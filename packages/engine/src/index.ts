@@ -9,26 +9,20 @@ import {
   ResourceKey,
 } from "./state";
 import { Services, PassiveManager, DefaultRules, CostBag, RuleSet } from "./services";
-import { EffectDef, createActionRegistry } from "./actions";
+import { createActionRegistry } from "./actions";
 import { BUILDINGS } from "./buildings";
 import { DEVELOPMENTS } from "./developments";
 import { POPULATIONS, PopulationDef } from "./populations";
 import { EngineContext } from "./context";
-import { EFFECTS, registerCoreEffects } from "./effects";
-
-function runEffects(effects: EffectDef[], ctx: EngineContext) {
-  for (const e of effects) {
-    const handler = EFFECTS.get(e.type);
-    handler(e, ctx);
-  }
-}
+import { runEffects, EFFECTS, registerCoreEffects } from "./effects";
+import { EVALUATORS, registerCoreEvaluators } from "./evaluators";
 
 function runPopulationTrigger(trigger: "onDevelopmentPhase" | "onUpkeepPhase", ctx: EngineContext) {
   for (const [role, count] of Object.entries(ctx.activePlayer.population)) {
     const def = ctx.populations.get(role);
     const effects = def[trigger];
     if (!effects) continue;
-    for (let i = 0; i < (count as number); i++) runEffects(effects, ctx);
+    runEffects(effects, ctx, count as number);
   }
 }
 
@@ -94,6 +88,7 @@ export function createEngine(overrides?: {
   rules?: RuleSet;
 }) {
   registerCoreEffects();
+  registerCoreEvaluators();
 
   const rules = overrides?.rules || DefaultRules;
   const services = new Services(rules);
@@ -118,7 +113,7 @@ export function createEngine(overrides?: {
   playerB.lands[0].slotsUsed = 1;
   playerA.population[PopulationRole.Council] = 1; playerB.population[PopulationRole.Council] = 1;
   ctx.game.currentPlayerIndex = 0;
-  
+
   return ctx;
 }
 
@@ -130,6 +125,7 @@ export {
   BUILDINGS,
   DEVELOPMENTS,
   EFFECTS,
+  EVALUATORS,
   POPULATIONS,
   EngineContext,
   Services,
@@ -142,6 +138,8 @@ export type { RuleSet };
 export { createActionRegistry } from "./actions";
 
 export { registerCoreEffects, EffectRegistry } from "./effects";
-export type { EffectHandler } from "./effects";
+export type { EffectHandler, EffectDef } from "./effects";
+export { registerCoreEvaluators, EvaluatorRegistry } from "./evaluators";
+export type { EvaluatorHandler, EvaluatorDef } from "./evaluators";
 export { createDevelopmentRegistry } from "./developments";
 export { createPopulationRegistry } from "./populations";

@@ -12,10 +12,10 @@ function getExpandExpectations(ctx: EngineContext) {
   const expandDef = ctx.actions.get('expand');
   const costs = getActionCosts('expand', ctx);
   const landGain = expandDef.effects
-    .filter(e => e.type === 'add_land')
+    .filter(e => e.type === 'land' && e.method === 'add')
     .reduce((sum, e) => sum + (e.params?.count ?? 0), 0);
   const baseHappiness = expandDef.effects
-    .filter(e => e.type === 'add_resource' && e.params?.key === Resource.happiness)
+    .filter(e => e.type === 'resource' && e.method === 'add' && e.params?.key === Resource.happiness)
     .reduce((sum, e) => sum + (e.params?.amount ?? 0), 0);
   const dummyCtx = { activePlayer: { happiness: 0 } } as EngineContext;
   ctx.passives.runResultMods(expandDef.id, dummyCtx);
@@ -29,8 +29,8 @@ describe('Action configuration overrides', () => {
     const expand = actions.get('expand');
     expand.baseCosts = { [Resource.gold]: 3 };
     expand.effects = [
-      { type: 'add_land', params: { count: 2 } },
-      { type: 'add_resource', params: { key: Resource.happiness, amount: 5 } },
+      { type: 'land', method: 'add', params: { count: 2 } },
+      { type: 'resource', method: 'add', params: { key: Resource.happiness, amount: 5 } },
     ];
     const ctx = createEngine({ actions });
     runDevelopment(ctx);
