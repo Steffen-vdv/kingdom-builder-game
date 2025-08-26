@@ -36,7 +36,7 @@ export const DefaultRules: RuleSet = {
   maxSlotsPerLand: 2,
 };
 
-export class HappinessService {
+class HappinessService {
   constructor(private rules: RuleSet) {}
   tier(h: number): HappinessTierEffect | undefined {
     let last: HappinessTierEffect | undefined;
@@ -46,7 +46,7 @@ export class HappinessService {
 }
 
 // PopCap policy (placeholder — data-driven later)
-export class PopCapService {
+class PopCapService {
   baseCastleHouses = 1; // can be moved to config
   getCap(p: PlayerState): number {
     const housesOnLand = p.lands.reduce((acc, l) => acc + l.developments.filter(d => d === "house").length, 0);

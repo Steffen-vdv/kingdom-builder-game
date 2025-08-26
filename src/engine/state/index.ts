@@ -1,6 +1,6 @@
 export type ResourceKey = string; // e.g., "gold", "ap", "happiness", "castleHP"
 
-export const R = {
+export const Resource = {
   gold: "gold",
   ap: "ap",
   happiness: "happiness",
@@ -39,17 +39,17 @@ export class Land {
 export class PlayerState {
   id: PlayerId;
   name: string;
-  resources: Record<ResourceKey, number> = { [R.gold]: 0, [R.ap]: 0, [R.happiness]: 0, [R.castleHP]: 10 };
+  resources: Record<ResourceKey, number> = { [Resource.gold]: 0, [Resource.ap]: 0, [Resource.happiness]: 0, [Resource.castleHP]: 10 };
   roles: Record<RoleId, number> = { [Role.Council]: 0, [Role.Commander]: 0, [Role.Fortifier]: 0, [Role.Citizen]: 0 };
   lands: Land[] = [];
   buildings: Set<string> = new Set();
   constructor(id: PlayerId, name: string) { this.id = id; this.name = name; }
-  get gold() { return this.resources[R.gold]; }
-  set gold(v: number) { this.resources[R.gold] = v; }
-  get ap() { return this.resources[R.ap]; }
-  set ap(v: number) { this.resources[R.ap] = v; }
-  get happiness() { return this.resources[R.happiness]; }
-  set happiness(v: number) { this.resources[R.happiness] = v; }
+  get gold() { return this.resources[Resource.gold]; }
+  set gold(v: number) { this.resources[Resource.gold] = v; }
+  get ap() { return this.resources[Resource.ap]; }
+  set ap(v: number) { this.resources[Resource.ap] = v; }
+  get happiness() { return this.resources[Resource.happiness]; }
+  set happiness(v: number) { this.resources[Resource.happiness] = v; }
 }
 
 export class GameState {

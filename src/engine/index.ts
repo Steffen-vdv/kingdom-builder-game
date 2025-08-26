@@ -1,4 +1,4 @@
-import { R, Phase, Role, GameState, PlayerState, Land } from "./state";
+import { Resource, Phase, Role, GameState, PlayerState, Land } from "./state";
 import { Services, PassiveManager, DefaultRules, CostBag } from "./services";
 import { EffectDef, createActionRegistry } from "./actions";
 import { BUILDINGS } from "./buildings";
@@ -14,7 +14,7 @@ function runEffects(effects: EffectDef[], ctx: EngineContext) {
 
 function applyCostsWithPassives(actionId: string, base: CostBag, ctx: EngineContext): CostBag {
   const withDefaultAP = { ...base };
-  if (withDefaultAP[R.ap] === undefined) withDefaultAP[R.ap] = ctx.services.rules.defaultActionAPCost;
+  if (withDefaultAP[Resource.ap] === undefined) withDefaultAP[Resource.ap] = ctx.services.rules.defaultActionAPCost;
   return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
 }
 
@@ -38,23 +38,23 @@ export function performAction(actionId: string, ctx: EngineContext) {
     if (ok !== true) throw new Error(String(ok));
   }
   const costs = applyCostsWithPassives(def.id, def.baseCosts || {}, ctx);
-  const ok = canPay(costs, ctx.me);
+  const ok = canPay(costs, ctx.activePlayer);
   if (ok !== true) throw new Error(ok);
-  pay(costs, ctx.me);
+  pay(costs, ctx.activePlayer);
   runEffects(def.effects, ctx);
   ctx.passives.runResultMods(def.id, ctx);
 }
 
 export function runDevelopment(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Development;
-  ctx.me.ap += ctx.services.rules.apPerCouncil * (ctx.me.roles[Role.Council] || 0);
+  ctx.activePlayer.ap += ctx.services.rules.apPerCouncil * (ctx.activePlayer.roles[Role.Council] || 0);
 }
 
 export function runUpkeep(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Upkeep;
-  const due = 2 * (ctx.me.roles[Role.Council] || 0);
-  if (ctx.me.gold < due) throw new Error(`Upkeep not payable (need ${due}, have ${ctx.me.gold})`);
-  ctx.me.gold -= due;
+  const due = 2 * (ctx.activePlayer.roles[Role.Council] || 0);
+  if (ctx.activePlayer.gold < due) throw new Error(`Upkeep not payable (need ${due}, have ${ctx.activePlayer.gold})`);
+  ctx.activePlayer.gold -= due;
 }
 
 export function createEngine(overrides?: {
@@ -70,22 +70,22 @@ export function createEngine(overrides?: {
   const actions = overrides?.actions || createActionRegistry();
   const buildings = overrides?.buildings || BUILDINGS;
   const ctx = new EngineContext(game, services, actions, buildings, passives);
-  const A = ctx.game.players[0];
-  const B = ctx.game.players[1];
-  
-  A.gold = 10; B.gold = 10;
-  A.lands.push(new Land("A-L1", rules.slotsPerNewLand));
-  A.lands.push(new Land("A-L2", rules.slotsPerNewLand));
-  B.lands.push(new Land("B-L1", rules.slotsPerNewLand));
-  B.lands.push(new Land("B-L2", rules.slotsPerNewLand));
-  A.roles[Role.Council] = 1; B.roles[Role.Council] = 1;
+  const playerA = ctx.game.players[0];
+  const playerB = ctx.game.players[1];
+
+  playerA.gold = 10; playerB.gold = 10;
+  playerA.lands.push(new Land("A-L1", rules.slotsPerNewLand));
+  playerA.lands.push(new Land("A-L2", rules.slotsPerNewLand));
+  playerB.lands.push(new Land("B-L1", rules.slotsPerNewLand));
+  playerB.lands.push(new Land("B-L2", rules.slotsPerNewLand));
+  playerA.roles[Role.Council] = 1; playerB.roles[Role.Council] = 1;
   ctx.game.currentPlayerIndex = 0;
   
   return ctx;
 }
 
 export {
-  R,
+  Resource,
   Phase,
   Role,
   BUILDINGS,
@@ -94,8 +94,9 @@ export {
   Services,
   PassiveManager,
   DefaultRules,
-  createActionRegistry,
 };
+
+export { createActionRegistry } from "./actions";
 
 export { registerCoreEffects, EffectRegistry } from "./effects";
 export type { EffectHandler } from "./effects";

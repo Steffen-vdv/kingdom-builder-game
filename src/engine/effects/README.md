@@ -14,7 +14,7 @@ import { EFFECTS } from "./effects"; // adjust path as needed
 
 EFFECTS.add("heal_castle", (effect, ctx) => {
   const amt = effect.params?.amount ?? 0;
-  ctx.me.resources["castleHP"] += amt;
+  ctx.activePlayer.resources["castleHP"] += amt;
 });
 ```
 
