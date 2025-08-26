@@ -1,36 +1,14 @@
-import { R, Phase, Role, GameState, PlayerState, Land, type ResourceKey } from "./state";
+import { R, Phase, Role, GameState, PlayerState, Land } from "./state";
 import { Services, PassiveManager, DefaultRules, CostBag } from "./services";
 import { ACTIONS, EffectDef } from "./actions";
 import { BUILDINGS } from "./buildings";
 import { EngineContext } from "./context";
+import { EFFECTS, registerCoreEffects } from "./effects";
 
 function runEffects(effects: EffectDef[], ctx: EngineContext) {
   for (const e of effects) {
-    switch (e.type) {
-      case "add_land": {
-        const count = e.params?.count ?? 1;
-        for (let i = 0; i < count; i++) {
-          const land = new Land(`${ctx.me.id}-L${ctx.me.lands.length + 1}`, ctx.services.rules.slotsPerNewLand);
-          ctx.me.lands.push(land);
-        }
-        break;
-      }
-      case "add_resource": {
-        const key = e.params!.key as ResourceKey;
-        const amount = e.params!.amount as number;
-        ctx.me.resources[key] = (ctx.me.resources[key] || 0) + amount;
-        break;
-      }
-      case "add_building": {
-        const id = e.params!.id as string;
-        ctx.me.buildings.add(id);
-        const b = ctx.buildings.get(id);
-        b.passives?.(ctx.passives, ctx);
-        break;
-      }
-      default:
-        throw new Error(`Unknown effect type: ${e.type}`);
-    }
+    const handler = EFFECTS.get(e.type);
+    handler(e, ctx);
   }
 }
 
@@ -80,6 +58,7 @@ export function runUpkeep(ctx: EngineContext) {
 }
 
 export function createEngine() {
+  registerCoreEffects();
   const rules = DefaultRules;
   const services = new Services(rules);
   const passives = new PassiveManager();
@@ -103,8 +82,12 @@ export {
   Role,
   ACTIONS,
   BUILDINGS,
+  EFFECTS,
   EngineContext,
   Services,
   PassiveManager,
   DefaultRules,
 };
+
+export { registerCoreEffects, EffectRegistry } from "./effects";
+export type { EffectHandler } from "./effects";
