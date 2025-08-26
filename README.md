@@ -32,4 +32,3 @@ Happiness (–10 … +10) represents the morale of your kingdom. High happiness 
 - Player order: A then B; B gains +1 ⚡️ Action Point on their first Development phase
 
 
-Absorption reduces incoming damage by a percentage, stacking up to a maximum of 100%. After calculating modifiers, damage is reduced and rounded down. Temporary sources, such as a Watchtower, apply only while they remain in play.
