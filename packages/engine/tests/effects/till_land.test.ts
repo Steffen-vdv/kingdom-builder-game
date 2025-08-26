@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, performAction, createActionRegistry } from '../../src/engine';
+import { createEngine, performAction, createActionRegistry } from '../../src/index.ts';
 
 describe('land:till effect', () => {
   it('increases land slots up to the maximum', () => {

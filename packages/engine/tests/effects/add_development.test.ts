@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, performAction, createActionRegistry } from '../../src/engine';
+import { createEngine, performAction, createActionRegistry } from '../../src/index.ts';
 
 // Custom action to build a house on an empty land slot
 const actions = createActionRegistry();

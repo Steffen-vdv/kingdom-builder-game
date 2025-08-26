@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, runDevelopment, performAction, Resource, Stat, createActionRegistry } from '../../src/engine';
+import { createEngine, runDevelopment, performAction, Resource, Stat, createActionRegistry } from '../../src/index.ts';
 
 describe('stat:add effect', () => {
   it('increments a stat via action effect', () => {
