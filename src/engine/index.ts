@@ -1,6 +1,6 @@
 import { R, Phase, Role, GameState, PlayerState, Land, type ResourceKey } from "./state";
 import { Services, PassiveManager, DefaultRules, CostBag } from "./services";
-import { ACTIONS, EffectDef } from "./actions";
+import { ACTIONS, EffectDef, createActionRegistry } from "./actions";
 import { BUILDINGS } from "./buildings";
 import { EngineContext } from "./context";
 
@@ -79,12 +79,17 @@ export function runUpkeep(ctx: EngineContext) {
   ctx.me.gold -= due;
 }
 
-export function createEngine() {
+export function createEngine(overrides?: {
+  actions?: import("./registry").Registry<import("./actions").ActionDef>;
+  buildings?: import("./registry").Registry<import("./buildings").BuildingDef>;
+}) {
   const rules = DefaultRules;
   const services = new Services(rules);
   const passives = new PassiveManager();
   const game = new GameState("Steph", "Byte");
-  const ctx = new EngineContext(game, services, ACTIONS, BUILDINGS, passives);
+  const actions = overrides?.actions || ACTIONS;
+  const buildings = overrides?.buildings || BUILDINGS;
+  const ctx = new EngineContext(game, services, actions, buildings, passives);
   const A = ctx.game.players[0];
   const B = ctx.game.players[1];
   A.gold = 10; B.gold = 10;
@@ -107,4 +112,5 @@ export {
   Services,
   PassiveManager,
   DefaultRules,
+  createActionRegistry,
 };
