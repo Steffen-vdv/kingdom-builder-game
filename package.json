@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build packages/web",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
+    "type-check": "tsc --noEmit",
     "test": "npm run lint && vitest run",
     "test:coverage": "npm run lint && vitest run --coverage"
   },
