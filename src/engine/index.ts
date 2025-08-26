@@ -1,6 +1,6 @@
 import { Resource, Phase, PopulationRole, Stat, GameState, PlayerState, Land } from "./state";
 import { Services, PassiveManager, DefaultRules, CostBag, RuleSet } from "./services";
-import { ACTIONS, EffectDef } from "./actions";
+import { EffectDef, createActionRegistry } from "./actions";
 import { BUILDINGS } from "./buildings";
 import { DEVELOPMENTS } from "./developments";
 import { POPULATIONS, PopulationDef } from "./populations";
@@ -85,7 +85,7 @@ export function createEngine(overrides?: {
   const services = new Services(rules);
   const passives = new PassiveManager();
   const game = new GameState("Steph", "Byte");
-  const actions = overrides?.actions || ACTIONS;
+  const actions = overrides?.actions || createActionRegistry();
   const buildings = overrides?.buildings || BUILDINGS;
   const developments = overrides?.developments || DEVELOPMENTS;
   const populations = overrides?.populations || POPULATIONS;
@@ -113,7 +113,6 @@ export {
   Phase,
   PopulationRole,
   Stat,
-  ACTIONS,
   BUILDINGS,
   DEVELOPMENTS,
   EFFECTS,
