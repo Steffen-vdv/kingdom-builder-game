@@ -10,6 +10,10 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "strict": true,
-    "types": ["vitest"]
+    "types": ["vitest"],
+    "baseUrl": ".",
+    "paths": {
+      "@kingdom-builder/*": ["packages/*/src"]
+    }
   }
 }

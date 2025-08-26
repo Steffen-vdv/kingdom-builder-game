@@ -7,7 +7,7 @@ import {
   Resource,
   POPULATIONS,
   DEVELOPMENTS,
-} from '../../src/engine';
+} from '../../src';
 
 const council = POPULATIONS.get(PopulationRole.Council);
 const councilApGain =
