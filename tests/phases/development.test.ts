@@ -9,28 +9,43 @@ import {
   DEVELOPMENTS,
 } from '../../src/engine';
 
+function effectValue<K extends 'amount' | 'percent'> (
+  events:
+    | { type: string; params?: Record<string, any> }[]
+    | undefined,
+  predicate: (e: { type: string; params?: Record<string, any> }) => boolean,
+  key: K,
+): number {
+  const effect = events?.find(predicate);
+  return (effect?.params?.[key] as number) ?? 0;
+}
+
 const council = POPULATIONS.get(PopulationRole.Council)!;
-const councilApGain =
-  council.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_resource' && e.params?.key === Resource.ap,
-  )?.params?.amount ?? 0;
+const councilApGain = effectValue(
+  council.onDevelopmentPhase,
+  (e) => e.type === 'add_resource' && e.params?.key === Resource.ap,
+  'amount',
+);
 
 const farm = DEVELOPMENTS.get('farm')!;
-const farmGoldGain =
-  farm.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_resource' && e.params?.key === Resource.gold,
-  )?.params?.amount ?? 0;
+const farmGoldGain = effectValue(
+  farm.onDevelopmentPhase,
+  (e) => e.type === 'add_resource' && e.params?.key === Resource.gold,
+  'amount',
+);
 
-const commanderPct =
-  POPULATIONS.get(PopulationRole.Commander)!.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_stat_pct' && e.params?.key === Stat.armyStrength,
-  )?.params?.percent ?? 0;
-const fortifierPct =
-  POPULATIONS.get(PopulationRole.Fortifier)!.onDevelopmentPhase?.find(
-    (e) =>
-      e.type === 'add_stat_pct' &&
-      e.params?.key === Stat.fortificationStrength,
-  )?.params?.percent ?? 0;
+const commanderPct = effectValue(
+  POPULATIONS.get(PopulationRole.Commander)!.onDevelopmentPhase,
+  (e) => e.type === 'add_stat_pct' && e.params?.key === Stat.armyStrength,
+  'percent',
+);
+const fortifierPct = effectValue(
+  POPULATIONS.get(PopulationRole.Fortifier)!.onDevelopmentPhase,
+  (e) =>
+    e.type === 'add_stat_pct' &&
+    e.params?.key === Stat.fortificationStrength,
+  'percent',
+);
 
 describe('Development phase', () => {
   it('triggers population and development effects', () => {
