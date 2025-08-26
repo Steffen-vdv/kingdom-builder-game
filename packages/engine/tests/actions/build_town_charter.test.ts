@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, runDevelopment, performAction, Resource, EngineContext } from '../../src/engine';
+import { createEngine, runDevelopment, performAction, Resource, EngineContext } from '../../src/index.ts';
 
 function getActionCosts(id: string, ctx: EngineContext) {
   const def = ctx.actions.get(id);

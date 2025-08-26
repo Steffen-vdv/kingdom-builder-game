@@ -5,7 +5,7 @@ import {
   PopulationRole,
   Resource,
   POPULATIONS,
-} from '../../src/engine';
+} from '../../src/index.ts';
 
 const councilUpkeep =
   POPULATIONS.get(PopulationRole.Council).onUpkeepPhase?.find(
