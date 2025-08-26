@@ -20,7 +20,6 @@ Each turn flows through three phases:
 3. **Main** – spend action points to perform strategic actions such as expanding your territory, developing lands, or attacking the enemy.
 
 
-Happiness (–10 … +10) represents the morale of your kingdom. High happiness grants bonuses like increased income or discounts, while low happiness causes penalties and can eventually halt growth.
 
 ### Starting Setup
 
