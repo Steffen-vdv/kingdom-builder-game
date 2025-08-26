@@ -17,7 +17,7 @@ BUILDINGS.add("town_charter", {
   id: "town_charter",
   name: "Town Charter",
   costs: { [Resource.gold]: 5 },
-  passives: (pm: PassiveManager, ctx: EngineContext) => {
+  passives: (pm: PassiveManager, _ctx: EngineContext) => {
     pm.registerCostModifier((actionId, costs, _ctx) => {
       if (actionId === "expand") {
         const gold = (costs[Resource.gold] || 0) + 2;

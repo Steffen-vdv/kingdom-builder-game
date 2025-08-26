@@ -1,4 +1,4 @@
-import type { EffectHandler, EffectDef } from ".";
+import type { EffectHandler } from ".";
 import { runEffects } from ".";
 
 export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
