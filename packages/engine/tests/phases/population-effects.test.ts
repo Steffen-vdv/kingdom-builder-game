@@ -8,7 +8,7 @@ import {
   Stat,
   POPULATIONS,
   createPopulationRegistry,
-} from '../../src/engine';
+} from '../../src/index.ts';
 
 const council = POPULATIONS.get(PopulationRole.Council);
 const councilApGain =
