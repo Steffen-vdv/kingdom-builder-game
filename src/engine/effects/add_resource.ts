@@ -4,5 +4,5 @@ import type { ResourceKey } from "../state";
 export const addResource: EffectHandler = (effect, ctx) => {
   const key = effect.params!.key as ResourceKey;
   const amount = effect.params!.amount as number;
-  ctx.me.resources[key] = (ctx.me.resources[key] || 0) + amount;
+  ctx.activePlayer.resources[key] = (ctx.activePlayer.resources[key] || 0) + amount;
 };
