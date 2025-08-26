@@ -1,4 +1,13 @@
-import { Resource, Phase, PopulationRole, Stat, GameState, PlayerState, Land } from "./state";
+import {
+  Resource,
+  Phase,
+  PopulationRole,
+  Stat,
+  GameState,
+  PlayerState,
+  Land,
+  ResourceKey,
+} from "./state";
 import { Services, PassiveManager, DefaultRules, CostBag, RuleSet } from "./services";
 import { EffectDef, createActionRegistry } from "./actions";
 import { BUILDINGS } from "./buildings";
@@ -29,17 +38,22 @@ function applyCostsWithPassives(actionId: string, base: CostBag, ctx: EngineCont
   return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
 }
 
-function canPay(costs: CostBag, p: PlayerState): true | string {
-  for (const [key, amt] of Object.entries(costs)) {
-    const need = amt ?? 0; const have = p.resources[key] ?? 0;
-    if (have < need) return `Insufficient ${key}: need ${need}, have ${have}`;
+function canPay(costs: CostBag, player: PlayerState): true | string {
+  for (const key of Object.keys(costs) as ResourceKey[]) {
+    const need = costs[key] ?? 0;
+    const available = player.resources[key] ?? 0;
+    if (available < need) {
+      return `Insufficient ${key}: need ${need}, have ${available}`;
+    }
   }
   return true;
 }
 
-function pay(costs: CostBag, p: PlayerState) {
-  for (const [key, amt] of Object.entries(costs))
-    p.resources[key] = (p.resources[key] || 0) - (amt ?? 0);
+function pay(costs: CostBag, player: PlayerState) {
+  for (const key of Object.keys(costs) as ResourceKey[]) {
+    const amount = costs[key] ?? 0;
+    player.resources[key] = (player.resources[key] || 0) - amount;
+  }
 }
 
 export function performAction(actionId: string, ctx: EngineContext) {
@@ -121,8 +135,9 @@ export {
   Services,
   PassiveManager,
   DefaultRules,
-  RuleSet,
 };
+
+export type { RuleSet };
 
 export { createActionRegistry } from "./actions";
 
