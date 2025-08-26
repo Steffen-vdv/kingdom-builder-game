@@ -10,37 +10,54 @@ import {
   createPopulationRegistry,
 } from '../../src/index.ts';
 
-const council = POPULATIONS.get(PopulationRole.Council);
-const councilApGain =
-  council.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_resource' && e.params.key === Resource.ap,
-  )?.params.amount ?? 0;
-const councilUpkeep =
-  council.onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
+function effectValue<K extends 'amount' | 'percent'> (
+  events:
+    | { type: string; params?: Record<string, any> }[]
+    | undefined,
+  predicate: (e: { type: string; params?: Record<string, any> }) => boolean,
+  key: K,
+): number {
+  const effect = events?.find(predicate);
+  return (effect?.params?.[key] as number) ?? 0;
+}
 
-const commander = POPULATIONS.get(PopulationRole.Commander);
-const commanderUpkeep =
-  commander.onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
-const commanderPct =
-  commander.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_stat_pct' && e.params.key === Stat.armyStrength,
-  )?.params.percent ?? 0;
+const council = POPULATIONS.get(PopulationRole.Council)!;
+const councilApGain = effectValue(
+  council.onDevelopmentPhase,
+  (e) => e.type === 'add_resource' && e.params?.key === Resource.ap,
+  'amount',
+);
+const councilUpkeep = effectValue(
+  council.onUpkeepPhase,
+  (e) => e.type === 'pay_resource' && e.params?.key === Resource.gold,
+  'amount',
+);
 
-const fortifier = POPULATIONS.get(PopulationRole.Fortifier);
-const fortifierUpkeep =
-  fortifier.onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
-const fortifierPct =
-  fortifier.onDevelopmentPhase?.find(
-    (e) =>
-      e.type === 'add_stat_pct' &&
-      e.params.key === Stat.fortificationStrength,
-  )?.params.percent ?? 0;
+const commander = POPULATIONS.get(PopulationRole.Commander)!;
+const commanderUpkeep = effectValue(
+  commander.onUpkeepPhase,
+  (e) => e.type === 'pay_resource' && e.params?.key === Resource.gold,
+  'amount',
+);
+const commanderPct = effectValue(
+  commander.onDevelopmentPhase,
+  (e) => e.type === 'add_stat_pct' && e.params?.key === Stat.armyStrength,
+  'percent',
+);
+
+const fortifier = POPULATIONS.get(PopulationRole.Fortifier)!;
+const fortifierUpkeep = effectValue(
+  fortifier.onUpkeepPhase,
+  (e) => e.type === 'pay_resource' && e.params?.key === Resource.gold,
+  'amount',
+);
+const fortifierPct = effectValue(
+  fortifier.onDevelopmentPhase,
+  (e) =>
+    e.type === 'add_stat_pct' &&
+    e.params?.key === Stat.fortificationStrength,
+  'percent',
+);
 
 function setup({
   gold,
@@ -223,15 +240,17 @@ describe('population registry overrides', () => {
     ctx.activePlayer.population[PopulationRole.Commander] = 0;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 0;
 
-    const council = populations.get(PopulationRole.Council);
-    const devGain =
-      council.onDevelopmentPhase?.find(
-        (e) => e.type === 'add_resource' && e.params.key === Resource.gold,
-      )?.params.amount ?? 0;
-    const upkeepCost =
-      council.onUpkeepPhase?.find(
-        (e) => e.type === 'pay_resource' && e.params.key === Resource.ap,
-      )?.params.amount ?? 0;
+    const council = populations.get(PopulationRole.Council)!;
+    const devGain = effectValue(
+      council.onDevelopmentPhase,
+      (e) => e.type === 'add_resource' && e.params?.key === Resource.gold,
+      'amount',
+    );
+    const upkeepCost = effectValue(
+      council.onUpkeepPhase,
+      (e) => e.type === 'pay_resource' && e.params?.key === Resource.ap,
+      'amount',
+    );
 
     runDevelopment(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold + devGain);
@@ -269,16 +288,18 @@ describe('population registry overrides', () => {
     ctx.activePlayer.population[PopulationRole.Council] = 0;
     ctx.activePlayer.population[PopulationRole.Commander] = 1;
 
-    const commander = populations.get(PopulationRole.Commander);
-    const devCost =
-      commander.onDevelopmentPhase?.find(
-        (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
-      )?.params.amount ?? 0;
-    const upkeepPct =
-      commander.onUpkeepPhase?.find(
-        (e) =>
-          e.type === 'add_stat_pct' && e.params.key === Stat.armyStrength,
-      )?.params.percent ?? 0;
+    const commander = populations.get(PopulationRole.Commander)!;
+    const devCost = effectValue(
+      commander.onDevelopmentPhase,
+      (e) => e.type === 'pay_resource' && e.params?.key === Resource.gold,
+      'amount',
+    );
+    const upkeepPct = effectValue(
+      commander.onUpkeepPhase,
+      (e) =>
+        e.type === 'add_stat_pct' && e.params?.key === Stat.armyStrength,
+      'percent',
+    );
 
     runDevelopment(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);
@@ -317,17 +338,19 @@ describe('population registry overrides', () => {
     ctx.activePlayer.population[PopulationRole.Council] = 0;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 1;
 
-    const fortifier = populations.get(PopulationRole.Fortifier);
-    const devCost =
-      fortifier.onDevelopmentPhase?.find(
-        (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
-      )?.params.amount ?? 0;
-    const upkeepPct =
-      fortifier.onUpkeepPhase?.find(
-        (e) =>
-          e.type === 'add_stat_pct' &&
-          e.params.key === Stat.fortificationStrength,
-      )?.params.percent ?? 0;
+    const fortifier = populations.get(PopulationRole.Fortifier)!;
+    const devCost = effectValue(
+      fortifier.onDevelopmentPhase,
+      (e) => e.type === 'pay_resource' && e.params?.key === Resource.gold,
+      'amount',
+    );
+    const upkeepPct = effectValue(
+      fortifier.onUpkeepPhase,
+      (e) =>
+        e.type === 'add_stat_pct' &&
+        e.params?.key === Stat.fortificationStrength,
+      'percent',
+    );
 
     runDevelopment(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);

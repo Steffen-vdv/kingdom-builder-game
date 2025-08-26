@@ -7,18 +7,32 @@ import {
   POPULATIONS,
 } from '../../src/index.ts';
 
-const councilUpkeep =
-  POPULATIONS.get(PopulationRole.Council).onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
-const commanderUpkeep =
-  POPULATIONS.get(PopulationRole.Commander).onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
-const fortifierUpkeep =
-  POPULATIONS.get(PopulationRole.Fortifier).onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
+function effectValue<K extends 'amount' | 'percent'> (
+  events:
+    | { type: string; params?: Record<string, any> }[]
+    | undefined,
+  predicate: (e: { type: string; params?: Record<string, any> }) => boolean,
+  key: K,
+): number {
+  const effect = events?.find(predicate);
+  return (effect?.params?.[key] as number) ?? 0;
+}
+
+const councilUpkeep = effectValue(
+  POPULATIONS.get(PopulationRole.Council)!.onUpkeepPhase,
+  (e) => e.type === 'pay_resource' && e.params?.key === Resource.gold,
+  'amount',
+);
+const commanderUpkeep = effectValue(
+  POPULATIONS.get(PopulationRole.Commander)!.onUpkeepPhase,
+  (e) => e.type === 'pay_resource' && e.params?.key === Resource.gold,
+  'amount',
+);
+const fortifierUpkeep = effectValue(
+  POPULATIONS.get(PopulationRole.Fortifier)!.onUpkeepPhase,
+  (e) => e.type === 'pay_resource' && e.params?.key === Resource.gold,
+  'amount',
+);
 
 describe('Upkeep phase', () => {
   it('charges gold per population role', () => {
