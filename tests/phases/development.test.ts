@@ -12,23 +12,24 @@ import {
 const council = POPULATIONS.get(PopulationRole.Council);
 const councilApGain =
   council.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_resource' && e.params.key === Resource.ap,
+    (e) => e.type === 'resource' && e.method === 'add' && e.params.key === Resource.ap,
   )?.params.amount ?? 0;
 
 const farm = DEVELOPMENTS.get('farm');
 const farmGoldGain =
   farm.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_resource' && e.params.key === Resource.gold,
+    (e) => e.type === 'resource' && e.method === 'add' && e.params.key === Resource.gold,
   )?.params.amount ?? 0;
 
 const commanderPct =
   POPULATIONS.get(PopulationRole.Commander).onDevelopmentPhase?.find(
-    (e) => e.type === 'add_stat_pct' && e.params.key === Stat.armyStrength,
+    (e) => e.type === 'stat' && e.method === 'add_pct' && e.params.key === Stat.armyStrength,
   )?.params.percent ?? 0;
 const fortifierPct =
   POPULATIONS.get(PopulationRole.Fortifier).onDevelopmentPhase?.find(
     (e) =>
-      e.type === 'add_stat_pct' &&
+      e.type === 'stat' &&
+      e.method === 'add_pct' &&
       e.params.key === Stat.fortificationStrength,
   )?.params.percent ?? 0;
 

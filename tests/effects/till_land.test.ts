@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, performAction, createActionRegistry } from '../../src/engine';
 
-describe('till_land effect', () => {
+describe('land:till effect', () => {
   it('increases land slots up to the maximum', () => {
     const actions = createActionRegistry();
     actions.add('till', {
       id: 'till',
       name: 'Till',
       baseCosts: { ap: 0 },
-      effects: [ { type: 'till_land', params: { landId: 'A-L2' } } ],
+      effects: [ { type: 'land', method: 'till', params: { landId: 'A-L2' } } ],
     });
     const ctx = createEngine({ actions });
     const land = ctx.activePlayer.lands[1]; // A-L2
@@ -24,7 +24,7 @@ describe('till_land effect', () => {
       id: 'till',
       name: 'Till',
       baseCosts: { ap: 0 },
-      effects: [ { type: 'till_land', params: { landId: 'A-L2' } } ],
+      effects: [ { type: 'land', method: 'till', params: { landId: 'A-L2' } } ],
     });
     const ctx = createEngine({ actions });
     const land = ctx.activePlayer.lands[1];

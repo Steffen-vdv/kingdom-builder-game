@@ -1,6 +1,6 @@
 import { Registry } from "../registry";
 import { PopulationRole, Resource, Stat } from "../state";
-import type { EffectDef } from "../actions";
+import type { EffectDef } from "../effects";
 
 export type PopulationDef = {
   id: string;
@@ -16,10 +16,10 @@ export function createPopulationRegistry() {
     id: PopulationRole.Council,
     name: "Council",
     onDevelopmentPhase: [
-      { type: "add_resource", params: { key: Resource.ap, amount: 1 } },
+      { type: "resource", method: "add", params: { key: Resource.ap, amount: 1 } },
     ],
     onUpkeepPhase: [
-      { type: "pay_resource", params: { key: Resource.gold, amount: 2 } },
+      { type: "resource", method: "remove", params: { key: Resource.gold, amount: 2 } },
     ],
   });
 
@@ -27,10 +27,10 @@ export function createPopulationRegistry() {
     id: PopulationRole.Commander,
     name: "Army Commander",
     onDevelopmentPhase: [
-      { type: "add_stat_pct", params: { key: Stat.armyStrength, percent: 25 } },
+      { type: "stat", method: "add_pct", params: { key: Stat.armyStrength, percent: 25 } },
     ],
     onUpkeepPhase: [
-      { type: "pay_resource", params: { key: Resource.gold, amount: 1 } },
+      { type: "resource", method: "remove", params: { key: Resource.gold, amount: 1 } },
     ],
   });
 
@@ -38,10 +38,10 @@ export function createPopulationRegistry() {
     id: PopulationRole.Fortifier,
     name: "Fortifier",
     onDevelopmentPhase: [
-      { type: "add_stat_pct", params: { key: Stat.fortificationStrength, percent: 25 } },
+      { type: "stat", method: "add_pct", params: { key: Stat.fortificationStrength, percent: 25 } },
     ],
     onUpkeepPhase: [
-      { type: "pay_resource", params: { key: Resource.gold, amount: 1 } },
+      { type: "resource", method: "remove", params: { key: Resource.gold, amount: 1 } },
     ],
   });
 

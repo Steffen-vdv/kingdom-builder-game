@@ -1,6 +1,6 @@
 import { Registry } from "../registry";
 import { Resource, Stat } from "../state";
-import type { EffectDef } from "../actions";
+import type { EffectDef } from "../effects";
 
 export type DevelopmentDef = {
   id: string;
@@ -15,13 +15,13 @@ export function createDevelopmentRegistry() {
   reg.add("farm", {
     id: "farm",
     name: "Farm",
-    onDevelopmentPhase: [{ type: "add_resource", params: { key: Resource.gold, amount: 2 } }],
+    onDevelopmentPhase: [{ type: "resource", method: "add", params: { key: Resource.gold, amount: 2 } }],
   });
 
   reg.add("house", {
     id: "house",
     name: "House",
-    onBuild: [{ type: "add_stat", params: { key: Stat.maxPopulation, amount: 1 } }],
+    onBuild: [{ type: "stat", method: "add", params: { key: Stat.maxPopulation, amount: 1 } }],
   });
 
   return reg;

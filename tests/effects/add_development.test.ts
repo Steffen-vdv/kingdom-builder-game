@@ -8,11 +8,11 @@ actions.add('build_house', {
   name: 'Build House',
   baseCosts: { ap: 0 },
   effects: [
-    { type: 'add_development', params: { id: 'house', landId: 'A-L2' } },
+    { type: 'development', method: 'add', params: { id: 'house', landId: 'A-L2' } },
   ],
 });
 
-describe('add_development effect', () => {
+describe('development:add effect', () => {
   it('adds house and applies onBuild effects', () => {
     const ctx = createEngine({ actions });
     const land = ctx.activePlayer.lands[1]; // A-L2

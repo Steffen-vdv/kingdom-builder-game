@@ -1,8 +1,8 @@
 import { Registry } from "../registry";
 import { Resource } from "../state";
 import type { CostBag } from "../services";
+import type { EffectDef } from "../effects";
 
-export type EffectDef = { type: string; params?: Record<string, any> };
 export type ActionDef = {
   id: string;
   name: string;
@@ -13,14 +13,14 @@ export type ActionDef = {
 
 export function createActionRegistry() {
   const reg = new Registry<ActionDef>();
-  
+
   reg.add("expand", {
     id: "expand",
     name: "Expand",
     baseCosts: { [Resource.gold]: 2 },
     effects: [
-      { type: "add_land", params: { count: 1 } },
-      { type: "add_resource", params: { key: Resource.happiness, amount: 1 } },
+      { type: "land", method: "add", params: { count: 1 } },
+      { type: "resource", method: "add", params: { key: Resource.happiness, amount: 1 } },
     ],
   });
 
@@ -29,15 +29,32 @@ export function createActionRegistry() {
     id: "build_town_charter",
     name: "Build — Town Charter",
     baseCosts: { [Resource.gold]: 5 },
-    effects: [ { type: "add_building", params: { id: "town_charter" } } ],
+    effects: [ { type: "building", method: "add", params: { id: "town_charter" } } ],
   });
 
   reg.add("overwork", {
     id: "overwork",
     name: "Overwork",
     baseCosts: { [Resource.ap]: 0 }, // Free
-    // TODO: +2 gold per Farm; -0.5 happiness per Farm (rounded up)
-    effects: [],
+    effects: [
+      {
+        evaluator: { type: "development", params: { id: "farm" } },
+        effects: [
+          {
+            type: "resource",
+            method: "add",
+            round: "down",
+            params: { key: Resource.gold, amount: 2 },
+          },
+          {
+            type: "resource",
+            method: "add",
+            round: "up",
+            params: { key: Resource.happiness, amount: -0.5 },
+          },
+        ],
+      },
+    ],
   });
 
   reg.add("develop", {

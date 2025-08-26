@@ -1,33 +1,62 @@
 import { Registry } from "../registry";
-import type { EffectDef } from "../actions";
 import type { EngineContext } from "../context";
-import { addLand } from "./add_land";
-import { addResource } from "./add_resource";
-import { addBuilding } from "./add_building";
-import { addStat } from "./add_stat";
-import { addDevelopment } from "./add_development";
-import { payResource } from "./pay_resource";
-import { addStatPct } from "./add_stat_pct";
-import { tillLand } from "./till_land";
+import { EVALUATORS } from "../evaluators";
+import { landAdd } from "./land_add";
+import { resourceAdd } from "./resource_add";
+import { resourceRemove } from "./resource_remove";
+import { buildingAdd } from "./building_add";
+import { statAdd } from "./stat_add";
+import { statAddPct } from "./stat_add_pct";
+import { developmentAdd } from "./development_add";
+import { landTill } from "./land_till";
+
+export interface EffectDef {
+  type?: string;
+  method?: string;
+  params?: Record<string, any>;
+  effects?: EffectDef[];
+  evaluator?: import("../evaluators").EvaluatorDef;
+  round?: "up" | "down";
+}
 
 export interface EffectHandler {
-  (effect: EffectDef, ctx: EngineContext): void;
+  (effect: EffectDef, ctx: EngineContext, mult: number): void;
 }
 
 export class EffectRegistry extends Registry<EffectHandler> {}
-
 export const EFFECTS = new EffectRegistry();
 
-// Registers the core engine effects. Should be called during engine bootstrap.
 export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
-  registry.add("add_land", addLand);
-  registry.add("add_resource", addResource);
-  registry.add("add_building", addBuilding);
-  registry.add("add_stat", addStat);
-  registry.add("add_stat_pct", addStatPct);
-  registry.add("add_development", addDevelopment);
-  registry.add("pay_resource", payResource);
-  registry.add("till_land", tillLand);
+  registry.add("land:add", landAdd);
+  registry.add("resource:add", resourceAdd);
+  registry.add("resource:remove", resourceRemove);
+  registry.add("building:add", buildingAdd);
+  registry.add("stat:add", statAdd);
+  registry.add("stat:add_pct", statAddPct);
+  registry.add("development:add", developmentAdd);
+  registry.add("land:till", landTill);
 }
 
-export { addLand, addResource, addBuilding, addStat, addDevelopment, payResource, addStatPct, tillLand };
+export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
+  for (const e of effects) {
+    if (e.evaluator) {
+      const ev = EVALUATORS.get(e.evaluator.type);
+      const count = ev(e.evaluator, ctx);
+      runEffects(e.effects || [], ctx, mult * (count as number));
+    } else if (e.type && e.method) {
+      const handler = EFFECTS.get(`${e.type}:${e.method}`);
+      handler(e, ctx, mult);
+    }
+  }
+}
+
+export {
+  landAdd,
+  resourceAdd,
+  resourceRemove,
+  buildingAdd,
+  statAdd,
+  statAddPct,
+  developmentAdd,
+  landTill,
+};

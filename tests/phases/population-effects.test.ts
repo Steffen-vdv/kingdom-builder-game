@@ -13,32 +13,33 @@ import {
 const council = POPULATIONS.get(PopulationRole.Council);
 const councilApGain =
   council.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_resource' && e.params.key === Resource.ap,
+    (e) => e.type === 'resource' && e.method === 'add' && e.params.key === Resource.ap,
   )?.params.amount ?? 0;
 const councilUpkeep =
   council.onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
+    (e) => e.type === 'resource' && e.method === 'remove' && e.params.key === Resource.gold,
   )?.params.amount ?? 0;
 
 const commander = POPULATIONS.get(PopulationRole.Commander);
 const commanderUpkeep =
   commander.onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
+    (e) => e.type === 'resource' && e.method === 'remove' && e.params.key === Resource.gold,
   )?.params.amount ?? 0;
 const commanderPct =
   commander.onDevelopmentPhase?.find(
-    (e) => e.type === 'add_stat_pct' && e.params.key === Stat.armyStrength,
+    (e) => e.type === 'stat' && e.method === 'add_pct' && e.params.key === Stat.armyStrength,
   )?.params.percent ?? 0;
 
 const fortifier = POPULATIONS.get(PopulationRole.Fortifier);
 const fortifierUpkeep =
   fortifier.onUpkeepPhase?.find(
-    (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
+    (e) => e.type === 'resource' && e.method === 'remove' && e.params.key === Resource.gold,
   )?.params.amount ?? 0;
 const fortifierPct =
   fortifier.onDevelopmentPhase?.find(
     (e) =>
-      e.type === 'add_stat_pct' &&
+      e.type === 'stat' &&
+      e.method === 'add_pct' &&
       e.params.key === Stat.fortificationStrength,
   )?.params.percent ?? 0;
 
@@ -203,10 +204,10 @@ describe('population registry overrides', () => {
       id: PopulationRole.Council,
       name: 'Council',
       onDevelopmentPhase: [
-        { type: 'add_resource', params: { key: Resource.gold, amount: 2 } },
+        { type: 'resource', method: 'add', params: { key: Resource.gold, amount: 2 } },
       ],
       onUpkeepPhase: [
-        { type: 'pay_resource', params: { key: Resource.ap, amount: 1 } },
+        { type: 'resource', method: 'remove', params: { key: Resource.ap, amount: 1 } },
       ],
     });
 
@@ -226,11 +227,11 @@ describe('population registry overrides', () => {
     const council = populations.get(PopulationRole.Council);
     const devGain =
       council.onDevelopmentPhase?.find(
-        (e) => e.type === 'add_resource' && e.params.key === Resource.gold,
+        (e) => e.type === 'resource' && e.method === 'add' && e.params.key === Resource.gold,
       )?.params.amount ?? 0;
     const upkeepCost =
       council.onUpkeepPhase?.find(
-        (e) => e.type === 'pay_resource' && e.params.key === Resource.ap,
+        (e) => e.type === 'resource' && e.method === 'remove' && e.params.key === Resource.ap,
       )?.params.amount ?? 0;
 
     runDevelopment(ctx);
@@ -247,11 +248,12 @@ describe('population registry overrides', () => {
       id: PopulationRole.Commander,
       name: 'Army Commander',
       onDevelopmentPhase: [
-        { type: 'pay_resource', params: { key: Resource.gold, amount: 1 } },
+        { type: 'resource', method: 'remove', params: { key: Resource.gold, amount: 1 } },
       ],
       onUpkeepPhase: [
         {
-          type: 'add_stat_pct',
+          type: 'stat',
+          method: 'add_pct',
           params: { key: Stat.armyStrength, percent: 25 },
         },
       ],
@@ -272,12 +274,12 @@ describe('population registry overrides', () => {
     const commander = populations.get(PopulationRole.Commander);
     const devCost =
       commander.onDevelopmentPhase?.find(
-        (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
+        (e) => e.type === 'resource' && e.method === 'remove' && e.params.key === Resource.gold,
       )?.params.amount ?? 0;
     const upkeepPct =
       commander.onUpkeepPhase?.find(
         (e) =>
-          e.type === 'add_stat_pct' && e.params.key === Stat.armyStrength,
+          e.type === 'stat' && e.method === 'add_pct' && e.params.key === Stat.armyStrength,
       )?.params.percent ?? 0;
 
     runDevelopment(ctx);
@@ -295,11 +297,12 @@ describe('population registry overrides', () => {
       id: PopulationRole.Fortifier,
       name: 'Fortifier',
       onDevelopmentPhase: [
-        { type: 'pay_resource', params: { key: Resource.gold, amount: 1 } },
+        { type: 'resource', method: 'remove', params: { key: Resource.gold, amount: 1 } },
       ],
       onUpkeepPhase: [
         {
-          type: 'add_stat_pct',
+          type: 'stat',
+          method: 'add_pct',
           params: { key: Stat.fortificationStrength, percent: 25 },
         },
       ],
@@ -320,12 +323,13 @@ describe('population registry overrides', () => {
     const fortifier = populations.get(PopulationRole.Fortifier);
     const devCost =
       fortifier.onDevelopmentPhase?.find(
-        (e) => e.type === 'pay_resource' && e.params.key === Resource.gold,
+        (e) => e.type === 'resource' && e.method === 'remove' && e.params.key === Resource.gold,
       )?.params.amount ?? 0;
     const upkeepPct =
       fortifier.onUpkeepPhase?.find(
         (e) =>
-          e.type === 'add_stat_pct' &&
+          e.type === 'stat' &&
+          e.method === 'add_pct' &&
           e.params.key === Stat.fortificationStrength,
       )?.params.percent ?? 0;
 
@@ -337,4 +341,3 @@ describe('population registry overrides', () => {
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);
   });
 });
-
