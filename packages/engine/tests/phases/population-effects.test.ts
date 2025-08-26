@@ -8,7 +8,7 @@ import {
   Stat,
   POPULATIONS,
   createPopulationRegistry,
-} from '../../src/engine';
+} from '../../src/index.ts';
 
 function effectValue<K extends 'amount' | 'percent'> (
   events:

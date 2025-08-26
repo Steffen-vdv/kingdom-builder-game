@@ -7,7 +7,7 @@ import {
   Resource,
   POPULATIONS,
   DEVELOPMENTS,
-} from '../../src/engine';
+} from '../../src/index.ts';
 
 function effectValue<K extends 'amount' | 'percent'> (
   events:
