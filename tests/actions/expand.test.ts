@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, runDevelopment, performAction, R, EngineContext } from '../../src/engine';
+import { createEngine, runDevelopment, performAction, Resource, EngineContext } from '../../src/engine';
 
 function getActionCosts(id: string, ctx: EngineContext) {
   const def = ctx.actions.get(id);
   const baseCosts = { ...(def.baseCosts || {}) };
-  if (baseCosts[R.ap] === undefined) baseCosts[R.ap] = ctx.services.rules.defaultActionAPCost;
+  if (baseCosts[Resource.ap] === undefined) baseCosts[Resource.ap] = ctx.services.rules.defaultActionAPCost;
   return ctx.passives.applyCostMods(def.id, baseCosts, ctx);
 }
 
@@ -15,11 +15,11 @@ function getExpandExpectations(ctx: EngineContext) {
     .filter(e => e.type === 'add_land')
     .reduce((sum, e) => sum + (e.params?.count ?? 0), 0);
   const baseHappiness = expandDef.effects
-    .filter(e => e.type === 'add_resource' && e.params?.key === R.happiness)
+    .filter(e => e.type === 'add_resource' && e.params?.key === Resource.happiness)
     .reduce((sum, e) => sum + (e.params?.amount ?? 0), 0);
-  const dummyCtx = { me: { happiness: 0 } } as EngineContext;
+  const dummyCtx = { activePlayer: { happiness: 0 } } as EngineContext;
   ctx.passives.runResultMods(expandDef.id, dummyCtx);
-  const extraHappiness = dummyCtx.me.happiness;
+  const extraHappiness = dummyCtx.activePlayer.happiness;
   return { costs, landGain, happinessGain: baseHappiness + extraHappiness };
 }
 
@@ -27,57 +27,57 @@ describe('Expand action', () => {
   it('costs gold and AP while granting land and happiness without Town Charter', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
-    const goldBefore = ctx.me.gold;
-    const apBefore = ctx.me.ap;
-    const landsBefore = ctx.me.lands.length;
-    const hapBefore = ctx.me.happiness;
+    const goldBefore = ctx.activePlayer.gold;
+    const apBefore = ctx.activePlayer.ap;
+    const landsBefore = ctx.activePlayer.lands.length;
+    const hapBefore = ctx.activePlayer.happiness;
     const expected = getExpandExpectations(ctx);
     performAction('expand', ctx);
-    expect(ctx.me.gold).toBe(goldBefore - (expected.costs[R.gold] || 0));
-    expect(ctx.me.ap).toBe(apBefore - (expected.costs[R.ap] || 0));
-    expect(ctx.me.lands.length).toBe(landsBefore + expected.landGain);
-    expect(ctx.me.happiness).toBe(hapBefore + expected.happinessGain);
+    expect(ctx.activePlayer.gold).toBe(goldBefore - (expected.costs[Resource.gold] || 0));
+    expect(ctx.activePlayer.ap).toBe(apBefore - (expected.costs[Resource.ap] || 0));
+    expect(ctx.activePlayer.lands.length).toBe(landsBefore + expected.landGain);
+    expect(ctx.activePlayer.happiness).toBe(hapBefore + expected.happinessGain);
   });
 
   it('includes Town Charter modifiers when present', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
     performAction('build_town_charter', ctx);
-    ctx.me.ap += 1; // allow another action
-    const goldBefore = ctx.me.gold;
-    const apBefore = ctx.me.ap;
-    const hapBefore = ctx.me.happiness;
+    ctx.activePlayer.ap += 1; // allow another action
+    const goldBefore = ctx.activePlayer.gold;
+    const apBefore = ctx.activePlayer.ap;
+    const hapBefore = ctx.activePlayer.happiness;
     const expected = getExpandExpectations(ctx);
     performAction('expand', ctx);
-    expect(ctx.me.gold).toBe(goldBefore - (expected.costs[R.gold] || 0));
-    expect(ctx.me.ap).toBe(apBefore - (expected.costs[R.ap] || 0));
-    expect(ctx.me.happiness).toBe(hapBefore + expected.happinessGain);
+    expect(ctx.activePlayer.gold).toBe(goldBefore - (expected.costs[Resource.gold] || 0));
+    expect(ctx.activePlayer.ap).toBe(apBefore - (expected.costs[Resource.ap] || 0));
+    expect(ctx.activePlayer.happiness).toBe(hapBefore + expected.happinessGain);
   });
 
   it('applies modifiers consistently across multiple expansions', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
     performAction('build_town_charter', ctx);
-    ctx.me.ap += 2; // allow two expands
-    ctx.me.gold += 10; // top-up to afford two expands
-    const goldBefore = ctx.me.gold;
-    const apBefore = ctx.me.ap;
-    const hapBefore = ctx.me.happiness;
-    const landsBefore = ctx.me.lands.length;
+    ctx.activePlayer.ap += 2; // allow two expands
+    ctx.activePlayer.gold += 10; // top-up to afford two expands
+    const goldBefore = ctx.activePlayer.gold;
+    const apBefore = ctx.activePlayer.ap;
+    const hapBefore = ctx.activePlayer.happiness;
+    const landsBefore = ctx.activePlayer.lands.length;
     const expected = getExpandExpectations(ctx);
     performAction('expand', ctx);
     performAction('expand', ctx);
-    expect(ctx.me.gold).toBe(goldBefore - (expected.costs[R.gold] || 0) * 2);
-    expect(ctx.me.ap).toBe(apBefore - (expected.costs[R.ap] || 0) * 2);
-    expect(ctx.me.happiness).toBe(hapBefore + expected.happinessGain * 2);
-    expect(ctx.me.lands.length).toBe(landsBefore + expected.landGain * 2);
+    expect(ctx.activePlayer.gold).toBe(goldBefore - (expected.costs[Resource.gold] || 0) * 2);
+    expect(ctx.activePlayer.ap).toBe(apBefore - (expected.costs[Resource.ap] || 0) * 2);
+    expect(ctx.activePlayer.happiness).toBe(hapBefore + expected.happinessGain * 2);
+    expect(ctx.activePlayer.lands.length).toBe(landsBefore + expected.landGain * 2);
   });
 
   it('rejects expand when gold is insufficient', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
     const cost = getActionCosts('expand', ctx);
-    ctx.me.gold = (cost[R.gold] || 0) - 1;
+    ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;
     expect(() => performAction('expand', ctx)).toThrow(/Insufficient gold/);
   });
 });

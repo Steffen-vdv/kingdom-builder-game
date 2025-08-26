@@ -12,6 +12,6 @@ export class EngineContext {
     public buildings: Registry<BuildingDef>,
     public passives: PassiveManager,
   ) {}
-  get me() { return this.game.active; }
-  get opp() { return this.game.opponent; }
+  get activePlayer() { return this.game.active; }
+  get opponent() { return this.game.opponent; }
 }

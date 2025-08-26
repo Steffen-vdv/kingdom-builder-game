@@ -1,5 +1,5 @@
 import { Registry } from "../registry";
-import { R } from "../state";
+import { Resource } from "../state";
 import type { CostBag } from "../services";
 
 export type EffectDef = { type: string; params?: Record<string, any> };
@@ -17,10 +17,10 @@ export function createActionRegistry() {
   reg.add("expand", {
     id: "expand",
     name: "Expand",
-    baseCosts: { [R.gold]: 2 },
+    baseCosts: { [Resource.gold]: 2 },
     effects: [
       { type: "add_land", params: { count: 1 } },
-      { type: "add_resource", params: { key: R.happiness, amount: 1 } },
+      { type: "add_resource", params: { key: Resource.happiness, amount: 1 } },
     ],
   });
 
@@ -28,22 +28,14 @@ export function createActionRegistry() {
   reg.add("build_town_charter", {
     id: "build_town_charter",
     name: "Build — Town Charter",
-    baseCosts: { [R.gold]: 5 },
-    effects: [ { type: "add_building", params: { id: "town_charter" } } ],
-  });
-
-  // A simple build action to acquire Town Charter in tests
-  reg.add("build_town_charter", {
-    id: "build_town_charter",
-    name: "Build — Town Charter",
-    baseCosts: { [R.gold]: 5 },
+    baseCosts: { [Resource.gold]: 5 },
     effects: [ { type: "add_building", params: { id: "town_charter" } } ],
   });
 
   reg.add("overwork", {
     id: "overwork",
     name: "Overwork",
-    baseCosts: { [R.ap]: 0 }, // Free
+    baseCosts: { [Resource.ap]: 0 }, // Free
     // TODO: +2 gold per Farm; -0.5 happiness per Farm (rounded up)
     effects: [],
   });
@@ -51,7 +43,7 @@ export function createActionRegistry() {
   reg.add("develop", {
     id: "develop",
     name: "Develop",
-    baseCosts: { [R.gold]: 3 },
+    baseCosts: { [Resource.gold]: 3 },
     // TODO: place House, Farm, Outpost, or Watchtower on land with an open slot
     effects: [],
   });
@@ -59,7 +51,7 @@ export function createActionRegistry() {
   reg.add("tax", {
     id: "tax",
     name: "Tax",
-    baseCosts: { [R.ap]: 0 }, // Free
+    baseCosts: { [Resource.ap]: 0 }, // Free
     // TODO: +4 gold per population; -0.5 happiness per population (rounded up)
     effects: [],
   });
@@ -67,7 +59,7 @@ export function createActionRegistry() {
   reg.add("reallocate", {
     id: "reallocate",
     name: "Reallocate",
-    baseCosts: { [R.gold]: 5 },
+    baseCosts: { [Resource.gold]: 5 },
     // TODO: move 1 population between roles; -1 happiness; adjust AP when moving to/from Council
     effects: [],
   });
@@ -75,7 +67,7 @@ export function createActionRegistry() {
   reg.add("raise_pop", {
     id: "raise_pop",
     name: "Raise Population",
-    baseCosts: { [R.gold]: 5 },
+    baseCosts: { [Resource.gold]: 5 },
     // TODO: requires free House; +1 population (assign immediately); +1 happiness; +1 AP if assigned to Council
     effects: [],
   });
@@ -83,7 +75,7 @@ export function createActionRegistry() {
   reg.add("royal_decree", {
     id: "royal_decree",
     name: "Royal Decree",
-    baseCosts: { [R.gold]: 12 },
+    baseCosts: { [Resource.gold]: 12 },
     // TODO: Expand → Till → Develop (House/Farm/Outpost/Watchtower), then -3 happiness
     effects: [],
   });
@@ -91,7 +83,7 @@ export function createActionRegistry() {
   reg.add("army_attack", {
     id: "army_attack",
     name: "Army Attack",
-    baseCosts: { [R.ap]: 0 }, // Free
+    baseCosts: { [Resource.ap]: 0 }, // Free
     // TODO: limited by number of Commanders; damage uses Army Strength with Absorption rules
     effects: [],
   });
@@ -99,7 +91,7 @@ export function createActionRegistry() {
   reg.add("hold_festival", {
     id: "hold_festival",
     name: "Hold Festival",
-    baseCosts: { [R.gold]: 3 },
+    baseCosts: { [Resource.gold]: 3 },
     // TODO: +2 happiness; cannot attack this turn; attacks against you double damage before absorption
     effects: [],
   });
@@ -107,7 +99,7 @@ export function createActionRegistry() {
   reg.add("plow", {
     id: "plow",
     name: "Plow",
-    baseCosts: { [R.gold]: 6 },
+    baseCosts: { [Resource.gold]: 6 },
     // TODO: requires Plow Workshop; Expand; Till; next action costs +2 gold
     effects: [],
   });
@@ -121,3 +113,5 @@ export function createActionRegistry() {
   
   return reg;
 }
+
+export const ACTIONS = createActionRegistry();
