@@ -13,7 +13,6 @@ export type HappinessTierEffect = {
 
 export type RuleSet = {
   defaultActionAPCost: number;
-  apPerCouncil: number;
   absorptionCapPct: number;
   absorptionRounding: "down" | "up" | "nearest";
   happinessTiers: { threshold: number; effect: HappinessTierEffect }[];
@@ -23,7 +22,6 @@ export type RuleSet = {
 
 export const DefaultRules: RuleSet = {
   defaultActionAPCost: 1,
-  apPerCouncil: 1,
   absorptionCapPct: 1,
   absorptionRounding: "down",
   happinessTiers: [

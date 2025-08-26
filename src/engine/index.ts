@@ -1,7 +1,9 @@
-import { Resource, Phase, Role, GameState, PlayerState, Land } from "./state";
-import { Services, PassiveManager, DefaultRules, CostBag } from "./services";
+import { Resource, Phase, PopulationRole, Stat, GameState, PlayerState, Land } from "./state";
+import { Services, PassiveManager, DefaultRules, CostBag, RuleSet } from "./services";
 import { EffectDef, createActionRegistry } from "./actions";
 import { BUILDINGS } from "./buildings";
+import { DEVELOPMENTS } from "./developments";
+import { POPULATIONS, PopulationDef } from "./populations";
 import { EngineContext } from "./context";
 import { EFFECTS, registerCoreEffects } from "./effects";
 
@@ -9,6 +11,15 @@ function runEffects(effects: EffectDef[], ctx: EngineContext) {
   for (const e of effects) {
     const handler = EFFECTS.get(e.type);
     handler(e, ctx);
+  }
+}
+
+function runPopulationTrigger(trigger: "onDevelopmentPhase" | "onUpkeepPhase", ctx: EngineContext) {
+  for (const [role, count] of Object.entries(ctx.activePlayer.population)) {
+    const def = ctx.populations.get(role);
+    const effects = def[trigger];
+    if (!effects) continue;
+    for (let i = 0; i < (count as number); i++) runEffects(effects, ctx);
   }
 }
 
@@ -47,29 +58,38 @@ export function performAction(actionId: string, ctx: EngineContext) {
 
 export function runDevelopment(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Development;
-  ctx.activePlayer.ap += ctx.services.rules.apPerCouncil * (ctx.activePlayer.roles[Role.Council] || 0);
+  runPopulationTrigger("onDevelopmentPhase", ctx);
+  for (const land of ctx.activePlayer.lands) {
+    for (const id of land.developments) {
+      const def = ctx.developments.get(id);
+      if (def?.onDevelopmentPhase) runEffects(def.onDevelopmentPhase, ctx);
+    }
+  }
 }
 
 export function runUpkeep(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Upkeep;
-  const due = 2 * (ctx.activePlayer.roles[Role.Council] || 0);
-  if (ctx.activePlayer.gold < due) throw new Error(`Upkeep not payable (need ${due}, have ${ctx.activePlayer.gold})`);
-  ctx.activePlayer.gold -= due;
+  runPopulationTrigger("onUpkeepPhase", ctx);
 }
 
 export function createEngine(overrides?: {
   actions?: import("./registry").Registry<import("./actions").ActionDef>;
   buildings?: import("./registry").Registry<import("./buildings").BuildingDef>;
+  developments?: import("./registry").Registry<import("./developments").DevelopmentDef>;
+  populations?: import("./registry").Registry<PopulationDef>;
+  rules?: RuleSet;
 }) {
   registerCoreEffects();
-  
-  const rules = DefaultRules;
+
+  const rules = overrides?.rules || DefaultRules;
   const services = new Services(rules);
   const passives = new PassiveManager();
   const game = new GameState("Steph", "Byte");
   const actions = overrides?.actions || createActionRegistry();
   const buildings = overrides?.buildings || BUILDINGS;
-  const ctx = new EngineContext(game, services, actions, buildings, passives);
+  const developments = overrides?.developments || DEVELOPMENTS;
+  const populations = overrides?.populations || POPULATIONS;
+  const ctx = new EngineContext(game, services, actions, buildings, developments, populations, passives);
   const playerA = ctx.game.players[0];
   const playerB = ctx.game.players[1];
 
@@ -78,7 +98,11 @@ export function createEngine(overrides?: {
   playerA.lands.push(new Land("A-L2", rules.slotsPerNewLand));
   playerB.lands.push(new Land("B-L1", rules.slotsPerNewLand));
   playerB.lands.push(new Land("B-L2", rules.slotsPerNewLand));
-  playerA.roles[Role.Council] = 1; playerB.roles[Role.Council] = 1;
+  playerA.lands[0].developments.push("farm");
+  playerA.lands[0].slotsUsed = 1;
+  playerB.lands[0].developments.push("farm");
+  playerB.lands[0].slotsUsed = 1;
+  playerA.population[PopulationRole.Council] = 1; playerB.population[PopulationRole.Council] = 1;
   ctx.game.currentPlayerIndex = 0;
   
   return ctx;
@@ -87,16 +111,22 @@ export function createEngine(overrides?: {
 export {
   Resource,
   Phase,
-  Role,
+  PopulationRole,
+  Stat,
   BUILDINGS,
+  DEVELOPMENTS,
   EFFECTS,
+  POPULATIONS,
   EngineContext,
   Services,
   PassiveManager,
   DefaultRules,
+  RuleSet,
 };
 
 export { createActionRegistry } from "./actions";
 
 export { registerCoreEffects, EffectRegistry } from "./effects";
 export type { EffectHandler } from "./effects";
+export { createDevelopmentRegistry } from "./developments";
+export { createPopulationRegistry } from "./populations";
