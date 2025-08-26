@@ -1,6 +1,11 @@
 # Prime directive for Agents
 We are gradually, step by step, implementing a digital game. You can refer to the README.md for a summary of the game's general format and objective. The goal of Agents working on this project is to help structure the repository in such a way that we make progress towards our end-goal: A fully functional, robust, elegant and _extensible_ game. This is _not_ a type of game where we hardcode most things, stick to one config, and the game is done and forgotten. This game must be heavily configurable, possibly later by players themselves through a game config editor, but initially by ourselves for heavy AB & game design testing. We must be able to change nearly anything at a whim - Change configs, add buildings, add actions, invent new effects, invent new ratio's and thresholds for things, and so on.
 
+## Abstraction guidelines
+- Model behaviour through formal **Triggers** and **Effects**. Avoid hard coded fields such as `apOnUpkeep`; instead, wire rules through the central effect system so that any trigger can resolve any effect.
+- When writing tests, derive expectations from the active configuration or from a mocked registry. Do not hard code numeric values like `toBe(10)` when the value comes from config; fetch it from the registry so tests continue to pass if configs change.
+- Prefer composing behaviour via registries that can be overridden in tests. This keeps the engine flexible and showcases how new content can be added without touching core code.
+
 Therefore, the main mission for agents is to understand the intended game, and it's mechanics/terminology, very well. This is necessary in order to build a proper abstract, extensible system that allows us to make changes to the game's configuration by just changing some simple configs (rather than needing to update tens of if-statements everywhere). Therefore, in this project, we focus on very correct architecture, structure, separation, and a correct implementation of principles such as OOP, SOLID, DRY, YAGNI, KISS, and so on. When in doubt, over-engineering is the answer, because later I will invent a new Building and I will want to configure it myself with some unique combination of costs/requirements/effects and it should 'just work' as it is being carried by systems that understand such concepts.
 
 Full game information can be read below.
