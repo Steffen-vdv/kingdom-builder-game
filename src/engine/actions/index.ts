@@ -29,15 +29,7 @@ export function createActionRegistry() {
     id: "build_town_charter",
     name: "Build — Town Charter",
     baseCosts: { [R.gold]: 5 },
-    effects: [ { type: "add_building", params: { id: "town_charter" } } ],
-  });
-
-  // A simple build action to acquire Town Charter in tests
-  reg.add("build_town_charter", {
-    id: "build_town_charter",
-    name: "Build — Town Charter",
-    baseCosts: { [R.gold]: 5 },
-    effects: [ { type: "add_building", params: { id: "town_charter" } } ],
+    effects: [{ type: "add_building", params: { id: "town_charter" } }],
   });
 
   reg.add("overwork", {
@@ -118,6 +110,5 @@ export function createActionRegistry() {
     // TODO: choose a building to construct; costs vary by building
     effects: [],
   });
-  
   return reg;
 }
