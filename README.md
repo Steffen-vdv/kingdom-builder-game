@@ -1,7 +1,5 @@
 # 👑 Kingdom Builder v5.11 — Player Guide (Updated 2)
 
-*This revision centralizes the **Absorption** mechanic (single authoritative definition) and updates **🗼Watchtower** to: **+2 🛡️Fortification Strength**, **+50% Absorption**, and *remove after the enemy attack is fully resolved*. It also retains the previous clarification that 🎖️Army Commanders and 🧱Fortifiers provide flat +1 Strength each, in addition to growth effects.*
-
 ## 0) Icon Legend & Conventions
 - 🪙Gold — money; cannot go negative  
 - 💹Income — any effect that produces 🪙Gold (e.g., 🌾Farm, 🌿Garden, Temple, Overwork, Tax, Plunder)  
