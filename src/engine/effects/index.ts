@@ -8,6 +8,7 @@ import { addStat } from "./add_stat";
 import { addDevelopment } from "./add_development";
 import { payResource } from "./pay_resource";
 import { addStatPct } from "./add_stat_pct";
+import { tillLand } from "./till_land";
 
 export interface EffectHandler {
   (effect: EffectDef, ctx: EngineContext): void;
@@ -26,6 +27,7 @@ export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
   registry.add("add_stat_pct", addStatPct);
   registry.add("add_development", addDevelopment);
   registry.add("pay_resource", payResource);
+  registry.add("till_land", tillLand);
 }
 
-export { addLand, addResource, addBuilding, addStat, addDevelopment, payResource, addStatPct };
+export { addLand, addResource, addBuilding, addStat, addDevelopment, payResource, addStatPct, tillLand };
