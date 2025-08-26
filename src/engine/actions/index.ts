@@ -110,8 +110,5 @@ export function createActionRegistry() {
     // TODO: choose a building to construct; costs vary by building
     effects: [],
   });
-  
   return reg;
 }
-
-export const ACTIONS = createActionRegistry();
