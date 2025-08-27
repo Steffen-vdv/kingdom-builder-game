@@ -13,7 +13,12 @@ workflow for contributors so that changes remain consistent and easy to review.
 
 ## Testing Conventions
 
-- Always run `npm test` before committing. The script runs ESLint and Vitest.
+- Tests are split into three levels:
+  - **Unit tests** under `packages/engine/tests`.
+  - **Integration tests** under `tests/integration`.
+  - **End-to-end tests** under `e2e` (Playwright).
+- Always run `npm test` and `npm run e2e` before committing.
+  The `npm test` script runs ESLint and Vitest for unit/integration tests.
 - New features and bug fixes **must** include tests. Derive expectations from
   the active configuration or mocked registries instead of hard-coded numbers.
 - Use the registry pattern to swap implementations in tests when needed. Avoid
