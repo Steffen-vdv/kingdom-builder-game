@@ -1,6 +1,6 @@
-import { Registry } from "../registry";
-import { PopulationRole, Resource, Stat } from "../state";
-import type { EffectDef } from "../effects";
+import { Registry } from '../registry';
+import { PopulationRole, Resource, Stat } from '../state';
+import type { EffectDef } from '../effects';
 
 export type PopulationDef = {
   id: string;
@@ -14,40 +14,64 @@ export function createPopulationRegistry() {
 
   reg.add(PopulationRole.Council, {
     id: PopulationRole.Council,
-    name: "Council",
+    name: 'Council',
     onDevelopmentPhase: [
-      { type: "resource", method: "add", params: { key: Resource.ap, amount: 1 } },
+      {
+        type: 'resource',
+        method: 'add',
+        params: { key: Resource.ap, amount: 1 },
+      },
     ],
     onUpkeepPhase: [
-      { type: "resource", method: "remove", params: { key: Resource.gold, amount: 2 } },
+      {
+        type: 'resource',
+        method: 'remove',
+        params: { key: Resource.gold, amount: 2 },
+      },
     ],
   });
 
   reg.add(PopulationRole.Commander, {
     id: PopulationRole.Commander,
-    name: "Army Commander",
+    name: 'Army Commander',
     onDevelopmentPhase: [
-      { type: "stat", method: "add_pct", params: { key: Stat.armyStrength, percent: 25 } },
+      {
+        type: 'stat',
+        method: 'add_pct',
+        params: { key: Stat.armyStrength, percent: 25 },
+      },
     ],
     onUpkeepPhase: [
-      { type: "resource", method: "remove", params: { key: Resource.gold, amount: 1 } },
+      {
+        type: 'resource',
+        method: 'remove',
+        params: { key: Resource.gold, amount: 1 },
+      },
     ],
   });
 
   reg.add(PopulationRole.Fortifier, {
     id: PopulationRole.Fortifier,
-    name: "Fortifier",
+    name: 'Fortifier',
     onDevelopmentPhase: [
-      { type: "stat", method: "add_pct", params: { key: Stat.fortificationStrength, percent: 25 } },
+      {
+        type: 'stat',
+        method: 'add_pct',
+        params: { key: Stat.fortificationStrength, percent: 25 },
+      },
     ],
     onUpkeepPhase: [
-      { type: "resource", method: "remove", params: { key: Resource.gold, amount: 1 } },
+      {
+        type: 'resource',
+        method: 'remove',
+        params: { key: Resource.gold, amount: 1 },
+      },
     ],
   });
 
   reg.add(PopulationRole.Citizen, {
     id: PopulationRole.Citizen,
-    name: "Citizen",
+    name: 'Citizen',
   });
 
   return reg;

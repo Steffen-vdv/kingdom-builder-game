@@ -1,12 +1,12 @@
-import { Land } from "../state";
-import type { EffectHandler } from ".";
+import { Land } from '../state';
+import type { EffectHandler } from '.';
 
 export const landAdd: EffectHandler = (effect, ctx, mult = 1) => {
   const count = Math.floor((effect.params?.count ?? 1) * mult);
   for (let i = 0; i < count; i++) {
     const land = new Land(
       `${ctx.activePlayer.id}-L${ctx.activePlayer.lands.length + 1}`,
-      ctx.services.rules.slotsPerNewLand
+      ctx.services.rules.slotsPerNewLand,
     );
     ctx.activePlayer.lands.push(land);
   }

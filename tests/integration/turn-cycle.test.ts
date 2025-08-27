@@ -75,14 +75,18 @@ describe('Turn cycle integration', () => {
     performAction('expand', ctx);
     for (const [key, cost] of Object.entries(expandA.costs)) {
       const gain = expandA.results.resources[key] || 0;
-      expect(ctx.activePlayer.resources[key]).toBe(resBeforeA[key] - cost + gain);
+      expect(ctx.activePlayer.resources[key]).toBe(
+        resBeforeA[key] - cost + gain,
+      );
     }
     for (const [key, gain] of Object.entries(expandA.results.resources)) {
       if (expandA.costs[key] === undefined) {
         expect(ctx.activePlayer.resources[key]).toBe(resBeforeA[key] + gain);
       }
     }
-    expect(ctx.activePlayer.lands.length).toBe(landBeforeA + expandA.results.land);
+    expect(ctx.activePlayer.lands.length).toBe(
+      landBeforeA + expandA.results.land,
+    );
     for (const [key, gain] of Object.entries(expandA.results.stats)) {
       expect(ctx.activePlayer.stats[key]).toBe(statsBeforeA[key] + gain);
     }
@@ -95,14 +99,18 @@ describe('Turn cycle integration', () => {
     performAction('expand', ctx);
     for (const [key, cost] of Object.entries(expandB.costs)) {
       const gain = expandB.results.resources[key] || 0;
-      expect(ctx.activePlayer.resources[key]).toBe(resBeforeB[key] - cost + gain);
+      expect(ctx.activePlayer.resources[key]).toBe(
+        resBeforeB[key] - cost + gain,
+      );
     }
     for (const [key, gain] of Object.entries(expandB.results.resources)) {
       if (expandB.costs[key] === undefined) {
         expect(ctx.activePlayer.resources[key]).toBe(resBeforeB[key] + gain);
       }
     }
-    expect(ctx.activePlayer.lands.length).toBe(landBeforeB + expandB.results.land);
+    expect(ctx.activePlayer.lands.length).toBe(
+      landBeforeB + expandB.results.land,
+    );
     for (const [key, gain] of Object.entries(expandB.results.stats)) {
       expect(ctx.activePlayer.stats[key]).toBe(statsBeforeB[key] + gain);
     }
@@ -116,4 +124,3 @@ describe('Turn cycle integration', () => {
     expect(ctx.game.currentPlayerIndex).toBe(0);
   });
 });
-

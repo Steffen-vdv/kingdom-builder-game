@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, runDevelopment, performAction, Resource, Stat, createActionRegistry } from '../../src/index.ts';
+import {
+  createEngine,
+  runDevelopment,
+  performAction,
+  Resource,
+  Stat,
+  createActionRegistry,
+} from '../../src/index.ts';
 
 describe('stat:add effect', () => {
   it('increments a stat via action effect', () => {
@@ -8,7 +15,13 @@ describe('stat:add effect', () => {
       id: 'train_army',
       name: 'Train Army',
       baseCosts: { [Resource.ap]: 0 },
-      effects: [{ type: 'stat', method: 'add', params: { key: Stat.armyStrength, amount: 3 } }],
+      effects: [
+        {
+          type: 'stat',
+          method: 'add',
+          params: { key: Stat.armyStrength, amount: 3 },
+        },
+      ],
     });
     const ctx = createEngine({ actions });
     runDevelopment(ctx);

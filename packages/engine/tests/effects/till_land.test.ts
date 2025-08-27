@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, performAction, createActionRegistry } from '../../src/index.ts';
+import {
+  createEngine,
+  performAction,
+  createActionRegistry,
+} from '../../src/index.ts';
 
 describe('land:till effect', () => {
   it('increases land slots up to the maximum', () => {
@@ -8,7 +12,7 @@ describe('land:till effect', () => {
       id: 'till',
       name: 'Till',
       baseCosts: { ap: 0 },
-      effects: [ { type: 'land', method: 'till', params: { landId: 'A-L2' } } ],
+      effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
     });
     const ctx = createEngine({ actions });
     const land = ctx.activePlayer.lands[1]; // A-L2
@@ -24,7 +28,7 @@ describe('land:till effect', () => {
       id: 'till',
       name: 'Till',
       baseCosts: { ap: 0 },
-      effects: [ { type: 'land', method: 'till', params: { landId: 'A-L2' } } ],
+      effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
     });
     const ctx = createEngine({ actions });
     const land = ctx.activePlayer.lands[1];

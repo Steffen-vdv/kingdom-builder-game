@@ -1,10 +1,10 @@
-import { GameState } from "./state";
-import { Services, PassiveManager } from "./services";
-import { Registry } from "./registry";
-import type { ActionDef } from "./actions";
-import type { BuildingDef } from "./buildings";
-import type { DevelopmentDef } from "./developments";
-import type { PopulationDef } from "./populations";
+import { GameState } from './state';
+import { Services, PassiveManager } from './services';
+import { Registry } from './registry';
+import type { ActionDef } from './actions';
+import type { BuildingDef } from './buildings';
+import type { DevelopmentDef } from './developments';
+import type { PopulationDef } from './populations';
 
 export class EngineContext {
   constructor(
@@ -16,6 +16,10 @@ export class EngineContext {
     public populations: Registry<PopulationDef>,
     public passives: PassiveManager,
   ) {}
-  get activePlayer() { return this.game.active; }
-  get opponent() { return this.game.opponent; }
+  get activePlayer() {
+    return this.game.active;
+  }
+  get opponent() {
+    return this.game.opponent;
+  }
 }

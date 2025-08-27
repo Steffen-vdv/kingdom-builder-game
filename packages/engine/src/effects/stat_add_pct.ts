@@ -1,5 +1,5 @@
-import type { EffectHandler } from ".";
-import type { StatKey } from "../state";
+import type { EffectHandler } from '.';
+import type { StatKey } from '../state';
 
 export const statAddPct: EffectHandler = (effect, ctx, mult = 1) => {
   const key = effect.params!.key as StatKey;

@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, performAction, createActionRegistry } from '../../src/index.ts';
+import {
+  createEngine,
+  performAction,
+  createActionRegistry,
+} from '../../src/index.ts';
 
 // Custom action to build a house on an empty land slot
 const actions = createActionRegistry();
@@ -8,7 +12,11 @@ actions.add('build_house', {
   name: 'Build House',
   baseCosts: { ap: 0 },
   effects: [
-    { type: 'development', method: 'add', params: { id: 'house', landId: 'A-L2' } },
+    {
+      type: 'development',
+      method: 'add',
+      params: { id: 'house', landId: 'A-L2' },
+    },
   ],
 });
 
