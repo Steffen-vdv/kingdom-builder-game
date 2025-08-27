@@ -27,7 +27,9 @@ export interface EffectDef<
   round?: 'up' | 'down';
 }
 
-export interface EffectHandler<P extends Record<string, unknown> = any> {
+export interface EffectHandler<
+  P extends Record<string, unknown> = Record<string, unknown>,
+> {
   (effect: EffectDef<P>, ctx: EngineContext, mult: number): void;
 }
 

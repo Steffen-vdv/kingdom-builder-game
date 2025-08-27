@@ -1,8 +1,16 @@
 import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
 
-export const costMod: EffectHandler = (effect, ctx) => {
-  const { id, actionId, key, amount } = effect.params || {};
+interface CostModParams extends Record<string, unknown> {
+  id: string;
+  actionId: string;
+  key: ResourceKey;
+  amount: number;
+}
+
+export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
+  const { id, actionId, key, amount } =
+    (effect.params as CostModParams) || ({} as CostModParams);
   if (!id || !actionId || !key || amount === undefined) {
     throw new Error('cost_mod requires id, actionId, key, amount');
   }

@@ -56,9 +56,9 @@ actions.add('build_house_full', {
 
 function clonePlayer(p: PlayerState): PlayerState {
   const copy = new PlayerState(p.id, p.name);
-  copy.resources = { ...p.resources } as any;
-  copy.stats = { ...p.stats } as any;
-  copy.population = { ...p.population } as any;
+  copy.resources = { ...p.resources };
+  copy.stats = { ...p.stats };
+  copy.population = { ...p.population };
   copy.lands = p.lands.map((l) => {
     const land = new Land(l.id, l.slotsMax);
     land.slotsUsed = l.slotsUsed;

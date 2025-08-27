@@ -4,10 +4,10 @@ import type { EngineContext } from '../context';
 import { developmentEvaluator } from './development';
 export interface EvaluatorDef {
   type: string;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
 }
 
-export interface EvaluatorHandler<R = any> {
+export interface EvaluatorHandler<R = unknown> {
   (def: EvaluatorDef, ctx: EngineContext): R;
 }
 
