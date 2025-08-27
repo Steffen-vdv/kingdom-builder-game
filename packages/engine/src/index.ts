@@ -19,6 +19,7 @@ import { createActionRegistry } from './content/actions';
 import { BUILDINGS } from './content/buildings';
 import { DEVELOPMENTS } from './content/developments';
 import { POPULATIONS, PopulationDef } from './content/populations';
+import type { TriggerKey } from './content/defs';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
 import { EVALUATORS, registerCoreEvaluators } from './evaluators';
@@ -34,7 +35,7 @@ import {
 } from './config/schema';
 
 function runTrigger(
-  trigger: 'onDevelopmentPhase' | 'onUpkeepPhase' | 'onAttackResolved',
+  trigger: TriggerKey,
   ctx: EngineContext,
   player: PlayerState = ctx.activePlayer,
 ) {
@@ -44,14 +45,14 @@ function runTrigger(
 
   for (const [role, count] of Object.entries(player.population)) {
     const def = ctx.populations.get(role);
-    const effects = (def as any)[trigger];
+    const effects = def[trigger];
     if (effects) runEffects(effects, ctx, count as number);
   }
 
   for (const land of player.lands) {
     for (const id of land.developments) {
       const def = ctx.developments.get(id);
-      const effects = (def as any)[trigger];
+      const effects = def[trigger];
       if (!effects) continue;
       runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
     }
@@ -59,7 +60,7 @@ function runTrigger(
 
   for (const id of player.buildings) {
     const def = ctx.buildings.get(id);
-    const effects = (def as any)[trigger];
+    const effects = def[trigger];
     if (effects) runEffects(effects, ctx);
   }
 

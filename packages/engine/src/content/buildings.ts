@@ -1,9 +1,10 @@
 import { Registry } from '../registry';
 import { Resource } from '../state';
-import { buildingSchema, type BuildingConfig } from '../config/schema';
+import { buildingSchema } from '../config/schema';
 import { building } from '../config/builders';
+import type { BuildingDef } from './defs';
 
-export type BuildingDef = BuildingConfig;
+export type { BuildingDef } from './defs';
 
 export function createBuildingRegistry() {
   const reg = new Registry<BuildingDef>(buildingSchema);
