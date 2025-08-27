@@ -7,11 +7,15 @@ import {
 import { PlayerState, Land } from '../../packages/engine/src/state/index.ts';
 import { runEffects } from '../../packages/engine/src/effects/index.ts';
 
+function deepClone<T>(value: T): T {
+  return structuredClone(value);
+}
+
 function clonePlayer(p: PlayerState) {
   const c = new PlayerState(p.id, p.name);
-  c.resources = { ...p.resources } as any;
-  c.stats = { ...p.stats } as any;
-  c.population = { ...p.population } as any;
+  c.resources = deepClone(p.resources);
+  c.stats = deepClone(p.stats);
+  c.population = deepClone(p.population);
   c.lands = p.lands.map((l) => {
     const nl = new Land(l.id, l.slotsMax);
     nl.slotsUsed = l.slotsUsed;
