@@ -2,13 +2,18 @@ import { Registry } from '../registry';
 import type { EngineContext } from '../context';
 
 import { developmentEvaluator } from './development';
-export interface EvaluatorDef {
+export interface EvaluatorDef<
+  P extends Record<string, unknown> = Record<string, unknown>,
+> {
   type: string;
-  params?: Record<string, any>;
+  params?: P;
 }
 
-export interface EvaluatorHandler<R = any> {
-  (def: EvaluatorDef, ctx: EngineContext): R;
+export interface EvaluatorHandler<
+  R = any,
+  P extends Record<string, unknown> = Record<string, unknown>,
+> {
+  (def: EvaluatorDef<P>, ctx: EngineContext): R;
 }
 
 export class EvaluatorRegistry extends Registry<EvaluatorHandler> {}
