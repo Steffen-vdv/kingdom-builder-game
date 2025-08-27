@@ -16,6 +16,15 @@ import { POPULATIONS, PopulationDef } from "./populations";
 import { EngineContext } from "./context";
 import { runEffects, EFFECTS, registerCoreEffects } from "./effects";
 import { EVALUATORS, registerCoreEvaluators } from "./evaluators";
+import { Registry } from "./registry";
+import {
+  validateGameConfig,
+  type GameConfig,
+  actionSchema,
+  buildingSchema,
+  developmentSchema,
+  populationSchema,
+} from "./config/schema";
 
 function runPopulationTrigger(trigger: "onDevelopmentPhase" | "onUpkeepPhase", ctx: EngineContext) {
   for (const [role, count] of Object.entries(ctx.activePlayer.population)) {
@@ -81,11 +90,12 @@ export function runUpkeep(ctx: EngineContext) {
 }
 
 export function createEngine(overrides?: {
-  actions?: import("./registry").Registry<import("./actions").ActionDef>;
-  buildings?: import("./registry").Registry<import("./buildings").BuildingDef>;
-  developments?: import("./registry").Registry<import("./developments").DevelopmentDef>;
-  populations?: import("./registry").Registry<PopulationDef>;
+  actions?: Registry<import("./actions").ActionDef>;
+  buildings?: Registry<import("./buildings").BuildingDef>;
+  developments?: Registry<import("./developments").DevelopmentDef>;
+  populations?: Registry<PopulationDef>;
   rules?: RuleSet;
+  config?: GameConfig;
 }) {
   registerCoreEffects();
   registerCoreEvaluators();
@@ -94,10 +104,41 @@ export function createEngine(overrides?: {
   const services = new Services(rules);
   const passives = new PassiveManager();
   const game = new GameState("Steph", "Byte");
-  const actions = overrides?.actions || createActionRegistry();
-  const buildings = overrides?.buildings || BUILDINGS;
-  const developments = overrides?.developments || DEVELOPMENTS;
-  const populations = overrides?.populations || POPULATIONS;
+
+  let actions = overrides?.actions;
+  let buildings = overrides?.buildings;
+  let developments = overrides?.developments;
+  let populations = overrides?.populations;
+
+  if (overrides?.config) {
+    const cfg = validateGameConfig(overrides.config);
+    if (cfg.actions) {
+      const reg = new Registry<import("./actions").ActionDef>(actionSchema);
+      for (const a of cfg.actions) reg.add(a.id, a);
+      actions = reg;
+    }
+    if (cfg.buildings) {
+      const reg = new Registry<import("./buildings").BuildingDef>(buildingSchema);
+      for (const b of cfg.buildings) reg.add(b.id, b);
+      buildings = reg;
+    }
+    if (cfg.developments) {
+      const reg = new Registry<import("./developments").DevelopmentDef>(developmentSchema);
+      for (const d of cfg.developments) reg.add(d.id, d);
+      developments = reg;
+    }
+    if (cfg.populations) {
+      const reg = new Registry<PopulationDef>(populationSchema);
+      for (const p of cfg.populations) reg.add(p.id, p);
+      populations = reg;
+    }
+  }
+
+  actions = actions || createActionRegistry();
+  buildings = buildings || BUILDINGS;
+  developments = developments || DEVELOPMENTS;
+  populations = populations || POPULATIONS;
+
   const ctx = new EngineContext(game, services, actions, buildings, developments, populations, passives);
   const playerA = ctx.game.players[0];
   const playerB = ctx.game.players[1];
@@ -143,3 +184,5 @@ export { registerCoreEvaluators, EvaluatorRegistry } from "./evaluators";
 export type { EvaluatorHandler, EvaluatorDef } from "./evaluators";
 export { createDevelopmentRegistry } from "./developments";
 export { createPopulationRegistry } from "./populations";
+export { validateGameConfig } from "./config/schema";
+export type { GameConfig } from "./config/schema";

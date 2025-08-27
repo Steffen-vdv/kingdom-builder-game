@@ -1,16 +1,11 @@
 import { Registry } from "../registry";
 import { Resource, Stat } from "../state";
-import type { EffectDef } from "../effects";
+import { developmentSchema, type DevelopmentConfig } from "../config/schema";
 
-export type DevelopmentDef = {
-  id: string;
-  name: string;
-  onBuild?: EffectDef[];
-  onDevelopmentPhase?: EffectDef[];
-};
+export type DevelopmentDef = DevelopmentConfig;
 
 export function createDevelopmentRegistry() {
-  const reg = new Registry<DevelopmentDef>();
+  const reg = new Registry<DevelopmentDef>(developmentSchema);
 
   reg.add("farm", {
     id: "farm",

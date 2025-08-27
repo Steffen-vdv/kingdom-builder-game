@@ -1,16 +1,12 @@
 import { Registry } from "../registry";
 import { Resource } from "../state";
-import type { CostBag, PassiveManager } from "../services";
+import { buildingSchema, type BuildingConfig } from "../config/schema";
+import type { PassiveManager } from "../services";
 import type { EngineContext } from "../context";
 
-export type BuildingDef = {
-  id: string;
-  name: string;
-  costs: CostBag;
-  passives?: (pm: PassiveManager, ctx: EngineContext) => void;
-};
+export type BuildingDef = BuildingConfig;
 
-export const BUILDINGS = new Registry<BuildingDef>();
+export const BUILDINGS = new Registry<BuildingDef>(buildingSchema);
 
 // From README: Expand costs +2 gold; grants +1 extra happiness
 BUILDINGS.add("town_charter", {
