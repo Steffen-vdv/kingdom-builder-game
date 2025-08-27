@@ -9,6 +9,10 @@ import {
 } from '../../src/index.ts';
 import { PlayerState } from '../../src/state/index.ts';
 
+function deepClone<T>(value: T): T {
+  return structuredClone(value);
+}
+
 function getExpandExpectations(ctx: EngineContext) {
   const expandDef = ctx.actions.get('expand');
   const costs = getActionCosts('expand', ctx);
@@ -24,8 +28,8 @@ function getExpandExpectations(ctx: EngineContext) {
     )
     .reduce((sum, e) => sum + (e.params?.amount ?? 0), 0);
   const dummy = new PlayerState(ctx.activePlayer.id, ctx.activePlayer.name);
-  dummy.resources = { ...ctx.activePlayer.resources } as any;
-  dummy.stats = { ...ctx.activePlayer.stats } as any;
+  dummy.resources = deepClone(ctx.activePlayer.resources);
+  dummy.stats = deepClone(ctx.activePlayer.stats);
   const dummyCtx = { ...ctx, activePlayer: dummy } as EngineContext;
   const before = dummy.happiness;
   ctx.passives.runResultMods(expandDef.id, dummyCtx);
