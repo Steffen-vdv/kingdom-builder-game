@@ -31,3 +31,10 @@ Each turn flows through three phases:
 - Player order: A then B; B gains +1 ⚡️ Action Point on their first Development phase
 
 
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing conventions,
+and commit guidelines. For an overview of the engine architecture, read
+[ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
