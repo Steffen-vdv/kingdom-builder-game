@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { createEngine, performAction } from '@kingdom-builder/engine';
+import {
+  createEngine,
+  performAction,
+  Phase,
+  runEffects,
+  applyParamsToEffects,
+} from '@kingdom-builder/engine';
 
 type Player = ReturnType<typeof createEngine>['game']['active'];
 type Land = Player['lands'][number];
@@ -71,7 +77,11 @@ function diff(
 }
 
 export default function App() {
-  const [ctx] = useState(() => createEngine());
+  const [ctx] = useState(() => {
+    const c = createEngine();
+    c.game.active.ap = 30;
+    return c;
+  });
   const [log, setLog] = useState<string[]>([]);
   const [, forceUpdate] = useState(0);
 
@@ -84,6 +94,65 @@ export default function App() {
     ).map.values(),
   );
   const player = ctx.game.active;
+
+  const runPhaseTriggers = (
+    trigger: 'onDevelopmentPhase' | 'onUpkeepPhase',
+    entries: string[],
+  ) => {
+    const p = ctx.game.active;
+    const run = (
+      label: string,
+      effects: Parameters<typeof runEffects>[0],
+      mult = 1,
+      params?: Record<string, unknown>,
+    ) => {
+      const before = snapshot(p);
+      runEffects(
+        params ? applyParamsToEffects(effects, params) : effects,
+        ctx,
+        mult,
+      );
+      const after = snapshot(p);
+      const updates = diff(before, after);
+      if (updates.length) entries.push(`${label} — ${updates.join(', ')}`);
+    };
+
+    for (const [role, count] of Object.entries(p.population)) {
+      const def = ctx.populations.get(role);
+      const effects = def?.[trigger];
+      if (effects) run(`${def.name}`, effects, count as number);
+    }
+    for (const land of p.lands) {
+      for (const id of land.developments) {
+        const def = ctx.developments.get(id);
+        const effects = def?.[trigger];
+        if (effects)
+          run(`${def.name} on ${land.id}`, effects, 1, { landId: land.id, id });
+      }
+    }
+    for (const id of p.buildings) {
+      const def = ctx.buildings.get(id);
+      const effects = def?.[trigger];
+      if (effects) run(`${def.name}`, effects);
+    }
+  };
+
+  const cyclePhase = () => {
+    const current = ctx.game.currentPhase;
+    const next =
+      current === Phase.Development
+        ? Phase.Upkeep
+        : current === Phase.Upkeep
+          ? Phase.Main
+          : Phase.Development;
+    ctx.game.currentPhase = next;
+    const entries: string[] = [`${next} phase`];
+    if (next === Phase.Development)
+      runPhaseTriggers('onDevelopmentPhase', entries);
+    else if (next === Phase.Upkeep) runPhaseTriggers('onUpkeepPhase', entries);
+    setLog((l) => [...l, ...entries]);
+    forceUpdate((v) => v + 1);
+  };
 
   const handleAction = (id: string) => {
     const before = snapshot(player);
@@ -104,6 +173,15 @@ export default function App() {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">testlab</h1>
+      <div className="mb-4">
+        <span>phase: {ctx.game.currentPhase}</span>
+        <button
+          className="ml-2 px-2 py-1 bg-green-500 text-white rounded"
+          onClick={cyclePhase}
+        >
+          next phase
+        </button>
+      </div>
       <div className="grid grid-cols-3 gap-4">
         <section>
           <h2 className="font-semibold">Player</h2>
