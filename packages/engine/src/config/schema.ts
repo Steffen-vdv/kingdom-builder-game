@@ -1,13 +1,21 @@
 import { z } from 'zod';
 import { Resource } from '../state';
 import type { EffectDef } from '../effects';
+import { EngineContext } from '../context';
+
+export type RequirementFn = (ctx: EngineContext) => true | string;
+
+const requirementSchema: z.ZodType<RequirementFn> = z
+  .function()
+  .args(z.instanceof(EngineContext))
+  .returns(z.union([z.literal(true), z.string()]));
 
 // Basic schemas
 const costBagSchema = z.record(z.nativeEnum(Resource), z.number());
 
 const evaluatorSchema = z.object({
   type: z.string(),
-  params: z.record(z.any()).optional(),
+  params: z.record(z.unknown()).optional(),
 });
 
 // Effect
@@ -15,7 +23,7 @@ export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
   z.object({
     type: z.string().optional(),
     method: z.string().optional(),
-    params: z.record(z.any()).optional(),
+    params: z.record(z.unknown()).optional(),
     effects: z.array(effectSchema).optional(),
     evaluator: evaluatorSchema.optional(),
     round: z.enum(['up', 'down']).optional(),
@@ -29,7 +37,7 @@ export const actionSchema = z.object({
   id: z.string(),
   name: z.string(),
   baseCosts: costBagSchema.optional(),
-  requirements: z.array(z.any()).optional(),
+  requirements: z.array(requirementSchema).optional(),
   effects: z.array(effectSchema),
 });
 

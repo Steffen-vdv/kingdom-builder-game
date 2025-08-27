@@ -3,17 +3,18 @@ import type {
   BuildingConfig,
   DevelopmentConfig,
   PopulationConfig,
+  RequirementFn,
 } from './schema';
 import type { ResourceKey } from '../state';
 import type { EffectConfig } from './schema';
 
 class BaseBuilder<T extends { id: string; name: string }> {
-  protected cfg: any;
-  constructor(id: string, name: string, base: any) {
-    this.cfg = { id, name, ...base };
+  protected cfg: T;
+  constructor(id: string, name: string, base: Omit<T, 'id' | 'name'>) {
+    this.cfg = { id, name, ...base } as T;
   }
   build(): T {
-    return this.cfg as T;
+    return this.cfg;
   }
 }
 
@@ -23,10 +24,10 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
   }
   cost(key: ResourceKey, amount: number) {
     this.cfg.baseCosts = this.cfg.baseCosts || {};
-    this.cfg.baseCosts[key] = amount;
+    this.cfg.baseCosts![key] = amount;
     return this;
   }
-  requirement(req: (ctx: any) => any) {
+  requirement(req: RequirementFn) {
     this.cfg.requirements = this.cfg.requirements || [];
     this.cfg.requirements.push(req);
     return this;
@@ -46,7 +47,7 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
     return this;
   }
   onBuild(effect: EffectConfig) {
-    this.cfg.onBuild.push(effect);
+    this.cfg.onBuild!.push(effect);
     return this;
   }
   onDevelopmentPhase(effect: EffectConfig) {
