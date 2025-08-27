@@ -16,4 +16,20 @@ describe('Build Town Charter action', () => {
     ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;
     expect(() => performAction('build_town_charter', ctx)).toThrow(/Insufficient gold/);
   });
+
+  it('adds Town Charter and applies its passive to Expand', () => {
+    const ctx = createEngine();
+    runDevelopment(ctx);
+    const buildCost = getActionCosts('build_town_charter', ctx);
+    const expandCostBefore = getActionCosts('expand', ctx);
+    const goldBefore = ctx.activePlayer.gold;
+    const apBefore = ctx.activePlayer.ap;
+    performAction('build_town_charter', ctx);
+    expect(ctx.activePlayer.buildings.has('town_charter')).toBe(true);
+    expect(ctx.activePlayer.gold).toBe(goldBefore - (buildCost[Resource.gold] || 0));
+    expect(ctx.activePlayer.ap).toBe(apBefore - (buildCost[Resource.ap] || 0));
+    const expandCostAfter = getActionCosts('expand', ctx);
+    expect(expandCostAfter[Resource.gold]).toBe((expandCostBefore[Resource.gold] || 0) + 2);
+  });
 });
+
