@@ -10,7 +10,7 @@ export interface EvaluatorDef<
 }
 
 export interface EvaluatorHandler<
-  R = any,
+  R = unknown,
   P extends Record<string, unknown> = Record<string, unknown>,
 > {
   (def: EvaluatorDef<P>, ctx: EngineContext): R;
