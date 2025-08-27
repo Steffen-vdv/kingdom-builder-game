@@ -26,7 +26,14 @@ describe('stat:add effect', () => {
     const ctx = createEngine({ actions });
     runDevelopment(ctx);
     const before = ctx.activePlayer.armyStrength;
+    const def = actions.get('train_army');
+    const amt = def.effects.find(
+      (e) =>
+        e.type === 'stat' &&
+        e.method === 'add' &&
+        e.params?.key === Stat.armyStrength,
+    )?.params?.amount as number;
     performAction('train_army', ctx);
-    expect(ctx.activePlayer.armyStrength).toBe(before + 3);
+    expect(ctx.activePlayer.armyStrength).toBe(before + amt);
   });
 });
