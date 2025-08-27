@@ -122,7 +122,7 @@ export default function App() {
     for (const [role, count] of Object.entries(p.population)) {
       const def = ctx.populations.get(role);
       const effects = def?.[trigger];
-      if (effects) run(`${def.name}`, effects, count as number);
+      if (effects) run(`${def.name}`, effects, count);
     }
     for (const land of p.lands) {
       for (const id of land.developments) {
@@ -198,7 +198,7 @@ export default function App() {
             <ul>
               {Object.entries(player.resources).map(([k, v]) => (
                 <li key={k}>
-                  {k}: {v as number}
+                  {k}: {v}
                 </li>
               ))}
             </ul>
@@ -206,7 +206,7 @@ export default function App() {
             <ul>
               {Object.entries(player.stats).map(([k, v]) => (
                 <li key={k}>
-                  {k}: {v as number}
+                  {k}: {v}
                 </li>
               ))}
             </ul>
