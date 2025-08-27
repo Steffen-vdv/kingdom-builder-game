@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, performAction, createActionRegistry, Resource } from '../../src/index.ts';
+import {
+  createEngine,
+  performAction,
+  createActionRegistry,
+  Resource,
+} from '../../src/index.ts';
 
 // Custom action that grants Town Charter for free to test the effect handler
 const actions = createActionRegistry();
@@ -32,4 +37,3 @@ describe('building:add effect', () => {
     expect(after).toBe(before + 2);
   });
 });
-

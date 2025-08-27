@@ -7,16 +7,22 @@ import {
   PlayerState,
   Land,
   ResourceKey,
-} from "./state";
-import { Services, PassiveManager, DefaultRules, CostBag, RuleSet } from "./services";
-import { createActionRegistry } from "./actions";
-import { BUILDINGS } from "./buildings";
-import { DEVELOPMENTS } from "./developments";
-import { POPULATIONS, PopulationDef } from "./populations";
-import { EngineContext } from "./context";
-import { runEffects, EFFECTS, registerCoreEffects } from "./effects";
-import { EVALUATORS, registerCoreEvaluators } from "./evaluators";
-import { Registry } from "./registry";
+} from './state';
+import {
+  Services,
+  PassiveManager,
+  DefaultRules,
+  CostBag,
+  RuleSet,
+} from './services';
+import { createActionRegistry } from './actions';
+import { BUILDINGS } from './buildings';
+import { DEVELOPMENTS } from './developments';
+import { POPULATIONS, PopulationDef } from './populations';
+import { EngineContext } from './context';
+import { runEffects, EFFECTS, registerCoreEffects } from './effects';
+import { EVALUATORS, registerCoreEvaluators } from './evaluators';
+import { Registry } from './registry';
 import {
   validateGameConfig,
   type GameConfig,
@@ -24,9 +30,12 @@ import {
   buildingSchema,
   developmentSchema,
   populationSchema,
-} from "./config/schema";
+} from './config/schema';
 
-function runPopulationTrigger(trigger: "onDevelopmentPhase" | "onUpkeepPhase", ctx: EngineContext) {
+function runPopulationTrigger(
+  trigger: 'onDevelopmentPhase' | 'onUpkeepPhase',
+  ctx: EngineContext,
+) {
   for (const [role, count] of Object.entries(ctx.activePlayer.population)) {
     const def = ctx.populations.get(role);
     const effects = def[trigger];
@@ -35,9 +44,14 @@ function runPopulationTrigger(trigger: "onDevelopmentPhase" | "onUpkeepPhase", c
   }
 }
 
-function applyCostsWithPassives(actionId: string, base: CostBag, ctx: EngineContext): CostBag {
+function applyCostsWithPassives(
+  actionId: string,
+  base: CostBag,
+  ctx: EngineContext,
+): CostBag {
   const withDefaultAP = { ...base };
-  if (withDefaultAP[Resource.ap] === undefined) withDefaultAP[Resource.ap] = ctx.services.rules.defaultActionAPCost;
+  if (withDefaultAP[Resource.ap] === undefined)
+    withDefaultAP[Resource.ap] = ctx.services.rules.defaultActionAPCost;
   return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
 }
 
@@ -75,7 +89,7 @@ export function performAction(actionId: string, ctx: EngineContext) {
 
 export function runDevelopment(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Development;
-  runPopulationTrigger("onDevelopmentPhase", ctx);
+  runPopulationTrigger('onDevelopmentPhase', ctx);
   for (const land of ctx.activePlayer.lands) {
     for (const id of land.developments) {
       const def = ctx.developments.get(id);
@@ -86,13 +100,13 @@ export function runDevelopment(ctx: EngineContext) {
 
 export function runUpkeep(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Upkeep;
-  runPopulationTrigger("onUpkeepPhase", ctx);
+  runPopulationTrigger('onUpkeepPhase', ctx);
 }
 
 export function createEngine(overrides?: {
-  actions?: Registry<import("./actions").ActionDef>;
-  buildings?: Registry<import("./buildings").BuildingDef>;
-  developments?: Registry<import("./developments").DevelopmentDef>;
+  actions?: Registry<import('./actions').ActionDef>;
+  buildings?: Registry<import('./buildings').BuildingDef>;
+  developments?: Registry<import('./developments').DevelopmentDef>;
   populations?: Registry<PopulationDef>;
   rules?: RuleSet;
   config?: GameConfig;
@@ -103,7 +117,7 @@ export function createEngine(overrides?: {
   const rules = overrides?.rules || DefaultRules;
   const services = new Services(rules);
   const passives = new PassiveManager();
-  const game = new GameState("Steph", "Byte");
+  const game = new GameState('Steph', 'Byte');
 
   let actions = overrides?.actions;
   let buildings = overrides?.buildings;
@@ -113,17 +127,21 @@ export function createEngine(overrides?: {
   if (overrides?.config) {
     const cfg = validateGameConfig(overrides.config);
     if (cfg.actions) {
-      const reg = new Registry<import("./actions").ActionDef>(actionSchema);
+      const reg = new Registry<import('./actions').ActionDef>(actionSchema);
       for (const a of cfg.actions) reg.add(a.id, a);
       actions = reg;
     }
     if (cfg.buildings) {
-      const reg = new Registry<import("./buildings").BuildingDef>(buildingSchema);
+      const reg = new Registry<import('./buildings').BuildingDef>(
+        buildingSchema,
+      );
       for (const b of cfg.buildings) reg.add(b.id, b);
       buildings = reg;
     }
     if (cfg.developments) {
-      const reg = new Registry<import("./developments").DevelopmentDef>(developmentSchema);
+      const reg = new Registry<import('./developments').DevelopmentDef>(
+        developmentSchema,
+      );
       for (const d of cfg.developments) reg.add(d.id, d);
       developments = reg;
     }
@@ -139,20 +157,30 @@ export function createEngine(overrides?: {
   developments = developments || DEVELOPMENTS;
   populations = populations || POPULATIONS;
 
-  const ctx = new EngineContext(game, services, actions, buildings, developments, populations, passives);
+  const ctx = new EngineContext(
+    game,
+    services,
+    actions,
+    buildings,
+    developments,
+    populations,
+    passives,
+  );
   const playerA = ctx.game.players[0];
   const playerB = ctx.game.players[1];
 
-  playerA.gold = 10; playerB.gold = 10;
-  playerA.lands.push(new Land("A-L1", rules.slotsPerNewLand));
-  playerA.lands.push(new Land("A-L2", rules.slotsPerNewLand));
-  playerB.lands.push(new Land("B-L1", rules.slotsPerNewLand));
-  playerB.lands.push(new Land("B-L2", rules.slotsPerNewLand));
-  playerA.lands[0].developments.push("farm");
+  playerA.gold = 10;
+  playerB.gold = 10;
+  playerA.lands.push(new Land('A-L1', rules.slotsPerNewLand));
+  playerA.lands.push(new Land('A-L2', rules.slotsPerNewLand));
+  playerB.lands.push(new Land('B-L1', rules.slotsPerNewLand));
+  playerB.lands.push(new Land('B-L2', rules.slotsPerNewLand));
+  playerA.lands[0].developments.push('farm');
   playerA.lands[0].slotsUsed = 1;
-  playerB.lands[0].developments.push("farm");
+  playerB.lands[0].developments.push('farm');
   playerB.lands[0].slotsUsed = 1;
-  playerA.population[PopulationRole.Council] = 1; playerB.population[PopulationRole.Council] = 1;
+  playerA.population[PopulationRole.Council] = 1;
+  playerB.population[PopulationRole.Council] = 1;
   ctx.game.currentPlayerIndex = 0;
 
   return ctx;
@@ -176,13 +204,13 @@ export {
 
 export type { RuleSet };
 
-export { createActionRegistry } from "./actions";
+export { createActionRegistry } from './actions';
 
-export { registerCoreEffects, EffectRegistry } from "./effects";
-export type { EffectHandler, EffectDef } from "./effects";
-export { registerCoreEvaluators, EvaluatorRegistry } from "./evaluators";
-export type { EvaluatorHandler, EvaluatorDef } from "./evaluators";
-export { createDevelopmentRegistry } from "./developments";
-export { createPopulationRegistry } from "./populations";
-export { validateGameConfig } from "./config/schema";
-export type { GameConfig } from "./config/schema";
+export { registerCoreEffects, EffectRegistry } from './effects';
+export type { EffectHandler, EffectDef } from './effects';
+export { registerCoreEvaluators, EvaluatorRegistry } from './evaluators';
+export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
+export { createDevelopmentRegistry } from './developments';
+export { createPopulationRegistry } from './populations';
+export { validateGameConfig } from './config/schema';
+export type { GameConfig } from './config/schema';

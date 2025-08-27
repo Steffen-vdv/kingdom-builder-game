@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -22,6 +22,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
       - run: npm ci
+      - run: npm run format --check
       - run: npm run type-check
       - run: npm test
 
@@ -41,6 +42,7 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci
+      - run: npm run format --check
       - run: npm test
       - run: npm run type-check
       - run: npm run build

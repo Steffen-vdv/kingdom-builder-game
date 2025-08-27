@@ -15,7 +15,9 @@ describe('Action edge cases', () => {
     if (entries.length === 0) return; // no non-AP cost to exhaust
     const [key, amount] = entries[0];
     ctx.activePlayer.resources[key] = (amount || 0) - 1;
-    expect(() => performAction('expand', ctx)).toThrow(new RegExp(`Insufficient ${key}`));
+    expect(() => performAction('expand', ctx)).toThrow(
+      new RegExp(`Insufficient ${key}`),
+    );
     expect(ctx.activePlayer.resources[key]).toBe((amount || 0) - 1);
   });
 

@@ -9,11 +9,11 @@ Core handlers are registered during engine bootstrap via `registerCoreEffects()`
 To add a new effect from outside the engine, register a handler before performing actions:
 
 ```ts
-import { EFFECTS } from "./effects"; // adjust path as needed
+import { EFFECTS } from './effects'; // adjust path as needed
 
-EFFECTS.add("castle:heal", (effect, ctx, mult) => {
+EFFECTS.add('castle:heal', (effect, ctx, mult) => {
   const amt = (effect.params?.amount ?? 0) * mult;
-  ctx.activePlayer.resources["castleHP"] += amt;
+  ctx.activePlayer.resources['castleHP'] += amt;
 });
 ```
 

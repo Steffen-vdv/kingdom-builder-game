@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, runDevelopment, performAction, Resource, EngineContext, EVALUATORS } from '../../src';
+import {
+  createEngine,
+  runDevelopment,
+  performAction,
+  Resource,
+  EngineContext,
+  EVALUATORS,
+} from '../../src';
 import type { EffectDef } from '../../src/effects';
 import type { EvaluatorDef } from '../../src/evaluators';
 
@@ -15,7 +22,8 @@ function getOverworkExpectations(ctx: EngineContext) {
     let total = (e.params!.amount as number) * count;
     const r = e.round;
     if (r === 'up') total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-    else if (r === 'down') total = total >= 0 ? Math.floor(total) : Math.ceil(total);
+    else if (r === 'down')
+      total = total >= 0 ? Math.floor(total) : Math.ceil(total);
     deltas[key] = total;
   }
   return deltas;
@@ -29,7 +37,11 @@ describe('Overwork action', () => {
     const hapBefore = ctx.activePlayer.happiness;
     const expected = getOverworkExpectations(ctx);
     performAction('overwork', ctx);
-    expect(ctx.activePlayer.gold).toBe(goldBefore + (expected[Resource.gold] || 0));
-    expect(ctx.activePlayer.happiness).toBe(hapBefore + (expected[Resource.happiness] || 0));
+    expect(ctx.activePlayer.gold).toBe(
+      goldBefore + (expected[Resource.gold] || 0),
+    );
+    expect(ctx.activePlayer.happiness).toBe(
+      hapBefore + (expected[Resource.happiness] || 0),
+    );
   });
 });
