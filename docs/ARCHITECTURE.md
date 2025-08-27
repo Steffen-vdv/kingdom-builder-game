@@ -42,6 +42,9 @@ The evaluator returns a multiplier that determines how often the nested effects
 run. Because triggers are decoupled from effect domains, any trigger can result
 in any effect, keeping behaviour entirely data‑driven.
 
+See the [evaluator registry README](../packages/engine/src/evaluators/README.md)
+for details on built-in handlers and registering custom ones.
+
 ## Registry Pattern
 
 Most subsystems rely on lightweight registries. A `Registry` maps string
