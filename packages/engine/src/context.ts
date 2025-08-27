@@ -1,6 +1,6 @@
-import { GameState } from './state';
-import { Services, PassiveManager } from './services';
-import { Registry } from './registry';
+import type { GameState } from './state';
+import type { Services, PassiveManager } from './services';
+import type { Registry } from './registry';
 import type { ActionDef } from './content/actions';
 import type { BuildingDef } from './content/buildings';
 import type { DevelopmentDef } from './content/developments';

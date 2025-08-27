@@ -8,7 +8,7 @@ npx lint-staged
 
 # Run project-wide checks
 npm run lint
-npm run type-check
+npm run typecheck
 npm test
 if [ -n "$SONAR_TOKEN" ]; then
   npx sonar-scanner -Dsonar.token=$SONAR_TOKEN

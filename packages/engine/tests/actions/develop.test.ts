@@ -4,12 +4,12 @@ import {
   performAction,
   resolveAttack,
   runDevelopment,
-  EngineContext,
   PassiveManager,
   getActionCosts,
-  Resource,
+  EngineContext,
 } from '../../src/index.ts';
 import { PlayerState, Land, GameState } from '../../src/state/index.ts';
+import type { ResourceId } from '../../src/state/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
 
@@ -44,8 +44,8 @@ function simulateBuild(ctx: EngineContext, id: string, landId: string) {
     ctx.populations,
     new PassiveManager(),
   );
-  for (const [k, v] of Object.entries(costs)) {
-    sim.activePlayer.resources[k as Resource] -= v as number;
+  for (const [k, v] of Object.entries(costs) as [ResourceId, number][]) {
+    sim.activePlayer.resources[k] -= v;
   }
   const land = sim.activePlayer.lands.find((l) => l.id === landId)!;
   land.developments.push(id);

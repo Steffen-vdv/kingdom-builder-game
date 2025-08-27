@@ -1,4 +1,4 @@
-import type { ResourceKey, PlayerState } from '../state';
+import type { ResourceId, PlayerState } from '../state';
 import type { EngineContext } from '../context';
 import { runEffects, type EffectDef } from '../effects';
 
@@ -64,7 +64,7 @@ class PopCapService {
   }
 }
 
-export type CostBag = { [k in ResourceKey]?: number };
+export type CostBag = { [k in ResourceId]?: number };
 export type CostModifier = (
   actionId: string,
   cost: CostBag,

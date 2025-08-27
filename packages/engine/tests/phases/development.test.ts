@@ -11,36 +11,36 @@ import {
 
 const council = POPULATIONS.get(PopulationRole.Council);
 const councilApGain =
-  council.onDevelopmentPhase?.find(
+  (council.onDevelopmentPhase?.find(
     (e) =>
       e.type === 'resource' &&
       e.method === 'add' &&
       e.params.key === Resource.ap,
-  )?.params.amount ?? 0;
+  )?.params.amount as number) ?? 0;
 
 const farm = DEVELOPMENTS.get('farm');
 const farmGoldGain =
-  farm.onDevelopmentPhase?.find(
+  (farm.onDevelopmentPhase?.find(
     (e) =>
       e.type === 'resource' &&
       e.method === 'add' &&
       e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
+  )?.params.amount as number) ?? 0;
 
 const commanderPct =
-  POPULATIONS.get(PopulationRole.Commander).onDevelopmentPhase?.find(
+  (POPULATIONS.get(PopulationRole.Commander).onDevelopmentPhase?.find(
     (e) =>
       e.type === 'stat' &&
       e.method === 'add_pct' &&
       e.params.key === Stat.armyStrength,
-  )?.params.percent ?? 0;
+  )?.params.percent as number) ?? 0;
 const fortifierPct =
-  POPULATIONS.get(PopulationRole.Fortifier).onDevelopmentPhase?.find(
+  (POPULATIONS.get(PopulationRole.Fortifier).onDevelopmentPhase?.find(
     (e) =>
       e.type === 'stat' &&
       e.method === 'add_pct' &&
       e.params.key === Stat.fortificationStrength,
-  )?.params.percent ?? 0;
+  )?.params.percent as number) ?? 0;
 
 describe('Development phase', () => {
   it('triggers population and development effects', () => {

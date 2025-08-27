@@ -5,10 +5,11 @@ import {
   performAction,
   Resource,
   getActionCosts,
-  EngineContext,
   PassiveManager,
+  EngineContext,
 } from '../../src/index.ts';
 import { PlayerState, Land, GameState } from '../../src/state/index.ts';
+import type { ResourceId } from '../../src/state/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
 
@@ -55,8 +56,8 @@ describe('Build Town Charter action', () => {
       ctx.populations,
       new PassiveManager(),
     );
-    for (const [k, v] of Object.entries(buildCost)) {
-      sim.activePlayer.resources[k as Resource] -= v as number;
+    for (const [k, v] of Object.entries(buildCost) as [ResourceId, number][]) {
+      sim.activePlayer.resources[k] -= v;
     }
     const def = ctx.actions.get('build_town_charter');
     runEffects(applyParamsToEffects(def.effects, {}), sim);

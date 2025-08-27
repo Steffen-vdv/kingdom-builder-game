@@ -4,6 +4,5 @@
     "noEmit": true,
     "composite": true
   },
-  "include": ["src"],
-  "references": [{ "path": "../engine" }]
+  "include": ["src", "../engine/src"]
 }

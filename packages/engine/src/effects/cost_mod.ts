@@ -1,10 +1,10 @@
 import type { EffectHandler } from '.';
-import type { ResourceKey } from '../state';
+import type { ResourceId } from '../state';
 
 interface CostModParams {
   id: string;
   actionId: string;
-  key: ResourceKey;
+  key: ResourceId;
   amount: number;
   [key: string]: unknown;
 }

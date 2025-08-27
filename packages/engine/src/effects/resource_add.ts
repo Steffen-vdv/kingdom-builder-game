@@ -1,8 +1,8 @@
 import type { EffectHandler } from '.';
-import type { ResourceKey } from '../state';
+import type { ResourceId } from '../state';
 
 export const resourceAdd: EffectHandler = (effect, ctx, mult = 1) => {
-  const key = effect.params!['key'] as ResourceKey;
+  const key = effect.params!['key'] as ResourceId;
   const amount = effect.params!['amount'] as number;
   let total = amount * mult;
   if (effect.round === 'up')

@@ -1,6 +1,7 @@
 import { Registry } from '../registry';
 import type { EngineContext } from '../context';
 import { EVALUATORS } from '../evaluators';
+import type { EvaluatorDef } from '../evaluators';
 import { landAdd } from './land_add';
 import { resourceAdd } from './resource_add';
 import { resourceRemove } from './resource_remove';
@@ -23,7 +24,7 @@ export interface EffectDef<
   method?: string;
   params?: P;
   effects?: EffectDef[];
-  evaluator?: import('../evaluators').EvaluatorDef;
+  evaluator?: EvaluatorDef;
   round?: 'up' | 'down';
 }
 

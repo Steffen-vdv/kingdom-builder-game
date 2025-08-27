@@ -4,7 +4,7 @@ export const Resource = {
   happiness: 'happiness',
   castleHP: 'castleHP',
 } as const;
-export type ResourceKey = (typeof Resource)[keyof typeof Resource];
+export type ResourceId = (typeof Resource)[keyof typeof Resource];
 
 export const Stat = {
   maxPopulation: 'maxPopulation',
@@ -49,7 +49,7 @@ export class Land {
 export class PlayerState {
   id: PlayerId;
   name: string;
-  resources: Record<ResourceKey, number> = {
+  resources: Record<ResourceId, number> = {
     [Resource.gold]: 0,
     [Resource.ap]: 0,
     [Resource.happiness]: 0,

@@ -19,7 +19,7 @@ const evaluatorSchema = z.object({
 });
 
 // Effect
-export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
+export const effectSchema = z.lazy(() =>
   z.object({
     type: z.string().optional(),
     method: z.string().optional(),
@@ -28,7 +28,7 @@ export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
     evaluator: evaluatorSchema.optional(),
     round: z.enum(['up', 'down']).optional(),
   }),
-);
+) as z.ZodType<EffectDef<Record<string, unknown>>>;
 
 export type EffectConfig = EffectDef;
 

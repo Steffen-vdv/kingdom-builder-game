@@ -6,13 +6,13 @@ import type {
 import type { EffectDef } from '../effects';
 
 export interface Triggered {
-  onDevelopmentPhase?: EffectDef[];
-  onUpkeepPhase?: EffectDef[];
-  onAttackResolved?: EffectDef[];
+  onDevelopmentPhase: EffectDef[] | undefined;
+  onUpkeepPhase: EffectDef[] | undefined;
+  onAttackResolved: EffectDef[] | undefined;
 }
 
-export interface PopulationDef extends PopulationConfig, Triggered {}
-export interface DevelopmentDef extends DevelopmentConfig, Triggered {}
-export interface BuildingDef extends BuildingConfig, Triggered {}
+export type PopulationDef = PopulationConfig & Partial<Triggered>;
+export type DevelopmentDef = DevelopmentConfig & Partial<Triggered>;
+export type BuildingDef = BuildingConfig & Partial<Triggered>;
 
 export type TriggerKey = keyof Triggered;

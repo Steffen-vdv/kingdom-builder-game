@@ -4,9 +4,9 @@ import type {
   DevelopmentConfig,
   PopulationConfig,
   RequirementFn,
+  EffectConfig,
 } from './schema';
-import type { ResourceKey } from '../state';
-import type { EffectConfig } from './schema';
+import type { ResourceId } from '../state';
 
 class BaseBuilder<T extends { id: string; name: string }> {
   protected cfg: T;
@@ -22,9 +22,9 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
   constructor(id: string, name: string) {
     super(id, name, { effects: [] });
   }
-  cost(key: ResourceKey, amount: number) {
+  cost(key: ResourceId, amount: number) {
     this.cfg.baseCosts = this.cfg.baseCosts || {};
-    this.cfg.baseCosts![key] = amount;
+    this.cfg.baseCosts[key] = amount;
     return this;
   }
   requirement(req: RequirementFn) {
@@ -42,7 +42,7 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
   constructor(id: string, name: string) {
     super(id, name, { costs: {}, onBuild: [] });
   }
-  cost(key: ResourceKey, amount: number) {
+  cost(key: ResourceId, amount: number) {
     this.cfg.costs[key] = amount;
     return this;
   }

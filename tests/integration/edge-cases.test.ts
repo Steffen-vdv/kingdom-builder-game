@@ -4,6 +4,7 @@ import {
   Resource,
   getActionCosts,
 } from '../../packages/engine/src/index.ts';
+import type { ResourceId } from '../../packages/engine/src/state/index.ts';
 import { createTestContext } from './fixtures';
 
 describe('Action edge cases', () => {
@@ -15,14 +16,18 @@ describe('Action edge cases', () => {
   it('rejects actions when a required resource is exhausted', () => {
     const ctx = createTestContext();
     const costs = getActionCosts('expand', ctx);
-    const entries = Object.entries(costs).filter(([k]) => k !== Resource.ap);
+    const entries = (Object.entries(costs) as [ResourceId, number][]).filter(
+      ([k]) => k !== Resource.ap,
+    );
     if (entries.length === 0) return; // no non-AP cost to exhaust
     const [key, amount] = entries[0];
-    ctx.activePlayer.resources[key] = (amount || 0) - 1;
+    ctx.activePlayer.resources[key as ResourceId] = (amount || 0) - 1;
     expect(() => performAction('expand', ctx)).toThrow(
       new RegExp(`Insufficient ${key}`),
     );
-    expect(ctx.activePlayer.resources[key]).toBe((amount || 0) - 1);
+    expect(ctx.activePlayer.resources[key as ResourceId]).toBe(
+      (amount || 0) - 1,
+    );
   });
 
   it('rejects actions when action points are exhausted', () => {

@@ -249,19 +249,19 @@ describe('population registry overrides', () => {
 
     const council = populations.get(PopulationRole.Council);
     const devGain =
-      council.onDevelopmentPhase?.find(
+      (council.onDevelopmentPhase?.find(
         (e) =>
           e.type === 'resource' &&
           e.method === 'add' &&
           e.params.key === Resource.gold,
-      )?.params.amount ?? 0;
+      )?.params.amount as number) ?? 0;
     const upkeepCost =
-      council.onUpkeepPhase?.find(
+      (council.onUpkeepPhase?.find(
         (e) =>
           e.type === 'resource' &&
           e.method === 'remove' &&
           e.params.key === Resource.ap,
-      )?.params.amount ?? 0;
+      )?.params.amount as number) ?? 0;
 
     runDevelopment(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold + devGain);
@@ -306,19 +306,19 @@ describe('population registry overrides', () => {
 
     const commander = populations.get(PopulationRole.Commander);
     const devCost =
-      commander.onDevelopmentPhase?.find(
+      (commander.onDevelopmentPhase?.find(
         (e) =>
           e.type === 'resource' &&
           e.method === 'remove' &&
           e.params.key === Resource.gold,
-      )?.params.amount ?? 0;
+      )?.params.amount as number) ?? 0;
     const upkeepPct =
-      commander.onUpkeepPhase?.find(
+      (commander.onUpkeepPhase?.find(
         (e) =>
           e.type === 'stat' &&
           e.method === 'add_pct' &&
           e.params.key === Stat.armyStrength,
-      )?.params.percent ?? 0;
+      )?.params.percent as number) ?? 0;
 
     runDevelopment(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);
@@ -364,19 +364,19 @@ describe('population registry overrides', () => {
 
     const fortifier = populations.get(PopulationRole.Fortifier);
     const devCost =
-      fortifier.onDevelopmentPhase?.find(
+      (fortifier.onDevelopmentPhase?.find(
         (e) =>
           e.type === 'resource' &&
           e.method === 'remove' &&
           e.params.key === Resource.gold,
-      )?.params.amount ?? 0;
+      )?.params.amount as number) ?? 0;
     const upkeepPct =
-      fortifier.onUpkeepPhase?.find(
+      (fortifier.onUpkeepPhase?.find(
         (e) =>
           e.type === 'stat' &&
           e.method === 'add_pct' &&
           e.params.key === Stat.fortificationStrength,
-      )?.params.percent ?? 0;
+      )?.params.percent as number) ?? 0;
 
     runDevelopment(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);

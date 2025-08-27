@@ -4,21 +4,19 @@ import {
   PopulationRole,
   Stat,
   GameState,
-  PlayerState,
   Land,
-  ResourceKey,
 } from './state';
-import {
-  Services,
-  PassiveManager,
-  DefaultRules,
-  CostBag,
-  RuleSet,
-} from './services';
+import type { PlayerState, ResourceId, PopulationRoleId } from './state';
+import { Services, PassiveManager, DefaultRules } from './services';
+import type { CostBag, RuleSet } from './services';
 import { createActionRegistry } from './content/actions';
 import { BUILDINGS } from './content/buildings';
 import { DEVELOPMENTS } from './content/developments';
-import { POPULATIONS, PopulationDef } from './content/populations';
+import { POPULATIONS } from './content/populations';
+import type { ActionDef } from './content/actions';
+import type { BuildingDef } from './content/buildings';
+import type { DevelopmentDef } from './content/developments';
+import type { PopulationDef } from './content/populations';
 import type { TriggerKey } from './content/defs';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
@@ -43,10 +41,13 @@ function runTrigger(
   const index = ctx.game.players.indexOf(player);
   ctx.game.currentPlayerIndex = index;
 
-  for (const [role, count] of Object.entries(player.population)) {
+  for (const [role, count] of Object.entries(player.population) as [
+    PopulationRoleId,
+    number,
+  ][]) {
     const def = ctx.populations.get(role);
     const effects = def[trigger];
-    if (effects) runEffects(effects, ctx, count as number);
+    if (effects) runEffects(effects, ctx, count);
   }
 
   for (const land of player.lands) {
@@ -84,7 +85,7 @@ export function getActionCosts(actionId: string, ctx: EngineContext): CostBag {
 }
 
 function canPay(costs: CostBag, player: PlayerState): true | string {
-  for (const key of Object.keys(costs) as ResourceKey[]) {
+  for (const key of Object.keys(costs) as ResourceId[]) {
     const need = costs[key] ?? 0;
     const available = player.resources[key] ?? 0;
     if (available < need) {
@@ -95,7 +96,7 @@ function canPay(costs: CostBag, player: PlayerState): true | string {
 }
 
 function pay(costs: CostBag, player: PlayerState) {
-  for (const key of Object.keys(costs) as ResourceKey[]) {
+  for (const key of Object.keys(costs) as ResourceId[]) {
     const amount = costs[key] ?? 0;
     player.resources[key] = (player.resources[key] || 0) - amount;
   }
@@ -159,9 +160,9 @@ export function resolveAttack(
 }
 
 export function createEngine(overrides?: {
-  actions?: Registry<import('./content/actions').ActionDef>;
-  buildings?: Registry<import('./content/buildings').BuildingDef>;
-  developments?: Registry<import('./content/developments').DevelopmentDef>;
+  actions?: Registry<ActionDef>;
+  buildings?: Registry<BuildingDef>;
+  developments?: Registry<DevelopmentDef>;
   populations?: Registry<PopulationDef>;
   rules?: RuleSet;
   config?: GameConfig;
@@ -182,23 +183,17 @@ export function createEngine(overrides?: {
   if (overrides?.config) {
     const cfg = validateGameConfig(overrides.config);
     if (cfg.actions) {
-      const reg = new Registry<import('./content/actions').ActionDef>(
-        actionSchema,
-      );
+      const reg = new Registry<ActionDef>(actionSchema);
       for (const a of cfg.actions) reg.add(a.id, a);
       actions = reg;
     }
     if (cfg.buildings) {
-      const reg = new Registry<import('./content/buildings').BuildingDef>(
-        buildingSchema,
-      );
+      const reg = new Registry<BuildingDef>(buildingSchema);
       for (const b of cfg.buildings) reg.add(b.id, b);
       buildings = reg;
     }
     if (cfg.developments) {
-      const reg = new Registry<import('./content/developments').DevelopmentDef>(
-        developmentSchema,
-      );
+      const reg = new Registry<DevelopmentDef>(developmentSchema);
       for (const d of cfg.developments) reg.add(d.id, d);
       developments = reg;
     }
@@ -260,6 +255,7 @@ export {
 };
 
 export type { RuleSet };
+export type { ResourceId } from './state';
 
 export { createActionRegistry } from './content/actions';
 export { createBuildingRegistry } from './content/buildings';

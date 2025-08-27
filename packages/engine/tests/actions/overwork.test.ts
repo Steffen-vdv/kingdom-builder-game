@@ -4,9 +4,9 @@ import {
   runDevelopment,
   performAction,
   Resource,
-  EngineContext,
   EVALUATORS,
 } from '../../src';
+import type { EngineContext } from '../../src';
 import type { EffectDef } from '../../src/effects';
 import type { EvaluatorDef } from '../../src/evaluators';
 
