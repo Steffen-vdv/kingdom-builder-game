@@ -126,9 +126,9 @@ export class GameState {
     this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];
   }
   get active(): PlayerState {
-    return this.players[this.currentPlayerIndex];
+    return this.players[this.currentPlayerIndex]!;
   }
   get opponent(): PlayerState {
-    return this.players[(this.currentPlayerIndex + 1) % this.players.length];
+    return this.players[(this.currentPlayerIndex + 1) % this.players.length]!;
   }
 }
