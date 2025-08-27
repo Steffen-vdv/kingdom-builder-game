@@ -1,9 +1,10 @@
 import { Registry } from '../registry';
 import { PopulationRole, Resource, Stat } from '../state';
-import { populationSchema, type PopulationConfig } from '../config/schema';
+import { populationSchema } from '../config/schema';
 import { population } from '../config/builders';
+import type { PopulationDef } from './defs';
 
-export type PopulationDef = PopulationConfig;
+export type { PopulationDef } from './defs';
 
 export function createPopulationRegistry() {
   const reg = new Registry<PopulationDef>(populationSchema);

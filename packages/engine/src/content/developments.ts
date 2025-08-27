@@ -1,9 +1,10 @@
 import { Registry } from '../registry';
 import { Resource, Stat } from '../state';
-import { developmentSchema, type DevelopmentConfig } from '../config/schema';
+import { developmentSchema } from '../config/schema';
 import { development } from '../config/builders';
+import type { DevelopmentDef } from './defs';
 
-export type DevelopmentDef = DevelopmentConfig;
+export type { DevelopmentDef } from './defs';
 
 export function createDevelopmentRegistry() {
   const reg = new Registry<DevelopmentDef>(developmentSchema);
