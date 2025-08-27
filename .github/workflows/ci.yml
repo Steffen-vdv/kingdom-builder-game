@@ -27,9 +27,9 @@ jobs:
       - run: npm test
 
       - run: npm run test:coverage
-      # Install only the Chrome browser. Dependencies are already present on
+      # Install only the Chromium browser. Dependencies are already present on
       # the GitHub runner, so we skip the slow `--with-deps` flag.
-      - run: npx playwright install chrome
+      - run: npx playwright install chromium
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
         with:

@@ -19,12 +19,12 @@ Run unit and integration tests:
 npm test
 ```
 
-Run end-to-end tests (requires the Playwright Chrome browser). Install system
+Run end-to-end tests (requires the Playwright Chromium browser). Install system
 dependencies once on Linux, then install only the browser for faster runs:
 
 ```bash
-npx playwright install-deps # Linux only, run once
-npx playwright install chrome
+npx playwright install-deps chromium # Linux only, run once
+npx playwright install chromium
 npm run e2e
 ```
 
