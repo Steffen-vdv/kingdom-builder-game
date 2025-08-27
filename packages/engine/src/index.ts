@@ -100,10 +100,19 @@ function pay(costs: CostBag, player: PlayerState) {
   }
 }
 
-export function performAction(
-  actionId: string,
+type ActionParamMap = {
+  develop: { id: string; landId: string };
+  [key: string]: Record<string, any>;
+};
+
+export type ActionParams<T extends string> = T extends keyof ActionParamMap
+  ? ActionParamMap[T]
+  : Record<string, any>;
+
+export function performAction<T extends string>(
+  actionId: T,
   ctx: EngineContext,
-  params?: Record<string, any>,
+  params?: ActionParams<T>,
 ) {
   const def = ctx.actions.get(actionId);
   for (const req of def.requirements || []) {
