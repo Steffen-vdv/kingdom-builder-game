@@ -1,5 +1,6 @@
 import type { ResourceKey, PlayerState } from '../state';
 import type { EngineContext } from '../context';
+import { runEffects, type EffectDef } from '../effects';
 
 export type HappinessTierEffect = {
   incomeMultiplier: number;
@@ -74,6 +75,7 @@ export type ResultModifier = (actionId: string, ctx: EngineContext) => void;
 export class PassiveManager {
   private costMods: CostModifier[] = [];
   private resultMods: ResultModifier[] = [];
+  private passives: Map<string, { effects: EffectDef[] }> = new Map();
 
   registerCostModifier(mod: CostModifier) {
     this.costMods.push(mod);
@@ -89,6 +91,28 @@ export class PassiveManager {
   runResultMods(actionId: string, ctx: EngineContext) {
     for (const m of this.resultMods) m(actionId, ctx);
   }
+
+  addPassive(
+    passive: { id: string; effects: EffectDef[] },
+    ctx: EngineContext,
+  ) {
+    this.passives.set(passive.id, { effects: passive.effects });
+    runEffects(passive.effects, ctx);
+  }
+
+  removePassive(id: string, ctx: EngineContext) {
+    const p = this.passives.get(id);
+    if (!p) return;
+    runEffects(p.effects.map(reverseEffect), ctx);
+    this.passives.delete(id);
+  }
+}
+
+function reverseEffect(e: EffectDef): EffectDef {
+  if (e.effects) return { ...e, effects: e.effects.map(reverseEffect) };
+  if (e.method === 'add') return { ...e, method: 'remove' };
+  if (e.method === 'remove') return { ...e, method: 'add' };
+  return { ...e };
 }
 
 export class Services {

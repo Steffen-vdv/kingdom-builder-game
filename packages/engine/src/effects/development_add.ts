@@ -1,5 +1,6 @@
 import type { EffectHandler } from '.';
 import { runEffects } from '.';
+import { applyParamsToEffects } from '../utils';
 
 export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
   const id = effect.params?.id as string;
@@ -14,6 +15,7 @@ export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
     land.developments.push(id);
     land.slotsUsed += 1;
     const def = ctx.developments.get(id);
-    if (def?.onBuild) runEffects(def.onBuild, ctx);
+    if (def?.onBuild)
+      runEffects(applyParamsToEffects(def.onBuild, { landId, id }), ctx);
   }
 };

@@ -31,6 +31,59 @@ export function createDevelopmentRegistry() {
     ],
   });
 
+  reg.add('outpost', {
+    id: 'outpost',
+    name: 'Outpost',
+    onBuild: [
+      {
+        type: 'stat',
+        method: 'add',
+        params: { key: Stat.armyStrength, amount: 1 },
+      },
+      {
+        type: 'stat',
+        method: 'add',
+        params: { key: Stat.fortificationStrength, amount: 1 },
+      },
+    ],
+  });
+
+  reg.add('watchtower', {
+    id: 'watchtower',
+    name: 'Watchtower',
+    onBuild: [
+      {
+        type: 'stat',
+        method: 'add',
+        params: { key: Stat.fortificationStrength, amount: 2 },
+      },
+      {
+        type: 'passive',
+        method: 'add',
+        params: { id: 'watchtower_absorption_$landId' },
+        effects: [
+          {
+            type: 'stat',
+            method: 'add',
+            params: { key: Stat.absorption, amount: 0.5 },
+          },
+        ],
+      },
+    ],
+    onAttackResolved: [
+      {
+        type: 'development',
+        method: 'remove',
+        params: { id: 'watchtower', landId: '$landId' },
+      },
+      {
+        type: 'passive',
+        method: 'remove',
+        params: { id: 'watchtower_absorption_$landId' },
+      },
+    ],
+  });
+
   return reg;
 }
 
