@@ -15,10 +15,23 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('playwright.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
       - run: npm ci
       - run: npm run type-check
       - run: npm test
 
+      - run: npm run test:coverage
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
   build:
     runs-on: ubuntu-latest
     steps:
@@ -28,5 +41,6 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci
+      - run: npm test
       - run: npm run type-check
       - run: npm run build
