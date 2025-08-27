@@ -5,15 +5,8 @@ import {
   performAction,
   Resource,
   EngineContext,
+  getActionCosts,
 } from '../../src/index.ts';
-
-function getActionCosts(id: string, ctx: EngineContext) {
-  const def = ctx.actions.get(id);
-  const baseCosts = { ...(def.baseCosts || {}) };
-  if (baseCosts[Resource.ap] === undefined)
-    baseCosts[Resource.ap] = ctx.services.rules.defaultActionAPCost;
-  return ctx.passives.applyCostMods(def.id, baseCosts, ctx);
-}
 
 function getExpandExpectations(ctx: EngineContext) {
   const expandDef = ctx.actions.get('expand');

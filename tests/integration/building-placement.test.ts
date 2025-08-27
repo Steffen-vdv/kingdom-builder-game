@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { performAction } from '../../packages/engine/src/index.ts';
 import {
-  createTestContext,
+  performAction,
   getActionCosts,
-  getActionOutcome,
-} from './fixtures';
+} from '../../packages/engine/src/index.ts';
+import { createTestContext, getActionOutcome } from './fixtures';
 
 describe('Building placement integration', () => {
   it('applies building effects to subsequent actions', () => {
