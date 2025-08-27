@@ -16,17 +16,19 @@ import { passiveRemove } from './passive_remove';
 import { costMod } from './cost_mod';
 import { resultMod } from './result_mod';
 
-export interface EffectDef {
+export interface EffectDef<
+  P extends Record<string, unknown> = Record<string, unknown>,
+> {
   type?: string;
   method?: string;
-  params?: Record<string, any>;
+  params?: P;
   effects?: EffectDef[];
   evaluator?: import('../evaluators').EvaluatorDef;
   round?: 'up' | 'down';
 }
 
-export interface EffectHandler {
-  (effect: EffectDef, ctx: EngineContext, mult: number): void;
+export interface EffectHandler<P extends Record<string, unknown> = any> {
+  (effect: EffectDef<P>, ctx: EngineContext, mult: number): void;
 }
 
 export class EffectRegistry extends Registry<EffectHandler> {}
