@@ -5,7 +5,27 @@ import {
   performAction,
   Resource,
   getActionCosts,
+  EngineContext,
+  PassiveManager,
 } from '../../src/index.ts';
+import { PlayerState, Land, GameState } from '../../src/state/index.ts';
+import { runEffects } from '../../src/effects/index.ts';
+import { applyParamsToEffects } from '../../src/utils.ts';
+
+function clonePlayer(p: PlayerState): PlayerState {
+  const copy = new PlayerState(p.id, p.name);
+  copy.resources = { ...p.resources } as any;
+  copy.stats = { ...p.stats } as any;
+  copy.population = { ...p.population } as any;
+  copy.lands = p.lands.map((l) => {
+    const land = new Land(l.id, l.slotsMax);
+    land.slotsUsed = l.slotsUsed;
+    land.developments = [...l.developments];
+    return land;
+  });
+  copy.buildings = new Set(p.buildings);
+  return copy;
+}
 
 describe('Build Town Charter action', () => {
   it('rejects when gold is insufficient', () => {
@@ -22,18 +42,32 @@ describe('Build Town Charter action', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
     const buildCost = getActionCosts('build_town_charter', ctx);
-    const expandCostBefore = getActionCosts('expand', ctx);
-    const goldBefore = ctx.activePlayer.gold;
-    const apBefore = ctx.activePlayer.ap;
+
+    const game = new GameState();
+    game.players[0] = clonePlayer(ctx.activePlayer);
+    game.players[1] = clonePlayer(ctx.opponent);
+    const sim = new EngineContext(
+      game,
+      ctx.services,
+      ctx.actions,
+      ctx.buildings,
+      ctx.developments,
+      ctx.populations,
+      new PassiveManager(),
+    );
+    for (const [k, v] of Object.entries(buildCost)) {
+      sim.activePlayer.resources[k as Resource] -= v as number;
+    }
+    const def = ctx.actions.get('build_town_charter');
+    runEffects(applyParamsToEffects(def.effects, {}), sim);
+
+    const expectedCost = getActionCosts('expand', sim);
+
     performAction('build_town_charter', ctx);
     expect(ctx.activePlayer.buildings.has('town_charter')).toBe(true);
-    expect(ctx.activePlayer.gold).toBe(
-      goldBefore - (buildCost[Resource.gold] || 0),
-    );
-    expect(ctx.activePlayer.ap).toBe(apBefore - (buildCost[Resource.ap] || 0));
+    expect(ctx.activePlayer.gold).toBe(sim.activePlayer.gold);
+    expect(ctx.activePlayer.ap).toBe(sim.activePlayer.ap);
     const expandCostAfter = getActionCosts('expand', ctx);
-    expect(expandCostAfter[Resource.gold]).toBeGreaterThan(
-      expandCostBefore[Resource.gold] || 0,
-    );
+    expect(expandCostAfter).toEqual(expectedCost);
   });
 });

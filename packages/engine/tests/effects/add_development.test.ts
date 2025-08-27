@@ -3,8 +3,14 @@ import {
   createEngine,
   performAction,
   createActionRegistry,
-  Stat,
+  EngineContext,
+  PassiveManager,
+  getActionCosts,
+  Resource,
 } from '../../src/index.ts';
+import { PlayerState, Land, GameState } from '../../src/state/index.ts';
+import { runEffects } from '../../src/effects/index.ts';
+import { applyParamsToEffects } from '../../src/utils.ts';
 
 // Custom actions used to exercise the development:add handler
 const actions = createActionRegistry();
@@ -48,28 +54,63 @@ actions.add('build_house_full', {
   ],
 });
 
-function getHouseMaxPopGain(ctx: ReturnType<typeof createEngine>) {
-  const def = ctx.developments.get('house');
-  const eff = def?.onBuild?.find(
-    (e) =>
-      e.type === 'stat' &&
-      e.method === 'add' &&
-      e.params?.key === Stat.maxPopulation,
+function clonePlayer(p: PlayerState): PlayerState {
+  const copy = new PlayerState(p.id, p.name);
+  copy.resources = { ...p.resources } as any;
+  copy.stats = { ...p.stats } as any;
+  copy.population = { ...p.population } as any;
+  copy.lands = p.lands.map((l) => {
+    const land = new Land(l.id, l.slotsMax);
+    land.slotsUsed = l.slotsUsed;
+    land.developments = [...l.developments];
+    return land;
+  });
+  copy.buildings = new Set(p.buildings);
+  return copy;
+}
+
+function simulateBuild(ctx: EngineContext, id: string, landId: string) {
+  const def = ctx.developments.get(id);
+  const costs = getActionCosts('build_house', ctx);
+  const game = new GameState();
+  game.players[0] = clonePlayer(ctx.activePlayer);
+  game.players[1] = clonePlayer(ctx.opponent);
+  game.currentPlayerIndex = 0;
+  const sim = new EngineContext(
+    game,
+    ctx.services,
+    ctx.actions,
+    ctx.buildings,
+    ctx.developments,
+    ctx.populations,
+    new PassiveManager(),
   );
-  return eff?.params?.amount ?? 0;
+  for (const [k, v] of Object.entries(costs)) {
+    sim.activePlayer.resources[k as Resource] -= v as number;
+  }
+  const land = sim.activePlayer.lands.find((l) => l.id === landId)!;
+  land.developments.push(id);
+  land.slotsUsed += 1;
+  const effects = applyParamsToEffects(def.onBuild || [], { landId, id });
+  runEffects(effects, sim);
+  return sim;
 }
 
 describe('development:add effect', () => {
   it('adds house and applies onBuild effects', () => {
     const ctx = createEngine({ actions });
-    const land = ctx.activePlayer.lands[1]; // A-L2
-    const maxBefore = ctx.activePlayer.maxPopulation;
+    const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
+    const expected = simulateBuild(ctx, 'house', land.id);
     performAction('build_house', ctx);
-    const gain = getHouseMaxPopGain(ctx);
     expect(land.developments).toContain('house');
     expect(land.slotsUsed).toBe(slotsBefore + 1);
-    expect(ctx.activePlayer.maxPopulation).toBe(maxBefore + gain);
+    expect(ctx.activePlayer.resources).toEqual(expected.activePlayer.resources);
+    for (const [k, v] of Object.entries(expected.activePlayer.stats)) {
+      expect(
+        ctx.activePlayer.stats[k as keyof typeof ctx.activePlayer.stats],
+      ).toBeCloseTo(v, 5);
+    }
   });
 
   it('throws if land does not exist', () => {
