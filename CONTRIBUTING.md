@@ -34,6 +34,7 @@ workflow for contributors so that changes remain consistent and easy to review.
 - Update documentation and tests in the same commit as the code change when
   possible.
 - Ensure `npm test` and `npm run type-check` pass before pushing.
+- The pre-commit hook runs `lint-staged`, `npm run lint`, `npm run type-check`, and `npm test`. Fix any issues before committing.
 - Limit commit message subject lines to ~70 characters.
 
 For architectural details see [ARCHITECTURE.md](docs/ARCHITECTURE.md). If in

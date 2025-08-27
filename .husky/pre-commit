@@ -1,2 +1,12 @@
 #!/usr/bin/env sh
+
+# Exit on errors
+set -e
+
+# Run lint-staged on changed files
 npx lint-staged
+
+# Run project-wide checks
+npm run lint
+npm run type-check
+npm test
