@@ -1,63 +1,60 @@
 import { Registry } from '../registry';
 import { Resource, Stat } from '../state';
 import { developmentSchema, type DevelopmentConfig } from '../config/schema';
+import { development } from '../config/builders';
 
 export type DevelopmentDef = DevelopmentConfig;
 
 export function createDevelopmentRegistry() {
   const reg = new Registry<DevelopmentDef>(developmentSchema);
 
-  reg.add('farm', {
-    id: 'farm',
-    name: 'Farm',
-    onDevelopmentPhase: [
-      {
+  reg.add(
+    'farm',
+    development('farm', 'Farm')
+      .onDevelopmentPhase({
         type: 'resource',
         method: 'add',
         params: { key: Resource.gold, amount: 2 },
-      },
-    ],
-  });
+      })
+      .build(),
+  );
 
-  reg.add('house', {
-    id: 'house',
-    name: 'House',
-    onBuild: [
-      {
+  reg.add(
+    'house',
+    development('house', 'House')
+      .onBuild({
         type: 'stat',
         method: 'add',
         params: { key: Stat.maxPopulation, amount: 1 },
-      },
-    ],
-  });
+      })
+      .build(),
+  );
 
-  reg.add('outpost', {
-    id: 'outpost',
-    name: 'Outpost',
-    onBuild: [
-      {
+  reg.add(
+    'outpost',
+    development('outpost', 'Outpost')
+      .onBuild({
         type: 'stat',
         method: 'add',
         params: { key: Stat.armyStrength, amount: 1 },
-      },
-      {
+      })
+      .onBuild({
         type: 'stat',
         method: 'add',
         params: { key: Stat.fortificationStrength, amount: 1 },
-      },
-    ],
-  });
+      })
+      .build(),
+  );
 
-  reg.add('watchtower', {
-    id: 'watchtower',
-    name: 'Watchtower',
-    onBuild: [
-      {
+  reg.add(
+    'watchtower',
+    development('watchtower', 'Watchtower')
+      .onBuild({
         type: 'stat',
         method: 'add',
         params: { key: Stat.fortificationStrength, amount: 2 },
-      },
-      {
+      })
+      .onBuild({
         type: 'passive',
         method: 'add',
         params: { id: 'watchtower_absorption_$landId' },
@@ -68,21 +65,19 @@ export function createDevelopmentRegistry() {
             params: { key: Stat.absorption, amount: 0.5 },
           },
         ],
-      },
-    ],
-    onAttackResolved: [
-      {
+      })
+      .onAttackResolved({
         type: 'development',
         method: 'remove',
         params: { id: 'watchtower', landId: '$landId' },
-      },
-      {
+      })
+      .onAttackResolved({
         type: 'passive',
         method: 'remove',
         params: { id: 'watchtower_absorption_$landId' },
-      },
-    ],
-  });
+      })
+      .build(),
+  );
 
   return reg;
 }

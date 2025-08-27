@@ -15,10 +15,10 @@ import {
   CostBag,
   RuleSet,
 } from './services';
-import { createActionRegistry } from './actions';
-import { BUILDINGS } from './buildings';
-import { DEVELOPMENTS } from './developments';
-import { POPULATIONS, PopulationDef } from './populations';
+import { createActionRegistry } from './content/actions';
+import { BUILDINGS } from './content/buildings';
+import { DEVELOPMENTS } from './content/developments';
+import { POPULATIONS, PopulationDef } from './content/populations';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
 import { EVALUATORS, registerCoreEvaluators } from './evaluators';
@@ -55,6 +55,12 @@ function runTrigger(
       if (!effects) continue;
       runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
     }
+  }
+
+  for (const id of player.buildings) {
+    const def = ctx.buildings.get(id);
+    const effects = (def as any)[trigger];
+    if (effects) runEffects(effects, ctx);
   }
 
   ctx.game.currentPlayerIndex = original;
@@ -143,9 +149,9 @@ export function resolveAttack(
 }
 
 export function createEngine(overrides?: {
-  actions?: Registry<import('./actions').ActionDef>;
-  buildings?: Registry<import('./buildings').BuildingDef>;
-  developments?: Registry<import('./developments').DevelopmentDef>;
+  actions?: Registry<import('./content/actions').ActionDef>;
+  buildings?: Registry<import('./content/buildings').BuildingDef>;
+  developments?: Registry<import('./content/developments').DevelopmentDef>;
   populations?: Registry<PopulationDef>;
   rules?: RuleSet;
   config?: GameConfig;
@@ -166,19 +172,21 @@ export function createEngine(overrides?: {
   if (overrides?.config) {
     const cfg = validateGameConfig(overrides.config);
     if (cfg.actions) {
-      const reg = new Registry<import('./actions').ActionDef>(actionSchema);
+      const reg = new Registry<import('./content/actions').ActionDef>(
+        actionSchema,
+      );
       for (const a of cfg.actions) reg.add(a.id, a);
       actions = reg;
     }
     if (cfg.buildings) {
-      const reg = new Registry<import('./buildings').BuildingDef>(
+      const reg = new Registry<import('./content/buildings').BuildingDef>(
         buildingSchema,
       );
       for (const b of cfg.buildings) reg.add(b.id, b);
       buildings = reg;
     }
     if (cfg.developments) {
-      const reg = new Registry<import('./developments').DevelopmentDef>(
+      const reg = new Registry<import('./content/developments').DevelopmentDef>(
         developmentSchema,
       );
       for (const d of cfg.developments) reg.add(d.id, d);
@@ -243,13 +251,14 @@ export {
 
 export type { RuleSet };
 
-export { createActionRegistry } from './actions';
+export { createActionRegistry } from './content/actions';
+export { createBuildingRegistry } from './content/buildings';
+export { createDevelopmentRegistry } from './content/developments';
+export { createPopulationRegistry } from './content/populations';
 
 export { registerCoreEffects, EffectRegistry } from './effects';
 export type { EffectHandler, EffectDef } from './effects';
 export { registerCoreEvaluators, EvaluatorRegistry } from './evaluators';
 export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
-export { createDevelopmentRegistry } from './developments';
-export { createPopulationRegistry } from './populations';
 export { validateGameConfig } from './config/schema';
 export type { GameConfig } from './config/schema';

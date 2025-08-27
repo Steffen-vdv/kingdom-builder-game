@@ -40,7 +40,10 @@ export const buildingSchema = z.object({
   id: z.string(),
   name: z.string(),
   costs: costBagSchema,
-  passives: z.any().optional(),
+  onBuild: z.array(effectSchema).optional(),
+  onDevelopmentPhase: z.array(effectSchema).optional(),
+  onUpkeepPhase: z.array(effectSchema).optional(),
+  onAttackResolved: z.array(effectSchema).optional(),
 });
 
 export type BuildingConfig = z.infer<typeof buildingSchema>;
