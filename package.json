@@ -11,7 +11,7 @@
     "type-check": "tsc --noEmit",
     "test": "npm run lint && vitest run",
     "test:coverage": "npm run lint && vitest run --coverage",
-    "e2e": "playwright install --with-deps chromium && playwright test",
+    "e2e": "playwright test",
     "format": "prettier .",
     "prepare": "husky install"
   },
