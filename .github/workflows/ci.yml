@@ -21,10 +21,9 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('playwright.config.ts') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
-      - run: npm ci
+      - run: npm ci || npm i
       - run: npm run format --check
-      - run: npm run lint
-      - run: npm run type-check
+      - run: npm run check
       - run: npm test
 
       - run: npm run test:coverage
@@ -53,9 +52,8 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm ci
+      - run: npm ci || npm i
       - run: npm run format --check
-      - run: npm run lint
-      - run: npm run type-check
+      - run: npm run check
       - run: npm test
       - run: npm run build

@@ -6,7 +6,7 @@ export interface EvaluatorDef<
   P extends Record<string, unknown> = Record<string, unknown>,
 > {
   type: string;
-  params?: P;
+  params?: P | undefined;
 }
 
 export interface EvaluatorHandler<

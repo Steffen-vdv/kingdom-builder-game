@@ -1,8 +1,10 @@
 import {
   createEngine,
+  getActionCosts,
+} from '../../packages/engine/src/index.ts';
+import type {
   EngineContext,
   EffectDef,
-  getActionCosts,
 } from '../../packages/engine/src/index.ts';
 import { PlayerState, Land } from '../../packages/engine/src/state/index.ts';
 import { runEffects } from '../../packages/engine/src/effects/index.ts';

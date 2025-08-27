@@ -6,9 +6,9 @@ import type {
 import type { EffectDef } from '../effects';
 
 export interface Triggered {
-  onDevelopmentPhase?: EffectDef[];
-  onUpkeepPhase?: EffectDef[];
-  onAttackResolved?: EffectDef[];
+  onDevelopmentPhase?: EffectDef[] | undefined;
+  onUpkeepPhase?: EffectDef[] | undefined;
+  onAttackResolved?: EffectDef[] | undefined;
 }
 
 export interface PopulationDef extends PopulationConfig, Triggered {}
