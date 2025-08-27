@@ -23,6 +23,7 @@ jobs:
             ${{ runner.os }}-playwright-
       - run: npm ci
       - run: npm run format --check
+      - run: npm run lint
       - run: npm run type-check
       - run: npm test
 
@@ -54,6 +55,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run format --check
-      - run: npm test
+      - run: npm run lint
       - run: npm run type-check
+      - run: npm test
       - run: npm run build
