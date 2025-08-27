@@ -1,16 +1,11 @@
 import { Registry } from "../registry";
 import { PopulationRole, Resource, Stat } from "../state";
-import type { EffectDef } from "../effects";
+import { populationSchema, type PopulationConfig } from "../config/schema";
 
-export type PopulationDef = {
-  id: string;
-  name: string;
-  onDevelopmentPhase?: EffectDef[];
-  onUpkeepPhase?: EffectDef[];
-};
+export type PopulationDef = PopulationConfig;
 
 export function createPopulationRegistry() {
-  const reg = new Registry<PopulationDef>();
+  const reg = new Registry<PopulationDef>(populationSchema);
 
   reg.add(PopulationRole.Council, {
     id: PopulationRole.Council,

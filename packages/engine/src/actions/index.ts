@@ -1,18 +1,11 @@
 import { Registry } from "../registry";
 import { Resource } from "../state";
-import type { CostBag } from "../services";
-import type { EffectDef } from "../effects";
+import { actionSchema, type ActionConfig } from "../config/schema";
 
-export type ActionDef = {
-  id: string;
-  name: string;
-  baseCosts?: CostBag;
-  requirements?: ((ctx: import("../context").EngineContext) => true | string)[];
-  effects: EffectDef[];
-};
+export type ActionDef = ActionConfig;
 
 export function createActionRegistry() {
-  const reg = new Registry<ActionDef>();
+  const reg = new Registry<ActionDef>(actionSchema);
 
   reg.add("expand", {
     id: "expand",
