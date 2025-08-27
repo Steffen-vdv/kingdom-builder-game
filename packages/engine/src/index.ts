@@ -55,6 +55,11 @@ function applyCostsWithPassives(
   return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
 }
 
+export function getActionCosts(actionId: string, ctx: EngineContext): CostBag {
+  const def = ctx.actions.get(actionId);
+  return applyCostsWithPassives(def.id, def.baseCosts || {}, ctx);
+}
+
 function canPay(costs: CostBag, player: PlayerState): true | string {
   for (const key of Object.keys(costs) as ResourceKey[]) {
     const need = costs[key] ?? 0;

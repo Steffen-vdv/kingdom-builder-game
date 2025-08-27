@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { performAction, Resource } from '../../packages/engine/src/index.ts';
-import { createTestContext, getActionCosts } from './fixtures';
+import {
+  performAction,
+  Resource,
+  getActionCosts,
+} from '../../packages/engine/src/index.ts';
+import { createTestContext } from './fixtures';
 
 describe('Action edge cases', () => {
   it('throws for unknown action', () => {

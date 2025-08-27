@@ -4,6 +4,7 @@ import {
   performAction,
   createActionRegistry,
   Resource,
+  getActionCosts,
 } from '../../src/index.ts';
 
 // Custom action that grants Town Charter for free to test the effect handler
@@ -18,12 +19,7 @@ actions.add('free_charter', {
 });
 
 function getExpandGoldCost(ctx: ReturnType<typeof createEngine>) {
-  const def = ctx.actions.get('expand');
-  const baseCosts = { ...(def.baseCosts || {}) };
-  if (baseCosts[Resource.ap] === undefined) {
-    baseCosts[Resource.ap] = ctx.services.rules.defaultActionAPCost;
-  }
-  const costs = ctx.passives.applyCostMods(def.id, baseCosts, ctx);
+  const costs = getActionCosts('expand', ctx);
   return costs[Resource.gold] || 0;
 }
 

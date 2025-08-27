@@ -1,8 +1,8 @@
 import {
   createEngine,
   EngineContext,
-  Resource,
   EffectDef,
+  getActionCosts,
 } from '../../packages/engine/src/index.ts';
 import { PlayerState, Land } from '../../packages/engine/src/state/index.ts';
 import { runEffects } from '../../packages/engine/src/effects/index.ts';
@@ -27,14 +27,6 @@ export function createTestContext(overrides?: { gold?: number; ap?: number }) {
   if (overrides?.gold !== undefined) ctx.activePlayer.gold = overrides.gold;
   if (overrides?.ap !== undefined) ctx.activePlayer.ap = overrides.ap;
   return ctx;
-}
-
-export function getActionCosts(id: string, ctx: EngineContext) {
-  const def = ctx.actions.get(id);
-  const baseCosts = { ...(def.baseCosts || {}) };
-  if (baseCosts[Resource.ap] === undefined)
-    baseCosts[Resource.ap] = ctx.services.rules.defaultActionAPCost;
-  return ctx.passives.applyCostMods(def.id, baseCosts, ctx);
 }
 
 export function simulateEffects(
