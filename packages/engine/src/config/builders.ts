@@ -6,10 +6,11 @@ import type {
 } from './schema';
 import type { ResourceKey } from '../state';
 import type { EffectConfig } from './schema';
+import type { EngineContext } from '../context';
 
 class BaseBuilder<T extends { id: string; name: string }> {
-  protected cfg: any;
-  constructor(id: string, name: string, base: any) {
+  protected cfg: Partial<T>;
+  constructor(id: string, name: string, base: Partial<T>) {
     this.cfg = { id, name, ...base };
   }
   build(): T {
@@ -22,17 +23,19 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
     super(id, name, { effects: [] });
   }
   cost(key: ResourceKey, amount: number) {
-    this.cfg.baseCosts = this.cfg.baseCosts || {};
-    this.cfg.baseCosts[key] = amount;
+    const cfg = this.cfg as ActionConfig;
+    cfg.baseCosts = cfg.baseCosts || {};
+    cfg.baseCosts[key] = amount;
     return this;
   }
-  requirement(req: (ctx: any) => any) {
-    this.cfg.requirements = this.cfg.requirements || [];
-    this.cfg.requirements.push(req);
+  requirement(req: (ctx: EngineContext) => unknown) {
+    const cfg = this.cfg as ActionConfig;
+    cfg.requirements = cfg.requirements || [];
+    cfg.requirements.push(req);
     return this;
   }
   effect(effect: EffectConfig) {
-    this.cfg.effects.push(effect);
+    (this.cfg as ActionConfig).effects.push(effect);
     return this;
   }
 }
@@ -42,26 +45,31 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
     super(id, name, { costs: {}, onBuild: [] });
   }
   cost(key: ResourceKey, amount: number) {
-    this.cfg.costs[key] = amount;
+    (this.cfg as BuildingConfig).costs[key] = amount;
     return this;
   }
   onBuild(effect: EffectConfig) {
-    this.cfg.onBuild.push(effect);
+    const cfg = this.cfg as BuildingConfig;
+    cfg.onBuild = cfg.onBuild || [];
+    cfg.onBuild.push(effect);
     return this;
   }
   onDevelopmentPhase(effect: EffectConfig) {
-    this.cfg.onDevelopmentPhase = this.cfg.onDevelopmentPhase || [];
-    this.cfg.onDevelopmentPhase.push(effect);
+    const cfg = this.cfg as BuildingConfig;
+    cfg.onDevelopmentPhase = cfg.onDevelopmentPhase || [];
+    cfg.onDevelopmentPhase.push(effect);
     return this;
   }
   onUpkeepPhase(effect: EffectConfig) {
-    this.cfg.onUpkeepPhase = this.cfg.onUpkeepPhase || [];
-    this.cfg.onUpkeepPhase.push(effect);
+    const cfg = this.cfg as BuildingConfig;
+    cfg.onUpkeepPhase = cfg.onUpkeepPhase || [];
+    cfg.onUpkeepPhase.push(effect);
     return this;
   }
   onAttackResolved(effect: EffectConfig) {
-    this.cfg.onAttackResolved = this.cfg.onAttackResolved || [];
-    this.cfg.onAttackResolved.push(effect);
+    const cfg = this.cfg as BuildingConfig;
+    cfg.onAttackResolved = cfg.onAttackResolved || [];
+    cfg.onAttackResolved.push(effect);
     return this;
   }
 }
@@ -71,18 +79,21 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
     super(id, name, {});
   }
   onBuild(effect: EffectConfig) {
-    this.cfg.onBuild = this.cfg.onBuild || [];
-    this.cfg.onBuild.push(effect);
+    const cfg = this.cfg as DevelopmentConfig;
+    cfg.onBuild = cfg.onBuild || [];
+    cfg.onBuild.push(effect);
     return this;
   }
   onDevelopmentPhase(effect: EffectConfig) {
-    this.cfg.onDevelopmentPhase = this.cfg.onDevelopmentPhase || [];
-    this.cfg.onDevelopmentPhase.push(effect);
+    const cfg = this.cfg as DevelopmentConfig;
+    cfg.onDevelopmentPhase = cfg.onDevelopmentPhase || [];
+    cfg.onDevelopmentPhase.push(effect);
     return this;
   }
   onAttackResolved(effect: EffectConfig) {
-    this.cfg.onAttackResolved = this.cfg.onAttackResolved || [];
-    this.cfg.onAttackResolved.push(effect);
+    const cfg = this.cfg as DevelopmentConfig;
+    cfg.onAttackResolved = cfg.onAttackResolved || [];
+    cfg.onAttackResolved.push(effect);
     return this;
   }
 }
@@ -92,13 +103,15 @@ export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
     super(id, name, {});
   }
   onDevelopmentPhase(effect: EffectConfig) {
-    this.cfg.onDevelopmentPhase = this.cfg.onDevelopmentPhase || [];
-    this.cfg.onDevelopmentPhase.push(effect);
+    const cfg = this.cfg as PopulationConfig;
+    cfg.onDevelopmentPhase = cfg.onDevelopmentPhase || [];
+    cfg.onDevelopmentPhase.push(effect);
     return this;
   }
   onUpkeepPhase(effect: EffectConfig) {
-    this.cfg.onUpkeepPhase = this.cfg.onUpkeepPhase || [];
-    this.cfg.onUpkeepPhase.push(effect);
+    const cfg = this.cfg as PopulationConfig;
+    cfg.onUpkeepPhase = cfg.onUpkeepPhase || [];
+    cfg.onUpkeepPhase.push(effect);
     return this;
   }
 }

@@ -103,12 +103,12 @@ function pay(costs: CostBag, player: PlayerState) {
 
 type ActionParamMap = {
   develop: { id: string; landId: string };
-  [key: string]: Record<string, any>;
+  [key: string]: Record<string, unknown>;
 };
 
 export type ActionParams<T extends string> = T extends keyof ActionParamMap
   ? ActionParamMap[T]
-  : Record<string, any>;
+  : Record<string, unknown>;
 
 export function performAction<T extends string>(
   actionId: T,

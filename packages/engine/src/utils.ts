@@ -2,9 +2,9 @@ import type { EffectDef } from './effects';
 
 export function applyParamsToEffects(
   effects: EffectDef[],
-  params: Record<string, any>,
+  params: Record<string, unknown>,
 ): EffectDef[] {
-  const replace = (val: any) =>
+  const replace = (val: unknown) =>
     typeof val === 'string' && val.startsWith('$') ? params[val.slice(1)] : val;
   const mapEffect = (e: EffectDef): EffectDef => ({
     ...e,

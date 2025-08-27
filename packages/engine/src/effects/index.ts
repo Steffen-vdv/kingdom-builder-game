@@ -19,7 +19,7 @@ import { resultMod } from './result_mod';
 export interface EffectDef {
   type?: string;
   method?: string;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   effects?: EffectDef[];
   evaluator?: import('../evaluators').EvaluatorDef;
   round?: 'up' | 'down';

@@ -1,8 +1,16 @@
 import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
 
+interface CostModParams {
+  id: string;
+  actionId: string;
+  key: string;
+  amount: number;
+}
+
 export const costMod: EffectHandler = (effect, ctx) => {
-  const { id, actionId, key, amount } = effect.params || {};
+  const { id, actionId, key, amount } =
+    (effect.params as Partial<CostModParams>) || {};
   if (!id || !actionId || !key || amount === undefined) {
     throw new Error('cost_mod requires id, actionId, key, amount');
   }
@@ -11,7 +19,7 @@ export const costMod: EffectHandler = (effect, ctx) => {
       if (act === actionId) {
         const k = key as ResourceKey;
         const current = costs[k] || 0;
-        return { ...costs, [k]: current + (amount as number) };
+        return { ...costs, [k]: current + amount };
       }
       return costs;
     });

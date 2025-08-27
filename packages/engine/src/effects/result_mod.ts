@@ -1,8 +1,13 @@
 import type { EffectHandler } from '.';
 import { runEffects } from '.';
 
+interface ResultModParams {
+  id: string;
+  actionId: string;
+}
+
 export const resultMod: EffectHandler = (effect, ctx) => {
-  const { id, actionId } = effect.params || {};
+  const { id, actionId } = (effect.params as Partial<ResultModParams>) || {};
   if (!id || !actionId) throw new Error('result_mod requires id and actionId');
   if (effect.method === 'add') {
     const effects = effect.effects || [];
