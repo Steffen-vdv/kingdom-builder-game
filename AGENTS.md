@@ -17,7 +17,7 @@ We are gradually, step by step, implementing a digital game. You can refer to th
 
 ## Testing guidelines
 
-- Always run `npm test` and `npm run e2e` before submitting changes to ensure unit, integration, and end-to-end tests pass.
+- Always run `npm test`, `npm run e2e`, and `npm run build` before submitting changes to ensure unit, integration, end-to-end tests, and the production build all succeed.
 
 Therefore, the main mission for agents is to understand the intended game, and it's mechanics/terminology, very well. This is necessary in order to build a proper abstract, extensible system that allows us to make changes to the game's configuration by just changing some simple configs (rather than needing to update tens of if-statements everywhere). Therefore, in this project, we focus on very correct architecture, structure, separation, and a correct implementation of principles such as OOP, SOLID, DRY, YAGNI, KISS, and so on. When in doubt, over-engineering is the answer, because later I will invent a new Building and I will want to configure it myself with some unique combination of costs/requirements/effects and it should 'just work' as it is being carried by systems that understand such concepts.
 

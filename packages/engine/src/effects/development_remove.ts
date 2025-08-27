@@ -1,5 +1,4 @@
 import type { EffectHandler } from '.';
-import { runEffects } from '.';
 
 export const developmentRemove: EffectHandler = (effect, ctx, mult = 1) => {
   const id = effect.params?.id as string;
@@ -14,7 +13,5 @@ export const developmentRemove: EffectHandler = (effect, ctx, mult = 1) => {
     if (idx === -1) break;
     land.developments.splice(idx, 1);
     land.slotsUsed = Math.max(0, land.slotsUsed - 1);
-    const def = ctx.developments.get(id);
-    if (def?.onRemove) runEffects(def.onRemove, ctx);
   }
 };

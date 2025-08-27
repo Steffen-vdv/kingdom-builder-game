@@ -10,6 +10,7 @@ workflow for contributors so that changes remain consistent and easy to review.
 3. Use `npm run dev` to start the web client during development.
 4. Run `npm run type-check` to ensure the codebase compiles under TypeScript.
 5. Run `npm run lint` to check formatting and unused imports.
+6. Run `npm run build` to verify the production build succeeds.
 
 ## Testing Conventions
 
@@ -17,7 +18,7 @@ workflow for contributors so that changes remain consistent and easy to review.
   - **Unit tests** under `packages/engine/tests`.
   - **Integration tests** under `tests/integration`.
   - **End-to-end tests** under `e2e` (Playwright).
-- Always run `npm test` and `npm run e2e` before committing.
+- Always run `npm test`, `npm run e2e`, and `npm run build` before committing.
   The `npm test` script runs ESLint and Vitest for unit/integration tests.
 - New features and bug fixes **must** include tests. Derive expectations from
   the active configuration or mocked registries instead of hard-coded numbers.
@@ -33,7 +34,7 @@ workflow for contributors so that changes remain consistent and easy to review.
 - Keep commits focused; avoid mixing unrelated changes or drive-by edits.
 - Update documentation and tests in the same commit as the code change when
   possible.
-- Ensure `npm test` and `npm run type-check` pass before pushing.
+- Ensure `npm test`, `npm run type-check`, and `npm run build` pass before pushing.
 - The pre-commit hook runs `lint-staged`, `npm run lint`, `npm run type-check`, and `npm test`. Fix any issues before committing.
 - Limit commit message subject lines to ~70 characters.
 
