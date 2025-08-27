@@ -23,6 +23,7 @@ import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
 import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { Registry } from './registry';
+import { applyParamsToEffects } from './utils';
 import {
   validateGameConfig,
   type GameConfig,
@@ -32,16 +33,31 @@ import {
   populationSchema,
 } from './config/schema';
 
-function runPopulationTrigger(
-  trigger: 'onDevelopmentPhase' | 'onUpkeepPhase',
+function runTrigger(
+  trigger: 'onDevelopmentPhase' | 'onUpkeepPhase' | 'onAttackResolved',
   ctx: EngineContext,
+  player: PlayerState = ctx.activePlayer,
 ) {
-  for (const [role, count] of Object.entries(ctx.activePlayer.population)) {
+  const original = ctx.game.currentPlayerIndex;
+  const index = ctx.game.players.indexOf(player);
+  ctx.game.currentPlayerIndex = index;
+
+  for (const [role, count] of Object.entries(player.population)) {
     const def = ctx.populations.get(role);
-    const effects = def[trigger];
-    if (!effects) continue;
-    runEffects(effects, ctx, count as number);
+    const effects = (def as any)[trigger];
+    if (effects) runEffects(effects, ctx, count as number);
   }
+
+  for (const land of player.lands) {
+    for (const id of land.developments) {
+      const def = ctx.developments.get(id);
+      const effects = (def as any)[trigger];
+      if (!effects) continue;
+      runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
+    }
+  }
+
+  ctx.game.currentPlayerIndex = original;
 }
 
 function applyCostsWithPassives(
@@ -78,7 +94,11 @@ function pay(costs: CostBag, player: PlayerState) {
   }
 }
 
-export function performAction(actionId: string, ctx: EngineContext) {
+export function performAction(
+  actionId: string,
+  ctx: EngineContext,
+  params?: Record<string, any>,
+) {
   const def = ctx.actions.get(actionId);
   for (const req of def.requirements || []) {
     const ok = req(ctx);
@@ -88,24 +108,38 @@ export function performAction(actionId: string, ctx: EngineContext) {
   const ok = canPay(costs, ctx.activePlayer);
   if (ok !== true) throw new Error(ok);
   pay(costs, ctx.activePlayer);
-  runEffects(def.effects, ctx);
+
+  const resolved = applyParamsToEffects(def.effects, params || {});
+  runEffects(resolved, ctx);
   ctx.passives.runResultMods(def.id, ctx);
 }
 
 export function runDevelopment(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Development;
-  runPopulationTrigger('onDevelopmentPhase', ctx);
-  for (const land of ctx.activePlayer.lands) {
-    for (const id of land.developments) {
-      const def = ctx.developments.get(id);
-      if (def?.onDevelopmentPhase) runEffects(def.onDevelopmentPhase, ctx);
-    }
-  }
+  runTrigger('onDevelopmentPhase', ctx);
 }
 
 export function runUpkeep(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Upkeep;
-  runPopulationTrigger('onUpkeepPhase', ctx);
+  runTrigger('onUpkeepPhase', ctx);
+}
+
+export function resolveAttack(
+  defender: PlayerState,
+  damage: number,
+  ctx: EngineContext,
+) {
+  const absorb = Math.min(
+    defender.absorption || 0,
+    ctx.services.rules.absorptionCapPct,
+  );
+  let final = damage * (1 - absorb);
+  const r = ctx.services.rules.absorptionRounding;
+  if (r === 'down') final = Math.floor(final);
+  else if (r === 'up') final = Math.ceil(final);
+  else final = Math.round(final);
+  runTrigger('onAttackResolved', ctx, defender);
+  return final;
 }
 
 export function createEngine(overrides?: {

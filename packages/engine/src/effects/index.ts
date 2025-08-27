@@ -7,8 +7,12 @@ import { resourceRemove } from './resource_remove';
 import { buildingAdd } from './building_add';
 import { statAdd } from './stat_add';
 import { statAddPct } from './stat_add_pct';
+import { statRemove } from './stat_remove';
 import { developmentAdd } from './development_add';
+import { developmentRemove } from './development_remove';
 import { landTill } from './land_till';
+import { passiveAdd } from './passive_add';
+import { passiveRemove } from './passive_remove';
 
 export interface EffectDef {
   type?: string;
@@ -33,8 +37,12 @@ export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
   registry.add('building:add', buildingAdd);
   registry.add('stat:add', statAdd);
   registry.add('stat:add_pct', statAddPct);
+  registry.add('stat:remove', statRemove);
   registry.add('development:add', developmentAdd);
+  registry.add('development:remove', developmentRemove);
   registry.add('land:till', landTill);
+  registry.add('passive:add', passiveAdd);
+  registry.add('passive:remove', passiveRemove);
 }
 
 export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
@@ -57,6 +65,10 @@ export {
   buildingAdd,
   statAdd,
   statAddPct,
+  statRemove,
   developmentAdd,
+  developmentRemove,
   landTill,
+  passiveAdd,
+  passiveRemove,
 };

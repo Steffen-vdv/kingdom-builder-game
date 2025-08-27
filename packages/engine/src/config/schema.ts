@@ -51,6 +51,7 @@ export const developmentSchema = z.object({
   name: z.string(),
   onBuild: z.array(effectSchema).optional(),
   onDevelopmentPhase: z.array(effectSchema).optional(),
+  onAttackResolved: z.array(effectSchema).optional(),
 });
 
 export type DevelopmentConfig = z.infer<typeof developmentSchema>;

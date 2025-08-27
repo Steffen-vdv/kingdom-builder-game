@@ -60,8 +60,14 @@ export function createActionRegistry() {
     id: 'develop',
     name: 'Develop',
     baseCosts: { [Resource.gold]: 3 },
-    // TODO: place House, Farm, Outpost, or Watchtower on land with an open slot
-    effects: [],
+    // places a chosen development on selected land with an open slot
+    effects: [
+      {
+        type: 'development',
+        method: 'add',
+        params: { id: '$id', landId: '$landId' },
+      },
+    ],
   });
 
   reg.add('tax', {

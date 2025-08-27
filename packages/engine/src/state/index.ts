@@ -10,6 +10,7 @@ export const Stat = {
   maxPopulation: 'maxPopulation',
   armyStrength: 'armyStrength',
   fortificationStrength: 'fortificationStrength',
+  absorption: 'absorption',
 } as const;
 export type StatKey = (typeof Stat)[keyof typeof Stat];
 
@@ -58,6 +59,7 @@ export class PlayerState {
     [Stat.maxPopulation]: 1,
     [Stat.armyStrength]: 0,
     [Stat.fortificationStrength]: 0,
+    [Stat.absorption]: 0,
   };
   population: Record<PopulationRoleId, number> = {
     [PopulationRole.Council]: 0,
@@ -106,6 +108,12 @@ export class PlayerState {
   }
   set fortificationStrength(v: number) {
     this.stats[Stat.fortificationStrength] = v;
+  }
+  get absorption() {
+    return this.stats[Stat.absorption];
+  }
+  set absorption(v: number) {
+    this.stats[Stat.absorption] = v;
   }
 }
 
