@@ -84,6 +84,8 @@ export default function App() {
   });
   const [log, setLog] = useState<string[]>([]);
   const [, forceUpdate] = useState(0);
+  const [developLand, setDevelopLand] = useState('');
+  const [developId, setDevelopId] = useState('farm');
 
   type SimpleAction = { id: string; name: string };
   const actions: SimpleAction[] = Array.from(
@@ -154,15 +156,21 @@ export default function App() {
     forceUpdate((v) => v + 1);
   };
 
-  const handleAction = (id: string) => {
+  const handleAction = (
+    id: string,
+    params?: Record<string, unknown>,
+    label?: string,
+  ) => {
     const before = snapshot(player);
     try {
-      performAction(id, ctx);
+      performAction(id, ctx, params);
       const after = snapshot(player);
       const updates = diff(before, after);
       setLog((l) => [
         ...l,
-        `Action ${id} succeeded${updates.length ? ' — ' + updates.join(', ') : ''}`,
+        `Action ${id}${label ? ` (${label})` : ''} succeeded${
+          updates.length ? ' — ' + updates.join(', ') : ''
+        }`,
       ]);
     } catch (e) {
       setLog((l) => [...l, `Action ${id} failed — ${String(e)}`]);
@@ -227,17 +235,88 @@ export default function App() {
         <section>
           <h2 className="font-semibold">Actions</h2>
           <ul>
-            {actions.map((a) => (
-              <li key={a.id} className="mb-2">
-                {a.name}
-                <button
-                  className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
-                  onClick={() => handleAction(a.id)}
-                >
-                  perform action
-                </button>
-              </li>
-            ))}
+            {actions.map((a) => {
+              if (a.id === 'develop') {
+                const available = player.lands.filter(
+                  (l) => l.slotsUsed < l.slotsMax,
+                );
+                const landId =
+                  available.find((l) => l.id === developLand)?.id ||
+                  available[0]?.id ||
+                  '';
+                const disabled = !landId;
+                return (
+                  <li key={a.id} className="mb-2">
+                    {a.name}
+                    <div className="mt-1">
+                      <label className="mr-2">
+                        land:
+                        <select
+                          className="ml-1 border rounded"
+                          aria-label="develop land"
+                          value={landId}
+                          onChange={(e) => setDevelopLand(e.target.value)}
+                        >
+                          {available.map((l) => (
+                            <option key={l.id} value={l.id}>
+                              {l.id}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="mr-2">
+                        development:
+                        <select
+                          className="ml-1 border rounded"
+                          aria-label="develop id"
+                          value={developId}
+                          onChange={(e) => setDevelopId(e.target.value)}
+                        >
+                          {['farm', 'house', 'outpost', 'watchtower'].map(
+                            (d) => (
+                              <option key={d} value={d}>
+                                {d}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </label>
+                      <button
+                        className="ml-2 px-2 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+                        aria-label="perform develop"
+                        title={
+                          disabled
+                            ? 'no land with open development slot available'
+                            : undefined
+                        }
+                        disabled={disabled}
+                        onClick={() =>
+                          handleAction(
+                            a.id,
+                            { id: developId, landId },
+                            `${developId} on ${landId}`,
+                          )
+                        }
+                      >
+                        perform action
+                      </button>
+                    </div>
+                  </li>
+                );
+              }
+              return (
+                <li key={a.id} className="mb-2">
+                  {a.name}
+                  <button
+                    className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
+                    aria-label={`perform ${a.id}`}
+                    onClick={() => handleAction(a.id)}
+                  >
+                    perform action
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
 
