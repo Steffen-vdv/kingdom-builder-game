@@ -10,6 +10,9 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
     "types": ["vitest"],
     "baseUrl": ".",
     "paths": {

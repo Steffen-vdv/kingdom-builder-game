@@ -223,8 +223,8 @@ export function createEngine(overrides?: {
     populations,
     passives,
   );
-  const playerA = ctx.game.players[0];
-  const playerB = ctx.game.players[1];
+  const playerA = ctx.game.players[0]!;
+  const playerB = ctx.game.players[1]!;
 
   playerA.gold = 10;
   playerB.gold = 10;
@@ -232,10 +232,10 @@ export function createEngine(overrides?: {
   playerA.lands.push(new Land('A-L2', rules.slotsPerNewLand));
   playerB.lands.push(new Land('B-L1', rules.slotsPerNewLand));
   playerB.lands.push(new Land('B-L2', rules.slotsPerNewLand));
-  playerA.lands[0].developments.push('farm');
-  playerA.lands[0].slotsUsed = 1;
-  playerB.lands[0].developments.push('farm');
-  playerB.lands[0].slotsUsed = 1;
+  playerA.lands[0]!.developments.push('farm');
+  playerA.lands[0]!.slotsUsed = 1;
+  playerB.lands[0]!.developments.push('farm');
+  playerB.lands[0]!.slotsUsed = 1;
   playerA.population[PopulationRole.Council] = 1;
   playerB.population[PopulationRole.Council] = 1;
   ctx.game.currentPlayerIndex = 0;

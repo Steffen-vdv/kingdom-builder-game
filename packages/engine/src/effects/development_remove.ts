@@ -1,8 +1,8 @@
 import type { EffectHandler } from '.';
 
 export const developmentRemove: EffectHandler = (effect, ctx, mult = 1) => {
-  const id = effect.params?.id as string;
-  const landId = effect.params?.landId as string;
+  const id = effect.params?.['id'] as string;
+  const landId = effect.params?.['landId'] as string;
   if (!id || !landId)
     throw new Error('development:remove requires id and landId');
   const land = ctx.activePlayer.lands.find((l) => l.id === landId);
