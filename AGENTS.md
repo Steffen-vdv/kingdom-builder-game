@@ -1,13 +1,17 @@
-# Prime directive for Agents
+# Core Agent principles
 
 We are gradually, step by step, implementing a digital game. You can refer to the README.md for a summary of the game's general format and objective. The goal of Agents working on this project is to help structure the repository in such a way that we make progress towards our end-goal: A fully functional, robust, elegant and _extensible_ game. This is _not_ a type of game where we hardcode most things, stick to one config, and the game is done and forgotten. This game must be heavily configurable, possibly later by players themselves through a game config editor, but initially by ourselves for heavy AB & game design testing. We must be able to change nearly anything at a whim - Change configs, add buildings, add actions, invent new effects, invent new ratio's and thresholds for things, and so on.
 
-## Reference documents
+Therefore, the main mission for agents is to understand the intended game, and it's mechanics/terminology, very well. This is necessary in order to build a proper abstract, extensible system that allows us to make changes to the game's configuration by just changing some simple configs (rather than needing to update tens of if-statements everywhere). Therefore, in this project, we focus on very correct architecture, structure, separation, and a correct implementation of principles such as OOP, SOLID, DRY, YAGNI, KISS, and so on. When in doubt, over-engineering is the answer, because later I will invent a new Building and I will want to configure it myself with some unique combination of costs/requirements/effects and it should 'just work' as it is being carried by systems that understand such concepts.
+
+Full game information can be read below.
+
+# Reference documents
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-## Abstraction guidelines
+# Abstraction guidelines
 
 - Model behaviour through formal **Triggers** and **Effects**. Avoid hard coded fields such as `apOnUpkeep`; instead, wire rules through the central effect system so that any trigger can resolve any effect.
 - When writing tests, derive expectations from the active configuration or from a mocked registry. Do not hard code numeric values like `toBe(10)` when the value comes from config; fetch it from the registry so tests continue to pass if configs change.
@@ -15,13 +19,23 @@ We are gradually, step by step, implementing a digital game. You can refer to th
 - Use **Evaluators** to orchestrate conditional or iterative logic. Effects may include an `evaluator` and nested `effects`; the evaluator resolves to a value controlling how many times the sub-effects run. For example, `{ evaluator: { type: "development", params: { id: "farm" } }, effects: [{ type: "resource", method: "add", params: { key: "gold", amount: 2 } }] }` applies the resource gain per matching development.
 - Define leaf effects with `type` and `method` keys to separate domains (Resource, Stat, Land, etc.) from operations (add, remove, till...). This keeps params well-typed and enables a uniform effect registry.
 
-## Testing guidelines
+# Testing guidelines
 
-- Always run `npm test`, `npm run e2e`, and `npm run build` before submitting changes to ensure unit, integration, end-to-end tests, and the production build all succeed.
+Tests live in:
 
-Therefore, the main mission for agents is to understand the intended game, and it's mechanics/terminology, very well. This is necessary in order to build a proper abstract, extensible system that allows us to make changes to the game's configuration by just changing some simple configs (rather than needing to update tens of if-statements everywhere). Therefore, in this project, we focus on very correct architecture, structure, separation, and a correct implementation of principles such as OOP, SOLID, DRY, YAGNI, KISS, and so on. When in doubt, over-engineering is the answer, because later I will invent a new Building and I will want to configure it myself with some unique combination of costs/requirements/effects and it should 'just work' as it is being carried by systems that understand such concepts.
+- `packages/engine/tests` for unit tests
+- `tests/integration` for integration tests
+- `e2e` for end-to-end tests using Playwright
 
-Full game information can be read below.
+Install the Playwright Chromium browser (Linux users run `install-deps` once) and run all checks:
+
+```bash
+npx playwright install-deps chromium  # Linux only, run once
+npx playwright install chromium
+npm test
+npm run e2e
+npm run build
+```
 
 # Game overview
 

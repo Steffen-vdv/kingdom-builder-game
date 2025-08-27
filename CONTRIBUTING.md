@@ -18,6 +18,15 @@ workflow for contributors so that changes remain consistent and easy to review.
   - **Unit tests** under `packages/engine/tests`.
   - **Integration tests** under `tests/integration`.
   - **End-to-end tests** under `e2e` (Playwright).
+- Run unit and integration tests with `npm test`.
+- Run end-to-end tests (requires the Playwright Chromium browser):
+
+  ```bash
+  npx playwright install-deps chromium # Linux only, run once
+  npx playwright install chromium
+  npm run e2e
+  ```
+
 - Always run `npm test`, `npm run e2e`, and `npm run build` before committing.
   The `npm test` script runs ESLint and Vitest for unit/integration tests.
 - New features and bug fixes **must** include tests. Derive expectations from

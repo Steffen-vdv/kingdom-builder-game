@@ -7,27 +7,6 @@
 3. Start the development server: `npm run dev`
 4. Build for production: `npm run build`
 
-## 2) Testing
-
-- **Unit tests** live in `packages/engine/tests`.
-- **Integration tests** live in `tests/integration`.
-- **End-to-end tests** live in `e2e` and use Playwright.
-
-Run unit and integration tests:
-
-```bash
-npm test
-```
-
-Run end-to-end tests (requires the Playwright Chromium browser). Install system
-dependencies once on Linux, then install only the browser for faster runs:
-
-```bash
-npx playwright install-deps chromium # Linux only, run once
-npx playwright install chromium
-npm run e2e
-```
-
 ## 3) Game Overview
 
 Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, manage resources, and try to outlast or conquer the opponent. Victory is achieved by capturing the opposing castle, forcing bankruptcy, or holding the most victory points when the game ends after the final round.
