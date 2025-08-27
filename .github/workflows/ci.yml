@@ -31,6 +31,15 @@ jobs:
       # the GitHub runner, so we skip the slow `--with-deps` flag.
       - run: npx playwright install chromium
       - run: npm run e2e
+      - name: SonarQube Scan
+        run: |
+          if [ -n "$SONAR_TOKEN" ]; then
+            npx sonar-scanner -Dsonar.token=$SONAR_TOKEN
+          else
+            npx sonar-scanner -Dsonar.scanner.skip=true
+          fi
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
