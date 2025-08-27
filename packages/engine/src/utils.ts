@@ -1,17 +1,17 @@
 import type { EffectDef } from './effects';
 
-export function applyParamsToEffects(
-  effects: EffectDef[],
-  params: Record<string, any>,
-): EffectDef[] {
-  const replace = (val: any) =>
+export function applyParamsToEffects<E extends EffectDef>(
+  effects: E[],
+  params: Record<string, unknown>,
+): E[] {
+  const replace = (val: unknown): unknown =>
     typeof val === 'string' && val.startsWith('$') ? params[val.slice(1)] : val;
-  const mapEffect = (e: EffectDef): EffectDef => ({
+  const mapEffect = (e: E): E => ({
     ...e,
     params: e.params
-      ? Object.fromEntries(
+      ? (Object.fromEntries(
           Object.entries(e.params).map(([k, v]) => [k, replace(v)]),
-        )
+        ) as E['params'])
       : undefined,
     evaluator: e.evaluator
       ? {
