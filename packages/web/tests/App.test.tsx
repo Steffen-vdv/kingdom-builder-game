@@ -4,12 +4,28 @@ import React from 'react';
 import App from '../src/App';
 
 vi.mock('@kingdom-builder/engine', () => ({
-  createEngine: () => ({}),
+  createEngine: () => ({
+    actions: { map: new Map([['stub', { id: 'stub', name: 'Stub' }]]) },
+    game: {
+      active: {
+        resources: { gold: 0, ap: 0, happiness: 0, castleHP: 10 },
+        stats: {
+          maxPopulation: 1,
+          armyStrength: 0,
+          fortificationStrength: 0,
+          absorption: 0,
+        },
+        buildings: new Set<string>(),
+        lands: [],
+      },
+    },
+  }),
+  performAction: vi.fn(),
 }));
 
 describe('<App />', () => {
-  it('renders hello world', () => {
+  it('renders testlab header', () => {
     const html = renderToString(<App />);
-    expect(html).toContain('Hello World');
+    expect(html).toContain('testlab');
   });
 });
