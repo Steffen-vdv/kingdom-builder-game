@@ -1,6 +1,7 @@
 import { Registry } from '../registry';
 import type { EngineContext } from '../context';
 import { EVALUATORS } from '../evaluators';
+import type { EvaluatorDef } from '../evaluators';
 import { landAdd } from './land_add';
 import { resourceAdd } from './resource_add';
 import { resourceRemove } from './resource_remove';
@@ -19,12 +20,12 @@ import { resultMod } from './result_mod';
 export interface EffectDef<
   P extends Record<string, unknown> = Record<string, unknown>,
 > {
-  type?: string;
-  method?: string;
-  params?: P;
-  effects?: EffectDef[];
-  evaluator?: import('../evaluators').EvaluatorDef;
-  round?: 'up' | 'down';
+  type?: string | undefined;
+  method?: string | undefined;
+  params?: P | undefined;
+  effects?: EffectDef[] | undefined;
+  evaluator?: EvaluatorDef | undefined;
+  round?: 'up' | 'down' | undefined;
 }
 
 export interface EffectHandler<

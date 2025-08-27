@@ -2,6 +2,7 @@ module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   parserOptions: {
+    project: ['./tsconfig.eslint.json'],
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
@@ -10,8 +11,13 @@ module.exports = {
     node: true,
     es2022: true,
   },
-  plugins: ['@typescript-eslint', 'unused-imports'],
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
+  plugins: ['@typescript-eslint', 'unused-imports', 'import'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-type-checked',
+    'plugin:import/typescript',
+  ],
   rules: {
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': [
@@ -29,5 +35,14 @@ module.exports = {
       },
     ],
     '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
+    ],
+    '@typescript-eslint/ban-ts-comment': [
+      'error',
+      { 'ts-ignore': true, 'ts-nocheck': true },
+    ],
+    'import/no-duplicates': 'error',
   },
 };

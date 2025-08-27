@@ -248,20 +248,22 @@ describe('population registry overrides', () => {
     ctx.activePlayer.population[PopulationRole.Fortifier] = 0;
 
     const council = populations.get(PopulationRole.Council);
-    const devGain =
+    const devGain = Number(
       council.onDevelopmentPhase?.find(
         (e) =>
           e.type === 'resource' &&
           e.method === 'add' &&
           e.params.key === Resource.gold,
-      )?.params.amount ?? 0;
-    const upkeepCost =
+      )?.params.amount ?? 0,
+    );
+    const upkeepCost = Number(
       council.onUpkeepPhase?.find(
         (e) =>
           e.type === 'resource' &&
           e.method === 'remove' &&
           e.params.key === Resource.ap,
-      )?.params.amount ?? 0;
+      )?.params.amount ?? 0,
+    );
 
     runDevelopment(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold + devGain);

@@ -4,11 +4,11 @@ import {
   runDevelopment,
   performAction,
   Resource,
-  EngineContext,
   EVALUATORS,
 } from '../../src';
 import type { EffectDef } from '../../src/effects';
 import type { EvaluatorDef } from '../../src/evaluators';
+import type { EngineContext } from '../../src';
 
 function getOverworkExpectations(ctx: EngineContext) {
   const def = ctx.actions.get('overwork');
