@@ -73,23 +73,31 @@ export type CostModifier = (
 export type ResultModifier = (actionId: string, ctx: EngineContext) => void;
 
 export class PassiveManager {
-  private costMods: CostModifier[] = [];
-  private resultMods: ResultModifier[] = [];
+  private costMods: Map<string, CostModifier> = new Map();
+  private resultMods: Map<string, ResultModifier> = new Map();
   private passives: Map<string, { effects: EffectDef[] }> = new Map();
 
-  registerCostModifier(mod: CostModifier) {
-    this.costMods.push(mod);
+  registerCostModifier(id: string, mod: CostModifier) {
+    this.costMods.set(id, mod);
   }
-  registerResultModifier(mod: ResultModifier) {
-    this.resultMods.push(mod);
+  unregisterCostModifier(id: string) {
+    this.costMods.delete(id);
+  }
+  registerResultModifier(id: string, mod: ResultModifier) {
+    this.resultMods.set(id, mod);
+  }
+  unregisterResultModifier(id: string) {
+    this.resultMods.delete(id);
   }
 
   applyCostMods(actionId: string, base: CostBag, ctx: EngineContext): CostBag {
-    return this.costMods.reduce((acc, m) => m(actionId, acc, ctx), { ...base });
+    let acc: CostBag = { ...base };
+    for (const m of this.costMods.values()) acc = m(actionId, acc, ctx);
+    return acc;
   }
 
   runResultMods(actionId: string, ctx: EngineContext) {
-    for (const m of this.resultMods) m(actionId, ctx);
+    for (const m of this.resultMods.values()) m(actionId, ctx);
   }
 
   addPassive(

@@ -13,6 +13,8 @@ import { developmentRemove } from './development_remove';
 import { landTill } from './land_till';
 import { passiveAdd } from './passive_add';
 import { passiveRemove } from './passive_remove';
+import { costMod } from './cost_mod';
+import { resultMod } from './result_mod';
 
 export interface EffectDef {
   type?: string;
@@ -43,6 +45,10 @@ export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
   registry.add('land:till', landTill);
   registry.add('passive:add', passiveAdd);
   registry.add('passive:remove', passiveRemove);
+  registry.add('cost_mod:add', costMod);
+  registry.add('cost_mod:remove', costMod);
+  registry.add('result_mod:add', resultMod);
+  registry.add('result_mod:remove', resultMod);
 }
 
 export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
@@ -71,4 +77,6 @@ export {
   landTill,
   passiveAdd,
   passiveRemove,
+  costMod,
+  resultMod,
 };

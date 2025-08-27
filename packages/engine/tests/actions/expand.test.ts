@@ -7,6 +7,7 @@ import {
   EngineContext,
   getActionCosts,
 } from '../../src/index.ts';
+import { PlayerState } from '../../src/state/index.ts';
 
 function getExpandExpectations(ctx: EngineContext) {
   const expandDef = ctx.actions.get('expand');
@@ -22,9 +23,13 @@ function getExpandExpectations(ctx: EngineContext) {
         e.params?.key === Resource.happiness,
     )
     .reduce((sum, e) => sum + (e.params?.amount ?? 0), 0);
-  const dummyCtx = { activePlayer: { happiness: 0 } } as EngineContext;
+  const dummy = new PlayerState(ctx.activePlayer.id, ctx.activePlayer.name);
+  dummy.resources = { ...ctx.activePlayer.resources } as any;
+  dummy.stats = { ...ctx.activePlayer.stats } as any;
+  const dummyCtx = { ...ctx, activePlayer: dummy } as EngineContext;
+  const before = dummy.happiness;
   ctx.passives.runResultMods(expandDef.id, dummyCtx);
-  const extraHappiness = dummyCtx.activePlayer.happiness;
+  const extraHappiness = dummy.happiness - before;
   return { costs, landGain, happinessGain: baseHappiness + extraHappiness };
 }
 
