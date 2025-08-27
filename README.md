@@ -39,22 +39,17 @@ Each turn flows through three phases:
 2. **Upkeep** – pay upkeep for your people and resolve end-of-phase effects.
 3. **Main** – spend action points to perform strategic actions such as expanding your territory, developing lands, or attacking the enemy.
 
-
-
 ### Starting Setup
 
-- 10 🪙 Gold  
-- 2 🗺️ Land tiles (one with a 🌾 Farm)  
-- Castle HP 10 and one 🏠 House  
-- Population: 1 ⚖️ Council member  
-- Army Strength 0, Fortification Strength 0, Happiness 0  
+- 10 🪙 Gold
+- 2 🗺️ Land tiles (one with a 🌾 Farm)
+- Castle HP 10 and one 🏠 House
+- Population: 1 ⚖️ Council member
+- Army Strength 0, Fortification Strength 0, Happiness 0
 - Player order: A then B; B gains +1 ⚡️ Action Point on their first Development phase
-
-
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing conventions,
 and commit guidelines. For an overview of the engine architecture, read
 [ARCHITECTURE.md](docs/ARCHITECTURE.md).
-

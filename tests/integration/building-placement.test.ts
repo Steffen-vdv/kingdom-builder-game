@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { performAction } from '../../packages/engine/src/index.ts';
-import { createTestContext, getActionCosts, getActionOutcome } from './fixtures';
+import {
+  createTestContext,
+  getActionCosts,
+  getActionOutcome,
+} from './fixtures';
 
 describe('Building placement integration', () => {
   it('applies building effects to subsequent actions', () => {
@@ -35,7 +39,9 @@ describe('Building placement integration', () => {
         expect(ctx.activePlayer.resources[key]).toBe(resPre[key] + gain);
       }
     }
-    expect(ctx.activePlayer.lands.length).toBe(landPre + expandAfter.results.land);
+    expect(ctx.activePlayer.lands.length).toBe(
+      landPre + expandAfter.results.land,
+    );
     for (const [key, gain] of Object.entries(expandAfter.results.stats)) {
       expect(ctx.activePlayer.stats[key]).toBe(statsPre[key] + gain);
     }

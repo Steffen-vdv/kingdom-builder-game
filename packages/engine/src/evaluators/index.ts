@@ -1,7 +1,7 @@
-import { Registry } from "../registry";
-import type { EngineContext } from "../context";
+import { Registry } from '../registry';
+import type { EngineContext } from '../context';
 
-import { developmentEvaluator } from "./development";
+import { developmentEvaluator } from './development';
 export interface EvaluatorDef {
   type: string;
   params?: Record<string, any>;
@@ -15,8 +15,10 @@ export class EvaluatorRegistry extends Registry<EvaluatorHandler> {}
 
 export const EVALUATORS = new EvaluatorRegistry();
 
-export function registerCoreEvaluators(registry: EvaluatorRegistry = EVALUATORS) {
-  registry.add("development", developmentEvaluator);
+export function registerCoreEvaluators(
+  registry: EvaluatorRegistry = EVALUATORS,
+) {
+  registry.add('development', developmentEvaluator);
 }
 
-export { developmentEvaluator } from "./development";
+export { developmentEvaluator } from './development';

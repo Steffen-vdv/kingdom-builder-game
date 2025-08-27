@@ -12,7 +12,7 @@ function clonePlayer(p: PlayerState) {
   c.resources = { ...p.resources } as any;
   c.stats = { ...p.stats } as any;
   c.population = { ...p.population } as any;
-  c.lands = p.lands.map(l => {
+  c.lands = p.lands.map((l) => {
     const nl = new Land(l.id, l.slotsMax);
     nl.slotsUsed = l.slotsUsed;
     nl.developments = [...l.developments];
@@ -32,11 +32,16 @@ export function createTestContext(overrides?: { gold?: number; ap?: number }) {
 export function getActionCosts(id: string, ctx: EngineContext) {
   const def = ctx.actions.get(id);
   const baseCosts = { ...(def.baseCosts || {}) };
-  if (baseCosts[Resource.ap] === undefined) baseCosts[Resource.ap] = ctx.services.rules.defaultActionAPCost;
+  if (baseCosts[Resource.ap] === undefined)
+    baseCosts[Resource.ap] = ctx.services.rules.defaultActionAPCost;
   return ctx.passives.applyCostMods(def.id, baseCosts, ctx);
 }
 
-export function simulateEffects(effects: EffectDef[], ctx: EngineContext, actionId?: string) {
+export function simulateEffects(
+  effects: EffectDef[],
+  ctx: EngineContext,
+  actionId?: string,
+) {
   const before = clonePlayer(ctx.activePlayer);
   const dummy = clonePlayer(ctx.activePlayer);
   const dummyCtx = { ...ctx, activePlayer: dummy } as EngineContext;
@@ -45,13 +50,17 @@ export function simulateEffects(effects: EffectDef[], ctx: EngineContext, action
 
   const resources: Record<string, number> = {};
   for (const key of Object.keys(before.resources)) {
-    const delta = dummy.resources[key as keyof typeof dummy.resources] - before.resources[key as keyof typeof before.resources];
+    const delta =
+      dummy.resources[key as keyof typeof dummy.resources] -
+      before.resources[key as keyof typeof before.resources];
     if (delta !== 0) resources[key] = delta;
   }
 
   const stats: Record<string, number> = {};
   for (const key of Object.keys(before.stats)) {
-    const delta = dummy.stats[key as keyof typeof dummy.stats] - before.stats[key as keyof typeof before.stats];
+    const delta =
+      dummy.stats[key as keyof typeof dummy.stats] -
+      before.stats[key as keyof typeof before.stats];
     if (delta !== 0) stats[key] = delta;
   }
 

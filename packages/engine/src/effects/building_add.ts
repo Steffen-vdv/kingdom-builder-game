@@ -1,4 +1,4 @@
-import type { EffectHandler } from ".";
+import type { EffectHandler } from '.';
 
 export const buildingAdd: EffectHandler = (effect, ctx, mult = 1) => {
   const id = effect.params!.id as string;

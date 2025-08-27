@@ -78,4 +78,3 @@ export type GameConfig = z.infer<typeof gameConfigSchema>;
 export function validateGameConfig(config: unknown): GameConfig {
   return gameConfigSchema.parse(config);
 }
-

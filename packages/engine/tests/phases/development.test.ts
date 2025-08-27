@@ -12,18 +12,27 @@ import {
 const council = POPULATIONS.get(PopulationRole.Council);
 const councilApGain =
   council.onDevelopmentPhase?.find(
-    (e) => e.type === 'resource' && e.method === 'add' && e.params.key === Resource.ap,
+    (e) =>
+      e.type === 'resource' &&
+      e.method === 'add' &&
+      e.params.key === Resource.ap,
   )?.params.amount ?? 0;
 
 const farm = DEVELOPMENTS.get('farm');
 const farmGoldGain =
   farm.onDevelopmentPhase?.find(
-    (e) => e.type === 'resource' && e.method === 'add' && e.params.key === Resource.gold,
+    (e) =>
+      e.type === 'resource' &&
+      e.method === 'add' &&
+      e.params.key === Resource.gold,
   )?.params.amount ?? 0;
 
 const commanderPct =
   POPULATIONS.get(PopulationRole.Commander).onDevelopmentPhase?.find(
-    (e) => e.type === 'stat' && e.method === 'add_pct' && e.params.key === Stat.armyStrength,
+    (e) =>
+      e.type === 'stat' &&
+      e.method === 'add_pct' &&
+      e.params.key === Stat.armyStrength,
   )?.params.percent ?? 0;
 const fortifierPct =
   POPULATIONS.get(PopulationRole.Fortifier).onDevelopmentPhase?.find(
@@ -51,11 +60,11 @@ describe('Development phase', () => {
     ctx.activePlayer.stats[Stat.armyStrength] = 8;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
     runDevelopment(ctx);
-    const expectedArmy =
-      8 + 8 * (commanderPct / 100);
-    const expectedFort =
-      4 + 4 * (fortifierPct / 100);
+    const expectedArmy = 8 + 8 * (commanderPct / 100);
+    const expectedFort = 4 + 4 * (fortifierPct / 100);
     expect(ctx.activePlayer.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
-    expect(ctx.activePlayer.stats[Stat.fortificationStrength]).toBeCloseTo(expectedFort);
+    expect(ctx.activePlayer.stats[Stat.fortificationStrength]).toBeCloseTo(
+      expectedFort,
+    );
   });
 });
