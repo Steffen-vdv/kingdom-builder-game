@@ -15,11 +15,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      input: {
-        main: path.resolve(rootDir, 'index.html'),
-        game: path.resolve(rootDir, 'game.html'),
-        overview: path.resolve(rootDir, 'overview.html'),
-      },
+      input: path.resolve(rootDir, 'index.html'),
     },
   },
 });
