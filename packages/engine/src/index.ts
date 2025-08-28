@@ -84,7 +84,7 @@ export function getActionCosts<T extends string>(
   const actionDefinition = ctx.actions.get(actionId);
   let base = { ...(actionDefinition.baseCosts || {}) };
   if (actionId === 'build' && params) {
-    const p = params as ActionParams<'build'>;
+    const p = params as unknown as ActionParams<'build'>;
     const building = ctx.buildings.get(p.id);
     base = { ...building.costs, ...base };
   }
@@ -131,7 +131,7 @@ export function performAction<T extends string>(
   }
   let base = { ...(actionDefinition.baseCosts || {}) };
   if (actionId === 'build' && params) {
-    const p = params as ActionParams<'build'>;
+    const p = params as unknown as ActionParams<'build'>;
     const building = ctx.buildings.get(p.id);
     base = { ...building.costs, ...base };
   }
