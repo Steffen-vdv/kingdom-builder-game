@@ -112,6 +112,13 @@ const statInfo: Record<string, { icon: string; label: string }> = {
   armyGrowth: { icon: '📈', label: 'Army Growth' },
 };
 
+const populationInfo: Record<string, { icon: string; label: string }> = {
+  council: { icon: '⚖️', label: 'Council' },
+  commander: { icon: '🎖️', label: 'Army Commander' },
+  fortifier: { icon: '🧱', label: 'Fortifier' },
+  citizen: { icon: '👤', label: 'Citizen' },
+};
+
 const actionInfo = {
   expand: { icon: '🌱' },
   overwork: { icon: '🛠️' },
@@ -492,54 +499,64 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       ([, v]) => v > 0,
     );
     const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
+    const popDetails = popEntries.map(([role, count]) => ({ role, count }));
     function formatStatValue(key: string, value: number) {
       if (key === 'absorption') return `${value * 100}%`;
       return String(value);
     }
 
-    const landItems: JSX.Element[] = [];
+    const devCounts = new Map<string, number>();
+    let slotsFree = 0;
     player.lands.forEach((land) => {
-      const devCounts = new Map<string, number>();
       land.developments.forEach((d) =>
         devCounts.set(d, (devCounts.get(d) || 0) + 1),
       );
-      const items: {
-        key: string;
-        icon: string;
-        label: string;
-        count: number;
-      }[] = [];
-      devCounts.forEach((count, id) =>
-        items.push({
-          key: id,
-          icon: developmentInfo[id]?.icon || id,
-          label: developmentInfo[id]?.label || id,
-          count,
-        }),
-      );
-      if (land.slotsFree > 0)
-        items.push({
-          key: 'slot',
-          icon: slotIcon,
-          label: 'Empty development slot',
-          count: land.slotsFree,
-        });
-      landItems.push(
-        <span key={land.id} className="bar-item">
-          <span title="Land">{landIcon}</span>
-          {' ('}
-          {items.map((item, i) => (
-            <React.Fragment key={item.key}>
-              {i > 0 && ', '}
-              <span title={item.label}>
-                {item.icon}
-                {item.count}
-              </span>
-            </React.Fragment>
-          ))}
-          {')'}
-        </span>,
-      );
+      slotsFree += land.slotsFree;
+    });
+    const landItems: {
+      key: string;
+      icon: string;
+      label: string;
+      count: number;
+    }[] = [];
+    devCounts.forEach((count, id) =>
+      landItems.push({
+        key: id,
+        icon: developmentInfo[id]?.icon || id,
+        label: developmentInfo[id]?.label || id,
+        count,
+      }),
+    );
+    if (slotsFree > 0)
+      landItems.push({
+        key: 'slot',
+        icon: slotIcon,
+        label: 'Empty development slot',
+        count: slotsFree,
+      });
+    const landBar = (
+      <span className="bar-item">
+        <span title="Land">{landIcon}</span>
+        {' ('}
+        {landItems.map((item, i) => (
+          <React.Fragment key={item.key}>
+            {i > 0 && ','}
+            <span title={item.label}>
+              {item.icon}
+              {item.count}
+            </span>
+          </React.Fragment>
+        ))}
+        {')'}
+      </span>
+    );
+
+    const playerPassives = ctx.passives.list().filter((id) => {
+      if (id.startsWith('watchtower_absorption_')) {
+        const landId = id.replace('watchtower_absorption_', '');
+        return player.lands.some((l) => l.id === landId);
+      }
+      return true;
     });
 
     function describePassive(id: string): string {
@@ -574,6 +591,21 @@ export default function Game({ onExit }: { onExit?: () => void }) {
             className="bar-item"
           >
             👥{currentPop}/{player.maxPopulation}
+            {popDetails.length > 0 && (
+              <>
+                {' ('}
+                {popDetails.map(({ role, count }, i) => (
+                  <React.Fragment key={role}>
+                    {i > 0 && ','}
+                    <span title={populationInfo[role]?.label}>
+                      {populationInfo[role]?.icon}
+                      {count}
+                    </span>
+                  </React.Fragment>
+                ))}
+                {')'}
+              </>
+            )}
           </span>
           {Object.entries(player.stats)
             .filter(([k]) => k !== 'maxPopulation')
@@ -588,18 +620,16 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               </span>
             ))}
           <div className="h-4 border-l" />
-          {landItems}
+          {landBar}
         </div>
-        {ctx.passives.list().length > 0 && (
+        {playerPassives.length > 0 && (
           <div className="border p-2 rounded">
             <h4 className="font-medium">Passives</h4>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              {ctx.passives.list().map((p) => (
-                <span key={p} className="bar-item" title={describePassive(p)}>
-                  {describePassive(p)}
-                </span>
+            <ul className="mt-1 list-disc list-inside">
+              {playerPassives.map((p) => (
+                <li key={p}>{describePassive(p)}</li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
         {player.buildings.size > 0 && (
@@ -705,7 +735,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                     <span className="absolute top-2 right-2 text-sm text-gray-600">
                       {renderCosts(costs, ctx.activePlayer.resources)}
                     </span>
-                    <ul className="text-sm list-disc pl-4">
+                    <ul className="text-sm list-disc list-inside">
                       {actionSummaries.get(action.id)?.map((e, i) => (
                         <li key={i}>{e}</li>
                       ))}
@@ -766,7 +796,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-sm list-disc pl-4">
+                        <ul className="text-sm list-disc list-inside">
                           {developmentSummaries.get(d.id)?.map((e, i) => (
                             <li key={i}>{e}</li>
                           ))}
@@ -811,7 +841,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-sm list-disc pl-4">
+                        <ul className="text-sm list-disc list-inside">
                           {buildingSummaries.get(b.id)?.map((e, i) => (
                             <li key={i}>{e}</li>
                           ))}
