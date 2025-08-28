@@ -217,7 +217,7 @@ export function createEngine(overrides?: {
   const rules = overrides?.rules || DefaultRules;
   const services = new Services(rules);
   const passives = new PassiveManager();
-  const game = new GameState('Steph', 'Byte');
+  const game = new GameState('Player A', 'Player B');
 
   let actions = overrides?.actions;
   let buildings = overrides?.buildings;
