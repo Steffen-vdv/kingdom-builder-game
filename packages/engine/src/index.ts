@@ -6,7 +6,12 @@ import {
   GameState,
   Land,
 } from './state';
-import type { ResourceKey, PlayerState } from './state';
+import type {
+  ResourceKey,
+  PlayerState,
+  StatKey,
+  PopulationRoleId,
+} from './state';
 import { Services, PassiveManager, DefaultRules } from './services';
 import type { CostBag, RuleSet } from './services';
 import { createActionRegistry } from './content/actions';
@@ -30,7 +35,9 @@ import {
   buildingSchema,
   developmentSchema,
   populationSchema,
+  type PlayerStartConfig,
 } from './config/schema';
+import { GAME_START } from './content/game';
 
 function runTrigger(
   trigger: TriggerKey,
@@ -173,6 +180,29 @@ export function resolveAttack(
   return final;
 }
 
+function applyPlayerStart(
+  player: PlayerState,
+  config: PlayerStartConfig,
+  rules: RuleSet,
+) {
+  for (const [key, value] of Object.entries(config.resources || {}))
+    player.resources[key as ResourceKey] = value ?? 0;
+  for (const [key, value] of Object.entries(config.stats || {}))
+    player.stats[key as StatKey] = value ?? 0;
+  for (const [key, value] of Object.entries(config.population || {}))
+    player.population[key as PopulationRoleId] = value ?? 0;
+  if (config.lands)
+    config.lands.forEach((landCfg, idx) => {
+      const land = new Land(
+        `${player.id}-L${idx + 1}`,
+        landCfg.slotsMax ?? rules.slotsPerNewLand,
+      );
+      if (landCfg.developments) land.developments.push(...landCfg.developments);
+      land.slotsUsed = landCfg.slotsUsed ?? land.developments.length;
+      player.lands.push(land);
+    });
+}
+
 export function createEngine(overrides?: {
   actions?: Registry<ActionDef>;
   buildings?: Registry<BuildingDef>;
@@ -193,6 +223,7 @@ export function createEngine(overrides?: {
   let buildings = overrides?.buildings;
   let developments = overrides?.developments;
   let populations = overrides?.populations;
+  let start = GAME_START;
 
   if (overrides?.config) {
     const config = validateGameConfig(overrides.config);
@@ -219,6 +250,7 @@ export function createEngine(overrides?: {
         registry.add(population.id, population);
       populations = registry;
     }
+    if (config.start) start = config.start;
   }
 
   actions = actions || createActionRegistry();
@@ -238,18 +270,8 @@ export function createEngine(overrides?: {
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;
 
-  playerA.gold = 10;
-  playerB.gold = 10;
-  playerA.lands.push(new Land('A-L1', rules.slotsPerNewLand));
-  playerA.lands.push(new Land('A-L2', rules.slotsPerNewLand));
-  playerB.lands.push(new Land('B-L1', rules.slotsPerNewLand));
-  playerB.lands.push(new Land('B-L2', rules.slotsPerNewLand));
-  playerA.lands[0]!.developments.push('farm');
-  playerA.lands[0]!.slotsUsed = 1;
-  playerB.lands[0]!.developments.push('farm');
-  playerB.lands[0]!.slotsUsed = 1;
-  playerA.population[PopulationRole.Council] = 1;
-  playerB.population[PopulationRole.Council] = 1;
+  applyPlayerStart(playerA, start.player, rules);
+  applyPlayerStart(playerB, start.player, rules);
   ctx.game.currentPlayerIndex = 0;
 
   return ctx;
@@ -262,6 +284,7 @@ export {
   Stat,
   BUILDINGS,
   DEVELOPMENTS,
+  GAME_START,
   EFFECTS,
   EVALUATORS,
   POPULATIONS,
