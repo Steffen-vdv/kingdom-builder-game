@@ -1,4 +1,4 @@
-# 👑 Kingdom Builder v5.11 — Player Guide (Updated 2)
+# 👑 Kingdom Builder v5.11
 
 ## 1) Setup
 

@@ -11,7 +11,7 @@ export const landAdd: EffectHandler<LandAddParams> = (
   ctx,
   mult = 1,
 ) => {
-  const count = Math.floor(((effect.params?.count ?? 1) as number) * mult);
+  const count = Math.floor(Number(effect.params?.count ?? 1) * mult);
   for (let i = 0; i < count; i++) {
     const land = new Land(
       `${ctx.activePlayer.id}-L${ctx.activePlayer.lands.length + 1}`,

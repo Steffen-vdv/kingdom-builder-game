@@ -4,9 +4,9 @@ import {
   runDevelopment,
   performAction,
   Resource,
-  EngineContext,
   createActionRegistry,
   getActionCosts,
+  type EngineContext,
 } from '../../src/index.ts';
 
 function getExpandExpectations(ctx: EngineContext) {
@@ -14,7 +14,7 @@ function getExpandExpectations(ctx: EngineContext) {
   const costs = getActionCosts('expand', ctx);
   const landGain = expandDef.effects
     .filter((e) => e.type === 'land' && e.method === 'add')
-    .reduce((sum, e) => sum + (e.params?.count ?? 0), 0);
+    .reduce((sum, e) => sum + Number(e.params?.count ?? 0), 0);
   const baseHappiness = expandDef.effects
     .filter(
       (e) =>
@@ -22,7 +22,7 @@ function getExpandExpectations(ctx: EngineContext) {
         e.method === 'add' &&
         e.params?.key === Resource.happiness,
     )
-    .reduce((sum, e) => sum + (e.params?.amount ?? 0), 0);
+    .reduce((sum, e) => sum + Number(e.params?.amount ?? 0), 0);
   const dummyCtx = { activePlayer: { happiness: 0 } } as EngineContext;
   ctx.passives.runResultMods(expandDef.id, dummyCtx);
   const extraHappiness = dummyCtx.activePlayer.happiness;

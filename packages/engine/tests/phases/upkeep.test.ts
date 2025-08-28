@@ -7,27 +7,30 @@ import {
   POPULATIONS,
 } from '../../src';
 
-const councilUpkeep =
+const councilUpkeep = Number(
   POPULATIONS.get(PopulationRole.Council).onUpkeepPhase?.find(
     (e) =>
       e.type === 'resource' &&
       e.method === 'remove' &&
       e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
-const commanderUpkeep =
+  )?.params.amount ?? 0,
+);
+const commanderUpkeep = Number(
   POPULATIONS.get(PopulationRole.Commander).onUpkeepPhase?.find(
     (e) =>
       e.type === 'resource' &&
       e.method === 'remove' &&
       e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
-const fortifierUpkeep =
+  )?.params.amount ?? 0,
+);
+const fortifierUpkeep = Number(
   POPULATIONS.get(PopulationRole.Fortifier).onUpkeepPhase?.find(
     (e) =>
       e.type === 'resource' &&
       e.method === 'remove' &&
       e.params.key === Resource.gold,
-  )?.params.amount ?? 0;
+  )?.params.amount ?? 0,
+);
 
 describe('Upkeep phase', () => {
   it('charges gold per population role', () => {
