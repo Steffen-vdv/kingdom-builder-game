@@ -141,7 +141,7 @@ const buildingIcon = '🧱';
 function summarizeEffects(
   effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
   ctx: EngineContext,
-): string {
+): string[] {
   const parts: string[] = [];
   for (const eff of effects || []) {
     if (eff.evaluator) {
@@ -154,9 +154,9 @@ function summarizeEffects(
         const devParams = ev.params as Record<string, string>;
         const devId = devParams['id']!;
         const icon = developmentInfo[devId]?.icon || devId;
-        parts.push(`${sub} per ${icon}`);
+        sub.forEach((s) => parts.push(`${s} per ${icon}`));
       } else {
-        parts.push(summarizeEffects(eff.effects, ctx));
+        parts.push(...summarizeEffects(eff.effects, ctx));
       }
       continue;
     }
@@ -179,6 +179,10 @@ function summarizeEffects(
           const amount = Number(eff.params['amount']);
           if (key === 'maxPopulation')
             parts.push(`max ${icon}${amount >= 0 ? '+' : ''}${amount}`);
+          else if (key === 'absorption')
+            parts.push(
+              `${icon}${amount * 100 >= 0 ? '+' : ''}${amount * 100}%`,
+            );
           else parts.push(`${icon}${amount >= 0 ? '+' : ''}${amount}`);
         }
         break;
@@ -192,10 +196,11 @@ function summarizeEffects(
         break;
       }
       case 'development': {
-        if (eff.method === 'add' && eff.params) {
+        if (eff.params) {
           const id = eff.params['id'] as string;
           const icon = developmentInfo[id]?.icon || id;
-          parts.push(`${icon}`);
+          if (eff.method === 'add') parts.push(`${icon}`);
+          else if (eff.method === 'remove') parts.push(`remove ${icon}`);
         }
         break;
       }
@@ -233,14 +238,14 @@ function summarizeEffects(
           const actionId = eff.params['actionId'] as string;
           const actionIcon =
             actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-          parts.push(`${actionIcon}: ${sub}`);
+          sub.forEach((s) => parts.push(`${actionIcon}: ${s}`));
         }
         break;
       }
       case 'passive': {
         if (eff.method === 'add') {
           const sub = summarizeEffects(eff.effects || [], ctx);
-          if (sub) parts.push(sub);
+          if (sub.length) parts.push(...sub);
         }
         break;
       }
@@ -248,7 +253,7 @@ function summarizeEffects(
         break;
     }
   }
-  return parts.join(', ');
+  return parts;
 }
 
 function summarizeAction(id: string, ctx: EngineContext) {
@@ -259,27 +264,39 @@ function summarizeAction(id: string, ctx: EngineContext) {
 function summarizeDevelopment(id: string, ctx: EngineContext) {
   const def = ctx.developments.get(id);
   const parts: string[] = [];
-  if (def.onBuild) parts.push(summarizeEffects(def.onBuild, ctx));
+  if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
   if (def.onDevelopmentPhase)
-    parts.push(`💹 ${summarizeEffects(def.onDevelopmentPhase, ctx)}`);
+    parts.push(
+      ...summarizeEffects(def.onDevelopmentPhase, ctx).map((s) => `💹 ${s}`),
+    );
   if (def.onUpkeepPhase)
-    parts.push(`🧾 ${summarizeEffects(def.onUpkeepPhase, ctx)}`);
+    parts.push(
+      ...summarizeEffects(def.onUpkeepPhase, ctx).map((s) => `🧾 ${s}`),
+    );
   if (def.onAttackResolved)
-    parts.push(`⚔️ ${summarizeEffects(def.onAttackResolved, ctx)}`);
-  return parts.join('; ');
+    parts.push(
+      ...summarizeEffects(def.onAttackResolved, ctx).map((s) => `⚔️ ${s}`),
+    );
+  return parts;
 }
 
 function summarizeBuilding(id: string, ctx: EngineContext) {
   const def = ctx.buildings.get(id);
   const parts: string[] = [];
-  if (def.onBuild) parts.push(summarizeEffects(def.onBuild, ctx));
+  if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
   if (def.onDevelopmentPhase)
-    parts.push(`💹 ${summarizeEffects(def.onDevelopmentPhase, ctx)}`);
+    parts.push(
+      ...summarizeEffects(def.onDevelopmentPhase, ctx).map((s) => `💹 ${s}`),
+    );
   if (def.onUpkeepPhase)
-    parts.push(`🧾 ${summarizeEffects(def.onUpkeepPhase, ctx)}`);
+    parts.push(
+      ...summarizeEffects(def.onUpkeepPhase, ctx).map((s) => `🧾 ${s}`),
+    );
   if (def.onAttackResolved)
-    parts.push(`⚔️ ${summarizeEffects(def.onAttackResolved, ctx)}`);
-  return parts.join('; ');
+    parts.push(
+      ...summarizeEffects(def.onAttackResolved, ctx).map((s) => `⚔️ ${s}`),
+    );
+  return parts;
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 
@@ -357,19 +374,19 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   );
 
   const actionSummaries = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, string[]>();
     actions.forEach((a) => map.set(a.id, summarizeAction(a.id, ctx)));
     return map;
   }, [actions, ctx]);
   const developmentSummaries = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, string[]>();
     sortedDevelopments.forEach((d) =>
       map.set(d.id, summarizeDevelopment(d.id, ctx)),
     );
     return map;
   }, [sortedDevelopments, ctx]);
   const buildingSummaries = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, string[]>();
     buildingOptions.forEach((b) => map.set(b.id, summarizeBuilding(b.id, ctx)));
     return map;
   }, [buildingOptions, ctx]);
@@ -462,21 +479,48 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       ([, v]) => v > 0,
     );
     const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
-    const totalLands = player.lands.length;
-    const devCounts: Record<string, number> = {};
-    let openSlots = 0;
-    player.lands.forEach((l) => {
-      openSlots += l.slotsFree;
-      l.developments.forEach((d) => {
-        devCounts[d] = (devCounts[d] || 0) + 1;
-      });
+    function formatStatValue(key: string, value: number) {
+      if (key === 'absorption') return `${value * 100}%`;
+      return String(value);
+    }
+
+    const landItems: JSX.Element[] = [];
+    player.lands.forEach((land) => {
+      landItems.push(
+        <span key={`${land.id}-land`} title="Land" className="bar-item">
+          {landIcon}
+        </span>,
+      );
+      land.developments.forEach((d, i) =>
+        landItems.push(
+          <span
+            key={`${land.id}-dev-${i}`}
+            title={developmentInfo[d]?.label || d}
+            className="bar-item"
+          >
+            {developmentInfo[d]?.icon || d}
+          </span>,
+        ),
+      );
+      Array.from({ length: land.slotsFree }).forEach((_, i) =>
+        landItems.push(
+          <span
+            key={`${land.id}-slot-${i}`}
+            title="Empty development slot"
+            className="bar-item"
+          >
+            {slotIcon}
+          </span>,
+        ),
+      );
     });
-    const devParts: string[] = [];
-    developmentOrder.forEach((id) => {
-      const count = devCounts[id];
-      if (count) devParts.push(`${developmentInfo[id]?.icon}${count}`);
-    });
-    if (openSlots) devParts.push(`${slotIcon}${openSlots}`);
+
+    function describePassive(id: string): string {
+      if (id.startsWith('watchtower_absorption_'))
+        return '50% absorption. Source: Watchtower. Expires on attack resolved';
+      return id;
+    }
+
     return (
       <div className="space-y-1">
         <h3
@@ -513,20 +557,17 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                 className="bar-item"
               >
                 {statInfo[k]?.icon}
-                {v}
+                {formatStatValue(k, v)}
               </span>
             ))}
           <div className="h-4 border-l" />
-          <span title={`Lands and developments`} className="bar-item">
-            {landIcon}
-            {totalLands} ({devParts.join(', ')})
-          </span>
+          {landItems}
         </div>
         {ctx.passives.list().length > 0 && (
           <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
             {ctx.passives.list().map((p) => (
-              <span key={p} className="bar-item" title={p}>
-                {p}
+              <span key={p} className="bar-item" title={describePassive(p)}>
+                {describePassive(p)}
               </span>
             ))}
           </div>
@@ -549,205 +590,225 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-screen-lg mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-center flex-1">
-          Kingdom Builder
-        </h1>
-        <span className="ml-4">Turn {ctx.game.turn}</span>
-        {onExit && (
-          <button className="border px-2 py-1 ml-4" onClick={onExit}>
-            Back to Menu
-          </button>
-        )}
-      </div>
-
-      <section className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-2">Players</h2>
-        <div className="flex flex-wrap gap-4">
-          {ctx.game.players.map((p) => (
-            <PlayerPanel
-              key={p.id}
-              player={p}
-              active={p.id === ctx.activePlayer.id}
-            />
-          ))}
+    <div className="p-4 flex gap-4 max-w-screen-xl mx-auto">
+      <div className="flex-1 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-center flex-1">
+            Kingdom Builder
+          </h1>
+          <span className="ml-4">Turn {ctx.game.turn}</span>
+          {onExit && (
+            <button className="border px-2 py-1 ml-4" onClick={onExit}>
+              Back to Menu
+            </button>
+          )}
         </div>
-      </section>
 
-      <section className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-2">Phases</h2>
-        <div className="flex flex-wrap items-center gap-4">
-          {Object.values(Phase).map((p) => (
-            <span
-              key={p}
-              className={
-                p === ctx.game.currentPhase
-                  ? 'font-bold underline'
-                  : 'text-gray-500'
-              }
-            >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-2">
-          Actions (1 {resourceInfo[Resource.ap].icon} each)
-        </h2>
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {otherActions.map((action) => {
-              const costs = getActionCosts(action.id, ctx);
-              const canPay = Object.entries(costs).every(
-                ([k, v]) =>
-                  ctx.activePlayer.resources[
-                    k as keyof typeof ctx.activePlayer.resources
-                  ] >= v,
-              );
-              return (
-                <button
-                  key={action.id}
-                  className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                    canPay && ctx.game.currentPhase === Phase.Main
-                      ? ''
-                      : 'opacity-50 border-red-500'
-                  }`}
-                  disabled={!canPay || ctx.game.currentPhase !== Phase.Main}
-                  onClick={() => handlePerform(action)}
-                >
-                  <span>
-                    {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
-                    {action.name}
-                  </span>
-                  <span className="text-xs">
-                    <strong>Effect:</strong> {actionSummaries.get(action.id)}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    <strong>Cost:</strong>{' '}
-                    {renderCosts(costs, ctx.activePlayer.resources)}
-                  </span>
-                </button>
-              );
-            })}
+        <section className="border rounded p-4">
+          <h2 className="text-xl font-semibold mb-2">Players</h2>
+          <div className="flex flex-wrap gap-4">
+            {ctx.game.players.map((p) => (
+              <PlayerPanel
+                key={p.id}
+                player={p}
+                active={p.id === ctx.activePlayer.id}
+              />
+            ))}
           </div>
+        </section>
 
-          {developAction && (
-            <div>
-              <h3 className="font-medium">{actionInfo.develop.icon} Develop</h3>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {sortedDevelopments.map((d) => {
-                  const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
-                  const costs = getActionCosts('develop', ctx, {
-                    id: d.id,
-                    landId: landIdForCost,
-                  });
-                  const canPay =
-                    hasDevelopLand &&
-                    Object.entries(costs).every(
+        <section className="border rounded p-4">
+          <h2 className="text-xl font-semibold mb-2">Phases</h2>
+          <div className="flex flex-wrap items-center gap-4">
+            {Object.values(Phase).map((p) => (
+              <span
+                key={p}
+                className={
+                  p === ctx.game.currentPhase
+                    ? 'font-bold underline'
+                    : 'text-gray-500'
+                }
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        <section className="border rounded p-4">
+          <h2 className="text-xl font-semibold mb-2">
+            Actions (1 {resourceInfo[Resource.ap].icon} each)
+          </h2>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {otherActions.map((action) => {
+                const costs = getActionCosts(action.id, ctx);
+                const canPay = Object.entries(costs).every(
+                  ([k, v]) =>
+                    ctx.activePlayer.resources[
+                      k as keyof typeof ctx.activePlayer.resources
+                    ] >= v,
+                );
+                const enabled = canPay && ctx.game.currentPhase === Phase.Main;
+                const title = !canPay
+                  ? 'Cannot pay costs'
+                  : ctx.game.currentPhase !== Phase.Main
+                    ? 'Not in Main phase'
+                    : undefined;
+                return (
+                  <button
+                    key={action.id}
+                    className={`relative border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                      enabled ? '' : 'opacity-50 border-red-500'
+                    }`}
+                    disabled={!enabled}
+                    title={title}
+                    onClick={() => handlePerform(action)}
+                  >
+                    <span>
+                      {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
+                      {action.name}
+                    </span>
+                    <span className="absolute top-1 right-1 text-sm text-gray-600">
+                      {renderCosts(costs, ctx.activePlayer.resources)}
+                    </span>
+                    <ul className="text-xs list-disc pl-4">
+                      {actionSummaries.get(action.id)?.map((e, i) => (
+                        <li key={i}>{e}</li>
+                      ))}
+                    </ul>
+                  </button>
+                );
+              })}
+            </div>
+
+            {developAction && (
+              <div>
+                <h3 className="font-medium">
+                  {actionInfo.develop.icon} Develop
+                </h3>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {sortedDevelopments.map((d) => {
+                    const landIdForCost = ctx.activePlayer.lands[0]
+                      ?.id as string;
+                    const costs = getActionCosts('develop', ctx, {
+                      id: d.id,
+                      landId: landIdForCost,
+                    });
+                    const canPay =
+                      hasDevelopLand &&
+                      Object.entries(costs).every(
+                        ([k, v]) =>
+                          ctx.activePlayer.resources[
+                            k as keyof typeof ctx.activePlayer.resources
+                          ] >= v,
+                      );
+                    const enabled =
+                      canPay && ctx.game.currentPhase === Phase.Main;
+                    const title = !hasDevelopLand
+                      ? 'No land with free development slot'
+                      : !canPay
+                        ? 'Cannot pay costs'
+                        : ctx.game.currentPhase !== Phase.Main
+                          ? 'Not in Main phase'
+                          : undefined;
+                    return (
+                      <button
+                        key={d.id}
+                        className={`relative border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                          enabled ? '' : 'opacity-50 border-red-500'
+                        }`}
+                        disabled={!enabled}
+                        title={title}
+                        onClick={() => {
+                          const landId = ctx.activePlayer.lands.find(
+                            (l) => l.slotsFree > 0,
+                          )?.id;
+                          handlePerform(developAction, { id: d.id, landId });
+                        }}
+                      >
+                        <span>
+                          {developmentInfo[d.id]?.icon} {d.name}
+                        </span>
+                        <span className="absolute top-1 right-1 text-sm text-gray-600">
+                          {renderCosts(costs, ctx.activePlayer.resources)}
+                        </span>
+                        <ul className="text-xs list-disc pl-4">
+                          {developmentSummaries.get(d.id)?.map((e, i) => (
+                            <li key={i}>{e}</li>
+                          ))}
+                        </ul>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {buildAction && (
+              <div>
+                <h3 className="font-medium">{actionInfo.build.icon} Build</h3>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {buildingOptions.map((b) => {
+                    const costs = getActionCosts('build', ctx, { id: b.id });
+                    const canPay = Object.entries(costs).every(
                       ([k, v]) =>
                         ctx.activePlayer.resources[
                           k as keyof typeof ctx.activePlayer.resources
                         ] >= v,
                     );
-                  const enabled =
-                    canPay && ctx.game.currentPhase === Phase.Main;
-                  return (
-                    <button
-                      key={d.id}
-                      className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                        enabled ? '' : 'opacity-50 border-red-500'
-                      }`}
-                      disabled={!enabled}
-                      title={
-                        !hasDevelopLand
-                          ? 'No land with free development slot'
-                          : undefined
-                      }
-                      onClick={() => {
-                        const landId = ctx.activePlayer.lands.find(
-                          (l) => l.slotsFree > 0,
-                        )?.id;
-                        handlePerform(developAction, { id: d.id, landId });
-                      }}
-                    >
-                      <span>
-                        {developmentInfo[d.id]?.icon} {d.name}
-                      </span>
-                      <span className="text-xs">
-                        <strong>Effect:</strong>{' '}
-                        {developmentSummaries.get(d.id)}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        <strong>Cost:</strong>{' '}
-                        {renderCosts(costs, ctx.activePlayer.resources)}
-                      </span>
-                    </button>
-                  );
-                })}
+                    const enabled =
+                      canPay && ctx.game.currentPhase === Phase.Main;
+                    const title = !canPay
+                      ? 'Cannot pay costs'
+                      : ctx.game.currentPhase !== Phase.Main
+                        ? 'Not in Main phase'
+                        : undefined;
+                    return (
+                      <button
+                        key={b.id}
+                        className={`relative border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                          enabled ? '' : 'opacity-50 border-red-500'
+                        }`}
+                        disabled={!enabled}
+                        title={title}
+                        onClick={() => handlePerform(buildAction, { id: b.id })}
+                      >
+                        <span>{b.name}</span>
+                        <span className="absolute top-1 right-1 text-sm text-gray-600">
+                          {renderCosts(costs, ctx.activePlayer.resources)}
+                        </span>
+                        <ul className="text-xs list-disc pl-4">
+                          {buildingSummaries.get(b.id)?.map((e, i) => (
+                            <li key={i}>{e}</li>
+                          ))}
+                        </ul>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-
-          {buildAction && (
-            <div>
-              <h3 className="font-medium">{actionInfo.build.icon} Build</h3>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {buildingOptions.map((b) => {
-                  const costs = getActionCosts('build', ctx, { id: b.id });
-                  const canPay = Object.entries(costs).every(
-                    ([k, v]) =>
-                      ctx.activePlayer.resources[
-                        k as keyof typeof ctx.activePlayer.resources
-                      ] >= v,
-                  );
-                  const enabled =
-                    canPay && ctx.game.currentPhase === Phase.Main;
-                  return (
-                    <button
-                      key={b.id}
-                      className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                        enabled ? '' : 'opacity-50 border-red-500'
-                      }`}
-                      disabled={!enabled}
-                      onClick={() => handlePerform(buildAction, { id: b.id })}
-                    >
-                      <span>{b.name}</span>
-                      <span className="text-xs">
-                        <strong>Effect:</strong> {buildingSummaries.get(b.id)}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        <strong>Cost:</strong>{' '}
-                        {renderCosts(costs, ctx.activePlayer.resources)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-        <button
-          className="border px-2 py-1 mt-4"
-          disabled={
-            ctx.game.currentPhase !== Phase.Main || ctx.activePlayer.ap > 0
-          }
-          onClick={() => void handleEndTurn()}
-        >
-          End turn
-          {ctx.activePlayer.ap > 0 && (
-            <span className="block text-xs text-red-500">
-              You still have unspent AP
-            </span>
-          )}
-        </button>
-      </section>
-
-      <section className="border rounded p-4">
+            )}
+          </div>
+          <button
+            className="border px-2 py-1 mt-4"
+            disabled={
+              ctx.game.currentPhase !== Phase.Main || ctx.activePlayer.ap > 0
+            }
+            onClick={() => void handleEndTurn()}
+          >
+            End turn
+            {ctx.activePlayer.ap > 0 && (
+              <span className="block text-xs text-red-500">
+                You still have unspent AP
+              </span>
+            )}
+          </button>
+        </section>
+      </div>
+      <section className="border rounded p-4 w-64 max-h-screen overflow-y-auto sticky top-4 self-start">
         <h2 className="text-xl font-semibold mb-2">Log</h2>
-        <ul className="mt-2 space-y-1 max-h-64 overflow-y-auto">
+        <ul className="mt-2 space-y-1">
           {log.map((entry, idx) => (
             <li key={idx} className="text-sm font-mono whitespace-pre-wrap">
               [{entry.time}] {entry.text}
