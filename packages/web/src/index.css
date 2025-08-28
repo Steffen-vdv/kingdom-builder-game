@@ -8,6 +8,6 @@
 
 @layer components {
   .bar-item {
-    @apply flex items-center gap-1 w-20 tabular-nums;
+    @apply flex items-center gap-1 tabular-nums whitespace-nowrap;
   }
 }
