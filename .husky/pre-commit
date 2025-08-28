@@ -11,8 +11,3 @@ npm run check
 
 # Run tests with coverage (supersedes separate `npm test`)
 npm run test:coverage
-if [ -n "$SONAR_TOKEN" ]; then
-  npx sonar-scanner -Dsonar.token=$SONAR_TOKEN
-else
-  npx sonar-scanner -Dsonar.scanner.skip=true
-fi
