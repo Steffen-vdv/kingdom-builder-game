@@ -13,4 +13,13 @@ export default defineConfig({
       '@kingdom-builder/engine': path.resolve(rootDir, '../engine/src'),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(rootDir, 'index.html'),
+        game: path.resolve(rootDir, 'game.html'),
+        overview: path.resolve(rootDir, 'overview.html'),
+      },
+    },
+  },
 });
