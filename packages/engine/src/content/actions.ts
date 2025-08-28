@@ -59,7 +59,28 @@ export function createActionRegistry() {
       .build(),
   );
 
-  registry.add('tax', action('tax', 'Tax').cost(Resource.ap, 1).build());
+  registry.add(
+    'tax',
+    action('tax', 'Tax')
+      .cost(Resource.ap, 1)
+      .effect({
+        evaluator: { type: 'population' },
+        effects: [
+          {
+            type: 'resource',
+            method: 'add',
+            params: { key: Resource.gold, amount: 4 },
+          },
+          {
+            type: 'resource',
+            method: 'add',
+            round: 'up',
+            params: { key: Resource.happiness, amount: -0.5 },
+          },
+        ],
+      })
+      .build(),
+  );
 
   registry.add(
     'reallocate',

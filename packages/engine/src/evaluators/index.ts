@@ -2,6 +2,7 @@ import { Registry } from '../registry';
 import type { EngineContext } from '../context';
 
 import { developmentEvaluator } from './development';
+import { populationEvaluator } from './population';
 export interface EvaluatorDef<
   P extends Record<string, unknown> = Record<string, unknown>,
 > {
@@ -24,6 +25,8 @@ export function registerCoreEvaluators(
   registry: EvaluatorRegistry = EVALUATORS,
 ) {
   registry.add('development', developmentEvaluator);
+  registry.add('population', populationEvaluator);
 }
 
 export { developmentEvaluator } from './development';
+export { populationEvaluator } from './population';
