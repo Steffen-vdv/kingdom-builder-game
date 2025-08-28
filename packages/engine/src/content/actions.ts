@@ -21,19 +21,6 @@ export function createActionRegistry() {
       .build(),
   );
 
-  // A simple build action to acquire Town Charter in tests
-  registry.add(
-    'build_town_charter',
-    action('build_town_charter', 'Build — Town Charter')
-      .cost(Resource.gold, 5)
-      .effect({
-        type: 'building',
-        method: 'add',
-        params: { id: 'town_charter' },
-      })
-      .build(),
-  );
-
   registry.add(
     'overwork',
     action('overwork', 'Overwork')
@@ -99,7 +86,12 @@ export function createActionRegistry() {
 
   registry.add('plow', action('plow', 'Plow').cost(Resource.gold, 6).build());
 
-  registry.add('build', action('build', 'Build').build());
+  registry.add(
+    'build',
+    action('build', 'Build')
+      .effect({ type: 'building', method: 'add', params: { id: '$id' } })
+      .build(),
+  );
 
   return registry;
 }
