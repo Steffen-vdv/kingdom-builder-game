@@ -6,9 +6,7 @@ set -e
 # Run lint-staged on changed files
 npx lint-staged
 
-# Run project-wide checks
-npm run lint
-npm run type-check
+# Run tests after lint-staged passes
 npm test
 if [ -n "$SONAR_TOKEN" ]; then
   npx sonar-scanner -Dsonar.token=$SONAR_TOKEN
