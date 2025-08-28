@@ -27,6 +27,7 @@ import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
 import type { EffectDef } from './effects';
 import { EVALUATORS, registerCoreEvaluators } from './evaluators';
+import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
 import {
@@ -132,6 +133,20 @@ export function getActionCosts<T extends string>(
   return applyCostsWithPassives(actionDefinition.id, base, ctx);
 }
 
+export function getActionRequirements<T extends string>(
+  actionId: T,
+  ctx: EngineContext,
+  _params?: ActionParams<T>,
+): string[] {
+  const actionDefinition = ctx.actions.get(actionId);
+  const failures: string[] = [];
+  for (const requirement of actionDefinition.requirements || []) {
+    const ok = runRequirement(requirement, ctx);
+    if (ok !== true) failures.push(String(ok));
+  }
+  return failures;
+}
+
 function canPay(costs: CostBag, player: PlayerState): true | string {
   for (const key of Object.keys(costs) as ResourceKey[]) {
     const need = costs[key] ?? 0;
@@ -153,6 +168,7 @@ function pay(costs: CostBag, player: PlayerState) {
 type ActionParamMap = {
   develop: { id: string; landId: string };
   build: { id: string };
+  raise_pop: { role: PopulationRoleId };
   [key: string]: Record<string, unknown>;
 };
 
@@ -167,7 +183,7 @@ export function performAction<T extends string>(
 ) {
   const actionDefinition = ctx.actions.get(actionId);
   for (const requirement of actionDefinition.requirements || []) {
-    const ok = requirement(ctx);
+    const ok = runRequirement(requirement, ctx);
     if (ok !== true) throw new Error(String(ok));
   }
   let base = { ...(actionDefinition.baseCosts || {}) };
@@ -247,6 +263,7 @@ export function createEngine(overrides?: {
 }) {
   registerCoreEffects();
   registerCoreEvaluators();
+  registerCoreRequirements();
 
   const rules = overrides?.rules || DefaultRules;
   const services = new Services(rules);
@@ -340,5 +357,7 @@ export type { EffectHandler, EffectDef } from './effects';
 export { applyParamsToEffects } from './utils';
 export { registerCoreEvaluators, EvaluatorRegistry } from './evaluators';
 export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
+export { registerCoreRequirements, RequirementRegistry } from './requirements';
+export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
 export type { GameConfig } from './config/schema';

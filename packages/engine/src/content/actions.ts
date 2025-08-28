@@ -95,6 +95,21 @@ export function createActionRegistry() {
     action('raise_pop', 'Raise Population')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 5)
+      .requirement({
+        type: 'population',
+        method: 'cap',
+        message: 'Requires free House',
+      })
+      .effect({
+        type: 'population',
+        method: 'add',
+        params: { role: '$role' },
+      })
+      .effect({
+        type: 'resource',
+        method: 'add',
+        params: { key: Resource.happiness, amount: 1 },
+      })
       .build(),
   );
 

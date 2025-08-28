@@ -6,7 +6,9 @@ import {
   collectTriggerEffects,
   Phase,
   getActionCosts,
+  getActionRequirements,
   Resource,
+  PopulationRole,
 } from '@kingdom-builder/engine';
 import type {
   EngineContext,
@@ -414,8 +416,9 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.id === 'develop');
   const buildAction = actions.find((a) => a.id === 'build');
+  const raisePopAction = actions.find((a) => a.id === 'raise_pop');
   const otherActions = actions.filter(
-    (a) => a.id !== 'develop' && a.id !== 'build',
+    (a) => a.id !== 'develop' && a.id !== 'build' && a.id !== 'raise_pop',
   );
 
   function handlePerform(action: Action, params?: Record<string, unknown>) {
@@ -706,18 +709,23 @@ export default function Game({ onExit }: { onExit?: () => void }) {
             <div className="grid grid-cols-4 gap-2">
               {otherActions.map((action) => {
                 const costs = getActionCosts(action.id, ctx);
+                const requirements = getActionRequirements(action.id, ctx);
                 const canPay = Object.entries(costs).every(
                   ([k, v]) =>
                     ctx.activePlayer.resources[
                       k as keyof typeof ctx.activePlayer.resources
                     ] >= v,
                 );
-                const enabled = canPay && ctx.game.currentPhase === Phase.Main;
-                const title = !canPay
-                  ? 'Cannot pay costs'
-                  : ctx.game.currentPhase !== Phase.Main
-                    ? 'Not in Main phase'
-                    : undefined;
+                const meetsReq = requirements.length === 0;
+                const enabled =
+                  canPay && meetsReq && ctx.game.currentPhase === Phase.Main;
+                const title = !meetsReq
+                  ? requirements.join(', ')
+                  : !canPay
+                    ? 'Cannot pay costs'
+                    : ctx.game.currentPhase !== Phase.Main
+                      ? 'Not in Main phase'
+                      : undefined;
                 return (
                   <button
                     key={action.id}
@@ -739,11 +747,84 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       {actionSummaries.get(action.id)?.map((e, i) => (
                         <li key={i}>{e}</li>
                       ))}
+                      {requirements.map((r, i) => (
+                        <li key={`req-${i}`} className="text-red-500">
+                          {r}
+                        </li>
+                      ))}
                     </ul>
                   </button>
                 );
               })}
             </div>
+
+            {raisePopAction && (
+              <div>
+                <h3 className="font-medium">
+                  {actionInfo.raise_pop.icon} Raise Population
+                </h3>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  {[
+                    PopulationRole.Council,
+                    PopulationRole.Commander,
+                    PopulationRole.Fortifier,
+                  ].map((role) => {
+                    const costs = getActionCosts('raise_pop', ctx);
+                    const requirements = getActionRequirements(
+                      'raise_pop',
+                      ctx,
+                    );
+                    const canPay = Object.entries(costs).every(
+                      ([k, v]) =>
+                        ctx.activePlayer.resources[
+                          k as keyof typeof ctx.activePlayer.resources
+                        ] >= v,
+                    );
+                    const meetsReq = requirements.length === 0;
+                    const enabled =
+                      canPay &&
+                      meetsReq &&
+                      ctx.game.currentPhase === Phase.Main;
+                    const title = !meetsReq
+                      ? requirements.join(', ')
+                      : !canPay
+                        ? 'Cannot pay costs'
+                        : ctx.game.currentPhase !== Phase.Main
+                          ? 'Not in Main phase'
+                          : undefined;
+                    return (
+                      <button
+                        key={role}
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
+                          enabled ? '' : 'opacity-50 border-red-500'
+                        }`}
+                        disabled={!enabled}
+                        title={title}
+                        onClick={() => handlePerform(raisePopAction, { role })}
+                      >
+                        <span className="text-base font-medium">
+                          {populationInfo[role]?.icon}{' '}
+                          {populationInfo[role]?.label}
+                        </span>
+                        <span className="absolute top-2 right-2 text-sm text-gray-600">
+                          {renderCosts(costs, ctx.activePlayer.resources)}
+                        </span>
+                        <ul className="text-sm list-disc list-inside">
+                          {actionSummaries.get('raise_pop')?.map((e, i) => (
+                            <li key={i}>{e}</li>
+                          ))}
+                          {requirements.map((r, i) => (
+                            <li key={`req-${i}`} className="text-red-500">
+                              {r}
+                            </li>
+                          ))}
+                        </ul>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {developAction && (
               <div>

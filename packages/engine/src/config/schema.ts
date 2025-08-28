@@ -1,14 +1,15 @@
 import { z } from 'zod';
 import { Resource, Stat, PopulationRole } from '../state';
 import type { EffectDef } from '../effects';
-import { EngineContext } from '../context';
 
-export type RequirementFn = (ctx: EngineContext) => true | string;
+const requirementSchema = z.object({
+  type: z.string(),
+  method: z.string(),
+  params: z.record(z.unknown()).optional(),
+  message: z.string().optional(),
+});
 
-const requirementSchema: z.ZodType<RequirementFn> = z
-  .function()
-  .args(z.instanceof(EngineContext))
-  .returns(z.union([z.literal(true), z.string()]));
+export type RequirementConfig = z.infer<typeof requirementSchema>;
 
 // Basic schemas
 const costBagSchema = z.record(z.nativeEnum(Resource), z.number());
@@ -71,6 +72,8 @@ export type DevelopmentConfig = z.infer<typeof developmentSchema>;
 export const populationSchema = z.object({
   id: z.string(),
   name: z.string(),
+  onAssigned: z.array(effectSchema).optional(),
+  onUnassigned: z.array(effectSchema).optional(),
   onDevelopmentPhase: z.array(effectSchema).optional(),
   onUpkeepPhase: z.array(effectSchema).optional(),
 });
