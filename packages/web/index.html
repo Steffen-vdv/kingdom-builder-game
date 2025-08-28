@@ -4,17 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kingdom Builder</title>
-    <style>
-      body { display: flex; height: 100vh; margin: 0; align-items: center; justify-content: center; font-family: sans-serif; }
-      .menu { display: flex; flex-direction: column; gap: 1rem; align-items: center; }
-      button { padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
-    </style>
   </head>
   <body>
-    <div class="menu">
-      <h1>Kingdom Builder</h1>
-      <button onclick="window.location.href='game.html'">Start New Game</button>
-      <button onclick="window.location.href='overview.html'">Game Overview</button>
-    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
