@@ -178,7 +178,7 @@ function summarizeEffects(
           const icon = stat ? stat.icon : key;
           const amount = Number(eff.params['amount']);
           if (key === 'maxPopulation')
-            parts.push(`max ${icon}${amount >= 0 ? '+' : ''}${amount}`);
+            parts.push(`Max ${icon}${amount >= 0 ? '+' : ''}${amount}`);
           else if (key === 'absorption')
             parts.push(
               `${icon}${amount * 100 >= 0 ? '+' : ''}${amount * 100}%`,
@@ -253,7 +253,7 @@ function summarizeEffects(
         break;
     }
   }
-  return parts;
+  return parts.map((p) => p.trim());
 }
 
 function summarizeAction(id: string, ctx: EngineContext) {
@@ -267,17 +267,23 @@ function summarizeDevelopment(id: string, ctx: EngineContext) {
   if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
   if (def.onDevelopmentPhase)
     parts.push(
-      ...summarizeEffects(def.onDevelopmentPhase, ctx).map((s) => `💹 ${s}`),
+      ...summarizeEffects(def.onDevelopmentPhase, ctx).map(
+        (s) => `On Development phase: ${s}`,
+      ),
     );
   if (def.onUpkeepPhase)
     parts.push(
-      ...summarizeEffects(def.onUpkeepPhase, ctx).map((s) => `🧾 ${s}`),
+      ...summarizeEffects(def.onUpkeepPhase, ctx).map(
+        (s) => `On Upkeep phase: ${s}`,
+      ),
     );
   if (def.onAttackResolved)
     parts.push(
-      ...summarizeEffects(def.onAttackResolved, ctx).map((s) => `⚔️ ${s}`),
+      ...summarizeEffects(def.onAttackResolved, ctx).map(
+        (s) => `After attack: ${s}`,
+      ),
     );
-  return parts;
+  return parts.map((p) => p.trim());
 }
 
 function summarizeBuilding(id: string, ctx: EngineContext) {
@@ -286,17 +292,23 @@ function summarizeBuilding(id: string, ctx: EngineContext) {
   if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
   if (def.onDevelopmentPhase)
     parts.push(
-      ...summarizeEffects(def.onDevelopmentPhase, ctx).map((s) => `💹 ${s}`),
+      ...summarizeEffects(def.onDevelopmentPhase, ctx).map(
+        (s) => `On Development phase: ${s}`,
+      ),
     );
   if (def.onUpkeepPhase)
     parts.push(
-      ...summarizeEffects(def.onUpkeepPhase, ctx).map((s) => `🧾 ${s}`),
+      ...summarizeEffects(def.onUpkeepPhase, ctx).map(
+        (s) => `On Upkeep phase: ${s}`,
+      ),
     );
   if (def.onAttackResolved)
     parts.push(
-      ...summarizeEffects(def.onAttackResolved, ctx).map((s) => `⚔️ ${s}`),
+      ...summarizeEffects(def.onAttackResolved, ctx).map(
+        (s) => `After attack: ${s}`,
+      ),
     );
-  return parts;
+  return parts.map((p) => p.trim());
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 
@@ -304,19 +316,20 @@ function renderCosts(
   costs: Record<string, number>,
   resources: Record<string, number>,
 ) {
+  const entries = Object.entries(costs).filter(([k]) => k !== Resource.ap);
+  if (entries.length === 0)
+    return <span className="mr-1 text-gray-400 italic">Free</span>;
   return (
     <>
-      {Object.entries(costs)
-        .filter(([k]) => k !== Resource.ap)
-        .map(([k, v]) => (
-          <span
-            key={k}
-            className={`mr-1 ${(resources[k] ?? 0) < v ? 'text-red-500' : ''}`}
-          >
-            {resourceInfo[k as keyof typeof resourceInfo]?.icon}
-            {v}
-          </span>
-        ))}
+      {entries.map(([k, v]) => (
+        <span
+          key={k}
+          className={`mr-1 ${(resources[k] ?? 0) < v ? 'text-red-500' : ''}`}
+        >
+          {resourceInfo[k as keyof typeof resourceInfo]?.icon}
+          {v}
+        </span>
+      ))}
     </>
   );
 }
@@ -486,38 +499,52 @@ export default function Game({ onExit }: { onExit?: () => void }) {
 
     const landItems: JSX.Element[] = [];
     player.lands.forEach((land) => {
+      const devCounts = new Map<string, number>();
+      land.developments.forEach((d) =>
+        devCounts.set(d, (devCounts.get(d) || 0) + 1),
+      );
+      const items: {
+        key: string;
+        icon: string;
+        label: string;
+        count: number;
+      }[] = [];
+      devCounts.forEach((count, id) =>
+        items.push({
+          key: id,
+          icon: developmentInfo[id]?.icon || id,
+          label: developmentInfo[id]?.label || id,
+          count,
+        }),
+      );
+      if (land.slotsFree > 0)
+        items.push({
+          key: 'slot',
+          icon: slotIcon,
+          label: 'Empty development slot',
+          count: land.slotsFree,
+        });
       landItems.push(
-        <span key={`${land.id}-land`} title="Land" className="bar-item">
-          {landIcon}
+        <span key={land.id} className="bar-item">
+          <span title="Land">{landIcon}</span>
+          {' ('}
+          {items.map((item, i) => (
+            <React.Fragment key={item.key}>
+              {i > 0 && ', '}
+              <span title={item.label}>
+                {item.icon}
+                {item.count}
+              </span>
+            </React.Fragment>
+          ))}
+          {')'}
         </span>,
-      );
-      land.developments.forEach((d, i) =>
-        landItems.push(
-          <span
-            key={`${land.id}-dev-${i}`}
-            title={developmentInfo[d]?.label || d}
-            className="bar-item"
-          >
-            {developmentInfo[d]?.icon || d}
-          </span>,
-        ),
-      );
-      Array.from({ length: land.slotsFree }).forEach((_, i) =>
-        landItems.push(
-          <span
-            key={`${land.id}-slot-${i}`}
-            title="Empty development slot"
-            className="bar-item"
-          >
-            {slotIcon}
-          </span>,
-        ),
       );
     });
 
     function describePassive(id: string): string {
       if (id.startsWith('watchtower_absorption_'))
-        return '50% absorption. Source: Watchtower. Expires on attack resolved';
+        return '50% absorption. Source: Watchtower. Removed after having been attacked';
       return id;
     }
 
@@ -564,25 +591,31 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           {landItems}
         </div>
         {ctx.passives.list().length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
-            {ctx.passives.list().map((p) => (
-              <span key={p} className="bar-item" title={describePassive(p)}>
-                {describePassive(p)}
-              </span>
-            ))}
+          <div className="border p-2 rounded">
+            <h4 className="font-medium">Passives</h4>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              {ctx.passives.list().map((p) => (
+                <span key={p} className="bar-item" title={describePassive(p)}>
+                  {describePassive(p)}
+                </span>
+              ))}
+            </div>
           </div>
         )}
         {player.buildings.size > 0 && (
-          <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
-            {Array.from(player.buildings).map((b) => (
-              <span
-                key={b}
-                title={ctx.buildings.get(b)?.name || b}
-                className="bar-item"
-              >
-                {buildingIcon}
-              </span>
-            ))}
+          <div className="border p-2 rounded">
+            <h4 className="font-medium">Buildings</h4>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              {Array.from(player.buildings).map((b) => (
+                <span
+                  key={b}
+                  title={ctx.buildings.get(b)?.name || b}
+                  className="bar-item"
+                >
+                  {buildingIcon}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -590,7 +623,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   }
 
   return (
-    <div className="p-4 flex gap-4 max-w-screen-xl mx-auto">
+    <div className="p-4 flex gap-4 w-full">
       <div className="flex-1 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-center flex-1">
@@ -640,7 +673,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
             Actions (1 {resourceInfo[Resource.ap].icon} each)
           </h2>
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {otherActions.map((action) => {
                 const costs = getActionCosts(action.id, ctx);
                 const canPay = Object.entries(costs).every(
@@ -658,21 +691,21 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                 return (
                   <button
                     key={action.id}
-                    className={`relative border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                    className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
                       enabled ? '' : 'opacity-50 border-red-500'
                     }`}
                     disabled={!enabled}
                     title={title}
                     onClick={() => handlePerform(action)}
                   >
-                    <span>
+                    <span className="text-base font-medium">
                       {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
                       {action.name}
                     </span>
-                    <span className="absolute top-1 right-1 text-sm text-gray-600">
+                    <span className="absolute top-2 right-2 text-sm text-gray-600">
                       {renderCosts(costs, ctx.activePlayer.resources)}
                     </span>
-                    <ul className="text-xs list-disc pl-4">
+                    <ul className="text-sm list-disc pl-4">
                       {actionSummaries.get(action.id)?.map((e, i) => (
                         <li key={i}>{e}</li>
                       ))}
@@ -687,7 +720,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                 <h3 className="font-medium">
                   {actionInfo.develop.icon} Develop
                 </h3>
-                <div className="flex flex-wrap gap-2 mt-1">
+                <div className="grid grid-cols-4 gap-2 mt-1">
                   {sortedDevelopments.map((d) => {
                     const landIdForCost = ctx.activePlayer.lands[0]
                       ?.id as string;
@@ -715,7 +748,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                     return (
                       <button
                         key={d.id}
-                        className={`relative border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
                           enabled ? '' : 'opacity-50 border-red-500'
                         }`}
                         disabled={!enabled}
@@ -727,13 +760,13 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                           handlePerform(developAction, { id: d.id, landId });
                         }}
                       >
-                        <span>
+                        <span className="text-base font-medium">
                           {developmentInfo[d.id]?.icon} {d.name}
                         </span>
-                        <span className="absolute top-1 right-1 text-sm text-gray-600">
+                        <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-xs list-disc pl-4">
+                        <ul className="text-sm list-disc pl-4">
                           {developmentSummaries.get(d.id)?.map((e, i) => (
                             <li key={i}>{e}</li>
                           ))}
@@ -748,7 +781,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
             {buildAction && (
               <div>
                 <h3 className="font-medium">{actionInfo.build.icon} Build</h3>
-                <div className="flex flex-wrap gap-2 mt-1">
+                <div className="grid grid-cols-4 gap-2 mt-1">
                   {buildingOptions.map((b) => {
                     const costs = getActionCosts('build', ctx, { id: b.id });
                     const canPay = Object.entries(costs).every(
@@ -767,18 +800,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                     return (
                       <button
                         key={b.id}
-                        className={`relative border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
                           enabled ? '' : 'opacity-50 border-red-500'
                         }`}
                         disabled={!enabled}
                         title={title}
                         onClick={() => handlePerform(buildAction, { id: b.id })}
                       >
-                        <span>{b.name}</span>
-                        <span className="absolute top-1 right-1 text-sm text-gray-600">
+                        <span className="text-base font-medium">{b.name}</span>
+                        <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-xs list-disc pl-4">
+                        <ul className="text-sm list-disc pl-4">
                           {buildingSummaries.get(b.id)?.map((e, i) => (
                             <li key={i}>{e}</li>
                           ))}
@@ -806,11 +839,11 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           </button>
         </section>
       </div>
-      <section className="border rounded p-4 w-64 max-h-screen overflow-y-auto sticky top-4 self-start">
+      <section className="border rounded p-4 w-96 max-h-screen overflow-y-auto sticky top-4 self-start">
         <h2 className="text-xl font-semibold mb-2">Log</h2>
         <ul className="mt-2 space-y-1">
           {log.map((entry, idx) => (
-            <li key={idx} className="text-sm font-mono whitespace-pre-wrap">
+            <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
               [{entry.time}] {entry.text}
             </li>
           ))}
