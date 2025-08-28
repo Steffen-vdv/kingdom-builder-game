@@ -130,7 +130,6 @@ function renderCosts(costs: Record<string, number>) {
 export default function App() {
   const ctx = useMemo<EngineContext>(() => {
     const c = createEngine();
-    c.activePlayer.ap = 30;
     return c;
   }, []);
 

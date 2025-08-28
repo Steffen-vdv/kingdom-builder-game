@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Resource } from '../state';
+import { Resource, Stat, PopulationRole } from '../state';
 import type { EffectDef } from '../effects';
 import { EngineContext } from '../context';
 
@@ -78,7 +78,28 @@ export const populationSchema = z.object({
 export type PopulationConfig = z.infer<typeof populationSchema>;
 
 // Game config
+const landStartSchema = z.object({
+  developments: z.array(z.string()).optional(),
+  slotsMax: z.number().optional(),
+  slotsUsed: z.number().optional(),
+});
+
+const playerStartSchema = z.object({
+  resources: z.record(z.nativeEnum(Resource), z.number()).optional(),
+  stats: z.record(z.nativeEnum(Stat), z.number()).optional(),
+  population: z.record(z.nativeEnum(PopulationRole), z.number()).optional(),
+  lands: z.array(landStartSchema).optional(),
+});
+
+export const startConfigSchema = z.object({
+  player: playerStartSchema,
+});
+
+export type PlayerStartConfig = z.infer<typeof playerStartSchema>;
+export type StartConfig = z.infer<typeof startConfigSchema>;
+
 export const gameConfigSchema = z.object({
+  start: startConfigSchema.optional(),
   actions: z.array(actionSchema).optional(),
   buildings: z.array(buildingSchema).optional(),
   developments: z.array(developmentSchema).optional(),
