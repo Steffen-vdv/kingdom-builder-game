@@ -1,717 +1,87 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  createEngine,
-  performAction,
-  runEffects,
-  collectTriggerEffects,
-  Phase,
-  getActionCosts,
-  Resource,
-} from '@kingdom-builder/engine';
-import type {
-  EngineContext,
-  ActionParams,
-  EffectDef,
-} from '@kingdom-builder/engine';
+import React, { useState, useEffect } from 'react';
+import Game from './Game';
 
-interface Land {
-  id: string;
-  slotsMax: number;
-  slotsUsed: number;
-  slotsFree: number;
-  developments: string[];
-}
-
-interface Player {
-  resources: Record<string, number>;
-  stats: Record<string, number>;
-  buildings: Set<string>;
-  lands: Land[];
-}
-
-type Snapshot = {
-  resources: Record<string, number>;
-  stats: Record<string, number>;
-  buildings: string[];
-  lands: {
-    id: string;
-    slotsMax: number;
-    slotsUsed: number;
-    developments: string[];
-  }[];
-};
-
-function snapshotPlayer(player: Player): Snapshot {
-  return {
-    resources: { ...player.resources },
-    stats: { ...player.stats },
-    buildings: Array.from(player.buildings ?? []),
-    lands: player.lands.map((l) => ({
-      id: l.id,
-      slotsMax: l.slotsMax,
-      slotsUsed: l.slotsUsed,
-      developments: [...l.developments],
-    })),
-  };
-}
-
-function diffSnapshots(before: Snapshot, after: Snapshot): string[] {
-  const changes: string[] = [];
-  for (const key of Object.keys(after.resources)) {
-    const b = before.resources[key] ?? 0;
-    const a = after.resources[key] ?? 0;
-    if (a !== b) changes.push(`Resource ${key}: ${b} -> ${a} (Δ ${a - b})`);
-  }
-  for (const key of Object.keys(after.stats)) {
-    const b = before.stats[key] ?? 0;
-    const a = after.stats[key] ?? 0;
-    if (a !== b) changes.push(`Stat ${key}: ${b} -> ${a} (Δ ${a - b})`);
-  }
-  const beforeB = new Set(before.buildings);
-  const afterB = new Set(after.buildings);
-  for (const id of afterB)
-    if (!beforeB.has(id)) changes.push(`Building added: ${id}`);
-  for (const land of after.lands) {
-    const prev = before.lands.find((l) => l.id === land.id);
-    if (!prev) {
-      changes.push(`Land added: ${land.id}`);
-      continue;
-    }
-    for (const dev of land.developments)
-      if (!prev.developments.includes(dev))
-        changes.push(`Development ${dev} added to ${land.id}`);
-  }
-  return changes;
-}
-
-interface Action {
-  id: string;
-  name: string;
-}
-interface Development {
-  id: string;
-  name: string;
-}
-interface Building {
-  id: string;
-  name: string;
-}
-
-const resourceInfo = {
-  [Resource.gold]: { icon: '🪙', label: 'Gold' },
-  [Resource.ap]: { icon: '⚡', label: 'Action Points' },
-  [Resource.happiness]: { icon: '😊', label: 'Happiness' },
-  [Resource.castleHP]: { icon: '🏰', label: 'Castle HP' },
-} as const;
-
-const statInfo: Record<string, { icon: string; label: string }> = {
-  armyStrength: { icon: '🗡️', label: 'Army Strength' },
-  fortificationStrength: { icon: '🛡️', label: 'Fortification Strength' },
-  absorption: { icon: '🛡️', label: 'Absorption' },
-  armyGrowth: { icon: '📈', label: 'Army Growth' },
-};
-
-const developmentInfo: Record<string, { icon: string; label: string }> = {
-  house: { icon: '🏠', label: 'House' },
-  farm: { icon: '🌾', label: 'Farm' },
-  outpost: { icon: '🛡️', label: 'Outpost' },
-  watchtower: { icon: '🗼', label: 'Watchtower' },
-  garden: { icon: '🌿', label: 'Garden' },
-};
-
-const landIcon = '🗺️';
-const slotIcon = '🧩';
-const buildingIcon = '🧱';
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
-function summarizeEffects(
-  effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-  ctx: EngineContext,
-): string {
-  const parts: string[] = [];
-  for (const eff of effects || []) {
-    if (eff.evaluator) {
-      const ev = eff.evaluator as {
-        type: string;
-        params: Record<string, unknown>;
-      };
-      if (ev.type === 'development') {
-        const sub = summarizeEffects(eff.effects, ctx);
-        const devParams = ev.params as Record<string, string>;
-        const devId = devParams['id']!;
-        const icon = developmentInfo[devId]?.icon || devId;
-        parts.push(`${sub} per ${icon}`);
-      } else {
-        parts.push(summarizeEffects(eff.effects, ctx));
-      }
-      continue;
-    }
-    switch (eff.type) {
-      case 'resource': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const res = resourceInfo[key as keyof typeof resourceInfo];
-          const icon = res ? res.icon : key;
-          const amount = Number(eff.params['amount']);
-          parts.push(`${icon}${amount >= 0 ? '+' : ''}${amount}`);
-        }
-        break;
-      }
-      case 'stat': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const stat = statInfo[key];
-          const icon = stat ? stat.icon : key;
-          const amount = Number(eff.params['amount']);
-          parts.push(`${icon}${amount >= 0 ? '+' : ''}${amount}`);
-        }
-        break;
-      }
-      case 'land': {
-        if (eff.method === 'add') {
-          const params = eff.params as Record<string, unknown> | undefined;
-          const count = Number(params?.['count'] ?? 1);
-          parts.push(`${landIcon}+${count}`);
-        }
-        break;
-      }
-      case 'development': {
-        if (eff.method === 'add' && eff.params) {
-          const id = eff.params['id'] as string;
-          const icon = developmentInfo[id]?.icon || id;
-          parts.push(`${icon}`);
-        }
-        break;
-      }
-      case 'building': {
-        if (eff.method === 'add' && eff.params) {
-          const id = eff.params['id'] as string;
-          let name = id;
-          try {
-            name = ctx.buildings.get(id).name;
-          } catch {
-            // fall back to raw id when the building is not registered yet
-          }
-          parts.push(`${buildingIcon}${name}`);
-        }
-        break;
-      }
-      case 'cost_mod': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const icon =
-            resourceInfo[key as keyof typeof resourceInfo]?.icon || key;
-          const amount = Number(eff.params['amount']);
-          const actionId = eff.params['actionId'];
-          parts.push(
-            `${String(actionId)} cost ${icon}${amount >= 0 ? '+' : ''}${amount}`,
-          );
-        }
-        break;
-      }
-      case 'result_mod': {
-        if (eff.method === 'add' && eff.params) {
-          const sub = summarizeEffects(eff.effects || [], ctx);
-          const actionId = eff.params['actionId'];
-          parts.push(`${String(actionId)}: ${sub}`);
-        }
-        break;
-      }
-      case 'passive': {
-        if (eff.method === 'add') {
-          const sub = summarizeEffects(eff.effects || [], ctx);
-          if (sub) parts.push(sub);
-        }
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  return parts.join(', ');
-}
-
-function summarizeAction(id: string, ctx: EngineContext) {
-  const def = ctx.actions.get(id);
-  return summarizeEffects(def.effects, ctx);
-}
-
-function summarizeDevelopment(id: string, ctx: EngineContext) {
-  const def = ctx.developments.get(id);
-  const parts: string[] = [];
-  if (def.onBuild) parts.push(summarizeEffects(def.onBuild, ctx));
-  if (def.onDevelopmentPhase)
-    parts.push(`💹 ${summarizeEffects(def.onDevelopmentPhase, ctx)}`);
-  if (def.onUpkeepPhase)
-    parts.push(`🧾 ${summarizeEffects(def.onUpkeepPhase, ctx)}`);
-  if (def.onAttackResolved)
-    parts.push(`⚔️ ${summarizeEffects(def.onAttackResolved, ctx)}`);
-  return parts.join('; ');
-}
-
-function summarizeBuilding(id: string, ctx: EngineContext) {
-  const def = ctx.buildings.get(id);
-  const parts: string[] = [];
-  if (def.onBuild) parts.push(summarizeEffects(def.onBuild, ctx));
-  if (def.onDevelopmentPhase)
-    parts.push(`💹 ${summarizeEffects(def.onDevelopmentPhase, ctx)}`);
-  if (def.onUpkeepPhase)
-    parts.push(`🧾 ${summarizeEffects(def.onUpkeepPhase, ctx)}`);
-  if (def.onAttackResolved)
-    parts.push(`⚔️ ${summarizeEffects(def.onAttackResolved, ctx)}`);
-  return parts.join('; ');
-}
-/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
-
-function renderCosts(
-  costs: Record<string, number>,
-  resources: Record<string, number>,
-) {
-  return (
-    <>
-      {Object.entries(costs)
-        .filter(([k]) => k !== Resource.ap)
-        .map(([k, v]) => (
-          <span
-            key={k}
-            className={`mr-1 ${(resources[k] ?? 0) < v ? 'text-red-500' : ''}`}
-          >
-            {resourceInfo[k as keyof typeof resourceInfo]?.icon}
-            {v}
-          </span>
-        ))}
-    </>
-  );
-}
+type Screen = 'menu' | 'overview' | 'game';
 
 export default function App() {
-  const ctx = useMemo<EngineContext>(() => {
-    const c = createEngine();
-    return c;
-  }, []);
-
-  const [, setTick] = useState(0);
-  const refresh = () => setTick((t) => t + 1);
-  const [log, setLog] = useState<{ time: string; text: string }[]>([]);
-  const addLog = (entry: string | string[]) =>
-    setLog((prev) => [
-      ...(Array.isArray(entry) ? entry : [entry]).map((text) => ({
-        time: new Date().toLocaleTimeString(),
-        text,
-      })),
-      ...prev,
-    ]);
-
-  const actions = useMemo<Action[]>(
-    () =>
-      Array.from(
-        (ctx.actions as unknown as { map: Map<string, Action> }).map.values(),
-      ),
-    [ctx],
-  );
-  const developmentOptions = useMemo<Development[]>(
-    () =>
-      Array.from(
-        (
-          ctx.developments as unknown as { map: Map<string, Development> }
-        ).map.values(),
-      ),
-    [ctx],
-  );
-  const developmentOrder = ['house', 'farm', 'outpost', 'watchtower', 'garden'];
-  const sortedDevelopments = useMemo(
-    () =>
-      developmentOrder
-        .map((id) => developmentOptions.find((d) => d.id === id))
-        .filter(Boolean) as Development[],
-    [developmentOptions],
-  );
-  const buildingOptions = useMemo<Building[]>(
-    () =>
-      Array.from(
-        (
-          ctx.buildings as unknown as { map: Map<string, Building> }
-        ).map.values(),
-      ),
-    [ctx],
-  );
-
-  const actionSummaries = useMemo(() => {
-    const map = new Map<string, string>();
-    actions.forEach((a) => map.set(a.id, summarizeAction(a.id, ctx)));
-    return map;
-  }, [actions, ctx]);
-  const developmentSummaries = useMemo(() => {
-    const map = new Map<string, string>();
-    sortedDevelopments.forEach((d) =>
-      map.set(d.id, summarizeDevelopment(d.id, ctx)),
-    );
-    return map;
-  }, [sortedDevelopments, ctx]);
-  const buildingSummaries = useMemo(() => {
-    const map = new Map<string, string>();
-    buildingOptions.forEach((b) => map.set(b.id, summarizeBuilding(b.id, ctx)));
-    return map;
-  }, [buildingOptions, ctx]);
-
-  const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
-  const developAction = actions.find((a) => a.id === 'develop');
-  const buildAction = actions.find((a) => a.id === 'build');
-  const otherActions = actions.filter(
-    (a) => a.id !== 'develop' && a.id !== 'build',
-  );
-
-  function handlePerform(action: Action, params?: Record<string, unknown>) {
-    const before = snapshotPlayer(ctx.activePlayer);
-    try {
-      performAction(action.id, ctx, params as ActionParams<string>);
-      const after = snapshotPlayer(ctx.activePlayer);
-      const changes = diffSnapshots(before, after);
-      addLog([
-        `Action ${action.name} performed`,
-        ...changes.map((c) => `  ${c}`),
-      ]);
-    } catch (e) {
-      addLog(`Action ${action.name} failed: ${(e as Error).message}`);
-    }
-    refresh();
-  }
-
-  function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  async function runPhaseForPlayer(
-    trigger: 'onDevelopmentPhase' | 'onUpkeepPhase',
-    index: number,
-  ) {
-    ctx.game.currentPlayerIndex = index;
-    const player = ctx.activePlayer;
-    const effects = collectTriggerEffects(trigger, ctx, player);
-    for (const effect of effects) {
-      const before = snapshotPlayer(player);
-      runEffects([effect], ctx);
-      const after = snapshotPlayer(player);
-      const changes = diffSnapshots(before, after);
-      if (changes.length) addLog(changes);
-      refresh();
-      await sleep(1000);
-    }
-  }
-
-  async function startTurn() {
-    ctx.game.currentPhase = Phase.Development;
-    await runPhaseForPlayer('onDevelopmentPhase', 0);
-    await runPhaseForPlayer('onDevelopmentPhase', 1);
-    ctx.game.currentPhase = Phase.Upkeep;
-    await runPhaseForPlayer('onUpkeepPhase', 0);
-    await runPhaseForPlayer('onUpkeepPhase', 1);
-    ctx.game.currentPhase = Phase.Main;
-    ctx.game.currentPlayerIndex = 0;
-    refresh();
-  }
-
-  function handleEndTurn() {
-    if (ctx.game.currentPhase !== Phase.Main) return;
-    if (ctx.activePlayer.ap > 0) return;
-    const last = ctx.game.currentPlayerIndex === ctx.game.players.length - 1;
-    if (last) {
-      ctx.game.turn += 1;
-      void startTurn();
-    } else {
-      ctx.game.currentPlayerIndex += 1;
-      refresh();
-    }
-  }
+  const [screen, setScreen] = useState<Screen>('menu');
+  const [gameKey, setGameKey] = useState(0);
 
   useEffect(() => {
-    void startTurn();
+    if (window.location.pathname !== '/') {
+      window.history.replaceState(null, '', '/');
+    }
   }, []);
 
-  function PlayerPanel({
-    player,
-    active,
-  }: {
-    player: typeof ctx.activePlayer;
-    active: boolean;
-  }) {
-    const popEntries = Object.entries(player.population).filter(
-      ([, v]) => v > 0,
-    );
-    const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
-    const totalLands = player.lands.length;
-    const devCounts: Record<string, number> = {};
-    let openSlots = 0;
-    player.lands.forEach((l) => {
-      openSlots += l.slotsFree;
-      l.developments.forEach((d) => {
-        devCounts[d] = (devCounts[d] || 0) + 1;
-      });
-    });
-    const devParts: string[] = [];
-    developmentOrder.forEach((id) => {
-      const count = devCounts[id];
-      if (count) devParts.push(`${developmentInfo[id]?.icon}${count}`);
-    });
-    if (openSlots) devParts.push(`${slotIcon}${openSlots}`);
+  if (screen === 'overview') {
     return (
-      <div className="space-y-1">
-        <h3
-          className={
-            active ? 'font-bold underline' : 'text-gray-500 font-semibold'
-          }
-        >
-          {player.name}
-        </h3>
-        <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
-          {Object.entries(player.resources).map(([k, v]) => (
-            <span
-              key={k}
-              title={resourceInfo[k as keyof typeof resourceInfo]?.label}
-              className="bar-item"
-            >
-              {resourceInfo[k as keyof typeof resourceInfo]?.icon}
-              {v}
-            </span>
-          ))}
-          <div className="h-4 border-l" />
-          <span
-            title={`Population ${currentPop}/${player.maxPopulation}`}
-            className="bar-item"
-          >
-            👥{currentPop}/{player.maxPopulation}
-          </span>
-          {Object.entries(player.stats)
-            .filter(([k]) => k !== 'maxPopulation')
-            .map(([k, v]) => (
-              <span
-                key={k}
-                title={statInfo[k]?.label || k}
-                className="bar-item"
-              >
-                {statInfo[k]?.icon}
-                {v}
-              </span>
-            ))}
-          <div className="h-4 border-l" />
-          <span title={`Lands and developments`} className="bar-item">
-            {landIcon}
-            {totalLands} ({devParts.join(', ')})
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
-          {ctx.passives.list().map((p) => (
-            <span key={p} className="bar-item" title={p}>
-              {p}
-            </span>
-          ))}
-          {ctx.passives.list().length === 0 && (
-            <span className="text-sm text-gray-500">No passives</span>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
-          {Array.from(player.buildings).map((b) => (
-            <span
-              key={b}
-              title={ctx.buildings.get(b)?.name || b}
-              className="bar-item"
-            >
-              {buildingIcon}
-            </span>
-          ))}
-          {player.buildings.size === 0 && (
-            <span className="text-sm text-gray-500">No buildings</span>
-          )}
-        </div>
+      <div className="p-4 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold text-center mb-4">Game Overview</h1>
+        <p>
+          Kingdom Builder is a turn-based duel where you grow your realm and
+          attempt to outmaneuver your rival. Protect your castle, expand your
+          lands, and manage your resources to prevail.
+        </p>
+        <h2 className="text-xl font-semibold mt-4 mb-2">Goal</h2>
+        <p>
+          Outlast or conquer your opponent. A game can end when a castle falls,
+          when a player can no longer sustain their realm, or when the final
+          round ends with one ruler holding the advantage.
+        </p>
+        <h2 className="text-xl font-semibold mt-4 mb-2">Phases</h2>
+        <p>Each turn flows through three phases:</p>
+        <ul className="list-disc list-inside mb-2">
+          <li>
+            <strong>Development</strong> – your realm produces resources and
+            triggered effects take place.
+          </li>
+          <li>
+            <strong>Upkeep</strong> – maintain your population and resolve
+            ongoing effects.
+          </li>
+          <li>
+            <strong>Main</strong> – both players secretly choose actions and
+            then resolve them in turn.
+          </li>
+        </ul>
+        <h2 className="text-xl font-semibold mt-4 mb-2">Core Mechanics</h2>
+        <p className="mb-4">
+          Actions may require resources or other prerequisites and grant various
+          effects, such as gaining resources, building structures, developing
+          land, or hindering your opponent. Buildings provide passive bonuses,
+          while land around your castle holds developments that yield benefits.
+          Resources like Gold, Action Points, Happiness, and Castle Health are
+          spent and gained throughout the game.
+        </p>
+        <button className="border px-4 py-2" onClick={() => setScreen('menu')}>
+          Back to Start
+        </button>
       </div>
     );
   }
 
+  if (screen === 'game') {
+    return <Game key={gameKey} onExit={() => setScreen('menu')} />;
+  }
+
   return (
-    <div className="p-4 space-y-6 max-w-screen-lg mx-auto">
-      <h1 className="text-2xl font-bold text-center">Kingdom Builder</h1>
-
-      <section className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-2">Players</h2>
-        <div className="flex flex-wrap gap-4">
-          {ctx.game.players.map((p) => (
-            <PlayerPanel
-              key={p.id}
-              player={p}
-              active={p.id === ctx.activePlayer.id}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-2">Phases</h2>
-        <div className="flex flex-wrap items-center gap-4">
-          {Object.values(Phase).map((p) => (
-            <span
-              key={p}
-              className={
-                p === ctx.game.currentPhase
-                  ? 'font-bold underline'
-                  : 'text-gray-500'
-              }
-            >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-2">
-          Actions (1 {resourceInfo[Resource.ap].icon} each)
-        </h2>
-        <div className="space-y-4">
-          {otherActions.map((action) => {
-            const costs = getActionCosts(action.id, ctx);
-            const canPay = Object.entries(costs).every(
-              ([k, v]) =>
-                ctx.activePlayer.resources[
-                  k as keyof typeof ctx.activePlayer.resources
-                ] >= v,
-            );
-            return (
-              <button
-                key={action.id}
-                className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                  canPay && ctx.game.currentPhase === Phase.Main
-                    ? ''
-                    : 'opacity-50 border-red-500'
-                }`}
-                disabled={!canPay || ctx.game.currentPhase !== Phase.Main}
-                onClick={() => handlePerform(action)}
-              >
-                <span>{action.name}</span>
-                <span className="text-xs">
-                  {actionSummaries.get(action.id)}
-                </span>
-                <span className="text-sm text-gray-600">
-                  {renderCosts(costs, ctx.activePlayer.resources)}
-                </span>
-              </button>
-            );
-          })}
-
-          {developAction && (
-            <div>
-              <h3 className="font-medium">Develop</h3>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {sortedDevelopments.map((d) => {
-                  const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
-                  const costs = getActionCosts('develop', ctx, {
-                    id: d.id,
-                    landId: landIdForCost,
-                  });
-                  const canPay =
-                    hasDevelopLand &&
-                    Object.entries(costs).every(
-                      ([k, v]) =>
-                        ctx.activePlayer.resources[
-                          k as keyof typeof ctx.activePlayer.resources
-                        ] >= v,
-                    );
-                  const enabled =
-                    canPay && ctx.game.currentPhase === Phase.Main;
-                  return (
-                    <button
-                      key={d.id}
-                      className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                        enabled ? '' : 'opacity-50 border-red-500'
-                      }`}
-                      disabled={!enabled}
-                      title={
-                        !hasDevelopLand
-                          ? 'No land with free development slot'
-                          : undefined
-                      }
-                      onClick={() => {
-                        const landId = ctx.activePlayer.lands.find(
-                          (l) => l.slotsFree > 0,
-                        )?.id;
-                        handlePerform(developAction, { id: d.id, landId });
-                      }}
-                    >
-                      <span>{d.name}</span>
-                      <span className="text-xs">
-                        {developmentSummaries.get(d.id)}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        {renderCosts(costs, ctx.activePlayer.resources)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {buildAction && (
-            <div>
-              <h3 className="font-medium">Build</h3>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {buildingOptions.map((b) => {
-                  const costs = getActionCosts('build', ctx, { id: b.id });
-                  const canPay = Object.entries(costs).every(
-                    ([k, v]) =>
-                      ctx.activePlayer.resources[
-                        k as keyof typeof ctx.activePlayer.resources
-                      ] >= v,
-                  );
-                  const enabled =
-                    canPay && ctx.game.currentPhase === Phase.Main;
-                  return (
-                    <button
-                      key={b.id}
-                      className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                        enabled ? '' : 'opacity-50 border-red-500'
-                      }`}
-                      disabled={!enabled}
-                      onClick={() => handlePerform(buildAction, { id: b.id })}
-                    >
-                      <span>{b.name}</span>
-                      <span className="text-xs">
-                        {buildingSummaries.get(b.id)}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        {renderCosts(costs, ctx.activePlayer.resources)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-        <button
-          className="border px-2 py-1 mt-4"
-          disabled={
-            ctx.game.currentPhase !== Phase.Main || ctx.activePlayer.ap > 0
-          }
-          onClick={handleEndTurn}
-        >
-          End turn
-          {ctx.activePlayer.ap > 0 && (
-            <span className="block text-xs text-red-500">
-              You still have unspent ap
-            </span>
-          )}
-        </button>
-      </section>
-
-      <section className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-2">Log</h2>
-        <ul className="mt-2 space-y-1 max-h-64 overflow-y-auto">
-          {log.map((entry, idx) => (
-            <li key={idx} className="text-sm font-mono whitespace-pre-wrap">
-              [{entry.time}] {entry.text}
-            </li>
-          ))}
-        </ul>
-      </section>
+    <div className="h-screen flex flex-col gap-4 items-center justify-center">
+      <h1 className="text-3xl font-bold">Kingdom Builder</h1>
+      <button
+        className="border px-4 py-2"
+        onClick={() => {
+          setGameKey((k) => k + 1);
+          setScreen('game');
+        }}
+      >
+        Start New Game
+      </button>
+      <button
+        className="border px-4 py-2"
+        onClick={() => setScreen('overview')}
+      >
+        Game Overview
+      </button>
     </div>
   );
 }

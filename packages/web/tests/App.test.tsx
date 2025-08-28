@@ -41,8 +41,9 @@ vi.mock('@kingdom-builder/engine', () => {
 });
 
 describe('<App />', () => {
-  it('renders Kingdom Builder header', () => {
+  it('renders main menu', () => {
     const html = renderToString(<App />);
     expect(html).toContain('Kingdom Builder');
+    expect(html).toContain('Start New Game');
   });
 });
