@@ -12,6 +12,16 @@ export function createPopulationRegistry() {
   registry.add(
     PopulationRole.Council,
     population(PopulationRole.Council, 'Council')
+      .onAssigned({
+        type: 'resource',
+        method: 'add',
+        params: { key: Resource.ap, amount: 1 },
+      })
+      .onUnassigned({
+        type: 'resource',
+        method: 'remove',
+        params: { key: Resource.ap, amount: 1 },
+      })
       .onDevelopmentPhase({
         type: 'resource',
         method: 'add',
@@ -28,6 +38,23 @@ export function createPopulationRegistry() {
   registry.add(
     PopulationRole.Commander,
     population(PopulationRole.Commander, 'Army Commander')
+      .onAssigned({
+        type: 'passive',
+        method: 'add',
+        params: { id: 'commander_$player_$index' },
+        effects: [
+          {
+            type: 'stat',
+            method: 'add',
+            params: { key: Stat.armyStrength, amount: 1 },
+          },
+        ],
+      })
+      .onUnassigned({
+        type: 'passive',
+        method: 'remove',
+        params: { id: 'commander_$player_$index' },
+      })
       .onDevelopmentPhase({
         type: 'stat',
         method: 'add_pct',
@@ -44,6 +71,23 @@ export function createPopulationRegistry() {
   registry.add(
     PopulationRole.Fortifier,
     population(PopulationRole.Fortifier, 'Fortifier')
+      .onAssigned({
+        type: 'passive',
+        method: 'add',
+        params: { id: 'fortifier_$player_$index' },
+        effects: [
+          {
+            type: 'stat',
+            method: 'add',
+            params: { key: Stat.fortificationStrength, amount: 1 },
+          },
+        ],
+      })
+      .onUnassigned({
+        type: 'passive',
+        method: 'remove',
+        params: { id: 'fortifier_$player_$index' },
+      })
       .onDevelopmentPhase({
         type: 'stat',
         method: 'add_pct',

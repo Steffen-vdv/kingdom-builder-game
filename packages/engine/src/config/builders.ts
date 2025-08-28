@@ -3,7 +3,7 @@ import type {
   BuildingConfig,
   DevelopmentConfig,
   PopulationConfig,
-  RequirementFn,
+  RequirementConfig,
   EffectConfig,
 } from './schema';
 import type { ResourceKey } from '../state';
@@ -27,7 +27,7 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
     this.config.baseCosts[key] = amount;
     return this;
   }
-  requirement(req: RequirementFn) {
+  requirement(req: RequirementConfig) {
     this.config.requirements = this.config.requirements || [];
     this.config.requirements.push(req);
     return this;
@@ -91,6 +91,16 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
 export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
   constructor(id: string, name: string) {
     super(id, name, {});
+  }
+  onAssigned(effect: EffectConfig) {
+    this.config.onAssigned = this.config.onAssigned || [];
+    this.config.onAssigned.push(effect);
+    return this;
+  }
+  onUnassigned(effect: EffectConfig) {
+    this.config.onUnassigned = this.config.onUnassigned || [];
+    this.config.onUnassigned.push(effect);
+    return this;
   }
   onDevelopmentPhase(effect: EffectConfig) {
     this.config.onDevelopmentPhase = this.config.onDevelopmentPhase || [];
