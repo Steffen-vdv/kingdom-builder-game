@@ -20,11 +20,15 @@ vi.mock('@kingdom-builder/engine', () => {
       developments: { map: new Map() },
       buildings: { map: new Map(), get: () => undefined },
       passives: { list: () => [] },
-      game: { currentPhase: 'development', players: [player] },
+      game: {
+        currentPhase: 'development',
+        players: [player],
+        currentPlayerIndex: 0,
+      },
     }),
     performAction: () => {},
-    runDevelopment: () => {},
-    runUpkeep: () => {},
+    runEffects: () => {},
+    collectTriggerEffects: () => [],
     getActionCosts: () => ({}),
     Phase: { Development: 'development', Upkeep: 'upkeep', Main: 'main' },
     Resource: {
