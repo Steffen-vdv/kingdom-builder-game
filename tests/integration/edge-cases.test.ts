@@ -17,15 +17,15 @@ describe('Action edge cases', () => {
     const ctx = createTestContext();
     const costs = getActionCosts('expand', ctx);
     const entries = Object.entries(costs).filter(
-      ([k]) => k !== Resource.ap,
+      ([key]) => key !== Resource.ap,
     ) as [ResourceKey, number][];
     if (entries.length === 0) return; // no non-AP cost to exhaust
-    const [key, amount]: [ResourceKey, number] = entries[0];
-    ctx.activePlayer.resources[key] = (amount ?? 0) - 1;
+    const [resourceKey, amount]: [ResourceKey, number] = entries[0];
+    ctx.activePlayer.resources[resourceKey] = (amount ?? 0) - 1;
     expect(() => performAction('expand', ctx)).toThrow(
-      new RegExp(`Insufficient ${key}`),
+      new RegExp(`Insufficient ${resourceKey}`),
     );
-    expect(ctx.activePlayer.resources[key]).toBe((amount ?? 0) - 1);
+    expect(ctx.activePlayer.resources[resourceKey]).toBe((amount ?? 0) - 1);
   });
 
   it('rejects actions when action points are exhausted', () => {

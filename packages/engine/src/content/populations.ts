@@ -7,9 +7,9 @@ import type { PopulationDef } from './defs';
 export type { PopulationDef } from './defs';
 
 export function createPopulationRegistry() {
-  const reg = new Registry<PopulationDef>(populationSchema);
+  const registry = new Registry<PopulationDef>(populationSchema);
 
-  reg.add(
+  registry.add(
     PopulationRole.Council,
     population(PopulationRole.Council, 'Council')
       .onDevelopmentPhase({
@@ -25,7 +25,7 @@ export function createPopulationRegistry() {
       .build(),
   );
 
-  reg.add(
+  registry.add(
     PopulationRole.Commander,
     population(PopulationRole.Commander, 'Army Commander')
       .onDevelopmentPhase({
@@ -41,7 +41,7 @@ export function createPopulationRegistry() {
       .build(),
   );
 
-  reg.add(
+  registry.add(
     PopulationRole.Fortifier,
     population(PopulationRole.Fortifier, 'Fortifier')
       .onDevelopmentPhase({
@@ -57,12 +57,12 @@ export function createPopulationRegistry() {
       .build(),
   );
 
-  reg.add(
+  registry.add(
     PopulationRole.Citizen,
     population(PopulationRole.Citizen, 'Citizen').build(),
   );
 
-  return reg;
+  return registry;
 }
 
 export const POPULATIONS = createPopulationRegistry();

@@ -13,19 +13,19 @@ function deepClone<T>(value: T): T {
   return structuredClone(value);
 }
 
-function clonePlayer(p: PlayerState) {
-  const c = new PlayerState(p.id, p.name);
-  c.resources = deepClone(p.resources);
-  c.stats = deepClone(p.stats);
-  c.population = deepClone(p.population);
-  c.lands = p.lands.map((l) => {
-    const nl = new Land(l.id, l.slotsMax);
-    nl.slotsUsed = l.slotsUsed;
-    nl.developments = [...l.developments];
-    return nl;
+function clonePlayer(player: PlayerState) {
+  const copy = new PlayerState(player.id, player.name);
+  copy.resources = deepClone(player.resources);
+  copy.stats = deepClone(player.stats);
+  copy.population = deepClone(player.population);
+  copy.lands = player.lands.map((landState) => {
+    const newLand = new Land(landState.id, landState.slotsMax);
+    newLand.slotsUsed = landState.slotsUsed;
+    newLand.developments = [...landState.developments];
+    return newLand;
   });
-  c.buildings = new Set([...p.buildings]);
-  return c;
+  copy.buildings = new Set([...player.buildings]);
+  return copy;
 }
 
 export function createTestContext(overrides?: { gold?: number; ap?: number }) {
@@ -67,8 +67,12 @@ export function simulateEffects(
 }
 
 export function getActionOutcome(id: string, ctx: EngineContext) {
-  const def = ctx.actions.get(id);
+  const actionDefinition = ctx.actions.get(id);
   const costs = getActionCosts(id, ctx);
-  const results = simulateEffects(def.effects, ctx, def.id);
+  const results = simulateEffects(
+    actionDefinition.effects,
+    ctx,
+    actionDefinition.id,
+  );
   return { costs, results };
 }

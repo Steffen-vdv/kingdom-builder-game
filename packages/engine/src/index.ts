@@ -42,23 +42,23 @@ function runTrigger(
   ctx.game.currentPlayerIndex = index;
 
   for (const [role, count] of Object.entries(player.population)) {
-    const def = ctx.populations.get(role);
-    const effects = def[trigger];
+    const populationDefinition = ctx.populations.get(role);
+    const effects = populationDefinition[trigger];
     if (effects) runEffects(effects, ctx, Number(count));
   }
 
   for (const land of player.lands) {
     for (const id of land.developments) {
-      const def = ctx.developments.get(id);
-      const effects = def[trigger];
+      const developmentDefinition = ctx.developments.get(id);
+      const effects = developmentDefinition[trigger];
       if (!effects) continue;
       runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
     }
   }
 
   for (const id of player.buildings) {
-    const def = ctx.buildings.get(id);
-    const effects = def[trigger];
+    const buildingDefinition = ctx.buildings.get(id);
+    const effects = buildingDefinition[trigger];
     if (effects) runEffects(effects, ctx);
   }
 
@@ -77,8 +77,12 @@ function applyCostsWithPassives(
 }
 
 export function getActionCosts(actionId: string, ctx: EngineContext): CostBag {
-  const def = ctx.actions.get(actionId);
-  return applyCostsWithPassives(def.id, def.baseCosts || {}, ctx);
+  const actionDefinition = ctx.actions.get(actionId);
+  return applyCostsWithPassives(
+    actionDefinition.id,
+    actionDefinition.baseCosts || {},
+    ctx,
+  );
 }
 
 function canPay(costs: CostBag, player: PlayerState): true | string {
@@ -113,19 +117,23 @@ export function performAction<T extends string>(
   ctx: EngineContext,
   params?: ActionParams<T>,
 ) {
-  const def = ctx.actions.get(actionId);
-  for (const req of def.requirements || []) {
-    const ok = req(ctx);
+  const actionDefinition = ctx.actions.get(actionId);
+  for (const requirement of actionDefinition.requirements || []) {
+    const ok = requirement(ctx);
     if (ok !== true) throw new Error(String(ok));
   }
-  const costs = applyCostsWithPassives(def.id, def.baseCosts || {}, ctx);
+  const costs = applyCostsWithPassives(
+    actionDefinition.id,
+    actionDefinition.baseCosts || {},
+    ctx,
+  );
   const ok = canPay(costs, ctx.activePlayer);
   if (ok !== true) throw new Error(ok);
   pay(costs, ctx.activePlayer);
 
-  const resolved = applyParamsToEffects(def.effects, params || {});
+  const resolved = applyParamsToEffects(actionDefinition.effects, params || {});
   runEffects(resolved, ctx);
-  ctx.passives.runResultMods(def.id, ctx);
+  ctx.passives.runResultMods(actionDefinition.id, ctx);
 }
 
 export function runDevelopment(ctx: EngineContext) {
@@ -148,9 +156,9 @@ export function resolveAttack(
     ctx.services.rules.absorptionCapPct,
   );
   let final = damage * (1 - absorb);
-  const r = ctx.services.rules.absorptionRounding;
-  if (r === 'down') final = Math.floor(final);
-  else if (r === 'up') final = Math.ceil(final);
+  const rounding = ctx.services.rules.absorptionRounding;
+  if (rounding === 'down') final = Math.floor(final);
+  else if (rounding === 'up') final = Math.ceil(final);
   else final = Math.round(final);
   runTrigger('onAttackResolved', ctx, defender);
   return final;
@@ -178,26 +186,29 @@ export function createEngine(overrides?: {
   let populations = overrides?.populations;
 
   if (overrides?.config) {
-    const cfg = validateGameConfig(overrides.config);
-    if (cfg.actions) {
-      const reg = new Registry<ActionDef>(actionSchema);
-      for (const a of cfg.actions) reg.add(a.id, a);
-      actions = reg;
+    const config = validateGameConfig(overrides.config);
+    if (config.actions) {
+      const registry = new Registry<ActionDef>(actionSchema);
+      for (const action of config.actions) registry.add(action.id, action);
+      actions = registry;
     }
-    if (cfg.buildings) {
-      const reg = new Registry<BuildingDef>(buildingSchema);
-      for (const b of cfg.buildings) reg.add(b.id, b);
-      buildings = reg;
+    if (config.buildings) {
+      const registry = new Registry<BuildingDef>(buildingSchema);
+      for (const building of config.buildings)
+        registry.add(building.id, building);
+      buildings = registry;
     }
-    if (cfg.developments) {
-      const reg = new Registry<DevelopmentDef>(developmentSchema);
-      for (const d of cfg.developments) reg.add(d.id, d);
-      developments = reg;
+    if (config.developments) {
+      const registry = new Registry<DevelopmentDef>(developmentSchema);
+      for (const development of config.developments)
+        registry.add(development.id, development);
+      developments = registry;
     }
-    if (cfg.populations) {
-      const reg = new Registry<PopulationDef>(populationSchema);
-      for (const p of cfg.populations) reg.add(p.id, p);
-      populations = reg;
+    if (config.populations) {
+      const registry = new Registry<PopulationDef>(populationSchema);
+      for (const population of config.populations)
+        registry.add(population.id, population);
+      populations = registry;
     }
   }
 

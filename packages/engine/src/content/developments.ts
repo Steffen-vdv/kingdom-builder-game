@@ -7,9 +7,9 @@ import type { DevelopmentDef } from './defs';
 export type { DevelopmentDef } from './defs';
 
 export function createDevelopmentRegistry() {
-  const reg = new Registry<DevelopmentDef>(developmentSchema);
+  const registry = new Registry<DevelopmentDef>(developmentSchema);
 
-  reg.add(
+  registry.add(
     'farm',
     development('farm', 'Farm')
       .onDevelopmentPhase({
@@ -20,7 +20,7 @@ export function createDevelopmentRegistry() {
       .build(),
   );
 
-  reg.add(
+  registry.add(
     'house',
     development('house', 'House')
       .onBuild({
@@ -31,7 +31,7 @@ export function createDevelopmentRegistry() {
       .build(),
   );
 
-  reg.add(
+  registry.add(
     'outpost',
     development('outpost', 'Outpost')
       .onBuild({
@@ -47,7 +47,7 @@ export function createDevelopmentRegistry() {
       .build(),
   );
 
-  reg.add(
+  registry.add(
     'watchtower',
     development('watchtower', 'Watchtower')
       .onBuild({
@@ -80,7 +80,7 @@ export function createDevelopmentRegistry() {
       .build(),
   );
 
-  return reg;
+  return registry;
 }
 
 export const DEVELOPMENTS = createDevelopmentRegistry();

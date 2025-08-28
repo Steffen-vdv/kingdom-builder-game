@@ -13,23 +13,23 @@ import { PlayerState, Land, GameState } from '../../src/state/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
 
-function clonePlayer(p: PlayerState): PlayerState {
-  const copy = new PlayerState(p.id, p.name);
-  copy.resources = { ...p.resources };
-  copy.stats = { ...p.stats };
-  copy.population = { ...p.population };
-  copy.lands = p.lands.map((l) => {
-    const land = new Land(l.id, l.slotsMax);
-    land.slotsUsed = l.slotsUsed;
-    land.developments = [...l.developments];
+function clonePlayer(player: PlayerState): PlayerState {
+  const copy = new PlayerState(player.id, player.name);
+  copy.resources = { ...player.resources };
+  copy.stats = { ...player.stats };
+  copy.population = { ...player.population };
+  copy.lands = player.lands.map((landState) => {
+    const land = new Land(landState.id, landState.slotsMax);
+    land.slotsUsed = landState.slotsUsed;
+    land.developments = [...landState.developments];
     return land;
   });
-  copy.buildings = new Set(p.buildings);
+  copy.buildings = new Set(player.buildings);
   return copy;
 }
 
 function simulateBuild(ctx: EngineContext, id: string, landId: string) {
-  const def = ctx.developments.get(id);
+  const developmentDefinition = ctx.developments.get(id);
   const costs = getActionCosts('develop', ctx);
   const game = new GameState();
   game.players[0] = clonePlayer(ctx.activePlayer);
@@ -44,21 +44,29 @@ function simulateBuild(ctx: EngineContext, id: string, landId: string) {
     ctx.populations,
     new PassiveManager(),
   );
-  for (const [k, v] of Object.entries(costs)) {
-    sim.activePlayer.resources[k as ResourceKey] -= v;
+  for (const [resourceKey, cost] of Object.entries(costs)) {
+    sim.activePlayer.resources[resourceKey as ResourceKey] -= cost;
   }
-  const land = sim.activePlayer.lands.find((l) => l.id === landId)!;
+  const land = sim.activePlayer.lands.find(
+    (landState) => landState.id === landId,
+  )!;
   land.developments.push(id);
   land.slotsUsed += 1;
-  const effects = applyParamsToEffects(def.onBuild || [], { landId, id });
+  const effects = applyParamsToEffects(developmentDefinition.onBuild || [], {
+    landId,
+    id,
+  });
   runEffects(effects, sim);
   return sim;
 }
 
 function expectState(actual: PlayerState, expected: PlayerState) {
   expect(actual.resources).toEqual(expected.resources);
-  for (const [k, v] of Object.entries(expected.stats)) {
-    expect(actual.stats[k as keyof typeof actual.stats]).toBeCloseTo(v, 5);
+  for (const [statKey, statValue] of Object.entries(expected.stats)) {
+    expect(actual.stats[statKey as keyof typeof actual.stats]).toBeCloseTo(
+      statValue,
+      5,
+    );
   }
 }
 
@@ -111,15 +119,20 @@ describe('Develop action', () => {
     expect(land.slotsUsed).toBe(slotsBefore + 1);
     expectState(ctx.activePlayer, expectedBuild);
 
-    const def = ctx.developments.get('watchtower');
-    const removalEffects = applyParamsToEffects(def.onAttackResolved || [], {
-      landId: land.id,
-      id: 'watchtower',
-    });
+    const developmentDefinition = ctx.developments.get('watchtower');
+    const removalEffects = applyParamsToEffects(
+      developmentDefinition.onAttackResolved || [],
+      {
+        landId: land.id,
+        id: 'watchtower',
+      },
+    );
     runEffects(removalEffects, buildSim);
     resolveAttack(ctx.activePlayer, 0, ctx);
     expectState(ctx.activePlayer, buildSim.activePlayer);
-    const simLand = buildSim.activePlayer.lands.find((l) => l.id === land.id)!;
+    const simLand = buildSim.activePlayer.lands.find(
+      (landState) => landState.id === land.id,
+    )!;
     expect(land.developments).toEqual(simLand.developments);
     expect(land.slotsUsed).toBe(simLand.slotsUsed);
     expect(ctx.activePlayer.fortificationStrength).toBe(

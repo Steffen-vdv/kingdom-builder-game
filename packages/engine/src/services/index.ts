@@ -43,10 +43,10 @@ export const DefaultRules: RuleSet = {
 
 class HappinessService {
   constructor(private rules: RuleSet) {}
-  tier(h: number): HappinessTierEffect | undefined {
+  tier(happiness: number): HappinessTierEffect | undefined {
     let last: HappinessTierEffect | undefined;
-    for (const t of this.rules.happinessTiers)
-      if (h >= t.threshold) last = t.effect;
+    for (const tier of this.rules.happinessTiers)
+      if (happiness >= tier.threshold) last = tier.effect;
       else break;
     return last;
   }
@@ -55,16 +55,19 @@ class HappinessService {
 // PopCap policy (placeholder — data-driven later)
 class PopCapService {
   baseCastleHouses = 1; // can be moved to config
-  getCap(p: PlayerState): number {
-    const housesOnLand = p.lands.reduce(
-      (acc, l) => acc + l.developments.filter((d) => d === 'house').length,
+  getCap(player: PlayerState): number {
+    const housesOnLand = player.lands.reduce(
+      (acc, land) =>
+        acc +
+        land.developments.filter((development) => development === 'house')
+          .length,
       0,
     );
     return this.baseCastleHouses + housesOnLand;
   }
 }
 
-export type CostBag = { [k in ResourceKey]?: number };
+export type CostBag = { [resourceKey in ResourceKey]?: number };
 export type CostModifier = (
   actionId: string,
   cost: CostBag,
@@ -92,12 +95,13 @@ export class PassiveManager {
 
   applyCostMods(actionId: string, base: CostBag, ctx: EngineContext): CostBag {
     let acc: CostBag = { ...base };
-    for (const m of this.costMods.values()) acc = m(actionId, acc, ctx);
+    for (const modifier of this.costMods.values())
+      acc = modifier(actionId, acc, ctx);
     return acc;
   }
 
   runResultMods(actionId: string, ctx: EngineContext) {
-    for (const m of this.resultMods.values()) m(actionId, ctx);
+    for (const modifier of this.resultMods.values()) modifier(actionId, ctx);
   }
 
   addPassive(
@@ -109,18 +113,19 @@ export class PassiveManager {
   }
 
   removePassive(id: string, ctx: EngineContext) {
-    const p = this.passives.get(id);
-    if (!p) return;
-    runEffects(p.effects.map(reverseEffect), ctx);
+    const passive = this.passives.get(id);
+    if (!passive) return;
+    runEffects(passive.effects.map(reverseEffect), ctx);
     this.passives.delete(id);
   }
 }
 
-function reverseEffect(e: EffectDef): EffectDef {
-  if (e.effects) return { ...e, effects: e.effects.map(reverseEffect) };
-  if (e.method === 'add') return { ...e, method: 'remove' };
-  if (e.method === 'remove') return { ...e, method: 'add' };
-  return { ...e };
+function reverseEffect(effect: EffectDef): EffectDef {
+  if (effect.effects)
+    return { ...effect, effects: effect.effects.map(reverseEffect) };
+  if (effect.method === 'add') return { ...effect, method: 'remove' };
+  if (effect.method === 'remove') return { ...effect, method: 'add' };
+  return { ...effect };
 }
 
 export class Services {

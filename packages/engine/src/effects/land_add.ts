@@ -12,7 +12,7 @@ export const landAdd: EffectHandler<LandAddParams> = (
   mult = 1,
 ) => {
   const count = Math.floor(Number(effect.params?.count ?? 1) * mult);
-  for (let i = 0; i < count; i++) {
+  for (let index = 0; index < count; index++) {
     const land = new Land(
       `${ctx.activePlayer.id}-L${ctx.activePlayer.lands.length + 1}`,
       ctx.services.rules.slotsPerNewLand,

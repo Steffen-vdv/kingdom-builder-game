@@ -57,14 +57,14 @@ export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
 }
 
 export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
-  for (const e of effects) {
-    if (e.evaluator) {
-      const ev = EVALUATORS.get(e.evaluator.type);
-      const count = ev(e.evaluator, ctx);
-      runEffects(e.effects || [], ctx, mult * (count as number));
-    } else if (e.type && e.method) {
-      const handler = EFFECTS.get(`${e.type}:${e.method}`);
-      handler(e, ctx, mult);
+  for (const effect of effects) {
+    if (effect.evaluator) {
+      const evaluatorHandler = EVALUATORS.get(effect.evaluator.type);
+      const count = evaluatorHandler(effect.evaluator, ctx);
+      runEffects(effect.effects || [], ctx, mult * (count as number));
+    } else if (effect.type && effect.method) {
+      const handler = EFFECTS.get(`${effect.type}:${effect.method}`);
+      handler(effect, ctx, mult);
     }
   }
 }

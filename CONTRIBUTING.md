@@ -3,6 +3,9 @@
 Thanks for your interest in improving Kingdom Builder! This guide describes the
 workflow for contributors so that changes remain consistent and easy to review.
 
+Please also review our [Code Standards](docs/CODE_STANDARDS.md) for naming and
+style conventions used throughout the repository.
+
 ## Development Setup
 
 1. Install [Node.js](https://nodejs.org/) **18 or newer**.
