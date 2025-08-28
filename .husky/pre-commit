@@ -9,8 +9,8 @@ npx lint-staged
 # Run type checking and linting
 npm run check
 
-# Run tests after check passes
-npm test
+# Run tests with coverage after check passes
+npm run test:coverage
 if [ -n "$SONAR_TOKEN" ]; then
   npx sonar-scanner -Dsonar.token=$SONAR_TOKEN
 else
