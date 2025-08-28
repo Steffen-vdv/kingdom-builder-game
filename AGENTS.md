@@ -27,7 +27,7 @@ Tests live in:
 - `packages/engine/tests` for unit tests
 - `tests/integration` for integration tests
 
-The pre-commit hook runs lint-staged and `npm test` automatically. GitHub
+The pre-commit hook runs lint-staged, type checking, linting, and `npm run test:coverage` automatically. GitHub
 Actions executes `npm run test:coverage` and `npm run build` for each pull
 request. Run these scripts locally only when debugging or when changes could
 affect them. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.

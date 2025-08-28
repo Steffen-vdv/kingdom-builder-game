@@ -9,5 +9,5 @@ npx lint-staged
 # Run type checking and linting
 npm run check
 
-# Run tests with coverage after check passes
+# Run tests with coverage (supersedes separate `npm test`)
 npm run test:coverage

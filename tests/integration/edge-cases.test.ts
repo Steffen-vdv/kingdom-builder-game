@@ -16,6 +16,7 @@ describe('Action edge cases', () => {
   it('rejects actions when a required resource is exhausted', () => {
     const ctx = createTestContext();
     const costs = getActionCosts('expand', ctx);
+    ctx.activePlayer.ap = costs[Resource.ap] || 0;
     const entries = Object.entries(costs).filter(
       ([key]) => key !== Resource.ap,
     ) as [ResourceKey, number][];

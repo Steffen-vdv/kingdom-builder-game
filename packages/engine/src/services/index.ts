@@ -118,6 +118,10 @@ export class PassiveManager {
     runEffects(passive.effects.map(reverseEffect), ctx);
     this.passives.delete(id);
   }
+
+  list() {
+    return Array.from(this.passives.keys());
+  }
 }
 
 function reverseEffect(effect: EffectDef): EffectDef {
