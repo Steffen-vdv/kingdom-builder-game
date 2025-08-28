@@ -26,12 +26,11 @@ Tests live in:
 
 - `packages/engine/tests` for unit tests
 - `tests/integration` for integration tests
-- `e2e` for end-to-end tests using Playwright
 
 The pre-commit hook runs lint-staged and `npm test` automatically. GitHub
-Actions executes `npm run test:coverage`, `npm run e2e`, and `npm run build`
-for each pull request. Run these scripts locally only when debugging or when
-changes could affect them. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+Actions executes `npm run test:coverage` and `npm run build` for each pull
+request. Run these scripts locally only when debugging or when changes could
+affect them. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 # Game overview
 

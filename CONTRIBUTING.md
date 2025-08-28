@@ -18,15 +18,14 @@ style conventions used throughout the repository.
 
 ## Testing Conventions
 
-- Tests are split into three levels:
+- Tests are split into two levels:
   - **Unit tests** under `packages/engine/tests`.
   - **Integration tests** under `tests/integration`.
-  - **End-to-end tests** under `e2e` (Playwright).
 - The pre-commit hook runs `npm test` for unit and integration tests on staged
   files.
-- GitHub Actions runs `npm run test:coverage`, `npm run e2e`, and `npm run build`
-  for every pull request. Run these scripts locally only when working on related
-  areas or debugging failures.
+- GitHub Actions runs `npm run test:coverage` and `npm run build` for every pull
+  request. Run these scripts locally only when working on related areas or
+  debugging failures.
 - New features and bug fixes **must** include tests. Derive expectations from
   the active configuration or mocked registries instead of hard-coded numbers.
 - Use the registry pattern to swap implementations in tests when needed. Avoid
@@ -43,7 +42,7 @@ style conventions used throughout the repository.
   possible.
 - Ensure the pre-commit hook passes before pushing. It runs `lint-staged`,
   `npm run lint`, `npm run type-check`, and `npm test` on staged files.
-  Additional checks such as end-to-end tests and the production build run in CI.
+  Additional checks such as the production build run in CI.
 - Limit commit message subject lines to ~70 characters.
 
 For architectural details see [ARCHITECTURE.md](docs/ARCHITECTURE.md). If in

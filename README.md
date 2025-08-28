@@ -10,9 +10,8 @@
 ## 2) Testing
 
 Pre-commit runs unit and integration tests automatically. Continuous
-integration executes the full suite, including end-to-end tests and the
-production build. See [CONTRIBUTING.md](CONTRIBUTING.md) for details on the
-workflow.
+integration executes the full suite and the production build. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for details on the workflow.
 
 ## 3) Game Overview
 
