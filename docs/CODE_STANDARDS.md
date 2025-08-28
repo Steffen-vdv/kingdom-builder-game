@@ -22,6 +22,6 @@ maintainable.
 - Unit tests live under `packages/engine/tests`.
 - Integration tests live under `tests/integration`.
 - End-to-end tests live under `e2e`.
-- Run `npm test`, `npm run e2e` and `npm run build` before committing.
+- See [CONTRIBUTING.md](../CONTRIBUTING.md) for the recommended testing workflow.
 
 These standards help ensure consistent contributions across the repository.

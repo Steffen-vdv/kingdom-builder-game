@@ -9,16 +9,10 @@
 
 ## 2) Testing
 
-Run tests before committing:
-
-```bash
-npm test
-npm run e2e
-npm run build
-```
-
-`npm run e2e` automatically installs the Playwright Chromium browser and any
-required system dependencies on first run.
+Pre-commit runs unit and integration tests automatically. Continuous
+integration executes the full suite, including end-to-end tests and the
+production build. See [CONTRIBUTING.md](CONTRIBUTING.md) for details on the
+workflow.
 
 ## 3) Game Overview
 

@@ -11,9 +11,10 @@ style conventions used throughout the repository.
 1. Install [Node.js](https://nodejs.org/) **18 or newer**.
 2. Install dependencies with `npm install`.
 3. Use `npm run dev` to start the web client during development.
-4. Run `npm run type-check` to ensure the codebase compiles under TypeScript.
-5. Run `npm run lint` to check formatting and unused imports.
-6. Run `npm run build` to verify the production build succeeds.
+4. The pre-commit hook automatically lints, type-checks, and tests changed
+   files. To run these checks manually across the repository, use
+   `npm run check`.
+5. Run `npm run build` only when verifying production builds locally.
 
 ## Testing Conventions
 
@@ -21,19 +22,11 @@ style conventions used throughout the repository.
   - **Unit tests** under `packages/engine/tests`.
   - **Integration tests** under `tests/integration`.
   - **End-to-end tests** under `e2e` (Playwright).
-- Run unit and integration tests with `npm test`.
-- Run end-to-end tests. The `npm run e2e` script automatically downloads the
-  Playwright Chromium browser and any required Linux dependencies on first run:
-
-  ```bash
-  npm run e2e
-  ```
-
-  Some environments may print `403` warnings from `mise.jdx.dev` while installing
-  system packages; these are harmless and can be ignored.
-
-- Always run `npm test`, `npm run e2e`, and `npm run build` before committing.
-  The `npm test` script runs ESLint and Vitest for unit/integration tests.
+- The pre-commit hook runs `npm test` for unit and integration tests on staged
+  files.
+- GitHub Actions runs `npm run test:coverage`, `npm run e2e`, and `npm run build`
+  for every pull request. Run these scripts locally only when working on related
+  areas or debugging failures.
 - New features and bug fixes **must** include tests. Derive expectations from
   the active configuration or mocked registries instead of hard-coded numbers.
 - Use the registry pattern to swap implementations in tests when needed. Avoid
@@ -48,8 +41,9 @@ style conventions used throughout the repository.
 - Keep commits focused; avoid mixing unrelated changes or drive-by edits.
 - Update documentation and tests in the same commit as the code change when
   possible.
-- Ensure `npm test`, `npm run type-check`, and `npm run build` pass before pushing.
-- The pre-commit hook runs `lint-staged`, `npm run lint`, `npm run type-check`, and `npm test`. Fix any issues before committing.
+- Ensure the pre-commit hook passes before pushing. It runs `lint-staged`,
+  `npm run lint`, `npm run type-check`, and `npm test` on staged files.
+  Additional checks such as end-to-end tests and the production build run in CI.
 - Limit commit message subject lines to ~70 characters.
 
 For architectural details see [ARCHITECTURE.md](docs/ARCHITECTURE.md). If in
