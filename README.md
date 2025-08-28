@@ -1,5 +1,4 @@
 # 👑 Kingdom Builder v5.11
-
 ## 1) Setup
 
 1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
