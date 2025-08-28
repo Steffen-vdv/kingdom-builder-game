@@ -57,31 +57,70 @@ function snapshotPlayer(player: Player): Snapshot {
   };
 }
 
-function diffSnapshots(before: Snapshot, after: Snapshot): string[] {
+function diffSnapshots(
+  before: Snapshot,
+  after: Snapshot,
+  ctx: EngineContext,
+): string[] {
   const changes: string[] = [];
   for (const key of Object.keys(after.resources)) {
     const b = before.resources[key] ?? 0;
     const a = after.resources[key] ?? 0;
-    if (a !== b) changes.push(`Resource ${key}: ${b} -> ${a} (Δ ${a - b})`);
+    if (a !== b) {
+      const info = resourceInfo[key as keyof typeof resourceInfo];
+      const icon = info?.icon ? `${info.icon} ` : '';
+      const label = info?.label ?? key;
+      const delta = a - b;
+      changes.push(
+        `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
+      );
+    }
   }
   for (const key of Object.keys(after.stats)) {
     const b = before.stats[key] ?? 0;
     const a = after.stats[key] ?? 0;
-    if (a !== b) changes.push(`Stat ${key}: ${b} -> ${a} (Δ ${a - b})`);
+    if (a !== b) {
+      const info = statInfo[key];
+      const icon = info?.icon ? `${info.icon} ` : '';
+      const label = info?.label ?? key;
+      const delta = a - b;
+      if (key === 'absorption') {
+        const bPerc = b * 100;
+        const aPerc = a * 100;
+        const dPerc = delta * 100;
+        changes.push(
+          `${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
+        );
+      } else {
+        changes.push(
+          `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
+        );
+      }
+    }
   }
   const beforeB = new Set(before.buildings);
   const afterB = new Set(after.buildings);
   for (const id of afterB)
-    if (!beforeB.has(id)) changes.push(`Building added: ${id}`);
+    if (!beforeB.has(id)) {
+      let name = id;
+      try {
+        name = ctx.buildings.get(id).name;
+      } catch {
+        // use id if lookup fails
+      }
+      changes.push(`${buildingIcon} ${name} built`);
+    }
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
     if (!prev) {
-      changes.push(`Land added: ${land.id}`);
+      changes.push(`${landIcon} New land ${land.id}`);
       continue;
     }
     for (const dev of land.developments)
-      if (!prev.developments.includes(dev))
-        changes.push(`Development ${dev} added to ${land.id}`);
+      if (!prev.developments.includes(dev)) {
+        const icon = developmentInfo[dev]?.icon || dev;
+        changes.push(`${landIcon} ${land.id}: +${icon}`);
+      }
   }
   return changes;
 }
@@ -146,6 +185,10 @@ const developmentInfo: Record<string, { icon: string; label: string }> = {
 const landIcon = '🗺️';
 const slotIcon = '🧩';
 const buildingIcon = '🧱';
+const phaseInfo = {
+  onDevelopmentPhase: { icon: '🏗️', label: 'Development phase' },
+  onUpkeepPhase: { icon: '🧹', label: 'Upkeep phase' },
+} as const;
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 function summarizeEffects(
   effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
@@ -426,19 +469,15 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     try {
       performAction(action.id, ctx, params as ActionParams<string>);
       const after = snapshotPlayer(ctx.activePlayer);
-      const changes = diffSnapshots(before, after);
+      const changes = diffSnapshots(before, after, ctx);
+      const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
       addLog([
-        `Action ${
-          actionInfo[action.id as keyof typeof actionInfo]?.icon || ''
-        } ${action.name} performed`,
+        `Played ${icon} ${action.name}`,
         ...changes.map((c) => `  ${c}`),
       ]);
     } catch (e) {
-      addLog(
-        `Action ${
-          actionInfo[action.id as keyof typeof actionInfo]?.icon || ''
-        } ${action.name} failed: ${(e as Error).message}`,
-      );
+      const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
+      addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
     }
     refresh();
   }
@@ -458,8 +497,14 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       const before = snapshotPlayer(player);
       runEffects([effect], ctx);
       const after = snapshotPlayer(player);
-      const changes = diffSnapshots(before, after);
-      if (changes.length) addLog(changes, player.name);
+      const changes = diffSnapshots(before, after, ctx);
+      if (changes.length) {
+        const info = phaseInfo[trigger];
+        addLog(
+          [`${info.icon} ${info.label}:`, ...changes.map((c) => `  ${c}`)],
+          player.name,
+        );
+      }
       refresh();
       await sleep(1000);
     }
