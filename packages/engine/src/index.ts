@@ -25,6 +25,7 @@ import type { BuildingDef } from './content/buildings';
 import type { DevelopmentDef } from './content/developments';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
+import type { EffectDef } from './effects';
 import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
@@ -70,6 +71,39 @@ function runTrigger(
   }
 
   ctx.game.currentPlayerIndex = original;
+}
+
+export function collectTriggerEffects(
+  trigger: TriggerKey,
+  ctx: EngineContext,
+  player: PlayerState = ctx.activePlayer,
+): EffectDef[] {
+  const effects: EffectDef[] = [];
+  for (const [role, count] of Object.entries(player.population)) {
+    const populationDefinition = ctx.populations.get(role);
+    const list = populationDefinition[trigger];
+    if (!list) continue;
+    for (let i = 0; i < Number(count); i++)
+      effects.push(...list.map((e) => ({ ...e })));
+  }
+  for (const land of player.lands) {
+    for (const id of land.developments) {
+      const developmentDefinition = ctx.developments.get(id);
+      const list = developmentDefinition[trigger];
+      if (!list) continue;
+      effects.push(
+        ...applyParamsToEffects(list, { landId: land.id, id }).map((e) => ({
+          ...e,
+        })),
+      );
+    }
+  }
+  for (const id of player.buildings) {
+    const buildingDefinition = ctx.buildings.get(id);
+    const list = buildingDefinition[trigger];
+    if (list) effects.push(...list.map((e) => ({ ...e })));
+  }
+  return effects;
 }
 
 function applyCostsWithPassives(
@@ -301,8 +335,9 @@ export { createBuildingRegistry } from './content/buildings';
 export { createDevelopmentRegistry } from './content/developments';
 export { createPopulationRegistry } from './content/populations';
 
-export { registerCoreEffects, EffectRegistry } from './effects';
+export { registerCoreEffects, EffectRegistry, runEffects } from './effects';
 export type { EffectHandler, EffectDef } from './effects';
+export { applyParamsToEffects } from './utils';
 export { registerCoreEvaluators, EvaluatorRegistry } from './evaluators';
 export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
 export { validateGameConfig } from './config/schema';

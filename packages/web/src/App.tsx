@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   createEngine,
   performAction,
-  runDevelopment,
-  runUpkeep,
+  runEffects,
+  collectTriggerEffects,
   Phase,
   getActionCosts,
   Resource,
@@ -371,22 +371,64 @@ export default function App() {
     refresh();
   }
 
-  function handleCyclePhase() {
-    const before = snapshotPlayer(ctx.activePlayer);
-    const current = ctx.game.currentPhase;
-    if (current === Phase.Development) runUpkeep(ctx);
-    else if (current === Phase.Upkeep) ctx.game.currentPhase = Phase.Main;
-    else runDevelopment(ctx);
-    const after = snapshotPlayer(ctx.activePlayer);
-    const changes = diffSnapshots(before, after);
-    addLog([
-      `Phase changed to ${ctx.game.currentPhase}`,
-      ...changes.map((c) => `  ${c}`),
-    ]);
+  function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function runPhaseForPlayer(
+    trigger: 'onDevelopmentPhase' | 'onUpkeepPhase',
+    index: number,
+  ) {
+    ctx.game.currentPlayerIndex = index;
+    const player = ctx.activePlayer;
+    const effects = collectTriggerEffects(trigger, ctx, player);
+    for (const effect of effects) {
+      const before = snapshotPlayer(player);
+      runEffects([effect], ctx);
+      const after = snapshotPlayer(player);
+      const changes = diffSnapshots(before, after);
+      if (changes.length) addLog(changes);
+      refresh();
+      await sleep(1000);
+    }
+  }
+
+  async function startTurn() {
+    ctx.game.currentPhase = Phase.Development;
+    await runPhaseForPlayer('onDevelopmentPhase', 0);
+    await runPhaseForPlayer('onDevelopmentPhase', 1);
+    ctx.game.currentPhase = Phase.Upkeep;
+    await runPhaseForPlayer('onUpkeepPhase', 0);
+    await runPhaseForPlayer('onUpkeepPhase', 1);
+    ctx.game.currentPhase = Phase.Main;
+    ctx.game.currentPlayerIndex = 0;
     refresh();
   }
 
-  function PlayerPanel({ player }: { player: typeof ctx.activePlayer }) {
+  function handleEndTurn() {
+    if (ctx.game.currentPhase !== Phase.Main) return;
+    if (ctx.activePlayer.ap > 0) return;
+    const last = ctx.game.currentPlayerIndex === ctx.game.players.length - 1;
+    if (last) {
+      ctx.game.turn += 1;
+      void startTurn();
+    } else {
+      ctx.game.currentPlayerIndex += 1;
+      refresh();
+    }
+  }
+
+  useEffect(() => {
+    void startTurn();
+  }, []);
+
+  function PlayerPanel({
+    player,
+    active,
+  }: {
+    player: typeof ctx.activePlayer;
+    active: boolean;
+  }) {
     const popEntries = Object.entries(player.population).filter(
       ([, v]) => v > 0,
     );
@@ -408,7 +450,13 @@ export default function App() {
     if (openSlots) devParts.push(`${slotIcon}${openSlots}`);
     return (
       <div className="space-y-1">
-        <h3 className="font-semibold">{player.name}</h3>
+        <h3
+          className={
+            active ? 'font-bold underline' : 'text-gray-500 font-semibold'
+          }
+        >
+          {player.name}
+        </h3>
         <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
           {Object.entries(player.resources).map(([k, v]) => (
             <span
@@ -481,7 +529,11 @@ export default function App() {
         <h2 className="text-xl font-semibold mb-2">Players</h2>
         <div className="flex flex-wrap gap-4">
           {ctx.game.players.map((p) => (
-            <PlayerPanel key={p.id} player={p} />
+            <PlayerPanel
+              key={p.id}
+              player={p}
+              active={p.id === ctx.activePlayer.id}
+            />
           ))}
         </div>
       </section>
@@ -501,9 +553,6 @@ export default function App() {
               {p.charAt(0).toUpperCase() + p.slice(1)}
             </span>
           ))}
-          <button className="border px-2 py-1" onClick={handleCyclePhase}>
-            Next phase
-          </button>
         </div>
       </section>
 
@@ -524,9 +573,11 @@ export default function App() {
               <button
                 key={action.id}
                 className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                  canPay ? '' : 'opacity-50 border-red-500'
+                  canPay && ctx.game.currentPhase === Phase.Main
+                    ? ''
+                    : 'opacity-50 border-red-500'
                 }`}
-                disabled={!canPay}
+                disabled={!canPay || ctx.game.currentPhase !== Phase.Main}
                 onClick={() => handlePerform(action)}
               >
                 <span>{action.name}</span>
@@ -558,13 +609,15 @@ export default function App() {
                           k as keyof typeof ctx.activePlayer.resources
                         ] >= v,
                     );
+                  const enabled =
+                    canPay && ctx.game.currentPhase === Phase.Main;
                   return (
                     <button
                       key={d.id}
                       className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                        canPay ? '' : 'opacity-50 border-red-500'
+                        enabled ? '' : 'opacity-50 border-red-500'
                       }`}
-                      disabled={!canPay}
+                      disabled={!enabled}
                       title={
                         !hasDevelopLand
                           ? 'No land with free development slot'
@@ -603,13 +656,15 @@ export default function App() {
                         k as keyof typeof ctx.activePlayer.resources
                       ] >= v,
                   );
+                  const enabled =
+                    canPay && ctx.game.currentPhase === Phase.Main;
                   return (
                     <button
                       key={b.id}
                       className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
-                        canPay ? '' : 'opacity-50 border-red-500'
+                        enabled ? '' : 'opacity-50 border-red-500'
                       }`}
-                      disabled={!canPay}
+                      disabled={!enabled}
                       onClick={() => handlePerform(buildAction, { id: b.id })}
                     >
                       <span>{b.name}</span>
@@ -626,6 +681,20 @@ export default function App() {
             </div>
           )}
         </div>
+        <button
+          className="border px-2 py-1 mt-4"
+          disabled={
+            ctx.game.currentPhase !== Phase.Main || ctx.activePlayer.ap > 0
+          }
+          onClick={handleEndTurn}
+        >
+          End turn
+          {ctx.activePlayer.ap > 0 && (
+            <span className="block text-xs text-red-500">
+              You still have unspent ap
+            </span>
+          )}
+        </button>
       </section>
 
       <section className="border rounded p-4">
