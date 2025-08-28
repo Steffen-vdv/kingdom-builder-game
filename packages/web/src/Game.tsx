@@ -551,13 +551,9 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       </span>
     );
 
-    const playerPassives = ctx.passives.list().filter((id) => {
-      if (id.startsWith('watchtower_absorption_')) {
-        const landId = id.replace('watchtower_absorption_', '');
-        return player.lands.some((l) => l.id === landId);
-      }
-      return true;
-    });
+    const playerPassives = ctx.passives
+      .list()
+      .filter((id) => id.includes(player.id));
 
     function describePassive(id: string): string {
       if (id.startsWith('watchtower_absorption_'))
@@ -625,7 +621,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
         {playerPassives.length > 0 && (
           <div className="border p-2 rounded">
             <h4 className="font-medium">Passives</h4>
-            <ul className="mt-1 list-disc list-inside">
+            <ul className="mt-1 list-disc pl-4 text-left">
               {playerPassives.map((p) => (
                 <li key={p}>{describePassive(p)}</li>
               ))}
@@ -669,7 +665,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
 
         <section className="border rounded p-4">
           <h2 className="text-xl font-semibold mb-2">Players</h2>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col gap-4">
             {ctx.game.players.map((p) => (
               <PlayerPanel
                 key={p.id}
@@ -735,7 +731,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                     <span className="absolute top-2 right-2 text-sm text-gray-600">
                       {renderCosts(costs, ctx.activePlayer.resources)}
                     </span>
-                    <ul className="text-sm list-disc list-inside">
+                    <ul className="text-sm list-disc pl-4 text-left">
                       {actionSummaries.get(action.id)?.map((e, i) => (
                         <li key={i}>{e}</li>
                       ))}
@@ -796,7 +792,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-sm list-disc list-inside">
+                        <ul className="text-sm list-disc pl-4 text-left">
                           {developmentSummaries.get(d.id)?.map((e, i) => (
                             <li key={i}>{e}</li>
                           ))}
@@ -841,7 +837,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-sm list-disc list-inside">
+                        <ul className="text-sm list-disc pl-4 text-left">
                           {buildingSummaries.get(b.id)?.map((e, i) => (
                             <li key={i}>{e}</li>
                           ))}
