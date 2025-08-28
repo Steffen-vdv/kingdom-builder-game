@@ -13,6 +13,7 @@
     "check": "npm run typecheck && npm run lint",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "pree2e": "playwright install --with-deps chromium",
     "e2e": "playwright test",
     "format": "prettier .",
     "prepare": "husky install"

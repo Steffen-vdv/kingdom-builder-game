@@ -1,10 +1,24 @@
 # 👑 Kingdom Builder v5.11
+
 ## 1) Setup
 
 1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
 2. Install dependencies: `npm install`
 3. Start the development server: `npm run dev`
 4. Build for production: `npm run build`
+
+## 2) Testing
+
+Run tests before committing:
+
+```bash
+npm test
+npm run e2e
+npm run build
+```
+
+`npm run e2e` automatically installs the Playwright Chromium browser and any
+required system dependencies on first run.
 
 ## 3) Game Overview
 

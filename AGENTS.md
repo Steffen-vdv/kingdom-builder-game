@@ -28,11 +28,9 @@ Tests live in:
 - `tests/integration` for integration tests
 - `e2e` for end-to-end tests using Playwright
 
-Always run all tests before making a PR. Install the Playwright Chromium browser (Linux users run `install-deps` once) and run all checks. The repository configures an alternate Playwright download host via `.npmrc` to work behind restricted networks:
+Always run all tests before making a PR. The Playwright Chromium browser is installed automatically the first time `npm run e2e` is executed (it runs `playwright install --with-deps chromium` under the hood). The repository configures an alternate Playwright download host via `.npmrc` to work behind restricted networks:
 
 ```bash
-npx playwright install-deps chromium  # Linux only, run once
-npx playwright install chromium
 npm test
 npm run e2e
 npm run build
