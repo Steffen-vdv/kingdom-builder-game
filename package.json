@@ -50,7 +50,7 @@
       "eslint --max-warnings=0",
       "prettier --write"
     ],
-    "*.{json,md}": "prettier --write"
+    "*.{json,md}": "prettier --write",
     "*.{ts,tsx}": "bash -c 'tsc --noEmit'"
   }
 }
