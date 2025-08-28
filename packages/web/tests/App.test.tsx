@@ -3,22 +3,41 @@ import { renderToString } from 'react-dom/server';
 import React from 'react';
 import App from '../src/App';
 
-vi.mock('@kingdom-builder/engine', () => ({
-  createEngine: () => ({
-    activePlayer: { resources: {}, stats: {}, buildings: new Set(), lands: [] },
-    actions: { map: new Map() },
-    developments: { map: new Map() },
-    game: { currentPhase: 'development' },
-  }),
-  performAction: () => {},
-  runDevelopment: () => {},
-  runUpkeep: () => {},
-  Phase: { Development: 'development', Upkeep: 'upkeep', Main: 'main' },
-}));
+vi.mock('@kingdom-builder/engine', () => {
+  const player = {
+    id: 'A',
+    name: 'A',
+    resources: {} as Record<string, number>,
+    stats: { maxPopulation: 0 } as Record<string, number>,
+    population: {} as Record<string, number>,
+    buildings: new Set<string>(),
+    lands: [] as unknown[],
+  };
+  return {
+    createEngine: () => ({
+      activePlayer: player,
+      actions: { map: new Map() },
+      developments: { map: new Map() },
+      buildings: { map: new Map() },
+      game: { currentPhase: 'development', players: [player] },
+    }),
+    performAction: () => {},
+    runDevelopment: () => {},
+    runUpkeep: () => {},
+    getActionCosts: () => ({}),
+    Phase: { Development: 'development', Upkeep: 'upkeep', Main: 'main' },
+    Resource: {
+      gold: 'gold',
+      ap: 'ap',
+      happiness: 'happiness',
+      castleHP: 'castleHP',
+    },
+  };
+});
 
 describe('<App />', () => {
-  it('renders testlab header', () => {
+  it('renders Kingdom Builder header', () => {
     const html = renderToString(<App />);
-    expect(html).toContain('testlab');
+    expect(html).toContain('Kingdom Builder');
   });
 });

@@ -10,10 +10,10 @@ describe('Building placement integration', () => {
     const ctx = createTestContext();
     ctx.activePlayer.ap = ctx.services.rules.defaultActionAPCost * 2;
     const expandBefore = getActionOutcome('expand', ctx);
-    const buildCosts = getActionCosts('build_town_charter', ctx);
+    const buildCosts = getActionCosts('build', ctx, { id: 'town_charter' });
     const resBefore = { ...ctx.activePlayer.resources };
 
-    performAction('build_town_charter', ctx);
+    performAction('build', ctx, { id: 'town_charter' });
 
     expect(ctx.activePlayer.buildings.has('town_charter')).toBe(true);
     for (const [key, cost] of Object.entries(buildCosts)) {

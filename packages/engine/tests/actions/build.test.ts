@@ -28,13 +28,13 @@ function clonePlayer(player: PlayerState): PlayerState {
   return copy;
 }
 
-describe('Build Town Charter action', () => {
+describe('Build action', () => {
   it('rejects when gold is insufficient', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
-    const cost = getActionCosts('build_town_charter', ctx);
+    const cost = getActionCosts('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;
-    expect(() => performAction('build_town_charter', ctx)).toThrow(
+    expect(() => performAction('build', ctx, { id: 'town_charter' })).toThrow(
       /Insufficient gold/,
     );
   });
@@ -42,7 +42,7 @@ describe('Build Town Charter action', () => {
   it('adds Town Charter and applies its passive to Expand', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
-    const buildCost = getActionCosts('build_town_charter', ctx);
+    const buildCost = getActionCosts('build', ctx, { id: 'town_charter' });
 
     const game = new GameState();
     game.players[0] = clonePlayer(ctx.activePlayer);
@@ -59,12 +59,15 @@ describe('Build Town Charter action', () => {
     for (const [resourceKey, cost] of Object.entries(buildCost)) {
       sim.activePlayer.resources[resourceKey as ResourceKey] -= cost;
     }
-    const actionDefinition = ctx.actions.get('build_town_charter');
-    runEffects(applyParamsToEffects(actionDefinition.effects, {}), sim);
+    const actionDefinition = ctx.actions.get('build');
+    runEffects(
+      applyParamsToEffects(actionDefinition.effects, { id: 'town_charter' }),
+      sim,
+    );
 
     const expectedCost = getActionCosts('expand', sim);
 
-    performAction('build_town_charter', ctx);
+    performAction('build', ctx, { id: 'town_charter' });
     expect(ctx.activePlayer.buildings.has('town_charter')).toBe(true);
     expect(ctx.activePlayer.gold).toBe(sim.activePlayer.gold);
     expect(ctx.activePlayer.ap).toBe(sim.activePlayer.ap);

@@ -5,8 +5,10 @@ import {
   runDevelopment,
   runUpkeep,
   Phase,
+  getActionCosts,
+  Resource,
 } from '@kingdom-builder/engine';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { EngineContext, ActionParams } from '@kingdom-builder/engine';
 
 interface Land {
   id: string;
@@ -86,6 +88,44 @@ interface Development {
   id: string;
   name: string;
 }
+interface Building {
+  id: string;
+  name: string;
+}
+
+const resourceInfo = {
+  [Resource.gold]: { icon: '🪙', label: 'Gold' },
+  [Resource.ap]: { icon: '⚡', label: 'Action Points' },
+  [Resource.happiness]: { icon: '😊', label: 'Happiness' },
+  [Resource.castleHP]: { icon: '🏰', label: 'Castle HP' },
+} as const;
+
+const statInfo: Record<string, { icon: string; label: string }> = {
+  armyStrength: { icon: '⚔️', label: 'Army Strength' },
+  fortificationStrength: { icon: '🛡️', label: 'Fortification Strength' },
+  absorption: { icon: '🛡️', label: 'Absorption' },
+  armyGrowth: { icon: '📈', label: 'Army Growth' },
+};
+
+const populationInfo: Record<string, { icon: string; label: string }> = {
+  council: { icon: '📜', label: 'Council' },
+  commander: { icon: '🗡️', label: 'Commander' },
+  fortifier: { icon: '🛡️', label: 'Fortifier' },
+  citizen: { icon: '👤', label: 'Citizen' },
+};
+
+function renderCosts(costs: Record<string, number>) {
+  return (
+    <>
+      {Object.entries(costs).map(([k, v]) => (
+        <span key={k} className="mr-1">
+          {resourceInfo[k as keyof typeof resourceInfo]?.icon}
+          {v}
+        </span>
+      ))}
+    </>
+  );
+}
 
 export default function App() {
   const ctx = useMemo<EngineContext>(() => {
@@ -116,15 +156,25 @@ export default function App() {
       ),
     [ctx],
   );
+  const buildingOptions = useMemo<Building[]>(
+    () =>
+      Array.from(
+        (
+          ctx.buildings as unknown as { map: Map<string, Building> }
+        ).map.values(),
+      ),
+    [ctx],
+  );
 
-  const [develop, setDevelop] = useState({ landId: '', id: '' });
+  const [developId, setDevelopId] = useState('');
+  const [buildId, setBuildId] = useState('');
 
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
 
   function handlePerform(action: Action, params?: Record<string, unknown>) {
     const before = snapshotPlayer(ctx.activePlayer);
     try {
-      performAction(action.id, ctx, params);
+      performAction(action.id, ctx, params as ActionParams<string>);
       const after = snapshotPlayer(ctx.activePlayer);
       const changes = diffSnapshots(before, after);
       addLog([
@@ -152,91 +202,122 @@ export default function App() {
     refresh();
   }
 
+  function PlayerPanel({ player }: { player: typeof ctx.activePlayer }) {
+    const popEntries = Object.entries(player.population).filter(
+      ([, v]) => v > 0,
+    );
+    const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
+    return (
+      <div className="space-y-2">
+        <h3 className="font-semibold">{player.name}</h3>
+        <div>
+          <h4 className="font-medium">Resources</h4>
+          <ul>
+            {Object.entries(player.resources).map(([k, v]) => (
+              <li key={k}>
+                {resourceInfo[k as keyof typeof resourceInfo]?.icon}
+                {resourceInfo[k as keyof typeof resourceInfo]?.label}: {v}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-medium">Stats</h4>
+          <ul>
+            <li>
+              👥 Population: {currentPop}/{player.maxPopulation} (
+              {popEntries.map(([role, count], idx) => (
+                <span key={role}>
+                  {populationInfo[role]?.icon}
+                  {count}
+                  {idx < popEntries.length - 1 ? ', ' : ''}
+                </span>
+              ))}
+              )
+            </li>
+            {Object.entries(player.stats)
+              .filter(([k]) => k !== 'maxPopulation')
+              .map(([k, v]) => (
+                <li key={k}>
+                  {statInfo[k]?.icon}
+                  {statInfo[k]?.label || k}: {v}
+                </li>
+              ))}
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-medium">Buildings</h4>
+          <ul>
+            {Array.from(player.buildings).map((b) => (
+              <li key={b}>{b}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-medium">Lands</h4>
+          <ul>
+            {player.lands.map((l) => (
+              <li key={l.id}>
+                ({l.slotsUsed}/{l.slotsMax}) — [
+                {l.developments.join(', ') || 'empty'}]
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">testlab</h1>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Kingdom Builder</h1>
 
       <section>
-        <h2 className="text-xl font-semibold">Player</h2>
+        <h2 className="text-xl font-semibold">Players</h2>
         <div className="flex flex-wrap gap-6 mt-2">
-          <div>
-            <h3 className="font-medium">Resources</h3>
-            <ul>
-              {Object.entries(ctx.activePlayer.resources).map(([k, v]) => (
-                <li key={k}>
-                  {k}: {v}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium">Stats</h3>
-            <ul>
-              {Object.entries(ctx.activePlayer.stats).map(([k, v]) => (
-                <li key={k}>
-                  {k}: {v}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium">Buildings</h3>
-            <ul>
-              {Array.from(ctx.activePlayer.buildings).map((b) => (
-                <li key={b}>{b}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium">Lands</h3>
-            <ul>
-              {ctx.activePlayer.lands.map((l) => (
-                <li key={l.id}>
-                  {l.id} ({l.slotsUsed}/{l.slotsMax}) — [
-                  {l.developments.join(', ') || 'empty'}]
-                </li>
-              ))}
-            </ul>
-          </div>
+          {ctx.game.players.map((p) => (
+            <PlayerPanel key={p.id} player={p} />
+          ))}
         </div>
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold flex items-center gap-4">
-          Actions — phase: {ctx.game.currentPhase}
+        <h2 className="text-xl font-semibold">Phases</h2>
+        <div className="flex items-center gap-4 mt-2">
+          {Object.values(Phase).map((p) => (
+            <span
+              key={p}
+              className={
+                p === ctx.game.currentPhase
+                  ? 'font-bold underline'
+                  : 'text-gray-500'
+              }
+            >
+              {p}
+            </span>
+          ))}
           <button className="border px-2 py-1" onClick={handleCyclePhase}>
             Next phase
           </button>
-        </h2>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold">Actions</h2>
         <div className="space-y-2 mt-2">
-          {actions.map((action) => (
-            <div key={action.id} className="flex items-center gap-2">
-              <span className="w-48">{action.name}</span>
-              {action.id === 'develop' && (
-                <>
+          {actions.map((action) => {
+            const costs =
+              action.id === 'build' && buildId
+                ? getActionCosts('build', ctx, { id: buildId })
+                : getActionCosts(action.id, ctx);
+            return (
+              <div key={action.id} className="flex items-center gap-2">
+                <span className="w-48">{action.name}</span>
+                {action.id === 'develop' && (
                   <select
                     className="border px-1"
-                    value={develop.landId}
-                    onChange={(e) =>
-                      setDevelop((s) => ({ ...s, landId: e.target.value }))
-                    }
-                  >
-                    <option value="">Select land</option>
-                    {ctx.activePlayer.lands.map(
-                      (l) =>
-                        l.slotsFree > 0 && (
-                          <option key={l.id} value={l.id}>
-                            {l.id}
-                          </option>
-                        ),
-                    )}
-                  </select>
-                  <select
-                    className="border px-1"
-                    value={develop.id}
-                    onChange={(e) =>
-                      setDevelop((s) => ({ ...s, id: e.target.value }))
-                    }
+                    value={developId}
+                    onChange={(e) => setDevelopId(e.target.value)}
                   >
                     <option value="">Select development</option>
                     {developmentOptions.map((d) => (
@@ -245,33 +326,54 @@ export default function App() {
                       </option>
                     ))}
                   </select>
-                </>
-              )}
-              <button
-                className="border px-2 py-1"
-                disabled={
-                  action.id === 'develop' &&
-                  (!hasDevelopLand || !develop.landId || !develop.id)
-                }
-                title={
-                  action.id === 'develop' && !hasDevelopLand
-                    ? 'No land with free development slot'
-                    : undefined
-                }
-                onClick={() => {
-                  if (action.id === 'develop') {
-                    handlePerform(action, {
-                      id: develop.id,
-                      landId: develop.landId,
-                    });
-                    setDevelop({ landId: '', id: '' });
-                  } else handlePerform(action);
-                }}
-              >
-                perform action
-              </button>
-            </div>
-          ))}
+                )}
+                {action.id === 'build' && (
+                  <select
+                    className="border px-1"
+                    value={buildId}
+                    onChange={(e) => setBuildId(e.target.value)}
+                  >
+                    <option value="">Select building</option>
+                    {buildingOptions.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <span className="text-sm text-gray-600">
+                  {renderCosts(costs)}
+                </span>
+                <button
+                  className="border px-2 py-1"
+                  disabled={
+                    (action.id === 'develop' &&
+                      (!hasDevelopLand || !developId)) ||
+                    (action.id === 'build' && !buildId)
+                  }
+                  title={
+                    action.id === 'develop' && !hasDevelopLand
+                      ? 'No land with free development slot'
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (action.id === 'develop') {
+                      const landId = ctx.activePlayer.lands.find(
+                        (l) => l.slotsFree > 0,
+                      )?.id;
+                      handlePerform(action, { id: developId, landId });
+                      setDevelopId('');
+                    } else if (action.id === 'build') {
+                      handlePerform(action, { id: buildId });
+                      setBuildId('');
+                    } else handlePerform(action);
+                  }}
+                >
+                  perform action
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
 

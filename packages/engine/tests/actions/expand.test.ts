@@ -62,7 +62,7 @@ describe('Expand action', () => {
   it('includes Town Charter modifiers when present', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
-    performAction('build_town_charter', ctx);
+    performAction('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.ap += 1; // allow another action
     const goldBefore = ctx.activePlayer.gold;
     const actionPointsBefore = ctx.activePlayer.ap;
@@ -83,7 +83,7 @@ describe('Expand action', () => {
   it('applies modifiers consistently across multiple expansions', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
-    performAction('build_town_charter', ctx);
+    performAction('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.ap += 2; // allow two expands
     ctx.activePlayer.gold += 10; // top-up to afford two expands
     const goldBefore = ctx.activePlayer.gold;

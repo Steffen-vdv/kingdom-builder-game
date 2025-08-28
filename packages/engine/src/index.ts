@@ -76,13 +76,19 @@ function applyCostsWithPassives(
   return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
 }
 
-export function getActionCosts(actionId: string, ctx: EngineContext): CostBag {
+export function getActionCosts<T extends string>(
+  actionId: T,
+  ctx: EngineContext,
+  params?: ActionParams<T>,
+): CostBag {
   const actionDefinition = ctx.actions.get(actionId);
-  return applyCostsWithPassives(
-    actionDefinition.id,
-    actionDefinition.baseCosts || {},
-    ctx,
-  );
+  let base = { ...(actionDefinition.baseCosts || {}) };
+  if (actionId === 'build' && params) {
+    const p = params as ActionParams<'build'>;
+    const building = ctx.buildings.get(p.id);
+    base = { ...building.costs, ...base };
+  }
+  return applyCostsWithPassives(actionDefinition.id, base, ctx);
 }
 
 function canPay(costs: CostBag, player: PlayerState): true | string {
@@ -105,6 +111,7 @@ function pay(costs: CostBag, player: PlayerState) {
 
 type ActionParamMap = {
   develop: { id: string; landId: string };
+  build: { id: string };
   [key: string]: Record<string, unknown>;
 };
 
@@ -122,11 +129,13 @@ export function performAction<T extends string>(
     const ok = requirement(ctx);
     if (ok !== true) throw new Error(String(ok));
   }
-  const costs = applyCostsWithPassives(
-    actionDefinition.id,
-    actionDefinition.baseCosts || {},
-    ctx,
-  );
+  let base = { ...(actionDefinition.baseCosts || {}) };
+  if (actionId === 'build' && params) {
+    const p = params as ActionParams<'build'>;
+    const building = ctx.buildings.get(p.id);
+    base = { ...building.costs, ...base };
+  }
+  const costs = applyCostsWithPassives(actionDefinition.id, base, ctx);
   const ok = canPay(costs, ctx.activePlayer);
   if (ok !== true) throw new Error(ok);
   pay(costs, ctx.activePlayer);
