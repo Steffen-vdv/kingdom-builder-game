@@ -12,11 +12,14 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
   if (!id || !actionId) throw new Error('result_mod requires id and actionId');
   if (effect.method === 'add') {
     const effects = effect.effects || [];
-    ctx.passives.registerResultModifier(id, (act, innerCtx) => {
-      if (act === actionId) {
-        runEffects(effects, innerCtx);
-      }
-    });
+    ctx.passives.registerResultModifier(
+      id,
+      (executedActionId, innerContext) => {
+        if (executedActionId === actionId) {
+          runEffects(effects, innerContext);
+        }
+      },
+    );
   } else if (effect.method === 'remove') {
     ctx.passives.unregisterResultModifier(id);
   }

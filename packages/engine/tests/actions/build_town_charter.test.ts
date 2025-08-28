@@ -13,18 +13,18 @@ import { PlayerState, Land, GameState } from '../../src/state/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
 
-function clonePlayer(p: PlayerState): PlayerState {
-  const copy = new PlayerState(p.id, p.name);
-  copy.resources = { ...p.resources };
-  copy.stats = { ...p.stats };
-  copy.population = { ...p.population };
-  copy.lands = p.lands.map((l) => {
-    const land = new Land(l.id, l.slotsMax);
-    land.slotsUsed = l.slotsUsed;
-    land.developments = [...l.developments];
+function clonePlayer(player: PlayerState): PlayerState {
+  const copy = new PlayerState(player.id, player.name);
+  copy.resources = { ...player.resources };
+  copy.stats = { ...player.stats };
+  copy.population = { ...player.population };
+  copy.lands = player.lands.map((landState) => {
+    const land = new Land(landState.id, landState.slotsMax);
+    land.slotsUsed = landState.slotsUsed;
+    land.developments = [...landState.developments];
     return land;
   });
-  copy.buildings = new Set(p.buildings);
+  copy.buildings = new Set(player.buildings);
   return copy;
 }
 
@@ -56,11 +56,11 @@ describe('Build Town Charter action', () => {
       ctx.populations,
       new PassiveManager(),
     );
-    for (const [k, v] of Object.entries(buildCost)) {
-      sim.activePlayer.resources[k as ResourceKey] -= v;
+    for (const [resourceKey, cost] of Object.entries(buildCost)) {
+      sim.activePlayer.resources[resourceKey as ResourceKey] -= cost;
     }
-    const def = ctx.actions.get('build_town_charter');
-    runEffects(applyParamsToEffects(def.effects, {}), sim);
+    const actionDefinition = ctx.actions.get('build_town_charter');
+    runEffects(applyParamsToEffects(actionDefinition.effects, {}), sim);
 
     const expectedCost = getActionCosts('expand', sim);
 

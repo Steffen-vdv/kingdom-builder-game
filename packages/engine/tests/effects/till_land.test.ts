@@ -34,7 +34,7 @@ describe('land:till effect', () => {
     const land = ctx.activePlayer.lands[1];
     const max = ctx.services.rules.maxSlotsPerLand;
     const attempts = max - land.slotsMax + 1;
-    for (let i = 0; i < attempts; i++) {
+    for (let iteration = 0; iteration < attempts; iteration++) {
       performAction('till', ctx);
     }
     expect(land.slotsMax).toBe(max);

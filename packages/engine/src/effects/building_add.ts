@@ -3,9 +3,9 @@ import { runEffects } from '.';
 
 export const buildingAdd: EffectHandler = (effect, ctx, mult = 1) => {
   const id = effect.params!['id'] as string;
-  for (let i = 0; i < Math.floor(mult); i++) {
+  for (let index = 0; index < Math.floor(mult); index++) {
     ctx.activePlayer.buildings.add(id);
-    const b = ctx.buildings.get(id);
-    if (b.onBuild) runEffects(b.onBuild, ctx);
+    const building = ctx.buildings.get(id);
+    if (building.onBuild) runEffects(building.onBuild, ctx);
   }
 };

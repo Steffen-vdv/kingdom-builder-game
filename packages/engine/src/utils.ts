@@ -6,27 +6,32 @@ export function applyParamsToEffects<E extends EffectDef>(
 ): E[] {
   const replace = (val: unknown): unknown =>
     typeof val === 'string' && val.startsWith('$') ? params[val.slice(1)] : val;
-  const mapEffect = (e: E): E => ({
-    ...e,
-    params: e.params
+  const mapEffect = (effect: E): E => ({
+    ...effect,
+    params: effect.params
       ? (Object.fromEntries(
-          Object.entries(e.params).map(([k, v]) => [k, replace(v)]),
+          Object.entries(effect.params).map(([key, value]) => [
+            key,
+            replace(value),
+          ]),
         ) as E['params'])
       : undefined,
-    evaluator: e.evaluator
+    evaluator: effect.evaluator
       ? {
-          ...e.evaluator,
-          params: e.evaluator.params
+          ...effect.evaluator,
+          params: effect.evaluator.params
             ? Object.fromEntries(
-                Object.entries(e.evaluator.params).map(([k, v]) => [
-                  k,
-                  replace(v),
+                Object.entries(effect.evaluator.params).map(([key, value]) => [
+                  key,
+                  replace(value),
                 ]),
               )
             : undefined,
         }
       : undefined,
-    effects: e.effects ? applyParamsToEffects(e.effects, params) : undefined,
+    effects: effect.effects
+      ? applyParamsToEffects(effect.effects, params)
+      : undefined,
   });
   return effects.map(mapEffect);
 }

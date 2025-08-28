@@ -6,16 +6,21 @@ export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
   const id = effect.params?.['id'] as string;
   const landId = effect.params?.['landId'] as string;
   if (!id || !landId) throw new Error('development:add requires id and landId');
-  const land = ctx.activePlayer.lands.find((l) => l.id === landId);
+  const land = ctx.activePlayer.lands.find(
+    (landItem) => landItem.id === landId,
+  );
   if (!land) throw new Error(`Land ${landId} not found`);
   const iterations = Math.floor(mult);
-  for (let i = 0; i < iterations; i++) {
+  for (let index = 0; index < iterations; index++) {
     if (land.slotsUsed >= land.slotsMax)
       throw new Error(`No free slots on land ${landId}`);
     land.developments.push(id);
     land.slotsUsed += 1;
-    const def = ctx.developments.get(id);
-    if (def?.onBuild)
-      runEffects(applyParamsToEffects(def.onBuild, { landId, id }), ctx);
+    const developmentDefinition = ctx.developments.get(id);
+    if (developmentDefinition?.onBuild)
+      runEffects(
+        applyParamsToEffects(developmentDefinition.onBuild, { landId, id }),
+        ctx,
+      );
   }
 };

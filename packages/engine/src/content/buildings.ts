@@ -7,9 +7,9 @@ import type { BuildingDef } from './defs';
 export type { BuildingDef } from './defs';
 
 export function createBuildingRegistry() {
-  const reg = new Registry<BuildingDef>(buildingSchema);
+  const registry = new Registry<BuildingDef>(buildingSchema);
 
-  reg.add(
+  registry.add(
     'town_charter',
     building('town_charter', 'Town Charter')
       .cost(Resource.gold, 5)
@@ -46,51 +46,51 @@ export function createBuildingRegistry() {
   );
 
   // TODO: remaining buildings from original manual config
-  reg.add('mill', building('mill', 'Mill').cost(Resource.gold, 7).build());
-  reg.add(
+  registry.add('mill', building('mill', 'Mill').cost(Resource.gold, 7).build());
+  registry.add(
     'raiders_guild',
     building('raiders_guild', "Raider's Guild").cost(Resource.gold, 8).build(),
   );
-  reg.add(
+  registry.add(
     'plow_workshop',
     building('plow_workshop', 'Plow Workshop').cost(Resource.gold, 10).build(),
   );
-  reg.add(
+  registry.add(
     'market',
     building('market', 'Market').cost(Resource.gold, 10).build(),
   );
-  reg.add(
+  registry.add(
     'barracks',
     building('barracks', 'Barracks').cost(Resource.gold, 12).build(),
   );
-  reg.add(
+  registry.add(
     'citadel',
     building('citadel', 'Citadel').cost(Resource.gold, 12).build(),
   );
-  reg.add(
+  registry.add(
     'castle_walls',
     building('castle_walls', 'Castle Walls').cost(Resource.gold, 14).build(),
   );
-  reg.add(
+  registry.add(
     'castle_gardens',
     building('castle_gardens', 'Castle Gardens')
       .cost(Resource.gold, 15)
       .build(),
   );
-  reg.add(
+  registry.add(
     'temple',
     building('temple', 'Temple').cost(Resource.gold, 16).build(),
   );
-  reg.add(
+  registry.add(
     'palace',
     building('palace', 'Palace').cost(Resource.gold, 20).build(),
   );
-  reg.add(
+  registry.add(
     'great_hall',
     building('great_hall', 'Great Hall').cost(Resource.gold, 22).build(),
   );
 
-  return reg;
+  return registry;
 }
 
 export const BUILDINGS = createBuildingRegistry();

@@ -13,7 +13,7 @@ export interface EvaluatorHandler<
   R = unknown,
   P extends Record<string, unknown> = Record<string, unknown>,
 > {
-  (def: EvaluatorDef<P>, ctx: EngineContext): R;
+  (definition: EvaluatorDef<P>, ctx: EngineContext): R;
 }
 
 export class EvaluatorRegistry extends Registry<EvaluatorHandler> {}

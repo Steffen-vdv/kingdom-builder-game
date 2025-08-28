@@ -17,23 +17,23 @@ function getExpandExpectations(ctx: EngineContext) {
   const expandDef = ctx.actions.get('expand');
   const costs = getActionCosts('expand', ctx);
   const landGain = expandDef.effects
-    .filter((e) => e.type === 'land' && e.method === 'add')
-    .reduce((sum, e) => sum + Number(e.params?.count ?? 0), 0);
+    .filter((effect) => effect.type === 'land' && effect.method === 'add')
+    .reduce((sum, effect) => sum + Number(effect.params?.count ?? 0), 0);
   const baseHappiness = expandDef.effects
     .filter(
-      (e) =>
-        e.type === 'resource' &&
-        e.method === 'add' &&
-        e.params?.key === Resource.happiness,
+      (effect) =>
+        effect.type === 'resource' &&
+        effect.method === 'add' &&
+        effect.params?.key === Resource.happiness,
     )
-    .reduce((sum, e) => sum + Number(e.params?.amount ?? 0), 0);
+    .reduce((sum, effect) => sum + Number(effect.params?.amount ?? 0), 0);
   const dummy = new PlayerState(ctx.activePlayer.id, ctx.activePlayer.name);
   dummy.resources = deepClone(ctx.activePlayer.resources);
   dummy.stats = deepClone(ctx.activePlayer.stats);
   const dummyCtx = { ...ctx, activePlayer: dummy } as EngineContext;
-  const before = dummy.happiness;
+  const happinessBefore = dummy.happiness;
   ctx.passives.runResultMods(expandDef.id, dummyCtx);
-  const extraHappiness = dummy.happiness - before;
+  const extraHappiness = dummy.happiness - happinessBefore;
   return { costs, landGain, happinessGain: baseHappiness + extraHappiness };
 }
 
@@ -42,19 +42,21 @@ describe('Expand action', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
     const goldBefore = ctx.activePlayer.gold;
-    const apBefore = ctx.activePlayer.ap;
+    const actionPointsBefore = ctx.activePlayer.ap;
     const landsBefore = ctx.activePlayer.lands.length;
-    const hapBefore = ctx.activePlayer.happiness;
+    const happinessBefore = ctx.activePlayer.happiness;
     const expected = getExpandExpectations(ctx);
     performAction('expand', ctx);
     expect(ctx.activePlayer.gold).toBe(
       goldBefore - (expected.costs[Resource.gold] || 0),
     );
     expect(ctx.activePlayer.ap).toBe(
-      apBefore - (expected.costs[Resource.ap] || 0),
+      actionPointsBefore - (expected.costs[Resource.ap] || 0),
     );
     expect(ctx.activePlayer.lands.length).toBe(landsBefore + expected.landGain);
-    expect(ctx.activePlayer.happiness).toBe(hapBefore + expected.happinessGain);
+    expect(ctx.activePlayer.happiness).toBe(
+      happinessBefore + expected.happinessGain,
+    );
   });
 
   it('includes Town Charter modifiers when present', () => {
@@ -63,17 +65,19 @@ describe('Expand action', () => {
     performAction('build_town_charter', ctx);
     ctx.activePlayer.ap += 1; // allow another action
     const goldBefore = ctx.activePlayer.gold;
-    const apBefore = ctx.activePlayer.ap;
-    const hapBefore = ctx.activePlayer.happiness;
+    const actionPointsBefore = ctx.activePlayer.ap;
+    const happinessBefore = ctx.activePlayer.happiness;
     const expected = getExpandExpectations(ctx);
     performAction('expand', ctx);
     expect(ctx.activePlayer.gold).toBe(
       goldBefore - (expected.costs[Resource.gold] || 0),
     );
     expect(ctx.activePlayer.ap).toBe(
-      apBefore - (expected.costs[Resource.ap] || 0),
+      actionPointsBefore - (expected.costs[Resource.ap] || 0),
     );
-    expect(ctx.activePlayer.happiness).toBe(hapBefore + expected.happinessGain);
+    expect(ctx.activePlayer.happiness).toBe(
+      happinessBefore + expected.happinessGain,
+    );
   });
 
   it('applies modifiers consistently across multiple expansions', () => {
@@ -83,8 +87,8 @@ describe('Expand action', () => {
     ctx.activePlayer.ap += 2; // allow two expands
     ctx.activePlayer.gold += 10; // top-up to afford two expands
     const goldBefore = ctx.activePlayer.gold;
-    const apBefore = ctx.activePlayer.ap;
-    const hapBefore = ctx.activePlayer.happiness;
+    const actionPointsBefore = ctx.activePlayer.ap;
+    const happinessBefore = ctx.activePlayer.happiness;
     const landsBefore = ctx.activePlayer.lands.length;
     const expected = getExpandExpectations(ctx);
     performAction('expand', ctx);
@@ -93,10 +97,10 @@ describe('Expand action', () => {
       goldBefore - (expected.costs[Resource.gold] || 0) * 2,
     );
     expect(ctx.activePlayer.ap).toBe(
-      apBefore - (expected.costs[Resource.ap] || 0) * 2,
+      actionPointsBefore - (expected.costs[Resource.ap] || 0) * 2,
     );
     expect(ctx.activePlayer.happiness).toBe(
-      hapBefore + expected.happinessGain * 2,
+      happinessBefore + expected.happinessGain * 2,
     );
     expect(ctx.activePlayer.lands.length).toBe(
       landsBefore + expected.landGain * 2,

@@ -54,23 +54,23 @@ actions.add('build_house_full', {
   ],
 });
 
-function clonePlayer(p: PlayerState): PlayerState {
-  const copy = new PlayerState(p.id, p.name);
-  copy.resources = { ...p.resources };
-  copy.stats = { ...p.stats };
-  copy.population = { ...p.population };
-  copy.lands = p.lands.map((l) => {
-    const land = new Land(l.id, l.slotsMax);
-    land.slotsUsed = l.slotsUsed;
-    land.developments = [...l.developments];
+function clonePlayer(player: PlayerState): PlayerState {
+  const copy = new PlayerState(player.id, player.name);
+  copy.resources = { ...player.resources };
+  copy.stats = { ...player.stats };
+  copy.population = { ...player.population };
+  copy.lands = player.lands.map((landState) => {
+    const land = new Land(landState.id, landState.slotsMax);
+    land.slotsUsed = landState.slotsUsed;
+    land.developments = [...landState.developments];
     return land;
   });
-  copy.buildings = new Set(p.buildings);
+  copy.buildings = new Set(player.buildings);
   return copy;
 }
 
 function simulateBuild(ctx: EngineContext, id: string, landId: string) {
-  const def = ctx.developments.get(id);
+  const developmentDefinition = ctx.developments.get(id);
   const costs = getActionCosts('build_house', ctx);
   const game = new GameState();
   game.players[0] = clonePlayer(ctx.activePlayer);
@@ -85,13 +85,18 @@ function simulateBuild(ctx: EngineContext, id: string, landId: string) {
     ctx.populations,
     new PassiveManager(),
   );
-  for (const [k, v] of Object.entries(costs)) {
-    sim.activePlayer.resources[k as ResourceKey] -= v;
+  for (const [resourceKey, cost] of Object.entries(costs)) {
+    sim.activePlayer.resources[resourceKey as ResourceKey] -= cost;
   }
-  const land = sim.activePlayer.lands.find((l) => l.id === landId)!;
+  const land = sim.activePlayer.lands.find(
+    (landState) => landState.id === landId,
+  )!;
   land.developments.push(id);
   land.slotsUsed += 1;
-  const effects = applyParamsToEffects(def.onBuild || [], { landId, id });
+  const effects = applyParamsToEffects(developmentDefinition.onBuild || [], {
+    landId,
+    id,
+  });
   runEffects(effects, sim);
   return sim;
 }
@@ -106,10 +111,12 @@ describe('development:add effect', () => {
     expect(land.developments).toContain('house');
     expect(land.slotsUsed).toBe(slotsBefore + 1);
     expect(ctx.activePlayer.resources).toEqual(expected.activePlayer.resources);
-    for (const [k, v] of Object.entries(expected.activePlayer.stats)) {
+    for (const [statKey, statValue] of Object.entries(
+      expected.activePlayer.stats,
+    )) {
       expect(
-        ctx.activePlayer.stats[k as keyof typeof ctx.activePlayer.stats],
-      ).toBeCloseTo(v, 5);
+        ctx.activePlayer.stats[statKey as keyof typeof ctx.activePlayer.stats],
+      ).toBeCloseTo(statValue, 5);
     }
   });
 

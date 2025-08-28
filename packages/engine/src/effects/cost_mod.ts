@@ -15,8 +15,8 @@ export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
     throw new Error('cost_mod requires id, actionId, key, amount');
   }
   if (effect.method === 'add') {
-    ctx.passives.registerCostModifier(id, (act, costs) => {
-      if (act === actionId) {
+    ctx.passives.registerCostModifier(id, (targetActionId, costs) => {
+      if (targetActionId === actionId) {
         const current = costs[key] || 0;
         return { ...costs, [key]: current + amount };
       }

@@ -15,21 +15,25 @@ describe('resource:add effect', () => {
       name: 'Grant Gold',
       baseCosts: { [Resource.ap]: 0 },
       effects: [
-        { type: 'resource', method: 'add', params: { key: Resource.gold, amount: 3 } },
+        {
+          type: 'resource',
+          method: 'add',
+          params: { key: Resource.gold, amount: 3 },
+        },
       ],
     });
     const ctx = createEngine({ actions });
     runDevelopment(ctx);
     const before = ctx.activePlayer.gold;
-    const def = actions.get('grant_gold');
-    const amt = def.effects.find(
-      (e) =>
-        e.type === 'resource' &&
-        e.method === 'add' &&
-        e.params?.key === Resource.gold,
+    const actionDefinition = actions.get('grant_gold');
+    const amount = actionDefinition.effects.find(
+      (effect) =>
+        effect.type === 'resource' &&
+        effect.method === 'add' &&
+        effect.params?.key === Resource.gold,
     )?.params?.amount as number;
     performAction('grant_gold', ctx);
-    expect(ctx.activePlayer.gold).toBe(before + amt);
+    expect(ctx.activePlayer.gold).toBe(before + amount);
   });
 
   it('rounds fractional amounts according to round setting', () => {
@@ -64,34 +68,37 @@ describe('resource:add effect', () => {
     runDevelopment(ctx);
 
     let before = ctx.activePlayer.gold;
-    let effect = actions.get('round_up').effects.find(
-      (e) =>
-        e.type === 'resource' &&
-        e.method === 'add' &&
-        e.params?.key === Resource.gold,
-    );
-    let total = (effect?.params?.amount as number) || 0;
-    if (effect?.round === 'up')
+    let foundEffect = actions
+      .get('round_up')
+      .effects.find(
+        (effect) =>
+          effect.type === 'resource' &&
+          effect.method === 'add' &&
+          effect.params?.key === Resource.gold,
+      );
+    let total = (foundEffect?.params?.amount as number) || 0;
+    if (foundEffect?.round === 'up')
       total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-    else if (effect?.round === 'down')
+    else if (foundEffect?.round === 'down')
       total = total >= 0 ? Math.floor(total) : Math.ceil(total);
     performAction('round_up', ctx);
     expect(ctx.activePlayer.gold).toBe(before + total);
 
     before = ctx.activePlayer.gold;
-    effect = actions.get('round_down').effects.find(
-      (e) =>
-        e.type === 'resource' &&
-        e.method === 'add' &&
-        e.params?.key === Resource.gold,
-    );
-    total = (effect?.params?.amount as number) || 0;
-    if (effect?.round === 'up')
+    foundEffect = actions
+      .get('round_down')
+      .effects.find(
+        (effect) =>
+          effect.type === 'resource' &&
+          effect.method === 'add' &&
+          effect.params?.key === Resource.gold,
+      );
+    total = (foundEffect?.params?.amount as number) || 0;
+    if (foundEffect?.round === 'up')
       total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-    else if (effect?.round === 'down')
+    else if (foundEffect?.round === 'down')
       total = total >= 0 ? Math.floor(total) : Math.ceil(total);
     performAction('round_down', ctx);
     expect(ctx.activePlayer.gold).toBe(before + total);
   });
 });
-

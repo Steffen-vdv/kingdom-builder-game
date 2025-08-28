@@ -10,6 +10,7 @@ Full game information can be read below.
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [CODE_STANDARDS.md](docs/CODE_STANDARDS.md)
 
 # Abstraction guidelines
 

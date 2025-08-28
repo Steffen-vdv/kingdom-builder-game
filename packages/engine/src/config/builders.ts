@@ -9,12 +9,12 @@ import type {
 import type { ResourceKey } from '../state';
 
 class BaseBuilder<T extends { id: string; name: string }> {
-  protected cfg: T;
+  protected config: T;
   constructor(id: string, name: string, base: Omit<T, 'id' | 'name'>) {
-    this.cfg = { id, name, ...base } as T;
+    this.config = { id, name, ...base } as T;
   }
   build(): T {
-    return this.cfg;
+    return this.config;
   }
 }
 
@@ -23,17 +23,17 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
     super(id, name, { effects: [] });
   }
   cost(key: ResourceKey, amount: number) {
-    this.cfg.baseCosts = this.cfg.baseCosts || {};
-    this.cfg.baseCosts[key] = amount;
+    this.config.baseCosts = this.config.baseCosts || {};
+    this.config.baseCosts[key] = amount;
     return this;
   }
   requirement(req: RequirementFn) {
-    this.cfg.requirements = this.cfg.requirements || [];
-    this.cfg.requirements.push(req);
+    this.config.requirements = this.config.requirements || [];
+    this.config.requirements.push(req);
     return this;
   }
   effect(effect: EffectConfig) {
-    this.cfg.effects.push(effect);
+    this.config.effects.push(effect);
     return this;
   }
 }
@@ -43,26 +43,26 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
     super(id, name, { costs: {}, onBuild: [] });
   }
   cost(key: ResourceKey, amount: number) {
-    this.cfg.costs[key] = amount;
+    this.config.costs[key] = amount;
     return this;
   }
   onBuild(effect: EffectConfig) {
-    this.cfg.onBuild!.push(effect);
+    this.config.onBuild!.push(effect);
     return this;
   }
   onDevelopmentPhase(effect: EffectConfig) {
-    this.cfg.onDevelopmentPhase = this.cfg.onDevelopmentPhase || [];
-    this.cfg.onDevelopmentPhase.push(effect);
+    this.config.onDevelopmentPhase = this.config.onDevelopmentPhase || [];
+    this.config.onDevelopmentPhase.push(effect);
     return this;
   }
   onUpkeepPhase(effect: EffectConfig) {
-    this.cfg.onUpkeepPhase = this.cfg.onUpkeepPhase || [];
-    this.cfg.onUpkeepPhase.push(effect);
+    this.config.onUpkeepPhase = this.config.onUpkeepPhase || [];
+    this.config.onUpkeepPhase.push(effect);
     return this;
   }
   onAttackResolved(effect: EffectConfig) {
-    this.cfg.onAttackResolved = this.cfg.onAttackResolved || [];
-    this.cfg.onAttackResolved.push(effect);
+    this.config.onAttackResolved = this.config.onAttackResolved || [];
+    this.config.onAttackResolved.push(effect);
     return this;
   }
 }
@@ -72,18 +72,18 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
     super(id, name, {});
   }
   onBuild(effect: EffectConfig) {
-    this.cfg.onBuild = this.cfg.onBuild || [];
-    this.cfg.onBuild.push(effect);
+    this.config.onBuild = this.config.onBuild || [];
+    this.config.onBuild.push(effect);
     return this;
   }
   onDevelopmentPhase(effect: EffectConfig) {
-    this.cfg.onDevelopmentPhase = this.cfg.onDevelopmentPhase || [];
-    this.cfg.onDevelopmentPhase.push(effect);
+    this.config.onDevelopmentPhase = this.config.onDevelopmentPhase || [];
+    this.config.onDevelopmentPhase.push(effect);
     return this;
   }
   onAttackResolved(effect: EffectConfig) {
-    this.cfg.onAttackResolved = this.cfg.onAttackResolved || [];
-    this.cfg.onAttackResolved.push(effect);
+    this.config.onAttackResolved = this.config.onAttackResolved || [];
+    this.config.onAttackResolved.push(effect);
     return this;
   }
 }
@@ -93,13 +93,13 @@ export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
     super(id, name, {});
   }
   onDevelopmentPhase(effect: EffectConfig) {
-    this.cfg.onDevelopmentPhase = this.cfg.onDevelopmentPhase || [];
-    this.cfg.onDevelopmentPhase.push(effect);
+    this.config.onDevelopmentPhase = this.config.onDevelopmentPhase || [];
+    this.config.onDevelopmentPhase.push(effect);
     return this;
   }
   onUpkeepPhase(effect: EffectConfig) {
-    this.cfg.onUpkeepPhase = this.cfg.onUpkeepPhase || [];
-    this.cfg.onUpkeepPhase.push(effect);
+    this.config.onUpkeepPhase = this.config.onUpkeepPhase || [];
+    this.config.onUpkeepPhase.push(effect);
     return this;
   }
 }
