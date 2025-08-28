@@ -28,13 +28,10 @@ Tests live in:
 - `tests/integration` for integration tests
 - `e2e` for end-to-end tests using Playwright
 
-Always run all tests before making a PR. The Playwright Chromium browser is installed automatically the first time `npm run e2e` is executed (it runs `playwright install --with-deps chromium` under the hood). The repository configures an alternate Playwright download host via `.npmrc` to work behind restricted networks:
-
-```bash
-npm test
-npm run e2e
-npm run build
-```
+The pre-commit hook runs lint-staged and `npm test` automatically. GitHub
+Actions executes `npm run test:coverage`, `npm run e2e`, and `npm run build`
+for each pull request. Run these scripts locally only when debugging or when
+changes could affect them. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 # Game overview
 
