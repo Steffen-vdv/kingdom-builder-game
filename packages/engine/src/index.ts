@@ -251,6 +251,8 @@ export {
   BUILDINGS,
   DEVELOPMENTS,
   EFFECTS,
+  runEffects,
+  applyParamsToEffects,
   EVALUATORS,
   POPULATIONS,
   EngineContext,
