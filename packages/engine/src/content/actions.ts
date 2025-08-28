@@ -134,5 +134,3 @@ export function createActionRegistry() {
 
   return registry;
 }
-
-export const ACTIONS = createActionRegistry();

@@ -49,8 +49,8 @@ for details on built-in handlers and registering custom ones.
 
 Most subsystems rely on lightweight registries. A `Registry` maps string
 identifiers to handler functions and throws if an unknown id is requested. Core
-registries include `EFFECTS`, `EVALUATORS`, `ACTIONS`, `BUILDINGS`,
-`DEVELOPMENTS` and `POPULATIONS`.
+registries include the actions, buildings, developments and populations
+registries alongside `EFFECTS` and `EVALUATORS`.
 
 Registries are intentionally mutable: tests or mods may replace entries or add
 new ones at runtime. This allows contributors to prototype new mechanics simply
