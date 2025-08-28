@@ -8,7 +8,11 @@ import {
   getActionCosts,
   Resource,
 } from '@kingdom-builder/engine';
-import type { EngineContext, ActionParams } from '@kingdom-builder/engine';
+import type {
+  EngineContext,
+  ActionParams,
+  EffectDef,
+} from '@kingdom-builder/engine';
 
 interface Land {
   id: string;
@@ -101,21 +105,175 @@ const resourceInfo = {
 } as const;
 
 const statInfo: Record<string, { icon: string; label: string }> = {
-  armyStrength: { icon: '⚔️', label: 'Army Strength' },
+  armyStrength: { icon: '🗡️', label: 'Army Strength' },
   fortificationStrength: { icon: '🛡️', label: 'Fortification Strength' },
   absorption: { icon: '🛡️', label: 'Absorption' },
   armyGrowth: { icon: '📈', label: 'Army Growth' },
 };
 
-function renderCosts(costs: Record<string, number>) {
+const developmentInfo: Record<string, { icon: string; label: string }> = {
+  house: { icon: '🏠', label: 'House' },
+  farm: { icon: '🌾', label: 'Farm' },
+  outpost: { icon: '🛡️', label: 'Outpost' },
+  watchtower: { icon: '🗼', label: 'Watchtower' },
+  garden: { icon: '🌿', label: 'Garden' },
+};
+
+const landIcon = '🗺️';
+const slotIcon = '🧩';
+const buildingIcon = '🧱';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
+function summarizeEffects(
+  effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
+  ctx: EngineContext,
+): string {
+  const parts: string[] = [];
+  for (const eff of effects || []) {
+    if (eff.evaluator) {
+      const ev = eff.evaluator as {
+        type: string;
+        params: Record<string, unknown>;
+      };
+      if (ev.type === 'development') {
+        const sub = summarizeEffects(eff.effects, ctx);
+        const devParams = ev.params as Record<string, string>;
+        const devId = devParams['id']!;
+        const icon = developmentInfo[devId]?.icon || devId;
+        parts.push(`${sub} per ${icon}`);
+      } else {
+        parts.push(summarizeEffects(eff.effects, ctx));
+      }
+      continue;
+    }
+    switch (eff.type) {
+      case 'resource': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const res = resourceInfo[key as keyof typeof resourceInfo];
+          const icon = res ? res.icon : key;
+          const amount = Number(eff.params['amount']);
+          parts.push(`${icon}${amount >= 0 ? '+' : ''}${amount}`);
+        }
+        break;
+      }
+      case 'stat': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const stat = statInfo[key];
+          const icon = stat ? stat.icon : key;
+          const amount = Number(eff.params['amount']);
+          parts.push(`${icon}${amount >= 0 ? '+' : ''}${amount}`);
+        }
+        break;
+      }
+      case 'land': {
+        if (eff.method === 'add') {
+          const params = eff.params as Record<string, unknown> | undefined;
+          const count = Number(params?.['count'] ?? 1);
+          parts.push(`${landIcon}+${count}`);
+        }
+        break;
+      }
+      case 'development': {
+        if (eff.method === 'add' && eff.params) {
+          const id = eff.params['id'] as string;
+          const icon = developmentInfo[id]?.icon || id;
+          parts.push(`${icon}`);
+        }
+        break;
+      }
+      case 'building': {
+        if (eff.method === 'add' && eff.params) {
+          const id = eff.params['id'] as string;
+          const name = ctx.buildings.get(id)?.name || id;
+          parts.push(`${buildingIcon}${name}`);
+        }
+        break;
+      }
+      case 'cost_mod': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const icon =
+            resourceInfo[key as keyof typeof resourceInfo]?.icon || key;
+          const amount = Number(eff.params['amount']);
+          const actionId = eff.params['actionId'];
+          parts.push(
+            `${String(actionId)} cost ${icon}${amount >= 0 ? '+' : ''}${amount}`,
+          );
+        }
+        break;
+      }
+      case 'result_mod': {
+        if (eff.method === 'add' && eff.params) {
+          const sub = summarizeEffects(eff.effects || [], ctx);
+          const actionId = eff.params['actionId'];
+          parts.push(`${String(actionId)}: ${sub}`);
+        }
+        break;
+      }
+      case 'passive': {
+        if (eff.method === 'add') {
+          const sub = summarizeEffects(eff.effects || [], ctx);
+          if (sub) parts.push(sub);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return parts.join(', ');
+}
+
+function summarizeAction(id: string, ctx: EngineContext) {
+  const def = ctx.actions.get(id);
+  return summarizeEffects(def.effects, ctx);
+}
+
+function summarizeDevelopment(id: string, ctx: EngineContext) {
+  const def = ctx.developments.get(id);
+  const parts: string[] = [];
+  if (def.onBuild) parts.push(summarizeEffects(def.onBuild, ctx));
+  if (def.onDevelopmentPhase)
+    parts.push(`💹 ${summarizeEffects(def.onDevelopmentPhase, ctx)}`);
+  if (def.onUpkeepPhase)
+    parts.push(`🧾 ${summarizeEffects(def.onUpkeepPhase, ctx)}`);
+  if (def.onAttackResolved)
+    parts.push(`⚔️ ${summarizeEffects(def.onAttackResolved, ctx)}`);
+  return parts.join('; ');
+}
+
+function summarizeBuilding(id: string, ctx: EngineContext) {
+  const def = ctx.buildings.get(id);
+  const parts: string[] = [];
+  if (def.onBuild) parts.push(summarizeEffects(def.onBuild, ctx));
+  if (def.onDevelopmentPhase)
+    parts.push(`💹 ${summarizeEffects(def.onDevelopmentPhase, ctx)}`);
+  if (def.onUpkeepPhase)
+    parts.push(`🧾 ${summarizeEffects(def.onUpkeepPhase, ctx)}`);
+  if (def.onAttackResolved)
+    parts.push(`⚔️ ${summarizeEffects(def.onAttackResolved, ctx)}`);
+  return parts.join('; ');
+}
+/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
+
+function renderCosts(
+  costs: Record<string, number>,
+  resources: Record<string, number>,
+) {
   return (
     <>
-      {Object.entries(costs).map(([k, v]) => (
-        <span key={k} className="mr-1">
-          {resourceInfo[k as keyof typeof resourceInfo]?.icon}
-          {v}
-        </span>
-      ))}
+      {Object.entries(costs)
+        .filter(([k]) => k !== Resource.ap)
+        .map(([k, v]) => (
+          <span
+            key={k}
+            className={`mr-1 ${(resources[k] ?? 0) < v ? 'text-red-500' : ''}`}
+          >
+            {resourceInfo[k as keyof typeof resourceInfo]?.icon}
+            {v}
+          </span>
+        ))}
     </>
   );
 }
@@ -154,6 +312,14 @@ export default function App() {
       ),
     [ctx],
   );
+  const developmentOrder = ['house', 'farm', 'outpost', 'watchtower', 'garden'];
+  const sortedDevelopments = useMemo(
+    () =>
+      developmentOrder
+        .map((id) => developmentOptions.find((d) => d.id === id))
+        .filter(Boolean) as Development[],
+    [developmentOptions],
+  );
   const buildingOptions = useMemo<Building[]>(
     () =>
       Array.from(
@@ -163,6 +329,24 @@ export default function App() {
       ),
     [ctx],
   );
+
+  const actionSummaries = useMemo(() => {
+    const map = new Map<string, string>();
+    actions.forEach((a) => map.set(a.id, summarizeAction(a.id, ctx)));
+    return map;
+  }, [actions, ctx]);
+  const developmentSummaries = useMemo(() => {
+    const map = new Map<string, string>();
+    sortedDevelopments.forEach((d) =>
+      map.set(d.id, summarizeDevelopment(d.id, ctx)),
+    );
+    return map;
+  }, [sortedDevelopments, ctx]);
+  const buildingSummaries = useMemo(() => {
+    const map = new Map<string, string>();
+    buildingOptions.forEach((b) => map.set(b.id, summarizeBuilding(b.id, ctx)));
+    return map;
+  }, [buildingOptions, ctx]);
 
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.id === 'develop');
@@ -207,6 +391,21 @@ export default function App() {
       ([, v]) => v > 0,
     );
     const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
+    const totalLands = player.lands.length;
+    const devCounts: Record<string, number> = {};
+    let openSlots = 0;
+    player.lands.forEach((l) => {
+      openSlots += l.slotsFree;
+      l.developments.forEach((d) => {
+        devCounts[d] = (devCounts[d] || 0) + 1;
+      });
+    });
+    const devParts: string[] = [];
+    developmentOrder.forEach((id) => {
+      const count = devCounts[id];
+      if (count) devParts.push(`${developmentInfo[id]?.icon}${count}`);
+    });
+    if (openSlots) devParts.push(`${slotIcon}${openSlots}`);
     return (
       <div className="space-y-1">
         <h3 className="font-semibold">{player.name}</h3>
@@ -215,7 +414,7 @@ export default function App() {
             <span
               key={k}
               title={resourceInfo[k as keyof typeof resourceInfo]?.label}
-              className="flex items-center gap-1"
+              className="bar-item"
             >
               {resourceInfo[k as keyof typeof resourceInfo]?.icon}
               {v}
@@ -224,7 +423,7 @@ export default function App() {
           <div className="h-4 border-l" />
           <span
             title={`Population ${currentPop}/${player.maxPopulation}`}
-            className="flex items-center gap-1"
+            className="bar-item"
           >
             👥{currentPop}/{player.maxPopulation}
           </span>
@@ -234,28 +433,41 @@ export default function App() {
               <span
                 key={k}
                 title={statInfo[k]?.label || k}
-                className="flex items-center gap-1"
+                className="bar-item"
               >
                 {statInfo[k]?.icon}
                 {v}
               </span>
             ))}
           <div className="h-4 border-l" />
+          <span title={`Lands and developments`} className="bar-item">
+            {landIcon}
+            {totalLands} ({devParts.join(', ')})
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
+          {ctx.passives.list().map((p) => (
+            <span key={p} className="bar-item" title={p}>
+              {p}
+            </span>
+          ))}
+          {ctx.passives.list().length === 0 && (
+            <span className="text-sm text-gray-500">No passives</span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
           {Array.from(player.buildings).map((b) => (
-            <span key={b} title={b} className="flex items-center">
-              🏗️
-            </span>
-          ))}
-          <div className="h-4 border-l" />
-          {player.lands.map((l) => (
             <span
-              key={l.id}
-              title={`${l.id} (${l.slotsUsed}/${l.slotsMax}) — [${l.developments.join(', ') || 'empty'}]`}
-              className="flex items-center gap-1"
+              key={b}
+              title={ctx.buildings.get(b)?.name || b}
+              className="bar-item"
             >
-              🌄{l.slotsUsed}/{l.slotsMax}
+              {buildingIcon}
             </span>
           ))}
+          {player.buildings.size === 0 && (
+            <span className="text-sm text-gray-500">No buildings</span>
+          )}
         </div>
       </div>
     );
@@ -286,7 +498,7 @@ export default function App() {
                   : 'text-gray-500'
               }
             >
-              {p}
+              {p.charAt(0).toUpperCase() + p.slice(1)}
             </span>
           ))}
           <button className="border px-2 py-1" onClick={handleCyclePhase}>
@@ -296,19 +508,33 @@ export default function App() {
       </section>
 
       <section className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-2">Actions</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          Actions (1 {resourceInfo[Resource.ap].icon} each)
+        </h2>
         <div className="space-y-4">
           {otherActions.map((action) => {
             const costs = getActionCosts(action.id, ctx);
+            const canPay = Object.entries(costs).every(
+              ([k, v]) =>
+                ctx.activePlayer.resources[
+                  k as keyof typeof ctx.activePlayer.resources
+                ] >= v,
+            );
             return (
               <button
                 key={action.id}
-                className="border px-2 py-1 flex items-center gap-1"
+                className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                  canPay ? '' : 'opacity-50 border-red-500'
+                }`}
+                disabled={!canPay}
                 onClick={() => handlePerform(action)}
               >
-                {action.name}
+                <span>{action.name}</span>
+                <span className="text-xs">
+                  {actionSummaries.get(action.id)}
+                </span>
                 <span className="text-sm text-gray-600">
-                  {renderCosts(costs)}
+                  {renderCosts(costs, ctx.activePlayer.resources)}
                 </span>
               </button>
             );
@@ -318,17 +544,27 @@ export default function App() {
             <div>
               <h3 className="font-medium">Develop</h3>
               <div className="flex flex-wrap gap-2 mt-1">
-                {developmentOptions.map((d) => {
+                {sortedDevelopments.map((d) => {
                   const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
                   const costs = getActionCosts('develop', ctx, {
                     id: d.id,
                     landId: landIdForCost,
                   });
+                  const canPay =
+                    hasDevelopLand &&
+                    Object.entries(costs).every(
+                      ([k, v]) =>
+                        ctx.activePlayer.resources[
+                          k as keyof typeof ctx.activePlayer.resources
+                        ] >= v,
+                    );
                   return (
                     <button
                       key={d.id}
-                      className="border px-2 py-1 flex items-center gap-1"
-                      disabled={!hasDevelopLand}
+                      className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                        canPay ? '' : 'opacity-50 border-red-500'
+                      }`}
+                      disabled={!canPay}
                       title={
                         !hasDevelopLand
                           ? 'No land with free development slot'
@@ -341,9 +577,12 @@ export default function App() {
                         handlePerform(developAction, { id: d.id, landId });
                       }}
                     >
-                      {d.name}
+                      <span>{d.name}</span>
+                      <span className="text-xs">
+                        {developmentSummaries.get(d.id)}
+                      </span>
                       <span className="text-sm text-gray-600">
-                        {renderCosts(costs)}
+                        {renderCosts(costs, ctx.activePlayer.resources)}
                       </span>
                     </button>
                   );
@@ -358,15 +597,27 @@ export default function App() {
               <div className="flex flex-wrap gap-2 mt-1">
                 {buildingOptions.map((b) => {
                   const costs = getActionCosts('build', ctx, { id: b.id });
+                  const canPay = Object.entries(costs).every(
+                    ([k, v]) =>
+                      ctx.activePlayer.resources[
+                        k as keyof typeof ctx.activePlayer.resources
+                      ] >= v,
+                  );
                   return (
                     <button
                       key={b.id}
-                      className="border px-2 py-1 flex items-center gap-1"
+                      className={`border px-2 py-1 flex flex-col items-start gap-1 w-48 ${
+                        canPay ? '' : 'opacity-50 border-red-500'
+                      }`}
+                      disabled={!canPay}
                       onClick={() => handlePerform(buildAction, { id: b.id })}
                     >
-                      {b.name}
+                      <span>{b.name}</span>
+                      <span className="text-xs">
+                        {buildingSummaries.get(b.id)}
+                      </span>
                       <span className="text-sm text-gray-600">
-                        {renderCosts(costs)}
+                        {renderCosts(costs, ctx.activePlayer.resources)}
                       </span>
                     </button>
                   );
