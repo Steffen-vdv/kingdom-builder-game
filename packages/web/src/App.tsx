@@ -185,7 +185,12 @@ function summarizeEffects(
       case 'building': {
         if (eff.method === 'add' && eff.params) {
           const id = eff.params['id'] as string;
-          const name = ctx.buildings.get(id)?.name || id;
+          let name = id;
+          try {
+            name = ctx.buildings.get(id).name;
+          } catch {
+            // fall back to raw id when the building is not registered yet
+          }
           parts.push(`${buildingIcon}${name}`);
         }
         break;
