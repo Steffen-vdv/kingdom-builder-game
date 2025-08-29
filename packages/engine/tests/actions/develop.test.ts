@@ -9,7 +9,7 @@ import {
   getActionCosts,
   type ResourceKey,
 } from '../../src/index.ts';
-import { PlayerState, Land, GameState, Stat } from '../../src/state/index.ts';
+import { PlayerState, Land, GameState } from '../../src/state/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
 
@@ -107,49 +107,22 @@ describe('Develop action', () => {
     expectState(ctx.activePlayer, expected.activePlayer);
   });
 
-  it('handles Watchtower effects and cleanup after attack', () => {
+  it('applies development effects and cleans up after attack', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
     const land = ctx.activePlayer.lands[1];
 
-    const def = ctx.developments.get('watchtower');
-    const fortEffect = Number(
-      (
-        def.onBuild.find(
-          (e) =>
-            e.type === 'stat' &&
-            (e.params as { key: Stat }).key === Stat.fortificationStrength,
-        )?.params as { amount: number } | undefined
-      )?.amount || 0,
-    );
-    const absEffect = Number(
-      (
-        def.onBuild.find(
-          (e) =>
-            e.type === 'stat' &&
-            (e.params as { key: Stat }).key === Stat.absorption,
-        )?.params as { amount: number } | undefined
-      )?.amount || 0,
-    );
-
-    const beforeFort = ctx.activePlayer.stats.fortificationStrength;
-    const beforeAbs = ctx.activePlayer.stats.absorption;
+    const expectedBuild = simulateBuild(ctx, 'watchtower', land.id);
+    const expectedAfterAttack = simulateBuild(ctx, 'watchtower', land.id);
+    resolveAttack(expectedAfterAttack.activePlayer, 0, expectedAfterAttack);
 
     performAction('develop', ctx, { id: 'watchtower', landId: land.id });
     expect(land.developments).toContain('watchtower');
-    expect(ctx.activePlayer.stats.fortificationStrength).toBeCloseTo(
-      beforeFort + fortEffect,
-    );
-    expect(ctx.activePlayer.stats.absorption).toBeCloseTo(
-      beforeAbs + absEffect,
-    );
+    expectState(ctx.activePlayer, expectedBuild.activePlayer);
 
     resolveAttack(ctx.activePlayer, 0, ctx);
     expect(land.developments).not.toContain('watchtower');
-    expect(ctx.activePlayer.stats.fortificationStrength).toBeCloseTo(
-      beforeFort,
-    );
-    expect(ctx.activePlayer.stats.absorption).toBeCloseTo(beforeAbs);
+    expectState(ctx.activePlayer, expectedAfterAttack.activePlayer);
   });
 
   it('removing a development reverts its on-build effects', () => {
