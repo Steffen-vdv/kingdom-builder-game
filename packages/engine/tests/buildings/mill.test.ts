@@ -78,4 +78,34 @@ describe('Mill building', () => {
     performAction('overwork', ctx);
     expect(ctx.activePlayer.gold).toBe(goldBefore + farmCount * (base + bonus));
   });
+
+  it('does not grant bonuses to the opponent', () => {
+    const ctx = createEngine();
+    runDevelopment(ctx);
+    performAction('build', ctx, { id: 'mill' });
+
+    // switch to opponent
+    ctx.game.currentPlayerIndex = 1;
+
+    const goldBefore = ctx.activePlayer.gold;
+    const farmCount = getFarmCount(ctx);
+    const baseIncome = getFarmIncome(ctx);
+
+    runDevelopment(ctx);
+    expect(ctx.activePlayer.gold).toBe(goldBefore + farmCount * baseIncome);
+
+    const goldBeforeOverwork = ctx.activePlayer.gold;
+
+    const actionDef = ctx.actions.get('overwork');
+    const container = actionDef.effects[0] as EffectDef;
+    const goldEffect = (container.effects || []).find(
+      (e) => e.params && (e.params as { key?: Resource }).key === Resource.gold,
+    ) as EffectDef & { round?: 'up' | 'down' };
+    let base = (goldEffect.params?.amount as number) || 0;
+    if (goldEffect.round === 'up') base = Math.ceil(base);
+    else if (goldEffect.round === 'down') base = Math.floor(base);
+
+    performAction('overwork', ctx);
+    expect(ctx.activePlayer.gold).toBe(goldBeforeOverwork + farmCount * base);
+  });
 });
