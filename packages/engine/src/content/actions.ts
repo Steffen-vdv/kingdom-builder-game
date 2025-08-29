@@ -98,7 +98,7 @@ export function createActionRegistry() {
       .requirement({
         type: 'population',
         method: 'cap',
-        message: 'Requires free House',
+        message: 'Free space for 👥',
       })
       .effect({
         type: 'population',

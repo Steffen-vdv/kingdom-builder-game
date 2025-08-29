@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   createEngine,
   performAction,
@@ -113,13 +113,13 @@ function diffSnapshots(
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
     if (!prev) {
-      changes.push(`${landIcon} New land ${land.id}`);
+      changes.push(`${landIcon} New land`);
       continue;
     }
     for (const dev of land.developments)
       if (!prev.developments.includes(dev)) {
         const icon = developmentInfo[dev]?.icon || dev;
-        changes.push(`${landIcon} ${land.id}: +${icon}`);
+        changes.push(`${landIcon} +${icon}`);
       }
   }
   return changes;
@@ -190,6 +190,9 @@ const phaseInfo = {
   onDevelopmentPhase: { icon: '🏗️', label: 'Development phase' },
   onUpkeepPhase: { icon: '🧹', label: 'Upkeep phase' },
 } as const;
+
+type SummaryEntry = string | { title: string; items: string[] };
+type Summary = SummaryEntry[];
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 function summarizeEffects(
   effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
@@ -253,7 +256,7 @@ function summarizeEffects(
           const id = eff.params['id'] as string;
           const icon = developmentInfo[id]?.icon || id;
           if (eff.method === 'add') parts.push(`${icon}`);
-          else if (eff.method === 'remove') parts.push(`remove ${icon}`);
+          else if (eff.method === 'remove') parts.push(`Remove ${icon}`);
         }
         break;
       }
@@ -314,54 +317,222 @@ function summarizeAction(id: string, ctx: EngineContext) {
   return summarizeEffects(def.effects, ctx);
 }
 
-function summarizeDevelopment(id: string, ctx: EngineContext) {
+function summarizeDevelopment(id: string, ctx: EngineContext): Summary {
   const def = ctx.developments.get(id);
-  const parts: string[] = [];
+  const parts: Summary = [];
   if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
-  if (def.onDevelopmentPhase)
-    parts.push(
-      ...summarizeEffects(def.onDevelopmentPhase, ctx).map(
-        (s) => `On Development phase: ${s}`,
-      ),
-    );
-  if (def.onUpkeepPhase)
-    parts.push(
-      ...summarizeEffects(def.onUpkeepPhase, ctx).map(
-        (s) => `On Upkeep phase: ${s}`,
-      ),
-    );
-  if (def.onAttackResolved)
-    parts.push(
-      ...summarizeEffects(def.onAttackResolved, ctx).map(
-        (s) => `After attack: ${s}`,
-      ),
-    );
+  const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
+  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  const upk = summarizeEffects(def.onUpkeepPhase, ctx);
+  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  const atk = summarizeEffects(def.onAttackResolved, ctx);
+  if (atk.length)
+    parts.push({ title: 'After having been attacked', items: atk });
+  return parts;
+}
+
+function summarizeBuilding(id: string, ctx: EngineContext): Summary {
+  const def = ctx.buildings.get(id);
+  const parts: Summary = [];
+  if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
+  const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
+  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  const upk = summarizeEffects(def.onUpkeepPhase, ctx);
+  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  const atk = summarizeEffects(def.onAttackResolved, ctx);
+  if (atk.length)
+    parts.push({ title: 'After having been attacked', items: atk });
+  return parts;
+}
+
+function describeEffects(
+  effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
+  ctx: EngineContext,
+): string[] {
+  const parts: string[] = [];
+  for (const eff of effects || []) {
+    if (eff.evaluator) {
+      const ev = eff.evaluator as {
+        type: string;
+        params: Record<string, unknown>;
+      };
+      if (ev.type === 'development') {
+        const sub = describeEffects(eff.effects, ctx);
+        const devParams = ev.params as Record<string, string>;
+        const devId = devParams['id']!;
+        const info = developmentInfo[devId];
+        sub.forEach((s) =>
+          parts.push(
+            `${s} for each ${info?.icon || ''}${info?.label || devId}`,
+          ),
+        );
+      } else {
+        parts.push(...describeEffects(eff.effects, ctx));
+      }
+      continue;
+    }
+    switch (eff.type) {
+      case 'resource': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const res = resourceInfo[key as keyof typeof resourceInfo];
+          const label = res?.label || key;
+          const icon = res?.icon || '';
+          const amount = Number(eff.params['amount']);
+          parts.push(
+            `${amount >= 0 ? 'Gain' : 'Lose'} ${Math.abs(amount)} ${icon} ${label}`,
+          );
+        }
+        break;
+      }
+      case 'stat': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const stat = statInfo[key];
+          const label = stat?.label || key;
+          const icon = stat?.icon || '';
+          const amount = Number(eff.params['amount']);
+          if (key === 'maxPopulation')
+            parts.push(`Increase Max ${icon} by ${amount}`);
+          else if (key === 'absorption')
+            parts.push(
+              `${amount >= 0 ? 'Increase' : 'Decrease'} ${icon}${label} by ${
+                amount * 100
+              }%`,
+            );
+          else
+            parts.push(
+              `${amount >= 0 ? 'Gain' : 'Lose'} ${Math.abs(amount)} ${icon} ${label}`,
+            );
+        }
+        break;
+      }
+      case 'land': {
+        if (eff.method === 'add') {
+          const params = eff.params as Record<string, unknown> | undefined;
+          const count = Number(params?.['count'] ?? 1);
+          parts.push(`Gain ${count} ${landIcon} Land`);
+        }
+        break;
+      }
+      case 'development': {
+        if (eff.params) {
+          const id = eff.params['id'] as string;
+          const info = developmentInfo[id];
+          const label = info?.label || id;
+          const icon = info?.icon || '';
+          if (eff.method === 'add') parts.push(`Add ${icon}${label}`);
+          else if (eff.method === 'remove')
+            parts.push(`Remove ${icon}${label}`);
+        }
+        break;
+      }
+      case 'building': {
+        if (eff.method === 'add' && eff.params) {
+          const id = eff.params['id'] as string;
+          let name = id;
+          try {
+            name = ctx.buildings.get(id).name;
+          } catch {
+            // ignore
+          }
+          parts.push(`Construct ${buildingIcon}${name}`);
+        }
+        break;
+      }
+      case 'cost_mod': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const icon =
+            resourceInfo[key as keyof typeof resourceInfo]?.icon || key;
+          const amount = Number(eff.params['amount']);
+          const actionId = eff.params['actionId'] as string;
+          const actionIcon =
+            actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
+          parts.push(
+            `${amount >= 0 ? 'Increase' : 'Decrease'} ${actionIcon} cost by ${
+              icon
+            }${Math.abs(amount)}`,
+          );
+        }
+        break;
+      }
+      case 'result_mod': {
+        if (eff.method === 'add' && eff.params) {
+          const sub = describeEffects(eff.effects || [], ctx);
+          const actionId = eff.params['actionId'] as string;
+          const actionIcon =
+            actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
+          sub.forEach((s) => parts.push(`${actionIcon}: ${s}`));
+        }
+        break;
+      }
+      case 'passive': {
+        if (eff.method === 'add') {
+          const sub = describeEffects(eff.effects || [], ctx);
+          if (sub.length) parts.push(...sub);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
   return parts.map((p) => p.trim());
 }
 
-function summarizeBuilding(id: string, ctx: EngineContext) {
+function describeAction(id: string, ctx: EngineContext): Summary {
+  const def = ctx.actions.get(id);
+  return describeEffects(def.effects, ctx);
+}
+
+function describeDevelopment(id: string, ctx: EngineContext): Summary {
+  const def = ctx.developments.get(id);
+  const parts: Summary = [];
+  if (def.onBuild) parts.push(...describeEffects(def.onBuild, ctx));
+  const dev = describeEffects(def.onDevelopmentPhase, ctx);
+  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  const upk = describeEffects(def.onUpkeepPhase, ctx);
+  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  const atk = describeEffects(def.onAttackResolved, ctx);
+  if (atk.length)
+    parts.push({ title: 'After having been attacked', items: atk });
+  return parts;
+}
+
+function describeBuilding(id: string, ctx: EngineContext): Summary {
   const def = ctx.buildings.get(id);
-  const parts: string[] = [];
-  if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
-  if (def.onDevelopmentPhase)
-    parts.push(
-      ...summarizeEffects(def.onDevelopmentPhase, ctx).map(
-        (s) => `On Development phase: ${s}`,
-      ),
-    );
-  if (def.onUpkeepPhase)
-    parts.push(
-      ...summarizeEffects(def.onUpkeepPhase, ctx).map(
-        (s) => `On Upkeep phase: ${s}`,
-      ),
-    );
-  if (def.onAttackResolved)
-    parts.push(
-      ...summarizeEffects(def.onAttackResolved, ctx).map(
-        (s) => `After attack: ${s}`,
-      ),
-    );
-  return parts.map((p) => p.trim());
+  const parts: Summary = [];
+  if (def.onBuild) parts.push(...describeEffects(def.onBuild, ctx));
+  const dev = describeEffects(def.onDevelopmentPhase, ctx);
+  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  const upk = describeEffects(def.onUpkeepPhase, ctx);
+  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  const atk = describeEffects(def.onAttackResolved, ctx);
+  if (atk.length)
+    parts.push({ title: 'After having been attacked', items: atk });
+  return parts;
+}
+
+function renderSummary(summary: Summary | undefined) {
+  return summary?.map((e, i) =>
+    typeof e === 'string' ? (
+      <li key={i} className="whitespace-pre-line">
+        {e}
+      </li>
+    ) : (
+      <li key={i}>
+        <span className="font-semibold">{e.title}</span>
+        <ul className="list-disc pl-4">
+          {e.items.map((s, j) => (
+            <li key={j} className="whitespace-pre-line">
+              {s}
+            </li>
+          ))}
+        </ul>
+      </li>
+    ),
+  );
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 
@@ -387,6 +558,33 @@ function renderCosts(
   );
 }
 
+function TimerCircle({ progress }: { progress: number }) {
+  const radius = 12;
+  const circumference = 2 * Math.PI * radius;
+  return (
+    <svg width={24} height={24}>
+      <circle
+        cx="12"
+        cy="12"
+        r={radius}
+        stroke="#e5e7eb"
+        strokeWidth="2"
+        fill="none"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r={radius}
+        stroke="#10b981"
+        strokeWidth="2"
+        fill="none"
+        strokeDasharray={circumference}
+        strokeDashoffset={(1 - progress) * circumference}
+      />
+    </svg>
+  );
+}
+
 export default function Game({ onExit }: { onExit?: () => void }) {
   const ctx = useMemo<EngineContext>(() => {
     const c = createEngine();
@@ -396,6 +594,35 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   const [, setTick] = useState(0);
   const refresh = () => setTick((t) => t + 1);
   const [log, setLog] = useState<{ time: string; text: string }[]>([]);
+  const [hoverCard, setHoverCard] = useState<{
+    title: string;
+    effects: Summary;
+    requirements: string[];
+    costs: Record<string, number>;
+  } | null>(null);
+  const hoverTimeout = useRef<number>();
+  const [phaseSteps, setPhaseSteps] = useState<
+    {
+      title: string;
+      items: { text: string; italic?: boolean; done?: boolean }[];
+      active: boolean;
+    }[]
+  >([]);
+  const [phaseTimer, setPhaseTimer] = useState(0);
+  const [phasePaused, setPhasePaused] = useState(false);
+  const phasePausedRef = useRef(false);
+  const [mainApStart, setMainApStart] = useState(0);
+
+  function setPaused(v: boolean) {
+    phasePausedRef.current = v;
+    setPhasePaused(v);
+  }
+
+  function formatRequirement(req: string): string {
+    if (req.toLowerCase() === 'requires free house') return 'Free space for 👥';
+    return req;
+  }
+
   const addLog = (entry: string | string[], playerName?: string) =>
     setLog((prev) => [
       ...(Array.isArray(entry) ? entry : [entry]).map((text) => ({
@@ -404,6 +631,20 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       })),
       ...prev,
     ]);
+
+  function handleHoverCard(data: {
+    title: string;
+    effects: Summary;
+    requirements: string[];
+    costs: Record<string, number>;
+  }) {
+    if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
+    hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
+  }
+  function clearHoverCard() {
+    if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
+    setHoverCard(null);
+  }
 
   const actions = useMemo<Action[]>(
     () =>
@@ -445,14 +686,14 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     return map;
   }, [actions, ctx]);
   const developmentSummaries = useMemo(() => {
-    const map = new Map<string, string[]>();
+    const map = new Map<string, Summary>();
     sortedDevelopments.forEach((d) =>
       map.set(d.id, summarizeDevelopment(d.id, ctx)),
     );
     return map;
   }, [sortedDevelopments, ctx]);
   const buildingSummaries = useMemo(() => {
-    const map = new Map<string, string[]>();
+    const map = new Map<string, Summary>();
     buildingOptions.forEach((b) => map.set(b.id, summarizeBuilding(b.id, ctx)));
     return map;
   }, [buildingOptions, ctx]);
@@ -472,10 +713,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       const after = snapshotPlayer(ctx.activePlayer);
       const changes = diffSnapshots(before, after, ctx);
       const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
-      addLog([
-        `Played ${icon} ${action.name}`,
-        ...changes.map((c) => `  ${c}`),
-      ]);
+      let message = `Played ${icon} ${action.name}`;
+      if (
+        action.id === 'develop' &&
+        params &&
+        typeof (params as { id?: string }).id === 'string'
+      ) {
+        const devId = (params as { id: string }).id;
+        const devIcon = developmentInfo[devId]?.icon || '';
+        const devLabel = developmentInfo[devId]?.label || devId;
+        message += ` - ${devIcon}${devLabel}`;
+      }
+      addLog([message, ...changes.map((c) => `  ${c}`)]);
     } catch (e) {
       const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
@@ -483,8 +732,46 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     refresh();
   }
 
-  function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  function runDelay(total: number) {
+    setPhaseTimer(0);
+    return new Promise<void>((resolve) => {
+      let elapsed = 0;
+      const step = 100;
+      const interval = window.setInterval(() => {
+        if (!phasePausedRef.current) {
+          elapsed += step;
+          setPhaseTimer(elapsed / total);
+          if (elapsed >= total) {
+            window.clearInterval(interval);
+            resolve();
+          }
+        }
+      }, step);
+    });
+  }
+
+  function runPhaseDelay() {
+    return runDelay(2000);
+  }
+
+  function runStepDelay() {
+    return runDelay(1000);
+  }
+
+  function updateMainPhaseStep(apStartOverride?: number) {
+    const total = apStartOverride ?? mainApStart;
+    setPhaseSteps([
+      {
+        title: 'Step 1 - Spend all AP',
+        items: [
+          {
+            text: `${resourceInfo[Resource.ap].icon} ${ctx.activePlayer.ap}/${total} remaining`,
+            done: ctx.activePlayer.ap === 0,
+          },
+        ],
+        active: ctx.activePlayer.ap > 0,
+      },
+    ]);
   }
 
   async function runPhaseForPlayer(
@@ -494,6 +781,49 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     ctx.game.currentPlayerIndex = index;
     const player = ctx.activePlayer;
     const effects = collectTriggerEffects(trigger, ctx, player);
+
+    const developmentSteps = [
+      {
+        title: 'Gain Income',
+        classify: (change: string) =>
+          change.includes(resourceInfo[Resource.gold].icon) ||
+          change.includes(resourceInfo[Resource.happiness].icon),
+      },
+      {
+        title: 'Generate Action Points',
+        classify: (change: string) =>
+          change.includes(resourceInfo[Resource.ap].icon),
+      },
+      {
+        title: 'Grow Strengths',
+        classify: (change: string) =>
+          change.includes(statInfo['armyStrength']!.icon) ||
+          change.includes(statInfo['fortificationStrength']!.icon),
+      },
+    ] as const;
+
+    const upkeepSteps = [
+      {
+        title: 'Pay Upkeep',
+        classify: (change: string) =>
+          change.includes(resourceInfo[Resource.gold].icon),
+      },
+      {
+        title: 'Check Shortfall',
+        classify: () => false,
+      },
+      {
+        title: 'End-of-Upkeep triggers',
+        classify: () => true,
+      },
+    ] as const;
+
+    const stepDefs =
+      trigger === 'onDevelopmentPhase' ? developmentSteps : upkeepSteps;
+    const stepItems = stepDefs.map(
+      () => [] as { text: string; italic?: boolean; done?: boolean }[],
+    );
+
     for (const effect of effects) {
       const before = snapshotPlayer(player);
       runEffects([effect], ctx);
@@ -506,18 +836,82 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           player.name,
         );
       }
-      refresh();
-      await sleep(1000);
+      for (const change of changes) {
+        let idx = stepDefs.findIndex((s) => s.classify(change));
+        if (idx === -1) idx = stepDefs.length - 1;
+        stepItems[idx]!.push({ text: change });
+      }
+    }
+
+    if (trigger === 'onDevelopmentPhase') {
+      const commanders = player.population[PopulationRole.Commander] || 0;
+      const fortifiers = player.population[PopulationRole.Fortifier] || 0;
+      if (stepItems[2]!.length === 0) {
+        stepItems[2]!.push({
+          text: `${populationInfo[PopulationRole.Commander]!.icon}${commanders} - No effect`,
+          italic: true,
+        });
+        stepItems[2]!.push({
+          text: `${populationInfo[PopulationRole.Fortifier]!.icon}${fortifiers} - No effect`,
+          italic: true,
+        });
+      }
+    } else if (trigger === 'onUpkeepPhase') {
+      if (stepItems[0]!.length === 0)
+        stepItems[0]!.push({ text: 'No costs to pay', italic: true });
+      if (stepItems[1]!.length === 0)
+        stepItems[1]!.push({ text: 'No shortfall', italic: true });
+      if (stepItems[2]!.length === 0)
+        stepItems[2]!.push({ text: 'No effects', italic: true });
+    }
+
+    setPhaseSteps([]);
+    for (let i = 0; i < stepDefs.length; i++) {
+      setPhaseSteps((prev) => [
+        ...prev,
+        {
+          title: `Step ${i + 1} - ${stepDefs[i]!.title}`,
+          items: [],
+          active: true,
+        },
+      ]);
+      const items =
+        stepItems[i]!.length > 0
+          ? stepItems[i]!
+          : [{ text: 'No effect', italic: true }];
+      for (const item of items) {
+        setPhaseSteps((prev) => {
+          const next = [...prev];
+          next[i] = {
+            ...next[i]!,
+            items: [...next[i]!.items, item],
+          };
+          return next;
+        });
+        await runStepDelay();
+      }
+      setPhaseSteps((prev) => {
+        const next = [...prev];
+        next[i] = { ...next[i]!, active: false };
+        return next;
+      });
+      await runStepDelay();
     }
   }
 
   async function startTurn(playerIndex: number) {
     ctx.game.currentPlayerIndex = playerIndex;
     ctx.game.currentPhase = Phase.Development;
+    refresh();
     await runPhaseForPlayer('onDevelopmentPhase', playerIndex);
+    await runPhaseDelay();
     ctx.game.currentPhase = Phase.Upkeep;
+    refresh();
     await runPhaseForPlayer('onUpkeepPhase', playerIndex);
+    await runPhaseDelay();
     ctx.game.currentPhase = Phase.Main;
+    setMainApStart(ctx.activePlayer.ap);
+    updateMainPhaseStep(ctx.activePlayer.ap);
     refresh();
   }
 
@@ -537,13 +931,11 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     void startTurn(0);
   }, []);
 
-  function PlayerPanel({
-    player,
-    active,
-  }: {
-    player: typeof ctx.activePlayer;
-    active: boolean;
-  }) {
+  useEffect(() => {
+    if (ctx.game.currentPhase === Phase.Main) updateMainPhaseStep();
+  }, [ctx.game.currentPhase, ctx.activePlayer.ap]);
+
+  function PlayerPanel({ player }: { player: typeof ctx.activePlayer }) {
     const popEntries = Object.entries(player.population).filter(
       ([, v]) => v > 0,
     );
@@ -562,6 +954,11 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       );
       slotsFree += land.slotsFree;
     });
+    const landCount = player.lands.length;
+    const totalSlots = player.lands.reduce(
+      (sum, land) => sum + land.slotsMax,
+      0,
+    );
     const landItems: {
       key: string;
       icon: string;
@@ -585,11 +982,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       });
     const landBar = (
       <span className="bar-item">
-        <span title="Land">{landIcon}</span>
+        <span title="Land">
+          {landIcon}
+          {landCount}
+        </span>{' '}
+        <span title="Development slots">
+          {actionInfo.develop.icon}
+          {totalSlots}
+        </span>
         {' ('}
         {landItems.map((item, i) => (
           <React.Fragment key={item.key}>
-            {i > 0 && ','}
+            {i > 0 && ' , '}
             <span title={item.label}>
               {item.icon}
               {item.count}
@@ -600,9 +1004,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       </span>
     );
 
-    const playerPassives = ctx.passives
-      .list()
-      .filter((id) => id.includes(player.id));
+    const playerPassives = ctx.passives.list();
 
     function describePassive(id: string): string {
       if (id.startsWith('watchtower_absorption_'))
@@ -612,13 +1014,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
 
     return (
       <div className="space-y-1">
-        <h3
-          className={
-            active ? 'font-bold underline' : 'text-gray-500 font-semibold'
-          }
-        >
-          {player.name}
-        </h3>
+        <h3 className="font-semibold">{player.name}</h3>
         <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
           {Object.entries(player.resources).map(([k, v]) => (
             <span
@@ -698,13 +1094,12 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   }
 
   return (
-    <div className="p-4 flex gap-4 w-full">
+    <div className="p-4 flex gap-4 w-full bg-slate-100 text-gray-900 min-h-screen">
       <div className="flex-1 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-center flex-1">
             Kingdom Builder
           </h1>
-          <span className="ml-4">Turn {ctx.game.turn}</span>
           {onExit && (
             <button className="border px-2 py-1 ml-4" onClick={onExit}>
               Back to Menu
@@ -712,46 +1107,99 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           )}
         </div>
 
-        <section className="border rounded p-4">
-          <h2 className="text-xl font-semibold mb-2">Players</h2>
+        <section className="border rounded p-4 bg-white shadow">
           <div className="flex flex-col gap-4">
             {ctx.game.players.map((p) => (
-              <PlayerPanel
-                key={p.id}
-                player={p}
-                active={p.id === ctx.activePlayer.id}
-              />
+              <PlayerPanel key={p.id} player={p} />
             ))}
           </div>
         </section>
 
-        <section className="border rounded p-4">
-          <h2 className="text-xl font-semibold mb-2">Phases</h2>
-          <div className="flex flex-wrap items-center gap-4">
-            {Object.values(Phase).map((p) => (
+        <section
+          className="border rounded p-4 bg-white shadow relative w-full max-w-md"
+          onMouseEnter={() =>
+            ctx.game.currentPhase !== Phase.Main && setPaused(true)
+          }
+          onMouseLeave={() => setPaused(false)}
+          style={{
+            cursor:
+              phasePaused && ctx.game.currentPhase !== Phase.Main
+                ? 'pause'
+                : 'auto',
+          }}
+        >
+          <h2 className="text-xl font-semibold mb-2">
+            Turn {ctx.game.turn} - {ctx.activePlayer.name}
+          </h2>
+          <div className="flex gap-4 mb-2">
+            {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
               <span
                 key={p}
                 className={
-                  p === ctx.game.currentPhase
-                    ? 'font-bold underline'
-                    : 'text-gray-500'
+                  p === ctx.game.currentPhase ? 'font-semibold underline' : ''
                 }
               >
-                {p.charAt(0).toUpperCase() + p.slice(1)}
+                {p.charAt(0).toUpperCase() + p.slice(1)} Phase
               </span>
             ))}
           </div>
+          <ul className="text-sm text-left min-h-[1rem] space-y-1">
+            {phaseSteps.map((s, i) => (
+              <li key={i} className={s.active ? 'font-semibold' : ''}>
+                <div>{s.title}</div>
+                <ul className="pl-4 list-disc">
+                  {s.items.length > 0 ? (
+                    s.items.map((it, j) => (
+                      <li key={j} className={it.italic ? 'italic' : ''}>
+                        {it.text}
+                        {it.done && (
+                          <span className="text-green-600 ml-1">✔️</span>
+                        )}
+                      </li>
+                    ))
+                  ) : (
+                    <li>...</li>
+                  )}
+                </ul>
+              </li>
+            ))}
+          </ul>
+          {ctx.game.currentPhase !== Phase.Main && (
+            <div className="absolute top-2 right-2">
+              <TimerCircle progress={phaseTimer} />
+            </div>
+          )}
+          {ctx.game.currentPhase === Phase.Main && (
+            <div className="mt-2 text-right">
+              <button
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={phaseSteps.some((s) => s.active)}
+                onClick={() => void handleEndTurn()}
+              >
+                Next Turn
+              </button>
+            </div>
+          )}
+          {phasePaused && (
+            <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center text-sm">
+              Paused
+            </div>
+          )}
         </section>
 
-        <section className="border rounded p-4">
-          <h2 className="text-xl font-semibold mb-2">
-            Actions (1 {resourceInfo[Resource.ap].icon} each)
-          </h2>
+        <section className="border rounded p-4 bg-white shadow">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-semibold">
+              Actions (1 {resourceInfo[Resource.ap].icon} each)
+            </h2>
+          </div>
           <div className="space-y-4">
             <div className="grid grid-cols-4 gap-2">
               {otherActions.map((action) => {
                 const costs = getActionCosts(action.id, ctx);
-                const requirements = getActionRequirements(action.id, ctx);
+                const requirements = getActionRequirements(action.id, ctx).map(
+                  formatRequirement,
+                );
                 const canPay = Object.entries(costs).every(
                   ([k, v]) =>
                     ctx.activePlayer.resources[
@@ -772,11 +1220,24 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                   <button
                     key={action.id}
                     className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
-                      enabled ? '' : 'opacity-50 border-red-500'
+                      enabled
+                        ? ''
+                        : 'opacity-50 border-red-500 cursor-not-allowed'
                     }`}
-                    disabled={!enabled}
                     title={title}
-                    onClick={() => handlePerform(action)}
+                    onClick={() => enabled && handlePerform(action)}
+                    onMouseEnter={() =>
+                      handleHoverCard({
+                        title: `${
+                          actionInfo[action.id as keyof typeof actionInfo]
+                            ?.icon || ''
+                        } ${action.name}`,
+                        effects: describeAction(action.id, ctx),
+                        requirements,
+                        costs,
+                      })
+                    }
+                    onMouseLeave={clearHoverCard}
                   >
                     <span className="text-base font-medium">
                       {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
@@ -786,15 +1247,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       {renderCosts(costs, ctx.activePlayer.resources)}
                     </span>
                     <ul className="text-sm list-disc pl-4 text-left">
-                      {actionSummaries.get(action.id)?.map((e, i) => (
-                        <li key={i}>{e}</li>
-                      ))}
-                      {requirements.map((r, i) => (
-                        <li key={`req-${i}`} className="text-red-500">
-                          {r}
-                        </li>
-                      ))}
+                      {renderSummary(actionSummaries.get(action.id))}
                     </ul>
+                    {requirements.length > 0 && (
+                      <div className="text-sm text-red-600 text-left">
+                        <span className="font-semibold">Requirements</span>
+                        <ul className="list-disc pl-4">
+                          {requirements.map((r, i) => (
+                            <li key={i}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -815,7 +1279,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                     const requirements = getActionRequirements(
                       'raise_pop',
                       ctx,
-                    );
+                    ).map(formatRequirement);
                     const canPay = Object.entries(costs).every(
                       ([k, v]) =>
                         ctx.activePlayer.resources[
@@ -838,11 +1302,28 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       <button
                         key={role}
                         className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
-                          enabled ? '' : 'opacity-50 border-red-500'
+                          enabled
+                            ? ''
+                            : 'opacity-50 border-red-500 cursor-not-allowed'
                         }`}
-                        disabled={!enabled}
                         title={title}
-                        onClick={() => handlePerform(raisePopAction, { role })}
+                        onClick={() =>
+                          enabled && handlePerform(raisePopAction, { role })
+                        }
+                        onMouseEnter={() =>
+                          handleHoverCard({
+                            title: `${actionInfo.raise_pop.icon} Raise Population - ${
+                              populationInfo[role]?.icon
+                            } ${populationInfo[role]?.label || ''}`,
+                            effects: [
+                              `👥(${populationInfo[role]?.icon}) +1`,
+                              ...describeAction('raise_pop', ctx),
+                            ],
+                            requirements,
+                            costs,
+                          })
+                        }
+                        onMouseLeave={clearHoverCard}
                       >
                         <span className="text-base font-medium">
                           {populationInfo[role]?.icon}{' '}
@@ -851,16 +1332,22 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-sm list-disc list-inside">
-                          {actionSummaries.get('raise_pop')?.map((e, i) => (
-                            <li key={i}>{e}</li>
-                          ))}
-                          {requirements.map((r, i) => (
-                            <li key={`req-${i}`} className="text-red-500">
-                              {r}
-                            </li>
-                          ))}
+                        <ul className="text-sm list-disc list-inside text-left">
+                          {renderSummary([
+                            `👥(${populationInfo[role]?.icon}) +1`,
+                            ...(actionSummaries.get('raise_pop') ?? []),
+                          ])}
                         </ul>
+                        {requirements.length > 0 && (
+                          <div className="text-sm text-red-600 text-left">
+                            <span className="font-semibold">Requirements</span>
+                            <ul className="list-disc pl-4">
+                              {requirements.map((r, i) => (
+                                <li key={i}>{r}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -881,6 +1368,9 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       id: d.id,
                       landId: landIdForCost,
                     });
+                    const requirements = hasDevelopLand
+                      ? []
+                      : ['Requires land with free development slot'];
                     const canPay =
                       hasDevelopLand &&
                       Object.entries(costs).every(
@@ -902,16 +1392,29 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       <button
                         key={d.id}
                         className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
-                          enabled ? '' : 'opacity-50 border-red-500'
+                          enabled
+                            ? ''
+                            : 'opacity-50 border-red-500 cursor-not-allowed'
                         }`}
-                        disabled={!enabled}
                         title={title}
                         onClick={() => {
+                          if (!enabled) return;
                           const landId = ctx.activePlayer.lands.find(
                             (l) => l.slotsFree > 0,
                           )?.id;
                           handlePerform(developAction, { id: d.id, landId });
                         }}
+                        onMouseEnter={() =>
+                          handleHoverCard({
+                            title: `${actionInfo.develop.icon} Develop - ${
+                              developmentInfo[d.id]?.icon
+                            } ${d.name}`,
+                            effects: describeDevelopment(d.id, ctx),
+                            requirements,
+                            costs,
+                          })
+                        }
+                        onMouseLeave={clearHoverCard}
                       >
                         <span className="text-base font-medium">
                           {developmentInfo[d.id]?.icon} {d.name}
@@ -920,10 +1423,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc pl-4 text-left">
-                          {developmentSummaries.get(d.id)?.map((e, i) => (
-                            <li key={i}>{e}</li>
-                          ))}
+                          {renderSummary(developmentSummaries.get(d.id))}
                         </ul>
+                        {requirements.length > 0 && (
+                          <div className="text-sm text-red-600 text-left">
+                            <span className="font-semibold">Requirements</span>
+                            <ul className="list-disc pl-4">
+                              {requirements.map((r, i) => (
+                                <li key={i}>{r}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -937,6 +1448,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                 <div className="grid grid-cols-4 gap-2 mt-1">
                   {buildingOptions.map((b) => {
                     const costs = getActionCosts('build', ctx, { id: b.id });
+                    const requirements: string[] = [];
                     const canPay = Object.entries(costs).every(
                       ([k, v]) =>
                         ctx.activePlayer.resources[
@@ -954,20 +1466,30 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       <button
                         key={b.id}
                         className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
-                          enabled ? '' : 'opacity-50 border-red-500'
+                          enabled
+                            ? ''
+                            : 'opacity-50 border-red-500 cursor-not-allowed'
                         }`}
-                        disabled={!enabled}
                         title={title}
-                        onClick={() => handlePerform(buildAction, { id: b.id })}
+                        onClick={() =>
+                          enabled && handlePerform(buildAction, { id: b.id })
+                        }
+                        onMouseEnter={() =>
+                          handleHoverCard({
+                            title: `${actionInfo.build.icon} Build - ${b.name}`,
+                            effects: describeBuilding(b.id, ctx),
+                            requirements,
+                            costs,
+                          })
+                        }
+                        onMouseLeave={clearHoverCard}
                       >
                         <span className="text-base font-medium">{b.name}</span>
                         <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc pl-4 text-left">
-                          {buildingSummaries.get(b.id)?.map((e, i) => (
-                            <li key={i}>{e}</li>
-                          ))}
+                          {renderSummary(buildingSummaries.get(b.id))}
                         </ul>
                       </button>
                     );
@@ -976,31 +1498,47 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               </div>
             )}
           </div>
-          <button
-            className="border px-2 py-1 mt-4"
-            disabled={
-              ctx.game.currentPhase !== Phase.Main || ctx.activePlayer.ap > 0
-            }
-            onClick={() => void handleEndTurn()}
-          >
-            End turn
-            {ctx.activePlayer.ap > 0 && (
-              <span className="block text-xs text-red-500">
-                You still have unspent AP
-              </span>
-            )}
-          </button>
         </section>
       </div>
-      <section className="border rounded p-4 w-96 max-h-screen overflow-y-auto sticky top-4 self-start">
-        <h2 className="text-xl font-semibold mb-2">Log</h2>
-        <ul className="mt-2 space-y-1">
-          {log.map((entry, idx) => (
-            <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
-              [{entry.time}] {entry.text}
-            </li>
-          ))}
-        </ul>
+      <section className="w-96 sticky top-4 self-start flex flex-col gap-4">
+        <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white shadow">
+          <h2 className="text-xl font-semibold mb-2">Log</h2>
+          <ul className="mt-2 space-y-1">
+            {log.map((entry, idx) => (
+              <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
+                [{entry.time}] {entry.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+        {hoverCard && (
+          <div className="border rounded p-4 bg-white shadow relative">
+            <div className="font-semibold mb-2">
+              {hoverCard.title}
+              <span className="absolute top-2 right-2 text-sm text-gray-600">
+                {renderCosts(hoverCard.costs, ctx.activePlayer.resources)}
+              </span>
+            </div>
+            {hoverCard.requirements.length > 0 && (
+              <div className="mb-2">
+                <div className="font-semibold text-red-600">Requirements</div>
+                <ul className="list-disc pl-4 text-sm text-red-600">
+                  {hoverCard.requirements.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {hoverCard.effects.length > 0 && (
+              <div>
+                <div className="font-semibold">Effects</div>
+                <ul className="list-disc pl-4 text-sm">
+                  {renderSummary(hoverCard.effects)}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );
