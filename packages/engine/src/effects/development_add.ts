@@ -1,5 +1,4 @@
 import type { EffectHandler } from '.';
-import { runEffects } from '.';
 import { applyParamsToEffects } from '../utils';
 
 export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
@@ -18,8 +17,14 @@ export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
     land.slotsUsed += 1;
     const developmentDefinition = ctx.developments.get(id);
     if (developmentDefinition?.onBuild)
-      runEffects(
-        applyParamsToEffects(developmentDefinition.onBuild, { landId, id }),
+      ctx.passives.addPassive(
+        {
+          id: `${id}_${landId}`,
+          effects: applyParamsToEffects(developmentDefinition.onBuild, {
+            landId,
+            id,
+          }),
+        },
         ctx,
       );
   }

@@ -9,7 +9,7 @@ import {
   getActionCosts,
   type ResourceKey,
 } from '../../src/index.ts';
-import { PlayerState, Land, GameState } from '../../src/state/index.ts';
+import { PlayerState, Land, GameState, Stat } from '../../src/state/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
 
@@ -56,7 +56,7 @@ function simulateBuild(ctx: EngineContext, id: string, landId: string) {
     landId,
     id,
   });
-  runEffects(effects, sim);
+  sim.passives.addPassive({ id: `${id}_${landId}`, effects }, sim);
   return sim;
 }
 
@@ -111,32 +111,73 @@ describe('Develop action', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
     const land = ctx.activePlayer.lands[1];
-    const slotsBefore = land.slotsUsed;
-    const buildSim = simulateBuild(ctx, 'watchtower', land.id);
-    const expectedBuild = clonePlayer(buildSim.activePlayer);
+
+    const def = ctx.developments.get('watchtower');
+    const fortEffect = Number(
+      (
+        def.onBuild.find(
+          (e) =>
+            e.type === 'stat' &&
+            (e.params as { key: Stat }).key === Stat.fortificationStrength,
+        )?.params as { amount: number } | undefined
+      )?.amount || 0,
+    );
+    const absEffect = Number(
+      (
+        def.onBuild.find(
+          (e) =>
+            e.type === 'stat' &&
+            (e.params as { key: Stat }).key === Stat.absorption,
+        )?.params as { amount: number } | undefined
+      )?.amount || 0,
+    );
+
+    const beforeFort = ctx.activePlayer.stats.fortificationStrength;
+    const beforeAbs = ctx.activePlayer.stats.absorption;
+
     performAction('develop', ctx, { id: 'watchtower', landId: land.id });
     expect(land.developments).toContain('watchtower');
-    expect(land.slotsUsed).toBe(slotsBefore + 1);
-    expectState(ctx.activePlayer, expectedBuild);
+    expect(ctx.activePlayer.stats.fortificationStrength).toBeCloseTo(
+      beforeFort + fortEffect,
+    );
+    expect(ctx.activePlayer.stats.absorption).toBeCloseTo(
+      beforeAbs + absEffect,
+    );
 
-    const developmentDefinition = ctx.developments.get('watchtower');
-    const removalEffects = applyParamsToEffects(
-      developmentDefinition.onAttackResolved || [],
-      {
-        landId: land.id,
-        id: 'watchtower',
-      },
-    );
-    runEffects(removalEffects, buildSim);
     resolveAttack(ctx.activePlayer, 0, ctx);
-    expectState(ctx.activePlayer, buildSim.activePlayer);
-    const simLand = buildSim.activePlayer.lands.find(
-      (landState) => landState.id === land.id,
-    )!;
-    expect(land.developments).toEqual(simLand.developments);
-    expect(land.slotsUsed).toBe(simLand.slotsUsed);
-    expect(ctx.activePlayer.fortificationStrength).toBe(
-      expectedBuild.fortificationStrength,
+    expect(land.developments).not.toContain('watchtower');
+    expect(ctx.activePlayer.stats.fortificationStrength).toBeCloseTo(
+      beforeFort,
     );
+    expect(ctx.activePlayer.stats.absorption).toBeCloseTo(beforeAbs);
+  });
+
+  it('removing a development reverts its on-build effects', () => {
+    const ctx = createEngine();
+    runDevelopment(ctx);
+    const land = ctx.activePlayer.lands[1];
+
+    const def = ctx.developments.get('house');
+    const statEffect = def.onBuild.find((e) => e.type === 'stat') as {
+      params: { amount: number };
+    };
+    const amount = statEffect.params.amount;
+
+    const before = ctx.activePlayer.stats.maxPopulation;
+    performAction('develop', ctx, { id: 'house', landId: land.id });
+    expect(ctx.activePlayer.stats.maxPopulation).toBe(before + amount);
+
+    runEffects(
+      [
+        {
+          type: 'development',
+          method: 'remove',
+          params: { id: 'house', landId: land.id },
+        },
+      ],
+      ctx,
+    );
+    expect(ctx.activePlayer.stats.maxPopulation).toBe(before);
+    expect(land.developments).not.toContain('house');
   });
 });

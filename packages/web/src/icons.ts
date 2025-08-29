@@ -52,14 +52,10 @@ export const modifierInfo = {
   result: { icon: '✨', label: 'Result Modifier' },
 } as const;
 
-export const passiveInfo = {
-  add: { icon: '♾️', label: 'Passive' },
-  remove: { icon: '🚫', label: 'Remove passive' },
-} as const;
-
 export const phaseInfo = {
-  onBuild: { icon: '⚒️', label: 'On build' },
-  onDevelopmentPhase: { icon: '🏗️', label: 'Development phase' },
-  onUpkeepPhase: { icon: '🧹', label: 'Upkeep phase' },
-  onAttackResolved: { icon: '⚔️', label: 'After attack' },
+  onBuild: { icon: '⚒️', label: 'Until removed' },
+  onDevelopmentPhase: { icon: '🏗️', label: 'On each Development Phase' },
+  onUpkeepPhase: { icon: '🧹', label: 'On each Upkeep Phase' },
+  onAttackResolved: { icon: '⚔️', label: 'After having been attacked' },
+  mainPhase: { icon: '🎯', label: 'Main phase' },
 } as const;

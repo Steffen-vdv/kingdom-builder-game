@@ -25,7 +25,6 @@ import {
   slotIcon,
   buildingIcon,
   modifierInfo,
-  passiveInfo,
   phaseInfo,
 } from './icons';
 
@@ -151,7 +150,7 @@ interface Building {
   id: string;
   name: string;
 }
-type SummaryEntry = string | { title: string; items: string[] };
+type SummaryEntry = string | { title: string; items: SummaryEntry[] };
 type Summary = SummaryEntry[];
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 function summarizeEffects(
@@ -263,15 +262,8 @@ function summarizeEffects(
         break;
       }
       case 'passive': {
-        if (eff.method === 'add') {
-          const sub = summarizeEffects(eff.effects || [], ctx);
-          if (sub.length)
-            sub.forEach((s) => parts.push(`${passiveInfo.add.icon} ${s}`));
-        } else if (eff.method === 'remove') {
-          const sub = summarizeEffects(eff.effects || [], ctx);
-          if (sub.length)
-            sub.forEach((s) => parts.push(`${passiveInfo.remove.icon} ${s}`));
-        }
+        const sub = summarizeEffects(eff.effects || [], ctx);
+        parts.push(...sub);
         break;
       }
       default:
@@ -288,62 +280,68 @@ function summarizeAction(id: string, ctx: EngineContext) {
 
 function summarizeDevelopment(id: string, ctx: EngineContext): Summary {
   const def = ctx.developments.get(id);
-  const parts: Summary = [];
+  const root: SummaryEntry[] = [];
   const build = summarizeEffects(def.onBuild, ctx);
-  if (build.length)
-    parts.push({
-      title: `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`,
-      items: build,
-    });
+  if (build.length) root.push(...build);
   const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
   if (dev.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
       items: dev,
     });
   const upk = summarizeEffects(def.onUpkeepPhase, ctx);
   if (upk.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
       items: upk,
     });
   const atk = summarizeEffects(def.onAttackResolved, ctx);
   if (atk.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
       items: atk,
     });
-  return parts;
+  return root.length
+    ? [
+        {
+          title: `${phaseInfo.onBuild.icon} On build, until removed`,
+          items: root,
+        },
+      ]
+    : [];
 }
 
 function summarizeBuilding(id: string, ctx: EngineContext): Summary {
   const def = ctx.buildings.get(id);
-  const parts: Summary = [];
+  const root: SummaryEntry[] = [];
   const build = summarizeEffects(def.onBuild, ctx);
-  if (build.length)
-    parts.push({
-      title: `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`,
-      items: build,
-    });
+  if (build.length) root.push(...build);
   const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
   if (dev.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
       items: dev,
     });
   const upk = summarizeEffects(def.onUpkeepPhase, ctx);
   if (upk.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
       items: upk,
     });
   const atk = summarizeEffects(def.onAttackResolved, ctx);
   if (atk.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
       items: atk,
     });
-  return parts;
+  return root.length
+    ? [
+        {
+          title: `${phaseInfo.onBuild.icon} On build, until removed`,
+          items: root,
+        },
+      ]
+    : [];
 }
 
 function describeEffects(
@@ -471,15 +469,8 @@ function describeEffects(
         break;
       }
       case 'passive': {
-        if (eff.method === 'add') {
-          const sub = describeEffects(eff.effects || [], ctx);
-          if (sub.length)
-            sub.forEach((s) => parts.push(`${passiveInfo.add.label}: ${s}`));
-        } else if (eff.method === 'remove') {
-          const sub = describeEffects(eff.effects || [], ctx);
-          if (sub.length)
-            sub.forEach((s) => parts.push(`${passiveInfo.remove.label}: ${s}`));
-        }
+        const sub = describeEffects(eff.effects || [], ctx);
+        parts.push(...sub);
         break;
       }
       default:
@@ -496,65 +487,71 @@ function describeAction(id: string, ctx: EngineContext): Summary {
 
 function describeDevelopment(id: string, ctx: EngineContext): Summary {
   const def = ctx.developments.get(id);
-  const parts: Summary = [];
+  const root: SummaryEntry[] = [];
   const build = describeEffects(def.onBuild, ctx);
-  if (build.length)
-    parts.push({
-      title: `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`,
-      items: build,
-    });
+  if (build.length) root.push(...build);
   const dev = describeEffects(def.onDevelopmentPhase, ctx);
   if (dev.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
       items: dev,
     });
   const upk = describeEffects(def.onUpkeepPhase, ctx);
   if (upk.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
       items: upk,
     });
   const atk = describeEffects(def.onAttackResolved, ctx);
   if (atk.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
       items: atk,
     });
-  return parts;
+  return root.length
+    ? [
+        {
+          title: `${phaseInfo.onBuild.icon} On build, until removed`,
+          items: root,
+        },
+      ]
+    : [];
 }
 
 function describeBuilding(id: string, ctx: EngineContext): Summary {
   const def = ctx.buildings.get(id);
-  const parts: Summary = [];
+  const root: SummaryEntry[] = [];
   const build = describeEffects(def.onBuild, ctx);
-  if (build.length)
-    parts.push({
-      title: `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`,
-      items: build,
-    });
+  if (build.length) root.push(...build);
   const dev = describeEffects(def.onDevelopmentPhase, ctx);
   if (dev.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
       items: dev,
     });
   const upk = describeEffects(def.onUpkeepPhase, ctx);
   if (upk.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
       items: upk,
     });
   const atk = describeEffects(def.onAttackResolved, ctx);
   if (atk.length)
-    parts.push({
+    root.push({
       title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
       items: atk,
     });
-  return parts;
+  return root.length
+    ? [
+        {
+          title: `${phaseInfo.onBuild.icon} On build, until removed`,
+          items: root,
+        },
+      ]
+    : [];
 }
 
-function renderSummary(summary: Summary | undefined) {
+function renderSummary(summary: Summary | undefined): React.ReactNode {
   return summary?.map((e, i) =>
     typeof e === 'string' ? (
       <li key={i} className="whitespace-pre-line">
@@ -563,13 +560,7 @@ function renderSummary(summary: Summary | undefined) {
     ) : (
       <li key={i}>
         <span className="font-semibold">{e.title}</span>
-        <ul className="list-disc pl-4">
-          {e.items.map((s, j) => (
-            <li key={j} className="whitespace-pre-line">
-              {s}
-            </li>
-          ))}
-        </ul>
+        <ul className="list-disc pl-4">{renderSummary(e.items)}</ul>
       </li>
     ),
   );
@@ -744,6 +735,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   const otherActions = actions.filter(
     (a) => a.id !== 'develop' && a.id !== 'build' && a.id !== 'raise_pop',
   );
+
+  const phaseBox = {
+    [Phase.Development]: {
+      icon: phaseInfo.onDevelopmentPhase.icon,
+      label: 'Development',
+    },
+    [Phase.Upkeep]: {
+      icon: phaseInfo.onUpkeepPhase.icon,
+      label: 'Upkeep',
+    },
+    [Phase.Main]: { icon: phaseInfo.mainPhase.icon, label: 'Main' },
+  } as const;
 
   function handlePerform(action: Action, params?: Record<string, unknown>) {
     const before = snapshotPlayer(ctx.activePlayer);
@@ -1043,14 +1046,6 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       </span>
     );
 
-    const playerPassives = ctx.passives.list();
-
-    function describePassive(id: string): string {
-      if (id.startsWith('watchtower_absorption_'))
-        return '50% absorption. Source: Watchtower. Removed after having been attacked';
-      return id;
-    }
-
     return (
       <div className="space-y-1">
         <h3 className="font-semibold">{player.name}</h3>
@@ -1102,30 +1097,48 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           <div className="h-4 border-l" />
           {landBar}
         </div>
-        {playerPassives.length > 0 && (
-          <div className="border p-2 rounded">
-            <h4 className="font-medium">Passives</h4>
-            <ul className="mt-1 list-disc pl-4 text-left">
-              {playerPassives.map((p) => (
-                <li key={p}>{describePassive(p)}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {(() => {
+          const devCounts = new Map<string, number>();
+          player.lands.forEach((l) =>
+            l.developments.forEach((d) =>
+              devCounts.set(d, (devCounts.get(d) || 0) + 1),
+            ),
+          );
+          return devCounts.size > 0 ? (
+            <div className="border p-2 rounded">
+              <h4 className="font-medium">Developments</h4>
+              <ul className="mt-1 list-disc pl-4 text-left">
+                {Array.from(devCounts.entries()).map(([d, count]) => (
+                  <li key={d}>
+                    <span className="font-semibold">
+                      {developmentInfo[d]?.icon}{' '}
+                      {ctx.developments.get(d)?.name || d}
+                    </span>
+                    {count > 1 && ` x${count}`}
+                    <ul className="list-disc pl-4">
+                      {renderSummary(summarizeDevelopment(d, ctx))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null;
+        })()}
         {player.buildings.size > 0 && (
           <div className="border p-2 rounded">
             <h4 className="font-medium">Buildings</h4>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
+            <ul className="mt-1 list-disc pl-4 text-left">
               {Array.from(player.buildings).map((b) => (
-                <span
-                  key={b}
-                  title={ctx.buildings.get(b)?.name || b}
-                  className="bar-item"
-                >
-                  {buildingIcon}
-                </span>
+                <li key={b}>
+                  <span className="font-semibold">
+                    {buildingIcon} {ctx.buildings.get(b)?.name || b}
+                  </span>
+                  <ul className="list-disc pl-4">
+                    {renderSummary(summarizeBuilding(b, ctx))}
+                  </ul>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
       </div>
@@ -1178,7 +1191,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                   p === ctx.game.currentPhase ? 'font-semibold underline' : ''
                 }
               >
-                {p.charAt(0).toUpperCase() + p.slice(1)} Phase
+                {phaseBox[p].icon} {phaseBox[p].label} Phase
               </span>
             ))}
           </div>
