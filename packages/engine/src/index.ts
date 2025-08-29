@@ -205,10 +205,16 @@ export function performAction<T extends string>(
   ctx.passives.runResultMods(actionDefinition.id, ctx);
 }
 
-export function runDevelopment(ctx: EngineContext) {
+export function runDevelopment(
+  ctx: EngineContext,
+  player: PlayerState = ctx.activePlayer,
+) {
   ctx.game.currentPhase = Phase.Development;
-  runTrigger('onDevelopmentPhase', ctx);
+  runTrigger('onDevelopmentPhase', ctx, player);
+  const original = ctx.game.currentPlayerIndex;
+  ctx.game.currentPlayerIndex = ctx.game.players.indexOf(player);
   ctx.passives.runResultMods('development_phase', ctx);
+  ctx.game.currentPlayerIndex = original;
 }
 
 export function runUpkeep(ctx: EngineContext) {

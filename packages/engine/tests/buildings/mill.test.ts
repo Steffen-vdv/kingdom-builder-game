@@ -55,6 +55,24 @@ describe('Mill building', () => {
     );
   });
 
+  it('applies bonus even when running development for a non-active player', () => {
+    const ctx = createEngine();
+    runDevelopment(ctx);
+    performAction('build', ctx, { id: 'mill' });
+
+    const playerA = ctx.game.players[0];
+    const farmCount = getFarmCount(ctx);
+    const baseIncome = getFarmIncome(ctx);
+    const bonus = getMillBonus(ctx, 'development_phase');
+    const goldBefore = playerA.gold;
+
+    // switch active player to opponent but resolve development for playerA
+    ctx.game.currentPlayerIndex = 1;
+    runDevelopment(ctx, playerA);
+
+    expect(playerA.gold).toBe(goldBefore + farmCount * (baseIncome + bonus));
+  });
+
   it('adds bonus gold when using Overwork', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
