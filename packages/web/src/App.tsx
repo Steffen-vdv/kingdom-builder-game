@@ -6,6 +6,11 @@ type Screen = 'menu' | 'overview' | 'game';
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [gameKey, setGameKey] = useState(0);
+  const [darkMode, setDarkMode] = useState(true);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   useEffect(() => {
     if (window.location.pathname !== '/') {
@@ -61,7 +66,14 @@ export default function App() {
   }
 
   if (screen === 'game') {
-    return <Game key={gameKey} onExit={() => setScreen('menu')} />;
+    return (
+      <Game
+        key={gameKey}
+        onExit={() => setScreen('menu')}
+        darkMode={darkMode}
+        onToggleDark={() => setDarkMode((d) => !d)}
+      />
+    );
   }
 
   return (
