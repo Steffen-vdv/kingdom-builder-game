@@ -278,7 +278,11 @@ function summarizeAction(id: string, ctx: EngineContext) {
   return summarizeEffects(def.effects, ctx);
 }
 
-function summarizeDevelopment(id: string, ctx: EngineContext): Summary {
+function summarizeDevelopment(
+  id: string,
+  ctx: EngineContext,
+  opts?: { installed?: boolean },
+): Summary {
   const def = ctx.developments.get(id);
   const root: SummaryEntry[] = [];
   const build = summarizeEffects(def.onBuild, ctx);
@@ -301,17 +305,18 @@ function summarizeDevelopment(id: string, ctx: EngineContext): Summary {
       title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
       items: atk,
     });
-  return root.length
-    ? [
-        {
-          title: `${phaseInfo.onBuild.icon} On build, until removed`,
-          items: root,
-        },
-      ]
-    : [];
+  if (!root.length) return [];
+  const title = opts?.installed
+    ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
+    : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
+  return [{ title, items: root }];
 }
 
-function summarizeBuilding(id: string, ctx: EngineContext): Summary {
+function summarizeBuilding(
+  id: string,
+  ctx: EngineContext,
+  opts?: { installed?: boolean },
+): Summary {
   const def = ctx.buildings.get(id);
   const root: SummaryEntry[] = [];
   const build = summarizeEffects(def.onBuild, ctx);
@@ -334,14 +339,11 @@ function summarizeBuilding(id: string, ctx: EngineContext): Summary {
       title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
       items: atk,
     });
-  return root.length
-    ? [
-        {
-          title: `${phaseInfo.onBuild.icon} On build, until removed`,
-          items: root,
-        },
-      ]
-    : [];
+  if (!root.length) return [];
+  const title = opts?.installed
+    ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
+    : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
+  return [{ title, items: root }];
 }
 
 function describeEffects(
@@ -485,7 +487,11 @@ function describeAction(id: string, ctx: EngineContext): Summary {
   return describeEffects(def.effects, ctx);
 }
 
-function describeDevelopment(id: string, ctx: EngineContext): Summary {
+function describeDevelopment(
+  id: string,
+  ctx: EngineContext,
+  opts?: { installed?: boolean },
+): Summary {
   const def = ctx.developments.get(id);
   const root: SummaryEntry[] = [];
   const build = describeEffects(def.onBuild, ctx);
@@ -508,17 +514,18 @@ function describeDevelopment(id: string, ctx: EngineContext): Summary {
       title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
       items: atk,
     });
-  return root.length
-    ? [
-        {
-          title: `${phaseInfo.onBuild.icon} On build, until removed`,
-          items: root,
-        },
-      ]
-    : [];
+  if (!root.length) return [];
+  const title = opts?.installed
+    ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
+    : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
+  return [{ title, items: root }];
 }
 
-function describeBuilding(id: string, ctx: EngineContext): Summary {
+function describeBuilding(
+  id: string,
+  ctx: EngineContext,
+  opts?: { installed?: boolean },
+): Summary {
   const def = ctx.buildings.get(id);
   const root: SummaryEntry[] = [];
   const build = describeEffects(def.onBuild, ctx);
@@ -541,14 +548,11 @@ function describeBuilding(id: string, ctx: EngineContext): Summary {
       title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
       items: atk,
     });
-  return root.length
-    ? [
-        {
-          title: `${phaseInfo.onBuild.icon} On build, until removed`,
-          items: root,
-        },
-      ]
-    : [];
+  if (!root.length) return [];
+  const title = opts?.installed
+    ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
+    : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
+  return [{ title, items: root }];
 }
 
 function renderSummary(summary: Summary | undefined): React.ReactNode {
@@ -1106,39 +1110,72 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           );
           return devCounts.size > 0 ? (
             <div className="border p-2 rounded">
-              <h4 className="font-medium">Developments</h4>
-              <ul className="mt-1 list-disc pl-4 text-left">
-                {Array.from(devCounts.entries()).map(([d, count]) => (
-                  <li key={d}>
-                    <span className="font-semibold">
-                      {developmentInfo[d]?.icon}{' '}
-                      {ctx.developments.get(d)?.name || d}
-                    </span>
-                    {count > 1 && ` x${count}`}
-                    <ul className="list-disc pl-4">
-                      {renderSummary(summarizeDevelopment(d, ctx))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
+              <h4 className="font-medium mb-1">Developments</h4>
+              <div className="grid grid-cols-4 gap-2">
+                {Array.from(devCounts.entries()).map(([d, count]) => {
+                  const title = `${developmentInfo[d]?.icon || ''} ${
+                    ctx.developments.get(d)?.name || d
+                  }`;
+                  return (
+                    <div
+                      key={d}
+                      className="relative border p-2 text-center cursor-default"
+                      onMouseEnter={() =>
+                        handleHoverCard({
+                          title,
+                          effects: describeDevelopment(d, ctx, {
+                            installed: true,
+                          }),
+                          requirements: [],
+                          costs: {},
+                        })
+                      }
+                      onMouseLeave={clearHoverCard}
+                    >
+                      <span className="font-medium">
+                        {developmentInfo[d]?.icon}{' '}
+                        {ctx.developments.get(d)?.name || d}
+                      </span>
+                      {count > 1 && (
+                        <span className="absolute top-1 right-1 text-xs">
+                          x{count}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : null;
         })()}
         {player.buildings.size > 0 && (
           <div className="border p-2 rounded">
-            <h4 className="font-medium">Buildings</h4>
-            <ul className="mt-1 list-disc pl-4 text-left">
-              {Array.from(player.buildings).map((b) => (
-                <li key={b}>
-                  <span className="font-semibold">
-                    {buildingIcon} {ctx.buildings.get(b)?.name || b}
-                  </span>
-                  <ul className="list-disc pl-4">
-                    {renderSummary(summarizeBuilding(b, ctx))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
+            <h4 className="font-medium mb-1">Buildings</h4>
+            <div className="grid grid-cols-4 gap-2">
+              {Array.from(player.buildings).map((b) => {
+                const name = ctx.buildings.get(b)?.name || b;
+                const title = `${buildingIcon} ${name}`;
+                return (
+                  <div
+                    key={b}
+                    className="border p-2 text-center cursor-default"
+                    onMouseEnter={() =>
+                      handleHoverCard({
+                        title,
+                        effects: describeBuilding(b, ctx, { installed: true }),
+                        requirements: [],
+                        costs: {},
+                      })
+                    }
+                    onMouseLeave={clearHoverCard}
+                  >
+                    <span className="font-medium">
+                      {buildingIcon} {name}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
