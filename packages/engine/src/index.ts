@@ -208,6 +208,7 @@ export function performAction<T extends string>(
 export function runDevelopment(ctx: EngineContext) {
   ctx.game.currentPhase = Phase.Development;
   runTrigger('onDevelopmentPhase', ctx);
+  ctx.passives.runResultMods('development_phase', ctx);
 }
 
 export function runUpkeep(ctx: EngineContext) {

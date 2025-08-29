@@ -46,7 +46,53 @@ export function createBuildingRegistry() {
   );
 
   // TODO: remaining buildings from original manual config
-  registry.add('mill', building('mill', 'Mill').cost(Resource.gold, 7).build());
+  registry.add(
+    'mill',
+    building('mill', 'Mill')
+      .cost(Resource.gold, 7)
+      .onBuild({
+        type: 'passive',
+        method: 'add',
+        params: { id: 'mill' },
+        effects: [
+          {
+            type: 'result_mod',
+            method: 'add',
+            params: { id: 'mill_dev_gold', actionId: 'development_phase' },
+            effects: [
+              {
+                evaluator: { type: 'development', params: { id: 'farm' } },
+                effects: [
+                  {
+                    type: 'resource',
+                    method: 'add',
+                    params: { key: Resource.gold, amount: 1 },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'result_mod',
+            method: 'add',
+            params: { id: 'mill_overwork_gold', actionId: 'overwork' },
+            effects: [
+              {
+                evaluator: { type: 'development', params: { id: 'farm' } },
+                effects: [
+                  {
+                    type: 'resource',
+                    method: 'add',
+                    params: { key: Resource.gold, amount: 1 },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+      .build(),
+  );
   registry.add(
     'raiders_guild',
     building('raiders_guild', "Raider's Guild").cost(Resource.gold, 8).build(),
