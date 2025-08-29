@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   createEngine,
   performAction,
@@ -113,13 +113,13 @@ function diffSnapshots(
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
     if (!prev) {
-      changes.push(`${landIcon} New land ${land.id}`);
+      changes.push(`${landIcon} New land`);
       continue;
     }
     for (const dev of land.developments)
       if (!prev.developments.includes(dev)) {
         const icon = developmentInfo[dev]?.icon || dev;
-        changes.push(`${landIcon} ${land.id}: +${icon}`);
+        changes.push(`${landIcon} +${icon}`);
       }
   }
   return changes;
@@ -396,6 +396,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   const [, setTick] = useState(0);
   const refresh = () => setTick((t) => t + 1);
   const [log, setLog] = useState<{ time: string; text: string }[]>([]);
+  const [hoverCard, setHoverCard] = useState<{
+    title: string;
+    effects: string[];
+    requirements: string[];
+  } | null>(null);
+  const hoverTimeout = useRef<number>();
+
+  function formatRequirement(req: string): string {
+    if (req === 'Requires free house') return 'Requires room for Population';
+    return req;
+  }
+
   const addLog = (entry: string | string[], playerName?: string) =>
     setLog((prev) => [
       ...(Array.isArray(entry) ? entry : [entry]).map((text) => ({
@@ -404,6 +416,19 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       })),
       ...prev,
     ]);
+
+  function handleHoverCard(data: {
+    title: string;
+    effects: string[];
+    requirements: string[];
+  }) {
+    if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
+    hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
+  }
+  function clearHoverCard() {
+    if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
+    setHoverCard(null);
+  }
 
   const actions = useMemo<Action[]>(
     () =>
@@ -472,10 +497,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       const after = snapshotPlayer(ctx.activePlayer);
       const changes = diffSnapshots(before, after, ctx);
       const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
-      addLog([
-        `Played ${icon} ${action.name}`,
-        ...changes.map((c) => `  ${c}`),
-      ]);
+      let message = `Played ${icon} ${action.name}`;
+      if (
+        action.id === 'develop' &&
+        params &&
+        typeof (params as { id?: string }).id === 'string'
+      ) {
+        const devId = (params as { id: string }).id;
+        const devIcon = developmentInfo[devId]?.icon || '';
+        const devLabel = developmentInfo[devId]?.label || devId;
+        message += ` - ${devIcon}${devLabel}`;
+      }
+      addLog([message, ...changes.map((c) => `  ${c}`)]);
     } catch (e) {
       const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
@@ -537,13 +570,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     void startTurn(0);
   }, []);
 
-  function PlayerPanel({
-    player,
-    active,
-  }: {
-    player: typeof ctx.activePlayer;
-    active: boolean;
-  }) {
+  function PlayerPanel({ player }: { player: typeof ctx.activePlayer }) {
     const popEntries = Object.entries(player.population).filter(
       ([, v]) => v > 0,
     );
@@ -562,6 +589,11 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       );
       slotsFree += land.slotsFree;
     });
+    const landCount = player.lands.length;
+    const totalSlots = player.lands.reduce(
+      (sum, land) => sum + land.slotsMax,
+      0,
+    );
     const landItems: {
       key: string;
       icon: string;
@@ -585,11 +617,18 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       });
     const landBar = (
       <span className="bar-item">
-        <span title="Land">{landIcon}</span>
+        <span title="Land">
+          {landIcon}
+          {landCount}
+        </span>{' '}
+        <span title="Development slots">
+          {actionInfo.develop.icon}
+          {totalSlots}
+        </span>
         {' ('}
         {landItems.map((item, i) => (
           <React.Fragment key={item.key}>
-            {i > 0 && ','}
+            {i > 0 && ' , '}
             <span title={item.label}>
               {item.icon}
               {item.count}
@@ -602,7 +641,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
 
     const playerPassives = ctx.passives
       .list()
-      .filter((id) => id.includes(player.id));
+      .filter((id) => player.lands.some((l) => id.includes(l.id)));
 
     function describePassive(id: string): string {
       if (id.startsWith('watchtower_absorption_'))
@@ -612,13 +651,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
 
     return (
       <div className="space-y-1">
-        <h3
-          className={
-            active ? 'font-bold underline' : 'text-gray-500 font-semibold'
-          }
-        >
-          {player.name}
-        </h3>
+        <h3 className="font-semibold">{player.name}</h3>
         <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
           {Object.entries(player.resources).map(([k, v]) => (
             <span
@@ -698,13 +731,12 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   }
 
   return (
-    <div className="p-4 flex gap-4 w-full">
+    <div className="p-4 flex gap-4 w-full bg-slate-100 text-gray-900 min-h-screen">
       <div className="flex-1 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-center flex-1">
             Kingdom Builder
           </h1>
-          <span className="ml-4">Turn {ctx.game.turn}</span>
           {onExit && (
             <button className="border px-2 py-1 ml-4" onClick={onExit}>
               Back to Menu
@@ -712,46 +744,54 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           )}
         </div>
 
-        <section className="border rounded p-4">
+        <section className="border rounded p-4 bg-white shadow">
           <h2 className="text-xl font-semibold mb-2">Players</h2>
           <div className="flex flex-col gap-4">
             {ctx.game.players.map((p) => (
-              <PlayerPanel
-                key={p.id}
-                player={p}
-                active={p.id === ctx.activePlayer.id}
-              />
+              <PlayerPanel key={p.id} player={p} />
             ))}
           </div>
         </section>
 
-        <section className="border rounded p-4">
-          <h2 className="text-xl font-semibold mb-2">Phases</h2>
-          <div className="flex flex-wrap items-center gap-4">
-            {Object.values(Phase).map((p) => (
-              <span
-                key={p}
-                className={
-                  p === ctx.game.currentPhase
-                    ? 'font-bold underline'
-                    : 'text-gray-500'
-                }
-              >
-                {p.charAt(0).toUpperCase() + p.slice(1)}
-              </span>
-            ))}
-          </div>
-        </section>
-
-        <section className="border rounded p-4">
+        <section className="border rounded p-4 bg-white shadow">
           <h2 className="text-xl font-semibold mb-2">
-            Actions (1 {resourceInfo[Resource.ap].icon} each)
+            Turn {ctx.game.turn} - {ctx.activePlayer.name} -{' '}
+            {ctx.game.currentPhase.charAt(0).toUpperCase() +
+              ctx.game.currentPhase.slice(1)}{' '}
+            Phase
           </h2>
+        </section>
+
+        <section className="border rounded p-4 bg-white shadow">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-semibold">
+              Actions (1 {resourceInfo[Resource.ap].icon} each)
+            </h2>
+            <div className="flex flex-col items-end">
+              <button
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={
+                  ctx.game.currentPhase !== Phase.Main ||
+                  ctx.activePlayer.ap > 0
+                }
+                onClick={() => void handleEndTurn()}
+              >
+                End turn
+              </button>
+              {ctx.activePlayer.ap > 0 && (
+                <span className="text-xs text-red-500">
+                  You still have unspent AP
+                </span>
+              )}
+            </div>
+          </div>
           <div className="space-y-4">
             <div className="grid grid-cols-4 gap-2">
               {otherActions.map((action) => {
                 const costs = getActionCosts(action.id, ctx);
-                const requirements = getActionRequirements(action.id, ctx);
+                const requirements = getActionRequirements(action.id, ctx).map(
+                  formatRequirement,
+                );
                 const canPay = Object.entries(costs).every(
                   ([k, v]) =>
                     ctx.activePlayer.resources[
@@ -777,6 +817,17 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                     disabled={!enabled}
                     title={title}
                     onClick={() => handlePerform(action)}
+                    onMouseEnter={() =>
+                      handleHoverCard({
+                        title: `${
+                          actionInfo[action.id as keyof typeof actionInfo]
+                            ?.icon || ''
+                        } ${action.name}`,
+                        effects: actionSummaries.get(action.id) ?? [],
+                        requirements,
+                      })
+                    }
+                    onMouseLeave={clearHoverCard}
                   >
                     <span className="text-base font-medium">
                       {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
@@ -789,12 +840,17 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       {actionSummaries.get(action.id)?.map((e, i) => (
                         <li key={i}>{e}</li>
                       ))}
-                      {requirements.map((r, i) => (
-                        <li key={`req-${i}`} className="text-red-500">
-                          {r}
-                        </li>
-                      ))}
                     </ul>
+                    {requirements.length > 0 && (
+                      <div className="text-sm text-red-600 text-left">
+                        <span className="font-semibold">Requires:</span>
+                        <ul className="list-disc pl-4">
+                          {requirements.map((r, i) => (
+                            <li key={i}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -815,7 +871,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                     const requirements = getActionRequirements(
                       'raise_pop',
                       ctx,
-                    );
+                    ).map(formatRequirement);
                     const canPay = Object.entries(costs).every(
                       ([k, v]) =>
                         ctx.activePlayer.resources[
@@ -843,6 +899,16 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         disabled={!enabled}
                         title={title}
                         onClick={() => handlePerform(raisePopAction, { role })}
+                        onMouseEnter={() =>
+                          handleHoverCard({
+                            title: `${actionInfo.raise_pop.icon} Raise Population - ${
+                              populationInfo[role]?.label || ''
+                            }`,
+                            effects: actionSummaries.get('raise_pop') ?? [],
+                            requirements,
+                          })
+                        }
+                        onMouseLeave={clearHoverCard}
                       >
                         <span className="text-base font-medium">
                           {populationInfo[role]?.icon}{' '}
@@ -851,16 +917,21 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         <span className="absolute top-2 right-2 text-sm text-gray-600">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-sm list-disc list-inside">
+                        <ul className="text-sm list-disc list-inside text-left">
                           {actionSummaries.get('raise_pop')?.map((e, i) => (
                             <li key={i}>{e}</li>
                           ))}
-                          {requirements.map((r, i) => (
-                            <li key={`req-${i}`} className="text-red-500">
-                              {r}
-                            </li>
-                          ))}
                         </ul>
+                        {requirements.length > 0 && (
+                          <div className="text-sm text-red-600 text-left">
+                            <span className="font-semibold">Requires:</span>
+                            <ul className="list-disc pl-4">
+                              {requirements.map((r, i) => (
+                                <li key={i}>{r}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -881,6 +952,9 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       id: d.id,
                       landId: landIdForCost,
                     });
+                    const requirements = hasDevelopLand
+                      ? []
+                      : ['Requires land with free development slot'];
                     const canPay =
                       hasDevelopLand &&
                       Object.entries(costs).every(
@@ -912,6 +986,16 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                           )?.id;
                           handlePerform(developAction, { id: d.id, landId });
                         }}
+                        onMouseEnter={() =>
+                          handleHoverCard({
+                            title: `${actionInfo.develop.icon} Develop - ${
+                              developmentInfo[d.id]?.icon
+                            } ${d.name}`,
+                            effects: developmentSummaries.get(d.id) ?? [],
+                            requirements,
+                          })
+                        }
+                        onMouseLeave={clearHoverCard}
                       >
                         <span className="text-base font-medium">
                           {developmentInfo[d.id]?.icon} {d.name}
@@ -924,6 +1008,16 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                             <li key={i}>{e}</li>
                           ))}
                         </ul>
+                        {requirements.length > 0 && (
+                          <div className="text-sm text-red-600 text-left">
+                            <span className="font-semibold">Requires:</span>
+                            <ul className="list-disc pl-4">
+                              {requirements.map((r, i) => (
+                                <li key={i}>{r}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -937,6 +1031,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                 <div className="grid grid-cols-4 gap-2 mt-1">
                   {buildingOptions.map((b) => {
                     const costs = getActionCosts('build', ctx, { id: b.id });
+                    const requirements: string[] = [];
                     const canPay = Object.entries(costs).every(
                       ([k, v]) =>
                         ctx.activePlayer.resources[
@@ -959,6 +1054,14 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         disabled={!enabled}
                         title={title}
                         onClick={() => handlePerform(buildAction, { id: b.id })}
+                        onMouseEnter={() =>
+                          handleHoverCard({
+                            title: `${actionInfo.build.icon} Build - ${b.name}`,
+                            effects: buildingSummaries.get(b.id) ?? [],
+                            requirements,
+                          })
+                        }
+                        onMouseLeave={clearHoverCard}
                       >
                         <span className="text-base font-medium">{b.name}</span>
                         <span className="absolute top-2 right-2 text-sm text-gray-600">
@@ -976,31 +1079,44 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               </div>
             )}
           </div>
-          <button
-            className="border px-2 py-1 mt-4"
-            disabled={
-              ctx.game.currentPhase !== Phase.Main || ctx.activePlayer.ap > 0
-            }
-            onClick={() => void handleEndTurn()}
-          >
-            End turn
-            {ctx.activePlayer.ap > 0 && (
-              <span className="block text-xs text-red-500">
-                You still have unspent AP
-              </span>
-            )}
-          </button>
         </section>
       </div>
-      <section className="border rounded p-4 w-96 max-h-screen overflow-y-auto sticky top-4 self-start">
-        <h2 className="text-xl font-semibold mb-2">Log</h2>
-        <ul className="mt-2 space-y-1">
-          {log.map((entry, idx) => (
-            <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
-              [{entry.time}] {entry.text}
-            </li>
-          ))}
-        </ul>
+      <section className="w-96 sticky top-4 self-start flex flex-col gap-4">
+        <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white shadow">
+          <h2 className="text-xl font-semibold mb-2">Log</h2>
+          <ul className="mt-2 space-y-1">
+            {log.map((entry, idx) => (
+              <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
+                [{entry.time}] {entry.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+        {hoverCard && (
+          <div className="border rounded p-4 bg-white shadow">
+            <div className="font-semibold mb-2">{hoverCard.title}</div>
+            {hoverCard.requirements.length > 0 && (
+              <div className="mb-2">
+                <div className="font-semibold text-red-600">Requirements</div>
+                <ul className="list-disc pl-4 text-sm text-red-600">
+                  {hoverCard.requirements.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {hoverCard.effects.length > 0 && (
+              <div>
+                <div className="font-semibold">Effects</div>
+                <ul className="list-disc pl-4 text-sm">
+                  {hoverCard.effects.map((e, i) => (
+                    <li key={i}>{e}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );
