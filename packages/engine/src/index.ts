@@ -113,8 +113,11 @@ function applyCostsWithPassives(
   ctx: EngineContext,
 ): CostBag {
   const withDefaultAP = { ...base };
+  const definition = ctx.actions.get(actionId);
   if (withDefaultAP[Resource.ap] === undefined)
-    withDefaultAP[Resource.ap] = ctx.services.rules.defaultActionAPCost;
+    withDefaultAP[Resource.ap] = definition.system
+      ? 0
+      : ctx.services.rules.defaultActionAPCost;
   return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
 }
 
@@ -246,6 +249,7 @@ function applyPlayerStart(
       const land = new Land(
         `${player.id}-L${idx + 1}`,
         landCfg.slotsMax ?? rules.slotsPerNewLand,
+        landCfg.tilled ?? false,
       );
       if (landCfg.developments) land.developments.push(...landCfg.developments);
       land.slotsUsed = landCfg.slotsUsed ?? land.developments.length;

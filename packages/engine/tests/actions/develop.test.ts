@@ -19,7 +19,7 @@ function clonePlayer(player: PlayerState): PlayerState {
   copy.stats = { ...player.stats };
   copy.population = { ...player.population };
   copy.lands = player.lands.map((landState) => {
-    const land = new Land(landState.id, landState.slotsMax);
+    const land = new Land(landState.id, landState.slotsMax, landState.tilled);
     land.slotsUsed = landState.slotsUsed;
     land.developments = [...landState.developments];
     return land;

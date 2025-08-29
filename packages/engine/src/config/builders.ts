@@ -36,6 +36,10 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
     this.config.effects.push(effect);
     return this;
   }
+  system(flag = true) {
+    this.config.system = flag;
+    return this;
+  }
 }
 
 export class BuildingBuilder extends BaseBuilder<BuildingConfig> {

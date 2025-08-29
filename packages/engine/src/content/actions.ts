@@ -140,6 +140,14 @@ export function createActionRegistry() {
   );
 
   registry.add(
+    'till',
+    action('till', 'Till')
+      .system()
+      .effect({ type: 'land', method: 'till' })
+      .build(),
+  );
+
+  registry.add(
     'build',
     action('build', 'Build')
       .cost(Resource.ap, 1)
