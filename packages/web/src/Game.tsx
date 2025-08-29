@@ -273,9 +273,16 @@ function summarizeEffects(
   return parts.map((p) => p.trim());
 }
 
-function summarizeAction(id: string, ctx: EngineContext) {
+function summarizeAction(id: string, ctx: EngineContext): Summary {
   const def = ctx.actions.get(id);
-  return summarizeEffects(def.effects, ctx);
+  const eff = summarizeEffects(def.effects, ctx);
+  if (!eff.length) return [];
+  return [
+    {
+      title: `${phaseInfo.mainPhase.icon} Immediately`,
+      items: eff,
+    },
+  ];
 }
 
 function summarizeDevelopment(
@@ -484,7 +491,14 @@ function describeEffects(
 
 function describeAction(id: string, ctx: EngineContext): Summary {
   const def = ctx.actions.get(id);
-  return describeEffects(def.effects, ctx);
+  const eff = describeEffects(def.effects, ctx);
+  if (!eff.length) return [];
+  return [
+    {
+      title: `${phaseInfo.mainPhase.icon} Immediately`,
+      items: eff,
+    },
+  ];
 }
 
 function describeDevelopment(
@@ -553,6 +567,24 @@ function describeBuilding(
     ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
     : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
   return [{ title, items: root }];
+}
+
+function describeLand(land: Land, ctx: EngineContext): Summary {
+  const items: SummaryEntry[] = [];
+  for (let i = 0; i < land.slotsMax; i++) {
+    const devId = land.developments[i];
+    if (devId) {
+      items.push({
+        title: `${developmentInfo[devId]?.icon || ''} ${
+          ctx.developments.get(devId)?.name || devId
+        }`,
+        items: describeDevelopment(devId, ctx, { installed: true }),
+      });
+    } else {
+      items.push(`${slotIcon} Empty development slot`);
+    }
+  }
+  return items;
 }
 
 function renderSummary(summary: Summary | undefined): React.ReactNode {
@@ -715,7 +747,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   );
 
   const actionSummaries = useMemo(() => {
-    const map = new Map<string, string[]>();
+    const map = new Map<string, Summary>();
     actions.forEach((a) => map.set(a.id, summarizeAction(a.id, ctx)));
     return map;
   }, [actions, ctx]);
@@ -1101,53 +1133,92 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           <div className="h-4 border-l" />
           {landBar}
         </div>
-        {(() => {
-          const devCounts = new Map<string, number>();
-          player.lands.forEach((l) =>
-            l.developments.forEach((d) =>
-              devCounts.set(d, (devCounts.get(d) || 0) + 1),
-            ),
-          );
-          return devCounts.size > 0 ? (
-            <div className="border p-2 rounded">
-              <h4 className="font-medium mb-1">Developments</h4>
-              <div className="grid grid-cols-4 gap-2">
-                {Array.from(devCounts.entries()).map(([d, count]) => {
-                  const title = `${developmentInfo[d]?.icon || ''} ${
-                    ctx.developments.get(d)?.name || d
-                  }`;
-                  return (
-                    <div
-                      key={d}
-                      className="relative border p-2 text-center cursor-default"
-                      onMouseEnter={() =>
-                        handleHoverCard({
-                          title,
-                          effects: describeDevelopment(d, ctx, {
-                            installed: true,
-                          }),
-                          requirements: [],
-                          costs: {},
-                        })
-                      }
-                      onMouseLeave={clearHoverCard}
-                    >
-                      <span className="font-medium">
-                        {developmentInfo[d]?.icon}{' '}
-                        {ctx.developments.get(d)?.name || d}
-                      </span>
-                      {count > 1 && (
-                        <span className="absolute top-1 right-1 text-xs">
-                          x{count}
-                        </span>
-                      )}
+        {player.lands.length > 0 && (
+          <div className="border p-2 rounded">
+            <h4 className="font-medium mb-1">Lands</h4>
+            <div className="grid grid-cols-4 gap-2">
+              {player.lands.map((land, idx) => {
+                const showLandCard = () =>
+                  handleHoverCard({
+                    title: `${landIcon} Land`,
+                    effects: describeLand(land, ctx),
+                    requirements: [],
+                    costs: {},
+                  });
+                return (
+                  <div
+                    key={idx}
+                    className="relative border p-2 text-center cursor-default"
+                    onMouseEnter={showLandCard}
+                    onMouseLeave={clearHoverCard}
+                  >
+                    <span className="font-medium">{landIcon} Land</span>
+                    <div className="mt-1 flex flex-wrap justify-center gap-1">
+                      {Array.from({ length: land.slotsMax }).map((_, i) => {
+                        const devId = land.developments[i];
+                        if (devId) {
+                          const name =
+                            ctx.developments.get(devId)?.name || devId;
+                          const title = `${
+                            developmentInfo[devId]?.icon || ''
+                          } ${name}`;
+                          const handleLeave = () => showLandCard();
+                          return (
+                            <span
+                              key={i}
+                              className="border p-1 text-xs cursor-default"
+                              onMouseEnter={(e) => {
+                                e.stopPropagation();
+                                handleHoverCard({
+                                  title,
+                                  effects: describeDevelopment(devId, ctx, {
+                                    installed: true,
+                                  }),
+                                  requirements: [],
+                                  costs: {},
+                                });
+                              }}
+                              onMouseLeave={(e) => {
+                                e.stopPropagation();
+                                handleLeave();
+                              }}
+                            >
+                              {developmentInfo[devId]?.icon} {name}
+                            </span>
+                          );
+                        }
+                        const handleLeave = () => showLandCard();
+                        return (
+                          <span
+                            key={i}
+                            className="border p-1 text-xs cursor-default"
+                            onMouseEnter={(e) => {
+                              e.stopPropagation();
+                              handleHoverCard({
+                                title: `${slotIcon} Empty development slot`,
+                                effects: [
+                                  `Use ${actionInfo.develop.icon} Develop to build here`,
+                                ],
+                                requirements: [],
+                                costs: {},
+                              });
+                            }}
+                            onMouseLeave={(e) => {
+                              e.stopPropagation();
+                              handleLeave();
+                            }}
+                          >
+                            {slotIcon}
+                          </span>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          ) : null;
-        })()}
+          </div>
+        )}
         {player.buildings.size > 0 && (
           <div className="border p-2 rounded">
             <h4 className="font-medium mb-1">Buildings</h4>
