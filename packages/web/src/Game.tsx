@@ -128,6 +128,7 @@ function diffSnapshots(
 interface Action {
   id: string;
   name: string;
+  system?: boolean;
 }
 interface Development {
   id: string;
@@ -408,7 +409,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     () =>
       Array.from(
         (ctx.actions as unknown as { map: Map<string, Action> }).map.values(),
-      ),
+      ).filter((a) => !a.system),
     [ctx],
   );
   const developmentOptions = useMemo<Development[]>(
