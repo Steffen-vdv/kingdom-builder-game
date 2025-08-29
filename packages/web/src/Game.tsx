@@ -558,9 +558,30 @@ function renderCosts(
   );
 }
 
-function TimerCircle({ progress }: { progress: number }) {
+function TimerCircle({
+  progress,
+  paused = false,
+}: {
+  progress: number;
+  paused?: boolean;
+}) {
   const radius = 12;
   const circumference = 2 * Math.PI * radius;
+  if (paused)
+    return (
+      <svg width={24} height={24}>
+        <circle
+          cx="12"
+          cy="12"
+          r={radius}
+          stroke="#e5e7eb"
+          strokeWidth="2"
+          fill="none"
+        />
+        <rect x="8" y="6" width="3" height="12" fill="#10b981" />
+        <rect x="13" y="6" width="3" height="12" fill="#10b981" />
+      </svg>
+    );
   return (
     <svg width={24} height={24}>
       <circle
@@ -765,7 +786,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
         title: 'Step 1 - Spend all AP',
         items: [
           {
-            text: `${resourceInfo[Resource.ap].icon} ${ctx.activePlayer.ap}/${total} remaining`,
+            text: `${resourceInfo[Resource.ap].icon} ${total - ctx.activePlayer.ap}/${total} spent`,
             done: ctx.activePlayer.ap === 0,
           },
         ],
@@ -888,14 +909,13 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           };
           return next;
         });
-        await runStepDelay();
       }
+      await runStepDelay();
       setPhaseSteps((prev) => {
         const next = [...prev];
         next[i] = { ...next[i]!, active: false };
         return next;
       });
-      await runStepDelay();
     }
   }
 
@@ -1113,78 +1133,6 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               <PlayerPanel key={p.id} player={p} />
             ))}
           </div>
-        </section>
-
-        <section
-          className="border rounded p-4 bg-white shadow relative w-full max-w-md"
-          onMouseEnter={() =>
-            ctx.game.currentPhase !== Phase.Main && setPaused(true)
-          }
-          onMouseLeave={() => setPaused(false)}
-          style={{
-            cursor:
-              phasePaused && ctx.game.currentPhase !== Phase.Main
-                ? 'pause'
-                : 'auto',
-          }}
-        >
-          <h2 className="text-xl font-semibold mb-2">
-            Turn {ctx.game.turn} - {ctx.activePlayer.name}
-          </h2>
-          <div className="flex gap-4 mb-2">
-            {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
-              <span
-                key={p}
-                className={
-                  p === ctx.game.currentPhase ? 'font-semibold underline' : ''
-                }
-              >
-                {p.charAt(0).toUpperCase() + p.slice(1)} Phase
-              </span>
-            ))}
-          </div>
-          <ul className="text-sm text-left min-h-[1rem] space-y-1">
-            {phaseSteps.map((s, i) => (
-              <li key={i} className={s.active ? 'font-semibold' : ''}>
-                <div>{s.title}</div>
-                <ul className="pl-4 list-disc">
-                  {s.items.length > 0 ? (
-                    s.items.map((it, j) => (
-                      <li key={j} className={it.italic ? 'italic' : ''}>
-                        {it.text}
-                        {it.done && (
-                          <span className="text-green-600 ml-1">✔️</span>
-                        )}
-                      </li>
-                    ))
-                  ) : (
-                    <li>...</li>
-                  )}
-                </ul>
-              </li>
-            ))}
-          </ul>
-          {ctx.game.currentPhase !== Phase.Main && (
-            <div className="absolute top-2 right-2">
-              <TimerCircle progress={phaseTimer} />
-            </div>
-          )}
-          {ctx.game.currentPhase === Phase.Main && (
-            <div className="mt-2 text-right">
-              <button
-                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                disabled={phaseSteps.some((s) => s.active)}
-                onClick={() => void handleEndTurn()}
-              >
-                Next Turn
-              </button>
-            </div>
-          )}
-          {phasePaused && (
-            <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center text-sm">
-              Paused
-            </div>
-          )}
         </section>
 
         <section className="border rounded p-4 bg-white shadow">
@@ -1501,6 +1449,73 @@ export default function Game({ onExit }: { onExit?: () => void }) {
         </section>
       </div>
       <section className="w-96 sticky top-4 self-start flex flex-col gap-4">
+        <section
+          className="border rounded p-4 bg-white shadow relative w-full"
+          onMouseEnter={() =>
+            ctx.game.currentPhase !== Phase.Main && setPaused(true)
+          }
+          onMouseLeave={() => setPaused(false)}
+          style={{
+            cursor:
+              phasePaused && ctx.game.currentPhase !== Phase.Main
+                ? 'pause'
+                : 'auto',
+          }}
+        >
+          <h2 className="text-xl font-semibold mb-2">
+            Turn {ctx.game.turn} - {ctx.activePlayer.name}
+          </h2>
+          <div className="flex gap-4 mb-2">
+            {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
+              <span
+                key={p}
+                className={
+                  p === ctx.game.currentPhase ? 'font-semibold underline' : ''
+                }
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)} Phase
+              </span>
+            ))}
+          </div>
+          <ul className="text-sm text-left min-h-[1rem] space-y-1">
+            {phaseSteps.map((s, i) => (
+              <li key={i} className={s.active ? 'font-semibold' : ''}>
+                <div>{s.title}</div>
+                <ul className="pl-4 list-disc">
+                  {s.items.length > 0 ? (
+                    s.items.map((it, j) => (
+                      <li key={j} className={it.italic ? 'italic' : ''}>
+                        {it.text}
+                        {it.done && (
+                          <span className="text-green-600 ml-1">✔️</span>
+                        )}
+                      </li>
+                    ))
+                  ) : (
+                    <li>...</li>
+                  )}
+                </ul>
+              </li>
+            ))}
+          </ul>
+          {ctx.game.currentPhase !== Phase.Main && (
+            <div className="absolute top-2 right-2">
+              <TimerCircle progress={phaseTimer} paused={phasePaused} />
+            </div>
+          )}
+          {ctx.game.currentPhase === Phase.Main && (
+            <div className="mt-2 text-right">
+              <button
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={phaseSteps.some((s) => s.active)}
+                onClick={() => void handleEndTurn()}
+              >
+                Next Turn
+              </button>
+            </div>
+          )}
+        </section>
+
         <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white shadow">
           <h2 className="text-xl font-semibold mb-2">Log</h2>
           <ul className="mt-2 space-y-1">
