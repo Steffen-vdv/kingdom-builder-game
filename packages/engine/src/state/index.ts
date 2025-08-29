@@ -37,9 +37,11 @@ export class Land {
   slotsMax: number;
   slotsUsed = 0;
   developments: string[] = [];
-  constructor(id: string, slotsMax: number) {
+  tilled = false;
+  constructor(id: string, slotsMax: number, tilled = false) {
     this.id = id;
     this.slotsMax = slotsMax;
+    this.tilled = tilled;
   }
   get slotsFree() {
     return this.slotsMax - this.slotsUsed;

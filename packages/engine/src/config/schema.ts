@@ -40,6 +40,7 @@ export const actionSchema = z.object({
   baseCosts: costBagSchema.optional(),
   requirements: z.array(requirementSchema).optional(),
   effects: z.array(effectSchema),
+  system: z.boolean().optional(),
 });
 
 export type ActionConfig = z.infer<typeof actionSchema>;
@@ -85,6 +86,7 @@ const landStartSchema = z.object({
   developments: z.array(z.string()).optional(),
   slotsMax: z.number().optional(),
   slotsUsed: z.number().optional(),
+  tilled: z.boolean().optional(),
 });
 
 const playerStartSchema = z.object({

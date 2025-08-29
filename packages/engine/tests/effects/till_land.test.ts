@@ -6,37 +6,47 @@ import {
 } from '../../src/index.ts';
 
 describe('land:till effect', () => {
-  it('increases land slots up to the maximum', () => {
+  it('tills the specified land and marks it as tilled', () => {
     const actions = createActionRegistry();
     actions.add('till', {
       id: 'till',
       name: 'Till',
-      baseCosts: { ap: 0 },
-      effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
-    });
-    const ctx = createEngine({ actions });
-    const land = ctx.activePlayer.lands[1]; // A-L2
-    const before = land.slotsMax;
-    const expected = Math.min(before + 1, ctx.services.rules.maxSlotsPerLand);
-    performAction('till', ctx);
-    expect(land.slotsMax).toBe(expected);
-  });
-
-  it('does not exceed maxSlotsPerLand', () => {
-    const actions = createActionRegistry();
-    actions.add('till', {
-      id: 'till',
-      name: 'Till',
-      baseCosts: { ap: 0 },
+      system: true,
       effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
     });
     const ctx = createEngine({ actions });
     const land = ctx.activePlayer.lands[1];
-    const max = ctx.services.rules.maxSlotsPerLand;
-    const attempts = max - land.slotsMax + 1;
-    for (let iteration = 0; iteration < attempts; iteration++) {
-      performAction('till', ctx);
-    }
-    expect(land.slotsMax).toBe(max);
+    const before = land.slotsMax;
+    const expected = Math.min(before + 1, ctx.services.rules.maxSlotsPerLand);
+    performAction('till', ctx);
+    expect(land.slotsMax).toBe(expected);
+    expect(land.tilled).toBe(true);
+  });
+
+  it('throws if the land is already tilled', () => {
+    const actions = createActionRegistry();
+    actions.add('till', {
+      id: 'till',
+      name: 'Till',
+      system: true,
+      effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
+    });
+    const ctx = createEngine({ actions });
+    performAction('till', ctx);
+    expect(() => performAction('till', ctx)).toThrow(/already tilled/);
+  });
+
+  it('tills the first available land when no id is given', () => {
+    const actions = createActionRegistry();
+    actions.add('till', {
+      id: 'till',
+      name: 'Till',
+      system: true,
+      effects: [{ type: 'land', method: 'till' }],
+    });
+    const ctx = createEngine({ actions });
+    performAction('till', ctx);
+    const tilledCount = ctx.activePlayer.lands.filter((l) => l.tilled).length;
+    expect(tilledCount).toBe(1);
   });
 });
