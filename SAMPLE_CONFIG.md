@@ -30,7 +30,7 @@
     - Developments: 1 VP per 2 🏚️ (max 7)
     - Population: 1 VP per 👥 (no limit)
     - Happiness: +1 VP per point above 0 (max +10), –1 per point below 0 (max –5)
-    - Buildings: 1 VP per 2 🧱 (no limit)
+    - Buildings: 1 VP per 2 🏛️ (no limit)
 
 ## 2) Turn Structure
 
@@ -112,7 +112,7 @@
 - 🌱Expand; 🧑‍🌾Till
 - Your next Action this turn costs +2🪙 (token queue)
 
-### 3.11 Build 🧱 (each at most once)
+### 3.11 Build 🏛️ (each at most once)
 
 - **5🪙 — Town Charter**: 🌱Expand costs +2🪙; grants +1 extra 😊
 - **7🪙 — Mill**: each 🌾 +1🪙 at 💹; Overwork +1🪙/🌾
