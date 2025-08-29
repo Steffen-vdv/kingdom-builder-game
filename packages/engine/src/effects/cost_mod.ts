@@ -6,15 +6,18 @@ interface CostModParams {
   actionId: string;
   key: ResourceKey;
   amount: number;
+  player?: 'self' | 'opponent';
   [key: string]: unknown;
 }
 
 export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
-  const { id, actionId, key, amount } = effect.params || ({} as CostModParams);
+  const { id, actionId, key, amount, player } =
+    effect.params || ({} as CostModParams);
   if (!id || !actionId || !key || amount === undefined) {
     throw new Error('cost_mod requires id, actionId, key, amount');
   }
   const ownerId = ctx.activePlayer.id;
+  const targetId = player === 'opponent' ? ctx.opponent.id : ownerId;
   const scopedId = `${ownerId}:${id}`;
   if (effect.method === 'add') {
     ctx.passives.registerCostModifier(
@@ -22,7 +25,7 @@ export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
       (targetActionId, costs, innerCtx) => {
         if (
           targetActionId === actionId &&
-          innerCtx.activePlayer.id === ownerId
+          innerCtx.activePlayer.id === targetId
         ) {
           const current = costs[key] || 0;
           return { ...costs, [key]: current + amount };

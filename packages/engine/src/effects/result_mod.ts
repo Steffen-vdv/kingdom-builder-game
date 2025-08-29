@@ -4,13 +4,15 @@ import { runEffects } from '.';
 interface ResultModParams {
   id: string;
   actionId: string;
+  player?: 'self' | 'opponent';
   [key: string]: unknown;
 }
 
 export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
-  const { id, actionId } = effect.params || ({} as ResultModParams);
+  const { id, actionId, player } = effect.params || ({} as ResultModParams);
   if (!id || !actionId) throw new Error('result_mod requires id and actionId');
   const ownerId = ctx.activePlayer.id;
+  const targetId = player === 'opponent' ? ctx.opponent.id : ownerId;
   const scopedId = `${ownerId}:${id}`;
   if (effect.method === 'add') {
     const effects = effect.effects || [];
@@ -19,7 +21,7 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
       (executedActionId, innerContext) => {
         if (
           executedActionId === actionId &&
-          innerContext.activePlayer.id === ownerId
+          innerContext.activePlayer.id === targetId
         ) {
           runEffects(effects, innerContext);
         }
