@@ -15,6 +15,19 @@ import type {
   ActionParams,
   EffectDef,
 } from '@kingdom-builder/engine';
+import {
+  resourceInfo,
+  statInfo,
+  populationInfo,
+  actionInfo,
+  developmentInfo,
+  landIcon,
+  slotIcon,
+  buildingIcon,
+  modifierInfo,
+  passiveInfo,
+  phaseInfo,
+} from './icons';
 
 interface Land {
   id: string;
@@ -138,59 +151,6 @@ interface Building {
   id: string;
   name: string;
 }
-
-const resourceInfo = {
-  [Resource.gold]: { icon: '🪙', label: 'Gold' },
-  [Resource.ap]: { icon: '⚡', label: 'Action Points' },
-  [Resource.happiness]: { icon: '😊', label: 'Happiness' },
-  [Resource.castleHP]: { icon: '🏰', label: 'Castle HP' },
-} as const;
-
-const statInfo: Record<string, { icon: string; label: string }> = {
-  maxPopulation: { icon: '👥', label: 'Max Population' },
-  armyStrength: { icon: '🗡️', label: 'Army Strength' },
-  fortificationStrength: { icon: '🛡️', label: 'Fortification Strength' },
-  absorption: { icon: '🌀', label: 'Absorption' },
-  armyGrowth: { icon: '📈', label: 'Army Growth' },
-};
-
-const populationInfo: Record<string, { icon: string; label: string }> = {
-  council: { icon: '⚖️', label: 'Council' },
-  commander: { icon: '🎖️', label: 'Army Commander' },
-  fortifier: { icon: '🧱', label: 'Fortifier' },
-  citizen: { icon: '👤', label: 'Citizen' },
-};
-
-const actionInfo = {
-  expand: { icon: '🌱' },
-  overwork: { icon: '🛠️' },
-  develop: { icon: '🏗️' },
-  tax: { icon: '💰' },
-  reallocate: { icon: '🔄' },
-  raise_pop: { icon: '👶' },
-  royal_decree: { icon: '📜' },
-  army_attack: { icon: '🗡️' },
-  hold_festival: { icon: '🎉' },
-  plow: { icon: '🚜' },
-  build: { icon: '🧱' },
-} as const;
-
-const developmentInfo: Record<string, { icon: string; label: string }> = {
-  house: { icon: '🏠', label: 'House' },
-  farm: { icon: '🌾', label: 'Farm' },
-  outpost: { icon: '🛡️', label: 'Outpost' },
-  watchtower: { icon: '🗼', label: 'Watchtower' },
-  garden: { icon: '🌿', label: 'Garden' },
-};
-
-const landIcon = '🗺️';
-const slotIcon = '🧩';
-const buildingIcon = '🧱';
-const phaseInfo = {
-  onDevelopmentPhase: { icon: '🏗️', label: 'Development phase' },
-  onUpkeepPhase: { icon: '🧹', label: 'Upkeep phase' },
-} as const;
-
 type SummaryEntry = string | { title: string; items: string[] };
 type Summary = SummaryEntry[];
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
@@ -283,7 +243,9 @@ function summarizeEffects(
           const actionIcon =
             actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
           parts.push(
-            `${actionIcon} cost ${icon}${amount >= 0 ? '+' : ''}${amount}`,
+            `${modifierInfo.cost.icon} ${actionIcon} cost ${icon}${
+              amount >= 0 ? '+' : ''
+            }${amount}`,
           );
         }
         break;
@@ -294,14 +256,21 @@ function summarizeEffects(
           const actionId = eff.params['actionId'] as string;
           const actionIcon =
             actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-          sub.forEach((s) => parts.push(`${actionIcon}: ${s}`));
+          sub.forEach((s) =>
+            parts.push(`${modifierInfo.result.icon} ${actionIcon}: ${s}`),
+          );
         }
         break;
       }
       case 'passive': {
         if (eff.method === 'add') {
           const sub = summarizeEffects(eff.effects || [], ctx);
-          if (sub.length) parts.push(...sub);
+          if (sub.length)
+            sub.forEach((s) => parts.push(`${passiveInfo.add.icon} ${s}`));
+        } else if (eff.method === 'remove') {
+          const sub = summarizeEffects(eff.effects || [], ctx);
+          if (sub.length)
+            sub.forEach((s) => parts.push(`${passiveInfo.remove.icon} ${s}`));
         }
         break;
       }
@@ -320,28 +289,60 @@ function summarizeAction(id: string, ctx: EngineContext) {
 function summarizeDevelopment(id: string, ctx: EngineContext): Summary {
   const def = ctx.developments.get(id);
   const parts: Summary = [];
-  if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
+  const build = summarizeEffects(def.onBuild, ctx);
+  if (build.length)
+    parts.push({
+      title: `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`,
+      items: build,
+    });
   const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
-  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  if (dev.length)
+    parts.push({
+      title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
+      items: dev,
+    });
   const upk = summarizeEffects(def.onUpkeepPhase, ctx);
-  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  if (upk.length)
+    parts.push({
+      title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
+      items: upk,
+    });
   const atk = summarizeEffects(def.onAttackResolved, ctx);
   if (atk.length)
-    parts.push({ title: 'After having been attacked', items: atk });
+    parts.push({
+      title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
+      items: atk,
+    });
   return parts;
 }
 
 function summarizeBuilding(id: string, ctx: EngineContext): Summary {
   const def = ctx.buildings.get(id);
   const parts: Summary = [];
-  if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
+  const build = summarizeEffects(def.onBuild, ctx);
+  if (build.length)
+    parts.push({
+      title: `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`,
+      items: build,
+    });
   const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
-  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  if (dev.length)
+    parts.push({
+      title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
+      items: dev,
+    });
   const upk = summarizeEffects(def.onUpkeepPhase, ctx);
-  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  if (upk.length)
+    parts.push({
+      title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
+      items: upk,
+    });
   const atk = summarizeEffects(def.onAttackResolved, ctx);
   if (atk.length)
-    parts.push({ title: 'After having been attacked', items: atk });
+    parts.push({
+      title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
+      items: atk,
+    });
   return parts;
 }
 
@@ -450,9 +451,9 @@ function describeEffects(
           const actionIcon =
             actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
           parts.push(
-            `${amount >= 0 ? 'Increase' : 'Decrease'} ${actionIcon} cost by ${
-              icon
-            }${Math.abs(amount)}`,
+            `${modifierInfo.cost.label}: ${
+              amount >= 0 ? 'Increase' : 'Decrease'
+            } ${actionIcon} cost by ${icon}${Math.abs(amount)}`,
           );
         }
         break;
@@ -463,14 +464,21 @@ function describeEffects(
           const actionId = eff.params['actionId'] as string;
           const actionIcon =
             actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-          sub.forEach((s) => parts.push(`${actionIcon}: ${s}`));
+          sub.forEach((s) =>
+            parts.push(`${modifierInfo.result.label} on ${actionIcon}: ${s}`),
+          );
         }
         break;
       }
       case 'passive': {
         if (eff.method === 'add') {
           const sub = describeEffects(eff.effects || [], ctx);
-          if (sub.length) parts.push(...sub);
+          if (sub.length)
+            sub.forEach((s) => parts.push(`${passiveInfo.add.label}: ${s}`));
+        } else if (eff.method === 'remove') {
+          const sub = describeEffects(eff.effects || [], ctx);
+          if (sub.length)
+            sub.forEach((s) => parts.push(`${passiveInfo.remove.label}: ${s}`));
         }
         break;
       }
@@ -489,28 +497,60 @@ function describeAction(id: string, ctx: EngineContext): Summary {
 function describeDevelopment(id: string, ctx: EngineContext): Summary {
   const def = ctx.developments.get(id);
   const parts: Summary = [];
-  if (def.onBuild) parts.push(...describeEffects(def.onBuild, ctx));
+  const build = describeEffects(def.onBuild, ctx);
+  if (build.length)
+    parts.push({
+      title: `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`,
+      items: build,
+    });
   const dev = describeEffects(def.onDevelopmentPhase, ctx);
-  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  if (dev.length)
+    parts.push({
+      title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
+      items: dev,
+    });
   const upk = describeEffects(def.onUpkeepPhase, ctx);
-  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  if (upk.length)
+    parts.push({
+      title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
+      items: upk,
+    });
   const atk = describeEffects(def.onAttackResolved, ctx);
   if (atk.length)
-    parts.push({ title: 'After having been attacked', items: atk });
+    parts.push({
+      title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
+      items: atk,
+    });
   return parts;
 }
 
 function describeBuilding(id: string, ctx: EngineContext): Summary {
   const def = ctx.buildings.get(id);
   const parts: Summary = [];
-  if (def.onBuild) parts.push(...describeEffects(def.onBuild, ctx));
+  const build = describeEffects(def.onBuild, ctx);
+  if (build.length)
+    parts.push({
+      title: `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`,
+      items: build,
+    });
   const dev = describeEffects(def.onDevelopmentPhase, ctx);
-  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  if (dev.length)
+    parts.push({
+      title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
+      items: dev,
+    });
   const upk = describeEffects(def.onUpkeepPhase, ctx);
-  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  if (upk.length)
+    parts.push({
+      title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
+      items: upk,
+    });
   const atk = describeEffects(def.onAttackResolved, ctx);
   if (atk.length)
-    parts.push({ title: 'After having been attacked', items: atk });
+    parts.push({
+      title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
+      items: atk,
+    });
   return parts;
 }
 
@@ -619,7 +659,6 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   }
 
   function formatRequirement(req: string): string {
-    if (req.toLowerCase() === 'requires free house') return 'Free space for 👥';
     return req;
   }
 
