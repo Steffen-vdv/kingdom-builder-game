@@ -190,6 +190,9 @@ const phaseInfo = {
   onDevelopmentPhase: { icon: '🏗️', label: 'Development phase' },
   onUpkeepPhase: { icon: '🧹', label: 'Upkeep phase' },
 } as const;
+
+type SummaryEntry = string | { title: string; items: string[] };
+type Summary = SummaryEntry[];
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 function summarizeEffects(
   effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
@@ -314,54 +317,222 @@ function summarizeAction(id: string, ctx: EngineContext) {
   return summarizeEffects(def.effects, ctx);
 }
 
-function summarizeDevelopment(id: string, ctx: EngineContext) {
+function summarizeDevelopment(id: string, ctx: EngineContext): Summary {
   const def = ctx.developments.get(id);
-  const parts: string[] = [];
+  const parts: Summary = [];
   if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
-  if (def.onDevelopmentPhase)
-    parts.push(
-      ...summarizeEffects(def.onDevelopmentPhase, ctx).map(
-        (s) => `On Development phase: ${s}`,
-      ),
-    );
-  if (def.onUpkeepPhase)
-    parts.push(
-      ...summarizeEffects(def.onUpkeepPhase, ctx).map(
-        (s) => `On Upkeep phase: ${s}`,
-      ),
-    );
-  if (def.onAttackResolved)
-    parts.push(
-      ...summarizeEffects(def.onAttackResolved, ctx).map(
-        (s) => `After attack: ${s}`,
-      ),
-    );
+  const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
+  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  const upk = summarizeEffects(def.onUpkeepPhase, ctx);
+  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  const atk = summarizeEffects(def.onAttackResolved, ctx);
+  if (atk.length)
+    parts.push({ title: 'After having been attacked', items: atk });
+  return parts;
+}
+
+function summarizeBuilding(id: string, ctx: EngineContext): Summary {
+  const def = ctx.buildings.get(id);
+  const parts: Summary = [];
+  if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
+  const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
+  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  const upk = summarizeEffects(def.onUpkeepPhase, ctx);
+  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  const atk = summarizeEffects(def.onAttackResolved, ctx);
+  if (atk.length)
+    parts.push({ title: 'After having been attacked', items: atk });
+  return parts;
+}
+
+function describeEffects(
+  effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
+  ctx: EngineContext,
+): string[] {
+  const parts: string[] = [];
+  for (const eff of effects || []) {
+    if (eff.evaluator) {
+      const ev = eff.evaluator as {
+        type: string;
+        params: Record<string, unknown>;
+      };
+      if (ev.type === 'development') {
+        const sub = describeEffects(eff.effects, ctx);
+        const devParams = ev.params as Record<string, string>;
+        const devId = devParams['id']!;
+        const info = developmentInfo[devId];
+        sub.forEach((s) =>
+          parts.push(
+            `${s} for each ${info?.icon || ''}${info?.label || devId}`,
+          ),
+        );
+      } else {
+        parts.push(...describeEffects(eff.effects, ctx));
+      }
+      continue;
+    }
+    switch (eff.type) {
+      case 'resource': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const res = resourceInfo[key as keyof typeof resourceInfo];
+          const label = res?.label || key;
+          const icon = res?.icon || '';
+          const amount = Number(eff.params['amount']);
+          parts.push(
+            `${amount >= 0 ? 'Gain' : 'Lose'} ${Math.abs(amount)} ${icon} ${label}`,
+          );
+        }
+        break;
+      }
+      case 'stat': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const stat = statInfo[key];
+          const label = stat?.label || key;
+          const icon = stat?.icon || '';
+          const amount = Number(eff.params['amount']);
+          if (key === 'maxPopulation')
+            parts.push(`Increase Max ${icon} by ${amount}`);
+          else if (key === 'absorption')
+            parts.push(
+              `${amount >= 0 ? 'Increase' : 'Decrease'} ${icon}${label} by ${
+                amount * 100
+              }%`,
+            );
+          else
+            parts.push(
+              `${amount >= 0 ? 'Gain' : 'Lose'} ${Math.abs(amount)} ${icon} ${label}`,
+            );
+        }
+        break;
+      }
+      case 'land': {
+        if (eff.method === 'add') {
+          const params = eff.params as Record<string, unknown> | undefined;
+          const count = Number(params?.['count'] ?? 1);
+          parts.push(`Gain ${count} ${landIcon} Land`);
+        }
+        break;
+      }
+      case 'development': {
+        if (eff.params) {
+          const id = eff.params['id'] as string;
+          const info = developmentInfo[id];
+          const label = info?.label || id;
+          const icon = info?.icon || '';
+          if (eff.method === 'add') parts.push(`Add ${icon}${label}`);
+          else if (eff.method === 'remove')
+            parts.push(`Remove ${icon}${label}`);
+        }
+        break;
+      }
+      case 'building': {
+        if (eff.method === 'add' && eff.params) {
+          const id = eff.params['id'] as string;
+          let name = id;
+          try {
+            name = ctx.buildings.get(id).name;
+          } catch {
+            // ignore
+          }
+          parts.push(`Construct ${buildingIcon}${name}`);
+        }
+        break;
+      }
+      case 'cost_mod': {
+        if (eff.method === 'add' && eff.params) {
+          const key = eff.params['key'] as string;
+          const icon =
+            resourceInfo[key as keyof typeof resourceInfo]?.icon || key;
+          const amount = Number(eff.params['amount']);
+          const actionId = eff.params['actionId'] as string;
+          const actionIcon =
+            actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
+          parts.push(
+            `${amount >= 0 ? 'Increase' : 'Decrease'} ${actionIcon} cost by ${
+              icon
+            }${Math.abs(amount)}`,
+          );
+        }
+        break;
+      }
+      case 'result_mod': {
+        if (eff.method === 'add' && eff.params) {
+          const sub = describeEffects(eff.effects || [], ctx);
+          const actionId = eff.params['actionId'] as string;
+          const actionIcon =
+            actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
+          sub.forEach((s) => parts.push(`${actionIcon}: ${s}`));
+        }
+        break;
+      }
+      case 'passive': {
+        if (eff.method === 'add') {
+          const sub = describeEffects(eff.effects || [], ctx);
+          if (sub.length) parts.push(...sub);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
   return parts.map((p) => p.trim());
 }
 
-function summarizeBuilding(id: string, ctx: EngineContext) {
+function describeAction(id: string, ctx: EngineContext): Summary {
+  const def = ctx.actions.get(id);
+  return describeEffects(def.effects, ctx);
+}
+
+function describeDevelopment(id: string, ctx: EngineContext): Summary {
+  const def = ctx.developments.get(id);
+  const parts: Summary = [];
+  if (def.onBuild) parts.push(...describeEffects(def.onBuild, ctx));
+  const dev = describeEffects(def.onDevelopmentPhase, ctx);
+  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  const upk = describeEffects(def.onUpkeepPhase, ctx);
+  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  const atk = describeEffects(def.onAttackResolved, ctx);
+  if (atk.length)
+    parts.push({ title: 'After having been attacked', items: atk });
+  return parts;
+}
+
+function describeBuilding(id: string, ctx: EngineContext): Summary {
   const def = ctx.buildings.get(id);
-  const parts: string[] = [];
-  if (def.onBuild) parts.push(...summarizeEffects(def.onBuild, ctx));
-  if (def.onDevelopmentPhase)
-    parts.push(
-      ...summarizeEffects(def.onDevelopmentPhase, ctx).map(
-        (s) => `On Development phase: ${s}`,
-      ),
-    );
-  if (def.onUpkeepPhase)
-    parts.push(
-      ...summarizeEffects(def.onUpkeepPhase, ctx).map(
-        (s) => `On Upkeep phase: ${s}`,
-      ),
-    );
-  if (def.onAttackResolved)
-    parts.push(
-      ...summarizeEffects(def.onAttackResolved, ctx).map(
-        (s) => `After attack: ${s}`,
-      ),
-    );
-  return parts.map((p) => p.trim());
+  const parts: Summary = [];
+  if (def.onBuild) parts.push(...describeEffects(def.onBuild, ctx));
+  const dev = describeEffects(def.onDevelopmentPhase, ctx);
+  if (dev.length) parts.push({ title: 'Development Phase', items: dev });
+  const upk = describeEffects(def.onUpkeepPhase, ctx);
+  if (upk.length) parts.push({ title: 'Upkeep Phase', items: upk });
+  const atk = describeEffects(def.onAttackResolved, ctx);
+  if (atk.length)
+    parts.push({ title: 'After having been attacked', items: atk });
+  return parts;
+}
+
+function renderSummary(summary: Summary | undefined) {
+  return summary?.map((e, i) =>
+    typeof e === 'string' ? (
+      <li key={i} className="whitespace-pre-line">
+        {e}
+      </li>
+    ) : (
+      <li key={i}>
+        <span className="font-semibold">{e.title}</span>
+        <ul className="list-disc pl-4">
+          {e.items.map((s, j) => (
+            <li key={j} className="whitespace-pre-line">
+              {s}
+            </li>
+          ))}
+        </ul>
+      </li>
+    ),
+  );
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 
@@ -398,13 +569,13 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   const [log, setLog] = useState<{ time: string; text: string }[]>([]);
   const [hoverCard, setHoverCard] = useState<{
     title: string;
-    effects: string[];
+    effects: Summary;
     requirements: string[];
   } | null>(null);
   const hoverTimeout = useRef<number>();
 
   function formatRequirement(req: string): string {
-    if (req === 'Requires free house') return 'Requires room for Population';
+    if (req === 'Requires free house') return 'Free space for 👥';
     return req;
   }
 
@@ -419,7 +590,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
 
   function handleHoverCard(data: {
     title: string;
-    effects: string[];
+    effects: Summary;
     requirements: string[];
   }) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
@@ -470,14 +641,14 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     return map;
   }, [actions, ctx]);
   const developmentSummaries = useMemo(() => {
-    const map = new Map<string, string[]>();
+    const map = new Map<string, Summary>();
     sortedDevelopments.forEach((d) =>
       map.set(d.id, summarizeDevelopment(d.id, ctx)),
     );
     return map;
   }, [sortedDevelopments, ctx]);
   const buildingSummaries = useMemo(() => {
-    const map = new Map<string, string[]>();
+    const map = new Map<string, Summary>();
     buildingOptions.forEach((b) => map.set(b.id, summarizeBuilding(b.id, ctx)));
     return map;
   }, [buildingOptions, ctx]);
@@ -755,11 +926,20 @@ export default function Game({ onExit }: { onExit?: () => void }) {
 
         <section className="border rounded p-4 bg-white shadow">
           <h2 className="text-xl font-semibold mb-2">
-            Turn {ctx.game.turn} - {ctx.activePlayer.name} -{' '}
-            {ctx.game.currentPhase.charAt(0).toUpperCase() +
-              ctx.game.currentPhase.slice(1)}{' '}
-            Phase
+            Turn {ctx.game.turn} - {ctx.activePlayer.name}
           </h2>
+          <div className="flex gap-4">
+            {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
+              <span
+                key={p}
+                className={
+                  p === ctx.game.currentPhase ? 'font-semibold underline' : ''
+                }
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)} Phase
+              </span>
+            ))}
+          </div>
         </section>
 
         <section className="border rounded p-4 bg-white shadow">
@@ -823,7 +1003,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                           actionInfo[action.id as keyof typeof actionInfo]
                             ?.icon || ''
                         } ${action.name}`,
-                        effects: actionSummaries.get(action.id) ?? [],
+                        effects: describeAction(action.id, ctx),
                         requirements,
                       })
                     }
@@ -837,13 +1017,11 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       {renderCosts(costs, ctx.activePlayer.resources)}
                     </span>
                     <ul className="text-sm list-disc pl-4 text-left">
-                      {actionSummaries.get(action.id)?.map((e, i) => (
-                        <li key={i}>{e}</li>
-                      ))}
+                      {renderSummary(actionSummaries.get(action.id))}
                     </ul>
                     {requirements.length > 0 && (
                       <div className="text-sm text-red-600 text-left">
-                        <span className="font-semibold">Requires:</span>
+                        <span className="font-semibold">Requirements</span>
                         <ul className="list-disc pl-4">
                           {requirements.map((r, i) => (
                             <li key={i}>{r}</li>
@@ -904,7 +1082,10 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                             title: `${actionInfo.raise_pop.icon} Raise Population - ${
                               populationInfo[role]?.label || ''
                             }`,
-                            effects: actionSummaries.get('raise_pop') ?? [],
+                            effects: [
+                              `👥(${populationInfo[role]?.icon}) +1`,
+                              ...describeAction('raise_pop', ctx),
+                            ],
                             requirements,
                           })
                         }
@@ -918,13 +1099,14 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc list-inside text-left">
-                          {actionSummaries.get('raise_pop')?.map((e, i) => (
-                            <li key={i}>{e}</li>
-                          ))}
+                          {renderSummary([
+                            `👥(${populationInfo[role]?.icon}) +1`,
+                            ...(actionSummaries.get('raise_pop') ?? []),
+                          ])}
                         </ul>
                         {requirements.length > 0 && (
                           <div className="text-sm text-red-600 text-left">
-                            <span className="font-semibold">Requires:</span>
+                            <span className="font-semibold">Requirements</span>
                             <ul className="list-disc pl-4">
                               {requirements.map((r, i) => (
                                 <li key={i}>{r}</li>
@@ -991,7 +1173,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                             title: `${actionInfo.develop.icon} Develop - ${
                               developmentInfo[d.id]?.icon
                             } ${d.name}`,
-                            effects: developmentSummaries.get(d.id) ?? [],
+                            effects: describeDevelopment(d.id, ctx),
                             requirements,
                           })
                         }
@@ -1004,13 +1186,11 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc pl-4 text-left">
-                          {developmentSummaries.get(d.id)?.map((e, i) => (
-                            <li key={i}>{e}</li>
-                          ))}
+                          {renderSummary(developmentSummaries.get(d.id))}
                         </ul>
                         {requirements.length > 0 && (
                           <div className="text-sm text-red-600 text-left">
-                            <span className="font-semibold">Requires:</span>
+                            <span className="font-semibold">Requirements</span>
                             <ul className="list-disc pl-4">
                               {requirements.map((r, i) => (
                                 <li key={i}>{r}</li>
@@ -1057,7 +1237,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         onMouseEnter={() =>
                           handleHoverCard({
                             title: `${actionInfo.build.icon} Build - ${b.name}`,
-                            effects: buildingSummaries.get(b.id) ?? [],
+                            effects: describeBuilding(b.id, ctx),
                             requirements,
                           })
                         }
@@ -1068,9 +1248,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc pl-4 text-left">
-                          {buildingSummaries.get(b.id)?.map((e, i) => (
-                            <li key={i}>{e}</li>
-                          ))}
+                          {renderSummary(buildingSummaries.get(b.id))}
                         </ul>
                       </button>
                     );
@@ -1109,9 +1287,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               <div>
                 <div className="font-semibold">Effects</div>
                 <ul className="list-disc pl-4 text-sm">
-                  {hoverCard.effects.map((e, i) => (
-                    <li key={i}>{e}</li>
-                  ))}
+                  {renderSummary(hoverCard.effects)}
                 </ul>
               </div>
             )}
