@@ -7,5 +7,5 @@ export const populationCap: RequirementHandler = (req, ctx) => {
   );
   return current < ctx.activePlayer.maxPopulation
     ? true
-    : req.message || 'Requires free House';
+    : req.message || 'Free space for 👥';
 };

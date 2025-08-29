@@ -603,7 +603,8 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   const hoverTimeout = useRef<number>();
   const [phaseSteps, setPhaseSteps] = useState<
     {
-      items: string[];
+      title: string;
+      items: { text: string; italic?: boolean }[];
       active: boolean;
     }[]
   >([]);
@@ -617,7 +618,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   }
 
   function formatRequirement(req: string): string {
-    if (req === 'Requires free house') return 'Free space for 👥';
+    if (req.toLowerCase() === 'requires free house') return 'Free space for 👥';
     return req;
   }
 
@@ -749,7 +750,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   function runPhaseDelay() {
     setPhaseTimer(0);
     return new Promise<void>((resolve) => {
-      const total = 3000;
+      const total = 2000;
       let elapsed = 0;
       const step = 100;
       const interval = window.setInterval(() => {
@@ -772,9 +773,50 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     ctx.game.currentPlayerIndex = index;
     const player = ctx.activePlayer;
     const effects = collectTriggerEffects(trigger, ctx, player);
-    setPhaseSteps([]);
+
+    const developmentSteps = [
+      {
+        title: 'Gain Income',
+        classify: (change: string) =>
+          change.includes(resourceInfo[Resource.gold].icon) ||
+          change.includes(resourceInfo[Resource.happiness].icon),
+      },
+      {
+        title: 'Generate Action Points',
+        classify: (change: string) =>
+          change.includes(resourceInfo[Resource.ap].icon),
+      },
+      {
+        title: 'Grow Strengths',
+        classify: (change: string) =>
+          change.includes(statInfo['armyStrength']!.icon) ||
+          change.includes(statInfo['fortificationStrength']!.icon),
+      },
+    ] as const;
+
+    const upkeepSteps = [
+      {
+        title: 'Pay Upkeep',
+        classify: (change: string) =>
+          change.includes(resourceInfo[Resource.gold].icon),
+      },
+      {
+        title: 'Check Shortfall',
+        classify: () => false,
+      },
+      {
+        title: 'End-of-Upkeep triggers',
+        classify: () => true,
+      },
+    ] as const;
+
+    const stepDefs =
+      trigger === 'onDevelopmentPhase' ? developmentSteps : upkeepSteps;
+    const stepItems = stepDefs.map(
+      () => [] as { text: string; italic?: boolean }[],
+    );
+
     for (const effect of effects) {
-      setPhaseSteps((prev) => [...prev, { items: [], active: true }]);
       const before = snapshotPlayer(player);
       runEffects([effect], ctx);
       const after = snapshotPlayer(player);
@@ -786,21 +828,62 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           player.name,
         );
       }
+      for (const change of changes) {
+        let idx = stepDefs.findIndex((s) => s.classify(change));
+        if (idx === -1) idx = stepDefs.length - 1;
+        stepItems[idx]!.push({ text: change });
+      }
+    }
+
+    if (trigger === 'onDevelopmentPhase') {
+      const commanders = player.population[PopulationRole.Commander] || 0;
+      const fortifiers = player.population[PopulationRole.Fortifier] || 0;
+      if (stepItems[2]!.length === 0) {
+        stepItems[2]!.push({
+          text: `${populationInfo[PopulationRole.Commander]!.icon}${commanders} - No effect`,
+          italic: true,
+        });
+        stepItems[2]!.push({
+          text: `${populationInfo[PopulationRole.Fortifier]!.icon}${fortifiers} - No effect`,
+          italic: true,
+        });
+      }
+    } else if (trigger === 'onUpkeepPhase') {
+      if (stepItems[0]!.length === 0)
+        stepItems[0]!.push({ text: 'No costs to pay', italic: true });
+      if (stepItems[1]!.length === 0)
+        stepItems[1]!.push({ text: 'No shortfall', italic: true });
+      if (stepItems[2]!.length === 0)
+        stepItems[2]!.push({ text: 'No effects', italic: true });
+    }
+
+    setPhaseSteps([]);
+    for (let i = 0; i < stepDefs.length; i++) {
+      setPhaseSteps((prev) => [
+        ...prev,
+        { title: stepDefs[i]!.title, items: [], active: true },
+      ]);
+      const items =
+        stepItems[i]!.length > 0
+          ? stepItems[i]!
+          : [{ text: 'No effect', italic: true }];
+      for (const item of items) {
+        setPhaseSteps((prev) => {
+          const next = [...prev];
+          next[i] = {
+            ...next[i]!,
+            items: [...next[i]!.items, item],
+          };
+          return next;
+        });
+        await sleep(1000);
+      }
       setPhaseSteps((prev) => {
         const next = [...prev];
-        next[next.length - 1] = {
-          items: changes.length ? changes : ['No effect'],
-          active: true,
-        };
+        next[i] = { ...next[i]!, active: false };
         return next;
       });
-      refresh();
       await sleep(1000);
-      setPhaseSteps((prev) => {
-        const next = [...prev];
-        if (next.length > 0) next[next.length - 1]!.active = false;
-        return next;
-      });
     }
   }
 
@@ -1016,10 +1099,17 @@ export default function Game({ onExit }: { onExit?: () => void }) {
         </section>
 
         <section
-          className="border rounded p-4 bg-white shadow relative"
-          onMouseEnter={() => setPaused(true)}
+          className="border rounded p-4 bg-white shadow relative w-full max-w-md"
+          onMouseEnter={() =>
+            ctx.game.currentPhase !== Phase.Main && setPaused(true)
+          }
           onMouseLeave={() => setPaused(false)}
-          style={{ cursor: phasePaused ? 'pause' : 'auto' }}
+          style={{
+            cursor:
+              phasePaused && ctx.game.currentPhase !== Phase.Main
+                ? 'pause'
+                : 'auto',
+          }}
         >
           <h2 className="text-xl font-semibold mb-2">
             Turn {ctx.game.turn} - {ctx.activePlayer.name}
@@ -1036,14 +1126,21 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               </span>
             ))}
           </div>
-          <ul className="text-sm text-left min-h-[1rem]">
+          <ul className="text-sm text-left min-h-[1rem] space-y-1">
             {phaseSteps.map((s, i) => (
               <li key={i} className={s.active ? 'font-semibold' : ''}>
-                {s.items.length > 0 ? (
-                  s.items.map((it, j) => <div key={j}>{it}</div>)
-                ) : (
-                  <div>...</div>
-                )}
+                <div>{s.title}</div>
+                <ul className="pl-4 list-disc">
+                  {s.items.length > 0 ? (
+                    s.items.map((it, j) => (
+                      <li key={j} className={it.italic ? 'italic' : ''}>
+                        {it.text}
+                      </li>
+                    ))
+                  ) : (
+                    <li>...</li>
+                  )}
+                </ul>
               </li>
             ))}
           </ul>
@@ -1200,8 +1297,8 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         onMouseEnter={() =>
                           handleHoverCard({
                             title: `${actionInfo.raise_pop.icon} Raise Population - ${
-                              populationInfo[role]?.label || ''
-                            }`,
+                              populationInfo[role]?.icon
+                            } ${populationInfo[role]?.label || ''}`,
                             effects: [
                               `👥(${populationInfo[role]?.icon}) +1`,
                               ...describeAction('raise_pop', ctx),
