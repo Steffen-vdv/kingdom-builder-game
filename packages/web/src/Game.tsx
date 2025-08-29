@@ -604,13 +604,14 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   const [phaseSteps, setPhaseSteps] = useState<
     {
       title: string;
-      items: { text: string; italic?: boolean }[];
+      items: { text: string; italic?: boolean; done?: boolean }[];
       active: boolean;
     }[]
   >([]);
   const [phaseTimer, setPhaseTimer] = useState(0);
   const [phasePaused, setPhasePaused] = useState(false);
   const phasePausedRef = useRef(false);
+  const [mainApStart, setMainApStart] = useState(0);
 
   function setPaused(v: boolean) {
     phasePausedRef.current = v;
@@ -731,26 +732,9 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     refresh();
   }
 
-  function sleep(ms: number) {
-    return new Promise<void>((resolve) => {
-      let elapsed = 0;
-      const step = 100;
-      const interval = window.setInterval(() => {
-        if (!phasePausedRef.current) {
-          elapsed += step;
-          if (elapsed >= ms) {
-            window.clearInterval(interval);
-            resolve();
-          }
-        }
-      }, step);
-    });
-  }
-
-  function runPhaseDelay() {
+  function runDelay(total: number) {
     setPhaseTimer(0);
     return new Promise<void>((resolve) => {
-      const total = 2000;
       let elapsed = 0;
       const step = 100;
       const interval = window.setInterval(() => {
@@ -764,6 +748,30 @@ export default function Game({ onExit }: { onExit?: () => void }) {
         }
       }, step);
     });
+  }
+
+  function runPhaseDelay() {
+    return runDelay(2000);
+  }
+
+  function runStepDelay() {
+    return runDelay(1000);
+  }
+
+  function updateMainPhaseStep(apStartOverride?: number) {
+    const total = apStartOverride ?? mainApStart;
+    setPhaseSteps([
+      {
+        title: 'Step 1 - Spend all AP',
+        items: [
+          {
+            text: `${resourceInfo[Resource.ap].icon} ${ctx.activePlayer.ap}/${total} remaining`,
+            done: ctx.activePlayer.ap === 0,
+          },
+        ],
+        active: ctx.activePlayer.ap > 0,
+      },
+    ]);
   }
 
   async function runPhaseForPlayer(
@@ -813,7 +821,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     const stepDefs =
       trigger === 'onDevelopmentPhase' ? developmentSteps : upkeepSteps;
     const stepItems = stepDefs.map(
-      () => [] as { text: string; italic?: boolean }[],
+      () => [] as { text: string; italic?: boolean; done?: boolean }[],
     );
 
     for (const effect of effects) {
@@ -861,7 +869,11 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     for (let i = 0; i < stepDefs.length; i++) {
       setPhaseSteps((prev) => [
         ...prev,
-        { title: stepDefs[i]!.title, items: [], active: true },
+        {
+          title: `Step ${i + 1} - ${stepDefs[i]!.title}`,
+          items: [],
+          active: true,
+        },
       ]);
       const items =
         stepItems[i]!.length > 0
@@ -876,14 +888,14 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           };
           return next;
         });
-        await sleep(1000);
+        await runStepDelay();
       }
       setPhaseSteps((prev) => {
         const next = [...prev];
         next[i] = { ...next[i]!, active: false };
         return next;
       });
-      await sleep(1000);
+      await runStepDelay();
     }
   }
 
@@ -898,7 +910,8 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     await runPhaseForPlayer('onUpkeepPhase', playerIndex);
     await runPhaseDelay();
     ctx.game.currentPhase = Phase.Main;
-    setPhaseSteps([]);
+    setMainApStart(ctx.activePlayer.ap);
+    updateMainPhaseStep(ctx.activePlayer.ap);
     refresh();
   }
 
@@ -917,6 +930,10 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   useEffect(() => {
     void startTurn(0);
   }, []);
+
+  useEffect(() => {
+    if (ctx.game.currentPhase === Phase.Main) updateMainPhaseStep();
+  }, [ctx.game.currentPhase, ctx.activePlayer.ap]);
 
   function PlayerPanel({ player }: { player: typeof ctx.activePlayer }) {
     const popEntries = Object.entries(player.population).filter(
@@ -1135,6 +1152,9 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                     s.items.map((it, j) => (
                       <li key={j} className={it.italic ? 'italic' : ''}>
                         {it.text}
+                        {it.done && (
+                          <span className="text-green-600 ml-1">✔️</span>
+                        )}
                       </li>
                     ))
                   ) : (
@@ -1144,26 +1164,22 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               </li>
             ))}
           </ul>
-          <div className="absolute top-2 right-2">
-            {ctx.game.currentPhase === Phase.Main ? (
-              <>
-                <button
-                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                  disabled={ctx.activePlayer.ap > 0}
-                  onClick={() => void handleEndTurn()}
-                >
-                  Next Turn
-                </button>
-                {ctx.activePlayer.ap > 0 && (
-                  <span className="block text-xs text-red-500 mt-1">
-                    You still have unspent AP
-                  </span>
-                )}
-              </>
-            ) : (
+          {ctx.game.currentPhase !== Phase.Main && (
+            <div className="absolute top-2 right-2">
               <TimerCircle progress={phaseTimer} />
-            )}
-          </div>
+            </div>
+          )}
+          {ctx.game.currentPhase === Phase.Main && (
+            <div className="mt-2 text-right">
+              <button
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={phaseSteps.some((s) => s.active)}
+                onClick={() => void handleEndTurn()}
+              >
+                Next Turn
+              </button>
+            </div>
+          )}
           {phasePaused && (
             <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center text-sm">
               Paused
