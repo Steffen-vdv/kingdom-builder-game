@@ -542,7 +542,9 @@ function renderCosts(
 ) {
   const entries = Object.entries(costs).filter(([k]) => k !== Resource.ap);
   if (entries.length === 0)
-    return <span className="mr-1 text-gray-400 italic">Free</span>;
+    return (
+      <span className="mr-1 text-gray-400 dark:text-gray-500 italic">Free</span>
+    );
   return (
     <>
       {entries.map(([k, v]) => (
@@ -606,7 +608,15 @@ function TimerCircle({
   );
 }
 
-export default function Game({ onExit }: { onExit?: () => void }) {
+export default function Game({
+  onExit,
+  darkMode = true,
+  onToggleDark = () => {},
+}: {
+  onExit?: () => void;
+  darkMode?: boolean;
+  onToggleDark?: () => void;
+}) {
   const ctx = useMemo<EngineContext>(() => {
     const c = createEngine();
     return c;
@@ -1114,20 +1124,31 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   }
 
   return (
-    <div className="p-4 flex gap-4 w-full bg-slate-100 text-gray-900 min-h-screen">
+    <div className="p-4 flex gap-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
       <div className="flex-1 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-center flex-1">
             Kingdom Builder
           </h1>
           {onExit && (
-            <button className="border px-2 py-1 ml-4" onClick={onExit}>
-              Back to Menu
-            </button>
+            <div className="flex items-center gap-2 ml-4">
+              <button
+                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+                onClick={onToggleDark}
+              >
+                {darkMode ? 'Light Mode' : 'Dark Mode'}
+              </button>
+              <button
+                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                onClick={onExit}
+              >
+                Quit
+              </button>
+            </div>
           )}
         </div>
 
-        <section className="border rounded p-4 bg-white shadow">
+        <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow">
           <div className="flex flex-col gap-4">
             {ctx.game.players.map((p) => (
               <PlayerPanel key={p.id} player={p} />
@@ -1135,7 +1156,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           </div>
         </section>
 
-        <section className="border rounded p-4 bg-white shadow">
+        <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full max-w-md">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-semibold">
               Actions (1 {resourceInfo[Resource.ap].icon} each)
@@ -1191,7 +1212,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
                       {action.name}
                     </span>
-                    <span className="absolute top-2 right-2 text-sm text-gray-600">
+                    <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                       {renderCosts(costs, ctx.activePlayer.resources)}
                     </span>
                     <ul className="text-sm list-disc pl-4 text-left">
@@ -1277,7 +1298,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                           {populationInfo[role]?.icon}{' '}
                           {populationInfo[role]?.label}
                         </span>
-                        <span className="absolute top-2 right-2 text-sm text-gray-600">
+                        <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc list-inside text-left">
@@ -1367,7 +1388,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         <span className="text-base font-medium">
                           {developmentInfo[d.id]?.icon} {d.name}
                         </span>
-                        <span className="absolute top-2 right-2 text-sm text-gray-600">
+                        <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc pl-4 text-left">
@@ -1433,7 +1454,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         onMouseLeave={clearHoverCard}
                       >
                         <span className="text-base font-medium">{b.name}</span>
-                        <span className="absolute top-2 right-2 text-sm text-gray-600">
+                        <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc pl-4 text-left">
@@ -1516,7 +1537,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           )}
         </section>
 
-        <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white shadow">
+        <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white dark:bg-gray-800 shadow">
           <h2 className="text-xl font-semibold mb-2">Log</h2>
           <ul className="mt-2 space-y-1">
             {log.map((entry, idx) => (
@@ -1527,10 +1548,10 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           </ul>
         </div>
         {hoverCard && (
-          <div className="border rounded p-4 bg-white shadow relative">
+          <div className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative">
             <div className="font-semibold mb-2">
               {hoverCard.title}
-              <span className="absolute top-2 right-2 text-sm text-gray-600">
+              <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(hoverCard.costs, ctx.activePlayer.resources)}
               </span>
             </div>
