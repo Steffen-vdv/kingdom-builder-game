@@ -635,6 +635,9 @@ export default function Game({
   const [phasePaused, setPhasePaused] = useState(false);
   const phasePausedRef = useRef(false);
   const [mainApStart, setMainApStart] = useState(0);
+  const playerBoxRef = useRef<HTMLDivElement>(null);
+  const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
+  const phaseStepsRef = useRef<HTMLUListElement>(null);
 
   function setPaused(v: boolean) {
     phasePausedRef.current = v;
@@ -720,6 +723,22 @@ export default function Game({
     buildingOptions.forEach((b) => map.set(b.id, summarizeBuilding(b.id, ctx)));
     return map;
   }, [buildingOptions, ctx]);
+
+  useEffect(() => {
+    const el = playerBoxRef.current;
+    if (!el) return;
+    const update = () => setPlayerBoxHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const el = phaseStepsRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [phaseSteps]);
 
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.id === 'develop');
@@ -1118,7 +1137,10 @@ export default function Game({
 
   return (
     <div className="p-4 flex gap-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
-      <div className="flex-1 space-y-6">
+      <div
+        className="flex-1 space-y-6"
+        style={{ maxWidth: 'calc(100% - 21rem)' }}
+      >
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-center flex-1">
             Kingdom Builder
@@ -1141,7 +1163,10 @@ export default function Game({
           )}
         </div>
 
-        <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow">
+        <section
+          ref={playerBoxRef}
+          className="border rounded p-4 bg-white dark:bg-gray-800 shadow"
+        >
           <div className="flex flex-col gap-4">
             {ctx.game.players.map((p) => (
               <PlayerPanel key={p.id} player={p} />
@@ -1462,9 +1487,9 @@ export default function Game({
           </div>
         </section>
       </div>
-      <section className="w-96 sticky top-4 self-start flex flex-col gap-4">
+      <section className="w-80 sticky top-4 self-start flex flex-col gap-4">
         <section
-          className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full"
+          className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
           onMouseEnter={() =>
             ctx.game.currentPhase !== Phase.Main && setPaused(true)
           }
@@ -1474,6 +1499,7 @@ export default function Game({
               phasePaused && ctx.game.currentPhase !== Phase.Main
                 ? 'pause'
                 : 'auto',
+            height: playerBoxHeight || undefined,
           }}
         >
           <h2 className="text-xl font-semibold mb-2">
@@ -1491,7 +1517,10 @@ export default function Game({
               </span>
             ))}
           </div>
-          <ul className="text-sm text-left min-h-[1rem] space-y-1">
+          <ul
+            ref={phaseStepsRef}
+            className="text-sm text-left space-y-1 overflow-y-scroll flex-1"
+          >
             {phaseSteps.map((s, i) => (
               <li key={i} className={s.active ? 'font-semibold' : ''}>
                 <div>{s.title}</div>
