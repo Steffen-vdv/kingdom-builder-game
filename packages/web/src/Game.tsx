@@ -256,7 +256,7 @@ function summarizeEffects(
           const id = eff.params['id'] as string;
           const icon = developmentInfo[id]?.icon || id;
           if (eff.method === 'add') parts.push(`${icon}`);
-          else if (eff.method === 'remove') parts.push(`remove ${icon}`);
+          else if (eff.method === 'remove') parts.push(`Remove ${icon}`);
         }
         break;
       }
@@ -558,6 +558,33 @@ function renderCosts(
   );
 }
 
+function TimerCircle({ progress }: { progress: number }) {
+  const radius = 12;
+  const circumference = 2 * Math.PI * radius;
+  return (
+    <svg width={24} height={24}>
+      <circle
+        cx="12"
+        cy="12"
+        r={radius}
+        stroke="#e5e7eb"
+        strokeWidth="2"
+        fill="none"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r={radius}
+        stroke="#10b981"
+        strokeWidth="2"
+        fill="none"
+        strokeDasharray={circumference}
+        strokeDashoffset={(1 - progress) * circumference}
+      />
+    </svg>
+  );
+}
+
 export default function Game({ onExit }: { onExit?: () => void }) {
   const ctx = useMemo<EngineContext>(() => {
     const c = createEngine();
@@ -571,8 +598,23 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     title: string;
     effects: Summary;
     requirements: string[];
+    costs: Record<string, number>;
   } | null>(null);
   const hoverTimeout = useRef<number>();
+  const [phaseSteps, setPhaseSteps] = useState<
+    {
+      items: string[];
+      active: boolean;
+    }[]
+  >([]);
+  const [phaseTimer, setPhaseTimer] = useState(0);
+  const [phasePaused, setPhasePaused] = useState(false);
+  const phasePausedRef = useRef(false);
+
+  function setPaused(v: boolean) {
+    phasePausedRef.current = v;
+    setPhasePaused(v);
+  }
 
   function formatRequirement(req: string): string {
     if (req === 'Requires free house') return 'Free space for 👥';
@@ -592,6 +634,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     title: string;
     effects: Summary;
     requirements: string[];
+    costs: Record<string, number>;
   }) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
     hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
@@ -688,7 +731,38 @@ export default function Game({ onExit }: { onExit?: () => void }) {
   }
 
   function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise<void>((resolve) => {
+      let elapsed = 0;
+      const step = 100;
+      const interval = window.setInterval(() => {
+        if (!phasePausedRef.current) {
+          elapsed += step;
+          if (elapsed >= ms) {
+            window.clearInterval(interval);
+            resolve();
+          }
+        }
+      }, step);
+    });
+  }
+
+  function runPhaseDelay() {
+    setPhaseTimer(0);
+    return new Promise<void>((resolve) => {
+      const total = 3000;
+      let elapsed = 0;
+      const step = 100;
+      const interval = window.setInterval(() => {
+        if (!phasePausedRef.current) {
+          elapsed += step;
+          setPhaseTimer(elapsed / total);
+          if (elapsed >= total) {
+            window.clearInterval(interval);
+            resolve();
+          }
+        }
+      }, step);
+    });
   }
 
   async function runPhaseForPlayer(
@@ -698,7 +772,9 @@ export default function Game({ onExit }: { onExit?: () => void }) {
     ctx.game.currentPlayerIndex = index;
     const player = ctx.activePlayer;
     const effects = collectTriggerEffects(trigger, ctx, player);
+    setPhaseSteps([]);
     for (const effect of effects) {
+      setPhaseSteps((prev) => [...prev, { items: [], active: true }]);
       const before = snapshotPlayer(player);
       runEffects([effect], ctx);
       const after = snapshotPlayer(player);
@@ -710,18 +786,36 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           player.name,
         );
       }
+      setPhaseSteps((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = {
+          items: changes.length ? changes : ['No effect'],
+          active: true,
+        };
+        return next;
+      });
       refresh();
       await sleep(1000);
+      setPhaseSteps((prev) => {
+        const next = [...prev];
+        if (next.length > 0) next[next.length - 1]!.active = false;
+        return next;
+      });
     }
   }
 
   async function startTurn(playerIndex: number) {
     ctx.game.currentPlayerIndex = playerIndex;
     ctx.game.currentPhase = Phase.Development;
+    refresh();
     await runPhaseForPlayer('onDevelopmentPhase', playerIndex);
+    await runPhaseDelay();
     ctx.game.currentPhase = Phase.Upkeep;
+    refresh();
     await runPhaseForPlayer('onUpkeepPhase', playerIndex);
+    await runPhaseDelay();
     ctx.game.currentPhase = Phase.Main;
+    setPhaseSteps([]);
     refresh();
   }
 
@@ -810,9 +904,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
       </span>
     );
 
-    const playerPassives = ctx.passives
-      .list()
-      .filter((id) => player.lands.some((l) => id.includes(l.id)));
+    const playerPassives = ctx.passives.list();
 
     function describePassive(id: string): string {
       if (id.startsWith('watchtower_absorption_'))
@@ -916,7 +1008,6 @@ export default function Game({ onExit }: { onExit?: () => void }) {
         </div>
 
         <section className="border rounded p-4 bg-white shadow">
-          <h2 className="text-xl font-semibold mb-2">Players</h2>
           <div className="flex flex-col gap-4">
             {ctx.game.players.map((p) => (
               <PlayerPanel key={p.id} player={p} />
@@ -924,11 +1015,16 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           </div>
         </section>
 
-        <section className="border rounded p-4 bg-white shadow">
+        <section
+          className="border rounded p-4 bg-white shadow relative"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          style={{ cursor: phasePaused ? 'pause' : 'auto' }}
+        >
           <h2 className="text-xl font-semibold mb-2">
             Turn {ctx.game.turn} - {ctx.activePlayer.name}
           </h2>
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-2">
             {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
               <span
                 key={p}
@@ -940,6 +1036,42 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               </span>
             ))}
           </div>
+          <ul className="text-sm text-left min-h-[1rem]">
+            {phaseSteps.map((s, i) => (
+              <li key={i} className={s.active ? 'font-semibold' : ''}>
+                {s.items.length > 0 ? (
+                  s.items.map((it, j) => <div key={j}>{it}</div>)
+                ) : (
+                  <div>...</div>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="absolute top-2 right-2">
+            {ctx.game.currentPhase === Phase.Main ? (
+              <>
+                <button
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                  disabled={ctx.activePlayer.ap > 0}
+                  onClick={() => void handleEndTurn()}
+                >
+                  Next Turn
+                </button>
+                {ctx.activePlayer.ap > 0 && (
+                  <span className="block text-xs text-red-500 mt-1">
+                    You still have unspent AP
+                  </span>
+                )}
+              </>
+            ) : (
+              <TimerCircle progress={phaseTimer} />
+            )}
+          </div>
+          {phasePaused && (
+            <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center text-sm">
+              Paused
+            </div>
+          )}
         </section>
 
         <section className="border rounded p-4 bg-white shadow">
@@ -947,23 +1079,6 @@ export default function Game({ onExit }: { onExit?: () => void }) {
             <h2 className="text-xl font-semibold">
               Actions (1 {resourceInfo[Resource.ap].icon} each)
             </h2>
-            <div className="flex flex-col items-end">
-              <button
-                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                disabled={
-                  ctx.game.currentPhase !== Phase.Main ||
-                  ctx.activePlayer.ap > 0
-                }
-                onClick={() => void handleEndTurn()}
-              >
-                End turn
-              </button>
-              {ctx.activePlayer.ap > 0 && (
-                <span className="text-xs text-red-500">
-                  You still have unspent AP
-                </span>
-              )}
-            </div>
           </div>
           <div className="space-y-4">
             <div className="grid grid-cols-4 gap-2">
@@ -992,11 +1107,12 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                   <button
                     key={action.id}
                     className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
-                      enabled ? '' : 'opacity-50 border-red-500'
+                      enabled
+                        ? ''
+                        : 'opacity-50 border-red-500 cursor-not-allowed'
                     }`}
-                    disabled={!enabled}
                     title={title}
-                    onClick={() => handlePerform(action)}
+                    onClick={() => enabled && handlePerform(action)}
                     onMouseEnter={() =>
                       handleHoverCard({
                         title: `${
@@ -1005,6 +1121,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                         } ${action.name}`,
                         effects: describeAction(action.id, ctx),
                         requirements,
+                        costs,
                       })
                     }
                     onMouseLeave={clearHoverCard}
@@ -1072,11 +1189,14 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       <button
                         key={role}
                         className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
-                          enabled ? '' : 'opacity-50 border-red-500'
+                          enabled
+                            ? ''
+                            : 'opacity-50 border-red-500 cursor-not-allowed'
                         }`}
-                        disabled={!enabled}
                         title={title}
-                        onClick={() => handlePerform(raisePopAction, { role })}
+                        onClick={() =>
+                          enabled && handlePerform(raisePopAction, { role })
+                        }
                         onMouseEnter={() =>
                           handleHoverCard({
                             title: `${actionInfo.raise_pop.icon} Raise Population - ${
@@ -1087,6 +1207,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                               ...describeAction('raise_pop', ctx),
                             ],
                             requirements,
+                            costs,
                           })
                         }
                         onMouseLeave={clearHoverCard}
@@ -1158,11 +1279,13 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       <button
                         key={d.id}
                         className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
-                          enabled ? '' : 'opacity-50 border-red-500'
+                          enabled
+                            ? ''
+                            : 'opacity-50 border-red-500 cursor-not-allowed'
                         }`}
-                        disabled={!enabled}
                         title={title}
                         onClick={() => {
+                          if (!enabled) return;
                           const landId = ctx.activePlayer.lands.find(
                             (l) => l.slotsFree > 0,
                           )?.id;
@@ -1175,6 +1298,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                             } ${d.name}`,
                             effects: describeDevelopment(d.id, ctx),
                             requirements,
+                            costs,
                           })
                         }
                         onMouseLeave={clearHoverCard}
@@ -1229,16 +1353,20 @@ export default function Game({ onExit }: { onExit?: () => void }) {
                       <button
                         key={b.id}
                         className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
-                          enabled ? '' : 'opacity-50 border-red-500'
+                          enabled
+                            ? ''
+                            : 'opacity-50 border-red-500 cursor-not-allowed'
                         }`}
-                        disabled={!enabled}
                         title={title}
-                        onClick={() => handlePerform(buildAction, { id: b.id })}
+                        onClick={() =>
+                          enabled && handlePerform(buildAction, { id: b.id })
+                        }
                         onMouseEnter={() =>
                           handleHoverCard({
                             title: `${actionInfo.build.icon} Build - ${b.name}`,
                             effects: describeBuilding(b.id, ctx),
                             requirements,
+                            costs,
                           })
                         }
                         onMouseLeave={clearHoverCard}
@@ -1271,8 +1399,13 @@ export default function Game({ onExit }: { onExit?: () => void }) {
           </ul>
         </div>
         {hoverCard && (
-          <div className="border rounded p-4 bg-white shadow">
-            <div className="font-semibold mb-2">{hoverCard.title}</div>
+          <div className="border rounded p-4 bg-white shadow relative">
+            <div className="font-semibold mb-2">
+              {hoverCard.title}
+              <span className="absolute top-2 right-2 text-sm text-gray-600">
+                {renderCosts(hoverCard.costs, ctx.activePlayer.resources)}
+              </span>
+            </div>
             {hoverCard.requirements.length > 0 && (
               <div className="mb-2">
                 <div className="font-semibold text-red-600">Requirements</div>
