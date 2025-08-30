@@ -13,3 +13,4 @@ import './formatters/building';
 import './formatters/modifier';
 import './formatters/passive';
 import './evaluators/development';
+import './evaluators/population';
