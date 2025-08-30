@@ -816,6 +816,11 @@ export default function Game({
               <h2 className="text-xl font-semibold">
                 Actions (1 {RESOURCES[Resource.ap].icon} each)
               </h2>
+              {ctx.game.currentPhase !== Phase.Main && (
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Not in Main phase
+                </span>
+              )}
             </div>
             <div className="space-y-4">
               <div className="grid grid-cols-4 gap-2">
@@ -845,9 +850,7 @@ export default function Game({
                       ? requirements.join(', ')
                       : !canPay
                         ? 'Cannot pay costs'
-                        : ctx.game.currentPhase !== Phase.Main
-                          ? 'Not in Main phase'
-                          : undefined;
+                        : undefined;
                   return (
                     <button
                       key={action.id}
@@ -936,9 +939,7 @@ export default function Game({
                         ? requirements.join(', ')
                         : !canPay
                           ? 'Cannot pay costs'
-                          : ctx.game.currentPhase !== Phase.Main
-                            ? 'Not in Main phase'
-                            : undefined;
+                          : undefined;
                       const summary = describeContent(
                         'action',
                         'raise_pop',
@@ -1049,9 +1050,7 @@ export default function Game({
                           ? 'No land with free development slot'
                           : !canPay
                             ? 'Cannot pay costs'
-                            : ctx.game.currentPhase !== Phase.Main
-                              ? 'Not in Main phase'
-                              : undefined;
+                            : undefined;
                       return (
                         <button
                           key={d.id}
@@ -1144,9 +1143,7 @@ export default function Game({
                         ? 'Not implemented yet'
                         : !canPay
                           ? 'Cannot pay costs'
-                          : ctx.game.currentPhase !== Phase.Main
-                            ? 'Not in Main phase'
-                            : undefined;
+                          : undefined;
                       return (
                         <button
                           key={b.id}
