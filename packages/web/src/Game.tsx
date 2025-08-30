@@ -9,12 +9,16 @@ import {
   getActionRequirements,
   Resource,
   PopulationRole,
+  RESOURCES,
+  STATS,
+  POPULATION_ROLES,
 } from '@kingdom-builder/engine';
-import type { EngineContext, ActionParams } from '@kingdom-builder/engine';
+import type {
+  EngineContext,
+  ActionParams,
+  ResourceKey,
+} from '@kingdom-builder/engine';
 import {
-  resourceInfo,
-  statInfo,
-  populationInfo,
   actionInfo,
   developmentInfo,
   landIcon,
@@ -71,6 +75,7 @@ interface PlayerPanelProps {
     description?: string;
     descriptionClass?: string;
     effectsTitle?: string;
+    bgClass?: string;
   }) => void;
   clearHoverCard: () => void;
 }
@@ -88,179 +93,163 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     if (key === 'absorption') return `${value * 100}%`;
     return String(value);
   }
-
-  const devCounts = new Map<string, number>();
-  let slotsFree = 0;
-  player.lands.forEach((land) => {
-    land.developments.forEach((d) =>
-      devCounts.set(d, (devCounts.get(d) || 0) + 1),
-    );
-    slotsFree += land.slotsFree;
-  });
-  const landCount = player.lands.length;
-  const totalSlots = player.lands.reduce((sum, land) => sum + land.slotsMax, 0);
-  const landItems: {
-    key: string;
-    icon: string;
-    label: string;
-    count: number;
-  }[] = [];
-  devCounts.forEach((count, id) =>
-    landItems.push({
-      key: id,
-      icon: developmentInfo[id]?.icon || id,
-      label: developmentInfo[id]?.label || id,
-      count,
-    }),
-  );
-  if (slotsFree > 0)
-    landItems.push({
-      key: 'slot',
-      icon: slotIcon,
-      label: 'Empty development slot',
-      count: slotsFree,
+  const showPopulationCard = () =>
+    handleHoverCard({
+      title: '👥 Population',
+      effects: Object.values(POPULATION_ROLES).map(
+        (r) => `${r.icon} ${r.label} - ${r.description}`,
+      ),
+      effectsTitle: 'Archetypes',
+      requirements: [],
+      costs: {},
+      description:
+        'Population represents the people of your kingdom. Manage them wisely and assign roles to benefit your realm.',
+      bgClass: 'bg-gray-100 dark:bg-gray-700',
     });
-  const landBar = (
-    <span className="bar-item">
-      <span title="Land">
-        {landIcon}
-        {landCount}
-      </span>{' '}
-      <span title="Development slots">
-        {actionInfo.develop.icon}
-        {totalSlots}
-      </span>
-      {' ('}
-      {landItems.map((item, i) => (
-        <React.Fragment key={item.key}>
-          {i > 0 && ' , '}
-          <span title={item.label}>
-            {item.icon}
-            {item.count}
-          </span>
-        </React.Fragment>
-      ))}
-      {')'}
-    </span>
-  );
 
   return (
     <div className="space-y-1">
       <h3 className="font-semibold">{player.name}</h3>
       <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
-        {Object.entries(player.resources).map(([k, v]) => (
-          <span
-            key={k}
-            title={resourceInfo[k as keyof typeof resourceInfo]?.label}
-            className="bar-item"
-          >
-            {resourceInfo[k as keyof typeof resourceInfo]?.icon}
-            {v}
-          </span>
-        ))}
+        {Object.entries(player.resources).map(([k, v]) => {
+          const info = RESOURCES[k as keyof typeof RESOURCES];
+          return (
+            <span
+              key={k}
+              className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+              onMouseEnter={() =>
+                handleHoverCard({
+                  title: `${info.icon} ${info.label}`,
+                  effects: [],
+                  requirements: [],
+                  costs: {},
+                  description: info.description,
+                  bgClass: 'bg-gray-100 dark:bg-gray-700',
+                })
+              }
+              onMouseLeave={clearHoverCard}
+            >
+              {info.icon}
+              {v}
+            </span>
+          );
+        })}
         <div className="h-4 border-l" />
         <span
-          title={`Population ${currentPop}/${player.maxPopulation}`}
-          className="bar-item"
+          className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+          onMouseEnter={showPopulationCard}
+          onMouseLeave={clearHoverCard}
         >
           👥{currentPop}/{player.maxPopulation}
           {popDetails.length > 0 && (
             <>
               {' ('}
-              {popDetails.map(({ role, count }, i) => (
-                <React.Fragment key={role}>
-                  {i > 0 && ','}
-                  <span title={populationInfo[role]?.label}>
-                    {populationInfo[role]?.icon}
-                    {count}
-                  </span>
-                </React.Fragment>
-              ))}
+              {popDetails.map(({ role, count }, i) => {
+                const info =
+                  POPULATION_ROLES[role as keyof typeof POPULATION_ROLES];
+                return (
+                  <React.Fragment key={role}>
+                    {i > 0 && ','}
+                    <span
+                      className="cursor-help transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
+                      onMouseEnter={(e) => {
+                        e.stopPropagation();
+                        handleHoverCard({
+                          title: `${info.icon} ${info.label}`,
+                          effects: [],
+                          requirements: [],
+                          costs: {},
+                          description: info.description,
+                          bgClass: 'bg-gray-100 dark:bg-gray-700',
+                        });
+                      }}
+                      onMouseLeave={(e) => {
+                        e.stopPropagation();
+                        showPopulationCard();
+                      }}
+                    >
+                      {info.icon}
+                      {count}
+                    </span>
+                  </React.Fragment>
+                );
+              })}
               {')'}
             </>
           )}
         </span>
         {Object.entries(player.stats)
           .filter(([k]) => k !== 'maxPopulation')
-          .map(([k, v]) => (
-            <span key={k} title={statInfo[k]?.label || k} className="bar-item">
-              {statInfo[k]?.icon}
-              {formatStatValue(k, v)}
-            </span>
-          ))}
-        <div className="h-4 border-l" />
-        {landBar}
+          .map(([k, v]) => {
+            const info = STATS[k as keyof typeof STATS];
+            return (
+              <span
+                key={k}
+                className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                onMouseEnter={() =>
+                  handleHoverCard({
+                    title: `${info.icon} ${info.label}`,
+                    effects: [],
+                    requirements: [],
+                    costs: {},
+                    description: info.description,
+                    bgClass: 'bg-gray-100 dark:bg-gray-700',
+                  })
+                }
+                onMouseLeave={clearHoverCard}
+              >
+                {info.icon}
+                {formatStatValue(k, v)}
+              </span>
+            );
+          })}
       </div>
       {player.lands.length > 0 && (
-        <div className="border p-2 rounded">
-          <h4 className="font-medium mb-1">Lands</h4>
-          <div className="grid grid-cols-4 gap-2">
-            {player.lands.map((land, idx) => {
-              const showLandCard = () =>
-                handleHoverCard({
-                  title: `${landIcon} Land`,
-                  effects: describeContent('land', land, ctx),
-                  requirements: [],
-                  costs: {},
-                  effectsTitle: 'Developments',
-                });
-              return (
-                <div
-                  key={idx}
-                  className="relative border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
-                  onMouseEnter={showLandCard}
-                  onMouseLeave={clearHoverCard}
-                >
-                  <span className="font-medium">{landIcon} Land</span>
-                  <div className="mt-1 flex flex-wrap justify-center gap-1">
-                    {Array.from({ length: land.slotsMax }).map((_, i) => {
-                      const devId = land.developments[i];
-                      if (devId) {
-                        const name = ctx.developments.get(devId)?.name || devId;
-                        const title = `${developmentInfo[devId]?.icon || ''} ${name}`;
-                        const handleLeave = () => showLandCard();
-                        return (
-                          <span
-                            key={i}
-                            className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
-                            onMouseEnter={(e) => {
-                              e.stopPropagation();
-                              handleHoverCard({
-                                title,
-                                effects: describeContent(
-                                  'development',
-                                  devId,
-                                  ctx,
-                                  {
-                                    installed: true,
-                                  },
-                                ),
-                                requirements: [],
-                                costs: {},
-                              });
-                            }}
-                            onMouseLeave={(e) => {
-                              e.stopPropagation();
-                              handleLeave();
-                            }}
-                          >
-                            {developmentInfo[devId]?.icon} {name}
-                          </span>
-                        );
-                      }
+        <div className="grid grid-cols-4 gap-2 mt-2">
+          {player.lands.map((land, idx) => {
+            const showLandCard = () =>
+              handleHoverCard({
+                title: `${landIcon} Land`,
+                effects: describeContent('land', land, ctx),
+                requirements: [],
+                costs: {},
+                effectsTitle: 'Developments',
+                bgClass: 'bg-gray-100 dark:bg-gray-700',
+              });
+            return (
+              <div
+                key={idx}
+                className="relative border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                onMouseEnter={showLandCard}
+                onMouseLeave={clearHoverCard}
+              >
+                <span className="font-medium">{landIcon} Land</span>
+                <div className="mt-1 flex flex-wrap justify-center gap-1">
+                  {Array.from({ length: land.slotsMax }).map((_, i) => {
+                    const devId = land.developments[i];
+                    if (devId) {
+                      const name = ctx.developments.get(devId)?.name || devId;
+                      const title = `${developmentInfo[devId]?.icon || ''} ${name}`;
                       const handleLeave = () => showLandCard();
                       return (
                         <span
                           key={i}
-                          className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
+                          className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
                           onMouseEnter={(e) => {
                             e.stopPropagation();
                             handleHoverCard({
-                              title: `${slotIcon} Empty development slot`,
-                              effects: [],
-                              description: `Use ${actionInfo.develop.icon} Develop to build here`,
+                              title,
+                              effects: describeContent(
+                                'development',
+                                devId,
+                                ctx,
+                                {
+                                  installed: true,
+                                },
+                              ),
                               requirements: [],
                               costs: {},
+                              bgClass: 'bg-gray-100 dark:bg-gray-700',
                             });
                           }}
                           onMouseLeave={(e) => {
@@ -268,47 +257,69 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                             handleLeave();
                           }}
                         >
-                          {slotIcon}
+                          {developmentInfo[devId]?.icon} {name}
                         </span>
                       );
-                    })}
-                  </div>
+                    }
+                    const handleLeave = () => showLandCard();
+                    return (
+                      <span
+                        key={i}
+                        className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                        onMouseEnter={(e) => {
+                          e.stopPropagation();
+                          handleHoverCard({
+                            title: `${slotIcon} Empty development slot`,
+                            effects: [],
+                            description: `Use ${actionInfo.develop.icon} Develop to build here`,
+                            requirements: [],
+                            costs: {},
+                            bgClass: 'bg-gray-100 dark:bg-gray-700',
+                          });
+                        }}
+                        onMouseLeave={(e) => {
+                          e.stopPropagation();
+                          handleLeave();
+                        }}
+                      >
+                        {slotIcon}
+                      </span>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       )}
       {player.buildings.size > 0 && (
-        <div className="border p-2 rounded">
-          <h4 className="font-medium mb-1">Buildings</h4>
-          <div className="grid grid-cols-4 gap-2">
-            {Array.from(player.buildings).map((b) => {
-              const name = ctx.buildings.get(b)?.name || b;
-              const title = `${buildingIcon} ${name}`;
-              return (
-                <div
-                  key={b}
-                  className="border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
-                  onMouseEnter={() =>
-                    handleHoverCard({
-                      title,
-                      effects: describeContent('building', b, ctx, {
-                        installed: true,
-                      }),
-                      requirements: [],
-                      costs: {},
-                    })
-                  }
-                  onMouseLeave={clearHoverCard}
-                >
-                  <span className="font-medium">
-                    {buildingIcon} {name}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+        <div className="grid grid-cols-4 gap-2 mt-2">
+          {Array.from(player.buildings).map((b) => {
+            const name = ctx.buildings.get(b)?.name || b;
+            const title = `${buildingIcon} ${name}`;
+            return (
+              <div
+                key={b}
+                className="border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                onMouseEnter={() =>
+                  handleHoverCard({
+                    title,
+                    effects: describeContent('building', b, ctx, {
+                      installed: true,
+                    }),
+                    requirements: [],
+                    costs: {},
+                    bgClass: 'bg-gray-100 dark:bg-gray-700',
+                  })
+                }
+                onMouseLeave={clearHoverCard}
+              >
+                <span className="font-medium">
+                  {buildingIcon} {name}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -332,7 +343,7 @@ function renderCosts(
           key={k}
           className={`mr-1 ${(resources[k] ?? 0) < v ? 'text-red-500' : ''}`}
         >
-          {resourceInfo[k as keyof typeof resourceInfo]?.icon}
+          {RESOURCES[k as ResourceKey]?.icon}
           {v}
         </span>
       ))}
@@ -405,6 +416,7 @@ export default function Game({
     description?: string;
     descriptionClass?: string;
     effectsTitle?: string;
+    bgClass?: string;
   } | null>(null);
   const hoverTimeout = useRef<number>();
   const [phaseSteps, setPhaseSteps] = useState<
@@ -448,6 +460,7 @@ export default function Game({
     description?: string;
     descriptionClass?: string;
     effectsTitle?: string;
+    bgClass?: string;
   }) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
     hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
@@ -586,7 +599,7 @@ export default function Game({
         title: 'Step 1 - Spend all AP',
         items: [
           {
-            text: `${resourceInfo[Resource.ap].icon} ${spent}/${total} spent`,
+            text: `${RESOURCES[Resource.ap].icon} ${spent}/${total} spent`,
             done: ctx.activePlayer.ap === 0,
           },
         ],
@@ -607,19 +620,19 @@ export default function Game({
       {
         title: 'Gain Income',
         classify: (change: string) =>
-          change.includes(resourceInfo[Resource.gold].icon) ||
-          change.includes(resourceInfo[Resource.happiness].icon),
+          change.includes(RESOURCES[Resource.gold].icon) ||
+          change.includes(RESOURCES[Resource.happiness].icon),
       },
       {
         title: 'Generate Action Points',
         classify: (change: string) =>
-          change.includes(resourceInfo[Resource.ap].icon),
+          change.includes(RESOURCES[Resource.ap].icon),
       },
       {
         title: 'Grow Strengths',
         classify: (change: string) =>
-          change.includes(statInfo['armyStrength']!.icon) ||
-          change.includes(statInfo['fortificationStrength']!.icon),
+          change.includes(STATS['armyStrength'].icon) ||
+          change.includes(STATS['fortificationStrength'].icon),
       },
     ] as const;
 
@@ -627,7 +640,7 @@ export default function Game({
       {
         title: 'Pay Upkeep',
         classify: (change: string) =>
-          change.includes(resourceInfo[Resource.gold].icon),
+          change.includes(RESOURCES[Resource.gold].icon),
       },
       {
         title: 'Check Shortfall',
@@ -671,11 +684,11 @@ export default function Game({
       const fortifiers = player.population[PopulationRole.Fortifier] || 0;
       if (stepItems[2]!.length === 0) {
         stepItems[2]!.push({
-          text: `${populationInfo[PopulationRole.Commander]!.icon}${commanders} - No effect`,
+          text: `${POPULATION_ROLES[PopulationRole.Commander].icon}${commanders} - No effect`,
           italic: true,
         });
         stepItems[2]!.push({
-          text: `${populationInfo[PopulationRole.Fortifier]!.icon}${fortifiers} - No effect`,
+          text: `${POPULATION_ROLES[PopulationRole.Fortifier].icon}${fortifiers} - No effect`,
           italic: true,
         });
       }
@@ -802,10 +815,13 @@ export default function Game({
               ))}
             </div>
           </section>
-          <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow">
+          <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative">
+            {ctx.game.currentPhase !== Phase.Main && (
+              <div className="absolute inset-0 bg-gray-200/60 dark:bg-gray-900/60 rounded pointer-events-none" />
+            )}
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-xl font-semibold">
-                Actions (1 {resourceInfo[Resource.ap].icon} each)
+                Actions (1 {RESOURCES[Resource.ap].icon} each)
               </h2>
             </div>
             <div className="space-y-4">
@@ -843,9 +859,7 @@ export default function Game({
                     <button
                       key={action.id}
                       className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                        enabled
-                          ? ''
-                          : 'opacity-50 border-red-500 cursor-not-allowed'
+                        enabled ? '' : 'opacity-50 cursor-not-allowed'
                       }`}
                       title={title}
                       onClick={() => enabled && handlePerform(action)}
@@ -862,6 +876,7 @@ export default function Game({
                             description: 'Not implemented yet',
                             descriptionClass: 'italic text-red-600',
                           }),
+                          bgClass: 'bg-gray-100 dark:bg-gray-700',
                         })
                       }
                       onMouseLeave={clearHoverCard}
@@ -944,22 +959,20 @@ export default function Game({
                       const first = summary[0];
                       if (first && typeof first !== 'string') {
                         first.items.push(
-                          `👥(${populationInfo[role]?.icon}) +1`,
+                          `👥(${POPULATION_ROLES[role]?.icon}) +1`,
                         );
                       }
                       const shortFirst = shortSummary[0];
                       if (shortFirst && typeof shortFirst !== 'string') {
                         shortFirst.items.push(
-                          `👥(${populationInfo[role]?.icon}) +1`,
+                          `👥(${POPULATION_ROLES[role]?.icon}) +1`,
                         );
                       }
                       return (
                         <button
                           key={role}
                           className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled
-                              ? ''
-                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                            enabled ? '' : 'opacity-50 cursor-not-allowed'
                           }`}
                           title={title}
                           onClick={() =>
@@ -968,18 +981,19 @@ export default function Game({
                           onMouseEnter={() =>
                             handleHoverCard({
                               title: `${actionInfo.raise_pop.icon} Raise Population - ${
-                                populationInfo[role]?.icon
-                              } ${populationInfo[role]?.label || ''}`,
+                                POPULATION_ROLES[role]?.icon
+                              } ${POPULATION_ROLES[role]?.label || ''}`,
                               effects: summary,
                               requirements,
                               costs,
+                              bgClass: 'bg-gray-100 dark:bg-gray-700',
                             })
                           }
                           onMouseLeave={clearHoverCard}
                         >
                           <span className="text-base font-medium">
-                            {populationInfo[role]?.icon}{' '}
-                            {populationInfo[role]?.label}
+                            {POPULATION_ROLES[role]?.icon}{' '}
+                            {POPULATION_ROLES[role]?.label}
                           </span>
                           <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                             {renderCosts(costs, ctx.activePlayer.resources)}
@@ -1049,9 +1063,7 @@ export default function Game({
                         <button
                           key={d.id}
                           className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled
-                              ? ''
-                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                            enabled ? '' : 'opacity-50 cursor-not-allowed'
                           }`}
                           title={title}
                           onClick={() => {
@@ -1077,6 +1089,7 @@ export default function Game({
                                 description: 'Not implemented yet',
                                 descriptionClass: 'italic text-red-600',
                               }),
+                              bgClass: 'bg-gray-100 dark:bg-gray-700',
                             })
                           }
                           onMouseLeave={clearHoverCard}
@@ -1145,9 +1158,7 @@ export default function Game({
                         <button
                           key={b.id}
                           className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled
-                              ? ''
-                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                            enabled ? '' : 'opacity-50 cursor-not-allowed'
                           }`}
                           title={title}
                           onClick={() =>
@@ -1163,6 +1174,7 @@ export default function Game({
                                 description: 'Not implemented yet',
                                 descriptionClass: 'italic text-red-600',
                               }),
+                              bgClass: 'bg-gray-100 dark:bg-gray-700',
                             })
                           }
                           onMouseLeave={clearHoverCard}
@@ -1273,7 +1285,9 @@ export default function Game({
             </ul>
           </div>
           {hoverCard && (
-            <div className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative pointer-events-none w-full">
+            <div
+              className={`border rounded p-4 shadow relative pointer-events-none w-full ${hoverCard.bgClass || 'bg-white dark:bg-gray-800'}`}
+            >
               <div className="font-semibold mb-2">
                 {hoverCard.title}
                 <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">

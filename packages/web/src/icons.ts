@@ -1,25 +1,3 @@
-export const resourceInfo = {
-  gold: { icon: '🪙', label: 'Gold' },
-  ap: { icon: '⚡', label: 'Action Points' },
-  happiness: { icon: '😊', label: 'Happiness' },
-  castleHP: { icon: '🏰', label: 'Castle HP' },
-} as const;
-
-export const statInfo: Record<string, { icon: string; label: string }> = {
-  maxPopulation: { icon: '👥', label: 'Max Population' },
-  armyStrength: { icon: '🗡️', label: 'Army Strength' },
-  fortificationStrength: { icon: '🛡️', label: 'Fortification Strength' },
-  absorption: { icon: '🌀', label: 'Absorption' },
-  armyGrowth: { icon: '📈', label: 'Army Growth' },
-};
-
-export const populationInfo: Record<string, { icon: string; label: string }> = {
-  council: { icon: '⚖️', label: 'Council' },
-  commander: { icon: '🎖️', label: 'Army Commander' },
-  fortifier: { icon: '🧱', label: 'Fortifier' },
-  citizen: { icon: '👤', label: 'Citizen' },
-};
-
 export const actionInfo = {
   expand: { icon: '🌱' },
   overwork: { icon: '🛠️' },

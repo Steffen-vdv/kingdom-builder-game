@@ -1,4 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+vi.mock(
+  '@kingdom-builder/engine',
+  async () => import('../../packages/engine/src'),
+);
 import { createEngine } from '../../packages/engine/src';
 import { summarizeContent } from '../../packages/web/src/translation/content';
 
