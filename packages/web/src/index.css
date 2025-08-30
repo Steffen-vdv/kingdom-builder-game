@@ -6,11 +6,63 @@
   cursor: help;
 }
 
+@keyframes player-bg-slide {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 40px 40px;
+  }
+}
+
 @layer components {
   .bar-item {
     @apply flex items-center gap-1 tabular-nums whitespace-nowrap;
   }
   .hoverable {
     @apply transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105;
+  }
+  .panel-card {
+    @apply rounded-md bg-black/5 dark:bg-white/10;
+  }
+  .player-bg {
+    @apply relative overflow-hidden text-gray-900 dark:text-white;
+    --stripe-color: rgba(0, 0, 0, 0.05);
+    background: var(--player-color);
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--stripe-color) 0,
+      var(--stripe-color) 10px,
+      transparent 10px,
+      transparent 20px
+    );
+    animation: player-bg-slide 60s linear infinite;
+  }
+  .dark .player-bg {
+    --stripe-color: rgba(255, 255, 255, 0.05);
+  }
+  .player-bg-blue {
+    --player-color: #dbeafe;
+  }
+  .player-bg-blue-active {
+    --player-color: #bfdbfe;
+  }
+  .player-bg-red {
+    --player-color: #fee2e2;
+  }
+  .player-bg-red-active {
+    --player-color: #fecaca;
+  }
+  .dark .player-bg-blue {
+    --player-color: rgba(30, 58, 138, 0.5);
+  }
+  .dark .player-bg-blue-active {
+    --player-color: rgba(59, 130, 246, 0.6);
+  }
+  .dark .player-bg-red {
+    --player-color: rgba(127, 29, 29, 0.5);
+  }
+  .dark .player-bg-red-active {
+    --player-color: rgba(220, 38, 38, 0.6);
   }
 }

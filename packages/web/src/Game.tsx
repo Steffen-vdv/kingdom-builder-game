@@ -110,13 +110,13 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
   return (
     <div className={`h-full flex flex-col space-y-1 ${className}`}>
       <h3 className="font-semibold">{player.name}</h3>
-      <div className="flex flex-wrap items-center gap-2 border p-2 rounded w-fit">
+      <div className="panel-card flex flex-wrap items-center gap-2 px-3 py-2 w-fit">
         {Object.entries(player.resources).map(([k, v]) => {
           const info = RESOURCES[k as keyof typeof RESOURCES];
           return (
             <span
               key={k}
-              className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+              className="bar-item hoverable cursor-help rounded px-1"
               onMouseEnter={() =>
                 handleHoverCard({
                   title: `${info.icon} ${info.label}`,
@@ -133,9 +133,9 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
             </span>
           );
         })}
-        <div className="h-4 border-l" />
+        <div className="h-4 border-l border-black/10 dark:border-white/10" />
         <span
-          className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+          className="bar-item hoverable cursor-help rounded px-1"
           onMouseEnter={showPopulationCard}
           onMouseLeave={clearHoverCard}
         >
@@ -150,7 +150,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                   <React.Fragment key={role}>
                     {i > 0 && ','}
                     <span
-                      className="cursor-help transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105"
+                      className="cursor-help hoverable rounded px-1"
                       onMouseEnter={(e) => {
                         e.stopPropagation();
                         handleHoverCard({
@@ -183,7 +183,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
             return (
               <span
                 key={k}
-                className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                className="bar-item hoverable cursor-help rounded px-1"
                 onMouseEnter={() =>
                   handleHoverCard({
                     title: `${info.icon} ${info.label}`,
@@ -215,7 +215,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
             return (
               <div
                 key={idx}
-                className="relative border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                className="relative panel-card p-2 text-center hoverable cursor-help"
                 onMouseEnter={showLandCard}
                 onMouseLeave={clearHoverCard}
               >
@@ -230,7 +230,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                       return (
                         <span
                           key={i}
-                          className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                          className="panel-card p-1 text-xs hoverable cursor-help"
                           onMouseEnter={(e) => {
                             e.stopPropagation();
                             handleHoverCard({
@@ -260,7 +260,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                     return (
                       <span
                         key={i}
-                        className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help whitespace-nowrap"
+                        className="panel-card p-1 text-xs hoverable cursor-help whitespace-nowrap"
                         onMouseEnter={(e) => {
                           e.stopPropagation();
                           handleHoverCard({
@@ -296,7 +296,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
             return (
               <div
                 key={b}
-                className="border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                className="panel-card p-2 text-center hoverable cursor-help"
                 onMouseEnter={() =>
                   handleHoverCard({
                     title,
@@ -765,17 +765,17 @@ export default function Game({
             className="border rounded bg-white dark:bg-gray-800 shadow flex"
             style={{ minHeight: sharedHeight }}
           >
-            <div className="flex flex-1 items-stretch rounded overflow-hidden divide-x divide-gray-300">
+            <div className="flex flex-1 items-stretch rounded overflow-hidden divide-x divide-black/10 dark:divide-white/10">
               {ctx.game.players.map((p, i) => {
                 const isActive = p.id === ctx.activePlayer.id;
                 const bgClass =
                   i === 0
                     ? isActive
-                      ? 'bg-[#1f3b99] text-white pr-6'
-                      : 'bg-[#11235f] text-white pr-6'
+                      ? 'player-bg player-bg-blue-active pr-6'
+                      : 'player-bg player-bg-blue pr-6'
                     : isActive
-                      ? 'bg-[#813939] text-white pl-6'
-                      : 'bg-[#632b2b] text-white pl-6';
+                      ? 'player-bg player-bg-red-active pl-6'
+                      : 'player-bg player-bg-red pl-6';
                 return (
                   <PlayerPanel
                     key={p.id}
