@@ -9,7 +9,7 @@ or other consumers.
 
 Effects are translated by registry-driven **formatters** located under
 `packages/web/src/translation/effects`. Each effect formatter describes how to
-summarize and describe a specific `{type, method}` pair.
+summarize, describe and log a specific `{type, method}` pair.
 
 Formatters register themselves with the factory when their module is imported:
 
@@ -17,12 +17,14 @@ Formatters register themselves with the factory when their module is imported:
 registerEffectFormatter('resource', 'add', {
   summarize: ...,
   describe: ...,
+  log: ...,
 });
 ```
 
 The factory applies the appropriate formatter for each effect. Adding support
 for a new effect simply means creating a new formatter module and registering it
-with `registerEffectFormatter`.
+with `registerEffectFormatter`. The optional `log` handler formats effects in a
+"this just happened" style for the game log.
 
 Common verb helpers such as `gainOrLose` and `increaseOrDecrease` live in
 `effects/helpers.ts` to keep wording consistent.
@@ -36,12 +38,13 @@ Content such as actions, developments, buildings and land are handled by
 Translators implement `summarize` and `describe` and may compose other
 translators. For example, the development and building translators share the
 `PhasedTranslator` to process phase-specific effects and are wrapped with the
-`withInstallation` decorator to add the appropriate "On build" header.
+`withInstallation` decorator to add the appropriate "On build" header. A
+translator may optionally expose a `log` method for producing flat log lines.
 
-Consumers call the generic `summarizeContent` or `describeContent` factory
-functions which dispatch to the correct translator based on the content type.
-Adding a new content type only requires implementing and registering another
-translator.
+Consumers call the generic `summarizeContent`, `describeContent` or
+`logContent` factory functions which dispatch to the correct translator based on
+the content type. Adding a new content type only requires implementing and
+registering another translator.
 
 ## Extending
 
@@ -51,6 +54,15 @@ translator.
    card type) needs summaries or descriptions.
 3. Register the translator with `registerContentTranslator` and expose it by
    importing the module in `translation/content/index.ts`.
+
+## Logging helpers
+
+State changes are derived through `snapshotPlayer` and `diffSnapshots` in
+`translation/log.ts`. These utilities capture player state before and after an
+effect resolves and emit human readable change strings such as
+`Gold +2 (10→12)`. Phase headings draw from `phaseInfo`, which provides both a
+`future` label for summaries (e.g. "On each Development Phase") and a `past`
+label for log entries ("Development Phase").
 
 This structure keeps translation logic isolated and makes the UI resilient to
 engine and content changes.

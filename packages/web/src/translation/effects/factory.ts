@@ -10,6 +10,10 @@ export interface EffectFormatter {
     effect: EffectDef<Record<string, unknown>>,
     ctx: EngineContext,
   ) => string | string[] | null;
+  log?: (
+    effect: EffectDef<Record<string, unknown>>,
+    ctx: EngineContext,
+  ) => string | string[] | null;
 }
 
 const EFFECT_FORMATTERS = new Map<string, EffectFormatter>();
@@ -34,6 +38,11 @@ export interface EvaluatorFormatter {
     sub: string[],
     ctx: EngineContext,
   ) => string[];
+  log?: (
+    ev: { type: string; params: Record<string, unknown> },
+    sub: string[],
+    ctx: EngineContext,
+  ) => string[];
 }
 
 export function registerEvaluatorFormatter(
@@ -46,7 +55,7 @@ export function registerEvaluatorFormatter(
 function applyFormatter(
   effect: EffectDef<Record<string, unknown>>,
   ctx: EngineContext,
-  mode: 'summarize' | 'describe',
+  mode: 'summarize' | 'describe' | 'log',
 ): string[] {
   const key = `${effect.type}:${effect.method ?? ''}`;
   const handler = EFFECT_FORMATTERS.get(key);
@@ -104,6 +113,31 @@ export function describeEffects(
       continue;
     }
     parts.push(...applyFormatter(eff, ctx, 'describe'));
+  }
+  return parts.map((p) => p.trim());
+}
+
+export function logEffects(
+  effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
+  ctx: EngineContext,
+): string[] {
+  const parts: string[] = [];
+  for (const eff of effects || []) {
+    if (eff.evaluator) {
+      const ev = eff.evaluator as {
+        type: string;
+        params: Record<string, unknown>;
+      };
+      const sub = logEffects(eff.effects, ctx);
+      const handler = EVALUATOR_FORMATTERS.get(ev.type);
+      if (handler?.log) {
+        parts.push(...handler.log(ev, sub, ctx));
+      } else {
+        parts.push(...sub);
+      }
+      continue;
+    }
+    parts.push(...applyFormatter(eff, ctx, 'log'));
   }
   return parts.map((p) => p.trim());
 }

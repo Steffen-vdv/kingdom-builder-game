@@ -9,13 +9,23 @@ class ActionTranslator implements ContentTranslator<string> {
     const def = ctx.actions.get(id);
     const eff = summarizeEffects(def.effects, ctx);
     if (!eff.length) return [];
-    return [{ title: `${phaseInfo.mainPhase.icon} Immediately`, items: eff }];
+    return [
+      {
+        title: `${phaseInfo.mainPhase.icon} ${phaseInfo.mainPhase.future}`,
+        items: eff,
+      },
+    ];
   }
   describe(id: string, ctx: EngineContext): Summary {
     const def = ctx.actions.get(id);
     const eff = describeEffects(def.effects, ctx);
     if (!eff.length) return [];
-    return [{ title: `${phaseInfo.mainPhase.icon} Immediately`, items: eff }];
+    return [
+      {
+        title: `${phaseInfo.mainPhase.icon} ${phaseInfo.mainPhase.future}`,
+        items: eff,
+      },
+    ];
   }
 }
 

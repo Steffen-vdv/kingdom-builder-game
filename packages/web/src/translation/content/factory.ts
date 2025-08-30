@@ -33,3 +33,15 @@ export function describeContent<T, O>(
     | undefined;
   return translator ? translator.describe(target, ctx, opts) : [];
 }
+
+export function logContent<T, O>(
+  type: string,
+  target: T,
+  ctx: EngineContext,
+  opts?: O,
+): string[] {
+  const translator = TRANSLATORS.get(type) as
+    | ContentTranslator<T, O>
+    | undefined;
+  return translator?.log ? translator.log(target, ctx, opts) : [];
+}

@@ -3,6 +3,7 @@ export {
   registerContentTranslator,
   summarizeContent,
   describeContent,
+  logContent,
 } from './factory';
 
 import './action';

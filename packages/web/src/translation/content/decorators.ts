@@ -14,8 +14,8 @@ export function withInstallation<T>(
       const inner = translator.summarize(target, ctx, opts);
       if (!inner.length) return [];
       const title = opts?.installed
-        ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
-        : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
+        ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.future}`
+        : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.future.toLowerCase()}`;
       return [{ title, items: inner }];
     },
     describe(
@@ -26,8 +26,8 @@ export function withInstallation<T>(
       const inner = translator.describe(target, ctx, opts);
       if (!inner.length) return [];
       const title = opts?.installed
-        ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
-        : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
+        ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.future}`
+        : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.future.toLowerCase()}`;
       return [{ title, items: inner }];
     },
   };

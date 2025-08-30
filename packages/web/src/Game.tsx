@@ -25,110 +25,10 @@ import {
 import {
   summarizeContent,
   describeContent,
+  snapshotPlayer,
+  diffSnapshots,
   type Summary,
-  type Land,
 } from './translation';
-
-interface Player {
-  resources: Record<string, number>;
-  stats: Record<string, number>;
-  buildings: Set<string>;
-  lands: Land[];
-}
-
-type Snapshot = {
-  resources: Record<string, number>;
-  stats: Record<string, number>;
-  buildings: string[];
-  lands: {
-    id: string;
-    slotsMax: number;
-    slotsUsed: number;
-    developments: string[];
-  }[];
-};
-
-function snapshotPlayer(player: Player): Snapshot {
-  return {
-    resources: { ...player.resources },
-    stats: { ...player.stats },
-    buildings: Array.from(player.buildings ?? []),
-    lands: player.lands.map((l) => ({
-      id: l.id,
-      slotsMax: l.slotsMax,
-      slotsUsed: l.slotsUsed,
-      developments: [...l.developments],
-    })),
-  };
-}
-
-function diffSnapshots(
-  before: Snapshot,
-  after: Snapshot,
-  ctx: EngineContext,
-): string[] {
-  const changes: string[] = [];
-  for (const key of Object.keys(after.resources)) {
-    const b = before.resources[key] ?? 0;
-    const a = after.resources[key] ?? 0;
-    if (a !== b) {
-      const info = resourceInfo[key as keyof typeof resourceInfo];
-      const icon = info?.icon ? `${info.icon} ` : '';
-      const label = info?.label ?? key;
-      const delta = a - b;
-      changes.push(
-        `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-      );
-    }
-  }
-  for (const key of Object.keys(after.stats)) {
-    const b = before.stats[key] ?? 0;
-    const a = after.stats[key] ?? 0;
-    if (a !== b) {
-      const info = statInfo[key];
-      const icon = info?.icon ? `${info.icon} ` : '';
-      const label = info?.label ?? key;
-      const delta = a - b;
-      if (key === 'absorption') {
-        const bPerc = b * 100;
-        const aPerc = a * 100;
-        const dPerc = delta * 100;
-        changes.push(
-          `${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
-        );
-      } else {
-        changes.push(
-          `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-        );
-      }
-    }
-  }
-  const beforeB = new Set(before.buildings);
-  const afterB = new Set(after.buildings);
-  for (const id of afterB)
-    if (!beforeB.has(id)) {
-      let name = id;
-      try {
-        name = ctx.buildings.get(id).name;
-      } catch {
-        // use id if lookup fails
-      }
-      changes.push(`${buildingIcon} ${name} built`);
-    }
-  for (const land of after.lands) {
-    const prev = before.lands.find((l) => l.id === land.id);
-    if (!prev) {
-      changes.push(`${landIcon} New land`);
-      continue;
-    }
-    for (const dev of land.developments)
-      if (!prev.developments.includes(dev)) {
-        const icon = developmentInfo[dev]?.icon || dev;
-        changes.push(`${landIcon} +${icon}`);
-      }
-  }
-  return changes;
-}
 
 interface Action {
   id: string;
@@ -752,23 +652,25 @@ export default function Game({
       () => [] as { text: string; italic?: boolean; done?: boolean }[],
     );
 
+    const phaseChanges: string[] = [];
     for (const effect of effects) {
       const before = snapshotPlayer(player);
       runEffects([effect], ctx);
       const after = snapshotPlayer(player);
       const changes = diffSnapshots(before, after, ctx);
-      if (changes.length) {
-        const info = phaseInfo[trigger];
-        addLog(
-          [`${info.icon} ${info.label}:`, ...changes.map((c) => `  ${c}`)],
-          player.name,
-        );
-      }
+      phaseChanges.push(...changes);
       for (const change of changes) {
         let idx = stepDefs.findIndex((s) => s.classify(change));
         if (idx === -1) idx = stepDefs.length - 1;
         stepItems[idx]!.push({ text: change });
       }
+    }
+    if (phaseChanges.length) {
+      const info = phaseInfo[trigger];
+      addLog(
+        [`${info.icon} ${info.past}:`, ...phaseChanges.map((c) => `  ${c}`)],
+        player.name,
+      );
     }
 
     if (trigger === 'onDevelopmentPhase') {

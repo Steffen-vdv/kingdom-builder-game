@@ -18,19 +18,19 @@ export class PhasedTranslator {
     const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
     if (dev.length)
       root.push({
-        title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
+        title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.future}`,
         items: dev,
       });
     const upk = summarizeEffects(def.onUpkeepPhase, ctx);
     if (upk.length)
       root.push({
-        title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
+        title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.future}`,
         items: upk,
       });
     const atk = summarizeEffects(def.onAttackResolved, ctx);
     if (atk.length)
       root.push({
-        title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
+        title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.future}`,
         items: atk,
       });
     return root;
@@ -43,19 +43,19 @@ export class PhasedTranslator {
     const dev = describeEffects(def.onDevelopmentPhase, ctx);
     if (dev.length)
       root.push({
-        title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
+        title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.future}`,
         items: dev,
       });
     const upk = describeEffects(def.onUpkeepPhase, ctx);
     if (upk.length)
       root.push({
-        title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
+        title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.future}`,
         items: upk,
       });
     const atk = describeEffects(def.onAttackResolved, ctx);
     if (atk.length)
       root.push({
-        title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
+        title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.future}`,
         items: atk,
       });
     return root;

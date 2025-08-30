@@ -53,9 +53,25 @@ export const modifierInfo = {
 } as const;
 
 export const phaseInfo = {
-  onBuild: { icon: '⚒️', label: 'Until removed' },
-  onDevelopmentPhase: { icon: '🏗️', label: 'On each Development Phase' },
-  onUpkeepPhase: { icon: '🧹', label: 'On each Upkeep Phase' },
-  onAttackResolved: { icon: '⚔️', label: 'After having been attacked' },
-  mainPhase: { icon: '🎯', label: 'Main phase' },
+  onBuild: {
+    icon: '⚒️',
+    future: 'Until removed',
+    past: 'Build',
+  },
+  onDevelopmentPhase: {
+    icon: '🏗️',
+    future: 'On each Development Phase',
+    past: 'Development Phase',
+  },
+  onUpkeepPhase: {
+    icon: '🧹',
+    future: 'On each Upkeep Phase',
+    past: 'Upkeep Phase',
+  },
+  onAttackResolved: {
+    icon: '⚔️',
+    future: 'After having been attacked',
+    past: 'After attack',
+  },
+  mainPhase: { icon: '🎯', future: 'Immediately', past: 'Main phase' },
 } as const;
