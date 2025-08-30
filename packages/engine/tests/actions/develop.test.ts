@@ -74,8 +74,7 @@ function expectState(actual: PlayerState, expected: PlayerState) {
 describe('Develop action', () => {
   it('places a Farm applying its configured effects', () => {
     const ctx = createEngine();
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
     const expected = simulateBuild(ctx, 'farm', land.id);
@@ -87,8 +86,7 @@ describe('Develop action', () => {
 
   it('places a House applying its configured effects', () => {
     const ctx = createEngine();
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
     const expected = simulateBuild(ctx, 'house', land.id);
@@ -100,8 +98,7 @@ describe('Develop action', () => {
 
   it('places an Outpost applying its configured effects', () => {
     const ctx = createEngine();
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
     const expected = simulateBuild(ctx, 'outpost', land.id);
@@ -113,8 +110,7 @@ describe('Develop action', () => {
 
   it('applies development effects and cleans up after attack', () => {
     const ctx = createEngine();
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
 
     const expectedBuild = simulateBuild(ctx, 'watchtower', land.id);
@@ -132,8 +128,7 @@ describe('Develop action', () => {
 
   it('removing a development reverts its on-build effects', () => {
     const ctx = createEngine();
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
 
     const def = ctx.developments.get('house');

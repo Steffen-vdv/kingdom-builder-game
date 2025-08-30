@@ -605,11 +605,16 @@ export default function Game({
 
   async function runUntilActionPhase() {
     setPhaseSteps([]);
+    let lastPhase = '';
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
       const before = snapshotPlayer(ctx.activePlayer);
       const { phase, step, player } = advance(ctx);
       const after = snapshotPlayer(player);
       const changes = diffSnapshots(before, after, ctx);
+      if (phase !== lastPhase) {
+        setPhaseSteps([]);
+        lastPhase = phase;
+      }
       if (changes.length) {
         const info = phaseInfo[
           `on${phase.charAt(0).toUpperCase() + phase.slice(1)}Phase` as keyof typeof phaseInfo
@@ -628,7 +633,10 @@ export default function Game({
         ...prev,
         {
           title: stepDef?.title || step,
-          items: changes.map((text) => ({ text })),
+          items:
+            changes.length > 0
+              ? changes.map((text) => ({ text }))
+              : [{ text: 'No effect', italic: true }],
           active: false,
         },
       ]);

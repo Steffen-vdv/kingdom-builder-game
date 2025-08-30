@@ -21,8 +21,7 @@ describe('Raise Population action', () => {
   it('assigns a Council and applies effects', () => {
     const ctx = createEngine();
     ctx.activePlayer.maxPopulation = 2;
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const costs = getActionCosts('raise_pop', ctx);
     const goldBefore = ctx.activePlayer.gold;
     const apBefore = ctx.activePlayer.ap;
@@ -47,8 +46,7 @@ describe('Raise Population action', () => {
   it('assigns a Commander and grants army strength', () => {
     const ctx = createEngine();
     ctx.activePlayer.maxPopulation = 2;
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const commanderDef = ctx.populations.get(PopulationRole.Commander);
     const passive = commanderDef.onAssigned![0];
     const statGain = (
@@ -62,8 +60,7 @@ describe('Raise Population action', () => {
 
   it('enforces population cap requirement', () => {
     const ctx = createEngine();
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     expect(() =>
       performAction('raise_pop', ctx, { role: PopulationRole.Council }),
     ).toThrow();
@@ -72,8 +69,7 @@ describe('Raise Population action', () => {
   it('removes commander passive when unassigned', () => {
     const ctx = createEngine();
     ctx.activePlayer.maxPopulation = 2;
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     performAction('raise_pop', ctx, { role: PopulationRole.Commander });
     const afterAdd = ctx.activePlayer.armyStrength;
     runEffects(
@@ -93,8 +89,7 @@ describe('Raise Population action', () => {
   it('removes council AP when unassigned', () => {
     const ctx = createEngine();
     ctx.activePlayer.maxPopulation = 2;
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     performAction('raise_pop', ctx, { role: PopulationRole.Council });
     runEffects(
       [

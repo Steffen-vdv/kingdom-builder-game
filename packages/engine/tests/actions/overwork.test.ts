@@ -35,8 +35,7 @@ function getOverworkExpectations(ctx: EngineContext) {
 describe('Overwork action', () => {
   it('grants gold and loses happiness for each Farm', () => {
     const ctx = createEngine();
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const goldBefore = ctx.activePlayer.gold;
     const hapBefore = ctx.activePlayer.happiness;
     const expected = getOverworkExpectations(ctx);

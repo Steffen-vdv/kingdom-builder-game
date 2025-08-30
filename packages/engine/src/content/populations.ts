@@ -22,11 +22,6 @@ export function createPopulationRegistry() {
         method: 'remove',
         params: { key: Resource.ap, amount: 1 },
       })
-      .onDevelopmentPhase({
-        type: 'resource',
-        method: 'add',
-        params: { key: Resource.ap, amount: 1 },
-      })
       .onUpkeepPhase({
         type: 'resource',
         method: 'remove',
@@ -55,11 +50,6 @@ export function createPopulationRegistry() {
         method: 'remove',
         params: { id: 'commander_$player_$index' },
       })
-      .onDevelopmentPhase({
-        type: 'stat',
-        method: 'add_pct',
-        params: { key: Stat.armyStrength, percent: 25 },
-      })
       .onUpkeepPhase({
         type: 'resource',
         method: 'remove',
@@ -87,11 +77,6 @@ export function createPopulationRegistry() {
         type: 'passive',
         method: 'remove',
         params: { id: 'fortifier_$player_$index' },
-      })
-      .onDevelopmentPhase({
-        type: 'stat',
-        method: 'add_pct',
-        params: { key: Stat.fortificationStrength, percent: 25 },
       })
       .onUpkeepPhase({
         type: 'resource',

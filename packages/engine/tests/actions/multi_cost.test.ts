@@ -21,8 +21,7 @@ describe('multi-cost content', () => {
       .build();
 
     const ctx = createEngine({ config: { actions: [multiCostAction] } });
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
 
     ctx.activePlayer.gold = 5;
     ctx.activePlayer.happiness = 3;
@@ -64,8 +63,7 @@ describe('multi-cost content', () => {
         buildings: [multiCostBuildingDefinition],
       },
     });
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
 
     ctx.activePlayer.gold = 10;
     ctx.activePlayer.happiness = 2;

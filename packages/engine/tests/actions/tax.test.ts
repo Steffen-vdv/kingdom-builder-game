@@ -37,8 +37,7 @@ function getTaxExpectations(ctx: EngineContext) {
 describe('Tax action', () => {
   it('grants gold and loses happiness for each population', () => {
     const ctx = createEngine();
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     runEffects(
       [
         {

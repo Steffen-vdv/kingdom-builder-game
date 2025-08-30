@@ -5,21 +5,11 @@ import {
   PopulationRole,
   Stat,
   Resource,
-  POPULATIONS,
   PHASES,
 } from '../../src';
 
-const council = POPULATIONS.get(PopulationRole.Council);
-const councilApGain = Number(
-  council.onDevelopmentPhase?.find(
-    (effect) =>
-      effect.type === 'resource' &&
-      effect.method === 'add' &&
-      effect.params.key === Resource.ap,
-  )?.params.amount ?? 0,
-);
-
-const incomeStep = PHASES[0]!.steps.find((s) => s.id === 'gain-income');
+const devPhase = PHASES.find((p) => p.id === 'development')!;
+const incomeStep = devPhase.steps.find((s) => s.id === 'gain-income');
 const farmGoldGain = Number(
   incomeStep?.effects?.[0]?.effects?.find(
     (e) =>
@@ -29,21 +19,36 @@ const farmGoldGain = Number(
   )?.params.amount ?? 0,
 );
 
+const apStep = devPhase.steps.find((s) => s.id === 'gain-ap');
+const councilApGain = Number(
+  apStep?.effects?.[0]?.effects?.find(
+    (e) =>
+      e.type === 'resource' &&
+      e.method === 'add' &&
+      (e as { params: { key: string } }).params.key === Resource.ap,
+  )?.params.amount ?? 0,
+);
+
+const raiseStep = devPhase.steps.find((s) => s.id === 'raise-strength');
 const commanderPct = Number(
-  POPULATIONS.get(PopulationRole.Commander).onDevelopmentPhase?.find(
-    (effect) =>
-      effect.type === 'stat' &&
-      effect.method === 'add_pct' &&
-      effect.params.key === Stat.armyStrength,
-  )?.params.percent ?? 0,
+  raiseStep?.effects
+    ?.find((e) => e.evaluator?.params?.role === PopulationRole.Commander)
+    ?.effects?.find(
+      (eff) =>
+        eff.type === 'stat' &&
+        eff.method === 'add_pct' &&
+        eff.params.key === Stat.armyStrength,
+    )?.params.percent ?? 0,
 );
 const fortifierPct = Number(
-  POPULATIONS.get(PopulationRole.Fortifier).onDevelopmentPhase?.find(
-    (effect) =>
-      effect.type === 'stat' &&
-      effect.method === 'add_pct' &&
-      effect.params.key === Stat.fortificationStrength,
-  )?.params.percent ?? 0,
+  raiseStep?.effects
+    ?.find((e) => e.evaluator?.params?.role === PopulationRole.Fortifier)
+    ?.effects?.find(
+      (eff) =>
+        eff.type === 'stat' &&
+        eff.method === 'add_pct' &&
+        eff.params.key === Stat.fortificationStrength,
+    )?.params.percent ?? 0,
 );
 
 describe('Development phase', () => {
@@ -52,7 +57,7 @@ describe('Development phase', () => {
     const player = ctx.activePlayer;
     const apBefore = player.ap;
     const goldBefore = player.gold;
-    advance(ctx);
+    while (ctx.game.currentPhase === 'development') advance(ctx);
     const councils = player.population[PopulationRole.Council];
     expect(player.ap).toBe(apBefore + councilApGain * councils);
     expect(player.gold).toBe(goldBefore + farmGoldGain);
@@ -65,7 +70,7 @@ describe('Development phase', () => {
     ctx.activePlayer.stats[Stat.armyStrength] = 8;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
     const player = ctx.activePlayer;
-    advance(ctx);
+    while (ctx.game.currentPhase === 'development') advance(ctx);
     const expectedArmy = 8 + 8 * (commanderPct / 100);
     const expectedFort = 4 + 4 * (fortifierPct / 100);
     expect(player.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);

@@ -235,15 +235,15 @@ export function advance(ctx: EngineContext): AdvanceResult {
   ctx.game.stepIndex += 1;
   if (ctx.game.stepIndex >= phase.steps.length) {
     ctx.game.stepIndex = 0;
-    if (ctx.game.currentPlayerIndex === ctx.game.players.length - 1) {
-      ctx.game.currentPlayerIndex = 0;
-      ctx.game.phaseIndex += 1;
-      if (ctx.game.phaseIndex >= ctx.phases.length) {
-        ctx.game.phaseIndex = 0;
+    ctx.game.phaseIndex += 1;
+    if (ctx.game.phaseIndex >= ctx.phases.length) {
+      ctx.game.phaseIndex = 0;
+      if (ctx.game.currentPlayerIndex === ctx.game.players.length - 1) {
+        ctx.game.currentPlayerIndex = 0;
         ctx.game.turn += 1;
+      } else {
+        ctx.game.currentPlayerIndex += 1;
       }
-    } else {
-      ctx.game.currentPlayerIndex += 1;
     }
   }
 

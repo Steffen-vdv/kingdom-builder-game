@@ -43,8 +43,7 @@ describe('Action configuration overrides', () => {
       },
     ];
     const ctx = createEngine({ actions });
-    advance(ctx);
-    ctx.game.currentPlayerIndex = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const goldBefore = ctx.activePlayer.gold;
     const landsBefore = ctx.activePlayer.lands.length;
     const hapBefore = ctx.activePlayer.happiness;
