@@ -1,6 +1,7 @@
 import React from 'react';
-import { Resource, RESOURCES } from '@kingdom-builder/engine';
+import { Resource } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/engine';
+import { RESOURCES } from '@kingdom-builder/contents';
 import type { Summary } from './translation';
 
 export function renderSummary(summary: Summary | undefined): React.ReactNode {

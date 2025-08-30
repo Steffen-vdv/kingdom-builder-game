@@ -14,15 +14,6 @@ import type {
 } from './state';
 import { Services, PassiveManager, DefaultRules } from './services';
 import type { CostBag, RuleSet } from './services';
-import { ACTIONS, ACTION_INFO } from './content/actions';
-import { BUILDINGS, BUILDING_INFO } from './content/buildings';
-import { DEVELOPMENTS, DEVELOPMENT_INFO } from './content/developments';
-import { POPULATIONS } from './content/populations';
-import type { PopulationDef } from './content/populations';
-import type { TriggerKey } from './content/defs';
-import type { ActionDef } from './content/actions';
-import type { BuildingDef } from './content/buildings';
-import type { DevelopmentDef } from './content/developments';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
 import type { EffectDef } from './effects';
@@ -30,10 +21,6 @@ import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
-import { PHASES, PHASE_INFO, type PhaseDef } from './content/phases';
-import { TRIGGER_INFO } from './content/triggers';
-import { LAND_ICON, SLOT_ICON } from './content/land';
-import { MODIFIER_INFO } from './content/modifiers';
 import {
   validateGameConfig,
   type GameConfig,
@@ -42,8 +29,23 @@ import {
   developmentSchema,
   populationSchema,
   type PlayerStartConfig,
+  type ActionConfig,
+  type BuildingConfig,
+  type DevelopmentConfig,
+  type PopulationConfig,
 } from './config/schema';
-import { GAME_START } from './content/game';
+import type { TriggerKey, PhaseDef } from './phases';
+
+interface Triggered {
+  onDevelopmentPhase?: EffectDef[] | undefined;
+  onUpkeepPhase?: EffectDef[] | undefined;
+  onAttackResolved?: EffectDef[] | undefined;
+}
+
+type ActionDef = ActionConfig;
+type BuildingDef = BuildingConfig & Triggered;
+type DevelopmentDef = DevelopmentConfig & Triggered;
+type PopulationDef = PopulationConfig & Triggered;
 
 function runTrigger(
   trigger: TriggerKey,
@@ -56,14 +58,14 @@ function runTrigger(
 
   for (const [role, count] of Object.entries(player.population)) {
     const populationDefinition = ctx.populations.get(role);
-    const effects = populationDefinition[trigger];
+    const effects = (populationDefinition as Triggered)[trigger];
     if (effects) runEffects(effects, ctx, Number(count));
   }
 
   for (const land of player.lands) {
     for (const id of land.developments) {
       const developmentDefinition = ctx.developments.get(id);
-      const effects = developmentDefinition[trigger];
+      const effects = (developmentDefinition as Triggered)[trigger];
       if (!effects) continue;
       runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
     }
@@ -71,7 +73,7 @@ function runTrigger(
 
   for (const id of player.buildings) {
     const buildingDefinition = ctx.buildings.get(id);
-    const effects = buildingDefinition[trigger];
+    const effects = (buildingDefinition as Triggered)[trigger];
     if (effects) runEffects(effects, ctx);
   }
 
@@ -86,27 +88,29 @@ export function collectTriggerEffects(
   const effects: EffectDef[] = [];
   for (const [role, count] of Object.entries(player.population)) {
     const populationDefinition = ctx.populations.get(role);
-    const list = populationDefinition[trigger];
+    const list = (populationDefinition as Triggered)[trigger];
     if (!list) continue;
     for (let i = 0; i < Number(count); i++)
-      effects.push(...list.map((e) => ({ ...e })));
+      effects.push(...list.map((e: EffectDef) => ({ ...e })));
   }
   for (const land of player.lands) {
     for (const id of land.developments) {
       const developmentDefinition = ctx.developments.get(id);
-      const list = developmentDefinition[trigger];
+      const list = (developmentDefinition as Triggered)[trigger];
       if (!list) continue;
       effects.push(
-        ...applyParamsToEffects(list, { landId: land.id, id }).map((e) => ({
-          ...e,
-        })),
+        ...applyParamsToEffects(list, { landId: land.id, id }).map(
+          (e: EffectDef) => ({
+            ...e,
+          }),
+        ),
       );
     }
   }
   for (const id of player.buildings) {
     const buildingDefinition = ctx.buildings.get(id);
-    const list = buildingDefinition[trigger];
-    if (list) effects.push(...list.map((e) => ({ ...e })));
+    const list = (buildingDefinition as Triggered)[trigger];
+    if (list) effects.push(...list.map((e: EffectDef) => ({ ...e })));
   }
   return effects;
 }
@@ -335,8 +339,8 @@ export function createEngine(overrides?: {
   let buildings = overrides?.buildings;
   let developments = overrides?.developments;
   let populations = overrides?.populations;
-  let start = GAME_START;
-  let phases = overrides?.phases || PHASES;
+  let start = { player: {} as PlayerStartConfig };
+  let phases = overrides?.phases || [];
 
   if (overrides?.config) {
     const config = validateGameConfig(overrides.config);
@@ -366,11 +370,12 @@ export function createEngine(overrides?: {
     if (config.start) start = config.start;
   }
 
-  actions = actions || ACTIONS;
-  buildings = buildings || BUILDINGS;
-  developments = developments || DEVELOPMENTS;
-  populations = populations || POPULATIONS;
-  phases = phases || PHASES;
+  if (!actions) actions = new Registry<ActionDef>(actionSchema);
+  if (!buildings) buildings = new Registry<BuildingDef>(buildingSchema);
+  if (!developments)
+    developments = new Registry<DevelopmentDef>(developmentSchema);
+  if (!populations) populations = new Registry<PopulationDef>(populationSchema);
+  phases = phases || [];
 
   const ctx = new EngineContext(
     game,
@@ -399,33 +404,15 @@ export {
   Phase,
   PopulationRole,
   Stat,
-  BUILDINGS,
-  BUILDING_INFO,
-  DEVELOPMENTS,
-  DEVELOPMENT_INFO,
-  GAME_START,
   EFFECTS,
   EVALUATORS,
-  POPULATIONS,
   EngineContext,
   Services,
   PassiveManager,
   DefaultRules,
-  PHASES,
-  PHASE_INFO,
-  ACTION_INFO,
-  TRIGGER_INFO,
-  LAND_ICON,
-  SLOT_ICON,
-  MODIFIER_INFO,
 };
 
 export type { RuleSet, ResourceKey };
-
-export { createActionRegistry } from './content/actions';
-export { createBuildingRegistry } from './content/buildings';
-export { createDevelopmentRegistry } from './content/developments';
-export { createPopulationRegistry } from './content/populations';
 
 export { registerCoreEffects, EffectRegistry, runEffects } from './effects';
 export type { EffectHandler, EffectDef } from './effects';
@@ -436,9 +423,3 @@ export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
 export type { GameConfig } from './config/schema';
-export { RESOURCES, type ResourceInfo } from './content/resources';
-export { STATS, type StatInfo } from './content/stats';
-export {
-  POPULATION_ROLES,
-  type PopulationRoleInfo,
-} from './content/populationRoles';

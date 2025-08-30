@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEngine,
-  performAction,
-  createActionRegistry,
-} from '../../src/index.ts';
+import { performAction } from '../../src/index.ts';
+import { createActionRegistry } from '@kingdom-builder/contents';
+import { createTestEngine } from '../test-utils';
 
 describe('land:till effect', () => {
   it('tills the specified land and marks it as tilled', () => {
@@ -14,7 +12,7 @@ describe('land:till effect', () => {
       system: true,
       effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
     });
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     ctx.activePlayer.actions.add('till');
     const land = ctx.activePlayer.lands[1];
     const before = land.slotsMax;
@@ -32,7 +30,7 @@ describe('land:till effect', () => {
       system: true,
       effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
     });
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     ctx.activePlayer.actions.add('till');
     performAction('till', ctx);
     expect(() => performAction('till', ctx)).toThrow(/already tilled/);
@@ -46,7 +44,7 @@ describe('land:till effect', () => {
       system: true,
       effects: [{ type: 'land', method: 'till' }],
     });
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     ctx.activePlayer.actions.add('till');
     performAction('till', ctx);
     const tilledCount = ctx.activePlayer.lands.filter((l) => l.tilled).length;

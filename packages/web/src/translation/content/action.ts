@@ -2,7 +2,7 @@ import type { EngineContext } from '@kingdom-builder/engine';
 import {
   TRIGGER_INFO as triggerInfo,
   ACTION_INFO as actionInfo,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/contents';
 import { summarizeEffects, describeEffects } from '../effects';
 import { registerContentTranslator, logContent } from './factory';
 import type { ContentTranslator, Summary } from './types';

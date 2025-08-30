@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEngine,
-  performAction,
-  createActionRegistry,
-  Resource,
-  advance,
-} from '../../src/index.ts';
+import { performAction, Resource, advance } from '../../src/index.ts';
+import { createActionRegistry } from '@kingdom-builder/contents';
+import { createTestEngine } from '../test-utils';
 
 describe('resource:remove effect', () => {
   it('decrements a resource via action effect', () => {
@@ -22,7 +18,7 @@ describe('resource:remove effect', () => {
         },
       ],
     });
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     advance(ctx);
     ctx.game.currentPlayerIndex = 0;
     const before = ctx.activePlayer.gold;
@@ -65,7 +61,7 @@ describe('resource:remove effect', () => {
         },
       ],
     });
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     advance(ctx);
     ctx.game.currentPlayerIndex = 0;
 

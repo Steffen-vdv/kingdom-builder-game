@@ -2,7 +2,7 @@ import React from 'react';
 import {
   ACTION_INFO as actionInfo,
   BUILDING_INFO as buildingInfo,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import type { Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';

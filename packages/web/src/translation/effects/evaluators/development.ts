@@ -1,4 +1,4 @@
-import { DEVELOPMENT_INFO as developmentInfo } from '@kingdom-builder/engine';
+import { DEVELOPMENT_INFO as developmentInfo } from '@kingdom-builder/contents';
 import { registerEvaluatorFormatter } from '../factory';
 
 registerEvaluatorFormatter('development', {

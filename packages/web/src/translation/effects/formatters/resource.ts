@@ -1,4 +1,4 @@
-import { RESOURCES } from '@kingdom-builder/engine';
+import { RESOURCES } from '@kingdom-builder/contents';
 import type { ResourceKey } from '@kingdom-builder/engine';
 import { signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';

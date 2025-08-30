@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   performAction,
   Resource,
   getActionCosts,
   type EngineContext,
   advance,
 } from '../../src/index.ts';
+import { createTestEngine } from '../test-utils';
 import { PlayerState } from '../../src/state/index.ts';
 
 function deepClone<T>(value: T): T {
@@ -39,7 +39,7 @@ function getExpandExpectations(ctx: EngineContext) {
 
 describe('Expand action', () => {
   it('costs gold and AP while granting land and happiness without Town Charter', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const goldBefore = ctx.activePlayer.gold;
     const actionPointsBefore = ctx.activePlayer.ap;
@@ -60,7 +60,7 @@ describe('Expand action', () => {
   });
 
   it('includes Town Charter modifiers when present', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     performAction('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.ap += 1; // allow another action
@@ -81,7 +81,7 @@ describe('Expand action', () => {
   });
 
   it('applies modifiers consistently across multiple expansions', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     performAction('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.ap += 2; // allow two expands
@@ -108,7 +108,7 @@ describe('Expand action', () => {
   });
 
   it('rejects expand when gold is insufficient', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const cost = getActionCosts('expand', ctx);
     ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;

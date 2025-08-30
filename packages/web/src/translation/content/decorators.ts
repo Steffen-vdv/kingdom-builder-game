@@ -1,5 +1,5 @@
 import type { ContentTranslator, Summary } from './types';
-import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/engine';
+import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 
 export function withInstallation<T>(

@@ -1,22 +1,22 @@
 import {
-  RESOURCES,
-  STATS,
-  POPULATION_ROLES,
   EVALUATORS,
   type EffectDef,
   type EngineContext,
 } from '@kingdom-builder/engine';
+import {
+  RESOURCES,
+  STATS,
+  POPULATION_ROLES,
+  LAND_ICON as landIcon,
+  DEVELOPMENT_INFO as developmentInfo,
+  ACTION_INFO as actionInfo,
+} from '@kingdom-builder/contents';
 interface StepDef {
   id: string;
   title?: string;
   triggers?: string[];
   effects?: EffectDef[];
 }
-import {
-  LAND_ICON as landIcon,
-  DEVELOPMENT_INFO as developmentInfo,
-  ACTION_INFO as actionInfo,
-} from '@kingdom-builder/engine';
 import { logContent, type Land } from './content';
 
 export interface PlayerSnapshot {

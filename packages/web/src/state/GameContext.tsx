@@ -10,11 +10,19 @@ import {
   performAction,
   advance,
   Resource,
-  RESOURCES,
-  ACTION_INFO as actionInfo,
   type EngineContext,
   type ActionParams,
 } from '@kingdom-builder/engine';
+import {
+  RESOURCES,
+  ACTION_INFO as actionInfo,
+  createActionRegistry,
+  createBuildingRegistry,
+  createDevelopmentRegistry,
+  createPopulationRegistry,
+  PHASES,
+  GAME_START,
+} from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
   diffSnapshots,
@@ -76,7 +84,18 @@ interface GameEngineContextValue {
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  const ctx = useMemo<EngineContext>(() => createEngine(), []);
+  const ctx = useMemo<EngineContext>(
+    () =>
+      createEngine({
+        actions: createActionRegistry(),
+        buildings: createBuildingRegistry(),
+        developments: createDevelopmentRegistry(),
+        populations: createPopulationRegistry(),
+        phases: PHASES,
+        config: { start: GAME_START },
+      }),
+    [],
+  );
   const [, setTick] = useState(0);
   const refresh = () => setTick((t) => t + 1);
 

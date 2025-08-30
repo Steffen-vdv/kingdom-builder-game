@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   performAction,
   resolveAttack,
   EngineContext,
@@ -10,8 +9,8 @@ import {
   advance,
   runEffects,
 } from '../../src/index.ts';
+import { createTestEngine } from '../test-utils';
 import { PlayerState, Land, GameState } from '../../src/state/index.ts';
-import { runEffects } from '../../src/effects/index.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
 
 function clonePlayer(player: PlayerState): PlayerState {
@@ -73,7 +72,7 @@ function expectState(actual: PlayerState, expected: PlayerState) {
 
 describe('Develop action', () => {
   it('places a Farm applying its configured effects', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
@@ -85,7 +84,7 @@ describe('Develop action', () => {
   });
 
   it('places a House applying its configured effects', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
@@ -97,7 +96,7 @@ describe('Develop action', () => {
   });
 
   it('places an Outpost applying its configured effects', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
@@ -109,7 +108,7 @@ describe('Develop action', () => {
   });
 
   it('applies development effects and cleans up after attack', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
 
@@ -127,7 +126,7 @@ describe('Develop action', () => {
   });
 
   it('removing a development reverts its on-build effects', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
 

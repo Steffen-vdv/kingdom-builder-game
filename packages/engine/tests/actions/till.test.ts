@@ -1,14 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEngine,
-  performAction,
-  getActionCosts,
-  Resource,
-} from '../../src/index.ts';
+import { performAction, getActionCosts, Resource } from '../../src/index.ts';
+import { createTestEngine } from '../test-utils';
 
 describe('Till action', () => {
   it('tills an available land for free', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.activePlayer.actions.add('till');
     ctx.activePlayer.ap = 5;
     const target = ctx.activePlayer.lands.find((l) => !l.tilled)!;
@@ -24,7 +20,7 @@ describe('Till action', () => {
   });
 
   it('throws when no tillable land exists', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.activePlayer.actions.add('till');
     performAction('till', ctx);
     performAction('till', ctx);

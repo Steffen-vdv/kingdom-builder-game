@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   runEffects,
-  BUILDINGS,
-  PHASES,
   performAction,
   Resource,
   EVALUATORS,
@@ -12,6 +9,7 @@ import {
   type EngineContext,
 } from '../../src/index.ts';
 import type { EvaluatorDef } from '../../src/evaluators';
+import { createTestEngine, PHASES } from '../test-utils';
 
 function getOverworkExpectations(ctx: EngineContext) {
   const actionDefinition = ctx.actions.get('overwork');
@@ -40,7 +38,7 @@ function getOverworkExpectations(ctx: EngineContext) {
 
 describe('evaluation result modifiers', () => {
   it('Mill grants extra gold for each Farm income', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     // Add Mill to active player
     runEffects(
       [
@@ -59,7 +57,7 @@ describe('evaluation result modifiers', () => {
     runEffects(gainIncome, ctx);
     const farmEffect = gainIncome[0]!;
     const baseAmount = Number(farmEffect.effects?.[0]?.params?.['amount'] ?? 0);
-    const millDef = BUILDINGS.get('mill');
+    const millDef = ctx.buildings.get('mill');
     const bonusEffect = millDef.onBuild?.find(
       (e: EffectDef) => e.params?.['id'] === 'mill_farm_bonus',
     );
@@ -74,7 +72,7 @@ describe('evaluation result modifiers', () => {
   });
 
   it('Mill bonus applies to Overwork once per Farm', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     runEffects(
       [{ type: 'building', method: 'add', params: { id: 'mill' } }],
       ctx,
@@ -84,9 +82,9 @@ describe('evaluation result modifiers', () => {
       (acc, land) => acc + land.developments.filter((d) => d === 'farm').length,
       0,
     );
-    const bonusEffect = BUILDINGS.get('mill').onBuild?.find(
-      (e: EffectDef) => e.params?.['id'] === 'mill_farm_bonus',
-    );
+    const bonusEffect = ctx.buildings
+      .get('mill')
+      .onBuild?.find((e: EffectDef) => e.params?.['id'] === 'mill_farm_bonus');
     const bonusAmount = Number(bonusEffect?.params?.['amount'] ?? 0);
     const expected = getOverworkExpectations(ctx);
     const before = ctx.activePlayer.gold;

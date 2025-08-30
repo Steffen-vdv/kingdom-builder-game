@@ -1,4 +1,4 @@
-import { STATS } from '@kingdom-builder/engine';
+import { STATS } from '@kingdom-builder/contents';
 import { signed } from '../../helpers';
 import { registerStatAddFormatter } from './registry';
 

@@ -1,7 +1,7 @@
 import {
   BUILDING_INFO as buildingInfo,
   ACTION_INFO as actionInfo,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/contents';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('building', 'add', {

@@ -3,7 +3,7 @@ import {
   MODIFIER_INFO as modifierInfo,
   DEVELOPMENT_INFO as developmentInfo,
   RESOURCES,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/contents';
 import type { ResourceKey } from '@kingdom-builder/engine';
 import { increaseOrDecrease, signed } from '../helpers';
 import {

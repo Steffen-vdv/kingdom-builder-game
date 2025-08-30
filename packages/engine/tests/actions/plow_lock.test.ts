@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, performAction, advance } from '../../src/index.ts';
+import { performAction, advance } from '../../src/index.ts';
+import { createTestEngine } from '../test-utils';
 
 describe('Plow action lock', () => {
   it('is locked until Plow Workshop is built', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     expect(() => performAction('plow', ctx)).toThrow(/locked/);
     performAction('build', ctx, { id: 'plow_workshop' });

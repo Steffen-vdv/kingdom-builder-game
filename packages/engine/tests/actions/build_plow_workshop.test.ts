@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   performAction,
   getActionCosts,
   Resource,
   advance,
 } from '../../src/index.ts';
+import { createTestEngine } from '../test-utils';
 
 describe('Build - Plow Workshop action', () => {
   it('builds the Plow Workshop and unlocks Plow', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const cost = getActionCosts('build_plow_workshop', ctx);
     const buildingCost =
