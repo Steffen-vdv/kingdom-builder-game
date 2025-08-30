@@ -15,7 +15,7 @@ import {
   summarizeContent,
   type Summary,
 } from '../../translation';
-import { renderSummary, renderCosts } from '../../render';
+import { renderSummary, renderCosts } from '../../translation/render';
 import { useGameEngine } from '../../state/GameContext';
 
 interface Action {

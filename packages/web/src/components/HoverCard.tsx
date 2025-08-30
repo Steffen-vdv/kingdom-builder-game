@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderSummary, renderCosts } from '../render';
+import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
 
 type HoverCardData = ReturnType<typeof useGameEngine>['hoverCard'];
