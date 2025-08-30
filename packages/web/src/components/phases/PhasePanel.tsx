@@ -39,7 +39,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <section
       ref={ref}
-      className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
+      className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col h-full min-h-[275px]"
       onMouseEnter={() => !isActionPhase && setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       style={{ cursor: phasePaused && !isActionPhase ? 'pause' : 'auto' }}
