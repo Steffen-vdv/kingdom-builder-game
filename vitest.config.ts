@@ -1,6 +1,12 @@
+import path from 'path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@kingdom-builder/engine': path.resolve(__dirname, 'packages/engine/src'),
+    },
+  },
   test: {
     exclude: ['**/node_modules/**'],
     coverage: {
