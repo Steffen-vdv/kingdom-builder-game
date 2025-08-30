@@ -32,7 +32,7 @@ To run the test suite and capture a reliable summary without redundant
 checks, execute:
 
 ```sh
-npm run test:coverage >/tmp/unit.log 2>&1; tail -n 100 /tmp/unit.log
+npm run test:coverage >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log
 ```
 
 This command runs the tests with coverage and saves the output to
