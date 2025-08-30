@@ -259,6 +259,14 @@ export function GameProvider({
     await runUntilActionPhase();
   }
 
+  // Update main phase steps once action phase becomes active
+  useEffect(() => {
+    if (ctx.phases[ctx.game.phaseIndex]?.action) {
+      setMainApStart(ctx.activePlayer.ap);
+      updateMainPhaseStep(ctx.activePlayer.ap);
+    }
+  }, [ctx.game.phaseIndex]);
+
   useEffect(() => {
     void runUntilActionPhase();
   }, []);
