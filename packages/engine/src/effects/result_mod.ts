@@ -10,11 +10,12 @@ interface ResultModParams {
 export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
   const { id, actionId } = effect.params || ({} as ResultModParams);
   if (!id || !actionId) throw new Error('result_mod requires id and actionId');
+  const ownerId = ctx.activePlayer.id;
+  const modId = `${id}_${ownerId}`;
   if (effect.method === 'add') {
     const effects = effect.effects || [];
-    const ownerId = ctx.activePlayer.id;
     ctx.passives.registerResultModifier(
-      id,
+      modId,
       (executedActionId, innerContext) => {
         if (
           executedActionId === actionId &&
@@ -25,6 +26,6 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
       },
     );
   } else if (effect.method === 'remove') {
-    ctx.passives.unregisterResultModifier(id);
+    ctx.passives.unregisterResultModifier(modId);
   }
 };
