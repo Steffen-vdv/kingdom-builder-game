@@ -109,7 +109,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     });
 
   return (
-    <div className={`flex flex-col space-y-1 ${className}`}>
+    <div className={`h-full flex flex-col space-y-1 ${className}`}>
       <h3 className="font-semibold">{player.name}</h3>
       <div className="flex flex-wrap items-center gap-2 border p-2 rounded w-fit">
         {Object.entries(player.resources).map(([k, v]) => {
