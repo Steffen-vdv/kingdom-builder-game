@@ -59,7 +59,18 @@ export function createDevelopmentRegistry() {
       .build(),
   );
 
+  registry.add('garden', development('garden', 'Garden').build());
+
   return registry;
 }
 
 export const DEVELOPMENTS = createDevelopmentRegistry();
+
+export const DEVELOPMENT_INFO: Record<string, { icon: string; label: string }> =
+  {
+    house: { icon: '🏠', label: DEVELOPMENTS.get('house').name },
+    farm: { icon: '🌾', label: DEVELOPMENTS.get('farm').name },
+    outpost: { icon: '🛡️', label: DEVELOPMENTS.get('outpost').name },
+    watchtower: { icon: '🗼', label: DEVELOPMENTS.get('watchtower').name },
+    garden: { icon: '🌿', label: DEVELOPMENTS.get('garden').name },
+  };

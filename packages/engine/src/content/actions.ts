@@ -157,3 +157,19 @@ export function createActionRegistry() {
 
   return registry;
 }
+
+export const ACTIONS = createActionRegistry();
+
+export const ACTION_INFO: Record<string, { icon: string; label: string }> = {
+  expand: { icon: '🌱', label: ACTIONS.get('expand').name },
+  overwork: { icon: '🛠️', label: ACTIONS.get('overwork').name },
+  develop: { icon: '🏗️', label: ACTIONS.get('develop').name },
+  tax: { icon: '💰', label: ACTIONS.get('tax').name },
+  reallocate: { icon: '🔄', label: ACTIONS.get('reallocate').name },
+  raise_pop: { icon: '👶', label: ACTIONS.get('raise_pop').name },
+  royal_decree: { icon: '📜', label: ACTIONS.get('royal_decree').name },
+  army_attack: { icon: '🗡️', label: ACTIONS.get('army_attack').name },
+  hold_festival: { icon: '🎉', label: ACTIONS.get('hold_festival').name },
+  plow: { icon: '🚜', label: ACTIONS.get('plow').name },
+  build: { icon: '🏛️', label: ACTIONS.get('build').name },
+} as const;

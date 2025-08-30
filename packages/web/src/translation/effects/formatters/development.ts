@@ -1,4 +1,4 @@
-import { developmentInfo } from '../../../icons';
+import { DEVELOPMENT_INFO as developmentInfo } from '@kingdom-builder/engine';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('development', 'add', {

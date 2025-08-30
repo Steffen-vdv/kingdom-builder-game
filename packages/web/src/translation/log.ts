@@ -12,7 +12,11 @@ interface StepDef {
   triggers?: string[];
   effects?: EffectDef[];
 }
-import { landIcon, developmentInfo, buildingIcon } from '../icons';
+import {
+  LAND_ICON as landIcon,
+  DEVELOPMENT_INFO as developmentInfo,
+  ACTION_INFO as actionInfo,
+} from '@kingdom-builder/engine';
 import { logContent, type Land } from './content';
 
 export interface PlayerSnapshot {
@@ -163,7 +167,7 @@ function collectResourceSources(
   const result: Record<string, string> = {};
   for (const [key, { icons, mods }] of Object.entries(map)) {
     let part = icons;
-    if (mods > 0) part += `+${buildingIcon.repeat(mods)}`;
+    if (mods > 0) part += `+${(actionInfo['build']?.icon || '').repeat(mods)}`;
     result[key] = part;
   }
   return result;

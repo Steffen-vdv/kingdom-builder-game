@@ -1,5 +1,5 @@
 import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
-import { phaseInfo } from '../../icons';
+import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/engine';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 
@@ -27,7 +27,7 @@ export class PhasedTranslator {
     const atk = summarizeEffects(def.onAttackResolved, ctx);
     if (atk.length)
       root.push({
-        title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.future}`,
+        title: `${triggerInfo.onAttackResolved.icon} ${triggerInfo.onAttackResolved.future}`,
         items: atk,
       });
     return root;
@@ -50,7 +50,7 @@ export class PhasedTranslator {
     const atk = describeEffects(def.onAttackResolved, ctx);
     if (atk.length)
       root.push({
-        title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.future}`,
+        title: `${triggerInfo.onAttackResolved.icon} ${triggerInfo.onAttackResolved.future}`,
         items: atk,
       });
     return root;

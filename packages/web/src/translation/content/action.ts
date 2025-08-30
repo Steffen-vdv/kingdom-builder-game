@@ -1,5 +1,8 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import { phaseInfo, actionInfo } from '../../icons';
+import {
+  TRIGGER_INFO as triggerInfo,
+  ACTION_INFO as actionInfo,
+} from '@kingdom-builder/engine';
 import { summarizeEffects, describeEffects } from '../effects';
 import { registerContentTranslator, logContent } from './factory';
 import type { ContentTranslator, Summary } from './types';
@@ -13,7 +16,7 @@ class ActionTranslator
     if (!eff.length) return [];
     return [
       {
-        title: `${phaseInfo.mainPhase.icon} ${phaseInfo.mainPhase.future}`,
+        title: `${triggerInfo.mainPhase.icon} ${triggerInfo.mainPhase.future}`,
         items: eff,
       },
     ];
@@ -24,7 +27,7 @@ class ActionTranslator
     if (!eff.length) return [];
     return [
       {
-        title: `${phaseInfo.mainPhase.icon} ${phaseInfo.mainPhase.future}`,
+        title: `${triggerInfo.mainPhase.icon} ${triggerInfo.mainPhase.future}`,
         items: eff,
       },
     ];
@@ -58,8 +61,10 @@ class ActionTranslator
     params?: Record<string, unknown>,
   ): string[] {
     const def = ctx.actions.get(id);
-    const icon = actionInfo[id as keyof typeof actionInfo]?.icon || '';
-    let message = `Played ${icon} ${def.name}`;
+    const info = actionInfo[id];
+    const icon = info?.icon || '';
+    const label = info?.label || def.name;
+    let message = `Played ${icon} ${label}`;
     const extra = this.logHandlers[id]?.(ctx, params);
     if (extra) message += extra;
     return [message];

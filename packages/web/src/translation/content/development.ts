@@ -4,7 +4,7 @@ import type { ContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';
 import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
-import { developmentInfo } from '../../icons';
+import { DEVELOPMENT_INFO as developmentInfo } from '@kingdom-builder/engine';
 
 interface PhaseEffects {
   onAttackResolved?: EffectDef[];

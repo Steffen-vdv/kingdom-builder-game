@@ -10,19 +10,17 @@ import {
   RESOURCES,
   STATS,
   POPULATION_ROLES,
+  ACTION_INFO as actionInfo,
+  DEVELOPMENT_INFO as developmentInfo,
+  LAND_ICON as landIcon,
+  SLOT_ICON as slotIcon,
+  BUILDING_INFO as buildingInfo,
 } from '@kingdom-builder/engine';
 import type {
   EngineContext,
   ActionParams,
   ResourceKey,
 } from '@kingdom-builder/engine';
-import {
-  actionInfo,
-  developmentInfo,
-  landIcon,
-  slotIcon,
-  buildingIcon,
-} from './icons';
 import {
   summarizeContent,
   describeContent,
@@ -267,7 +265,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                           handleHoverCard({
                             title: `${slotIcon} Development Slot (empty)`,
                             effects: [],
-                            description: `Use ${actionInfo.develop.icon} Develop to build here`,
+                            description: `Use ${actionInfo['develop']?.icon ?? ''} ${actionInfo['develop']?.label ?? ''} to build here`,
                             requirements: [],
                             bgClass: 'bg-gray-100 dark:bg-gray-700',
                           });
@@ -291,7 +289,9 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         <div className="flex flex-wrap gap-2 mt-2 w-fit">
           {Array.from(player.buildings).map((b) => {
             const name = ctx.buildings.get(b)?.name || b;
-            const title = `${buildingIcon} ${name}`;
+            const icon =
+              buildingInfo[b]?.icon || actionInfo['build']?.icon || '';
+            const title = `${icon} ${name}`;
             return (
               <div
                 key={b}
@@ -307,7 +307,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                 onMouseLeave={clearHoverCard}
               >
                 <span className="font-medium">
-                  {buildingIcon} {name}
+                  {icon} {name}
                 </span>
               </div>
             );
@@ -597,7 +597,7 @@ export default function Game({
       const messages = logContent('action', action.id, ctx, params);
       addLog([...messages, ...changes.map((c) => `  ${c}`)]);
     } catch (e) {
-      const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
+      const icon = actionInfo[action.id]?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
       return;
     }
@@ -829,10 +829,7 @@ export default function Game({
                       onClick={() => enabled && handlePerform(action)}
                       onMouseEnter={() =>
                         handleHoverCard({
-                          title: `${
-                            actionInfo[action.id as keyof typeof actionInfo]
-                              ?.icon || ''
-                          } ${action.name}`,
+                          title: `${actionInfo[action.id]?.icon || ''} ${action.name}`,
                           effects: describeContent('action', action.id, ctx),
                           requirements,
                           costs,
@@ -846,8 +843,7 @@ export default function Game({
                       onMouseLeave={clearHoverCard}
                     >
                       <span className="text-base font-medium">
-                        {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
-                        {action.name}
+                        {actionInfo[action.id]?.icon || ''} {action.name}
                       </span>
                       <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                         {renderCosts(costs, ctx.activePlayer.resources)}
@@ -879,7 +875,8 @@ export default function Game({
               {raisePopAction && (
                 <div>
                   <h3 className="font-medium">
-                    {actionInfo.raise_pop.icon} Raise Population
+                    {actionInfo['raise_pop']?.icon ?? ''}{' '}
+                    {actionInfo['raise_pop']?.label ?? ''}
                   </h3>
                   <div className="grid grid-cols-3 gap-2 mt-1">
                     {[
@@ -939,7 +936,7 @@ export default function Game({
                           }
                           onMouseEnter={() =>
                             handleHoverCard({
-                              title: `${actionInfo.raise_pop.icon} Raise Population - ${
+                              title: `${actionInfo['raise_pop']?.icon ?? ''} ${actionInfo['raise_pop']?.label ?? ''} - ${
                                 POPULATION_ROLES[role]?.icon
                               } ${POPULATION_ROLES[role]?.label || ''}`,
                               effects: summary,
@@ -982,7 +979,8 @@ export default function Game({
               {developAction && (
                 <div>
                   <h3 className="font-medium">
-                    {actionInfo.develop.icon} Develop
+                    {actionInfo['develop']?.icon ?? ''}{' '}
+                    {actionInfo['develop']?.label ?? ''}
                   </h3>
                   <div className="grid grid-cols-4 gap-2 mt-1">
                     {sortedDevelopments.map((d) => {
@@ -1029,7 +1027,7 @@ export default function Game({
                           }}
                           onMouseEnter={() =>
                             handleHoverCard({
-                              title: `${actionInfo.develop.icon} Develop - ${
+                              title: `${actionInfo['develop']?.icon ?? ''} ${actionInfo['develop']?.label ?? ''} - ${
                                 developmentInfo[d.id]?.icon
                               } ${d.name}`,
                               effects: describeContent(
@@ -1084,7 +1082,10 @@ export default function Game({
 
               {buildAction && (
                 <div>
-                  <h3 className="font-medium">{actionInfo.build.icon} Build</h3>
+                  <h3 className="font-medium">
+                    {actionInfo['build']?.icon ?? ''}{' '}
+                    {actionInfo['build']?.label ?? ''}
+                  </h3>
                   <div className="grid grid-cols-4 gap-2 mt-1">
                     {buildingOptions.map((b) => {
                       const costs = getActionCosts('build', ctx, { id: b.id });
@@ -1115,7 +1116,9 @@ export default function Game({
                           }
                           onMouseEnter={() =>
                             handleHoverCard({
-                              title: `${actionInfo.build.icon} Build - ${b.name}`,
+                              title: `${actionInfo['build']?.icon ?? ''} ${actionInfo['build']?.label ?? ''} - ${
+                                buildingInfo[b.id]?.icon || ''
+                              } ${b.name}`,
                               effects: buildingDescriptions.get(b.id) ?? [],
                               requirements,
                               costs,
@@ -1129,6 +1132,9 @@ export default function Game({
                           onMouseLeave={clearHoverCard}
                         >
                           <span className="text-base font-medium">
+                            {buildingInfo[b.id]?.icon ||
+                              actionInfo['build']?.icon ||
+                              ''}{' '}
                             {b.name}
                           </span>
                           <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">

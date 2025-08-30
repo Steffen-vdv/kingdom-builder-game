@@ -1,4 +1,4 @@
-import { landIcon } from '../../../icons';
+import { LAND_ICON as landIcon } from '@kingdom-builder/engine';
 import { gainOrLose, signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';
 

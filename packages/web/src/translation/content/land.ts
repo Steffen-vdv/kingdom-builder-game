@@ -1,5 +1,8 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import { developmentInfo, slotIcon } from '../../icons';
+import {
+  DEVELOPMENT_INFO as developmentInfo,
+  SLOT_ICON as slotIcon,
+} from '@kingdom-builder/engine';
 import {
   describeContent,
   summarizeContent,
