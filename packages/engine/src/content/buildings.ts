@@ -60,7 +60,10 @@ export function createBuildingRegistry() {
   );
   registry.add(
     'plow_workshop',
-    building('plow_workshop', 'Plow Workshop').cost(Resource.gold, 10).build(),
+    building('plow_workshop', 'Plow Workshop')
+      .cost(Resource.gold, 10)
+      .onBuild({ type: 'action', method: 'add', params: { id: 'plow' } })
+      .build(),
   );
   registry.add(
     'market',

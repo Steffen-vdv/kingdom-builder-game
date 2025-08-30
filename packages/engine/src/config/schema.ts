@@ -41,7 +41,6 @@ export const actionSchema = z.object({
   requirements: z.array(requirementSchema).optional(),
   effects: z.array(effectSchema),
   system: z.boolean().optional(),
-  unlockedBy: z.array(requirementSchema).optional(),
 });
 
 export type ActionConfig = z.infer<typeof actionSchema>;
@@ -67,7 +66,6 @@ export const developmentSchema = z.object({
   onDevelopmentPhase: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
   system: z.boolean().optional(),
-  unlockedBy: z.array(requirementSchema).optional(),
 });
 
 export type DevelopmentConfig = z.infer<typeof developmentSchema>;

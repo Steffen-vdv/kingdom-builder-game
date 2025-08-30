@@ -9,6 +9,7 @@ import {
 describe('Till action', () => {
   it('tills an available land for free', () => {
     const ctx = createEngine();
+    ctx.activePlayer.actions.add('till');
     ctx.activePlayer.ap = 5;
     const target = ctx.activePlayer.lands.find((l) => !l.tilled)!;
     const before = target.slotsMax;
@@ -24,6 +25,7 @@ describe('Till action', () => {
 
   it('throws when no tillable land exists', () => {
     const ctx = createEngine();
+    ctx.activePlayer.actions.add('till');
     performAction('till', ctx);
     performAction('till', ctx);
     expect(() => performAction('till', ctx)).toThrow(/No tillable land/);

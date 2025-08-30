@@ -15,6 +15,7 @@ describe('land:till effect', () => {
       effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
     });
     const ctx = createEngine({ actions });
+    ctx.activePlayer.actions.add('till');
     const land = ctx.activePlayer.lands[1];
     const before = land.slotsMax;
     const expected = Math.min(before + 1, ctx.services.rules.maxSlotsPerLand);
@@ -32,6 +33,7 @@ describe('land:till effect', () => {
       effects: [{ type: 'land', method: 'till', params: { landId: 'A-L2' } }],
     });
     const ctx = createEngine({ actions });
+    ctx.activePlayer.actions.add('till');
     performAction('till', ctx);
     expect(() => performAction('till', ctx)).toThrow(/already tilled/);
   });
@@ -45,6 +47,7 @@ describe('land:till effect', () => {
       effects: [{ type: 'land', method: 'till' }],
     });
     const ctx = createEngine({ actions });
+    ctx.activePlayer.actions.add('till');
     performAction('till', ctx);
     const tilledCount = ctx.activePlayer.lands.filter((l) => l.tilled).length;
     expect(tilledCount).toBe(1);
