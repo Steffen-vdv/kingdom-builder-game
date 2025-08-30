@@ -5,6 +5,7 @@ interface ResultModParams {
   id: string;
   actionId?: string;
   evaluation?: { type: string; id: string };
+  amount?: number;
   [key: string]: unknown;
 }
 
@@ -30,10 +31,29 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
       );
     else if (evaluation) {
       const target = `${evaluation.type}:${evaluation.id}`;
-      ctx.passives.registerEvaluationModifier(modId, target, (innerContext) => {
-        if (innerContext.activePlayer.id === ownerId)
-          runEffects(effects, innerContext);
-      });
+      const rawAmount = effect.params?.['amount'];
+      const amount = typeof rawAmount === 'number' ? rawAmount : undefined;
+      ctx.passives.registerEvaluationModifier(
+        modId,
+        target,
+        (innerContext, gains) => {
+          if (innerContext.activePlayer.id !== ownerId) return;
+          if (effects.length) runEffects(effects, innerContext);
+          if (amount !== undefined)
+            for (const g of gains)
+              if (g.amount > 0)
+                runEffects(
+                  [
+                    {
+                      type: 'resource',
+                      method: 'add',
+                      params: { key: g.key, amount },
+                    },
+                  ],
+                  innerContext,
+                );
+        },
+      );
     }
   } else if (effect.method === 'remove') {
     if (actionId) ctx.passives.unregisterResultModifier(modId);

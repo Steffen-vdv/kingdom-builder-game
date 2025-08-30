@@ -42,11 +42,17 @@ registerEffectFormatter('result_mod', 'add', {
       const resource = eff.effects?.find(
         (e) => e.type === 'resource' && e.method === 'add',
       );
-      const key = resource?.params?.['key'] as string;
-      const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
-      const amount = Number(resource?.params?.['amount']);
+      if (resource) {
+        const key = resource.params?.['key'] as string;
+        const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
+        const amount = Number(resource.params?.['amount']);
+        return [
+          `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more`,
+        ];
+      }
+      const amount = Number(eff.params?.['amount'] ?? 0);
       return [
-        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more`,
+        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
       ];
     }
     const actionId = eff.params?.['actionId'] as string;
@@ -65,11 +71,17 @@ registerEffectFormatter('result_mod', 'add', {
       const resource = eff.effects?.find(
         (e) => e.type === 'resource' && e.method === 'add',
       );
-      const key = resource?.params?.['key'] as string;
-      const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
-      const amount = Number(resource?.params?.['amount']);
+      if (resource) {
+        const key = resource.params?.['key'] as string;
+        const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
+        const amount = Number(resource.params?.['amount']);
+        return [
+          `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more of that resource`,
+        ];
+      }
+      const amount = Number(eff.params?.['amount'] ?? 0);
       return [
-        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more of that resource`,
+        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
       ];
     }
     const actionId = eff.params?.['actionId'] as string;

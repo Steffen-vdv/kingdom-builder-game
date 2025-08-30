@@ -21,16 +21,17 @@ function getTaxExpectations(ctx: EngineContext) {
   const subEffects = container.effects as (EffectDef & {
     round?: 'up' | 'down';
   })[];
-  for (const subEffect of subEffects) {
-    const key = subEffect.params!.key as string;
-    let total = (subEffect.params!.amount as number) * count;
-    const rounding = subEffect.round;
-    if (rounding === 'up')
-      total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-    else if (rounding === 'down')
-      total = total >= 0 ? Math.floor(total) : Math.ceil(total);
-    deltas[key] = total;
-  }
+  for (let i = 0; i < count; i++)
+    for (const subEffect of subEffects) {
+      const key = subEffect.params!.key as string;
+      let amount = subEffect.params!.amount as number;
+      const rounding = subEffect.round;
+      if (rounding === 'up')
+        amount = amount >= 0 ? Math.ceil(amount) : Math.floor(amount);
+      else if (rounding === 'down')
+        amount = amount >= 0 ? Math.floor(amount) : Math.ceil(amount);
+      deltas[key] = (deltas[key] || 0) + amount;
+    }
   return deltas;
 }
 

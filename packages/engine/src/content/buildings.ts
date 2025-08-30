@@ -46,34 +46,11 @@ export function createBuildingRegistry() {
       .onBuild({
         type: 'result_mod',
         method: 'add',
-        params: { id: 'mill_overwork_bonus', actionId: 'overwork' },
-        effects: [
-          {
-            evaluator: { type: 'development', params: { id: 'farm' } },
-            effects: [
-              {
-                type: 'resource',
-                method: 'add',
-                params: { key: Resource.gold, amount: 1 },
-              },
-            ],
-          },
-        ],
-      })
-      .onBuild({
-        type: 'result_mod',
-        method: 'add',
         params: {
           id: 'mill_farm_bonus',
           evaluation: { type: 'development', id: 'farm' },
+          amount: 1,
         },
-        effects: [
-          {
-            type: 'resource',
-            method: 'add',
-            params: { key: Resource.gold, amount: 1 },
-          },
-        ],
       })
       .build(),
   );

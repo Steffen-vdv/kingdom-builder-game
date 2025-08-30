@@ -74,7 +74,11 @@ export type CostModifier = (
   ctx: EngineContext,
 ) => CostBag;
 export type ResultModifier = (actionId: string, ctx: EngineContext) => void;
-export type EvaluationModifier = (ctx: EngineContext) => void;
+export type ResourceGain = { key: ResourceKey; amount: number };
+export type EvaluationModifier = (
+  ctx: EngineContext,
+  gains: ResourceGain[],
+) => void;
 
 export class PassiveManager {
   private costMods: Map<string, CostModifier> = new Map();
@@ -127,10 +131,10 @@ export class PassiveManager {
     for (const modifier of this.resultMods.values()) modifier(actionId, ctx);
   }
 
-  runEvaluationMods(target: string, ctx: EngineContext) {
+  runEvaluationMods(target: string, ctx: EngineContext, gains: ResourceGain[]) {
     const mods = this.evaluationMods.get(target);
     if (!mods) return;
-    for (const mod of mods.values()) mod(ctx);
+    for (const mod of mods.values()) mod(ctx, gains);
   }
 
   addPassive(

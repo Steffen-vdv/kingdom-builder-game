@@ -1,4 +1,4 @@
-import type { GameState } from './state';
+import type { GameState, ResourceKey } from './state';
 import type { Services, PassiveManager } from './services';
 import type { Registry } from './registry';
 import type { ActionDef } from './content/actions';
@@ -18,6 +18,7 @@ export class EngineContext {
     public passives: PassiveManager,
     public phases: PhaseDef[],
   ) {}
+  recentResourceGains: { key: ResourceKey; amount: number }[] = [];
   get activePlayer() {
     return this.game.active;
   }

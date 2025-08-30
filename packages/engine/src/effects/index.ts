@@ -72,10 +72,13 @@ export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
         params && 'id' in params
           ? `${effect.evaluator.type}:${String(params['id'])}`
           : effect.evaluator.type;
-      runEffects(effect.effects || [], ctx, mult * (count as number));
       const total = (count as number) * mult;
-      for (let i = 0; i < total; i++)
-        ctx.passives.runEvaluationMods(target, ctx);
+      for (let i = 0; i < total; i++) {
+        ctx.recentResourceGains = [];
+        runEffects(effect.effects || [], ctx);
+        const gains = [...ctx.recentResourceGains];
+        ctx.passives.runEvaluationMods(target, ctx, gains);
+      }
     } else if (effect.type && effect.method) {
       const handler = EFFECTS.get(`${effect.type}:${effect.method}`);
       handler(effect, ctx, mult);
