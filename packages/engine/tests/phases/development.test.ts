@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
+  advance,
   PopulationRole,
   Stat,
   Resource,
@@ -49,12 +49,13 @@ const fortifierPct = Number(
 describe('Development phase', () => {
   it('triggers population and development effects', () => {
     const ctx = createEngine();
-    const apBefore = ctx.activePlayer.ap;
-    const goldBefore = ctx.activePlayer.gold;
-    runDevelopment(ctx);
-    const councils = ctx.activePlayer.population[PopulationRole.Council];
-    expect(ctx.activePlayer.ap).toBe(apBefore + councilApGain * councils);
-    expect(ctx.activePlayer.gold).toBe(goldBefore + farmGoldGain);
+    const player = ctx.activePlayer;
+    const apBefore = player.ap;
+    const goldBefore = player.gold;
+    advance(ctx);
+    const councils = player.population[PopulationRole.Council];
+    expect(player.ap).toBe(apBefore + councilApGain * councils);
+    expect(player.gold).toBe(goldBefore + farmGoldGain);
   });
 
   it('grows commander and fortifier stats', () => {
@@ -63,12 +64,11 @@ describe('Development phase', () => {
     ctx.activePlayer.population[PopulationRole.Fortifier] = 1;
     ctx.activePlayer.stats[Stat.armyStrength] = 8;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
-    runDevelopment(ctx);
+    const player = ctx.activePlayer;
+    advance(ctx);
     const expectedArmy = 8 + 8 * (commanderPct / 100);
     const expectedFort = 4 + 4 * (fortifierPct / 100);
-    expect(ctx.activePlayer.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
-    expect(ctx.activePlayer.stats[Stat.fortificationStrength]).toBeCloseTo(
-      expectedFort,
-    );
+    expect(player.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
+    expect(player.stats[Stat.fortificationStrength]).toBeCloseTo(expectedFort);
   });
 });

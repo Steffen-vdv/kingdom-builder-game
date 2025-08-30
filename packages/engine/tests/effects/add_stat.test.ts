@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
   performAction,
   Resource,
   Stat,
   createActionRegistry,
+  collectTriggerEffects,
+  runEffects,
 } from '../../src/index.ts';
 
 describe('stat:add effect', () => {
@@ -24,7 +25,7 @@ describe('stat:add effect', () => {
       ],
     });
     const ctx = createEngine({ actions });
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
     const before = ctx.activePlayer.armyStrength;
     const actionDefinition = actions.get('train_army');
     const amount = actionDefinition.effects.find(

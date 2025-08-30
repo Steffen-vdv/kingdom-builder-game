@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
   performAction,
   getActionCosts,
   Resource,
+  collectTriggerEffects,
+  runEffects,
 } from '../../src/index.ts';
 import { action, building } from '../../src/config/builders.ts';
 
@@ -21,7 +22,7 @@ describe('multi-cost content', () => {
       .build();
 
     const ctx = createEngine({ config: { actions: [multiCostAction] } });
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
 
     ctx.activePlayer.gold = 5;
     ctx.activePlayer.happiness = 3;
@@ -63,7 +64,7 @@ describe('multi-cost content', () => {
         buildings: [multiCostBuildingDefinition],
       },
     });
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
 
     ctx.activePlayer.gold = 10;
     ctx.activePlayer.happiness = 2;

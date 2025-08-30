@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
-  runUpkeep,
+  advance,
   PopulationRole,
   Resource,
   Stat,
   POPULATIONS,
   createPopulationRegistry,
+  PHASES,
 } from '../../src';
 
 const council = POPULATIONS.get(PopulationRole.Council);
@@ -85,17 +85,35 @@ function setup({
   return ctx;
 }
 
+function runDev(ctx: ReturnType<typeof createEngine>) {
+  ctx.game.phaseIndex = 0;
+  ctx.game.currentPhase = PHASES[0]!.id;
+  ctx.game.currentStep = PHASES[0]!.steps[0]!.id;
+  ctx.game.currentPlayerIndex = 0;
+  advance(ctx);
+  ctx.game.currentPlayerIndex = 0;
+}
+
+function runUpk(ctx: ReturnType<typeof createEngine>) {
+  ctx.game.phaseIndex = 1;
+  ctx.game.currentPhase = PHASES[1]!.id;
+  ctx.game.currentStep = PHASES[1]!.steps[0]!.id;
+  ctx.game.currentPlayerIndex = 0;
+  advance(ctx);
+  ctx.game.currentPlayerIndex = 0;
+}
+
 describe('population development/upkeep triggers', () => {
   it('scenario 1: single council', () => {
     const startGold = 10;
     const startAP = 0;
     const councils = 1;
     const ctx = setup({ gold: startGold, ap: startAP, councils });
-    runDevelopment(ctx);
+    runDev(ctx);
     const expectedAp = startAP + councilApGain * councils;
     expect(ctx.activePlayer.ap).toBe(expectedAp);
     expect(ctx.activePlayer.gold).toBe(startGold);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedGold = startGold - councilUpkeep * councils;
     expect(ctx.activePlayer.gold).toBe(expectedGold);
     expect(ctx.activePlayer.ap).toBe(expectedAp);
@@ -106,11 +124,11 @@ describe('population development/upkeep triggers', () => {
     const startAP = 2;
     const councils = 1;
     const ctx = setup({ gold: startGold, ap: startAP, councils });
-    runDevelopment(ctx);
+    runDev(ctx);
     const expectedAp = startAP + councilApGain * councils;
     expect(ctx.activePlayer.ap).toBe(expectedAp);
     expect(ctx.activePlayer.gold).toBe(startGold);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedGold = startGold - councilUpkeep * councils;
     expect(ctx.activePlayer.gold).toBe(expectedGold);
     expect(ctx.activePlayer.ap).toBe(expectedAp);
@@ -121,11 +139,11 @@ describe('population development/upkeep triggers', () => {
     const startAP = -1;
     const councils = 1;
     const ctx = setup({ gold: startGold, ap: startAP, councils });
-    runDevelopment(ctx);
+    runDev(ctx);
     const expectedAp = startAP + councilApGain * councils;
     expect(ctx.activePlayer.ap).toBe(expectedAp);
     expect(ctx.activePlayer.gold).toBe(startGold);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedGold = startGold - councilUpkeep * councils;
     expect(ctx.activePlayer.gold).toBe(expectedGold);
     expect(ctx.activePlayer.ap).toBe(expectedAp);
@@ -136,11 +154,11 @@ describe('population development/upkeep triggers', () => {
     const startAP = 0;
     const councils = 2;
     const ctx = setup({ gold: startGold, ap: startAP, councils });
-    runDevelopment(ctx);
+    runDev(ctx);
     const expectedAp = startAP + councilApGain * councils;
     expect(ctx.activePlayer.ap).toBe(expectedAp);
     expect(ctx.activePlayer.gold).toBe(startGold);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedGold = startGold - councilUpkeep * councils;
     expect(ctx.activePlayer.gold).toBe(expectedGold);
     expect(ctx.activePlayer.ap).toBe(expectedAp);
@@ -151,11 +169,14 @@ describe('population development/upkeep triggers', () => {
     const startAP = 0;
     const councils = 1;
     const ctx = setup({ gold: startGold, ap: startAP, councils });
-    runDevelopment(ctx);
+    runDev(ctx);
     const expectedAp = startAP + councilApGain * councils;
     expect(ctx.activePlayer.ap).toBe(expectedAp);
     expect(ctx.activePlayer.gold).toBe(startGold);
-    expect(() => runUpkeep(ctx)).toThrow();
+    ctx.game.phaseIndex = 1;
+    ctx.game.currentPhase = PHASES[1]!.id;
+    ctx.game.currentStep = PHASES[1]!.steps[0]!.id;
+    expect(() => advance(ctx)).toThrow();
   });
 
   it('scenario 6: mixed roles', () => {
@@ -171,11 +192,11 @@ describe('population development/upkeep triggers', () => {
       commanders,
       fortifiers,
     });
-    runDevelopment(ctx);
+    runDev(ctx);
     const expectedAp = startAP + councilApGain * councils;
     expect(ctx.activePlayer.ap).toBe(expectedAp);
     expect(ctx.activePlayer.gold).toBe(startGold);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedGold =
       startGold -
       councilUpkeep * councils -
@@ -190,10 +211,10 @@ describe('population development/upkeep triggers', () => {
     const startArmy = 8;
     const ctx = setup({ gold: startGold, ap: 0, councils: 0, commanders: 1 });
     ctx.activePlayer.armyStrength = startArmy;
-    runDevelopment(ctx);
+    runDev(ctx);
     const expectedArmy = startArmy + startArmy * (commanderPct / 100);
     expect(ctx.activePlayer.armyStrength).toBeCloseTo(expectedArmy);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedGold = startGold - commanderUpkeep;
     expect(ctx.activePlayer.gold).toBe(expectedGold);
   });
@@ -203,10 +224,10 @@ describe('population development/upkeep triggers', () => {
     const startFort = 4;
     const ctx = setup({ gold: startGold, ap: 0, councils: 0, fortifiers: 1 });
     ctx.activePlayer.fortificationStrength = startFort;
-    runDevelopment(ctx);
+    runDev(ctx);
     const expectedFort = startFort + startFort * (fortifierPct / 100);
     expect(ctx.activePlayer.fortificationStrength).toBeCloseTo(expectedFort);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedGold = startGold - fortifierUpkeep;
     expect(ctx.activePlayer.gold).toBe(expectedGold);
   });
@@ -265,10 +286,10 @@ describe('population registry overrides', () => {
       )?.params.amount ?? 0,
     );
 
-    runDevelopment(ctx);
+    runDev(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold + devGain);
     expect(ctx.activePlayer.ap).toBe(startAP);
-    runUpkeep(ctx);
+    runUpk(ctx);
     expect(ctx.activePlayer.ap).toBe(startAP - upkeepCost);
     expect(ctx.activePlayer.gold).toBe(startGold + devGain);
   });
@@ -322,10 +343,10 @@ describe('population registry overrides', () => {
           effect.params.key === Stat.armyStrength,
       )?.params.percent ?? 0;
 
-    runDevelopment(ctx);
+    runDev(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);
     expect(ctx.activePlayer.armyStrength).toBe(startArmy);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedArmy = startArmy + startArmy * (upkeepPct / 100);
     expect(ctx.activePlayer.armyStrength).toBeCloseTo(expectedArmy);
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);
@@ -380,9 +401,9 @@ describe('population registry overrides', () => {
           effect.params.key === Stat.fortificationStrength,
       )?.params.percent ?? 0;
 
-    runDevelopment(ctx);
+    runDev(ctx);
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);
-    runUpkeep(ctx);
+    runUpk(ctx);
     const expectedFort = startFort + startFort * (upkeepPct / 100);
     expect(ctx.activePlayer.fortificationStrength).toBeCloseTo(expectedFort);
     expect(ctx.activePlayer.gold).toBe(startGold - devCost);

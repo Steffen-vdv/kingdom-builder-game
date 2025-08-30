@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
-  runUpkeep,
+  advance,
   performAction,
   Resource,
-  Phase,
   POPULATIONS,
   DEVELOPMENTS,
   PopulationRole,
@@ -16,7 +14,7 @@ describe('Turn cycle integration', () => {
   it('processes development, upkeep, and main phases for both players', () => {
     const ctx = createEngine();
     expect(ctx.game.turn).toBe(1);
-    expect(ctx.game.currentPhase).toBe(Phase.Development);
+    expect(ctx.game.currentPhase).toBe('development');
     expect(ctx.game.currentPlayerIndex).toBe(0);
     const councilDev = simulateEffects(
       POPULATIONS.get(PopulationRole.Council).onDevelopmentPhase || [],
@@ -36,36 +34,40 @@ describe('Turn cycle integration', () => {
 
     // Player A development
     ctx.game.currentPlayerIndex = 0;
-    const startGoldA = ctx.activePlayer.gold;
-    const startApA = ctx.activePlayer.ap;
-    runDevelopment(ctx);
-    expect(ctx.game.currentPhase).toBe(Phase.Development);
-    expect(ctx.activePlayer.ap).toBe(startApA + apGain);
-    expect(ctx.activePlayer.gold).toBe(startGoldA + farmGold);
-    const afterDevGoldA = ctx.activePlayer.gold;
+    const playerA = ctx.activePlayer;
+    const startGoldA = playerA.gold;
+    const startApA = playerA.ap;
+    advance(ctx);
+    expect(ctx.game.currentPhase).toBe('development');
+    expect(playerA.ap).toBe(startApA + apGain);
+    expect(playerA.gold).toBe(startGoldA + farmGold);
+    const afterDevGoldA = playerA.gold;
 
     // Player B development
     ctx.game.currentPlayerIndex = 1;
-    const startGoldB = ctx.activePlayer.gold;
-    const startApB = ctx.activePlayer.ap;
-    runDevelopment(ctx);
-    expect(ctx.activePlayer.ap).toBe(startApB + apGain);
-    expect(ctx.activePlayer.gold).toBe(startGoldB + farmGold);
-    const afterDevGoldB = ctx.activePlayer.gold;
+    const playerB = ctx.activePlayer;
+    const startGoldB = playerB.gold;
+    const startApB = playerB.ap;
+    advance(ctx);
+    expect(playerB.ap).toBe(startApB + apGain);
+    expect(playerB.gold).toBe(startGoldB + farmGold);
+    const afterDevGoldB = playerB.gold;
 
     // Player A upkeep
     ctx.game.currentPlayerIndex = 0;
-    runUpkeep(ctx);
-    expect(ctx.game.currentPhase).toBe(Phase.Upkeep);
-    expect(ctx.activePlayer.gold).toBe(afterDevGoldA + upkeepGold);
+    const upkeepA = ctx.activePlayer;
+    advance(ctx);
+    expect(ctx.game.currentPhase).toBe('upkeep');
+    expect(upkeepA.gold).toBe(afterDevGoldA + upkeepGold);
 
     // Player B upkeep
     ctx.game.currentPlayerIndex = 1;
-    runUpkeep(ctx);
-    expect(ctx.activePlayer.gold).toBe(afterDevGoldB + upkeepGold);
+    const upkeepB = ctx.activePlayer;
+    advance(ctx);
+    expect(upkeepB.gold).toBe(afterDevGoldB + upkeepGold);
 
     // Main phase actions
-    ctx.game.currentPhase = Phase.Main;
+    expect(ctx.game.currentPhase).toBe('main');
 
     ctx.game.currentPlayerIndex = 0;
     const expandA = getActionOutcome('expand', ctx);
@@ -116,11 +118,12 @@ describe('Turn cycle integration', () => {
     }
 
     // End turn reset
-    ctx.game.turn += 1;
-    ctx.game.currentPhase = Phase.Development;
     ctx.game.currentPlayerIndex = 0;
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 1;
+    advance(ctx);
     expect(ctx.game.turn).toBe(2);
-    expect(ctx.game.currentPhase).toBe(Phase.Development);
+    expect(ctx.game.currentPhase).toBe('development');
     expect(ctx.game.currentPlayerIndex).toBe(0);
   });
 });

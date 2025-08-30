@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
   performAction,
   createActionRegistry,
   Resource,
+  collectTriggerEffects,
+  runEffects,
 } from '../../src/index.ts';
 
 describe('resource:remove effect', () => {
@@ -23,7 +24,7 @@ describe('resource:remove effect', () => {
       ],
     });
     const ctx = createEngine({ actions });
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
     const before = ctx.activePlayer.gold;
     const actionDefinition = actions.get('pay_gold');
     const amount = actionDefinition.effects.find(
@@ -65,7 +66,7 @@ describe('resource:remove effect', () => {
       ],
     });
     const ctx = createEngine({ actions });
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
 
     let before = ctx.activePlayer.gold;
     let foundEffect = actions

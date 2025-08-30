@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   createEngine,
   performAction,
-  runDevelopment,
   runEffects,
   getActionCosts,
+  collectTriggerEffects,
 } from '../../src';
 import { PopulationRole, Resource } from '../../src/state';
 import type { EffectDef } from '../../src/effects';
@@ -21,7 +21,7 @@ describe('Raise Population action', () => {
   it('assigns a Council and applies effects', () => {
     const ctx = createEngine();
     ctx.activePlayer.maxPopulation = 2;
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
     const costs = getActionCosts('raise_pop', ctx);
     const goldBefore = ctx.activePlayer.gold;
     const apBefore = ctx.activePlayer.ap;
@@ -46,7 +46,7 @@ describe('Raise Population action', () => {
   it('assigns a Commander and grants army strength', () => {
     const ctx = createEngine();
     ctx.activePlayer.maxPopulation = 2;
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
     const commanderDef = ctx.populations.get(PopulationRole.Commander);
     const passive = commanderDef.onAssigned![0];
     const statGain = (
@@ -60,7 +60,7 @@ describe('Raise Population action', () => {
 
   it('enforces population cap requirement', () => {
     const ctx = createEngine();
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
     expect(() =>
       performAction('raise_pop', ctx, { role: PopulationRole.Council }),
     ).toThrow();
@@ -69,7 +69,7 @@ describe('Raise Population action', () => {
   it('removes commander passive when unassigned', () => {
     const ctx = createEngine();
     ctx.activePlayer.maxPopulation = 2;
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
     performAction('raise_pop', ctx, { role: PopulationRole.Commander });
     const afterAdd = ctx.activePlayer.armyStrength;
     runEffects(
@@ -89,7 +89,7 @@ describe('Raise Population action', () => {
   it('removes council AP when unassigned', () => {
     const ctx = createEngine();
     ctx.activePlayer.maxPopulation = 2;
-    runDevelopment(ctx);
+    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
     performAction('raise_pop', ctx, { role: PopulationRole.Council });
     runEffects(
       [
