@@ -3,6 +3,7 @@ import { registerContentTranslator } from './factory';
 import type { ContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';
 import { withInstallation } from './decorators';
+import { buildingIcon } from '../../icons';
 
 class BuildingCore implements ContentTranslator<string> {
   private phased = new PhasedTranslator();
@@ -13,6 +14,10 @@ class BuildingCore implements ContentTranslator<string> {
   describe(id: string, ctx: EngineContext): Summary {
     const def = ctx.buildings.get(id);
     return this.phased.describe(def, ctx);
+  }
+  log(id: string, ctx: EngineContext): string[] {
+    const def = ctx.buildings.get(id);
+    return [`${buildingIcon}${def.name}`];
   }
 }
 

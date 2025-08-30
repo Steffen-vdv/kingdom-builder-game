@@ -30,5 +30,12 @@ export function withInstallation<T>(
         : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.future.toLowerCase()}`;
       return [{ title, items: inner }];
     },
+    log(
+      target: T,
+      ctx: EngineContext,
+      opts?: { installed?: boolean },
+    ): string[] {
+      return translator.log ? translator.log(target, ctx, opts) : [];
+    },
   };
 }

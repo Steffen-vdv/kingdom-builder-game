@@ -1,12 +1,6 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import {
-  resourceInfo,
-  statInfo,
-  developmentInfo,
-  landIcon,
-  buildingIcon,
-} from '../icons';
-import type { Land } from './content';
+import { resourceInfo, statInfo, landIcon } from '../icons';
+import { logContent, type Land } from './content';
 
 export interface PlayerSnapshot {
   resources: Record<string, number>;
@@ -84,13 +78,8 @@ export function diffSnapshots(
   const afterB = new Set(after.buildings);
   for (const id of afterB)
     if (!beforeB.has(id)) {
-      let name = id;
-      try {
-        name = ctx.buildings.get(id).name;
-      } catch {
-        // use id if lookup fails
-      }
-      changes.push(`${buildingIcon} ${name} built`);
+      const label = logContent('building', id, ctx)[0] ?? id;
+      changes.push(`${label} built`);
     }
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
@@ -100,8 +89,8 @@ export function diffSnapshots(
     }
     for (const dev of land.developments)
       if (!prev.developments.includes(dev)) {
-        const icon = developmentInfo[dev]?.icon || dev;
-        changes.push(`${landIcon} +${icon}`);
+        const label = logContent('development', dev, ctx)[0] ?? dev;
+        changes.push(`${landIcon} +${label}`);
       }
   }
   return changes;
