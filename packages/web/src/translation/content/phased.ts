@@ -3,11 +3,10 @@ import { phaseInfo } from '../../icons';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 
-interface PhasedDef {
+export interface PhasedDef {
   onBuild?: EffectDef<Record<string, unknown>>[] | undefined;
-  onDevelopmentPhase?: EffectDef<Record<string, unknown>>[] | undefined;
-  onUpkeepPhase?: EffectDef<Record<string, unknown>>[] | undefined;
   onAttackResolved?: EffectDef<Record<string, unknown>>[] | undefined;
+  [key: string]: EffectDef<Record<string, unknown>>[] | undefined;
 }
 
 export class PhasedTranslator {
@@ -15,18 +14,16 @@ export class PhasedTranslator {
     const root: SummaryEntry[] = [];
     const build = summarizeEffects(def.onBuild, ctx);
     if (build.length) root.push(...build);
-    const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
-    if (dev.length)
-      root.push({
-        title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.future}`,
-        items: dev,
-      });
-    const upk = summarizeEffects(def.onUpkeepPhase, ctx);
-    if (upk.length)
-      root.push({
-        title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.future}`,
-        items: upk,
-      });
+    for (const phase of ctx.phases) {
+      const key =
+        `on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhasedDef;
+      const eff = summarizeEffects(def[key], ctx);
+      if (eff.length)
+        root.push({
+          title: `${phase.icon} On each ${phase.label} Phase`,
+          items: eff,
+        });
+    }
     const atk = summarizeEffects(def.onAttackResolved, ctx);
     if (atk.length)
       root.push({
@@ -40,18 +37,16 @@ export class PhasedTranslator {
     const root: SummaryEntry[] = [];
     const build = describeEffects(def.onBuild, ctx);
     if (build.length) root.push(...build);
-    const dev = describeEffects(def.onDevelopmentPhase, ctx);
-    if (dev.length)
-      root.push({
-        title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.future}`,
-        items: dev,
-      });
-    const upk = describeEffects(def.onUpkeepPhase, ctx);
-    if (upk.length)
-      root.push({
-        title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.future}`,
-        items: upk,
-      });
+    for (const phase of ctx.phases) {
+      const key =
+        `on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhasedDef;
+      const eff = describeEffects(def[key], ctx);
+      if (eff.length)
+        root.push({
+          title: `${phase.icon} On each ${phase.label} Phase`,
+          items: eff,
+        });
+    }
     const atk = describeEffects(def.onAttackResolved, ctx);
     if (atk.length)
       root.push({

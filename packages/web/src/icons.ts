@@ -1,3 +1,5 @@
+import { PHASES } from '@kingdom-builder/engine';
+
 export const actionInfo = {
   expand: { icon: '🌱' },
   overwork: { icon: '🛠️' },
@@ -31,26 +33,34 @@ export const modifierInfo = {
   result: { icon: '✨', label: 'Result Modifier' },
 } as const;
 
+const phaseEntries = Object.fromEntries(
+  PHASES.map((p) => [
+    `on${p.id.charAt(0).toUpperCase() + p.id.slice(1)}Phase`,
+    {
+      icon: p.icon,
+      future: `On each ${p.label} Phase`,
+      past: `${p.label} Phase`,
+    },
+  ]),
+);
+
+const actionPhase = PHASES.find((p) => p.action);
+
 export const phaseInfo = {
   onBuild: {
     icon: '⚒️',
     future: 'Until removed',
     past: 'Build',
   },
-  onDevelopmentPhase: {
-    icon: '🏗️',
-    future: 'On each Development Phase',
-    past: 'Development Phase',
-  },
-  onUpkeepPhase: {
-    icon: '🧹',
-    future: 'On each Upkeep Phase',
-    past: 'Upkeep Phase',
-  },
   onAttackResolved: {
     icon: '⚔️',
     future: 'After having been attacked',
     past: 'After attack',
   },
-  mainPhase: { icon: '🎯', future: 'Immediately', past: 'Main phase' },
+  mainPhase: {
+    icon: actionPhase?.icon || '🎯',
+    future: 'Immediately',
+    past: `${actionPhase?.label ?? 'Main'} phase`,
+  },
+  ...phaseEntries,
 } as const;
