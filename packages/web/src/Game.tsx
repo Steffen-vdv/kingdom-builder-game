@@ -438,7 +438,8 @@ export default function Game({
   const [phaseBoxHeight, setPhaseBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
   const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
-  const isActionPhase = ctx.phases[ctx.game.phaseIndex]?.action;
+  const actualActionPhase = ctx.phases[ctx.game.phaseIndex]?.action;
+  const isActionPhase = actualActionPhase && displayPhase === 'main';
 
   useEffect(() => {
     const pEl = playerBoxRef.current;
@@ -702,7 +703,6 @@ export default function Game({
   return (
     <div className="p-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
       <div className="flex items-center justify-between mb-6">
-        <div className="text-lg font-semibold">Turn {ctx.game.turn}</div>
         <h1 className="text-2xl font-bold text-center flex-1">
           Kingdom Builder
         </h1>
@@ -740,11 +740,11 @@ export default function Game({
                 const bgClass =
                   i === 0
                     ? isActive
-                      ? 'bg-blue-100 dark:bg-blue-900/20 pr-6'
-                      : 'bg-blue-200 dark:bg-blue-900/40 pr-6'
+                      ? 'bg-blue-200 dark:bg-blue-700 pr-6'
+                      : 'bg-blue-500 dark:bg-blue-900 pr-6'
                     : isActive
-                      ? 'bg-red-100 dark:bg-red-900/20 pl-6'
-                      : 'bg-red-200 dark:bg-red-900/40 pl-6';
+                      ? 'bg-red-200 dark:bg-red-700 pl-6'
+                      : 'bg-red-500 dark:bg-red-900 pl-6';
                 return (
                   <PlayerPanel
                     key={p.id}
@@ -1133,6 +1133,7 @@ export default function Game({
           </section>
         </div>
         <section className="w-[30rem] self-start flex flex-col gap-6">
+          <div className="font-semibold">Turn {ctx.game.turn}</div>
           <section
             ref={phaseBoxRef}
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
