@@ -550,6 +550,14 @@ export default function Game({
         const devIcon = developmentInfo[devId]?.icon || '';
         const devLabel = developmentInfo[devId]?.label || devId;
         message += ` - ${devIcon}${devLabel}`;
+      } else if (
+        action.id === 'build' &&
+        params &&
+        typeof (params as { id?: string }).id === 'string'
+      ) {
+        const bId = (params as { id: string }).id;
+        const bLabel = ctx.buildings.get(bId)?.name || bId;
+        message += ` - ${buildingIcon}${bLabel}`;
       }
       addLog([message, ...changes.map((c) => `  ${c}`)]);
     } catch (e) {
@@ -830,15 +838,22 @@ export default function Game({
                       ] >= v,
                   );
                   const meetsReq = requirements.length === 0;
+                  const summary = actionSummaries.get(action.id);
+                  const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
                   const enabled =
-                    canPay && meetsReq && ctx.game.currentPhase === Phase.Main;
-                  const title = !meetsReq
-                    ? requirements.join(', ')
-                    : !canPay
-                      ? 'Cannot pay costs'
-                      : ctx.game.currentPhase !== Phase.Main
-                        ? 'Not in Main phase'
-                        : undefined;
+                    canPay &&
+                    meetsReq &&
+                    ctx.game.currentPhase === Phase.Main &&
+                    implemented;
+                  const title = !implemented
+                    ? 'Not implemented yet'
+                    : !meetsReq
+                      ? requirements.join(', ')
+                      : !canPay
+                        ? 'Cannot pay costs'
+                        : ctx.game.currentPhase !== Phase.Main
+                          ? 'Not in Main phase'
+                          : undefined;
                   return (
                     <button
                       key={action.id}
@@ -870,7 +885,13 @@ export default function Game({
                         {renderCosts(costs, ctx.activePlayer.resources)}
                       </span>
                       <ul className="text-sm list-disc pl-4 text-left">
-                        {renderSummary(actionSummaries.get(action.id))}
+                        {implemented ? (
+                          renderSummary(summary)
+                        ) : (
+                          <li className="italic text-red-600">
+                            Not implemented yet
+                          </li>
+                        )}
                       </ul>
                       {requirements.length > 0 && (
                         <div className="text-sm text-red-600 text-left">
@@ -1020,15 +1041,21 @@ export default function Game({
                               k as keyof typeof ctx.activePlayer.resources
                             ] >= v,
                         );
+                      const summary = developmentSummaries.get(d.id);
+                      const implemented = (summary?.length ?? 0) > 0; // TODO: implement development effects
                       const enabled =
-                        canPay && ctx.game.currentPhase === Phase.Main;
-                      const title = !hasDevelopLand
-                        ? 'No land with free development slot'
-                        : !canPay
-                          ? 'Cannot pay costs'
-                          : ctx.game.currentPhase !== Phase.Main
-                            ? 'Not in Main phase'
-                            : undefined;
+                        canPay &&
+                        ctx.game.currentPhase === Phase.Main &&
+                        implemented;
+                      const title = !implemented
+                        ? 'Not implemented yet'
+                        : !hasDevelopLand
+                          ? 'No land with free development slot'
+                          : !canPay
+                            ? 'Cannot pay costs'
+                            : ctx.game.currentPhase !== Phase.Main
+                              ? 'Not in Main phase'
+                              : undefined;
                       return (
                         <button
                           key={d.id}
@@ -1068,7 +1095,13 @@ export default function Game({
                             {renderCosts(costs, ctx.activePlayer.resources)}
                           </span>
                           <ul className="text-sm list-disc pl-4 text-left">
-                            {renderSummary(developmentSummaries.get(d.id))}
+                            {implemented ? (
+                              renderSummary(summary)
+                            ) : (
+                              <li className="italic text-red-600">
+                                Not implemented yet
+                              </li>
+                            )}
                           </ul>
                           {requirements.length > 0 && (
                             <div className="text-sm text-red-600 text-left">
@@ -1102,13 +1135,19 @@ export default function Game({
                             k as keyof typeof ctx.activePlayer.resources
                           ] >= v,
                       );
+                      const summary = buildingSummaries.get(b.id);
+                      const implemented = (summary?.length ?? 0) > 0; // TODO: implement building effects
                       const enabled =
-                        canPay && ctx.game.currentPhase === Phase.Main;
-                      const title = !canPay
-                        ? 'Cannot pay costs'
-                        : ctx.game.currentPhase !== Phase.Main
-                          ? 'Not in Main phase'
-                          : undefined;
+                        canPay &&
+                        ctx.game.currentPhase === Phase.Main &&
+                        implemented;
+                      const title = !implemented
+                        ? 'Not implemented yet'
+                        : !canPay
+                          ? 'Cannot pay costs'
+                          : ctx.game.currentPhase !== Phase.Main
+                            ? 'Not in Main phase'
+                            : undefined;
                       return (
                         <button
                           key={b.id}
@@ -1138,7 +1177,13 @@ export default function Game({
                             {renderCosts(costs, ctx.activePlayer.resources)}
                           </span>
                           <ul className="text-sm list-disc pl-4 text-left">
-                            {renderSummary(buildingSummaries.get(b.id))}
+                            {implemented ? (
+                              renderSummary(summary)
+                            ) : (
+                              <li className="italic text-red-600">
+                                Not implemented yet
+                              </li>
+                            )}
                           </ul>
                         </button>
                       );

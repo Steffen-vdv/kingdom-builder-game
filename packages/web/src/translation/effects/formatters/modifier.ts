@@ -14,7 +14,7 @@ registerEffectFormatter('cost_mod', 'add', {
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
       actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-    return `${modifierInfo.cost.icon} ${actionIcon} cost ${icon}${signed(amount)}${amount}`;
+    return `${modifierInfo.cost.icon} ${actionIcon}: ${icon}${signed(amount)}${amount}`;
   },
   describe: (eff) => {
     const key = eff.params?.['key'] as string;
@@ -23,7 +23,7 @@ registerEffectFormatter('cost_mod', 'add', {
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
       actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-    return `${modifierInfo.cost.label}: ${increaseOrDecrease(amount)} ${actionIcon} cost by ${icon}${Math.abs(amount)}`;
+    return `${modifierInfo.cost.label} on ${actionIcon}: ${increaseOrDecrease(amount)} cost by ${icon}${Math.abs(amount)}`;
   },
 });
 
