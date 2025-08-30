@@ -1,11 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import type { LogEntry } from '../state/GameContext';
+import { useGameEngine } from '../state/GameContext';
 
-interface LogPanelProps {
-  entries: LogEntry[];
-}
-
-export default function LogPanel({ entries }: LogPanelProps) {
+export default function LogPanel() {
+  const { log: entries } = useGameEngine();
   const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

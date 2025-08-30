@@ -2,22 +2,15 @@ import React from 'react';
 import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
 
-type HoverCardData = ReturnType<typeof useGameEngine>['hoverCard'];
-
-interface HoverCardProps {
-  data: HoverCardData;
-  onClose?: () => void;
-}
-
-export default function HoverCard({ data, onClose }: HoverCardProps) {
-  const { ctx } = useGameEngine();
+export default function HoverCard() {
+  const { hoverCard: data, clearHoverCard, ctx } = useGameEngine();
   if (!data) return null;
   return (
     <div
       className={`border rounded p-4 shadow relative pointer-events-none w-full ${
         data.bgClass || 'bg-white dark:bg-gray-800'
       }`}
-      onMouseLeave={onClose}
+      onMouseLeave={clearHoverCard}
     >
       <div className="font-semibold mb-2">
         {data.title}

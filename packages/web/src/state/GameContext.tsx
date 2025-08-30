@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useEffect,
 } from 'react';
 import {
   createEngine,
@@ -71,11 +72,24 @@ interface GameEngineContextValue {
   runUntilActionPhase: () => Promise<void>;
   handleEndTurn: () => Promise<void>;
   updateMainPhaseStep: (apStartOverride?: number) => void;
+  onExit?: () => void;
+  darkMode: boolean;
+  onToggleDark: () => void;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
 
-export function GameProvider({ children }: { children: React.ReactNode }) {
+export function GameProvider({
+  children,
+  onExit,
+  darkMode = true,
+  onToggleDark = () => {},
+}: {
+  children: React.ReactNode;
+  onExit?: () => void;
+  darkMode?: boolean;
+  onToggleDark?: () => void;
+}) {
   const ctx = useMemo<EngineContext>(() => createEngine(), []);
   const [, setTick] = useState(0);
   const refresh = () => setTick((t) => t + 1);
@@ -245,6 +259,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     await runUntilActionPhase();
   }
 
+  // Update main phase steps once action phase becomes active
+  useEffect(() => {
+    if (ctx.phases[ctx.game.phaseIndex]?.action) {
+      setMainApStart(ctx.activePlayer.ap);
+      updateMainPhaseStep(ctx.activePlayer.ap);
+    }
+  }, [ctx.game.phaseIndex]);
+
+  useEffect(() => {
+    void runUntilActionPhase();
+  }, []);
+
   const value: GameEngineContextValue = {
     ctx,
     log,
@@ -265,6 +291,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     runUntilActionPhase,
     handleEndTurn,
     updateMainPhaseStep,
+    darkMode,
+    onToggleDark,
+    ...(onExit ? { onExit } : {}),
   };
 
   return (
