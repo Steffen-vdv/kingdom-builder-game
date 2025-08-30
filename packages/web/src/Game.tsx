@@ -413,13 +413,12 @@ export default function Game({
     bgClass?: string;
   } | null>(null);
   const hoverTimeout = useRef<number>();
-  const [phaseSteps, setPhaseSteps] = useState<
-    {
-      title: string;
-      items: { text: string; italic?: boolean; done?: boolean }[];
-      active: boolean;
-    }[]
-  >([]);
+  type PhaseStep = {
+    title: string;
+    items: { text: string; italic?: boolean; done?: boolean }[];
+    active: boolean;
+  };
+  const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
   const [phaseTimer, setPhaseTimer] = useState(0);
   const [phasePaused, setPhasePaused] = useState(false);
   const phasePausedRef = useRef(false);
@@ -430,12 +429,15 @@ export default function Game({
   const [phaseBoxHeight, setPhaseBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
   const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
+  const [phaseHistories, setPhaseHistories] = useState<
+    Record<string, PhaseStep[]>
+  >({});
+  const [tabsEnabled, setTabsEnabled] = useState(false);
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
     [ctx],
   );
-  const actualActionPhase = ctx.phases[ctx.game.phaseIndex]?.action;
-  const isActionPhase = actualActionPhase && displayPhase === actionPhaseId;
+  const isActionPhase = Boolean(ctx.phases[ctx.game.phaseIndex]?.action);
 
   useEffect(() => {
     const pEl = playerBoxRef.current;
@@ -595,7 +597,9 @@ export default function Game({
     } catch (e) {
       const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
+      return;
     }
+    updateMainPhaseStep();
     refresh();
   }
 
@@ -610,6 +614,7 @@ export default function Game({
           setPhaseTimer(elapsed / total);
           if (elapsed >= total) {
             window.clearInterval(interval);
+            setPhaseTimer(0);
             resolve();
           }
         }
@@ -624,7 +629,7 @@ export default function Game({
   function updateMainPhaseStep(apStartOverride?: number) {
     const total = apStartOverride ?? mainApStart;
     const spent = total - ctx.activePlayer.ap;
-    setPhaseSteps([
+    const steps = [
       {
         title: 'Step 1 - Spend all AP',
         items: [
@@ -635,50 +640,62 @@ export default function Game({
         ],
         active: ctx.activePlayer.ap > 0,
       },
-    ]);
+    ];
+    setPhaseSteps(steps);
+    if (actionPhaseId) {
+      setPhaseHistories((prev) => ({ ...prev, [actionPhaseId]: steps }));
+      setDisplayPhase(actionPhaseId);
+    } else {
+      setDisplayPhase(ctx.game.currentPhase);
+    }
   }
 
   async function runUntilActionPhase() {
+    setTabsEnabled(false);
     setPhaseSteps([]);
     setDisplayPhase(ctx.game.currentPhase);
+    setPhaseHistories({});
     let lastPhase: string | null = null;
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
       const before = snapshotPlayer(ctx.activePlayer);
       const { phase, step, player } = advance(ctx);
-      setDisplayPhase(phase);
       const phaseDef = ctx.phases.find((p) => p.id === phase)!;
       const stepDef = phaseDef.steps.find((s) => s.id === step);
-      const after = snapshotPlayer(player);
-      const changes = diffStepSnapshots(before, after, stepDef, ctx);
       if (phase !== lastPhase) {
-        if (lastPhase !== null) await runDelay(1500);
+        await runDelay(1500);
         setPhaseSteps([]);
         setDisplayPhase(phase);
         addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player.name);
         lastPhase = phase;
       }
+      const after = snapshotPlayer(player);
+      const changes = diffStepSnapshots(before, after, stepDef, ctx);
       if (changes.length) {
         addLog(
           changes.map((c) => `  ${c}`),
           player.name,
         );
       }
-      setPhaseSteps((prev) => [
+      const entry = {
+        title: stepDef?.title || step,
+        items:
+          changes.length > 0
+            ? changes.map((text) => ({ text }))
+            : [{ text: 'No effect', italic: true }],
+        active: false,
+      };
+      setPhaseSteps((prev) => [...prev, entry]);
+      setPhaseHistories((prev) => ({
         ...prev,
-        {
-          title: stepDef?.title || step,
-          items:
-            changes.length > 0
-              ? changes.map((text) => ({ text }))
-              : [{ text: 'No effect', italic: true }],
-          active: false,
-        },
-      ]);
+        [phase]: [...(prev[phase] ?? []), entry],
+      }));
       await runStepDelay();
     }
+    await runDelay(1500);
     setMainApStart(ctx.activePlayer.ap);
     updateMainPhaseStep(ctx.activePlayer.ap);
     setDisplayPhase(ctx.game.currentPhase);
+    setTabsEnabled(true);
     refresh();
   }
 
@@ -687,6 +704,7 @@ export default function Game({
     if (!phaseDef?.action) return;
     if (ctx.activePlayer.ap > 0) return;
     advance(ctx);
+    setPhaseHistories({});
     await runUntilActionPhase();
   }
 
@@ -740,11 +758,11 @@ export default function Game({
                 const bgClass =
                   i === 0
                     ? isActive
-                      ? 'bg-blue-200 dark:bg-blue-700 pr-6'
-                      : 'bg-blue-500 dark:bg-blue-900 pr-6'
+                      ? 'bg-[#1f3b99] text-white pr-6'
+                      : 'bg-[#11235f] text-white pr-6'
                     : isActive
-                      ? 'bg-red-200 dark:bg-red-700 pl-6'
-                      : 'bg-red-500 dark:bg-red-900 pl-6';
+                      ? 'bg-[#813939] text-white pl-6'
+                      : 'bg-[#632b2b] text-white pl-6';
                 return (
                   <PlayerPanel
                     key={p.id}
@@ -1133,7 +1151,6 @@ export default function Game({
           </section>
         </div>
         <section className="w-[30rem] self-start flex flex-col gap-6">
-          <div className="font-semibold">Turn {ctx.game.turn}</div>
           <section
             ref={phaseBoxRef}
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
@@ -1144,19 +1161,34 @@ export default function Game({
               minHeight: sharedHeight,
             }}
           >
+            <div className="absolute -top-6 left-0 font-semibold">
+              Turn {ctx.game.turn} - {ctx.activePlayer.name}
+            </div>
             <div className="flex mb-2 border-b">
               {ctx.phases.map((p) => {
+                const isSelected = displayPhase === p.id;
                 return (
-                  <div
+                  <button
                     key={p.id}
+                    type="button"
+                    disabled={!tabsEnabled}
+                    onClick={() => {
+                      if (!tabsEnabled) return;
+                      setDisplayPhase(p.id);
+                      setPhaseSteps(phaseHistories[p.id] ?? []);
+                    }}
                     className={`px-3 py-1 text-sm flex items-center gap-1 border-b-2 ${
-                      displayPhase === p.id
+                      isSelected
                         ? 'border-blue-500 font-semibold'
                         : 'border-transparent text-gray-500'
+                    } ${
+                      tabsEnabled
+                        ? 'hover:text-gray-800 dark:hover:text-gray-200'
+                        : ''
                     }`}
                   >
                     {p?.icon} {p?.label}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -1184,7 +1216,7 @@ export default function Game({
                 </li>
               ))}
             </ul>
-            {!isActionPhase && (
+            {(!isActionPhase || phaseTimer > 0) && (
               <div className="absolute top-2 right-2">
                 <TimerCircle progress={phaseTimer} paused={phasePaused} />
               </div>
@@ -1193,7 +1225,10 @@ export default function Game({
               <div className="mt-2 text-right">
                 <button
                   className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                  disabled={phaseSteps.some((s) => s.active)}
+                  disabled={Boolean(
+                    actionPhaseId &&
+                      phaseHistories[actionPhaseId]?.some((s) => s.active),
+                  )}
                   onClick={() => void handleEndTurn()}
                 >
                   Next Turn
