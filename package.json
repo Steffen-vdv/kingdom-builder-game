@@ -11,6 +11,7 @@
     "typecheck": "tsc -b --noEmit --pretty false",
     "fix": "eslint . --ext .ts,.tsx --fix",
     "check": "npm run typecheck && npm run lint",
+    "pretest": "npm run check",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "format": "prettier .",

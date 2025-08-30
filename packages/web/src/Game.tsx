@@ -1033,7 +1033,7 @@ export default function Game({
     (a) => a.id !== 'develop' && a.id !== 'build' && a.id !== 'raise_pop',
   );
 
-  const phaseBox = {
+  const phaseMeta = {
     [Phase.Development]: {
       icon: phaseInfo.onDevelopmentPhase.icon,
       label: 'Development',
@@ -1337,7 +1337,7 @@ export default function Game({
                   p === ctx.game.currentPhase ? 'font-semibold underline' : ''
                 }
               >
-                {phaseBox[p].icon} {phaseBox[p].label} Phase
+                {phaseMeta[p].icon} {phaseMeta[p].label} Phase
               </span>
             ))}
           </div>
