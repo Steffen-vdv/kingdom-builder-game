@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  createEngine,
-  performAction,
   getActionCosts,
   getActionRequirements,
-  advance,
   Resource,
   PopulationRole,
   RESOURCES,
@@ -16,20 +13,9 @@ import {
   SLOT_ICON as slotIcon,
   BUILDING_INFO as buildingInfo,
 } from '@kingdom-builder/engine';
-import type {
-  EngineContext,
-  ActionParams,
-  ResourceKey,
-} from '@kingdom-builder/engine';
-import {
-  summarizeContent,
-  describeContent,
-  snapshotPlayer,
-  diffSnapshots,
-  diffStepSnapshots,
-  logContent,
-  type Summary,
-} from './translation';
+import type { EngineContext, ResourceKey } from '@kingdom-builder/engine';
+import { summarizeContent, describeContent, type Summary } from './translation';
+import { GameProvider, useGameEngine } from './state/GameContext';
 
 interface Action {
   id: string;
@@ -63,30 +49,16 @@ function renderSummary(summary: Summary | undefined): React.ReactNode {
 
 interface PlayerPanelProps {
   player: EngineContext['activePlayer'];
-  ctx: EngineContext;
-  handleHoverCard: (data: {
-    title: string;
-    effects: Summary;
-    requirements: string[];
-    costs?: Record<string, number>;
-    description?: string;
-    descriptionClass?: string;
-    effectsTitle?: string;
-    bgClass?: string;
-  }) => void;
-  clearHoverCard: () => void;
   className?: string;
   buildingDescriptions: Map<string, Summary>;
 }
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
   player,
-  ctx,
-  handleHoverCard,
-  clearHoverCard,
   className = '',
   buildingDescriptions,
 }) => {
+  const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
   const popDetails = popEntries.map(([role, count]) => ({ role, count }));
@@ -393,7 +365,7 @@ export function isActionPhaseActive(
   return tabsEnabled && currentPhase === actionPhaseId;
 }
 
-export default function Game({
+function GameInner({
   onExit,
   darkMode = true,
   onToggleDark = () => {},
@@ -402,46 +374,34 @@ export default function Game({
   darkMode?: boolean;
   onToggleDark?: () => void;
 }) {
-  const ctx = useMemo<EngineContext>(() => {
-    const c = createEngine();
-    return c;
-  }, []);
+  const {
+    ctx,
+    log,
+    hoverCard,
+    handleHoverCard,
+    clearHoverCard,
+    phaseSteps,
+    setPhaseSteps,
+    phaseTimer,
+    phasePaused,
+    setPaused,
+    mainApStart,
+    displayPhase,
+    setDisplayPhase,
+    phaseHistories,
+    tabsEnabled,
+    handlePerform,
+    runUntilActionPhase,
+    handleEndTurn,
+    updateMainPhaseStep,
+  } = useGameEngine();
 
-  const [, setTick] = useState(0);
-  const refresh = () => setTick((t) => t + 1);
-  const [log, setLog] = useState<{ time: string; text: string }[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
-  const [hoverCard, setHoverCard] = useState<{
-    title: string;
-    effects: Summary;
-    requirements: string[];
-    costs?: Record<string, number>;
-    description?: string;
-    descriptionClass?: string;
-    effectsTitle?: string;
-    bgClass?: string;
-  } | null>(null);
-  const hoverTimeout = useRef<number>();
-  type PhaseStep = {
-    title: string;
-    items: { text: string; italic?: boolean; done?: boolean }[];
-    active: boolean;
-  };
-  const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
-  const [phaseTimer, setPhaseTimer] = useState(0);
-  const [phasePaused, setPhasePaused] = useState(false);
-  const phasePausedRef = useRef(false);
-  const [mainApStart, setMainApStart] = useState(0);
   const playerBoxRef = useRef<HTMLDivElement>(null);
   const phaseBoxRef = useRef<HTMLDivElement>(null);
   const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
   const [phaseBoxHeight, setPhaseBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
-  const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
-  const [phaseHistories, setPhaseHistories] = useState<
-    Record<string, PhaseStep[]>
-  >({});
-  const [tabsEnabled, setTabsEnabled] = useState(false);
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
     [ctx],
@@ -469,40 +429,8 @@ export default function Game({
 
   const sharedHeight = Math.max(playerBoxHeight, phaseBoxHeight, 275);
 
-  function setPaused(v: boolean) {
-    phasePausedRef.current = v;
-    setPhasePaused(v);
-  }
-
   function formatRequirement(req: string): string {
     return req;
-  }
-
-  const addLog = (entry: string | string[], playerName?: string) =>
-    setLog((prev) => {
-      const items = (Array.isArray(entry) ? entry : [entry]).map((text) => ({
-        time: new Date().toLocaleTimeString(),
-        text: `[${playerName ?? ctx.activePlayer.name}] ${text}`,
-      }));
-      return [...prev, ...items];
-    });
-
-  function handleHoverCard(data: {
-    title: string;
-    effects: Summary;
-    requirements: string[];
-    costs?: Record<string, number>;
-    description?: string;
-    descriptionClass?: string;
-    effectsTitle?: string;
-    bgClass?: string;
-  }) {
-    if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
-    hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
-  }
-  function clearHoverCard() {
-    if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
-    setHoverCard(null);
   }
 
   const actions = useMemo<Action[]>(
@@ -599,128 +527,6 @@ export default function Game({
     (a) => a.id !== 'develop' && a.id !== 'build' && a.id !== 'raise_pop',
   );
 
-  function handlePerform(action: Action, params?: Record<string, unknown>) {
-    const before = snapshotPlayer(ctx.activePlayer);
-    try {
-      performAction(action.id, ctx, params as ActionParams<string>);
-      const after = snapshotPlayer(ctx.activePlayer);
-      const changes = diffSnapshots(before, after, ctx);
-      const messages = logContent('action', action.id, ctx, params);
-      addLog([...messages, ...changes.map((c) => `  ${c}`)]);
-    } catch (e) {
-      const icon = actionInfo[action.id]?.icon || '';
-      addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
-      return;
-    }
-    updateMainPhaseStep();
-    refresh();
-  }
-
-  function runDelay(total: number) {
-    setPhaseTimer(0);
-    return new Promise<void>((resolve) => {
-      let elapsed = 0;
-      const step = 100;
-      const interval = window.setInterval(() => {
-        if (!phasePausedRef.current) {
-          elapsed += step;
-          setPhaseTimer(elapsed / total);
-          if (elapsed >= total) {
-            window.clearInterval(interval);
-            setPhaseTimer(0);
-            resolve();
-          }
-        }
-      }, step);
-    });
-  }
-
-  function runStepDelay() {
-    return runDelay(1000);
-  }
-
-  function updateMainPhaseStep(apStartOverride?: number) {
-    const total = apStartOverride ?? mainApStart;
-    const spent = total - ctx.activePlayer.ap;
-    const steps = [
-      {
-        title: 'Step 1 - Spend all AP',
-        items: [
-          {
-            text: `${RESOURCES[Resource.ap].icon} ${spent}/${total} spent`,
-            done: ctx.activePlayer.ap === 0,
-          },
-        ],
-        active: ctx.activePlayer.ap > 0,
-      },
-    ];
-    setPhaseSteps(steps);
-    if (actionPhaseId) {
-      setPhaseHistories((prev) => ({ ...prev, [actionPhaseId]: steps }));
-      setDisplayPhase(actionPhaseId);
-    } else {
-      setDisplayPhase(ctx.game.currentPhase);
-    }
-  }
-
-  async function runUntilActionPhase() {
-    setTabsEnabled(false);
-    setPhaseSteps([]);
-    setDisplayPhase(ctx.game.currentPhase);
-    setPhaseHistories({});
-    let lastPhase: string | null = null;
-    while (!ctx.phases[ctx.game.phaseIndex]?.action) {
-      const before = snapshotPlayer(ctx.activePlayer);
-      const { phase, step, player } = advance(ctx);
-      const phaseDef = ctx.phases.find((p) => p.id === phase)!;
-      const stepDef = phaseDef.steps.find((s) => s.id === step);
-      if (phase !== lastPhase) {
-        await runDelay(1500);
-        setPhaseSteps([]);
-        setDisplayPhase(phase);
-        addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player.name);
-        lastPhase = phase;
-      }
-      const after = snapshotPlayer(player);
-      const changes = diffStepSnapshots(before, after, stepDef, ctx);
-      if (changes.length) {
-        addLog(
-          changes.map((c) => `  ${c}`),
-          player.name,
-        );
-      }
-      const entry = {
-        title: stepDef?.title || step,
-        items:
-          changes.length > 0
-            ? changes.map((text) => ({ text }))
-            : [{ text: 'No effect', italic: true }],
-        active: false,
-      };
-      setPhaseSteps((prev) => [...prev, entry]);
-      setPhaseHistories((prev) => ({
-        ...prev,
-        [phase]: [...(prev[phase] ?? []), entry],
-      }));
-      await runStepDelay();
-    }
-    await runDelay(1500);
-    setMainApStart(ctx.activePlayer.ap);
-    updateMainPhaseStep(ctx.activePlayer.ap);
-    setDisplayPhase(ctx.game.currentPhase);
-    setTabsEnabled(true);
-    refresh();
-  }
-
-  async function handleEndTurn() {
-    const phaseDef = ctx.phases[ctx.game.phaseIndex];
-    if (!phaseDef?.action) return;
-    if (ctx.activePlayer.ap > 0) return;
-    advance(ctx);
-    setPhaseHistories({});
-    await runUntilActionPhase();
-  }
-
   useEffect(() => {
     void runUntilActionPhase();
   }, []);
@@ -780,9 +586,6 @@ export default function Game({
                   <PlayerPanel
                     key={p.id}
                     player={p}
-                    ctx={ctx}
-                    handleHoverCard={handleHoverCard}
-                    clearHoverCard={clearHoverCard}
                     className={`flex-1 p-4 ${bgClass}`}
                     buildingDescriptions={buildingInstalledDescriptions}
                   />
@@ -1310,5 +1113,17 @@ export default function Game({
         </section>
       </div>
     </div>
+  );
+}
+
+export default function Game(props: {
+  onExit?: () => void;
+  darkMode?: boolean;
+  onToggleDark?: () => void;
+}) {
+  return (
+    <GameProvider>
+      <GameInner {...props} />
+    </GameProvider>
   );
 }
