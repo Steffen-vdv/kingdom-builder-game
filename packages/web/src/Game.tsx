@@ -437,7 +437,9 @@ export default function Game({
     () => ctx.phases.find((p) => p.action)?.id,
     [ctx],
   );
-  const isActionPhase = Boolean(ctx.phases[ctx.game.phaseIndex]?.action);
+  const isActionPhase =
+    tabsEnabled &&
+    Boolean(ctx.phases.find((p) => p.id === displayPhase)?.action);
 
   useEffect(() => {
     const pEl = playerBoxRef.current;
