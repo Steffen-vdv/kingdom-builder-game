@@ -78,6 +78,7 @@ interface PlayerPanelProps {
     bgClass?: string;
   }) => void;
   clearHoverCard: () => void;
+  className?: string;
 }
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
@@ -85,6 +86,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
   ctx,
   handleHoverCard,
   clearHoverCard,
+  className = '',
 }) => {
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
@@ -108,7 +110,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     });
 
   return (
-    <div className="space-y-1 w-fit">
+    <div className={`space-y-1 w-fit ${className}`}>
       <h3 className="font-semibold">{player.name}</h3>
       <div className="flex flex-wrap items-center gap-2 border p-2 rounded w-fit">
         {Object.entries(player.resources).map(([k, v]) => {
@@ -803,15 +805,22 @@ export default function Game({
             ref={playerBoxRef}
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow"
           >
-            <div className="flex flex-col items-start gap-4">
-              {ctx.game.players.map((p) => (
-                <PlayerPanel
-                  key={p.id}
-                  player={p}
-                  ctx={ctx}
-                  handleHoverCard={handleHoverCard}
-                  clearHoverCard={clearHoverCard}
-                />
+            <div className="flex items-start gap-4">
+              {ctx.game.players.map((p, i) => (
+                <React.Fragment key={p.id}>
+                  {i > 0 && <div className="w-px bg-gray-300 self-stretch" />}
+                  <PlayerPanel
+                    player={p}
+                    ctx={ctx}
+                    handleHoverCard={handleHoverCard}
+                    clearHoverCard={clearHoverCard}
+                    className={`p-2 rounded ${
+                      i === 0
+                        ? 'bg-blue-50 dark:bg-blue-900/40'
+                        : 'bg-red-50 dark:bg-red-900/40'
+                    }`}
+                  />
+                </React.Fragment>
               ))}
             </div>
           </section>
