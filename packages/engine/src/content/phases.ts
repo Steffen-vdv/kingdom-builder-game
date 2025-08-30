@@ -20,6 +20,11 @@ export const PHASES: PhaseDef[] = [
     id: 'development',
     steps: [
       {
+        id: 'resolve-dynamic-triggers',
+        title: 'Resolve dynamic triggers',
+        triggers: ['onDevelopmentPhase'],
+      },
+      {
         id: 'gain-income',
         title: 'Gain Income',
         effects: [
@@ -34,7 +39,6 @@ export const PHASES: PhaseDef[] = [
             ],
           },
         ],
-        triggers: ['onDevelopmentPhase'],
       },
       {
         id: 'gain-ap',
@@ -93,9 +97,54 @@ export const PHASES: PhaseDef[] = [
     id: 'upkeep',
     steps: [
       {
+        id: 'resolve-dynamic-triggers',
+        title: 'Resolve dynamic triggers',
+        triggers: ['onUpkeepPhase'],
+      },
+      {
         id: 'pay-upkeep',
         title: 'Pay Upkeep',
-        triggers: ['onUpkeepPhase'],
+        effects: [
+          {
+            evaluator: {
+              type: 'population',
+              params: { role: PopulationRole.Council },
+            },
+            effects: [
+              {
+                type: 'resource',
+                method: 'remove',
+                params: { key: Resource.gold, amount: 2 },
+              },
+            ],
+          },
+          {
+            evaluator: {
+              type: 'population',
+              params: { role: PopulationRole.Commander },
+            },
+            effects: [
+              {
+                type: 'resource',
+                method: 'remove',
+                params: { key: Resource.gold, amount: 1 },
+              },
+            ],
+          },
+          {
+            evaluator: {
+              type: 'population',
+              params: { role: PopulationRole.Fortifier },
+            },
+            effects: [
+              {
+                type: 'resource',
+                method: 'remove',
+                params: { key: Resource.gold, amount: 1 },
+              },
+            ],
+          },
+        ],
       },
     ],
   },
