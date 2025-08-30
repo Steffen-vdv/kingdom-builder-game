@@ -558,10 +558,6 @@ export default function Game({
   }, [phaseSteps]);
 
   useEffect(() => {
-    setViewPhase(ctx.game.currentPhase as PhaseId);
-  }, [ctx.game.currentPhase]);
-
-  useEffect(() => {
     if (viewPhase !== (ctx.game.currentPhase as PhaseId))
       setPhaseSteps(phaseHistory[viewPhase] ?? []);
   }, [viewPhase, ctx.game.currentPhase, phaseHistory]);
@@ -627,7 +623,9 @@ export default function Game({
   }
 
   function nextFrame() {
-    return new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+    return new Promise<void>((resolve) =>
+      window.requestAnimationFrame(() => resolve()),
+    );
   }
 
   function updateMainPhaseStep(apStartOverride?: number) {
@@ -724,12 +722,14 @@ export default function Game({
         await runPhaseDelay();
         setViewPhase(currentPhase);
         setPhaseSteps([]);
+        await nextFrame();
       }
     }
 
     setPhaseHistory(tempHistory);
     setMainApStart(ctx.activePlayer.ap);
     updateMainPhaseStep(ctx.activePlayer.ap);
+    setViewPhase('main');
     refresh();
   }
 
