@@ -27,42 +27,46 @@
   }
   .player-bg {
     @apply relative overflow-hidden text-gray-900 dark:text-white;
-    --stripe-color: rgba(0, 0, 0, 0.05);
-    background: var(--player-color);
-    background-image: repeating-linear-gradient(
+    --stripe-color: rgba(0, 0, 0, 0.03);
+    background-color: var(--player-color);
+    background-image: linear-gradient(
       45deg,
-      var(--stripe-color) 0,
-      var(--stripe-color) 10px,
-      transparent 10px,
-      transparent 20px
+      var(--stripe-color) 25%,
+      transparent 25%,
+      transparent 50%,
+      var(--stripe-color) 50%,
+      var(--stripe-color) 75%,
+      transparent 75%,
+      transparent
     );
+    background-size: 20px 20px;
     animation: player-bg-slide 60s linear infinite;
   }
   .dark .player-bg {
-    --stripe-color: rgba(255, 255, 255, 0.05);
+    --stripe-color: rgba(255, 255, 255, 0.03);
   }
   .player-bg-blue {
-    --player-color: #dbeafe;
+    --player-color: rgba(219, 234, 254, 0.5);
   }
   .player-bg-blue-active {
-    --player-color: #bfdbfe;
+    --player-color: rgba(191, 219, 254, 0.7);
   }
   .player-bg-red {
-    --player-color: #fee2e2;
+    --player-color: rgba(254, 226, 226, 0.5);
   }
   .player-bg-red-active {
-    --player-color: #fecaca;
+    --player-color: rgba(254, 202, 202, 0.7);
   }
   .dark .player-bg-blue {
-    --player-color: rgba(30, 58, 138, 0.5);
+    --player-color: rgba(30, 58, 138, 0.3);
   }
   .dark .player-bg-blue-active {
-    --player-color: rgba(59, 130, 246, 0.6);
+    --player-color: rgba(59, 130, 246, 0.4);
   }
   .dark .player-bg-red {
-    --player-color: rgba(127, 29, 29, 0.5);
+    --player-color: rgba(127, 29, 29, 0.3);
   }
   .dark .player-bg-red-active {
-    --player-color: rgba(220, 38, 38, 0.6);
+    --player-color: rgba(220, 38, 38, 0.4);
   }
 }
