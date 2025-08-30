@@ -28,6 +28,7 @@ import {
   describeContent,
   snapshotPlayer,
   diffSnapshots,
+  diffStepSnapshots,
   logContent,
   type Summary,
 } from './translation';
@@ -638,8 +639,9 @@ export default function Game({
       const { phase, step, player } = advance(ctx);
       setDisplayPhase(phase);
       const phaseDef = ctx.phases.find((p) => p.id === phase)!;
+      const stepDef = phaseDef.steps.find((s) => s.id === step);
       const after = snapshotPlayer(player);
-      const changes = diffSnapshots(before, after, ctx);
+      const changes = diffStepSnapshots(before, after, stepDef, ctx);
       if (phase !== lastPhase) {
         await runDelay(1500);
         setPhaseSteps([]);
@@ -649,13 +651,12 @@ export default function Game({
       if (changes.length) {
         addLog(
           [
-            `${phaseDef.icon} ${phaseDef.label}:`,
+            `${phaseDef.icon} ${phaseDef.label} – ${stepDef?.title || step}`,
             ...changes.map((c) => `  ${c}`),
           ],
           player.name,
         );
       }
-      const stepDef = phaseDef.steps.find((s) => s.id === step);
       setPhaseSteps((prev) => [
         ...prev,
         {
