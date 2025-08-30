@@ -1144,9 +1144,6 @@ export default function Game({
           </section>
         </div>
         <section className="w-[30rem] self-start flex flex-col gap-6">
-          <div className="font-semibold">
-            Turn {Math.ceil(ctx.game.turn / 2)} - {ctx.activePlayer.name}
-          </div>
           <section
             ref={phaseBoxRef}
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
@@ -1157,6 +1154,9 @@ export default function Game({
               minHeight: sharedHeight,
             }}
           >
+            <div className="absolute -top-6 left-0 font-semibold">
+              Turn {ctx.game.turn} - {ctx.activePlayer.name}
+            </div>
             <div className="flex mb-2 border-b">
               {ctx.phases.map((p) => {
                 const isSelected = displayPhase === p.id;
