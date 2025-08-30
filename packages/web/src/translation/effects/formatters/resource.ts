@@ -1,5 +1,5 @@
 import { resourceInfo } from '../../../icons';
-import { gainOrLose, signed } from '../helpers';
+import { signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('resource', 'add', {
@@ -14,8 +14,8 @@ registerEffectFormatter('resource', 'add', {
     const key = eff.params?.['key'] as string;
     const res = resourceInfo[key as keyof typeof resourceInfo];
     const label = res?.label || key;
-    const icon = res?.icon || '';
+    const icon = res?.icon || key;
     const amount = Number(eff.params?.['amount']);
-    return `${gainOrLose(amount)} ${Math.abs(amount)} ${icon} ${label}`;
+    return `${icon}${signed(amount)}${amount} ${label}`;
   },
 });

@@ -69,6 +69,7 @@ interface PlayerPanelProps {
     requirements: string[];
     costs: Record<string, number>;
     description?: string;
+    descriptionClass?: string;
     effectsTitle?: string;
   }) => void;
   clearHoverCard: () => void;
@@ -402,6 +403,7 @@ export default function Game({
     requirements: string[];
     costs: Record<string, number>;
     description?: string;
+    descriptionClass?: string;
     effectsTitle?: string;
   } | null>(null);
   const hoverTimeout = useRef<number>();
@@ -444,6 +446,7 @@ export default function Game({
     requirements: string[];
     costs: Record<string, number>;
     description?: string;
+    descriptionClass?: string;
     effectsTitle?: string;
   }) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
@@ -855,6 +858,10 @@ export default function Game({
                           effects: describeContent('action', action.id, ctx),
                           requirements,
                           costs,
+                          ...(!implemented && {
+                            description: 'Not implemented yet',
+                            descriptionClass: 'italic text-red-600',
+                          }),
                         })
                       }
                       onMouseLeave={clearHoverCard}
@@ -1066,6 +1073,10 @@ export default function Game({
                               ),
                               requirements,
                               costs,
+                              ...(!implemented && {
+                                description: 'Not implemented yet',
+                                descriptionClass: 'italic text-red-600',
+                              }),
                             })
                           }
                           onMouseLeave={clearHoverCard}
@@ -1148,6 +1159,10 @@ export default function Game({
                               effects: describeContent('building', b.id, ctx),
                               requirements,
                               costs,
+                              ...(!implemented && {
+                                description: 'Not implemented yet',
+                                descriptionClass: 'italic text-red-600',
+                              }),
                             })
                           }
                           onMouseLeave={clearHoverCard}
@@ -1276,7 +1291,11 @@ export default function Game({
                 </div>
               )}
               {hoverCard.description && (
-                <div className="mb-2 text-sm">{hoverCard.description}</div>
+                <div
+                  className={`mb-2 text-sm ${hoverCard.descriptionClass ?? ''}`}
+                >
+                  {hoverCard.description}
+                </div>
               )}
               {hoverCard.effects.length > 0 && (
                 <div>
