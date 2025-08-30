@@ -93,6 +93,19 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     if (key === 'absorption') return `${value * 100}%`;
     return String(value);
   }
+  const showPopulationCard = () =>
+    handleHoverCard({
+      title: '👥 Population',
+      effects: Object.values(POPULATION_ROLES).map(
+        (r) => `${r.icon} ${r.label} - ${r.description}`,
+      ),
+      effectsTitle: 'Archetypes',
+      requirements: [],
+      costs: {},
+      description:
+        'Population represents the people of your kingdom. Manage them wisely and assign roles to benefit your realm.',
+      bgClass: 'bg-gray-100 dark:bg-gray-700',
+    });
 
   return (
     <div className="space-y-1">
@@ -124,20 +137,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         <div className="h-4 border-l" />
         <span
           className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
-          onMouseEnter={() =>
-            handleHoverCard({
-              title: '👥 Population',
-              effects: Object.values(POPULATION_ROLES).map(
-                (r) => `${r.icon} ${r.label} - ${r.description}`,
-              ),
-              effectsTitle: 'Archetypes',
-              requirements: [],
-              costs: {},
-              description:
-                'Population represents the people of your kingdom. Manage them wisely and assign roles to benefit your realm.',
-              bgClass: 'bg-gray-100 dark:bg-gray-700',
-            })
-          }
+          onMouseEnter={showPopulationCard}
           onMouseLeave={clearHoverCard}
         >
           👥{currentPop}/{player.maxPopulation}
@@ -165,7 +165,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                       }}
                       onMouseLeave={(e) => {
                         e.stopPropagation();
-                        clearHoverCard();
+                        showPopulationCard();
                       }}
                     >
                       {info.icon}
