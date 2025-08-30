@@ -1,6 +1,18 @@
-import type { EngineContext } from '@kingdom-builder/engine';
-import { RESOURCES, STATS } from '@kingdom-builder/engine';
-import { landIcon } from '../icons';
+import {
+  RESOURCES,
+  STATS,
+  POPULATION_ROLES,
+  EVALUATORS,
+  type EffectDef,
+  type EngineContext,
+} from '@kingdom-builder/engine';
+interface StepDef {
+  id: string;
+  title?: string;
+  triggers?: string[];
+  effects?: EffectDef[];
+}
+import { landIcon, developmentInfo, buildingIcon } from '../icons';
 import { logContent, type Land } from './content';
 
 export interface PlayerSnapshot {
@@ -51,6 +63,133 @@ export function diffSnapshots(
       changes.push(
         `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
       );
+    }
+  }
+  for (const key of Object.keys(after.stats)) {
+    const b = before.stats[key] ?? 0;
+    const a = after.stats[key] ?? 0;
+    if (a !== b) {
+      const info = STATS[key as keyof typeof STATS];
+      const icon = info?.icon ? `${info.icon} ` : '';
+      const label = info?.label ?? key;
+      const delta = a - b;
+      if (key === 'absorption') {
+        const bPerc = b * 100;
+        const aPerc = a * 100;
+        const dPerc = delta * 100;
+        changes.push(
+          `${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
+        );
+      } else {
+        changes.push(
+          `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
+        );
+      }
+    }
+  }
+  const beforeB = new Set(before.buildings);
+  const afterB = new Set(after.buildings);
+  for (const id of afterB)
+    if (!beforeB.has(id)) {
+      const label = logContent('building', id, ctx)[0] ?? id;
+      changes.push(`${label} built`);
+    }
+  for (const land of after.lands) {
+    const prev = before.lands.find((l) => l.id === land.id);
+    if (!prev) {
+      changes.push(`${landIcon} New land`);
+      continue;
+    }
+    for (const dev of land.developments)
+      if (!prev.developments.includes(dev)) {
+        const label = logContent('development', dev, ctx)[0] ?? dev;
+        changes.push(`${landIcon} +${label}`);
+      }
+  }
+  return changes;
+}
+
+function collectResourceSources(
+  step: StepDef | undefined,
+  ctx: EngineContext,
+): Record<string, string> {
+  const map: Record<string, { icons: string; mods: number }> = {};
+  for (const eff of step?.effects || []) {
+    if (eff.evaluator && eff.effects) {
+      const inner = eff.effects.find((e) => e.type === 'resource');
+      if (!inner) continue;
+      const key = inner.params?.['key'] as string | undefined;
+      if (!key) continue;
+      const entry = map[key] || { icons: '', mods: 0 };
+      const ev = eff.evaluator as {
+        type: string;
+        params?: Record<string, unknown>;
+      };
+      try {
+        const handler = EVALUATORS.get(ev.type);
+        const count = Number(handler(ev, ctx));
+        if (ev.type === 'development') {
+          const id = (ev.params as Record<string, string> | undefined)?.['id'];
+          const icon = id ? developmentInfo[id]?.icon || '' : '';
+          entry.icons += icon.repeat(count);
+        } else if (ev.type === 'population') {
+          const role = (ev.params as Record<string, string> | undefined)?.[
+            'role'
+          ] as keyof typeof POPULATION_ROLES | undefined;
+          const icon = role ? POPULATION_ROLES[role]?.icon || role : '👥';
+          entry.icons += icon.repeat(count);
+        }
+        const idParam = ev.params?.['id'];
+        const target =
+          ev.params && 'id' in ev.params
+            ? `${ev.type}:${String(idParam)}`
+            : ev.type;
+        const passives = ctx.passives as unknown as {
+          evaluationMods?: Map<string, Map<string, unknown>>;
+        };
+        const modsMap = passives.evaluationMods?.get(target);
+        const mods = modsMap
+          ? Array.from(modsMap.keys()).filter((k) =>
+              k.endsWith(`_${ctx.activePlayer.id}`),
+            ).length
+          : 0;
+        entry.mods += mods;
+      } catch {
+        // ignore missing evaluators
+      }
+      map[key] = entry;
+    }
+  }
+  const result: Record<string, string> = {};
+  for (const [key, { icons, mods }] of Object.entries(map)) {
+    let part = icons;
+    if (mods > 0) part += `+${buildingIcon.repeat(mods)}`;
+    result[key] = part;
+  }
+  return result;
+}
+
+export function diffStepSnapshots(
+  before: PlayerSnapshot,
+  after: PlayerSnapshot,
+  step: StepDef | undefined,
+  ctx: EngineContext,
+): string[] {
+  const changes: string[] = [];
+  const sources = collectResourceSources(step, ctx);
+  for (const key of Object.keys(after.resources)) {
+    const b = before.resources[key] ?? 0;
+    const a = after.resources[key] ?? 0;
+    if (a !== b) {
+      const info = RESOURCES[key as keyof typeof RESOURCES];
+      const icon = info?.icon ? `${info.icon} ` : '';
+      const label = info?.label ?? key;
+      const delta = a - b;
+      let line = `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`;
+      const src = sources[key];
+      if (src)
+        line += ` (${info?.icon || key}${delta >= 0 ? '+' : ''}${delta} from ${src})`;
+      changes.push(line);
     }
   }
   for (const key of Object.keys(after.stats)) {
