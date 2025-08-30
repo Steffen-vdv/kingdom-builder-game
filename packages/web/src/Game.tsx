@@ -100,7 +100,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
           return (
             <span
               key={k}
-              title={info?.label}
               className="bar-item"
               onMouseEnter={(e) =>
                 handleHoverCard(
@@ -122,7 +121,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
           );
         })}
         <span
-          title={`Population ${currentPop}/${player.maxPopulation}`}
           className="bar-item"
           onMouseEnter={(e) =>
             handleHoverCard(
@@ -150,7 +148,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                       populationInfo[role as keyof typeof populationInfo];
                     return (
                       <span
-                        title={info?.label}
+                        className="bar-item"
                         onMouseEnter={(e) =>
                           handleHoverCard(
                             {
@@ -185,7 +183,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
             return (
               <span
                 key={k}
-                title={info?.label || k}
                 className="bar-item"
                 onMouseEnter={(e) =>
                   handleHoverCard(
@@ -1336,7 +1333,9 @@ export default function Game({
                 </div>
               )}
               {hoverCard.description && (
-                <div className="mb-2 text-sm">{hoverCard.description}</div>
+                <div className="mb-2 text-sm whitespace-pre-line">
+                  {hoverCard.description}
+                </div>
               )}
               {hoverCard.effects.length > 0 && (
                 <div>
