@@ -15,6 +15,7 @@ import type {
   EngineContext,
   ActionParams,
   ResourceKey,
+  EvaluationLog,
 } from '@kingdom-builder/engine';
 import {
   actionInfo,
@@ -23,6 +24,7 @@ import {
   slotIcon,
   buildingIcon,
   phaseInfo,
+  buildingInfo,
 } from './icons';
 import {
   summarizeContent,
@@ -32,6 +34,48 @@ import {
   logContent,
   type Summary,
 } from './translation';
+
+const signed = (n: number) => (n >= 0 ? '+' : '') + n;
+
+function buildBreakdown(evals: EvaluationLog[]): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
+  for (const ev of evals) {
+    const parts = ev.target.split(':');
+    const type = parts[0];
+    const id = parts[1] ?? '';
+    let sourceIcon = '';
+    if (type === 'development') sourceIcon = developmentInfo[id]?.icon || id;
+    else if (type === 'population')
+      sourceIcon =
+        POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]?.icon || id;
+    else sourceIcon = id;
+    for (const g of ev.gains) {
+      const resIcon = RESOURCES[g.key]?.icon || g.key;
+      const baseAmt = ev.base.find((b) => b.key === g.key)?.amount ?? 0;
+      const parts: string[] = [];
+      if (baseAmt !== 0) parts.push(`${resIcon}${signed(baseAmt)} base`);
+      for (const mod of ev.modifiers) {
+        const modAmt = mod.gains.find((m) => m.key === g.key)?.amount ?? 0;
+        if (modAmt !== 0) {
+          const mParts = mod.source.split(':');
+          const mType = mParts[0];
+          const mId = mParts[1] ?? '';
+          let modIcon = '';
+          if (mType === 'building')
+            modIcon = buildingInfo[mId]?.icon || buildingIcon;
+          else modIcon = mId;
+          parts.push(`${resIcon}${signed(modAmt)} from ${modIcon}`);
+        }
+      }
+      const total = g.amount;
+      let text = `${resIcon}${signed(total)} from ${sourceIcon}`;
+      if (parts.length) text += `(${parts.join(', ')})`;
+      if (!map[g.key]) map[g.key] = [];
+      map[g.key]!.push(text);
+    }
+  }
+  return map;
+}
 
 interface Action {
   id: string;
@@ -577,7 +621,7 @@ export default function Game({
       const after = snapshotPlayer(ctx.activePlayer);
       const changes = diffSnapshots(before, after, ctx);
       const messages = logContent('action', action.id, ctx, params);
-      addLog([...messages, ...changes.map((c) => `  ${c}`)]);
+      addLog([...messages, ...changes.map((c) => `  ${c.text}`)]);
     } catch (e) {
       const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
@@ -629,34 +673,42 @@ export default function Game({
     let lastPhase = '';
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
       const before = snapshotPlayer(ctx.activePlayer);
-      const { phase, step, player } = advance(ctx);
+      const { phase, step, player, evaluations } = advance(ctx);
       const after = snapshotPlayer(player);
       const changes = diffSnapshots(before, after, ctx);
+      const breakdowns = buildBreakdown(evaluations);
       if (phase !== lastPhase) {
         setPhaseSteps([]);
         lastPhase = phase;
       }
-      if (changes.length) {
-        const info = phaseInfo[
-          `on${phase.charAt(0).toUpperCase() + phase.slice(1)}Phase` as keyof typeof phaseInfo
-        ] || { icon: '' };
-        addLog(
-          [
-            `${info.icon} ${phase.charAt(0).toUpperCase() + phase.slice(1)}:`,
-            ...changes.map((c) => `  ${c}`),
-          ],
-          player.name,
-        );
-      }
       const phaseDef = ctx.phases.find((p) => p.id === phase)!;
       const stepDef = phaseDef.steps.find((s) => s.id === step);
+      const info = phaseInfo[
+        `on${phase.charAt(0).toUpperCase() + phase.slice(1)}Phase` as keyof typeof phaseInfo
+      ] || { icon: '' };
+      addLog(
+        [
+          `${info.icon} ${phase.charAt(0).toUpperCase() + phase.slice(1)} Phase - Step: ${stepDef?.title || step}`,
+          ...(changes.length > 0
+            ? changes.map(
+                (c) =>
+                  `  ${c.text}${
+                    c.key && breakdowns[c.key]?.length
+                      ? ` (${breakdowns[c.key]!.join(', ')})`
+                      : ''
+                  }`,
+              )
+            : ['  No effect']),
+        ],
+        player.name,
+      );
       setPhaseSteps((prev) => [
         ...prev,
         {
           title: stepDef?.title || step,
           items:
             changes.length > 0
-              ? changes.map((text) => ({ text }))
+              ? changes.map((c) => ({ text: c.text }))
               : [{ text: 'No effect', italic: true }],
           active: false,
         },

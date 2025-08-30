@@ -19,6 +19,15 @@ export class EngineContext {
     public phases: PhaseDef[],
   ) {}
   recentResourceGains: { key: ResourceKey; amount: number }[] = [];
+  recentEvaluations: {
+    target: string;
+    base: { key: ResourceKey; amount: number }[];
+    gains: { key: ResourceKey; amount: number }[];
+    modifiers: {
+      source: string;
+      gains: { key: ResourceKey; amount: number }[];
+    }[];
+  }[] = [];
   get activePlayer() {
     return this.game.active;
   }

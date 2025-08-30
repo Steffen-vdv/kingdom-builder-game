@@ -25,6 +25,9 @@ export const developmentInfo: Record<string, { icon: string; label: string }> =
 export const landIcon = '🗺️';
 export const slotIcon = '🧩';
 export const buildingIcon = '🏛️';
+export const buildingInfo: Record<string, { icon: string; label: string }> = {
+  mill: { icon: '⚙️', label: 'Mill' },
+};
 
 export const modifierInfo = {
   cost: { icon: '💲', label: 'Cost Modifier' },

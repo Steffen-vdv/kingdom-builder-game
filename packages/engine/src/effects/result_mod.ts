@@ -6,6 +6,7 @@ interface ResultModParams {
   actionId?: string;
   evaluation?: { type: string; id: string };
   amount?: number;
+  source?: string;
   [key: string]: unknown;
 }
 
@@ -53,6 +54,7 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
                   innerContext,
                 );
         },
+        effect.params?.source,
       );
     }
   } else if (effect.method === 'remove') {

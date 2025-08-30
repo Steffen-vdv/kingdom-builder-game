@@ -34,12 +34,17 @@ export function snapshotPlayer(player: {
   };
 }
 
+export interface ChangeLog {
+  key?: string;
+  text: string;
+}
+
 export function diffSnapshots(
   before: PlayerSnapshot,
   after: PlayerSnapshot,
   ctx: EngineContext,
-): string[] {
-  const changes: string[] = [];
+): ChangeLog[] {
+  const changes: ChangeLog[] = [];
   for (const key of Object.keys(after.resources)) {
     const b = before.resources[key] ?? 0;
     const a = after.resources[key] ?? 0;
@@ -48,9 +53,10 @@ export function diffSnapshots(
       const icon = info?.icon ? `${info.icon} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;
-      changes.push(
-        `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-      );
+      changes.push({
+        key,
+        text: `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
+      });
     }
   }
   for (const key of Object.keys(after.stats)) {
@@ -65,13 +71,15 @@ export function diffSnapshots(
         const bPerc = b * 100;
         const aPerc = a * 100;
         const dPerc = delta * 100;
-        changes.push(
-          `${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
-        );
+        changes.push({
+          key,
+          text: `${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
+        });
       } else {
-        changes.push(
-          `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-        );
+        changes.push({
+          key,
+          text: `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
+        });
       }
     }
   }
@@ -80,18 +88,18 @@ export function diffSnapshots(
   for (const id of afterB)
     if (!beforeB.has(id)) {
       const label = logContent('building', id, ctx)[0] ?? id;
-      changes.push(`${label} built`);
+      changes.push({ text: `${label} built` });
     }
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
     if (!prev) {
-      changes.push(`${landIcon} New land`);
+      changes.push({ text: `${landIcon} New land` });
       continue;
     }
     for (const dev of land.developments)
       if (!prev.developments.includes(dev)) {
         const label = logContent('development', dev, ctx)[0] ?? dev;
-        changes.push(`${landIcon} +${label}`);
+        changes.push({ text: `${landIcon} +${label}` });
       }
   }
   return changes;

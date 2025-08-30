@@ -12,8 +12,14 @@ import type {
   StatKey,
   PopulationRoleId,
 } from './state';
-import { Services, PassiveManager, DefaultRules } from './services';
-import type { CostBag, RuleSet } from './services';
+import {
+  Services,
+  PassiveManager,
+  DefaultRules,
+  type CostBag,
+  type RuleSet,
+  type EvaluationLog,
+} from './services';
 import { createActionRegistry } from './content/actions';
 import { BUILDINGS } from './content/buildings';
 import { DEVELOPMENTS } from './content/developments';
@@ -210,6 +216,7 @@ export interface AdvanceResult {
   phase: string;
   step: string;
   effects: EffectDef[];
+  evaluations: EvaluationLog[];
   player: PlayerState;
 }
 
@@ -217,6 +224,7 @@ export function advance(ctx: EngineContext): AdvanceResult {
   const phase = ctx.phases[ctx.game.phaseIndex]!;
   const step = phase.steps[ctx.game.stepIndex];
   const player = ctx.activePlayer;
+  ctx.recentEvaluations = [];
   const effects: EffectDef[] = [];
   if (step?.triggers) {
     for (const trig of step.triggers) {
@@ -254,7 +262,13 @@ export function advance(ctx: EngineContext): AdvanceResult {
   ctx.game.currentPhase = nextPhase.id;
   ctx.game.currentStep = nextStep ? nextStep.id : '';
 
-  return { phase: phase.id, step: step?.id || '', effects, player };
+  return {
+    phase: phase.id,
+    step: step?.id || '',
+    effects,
+    evaluations: ctx.recentEvaluations,
+    player,
+  };
 }
 
 export function resolveAttack(
@@ -398,7 +412,8 @@ export {
   PHASES,
 };
 
-export type { RuleSet, ResourceKey };
+export type { RuleSet, ResourceGain, EvaluationLog } from './services';
+export type { ResourceKey } from './state';
 
 export { createActionRegistry } from './content/actions';
 export { createBuildingRegistry } from './content/buildings';

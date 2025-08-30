@@ -50,6 +50,7 @@ export function createBuildingRegistry() {
           id: 'mill_farm_bonus',
           evaluation: { type: 'development', id: 'farm' },
           amount: 1,
+          source: 'building:mill',
         },
       })
       .build(),

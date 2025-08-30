@@ -79,6 +79,12 @@ export type EvaluationModifier = (
   ctx: EngineContext,
   gains: ResourceGain[],
 ) => void;
+export type EvaluationLog = {
+  target: string;
+  base: ResourceGain[];
+  gains: ResourceGain[];
+  modifiers: { source: string; gains: ResourceGain[] }[];
+};
 
 export class PassiveManager {
   private costMods: Map<string, CostModifier> = new Map();
@@ -101,15 +107,18 @@ export class PassiveManager {
     this.resultMods.delete(id);
   }
 
+  private evaluationSources: Map<string, string> = new Map();
   registerEvaluationModifier(
     id: string,
     target: string,
     mod: EvaluationModifier,
+    source?: string,
   ) {
     if (!this.evaluationMods.has(target))
       this.evaluationMods.set(target, new Map());
     this.evaluationMods.get(target)!.set(id, mod);
     this.evaluationIndex.set(id, target);
+    if (source) this.evaluationSources.set(id, source);
   }
   unregisterEvaluationModifier(id: string) {
     const target = this.evaluationIndex.get(id);
@@ -118,6 +127,7 @@ export class PassiveManager {
     mods?.delete(id);
     if (mods && mods.size === 0) this.evaluationMods.delete(target);
     this.evaluationIndex.delete(id);
+    this.evaluationSources.delete(id);
   }
 
   applyCostMods(actionId: string, base: CostBag, ctx: EngineContext): CostBag {
@@ -131,10 +141,26 @@ export class PassiveManager {
     for (const modifier of this.resultMods.values()) modifier(actionId, ctx);
   }
 
-  runEvaluationMods(target: string, ctx: EngineContext, gains: ResourceGain[]) {
+  runEvaluationMods(
+    target: string,
+    ctx: EngineContext,
+    gains: ResourceGain[],
+    log?: { source: string; gains: ResourceGain[] }[],
+  ) {
     const mods = this.evaluationMods.get(target);
     if (!mods) return;
-    for (const mod of mods.values()) mod(ctx, gains);
+    for (const [id, mod] of mods.entries()) {
+      const before = ctx.recentResourceGains.length;
+      mod(ctx, gains);
+      if (log) {
+        const delta = ctx.recentResourceGains.slice(before);
+        if (delta.length)
+          log.push({
+            source: this.evaluationSources.get(id) || id,
+            gains: delta,
+          });
+      }
+    }
   }
 
   addPassive(

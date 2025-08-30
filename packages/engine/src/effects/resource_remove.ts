@@ -13,4 +13,5 @@ export const resourceRemove: EffectHandler = (effect, ctx, mult = 1) => {
   if (have < total)
     throw new Error(`Insufficient ${key}: need ${total}, have ${have}`);
   ctx.activePlayer.resources[key] = have - total;
+  if (total > 0) ctx.recentResourceGains.push({ key, amount: -total });
 };

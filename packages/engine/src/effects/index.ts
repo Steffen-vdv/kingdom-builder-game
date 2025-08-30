@@ -18,6 +18,7 @@ import { passiveRemove } from './passive_remove';
 import { costMod } from './cost_mod';
 import { resultMod } from './result_mod';
 import { populationAdd } from './population_add';
+import type { ResourceKey } from '../state';
 import { populationRemove } from './population_remove';
 
 export interface EffectDef<
@@ -73,11 +74,36 @@ export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
           ? `${effect.evaluator.type}:${String(params['id'])}`
           : effect.evaluator.type;
       const total = (count as number) * mult;
-      for (let i = 0; i < total; i++) {
+      const hasResource = (effect.effects || []).some(
+        (e) => e.type === 'resource',
+      );
+      if (!hasResource) {
         ctx.recentResourceGains = [];
-        runEffects(effect.effects || [], ctx);
-        const gains = [...ctx.recentResourceGains];
-        ctx.passives.runEvaluationMods(target, ctx, gains);
+        runEffects(effect.effects || [], ctx, total);
+        ctx.recentEvaluations.push({
+          target,
+          base: [],
+          gains: [],
+          modifiers: [],
+        });
+      } else {
+        for (let i = 0; i < total; i++) {
+          ctx.recentResourceGains = [];
+          runEffects(effect.effects || [], ctx);
+          const base = [...ctx.recentResourceGains];
+          const mods: {
+            source: string;
+            gains: { key: ResourceKey; amount: number }[];
+          }[] = [];
+          ctx.passives.runEvaluationMods(target, ctx, base, mods);
+          const gains = [...ctx.recentResourceGains];
+          ctx.recentEvaluations.push({
+            target,
+            base,
+            gains,
+            modifiers: mods,
+          });
+        }
       }
     } else if (effect.type && effect.method) {
       const handler = EFFECTS.get(`${effect.type}:${effect.method}`);
