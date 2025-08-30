@@ -125,11 +125,11 @@ export class PassiveManager {
 }
 
 function reverseEffect(effect: EffectDef): EffectDef {
-  if (effect.effects)
-    return { ...effect, effects: effect.effects.map(reverseEffect) };
-  if (effect.method === 'add') return { ...effect, method: 'remove' };
-  if (effect.method === 'remove') return { ...effect, method: 'add' };
-  return { ...effect };
+  const reversed: EffectDef = { ...effect };
+  if (effect.effects) reversed.effects = effect.effects.map(reverseEffect);
+  if (effect.method === 'add') reversed.method = 'remove';
+  else if (effect.method === 'remove') reversed.method = 'add';
+  return reversed;
 }
 
 export class Services {
