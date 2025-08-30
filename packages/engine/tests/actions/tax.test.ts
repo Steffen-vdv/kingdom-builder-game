@@ -4,6 +4,8 @@ import {
   runDevelopment,
   performAction,
   Resource,
+  PopulationRole,
+  runEffects,
   EVALUATORS,
 } from '../../src';
 import type { EffectDef } from '../../src/effects';
@@ -36,6 +38,17 @@ describe('Tax action', () => {
   it('grants gold and loses happiness for each population', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
+    runEffects(
+      [
+        {
+          type: 'population',
+          method: 'add',
+          params: { role: PopulationRole.Citizen },
+        },
+      ],
+      ctx,
+      2,
+    );
     const actionDefinition = ctx.actions.get('tax');
     const apBefore = ctx.activePlayer.ap;
     const goldBefore = ctx.activePlayer.gold;
