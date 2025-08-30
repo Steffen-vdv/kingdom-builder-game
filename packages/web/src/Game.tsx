@@ -426,7 +426,7 @@ export default function Game({
   const [phaseTimer, setPhaseTimer] = useState(0);
   const [phasePaused, setPhasePaused] = useState(false);
   const phasePausedRef = useRef(false);
-  const [mainApStart, setMainApStart] = useState(0);
+  const [mainApStart, setMainApStart] = useState<number | null>(null);
   const playerBoxRef = useRef<HTMLDivElement>(null);
   const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
@@ -626,8 +626,12 @@ export default function Game({
     return runDelay(1000);
   }
 
+  function nextFrame() {
+    return new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+  }
+
   function updateMainPhaseStep(apStartOverride?: number) {
-    const total = apStartOverride ?? mainApStart;
+    const total = apStartOverride ?? mainApStart ?? 0;
     const spent = total - ctx.activePlayer.ap;
     const steps = [
       {
@@ -659,6 +663,7 @@ export default function Game({
     engineStartTurn(ctx, playerIndex);
     setViewPhase(ctx.game.currentPhase as PhaseId);
     refresh();
+    await nextFrame();
 
     const tempHistory: Record<PhaseId, typeof phaseSteps> = {} as Record<
       PhaseId,
@@ -674,6 +679,7 @@ export default function Game({
       const stepIndex = ctx.game.stepIndex;
       const title = `Step ${stepIndex + 1} - ${stepInfo.def.title}`;
       setPhaseSteps((prev) => [...prev, { title, items: [], active: true }]);
+      await nextFrame();
 
       const before = snapshotPlayer(ctx.activePlayer);
       runCurrentStep(ctx);
@@ -715,9 +721,9 @@ export default function Game({
         stepsForHistory = [];
         currentPhase = ctx.game.currentPhase as PhaseId;
         if (currentPhase === 'main') break;
+        await runPhaseDelay();
         setViewPhase(currentPhase);
         setPhaseSteps([]);
-        await runPhaseDelay();
       }
     }
 
@@ -744,8 +750,9 @@ export default function Game({
   }, []);
 
   useEffect(() => {
-    if (ctx.game.currentPhase === 'main') updateMainPhaseStep();
-  }, [ctx.game.currentPhase, ctx.activePlayer.ap]);
+    if (ctx.game.currentPhase === 'main' && mainApStart !== null)
+      updateMainPhaseStep();
+  }, [ctx.game.currentPhase, ctx.activePlayer.ap, mainApStart]);
 
   return (
     <div className="p-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
