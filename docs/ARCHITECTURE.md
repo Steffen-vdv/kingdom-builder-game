@@ -20,6 +20,12 @@ Each effect definition contains:
 - `params` – optional parameters required by the handler
 - `effects` – optional nested effects to execute
 - `evaluator` – optional definition determining how many times `effects` run
+- `round` – optional rounding strategy (`up` or `down`) applied by some
+  handlers when working with fractional amounts
+
+Values in `params` may reference runtime arguments using a `$placeholder`
+syntax. These placeholders are substituted before execution so the same effect
+definitions can be reused with different data.
 
 The engine processes effects with `runEffects`:
 
@@ -49,8 +55,8 @@ for details on built-in handlers and registering custom ones.
 
 Most subsystems rely on lightweight registries. A `Registry` maps string
 identifiers to handler functions and throws if an unknown id is requested. Core
-registries include the actions, buildings, developments and populations
-registries alongside `EFFECTS` and `EVALUATORS`.
+registries include the actions, buildings, developments, populations and
+requirements registries alongside `EFFECTS` and `EVALUATORS`.
 
 Registries are intentionally mutable: tests or mods may replace entries or add
 new ones at runtime. This allows contributors to prototype new mechanics simply
@@ -71,7 +77,8 @@ library should follow the same structure so shared tooling continues to work.
 
 To introduce new behaviour:
 
-1. Register any new effect or evaluator handlers before creating the engine.
+1. Register any new effect, evaluator or requirement handlers before creating
+   the engine.
 2. Define actions, developments, buildings or populations that use those
    handlers via effect definitions.
 3. Write tests demonstrating the new content by overriding registries where
