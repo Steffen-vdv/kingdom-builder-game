@@ -27,6 +27,7 @@ import {
   describeContent,
   snapshotPlayer,
   diffSnapshots,
+  logContent,
   type Summary,
 } from './translation';
 
@@ -539,27 +540,8 @@ export default function Game({
       performAction(action.id, ctx, params as ActionParams<string>);
       const after = snapshotPlayer(ctx.activePlayer);
       const changes = diffSnapshots(before, after, ctx);
-      const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
-      let message = `Played ${icon} ${action.name}`;
-      if (
-        action.id === 'develop' &&
-        params &&
-        typeof (params as { id?: string }).id === 'string'
-      ) {
-        const devId = (params as { id: string }).id;
-        const devIcon = developmentInfo[devId]?.icon || '';
-        const devLabel = developmentInfo[devId]?.label || devId;
-        message += ` - ${devIcon}${devLabel}`;
-      } else if (
-        action.id === 'build' &&
-        params &&
-        typeof (params as { id?: string }).id === 'string'
-      ) {
-        const bId = (params as { id: string }).id;
-        const bLabel = ctx.buildings.get(bId)?.name || bId;
-        message += ` - ${buildingIcon}${bLabel}`;
-      }
-      addLog([message, ...changes.map((c) => `  ${c}`)]);
+      const messages = logContent('action', action.id, ctx, params);
+      addLog([...messages, ...changes.map((c) => `  ${c}`)]);
     } catch (e) {
       const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
