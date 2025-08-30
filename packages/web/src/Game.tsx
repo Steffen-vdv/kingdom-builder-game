@@ -78,6 +78,7 @@ interface PlayerPanelProps {
     bgClass?: string;
   }) => void;
   clearHoverCard: () => void;
+  className?: string;
 }
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
@@ -85,6 +86,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
   ctx,
   handleHoverCard,
   clearHoverCard,
+  className = '',
 }) => {
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
@@ -107,9 +109,9 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     });
 
   return (
-    <div className="space-y-1">
+    <div className={`space-y-1 h-full ${className}`}>
       <h3 className="font-semibold">{player.name}</h3>
-      <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
+      <div className="flex flex-wrap items-center gap-2 border p-2 rounded w-fit">
         {Object.entries(player.resources).map(([k, v]) => {
           const info = RESOURCES[k as keyof typeof RESOURCES];
           return (
@@ -201,7 +203,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
           })}
       </div>
       {player.lands.length > 0 && (
-        <div className="grid grid-cols-4 gap-2 mt-2">
+        <div className="flex flex-wrap gap-2 mt-2 w-fit">
           {player.lands.map((land, idx) => {
             const showLandCard = () =>
               handleHoverCard({
@@ -259,11 +261,11 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                     return (
                       <span
                         key={i}
-                        className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                        className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help whitespace-nowrap"
                         onMouseEnter={(e) => {
                           e.stopPropagation();
                           handleHoverCard({
-                            title: `${slotIcon} Empty development slot`,
+                            title: `${slotIcon} Development Slot (empty)`,
                             effects: [],
                             description: `Use ${actionInfo.develop.icon} Develop to build here`,
                             requirements: [],
@@ -275,7 +277,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                           handleLeave();
                         }}
                       >
-                        {slotIcon}
+                        {slotIcon} Development Slot (empty)
                       </span>
                     );
                   })}
@@ -286,7 +288,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         </div>
       )}
       {player.buildings.size > 0 && (
-        <div className="grid grid-cols-4 gap-2 mt-2">
+        <div className="flex flex-wrap gap-2 mt-2 w-fit">
           {Array.from(player.buildings).map((b) => {
             const name = ctx.buildings.get(b)?.name || b;
             const title = `${buildingIcon} ${name}`;
@@ -794,16 +796,21 @@ export default function Game({
         >
           <section
             ref={playerBoxRef}
-            className="border rounded p-4 bg-white dark:bg-gray-800 shadow"
+            className="border rounded bg-white dark:bg-gray-800 shadow"
           >
-            <div className="flex flex-col gap-4">
-              {ctx.game.players.map((p) => (
+            <div className="flex items-stretch rounded overflow-hidden divide-x divide-gray-300">
+              {ctx.game.players.map((p, i) => (
                 <PlayerPanel
                   key={p.id}
                   player={p}
                   ctx={ctx}
                   handleHoverCard={handleHoverCard}
                   clearHoverCard={clearHoverCard}
+                  className={`flex-1 p-4 ${
+                    i === 0
+                      ? 'bg-blue-50 dark:bg-blue-900/20 pr-6'
+                      : 'bg-red-50 dark:bg-red-900/20 pl-6'
+                  }`}
                 />
               ))}
             </div>
