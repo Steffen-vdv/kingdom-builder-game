@@ -1667,7 +1667,7 @@ export default function Game({
             </div>
           </section>
         </div>
-        <section className="w-[30rem] sticky top-0 self-start flex flex-col gap-4">
+        <section className="w-[30rem] sticky top-0 self-start flex flex-col gap-6">
           <section
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
             onMouseEnter={() =>
