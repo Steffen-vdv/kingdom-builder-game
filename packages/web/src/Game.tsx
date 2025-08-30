@@ -33,6 +33,15 @@ import {
   type Summary,
 } from './translation';
 
+const phaseTabs = {
+  development: {
+    icon: phaseInfo.onDevelopmentPhase.icon,
+    label: 'Development',
+  },
+  upkeep: { icon: phaseInfo.onUpkeepPhase.icon, label: 'Upkeep' },
+  main: { icon: phaseInfo.mainPhase.icon, label: 'Main' },
+} as const;
+
 interface Action {
   id: string;
   name: string;
@@ -428,6 +437,7 @@ export default function Game({
   const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
   const [phaseBoxHeight, setPhaseBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
+  const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
   const isActionPhase = ctx.phases[ctx.game.phaseIndex]?.action;
 
   useEffect(() => {
@@ -626,10 +636,12 @@ export default function Game({
 
   async function runUntilActionPhase() {
     setPhaseSteps([]);
+    setDisplayPhase(ctx.game.currentPhase);
     let lastPhase = '';
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
       const before = snapshotPlayer(ctx.activePlayer);
       const { phase, step, player } = advance(ctx);
+      setDisplayPhase(phase);
       const after = snapshotPlayer(player);
       const changes = diffSnapshots(before, after, ctx);
       if (phase !== lastPhase) {
@@ -665,6 +677,7 @@ export default function Game({
     }
     setMainApStart(ctx.activePlayer.ap);
     updateMainPhaseStep(ctx.activePlayer.ap);
+    setDisplayPhase(ctx.game.currentPhase);
     refresh();
   }
 
@@ -681,12 +694,15 @@ export default function Game({
   }, []);
 
   useEffect(() => {
-    if (isActionPhase) updateMainPhaseStep();
-  }, [ctx.game.currentPhase, ctx.activePlayer.ap]);
+    if (isActionPhase && (mainApStart !== 0 || ctx.activePlayer.ap === 0)) {
+      updateMainPhaseStep();
+    }
+  }, [isActionPhase, ctx.activePlayer.ap, mainApStart]);
 
   return (
     <div className="p-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
       <div className="flex items-center justify-between mb-6">
+        <div className="text-lg font-semibold">Turn {ctx.game.turn}</div>
         <h1 className="text-2xl font-bold text-center flex-1">
           Kingdom Builder
         </h1>
@@ -719,21 +735,28 @@ export default function Game({
             style={{ minHeight: sharedHeight }}
           >
             <div className="flex items-stretch rounded overflow-hidden divide-x divide-gray-300 h-full">
-              {ctx.game.players.map((p, i) => (
-                <PlayerPanel
-                  key={p.id}
-                  player={p}
-                  ctx={ctx}
-                  handleHoverCard={handleHoverCard}
-                  clearHoverCard={clearHoverCard}
-                  className={`flex-1 p-4 ${
-                    i === 0
-                      ? 'bg-blue-50 dark:bg-blue-900/20 pr-6'
-                      : 'bg-red-50 dark:bg-red-900/20 pl-6'
-                  }`}
-                  buildingDescriptions={buildingInstalledDescriptions}
-                />
-              ))}
+              {ctx.game.players.map((p, i) => {
+                const isActive = p.id === ctx.activePlayer.id;
+                const bgClass =
+                  i === 0
+                    ? isActive
+                      ? 'bg-blue-100 dark:bg-blue-900/20 pr-6'
+                      : 'bg-blue-200 dark:bg-blue-900/40 pr-6'
+                    : isActive
+                      ? 'bg-red-100 dark:bg-red-900/20 pl-6'
+                      : 'bg-red-200 dark:bg-red-900/40 pl-6';
+                return (
+                  <PlayerPanel
+                    key={p.id}
+                    player={p}
+                    ctx={ctx}
+                    handleHoverCard={handleHoverCard}
+                    clearHoverCard={clearHoverCard}
+                    className={`flex-1 p-4 ${bgClass}`}
+                    buildingDescriptions={buildingInstalledDescriptions}
+                  />
+                );
+              })}
             </div>
           </section>
           <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative">
@@ -1120,22 +1143,22 @@ export default function Game({
               minHeight: sharedHeight,
             }}
           >
-            <h2 className="text-xl font-semibold mb-2">
-              Turn {ctx.game.turn} - {ctx.activePlayer.name}
-            </h2>
-            <div className="flex gap-4 mb-2">
-              {ctx.phases.map((p) => (
-                <span
-                  key={p.id}
-                  className={
-                    p.id === ctx.game.currentPhase
-                      ? 'font-semibold underline'
-                      : ''
-                  }
-                >
-                  {p.id.charAt(0).toUpperCase() + p.id.slice(1)} Phase
-                </span>
-              ))}
+            <div className="flex mb-2 border-b">
+              {ctx.phases.map((p) => {
+                const tab = phaseTabs[p.id as keyof typeof phaseTabs];
+                return (
+                  <div
+                    key={p.id}
+                    className={`px-3 py-1 text-sm flex items-center gap-1 border-b-2 ${
+                      displayPhase === p.id
+                        ? 'border-blue-500 font-semibold'
+                        : 'border-transparent text-gray-500'
+                    }`}
+                  >
+                    {tab?.icon} {tab?.label}
+                  </div>
+                );
+              })}
             </div>
             <ul
               ref={phaseStepsRef}
