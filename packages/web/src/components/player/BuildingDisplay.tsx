@@ -4,18 +4,14 @@ import {
   BUILDING_INFO as buildingInfo,
 } from '@kingdom-builder/engine';
 import type { EngineContext } from '@kingdom-builder/engine';
-import type { Summary } from '../../translation';
+import { describeContent } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 
 interface BuildingDisplayProps {
   player: EngineContext['activePlayer'];
-  buildingDescriptions: Map<string, Summary>;
 }
 
-const BuildingDisplay: React.FC<BuildingDisplayProps> = ({
-  player,
-  buildingDescriptions,
-}) => {
+const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
   const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
   if (player.buildings.size === 0) return null;
   return (
@@ -31,7 +27,9 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({
             onMouseEnter={() =>
               handleHoverCard({
                 title,
-                effects: buildingDescriptions.get(b) ?? [],
+                effects: describeContent('building', b, ctx, {
+                  installed: true,
+                }),
                 requirements: [],
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
               })
