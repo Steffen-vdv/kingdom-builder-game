@@ -63,17 +63,15 @@ export function createBuildingRegistry() {
       .onBuild({
         type: 'result_mod',
         method: 'add',
-        params: { id: 'mill_farm_income', actionId: 'gain-income' },
+        params: {
+          id: 'mill_farm_bonus',
+          evaluation: { type: 'development', id: 'farm' },
+        },
         effects: [
           {
-            evaluator: { type: 'development', params: { id: 'farm' } },
-            effects: [
-              {
-                type: 'resource',
-                method: 'add',
-                params: { key: Resource.gold, amount: 1 },
-              },
-            ],
+            type: 'resource',
+            method: 'add',
+            params: { key: Resource.gold, amount: 1 },
           },
         ],
       })

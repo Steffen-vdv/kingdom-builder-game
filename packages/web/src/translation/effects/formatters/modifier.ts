@@ -1,4 +1,4 @@
-import { actionInfo, modifierInfo } from '../../../icons';
+import { actionInfo, modifierInfo, developmentInfo } from '../../../icons';
 import { RESOURCES } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/engine';
 import { increaseOrDecrease, signed } from '../helpers';
@@ -33,6 +33,22 @@ registerEffectFormatter('cost_mod', 'add', {
 registerEffectFormatter('result_mod', 'add', {
   summarize: (eff, ctx) => {
     const sub = summarizeEffects(eff.effects || [], ctx);
+    const evaluation = eff.params?.['evaluation'] as
+      | { type: string; id: string }
+      | undefined;
+    if (evaluation?.type === 'development') {
+      const dev = ctx.developments.get(evaluation.id);
+      const icon = developmentInfo[evaluation.id]?.icon || '';
+      const resource = eff.effects?.find(
+        (e) => e.type === 'resource' && e.method === 'add',
+      );
+      const key = resource?.params?.['key'] as string;
+      const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
+      const amount = Number(resource?.params?.['amount']);
+      return [
+        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more`,
+      ];
+    }
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
       actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
@@ -40,6 +56,22 @@ registerEffectFormatter('result_mod', 'add', {
   },
   describe: (eff, ctx) => {
     const sub = describeEffects(eff.effects || [], ctx);
+    const evaluation = eff.params?.['evaluation'] as
+      | { type: string; id: string }
+      | undefined;
+    if (evaluation?.type === 'development') {
+      const dev = ctx.developments.get(evaluation.id);
+      const icon = developmentInfo[evaluation.id]?.icon || '';
+      const resource = eff.effects?.find(
+        (e) => e.type === 'resource' && e.method === 'add',
+      );
+      const key = resource?.params?.['key'] as string;
+      const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
+      const amount = Number(resource?.params?.['amount']);
+      return [
+        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more of that resource`,
+      ];
+    }
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
       actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
