@@ -10,4 +10,7 @@
   .bar-item {
     @apply flex items-center gap-1 tabular-nums whitespace-nowrap;
   }
+  .hoverable {
+    @apply transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105;
+  }
 }
