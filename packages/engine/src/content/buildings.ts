@@ -60,13 +60,20 @@ export function createBuildingRegistry() {
           },
         ],
       })
-      .onDevelopmentPhase({
-        evaluator: { type: 'development', params: { id: 'farm' } },
+      .onBuild({
+        type: 'result_mod',
+        method: 'add',
+        params: { id: 'mill_farm_income', actionId: 'gain-income' },
         effects: [
           {
-            type: 'resource',
-            method: 'add',
-            params: { key: Resource.gold, amount: 1 },
+            evaluator: { type: 'development', params: { id: 'farm' } },
+            effects: [
+              {
+                type: 'resource',
+                method: 'add',
+                params: { key: Resource.gold, amount: 1 },
+              },
+            ],
           },
         ],
       })

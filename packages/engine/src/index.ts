@@ -232,6 +232,8 @@ export function advance(ctx: EngineContext): AdvanceResult {
     effects.push(...step.effects);
   }
 
+  if (step) ctx.passives.runResultMods(step.id, ctx);
+
   ctx.game.stepIndex += 1;
   if (ctx.game.stepIndex >= phase.steps.length) {
     ctx.game.stepIndex = 0;
