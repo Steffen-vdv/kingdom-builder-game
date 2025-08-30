@@ -15,6 +15,7 @@ import {
   resourceInfo,
   statInfo,
   populationInfo,
+  populationDescription,
   actionInfo,
   developmentInfo,
   landIcon,
@@ -62,14 +63,17 @@ function renderSummary(summary: Summary | undefined): React.ReactNode {
 interface PlayerPanelProps {
   player: EngineContext['activePlayer'];
   ctx: EngineContext;
-  handleHoverCard: (data: {
-    title: string;
-    effects: Summary;
-    requirements: string[];
-    costs: Record<string, number>;
-    description?: string;
-    effectsTitle?: string;
-  }) => void;
+  handleHoverCard: (
+    data: {
+      title: string;
+      effects: Summary;
+      requirements: string[];
+      costs: Record<string, number>;
+      description?: string;
+      effectsTitle?: string;
+    },
+    el: HTMLElement,
+  ) => void;
   clearHoverCard: () => void;
 }
 
@@ -87,79 +91,52 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     return String(value);
   }
 
-  const devCounts = new Map<string, number>();
-  let slotsFree = 0;
-  player.lands.forEach((land) => {
-    land.developments.forEach((d) =>
-      devCounts.set(d, (devCounts.get(d) || 0) + 1),
-    );
-    slotsFree += land.slotsFree;
-  });
-  const landCount = player.lands.length;
-  const totalSlots = player.lands.reduce((sum, land) => sum + land.slotsMax, 0);
-  const landItems: {
-    key: string;
-    icon: string;
-    label: string;
-    count: number;
-  }[] = [];
-  devCounts.forEach((count, id) =>
-    landItems.push({
-      key: id,
-      icon: developmentInfo[id]?.icon || id,
-      label: developmentInfo[id]?.label || id,
-      count,
-    }),
-  );
-  if (slotsFree > 0)
-    landItems.push({
-      key: 'slot',
-      icon: slotIcon,
-      label: 'Empty development slot',
-      count: slotsFree,
-    });
-  const landBar = (
-    <span className="bar-item">
-      <span title="Land">
-        {landIcon}
-        {landCount}
-      </span>{' '}
-      <span title="Development slots">
-        {actionInfo.develop.icon}
-        {totalSlots}
-      </span>
-      {' ('}
-      {landItems.map((item, i) => (
-        <React.Fragment key={item.key}>
-          {i > 0 && ' , '}
-          <span title={item.label}>
-            {item.icon}
-            {item.count}
-          </span>
-        </React.Fragment>
-      ))}
-      {')'}
-    </span>
-  );
-
   return (
     <div className="space-y-1">
       <h3 className="font-semibold">{player.name}</h3>
       <div className="flex flex-wrap items-center gap-2 border p-2 rounded">
-        {Object.entries(player.resources).map(([k, v]) => (
-          <span
-            key={k}
-            title={resourceInfo[k as keyof typeof resourceInfo]?.label}
-            className="bar-item"
-          >
-            {resourceInfo[k as keyof typeof resourceInfo]?.icon}
-            {v}
-          </span>
-        ))}
-        <div className="h-4 border-l" />
+        {Object.entries(player.resources).map(([k, v]) => {
+          const info = resourceInfo[k as keyof typeof resourceInfo];
+          return (
+            <span
+              key={k}
+              title={info?.label}
+              className="bar-item"
+              onMouseEnter={(e) =>
+                handleHoverCard(
+                  {
+                    title: `${info?.icon ?? ''} ${info?.label ?? k}`,
+                    effects: [] as Summary,
+                    requirements: [] as string[],
+                    costs: {} as Record<string, number>,
+                    description: info?.description ?? '',
+                  },
+                  e.currentTarget,
+                )
+              }
+              onMouseLeave={clearHoverCard}
+            >
+              {info?.icon}
+              {v}
+            </span>
+          );
+        })}
         <span
           title={`Population ${currentPop}/${player.maxPopulation}`}
           className="bar-item"
+          onMouseEnter={(e) =>
+            handleHoverCard(
+              {
+                title: '👥 Population',
+                effects: [] as Summary,
+                requirements: [] as string[],
+                costs: {} as Record<string, number>,
+                description: populationDescription,
+              },
+              e.currentTarget,
+            )
+          }
+          onMouseLeave={clearHoverCard}
         >
           👥{currentPop}/{player.maxPopulation}
           {popDetails.length > 0 && (
@@ -180,50 +157,77 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         </span>
         {Object.entries(player.stats)
           .filter(([k]) => k !== 'maxPopulation')
-          .map(([k, v]) => (
-            <span key={k} title={statInfo[k]?.label || k} className="bar-item">
-              {statInfo[k]?.icon}
-              {formatStatValue(k, v)}
-            </span>
-          ))}
-        <div className="h-4 border-l" />
-        {landBar}
+          .map(([k, v]) => {
+            const info = statInfo[k];
+            return (
+              <span
+                key={k}
+                title={info?.label || k}
+                className="bar-item"
+                onMouseEnter={(e) =>
+                  handleHoverCard(
+                    {
+                      title: `${info?.icon ?? ''} ${info?.label ?? k}`,
+                      effects: [] as Summary,
+                      requirements: [] as string[],
+                      costs: {} as Record<string, number>,
+                      description: info?.description ?? '',
+                    },
+                    e.currentTarget,
+                  )
+                }
+                onMouseLeave={clearHoverCard}
+              >
+                {info?.icon}
+                {formatStatValue(k, v)}
+              </span>
+            );
+          })}
       </div>
       {player.lands.length > 0 && (
-        <div className="border p-2 rounded">
-          <h4 className="font-medium mb-1">Lands</h4>
-          <div className="grid grid-cols-4 gap-2">
-            {player.lands.map((land, idx) => {
-              const showLandCard = () =>
-                handleHoverCard({
+        <div className="grid grid-cols-4 gap-2 mt-2">
+          {player.lands.map((land, idx) => {
+            let landEl: HTMLElement | null = null;
+            const showLandCard = () =>
+              landEl &&
+              handleHoverCard(
+                {
                   title: `${landIcon} Land`,
                   effects: describeContent('land', land, ctx),
-                  requirements: [],
-                  costs: {},
+                  requirements: [] as string[],
+                  costs: {} as Record<string, number>,
                   effectsTitle: 'Developments',
-                });
-              return (
-                <div
-                  key={idx}
-                  className="relative border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
-                  onMouseEnter={showLandCard}
-                  onMouseLeave={clearHoverCard}
-                >
-                  <span className="font-medium">{landIcon} Land</span>
-                  <div className="mt-1 flex flex-wrap justify-center gap-1">
-                    {Array.from({ length: land.slotsMax }).map((_, i) => {
-                      const devId = land.developments[i];
-                      if (devId) {
-                        const name = ctx.developments.get(devId)?.name || devId;
-                        const title = `${developmentInfo[devId]?.icon || ''} ${name}`;
-                        const handleLeave = () => showLandCard();
-                        return (
-                          <span
-                            key={i}
-                            className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
-                            onMouseEnter={(e) => {
-                              e.stopPropagation();
-                              handleHoverCard({
+                },
+                landEl,
+              );
+            return (
+              <div
+                key={idx}
+                className="relative border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
+                onMouseEnter={(e) => {
+                  landEl = e.currentTarget;
+                  showLandCard();
+                }}
+                onMouseLeave={clearHoverCard}
+              >
+                <span className="font-medium">{landIcon} Land</span>
+                <div className="mt-1 flex flex-wrap justify-center gap-1">
+                  {Array.from({ length: land.slotsMax }).map((_, i) => {
+                    const devId = land.developments[i];
+                    if (devId) {
+                      const name = ctx.developments.get(devId)?.name || devId;
+                      const title = `${
+                        developmentInfo[devId]?.icon || ''
+                      } ${name}`;
+                      const handleLeave = () => showLandCard();
+                      return (
+                        <span
+                          key={i}
+                          className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
+                          onMouseEnter={(e) => {
+                            e.stopPropagation();
+                            handleHoverCard(
+                              {
                                 title,
                                 effects: describeContent(
                                   'development',
@@ -233,80 +237,84 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                                     installed: true,
                                   },
                                 ),
-                                requirements: [],
-                                costs: {},
-                              });
-                            }}
-                            onMouseLeave={(e) => {
-                              e.stopPropagation();
-                              handleLeave();
-                            }}
-                          >
-                            {developmentInfo[devId]?.icon} {name}
-                          </span>
-                        );
-                      }
-                      const handleLeave = () => showLandCard();
-                      return (
-                        <span
-                          key={i}
-                          className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
-                          onMouseEnter={(e) => {
-                            e.stopPropagation();
-                            handleHoverCard({
-                              title: `${slotIcon} Empty development slot`,
-                              effects: [],
-                              description: `Use ${actionInfo.develop.icon} Develop to build here`,
-                              requirements: [],
-                              costs: {},
-                            });
+                                requirements: [] as string[],
+                                costs: {} as Record<string, number>,
+                              },
+                              e.currentTarget,
+                            );
                           }}
                           onMouseLeave={(e) => {
                             e.stopPropagation();
                             handleLeave();
                           }}
                         >
-                          {slotIcon}
+                          {developmentInfo[devId]?.icon} {name}
                         </span>
                       );
-                    })}
-                  </div>
+                    }
+                    const handleLeave = () => showLandCard();
+                    return (
+                      <span
+                        key={i}
+                        className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
+                        onMouseEnter={(e) => {
+                          e.stopPropagation();
+                          handleHoverCard(
+                            {
+                              title: `${slotIcon} Empty development slot`,
+                              effects: [] as Summary,
+                              description: `Use ${actionInfo.develop.icon} Develop to build here`,
+                              requirements: [] as string[],
+                              costs: {} as Record<string, number>,
+                            },
+                            e.currentTarget,
+                          );
+                        }}
+                        onMouseLeave={(e) => {
+                          e.stopPropagation();
+                          handleLeave();
+                        }}
+                      >
+                        {slotIcon}
+                      </span>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       )}
       {player.buildings.size > 0 && (
-        <div className="border p-2 rounded">
-          <h4 className="font-medium mb-1">Buildings</h4>
-          <div className="grid grid-cols-4 gap-2">
-            {Array.from(player.buildings).map((b) => {
-              const name = ctx.buildings.get(b)?.name || b;
-              const title = `${buildingIcon} ${name}`;
-              return (
-                <div
-                  key={b}
-                  className="border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
-                  onMouseEnter={() =>
-                    handleHoverCard({
+        <div className="grid grid-cols-4 gap-2 mt-2">
+          {Array.from(player.buildings).map((b) => {
+            const name = ctx.buildings.get(b)?.name || b;
+            const title = `${buildingIcon} ${name}`;
+            return (
+              <div
+                key={b}
+                className="border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
+                onMouseEnter={(e) =>
+                  handleHoverCard(
+                    {
                       title,
                       effects: describeContent('building', b, ctx, {
                         installed: true,
                       }),
-                      requirements: [],
-                      costs: {},
-                    })
-                  }
-                  onMouseLeave={clearHoverCard}
-                >
-                  <span className="font-medium">
-                    {buildingIcon} {name}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                      requirements: [] as string[],
+                      costs: {} as Record<string, number>,
+                    },
+                    e.currentTarget,
+                  )
+                }
+                onMouseLeave={clearHoverCard}
+              >
+                <span className="font-medium">
+                  {buildingIcon} {name}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -402,6 +410,7 @@ export default function Game({
     costs: Record<string, number>;
     description?: string;
     effectsTitle?: string;
+    bgColor?: string;
   } | null>(null);
   const hoverTimeout = useRef<number>();
   const [phaseSteps, setPhaseSteps] = useState<
@@ -437,16 +446,27 @@ export default function Game({
       ...prev,
     ]);
 
-  function handleHoverCard(data: {
-    title: string;
-    effects: Summary;
-    requirements: string[];
-    costs: Record<string, number>;
-    description?: string;
-    effectsTitle?: string;
-  }) {
+  function handleHoverCard(
+    data: {
+      title: string;
+      effects: Summary;
+      requirements: string[];
+      costs: Record<string, number>;
+      description?: string;
+      effectsTitle?: string;
+    },
+    el: HTMLElement,
+  ) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
-    hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
+    hoverTimeout.current = window.setTimeout(() => {
+      const style = window.getComputedStyle(el);
+      const bgColor =
+        style.backgroundColor === 'rgba(0, 0, 0, 0)'
+          ? undefined
+          : style.backgroundColor;
+      const card = bgColor ? { ...data, bgColor } : data;
+      setHoverCard(card);
+    }, 300);
   }
   function clearHoverCard() {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
@@ -809,7 +829,11 @@ export default function Game({
               ))}
             </div>
           </section>
-          <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow">
+          <section
+            className={`border rounded p-4 bg-white dark:bg-gray-800 shadow ${
+              ctx.game.currentPhase !== Phase.Main ? 'opacity-50' : ''
+            }`}
+          >
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-xl font-semibold">
                 Actions (1 {resourceInfo[Resource.ap].icon} each)
@@ -843,22 +867,27 @@ export default function Game({
                     <button
                       key={action.id}
                       className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                        enabled
-                          ? ''
-                          : 'opacity-50 border-red-500 cursor-not-allowed'
+                        !canPay || !meetsReq
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ctx.game.currentPhase !== Phase.Main
+                            ? 'cursor-not-allowed'
+                            : ''
                       }`}
                       title={title}
                       onClick={() => enabled && handlePerform(action)}
-                      onMouseEnter={() =>
-                        handleHoverCard({
-                          title: `${
-                            actionInfo[action.id as keyof typeof actionInfo]
-                              ?.icon || ''
-                          } ${action.name}`,
-                          effects: describeContent('action', action.id, ctx),
-                          requirements,
-                          costs,
-                        })
+                      onMouseEnter={(e) =>
+                        handleHoverCard(
+                          {
+                            title: `${
+                              actionInfo[action.id as keyof typeof actionInfo]
+                                ?.icon || ''
+                            } ${action.name}`,
+                            effects: describeContent('action', action.id, ctx),
+                            requirements,
+                            costs,
+                          },
+                          e.currentTarget,
+                        )
                       }
                       onMouseLeave={clearHoverCard}
                     >
@@ -947,23 +976,28 @@ export default function Game({
                         <button
                           key={role}
                           className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled
-                              ? ''
-                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                            !canPay || !meetsReq
+                              ? 'opacity-50 cursor-not-allowed'
+                              : ctx.game.currentPhase !== Phase.Main
+                                ? 'cursor-not-allowed'
+                                : ''
                           }`}
                           title={title}
                           onClick={() =>
                             enabled && handlePerform(raisePopAction, { role })
                           }
-                          onMouseEnter={() =>
-                            handleHoverCard({
-                              title: `${actionInfo.raise_pop.icon} Raise Population - ${
-                                populationInfo[role]?.icon
-                              } ${populationInfo[role]?.label || ''}`,
-                              effects: summary,
-                              requirements,
-                              costs,
-                            })
+                          onMouseEnter={(e) =>
+                            handleHoverCard(
+                              {
+                                title: `${actionInfo.raise_pop.icon} Raise Population - ${
+                                  populationInfo[role]?.icon
+                                } ${populationInfo[role]?.label || ''}`,
+                                effects: summary,
+                                requirements,
+                                costs,
+                              },
+                              e.currentTarget,
+                            )
                           }
                           onMouseLeave={clearHoverCard}
                         >
@@ -1033,9 +1067,11 @@ export default function Game({
                         <button
                           key={d.id}
                           className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled
-                              ? ''
-                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                            !canPay || requirements.length > 0
+                              ? 'opacity-50 cursor-not-allowed'
+                              : ctx.game.currentPhase !== Phase.Main
+                                ? 'cursor-not-allowed'
+                                : ''
                           }`}
                           title={title}
                           onClick={() => {
@@ -1045,19 +1081,22 @@ export default function Game({
                             )?.id;
                             handlePerform(developAction, { id: d.id, landId });
                           }}
-                          onMouseEnter={() =>
-                            handleHoverCard({
-                              title: `${actionInfo.develop.icon} Develop - ${
-                                developmentInfo[d.id]?.icon
-                              } ${d.name}`,
-                              effects: describeContent(
-                                'development',
-                                d.id,
-                                ctx,
-                              ),
-                              requirements,
-                              costs,
-                            })
+                          onMouseEnter={(e) =>
+                            handleHoverCard(
+                              {
+                                title: `${actionInfo.develop.icon} Develop - ${
+                                  developmentInfo[d.id]?.icon
+                                } ${d.name}`,
+                                effects: describeContent(
+                                  'development',
+                                  d.id,
+                                  ctx,
+                                ),
+                                requirements,
+                                costs,
+                              },
+                              e.currentTarget,
+                            )
                           }
                           onMouseLeave={clearHoverCard}
                         >
@@ -1113,21 +1152,26 @@ export default function Game({
                         <button
                           key={b.id}
                           className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled
-                              ? ''
-                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                            !canPay
+                              ? 'opacity-50 cursor-not-allowed'
+                              : ctx.game.currentPhase !== Phase.Main
+                                ? 'cursor-not-allowed'
+                                : ''
                           }`}
                           title={title}
                           onClick={() =>
                             enabled && handlePerform(buildAction, { id: b.id })
                           }
-                          onMouseEnter={() =>
-                            handleHoverCard({
-                              title: `${actionInfo.build.icon} Build - ${b.name}`,
-                              effects: describeContent('building', b.id, ctx),
-                              requirements,
-                              costs,
-                            })
+                          onMouseEnter={(e) =>
+                            handleHoverCard(
+                              {
+                                title: `${actionInfo.build.icon} Build - ${b.name}`,
+                                effects: describeContent('building', b.id, ctx),
+                                requirements,
+                                costs,
+                              },
+                              e.currentTarget,
+                            )
                           }
                           onMouseLeave={clearHoverCard}
                         >
@@ -1231,7 +1275,13 @@ export default function Game({
             </ul>
           </div>
           {hoverCard && (
-            <div className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative pointer-events-none w-full">
+            <div
+              className="border rounded p-4 shadow relative pointer-events-none w-full"
+              style={{
+                backgroundColor:
+                  hoverCard.bgColor ?? (darkMode ? '#1f2937' : '#ffffff'),
+              }}
+            >
               <div className="font-semibold mb-2">
                 {hoverCard.title}
                 <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
