@@ -15,6 +15,7 @@ import { summarizeContent, describeContent, type Summary } from './translation';
 import { GameProvider, useGameEngine } from './state/GameContext';
 import PlayerPanel from './components/player/PlayerPanel';
 import TimerCircle from './components/TimerCircle';
+import HoverCard from './components/HoverCard';
 
 interface Action {
   id: string;
@@ -31,7 +32,7 @@ interface Building {
   name: string;
 }
 
-function renderSummary(summary: Summary | undefined): React.ReactNode {
+export function renderSummary(summary: Summary | undefined): React.ReactNode {
   return summary?.map((e, i) =>
     typeof e === 'string' ? (
       <li key={i} className="whitespace-pre-line">
@@ -46,7 +47,7 @@ function renderSummary(summary: Summary | undefined): React.ReactNode {
   );
 }
 
-function renderCosts(
+export function renderCosts(
   costs: Record<string, number> | undefined,
   resources: Record<string, number>,
 ) {
@@ -793,45 +794,7 @@ function GameInner({
               ))}
             </ul>
           </div>
-          {hoverCard && (
-            <div
-              className={`border rounded p-4 shadow relative pointer-events-none w-full ${hoverCard.bgClass || 'bg-white dark:bg-gray-800'}`}
-            >
-              <div className="font-semibold mb-2">
-                {hoverCard.title}
-                <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                  {renderCosts(hoverCard.costs, ctx.activePlayer.resources)}
-                </span>
-              </div>
-              {hoverCard.requirements.length > 0 && (
-                <div className="mb-2">
-                  <div className="font-semibold text-red-600">Requirements</div>
-                  <ul className="list-disc pl-4 text-sm text-red-600">
-                    {hoverCard.requirements.map((r, i) => (
-                      <li key={i}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {hoverCard.description && (
-                <div
-                  className={`mb-2 text-sm ${hoverCard.descriptionClass ?? ''}`}
-                >
-                  {hoverCard.description}
-                </div>
-              )}
-              {hoverCard.effects.length > 0 && (
-                <div>
-                  <div className="font-semibold">
-                    {hoverCard.effectsTitle ?? 'Effects'}
-                  </div>
-                  <ul className="list-disc pl-4 text-sm">
-                    {renderSummary(hoverCard.effects)}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+          <HoverCard data={hoverCard} />
         </section>
       </div>
     </div>
