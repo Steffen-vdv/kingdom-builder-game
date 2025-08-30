@@ -7,13 +7,7 @@
 3. Start the development server: `npm run dev`
 4. Build for production: `npm run build`
 
-## 2) Testing
-
-Pre-commit runs unit and integration tests automatically. Continuous
-integration executes the full suite and the production build. See
-[CONTRIBUTING](CONTRIBUTING/AGENTS.md) for details on the workflow.
-
-## 3) Game Overview
+## 2) Game Overview
 
 Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, manage resources, and try to outlast or conquer the opponent. Victory is achieved by capturing the opposing castle, forcing bankruptcy, or holding the most victory points when the game ends after the final round.
 
@@ -33,9 +27,3 @@ Each turn flows through three phases:
 - Population: 1 ⚖️ Council member
 - Army Strength 0, Fortification Strength 0, Happiness 0
 - Player order: A then B; B gains +1 ⚡️ Action Point on their first Development phase
-
-## Contributing
-
-See [CONTRIBUTING](CONTRIBUTING/AGENTS.md) for development setup, testing conventions,
-and commit guidelines. For an overview of the engine architecture, read
-[ARCHITECTURE](docs/architecture/AGENTS.md).
