@@ -676,6 +676,8 @@ export default function Game({
     effects: Summary;
     requirements: string[];
     costs: Record<string, number>;
+    description?: string;
+    effectsTitle?: string;
   } | null>(null);
   const hoverTimeout = useRef<number>();
   const [phaseSteps, setPhaseSteps] = useState<
@@ -713,6 +715,8 @@ export default function Game({
     effects: Summary;
     requirements: string[];
     costs: Record<string, number>;
+    description?: string;
+    effectsTitle?: string;
   }) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
     hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
@@ -1154,11 +1158,12 @@ export default function Game({
                     effects: describeLand(land, ctx),
                     requirements: [],
                     costs: {},
+                    effectsTitle: 'Developments',
                   });
                 return (
                   <div
                     key={idx}
-                    className="relative border p-2 text-center cursor-default"
+                    className="relative border p-2 text-center transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help"
                     onMouseEnter={showLandCard}
                     onMouseLeave={clearHoverCard}
                   >
@@ -1176,7 +1181,7 @@ export default function Game({
                           return (
                             <span
                               key={i}
-                              className="border p-1 text-xs cursor-default"
+                              className="border p-1 text-xs transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help"
                               onMouseEnter={(e) => {
                                 e.stopPropagation();
                                 handleHoverCard({
@@ -1201,14 +1206,13 @@ export default function Game({
                         return (
                           <span
                             key={i}
-                            className="border p-1 text-xs cursor-default"
+                            className="border p-1 text-xs transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help"
                             onMouseEnter={(e) => {
                               e.stopPropagation();
                               handleHoverCard({
                                 title: `${slotIcon} Empty development slot`,
-                                effects: [
-                                  `Use ${actionInfo.develop.icon} Develop to build here`,
-                                ],
+                                effects: [],
+                                description: `Use ${actionInfo.develop.icon} Develop to build here`,
                                 requirements: [],
                                 costs: {},
                               });
@@ -1239,7 +1243,7 @@ export default function Game({
                 return (
                   <div
                     key={b}
-                    className="border p-2 text-center cursor-default"
+                    className="border p-2 text-center transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help"
                     onMouseEnter={() =>
                       handleHoverCard({
                         title,
@@ -1400,7 +1404,7 @@ export default function Game({
                 return (
                   <button
                     key={action.id}
-                    className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
+                    className={`relative border p-3 flex flex-col items-start gap-2 h-full transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help ${
                       enabled
                         ? ''
                         : 'opacity-50 border-red-500 cursor-not-allowed'
@@ -1479,10 +1483,22 @@ export default function Game({
                         : ctx.game.currentPhase !== Phase.Main
                           ? 'Not in Main phase'
                           : undefined;
+                    const summary = describeAction('raise_pop', ctx);
+                    const shortSummary = summarizeAction('raise_pop', ctx);
+                    const first = summary[0];
+                    if (first && typeof first !== 'string') {
+                      first.items.push(`👥(${populationInfo[role]?.icon}) +1`);
+                    }
+                    const shortFirst = shortSummary[0];
+                    if (shortFirst && typeof shortFirst !== 'string') {
+                      shortFirst.items.push(
+                        `👥(${populationInfo[role]?.icon}) +1`,
+                      );
+                    }
                     return (
                       <button
                         key={role}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help ${
                           enabled
                             ? ''
                             : 'opacity-50 border-red-500 cursor-not-allowed'
@@ -1496,10 +1512,7 @@ export default function Game({
                             title: `${actionInfo.raise_pop.icon} Raise Population - ${
                               populationInfo[role]?.icon
                             } ${populationInfo[role]?.label || ''}`,
-                            effects: [
-                              `👥(${populationInfo[role]?.icon}) +1`,
-                              ...describeAction('raise_pop', ctx),
-                            ],
+                            effects: summary,
                             requirements,
                             costs,
                           })
@@ -1514,10 +1527,7 @@ export default function Game({
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
                         <ul className="text-sm list-disc list-inside text-left">
-                          {renderSummary([
-                            `👥(${populationInfo[role]?.icon}) +1`,
-                            ...(actionSummaries.get('raise_pop') ?? []),
-                          ])}
+                          {renderSummary(shortSummary)}
                         </ul>
                         {requirements.length > 0 && (
                           <div className="text-sm text-red-600 text-left">
@@ -1572,7 +1582,7 @@ export default function Game({
                     return (
                       <button
                         key={d.id}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help ${
                           enabled
                             ? ''
                             : 'opacity-50 border-red-500 cursor-not-allowed'
@@ -1646,7 +1656,7 @@ export default function Game({
                     return (
                       <button
                         key={b.id}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full ${
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help ${
                           enabled
                             ? ''
                             : 'opacity-50 border-red-500 cursor-not-allowed'
@@ -1710,9 +1720,14 @@ export default function Game({
                 </ul>
               </div>
             )}
+            {hoverCard.description && (
+              <div className="mb-2 text-sm">{hoverCard.description}</div>
+            )}
             {hoverCard.effects.length > 0 && (
               <div>
-                <div className="font-semibold">Effects</div>
+                <div className="font-semibold">
+                  {hoverCard.effectsTitle ?? 'Effects'}
+                </div>
                 <ul className="list-disc pl-4 text-sm">
                   {renderSummary(hoverCard.effects)}
                 </ul>
