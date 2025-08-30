@@ -12,14 +12,7 @@ const requirementSchema = z.object({
 export type RequirementConfig = z.infer<typeof requirementSchema>;
 
 // Basic schemas
-const costBagSchema = z
-  .object({
-    [Resource.gold]: z.number().optional(),
-    [Resource.ap]: z.number().optional(),
-    [Resource.happiness]: z.number().optional(),
-    [Resource.castleHP]: z.number().optional(),
-  })
-  .strict();
+const costBagSchema = z.record(z.nativeEnum(Resource), z.number());
 
 const evaluatorSchema = z.object({
   type: z.string(),

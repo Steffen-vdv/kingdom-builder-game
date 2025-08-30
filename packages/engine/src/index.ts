@@ -131,11 +131,11 @@ export function getActionCosts<T extends string>(
   params?: ActionParams<T>,
 ): CostBag {
   const actionDefinition = ctx.actions.get(actionId);
-  let base = { ...(actionDefinition.baseCosts || {}) } as CostBag;
+  let base = { ...(actionDefinition.baseCosts || {}) };
   if (actionId === 'build' && params) {
     const p = params as unknown as ActionParams<'build'>;
     const building = ctx.buildings.get(p.id);
-    base = { ...building.costs, ...base } as CostBag;
+    base = { ...building.costs, ...base };
   }
   return applyCostsWithPassives(actionDefinition.id, base, ctx);
 }
@@ -195,11 +195,11 @@ export function performAction<T extends string>(
     const ok = runRequirement(requirement, ctx);
     if (ok !== true) throw new Error(String(ok));
   }
-  let base = { ...(actionDefinition.baseCosts || {}) } as CostBag;
+  let base = { ...(actionDefinition.baseCosts || {}) };
   if (actionId === 'build' && params) {
     const p = params as unknown as ActionParams<'build'>;
     const building = ctx.buildings.get(p.id);
-    base = { ...building.costs, ...base } as CostBag;
+    base = { ...building.costs, ...base };
   }
   const costs = applyCostsWithPassives(actionDefinition.id, base, ctx);
   const ok = canPay(costs, ctx.activePlayer);
