@@ -385,6 +385,14 @@ function TimerCircle({
   );
 }
 
+export function isActionPhaseActive(
+  currentPhase: string,
+  actionPhaseId: string | undefined,
+  tabsEnabled: boolean,
+): boolean {
+  return tabsEnabled && currentPhase === actionPhaseId;
+}
+
 export default function Game({
   onExit,
   darkMode = true,
@@ -438,9 +446,11 @@ export default function Game({
     () => ctx.phases.find((p) => p.action)?.id,
     [ctx],
   );
-  const isActionPhase =
-    tabsEnabled &&
-    Boolean(ctx.phases.find((p) => p.id === displayPhase)?.action);
+  const isActionPhase = isActionPhaseActive(
+    ctx.game.currentPhase,
+    actionPhaseId,
+    tabsEnabled,
+  );
 
   useEffect(() => {
     const pEl = playerBoxRef.current;
