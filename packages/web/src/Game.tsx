@@ -401,6 +401,7 @@ export default function Game({
   const [, setTick] = useState(0);
   const refresh = () => setTick((t) => t + 1);
   const [log, setLog] = useState<{ time: string; text: string }[]>([]);
+  const logRef = useRef<HTMLDivElement>(null);
   const [hoverCard, setHoverCard] = useState<{
     title: string;
     effects: Summary;
@@ -463,13 +464,13 @@ export default function Game({
   }
 
   const addLog = (entry: string | string[], playerName?: string) =>
-    setLog((prev) => [
-      ...(Array.isArray(entry) ? entry : [entry]).map((text) => ({
+    setLog((prev) => {
+      const items = (Array.isArray(entry) ? entry : [entry]).map((text) => ({
         time: new Date().toLocaleTimeString(),
         text: `[${playerName ?? ctx.activePlayer.name}] ${text}`,
-      })),
-      ...prev,
-    ]);
+      }));
+      return [...prev, ...items];
+    });
 
   function handleHoverCard(data: {
     title: string;
@@ -568,6 +569,13 @@ export default function Game({
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [phaseSteps]);
 
+  useEffect(() => {
+    const el = logRef.current;
+    if (!el) return;
+    if (el.scrollHeight > el.clientHeight)
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [log]);
+
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.id === 'develop');
   const buildAction = actions.find((a) => a.id === 'build');
@@ -633,7 +641,7 @@ export default function Game({
   async function runUntilActionPhase() {
     setPhaseSteps([]);
     setDisplayPhase(ctx.game.currentPhase);
-    let lastPhase = ctx.game.currentPhase;
+    let lastPhase: string | null = null;
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
       const before = snapshotPlayer(ctx.activePlayer);
       const { phase, step, player } = advance(ctx);
@@ -643,17 +651,15 @@ export default function Game({
       const after = snapshotPlayer(player);
       const changes = diffStepSnapshots(before, after, stepDef, ctx);
       if (phase !== lastPhase) {
-        await runDelay(1500);
+        if (lastPhase !== null) await runDelay(1500);
         setPhaseSteps([]);
         setDisplayPhase(phase);
+        addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player.name);
         lastPhase = phase;
       }
       if (changes.length) {
         addLog(
-          [
-            `${phaseDef.icon} ${phaseDef.label} – ${stepDef?.title || step}`,
-            ...changes.map((c) => `  ${c}`),
-          ],
+          changes.map((c) => `  ${c}`),
           player.name,
         );
       }
@@ -1195,7 +1201,10 @@ export default function Game({
               </div>
             )}
           </section>
-          <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white dark:bg-gray-800 shadow w-full">
+          <div
+            ref={logRef}
+            className="border rounded p-4 overflow-y-auto max-h-80 bg-white dark:bg-gray-800 shadow w-full"
+          >
             <h2 className="text-xl font-semibold mb-2">Log</h2>
             <ul className="mt-2 space-y-1">
               {log.map((entry, idx) => (
