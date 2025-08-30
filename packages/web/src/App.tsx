@@ -59,7 +59,7 @@ export default function App() {
           spent and gained throughout the game.
         </p>
         <button
-          className="border px-4 py-2 transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-pointer"
+          className="border px-4 py-2 hoverable cursor-pointer"
           onClick={() => setScreen('menu')}
         >
           Back to Start
@@ -85,7 +85,7 @@ export default function App() {
         <div className="text-6xl">🏰</div>
         <h1 className="text-3xl font-bold">Kingdom Builder</h1>
         <button
-          className="border px-4 py-2 transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-pointer"
+          className="border px-4 py-2 hoverable cursor-pointer"
           onClick={() => {
             setGameKey((k) => k + 1);
             setScreen('game');
@@ -94,7 +94,7 @@ export default function App() {
           Start New Game
         </button>
         <button
-          className="border px-4 py-2 transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-pointer"
+          className="border px-4 py-2 hoverable cursor-pointer"
           onClick={() => setScreen('overview')}
         >
           Game Overview
