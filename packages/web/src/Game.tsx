@@ -69,7 +69,7 @@ interface PlayerPanelProps {
       effects: Summary;
       requirements: string[];
       costs: Record<string, number>;
-      description?: string;
+      description?: React.ReactNode;
       effectsTitle?: string;
     },
     el: HTMLElement,
@@ -108,7 +108,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                     effects: [] as Summary,
                     requirements: [] as string[],
                     costs: {} as Record<string, number>,
-                    description: info?.description ?? '',
+                    description: info?.description,
                   },
                   e.currentTarget,
                 )
@@ -129,7 +129,20 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                 effects: [] as Summary,
                 requirements: [] as string[],
                 costs: {} as Record<string, number>,
-                description: populationOverview,
+                description: (
+                  <>
+                    <p>{populationOverview.intro}</p>
+                    <ul className="list-disc pl-4 mt-1">
+                      {populationOverview.roles.map((r) => (
+                        <li key={r.key}>
+                          {r.icon}{' '}
+                          <span className="font-semibold">{r.label}:</span>{' '}
+                          {r.description}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ),
               },
               e.currentTarget,
             )
@@ -158,7 +171,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                               effects: [] as Summary,
                               requirements: [] as string[],
                               costs: {} as Record<string, number>,
-                              description: info?.description ?? '',
+                              description: info?.description,
                             },
                             e.currentTarget,
                           )
@@ -191,7 +204,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                       effects: [] as Summary,
                       requirements: [] as string[],
                       costs: {} as Record<string, number>,
-                      description: info?.description ?? '',
+                      description: info?.description,
                     },
                     e.currentTarget,
                   )
@@ -428,7 +441,7 @@ export default function Game({
     effects: Summary;
     requirements: string[];
     costs: Record<string, number>;
-    description?: string;
+    description?: React.ReactNode;
     effectsTitle?: string;
     bgColor?: string;
   } | null>(null);
@@ -472,7 +485,7 @@ export default function Game({
       effects: Summary;
       requirements: string[];
       costs: Record<string, number>;
-      description?: string;
+      description?: React.ReactNode;
       effectsTitle?: string;
     },
     el: HTMLElement,
@@ -1332,10 +1345,8 @@ export default function Game({
                   </ul>
                 </div>
               )}
-              {hoverCard.description && (
-                <div className="mb-2 text-sm whitespace-pre-line">
-                  {hoverCard.description}
-                </div>
+              {hoverCard.description !== undefined && (
+                <div className="mb-2 text-sm">{hoverCard.description}</div>
               )}
               {hoverCard.effects.length > 0 && (
                 <div>

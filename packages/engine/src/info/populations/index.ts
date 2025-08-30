@@ -10,12 +10,9 @@ export const populationInfo = {
   [citizen.key]: citizen,
 } as const;
 
-export const populationOverview = [
-  'Population represents your citizens who can take on various roles:',
-  `- ${council.icon} ${council.label}: ${council.description}`,
-  `- ${commander.icon} ${commander.label}: ${commander.description}`,
-  `- ${fortifier.icon} ${fortifier.label}: ${fortifier.description}`,
-  `- ${citizen.icon} ${citizen.label}: ${citizen.description}`,
-].join('\n');
+export const populationOverview = {
+  intro: 'Population represents your citizens who can take on various roles:',
+  roles: [council, commander, fortifier, citizen],
+} as const;
 
 export { council, commander, fortifier, citizen };
