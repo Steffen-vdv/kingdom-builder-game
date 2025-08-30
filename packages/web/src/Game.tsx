@@ -655,6 +655,9 @@ export default function Game({
     for (const effect of effects) {
       const before = snapshotPlayer(player);
       runEffects([effect], ctx);
+      const id = (effect.params ?? ({} as Record<string, unknown>))['id'];
+      if (typeof id === 'string')
+        ctx.passives.runResultMods(`development:${id}`, ctx);
       const after = snapshotPlayer(player);
       const changes = diffSnapshots(before, after, ctx);
       phaseChanges.push(...changes);

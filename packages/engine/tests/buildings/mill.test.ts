@@ -47,20 +47,17 @@ function getOverworkBaseGold(ctx: EngineContext) {
 
 function getMillDevelopmentBonus(ctx: EngineContext) {
   const mill = ctx.buildings.get('mill');
-  const container = mill.onDevelopmentPhase?.[0];
-  if (!container) return 0;
-  const evaluator = container.evaluator;
-  const count = evaluator
-    ? (EVALUATORS.get(evaluator.type)(evaluator, ctx) as number)
-    : 0;
-  const resource = container.effects?.find(
+  const mod = mill.onBuild?.find(
+    (e) => e.type === 'result_mod' && e.params?.actionId === 'development:farm',
+  );
+  const resource = mod?.effects?.find(
     (e) =>
       e.type === 'resource' &&
       e.method === 'add' &&
       e.params?.key === Resource.gold,
   ) as { params: { amount: number } } | undefined;
   const amount = resource?.params.amount ?? 0;
-  return amount * count;
+  return amount * countFarms(ctx);
 }
 
 function getMillOverworkBonus(ctx: EngineContext) {

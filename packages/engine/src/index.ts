@@ -53,7 +53,10 @@ function runTrigger(
   for (const [role, count] of Object.entries(player.population)) {
     const populationDefinition = ctx.populations.get(role);
     const effects = populationDefinition[trigger];
-    if (effects) runEffects(effects, ctx, Number(count));
+    if (effects) {
+      runEffects(effects, ctx, Number(count));
+      ctx.passives.runResultMods(`population:${role}`, ctx);
+    }
   }
 
   for (const land of player.lands) {
@@ -62,13 +65,17 @@ function runTrigger(
       const effects = developmentDefinition[trigger];
       if (!effects) continue;
       runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
+      ctx.passives.runResultMods(`development:${id}`, ctx);
     }
   }
 
   for (const id of player.buildings) {
     const buildingDefinition = ctx.buildings.get(id);
     const effects = buildingDefinition[trigger];
-    if (effects) runEffects(effects, ctx);
+    if (effects) {
+      runEffects(effects, ctx);
+      ctx.passives.runResultMods(`building:${id}`, ctx);
+    }
   }
 
   ctx.game.currentPlayerIndex = original;

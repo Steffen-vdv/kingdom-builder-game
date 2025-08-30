@@ -1,4 +1,4 @@
-import { actionInfo, modifierInfo } from '../../../icons';
+import { actionInfo, modifierInfo, developmentInfo } from '../../../icons';
 import { RESOURCES } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/engine';
 import { increaseOrDecrease, signed } from '../helpers';
@@ -34,19 +34,30 @@ registerEffectFormatter('result_mod', 'add', {
   summarize: (eff, ctx) => {
     const sub = summarizeEffects(eff.effects || [], ctx);
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon =
-      actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-    return sub.map((s) => `${modifierInfo.result.icon} ${actionIcon}: ${s}`);
+    let actionIcon: string | undefined =
+      actionInfo[actionId as keyof typeof actionInfo]?.icon;
+    if (!actionIcon && actionId.startsWith('development:')) {
+      const dev = actionId.split(':')[1]!;
+      actionIcon = developmentInfo[dev]?.icon || actionId;
+    }
+    return sub.map(
+      (s) => `${modifierInfo.result.icon} ${actionIcon || actionId}: ${s}`,
+    );
   },
   describe: (eff, ctx) => {
     const sub = describeEffects(eff.effects || [], ctx);
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon =
-      actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-    const actionName = ctx.actions.get(actionId)?.name || actionId;
+    let actionIcon: string | undefined =
+      actionInfo[actionId as keyof typeof actionInfo]?.icon;
+    let actionName: string | undefined = ctx.actions.get(actionId)?.name;
+    if (!actionIcon && actionId.startsWith('development:')) {
+      const devId = actionId.split(':')[1]!;
+      actionIcon = developmentInfo[devId]?.icon || actionId;
+      actionName = ctx.developments.get(devId)?.name || devId;
+    }
     return sub.map(
       (s) =>
-        `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`,
+        `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon || actionId} ${actionName || actionId}: ${s}`,
     );
   },
 });

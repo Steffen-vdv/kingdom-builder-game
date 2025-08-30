@@ -60,8 +60,10 @@ export function createBuildingRegistry() {
           },
         ],
       })
-      .onDevelopmentPhase({
-        evaluator: { type: 'development', params: { id: 'farm' } },
+      .onBuild({
+        type: 'result_mod',
+        method: 'add',
+        params: { id: 'mill_farm_bonus', actionId: 'development:farm' },
         effects: [
           {
             type: 'resource',
