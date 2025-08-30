@@ -71,11 +71,24 @@ interface GameEngineContextValue {
   runUntilActionPhase: () => Promise<void>;
   handleEndTurn: () => Promise<void>;
   updateMainPhaseStep: (apStartOverride?: number) => void;
+  onExit?: () => void;
+  darkMode: boolean;
+  onToggleDark: () => void;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
 
-export function GameProvider({ children }: { children: React.ReactNode }) {
+export function GameProvider({
+  children,
+  onExit,
+  darkMode = true,
+  onToggleDark = () => {},
+}: {
+  children: React.ReactNode;
+  onExit?: () => void;
+  darkMode?: boolean;
+  onToggleDark?: () => void;
+}) {
   const ctx = useMemo<EngineContext>(() => createEngine(), []);
   const [, setTick] = useState(0);
   const refresh = () => setTick((t) => t + 1);
@@ -265,6 +278,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     runUntilActionPhase,
     handleEndTurn,
     updateMainPhaseStep,
+    darkMode,
+    onToggleDark,
+    ...(onExit ? { onExit } : {}),
   };
 
   return (

@@ -1,6 +1,5 @@
 import React from 'react';
 import type { EngineContext } from '@kingdom-builder/engine';
-import type { Summary } from '../../translation';
 import ResourceBar from './ResourceBar';
 import PopulationInfo from './PopulationInfo';
 import LandDisplay from './LandDisplay';
@@ -9,13 +8,11 @@ import BuildingDisplay from './BuildingDisplay';
 interface PlayerPanelProps {
   player: EngineContext['activePlayer'];
   className?: string;
-  buildingDescriptions: Map<string, Summary>;
 }
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
   player,
   className = '',
-  buildingDescriptions,
 }) => {
   return (
     <div className={`h-full flex flex-col space-y-1 ${className}`}>
@@ -25,10 +22,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         <PopulationInfo player={player} />
       </div>
       <LandDisplay player={player} />
-      <BuildingDisplay
-        player={player}
-        buildingDescriptions={buildingDescriptions}
-      />
+      <BuildingDisplay player={player} />
     </div>
   );
 };

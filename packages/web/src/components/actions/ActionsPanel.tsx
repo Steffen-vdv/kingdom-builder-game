@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   getActionCosts,
   getActionRequirements,
@@ -17,6 +17,7 @@ import {
 } from '../../translation';
 import { renderSummary, renderCosts } from '../../translation/render';
 import { useGameEngine } from '../../state/GameContext';
+import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 
 interface Action {
   id: string;
@@ -31,21 +32,6 @@ interface Development {
 interface Building {
   id: string;
   name: string;
-}
-
-interface ActionsPanelProps {
-  isActionPhase: boolean;
-  otherActions: Action[];
-  raisePopAction: Action | undefined;
-  developAction: Action | undefined;
-  buildAction: Action | undefined;
-  hasDevelopLand: boolean;
-  sortedDevelopments: Development[];
-  buildingOptions: Building[];
-  actionSummaries: Map<string, Summary>;
-  developmentSummaries: Map<string, Summary>;
-  buildingSummaries: Map<string, Summary>;
-  buildingDescriptions: Map<string, Summary>;
 }
 
 function GenericActions({
@@ -429,21 +415,90 @@ function BuildOptions({
   );
 }
 
-export default function ActionsPanel(props: ActionsPanelProps) {
-  const {
-    isActionPhase,
-    otherActions,
-    raisePopAction,
-    developAction,
-    buildAction,
-    hasDevelopLand,
-    sortedDevelopments,
-    buildingOptions,
-    actionSummaries,
-    developmentSummaries,
-    buildingSummaries,
-    buildingDescriptions,
-  } = props;
+export default function ActionsPanel() {
+  const { ctx, tabsEnabled } = useGameEngine();
+
+  const actionPhaseId = useMemo(
+    () => ctx.phases.find((p) => p.action)?.id,
+    [ctx],
+  );
+  const isActionPhase = isActionPhaseActive(
+    ctx.game.currentPhase,
+    actionPhaseId,
+    tabsEnabled,
+  );
+
+  const actions = useMemo<Action[]>(
+    () =>
+      Array.from(
+        (ctx.actions as unknown as { map: Map<string, Action> }).map.values(),
+      ).filter((a) => !a.system || ctx.activePlayer.actions.has(a.id)),
+    [ctx, ctx.activePlayer.actions.size],
+  );
+  const developmentOptions = useMemo<Development[]>(
+    () =>
+      Array.from(
+        (
+          ctx.developments as unknown as { map: Map<string, Development> }
+        ).map.values(),
+      ).filter((d) => !d.system),
+    [ctx],
+  );
+  const developmentOrder = ['house', 'farm', 'outpost', 'watchtower'];
+  const sortedDevelopments = useMemo(
+    () =>
+      developmentOrder
+        .map((id) => developmentOptions.find((d) => d.id === id))
+        .filter(Boolean) as Development[],
+    [developmentOptions],
+  );
+  const buildingOptions = useMemo<Building[]>(
+    () =>
+      Array.from(
+        (
+          ctx.buildings as unknown as { map: Map<string, Building> }
+        ).map.values(),
+      ),
+    [ctx],
+  );
+
+  const actionSummaries = useMemo(() => {
+    const map = new Map<string, Summary>();
+    actions.forEach((a) =>
+      map.set(a.id, summarizeContent('action', a.id, ctx)),
+    );
+    return map;
+  }, [actions, ctx]);
+  const developmentSummaries = useMemo(() => {
+    const map = new Map<string, Summary>();
+    sortedDevelopments.forEach((d) =>
+      map.set(d.id, summarizeContent('development', d.id, ctx)),
+    );
+    return map;
+  }, [sortedDevelopments, ctx]);
+  const buildingSummaries = useMemo(() => {
+    const map = new Map<string, Summary>();
+    buildingOptions.forEach((b) =>
+      map.set(b.id, summarizeContent('building', b.id, ctx)),
+    );
+    return map;
+  }, [buildingOptions, ctx]);
+  const buildingDescriptions = useMemo(() => {
+    const map = new Map<string, Summary>();
+    buildingOptions.forEach((b) =>
+      map.set(b.id, describeContent('building', b.id, ctx)),
+    );
+    return map;
+  }, [buildingOptions, ctx]);
+
+  const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
+  const developAction = actions.find((a) => a.id === 'develop');
+  const buildAction = actions.find((a) => a.id === 'build');
+  const raisePopAction = actions.find((a) => a.id === 'raise_pop');
+  const otherActions = actions.filter(
+    (a) => a.id !== 'develop' && a.id !== 'build' && a.id !== 'raise_pop',
+  );
+
   return (
     <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative">
       {!isActionPhase && (
