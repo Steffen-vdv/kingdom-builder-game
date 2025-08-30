@@ -1295,483 +1295,494 @@ export default function Game({
   }, [ctx.game.currentPhase, ctx.activePlayer.ap]);
 
   return (
-    <div className="p-4 flex gap-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
-      <div
-        className="flex-1 space-y-6"
-        style={{ maxWidth: 'calc(100% - 21rem)' }}
-      >
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-center flex-1">
-            Kingdom Builder
-          </h1>
-          {onExit && (
-            <div className="flex items-center gap-2 ml-4">
-              <button
-                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
-                onClick={onToggleDark}
-              >
-                {darkMode ? 'Light Mode' : 'Dark Mode'}
-              </button>
-              <button
-                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                onClick={onExit}
-              >
-                Quit
-              </button>
-            </div>
-          )}
-        </div>
+    <div className="p-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-center flex-1">
+          Kingdom Builder
+        </h1>
+        {onExit && (
+          <div className="flex items-center gap-2 ml-4">
+            <button
+              className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+              onClick={onToggleDark}
+            >
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </button>
+            <button
+              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+              onClick={onExit}
+            >
+              Quit
+            </button>
+          </div>
+        )}
+      </div>
 
-        <section
-          ref={playerBoxRef}
-          className="border rounded p-4 bg-white dark:bg-gray-800 shadow"
+      <div className="flex gap-4">
+        <div
+          className="flex-1 space-y-6"
+          style={{ maxWidth: 'calc(100% - 31rem)' }}
         >
-          <div className="flex flex-col gap-4">
-            {ctx.game.players.map((p) => (
-              <PlayerPanel
-                key={p.id}
-                player={p}
-                ctx={ctx}
-                handleHoverCard={handleHoverCard}
-                clearHoverCard={clearHoverCard}
-              />
-            ))}
-          </div>
-        </section>
-        <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-semibold">
-              Actions (1 {resourceInfo[Resource.ap].icon} each)
-            </h2>
-          </div>
-          <div className="space-y-4">
-            <div className="grid grid-cols-4 gap-2">
-              {otherActions.map((action) => {
-                const costs = getActionCosts(action.id, ctx);
-                const requirements = getActionRequirements(action.id, ctx).map(
-                  formatRequirement,
-                );
-                const canPay = Object.entries(costs).every(
-                  ([k, v]) =>
-                    ctx.activePlayer.resources[
-                      k as keyof typeof ctx.activePlayer.resources
-                    ] >= v,
-                );
-                const meetsReq = requirements.length === 0;
-                const enabled =
-                  canPay && meetsReq && ctx.game.currentPhase === Phase.Main;
-                const title = !meetsReq
-                  ? requirements.join(', ')
-                  : !canPay
-                    ? 'Cannot pay costs'
-                    : ctx.game.currentPhase !== Phase.Main
-                      ? 'Not in Main phase'
-                      : undefined;
-                return (
-                  <button
-                    key={action.id}
-                    className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                      enabled
-                        ? ''
-                        : 'opacity-50 border-red-500 cursor-not-allowed'
-                    }`}
-                    title={title}
-                    onClick={() => enabled && handlePerform(action)}
-                    onMouseEnter={() =>
-                      handleHoverCard({
-                        title: `${
-                          actionInfo[action.id as keyof typeof actionInfo]
-                            ?.icon || ''
-                        } ${action.name}`,
-                        effects: describeAction(action.id, ctx),
-                        requirements,
-                        costs,
-                      })
-                    }
-                    onMouseLeave={clearHoverCard}
-                  >
-                    <span className="text-base font-medium">
-                      {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
-                      {action.name}
-                    </span>
-                    <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                      {renderCosts(costs, ctx.activePlayer.resources)}
-                    </span>
-                    <ul className="text-sm list-disc pl-4 text-left">
-                      {renderSummary(actionSummaries.get(action.id))}
-                    </ul>
-                    {requirements.length > 0 && (
-                      <div className="text-sm text-red-600 text-left">
-                        <span className="font-semibold">Requirements</span>
-                        <ul className="list-disc pl-4">
-                          {requirements.map((r, i) => (
-                            <li key={i}>{r}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+          <section
+            ref={playerBoxRef}
+            className="border rounded p-4 bg-white dark:bg-gray-800 shadow"
+          >
+            <div className="flex flex-col gap-4">
+              {ctx.game.players.map((p) => (
+                <PlayerPanel
+                  key={p.id}
+                  player={p}
+                  ctx={ctx}
+                  handleHoverCard={handleHoverCard}
+                  clearHoverCard={clearHoverCard}
+                />
+              ))}
             </div>
-
-            {raisePopAction && (
-              <div>
-                <h3 className="font-medium">
-                  {actionInfo.raise_pop.icon} Raise Population
-                </h3>
-                <div className="grid grid-cols-3 gap-2 mt-1">
-                  {[
-                    PopulationRole.Council,
-                    PopulationRole.Commander,
-                    PopulationRole.Fortifier,
-                  ].map((role) => {
-                    const costs = getActionCosts('raise_pop', ctx);
-                    const requirements = getActionRequirements(
-                      'raise_pop',
-                      ctx,
-                    ).map(formatRequirement);
-                    const canPay = Object.entries(costs).every(
-                      ([k, v]) =>
-                        ctx.activePlayer.resources[
-                          k as keyof typeof ctx.activePlayer.resources
-                        ] >= v,
-                    );
-                    const meetsReq = requirements.length === 0;
-                    const enabled =
-                      canPay &&
-                      meetsReq &&
-                      ctx.game.currentPhase === Phase.Main;
-                    const title = !meetsReq
-                      ? requirements.join(', ')
-                      : !canPay
-                        ? 'Cannot pay costs'
-                        : ctx.game.currentPhase !== Phase.Main
-                          ? 'Not in Main phase'
-                          : undefined;
-                    const summary = describeAction('raise_pop', ctx);
-                    const shortSummary = summarizeAction('raise_pop', ctx);
-                    const first = summary[0];
-                    if (first && typeof first !== 'string') {
-                      first.items.push(`👥(${populationInfo[role]?.icon}) +1`);
-                    }
-                    const shortFirst = shortSummary[0];
-                    if (shortFirst && typeof shortFirst !== 'string') {
-                      shortFirst.items.push(
-                        `👥(${populationInfo[role]?.icon}) +1`,
-                      );
-                    }
-                    return (
-                      <button
-                        key={role}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                          enabled
-                            ? ''
-                            : 'opacity-50 border-red-500 cursor-not-allowed'
-                        }`}
-                        title={title}
-                        onClick={() =>
-                          enabled && handlePerform(raisePopAction, { role })
-                        }
-                        onMouseEnter={() =>
-                          handleHoverCard({
-                            title: `${actionInfo.raise_pop.icon} Raise Population - ${
-                              populationInfo[role]?.icon
-                            } ${populationInfo[role]?.label || ''}`,
-                            effects: summary,
-                            requirements,
-                            costs,
-                          })
-                        }
-                        onMouseLeave={clearHoverCard}
-                      >
-                        <span className="text-base font-medium">
-                          {populationInfo[role]?.icon}{' '}
-                          {populationInfo[role]?.label}
-                        </span>
-                        <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                          {renderCosts(costs, ctx.activePlayer.resources)}
-                        </span>
-                        <ul className="text-sm list-disc pl-4 text-left">
-                          {renderSummary(shortSummary)}
-                        </ul>
-                        {requirements.length > 0 && (
-                          <div className="text-sm text-red-600 text-left">
-                            <span className="font-semibold">Requirements</span>
-                            <ul className="list-disc pl-4">
-                              {requirements.map((r, i) => (
-                                <li key={i}>{r}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+          </section>
+          <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-semibold">
+                Actions (1 {resourceInfo[Resource.ap].icon} each)
+              </h2>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-4 gap-2">
+                {otherActions.map((action) => {
+                  const costs = getActionCosts(action.id, ctx);
+                  const requirements = getActionRequirements(
+                    action.id,
+                    ctx,
+                  ).map(formatRequirement);
+                  const canPay = Object.entries(costs).every(
+                    ([k, v]) =>
+                      ctx.activePlayer.resources[
+                        k as keyof typeof ctx.activePlayer.resources
+                      ] >= v,
+                  );
+                  const meetsReq = requirements.length === 0;
+                  const enabled =
+                    canPay && meetsReq && ctx.game.currentPhase === Phase.Main;
+                  const title = !meetsReq
+                    ? requirements.join(', ')
+                    : !canPay
+                      ? 'Cannot pay costs'
+                      : ctx.game.currentPhase !== Phase.Main
+                        ? 'Not in Main phase'
+                        : undefined;
+                  return (
+                    <button
+                      key={action.id}
+                      className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
+                        enabled
+                          ? ''
+                          : 'opacity-50 border-red-500 cursor-not-allowed'
+                      }`}
+                      title={title}
+                      onClick={() => enabled && handlePerform(action)}
+                      onMouseEnter={() =>
+                        handleHoverCard({
+                          title: `${
+                            actionInfo[action.id as keyof typeof actionInfo]
+                              ?.icon || ''
+                          } ${action.name}`,
+                          effects: describeAction(action.id, ctx),
+                          requirements,
+                          costs,
+                        })
+                      }
+                      onMouseLeave={clearHoverCard}
+                    >
+                      <span className="text-base font-medium">
+                        {actionInfo[action.id as keyof typeof actionInfo]?.icon}{' '}
+                        {action.name}
+                      </span>
+                      <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
+                        {renderCosts(costs, ctx.activePlayer.resources)}
+                      </span>
+                      <ul className="text-sm list-disc pl-4 text-left">
+                        {renderSummary(actionSummaries.get(action.id))}
+                      </ul>
+                      {requirements.length > 0 && (
+                        <div className="text-sm text-red-600 text-left">
+                          <span className="font-semibold">Requirements</span>
+                          <ul className="list-disc pl-4">
+                            {requirements.map((r, i) => (
+                              <li key={i}>{r}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            )}
 
-            {developAction && (
-              <div>
-                <h3 className="font-medium">
-                  {actionInfo.develop.icon} Develop
-                </h3>
-                <div className="grid grid-cols-4 gap-2 mt-1">
-                  {sortedDevelopments.map((d) => {
-                    const landIdForCost = ctx.activePlayer.lands[0]
-                      ?.id as string;
-                    const costs = getActionCosts('develop', ctx, {
-                      id: d.id,
-                      landId: landIdForCost,
-                    });
-                    const requirements = hasDevelopLand
-                      ? []
-                      : ['Requires land with free development slot'];
-                    const canPay =
-                      hasDevelopLand &&
-                      Object.entries(costs).every(
+              {raisePopAction && (
+                <div>
+                  <h3 className="font-medium">
+                    {actionInfo.raise_pop.icon} Raise Population
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    {[
+                      PopulationRole.Council,
+                      PopulationRole.Commander,
+                      PopulationRole.Fortifier,
+                    ].map((role) => {
+                      const costs = getActionCosts('raise_pop', ctx);
+                      const requirements = getActionRequirements(
+                        'raise_pop',
+                        ctx,
+                      ).map(formatRequirement);
+                      const canPay = Object.entries(costs).every(
                         ([k, v]) =>
                           ctx.activePlayer.resources[
                             k as keyof typeof ctx.activePlayer.resources
                           ] >= v,
                       );
-                    const enabled =
-                      canPay && ctx.game.currentPhase === Phase.Main;
-                    const title = !hasDevelopLand
-                      ? 'No land with free development slot'
-                      : !canPay
+                      const meetsReq = requirements.length === 0;
+                      const enabled =
+                        canPay &&
+                        meetsReq &&
+                        ctx.game.currentPhase === Phase.Main;
+                      const title = !meetsReq
+                        ? requirements.join(', ')
+                        : !canPay
+                          ? 'Cannot pay costs'
+                          : ctx.game.currentPhase !== Phase.Main
+                            ? 'Not in Main phase'
+                            : undefined;
+                      const summary = describeAction('raise_pop', ctx);
+                      const shortSummary = summarizeAction('raise_pop', ctx);
+                      const first = summary[0];
+                      if (first && typeof first !== 'string') {
+                        first.items.push(
+                          `👥(${populationInfo[role]?.icon}) +1`,
+                        );
+                      }
+                      const shortFirst = shortSummary[0];
+                      if (shortFirst && typeof shortFirst !== 'string') {
+                        shortFirst.items.push(
+                          `👥(${populationInfo[role]?.icon}) +1`,
+                        );
+                      }
+                      return (
+                        <button
+                          key={role}
+                          className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
+                            enabled
+                              ? ''
+                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                          }`}
+                          title={title}
+                          onClick={() =>
+                            enabled && handlePerform(raisePopAction, { role })
+                          }
+                          onMouseEnter={() =>
+                            handleHoverCard({
+                              title: `${actionInfo.raise_pop.icon} Raise Population - ${
+                                populationInfo[role]?.icon
+                              } ${populationInfo[role]?.label || ''}`,
+                              effects: summary,
+                              requirements,
+                              costs,
+                            })
+                          }
+                          onMouseLeave={clearHoverCard}
+                        >
+                          <span className="text-base font-medium">
+                            {populationInfo[role]?.icon}{' '}
+                            {populationInfo[role]?.label}
+                          </span>
+                          <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
+                            {renderCosts(costs, ctx.activePlayer.resources)}
+                          </span>
+                          <ul className="text-sm list-disc pl-4 text-left">
+                            {renderSummary(shortSummary)}
+                          </ul>
+                          {requirements.length > 0 && (
+                            <div className="text-sm text-red-600 text-left">
+                              <span className="font-semibold">
+                                Requirements
+                              </span>
+                              <ul className="list-disc pl-4">
+                                {requirements.map((r, i) => (
+                                  <li key={i}>{r}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {developAction && (
+                <div>
+                  <h3 className="font-medium">
+                    {actionInfo.develop.icon} Develop
+                  </h3>
+                  <div className="grid grid-cols-4 gap-2 mt-1">
+                    {sortedDevelopments.map((d) => {
+                      const landIdForCost = ctx.activePlayer.lands[0]
+                        ?.id as string;
+                      const costs = getActionCosts('develop', ctx, {
+                        id: d.id,
+                        landId: landIdForCost,
+                      });
+                      const requirements = hasDevelopLand
+                        ? []
+                        : ['Requires land with free development slot'];
+                      const canPay =
+                        hasDevelopLand &&
+                        Object.entries(costs).every(
+                          ([k, v]) =>
+                            ctx.activePlayer.resources[
+                              k as keyof typeof ctx.activePlayer.resources
+                            ] >= v,
+                        );
+                      const enabled =
+                        canPay && ctx.game.currentPhase === Phase.Main;
+                      const title = !hasDevelopLand
+                        ? 'No land with free development slot'
+                        : !canPay
+                          ? 'Cannot pay costs'
+                          : ctx.game.currentPhase !== Phase.Main
+                            ? 'Not in Main phase'
+                            : undefined;
+                      return (
+                        <button
+                          key={d.id}
+                          className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
+                            enabled
+                              ? ''
+                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                          }`}
+                          title={title}
+                          onClick={() => {
+                            if (!enabled) return;
+                            const landId = ctx.activePlayer.lands.find(
+                              (l) => l.slotsFree > 0,
+                            )?.id;
+                            handlePerform(developAction, { id: d.id, landId });
+                          }}
+                          onMouseEnter={() =>
+                            handleHoverCard({
+                              title: `${actionInfo.develop.icon} Develop - ${
+                                developmentInfo[d.id]?.icon
+                              } ${d.name}`,
+                              effects: describeDevelopment(d.id, ctx),
+                              requirements,
+                              costs,
+                            })
+                          }
+                          onMouseLeave={clearHoverCard}
+                        >
+                          <span className="text-base font-medium">
+                            {developmentInfo[d.id]?.icon} {d.name}
+                          </span>
+                          <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
+                            {renderCosts(costs, ctx.activePlayer.resources)}
+                          </span>
+                          <ul className="text-sm list-disc pl-4 text-left">
+                            {renderSummary(developmentSummaries.get(d.id))}
+                          </ul>
+                          {requirements.length > 0 && (
+                            <div className="text-sm text-red-600 text-left">
+                              <span className="font-semibold">
+                                Requirements
+                              </span>
+                              <ul className="list-disc pl-4">
+                                {requirements.map((r, i) => (
+                                  <li key={i}>{r}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {buildAction && (
+                <div>
+                  <h3 className="font-medium">{actionInfo.build.icon} Build</h3>
+                  <div className="grid grid-cols-4 gap-2 mt-1">
+                    {buildingOptions.map((b) => {
+                      const costs = getActionCosts('build', ctx, { id: b.id });
+                      const requirements: string[] = [];
+                      const canPay = Object.entries(costs).every(
+                        ([k, v]) =>
+                          ctx.activePlayer.resources[
+                            k as keyof typeof ctx.activePlayer.resources
+                          ] >= v,
+                      );
+                      const enabled =
+                        canPay && ctx.game.currentPhase === Phase.Main;
+                      const title = !canPay
                         ? 'Cannot pay costs'
                         : ctx.game.currentPhase !== Phase.Main
                           ? 'Not in Main phase'
                           : undefined;
-                    return (
-                      <button
-                        key={d.id}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                          enabled
-                            ? ''
-                            : 'opacity-50 border-red-500 cursor-not-allowed'
-                        }`}
-                        title={title}
-                        onClick={() => {
-                          if (!enabled) return;
-                          const landId = ctx.activePlayer.lands.find(
-                            (l) => l.slotsFree > 0,
-                          )?.id;
-                          handlePerform(developAction, { id: d.id, landId });
-                        }}
-                        onMouseEnter={() =>
-                          handleHoverCard({
-                            title: `${actionInfo.develop.icon} Develop - ${
-                              developmentInfo[d.id]?.icon
-                            } ${d.name}`,
-                            effects: describeDevelopment(d.id, ctx),
-                            requirements,
-                            costs,
-                          })
-                        }
-                        onMouseLeave={clearHoverCard}
-                      >
-                        <span className="text-base font-medium">
-                          {developmentInfo[d.id]?.icon} {d.name}
-                        </span>
-                        <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                          {renderCosts(costs, ctx.activePlayer.resources)}
-                        </span>
-                        <ul className="text-sm list-disc pl-4 text-left">
-                          {renderSummary(developmentSummaries.get(d.id))}
-                        </ul>
-                        {requirements.length > 0 && (
-                          <div className="text-sm text-red-600 text-left">
-                            <span className="font-semibold">Requirements</span>
-                            <ul className="list-disc pl-4">
-                              {requirements.map((r, i) => (
-                                <li key={i}>{r}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={b.id}
+                          className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
+                            enabled
+                              ? ''
+                              : 'opacity-50 border-red-500 cursor-not-allowed'
+                          }`}
+                          title={title}
+                          onClick={() =>
+                            enabled && handlePerform(buildAction, { id: b.id })
+                          }
+                          onMouseEnter={() =>
+                            handleHoverCard({
+                              title: `${actionInfo.build.icon} Build - ${b.name}`,
+                              effects: describeBuilding(b.id, ctx),
+                              requirements,
+                              costs,
+                            })
+                          }
+                          onMouseLeave={clearHoverCard}
+                        >
+                          <span className="text-base font-medium">
+                            {b.name}
+                          </span>
+                          <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
+                            {renderCosts(costs, ctx.activePlayer.resources)}
+                          </span>
+                          <ul className="text-sm list-disc pl-4 text-left">
+                            {renderSummary(buildingSummaries.get(b.id))}
+                          </ul>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
+            </div>
+          </section>
+        </div>
+        <section className="w-[30rem] sticky top-0 self-start flex flex-col gap-6">
+          <section
+            className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
+            onMouseEnter={() =>
+              ctx.game.currentPhase !== Phase.Main && setPaused(true)
+            }
+            onMouseLeave={() => setPaused(false)}
+            style={{
+              cursor:
+                phasePaused && ctx.game.currentPhase !== Phase.Main
+                  ? 'pause'
+                  : 'auto',
+              height: playerBoxHeight || undefined,
+            }}
+          >
+            <h2 className="text-xl font-semibold mb-2">
+              Turn {ctx.game.turn} - {ctx.activePlayer.name}
+            </h2>
+            <div className="flex gap-4 mb-2">
+              {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
+                <span
+                  key={p}
+                  className={
+                    p === ctx.game.currentPhase ? 'font-semibold underline' : ''
+                  }
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1)} Phase
+                </span>
+              ))}
+            </div>
+            <ul
+              ref={phaseStepsRef}
+              className="text-sm text-left space-y-1 overflow-y-scroll flex-1"
+            >
+              {phaseSteps.map((s, i) => (
+                <li key={i} className={s.active ? 'font-semibold' : ''}>
+                  <div>{s.title}</div>
+                  <ul className="pl-4 list-disc">
+                    {s.items.length > 0 ? (
+                      s.items.map((it, j) => (
+                        <li key={j} className={it.italic ? 'italic' : ''}>
+                          {it.text}
+                          {it.done && (
+                            <span className="text-green-600 ml-1">✔️</span>
+                          )}
+                        </li>
+                      ))
+                    ) : (
+                      <li>...</li>
+                    )}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+            {ctx.game.currentPhase !== Phase.Main && (
+              <div className="absolute top-2 right-2">
+                <TimerCircle progress={phaseTimer} paused={phasePaused} />
               </div>
             )}
-
-            {buildAction && (
-              <div>
-                <h3 className="font-medium">{actionInfo.build.icon} Build</h3>
-                <div className="grid grid-cols-4 gap-2 mt-1">
-                  {buildingOptions.map((b) => {
-                    const costs = getActionCosts('build', ctx, { id: b.id });
-                    const requirements: string[] = [];
-                    const canPay = Object.entries(costs).every(
-                      ([k, v]) =>
-                        ctx.activePlayer.resources[
-                          k as keyof typeof ctx.activePlayer.resources
-                        ] >= v,
-                    );
-                    const enabled =
-                      canPay && ctx.game.currentPhase === Phase.Main;
-                    const title = !canPay
-                      ? 'Cannot pay costs'
-                      : ctx.game.currentPhase !== Phase.Main
-                        ? 'Not in Main phase'
-                        : undefined;
-                    return (
-                      <button
-                        key={b.id}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                          enabled
-                            ? ''
-                            : 'opacity-50 border-red-500 cursor-not-allowed'
-                        }`}
-                        title={title}
-                        onClick={() =>
-                          enabled && handlePerform(buildAction, { id: b.id })
-                        }
-                        onMouseEnter={() =>
-                          handleHoverCard({
-                            title: `${actionInfo.build.icon} Build - ${b.name}`,
-                            effects: describeBuilding(b.id, ctx),
-                            requirements,
-                            costs,
-                          })
-                        }
-                        onMouseLeave={clearHoverCard}
-                      >
-                        <span className="text-base font-medium">{b.name}</span>
-                        <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                          {renderCosts(costs, ctx.activePlayer.resources)}
-                        </span>
-                        <ul className="text-sm list-disc pl-4 text-left">
-                          {renderSummary(buildingSummaries.get(b.id))}
-                        </ul>
-                      </button>
-                    );
-                  })}
-                </div>
+            {ctx.game.currentPhase === Phase.Main && (
+              <div className="mt-2 text-right">
+                <button
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                  disabled={phaseSteps.some((s) => s.active)}
+                  onClick={() => void handleEndTurn()}
+                >
+                  Next Turn
+                </button>
               </div>
             )}
+          </section>
+          <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white dark:bg-gray-800 shadow w-full">
+            <h2 className="text-xl font-semibold mb-2">Log</h2>
+            <ul className="mt-2 space-y-1">
+              {log.map((entry, idx) => (
+                <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
+                  [{entry.time}] {entry.text}
+                </li>
+              ))}
+            </ul>
           </div>
+          {hoverCard && (
+            <div className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative pointer-events-none w-full">
+              <div className="font-semibold mb-2">
+                {hoverCard.title}
+                <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
+                  {renderCosts(hoverCard.costs, ctx.activePlayer.resources)}
+                </span>
+              </div>
+              {hoverCard.requirements.length > 0 && (
+                <div className="mb-2">
+                  <div className="font-semibold text-red-600">Requirements</div>
+                  <ul className="list-disc pl-4 text-sm text-red-600">
+                    {hoverCard.requirements.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {hoverCard.description && (
+                <div className="mb-2 text-sm">{hoverCard.description}</div>
+              )}
+              {hoverCard.effects.length > 0 && (
+                <div>
+                  <div className="font-semibold">
+                    {hoverCard.effectsTitle ?? 'Effects'}
+                  </div>
+                  <ul className="list-disc pl-4 text-sm">
+                    {renderSummary(hoverCard.effects)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </section>
       </div>
-      <section className="w-80 sticky top-4 self-start flex flex-col gap-4">
-        <section
-          className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
-          onMouseEnter={() =>
-            ctx.game.currentPhase !== Phase.Main && setPaused(true)
-          }
-          onMouseLeave={() => setPaused(false)}
-          style={{
-            cursor:
-              phasePaused && ctx.game.currentPhase !== Phase.Main
-                ? 'pause'
-                : 'auto',
-            height: playerBoxHeight || undefined,
-          }}
-        >
-          <h2 className="text-xl font-semibold mb-2">
-            Turn {ctx.game.turn} - {ctx.activePlayer.name}
-          </h2>
-          <div className="flex gap-4 mb-2">
-            {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
-              <span
-                key={p}
-                className={
-                  p === ctx.game.currentPhase ? 'font-semibold underline' : ''
-                }
-              >
-                {p.charAt(0).toUpperCase() + p.slice(1)} Phase
-              </span>
-            ))}
-          </div>
-          <ul
-            ref={phaseStepsRef}
-            className="text-sm text-left space-y-1 overflow-y-scroll flex-1"
-          >
-            {phaseSteps.map((s, i) => (
-              <li key={i} className={s.active ? 'font-semibold' : ''}>
-                <div>{s.title}</div>
-                <ul className="pl-4 list-disc">
-                  {s.items.length > 0 ? (
-                    s.items.map((it, j) => (
-                      <li key={j} className={it.italic ? 'italic' : ''}>
-                        {it.text}
-                        {it.done && (
-                          <span className="text-green-600 ml-1">✔️</span>
-                        )}
-                      </li>
-                    ))
-                  ) : (
-                    <li>...</li>
-                  )}
-                </ul>
-              </li>
-            ))}
-          </ul>
-          {ctx.game.currentPhase !== Phase.Main && (
-            <div className="absolute top-2 right-2">
-              <TimerCircle progress={phaseTimer} paused={phasePaused} />
-            </div>
-          )}
-          {ctx.game.currentPhase === Phase.Main && (
-            <div className="mt-2 text-right">
-              <button
-                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                disabled={phaseSteps.some((s) => s.active)}
-                onClick={() => void handleEndTurn()}
-              >
-                Next Turn
-              </button>
-            </div>
-          )}
-        </section>
-        <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white dark:bg-gray-800 shadow">
-          <h2 className="text-xl font-semibold mb-2">Log</h2>
-          <ul className="mt-2 space-y-1">
-            {log.map((entry, idx) => (
-              <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
-                [{entry.time}] {entry.text}
-              </li>
-            ))}
-          </ul>
-        </div>
-        {hoverCard && (
-          <div className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative pointer-events-none">
-            <div className="font-semibold mb-2">
-              {hoverCard.title}
-              <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                {renderCosts(hoverCard.costs, ctx.activePlayer.resources)}
-              </span>
-            </div>
-            {hoverCard.requirements.length > 0 && (
-              <div className="mb-2">
-                <div className="font-semibold text-red-600">Requirements</div>
-                <ul className="list-disc pl-4 text-sm text-red-600">
-                  {hoverCard.requirements.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {hoverCard.description && (
-              <div className="mb-2 text-sm">{hoverCard.description}</div>
-            )}
-            {hoverCard.effects.length > 0 && (
-              <div>
-                <div className="font-semibold">
-                  {hoverCard.effectsTitle ?? 'Effects'}
-                </div>
-                <ul className="list-disc pl-4 text-sm">
-                  {renderSummary(hoverCard.effects)}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
     </div>
   );
 }
