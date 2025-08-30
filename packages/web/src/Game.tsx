@@ -5,6 +5,7 @@ import PlayerPanel from './components/player/PlayerPanel';
 import HoverCard from './components/HoverCard';
 import ActionsPanel from './components/actions/ActionsPanel';
 import PhasePanel from './components/phases/PhasePanel';
+import LogPanel from './components/LogPanel';
 
 interface Action {
   id: string;
@@ -57,7 +58,6 @@ function GameInner({
     updateMainPhaseStep,
   } = useGameEngine();
 
-  const logRef = useRef<HTMLDivElement>(null);
   const playerBoxRef = useRef<HTMLDivElement>(null);
   const phaseBoxRef = useRef<HTMLDivElement>(null);
   const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
@@ -161,13 +161,6 @@ function GameInner({
     );
     return map;
   }, [buildingOptions, ctx]);
-
-  useEffect(() => {
-    const el = logRef.current;
-    if (!el) return;
-    if (el.scrollHeight > el.clientHeight)
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [log]);
 
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.id === 'develop');
@@ -278,19 +271,7 @@ function GameInner({
             handleEndTurn={handleEndTurn}
             sharedHeight={sharedHeight}
           />
-          <div
-            ref={logRef}
-            className="border rounded p-4 overflow-y-auto max-h-80 bg-white dark:bg-gray-800 shadow w-full"
-          >
-            <h2 className="text-xl font-semibold mb-2">Log</h2>
-            <ul className="mt-2 space-y-1">
-              {log.map((entry, idx) => (
-                <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
-                  [{entry.time}] {entry.text}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <LogPanel entries={log} />
           <HoverCard data={hoverCard} />
         </section>
       </div>
