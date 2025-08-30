@@ -147,7 +147,12 @@ function collectResourceSources(
         const passives = ctx.passives as unknown as {
           evaluationMods?: Map<string, Map<string, unknown>>;
         };
-        const mods = passives.evaluationMods?.get(target)?.size ?? 0;
+        const modsMap = passives.evaluationMods?.get(target);
+        const mods = modsMap
+          ? Array.from(modsMap.keys()).filter((k) =>
+              k.endsWith(`_${ctx.activePlayer.id}`),
+            ).length
+          : 0;
         entry.mods += mods;
       } catch {
         // ignore missing evaluators
