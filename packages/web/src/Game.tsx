@@ -411,13 +411,12 @@ export default function Game({
     bgClass?: string;
   } | null>(null);
   const hoverTimeout = useRef<number>();
-  const [phaseSteps, setPhaseSteps] = useState<
-    {
-      title: string;
-      items: { text: string; italic?: boolean; done?: boolean }[];
-      active: boolean;
-    }[]
-  >([]);
+  type PhaseStep = {
+    title: string;
+    items: { text: string; italic?: boolean; done?: boolean }[];
+    active: boolean;
+  };
+  const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
   const [phaseTimer, setPhaseTimer] = useState(0);
   const [phasePaused, setPhasePaused] = useState(false);
   const phasePausedRef = useRef(false);
@@ -428,12 +427,14 @@ export default function Game({
   const [phaseBoxHeight, setPhaseBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
   const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
+  const [phaseHistories, setPhaseHistories] = useState<
+    Record<string, PhaseStep[]>
+  >({});
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
     [ctx],
   );
-  const actualActionPhase = ctx.phases[ctx.game.phaseIndex]?.action;
-  const isActionPhase = actualActionPhase && displayPhase === actionPhaseId;
+  const isActionPhase = Boolean(ctx.phases[ctx.game.phaseIndex]?.action);
 
   useEffect(() => {
     const pEl = playerBoxRef.current;
@@ -601,6 +602,7 @@ export default function Game({
           setPhaseTimer(elapsed / total);
           if (elapsed >= total) {
             window.clearInterval(interval);
+            setPhaseTimer(0);
             resolve();
           }
         }
@@ -615,7 +617,7 @@ export default function Game({
   function updateMainPhaseStep(apStartOverride?: number) {
     const total = apStartOverride ?? mainApStart;
     const spent = total - ctx.activePlayer.ap;
-    setPhaseSteps([
+    const steps = [
       {
         title: 'Step 1 - Spend all AP',
         items: [
@@ -626,26 +628,30 @@ export default function Game({
         ],
         active: ctx.activePlayer.ap > 0,
       },
-    ]);
+    ];
+    setPhaseSteps(steps);
+    if (actionPhaseId) {
+      setPhaseHistories((prev) => ({ ...prev, [actionPhaseId]: steps }));
+    }
   }
 
   async function runUntilActionPhase() {
     setPhaseSteps([]);
     setDisplayPhase(ctx.game.currentPhase);
+    setPhaseHistories({});
     let lastPhase = ctx.game.currentPhase;
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
       const before = snapshotPlayer(ctx.activePlayer);
       const { phase, step, player } = advance(ctx);
-      setDisplayPhase(phase);
       const phaseDef = ctx.phases.find((p) => p.id === phase)!;
-      const after = snapshotPlayer(player);
-      const changes = diffSnapshots(before, after, ctx);
       if (phase !== lastPhase) {
         await runDelay(1500);
         setPhaseSteps([]);
         setDisplayPhase(phase);
         lastPhase = phase;
       }
+      const after = snapshotPlayer(player);
+      const changes = diffSnapshots(before, after, ctx);
       if (changes.length) {
         addLog(
           [
@@ -656,19 +662,22 @@ export default function Game({
         );
       }
       const stepDef = phaseDef.steps.find((s) => s.id === step);
-      setPhaseSteps((prev) => [
+      const entry = {
+        title: stepDef?.title || step,
+        items:
+          changes.length > 0
+            ? changes.map((text) => ({ text }))
+            : [{ text: 'No effect', italic: true }],
+        active: false,
+      };
+      setPhaseSteps((prev) => [...prev, entry]);
+      setPhaseHistories((prev) => ({
         ...prev,
-        {
-          title: stepDef?.title || step,
-          items:
-            changes.length > 0
-              ? changes.map((text) => ({ text }))
-              : [{ text: 'No effect', italic: true }],
-          active: false,
-        },
-      ]);
+        [phase]: [...(prev[phase] ?? []), entry],
+      }));
       await runStepDelay();
     }
+    await runDelay(1500);
     setMainApStart(ctx.activePlayer.ap);
     updateMainPhaseStep(ctx.activePlayer.ap);
     setDisplayPhase(ctx.game.currentPhase);
@@ -680,6 +689,7 @@ export default function Game({
     if (!phaseDef?.action) return;
     if (ctx.activePlayer.ap > 0) return;
     advance(ctx);
+    setPhaseHistories({});
     await runUntilActionPhase();
   }
 
@@ -1126,7 +1136,9 @@ export default function Game({
           </section>
         </div>
         <section className="w-[30rem] self-start flex flex-col gap-6">
-          <div className="font-semibold">Turn {ctx.game.turn}</div>
+          <div className="font-semibold">
+            Turn {Math.ceil(ctx.game.turn / 2)} - {ctx.activePlayer.name}
+          </div>
           <section
             ref={phaseBoxRef}
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
@@ -1139,17 +1151,25 @@ export default function Game({
           >
             <div className="flex mb-2 border-b">
               {ctx.phases.map((p) => {
+                const isSelected = displayPhase === p.id;
                 return (
-                  <div
+                  <button
                     key={p.id}
+                    type="button"
+                    disabled={!isActionPhase}
+                    onClick={() => {
+                      if (!isActionPhase) return;
+                      setDisplayPhase(p.id);
+                      setPhaseSteps(phaseHistories[p.id] ?? []);
+                    }}
                     className={`px-3 py-1 text-sm flex items-center gap-1 border-b-2 ${
-                      displayPhase === p.id
+                      isSelected
                         ? 'border-blue-500 font-semibold'
                         : 'border-transparent text-gray-500'
-                    }`}
+                    } ${isActionPhase ? 'hover:text-gray-800' : ''}`}
                   >
                     {p?.icon} {p?.label}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -1177,7 +1197,7 @@ export default function Game({
                 </li>
               ))}
             </ul>
-            {!isActionPhase && (
+            {(!isActionPhase || phaseTimer > 0) && (
               <div className="absolute top-2 right-2">
                 <TimerCircle progress={phaseTimer} paused={phasePaused} />
               </div>
@@ -1186,7 +1206,10 @@ export default function Game({
               <div className="mt-2 text-right">
                 <button
                   className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                  disabled={phaseSteps.some((s) => s.active)}
+                  disabled={Boolean(
+                    actionPhaseId &&
+                      phaseHistories[actionPhaseId]?.some((s) => s.active),
+                  )}
                   onClick={() => void handleEndTurn()}
                 >
                   Next Turn
