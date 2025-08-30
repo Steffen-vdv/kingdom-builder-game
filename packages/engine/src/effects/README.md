@@ -19,3 +19,12 @@ EFFECTS.add('castle:heal', (effect, ctx, mult) => {
 
 Once registered, any action can reference `{ type: "castle", method: "heal", params: { amount: 5 } }`
 in its effects list.
+
+## Built-in modifiers
+
+The core set also exposes `cost-mod` and `result-mod` handlers for temporary
+hooks. A `cost-mod` effect adjusts the resource cost of a matching action. A
+`result-mod` effect tweaks resolved values, either when a specific action runs
+or when an evaluation such as `development:farm` produces resources. Modifiers
+require a unique `id` and are automatically scoped to the owning player so
+multiple copies of the same source do not conflict.

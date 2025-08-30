@@ -1,8 +1,8 @@
 # Evaluator Registry
 
-Evaluators compute numbers used by effects to determine how many times nested
-effects execute. They receive the evaluator definition and the current
-`EngineContext`, and return a numeric multiplier.
+Evaluators compute numbers used by effects and result modifiers to determine how
+many times nested effects execute. They receive the evaluator definition and the
+current `EngineContext`, and return a numeric multiplier.
 
 Core evaluators are registered during engine bootstrap via
 `registerCoreEvaluators()`. This populates the `EVALUATORS` registry with the
