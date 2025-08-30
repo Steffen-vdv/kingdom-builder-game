@@ -430,6 +430,7 @@ export default function Game({
   const [phaseHistories, setPhaseHistories] = useState<
     Record<string, PhaseStep[]>
   >({});
+  const [tabsEnabled, setTabsEnabled] = useState(false);
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
     [ctx],
@@ -587,7 +588,9 @@ export default function Game({
     } catch (e) {
       const icon = actionInfo[action.id as keyof typeof actionInfo]?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
+      return;
     }
+    updateMainPhaseStep();
     refresh();
   }
 
@@ -632,10 +635,14 @@ export default function Game({
     setPhaseSteps(steps);
     if (actionPhaseId) {
       setPhaseHistories((prev) => ({ ...prev, [actionPhaseId]: steps }));
+      setDisplayPhase(actionPhaseId);
+    } else {
+      setDisplayPhase(ctx.game.currentPhase);
     }
   }
 
   async function runUntilActionPhase() {
+    setTabsEnabled(false);
     setPhaseSteps([]);
     setDisplayPhase(ctx.game.currentPhase);
     setPhaseHistories({});
@@ -681,6 +688,7 @@ export default function Game({
     setMainApStart(ctx.activePlayer.ap);
     updateMainPhaseStep(ctx.activePlayer.ap);
     setDisplayPhase(ctx.game.currentPhase);
+    setTabsEnabled(true);
     refresh();
   }
 
@@ -1156,9 +1164,9 @@ export default function Game({
                   <button
                     key={p.id}
                     type="button"
-                    disabled={!isActionPhase}
+                    disabled={!tabsEnabled}
                     onClick={() => {
-                      if (!isActionPhase) return;
+                      if (!tabsEnabled) return;
                       setDisplayPhase(p.id);
                       setPhaseSteps(phaseHistories[p.id] ?? []);
                     }}
@@ -1166,7 +1174,11 @@ export default function Game({
                       isSelected
                         ? 'border-blue-500 font-semibold'
                         : 'border-transparent text-gray-500'
-                    } ${isActionPhase ? 'hover:text-gray-800' : ''}`}
+                    } ${
+                      tabsEnabled
+                        ? 'hover:text-gray-800 dark:hover:text-gray-200'
+                        : ''
+                    }`}
                   >
                     {p?.icon} {p?.label}
                   </button>
