@@ -23,7 +23,7 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
     super(id, name, { effects: [] });
   }
   cost(key: ResourceKey, amount: number) {
-    this.config.baseCosts = this.config.baseCosts || {};
+    this.config.baseCosts ??= {} as Record<ResourceKey, number>;
     this.config.baseCosts[key] = amount;
     return this;
   }
@@ -44,7 +44,7 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 
 export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
   constructor(id: string, name: string) {
-    super(id, name, { costs: {}, onBuild: [] });
+    super(id, name, { costs: {} as Record<ResourceKey, number>, onBuild: [] });
   }
   cost(key: ResourceKey, amount: number) {
     this.config.costs[key] = amount;
