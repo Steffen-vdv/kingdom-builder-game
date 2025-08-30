@@ -803,7 +803,7 @@ export default function Game({
         >
           <section
             ref={playerBoxRef}
-            className="border rounded p-4 bg-white dark:bg-gray-800 shadow"
+            className="border rounded bg-white dark:bg-gray-800 shadow"
           >
             <div className="flex items-stretch rounded overflow-hidden divide-x divide-gray-300">
               {ctx.game.players.map((p, i) => (
@@ -813,10 +813,10 @@ export default function Game({
                   ctx={ctx}
                   handleHoverCard={handleHoverCard}
                   clearHoverCard={clearHoverCard}
-                  className={`flex-1 p-2 ${
+                  className={`flex-1 p-4 ${
                     i === 0
-                      ? 'bg-blue-50 dark:bg-blue-900/20'
-                      : 'bg-red-50 dark:bg-red-900/20'
+                      ? 'bg-blue-50 dark:bg-blue-900/20 pr-6'
+                      : 'bg-red-50 dark:bg-red-900/20 pl-6'
                   }`}
                 />
               ))}
