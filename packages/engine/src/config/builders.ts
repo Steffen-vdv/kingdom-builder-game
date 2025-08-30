@@ -90,6 +90,10 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
     this.config.onAttackResolved.push(effect);
     return this;
   }
+  system(flag = true) {
+    this.config.system = flag;
+    return this;
+  }
 }
 
 export class PopulationBuilder extends BaseBuilder<PopulationConfig> {

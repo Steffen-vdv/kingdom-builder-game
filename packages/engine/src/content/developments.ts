@@ -59,7 +59,7 @@ export function createDevelopmentRegistry() {
       .build(),
   );
 
-  registry.add('garden', development('garden', 'Garden').build());
+  registry.add('garden', development('garden', 'Garden').system().build());
 
   return registry;
 }

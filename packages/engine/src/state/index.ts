@@ -71,6 +71,7 @@ export class PlayerState {
   };
   lands: Land[] = [];
   buildings: Set<string> = new Set();
+  actions: Set<string> = new Set();
   constructor(id: PlayerId, name: string) {
     this.id = id;
     this.name = name;

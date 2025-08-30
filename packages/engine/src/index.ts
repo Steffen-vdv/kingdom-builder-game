@@ -189,6 +189,8 @@ export function performAction<T extends string>(
   params?: ActionParams<T>,
 ) {
   const actionDefinition = ctx.actions.get(actionId);
+  if (actionDefinition.system && !ctx.activePlayer.actions.has(actionId))
+    throw new Error(`Action ${actionId} is locked`);
   for (const requirement of actionDefinition.requirements || []) {
     const ok = runRequirement(requirement, ctx);
     if (ok !== true) throw new Error(String(ok));

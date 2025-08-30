@@ -19,6 +19,8 @@ import { costMod } from './cost_mod';
 import { resultMod } from './result_mod';
 import { populationAdd } from './population_add';
 import { populationRemove } from './population_remove';
+import { actionAdd } from './action_add';
+import { actionRemove } from './action_remove';
 
 export interface EffectDef<
   P extends Record<string, unknown> = Record<string, unknown>,
@@ -60,6 +62,8 @@ export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
   registry.add('result_mod:remove', resultMod);
   registry.add('population:add', populationAdd);
   registry.add('population:remove', populationRemove);
+  registry.add('action:add', actionAdd);
+  registry.add('action:remove', actionRemove);
 }
 
 export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
@@ -104,4 +108,6 @@ export {
   resultMod,
   populationAdd,
   populationRemove,
+  actionAdd,
+  actionRemove,
 };

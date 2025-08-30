@@ -136,7 +136,11 @@ export function createActionRegistry() {
 
   registry.add(
     'plow',
-    action('plow', 'Plow').cost(Resource.ap, 1).cost(Resource.gold, 6).build(),
+    action('plow', 'Plow')
+      .system()
+      .cost(Resource.ap, 1)
+      .cost(Resource.gold, 6)
+      .build(),
   );
 
   registry.add(
