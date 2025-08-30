@@ -43,7 +43,12 @@ registerEffectFormatter('result_mod', 'add', {
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
       actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-    const actionName = ctx.actions.get(actionId)?.name || actionId;
+    let actionName = actionId;
+    try {
+      actionName = ctx.actions.get(actionId).name;
+    } catch {
+      /* ignore missing action */
+    }
     return sub.map(
       (s) =>
         `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`,

@@ -77,6 +77,7 @@ interface PlayerPanelProps {
   }) => void;
   clearHoverCard: () => void;
   className?: string;
+  buildingDescriptions: Map<string, Summary>;
 }
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
@@ -85,6 +86,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
   handleHoverCard,
   clearHoverCard,
   className = '',
+  buildingDescriptions,
 }) => {
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
@@ -107,7 +109,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     });
 
   return (
-    <div className={`space-y-1 ${className}`}>
+    <div className={`space-y-1 h-full ${className}`}>
       <h3 className="font-semibold">{player.name}</h3>
       <div className="flex flex-wrap items-center gap-2 border p-2 rounded w-fit">
         {Object.entries(player.resources).map(([k, v]) => {
@@ -297,9 +299,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                 onMouseEnter={() =>
                   handleHoverCard({
                     title,
-                    effects: describeContent('building', b, ctx, {
-                      installed: true,
-                    }),
+                    effects: buildingDescriptions.get(b) ?? [],
                     requirements: [],
                     bgClass: 'bg-gray-100 dark:bg-gray-700',
                   })
@@ -538,6 +538,23 @@ export default function Game({
     );
     return map;
   }, [buildingOptions, ctx]);
+  const buildingDescriptions = useMemo(() => {
+    const map = new Map<string, Summary>();
+    buildingOptions.forEach((b) =>
+      map.set(b.id, describeContent('building', b.id, ctx)),
+    );
+    return map;
+  }, [buildingOptions, ctx]);
+  const buildingInstalledDescriptions = useMemo(() => {
+    const map = new Map<string, Summary>();
+    buildingOptions.forEach((b) =>
+      map.set(
+        b.id,
+        describeContent('building', b.id, ctx, { installed: true }),
+      ),
+    );
+    return map;
+  }, [buildingOptions, ctx]);
 
   useEffect(() => {
     const el = phaseStepsRef.current;
@@ -714,6 +731,7 @@ export default function Game({
                       ? 'bg-blue-50 dark:bg-blue-900/20 pr-6'
                       : 'bg-red-50 dark:bg-red-900/20 pl-6'
                   }`}
+                  buildingDescriptions={buildingInstalledDescriptions}
                 />
               ))}
             </div>
@@ -1055,7 +1073,7 @@ export default function Game({
                           onMouseEnter={() =>
                             handleHoverCard({
                               title: `${actionInfo.build.icon} Build - ${b.name}`,
-                              effects: describeContent('building', b.id, ctx),
+                              effects: buildingDescriptions.get(b.id) ?? [],
                               requirements,
                               costs,
                               ...(!implemented && {
