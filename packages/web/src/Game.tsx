@@ -10,11 +10,7 @@ import {
   Resource,
   PopulationRole,
 } from '@kingdom-builder/engine';
-import type {
-  EngineContext,
-  ActionParams,
-  EffectDef,
-} from '@kingdom-builder/engine';
+import type { EngineContext, ActionParams } from '@kingdom-builder/engine';
 import {
   resourceInfo,
   statInfo,
@@ -24,118 +20,15 @@ import {
   landIcon,
   slotIcon,
   buildingIcon,
-  modifierInfo,
   phaseInfo,
 } from './icons';
-
-interface Land {
-  id: string;
-  slotsMax: number;
-  slotsUsed: number;
-  slotsFree: number;
-  developments: string[];
-}
-
-interface Player {
-  resources: Record<string, number>;
-  stats: Record<string, number>;
-  buildings: Set<string>;
-  lands: Land[];
-}
-
-type Snapshot = {
-  resources: Record<string, number>;
-  stats: Record<string, number>;
-  buildings: string[];
-  lands: {
-    id: string;
-    slotsMax: number;
-    slotsUsed: number;
-    developments: string[];
-  }[];
-};
-
-function snapshotPlayer(player: Player): Snapshot {
-  return {
-    resources: { ...player.resources },
-    stats: { ...player.stats },
-    buildings: Array.from(player.buildings ?? []),
-    lands: player.lands.map((l) => ({
-      id: l.id,
-      slotsMax: l.slotsMax,
-      slotsUsed: l.slotsUsed,
-      developments: [...l.developments],
-    })),
-  };
-}
-
-function diffSnapshots(
-  before: Snapshot,
-  after: Snapshot,
-  ctx: EngineContext,
-): string[] {
-  const changes: string[] = [];
-  for (const key of Object.keys(after.resources)) {
-    const b = before.resources[key] ?? 0;
-    const a = after.resources[key] ?? 0;
-    if (a !== b) {
-      const info = resourceInfo[key as keyof typeof resourceInfo];
-      const icon = info?.icon ? `${info.icon} ` : '';
-      const label = info?.label ?? key;
-      const delta = a - b;
-      changes.push(
-        `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-      );
-    }
-  }
-  for (const key of Object.keys(after.stats)) {
-    const b = before.stats[key] ?? 0;
-    const a = after.stats[key] ?? 0;
-    if (a !== b) {
-      const info = statInfo[key];
-      const icon = info?.icon ? `${info.icon} ` : '';
-      const label = info?.label ?? key;
-      const delta = a - b;
-      if (key === 'absorption') {
-        const bPerc = b * 100;
-        const aPerc = a * 100;
-        const dPerc = delta * 100;
-        changes.push(
-          `${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
-        );
-      } else {
-        changes.push(
-          `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-        );
-      }
-    }
-  }
-  const beforeB = new Set(before.buildings);
-  const afterB = new Set(after.buildings);
-  for (const id of afterB)
-    if (!beforeB.has(id)) {
-      let name = id;
-      try {
-        name = ctx.buildings.get(id).name;
-      } catch {
-        // use id if lookup fails
-      }
-      changes.push(`${buildingIcon} ${name} built`);
-    }
-  for (const land of after.lands) {
-    const prev = before.lands.find((l) => l.id === land.id);
-    if (!prev) {
-      changes.push(`${landIcon} New land`);
-      continue;
-    }
-    for (const dev of land.developments)
-      if (!prev.developments.includes(dev)) {
-        const icon = developmentInfo[dev]?.icon || dev;
-        changes.push(`${landIcon} +${icon}`);
-      }
-  }
-  return changes;
-}
+import {
+  summarizeContent,
+  describeContent,
+  snapshotPlayer,
+  diffSnapshots,
+  type Summary,
+} from './translation';
 
 interface Action {
   id: string;
@@ -149,442 +42,6 @@ interface Development {
 interface Building {
   id: string;
   name: string;
-}
-type SummaryEntry = string | { title: string; items: SummaryEntry[] };
-type Summary = SummaryEntry[];
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
-function summarizeEffects(
-  effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-  ctx: EngineContext,
-): string[] {
-  const parts: string[] = [];
-  for (const eff of effects || []) {
-    if (eff.evaluator) {
-      const ev = eff.evaluator as {
-        type: string;
-        params: Record<string, unknown>;
-      };
-      if (ev.type === 'development') {
-        const sub = summarizeEffects(eff.effects, ctx);
-        const devParams = ev.params as Record<string, string>;
-        const devId = devParams['id']!;
-        const icon = developmentInfo[devId]?.icon || devId;
-        sub.forEach((s) => parts.push(`${s} per ${icon}`));
-      } else {
-        parts.push(...summarizeEffects(eff.effects, ctx));
-      }
-      continue;
-    }
-    switch (eff.type) {
-      case 'resource': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const res = resourceInfo[key as keyof typeof resourceInfo];
-          const icon = res ? res.icon : key;
-          const amount = Number(eff.params['amount']);
-          parts.push(`${icon}${amount >= 0 ? '+' : ''}${amount}`);
-        }
-        break;
-      }
-      case 'stat': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const stat = statInfo[key];
-          const icon = stat ? stat.icon : key;
-          const amount = Number(eff.params['amount']);
-          if (key === 'maxPopulation')
-            parts.push(`Max ${icon}${amount >= 0 ? '+' : ''}${amount}`);
-          else if (key === 'absorption')
-            parts.push(
-              `${icon}${amount * 100 >= 0 ? '+' : ''}${amount * 100}%`,
-            );
-          else parts.push(`${icon}${amount >= 0 ? '+' : ''}${amount}`);
-        }
-        break;
-      }
-      case 'land': {
-        if (eff.method === 'add') {
-          const params = eff.params as Record<string, unknown> | undefined;
-          const count = Number(params?.['count'] ?? 1);
-          parts.push(`${landIcon}+${count}`);
-        }
-        break;
-      }
-      case 'development': {
-        if (eff.params) {
-          const id = eff.params['id'] as string;
-          const icon = developmentInfo[id]?.icon || id;
-          if (eff.method === 'add') parts.push(`${icon}`);
-          else if (eff.method === 'remove') parts.push(`Remove ${icon}`);
-        }
-        break;
-      }
-      case 'building': {
-        if (eff.method === 'add' && eff.params) {
-          const id = eff.params['id'] as string;
-          let name = id;
-          try {
-            name = ctx.buildings.get(id).name;
-          } catch {
-            // fall back to raw id when the building is not registered yet
-          }
-          parts.push(`${buildingIcon}${name}`);
-        }
-        break;
-      }
-      case 'cost_mod': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const icon =
-            resourceInfo[key as keyof typeof resourceInfo]?.icon || key;
-          const amount = Number(eff.params['amount']);
-          const actionId = eff.params['actionId'] as string;
-          const actionIcon =
-            actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-          parts.push(
-            `${modifierInfo.cost.icon} ${actionIcon} cost ${icon}${
-              amount >= 0 ? '+' : ''
-            }${amount}`,
-          );
-        }
-        break;
-      }
-      case 'result_mod': {
-        if (eff.method === 'add' && eff.params) {
-          const sub = summarizeEffects(eff.effects || [], ctx);
-          const actionId = eff.params['actionId'] as string;
-          const actionIcon =
-            actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-          sub.forEach((s) =>
-            parts.push(`${modifierInfo.result.icon} ${actionIcon}: ${s}`),
-          );
-        }
-        break;
-      }
-      case 'passive': {
-        const sub = summarizeEffects(eff.effects || [], ctx);
-        parts.push(...sub);
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  return parts.map((p) => p.trim());
-}
-
-function summarizeAction(id: string, ctx: EngineContext): Summary {
-  const def = ctx.actions.get(id);
-  const eff = summarizeEffects(def.effects, ctx);
-  if (!eff.length) return [];
-  return [
-    {
-      title: `${phaseInfo.mainPhase.icon} Immediately`,
-      items: eff,
-    },
-  ];
-}
-
-function summarizeDevelopment(
-  id: string,
-  ctx: EngineContext,
-  opts?: { installed?: boolean },
-): Summary {
-  const def = ctx.developments.get(id);
-  const root: SummaryEntry[] = [];
-  const build = summarizeEffects(def.onBuild, ctx);
-  if (build.length) root.push(...build);
-  const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
-  if (dev.length)
-    root.push({
-      title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
-      items: dev,
-    });
-  const upk = summarizeEffects(def.onUpkeepPhase, ctx);
-  if (upk.length)
-    root.push({
-      title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
-      items: upk,
-    });
-  const atk = summarizeEffects(def.onAttackResolved, ctx);
-  if (atk.length)
-    root.push({
-      title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
-      items: atk,
-    });
-  if (!root.length) return [];
-  const title = opts?.installed
-    ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
-    : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
-  return [{ title, items: root }];
-}
-
-function summarizeBuilding(
-  id: string,
-  ctx: EngineContext,
-  opts?: { installed?: boolean },
-): Summary {
-  const def = ctx.buildings.get(id);
-  const root: SummaryEntry[] = [];
-  const build = summarizeEffects(def.onBuild, ctx);
-  if (build.length) root.push(...build);
-  const dev = summarizeEffects(def.onDevelopmentPhase, ctx);
-  if (dev.length)
-    root.push({
-      title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
-      items: dev,
-    });
-  const upk = summarizeEffects(def.onUpkeepPhase, ctx);
-  if (upk.length)
-    root.push({
-      title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
-      items: upk,
-    });
-  const atk = summarizeEffects(def.onAttackResolved, ctx);
-  if (atk.length)
-    root.push({
-      title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
-      items: atk,
-    });
-  if (!root.length) return [];
-  const title = opts?.installed
-    ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
-    : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
-  return [{ title, items: root }];
-}
-
-function describeEffects(
-  effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-  ctx: EngineContext,
-): string[] {
-  const parts: string[] = [];
-  for (const eff of effects || []) {
-    if (eff.evaluator) {
-      const ev = eff.evaluator as {
-        type: string;
-        params: Record<string, unknown>;
-      };
-      if (ev.type === 'development') {
-        const sub = describeEffects(eff.effects, ctx);
-        const devParams = ev.params as Record<string, string>;
-        const devId = devParams['id']!;
-        const info = developmentInfo[devId];
-        sub.forEach((s) =>
-          parts.push(
-            `${s} for each ${info?.icon || ''}${info?.label || devId}`,
-          ),
-        );
-      } else {
-        parts.push(...describeEffects(eff.effects, ctx));
-      }
-      continue;
-    }
-    switch (eff.type) {
-      case 'resource': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const res = resourceInfo[key as keyof typeof resourceInfo];
-          const label = res?.label || key;
-          const icon = res?.icon || '';
-          const amount = Number(eff.params['amount']);
-          parts.push(
-            `${amount >= 0 ? 'Gain' : 'Lose'} ${Math.abs(amount)} ${icon} ${label}`,
-          );
-        }
-        break;
-      }
-      case 'stat': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const stat = statInfo[key];
-          const label = stat?.label || key;
-          const icon = stat?.icon || '';
-          const amount = Number(eff.params['amount']);
-          if (key === 'maxPopulation')
-            parts.push(`Increase Max ${icon} by ${amount}`);
-          else if (key === 'absorption')
-            parts.push(
-              `${amount >= 0 ? 'Increase' : 'Decrease'} ${icon}${label} by ${
-                amount * 100
-              }%`,
-            );
-          else
-            parts.push(
-              `${amount >= 0 ? 'Gain' : 'Lose'} ${Math.abs(amount)} ${icon} ${label}`,
-            );
-        }
-        break;
-      }
-      case 'land': {
-        if (eff.method === 'add') {
-          const params = eff.params as Record<string, unknown> | undefined;
-          const count = Number(params?.['count'] ?? 1);
-          parts.push(`Gain ${count} ${landIcon} Land`);
-        }
-        break;
-      }
-      case 'development': {
-        if (eff.params) {
-          const id = eff.params['id'] as string;
-          const info = developmentInfo[id];
-          const label = info?.label || id;
-          const icon = info?.icon || '';
-          if (eff.method === 'add') parts.push(`Add ${icon}${label}`);
-          else if (eff.method === 'remove')
-            parts.push(`Remove ${icon}${label}`);
-        }
-        break;
-      }
-      case 'building': {
-        if (eff.method === 'add' && eff.params) {
-          const id = eff.params['id'] as string;
-          let name = id;
-          try {
-            name = ctx.buildings.get(id).name;
-          } catch {
-            // ignore
-          }
-          parts.push(`Construct ${buildingIcon}${name}`);
-        }
-        break;
-      }
-      case 'cost_mod': {
-        if (eff.method === 'add' && eff.params) {
-          const key = eff.params['key'] as string;
-          const icon =
-            resourceInfo[key as keyof typeof resourceInfo]?.icon || key;
-          const amount = Number(eff.params['amount']);
-          const actionId = eff.params['actionId'] as string;
-          const actionIcon =
-            actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-          parts.push(
-            `${modifierInfo.cost.label}: ${
-              amount >= 0 ? 'Increase' : 'Decrease'
-            } ${actionIcon} cost by ${icon}${Math.abs(amount)}`,
-          );
-        }
-        break;
-      }
-      case 'result_mod': {
-        if (eff.method === 'add' && eff.params) {
-          const sub = describeEffects(eff.effects || [], ctx);
-          const actionId = eff.params['actionId'] as string;
-          const actionIcon =
-            actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-          sub.forEach((s) =>
-            parts.push(`${modifierInfo.result.label} on ${actionIcon}: ${s}`),
-          );
-        }
-        break;
-      }
-      case 'passive': {
-        const sub = describeEffects(eff.effects || [], ctx);
-        parts.push(...sub);
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  return parts.map((p) => p.trim());
-}
-
-function describeAction(id: string, ctx: EngineContext): Summary {
-  const def = ctx.actions.get(id);
-  const eff = describeEffects(def.effects, ctx);
-  if (!eff.length) return [];
-  return [
-    {
-      title: `${phaseInfo.mainPhase.icon} Immediately`,
-      items: eff,
-    },
-  ];
-}
-
-function describeDevelopment(
-  id: string,
-  ctx: EngineContext,
-  opts?: { installed?: boolean },
-): Summary {
-  const def = ctx.developments.get(id);
-  const root: SummaryEntry[] = [];
-  const build = describeEffects(def.onBuild, ctx);
-  if (build.length) root.push(...build);
-  const dev = describeEffects(def.onDevelopmentPhase, ctx);
-  if (dev.length)
-    root.push({
-      title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
-      items: dev,
-    });
-  const upk = describeEffects(def.onUpkeepPhase, ctx);
-  if (upk.length)
-    root.push({
-      title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
-      items: upk,
-    });
-  const atk = describeEffects(def.onAttackResolved, ctx);
-  if (atk.length)
-    root.push({
-      title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
-      items: atk,
-    });
-  if (!root.length) return [];
-  const title = opts?.installed
-    ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
-    : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
-  return [{ title, items: root }];
-}
-
-function describeBuilding(
-  id: string,
-  ctx: EngineContext,
-  opts?: { installed?: boolean },
-): Summary {
-  const def = ctx.buildings.get(id);
-  const root: SummaryEntry[] = [];
-  const build = describeEffects(def.onBuild, ctx);
-  if (build.length) root.push(...build);
-  const dev = describeEffects(def.onDevelopmentPhase, ctx);
-  if (dev.length)
-    root.push({
-      title: `${phaseInfo.onDevelopmentPhase.icon} ${phaseInfo.onDevelopmentPhase.label}`,
-      items: dev,
-    });
-  const upk = describeEffects(def.onUpkeepPhase, ctx);
-  if (upk.length)
-    root.push({
-      title: `${phaseInfo.onUpkeepPhase.icon} ${phaseInfo.onUpkeepPhase.label}`,
-      items: upk,
-    });
-  const atk = describeEffects(def.onAttackResolved, ctx);
-  if (atk.length)
-    root.push({
-      title: `${phaseInfo.onAttackResolved.icon} ${phaseInfo.onAttackResolved.label}`,
-      items: atk,
-    });
-  if (!root.length) return [];
-  const title = opts?.installed
-    ? `${phaseInfo.onBuild.icon} ${phaseInfo.onBuild.label}`
-    : `${phaseInfo.onBuild.icon} On build, ${phaseInfo.onBuild.label.toLowerCase()}`;
-  return [{ title, items: root }];
-}
-
-function describeLand(land: Land, ctx: EngineContext): Summary {
-  const items: SummaryEntry[] = [];
-  for (let i = 0; i < land.slotsMax; i++) {
-    const devId = land.developments[i];
-    if (devId) {
-      items.push({
-        title: `${developmentInfo[devId]?.icon || ''} ${
-          ctx.developments.get(devId)?.name || devId
-        }`,
-        items: describeDevelopment(devId, ctx, { installed: true }),
-      });
-    } else {
-      items.push(`${slotIcon} Empty development slot`);
-    }
-  }
-  return items;
 }
 
 function renderSummary(summary: Summary | undefined): React.ReactNode {
@@ -740,7 +197,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
               const showLandCard = () =>
                 handleHoverCard({
                   title: `${landIcon} Land`,
-                  effects: describeLand(land, ctx),
+                  effects: describeContent('land', land, ctx),
                   requirements: [],
                   costs: {},
                   effectsTitle: 'Developments',
@@ -768,9 +225,14 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                               e.stopPropagation();
                               handleHoverCard({
                                 title,
-                                effects: describeDevelopment(devId, ctx, {
-                                  installed: true,
-                                }),
+                                effects: describeContent(
+                                  'development',
+                                  devId,
+                                  ctx,
+                                  {
+                                    installed: true,
+                                  },
+                                ),
                                 requirements: [],
                                 costs: {},
                               });
@@ -829,7 +291,9 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                   onMouseEnter={() =>
                     handleHoverCard({
                       title,
-                      effects: describeBuilding(b, ctx, { installed: true }),
+                      effects: describeContent('building', b, ctx, {
+                        installed: true,
+                      }),
                       requirements: [],
                       costs: {},
                     })
@@ -1025,19 +489,23 @@ export default function Game({
 
   const actionSummaries = useMemo(() => {
     const map = new Map<string, Summary>();
-    actions.forEach((a) => map.set(a.id, summarizeAction(a.id, ctx)));
+    actions.forEach((a) =>
+      map.set(a.id, summarizeContent('action', a.id, ctx)),
+    );
     return map;
   }, [actions, ctx]);
   const developmentSummaries = useMemo(() => {
     const map = new Map<string, Summary>();
     sortedDevelopments.forEach((d) =>
-      map.set(d.id, summarizeDevelopment(d.id, ctx)),
+      map.set(d.id, summarizeContent('development', d.id, ctx)),
     );
     return map;
   }, [sortedDevelopments, ctx]);
   const buildingSummaries = useMemo(() => {
     const map = new Map<string, Summary>();
-    buildingOptions.forEach((b) => map.set(b.id, summarizeBuilding(b.id, ctx)));
+    buildingOptions.forEach((b) =>
+      map.set(b.id, summarizeContent('building', b.id, ctx)),
+    );
     return map;
   }, [buildingOptions, ctx]);
 
@@ -1184,23 +652,25 @@ export default function Game({
       () => [] as { text: string; italic?: boolean; done?: boolean }[],
     );
 
+    const phaseChanges: string[] = [];
     for (const effect of effects) {
       const before = snapshotPlayer(player);
       runEffects([effect], ctx);
       const after = snapshotPlayer(player);
       const changes = diffSnapshots(before, after, ctx);
-      if (changes.length) {
-        const info = phaseInfo[trigger];
-        addLog(
-          [`${info.icon} ${info.label}:`, ...changes.map((c) => `  ${c}`)],
-          player.name,
-        );
-      }
+      phaseChanges.push(...changes);
       for (const change of changes) {
         let idx = stepDefs.findIndex((s) => s.classify(change));
         if (idx === -1) idx = stepDefs.length - 1;
         stepItems[idx]!.push({ text: change });
       }
+    }
+    if (phaseChanges.length) {
+      const info = phaseInfo[trigger];
+      addLog(
+        [`${info.icon} ${info.past}:`, ...phaseChanges.map((c) => `  ${c}`)],
+        player.name,
+      );
     }
 
     if (trigger === 'onDevelopmentPhase') {
@@ -1385,7 +855,7 @@ export default function Game({
                             actionInfo[action.id as keyof typeof actionInfo]
                               ?.icon || ''
                           } ${action.name}`,
-                          effects: describeAction(action.id, ctx),
+                          effects: describeContent('action', action.id, ctx),
                           requirements,
                           costs,
                         })
@@ -1451,8 +921,16 @@ export default function Game({
                           : ctx.game.currentPhase !== Phase.Main
                             ? 'Not in Main phase'
                             : undefined;
-                      const summary = describeAction('raise_pop', ctx);
-                      const shortSummary = summarizeAction('raise_pop', ctx);
+                      const summary = describeContent(
+                        'action',
+                        'raise_pop',
+                        ctx,
+                      );
+                      const shortSummary = summarizeContent(
+                        'action',
+                        'raise_pop',
+                        ctx,
+                      );
                       const first = summary[0];
                       if (first && typeof first !== 'string') {
                         first.items.push(
@@ -1572,7 +1050,11 @@ export default function Game({
                               title: `${actionInfo.develop.icon} Develop - ${
                                 developmentInfo[d.id]?.icon
                               } ${d.name}`,
-                              effects: describeDevelopment(d.id, ctx),
+                              effects: describeContent(
+                                'development',
+                                d.id,
+                                ctx,
+                              ),
                               requirements,
                               costs,
                             })
@@ -1642,7 +1124,7 @@ export default function Game({
                           onMouseEnter={() =>
                             handleHoverCard({
                               title: `${actionInfo.build.icon} Build - ${b.name}`,
-                              effects: describeBuilding(b.id, ctx),
+                              effects: describeContent('building', b.id, ctx),
                               requirements,
                               costs,
                             })

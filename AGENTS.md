@@ -11,6 +11,7 @@ Full game information can be read below.
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [CODE_STANDARDS.md](docs/CODE_STANDARDS.md)
+- [FRONTEND_TRANSLATION.md](docs/FRONTEND_TRANSLATION.md)
 
 # Abstraction guidelines
 

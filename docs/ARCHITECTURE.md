@@ -86,3 +86,11 @@ To introduce new behaviour:
 
 By leaning on triggers, effects and registries, almost any rule can be added
 purely through data.
+
+## Frontend Translation Layer
+
+The web client uses a dedicated translation layer to convert engine data into
+player-facing strings. Effect formatters and content translators follow
+registry-based factories to keep UI code decoupled from game logic. See
+[FRONTEND_TRANSLATION.md](FRONTEND_TRANSLATION.md) for details on extending the
+system.
