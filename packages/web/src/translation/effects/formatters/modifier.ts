@@ -1,5 +1,9 @@
-import { actionInfo, modifierInfo, developmentInfo } from '../../../icons';
-import { RESOURCES } from '@kingdom-builder/engine';
+import {
+  ACTION_INFO as actionInfo,
+  MODIFIER_INFO as modifierInfo,
+  DEVELOPMENT_INFO as developmentInfo,
+  RESOURCES,
+} from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/engine';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
@@ -14,8 +18,7 @@ registerEffectFormatter('cost_mod', 'add', {
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon =
-      actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
+    const actionIcon = actionInfo[actionId]?.icon || actionId;
     return `${modifierInfo.cost.icon} ${actionIcon}: ${icon}${signed(amount)}${amount}`;
   },
   describe: (eff, ctx) => {
@@ -23,8 +26,7 @@ registerEffectFormatter('cost_mod', 'add', {
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon =
-      actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
+    const actionIcon = actionInfo[actionId]?.icon || actionId;
     const actionName = ctx.actions.get(actionId)?.name || actionId;
     return `${modifierInfo.cost.icon} ${modifierInfo.cost.label} on ${actionIcon} ${actionName}: ${increaseOrDecrease(amount)} cost by ${icon}${Math.abs(amount)}`;
   },
@@ -56,8 +58,7 @@ registerEffectFormatter('result_mod', 'add', {
       ];
     }
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon =
-      actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
+    const actionIcon = actionInfo[actionId]?.icon || actionId;
     return sub.map((s) => `${modifierInfo.result.icon} ${actionIcon}: ${s}`);
   },
   describe: (eff, ctx) => {
@@ -85,8 +86,7 @@ registerEffectFormatter('result_mod', 'add', {
       ];
     }
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon =
-      actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
+    const actionIcon = actionInfo[actionId]?.icon || actionId;
     let actionName = actionId;
     try {
       actionName = ctx.actions.get(actionId).name;

@@ -7,6 +7,7 @@ export interface StepDef {
   title?: string;
   triggers?: TriggerKey[];
   effects?: EffectDef[];
+  icon?: string;
 }
 
 export interface PhaseDef {
@@ -31,6 +32,7 @@ export const PHASES: PhaseDef[] = [
       {
         id: 'gain-income',
         title: 'Gain Income',
+        icon: '💰',
         effects: [
           {
             evaluator: { type: 'development', params: { id: 'farm' } },
@@ -162,3 +164,8 @@ export const PHASES: PhaseDef[] = [
     steps: [{ id: 'main', title: 'Main Phase' }],
   },
 ];
+
+export const PHASE_INFO: Record<string, { icon: string; label: string }> =
+  Object.fromEntries(
+    PHASES.map((p) => [p.id, { icon: p.icon, label: p.label }]),
+  );

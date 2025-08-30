@@ -14,9 +14,9 @@ import type {
 } from './state';
 import { Services, PassiveManager, DefaultRules } from './services';
 import type { CostBag, RuleSet } from './services';
-import { createActionRegistry } from './content/actions';
-import { BUILDINGS } from './content/buildings';
-import { DEVELOPMENTS } from './content/developments';
+import { ACTIONS, ACTION_INFO } from './content/actions';
+import { BUILDINGS, BUILDING_INFO } from './content/buildings';
+import { DEVELOPMENTS, DEVELOPMENT_INFO } from './content/developments';
 import { POPULATIONS } from './content/populations';
 import type { PopulationDef } from './content/populations';
 import type { TriggerKey } from './content/defs';
@@ -30,7 +30,10 @@ import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
-import { PHASES, type PhaseDef } from './content/phases';
+import { PHASES, PHASE_INFO, type PhaseDef } from './content/phases';
+import { TRIGGER_INFO } from './content/triggers';
+import { LAND_ICON, SLOT_ICON } from './content/land';
+import { MODIFIER_INFO } from './content/modifiers';
 import {
   validateGameConfig,
   type GameConfig,
@@ -352,7 +355,7 @@ export function createEngine(overrides?: {
     if (config.start) start = config.start;
   }
 
-  actions = actions || createActionRegistry();
+  actions = actions || ACTIONS;
   buildings = buildings || BUILDINGS;
   developments = developments || DEVELOPMENTS;
   populations = populations || POPULATIONS;
@@ -386,7 +389,9 @@ export {
   PopulationRole,
   Stat,
   BUILDINGS,
+  BUILDING_INFO,
   DEVELOPMENTS,
+  DEVELOPMENT_INFO,
   GAME_START,
   EFFECTS,
   EVALUATORS,
@@ -396,6 +401,12 @@ export {
   PassiveManager,
   DefaultRules,
   PHASES,
+  PHASE_INFO,
+  ACTION_INFO,
+  TRIGGER_INFO,
+  LAND_ICON,
+  SLOT_ICON,
+  MODIFIER_INFO,
 };
 
 export type { RuleSet, ResourceKey };

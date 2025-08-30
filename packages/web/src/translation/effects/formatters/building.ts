@@ -1,4 +1,7 @@
-import { buildingIcon } from '../../../icons';
+import {
+  BUILDING_INFO as buildingInfo,
+  ACTION_INFO as actionInfo,
+} from '@kingdom-builder/engine';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('building', 'add', {
@@ -10,7 +13,8 @@ registerEffectFormatter('building', 'add', {
     } catch {
       // ignore
     }
-    return `${buildingIcon}${name}`;
+    const icon = buildingInfo[id]?.icon || actionInfo['build']?.icon || '';
+    return `${icon}${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
@@ -20,6 +24,7 @@ registerEffectFormatter('building', 'add', {
     } catch {
       // ignore
     }
-    return `Construct ${buildingIcon}${name}`;
+    const icon = buildingInfo[id]?.icon || actionInfo['build']?.icon || '';
+    return `Construct ${icon}${name}`;
   },
 });

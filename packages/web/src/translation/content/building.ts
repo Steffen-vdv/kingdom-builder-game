@@ -4,7 +4,10 @@ import type { ContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';
 import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
-import { buildingIcon } from '../../icons';
+import {
+  BUILDING_INFO as buildingInfo,
+  ACTION_INFO as actionInfo,
+} from '@kingdom-builder/engine';
 
 class BuildingCore implements ContentTranslator<string> {
   private phased = new PhasedTranslator();
@@ -18,7 +21,8 @@ class BuildingCore implements ContentTranslator<string> {
   }
   log(id: string, ctx: EngineContext): string[] {
     const def = ctx.buildings.get(id);
-    return [`${buildingIcon}${def.name}`];
+    const icon = buildingInfo[id]?.icon || actionInfo['build']?.icon || '';
+    return [`${icon}${def.name}`];
   }
 }
 
