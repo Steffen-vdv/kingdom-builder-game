@@ -1,0 +1,150 @@
+import React, { useEffect, useRef } from 'react';
+import TimerCircle from '../TimerCircle';
+import type { PhaseStep } from '../../state/GameContext';
+
+interface PhaseInfo {
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
+}
+
+interface PhasePanelProps {
+  turn: number;
+  activePlayerName: string;
+  phases: PhaseInfo[];
+  phaseSteps: PhaseStep[];
+  setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
+  phaseTimer: number;
+  phasePaused: boolean;
+  setPaused: (v: boolean) => void;
+  displayPhase: string;
+  setDisplayPhase: (id: string) => void;
+  phaseHistories: Record<string, PhaseStep[]>;
+  tabsEnabled: boolean;
+  isActionPhase: boolean;
+  actionPhaseId?: string | undefined;
+  handleEndTurn: () => void | Promise<void>;
+  sharedHeight: number;
+}
+
+const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
+  (
+    {
+      turn,
+      activePlayerName,
+      phases,
+      phaseSteps,
+      setPhaseSteps,
+      phaseTimer,
+      phasePaused,
+      setPaused,
+      displayPhase,
+      setDisplayPhase,
+      phaseHistories,
+      tabsEnabled,
+      isActionPhase,
+      actionPhaseId,
+      handleEndTurn,
+      sharedHeight,
+    },
+    ref,
+  ) => {
+    const phaseStepsRef = useRef<HTMLUListElement>(null);
+
+    useEffect(() => {
+      const el = phaseStepsRef.current;
+      if (!el) return;
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }, [phaseSteps]);
+
+    return (
+      <section
+        ref={ref}
+        className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
+        onMouseEnter={() => !isActionPhase && setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        style={{
+          cursor: phasePaused && !isActionPhase ? 'pause' : 'auto',
+          minHeight: sharedHeight,
+        }}
+      >
+        <div className="absolute -top-6 left-0 font-semibold">
+          Turn {turn} - {activePlayerName}
+        </div>
+        <div className="flex mb-2 border-b">
+          {phases.map((p) => {
+            const isSelected = displayPhase === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                disabled={!tabsEnabled}
+                onClick={() => {
+                  if (!tabsEnabled) return;
+                  setDisplayPhase(p.id);
+                  setPhaseSteps(phaseHistories[p.id] ?? []);
+                }}
+                className={`px-3 py-1 text-sm flex items-center gap-1 border-b-2 ${
+                  isSelected
+                    ? 'border-blue-500 font-semibold'
+                    : 'border-transparent text-gray-500'
+                } ${
+                  tabsEnabled
+                    ? 'hover:text-gray-800 dark:hover:text-gray-200'
+                    : ''
+                }`}
+              >
+                {p?.icon} {p?.label}
+              </button>
+            );
+          })}
+        </div>
+        <ul
+          ref={phaseStepsRef}
+          className="text-sm text-left space-y-1 overflow-y-auto flex-1"
+        >
+          {phaseSteps.map((s, i) => (
+            <li key={i} className={s.active ? 'font-semibold' : ''}>
+              <div>{s.title}</div>
+              <ul className="pl-4 list-disc list-inside">
+                {s.items.length > 0 ? (
+                  s.items.map((it, j) => (
+                    <li key={j} className={it.italic ? 'italic' : ''}>
+                      {it.text}
+                      {it.done && (
+                        <span className="text-green-600 ml-1">✔️</span>
+                      )}
+                    </li>
+                  ))
+                ) : (
+                  <li>...</li>
+                )}
+              </ul>
+            </li>
+          ))}
+        </ul>
+        {(!isActionPhase || phaseTimer > 0) && (
+          <div className="absolute top-2 right-2">
+            <TimerCircle progress={phaseTimer} paused={phasePaused} />
+          </div>
+        )}
+        {isActionPhase && (
+          <div className="mt-2 text-right">
+            <button
+              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              disabled={Boolean(
+                actionPhaseId &&
+                  phaseHistories[actionPhaseId]?.some((s) => s.active),
+              )}
+              onClick={() => void handleEndTurn()}
+            >
+              Next Turn
+            </button>
+          </div>
+        )}
+      </section>
+    );
+  },
+);
+
+export default PhasePanel;

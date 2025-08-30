@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { summarizeContent, describeContent, type Summary } from './translation';
 import { GameProvider, useGameEngine } from './state/GameContext';
 import PlayerPanel from './components/player/PlayerPanel';
-import TimerCircle from './components/TimerCircle';
 import HoverCard from './components/HoverCard';
 import ActionsPanel from './components/actions/ActionsPanel';
+import PhasePanel from './components/phases/PhasePanel';
 
 interface Action {
   id: string;
@@ -62,7 +62,6 @@ function GameInner({
   const phaseBoxRef = useRef<HTMLDivElement>(null);
   const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
   const [phaseBoxHeight, setPhaseBoxHeight] = useState(0);
-  const phaseStepsRef = useRef<HTMLUListElement>(null);
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
     [ctx],
@@ -164,12 +163,6 @@ function GameInner({
   }, [buildingOptions, ctx]);
 
   useEffect(() => {
-    const el = phaseStepsRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [phaseSteps]);
-
-  useEffect(() => {
     const el = logRef.current;
     if (!el) return;
     if (el.scrollHeight > el.clientHeight)
@@ -266,91 +259,25 @@ function GameInner({
           />
         </div>
         <section className="w-[30rem] self-start flex flex-col gap-6">
-          <section
+          <PhasePanel
             ref={phaseBoxRef}
-            className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
-            onMouseEnter={() => !isActionPhase && setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-            style={{
-              cursor: phasePaused && !isActionPhase ? 'pause' : 'auto',
-              minHeight: sharedHeight,
-            }}
-          >
-            <div className="absolute -top-6 left-0 font-semibold">
-              Turn {ctx.game.turn} - {ctx.activePlayer.name}
-            </div>
-            <div className="flex mb-2 border-b">
-              {ctx.phases.map((p) => {
-                const isSelected = displayPhase === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    disabled={!tabsEnabled}
-                    onClick={() => {
-                      if (!tabsEnabled) return;
-                      setDisplayPhase(p.id);
-                      setPhaseSteps(phaseHistories[p.id] ?? []);
-                    }}
-                    className={`px-3 py-1 text-sm flex items-center gap-1 border-b-2 ${
-                      isSelected
-                        ? 'border-blue-500 font-semibold'
-                        : 'border-transparent text-gray-500'
-                    } ${
-                      tabsEnabled
-                        ? 'hover:text-gray-800 dark:hover:text-gray-200'
-                        : ''
-                    }`}
-                  >
-                    {p?.icon} {p?.label}
-                  </button>
-                );
-              })}
-            </div>
-            <ul
-              ref={phaseStepsRef}
-              className="text-sm text-left space-y-1 overflow-y-auto flex-1"
-            >
-              {phaseSteps.map((s, i) => (
-                <li key={i} className={s.active ? 'font-semibold' : ''}>
-                  <div>{s.title}</div>
-                  <ul className="pl-4 list-disc list-inside">
-                    {s.items.length > 0 ? (
-                      s.items.map((it, j) => (
-                        <li key={j} className={it.italic ? 'italic' : ''}>
-                          {it.text}
-                          {it.done && (
-                            <span className="text-green-600 ml-1">✔️</span>
-                          )}
-                        </li>
-                      ))
-                    ) : (
-                      <li>...</li>
-                    )}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-            {(!isActionPhase || phaseTimer > 0) && (
-              <div className="absolute top-2 right-2">
-                <TimerCircle progress={phaseTimer} paused={phasePaused} />
-              </div>
-            )}
-            {isActionPhase && (
-              <div className="mt-2 text-right">
-                <button
-                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                  disabled={Boolean(
-                    actionPhaseId &&
-                      phaseHistories[actionPhaseId]?.some((s) => s.active),
-                  )}
-                  onClick={() => void handleEndTurn()}
-                >
-                  Next Turn
-                </button>
-              </div>
-            )}
-          </section>
+            turn={ctx.game.turn}
+            activePlayerName={ctx.activePlayer.name}
+            phases={ctx.phases}
+            phaseSteps={phaseSteps}
+            setPhaseSteps={setPhaseSteps}
+            phaseTimer={phaseTimer}
+            phasePaused={phasePaused}
+            setPaused={setPaused}
+            displayPhase={displayPhase}
+            setDisplayPhase={setDisplayPhase}
+            phaseHistories={phaseHistories}
+            tabsEnabled={tabsEnabled}
+            isActionPhase={isActionPhase}
+            actionPhaseId={actionPhaseId}
+            handleEndTurn={handleEndTurn}
+            sharedHeight={sharedHeight}
+          />
           <div
             ref={logRef}
             className="border rounded p-4 overflow-y-auto max-h-80 bg-white dark:bg-gray-800 shadow w-full"
