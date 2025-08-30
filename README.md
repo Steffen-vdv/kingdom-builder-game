@@ -11,7 +11,7 @@
 
 Pre-commit runs unit and integration tests automatically. Continuous
 integration executes the full suite and the production build. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for details on the workflow.
+[CONTRIBUTING](CONTRIBUTING/AGENTS.md) for details on the workflow.
 
 ## 3) Game Overview
 
@@ -36,6 +36,6 @@ Each turn flows through three phases:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing conventions,
+See [CONTRIBUTING](CONTRIBUTING/AGENTS.md) for development setup, testing conventions,
 and commit guidelines. For an overview of the engine architecture, read
-[ARCHITECTURE.md](docs/ARCHITECTURE.md).
+[ARCHITECTURE](docs/architecture/AGENTS.md).

@@ -21,6 +21,6 @@ maintainable.
 
 - Unit tests live under `packages/engine/tests`.
 - Integration tests live under `tests/integration`.
-- See [CONTRIBUTING.md](../CONTRIBUTING.md) for the recommended testing workflow.
+- See [CONTRIBUTING](../../CONTRIBUTING/AGENTS.md) for the recommended testing workflow.
 
 These standards help ensure consistent contributions across the repository.
