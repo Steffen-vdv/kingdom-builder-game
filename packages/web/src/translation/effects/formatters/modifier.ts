@@ -9,15 +9,14 @@ import {
 } from '../factory';
 
 registerEffectFormatter('cost_mod', 'add', {
-  summarize: (eff, ctx) => {
+  summarize: (eff, _ctx) => {
     const key = eff.params?.['key'] as string;
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
       actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-    const actionName = ctx.actions.get(actionId)?.name || actionId;
-    return `${modifierInfo.cost.icon} ${actionIcon} ${actionName}: ${icon}${signed(amount)}${amount}`;
+    return `${modifierInfo.cost.icon} ${actionIcon}: ${icon}${signed(amount)}${amount}`;
   },
   describe: (eff, ctx) => {
     const key = eff.params?.['key'] as string;
@@ -27,7 +26,7 @@ registerEffectFormatter('cost_mod', 'add', {
     const actionIcon =
       actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
     const actionName = ctx.actions.get(actionId)?.name || actionId;
-    return `${modifierInfo.cost.label} on ${actionIcon} ${actionName}: ${increaseOrDecrease(amount)} cost by ${icon}${Math.abs(amount)}`;
+    return `${modifierInfo.cost.icon} ${modifierInfo.cost.label} on ${actionIcon} ${actionName}: ${increaseOrDecrease(amount)} cost by ${icon}${Math.abs(amount)}`;
   },
 });
 
@@ -37,10 +36,7 @@ registerEffectFormatter('result_mod', 'add', {
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
       actionInfo[actionId as keyof typeof actionInfo]?.icon || actionId;
-    const actionName = ctx.actions.get(actionId)?.name || actionId;
-    return sub.map(
-      (s) => `${modifierInfo.result.icon} ${actionIcon} ${actionName}: ${s}`,
-    );
+    return sub.map((s) => `${modifierInfo.result.icon} ${actionIcon}: ${s}`);
   },
   describe: (eff, ctx) => {
     const sub = describeEffects(eff.effects || [], ctx);
@@ -50,7 +46,7 @@ registerEffectFormatter('result_mod', 'add', {
     const actionName = ctx.actions.get(actionId)?.name || actionId;
     return sub.map(
       (s) =>
-        `${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`,
+        `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`,
     );
   },
 });
