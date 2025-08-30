@@ -3,7 +3,7 @@
 Thanks for your interest in improving Kingdom Builder! This guide describes the
 workflow for contributors so that changes remain consistent and easy to review.
 
-Please also review our [Code Standards](docs/CODE_STANDARDS.md) for naming and
+Please also review our [Code Standards](../docs/code_standards/AGENTS.md) for naming and
 style conventions used throughout the repository.
 
 ## Development Setup
@@ -45,6 +45,6 @@ style conventions used throughout the repository.
   Additional checks such as the production build run in CI.
 - Limit commit message subject lines to ~70 characters.
 
-For architectural details see [ARCHITECTURE.md](docs/ARCHITECTURE.md). If in
+For architectural details see [ARCHITECTURE](../docs/architecture/AGENTS.md). If in
 doubt about how to structure new behaviour, consult that document and existing
 tests for examples.

@@ -48,7 +48,7 @@ The evaluator returns a multiplier that determines how often the nested effects
 run. Because triggers are decoupled from effect domains, any trigger can result
 in any effect, keeping behaviour entirely data‑driven.
 
-See the [evaluator registry README](../packages/engine/src/evaluators/README.md)
+See the [evaluator registry README](../../packages/engine/src/evaluators/AGENTS.md)
 for details on built-in handlers and registering custom ones.
 
 ## Modifiers
@@ -104,5 +104,5 @@ purely through data.
 The web client uses a dedicated translation layer to convert engine data into
 player-facing strings. Effect formatters and content translators follow
 registry-based factories to keep UI code decoupled from game logic. See
-[FRONTEND_TRANSLATION.md](FRONTEND_TRANSLATION.md) for details on extending the
+[FRONTEND_TRANSLATION](../frontend_translation/AGENTS.md) for details on extending the
 system.

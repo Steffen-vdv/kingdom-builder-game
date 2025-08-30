@@ -8,10 +8,10 @@ Full game information can be read below.
 
 # Reference documents
 
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- [CODE_STANDARDS.md](docs/CODE_STANDARDS.md)
-- [FRONTEND_TRANSLATION.md](docs/FRONTEND_TRANSLATION.md)
+- [CONTRIBUTING](CONTRIBUTING/AGENTS.md)
+- [ARCHITECTURE](docs/architecture/AGENTS.md)
+- [CODE_STANDARDS](docs/code_standards/AGENTS.md)
+- [FRONTEND_TRANSLATION](docs/frontend_translation/AGENTS.md)
 
 # Abstraction guidelines
 
@@ -48,7 +48,7 @@ The pre-commit hook already runs `lint-staged`, type checking, linting, and
 would repeat those checks. GitHub Actions executes `npm run test:coverage`
 and `npm run build` for each pull request. Run these scripts locally only
 when debugging or when changes could affect them. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for details.
+[CONTRIBUTING](CONTRIBUTING/AGENTS.md) for details.
 
 # Game overview
 
