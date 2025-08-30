@@ -71,7 +71,7 @@ interface PlayerPanelProps {
     title: string;
     effects: Summary;
     requirements: string[];
-    costs: Record<string, number>;
+    costs?: Record<string, number>;
     description?: string;
     descriptionClass?: string;
     effectsTitle?: string;
@@ -101,7 +101,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
       ),
       effectsTitle: 'Archetypes',
       requirements: [],
-      costs: {},
       description:
         'Population represents the people of your kingdom. Manage them wisely and assign roles to benefit your realm.',
       bgClass: 'bg-gray-100 dark:bg-gray-700',
@@ -122,7 +121,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                   title: `${info.icon} ${info.label}`,
                   effects: [],
                   requirements: [],
-                  costs: {},
                   description: info.description,
                   bgClass: 'bg-gray-100 dark:bg-gray-700',
                 })
@@ -158,7 +156,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                           title: `${info.icon} ${info.label}`,
                           effects: [],
                           requirements: [],
-                          costs: {},
                           description: info.description,
                           bgClass: 'bg-gray-100 dark:bg-gray-700',
                         });
@@ -191,7 +188,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                     title: `${info.icon} ${info.label}`,
                     effects: [],
                     requirements: [],
-                    costs: {},
                     description: info.description,
                     bgClass: 'bg-gray-100 dark:bg-gray-700',
                   })
@@ -212,7 +208,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                 title: `${landIcon} Land`,
                 effects: describeContent('land', land, ctx),
                 requirements: [],
-                costs: {},
                 effectsTitle: 'Developments',
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
               });
@@ -248,7 +243,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                                 },
                               ),
                               requirements: [],
-                              costs: {},
                               bgClass: 'bg-gray-100 dark:bg-gray-700',
                             });
                           }}
@@ -273,7 +267,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                             effects: [],
                             description: `Use ${actionInfo.develop.icon} Develop to build here`,
                             requirements: [],
-                            costs: {},
                             bgClass: 'bg-gray-100 dark:bg-gray-700',
                           });
                         }}
@@ -308,7 +301,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                       installed: true,
                     }),
                     requirements: [],
-                    costs: {},
                     bgClass: 'bg-gray-100 dark:bg-gray-700',
                   })
                 }
@@ -328,9 +320,10 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 
 function renderCosts(
-  costs: Record<string, number>,
+  costs: Record<string, number> | undefined,
   resources: Record<string, number>,
 ) {
+  if (!costs) return null;
   const entries = Object.entries(costs).filter(([k]) => k !== Resource.ap);
   if (entries.length === 0)
     return (
@@ -412,7 +405,7 @@ export default function Game({
     title: string;
     effects: Summary;
     requirements: string[];
-    costs: Record<string, number>;
+    costs?: Record<string, number>;
     description?: string;
     descriptionClass?: string;
     effectsTitle?: string;
@@ -456,7 +449,7 @@ export default function Game({
     title: string;
     effects: Summary;
     requirements: string[];
-    costs: Record<string, number>;
+    costs?: Record<string, number>;
     description?: string;
     descriptionClass?: string;
     effectsTitle?: string;
