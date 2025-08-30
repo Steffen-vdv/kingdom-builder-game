@@ -715,10 +715,10 @@ export default function Game({
         >
           <section
             ref={playerBoxRef}
-            className="border rounded bg-white dark:bg-gray-800 shadow"
+            className="border rounded bg-white dark:bg-gray-800 shadow flex"
             style={{ minHeight: sharedHeight }}
           >
-            <div className="flex items-stretch rounded overflow-hidden divide-x divide-gray-300 h-full">
+            <div className="flex flex-1 items-stretch rounded overflow-hidden divide-x divide-gray-300">
               {ctx.game.players.map((p, i) => (
                 <PlayerPanel
                   key={p.id}
