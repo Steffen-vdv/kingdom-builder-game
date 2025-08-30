@@ -22,11 +22,6 @@ export function createPopulationRegistry() {
         method: 'remove',
         params: { key: Resource.ap, amount: 1 },
       })
-      .onUpkeepPhase({
-        type: 'resource',
-        method: 'remove',
-        params: { key: Resource.gold, amount: 2 },
-      })
       .build(),
   );
 
@@ -50,11 +45,6 @@ export function createPopulationRegistry() {
         method: 'remove',
         params: { id: 'commander_$player_$index' },
       })
-      .onUpkeepPhase({
-        type: 'resource',
-        method: 'remove',
-        params: { key: Resource.gold, amount: 1 },
-      })
       .build(),
   );
 
@@ -77,11 +67,6 @@ export function createPopulationRegistry() {
         type: 'passive',
         method: 'remove',
         params: { id: 'fortifier_$player_$index' },
-      })
-      .onUpkeepPhase({
-        type: 'resource',
-        method: 'remove',
-        params: { key: Resource.gold, amount: 1 },
       })
       .build(),
   );

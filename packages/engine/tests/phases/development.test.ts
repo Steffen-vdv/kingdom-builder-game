@@ -76,4 +76,19 @@ describe('Development phase', () => {
     expect(player.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
     expect(player.stats[Stat.fortificationStrength]).toBeCloseTo(expectedFort);
   });
+
+  it('scales strength additively with multiple leaders', () => {
+    const ctx = createEngine();
+    ctx.activePlayer.population[PopulationRole.Commander] = 2;
+    ctx.activePlayer.population[PopulationRole.Fortifier] = 2;
+    ctx.activePlayer.stats[Stat.armyStrength] = 10;
+    ctx.activePlayer.stats[Stat.fortificationStrength] = 10;
+    while (ctx.game.currentPhase === 'development') advance(ctx);
+    const expectedArmy = 10 + 10 * (commanderPct / 100) * 2;
+    const expectedFort = 10 + 10 * (fortifierPct / 100) * 2;
+    expect(ctx.activePlayer.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
+    expect(ctx.activePlayer.stats[Stat.fortificationStrength]).toBeCloseTo(
+      expectedFort,
+    );
+  });
 });

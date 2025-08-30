@@ -4,41 +4,39 @@ import {
   advance,
   PopulationRole,
   Resource,
-  POPULATIONS,
   PHASES,
 } from '../../src';
 
-const councilUpkeep = Number(
-  POPULATIONS.get(PopulationRole.Council).onUpkeepPhase?.find(
-    (effect) =>
-      effect.type === 'resource' &&
-      effect.method === 'remove' &&
-      effect.params.key === Resource.gold,
-  )?.params.amount ?? 0,
-);
-const commanderUpkeep = Number(
-  POPULATIONS.get(PopulationRole.Commander).onUpkeepPhase?.find(
-    (effect) =>
-      effect.type === 'resource' &&
-      effect.method === 'remove' &&
-      effect.params.key === Resource.gold,
-  )?.params.amount ?? 0,
-);
-const fortifierUpkeep = Number(
-  POPULATIONS.get(PopulationRole.Fortifier).onUpkeepPhase?.find(
-    (effect) =>
-      effect.type === 'resource' &&
-      effect.method === 'remove' &&
-      effect.params.key === Resource.gold,
-  )?.params.amount ?? 0,
-);
+const upkeepPhase = PHASES.find((p) => p.id === 'upkeep')!;
+const payStep = upkeepPhase.steps.find((s) => s.id === 'pay-upkeep')!;
+
+function getUpkeep(role: PopulationRole) {
+  return Number(
+    payStep.effects
+      ?.find((e) => e.evaluator?.params?.role === role)
+      ?.effects?.find(
+        (eff) =>
+          eff.type === 'resource' &&
+          eff.method === 'remove' &&
+          eff.params.key === Resource.gold,
+      )?.params.amount ?? 0,
+  );
+}
+
+const councilUpkeep = getUpkeep(PopulationRole.Council);
+const commanderUpkeep = getUpkeep(PopulationRole.Commander);
+const fortifierUpkeep = getUpkeep(PopulationRole.Fortifier);
 
 describe('Upkeep phase', () => {
   it('charges gold per population role', () => {
     const ctx = createEngine();
-    ctx.game.phaseIndex = 1;
-    ctx.game.currentPhase = PHASES[1]!.id;
-    ctx.game.currentStep = PHASES[1]!.steps[0]!.id;
+    const idx = PHASES.findIndex((p) => p.id === 'upkeep');
+    ctx.game.phaseIndex = idx;
+    ctx.game.currentPhase = PHASES[idx]!.id;
+    ctx.game.stepIndex = PHASES[idx]!.steps.findIndex(
+      (s) => s.id === 'pay-upkeep',
+    );
+    ctx.game.currentStep = payStep.id;
     ctx.activePlayer.population[PopulationRole.Commander] = 1;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 1;
     const startGold = 5;
@@ -55,9 +53,13 @@ describe('Upkeep phase', () => {
 
   it('throws if upkeep cannot be paid', () => {
     const ctx = createEngine();
-    ctx.game.phaseIndex = 1;
-    ctx.game.currentPhase = PHASES[1]!.id;
-    ctx.game.currentStep = PHASES[1]!.steps[0]!.id;
+    const idx = PHASES.findIndex((p) => p.id === 'upkeep');
+    ctx.game.phaseIndex = idx;
+    ctx.game.currentPhase = PHASES[idx]!.id;
+    ctx.game.stepIndex = PHASES[idx]!.steps.findIndex(
+      (s) => s.id === 'pay-upkeep',
+    );
+    ctx.game.currentStep = payStep.id;
     ctx.activePlayer.population[PopulationRole.Commander] = 1;
     const councils = ctx.activePlayer.population[PopulationRole.Council];
     const totalCost = councilUpkeep * councils + commanderUpkeep;
