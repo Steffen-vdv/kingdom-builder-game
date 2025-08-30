@@ -1163,7 +1163,7 @@ export default function Game({
                 return (
                   <div
                     key={idx}
-                    className="relative border p-2 text-center transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help"
+                    className="relative border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
                     onMouseEnter={showLandCard}
                     onMouseLeave={clearHoverCard}
                   >
@@ -1181,7 +1181,7 @@ export default function Game({
                           return (
                             <span
                               key={i}
-                              className="border p-1 text-xs transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help"
+                              className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
                               onMouseEnter={(e) => {
                                 e.stopPropagation();
                                 handleHoverCard({
@@ -1206,7 +1206,7 @@ export default function Game({
                         return (
                           <span
                             key={i}
-                            className="border p-1 text-xs transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help"
+                            className="border p-1 text-xs transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
                             onMouseEnter={(e) => {
                               e.stopPropagation();
                               handleHoverCard({
@@ -1243,7 +1243,7 @@ export default function Game({
                 return (
                   <div
                     key={b}
-                    className="border p-2 text-center transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help"
+                    className="border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
                     onMouseEnter={() =>
                       handleHoverCard({
                         title,
@@ -1404,7 +1404,7 @@ export default function Game({
                 return (
                   <button
                     key={action.id}
-                    className={`relative border p-3 flex flex-col items-start gap-2 h-full transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help ${
+                    className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
                       enabled
                         ? ''
                         : 'opacity-50 border-red-500 cursor-not-allowed'
@@ -1498,7 +1498,7 @@ export default function Game({
                     return (
                       <button
                         key={role}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help ${
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
                           enabled
                             ? ''
                             : 'opacity-50 border-red-500 cursor-not-allowed'
@@ -1526,7 +1526,7 @@ export default function Game({
                         <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                           {renderCosts(costs, ctx.activePlayer.resources)}
                         </span>
-                        <ul className="text-sm list-disc list-inside text-left">
+                        <ul className="text-sm list-disc pl-4 text-left">
                           {renderSummary(shortSummary)}
                         </ul>
                         {requirements.length > 0 && (
@@ -1582,7 +1582,7 @@ export default function Game({
                     return (
                       <button
                         key={d.id}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help ${
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
                           enabled
                             ? ''
                             : 'opacity-50 border-red-500 cursor-not-allowed'
@@ -1656,7 +1656,7 @@ export default function Game({
                     return (
                       <button
                         key={b.id}
-                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition transform hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-help ${
+                        className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
                           enabled
                             ? ''
                             : 'opacity-50 border-red-500 cursor-not-allowed'
@@ -1703,7 +1703,7 @@ export default function Game({
           </ul>
         </div>
         {hoverCard && (
-          <div className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative">
+          <div className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative pointer-events-none">
             <div className="font-semibold mb-2">
               {hoverCard.title}
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
