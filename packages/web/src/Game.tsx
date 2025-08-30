@@ -1199,7 +1199,7 @@ export default function Game({
               {phaseSteps.map((s, i) => (
                 <li key={i} className={s.active ? 'font-semibold' : ''}>
                   <div>{s.title}</div>
-                  <ul className="pl-4 list-disc">
+                  <ul className="pl-4 list-disc list-inside">
                     {s.items.length > 0 ? (
                       s.items.map((it, j) => (
                         <li key={j} className={it.italic ? 'italic' : ''}>
