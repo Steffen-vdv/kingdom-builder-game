@@ -1,4 +1,4 @@
-import { statInfo } from '../../../../icons';
+import { STATS } from '@kingdom-builder/engine';
 import { increaseOrDecrease, signed } from '../../helpers';
 import { registerEffectFormatter } from '../../factory';
 import { applyStatAddFormatter } from './registry';
@@ -11,14 +11,14 @@ registerEffectFormatter('stat', 'add', {
 registerEffectFormatter('stat', 'add_pct', {
   summarize: (eff) => {
     const key = eff.params?.['key'] as string;
-    const stat = statInfo[key];
+    const stat = STATS[key as keyof typeof STATS];
     const icon = stat ? stat.icon : key;
     const percent = Number(eff.params?.['percent']);
     return `${icon}${signed(percent)}${percent}%`;
   },
   describe: (eff) => {
     const key = eff.params?.['key'] as string;
-    const stat = statInfo[key];
+    const stat = STATS[key as keyof typeof STATS];
     const label = stat?.label || key;
     const icon = stat?.icon || '';
     const percent = Number(eff.params?.['percent']);

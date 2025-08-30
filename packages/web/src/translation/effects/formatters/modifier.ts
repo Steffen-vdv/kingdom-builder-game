@@ -1,4 +1,6 @@
-import { actionInfo, modifierInfo, resourceInfo } from '../../../icons';
+import { actionInfo, modifierInfo } from '../../../icons';
+import { RESOURCES } from '@kingdom-builder/engine';
+import type { ResourceKey } from '@kingdom-builder/engine';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
   registerEffectFormatter,
@@ -9,7 +11,7 @@ import {
 registerEffectFormatter('cost_mod', 'add', {
   summarize: (eff) => {
     const key = eff.params?.['key'] as string;
-    const icon = resourceInfo[key as keyof typeof resourceInfo]?.icon || key;
+    const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
@@ -18,7 +20,7 @@ registerEffectFormatter('cost_mod', 'add', {
   },
   describe: (eff) => {
     const key = eff.params?.['key'] as string;
-    const icon = resourceInfo[key as keyof typeof resourceInfo]?.icon || key;
+    const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon =
