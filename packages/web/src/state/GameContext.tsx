@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useEffect,
 } from 'react';
 import {
   createEngine,
@@ -257,6 +258,10 @@ export function GameProvider({
     setPhaseHistories({});
     await runUntilActionPhase();
   }
+
+  useEffect(() => {
+    void runUntilActionPhase();
+  }, []);
 
   const value: GameEngineContextValue = {
     ctx,
