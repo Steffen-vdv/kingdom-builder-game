@@ -4,8 +4,7 @@ import {
   performAction,
   getActionCosts,
   Resource,
-  collectTriggerEffects,
-  runEffects,
+  advance,
 } from '../../src/index.ts';
 import { action, building } from '../../src/config/builders.ts';
 
@@ -22,7 +21,8 @@ describe('multi-cost content', () => {
       .build();
 
     const ctx = createEngine({ config: { actions: [multiCostAction] } });
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
 
     ctx.activePlayer.gold = 5;
     ctx.activePlayer.happiness = 3;
@@ -64,7 +64,8 @@ describe('multi-cost content', () => {
         buildings: [multiCostBuildingDefinition],
       },
     });
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
 
     ctx.activePlayer.gold = 10;
     ctx.activePlayer.happiness = 2;

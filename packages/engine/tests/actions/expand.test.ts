@@ -5,8 +5,7 @@ import {
   Resource,
   getActionCosts,
   type EngineContext,
-  collectTriggerEffects,
-  runEffects,
+  advance,
 } from '../../src/index.ts';
 import { PlayerState } from '../../src/state/index.ts';
 
@@ -41,7 +40,8 @@ function getExpandExpectations(ctx: EngineContext) {
 describe('Expand action', () => {
   it('costs gold and AP while granting land and happiness without Town Charter', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const goldBefore = ctx.activePlayer.gold;
     const actionPointsBefore = ctx.activePlayer.ap;
     const landsBefore = ctx.activePlayer.lands.length;
@@ -62,7 +62,8 @@ describe('Expand action', () => {
 
   it('includes Town Charter modifiers when present', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     performAction('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.ap += 1; // allow another action
     const goldBefore = ctx.activePlayer.gold;
@@ -83,7 +84,8 @@ describe('Expand action', () => {
 
   it('applies modifiers consistently across multiple expansions', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     performAction('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.ap += 2; // allow two expands
     ctx.activePlayer.gold += 10; // top-up to afford two expands
@@ -110,7 +112,8 @@ describe('Expand action', () => {
 
   it('rejects expand when gold is insufficient', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const cost = getActionCosts('expand', ctx);
     ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;
     expect(() => performAction('expand', ctx)).toThrow(/Insufficient gold/);

@@ -5,8 +5,7 @@ import {
   Resource,
   Stat,
   createActionRegistry,
-  collectTriggerEffects,
-  runEffects,
+  advance,
 } from '../../src/index.ts';
 
 describe('stat:add effect', () => {
@@ -25,7 +24,8 @@ describe('stat:add effect', () => {
       ],
     });
     const ctx = createEngine({ actions });
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const before = ctx.activePlayer.armyStrength;
     const actionDefinition = actions.get('train_army');
     const amount = actionDefinition.effects.find(

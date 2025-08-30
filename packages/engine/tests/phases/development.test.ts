@@ -6,7 +6,7 @@ import {
   Stat,
   Resource,
   POPULATIONS,
-  DEVELOPMENTS,
+  PHASES,
 } from '../../src';
 
 const council = POPULATIONS.get(PopulationRole.Council);
@@ -19,13 +19,13 @@ const councilApGain = Number(
   )?.params.amount ?? 0,
 );
 
-const farm = DEVELOPMENTS.get('farm');
+const incomeStep = PHASES[0]!.steps.find((s) => s.id === 'gain-income');
 const farmGoldGain = Number(
-  farm.onDevelopmentPhase?.find(
-    (effect) =>
-      effect.type === 'resource' &&
-      effect.method === 'add' &&
-      effect.params.key === Resource.gold,
+  incomeStep?.effects?.[0]?.effects?.find(
+    (e) =>
+      e.type === 'resource' &&
+      e.method === 'add' &&
+      (e as { params: { key: string } }).params.key === Resource.gold,
   )?.params.amount ?? 0,
 );
 

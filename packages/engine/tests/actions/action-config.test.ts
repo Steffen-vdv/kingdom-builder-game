@@ -6,8 +6,7 @@ import {
   createActionRegistry,
   getActionCosts,
   type EngineContext,
-  collectTriggerEffects,
-  runEffects,
+  advance,
 } from '../../src/index.ts';
 
 function getExpandExpectations(ctx: EngineContext) {
@@ -44,7 +43,8 @@ describe('Action configuration overrides', () => {
       },
     ];
     const ctx = createEngine({ actions });
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const goldBefore = ctx.activePlayer.gold;
     const landsBefore = ctx.activePlayer.lands.length;
     const hapBefore = ctx.activePlayer.happiness;

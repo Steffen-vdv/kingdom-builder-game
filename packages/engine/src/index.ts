@@ -217,10 +217,19 @@ export function advance(ctx: EngineContext): AdvanceResult {
   const phase = ctx.phases[ctx.game.phaseIndex]!;
   const step = phase.steps[ctx.game.stepIndex];
   const player = ctx.activePlayer;
-  let effects: EffectDef[] = [];
-  if (step?.trigger) {
-    effects = collectTriggerEffects(step.trigger, ctx, player);
-    runEffects(effects, ctx);
+  const effects: EffectDef[] = [];
+  if (step?.triggers) {
+    for (const trig of step.triggers) {
+      const collected = collectTriggerEffects(trig, ctx, player);
+      if (collected.length) {
+        runEffects(collected, ctx);
+        effects.push(...collected);
+      }
+    }
+  }
+  if (step?.effects) {
+    runEffects(step.effects, ctx);
+    effects.push(...step.effects);
   }
 
   ctx.game.stepIndex += 1;

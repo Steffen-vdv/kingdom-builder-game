@@ -5,7 +5,8 @@ import {
   Resource,
   EVALUATORS,
   type EngineContext,
-  collectTriggerEffects,
+  PHASES,
+  advance,
   runEffects,
 } from '../../src/index.ts';
 import type { EvaluatorDef } from '../../src/evaluators/index.ts';
@@ -19,9 +20,12 @@ function countFarms(ctx: EngineContext) {
 }
 
 function getFarmIncome(ctx: EngineContext) {
-  const farm = ctx.developments.get('farm');
-  const effect = farm.onDevelopmentPhase?.find(
-    (e) => e.type === 'resource' && e.params?.key === Resource.gold,
+  const step = PHASES[0]!.steps.find((s) => s.id === 'gain-income');
+  const effect = step?.effects?.[0]?.effects?.find(
+    (e) =>
+      e.type === 'resource' &&
+      e.method === 'add' &&
+      (e as { params: { key: string } }).params.key === Resource.gold,
   ) as { params: { amount: number } } | undefined;
   const amount = effect?.params.amount ?? 0;
   return amount * countFarms(ctx);
@@ -90,7 +94,8 @@ describe('Mill building', () => {
 
     const devBase = getFarmIncome(ctx);
     const beforeDev = ctx.activePlayer.gold;
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     expect(ctx.activePlayer.gold - beforeDev).toBe(devBase);
 
     const overworkBase = getOverworkBaseGold(ctx);
@@ -101,14 +106,16 @@ describe('Mill building', () => {
 
   it('grants additional gold during development for each farm until removed', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
 
     performAction('build', ctx, { id: 'mill' });
 
     const base = getFarmIncome(ctx);
     const bonus = getMillDevelopmentBonus(ctx);
     const before = ctx.activePlayer.gold;
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     expect(ctx.activePlayer.gold - before).toBe(base + bonus);
 
     runEffects(
@@ -116,13 +123,15 @@ describe('Mill building', () => {
       ctx,
     );
     const before2 = ctx.activePlayer.gold;
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     expect(ctx.activePlayer.gold - before2).toBe(base);
   });
 
   it('adds gold when overworking farms until removed', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     performAction('build', ctx, { id: 'mill' });
     ctx.activePlayer.ap += 1;
     const base = getOverworkBaseGold(ctx);
@@ -143,13 +152,15 @@ describe('Mill building', () => {
 
   it('does not grant bonuses to the opponent', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     performAction('build', ctx, { id: 'mill' });
 
     ctx.game.currentPlayerIndex = 1;
     const devBase = getFarmIncome(ctx);
     const beforeDev = ctx.activePlayer.gold;
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 1;
     expect(ctx.activePlayer.gold - beforeDev).toBe(devBase);
 
     const overworkBase = getOverworkBaseGold(ctx);

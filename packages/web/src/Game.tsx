@@ -2,11 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   createEngine,
   performAction,
-  runEffects,
-  collectTriggerEffects,
-  Phase,
   getActionCosts,
   getActionRequirements,
+  advance,
   Resource,
   PopulationRole,
   RESOURCES,
@@ -433,6 +431,7 @@ export default function Game({
   const playerBoxRef = useRef<HTMLDivElement>(null);
   const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
+  const isActionPhase = ctx.phases[ctx.game.phaseIndex]?.action;
 
   function setPaused(v: boolean) {
     phasePausedRef.current = v;
@@ -583,10 +582,6 @@ export default function Game({
     });
   }
 
-  function runPhaseDelay() {
-    return runDelay(2000);
-  }
-
   function runStepDelay() {
     return runDelay(1000);
   }
@@ -608,166 +603,56 @@ export default function Game({
     ]);
   }
 
-  async function runPhaseForPlayer(
-    trigger: 'onDevelopmentPhase' | 'onUpkeepPhase',
-    index: number,
-  ) {
-    ctx.game.currentPlayerIndex = index;
-    const player = ctx.activePlayer;
-    const effects = collectTriggerEffects(trigger, ctx, player);
-
-    const developmentSteps = [
-      {
-        title: 'Gain Income',
-        classify: (change: string) =>
-          change.includes(RESOURCES[Resource.gold].icon) ||
-          change.includes(RESOURCES[Resource.happiness].icon),
-      },
-      {
-        title: 'Generate Action Points',
-        classify: (change: string) =>
-          change.includes(RESOURCES[Resource.ap].icon),
-      },
-      {
-        title: 'Grow Strengths',
-        classify: (change: string) =>
-          change.includes(STATS['armyStrength'].icon) ||
-          change.includes(STATS['fortificationStrength'].icon),
-      },
-    ] as const;
-
-    const upkeepSteps = [
-      {
-        title: 'Pay Upkeep',
-        classify: (change: string) =>
-          change.includes(RESOURCES[Resource.gold].icon),
-      },
-      {
-        title: 'Check Shortfall',
-        classify: () => false,
-      },
-      {
-        title: 'End-of-Upkeep triggers',
-        classify: () => true,
-      },
-    ] as const;
-
-    const stepDefs =
-      trigger === 'onDevelopmentPhase' ? developmentSteps : upkeepSteps;
-    const stepItems = stepDefs.map(
-      () => [] as { text: string; italic?: boolean; done?: boolean }[],
-    );
-
-    const phaseChanges: string[] = [];
-    for (const effect of effects) {
-      const before = snapshotPlayer(player);
-      runEffects([effect], ctx);
+  async function runUntilActionPhase() {
+    setPhaseSteps([]);
+    while (!ctx.phases[ctx.game.phaseIndex]?.action) {
+      const before = snapshotPlayer(ctx.activePlayer);
+      const { phase, step, player } = advance(ctx);
       const after = snapshotPlayer(player);
       const changes = diffSnapshots(before, after, ctx);
-      phaseChanges.push(...changes);
-      for (const change of changes) {
-        let idx = stepDefs.findIndex((s) => s.classify(change));
-        if (idx === -1) idx = stepDefs.length - 1;
-        stepItems[idx]!.push({ text: change });
+      if (changes.length) {
+        const info = phaseInfo[
+          `on${phase.charAt(0).toUpperCase() + phase.slice(1)}Phase` as keyof typeof phaseInfo
+        ] || { icon: '' };
+        addLog(
+          [
+            `${info.icon} ${phase.charAt(0).toUpperCase() + phase.slice(1)}:`,
+            ...changes.map((c) => `  ${c}`),
+          ],
+          player.name,
+        );
       }
-    }
-    if (phaseChanges.length) {
-      const info = phaseInfo[trigger];
-      addLog(
-        [`${info.icon} ${info.past}:`, ...phaseChanges.map((c) => `  ${c}`)],
-        player.name,
-      );
-    }
-
-    if (trigger === 'onDevelopmentPhase') {
-      const commanders = player.population[PopulationRole.Commander] || 0;
-      const fortifiers = player.population[PopulationRole.Fortifier] || 0;
-      if (stepItems[2]!.length === 0) {
-        stepItems[2]!.push({
-          text: `${POPULATION_ROLES[PopulationRole.Commander].icon}${commanders} - No effect`,
-          italic: true,
-        });
-        stepItems[2]!.push({
-          text: `${POPULATION_ROLES[PopulationRole.Fortifier].icon}${fortifiers} - No effect`,
-          italic: true,
-        });
-      }
-    } else if (trigger === 'onUpkeepPhase') {
-      if (stepItems[0]!.length === 0)
-        stepItems[0]!.push({ text: 'No costs to pay', italic: true });
-      if (stepItems[1]!.length === 0)
-        stepItems[1]!.push({ text: 'No shortfall', italic: true });
-      if (stepItems[2]!.length === 0)
-        stepItems[2]!.push({ text: 'No effects', italic: true });
-    }
-
-    setPhaseSteps([]);
-    for (let i = 0; i < stepDefs.length; i++) {
+      const phaseDef = ctx.phases.find((p) => p.id === phase)!;
+      const stepDef = phaseDef.steps.find((s) => s.id === step);
       setPhaseSteps((prev) => [
         ...prev,
         {
-          title: `Step ${i + 1} - ${stepDefs[i]!.title}`,
-          items: [],
-          active: true,
+          title: stepDef?.title || step,
+          items: changes.map((text) => ({ text })),
+          active: false,
         },
       ]);
-      const items =
-        stepItems[i]!.length > 0
-          ? stepItems[i]!
-          : [{ text: 'No effect', italic: true }];
-      for (const item of items) {
-        setPhaseSteps((prev) => {
-          const next = [...prev];
-          next[i] = {
-            ...next[i]!,
-            items: [...next[i]!.items, item],
-          };
-          return next;
-        });
-      }
       await runStepDelay();
-      setPhaseSteps((prev) => {
-        const next = [...prev];
-        next[i] = { ...next[i]!, active: false };
-        return next;
-      });
     }
-  }
-
-  async function startTurn(playerIndex: number) {
-    ctx.game.currentPlayerIndex = playerIndex;
-    ctx.game.currentPhase = Phase.Development;
-    refresh();
-    await runPhaseForPlayer('onDevelopmentPhase', playerIndex);
-    await runPhaseDelay();
-    ctx.game.currentPhase = Phase.Upkeep;
-    refresh();
-    await runPhaseForPlayer('onUpkeepPhase', playerIndex);
-    await runPhaseDelay();
-    ctx.game.currentPhase = Phase.Main;
     setMainApStart(ctx.activePlayer.ap);
     updateMainPhaseStep(ctx.activePlayer.ap);
     refresh();
   }
 
   async function handleEndTurn() {
-    if (ctx.game.currentPhase !== Phase.Main) return;
+    const phaseDef = ctx.phases[ctx.game.phaseIndex];
+    if (!phaseDef?.action) return;
     if (ctx.activePlayer.ap > 0) return;
-    const last = ctx.game.currentPlayerIndex === ctx.game.players.length - 1;
-    if (last) {
-      ctx.game.turn += 1;
-      await startTurn(0);
-    } else {
-      await startTurn(ctx.game.currentPlayerIndex + 1);
-    }
+    advance(ctx);
+    await runUntilActionPhase();
   }
 
   useEffect(() => {
-    void startTurn(0);
+    void runUntilActionPhase();
   }, []);
 
   useEffect(() => {
-    if (ctx.game.currentPhase === Phase.Main) updateMainPhaseStep();
+    if (isActionPhase) updateMainPhaseStep();
   }, [ctx.game.currentPhase, ctx.activePlayer.ap]);
 
   return (
@@ -816,7 +701,7 @@ export default function Game({
             </div>
           </section>
           <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative">
-            {ctx.game.currentPhase !== Phase.Main && (
+            {!isActionPhase && (
               <div className="absolute inset-0 bg-gray-200/60 dark:bg-gray-900/60 rounded pointer-events-none" />
             )}
             <div className="flex items-center justify-between mb-2">
@@ -842,17 +727,14 @@ export default function Game({
                   const summary = actionSummaries.get(action.id);
                   const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
                   const enabled =
-                    canPay &&
-                    meetsReq &&
-                    ctx.game.currentPhase === Phase.Main &&
-                    implemented;
+                    canPay && meetsReq && isActionPhase && implemented;
                   const title = !implemented
                     ? 'Not implemented yet'
                     : !meetsReq
                       ? requirements.join(', ')
                       : !canPay
                         ? 'Cannot pay costs'
-                        : ctx.game.currentPhase !== Phase.Main
+                        : !isActionPhase
                           ? 'Not in Main phase'
                           : undefined;
                   return (
@@ -935,15 +817,12 @@ export default function Game({
                           ] >= v,
                       );
                       const meetsReq = requirements.length === 0;
-                      const enabled =
-                        canPay &&
-                        meetsReq &&
-                        ctx.game.currentPhase === Phase.Main;
+                      const enabled = canPay && meetsReq && isActionPhase;
                       const title = !meetsReq
                         ? requirements.join(', ')
                         : !canPay
                           ? 'Cannot pay costs'
-                          : ctx.game.currentPhase !== Phase.Main
+                          : !isActionPhase
                             ? 'Not in Main phase'
                             : undefined;
                       const summary = describeContent(
@@ -1046,17 +925,14 @@ export default function Game({
                         );
                       const summary = developmentSummaries.get(d.id);
                       const implemented = (summary?.length ?? 0) > 0; // TODO: implement development effects
-                      const enabled =
-                        canPay &&
-                        ctx.game.currentPhase === Phase.Main &&
-                        implemented;
+                      const enabled = canPay && isActionPhase && implemented;
                       const title = !implemented
                         ? 'Not implemented yet'
                         : !hasDevelopLand
                           ? 'No land with free development slot'
                           : !canPay
                             ? 'Cannot pay costs'
-                            : ctx.game.currentPhase !== Phase.Main
+                            : !isActionPhase
                               ? 'Not in Main phase'
                               : undefined;
                       return (
@@ -1143,15 +1019,12 @@ export default function Game({
                       );
                       const summary = buildingSummaries.get(b.id);
                       const implemented = (summary?.length ?? 0) > 0; // TODO: implement building effects
-                      const enabled =
-                        canPay &&
-                        ctx.game.currentPhase === Phase.Main &&
-                        implemented;
+                      const enabled = canPay && isActionPhase && implemented;
                       const title = !implemented
                         ? 'Not implemented yet'
                         : !canPay
                           ? 'Cannot pay costs'
-                          : ctx.game.currentPhase !== Phase.Main
+                          : !isActionPhase
                             ? 'Not in Main phase'
                             : undefined;
                       return (
@@ -1206,15 +1079,10 @@ export default function Game({
         <section className="w-[30rem] sticky top-0 self-start flex flex-col gap-6">
           <section
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
-            onMouseEnter={() =>
-              ctx.game.currentPhase !== Phase.Main && setPaused(true)
-            }
+            onMouseEnter={() => !isActionPhase && setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             style={{
-              cursor:
-                phasePaused && ctx.game.currentPhase !== Phase.Main
-                  ? 'pause'
-                  : 'auto',
+              cursor: phasePaused && !isActionPhase ? 'pause' : 'auto',
               height: playerBoxHeight || undefined,
             }}
           >
@@ -1222,14 +1090,16 @@ export default function Game({
               Turn {ctx.game.turn} - {ctx.activePlayer.name}
             </h2>
             <div className="flex gap-4 mb-2">
-              {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
+              {ctx.phases.map((p) => (
                 <span
-                  key={p}
+                  key={p.id}
                   className={
-                    p === ctx.game.currentPhase ? 'font-semibold underline' : ''
+                    p.id === ctx.game.currentPhase
+                      ? 'font-semibold underline'
+                      : ''
                   }
                 >
-                  {p.charAt(0).toUpperCase() + p.slice(1)} Phase
+                  {p.id.charAt(0).toUpperCase() + p.id.slice(1)} Phase
                 </span>
               ))}
             </div>
@@ -1257,12 +1127,12 @@ export default function Game({
                 </li>
               ))}
             </ul>
-            {ctx.game.currentPhase !== Phase.Main && (
+            {!isActionPhase && (
               <div className="absolute top-2 right-2">
                 <TimerCircle progress={phaseTimer} paused={phasePaused} />
               </div>
             )}
-            {ctx.game.currentPhase === Phase.Main && (
+            {isActionPhase && (
               <div className="mt-2 text-right">
                 <button
                   className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"

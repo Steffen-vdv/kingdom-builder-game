@@ -4,8 +4,7 @@ import {
   performAction,
   createActionRegistry,
   Resource,
-  collectTriggerEffects,
-  runEffects,
+  advance,
 } from '../../src/index.ts';
 
 describe('resource:remove effect', () => {
@@ -24,7 +23,8 @@ describe('resource:remove effect', () => {
       ],
     });
     const ctx = createEngine({ actions });
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const before = ctx.activePlayer.gold;
     const actionDefinition = actions.get('pay_gold');
     const amount = actionDefinition.effects.find(
@@ -66,7 +66,8 @@ describe('resource:remove effect', () => {
       ],
     });
     const ctx = createEngine({ actions });
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
 
     let before = ctx.activePlayer.gold;
     let foundEffect = actions

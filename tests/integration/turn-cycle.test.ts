@@ -5,7 +5,7 @@ import {
   performAction,
   Resource,
   POPULATIONS,
-  DEVELOPMENTS,
+  PHASES,
   PopulationRole,
 } from '../../packages/engine/src/index.ts';
 import { getActionOutcome, simulateEffects } from './fixtures';
@@ -21,10 +21,8 @@ describe('Turn cycle integration', () => {
       ctx,
     );
     const apGain = councilDev.resources[Resource.ap] || 0;
-    const farmDev = simulateEffects(
-      DEVELOPMENTS.get('farm').onDevelopmentPhase || [],
-      ctx,
-    );
+    const incomeStep = PHASES[0]!.steps.find((s) => s.id === 'gain-income');
+    const farmDev = simulateEffects(incomeStep?.effects || [], ctx);
     const farmGold = farmDev.resources[Resource.gold] || 0;
     const councilUpkeep = simulateEffects(
       POPULATIONS.get(PopulationRole.Council).onUpkeepPhase || [],

@@ -1,5 +1,5 @@
 import { Registry } from '../registry';
-import { Resource, Stat } from '../state';
+import { Stat } from '../state';
 import { developmentSchema } from '../config/schema';
 import { development } from '../config/builders';
 import type { DevelopmentDef } from './defs';
@@ -9,16 +9,7 @@ export type { DevelopmentDef } from './defs';
 export function createDevelopmentRegistry() {
   const registry = new Registry<DevelopmentDef>(developmentSchema);
 
-  registry.add(
-    'farm',
-    development('farm', 'Farm')
-      .onDevelopmentPhase({
-        type: 'resource',
-        method: 'add',
-        params: { key: Resource.gold, amount: 2 },
-      })
-      .build(),
-  );
+  registry.add('farm', development('farm', 'Farm').build());
 
   registry.add(
     'house',

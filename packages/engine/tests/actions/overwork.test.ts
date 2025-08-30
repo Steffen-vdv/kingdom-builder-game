@@ -4,8 +4,7 @@ import {
   performAction,
   Resource,
   EVALUATORS,
-  collectTriggerEffects,
-  runEffects,
+  advance,
 } from '../../src';
 import type { EffectDef } from '../../src/effects';
 import type { EvaluatorDef } from '../../src/evaluators';
@@ -36,7 +35,8 @@ function getOverworkExpectations(ctx: EngineContext) {
 describe('Overwork action', () => {
   it('grants gold and loses happiness for each Farm', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const goldBefore = ctx.activePlayer.gold;
     const hapBefore = ctx.activePlayer.happiness;
     const expected = getOverworkExpectations(ctx);

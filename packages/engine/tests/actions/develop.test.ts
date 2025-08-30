@@ -7,7 +7,7 @@ import {
   PassiveManager,
   getActionCosts,
   type ResourceKey,
-  collectTriggerEffects,
+  advance,
   runEffects,
 } from '../../src/index.ts';
 import { PlayerState, Land, GameState } from '../../src/state/index.ts';
@@ -74,7 +74,8 @@ function expectState(actual: PlayerState, expected: PlayerState) {
 describe('Develop action', () => {
   it('places a Farm applying its configured effects', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
     const expected = simulateBuild(ctx, 'farm', land.id);
@@ -86,7 +87,8 @@ describe('Develop action', () => {
 
   it('places a House applying its configured effects', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
     const expected = simulateBuild(ctx, 'house', land.id);
@@ -98,7 +100,8 @@ describe('Develop action', () => {
 
   it('places an Outpost applying its configured effects', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
     const expected = simulateBuild(ctx, 'outpost', land.id);
@@ -110,7 +113,8 @@ describe('Develop action', () => {
 
   it('applies development effects and cleans up after attack', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const land = ctx.activePlayer.lands[1];
 
     const expectedBuild = simulateBuild(ctx, 'watchtower', land.id);
@@ -128,7 +132,8 @@ describe('Develop action', () => {
 
   it('removing a development reverts its on-build effects', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const land = ctx.activePlayer.lands[1];
 
     const def = ctx.developments.get('house');

@@ -6,7 +6,7 @@ import {
   PopulationRole,
   runEffects,
   EVALUATORS,
-  collectTriggerEffects,
+  advance,
 } from '../../src';
 import type { EffectDef } from '../../src/effects';
 import type { EvaluatorDef } from '../../src/evaluators';
@@ -37,7 +37,8 @@ function getTaxExpectations(ctx: EngineContext) {
 describe('Tax action', () => {
   it('grants gold and loses happiness for each population', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     runEffects(
       [
         {

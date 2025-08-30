@@ -4,15 +4,15 @@ import {
   performAction,
   Resource,
   getActionCosts,
-  collectTriggerEffects,
   runEffects,
+  advance,
 } from '../../src/index.ts';
-import { runEffects } from '../../src/effects/index.ts';
 
 describe('Build action', () => {
   it('rejects when gold is insufficient', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const cost = getActionCosts('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;
     expect(() => performAction('build', ctx, { id: 'town_charter' })).toThrow(
@@ -22,7 +22,8 @@ describe('Build action', () => {
 
   it('adds Town Charter modifying Expand until removed', () => {
     const ctx = createEngine();
-    runEffects(collectTriggerEffects('onDevelopmentPhase', ctx), ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
 
     const baseCost = getActionCosts('expand', ctx);
     performAction('build', ctx, { id: 'town_charter' });
