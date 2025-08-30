@@ -733,11 +733,11 @@ export default function Game({
                 const bgClass =
                   i === 0
                     ? isActive
-                      ? 'bg-blue-200 dark:bg-blue-800 pr-6'
-                      : 'bg-blue-300 dark:bg-blue-900 pr-6'
+                      ? 'bg-[#1f3b99] text-white pr-6'
+                      : 'bg-[#11235f] text-white pr-6'
                     : isActive
-                      ? 'bg-red-200 dark:bg-red-800 pl-6'
-                      : 'bg-red-300 dark:bg-red-900 pl-6';
+                      ? 'bg-[#813939] text-white pl-6'
+                      : 'bg-[#632b2b] text-white pl-6';
                 return (
                   <PlayerPanel
                     key={p.id}
