@@ -14,12 +14,16 @@ export type RequirementConfig = z.infer<typeof requirementSchema>;
 // Basic schemas
 const costBagSchema = z
   .object({
-    [Resource.gold]: z.number().optional(),
-    [Resource.ap]: z.number().optional(),
-    [Resource.happiness]: z.number().optional(),
-    [Resource.castleHP]: z.number().optional(),
+    [Resource.gold]: z.number(),
+    [Resource.ap]: z.number(),
+    [Resource.happiness]: z.number(),
+    [Resource.castleHP]: z.number(),
   })
-  .strict();
+  .partial()
+  .strict()
+  .transform((obj) =>
+    Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)),
+  );
 
 const evaluatorSchema = z.object({
   type: z.string(),
