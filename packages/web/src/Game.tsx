@@ -360,8 +360,8 @@ function GameInner({
                 </span>
               )}
             </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-4 gap-2">
+            <div className="space-y-3">
+              <div className="grid grid-cols-4 gap-2 auto-rows-fr">
                 {otherActions.map((action) => {
                   const costs = getActionCosts(action.id, ctx);
                   const requirements = getActionRequirements(
@@ -389,8 +389,10 @@ function GameInner({
                   return (
                     <button
                       key={action.id}
-                      className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                        enabled ? '' : 'opacity-50 cursor-not-allowed'
+                      className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
+                        enabled
+                          ? 'hoverable cursor-pointer'
+                          : 'opacity-50 cursor-not-allowed'
                       }`}
                       title={title}
                       onClick={() => enabled && handlePerform(action)}
@@ -445,7 +447,7 @@ function GameInner({
                     {actionInfo['raise_pop']?.icon ?? ''}{' '}
                     {actionInfo['raise_pop']?.label ?? ''}
                   </h3>
-                  <div className="grid grid-cols-3 gap-2 mt-1">
+                  <div className="grid grid-cols-3 gap-2 mt-1 auto-rows-fr">
                     {[
                       PopulationRole.Council,
                       PopulationRole.Commander,
@@ -494,8 +496,10 @@ function GameInner({
                       return (
                         <button
                           key={role}
-                          className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled ? '' : 'opacity-50 cursor-not-allowed'
+                          className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
+                            enabled
+                              ? 'hoverable cursor-pointer'
+                              : 'opacity-50 cursor-not-allowed'
                           }`}
                           title={title}
                           onClick={() =>
@@ -549,7 +553,7 @@ function GameInner({
                     {actionInfo['develop']?.icon ?? ''}{' '}
                     {actionInfo['develop']?.label ?? ''}
                   </h3>
-                  <div className="grid grid-cols-4 gap-2 mt-1">
+                  <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
                     {sortedDevelopments.map((d) => {
                       const landIdForCost = ctx.activePlayer.lands[0]
                         ?.id as string;
@@ -581,8 +585,10 @@ function GameInner({
                       return (
                         <button
                           key={d.id}
-                          className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled ? '' : 'opacity-50 cursor-not-allowed'
+                          className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
+                            enabled
+                              ? 'hoverable cursor-pointer'
+                              : 'opacity-50 cursor-not-allowed'
                           }`}
                           title={title}
                           onClick={() => {
@@ -653,7 +659,7 @@ function GameInner({
                     {actionInfo['build']?.icon ?? ''}{' '}
                     {actionInfo['build']?.label ?? ''}
                   </h3>
-                  <div className="grid grid-cols-4 gap-2 mt-1">
+                  <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
                     {buildingOptions.map((b) => {
                       const costs = getActionCosts('build', ctx, { id: b.id });
                       const requirements: string[] = [];
@@ -674,8 +680,10 @@ function GameInner({
                       return (
                         <button
                           key={b.id}
-                          className={`relative border p-3 flex flex-col items-start gap-2 h-full transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help ${
-                            enabled ? '' : 'opacity-50 cursor-not-allowed'
+                          className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
+                            enabled
+                              ? 'hoverable cursor-pointer'
+                              : 'opacity-50 cursor-not-allowed'
                           }`}
                           title={title}
                           onClick={() =>
