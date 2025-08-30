@@ -1,7 +1,7 @@
 import React from 'react';
 import { Resource, RESOURCES } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/engine';
-import type { Summary } from './translation';
+import type { Summary } from './content';
 
 export function renderSummary(summary: Summary | undefined): React.ReactNode {
   return summary?.map((e, i) =>
