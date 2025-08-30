@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
   performAction,
   createActionRegistry,
   Resource,
+  advance,
 } from '../../src/index.ts';
 
 describe('resource:add effect', () => {
@@ -23,7 +23,8 @@ describe('resource:add effect', () => {
       ],
     });
     const ctx = createEngine({ actions });
-    runDevelopment(ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const before = ctx.activePlayer.gold;
     const actionDefinition = actions.get('grant_gold');
     const amount = actionDefinition.effects.find(
@@ -65,7 +66,8 @@ describe('resource:add effect', () => {
       ],
     });
     const ctx = createEngine({ actions });
-    runDevelopment(ctx);
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
 
     let before = ctx.activePlayer.gold;
     let foundEffect = actions

@@ -5,6 +5,7 @@ import type { ActionDef } from './content/actions';
 import type { BuildingDef } from './content/buildings';
 import type { DevelopmentDef } from './content/developments';
 import type { PopulationDef } from './content/populations';
+import type { PhaseDef } from './content/phases';
 
 export class EngineContext {
   constructor(
@@ -15,6 +16,7 @@ export class EngineContext {
     public developments: Registry<DevelopmentDef>,
     public populations: Registry<PopulationDef>,
     public passives: PassiveManager,
+    public phases: PhaseDef[],
   ) {}
   get activePlayer() {
     return this.game.active;

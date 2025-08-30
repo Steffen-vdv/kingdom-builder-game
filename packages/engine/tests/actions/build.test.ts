@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
   performAction,
   Resource,
   getActionCosts,
+  runEffects,
+  advance,
 } from '../../src/index.ts';
-import { runEffects } from '../../src/effects/index.ts';
 
 describe('Build action', () => {
   it('rejects when gold is insufficient', () => {
     const ctx = createEngine();
-    runDevelopment(ctx);
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const cost = getActionCosts('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;
     expect(() => performAction('build', ctx, { id: 'town_charter' })).toThrow(
@@ -21,7 +21,7 @@ describe('Build action', () => {
 
   it('adds Town Charter modifying Expand until removed', () => {
     const ctx = createEngine();
-    runDevelopment(ctx);
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
 
     const baseCost = getActionCosts('expand', ctx);
     performAction('build', ctx, { id: 'town_charter' });

@@ -122,7 +122,10 @@ export class PlayerState {
 export class GameState {
   turn = 1;
   currentPlayerIndex = 0; // multi-player friendly
-  currentPhase: PhaseId = Phase.Development;
+  currentPhase = '';
+  currentStep = '';
+  phaseIndex = 0;
+  stepIndex = 0;
   players: PlayerState[];
   constructor(aName = 'Player A', bName = 'Player B') {
     this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];

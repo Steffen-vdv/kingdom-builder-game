@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
   performAction,
   Resource,
   PopulationRole,
   runEffects,
   EVALUATORS,
+  advance,
 } from '../../src';
 import type { EffectDef } from '../../src/effects';
 import type { EvaluatorDef } from '../../src/evaluators';
@@ -37,7 +37,7 @@ function getTaxExpectations(ctx: EngineContext) {
 describe('Tax action', () => {
   it('grants gold and loses happiness for each population', () => {
     const ctx = createEngine();
-    runDevelopment(ctx);
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     runEffects(
       [
         {

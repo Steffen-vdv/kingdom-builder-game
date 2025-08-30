@@ -30,6 +30,7 @@ import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
+import { PHASES, type PhaseDef } from './content/phases';
 import {
   validateGameConfig,
   type GameConfig,
@@ -205,14 +206,53 @@ export function performAction<T extends string>(
   ctx.passives.runResultMods(actionDefinition.id, ctx);
 }
 
-export function runDevelopment(ctx: EngineContext) {
-  ctx.game.currentPhase = Phase.Development;
-  runTrigger('onDevelopmentPhase', ctx);
+export interface AdvanceResult {
+  phase: string;
+  step: string;
+  effects: EffectDef[];
+  player: PlayerState;
 }
 
-export function runUpkeep(ctx: EngineContext) {
-  ctx.game.currentPhase = Phase.Upkeep;
-  runTrigger('onUpkeepPhase', ctx);
+export function advance(ctx: EngineContext): AdvanceResult {
+  const phase = ctx.phases[ctx.game.phaseIndex]!;
+  const step = phase.steps[ctx.game.stepIndex];
+  const player = ctx.activePlayer;
+  const effects: EffectDef[] = [];
+  if (step?.triggers) {
+    for (const trig of step.triggers) {
+      const collected = collectTriggerEffects(trig, ctx, player);
+      if (collected.length) {
+        runEffects(collected, ctx);
+        effects.push(...collected);
+      }
+    }
+  }
+  if (step?.effects) {
+    runEffects(step.effects, ctx);
+    effects.push(...step.effects);
+  }
+
+  ctx.game.stepIndex += 1;
+  if (ctx.game.stepIndex >= phase.steps.length) {
+    ctx.game.stepIndex = 0;
+    ctx.game.phaseIndex += 1;
+    if (ctx.game.phaseIndex >= ctx.phases.length) {
+      ctx.game.phaseIndex = 0;
+      if (ctx.game.currentPlayerIndex === ctx.game.players.length - 1) {
+        ctx.game.currentPlayerIndex = 0;
+        ctx.game.turn += 1;
+      } else {
+        ctx.game.currentPlayerIndex += 1;
+      }
+    }
+  }
+
+  const nextPhase = ctx.phases[ctx.game.phaseIndex]!;
+  const nextStep = nextPhase.steps[ctx.game.stepIndex];
+  ctx.game.currentPhase = nextPhase.id;
+  ctx.game.currentStep = nextStep ? nextStep.id : '';
+
+  return { phase: phase.id, step: step?.id || '', effects, player };
 }
 
 export function resolveAttack(
@@ -264,6 +304,7 @@ export function createEngine(overrides?: {
   populations?: Registry<PopulationDef>;
   rules?: RuleSet;
   config?: GameConfig;
+  phases?: PhaseDef[];
 }) {
   registerCoreEffects();
   registerCoreEvaluators();
@@ -279,6 +320,7 @@ export function createEngine(overrides?: {
   let developments = overrides?.developments;
   let populations = overrides?.populations;
   let start = GAME_START;
+  let phases = overrides?.phases || PHASES;
 
   if (overrides?.config) {
     const config = validateGameConfig(overrides.config);
@@ -312,6 +354,7 @@ export function createEngine(overrides?: {
   buildings = buildings || BUILDINGS;
   developments = developments || DEVELOPMENTS;
   populations = populations || POPULATIONS;
+  phases = phases || PHASES;
 
   const ctx = new EngineContext(
     game,
@@ -321,6 +364,7 @@ export function createEngine(overrides?: {
     developments,
     populations,
     passives,
+    phases,
   );
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;
@@ -328,6 +372,8 @@ export function createEngine(overrides?: {
   applyPlayerStart(playerA, start.player, rules);
   applyPlayerStart(playerB, start.player, rules);
   ctx.game.currentPlayerIndex = 0;
+  ctx.game.currentPhase = phases[0]?.id || '';
+  ctx.game.currentStep = phases[0]?.steps[0]?.id || '';
 
   return ctx;
 }
@@ -347,6 +393,7 @@ export {
   Services,
   PassiveManager,
   DefaultRules,
+  PHASES,
 };
 
 export type { RuleSet, ResourceKey };

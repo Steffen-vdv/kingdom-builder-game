@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
   performAction,
   Resource,
   createActionRegistry,
   getActionCosts,
   type EngineContext,
+  advance,
 } from '../../src/index.ts';
 
 function getExpandExpectations(ctx: EngineContext) {
@@ -43,7 +43,7 @@ describe('Action configuration overrides', () => {
       },
     ];
     const ctx = createEngine({ actions });
-    runDevelopment(ctx);
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
     const goldBefore = ctx.activePlayer.gold;
     const landsBefore = ctx.activePlayer.lands.length;
     const hapBefore = ctx.activePlayer.happiness;

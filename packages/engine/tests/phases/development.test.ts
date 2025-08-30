@@ -1,60 +1,66 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runDevelopment,
+  advance,
   PopulationRole,
   Stat,
   Resource,
-  POPULATIONS,
-  DEVELOPMENTS,
+  PHASES,
 } from '../../src';
 
-const council = POPULATIONS.get(PopulationRole.Council);
-const councilApGain = Number(
-  council.onDevelopmentPhase?.find(
-    (effect) =>
-      effect.type === 'resource' &&
-      effect.method === 'add' &&
-      effect.params.key === Resource.ap,
-  )?.params.amount ?? 0,
-);
-
-const farm = DEVELOPMENTS.get('farm');
+const devPhase = PHASES.find((p) => p.id === 'development')!;
+const incomeStep = devPhase.steps.find((s) => s.id === 'gain-income');
 const farmGoldGain = Number(
-  farm.onDevelopmentPhase?.find(
-    (effect) =>
-      effect.type === 'resource' &&
-      effect.method === 'add' &&
-      effect.params.key === Resource.gold,
+  incomeStep?.effects?.[0]?.effects?.find(
+    (e) =>
+      e.type === 'resource' &&
+      e.method === 'add' &&
+      (e as { params: { key: string } }).params.key === Resource.gold,
   )?.params.amount ?? 0,
 );
 
+const apStep = devPhase.steps.find((s) => s.id === 'gain-ap');
+const councilApGain = Number(
+  apStep?.effects?.[0]?.effects?.find(
+    (e) =>
+      e.type === 'resource' &&
+      e.method === 'add' &&
+      (e as { params: { key: string } }).params.key === Resource.ap,
+  )?.params.amount ?? 0,
+);
+
+const raiseStep = devPhase.steps.find((s) => s.id === 'raise-strength');
 const commanderPct = Number(
-  POPULATIONS.get(PopulationRole.Commander).onDevelopmentPhase?.find(
-    (effect) =>
-      effect.type === 'stat' &&
-      effect.method === 'add_pct' &&
-      effect.params.key === Stat.armyStrength,
-  )?.params.percent ?? 0,
+  raiseStep?.effects
+    ?.find((e) => e.evaluator?.params?.role === PopulationRole.Commander)
+    ?.effects?.find(
+      (eff) =>
+        eff.type === 'stat' &&
+        eff.method === 'add_pct' &&
+        eff.params.key === Stat.armyStrength,
+    )?.params.percent ?? 0,
 );
 const fortifierPct = Number(
-  POPULATIONS.get(PopulationRole.Fortifier).onDevelopmentPhase?.find(
-    (effect) =>
-      effect.type === 'stat' &&
-      effect.method === 'add_pct' &&
-      effect.params.key === Stat.fortificationStrength,
-  )?.params.percent ?? 0,
+  raiseStep?.effects
+    ?.find((e) => e.evaluator?.params?.role === PopulationRole.Fortifier)
+    ?.effects?.find(
+      (eff) =>
+        eff.type === 'stat' &&
+        eff.method === 'add_pct' &&
+        eff.params.key === Stat.fortificationStrength,
+    )?.params.percent ?? 0,
 );
 
 describe('Development phase', () => {
   it('triggers population and development effects', () => {
     const ctx = createEngine();
-    const apBefore = ctx.activePlayer.ap;
-    const goldBefore = ctx.activePlayer.gold;
-    runDevelopment(ctx);
-    const councils = ctx.activePlayer.population[PopulationRole.Council];
-    expect(ctx.activePlayer.ap).toBe(apBefore + councilApGain * councils);
-    expect(ctx.activePlayer.gold).toBe(goldBefore + farmGoldGain);
+    const player = ctx.activePlayer;
+    const apBefore = player.ap;
+    const goldBefore = player.gold;
+    while (ctx.game.currentPhase === 'development') advance(ctx);
+    const councils = player.population[PopulationRole.Council];
+    expect(player.ap).toBe(apBefore + councilApGain * councils);
+    expect(player.gold).toBe(goldBefore + farmGoldGain);
   });
 
   it('grows commander and fortifier stats', () => {
@@ -63,12 +69,11 @@ describe('Development phase', () => {
     ctx.activePlayer.population[PopulationRole.Fortifier] = 1;
     ctx.activePlayer.stats[Stat.armyStrength] = 8;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
-    runDevelopment(ctx);
+    const player = ctx.activePlayer;
+    while (ctx.game.currentPhase === 'development') advance(ctx);
     const expectedArmy = 8 + 8 * (commanderPct / 100);
     const expectedFort = 4 + 4 * (fortifierPct / 100);
-    expect(ctx.activePlayer.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
-    expect(ctx.activePlayer.stats[Stat.fortificationStrength]).toBeCloseTo(
-      expectedFort,
-    );
+    expect(player.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
+    expect(player.stats[Stat.fortificationStrength]).toBeCloseTo(expectedFort);
   });
 });

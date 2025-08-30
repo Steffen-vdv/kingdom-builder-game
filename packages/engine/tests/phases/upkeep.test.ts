@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEngine,
-  runUpkeep,
+  advance,
   PopulationRole,
   Resource,
   POPULATIONS,
+  PHASES,
 } from '../../src';
 
 const councilUpkeep = Number(
@@ -35,24 +36,32 @@ const fortifierUpkeep = Number(
 describe('Upkeep phase', () => {
   it('charges gold per population role', () => {
     const ctx = createEngine();
+    ctx.game.phaseIndex = 1;
+    ctx.game.currentPhase = PHASES[1]!.id;
+    ctx.game.currentStep = PHASES[1]!.steps[0]!.id;
     ctx.activePlayer.population[PopulationRole.Commander] = 1;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 1;
     const startGold = 5;
     ctx.activePlayer.gold = startGold;
     const councils = ctx.activePlayer.population[PopulationRole.Council];
-    runUpkeep(ctx);
+    const player = ctx.activePlayer;
+    advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
     const expectedGold =
       startGold -
       (councilUpkeep * councils + commanderUpkeep + fortifierUpkeep);
-    expect(ctx.activePlayer.gold).toBe(expectedGold);
+    expect(player.gold).toBe(expectedGold);
   });
 
   it('throws if upkeep cannot be paid', () => {
     const ctx = createEngine();
+    ctx.game.phaseIndex = 1;
+    ctx.game.currentPhase = PHASES[1]!.id;
+    ctx.game.currentStep = PHASES[1]!.steps[0]!.id;
     ctx.activePlayer.population[PopulationRole.Commander] = 1;
     const councils = ctx.activePlayer.population[PopulationRole.Council];
     const totalCost = councilUpkeep * councils + commanderUpkeep;
     ctx.activePlayer.gold = totalCost - 1;
-    expect(() => runUpkeep(ctx)).toThrow();
+    expect(() => advance(ctx)).toThrow();
   });
 });
