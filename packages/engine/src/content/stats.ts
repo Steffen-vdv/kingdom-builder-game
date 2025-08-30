@@ -11,7 +11,7 @@ export interface StatInfo {
 export const STATS: Record<StatKey, StatInfo> = {
   [Stat.maxPopulation]: {
     key: Stat.maxPopulation,
-    icon: '🏘️',
+    icon: '👥',
     label: 'Max Population',
     description:
       'Max Population determines how many subjects your kingdom can sustain. Expand infrastructure or build houses to increase it.',
