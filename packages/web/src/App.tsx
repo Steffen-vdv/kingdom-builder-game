@@ -58,7 +58,10 @@ export default function App() {
           Resources like Gold, Action Points, Happiness, and Castle Health are
           spent and gained throughout the game.
         </p>
-        <button className="border px-4 py-2" onClick={() => setScreen('menu')}>
+        <button
+          className="border px-4 py-2 hoverable cursor-pointer"
+          onClick={() => setScreen('menu')}
+        >
           Back to Start
         </button>
       </div>
@@ -77,23 +80,26 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col gap-4 items-center justify-center">
-      <h1 className="text-3xl font-bold">Kingdom Builder</h1>
-      <button
-        className="border px-4 py-2"
-        onClick={() => {
-          setGameKey((k) => k + 1);
-          setScreen('game');
-        }}
-      >
-        Start New Game
-      </button>
-      <button
-        className="border px-4 py-2"
-        onClick={() => setScreen('overview')}
-      >
-        Game Overview
-      </button>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-100 via-red-100 to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="flex flex-col gap-4 items-center justify-center p-8 rounded-lg shadow-lg bg-white dark:bg-gray-800">
+        <div className="text-6xl">🏰</div>
+        <h1 className="text-3xl font-bold">Kingdom Builder</h1>
+        <button
+          className="border px-4 py-2 hoverable cursor-pointer"
+          onClick={() => {
+            setGameKey((k) => k + 1);
+            setScreen('game');
+          }}
+        >
+          Start New Game
+        </button>
+        <button
+          className="border px-4 py-2 hoverable cursor-pointer"
+          onClick={() => setScreen('overview')}
+        >
+          Game Overview
+        </button>
+      </div>
     </div>
   );
 }
