@@ -56,26 +56,14 @@ export function createDevelopmentRegistry() {
         params: { key: Stat.fortificationStrength, amount: 2 },
       })
       .onBuild({
-        type: 'passive',
+        type: 'stat',
         method: 'add',
-        params: { id: 'watchtower_absorption_$landId' },
-        effects: [
-          {
-            type: 'stat',
-            method: 'add',
-            params: { key: Stat.absorption, amount: 0.5 },
-          },
-        ],
+        params: { key: Stat.absorption, amount: 0.5 },
       })
       .onAttackResolved({
         type: 'development',
         method: 'remove',
         params: { id: 'watchtower', landId: '$landId' },
-      })
-      .onAttackResolved({
-        type: 'passive',
-        method: 'remove',
-        params: { id: 'watchtower_absorption_$landId' },
       })
       .build(),
   );

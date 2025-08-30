@@ -56,7 +56,7 @@ function simulateBuild(ctx: EngineContext, id: string, landId: string) {
     landId,
     id,
   });
-  runEffects(effects, sim);
+  sim.passives.addPassive({ id: `${id}_${landId}`, effects }, sim);
   return sim;
 }
 
@@ -107,36 +107,50 @@ describe('Develop action', () => {
     expectState(ctx.activePlayer, expected.activePlayer);
   });
 
-  it('handles Watchtower effects and cleanup after attack', () => {
+  it('applies development effects and cleans up after attack', () => {
     const ctx = createEngine();
     runDevelopment(ctx);
     const land = ctx.activePlayer.lands[1];
-    const slotsBefore = land.slotsUsed;
-    const buildSim = simulateBuild(ctx, 'watchtower', land.id);
-    const expectedBuild = clonePlayer(buildSim.activePlayer);
+
+    const expectedBuild = simulateBuild(ctx, 'watchtower', land.id);
+    const expectedAfterAttack = simulateBuild(ctx, 'watchtower', land.id);
+    resolveAttack(expectedAfterAttack.activePlayer, 0, expectedAfterAttack);
+
     performAction('develop', ctx, { id: 'watchtower', landId: land.id });
     expect(land.developments).toContain('watchtower');
-    expect(land.slotsUsed).toBe(slotsBefore + 1);
-    expectState(ctx.activePlayer, expectedBuild);
+    expectState(ctx.activePlayer, expectedBuild.activePlayer);
 
-    const developmentDefinition = ctx.developments.get('watchtower');
-    const removalEffects = applyParamsToEffects(
-      developmentDefinition.onAttackResolved || [],
-      {
-        landId: land.id,
-        id: 'watchtower',
-      },
-    );
-    runEffects(removalEffects, buildSim);
     resolveAttack(ctx.activePlayer, 0, ctx);
-    expectState(ctx.activePlayer, buildSim.activePlayer);
-    const simLand = buildSim.activePlayer.lands.find(
-      (landState) => landState.id === land.id,
-    )!;
-    expect(land.developments).toEqual(simLand.developments);
-    expect(land.slotsUsed).toBe(simLand.slotsUsed);
-    expect(ctx.activePlayer.fortificationStrength).toBe(
-      expectedBuild.fortificationStrength,
+    expect(land.developments).not.toContain('watchtower');
+    expectState(ctx.activePlayer, expectedAfterAttack.activePlayer);
+  });
+
+  it('removing a development reverts its on-build effects', () => {
+    const ctx = createEngine();
+    runDevelopment(ctx);
+    const land = ctx.activePlayer.lands[1];
+
+    const def = ctx.developments.get('house');
+    const statEffect = def.onBuild.find((e) => e.type === 'stat') as {
+      params: { amount: number };
+    };
+    const amount = statEffect.params.amount;
+
+    const before = ctx.activePlayer.stats.maxPopulation;
+    performAction('develop', ctx, { id: 'house', landId: land.id });
+    expect(ctx.activePlayer.stats.maxPopulation).toBe(before + amount);
+
+    runEffects(
+      [
+        {
+          type: 'development',
+          method: 'remove',
+          params: { id: 'house', landId: land.id },
+        },
+      ],
+      ctx,
     );
+    expect(ctx.activePlayer.stats.maxPopulation).toBe(before);
+    expect(land.developments).not.toContain('house');
   });
 });

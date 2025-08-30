@@ -15,5 +15,6 @@ export const developmentRemove: EffectHandler = (effect, ctx, mult = 1) => {
     if (developmentIndex === -1) break;
     land.developments.splice(developmentIndex, 1);
     land.slotsUsed = Math.max(0, land.slotsUsed - 1);
+    ctx.passives.removePassive(`${id}_${landId}`, ctx);
   }
 };
