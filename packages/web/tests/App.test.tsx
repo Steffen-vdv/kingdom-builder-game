@@ -31,6 +31,11 @@ vi.mock('@kingdom-builder/engine', () => {
     collectTriggerEffects: () => [],
     getActionCosts: () => ({}),
     Phase: { Development: 'development', Upkeep: 'upkeep', Main: 'main' },
+    PHASES: [
+      { id: 'development', label: 'Development', icon: '🏗️', steps: [] },
+      { id: 'upkeep', label: 'Upkeep', icon: '🧹', steps: [] },
+      { id: 'main', label: 'Main', icon: '🎯', steps: [], action: true },
+    ],
     Resource: {
       gold: 'gold',
       ap: 'ap',

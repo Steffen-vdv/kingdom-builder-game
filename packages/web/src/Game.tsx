@@ -22,7 +22,6 @@ import {
   landIcon,
   slotIcon,
   buildingIcon,
-  phaseInfo,
 } from './icons';
 import {
   summarizeContent,
@@ -32,15 +31,6 @@ import {
   logContent,
   type Summary,
 } from './translation';
-
-const phaseTabs = {
-  development: {
-    icon: phaseInfo.onDevelopmentPhase.icon,
-    label: 'Development',
-  },
-  upkeep: { icon: phaseInfo.onUpkeepPhase.icon, label: 'Upkeep' },
-  main: { icon: phaseInfo.mainPhase.icon, label: 'Main' },
-} as const;
 
 interface Action {
   id: string;
@@ -438,8 +428,12 @@ export default function Game({
   const [phaseBoxHeight, setPhaseBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
   const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
+  const actionPhaseId = useMemo(
+    () => ctx.phases.find((p) => p.action)?.id,
+    [ctx],
+  );
   const actualActionPhase = ctx.phases[ctx.game.phaseIndex]?.action;
-  const isActionPhase = actualActionPhase && displayPhase === 'main';
+  const isActionPhase = actualActionPhase && displayPhase === actionPhaseId;
 
   useEffect(() => {
     const pEl = playerBoxRef.current;
@@ -638,30 +632,29 @@ export default function Game({
   async function runUntilActionPhase() {
     setPhaseSteps([]);
     setDisplayPhase(ctx.game.currentPhase);
-    let lastPhase = '';
+    let lastPhase = ctx.game.currentPhase;
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
       const before = snapshotPlayer(ctx.activePlayer);
       const { phase, step, player } = advance(ctx);
       setDisplayPhase(phase);
+      const phaseDef = ctx.phases.find((p) => p.id === phase)!;
       const after = snapshotPlayer(player);
       const changes = diffSnapshots(before, after, ctx);
       if (phase !== lastPhase) {
+        await runDelay(1500);
         setPhaseSteps([]);
+        setDisplayPhase(phase);
         lastPhase = phase;
       }
       if (changes.length) {
-        const info = phaseInfo[
-          `on${phase.charAt(0).toUpperCase() + phase.slice(1)}Phase` as keyof typeof phaseInfo
-        ] || { icon: '' };
         addLog(
           [
-            `${info.icon} ${phase.charAt(0).toUpperCase() + phase.slice(1)}:`,
+            `${phaseDef.icon} ${phaseDef.label}:`,
             ...changes.map((c) => `  ${c}`),
           ],
           player.name,
         );
       }
-      const phaseDef = ctx.phases.find((p) => p.id === phase)!;
       const stepDef = phaseDef.steps.find((s) => s.id === step);
       setPhaseSteps((prev) => [
         ...prev,
@@ -1146,7 +1139,6 @@ export default function Game({
           >
             <div className="flex mb-2 border-b">
               {ctx.phases.map((p) => {
-                const tab = phaseTabs[p.id as keyof typeof phaseTabs];
                 return (
                   <div
                     key={p.id}
@@ -1156,7 +1148,7 @@ export default function Game({
                         : 'border-transparent text-gray-500'
                     }`}
                   >
-                    {tab?.icon} {tab?.label}
+                    {p?.icon} {p?.label}
                   </div>
                 );
               })}

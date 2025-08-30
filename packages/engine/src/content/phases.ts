@@ -13,11 +13,15 @@ export interface PhaseDef {
   id: string;
   steps: StepDef[];
   action?: boolean;
+  label: string;
+  icon: string;
 }
 
 export const PHASES: PhaseDef[] = [
   {
     id: 'development',
+    label: 'Development',
+    icon: '🏗️',
     steps: [
       {
         id: 'resolve-dynamic-triggers',
@@ -95,6 +99,8 @@ export const PHASES: PhaseDef[] = [
   },
   {
     id: 'upkeep',
+    label: 'Upkeep',
+    icon: '🧹',
     steps: [
       {
         id: 'resolve-dynamic-triggers',
@@ -150,6 +156,8 @@ export const PHASES: PhaseDef[] = [
   },
   {
     id: 'main',
+    label: 'Main',
+    icon: '🎯',
     action: true,
     steps: [{ id: 'main', title: 'Main Phase' }],
   },
