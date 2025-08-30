@@ -419,7 +419,12 @@ export default function Game({
   const [phaseSteps, setPhaseSteps] = useState<
     {
       title: string;
-      items: { text: string; italic?: boolean; done?: boolean }[];
+      items: {
+        text: string;
+        italic?: boolean;
+        done?: boolean;
+        bold?: boolean;
+      }[];
       active: boolean;
     }[]
   >([]);
@@ -435,7 +440,12 @@ export default function Game({
       PhaseId,
       {
         title: string;
-        items: { text: string; italic?: boolean; done?: boolean }[];
+        items: {
+          text: string;
+          italic?: boolean;
+          done?: boolean;
+          bold?: boolean;
+        }[];
         active: boolean;
       }[]
     >
@@ -444,7 +454,12 @@ export default function Game({
       PhaseId,
       {
         title: string;
-        items: { text: string; italic?: boolean; done?: boolean }[];
+        items: {
+          text: string;
+          italic?: boolean;
+          done?: boolean;
+          bold?: boolean;
+        }[];
         active: boolean;
       }[]
     >,
@@ -615,7 +630,7 @@ export default function Game({
   }
 
   function runPhaseDelay() {
-    return runDelay(1500);
+    return runDelay(1000);
   }
 
   function runStepDelay() {
@@ -653,7 +668,12 @@ export default function Game({
         PhaseId,
         {
           title: string;
-          items: { text: string; italic?: boolean; done?: boolean }[];
+          items: {
+            text: string;
+            italic?: boolean;
+            done?: boolean;
+            bold?: boolean;
+          }[];
           active: boolean;
         }[]
       >,
@@ -662,6 +682,7 @@ export default function Game({
     setViewPhase(ctx.game.currentPhase as PhaseId);
     refresh();
     await nextFrame();
+    await runPhaseDelay();
 
     const tempHistory: Record<PhaseId, typeof phaseSteps> = {} as Record<
       PhaseId,
@@ -678,6 +699,7 @@ export default function Game({
       const title = `Step ${stepIndex + 1} - ${stepInfo.def.title}`;
       setPhaseSteps((prev) => [...prev, { title, items: [], active: true }]);
       await nextFrame();
+      await runStepDelay();
 
       const before = snapshotPlayer(ctx.activePlayer);
       runCurrentStep(ctx);
@@ -685,7 +707,7 @@ export default function Game({
       const changes = diffSnapshots(before, after, ctx);
       const items =
         changes.length > 0
-          ? changes.map((c) => ({ text: c }))
+          ? changes.map((c) => ({ text: c, bold: true }))
           : [{ text: 'No effect', italic: true }];
 
       setPhaseSteps((prev) => {
@@ -718,11 +740,14 @@ export default function Game({
         tempHistory[currentPhase] = stepsForHistory;
         stepsForHistory = [];
         currentPhase = ctx.game.currentPhase as PhaseId;
-        if (currentPhase === 'main') break;
-        await runPhaseDelay();
+        if (currentPhase === 'main') {
+          await runPhaseDelay();
+          break;
+        }
         setViewPhase(currentPhase);
         setPhaseSteps([]);
         await nextFrame();
+        await runPhaseDelay();
       }
     }
 
@@ -1178,7 +1203,12 @@ export default function Game({
                   <ul className="pl-4 list-disc">
                     {s.items.length > 0 ? (
                       s.items.map((it, j) => (
-                        <li key={j} className={it.italic ? 'italic' : ''}>
+                        <li
+                          key={j}
+                          className={`${it.italic ? 'italic' : ''} ${
+                            it.bold ? 'font-bold' : ''
+                          }`}
+                        >
                           {it.text}
                           {it.done && (
                             <span className="text-green-600 ml-1">✔️</span>
