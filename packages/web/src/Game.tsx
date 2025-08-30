@@ -874,9 +874,22 @@ function renderCosts(
   );
 }
 
-function TimerCircle({ progress }: { progress: number }) {
+function TimerCircle({
+  progress,
+  paused = false,
+}: {
+  progress: number;
+  paused?: boolean;
+}) {
   const radius = 12;
   const circumference = 2 * Math.PI * radius;
+  if (paused)
+    return (
+      <svg width={24} height={24} viewBox="0 0 24 24">
+        <rect x="6" y="4" width="4" height="16" fill="#10b981" />
+        <rect x="14" y="4" width="4" height="16" fill="#10b981" />
+      </svg>
+    );
   return (
     <svg width={24} height={24}>
       <circle
@@ -938,6 +951,9 @@ export default function Game({
   const [phasePaused, setPhasePaused] = useState(false);
   const phasePausedRef = useRef(false);
   const [mainApStart, setMainApStart] = useState(0);
+  const playerBoxRef = useRef<HTMLDivElement>(null);
+  const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
+  const phaseStepsRef = useRef<HTMLUListElement>(null);
 
   function setPaused(v: boolean) {
     phasePausedRef.current = v;
@@ -1025,6 +1041,22 @@ export default function Game({
     return map;
   }, [buildingOptions, ctx]);
 
+  useEffect(() => {
+    const el = playerBoxRef.current;
+    if (!el) return;
+    const update = () => setPlayerBoxHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const el = phaseStepsRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [phaseSteps]);
+
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.id === 'develop');
   const buildAction = actions.find((a) => a.id === 'build');
@@ -1032,18 +1064,6 @@ export default function Game({
   const otherActions = actions.filter(
     (a) => a.id !== 'develop' && a.id !== 'build' && a.id !== 'raise_pop',
   );
-
-  const phaseMeta = {
-    [Phase.Development]: {
-      icon: phaseInfo.onDevelopmentPhase.icon,
-      label: 'Development',
-    },
-    [Phase.Upkeep]: {
-      icon: phaseInfo.onUpkeepPhase.icon,
-      label: 'Upkeep',
-    },
-    [Phase.Main]: { icon: phaseInfo.mainPhase.icon, label: 'Main' },
-  } as const;
 
   function handlePerform(action: Action, params?: Record<string, unknown>) {
     const before = snapshotPlayer(ctx.activePlayer);
@@ -1099,12 +1119,13 @@ export default function Game({
 
   function updateMainPhaseStep(apStartOverride?: number) {
     const total = apStartOverride ?? mainApStart;
+    const spent = total - ctx.activePlayer.ap;
     setPhaseSteps([
       {
         title: 'Step 1 - Spend all AP',
         items: [
           {
-            text: `${resourceInfo[Resource.ap].icon} ${ctx.activePlayer.ap}/${total} remaining`,
+            text: `${resourceInfo[Resource.ap].icon} ${spent}/${total} spent`,
             done: ctx.activePlayer.ap === 0,
           },
         ],
@@ -1227,14 +1248,13 @@ export default function Game({
           };
           return next;
         });
-        await runStepDelay();
       }
+      await runStepDelay();
       setPhaseSteps((prev) => {
         const next = [...prev];
         next[i] = { ...next[i]!, active: false };
         return next;
       });
-      await runStepDelay();
     }
   }
 
@@ -1276,7 +1296,10 @@ export default function Game({
 
   return (
     <div className="p-4 flex gap-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
-      <div className="flex-1 space-y-6">
+      <div
+        className="flex-1 space-y-6"
+        style={{ maxWidth: 'calc(100% - 21rem)' }}
+      >
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-center flex-1">
             Kingdom Builder
@@ -1299,7 +1322,10 @@ export default function Game({
           )}
         </div>
 
-        <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow">
+        <section
+          ref={playerBoxRef}
+          className="border rounded p-4 bg-white dark:bg-gray-800 shadow"
+        >
           <div className="flex flex-col gap-4">
             {ctx.game.players.map((p) => (
               <PlayerPanel
@@ -1312,79 +1338,6 @@ export default function Game({
             ))}
           </div>
         </section>
-
-        <section
-          className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full max-w-md"
-          onMouseEnter={() =>
-            ctx.game.currentPhase !== Phase.Main && setPaused(true)
-          }
-          onMouseLeave={() => setPaused(false)}
-          style={{
-            cursor:
-              phasePaused && ctx.game.currentPhase !== Phase.Main
-                ? 'pause'
-                : 'auto',
-          }}
-        >
-          <h2 className="text-xl font-semibold mb-2">
-            Turn {ctx.game.turn} - {ctx.activePlayer.name}
-          </h2>
-          <div className="flex gap-4 mb-2">
-            {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
-              <span
-                key={p}
-                className={
-                  p === ctx.game.currentPhase ? 'font-semibold underline' : ''
-                }
-              >
-                {phaseMeta[p].icon} {phaseMeta[p].label} Phase
-              </span>
-            ))}
-          </div>
-          <ul className="text-sm text-left min-h-[1rem] space-y-1">
-            {phaseSteps.map((s, i) => (
-              <li key={i} className={s.active ? 'font-semibold' : ''}>
-                <div>{s.title}</div>
-                <ul className="pl-4 list-disc">
-                  {s.items.length > 0 ? (
-                    s.items.map((it, j) => (
-                      <li key={j} className={it.italic ? 'italic' : ''}>
-                        {it.text}
-                        {it.done && (
-                          <span className="text-green-600 ml-1">✔️</span>
-                        )}
-                      </li>
-                    ))
-                  ) : (
-                    <li>...</li>
-                  )}
-                </ul>
-              </li>
-            ))}
-          </ul>
-          {ctx.game.currentPhase !== Phase.Main && (
-            <div className="absolute top-2 right-2">
-              <TimerCircle progress={phaseTimer} />
-            </div>
-          )}
-          {ctx.game.currentPhase === Phase.Main && (
-            <div className="mt-2 text-right">
-              <button
-                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                disabled={phaseSteps.some((s) => s.active)}
-                onClick={() => void handleEndTurn()}
-              >
-                Next Turn
-              </button>
-            </div>
-          )}
-          {phasePaused && (
-            <div className="absolute inset-0 bg-white dark:bg-gray-900 bg-opacity-50 flex items-center justify-center text-sm">
-              Paused
-            </div>
-          )}
-        </section>
-
         <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-semibold">
@@ -1704,7 +1657,77 @@ export default function Game({
           </div>
         </section>
       </div>
-      <section className="w-96 sticky top-4 self-start flex flex-col gap-4">
+      <section className="w-80 sticky top-4 self-start flex flex-col gap-4">
+        <section
+          className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
+          onMouseEnter={() =>
+            ctx.game.currentPhase !== Phase.Main && setPaused(true)
+          }
+          onMouseLeave={() => setPaused(false)}
+          style={{
+            cursor:
+              phasePaused && ctx.game.currentPhase !== Phase.Main
+                ? 'pause'
+                : 'auto',
+            height: playerBoxHeight || undefined,
+          }}
+        >
+          <h2 className="text-xl font-semibold mb-2">
+            Turn {ctx.game.turn} - {ctx.activePlayer.name}
+          </h2>
+          <div className="flex gap-4 mb-2">
+            {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
+              <span
+                key={p}
+                className={
+                  p === ctx.game.currentPhase ? 'font-semibold underline' : ''
+                }
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)} Phase
+              </span>
+            ))}
+          </div>
+          <ul
+            ref={phaseStepsRef}
+            className="text-sm text-left space-y-1 overflow-y-scroll flex-1"
+          >
+            {phaseSteps.map((s, i) => (
+              <li key={i} className={s.active ? 'font-semibold' : ''}>
+                <div>{s.title}</div>
+                <ul className="pl-4 list-disc">
+                  {s.items.length > 0 ? (
+                    s.items.map((it, j) => (
+                      <li key={j} className={it.italic ? 'italic' : ''}>
+                        {it.text}
+                        {it.done && (
+                          <span className="text-green-600 ml-1">✔️</span>
+                        )}
+                      </li>
+                    ))
+                  ) : (
+                    <li>...</li>
+                  )}
+                </ul>
+              </li>
+            ))}
+          </ul>
+          {ctx.game.currentPhase !== Phase.Main && (
+            <div className="absolute top-2 right-2">
+              <TimerCircle progress={phaseTimer} paused={phasePaused} />
+            </div>
+          )}
+          {ctx.game.currentPhase === Phase.Main && (
+            <div className="mt-2 text-right">
+              <button
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={phaseSteps.some((s) => s.active)}
+                onClick={() => void handleEndTurn()}
+              >
+                Next Turn
+              </button>
+            </div>
+          )}
+        </section>
         <div className="border rounded p-4 overflow-y-auto max-h-80 bg-white dark:bg-gray-800 shadow">
           <h2 className="text-xl font-semibold mb-2">Log</h2>
           <ul className="mt-2 space-y-1">
