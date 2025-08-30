@@ -1,4 +1,5 @@
-import { actionInfo, modifierInfo, resourceInfo } from '../../../icons';
+import { resourceInfo } from '@kingdom-builder/engine';
+import { actionInfo, modifierInfo } from '../../../icons';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
   registerEffectFormatter,

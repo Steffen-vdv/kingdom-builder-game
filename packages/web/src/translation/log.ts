@@ -1,11 +1,6 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import {
-  resourceInfo,
-  statInfo,
-  developmentInfo,
-  landIcon,
-  buildingIcon,
-} from '../icons';
+import { resourceInfo, statInfo } from '@kingdom-builder/engine';
+import { developmentInfo, landIcon, buildingIcon } from '../icons';
 import type { Land } from './content';
 
 export interface PlayerSnapshot {
@@ -62,7 +57,7 @@ export function diffSnapshots(
     const b = before.stats[key] ?? 0;
     const a = after.stats[key] ?? 0;
     if (a !== b) {
-      const info = statInfo[key];
+      const info = statInfo[key as keyof typeof statInfo];
       const icon = info?.icon ? `${info.icon} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;

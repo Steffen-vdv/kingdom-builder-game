@@ -1,4 +1,4 @@
-import { resourceInfo } from '../../../icons';
+import { resourceInfo } from '@kingdom-builder/engine';
 import { gainOrLose, signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';
 

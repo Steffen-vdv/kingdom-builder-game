@@ -9,13 +9,13 @@ import {
   getActionRequirements,
   Resource,
   PopulationRole,
-} from '@kingdom-builder/engine';
-import type { EngineContext, ActionParams } from '@kingdom-builder/engine';
-import {
   resourceInfo,
   statInfo,
   populationInfo,
-  populationDescription,
+  populationOverview,
+} from '@kingdom-builder/engine';
+import type { EngineContext, ActionParams } from '@kingdom-builder/engine';
+import {
   actionInfo,
   developmentInfo,
   landIcon,
@@ -131,7 +131,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                 effects: [] as Summary,
                 requirements: [] as string[],
                 costs: {} as Record<string, number>,
-                description: populationDescription,
+                description: populationOverview,
               },
               e.currentTarget,
             )
@@ -145,10 +145,33 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
               {popDetails.map(({ role, count }, i) => (
                 <React.Fragment key={role}>
                   {i > 0 && ','}
-                  <span title={populationInfo[role]?.label}>
-                    {populationInfo[role]?.icon}
-                    {count}
-                  </span>
+                  {(() => {
+                    const info =
+                      populationInfo[role as keyof typeof populationInfo];
+                    return (
+                      <span
+                        title={info?.label}
+                        onMouseEnter={(e) =>
+                          handleHoverCard(
+                            {
+                              title: `${info?.icon ?? ''} ${
+                                info?.label ?? role
+                              }`,
+                              effects: [] as Summary,
+                              requirements: [] as string[],
+                              costs: {} as Record<string, number>,
+                              description: info?.description ?? '',
+                            },
+                            e.currentTarget,
+                          )
+                        }
+                        onMouseLeave={clearHoverCard}
+                      >
+                        {info?.icon}
+                        {count}
+                      </span>
+                    );
+                  })()}
                 </React.Fragment>
               ))}
               {')'}
@@ -158,7 +181,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         {Object.entries(player.stats)
           .filter(([k]) => k !== 'maxPopulation')
           .map(([k, v]) => {
-            const info = statInfo[k];
+            const info = statInfo[k as keyof typeof statInfo];
             return (
               <span
                 key={k}
@@ -645,8 +668,8 @@ export default function Game({
       {
         title: 'Grow Strengths',
         classify: (change: string) =>
-          change.includes(statInfo['armyStrength']!.icon) ||
-          change.includes(statInfo['fortificationStrength']!.icon),
+          change.includes(statInfo['armyStrength'].icon) ||
+          change.includes(statInfo['fortificationStrength'].icon),
       },
     ] as const;
 
@@ -698,11 +721,11 @@ export default function Game({
       const fortifiers = player.population[PopulationRole.Fortifier] || 0;
       if (stepItems[2]!.length === 0) {
         stepItems[2]!.push({
-          text: `${populationInfo[PopulationRole.Commander]!.icon}${commanders} - No effect`,
+          text: `${populationInfo[PopulationRole.Commander].icon}${commanders} - No effect`,
           italic: true,
         });
         stepItems[2]!.push({
-          text: `${populationInfo[PopulationRole.Fortifier]!.icon}${fortifiers} - No effect`,
+          text: `${populationInfo[PopulationRole.Fortifier].icon}${fortifiers} - No effect`,
           italic: true,
         });
       }
@@ -963,13 +986,13 @@ export default function Game({
                       const first = summary[0];
                       if (first && typeof first !== 'string') {
                         first.items.push(
-                          `👥(${populationInfo[role]?.icon}) +1`,
+                          `👥(${populationInfo[role as keyof typeof populationInfo]?.icon}) +1`,
                         );
                       }
                       const shortFirst = shortSummary[0];
                       if (shortFirst && typeof shortFirst !== 'string') {
                         shortFirst.items.push(
-                          `👥(${populationInfo[role]?.icon}) +1`,
+                          `👥(${populationInfo[role as keyof typeof populationInfo]?.icon}) +1`,
                         );
                       }
                       return (
@@ -990,8 +1013,14 @@ export default function Game({
                             handleHoverCard(
                               {
                                 title: `${actionInfo.raise_pop.icon} Raise Population - ${
-                                  populationInfo[role]?.icon
-                                } ${populationInfo[role]?.label || ''}`,
+                                  populationInfo[
+                                    role as keyof typeof populationInfo
+                                  ]?.icon
+                                } ${
+                                  populationInfo[
+                                    role as keyof typeof populationInfo
+                                  ]?.label || ''
+                                }`,
                                 effects: summary,
                                 requirements,
                                 costs,
@@ -1002,8 +1031,16 @@ export default function Game({
                           onMouseLeave={clearHoverCard}
                         >
                           <span className="text-base font-medium">
-                            {populationInfo[role]?.icon}{' '}
-                            {populationInfo[role]?.label}
+                            {
+                              populationInfo[
+                                role as keyof typeof populationInfo
+                              ]?.icon
+                            }{' '}
+                            {
+                              populationInfo[
+                                role as keyof typeof populationInfo
+                              ]?.label
+                            }
                           </span>
                           <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                             {renderCosts(costs, ctx.activePlayer.resources)}

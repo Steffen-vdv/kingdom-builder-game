@@ -365,3 +365,6 @@ export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
 export type { GameConfig } from './config/schema';
+export { resourceInfo } from './info/resources';
+export { statInfo } from './info/stats';
+export { populationInfo, populationOverview } from './info/populations';
