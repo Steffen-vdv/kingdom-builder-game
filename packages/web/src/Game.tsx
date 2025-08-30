@@ -68,7 +68,7 @@ interface PlayerPanelProps {
       title: string;
       effects: Summary;
       requirements: string[];
-      costs: Record<string, number>;
+      costs?: Record<string, number>;
       description?: React.ReactNode;
       effectsTitle?: string;
     },
@@ -91,6 +91,31 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     return String(value);
   }
 
+  let populationEl: HTMLSpanElement | null = null;
+  const showPopulationCard = () =>
+    populationEl &&
+    handleHoverCard(
+      {
+        title: '👥 Population',
+        effects: [] as Summary,
+        requirements: [] as string[],
+        description: (
+          <>
+            <p>{populationOverview.intro}</p>
+            <ul className="list-disc pl-4 mt-1">
+              {populationOverview.roles.map((r) => (
+                <li key={r.key}>
+                  {r.icon} <span className="font-semibold">{r.label}:</span>{' '}
+                  {r.description}
+                </li>
+              ))}
+            </ul>
+          </>
+        ),
+      },
+      populationEl,
+    );
+
   return (
     <div className="space-y-1">
       <h3 className="font-semibold">{player.name}</h3>
@@ -107,7 +132,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                     title: `${info?.icon ?? ''} ${info?.label ?? k}`,
                     effects: [] as Summary,
                     requirements: [] as string[],
-                    costs: {} as Record<string, number>,
                     description: info?.description,
                   },
                   e.currentTarget,
@@ -121,32 +145,11 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
           );
         })}
         <span
+          ref={(el) => {
+            populationEl = el;
+          }}
           className="bar-item"
-          onMouseEnter={(e) =>
-            handleHoverCard(
-              {
-                title: '👥 Population',
-                effects: [] as Summary,
-                requirements: [] as string[],
-                costs: {} as Record<string, number>,
-                description: (
-                  <>
-                    <p>{populationOverview.intro}</p>
-                    <ul className="list-disc pl-4 mt-1">
-                      {populationOverview.roles.map((r) => (
-                        <li key={r.key}>
-                          {r.icon}{' '}
-                          <span className="font-semibold">{r.label}:</span>{' '}
-                          {r.description}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ),
-              },
-              e.currentTarget,
-            )
-          }
+          onMouseEnter={showPopulationCard}
           onMouseLeave={clearHoverCard}
         >
           👥{currentPop}/{player.maxPopulation}
@@ -170,13 +173,21 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                               }`,
                               effects: [] as Summary,
                               requirements: [] as string[],
-                              costs: {} as Record<string, number>,
                               description: info?.description,
                             },
                             e.currentTarget,
                           )
                         }
-                        onMouseLeave={clearHoverCard}
+                        onMouseLeave={(e) => {
+                          if (
+                            populationEl &&
+                            populationEl.contains(e.relatedTarget as Node)
+                          ) {
+                            showPopulationCard();
+                          } else {
+                            clearHoverCard();
+                          }
+                        }}
                       >
                         {info?.icon}
                         {count}
@@ -203,7 +214,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                       title: `${info?.icon ?? ''} ${info?.label ?? k}`,
                       effects: [] as Summary,
                       requirements: [] as string[],
-                      costs: {} as Record<string, number>,
                       description: info?.description,
                     },
                     e.currentTarget,
@@ -220,7 +230,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
       {player.lands.length > 0 && (
         <div className="grid grid-cols-4 gap-2 mt-2">
           {player.lands.map((land, idx) => {
-            let landEl: HTMLElement | null = null;
+            let landEl: HTMLDivElement | null = null;
             const showLandCard = () =>
               landEl &&
               handleHoverCard(
@@ -228,7 +238,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                   title: `${landIcon} Land`,
                   effects: describeContent('land', land, ctx),
                   requirements: [] as string[],
-                  costs: {} as Record<string, number>,
                   effectsTitle: 'Developments',
                 },
                 landEl,
@@ -236,9 +245,11 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
             return (
               <div
                 key={idx}
+                ref={(el) => {
+                  landEl = el;
+                }}
                 className="relative border p-2 text-center transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 hover:cursor-help"
-                onMouseEnter={(e) => {
-                  landEl = e.currentTarget;
+                onMouseEnter={() => {
                   showLandCard();
                 }}
                 onMouseLeave={clearHoverCard}
@@ -252,7 +263,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                       const title = `${
                         developmentInfo[devId]?.icon || ''
                       } ${name}`;
-                      const handleLeave = () => showLandCard();
                       return (
                         <span
                           key={i}
@@ -271,21 +281,26 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                                   },
                                 ),
                                 requirements: [] as string[],
-                                costs: {} as Record<string, number>,
                               },
                               e.currentTarget,
                             );
                           }}
                           onMouseLeave={(e) => {
                             e.stopPropagation();
-                            handleLeave();
+                            if (
+                              landEl &&
+                              landEl.contains(e.relatedTarget as Node)
+                            ) {
+                              showLandCard();
+                            } else {
+                              clearHoverCard();
+                            }
                           }}
                         >
                           {developmentInfo[devId]?.icon} {name}
                         </span>
                       );
                     }
-                    const handleLeave = () => showLandCard();
                     return (
                       <span
                         key={i}
@@ -298,14 +313,20 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                               effects: [] as Summary,
                               description: `Use ${actionInfo.develop.icon} Develop to build here`,
                               requirements: [] as string[],
-                              costs: {} as Record<string, number>,
                             },
                             e.currentTarget,
                           );
                         }}
                         onMouseLeave={(e) => {
                           e.stopPropagation();
-                          handleLeave();
+                          if (
+                            landEl &&
+                            landEl.contains(e.relatedTarget as Node)
+                          ) {
+                            showLandCard();
+                          } else {
+                            clearHoverCard();
+                          }
                         }}
                       >
                         {slotIcon}
@@ -335,7 +356,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                         installed: true,
                       }),
                       requirements: [] as string[],
-                      costs: {} as Record<string, number>,
                     },
                     e.currentTarget,
                   )
@@ -440,7 +460,7 @@ export default function Game({
     title: string;
     effects: Summary;
     requirements: string[];
-    costs: Record<string, number>;
+    costs?: Record<string, number>;
     description?: React.ReactNode;
     effectsTitle?: string;
     bgColor?: string;
@@ -484,7 +504,7 @@ export default function Game({
       title: string;
       effects: Summary;
       requirements: string[];
-      costs: Record<string, number>;
+      costs?: Record<string, number>;
       description?: React.ReactNode;
       effectsTitle?: string;
     },
@@ -1332,7 +1352,8 @@ export default function Game({
               <div className="font-semibold mb-2">
                 {hoverCard.title}
                 <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                  {renderCosts(hoverCard.costs, ctx.activePlayer.resources)}
+                  {hoverCard.costs !== undefined &&
+                    renderCosts(hoverCard.costs, ctx.activePlayer.resources)}
                 </span>
               </div>
               {hoverCard.requirements.length > 0 && (
