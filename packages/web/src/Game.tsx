@@ -716,7 +716,7 @@ export default function Game({
               <h2 className="text-xl font-semibold">
                 Actions (1 {RESOURCES[Resource.ap].icon} each)
               </h2>
-              {isActionPhase && (
+              {!isActionPhase && (
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   Not in Main phase
                 </span>
