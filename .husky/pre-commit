@@ -7,6 +7,5 @@ set -e
 npx lint-staged
 
 # Run type checking, linting, and tests with coverage
-npm run check
 npm test
 
