@@ -14,31 +14,24 @@ export function createBuildingRegistry() {
     building('town_charter', 'Town Charter')
       .cost(Resource.gold, 5)
       .onBuild({
-        type: 'passive',
+        type: 'cost_mod',
         method: 'add',
-        params: { id: 'town_charter' },
+        params: {
+          id: 'tc_expand_cost',
+          actionId: 'expand',
+          key: Resource.gold,
+          amount: 2,
+        },
+      })
+      .onBuild({
+        type: 'result_mod',
+        method: 'add',
+        params: { id: 'tc_expand_result', actionId: 'expand' },
         effects: [
           {
-            type: 'cost_mod',
+            type: 'resource',
             method: 'add',
-            params: {
-              id: 'tc_expand_cost',
-              actionId: 'expand',
-              key: Resource.gold,
-              amount: 2,
-            },
-          },
-          {
-            type: 'result_mod',
-            method: 'add',
-            params: { id: 'tc_expand_result', actionId: 'expand' },
-            effects: [
-              {
-                type: 'resource',
-                method: 'add',
-                params: { key: Resource.happiness, amount: 1 },
-              },
-            ],
+            params: { key: Resource.happiness, amount: 1 },
           },
         ],
       })

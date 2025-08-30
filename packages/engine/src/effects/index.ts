@@ -6,6 +6,7 @@ import { landAdd } from './land_add';
 import { resourceAdd } from './resource_add';
 import { resourceRemove } from './resource_remove';
 import { buildingAdd } from './building_add';
+import { buildingRemove } from './building_remove';
 import { statAdd } from './stat_add';
 import { statAddPct } from './stat_add_pct';
 import { statRemove } from './stat_remove';
@@ -44,6 +45,7 @@ export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
   registry.add('resource:add', resourceAdd);
   registry.add('resource:remove', resourceRemove);
   registry.add('building:add', buildingAdd);
+  registry.add('building:remove', buildingRemove);
   registry.add('stat:add', statAdd);
   registry.add('stat:add_pct', statAddPct);
   registry.add('stat:remove', statRemove);
@@ -78,6 +80,7 @@ export {
   resourceAdd,
   resourceRemove,
   buildingAdd,
+  buildingRemove,
   statAdd,
   statAddPct,
   statRemove,
