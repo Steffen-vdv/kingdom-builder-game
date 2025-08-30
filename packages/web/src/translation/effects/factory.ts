@@ -1,5 +1,5 @@
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
-import { developmentInfo } from '../../icons';
+// Effect and evaluator formatter registries drive translation lookups.
 
 export interface EffectFormatter {
   summarize?: (
@@ -13,6 +13,7 @@ export interface EffectFormatter {
 }
 
 const EFFECT_FORMATTERS = new Map<string, EffectFormatter>();
+const EVALUATOR_FORMATTERS = new Map<string, EvaluatorFormatter>();
 
 export function registerEffectFormatter(
   type: string,
@@ -20,6 +21,26 @@ export function registerEffectFormatter(
   formatter: EffectFormatter,
 ): void {
   EFFECT_FORMATTERS.set(`${type}:${method}`, formatter);
+}
+
+export interface EvaluatorFormatter {
+  summarize?: (
+    ev: { type: string; params: Record<string, unknown> },
+    sub: string[],
+    ctx: EngineContext,
+  ) => string[];
+  describe?: (
+    ev: { type: string; params: Record<string, unknown> },
+    sub: string[],
+    ctx: EngineContext,
+  ) => string[];
+}
+
+export function registerEvaluatorFormatter(
+  type: string,
+  formatter: EvaluatorFormatter,
+): void {
+  EVALUATOR_FORMATTERS.set(type, formatter);
 }
 
 function applyFormatter(
@@ -48,14 +69,12 @@ export function summarizeEffects(
         type: string;
         params: Record<string, unknown>;
       };
-      if (ev.type === 'development') {
-        const devParams = ev.params as Record<string, string>;
-        const devId = devParams['id']!;
-        const icon = developmentInfo[devId]?.icon || devId;
-        const sub = summarizeEffects(eff.effects, ctx);
-        sub.forEach((s) => parts.push(`${s} per ${icon}`));
+      const sub = summarizeEffects(eff.effects, ctx);
+      const handler = EVALUATOR_FORMATTERS.get(ev.type);
+      if (handler?.summarize) {
+        parts.push(...handler.summarize(ev, sub, ctx));
       } else {
-        parts.push(...summarizeEffects(eff.effects, ctx));
+        parts.push(...sub);
       }
       continue;
     }
@@ -75,18 +94,12 @@ export function describeEffects(
         type: string;
         params: Record<string, unknown>;
       };
-      if (ev.type === 'development') {
-        const devParams = ev.params as Record<string, string>;
-        const devId = devParams['id']!;
-        const info = developmentInfo[devId];
-        const sub = describeEffects(eff.effects, ctx);
-        sub.forEach((s) =>
-          parts.push(
-            `${s} for each ${info?.icon || ''}${info?.label || devId}`,
-          ),
-        );
+      const sub = describeEffects(eff.effects, ctx);
+      const handler = EVALUATOR_FORMATTERS.get(ev.type);
+      if (handler?.describe) {
+        parts.push(...handler.describe(ev, sub, ctx));
       } else {
-        parts.push(...describeEffects(eff.effects, ctx));
+        parts.push(...sub);
       }
       continue;
     }
