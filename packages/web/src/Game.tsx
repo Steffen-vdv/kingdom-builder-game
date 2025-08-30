@@ -318,6 +318,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     </div>
   );
 };
+/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 
 function renderCosts(
   costs: Record<string, number> | undefined,
@@ -412,7 +413,7 @@ export default function Game({
     effectsTitle?: string;
     bgClass?: string;
   } | null>(null);
-  const hoverTimeout = useRef<number | undefined>(undefined);
+  const hoverTimeout = useRef<number>();
   type PhaseStep = {
     title: string;
     items: { text: string; italic?: boolean; done?: boolean }[];
