@@ -14,15 +14,23 @@ import type {
 } from './state';
 import { Services, PassiveManager, DefaultRules } from './services';
 import type { CostBag, RuleSet } from './services';
-import { ACTIONS, ACTION_INFO } from './content/actions';
-import { BUILDINGS, BUILDING_INFO } from './content/buildings';
-import { DEVELOPMENTS, DEVELOPMENT_INFO } from './content/developments';
-import { POPULATIONS } from './content/populations';
-import type { PopulationDef } from './content/populations';
-import type { TriggerKey } from './content/defs';
-import type { ActionDef } from './content/actions';
-import type { BuildingDef } from './content/buildings';
-import type { DevelopmentDef } from './content/developments';
+import {
+  ACTIONS,
+  ACTION_INFO,
+  BUILDINGS,
+  BUILDING_INFO,
+  DEVELOPMENTS,
+  DEVELOPMENT_INFO,
+  POPULATIONS,
+  PHASES,
+  PHASE_INFO,
+  TRIGGER_INFO,
+  LAND_ICON,
+  SLOT_ICON,
+  MODIFIER_INFO,
+  GAME_START,
+} from '@kingdom-builder/contents';
+import type { PhaseDef } from './phases';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
 import type { EffectDef } from './effects';
@@ -30,10 +38,6 @@ import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
-import { PHASES, PHASE_INFO, type PhaseDef } from './content/phases';
-import { TRIGGER_INFO } from './content/triggers';
-import { LAND_ICON, SLOT_ICON } from './content/land';
-import { MODIFIER_INFO } from './content/modifiers';
 import {
   validateGameConfig,
   type GameConfig,
@@ -42,8 +46,16 @@ import {
   developmentSchema,
   populationSchema,
   type PlayerStartConfig,
+  type ActionConfig,
+  type BuildingConfig,
+  type DevelopmentConfig,
+  type PopulationConfig,
 } from './config/schema';
-import { GAME_START } from './content/game';
+type ActionDef = ActionConfig;
+type BuildingDef = BuildingConfig;
+type DevelopmentDef = DevelopmentConfig;
+type PopulationDef = PopulationConfig;
+type TriggerKey = string;
 
 function runTrigger(
   trigger: TriggerKey,
@@ -422,11 +434,15 @@ export {
 
 export type { RuleSet, ResourceKey };
 
-export { createActionRegistry } from './content/actions';
-export { createBuildingRegistry } from './content/buildings';
-export { createDevelopmentRegistry } from './content/developments';
-export { createPopulationRegistry } from './content/populations';
-
+export {
+  createActionRegistry,
+  createBuildingRegistry,
+  createDevelopmentRegistry,
+  createPopulationRegistry,
+  RESOURCES,
+  STATS,
+  POPULATION_ROLES,
+} from '@kingdom-builder/contents';
 export { registerCoreEffects, EffectRegistry, runEffects } from './effects';
 export type { EffectHandler, EffectDef } from './effects';
 export { applyParamsToEffects } from './utils';
@@ -436,9 +452,4 @@ export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
 export type { GameConfig } from './config/schema';
-export { RESOURCES, type ResourceInfo } from './content/resources';
-export { STATS, type StatInfo } from './content/stats';
-export {
-  POPULATION_ROLES,
-  type PopulationRoleInfo,
-} from './content/populationRoles';
+

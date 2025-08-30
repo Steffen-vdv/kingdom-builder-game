@@ -20,7 +20,10 @@
     "types": ["vitest", "node"],
     "baseUrl": ".",
     "paths": {
+      "@kingdom-builder/engine": ["packages/engine/src/index.ts"],
       "@kingdom-builder/engine/*": ["packages/engine/src/*"],
+      "@kingdom-builder/contents": ["packages/contents/src/index.ts"],
+      "@kingdom-builder/contents/*": ["packages/contents/src/*"],
       "@kingdom-builder/*": ["packages/*/src"]
     }
   }
