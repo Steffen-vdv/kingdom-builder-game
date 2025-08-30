@@ -19,6 +19,11 @@ export class EngineContext {
     public phases: PhaseDef[],
   ) {}
   recentResourceGains: { key: ResourceKey; amount: number }[] = [];
+  // Cache base values for stat:add_pct per turn/phase/step to ensure
+  // additive scaling when effects are evaluated multiple times in the
+  // same step (e.g. multiple leaders raising strength).
+  statAddPctBases: Record<string, number> = {};
+  statAddPctAccums: Record<string, number> = {};
   get activePlayer() {
     return this.game.active;
   }
