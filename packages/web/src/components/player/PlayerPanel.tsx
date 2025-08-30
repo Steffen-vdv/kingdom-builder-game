@@ -18,7 +18,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
   buildingDescriptions,
 }) => {
   return (
-    <div className={`h-full flex flex-col space-y-1 ${className}`}>
+    <div className={`player-panel h-full flex flex-col space-y-1 ${className}`}>
       <h3 className="font-semibold">{player.name}</h3>
       <div className="panel-card flex flex-wrap items-center gap-2 px-3 py-2 w-fit">
         <ResourceBar player={player} />
