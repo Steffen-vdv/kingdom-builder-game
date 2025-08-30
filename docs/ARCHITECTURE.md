@@ -51,6 +51,18 @@ in any effect, keeping behaviour entirely data‑driven.
 See the [evaluator registry README](../packages/engine/src/evaluators/README.md)
 for details on built-in handlers and registering custom ones.
 
+## Modifiers
+
+Some effects register temporary modifiers that adjust future costs or results.
+`cost-mod` handlers alter the cost of matching actions, while `result-mod`
+handlers tweak evaluated amounts after a step resolves. Each modifier is
+identified by an `id` and scoped to its owning player so multiple copies of the
+same building do not collide.
+
+Result modifiers may also supply an `evaluator` and target `step` to react to
+repeated events. The Mill uses this to grant +1 of whatever resource each Farm
+produces during the `gain-income` step.
+
 ## Registry Pattern
 
 Most subsystems rely on lightweight registries. A `Registry` maps string

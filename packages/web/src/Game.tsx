@@ -77,6 +77,7 @@ interface PlayerPanelProps {
   }) => void;
   clearHoverCard: () => void;
   className?: string;
+  buildingDescriptions: Map<string, Summary>;
 }
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
@@ -85,6 +86,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
   handleHoverCard,
   clearHoverCard,
   className = '',
+  buildingDescriptions,
 }) => {
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
@@ -107,7 +109,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     });
 
   return (
-    <div className={`space-y-1 h-full ${className}`}>
+    <div className={`flex flex-col space-y-1 ${className}`}>
       <h3 className="font-semibold">{player.name}</h3>
       <div className="flex flex-wrap items-center gap-2 border p-2 rounded w-fit">
         {Object.entries(player.resources).map(([k, v]) => {
@@ -297,9 +299,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
                 onMouseEnter={() =>
                   handleHoverCard({
                     title,
-                    effects: describeContent('building', b, ctx, {
-                      installed: true,
-                    }),
+                    effects: buildingDescriptions.get(b) ?? [],
                     requirements: [],
                     bgClass: 'bg-gray-100 dark:bg-gray-700',
                   })
@@ -424,9 +424,28 @@ export default function Game({
   const phasePausedRef = useRef(false);
   const [mainApStart, setMainApStart] = useState(0);
   const playerBoxRef = useRef<HTMLDivElement>(null);
+  const phaseBoxRef = useRef<HTMLDivElement>(null);
   const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
+  const [phaseBoxHeight, setPhaseBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
   const isActionPhase = ctx.phases[ctx.game.phaseIndex]?.action;
+
+  useEffect(() => {
+    const pEl = playerBoxRef.current;
+    const phEl = phaseBoxRef.current;
+    if (!pEl || !phEl) return;
+    const update = () => {
+      setPlayerBoxHeight(pEl.offsetHeight);
+      setPhaseBoxHeight(phEl.offsetHeight);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(pEl);
+    ro.observe(phEl);
+    return () => ro.disconnect();
+  }, []);
+
+  const sharedHeight = Math.max(playerBoxHeight, phaseBoxHeight, 275);
 
   function setPaused(v: boolean) {
     phasePausedRef.current = v;
@@ -519,16 +538,23 @@ export default function Game({
     );
     return map;
   }, [buildingOptions, ctx]);
-
-  useEffect(() => {
-    const el = playerBoxRef.current;
-    if (!el) return;
-    const update = () => setPlayerBoxHeight(el.offsetHeight);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  const buildingDescriptions = useMemo(() => {
+    const map = new Map<string, Summary>();
+    buildingOptions.forEach((b) =>
+      map.set(b.id, describeContent('building', b.id, ctx)),
+    );
+    return map;
+  }, [buildingOptions, ctx]);
+  const buildingInstalledDescriptions = useMemo(() => {
+    const map = new Map<string, Summary>();
+    buildingOptions.forEach((b) =>
+      map.set(
+        b.id,
+        describeContent('building', b.id, ctx, { installed: true }),
+      ),
+    );
+    return map;
+  }, [buildingOptions, ctx]);
 
   useEffect(() => {
     const el = phaseStepsRef.current;
@@ -690,8 +716,9 @@ export default function Game({
           <section
             ref={playerBoxRef}
             className="border rounded bg-white dark:bg-gray-800 shadow"
+            style={{ minHeight: sharedHeight }}
           >
-            <div className="flex items-stretch rounded overflow-hidden divide-x divide-gray-300">
+            <div className="flex items-stretch rounded overflow-hidden divide-x divide-gray-300 h-full">
               {ctx.game.players.map((p, i) => (
                 <PlayerPanel
                   key={p.id}
@@ -704,6 +731,7 @@ export default function Game({
                       ? 'bg-blue-50 dark:bg-blue-900/20 pr-6'
                       : 'bg-red-50 dark:bg-red-900/20 pl-6'
                   }`}
+                  buildingDescriptions={buildingInstalledDescriptions}
                 />
               ))}
             </div>
@@ -1045,7 +1073,7 @@ export default function Game({
                           onMouseEnter={() =>
                             handleHoverCard({
                               title: `${actionInfo.build.icon} Build - ${b.name}`,
-                              effects: describeContent('building', b.id, ctx),
+                              effects: buildingDescriptions.get(b.id) ?? [],
                               requirements,
                               costs,
                               ...(!implemented && {
@@ -1081,14 +1109,15 @@ export default function Game({
             </div>
           </section>
         </div>
-        <section className="w-[30rem] sticky top-0 self-start flex flex-col gap-6">
+        <section className="w-[30rem] self-start flex flex-col gap-6">
           <section
+            ref={phaseBoxRef}
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
             onMouseEnter={() => !isActionPhase && setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             style={{
               cursor: phasePaused && !isActionPhase ? 'pause' : 'auto',
-              height: playerBoxHeight || undefined,
+              minHeight: sharedHeight,
             }}
           >
             <h2 className="text-xl font-semibold mb-2">

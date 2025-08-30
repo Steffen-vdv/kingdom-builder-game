@@ -115,7 +115,7 @@
 ### 3.11 Build 🏛️ (each at most once)
 
 - **5🪙 — Town Charter**: 🌱Expand costs +2🪙; grants +1 extra 😊
-- **7🪙 — Mill**: each 🌾 +1🪙 at 💹; Overwork +1🪙/🌾
+- **7🪙 — Mill**: whenever you gain resources from a 🌾, gain +1 more of that resource
 - **8🪙 — Raider’s Guild**: Plunder 50%
 - **10🪙 — 🚜Plow Workshop**: gain 🚜Plow
 - **10🪙 — Market**: Tax +1🪙/👥

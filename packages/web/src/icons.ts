@@ -10,6 +10,7 @@ export const actionInfo = {
   hold_festival: { icon: '🎉' },
   plow: { icon: '🚜' },
   build: { icon: '🏛️' },
+  'gain-income': { icon: '💰', label: 'Gain Income' },
 } as const;
 
 export const developmentInfo: Record<string, { icon: string; label: string }> =
