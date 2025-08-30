@@ -116,7 +116,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
           return (
             <span
               key={k}
-              className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+              className="bar-item gap-1 transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
               onMouseEnter={() =>
                 handleHoverCard({
                   title: `${info.icon} ${info.label}`,
@@ -135,7 +135,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         })}
         <div className="h-4 border-l" />
         <span
-          className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+          className="bar-item gap-1 transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
           onMouseEnter={showPopulationCard}
           onMouseLeave={clearHoverCard}
         >
@@ -183,7 +183,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
             return (
               <span
                 key={k}
-                className="bar-item transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
+                className="bar-item gap-1 transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 cursor-help"
                 onMouseEnter={() =>
                   handleHoverCard({
                     title: `${info.icon} ${info.label}`,
@@ -318,7 +318,6 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
     </div>
   );
 };
-/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 
 function renderCosts(
   costs: Record<string, number> | undefined,
@@ -413,7 +412,7 @@ export default function Game({
     effectsTitle?: string;
     bgClass?: string;
   } | null>(null);
-  const hoverTimeout = useRef<number>();
+  const hoverTimeout = useRef<number | undefined>(undefined);
   type PhaseStep = {
     title: string;
     items: { text: string; italic?: boolean; done?: boolean }[];

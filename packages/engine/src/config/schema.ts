@@ -5,18 +5,25 @@ import type { EffectDef } from '../effects';
 const requirementSchema = z.object({
   type: z.string(),
   method: z.string(),
-  params: z.record(z.unknown()).optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
   message: z.string().optional(),
 });
 
 export type RequirementConfig = z.infer<typeof requirementSchema>;
 
 // Basic schemas
-const costBagSchema = z.record(z.nativeEnum(Resource), z.number());
+const costBagSchema = z
+  .object({
+    [Resource.gold]: z.number().optional(),
+    [Resource.ap]: z.number().optional(),
+    [Resource.happiness]: z.number().optional(),
+    [Resource.castleHP]: z.number().optional(),
+  })
+  .strict();
 
 const evaluatorSchema = z.object({
   type: z.string(),
-  params: z.record(z.unknown()).optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Effect
@@ -24,7 +31,7 @@ export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
   z.object({
     type: z.string().optional(),
     method: z.string().optional(),
-    params: z.record(z.unknown()).optional(),
+    params: z.record(z.string(), z.unknown()).optional(),
     effects: z.array(effectSchema).optional(),
     evaluator: evaluatorSchema.optional(),
     round: z.enum(['up', 'down']).optional(),

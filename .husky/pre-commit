@@ -6,6 +6,8 @@ set -e
 # Run lint-staged on changed files
 npx lint-staged
 
-# Run type checking, linting, and tests with coverage
+# Run type checking, linting, build, and tests with coverage
+npm run check
+npm run build
 npm test
 
