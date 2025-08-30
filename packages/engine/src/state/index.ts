@@ -14,13 +14,6 @@ export const Stat = {
 } as const;
 export type StatKey = (typeof Stat)[keyof typeof Stat];
 
-export const Phase = {
-  Development: 'development',
-  Upkeep: 'upkeep',
-  Main: 'main',
-} as const;
-export type PhaseId = (typeof Phase)[keyof typeof Phase];
-
 export const PopulationRole = {
   Council: 'council',
   Commander: 'commander',
@@ -122,7 +115,9 @@ export class PlayerState {
 export class GameState {
   turn = 1;
   currentPlayerIndex = 0; // multi-player friendly
-  currentPhase: PhaseId = Phase.Development;
+  currentPhase = 'development';
+  phaseIndex = 0;
+  stepIndex = 0;
   players: PlayerState[];
   constructor(aName = 'Player A', bName = 'Player B') {
     this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];

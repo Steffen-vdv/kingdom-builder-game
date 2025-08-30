@@ -61,6 +61,7 @@ export function createBuildingRegistry() {
         ],
       })
       .onDevelopmentPhase({
+        step: 'income',
         evaluator: { type: 'development', params: { id: 'farm' } },
         effects: [
           {

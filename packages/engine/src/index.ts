@@ -1,11 +1,4 @@
-import {
-  Resource,
-  Phase,
-  PopulationRole,
-  Stat,
-  GameState,
-  Land,
-} from './state';
+import { Resource, PopulationRole, Stat, GameState, Land } from './state';
 import type {
   ResourceKey,
   PlayerState,
@@ -19,13 +12,12 @@ import { BUILDINGS } from './content/buildings';
 import { DEVELOPMENTS } from './content/developments';
 import { POPULATIONS } from './content/populations';
 import type { PopulationDef } from './content/populations';
-import type { TriggerKey } from './content/defs';
 import type { ActionDef } from './content/actions';
 import type { BuildingDef } from './content/buildings';
 import type { DevelopmentDef } from './content/developments';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
-import type { EffectDef } from './effects';
+import { runTrigger } from './triggers';
 import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
@@ -40,72 +32,6 @@ import {
   type PlayerStartConfig,
 } from './config/schema';
 import { GAME_START } from './content/game';
-
-function runTrigger(
-  trigger: TriggerKey,
-  ctx: EngineContext,
-  player: PlayerState = ctx.activePlayer,
-) {
-  const original = ctx.game.currentPlayerIndex;
-  const index = ctx.game.players.indexOf(player);
-  ctx.game.currentPlayerIndex = index;
-
-  for (const [role, count] of Object.entries(player.population)) {
-    const populationDefinition = ctx.populations.get(role);
-    const effects = populationDefinition[trigger];
-    if (effects) runEffects(effects, ctx, Number(count));
-  }
-
-  for (const land of player.lands) {
-    for (const id of land.developments) {
-      const developmentDefinition = ctx.developments.get(id);
-      const effects = developmentDefinition[trigger];
-      if (!effects) continue;
-      runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
-    }
-  }
-
-  for (const id of player.buildings) {
-    const buildingDefinition = ctx.buildings.get(id);
-    const effects = buildingDefinition[trigger];
-    if (effects) runEffects(effects, ctx);
-  }
-
-  ctx.game.currentPlayerIndex = original;
-}
-
-export function collectTriggerEffects(
-  trigger: TriggerKey,
-  ctx: EngineContext,
-  player: PlayerState = ctx.activePlayer,
-): EffectDef[] {
-  const effects: EffectDef[] = [];
-  for (const [role, count] of Object.entries(player.population)) {
-    const populationDefinition = ctx.populations.get(role);
-    const list = populationDefinition[trigger];
-    if (!list) continue;
-    for (let i = 0; i < Number(count); i++)
-      effects.push(...list.map((e) => ({ ...e })));
-  }
-  for (const land of player.lands) {
-    for (const id of land.developments) {
-      const developmentDefinition = ctx.developments.get(id);
-      const list = developmentDefinition[trigger];
-      if (!list) continue;
-      effects.push(
-        ...applyParamsToEffects(list, { landId: land.id, id }).map((e) => ({
-          ...e,
-        })),
-      );
-    }
-  }
-  for (const id of player.buildings) {
-    const buildingDefinition = ctx.buildings.get(id);
-    const list = buildingDefinition[trigger];
-    if (list) effects.push(...list.map((e) => ({ ...e })));
-  }
-  return effects;
-}
 
 function applyCostsWithPassives(
   actionId: string,
@@ -206,12 +132,12 @@ export function performAction<T extends string>(
 }
 
 export function runDevelopment(ctx: EngineContext) {
-  ctx.game.currentPhase = Phase.Development;
+  ctx.game.currentPhase = 'development';
   runTrigger('onDevelopmentPhase', ctx);
 }
 
 export function runUpkeep(ctx: EngineContext) {
-  ctx.game.currentPhase = Phase.Upkeep;
+  ctx.game.currentPhase = 'upkeep';
   runTrigger('onUpkeepPhase', ctx);
 }
 
@@ -334,7 +260,6 @@ export function createEngine(overrides?: {
 
 export {
   Resource,
-  Phase,
   PopulationRole,
   Stat,
   BUILDINGS,
@@ -355,6 +280,9 @@ export { createActionRegistry } from './content/actions';
 export { createBuildingRegistry } from './content/buildings';
 export { createDevelopmentRegistry } from './content/developments';
 export { createPopulationRegistry } from './content/populations';
+export { collectTriggerEffects, runTrigger } from './triggers';
+export { PHASES, startTurn, getCurrentStep, runCurrentStep } from './phases';
+export type { PhaseId } from './phases';
 
 export { registerCoreEffects, EffectRegistry, runEffects } from './effects';
 export type { EffectHandler, EffectDef } from './effects';

@@ -28,6 +28,12 @@ export interface EffectDef<
   params?: P | undefined;
   effects?: EffectDef[] | undefined;
   evaluator?: EvaluatorDef | undefined;
+  /**
+   * Optional identifier linking this effect to a configured phase step.
+   * When provided, the engine can resolve only the effects matching the
+   * current step, enabling content-driven phase sequencing.
+   */
+  step?: string | undefined;
   round?: 'up' | 'down' | undefined;
 }
 

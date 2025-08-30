@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   createEngine,
   performAction,
-  runEffects,
-  collectTriggerEffects,
-  Phase,
+  startTurn as engineStartTurn,
+  runCurrentStep,
+  getCurrentStep,
+  PHASES,
   getActionCosts,
   getActionRequirements,
   Resource,
@@ -30,6 +31,8 @@ import {
   type Summary,
 } from './translation';
 
+type PhaseId = (typeof PHASES)[number]['id'];
+
 interface Action {
   id: string;
   name: string;
@@ -43,6 +46,15 @@ interface Building {
   id: string;
   name: string;
 }
+
+const phaseIcons: Record<
+  PhaseId,
+  { icon: string; past: string; future: string }
+> = {
+  development: phaseInfo.onDevelopmentPhase,
+  upkeep: phaseInfo.onUpkeepPhase,
+  main: phaseInfo.mainPhase,
+};
 
 function renderSummary(summary: Summary | undefined): React.ReactNode {
   return summary?.map((e, i) =>
@@ -418,6 +430,26 @@ export default function Game({
   const playerBoxRef = useRef<HTMLDivElement>(null);
   const [playerBoxHeight, setPlayerBoxHeight] = useState(0);
   const phaseStepsRef = useRef<HTMLUListElement>(null);
+  const [phaseHistory, setPhaseHistory] = useState<
+    Record<
+      PhaseId,
+      {
+        title: string;
+        items: { text: string; italic?: boolean; done?: boolean }[];
+        active: boolean;
+      }[]
+    >
+  >(
+    {} as Record<
+      PhaseId,
+      {
+        title: string;
+        items: { text: string; italic?: boolean; done?: boolean }[];
+        active: boolean;
+      }[]
+    >,
+  );
+  const [viewPhase, setViewPhase] = useState<PhaseId>(PHASES[0].id);
 
   function setPaused(v: boolean) {
     phasePausedRef.current = v;
@@ -525,6 +557,15 @@ export default function Game({
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [phaseSteps]);
 
+  useEffect(() => {
+    setViewPhase(ctx.game.currentPhase as PhaseId);
+  }, [ctx.game.currentPhase]);
+
+  useEffect(() => {
+    if (viewPhase !== (ctx.game.currentPhase as PhaseId))
+      setPhaseSteps(phaseHistory[viewPhase] ?? []);
+  }, [viewPhase, ctx.game.currentPhase, phaseHistory]);
+
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.id === 'develop');
   const buildAction = actions.find((a) => a.id === 'build');
@@ -578,7 +619,7 @@ export default function Game({
   }
 
   function runPhaseDelay() {
-    return runDelay(2000);
+    return runDelay(1500);
   }
 
   function runStepDelay() {
@@ -588,7 +629,7 @@ export default function Game({
   function updateMainPhaseStep(apStartOverride?: number) {
     const total = apStartOverride ?? mainApStart;
     const spent = total - ctx.activePlayer.ap;
-    setPhaseSteps([
+    const steps = [
       {
         title: 'Step 1 - Spend all AP',
         items: [
@@ -599,153 +640,95 @@ export default function Game({
         ],
         active: ctx.activePlayer.ap > 0,
       },
-    ]);
-  }
-
-  async function runPhaseForPlayer(
-    trigger: 'onDevelopmentPhase' | 'onUpkeepPhase',
-    index: number,
-  ) {
-    ctx.game.currentPlayerIndex = index;
-    const player = ctx.activePlayer;
-    const effects = collectTriggerEffects(trigger, ctx, player);
-
-    const developmentSteps = [
-      {
-        title: 'Gain Income',
-        classify: (change: string) =>
-          change.includes(resourceInfo[Resource.gold].icon) ||
-          change.includes(resourceInfo[Resource.happiness].icon),
-      },
-      {
-        title: 'Generate Action Points',
-        classify: (change: string) =>
-          change.includes(resourceInfo[Resource.ap].icon),
-      },
-      {
-        title: 'Grow Strengths',
-        classify: (change: string) =>
-          change.includes(statInfo['armyStrength']!.icon) ||
-          change.includes(statInfo['fortificationStrength']!.icon),
-      },
-    ] as const;
-
-    const upkeepSteps = [
-      {
-        title: 'Pay Upkeep',
-        classify: (change: string) =>
-          change.includes(resourceInfo[Resource.gold].icon),
-      },
-      {
-        title: 'Check Shortfall',
-        classify: () => false,
-      },
-      {
-        title: 'End-of-Upkeep triggers',
-        classify: () => true,
-      },
-    ] as const;
-
-    const stepDefs =
-      trigger === 'onDevelopmentPhase' ? developmentSteps : upkeepSteps;
-    const stepItems = stepDefs.map(
-      () => [] as { text: string; italic?: boolean; done?: boolean }[],
-    );
-
-    const phaseChanges: string[] = [];
-    for (const effect of effects) {
-      const before = snapshotPlayer(player);
-      runEffects([effect], ctx);
-      const after = snapshotPlayer(player);
-      const changes = diffSnapshots(before, after, ctx);
-      phaseChanges.push(...changes);
-      for (const change of changes) {
-        let idx = stepDefs.findIndex((s) => s.classify(change));
-        if (idx === -1) idx = stepDefs.length - 1;
-        stepItems[idx]!.push({ text: change });
-      }
-    }
-    if (phaseChanges.length) {
-      const info = phaseInfo[trigger];
-      addLog(
-        [`${info.icon} ${info.past}:`, ...phaseChanges.map((c) => `  ${c}`)],
-        player.name,
-      );
-    }
-
-    if (trigger === 'onDevelopmentPhase') {
-      const commanders = player.population[PopulationRole.Commander] || 0;
-      const fortifiers = player.population[PopulationRole.Fortifier] || 0;
-      if (stepItems[2]!.length === 0) {
-        stepItems[2]!.push({
-          text: `${populationInfo[PopulationRole.Commander]!.icon}${commanders} - No effect`,
-          italic: true,
-        });
-        stepItems[2]!.push({
-          text: `${populationInfo[PopulationRole.Fortifier]!.icon}${fortifiers} - No effect`,
-          italic: true,
-        });
-      }
-    } else if (trigger === 'onUpkeepPhase') {
-      if (stepItems[0]!.length === 0)
-        stepItems[0]!.push({ text: 'No costs to pay', italic: true });
-      if (stepItems[1]!.length === 0)
-        stepItems[1]!.push({ text: 'No shortfall', italic: true });
-      if (stepItems[2]!.length === 0)
-        stepItems[2]!.push({ text: 'No effects', italic: true });
-    }
-
-    setPhaseSteps([]);
-    for (let i = 0; i < stepDefs.length; i++) {
-      setPhaseSteps((prev) => [
-        ...prev,
-        {
-          title: `Step ${i + 1} - ${stepDefs[i]!.title}`,
-          items: [],
-          active: true,
-        },
-      ]);
-      const items =
-        stepItems[i]!.length > 0
-          ? stepItems[i]!
-          : [{ text: 'No effect', italic: true }];
-      for (const item of items) {
-        setPhaseSteps((prev) => {
-          const next = [...prev];
-          next[i] = {
-            ...next[i]!,
-            items: [...next[i]!.items, item],
-          };
-          return next;
-        });
-      }
-      await runStepDelay();
-      setPhaseSteps((prev) => {
-        const next = [...prev];
-        next[i] = { ...next[i]!, active: false };
-        return next;
-      });
-    }
+    ];
+    setPhaseSteps(steps);
+    setPhaseHistory((prev) => ({ ...prev, ['main']: steps }));
   }
 
   async function startTurn(playerIndex: number) {
-    ctx.game.currentPlayerIndex = playerIndex;
-    ctx.game.currentPhase = Phase.Development;
+    setPhaseHistory(
+      {} as Record<
+        PhaseId,
+        {
+          title: string;
+          items: { text: string; italic?: boolean; done?: boolean }[];
+          active: boolean;
+        }[]
+      >,
+    );
+    engineStartTurn(ctx, playerIndex);
+    setViewPhase(ctx.game.currentPhase as PhaseId);
     refresh();
-    await runPhaseForPlayer('onDevelopmentPhase', playerIndex);
-    await runPhaseDelay();
-    ctx.game.currentPhase = Phase.Upkeep;
-    refresh();
-    await runPhaseForPlayer('onUpkeepPhase', playerIndex);
-    await runPhaseDelay();
-    ctx.game.currentPhase = Phase.Main;
+
+    const tempHistory: Record<PhaseId, typeof phaseSteps> = {} as Record<
+      PhaseId,
+      typeof phaseSteps
+    >;
+    let currentPhase: PhaseId = ctx.game.currentPhase as PhaseId;
+    let stepsForHistory: typeof phaseSteps = [];
+    setPhaseSteps([]);
+
+    while (currentPhase !== 'main') {
+      const stepInfo = getCurrentStep(ctx);
+      if (!stepInfo) break;
+      const stepIndex = ctx.game.stepIndex;
+      const title = `Step ${stepIndex + 1} - ${stepInfo.def.title}`;
+      setPhaseSteps((prev) => [...prev, { title, items: [], active: true }]);
+
+      const before = snapshotPlayer(ctx.activePlayer);
+      runCurrentStep(ctx);
+      const after = snapshotPlayer(ctx.activePlayer);
+      const changes = diffSnapshots(before, after, ctx);
+      const items =
+        changes.length > 0
+          ? changes.map((c) => ({ text: c }))
+          : [{ text: 'No effect', italic: true }];
+
+      setPhaseSteps((prev) => {
+        const next = [...prev];
+        next[stepIndex] = {
+          ...next[stepIndex]!,
+          items,
+        };
+        return next;
+      });
+
+      if (changes.length) {
+        const info = phaseIcons[stepInfo.phase];
+        addLog(
+          [`${info.icon} ${info.past}:`, ...changes.map((c) => `  ${c}`)],
+          ctx.activePlayer.name,
+        );
+      }
+
+      await runStepDelay();
+      setPhaseSteps((prev) => {
+        const next = [...prev];
+        next[stepIndex] = { ...next[stepIndex]!, active: false };
+        return next;
+      });
+
+      stepsForHistory.push({ title, items, active: false });
+
+      if (ctx.game.currentPhase !== currentPhase) {
+        tempHistory[currentPhase] = stepsForHistory;
+        stepsForHistory = [];
+        currentPhase = ctx.game.currentPhase as PhaseId;
+        if (currentPhase === 'main') break;
+        setViewPhase(currentPhase);
+        setPhaseSteps([]);
+        await runPhaseDelay();
+      }
+    }
+
+    setPhaseHistory(tempHistory);
     setMainApStart(ctx.activePlayer.ap);
     updateMainPhaseStep(ctx.activePlayer.ap);
     refresh();
   }
 
   async function handleEndTurn() {
-    if (ctx.game.currentPhase !== Phase.Main) return;
+    if (ctx.game.currentPhase !== 'main') return;
     if (ctx.activePlayer.ap > 0) return;
     const last = ctx.game.currentPlayerIndex === ctx.game.players.length - 1;
     if (last) {
@@ -761,7 +744,7 @@ export default function Game({
   }, []);
 
   useEffect(() => {
-    if (ctx.game.currentPhase === Phase.Main) updateMainPhaseStep();
+    if (ctx.game.currentPhase === 'main') updateMainPhaseStep();
   }, [ctx.game.currentPhase, ctx.activePlayer.ap]);
 
   return (
@@ -831,12 +814,12 @@ export default function Game({
                   );
                   const meetsReq = requirements.length === 0;
                   const enabled =
-                    canPay && meetsReq && ctx.game.currentPhase === Phase.Main;
+                    canPay && meetsReq && ctx.game.currentPhase === 'main';
                   const title = !meetsReq
                     ? requirements.join(', ')
                     : !canPay
                       ? 'Cannot pay costs'
-                      : ctx.game.currentPhase !== Phase.Main
+                      : ctx.game.currentPhase !== 'main'
                         ? 'Not in Main phase'
                         : undefined;
                   return (
@@ -911,14 +894,12 @@ export default function Game({
                       );
                       const meetsReq = requirements.length === 0;
                       const enabled =
-                        canPay &&
-                        meetsReq &&
-                        ctx.game.currentPhase === Phase.Main;
+                        canPay && meetsReq && ctx.game.currentPhase === 'main';
                       const title = !meetsReq
                         ? requirements.join(', ')
                         : !canPay
                           ? 'Cannot pay costs'
-                          : ctx.game.currentPhase !== Phase.Main
+                          : ctx.game.currentPhase !== 'main'
                             ? 'Not in Main phase'
                             : undefined;
                       const summary = describeContent(
@@ -1021,12 +1002,12 @@ export default function Game({
                             ] >= v,
                         );
                       const enabled =
-                        canPay && ctx.game.currentPhase === Phase.Main;
+                        canPay && ctx.game.currentPhase === 'main';
                       const title = !hasDevelopLand
                         ? 'No land with free development slot'
                         : !canPay
                           ? 'Cannot pay costs'
-                          : ctx.game.currentPhase !== Phase.Main
+                          : ctx.game.currentPhase !== 'main'
                             ? 'Not in Main phase'
                             : undefined;
                       return (
@@ -1103,10 +1084,10 @@ export default function Game({
                           ] >= v,
                       );
                       const enabled =
-                        canPay && ctx.game.currentPhase === Phase.Main;
+                        canPay && ctx.game.currentPhase === 'main';
                       const title = !canPay
                         ? 'Cannot pay costs'
-                        : ctx.game.currentPhase !== Phase.Main
+                        : ctx.game.currentPhase !== 'main'
                           ? 'Not in Main phase'
                           : undefined;
                       return (
@@ -1153,12 +1134,12 @@ export default function Game({
           <section
             className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col"
             onMouseEnter={() =>
-              ctx.game.currentPhase !== Phase.Main && setPaused(true)
+              ctx.game.currentPhase !== 'main' && setPaused(true)
             }
             onMouseLeave={() => setPaused(false)}
             style={{
               cursor:
-                phasePaused && ctx.game.currentPhase !== Phase.Main
+                phasePaused && ctx.game.currentPhase !== 'main'
                   ? 'pause'
                   : 'auto',
               height: playerBoxHeight || undefined,
@@ -1168,14 +1149,15 @@ export default function Game({
               Turn {ctx.game.turn} - {ctx.activePlayer.name}
             </h2>
             <div className="flex gap-4 mb-2">
-              {[Phase.Development, Phase.Upkeep, Phase.Main].map((p) => (
+              {PHASES.map((p) => (
                 <span
-                  key={p}
-                  className={
-                    p === ctx.game.currentPhase ? 'font-semibold underline' : ''
-                  }
+                  key={p.id}
+                  onClick={() => setViewPhase(p.id)}
+                  className={`cursor-pointer ${
+                    p.id === viewPhase ? 'font-semibold underline' : ''
+                  }`}
                 >
-                  {p.charAt(0).toUpperCase() + p.slice(1)} Phase
+                  {p.name} Phase
                 </span>
               ))}
             </div>
@@ -1203,12 +1185,12 @@ export default function Game({
                 </li>
               ))}
             </ul>
-            {ctx.game.currentPhase !== Phase.Main && (
+            {ctx.game.currentPhase !== 'main' && (
               <div className="absolute top-2 right-2">
                 <TimerCircle progress={phaseTimer} paused={phasePaused} />
               </div>
             )}
-            {ctx.game.currentPhase === Phase.Main && (
+            {ctx.game.currentPhase === 'main' && (
               <div className="mt-2 text-right">
                 <button
                   className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"

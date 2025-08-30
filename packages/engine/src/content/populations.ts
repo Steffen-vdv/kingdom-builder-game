@@ -23,11 +23,13 @@ export function createPopulationRegistry() {
         params: { key: Resource.ap, amount: 1 },
       })
       .onDevelopmentPhase({
+        step: 'ap',
         type: 'resource',
         method: 'add',
         params: { key: Resource.ap, amount: 1 },
       })
       .onUpkeepPhase({
+        step: 'pay',
         type: 'resource',
         method: 'remove',
         params: { key: Resource.gold, amount: 2 },
@@ -56,11 +58,13 @@ export function createPopulationRegistry() {
         params: { id: 'commander_$player_$index' },
       })
       .onDevelopmentPhase({
+        step: 'strength',
         type: 'stat',
         method: 'add_pct',
         params: { key: Stat.armyStrength, percent: 25 },
       })
       .onUpkeepPhase({
+        step: 'pay',
         type: 'resource',
         method: 'remove',
         params: { key: Resource.gold, amount: 1 },
@@ -89,11 +93,13 @@ export function createPopulationRegistry() {
         params: { id: 'fortifier_$player_$index' },
       })
       .onDevelopmentPhase({
+        step: 'strength',
         type: 'stat',
         method: 'add_pct',
         params: { key: Stat.fortificationStrength, percent: 25 },
       })
       .onUpkeepPhase({
+        step: 'pay',
         type: 'resource',
         method: 'remove',
         params: { key: Resource.gold, amount: 1 },

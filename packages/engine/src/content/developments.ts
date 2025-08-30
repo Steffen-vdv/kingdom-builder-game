@@ -13,6 +13,7 @@ export function createDevelopmentRegistry() {
     'farm',
     development('farm', 'Farm')
       .onDevelopmentPhase({
+        step: 'income',
         type: 'resource',
         method: 'add',
         params: { key: Resource.gold, amount: 2 },
