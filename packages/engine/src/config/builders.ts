@@ -40,6 +40,11 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
     this.config.system = flag;
     return this;
   }
+  unlock(req: RequirementConfig) {
+    this.config.unlockedBy = this.config.unlockedBy || [];
+    this.config.unlockedBy.push(req);
+    return this;
+  }
 }
 
 export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
@@ -88,6 +93,15 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
   onAttackResolved(effect: EffectConfig) {
     this.config.onAttackResolved = this.config.onAttackResolved || [];
     this.config.onAttackResolved.push(effect);
+    return this;
+  }
+  system(flag = true) {
+    this.config.system = flag;
+    return this;
+  }
+  unlock(req: RequirementConfig) {
+    this.config.unlockedBy = this.config.unlockedBy || [];
+    this.config.unlockedBy.push(req);
     return this;
   }
 }

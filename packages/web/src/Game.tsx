@@ -15,6 +15,8 @@ import {
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
   BUILDING_INFO as buildingInfo,
+  isActionUnlocked,
+  isDevelopmentUnlocked,
 } from '@kingdom-builder/engine';
 import type {
   EngineContext,
@@ -39,6 +41,7 @@ interface Action {
 interface Development {
   id: string;
   name: string;
+  system?: boolean;
 }
 interface Building {
   id: string;
@@ -498,7 +501,7 @@ export default function Game({
     () =>
       Array.from(
         (ctx.actions as unknown as { map: Map<string, Action> }).map.values(),
-      ).filter((a) => !a.system),
+      ).filter((a) => !a.system && isActionUnlocked(a.id, ctx)),
     [ctx],
   );
   const developmentOptions = useMemo<Development[]>(
@@ -507,10 +510,10 @@ export default function Game({
         (
           ctx.developments as unknown as { map: Map<string, Development> }
         ).map.values(),
-      ),
+      ).filter((d) => !d.system && isDevelopmentUnlocked(d.id, ctx)),
     [ctx],
   );
-  const developmentOrder = ['house', 'farm', 'outpost', 'watchtower', 'garden'];
+  const developmentOrder = ['house', 'farm', 'outpost', 'watchtower'];
   const sortedDevelopments = useMemo(
     () =>
       developmentOrder

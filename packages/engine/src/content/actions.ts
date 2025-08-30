@@ -136,7 +136,15 @@ export function createActionRegistry() {
 
   registry.add(
     'plow',
-    action('plow', 'Plow').cost(Resource.ap, 1).cost(Resource.gold, 6).build(),
+    action('plow', 'Plow')
+      .cost(Resource.ap, 1)
+      .cost(Resource.gold, 6)
+      .unlock({
+        type: 'building',
+        method: 'exists',
+        params: { id: 'plow_workshop' },
+      })
+      .build(),
   );
 
   registry.add(

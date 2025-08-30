@@ -154,6 +154,27 @@ export function getActionRequirements<T extends string>(
   return failures;
 }
 
+function isActionUnlocked(actionId: string, ctx: EngineContext): boolean {
+  const def = ctx.actions.get(actionId);
+  for (const requirement of def.unlockedBy || []) {
+    const ok = runRequirement(requirement, ctx);
+    if (ok !== true) return false;
+  }
+  return true;
+}
+
+function isDevelopmentUnlocked(
+  developmentId: string,
+  ctx: EngineContext,
+): boolean {
+  const def = ctx.developments.get(developmentId);
+  for (const requirement of def.unlockedBy || []) {
+    const ok = runRequirement(requirement, ctx);
+    if (ok !== true) return false;
+  }
+  return true;
+}
+
 function canPay(costs: CostBag, player: PlayerState): true | string {
   for (const key of Object.keys(costs) as ResourceKey[]) {
     const need = costs[key] ?? 0;
@@ -189,6 +210,8 @@ export function performAction<T extends string>(
   params?: ActionParams<T>,
 ) {
   const actionDefinition = ctx.actions.get(actionId);
+  if (!isActionUnlocked(actionId, ctx))
+    throw new Error(`Action ${actionId} is locked`);
   for (const requirement of actionDefinition.requirements || []) {
     const ok = runRequirement(requirement, ctx);
     if (ok !== true) throw new Error(String(ok));
@@ -198,6 +221,14 @@ export function performAction<T extends string>(
     const p = params as unknown as ActionParams<'build'>;
     const building = ctx.buildings.get(p.id);
     base = { ...building.costs, ...base };
+  }
+  if (actionId === 'develop' && params) {
+    const p = params as unknown as ActionParams<'develop'>;
+    const development = ctx.developments.get(p.id);
+    if (development.system)
+      throw new Error(`Development ${p.id} is system only`);
+    if (!isDevelopmentUnlocked(p.id, ctx))
+      throw new Error(`Development ${p.id} is locked`);
   }
   const costs = applyCostsWithPassives(actionDefinition.id, base, ctx);
   const ok = canPay(costs, ctx.activePlayer);
@@ -407,6 +438,8 @@ export {
   LAND_ICON,
   SLOT_ICON,
   MODIFIER_INFO,
+  isActionUnlocked,
+  isDevelopmentUnlocked,
 };
 
 export type { RuleSet, ResourceKey };

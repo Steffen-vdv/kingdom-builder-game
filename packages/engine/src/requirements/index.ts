@@ -1,6 +1,7 @@
 import { Registry } from '../registry';
 import type { EngineContext } from '../context';
 import { populationCap } from './population_cap';
+import { buildingExists } from './building_exists';
 import type { RequirementConfig } from '../config/schema';
 
 export type RequirementDef = RequirementConfig;
@@ -26,6 +27,7 @@ export function registerCoreRequirements(
   registry: RequirementRegistry = REQUIREMENTS,
 ) {
   registry.add('population:cap', populationCap);
+  registry.add('building:exists', buildingExists);
 }
 
-export { populationCap };
+export { populationCap, buildingExists };
