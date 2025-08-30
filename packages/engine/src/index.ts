@@ -131,11 +131,16 @@ export function getActionCosts<T extends string>(
   params?: ActionParams<T>,
 ): CostBag {
   const actionDefinition = ctx.actions.get(actionId);
-  let base = { ...(actionDefinition.baseCosts || {}) };
-  if (actionId === 'build' && params) {
-    const p = params as unknown as ActionParams<'build'>;
-    const building = ctx.buildings.get(p.id);
-    base = { ...building.costs, ...base };
+  const base = { ...(actionDefinition.baseCosts || {}) };
+  const resolved = applyParamsToEffects(actionDefinition.effects, params || {});
+  for (const effect of resolved) {
+    if (effect.type === 'building' && effect.method === 'add') {
+      const id = effect.params?.['id'] as string;
+      const building = ctx.buildings.get(id);
+      for (const key of Object.keys(building.costs) as ResourceKey[]) {
+        base[key] = (base[key] || 0) + (building.costs[key] || 0);
+      }
+    }
   }
   return applyCostsWithPassives(actionDefinition.id, base, ctx);
 }
@@ -195,18 +200,22 @@ export function performAction<T extends string>(
     const ok = runRequirement(requirement, ctx);
     if (ok !== true) throw new Error(String(ok));
   }
-  let base = { ...(actionDefinition.baseCosts || {}) };
-  if (actionId === 'build' && params) {
-    const p = params as unknown as ActionParams<'build'>;
-    const building = ctx.buildings.get(p.id);
-    base = { ...building.costs, ...base };
+  const base = { ...(actionDefinition.baseCosts || {}) };
+  const resolved = applyParamsToEffects(actionDefinition.effects, params || {});
+  for (const effect of resolved) {
+    if (effect.type === 'building' && effect.method === 'add') {
+      const id = effect.params?.['id'] as string;
+      const building = ctx.buildings.get(id);
+      for (const key of Object.keys(building.costs) as ResourceKey[]) {
+        base[key] = (base[key] || 0) + (building.costs[key] || 0);
+      }
+    }
   }
   const costs = applyCostsWithPassives(actionDefinition.id, base, ctx);
   const ok = canPay(costs, ctx.activePlayer);
   if (ok !== true) throw new Error(ok);
   pay(costs, ctx.activePlayer);
 
-  const resolved = applyParamsToEffects(actionDefinition.effects, params || {});
   runEffects(resolved, ctx);
   ctx.passives.runResultMods(actionDefinition.id, ctx);
 }
