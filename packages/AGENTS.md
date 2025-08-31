@@ -1,5 +1,10 @@
 # Package Overview
 
+## 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** Resource or stat keys, starting amounts and effect behaviour must come from the `contents` package so designs can change freely.
+- **Tests may not rely on literals.** Always read values from the Content domain or mock registries; changes in content should not break tests unless they reveal missing engine support.
+
 This directory houses the monorepo packages:
 
 - **engine** – core game logic, effect handlers and registries. No game content

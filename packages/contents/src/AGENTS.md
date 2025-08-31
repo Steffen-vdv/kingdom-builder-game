@@ -1,5 +1,10 @@
 # Game Content Configurations
 
+## 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** Any resource/stat keys or default values shown in these configuration files are subject to change and must not be referenced directly in other domains.
+- **Tests may not rely on literals.** Always read required ids and values from the content registry or mocks so that changing these configs does not break tests unless it uncovers missing engine support.
+
 This directory holds the flexible configuration files that define the default game content:
 Actions, Buildings, Developments and Populations. These files are meant to be tweaked
 frequently during playtesting or balancing. Only the _structure_ of the objects must obey
