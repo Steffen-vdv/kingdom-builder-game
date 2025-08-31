@@ -11,7 +11,6 @@ import {
 } from '@kingdom-builder/engine';
 import {
   RESOURCES,
-  ACTION_INFO,
   ACTIONS,
   BUILDINGS,
   DEVELOPMENTS,
@@ -67,8 +66,8 @@ describe('<ActionsPanel />', () => {
     render(<ActionsPanel />);
     const apIcon = RESOURCES[Resource.ap].icon;
     expect(screen.getByText(`Actions (1 ${apIcon} each)`)).toBeInTheDocument();
-    const developName = ctx.actions.get('develop')?.name || '';
-    const developLabel = `${ACTION_INFO['develop'].icon} ${developName}`;
+    const developDef = ctx.actions.get('develop');
+    const developLabel = `${developDef.icon} ${developDef.name}`;
     expect(screen.getByText(developLabel)).toBeInTheDocument();
   });
 

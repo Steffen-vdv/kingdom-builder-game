@@ -1,8 +1,4 @@
 import React from 'react';
-import {
-  ACTION_INFO as actionInfo,
-  BUILDING_INFO as buildingInfo,
-} from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { describeContent } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
@@ -18,7 +14,8 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
     <div className="flex flex-wrap gap-2 mt-2 w-fit">
       {Array.from(player.buildings).map((b) => {
         const name = ctx.buildings.get(b)?.name || b;
-        const icon = buildingInfo[b]?.icon || actionInfo['build']?.icon || '';
+        const icon =
+          ctx.buildings.get(b)?.icon || ctx.actions.get('build').icon || '';
         const title = `${icon} ${name}`;
         return (
           <div

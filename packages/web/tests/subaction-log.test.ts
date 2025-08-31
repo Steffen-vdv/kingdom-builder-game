@@ -13,7 +13,6 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
-  ACTION_INFO as actionInfo,
   RESOURCES,
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
@@ -61,7 +60,7 @@ describe('sub-action logging', () => {
       const subChanges = diffSnapshots(trace.before, trace.after, ctx);
       if (!subChanges.length) continue;
       subLines.push(...subChanges);
-      const icon = actionInfo[trace.id]?.icon || '';
+      const icon = ctx.actions.get(trace.id)?.icon || '';
       const name = ctx.actions.get(trace.id).name;
       const line = `  ${icon} ${name}`;
       const idx = messages.indexOf(line);

@@ -1,16 +1,17 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import { ACTION_INFO as actionInfo } from '@kingdom-builder/contents';
 import { describeContent } from '../../content';
 import { registerEffectFormatter, logEffects } from '../factory';
 
 function getActionLabel(id: string, ctx: EngineContext) {
   let name = id;
+  let icon = '';
   try {
-    name = ctx.actions.get(id).name;
+    const def = ctx.actions.get(id);
+    name = def.name;
+    icon = def.icon || '';
   } catch {
     // ignore missing action
   }
-  const icon = actionInfo[id]?.icon || '';
   return { icon, name };
 }
 

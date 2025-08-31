@@ -17,7 +17,6 @@ import {
 } from '@kingdom-builder/engine';
 import {
   RESOURCES,
-  ACTION_INFO as actionInfo,
   ACTIONS,
   BUILDINGS,
   DEVELOPMENTS,
@@ -301,7 +300,7 @@ export function GameProvider({
         const subChanges = diffSnapshots(trace.before, trace.after, ctx);
         if (!subChanges.length) continue;
         subLines.push(...subChanges);
-        const icon = actionInfo[trace.id]?.icon || '';
+        const icon = ctx.actions.get(trace.id)?.icon || '';
         const name = ctx.actions.get(trace.id).name;
         const line = `  ${icon} ${name}`;
         const idx = messages.indexOf(line);
@@ -327,7 +326,7 @@ export function GameProvider({
       });
       addLog([...messages, ...filtered.map((c) => `  ${c}`)]);
     } catch (e) {
-      const icon = actionInfo[action.id]?.icon || '';
+      const icon = ctx.actions.get(action.id)?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
       return;
     }
@@ -366,7 +365,7 @@ export function GameProvider({
       while (ctx.activePlayer.ap > 0) {
         handlePerform({
           id: 'tax',
-          name: actionInfo['tax']!.label,
+          name: ctx.actions.get('tax').name,
           system: true,
         });
       }

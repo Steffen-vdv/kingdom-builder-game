@@ -33,6 +33,9 @@ non-obvious insights that will help future agents work more efficiently. Any upd
   resolving triggers for non-active players.
 - 2025-08-31: `npm run test:coverage` requires `@vitest/coverage-v8`; install with `npm install --no-save @vitest/coverage-v8` if missing.
 - 2025-08-31: `performAction` returns sub-action traces via `ctx.actionTraces` for nested log attribution.
+- 2025-09-01: Use `buildInfo(registry, { id: icon })` to derive icon/label maps from content registries.
+- 2025-09-01: Compose effects with `effect(type, method).param(key, value)` to avoid manual `{ type, method, params }` objects.
+- 2025-09-02: Content builders now chain `.id().name().icon()` and icons live on config entries; standalone info maps are deprecated.
 
 # Core Agent principles
 

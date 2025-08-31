@@ -1,7 +1,5 @@
 import {
-  ACTION_INFO as actionInfo,
   MODIFIER_INFO as modifierInfo,
-  DEVELOPMENT_INFO as developmentInfo,
   RESOURCES,
 } from '@kingdom-builder/contents';
 import type { ResourceKey } from '@kingdom-builder/engine';
@@ -13,12 +11,14 @@ import {
 } from '../factory';
 
 registerEffectFormatter('cost_mod', 'add', {
-  summarize: (eff, _ctx) => {
+  summarize: (eff, ctx) => {
     const key = eff.params?.['key'] as string;
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
-    const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
+    const actionIcon = actionId
+      ? ctx.actions.get(actionId)?.icon || actionId
+      : '';
     const prefix = actionId ? `${actionIcon}: ` : ': ';
     return `${modifierInfo.cost.icon}${prefix}${icon}${signed(amount)}${Math.abs(amount)}`;
   },
@@ -27,7 +27,9 @@ registerEffectFormatter('cost_mod', 'add', {
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
-    const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
+    const actionIcon = actionId
+      ? ctx.actions.get(actionId)?.icon || actionId
+      : '';
     const actionName = actionId
       ? ctx.actions.get(actionId)?.name || actionId
       : 'all actions';
@@ -37,12 +39,14 @@ registerEffectFormatter('cost_mod', 'add', {
 });
 
 registerEffectFormatter('cost_mod', 'remove', {
-  summarize: (eff, _ctx) => {
+  summarize: (eff, ctx) => {
     const key = eff.params?.['key'] as string;
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
-    const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
+    const actionIcon = actionId
+      ? ctx.actions.get(actionId)?.icon || actionId
+      : '';
     const prefix = actionId ? `${actionIcon}: ` : ': ';
     const delta = -amount;
     const sign = delta >= 0 ? '+' : '-';
@@ -53,7 +57,9 @@ registerEffectFormatter('cost_mod', 'remove', {
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
-    const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
+    const actionIcon = actionId
+      ? ctx.actions.get(actionId)?.icon || actionId
+      : '';
     const actionName = actionId
       ? ctx.actions.get(actionId)?.name || actionId
       : 'all actions';
@@ -70,7 +76,7 @@ registerEffectFormatter('result_mod', 'add', {
       | undefined;
     if (evaluation?.type === 'development') {
       const dev = ctx.developments.get(evaluation.id);
-      const icon = developmentInfo[evaluation.id]?.icon || '';
+      const icon = ctx.developments.get(evaluation.id)?.icon || '';
       const resource = eff.effects?.find(
         (e) => e.type === 'resource' && e.method === 'add',
       );
@@ -88,7 +94,7 @@ registerEffectFormatter('result_mod', 'add', {
       ];
     }
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon = actionInfo[actionId]?.icon || actionId;
+    const actionIcon = ctx.actions.get(actionId)?.icon || actionId;
     return sub.map((s) =>
       typeof s === 'string'
         ? `${modifierInfo.result.icon} ${actionIcon}: ${s}`
@@ -105,7 +111,7 @@ registerEffectFormatter('result_mod', 'add', {
       | undefined;
     if (evaluation?.type === 'development') {
       const dev = ctx.developments.get(evaluation.id);
-      const icon = developmentInfo[evaluation.id]?.icon || '';
+      const icon = ctx.developments.get(evaluation.id)?.icon || '';
       const resource = eff.effects?.find(
         (e) => e.type === 'resource' && e.method === 'add',
       );
@@ -123,7 +129,7 @@ registerEffectFormatter('result_mod', 'add', {
       ];
     }
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon = actionInfo[actionId]?.icon || actionId;
+    const actionIcon = ctx.actions.get(actionId)?.icon || actionId;
     let actionName = actionId;
     try {
       actionName = ctx.actions.get(actionId).name;

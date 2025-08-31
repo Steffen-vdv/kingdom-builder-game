@@ -8,9 +8,6 @@ import {
 import {
   RESOURCES,
   POPULATION_ROLES,
-  ACTION_INFO as actionInfo,
-  DEVELOPMENT_INFO as developmentInfo,
-  BUILDING_INFO as buildingInfo,
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
 import {
@@ -91,7 +88,7 @@ function GenericActions({
             onClick={() => enabled && handlePerform(action)}
             onMouseEnter={() =>
               handleHoverCard({
-                title: `${actionInfo[action.id]?.icon || ''} ${action.name}`,
+                title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
                 effects: describeContent('action', action.id, ctx),
                 requirements,
                 costs,
@@ -105,7 +102,7 @@ function GenericActions({
             onMouseLeave={clearHoverCard}
           >
             <span className="text-base font-medium">
-              {actionInfo[action.id]?.icon || ''} {action.name}
+              {ctx.actions.get(action.id)?.icon || ''} {action.name}
             </span>
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
@@ -179,7 +176,7 @@ function RaisePopOptions({
             onClick={() => enabled && handlePerform(action, { role })}
             onMouseEnter={() =>
               handleHoverCard({
-                title: `${actionInfo['raise_pop']?.icon ?? ''}${
+                title: `${ctx.actions.get('raise_pop').icon || ''}${
                   POPULATION_ROLES[role]?.icon
                 } - Hire ${POPULATION_ROLES[role]?.label || ''}`,
                 effects: summary,
@@ -191,7 +188,7 @@ function RaisePopOptions({
             onMouseLeave={clearHoverCard}
           >
             <span className="text-base font-medium">
-              {actionInfo['raise_pop']?.icon ?? ''}
+              {ctx.actions.get('raise_pop').icon || ''}
               {POPULATION_ROLES[role]?.icon} - Hire{' '}
               {POPULATION_ROLES[role]?.label}
             </span>
@@ -267,7 +264,8 @@ function DevelopOptions({
   return (
     <div>
       <h3 className="font-medium">
-        {actionInfo['develop']?.icon ?? ''} {actionInfo['develop']?.label ?? ''}{' '}
+        {ctx.actions.get('develop').icon || ''}{' '}
+        {ctx.actions.get('develop').name}{' '}
         <span className="italic text-sm font-normal">
           (Effects take place on build and last until development is removed)
         </span>
@@ -318,9 +316,9 @@ function DevelopOptions({
               }}
               onMouseEnter={() =>
                 handleHoverCard({
-                  title: `${actionInfo['develop']?.icon ?? ''} ${
-                    actionInfo['develop']?.label ?? ''
-                  } - ${developmentInfo[d.id]?.icon} ${d.name}`,
+                  title: `${ctx.actions.get('develop').icon || ''} ${
+                    ctx.actions.get('develop').name
+                  } - ${ctx.developments.get(d.id)?.icon} ${d.name}`,
                   effects: describeContent('development', d.id, ctx),
                   requirements,
                   costs,
@@ -334,7 +332,7 @@ function DevelopOptions({
               onMouseLeave={clearHoverCard}
             >
               <span className="text-base font-medium">
-                {developmentInfo[d.id]?.icon} {d.name}
+                {ctx.developments.get(d.id)?.icon} {d.name}
               </span>
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(costs, ctx.activePlayer.resources)}
@@ -377,7 +375,7 @@ function BuildOptions({
   return (
     <div>
       <h3 className="font-medium">
-        {actionInfo['build']?.icon ?? ''} {actionInfo['build']?.label ?? ''}{' '}
+        {ctx.actions.get('build').icon || ''} {ctx.actions.get('build').name}{' '}
         <span className="italic text-sm font-normal">
           (Effects take place on build and last until building is removed)
         </span>
@@ -412,9 +410,9 @@ function BuildOptions({
               onClick={() => enabled && handlePerform(action, { id: b.id })}
               onMouseEnter={() =>
                 handleHoverCard({
-                  title: `${actionInfo['build']?.icon ?? ''} ${
-                    actionInfo['build']?.label ?? ''
-                  } - ${buildingInfo[b.id]?.icon || ''} ${b.name}`,
+                  title: `${ctx.actions.get('build').icon || ''} ${
+                    ctx.actions.get('build').name
+                  } - ${ctx.buildings.get(b.id)?.icon || ''} ${b.name}`,
                   effects: descriptions.get(b.id) ?? [],
                   requirements,
                   costs,
@@ -428,7 +426,9 @@ function BuildOptions({
               onMouseLeave={clearHoverCard}
             >
               <span className="text-base font-medium">
-                {buildingInfo[b.id]?.icon || actionInfo['build']?.icon || ''}{' '}
+                {ctx.buildings.get(b.id)?.icon ||
+                  ctx.actions.get('build').icon ||
+                  ''}{' '}
                 {b.name}
               </span>
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">

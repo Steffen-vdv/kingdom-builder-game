@@ -1,5 +1,4 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import { ACTION_INFO as actionInfo } from '@kingdom-builder/contents';
 import { summarizeEffects, describeEffects, logEffects } from '../effects';
 import { applyParamsToEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator, logContent } from './factory';
@@ -61,9 +60,8 @@ class ActionTranslator
     params?: Record<string, unknown>,
   ): string[] {
     const def = ctx.actions.get(id);
-    const info = actionInfo[id];
-    const icon = info?.icon || '';
-    const label = info?.label || def.name;
+    const icon = def.icon || '';
+    const label = def.name;
     let message = `Played ${icon} ${label}`;
     const extra = this.logHandlers[id]?.(ctx, params);
     if (extra) message += extra;

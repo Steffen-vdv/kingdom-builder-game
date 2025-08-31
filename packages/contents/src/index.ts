@@ -1,12 +1,8 @@
-export { ACTIONS, ACTION_INFO, createActionRegistry } from './actions';
-export { BUILDINGS, BUILDING_INFO, createBuildingRegistry } from './buildings';
-export {
-  DEVELOPMENTS,
-  DEVELOPMENT_INFO,
-  createDevelopmentRegistry,
-} from './developments';
+export { ACTIONS, createActionRegistry } from './actions';
+export { BUILDINGS, createBuildingRegistry } from './buildings';
+export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
-export { PHASES, PHASE_INFO, type PhaseDef, type StepDef } from './phases';
+export { PHASES, type PhaseDef, type StepDef } from './phases';
 export { POPULATION_ROLES } from './populationRoles';
 export { RESOURCES } from './resources';
 export { STATS } from './stats';

@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  ACTION_INFO as actionInfo,
-  DEVELOPMENT_INFO as developmentInfo,
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
@@ -40,7 +38,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
                 const devId = land.developments[i];
                 if (devId) {
                   const name = ctx.developments.get(devId)?.name || devId;
-                  const title = `${developmentInfo[devId]?.icon || ''} ${name}`;
+                  const title = `${ctx.developments.get(devId)?.icon || ''} ${name}`;
                   const handleLeave = () => showLandCard();
                   return (
                     <span
@@ -62,7 +60,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
                         handleLeave();
                       }}
                     >
-                      {developmentInfo[devId]?.icon} {name}
+                      {ctx.developments.get(devId)?.icon} {name}
                     </span>
                   );
                 }
@@ -76,8 +74,8 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
                       handleHoverCard({
                         title: `${slotIcon} Development Slot (empty)`,
                         effects: [],
-                        description: `Use ${actionInfo['develop']?.icon ?? ''} ${
-                          actionInfo['develop']?.label ?? ''
+                        description: `Use ${ctx.actions.get('develop').icon || ''} ${
+                          ctx.actions.get('develop').name
                         } to build here`,
                         requirements: [],
                         bgClass: 'bg-gray-100 dark:bg-gray-700',

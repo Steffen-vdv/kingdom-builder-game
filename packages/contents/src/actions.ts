@@ -4,7 +4,19 @@ import {
   actionSchema,
   type ActionConfig,
 } from '@kingdom-builder/engine/config/schema';
-import { action } from '@kingdom-builder/engine/config/builders';
+import {
+  action,
+  effect,
+  Types,
+  LandMethods,
+  ResourceMethods,
+  DevelopmentMethods,
+  PopulationMethods,
+  ActionMethods,
+  PassiveMethods,
+  CostModMethods,
+  BuildingMethods,
+} from '@kingdom-builder/engine/config/builders';
 
 export type ActionDef = ActionConfig;
 
@@ -13,81 +25,96 @@ export function createActionRegistry() {
 
   registry.add(
     'expand',
-    action('expand', 'Expand')
+    action()
+      .id('expand')
+      .name('Expand')
+      .icon('🌱')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 2)
-      .effect({ type: 'land', method: 'add', params: { count: 1 } })
-      .effect({
-        type: 'resource',
-        method: 'add',
-        params: { key: Resource.happiness, amount: 1 },
-      })
+      .effect(effect(Types.Land, LandMethods.ADD).param('count', 1).build())
+      .effect(
+        effect(Types.Resource, ResourceMethods.ADD)
+          .params({ key: Resource.happiness, amount: 1 })
+          .build(),
+      )
       .build(),
   );
 
   registry.add(
     'overwork',
-    action('overwork', 'Overwork')
+    action()
+      .id('overwork')
+      .name('Overwork')
+      .icon('🛠️')
       .cost(Resource.ap, 1)
-      .effect({
-        evaluator: { type: 'development', params: { id: 'farm' } },
-        effects: [
-          {
-            type: 'resource',
-            method: 'add',
-            round: 'down',
-            params: { key: Resource.gold, amount: 2 },
-          },
-          {
-            type: 'resource',
-            method: 'add',
-            round: 'up',
-            params: { key: Resource.happiness, amount: -0.5 },
-          },
-        ],
-      })
+      .effect(
+        effect()
+          .evaluator('development', { id: 'farm' })
+          .effect(
+            effect(Types.Resource, ResourceMethods.ADD)
+              .round('down')
+              .params({ key: Resource.gold, amount: 2 })
+              .build(),
+          )
+          .effect(
+            effect(Types.Resource, ResourceMethods.ADD)
+              .round('up')
+              .params({ key: Resource.happiness, amount: -0.5 })
+              .build(),
+          )
+          .build(),
+      )
       .build(),
   );
 
   registry.add(
     'develop',
-    action('develop', 'Develop')
+    action()
+      .id('develop')
+      .name('Develop')
+      .icon('🏗️')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 3)
-      .effect({
-        type: 'development',
-        method: 'add',
-        params: { id: '$id', landId: '$landId' },
-      })
+      .effect(
+        effect(Types.Development, DevelopmentMethods.ADD)
+          .params({ id: '$id', landId: '$landId' })
+          .build(),
+      )
       .build(),
   );
 
   registry.add(
     'tax',
-    action('tax', 'Tax')
+    action()
+      .id('tax')
+      .name('Tax')
+      .icon('💰')
       .cost(Resource.ap, 1)
-      .effect({
-        evaluator: { type: 'population' },
-        effects: [
-          {
-            type: 'resource',
-            method: 'add',
-            params: { key: Resource.gold, amount: 4 },
-          },
-          {
-            type: 'resource',
-            method: 'add',
-            round: 'up',
-            params: { key: Resource.happiness, amount: -0.5 },
-          },
-        ],
-      })
+      .effect(
+        effect()
+          .evaluator('population')
+          .effect(
+            effect(Types.Resource, ResourceMethods.ADD)
+              .params({ key: Resource.gold, amount: 4 })
+              .build(),
+          )
+          .effect(
+            effect(Types.Resource, ResourceMethods.ADD)
+              .round('up')
+              .params({ key: Resource.happiness, amount: -0.5 })
+              .build(),
+          )
+          .build(),
+      )
       .build(),
   );
 
   registry.add(
     'reallocate',
-    action('reallocate', 'Reallocate')
+    action()
+      .id('reallocate')
+      .name('Reallocate')
+      .icon('🔄')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 5)
       .build(),
@@ -95,7 +122,10 @@ export function createActionRegistry() {
 
   registry.add(
     'raise_pop',
-    action('raise_pop', 'Raise Population')
+    action()
+      .id('raise_pop')
+      .name('Raise Population')
+      .icon('👶')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 5)
       .requirement({
@@ -103,22 +133,25 @@ export function createActionRegistry() {
         method: 'cap',
         message: 'Free space for 👥',
       })
-      .effect({
-        type: 'population',
-        method: 'add',
-        params: { role: '$role' },
-      })
-      .effect({
-        type: 'resource',
-        method: 'add',
-        params: { key: Resource.happiness, amount: 1 },
-      })
+      .effect(
+        effect(Types.Population, PopulationMethods.ADD)
+          .param('role', '$role')
+          .build(),
+      )
+      .effect(
+        effect(Types.Resource, ResourceMethods.ADD)
+          .params({ key: Resource.happiness, amount: 1 })
+          .build(),
+      )
       .build(),
   );
 
   registry.add(
     'royal_decree',
-    action('royal_decree', 'Royal Decree')
+    action()
+      .id('royal_decree')
+      .name('Royal Decree')
+      .icon('📜')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 12)
       .build(),
@@ -126,12 +159,20 @@ export function createActionRegistry() {
 
   registry.add(
     'army_attack',
-    action('army_attack', 'Army Attack').cost(Resource.ap, 1).build(),
+    action()
+      .id('army_attack')
+      .name('Army Attack')
+      .icon('🗡️')
+      .cost(Resource.ap, 1)
+      .build(),
   );
 
   registry.add(
     'hold_festival',
-    action('hold_festival', 'Hold Festival')
+    action()
+      .id('hold_festival')
+      .name('Hold Festival')
+      .icon('🎉')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 3)
       .build(),
@@ -139,53 +180,66 @@ export function createActionRegistry() {
 
   registry.add(
     'plow',
-    action('plow', 'Plow')
+    action()
+      .id('plow')
+      .name('Plow')
+      .icon('🚜')
       .system()
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 6)
-      .effect({ type: 'action', method: 'perform', params: { id: 'expand' } })
-      .effect({ type: 'action', method: 'perform', params: { id: 'till' } })
-      .effect({
-        type: 'passive',
-        method: 'add',
-        params: {
-          id: 'plow_cost_mod',
-          onUpkeepPhase: [
-            {
-              type: 'passive',
-              method: 'remove',
-              params: { id: 'plow_cost_mod' },
-            },
-          ],
-        },
-        effects: [
-          {
-            type: 'cost_mod',
-            method: 'add',
-            params: {
-              id: 'plow_cost_all',
-              key: Resource.gold,
-              amount: 2,
-            },
-          },
-        ],
-      })
+      .effect(
+        effect(Types.Action, ActionMethods.PERFORM)
+          .param('id', 'expand')
+          .build(),
+      )
+      .effect(
+        effect(Types.Action, ActionMethods.PERFORM).param('id', 'till').build(),
+      )
+      .effect(
+        effect(Types.Passive, PassiveMethods.ADD)
+          .params({
+            id: 'plow_cost_mod',
+            onUpkeepPhase: [
+              effect(Types.Passive, PassiveMethods.REMOVE)
+                .param('id', 'plow_cost_mod')
+                .build(),
+            ],
+          })
+          .effect(
+            effect(Types.CostMod, CostModMethods.ADD)
+              .params({
+                id: 'plow_cost_all',
+                key: Resource.gold,
+                amount: 2,
+              })
+              .build(),
+          )
+          .build(),
+      )
       .build(),
   );
 
   registry.add(
     'till',
-    action('till', 'Till')
+    action()
+      .id('till')
+      .name('Till')
+      .icon('🧑‍🌾')
       .system()
-      .effect({ type: 'land', method: 'till' })
+      .effect(effect(Types.Land, LandMethods.TILL).build())
       .build(),
   );
 
   registry.add(
     'build',
-    action('build', 'Build')
+    action()
+      .id('build')
+      .name('Build')
+      .icon('🏛️')
       .cost(Resource.ap, 1)
-      .effect({ type: 'building', method: 'add', params: { id: '$id' } })
+      .effect(
+        effect(Types.Building, BuildingMethods.ADD).param('id', '$id').build(),
+      )
       .build(),
   );
 
@@ -193,18 +247,3 @@ export function createActionRegistry() {
 }
 
 export const ACTIONS = createActionRegistry();
-
-export const ACTION_INFO: Record<string, { icon: string; label: string }> = {
-  expand: { icon: '🌱', label: ACTIONS.get('expand').name },
-  overwork: { icon: '🛠️', label: ACTIONS.get('overwork').name },
-  develop: { icon: '🏗️', label: ACTIONS.get('develop').name },
-  tax: { icon: '💰', label: ACTIONS.get('tax').name },
-  reallocate: { icon: '🔄', label: ACTIONS.get('reallocate').name },
-  raise_pop: { icon: '👶', label: ACTIONS.get('raise_pop').name },
-  royal_decree: { icon: '📜', label: ACTIONS.get('royal_decree').name },
-  army_attack: { icon: '🗡️', label: ACTIONS.get('army_attack').name },
-  hold_festival: { icon: '🎉', label: ACTIONS.get('hold_festival').name },
-  plow: { icon: '🚜', label: ACTIONS.get('plow').name },
-  till: { icon: '🧑‍🌾', label: ACTIONS.get('till').name },
-  build: { icon: '🏛️', label: ACTIONS.get('build').name },
-} as const;

@@ -10,7 +10,9 @@ import { action, building } from '../../src/config/builders.ts';
 
 describe('multi-cost content', () => {
   it('supports actions with multiple costs', () => {
-    const multiCostAction = action('multi_cost_action', 'Multi Cost Action')
+    const multiCostAction = action()
+      .id('multi_cost_action')
+      .name('Multi Cost Action')
       .cost(Resource.gold, 3)
       .cost(Resource.happiness, 2)
       .effect({
@@ -36,18 +38,16 @@ describe('multi-cost content', () => {
   });
 
   it('supports building actions with multiple costs', () => {
-    const multiCostBuildingDefinition = building(
-      'multi_cost_building',
-      'Multi Cost Building',
-    )
+    const multiCostBuildingDefinition = building()
+      .id('multi_cost_building')
+      .name('Multi Cost Building')
       .cost(Resource.gold, 4)
       .cost(Resource.happiness, 1)
       .build();
 
-    const buildAction = action(
-      'build_multi_cost_building',
-      'Build Multi Cost Building',
-    )
+    const buildAction = action()
+      .id('build_multi_cost_building')
+      .name('Build Multi Cost Building')
       .cost(Resource.gold, 4)
       .cost(Resource.happiness, 1)
       .effect({
