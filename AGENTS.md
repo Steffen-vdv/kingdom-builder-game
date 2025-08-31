@@ -41,6 +41,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-08-31: Overview screen can pull icons from contents (e.g. ACTION_INFO, LAND_ICON) to keep keywords visually consistent.
 - 2025-08-31: PlayerState maintains `statsHistory` so stats returning to zero remain visible; initialize new non-zero stats accordingly.
 - 2025-09-01: `stat:add_pct` effects honor a `round` setting like resources; use `round: 'up'` to keep strength stats integer and non-negative.
+- 2025-09-07: `stat:add_pct` can read a `percentStat` to apply a player's stat as the percentage.
 
 # Core Agent principles
 

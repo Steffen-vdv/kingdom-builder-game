@@ -37,4 +37,11 @@ export const STATS: Record<StatKey, StatInfo> = {
     description:
       'Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.',
   },
+  [Stat.growth]: {
+    key: Stat.growth,
+    icon: '📈',
+    label: 'Growth',
+    description:
+      'Growth increases Army and Fortification Strength during the Raise Strength step.',
+  },
 };

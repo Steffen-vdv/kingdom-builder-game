@@ -11,6 +11,7 @@ export const Stat = {
   armyStrength: 'armyStrength',
   fortificationStrength: 'fortificationStrength',
   absorption: 'absorption',
+  growth: 'growth',
 } as const;
 export type StatKey = (typeof Stat)[keyof typeof Stat];
 
@@ -80,7 +81,9 @@ export class PlayerState {
     this.stats = {} as Record<StatKey, number>;
     this.statsHistory = {} as Record<StatKey, boolean>;
     for (const key of Object.values(Stat) as StatKey[]) {
-      const value = key === Stat.maxPopulation ? 1 : 0;
+      let value = 0;
+      if (key === Stat.maxPopulation) value = 1;
+      else if (key === Stat.growth) value = 0.25;
       this.stats[key] = value;
       this.statsHistory[key] = value !== 0;
     }
@@ -130,6 +133,13 @@ export class PlayerState {
   set absorption(v: number) {
     this.stats[Stat.absorption] = v;
     if (v !== 0) this.statsHistory[Stat.absorption] = true;
+  }
+  get growth() {
+    return this.stats[Stat.growth];
+  }
+  set growth(v: number) {
+    this.stats[Stat.growth] = v;
+    if (v !== 0) this.statsHistory[Stat.growth] = true;
   }
 }
 

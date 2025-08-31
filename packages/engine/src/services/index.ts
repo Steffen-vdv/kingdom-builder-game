@@ -5,8 +5,7 @@ import { runEffects, type EffectDef } from '../effects';
 export type HappinessTierEffect = {
   incomeMultiplier: number;
   buildingDiscountPct?: number; // 0.2 = 20%
-  growthBonusPctArmy?: number;
-  growthBonusPctFort?: number;
+  growthBonusPct?: number;
   upkeepCouncilReduction?: number; // if present, e.g., 1 instead of 2
   halveCouncilAPInUpkeep?: boolean;
   disableGrowth?: boolean;
