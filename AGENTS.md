@@ -28,6 +28,9 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-09-21: Exporting TS interfaces from React modules can trigger Vite Fast Refresh incompatibility; use type-only exports instead.
 - 2025-09-04: Use `rg --hidden` to search hidden directories like `.github`.
 
+- 2025-08-31: Trigger handling now uses `collectTriggerEffects`; direct
+  `runTrigger` helper has been removed. Switch the active player index when
+  resolving triggers for non-active players.
 
 # Core Agent principles
 
