@@ -166,16 +166,10 @@ function RaisePopOptions({
             : !canPay
               ? 'Cannot pay costs'
               : undefined;
-          const summary = describeContent('action', 'raise_pop', ctx);
-          const shortSummary = summarizeContent('action', 'raise_pop', ctx);
-          const first = summary[0];
-          if (first && typeof first !== 'string') {
-            first.items.push(`👥(${POPULATION_ROLES[role]?.icon}) +1`);
-          }
-          const shortFirst = shortSummary[0];
-          if (shortFirst && typeof shortFirst !== 'string') {
-            shortFirst.items.push(`👥(${POPULATION_ROLES[role]?.icon}) +1`);
-          }
+          const summary = describeContent('action', 'raise_pop', ctx, { role });
+          const shortSummary = summarizeContent('action', 'raise_pop', ctx, {
+            role,
+          });
           return (
             <button
               key={role}
