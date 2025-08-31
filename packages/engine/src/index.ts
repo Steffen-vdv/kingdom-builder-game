@@ -239,6 +239,7 @@ export function advance(ctx: EngineContext): AdvanceResult {
       };
       runEffects([extra], ctx);
       effects.push(extra);
+      ctx.compensations[player.id].resources![resKey] = 0;
     }
   }
 

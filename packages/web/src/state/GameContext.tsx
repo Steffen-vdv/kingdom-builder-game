@@ -26,7 +26,6 @@ import {
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
-  diffSnapshots,
   diffStepSnapshots,
   logContent,
   type Summary,
@@ -183,10 +182,10 @@ export function GameProvider({
         after.resources[k] = (after.resources[k] || 0) + (v ?? 0);
       for (const [k, v] of Object.entries(comp.stats || {}))
         after.stats[k] = (after.stats[k] || 0) + (v ?? 0);
-      const lines = diffSnapshots(before, after, ctx);
+      const lines = diffStepSnapshots(before, after, undefined, ctx);
       if (lines.length)
         addLog(
-          ['Last-player compensation:', ...lines.map((l) => `  ${l}`)],
+          ['Last-player compensation:', ...lines.map((l: string) => `  ${l}`)],
           player,
         );
     });
@@ -313,7 +312,7 @@ export function GameProvider({
         params as ActionParams<string>,
       );
       const after = snapshotPlayer(ctx.activePlayer, ctx);
-      const changes = diffSnapshots(before, after, ctx);
+      const changes = diffStepSnapshots(before, after, undefined, ctx);
       const messages = logContent('action', action.id, ctx, params);
       const costLines: string[] = [];
       for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
@@ -332,7 +331,12 @@ export function GameProvider({
 
       const subLines: string[] = [];
       for (const trace of traces) {
-        const subChanges = diffSnapshots(trace.before, trace.after, ctx);
+        const subChanges = diffStepSnapshots(
+          trace.before,
+          trace.after,
+          undefined,
+          ctx,
+        );
         if (!subChanges.length) continue;
         subLines.push(...subChanges);
         const icon = ctx.actions.get(trace.id)?.icon || '';
