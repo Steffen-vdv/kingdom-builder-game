@@ -50,7 +50,8 @@ interface HoverCard {
   effects: Summary;
   requirements: string[];
   costs?: Record<string, number>;
-  description?: string;
+  description?: string | Summary;
+  descriptionTitle?: string;
   descriptionClass?: string;
   effectsTitle?: string;
   bgClass?: string;

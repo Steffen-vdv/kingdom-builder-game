@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { describeContent } from '../src/translation/content';
+import { describeContent, splitSummary } from '../src/translation/content';
 import { createEngine } from '@kingdom-builder/engine';
 import {
   ACTIONS,
@@ -29,11 +29,14 @@ describe('plow workshop translation', () => {
   it('includes action card and omits Immediately', () => {
     const ctx = createCtx();
     const summary = describeContent('building', 'plow_workshop', ctx);
-    expect(summary).toHaveLength(2);
-    const build = summary[0] as { title: string; items?: unknown[] };
+    const { effects, description } = splitSummary(summary);
+    expect(effects).toHaveLength(1);
+    const build = effects[0] as { title: string; items?: unknown[] };
     expect(build.items?.[0]).toBe('Gain action 🚜 Plow');
-    const actionCard = summary[1] as { title: string };
+    const actionCard = description[0] as { title: string };
     expect(actionCard.title).toBe('🚜 Plow');
-    expect(JSON.stringify(summary)).not.toMatch(/Immediately|🎯/);
+    expect(JSON.stringify({ effects, description })).not.toMatch(
+      /Immediately|🎯/,
+    );
   });
 });

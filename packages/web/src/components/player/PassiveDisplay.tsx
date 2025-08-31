@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
 import { MODIFIER_INFO as modifierInfo } from '@kingdom-builder/contents';
-import { describeEffects } from '../../translation';
+import { describeEffects, splitSummary } from '../../translation';
 import type { EffectDef } from '@kingdom-builder/engine';
 
 export default function PassiveDisplay({
@@ -49,14 +49,16 @@ export default function PassiveDisplay({
           <span
             key={id}
             className="hoverable cursor-pointer"
-            onMouseEnter={() =>
+            onMouseEnter={() => {
+              const { effects, description } = splitSummary(summary);
               handleHoverCard({
                 title: `${icon} Passive`,
-                effects: summary,
+                effects,
+                description,
                 requirements: [],
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
-              })
-            }
+              });
+            }}
             onMouseLeave={clearHoverCard}
           >
             {icon}

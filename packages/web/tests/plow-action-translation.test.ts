@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { summarizeContent, describeContent } from '../src/translation/content';
+import {
+  summarizeContent,
+  describeContent,
+  splitSummary,
+} from '../src/translation/content';
 import { createEngine } from '@kingdom-builder/engine';
 import {
   ACTIONS,
@@ -45,5 +49,20 @@ describe('plow action translation', () => {
       (d) => typeof d === 'object' && d.title.includes('Upkeep Phase'),
     ) as { title: string; items?: unknown[] } | undefined;
     expect(passive?.title.startsWith('♾️ ')).toBe(true);
+  });
+
+  it('moves system actions to description', () => {
+    const ctx = createCtx();
+    const summary = describeContent('action', 'plow', ctx);
+    const { effects, description } = splitSummary(summary);
+    expect(effects).toEqual([
+      { title: '🌱 Expand', items: ['Gain 1 🗺️ Land', '😊+1 Happiness'] },
+      {
+        title: '♾️ Before your next Upkeep Phase',
+        items: ['💲 Cost Modifier on all actions: Increase cost by 🪙2'],
+      },
+    ]);
+    const till = description[0] as { title: string };
+    expect(till.title).toBe('🧑‍🌾 Till');
   });
 });
