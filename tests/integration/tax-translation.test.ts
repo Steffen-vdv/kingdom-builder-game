@@ -1,10 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-vi.mock(
-  '@kingdom-builder/engine',
-  async () => import('../../packages/engine/src'),
-);
-import { createEngine } from '../../packages/engine/src';
-import { summarizeContent } from '../../packages/web/src/translation/content';
+import { describe, it, expect } from 'vitest';
+import { createEngine } from '@kingdom-builder/engine';
+import { summarizeContent } from '@kingdom-builder/web/translation/content';
 import {
   ACTIONS,
   BUILDINGS,
@@ -12,7 +8,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
-} from '../../packages/contents/src';
+} from '@kingdom-builder/contents';
 
 describe('Tax action translation', () => {
   it('mentions population scaling', () => {
@@ -24,6 +20,7 @@ describe('Tax action translation', () => {
       phases: PHASES,
       start: GAME_START,
     });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const summary = summarizeContent('action', 'tax', ctx) as {
       title: string;
       items: string[];

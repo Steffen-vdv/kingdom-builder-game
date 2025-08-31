@@ -1,7 +1,4 @@
-import {
-  createEngine,
-  getActionCosts,
-} from '../../packages/engine/src/index.ts';
+import { createEngine, getActionCosts } from '@kingdom-builder/engine';
 import {
   ACTIONS,
   BUILDINGS,
@@ -9,13 +6,10 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
-} from '../../packages/contents/src/index.ts';
-import type {
-  EngineContext,
-  EffectDef,
-} from '../../packages/engine/src/index.ts';
-import { PlayerState, Land } from '../../packages/engine/src/state/index.ts';
-import { runEffects } from '../../packages/engine/src/effects/index.ts';
+} from '@kingdom-builder/contents';
+import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
+import { PlayerState, Land } from '@kingdom-builder/engine/state';
+import { runEffects } from '@kingdom-builder/engine/effects';
 
 function deepClone<T>(value: T): T {
   return structuredClone(value);
