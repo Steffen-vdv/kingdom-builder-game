@@ -19,6 +19,7 @@ import {
   GAME_START,
   POPULATION_ROLES,
   SLOT_ICON,
+  LAND_ICON,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -82,6 +83,11 @@ describe('<ActionsPanel />', () => {
     ctx.activePlayer.lands.forEach((l) => (l.slotsUsed = l.slotsMax));
     render(<ActionsPanel />);
     expect(screen.getAllByText(`Req ${SLOT_ICON}`)[0]).toBeInTheDocument();
+    expect(
+      screen.getAllByTitle(
+        `No ${LAND_ICON} land with free ${SLOT_ICON} development slot`,
+      )[0],
+    ).toBeInTheDocument();
     ctx.activePlayer.lands.forEach((l, i) => (l.slotsUsed = originalSlots[i]));
   });
 });

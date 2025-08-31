@@ -8,8 +8,10 @@ may include repository structure tips, tricky commands, or environment quirks
 that required some investigation. Maintain this list during your work and, when
 submitting a pull request, append your findings to the **Agent discovery log**
 below.
-Avoid logging the routine steps you performed, avoid logging updates related to your implementation; use the discovery log only for
-non-obvious insights that will help future agents work more efficiently. Any updates or documentation related to your implementation should be plaecd in architectural/system design/system config documentation elsewhere.
+
+Avoid logging the routine steps you performed, avoid logging updates related to your implementation. 
+Use the discovery log only for non-obvious insights that will help future agents work more efficiently. 
+Attach the date of your update as a prefix to your log entry.
 
 ## Agent discovery log
 
@@ -33,9 +35,11 @@ non-obvious insights that will help future agents work more efficiently. Any upd
   resolving triggers for non-active players.
 - 2025-08-31: `npm run test:coverage` requires `@vitest/coverage-v8`; install with `npm install --no-save @vitest/coverage-v8` if missing.
 - 2025-08-31: `performAction` returns sub-action traces via `ctx.actionTraces` for nested log attribution.
-- 2025-09-01: Use `buildInfo(registry, { id: icon })` to derive icon/label maps from content registries.
-- 2025-09-01: Compose effects with `effect(type, method).param(key, value)` to avoid manual `{ type, method, params }` objects.
-- 2025-09-02: Content builders now chain `.id().name().icon()` and icons live on config entries; standalone info maps are deprecated.
+- 2025-08-31: Use `buildInfo(registry, { id: icon })` to derive icon/label maps from content registries.
+- 2025-08-31: Compose effects with `effect(type, method).param(key, value)` to avoid manual `{ type, method, params }` objects.
+- 2025-08-31: Content builders now chain `.id().name().icon()` and icons live on config entries; standalone info maps are deprecated.
+- 2025-08-31: Overview screen can pull icons from contents (e.g. ACTION_INFO, LAND_ICON) to keep keywords visually consistent.
+- 2025-08-31: PlayerState maintains `statsHistory` so stats returning to zero remain visible; initialize new non-zero stats accordingly.
 
 # Core Agent principles
 

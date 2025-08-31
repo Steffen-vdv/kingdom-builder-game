@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Land, PlayerState, GameState } from '../../src/state/index.ts';
+import { Land, PlayerState, GameState, Stat } from '../../src/state/index.ts';
 
 describe('State classes', () => {
   it('calculates free slots on land', () => {
@@ -15,6 +15,15 @@ describe('State classes', () => {
     player.maxPopulation = 3;
     expect(player.gold).toBe(5);
     expect(player.maxPopulation).toBe(3);
+  });
+
+  it('tracks stat history when values become non-zero', () => {
+    const player = new PlayerState('A', 'Alice');
+    expect(player.statsHistory[Stat.armyStrength]).toBe(false);
+    player.armyStrength = 1;
+    expect(player.statsHistory[Stat.armyStrength]).toBe(true);
+    player.armyStrength = 0;
+    expect(player.statsHistory[Stat.armyStrength]).toBe(true);
   });
 
   it('provides active and opponent players', () => {

@@ -9,6 +9,7 @@ import {
   RESOURCES,
   POPULATION_ROLES,
   SLOT_ICON as slotIcon,
+  LAND_ICON as landIcon,
 } from '@kingdom-builder/contents';
 import {
   describeContent,
@@ -178,7 +179,7 @@ function RaisePopOptions({
               handleHoverCard({
                 title: `${ctx.actions.get('raise_pop').icon || ''}${
                   POPULATION_ROLES[role]?.icon
-                } - Hire ${POPULATION_ROLES[role]?.label || ''}`,
+                } Hire ${POPULATION_ROLES[role]?.label || ''}`,
                 effects: summary,
                 requirements,
                 costs,
@@ -189,7 +190,7 @@ function RaisePopOptions({
           >
             <span className="text-base font-medium">
               {ctx.actions.get('raise_pop').icon || ''}
-              {POPULATION_ROLES[role]?.icon} - Hire{' '}
+              {POPULATION_ROLES[role]?.icon} Hire{' '}
               {POPULATION_ROLES[role]?.label}
             </span>
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
@@ -279,7 +280,9 @@ function DevelopOptions({
           });
           const requirements = hasDevelopLand
             ? []
-            : ['Requires land with free development slot'];
+            : [
+                `Requires ${landIcon} land with free ${slotIcon} development slot`,
+              ];
           const canPay =
             hasDevelopLand &&
             Object.entries(costs).every(
@@ -294,7 +297,7 @@ function DevelopOptions({
           const title = !implemented
             ? 'Not implemented yet'
             : !hasDevelopLand
-              ? 'No land with free development slot'
+              ? `No ${landIcon} land with free ${slotIcon} development slot`
               : !canPay
                 ? 'Cannot pay costs'
                 : undefined;
