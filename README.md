@@ -4,7 +4,7 @@
 
 1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
 2. Install dependencies: `npm install` (uses npm workspaces to link local packages)
-3. Start the development server: `npm run dev`
+3. Start the development server: `npm run dev` (automatically builds `@kingdom-builder/contents`)
 4. Build for production: `npm run build`
 
 Default game content (actions, buildings, etc.) lives in `packages/contents`.

@@ -8,6 +8,8 @@ may include repository structure tips, tricky commands, or environment quirks
 that required some investigation. Maintain this list during your work and, when
 submitting a pull request, append your findings to the **Agent discovery log**
 below.
+Avoid logging the routine steps you performed, avoid logging updates related to your implementation; use the discovery log only for
+non-obvious insights that will help future agents work more efficiently. Any updates or documentation related to your implementation should be plaecd in architectural/system design/system config documentation elsewhere.
 
 ## Agent discovery log
 
@@ -17,8 +19,7 @@ below.
 - 2025-08-31: Registries can validate entries with Zod schemas; invalid data will throw during `add`.
 - 2025-08-31: A quick Node script can scan content files to detect duplicate icons across actions, buildings, stats, population roles and developments.
 - 2025-08-31: Buildings that unlock actions require an `action` effect formatter so they aren't marked as unimplemented in the UI.
-- 2025-08-31: Replaced Playwright test runner with `playwright-chromium` script to speed up smoke tests.
-- 2025-08-31: Smoke test now skips when Chromium dependencies are missing, preventing false failures.
+- 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
 
 # Core Agent principles
 
