@@ -81,6 +81,7 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-08-31: Type re-exports from React modules can still break Vite Fast Refresh; move shared types to separate files.
 - 2025-08-31: Engine creation now requires passing a `rules` object; import `RULES` from `@kingdom-builder/contents` when initializing tests or the web context.
 - 2025-08-31: Stat add formatting can be driven by `addFormat` in `STATS` to supply prefixes or percentage displays.
+- 2025-08-31: Percentage-based stats can be detected from their `addFormat.percent` (or `displayAsPercent`) flag instead of hardcoding keys.
 
 # Core Agent principles
 
