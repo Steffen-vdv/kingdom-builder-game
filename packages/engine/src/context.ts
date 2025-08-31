@@ -8,6 +8,7 @@ import type {
   PopulationConfig as PopulationDef,
 } from './config/schema';
 import type { PhaseDef } from './phases';
+import type { ActionTrace } from './log';
 
 export class EngineContext {
   constructor(
@@ -26,6 +27,7 @@ export class EngineContext {
   // same step (e.g. multiple leaders raising strength).
   statAddPctBases: Record<string, number> = {};
   statAddPctAccums: Record<string, number> = {};
+  actionTraces: ActionTrace[] = [];
   get activePlayer() {
     return this.game.active;
   }
