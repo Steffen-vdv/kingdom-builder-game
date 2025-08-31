@@ -252,6 +252,11 @@ export function resolveAttack(
   damage: number,
   ctx: EngineContext,
 ) {
+  const original = ctx.game.currentPlayerIndex;
+  const index = ctx.game.players.indexOf(defender);
+  ctx.game.currentPlayerIndex = index;
+  const pre = collectTriggerEffects('onBeforeAttacked', ctx, defender);
+  if (pre.length) runEffects(pre, ctx);
   const absorb = Math.min(
     defender.absorption || 0,
     ctx.services.rules.absorptionCapPct,
@@ -261,9 +266,6 @@ export function resolveAttack(
   if (rounding === 'down') final = Math.floor(final);
   else if (rounding === 'up') final = Math.ceil(final);
   else final = Math.round(final);
-  const original = ctx.game.currentPlayerIndex;
-  const index = ctx.game.players.indexOf(defender);
-  ctx.game.currentPlayerIndex = index;
   const effects = collectTriggerEffects('onAttackResolved', ctx, defender);
   if (effects.length) runEffects(effects, ctx);
   ctx.game.currentPlayerIndex = original;

@@ -4,6 +4,7 @@ interface PassiveParams {
   id: string;
   onDevelopmentPhase?: EffectDef[];
   onUpkeepPhase?: EffectDef[];
+  onBeforeAttacked?: EffectDef[];
   onAttackResolved?: EffectDef[];
   [key: string]: unknown;
 }
@@ -14,17 +15,25 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
   mult = 1,
 ) => {
   const params = effect.params || ({} as PassiveParams);
-  const { id, onDevelopmentPhase, onUpkeepPhase, onAttackResolved } = params;
+  const {
+    id,
+    onDevelopmentPhase,
+    onUpkeepPhase,
+    onBeforeAttacked,
+    onAttackResolved,
+  } = params;
   if (!id) throw new Error('passive:add requires id');
   const passive: {
     id: string;
     effects: EffectDef[];
     onDevelopmentPhase?: EffectDef[];
     onUpkeepPhase?: EffectDef[];
+    onBeforeAttacked?: EffectDef[];
     onAttackResolved?: EffectDef[];
   } = { id, effects: effect.effects || [] };
   if (onDevelopmentPhase) passive.onDevelopmentPhase = onDevelopmentPhase;
   if (onUpkeepPhase) passive.onUpkeepPhase = onUpkeepPhase;
+  if (onBeforeAttacked) passive.onBeforeAttacked = onBeforeAttacked;
   if (onAttackResolved) passive.onAttackResolved = onAttackResolved;
   for (let index = 0; index < Math.floor(mult); index++) {
     ctx.passives.addPassive(passive, ctx);

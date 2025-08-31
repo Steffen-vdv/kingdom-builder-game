@@ -55,6 +55,7 @@ export const buildingSchema = z.object({
   onBuild: z.array(effectSchema).optional(),
   onDevelopmentPhase: z.array(effectSchema).optional(),
   onUpkeepPhase: z.array(effectSchema).optional(),
+  onBeforeAttacked: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
 });
 
@@ -67,6 +68,7 @@ export const developmentSchema = z.object({
   icon: z.string().optional(),
   onBuild: z.array(effectSchema).optional(),
   onDevelopmentPhase: z.array(effectSchema).optional(),
+  onBeforeAttacked: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
   system: z.boolean().optional(),
 });

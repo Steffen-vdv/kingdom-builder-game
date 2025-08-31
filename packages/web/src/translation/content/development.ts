@@ -6,6 +6,7 @@ import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
 
 interface PhaseEffects {
+  onBeforeAttacked?: EffectDef[];
   onAttackResolved?: EffectDef[];
   [key: string]: EffectDef[] | undefined;
 }
