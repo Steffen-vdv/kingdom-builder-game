@@ -41,6 +41,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-08-31: Overview screen can pull icons from contents (e.g. ACTION_INFO, LAND_ICON) to keep keywords visually consistent.
 - 2025-08-31: PlayerState maintains `statsHistory` so stats returning to zero remain visible; initialize new non-zero stats accordingly.
 - 2025-09-14: PlayerState auto-initializes stats by iterating over `Stat` keys; adding a new stat requires only updating the `Stat` map and providing getters/setters.
+- 2025-08-31: Clone trigger arrays when adding passives to avoid shared references across players.
 
 # Core Agent principles
 

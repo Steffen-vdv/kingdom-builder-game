@@ -23,9 +23,12 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
     onUpkeepPhase?: EffectDef[];
     onAttackResolved?: EffectDef[];
   } = { id, effects: effect.effects || [] };
-  if (onDevelopmentPhase) passive.onDevelopmentPhase = onDevelopmentPhase;
-  if (onUpkeepPhase) passive.onUpkeepPhase = onUpkeepPhase;
-  if (onAttackResolved) passive.onAttackResolved = onAttackResolved;
+  if (onDevelopmentPhase)
+    passive.onDevelopmentPhase = onDevelopmentPhase.map((e) => ({ ...e }));
+  if (onUpkeepPhase)
+    passive.onUpkeepPhase = onUpkeepPhase.map((e) => ({ ...e }));
+  if (onAttackResolved)
+    passive.onAttackResolved = onAttackResolved.map((e) => ({ ...e }));
   for (let index = 0; index < Math.floor(mult); index++) {
     ctx.passives.addPassive(passive, ctx);
   }
