@@ -224,6 +224,16 @@ export function advance(ctx: EngineContext): AdvanceResult {
 
   if (step) ctx.passives.runResultMods(step.id, ctx);
 
+  if (step?.id === 'gain-ap' && player.id === ctx.game.players[1]?.id) {
+    const extra: EffectDef = {
+      type: 'resource',
+      method: 'add',
+      params: { key: Resource.ap, amount: 1 },
+    };
+    runEffects([extra], ctx);
+    effects.push(extra);
+  }
+
   ctx.game.stepIndex += 1;
   if (ctx.game.stepIndex >= phase.steps.length) {
     ctx.game.stepIndex = 0;

@@ -10,7 +10,7 @@ import {
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
-import { PopulationRole, Stat } from '@kingdom-builder/engine/state';
+import { PopulationRole, Stat, Resource } from '@kingdom-builder/engine/state';
 interface StepDef {
   id: string;
   title?: string;
@@ -207,6 +207,40 @@ export function diffStepSnapshots(
     const b = before.resources[key] ?? 0;
     const a = after.resources[key] ?? 0;
     if (a !== b) {
+      if (
+        step?.id === 'gain-ap' &&
+        key === Resource.ap &&
+        ctx.activePlayer.id === ctx.game.players[1]?.id
+      ) {
+        const info = RESOURCES[key as keyof typeof RESOURCES];
+        const icon = info?.icon ? `${info.icon} ` : '';
+        const label = info?.label ?? key;
+        const evaluator = EVALUATORS.get('population');
+        const councilAP = evaluator
+          ? Number(
+              evaluator(
+                {
+                  type: 'population',
+                  params: { role: PopulationRole.Council },
+                },
+                ctx,
+              ),
+            )
+          : 0;
+        const extra = a - b - councilAP;
+        if (councilAP > 0) {
+          let councilLine = `${icon}${label} +${councilAP} (${b}→${b + councilAP})`;
+          const src = sources[key];
+          if (src)
+            councilLine += ` (${info?.icon || key}+${councilAP} from ${src})`;
+          changes.push(councilLine);
+        }
+        if (extra > 0)
+          changes.push(
+            `${icon}${label} +${extra} (${b + councilAP}→${a}) (last-player compensation)`,
+          );
+        continue;
+      }
       const info = RESOURCES[key as keyof typeof RESOURCES];
       const icon = info?.icon ? `${info.icon} ` : '';
       const label = info?.label ?? key;

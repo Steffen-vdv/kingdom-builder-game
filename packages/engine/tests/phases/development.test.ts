@@ -36,6 +36,16 @@ describe('Development phase', () => {
     expect(player.gold).toBe(goldBefore + farmGoldGain);
   });
 
+  it('grants player B an extra ap for going last', () => {
+    const ctx = createTestEngine();
+    ctx.game.currentPlayerIndex = 1;
+    const player = ctx.activePlayer;
+    const apBefore = player.ap;
+    while (ctx.game.currentPhase === 'development') advance(ctx);
+    const councils = player.population[PopulationRole.Council];
+    expect(player.ap).toBe(apBefore + councilApGain * councils + 1);
+  });
+
   it('grows commander and fortifier stats', () => {
     const ctx = createTestEngine();
     ctx.activePlayer.population[PopulationRole.Commander] = 1;
