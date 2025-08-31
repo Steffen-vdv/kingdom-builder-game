@@ -1,6 +1,6 @@
 import type { EngineContext } from '@kingdom-builder/engine';
 import { ACTION_INFO as actionInfo } from '@kingdom-builder/contents';
-import { summarizeContent, describeContent } from '../../content';
+import { describeContent } from '../../content';
 import { registerEffectFormatter, logEffects } from '../factory';
 
 function getActionLabel(id: string, ctx: EngineContext) {
@@ -65,15 +65,14 @@ registerEffectFormatter('action', 'perform', {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    const summary = summarizeContent('action', id, ctx);
-    return [{ title: `${icon} ${name}`, items: summary }];
+    return `${icon} ${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
     const summary = describeContent('action', id, ctx);
-    return [{ title: `Perform action ${icon} ${name}`, items: summary }];
+    return [{ title: `${icon} ${name}`, items: summary }];
   },
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;

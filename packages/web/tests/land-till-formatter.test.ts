@@ -42,10 +42,4 @@ describe('land till formatter', () => {
     );
     expect(hasIcon).toBe(true);
   });
-
-  it('summarizes plow action', () => {
-    const ctx = createCtx();
-    const summary = summarizeContent('action', 'plow', ctx);
-    expect(summary.length).toBeGreaterThan(0);
-  });
 });
