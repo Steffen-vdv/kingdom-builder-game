@@ -1,8 +1,9 @@
 import type { EngineContext } from '@kingdom-builder/engine';
 import { summarizeEffects, describeEffects, logEffects } from '../effects';
 import { applyParamsToEffects } from '@kingdom-builder/engine';
-import { registerContentTranslator, logContent } from './factory';
+import { registerContentTranslator } from './factory';
 import type { ContentTranslator, Summary } from './types';
+import { getActionLogHook } from './actionLogHooks';
 
 class ActionTranslator
   implements ContentTranslator<string, Record<string, unknown>>
@@ -31,29 +32,6 @@ class ActionTranslator
     const eff = describeEffects(effects, ctx);
     return eff.length ? eff : [];
   }
-  private logHandlers: Record<
-    string,
-    (ctx: EngineContext, params?: Record<string, unknown>) => string
-  > = {
-    develop: (ctx, params) => {
-      const id =
-        typeof (params as { id?: string })?.id === 'string'
-          ? (params as { id: string }).id
-          : undefined;
-      if (!id) return '';
-      const target = logContent('development', id, ctx)[0];
-      return target ? ` - ${target}` : '';
-    },
-    build: (ctx, params) => {
-      const id =
-        typeof (params as { id?: string })?.id === 'string'
-          ? (params as { id: string }).id
-          : undefined;
-      if (!id) return '';
-      const target = logContent('building', id, ctx)[0];
-      return target ? ` - ${target}` : '';
-    },
-  };
   log(
     id: string,
     ctx: EngineContext,
@@ -63,7 +41,7 @@ class ActionTranslator
     const icon = def.icon || '';
     const label = def.name;
     let message = `Played ${icon} ${label}`;
-    const extra = this.logHandlers[id]?.(ctx, params);
+    const extra = getActionLogHook(id)?.(ctx, params);
     if (extra) message += extra;
     const effects = params
       ? applyParamsToEffects(def.effects, params)

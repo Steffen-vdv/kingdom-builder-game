@@ -22,14 +22,16 @@ import {
   StatMethods,
 } from './config/builders';
 
-export type ActionDef = ActionConfig;
+export interface ActionDef extends ActionConfig {
+  category?: string;
+  order?: number;
+}
 
 export function createActionRegistry() {
-  const registry = new Registry<ActionDef>(actionSchema);
+  const registry = new Registry<ActionDef>(actionSchema.passthrough());
 
-  registry.add(
-    'expand',
-    action()
+  registry.add('expand', {
+    ...action()
       .id('expand')
       .name('Expand')
       .icon('🌱')
@@ -42,11 +44,12 @@ export function createActionRegistry() {
           .build(),
       )
       .build(),
-  );
+    category: 'basic',
+    order: 1,
+  });
 
-  registry.add(
-    'overwork',
-    action()
+  registry.add('overwork', {
+    ...action()
       .id('overwork')
       .name('Overwork')
       .icon('🛠️')
@@ -69,11 +72,12 @@ export function createActionRegistry() {
           .build(),
       )
       .build(),
-  );
+    category: 'basic',
+    order: 2,
+  });
 
-  registry.add(
-    'develop',
-    action()
+  registry.add('develop', {
+    ...action()
       .id('develop')
       .name('Develop')
       .icon('🏗️')
@@ -85,11 +89,12 @@ export function createActionRegistry() {
           .build(),
       )
       .build(),
-  );
+    category: 'development',
+    order: 1,
+  });
 
-  registry.add(
-    'tax',
-    action()
+  registry.add('tax', {
+    ...action()
       .id('tax')
       .name('Tax')
       .icon('💰')
@@ -111,22 +116,24 @@ export function createActionRegistry() {
           .build(),
       )
       .build(),
-  );
+    category: 'basic',
+    order: 3,
+  });
 
-  registry.add(
-    'reallocate',
-    action()
+  registry.add('reallocate', {
+    ...action()
       .id('reallocate')
       .name('Reallocate')
       .icon('🔄')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 5)
       .build(),
-  );
+    category: 'basic',
+    order: 4,
+  });
 
-  registry.add(
-    'raise_pop',
-    action()
+  registry.add('raise_pop', {
+    ...action()
       .id('raise_pop')
       .name('Raise Population')
       .icon('👶')
@@ -151,22 +158,24 @@ export function createActionRegistry() {
           .build(),
       )
       .build(),
-  );
+    category: 'population',
+    order: 1,
+  });
 
-  registry.add(
-    'royal_decree',
-    action()
+  registry.add('royal_decree', {
+    ...action()
       .id('royal_decree')
       .name('Royal Decree')
       .icon('📜')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 12)
       .build(),
-  );
+    category: 'basic',
+    order: 5,
+  });
 
-  registry.add(
-    'army_attack',
-    action()
+  registry.add('army_attack', {
+    ...action()
       .id('army_attack')
       .name('Army Attack')
       .icon('🗡️')
@@ -209,18 +218,21 @@ export function createActionRegistry() {
           .build(),
       )
       .build(),
-  );
+    category: 'basic',
+    order: 6,
+  });
 
-  registry.add(
-    'hold_festival',
-    action()
+  registry.add('hold_festival', {
+    ...action()
       .id('hold_festival')
       .name('Hold Festival')
       .icon('🎉')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 3)
       .build(),
-  );
+    category: 'basic',
+    order: 7,
+  });
 
   registry.add(
     'plunder',
@@ -291,9 +303,8 @@ export function createActionRegistry() {
       .build(),
   );
 
-  registry.add(
-    'build',
-    action()
+  registry.add('build', {
+    ...action()
       .id('build')
       .name('Build')
       .icon('🏛️')
@@ -301,7 +312,9 @@ export function createActionRegistry() {
         effect(Types.Building, BuildingMethods.ADD).param('id', '$id').build(),
       )
       .build(),
-  );
+    category: 'building',
+    order: 1,
+  });
 
   return registry;
 }

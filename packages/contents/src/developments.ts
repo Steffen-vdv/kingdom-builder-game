@@ -13,16 +13,17 @@ import type { DevelopmentDef } from './defs';
 export type { DevelopmentDef } from './defs';
 
 export function createDevelopmentRegistry() {
-  const registry = new Registry<DevelopmentDef>(developmentSchema);
-
-  registry.add(
-    'farm',
-    development().id('farm').name('Farm').icon('🌾').build(),
+  const registry = new Registry<DevelopmentDef>(
+    developmentSchema.passthrough(),
   );
 
-  registry.add(
-    'house',
-    development()
+  registry.add('farm', {
+    ...development().id('farm').name('Farm').icon('🌾').build(),
+    order: 2,
+  });
+
+  registry.add('house', {
+    ...development()
       .id('house')
       .name('House')
       .icon('🏠')
@@ -32,11 +33,11 @@ export function createDevelopmentRegistry() {
           .build(),
       )
       .build(),
-  );
+    order: 1,
+  });
 
-  registry.add(
-    'outpost',
-    development()
+  registry.add('outpost', {
+    ...development()
       .id('outpost')
       .name('Outpost')
       .icon('🏹')
@@ -51,11 +52,11 @@ export function createDevelopmentRegistry() {
           .build(),
       )
       .build(),
-  );
+    order: 3,
+  });
 
-  registry.add(
-    'watchtower',
-    development()
+  registry.add('watchtower', {
+    ...development()
       .id('watchtower')
       .name('Watchtower')
       .icon('🗼')
@@ -75,7 +76,8 @@ export function createDevelopmentRegistry() {
           .build(),
       )
       .build(),
-  );
+    order: 4,
+  });
 
   registry.add(
     'garden',
