@@ -1,3 +1,20 @@
+# Knowledge sharing
+
+## Maintain a discovery log
+
+To streamline collaboration, the repository owner asks every agent to keep
+track of any non-obvious discoveries made while completing their task. These
+may include repository structure tips, tricky commands, or environment quirks
+that required some investigation. Maintain this list during your work and, when
+submitting a pull request, append your findings to the **Agent discovery log**
+below.
+
+## Agent discovery log
+
+- 2025-08-31: Run tests with `npm run test:coverage >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log`; avoid running extra test commands.
+- 2025-08-31: `git commit` triggers a Husky pre-commit hook running lint-staged, type checking, linting and tests.
+- 2025-08-31: Use `rg` for code searches; `grep -R` and `ls -R` are discouraged for performance.
+
 # Core Agent principles
 
 We are gradually, step by step, implementing a digital game. You can refer to the README.md for a summary of the game's general format and objective. The goal of Agents working on this project is to help structure the repository in such a way that we make progress towards our end-goal: A fully functional, robust, elegant and _extensible_ game. This is _not_ a type of game where we hardcode most things, stick to one config, and the game is done and forgotten. This game must be heavily configurable, possibly later by players themselves through a game config editor, but initially by ourselves for heavy AB & game design testing. We must be able to change nearly anything at a whim - Change configs, add buildings, add actions, invent new effects, invent new ratio's and thresholds for things, and so on.
