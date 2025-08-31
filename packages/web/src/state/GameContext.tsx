@@ -279,7 +279,11 @@ export function GameProvider({
         params as ActionParams<string>,
       );
       const after = snapshotPlayer(ctx.activePlayer, ctx);
-      const changes = diffSnapshots(before, after, ctx);
+      const stepDef = {
+        id: action.id,
+        effects: ctx.actions.get(action.id).effects,
+      };
+      const changes = diffStepSnapshots(before, after, stepDef, ctx);
       const messages = logContent('action', action.id, ctx, params);
       const costLines: string[] = [];
       for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {

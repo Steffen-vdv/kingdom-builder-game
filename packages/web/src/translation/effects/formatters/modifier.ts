@@ -92,7 +92,7 @@ registerEffectFormatter('result_mod', 'add', {
       const icon = actionInfo[evaluation.id]?.icon || '';
       const amount = Number(eff.params?.['amount'] ?? 0);
       return [
-        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${action?.name || evaluation.id}, gain +${amount} more of that resource`,
+        `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${icon} ${action?.name || evaluation.id}, gain +${amount} more of that resource`,
       ];
     }
     const actionId = eff.params?.['actionId'] as string;
@@ -135,7 +135,7 @@ registerEffectFormatter('result_mod', 'add', {
       const icon = actionInfo[evaluation.id]?.icon || '';
       const amount = Number(eff.params?.['amount'] ?? 0);
       return [
-        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${action?.name || evaluation.id}, gain +${amount} more of that resource`,
+        `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${icon} ${action?.name || evaluation.id}, gain +${amount} more of that resource`,
       ];
     }
     const actionId = eff.params?.['actionId'] as string;

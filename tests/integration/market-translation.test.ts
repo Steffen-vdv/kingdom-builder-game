@@ -22,6 +22,8 @@ describe('Market building translation', () => {
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
     const summary = summarizeContent('building', 'market', ctx) as unknown;
-    expect(JSON.stringify(summary)).toContain('Tax');
+    const str = JSON.stringify(summary);
+    expect(str).toContain('Population');
+    expect(str).toContain('Tax');
   });
 });

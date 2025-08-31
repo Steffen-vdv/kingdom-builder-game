@@ -35,6 +35,7 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-08-31: `performAction` returns sub-action traces via `ctx.actionTraces` for nested log attribution.
 - 2025-08-31: Overview screen can pull icons from contents (e.g. ACTION_INFO, LAND_ICON) to keep keywords visually consistent.
 - 2025-08-31: Evaluation modifiers can target action-based gains by giving the action's evaluator an `id`.
+- 2025-08-31: Use `diffStepSnapshots` with a pseudo step to surface resource sources for action logs.
 
 # Core Agent principles
 

@@ -11,6 +11,7 @@ import {
   SLOT_ICON as slotIcon,
   DEVELOPMENT_INFO as developmentInfo,
   ACTION_INFO as actionInfo,
+  BUILDING_INFO as buildingInfo,
 } from '@kingdom-builder/contents';
 interface StepDef {
   id: string;
@@ -139,14 +140,14 @@ function collectResourceSources(
   step: StepDef | undefined,
   ctx: EngineContext,
 ): Record<string, string> {
-  const map: Record<string, { icons: string; mods: number }> = {};
+  const map: Record<string, { icons: string; modIcons: string }> = {};
   for (const eff of step?.effects || []) {
     if (eff.evaluator && eff.effects) {
       const inner = eff.effects.find((e) => e.type === 'resource');
       if (!inner) continue;
       const key = inner.params?.['key'] as string | undefined;
       if (!key) continue;
-      const entry = map[key] || { icons: '', mods: 0 };
+      const entry = map[key] || { icons: '', modIcons: '' };
       const ev = eff.evaluator as {
         type: string;
         params?: Record<string, unknown>;
@@ -174,12 +175,20 @@ function collectResourceSources(
           evaluationMods?: Map<string, Map<string, unknown>>;
         };
         const modsMap = passives.evaluationMods?.get(target);
-        const mods = modsMap
-          ? Array.from(modsMap.keys()).filter((k) =>
-              k.endsWith(`_${ctx.activePlayer.id}`),
-            ).length
-          : 0;
-        entry.mods += mods;
+        if (modsMap)
+          for (const modId of modsMap.keys()) {
+            if (!modId.endsWith(`_${ctx.activePlayer.id}`)) continue;
+            const suffix = `_${ctx.activePlayer.id}`;
+            const base = modId.slice(0, -suffix.length);
+            const buildingId = base.split('_')[0] ?? '';
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const info = (buildingInfo as Record<string, { icon?: string }>)[
+              buildingId
+            ];
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const icon = String(info?.icon || actionInfo['build']?.icon || '');
+            entry.modIcons += `+${icon}`;
+          }
       } catch {
         // ignore missing evaluators
       }
@@ -187,10 +196,8 @@ function collectResourceSources(
     }
   }
   const result: Record<string, string> = {};
-  for (const [key, { icons, mods }] of Object.entries(map)) {
-    let part = icons;
-    if (mods > 0) part += `+${(actionInfo['build']?.icon || '').repeat(mods)}`;
-    result[key] = part;
+  for (const [key, { icons, modIcons }] of Object.entries(map)) {
+    result[key] = icons + modIcons;
   }
   return result;
 }
