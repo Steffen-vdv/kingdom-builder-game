@@ -29,14 +29,16 @@ export default function PassiveDisplay({
   const entries = Array.from(map.entries()).filter(
     ([id]) => !buildingIds.has(id) && !developmentIds.has(id),
   );
+  if (entries.length === 0) return null;
+
   const getIcon = (effects: EffectDef[] | undefined) => {
     const first = effects?.[0];
     if (first?.type === 'cost_mod') return modifierInfo.cost.icon;
     if (first?.type === 'result_mod') return modifierInfo.result.icon;
     return '❔';
   };
+
   const animatePassives = useAnimate<HTMLDivElement>();
-  if (entries.length === 0) return null;
   return (
     <div
       ref={animatePassives}
