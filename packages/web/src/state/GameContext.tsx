@@ -11,6 +11,7 @@ import {
   performAction,
   advance,
   Resource,
+  getActionCosts,
   type EngineContext,
   type ActionParams,
 } from '@kingdom-builder/engine';
@@ -266,12 +267,42 @@ export function GameProvider({
 
   function handlePerform(action: Action, params?: Record<string, unknown>) {
     const before = snapshotPlayer(ctx.activePlayer, ctx);
+    const costs = getActionCosts(
+      action.id,
+      ctx,
+      params as ActionParams<string>,
+    );
     try {
       performAction(action.id, ctx, params as ActionParams<string>);
       const after = snapshotPlayer(ctx.activePlayer, ctx);
       const changes = diffSnapshots(before, after, ctx);
       const messages = logContent('action', action.id, ctx, params);
-      addLog([...messages, ...changes.map((c) => `  ${c}`)]);
+      const costLines: string[] = [];
+      for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
+        const amt = costs[key] ?? 0;
+        if (!amt) continue;
+        const info = RESOURCES[key];
+        const icon = info?.icon ? `${info.icon} ` : '';
+        const label = info?.label ?? key;
+        const b = before.resources[key] ?? 0;
+        const a = b - amt;
+        costLines.push(`    ${icon}${label} -${amt} (${b}→${a})`);
+      }
+      if (costLines.length) {
+        messages.splice(1, 0, '  💲 Action cost', ...costLines);
+      }
+      const costLabels = new Set(
+        Object.keys(costs) as (keyof typeof RESOURCES)[],
+      );
+      const filtered = changes.filter((line) => {
+        for (const key of costLabels) {
+          const info = RESOURCES[key];
+          const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
+          if (line.startsWith(prefix)) return false;
+        }
+        return true;
+      });
+      addLog([...messages, ...filtered.map((c) => `  ${c}`)]);
     } catch (e) {
       const icon = actionInfo[action.id]?.icon || '';
       addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
