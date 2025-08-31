@@ -10,8 +10,8 @@ interface BuildingDisplayProps {
 
 const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
   const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
-  if (player.buildings.size === 0) return null;
   const animateBuildings = useAnimate<HTMLDivElement>();
+  if (player.buildings.size === 0) return null;
   return (
     <div ref={animateBuildings} className="flex flex-wrap gap-2 mt-2 w-fit">
       {Array.from(player.buildings).map((b) => {
