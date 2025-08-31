@@ -34,6 +34,7 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-08-31: `npm run test:coverage` requires `@vitest/coverage-v8`; install with `npm install --no-save @vitest/coverage-v8` if missing.
 - 2025-08-31: `performAction` returns sub-action traces via `ctx.actionTraces` for nested log attribution.
 - 2025-08-31: Overview screen can pull icons from contents (e.g. ACTION_INFO, LAND_ICON) to keep keywords visually consistent.
+- 2025-08-31: Evaluation modifiers can target action-based gains by giving the action's evaluator an `id`.
 
 # Core Agent principles
 

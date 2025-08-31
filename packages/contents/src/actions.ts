@@ -67,7 +67,7 @@ export function createActionRegistry() {
     action('tax', 'Tax')
       .cost(Resource.ap, 1)
       .effect({
-        evaluator: { type: 'population' },
+        evaluator: { type: 'population', params: { id: 'tax' } },
         effects: [
           {
             type: 'resource',

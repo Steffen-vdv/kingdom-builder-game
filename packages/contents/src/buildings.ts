@@ -67,7 +67,18 @@ export function createBuildingRegistry() {
   );
   registry.add(
     'market',
-    building('market', 'Market').cost(Resource.gold, 10).build(),
+    building('market', 'Market')
+      .cost(Resource.gold, 10)
+      .onBuild({
+        type: 'result_mod',
+        method: 'add',
+        params: {
+          id: 'market_tax_bonus',
+          evaluation: { type: 'population', id: 'tax' },
+          amount: 1,
+        },
+      })
+      .build(),
   );
   registry.add(
     'barracks',

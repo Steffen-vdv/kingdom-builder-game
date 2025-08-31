@@ -87,6 +87,14 @@ registerEffectFormatter('result_mod', 'add', {
         `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
       ];
     }
+    if (evaluation?.type === 'population') {
+      const action = ctx.actions.get(evaluation.id);
+      const icon = actionInfo[evaluation.id]?.icon || '';
+      const amount = Number(eff.params?.['amount'] ?? 0);
+      return [
+        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${action?.name || evaluation.id}, gain +${amount} more of that resource`,
+      ];
+    }
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon = actionInfo[actionId]?.icon || actionId;
     return sub.map((s) =>
@@ -120,6 +128,14 @@ registerEffectFormatter('result_mod', 'add', {
       const amount = Number(eff.params?.['amount'] ?? 0);
       return [
         `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
+      ];
+    }
+    if (evaluation?.type === 'population') {
+      const action = ctx.actions.get(evaluation.id);
+      const icon = actionInfo[evaluation.id]?.icon || '';
+      const amount = Number(eff.params?.['amount'] ?? 0);
+      return [
+        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${action?.name || evaluation.id}, gain +${amount} more of that resource`,
       ];
     }
     const actionId = eff.params?.['actionId'] as string;

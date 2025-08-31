@@ -3,6 +3,7 @@ import {
   runEffects,
   performAction,
   Resource,
+  PopulationRole,
   EVALUATORS,
   advance,
   type EffectDef,
@@ -14,6 +15,29 @@ import type { EvaluatorDef } from '../../src/evaluators';
 
 function getOverworkExpectations(ctx: EngineContext) {
   const actionDefinition = ctx.actions.get('overwork');
+  const container = actionDefinition.effects[0];
+  const evaluator = container.evaluator as EvaluatorDef;
+  const count = EVALUATORS.get(evaluator.type)(evaluator, ctx) as number;
+  const deltas: Record<string, number> = {};
+  const subEffects = container.effects as (EffectDef & {
+    round?: 'up' | 'down';
+  })[];
+  for (let i = 0; i < count; i++)
+    for (const subEffect of subEffects) {
+      const key = subEffect.params!.key as string;
+      let amount = subEffect.params!.amount as number;
+      const rounding = subEffect.round;
+      if (rounding === 'up')
+        amount = amount >= 0 ? Math.ceil(amount) : Math.floor(amount);
+      else if (rounding === 'down')
+        amount = amount >= 0 ? Math.floor(amount) : Math.ceil(amount);
+      deltas[key] = (deltas[key] || 0) + amount;
+    }
+  return deltas;
+}
+
+function getTaxExpectations(ctx: EngineContext) {
+  const actionDefinition = ctx.actions.get('tax');
   const container = actionDefinition.effects[0];
   const evaluator = container.evaluator as EvaluatorDef;
   const count = EVALUATORS.get(evaluator.type)(evaluator, ctx) as number;
@@ -92,6 +116,40 @@ describe('evaluation result modifiers', () => {
     performAction('overwork', ctx);
     expect(ctx.activePlayer.gold).toBe(
       before + (expected[Resource.gold] || 0) + farms * bonusAmount,
+    );
+  });
+
+  it('Market grants extra gold for each Tax population', () => {
+    const ctx = createTestEngine();
+    runEffects(
+      [{ type: 'building', method: 'add', params: { id: 'market' } }],
+      ctx,
+    );
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
+    runEffects(
+      [
+        {
+          type: 'population',
+          method: 'add',
+          params: { role: PopulationRole.Citizen },
+        },
+      ],
+      ctx,
+      2,
+    );
+    const before = ctx.activePlayer.gold;
+    const expected = getTaxExpectations(ctx);
+    const popCount = Object.values(ctx.activePlayer.population).reduce(
+      (acc, val) => acc + Number(val || 0),
+      0,
+    );
+    performAction('tax', ctx);
+    const bonusEffect = BUILDINGS.get('market').onBuild?.find(
+      (e: EffectDef) => e.params?.['id'] === 'market_tax_bonus',
+    );
+    const bonusAmount = Number(bonusEffect?.params?.['amount'] ?? 0);
+    expect(ctx.activePlayer.gold).toBe(
+      before + (expected[Resource.gold] || 0) + popCount * bonusAmount,
     );
   });
 });
