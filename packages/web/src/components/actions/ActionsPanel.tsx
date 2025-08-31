@@ -181,7 +181,7 @@ function RaisePopOptions({
               handleHoverCard({
                 title: `${actionInfo['raise_pop']?.icon ?? ''}${
                   POPULATION_ROLES[role]?.icon
-                } - Hire ${POPULATION_ROLES[role]?.label || ''}`,
+                } Hire ${POPULATION_ROLES[role]?.label || ''}`,
                 effects: summary,
                 requirements,
                 costs,
@@ -192,7 +192,7 @@ function RaisePopOptions({
           >
             <span className="text-base font-medium">
               {actionInfo['raise_pop']?.icon ?? ''}
-              {POPULATION_ROLES[role]?.icon} - Hire{' '}
+              {POPULATION_ROLES[role]?.icon} Hire{' '}
               {POPULATION_ROLES[role]?.label}
             </span>
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">

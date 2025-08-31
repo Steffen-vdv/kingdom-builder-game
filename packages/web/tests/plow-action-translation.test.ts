@@ -32,7 +32,7 @@ describe('plow action translation', () => {
     expect(summary).toEqual([
       '🌱 Expand',
       '🧑‍🌾 Till',
-      { title: '♾️ Until your next Upkeep Phase', items: ['💲: 🪙+2'] },
+      { title: '♾️ Until next Upkeep', items: ['💲: 🪙+2'] },
     ]);
   });
 
