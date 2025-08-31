@@ -72,4 +72,16 @@
   .dark .player-bg-red-active {
     --player-color: rgba(220, 38, 38, 0.4);
   }
+  .log-entry-a {
+    background-color: rgba(219, 234, 254, 0.5);
+  }
+  .log-entry-b {
+    background-color: rgba(254, 226, 226, 0.5);
+  }
+  .dark .log-entry-a {
+    background-color: rgba(30, 58, 138, 0.3);
+  }
+  .dark .log-entry-b {
+    background-color: rgba(127, 29, 29, 0.3);
+  }
 }

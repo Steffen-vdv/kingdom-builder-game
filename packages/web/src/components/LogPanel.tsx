@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useGameEngine } from '../state/GameContext';
 
 export default function LogPanel() {
-  const { log: entries } = useGameEngine();
+  const { log: entries, ctx } = useGameEngine();
   const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,11 +19,24 @@ export default function LogPanel() {
     >
       <h2 className="text-xl font-semibold mb-2">Log</h2>
       <ul className="mt-2 space-y-1">
-        {entries.map((entry, idx) => (
-          <li key={idx} className="text-xs font-mono whitespace-pre-wrap">
-            [{entry.time}] {entry.text}
-          </li>
-        ))}
+        {entries.map((entry, idx) => {
+          const aId = ctx.game.players[0]?.id;
+          const bId = ctx.game.players[1]?.id;
+          const colorClass =
+            entry.playerId === aId
+              ? 'log-entry-a'
+              : entry.playerId === bId
+                ? 'log-entry-b'
+                : '';
+          return (
+            <li
+              key={idx}
+              className={`text-xs font-mono whitespace-pre-wrap rounded px-1 ${colorClass}`}
+            >
+              [{entry.time}] {entry.text}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

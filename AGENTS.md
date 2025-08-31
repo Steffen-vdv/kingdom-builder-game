@@ -20,6 +20,7 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-08-31: A quick Node script can scan content files to detect duplicate icons across actions, buildings, stats, population roles and developments.
 - 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
 - 2025-09-01: Player snapshots now require the engine context to include active passive IDs; use `snapshotPlayer(player, ctx)`.
+- 2025-09-02: Log entries include `playerId` so the web UI can style messages per player.
 
 # Core Agent principles
 
