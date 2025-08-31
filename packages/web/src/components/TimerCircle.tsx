@@ -29,7 +29,6 @@ const TimerCircle: React.FC<TimerCircleProps> = ({
         stroke="#e5e7eb"
         strokeWidth="2"
         fill="none"
-        strokeLinecap="round"
       />
       <circle
         cx="12"
@@ -40,8 +39,6 @@ const TimerCircle: React.FC<TimerCircleProps> = ({
         fill="none"
         strokeDasharray={circumference}
         strokeDashoffset={(1 - progress) * circumference}
-        style={{ transition: 'stroke-dashoffset 0.2s linear' }}
-        strokeLinecap="round"
       />
     </svg>
   );

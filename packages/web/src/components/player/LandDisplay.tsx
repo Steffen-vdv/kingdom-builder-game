@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import {
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
@@ -32,75 +32,6 @@ const LandTile: React.FC<{
     });
   };
   const animateSlots = useAnimate<HTMLDivElement>();
-
-  const DevSlot: React.FC<{ devId: string | undefined }> = ({ devId }) => {
-    const slotRef = useRef<HTMLSpanElement>(null);
-    useEffect(() => {
-      if (devId) {
-        const el = slotRef.current;
-        el?.classList.add('dev-pop');
-        const t = setTimeout(() => el?.classList.remove('dev-pop'), 400);
-        return () => clearTimeout(t);
-      }
-    }, [devId]);
-
-    if (devId) {
-      const name = ctx.developments.get(devId)?.name || devId;
-      const title = `${ctx.developments.get(devId)?.icon || ''} ${name}`;
-      const handleLeave = () => showLandCard();
-      return (
-        <span
-          ref={slotRef}
-          className="panel-card p-1 text-xs hoverable cursor-help"
-          onMouseEnter={(e) => {
-            e.stopPropagation();
-            const full = describeContent('development', devId, ctx, {
-              installed: true,
-            });
-            const { effects, description } = splitSummary(full);
-            handleHoverCard({
-              title,
-              effects,
-              requirements: [],
-              ...(description && { description }),
-              bgClass: 'bg-gray-100 dark:bg-gray-700',
-            });
-          }}
-          onMouseLeave={(e) => {
-            e.stopPropagation();
-            handleLeave();
-          }}
-        >
-          {ctx.developments.get(devId)?.icon} {name}
-        </span>
-      );
-    }
-    const handleLeave = () => showLandCard();
-    return (
-      <span
-        ref={slotRef}
-        className="panel-card p-1 text-xs hoverable cursor-help italic"
-        onMouseEnter={(e) => {
-          e.stopPropagation();
-          handleHoverCard({
-            title: `${slotIcon} Development Slot (empty)`,
-            effects: [],
-            description: `Use ${ctx.actions.get('develop').icon || ''} ${
-              ctx.actions.get('develop').name
-            } to build here`,
-            requirements: [],
-            bgClass: 'bg-gray-100 dark:bg-gray-700',
-          });
-        }}
-        onMouseLeave={(e) => {
-          e.stopPropagation();
-          handleLeave();
-        }}
-      >
-        {slotIcon} -empty-
-      </span>
-    );
-  };
   return (
     <div
       key={idx}
@@ -113,9 +44,65 @@ const LandTile: React.FC<{
         ref={animateSlots}
         className="mt-1 flex flex-wrap justify-center gap-1"
       >
-        {Array.from({ length: land.slotsMax }).map((_, i) => (
-          <DevSlot key={i} devId={land.developments[i]} />
-        ))}
+        {Array.from({ length: land.slotsMax }).map((_, i) => {
+          const devId = land.developments[i];
+          if (devId) {
+            const name = ctx.developments.get(devId)?.name || devId;
+            const title = `${ctx.developments.get(devId)?.icon || ''} ${name}`;
+            const handleLeave = () => showLandCard();
+            return (
+              <span
+                key={i}
+                className="panel-card p-1 text-xs hoverable cursor-help"
+                onMouseEnter={(e) => {
+                  e.stopPropagation();
+                  const full = describeContent('development', devId, ctx, {
+                    installed: true,
+                  });
+                  const { effects, description } = splitSummary(full);
+                  handleHoverCard({
+                    title,
+                    effects,
+                    requirements: [],
+                    ...(description && { description }),
+                    bgClass: 'bg-gray-100 dark:bg-gray-700',
+                  });
+                }}
+                onMouseLeave={(e) => {
+                  e.stopPropagation();
+                  handleLeave();
+                }}
+              >
+                {ctx.developments.get(devId)?.icon} {name}
+              </span>
+            );
+          }
+          const handleLeave = () => showLandCard();
+          return (
+            <span
+              key={i}
+              className="panel-card p-1 text-xs hoverable cursor-help italic"
+              onMouseEnter={(e) => {
+                e.stopPropagation();
+                handleHoverCard({
+                  title: `${slotIcon} Development Slot (empty)`,
+                  effects: [],
+                  description: `Use ${ctx.actions.get('develop').icon || ''} ${
+                    ctx.actions.get('develop').name
+                  } to build here`,
+                  requirements: [],
+                  bgClass: 'bg-gray-100 dark:bg-gray-700',
+                });
+              }}
+              onMouseLeave={(e) => {
+                e.stopPropagation();
+                handleLeave();
+              }}
+            >
+              {slotIcon} -empty-
+            </span>
+          );
+        })}
       </div>
     </div>
   );

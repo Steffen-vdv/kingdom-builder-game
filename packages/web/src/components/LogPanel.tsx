@@ -10,11 +10,8 @@ export default function LogPanel() {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const t = setTimeout(() => {
-      if (el.scrollHeight > el.clientHeight)
-        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-    }, 300);
-    return () => clearTimeout(t);
+    if (el.scrollHeight > el.clientHeight)
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [entries]);
 
   return (

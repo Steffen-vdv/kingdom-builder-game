@@ -30,7 +30,6 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
   );
 
   const phaseStepsRef = useAnimate<HTMLUListElement>();
-  const [switching, setSwitching] = React.useState(false);
 
   useEffect(() => {
     const el = phaseStepsRef.current;
@@ -52,21 +51,16 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
       <div className="flex mb-2 border-b">
         {ctx.phases.map((p) => {
           const isSelected = displayPhase === p.id;
-          const handleClick = () => {
-            if (!tabsEnabled || p.id === displayPhase) return;
-            setSwitching(true);
-            setTimeout(() => {
-              setDisplayPhase(p.id);
-              setPhaseSteps(phaseHistories[p.id] ?? []);
-              setSwitching(false);
-            }, 200);
-          };
           return (
             <button
               key={p.id}
               type="button"
               disabled={!tabsEnabled}
-              onClick={handleClick}
+              onClick={() => {
+                if (!tabsEnabled) return;
+                setDisplayPhase(p.id);
+                setPhaseSteps(phaseHistories[p.id] ?? []);
+              }}
               className={`px-3 py-1 text-sm flex items-center gap-1 border-b-2 ${
                 isSelected
                   ? 'border-blue-500 font-semibold'
@@ -84,7 +78,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
       </div>
       <ul
         ref={phaseStepsRef}
-        className={`text-sm text-left space-y-1 overflow-y-auto flex-1 transition-opacity duration-200 ${switching ? 'opacity-0' : 'opacity-100'}`}
+        className="text-sm text-left space-y-1 overflow-y-auto flex-1"
       >
         {phaseSteps.map((s, i) => (
           <li key={i} className={s.active ? 'font-semibold' : ''}>
