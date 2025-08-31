@@ -25,4 +25,9 @@ export const GAME_START: StartConfig = {
     },
     lands: [{ developments: ['farm'] }, {}],
   },
+  players: {
+    B: {
+      resources: { [Resource.ap]: 1 },
+    },
+  },
 };

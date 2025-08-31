@@ -5,6 +5,7 @@ import type { Summary, SummaryEntry } from './types';
 
 export interface PhasedDef {
   onBuild?: EffectDef<Record<string, unknown>>[] | undefined;
+  onBeforeAttacked?: EffectDef<Record<string, unknown>>[] | undefined;
   onAttackResolved?: EffectDef<Record<string, unknown>>[] | undefined;
   [key: string]: EffectDef<Record<string, unknown>>[] | undefined;
 }
@@ -25,6 +26,12 @@ export class PhasedTranslator {
         });
       }
     }
+    const pre = summarizeEffects(def.onBeforeAttacked, ctx);
+    if (pre.length)
+      root.push({
+        title: `${triggerInfo.onBeforeAttacked.icon} ${triggerInfo.onBeforeAttacked.future}`,
+        items: pre,
+      });
     const atk = summarizeEffects(def.onAttackResolved, ctx);
     if (atk.length)
       root.push({
@@ -49,6 +56,12 @@ export class PhasedTranslator {
         });
       }
     }
+    const pre = describeEffects(def.onBeforeAttacked, ctx);
+    if (pre.length)
+      root.push({
+        title: `${triggerInfo.onBeforeAttacked.icon} ${triggerInfo.onBeforeAttacked.future}`,
+        items: pre,
+      });
     const atk = describeEffects(def.onAttackResolved, ctx);
     if (atk.length)
       root.push({

@@ -36,6 +36,49 @@ describe('Development phase', () => {
     expect(player.gold).toBe(goldBefore + farmGoldGain);
   });
 
+  it('applies player B compensation at start and not during development', () => {
+    const ctx = createTestEngine();
+    const baseAp = GAME_START.player.resources?.[Resource.ap] || 0;
+    const comp =
+      (GAME_START.players?.B?.resources?.[Resource.ap] || 0) - baseAp;
+    expect(ctx.game.players[0].ap).toBe(baseAp);
+    expect(ctx.game.players[1].ap).toBe(baseAp + comp);
+
+    const gainApIdx = devPhase.steps.findIndex((s) => s.id === 'gain-ap');
+
+    // Player A development
+    let player = ctx.activePlayer;
+    player.ap = 0;
+    ctx.game.currentPhase = 'development';
+    ctx.game.currentStep = 'gain-ap';
+    ctx.game.stepIndex = gainApIdx;
+    advance(ctx);
+    const councilsA = player.population[PopulationRole.Council];
+    expect(player.ap).toBe(councilApGain * councilsA);
+
+    // Player B development (compensation already applied)
+    ctx.game.currentPlayerIndex = 1;
+    ctx.game.currentPhase = 'development';
+    ctx.game.currentStep = 'gain-ap';
+    ctx.game.stepIndex = gainApIdx;
+    player = ctx.activePlayer;
+    player.ap = 0;
+    advance(ctx);
+    const councilsB = player.population[PopulationRole.Council];
+    expect(player.ap).toBe(councilApGain * councilsB);
+
+    // Subsequent Player B developments
+    for (let i = 0; i < 3; i++) {
+      ctx.game.currentPlayerIndex = 1;
+      ctx.game.currentPhase = 'development';
+      ctx.game.currentStep = 'gain-ap';
+      ctx.game.stepIndex = gainApIdx;
+      player.ap = 0;
+      advance(ctx);
+      expect(player.ap).toBe(councilApGain * councilsB);
+    }
+  });
+
   it('grows commander and fortifier stats', () => {
     const ctx = createTestEngine();
     ctx.activePlayer.population[PopulationRole.Commander] = 1;

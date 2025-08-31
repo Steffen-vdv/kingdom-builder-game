@@ -232,6 +232,11 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
     this.config.onUpkeepPhase.push(effect);
     return this;
   }
+  onBeforeAttacked(effect: EffectConfig) {
+    this.config.onBeforeAttacked = this.config.onBeforeAttacked || [];
+    this.config.onBeforeAttacked.push(effect);
+    return this;
+  }
   onAttackResolved(effect: EffectConfig) {
     this.config.onAttackResolved = this.config.onAttackResolved || [];
     this.config.onAttackResolved.push(effect);
@@ -251,6 +256,11 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
   onDevelopmentPhase(effect: EffectConfig) {
     this.config.onDevelopmentPhase = this.config.onDevelopmentPhase || [];
     this.config.onDevelopmentPhase.push(effect);
+    return this;
+  }
+  onBeforeAttacked(effect: EffectConfig) {
+    this.config.onBeforeAttacked = this.config.onBeforeAttacked || [];
+    this.config.onBeforeAttacked.push(effect);
     return this;
   }
   onAttackResolved(effect: EffectConfig) {
