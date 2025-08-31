@@ -18,6 +18,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
   POPULATION_ROLES,
   STATS,
   SLOT_ICON,
@@ -37,6 +38,7 @@ const ctx = createEngine({
   populations: POPULATIONS,
   phases: PHASES,
   start: GAME_START,
+  rules: RULES,
 });
 const mockGame = {
   ctx,

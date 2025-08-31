@@ -249,6 +249,10 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
   constructor() {
     super({});
   }
+  populationCap(amount: number) {
+    this.config.populationCap = amount;
+    return this;
+  }
   onBuild(effect: EffectConfig) {
     this.config.onBuild = this.config.onBuild || [];
     this.config.onBuild.push(effect);

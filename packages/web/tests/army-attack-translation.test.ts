@@ -9,6 +9,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
   RESOURCES,
   STATS,
 } from '@kingdom-builder/contents';
@@ -25,6 +26,7 @@ function createCtx() {
     populations: POPULATIONS,
     phases: PHASES,
     start: GAME_START,
+    rules: RULES,
   });
 }
 

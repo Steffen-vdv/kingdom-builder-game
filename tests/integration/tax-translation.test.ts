@@ -8,6 +8,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
 } from '@kingdom-builder/contents';
 
 describe('Tax action translation', () => {
@@ -19,6 +20,7 @@ describe('Tax action translation', () => {
       populations: POPULATIONS,
       phases: PHASES,
       start: GAME_START,
+      rules: RULES,
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const summary = summarizeContent('action', 'tax', ctx) as (

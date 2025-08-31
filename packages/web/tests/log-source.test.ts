@@ -12,6 +12,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
 } from '@kingdom-builder/contents';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 
@@ -28,6 +29,7 @@ describe('log resource sources', () => {
       populations: POPULATIONS,
       phases: PHASES,
       start: GAME_START,
+      rules: RULES,
     });
     // Give opponent (Player B) a mill
     ctx.game.currentPlayerIndex = 1;
@@ -54,6 +56,7 @@ describe('log resource sources', () => {
       populations: POPULATIONS,
       phases: PHASES,
       start: GAME_START,
+      rules: RULES,
     });
     runEffects(
       [{ type: 'building', method: 'add', params: { id: 'market' } }],

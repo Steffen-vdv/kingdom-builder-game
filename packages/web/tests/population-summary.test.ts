@@ -13,6 +13,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
   POPULATION_ROLES,
 } from '@kingdom-builder/contents';
 
@@ -40,6 +41,7 @@ describe('population effect translation', () => {
     populations: POPULATIONS,
     phases: PHASES,
     start: GAME_START,
+    rules: RULES,
   });
 
   it('summarizes raise_pop action for specific role', () => {

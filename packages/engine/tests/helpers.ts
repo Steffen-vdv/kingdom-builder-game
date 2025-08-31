@@ -6,6 +6,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
 } from '@kingdom-builder/contents';
 import type {
   ActionConfig as ActionDef,
@@ -34,5 +35,5 @@ const BASE: {
 };
 
 export function createTestEngine(overrides: Partial<typeof BASE> = {}) {
-  return createEngine({ ...BASE, ...overrides });
+  return createEngine({ ...BASE, ...overrides, rules: RULES });
 }

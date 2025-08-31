@@ -70,6 +70,7 @@ export const developmentSchema = z.object({
   onBeforeAttacked: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
   system: z.boolean().optional(),
+  populationCap: z.number().optional(),
 });
 
 export type DevelopmentConfig = z.infer<typeof developmentSchema>;

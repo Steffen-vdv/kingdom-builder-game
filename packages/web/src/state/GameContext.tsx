@@ -22,6 +22,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
   Resource,
 } from '@kingdom-builder/contents';
 import {
@@ -113,6 +114,7 @@ export function GameProvider({
         populations: POPULATIONS,
         phases: PHASES,
         start: GAME_START,
+        rules: RULES,
       }),
     [],
   );

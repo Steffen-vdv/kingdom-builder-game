@@ -7,6 +7,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
 } from '@kingdom-builder/contents';
 
 describe('Turn cycle integration', () => {
@@ -18,6 +19,7 @@ describe('Turn cycle integration', () => {
       populations: POPULATIONS,
       phases: PHASES,
       start: GAME_START,
+      rules: RULES,
     });
     // player A development & upkeep
     while (ctx.game.currentPhase !== 'main') advance(ctx);

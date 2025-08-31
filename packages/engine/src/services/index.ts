@@ -1,6 +1,8 @@
 import type { ResourceKey, PlayerState, PlayerId } from '../state';
 import type { EngineContext } from '../context';
 import { runEffects, type EffectDef } from '../effects';
+import type { DevelopmentConfig } from '../config/schema';
+import type { Registry } from '../registry';
 
 export type HappinessTierEffect = {
   incomeMultiplier: number;
@@ -18,26 +20,7 @@ export type RuleSet = {
   happinessTiers: { threshold: number; effect: HappinessTierEffect }[];
   slotsPerNewLand: number;
   maxSlotsPerLand: number;
-};
-
-export const DefaultRules: RuleSet = {
-  defaultActionAPCost: 1,
-  absorptionCapPct: 1,
-  absorptionRounding: 'down',
-  happinessTiers: [
-    { threshold: 0, effect: { incomeMultiplier: 1 } },
-    { threshold: 3, effect: { incomeMultiplier: 1.25 } },
-    {
-      threshold: 5,
-      effect: { incomeMultiplier: 1.25, buildingDiscountPct: 0.2 },
-    },
-    {
-      threshold: 8,
-      effect: { incomeMultiplier: 1.5, buildingDiscountPct: 0.2 },
-    },
-  ],
-  slotsPerNewLand: 1,
-  maxSlotsPerLand: 2,
+  basePopulationCap: number;
 };
 
 class HappinessService {
@@ -53,16 +36,19 @@ class HappinessService {
 
 // PopCap policy (placeholder — data-driven later)
 class PopCapService {
-  baseCastleHouses = 1; // can be moved to config
+  constructor(
+    private rules: RuleSet,
+    private developments: Registry<DevelopmentConfig>,
+  ) {}
   getCap(player: PlayerState): number {
-    const housesOnLand = player.lands.reduce(
-      (acc, land) =>
-        acc +
-        land.developments.filter((development) => development === 'house')
-          .length,
-      0,
-    );
-    return this.baseCastleHouses + housesOnLand;
+    let cap = this.rules.basePopulationCap;
+    for (const land of player.lands) {
+      for (const id of land.developments) {
+        const def = this.developments.get(id);
+        cap += def.populationCap ?? 0;
+      }
+    }
+    return cap;
   }
 }
 
@@ -197,8 +183,11 @@ function reverseEffect(effect: EffectDef): EffectDef {
 export class Services {
   happiness: HappinessService;
   popcap: PopCapService;
-  constructor(public rules: RuleSet) {
+  constructor(
+    public rules: RuleSet,
+    developments: Registry<DevelopmentConfig>,
+  ) {
     this.happiness = new HappinessService(rules);
-    this.popcap = new PopCapService();
+    this.popcap = new PopCapService(rules, developments);
   }
 }

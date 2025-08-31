@@ -16,7 +16,7 @@ import type {
   StatKey,
   PopulationRoleId,
 } from './state';
-import { Services, PassiveManager, DefaultRules } from './services';
+import { Services, PassiveManager } from './services';
 import type { CostBag, RuleSet } from './services';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
@@ -276,7 +276,7 @@ export function createEngine({
   populations: Registry<PopulationDef>;
   phases: PhaseDef[];
   start: StartConfig;
-  rules?: RuleSet;
+  rules: RuleSet;
   config?: GameConfig;
 }) {
   registerCoreEffects();
@@ -316,8 +316,7 @@ export function createEngine({
   setPhaseKeys(phases.map((p) => p.id));
   setPopulationRoleKeys(Object.keys(startCfg.player.population || {}));
 
-  const resolvedRules = rules || DefaultRules;
-  const services = new Services(resolvedRules);
+  const services = new Services(rules, developments);
   const passives = new PassiveManager();
   const game = new GameState('Player A', 'Player B');
 
@@ -342,10 +341,10 @@ export function createEngine({
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;
 
-  applyPlayerStart(playerA, startCfg.player, resolvedRules);
-  applyPlayerStart(playerA, compA, resolvedRules);
-  applyPlayerStart(playerB, startCfg.player, resolvedRules);
-  applyPlayerStart(playerB, compB, resolvedRules);
+  applyPlayerStart(playerA, startCfg.player, rules);
+  applyPlayerStart(playerA, compA, rules);
+  applyPlayerStart(playerB, startCfg.player, rules);
+  applyPlayerStart(playerB, compB, rules);
   ctx.game.currentPlayerIndex = 0;
   ctx.game.currentPhase = phases[0]?.id || '';
   ctx.game.currentStep = phases[0]?.steps[0]?.id || '';
@@ -363,7 +362,6 @@ export {
   EngineContext,
   Services,
   PassiveManager,
-  DefaultRules,
 };
 
 export type { RuleSet, ResourceKey, StatKey };

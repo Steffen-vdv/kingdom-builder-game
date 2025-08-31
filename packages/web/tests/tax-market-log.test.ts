@@ -14,6 +14,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
   RESOURCES,
 } from '@kingdom-builder/contents';
 import {
@@ -35,6 +36,7 @@ describe('tax action logging with market', () => {
       populations: POPULATIONS,
       phases: PHASES,
       start: GAME_START,
+      rules: RULES,
     });
     runEffects(
       [{ type: 'building', method: 'add', params: { id: 'market' } }],

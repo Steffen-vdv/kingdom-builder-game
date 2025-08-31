@@ -9,6 +9,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
 
@@ -24,6 +25,7 @@ function createCtx() {
     populations: POPULATIONS,
     phases: PHASES,
     start: GAME_START,
+    rules: RULES,
   });
 }
 

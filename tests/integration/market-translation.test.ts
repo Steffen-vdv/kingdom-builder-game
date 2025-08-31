@@ -8,6 +8,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
 } from '@kingdom-builder/contents';
 
 describe('Market building translation', () => {
@@ -19,6 +20,7 @@ describe('Market building translation', () => {
       populations: POPULATIONS,
       phases: PHASES,
       start: GAME_START,
+      rules: RULES,
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const summary = summarizeContent('building', 'market', ctx) as unknown;
