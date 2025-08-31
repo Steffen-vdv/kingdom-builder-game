@@ -18,11 +18,6 @@ export default function HoverCard() {
           {renderCosts(data.costs, ctx.activePlayer.resources)}
         </span>
       </div>
-      {data.description && (
-        <div className={`mb-2 text-sm ${data.descriptionClass ?? ''}`}>
-          {data.description}
-        </div>
-      )}
       {data.effects.length > 0 && (
         <div className="mb-2">
           <div className="font-semibold">{data.effectsTitle ?? 'Effects'}</div>
@@ -31,6 +26,28 @@ export default function HoverCard() {
           </ul>
         </div>
       )}
+      {(() => {
+        const desc = data.description;
+        const hasDescription =
+          typeof desc === 'string'
+            ? desc.trim().length > 0
+            : Array.isArray(desc) && desc.length > 0;
+        if (!hasDescription) return null;
+        return (
+          <div className="mt-2">
+            <div className={`font-semibold ${data.descriptionClass ?? ''}`}>
+              {data.descriptionTitle ?? 'Description'}
+            </div>
+            {typeof desc === 'string' ? (
+              <div className={`text-sm ${data.descriptionClass ?? ''}`}>
+                {desc}
+              </div>
+            ) : (
+              <ul className="list-disc pl-4 text-sm">{renderSummary(desc)}</ul>
+            )}
+          </div>
+        );
+      })()}
       {data.requirements.length > 0 && (
         <div className="text-sm text-red-600 mt-2">
           <div className="font-semibold text-red-600">Requirements</div>

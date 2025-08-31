@@ -8,7 +8,14 @@ export interface Land {
   developments: string[];
 }
 
-export type SummaryEntry = string | { title: string; items: SummaryEntry[] };
+export type SummaryEntry =
+  | string
+  | {
+      title: string;
+      items: SummaryEntry[];
+      _desc?: true;
+      _hoist?: true;
+    };
 export type Summary = SummaryEntry[];
 
 export interface ContentTranslator<T = unknown, O = Record<string, unknown>> {

@@ -5,6 +5,7 @@ export {
   describeContent,
   logContent,
 } from './factory';
+export { splitSummary } from './partition';
 
 import './action';
 import './development';

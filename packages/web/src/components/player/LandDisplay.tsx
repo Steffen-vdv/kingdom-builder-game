@@ -4,7 +4,7 @@ import {
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
-import { describeContent } from '../../translation';
+import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 
 interface LandDisplayProps {
@@ -17,14 +17,18 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
   return (
     <div className="flex flex-wrap gap-2 mt-2 w-fit">
       {player.lands.map((land, idx) => {
-        const showLandCard = () =>
+        const showLandCard = () => {
+          const full = describeContent('land', land, ctx);
+          const { effects, description } = splitSummary(full);
           handleHoverCard({
             title: `${landIcon} Land`,
-            effects: describeContent('land', land, ctx),
+            effects,
             requirements: [],
             effectsTitle: 'Developments',
+            ...(description && { description }),
             bgClass: 'bg-gray-100 dark:bg-gray-700',
           });
+        };
         return (
           <div
             key={idx}
@@ -46,12 +50,20 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
                       className="panel-card p-1 text-xs hoverable cursor-help"
                       onMouseEnter={(e) => {
                         e.stopPropagation();
+                        const full = describeContent(
+                          'development',
+                          devId,
+                          ctx,
+                          {
+                            installed: true,
+                          },
+                        );
+                        const { effects, description } = splitSummary(full);
                         handleHoverCard({
                           title,
-                          effects: describeContent('development', devId, ctx, {
-                            installed: true,
-                          }),
+                          effects,
                           requirements: [],
+                          ...(description && { description }),
                           bgClass: 'bg-gray-100 dark:bg-gray-700',
                         });
                       }}
