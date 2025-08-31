@@ -11,7 +11,7 @@ describe('Building placement integration', () => {
     const ctx = createTestContext();
     const expandBefore = getActionOutcome('expand', ctx);
     const buildCosts = getActionCosts('build', ctx, { id: 'town_charter' });
-    ctx.activePlayer.ap =
+    ctx.activePlayer.resources[Resource.ap] =
       (expandBefore.costs[Resource.ap] ?? 0) + (buildCosts[Resource.ap] ?? 0);
     const resBefore = { ...ctx.activePlayer.resources };
 

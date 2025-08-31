@@ -7,6 +7,7 @@ import {
   PHASES,
   GAME_START,
   RULES,
+  RESOURCES,
 } from '@kingdom-builder/contents';
 import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
@@ -31,7 +32,9 @@ function clonePlayer(player: PlayerState) {
   return copy;
 }
 
-export function createTestContext(overrides?: { gold?: number; ap?: number }) {
+export function createTestContext(
+  overrides?: Partial<Record<keyof typeof RESOURCES, number>>,
+) {
   const ctx = createEngine({
     actions: ACTIONS,
     buildings: BUILDINGS,
@@ -41,8 +44,12 @@ export function createTestContext(overrides?: { gold?: number; ap?: number }) {
     start: GAME_START,
     rules: RULES,
   });
-  if (overrides?.gold !== undefined) ctx.activePlayer.gold = overrides.gold;
-  if (overrides?.ap !== undefined) ctx.activePlayer.ap = overrides.ap;
+  if (overrides) {
+    for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
+      const value = overrides[key];
+      if (value !== undefined) ctx.activePlayer.resources[key] = value;
+    }
+  }
   return ctx;
 }
 

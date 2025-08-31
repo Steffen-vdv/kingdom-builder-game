@@ -29,8 +29,8 @@ describe('Castle Walls building', () => {
   it('applies and removes stat bonuses when built and removed', () => {
     const def = BUILDINGS.get('castle_walls');
     const ctx = createTestContext();
-    ctx.activePlayer.gold = def.costs[Resource.gold] ?? 0;
-    ctx.activePlayer.ap = def.costs[Resource.ap] ?? 0;
+    ctx.activePlayer.resources[Resource.gold] = def.costs[Resource.gold] ?? 0;
+    ctx.activePlayer.resources[Resource.ap] = def.costs[Resource.ap] ?? 0;
 
     const fortGain = getStatGain(Stat.fortificationStrength);
     const absorptionGain = getStatGain(Stat.absorption);
