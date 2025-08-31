@@ -1,5 +1,5 @@
 import { Registry } from '@kingdom-builder/engine/registry';
-import { Resource } from '@kingdom-builder/engine/state';
+import { Resource, Stat } from '@kingdom-builder/engine/state';
 import { buildingSchema } from '@kingdom-builder/engine/config/schema';
 import {
   building,
@@ -9,6 +9,8 @@ import {
   ResultModMethods,
   ResourceMethods,
   ActionMethods,
+  PassiveMethods,
+  StatMethods,
 } from './config/builders';
 import type { BuildingDef } from './defs';
 
@@ -129,7 +131,23 @@ export function createBuildingRegistry() {
       .id('castle_walls')
       .name('Castle Walls')
       .icon('🧱')
-      .cost(Resource.gold, 14)
+      .cost(Resource.gold, 12)
+      .cost(Resource.ap, 1)
+      .onBuild(
+        effect(Types.Passive, PassiveMethods.ADD)
+          .param('id', 'castle_walls_bonus')
+          .effect(
+            effect(Types.Stat, StatMethods.ADD)
+              .params({ key: Stat.fortificationStrength, amount: 5 })
+              .build(),
+          )
+          .effect(
+            effect(Types.Stat, StatMethods.ADD)
+              .params({ key: Stat.absorption, amount: 0.2 })
+              .build(),
+          )
+          .build(),
+      )
       .build(),
   );
   registry.add(

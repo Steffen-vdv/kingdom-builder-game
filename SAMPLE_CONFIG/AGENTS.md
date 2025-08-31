@@ -11,7 +11,7 @@
 - 🏚️Development — a built feature occupying a 🧩Development Slot
 - 👥Population — citizens (roles below)
   - ⚖️Council — each grants 1 ⚡Action Point at the start of your turn
-  - 🎖️Army Commander — **+1 ⚔️Army Strength (flat)** & contributes +25% 📈⚔️Growth each 📈Development Phase
+  - 🎖️Commander — **+1 ⚔️Army Strength (flat)** & contributes +25% 📈⚔️Growth each 📈Development Phase
   - 🔧Fortifier — **+1 🛡️Fortification Strength (flat)** & contributes +25% 📈🛡️Growth each 📈Development Phase
   - 👤Citizen — unassigned; no benefits until assigned (upkeep 0🪙)
 - ⚡Action Point (AP) — each Action costs 1⚡
