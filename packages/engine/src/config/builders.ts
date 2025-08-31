@@ -7,20 +7,150 @@ import type {
   EffectConfig,
 } from './schema';
 import type { ResourceKey } from '../state';
+import type { EvaluatorDef } from '../evaluators';
 
-class BaseBuilder<T extends { id: string; name: string }> {
-  protected config: T;
-  constructor(id: string, name: string, base: Omit<T, 'id' | 'name'>) {
-    this.config = { id, name, ...base } as T;
+export const Types = {
+  Land: 'land',
+  Resource: 'resource',
+  Building: 'building',
+  Development: 'development',
+  Passive: 'passive',
+  CostMod: 'cost_mod',
+  ResultMod: 'result_mod',
+  Population: 'population',
+  Action: 'action',
+  Stat: 'stat',
+} as const;
+
+export const LandMethods = {
+  ADD: 'add',
+  TILL: 'till',
+} as const;
+
+export const ResourceMethods = {
+  ADD: 'add',
+  REMOVE: 'remove',
+} as const;
+
+export const BuildingMethods = {
+  ADD: 'add',
+  REMOVE: 'remove',
+} as const;
+
+export const DevelopmentMethods = {
+  ADD: 'add',
+  REMOVE: 'remove',
+} as const;
+
+export const PassiveMethods = {
+  ADD: 'add',
+  REMOVE: 'remove',
+} as const;
+
+export const CostModMethods = {
+  ADD: 'add',
+  REMOVE: 'remove',
+} as const;
+
+export const ResultModMethods = {
+  ADD: 'add',
+  REMOVE: 'remove',
+} as const;
+
+export const PopulationMethods = {
+  ADD: 'add',
+  REMOVE: 'remove',
+} as const;
+
+export const ActionMethods = {
+  ADD: 'add',
+  REMOVE: 'remove',
+  PERFORM: 'perform',
+} as const;
+
+export const StatMethods = {
+  ADD: 'add',
+  ADD_PCT: 'add_pct',
+  REMOVE: 'remove',
+} as const;
+
+type Params = Record<string, unknown>;
+
+export class EffectBuilder<P extends Params = Params> {
+  private config: EffectConfig = {};
+  type(type: string) {
+    this.config.type = type;
+    return this;
   }
-  build(): T {
+  method(method: string) {
+    this.config.method = method;
+    return this;
+  }
+  param(key: string, value: unknown) {
+    this.config.params = this.config.params || {};
+    (this.config.params as Params)[key] = value;
+    return this;
+  }
+  params(params: P) {
+    this.config.params = params;
+    return this;
+  }
+  effect(effect: EffectConfig) {
+    this.config.effects = this.config.effects || [];
+    this.config.effects.push(effect);
+    return this;
+  }
+  evaluator(type: string, params?: Params) {
+    this.config.evaluator = { type, params } as EvaluatorDef;
+    return this;
+  }
+  round(mode: 'up' | 'down') {
+    this.config.round = mode;
+    return this;
+  }
+  build(): EffectConfig {
     return this.config;
   }
 }
 
+export function effect(type?: string, method?: string) {
+  const builder = new EffectBuilder();
+  if (type) builder.type(type);
+  if (method) builder.method(method);
+  return builder;
+}
+
+class BaseBuilder<T extends { id: string; name: string }> {
+  protected config: Omit<T, 'id' | 'name'> &
+    Partial<Pick<T, 'id' | 'name'>> & { icon?: string };
+  constructor(base: Omit<T, 'id' | 'name'>) {
+    this.config = {
+      ...base,
+    } as Omit<T, 'id' | 'name'> &
+      Partial<Pick<T, 'id' | 'name'>> & {
+        icon?: string;
+      };
+  }
+  id(id: string) {
+    this.config.id = id;
+    return this;
+  }
+  name(name: string) {
+    this.config.name = name;
+    return this;
+  }
+  icon(icon: string) {
+    this.config.icon = icon;
+    return this;
+  }
+  build(): T {
+    return this.config as T;
+  }
+}
+
 export class ActionBuilder extends BaseBuilder<ActionConfig> {
-  constructor(id: string, name: string) {
-    super(id, name, { effects: [] });
+  constructor() {
+    super({ effects: [] });
   }
   cost(key: ResourceKey, amount: number) {
     this.config.baseCosts = this.config.baseCosts || {};
@@ -43,15 +173,16 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 }
 
 export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
-  constructor(id: string, name: string) {
-    super(id, name, { costs: {}, onBuild: [] });
+  constructor() {
+    super({ costs: {}, onBuild: [] });
   }
   cost(key: ResourceKey, amount: number) {
     this.config.costs[key] = amount;
     return this;
   }
   onBuild(effect: EffectConfig) {
-    this.config.onBuild!.push(effect);
+    this.config.onBuild = this.config.onBuild || [];
+    this.config.onBuild.push(effect);
     return this;
   }
   onDevelopmentPhase(effect: EffectConfig) {
@@ -72,8 +203,8 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
 }
 
 export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
-  constructor(id: string, name: string) {
-    super(id, name, {});
+  constructor() {
+    super({});
   }
   onBuild(effect: EffectConfig) {
     this.config.onBuild = this.config.onBuild || [];
@@ -97,8 +228,8 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
 }
 
 export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
-  constructor(id: string, name: string) {
-    super(id, name, {});
+  constructor() {
+    super({});
   }
   onAssigned(effect: EffectConfig) {
     this.config.onAssigned = this.config.onAssigned || [];
@@ -122,15 +253,15 @@ export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
   }
 }
 
-export function action(id: string, name: string) {
-  return new ActionBuilder(id, name);
+export function action() {
+  return new ActionBuilder();
 }
-export function building(id: string, name: string) {
-  return new BuildingBuilder(id, name);
+export function building() {
+  return new BuildingBuilder();
 }
-export function development(id: string, name: string) {
-  return new DevelopmentBuilder(id, name);
+export function development() {
+  return new DevelopmentBuilder();
 }
-export function population(id: string, name: string) {
-  return new PopulationBuilder(id, name);
+export function population() {
+  return new PopulationBuilder();
 }

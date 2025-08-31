@@ -4,7 +4,6 @@ import type { ContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';
 import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
-import { DEVELOPMENT_INFO as developmentInfo } from '@kingdom-builder/contents';
 
 interface PhaseEffects {
   onAttackResolved?: EffectDef[];
@@ -71,7 +70,7 @@ class DevelopmentCore implements ContentTranslator<string> {
   }
   log(id: string, ctx: EngineContext): string[] {
     const def = ctx.developments.get(id);
-    const icon = developmentInfo[id]?.icon || '';
+    const icon = def.icon || '';
     return [`${icon}${def.name}`];
   }
 }

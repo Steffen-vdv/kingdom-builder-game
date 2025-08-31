@@ -9,8 +9,6 @@ import {
   POPULATION_ROLES,
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
-  DEVELOPMENT_INFO as developmentInfo,
-  ACTION_INFO as actionInfo,
 } from '@kingdom-builder/contents';
 interface StepDef {
   id: string;
@@ -156,7 +154,7 @@ function collectResourceSources(
         const count = Number(handler(ev, ctx));
         if (ev.type === 'development') {
           const id = (ev.params as Record<string, string> | undefined)?.['id'];
-          const icon = id ? developmentInfo[id]?.icon || '' : '';
+          const icon = id ? ctx.developments.get(id)?.icon || '' : '';
           entry.icons += icon.repeat(count);
         } else if (ev.type === 'population') {
           const role = (ev.params as Record<string, string> | undefined)?.[
@@ -189,7 +187,8 @@ function collectResourceSources(
   const result: Record<string, string> = {};
   for (const [key, { icons, mods }] of Object.entries(map)) {
     let part = icons;
-    if (mods > 0) part += `+${(actionInfo['build']?.icon || '').repeat(mods)}`;
+    if (mods > 0)
+      part += `+${(ctx.actions.get('build').icon || '').repeat(mods)}`;
     result[key] = part;
   }
   return result;

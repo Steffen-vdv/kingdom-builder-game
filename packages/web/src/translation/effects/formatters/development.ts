@@ -1,32 +1,51 @@
-import { DEVELOPMENT_INFO as developmentInfo } from '@kingdom-builder/contents';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('development', 'add', {
-  summarize: (eff) => {
+  summarize: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    const icon = developmentInfo[id]?.icon || id;
+    let icon = id;
+    try {
+      icon = ctx.developments.get(id).icon || id;
+    } catch {
+      /* ignore */
+    }
     return `${icon}`;
   },
-  describe: (eff) => {
+  describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    const info = developmentInfo[id];
-    const label = info?.label || id;
-    const icon = info?.icon || '';
+    let def: { name: string; icon?: string | undefined } | undefined;
+    try {
+      def = ctx.developments.get(id);
+    } catch {
+      /* ignore */
+    }
+    const label = def?.name || id;
+    const icon = def?.icon || '';
     return `Add ${icon}${label}`;
   },
 });
 
 registerEffectFormatter('development', 'remove', {
-  summarize: (eff) => {
+  summarize: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    const icon = developmentInfo[id]?.icon || id;
+    let icon = id;
+    try {
+      icon = ctx.developments.get(id).icon || id;
+    } catch {
+      /* ignore */
+    }
     return `Remove ${icon}`;
   },
-  describe: (eff) => {
+  describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    const info = developmentInfo[id];
-    const label = info?.label || id;
-    const icon = info?.icon || '';
+    let def: { name: string; icon?: string | undefined } | undefined;
+    try {
+      def = ctx.developments.get(id);
+    } catch {
+      /* ignore */
+    }
+    const label = def?.name || id;
+    const icon = def?.icon || '';
     return `Remove ${icon}${label}`;
   },
 });

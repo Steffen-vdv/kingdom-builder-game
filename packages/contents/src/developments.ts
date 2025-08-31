@@ -1,7 +1,13 @@
 import { Registry } from '@kingdom-builder/engine/registry';
 import { Stat } from '@kingdom-builder/engine/state';
 import { developmentSchema } from '@kingdom-builder/engine/config/schema';
-import { development } from '@kingdom-builder/engine/config/builders';
+import {
+  development,
+  effect,
+  Types,
+  StatMethods,
+  DevelopmentMethods,
+} from '@kingdom-builder/engine/config/builders';
 import type { DevelopmentDef } from './defs';
 
 export type { DevelopmentDef } from './defs';
@@ -9,68 +15,74 @@ export type { DevelopmentDef } from './defs';
 export function createDevelopmentRegistry() {
   const registry = new Registry<DevelopmentDef>(developmentSchema);
 
-  registry.add('farm', development('farm', 'Farm').build());
+  registry.add(
+    'farm',
+    development().id('farm').name('Farm').icon('🌾').build(),
+  );
 
   registry.add(
     'house',
-    development('house', 'House')
-      .onBuild({
-        type: 'stat',
-        method: 'add',
-        params: { key: Stat.maxPopulation, amount: 1 },
-      })
+    development()
+      .id('house')
+      .name('House')
+      .icon('🏠')
+      .onBuild(
+        effect(Types.Stat, StatMethods.ADD)
+          .params({ key: Stat.maxPopulation, amount: 1 })
+          .build(),
+      )
       .build(),
   );
 
   registry.add(
     'outpost',
-    development('outpost', 'Outpost')
-      .onBuild({
-        type: 'stat',
-        method: 'add',
-        params: { key: Stat.armyStrength, amount: 1 },
-      })
-      .onBuild({
-        type: 'stat',
-        method: 'add',
-        params: { key: Stat.fortificationStrength, amount: 1 },
-      })
+    development()
+      .id('outpost')
+      .name('Outpost')
+      .icon('🏹')
+      .onBuild(
+        effect(Types.Stat, StatMethods.ADD)
+          .params({ key: Stat.armyStrength, amount: 1 })
+          .build(),
+      )
+      .onBuild(
+        effect(Types.Stat, StatMethods.ADD)
+          .params({ key: Stat.fortificationStrength, amount: 1 })
+          .build(),
+      )
       .build(),
   );
 
   registry.add(
     'watchtower',
-    development('watchtower', 'Watchtower')
-      .onBuild({
-        type: 'stat',
-        method: 'add',
-        params: { key: Stat.fortificationStrength, amount: 2 },
-      })
-      .onBuild({
-        type: 'stat',
-        method: 'add',
-        params: { key: Stat.absorption, amount: 0.5 },
-      })
-      .onAttackResolved({
-        type: 'development',
-        method: 'remove',
-        params: { id: 'watchtower', landId: '$landId' },
-      })
+    development()
+      .id('watchtower')
+      .name('Watchtower')
+      .icon('🗼')
+      .onBuild(
+        effect(Types.Stat, StatMethods.ADD)
+          .params({ key: Stat.fortificationStrength, amount: 2 })
+          .build(),
+      )
+      .onBuild(
+        effect(Types.Stat, StatMethods.ADD)
+          .params({ key: Stat.absorption, amount: 0.5 })
+          .build(),
+      )
+      .onAttackResolved(
+        effect(Types.Development, DevelopmentMethods.REMOVE)
+          .params({ id: 'watchtower', landId: '$landId' })
+          .build(),
+      )
       .build(),
   );
 
-  registry.add('garden', development('garden', 'Garden').system().build());
+  registry.add(
+    'garden',
+    development().id('garden').name('Garden').icon('🌿').system().build(),
+  );
 
   return registry;
 }
 
 export const DEVELOPMENTS = createDevelopmentRegistry();
-
-export const DEVELOPMENT_INFO: Record<string, { icon: string; label: string }> =
-  {
-    house: { icon: '🏠', label: DEVELOPMENTS.get('house').name },
-    farm: { icon: '🌾', label: DEVELOPMENTS.get('farm').name },
-    outpost: { icon: '🏹', label: DEVELOPMENTS.get('outpost').name },
-    watchtower: { icon: '🗼', label: DEVELOPMENTS.get('watchtower').name },
-    garden: { icon: '🌿', label: DEVELOPMENTS.get('garden').name },
-  };

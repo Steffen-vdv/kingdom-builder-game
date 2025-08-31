@@ -37,6 +37,7 @@ export type EffectConfig = EffectDef;
 export const actionSchema = z.object({
   id: z.string(),
   name: z.string(),
+  icon: z.string().optional(),
   baseCosts: costBagSchema.optional(),
   requirements: z.array(requirementSchema).optional(),
   effects: z.array(effectSchema),
@@ -49,6 +50,7 @@ export type ActionConfig = z.infer<typeof actionSchema>;
 export const buildingSchema = z.object({
   id: z.string(),
   name: z.string(),
+  icon: z.string().optional(),
   costs: costBagSchema,
   onBuild: z.array(effectSchema).optional(),
   onDevelopmentPhase: z.array(effectSchema).optional(),
@@ -62,6 +64,7 @@ export type BuildingConfig = z.infer<typeof buildingSchema>;
 export const developmentSchema = z.object({
   id: z.string(),
   name: z.string(),
+  icon: z.string().optional(),
   onBuild: z.array(effectSchema).optional(),
   onDevelopmentPhase: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
@@ -74,6 +77,7 @@ export type DevelopmentConfig = z.infer<typeof developmentSchema>;
 export const populationSchema = z.object({
   id: z.string(),
   name: z.string(),
+  icon: z.string().optional(),
   onAssigned: z.array(effectSchema).optional(),
   onUnassigned: z.array(effectSchema).optional(),
   onDevelopmentPhase: z.array(effectSchema).optional(),

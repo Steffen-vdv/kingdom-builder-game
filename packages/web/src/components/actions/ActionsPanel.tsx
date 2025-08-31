@@ -8,9 +8,6 @@ import {
 import {
   RESOURCES,
   POPULATION_ROLES,
-  ACTION_INFO as actionInfo,
-  DEVELOPMENT_INFO as developmentInfo,
-  BUILDING_INFO as buildingInfo,
   SLOT_ICON as slotIcon,
   LAND_ICON as landIcon,
 } from '@kingdom-builder/contents';
@@ -95,7 +92,7 @@ function GenericActions({
               const full = describeContent('action', action.id, ctx);
               const { effects, description } = splitSummary(full);
               handleHoverCard({
-                title: `${actionInfo[action.id]?.icon || ''} ${action.name}`,
+                title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
                 effects,
                 requirements,
                 costs,
@@ -110,7 +107,7 @@ function GenericActions({
             onMouseLeave={clearHoverCard}
           >
             <span className="text-base font-medium">
-              {actionInfo[action.id]?.icon || ''} {action.name}
+              {ctx.actions.get(action.id)?.icon || ''} {action.name}
             </span>
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
@@ -185,7 +182,7 @@ function RaisePopOptions({
             onMouseEnter={() => {
               const { effects, description } = splitSummary(summary);
               handleHoverCard({
-                title: `${actionInfo['raise_pop']?.icon ?? ''}${
+                title: `${ctx.actions.get('raise_pop').icon || ''}${
                   POPULATION_ROLES[role]?.icon
                 } Hire ${POPULATION_ROLES[role]?.label || ''}`,
                 effects,
@@ -198,7 +195,7 @@ function RaisePopOptions({
             onMouseLeave={clearHoverCard}
           >
             <span className="text-base font-medium">
-              {actionInfo['raise_pop']?.icon ?? ''}
+              {ctx.actions.get('raise_pop').icon || ''}
               {POPULATION_ROLES[role]?.icon} Hire{' '}
               {POPULATION_ROLES[role]?.label}
             </span>
@@ -274,7 +271,8 @@ function DevelopOptions({
   return (
     <div>
       <h3 className="font-medium">
-        {actionInfo['develop']?.icon ?? ''} {actionInfo['develop']?.label ?? ''}{' '}
+        {ctx.actions.get('develop').icon || ''}{' '}
+        {ctx.actions.get('develop').name}{' '}
         <span className="italic text-sm font-normal">
           (Effects take place on build and last until development is removed)
         </span>
@@ -329,9 +327,9 @@ function DevelopOptions({
                 const full = describeContent('development', d.id, ctx);
                 const { effects, description } = splitSummary(full);
                 handleHoverCard({
-                  title: `${actionInfo['develop']?.icon ?? ''} ${
-                    actionInfo['develop']?.label ?? ''
-                  } - ${developmentInfo[d.id]?.icon} ${d.name}`,
+                  title: `${ctx.actions.get('develop').icon || ''} ${
+                    ctx.actions.get('develop').name
+                  } - ${ctx.developments.get(d.id)?.icon} ${d.name}`,
                   effects,
                   requirements,
                   costs,
@@ -346,7 +344,7 @@ function DevelopOptions({
               onMouseLeave={clearHoverCard}
             >
               <span className="text-base font-medium">
-                {developmentInfo[d.id]?.icon} {d.name}
+                {ctx.developments.get(d.id)?.icon} {d.name}
               </span>
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(costs, ctx.activePlayer.resources)}
@@ -389,7 +387,7 @@ function BuildOptions({
   return (
     <div>
       <h3 className="font-medium">
-        {actionInfo['build']?.icon ?? ''} {actionInfo['build']?.label ?? ''}{' '}
+        {ctx.actions.get('build').icon || ''} {ctx.actions.get('build').name}{' '}
         <span className="italic text-sm font-normal">
           (Effects take place on build and last until building is removed)
         </span>
@@ -426,9 +424,9 @@ function BuildOptions({
                 const full = descriptions.get(b.id) ?? [];
                 const { effects, description } = splitSummary(full);
                 handleHoverCard({
-                  title: `${actionInfo['build']?.icon ?? ''} ${
-                    actionInfo['build']?.label ?? ''
-                  } - ${buildingInfo[b.id]?.icon || ''} ${b.name}`,
+                  title: `${ctx.actions.get('build').icon || ''} ${
+                    ctx.actions.get('build').name
+                  } - ${ctx.buildings.get(b.id)?.icon || ''} ${b.name}`,
                   effects,
                   requirements,
                   costs,
@@ -443,7 +441,9 @@ function BuildOptions({
               onMouseLeave={clearHoverCard}
             >
               <span className="text-base font-medium">
-                {buildingInfo[b.id]?.icon || actionInfo['build']?.icon || ''}{' '}
+                {ctx.buildings.get(b.id)?.icon ||
+                  ctx.actions.get('build').icon ||
+                  ''}{' '}
                 {b.name}
               </span>
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">

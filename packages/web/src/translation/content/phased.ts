@@ -18,11 +18,12 @@ export class PhasedTranslator {
       const key =
         `on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhasedDef;
       const eff = summarizeEffects(def[key], ctx);
-      if (eff.length)
+      if (eff.length) {
         root.push({
           title: `${phase.icon} On each ${phase.label} Phase`,
           items: eff,
         });
+      }
     }
     const atk = summarizeEffects(def.onAttackResolved, ctx);
     if (atk.length)
@@ -41,11 +42,12 @@ export class PhasedTranslator {
       const key =
         `on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhasedDef;
       const eff = describeEffects(def[key], ctx);
-      if (eff.length)
+      if (eff.length) {
         root.push({
           title: `${phase.icon} On each ${phase.label} Phase`,
           items: eff,
         });
+      }
     }
     const atk = describeEffects(def.onAttackResolved, ctx);
     if (atk.length)

@@ -1,6 +1,12 @@
 import type { TriggerKey } from './defs';
 import { Resource, PopulationRole, Stat } from '@kingdom-builder/engine/state';
 import type { EffectDef } from '@kingdom-builder/engine/effects';
+import {
+  effect,
+  Types,
+  ResourceMethods,
+  StatMethods,
+} from '@kingdom-builder/engine/config/builders';
 
 export interface StepDef {
   id: string;
@@ -15,7 +21,7 @@ export interface PhaseDef {
   steps: StepDef[];
   action?: boolean;
   label: string;
-  icon: string;
+  icon?: string;
 }
 
 export const PHASES: PhaseDef[] = [
@@ -34,69 +40,52 @@ export const PHASES: PhaseDef[] = [
         title: 'Gain Income',
         icon: '💰',
         effects: [
-          {
-            evaluator: { type: 'development', params: { id: 'farm' } },
-            effects: [
-              {
-                type: 'resource',
-                method: 'add',
-                params: { key: Resource.gold, amount: 2 },
-              },
-            ],
-          },
+          effect()
+            .evaluator('development', { id: 'farm' })
+            .effect(
+              effect(Types.Resource, ResourceMethods.ADD)
+                .params({ key: Resource.gold, amount: 2 })
+                .build(),
+            )
+            .build(),
         ],
       },
       {
         id: 'gain-ap',
         title: 'Gain Action Points',
         effects: [
-          {
-            evaluator: {
-              type: 'population',
-              params: { role: PopulationRole.Council },
-            },
-            effects: [
-              {
-                type: 'resource',
-                method: 'add',
-                params: { key: Resource.ap, amount: 1 },
-              },
-            ],
-          },
+          effect()
+            .evaluator('population', { role: PopulationRole.Council })
+            .effect(
+              effect(Types.Resource, ResourceMethods.ADD)
+                .params({ key: Resource.ap, amount: 1 })
+                .build(),
+            )
+            .build(),
         ],
       },
       {
         id: 'raise-strength',
         title: 'Raise Strength',
         effects: [
-          {
-            evaluator: {
-              type: 'population',
-              params: { role: PopulationRole.Commander },
-            },
-            effects: [
-              {
-                type: 'stat',
-                method: 'add_pct',
-                params: { key: Stat.armyStrength, percent: 25 },
-                round: 'up',
-              },
-            ],
-          },
-          {
-            evaluator: {
-              type: 'population',
-              params: { role: PopulationRole.Fortifier },
-            },
-            effects: [
-              {
-                type: 'stat',
-                method: 'add_pct',
-                params: { key: Stat.fortificationStrength, percent: 25 },
-                round: 'up',
-              },
-            ],
-          },
+          effect()
+            .evaluator('population', { role: PopulationRole.Commander })
+            .effect(
+              effect(Types.Stat, StatMethods.ADD_PCT)
+                .params({ key: Stat.armyStrength, percent: 25 })
+                .round('up')
+                .build(),
+            )
+            .build(),
+          effect()
+            .evaluator('population', { role: PopulationRole.Fortifier })
+            .effect(
+              effect(Types.Stat, StatMethods.ADD_PCT)
+                .params({ key: Stat.fortificationStrength, percent: 25 })
+                .round('up')
+                .build(),
+            )
+            .build(),
         ],
       },
     ],
@@ -115,45 +104,30 @@ export const PHASES: PhaseDef[] = [
         id: 'pay-upkeep',
         title: 'Pay Upkeep',
         effects: [
-          {
-            evaluator: {
-              type: 'population',
-              params: { role: PopulationRole.Council },
-            },
-            effects: [
-              {
-                type: 'resource',
-                method: 'remove',
-                params: { key: Resource.gold, amount: 2 },
-              },
-            ],
-          },
-          {
-            evaluator: {
-              type: 'population',
-              params: { role: PopulationRole.Commander },
-            },
-            effects: [
-              {
-                type: 'resource',
-                method: 'remove',
-                params: { key: Resource.gold, amount: 1 },
-              },
-            ],
-          },
-          {
-            evaluator: {
-              type: 'population',
-              params: { role: PopulationRole.Fortifier },
-            },
-            effects: [
-              {
-                type: 'resource',
-                method: 'remove',
-                params: { key: Resource.gold, amount: 1 },
-              },
-            ],
-          },
+          effect()
+            .evaluator('population', { role: PopulationRole.Council })
+            .effect(
+              effect(Types.Resource, ResourceMethods.REMOVE)
+                .params({ key: Resource.gold, amount: 2 })
+                .build(),
+            )
+            .build(),
+          effect()
+            .evaluator('population', { role: PopulationRole.Commander })
+            .effect(
+              effect(Types.Resource, ResourceMethods.REMOVE)
+                .params({ key: Resource.gold, amount: 1 })
+                .build(),
+            )
+            .build(),
+          effect()
+            .evaluator('population', { role: PopulationRole.Fortifier })
+            .effect(
+              effect(Types.Resource, ResourceMethods.REMOVE)
+                .params({ key: Resource.gold, amount: 1 })
+                .build(),
+            )
+            .build(),
         ],
       },
     ],
@@ -166,8 +140,3 @@ export const PHASES: PhaseDef[] = [
     steps: [{ id: 'main', title: 'Main Phase' }],
   },
 ];
-
-export const PHASE_INFO: Record<string, { icon: string; label: string }> =
-  Object.fromEntries(
-    PHASES.map((p) => [p.id, { icon: p.icon, label: p.label }]),
-  );

@@ -12,7 +12,6 @@ import {
 } from '@kingdom-builder/engine';
 import {
   RESOURCES,
-  ACTION_INFO,
   ACTIONS,
   BUILDINGS,
   DEVELOPMENTS,
@@ -70,7 +69,7 @@ describe('<HoverCard />', () => {
   it('renders hover card details from context', () => {
     const actionId = 'raise_pop';
     const actionName = ctx.actions.get(actionId)?.name || '';
-    const title = `${ACTION_INFO[actionId].icon} ${actionName}`;
+    const title = `${ctx.actions.get(actionId).icon} ${actionName}`;
     const costs = getActionCosts(actionId, ctx);
     const requirements = getActionRequirements(actionId, ctx);
     mockGame.hoverCard = {

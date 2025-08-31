@@ -1,8 +1,5 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import {
-  DEVELOPMENT_INFO as developmentInfo,
-  SLOT_ICON as slotIcon,
-} from '@kingdom-builder/contents';
+import { SLOT_ICON as slotIcon } from '@kingdom-builder/contents';
 import {
   describeContent,
   summarizeContent,
@@ -25,7 +22,7 @@ function translate(
     const devId = land.developments[i];
     if (devId) {
       items.push({
-        title: `${developmentInfo[devId]?.icon || ''} ${
+        title: `${ctx.developments.get(devId)?.icon || ''} ${
           ctx.developments.get(devId)?.name || devId
         }`,
         items: fn('development', devId, ctx, { installed: true }),

@@ -1,7 +1,15 @@
 import { Registry } from '@kingdom-builder/engine/registry';
 import { Resource } from '@kingdom-builder/engine/state';
 import { buildingSchema } from '@kingdom-builder/engine/config/schema';
-import { building } from '@kingdom-builder/engine/config/builders';
+import {
+  building,
+  effect,
+  Types,
+  CostModMethods,
+  ResultModMethods,
+  ResourceMethods,
+  ActionMethods,
+} from '@kingdom-builder/engine/config/builders';
 import type { BuildingDef } from './defs';
 
 export type { BuildingDef } from './defs';
@@ -11,111 +19,148 @@ export function createBuildingRegistry() {
 
   registry.add(
     'town_charter',
-    building('town_charter', 'Town Charter')
+    building()
+      .id('town_charter')
+      .name('Town Charter')
+      .icon('🏘️')
       .cost(Resource.gold, 5)
-      .onBuild({
-        type: 'cost_mod',
-        method: 'add',
-        params: {
-          id: 'tc_expand_cost',
-          actionId: 'expand',
-          key: Resource.gold,
-          amount: 2,
-        },
-      })
-      .onBuild({
-        type: 'result_mod',
-        method: 'add',
-        params: { id: 'tc_expand_result', actionId: 'expand' },
-        effects: [
-          {
-            type: 'resource',
-            method: 'add',
-            params: { key: Resource.happiness, amount: 1 },
-          },
-        ],
-      })
+      .onBuild(
+        effect(Types.CostMod, CostModMethods.ADD)
+          .params({
+            id: 'tc_expand_cost',
+            actionId: 'expand',
+            key: Resource.gold,
+            amount: 2,
+          })
+          .build(),
+      )
+      .onBuild(
+        effect(Types.ResultMod, ResultModMethods.ADD)
+          .params({ id: 'tc_expand_result', actionId: 'expand' })
+          .effect(
+            effect(Types.Resource, ResourceMethods.ADD)
+              .params({ key: Resource.happiness, amount: 1 })
+              .build(),
+          )
+          .build(),
+      )
       .build(),
   );
 
   // TODO: remaining buildings from original manual config
   registry.add(
     'mill',
-    building('mill', 'Mill')
+    building()
+      .id('mill')
+      .name('Mill')
+      .icon('⚙️')
       .cost(Resource.gold, 7)
-      .onBuild({
-        type: 'result_mod',
-        method: 'add',
-        params: {
-          id: 'mill_farm_bonus',
-          evaluation: { type: 'development', id: 'farm' },
-          amount: 1,
-        },
-      })
+      .onBuild(
+        effect(Types.ResultMod, ResultModMethods.ADD)
+          .params({
+            id: 'mill_farm_bonus',
+            evaluation: { type: 'development', id: 'farm' },
+            amount: 1,
+          })
+          .build(),
+      )
       .build(),
   );
   registry.add(
     'raiders_guild',
-    building('raiders_guild', "Raider's Guild").cost(Resource.gold, 8).build(),
+    building()
+      .id('raiders_guild')
+      .name("Raider's Guild")
+      .icon('🏴‍☠️')
+      .cost(Resource.gold, 8)
+      .build(),
   );
   registry.add(
     'plow_workshop',
-    building('plow_workshop', 'Plow Workshop')
+    building()
+      .id('plow_workshop')
+      .name('Plow Workshop')
+      .icon('🏭')
       .cost(Resource.gold, 10)
-      .onBuild({ type: 'action', method: 'add', params: { id: 'plow' } })
+      .onBuild(
+        effect(Types.Action, ActionMethods.ADD).param('id', 'plow').build(),
+      )
       .build(),
   );
   registry.add(
     'market',
-    building('market', 'Market').cost(Resource.gold, 10).build(),
+    building()
+      .id('market')
+      .name('Market')
+      .icon('🏪')
+      .cost(Resource.gold, 10)
+      .build(),
   );
   registry.add(
     'barracks',
-    building('barracks', 'Barracks').cost(Resource.gold, 12).build(),
+    building()
+      .id('barracks')
+      .name('Barracks')
+      .icon('🪖')
+      .cost(Resource.gold, 12)
+      .build(),
   );
   registry.add(
     'citadel',
-    building('citadel', 'Citadel').cost(Resource.gold, 12).build(),
+    building()
+      .id('citadel')
+      .name('Citadel')
+      .icon('🏯')
+      .cost(Resource.gold, 12)
+      .build(),
   );
   registry.add(
     'castle_walls',
-    building('castle_walls', 'Castle Walls').cost(Resource.gold, 14).build(),
+    building()
+      .id('castle_walls')
+      .name('Castle Walls')
+      .icon('🧱')
+      .cost(Resource.gold, 14)
+      .build(),
   );
   registry.add(
     'castle_gardens',
-    building('castle_gardens', 'Castle Gardens')
+    building()
+      .id('castle_gardens')
+      .name('Castle Gardens')
+      .icon('🌷')
       .cost(Resource.gold, 15)
       .build(),
   );
   registry.add(
     'temple',
-    building('temple', 'Temple').cost(Resource.gold, 16).build(),
+    building()
+      .id('temple')
+      .name('Temple')
+      .icon('⛪')
+      .cost(Resource.gold, 16)
+      .build(),
   );
   registry.add(
     'palace',
-    building('palace', 'Palace').cost(Resource.gold, 20).build(),
+    building()
+      .id('palace')
+      .name('Palace')
+      .icon('👑')
+      .cost(Resource.gold, 20)
+      .build(),
   );
   registry.add(
     'great_hall',
-    building('great_hall', 'Great Hall').cost(Resource.gold, 22).build(),
+    building()
+      .id('great_hall')
+      .name('Great Hall')
+      .icon('🏟️')
+      .cost(Resource.gold, 22)
+      .build(),
   );
 
   return registry;
 }
 
 export const BUILDINGS = createBuildingRegistry();
-
-export const BUILDING_INFO: Record<string, { icon: string; label: string }> = {
-  town_charter: { icon: '🏘️', label: BUILDINGS.get('town_charter').name },
-  mill: { icon: '⚙️', label: BUILDINGS.get('mill').name },
-  raiders_guild: { icon: '🏴‍☠️', label: BUILDINGS.get('raiders_guild').name },
-  plow_workshop: { icon: '🏭', label: BUILDINGS.get('plow_workshop').name },
-  market: { icon: '🏪', label: BUILDINGS.get('market').name },
-  barracks: { icon: '🪖', label: BUILDINGS.get('barracks').name },
-  citadel: { icon: '🏯', label: BUILDINGS.get('citadel').name },
-  castle_walls: { icon: '🧱', label: BUILDINGS.get('castle_walls').name },
-  castle_gardens: { icon: '🌷', label: BUILDINGS.get('castle_gardens').name },
-  temple: { icon: '⛪', label: BUILDINGS.get('temple').name },
-  palace: { icon: '👑', label: BUILDINGS.get('palace').name },
-  great_hall: { icon: '🏟️', label: BUILDINGS.get('great_hall').name },
-};

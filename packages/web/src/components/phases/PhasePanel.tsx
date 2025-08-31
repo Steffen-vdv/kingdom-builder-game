@@ -70,7 +70,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
                   : ''
               }`}
             >
-              {p?.icon} {p?.label}
+              {p.icon} {p.label}
             </button>
           );
         })}
