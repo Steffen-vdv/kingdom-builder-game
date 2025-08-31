@@ -3,7 +3,11 @@ export { BUILDINGS, createBuildingRegistry } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
 export { PHASES, type PhaseDef, type StepDef } from './phases';
-export { POPULATION_ROLES } from './populationRoles';
+export {
+  POPULATION_ROLES,
+  PopulationRole,
+  type PopulationRoleId,
+} from './populationRoles';
 export { Resource, type ResourceKey, RESOURCES } from './resources';
 export { Stat, type StatKey, STATS } from './stats';
 export { TRIGGER_INFO } from './triggers';

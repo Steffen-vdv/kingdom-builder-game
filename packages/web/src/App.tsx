@@ -8,9 +8,8 @@ import {
   Resource,
   PHASES,
   POPULATION_ROLES,
+  PopulationRole,
 } from '@kingdom-builder/contents';
-
-import { PopulationRole } from '@kingdom-builder/engine';
 
 type Screen = 'menu' | 'overview' | 'game';
 

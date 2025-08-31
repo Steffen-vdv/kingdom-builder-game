@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { advance, PopulationRole, Stat } from '../../src';
+import { advance, Stat } from '../../src';
 import {
   PHASES,
   GAME_START,
   Resource as CResource,
   Stat as CStat,
+  PopulationRole,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 

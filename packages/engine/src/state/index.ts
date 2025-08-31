@@ -12,21 +12,20 @@ export function setStatKeys(keys: string[]) {
   for (const key of keys) Stat[key] = key;
 }
 
-export const Phase = {
-  Development: 'development',
-  Upkeep: 'upkeep',
-  Main: 'main',
-} as const;
-export type PhaseId = (typeof Phase)[keyof typeof Phase];
+export const Phase: Record<string, string> = {};
+export type PhaseId = string;
+export function setPhaseKeys(keys: string[]) {
+  for (const key of Object.keys(Phase)) delete Phase[key];
+  for (const id of keys) Phase[id.charAt(0).toUpperCase() + id.slice(1)] = id;
+}
 
-export const PopulationRole = {
-  Council: 'council',
-  Commander: 'commander',
-  Fortifier: 'fortifier',
-  Citizen: 'citizen',
-} as const;
-export type PopulationRoleId =
-  (typeof PopulationRole)[keyof typeof PopulationRole];
+export const PopulationRole: Record<string, string> = {};
+export type PopulationRoleId = string;
+export function setPopulationRoleKeys(keys: string[]) {
+  for (const key of Object.keys(PopulationRole)) delete PopulationRole[key];
+  for (const id of keys)
+    PopulationRole[id.charAt(0).toUpperCase() + id.slice(1)] = id;
+}
 
 export type PlayerId = 'A' | 'B';
 
@@ -57,12 +56,7 @@ export class PlayerState {
    * returned to zero after previously having a value.
    */
   statsHistory: Record<StatKey, boolean>;
-  population: Record<PopulationRoleId, number> = {
-    [PopulationRole.Council]: 0,
-    [PopulationRole.Commander]: 0,
-    [PopulationRole.Fortifier]: 0,
-    [PopulationRole.Citizen]: 0,
-  };
+  population: Record<PopulationRoleId, number>;
   lands: Land[] = [];
   buildings: Set<string> = new Set();
   actions: Set<string> = new Set();
@@ -97,6 +91,10 @@ export class PlayerState {
         enumerable: false,
         configurable: true,
       });
+    }
+    this.population = {};
+    for (const key of Object.values(PopulationRole)) {
+      this.population[key] = 0;
     }
   }
 }

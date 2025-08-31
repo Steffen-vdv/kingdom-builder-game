@@ -7,6 +7,8 @@ import {
   Land,
   setResourceKeys,
   setStatKeys,
+  setPhaseKeys,
+  setPopulationRoleKeys,
 } from './state';
 import type {
   ResourceKey,
@@ -219,7 +221,7 @@ function applyPlayerStart(
     if (val !== 0) player.statsHistory[key] = true;
   }
   for (const [key, value] of Object.entries(config.population || {}))
-    player.population[key as PopulationRoleId] = value ?? 0;
+    player.population[key] = value ?? 0;
   if (config.lands)
     config.lands.forEach((landCfg, idx) => {
       const land = new Land(
@@ -311,6 +313,8 @@ export function createEngine({
 
   setResourceKeys(Object.keys(startCfg.player.resources || {}));
   setStatKeys(Object.keys(startCfg.player.stats || {}));
+  setPhaseKeys(phases.map((p) => p.id));
+  setPopulationRoleKeys(Object.keys(startCfg.player.population || {}));
 
   const resolvedRules = rules || DefaultRules;
   const services = new Services(resolvedRules);

@@ -1,7 +1,10 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import { STATS, POPULATION_ROLES } from '@kingdom-builder/contents';
-import type { StatKey } from '@kingdom-builder/contents';
-import type { PopulationRoleId } from '@kingdom-builder/engine/state';
+import {
+  STATS,
+  POPULATION_ROLES,
+  type StatKey,
+  type PopulationRoleId,
+} from '@kingdom-builder/contents';
 
 interface EvalConfig {
   type: string;
