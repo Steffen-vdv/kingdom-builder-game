@@ -3,7 +3,12 @@ import type { StatKey } from '../state';
 
 export const statAddPct: EffectHandler = (effect, ctx, mult = 1) => {
   const key = effect.params!['key'] as StatKey;
-  const pct = effect.params!['percent'] as number;
+  let pct = effect.params!['percent'] as number | undefined;
+  if (pct === undefined) {
+    const statKey = effect.params!['percentStat'] as StatKey;
+    const statVal = ctx.activePlayer.stats[statKey] || 0;
+    pct = statVal * 100;
+  }
 
   // Use a cache keyed by turn/phase/step so multiple evaluations in the
   // same step (e.g. multiple commanders) scale additively from the

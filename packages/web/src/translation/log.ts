@@ -10,6 +10,7 @@ import {
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
+import { PopulationRole, Stat } from '@kingdom-builder/engine/state';
 interface StepDef {
   id: string;
   title?: string;
@@ -234,7 +235,8 @@ export function diffStepSnapshots(
     const a = after.stats[key] ?? 0;
     if (a !== b) {
       const info = STATS[key as keyof typeof STATS];
-      const icon = info?.icon ? `${info.icon} ` : '';
+      const iconOnly = info?.icon || '';
+      const icon = iconOnly ? `${iconOnly} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;
       if (key === 'absorption') {
@@ -245,9 +247,23 @@ export function diffStepSnapshots(
           `${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
         );
       } else {
-        changes.push(
-          `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-        );
+        let line = `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`;
+        if (
+          step?.id === 'raise-strength' &&
+          (key === Stat.armyStrength || key === Stat.fortificationStrength) &&
+          delta > 0
+        ) {
+          const role =
+            key === Stat.armyStrength
+              ? PopulationRole.Commander
+              : PopulationRole.Fortifier;
+          const count = ctx.activePlayer.population[role] ?? 0;
+          const popIcon = POPULATION_ROLES[role]?.icon || '';
+          const growth = ctx.activePlayer.stats[Stat.growth] ?? 0;
+          const growthIcon = STATS[Stat.growth]?.icon || '';
+          line += ` (${iconOnly}${b} + (${popIcon}${count} * ${growthIcon}${growth}) = ${iconOnly}${a})`;
+        }
+        changes.push(line);
       }
     }
   }

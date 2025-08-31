@@ -72,7 +72,7 @@ export const PHASES: PhaseDef[] = [
             .evaluator('population', { role: PopulationRole.Commander })
             .effect(
               effect(Types.Stat, StatMethods.ADD_PCT)
-                .params({ key: Stat.armyStrength, percent: 25 })
+                .params({ key: Stat.armyStrength, percentStat: Stat.growth })
                 .round('up')
                 .build(),
             )
@@ -81,7 +81,10 @@ export const PHASES: PhaseDef[] = [
             .evaluator('population', { role: PopulationRole.Fortifier })
             .effect(
               effect(Types.Stat, StatMethods.ADD_PCT)
-                .params({ key: Stat.fortificationStrength, percent: 25 })
+                .params({
+                  key: Stat.fortificationStrength,
+                  percentStat: Stat.growth,
+                })
                 .round('up')
                 .build(),
             )

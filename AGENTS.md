@@ -43,6 +43,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-09-01: `stat:add_pct` effects honor a `round` setting like resources; use `round: 'up'` to keep strength stats integer and non-negative.
 - 2025-09-02: Scope result modifiers by tagging evaluators with an `id` (e.g. population id 'tax') and referencing it in the modifier's `evaluation`.
 - 2025-09-03: Use `diffStepSnapshots` instead of `diffSnapshots` when logging action results to capture resource source icons.
+- 2025-09-14: PlayerState auto-initializes stats by iterating over `Stat` keys; adding a new stat requires only updating the `Stat` map and providing getters/setters.
 
 # Core Agent principles
 
