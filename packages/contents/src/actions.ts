@@ -7,6 +7,7 @@ import {
 import {
   action,
   effect,
+  requirement,
   Types,
   LandMethods,
   ResourceMethods,
@@ -128,16 +129,14 @@ export function createActionRegistry() {
       .icon('👶')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 5)
-      .requirement({
-        type: 'evaluator',
-        method: 'compare',
-        params: {
-          left: { type: 'population' },
-          operator: 'lt',
-          right: { type: 'stat', params: { key: Stat.maxPopulation } },
-        },
-        message: 'Free space for 👥',
-      })
+      .requirement(
+        requirement('evaluator', 'compare')
+          .param('left', { type: 'population' })
+          .param('operator', 'lt')
+          .param('right', { type: 'stat', params: { key: Stat.maxPopulation } })
+          .message('Free space for 👥')
+          .build(),
+      )
       .effect(
         effect(Types.Population, PopulationMethods.ADD)
           .param('role', '$role')
@@ -169,19 +168,17 @@ export function createActionRegistry() {
       .name('Army Attack')
       .icon('🗡️')
       .cost(Resource.ap, 1)
-      .requirement({
-        type: 'evaluator',
-        method: 'compare',
-        params: {
-          left: { type: 'stat', params: { key: Stat.warWeariness } },
-          operator: 'lt',
-          right: {
+      .requirement(
+        requirement('evaluator', 'compare')
+          .param('left', { type: 'stat', params: { key: Stat.warWeariness } })
+          .param('operator', 'lt')
+          .param('right', {
             type: 'population',
             params: { role: PopulationRole.Commander },
-          },
-        },
-        message: 'War weariness must be lower than commanders',
-      })
+          })
+          .message('War weariness must be lower than commanders')
+          .build(),
+      )
       .build(),
   );
 
