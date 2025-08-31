@@ -10,7 +10,10 @@ Rules and content are encoded as declarative **effects** that respond to
 specific **triggers**. A trigger represents a moment in the game such as the
 start of the Development phase or the resolution of an action. When a trigger
 fires the engine looks up all matching effects and resolves them through the
-central registry.
+central registry. All trigger lookups funnel through a single helper,
+`collectTriggerEffects`, which gathers the relevant effects for a player before
+execution. This unified path avoids divergent trigger systems and ensures new
+content hooks into triggers consistently.
 
 Each effect definition contains:
 

@@ -44,44 +44,6 @@ function getEffects(def: unknown, trigger: string): EffectDef[] | undefined {
   return Array.isArray(val) ? (val as EffectDef[]) : undefined;
 }
 
-function runTrigger(
-  trigger: TriggerKey,
-  ctx: EngineContext,
-  player: PlayerState = ctx.activePlayer,
-) {
-  const original = ctx.game.currentPlayerIndex;
-  const index = ctx.game.players.indexOf(player);
-  ctx.game.currentPlayerIndex = index;
-
-  for (const [role, count] of Object.entries(player.population)) {
-    const populationDefinition = ctx.populations.get(role);
-    const effects = getEffects(populationDefinition, trigger);
-    if (effects) runEffects(effects, ctx, Number(count));
-  }
-
-  for (const land of player.lands) {
-    for (const id of land.developments) {
-      const developmentDefinition = ctx.developments.get(id);
-      const effects = getEffects(developmentDefinition, trigger);
-      if (!effects) continue;
-      runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
-    }
-  }
-
-  for (const id of player.buildings) {
-    const buildingDefinition = ctx.buildings.get(id);
-    const effects = getEffects(buildingDefinition, trigger);
-    if (effects) runEffects(effects, ctx);
-  }
-
-  for (const passive of ctx.passives.values(player.id)) {
-    const effects = getEffects(passive, trigger);
-    if (effects) runEffects(effects, ctx);
-  }
-
-  ctx.game.currentPlayerIndex = original;
-}
-
 export function collectTriggerEffects(
   trigger: TriggerKey,
   ctx: EngineContext,
@@ -293,7 +255,12 @@ export function resolveAttack(
   if (rounding === 'down') final = Math.floor(final);
   else if (rounding === 'up') final = Math.ceil(final);
   else final = Math.round(final);
-  runTrigger('onAttackResolved', ctx, defender);
+  const original = ctx.game.currentPlayerIndex;
+  const index = ctx.game.players.indexOf(defender);
+  ctx.game.currentPlayerIndex = index;
+  const effects = collectTriggerEffects('onAttackResolved', ctx, defender);
+  if (effects.length) runEffects(effects, ctx);
+  ctx.game.currentPlayerIndex = original;
   return final;
 }
 
