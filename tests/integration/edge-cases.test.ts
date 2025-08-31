@@ -16,7 +16,7 @@ describe('Action edge cases', () => {
   it('rejects actions when a required resource is exhausted', () => {
     const ctx = createTestContext();
     const costs = getActionCosts('expand', ctx);
-    ctx.activePlayer.ap = costs[Resource.ap] || 0;
+    ctx.activePlayer.resources[Resource.ap] = costs[Resource.ap] || 0;
     const entries = Object.entries(costs).filter(
       ([key]) => key !== Resource.ap,
     ) as [ResourceKey, number][];
@@ -32,8 +32,10 @@ describe('Action edge cases', () => {
   it('rejects actions when action points are exhausted', () => {
     const ctx = createTestContext();
     const cost = getActionCosts('expand', ctx);
-    ctx.activePlayer.ap = (cost[Resource.ap] || 0) - 1;
+    ctx.activePlayer.resources[Resource.ap] = (cost[Resource.ap] || 0) - 1;
     expect(() => performAction('expand', ctx)).toThrow(/Insufficient ap/);
-    expect(ctx.activePlayer.ap).toBe((cost[Resource.ap] || 0) - 1);
+    expect(ctx.activePlayer.resources[Resource.ap]).toBe(
+      (cost[Resource.ap] || 0) - 1,
+    );
   });
 });
