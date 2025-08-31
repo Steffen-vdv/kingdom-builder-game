@@ -109,25 +109,18 @@ function GenericActions({
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
             </span>
-            <div className="flex w-full gap-2">
-              <ul className="text-sm list-disc pl-4 text-left flex-1">
-                {implemented ? (
-                  renderSummary(stripSummary(summary))
-                ) : (
-                  <li className="italic text-red-600">Not implemented yet</li>
-                )}
-              </ul>
-              {requirements.length > 0 && (
-                <div className="text-sm text-red-600 text-left mt-4 w-1/3">
-                  <span className="font-semibold">Requirements</span>
-                  <ul className="list-disc pl-4">
-                    {requirements.map((r, i) => (
-                      <li key={i}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
+            {requirements.length > 0 && (
+              <span className="absolute top-7 right-2 text-xs text-red-600">
+                Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+              </span>
+            )}
+            <ul className="text-sm list-disc pl-4 text-left">
+              {implemented ? (
+                renderSummary(stripSummary(summary))
+              ) : (
+                <li className="italic text-red-600">Not implemented yet</li>
               )}
-            </div>
+            </ul>
           </button>
         );
       })}
@@ -204,21 +197,14 @@ function RaisePopOptions({
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
             </span>
-            <div className="flex w-full gap-2">
-              <ul className="text-sm list-disc pl-4 text-left flex-1">
-                {renderSummary(stripSummary(shortSummary))}
-              </ul>
-              {requirements.length > 0 && (
-                <div className="text-sm text-red-600 text-left mt-4 w-1/3">
-                  <span className="font-semibold">Requirements</span>
-                  <ul className="list-disc pl-4">
-                    {requirements.map((r, i) => (
-                      <li key={i}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            {requirements.length > 0 && (
+              <span className="absolute top-7 right-2 text-xs text-red-600">
+                Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+              </span>
+            )}
+            <ul className="text-sm list-disc pl-4 text-left">
+              {renderSummary(stripSummary(shortSummary))}
+            </ul>
           </button>
         );
       })}
@@ -352,25 +338,18 @@ function DevelopOptions({
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(costs, ctx.activePlayer.resources)}
               </span>
-              <div className="flex w-full gap-2">
-                <ul className="text-sm list-disc pl-4 text-left flex-1">
-                  {implemented ? (
-                    renderSummary(stripSummary(summary))
-                  ) : (
-                    <li className="italic text-red-600">Not implemented yet</li>
-                  )}
-                </ul>
-                {requirements.length > 0 && (
-                  <div className="text-sm text-red-600 text-left mt-4 w-1/3">
-                    <span className="font-semibold">Requirements</span>
-                    <ul className="list-disc pl-4">
-                      {requirements.map((r, i) => (
-                        <li key={i}>{r}</li>
-                      ))}
-                    </ul>
-                  </div>
+              {requirements.length > 0 && (
+                <span className="absolute top-7 right-2 text-xs text-red-600">
+                  Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+                </span>
+              )}
+              <ul className="text-sm list-disc pl-4 text-left">
+                {implemented ? (
+                  renderSummary(stripSummary(summary))
+                ) : (
+                  <li className="italic text-red-600">Not implemented yet</li>
                 )}
-              </div>
+              </ul>
             </button>
           );
         })}
@@ -454,25 +433,18 @@ function BuildOptions({
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(costs, ctx.activePlayer.resources)}
               </span>
-              <div className="flex w-full gap-2">
-                <ul className="text-sm list-disc pl-4 text-left flex-1">
-                  {implemented ? (
-                    renderSummary(stripSummary(summary))
-                  ) : (
-                    <li className="italic text-red-600">Not implemented yet</li>
-                  )}
-                </ul>
-                {requirements.length > 0 && (
-                  <div className="text-sm text-red-600 text-left mt-4 w-1/3">
-                    <span className="font-semibold">Requirements</span>
-                    <ul className="list-disc pl-4">
-                      {requirements.map((r, i) => (
-                        <li key={i}>{r}</li>
-                      ))}
-                    </ul>
-                  </div>
+              {requirements.length > 0 && (
+                <span className="absolute top-7 right-2 text-xs text-red-600">
+                  Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+                </span>
+              )}
+              <ul className="text-sm list-disc pl-4 text-left">
+                {implemented ? (
+                  renderSummary(stripSummary(summary))
+                ) : (
+                  <li className="italic text-red-600">Not implemented yet</li>
                 )}
-              </div>
+              </ul>
             </button>
           );
         })}

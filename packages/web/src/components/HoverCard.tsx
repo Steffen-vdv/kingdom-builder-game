@@ -23,28 +23,24 @@ export default function HoverCard() {
           {data.description}
         </div>
       )}
-      <div className="flex gap-2">
-        {data.effects.length > 0 && (
-          <div className="flex-1">
-            <div className="font-semibold">
-              {data.effectsTitle ?? 'Effects'}
-            </div>
-            <ul className="list-disc pl-4 text-sm">
-              {renderSummary(data.effects)}
-            </ul>
-          </div>
-        )}
-        {data.requirements.length > 0 && (
-          <div className="text-sm text-red-600 mt-4 w-1/3">
-            <div className="font-semibold text-red-600">Requirements</div>
-            <ul className="list-disc pl-4">
-              {data.requirements.map((r, i) => (
-                <li key={i}>{r}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+      {data.effects.length > 0 && (
+        <div className="mb-2">
+          <div className="font-semibold">{data.effectsTitle ?? 'Effects'}</div>
+          <ul className="list-disc pl-4 text-sm">
+            {renderSummary(data.effects)}
+          </ul>
+        </div>
+      )}
+      {data.requirements.length > 0 && (
+        <div className="text-sm text-red-600 mt-2">
+          <div className="font-semibold text-red-600">Requirements</div>
+          <ul className="list-disc pl-4">
+            {data.requirements.map((r, i) => (
+              <li key={i}>{r}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
