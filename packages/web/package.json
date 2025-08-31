@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "npm run lint && vitest run",
-    "playwright": "playwright test tests/smoke.spec.ts",
+    "playwright": "node tests/smoke.mjs",
     "playwright:e2e": "E2E_PORT=5173 npm run playwright",
     "e2e": "start-server-and-test dev http://localhost:5173 playwright:e2e"
   },
@@ -33,7 +33,7 @@
     "typescript": "^5.5.4",
     "vite": "^5.4.0",
     "vitest": "^3.2.4",
-    "@playwright/test": "^1.49.0",
+    "playwright-chromium": "^1.49.0",
     "start-server-and-test": "^2.0.3"
   }
 }
