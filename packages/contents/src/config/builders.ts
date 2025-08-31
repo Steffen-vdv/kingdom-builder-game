@@ -5,10 +5,18 @@ import type {
   PopulationConfig,
   RequirementConfig,
   EffectConfig,
+  StartConfig,
 } from '@kingdom-builder/engine/config/schema';
-import type { ResourceKey } from '../resources';
-import { Resource } from '../resources';
+import type {
+  RuleSet,
+  HappinessTierEffect,
+} from '@kingdom-builder/engine/services';
 import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
+import type { EffectDef } from '@kingdom-builder/engine/effects';
+import type { ResourceKey, ResourceInfo } from '../resources';
+import type { StatKey, StatInfo } from '../stats';
+import type { PopulationRoleId, PopulationRoleInfo } from '../populationRoles';
+import type { TriggerKey } from '../defs';
 
 export const Types = {
   Land: 'land',
@@ -212,7 +220,10 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 
 export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
   constructor() {
-    super({ costs: { [Resource.ap]: 1 }, onBuild: [] });
+    super({
+      costs: { ap: 1 } as Record<ResourceKey, number>,
+      onBuild: [],
+    });
   }
   cost(key: ResourceKey, amount: number) {
     this.config.costs[key] = amount;
@@ -316,4 +327,264 @@ export function development() {
 }
 export function population() {
   return new PopulationBuilder();
+}
+
+// Generic info builder for simple keyed entries
+class InfoBuilder<
+  T extends {
+    key: string;
+    icon?: string;
+    label?: string;
+    description?: string;
+  },
+> {
+  protected config: Partial<T> = {};
+  id(key: T['key']) {
+    this.config.key = key;
+    return this;
+  }
+  icon(icon: string) {
+    this.config.icon = icon as T['icon'];
+    return this;
+  }
+  label(label: string) {
+    this.config.label = label as T['label'];
+    return this;
+  }
+  description(description: string) {
+    this.config.description = description as T['description'];
+    return this;
+  }
+  build(): T {
+    return this.config as T;
+  }
+}
+
+export class ResourceInfoBuilder extends InfoBuilder<ResourceInfo> {}
+export function resourceInfo() {
+  return new ResourceInfoBuilder();
+}
+
+export class StatInfoBuilder extends InfoBuilder<StatInfo> {
+  addFormat(format: NonNullable<StatInfo['addFormat']>) {
+    this.config.addFormat = format;
+    return this;
+  }
+}
+export function statInfo() {
+  return new StatInfoBuilder();
+}
+
+export class PopulationRoleInfoBuilder extends InfoBuilder<PopulationRoleInfo> {}
+export function populationRoleInfo() {
+  return new PopulationRoleInfoBuilder();
+}
+
+export class ModifierInfoBuilder extends InfoBuilder<{
+  key: string;
+  icon: string;
+  label: string;
+}> {}
+export function modifierInfo() {
+  return new ModifierInfoBuilder();
+}
+
+// Phase and Step builders
+export interface StepDef {
+  id: string;
+  title?: string;
+  triggers?: TriggerKey[];
+  effects?: EffectDef[];
+  icon?: string;
+}
+
+export interface PhaseDef {
+  id: string;
+  steps: StepDef[];
+  action?: boolean;
+  label: string;
+  icon?: string;
+}
+
+export class StepBuilder {
+  private config: StepDef = { id: '', effects: [] };
+  id(id: string) {
+    this.config.id = id;
+    return this;
+  }
+  title(title: string) {
+    this.config.title = title;
+    return this;
+  }
+  icon(icon: string) {
+    this.config.icon = icon;
+    return this;
+  }
+  trigger(trigger: TriggerKey) {
+    this.config.triggers = this.config.triggers || [];
+    this.config.triggers.push(trigger);
+    return this;
+  }
+  effect(effect: EffectDef) {
+    this.config.effects = this.config.effects || [];
+    this.config.effects.push(effect);
+    return this;
+  }
+  build(): StepDef {
+    return this.config;
+  }
+}
+
+export class PhaseBuilder {
+  private config: PhaseDef = { id: '', label: '', steps: [] };
+  id(id: string) {
+    this.config.id = id;
+    return this;
+  }
+  label(label: string) {
+    this.config.label = label;
+    return this;
+  }
+  icon(icon: string) {
+    this.config.icon = icon;
+    return this;
+  }
+  action(flag = true) {
+    this.config.action = flag;
+    return this;
+  }
+  step(step: StepDef | StepBuilder) {
+    const built = step instanceof StepBuilder ? step.build() : step;
+    this.config.steps.push(built);
+    return this;
+  }
+  build(): PhaseDef {
+    return this.config;
+  }
+}
+
+export function step() {
+  return new StepBuilder();
+}
+export function phase() {
+  return new PhaseBuilder();
+}
+
+// Rules builder
+export class RulesBuilder {
+  private config: RuleSet = {
+    defaultActionAPCost: 1,
+    absorptionCapPct: 1,
+    absorptionRounding: 'down',
+    happinessTiers: [],
+    slotsPerNewLand: 1,
+    maxSlotsPerLand: 2,
+    basePopulationCap: 1,
+  };
+  defaultActionAPCost(cost: number) {
+    this.config.defaultActionAPCost = cost;
+    return this;
+  }
+  absorptionCapPct(pct: number) {
+    this.config.absorptionCapPct = pct;
+    return this;
+  }
+  absorptionRounding(mode: 'up' | 'down') {
+    this.config.absorptionRounding = mode;
+    return this;
+  }
+  happinessTier(threshold: number, effect: HappinessTierEffect) {
+    this.config.happinessTiers.push({ threshold, effect });
+    return this;
+  }
+  slotsPerNewLand(count: number) {
+    this.config.slotsPerNewLand = count;
+    return this;
+  }
+  maxSlotsPerLand(count: number) {
+    this.config.maxSlotsPerLand = count;
+    return this;
+  }
+  basePopulationCap(cap: number) {
+    this.config.basePopulationCap = cap;
+    return this;
+  }
+  build(): RuleSet {
+    return this.config;
+  }
+}
+
+export function rules() {
+  return new RulesBuilder();
+}
+
+// Start config builder
+class PlayerStartBuilder {
+  private config: StartConfig['player'] & {
+    resources: Partial<Record<ResourceKey, number>>;
+    stats: Partial<Record<StatKey, number>>;
+    population: Partial<Record<PopulationRoleId, number>>;
+    lands: { developments?: string[] }[];
+  } = {
+    resources: {},
+    stats: {},
+    population: {},
+    lands: [],
+  };
+  resource(key: ResourceKey, amount: number) {
+    this.config.resources[key] = amount;
+    return this;
+  }
+  stat(key: StatKey, amount: number) {
+    this.config.stats[key] = amount;
+    return this;
+  }
+  population(role: PopulationRoleId, amount: number) {
+    this.config.population[role] = amount;
+    return this;
+  }
+  land(developments: string[] = []) {
+    this.config.lands.push({ developments });
+    return this;
+  }
+  build(): StartConfig['player'] {
+    return this.config;
+  }
+  partial(): Partial<StartConfig['player']> {
+    const { resources, stats, population, lands } = this.config;
+    const partial: Partial<StartConfig['player']> = {};
+    if (Object.keys(resources).length) partial.resources = resources;
+    if (Object.keys(stats).length) partial.stats = stats;
+    if (Object.keys(population).length) partial.population = population;
+    if (lands.length) partial.lands = lands;
+    return partial;
+  }
+}
+
+export class StartBuilder {
+  private config: StartConfig & {
+    players: Record<string, Partial<StartConfig['player']>>;
+  } = {
+    player: { resources: {}, stats: {}, population: {}, lands: [] },
+    players: {},
+  };
+  player(setup: (b: PlayerStartBuilder) => void) {
+    const builder = new PlayerStartBuilder();
+    setup(builder);
+    this.config.player = builder.build();
+    return this;
+  }
+  bonus(id: string, setup: (b: PlayerStartBuilder) => void) {
+    const builder = new PlayerStartBuilder();
+    setup(builder);
+    this.config.players[id] = builder.partial();
+    return this;
+  }
+  build(): StartConfig {
+    return this.config;
+  }
+}
+
+export function start() {
+  return new StartBuilder();
 }
