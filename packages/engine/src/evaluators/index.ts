@@ -4,6 +4,7 @@ import type { EngineContext } from '../context';
 import { developmentEvaluator } from './development';
 import { populationEvaluator } from './population';
 import { statEvaluator } from './stat';
+import { compareEvaluator } from './compare';
 export interface EvaluatorDef<
   P extends Record<string, unknown> = Record<string, unknown>,
 > {
@@ -28,8 +29,10 @@ export function registerCoreEvaluators(
   registry.add('development', developmentEvaluator);
   registry.add('population', populationEvaluator);
   registry.add('stat', statEvaluator);
+  registry.add('compare', compareEvaluator);
 }
 
 export { developmentEvaluator } from './development';
 export { populationEvaluator } from './population';
 export { statEvaluator } from './stat';
+export { compareEvaluator } from './compare';

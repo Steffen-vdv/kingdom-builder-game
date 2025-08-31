@@ -7,7 +7,7 @@ describe('Army Attack action', () => {
   it('blocks when war weariness is not lower than commanders', () => {
     const ctx = createTestEngine();
     ctx.activePlayer.population[PopulationRole.Commander] = 1;
-    ctx.activePlayer.warWeariness = 1;
+    ctx.activePlayer.warWeariness = 2;
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const failures = getActionRequirements('army_attack', ctx);
     expect(failures).toHaveLength(1);
