@@ -67,6 +67,7 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-10-11: Building stat bonuses should use `PassiveMethods.ADD` with a unique id to tie their effects to the building's existence.
 - 2025-10-19: Population labels are defined in `packages/contents/src/populationRoles.ts` for UI display.
 - 2025-10-23: Summary entries with a `_desc` flag appear under the Description section.
+- 2025-10-29: Phase icons live in `PHASES`; grab them with `PHASES.find(p => p.id === id)?.icon` for overview displays.
 
 # Core Agent principles
 
