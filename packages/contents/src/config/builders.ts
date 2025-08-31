@@ -7,8 +7,11 @@ import type {
   EffectConfig,
 } from '@kingdom-builder/engine/config/schema';
 import type { ResourceKey } from '../resources';
-import { Resource } from '../resources';
+import type { StatKey } from '../stats';
+import type { PopulationRoleId } from '../populationRoles';
+import type { TriggerKey } from '../defs';
 import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
+import type { EffectDef } from '@kingdom-builder/engine/effects';
 
 export const Types = {
   Land: 'land',
@@ -212,7 +215,8 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 
 export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
   constructor() {
-    super({ costs: { [Resource.ap]: 1 }, onBuild: [] });
+    super({ costs: {} as Record<ResourceKey, number>, onBuild: [] });
+    (this.config.costs as Record<ResourceKey, number>)['ap' as ResourceKey] = 1;
   }
   cost(key: ResourceKey, amount: number) {
     this.config.costs[key] = amount;
@@ -305,6 +309,153 @@ export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
   }
 }
 
+export interface InfoDef {
+  key: string;
+  icon: string;
+  label: string;
+  description: string;
+}
+
+class InfoBuilder<T extends InfoDef> {
+  protected config: T;
+  constructor(key: string) {
+    this.config = { key, icon: '', label: '', description: '' } as T;
+  }
+  icon(icon: string) {
+    this.config.icon = icon;
+    return this;
+  }
+  label(label: string) {
+    this.config.label = label;
+    return this;
+  }
+  description(description: string) {
+    this.config.description = description;
+    return this;
+  }
+  build(): T {
+    return this.config;
+  }
+}
+
+export interface ResourceInfo extends InfoDef {}
+
+class ResourceBuilder extends InfoBuilder<ResourceInfo> {
+  constructor(key: ResourceKey) {
+    super(key);
+  }
+}
+
+export interface PopulationRoleInfo extends InfoDef {}
+
+class PopulationRoleBuilder extends InfoBuilder<PopulationRoleInfo> {
+  constructor(key: PopulationRoleId) {
+    super(key);
+  }
+}
+
+export interface StatInfo extends InfoDef {
+  displayAsPercent?: boolean;
+  addFormat?: {
+    prefix?: string;
+    percent?: boolean;
+  };
+}
+
+class StatBuilder extends InfoBuilder<StatInfo> {
+  constructor(key: StatKey) {
+    super(key);
+  }
+  displayAsPercent(flag = true) {
+    this.config.displayAsPercent = flag;
+    return this;
+  }
+  addFormat(format: { prefix?: string; percent?: boolean }) {
+    this.config.addFormat = { ...this.config.addFormat, ...format };
+    return this;
+  }
+}
+
+export interface StepDef {
+  id: string;
+  title?: string;
+  triggers?: TriggerKey[];
+  effects?: EffectDef[];
+  icon?: string;
+}
+
+class StepBuilder {
+  private config: StepDef;
+  constructor(id: string) {
+    this.config = { id };
+  }
+  title(title: string) {
+    this.config.title = title;
+    return this;
+  }
+  icon(icon: string) {
+    this.config.icon = icon;
+    return this;
+  }
+  trigger(trigger: TriggerKey) {
+    this.config.triggers = this.config.triggers || [];
+    this.config.triggers.push(trigger);
+    return this;
+  }
+  triggers(...triggers: TriggerKey[]) {
+    this.config.triggers = this.config.triggers || [];
+    this.config.triggers.push(...triggers);
+    return this;
+  }
+  effect(effect: EffectDef) {
+    this.config.effects = this.config.effects || [];
+    this.config.effects.push(effect);
+    return this;
+  }
+  build(): StepDef {
+    return this.config;
+  }
+}
+
+export interface PhaseDef {
+  id: string;
+  steps: StepDef[];
+  action?: boolean;
+  label: string;
+  icon?: string;
+}
+
+class PhaseBuilder {
+  private config: PhaseDef;
+  constructor(id: string) {
+    this.config = { id, steps: [], label: '' };
+  }
+  label(label: string) {
+    this.config.label = label;
+    return this;
+  }
+  icon(icon: string) {
+    this.config.icon = icon;
+    return this;
+  }
+  action(flag = true) {
+    this.config.action = flag;
+    return this;
+  }
+  step(step: StepDef | StepBuilder) {
+    const built = step instanceof StepBuilder ? step.build() : step;
+    this.config.steps.push(built);
+    return this;
+  }
+  build(): PhaseDef {
+    return this.config;
+  }
+}
+
+export function toRecord<T extends { key: string }>(items: T[]) {
+  return Object.fromEntries(items.map((i) => [i.key, i])) as Record<string, T>;
+}
+
 export function action() {
   return new ActionBuilder();
 }
@@ -316,4 +467,19 @@ export function development() {
 }
 export function population() {
   return new PopulationBuilder();
+}
+export function resource(key: ResourceKey) {
+  return new ResourceBuilder(key);
+}
+export function stat(key: StatKey) {
+  return new StatBuilder(key);
+}
+export function populationRole(key: PopulationRoleId) {
+  return new PopulationRoleBuilder(key);
+}
+export function phase(id: string) {
+  return new PhaseBuilder(id);
+}
+export function step(id: string) {
+  return new StepBuilder(id);
 }

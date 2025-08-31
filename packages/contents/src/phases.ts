@@ -1,42 +1,30 @@
-import type { TriggerKey } from './defs';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { PopulationRole } from './populationRoles';
-import type { EffectDef } from '@kingdom-builder/engine/effects';
-import { effect, Types, ResourceMethods, StatMethods } from './config/builders';
-
-export interface StepDef {
-  id: string;
-  title?: string;
-  triggers?: TriggerKey[];
-  effects?: EffectDef[];
-  icon?: string;
-}
-
-export interface PhaseDef {
-  id: string;
-  steps: StepDef[];
-  action?: boolean;
-  label: string;
-  icon?: string;
-}
+import {
+  effect,
+  Types,
+  ResourceMethods,
+  StatMethods,
+  phase,
+  step,
+  type PhaseDef,
+} from './config/builders';
 
 export const PHASES: PhaseDef[] = [
-  {
-    id: 'development',
-    label: 'Development',
-    icon: '🏗️',
-    steps: [
-      {
-        id: 'resolve-dynamic-triggers',
-        title: 'Resolve dynamic triggers',
-        triggers: ['onDevelopmentPhase'],
-      },
-      {
-        id: 'gain-income',
-        title: 'Gain Income',
-        icon: '💰',
-        effects: [
+  phase('development')
+    .label('Development')
+    .icon('🏗️')
+    .step(
+      step('resolve-dynamic-triggers')
+        .title('Resolve dynamic triggers')
+        .triggers('onDevelopmentPhase'),
+    )
+    .step(
+      step('gain-income')
+        .title('Gain Income')
+        .icon('💰')
+        .effect(
           effect()
             .evaluator('development', { id: 'farm' })
             .effect(
@@ -45,12 +33,12 @@ export const PHASES: PhaseDef[] = [
                 .build(),
             )
             .build(),
-        ],
-      },
-      {
-        id: 'gain-ap',
-        title: 'Gain Action Points',
-        effects: [
+        ),
+    )
+    .step(
+      step('gain-ap')
+        .title('Gain Action Points')
+        .effect(
           effect()
             .evaluator('population', { role: PopulationRole.Council })
             .effect(
@@ -59,12 +47,12 @@ export const PHASES: PhaseDef[] = [
                 .build(),
             )
             .build(),
-        ],
-      },
-      {
-        id: 'raise-strength',
-        title: 'Raise Strength',
-        effects: [
+        ),
+    )
+    .step(
+      step('raise-strength')
+        .title('Raise Strength')
+        .effect(
           effect()
             .evaluator('population', { role: PopulationRole.Commander })
             .effect(
@@ -74,6 +62,8 @@ export const PHASES: PhaseDef[] = [
                 .build(),
             )
             .build(),
+        )
+        .effect(
           effect()
             .evaluator('population', { role: PopulationRole.Fortifier })
             .effect(
@@ -86,24 +76,21 @@ export const PHASES: PhaseDef[] = [
                 .build(),
             )
             .build(),
-        ],
-      },
-    ],
-  },
-  {
-    id: 'upkeep',
-    label: 'Upkeep',
-    icon: '🧹',
-    steps: [
-      {
-        id: 'resolve-dynamic-triggers',
-        title: 'Resolve dynamic triggers',
-        triggers: ['onUpkeepPhase'],
-      },
-      {
-        id: 'pay-upkeep',
-        title: 'Pay Upkeep',
-        effects: [
+        ),
+    )
+    .build(),
+  phase('upkeep')
+    .label('Upkeep')
+    .icon('🧹')
+    .step(
+      step('resolve-dynamic-triggers')
+        .title('Resolve dynamic triggers')
+        .triggers('onUpkeepPhase'),
+    )
+    .step(
+      step('pay-upkeep')
+        .title('Pay Upkeep')
+        .effect(
           effect()
             .evaluator('population', { role: PopulationRole.Council })
             .effect(
@@ -112,6 +99,8 @@ export const PHASES: PhaseDef[] = [
                 .build(),
             )
             .build(),
+        )
+        .effect(
           effect()
             .evaluator('population', { role: PopulationRole.Commander })
             .effect(
@@ -120,6 +109,8 @@ export const PHASES: PhaseDef[] = [
                 .build(),
             )
             .build(),
+        )
+        .effect(
           effect()
             .evaluator('population', { role: PopulationRole.Fortifier })
             .effect(
@@ -128,12 +119,12 @@ export const PHASES: PhaseDef[] = [
                 .build(),
             )
             .build(),
-        ],
-      },
-      {
-        id: 'war-recovery',
-        title: 'War recovery',
-        effects: [
+        ),
+    )
+    .step(
+      step('war-recovery')
+        .title('War recovery')
+        .effect(
           effect()
             .evaluator('compare', {
               left: { type: 'stat', params: { key: Stat.warWeariness } },
@@ -146,15 +137,13 @@ export const PHASES: PhaseDef[] = [
                 .build(),
             )
             .build(),
-        ],
-      },
-    ],
-  },
-  {
-    id: 'main',
-    label: 'Main',
-    icon: '🎯',
-    action: true,
-    steps: [{ id: 'main', title: 'Main Phase' }],
-  },
+        ),
+    )
+    .build(),
+  phase('main')
+    .label('Main')
+    .icon('🎯')
+    .action()
+    .step(step('main').title('Main Phase'))
+    .build(),
 ];
