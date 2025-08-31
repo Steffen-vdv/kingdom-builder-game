@@ -83,6 +83,8 @@ interface GameEngineContextValue {
   onExit?: () => void;
   darkMode: boolean;
   onToggleDark: () => void;
+  devMode: boolean;
+  onToggleDev: () => void;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
@@ -121,6 +123,8 @@ export function GameProvider({
   const [phaseTimer, setPhaseTimer] = useState(0);
   const [phasePaused, setPhasePaused] = useState(false);
   const phasePausedRef = useRef(false);
+  const [devMode, setDevMode] = useState(true);
+  const onToggleDev = () => setDevMode((d) => !d);
   const [mainApStart, setMainApStart] = useState(0);
   const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
   const [phaseHistories, setPhaseHistories] = useState<
@@ -181,15 +185,17 @@ export function GameProvider({
   }
 
   function runDelay(total: number) {
+    const speed = devMode ? 0.01 : 1;
+    const adjustedTotal = total * speed;
+    const step = 100 * speed;
     setPhaseTimer(0);
     return new Promise<void>((resolve) => {
       let elapsed = 0;
-      const step = 100;
       const interval = window.setInterval(() => {
         if (!phasePausedRef.current) {
           elapsed += step;
-          setPhaseTimer(elapsed / total);
-          if (elapsed >= total) {
+          setPhaseTimer(elapsed / adjustedTotal);
+          if (elapsed >= adjustedTotal) {
             window.clearInterval(interval);
             setPhaseTimer(0);
             resolve();
@@ -290,6 +296,22 @@ export function GameProvider({
     void runUntilActionPhase();
   }, []);
 
+  useEffect(() => {
+    if (!devMode) return;
+    const phaseDef = ctx.phases[ctx.game.phaseIndex];
+    const playerB = ctx.game.players[1]!;
+    if (phaseDef?.action && ctx.activePlayer.id === playerB.id) {
+      while (ctx.activePlayer.ap > 0) {
+        handlePerform({
+          id: 'tax',
+          name: actionInfo['tax']!.label,
+          system: true,
+        });
+      }
+      void handleEndTurn();
+    }
+  }, [devMode, ctx.game.phaseIndex, ctx.activePlayer.id]);
+
   const value: GameEngineContextValue = {
     ctx,
     log,
@@ -312,6 +334,8 @@ export function GameProvider({
     updateMainPhaseStep,
     darkMode,
     onToggleDark,
+    devMode,
+    onToggleDev,
     ...(onExit ? { onExit } : {}),
   };
 
