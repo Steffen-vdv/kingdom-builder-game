@@ -471,5 +471,3 @@ export const useGameEngine = (): GameEngineContextValue => {
   if (!value) throw new Error('useGameEngine must be used within GameProvider');
   return value;
 };
-
-export type { LogEntry, PhaseStep };
