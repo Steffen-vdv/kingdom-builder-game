@@ -11,6 +11,7 @@ import './formatters/land';
 import './formatters/development';
 import './formatters/building';
 import './formatters/modifier';
+import './formatters/action';
 import './formatters/passive';
 import './evaluators/development';
 import './evaluators/population';
