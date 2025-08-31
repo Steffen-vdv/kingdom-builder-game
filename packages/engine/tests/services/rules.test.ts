@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { Services, DefaultRules } from '../../src/services/index.ts';
+import { Services } from '../../src/services/index.ts';
 import { PlayerState, Land, Resource } from '../../src/state/index.ts';
 import { createTestEngine } from '../helpers.ts';
+import { DEVELOPMENTS, RULES } from '@kingdom-builder/contents';
 
 describe('Services', () => {
   it('evaluates happiness tiers correctly', () => {
-    const services = new Services(DefaultRules);
+    const services = new Services(RULES, DEVELOPMENTS);
     expect(services.happiness.tier(0)?.incomeMultiplier).toBe(1);
     expect(services.happiness.tier(4)?.incomeMultiplier).toBe(1.25);
     expect(services.happiness.tier(5)?.buildingDiscountPct).toBe(0.2);
@@ -13,7 +14,7 @@ describe('Services', () => {
   });
 
   it('calculates population cap from houses on land', () => {
-    const services = new Services(DefaultRules);
+    const services = new Services(RULES, DEVELOPMENTS);
     const player = new PlayerState('A', 'Test');
     const land1 = new Land('l1', 1);
     land1.developments.push('house');

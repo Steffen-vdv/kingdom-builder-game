@@ -13,6 +13,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -26,6 +27,7 @@ const ctx = createEngine({
   populations: POPULATIONS,
   phases: PHASES,
   start: GAME_START,
+  rules: RULES,
 });
 const mockGame = {
   ctx,

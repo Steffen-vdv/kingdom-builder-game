@@ -79,6 +79,7 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-08-31: Web effect formatters should import `Resource` and `Stat` from `@kingdom-builder/contents` to avoid undefined index errors when accessing `RESOURCES` and `STATS`.
 - 2025-08-31: Configure runtime phase and population role enums with `setPhaseKeys` and `setPopulationRoleKeys` before creating the engine.
 - 2025-08-31: Type re-exports from React modules can still break Vite Fast Refresh; move shared types to separate files.
+- 2025-08-31: Engine creation now requires passing a `rules` object; import `RULES` from `@kingdom-builder/contents` when initializing tests or the web context.
 
 # Core Agent principles
 

@@ -6,6 +6,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
 } from '@kingdom-builder/contents';
 import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
@@ -38,6 +39,7 @@ export function createTestContext(overrides?: { gold?: number; ap?: number }) {
     populations: POPULATIONS,
     phases: PHASES,
     start: GAME_START,
+    rules: RULES,
   });
   if (overrides?.gold !== undefined) ctx.activePlayer.gold = overrides.gold;
   if (overrides?.ap !== undefined) ctx.activePlayer.ap = overrides.ap;

@@ -26,6 +26,7 @@ export function createDevelopmentRegistry() {
       .id('house')
       .name('House')
       .icon('🏠')
+      .populationCap(1)
       .onBuild(
         effect(Types.Stat, StatMethods.ADD)
           .params({ key: Stat.maxPopulation, amount: 1 })

@@ -13,6 +13,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  RULES,
   RESOURCES,
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
@@ -35,6 +36,7 @@ describe('sub-action logging', () => {
       populations: POPULATIONS,
       phases: PHASES,
       start: GAME_START,
+      rules: RULES,
     });
     ctx.activePlayer.actions.add('plow');
     ctx.activePlayer.resources[Resource.gold] = 10;
