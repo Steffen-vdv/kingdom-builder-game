@@ -9,7 +9,7 @@ that required some investigation. Maintain this list during your work and, when
 submitting a pull request, append your findings to the **Agent discovery log**
 below.
 Avoid logging the routine steps you performed, avoid logging updates related to your implementation; use the discovery log only for
-non-obvious insights that will help future agents work more efficiently.
+non-obvious insights that will help future agents work more efficiently. Any updates or documentation related to your implementation should be plaecd in architectural/system design/system config documentation elsewhere.
 
 ## Agent discovery log
 
