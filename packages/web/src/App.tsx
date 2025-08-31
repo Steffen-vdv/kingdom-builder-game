@@ -10,6 +10,8 @@ import {
   POPULATION_ROLES,
 } from '@kingdom-builder/contents';
 
+import { PopulationRole } from '@kingdom-builder/engine';
+
 type Screen = 'menu' | 'overview' | 'game';
 
 export default function App() {
