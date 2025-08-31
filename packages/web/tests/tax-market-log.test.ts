@@ -16,6 +16,7 @@ import {
   GAME_START,
   RULES,
   RESOURCES,
+  Resource,
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
@@ -42,7 +43,7 @@ describe('tax action logging with market', () => {
       [{ type: 'building', method: 'add', params: { id: 'market' } }],
       ctx,
     );
-    ctx.activePlayer.resources['gold'] = 0;
+    ctx.activePlayer.resources[Resource.gold] = 0;
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const action = ctx.actions.get('tax');
     const before = snapshotPlayer(ctx.activePlayer, ctx);
@@ -98,7 +99,17 @@ describe('tax action logging with market', () => {
       return true;
     });
     const logLines = [...messages, ...filtered.map((c) => `  ${c}`)];
-    const goldLine = logLines.find((l) => l.trimStart().startsWith('🪙 Gold'));
-    expect(goldLine).toBe('  🪙 Gold +5 (0→5) (🪙+5 from 👥+🏪)');
+    const goldInfo = RESOURCES[Resource.gold];
+    const populationIcon = '👥';
+    const marketIcon = BUILDINGS.get('market')?.icon || '';
+    const b = before.resources[Resource.gold] ?? 0;
+    const a = after.resources[Resource.gold] ?? 0;
+    const delta = a - b;
+    const goldLine = logLines.find((l) =>
+      l.trimStart().startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+    );
+    expect(goldLine).toBe(
+      `  ${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a}) (${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${populationIcon}+${marketIcon})`,
+    );
   });
 });
