@@ -128,6 +128,24 @@ export const PHASES: PhaseDef[] = [
             .build(),
         ],
       },
+      {
+        id: 'war-recovery',
+        title: 'War recovery',
+        effects: [
+          effect()
+            .evaluator('compare', {
+              left: { type: 'stat', params: { key: Stat.warWeariness } },
+              operator: 'gt',
+              right: 0,
+            })
+            .effect(
+              effect(Types.Stat, StatMethods.REMOVE)
+                .params({ key: Stat.warWeariness, amount: 1 })
+                .build(),
+            )
+            .build(),
+        ],
+      },
     ],
   },
   {
