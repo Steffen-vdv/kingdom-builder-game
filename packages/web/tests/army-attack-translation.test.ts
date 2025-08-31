@@ -32,19 +32,27 @@ describe('army attack translation', () => {
     const ctx = createCtx();
     const castle = RESOURCES[Resource.castleHP];
     const army = STATS[Stat.armyStrength];
+    const absorption = STATS[Stat.absorption];
+    const fort = STATS[Stat.fortificationStrength];
     const happiness = RESOURCES[Resource.happiness];
     const plunder = ctx.actions.get('plunder');
     const warWeariness = STATS[Stat.warWeariness];
     const summary = summarizeContent('action', 'army_attack', ctx);
     expect(summary).toEqual([
-      `Attack opponent's ${castle.icon} ${castle.label} with your ${army.icon} ${army.label}`,
       {
-        title: `On ${castle.icon} ${castle.label} damage (you)`,
-        items: [`${happiness.icon}+1`, `${plunder.icon} ${plunder.name}`],
+        title: `Attack opponent with your ${army.icon} ${army.label}`,
+        items: [
+          `${absorption.icon} reduces damage`,
+          `Hits opponent's ${fort.icon} then ${castle.icon}`,
+        ],
       },
       {
-        title: `On ${castle.icon} ${castle.label} damage (opponent)`,
-        items: [`${happiness.icon}-1`],
+        title: `On opponent ${castle.icon} ${castle.label} damage`,
+        items: [
+          `${happiness.icon}+1 for you`,
+          `${happiness.icon}-1 for opponent`,
+          `${plunder.icon} ${plunder.name}`,
+        ],
       },
       `${warWeariness.icon}+1`,
     ]);

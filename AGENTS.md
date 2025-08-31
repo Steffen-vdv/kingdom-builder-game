@@ -67,6 +67,7 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-10-11: Building stat bonuses should use `PassiveMethods.ADD` with a unique id to tie their effects to the building's existence.
 - 2025-10-19: Population labels are defined in `packages/contents/src/populationRoles.ts` for UI display.
 - 2025-08-31: `attack:perform` effect parameters `ignoreAbsorption`, `ignoreFortification` and nested `onCastleDamage` effects require dedicated web formatter for player-facing text.
+- 2025-08-31: Merge attacker and defender on-damage summaries by tagging items "for you" or "for opponent" instead of separate groups.
 
 # Core Agent principles
 
