@@ -74,33 +74,45 @@ registerEffectFormatter('result_mod', 'add', {
     const evaluation = eff.params?.['evaluation'] as
       | { type: string; id: string }
       | undefined;
-    if (evaluation?.type === 'development') {
-      const dev = ctx.developments.get(evaluation.id);
-      const icon = ctx.developments.get(evaluation.id)?.icon || '';
-      const resource = eff.effects?.find(
-        (e) => e.type === 'resource' && e.method === 'add',
-      );
-      if (resource) {
-        const key = resource.params?.['key'] as string;
-        const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
-        const amount = Number(resource.params?.['amount']);
+    if (evaluation) {
+      if (evaluation.type === 'development') {
+        const dev = ctx.developments.get(evaluation.id);
+        const icon = ctx.developments.get(evaluation.id)?.icon || '';
+        const resource = eff.effects?.find(
+          (e) => e.type === 'resource' && e.method === 'add',
+        );
+        if (resource) {
+          const key = resource.params?.['key'] as string;
+          const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
+          const amount = Number(resource.params?.['amount']);
+          return [
+            `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more`,
+          ];
+        }
+        const amount = Number(eff.params?.['amount'] ?? 0);
         return [
-          `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more`,
+          `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
         ];
       }
-      const amount = Number(eff.params?.['amount'] ?? 0);
-      return [
-        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
-      ];
-    }
-    if (evaluation?.type === 'population') {
-      const action = ctx.actions.get(evaluation.id);
-      const actionIcon = action?.icon || evaluation.id;
-      const actionName = action?.name || evaluation.id;
-      const amount = Number(eff.params?.['amount'] ?? 0);
-      return [
-        `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${actionIcon} ${actionName}, gain +${amount} more of that resource`,
-      ];
+      if (evaluation.type === 'population') {
+        const action = ctx.actions.get(evaluation.id);
+        const actionIcon = action?.icon || evaluation.id;
+        const actionName = action?.name || evaluation.id;
+        const amount = Number(eff.params?.['amount'] ?? 0);
+        return [
+          `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${actionIcon} ${actionName}, gain +${amount} more of that resource`,
+        ];
+      }
+      if (evaluation.type === 'transfer_pct') {
+        const action = ctx.actions.get('plunder');
+        const actionIcon = action?.icon || 'plunder';
+        const actionName = action?.name || 'plunder';
+        const amount = Number(eff.params?.['adjust'] ?? 0);
+        return [
+          `${modifierInfo.result.icon} ${actionIcon} ${actionName}: ${signed(amount)}${Math.abs(amount)}% transfer`,
+        ];
+      }
+      return [];
     }
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon = ctx.actions.get(actionId)?.icon || actionId;
@@ -118,33 +130,45 @@ registerEffectFormatter('result_mod', 'add', {
     const evaluation = eff.params?.['evaluation'] as
       | { type: string; id: string }
       | undefined;
-    if (evaluation?.type === 'development') {
-      const dev = ctx.developments.get(evaluation.id);
-      const icon = ctx.developments.get(evaluation.id)?.icon || '';
-      const resource = eff.effects?.find(
-        (e) => e.type === 'resource' && e.method === 'add',
-      );
-      if (resource) {
-        const key = resource.params?.['key'] as string;
-        const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
-        const amount = Number(resource.params?.['amount']);
+    if (evaluation) {
+      if (evaluation.type === 'development') {
+        const dev = ctx.developments.get(evaluation.id);
+        const icon = ctx.developments.get(evaluation.id)?.icon || '';
+        const resource = eff.effects?.find(
+          (e) => e.type === 'resource' && e.method === 'add',
+        );
+        if (resource) {
+          const key = resource.params?.['key'] as string;
+          const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
+          const amount = Number(resource.params?.['amount']);
+          return [
+            `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more of that resource`,
+          ];
+        }
+        const amount = Number(eff.params?.['amount'] ?? 0);
         return [
-          `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more of that resource`,
+          `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
         ];
       }
-      const amount = Number(eff.params?.['amount'] ?? 0);
-      return [
-        `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
-      ];
-    }
-    if (evaluation?.type === 'population') {
-      const action = ctx.actions.get(evaluation.id);
-      const actionIcon = action?.icon || evaluation.id;
-      const actionName = action?.name || evaluation.id;
-      const amount = Number(eff.params?.['amount'] ?? 0);
-      return [
-        `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${actionIcon} ${actionName}, gain +${amount} more of that resource`,
-      ];
+      if (evaluation.type === 'population') {
+        const action = ctx.actions.get(evaluation.id);
+        const actionIcon = action?.icon || evaluation.id;
+        const actionName = action?.name || evaluation.id;
+        const amount = Number(eff.params?.['amount'] ?? 0);
+        return [
+          `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${actionIcon} ${actionName}, gain +${amount} more of that resource`,
+        ];
+      }
+      if (evaluation.type === 'transfer_pct') {
+        const action = ctx.actions.get('plunder');
+        const actionIcon = action?.icon || 'plunder';
+        const actionName = action?.name || 'plunder';
+        const amount = Number(eff.params?.['adjust'] ?? 0);
+        return [
+          `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,
+        ];
+      }
+      return [];
     }
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon = ctx.actions.get(actionId)?.icon || actionId;

@@ -75,6 +75,16 @@ export function createBuildingRegistry() {
       .name("Raider's Guild")
       .icon('🏴‍☠️')
       .cost(Resource.gold, 8)
+      .cost(Resource.ap, 1)
+      .onBuild(
+        effect(Types.ResultMod, ResultModMethods.ADD)
+          .params({
+            id: 'raiders_guild_plunder_bonus',
+            evaluation: { type: 'transfer_pct', id: 'percent' },
+            adjust: 25,
+          })
+          .build(),
+      )
       .build(),
   );
   registry.add(

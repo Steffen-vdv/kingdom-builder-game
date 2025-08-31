@@ -20,3 +20,21 @@ registerEffectFormatter('resource', 'add', {
     return `${icon}${signed(amount)}${amount} ${label}`;
   },
 });
+
+registerEffectFormatter('resource', 'transfer', {
+  summarize: (eff) => {
+    const key = eff.params?.['key'] as string;
+    const res = RESOURCES[key as ResourceKey];
+    const icon = res ? res.icon : key;
+    const percent = Number(eff.params?.['percent']);
+    return `${icon}${percent}%`;
+  },
+  describe: (eff) => {
+    const key = eff.params?.['key'] as string;
+    const res = RESOURCES[key as ResourceKey];
+    const label = res?.label || key;
+    const icon = res?.icon || key;
+    const percent = Number(eff.params?.['percent']);
+    return `Transfer ${percent}% of opponent's ${icon}${label}`;
+  },
+});
