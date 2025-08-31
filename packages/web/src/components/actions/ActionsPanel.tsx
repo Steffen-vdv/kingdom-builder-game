@@ -31,11 +31,14 @@ interface Action {
   id: string;
   name: string;
   system?: boolean;
+  order?: number;
+  category?: string;
 }
 interface Development {
   id: string;
   name: string;
   system?: boolean;
+  order?: number;
 }
 interface Building {
   id: string;
@@ -141,7 +144,7 @@ function RaisePopOptions({
   const { ctx, handlePerform, handleHoverCard, clearHoverCard } =
     useGameEngine();
   const formatRequirement = (req: string) => req;
-  const requirementIcons = getRequirementIcons('raise_pop', ctx);
+  const requirementIcons = getRequirementIcons(action.id, ctx);
   return (
     <>
       {[
@@ -149,10 +152,10 @@ function RaisePopOptions({
         PopulationRole.Commander,
         PopulationRole.Fortifier,
       ].map((role) => {
-        const costsBag = getActionCosts('raise_pop', ctx);
+        const costsBag = getActionCosts(action.id, ctx);
         const costs: Record<string, number> = {};
         for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
-        const requirements = getActionRequirements('raise_pop', ctx).map(
+        const requirements = getActionRequirements(action.id, ctx).map(
           formatRequirement,
         );
         const canPay = Object.entries(costs).every(
@@ -165,8 +168,8 @@ function RaisePopOptions({
           : !canPay
             ? 'Cannot pay costs'
             : undefined;
-        const summary = describeContent('action', 'raise_pop', ctx, { role });
-        const shortSummary = summarizeContent('action', 'raise_pop', ctx, {
+        const summary = describeContent('action', action.id, ctx, { role });
+        const shortSummary = summarizeContent('action', action.id, ctx, {
           role,
         });
         return (
@@ -182,7 +185,7 @@ function RaisePopOptions({
             onMouseEnter={() => {
               const { effects, description } = splitSummary(summary);
               handleHoverCard({
-                title: `${ctx.actions.get('raise_pop').icon || ''}${
+                title: `${ctx.actions.get(action.id).icon || ''}${
                   POPULATION_ROLES[role]?.icon
                 } Hire ${POPULATION_ROLES[role]?.label || ''}`,
                 effects,
@@ -195,7 +198,7 @@ function RaisePopOptions({
             onMouseLeave={clearHoverCard}
           >
             <span className="text-base font-medium">
-              {ctx.actions.get('raise_pop').icon || ''}
+              {ctx.actions.get(action.id).icon || ''}
               {POPULATION_ROLES[role]?.icon} Hire{' '}
               {POPULATION_ROLES[role]?.label}
             </span>
@@ -486,7 +489,9 @@ export default function ActionsPanel() {
     () =>
       Array.from(
         (ctx.actions as unknown as { map: Map<string, Action> }).map.values(),
-      ).filter((a) => !a.system || ctx.activePlayer.actions.has(a.id)),
+      )
+        .filter((a) => !a.system || ctx.activePlayer.actions.has(a.id))
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     [ctx, ctx.activePlayer.actions.size],
   );
   const developmentOptions = useMemo<Development[]>(
@@ -495,16 +500,10 @@ export default function ActionsPanel() {
         (
           ctx.developments as unknown as { map: Map<string, Development> }
         ).map.values(),
-      ).filter((d) => !d.system),
+      )
+        .filter((d) => !d.system)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     [ctx],
-  );
-  const developmentOrder = ['house', 'farm', 'outpost', 'watchtower'];
-  const sortedDevelopments = useMemo(
-    () =>
-      developmentOrder
-        .map((id) => developmentOptions.find((d) => d.id === id))
-        .filter(Boolean) as Development[],
-    [developmentOptions],
   );
   const buildingOptions = useMemo<Building[]>(
     () =>
@@ -525,11 +524,11 @@ export default function ActionsPanel() {
   }, [actions, ctx]);
   const developmentSummaries = useMemo(() => {
     const map = new Map<string, Summary>();
-    sortedDevelopments.forEach((d) =>
+    developmentOptions.forEach((d) =>
       map.set(d.id, summarizeContent('development', d.id, ctx)),
     );
     return map;
-  }, [sortedDevelopments, ctx]);
+  }, [developmentOptions, ctx]);
   const buildingSummaries = useMemo(() => {
     const map = new Map<string, Summary>();
     buildingOptions.forEach((b) =>
@@ -546,11 +545,11 @@ export default function ActionsPanel() {
   }, [buildingOptions, ctx]);
 
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
-  const developAction = actions.find((a) => a.id === 'develop');
-  const buildAction = actions.find((a) => a.id === 'build');
-  const raisePopAction = actions.find((a) => a.id === 'raise_pop');
+  const developAction = actions.find((a) => a.category === 'development');
+  const buildAction = actions.find((a) => a.category === 'building');
+  const raisePopAction = actions.find((a) => a.category === 'population');
   const otherActions = actions.filter(
-    (a) => a.id !== 'develop' && a.id !== 'build' && a.id !== 'raise_pop',
+    (a) => (a.category ?? 'basic') === 'basic',
   );
 
   return (
@@ -581,7 +580,7 @@ export default function ActionsPanel() {
           <DevelopOptions
             action={developAction}
             isActionPhase={isActionPhase}
-            developments={sortedDevelopments}
+            developments={developmentOptions}
             summaries={developmentSummaries}
             hasDevelopLand={hasDevelopLand}
           />

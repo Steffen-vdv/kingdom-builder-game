@@ -13,7 +13,9 @@ export interface Triggered {
 }
 
 export interface PopulationDef extends PopulationConfig, Triggered {}
-export interface DevelopmentDef extends DevelopmentConfig, Triggered {}
+export interface DevelopmentDef extends DevelopmentConfig, Triggered {
+  order?: number;
+}
 export interface BuildingDef extends BuildingConfig, Triggered {}
 
 export type TriggerKey = keyof Triggered;
