@@ -1,5 +1,7 @@
 import { Registry } from '@kingdom-builder/engine/registry';
-import { PopulationRole, Resource, Stat } from '@kingdom-builder/engine/state';
+import { PopulationRole } from '@kingdom-builder/engine/state';
+import { Resource } from './resources';
+import { Stat } from './stats';
 import { populationSchema } from '@kingdom-builder/engine/config/schema';
 import {
   population,

@@ -1,5 +1,12 @@
-import type { StatKey } from '@kingdom-builder/engine/state';
-import { Stat } from '@kingdom-builder/engine/state';
+export const Stat = {
+  maxPopulation: 'maxPopulation',
+  armyStrength: 'armyStrength',
+  fortificationStrength: 'fortificationStrength',
+  absorption: 'absorption',
+  growth: 'growth',
+  warWeariness: 'warWeariness',
+} as const;
+export type StatKey = (typeof Stat)[keyof typeof Stat];
 
 export interface StatInfo {
   key: StatKey;

@@ -1,5 +1,5 @@
 import { Registry } from '@kingdom-builder/engine/registry';
-import { Stat } from '@kingdom-builder/engine/state';
+import { Stat } from './stats';
 import { developmentSchema } from '@kingdom-builder/engine/config/schema';
 import {
   development,

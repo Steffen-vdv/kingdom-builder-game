@@ -45,4 +45,21 @@ module.exports = {
     ],
     'import/no-duplicates': 'error',
   },
+  overrides: [
+    {
+      files: [
+        'packages/**/tests/**/*.ts',
+        'packages/**/tests/**/*.tsx',
+        'tests/**/*.ts',
+        'tests/**/*.tsx',
+      ],
+      rules: {
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-argument': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      },
+    },
+  ],
 };

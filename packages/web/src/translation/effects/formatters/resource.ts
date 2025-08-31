@@ -1,5 +1,5 @@
 import { RESOURCES } from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/engine';
+import type { ResourceKey } from '@kingdom-builder/contents';
 import { signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';
 
@@ -25,9 +25,9 @@ registerEffectFormatter('resource', 'transfer', {
   summarize: (eff) => {
     const key = eff.params?.['key'] as string;
     const res = RESOURCES[key as ResourceKey];
-    const icon = res ? res.icon : key;
+    const icon = res?.icon || key;
     const percent = Number(eff.params?.['percent']);
-    return `${icon}${percent}%`;
+    return `Transfer ${percent}% ${icon}`;
   },
   describe: (eff) => {
     const key = eff.params?.['key'] as string;

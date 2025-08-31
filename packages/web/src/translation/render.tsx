@@ -1,7 +1,6 @@
 import React from 'react';
-import { Resource } from '@kingdom-builder/engine';
-import { RESOURCES } from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/engine';
+import { Resource, RESOURCES } from '@kingdom-builder/contents';
+import type { ResourceKey } from '@kingdom-builder/contents';
 import type { Summary } from './content';
 
 export function renderSummary(summary: Summary | undefined): React.ReactNode {
@@ -20,7 +19,7 @@ export function renderSummary(summary: Summary | undefined): React.ReactNode {
 }
 
 export function renderCosts(
-  costs: Record<string, number> | undefined,
+  costs: Record<string, number | undefined> | undefined,
   resources: Record<string, number>,
 ) {
   if (!costs) return null;
@@ -34,10 +33,10 @@ export function renderCosts(
       {entries.map(([k, v]) => (
         <span
           key={k}
-          className={`mr-1 ${(resources[k] ?? 0) < v ? 'text-red-500' : ''}`}
+          className={`mr-1 ${(resources[k] ?? 0) < (v ?? 0) ? 'text-red-500' : ''}`}
         >
           {RESOURCES[k as ResourceKey]?.icon}
-          {v}
+          {v ?? 0}
         </span>
       ))}
     </>
