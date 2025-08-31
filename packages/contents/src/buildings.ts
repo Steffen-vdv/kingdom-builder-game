@@ -108,8 +108,8 @@ export const BUILDINGS = createBuildingRegistry();
 export const BUILDING_INFO: Record<string, { icon: string; label: string }> = {
   town_charter: { icon: '🏘️', label: BUILDINGS.get('town_charter').name },
   mill: { icon: '⚙️', label: BUILDINGS.get('mill').name },
-  raiders_guild: { icon: '⚔️', label: BUILDINGS.get('raiders_guild').name },
-  plow_workshop: { icon: '🚜', label: BUILDINGS.get('plow_workshop').name },
+  raiders_guild: { icon: '🏴‍☠️', label: BUILDINGS.get('raiders_guild').name },
+  plow_workshop: { icon: '🏭', label: BUILDINGS.get('plow_workshop').name },
   market: { icon: '🏪', label: BUILDINGS.get('market').name },
   barracks: { icon: '🪖', label: BUILDINGS.get('barracks').name },
   citadel: { icon: '🏯', label: BUILDINGS.get('citadel').name },
