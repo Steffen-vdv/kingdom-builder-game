@@ -298,6 +298,31 @@ function applyPlayerStart(
     });
 }
 
+function diffPlayerStart(
+  base: PlayerStartConfig,
+  override: PlayerStartConfig | undefined,
+): PlayerStartConfig {
+  const diff: PlayerStartConfig = {};
+  if (!override) return diff;
+  for (const [key, value] of Object.entries(override.resources || {})) {
+    const baseVal = base.resources?.[key as ResourceKey] ?? 0;
+    const delta = (value ?? 0) - baseVal;
+    if (delta !== 0) {
+      diff.resources = diff.resources || {};
+      diff.resources[key as ResourceKey] = delta;
+    }
+  }
+  for (const [key, value] of Object.entries(override.stats || {})) {
+    const baseVal = base.stats?.[key as StatKey] ?? 0;
+    const delta = (value ?? 0) - baseVal;
+    if (delta !== 0) {
+      diff.stats = diff.stats || {};
+      diff.stats[key as StatKey] = delta;
+    }
+  }
+  return diff;
+}
+
 export function createEngine({
   actions,
   buildings,
@@ -353,6 +378,13 @@ export function createEngine({
     if (cfg.start) start = cfg.start;
   }
 
+  const compA = diffPlayerStart(start.player, start.players?.['A']);
+  const compB = diffPlayerStart(start.player, start.players?.['B']);
+  const compensations = { A: compA, B: compB } as Record<
+    'A' | 'B',
+    PlayerStartConfig
+  >;
+
   const ctx = new EngineContext(
     game,
     services,
@@ -362,12 +394,15 @@ export function createEngine({
     populations,
     passives,
     phases,
+    compensations,
   );
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;
 
   applyPlayerStart(playerA, start.player, resolvedRules);
+  applyPlayerStart(playerA, compA, resolvedRules);
   applyPlayerStart(playerB, start.player, resolvedRules);
+  applyPlayerStart(playerB, compB, resolvedRules);
   ctx.game.currentPlayerIndex = 0;
   ctx.game.currentPhase = phases[0]?.id || '';
   ctx.game.currentStep = phases[0]?.steps[0]?.id || '';

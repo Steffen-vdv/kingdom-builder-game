@@ -111,7 +111,7 @@ when debugging or when changes could affect them. See
 
 # Game overview
 
-The game consists of two players, player A and B. Player A always goes first. Player B gains an additional Action Point (AP) in their first turn to compensate.
+The game consists of two players, player A and B. Player A always goes first. Player B gains additional resources/stats in their first turn to compensate. Concrete compensation resources/stats defined in `contents/src/game.ts`.
 
 # Game phasing
 

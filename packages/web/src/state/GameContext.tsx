@@ -162,6 +162,40 @@ export function GameProvider({
     });
   };
 
+  useEffect(() => {
+    ctx.game.players.forEach((player) => {
+      const comp = ctx.compensations[player.id];
+      if (
+        !comp ||
+        (Object.keys(comp.resources || {}).length === 0 &&
+          Object.keys(comp.stats || {}).length === 0)
+      )
+        return;
+      const after = snapshotPlayer(player, ctx);
+      const before = {
+        ...after,
+        resources: { ...after.resources },
+        stats: { ...after.stats },
+        buildings: [...after.buildings],
+        lands: after.lands.map((l) => ({
+          ...l,
+          developments: [...l.developments],
+        })),
+        passives: [...after.passives],
+      };
+      for (const [k, v] of Object.entries(comp.resources || {}))
+        before.resources[k] = (before.resources[k] || 0) - (v ?? 0);
+      for (const [k, v] of Object.entries(comp.stats || {}))
+        before.stats[k] = (before.stats[k] || 0) - (v ?? 0);
+      const lines = diffStepSnapshots(before, after, undefined, ctx);
+      if (lines.length)
+        addLog(
+          ['Last-player compensation:', ...lines.map((l: string) => `  ${l}`)],
+          player,
+        );
+    });
+  }, [ctx]);
+
   function handleHoverCard(data: HoverCard) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
     hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
@@ -285,6 +319,7 @@ export function GameProvider({
         ctx,
         params as ActionParams<string>,
       );
+
       const after = snapshotPlayer(player, ctx);
       const stepDef = ctx.actions.get(action.id);
       const changes = diffStepSnapshots(before, after, stepDef, ctx);

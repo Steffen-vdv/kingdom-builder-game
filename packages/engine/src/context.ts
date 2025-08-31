@@ -1,4 +1,4 @@
-import type { GameState, ResourceKey } from './state';
+import type { GameState, ResourceKey, PlayerId } from './state';
 import type { Services, PassiveManager } from './services';
 import type { Registry } from './registry';
 import type {
@@ -6,6 +6,7 @@ import type {
   BuildingConfig as BuildingDef,
   DevelopmentConfig as DevelopmentDef,
   PopulationConfig as PopulationDef,
+  PlayerStartConfig,
 } from './config/schema';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
@@ -20,6 +21,10 @@ export class EngineContext {
     public populations: Registry<PopulationDef>,
     public passives: PassiveManager,
     public phases: PhaseDef[],
+    public compensations: Record<PlayerId, PlayerStartConfig> = {
+      A: {},
+      B: {},
+    },
   ) {}
   recentResourceGains: { key: ResourceKey; amount: number }[] = [];
   // Cache base values for stat:add_pct per turn/phase/step to ensure
