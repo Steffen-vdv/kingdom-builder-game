@@ -103,6 +103,7 @@ const playerStartSchema = z.object({
 
 export const startConfigSchema = z.object({
   player: playerStartSchema,
+  players: z.record(z.string(), playerStartSchema).optional(),
 });
 
 export type PlayerStartConfig = z.infer<typeof playerStartSchema>;

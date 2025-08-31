@@ -43,7 +43,10 @@ describe('Development phase', () => {
     const apBefore = player.ap;
     while (ctx.game.currentPhase === 'development') advance(ctx);
     const councils = player.population[PopulationRole.Council];
-    expect(player.ap).toBe(apBefore + councilApGain * councils + 1);
+    const comp =
+      (GAME_START.players?.B?.resources?.[Resource.ap] || 0) -
+      (GAME_START.player.resources?.[Resource.ap] || 0);
+    expect(player.ap).toBe(apBefore + councilApGain * councils + comp);
   });
 
   it('grows commander and fortifier stats', () => {

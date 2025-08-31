@@ -224,14 +224,22 @@ export function advance(ctx: EngineContext): AdvanceResult {
 
   if (step) ctx.passives.runResultMods(step.id, ctx);
 
-  if (step?.id === 'gain-ap' && player.id === ctx.game.players[1]?.id) {
-    const extra: EffectDef = {
-      type: 'resource',
-      method: 'add',
-      params: { key: Resource.ap, amount: 1 },
-    };
-    runEffects([extra], ctx);
-    effects.push(extra);
+  const compResource: Record<string, ResourceKey> = {
+    'gain-ap': Resource.ap,
+    'gain-income': Resource.gold,
+  };
+  const resKey = step ? compResource[step.id] : undefined;
+  if (resKey) {
+    const diff = ctx.compensations[player.id]?.resources?.[resKey];
+    if (diff) {
+      const extra: EffectDef = {
+        type: 'resource',
+        method: 'add',
+        params: { key: resKey, amount: diff },
+      };
+      runEffects([extra], ctx);
+      effects.push(extra);
+    }
   }
 
   ctx.game.stepIndex += 1;
@@ -308,6 +316,31 @@ function applyPlayerStart(
     });
 }
 
+function diffPlayerStart(
+  base: PlayerStartConfig,
+  override: PlayerStartConfig | undefined,
+): PlayerStartConfig {
+  const diff: PlayerStartConfig = {};
+  if (!override) return diff;
+  for (const [key, value] of Object.entries(override.resources || {})) {
+    const baseVal = base.resources?.[key as ResourceKey] ?? 0;
+    const delta = (value ?? 0) - baseVal;
+    if (delta !== 0) {
+      diff.resources = diff.resources || {};
+      diff.resources[key as ResourceKey] = delta;
+    }
+  }
+  for (const [key, value] of Object.entries(override.stats || {})) {
+    const baseVal = base.stats?.[key as StatKey] ?? 0;
+    const delta = (value ?? 0) - baseVal;
+    if (delta !== 0) {
+      diff.stats = diff.stats || {};
+      diff.stats[key as StatKey] = delta;
+    }
+  }
+  return diff;
+}
+
 export function createEngine({
   actions,
   buildings,
@@ -363,6 +396,11 @@ export function createEngine({
     if (cfg.start) start = cfg.start;
   }
 
+  const compensations = {
+    A: diffPlayerStart(start.player, start.players?.['A']),
+    B: diffPlayerStart(start.player, start.players?.['B']),
+  } as Record<'A' | 'B', PlayerStartConfig>;
+
   const ctx = new EngineContext(
     game,
     services,
@@ -372,6 +410,7 @@ export function createEngine({
     populations,
     passives,
     phases,
+    compensations,
   );
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;

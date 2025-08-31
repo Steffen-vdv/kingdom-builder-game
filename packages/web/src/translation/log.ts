@@ -207,37 +207,44 @@ export function diffStepSnapshots(
     const b = before.resources[key] ?? 0;
     const a = after.resources[key] ?? 0;
     if (a !== b) {
-      if (
-        step?.id === 'gain-ap' &&
-        key === Resource.ap &&
-        ctx.activePlayer.id === ctx.game.players[1]?.id
-      ) {
+      if (step?.id === 'gain-ap' && key === Resource.ap) {
         const info = RESOURCES[key as keyof typeof RESOURCES];
         const icon = info?.icon ? `${info.icon} ` : '';
         const label = info?.label ?? key;
-        const evaluator = EVALUATORS.get('population');
-        const councilAP = evaluator
-          ? Number(
-              evaluator(
-                {
-                  type: 'population',
-                  params: { role: PopulationRole.Council },
-                },
-                ctx,
-              ),
-            )
-          : 0;
-        const extra = a - b - councilAP;
-        if (councilAP > 0) {
-          let councilLine = `${icon}${label} +${councilAP} (${b}→${b + councilAP})`;
+        const comp =
+          ctx.compensations[ctx.activePlayer.id]?.resources?.[Resource.ap] ?? 0;
+        const delta = a - b;
+        const base = delta - comp;
+        if (base !== 0) {
+          let line = `${icon}${label} +${base} (${b}→${b + base})`;
           const src = sources[key];
-          if (src)
-            councilLine += ` (${info?.icon || key}+${councilAP} from ${src})`;
-          changes.push(councilLine);
+          if (src) line += ` (${info?.icon || key}+${base} from ${src})`;
+          changes.push(line);
         }
-        if (extra > 0)
+        if (comp !== 0)
           changes.push(
-            `${icon}${label} +${extra} (${b + councilAP}→${a}) (last-player compensation)`,
+            `${icon}${label} +${comp} (${b + base}→${a}) (last-player compensation)`,
+          );
+        continue;
+      }
+      if (step?.id === 'gain-income' && key === Resource.gold) {
+        const info = RESOURCES[key as keyof typeof RESOURCES];
+        const icon = info?.icon ? `${info.icon} ` : '';
+        const label = info?.label ?? key;
+        const comp =
+          ctx.compensations[ctx.activePlayer.id]?.resources?.[Resource.gold] ??
+          0;
+        const delta = a - b;
+        const base = delta - comp;
+        if (base !== 0) {
+          let line = `${icon}${label} +${base} (${b}→${b + base})`;
+          const src = sources[key];
+          if (src) line += ` (${info?.icon || key}+${base} from ${src})`;
+          changes.push(line);
+        }
+        if (comp !== 0)
+          changes.push(
+            `${icon}${label} +${comp} (${b + base}→${a}) (last-player compensation)`,
           );
         continue;
       }

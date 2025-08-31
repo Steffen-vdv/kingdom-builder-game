@@ -42,6 +42,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-08-31: PlayerState maintains `statsHistory` so stats returning to zero remain visible; initialize new non-zero stats accordingly.
 - 2025-09-14: PlayerState auto-initializes stats by iterating over `Stat` keys; adding a new stat requires only updating the `Stat` map and providing getters/setters.
 - 2025-09-22: Player B's extra AP is applied after result modifiers in the `gain-ap` step to avoid council-based bonuses affecting it.
+- 2025-09-23: Player-specific resource compensations come from `GAME_START.players` overrides and apply automatically during matching gain steps.
 
 # Core Agent principles
 
