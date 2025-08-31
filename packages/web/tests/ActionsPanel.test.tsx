@@ -41,17 +41,14 @@ const ctx = createEngine({
   rules: RULES,
 });
 const actionCostResource = (() => {
-  const firstIter = (
-    ctx.actions as unknown as { map: Map<string, unknown> }
-  ).map
-    .keys()
-    .next();
-  if (firstIter.done) return '';
-  const sample = getActionCosts(firstIter.value as string, ctx);
-  const match = Object.entries(sample).find(
-    ([, v]) => v === ctx.services.rules.defaultActionAPCost,
-  );
-  return (match ? match[0] : Object.keys(sample)[0]) as string;
+  const reg = ACTIONS as unknown as {
+    map: Map<string, { system?: boolean }>;
+  };
+  const first = Array.from(reg.map.entries()).find(([, a]) => !a.system);
+  if (!first) return '';
+  const [id] = first;
+  const costs = getActionCosts(id, ctx);
+  return (Object.keys(costs)[0] ?? '') as string;
 })();
 const mockGame = {
   ctx,
