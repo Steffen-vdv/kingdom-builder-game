@@ -60,7 +60,7 @@ describe('plow action translation', () => {
       { title: '🌱 Expand', items: ['Gain 1 🗺️ Land', '😊+1 Happiness'] },
       { title: '🧑‍🌾 Till', items: ['Till 🗺️ to unlock 🧩 slot'] },
       {
-        title: '♾️ Before your next Upkeep Phase',
+        title: '♾️ Until your next Upkeep Phase',
         items: ['💲 Cost Modifier on all actions: Increase cost by 🪙2'],
       },
     ]);

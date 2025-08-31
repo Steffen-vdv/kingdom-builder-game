@@ -14,7 +14,7 @@ registerEffectFormatter('passive', 'add', {
   describe: (eff, ctx) => {
     const inner = describeEffects(eff.effects || [], ctx);
     return eff.params?.['onUpkeepPhase']
-      ? [{ title: '♾️ Before your next Upkeep Phase', items: inner }]
+      ? [{ title: '♾️ Until your next Upkeep Phase', items: inner }]
       : inner;
   },
   log: (eff, ctx) => {
