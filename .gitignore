@@ -4,6 +4,3 @@ coverage
 .DS_Store
 .vscode
 tsconfig.tsbuildinfo
-test-results
-playwright-report
-.playwright-cache

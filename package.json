@@ -18,7 +18,6 @@
     "pretest": "npm run check",
     "test": "npm run test:coverage",
     "test:coverage": "vitest run --coverage",
-    "e2e": "npm run e2e -w packages/web",
     "format": "prettier .",
     "prepare": "husky install"
   },
