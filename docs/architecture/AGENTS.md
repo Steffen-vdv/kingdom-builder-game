@@ -1,5 +1,10 @@
 # Architecture Overview
 
+## 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** All resource/stat keys, starting values and effect behaviour must come from the Content domain so that rules can evolve freely.
+- **Tests may not rely on literals.** Fetch ids and values from the content registries or mocks; content tweaks should not cause test failures unless they expose unsupported engine features.
+
 The kingdom builder engine is designed for flexibility and extensibility.
 This document outlines the core systems that make it easy to bolt on new
 content without touching existing logic.

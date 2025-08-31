@@ -1,3 +1,8 @@
+# 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** All resource/stat names and starting values defined in this sample config are part of the Content domain and may change without requiring code updates.
+- **Tests may not rely on literals.** When verifying behaviour against this config, fetch ids and values from the content registries or mocks so that adjustments here do not break tests unless they reveal unsupported scenarios.
+
 ## 0) Icon Legend & Conventions
 
 - 🪙Gold — money; cannot go negative

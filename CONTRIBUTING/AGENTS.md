@@ -1,5 +1,10 @@
 # Contributing
 
+## 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** All resource/stat keys, starting values and effect behaviour must originate from the `contents` package so designs can change without modifying core code.
+- **Tests may not rely on literals.** When writing tests, obtain ids and values from the Content domain or mocks; content changes should not require test updates unless they expose unsupported scenarios.
+
 Thanks for your interest in improving Kingdom Builder! This guide describes the
 workflow for contributors so that changes remain consistent and easy to review.
 

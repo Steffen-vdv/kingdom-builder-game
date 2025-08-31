@@ -1,5 +1,10 @@
 # Effect Registry
 
+## 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** Effect handlers must not reference specific resource or stat keys or depend on default values from the content package.
+- **Tests may not rely on literals.** When asserting effect behaviour, pull required ids and amounts from the Content domain or mock registries so content updates do not break tests unless the engine lacks support.
+
 The engine resolves action effects through handler functions stored in the `EFFECTS` registry.
 Each handler implements the `EffectHandler` interface and is keyed by a `type:method` pair
 such as `resource:add` or `land:till`.

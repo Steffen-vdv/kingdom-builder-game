@@ -1,5 +1,10 @@
 # Frontend Translation Architecture
 
+## 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** The translation layer must obtain all resource/stat names and values from the Content domain so that wording adjusts automatically when content changes.
+- **Tests may not rely on literals.** Translation tests should pull ids and expected values from content registries or mocks; content tweaks should not require test updates unless they reveal unsupported scenarios.
+
 The web client converts raw engine definitions into player-facing text through a
 layered translation system. The goal is to keep UI strings decoupled from engine
 data so that new content can be introduced without touching the `Game` component

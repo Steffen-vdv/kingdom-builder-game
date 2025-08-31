@@ -1,3 +1,8 @@
+## 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** Never reference specific resource or stat keys, starting values or effect behavior in these domains. All content lives in `packages/contents` and can change without code updates.
+- **Tests may not rely on literals.** Fetch expected names and numeric values from the Content domain or mock registries so that content changes (e.g. different starting gold or altered action effects) do not break tests unless the engine itself lacks support.
+
 # Knowledge sharing
 
 ## Maintain a discovery log

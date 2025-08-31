@@ -1,5 +1,10 @@
 # Code Standards
 
+## 🚫 Hardcoded content prohibited
+
+- **Engine and Web may not hardcode game data.** All resource/stat keys, starting values and effect behaviour belong in the Content domain and can change at any time.
+- **Tests may not rely on literals.** Always pull ids and values from the content registries or mocks; content tweaks should not require test updates unless they reveal unsupported scenarios.
+
 This project follows a few simple conventions to keep the codebase readable and
 maintainable.
 
