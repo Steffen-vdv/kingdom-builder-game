@@ -17,6 +17,7 @@ import {
 import {
   describeContent,
   summarizeContent,
+  splitSummary,
   type Summary,
 } from '../../translation';
 import { renderSummary, renderCosts } from '../../translation/render';
@@ -90,19 +91,22 @@ function GenericActions({
             }`}
             title={title}
             onClick={() => enabled && handlePerform(action)}
-            onMouseEnter={() =>
+            onMouseEnter={() => {
+              const full = describeContent('action', action.id, ctx);
+              const { effects, description } = splitSummary(full);
               handleHoverCard({
                 title: `${actionInfo[action.id]?.icon || ''} ${action.name}`,
-                effects: describeContent('action', action.id, ctx),
+                effects,
                 requirements,
                 costs,
+                ...(description && { description }),
                 ...(!implemented && {
                   description: 'Not implemented yet',
                   descriptionClass: 'italic text-red-600',
                 }),
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
-              })
-            }
+              });
+            }}
             onMouseLeave={clearHoverCard}
           >
             <span className="text-base font-medium">
@@ -178,17 +182,19 @@ function RaisePopOptions({
             }`}
             title={title}
             onClick={() => enabled && handlePerform(action, { role })}
-            onMouseEnter={() =>
+            onMouseEnter={() => {
+              const { effects, description } = splitSummary(summary);
               handleHoverCard({
                 title: `${actionInfo['raise_pop']?.icon ?? ''}${
                   POPULATION_ROLES[role]?.icon
                 } Hire ${POPULATION_ROLES[role]?.label || ''}`,
-                effects: summary,
+                effects,
                 requirements,
                 costs,
+                ...(description && { description }),
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
-              })
-            }
+              });
+            }}
             onMouseLeave={clearHoverCard}
           >
             <span className="text-base font-medium">
@@ -319,21 +325,24 @@ function DevelopOptions({
                 )?.id;
                 handlePerform(action, { id: d.id, landId });
               }}
-              onMouseEnter={() =>
+              onMouseEnter={() => {
+                const full = describeContent('development', d.id, ctx);
+                const { effects, description } = splitSummary(full);
                 handleHoverCard({
                   title: `${actionInfo['develop']?.icon ?? ''} ${
                     actionInfo['develop']?.label ?? ''
                   } - ${developmentInfo[d.id]?.icon} ${d.name}`,
-                  effects: describeContent('development', d.id, ctx),
+                  effects,
                   requirements,
                   costs,
+                  ...(description && { description }),
                   ...(!implemented && {
                     description: 'Not implemented yet',
                     descriptionClass: 'italic text-red-600',
                   }),
                   bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
+                });
+              }}
               onMouseLeave={clearHoverCard}
             >
               <span className="text-base font-medium">
@@ -413,21 +422,24 @@ function BuildOptions({
               }`}
               title={title}
               onClick={() => enabled && handlePerform(action, { id: b.id })}
-              onMouseEnter={() =>
+              onMouseEnter={() => {
+                const full = descriptions.get(b.id) ?? [];
+                const { effects, description } = splitSummary(full);
                 handleHoverCard({
                   title: `${actionInfo['build']?.icon ?? ''} ${
                     actionInfo['build']?.label ?? ''
                   } - ${buildingInfo[b.id]?.icon || ''} ${b.name}`,
-                  effects: descriptions.get(b.id) ?? [],
+                  effects,
                   requirements,
                   costs,
+                  ...(description && { description }),
                   ...(!implemented && {
                     description: 'Not implemented yet',
                     descriptionClass: 'italic text-red-600',
                   }),
                   bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
+                });
+              }}
               onMouseLeave={clearHoverCard}
             >
               <span className="text-base font-medium">

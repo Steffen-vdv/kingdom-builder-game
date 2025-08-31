@@ -26,9 +26,20 @@ registerEffectFormatter('action', 'add', {
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
     const card = describeContent('action', id, ctx);
+    let isSystem = false;
+    try {
+      isSystem = !!ctx.actions.get(id).system;
+    } catch {
+      // ignore missing action
+    }
     return [
       `Gain action ${icon} ${name}`,
-      { title: `${icon} ${name}`, items: card, _hoist: true },
+      {
+        title: `${icon} ${name}`,
+        items: card,
+        _hoist: true,
+        ...(isSystem && { _desc: true }),
+      },
     ];
   },
   log: (eff, ctx) => {
@@ -72,7 +83,12 @@ registerEffectFormatter('action', 'perform', {
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
     const summary = describeContent('action', id, ctx);
-    return [{ title: `${icon} ${name}`, items: summary }];
+    return [
+      {
+        title: `${icon} ${name}`,
+        items: summary,
+      },
+    ];
   },
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
