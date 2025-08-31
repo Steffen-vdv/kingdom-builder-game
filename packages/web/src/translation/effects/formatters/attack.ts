@@ -1,6 +1,5 @@
-import { RESOURCES, STATS } from '@kingdom-builder/contents';
+import { RESOURCES, STATS, Resource, Stat } from '@kingdom-builder/contents';
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
-import { Resource, Stat } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../content';
 import {
   registerEffectFormatter,
