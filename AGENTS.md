@@ -70,7 +70,6 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-10-29: Phase icons live in `PHASES`; grab them with `PHASES.find(p => p.id === id)?.icon` for overview displays.
 - 2025-10-30: `@formkit/auto-animate` can add smooth transitions to UI lists and values via `useAutoAnimate`.
 - 2025-10-31: Delay scroll-to-bottom calls ~300ms when using auto-animate so animations settle before measuring heights.
-- 2025-08-31: React hooks must be called before conditional returns; otherwise later renders can crash with "Rendered more hooks than during previous render".
 
 # Core Agent principles
 
