@@ -39,7 +39,7 @@ export function createPopulationRegistry() {
     PopulationRole.Commander,
     population()
       .id(PopulationRole.Commander)
-      .name('Army Commander')
+      .name('Commander')
       .icon('🎖️')
       .onAssigned(
         effect(Types.Passive, PassiveMethods.ADD)
