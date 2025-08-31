@@ -88,7 +88,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
                       handleLeave();
                     }}
                   >
-                    empty
+                    {slotIcon} empty
                   </span>
                 );
               })}

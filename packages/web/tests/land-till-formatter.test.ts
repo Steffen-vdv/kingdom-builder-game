@@ -46,7 +46,11 @@ describe('land till formatter', () => {
 
   it('handles plow action with no summary', () => {
     const ctx = createCtx();
-    const summary = summarizeContent('action', 'plow', ctx);
-    expect(summary).toHaveLength(0);
+    const summary = summarizeContent('action', 'plow', ctx) as {
+      title: string;
+      items: string[];
+    }[];
+    const items = summary?.[0]?.items || [];
+    expect(items).toHaveLength(0);
   });
 });

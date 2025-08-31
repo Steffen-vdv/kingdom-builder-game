@@ -21,6 +21,7 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-08-31: Buildings that unlock actions require an `action` effect formatter so they aren't marked as unimplemented in the UI.
 - 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
 - 2025-08-31: Action/development summaries include trigger headers as the first element; render `summary?.[0]?.items` to skip these when a parent header already conveys timing.
+- 2025-08-31: `summarizeContent` returns a trigger header even when there are no items; tests should check `summary[0]?.items` length for empties instead of array length.
 
 # Core Agent principles
 

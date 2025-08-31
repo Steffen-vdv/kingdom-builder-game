@@ -55,7 +55,7 @@ function GenericActions({
     useGameEngine();
   const formatRequirement = (req: string) => req;
   return (
-    <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
+    <>
       {actions.map((action) => {
         const costs = getActionCosts(action.id, ctx);
         const requirements = getActionRequirements(action.id, ctx).map(
@@ -129,7 +129,7 @@ function GenericActions({
           </button>
         );
       })}
-    </div>
+    </>
   );
 }
 
@@ -144,7 +144,7 @@ function RaisePopOptions({
     useGameEngine();
   const formatRequirement = (req: string) => req;
   return (
-    <div className="grid grid-cols-3 gap-2 mt-1 auto-rows-fr">
+    <>
       {[
         PopulationRole.Council,
         PopulationRole.Commander,
@@ -220,7 +220,7 @@ function RaisePopOptions({
           </button>
         );
       })}
-    </div>
+    </>
   );
 }
 
@@ -243,19 +243,19 @@ function BasicOptions({
           (Effects take place immediately, unless stated otherwise)
         </span>
       </h3>
-      {actions.length > 0 && (
+      <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
         <GenericActions
           actions={actions}
           summaries={summaries}
           isActionPhase={isActionPhase}
         />
-      )}
-      {raisePopAction && (
-        <RaisePopOptions
-          action={raisePopAction}
-          isActionPhase={isActionPhase}
-        />
-      )}
+        {raisePopAction && (
+          <RaisePopOptions
+            action={raisePopAction}
+            isActionPhase={isActionPhase}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -280,7 +280,7 @@ function DevelopOptions({
       <h3 className="font-medium">
         {actionInfo['develop']?.icon ?? ''} {actionInfo['develop']?.label ?? ''}{' '}
         <span className="italic text-sm font-normal">
-          (On build, until removed)
+          (Effects take place on build and last until development is removed)
         </span>
       </h3>
       <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
@@ -385,7 +385,7 @@ function BuildOptions({
       <h3 className="font-medium">
         {actionInfo['build']?.icon ?? ''} {actionInfo['build']?.label ?? ''}{' '}
         <span className="italic text-sm font-normal">
-          (On build, until removed)
+          (Effects take place on build and last until building is removed)
         </span>
       </h3>
       <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
