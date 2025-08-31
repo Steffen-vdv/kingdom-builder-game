@@ -43,6 +43,7 @@ export const STATS: Record<StatKey, StatInfo> = {
     label: 'Growth',
     description:
       'Growth increases Army and Fortification Strength during the Raise Strength step.',
+  },
   [Stat.warWeariness]: {
     key: Stat.warWeariness,
     icon: '💤',
