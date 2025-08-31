@@ -8,7 +8,7 @@ vi.mock('@kingdom-builder/engine', () => {
     id: 'A',
     name: 'A',
     resources: {} as Record<string, number>,
-    stats: { maxPopulation: 0 } as Record<string, number>,
+    stats: { maxPopulation: 0, warWeariness: 0 } as Record<string, number>,
     population: {} as Record<string, number>,
     buildings: new Set<string>(),
     lands: [] as unknown[],

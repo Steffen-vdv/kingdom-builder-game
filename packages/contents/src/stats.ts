@@ -37,4 +37,11 @@ export const STATS: Record<StatKey, StatInfo> = {
     description:
       'Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.',
   },
+  [Stat.warWeariness]: {
+    key: Stat.warWeariness,
+    icon: '💤',
+    label: 'War Weariness',
+    description:
+      'War Weariness reflects the fatigue from prolonged conflict. High weariness can sap morale and hinder wartime efforts.',
+  },
 };
