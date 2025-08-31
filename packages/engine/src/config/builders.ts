@@ -120,6 +120,41 @@ export function effect(type?: string, method?: string) {
   return builder;
 }
 
+export class RequirementBuilder<P extends Params = Params> {
+  private config: RequirementConfig = {} as RequirementConfig;
+  type(type: string) {
+    this.config.type = type;
+    return this;
+  }
+  method(method: string) {
+    this.config.method = method;
+    return this;
+  }
+  param(key: string, value: unknown) {
+    this.config.params = this.config.params || {};
+    (this.config.params as Params)[key] = value;
+    return this;
+  }
+  params(params: P) {
+    this.config.params = params;
+    return this;
+  }
+  message(message: string) {
+    this.config.message = message;
+    return this;
+  }
+  build(): RequirementConfig {
+    return this.config;
+  }
+}
+
+export function requirement(type?: string, method?: string) {
+  const builder = new RequirementBuilder();
+  if (type) builder.type(type);
+  if (method) builder.method(method);
+  return builder;
+}
+
 class BaseBuilder<T extends { id: string; name: string }> {
   protected config: Omit<T, 'id' | 'name'> &
     Partial<Pick<T, 'id' | 'name'>> & { icon?: string };
@@ -157,9 +192,10 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
     this.config.baseCosts[key] = amount;
     return this;
   }
-  requirement(req: RequirementConfig) {
+  requirement(req: RequirementConfig | RequirementBuilder) {
+    const built = req instanceof RequirementBuilder ? req.build() : req;
     this.config.requirements = this.config.requirements || [];
-    this.config.requirements.push(req);
+    this.config.requirements.push(built);
     return this;
   }
   effect(effect: EffectConfig) {

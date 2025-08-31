@@ -1,5 +1,8 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import { SLOT_ICON as slotIcon } from '@kingdom-builder/contents';
+import {
+  SLOT_ICON as slotIcon,
+  SLOT_LABEL as slotLabel,
+} from '@kingdom-builder/contents';
 import {
   describeContent,
   summarizeContent,
@@ -28,7 +31,7 @@ function translate(
         items: fn('development', devId, ctx, { installed: true }),
       });
     } else {
-      items.push(`${slotIcon} Empty development slot`);
+      items.push(`${slotIcon} Empty ${slotLabel}`);
     }
   }
   return items;

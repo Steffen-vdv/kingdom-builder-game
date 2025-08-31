@@ -138,14 +138,14 @@ function collectResourceSources(
   step: StepDef | undefined,
   ctx: EngineContext,
 ): Record<string, string> {
-  const map: Record<string, { icons: string; mods: number }> = {};
+  const map: Record<string, { icons: string; mods: string }> = {};
   for (const eff of step?.effects || []) {
     if (eff.evaluator && eff.effects) {
       const inner = eff.effects.find((e) => e.type === 'resource');
       if (!inner) continue;
       const key = inner.params?.['key'] as string | undefined;
       if (!key) continue;
-      const entry = map[key] || { icons: '', mods: 0 };
+      const entry = map[key] || { icons: '', mods: '' };
       const ev = eff.evaluator as {
         type: string;
         params?: Record<string, unknown>;
@@ -173,12 +173,25 @@ function collectResourceSources(
           evaluationMods?: Map<string, Map<string, unknown>>;
         };
         const modsMap = passives.evaluationMods?.get(target);
-        const mods = modsMap
-          ? Array.from(modsMap.keys()).filter((k) =>
-              k.endsWith(`_${ctx.activePlayer.id}`),
-            ).length
-          : 0;
-        entry.mods += mods;
+        if (modsMap) {
+          for (const key of modsMap.keys()) {
+            if (!key.endsWith(`_${ctx.activePlayer.id}`)) continue;
+            const base = key.replace(`_${ctx.activePlayer.id}`, '');
+            const parts = base.split('_');
+            let icon = '';
+            for (let i = parts.length; i > 0; i--) {
+              const candidate = parts.slice(0, i).join('_');
+              try {
+                icon = ctx.buildings.get(candidate)?.icon || '';
+              } catch {
+                /* ignore */
+              }
+              if (icon) break;
+            }
+            if (!icon) icon = ctx.actions.get('build').icon || '';
+            entry.mods += icon;
+          }
+        }
       } catch {
         // ignore missing evaluators
       }
@@ -188,8 +201,7 @@ function collectResourceSources(
   const result: Record<string, string> = {};
   for (const [key, { icons, mods }] of Object.entries(map)) {
     let part = icons;
-    if (mods > 0)
-      part += `+${(ctx.actions.get('build').icon || '').repeat(mods)}`;
+    if (mods) part += `+${mods}`;
     result[key] = part;
   }
   return result;

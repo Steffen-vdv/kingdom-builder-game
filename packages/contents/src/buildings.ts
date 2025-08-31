@@ -94,6 +94,15 @@ export function createBuildingRegistry() {
       .name('Market')
       .icon('🏪')
       .cost(Resource.gold, 10)
+      .onBuild(
+        effect(Types.ResultMod, ResultModMethods.ADD)
+          .params({
+            id: 'market_tax_bonus',
+            evaluation: { type: 'population', id: 'tax' },
+            amount: 1,
+          })
+          .build(),
+      )
       .build(),
   );
   registry.add(

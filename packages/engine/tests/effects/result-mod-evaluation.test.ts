@@ -94,4 +94,32 @@ describe('evaluation result modifiers', () => {
       before + (expected[Resource.gold] || 0) + farms * bonusAmount,
     );
   });
+
+  it('Market grants extra gold for each population taxed', () => {
+    const ctx = createTestEngine();
+    runEffects(
+      [{ type: 'building', method: 'add', params: { id: 'market' } }],
+      ctx,
+    );
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
+    const actionDef = ctx.actions.get('tax');
+    const container = actionDef.effects[0];
+    const baseEffect = (container.effects || []).find(
+      (e) => e.type === 'resource' && e.method === 'add',
+    );
+    const baseAmount = Number(baseEffect?.params?.['amount'] ?? 0);
+    const bonusEffect = BUILDINGS.get('market').onBuild?.find(
+      (e: EffectDef) => e.params?.['id'] === 'market_tax_bonus',
+    );
+    const bonusAmount = Number(bonusEffect?.params?.['amount'] ?? 0);
+    const pop = Object.values(ctx.activePlayer.population).reduce(
+      (sum, v) => sum + Number(v || 0),
+      0,
+    );
+    const before = ctx.activePlayer.gold;
+    performAction('tax', ctx);
+    expect(ctx.activePlayer.gold).toBe(
+      before + pop * (baseAmount + bonusAmount),
+    );
+  });
 });
