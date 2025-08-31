@@ -15,6 +15,7 @@ export const GAME_START: StartConfig = {
       [Stat.fortificationStrength]: 0,
       [Stat.absorption]: 0,
       [Stat.growth]: 0.25,
+      [Stat.warWeariness]: 0,
     },
     population: {
       [PopulationRole.Council]: 1,

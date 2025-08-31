@@ -12,6 +12,7 @@ export const Stat = {
   fortificationStrength: 'fortificationStrength',
   absorption: 'absorption',
   growth: 'growth',
+  warWeariness: 'warWeariness',
 } as const;
 export type StatKey = (typeof Stat)[keyof typeof Stat];
 
@@ -133,6 +134,13 @@ export class PlayerState {
   set absorption(v: number) {
     this.stats[Stat.absorption] = v;
     if (v !== 0) this.statsHistory[Stat.absorption] = true;
+  }
+  get warWeariness() {
+    return this.stats[Stat.warWeariness];
+  }
+  set warWeariness(v: number) {
+    this.stats[Stat.warWeariness] = v;
+    if (v !== 0) this.statsHistory[Stat.warWeariness] = true;
   }
   get growth() {
     return this.stats[Stat.growth];

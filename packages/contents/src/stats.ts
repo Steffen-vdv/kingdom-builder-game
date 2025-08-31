@@ -43,5 +43,11 @@ export const STATS: Record<StatKey, StatInfo> = {
     label: 'Growth',
     description:
       'Growth increases Army and Fortification Strength during the Raise Strength step.',
+  [Stat.warWeariness]: {
+    key: Stat.warWeariness,
+    icon: '💤',
+    label: 'War Weariness',
+    description:
+      'War Weariness reflects the fatigue from prolonged conflict. High weariness can sap morale and hinder wartime efforts.',
   },
 };
