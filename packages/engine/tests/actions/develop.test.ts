@@ -12,6 +12,11 @@ import {
 import { PlayerState, Land, GameState } from '../../src/state/index.ts';
 import { createTestEngine } from '../helpers.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
+import { DEVELOPMENTS } from '@kingdom-builder/contents';
+
+const [farmId, houseId, outpostId, watchtowerId] = Array.from(
+  (DEVELOPMENTS as unknown as { map: Map<string, unknown> }).map.keys(),
+);
 
 function clonePlayer(player: PlayerState): PlayerState {
   const copy = new PlayerState(player.id, player.name);
@@ -76,9 +81,9 @@ describe('Develop action', () => {
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
-    const expected = simulateBuild(ctx, 'farm', land.id);
-    performAction('develop', ctx, { id: 'farm', landId: land.id });
-    expect(land.developments).toContain('farm');
+    const expected = simulateBuild(ctx, farmId, land.id);
+    performAction('develop', ctx, { id: farmId, landId: land.id });
+    expect(land.developments).toContain(farmId);
     expect(land.slotsUsed).toBe(slotsBefore + 1);
     expectState(ctx.activePlayer, expected.activePlayer);
   });
@@ -88,9 +93,9 @@ describe('Develop action', () => {
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
-    const expected = simulateBuild(ctx, 'house', land.id);
-    performAction('develop', ctx, { id: 'house', landId: land.id });
-    expect(land.developments).toContain('house');
+    const expected = simulateBuild(ctx, houseId, land.id);
+    performAction('develop', ctx, { id: houseId, landId: land.id });
+    expect(land.developments).toContain(houseId);
     expect(land.slotsUsed).toBe(slotsBefore + 1);
     expectState(ctx.activePlayer, expected.activePlayer);
   });
@@ -100,9 +105,9 @@ describe('Develop action', () => {
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
-    const expected = simulateBuild(ctx, 'outpost', land.id);
-    performAction('develop', ctx, { id: 'outpost', landId: land.id });
-    expect(land.developments).toContain('outpost');
+    const expected = simulateBuild(ctx, outpostId, land.id);
+    performAction('develop', ctx, { id: outpostId, landId: land.id });
+    expect(land.developments).toContain(outpostId);
     expect(land.slotsUsed).toBe(slotsBefore + 1);
     expectState(ctx.activePlayer, expected.activePlayer);
   });
@@ -112,16 +117,16 @@ describe('Develop action', () => {
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
 
-    const expectedBuild = simulateBuild(ctx, 'watchtower', land.id);
-    const expectedAfterAttack = simulateBuild(ctx, 'watchtower', land.id);
+    const expectedBuild = simulateBuild(ctx, watchtowerId, land.id);
+    const expectedAfterAttack = simulateBuild(ctx, watchtowerId, land.id);
     resolveAttack(expectedAfterAttack.activePlayer, 0, expectedAfterAttack);
 
-    performAction('develop', ctx, { id: 'watchtower', landId: land.id });
-    expect(land.developments).toContain('watchtower');
+    performAction('develop', ctx, { id: watchtowerId, landId: land.id });
+    expect(land.developments).toContain(watchtowerId);
     expectState(ctx.activePlayer, expectedBuild.activePlayer);
 
     resolveAttack(ctx.activePlayer, 0, ctx);
-    expect(land.developments).not.toContain('watchtower');
+    expect(land.developments).not.toContain(watchtowerId);
     expectState(ctx.activePlayer, expectedAfterAttack.activePlayer);
   });
 
@@ -130,14 +135,14 @@ describe('Develop action', () => {
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const land = ctx.activePlayer.lands[1];
 
-    const def = ctx.developments.get('house');
+    const def = ctx.developments.get(houseId);
     const statEffect = def.onBuild.find((e) => e.type === 'stat') as {
       params: { amount: number };
     };
     const amount = statEffect.params.amount;
 
     const before = ctx.activePlayer.stats.maxPopulation;
-    performAction('develop', ctx, { id: 'house', landId: land.id });
+    performAction('develop', ctx, { id: houseId, landId: land.id });
     expect(ctx.activePlayer.stats.maxPopulation).toBe(before + amount);
 
     runEffects(
@@ -145,12 +150,12 @@ describe('Develop action', () => {
         {
           type: 'development',
           method: 'remove',
-          params: { id: 'house', landId: land.id },
+          params: { id: houseId, landId: land.id },
         },
       ],
       ctx,
     );
     expect(ctx.activePlayer.stats.maxPopulation).toBe(before);
-    expect(land.developments).not.toContain('house');
+    expect(land.developments).not.toContain(houseId);
   });
 });

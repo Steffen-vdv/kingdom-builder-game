@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   performAction,
-  Resource,
   getActionCosts,
   type EngineContext,
   advance,
 } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
 import { PlayerState } from '../../src/state/index.ts';
+import { BUILDINGS, Resource as CResource } from '@kingdom-builder/contents';
 
 function deepClone<T>(value: T): T {
   return structuredClone(value);
@@ -24,7 +24,7 @@ function getExpandExpectations(ctx: EngineContext) {
       (effect) =>
         effect.type === 'resource' &&
         effect.method === 'add' &&
-        effect.params?.key === Resource.happiness,
+        effect.params?.key === CResource.happiness,
     )
     .reduce((sum, effect) => sum + Number(effect.params?.amount ?? 0), 0);
   const dummy = new PlayerState(ctx.activePlayer.id, ctx.activePlayer.name);
@@ -48,10 +48,10 @@ describe('Expand action', () => {
     const expected = getExpandExpectations(ctx);
     performAction('expand', ctx);
     expect(ctx.activePlayer.gold).toBe(
-      goldBefore - (expected.costs[Resource.gold] || 0),
+      goldBefore - (expected.costs[CResource.gold] || 0),
     );
     expect(ctx.activePlayer.ap).toBe(
-      actionPointsBefore - (expected.costs[Resource.ap] || 0),
+      actionPointsBefore - (expected.costs[CResource.ap] || 0),
     );
     expect(ctx.activePlayer.lands.length).toBe(landsBefore + expected.landGain);
     expect(ctx.activePlayer.happiness).toBe(
@@ -62,7 +62,10 @@ describe('Expand action', () => {
   it('includes Town Charter modifiers when present', () => {
     const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
-    performAction('build', ctx, { id: 'town_charter' });
+    const [townCharterId] = Array.from(
+      (BUILDINGS as unknown as { map: Map<string, unknown> }).map.keys(),
+    );
+    performAction('build', ctx, { id: townCharterId });
     ctx.activePlayer.ap += 1; // allow another action
     const goldBefore = ctx.activePlayer.gold;
     const actionPointsBefore = ctx.activePlayer.ap;
@@ -70,10 +73,10 @@ describe('Expand action', () => {
     const expected = getExpandExpectations(ctx);
     performAction('expand', ctx);
     expect(ctx.activePlayer.gold).toBe(
-      goldBefore - (expected.costs[Resource.gold] || 0),
+      goldBefore - (expected.costs[CResource.gold] || 0),
     );
     expect(ctx.activePlayer.ap).toBe(
-      actionPointsBefore - (expected.costs[Resource.ap] || 0),
+      actionPointsBefore - (expected.costs[CResource.ap] || 0),
     );
     expect(ctx.activePlayer.happiness).toBe(
       happinessBefore + expected.happinessGain,
@@ -83,7 +86,10 @@ describe('Expand action', () => {
   it('applies modifiers consistently across multiple expansions', () => {
     const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
-    performAction('build', ctx, { id: 'town_charter' });
+    const [townCharterId] = Array.from(
+      (BUILDINGS as unknown as { map: Map<string, unknown> }).map.keys(),
+    );
+    performAction('build', ctx, { id: townCharterId });
     ctx.activePlayer.ap += 2; // allow two expands
     ctx.activePlayer.gold += 10; // top-up to afford two expands
     const goldBefore = ctx.activePlayer.gold;
@@ -94,10 +100,10 @@ describe('Expand action', () => {
     performAction('expand', ctx);
     performAction('expand', ctx);
     expect(ctx.activePlayer.gold).toBe(
-      goldBefore - (expected.costs[Resource.gold] || 0) * 2,
+      goldBefore - (expected.costs[CResource.gold] || 0) * 2,
     );
     expect(ctx.activePlayer.ap).toBe(
-      actionPointsBefore - (expected.costs[Resource.ap] || 0) * 2,
+      actionPointsBefore - (expected.costs[CResource.ap] || 0) * 2,
     );
     expect(ctx.activePlayer.happiness).toBe(
       happinessBefore + expected.happinessGain * 2,
@@ -111,7 +117,7 @@ describe('Expand action', () => {
     const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const cost = getActionCosts('expand', ctx);
-    ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;
+    ctx.activePlayer.gold = (cost[CResource.gold] || 0) - 1;
     expect(() => performAction('expand', ctx)).toThrow(/Insufficient gold/);
   });
 });
