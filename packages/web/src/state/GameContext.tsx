@@ -38,11 +38,11 @@ interface Action {
   system?: boolean;
 }
 
-export interface LogEntry {
+type LogEntry = {
   time: string;
   text: string;
   playerId: string;
-}
+};
 
 interface HoverCard {
   title: string;
@@ -55,7 +55,7 @@ interface HoverCard {
   bgClass?: string;
 }
 
-export type PhaseStep = {
+type PhaseStep = {
   title: string;
   items: { text: string; italic?: boolean; done?: boolean }[];
   active: boolean;
@@ -359,8 +359,10 @@ export function GameProvider({
   );
 }
 
-export function useGameEngine() {
+export const useGameEngine = (): GameEngineContextValue => {
   const value = useContext(GameEngineContext);
   if (!value) throw new Error('useGameEngine must be used within GameProvider');
   return value;
-}
+};
+
+export type { LogEntry, PhaseStep };
