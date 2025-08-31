@@ -21,7 +21,6 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
 - 2025-09-01: Player snapshots now require the engine context to include active passive IDs; use `snapshotPlayer(player, ctx)`.
 - 2025-08-31: `handleEndTurn` will not advance phases if a player has remaining AP; automated tests must spend or clear AP first.
-- 2025-09-01: To auto-pass turns when AP hits zero, include `ctx.activePlayer.ap` in `useEffect` dependencies.
 
 # Core Agent principles
 

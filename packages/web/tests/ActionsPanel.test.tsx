@@ -4,7 +4,11 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
-import { createEngine, Resource } from '@kingdom-builder/engine';
+import {
+  createEngine,
+  Resource,
+  PopulationRole,
+} from '@kingdom-builder/engine';
 import {
   RESOURCES,
   ACTION_INFO,
@@ -14,6 +18,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  POPULATION_ROLES,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -64,5 +69,11 @@ describe('<ActionsPanel />', () => {
     const developName = ctx.actions.get('develop')?.name || '';
     const developLabel = `${ACTION_INFO['develop'].icon} ${developName}`;
     expect(screen.getByText(developLabel)).toBeInTheDocument();
+  });
+
+  it('shows short requirement indicator when unmet', () => {
+    render(<ActionsPanel />);
+    const popIcon = POPULATION_ROLES[PopulationRole.Citizen].icon;
+    expect(screen.getAllByText(`Req ${popIcon}`)[0]).toBeInTheDocument();
   });
 });
