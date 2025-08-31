@@ -273,7 +273,11 @@ export function GameProvider({
       params as ActionParams<string>,
     );
     try {
-      performAction(action.id, ctx, params as ActionParams<string>);
+      const traces = performAction(
+        action.id,
+        ctx,
+        params as ActionParams<string>,
+      );
       const after = snapshotPlayer(ctx.activePlayer, ctx);
       const changes = diffSnapshots(before, after, ctx);
       const messages = logContent('action', action.id, ctx, params);
@@ -291,10 +295,25 @@ export function GameProvider({
       if (costLines.length) {
         messages.splice(1, 0, '  💲 Action cost', ...costLines);
       }
+
+      const subLines: string[] = [];
+      for (const trace of traces) {
+        const subChanges = diffSnapshots(trace.before, trace.after, ctx);
+        if (!subChanges.length) continue;
+        subLines.push(...subChanges);
+        const icon = actionInfo[trace.id]?.icon || '';
+        const name = ctx.actions.get(trace.id).name;
+        const line = `  ${icon} ${name}`;
+        const idx = messages.indexOf(line);
+        if (idx !== -1)
+          messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
+      }
+
       const costLabels = new Set(
         Object.keys(costs) as (keyof typeof RESOURCES)[],
       );
       const filtered = changes.filter((line) => {
+        if (subLines.includes(line)) return false;
         for (const key of costLabels) {
           const info = RESOURCES[key];
           const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;

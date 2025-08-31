@@ -28,6 +28,7 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-09-21: Exporting TS interfaces from React modules can trigger Vite Fast Refresh incompatibility; use type-only exports instead.
 - 2025-09-04: Use `rg --hidden` to search hidden directories like `.github`.
 - 2025-08-31: `npm run test:coverage` requires `@vitest/coverage-v8`; install with `npm install --no-save @vitest/coverage-v8` if missing.
+- 2025-10-15: `performAction` returns sub-action traces via `ctx.actionTraces` for nested log attribution.
 
 # Core Agent principles
 

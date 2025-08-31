@@ -36,6 +36,8 @@ import {
   type StartConfig,
 } from './config/schema';
 import type { PhaseDef } from './phases';
+export { snapshotPlayer } from './log';
+export type { PlayerSnapshot, ActionTrace } from './log';
 
 type TriggerKey = string;
 
@@ -201,6 +203,7 @@ export function performAction<T extends string>(
   ctx: EngineContext,
   params?: ActionParams<T>,
 ) {
+  ctx.actionTraces = [];
   const actionDefinition = ctx.actions.get(actionId);
   if (actionDefinition.system && !ctx.activePlayer.actions.has(actionId))
     throw new Error(`Action ${actionId} is locked`);
@@ -226,6 +229,9 @@ export function performAction<T extends string>(
 
   runEffects(resolved, ctx);
   ctx.passives.runResultMods(actionDefinition.id, ctx);
+  const traces = ctx.actionTraces;
+  ctx.actionTraces = [];
+  return traces;
 }
 
 export interface AdvanceResult {
