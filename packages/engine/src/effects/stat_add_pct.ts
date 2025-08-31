@@ -16,5 +16,7 @@ export const statAddPct: EffectHandler = (effect, ctx, mult = 1) => {
 
   const base = ctx.statAddPctBases[cacheKey]!;
   ctx.statAddPctAccums[cacheKey]! += base * (pct / 100) * mult;
-  ctx.activePlayer.stats[key] = base + ctx.statAddPctAccums[cacheKey]!;
+  const newVal = base + ctx.statAddPctAccums[cacheKey]!;
+  ctx.activePlayer.stats[key] = newVal;
+  if (newVal !== 0) ctx.activePlayer.statsHistory[key] = true;
 };
