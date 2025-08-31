@@ -89,7 +89,14 @@ registerEffectFormatter('result_mod', 'add', {
     }
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon = actionInfo[actionId]?.icon || actionId;
-    return sub.map((s) => `${modifierInfo.result.icon} ${actionIcon}: ${s}`);
+    return sub.map((s) =>
+      typeof s === 'string'
+        ? `${modifierInfo.result.icon} ${actionIcon}: ${s}`
+        : {
+            ...s,
+            title: `${modifierInfo.result.icon} ${actionIcon}: ${s.title}`,
+          },
+    );
   },
   describe: (eff, ctx) => {
     const sub = describeEffects(eff.effects || [], ctx);
@@ -123,9 +130,13 @@ registerEffectFormatter('result_mod', 'add', {
     } catch {
       /* ignore missing action */
     }
-    return sub.map(
-      (s) =>
-        `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`,
+    return sub.map((s) =>
+      typeof s === 'string'
+        ? `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`
+        : {
+            ...s,
+            title: `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s.title}`,
+          },
     );
   },
 });

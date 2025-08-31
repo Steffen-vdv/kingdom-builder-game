@@ -7,7 +7,11 @@ registerEvaluatorFormatter('population', {
       | keyof typeof POPULATION_ROLES
       | undefined;
     const icon = role ? POPULATION_ROLES[role]?.icon || role : '👥';
-    return sub.map((s) => `${s} per ${icon}`);
+    return sub.map((s) =>
+      typeof s === 'string'
+        ? `${s} per ${icon}`
+        : { ...s, title: `${s.title} per ${icon}` },
+    );
   },
   describe: (ev, sub) => {
     const role = (ev.params as Record<string, string>)?.['role'] as
@@ -16,9 +20,19 @@ registerEvaluatorFormatter('population', {
     if (role) {
       const info = POPULATION_ROLES[role];
       return sub.map((s) =>
-        `${s} for each ${info?.icon || ''}${info?.label || role}`.trim(),
+        typeof s === 'string'
+          ? `${s} for each ${info?.icon || ''}${info?.label || role}`.trim()
+          : {
+              ...s,
+              title:
+                `${s.title} for each ${info?.icon || ''}${info?.label || role}`.trim(),
+            },
       );
     }
-    return sub.map((s) => `${s} for each population`);
+    return sub.map((s) =>
+      typeof s === 'string'
+        ? `${s} for each population`
+        : { ...s, title: `${s.title} for each population` },
+    );
   },
 });

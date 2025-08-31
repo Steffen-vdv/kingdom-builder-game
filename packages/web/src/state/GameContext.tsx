@@ -210,7 +210,7 @@ export function GameProvider({
     setPhaseHistories({});
     let lastPhase: string | null = null;
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
-      const before = snapshotPlayer(ctx.activePlayer);
+      const before = snapshotPlayer(ctx.activePlayer, ctx);
       const { phase, step, player } = advance(ctx);
       const phaseDef = ctx.phases.find((p) => p.id === phase)!;
       const stepDef = phaseDef.steps.find((s) => s.id === step);
@@ -221,7 +221,7 @@ export function GameProvider({
         addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player.name);
         lastPhase = phase;
       }
-      const after = snapshotPlayer(player);
+      const after = snapshotPlayer(player, ctx);
       const changes = diffStepSnapshots(before, after, stepDef, ctx);
       if (changes.length) {
         addLog(
@@ -253,10 +253,10 @@ export function GameProvider({
   }
 
   function handlePerform(action: Action, params?: Record<string, unknown>) {
-    const before = snapshotPlayer(ctx.activePlayer);
+    const before = snapshotPlayer(ctx.activePlayer, ctx);
     try {
       performAction(action.id, ctx, params as ActionParams<string>);
-      const after = snapshotPlayer(ctx.activePlayer);
+      const after = snapshotPlayer(ctx.activePlayer, ctx);
       const changes = diffSnapshots(before, after, ctx);
       const messages = logContent('action', action.id, ctx, params);
       addLog([...messages, ...changes.map((c) => `  ${c}`)]);

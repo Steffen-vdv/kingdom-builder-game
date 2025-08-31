@@ -4,6 +4,7 @@ import ResourceBar from './ResourceBar';
 import PopulationInfo from './PopulationInfo';
 import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
+import PassiveDisplay from './PassiveDisplay';
 
 interface PlayerPanelProps {
   player: EngineContext['activePlayer'];
@@ -23,6 +24,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
       </div>
       <LandDisplay player={player} />
       <BuildingDisplay player={player} />
+      <PassiveDisplay player={player} />
     </div>
   );
 };
