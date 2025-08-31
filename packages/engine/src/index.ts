@@ -5,6 +5,8 @@ import {
   Stat,
   GameState,
   Land,
+  setResourceKeys,
+  setStatKeys,
 } from './state';
 import type {
   ResourceKey,
@@ -47,8 +49,8 @@ function applyCostsWithPassives(
 ): CostBag {
   const withDefaultAP = { ...base };
   const definition = ctx.actions.get(actionId);
-  if (withDefaultAP[Resource.ap] === undefined)
-    withDefaultAP[Resource.ap] = definition.system
+  if (withDefaultAP[Resource.ap!] === undefined)
+    withDefaultAP[Resource.ap!] = definition.system
       ? 0
       : ctx.services.rules.defaultActionAPCost;
   return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
@@ -66,7 +68,7 @@ export function getActionCosts<T extends string>(
     if (effect.type === 'building' && effect.method === 'add') {
       const id = effect.params?.['id'] as string;
       const building = ctx.buildings.get(id);
-      for (const key of Object.keys(building.costs) as ResourceKey[]) {
+      for (const key of Object.keys(building.costs)) {
         base[key] = (base[key] || 0) + (building.costs[key] || 0);
       }
     }
@@ -89,7 +91,7 @@ export function getActionRequirements<T extends string>(
 }
 
 function canPay(costs: CostBag, player: PlayerState): true | string {
-  for (const key of Object.keys(costs) as ResourceKey[]) {
+  for (const key of Object.keys(costs)) {
     const need = costs[key] ?? 0;
     const available = player.resources[key] ?? 0;
     if (available < need) {
@@ -100,7 +102,7 @@ function canPay(costs: CostBag, player: PlayerState): true | string {
 }
 
 function pay(costs: CostBag, player: PlayerState) {
-  for (const key of Object.keys(costs) as ResourceKey[]) {
+  for (const key of Object.keys(costs)) {
     const amount = costs[key] ?? 0;
     player.resources[key] = (player.resources[key] || 0) - amount;
   }
@@ -136,7 +138,7 @@ export function performAction<T extends string>(
     if (effect.type === 'building' && effect.method === 'add') {
       const id = effect.params?.['id'] as string;
       const building = ctx.buildings.get(id);
-      for (const key of Object.keys(building.costs) as ResourceKey[]) {
+      for (const key of Object.keys(building.costs)) {
         base[key] = (base[key] || 0) + (building.costs[key] || 0);
       }
     }
@@ -210,12 +212,11 @@ function applyPlayerStart(
   rules: RuleSet,
 ) {
   for (const [key, value] of Object.entries(config.resources || {}))
-    player.resources[key as ResourceKey] = value ?? 0;
+    player.resources[key] = value ?? 0;
   for (const [key, value] of Object.entries(config.stats || {})) {
     const val = value ?? 0;
-    const statKey = key as StatKey;
-    player.stats[statKey] = val;
-    if (val !== 0) player.statsHistory[statKey] = true;
+    player.stats[key] = val;
+    if (val !== 0) player.statsHistory[key] = true;
   }
   for (const [key, value] of Object.entries(config.population || {}))
     player.population[key as PopulationRoleId] = value ?? 0;
@@ -239,19 +240,19 @@ function diffPlayerStart(
   const diff: PlayerStartConfig = {};
   if (!override) return diff;
   for (const [key, value] of Object.entries(override.resources || {})) {
-    const baseVal = base.resources?.[key as ResourceKey] ?? 0;
+    const baseVal = base.resources?.[key] ?? 0;
     const delta = (value ?? 0) - baseVal;
     if (delta !== 0) {
       diff.resources = diff.resources || {};
-      diff.resources[key as ResourceKey] = delta;
+      diff.resources[key] = delta;
     }
   }
   for (const [key, value] of Object.entries(override.stats || {})) {
-    const baseVal = base.stats?.[key as StatKey] ?? 0;
+    const baseVal = base.stats?.[key] ?? 0;
     const delta = (value ?? 0) - baseVal;
     if (delta !== 0) {
       diff.stats = diff.stats || {};
-      diff.stats[key as StatKey] = delta;
+      diff.stats[key] = delta;
     }
   }
   return diff;
@@ -280,11 +281,7 @@ export function createEngine({
   registerCoreEvaluators();
   registerCoreRequirements();
 
-  const resolvedRules = rules || DefaultRules;
-  const services = new Services(resolvedRules);
-  const passives = new PassiveManager();
-  const game = new GameState('Player A', 'Player B');
-
+  let startCfg = start;
   if (config) {
     const cfg = validateGameConfig(config);
     if (cfg.actions) {
@@ -309,11 +306,19 @@ export function createEngine({
         registry.add(population.id, population);
       populations = registry;
     }
-    if (cfg.start) start = cfg.start;
+    if (cfg.start) startCfg = cfg.start;
   }
 
-  const compA = diffPlayerStart(start.player, start.players?.['A']);
-  const compB = diffPlayerStart(start.player, start.players?.['B']);
+  setResourceKeys(Object.keys(startCfg.player.resources || {}));
+  setStatKeys(Object.keys(startCfg.player.stats || {}));
+
+  const resolvedRules = rules || DefaultRules;
+  const services = new Services(resolvedRules);
+  const passives = new PassiveManager();
+  const game = new GameState('Player A', 'Player B');
+
+  const compA = diffPlayerStart(startCfg.player, startCfg.players?.['A']);
+  const compB = diffPlayerStart(startCfg.player, startCfg.players?.['B']);
   const compensations = { A: compA, B: compB } as Record<
     'A' | 'B',
     PlayerStartConfig
@@ -333,9 +338,9 @@ export function createEngine({
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;
 
-  applyPlayerStart(playerA, start.player, resolvedRules);
+  applyPlayerStart(playerA, startCfg.player, resolvedRules);
   applyPlayerStart(playerA, compA, resolvedRules);
-  applyPlayerStart(playerB, start.player, resolvedRules);
+  applyPlayerStart(playerB, startCfg.player, resolvedRules);
   applyPlayerStart(playerB, compB, resolvedRules);
   ctx.game.currentPlayerIndex = 0;
   ctx.game.currentPhase = phases[0]?.id || '';
@@ -357,7 +362,7 @@ export {
   DefaultRules,
 };
 
-export type { RuleSet, ResourceKey };
+export type { RuleSet, ResourceKey, StatKey };
 export { registerCoreEffects, EffectRegistry, runEffects } from './effects';
 export type { EffectHandler, EffectDef } from './effects';
 export { applyParamsToEffects } from './utils';

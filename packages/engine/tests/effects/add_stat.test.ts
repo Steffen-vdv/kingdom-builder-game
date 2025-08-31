@@ -1,6 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { performAction, Resource, Stat, advance } from '../../src/index.ts';
-import { createActionRegistry } from '@kingdom-builder/contents';
+import {
+  performAction,
+  Resource,
+  advance,
+  getActionCosts,
+} from '../../src/index.ts';
+import {
+  createActionRegistry,
+  Resource as CResource,
+  Stat as CStat,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 describe('stat:add effect', () => {
@@ -9,12 +18,12 @@ describe('stat:add effect', () => {
     actions.add('train_army', {
       id: 'train_army',
       name: 'Train Army',
-      baseCosts: { [Resource.ap]: 0 },
+      baseCosts: { [CResource.ap]: 0 },
       effects: [
         {
           type: 'stat',
           method: 'add',
-          params: { key: Stat.armyStrength, amount: 3 },
+          params: { key: CStat.armyStrength, amount: 3 },
         },
       ],
     });
@@ -27,8 +36,10 @@ describe('stat:add effect', () => {
       (effect) =>
         effect.type === 'stat' &&
         effect.method === 'add' &&
-        effect.params?.key === Stat.armyStrength,
+        effect.params?.key === CStat.armyStrength,
     )?.params?.amount as number;
+    const costs = getActionCosts('train_army', ctx);
+    ctx.activePlayer.ap = costs[Resource.ap] ?? 0;
     performAction('train_army', ctx);
     expect(ctx.activePlayer.armyStrength).toBe(before + amount);
   });

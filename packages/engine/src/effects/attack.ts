@@ -27,7 +27,10 @@ export function resolveAttack(
 
   const absorb = opts.ignoreAbsorption
     ? 0
-    : Math.min(defender.absorption || 0, ctx.services.rules.absorptionCapPct);
+    : Math.min(
+        (defender.absorption as number) || 0,
+        ctx.services.rules.absorptionCapPct,
+      );
   let reduced = damage * (1 - absorb);
   const rounding = ctx.services.rules.absorptionRounding;
   if (rounding === 'down') reduced = Math.floor(reduced);
@@ -36,15 +39,15 @@ export function resolveAttack(
 
   const fortDamage = opts.ignoreFortification
     ? 0
-    : Math.min(defender.fortificationStrength || 0, reduced);
+    : Math.min((defender.fortificationStrength as number) || 0, reduced);
   if (fortDamage > 0)
     defender.fortificationStrength =
       (defender.fortificationStrength || 0) - fortDamage;
   const castleDamage = reduced - fortDamage;
   if (castleDamage > 0)
-    defender.resources[Resource.castleHP] = Math.max(
+    defender.resources[Resource.castleHP!] = Math.max(
       0,
-      (defender.resources[Resource.castleHP] || 0) - castleDamage,
+      (defender.resources[Resource.castleHP!] || 0) - castleDamage,
     );
 
   ctx.game.currentPlayerIndex = defenderIndex;
@@ -60,7 +63,7 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
   const attacker = ctx.activePlayer;
   const defender = ctx.opponent;
   const mods: ResourceGain[] = [
-    { key: Resource.castleHP, amount: attacker.armyStrength },
+    { key: Resource.castleHP!, amount: attacker.armyStrength as number },
   ];
   ctx.passives.runEvaluationMods('attack:power', ctx, mods);
   const damage = mods[0]!.amount;

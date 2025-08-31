@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { Land, PlayerState, GameState, Stat } from '../../src/state/index.ts';
+import {
+  Land,
+  PlayerState,
+  GameState,
+  setResourceKeys,
+  setStatKeys,
+} from '../../src/state/index.ts';
+import { Resource, Stat } from '@kingdom-builder/contents';
+
+setResourceKeys(Object.values(Resource));
+setStatKeys(Object.values(Stat));
 
 describe('State classes', () => {
   it('calculates free slots on land', () => {

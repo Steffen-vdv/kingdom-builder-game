@@ -1,4 +1,6 @@
-import { Resource, Stat, PopulationRole } from '@kingdom-builder/engine/state';
+import { Resource } from './resources';
+import { Stat } from './stats';
+import { PopulationRole } from '@kingdom-builder/engine/state';
 import type { StartConfig } from '@kingdom-builder/engine/config/schema';
 
 export const GAME_START: StartConfig = {

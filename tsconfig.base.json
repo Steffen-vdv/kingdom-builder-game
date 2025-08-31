@@ -16,7 +16,7 @@
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": true,
     "forceConsistentCasingInFileNames": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "types": ["vitest", "node"],
     "baseUrl": ".",
     "paths": {

@@ -10,7 +10,6 @@ import {
   createEngine,
   performAction,
   advance,
-  Resource,
   getActionCosts,
   type EngineContext,
   type ActionParams,
@@ -23,6 +22,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
+  Resource,
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
@@ -296,8 +296,8 @@ export function GameProvider({
       await runStepDelay();
     }
     await runDelay(1500);
-    setMainApStart(ctx.activePlayer.ap);
-    updateMainPhaseStep(ctx.activePlayer.ap);
+    setMainApStart(ctx.activePlayer.ap as number);
+    updateMainPhaseStep(ctx.activePlayer.ap as number);
     setDisplayPhase(ctx.game.currentPhase);
     setTabsEnabled(true);
     refresh();
@@ -404,8 +404,8 @@ export function GameProvider({
   // Update main phase steps once action phase becomes active
   useEffect(() => {
     if (ctx.phases[ctx.game.phaseIndex]?.action) {
-      setMainApStart(ctx.activePlayer.ap);
-      updateMainPhaseStep(ctx.activePlayer.ap);
+      setMainApStart(ctx.activePlayer.ap as number);
+      updateMainPhaseStep(ctx.activePlayer.ap as number);
     }
   }, [ctx.game.phaseIndex]);
 
@@ -422,7 +422,7 @@ export function GameProvider({
     const active = ctx.activePlayer;
     const taxName = ctx.actions.get('tax').name;
     if (active.id === playerB.id) {
-      const ap = active.ap;
+      const ap = active.ap as number;
       for (let i = 0; i < ap; i++) {
         void enqueue(() => perform({ id: 'tax', name: taxName, system: true }));
       }

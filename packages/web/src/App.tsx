@@ -5,10 +5,12 @@ import {
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
   RESOURCES,
+  Resource,
   PHASES,
   POPULATION_ROLES,
 } from '@kingdom-builder/contents';
-import { Resource, PopulationRole } from '@kingdom-builder/engine';
+
+import { PopulationRole } from '@kingdom-builder/engine';
 
 type Screen = 'menu' | 'overview' | 'game';
 

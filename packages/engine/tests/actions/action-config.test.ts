@@ -6,7 +6,10 @@ import {
   type EngineContext,
   advance,
 } from '../../src/index.ts';
-import { createActionRegistry } from '@kingdom-builder/contents';
+import {
+  createActionRegistry,
+  Resource as CResource,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 function getExpandExpectations(ctx: EngineContext) {
@@ -33,13 +36,13 @@ describe('Action configuration overrides', () => {
   it('respects modified expand costs and effects', () => {
     const actions = createActionRegistry();
     const expand = actions.get('expand');
-    expand.baseCosts = { [Resource.gold]: 3 };
+    expand.baseCosts = { [CResource.gold]: 3 };
     expand.effects = [
       { type: 'land', method: 'add', params: { count: 2 } },
       {
         type: 'resource',
         method: 'add',
-        params: { key: Resource.happiness, amount: 5 },
+        params: { key: CResource.happiness, amount: 5 },
       },
     ];
     const ctx = createTestEngine({ actions });
@@ -48,6 +51,7 @@ describe('Action configuration overrides', () => {
     const landsBefore = ctx.activePlayer.lands.length;
     const hapBefore = ctx.activePlayer.happiness;
     const expected = getExpandExpectations(ctx);
+    ctx.activePlayer.ap = expected.costs[Resource.ap] || 0;
     performAction('expand', ctx);
     expect(ctx.activePlayer.gold).toBe(
       goldBefore - (expected.costs[Resource.gold] || 0),

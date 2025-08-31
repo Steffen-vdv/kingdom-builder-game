@@ -6,7 +6,10 @@ import {
   getActionCosts,
   type ResourceKey,
 } from '../../src/index.ts';
-import { createActionRegistry } from '@kingdom-builder/contents';
+import {
+  createActionRegistry,
+  Resource as CResource,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import { PlayerState, Land, GameState } from '../../src/state/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
@@ -18,7 +21,7 @@ const actions = createActionRegistry();
 actions.add('build_house', {
   id: 'build_house',
   name: 'Build House',
-  baseCosts: { ap: 0 },
+  baseCosts: { [CResource.ap]: 0 },
   effects: [
     {
       type: 'development',
@@ -31,7 +34,7 @@ actions.add('build_house', {
 actions.add('build_house_bad_land', {
   id: 'build_house_bad_land',
   name: 'Build House Bad Land',
-  baseCosts: { ap: 0 },
+  baseCosts: { [CResource.ap]: 0 },
   effects: [
     {
       type: 'development',
@@ -44,7 +47,7 @@ actions.add('build_house_bad_land', {
 actions.add('build_house_full', {
   id: 'build_house_full',
   name: 'Build House Full',
-  baseCosts: { ap: 0 },
+  baseCosts: { [CResource.ap]: 0 },
   effects: [
     {
       type: 'development',

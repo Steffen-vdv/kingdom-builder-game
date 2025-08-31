@@ -7,18 +7,19 @@ import {
 } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
 import { action, building } from '@kingdom-builder/contents/config/builders';
+import { Resource as CResource } from '@kingdom-builder/contents';
 
 describe('multi-cost content', () => {
   it('supports actions with multiple costs', () => {
     const multiCostAction = action()
       .id('multi_cost_action')
       .name('Multi Cost Action')
-      .cost(Resource.gold, 3)
-      .cost(Resource.happiness, 2)
+      .cost(CResource.gold, 3)
+      .cost(CResource.happiness, 2)
       .effect({
         type: 'resource',
         method: 'add',
-        params: { key: Resource.gold, amount: 0 },
+        params: { key: CResource.gold, amount: 0 },
       })
       .build();
 
@@ -29,6 +30,7 @@ describe('multi-cost content', () => {
     ctx.activePlayer.happiness = 3;
 
     const costs = getActionCosts('multi_cost_action', ctx);
+    ctx.activePlayer.ap = costs[Resource.ap] || 0;
     performAction('multi_cost_action', ctx);
 
     expect(ctx.activePlayer.gold).toBe(5 - (costs[Resource.gold] || 0));
@@ -41,15 +43,15 @@ describe('multi-cost content', () => {
     const multiCostBuildingDefinition = building()
       .id('multi_cost_building')
       .name('Multi Cost Building')
-      .cost(Resource.gold, 4)
-      .cost(Resource.happiness, 1)
+      .cost(CResource.gold, 4)
+      .cost(CResource.happiness, 1)
       .build();
 
     const buildAction = action()
       .id('build_multi_cost_building')
       .name('Build Multi Cost Building')
-      .cost(Resource.gold, 4)
-      .cost(Resource.happiness, 1)
+      .cost(CResource.gold, 4)
+      .cost(CResource.happiness, 1)
       .effect({
         type: 'building',
         method: 'add',
@@ -69,6 +71,7 @@ describe('multi-cost content', () => {
     ctx.activePlayer.happiness = 2;
 
     const costs = getActionCosts('build_multi_cost_building', ctx);
+    ctx.activePlayer.ap = costs[Resource.ap] || 0;
     performAction('build_multi_cost_building', ctx);
 
     expect(ctx.activePlayer.gold).toBe(10 - (costs[Resource.gold] || 0));

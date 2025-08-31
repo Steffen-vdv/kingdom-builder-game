@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { performAction, Resource, advance } from '../../src/index.ts';
-import { createActionRegistry } from '@kingdom-builder/contents';
+import {
+  performAction,
+  Resource,
+  advance,
+  getActionCosts,
+} from '../../src/index.ts';
+import {
+  createActionRegistry,
+  Resource as CResource,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 describe('resource:add effect', () => {
@@ -9,12 +17,12 @@ describe('resource:add effect', () => {
     actions.add('grant_gold', {
       id: 'grant_gold',
       name: 'Grant Gold',
-      baseCosts: { [Resource.ap]: 0 },
+      baseCosts: { [CResource.ap]: 0 },
       effects: [
         {
           type: 'resource',
           method: 'add',
-          params: { key: Resource.gold, amount: 3 },
+          params: { key: CResource.gold, amount: 3 },
         },
       ],
     });
@@ -27,8 +35,10 @@ describe('resource:add effect', () => {
       (effect) =>
         effect.type === 'resource' &&
         effect.method === 'add' &&
-        effect.params?.key === Resource.gold,
+        effect.params?.key === CResource.gold,
     )?.params?.amount as number;
+    const cost = getActionCosts('grant_gold', ctx)[Resource.ap] ?? 0;
+    ctx.activePlayer.ap = cost;
     performAction('grant_gold', ctx);
     expect(ctx.activePlayer.gold).toBe(before + amount);
   });
@@ -38,12 +48,12 @@ describe('resource:add effect', () => {
     actions.add('round_up', {
       id: 'round_up',
       name: 'Round Up',
-      baseCosts: { [Resource.ap]: 0 },
+      baseCosts: { [CResource.ap]: 0 },
       effects: [
         {
           type: 'resource',
           method: 'add',
-          params: { key: Resource.gold, amount: 1.2 },
+          params: { key: CResource.gold, amount: 1.2 },
           round: 'up',
         },
       ],
@@ -51,12 +61,12 @@ describe('resource:add effect', () => {
     actions.add('round_down', {
       id: 'round_down',
       name: 'Round Down',
-      baseCosts: { [Resource.ap]: 0 },
+      baseCosts: { [CResource.ap]: 0 },
       effects: [
         {
           type: 'resource',
           method: 'add',
-          params: { key: Resource.gold, amount: 1.8 },
+          params: { key: CResource.gold, amount: 1.8 },
           round: 'down',
         },
       ],
@@ -72,13 +82,15 @@ describe('resource:add effect', () => {
         (effect) =>
           effect.type === 'resource' &&
           effect.method === 'add' &&
-          effect.params?.key === Resource.gold,
+          effect.params?.key === CResource.gold,
       );
     let total = (foundEffect?.params?.amount as number) || 0;
     if (foundEffect?.round === 'up')
       total = total >= 0 ? Math.ceil(total) : Math.floor(total);
     else if (foundEffect?.round === 'down')
       total = total >= 0 ? Math.floor(total) : Math.ceil(total);
+    let cost = getActionCosts('round_up', ctx)[Resource.ap] ?? 0;
+    ctx.activePlayer.ap = cost;
     performAction('round_up', ctx);
     expect(ctx.activePlayer.gold).toBe(before + total);
 
@@ -89,13 +101,15 @@ describe('resource:add effect', () => {
         (effect) =>
           effect.type === 'resource' &&
           effect.method === 'add' &&
-          effect.params?.key === Resource.gold,
+          effect.params?.key === CResource.gold,
       );
     total = (foundEffect?.params?.amount as number) || 0;
     if (foundEffect?.round === 'up')
       total = total >= 0 ? Math.ceil(total) : Math.floor(total);
     else if (foundEffect?.round === 'down')
       total = total >= 0 ? Math.floor(total) : Math.ceil(total);
+    cost = getActionCosts('round_down', ctx)[Resource.ap] ?? 0;
+    ctx.activePlayer.ap = cost;
     performAction('round_down', ctx);
     expect(ctx.activePlayer.gold).toBe(before + total);
   });

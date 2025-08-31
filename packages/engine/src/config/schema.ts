@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Resource, Stat, PopulationRole } from '../state';
+import { PopulationRole } from '../state';
 import type { EffectDef } from '../effects';
 
 const requirementSchema = z.object({
@@ -12,7 +12,7 @@ const requirementSchema = z.object({
 export type RequirementConfig = z.infer<typeof requirementSchema>;
 
 // Basic schemas
-const costBagSchema = z.record(z.nativeEnum(Resource), z.number());
+const costBagSchema = z.record(z.string(), z.number());
 
 const evaluatorSchema = z.object({
   type: z.string(),
@@ -97,8 +97,8 @@ const landStartSchema = z.object({
 });
 
 const playerStartSchema = z.object({
-  resources: z.record(z.nativeEnum(Resource), z.number()).optional(),
-  stats: z.record(z.nativeEnum(Stat), z.number()).optional(),
+  resources: z.record(z.string(), z.number()).optional(),
+  stats: z.record(z.string(), z.number()).optional(),
   population: z.record(z.nativeEnum(PopulationRole), z.number()).optional(),
   lands: z.array(landStartSchema).optional(),
 });

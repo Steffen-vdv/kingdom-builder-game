@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { advance, PopulationRole, Stat, Resource } from '../../src';
-import { PHASES, GAME_START } from '@kingdom-builder/contents';
+import { advance, PopulationRole, Stat } from '../../src';
+import {
+  PHASES,
+  GAME_START,
+  Resource as CResource,
+  Stat as CStat,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 const devPhase = PHASES.find((p) => p.id === 'development')!;
@@ -10,7 +15,7 @@ const farmGoldGain = Number(
     (e) =>
       e.type === 'resource' &&
       e.method === 'add' &&
-      (e as { params: { key: string } }).params.key === Resource.gold,
+      (e as { params: { key: string } }).params.key === CResource.gold,
   )?.params.amount ?? 0,
 );
 
@@ -20,7 +25,7 @@ const councilApGain = Number(
     (e) =>
       e.type === 'resource' &&
       e.method === 'add' &&
-      (e as { params: { key: string } }).params.key === Resource.ap,
+      (e as { params: { key: string } }).params.key === CResource.ap,
   )?.params.amount ?? 0,
 );
 
@@ -38,9 +43,9 @@ describe('Development phase', () => {
 
   it('applies player B compensation at start and not during development', () => {
     const ctx = createTestEngine();
-    const baseAp = GAME_START.player.resources?.[Resource.ap] || 0;
+    const baseAp = GAME_START.player.resources?.[CResource.ap] || 0;
     const comp =
-      (GAME_START.players?.B?.resources?.[Resource.ap] || 0) - baseAp;
+      (GAME_START.players?.B?.resources?.[CResource.ap] || 0) - baseAp;
     expect(ctx.game.players[0].ap).toBe(baseAp);
     expect(ctx.game.players[1].ap).toBe(baseAp + comp);
 
@@ -129,7 +134,7 @@ describe('Development phase', () => {
   describe('strength growth scenarios', () => {
     const baseArmy = 5;
     const baseFort = 5;
-    const baseGrowth = Number(GAME_START.player.stats?.[Stat.growth] ?? 0);
+    const baseGrowth = Number(GAME_START.player.stats?.[CStat.growth] ?? 0);
     it.each([
       {
         label: '0 fortifiers',

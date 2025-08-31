@@ -1,20 +1,16 @@
-export const Resource = {
-  gold: 'gold',
-  ap: 'ap',
-  happiness: 'happiness',
-  castleHP: 'castleHP',
-} as const;
-export type ResourceKey = (typeof Resource)[keyof typeof Resource];
+export const Resource: Record<string, string> = {};
+export type ResourceKey = string;
+export function setResourceKeys(keys: string[]) {
+  for (const key of Object.keys(Resource)) delete Resource[key];
+  for (const key of keys) Resource[key] = key;
+}
 
-export const Stat = {
-  maxPopulation: 'maxPopulation',
-  armyStrength: 'armyStrength',
-  fortificationStrength: 'fortificationStrength',
-  absorption: 'absorption',
-  growth: 'growth',
-  warWeariness: 'warWeariness',
-} as const;
-export type StatKey = (typeof Stat)[keyof typeof Stat];
+export const Stat: Record<string, string> = {};
+export type StatKey = string;
+export function setStatKeys(keys: string[]) {
+  for (const key of Object.keys(Stat)) delete Stat[key];
+  for (const key of keys) Stat[key] = key;
+}
 
 export const Phase = {
   Development: 'development',
@@ -70,84 +66,38 @@ export class PlayerState {
   lands: Land[] = [];
   buildings: Set<string> = new Set();
   actions: Set<string> = new Set();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
   constructor(id: PlayerId, name: string) {
     this.id = id;
     this.name = name;
-    this.resources = {
-      [Resource.gold]: 0,
-      [Resource.ap]: 0,
-      [Resource.happiness]: 0,
-      [Resource.castleHP]: 10,
-    };
-    this.stats = {} as Record<StatKey, number>;
-    this.statsHistory = {} as Record<StatKey, boolean>;
-    for (const key of Object.values(Stat) as StatKey[]) {
-      let value = 0;
-      if (key === Stat.maxPopulation) value = 1;
-      else if (key === Stat.growth) value = 0.25;
-      this.stats[key] = value;
-      this.statsHistory[key] = value !== 0;
+    this.resources = {};
+    for (const key of Object.values(Resource)) {
+      this.resources[key] = 0;
+      Object.defineProperty(this, key, {
+        get: () => this.resources[key],
+        set: (v: number) => {
+          this.resources[key] = v;
+        },
+        enumerable: false,
+        configurable: true,
+      });
     }
-  }
-  get gold() {
-    return this.resources[Resource.gold];
-  }
-  set gold(v: number) {
-    this.resources[Resource.gold] = v;
-  }
-  get ap() {
-    return this.resources[Resource.ap];
-  }
-  set ap(v: number) {
-    this.resources[Resource.ap] = v;
-  }
-  get happiness() {
-    return this.resources[Resource.happiness];
-  }
-  set happiness(v: number) {
-    this.resources[Resource.happiness] = v;
-  }
-  get maxPopulation() {
-    return this.stats[Stat.maxPopulation];
-  }
-  set maxPopulation(v: number) {
-    this.stats[Stat.maxPopulation] = v;
-    if (v !== 0) this.statsHistory[Stat.maxPopulation] = true;
-  }
-  get armyStrength() {
-    return this.stats[Stat.armyStrength];
-  }
-  set armyStrength(v: number) {
-    this.stats[Stat.armyStrength] = v;
-    if (v !== 0) this.statsHistory[Stat.armyStrength] = true;
-  }
-  get fortificationStrength() {
-    return this.stats[Stat.fortificationStrength];
-  }
-  set fortificationStrength(v: number) {
-    this.stats[Stat.fortificationStrength] = v;
-    if (v !== 0) this.statsHistory[Stat.fortificationStrength] = true;
-  }
-  get absorption() {
-    return this.stats[Stat.absorption];
-  }
-  set absorption(v: number) {
-    this.stats[Stat.absorption] = v;
-    if (v !== 0) this.statsHistory[Stat.absorption] = true;
-  }
-  get warWeariness() {
-    return this.stats[Stat.warWeariness];
-  }
-  set warWeariness(v: number) {
-    this.stats[Stat.warWeariness] = v;
-    if (v !== 0) this.statsHistory[Stat.warWeariness] = true;
-  }
-  get growth() {
-    return this.stats[Stat.growth];
-  }
-  set growth(v: number) {
-    this.stats[Stat.growth] = v;
-    if (v !== 0) this.statsHistory[Stat.growth] = true;
+    this.stats = {};
+    this.statsHistory = {};
+    for (const key of Object.values(Stat)) {
+      this.stats[key] = 0;
+      this.statsHistory[key] = false;
+      Object.defineProperty(this, key, {
+        get: () => this.stats[key],
+        set: (v: number) => {
+          this.stats[key] = v;
+          if (v !== 0) this.statsHistory[key] = true;
+        },
+        enumerable: false,
+        configurable: true,
+      });
+    }
   }
 }
 
