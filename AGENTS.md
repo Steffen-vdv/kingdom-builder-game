@@ -18,6 +18,7 @@ below.
 - 2025-08-31: A quick Node script can scan content files to detect duplicate icons across actions, buildings, stats, population roles and developments.
 - 2025-08-31: Buildings that unlock actions require an `action` effect formatter so they aren't marked as unimplemented in the UI.
 - 2025-08-31: `summarizeContent` and `describeContent` for actions can accept params; `applyParamsToEffects` resolves placeholders for dynamic summaries.
+- 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
 
 # Core Agent principles
 
