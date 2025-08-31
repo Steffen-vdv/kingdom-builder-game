@@ -13,6 +13,10 @@ export interface StatInfo {
   icon: string;
   label: string;
   description: string;
+  addFormat?: {
+    prefix?: string;
+    percent?: boolean;
+  };
 }
 
 export const STATS: Record<StatKey, StatInfo> = {
@@ -22,6 +26,9 @@ export const STATS: Record<StatKey, StatInfo> = {
     label: 'Max Population',
     description:
       'Max Population determines how many subjects your kingdom can sustain. Expand infrastructure or build houses to increase it.',
+    addFormat: {
+      prefix: 'Max ',
+    },
   },
   [Stat.armyStrength]: {
     key: Stat.armyStrength,
@@ -43,6 +50,9 @@ export const STATS: Record<StatKey, StatInfo> = {
     label: 'Absorption',
     description:
       'Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.',
+    addFormat: {
+      percent: true,
+    },
   },
   [Stat.growth]: {
     key: Stat.growth,
@@ -50,6 +60,9 @@ export const STATS: Record<StatKey, StatInfo> = {
     label: 'Growth',
     description:
       'Growth increases Army and Fortification Strength during the Raise Strength step.',
+    addFormat: {
+      percent: true,
+    },
   },
   [Stat.warWeariness]: {
     key: Stat.warWeariness,
