@@ -19,16 +19,20 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-08-31: Registries can validate entries with Zod schemas; invalid data will throw during `add`.
 - 2025-08-31: A quick Node script can scan content files to detect duplicate icons across actions, buildings, stats, population roles and developments.
 - 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
-- 2025-09-01: Player snapshots now require the engine context to include active passive IDs; use `snapshotPlayer(player, ctx)`.
+- 2025-08-31: Player snapshots now require the engine context to include active passive IDs; use `snapshotPlayer(player, ctx)`.
 - 2025-08-31: `handleEndTurn` will not advance phases if a player has remaining AP; automated tests must spend or clear AP first.
-- 2025-09-02: Log entries include `playerId` so the web UI can style messages per player.
-- 2025-09-03: Player log text can reuse inactive player panel hues; dark mode should invert to lighter shades for readability.
-- 2025-09-05: To render full action cards for unlock effects, the `action:add` formatter should return the unlock text followed by `describeContent('action', id, ctx)`.
-- 2025-09-05: Summary entries with a `_hoist` flag are lifted outside installation wrappers.
-- 2025-09-21: Exporting TS interfaces from React modules can trigger Vite Fast Refresh incompatibility; use type-only exports instead.
-- 2025-09-04: Use `rg --hidden` to search hidden directories like `.github`.
+- 2025-08-31: Log entries include `playerId` so the web UI can style messages per player.
+- 2025-08-31: Player log text can reuse inactive player panel hues; dark mode should invert to lighter shades for readability.
+- 2025-08-31: To render full action cards for unlock effects, the `action:add` formatter should return the unlock text followed by `describeContent('action', id, ctx)`.
+- 2025-08-31: Summary entries with a `_hoist` flag are lifted outside installation wrappers.
+- 2025-08-31: Exporting TS interfaces from React modules can trigger Vite Fast Refresh incompatibility; use type-only exports instead.
+- 2025-08-31: Use `rg --hidden` to search hidden directories like `.github`.
+- 2025-08-31: Use `SLOT_ICON` from `@kingdom-builder/contents` for development slot requirement indicators.
+- 2025-08-31: Trigger handling now uses `collectTriggerEffects`; direct
+  `runTrigger` helper has been removed. Switch the active player index when
+  resolving triggers for non-active players.
 - 2025-08-31: `npm run test:coverage` requires `@vitest/coverage-v8`; install with `npm install --no-save @vitest/coverage-v8` if missing.
-- 2025-10-15: `performAction` returns sub-action traces via `ctx.actionTraces` for nested log attribution.
+- 2025-08-31: `performAction` returns sub-action traces via `ctx.actionTraces` for nested log attribution.
 
 # Core Agent principles
 
