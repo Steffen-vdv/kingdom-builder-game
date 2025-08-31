@@ -51,18 +51,18 @@ describe('plow action translation', () => {
     expect(passive?.title.startsWith('♾️ ')).toBe(true);
   });
 
-  it('moves system actions to description', () => {
+  it('keeps performed system actions in effects', () => {
     const ctx = createCtx();
     const summary = describeContent('action', 'plow', ctx);
     const { effects, description } = splitSummary(summary);
+    expect(description).toHaveLength(0);
     expect(effects).toEqual([
       { title: '🌱 Expand', items: ['Gain 1 🗺️ Land', '😊+1 Happiness'] },
+      { title: '🧑‍🌾 Till', items: ['Till 🗺️ to unlock 🧩 slot'] },
       {
         title: '♾️ Before your next Upkeep Phase',
         items: ['💲 Cost Modifier on all actions: Increase cost by 🪙2'],
       },
     ]);
-    const till = description[0] as { title: string };
-    expect(till.title).toBe('🧑‍🌾 Till');
   });
 });

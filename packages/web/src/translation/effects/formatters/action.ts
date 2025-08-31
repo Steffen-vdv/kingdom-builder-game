@@ -83,17 +83,10 @@ registerEffectFormatter('action', 'perform', {
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
     const summary = describeContent('action', id, ctx);
-    let isSystem = false;
-    try {
-      isSystem = !!ctx.actions.get(id).system;
-    } catch {
-      // ignore missing action
-    }
     return [
       {
         title: `${icon} ${name}`,
         items: summary,
-        ...(isSystem && { _desc: true }),
       },
     ];
   },
