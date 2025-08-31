@@ -4,6 +4,7 @@ import {
 } from '@kingdom-builder/contents';
 import type { ResourceKey } from '@kingdom-builder/engine';
 import { increaseOrDecrease, signed } from '../helpers';
+import { describeContent } from '../../content';
 import {
   registerEffectFormatter,
   summarizeEffects,
@@ -164,8 +165,15 @@ registerEffectFormatter('result_mod', 'add', {
         const actionIcon = action?.icon || 'plunder';
         const actionName = action?.name || 'plunder';
         const amount = Number(eff.params?.['adjust'] ?? 0);
+        const card = describeContent('action', 'plunder', ctx);
         return [
           `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,
+          {
+            title: `${actionIcon} ${actionName}`,
+            items: card,
+            _hoist: true,
+            _desc: true,
+          },
         ];
       }
       return [];
