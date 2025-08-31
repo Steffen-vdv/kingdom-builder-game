@@ -23,6 +23,8 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-08-31: `handleEndTurn` will not advance phases if a player has remaining AP; automated tests must spend or clear AP first.
 - 2025-09-02: Log entries include `playerId` so the web UI can style messages per player.
 - 2025-09-03: Player log text can reuse inactive player panel hues; dark mode should invert to lighter shades for readability.
+- 2025-09-03: Player log text can reuse inactive player panel hues; dark mode should invert to lighter shades for readability.
+- 2025-09-05: To render full action cards for unlock effects, the `action:add` formatter should return the unlock text followed by `describeContent('action', id, ctx)`.
 
 # Core Agent principles
 

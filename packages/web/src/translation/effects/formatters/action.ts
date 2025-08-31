@@ -19,15 +19,14 @@ registerEffectFormatter('action', 'add', {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    const summary = summarizeContent('action', id, ctx);
-    return [{ title: `Gain ${icon}${name}`, items: summary }];
+    return `Gain action ${icon}${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    const summary = describeContent('action', id, ctx);
-    return [{ title: `Gain action ${icon}${name}`, items: summary }];
+    const card = describeContent('action', id, ctx);
+    return [`Gain action ${icon}${name}`, ...card];
   },
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;

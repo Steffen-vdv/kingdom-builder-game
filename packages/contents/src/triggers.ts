@@ -24,7 +24,7 @@ export const TRIGGER_INFO = {
   },
   mainPhase: {
     icon: PHASE_INFO['main']?.icon || '🎯',
-    future: 'Immediately',
+    future: '',
     past: `${PHASE_INFO['main']?.label || 'Main'} phase`,
   },
   ...phaseTriggers,

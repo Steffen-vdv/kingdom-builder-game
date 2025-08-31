@@ -22,9 +22,12 @@ class ActionTranslator
       : def.effects;
     const eff = summarizeEffects(effects, ctx);
     if (!eff.length) return [];
+    const title = [triggerInfo.mainPhase.icon, triggerInfo.mainPhase.future]
+      .filter(Boolean)
+      .join(' ');
     return [
       {
-        title: `${triggerInfo.mainPhase.icon} ${triggerInfo.mainPhase.future}`,
+        title,
         items: eff,
       },
     ];
@@ -40,9 +43,12 @@ class ActionTranslator
       : def.effects;
     const eff = describeEffects(effects, ctx);
     if (!eff.length) return [];
+    const title = [triggerInfo.mainPhase.icon, triggerInfo.mainPhase.future]
+      .filter(Boolean)
+      .join(' ');
     return [
       {
-        title: `${triggerInfo.mainPhase.icon} ${triggerInfo.mainPhase.future}`,
+        title,
         items: eff,
       },
     ];
