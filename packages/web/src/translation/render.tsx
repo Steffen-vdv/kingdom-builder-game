@@ -1,5 +1,5 @@
 import React from 'react';
-import { Resource, RESOURCES } from '@kingdom-builder/contents';
+import { RESOURCES } from '@kingdom-builder/contents';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import type { Summary } from './content';
 
@@ -21,9 +21,12 @@ export function renderSummary(summary: Summary | undefined): React.ReactNode {
 export function renderCosts(
   costs: Record<string, number | undefined> | undefined,
   resources: Record<string, number>,
+  actionResource?: string,
 ) {
   if (!costs) return null;
-  const entries = Object.entries(costs).filter(([k]) => k !== Resource.ap);
+  const entries = Object.entries(costs).filter(
+    ([k]) => !actionResource || k !== actionResource,
+  );
   if (entries.length === 0)
     return (
       <span className="mr-1 text-gray-400 dark:text-gray-500 italic">Free</span>

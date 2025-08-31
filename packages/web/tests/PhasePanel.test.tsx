@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngine, getActionCosts } from '@kingdom-builder/engine';
 import {
   ACTIONS,
   BUILDINGS,
@@ -28,6 +28,19 @@ const ctx = createEngine({
   start: GAME_START,
   rules: RULES,
 });
+const actionCostResource = (() => {
+  const firstIter = (
+    ctx.actions as unknown as { map: Map<string, unknown> }
+  ).map
+    .keys()
+    .next();
+  if (firstIter.done) return '';
+  const sample = getActionCosts(firstIter.value as string, ctx);
+  const match = Object.entries(sample).find(
+    ([, v]) => v === ctx.services.rules.defaultActionAPCost,
+  );
+  return (match ? match[0] : Object.keys(sample)[0]) as string;
+})();
 const mockGame = {
   ctx,
   log: [],
@@ -44,6 +57,7 @@ const mockGame = {
   setDisplayPhase: vi.fn(),
   phaseHistories: {},
   tabsEnabled: true,
+  actionCostResource,
   handlePerform: vi.fn().mockResolvedValue(undefined),
   runUntilActionPhase: vi.fn(),
   handleEndTurn: vi.fn().mockResolvedValue(undefined),

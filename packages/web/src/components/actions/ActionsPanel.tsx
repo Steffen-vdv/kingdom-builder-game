@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
 import {
-  Resource,
   RESOURCES,
   POPULATION_ROLES,
   PopulationRole,
@@ -54,8 +53,13 @@ function GenericActions({
   summaries: Map<string, Summary>;
   isActionPhase: boolean;
 }) {
-  const { ctx, handlePerform, handleHoverCard, clearHoverCard } =
-    useGameEngine();
+  const {
+    ctx,
+    handlePerform,
+    handleHoverCard,
+    clearHoverCard,
+    actionCostResource,
+  } = useGameEngine();
   const formatRequirement = (req: string) => req;
   return (
     <>
@@ -113,7 +117,11 @@ function GenericActions({
               {ctx.actions.get(action.id)?.icon || ''} {action.name}
             </span>
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-              {renderCosts(costs, ctx.activePlayer.resources)}
+              {renderCosts(
+                costs,
+                ctx.activePlayer.resources,
+                actionCostResource,
+              )}
             </span>
             {requirements.length > 0 && requirementIcons.length > 0 && (
               <span className="absolute top-7 right-2 text-xs text-red-600">
@@ -141,8 +149,13 @@ function RaisePopOptions({
   action: Action;
   isActionPhase: boolean;
 }) {
-  const { ctx, handlePerform, handleHoverCard, clearHoverCard } =
-    useGameEngine();
+  const {
+    ctx,
+    handlePerform,
+    handleHoverCard,
+    clearHoverCard,
+    actionCostResource,
+  } = useGameEngine();
   const formatRequirement = (req: string) => req;
   const requirementIcons = getRequirementIcons(action.id, ctx);
   return (
@@ -203,7 +216,11 @@ function RaisePopOptions({
               {POPULATION_ROLES[role]?.label}
             </span>
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-              {renderCosts(costs, ctx.activePlayer.resources)}
+              {renderCosts(
+                costs,
+                ctx.activePlayer.resources,
+                actionCostResource,
+              )}
             </span>
             {requirements.length > 0 && requirementIcons.length > 0 && (
               <span className="absolute top-7 right-2 text-xs text-red-600">
@@ -269,8 +286,13 @@ function DevelopOptions({
   summaries: Map<string, Summary>;
   hasDevelopLand: boolean;
 }) {
-  const { ctx, handlePerform, handleHoverCard, clearHoverCard } =
-    useGameEngine();
+  const {
+    ctx,
+    handlePerform,
+    handleHoverCard,
+    clearHoverCard,
+    actionCostResource,
+  } = useGameEngine();
   return (
     <div>
       <h3 className="font-medium">
@@ -349,7 +371,11 @@ function DevelopOptions({
                 {ctx.developments.get(d.id)?.icon} {d.name}
               </span>
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                {renderCosts(costs, ctx.activePlayer.resources)}
+                {renderCosts(
+                  costs,
+                  ctx.activePlayer.resources,
+                  actionCostResource,
+                )}
               </span>
               {requirements.length > 0 && (
                 <span className="absolute top-7 right-2 text-xs text-red-600">
@@ -384,8 +410,13 @@ function BuildOptions({
   summaries: Map<string, Summary>;
   descriptions: Map<string, Summary>;
 }) {
-  const { ctx, handlePerform, handleHoverCard, clearHoverCard } =
-    useGameEngine();
+  const {
+    ctx,
+    handlePerform,
+    handleHoverCard,
+    clearHoverCard,
+    actionCostResource,
+  } = useGameEngine();
   return (
     <div>
       <h3 className="font-medium">
@@ -450,7 +481,11 @@ function BuildOptions({
                 {b.name}
               </span>
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                {renderCosts(costs, ctx.activePlayer.resources)}
+                {renderCosts(
+                  costs,
+                  ctx.activePlayer.resources,
+                  actionCostResource,
+                )}
               </span>
               {requirements.length > 0 && (
                 <span className="absolute top-7 right-2 text-xs text-red-600">
@@ -473,7 +508,7 @@ function BuildOptions({
 }
 
 export default function ActionsPanel() {
-  const { ctx, tabsEnabled } = useGameEngine();
+  const { ctx, tabsEnabled, actionCostResource } = useGameEngine();
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
@@ -559,7 +594,7 @@ export default function ActionsPanel() {
       )}
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-semibold">
-          Actions (1 {RESOURCES[Resource.ap].icon} each)
+          Actions (1 {RESOURCES[actionCostResource].icon} each)
         </h2>
         {!isActionPhase && (
           <span className="text-sm text-gray-600 dark:text-gray-300">

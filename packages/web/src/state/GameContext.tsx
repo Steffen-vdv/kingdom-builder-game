@@ -23,7 +23,7 @@ import {
   PHASES,
   GAME_START,
   RULES,
-  Resource,
+  type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
@@ -78,6 +78,7 @@ interface GameEngineContextValue {
   setDisplayPhase: (id: string) => void;
   phaseHistories: Record<string, PhaseStep[]>;
   tabsEnabled: boolean;
+  actionCostResource: ResourceKey;
   handlePerform: (
     action: Action,
     params?: Record<string, unknown>,
@@ -138,6 +139,22 @@ export function GameProvider({
   >({});
   const [tabsEnabled, setTabsEnabled] = useState(false);
   const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
+
+  const actionCostResource = useMemo(() => {
+    const firstIter = (
+      ctx.actions as unknown as { map: Map<string, Action> }
+    ).map
+      .keys()
+      .next();
+    const firstId = firstIter.done ? '' : firstIter.value;
+    if (!firstId) return '';
+    const sample = getActionCosts(firstId, ctx);
+    const match = Object.entries(sample).find(
+      ([, v]) => v === ctx.services.rules.defaultActionAPCost,
+    );
+    const key = match ? match[0] : Object.keys(sample)[0];
+    return key || '';
+  }, [ctx]) as ResourceKey;
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
@@ -209,17 +226,18 @@ export function GameProvider({
 
   function updateMainPhaseStep(apStartOverride?: number) {
     const total = apStartOverride ?? mainApStart;
-    const spent = total - ctx.activePlayer.ap;
+    const remaining = ctx.activePlayer.resources[actionCostResource] ?? 0;
+    const spent = total - remaining;
     const steps = [
       {
-        title: 'Step 1 - Spend all AP',
+        title: `Step 1 - Spend all ${RESOURCES[actionCostResource].label}`,
         items: [
           {
-            text: `${RESOURCES[Resource.ap].icon} ${spent}/${total} spent`,
-            done: ctx.activePlayer.ap === 0,
+            text: `${RESOURCES[actionCostResource].icon} ${spent}/${total} spent`,
+            done: remaining === 0,
           },
         ],
-        active: ctx.activePlayer.ap > 0,
+        active: remaining > 0,
       },
     ];
     setPhaseSteps(steps);
@@ -298,8 +316,9 @@ export function GameProvider({
       await runStepDelay();
     }
     await runDelay(1500);
-    setMainApStart(ctx.activePlayer.ap as number);
-    updateMainPhaseStep(ctx.activePlayer.ap as number);
+    const start = ctx.activePlayer.resources[actionCostResource] as number;
+    setMainApStart(start);
+    updateMainPhaseStep(start);
     setDisplayPhase(ctx.game.currentPhase);
     setTabsEnabled(true);
     refresh();
@@ -395,7 +414,7 @@ export function GameProvider({
   async function endTurn() {
     const phaseDef = ctx.phases[ctx.game.phaseIndex];
     if (!phaseDef?.action) return;
-    if (ctx.activePlayer.ap > 0) return;
+    if ((ctx.activePlayer.resources[actionCostResource] ?? 0) > 0) return;
     advance(ctx);
     setPhaseHistories({});
     await runUntilActionPhaseCore();
@@ -406,8 +425,9 @@ export function GameProvider({
   // Update main phase steps once action phase becomes active
   useEffect(() => {
     if (ctx.phases[ctx.game.phaseIndex]?.action) {
-      setMainApStart(ctx.activePlayer.ap as number);
-      updateMainPhaseStep(ctx.activePlayer.ap as number);
+      const start = ctx.activePlayer.resources[actionCostResource] as number;
+      setMainApStart(start);
+      updateMainPhaseStep(start);
     }
   }, [ctx.game.phaseIndex]);
 
@@ -424,15 +444,23 @@ export function GameProvider({
     const active = ctx.activePlayer;
     const taxName = ctx.actions.get('tax').name;
     if (active.id === playerB.id) {
-      const ap = active.ap as number;
+      const ap = active.resources[actionCostResource] as number;
       for (let i = 0; i < ap; i++) {
         void enqueue(() => perform({ id: 'tax', name: taxName, system: true }));
       }
       void enqueue(endTurn);
-    } else if (active.id === playerA.id && active.ap === 0) {
+    } else if (
+      active.id === playerA.id &&
+      (active.resources[actionCostResource] ?? 0) === 0
+    ) {
       void enqueue(endTurn);
     }
-  }, [devMode, ctx.game.phaseIndex, ctx.activePlayer.id, ctx.activePlayer.ap]);
+  }, [
+    devMode,
+    ctx.game.phaseIndex,
+    ctx.activePlayer.id,
+    ctx.activePlayer.resources[actionCostResource],
+  ]);
 
   const value: GameEngineContextValue = {
     ctx,
@@ -450,6 +478,7 @@ export function GameProvider({
     setDisplayPhase,
     phaseHistories,
     tabsEnabled,
+    actionCostResource,
     handlePerform,
     runUntilActionPhase,
     handleEndTurn,

@@ -3,7 +3,12 @@ import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
 
 export default function HoverCard() {
-  const { hoverCard: data, clearHoverCard, ctx } = useGameEngine();
+  const {
+    hoverCard: data,
+    clearHoverCard,
+    ctx,
+    actionCostResource,
+  } = useGameEngine();
   if (!data) return null;
   return (
     <div
@@ -15,7 +20,11 @@ export default function HoverCard() {
       <div className="font-semibold mb-2">
         {data.title}
         <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-          {renderCosts(data.costs, ctx.activePlayer.resources)}
+          {renderCosts(
+            data.costs,
+            ctx.activePlayer.resources,
+            actionCostResource,
+          )}
         </span>
       </div>
       {data.effects.length > 0 && (

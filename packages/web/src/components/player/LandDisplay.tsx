@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
@@ -18,7 +18,8 @@ const LandTile: React.FC<{
   ctx: ReturnType<typeof useGameEngine>['ctx'];
   handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
   clearHoverCard: ReturnType<typeof useGameEngine>['clearHoverCard'];
-}> = ({ land, idx, ctx, handleHoverCard, clearHoverCard }) => {
+  developAction?: { icon?: string; name: string } | undefined;
+}> = ({ land, idx, ctx, handleHoverCard, clearHoverCard, developAction }) => {
   const showLandCard = () => {
     const full = describeContent('land', land, ctx);
     const { effects, description } = splitSummary(full);
@@ -87,9 +88,9 @@ const LandTile: React.FC<{
                 handleHoverCard({
                   title: `${slotIcon} Development Slot (empty)`,
                   effects: [],
-                  description: `Use ${ctx.actions.get('develop').icon || ''} ${
-                    ctx.actions.get('develop').name
-                  } to build here`,
+                  ...(developAction && {
+                    description: `Use ${developAction.icon || ''} ${developAction.name} to build here`,
+                  }),
                   requirements: [],
                   bgClass: 'bg-gray-100 dark:bg-gray-700',
                 });
@@ -110,6 +111,20 @@ const LandTile: React.FC<{
 
 const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
   const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+  const developAction = useMemo(
+    () =>
+      Array.from(
+        (
+          ctx.actions as unknown as {
+            map: Map<
+              string,
+              { category?: string; icon?: string; name: string }
+            >;
+          }
+        ).map.values(),
+      ).find((a) => a.category === 'development'),
+    [ctx],
+  );
   if (player.lands.length === 0) return null;
   const animateLands = useAnimate<HTMLDivElement>();
   return (
@@ -122,6 +137,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
           ctx={ctx}
           handleHoverCard={handleHoverCard}
           clearHoverCard={clearHoverCard}
+          developAction={developAction}
         />
       ))}
     </div>
