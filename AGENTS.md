@@ -1,3 +1,20 @@
+# Knowledge sharing
+
+## Maintain a discovery log
+
+To streamline collaboration, the repository owner asks every agent to keep
+track of any non-obvious discoveries made while completing their task. These
+may include repository structure tips, tricky commands, or environment quirks
+that required some investigation. Maintain this list during your work and, when
+submitting a pull request, append your findings to the **Agent discovery log**
+below.
+
+## Agent discovery log
+
+- 2025-08-31: Run tests with `npm run test:coverage >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log`; avoid running extra test commands.
+- 2025-08-31: `git commit` triggers a Husky pre-commit hook running lint-staged, type checking, linting and tests.
+- 2025-08-31: Use `rg` for code searches; `grep -R` and `ls -R` are discouraged for performance.
+
 # Core Agent principles
 
 We are gradually, step by step, implementing a digital game. You can refer to the README.md for a summary of the game's general format and objective. The goal of Agents working on this project is to help structure the repository in such a way that we make progress towards our end-goal: A fully functional, robust, elegant and _extensible_ game. This is _not_ a type of game where we hardcode most things, stick to one config, and the game is done and forgotten. This game must be heavily configurable, possibly later by players themselves through a game config editor, but initially by ourselves for heavy AB & game design testing. We must be able to change nearly anything at a whim - Change configs, add buildings, add actions, invent new effects, invent new ratio's and thresholds for things, and so on.
@@ -5,6 +22,12 @@ We are gradually, step by step, implementing a digital game. You can refer to th
 Therefore, the main mission for agents is to understand the intended game, and it's mechanics/terminology, very well. This is necessary in order to build a proper abstract, extensible system that allows us to make changes to the game's configuration by just changing some simple configs (rather than needing to update tens of if-statements everywhere). Therefore, in this project, we focus on very correct architecture, structure, separation, and a correct implementation of principles such as OOP, SOLID, DRY, YAGNI, KISS, and so on. When in doubt, over-engineering is the answer, because later I will invent a new Building and I will want to configure it myself with some unique combination of costs/requirements/effects and it should 'just work' as it is being carried by systems that understand such concepts.
 
 Full game information can be read below.
+
+# Default content
+
+Engine logic is decoupled from game data. The default configuration lives in
+`packages/contents`; supply those registries to `createEngine` or provide your
+own to experiment with new actions, buildings and more.
 
 # Reference documents
 

@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  performAction,
-  getActionCosts,
-} from '../../packages/engine/src/index.ts';
+import { performAction, getActionCosts } from '@kingdom-builder/engine';
 import { createTestContext, getActionOutcome } from './fixtures';
 
 describe('Building placement integration', () => {

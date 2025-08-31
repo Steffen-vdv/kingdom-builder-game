@@ -1,16 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   performAction,
   Resource,
   getActionCosts,
   runEffects,
   advance,
 } from '../../src/index.ts';
+import { createTestEngine } from '../helpers.ts';
 
 describe('Build action', () => {
   it('rejects when gold is insufficient', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const cost = getActionCosts('build', ctx, { id: 'town_charter' });
     ctx.activePlayer.gold = (cost[Resource.gold] || 0) - 1;
@@ -20,7 +20,7 @@ describe('Build action', () => {
   });
 
   it('adds Town Charter modifying Expand until removed', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
 
     const baseCost = getActionCosts('expand', ctx);

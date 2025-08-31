@@ -10,6 +10,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      '@kingdom-builder/contents': path.resolve(rootDir, '../contents/src'),
       '@kingdom-builder/engine': path.resolve(rootDir, '../engine/src'),
     },
   },

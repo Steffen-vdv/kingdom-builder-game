@@ -1,12 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEngine,
-  advance,
-  PopulationRole,
-  Stat,
-  Resource,
-  PHASES,
-} from '../../src';
+import { advance, PopulationRole, Stat, Resource } from '../../src';
+import { PHASES } from '@kingdom-builder/contents';
+import { createTestEngine } from '../helpers.ts';
 
 const devPhase = PHASES.find((p) => p.id === 'development')!;
 const incomeStep = devPhase.steps.find((s) => s.id === 'gain-income');
@@ -53,7 +48,7 @@ const fortifierPct = Number(
 
 describe('Development phase', () => {
   it('triggers population and development effects', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     const player = ctx.activePlayer;
     const apBefore = player.ap;
     const goldBefore = player.gold;
@@ -64,7 +59,7 @@ describe('Development phase', () => {
   });
 
   it('grows commander and fortifier stats', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.activePlayer.population[PopulationRole.Commander] = 1;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 1;
     ctx.activePlayer.stats[Stat.armyStrength] = 8;
@@ -78,7 +73,7 @@ describe('Development phase', () => {
   });
 
   it('scales strength additively with multiple leaders', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.activePlayer.population[PopulationRole.Commander] = 2;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 2;
     ctx.activePlayer.stats[Stat.armyStrength] = 10;

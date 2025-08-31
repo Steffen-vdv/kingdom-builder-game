@@ -7,7 +7,7 @@ import { withInstallation } from './decorators';
 import {
   BUILDING_INFO as buildingInfo,
   ACTION_INFO as actionInfo,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/contents';
 
 class BuildingCore implements ContentTranslator<string> {
   private phased = new PhasedTranslator();

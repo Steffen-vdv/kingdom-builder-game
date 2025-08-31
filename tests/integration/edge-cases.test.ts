@@ -4,7 +4,7 @@ import {
   Resource,
   getActionCosts,
   type ResourceKey,
-} from '../../packages/engine/src/index.ts';
+} from '@kingdom-builder/engine';
 import { createTestContext } from './fixtures';
 
 describe('Action edge cases', () => {

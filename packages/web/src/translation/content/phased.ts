@@ -1,5 +1,5 @@
 import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
-import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/engine';
+import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/contents';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 

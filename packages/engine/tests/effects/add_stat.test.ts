@@ -1,12 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEngine,
-  performAction,
-  Resource,
-  Stat,
-  createActionRegistry,
-  advance,
-} from '../../src/index.ts';
+import { performAction, Resource, Stat, advance } from '../../src/index.ts';
+import { createActionRegistry } from '@kingdom-builder/contents';
+import { createTestEngine } from '../helpers.ts';
 
 describe('stat:add effect', () => {
   it('increments a stat via action effect', () => {
@@ -23,7 +18,7 @@ describe('stat:add effect', () => {
         },
       ],
     });
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     advance(ctx);
     ctx.game.currentPlayerIndex = 0;
     const before = ctx.activePlayer.armyStrength;

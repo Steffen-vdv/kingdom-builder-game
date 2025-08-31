@@ -14,15 +14,6 @@ import type {
 } from './state';
 import { Services, PassiveManager, DefaultRules } from './services';
 import type { CostBag, RuleSet } from './services';
-import { ACTIONS, ACTION_INFO } from './content/actions';
-import { BUILDINGS, BUILDING_INFO } from './content/buildings';
-import { DEVELOPMENTS, DEVELOPMENT_INFO } from './content/developments';
-import { POPULATIONS } from './content/populations';
-import type { PopulationDef } from './content/populations';
-import type { TriggerKey } from './content/defs';
-import type { ActionDef } from './content/actions';
-import type { BuildingDef } from './content/buildings';
-import type { DevelopmentDef } from './content/developments';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
 import type { EffectDef } from './effects';
@@ -30,10 +21,6 @@ import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
-import { PHASES, PHASE_INFO, type PhaseDef } from './content/phases';
-import { TRIGGER_INFO } from './content/triggers';
-import { LAND_ICON, SLOT_ICON } from './content/land';
-import { MODIFIER_INFO } from './content/modifiers';
 import {
   validateGameConfig,
   type GameConfig,
@@ -42,8 +29,20 @@ import {
   developmentSchema,
   populationSchema,
   type PlayerStartConfig,
+  type ActionConfig as ActionDef,
+  type BuildingConfig as BuildingDef,
+  type DevelopmentConfig as DevelopmentDef,
+  type PopulationConfig as PopulationDef,
+  type StartConfig,
 } from './config/schema';
-import { GAME_START } from './content/game';
+import type { PhaseDef } from './phases';
+
+type TriggerKey = string;
+
+function getEffects(def: unknown, trigger: string): EffectDef[] | undefined {
+  const val = (def as Record<string, unknown>)[trigger];
+  return Array.isArray(val) ? (val as EffectDef[]) : undefined;
+}
 
 function runTrigger(
   trigger: TriggerKey,
@@ -56,14 +55,14 @@ function runTrigger(
 
   for (const [role, count] of Object.entries(player.population)) {
     const populationDefinition = ctx.populations.get(role);
-    const effects = populationDefinition[trigger];
+    const effects = getEffects(populationDefinition, trigger);
     if (effects) runEffects(effects, ctx, Number(count));
   }
 
   for (const land of player.lands) {
     for (const id of land.developments) {
       const developmentDefinition = ctx.developments.get(id);
-      const effects = developmentDefinition[trigger];
+      const effects = getEffects(developmentDefinition, trigger);
       if (!effects) continue;
       runEffects(applyParamsToEffects(effects, { landId: land.id, id }), ctx);
     }
@@ -71,7 +70,7 @@ function runTrigger(
 
   for (const id of player.buildings) {
     const buildingDefinition = ctx.buildings.get(id);
-    const effects = buildingDefinition[trigger];
+    const effects = getEffects(buildingDefinition, trigger);
     if (effects) runEffects(effects, ctx);
   }
 
@@ -86,7 +85,7 @@ export function collectTriggerEffects(
   const effects: EffectDef[] = [];
   for (const [role, count] of Object.entries(player.population)) {
     const populationDefinition = ctx.populations.get(role);
-    const list = populationDefinition[trigger];
+    const list = getEffects(populationDefinition, trigger);
     if (!list) continue;
     for (let i = 0; i < Number(count); i++)
       effects.push(...list.map((e) => ({ ...e })));
@@ -94,7 +93,7 @@ export function collectTriggerEffects(
   for (const land of player.lands) {
     for (const id of land.developments) {
       const developmentDefinition = ctx.developments.get(id);
-      const list = developmentDefinition[trigger];
+      const list = getEffects(developmentDefinition, trigger);
       if (!list) continue;
       effects.push(
         ...applyParamsToEffects(list, { landId: land.id, id }).map((e) => ({
@@ -105,7 +104,7 @@ export function collectTriggerEffects(
   }
   for (const id of player.buildings) {
     const buildingDefinition = ctx.buildings.get(id);
-    const list = buildingDefinition[trigger];
+    const list = getEffects(buildingDefinition, trigger);
     if (list) effects.push(...list.map((e) => ({ ...e })));
   }
   return effects;
@@ -313,64 +312,60 @@ function applyPlayerStart(
     });
 }
 
-export function createEngine(overrides?: {
-  actions?: Registry<ActionDef>;
-  buildings?: Registry<BuildingDef>;
-  developments?: Registry<DevelopmentDef>;
-  populations?: Registry<PopulationDef>;
+export function createEngine({
+  actions,
+  buildings,
+  developments,
+  populations,
+  phases,
+  start,
+  rules,
+  config,
+}: {
+  actions: Registry<ActionDef>;
+  buildings: Registry<BuildingDef>;
+  developments: Registry<DevelopmentDef>;
+  populations: Registry<PopulationDef>;
+  phases: PhaseDef[];
+  start: StartConfig;
   rules?: RuleSet;
   config?: GameConfig;
-  phases?: PhaseDef[];
 }) {
   registerCoreEffects();
   registerCoreEvaluators();
   registerCoreRequirements();
 
-  const rules = overrides?.rules || DefaultRules;
-  const services = new Services(rules);
+  const resolvedRules = rules || DefaultRules;
+  const services = new Services(resolvedRules);
   const passives = new PassiveManager();
   const game = new GameState('Player A', 'Player B');
 
-  let actions = overrides?.actions;
-  let buildings = overrides?.buildings;
-  let developments = overrides?.developments;
-  let populations = overrides?.populations;
-  let start = GAME_START;
-  let phases = overrides?.phases || PHASES;
-
-  if (overrides?.config) {
-    const config = validateGameConfig(overrides.config);
-    if (config.actions) {
+  if (config) {
+    const cfg = validateGameConfig(config);
+    if (cfg.actions) {
       const registry = new Registry<ActionDef>(actionSchema);
-      for (const action of config.actions) registry.add(action.id, action);
+      for (const action of cfg.actions) registry.add(action.id, action);
       actions = registry;
     }
-    if (config.buildings) {
+    if (cfg.buildings) {
       const registry = new Registry<BuildingDef>(buildingSchema);
-      for (const building of config.buildings)
-        registry.add(building.id, building);
+      for (const building of cfg.buildings) registry.add(building.id, building);
       buildings = registry;
     }
-    if (config.developments) {
+    if (cfg.developments) {
       const registry = new Registry<DevelopmentDef>(developmentSchema);
-      for (const development of config.developments)
+      for (const development of cfg.developments)
         registry.add(development.id, development);
       developments = registry;
     }
-    if (config.populations) {
+    if (cfg.populations) {
       const registry = new Registry<PopulationDef>(populationSchema);
-      for (const population of config.populations)
+      for (const population of cfg.populations)
         registry.add(population.id, population);
       populations = registry;
     }
-    if (config.start) start = config.start;
+    if (cfg.start) start = cfg.start;
   }
-
-  actions = actions || ACTIONS;
-  buildings = buildings || BUILDINGS;
-  developments = developments || DEVELOPMENTS;
-  populations = populations || POPULATIONS;
-  phases = phases || PHASES;
 
   const ctx = new EngineContext(
     game,
@@ -385,8 +380,8 @@ export function createEngine(overrides?: {
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;
 
-  applyPlayerStart(playerA, start.player, rules);
-  applyPlayerStart(playerB, start.player, rules);
+  applyPlayerStart(playerA, start.player, resolvedRules);
+  applyPlayerStart(playerB, start.player, resolvedRules);
   ctx.game.currentPlayerIndex = 0;
   ctx.game.currentPhase = phases[0]?.id || '';
   ctx.game.currentStep = phases[0]?.steps[0]?.id || '';
@@ -399,34 +394,15 @@ export {
   Phase,
   PopulationRole,
   Stat,
-  BUILDINGS,
-  BUILDING_INFO,
-  DEVELOPMENTS,
-  DEVELOPMENT_INFO,
-  GAME_START,
   EFFECTS,
   EVALUATORS,
-  POPULATIONS,
   EngineContext,
   Services,
   PassiveManager,
   DefaultRules,
-  PHASES,
-  PHASE_INFO,
-  ACTION_INFO,
-  TRIGGER_INFO,
-  LAND_ICON,
-  SLOT_ICON,
-  MODIFIER_INFO,
 };
 
 export type { RuleSet, ResourceKey };
-
-export { createActionRegistry } from './content/actions';
-export { createBuildingRegistry } from './content/buildings';
-export { createDevelopmentRegistry } from './content/developments';
-export { createPopulationRegistry } from './content/populations';
-
 export { registerCoreEffects, EffectRegistry, runEffects } from './effects';
 export type { EffectHandler, EffectDef } from './effects';
 export { applyParamsToEffects } from './utils';
@@ -436,9 +412,3 @@ export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
 export type { GameConfig } from './config/schema';
-export { RESOURCES, type ResourceInfo } from './content/resources';
-export { STATS, type StatInfo } from './content/stats';
-export {
-  POPULATION_ROLES,
-  type PopulationRoleInfo,
-} from './content/populationRoles';

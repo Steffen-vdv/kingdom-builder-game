@@ -2,6 +2,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { summarizeContent } from '../src/translation/content';
 import type { Summary } from '../src/translation/content';
 import { createEngine } from '@kingdom-builder/engine';
+import {
+  ACTIONS,
+  BUILDINGS,
+  DEVELOPMENTS,
+  POPULATIONS,
+  PHASES,
+  GAME_START,
+} from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
@@ -21,7 +29,14 @@ function flatten(summary: Summary): string[] {
 
 describe('development translation', () => {
   it('includes phase effects for farm', () => {
-    const ctx = createEngine();
+    const ctx = createEngine({
+      actions: ACTIONS,
+      buildings: BUILDINGS,
+      developments: DEVELOPMENTS,
+      populations: POPULATIONS,
+      phases: PHASES,
+      start: GAME_START,
+    });
     const summary = summarizeContent('development', 'farm', ctx);
     const flat = flatten(summary);
     expect(flat).toContain('🪙+2 per 🌾');

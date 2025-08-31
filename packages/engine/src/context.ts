@@ -1,11 +1,13 @@
 import type { GameState, ResourceKey } from './state';
 import type { Services, PassiveManager } from './services';
 import type { Registry } from './registry';
-import type { ActionDef } from './content/actions';
-import type { BuildingDef } from './content/buildings';
-import type { DevelopmentDef } from './content/developments';
-import type { PopulationDef } from './content/populations';
-import type { PhaseDef } from './content/phases';
+import type {
+  ActionConfig as ActionDef,
+  BuildingConfig as BuildingDef,
+  DevelopmentConfig as DevelopmentDef,
+  PopulationConfig as PopulationDef,
+} from './config/schema';
+import type { PhaseDef } from './phases';
 
 export class EngineContext {
   constructor(

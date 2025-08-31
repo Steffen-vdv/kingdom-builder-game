@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   performAction,
   Resource,
-  createActionRegistry,
   getActionCosts,
   type EngineContext,
   advance,
 } from '../../src/index.ts';
+import { createActionRegistry } from '@kingdom-builder/contents';
+import { createTestEngine } from '../helpers.ts';
 
 function getExpandExpectations(ctx: EngineContext) {
   const expandDef = ctx.actions.get('expand');
@@ -42,7 +42,7 @@ describe('Action configuration overrides', () => {
         params: { key: Resource.happiness, amount: 5 },
       },
     ];
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const goldBefore = ctx.activePlayer.gold;
     const landsBefore = ctx.activePlayer.lands.length;

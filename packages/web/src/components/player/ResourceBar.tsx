@@ -1,5 +1,5 @@
 import React from 'react';
-import { RESOURCES } from '@kingdom-builder/engine';
+import { RESOURCES } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 

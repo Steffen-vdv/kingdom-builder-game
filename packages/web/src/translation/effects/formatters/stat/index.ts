@@ -1,4 +1,4 @@
-import { STATS } from '@kingdom-builder/engine';
+import { STATS } from '@kingdom-builder/contents';
 import { increaseOrDecrease, signed } from '../../helpers';
 import { registerEffectFormatter } from '../../factory';
 import { applyStatAddFormatter } from './registry';
