@@ -25,7 +25,7 @@ export const POPULATION_ROLES: Record<PopulationRoleId, PopulationRoleInfo> = {
   },
   [PopulationRole.Fortifier]: {
     key: PopulationRole.Fortifier,
-    icon: '🧱',
+    icon: '🔧',
     label: 'Fortifier',
     description:
       'Fortifiers reinforce your defenses. They raise Fortification Strength and shore up the castle every Development phase.',

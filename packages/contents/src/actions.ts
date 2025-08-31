@@ -190,7 +190,7 @@ export const ACTION_INFO: Record<string, { icon: string; label: string }> = {
   army_attack: { icon: '🗡️', label: ACTIONS.get('army_attack').name },
   hold_festival: { icon: '🎉', label: ACTIONS.get('hold_festival').name },
   build_plow_workshop: {
-    icon: '🚜',
+    icon: '🏭',
     label: ACTIONS.get('build_plow_workshop').name,
   },
   plow: { icon: '🚜', label: ACTIONS.get('plow').name },
