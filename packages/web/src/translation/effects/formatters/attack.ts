@@ -18,7 +18,7 @@ function baseEntry(eff: EffectDef<Record<string, unknown>>, mode: Mode) {
   const fort = STATS[Stat.fortificationStrength];
 
   if (mode === 'summarize') {
-    const title = `${army.icon} Attack opponent's ${fort.icon}${castle.icon}`;
+    const title = `${army.icon} opponent's ${fort.icon}${castle.icon}`;
     return { entry: title, castle };
   }
 
@@ -83,17 +83,11 @@ function onCastleDamageEntry(
             : (item as { title: string }).title
           : item,
       );
-    else if (typeof item === 'string')
-      items.push(
-        mode === 'summarize' ? `Opponent ${item}` : `${item} for opponent`,
-      );
+    else if (typeof item === 'string') items.push(`${item} for opponent`);
     else
       items.push({
         ...item,
-        title:
-          mode === 'summarize'
-            ? `Opponent ${item.title}`
-            : `${item.title} for opponent`,
+        title: `${item.title} for opponent`,
       });
   });
 
@@ -107,13 +101,11 @@ function onCastleDamageEntry(
             : (item as { title: string }).title
           : item,
       );
-    else if (typeof item === 'string')
-      items.push(mode === 'summarize' ? `You ${item}` : `${item} for you`);
+    else if (typeof item === 'string') items.push(`${item} for you`);
     else
       items.push({
         ...item,
-        title:
-          mode === 'summarize' ? `You ${item.title}` : `${item.title} for you`,
+        title: `${item.title} for you`,
       });
   });
 
@@ -122,7 +114,7 @@ function onCastleDamageEntry(
   return {
     title:
       mode === 'summarize'
-        ? `On ${castle.icon} damage`
+        ? `On opponent ${castle.icon} damage`
         : `On opponent ${castle.icon} ${castle.label} damage`,
     items: all,
   };

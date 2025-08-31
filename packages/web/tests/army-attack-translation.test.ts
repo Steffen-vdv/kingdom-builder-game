@@ -39,12 +39,12 @@ describe('army attack translation', () => {
     const warWeariness = STATS[Stat.warWeariness];
     const summary = summarizeContent('action', 'army_attack', ctx);
     expect(summary).toEqual([
-      `${army.icon} Attack opponent's ${fort.icon}${castle.icon}`,
+      `${army.icon} opponent's ${fort.icon}${castle.icon}`,
       {
-        title: `On ${castle.icon} damage`,
+        title: `On opponent ${castle.icon} damage`,
         items: [
-          `Opponent ${happiness.icon}-1`,
-          `You ${happiness.icon}+1`,
+          `${happiness.icon}-1 for opponent`,
+          `${happiness.icon}+1 for you`,
           `${plunder.icon} ${plunder.name}`,
         ],
       },
