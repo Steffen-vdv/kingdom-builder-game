@@ -77,7 +77,10 @@ interface GameEngineContextValue {
   setDisplayPhase: (id: string) => void;
   phaseHistories: Record<string, PhaseStep[]>;
   tabsEnabled: boolean;
-  handlePerform: (action: Action, params?: Record<string, unknown>) => void;
+  handlePerform: (
+    action: Action,
+    params?: Record<string, unknown>,
+  ) => Promise<void>;
   runUntilActionPhase: () => Promise<void>;
   handleEndTurn: () => Promise<void>;
   updateMainPhaseStep: (apStartOverride?: number) => void;
@@ -132,6 +135,7 @@ export function GameProvider({
     Record<string, PhaseStep[]>
   >({});
   const [tabsEnabled, setTabsEnabled] = useState(false);
+  const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
@@ -146,9 +150,9 @@ export function GameProvider({
   const addLog = (
     entry: string | string[],
     player?: EngineContext['activePlayer'],
-  ) =>
+  ) => {
+    const p = player ?? ctx.activePlayer;
     setLog((prev) => {
-      const p = player ?? ctx.activePlayer;
       const items = (Array.isArray(entry) ? entry : [entry]).map((text) => ({
         time: new Date().toLocaleTimeString(),
         text: `[${p.name}] ${text}`,
@@ -156,6 +160,7 @@ export function GameProvider({
       }));
       return [...prev, ...items];
     });
+  };
 
   function handleHoverCard(data: HoverCard) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
@@ -215,7 +220,7 @@ export function GameProvider({
     return runDelay(1000);
   }
 
-  async function runUntilActionPhase() {
+  async function runUntilActionPhaseCore() {
     setTabsEnabled(false);
     setPhaseSteps([]);
     setDisplayPhase(ctx.game.currentPhase);
@@ -264,8 +269,11 @@ export function GameProvider({
     refresh();
   }
 
-  function handlePerform(action: Action, params?: Record<string, unknown>) {
-    const before = snapshotPlayer(ctx.activePlayer, ctx);
+  const runUntilActionPhase = () => enqueue(runUntilActionPhaseCore);
+
+  function perform(action: Action, params?: Record<string, unknown>) {
+    const player = ctx.activePlayer;
+    const before = snapshotPlayer(player, ctx);
     const costs = getActionCosts(
       action.id,
       ctx,
@@ -277,7 +285,7 @@ export function GameProvider({
         ctx,
         params as ActionParams<string>,
       );
-      const after = snapshotPlayer(ctx.activePlayer, ctx);
+      const after = snapshotPlayer(player, ctx);
       const stepDef = ctx.actions.get(action.id);
       const changes = diffStepSnapshots(before, after, stepDef, ctx);
       const messages = logContent('action', action.id, ctx, params);
@@ -331,24 +339,32 @@ export function GameProvider({
         }
         return true;
       });
-      addLog([...messages, ...filtered.map((c) => `  ${c}`)]);
+      addLog([...messages, ...filtered.map((c) => `  ${c}`)], player);
     } catch (e) {
       const icon = ctx.actions.get(action.id)?.icon || '';
-      addLog(`Failed to play ${icon} ${action.name}: ${(e as Error).message}`);
+      addLog(
+        `Failed to play ${icon} ${action.name}: ${(e as Error).message}`,
+        player,
+      );
       return;
     }
     updateMainPhaseStep();
     refresh();
   }
 
-  async function handleEndTurn() {
+  const handlePerform = (action: Action, params?: Record<string, unknown>) =>
+    enqueue(() => perform(action, params));
+
+  async function endTurn() {
     const phaseDef = ctx.phases[ctx.game.phaseIndex];
     if (!phaseDef?.action) return;
     if (ctx.activePlayer.ap > 0) return;
     advance(ctx);
     setPhaseHistories({});
-    await runUntilActionPhase();
+    await runUntilActionPhaseCore();
   }
+
+  const handleEndTurn = () => enqueue(endTurn);
 
   // Update main phase steps once action phase becomes active
   useEffect(() => {
@@ -368,20 +384,16 @@ export function GameProvider({
     if (!phaseDef?.action) return;
     const playerA = ctx.game.players[0]!;
     const playerB = ctx.game.players[1]!;
-    if (ctx.activePlayer.id === playerB.id) {
-      while (ctx.activePlayer.ap > 0) {
-        handlePerform({
-          id: 'tax',
-          name: ctx.actions.get('tax').name,
-          system: true,
-        });
+    const active = ctx.activePlayer;
+    const taxName = ctx.actions.get('tax').name;
+    if (active.id === playerB.id) {
+      const ap = active.ap;
+      for (let i = 0; i < ap; i++) {
+        void enqueue(() => perform({ id: 'tax', name: taxName, system: true }));
       }
-      void handleEndTurn();
-    } else if (
-      ctx.activePlayer.id === playerA.id &&
-      ctx.activePlayer.ap === 0
-    ) {
-      void handleEndTurn();
+      void enqueue(endTurn);
+    } else if (active.id === playerA.id && active.ap === 0) {
+      void enqueue(endTurn);
     }
   }, [devMode, ctx.game.phaseIndex, ctx.activePlayer.id, ctx.activePlayer.ap]);
 

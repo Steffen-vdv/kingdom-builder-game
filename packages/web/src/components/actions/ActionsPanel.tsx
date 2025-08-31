@@ -91,7 +91,7 @@ function GenericActions({
                 : 'opacity-50 cursor-not-allowed'
             }`}
             title={title}
-            onClick={() => enabled && handlePerform(action)}
+            onClick={() => enabled && void handlePerform(action)}
             onMouseEnter={() => {
               const full = describeContent('action', action.id, ctx);
               const { effects, description } = splitSummary(full);
@@ -183,7 +183,7 @@ function RaisePopOptions({
                 : 'opacity-50 cursor-not-allowed'
             }`}
             title={title}
-            onClick={() => enabled && handlePerform(action, { role })}
+            onClick={() => enabled && void handlePerform(action, { role })}
             onMouseEnter={() => {
               const { effects, description } = splitSummary(summary);
               handleHoverCard({
@@ -326,7 +326,7 @@ function DevelopOptions({
                 const landId = ctx.activePlayer.lands.find(
                   (l) => l.slotsFree > 0,
                 )?.id;
-                handlePerform(action, { id: d.id, landId });
+                void handlePerform(action, { id: d.id, landId });
               }}
               onMouseEnter={() => {
                 const full = describeContent('development', d.id, ctx);
@@ -424,7 +424,9 @@ function BuildOptions({
                   : 'opacity-50 cursor-not-allowed'
               }`}
               title={title}
-              onClick={() => enabled && handlePerform(action, { id: b.id })}
+              onClick={() =>
+                enabled && void handlePerform(action, { id: b.id })
+              }
               onMouseEnter={() => {
                 const full = descriptions.get(b.id) ?? [];
                 const { effects, description } = splitSummary(full);
