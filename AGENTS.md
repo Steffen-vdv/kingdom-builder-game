@@ -16,7 +16,8 @@ below.
 
 Avoid logging the routine steps you performed, avoid logging updates related to your implementation.
 Use the discovery log only for non-obvious insights that will help future agents work more efficiently.
-Attach the date of your update as a prefix to your log entry.
+Attach the current real date (YYYY-MM-DD) as a prefix to your log entry.
+Use the actual calendar date—today is 2025-08-31—and never log entries with future dates.
 
 ## Agent discovery log
 
@@ -45,6 +46,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-08-31: Content builders now chain `.id().name().icon()` and icons live on config entries; standalone info maps are deprecated.
 - 2025-08-31: Overview screen can pull icons from contents (e.g. ACTION_INFO, LAND_ICON) to keep keywords visually consistent.
 - 2025-08-31: PlayerState maintains `statsHistory` so stats returning to zero remain visible; initialize new non-zero stats accordingly.
+- 2025-08-31: Restore a file from the previous commit with `git checkout HEAD^ -- path/to/file`.
 - 2025-09-01: `stat:add_pct` effects honor a `round` setting like resources; use `round: 'up'` to keep strength stats integer and non-negative.
 - 2025-09-02: Scope result modifiers by tagging evaluators with an `id` (e.g. population id 'tax') and referencing it in the modifier's `evaluation`.
 - 2025-09-03: Use `diffStepSnapshots` instead of `diffSnapshots` when logging action results to capture resource source icons.
