@@ -72,6 +72,37 @@ describe('Plunder action', () => {
     expect(ctx.opponent.resources[Resource.gold]).toBe(65);
   });
 
+  it('clamps transfer to available when modifiers exceed 100%', () => {
+    const ctx = createTestEngine();
+    ctx.activePlayer.actions.add('plunder');
+    ctx.activePlayer.resources[Resource.gold] = 0;
+    ctx.opponent.resources[Resource.gold] = 100;
+    runEffects(
+      [
+        {
+          type: 'passive',
+          method: 'add',
+          params: { id: 'plunder_overkill' },
+          effects: [
+            {
+              type: 'result_mod',
+              method: 'add',
+              params: {
+                id: 'plunder_overkill_pct',
+                evaluation: { type: 'transfer_pct', id: 'percent' },
+                adjust: 100,
+              },
+            },
+          ],
+        },
+      ],
+      ctx,
+    );
+    performAction('plunder', ctx);
+    expect(ctx.activePlayer.resources[Resource.gold]).toBe(100);
+    expect(ctx.opponent.resources[Resource.gold]).toBe(0);
+  });
+
   it('does not transfer negative gold when modifiers drop percentage below zero', () => {
     const ctx = createTestEngine();
     ctx.activePlayer.actions.add('plunder');

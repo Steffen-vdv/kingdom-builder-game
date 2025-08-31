@@ -8,6 +8,8 @@ The engine includes a `plunder` system action that leverages a generic
   `result_mod` with `evaluation: { type: 'transfer_pct', id: 'percent' }` and an
   `adjust` value. Positive values increase the share while negative values reduce
   it.
+  Transfers never exceed the defender's available gold; percentages above 100 %
+  are clamped to the current balance.
 
 Example modifier:
 

@@ -50,6 +50,9 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-09-15: Requirement handlers return `true` or a message; `getActionRequirements` collects these messages for UI prompts.
 - 2025-09-16: Use `evaluator:compare` requirement to compare numeric evaluator outputs without custom handlers.
 - 2025-09-17: Derive requirement icons in the UI by parsing evaluator comparisons; see `getRequirementIcons` utility.
+- 2025-09-18: `result_mod` accepts an `adjust` parameter to tweak evaluation gains like `transfer_pct`.
+- 2025-09-20: Resource transfers use evaluation key `transfer_pct:percent` for modifier targeting.
+- 2025-09-22: Clamp percentage-based resource transfers to available balance to avoid negative totals when modifiers exceed 100%.
 - 2025-10-01: Shell starts without standard binaries in PATH; run `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` to restore.
 
 # Core Agent principles

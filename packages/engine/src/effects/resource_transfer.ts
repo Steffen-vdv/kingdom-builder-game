@@ -22,6 +22,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
   const available = defender.resources[key] || 0;
   let amount = Math.floor((available * pct) / 100);
   if (amount < 0) amount = 0;
+  if (amount > available) amount = available;
   defender.resources[key] = available - amount;
   attacker.resources[key] = (attacker.resources[key] || 0) + amount;
 };
