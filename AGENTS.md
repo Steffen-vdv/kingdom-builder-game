@@ -61,6 +61,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-10-01: Shell starts without standard binaries in PATH; run `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` to restore.
 - 2025-10-05: `compare` evaluator returns 1 when a comparison holds, allowing conditional effects.
 - 2025-08-31: Node and npm may be missing; install with `apt-get install -y nodejs npm` before running tests.
+- 2025-10-11: Building stat bonuses should use `PassiveMethods.ADD` with a unique id to tie their effects to the building's existence.
 
 # Core Agent principles
 
