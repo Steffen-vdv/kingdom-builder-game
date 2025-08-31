@@ -8,6 +8,7 @@ import {
   STATS,
   POPULATION_ROLES,
   LAND_ICON as landIcon,
+  SLOT_ICON as slotIcon,
   DEVELOPMENT_INFO as developmentInfo,
   ACTION_INFO as actionInfo,
 } from '@kingdom-builder/contents';
@@ -117,6 +118,16 @@ export function diffSnapshots(
         changes.push(`${landIcon} +${label}`);
       }
   }
+  const beforeSlots = before.lands.reduce((sum, l) => sum + l.slotsMax, 0);
+  const afterSlots = after.lands.reduce((sum, l) => sum + l.slotsMax, 0);
+  const newLandSlots = after.lands
+    .filter((l) => !before.lands.some((b) => b.id === l.id))
+    .reduce((sum, l) => sum + l.slotsMax, 0);
+  const slotDelta = afterSlots - newLandSlots - beforeSlots;
+  if (slotDelta !== 0)
+    changes.push(
+      `${slotIcon} Development Slot ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
+    );
   const beforeP = new Set(before.passives);
   const afterP = new Set(after.passives);
   for (const id of beforeP)
@@ -248,6 +259,16 @@ export function diffStepSnapshots(
         changes.push(`${landIcon} +${label}`);
       }
   }
+  const beforeSlots = before.lands.reduce((sum, l) => sum + l.slotsMax, 0);
+  const afterSlots = after.lands.reduce((sum, l) => sum + l.slotsMax, 0);
+  const newLandSlots = after.lands
+    .filter((l) => !before.lands.some((b) => b.id === l.id))
+    .reduce((sum, l) => sum + l.slotsMax, 0);
+  const slotDelta = afterSlots - newLandSlots - beforeSlots;
+  if (slotDelta !== 0)
+    changes.push(
+      `${slotIcon} Development Slot ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
+    );
   const beforeP = new Set(before.passives);
   const afterP = new Set(after.passives);
   for (const id of beforeP)

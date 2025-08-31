@@ -17,4 +17,11 @@ registerEffectFormatter('passive', 'add', {
       ? [{ title: '♾️ Before your next Upkeep Phase', items: inner }]
       : inner;
   },
+  log: (eff, ctx) => {
+    const inner = describeEffects(eff.effects || [], ctx);
+    const items = [...(inner.length ? inner : [])];
+    if (eff.params?.['onUpkeepPhase'])
+      items.push("♾️ Passive duration: Until player's next Upkeep Phase");
+    return { title: '♾️ Passive added', items };
+  },
 });
