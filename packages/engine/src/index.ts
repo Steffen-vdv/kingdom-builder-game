@@ -277,8 +277,12 @@ function applyPlayerStart(
 ) {
   for (const [key, value] of Object.entries(config.resources || {}))
     player.resources[key as ResourceKey] = value ?? 0;
-  for (const [key, value] of Object.entries(config.stats || {}))
-    player.stats[key as StatKey] = value ?? 0;
+  for (const [key, value] of Object.entries(config.stats || {})) {
+    const val = value ?? 0;
+    const statKey = key as StatKey;
+    player.stats[statKey] = val;
+    if (val !== 0) player.statsHistory[statKey] = true;
+  }
   for (const [key, value] of Object.entries(config.population || {}))
     player.population[key as PopulationRoleId] = value ?? 0;
   if (config.lands)

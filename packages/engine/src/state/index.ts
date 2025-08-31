@@ -51,18 +51,14 @@ export class Land {
 export class PlayerState {
   id: PlayerId;
   name: string;
-  resources: Record<ResourceKey, number> = {
-    [Resource.gold]: 0,
-    [Resource.ap]: 0,
-    [Resource.happiness]: 0,
-    [Resource.castleHP]: 10,
-  };
-  stats: Record<StatKey, number> = {
-    [Stat.maxPopulation]: 1,
-    [Stat.armyStrength]: 0,
-    [Stat.fortificationStrength]: 0,
-    [Stat.absorption]: 0,
-  };
+  resources: Record<ResourceKey, number>;
+  stats: Record<StatKey, number>;
+  /**
+   * Tracks whether a stat has ever been non-zero. This allows the UI to hide
+   * stats that are zero and have never changed while still showing stats that
+   * returned to zero after previously having a value.
+   */
+  statsHistory: Record<StatKey, boolean>;
   population: Record<PopulationRoleId, number> = {
     [PopulationRole.Council]: 0,
     [PopulationRole.Commander]: 0,
@@ -75,6 +71,19 @@ export class PlayerState {
   constructor(id: PlayerId, name: string) {
     this.id = id;
     this.name = name;
+    this.resources = {
+      [Resource.gold]: 0,
+      [Resource.ap]: 0,
+      [Resource.happiness]: 0,
+      [Resource.castleHP]: 10,
+    };
+    this.stats = {} as Record<StatKey, number>;
+    this.statsHistory = {} as Record<StatKey, boolean>;
+    for (const key of Object.values(Stat) as StatKey[]) {
+      const value = key === Stat.maxPopulation ? 1 : 0;
+      this.stats[key] = value;
+      this.statsHistory[key] = value !== 0;
+    }
   }
   get gold() {
     return this.resources[Resource.gold];
@@ -99,24 +108,28 @@ export class PlayerState {
   }
   set maxPopulation(v: number) {
     this.stats[Stat.maxPopulation] = v;
+    if (v !== 0) this.statsHistory[Stat.maxPopulation] = true;
   }
   get armyStrength() {
     return this.stats[Stat.armyStrength];
   }
   set armyStrength(v: number) {
     this.stats[Stat.armyStrength] = v;
+    if (v !== 0) this.statsHistory[Stat.armyStrength] = true;
   }
   get fortificationStrength() {
     return this.stats[Stat.fortificationStrength];
   }
   set fortificationStrength(v: number) {
     this.stats[Stat.fortificationStrength] = v;
+    if (v !== 0) this.statsHistory[Stat.fortificationStrength] = true;
   }
   get absorption() {
     return this.stats[Stat.absorption];
   }
   set absorption(v: number) {
     this.stats[Stat.absorption] = v;
+    if (v !== 0) this.statsHistory[Stat.absorption] = true;
   }
 }
 

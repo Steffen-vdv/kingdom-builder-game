@@ -16,5 +16,12 @@ export const statAddPct: EffectHandler = (effect, ctx, mult = 1) => {
 
   const base = ctx.statAddPctBases[cacheKey]!;
   ctx.statAddPctAccums[cacheKey]! += base * (pct / 100) * mult;
-  ctx.activePlayer.stats[key] = base + ctx.statAddPctAccums[cacheKey]!;
+  let newVal = base + ctx.statAddPctAccums[cacheKey]!;
+  if (effect.round === 'up')
+    newVal = newVal >= 0 ? Math.ceil(newVal) : Math.floor(newVal);
+  else if (effect.round === 'down')
+    newVal = newVal >= 0 ? Math.floor(newVal) : Math.ceil(newVal);
+  if (newVal < 0) newVal = 0;
+  ctx.activePlayer.stats[key] = newVal;
+  if (newVal !== 0) ctx.activePlayer.statsHistory[key] = true;
 };
