@@ -15,6 +15,7 @@ import {
   GAME_START,
   ACTION_INFO as actionInfo,
   RESOURCES,
+  SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
 import { snapshotPlayer, diffSnapshots, logContent } from '../src/translation';
 
@@ -94,6 +95,10 @@ describe('sub-action logging', () => {
     });
     const tillTrace = traces.find((t) => t.id === 'till') as ActionTrace;
     const tillDiff = diffSnapshots(tillTrace.before, tillTrace.after, ctx);
+    expect(tillDiff.length).toBeGreaterThan(0);
+    expect(
+      tillDiff.some((line) => line.startsWith(`${slotIcon} Development Slot`)),
+    ).toBe(true);
     tillDiff.forEach((line) => {
       expect(logLines).toContain(`    ${line}`);
       expect(logLines).not.toContain(`  ${line}`);

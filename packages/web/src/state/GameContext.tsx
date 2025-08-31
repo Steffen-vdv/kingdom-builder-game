@@ -309,11 +309,15 @@ export function GameProvider({
           messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
       }
 
+      const normalize = (line: string) =>
+        (line.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
+      const subPrefixes = subLines.map(normalize);
+
       const costLabels = new Set(
         Object.keys(costs) as (keyof typeof RESOURCES)[],
       );
       const filtered = changes.filter((line) => {
-        if (subLines.includes(line)) return false;
+        if (subPrefixes.includes(normalize(line))) return false;
         for (const key of costLabels) {
           const info = RESOURCES[key];
           const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
