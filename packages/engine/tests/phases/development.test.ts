@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { advance, PopulationRole, Stat, Resource } from '../../src';
-import { PHASES } from '@kingdom-builder/contents';
+import { PHASES, GAME_START } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 const devPhase = PHASES.find((p) => p.id === 'development')!;
@@ -24,28 +24,6 @@ const councilApGain = Number(
   )?.params.amount ?? 0,
 );
 
-const raiseStep = devPhase.steps.find((s) => s.id === 'raise-strength');
-const commanderPct = Number(
-  raiseStep?.effects
-    ?.find((e) => e.evaluator?.params?.role === PopulationRole.Commander)
-    ?.effects?.find(
-      (eff) =>
-        eff.type === 'stat' &&
-        eff.method === 'add_pct' &&
-        eff.params.key === Stat.armyStrength,
-    )?.params.percent ?? 0,
-);
-const fortifierPct = Number(
-  raiseStep?.effects
-    ?.find((e) => e.evaluator?.params?.role === PopulationRole.Fortifier)
-    ?.effects?.find(
-      (eff) =>
-        eff.type === 'stat' &&
-        eff.method === 'add_pct' &&
-        eff.params.key === Stat.fortificationStrength,
-    )?.params.percent ?? 0,
-);
-
 describe('Development phase', () => {
   it('triggers population and development effects', () => {
     const ctx = createTestEngine();
@@ -65,9 +43,10 @@ describe('Development phase', () => {
     ctx.activePlayer.stats[Stat.armyStrength] = 8;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
     const player = ctx.activePlayer;
+    const growth = player.stats[Stat.growth];
     while (ctx.game.currentPhase === 'development') advance(ctx);
-    const expectedArmy = Math.ceil(8 + 8 * (commanderPct / 100));
-    const expectedFort = Math.ceil(4 + 4 * (fortifierPct / 100));
+    const expectedArmy = Math.ceil(8 + 8 * growth);
+    const expectedFort = Math.ceil(4 + 4 * growth);
     expect(player.stats[Stat.armyStrength]).toBe(expectedArmy);
     expect(player.stats[Stat.fortificationStrength]).toBe(expectedFort);
     expect(Number.isInteger(player.stats[Stat.armyStrength])).toBe(true);
@@ -84,9 +63,10 @@ describe('Development phase', () => {
     ctx.activePlayer.population[PopulationRole.Fortifier] = 2;
     ctx.activePlayer.stats[Stat.armyStrength] = 10;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 10;
+    const growth = ctx.activePlayer.stats[Stat.growth];
     while (ctx.game.currentPhase === 'development') advance(ctx);
-    const expectedArmy = Math.ceil(10 + 10 * (commanderPct / 100) * 2);
-    const expectedFort = Math.ceil(10 + 10 * (fortifierPct / 100) * 2);
+    const expectedArmy = Math.ceil(10 + 10 * growth * 2);
+    const expectedFort = Math.ceil(10 + 10 * growth * 2);
     expect(ctx.activePlayer.stats[Stat.armyStrength]).toBe(expectedArmy);
     expect(ctx.activePlayer.stats[Stat.fortificationStrength]).toBe(
       expectedFort,
@@ -106,34 +86,35 @@ describe('Development phase', () => {
   describe('strength growth scenarios', () => {
     const baseArmy = 5;
     const baseFort = 5;
+    const baseGrowth = Number(GAME_START.player.stats?.[Stat.growth] ?? 0);
     it.each([
       {
         label: '0 fortifiers',
         commanders: 0,
         fortifiers: 0,
-        expArmy: Math.ceil(baseArmy + baseArmy * (commanderPct / 100) * 0),
-        expFort: Math.ceil(baseFort + baseFort * (fortifierPct / 100) * 0),
+        expArmy: Math.ceil(baseArmy + baseArmy * baseGrowth * 0),
+        expFort: Math.ceil(baseFort + baseFort * baseGrowth * 0),
       },
       {
         label: '3 fortifiers',
         commanders: 0,
         fortifiers: 3,
-        expArmy: Math.ceil(baseArmy + baseArmy * (commanderPct / 100) * 0),
-        expFort: Math.ceil(baseFort + baseFort * (fortifierPct / 100) * 3),
+        expArmy: Math.ceil(baseArmy + baseArmy * baseGrowth * 0),
+        expFort: Math.ceil(baseFort + baseFort * baseGrowth * 3),
       },
       {
         label: '15 fortifiers',
         commanders: 0,
         fortifiers: 15,
-        expArmy: Math.ceil(baseArmy + baseArmy * (commanderPct / 100) * 0),
-        expFort: Math.ceil(baseFort + baseFort * (fortifierPct / 100) * 15),
+        expArmy: Math.ceil(baseArmy + baseArmy * baseGrowth * 0),
+        expFort: Math.ceil(baseFort + baseFort * baseGrowth * 15),
       },
       {
         label: '5 fortifiers and 5 commanders',
         commanders: 5,
         fortifiers: 5,
-        expArmy: Math.ceil(baseArmy + baseArmy * (commanderPct / 100) * 5),
-        expFort: Math.ceil(baseFort + baseFort * (fortifierPct / 100) * 5),
+        expArmy: Math.ceil(baseArmy + baseArmy * baseGrowth * 5),
+        expFort: Math.ceil(baseFort + baseFort * baseGrowth * 5),
       },
     ])('$label', ({ commanders, fortifiers, expArmy, expFort }) => {
       const ctx = createTestEngine();
