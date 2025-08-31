@@ -17,6 +17,7 @@ import type { CostBag, RuleSet } from './services';
 import { EngineContext } from './context';
 import { runEffects, EFFECTS, registerCoreEffects } from './effects';
 import type { EffectDef } from './effects';
+import { collectTriggerEffects } from './triggers';
 import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
@@ -38,50 +39,6 @@ import {
 import type { PhaseDef } from './phases';
 export { snapshotPlayer } from './log';
 export type { PlayerSnapshot, ActionTrace } from './log';
-
-type TriggerKey = string;
-
-function getEffects(def: unknown, trigger: string): EffectDef[] | undefined {
-  const val = (def as Record<string, unknown>)[trigger];
-  return Array.isArray(val) ? (val as EffectDef[]) : undefined;
-}
-
-export function collectTriggerEffects(
-  trigger: TriggerKey,
-  ctx: EngineContext,
-  player: PlayerState = ctx.activePlayer,
-): EffectDef[] {
-  const effects: EffectDef[] = [];
-  for (const [role, count] of Object.entries(player.population)) {
-    const populationDefinition = ctx.populations.get(role);
-    const list = getEffects(populationDefinition, trigger);
-    if (!list) continue;
-    for (let i = 0; i < Number(count); i++)
-      effects.push(...list.map((e) => ({ ...e })));
-  }
-  for (const land of player.lands) {
-    for (const id of land.developments) {
-      const developmentDefinition = ctx.developments.get(id);
-      const list = getEffects(developmentDefinition, trigger);
-      if (!list) continue;
-      effects.push(
-        ...applyParamsToEffects(list, { landId: land.id, id }).map((e) => ({
-          ...e,
-        })),
-      );
-    }
-  }
-  for (const id of player.buildings) {
-    const buildingDefinition = ctx.buildings.get(id);
-    const list = getEffects(buildingDefinition, trigger);
-    if (list) effects.push(...list.map((e) => ({ ...e })));
-  }
-  for (const passive of ctx.passives.values(player.id)) {
-    const list = getEffects(passive, trigger);
-    if (list) effects.push(...list.map((e) => ({ ...e })));
-  }
-  return effects;
-}
 
 function applyCostsWithPassives(
   actionId: string,
@@ -247,51 +204,6 @@ export function advance(ctx: EngineContext): AdvanceResult {
   return { phase: phase.id, step: step?.id || '', effects, player };
 }
 
-export function resolveAttack(
-  defender: PlayerState,
-  damage: number,
-  ctx: EngineContext,
-) {
-  const original = ctx.game.currentPlayerIndex;
-  const index = ctx.game.players.indexOf(defender);
-  ctx.game.currentPlayerIndex = index;
-  const pre = collectTriggerEffects('onBeforeAttacked', ctx, defender);
-  if (pre.length) runEffects(pre, ctx);
-
-  const absorb = Math.min(
-    defender.absorption || 0,
-    ctx.services.rules.absorptionCapPct,
-  );
-  let reduced = damage * (1 - absorb);
-  const rounding = ctx.services.rules.absorptionRounding;
-  if (rounding === 'down') reduced = Math.floor(reduced);
-  else if (rounding === 'up') reduced = Math.ceil(reduced);
-  else reduced = Math.round(reduced);
-
-  const attacker = ctx.game.players[original]!;
-  const castleDamage = Math.max(
-    0,
-    reduced - (defender.fortificationStrength || 0),
-  );
-  if (castleDamage > 0) {
-    defender.resources[Resource.castleHP] = Math.max(
-      0,
-      (defender.resources[Resource.castleHP] || 0) - castleDamage,
-    );
-    defender.happiness -= 1;
-    attacker.happiness += 1;
-    const rate = attacker.buildings.has('raiders_guild') ? 0.5 : 0.25;
-    const plunder = Math.floor(defender.gold * rate);
-    defender.gold -= plunder;
-    attacker.gold += plunder;
-  }
-
-  const effects = collectTriggerEffects('onAttackResolved', ctx, defender);
-  if (effects.length) runEffects(effects, ctx);
-  ctx.game.currentPlayerIndex = original;
-  return castleDamage;
-}
-
 function applyPlayerStart(
   player: PlayerState,
   config: PlayerStartConfig,
@@ -455,3 +367,5 @@ export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
 export type { GameConfig } from './config/schema';
+export { resolveAttack } from './effects/attack';
+export { collectTriggerEffects } from './triggers';
