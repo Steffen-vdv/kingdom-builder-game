@@ -9,6 +9,7 @@ export default defineConfig({
         __dirname,
         'packages/contents/src',
       ),
+      '@kingdom-builder/web': path.resolve(__dirname, 'packages/web/src'),
     },
   },
   test: {

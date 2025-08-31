@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, advance } from '../../packages/engine/src';
+import { createEngine, advance } from '@kingdom-builder/engine';
 import {
   ACTIONS,
   BUILDINGS,
@@ -7,7 +7,7 @@ import {
   POPULATIONS,
   PHASES,
   GAME_START,
-} from '../../packages/contents/src';
+} from '@kingdom-builder/contents';
 
 describe('Turn cycle integration', () => {
   it('advances players through all phases sequentially', () => {

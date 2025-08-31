@@ -79,8 +79,11 @@ testing, prefer overriding registries instead of stubbing modules.
 
 The repository uses a monorepo under `packages/`:
 
-- `packages/engine` – game rules, registries, effect handlers and tests.
-- `packages/web` – Vite + React client consuming the engine.
+- `packages/contents` – default game configuration edited by live-ops. Contains
+  no logic; only data such as actions, buildings, phases and translations.
+- `packages/engine` – game rules, registries, effect handlers and tests. The
+  engine consumes configuration and never hard codes content.
+- `packages/web` – Vite + React client consuming the engine and content.
 
 Shared configuration files live at the repository root. Adding a new package or
 library should follow the same structure so shared tooling continues to work.
