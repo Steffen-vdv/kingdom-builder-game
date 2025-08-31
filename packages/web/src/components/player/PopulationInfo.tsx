@@ -2,6 +2,7 @@ import React from 'react';
 import { POPULATION_ROLES, STATS } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
+import { useDeltaFlash } from '../../utils/useDeltaFlash';
 
 interface PopulationInfoProps {
   player: EngineContext['activePlayer'];
@@ -12,6 +13,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
   const popDetails = popEntries.map(([role, count]) => ({ role, count }));
+  const popRef = useDeltaFlash<HTMLSpanElement>(currentPop);
 
   function formatStatValue(key: string, value: number) {
     if (key === 'absorption' || key === 'growth') return `${value * 100}%`;
@@ -31,10 +33,66 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
       bgClass: 'bg-gray-100 dark:bg-gray-700',
     });
 
+  const PopRoleItem: React.FC<{ role: string; count: number }> = ({
+    role,
+    count,
+  }) => {
+    const info = POPULATION_ROLES[role as keyof typeof POPULATION_ROLES];
+    const ref = useDeltaFlash<HTMLSpanElement>(count);
+    return (
+      <span
+        ref={ref}
+        className="cursor-help hoverable rounded px-1"
+        onMouseEnter={(e) => {
+          e.stopPropagation();
+          handleHoverCard({
+            title: `${info.icon} ${info.label}`,
+            effects: [],
+            requirements: [],
+            description: info.description,
+            bgClass: 'bg-gray-100 dark:bg-gray-700',
+          });
+        }}
+        onMouseLeave={(e) => {
+          e.stopPropagation();
+          showPopulationCard();
+        }}
+      >
+        {info.icon}
+        {count}
+      </span>
+    );
+  };
+
+  const StatItem: React.FC<{ k: string; v: number }> = ({ k, v }) => {
+    const info = STATS[k as keyof typeof STATS];
+    const ref = useDeltaFlash<HTMLSpanElement>(v);
+    return (
+      <span
+        ref={ref}
+        className="bar-item hoverable cursor-help rounded px-1"
+        onMouseEnter={() =>
+          handleHoverCard({
+            title: `${info.icon} ${info.label}`,
+            effects: [],
+            requirements: [],
+            description: info.description,
+            bgClass: 'bg-gray-100 dark:bg-gray-700',
+          })
+        }
+        onMouseLeave={clearHoverCard}
+      >
+        {info.icon}
+        {formatStatValue(k, v)}
+      </span>
+    );
+  };
+
   return (
     <>
       <div className="h-4 border-l border-black/10 dark:border-white/10" />
       <span
+        ref={popRef}
         className="bar-item hoverable cursor-help rounded px-1"
         onMouseEnter={showPopulationCard}
         onMouseLeave={clearHoverCard}
@@ -43,35 +101,12 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
         {popDetails.length > 0 && (
           <>
             {' ('}
-            {popDetails.map(({ role, count }, i) => {
-              const info =
-                POPULATION_ROLES[role as keyof typeof POPULATION_ROLES];
-              return (
-                <React.Fragment key={role}>
-                  {i > 0 && ','}
-                  <span
-                    className="cursor-help hoverable rounded px-1"
-                    onMouseEnter={(e) => {
-                      e.stopPropagation();
-                      handleHoverCard({
-                        title: `${info.icon} ${info.label}`,
-                        effects: [],
-                        requirements: [],
-                        description: info.description,
-                        bgClass: 'bg-gray-100 dark:bg-gray-700',
-                      });
-                    }}
-                    onMouseLeave={(e) => {
-                      e.stopPropagation();
-                      showPopulationCard();
-                    }}
-                  >
-                    {info.icon}
-                    {count}
-                  </span>
-                </React.Fragment>
-              );
-            })}
+            {popDetails.map(({ role, count }, i) => (
+              <React.Fragment key={role}>
+                {i > 0 && ','}
+                <PopRoleItem role={role} count={count} />
+              </React.Fragment>
+            ))}
             {')'}
           </>
         )}
@@ -83,28 +118,9 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
             (v !== 0 ||
               player.statsHistory?.[k as keyof typeof player.statsHistory]),
         )
-        .map(([k, v]) => {
-          const info = STATS[k as keyof typeof STATS];
-          return (
-            <span
-              key={k}
-              className="bar-item hoverable cursor-help rounded px-1"
-              onMouseEnter={() =>
-                handleHoverCard({
-                  title: `${info.icon} ${info.label}`,
-                  effects: [],
-                  requirements: [],
-                  description: info.description,
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
-              onMouseLeave={clearHoverCard}
-            >
-              {info.icon}
-              {formatStatValue(k, v)}
-            </span>
-          );
-        })}
+        .map(([k, v]) => (
+          <StatItem key={k} k={k} v={v} />
+        ))}
     </>
   );
 };
