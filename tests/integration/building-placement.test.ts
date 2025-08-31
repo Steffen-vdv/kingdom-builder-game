@@ -1,13 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { performAction, getActionCosts } from '@kingdom-builder/engine';
+import {
+  performAction,
+  getActionCosts,
+  Resource,
+} from '@kingdom-builder/engine';
 import { createTestContext, getActionOutcome } from './fixtures';
 
 describe('Building placement integration', () => {
   it('applies building effects to subsequent actions', () => {
     const ctx = createTestContext();
-    ctx.activePlayer.ap = ctx.services.rules.defaultActionAPCost * 2;
     const expandBefore = getActionOutcome('expand', ctx);
     const buildCosts = getActionCosts('build', ctx, { id: 'town_charter' });
+    ctx.activePlayer.ap =
+      (expandBefore.costs[Resource.ap] ?? 0) + (buildCosts[Resource.ap] ?? 0);
     const resBefore = { ...ctx.activePlayer.resources };
 
     performAction('build', ctx, { id: 'town_charter' });
