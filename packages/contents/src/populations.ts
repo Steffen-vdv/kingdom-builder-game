@@ -8,7 +8,7 @@ import {
   ResourceMethods,
   PassiveMethods,
   StatMethods,
-} from '@kingdom-builder/engine/config/builders';
+} from './config/builders';
 import type { PopulationDef } from './defs';
 
 export type { PopulationDef } from './defs';

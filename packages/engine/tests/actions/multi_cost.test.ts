@@ -6,7 +6,7 @@ import {
   advance,
 } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import { action, building } from '../../src/config/builders.ts';
+import { action, building } from '@kingdom-builder/contents/config/builders';
 
 describe('multi-cost content', () => {
   it('supports actions with multiple costs', () => {

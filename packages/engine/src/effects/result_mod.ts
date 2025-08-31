@@ -6,6 +6,7 @@ interface ResultModParams {
   actionId?: string;
   evaluation?: { type: string; id: string };
   amount?: number;
+  adjust?: number;
   [key: string]: unknown;
 }
 
@@ -33,12 +34,15 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
       const target = `${evaluation.type}:${evaluation.id}`;
       const rawAmount = effect.params?.['amount'];
       const amount = typeof rawAmount === 'number' ? rawAmount : undefined;
+      const rawAdjust = effect.params?.['adjust'];
+      const adjust = typeof rawAdjust === 'number' ? rawAdjust : undefined;
       ctx.passives.registerEvaluationModifier(
         modId,
         target,
         (innerContext, gains) => {
           if (innerContext.activePlayer.id !== ownerId) return;
           if (effects.length) runEffects(effects, innerContext);
+          if (adjust !== undefined) for (const g of gains) g.amount += adjust;
           if (amount !== undefined)
             for (const g of gains)
               if (g.amount > 0)
