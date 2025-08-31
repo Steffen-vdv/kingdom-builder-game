@@ -12,6 +12,7 @@ import {
   Stat,
   PopulationRole,
 } from '@kingdom-builder/contents';
+import { statDisplaysAsPercent } from '../utils/stats';
 interface StepDef {
   id: string;
   title?: string;
@@ -85,7 +86,7 @@ export function diffSnapshots(
       const icon = info?.icon ? `${info.icon} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;
-      if (key === 'absorption' || key === 'growth') {
+      if (statDisplaysAsPercent(key)) {
         const bPerc = b * 100;
         const aPerc = a * 100;
         const dPerc = delta * 100;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { POPULATION_ROLES, STATS } from '@kingdom-builder/contents';
+import { formatStatValue } from '../../utils/stats';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 
@@ -12,11 +13,6 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
   const popDetails = popEntries.map(([role, count]) => ({ role, count }));
-
-  function formatStatValue(key: string, value: number) {
-    if (key === 'absorption' || key === 'growth') return `${value * 100}%`;
-    return String(value);
-  }
 
   const showPopulationCard = () =>
     handleHoverCard({

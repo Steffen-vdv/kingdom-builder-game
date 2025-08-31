@@ -13,6 +13,7 @@ export interface StatInfo {
   icon: string;
   label: string;
   description: string;
+  displayAsPercent?: boolean;
   addFormat?: {
     prefix?: string;
     percent?: boolean;
@@ -50,6 +51,7 @@ export const STATS: Record<StatKey, StatInfo> = {
     label: 'Absorption',
     description:
       'Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.',
+    displayAsPercent: true,
     addFormat: {
       percent: true,
     },
@@ -60,6 +62,7 @@ export const STATS: Record<StatKey, StatInfo> = {
     label: 'Growth',
     description:
       'Growth increases Army and Fortification Strength during the Raise Strength step.',
+    displayAsPercent: true,
     addFormat: {
       percent: true,
     },
