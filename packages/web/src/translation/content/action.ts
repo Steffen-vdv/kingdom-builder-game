@@ -4,15 +4,23 @@ import {
   ACTION_INFO as actionInfo,
 } from '@kingdom-builder/contents';
 import { summarizeEffects, describeEffects } from '../effects';
+import { applyParamsToEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator, logContent } from './factory';
 import type { ContentTranslator, Summary } from './types';
 
 class ActionTranslator
   implements ContentTranslator<string, Record<string, unknown>>
 {
-  summarize(id: string, ctx: EngineContext): Summary {
+  summarize(
+    id: string,
+    ctx: EngineContext,
+    opts?: Record<string, unknown>,
+  ): Summary {
     const def = ctx.actions.get(id);
-    const eff = summarizeEffects(def.effects, ctx);
+    const effects = opts
+      ? applyParamsToEffects(def.effects, opts)
+      : def.effects;
+    const eff = summarizeEffects(effects, ctx);
     if (!eff.length) return [];
     return [
       {
@@ -21,9 +29,16 @@ class ActionTranslator
       },
     ];
   }
-  describe(id: string, ctx: EngineContext): Summary {
+  describe(
+    id: string,
+    ctx: EngineContext,
+    opts?: Record<string, unknown>,
+  ): Summary {
     const def = ctx.actions.get(id);
-    const eff = describeEffects(def.effects, ctx);
+    const effects = opts
+      ? applyParamsToEffects(def.effects, opts)
+      : def.effects;
+    const eff = describeEffects(effects, ctx);
     if (!eff.length) return [];
     return [
       {
