@@ -23,6 +23,7 @@ import { populationRemove } from './population_remove';
 import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
+import { attackPerform } from './attack';
 
 export interface EffectDef<
   P extends Record<string, unknown> = Record<string, unknown>,
@@ -68,6 +69,7 @@ export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
   registry.add('action:add', actionAdd);
   registry.add('action:remove', actionRemove);
   registry.add('action:perform', actionPerform);
+  registry.add('attack:perform', attackPerform);
 }
 
 export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {

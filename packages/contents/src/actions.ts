@@ -19,6 +19,7 @@ import {
   PassiveMethods,
   CostModMethods,
   BuildingMethods,
+  StatMethods,
 } from './config/builders';
 
 export type ActionDef = ActionConfig;
@@ -181,6 +182,30 @@ export function createActionRegistry() {
           .message(
             `${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Commander].icon} ${POPULATION_ROLES[PopulationRole.Commander].label}`,
           )
+          .build(),
+      )
+      .effect(
+        effect('attack', 'perform')
+          .param('onCastleDamage', {
+            attacker: [
+              effect(Types.Resource, ResourceMethods.ADD)
+                .params({ key: Resource.happiness, amount: 1 })
+                .build(),
+              effect(Types.Action, ActionMethods.PERFORM)
+                .param('id', 'plunder')
+                .build(),
+            ],
+            defender: [
+              effect(Types.Resource, ResourceMethods.ADD)
+                .params({ key: Resource.happiness, amount: -1 })
+                .build(),
+            ],
+          })
+          .build(),
+      )
+      .effect(
+        effect(Types.Stat, StatMethods.ADD)
+          .params({ key: Stat.warWeariness, amount: 1 })
           .build(),
       )
       .build(),
