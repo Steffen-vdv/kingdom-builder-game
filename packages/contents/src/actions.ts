@@ -1,5 +1,7 @@
 import { Registry } from '@kingdom-builder/engine/registry';
 import { Resource, Stat, PopulationRole } from '@kingdom-builder/engine/state';
+import { STATS } from './stats';
+import { POPULATION_ROLES } from './populationRoles';
 import {
   actionSchema,
   type ActionConfig,
@@ -176,7 +178,9 @@ export function createActionRegistry() {
             type: 'population',
             params: { role: PopulationRole.Commander },
           })
-          .message('War weariness must be lower than commanders')
+          .message(
+            `${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Commander].icon} ${POPULATION_ROLES[PopulationRole.Commander].label}`,
+          )
           .build(),
       )
       .build(),

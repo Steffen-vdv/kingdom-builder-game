@@ -43,6 +43,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-09-14: PlayerState auto-initializes stats by iterating over `Stat` keys; adding a new stat requires only updating the `Stat` map and providing getters/setters.
 - 2025-09-15: Requirement handlers return `true` or a message; `getActionRequirements` collects these messages for UI prompts.
 - 2025-09-16: Use `evaluator:compare` requirement to compare numeric evaluator outputs without custom handlers.
+- 2025-09-17: Derive requirement icons in the UI by parsing evaluator comparisons; see `getRequirementIcons` utility.
 
 # Core Agent principles
 
