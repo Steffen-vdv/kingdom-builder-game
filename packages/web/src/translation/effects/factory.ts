@@ -1,19 +1,20 @@
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type { SummaryEntry } from '../content';
 // Effect and evaluator formatter registries drive translation lookups.
 
 export interface EffectFormatter {
   summarize?: (
     effect: EffectDef<Record<string, unknown>>,
     ctx: EngineContext,
-  ) => string | string[] | null;
+  ) => SummaryEntry | SummaryEntry[] | null;
   describe?: (
     effect: EffectDef<Record<string, unknown>>,
     ctx: EngineContext,
-  ) => string | string[] | null;
+  ) => SummaryEntry | SummaryEntry[] | null;
   log?: (
     effect: EffectDef<Record<string, unknown>>,
     ctx: EngineContext,
-  ) => string | string[] | null;
+  ) => SummaryEntry | SummaryEntry[] | null;
 }
 
 const EFFECT_FORMATTERS = new Map<string, EffectFormatter>();
@@ -30,19 +31,19 @@ export function registerEffectFormatter(
 export interface EvaluatorFormatter {
   summarize?: (
     ev: { type: string; params: Record<string, unknown> },
-    sub: string[],
+    sub: SummaryEntry[],
     ctx: EngineContext,
-  ) => string[];
+  ) => SummaryEntry[];
   describe?: (
     ev: { type: string; params: Record<string, unknown> },
-    sub: string[],
+    sub: SummaryEntry[],
     ctx: EngineContext,
-  ) => string[];
+  ) => SummaryEntry[];
   log?: (
     ev: { type: string; params: Record<string, unknown> },
-    sub: string[],
+    sub: SummaryEntry[],
     ctx: EngineContext,
-  ) => string[];
+  ) => SummaryEntry[];
 }
 
 export function registerEvaluatorFormatter(
@@ -56,7 +57,7 @@ function applyFormatter(
   effect: EffectDef<Record<string, unknown>>,
   ctx: EngineContext,
   mode: 'summarize' | 'describe' | 'log',
-): string[] {
+): SummaryEntry[] {
   const key = `${effect.type}:${effect.method ?? ''}`;
   const handler = EFFECT_FORMATTERS.get(key);
   if (!handler) return [];
@@ -70,8 +71,8 @@ function applyFormatter(
 export function summarizeEffects(
   effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
   ctx: EngineContext,
-): string[] {
-  const parts: string[] = [];
+): SummaryEntry[] {
+  const parts: SummaryEntry[] = [];
   for (const eff of effects || []) {
     if (eff.evaluator) {
       const ev = eff.evaluator as {
@@ -89,14 +90,14 @@ export function summarizeEffects(
     }
     parts.push(...applyFormatter(eff, ctx, 'summarize'));
   }
-  return parts.map((p) => p.trim());
+  return parts.map((p) => (typeof p === 'string' ? p.trim() : p));
 }
 
 export function describeEffects(
   effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
   ctx: EngineContext,
-): string[] {
-  const parts: string[] = [];
+): SummaryEntry[] {
+  const parts: SummaryEntry[] = [];
   for (const eff of effects || []) {
     if (eff.evaluator) {
       const ev = eff.evaluator as {
@@ -114,14 +115,14 @@ export function describeEffects(
     }
     parts.push(...applyFormatter(eff, ctx, 'describe'));
   }
-  return parts.map((p) => p.trim());
+  return parts.map((p) => (typeof p === 'string' ? p.trim() : p));
 }
 
 export function logEffects(
   effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
   ctx: EngineContext,
-): string[] {
-  const parts: string[] = [];
+): SummaryEntry[] {
+  const parts: SummaryEntry[] = [];
   for (const eff of effects || []) {
     if (eff.evaluator) {
       const ev = eff.evaluator as {
@@ -139,5 +140,5 @@ export function logEffects(
     }
     parts.push(...applyFormatter(eff, ctx, 'log'));
   }
-  return parts.map((p) => p.trim());
+  return parts.map((p) => (typeof p === 'string' ? p.trim() : p));
 }

@@ -17,18 +17,48 @@ registerEffectFormatter('cost_mod', 'add', {
     const key = eff.params?.['key'] as string;
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
-    const actionId = eff.params?.['actionId'] as string;
-    const actionIcon = actionInfo[actionId]?.icon || actionId;
-    return `${modifierInfo.cost.icon} ${actionIcon}: ${icon}${signed(amount)}${amount}`;
+    const actionId = eff.params?.['actionId'] as string | undefined;
+    const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
+    const target = actionId ? `${actionIcon}` : 'All actions';
+    return `${modifierInfo.cost.icon} ${target}: ${icon}${signed(amount)}${amount}`;
   },
   describe: (eff, ctx) => {
     const key = eff.params?.['key'] as string;
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
-    const actionId = eff.params?.['actionId'] as string;
-    const actionIcon = actionInfo[actionId]?.icon || actionId;
-    const actionName = ctx.actions.get(actionId)?.name || actionId;
-    return `${modifierInfo.cost.icon} ${modifierInfo.cost.label} on ${actionIcon} ${actionName}: ${increaseOrDecrease(amount)} cost by ${icon}${Math.abs(amount)}`;
+    const actionId = eff.params?.['actionId'] as string | undefined;
+    const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
+    const actionName = actionId
+      ? ctx.actions.get(actionId)?.name || actionId
+      : 'all actions';
+    const target = actionId ? `${actionIcon} ${actionName}` : actionName;
+    return `${modifierInfo.cost.icon} ${modifierInfo.cost.label} on ${target}: ${increaseOrDecrease(amount)} cost by ${icon}${Math.abs(amount)}`;
+  },
+});
+
+registerEffectFormatter('cost_mod', 'remove', {
+  summarize: (eff, _ctx) => {
+    const key = eff.params?.['key'] as string;
+    const icon = RESOURCES[key as ResourceKey]?.icon || key;
+    const amount = Number(eff.params?.['amount']);
+    const actionId = eff.params?.['actionId'] as string | undefined;
+    const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
+    const target = actionId ? `${actionIcon}` : 'All actions';
+    const delta = -amount;
+    const sign = delta >= 0 ? '+' : '-';
+    return `${modifierInfo.cost.icon} ${target}: ${icon}${sign}${Math.abs(delta)}`;
+  },
+  describe: (eff, ctx) => {
+    const key = eff.params?.['key'] as string;
+    const icon = RESOURCES[key as ResourceKey]?.icon || key;
+    const amount = Number(eff.params?.['amount']);
+    const actionId = eff.params?.['actionId'] as string | undefined;
+    const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
+    const actionName = actionId
+      ? ctx.actions.get(actionId)?.name || actionId
+      : 'all actions';
+    const target = actionId ? `${actionIcon} ${actionName}` : actionName;
+    return `${modifierInfo.cost.icon} ${modifierInfo.cost.label} on ${target}: ${increaseOrDecrease(-amount)} cost by ${icon}${Math.abs(amount)}`;
   },
 });
 
@@ -59,7 +89,14 @@ registerEffectFormatter('result_mod', 'add', {
     }
     const actionId = eff.params?.['actionId'] as string;
     const actionIcon = actionInfo[actionId]?.icon || actionId;
-    return sub.map((s) => `${modifierInfo.result.icon} ${actionIcon}: ${s}`);
+    return sub.map((s) =>
+      typeof s === 'string'
+        ? `${modifierInfo.result.icon} ${actionIcon}: ${s}`
+        : {
+            ...s,
+            title: `${modifierInfo.result.icon} ${actionIcon}: ${s.title}`,
+          },
+    );
   },
   describe: (eff, ctx) => {
     const sub = describeEffects(eff.effects || [], ctx);
@@ -93,9 +130,13 @@ registerEffectFormatter('result_mod', 'add', {
     } catch {
       /* ignore missing action */
     }
-    return sub.map(
-      (s) =>
-        `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`,
+    return sub.map((s) =>
+      typeof s === 'string'
+        ? `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`
+        : {
+            ...s,
+            title: `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s.title}`,
+          },
     );
   },
 });

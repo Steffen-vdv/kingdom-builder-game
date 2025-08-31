@@ -44,13 +44,9 @@ describe('land till formatter', () => {
     expect(items.some((i) => i.includes(slotIcon))).toBe(true);
   });
 
-  it('handles plow action with no summary', () => {
+  it('summarizes plow action', () => {
     const ctx = createCtx();
-    const summary = summarizeContent('action', 'plow', ctx) as {
-      title: string;
-      items: string[];
-    }[];
-    const items = summary?.[0]?.items || [];
-    expect(items).toHaveLength(0);
+    const summary = summarizeContent('action', 'plow', ctx);
+    expect(summary.length).toBeGreaterThan(0);
   });
 });

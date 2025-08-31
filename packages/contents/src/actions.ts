@@ -143,6 +143,33 @@ export function createActionRegistry() {
       .system()
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 6)
+      .effect({ type: 'action', method: 'perform', params: { id: 'expand' } })
+      .effect({ type: 'action', method: 'perform', params: { id: 'till' } })
+      .effect({
+        type: 'passive',
+        method: 'add',
+        params: {
+          id: 'plow_cost_mod',
+          onUpkeepPhase: [
+            {
+              type: 'passive',
+              method: 'remove',
+              params: { id: 'plow_cost_mod' },
+            },
+          ],
+        },
+        effects: [
+          {
+            type: 'cost_mod',
+            method: 'add',
+            params: {
+              id: 'plow_cost_all',
+              key: Resource.gold,
+              amount: 2,
+            },
+          },
+        ],
+      })
       .build(),
   );
 
@@ -178,5 +205,6 @@ export const ACTION_INFO: Record<string, { icon: string; label: string }> = {
   army_attack: { icon: '🗡️', label: ACTIONS.get('army_attack').name },
   hold_festival: { icon: '🎉', label: ACTIONS.get('hold_festival').name },
   plow: { icon: '🚜', label: ACTIONS.get('plow').name },
+  till: { icon: '🧑‍🌾', label: ACTIONS.get('till').name },
   build: { icon: '🏛️', label: ACTIONS.get('build').name },
 } as const;
