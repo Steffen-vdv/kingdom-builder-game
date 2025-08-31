@@ -109,23 +109,25 @@ function GenericActions({
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
             </span>
-            <ul className="text-sm list-disc pl-4 text-left">
-              {implemented ? (
-                renderSummary(stripSummary(summary))
-              ) : (
-                <li className="italic text-red-600">Not implemented yet</li>
+            <div className="flex w-full gap-2">
+              <ul className="text-sm list-disc pl-4 text-left flex-1">
+                {implemented ? (
+                  renderSummary(stripSummary(summary))
+                ) : (
+                  <li className="italic text-red-600">Not implemented yet</li>
+                )}
+              </ul>
+              {requirements.length > 0 && (
+                <div className="text-sm text-red-600 text-left mt-4 w-1/3">
+                  <span className="font-semibold">Requirements</span>
+                  <ul className="list-disc pl-4">
+                    {requirements.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
-            </ul>
-            {requirements.length > 0 && (
-              <div className="text-sm text-red-600 text-left">
-                <span className="font-semibold">Requirements</span>
-                <ul className="list-disc pl-4">
-                  {requirements.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            </div>
           </button>
         );
       })}
@@ -183,11 +185,9 @@ function RaisePopOptions({
             onClick={() => enabled && handlePerform(action, { role })}
             onMouseEnter={() =>
               handleHoverCard({
-                title: `${actionInfo['raise_pop']?.icon ?? ''} ${
-                  actionInfo['raise_pop']?.label ?? ''
-                } - ${POPULATION_ROLES[role]?.icon} ${
-                  POPULATION_ROLES[role]?.label || ''
-                }`,
+                title: `${actionInfo['raise_pop']?.icon ?? ''}${
+                  POPULATION_ROLES[role]?.icon
+                } - Hire ${POPULATION_ROLES[role]?.label || ''}`,
                 effects: summary,
                 requirements,
                 costs,
@@ -197,26 +197,28 @@ function RaisePopOptions({
             onMouseLeave={clearHoverCard}
           >
             <span className="text-base font-medium">
-              {actionInfo['raise_pop']?.icon ?? ''}{' '}
-              {actionInfo['raise_pop']?.label ?? ''} -{' '}
-              {POPULATION_ROLES[role]?.icon} {POPULATION_ROLES[role]?.label}
+              {actionInfo['raise_pop']?.icon ?? ''}
+              {POPULATION_ROLES[role]?.icon} - Hire{' '}
+              {POPULATION_ROLES[role]?.label}
             </span>
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
             </span>
-            <ul className="text-sm list-disc pl-4 text-left">
-              {renderSummary(stripSummary(shortSummary))}
-            </ul>
-            {requirements.length > 0 && (
-              <div className="text-sm text-red-600 text-left">
-                <span className="font-semibold">Requirements</span>
-                <ul className="list-disc pl-4">
-                  {requirements.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <div className="flex w-full gap-2">
+              <ul className="text-sm list-disc pl-4 text-left flex-1">
+                {renderSummary(stripSummary(shortSummary))}
+              </ul>
+              {requirements.length > 0 && (
+                <div className="text-sm text-red-600 text-left mt-4 w-1/3">
+                  <span className="font-semibold">Requirements</span>
+                  <ul className="list-disc pl-4">
+                    {requirements.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </button>
         );
       })}
@@ -243,7 +245,7 @@ function BasicOptions({
           (Effects take place immediately, unless stated otherwise)
         </span>
       </h3>
-      <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
+      <div className="grid grid-cols-4 gap-2 mt-1">
         <GenericActions
           actions={actions}
           summaries={summaries}
@@ -283,7 +285,7 @@ function DevelopOptions({
           (Effects take place on build and last until development is removed)
         </span>
       </h3>
-      <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
+      <div className="grid grid-cols-4 gap-2 mt-1">
         {developments.map((d) => {
           const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
           const costs = getActionCosts('develop', ctx, {
@@ -350,13 +352,25 @@ function DevelopOptions({
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(costs, ctx.activePlayer.resources)}
               </span>
-              <ul className="text-sm list-disc pl-4 text-left">
-                {implemented ? (
-                  renderSummary(stripSummary(summary))
-                ) : (
-                  <li className="italic text-red-600">Not implemented yet</li>
+              <div className="flex w-full gap-2">
+                <ul className="text-sm list-disc pl-4 text-left flex-1">
+                  {implemented ? (
+                    renderSummary(stripSummary(summary))
+                  ) : (
+                    <li className="italic text-red-600">Not implemented yet</li>
+                  )}
+                </ul>
+                {requirements.length > 0 && (
+                  <div className="text-sm text-red-600 text-left mt-4 w-1/3">
+                    <span className="font-semibold">Requirements</span>
+                    <ul className="list-disc pl-4">
+                      {requirements.map((r, i) => (
+                        <li key={i}>{r}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-              </ul>
+              </div>
             </button>
           );
         })}
@@ -388,7 +402,7 @@ function BuildOptions({
           (Effects take place on build and last until building is removed)
         </span>
       </h3>
-      <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
+      <div className="grid grid-cols-4 gap-2 mt-1">
         {buildings.map((b) => {
           const costs = getActionCosts('build', ctx, { id: b.id });
           const requirements: string[] = [];
@@ -440,13 +454,25 @@ function BuildOptions({
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(costs, ctx.activePlayer.resources)}
               </span>
-              <ul className="text-sm list-disc pl-4 text-left">
-                {implemented ? (
-                  renderSummary(stripSummary(summary))
-                ) : (
-                  <li className="italic text-red-600">Not implemented yet</li>
+              <div className="flex w-full gap-2">
+                <ul className="text-sm list-disc pl-4 text-left flex-1">
+                  {implemented ? (
+                    renderSummary(stripSummary(summary))
+                  ) : (
+                    <li className="italic text-red-600">Not implemented yet</li>
+                  )}
+                </ul>
+                {requirements.length > 0 && (
+                  <div className="text-sm text-red-600 text-left mt-4 w-1/3">
+                    <span className="font-semibold">Requirements</span>
+                    <ul className="list-disc pl-4">
+                      {requirements.map((r, i) => (
+                        <li key={i}>{r}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-              </ul>
+              </div>
             </button>
           );
         })}
