@@ -1,5 +1,10 @@
-import type { ResourceKey } from '@kingdom-builder/engine/state';
-import { Resource } from '@kingdom-builder/engine/state';
+export const Resource = {
+  gold: 'gold',
+  ap: 'ap',
+  happiness: 'happiness',
+  castleHP: 'castleHP',
+} as const;
+export type ResourceKey = (typeof Resource)[keyof typeof Resource];
 
 export interface ResourceInfo {
   key: ResourceKey;

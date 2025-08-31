@@ -5,8 +5,8 @@ import {
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
   RESOURCES,
+  Resource,
 } from '@kingdom-builder/contents';
-import { Resource } from '@kingdom-builder/engine';
 
 type Screen = 'menu' | 'overview' | 'game';
 

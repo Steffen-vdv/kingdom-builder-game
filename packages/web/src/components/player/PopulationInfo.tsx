@@ -79,9 +79,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
       {Object.entries(player.stats)
         .filter(
           ([k, v]) =>
-            k !== 'maxPopulation' &&
-            (v !== 0 ||
-              player.statsHistory?.[k as keyof typeof player.statsHistory]),
+            k !== 'maxPopulation' && (v !== 0 || player.statsHistory?.[k]),
         )
         .map(([k, v]) => {
           const info = STATS[k as keyof typeof STATS];

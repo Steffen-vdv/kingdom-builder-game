@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import {
   getActionCosts,
   getActionRequirements,
-  Resource,
   PopulationRole,
 } from '@kingdom-builder/engine';
 import {
+  Resource,
   RESOURCES,
   POPULATION_ROLES,
   SLOT_ICON as slotIcon,
@@ -60,16 +60,15 @@ function GenericActions({
   return (
     <>
       {actions.map((action) => {
-        const costs = getActionCosts(action.id, ctx);
+        const costsBag = getActionCosts(action.id, ctx);
+        const costs: Record<string, number> = {};
+        for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
         const requirements = getActionRequirements(action.id, ctx).map(
           formatRequirement,
         );
         const requirementIcons = getRequirementIcons(action.id, ctx);
         const canPay = Object.entries(costs).every(
-          ([k, v]) =>
-            ctx.activePlayer.resources[
-              k as keyof typeof ctx.activePlayer.resources
-            ] >= v,
+          ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
         );
         const meetsReq = requirements.length === 0;
         const summary = summaries.get(action.id);
@@ -153,15 +152,14 @@ function RaisePopOptions({
         PopulationRole.Commander,
         PopulationRole.Fortifier,
       ].map((role) => {
-        const costs = getActionCosts('raise_pop', ctx);
+        const costsBag = getActionCosts('raise_pop', ctx);
+        const costs: Record<string, number> = {};
+        for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
         const requirements = getActionRequirements('raise_pop', ctx).map(
           formatRequirement,
         );
         const canPay = Object.entries(costs).every(
-          ([k, v]) =>
-            ctx.activePlayer.resources[
-              k as keyof typeof ctx.activePlayer.resources
-            ] >= v,
+          ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
         );
         const meetsReq = requirements.length === 0;
         const enabled = canPay && meetsReq && isActionPhase;
@@ -285,10 +283,12 @@ function DevelopOptions({
       <div className="grid grid-cols-4 gap-2 mt-1">
         {developments.map((d) => {
           const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
-          const costs = getActionCosts('develop', ctx, {
+          const costsBag = getActionCosts('develop', ctx, {
             id: d.id,
             landId: landIdForCost,
           });
+          const costs: Record<string, number> = {};
+          for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
           const requirements = hasDevelopLand
             ? []
             : [
@@ -297,10 +297,7 @@ function DevelopOptions({
           const canPay =
             hasDevelopLand &&
             Object.entries(costs).every(
-              ([k, v]) =>
-                ctx.activePlayer.resources[
-                  k as keyof typeof ctx.activePlayer.resources
-                ] >= v,
+              ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
             );
           const summary = summaries.get(d.id);
           const implemented = (summary?.length ?? 0) > 0; // TODO: implement development effects
@@ -399,13 +396,12 @@ function BuildOptions({
       </h3>
       <div className="grid grid-cols-4 gap-2 mt-1">
         {buildings.map((b) => {
-          const costs = getActionCosts('build', ctx, { id: b.id });
+          const costsBag = getActionCosts('build', ctx, { id: b.id });
+          const costs: Record<string, number> = {};
+          for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
           const requirements: string[] = [];
           const canPay = Object.entries(costs).every(
-            ([k, v]) =>
-              ctx.activePlayer.resources[
-                k as keyof typeof ctx.activePlayer.resources
-              ] >= v,
+            ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
           );
           const summary = summaries.get(b.id);
           const implemented = (summary?.length ?? 0) > 0; // TODO: implement building effects

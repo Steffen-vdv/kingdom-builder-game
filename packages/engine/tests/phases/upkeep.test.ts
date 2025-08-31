@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { advance, PopulationRole, Resource } from '../../src';
-import { PHASES } from '@kingdom-builder/contents';
+import { advance, PopulationRole } from '../../src';
+import { PHASES, Resource as CResource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 const upkeepPhase = PHASES.find((p) => p.id === 'upkeep')!;
@@ -15,7 +15,7 @@ function getUpkeep(role: PopulationRole) {
         (eff) =>
           eff.type === 'resource' &&
           eff.method === 'remove' &&
-          eff.params.key === Resource.gold,
+          eff.params.key === CResource.gold,
       )?.params.amount ?? 0,
   );
 }

@@ -1,17 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, runEffects } from '@kingdom-builder/engine';
-import { Resource, Stat } from '@kingdom-builder/engine/state';
-import { BUILDINGS } from '@kingdom-builder/contents';
+import {
+  Resource,
+  Stat,
+  type StatKey,
+  BUILDINGS,
+} from '@kingdom-builder/contents';
 import { createTestContext } from './fixtures';
 import type { EffectDef } from '@kingdom-builder/engine/effects';
 
-function getStatGain(key: Stat): number {
+function getStatGain(key: StatKey): number {
   const def = BUILDINGS.get('castle_walls');
   const passive = def.onBuild?.find(
     (e) => e.type === 'passive' && e.method === 'add',
   );
   const effect = passive?.effects?.find(
-    (eff): eff is EffectDef<{ key: Stat; amount: number }> =>
+    (eff): eff is EffectDef<{ key: StatKey; amount: number }> =>
       eff.type === 'stat' &&
       typeof eff.params === 'object' &&
       eff.params !== null &&

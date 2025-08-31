@@ -6,8 +6,8 @@ import type {
   RequirementConfig,
   EffectConfig,
 } from '@kingdom-builder/engine/config/schema';
-import type { ResourceKey } from '@kingdom-builder/engine/state';
-import { Resource } from '@kingdom-builder/engine/state';
+import type { ResourceKey } from '../resources';
+import { Resource } from '../resources';
 import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
 
 export const Types = {
