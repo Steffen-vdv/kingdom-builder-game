@@ -7,7 +7,7 @@ export const statAddPct: EffectHandler = (effect, ctx, mult = 1) => {
   if (pct === undefined) {
     const statKey = effect.params!['percentStat'] as StatKey;
     const statVal = ctx.activePlayer.stats[statKey] || 0;
-    pct = statVal * 100;
+    pct = statVal;
   }
 
   // Use a cache keyed by turn/phase/step so multiple evaluations in the
@@ -20,7 +20,7 @@ export const statAddPct: EffectHandler = (effect, ctx, mult = 1) => {
   }
 
   const base = ctx.statAddPctBases[cacheKey]!;
-  ctx.statAddPctAccums[cacheKey]! += base * (pct / 100) * mult;
+  ctx.statAddPctAccums[cacheKey]! += base * pct * mult;
   let newVal = base + ctx.statAddPctAccums[cacheKey]!;
   if (effect.round === 'up')
     newVal = newVal >= 0 ? Math.ceil(newVal) : Math.floor(newVal);

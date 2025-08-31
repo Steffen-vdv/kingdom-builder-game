@@ -84,7 +84,7 @@ export function diffSnapshots(
       const icon = info?.icon ? `${info.icon} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;
-      if (key === 'absorption') {
+      if (key === 'absorption' || key === 'growth') {
         const bPerc = b * 100;
         const aPerc = a * 100;
         const dPerc = delta * 100;
@@ -239,7 +239,7 @@ export function diffStepSnapshots(
       const icon = iconOnly ? `${iconOnly} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;
-      if (key === 'absorption') {
+      if (key === 'absorption' || key === 'growth') {
         const bPerc = b * 100;
         const aPerc = a * 100;
         const dPerc = delta * 100;
@@ -261,7 +261,7 @@ export function diffStepSnapshots(
           const popIcon = POPULATION_ROLES[role]?.icon || '';
           const growth = ctx.activePlayer.stats[Stat.growth] ?? 0;
           const growthIcon = STATS[Stat.growth]?.icon || '';
-          line += ` (${iconOnly}${b} + (${popIcon}${count} * ${growthIcon}${growth}) = ${iconOnly}${a})`;
+          line += ` (${iconOnly}${b} + (${popIcon}${count} * ${growthIcon}${growth * 100}%) = ${iconOnly}${a})`;
         }
         changes.push(line);
       }
