@@ -6,13 +6,13 @@
 - 🏚️Development — a built feature occupying a 🧩Development Slot
 - 👥Population — citizens (roles below)
   - ⚖️Council — each grants 1 ⚡Action Point at the start of your turn
-  - 🎖️Army Commander — **+1 🗡️Army Strength (flat)** & contributes +25% 📈🗡️Growth each 📈Development Phase
-  - 🧱Fortifier — **+1 🛡️Fortification Strength (flat)** & contributes +25% 📈🛡️Growth each 📈Development Phase
+  - 🎖️Army Commander — **+1 ⚔️Army Strength (flat)** & contributes +25% 📈⚔️Growth each 📈Development Phase
+  - 🔨Fortifier — **+1 🛡️Fortification Strength (flat)** & contributes +25% 📈🛡️Growth each 📈Development Phase
   - 👤Citizen — unassigned; no benefits until assigned (upkeep 0🪙)
 - ⚡Action Point (AP) — each Action costs 1⚡
-- 🗡️Army Strength — total offensive strength
+- ⚔️Army Strength — total offensive strength
 - 🛡️Fortification Strength — total defensive strength
-- 📈🗡️/📈🛡️ Growth — % increase applied during 📈Development
+- 📈⚔️/📈🛡️ Growth — % increase applied during 📈Development
 - 😊Happiness — morale (–10 … +10)
 - 🏰Castle HP — starts at 10
 - 🧑‍🌾Till — add +1 🧩Development Slot to an 🗺️Land (max 2 🧩)
@@ -39,14 +39,14 @@
 - **Gain 💹Income**: resolve sources that trigger now (e.g., 🌾, 🌿, Temple).
 - **Generate ⚡**: +1⚡ per ⚖️Council; Player B gets +1⚡ in their first 📈Development only.
 - **Grow Strengths**:
-  - 🗡️ increases by +25% per 🎖️ (rounded up), applied to current 🗡️ which already includes +1 per 🎖️.
-  - 🛡️ increases by +25% per 🧱 (rounded up), applied to current 🛡️ which already includes +1 per 🧱.
+  - ⚔️ increases by +25% per 🎖️ (rounded up), applied to current ⚔️ which already includes +1 per 🎖️.
+  - 🛡️ increases by +25% per 🔨 (rounded up), applied to current 🛡️ which already includes +1 per 🔨.
   - If a 😊 threshold says no growth, skip both increases.
 
 ### 2.2 🧾Upkeep Phase
 
-- Pay: 2🪙/⚖️, 1🪙/🎖️, 1🪙/🧱, 0🪙/👤.
-- If short: Liquidation → recheck → Desertion (🎖️→🧱→⚖️; keep ≥1 ⚖️) → Bankruptcy.
+- Pay: 2🪙/⚖️, 1🪙/🎖️, 1🪙/🔨, 0🪙/👤.
+- If short: Liquidation → recheck → Desertion (🎖️→🔨→⚖️; keep ≥1 ⚖️) → Bankruptcy.
 - End-of-Upkeep triggers: resolve one at a time; owner chooses order.
 
 ### 2.3 🎯Main Phase
@@ -69,7 +69,7 @@
 - Place on 🗺️ with available 🧩:
   - 🏠House — +1 pop cap
   - 🌾Farm — +2🪙 at 💹
-  - 🛡️Outpost — +1🗡️, +1🛡️
+  - 🏹Outpost — +1⚔️, +1🛡️
   - 🗼Watchtower — +2🛡️; **+50% Absorption**; _after an enemy 🗡️Army Attack against you is fully resolved (damage & triggers), remove this 🗼Watchtower (free the 🧩 slot)_
 
 ### 3.4 Tax 💰 — Free
@@ -78,7 +78,7 @@
 
 ### 3.5 Reallocate 🔄 — 5🪙
 
-- Move 1 👥 between ⚖️/🎖️/🧱 (keep ≥1 ⚖️)
+- Move 1 👥 between ⚖️/🎖️/🔨 (keep ≥1 ⚖️)
 - –1😊
 - If assigned to ⚖️: +1⚡ immediately
 - If removed from ⚖️: –1⚡ immediately (floor 0 this turn)
@@ -92,12 +92,12 @@
 
 ### 3.7 Royal Decree 📜 — 12🪙
 
-- 🌱Expand → 🧑‍🌾Till → 🏗️Develop (🏠/🌾/🛡️/🗼), then –3😊
+- 🌱Expand → 🧑‍🌾Till → 🏗️Develop (🏠/🌾/🏹/🗼), then –3😊
 
 ### 3.8 🗡️Army Attack — Free
 
 - Limit: ≤ number of 🎖️
-- Attack Power = current 🗡️
+- Attack Power = current ⚔️
 - Apply **Absorption** (see Section 6)
 - Damage: reduce 🛡️ first; overflow damages 🏰
 - On 🏰 damage: defender –1😊, attacker +1😊, plunder 25% (50% with Raider’s Guild)
@@ -107,7 +107,7 @@
 - +2😊; you cannot Attack this turn
 - Attacks against you: **double attacker’s damage before Absorption**, then apply Absorption (Section 6)
 
-### 3.10 🚜Plow — 6🪙 (requires 🚜Plow Workshop)
+### 3.10 🚜Plow — 6🪙 (requires 🏭Plow Workshop)
 
 - 🌱Expand; 🧑‍🌾Till
 - Your next Action this turn costs +2🪙 (token queue)
@@ -117,10 +117,10 @@
 - **5🪙 — Town Charter**: 🌱Expand costs +2🪙; grants +1 extra 😊
 - **7🪙 — Mill**: whenever you gain resources from a 🌾, gain +1 more of that resource
 - **8🪙 — Raider’s Guild**: Plunder 50%
-- **10🪙 — 🚜Plow Workshop**: gain 🚜Plow
+- **10🪙 — 🏭Plow Workshop**: gain 🚜Plow
 - **10🪙 — Market**: Tax +1🪙/👥
-- **12🪙 — Barracks**: each 🎖️ gives **+1 additional** 🗡️; 📈🗡️ +10% per 🎖️
-- **12🪙 — Citadel**: +5🛡️; 📈🛡️ +15% per 🧱; +1🏠
+- **12🪙 — Barracks**: each 🎖️ gives **+1 additional** ⚔️; 📈⚔️ +10% per 🎖️
+- **12🪙 — Citadel**: +5🛡️; 📈🛡️ +15% per 🔨; +1🏠
 - **14🪙 — Castle Walls**: +5🛡️; **Absorption 20%**
 - **15🪙 — Castle Gardens**: on build → 🌱×2, 🧑‍🌾×2, 🏗️🌿×2; 🌿: +1🪙 at 💹; end of 🧾Upkeep if 😊<0: +1😊
 - **16🪙 — Temple**: whenever 😊 increases, gain +1 extra 😊; +1🏠; +1🪙 at 💹
@@ -129,7 +129,7 @@
 
 ## 4) 😊Happiness — Threshold Effects
 
-- +10 → +50% 💹; Buildings –20% (rounded up); 📈🗡️/📈🛡️ +20%
+- +10 → +50% 💹; Buildings –20% (rounded up); 📈⚔️/📈🛡️ +20%
 - +8 → +50% 💹; Buildings –20% (rounded up)
 - +5 → +25% 💹; Buildings –20% (rounded up)
 - +3 → +25% 💹
@@ -143,5 +143,5 @@
 
 - 🪙 10; 🗺️ 2 (one has 🌾); 🏰 10 (with +1 🏠)
 - 👥 1 (in ⚖️)
-- 🗡️ 0; 🛡️ 0
+- ⚔️ 0; 🛡️ 0
 - 😊 0
