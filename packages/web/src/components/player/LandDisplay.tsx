@@ -70,7 +70,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
                 return (
                   <span
                     key={i}
-                    className="panel-card p-1 text-xs hoverable cursor-help whitespace-nowrap"
+                    className="panel-card p-1 text-xs hoverable cursor-help italic"
                     onMouseEnter={(e) => {
                       e.stopPropagation();
                       handleHoverCard({
@@ -88,7 +88,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
                       handleLeave();
                     }}
                   >
-                    {slotIcon} Development Slot (empty)
+                    empty
                   </span>
                 );
               })}
