@@ -7,7 +7,8 @@ import PhasePanel from './components/phases/PhasePanel';
 import LogPanel from './components/LogPanel';
 
 function GameLayout() {
-  const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
+  const { ctx, onExit, darkMode, onToggleDark, devMode, onToggleDev } =
+    useGameEngine();
   return (
     <div className="p-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
       <div className="flex items-center justify-between mb-6">
@@ -16,6 +17,14 @@ function GameLayout() {
         </h1>
         {onExit && (
           <div className="flex items-center gap-2 ml-4">
+            <button
+              className={`px-3 py-1 rounded text-white hover:opacity-90 ${
+                devMode ? 'bg-green-600' : 'bg-gray-600'
+              }`}
+              onClick={onToggleDev}
+            >
+              {`Dev Mode${devMode ? ': On' : ': Off'}`}
+            </button>
             <button
               className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
               onClick={onToggleDark}
