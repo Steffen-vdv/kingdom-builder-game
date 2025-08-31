@@ -9,7 +9,9 @@ import {
   RESOURCES,
   POPULATION_ROLES,
   SLOT_ICON as slotIcon,
+  SLOT_LABEL as slotLabel,
   LAND_ICON as landIcon,
+  LAND_LABEL as landLabel,
 } from '@kingdom-builder/contents';
 import {
   describeContent,
@@ -20,6 +22,7 @@ import {
 import { renderSummary, renderCosts } from '../../translation/render';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
+import { getRequirementIcons } from '../../utils/getRequirementIcons';
 
 function stripSummary(summary: Summary | undefined): Summary | undefined {
   const first = summary?.[0];
@@ -61,6 +64,7 @@ function GenericActions({
         const requirements = getActionRequirements(action.id, ctx).map(
           formatRequirement,
         );
+        const requirementIcons = getRequirementIcons(action.id, ctx);
         const canPay = Object.entries(costs).every(
           ([k, v]) =>
             ctx.activePlayer.resources[
@@ -87,7 +91,7 @@ function GenericActions({
                 : 'opacity-50 cursor-not-allowed'
             }`}
             title={title}
-            onClick={() => enabled && handlePerform(action)}
+            onClick={() => enabled && void handlePerform(action)}
             onMouseEnter={() => {
               const full = describeContent('action', action.id, ctx);
               const { effects, description } = splitSummary(full);
@@ -112,9 +116,9 @@ function GenericActions({
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
             </span>
-            {requirements.length > 0 && (
+            {requirements.length > 0 && requirementIcons.length > 0 && (
               <span className="absolute top-7 right-2 text-xs text-red-600">
-                Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+                Req {requirementIcons.join('')}
               </span>
             )}
             <ul className="text-sm list-disc pl-4 text-left">
@@ -141,6 +145,7 @@ function RaisePopOptions({
   const { ctx, handlePerform, handleHoverCard, clearHoverCard } =
     useGameEngine();
   const formatRequirement = (req: string) => req;
+  const requirementIcons = getRequirementIcons('raise_pop', ctx);
   return (
     <>
       {[
@@ -178,7 +183,7 @@ function RaisePopOptions({
                 : 'opacity-50 cursor-not-allowed'
             }`}
             title={title}
-            onClick={() => enabled && handlePerform(action, { role })}
+            onClick={() => enabled && void handlePerform(action, { role })}
             onMouseEnter={() => {
               const { effects, description } = splitSummary(summary);
               handleHoverCard({
@@ -202,9 +207,9 @@ function RaisePopOptions({
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
             </span>
-            {requirements.length > 0 && (
+            {requirements.length > 0 && requirementIcons.length > 0 && (
               <span className="absolute top-7 right-2 text-xs text-red-600">
-                Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+                Req {requirementIcons.join('')}
               </span>
             )}
             <ul className="text-sm list-disc pl-4 text-left">
@@ -287,7 +292,7 @@ function DevelopOptions({
           const requirements = hasDevelopLand
             ? []
             : [
-                `Requires ${landIcon} land with free ${slotIcon} development slot`,
+                `Requires ${landIcon} ${landLabel} with free ${slotIcon} ${slotLabel}`,
               ];
           const canPay =
             hasDevelopLand &&
@@ -303,7 +308,7 @@ function DevelopOptions({
           const title = !implemented
             ? 'Not implemented yet'
             : !hasDevelopLand
-              ? `No ${landIcon} land with free ${slotIcon} development slot`
+              ? `No ${landIcon} ${landLabel} with free ${slotIcon} ${slotLabel}`
               : !canPay
                 ? 'Cannot pay costs'
                 : undefined;
@@ -321,7 +326,7 @@ function DevelopOptions({
                 const landId = ctx.activePlayer.lands.find(
                   (l) => l.slotsFree > 0,
                 )?.id;
-                handlePerform(action, { id: d.id, landId });
+                void handlePerform(action, { id: d.id, landId });
               }}
               onMouseEnter={() => {
                 const full = describeContent('development', d.id, ctx);
@@ -419,7 +424,9 @@ function BuildOptions({
                   : 'opacity-50 cursor-not-allowed'
               }`}
               title={title}
-              onClick={() => enabled && handlePerform(action, { id: b.id })}
+              onClick={() =>
+                enabled && void handlePerform(action, { id: b.id })
+              }
               onMouseEnter={() => {
                 const full = descriptions.get(b.id) ?? [];
                 const { effects, description } = splitSummary(full);
