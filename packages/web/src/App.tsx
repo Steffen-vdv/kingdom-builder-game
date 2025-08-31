@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Game from './Game';
+import {
+  ACTION_INFO as actionInfo,
+  LAND_ICON as landIcon,
+  SLOT_ICON as slotIcon,
+  RESOURCES,
+} from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/engine';
 
 type Screen = 'menu' | 'overview' | 'game';
 
@@ -24,8 +31,8 @@ export default function App() {
         <h1 className="text-2xl font-bold text-center mb-4">Game Overview</h1>
         <p>
           Kingdom Builder is a turn-based duel where you grow your realm and
-          attempt to outmaneuver your rival. Protect your castle, expand your
-          lands, and manage your resources to prevail.
+          attempt to outmaneuver your rival. Protect your castle, expand your{' '}
+          {landIcon} lands, and manage your resources to prevail.
         </p>
         <h2 className="text-xl font-semibold mt-4 mb-2">Goal</h2>
         <p>
@@ -52,11 +59,16 @@ export default function App() {
         <h2 className="text-xl font-semibold mt-4 mb-2">Core Mechanics</h2>
         <p className="mb-4">
           Actions may require resources or other prerequisites and grant various
-          effects, such as gaining resources, building structures, developing
-          land, or hindering your opponent. Buildings provide passive bonuses,
-          while land around your castle holds developments that yield benefits.
-          Resources like Gold, Action Points, Happiness, and Castle Health are
-          spent and gained throughout the game.
+          effects, such as gaining resources, {actionInfo['build']?.icon}{' '}
+          building structures, {actionInfo['develop']?.icon} developing{' '}
+          {landIcon} land, or hindering your opponent.{' '}
+          {actionInfo['build']?.icon} Buildings provide ♾️ passive bonuses,
+          while {landIcon} land around your castle holds {slotIcon} developments
+          that yield benefits. Resources like
+          {RESOURCES[Resource.gold].icon} Gold, {RESOURCES[Resource.ap].icon}{' '}
+          Action Points, {RESOURCES[Resource.happiness].icon} Happiness, and{' '}
+          {RESOURCES[Resource.castleHP].icon} Castle Health are spent and gained
+          throughout the game.
         </p>
         <button
           className="border px-4 py-2 hoverable cursor-pointer"
