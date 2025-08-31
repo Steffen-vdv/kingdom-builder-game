@@ -28,7 +28,7 @@ export default function App() {
   }, []);
 
   if (screen === 'overview') {
-    const devIcon = PHASES.find((p) => p.id === 'development')?.icon;
+    const growthIcon = PHASES.find((p) => p.id === 'growth')?.icon;
     const upkeepIcon = PHASES.find((p) => p.id === 'upkeep')?.icon;
     const mainIcon = PHASES.find((p) => p.id === 'main')?.icon;
     return (
@@ -57,8 +57,8 @@ export default function App() {
           <p>Each round flows through three phases:</p>
           <ul className="list-disc list-inside">
             <li>
-              <strong>{devIcon} Development</strong> – your realm produces
-              income and triggered effects fire.
+              <strong>{growthIcon} Growth</strong> – your realm produces income
+              and triggered effects fire.
             </li>
             <li>
               <strong>{upkeepIcon} Upkeep</strong> – pay wages and resolve

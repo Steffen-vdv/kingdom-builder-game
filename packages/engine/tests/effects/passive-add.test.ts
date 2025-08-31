@@ -12,7 +12,7 @@ describe('passive:add effect', () => {
       method: 'add',
       params: {
         id: 'temp',
-        onDevelopmentPhase: [
+        onGrowthPhase: [
           {
             type: 'resource',
             method: 'add',

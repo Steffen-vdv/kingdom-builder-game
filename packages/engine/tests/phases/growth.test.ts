@@ -3,8 +3,8 @@ import { advance, PopulationRole, Stat, Resource } from '../../src';
 import { PHASES, GAME_START } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
-const devPhase = PHASES.find((p) => p.id === 'development')!;
-const incomeStep = devPhase.steps.find((s) => s.id === 'gain-income');
+const growthPhase = PHASES.find((p) => p.id === 'growth')!;
+const incomeStep = growthPhase.steps.find((s) => s.id === 'gain-income');
 const farmGoldGain = Number(
   incomeStep?.effects?.[0]?.effects?.find(
     (e) =>
@@ -14,7 +14,7 @@ const farmGoldGain = Number(
   )?.params.amount ?? 0,
 );
 
-const apStep = devPhase.steps.find((s) => s.id === 'gain-ap');
+const apStep = growthPhase.steps.find((s) => s.id === 'gain-ap');
 const councilApGain = Number(
   apStep?.effects?.[0]?.effects?.find(
     (e) =>
@@ -24,19 +24,19 @@ const councilApGain = Number(
   )?.params.amount ?? 0,
 );
 
-describe('Development phase', () => {
+describe('Growth phase', () => {
   it('triggers population and development effects', () => {
     const ctx = createTestEngine();
     const player = ctx.activePlayer;
     const apBefore = player.ap;
     const goldBefore = player.gold;
-    while (ctx.game.currentPhase === 'development') advance(ctx);
+    while (ctx.game.currentPhase === 'growth') advance(ctx);
     const councils = player.population[PopulationRole.Council];
     expect(player.ap).toBe(apBefore + councilApGain * councils);
     expect(player.gold).toBe(goldBefore + farmGoldGain);
   });
 
-  it('applies player B compensation at start and not during development', () => {
+  it('applies player B compensation at start and not during growth', () => {
     const ctx = createTestEngine();
     const baseAp = GAME_START.player.resources?.[Resource.ap] || 0;
     const comp =
@@ -44,21 +44,21 @@ describe('Development phase', () => {
     expect(ctx.game.players[0].ap).toBe(baseAp);
     expect(ctx.game.players[1].ap).toBe(baseAp + comp);
 
-    const gainApIdx = devPhase.steps.findIndex((s) => s.id === 'gain-ap');
+    const gainApIdx = growthPhase.steps.findIndex((s) => s.id === 'gain-ap');
 
-    // Player A development
+    // Player A growth
     let player = ctx.activePlayer;
     player.ap = 0;
-    ctx.game.currentPhase = 'development';
+    ctx.game.currentPhase = 'growth';
     ctx.game.currentStep = 'gain-ap';
     ctx.game.stepIndex = gainApIdx;
     advance(ctx);
     const councilsA = player.population[PopulationRole.Council];
     expect(player.ap).toBe(councilApGain * councilsA);
 
-    // Player B development (compensation already applied)
+    // Player B growth (compensation already applied)
     ctx.game.currentPlayerIndex = 1;
-    ctx.game.currentPhase = 'development';
+    ctx.game.currentPhase = 'growth';
     ctx.game.currentStep = 'gain-ap';
     ctx.game.stepIndex = gainApIdx;
     player = ctx.activePlayer;
@@ -67,10 +67,10 @@ describe('Development phase', () => {
     const councilsB = player.population[PopulationRole.Council];
     expect(player.ap).toBe(councilApGain * councilsB);
 
-    // Subsequent Player B developments
+    // Subsequent Player B growth phases
     for (let i = 0; i < 3; i++) {
       ctx.game.currentPlayerIndex = 1;
-      ctx.game.currentPhase = 'development';
+      ctx.game.currentPhase = 'growth';
       ctx.game.currentStep = 'gain-ap';
       ctx.game.stepIndex = gainApIdx;
       player.ap = 0;
@@ -87,7 +87,7 @@ describe('Development phase', () => {
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
     const player = ctx.activePlayer;
     const growth = player.stats[Stat.growth];
-    while (ctx.game.currentPhase === 'development') advance(ctx);
+    while (ctx.game.currentPhase === 'growth') advance(ctx);
     const expectedArmy = Math.ceil(8 + 8 * growth);
     const expectedFort = Math.ceil(4 + 4 * growth);
     expect(player.stats[Stat.armyStrength]).toBe(expectedArmy);
@@ -107,7 +107,7 @@ describe('Development phase', () => {
     ctx.activePlayer.stats[Stat.armyStrength] = 10;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 10;
     const growth = ctx.activePlayer.stats[Stat.growth];
-    while (ctx.game.currentPhase === 'development') advance(ctx);
+    while (ctx.game.currentPhase === 'growth') advance(ctx);
     const expectedArmy = Math.ceil(10 + 10 * growth * 2);
     const expectedFort = Math.ceil(10 + 10 * growth * 2);
     expect(ctx.activePlayer.stats[Stat.armyStrength]).toBe(expectedArmy);
@@ -166,7 +166,7 @@ describe('Development phase', () => {
       player.population[PopulationRole.Fortifier] = fortifiers;
       player.stats[Stat.armyStrength] = baseArmy;
       player.stats[Stat.fortificationStrength] = baseFort;
-      while (ctx.game.currentPhase === 'development') advance(ctx);
+      while (ctx.game.currentPhase === 'growth') advance(ctx);
       expect(player.stats[Stat.armyStrength]).toBe(expArmy);
       expect(player.stats[Stat.fortificationStrength]).toBe(expFort);
       expect(Number.isInteger(player.stats[Stat.armyStrength])).toBe(true);
@@ -186,7 +186,7 @@ describe('Development phase', () => {
       player.population[PopulationRole.Fortifier] = 1;
       player.stats[Stat.armyStrength] = -5;
       player.stats[Stat.fortificationStrength] = -5;
-      while (ctx.game.currentPhase === 'development') advance(ctx);
+      while (ctx.game.currentPhase === 'growth') advance(ctx);
       expect(player.stats[Stat.armyStrength]).toBe(0);
       expect(player.stats[Stat.fortificationStrength]).toBe(0);
       expect(Number.isInteger(player.stats[Stat.armyStrength])).toBe(true);

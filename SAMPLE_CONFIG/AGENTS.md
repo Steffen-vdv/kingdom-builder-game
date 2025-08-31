@@ -11,8 +11,8 @@
 - 🏚️Development — a built feature occupying a 🧩Development Slot
 - 👥Population — citizens (roles below)
   - ⚖️Council — each grants 1 ⚡Action Point at the start of your turn
-  - 🎖️Commander — **+1 ⚔️Army Strength (flat)** & contributes +25% 📈⚔️Growth each 📈Development Phase
-  - 🔧Fortifier — **+1 🛡️Fortification Strength (flat)** & contributes +25% 📈🛡️Growth each 📈Development Phase
+  - 🎖️Commander — **+1 ⚔️Army Strength (flat)** & contributes +25% 📈⚔️Growth each 📈Growth Phase
+  - 🔧Fortifier — **+1 🛡️Fortification Strength (flat)** & contributes +25% 📈🛡️Growth each 📈Growth Phase
   - 👤Citizen — unassigned; no benefits until assigned (upkeep 0🪙)
 - ⚡Action Point (AP) — each Action costs 1⚡
 - ⚔️Army Strength — total offensive strength
@@ -39,7 +39,7 @@
 
 ## 2) Turn Structure
 
-### 2.1 📈Development Phase
+### 2.1 📈Growth Phase
 
 - **Gain 💹Income**: resolve sources that trigger now (e.g., 🌾, 🌿, Temple).
 - **Generate ⚡**: +1⚡ per ⚖️Council; Player B gets +1⚡ in their first 📈Development only.

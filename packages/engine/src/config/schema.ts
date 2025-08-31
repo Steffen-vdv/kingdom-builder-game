@@ -53,7 +53,7 @@ export const buildingSchema = z.object({
   icon: z.string().optional(),
   costs: costBagSchema,
   onBuild: z.array(effectSchema).optional(),
-  onDevelopmentPhase: z.array(effectSchema).optional(),
+  onGrowthPhase: z.array(effectSchema).optional(),
   onUpkeepPhase: z.array(effectSchema).optional(),
   onBeforeAttacked: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
@@ -67,7 +67,7 @@ export const developmentSchema = z.object({
   name: z.string(),
   icon: z.string().optional(),
   onBuild: z.array(effectSchema).optional(),
-  onDevelopmentPhase: z.array(effectSchema).optional(),
+  onGrowthPhase: z.array(effectSchema).optional(),
   onBeforeAttacked: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
   system: z.boolean().optional(),
@@ -82,7 +82,7 @@ export const populationSchema = z.object({
   icon: z.string().optional(),
   onAssigned: z.array(effectSchema).optional(),
   onUnassigned: z.array(effectSchema).optional(),
-  onDevelopmentPhase: z.array(effectSchema).optional(),
+  onGrowthPhase: z.array(effectSchema).optional(),
   onUpkeepPhase: z.array(effectSchema).optional(),
 });
 

@@ -17,7 +17,7 @@ export const Stat = {
 export type StatKey = (typeof Stat)[keyof typeof Stat];
 
 export const Phase = {
-  Development: 'development',
+  Growth: 'growth',
   Upkeep: 'upkeep',
   Main: 'main',
 } as const;

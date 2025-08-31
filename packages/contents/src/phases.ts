@@ -21,14 +21,14 @@ export interface PhaseDef {
 
 export const PHASES: PhaseDef[] = [
   {
-    id: 'development',
-    label: 'Development',
+    id: 'growth',
+    label: 'Growth',
     icon: '🏗️',
     steps: [
       {
         id: 'resolve-dynamic-triggers',
         title: 'Resolve dynamic triggers',
-        triggers: ['onDevelopmentPhase'],
+        triggers: ['onGrowthPhase'],
       },
       {
         id: 'gain-income',

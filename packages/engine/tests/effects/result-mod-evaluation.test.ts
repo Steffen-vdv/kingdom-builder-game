@@ -52,7 +52,7 @@ describe('evaluation result modifiers', () => {
       ctx,
     );
     const before = ctx.activePlayer.gold;
-    const gainIncome = PHASES.find((p) => p.id === 'development')!.steps.find(
+    const gainIncome = PHASES.find((p) => p.id === 'growth')!.steps.find(
       (s) => s.id === 'gain-income',
     )!.effects!;
     runEffects(gainIncome, ctx);

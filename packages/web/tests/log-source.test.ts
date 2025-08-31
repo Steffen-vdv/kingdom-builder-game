@@ -37,8 +37,8 @@ describe('log resource sources', () => {
     );
     ctx.game.currentPlayerIndex = 0;
 
-    const devPhase = ctx.phases.find((p) => p.id === 'development');
-    const step = devPhase?.steps.find((s) => s.id === 'gain-income');
+    const growthPhase = ctx.phases.find((p) => p.id === 'growth');
+    const step = growthPhase?.steps.find((s) => s.id === 'gain-income');
     const before = snapshotPlayer(ctx.activePlayer, ctx);
     runEffects(step?.effects || [], ctx);
     const after = snapshotPlayer(ctx.activePlayer, ctx);

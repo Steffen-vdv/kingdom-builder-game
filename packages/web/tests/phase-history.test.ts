@@ -14,6 +14,6 @@ describe('isActionPhaseActive', () => {
   });
 
   it('returns false when not in action phase', () => {
-    expect(isActionPhaseActive('development', 'main', true)).toBe(false);
+    expect(isActionPhaseActive('growth', 'main', true)).toBe(false);
   });
 });

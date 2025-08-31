@@ -223,9 +223,9 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
     this.config.onBuild.push(effect);
     return this;
   }
-  onDevelopmentPhase(effect: EffectConfig) {
-    this.config.onDevelopmentPhase = this.config.onDevelopmentPhase || [];
-    this.config.onDevelopmentPhase.push(effect);
+  onGrowthPhase(effect: EffectConfig) {
+    this.config.onGrowthPhase = this.config.onGrowthPhase || [];
+    this.config.onGrowthPhase.push(effect);
     return this;
   }
   onUpkeepPhase(effect: EffectConfig) {
@@ -254,9 +254,9 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
     this.config.onBuild.push(effect);
     return this;
   }
-  onDevelopmentPhase(effect: EffectConfig) {
-    this.config.onDevelopmentPhase = this.config.onDevelopmentPhase || [];
-    this.config.onDevelopmentPhase.push(effect);
+  onGrowthPhase(effect: EffectConfig) {
+    this.config.onGrowthPhase = this.config.onGrowthPhase || [];
+    this.config.onGrowthPhase.push(effect);
     return this;
   }
   onBeforeAttacked(effect: EffectConfig) {
@@ -289,9 +289,9 @@ export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
     this.config.onUnassigned.push(effect);
     return this;
   }
-  onDevelopmentPhase(effect: EffectConfig) {
-    this.config.onDevelopmentPhase = this.config.onDevelopmentPhase || [];
-    this.config.onDevelopmentPhase.push(effect);
+  onGrowthPhase(effect: EffectConfig) {
+    this.config.onGrowthPhase = this.config.onGrowthPhase || [];
+    this.config.onGrowthPhase.push(effect);
     return this;
   }
   onUpkeepPhase(effect: EffectConfig) {

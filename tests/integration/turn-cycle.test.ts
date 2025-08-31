@@ -19,13 +19,13 @@ describe('Turn cycle integration', () => {
       phases: PHASES,
       start: GAME_START,
     });
-    // player A development & upkeep
+    // player A growth & upkeep
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     expect(ctx.game.currentPlayerIndex).toBe(0);
     expect(ctx.game.currentPhase).toBe('main');
     // end main for player A
     advance(ctx);
-    // player B development & upkeep
+    // player B growth & upkeep
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     expect(ctx.game.currentPlayerIndex).toBe(1);
     expect(ctx.game.currentPhase).toBe('main');
@@ -33,6 +33,6 @@ describe('Turn cycle integration', () => {
     advance(ctx);
     expect(ctx.game.turn).toBe(2);
     expect(ctx.game.currentPlayerIndex).toBe(0);
-    expect(ctx.game.currentPhase).toBe('development');
+    expect(ctx.game.currentPhase).toBe('growth');
   });
 });
