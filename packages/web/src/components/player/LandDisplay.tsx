@@ -14,11 +14,10 @@ interface LandDisplayProps {
 
 const LandTile: React.FC<{
   land: EngineContext['activePlayer']['lands'][number];
-  idx: number;
   ctx: ReturnType<typeof useGameEngine>['ctx'];
   handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
   clearHoverCard: ReturnType<typeof useGameEngine>['clearHoverCard'];
-}> = ({ land, idx, ctx, handleHoverCard, clearHoverCard }) => {
+}> = ({ land, ctx, handleHoverCard, clearHoverCard }) => {
   const showLandCard = () => {
     const full = describeContent('land', land, ctx);
     const { effects, description } = splitSummary(full);
@@ -34,7 +33,6 @@ const LandTile: React.FC<{
   const animateSlots = useAnimate<HTMLDivElement>();
   return (
     <div
-      key={idx}
       className="relative panel-card p-2 text-center hoverable cursor-help"
       onMouseEnter={showLandCard}
       onMouseLeave={clearHoverCard}
@@ -114,11 +112,10 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
   const animateLands = useAnimate<HTMLDivElement>();
   return (
     <div ref={animateLands} className="flex flex-wrap gap-2 mt-2 w-fit">
-      {player.lands.map((land, idx) => (
+      {player.lands.map((land) => (
         <LandTile
-          key={idx}
+          key={land.id}
           land={land}
-          idx={idx}
           ctx={ctx}
           handleHoverCard={handleHoverCard}
           clearHoverCard={clearHoverCard}
