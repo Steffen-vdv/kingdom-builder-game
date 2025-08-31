@@ -1,9 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, advance } from '../../packages/engine/src';
+import {
+  ACTIONS,
+  BUILDINGS,
+  DEVELOPMENTS,
+  POPULATIONS,
+  PHASES,
+  GAME_START,
+} from '../../packages/contents/src';
 
 describe('Turn cycle integration', () => {
   it('advances players through all phases sequentially', () => {
-    const ctx = createEngine();
+    const ctx = createEngine({
+      actions: ACTIONS,
+      buildings: BUILDINGS,
+      developments: DEVELOPMENTS,
+      populations: POPULATIONS,
+      phases: PHASES,
+      start: GAME_START,
+    });
     // player A development & upkeep
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     expect(ctx.game.currentPlayerIndex).toBe(0);

@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEngine,
-  advance,
-  PopulationRole,
-  Resource,
-  PHASES,
-} from '../../src';
+import { advance, PopulationRole, Resource } from '../../src';
+import { PHASES } from '@kingdom-builder/contents';
+import { createTestEngine } from '../helpers.ts';
 
 const upkeepPhase = PHASES.find((p) => p.id === 'upkeep')!;
 const payStep = upkeepPhase.steps.find((s) => s.id === 'pay-upkeep')!;
@@ -29,7 +25,7 @@ const fortifierUpkeep = getUpkeep(PopulationRole.Fortifier);
 
 describe('Upkeep phase', () => {
   it('charges gold per population role', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     const idx = PHASES.findIndex((p) => p.id === 'upkeep');
     ctx.game.phaseIndex = idx;
     ctx.game.currentPhase = PHASES[idx]!.id;
@@ -52,7 +48,7 @@ describe('Upkeep phase', () => {
   });
 
   it('throws if upkeep cannot be paid', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     const idx = PHASES.findIndex((p) => p.id === 'upkeep');
     ctx.game.phaseIndex = idx;
     ctx.game.currentPhase = PHASES[idx]!.id;

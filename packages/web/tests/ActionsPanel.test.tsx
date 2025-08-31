@@ -4,18 +4,30 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
+import { createEngine, Resource } from '@kingdom-builder/engine';
 import {
-  createEngine,
-  Resource,
   RESOURCES,
   ACTION_INFO,
-} from '@kingdom-builder/engine';
+  ACTIONS,
+  BUILDINGS,
+  DEVELOPMENTS,
+  POPULATIONS,
+  PHASES,
+  GAME_START,
+} from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
 });
 
-const ctx = createEngine();
+const ctx = createEngine({
+  actions: ACTIONS,
+  buildings: BUILDINGS,
+  developments: DEVELOPMENTS,
+  populations: POPULATIONS,
+  phases: PHASES,
+  start: GAME_START,
+});
 const mockGame = {
   ctx,
   log: [],

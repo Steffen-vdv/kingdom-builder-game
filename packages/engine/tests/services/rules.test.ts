@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Services, DefaultRules } from '../../src/services/index.ts';
 import { PlayerState, Land, Resource } from '../../src/state/index.ts';
-import { createEngine } from '../../src/index.ts';
+import { createTestEngine } from '../helpers.ts';
 
 describe('Services', () => {
   it('evaluates happiness tiers correctly', () => {
@@ -28,7 +28,7 @@ describe('Services', () => {
 
 describe('PassiveManager', () => {
   it('applies and unregisters cost modifiers', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     const base = { [Resource.gold]: 2 };
     ctx.passives.registerCostModifier('tax', (action, cost) => ({
       ...cost,
@@ -42,7 +42,7 @@ describe('PassiveManager', () => {
   });
 
   it('runs result modifiers and handles passives', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.passives.registerResultModifier('happy', (_a, innerCtx) => {
       innerCtx.activePlayer.happiness += 1;
     });

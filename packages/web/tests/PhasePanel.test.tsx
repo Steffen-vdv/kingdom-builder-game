@@ -5,12 +5,27 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
 import { createEngine } from '@kingdom-builder/engine';
+import {
+  ACTIONS,
+  BUILDINGS,
+  DEVELOPMENTS,
+  POPULATIONS,
+  PHASES,
+  GAME_START,
+} from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
 });
 
-const ctx = createEngine();
+const ctx = createEngine({
+  actions: ACTIONS,
+  buildings: BUILDINGS,
+  developments: DEVELOPMENTS,
+  populations: POPULATIONS,
+  phases: PHASES,
+  start: GAME_START,
+});
 const mockGame = {
   ctx,
   log: [],

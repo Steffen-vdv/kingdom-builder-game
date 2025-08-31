@@ -1,5 +1,6 @@
 import React from 'react';
-import { Resource, RESOURCES } from '@kingdom-builder/engine';
+import { Resource } from '@kingdom-builder/engine';
+import { RESOURCES } from '@kingdom-builder/contents';
 import type { ResourceKey } from '@kingdom-builder/engine';
 import type { Summary } from './content';
 

@@ -5,6 +5,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@kingdom-builder/engine': path.resolve(__dirname, 'packages/engine/src'),
+      '@kingdom-builder/contents': path.resolve(
+        __dirname,
+        'packages/contents/src',
+      ),
     },
   },
   test: {

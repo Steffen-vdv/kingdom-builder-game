@@ -1,11 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEngine,
-  performAction,
-  Resource,
-  EVALUATORS,
-  advance,
-} from '../../src';
+import { performAction, Resource, EVALUATORS, advance } from '../../src';
+import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects';
 import type { EvaluatorDef } from '../../src/evaluators';
 import type { EngineContext } from '../../src';
@@ -34,7 +29,7 @@ function getOverworkExpectations(ctx: EngineContext) {
 
 describe('Overwork action', () => {
   it('grants gold and loses happiness for each Farm', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const goldBefore = ctx.activePlayer.gold;
     const hapBefore = ctx.activePlayer.happiness;

@@ -11,11 +11,19 @@ import {
   performAction,
   advance,
   Resource,
-  RESOURCES,
-  ACTION_INFO as actionInfo,
   type EngineContext,
   type ActionParams,
 } from '@kingdom-builder/engine';
+import {
+  RESOURCES,
+  ACTION_INFO as actionInfo,
+  ACTIONS,
+  BUILDINGS,
+  DEVELOPMENTS,
+  POPULATIONS,
+  PHASES,
+  GAME_START,
+} from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
   diffSnapshots,
@@ -90,7 +98,18 @@ export function GameProvider({
   darkMode?: boolean;
   onToggleDark?: () => void;
 }) {
-  const ctx = useMemo<EngineContext>(() => createEngine(), []);
+  const ctx = useMemo<EngineContext>(
+    () =>
+      createEngine({
+        actions: ACTIONS,
+        buildings: BUILDINGS,
+        developments: DEVELOPMENTS,
+        populations: POPULATIONS,
+        phases: PHASES,
+        start: GAME_START,
+      }),
+    [],
+  );
   const [, setTick] = useState(0);
   const refresh = () => setTick((t) => t + 1);
 

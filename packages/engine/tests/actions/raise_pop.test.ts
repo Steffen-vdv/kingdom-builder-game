@@ -1,15 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEngine,
-  performAction,
-  runEffects,
-  getActionCosts,
-  advance,
-} from '../../src';
+import { performAction, runEffects, getActionCosts, advance } from '../../src';
+import type { EngineContext } from '../../src';
 import { PopulationRole, Resource } from '../../src/state';
 import type { EffectDef } from '../../src/effects';
+import { createTestEngine } from '../helpers.ts';
 
-function getHappinessGain(ctx: ReturnType<typeof createEngine>) {
+function getHappinessGain(ctx: EngineContext) {
   const def = ctx.actions.get('raise_pop');
   const eff = def.effects.find(
     (e) => e.type === 'resource' && e.method === 'add',
@@ -19,7 +15,7 @@ function getHappinessGain(ctx: ReturnType<typeof createEngine>) {
 
 describe('Raise Population action', () => {
   it('assigns a Council and applies effects', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.activePlayer.maxPopulation = 2;
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const costs = getActionCosts('raise_pop', ctx);
@@ -44,7 +40,7 @@ describe('Raise Population action', () => {
   });
 
   it('assigns a Commander and grants army strength', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.activePlayer.maxPopulation = 2;
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     const commanderDef = ctx.populations.get(PopulationRole.Commander);
@@ -59,7 +55,7 @@ describe('Raise Population action', () => {
   });
 
   it('enforces population cap requirement', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     expect(() =>
       performAction('raise_pop', ctx, { role: PopulationRole.Council }),
@@ -67,7 +63,7 @@ describe('Raise Population action', () => {
   });
 
   it('removes commander passive when unassigned', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.activePlayer.maxPopulation = 2;
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     performAction('raise_pop', ctx, { role: PopulationRole.Commander });
@@ -87,7 +83,7 @@ describe('Raise Population action', () => {
   });
 
   it('removes council AP when unassigned', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     ctx.activePlayer.maxPopulation = 2;
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     performAction('raise_pop', ctx, { role: PopulationRole.Council });

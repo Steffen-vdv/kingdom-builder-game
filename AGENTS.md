@@ -6,6 +6,12 @@ Therefore, the main mission for agents is to understand the intended game, and i
 
 Full game information can be read below.
 
+# Default content
+
+Engine logic is decoupled from game data. The default configuration lives in
+`packages/contents`; supply those registries to `createEngine` or provide your
+own to experiment with new actions, buildings and more.
+
 # Reference documents
 
 - [CONTRIBUTING](CONTRIBUTING/AGENTS.md)

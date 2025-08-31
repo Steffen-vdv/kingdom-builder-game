@@ -4,12 +4,14 @@ import {
   getActionRequirements,
   Resource,
   PopulationRole,
+} from '@kingdom-builder/engine';
+import {
   RESOURCES,
   POPULATION_ROLES,
   ACTION_INFO as actionInfo,
   DEVELOPMENT_INFO as developmentInfo,
   BUILDING_INFO as buildingInfo,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/contents';
 import {
   describeContent,
   summarizeContent,
