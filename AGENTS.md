@@ -3,23 +3,7 @@
 - **Engine and Web may not hardcode game data.** Never reference specific resource or stat keys, starting values or effect behavior in these domains. All content lives in `packages/contents` and can change without code updates.
 - **Tests may not rely on literals.** Fetch expected names and numeric values from the Content domain or mock registries so that content changes (e.g. different starting gold or altered action effects) do not break tests unless the engine itself lacks support.
 
-# Knowledge sharing
-
-## Maintain a discovery log
-
-To streamline collaboration, the repository owner asks every agent to keep
-track of any non-obvious discoveries made while completing their task. These
-may include repository structure tips, tricky commands, or environment quirks
-that required some investigation. Maintain this list during your work and, when
-submitting a pull request, append your findings to the **Agent discovery log**
-below.
-
-Avoid logging the routine steps you performed, avoid logging updates related to your implementation.
-Use the discovery log only for non-obvious insights that will help future agents work more efficiently.
-Attach the current real date (YYYY-MM-DD) as a prefix to your log entry.
-Use the actual calendar date—today is 2025-08-31—and never log entries with future dates.
-
-## Agent discovery log
+# Agent discovery log
 
 - 2025-08-31: Run tests with `npm run test:coverage >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log`; avoid running extra test commands.
 - 2025-08-31: `git commit` triggers a Husky pre-commit hook running lint-staged, type checking, linting and tests.
@@ -81,6 +65,8 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-08-31: Type re-exports from React modules can still break Vite Fast Refresh; move shared types to separate files.
 - 2025-08-31: Engine creation now requires passing a `rules` object; import `RULES` from `@kingdom-builder/contents` when initializing tests or the web context.
 - 2025-08-31: Determine the default action cost resource by intersecting cost keys of non-system actions; expose it as `actionCostResource` in `GameContext` for UI use.
+- 2025-08-31: Stat add formatting can be driven by `addFormat` in `STATS` to supply prefixes or percentage displays.
+- 2025-08-31: Percentage-based stats can be detected from their `addFormat.percent` (or `displayAsPercent`) flag instead of hardcoding keys.
 
 # Core Agent principles
 
