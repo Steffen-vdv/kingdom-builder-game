@@ -299,8 +299,10 @@ export function GameProvider({
   useEffect(() => {
     if (!devMode) return;
     const phaseDef = ctx.phases[ctx.game.phaseIndex];
+    if (!phaseDef?.action) return;
+    const playerA = ctx.game.players[0]!;
     const playerB = ctx.game.players[1]!;
-    if (phaseDef?.action && ctx.activePlayer.id === playerB.id) {
+    if (ctx.activePlayer.id === playerB.id) {
       while (ctx.activePlayer.ap > 0) {
         handlePerform({
           id: 'tax',
@@ -309,8 +311,13 @@ export function GameProvider({
         });
       }
       void handleEndTurn();
+    } else if (
+      ctx.activePlayer.id === playerA.id &&
+      ctx.activePlayer.ap === 0
+    ) {
+      void handleEndTurn();
     }
-  }, [devMode, ctx.game.phaseIndex, ctx.activePlayer.id]);
+  }, [devMode, ctx.game.phaseIndex, ctx.activePlayer.id, ctx.activePlayer.ap]);
 
   const value: GameEngineContextValue = {
     ctx,
