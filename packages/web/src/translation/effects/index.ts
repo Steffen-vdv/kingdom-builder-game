@@ -1,6 +1,7 @@
 export {
   summarizeEffects,
   describeEffects,
+  logEffects,
   registerEffectFormatter,
   registerEvaluatorFormatter,
 } from './factory';

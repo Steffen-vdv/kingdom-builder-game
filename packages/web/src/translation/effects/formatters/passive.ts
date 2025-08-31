@@ -5,6 +5,16 @@ import {
 } from '../factory';
 
 registerEffectFormatter('passive', 'add', {
-  summarize: (eff, ctx) => summarizeEffects(eff.effects || [], ctx),
-  describe: (eff, ctx) => describeEffects(eff.effects || [], ctx),
+  summarize: (eff, ctx) => {
+    const inner = summarizeEffects(eff.effects || [], ctx);
+    return eff.params?.['onUpkeepPhase']
+      ? [{ title: 'Until your next Upkeep Phase', items: inner }]
+      : inner;
+  },
+  describe: (eff, ctx) => {
+    const inner = describeEffects(eff.effects || [], ctx);
+    return eff.params?.['onUpkeepPhase']
+      ? [{ title: 'Until your next Upkeep Phase', items: inner }]
+      : inner;
+  },
 });

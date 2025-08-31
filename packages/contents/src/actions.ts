@@ -205,5 +205,6 @@ export const ACTION_INFO: Record<string, { icon: string; label: string }> = {
   army_attack: { icon: '🗡️', label: ACTIONS.get('army_attack').name },
   hold_festival: { icon: '🎉', label: ACTIONS.get('hold_festival').name },
   plow: { icon: '🚜', label: ACTIONS.get('plow').name },
+  till: { icon: '🧑‍🌾', label: ACTIONS.get('till').name },
   build: { icon: '🏛️', label: ACTIONS.get('build').name },
 } as const;

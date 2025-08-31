@@ -3,7 +3,7 @@ import {
   TRIGGER_INFO as triggerInfo,
   ACTION_INFO as actionInfo,
 } from '@kingdom-builder/contents';
-import { summarizeEffects, describeEffects } from '../effects';
+import { summarizeEffects, describeEffects, logEffects } from '../effects';
 import { applyParamsToEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator, logContent } from './factory';
 import type { ContentTranslator, Summary } from './types';
@@ -82,7 +82,22 @@ class ActionTranslator
     let message = `Played ${icon} ${label}`;
     const extra = this.logHandlers[id]?.(ctx, params);
     if (extra) message += extra;
-    return [message];
+    const effects = params
+      ? applyParamsToEffects(def.effects, params)
+      : def.effects;
+    const effLogs = logEffects(effects, ctx);
+    const lines = [message];
+    function push(entry: unknown, depth: number) {
+      if (typeof entry === 'string')
+        lines.push(`${'  '.repeat(depth)}${entry}`);
+      else if (entry && typeof entry === 'object') {
+        const e = entry as { title: string; items: unknown[] };
+        lines.push(`${'  '.repeat(depth)}${e.title}`);
+        e.items.forEach((i) => push(i, depth + 1));
+      }
+    }
+    effLogs.forEach((e) => push(e, 1));
+    return lines;
   }
 }
 

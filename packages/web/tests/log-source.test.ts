@@ -34,9 +34,9 @@ describe('log resource sources', () => {
 
     const devPhase = ctx.phases.find((p) => p.id === 'development');
     const step = devPhase?.steps.find((s) => s.id === 'gain-income');
-    const before = snapshotPlayer(ctx.activePlayer);
+    const before = snapshotPlayer(ctx.activePlayer, ctx);
     runEffects(step?.effects || [], ctx);
-    const after = snapshotPlayer(ctx.activePlayer);
+    const after = snapshotPlayer(ctx.activePlayer, ctx);
     const lines = diffStepSnapshots(before, after, step, ctx);
     expect(lines[0]).toBe('🪙 Gold +2 (10→12) (🪙+2 from 🌾)');
   });

@@ -1,6 +1,7 @@
 import type { EngineContext } from '@kingdom-builder/engine';
 import { ACTION_INFO as actionInfo } from '@kingdom-builder/contents';
-import { registerEffectFormatter } from '../factory';
+import { summarizeContent, describeContent } from '../../content';
+import { registerEffectFormatter, logEffects } from '../factory';
 
 function getActionLabel(id: string, ctx: EngineContext) {
   let name = id;
@@ -18,13 +19,15 @@ registerEffectFormatter('action', 'add', {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    return `Gain ${icon}${name}`;
+    const summary = summarizeContent('action', id, ctx);
+    return [{ title: `Gain ${icon}${name}`, items: summary }];
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    return `Gain action ${icon}${name}`;
+    const summary = describeContent('action', id, ctx);
+    return [{ title: `Gain action ${icon}${name}`, items: summary }];
   },
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
@@ -60,12 +63,22 @@ registerEffectFormatter('action', 'perform', {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    return `${icon} ${name}`;
+    const summary = summarizeContent('action', id, ctx);
+    return [{ title: `${icon} ${name}`, items: summary }];
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    return `Perform action ${icon}${name}`;
+    const summary = describeContent('action', id, ctx);
+    return [{ title: `Perform action ${icon}${name}`, items: summary }];
+  },
+  log: (eff, ctx) => {
+    const id = eff.params?.['id'] as string;
+    if (!id) return null;
+    const { icon, name } = getActionLabel(id, ctx);
+    const def = ctx.actions.get(id);
+    const sub = logEffects(def.effects, ctx);
+    return [{ title: `${icon} ${name}`, items: sub }];
   },
 });

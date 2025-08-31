@@ -29,14 +29,19 @@ export interface PlayerSnapshot {
     slotsUsed: number;
     developments: string[];
   }[];
+  passives: string[];
 }
 
-export function snapshotPlayer(player: {
-  resources: Record<string, number>;
-  stats: Record<string, number>;
-  buildings: Set<string>;
-  lands: Land[];
-}): PlayerSnapshot {
+export function snapshotPlayer(
+  player: {
+    id: string;
+    resources: Record<string, number>;
+    stats: Record<string, number>;
+    buildings: Set<string>;
+    lands: Land[];
+  },
+  ctx: EngineContext,
+): PlayerSnapshot {
   return {
     resources: { ...player.resources },
     stats: { ...player.stats },
@@ -47,6 +52,8 @@ export function snapshotPlayer(player: {
       slotsUsed: l.slotsUsed,
       developments: [...l.developments],
     })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+    passives: ctx.passives.list(player.id as any),
   };
 }
 
@@ -110,6 +117,10 @@ export function diffSnapshots(
         changes.push(`${landIcon} +${label}`);
       }
   }
+  const beforeP = new Set(before.passives);
+  const afterP = new Set(after.passives);
+  for (const id of beforeP)
+    if (!afterP.has(id)) changes.push(`Passive ${id} removed`);
   return changes;
 }
 
@@ -237,5 +248,9 @@ export function diffStepSnapshots(
         changes.push(`${landIcon} +${label}`);
       }
   }
+  const beforeP = new Set(before.passives);
+  const afterP = new Set(after.passives);
+  for (const id of beforeP)
+    if (!afterP.has(id)) changes.push(`Passive ${id} removed`);
   return changes;
 }
