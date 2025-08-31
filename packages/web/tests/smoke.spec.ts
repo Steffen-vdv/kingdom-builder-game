@@ -4,6 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 async function startVite() {
+  if (process.env.E2E_PORT) {
+    return { server: null, port: Number(process.env.E2E_PORT) } as const;
+  }
+
   const cwd = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const server = spawn('npm', ['run', 'dev', '--', '--port=0'], {
     cwd,
@@ -40,6 +44,6 @@ test('smoke', async ({ page }) => {
     await page.goto(`http://localhost:${port}/`);
     expect(errors).toEqual([]);
   } finally {
-    server.kill('SIGTERM');
+    server?.kill('SIGTERM');
   }
 });

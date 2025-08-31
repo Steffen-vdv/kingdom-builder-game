@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "npm run lint && vitest run",
-    "e2e": "start-server-and-test dev http://localhost:5173 playwright test"
+    "playwright": "playwright test tests/smoke.spec.ts",
+    "playwright:e2e": "E2E_PORT=5173 npm run playwright",
+    "e2e": "start-server-and-test dev http://localhost:5173 playwright:e2e"
   },
   "dependencies": {
     "@kingdom-builder/engine": "^0.1.0",
