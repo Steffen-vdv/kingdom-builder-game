@@ -26,8 +26,7 @@ describe('Castle Walls building', () => {
     const def = BUILDINGS.get('castle_walls');
     const ctx = createTestContext();
     ctx.activePlayer.gold = def.costs[Resource.gold] ?? 0;
-    ctx.activePlayer.ap =
-      ctx.services.rules.defaultActionAPCost + (def.costs[Resource.ap] ?? 0);
+    ctx.activePlayer.ap = def.costs[Resource.ap] ?? 0;
 
     const fortGain = getStatGain(Stat.fortificationStrength);
     const absorptionGain = getStatGain(Stat.absorption);

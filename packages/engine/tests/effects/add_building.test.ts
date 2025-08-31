@@ -23,6 +23,8 @@ function getExpandGoldCost(ctx: EngineContext) {
 describe('building:add effect', () => {
   it('adds building and applies its passives', () => {
     const ctx = createTestEngine({ actions });
+    ctx.activePlayer.ap =
+      ctx.buildings.get('town_charter').costs[Resource.ap] ?? 0;
     const before = getExpandGoldCost(ctx);
     performAction('free_charter', ctx);
     expect(ctx.activePlayer.buildings.has('town_charter')).toBe(true);

@@ -132,7 +132,7 @@ export function createBuildingRegistry() {
       .name('Castle Walls')
       .icon('🧱')
       .cost(Resource.gold, 12)
-      .cost(Resource.ap, 1)
+      .cost(Resource.ap, 2)
       .onBuild(
         effect(Types.Passive, PassiveMethods.ADD)
           .param('id', 'castle_walls_bonus')

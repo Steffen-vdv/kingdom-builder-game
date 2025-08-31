@@ -7,6 +7,7 @@ import type {
   EffectConfig,
 } from '@kingdom-builder/engine/config/schema';
 import type { ResourceKey } from '@kingdom-builder/engine/state';
+import { Resource } from '@kingdom-builder/engine/state';
 import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
 
 export const Types = {
@@ -211,7 +212,7 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 
 export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
   constructor() {
-    super({ costs: {}, onBuild: [] });
+    super({ costs: { [Resource.ap]: 1 }, onBuild: [] });
   }
   cost(key: ResourceKey, amount: number) {
     this.config.costs[key] = amount;
