@@ -18,14 +18,14 @@ export const STATS: Record<StatKey, StatInfo> = {
   },
   [Stat.armyStrength]: {
     key: Stat.armyStrength,
-    icon: '⚔️',
+    icon: '🛡️',
     label: 'Army Strength',
     description:
       'Army Strength reflects the overall power of your military forces. A higher value makes your attacks more formidable.',
   },
   [Stat.fortificationStrength]: {
     key: Stat.fortificationStrength,
-    icon: '🛡️',
+    icon: '🏯',
     label: 'Fortification Strength',
     description:
       'Fortification Strength measures the resilience of your defenses. It reduces damage taken when enemies assault your castle.',
