@@ -2,11 +2,11 @@ import type { Summary, SummaryEntry } from './types';
 
 export function splitSummary(summary: Summary | undefined): {
   effects: Summary;
-  description: Summary;
+  description?: Summary;
 } {
   const effects: Summary = [];
-  const description: Summary = [];
-  if (!summary) return { effects, description };
+  let description: Summary | undefined;
+  if (!summary) return { effects };
   for (const entry of summary) {
     if (typeof entry === 'string') {
       effects.push(entry);
@@ -23,17 +23,17 @@ export function splitSummary(summary: Summary | undefined): {
       ...(rest as { title: string }),
       items: inner.effects,
     };
-    if (inner.description.length > 0) {
+    if (inner.description?.length) {
       (newEntry as { items: SummaryEntry[] }).items.push({
         title: 'Description',
         items: inner.description,
       });
     }
     if (_desc) {
-      description.push(newEntry);
+      (description ||= []).push(newEntry);
     } else {
       effects.push(newEntry);
     }
   }
-  return { effects, description };
+  return description ? { effects, description } : { effects };
 }

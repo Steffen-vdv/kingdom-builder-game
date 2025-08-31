@@ -55,7 +55,7 @@ describe('plow action translation', () => {
     const ctx = createCtx();
     const summary = describeContent('action', 'plow', ctx);
     const { effects, description } = splitSummary(summary);
-    expect(description).toHaveLength(0);
+    expect(description).toBeUndefined();
     expect(effects).toEqual([
       { title: '🌱 Expand', items: ['Gain 1 🗺️ Land', '😊+1 Happiness'] },
       { title: '🧑‍🌾 Till', items: ['Till 🗺️ to unlock 🧩 slot'] },

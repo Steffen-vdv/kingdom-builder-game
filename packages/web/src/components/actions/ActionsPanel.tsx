@@ -97,9 +97,9 @@ function GenericActions({
               handleHoverCard({
                 title: `${actionInfo[action.id]?.icon || ''} ${action.name}`,
                 effects,
-                description,
                 requirements,
                 costs,
+                ...(description && { description }),
                 ...(!implemented && {
                   description: 'Not implemented yet',
                   descriptionClass: 'italic text-red-600',
@@ -189,9 +189,9 @@ function RaisePopOptions({
                   POPULATION_ROLES[role]?.icon
                 } - Hire ${POPULATION_ROLES[role]?.label || ''}`,
                 effects,
-                description,
                 requirements,
                 costs,
+                ...(description && { description }),
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
               });
             }}
@@ -333,9 +333,9 @@ function DevelopOptions({
                     actionInfo['develop']?.label ?? ''
                   } - ${developmentInfo[d.id]?.icon} ${d.name}`,
                   effects,
-                  description,
                   requirements,
                   costs,
+                  ...(description && { description }),
                   ...(!implemented && {
                     description: 'Not implemented yet',
                     descriptionClass: 'italic text-red-600',
@@ -430,9 +430,9 @@ function BuildOptions({
                     actionInfo['build']?.label ?? ''
                   } - ${buildingInfo[b.id]?.icon || ''} ${b.name}`,
                   effects,
-                  description,
                   requirements,
                   costs,
+                  ...(description && { description }),
                   ...(!implemented && {
                     description: 'Not implemented yet',
                     descriptionClass: 'italic text-red-600',

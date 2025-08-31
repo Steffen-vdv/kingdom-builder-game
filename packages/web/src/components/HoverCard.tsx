@@ -26,22 +26,28 @@ export default function HoverCard() {
           </ul>
         </div>
       )}
-      {data.description && (
-        <div className="mt-2">
-          <div className={`font-semibold ${data.descriptionClass ?? ''}`}>
-            {data.descriptionTitle ?? 'Description'}
-          </div>
-          {typeof data.description === 'string' ? (
-            <div className={`text-sm ${data.descriptionClass ?? ''}`}>
-              {data.description}
+      {(() => {
+        const desc = data.description;
+        const hasDescription =
+          typeof desc === 'string'
+            ? desc.trim().length > 0
+            : Array.isArray(desc) && desc.length > 0;
+        if (!hasDescription) return null;
+        return (
+          <div className="mt-2">
+            <div className={`font-semibold ${data.descriptionClass ?? ''}`}>
+              {data.descriptionTitle ?? 'Description'}
             </div>
-          ) : (
-            <ul className="list-disc pl-4 text-sm">
-              {renderSummary(data.description)}
-            </ul>
-          )}
-        </div>
-      )}
+            {typeof desc === 'string' ? (
+              <div className={`text-sm ${data.descriptionClass ?? ''}`}>
+                {desc}
+              </div>
+            ) : (
+              <ul className="list-disc pl-4 text-sm">{renderSummary(desc)}</ul>
+            )}
+          </div>
+        );
+      })()}
       {data.requirements.length > 0 && (
         <div className="text-sm text-red-600 mt-2">
           <div className="font-semibold text-red-600">Requirements</div>

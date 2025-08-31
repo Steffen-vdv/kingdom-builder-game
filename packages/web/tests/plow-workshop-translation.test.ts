@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { describeContent, splitSummary } from '../src/translation/content';
+import {
+  describeContent,
+  splitSummary,
+  type Summary,
+} from '../src/translation/content';
 import { createEngine } from '@kingdom-builder/engine';
 import {
   ACTIONS,
@@ -33,7 +37,8 @@ describe('plow workshop translation', () => {
     expect(effects).toHaveLength(1);
     const build = effects[0] as { title: string; items?: unknown[] };
     expect(build.items?.[0]).toBe('Gain action 🚜 Plow');
-    const actionCard = description[0] as { title: string };
+    expect(description).toBeDefined();
+    const actionCard = (description as Summary)[0] as { title: string };
     expect(actionCard.title).toBe('🚜 Plow');
     expect(JSON.stringify({ effects, description })).not.toMatch(
       /Immediately|🎯/,

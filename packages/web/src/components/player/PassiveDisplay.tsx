@@ -54,8 +54,8 @@ export default function PassiveDisplay({
               handleHoverCard({
                 title: `${icon} Passive`,
                 effects,
-                description,
                 requirements: [],
+                ...(description && { description }),
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
               });
             }}

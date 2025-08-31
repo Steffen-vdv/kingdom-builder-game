@@ -25,9 +25,9 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
           handleHoverCard({
             title: `${landIcon} Land`,
             effects,
-            description,
             requirements: [],
             effectsTitle: 'Developments',
+            ...(description && { description }),
             bgClass: 'bg-gray-100 dark:bg-gray-700',
           });
         };
@@ -64,8 +64,8 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
                         handleHoverCard({
                           title,
                           effects,
-                          description,
                           requirements: [],
+                          ...(description && { description }),
                           bgClass: 'bg-gray-100 dark:bg-gray-700',
                         });
                       }}

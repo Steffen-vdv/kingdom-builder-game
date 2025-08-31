@@ -32,8 +32,8 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
               handleHoverCard({
                 title,
                 effects,
-                description,
                 requirements: [],
+                ...(description && { description }),
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
               });
             }}
