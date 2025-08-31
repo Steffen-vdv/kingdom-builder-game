@@ -66,10 +66,16 @@ describe('Development phase', () => {
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
     const player = ctx.activePlayer;
     while (ctx.game.currentPhase === 'development') advance(ctx);
-    const expectedArmy = 8 + 8 * (commanderPct / 100);
-    const expectedFort = 4 + 4 * (fortifierPct / 100);
-    expect(player.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
-    expect(player.stats[Stat.fortificationStrength]).toBeCloseTo(expectedFort);
+    const expectedArmy = Math.ceil(8 + 8 * (commanderPct / 100));
+    const expectedFort = Math.ceil(4 + 4 * (fortifierPct / 100));
+    expect(player.stats[Stat.armyStrength]).toBe(expectedArmy);
+    expect(player.stats[Stat.fortificationStrength]).toBe(expectedFort);
+    expect(Number.isInteger(player.stats[Stat.armyStrength])).toBe(true);
+    expect(Number.isInteger(player.stats[Stat.fortificationStrength])).toBe(
+      true,
+    );
+    expect(player.stats[Stat.armyStrength]).toBeGreaterThanOrEqual(0);
+    expect(player.stats[Stat.fortificationStrength]).toBeGreaterThanOrEqual(0);
   });
 
   it('scales strength additively with multiple leaders', () => {
@@ -79,11 +85,90 @@ describe('Development phase', () => {
     ctx.activePlayer.stats[Stat.armyStrength] = 10;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 10;
     while (ctx.game.currentPhase === 'development') advance(ctx);
-    const expectedArmy = 10 + 10 * (commanderPct / 100) * 2;
-    const expectedFort = 10 + 10 * (fortifierPct / 100) * 2;
-    expect(ctx.activePlayer.stats[Stat.armyStrength]).toBeCloseTo(expectedArmy);
-    expect(ctx.activePlayer.stats[Stat.fortificationStrength]).toBeCloseTo(
+    const expectedArmy = Math.ceil(10 + 10 * (commanderPct / 100) * 2);
+    const expectedFort = Math.ceil(10 + 10 * (fortifierPct / 100) * 2);
+    expect(ctx.activePlayer.stats[Stat.armyStrength]).toBe(expectedArmy);
+    expect(ctx.activePlayer.stats[Stat.fortificationStrength]).toBe(
       expectedFort,
     );
+    expect(Number.isInteger(ctx.activePlayer.stats[Stat.armyStrength])).toBe(
+      true,
+    );
+    expect(
+      Number.isInteger(ctx.activePlayer.stats[Stat.fortificationStrength]),
+    ).toBe(true);
+    expect(ctx.activePlayer.stats[Stat.armyStrength]).toBeGreaterThanOrEqual(0);
+    expect(
+      ctx.activePlayer.stats[Stat.fortificationStrength],
+    ).toBeGreaterThanOrEqual(0);
+  });
+
+  describe('strength growth scenarios', () => {
+    const baseArmy = 5;
+    const baseFort = 5;
+    it.each([
+      {
+        label: '0 fortifiers',
+        commanders: 0,
+        fortifiers: 0,
+        expArmy: Math.ceil(baseArmy + baseArmy * (commanderPct / 100) * 0),
+        expFort: Math.ceil(baseFort + baseFort * (fortifierPct / 100) * 0),
+      },
+      {
+        label: '3 fortifiers',
+        commanders: 0,
+        fortifiers: 3,
+        expArmy: Math.ceil(baseArmy + baseArmy * (commanderPct / 100) * 0),
+        expFort: Math.ceil(baseFort + baseFort * (fortifierPct / 100) * 3),
+      },
+      {
+        label: '15 fortifiers',
+        commanders: 0,
+        fortifiers: 15,
+        expArmy: Math.ceil(baseArmy + baseArmy * (commanderPct / 100) * 0),
+        expFort: Math.ceil(baseFort + baseFort * (fortifierPct / 100) * 15),
+      },
+      {
+        label: '5 fortifiers and 5 commanders',
+        commanders: 5,
+        fortifiers: 5,
+        expArmy: Math.ceil(baseArmy + baseArmy * (commanderPct / 100) * 5),
+        expFort: Math.ceil(baseFort + baseFort * (fortifierPct / 100) * 5),
+      },
+    ])('$label', ({ commanders, fortifiers, expArmy, expFort }) => {
+      const ctx = createTestEngine();
+      const player = ctx.activePlayer;
+      player.population[PopulationRole.Commander] = commanders;
+      player.population[PopulationRole.Fortifier] = fortifiers;
+      player.stats[Stat.armyStrength] = baseArmy;
+      player.stats[Stat.fortificationStrength] = baseFort;
+      while (ctx.game.currentPhase === 'development') advance(ctx);
+      expect(player.stats[Stat.armyStrength]).toBe(expArmy);
+      expect(player.stats[Stat.fortificationStrength]).toBe(expFort);
+      expect(Number.isInteger(player.stats[Stat.armyStrength])).toBe(true);
+      expect(Number.isInteger(player.stats[Stat.fortificationStrength])).toBe(
+        true,
+      );
+      expect(player.stats[Stat.armyStrength]).toBeGreaterThanOrEqual(0);
+      expect(player.stats[Stat.fortificationStrength]).toBeGreaterThanOrEqual(
+        0,
+      );
+    });
+
+    it('never drops below zero', () => {
+      const ctx = createTestEngine();
+      const player = ctx.activePlayer;
+      player.population[PopulationRole.Commander] = 1;
+      player.population[PopulationRole.Fortifier] = 1;
+      player.stats[Stat.armyStrength] = -5;
+      player.stats[Stat.fortificationStrength] = -5;
+      while (ctx.game.currentPhase === 'development') advance(ctx);
+      expect(player.stats[Stat.armyStrength]).toBe(0);
+      expect(player.stats[Stat.fortificationStrength]).toBe(0);
+      expect(Number.isInteger(player.stats[Stat.armyStrength])).toBe(true);
+      expect(Number.isInteger(player.stats[Stat.fortificationStrength])).toBe(
+        true,
+      );
+    });
   });
 });
