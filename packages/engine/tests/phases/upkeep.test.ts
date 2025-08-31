@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { advance, PopulationRole } from '../../src';
-import { PHASES, Resource as CResource } from '@kingdom-builder/contents';
+import { advance } from '../../src';
+import {
+  PHASES,
+  Resource as CResource,
+  PopulationRole,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 const upkeepPhase = PHASES.find((p) => p.id === 'upkeep')!;

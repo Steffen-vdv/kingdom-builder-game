@@ -1,7 +1,7 @@
 import type { TriggerKey } from './defs';
 import { Resource } from './resources';
 import { Stat } from './stats';
-import { PopulationRole } from '@kingdom-builder/engine/state';
+import { PopulationRole } from './populationRoles';
 import type { EffectDef } from '@kingdom-builder/engine/effects';
 import { effect, Types, ResourceMethods, StatMethods } from './config/builders';
 
