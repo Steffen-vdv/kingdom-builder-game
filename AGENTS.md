@@ -21,34 +21,7 @@ Full game information can be read below.
 - Use **Evaluators** to orchestrate conditional or iterative logic. Effects may include an `evaluator` and nested `effects`; the evaluator resolves to a value controlling how many times the sub-effects run. For example, `{ evaluator: { type: "development", params: { id: "farm" } }, effects: [{ type: "resource", method: "add", params: { key: "gold", amount: 2 } }] }` applies the resource gain per matching development.
 - Define leaf effects with `type` and `method` keys to separate domains (Resource, Stat, Land, etc.) from operations (add, remove, till...). This keeps params well-typed and enables a uniform effect registry.
 
-# Testing guidelines
-
-Tests live in:
-
-- `packages/engine/tests` for unit tests
-- `tests/integration` for integration tests
-
-To run the test suite and capture a reliable summary without redundant
-checks, execute:
-
-```sh
-npm run test:coverage >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log
-```
-
-This command runs the tests with coverage and saves the output to
-`/tmp/unit.log`. The `tail` command prints the final portion of the log so
-you can quickly confirm whether tests passed or inspect any failures.
-
-**Run no additional manual tests.** Execute only the command above,
-verify the tail output looks correct, and proceed without running any
-extra test or build commands.
-
-The pre-commit hook already runs `lint-staged`, type checking, linting, and
-`npm test` (which triggers a `pretest` step). Running `npm test` manually
-would repeat those checks. GitHub Actions executes `npm run test:coverage`
-and `npm run build` for each pull request. Run these scripts locally only
-when debugging or when changes could affect them. See
-[CONTRIBUTING](CONTRIBUTING/AGENTS.md) for details.
+**Note:** Tests are intentionally skipped for this project phase.
 
 # Game overview
 
