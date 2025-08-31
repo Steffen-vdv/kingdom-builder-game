@@ -31,7 +31,7 @@ export default function LogPanel() {
           return (
             <li
               key={idx}
-              className={`text-xs font-mono whitespace-pre-wrap rounded px-1 ${colorClass}`}
+              className={`text-xs font-mono whitespace-pre-wrap ${colorClass}`}
             >
               [{entry.time}] {entry.text}
             </li>
