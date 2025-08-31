@@ -8,7 +8,7 @@ registerEffectFormatter('passive', 'add', {
   summarize: (eff, ctx) => {
     const inner = summarizeEffects(eff.effects || [], ctx);
     return eff.params?.['onUpkeepPhase']
-      ? [{ title: '♾️ Until your next Upkeep Phase', items: inner }]
+      ? [{ title: '♾️ Until next Upkeep', items: inner }]
       : inner;
   },
   describe: (eff, ctx) => {
