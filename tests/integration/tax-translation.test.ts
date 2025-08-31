@@ -21,11 +21,11 @@ describe('Tax action translation', () => {
       start: GAME_START,
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const summary = summarizeContent('action', 'tax', ctx) as {
-      title: string;
-      items: string[];
-    }[];
-    const items = summary[0]?.items || [];
-    expect(items.some((i) => i.includes('per 👥'))).toBe(true);
+    const summary = summarizeContent('action', 'tax', ctx) as (
+      | string
+      | { title: string; items: unknown[] }
+    )[];
+    const lines = summary.filter((i): i is string => typeof i === 'string');
+    expect(lines.some((i) => i.includes('per 👥'))).toBe(true);
   });
 });

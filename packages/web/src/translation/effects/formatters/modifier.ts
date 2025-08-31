@@ -19,8 +19,8 @@ registerEffectFormatter('cost_mod', 'add', {
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
     const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
-    const target = actionId ? `${actionIcon}` : 'All actions';
-    return `${modifierInfo.cost.icon} ${target}: ${icon}${signed(amount)}${amount}`;
+    const prefix = actionId ? `${actionIcon}: ` : ': ';
+    return `${modifierInfo.cost.icon}${prefix}${icon}${signed(amount)}${Math.abs(amount)}`;
   },
   describe: (eff, ctx) => {
     const key = eff.params?.['key'] as string;
@@ -43,10 +43,10 @@ registerEffectFormatter('cost_mod', 'remove', {
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
     const actionIcon = actionId ? actionInfo[actionId]?.icon || actionId : '';
-    const target = actionId ? `${actionIcon}` : 'All actions';
+    const prefix = actionId ? `${actionIcon}: ` : ': ';
     const delta = -amount;
     const sign = delta >= 0 ? '+' : '-';
-    return `${modifierInfo.cost.icon} ${target}: ${icon}${sign}${Math.abs(delta)}`;
+    return `${modifierInfo.cost.icon}${prefix}${icon}${sign}${Math.abs(delta)}`;
   },
   describe: (eff, ctx) => {
     const key = eff.params?.['key'] as string;
