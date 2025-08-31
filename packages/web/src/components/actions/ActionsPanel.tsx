@@ -11,6 +11,7 @@ import {
   ACTION_INFO as actionInfo,
   DEVELOPMENT_INFO as developmentInfo,
   BUILDING_INFO as buildingInfo,
+  SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
 import {
   describeContent,
@@ -340,7 +341,7 @@ function DevelopOptions({
               </span>
               {requirements.length > 0 && (
                 <span className="absolute top-7 right-2 text-xs text-red-600">
-                  Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+                  Req {slotIcon}
                 </span>
               )}
               <ul className="text-sm list-disc pl-4 text-left">

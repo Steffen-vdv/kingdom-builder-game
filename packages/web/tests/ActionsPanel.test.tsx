@@ -19,6 +19,7 @@ import {
   PHASES,
   GAME_START,
   POPULATION_ROLES,
+  SLOT_ICON,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -75,5 +76,13 @@ describe('<ActionsPanel />', () => {
     render(<ActionsPanel />);
     const popIcon = POPULATION_ROLES[PopulationRole.Citizen].icon;
     expect(screen.getAllByText(`Req ${popIcon}`)[0]).toBeInTheDocument();
+  });
+
+  it('shows development slot requirement indicator when no slots are free', () => {
+    const originalSlots = ctx.activePlayer.lands.map((l) => l.slotsUsed);
+    ctx.activePlayer.lands.forEach((l) => (l.slotsUsed = l.slotsMax));
+    render(<ActionsPanel />);
+    expect(screen.getAllByText(`Req ${SLOT_ICON}`)[0]).toBeInTheDocument();
+    ctx.activePlayer.lands.forEach((l, i) => (l.slotsUsed = originalSlots[i]));
   });
 });
