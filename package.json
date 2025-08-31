@@ -7,6 +7,7 @@
     "packages/*"
   ],
   "scripts": {
+    "predev": "npm run build --workspace @kingdom-builder/contents",
     "dev": "vite",
     "build": "tsc -b && vite build packages/web",
     "preview": "vite preview",
