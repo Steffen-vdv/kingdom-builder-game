@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { requirement } from '../../src/config/builders.ts';
+import { requirement } from '@kingdom-builder/contents/config/builders';
 import { Stat, PopulationRole } from '../../src/state/index.ts';
 
 describe('RequirementBuilder', () => {

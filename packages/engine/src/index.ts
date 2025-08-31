@@ -257,19 +257,39 @@ export function resolveAttack(
   ctx.game.currentPlayerIndex = index;
   const pre = collectTriggerEffects('onBeforeAttacked', ctx, defender);
   if (pre.length) runEffects(pre, ctx);
+
   const absorb = Math.min(
     defender.absorption || 0,
     ctx.services.rules.absorptionCapPct,
   );
-  let final = damage * (1 - absorb);
+  let reduced = damage * (1 - absorb);
   const rounding = ctx.services.rules.absorptionRounding;
-  if (rounding === 'down') final = Math.floor(final);
-  else if (rounding === 'up') final = Math.ceil(final);
-  else final = Math.round(final);
+  if (rounding === 'down') reduced = Math.floor(reduced);
+  else if (rounding === 'up') reduced = Math.ceil(reduced);
+  else reduced = Math.round(reduced);
+
+  const attacker = ctx.game.players[original]!;
+  const castleDamage = Math.max(
+    0,
+    reduced - (defender.fortificationStrength || 0),
+  );
+  if (castleDamage > 0) {
+    defender.resources[Resource.castleHP] = Math.max(
+      0,
+      (defender.resources[Resource.castleHP] || 0) - castleDamage,
+    );
+    defender.happiness -= 1;
+    attacker.happiness += 1;
+    const rate = attacker.buildings.has('raiders_guild') ? 0.5 : 0.25;
+    const plunder = Math.floor(defender.gold * rate);
+    defender.gold -= plunder;
+    attacker.gold += plunder;
+  }
+
   const effects = collectTriggerEffects('onAttackResolved', ctx, defender);
   if (effects.length) runEffects(effects, ctx);
   ctx.game.currentPlayerIndex = original;
-  return final;
+  return castleDamage;
 }
 
 function applyPlayerStart(

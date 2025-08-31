@@ -7,7 +7,7 @@ import {
   Types,
   StatMethods,
   DevelopmentMethods,
-} from '@kingdom-builder/engine/config/builders';
+} from './config/builders';
 import type { DevelopmentDef } from './defs';
 
 export type { DevelopmentDef } from './defs';

@@ -1,12 +1,7 @@
 import type { TriggerKey } from './defs';
 import { Resource, PopulationRole, Stat } from '@kingdom-builder/engine/state';
 import type { EffectDef } from '@kingdom-builder/engine/effects';
-import {
-  effect,
-  Types,
-  ResourceMethods,
-  StatMethods,
-} from '@kingdom-builder/engine/config/builders';
+import { effect, Types, ResourceMethods, StatMethods } from './config/builders';
 
 export interface StepDef {
   id: string;

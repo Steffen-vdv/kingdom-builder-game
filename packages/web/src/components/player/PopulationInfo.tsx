@@ -14,7 +14,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
   const popDetails = popEntries.map(([role, count]) => ({ role, count }));
 
   function formatStatValue(key: string, value: number) {
-    if (key === 'absorption') return `${value * 100}%`;
+    if (key === 'absorption' || key === 'growth') return `${value * 100}%`;
     return String(value);
   }
 
