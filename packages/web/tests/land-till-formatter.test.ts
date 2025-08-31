@@ -36,12 +36,11 @@ describe('land till formatter', () => {
 
   it('summarizes till action', () => {
     const ctx = createCtx();
-    const summary = summarizeContent('action', 'till', ctx) as {
-      title: string;
-      items: string[];
-    }[];
-    const items = summary[0]?.items || [];
-    expect(items.some((i) => i.includes(slotIcon))).toBe(true);
+    const summary = summarizeContent('action', 'till', ctx);
+    const hasIcon = summary.some(
+      (i) => typeof i === 'string' && i.includes(slotIcon),
+    );
+    expect(hasIcon).toBe(true);
   });
 
   it('summarizes plow action', () => {

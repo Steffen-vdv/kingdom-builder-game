@@ -1,8 +1,5 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import {
-  TRIGGER_INFO as triggerInfo,
-  ACTION_INFO as actionInfo,
-} from '@kingdom-builder/contents';
+import { ACTION_INFO as actionInfo } from '@kingdom-builder/contents';
 import { summarizeEffects, describeEffects, logEffects } from '../effects';
 import { applyParamsToEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator, logContent } from './factory';
@@ -21,16 +18,7 @@ class ActionTranslator
       ? applyParamsToEffects(def.effects, opts)
       : def.effects;
     const eff = summarizeEffects(effects, ctx);
-    if (!eff.length) return [];
-    const title = [triggerInfo.mainPhase.icon, triggerInfo.mainPhase.future]
-      .filter(Boolean)
-      .join(' ');
-    return [
-      {
-        title,
-        items: eff,
-      },
-    ];
+    return eff.length ? eff : [];
   }
   describe(
     id: string,
@@ -42,16 +30,7 @@ class ActionTranslator
       ? applyParamsToEffects(def.effects, opts)
       : def.effects;
     const eff = describeEffects(effects, ctx);
-    if (!eff.length) return [];
-    const title = [triggerInfo.mainPhase.icon, triggerInfo.mainPhase.future]
-      .filter(Boolean)
-      .join(' ');
-    return [
-      {
-        title,
-        items: eff,
-      },
-    ];
+    return eff.length ? eff : [];
   }
   private logHandlers: Record<
     string,

@@ -29,12 +29,11 @@ describe('plow workshop translation', () => {
   it('includes action card and omits Immediately', () => {
     const ctx = createCtx();
     const summary = describeContent('building', 'plow_workshop', ctx);
-    const root = summary[0] as { items?: unknown[] };
-    const items = root.items ?? [];
-    expect(items[0]).toBe('Gain action 🚜Plow');
-    const actionCard = items[1] as { title: string };
-    expect(typeof actionCard).toBe('object');
-    expect(actionCard.title.trim()).toBe('🎯');
-    expect(JSON.stringify(summary)).not.toMatch(/Immediately/);
+    expect(summary).toHaveLength(2);
+    const build = summary[0] as { title: string; items?: unknown[] };
+    expect(build.items?.[0]).toBe('Gain action 🚜 Plow');
+    const actionCard = summary[1] as { title: string };
+    expect(actionCard.title).toBe('🚜 Plow');
+    expect(JSON.stringify(summary)).not.toMatch(/Immediately|🎯/);
   });
 });

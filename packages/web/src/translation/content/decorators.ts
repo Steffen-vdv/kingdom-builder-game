@@ -13,10 +13,21 @@ export function withInstallation<T>(
     ): Summary {
       const inner = translator.summarize(target, ctx, opts);
       if (!inner.length) return [];
+      const main: Summary = [];
+      const hoisted: Summary = [];
+      for (const entry of inner) {
+        if (typeof entry === 'object' && entry && '_hoist' in entry) {
+          const { _hoist, ...rest } = entry as Record<string, unknown>;
+          hoisted.push(rest as unknown as Summary[number]);
+        } else {
+          main.push(entry);
+        }
+      }
       const title = opts?.installed
         ? `${triggerInfo.onBuild.icon} ${triggerInfo.onBuild.future}`
         : `${triggerInfo.onBuild.icon} On build, ${triggerInfo.onBuild.future.toLowerCase()}`;
-      return [{ title, items: inner }];
+      const wrapped = main.length ? [{ title, items: main }] : [];
+      return [...wrapped, ...hoisted];
     },
     describe(
       target: T,
@@ -25,10 +36,21 @@ export function withInstallation<T>(
     ): Summary {
       const inner = translator.describe(target, ctx, opts);
       if (!inner.length) return [];
+      const main: Summary = [];
+      const hoisted: Summary = [];
+      for (const entry of inner) {
+        if (typeof entry === 'object' && entry && '_hoist' in entry) {
+          const { _hoist, ...rest } = entry as Record<string, unknown>;
+          hoisted.push(rest as unknown as Summary[number]);
+        } else {
+          main.push(entry);
+        }
+      }
       const title = opts?.installed
         ? `${triggerInfo.onBuild.icon} ${triggerInfo.onBuild.future}`
         : `${triggerInfo.onBuild.icon} On build, ${triggerInfo.onBuild.future.toLowerCase()}`;
-      return [{ title, items: inner }];
+      const wrapped = main.length ? [{ title, items: main }] : [];
+      return [...wrapped, ...hoisted];
     },
     log(
       target: T,

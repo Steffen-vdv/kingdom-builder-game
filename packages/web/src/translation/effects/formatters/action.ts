@@ -19,14 +19,17 @@ registerEffectFormatter('action', 'add', {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    return `Gain action ${icon}${name}`;
+    return `Gain action ${icon} ${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
     const card = describeContent('action', id, ctx);
-    return [`Gain action ${icon}${name}`, ...card];
+    return [
+      `Gain action ${icon} ${name}`,
+      { title: `${icon} ${name}`, items: card, _hoist: true },
+    ];
   },
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
@@ -41,13 +44,13 @@ registerEffectFormatter('action', 'remove', {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    return `Lose ${icon}${name}`;
+    return `Lose ${icon} ${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
-    return `Lose action ${icon}${name}`;
+    return `Lose action ${icon} ${name}`;
   },
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
@@ -70,7 +73,7 @@ registerEffectFormatter('action', 'perform', {
     if (!id) return null;
     const { icon, name } = getActionLabel(id, ctx);
     const summary = describeContent('action', id, ctx);
-    return [{ title: `Perform action ${icon}${name}`, items: summary }];
+    return [{ title: `Perform action ${icon} ${name}`, items: summary }];
   },
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
