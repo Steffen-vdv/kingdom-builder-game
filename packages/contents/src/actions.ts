@@ -143,6 +143,33 @@ export function createActionRegistry() {
       .system()
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 6)
+      .effect({ type: 'action', method: 'perform', params: { id: 'expand' } })
+      .effect({ type: 'action', method: 'perform', params: { id: 'till' } })
+      .effect({
+        type: 'passive',
+        method: 'add',
+        params: {
+          id: 'plow_cost_mod',
+          onUpkeepPhase: [
+            {
+              type: 'passive',
+              method: 'remove',
+              params: { id: 'plow_cost_mod' },
+            },
+          ],
+        },
+        effects: [
+          {
+            type: 'cost_mod',
+            method: 'add',
+            params: {
+              id: 'plow_cost_all',
+              key: Resource.gold,
+              amount: 2,
+            },
+          },
+        ],
+      })
       .build(),
   );
 

@@ -74,6 +74,11 @@ function runTrigger(
     if (effects) runEffects(effects, ctx);
   }
 
+  for (const passive of ctx.passives.values(player.id)) {
+    const effects = getEffects(passive, trigger);
+    if (effects) runEffects(effects, ctx);
+  }
+
   ctx.game.currentPlayerIndex = original;
 }
 
@@ -105,6 +110,10 @@ export function collectTriggerEffects(
   for (const id of player.buildings) {
     const buildingDefinition = ctx.buildings.get(id);
     const list = getEffects(buildingDefinition, trigger);
+    if (list) effects.push(...list.map((e) => ({ ...e })));
+  }
+  for (const passive of ctx.passives.values(player.id)) {
+    const list = getEffects(passive, trigger);
     if (list) effects.push(...list.map((e) => ({ ...e })));
   }
   return effects;

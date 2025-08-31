@@ -1,4 +1,4 @@
-import type { ResourceKey, PlayerState } from '../state';
+import type { ResourceKey, PlayerState, PlayerId } from '../state';
 import type { EngineContext } from '../context';
 import { runEffects, type EffectDef } from '../effects';
 
@@ -86,7 +86,16 @@ export class PassiveManager {
   private evaluationMods: Map<string, Map<string, EvaluationModifier>> =
     new Map();
   private evaluationIndex: Map<string, string> = new Map();
-  private passives: Map<string, { effects: EffectDef[] }> = new Map();
+  private passives: Map<
+    string,
+    {
+      effects: EffectDef[];
+      onDevelopmentPhase?: EffectDef[];
+      onUpkeepPhase?: EffectDef[];
+      onAttackResolved?: EffectDef[];
+      owner: PlayerId;
+    }
+  > = new Map();
 
   registerCostModifier(id: string, mod: CostModifier) {
     this.costMods.set(id, mod);
@@ -138,22 +147,41 @@ export class PassiveManager {
   }
 
   addPassive(
-    passive: { id: string; effects: EffectDef[] },
+    passive: {
+      id: string;
+      effects: EffectDef[];
+      onDevelopmentPhase?: EffectDef[];
+      onUpkeepPhase?: EffectDef[];
+      onAttackResolved?: EffectDef[];
+    },
     ctx: EngineContext,
   ) {
-    this.passives.set(passive.id, { effects: passive.effects });
+    const key = `${passive.id}_${ctx.activePlayer.id}`;
+    this.passives.set(key, { ...passive, owner: ctx.activePlayer.id });
     runEffects(passive.effects, ctx);
   }
 
   removePassive(id: string, ctx: EngineContext) {
-    const passive = this.passives.get(id);
+    const key = `${id}_${ctx.activePlayer.id}`;
+    const passive = this.passives.get(key);
     if (!passive) return;
     runEffects(passive.effects.map(reverseEffect), ctx);
-    this.passives.delete(id);
+    this.passives.delete(key);
   }
 
-  list() {
-    return Array.from(this.passives.keys());
+  list(owner?: PlayerId) {
+    if (!owner) return Array.from(this.passives.keys());
+    const suffix = `_${owner}`;
+    return Array.from(this.passives.keys())
+      .filter((k) => k.endsWith(suffix))
+      .map((k) => k.slice(0, -suffix.length));
+  }
+
+  values(owner: PlayerId) {
+    const suffix = `_${owner}`;
+    return Array.from(this.passives.entries())
+      .filter(([k]) => k.endsWith(suffix))
+      .map(([, v]) => v);
   }
 }
 

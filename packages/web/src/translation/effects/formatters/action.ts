@@ -54,3 +54,18 @@ registerEffectFormatter('action', 'remove', {
     return `Lost ${icon} ${name}`;
   },
 });
+
+registerEffectFormatter('action', 'perform', {
+  summarize: (eff, ctx) => {
+    const id = eff.params?.['id'] as string;
+    if (!id) return null;
+    const { icon, name } = getActionLabel(id, ctx);
+    return `${icon} ${name}`;
+  },
+  describe: (eff, ctx) => {
+    const id = eff.params?.['id'] as string;
+    if (!id) return null;
+    const { icon, name } = getActionLabel(id, ctx);
+    return `Perform action ${icon}${name}`;
+  },
+});

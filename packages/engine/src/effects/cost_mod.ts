@@ -3,7 +3,7 @@ import type { ResourceKey } from '../state';
 
 interface CostModParams {
   id: string;
-  actionId: string;
+  actionId?: string;
   key: ResourceKey;
   amount: number;
   [key: string]: unknown;
@@ -11,8 +11,8 @@ interface CostModParams {
 
 export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
   const { id, actionId, key, amount } = effect.params || ({} as CostModParams);
-  if (!id || !actionId || !key || amount === undefined) {
-    throw new Error('cost_mod requires id, actionId, key, amount');
+  if (!id || !key || amount === undefined) {
+    throw new Error('cost_mod requires id, key, amount');
   }
   const ownerId = ctx.activePlayer.id;
   const modId = `${id}_${ownerId}`;
@@ -21,8 +21,8 @@ export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
       modId,
       (targetActionId, costs, innerCtx) => {
         if (
-          targetActionId === actionId &&
-          innerCtx.activePlayer.id === ownerId
+          innerCtx.activePlayer.id === ownerId &&
+          (!actionId || targetActionId === actionId)
         ) {
           const current = costs[key] || 0;
           return { ...costs, [key]: current + amount };
