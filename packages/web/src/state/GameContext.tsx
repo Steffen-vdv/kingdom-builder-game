@@ -41,6 +41,7 @@ interface Action {
 export interface LogEntry {
   time: string;
   text: string;
+  playerId: string;
 }
 
 interface HoverCard {
@@ -138,11 +139,16 @@ export function GameProvider({
     setPhasePaused(v);
   }
 
-  const addLog = (entry: string | string[], playerName?: string) =>
+  const addLog = (
+    entry: string | string[],
+    player?: EngineContext['activePlayer'],
+  ) =>
     setLog((prev) => {
+      const p = player ?? ctx.activePlayer;
       const items = (Array.isArray(entry) ? entry : [entry]).map((text) => ({
         time: new Date().toLocaleTimeString(),
-        text: `[${playerName ?? ctx.activePlayer.name}] ${text}`,
+        text: `[${p.name}] ${text}`,
+        playerId: p.id,
       }));
       return [...prev, ...items];
     });
@@ -218,7 +224,7 @@ export function GameProvider({
         await runDelay(1500);
         setPhaseSteps([]);
         setDisplayPhase(phase);
-        addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player.name);
+        addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player);
         lastPhase = phase;
       }
       const after = snapshotPlayer(player, ctx);
@@ -226,7 +232,7 @@ export function GameProvider({
       if (changes.length) {
         addLog(
           changes.map((c) => `  ${c}`),
-          player.name,
+          player,
         );
       }
       const entry = {

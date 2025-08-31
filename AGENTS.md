@@ -19,6 +19,8 @@ non-obvious insights that will help future agents work more efficiently. Any upd
 - 2025-08-31: Registries can validate entries with Zod schemas; invalid data will throw during `add`.
 - 2025-08-31: A quick Node script can scan content files to detect duplicate icons across actions, buildings, stats, population roles and developments.
 - 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
+- 2025-09-02: Log entries include `playerId` so the web UI can style messages per player.
+- 2025-09-03: Player log text can reuse inactive player panel hues; dark mode should invert to lighter shades for readability.
 
 # Core Agent principles
 
