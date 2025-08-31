@@ -1,13 +1,10 @@
 import React, { useMemo } from 'react';
-import {
-  getActionCosts,
-  getActionRequirements,
-  PopulationRole,
-} from '@kingdom-builder/engine';
+import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
 import {
   Resource,
   RESOURCES,
   POPULATION_ROLES,
+  PopulationRole,
   SLOT_ICON as slotIcon,
   SLOT_LABEL as slotLabel,
   LAND_ICON as landIcon,

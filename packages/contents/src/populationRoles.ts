@@ -1,5 +1,11 @@
-import type { PopulationRoleId } from '@kingdom-builder/engine/state';
-import { PopulationRole } from '@kingdom-builder/engine/state';
+export const PopulationRole = {
+  Council: 'council',
+  Commander: 'commander',
+  Fortifier: 'fortifier',
+  Citizen: 'citizen',
+} as const;
+export type PopulationRoleId =
+  (typeof PopulationRole)[keyof typeof PopulationRole];
 
 export interface PopulationRoleInfo {
   key: PopulationRoleId;

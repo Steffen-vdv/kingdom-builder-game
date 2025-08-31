@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { PopulationRole } from '../state';
 import type { EffectDef } from '../effects';
 
 const requirementSchema = z.object({
@@ -99,7 +98,7 @@ const landStartSchema = z.object({
 const playerStartSchema = z.object({
   resources: z.record(z.string(), z.number()).optional(),
   stats: z.record(z.string(), z.number()).optional(),
-  population: z.record(z.nativeEnum(PopulationRole), z.number()).optional(),
+  population: z.record(z.string(), z.number()).optional(),
   lands: z.array(landStartSchema).optional(),
 });
 

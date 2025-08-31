@@ -10,8 +10,8 @@ import {
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
   Stat,
+  PopulationRole,
 } from '@kingdom-builder/contents';
-import { PopulationRole } from '@kingdom-builder/engine/state';
 interface StepDef {
   id: string;
   title?: string;
