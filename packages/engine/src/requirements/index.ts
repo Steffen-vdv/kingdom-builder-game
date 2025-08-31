@@ -1,6 +1,6 @@
 import { Registry } from '../registry';
 import type { EngineContext } from '../context';
-import { populationCap } from './population_cap';
+import { evaluatorCompare } from './evaluator_compare';
 import type { RequirementConfig } from '../config/schema';
 
 export type RequirementDef = RequirementConfig;
@@ -25,7 +25,7 @@ export function runRequirement(
 export function registerCoreRequirements(
   registry: RequirementRegistry = REQUIREMENTS,
 ) {
-  registry.add('population:cap', populationCap);
+  registry.add('evaluator:compare', evaluatorCompare);
 }
 
-export { populationCap };
+export { evaluatorCompare };

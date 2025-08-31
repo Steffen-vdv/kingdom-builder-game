@@ -1,5 +1,5 @@
 import { Registry } from '@kingdom-builder/engine/registry';
-import { Resource } from '@kingdom-builder/engine/state';
+import { Resource, Stat, PopulationRole } from '@kingdom-builder/engine/state';
 import {
   actionSchema,
   type ActionConfig,
@@ -129,8 +129,13 @@ export function createActionRegistry() {
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 5)
       .requirement({
-        type: 'population',
-        method: 'cap',
+        type: 'evaluator',
+        method: 'compare',
+        params: {
+          left: { type: 'population' },
+          operator: 'lt',
+          right: { type: 'stat', params: { key: Stat.maxPopulation } },
+        },
         message: 'Free space for 👥',
       })
       .effect(
@@ -164,6 +169,19 @@ export function createActionRegistry() {
       .name('Army Attack')
       .icon('🗡️')
       .cost(Resource.ap, 1)
+      .requirement({
+        type: 'evaluator',
+        method: 'compare',
+        params: {
+          left: { type: 'stat', params: { key: Stat.warWeariness } },
+          operator: 'lt',
+          right: {
+            type: 'population',
+            params: { role: PopulationRole.Commander },
+          },
+        },
+        message: 'War weariness must be lower than commanders',
+      })
       .build(),
   );
 
