@@ -1,5 +1,7 @@
 import { Registry } from '@kingdom-builder/engine/registry';
-import { Resource } from '@kingdom-builder/engine/state';
+import { Resource, Stat, PopulationRole } from '@kingdom-builder/engine/state';
+import { STATS } from './stats';
+import { POPULATION_ROLES } from './populationRoles';
 import {
   actionSchema,
   type ActionConfig,
@@ -7,6 +9,7 @@ import {
 import {
   action,
   effect,
+  requirement,
   Types,
   LandMethods,
   ResourceMethods,
@@ -128,11 +131,14 @@ export function createActionRegistry() {
       .icon('👶')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 5)
-      .requirement({
-        type: 'population',
-        method: 'cap',
-        message: 'Free space for 👥',
-      })
+      .requirement(
+        requirement('evaluator', 'compare')
+          .param('left', { type: 'population' })
+          .param('operator', 'lt')
+          .param('right', { type: 'stat', params: { key: Stat.maxPopulation } })
+          .message('Free space for 👥')
+          .build(),
+      )
       .effect(
         effect(Types.Population, PopulationMethods.ADD)
           .param('role', '$role')
@@ -164,6 +170,19 @@ export function createActionRegistry() {
       .name('Army Attack')
       .icon('🗡️')
       .cost(Resource.ap, 1)
+      .requirement(
+        requirement('evaluator', 'compare')
+          .param('left', { type: 'stat', params: { key: Stat.warWeariness } })
+          .param('operator', 'lt')
+          .param('right', {
+            type: 'population',
+            params: { role: PopulationRole.Commander },
+          })
+          .message(
+            `${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Commander].icon} ${POPULATION_ROLES[PopulationRole.Commander].label}`,
+          )
+          .build(),
+      )
       .build(),
   );
 

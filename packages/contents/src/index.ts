@@ -7,7 +7,7 @@ export { POPULATION_ROLES } from './populationRoles';
 export { RESOURCES } from './resources';
 export { STATS } from './stats';
 export { TRIGGER_INFO } from './triggers';
-export { LAND_ICON, SLOT_ICON } from './land';
+export { LAND_ICON, LAND_LABEL, SLOT_ICON, SLOT_LABEL } from './land';
 export { MODIFIER_INFO } from './modifiers';
 export { GAME_START } from './game';
 export type { ActionDef } from './actions';

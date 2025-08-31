@@ -8,6 +8,7 @@ import {
   createEngine,
   Resource,
   PopulationRole,
+  Stat,
 } from '@kingdom-builder/engine';
 import {
   RESOURCES,
@@ -18,8 +19,11 @@ import {
   PHASES,
   GAME_START,
   POPULATION_ROLES,
+  STATS,
   SLOT_ICON,
   LAND_ICON,
+  LAND_LABEL,
+  SLOT_LABEL,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -74,7 +78,7 @@ describe('<ActionsPanel />', () => {
 
   it('shows short requirement indicator when unmet', () => {
     render(<ActionsPanel />);
-    const popIcon = POPULATION_ROLES[PopulationRole.Citizen].icon;
+    const popIcon = STATS[Stat.maxPopulation].icon;
     expect(screen.getAllByText(`Req ${popIcon}`)[0]).toBeInTheDocument();
   });
 
@@ -85,9 +89,18 @@ describe('<ActionsPanel />', () => {
     expect(screen.getAllByText(`Req ${SLOT_ICON}`)[0]).toBeInTheDocument();
     expect(
       screen.getAllByTitle(
-        `No ${LAND_ICON} land with free ${SLOT_ICON} development slot`,
+        `No ${LAND_ICON} ${LAND_LABEL} with free ${SLOT_ICON} ${SLOT_LABEL}`,
       )[0],
     ).toBeInTheDocument();
     ctx.activePlayer.lands.forEach((l, i) => (l.slotsUsed = originalSlots[i]));
+  });
+
+  it('shows war weariness vs commander requirement icons when unmet', () => {
+    render(<ActionsPanel />);
+    const wwIcon = STATS[Stat.warWeariness].icon;
+    const cmdIcon = POPULATION_ROLES[PopulationRole.Commander].icon;
+    expect(
+      screen.getAllByText(`Req ${wwIcon}${cmdIcon}`)[0],
+    ).toBeInTheDocument();
   });
 });
