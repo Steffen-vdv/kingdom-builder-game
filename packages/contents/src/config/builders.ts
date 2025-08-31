@@ -5,9 +5,9 @@ import type {
   PopulationConfig,
   RequirementConfig,
   EffectConfig,
-} from './schema';
-import type { ResourceKey } from '../state';
-import type { EvaluatorDef } from '../evaluators';
+} from '@kingdom-builder/engine/config/schema';
+import type { ResourceKey } from '@kingdom-builder/engine/state';
+import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
 
 export const Types = {
   Land: 'land',
@@ -30,6 +30,7 @@ export const LandMethods = {
 export const ResourceMethods = {
   ADD: 'add',
   REMOVE: 'remove',
+  TRANSFER: 'transfer',
 } as const;
 
 export const BuildingMethods = {

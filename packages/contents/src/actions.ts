@@ -19,7 +19,7 @@ import {
   PassiveMethods,
   CostModMethods,
   BuildingMethods,
-} from '@kingdom-builder/engine/config/builders';
+} from './config/builders';
 
 export type ActionDef = ActionConfig;
 
@@ -194,6 +194,23 @@ export function createActionRegistry() {
       .icon('🎉')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 3)
+      .build(),
+  );
+
+  registry.add(
+    'plunder',
+    action()
+      .id('plunder')
+      .name('Plunder')
+      .icon('🏴\u200d☠️')
+      .system()
+      // Base 25% transfer; modifiers may adjust via result_mod targeting
+      // evaluation { type: 'transfer_pct', id: 'percent' } with an `adjust` value.
+      .effect(
+        effect(Types.Resource, ResourceMethods.TRANSFER)
+          .params({ key: Resource.gold, percent: 25 })
+          .build(),
+      )
       .build(),
   );
 

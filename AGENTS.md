@@ -47,6 +47,8 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-09-15: Requirement handlers return `true` or a message; `getActionRequirements` collects these messages for UI prompts.
 - 2025-09-16: Use `evaluator:compare` requirement to compare numeric evaluator outputs without custom handlers.
 - 2025-09-17: Derive requirement icons in the UI by parsing evaluator comparisons; see `getRequirementIcons` utility.
+- 2025-09-18: `result_mod` accepts an `adjust` parameter to tweak evaluation gains like `transfer_pct`.
+- 2025-09-20: Resource transfers use evaluation key `transfer_pct:percent` for modifier targeting.
 
 # Core Agent principles
 

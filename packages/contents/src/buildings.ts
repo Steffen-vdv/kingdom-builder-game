@@ -9,7 +9,7 @@ import {
   ResultModMethods,
   ResourceMethods,
   ActionMethods,
-} from '@kingdom-builder/engine/config/builders';
+} from './config/builders';
 import type { BuildingDef } from './defs';
 
 export type { BuildingDef } from './defs';
