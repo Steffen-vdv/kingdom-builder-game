@@ -68,6 +68,7 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-10-19: Population labels are defined in `packages/contents/src/populationRoles.ts` for UI display.
 - 2025-08-31: `attack:perform` effect parameters `ignoreAbsorption`, `ignoreFortification` and nested `onCastleDamage` effects require dedicated web formatter for player-facing text.
 - 2025-08-31: Merge attacker and defender on-damage summaries by tagging items "for you" or "for opponent" instead of separate groups.
+- 2025-08-31: Compact on-damage summaries further by prefixing entries with "You" or "Opponent".
 
 # Core Agent principles
 

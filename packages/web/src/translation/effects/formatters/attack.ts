@@ -16,37 +16,33 @@ function baseEntry(eff: EffectDef<Record<string, unknown>>, mode: Mode) {
   const castle = RESOURCES[Resource.castleHP];
   const absorption = STATS[Stat.absorption];
   const fort = STATS[Stat.fortificationStrength];
+
+  if (mode === 'summarize') {
+    const title = `${army.icon} Attack opponent's ${fort.icon}${castle.icon}`;
+    return { entry: title, castle };
+  }
+
   const title = `Attack opponent with your ${army.icon} ${army.label}`;
   const items: SummaryEntry[] = [];
 
-  if (mode === 'describe') {
-    if (eff.params?.['ignoreAbsorption'])
-      items.push(
-        `Ignoring ${absorption.icon} ${absorption.label} damage reduction`,
-      );
-    else
-      items.push(
-        `${absorption.icon} ${absorption.label} damage reduction applied`,
-      );
+  if (eff.params?.['ignoreAbsorption'])
+    items.push(
+      `Ignoring ${absorption.icon} ${absorption.label} damage reduction`,
+    );
+  else
+    items.push(
+      `${absorption.icon} ${absorption.label} damage reduction applied`,
+    );
 
-    if (eff.params?.['ignoreFortification'])
-      items.push(
-        `Damage applied directly to opponent's ${castle.icon} ${castle.label}`,
-      );
-    else {
-      items.push(`Damage applied to opponent's ${fort.icon} ${fort.label}`);
-      items.push(
-        `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${castle.icon} ${castle.label}`,
-      );
-    }
-  } else {
-    if (eff.params?.['ignoreAbsorption'])
-      items.push(`Ignore ${absorption.icon} ${absorption.label}`);
-    else items.push(`${absorption.icon} reduces damage`);
-
-    if (eff.params?.['ignoreFortification'])
-      items.push(`Hits ${castle.icon} ${castle.label} directly`);
-    else items.push(`Hits opponent's ${fort.icon} then ${castle.icon}`);
+  if (eff.params?.['ignoreFortification'])
+    items.push(
+      `Damage applied directly to opponent's ${castle.icon} ${castle.label}`,
+    );
+  else {
+    items.push(`Damage applied to opponent's ${fort.icon} ${fort.label}`);
+    items.push(
+      `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${castle.icon} ${castle.label}`,
+    );
   }
 
   return { entry: { title, items }, castle };
@@ -77,26 +73,57 @@ function onCastleDamageEntry(
   const items: SummaryEntry[] = [];
   const actionItems: SummaryEntry[] = [];
 
-  attackerItems.forEach((item, i) => {
-    const def = attackerDefs[i]!;
-    if (def.type === 'action' && def.method === 'perform')
-      actionItems.push(item);
-    else if (typeof item === 'string') items.push(`${item} for you`);
-    else items.push({ ...item, title: `${item.title} for you` });
-  });
-
   defenderItems.forEach((item, i) => {
     const def = defenderDefs[i]!;
     if (def.type === 'action' && def.method === 'perform')
-      actionItems.push(item);
-    else if (typeof item === 'string') items.push(`${item} for opponent`);
-    else items.push({ ...item, title: `${item.title} for opponent` });
+      actionItems.push(
+        mode === 'summarize'
+          ? typeof item === 'string'
+            ? item
+            : (item as { title: string }).title
+          : item,
+      );
+    else if (typeof item === 'string')
+      items.push(
+        mode === 'summarize' ? `Opponent ${item}` : `${item} for opponent`,
+      );
+    else
+      items.push({
+        ...item,
+        title:
+          mode === 'summarize'
+            ? `Opponent ${item.title}`
+            : `${item.title} for opponent`,
+      });
+  });
+
+  attackerItems.forEach((item, i) => {
+    const def = attackerDefs[i]!;
+    if (def.type === 'action' && def.method === 'perform')
+      actionItems.push(
+        mode === 'summarize'
+          ? typeof item === 'string'
+            ? item
+            : (item as { title: string }).title
+          : item,
+      );
+    else if (typeof item === 'string')
+      items.push(mode === 'summarize' ? `You ${item}` : `${item} for you`);
+    else
+      items.push({
+        ...item,
+        title:
+          mode === 'summarize' ? `You ${item.title}` : `${item.title} for you`,
+      });
   });
 
   const all = items.concat(actionItems);
   if (!all.length) return null;
   return {
-    title: `On opponent ${castle.icon} ${castle.label} damage`,
+    title:
+      mode === 'summarize'
+        ? `On ${castle.icon} damage`
+        : `On opponent ${castle.icon} ${castle.label} damage`,
     items: all,
   };
 }
