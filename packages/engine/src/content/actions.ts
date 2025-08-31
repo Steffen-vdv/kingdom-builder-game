@@ -135,18 +135,6 @@ export function createActionRegistry() {
   );
 
   registry.add(
-    'build_plow_workshop',
-    action('build_plow_workshop', 'Build - Plow Workshop')
-      .cost(Resource.ap, 1)
-      .effect({
-        type: 'building',
-        method: 'add',
-        params: { id: 'plow_workshop' },
-      })
-      .build(),
-  );
-
-  registry.add(
     'plow',
     action('plow', 'Plow')
       .system()
@@ -186,10 +174,6 @@ export const ACTION_INFO: Record<string, { icon: string; label: string }> = {
   royal_decree: { icon: '📜', label: ACTIONS.get('royal_decree').name },
   army_attack: { icon: '🗡️', label: ACTIONS.get('army_attack').name },
   hold_festival: { icon: '🎉', label: ACTIONS.get('hold_festival').name },
-  build_plow_workshop: {
-    icon: '🚜',
-    label: ACTIONS.get('build_plow_workshop').name,
-  },
   plow: { icon: '🚜', label: ACTIONS.get('plow').name },
   build: { icon: '🏛️', label: ACTIONS.get('build').name },
 } as const;
