@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { SummaryEntry } from '../src/translation/content';
 import { summarizeContent, describeContent } from '../src/translation/content';
-import { createEngine, Resource, Stat } from '@kingdom-builder/engine';
+import {
+  createEngine,
+  Resource,
+  Stat,
+  type EffectDef,
+} from '@kingdom-builder/engine';
 import {
   ACTIONS,
   BUILDINGS,
@@ -39,18 +44,46 @@ describe('army attack translation', () => {
     const happiness = RESOURCES[Resource.happiness];
     const plunder = ctx.actions.get('plunder');
     const warWeariness = STATS[Stat.warWeariness];
+    const armyAttack = ctx.actions.get('army_attack');
+    const attackEffect = armyAttack.effects.find(
+      (e: EffectDef) => e.type === 'attack',
+    );
+    const onDamage = attackEffect?.params?.['onCastleDamage'] as {
+      attacker: EffectDef[];
+      defender: EffectDef[];
+    };
+    const attackerRes = onDamage?.attacker.find(
+      (e: EffectDef) =>
+        e.type === 'resource' &&
+        (e.params as { key?: string }).key === Resource.happiness,
+    );
+    const defenderRes = onDamage?.defender.find(
+      (e: EffectDef) =>
+        e.type === 'resource' &&
+        (e.params as { key?: string }).key === Resource.happiness,
+    );
+    const attackerAmt =
+      (attackerRes?.params as { amount?: number })?.amount ?? 0;
+    const defenderAmt =
+      (defenderRes?.params as { amount?: number })?.amount ?? 0;
+    const warRes = armyAttack.effects.find(
+      (e: EffectDef) =>
+        e.type === 'stat' &&
+        (e.params as { key?: string }).key === Stat.warWeariness,
+    );
+    const warAmt = (warRes?.params as { amount?: number })?.amount ?? 0;
     const summary = summarizeContent('action', 'army_attack', ctx);
     expect(summary).toEqual([
       `${army.icon} opponent's ${fort.icon}${castle.icon}`,
       {
         title: `On opponent ${castle.icon} damage`,
         items: [
-          `${happiness.icon}-1 for opponent`,
-          `${happiness.icon}+1 for you`,
+          `${happiness.icon}${defenderAmt} for opponent`,
+          `${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt} for you`,
           `${plunder.icon} ${plunder.name}`,
         ],
       },
-      `${warWeariness.icon}+1`,
+      `${warWeariness.icon}${warAmt >= 0 ? '+' : ''}${warAmt}`,
     ]);
   });
 

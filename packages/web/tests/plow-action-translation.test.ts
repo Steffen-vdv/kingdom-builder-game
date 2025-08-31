@@ -4,7 +4,7 @@ import {
   describeContent,
   splitSummary,
 } from '../src/translation/content';
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngine, type EffectDef } from '@kingdom-builder/engine';
 import {
   ACTIONS,
   BUILDINGS,
@@ -13,6 +13,11 @@ import {
   PHASES,
   GAME_START,
   RULES,
+  RESOURCES,
+  Resource,
+  LAND_ICON,
+  LAND_LABEL,
+  SLOT_ICON,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -35,10 +40,21 @@ describe('plow action translation', () => {
   it('summarizes plow action', () => {
     const ctx = createCtx();
     const summary = summarizeContent('action', 'plow', ctx);
+    const expand = ctx.actions.get('expand');
+    const till = ctx.actions.get('till');
+    const plow = ctx.actions.get('plow');
+    const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
+    const costMod = passive?.effects.find(
+      (e: EffectDef) => e.type === 'cost_mod',
+    );
+    const modKey = (costMod?.params as { key?: keyof typeof RESOURCES })
+      ?.key as keyof typeof RESOURCES;
+    const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
+    const modIcon = RESOURCES[modKey].icon;
     expect(summary).toEqual([
-      '🌱 Expand',
-      '🧑‍🌾 Till',
-      { title: '♾️ Until next Upkeep', items: ['💲: 🪙+2'] },
+      `${expand.icon} ${expand.name}`,
+      `${till.icon} ${till.name}`,
+      { title: '♾️ Until next Upkeep', items: [`💲: ${modIcon}+${modAmt}`] },
     ]);
   });
 
@@ -58,12 +74,43 @@ describe('plow action translation', () => {
     const summary = describeContent('action', 'plow', ctx);
     const { effects, description } = splitSummary(summary);
     expect(description).toBeUndefined();
+    const expand = ctx.actions.get('expand');
+    const till = ctx.actions.get('till');
+    const plow = ctx.actions.get('plow');
+    const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
+    const costMod = passive?.effects.find(
+      (e: EffectDef) => e.type === 'cost_mod',
+    );
+    const modKey = (costMod?.params as { key?: keyof typeof RESOURCES })
+      ?.key as keyof typeof RESOURCES;
+    const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
+    const modIcon = RESOURCES[modKey].icon;
+    const expandLand = expand.effects.find((e: EffectDef) => e.type === 'land');
+    const landCount = (expandLand?.params as { count?: number })?.count ?? 0;
+    const expandHap = expand.effects.find(
+      (e: EffectDef) =>
+        e.type === 'resource' &&
+        (e.params as { key?: string }).key === Resource.happiness,
+    );
+    const hapAmt = (expandHap?.params as { amount?: number })?.amount ?? 0;
+    const hapInfo = RESOURCES[Resource.happiness];
     expect(effects).toEqual([
-      { title: '🌱 Expand', items: ['Gain 1 🗺️ Land', '😊+1 Happiness'] },
-      { title: '🧑‍🌾 Till', items: ['Till 🗺️ to unlock 🧩 slot'] },
+      {
+        title: `${expand.icon} ${expand.name}`,
+        items: [
+          `Gain ${landCount} ${LAND_ICON} ${LAND_LABEL}`,
+          `${hapInfo.icon}+${hapAmt} ${hapInfo.label}`,
+        ],
+      },
+      {
+        title: `${till.icon} ${till.name}`,
+        items: [`Till ${LAND_ICON} to unlock ${SLOT_ICON} slot`],
+      },
       {
         title: '♾️ Until your next Upkeep Phase',
-        items: ['💲 Cost Modifier on all actions: Increase cost by 🪙2'],
+        items: [
+          `💲 Cost Modifier on all actions: Increase cost by ${modIcon}${modAmt}`,
+        ],
       },
     ]);
   });

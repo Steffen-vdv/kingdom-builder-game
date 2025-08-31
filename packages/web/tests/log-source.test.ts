@@ -13,6 +13,8 @@ import {
   PHASES,
   GAME_START,
   RULES,
+  RESOURCES,
+  Resource,
 } from '@kingdom-builder/contents';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 
@@ -45,7 +47,14 @@ describe('log resource sources', () => {
     runEffects(step?.effects || [], ctx);
     const after = snapshotPlayer(ctx.activePlayer, ctx);
     const lines = diffStepSnapshots(before, after, step, ctx);
-    expect(lines[0]).toBe('🪙 Gold +2 (10→12) (🪙+2 from 🌾)');
+    const goldInfo = RESOURCES[Resource.gold];
+    const farmIcon = DEVELOPMENTS.get('farm')?.icon || '';
+    const b = before.resources[Resource.gold] ?? 0;
+    const a = after.resources[Resource.gold] ?? 0;
+    const delta = a - b;
+    expect(lines[0]).toBe(
+      `${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a}) (${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${farmIcon})`,
+    );
   });
 
   it('logs market bonus when taxing population', () => {
@@ -68,7 +77,14 @@ describe('log resource sources', () => {
     performAction('tax', ctx);
     const after = snapshotPlayer(ctx.activePlayer, ctx);
     const lines = diffStepSnapshots(before, after, step, ctx);
-    const goldLine = lines.find((l) => l.startsWith('🪙 Gold'));
-    expect(goldLine).toMatch(/from 👥\+🏪\)$/);
+    const goldInfo = RESOURCES[Resource.gold];
+    const populationIcon = '👥';
+    const marketIcon = BUILDINGS.get('market')?.icon || '';
+    const goldLine = lines.find((l) =>
+      l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+    );
+    expect(goldLine).toMatch(
+      new RegExp(`from ${populationIcon}\\+${marketIcon}\\)$`),
+    );
   });
 });

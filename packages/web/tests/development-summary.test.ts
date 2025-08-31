@@ -10,6 +10,9 @@ import {
   PHASES,
   GAME_START,
   RULES,
+  RESOURCES,
+  Resource,
+  type StepDef,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -41,6 +44,15 @@ describe('development translation', () => {
     });
     const summary = summarizeContent('development', 'farm', ctx);
     const flat = flatten(summary);
-    expect(flat).toContain('🪙+2 per 🌾');
+    const goldIcon = RESOURCES[Resource.gold].icon;
+    const farmIcon = DEVELOPMENTS.get('farm')?.icon || '';
+    const devPhase = ctx.phases.find((p) => p.id === 'development');
+    const gainIncome = devPhase?.steps.find((s) => s.id === 'gain-income') as
+      | StepDef
+      | undefined;
+    const farmEffect = gainIncome?.effects?.find((e) => e.evaluator);
+    const inner = farmEffect?.effects?.find((e) => e.type === 'resource');
+    const amt = (inner?.params as { amount?: number })?.amount ?? 0;
+    expect(flat).toContain(`${goldIcon}+${amt} per ${farmIcon}`);
   });
 });
