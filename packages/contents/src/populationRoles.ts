@@ -19,9 +19,9 @@ export const POPULATION_ROLES: Record<PopulationRoleId, PopulationRoleInfo> = {
   [PopulationRole.Commander]: {
     key: PopulationRole.Commander,
     icon: '🎖️',
-    label: 'Army Commander',
+    label: 'Commander',
     description:
-      'Army Commanders lead your forces, boosting Army Strength and training troops each Development phase.',
+      'Commanders lead your forces, boosting Army Strength and training troops each Development phase.',
   },
   [PopulationRole.Fortifier]: {
     key: PopulationRole.Fortifier,

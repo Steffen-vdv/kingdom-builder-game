@@ -61,6 +61,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-10-01: Shell starts without standard binaries in PATH; run `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` to restore.
 - 2025-10-05: `compare` evaluator returns 1 when a comparison holds, allowing conditional effects.
 - 2025-08-31: Node and npm may be missing; install with `apt-get install -y nodejs npm` before running tests.
+- 2025-10-19: Population labels are defined in `packages/contents/src/populationRoles.ts` for UI display.
 
 # Core Agent principles
 
@@ -153,7 +154,7 @@ We have Trigger Effects and Global Effects. The former was explained in section 
 
 # Population
 
-Finally, we have Population, which is made up of four archtypes: Council, Army Commander, Fortifier and Citizen. Certain Actions can create Population, or change the Archtype of a Population member. Each Population member has one or more Effects, again with specific triggers or global. For example, the Council generates one AP at the end of every Development Phase (trigger effect). The Army Commander passively provides 1 Army Strength (a stat) (global effect, active at all times). When the Army Commander is relieved from his position, this global effect is removed. The Army Commander also permanently grows the current Army Strength by 25% of it's current size, at every Development Phase (trigger effect, permanent stat change). Even if the Army Commander is removed afterwards, this stat change stays - it was a one-time stat increase, not one tingent on his continued existence.
+Finally, we have Population, which is made up of four archtypes: Council, Commander, Fortifier and Citizen. Certain Actions can create Population, or change the Archtype of a Population member. Each Population member has one or more Effects, again with specific triggers or global. For example, the Council generates one AP at the end of every Development Phase (trigger effect). The Commander passively provides 1 Army Strength (a stat) (global effect, active at all times). When the Commander is relieved from his position, this global effect is removed. The Commander also permanently grows the current Army Strength by 25% of it's current size, at every Development Phase (trigger effect, permanent stat change). Even if the Commander is removed afterwards, this stat change stays - it was a one-time stat increase, not one tingent on his continued existence.
 
 # Start of game setup
 
