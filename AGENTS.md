@@ -66,10 +66,11 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-10-10: `action:perform` handler automatically snapshots for action traces, so nested manual snapshotting is redundant.
 - 2025-10-11: Building stat bonuses should use `PassiveMethods.ADD` with a unique id to tie their effects to the building's existence.
 - 2025-10-19: Population labels are defined in `packages/contents/src/populationRoles.ts` for UI display.
-- 2025-10-28: BuildingBuilder now defaults to 1 AP; tests adding buildings must allocate AP equal to building costs.
 - 2025-10-28: Dynamic PlayerState properties required disabling `noPropertyAccessFromIndexSignature` in `tsconfig.base.json`.
 - 2025-10-28: Missing `eslint-plugin-import` causes eslint to fail; install with `npm install --no-save eslint-plugin-import`.
 - 2025-10-28: Engine `Resource` and `Stat` constants are empty until `setResourceKeys`/`setStatKeys` run; use content-side keys when configuring tests before engine creation.
+- 2025-10-23: Summary entries with a `_desc` flag appear under the Description section.
+- 2025-10-29: Phase icons live in `PHASES`; grab them with `PHASES.find(p => p.id === id)?.icon` for overview displays.
 
 # Core Agent principles
 
