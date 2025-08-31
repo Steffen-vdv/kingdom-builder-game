@@ -70,6 +70,8 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-08-31: Merge attacker and defender on-damage summaries by tagging items "for you" or "for opponent" instead of separate groups.
 - 2025-08-31: Compact on-damage summaries further by prefixing entries with "You" or "Opponent".
 - 2025-08-31: Suffix on-damage summary items with "for you"/"for opponent" to keep icons leading each line.
+- 2025-10-23: Summary entries with a `_desc` flag appear under the Description section.
+- 2025-10-29: Phase icons live in `PHASES`; grab them with `PHASES.find(p => p.id === id)?.icon` for overview displays.
 
 # Core Agent principles
 

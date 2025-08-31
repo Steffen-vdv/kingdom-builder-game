@@ -35,6 +35,6 @@ registerEffectFormatter('resource', 'transfer', {
     const label = res?.label || key;
     const icon = res?.icon || key;
     const percent = Number(eff.params?.['percent']);
-    return `Transfer ${percent}% ${icon} ${label}`;
+    return `Transfer ${percent}% of opponent's ${icon}${label} to you`;
   },
 });

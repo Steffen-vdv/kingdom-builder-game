@@ -297,7 +297,6 @@ export function createActionRegistry() {
       .id('build')
       .name('Build')
       .icon('🏛️')
-      .cost(Resource.ap, 1)
       .effect(
         effect(Types.Building, BuildingMethods.ADD).param('id', '$id').build(),
       )
