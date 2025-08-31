@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createEngine, runEffects } from '@kingdom-builder/engine';
+import {
+  createEngine,
+  runEffects,
+  performAction,
+  advance,
+} from '@kingdom-builder/engine';
 import {
   ACTIONS,
   BUILDINGS,
@@ -39,5 +44,28 @@ describe('log resource sources', () => {
     const after = snapshotPlayer(ctx.activePlayer, ctx);
     const lines = diffStepSnapshots(before, after, step, ctx);
     expect(lines[0]).toBe('🪙 Gold +2 (10→12) (🪙+2 from 🌾)');
+  });
+
+  it('logs market bonus when taxing population', () => {
+    const ctx = createEngine({
+      actions: ACTIONS,
+      buildings: BUILDINGS,
+      developments: DEVELOPMENTS,
+      populations: POPULATIONS,
+      phases: PHASES,
+      start: GAME_START,
+    });
+    runEffects(
+      [{ type: 'building', method: 'add', params: { id: 'market' } }],
+      ctx,
+    );
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
+    const step = { id: 'tax', effects: ctx.actions.get('tax').effects };
+    const before = snapshotPlayer(ctx.activePlayer, ctx);
+    performAction('tax', ctx);
+    const after = snapshotPlayer(ctx.activePlayer, ctx);
+    const lines = diffStepSnapshots(before, after, step, ctx);
+    const goldLine = lines.find((l) => l.startsWith('🪙 Gold'));
+    expect(goldLine).toMatch(/from 👥\+🏪\)$/);
   });
 });

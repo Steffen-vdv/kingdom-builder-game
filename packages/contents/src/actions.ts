@@ -92,7 +92,7 @@ export function createActionRegistry() {
       .cost(Resource.ap, 1)
       .effect(
         effect()
-          .evaluator('population')
+          .evaluator('population', { id: 'tax' })
           .effect(
             effect(Types.Resource, ResourceMethods.ADD)
               .params({ key: Resource.gold, amount: 4 })

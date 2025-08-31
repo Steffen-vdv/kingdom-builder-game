@@ -26,7 +26,6 @@ import {
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
-  diffSnapshots,
   diffStepSnapshots,
   logContent,
   type Summary,
@@ -279,7 +278,8 @@ export function GameProvider({
         params as ActionParams<string>,
       );
       const after = snapshotPlayer(ctx.activePlayer, ctx);
-      const changes = diffSnapshots(before, after, ctx);
+      const stepDef = ctx.actions.get(action.id);
+      const changes = diffStepSnapshots(before, after, stepDef, ctx);
       const messages = logContent('action', action.id, ctx, params);
       const costLines: string[] = [];
       for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
@@ -298,7 +298,13 @@ export function GameProvider({
 
       const subLines: string[] = [];
       for (const trace of traces) {
-        const subChanges = diffSnapshots(trace.before, trace.after, ctx);
+        const subStep = ctx.actions.get(trace.id);
+        const subChanges = diffStepSnapshots(
+          trace.before,
+          trace.after,
+          subStep,
+          ctx,
+        );
         if (!subChanges.length) continue;
         subLines.push(...subChanges);
         const icon = ctx.actions.get(trace.id)?.icon || '';

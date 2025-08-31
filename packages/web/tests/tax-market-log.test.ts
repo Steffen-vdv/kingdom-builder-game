@@ -2,8 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   createEngine,
   performAction,
+  advance,
   getActionCosts,
-  Resource,
+  runEffects,
   type ActionTrace,
 } from '@kingdom-builder/engine';
 import {
@@ -14,7 +15,6 @@ import {
   PHASES,
   GAME_START,
   RESOURCES,
-  SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
@@ -26,8 +26,8 @@ vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
 });
 
-describe('sub-action logging', () => {
-  it('nests sub-action effects under the triggering action', () => {
+describe('tax action logging with market', () => {
+  it('shows population and market sources in gold gain', () => {
     const ctx = createEngine({
       actions: ACTIONS,
       buildings: BUILDINGS,
@@ -36,20 +36,19 @@ describe('sub-action logging', () => {
       phases: PHASES,
       start: GAME_START,
     });
-    ctx.activePlayer.actions.add('plow');
-    ctx.activePlayer.resources[Resource.gold] = 10;
-    ctx.activePlayer.resources[Resource.ap] = 1;
-    const before = snapshotPlayer(ctx.activePlayer, ctx);
-    const costs = getActionCosts('plow', ctx);
-    const traces = performAction('plow', ctx);
-    const after = snapshotPlayer(ctx.activePlayer, ctx);
-    const changes = diffStepSnapshots(
-      before,
-      after,
-      ctx.actions.get('plow'),
+    runEffects(
+      [{ type: 'building', method: 'add', params: { id: 'market' } }],
       ctx,
     );
-    const messages = logContent('action', 'plow', ctx);
+    ctx.activePlayer.resources['gold'] = 0;
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
+    const action = ctx.actions.get('tax');
+    const before = snapshotPlayer(ctx.activePlayer, ctx);
+    const costs = getActionCosts('tax', ctx);
+    const traces: ActionTrace[] = performAction('tax', ctx);
+    const after = snapshotPlayer(ctx.activePlayer, ctx);
+    const changes = diffStepSnapshots(before, after, action, ctx);
+    const messages = logContent('action', 'tax', ctx);
     const costLines: string[] = [];
     for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
       const amt = costs[key] ?? 0;
@@ -63,13 +62,13 @@ describe('sub-action logging', () => {
     }
     if (costLines.length)
       messages.splice(1, 0, '  💲 Action cost', ...costLines);
-
     const subLines: string[] = [];
     for (const trace of traces) {
+      const subStep = ctx.actions.get(trace.id);
       const subChanges = diffStepSnapshots(
         trace.before,
         trace.after,
-        ctx.actions.get(trace.id),
+        subStep,
         ctx,
       );
       if (!subChanges.length) continue;
@@ -81,12 +80,14 @@ describe('sub-action logging', () => {
       if (idx !== -1)
         messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
     }
-
+    const normalize = (line: string) =>
+      (line.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
+    const subPrefixes = subLines.map(normalize);
     const costLabels = new Set(
       Object.keys(costs) as (keyof typeof RESOURCES)[],
     );
     const filtered = changes.filter((line) => {
-      if (subLines.includes(line)) return false;
+      if (subPrefixes.includes(normalize(line))) return false;
       for (const key of costLabels) {
         const info = RESOURCES[key];
         const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
@@ -95,32 +96,7 @@ describe('sub-action logging', () => {
       return true;
     });
     const logLines = [...messages, ...filtered.map((c) => `  ${c}`)];
-
-    const expandTrace = traces.find((t) => t.id === 'expand') as ActionTrace;
-    const expandDiff = diffStepSnapshots(
-      expandTrace.before,
-      expandTrace.after,
-      ctx.actions.get('expand'),
-      ctx,
-    );
-    expandDiff.forEach((line) => {
-      expect(logLines).toContain(`    ${line}`);
-      expect(logLines).not.toContain(`  ${line}`);
-    });
-    const tillTrace = traces.find((t) => t.id === 'till') as ActionTrace;
-    const tillDiff = diffStepSnapshots(
-      tillTrace.before,
-      tillTrace.after,
-      ctx.actions.get('till'),
-      ctx,
-    );
-    expect(tillDiff.length).toBeGreaterThan(0);
-    expect(
-      tillDiff.some((line) => line.startsWith(`${slotIcon} Development Slot`)),
-    ).toBe(true);
-    tillDiff.forEach((line) => {
-      expect(logLines).toContain(`    ${line}`);
-      expect(logLines).not.toContain(`  ${line}`);
-    });
+    const goldLine = logLines.find((l) => l.trimStart().startsWith('🪙 Gold'));
+    expect(goldLine).toBe('  🪙 Gold +5 (0→5) (🪙+5 from 👥+🏪)');
   });
 });

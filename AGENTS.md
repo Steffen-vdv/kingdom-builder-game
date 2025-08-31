@@ -40,6 +40,9 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-08-31: Content builders now chain `.id().name().icon()` and icons live on config entries; standalone info maps are deprecated.
 - 2025-08-31: Overview screen can pull icons from contents (e.g. ACTION_INFO, LAND_ICON) to keep keywords visually consistent.
 - 2025-08-31: PlayerState maintains `statsHistory` so stats returning to zero remain visible; initialize new non-zero stats accordingly.
+- 2025-09-01: `stat:add_pct` effects honor a `round` setting like resources; use `round: 'up'` to keep strength stats integer and non-negative.
+- 2025-09-02: Scope result modifiers by tagging evaluators with an `id` (e.g. population id 'tax') and referencing it in the modifier's `evaluation`.
+- 2025-09-03: Use `diffStepSnapshots` instead of `diffSnapshots` when logging action results to capture resource source icons.
 - 2025-09-14: PlayerState auto-initializes stats by iterating over `Stat` keys; adding a new stat requires only updating the `Stat` map and providing getters/setters.
 
 # Core Agent principles
