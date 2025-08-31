@@ -17,6 +17,8 @@ below.
 - 2025-08-31: Registries can validate entries with Zod schemas; invalid data will throw during `add`.
 - 2025-08-31: A quick Node script can scan content files to detect duplicate icons across actions, buildings, stats, population roles and developments.
 - 2025-08-31: Buildings that unlock actions require an `action` effect formatter so they aren't marked as unimplemented in the UI.
+- 2025-08-31: Replaced Playwright test runner with `playwright-chromium` script to speed up smoke tests.
+- 2025-08-31: Smoke test now skips when Chromium dependencies are missing, preventing false failures.
 
 # Core Agent principles
 
