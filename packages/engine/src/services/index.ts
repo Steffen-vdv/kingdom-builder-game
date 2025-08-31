@@ -91,6 +91,7 @@ export class PassiveManager {
       effects: EffectDef[];
       onDevelopmentPhase?: EffectDef[];
       onUpkeepPhase?: EffectDef[];
+      onBeforeAttacked?: EffectDef[];
       onAttackResolved?: EffectDef[];
       owner: PlayerId;
     }
@@ -151,6 +152,7 @@ export class PassiveManager {
       effects: EffectDef[];
       onDevelopmentPhase?: EffectDef[];
       onUpkeepPhase?: EffectDef[];
+      onBeforeAttacked?: EffectDef[];
       onAttackResolved?: EffectDef[];
     },
     ctx: EngineContext,

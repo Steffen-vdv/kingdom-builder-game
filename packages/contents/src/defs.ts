@@ -8,6 +8,7 @@ import type { EffectDef } from '@kingdom-builder/engine/effects';
 export interface Triggered {
   onDevelopmentPhase?: EffectDef[] | undefined;
   onUpkeepPhase?: EffectDef[] | undefined;
+  onBeforeAttacked?: EffectDef[] | undefined;
   onAttackResolved?: EffectDef[] | undefined;
 }
 

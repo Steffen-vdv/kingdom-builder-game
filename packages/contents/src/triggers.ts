@@ -17,6 +17,11 @@ export const TRIGGER_INFO = {
     future: 'Until removed',
     past: 'Build',
   },
+  onBeforeAttacked: {
+    icon: '🛡️',
+    future: 'Before being attacked',
+    past: 'Before attack',
+  },
   onAttackResolved: {
     icon: '⚔️',
     future: 'After having been attacked',
