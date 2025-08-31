@@ -3,6 +3,7 @@ import { useGameEngine } from '../../state/GameContext';
 import { MODIFIER_INFO as modifierInfo } from '@kingdom-builder/contents';
 import { describeEffects, splitSummary } from '../../translation';
 import type { EffectDef } from '@kingdom-builder/engine';
+import { useAnimate } from '../../utils/useAutoAnimate';
 
 export default function PassiveDisplay({
   player,
@@ -37,8 +38,12 @@ export default function PassiveDisplay({
     return '❔';
   };
 
+  const animatePassives = useAnimate<HTMLDivElement>();
   return (
-    <div className="panel-card flex items-center gap-1 px-3 py-2 w-fit">
+    <div
+      ref={animatePassives}
+      className="panel-card flex items-center gap-1 px-3 py-2 w-fit"
+    >
       {entries.map(([id, def]) => {
         const icon = getIcon(def.effects);
         const items = describeEffects(def.effects || [], ctx);

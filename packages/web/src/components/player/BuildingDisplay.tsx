@@ -2,6 +2,7 @@ import React from 'react';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useAnimate } from '../../utils/useAutoAnimate';
 
 interface BuildingDisplayProps {
   player: EngineContext['activePlayer'];
@@ -10,8 +11,9 @@ interface BuildingDisplayProps {
 const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
   const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
   if (player.buildings.size === 0) return null;
+  const animateBuildings = useAnimate<HTMLDivElement>();
   return (
-    <div className="flex flex-wrap gap-2 mt-2 w-fit">
+    <div ref={animateBuildings} className="flex flex-wrap gap-2 mt-2 w-fit">
       {Array.from(player.buildings).map((b) => {
         const name = ctx.buildings.get(b)?.name || b;
         const icon =

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import TimerCircle from '../TimerCircle';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
+import { useAnimate } from '../../utils/useAutoAnimate';
 
 const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
   const {
@@ -28,7 +29,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
     tabsEnabled,
   );
 
-  const phaseStepsRef = useRef<HTMLUListElement>(null);
+  const phaseStepsRef = useAnimate<HTMLUListElement>();
 
   useEffect(() => {
     const el = phaseStepsRef.current;
