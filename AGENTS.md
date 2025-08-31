@@ -80,6 +80,7 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-08-31: Configure runtime phase and population role enums with `setPhaseKeys` and `setPopulationRoleKeys` before creating the engine.
 - 2025-08-31: Type re-exports from React modules can still break Vite Fast Refresh; move shared types to separate files.
 - 2025-08-31: Engine creation now requires passing a `rules` object; import `RULES` from `@kingdom-builder/contents` when initializing tests or the web context.
+- 2025-10-31: HoverCard renders single-entry descriptions as "Action - <name>" with effect list for system actions.
 
 # Core Agent principles
 

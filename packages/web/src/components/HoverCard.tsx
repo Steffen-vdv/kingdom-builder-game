@@ -1,5 +1,6 @@
 import React from 'react';
 import { renderSummary, renderCosts } from '../translation/render';
+import type { Summary } from '../translation/content';
 import { useGameEngine } from '../state/GameContext';
 
 export default function HoverCard() {
@@ -42,6 +43,18 @@ export default function HoverCard() {
               <div className={`text-sm ${data.descriptionClass ?? ''}`}>
                 {desc}
               </div>
+            ) : Array.isArray(desc) &&
+              desc.length === 1 &&
+              typeof desc[0] === 'object' &&
+              'items' in (desc[0] as Record<string, unknown>) ? (
+              <>
+                <div className={`text-sm ${data.descriptionClass ?? ''}`}>
+                  Action - {(desc[0] as { title: string }).title}
+                </div>
+                <ul className="list-disc pl-4 text-sm">
+                  {renderSummary((desc[0] as { items: Summary }).items)}
+                </ul>
+              </>
             ) : (
               <ul className="list-disc pl-4 text-sm">{renderSummary(desc)}</ul>
             )}

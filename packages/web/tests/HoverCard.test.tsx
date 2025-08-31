@@ -10,6 +10,7 @@ import {
   getActionCosts,
   getActionRequirements,
 } from '@kingdom-builder/engine';
+import { describeContent } from '../src/translation/content';
 import {
   RESOURCES,
   ACTIONS,
@@ -87,5 +88,24 @@ describe('<HoverCard />', () => {
       screen.getByText(`${goldIcon}${costs[Resource.gold]}`),
     ).toBeInTheDocument();
     expect(screen.getByText(requirements[0]!)).toBeInTheDocument();
+  });
+
+  it('formats action descriptions without bullet on action title', () => {
+    const actionId = 'plow';
+    const action = ctx.actions.get(actionId);
+    const summary = describeContent('action', actionId, ctx);
+    mockGame.hoverCard = {
+      title: 'Test',
+      effects: [],
+      requirements: [],
+      description: [{ title: `${action.icon} ${action.name}`, items: summary }],
+    } as unknown as typeof mockGame.hoverCard;
+    render(<HoverCard />);
+    expect(
+      screen.getByText(`Action - ${action.icon} ${action.name}`),
+    ).toBeInTheDocument();
+    const first = summary[0];
+    const text = typeof first === 'string' ? first : first.title;
+    expect(screen.getByText(text)).toBeInTheDocument();
   });
 });
