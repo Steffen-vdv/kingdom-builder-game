@@ -11,17 +11,18 @@
     "test": "npm run lint && vitest run"
   },
   "dependencies": {
-    "@kingdom-builder/engine": "^0.1.0",
+    "@formkit/auto-animate": "^0.8.4",
     "@kingdom-builder/contents": "^0.1.0",
+    "@kingdom-builder/engine": "^0.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.14.1",
+    "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.57.0",
     "eslint-plugin-unused-imports": "^3.1.0",

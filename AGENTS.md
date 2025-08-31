@@ -68,6 +68,7 @@ Use the actual calendar date—today is 2025-08-31—and never log entries with 
 - 2025-10-19: Population labels are defined in `packages/contents/src/populationRoles.ts` for UI display.
 - 2025-10-23: Summary entries with a `_desc` flag appear under the Description section.
 - 2025-10-29: Phase icons live in `PHASES`; grab them with `PHASES.find(p => p.id === id)?.icon` for overview displays.
+- 2025-10-30: `@formkit/auto-animate` can add smooth transitions to UI lists and values via `useAutoAnimate`.
 
 # Core Agent principles
 
