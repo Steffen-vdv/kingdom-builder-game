@@ -224,25 +224,6 @@ export function advance(ctx: EngineContext): AdvanceResult {
 
   if (step) ctx.passives.runResultMods(step.id, ctx);
 
-  const compResource: Record<string, ResourceKey> = {
-    'gain-ap': Resource.ap,
-    'gain-income': Resource.gold,
-  };
-  const resKey = step ? compResource[step.id] : undefined;
-  if (resKey) {
-    const diff = ctx.compensations[player.id]?.resources?.[resKey];
-    if (diff) {
-      const extra: EffectDef = {
-        type: 'resource',
-        method: 'add',
-        params: { key: resKey, amount: diff },
-      };
-      runEffects([extra], ctx);
-      effects.push(extra);
-      ctx.compensations[player.id].resources![resKey] = 0;
-    }
-  }
-
   ctx.game.stepIndex += 1;
   if (ctx.game.stepIndex >= phase.steps.length) {
     ctx.game.stepIndex = 0;
@@ -397,10 +378,12 @@ export function createEngine({
     if (cfg.start) start = cfg.start;
   }
 
-  const compensations = {
-    A: diffPlayerStart(start.player, start.players?.['A']),
-    B: diffPlayerStart(start.player, start.players?.['B']),
-  } as Record<'A' | 'B', PlayerStartConfig>;
+  const compA = diffPlayerStart(start.player, start.players?.['A']);
+  const compB = diffPlayerStart(start.player, start.players?.['B']);
+  const compensations = { A: compA, B: compB } as Record<
+    'A' | 'B',
+    PlayerStartConfig
+  >;
 
   const ctx = new EngineContext(
     game,
@@ -417,7 +400,9 @@ export function createEngine({
   const playerB = ctx.game.players[1]!;
 
   applyPlayerStart(playerA, start.player, resolvedRules);
+  applyPlayerStart(playerA, compA, resolvedRules);
   applyPlayerStart(playerB, start.player, resolvedRules);
+  applyPlayerStart(playerB, compB, resolvedRules);
   ctx.game.currentPlayerIndex = 0;
   ctx.game.currentPhase = phases[0]?.id || '';
   ctx.game.currentStep = phases[0]?.steps[0]?.id || '';

@@ -166,22 +166,22 @@ export function GameProvider({
           Object.keys(comp.stats || {}).length === 0)
       )
         return;
-      const before = snapshotPlayer(player, ctx);
-      const after = {
-        ...before,
-        resources: { ...before.resources },
-        stats: { ...before.stats },
-        buildings: [...before.buildings],
-        lands: before.lands.map((l) => ({
+      const after = snapshotPlayer(player, ctx);
+      const before = {
+        ...after,
+        resources: { ...after.resources },
+        stats: { ...after.stats },
+        buildings: [...after.buildings],
+        lands: after.lands.map((l) => ({
           ...l,
           developments: [...l.developments],
         })),
-        passives: [...before.passives],
+        passives: [...after.passives],
       };
       for (const [k, v] of Object.entries(comp.resources || {}))
-        after.resources[k] = (after.resources[k] || 0) + (v ?? 0);
+        before.resources[k] = (before.resources[k] || 0) - (v ?? 0);
       for (const [k, v] of Object.entries(comp.stats || {}))
-        after.stats[k] = (after.stats[k] || 0) + (v ?? 0);
+        before.stats[k] = (before.stats[k] || 0) - (v ?? 0);
       const lines = diffStepSnapshots(before, after, undefined, ctx);
       if (lines.length)
         addLog(

@@ -45,6 +45,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-09-23: Player-specific resource compensations come from `GAME_START.players` overrides and apply automatically during matching gain steps.
 - 2025-09-23: Player-specific resource compensations come from `GAME_START.players` overrides and apply automatically during matching gain steps.
 - 2025-09-24: Compensation resources are consumed after their first matching gain step so later turns use baseline values.
+- 2025-09-24: Start compensations from `GAME_START.players` are applied immediately; `ctx.compensations` exists solely for startup logs.
 
 # Core Agent principles
 

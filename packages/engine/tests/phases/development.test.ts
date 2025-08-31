@@ -36,24 +36,17 @@ describe('Development phase', () => {
     expect(player.gold).toBe(goldBefore + farmGoldGain);
   });
 
-  it('grants player B an extra ap for going last', () => {
+  it('applies player B compensation at start and not during development', () => {
     const ctx = createTestEngine();
-    ctx.game.currentPlayerIndex = 1;
-    const player = ctx.activePlayer;
-    const apBefore = player.ap;
-    while (ctx.game.currentPhase === 'development') advance(ctx);
-    const councils = player.population[PopulationRole.Council];
+    const baseAp = GAME_START.player.resources?.[Resource.ap] || 0;
     const comp =
-      (GAME_START.players?.B?.resources?.[Resource.ap] || 0) -
-      (GAME_START.player.resources?.[Resource.ap] || 0);
-    expect(player.ap).toBe(apBefore + councilApGain * councils + comp);
-  });
+      (GAME_START.players?.B?.resources?.[Resource.ap] || 0) - baseAp;
+    expect(ctx.game.players[0].ap).toBe(baseAp);
+    expect(ctx.game.players[1].ap).toBe(baseAp + comp);
 
-  it('only compensates player B on their first development', () => {
-    const ctx = createTestEngine();
     const gainApIdx = devPhase.steps.findIndex((s) => s.id === 'gain-ap');
 
-    // Player A first development
+    // Player A development
     let player = ctx.activePlayer;
     player.ap = 0;
     ctx.game.currentPhase = 'development';
@@ -63,7 +56,7 @@ describe('Development phase', () => {
     const councilsA = player.population[PopulationRole.Council];
     expect(player.ap).toBe(councilApGain * councilsA);
 
-    // Player B first development with compensation
+    // Player B development (compensation already applied)
     ctx.game.currentPlayerIndex = 1;
     ctx.game.currentPhase = 'development';
     ctx.game.currentStep = 'gain-ap';
@@ -72,12 +65,9 @@ describe('Development phase', () => {
     player.ap = 0;
     advance(ctx);
     const councilsB = player.population[PopulationRole.Council];
-    const comp =
-      (GAME_START.players?.B?.resources?.[Resource.ap] || 0) -
-      (GAME_START.player.resources?.[Resource.ap] || 0);
-    expect(player.ap).toBe(councilApGain * councilsB + comp);
+    expect(player.ap).toBe(councilApGain * councilsB);
 
-    // Subsequent Player B developments should not reapply compensation
+    // Subsequent Player B developments
     for (let i = 0; i < 3; i++) {
       ctx.game.currentPlayerIndex = 1;
       ctx.game.currentPhase = 'development';
