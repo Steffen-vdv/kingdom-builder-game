@@ -62,10 +62,10 @@ describe('PassiveManager', () => {
     };
     const before = ctx.activePlayer.gold;
     ctx.passives.addPassive(passive, ctx);
-    expect(ctx.passives.list()).toContain('shiny');
+    expect(ctx.passives.list(ctx.activePlayer.id)).toContain('shiny');
     expect(ctx.activePlayer.gold).toBe(before + 2);
     ctx.passives.removePassive('shiny', ctx);
-    expect(ctx.passives.list()).not.toContain('shiny');
+    expect(ctx.passives.list(ctx.activePlayer.id)).not.toContain('shiny');
     expect(ctx.activePlayer.gold).toBe(before);
     // removing non-existent passive is a no-op
     ctx.passives.removePassive('unknown', ctx);
