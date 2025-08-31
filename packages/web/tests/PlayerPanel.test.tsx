@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PlayerPanel from '../src/components/player/PlayerPanel';
-import { createEngine, Resource } from '@kingdom-builder/engine';
+import { createEngine, getActionCosts } from '@kingdom-builder/engine';
 import {
   RESOURCES,
   ACTIONS,
@@ -29,6 +29,19 @@ const ctx = createEngine({
   start: GAME_START,
   rules: RULES,
 });
+const actionCostResource = (() => {
+  const firstIter = (
+    ctx.actions as unknown as { map: Map<string, unknown> }
+  ).map
+    .keys()
+    .next();
+  if (firstIter.done) return '';
+  const sample = getActionCosts(firstIter.value as string, ctx);
+  const match = Object.entries(sample).find(
+    ([, v]) => v === ctx.services.rules.defaultActionAPCost,
+  );
+  return (match ? match[0] : Object.keys(sample)[0]) as string;
+})();
 const mockGame = {
   ctx,
   log: [],
@@ -45,6 +58,7 @@ const mockGame = {
   setDisplayPhase: vi.fn(),
   phaseHistories: {},
   tabsEnabled: true,
+  actionCostResource,
   handlePerform: vi.fn().mockResolvedValue(undefined),
   runUntilActionPhase: vi.fn(),
   handleEndTurn: vi.fn().mockResolvedValue(undefined),
@@ -61,8 +75,9 @@ describe('<PlayerPanel />', () => {
   it('renders player name and resource icons', () => {
     render(<PlayerPanel player={ctx.activePlayer} />);
     expect(screen.getByText(ctx.activePlayer.name)).toBeInTheDocument();
-    const goldIcon = RESOURCES[Resource.gold].icon;
-    const goldAmount = ctx.activePlayer.resources[Resource.gold];
-    expect(screen.getByText(`${goldIcon}${goldAmount}`)).toBeInTheDocument();
+    for (const [key, info] of Object.entries(RESOURCES)) {
+      const amount = ctx.activePlayer.resources[key] ?? 0;
+      expect(screen.getByText(`${info.icon}${amount}`)).toBeInTheDocument();
+    }
   });
 });
