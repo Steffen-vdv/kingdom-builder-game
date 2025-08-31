@@ -28,6 +28,12 @@ export class EngineContext {
   statAddPctBases: Record<string, number> = {};
   statAddPctAccums: Record<string, number> = {};
   actionTraces: ActionTrace[] = [];
+  private _queue: Promise<unknown> = Promise.resolve();
+  enqueue<T>(task: () => Promise<T> | T): Promise<T> {
+    const next = this._queue.then(() => task());
+    this._queue = next.catch(() => {});
+    return next;
+  }
   get activePlayer() {
     return this.game.active;
   }

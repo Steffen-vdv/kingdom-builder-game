@@ -136,12 +136,7 @@ export function GameProvider({
     Record<string, PhaseStep[]>
   >({});
   const [tabsEnabled, setTabsEnabled] = useState(false);
-  const queue = useRef<Promise<unknown>>(Promise.resolve());
-  const enqueue = <T,>(task: () => Promise<T> | T): Promise<T> => {
-    const next = queue.current.then(() => task());
-    queue.current = next.catch(() => {});
-    return next;
-  };
+  const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,

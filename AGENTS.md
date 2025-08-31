@@ -42,6 +42,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-08-31: PlayerState maintains `statsHistory` so stats returning to zero remain visible; initialize new non-zero stats accordingly.
 - 2025-09-14: PlayerState auto-initializes stats by iterating over `Stat` keys; adding a new stat requires only updating the `Stat` map and providing getters/setters.
 - 2025-09-20: Frontend should serialize engine calls with a promise queue to prevent race conditions when dev mode advances phases rapidly.
+- 2025-09-21: EngineContext exposes a built-in `enqueue` method; use `ctx.enqueue` to serialize engine operations.
 
 # Core Agent principles
 
