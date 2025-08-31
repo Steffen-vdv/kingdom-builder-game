@@ -158,6 +158,40 @@ export function GameProvider({
       return [...prev, ...items];
     });
 
+  useEffect(() => {
+    ctx.game.players.forEach((player) => {
+      const comp = ctx.compensations[player.id];
+      if (
+        !comp ||
+        (Object.keys(comp.resources || {}).length === 0 &&
+          Object.keys(comp.stats || {}).length === 0)
+      )
+        return;
+      const before = snapshotPlayer(player, ctx);
+      const after = {
+        ...before,
+        resources: { ...before.resources },
+        stats: { ...before.stats },
+        buildings: [...before.buildings],
+        lands: before.lands.map((l) => ({
+          ...l,
+          developments: [...l.developments],
+        })),
+        passives: [...before.passives],
+      };
+      for (const [k, v] of Object.entries(comp.resources || {}))
+        after.resources[k] = (after.resources[k] || 0) + (v ?? 0);
+      for (const [k, v] of Object.entries(comp.stats || {}))
+        after.stats[k] = (after.stats[k] || 0) + (v ?? 0);
+      const lines = diffSnapshots(before, after, ctx);
+      if (lines.length)
+        addLog(
+          ['Last-player compensation:', ...lines.map((l) => `  ${l}`)],
+          player,
+        );
+    });
+  }, [ctx]);
+
   function handleHoverCard(data: HoverCard) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
     hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
