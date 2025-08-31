@@ -2,7 +2,8 @@ export { ACTIONS, createActionRegistry } from './actions';
 export { BUILDINGS, createBuildingRegistry } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
-export { PHASES, type PhaseDef, type StepDef } from './phases';
+export { PHASES } from './phases';
+export type { PhaseDef, StepDef } from './config/builders';
 export {
   POPULATION_ROLES,
   PopulationRole,

@@ -1,3 +1,9 @@
+import {
+  populationRole,
+  type PopulationRoleInfo,
+  toRecord,
+} from './config/builders';
+
 export const PopulationRole = {
   Council: 'council',
   Commander: 'commander',
@@ -7,40 +13,36 @@ export const PopulationRole = {
 export type PopulationRoleId =
   (typeof PopulationRole)[keyof typeof PopulationRole];
 
-export interface PopulationRoleInfo {
-  key: PopulationRoleId;
-  icon: string;
-  label: string;
-  description: string;
-}
-
-export const POPULATION_ROLES: Record<PopulationRoleId, PopulationRoleInfo> = {
-  [PopulationRole.Council]: {
-    key: PopulationRole.Council,
-    icon: '⚖️',
-    label: 'Council',
-    description:
+const defs: PopulationRoleInfo[] = [
+  populationRole(PopulationRole.Council)
+    .icon('⚖️')
+    .label('Council')
+    .description(
       'The Council advises the crown and generates Action Points during the Development phase. Keeping them employed fuels your economy.',
-  },
-  [PopulationRole.Commander]: {
-    key: PopulationRole.Commander,
-    icon: '🎖️',
-    label: 'Commander',
-    description:
+    )
+    .build(),
+  populationRole(PopulationRole.Commander)
+    .icon('🎖️')
+    .label('Commander')
+    .description(
       'Commanders lead your forces, boosting Army Strength and training troops each Development phase.',
-  },
-  [PopulationRole.Fortifier]: {
-    key: PopulationRole.Fortifier,
-    icon: '🔧',
-    label: 'Fortifier',
-    description:
+    )
+    .build(),
+  populationRole(PopulationRole.Fortifier)
+    .icon('🔧')
+    .label('Fortifier')
+    .description(
       'Fortifiers reinforce your defenses. They raise Fortification Strength and shore up the castle every Development phase.',
-  },
-  [PopulationRole.Citizen]: {
-    key: PopulationRole.Citizen,
-    icon: '👤',
-    label: 'Citizen',
-    description:
+    )
+    .build(),
+  populationRole(PopulationRole.Citizen)
+    .icon('👤')
+    .label('Citizen')
+    .description(
       'Citizens are unassigned populace who await a role. They contribute little on their own but can be trained into specialists.',
-  },
-};
+    )
+    .build(),
+];
+
+export const POPULATION_ROLES: Record<PopulationRoleId, PopulationRoleInfo> =
+  toRecord(defs) as Record<PopulationRoleId, PopulationRoleInfo>;
