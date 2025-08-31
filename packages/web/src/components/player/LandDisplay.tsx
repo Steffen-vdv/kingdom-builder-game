@@ -111,20 +111,20 @@ const LandTile: React.FC<{
 
 const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
   const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
-  const developAction = useMemo(
-    () =>
-      Array.from(
-        (
-          ctx.actions as unknown as {
-            map: Map<
-              string,
-              { category?: string; icon?: string; name: string }
-            >;
-          }
-        ).map.values(),
-      ).find((a) => a.category === 'development'),
-    [ctx],
-  );
+  const developAction = useMemo(() => {
+    const entry = Array.from(
+      (
+        ctx.actions as unknown as {
+          map: Map<string, { category?: string; icon?: string; name: string }>;
+        }
+      ).map.entries(),
+    ).find(([, a]) => a.category === 'development');
+    if (!entry) return undefined;
+    const [, info] = entry;
+    return info.icon
+      ? { icon: info.icon, name: info.name }
+      : { name: info.name };
+  }, [ctx]);
   if (player.lands.length === 0) return null;
   const animateLands = useAnimate<HTMLDivElement>();
   return (

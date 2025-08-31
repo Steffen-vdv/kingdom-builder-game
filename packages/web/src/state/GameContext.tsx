@@ -140,21 +140,16 @@ export function GameProvider({
   const [tabsEnabled, setTabsEnabled] = useState(false);
   const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
 
-  const actionCostResource = useMemo(() => {
-    const firstIter = (
-      ctx.actions as unknown as { map: Map<string, Action> }
-    ).map
-      .keys()
-      .next();
-    const firstId = firstIter.done ? '' : firstIter.value;
-    if (!firstId) return '';
-    const sample = getActionCosts(firstId, ctx);
-    const match = Object.entries(sample).find(
-      ([, v]) => v === ctx.services.rules.defaultActionAPCost,
-    );
-    const key = match ? match[0] : Object.keys(sample)[0];
-    return key || '';
-  }, [ctx]) as ResourceKey;
+  const actionCostResource = useMemo<ResourceKey>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
+    const reg = ctx.actions as any as { map: Map<string, Action> };
+    const first = Array.from(reg.map.entries()).find(([, a]) => !a.system);
+    if (!first) return '' as ResourceKey;
+    const [id] = first;
+    const costs = getActionCosts(id, ctx);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    return (Object.keys(costs)[0] ?? '') as ResourceKey;
+  }, [ctx]);
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,

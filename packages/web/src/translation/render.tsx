@@ -21,11 +21,11 @@ export function renderSummary(summary: Summary | undefined): React.ReactNode {
 export function renderCosts(
   costs: Record<string, number | undefined> | undefined,
   resources: Record<string, number>,
-  actionResource?: string,
+  actionCostResource?: string,
 ) {
   if (!costs) return null;
   const entries = Object.entries(costs).filter(
-    ([k]) => !actionResource || k !== actionResource,
+    ([k]) => !actionCostResource || k !== actionCostResource,
   );
   if (entries.length === 0)
     return (
