@@ -8,6 +8,8 @@ may include repository structure tips, tricky commands, or environment quirks
 that required some investigation. Maintain this list during your work and, when
 submitting a pull request, append your findings to the **Agent discovery log**
 below.
+Avoid logging the routine steps you performed; use the discovery log only for
+non-obvious insights that will help future agents work more efficiently.
 
 ## Agent discovery log
 
