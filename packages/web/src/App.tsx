@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Game from './Game';
 import {
-  ACTION_INFO as actionInfo,
+  ACTIONS as actionInfo,
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
   RESOURCES,
@@ -59,10 +59,10 @@ export default function App() {
         <h2 className="text-xl font-semibold mt-4 mb-2">Core Mechanics</h2>
         <p className="mb-4">
           Actions may require resources or other prerequisites and grant various
-          effects, such as gaining resources, {actionInfo['build']?.icon}{' '}
-          building structures, {actionInfo['develop']?.icon} developing{' '}
+          effects, such as gaining resources, {actionInfo.get('build')?.icon}{' '}
+          building structures, {actionInfo.get('develop')?.icon} developing{' '}
           {landIcon} land, or hindering your opponent.{' '}
-          {actionInfo['build']?.icon} Buildings provide ♾️ passive bonuses,
+          {actionInfo.get('build')?.icon} Buildings provide ♾️ passive bonuses,
           while {landIcon} land around your castle holds {slotIcon} developments
           that yield benefits. Resources like
           {RESOURCES[Resource.gold].icon} Gold, {RESOURCES[Resource.ap].icon}{' '}
