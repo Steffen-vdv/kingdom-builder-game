@@ -21,6 +21,12 @@ import { renderSummary, renderCosts } from '../../translation/render';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 
+function stripSummary(summary: Summary | undefined): Summary | undefined {
+  const first = summary?.[0];
+  if (!first) return summary;
+  return typeof first === 'string' ? summary : first.items;
+}
+
 interface Action {
   id: string;
   name: string;
@@ -49,7 +55,7 @@ function GenericActions({
     useGameEngine();
   const formatRequirement = (req: string) => req;
   return (
-    <div className="grid grid-cols-4 gap-2 auto-rows-fr">
+    <>
       {actions.map((action) => {
         const costs = getActionCosts(action.id, ctx);
         const requirements = getActionRequirements(action.id, ctx).map(
@@ -103,27 +109,22 @@ function GenericActions({
             <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
               {renderCosts(costs, ctx.activePlayer.resources)}
             </span>
+            {requirements.length > 0 && (
+              <span className="absolute top-7 right-2 text-xs text-red-600">
+                Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+              </span>
+            )}
             <ul className="text-sm list-disc pl-4 text-left">
               {implemented ? (
-                renderSummary(summary)
+                renderSummary(stripSummary(summary))
               ) : (
                 <li className="italic text-red-600">Not implemented yet</li>
               )}
             </ul>
-            {requirements.length > 0 && (
-              <div className="text-sm text-red-600 text-left">
-                <span className="font-semibold">Requirements</span>
-                <ul className="list-disc pl-4">
-                  {requirements.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </button>
         );
       })}
-    </div>
+    </>
   );
 }
 
@@ -138,85 +139,110 @@ function RaisePopOptions({
     useGameEngine();
   const formatRequirement = (req: string) => req;
   return (
+    <>
+      {[
+        PopulationRole.Council,
+        PopulationRole.Commander,
+        PopulationRole.Fortifier,
+      ].map((role) => {
+        const costs = getActionCosts('raise_pop', ctx);
+        const requirements = getActionRequirements('raise_pop', ctx).map(
+          formatRequirement,
+        );
+        const canPay = Object.entries(costs).every(
+          ([k, v]) =>
+            ctx.activePlayer.resources[
+              k as keyof typeof ctx.activePlayer.resources
+            ] >= v,
+        );
+        const meetsReq = requirements.length === 0;
+        const enabled = canPay && meetsReq && isActionPhase;
+        const title = !meetsReq
+          ? requirements.join(', ')
+          : !canPay
+            ? 'Cannot pay costs'
+            : undefined;
+        const summary = describeContent('action', 'raise_pop', ctx, { role });
+        const shortSummary = summarizeContent('action', 'raise_pop', ctx, {
+          role,
+        });
+        return (
+          <button
+            key={role}
+            className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
+              enabled
+                ? 'hoverable cursor-pointer'
+                : 'opacity-50 cursor-not-allowed'
+            }`}
+            title={title}
+            onClick={() => enabled && handlePerform(action, { role })}
+            onMouseEnter={() =>
+              handleHoverCard({
+                title: `${actionInfo['raise_pop']?.icon ?? ''}${
+                  POPULATION_ROLES[role]?.icon
+                } - Hire ${POPULATION_ROLES[role]?.label || ''}`,
+                effects: summary,
+                requirements,
+                costs,
+                bgClass: 'bg-gray-100 dark:bg-gray-700',
+              })
+            }
+            onMouseLeave={clearHoverCard}
+          >
+            <span className="text-base font-medium">
+              {actionInfo['raise_pop']?.icon ?? ''}
+              {POPULATION_ROLES[role]?.icon} - Hire{' '}
+              {POPULATION_ROLES[role]?.label}
+            </span>
+            <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
+              {renderCosts(costs, ctx.activePlayer.resources)}
+            </span>
+            {requirements.length > 0 && (
+              <span className="absolute top-7 right-2 text-xs text-red-600">
+                Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+              </span>
+            )}
+            <ul className="text-sm list-disc pl-4 text-left">
+              {renderSummary(stripSummary(shortSummary))}
+            </ul>
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
+function BasicOptions({
+  actions,
+  raisePopAction,
+  summaries,
+  isActionPhase,
+}: {
+  actions: Action[];
+  raisePopAction: Action | undefined;
+  summaries: Map<string, Summary>;
+  isActionPhase: boolean;
+}) {
+  return (
     <div>
       <h3 className="font-medium">
-        {actionInfo['raise_pop']?.icon ?? ''}{' '}
-        {actionInfo['raise_pop']?.label ?? ''}
+        Basic{' '}
+        <span className="italic text-sm font-normal">
+          (Effects take place immediately, unless stated otherwise)
+        </span>
       </h3>
-      <div className="grid grid-cols-3 gap-2 mt-1 auto-rows-fr">
-        {[
-          PopulationRole.Council,
-          PopulationRole.Commander,
-          PopulationRole.Fortifier,
-        ].map((role) => {
-          const costs = getActionCosts('raise_pop', ctx);
-          const requirements = getActionRequirements('raise_pop', ctx).map(
-            formatRequirement,
-          );
-          const canPay = Object.entries(costs).every(
-            ([k, v]) =>
-              ctx.activePlayer.resources[
-                k as keyof typeof ctx.activePlayer.resources
-              ] >= v,
-          );
-          const meetsReq = requirements.length === 0;
-          const enabled = canPay && meetsReq && isActionPhase;
-          const title = !meetsReq
-            ? requirements.join(', ')
-            : !canPay
-              ? 'Cannot pay costs'
-              : undefined;
-          const summary = describeContent('action', 'raise_pop', ctx, { role });
-          const shortSummary = summarizeContent('action', 'raise_pop', ctx, {
-            role,
-          });
-          return (
-            <button
-              key={role}
-              className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
-                enabled
-                  ? 'hoverable cursor-pointer'
-                  : 'opacity-50 cursor-not-allowed'
-              }`}
-              title={title}
-              onClick={() => enabled && handlePerform(action, { role })}
-              onMouseEnter={() =>
-                handleHoverCard({
-                  title: `${actionInfo['raise_pop']?.icon ?? ''} ${
-                    actionInfo['raise_pop']?.label ?? ''
-                  } - ${POPULATION_ROLES[role]?.icon} ${
-                    POPULATION_ROLES[role]?.label || ''
-                  }`,
-                  effects: summary,
-                  requirements,
-                  costs,
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
-              onMouseLeave={clearHoverCard}
-            >
-              <span className="text-base font-medium">
-                {POPULATION_ROLES[role]?.icon} {POPULATION_ROLES[role]?.label}
-              </span>
-              <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                {renderCosts(costs, ctx.activePlayer.resources)}
-              </span>
-              <ul className="text-sm list-disc pl-4 text-left">
-                {renderSummary(shortSummary)}
-              </ul>
-              {requirements.length > 0 && (
-                <div className="text-sm text-red-600 text-left">
-                  <span className="font-semibold">Requirements</span>
-                  <ul className="list-disc pl-4">
-                    {requirements.map((r, i) => (
-                      <li key={i}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </button>
-          );
-        })}
+      <div className="grid grid-cols-4 gap-2 mt-1">
+        <GenericActions
+          actions={actions}
+          summaries={summaries}
+          isActionPhase={isActionPhase}
+        />
+        {raisePopAction && (
+          <RaisePopOptions
+            action={raisePopAction}
+            isActionPhase={isActionPhase}
+          />
+        )}
       </div>
     </div>
   );
@@ -240,9 +266,12 @@ function DevelopOptions({
   return (
     <div>
       <h3 className="font-medium">
-        {actionInfo['develop']?.icon ?? ''} {actionInfo['develop']?.label ?? ''}
+        {actionInfo['develop']?.icon ?? ''} {actionInfo['develop']?.label ?? ''}{' '}
+        <span className="italic text-sm font-normal">
+          (Effects take place on build and last until development is removed)
+        </span>
       </h3>
-      <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
+      <div className="grid grid-cols-4 gap-2 mt-1">
         {developments.map((d) => {
           const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
           const costs = getActionCosts('develop', ctx, {
@@ -309,9 +338,14 @@ function DevelopOptions({
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(costs, ctx.activePlayer.resources)}
               </span>
+              {requirements.length > 0 && (
+                <span className="absolute top-7 right-2 text-xs text-red-600">
+                  Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+                </span>
+              )}
               <ul className="text-sm list-disc pl-4 text-left">
                 {implemented ? (
-                  renderSummary(summary)
+                  renderSummary(stripSummary(summary))
                 ) : (
                   <li className="italic text-red-600">Not implemented yet</li>
                 )}
@@ -342,9 +376,12 @@ function BuildOptions({
   return (
     <div>
       <h3 className="font-medium">
-        {actionInfo['build']?.icon ?? ''} {actionInfo['build']?.label ?? ''}
+        {actionInfo['build']?.icon ?? ''} {actionInfo['build']?.label ?? ''}{' '}
+        <span className="italic text-sm font-normal">
+          (Effects take place on build and last until building is removed)
+        </span>
       </h3>
-      <div className="grid grid-cols-4 gap-2 mt-1 auto-rows-fr">
+      <div className="grid grid-cols-4 gap-2 mt-1">
         {buildings.map((b) => {
           const costs = getActionCosts('build', ctx, { id: b.id });
           const requirements: string[] = [];
@@ -396,9 +433,14 @@ function BuildOptions({
               <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
                 {renderCosts(costs, ctx.activePlayer.resources)}
               </span>
+              {requirements.length > 0 && (
+                <span className="absolute top-7 right-2 text-xs text-red-600">
+                  Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
+                </span>
+              )}
               <ul className="text-sm list-disc pl-4 text-left">
                 {implemented ? (
-                  renderSummary(summary)
+                  renderSummary(stripSummary(summary))
                 ) : (
                   <li className="italic text-red-600">Not implemented yet</li>
                 )}
@@ -511,14 +553,11 @@ export default function ActionsPanel() {
         )}
       </div>
       <div className="space-y-3">
-        <GenericActions
-          actions={otherActions}
-          summaries={actionSummaries}
-          isActionPhase={isActionPhase}
-        />
-        {raisePopAction && (
-          <RaisePopOptions
-            action={raisePopAction}
+        {(otherActions.length > 0 || raisePopAction) && (
+          <BasicOptions
+            actions={otherActions}
+            raisePopAction={raisePopAction}
+            summaries={actionSummaries}
             isActionPhase={isActionPhase}
           />
         )}
