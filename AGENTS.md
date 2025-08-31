@@ -54,6 +54,7 @@ Attach the date of your update as a prefix to your log entry.
 - 2025-09-20: Resource transfers use evaluation key `transfer_pct:percent` for modifier targeting.
 - 2025-09-22: Clamp percentage-based resource transfers to available balance to avoid negative totals when modifiers exceed 100%.
 - 2025-10-01: Shell starts without standard binaries in PATH; run `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` to restore.
+- 2025-08-31: Node and npm may be missing; install with `apt-get install -y nodejs npm` before running tests.
 
 # Core Agent principles
 
