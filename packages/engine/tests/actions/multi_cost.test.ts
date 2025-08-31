@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   performAction,
   getActionCosts,
   Resource,
   advance,
 } from '../../src/index.ts';
+import { createTestEngine } from '../helpers.ts';
 import { action, building } from '../../src/config/builders.ts';
 
 describe('multi-cost content', () => {
@@ -20,7 +20,7 @@ describe('multi-cost content', () => {
       })
       .build();
 
-    const ctx = createEngine({ config: { actions: [multiCostAction] } });
+    const ctx = createTestEngine({ config: { actions: [multiCostAction] } });
     while (ctx.game.currentPhase !== 'main') advance(ctx);
 
     ctx.activePlayer.gold = 5;
@@ -57,7 +57,7 @@ describe('multi-cost content', () => {
       })
       .build();
 
-    const ctx = createEngine({
+    const ctx = createTestEngine({
       config: {
         actions: [buildAction],
         buildings: [multiCostBuildingDefinition],

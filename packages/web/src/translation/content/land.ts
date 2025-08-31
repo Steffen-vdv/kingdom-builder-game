@@ -2,7 +2,7 @@ import type { EngineContext } from '@kingdom-builder/engine';
 import {
   DEVELOPMENT_INFO as developmentInfo,
   SLOT_ICON as slotIcon,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/contents';
 import {
   describeContent,
   summarizeContent,

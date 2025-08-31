@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   performAction,
-  createActionRegistry,
   EngineContext,
   PassiveManager,
   getActionCosts,
   type ResourceKey,
 } from '../../src/index.ts';
+import { createActionRegistry } from '@kingdom-builder/contents';
+import { createTestEngine } from '../helpers.ts';
 import { PlayerState, Land, GameState } from '../../src/state/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
 import { applyParamsToEffects } from '../../src/utils.ts';
@@ -103,7 +103,7 @@ function simulateBuild(ctx: EngineContext, id: string, landId: string) {
 
 describe('development:add effect', () => {
   it('adds house and applies onBuild effects', () => {
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     const land = ctx.activePlayer.lands[1];
     const slotsBefore = land.slotsUsed;
     const expected = simulateBuild(ctx, 'house', land.id);
@@ -121,14 +121,14 @@ describe('development:add effect', () => {
   });
 
   it('throws if land does not exist', () => {
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     expect(() => performAction('build_house_bad_land', ctx)).toThrow(
       /Land A-L9 not found/,
     );
   });
 
   it('throws if land has no free slots', () => {
-    const ctx = createEngine({ actions });
+    const ctx = createTestEngine({ actions });
     expect(() => performAction('build_house_full', ctx)).toThrow(
       /No free slots on land A-L1/,
     );

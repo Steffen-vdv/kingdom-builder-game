@@ -2,6 +2,14 @@ import {
   createEngine,
   getActionCosts,
 } from '../../packages/engine/src/index.ts';
+import {
+  ACTIONS,
+  BUILDINGS,
+  DEVELOPMENTS,
+  POPULATIONS,
+  PHASES,
+  GAME_START,
+} from '../../packages/contents/src/index.ts';
 import type {
   EngineContext,
   EffectDef,
@@ -29,7 +37,14 @@ function clonePlayer(player: PlayerState) {
 }
 
 export function createTestContext(overrides?: { gold?: number; ap?: number }) {
-  const ctx = createEngine();
+  const ctx = createEngine({
+    actions: ACTIONS,
+    buildings: BUILDINGS,
+    developments: DEVELOPMENTS,
+    populations: POPULATIONS,
+    phases: PHASES,
+    start: GAME_START,
+  });
   if (overrides?.gold !== undefined) ctx.activePlayer.gold = overrides.gold;
   if (overrides?.ap !== undefined) ctx.activePlayer.ap = overrides.ap;
   return ctx;

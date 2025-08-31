@@ -1,5 +1,5 @@
 import React from 'react';
-import { POPULATION_ROLES, STATS } from '@kingdom-builder/engine';
+import { POPULATION_ROLES, STATS } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 

@@ -7,6 +7,9 @@
 3. Start the development server: `npm run dev`
 4. Build for production: `npm run build`
 
+Default game content (actions, buildings, etc.) lives in `packages/contents`.
+Edit those configs or supply your own registries when creating an engine.
+
 ## 2) Game Overview
 
 Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, manage resources, and try to outlast or conquer the opponent. Victory is achieved by capturing the opposing castle, forcing bankruptcy, or holding the most victory points when the game ends after the final round.

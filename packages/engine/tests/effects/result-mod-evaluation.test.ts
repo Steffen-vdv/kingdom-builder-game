@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   runEffects,
-  BUILDINGS,
-  PHASES,
   performAction,
   Resource,
   EVALUATORS,
@@ -11,6 +8,8 @@ import {
   type EffectDef,
   type EngineContext,
 } from '../../src/index.ts';
+import { BUILDINGS, PHASES } from '@kingdom-builder/contents';
+import { createTestEngine } from '../helpers.ts';
 import type { EvaluatorDef } from '../../src/evaluators';
 
 function getOverworkExpectations(ctx: EngineContext) {
@@ -40,7 +39,7 @@ function getOverworkExpectations(ctx: EngineContext) {
 
 describe('evaluation result modifiers', () => {
   it('Mill grants extra gold for each Farm income', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     // Add Mill to active player
     runEffects(
       [
@@ -74,7 +73,7 @@ describe('evaluation result modifiers', () => {
   });
 
   it('Mill bonus applies to Overwork once per Farm', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     runEffects(
       [{ type: 'building', method: 'add', params: { id: 'mill' } }],
       ctx,

@@ -1,4 +1,4 @@
-import { POPULATION_ROLES } from '@kingdom-builder/engine';
+import { POPULATION_ROLES } from '@kingdom-builder/contents';
 import { registerEvaluatorFormatter } from '../factory';
 
 registerEvaluatorFormatter('population', {

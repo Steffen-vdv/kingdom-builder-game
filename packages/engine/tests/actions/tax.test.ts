@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createEngine,
   performAction,
   Resource,
   PopulationRole,
@@ -8,6 +7,7 @@ import {
   EVALUATORS,
   advance,
 } from '../../src';
+import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects';
 import type { EvaluatorDef } from '../../src/evaluators';
 import type { EngineContext } from '../../src';
@@ -37,7 +37,7 @@ function getTaxExpectations(ctx: EngineContext) {
 
 describe('Tax action', () => {
   it('grants gold and loses happiness for each population', () => {
-    const ctx = createEngine();
+    const ctx = createTestEngine();
     while (ctx.game.currentPhase !== 'main') advance(ctx);
     runEffects(
       [

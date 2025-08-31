@@ -4,7 +4,7 @@ import {
   DEVELOPMENT_INFO as developmentInfo,
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { describeContent } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
