@@ -10,9 +10,10 @@ import {
   GAME_START,
   RULES,
 } from '@kingdom-builder/contents';
+import { getBuildingWithPopulationBonus } from './fixtures';
 
-describe('Market building translation', () => {
-  it('mentions population and tax', () => {
+describe('Building translation with population bonus', () => {
+  it('mentions population and related action', () => {
     const ctx = createEngine({
       actions: ACTIONS,
       buildings: BUILDINGS,
@@ -22,8 +23,9 @@ describe('Market building translation', () => {
       start: GAME_START,
       rules: RULES,
     });
+    const { buildingId, actionId } = getBuildingWithPopulationBonus();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const summary = summarizeContent('building', 'market', ctx) as unknown;
+    const summary = summarizeContent('building', buildingId, ctx) as unknown;
     function flatten(items: unknown[]): string[] {
       return items.flatMap((i) =>
         typeof i === 'string'
@@ -34,9 +36,10 @@ describe('Market building translation', () => {
       );
     }
     const lines = flatten(summary as unknown[]);
+    const actionName = ctx.actions.get(actionId)?.name || '';
     expect(
       lines.some(
-        (l) => l.includes('👥 Population through') && l.includes('Tax'),
+        (l) => l.includes('Population through') && l.includes(actionName),
       ),
     ).toBe(true);
   });

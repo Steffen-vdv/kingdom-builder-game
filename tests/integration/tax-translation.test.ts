@@ -10,8 +10,9 @@ import {
   GAME_START,
   RULES,
 } from '@kingdom-builder/contents';
+import { getActionWithPopulationEvaluator } from './fixtures';
 
-describe('Tax action translation', () => {
+describe('Action translation with population scaling', () => {
   it('mentions population scaling', () => {
     const ctx = createEngine({
       actions: ACTIONS,
@@ -22,8 +23,9 @@ describe('Tax action translation', () => {
       start: GAME_START,
       rules: RULES,
     });
+    const actionId = getActionWithPopulationEvaluator(ctx);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const summary = summarizeContent('action', 'tax', ctx) as (
+    const summary = summarizeContent('action', actionId, ctx) as (
       | string
       | { title: string; items: unknown[] }
     )[];
