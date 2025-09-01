@@ -11,17 +11,24 @@ interface EvalConfig {
   params?: Record<string, unknown>;
 }
 
+export type EvaluatorIconGetter = (
+  params?: Record<string, unknown>,
+) => string[];
+
+export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
+  stat: (params) => {
+    const key = params?.['key'] as StatKey | undefined;
+    return key ? [STATS[key]?.icon || ''] : [];
+  },
+  population: (params) => {
+    const role = params?.['role'] as PopulationRoleId | undefined;
+    return role ? [POPULATION_ROLES[role]?.icon || ''] : [];
+  },
+};
+
 function collectEvaluatorIcons(evaluator?: EvalConfig): string[] {
   if (!evaluator) return [];
-  if (evaluator.type === 'stat') {
-    const key = evaluator.params?.['key'] as StatKey | undefined;
-    return key ? [STATS[key]?.icon || ''] : [];
-  }
-  if (evaluator.type === 'population') {
-    const role = evaluator.params?.['role'] as PopulationRoleId | undefined;
-    return role ? [POPULATION_ROLES[role]?.icon || ''] : [];
-  }
-  return [];
+  return EVALUATOR_ICON_MAP[evaluator.type]?.(evaluator.params) ?? [];
 }
 
 interface RequirementConfig {
