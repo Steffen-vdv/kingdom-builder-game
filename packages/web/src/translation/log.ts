@@ -9,10 +9,8 @@ import {
   POPULATION_ROLES,
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
-  Stat,
-  PopulationRole,
 } from '@kingdom-builder/contents';
-import { statDisplaysAsPercent } from '../utils/stats';
+import { formatStatValue, statDisplaysAsPercent } from '../utils/stats';
 interface StepDef {
   id: string;
   title?: string;
@@ -209,6 +207,36 @@ function collectResourceSources(
   return result;
 }
 
+function findStatPctBreakdown(
+  step: StepDef | undefined,
+  statKey: string,
+): { role: string; percentStat: string } | undefined {
+  const walk = (
+    effects: EffectDef[] | undefined,
+    currentRole: string | undefined,
+  ): { role: string; percentStat: string } | undefined => {
+    if (!effects) return undefined;
+    for (const eff of effects) {
+      let role = currentRole;
+      if (eff.evaluator?.type === 'population') {
+        role = (eff.evaluator.params as Record<string, string> | undefined)?.[
+          'role'
+        ];
+      }
+      if (eff.type === 'stat' && eff.method === 'add_pct') {
+        const params = eff.params as Record<string, string> | undefined;
+        if (params?.['key'] === statKey && params?.['percentStat'] && role) {
+          return { role, percentStat: params['percentStat'] };
+        }
+      }
+      const nested = walk(eff.effects, role);
+      if (nested) return nested;
+    }
+    return undefined;
+  };
+  return walk(step?.effects, undefined);
+}
+
 export function diffStepSnapshots(
   before: PlayerSnapshot,
   after: PlayerSnapshot,
@@ -241,32 +269,24 @@ export function diffStepSnapshots(
       const icon = iconOnly ? `${iconOnly} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;
-      if (key === 'absorption' || key === 'growth') {
-        const bPerc = b * 100;
-        const aPerc = a * 100;
-        const dPerc = delta * 100;
-        changes.push(
-          `${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
-        );
-      } else {
-        let line = `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`;
-        if (
-          step?.id === 'raise-strength' &&
-          (key === Stat.armyStrength || key === Stat.fortificationStrength) &&
-          delta > 0
-        ) {
-          const role =
-            key === Stat.armyStrength
-              ? PopulationRole.Commander
-              : PopulationRole.Fortifier;
+      const bStr = formatStatValue(key, b);
+      const aStr = formatStatValue(key, a);
+      const dStr = formatStatValue(key, delta);
+      let line = `${icon}${label} ${delta >= 0 ? '+' : ''}${dStr} (${bStr}→${aStr})`;
+      if (!statDisplaysAsPercent(key)) {
+        const breakdown = findStatPctBreakdown(step, key);
+        if (breakdown && delta > 0) {
+          const role = breakdown.role as keyof typeof POPULATION_ROLES;
           const count = ctx.activePlayer.population[role] ?? 0;
           const popIcon = POPULATION_ROLES[role]?.icon || '';
-          const growth = ctx.activePlayer.stats[Stat.growth] ?? 0;
-          const growthIcon = STATS[Stat.growth]?.icon || '';
-          line += ` (${iconOnly}${b} + (${popIcon}${count} * ${growthIcon}${growth * 100}%) = ${iconOnly}${a})`;
+          const pctStat = breakdown.percentStat as keyof typeof STATS;
+          const growth = ctx.activePlayer.stats[pctStat] ?? 0;
+          const growthIcon = STATS[pctStat]?.icon || '';
+          const growthStr = formatStatValue(breakdown.percentStat, growth);
+          line += ` (${iconOnly}${bStr} + (${popIcon}${count} * ${growthIcon}${growthStr}) = ${iconOnly}${aStr})`;
         }
-        changes.push(line);
       }
+      changes.push(line);
     }
   }
   const beforeB = new Set(before.buildings);
