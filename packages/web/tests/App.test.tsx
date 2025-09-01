@@ -4,6 +4,16 @@ import React from 'react';
 import App from '../src/App';
 
 vi.mock('@kingdom-builder/engine', () => {
+  const phaseA = 'phaseA';
+  const phaseB = 'phaseB';
+  const phaseC = 'phaseC';
+  const resources = {
+    r1: 'r1',
+    r2: 'r2',
+    r3: 'r3',
+    r4: 'r4',
+  } as const;
+
   const player = {
     id: 'A',
     name: 'A',
@@ -21,7 +31,7 @@ vi.mock('@kingdom-builder/engine', () => {
       buildings: { map: new Map(), get: () => undefined },
       passives: { list: () => [] },
       game: {
-        currentPhase: 'growth',
+        currentPhase: phaseA,
         players: [player],
         currentPlayerIndex: 0,
       },
@@ -30,18 +40,13 @@ vi.mock('@kingdom-builder/engine', () => {
     runEffects: () => {},
     collectTriggerEffects: () => [],
     getActionCosts: () => ({}),
-    Phase: { Growth: 'growth', Upkeep: 'upkeep', Main: 'main' },
+    Phase: { Growth: phaseA, Upkeep: phaseB, Main: phaseC },
     PHASES: [
-      { id: 'growth', label: 'Growth', icon: '🏗️', steps: [] },
-      { id: 'upkeep', label: 'Upkeep', icon: '🧹', steps: [] },
-      { id: 'main', label: 'Main', icon: '🎯', steps: [], action: true },
+      { id: phaseA, label: 'Phase A', icon: '🏗️', steps: [] },
+      { id: phaseB, label: 'Phase B', icon: '🧹', steps: [] },
+      { id: phaseC, label: 'Phase C', icon: '🎯', steps: [], action: true },
     ],
-    Resource: {
-      gold: 'gold',
-      ap: 'ap',
-      happiness: 'happiness',
-      castleHP: 'castleHP',
-    },
+    Resource: resources,
   };
 });
 

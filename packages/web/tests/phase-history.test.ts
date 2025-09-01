@@ -6,14 +6,17 @@ vi.mock('@kingdom-builder/engine', async () => {
 });
 
 // Ensure actions remain enabled when viewing previous phase history.
-// Specifically, current phase is main, but tabs display a prior phase.
+// Specifically, the check should depend solely on the provided phase ids.
 
 describe('isActionPhaseActive', () => {
+  const phaseA = 'phaseA';
+  const phaseB = 'phaseB';
+
   it('returns true when game is in action phase regardless of display phase', () => {
-    expect(isActionPhaseActive('main', 'main', true)).toBe(true);
+    expect(isActionPhaseActive(phaseA, phaseA, true)).toBe(true);
   });
 
   it('returns false when not in action phase', () => {
-    expect(isActionPhaseActive('growth', 'main', true)).toBe(false);
+    expect(isActionPhaseActive(phaseB, phaseA, true)).toBe(false);
   });
 });
