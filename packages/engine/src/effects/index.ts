@@ -2,11 +2,12 @@ import { Registry } from '../registry';
 import type { EngineContext } from '../context';
 import { EVALUATORS } from '../evaluators';
 import type { EvaluatorDef } from '../evaluators';
+import type { CostBag } from '../services';
 import { landAdd } from './land_add';
 import { resourceAdd } from './resource_add';
 import { resourceRemove } from './resource_remove';
 import { resourceTransfer } from './resource_transfer';
-import { buildingAdd } from './building_add';
+import { buildingAdd, collectBuildingAddCosts } from './building_add';
 import { buildingRemove } from './building_remove';
 import { statAdd } from './stat_add';
 import { statAddPct } from './stat_add_pct';
@@ -45,7 +46,17 @@ export interface EffectHandler<
 export class EffectRegistry extends Registry<EffectHandler> {}
 export const EFFECTS = new EffectRegistry();
 
-export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
+export interface EffectCostCollector {
+  (effect: EffectDef, base: CostBag, ctx: EngineContext): void;
+}
+
+export class EffectCostRegistry extends Registry<EffectCostCollector> {}
+export const EFFECT_COST_COLLECTORS = new EffectCostRegistry();
+
+export function registerCoreEffects(
+  registry: EffectRegistry = EFFECTS,
+  costRegistry: EffectCostRegistry = EFFECT_COST_COLLECTORS,
+) {
   registry.add('land:add', landAdd);
   registry.add('resource:add', resourceAdd);
   registry.add('resource:remove', resourceRemove);
@@ -70,6 +81,8 @@ export function registerCoreEffects(registry: EffectRegistry = EFFECTS) {
   registry.add('action:remove', actionRemove);
   registry.add('action:perform', actionPerform);
   registry.add('attack:perform', attackPerform);
+
+  costRegistry.add('building:add', collectBuildingAddCosts);
 }
 
 export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {

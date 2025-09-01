@@ -12,6 +12,9 @@ export class Registry<T> {
     if (!value) throw new Error(`Unknown id: ${id}`);
     return value;
   }
+  has(id: string): boolean {
+    return this.map.has(id);
+  }
   entries(): [string, T][] {
     return Array.from(this.map.entries());
   }

@@ -1,4 +1,4 @@
-import type { EffectHandler } from '.';
+import type { EffectHandler, EffectCostCollector } from '.';
 
 export const buildingAdd: EffectHandler = (effect, ctx, mult = 1) => {
   const id = effect.params!['id'] as string;
@@ -8,4 +8,16 @@ export const buildingAdd: EffectHandler = (effect, ctx, mult = 1) => {
     if (building.onBuild)
       ctx.passives.addPassive({ id, effects: building.onBuild }, ctx);
   }
+};
+
+export const collectBuildingAddCosts: EffectCostCollector = (
+  effect,
+  base,
+  ctx,
+) => {
+  const id = effect.params?.['id'] as string;
+  if (!id) return;
+  const building = ctx.buildings.get(id);
+  for (const key of Object.keys(building.costs))
+    base[key] = (base[key] || 0) + (building.costs[key] || 0);
 };
