@@ -75,7 +75,7 @@ export class PassiveManager {
     string,
     {
       effects: EffectDef[];
-      onDevelopmentPhase?: EffectDef[];
+      onGrowthPhase?: EffectDef[];
       onUpkeepPhase?: EffectDef[];
       onBeforeAttacked?: EffectDef[];
       onAttackResolved?: EffectDef[];
@@ -136,7 +136,7 @@ export class PassiveManager {
     passive: {
       id: string;
       effects: EffectDef[];
-      onDevelopmentPhase?: EffectDef[];
+      onGrowthPhase?: EffectDef[];
       onUpkeepPhase?: EffectDef[];
       onBeforeAttacked?: EffectDef[];
       onAttackResolved?: EffectDef[];

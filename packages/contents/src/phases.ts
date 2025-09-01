@@ -12,13 +12,13 @@ import {
 } from './config/builders';
 
 export const PHASES: PhaseDef[] = [
-  phase('development')
-    .label('Development')
+  phase('growth')
+    .label('Growth')
     .icon('🏗️')
     .step(
       step('resolve-dynamic-triggers')
         .title('Resolve dynamic triggers')
-        .triggers('onDevelopmentPhase'),
+        .triggers('onGrowthPhase'),
     )
     .step(
       step('gain-income')

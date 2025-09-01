@@ -66,8 +66,8 @@ State changes are derived through `snapshotPlayer` and `diffSnapshots` in
 `translation/log.ts`. These utilities capture player state before and after an
 effect resolves and emit human readable change strings such as
 `Gold +2 (10→12)`. Phase headings draw from `triggerInfo`, which provides both a
-`future` label for summaries (e.g. "On each Development Phase") and a `past`
-label for log entries ("Development Phase").
+`future` label for summaries (e.g. "On each Growth Phase") and a `past`
+label for log entries ("Growth Phase").
 
 This structure keeps translation logic isolated and makes the UI resilient to
 engine and content changes.

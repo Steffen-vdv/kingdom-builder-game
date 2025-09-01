@@ -13,7 +13,7 @@ content without touching existing logic.
 
 Rules and content are encoded as declarative **effects** that respond to
 specific **triggers**. A trigger represents a moment in the game such as the
-start of the Development phase or the resolution of an action. When a trigger
+start of the Growth phase or the resolution of an action. When a trigger
 fires the engine looks up all matching effects and resolves them through the
 central registry. All trigger lookups funnel through a single helper,
 `collectTriggerEffects`, which gathers the relevant effects for a player before
@@ -38,9 +38,9 @@ definitions can be reused with different data.
 The engine processes effects with `runEffects`:
 
 ```ts
-// Farm development: on every Development phase gain 2 Gold
+// Farm development: on every Growth phase gain 2 Gold
 {
-  onDevelopmentPhase: [
+  onGrowthPhase: [
     { type: "resource", method: "add", params: { key: "gold", amount: 2 } }
   ]
 }
