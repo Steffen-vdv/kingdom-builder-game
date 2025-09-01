@@ -2,6 +2,7 @@ import React from 'react';
 import { RESOURCES } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
+import AnimatedValue from '../AnimatedValue';
 
 interface ResourceBarProps {
   player: EngineContext['activePlayer'];
@@ -29,7 +30,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
             onMouseLeave={clearHoverCard}
           >
             {info.icon}
-            {v}
+            <AnimatedValue value={v} />
           </span>
         );
       })}

@@ -3,6 +3,7 @@ import { POPULATION_ROLES, STATS } from '@kingdom-builder/contents';
 import { formatStatValue } from '../../utils/stats';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
+import AnimatedValue from '../AnimatedValue';
 
 interface PopulationInfoProps {
   player: EngineContext['activePlayer'];
@@ -95,7 +96,10 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
               onMouseLeave={clearHoverCard}
             >
               {info.icon}
-              {formatStatValue(k, v)}
+              <AnimatedValue
+                value={v}
+                format={(val) => formatStatValue(k, val)}
+              />
             </span>
           );
         })}

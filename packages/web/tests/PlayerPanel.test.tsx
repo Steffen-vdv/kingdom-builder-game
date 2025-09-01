@@ -65,7 +65,8 @@ describe('<PlayerPanel />', () => {
     expect(screen.getByText(ctx.activePlayer.name)).toBeInTheDocument();
     for (const [key, info] of Object.entries(RESOURCES)) {
       const amount = ctx.activePlayer.resources[key] ?? 0;
-      expect(screen.getByText(`${info.icon}${amount}`)).toBeInTheDocument();
+      const iconEl = screen.getByText(info.icon);
+      expect(iconEl.parentElement).toHaveTextContent(String(amount));
     }
   });
 });

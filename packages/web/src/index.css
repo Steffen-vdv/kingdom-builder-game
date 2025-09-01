@@ -15,6 +15,28 @@
   }
 }
 
+@keyframes value-rise {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -0.75rem);
+  }
+}
+
+@keyframes value-fall {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 0.75rem);
+  }
+}
+
 @layer components {
   .bar-item {
     @apply flex items-center gap-1 tabular-nums whitespace-nowrap;
@@ -83,5 +105,13 @@
   }
   .dark .log-entry-b {
     color: rgb(254, 226, 226);
+  }
+  .gain-bubble {
+    @apply absolute left-1/2 -translate-x-1/2 text-green-600 text-sm;
+    animation: value-rise 0.8s forwards;
+  }
+  .loss-bubble {
+    @apply absolute left-1/2 -translate-x-1/2 text-red-600 text-sm;
+    animation: value-fall 0.8s forwards;
   }
 }
