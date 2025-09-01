@@ -13,10 +13,43 @@
 
 ## 🧪 Testing
 
-- **Tests may not rely on literals.**
+- **Tests may not rely on literals or hard-coded IDs.**
   - Never bake in expected names or numeric values (e.g., “expect gold to be 10”).
+  - Obtain action, building, and development ids from content definitions or factories.
   - Instead, retrieve those values via content modules or mock registries at runtime.
   - Rationale: Content changes (e.g., different starting gold or altered action effects) shouldn’t break tests unless the engine itself lacks support for such changes.
+
+- **Use the synthetic content factory** to generate minimal actions, buildings, and other entities during tests.  
+  Call `createContentFactory()` and build definitions inside the test to keep ids dynamic.
+
+- **Property-based testing** with [`fast-check`](https://github.com/dubzzz/fast-check) is encouraged for engine invariants.  
+  Randomized costs or gains can reveal edge cases that example-based tests miss.
+
+### 🔧 Dynamic examples
+
+```ts
+const content = createContentFactory();
+const effect = {
+  type: 'resource',
+  method: 'add',
+  params: { key: CResource.gold, amount: 2 },
+};
+const action = content.action({ effects: [effect] });
+const ctx = createTestEngine(content);
+const before = ctx.activePlayer.gold;
+performAction(action.id, ctx);
+expect(ctx.activePlayer.gold).toBe(before + effect.params.amount);
+```
+
+```ts
+fc.assert(
+  fc.property(resourceMapArb, (costs) => {
+    const content = createContentFactory();
+    const action = content.action({ baseCosts: costs });
+    // ...assert invariants
+  }),
+);
+```
 
 ## ✅ Compliance Checklist for Engine/Web Code
 
