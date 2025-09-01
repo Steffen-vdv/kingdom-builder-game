@@ -17,6 +17,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
   className = '',
 }) => {
   const animateBar = useAnimate<HTMLDivElement>();
+  const animateSections = useAnimate<HTMLDivElement>();
   return (
     <div className={`player-panel h-full flex flex-col space-y-1 ${className}`}>
       <h3 className="font-semibold">{player.name}</h3>
@@ -27,9 +28,11 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         <ResourceBar player={player} />
         <PopulationInfo player={player} />
       </div>
-      <LandDisplay player={player} />
-      <BuildingDisplay player={player} />
-      <PassiveDisplay player={player} />
+      <div ref={animateSections} className="flex flex-col space-y-1">
+        <LandDisplay player={player} />
+        <BuildingDisplay player={player} />
+        <PassiveDisplay player={player} />
+      </div>
     </div>
   );
 };
