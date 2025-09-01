@@ -18,6 +18,7 @@ import {
   ActionMethods,
   PassiveMethods,
   CostModMethods,
+  ResultModMethods,
   BuildingMethods,
   StatMethods,
 } from './config/builders';
@@ -229,6 +230,51 @@ export function createActionRegistry() {
       .icon('🎉')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 3)
+      .requirement(
+        requirement('evaluator', 'compare')
+          .param('left', { type: 'stat', params: { key: Stat.warWeariness } })
+          .param('operator', 'eq')
+          .param('right', 0)
+          .message(
+            `${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be 0`,
+          )
+          .build(),
+      )
+      .effect(
+        effect(Types.Resource, ResourceMethods.ADD)
+          .params({ key: Resource.happiness, amount: 3 })
+          .build(),
+      )
+      .effect(
+        effect(Types.Stat, StatMethods.ADD)
+          .params({ key: Stat.fortificationStrength, amount: -3 })
+          .build(),
+      )
+      .effect(
+        effect(Types.Passive, PassiveMethods.ADD)
+          .params({
+            id: 'hold_festival_attack_mod',
+            onUpkeepPhase: [
+              effect(Types.Passive, PassiveMethods.REMOVE)
+                .param('id', 'hold_festival_attack_mod')
+                .build(),
+            ],
+          })
+          .effect(
+            effect(Types.ResultMod, ResultModMethods.ADD)
+              .params({
+                id: 'hold_festival_attack_penalty',
+                actionId: 'army_attack',
+              })
+              .effect(
+                effect(Types.Resource, ResourceMethods.ADD)
+                  .params({ key: Resource.happiness, amount: -3 })
+                  .build(),
+              )
+              .build(),
+          )
+          .build(),
+      )
       .build(),
     category: 'basic',
     order: 7,
