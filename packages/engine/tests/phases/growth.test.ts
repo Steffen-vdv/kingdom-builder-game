@@ -9,7 +9,8 @@ import {
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
-const growthPhase = PHASES.find((p) => p.id === 'growth')!;
+const growthPhase = PHASES[0];
+const growthId = growthPhase.id;
 const incomeStep = growthPhase.steps.find((s) => s.id === 'gain-income');
 const farmGoldGain = Number(
   incomeStep?.effects?.[0]?.effects?.find(
@@ -36,7 +37,7 @@ describe('Growth phase', () => {
     const player = ctx.activePlayer;
     const apBefore = player.ap;
     const goldBefore = player.gold;
-    while (ctx.game.currentPhase === 'growth') advance(ctx);
+    while (ctx.game.currentPhase === growthId) advance(ctx);
     const councils = player.population[PopulationRole.Council];
     expect(player.ap).toBe(apBefore + councilApGain * councils);
     expect(player.gold).toBe(goldBefore + farmGoldGain);
@@ -55,7 +56,7 @@ describe('Growth phase', () => {
     // Player A growth
     let player = ctx.activePlayer;
     player.ap = 0;
-    ctx.game.currentPhase = 'growth';
+    ctx.game.currentPhase = growthId;
     ctx.game.currentStep = 'gain-ap';
     ctx.game.stepIndex = gainApIdx;
     advance(ctx);
@@ -64,7 +65,7 @@ describe('Growth phase', () => {
 
     // Player B growth (compensation already applied)
     ctx.game.currentPlayerIndex = 1;
-    ctx.game.currentPhase = 'growth';
+    ctx.game.currentPhase = growthId;
     ctx.game.currentStep = 'gain-ap';
     ctx.game.stepIndex = gainApIdx;
     player = ctx.activePlayer;
@@ -76,7 +77,7 @@ describe('Growth phase', () => {
     // Subsequent Player B growth phases
     for (let i = 0; i < 3; i++) {
       ctx.game.currentPlayerIndex = 1;
-      ctx.game.currentPhase = 'growth';
+      ctx.game.currentPhase = growthId;
       ctx.game.currentStep = 'gain-ap';
       ctx.game.stepIndex = gainApIdx;
       player.ap = 0;
@@ -93,7 +94,7 @@ describe('Growth phase', () => {
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
     const player = ctx.activePlayer;
     const growth = player.stats[Stat.growth];
-    while (ctx.game.currentPhase === 'growth') advance(ctx);
+    while (ctx.game.currentPhase === growthId) advance(ctx);
     const expectedArmy = Math.ceil(8 + 8 * growth);
     const expectedFort = Math.ceil(4 + 4 * growth);
     expect(player.stats[Stat.armyStrength]).toBe(expectedArmy);
@@ -113,7 +114,7 @@ describe('Growth phase', () => {
     ctx.activePlayer.stats[Stat.armyStrength] = 10;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 10;
     const growth = ctx.activePlayer.stats[Stat.growth];
-    while (ctx.game.currentPhase === 'growth') advance(ctx);
+    while (ctx.game.currentPhase === growthId) advance(ctx);
     const expectedArmy = Math.ceil(10 + 10 * growth * 2);
     const expectedFort = Math.ceil(10 + 10 * growth * 2);
     expect(ctx.activePlayer.stats[Stat.armyStrength]).toBe(expectedArmy);
@@ -172,7 +173,7 @@ describe('Growth phase', () => {
       player.population[PopulationRole.Fortifier] = fortifiers;
       player.stats[Stat.armyStrength] = baseArmy;
       player.stats[Stat.fortificationStrength] = baseFort;
-      while (ctx.game.currentPhase === 'growth') advance(ctx);
+      while (ctx.game.currentPhase === growthId) advance(ctx);
       expect(player.stats[Stat.armyStrength]).toBe(expArmy);
       expect(player.stats[Stat.fortificationStrength]).toBe(expFort);
       expect(Number.isInteger(player.stats[Stat.armyStrength])).toBe(true);
@@ -192,7 +193,7 @@ describe('Growth phase', () => {
       player.population[PopulationRole.Fortifier] = 1;
       player.stats[Stat.armyStrength] = -5;
       player.stats[Stat.fortificationStrength] = -5;
-      while (ctx.game.currentPhase === 'growth') advance(ctx);
+      while (ctx.game.currentPhase === growthId) advance(ctx);
       expect(player.stats[Stat.armyStrength]).toBe(0);
       expect(player.stats[Stat.fortificationStrength]).toBe(0);
       expect(Number.isInteger(player.stats[Stat.armyStrength])).toBe(true);

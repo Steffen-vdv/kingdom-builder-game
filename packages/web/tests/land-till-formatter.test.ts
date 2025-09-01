@@ -12,6 +12,7 @@ import {
   RULES,
   SLOT_ICON as slotIcon,
 } from '@kingdom-builder/contents';
+import { LandMethods } from '@kingdom-builder/contents/config/builders';
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
@@ -32,7 +33,10 @@ function createCtx() {
 describe('land till formatter', () => {
   it('summarizes till effect', () => {
     const ctx = createCtx();
-    const summary = summarizeEffects([{ type: 'land', method: 'till' }], ctx);
+    const summary = summarizeEffects(
+      [{ type: 'land', method: LandMethods.TILL }],
+      ctx,
+    );
     expect(summary).toContain(`${slotIcon}+1`);
   });
 
@@ -47,7 +51,7 @@ describe('land till formatter', () => {
     ).find(([, a]) =>
       a.effects.some(
         (e: { type: string; method?: string }) =>
-          e.type === 'land' && e.method === 'till',
+          e.type === 'land' && e.method === LandMethods.TILL,
       ),
     )?.[0] as string;
     const summary = summarizeContent('action', tillId, ctx);

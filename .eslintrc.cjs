@@ -58,7 +58,19 @@ module.exports = {
         '@typescript-eslint/no-unsafe-member-access': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
         '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      },
+    },
+    {
+      files: [
+        'packages/engine/tests/**/*.ts',
+        'packages/engine/tests/**/*.tsx',
+        'tests/**/*.ts',
+        'tests/**/*.tsx',
+      ],
+      rules: {
+        'check-test-content': 'error',
       },
     },
   ],

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
+import { createContentFactory } from './factories/content.ts';
 
 function makeAbsorptionEffect(amount: number): EffectDef {
   return {
@@ -83,26 +84,44 @@ describe('resolveAttack', () => {
   });
 
   it('resolves post-damage triggers like watchtower removal', () => {
-    const ctx = createTestEngine();
+    const content = createContentFactory();
+    const tower = content.development({
+      onBeforeAttacked: [
+        {
+          type: 'stat',
+          method: 'add',
+          params: { key: Stat.fortificationStrength, amount: 4 },
+        },
+      ],
+      onAttackResolved: [
+        {
+          type: 'resource',
+          method: 'add',
+          params: { key: Resource.gold, amount: 1 },
+        },
+      ],
+    });
+    const ctx = createTestEngine({ developments: content.developments });
     const defender = ctx.game.opponent;
     const landId = defender.lands[1].id;
-    ctx.game.currentPlayerIndex = 1; // switch to defender to build watchtower
+    ctx.game.currentPlayerIndex = 1; // switch to defender to build tower
     runEffects(
       [
         {
           type: 'development',
           method: 'add',
-          params: { id: 'watchtower', landId },
+          params: { id: tower.id, landId },
         },
       ],
       ctx,
     );
     ctx.game.currentPlayerIndex = 0; // attacker turn
+    const beforeGold = defender.gold;
     const dmg = resolveAttack(defender, 4, ctx);
     expect(dmg).toBe(0);
     expect(defender.resources[Resource.castleHP]).toBe(10);
     expect(defender.fortificationStrength).toBe(0);
     expect(defender.absorption).toBe(0);
-    expect(defender.lands[1].developments).not.toContain('watchtower');
+    expect(defender.gold).toBe(beforeGold + 1);
   });
 });

@@ -70,9 +70,9 @@ describe('<ActionsPanel />', () => {
     render(<ActionsPanel />);
     const apIcon = RESOURCES[actionCostResource].icon;
     expect(screen.getByText(`Actions (1 ${apIcon} each)`)).toBeInTheDocument();
-    const developDef = ctx.actions.get('develop');
-    const developLabel = `${developDef.icon} ${developDef.name}`;
-    expect(screen.getByText(developLabel)).toBeInTheDocument();
+    const action = ctx.actions.entries()[0][1];
+    const label = `${action.icon} ${action.name}`;
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
   it('shows short requirement indicator when unmet', () => {
