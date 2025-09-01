@@ -3,6 +3,7 @@ import TimerCircle from '../TimerCircle';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import Button from '../common/Button';
 
 const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
   const {
@@ -52,7 +53,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
         {ctx.phases.map((p) => {
           const isSelected = displayPhase === p.id;
           return (
-            <button
+            <Button
               key={p.id}
               type="button"
               disabled={!tabsEnabled}
@@ -61,7 +62,8 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
                 setDisplayPhase(p.id);
                 setPhaseSteps(phaseHistories[p.id] ?? []);
               }}
-              className={`px-3 py-1 text-sm flex items-center gap-1 border-b-2 ${
+              variant="ghost"
+              className={`text-sm flex items-center gap-1 border-b-2 rounded-none ${
                 isSelected
                   ? 'border-blue-500 font-semibold'
                   : 'border-transparent text-gray-500'
@@ -72,7 +74,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
               }`}
             >
               {p.icon} {p.label}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -105,8 +107,8 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
       )}
       {isActionPhase && (
         <div className="mt-2 text-right">
-          <button
-            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          <Button
+            variant="primary"
             disabled={Boolean(
               actionPhaseId &&
                 phaseHistories[actionPhaseId]?.some((s) => s.active),
@@ -114,7 +116,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
             onClick={() => void handleEndTurn()}
           >
             Next Turn
-          </button>
+          </Button>
         </div>
       )}
     </section>

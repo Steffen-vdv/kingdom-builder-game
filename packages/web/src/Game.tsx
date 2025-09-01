@@ -5,6 +5,7 @@ import HoverCard from './components/HoverCard';
 import ActionsPanel from './components/actions/ActionsPanel';
 import PhasePanel from './components/phases/PhasePanel';
 import LogPanel from './components/LogPanel';
+import Button from './components/common/Button';
 
 function GameLayout() {
   const { ctx, onExit, darkMode, onToggleDark, devMode, onToggleDev } =
@@ -17,26 +18,18 @@ function GameLayout() {
         </h1>
         {onExit && (
           <div className="flex items-center gap-2 ml-4">
-            <button
-              className={`px-3 py-1 rounded text-white hover:opacity-90 ${
-                devMode ? 'bg-green-600' : 'bg-gray-600'
-              }`}
+            <Button
               onClick={onToggleDev}
+              variant={devMode ? 'success' : 'secondary'}
             >
               {`Dev Mode${devMode ? ': On' : ': Off'}`}
-            </button>
-            <button
-              className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
-              onClick={onToggleDark}
-            >
+            </Button>
+            <Button onClick={onToggleDark} variant="secondary">
               {darkMode ? 'Light Mode' : 'Dark Mode'}
-            </button>
-            <button
-              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-              onClick={onExit}
-            >
+            </Button>
+            <Button onClick={onExit} variant="danger">
               Quit
-            </button>
+            </Button>
           </div>
         )}
       </div>
