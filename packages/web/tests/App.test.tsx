@@ -21,7 +21,7 @@ vi.mock('@kingdom-builder/engine', () => {
       buildings: { map: new Map(), get: () => undefined },
       passives: { list: () => [] },
       game: {
-        currentPhase: 'development',
+        currentPhase: 'growth',
         players: [player],
         currentPlayerIndex: 0,
       },
@@ -30,9 +30,9 @@ vi.mock('@kingdom-builder/engine', () => {
     runEffects: () => {},
     collectTriggerEffects: () => [],
     getActionCosts: () => ({}),
-    Phase: { Development: 'development', Upkeep: 'upkeep', Main: 'main' },
+    Phase: { Growth: 'growth', Upkeep: 'upkeep', Main: 'main' },
     PHASES: [
-      { id: 'development', label: 'Development', icon: '🏗️', steps: [] },
+      { id: 'growth', label: 'Growth', icon: '🏗️', steps: [] },
       { id: 'upkeep', label: 'Upkeep', icon: '🧹', steps: [] },
       { id: 'main', label: 'Main', icon: '🎯', steps: [], action: true },
     ],

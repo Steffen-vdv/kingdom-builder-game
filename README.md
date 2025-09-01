@@ -18,7 +18,7 @@ Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, man
 
 Each turn flows through three phases:
 
-1. **Development** – collect income, gain action points, and grow your military.
+1. **Growth** – collect income, gain action points, and grow your military.
 2. **Upkeep** – pay upkeep for your people and resolve end-of-phase effects.
 3. **Main** – spend action points to perform strategic actions such as expanding your territory, developing lands, or attacking the enemy.
 
@@ -29,4 +29,4 @@ Each turn flows through three phases:
 - Castle HP 10 and one 🏠 House
 - Population: 1 ⚖️ Council member
 - Army Strength 0, Fortification Strength 0, Happiness 0
-- Player order: A then B; B gains +1 ⚡️ Action Point on their first Development phase
+- Player order: A then B; B gains +1 ⚡️ Action Point on their first Growth phase

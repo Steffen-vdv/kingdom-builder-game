@@ -132,7 +132,7 @@ The game consists of two players, player A and B. Player A always goes first. Pl
 
 # Game phasing
 
-The game is played in turns. Each turn has three phases; Development Phase, Upkeep Phase, Main Phase. Players take turns going through the phases. First Player A goes through Development phase, then Player B goes through Development Phase, then Player A through Upkeep Phase, then player B through Upkeep Phase. If a decision needs to be made by a player in one of these phases, the game halts until the decision has been made. Finally, Player A and B simultaneously go through Main Phase, which is where they can pick their action(s) for their turn. Both players choose their actions, during the Main Phase, simultaneously. They do so in secret. The action(s) are locked in the moment both players have committed their action(s). Then, the Actions play out for Player A first, in the order Player A chose. Then, the actions for Player B play out, in the order player B chose.
+The game is played in turns. Each turn has three phases; Growth Phase, Upkeep Phase, Main Phase. Players take turns going through the phases. First Player A goes through Growth phase, then Player B goes through Growth Phase, then Player A through Upkeep Phase, then player B through Upkeep Phase. If a decision needs to be made by a player in one of these phases, the game halts until the decision has been made. Finally, Player A and B simultaneously go through Main Phase, which is where they can pick their action(s) for their turn. Both players choose their actions, during the Main Phase, simultaneously. They do so in secret. The action(s) are locked in the moment both players have committed their action(s). Then, the Actions play out for Player A first, in the order Player A chose. Then, the actions for Player B play out, in the order player B chose.
 
 # Core mechanic definitions
 
@@ -159,7 +159,7 @@ We have Trigger Effects and Global Effects. The former was explained in section 
 
 # Population
 
-Finally, we have Population, which is made up of four archtypes: Council, Commander, Fortifier and Citizen. Certain Actions can create Population, or change the Archtype of a Population member. Each Population member has one or more Effects, again with specific triggers or global. For example, the Council generates one AP at the end of every Development Phase (trigger effect). The Commander passively provides 1 Army Strength (a stat) (global effect, active at all times). When the Commander is relieved from his position, this global effect is removed. The Commander also permanently grows the current Army Strength by 25% of it's current size, at every Development Phase (trigger effect, permanent stat change). Even if the Commander is removed afterwards, this stat change stays - it was a one-time stat increase, not one tingent on his continued existence.
+Finally, we have Population, which is made up of four archtypes: Council, Commander, Fortifier and Citizen. Certain Actions can create Population, or change the Archtype of a Population member. Each Population member has one or more Effects, again with specific triggers or global. For example, the Council generates one AP at the end of every Growth Phase (trigger effect). The Commander passively provides 1 Army Strength (a stat) (global effect, active at all times). When the Commander is relieved from his position, this global effect is removed. The Commander also permanently grows the current Army Strength by 25% of it's current size, at every Growth Phase (trigger effect, permanent stat change). Even if the Commander is removed afterwards, this stat change stays - it was a one-time stat increase, not one tingent on his continued existence.
 
 # Start of game setup
 
@@ -167,7 +167,7 @@ The game starts with each player having:
 
 - Castle, with 10 Health.
 - Max Population Stat = 1
-- Two Land tiles. One empty (one open Development Slot). One whose Development Slot is filled by Development "Farm". Farm has a single Effect, based on a trigger. On every Development Phase: Gain 2 Gold.
+- Two Land tiles. One empty (one open Development Slot). One whose Development Slot is filled by Development "Farm". Farm has a single Effect, based on a trigger. On every Growth Phase: Gain 2 Gold.
 - One Population with Archtype Council
 - Ten Gold
 - Zero Happiness

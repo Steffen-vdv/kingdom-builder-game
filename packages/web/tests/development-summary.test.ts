@@ -46,10 +46,10 @@ describe('development translation', () => {
     const flat = flatten(summary);
     const goldIcon = RESOURCES[Resource.gold].icon;
     const farmIcon = DEVELOPMENTS.get('farm')?.icon || '';
-    const devPhase = ctx.phases.find((p) => p.id === 'development');
-    const gainIncome = devPhase?.steps.find((s) => s.id === 'gain-income') as
-      | StepDef
-      | undefined;
+    const growthPhase = ctx.phases.find((p) => p.id === 'growth');
+    const gainIncome = growthPhase?.steps.find(
+      (s) => s.id === 'gain-income',
+    ) as StepDef | undefined;
     const farmEffect = gainIncome?.effects?.find((e) => e.evaluator);
     const inner = farmEffect?.effects?.find((e) => e.type === 'resource');
     const amt = (inner?.params as { amount?: number })?.amount ?? 0;

@@ -35,6 +35,6 @@ describe('Turn cycle integration', () => {
     advance(ctx);
     expect(ctx.game.turn).toBe(2);
     expect(ctx.game.currentPlayerIndex).toBe(0);
-    expect(ctx.game.currentPhase).toBe('development');
+    expect(ctx.game.currentPhase).toBe('growth');
   });
 });

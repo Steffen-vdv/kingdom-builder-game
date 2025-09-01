@@ -2,7 +2,7 @@ import type { EffectHandler, EffectDef } from '.';
 
 interface PassiveParams {
   id: string;
-  onDevelopmentPhase?: EffectDef[];
+  onGrowthPhase?: EffectDef[];
   onUpkeepPhase?: EffectDef[];
   onBeforeAttacked?: EffectDef[];
   onAttackResolved?: EffectDef[];
@@ -17,7 +17,7 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
   const params = effect.params || ({} as PassiveParams);
   const {
     id,
-    onDevelopmentPhase,
+    onGrowthPhase,
     onUpkeepPhase,
     onBeforeAttacked,
     onAttackResolved,
@@ -26,12 +26,12 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
   const passive: {
     id: string;
     effects: EffectDef[];
-    onDevelopmentPhase?: EffectDef[];
+    onGrowthPhase?: EffectDef[];
     onUpkeepPhase?: EffectDef[];
     onBeforeAttacked?: EffectDef[];
     onAttackResolved?: EffectDef[];
   } = { id, effects: effect.effects || [] };
-  if (onDevelopmentPhase) passive.onDevelopmentPhase = onDevelopmentPhase;
+  if (onGrowthPhase) passive.onGrowthPhase = onGrowthPhase;
   if (onUpkeepPhase) passive.onUpkeepPhase = onUpkeepPhase;
   if (onBeforeAttacked) passive.onBeforeAttacked = onBeforeAttacked;
   if (onAttackResolved) passive.onAttackResolved = onAttackResolved;
