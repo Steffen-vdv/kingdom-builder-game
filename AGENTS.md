@@ -1,7 +1,48 @@
-## 🚫 Hardcoded content prohibited
+# AGENTS.md – Global Guidelines (Top-level Scope)
 
-- **Engine and Web may not hardcode game data.** Never reference specific resource or stat keys, starting values or effect behavior in these domains. All content lives in `packages/contents` and can change without code updates.
-- **Tests may not rely on literals.** Fetch expected names and numeric values from the Content domain or mock registries so that content changes (e.g. different starting gold or altered action effects) do not break tests unless the engine itself lacks support.
+## 🚫 Prohibited Hardcoding
+
+- **Engine and Web layers must never hardcode game data.**
+  - Do **not** reference specific resource/stat keys, starting values, or effect behaviors directly in engine or web code.
+  - Example of prohibited code: `if (resource === "gold") ...` or `const startingHealth = 100;`.
+  - Game data may change independently in `packages/contents`. The Engine and Web should remain agnostic to such specifics.
+
+- **All game content belongs exclusively in `packages/contents`.**
+  - If your code needs to know about a resource, stat, or effect, fetch it from the content domain or a registry designed for dynamic lookup.
+  - Do not replicate or copy content definitions into engine/web modules.
+
+## 🧪 Testing
+
+- **Tests may not rely on literals.**
+  - Never bake in expected names or numeric values (e.g., “expect gold to be 10”).
+  - Instead, retrieve those values via content modules or mock registries at runtime.
+  - Rationale: Content changes (e.g., different starting gold or altered action effects) shouldn’t break tests unless the engine itself lacks support for such changes.
+
+- **Use content-aware helpers.**
+  - When verifying behavior, always fetch the relevant starting values, resource names, and effect data using content APIs or registries provided for tests.
+  - Example pattern:
+    ```ts
+    const gold = content.getResource('gold');
+    expect(player.getResource(gold.id)).toBe(gold.startingValue);
+    ```
+
+## ✅ Compliance Checklist for Engine/Web Code
+
+- [ ] No references to specific resource/stat keys or effect behaviors.
+- [ ] All data lookups go through content or registry APIs.
+- [ ] Tests fetch expected values dynamically from content or mock registries.
+- [ ] New features are reviewed for adherence to content-driven design.
+
+## 🔁 Enforcement
+
+- Pull requests touching engine, web, or tests will be reviewed for compliance with these rules.
+- Violations (e.g., hardcoding resource names or relying on fixed numeric values in tests) will require refactoring before merge.
+
+## ☑️ Summary
+
+- The Engine and Web stay content-agnostic.
+- Tests dynamically fetch expectations from content or registries.
+- This ensures game data can evolve independently without breaking engine/web code or tests.
 
 # Agent discovery log
 
