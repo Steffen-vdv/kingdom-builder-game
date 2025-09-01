@@ -3,7 +3,9 @@
 ## 🚫 Hardcoded content prohibited
 
 - **Engine and Web may not hardcode game data.** All resource/stat keys, starting values and effect behaviour must originate from the `contents` package so designs can change without modifying core code.
-- **Tests may not rely on literals.** When writing tests, obtain ids and values from the Content domain or mocks; content changes should not require test updates unless they expose unsupported scenarios.
+- **Tests may not rely on literals or hard-coded ids.** When writing tests, obtain ids and values from the content domain, factories, or mocks; content changes should not require test updates unless they expose unsupported scenarios.
+- **Synthetic content factory.** Use `createContentFactory()` in tests to build actions, buildings, developments, and population roles with auto-generated ids.
+- **Property-based testing.** [`fast-check`](https://github.com/dubzzz/fast-check) enables property tests that explore randomised inputs and engine invariants.
 
 Thanks for your interest in improving Kingdom Builder! This guide describes the
 workflow for contributors so that changes remain consistent and easy to review.
@@ -35,8 +37,26 @@ style conventions used throughout the repository.
   the active configuration or mocked registries instead of hard-coded numbers.
 - Use the registry pattern to swap implementations in tests when needed. Avoid
   importing concrete handlers directly.
+- Property-based tests are encouraged for invariant behaviours; generate random
+  data with `fast-check`.
 - Prefer high level integration tests for complex behaviours and unit tests for
   individual effect handlers.
+
+### 🔧 Dynamic test example
+
+```ts
+const content = createContentFactory();
+const effect = {
+  type: 'resource',
+  method: 'add',
+  params: { key: CResource.gold, amount: 2 },
+};
+const action = content.action({ effects: [effect] });
+const ctx = createTestEngine(content);
+const before = ctx.activePlayer.gold;
+performAction(action.id, ctx);
+expect(ctx.activePlayer.gold).toBe(before + effect.params.amount);
+```
 
 ## Commit Guidelines
 
