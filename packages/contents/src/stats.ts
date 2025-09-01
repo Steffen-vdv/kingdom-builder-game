@@ -17,6 +17,7 @@ const defs: StatInfo[] = [
     .description(
       'Max Population determines how many subjects your kingdom can sustain. Expand infrastructure or build houses to increase it.',
     )
+    .capacity()
     .addFormat({ prefix: 'Max ' })
     .build(),
   stat(Stat.armyStrength)

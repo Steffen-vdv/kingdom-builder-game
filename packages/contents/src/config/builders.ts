@@ -360,6 +360,7 @@ export interface StatInfo extends InfoDef {
     prefix?: string;
     percent?: boolean;
   };
+  capacity?: boolean;
 }
 
 class StatBuilder extends InfoBuilder<StatInfo> {
@@ -372,6 +373,10 @@ class StatBuilder extends InfoBuilder<StatInfo> {
   }
   addFormat(format: { prefix?: string; percent?: boolean }) {
     this.config.addFormat = { ...this.config.addFormat, ...format };
+    return this;
+  }
+  capacity(flag = true) {
+    this.config.capacity = flag;
     return this;
   }
 }
