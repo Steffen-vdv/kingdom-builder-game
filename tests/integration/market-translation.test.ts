@@ -2,30 +2,40 @@ import { describe, it, expect } from 'vitest';
 import { createEngine } from '@kingdom-builder/engine';
 import { summarizeContent } from '@kingdom-builder/web/translation/content';
 import {
-  ACTIONS,
-  BUILDINGS,
-  DEVELOPMENTS,
-  POPULATIONS,
   PHASES,
+  POPULATIONS,
   GAME_START,
   RULES,
 } from '@kingdom-builder/contents';
-import { getBuildingWithPopulationBonus } from './fixtures';
+import { createContentFactory } from '../../packages/engine/tests/factories/content';
 
 describe('Building translation with population bonus', () => {
   it('mentions population and related action', () => {
+    const content = createContentFactory();
+    const action = content.action({ name: 'work', icon: '🛠️', effects: [] });
+    const building = content.building({
+      onBuild: [
+        {
+          type: 'result_mod',
+          method: 'add',
+          params: {
+            amount: 1,
+            evaluation: { type: 'population', id: action.id },
+          },
+        },
+      ],
+    });
     const ctx = createEngine({
-      actions: ACTIONS,
-      buildings: BUILDINGS,
-      developments: DEVELOPMENTS,
+      actions: content.actions,
+      buildings: content.buildings,
+      developments: content.developments,
       populations: POPULATIONS,
       phases: PHASES,
       start: GAME_START,
       rules: RULES,
     });
-    const { buildingId, actionId } = getBuildingWithPopulationBonus();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const summary = summarizeContent('building', buildingId, ctx) as unknown;
+    const summary = summarizeContent('building', building.id, ctx) as unknown;
     function flatten(items: unknown[]): string[] {
       return items.flatMap((i) =>
         typeof i === 'string'
@@ -36,11 +46,12 @@ describe('Building translation with population bonus', () => {
       );
     }
     const lines = flatten(summary as unknown[]);
-    const actionName = ctx.actions.get(actionId)?.name || '';
     expect(
       lines.some(
-        (l) => l.includes('Population through') && l.includes(actionName),
+        (l) => l.includes('Population through') && l.includes(action.name),
       ),
     ).toBe(true);
+    expect(ctx.actions.get(action.id)).toBeDefined();
+    expect(ctx.buildings.get(building.id)).toBeDefined();
   });
 });

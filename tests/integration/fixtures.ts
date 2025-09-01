@@ -166,47 +166,6 @@ export function getBuildingWithStatBonuses() {
   throw new Error('No building with stat bonuses found');
 }
 
-export function getBuildingWithPopulationBonus() {
-  for (const [id, def] of BUILDINGS.entries()) {
-    const effect = findEffect(
-      def.onBuild ?? [],
-      (e) =>
-        e.type === 'result_mod' &&
-        typeof (e.params as { evaluation?: unknown }).evaluation === 'object' &&
-        (e.params as { evaluation: { type?: string } }).evaluation.type ===
-          'population' &&
-        typeof (e.params as { evaluation: { id?: unknown } }).evaluation.id ===
-          'string',
-    );
-    if (effect) {
-      return {
-        buildingId: id,
-        actionId: (effect.params as { evaluation: { id: string } }).evaluation
-          .id,
-      };
-    }
-  }
-  throw new Error('No building with population bonus found');
-}
-
-export function getActionWithPopulationEvaluator(ctx: EngineContext) {
-  for (const [id, def] of ctx.actions.entries()) {
-    if (
-      findEffect(
-        def.effects,
-        (e) =>
-          typeof (e as { evaluator?: { type?: string } }).evaluator ===
-            'object' &&
-          (e as { evaluator: { type: string } }).evaluator.type ===
-            'population',
-      )
-    ) {
-      return id;
-    }
-  }
-  throw new Error('No action with population evaluator found');
-}
-
 export function getActionWithMultipleCosts(ctx: EngineContext) {
   for (const [id] of ctx.actions.entries()) {
     const costs = getActionCosts(id, ctx);
