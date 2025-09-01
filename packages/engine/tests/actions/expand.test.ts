@@ -6,7 +6,7 @@ import {
   advance,
 } from '../../src';
 import { createTestEngine } from '../helpers';
-import { PlayerState, Resource as ctxResource } from '../../src/state';
+import { PlayerState } from '../../src/state';
 import {
   createActionRegistry,
   createBuildingRegistry,
@@ -77,16 +77,16 @@ function getExpandExpectations(ctx: EngineContext) {
   return { costs, landGain, resKey, resGain: baseRes + extra };
 }
 
-function payResourceKey(costs: Record<string, number>) {
-  return Object.keys(costs).find((k) => k !== ctxResource.ap)!;
+function payResourceKey(costs: Record<string, number>, ctx: EngineContext) {
+  return Object.keys(costs).find((k) => k !== ctx.actionCostResource)!;
 }
 
 describe('Expand action', () => {
   it('costs resources and grants land and happiness', () => {
     const ctx = setup();
     const expected = getExpandExpectations(ctx);
-    const payKey = payResourceKey(expected.costs);
-    const apKey = apResourceKey();
+    const payKey = payResourceKey(expected.costs, ctx);
+    const apKey = apResourceKey(ctx);
     const goldBefore = ctx.activePlayer.resources[payKey] || 0;
     const apBefore = ctx.activePlayer.resources[apKey] || 0;
     const landsBefore = ctx.activePlayer.lands.length;
@@ -106,19 +106,19 @@ describe('Expand action', () => {
 
   it('includes charter modifiers when present', () => {
     const ctx = setup();
-    const payKey = payResourceKey(getActionCosts(expandId, ctx));
+    const payKey = payResourceKey(getActionCosts(expandId, ctx), ctx);
     performAction(buildId, ctx, { id: charterId });
-    ctx.activePlayer.resources[apResourceKey()] += 1;
+    ctx.activePlayer.resources[apResourceKey(ctx)] += 1;
     const expected = getExpandExpectations(ctx);
     const goldBefore = ctx.activePlayer.resources[payKey] || 0;
-    const apBefore = ctx.activePlayer.resources[apResourceKey()] || 0;
+    const apBefore = ctx.activePlayer.resources[apResourceKey(ctx)] || 0;
     const resBefore = ctx.activePlayer.resources[expected.resKey] || 0;
     performAction(expandId, ctx);
     expect(ctx.activePlayer.resources[payKey]).toBe(
       goldBefore - (expected.costs[payKey] || 0),
     );
-    expect(ctx.activePlayer.resources[apResourceKey()]).toBe(
-      apBefore - (expected.costs[apResourceKey()] || 0),
+    expect(ctx.activePlayer.resources[apResourceKey(ctx)]).toBe(
+      apBefore - (expected.costs[apResourceKey(ctx)] || 0),
     );
     expect(ctx.activePlayer.resources[expected.resKey]).toBe(
       resBefore + expected.resGain,
@@ -128,12 +128,12 @@ describe('Expand action', () => {
   it('applies modifiers across multiple expansions', () => {
     const ctx = setup();
     performAction(buildId, ctx, { id: charterId });
-    ctx.activePlayer.resources[apResourceKey()] += 2;
-    const payKey = payResourceKey(getActionCosts(expandId, ctx));
+    ctx.activePlayer.resources[apResourceKey(ctx)] += 2;
+    const payKey = payResourceKey(getActionCosts(expandId, ctx), ctx);
     ctx.activePlayer.resources[payKey] += 10;
     const expected = getExpandExpectations(ctx);
     const goldBefore = ctx.activePlayer.resources[payKey] || 0;
-    const apBefore = ctx.activePlayer.resources[apResourceKey()] || 0;
+    const apBefore = ctx.activePlayer.resources[apResourceKey(ctx)] || 0;
     const resBefore = ctx.activePlayer.resources[expected.resKey] || 0;
     const landsBefore = ctx.activePlayer.lands.length;
     performAction(expandId, ctx);
@@ -141,8 +141,8 @@ describe('Expand action', () => {
     expect(ctx.activePlayer.resources[payKey]).toBe(
       goldBefore - (expected.costs[payKey] || 0) * 2,
     );
-    expect(ctx.activePlayer.resources[apResourceKey()]).toBe(
-      apBefore - (expected.costs[apResourceKey()] || 0) * 2,
+    expect(ctx.activePlayer.resources[apResourceKey(ctx)]).toBe(
+      apBefore - (expected.costs[apResourceKey(ctx)] || 0) * 2,
     );
     expect(ctx.activePlayer.resources[expected.resKey]).toBe(
       resBefore + expected.resGain * 2,
@@ -155,7 +155,7 @@ describe('Expand action', () => {
   it('rejects expand when resource is insufficient', () => {
     const ctx = setup();
     const costs = getActionCosts(expandId, ctx);
-    const payKey = payResourceKey(costs);
+    const payKey = payResourceKey(costs, ctx);
     ctx.activePlayer.resources[payKey] = (costs[payKey] || 0) - 1;
     const need = costs[payKey];
     const have = ctx.activePlayer.resources[payKey];
@@ -164,6 +164,6 @@ describe('Expand action', () => {
   });
 });
 
-function apResourceKey() {
-  return ctxResource.ap!;
+function apResourceKey(ctx: EngineContext) {
+  return ctx.actionCostResource;
 }

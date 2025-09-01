@@ -21,6 +21,7 @@ export class EngineContext {
     public populations: Registry<PopulationDef>,
     public passives: PassiveManager,
     public phases: PhaseDef[],
+    public actionCostResource: ResourceKey,
     public compensations: Record<PlayerId, PlayerStartConfig> = {
       A: {},
       B: {},

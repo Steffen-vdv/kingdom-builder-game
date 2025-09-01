@@ -49,13 +49,14 @@ function applyCostsWithPassives(
   base: CostBag,
   ctx: EngineContext,
 ): CostBag {
-  const withDefaultAP = { ...base };
+  const withDefault = { ...base };
   const definition = ctx.actions.get(actionId);
-  if (withDefaultAP[Resource.ap!] === undefined)
-    withDefaultAP[Resource.ap!] = definition.system
+  const key = ctx.actionCostResource;
+  if (key && withDefault[key] === undefined)
+    withDefault[key] = definition.system
       ? 0
       : ctx.services.rules.defaultActionAPCost;
-  return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
+  return ctx.passives.applyCostMods(actionId, withDefault, ctx);
 }
 
 export function getActionCosts<T extends string>(
@@ -320,6 +321,17 @@ export function createEngine({
   const passives = new PassiveManager();
   const game = new GameState('Player A', 'Player B');
 
+  let actionCostResource: ResourceKey = '' as ResourceKey;
+  let intersect: string[] | null = null;
+  for (const [, action] of actions.entries()) {
+    if (action.system) continue;
+    const keys = Object.keys(action.baseCosts || {});
+    if (!keys.length) continue;
+    intersect = intersect ? intersect.filter((k) => keys.includes(k)) : keys;
+  }
+  if (intersect && intersect.length)
+    actionCostResource = intersect[0] as ResourceKey;
+
   const compA = diffPlayerStart(startCfg.player, startCfg.players?.['A']);
   const compB = diffPlayerStart(startCfg.player, startCfg.players?.['B']);
   const compensations = { A: compA, B: compB } as Record<
@@ -336,6 +348,7 @@ export function createEngine({
     populations,
     passives,
     phases,
+    actionCostResource,
     compensations,
   );
   const playerA = ctx.game.players[0]!;

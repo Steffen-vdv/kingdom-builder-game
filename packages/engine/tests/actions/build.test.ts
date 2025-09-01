@@ -7,7 +7,6 @@ import {
   ACTIONS,
   BUILDINGS,
 } from '@kingdom-builder/contents';
-import { Resource as ctxResource } from '../../src/state';
 
 function clone<T>(v: T): T {
   return structuredClone(v);
@@ -53,7 +52,7 @@ describe('Build action', () => {
   it('rejects when resources are insufficient', () => {
     const ctx = setup();
     const cost = getActionCosts(buildId, ctx, { id: charterId });
-    const payKey = Object.keys(cost).find((k) => k !== ctxResource.ap)!;
+    const payKey = Object.keys(cost).find((k) => k !== ctx.actionCostResource)!;
     ctx.activePlayer.resources[payKey] = (cost[payKey] || 0) - 1;
     const expected = `Insufficient ${payKey}: need ${cost[payKey]}, have ${ctx.activePlayer.resources[payKey]}`;
     expect(() => performAction(buildId, ctx, { id: charterId })).toThrow(
