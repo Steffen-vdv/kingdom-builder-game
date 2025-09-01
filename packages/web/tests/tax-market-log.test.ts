@@ -17,12 +17,15 @@ import {
   RULES,
   RESOURCES,
   Resource,
+  type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
   diffStepSnapshots,
   logContent,
 } from '../src/translation';
+
+const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
@@ -50,7 +53,13 @@ describe('tax action logging with market', () => {
     const costs = getActionCosts('tax', ctx);
     const traces: ActionTrace[] = performAction('tax', ctx);
     const after = snapshotPlayer(ctx.activePlayer, ctx);
-    const changes = diffStepSnapshots(before, after, action, ctx);
+    const changes = diffStepSnapshots(
+      before,
+      after,
+      action,
+      ctx,
+      RESOURCE_KEYS,
+    );
     const messages = logContent('action', 'tax', ctx);
     const costLines: string[] = [];
     for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
@@ -73,6 +82,7 @@ describe('tax action logging with market', () => {
         trace.after,
         subStep,
         ctx,
+        RESOURCE_KEYS,
       );
       if (!subChanges.length) continue;
       subLines.push(...subChanges);

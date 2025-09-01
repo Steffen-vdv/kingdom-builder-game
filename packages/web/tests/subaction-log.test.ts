@@ -16,12 +16,15 @@ import {
   RULES,
   RESOURCES,
   SLOT_ICON as slotIcon,
+  type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
   diffStepSnapshots,
   logContent,
 } from '../src/translation';
+
+const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
@@ -50,6 +53,7 @@ describe('sub-action logging', () => {
       after,
       ctx.actions.get('plow'),
       ctx,
+      RESOURCE_KEYS,
     );
     const messages = logContent('action', 'plow', ctx);
     const costLines: string[] = [];
@@ -73,6 +77,7 @@ describe('sub-action logging', () => {
         trace.after,
         ctx.actions.get(trace.id),
         ctx,
+        RESOURCE_KEYS,
       );
       if (!subChanges.length) continue;
       subLines.push(...subChanges);
@@ -104,6 +109,7 @@ describe('sub-action logging', () => {
       expandTrace.after,
       ctx.actions.get('expand'),
       ctx,
+      RESOURCE_KEYS,
     );
     expandDiff.forEach((line) => {
       expect(logLines).toContain(`    ${line}`);
@@ -115,6 +121,7 @@ describe('sub-action logging', () => {
       tillTrace.after,
       ctx.actions.get('till'),
       ctx,
+      RESOURCE_KEYS,
     );
     expect(tillDiff.length).toBeGreaterThan(0);
     expect(
