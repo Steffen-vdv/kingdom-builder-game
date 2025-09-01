@@ -75,8 +75,10 @@ interface GameEngineContextValue {
   ctx: EngineContext;
   log: LogEntry[];
   hoverCard: HoverCard | null;
+  hoverPinned: boolean;
   handleHoverCard: (data: HoverCard) => void;
-  clearHoverCard: () => void;
+  pinHoverCard: (data: HoverCard) => void;
+  clearHoverCard: (force?: boolean) => void;
   phaseSteps: PhaseStep[];
   setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
   phaseTimer: number;
@@ -133,6 +135,7 @@ export function GameProvider({
 
   const [log, setLog] = useState<LogEntry[]>([]);
   const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
+  const [hoverPinned, setHoverPinned] = useState(false);
   const hoverTimeout = useRef<number>();
 
   const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
@@ -220,12 +223,20 @@ export function GameProvider({
   }, [ctx]);
 
   function handleHoverCard(data: HoverCard) {
+    if (hoverPinned) return;
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
     hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
   }
-  function clearHoverCard() {
+  function pinHoverCard(data: HoverCard) {
     if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
+    setHoverCard(data);
+    setHoverPinned(true);
+  }
+  function clearHoverCard(force = false) {
+    if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
+    if (hoverPinned && !force) return;
     setHoverCard(null);
+    setHoverPinned(false);
   }
 
   function updateMainPhaseStep(apStartOverride?: number) {
@@ -492,7 +503,9 @@ export function GameProvider({
     ctx,
     log,
     hoverCard,
+    hoverPinned,
     handleHoverCard,
+    pinHoverCard,
     clearHoverCard,
     phaseSteps,
     setPhaseSteps,

@@ -19,7 +19,8 @@ export type ActionCardProps = {
   tooltip?: string | undefined;
   requirements?: string[];
   requirementIcons?: string[];
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 };
@@ -36,6 +37,7 @@ export default function ActionCard({
   requirements = [],
   requirementIcons = [],
   onClick,
+  onKeyDown,
   onMouseEnter,
   onMouseLeave,
 }: ActionCardProps) {
@@ -46,6 +48,7 @@ export default function ActionCard({
       }`}
       title={tooltip}
       onClick={enabled ? onClick : undefined}
+      onKeyDown={enabled ? onKeyDown : undefined}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

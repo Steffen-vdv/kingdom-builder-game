@@ -9,31 +9,45 @@ interface PopulationInfoProps {
 }
 
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
-  const { handleHoverCard, clearHoverCard } = useGameEngine();
+  const { handleHoverCard, pinHoverCard, clearHoverCard } = useGameEngine();
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
   const popDetails = popEntries.map(([role, count]) => ({ role, count }));
 
-  const showPopulationCard = () =>
-    handleHoverCard({
-      title: '👥 Population',
-      effects: Object.values(POPULATION_ROLES).map(
-        (r) => `${r.icon} ${r.label} - ${r.description}`,
-      ),
-      effectsTitle: 'Archetypes',
-      requirements: [],
-      description:
-        'Population represents the people of your kingdom. Manage them wisely and assign roles to benefit your realm.',
-      bgClass: 'bg-gray-100 dark:bg-gray-700',
-    });
+  const populationData = {
+    title: '👥 Population',
+    effects: Object.values(POPULATION_ROLES).map(
+      (r) => `${r.icon} ${r.label} - ${r.description}`,
+    ),
+    effectsTitle: 'Archetypes',
+    requirements: [],
+    description:
+      'Population represents the people of your kingdom. Manage them wisely and assign roles to benefit your realm.',
+    bgClass: 'bg-gray-100 dark:bg-gray-700',
+  };
+  const showPopulationCard = () => handleHoverCard(populationData);
+  const pinPopulationCard = () => pinHoverCard(populationData);
 
   return (
     <>
       <div className="h-4 border-l border-black/10 dark:border-white/10" />
       <span
         className="bar-item hoverable cursor-help rounded px-1"
+        tabIndex={0}
         onMouseEnter={showPopulationCard}
-        onMouseLeave={clearHoverCard}
+        onMouseLeave={() => clearHoverCard()}
+        onClick={(e) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            pinPopulationCard();
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            pinPopulationCard();
+          }
+        }}
       >
         👥{currentPop}/{player.maxPopulation}
         {popDetails.length > 0 && (
@@ -47,19 +61,47 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
                   {i > 0 && ','}
                   <span
                     className="cursor-help hoverable rounded px-1"
+                    tabIndex={0}
                     onMouseEnter={(e) => {
                       e.stopPropagation();
-                      handleHoverCard({
+                      const data = {
                         title: `${info.icon} ${info.label}`,
                         effects: [],
                         requirements: [],
                         description: info.description,
                         bgClass: 'bg-gray-100 dark:bg-gray-700',
-                      });
+                      };
+                      handleHoverCard(data);
                     }}
                     onMouseLeave={(e) => {
                       e.stopPropagation();
                       showPopulationCard();
+                    }}
+                    onClick={(e) => {
+                      if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        pinHoverCard({
+                          title: `${info.icon} ${info.label}`,
+                          effects: [],
+                          requirements: [],
+                          description: info.description,
+                          bgClass: 'bg-gray-100 dark:bg-gray-700',
+                        });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        pinHoverCard({
+                          title: `${info.icon} ${info.label}`,
+                          effects: [],
+                          requirements: [],
+                          description: info.description,
+                          bgClass: 'bg-gray-100 dark:bg-gray-700',
+                        });
+                      }
                     }}
                   >
                     {info.icon}
@@ -83,6 +125,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
             <span
               key={k}
               className="bar-item hoverable cursor-help rounded px-1"
+              tabIndex={0}
               onMouseEnter={() =>
                 handleHoverCard({
                   title: `${info.icon} ${info.label}`,
@@ -92,7 +135,31 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
                   bgClass: 'bg-gray-100 dark:bg-gray-700',
                 })
               }
-              onMouseLeave={clearHoverCard}
+              onMouseLeave={() => clearHoverCard()}
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey) {
+                  e.preventDefault();
+                  pinHoverCard({
+                    title: `${info.icon} ${info.label}`,
+                    effects: [],
+                    requirements: [],
+                    description: info.description,
+                    bgClass: 'bg-gray-100 dark:bg-gray-700',
+                  });
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  pinHoverCard({
+                    title: `${info.icon} ${info.label}`,
+                    effects: [],
+                    requirements: [],
+                    description: info.description,
+                    bgClass: 'bg-gray-100 dark:bg-gray-700',
+                  });
+                }
+              }}
             >
               {info.icon}
               {formatStatValue(k, v)}

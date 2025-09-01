@@ -9,7 +9,8 @@ interface BuildingDisplayProps {
 }
 
 const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
-  const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+  const { ctx, handleHoverCard, pinHoverCard, clearHoverCard } =
+    useGameEngine();
   if (player.buildings.size === 0) return null;
   const animateBuildings = useAnimate<HTMLDivElement>();
   return (
@@ -19,24 +20,36 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
         const icon =
           ctx.buildings.get(b)?.icon || ctx.actions.get('build').icon || '';
         const title = `${icon} ${name}`;
+        const full = describeContent('building', b, ctx, {
+          installed: true,
+        });
+        const { effects, description } = splitSummary(full);
+        const data = {
+          title,
+          effects,
+          requirements: [],
+          ...(description && { description }),
+          bgClass: 'bg-gray-100 dark:bg-gray-700',
+        };
         return (
           <div
             key={b}
+            tabIndex={0}
             className="panel-card p-2 text-center hoverable cursor-help"
-            onMouseEnter={() => {
-              const full = describeContent('building', b, ctx, {
-                installed: true,
-              });
-              const { effects, description } = splitSummary(full);
-              handleHoverCard({
-                title,
-                effects,
-                requirements: [],
-                ...(description && { description }),
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              });
+            onMouseEnter={() => handleHoverCard(data)}
+            onMouseLeave={() => clearHoverCard()}
+            onClick={(e) => {
+              if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                pinHoverCard(data);
+              }
             }}
-            onMouseLeave={clearHoverCard}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                pinHoverCard(data);
+              }
+            }}
           >
             <span className="font-medium">
               {icon} {name}

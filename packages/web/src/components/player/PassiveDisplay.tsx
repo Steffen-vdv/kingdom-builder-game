@@ -15,7 +15,8 @@ export default function PassiveDisplay({
 }: {
   player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
 }) {
-  const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+  const { ctx, handleHoverCard, pinHoverCard, clearHoverCard } =
+    useGameEngine();
   const ids = ctx.passives.list(player.id);
   const defs = ctx.passives.values(player.id) as {
     effects?: EffectDef[];
@@ -53,21 +54,33 @@ export default function PassiveDisplay({
         const summary = def.onUpkeepPhase
           ? [{ title: 'Until your next Upkeep Phase', items }]
           : items;
+        const { effects, description } = splitSummary(summary);
+        const data = {
+          title: `${icon} Passive`,
+          effects,
+          requirements: [],
+          ...(description && { description }),
+          bgClass: 'bg-gray-100 dark:bg-gray-700',
+        };
         return (
           <span
             key={id}
+            tabIndex={0}
             className="hoverable cursor-pointer"
-            onMouseEnter={() => {
-              const { effects, description } = splitSummary(summary);
-              handleHoverCard({
-                title: `${icon} Passive`,
-                effects,
-                requirements: [],
-                ...(description && { description }),
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              });
+            onMouseEnter={() => handleHoverCard(data)}
+            onMouseLeave={() => clearHoverCard()}
+            onClick={(e) => {
+              if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                pinHoverCard(data);
+              }
             }}
-            onMouseLeave={clearHoverCard}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                pinHoverCard(data);
+              }
+            }}
           >
             {icon}
           </span>

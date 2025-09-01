@@ -59,7 +59,9 @@ const mockGame = {
     requirements: string[];
     costs?: Record<string, number>;
   } | null,
+  hoverPinned: false,
   handleHoverCard: vi.fn(),
+  pinHoverCard: vi.fn(),
   clearHoverCard: vi.fn(),
   phaseSteps: [],
   setPhaseSteps: vi.fn(),

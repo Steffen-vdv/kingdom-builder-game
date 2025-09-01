@@ -51,6 +51,7 @@ function GenericActions({
     ctx,
     handlePerform,
     handleHoverCard,
+    pinHoverCard,
     clearHoverCard,
     actionCostResource,
   } = useGameEngine();
@@ -79,6 +80,20 @@ function GenericActions({
             : !canPay
               ? 'Cannot pay costs'
               : undefined;
+        const full = describeContent('action', action.id, ctx);
+        const { effects, description } = splitSummary(full);
+        const data = {
+          title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
+          effects,
+          requirements,
+          costs,
+          ...(description && { description }),
+          ...(!implemented && {
+            description: 'Not implemented yet',
+            descriptionClass: 'italic text-red-600',
+          }),
+          bgClass: 'bg-gray-100 dark:bg-gray-700',
+        };
         return (
           <ActionCard
             key={action.id}
@@ -96,24 +111,22 @@ function GenericActions({
             implemented={implemented}
             enabled={enabled}
             tooltip={title}
-            onClick={() => void handlePerform(action)}
-            onMouseEnter={() => {
-              const full = describeContent('action', action.id, ctx);
-              const { effects, description } = splitSummary(full);
-              handleHoverCard({
-                title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
-                effects,
-                requirements,
-                costs,
-                ...(description && { description }),
-                ...(!implemented && {
-                  description: 'Not implemented yet',
-                  descriptionClass: 'italic text-red-600',
-                }),
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              });
+            onClick={(e) => {
+              if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                pinHoverCard(data);
+              } else {
+                void handlePerform(action);
+              }
             }}
-            onMouseLeave={clearHoverCard}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                pinHoverCard(data);
+              }
+            }}
+            onMouseEnter={() => handleHoverCard(data)}
+            onMouseLeave={() => clearHoverCard()}
           />
         );
       })}
@@ -132,6 +145,7 @@ function RaisePopOptions({
     ctx,
     handlePerform,
     handleHoverCard,
+    pinHoverCard,
     clearHoverCard,
     actionCostResource,
   } = useGameEngine();
@@ -164,6 +178,17 @@ function RaisePopOptions({
         const shortSummary = summarizeContent('action', action.id, ctx, {
           role,
         });
+        const { effects, description } = splitSummary(summary);
+        const data = {
+          title: `${ctx.actions.get(action.id).icon || ''}${
+            POPULATION_ROLES[role]?.icon
+          } Hire ${POPULATION_ROLES[role]?.label || ''}`,
+          effects,
+          requirements,
+          costs,
+          ...(description && { description }),
+          bgClass: 'bg-gray-100 dark:bg-gray-700',
+        };
         return (
           <ActionCard
             key={role}
@@ -182,21 +207,22 @@ function RaisePopOptions({
             summary={shortSummary}
             enabled={enabled}
             tooltip={title}
-            onClick={() => void handlePerform(action, { role })}
-            onMouseEnter={() => {
-              const { effects, description } = splitSummary(summary);
-              handleHoverCard({
-                title: `${ctx.actions.get(action.id).icon || ''}${
-                  POPULATION_ROLES[role]?.icon
-                } Hire ${POPULATION_ROLES[role]?.label || ''}`,
-                effects,
-                requirements,
-                costs,
-                ...(description && { description }),
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              });
+            onClick={(e) => {
+              if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                pinHoverCard(data);
+              } else {
+                void handlePerform(action, { role });
+              }
             }}
-            onMouseLeave={clearHoverCard}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                pinHoverCard(data);
+              }
+            }}
+            onMouseEnter={() => handleHoverCard(data)}
+            onMouseLeave={() => clearHoverCard()}
           />
         );
       })}
@@ -257,6 +283,7 @@ function DevelopOptions({
     ctx,
     handlePerform,
     handleHoverCard,
+    pinHoverCard,
     clearHoverCard,
     actionCostResource,
   } = useGameEngine();
@@ -298,6 +325,22 @@ function DevelopOptions({
               : !canPay
                 ? 'Cannot pay costs'
                 : undefined;
+          const full = describeContent('development', d.id, ctx);
+          const { effects, description } = splitSummary(full);
+          const data = {
+            title: `${ctx.actions.get('develop').icon || ''} ${
+              ctx.actions.get('develop').name
+            } - ${ctx.developments.get(d.id)?.icon} ${d.name}`,
+            effects,
+            requirements,
+            costs,
+            ...(description && { description }),
+            ...(!implemented && {
+              description: 'Not implemented yet',
+              descriptionClass: 'italic text-red-600',
+            }),
+            bgClass: 'bg-gray-100 dark:bg-gray-700',
+          };
           return (
             <ActionCard
               key={d.id}
@@ -315,31 +358,25 @@ function DevelopOptions({
               implemented={implemented}
               enabled={enabled}
               tooltip={title}
-              onClick={() => {
-                const landId = ctx.activePlayer.lands.find(
-                  (l) => l.slotsFree > 0,
-                )?.id;
-                void handlePerform(action, { id: d.id, landId });
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey) {
+                  e.preventDefault();
+                  pinHoverCard(data);
+                } else {
+                  const landId = ctx.activePlayer.lands.find(
+                    (l) => l.slotsFree > 0,
+                  )?.id;
+                  void handlePerform(action, { id: d.id, landId });
+                }
               }}
-              onMouseEnter={() => {
-                const full = describeContent('development', d.id, ctx);
-                const { effects, description } = splitSummary(full);
-                handleHoverCard({
-                  title: `${ctx.actions.get('develop').icon || ''} ${
-                    ctx.actions.get('develop').name
-                  } - ${ctx.developments.get(d.id)?.icon} ${d.name}`,
-                  effects,
-                  requirements,
-                  costs,
-                  ...(description && { description }),
-                  ...(!implemented && {
-                    description: 'Not implemented yet',
-                    descriptionClass: 'italic text-red-600',
-                  }),
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                });
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  pinHoverCard(data);
+                }
               }}
-              onMouseLeave={clearHoverCard}
+              onMouseEnter={() => handleHoverCard(data)}
+              onMouseLeave={() => clearHoverCard()}
             />
           );
         })}
@@ -365,6 +402,7 @@ function BuildOptions({
     ctx,
     handlePerform,
     handleHoverCard,
+    pinHoverCard,
     clearHoverCard,
     actionCostResource,
   } = useGameEngine();
@@ -393,6 +431,22 @@ function BuildOptions({
             : !canPay
               ? 'Cannot pay costs'
               : undefined;
+          const full = descriptions.get(b.id) ?? [];
+          const { effects, description } = splitSummary(full);
+          const data = {
+            title: `${ctx.actions.get('build').icon || ''} ${
+              ctx.actions.get('build').name
+            } - ${ctx.buildings.get(b.id)?.icon || ''} ${b.name}`,
+            effects,
+            requirements,
+            costs,
+            ...(description && { description }),
+            ...(!implemented && {
+              description: 'Not implemented yet',
+              descriptionClass: 'italic text-red-600',
+            }),
+            bgClass: 'bg-gray-100 dark:bg-gray-700',
+          };
           return (
             <ActionCard
               key={b.id}
@@ -415,26 +469,22 @@ function BuildOptions({
               implemented={implemented}
               enabled={enabled}
               tooltip={title}
-              onClick={() => void handlePerform(action, { id: b.id })}
-              onMouseEnter={() => {
-                const full = descriptions.get(b.id) ?? [];
-                const { effects, description } = splitSummary(full);
-                handleHoverCard({
-                  title: `${ctx.actions.get('build').icon || ''} ${
-                    ctx.actions.get('build').name
-                  } - ${ctx.buildings.get(b.id)?.icon || ''} ${b.name}`,
-                  effects,
-                  requirements,
-                  costs,
-                  ...(description && { description }),
-                  ...(!implemented && {
-                    description: 'Not implemented yet',
-                    descriptionClass: 'italic text-red-600',
-                  }),
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                });
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey) {
+                  e.preventDefault();
+                  pinHoverCard(data);
+                } else {
+                  void handlePerform(action, { id: b.id });
+                }
               }}
-              onMouseLeave={clearHoverCard}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  pinHoverCard(data);
+                }
+              }}
+              onMouseEnter={() => handleHoverCard(data)}
+              onMouseLeave={() => clearHoverCard()}
             />
           );
         })}
