@@ -13,24 +13,28 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
     <>
       {Object.entries(player.resources).map(([k, v]) => {
         const info = RESOURCES[k as keyof typeof RESOURCES];
+        const showResourceCard = () =>
+          handleHoverCard({
+            title: `${info.icon} ${info.label}`,
+            effects: [],
+            requirements: [],
+            description: info.description,
+            bgClass: 'bg-gray-100 dark:bg-gray-700',
+          });
         return (
-          <span
+          <button
             key={k}
+            type="button"
             className="bar-item hoverable cursor-help rounded px-1"
-            onMouseEnter={() =>
-              handleHoverCard({
-                title: `${info.icon} ${info.label}`,
-                effects: [],
-                requirements: [],
-                description: info.description,
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              })
-            }
+            onMouseEnter={showResourceCard}
             onMouseLeave={clearHoverCard}
+            onFocus={showResourceCard}
+            onBlur={clearHoverCard}
+            onClick={showResourceCard}
           >
             {info.icon}
             {v}
-          </span>
+          </button>
         );
       })}
     </>

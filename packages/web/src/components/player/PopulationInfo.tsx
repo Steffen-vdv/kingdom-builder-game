@@ -30,10 +30,20 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
   return (
     <>
       <div className="h-4 border-l border-black/10 dark:border-white/10" />
-      <span
+      <div
+        role="button"
+        tabIndex={0}
         className="bar-item hoverable cursor-help rounded px-1"
         onMouseEnter={showPopulationCard}
         onMouseLeave={clearHoverCard}
+        onFocus={showPopulationCard}
+        onBlur={clearHoverCard}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            showPopulationCard();
+          }
+        }}
       >
         👥{currentPop}/{player.maxPopulation}
         {popDetails.length > 0 && (
@@ -45,7 +55,8 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
               return (
                 <React.Fragment key={role}>
                   {i > 0 && ','}
-                  <span
+                  <button
+                    type="button"
                     className="cursor-help hoverable rounded px-1"
                     onMouseEnter={(e) => {
                       e.stopPropagation();
@@ -61,17 +72,41 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
                       e.stopPropagation();
                       showPopulationCard();
                     }}
+                    onFocus={(e) => {
+                      e.stopPropagation();
+                      handleHoverCard({
+                        title: `${info.icon} ${info.label}`,
+                        effects: [],
+                        requirements: [],
+                        description: info.description,
+                        bgClass: 'bg-gray-100 dark:bg-gray-700',
+                      });
+                    }}
+                    onBlur={(e) => {
+                      e.stopPropagation();
+                      showPopulationCard();
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleHoverCard({
+                        title: `${info.icon} ${info.label}`,
+                        effects: [],
+                        requirements: [],
+                        description: info.description,
+                        bgClass: 'bg-gray-100 dark:bg-gray-700',
+                      });
+                    }}
                   >
                     {info.icon}
                     {count}
-                  </span>
+                  </button>
                 </React.Fragment>
               );
             })}
             {')'}
           </>
         )}
-      </span>
+      </div>
       {Object.entries(player.stats)
         .filter(([k, v]) => {
           const info = STATS[k as keyof typeof STATS];
@@ -80,8 +115,9 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
         .map(([k, v]) => {
           const info = STATS[k as keyof typeof STATS];
           return (
-            <span
+            <button
               key={k}
+              type="button"
               className="bar-item hoverable cursor-help rounded px-1"
               onMouseEnter={() =>
                 handleHoverCard({
@@ -93,10 +129,29 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
                 })
               }
               onMouseLeave={clearHoverCard}
+              onFocus={() =>
+                handleHoverCard({
+                  title: `${info.icon} ${info.label}`,
+                  effects: [],
+                  requirements: [],
+                  description: info.description,
+                  bgClass: 'bg-gray-100 dark:bg-gray-700',
+                })
+              }
+              onBlur={clearHoverCard}
+              onClick={() =>
+                handleHoverCard({
+                  title: `${info.icon} ${info.label}`,
+                  effects: [],
+                  requirements: [],
+                  description: info.description,
+                  bgClass: 'bg-gray-100 dark:bg-gray-700',
+                })
+              }
             >
               {info.icon}
               {formatStatValue(k, v)}
-            </span>
+            </button>
           );
         })}
     </>

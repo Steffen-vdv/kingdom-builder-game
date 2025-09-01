@@ -17,7 +17,7 @@
 
 @layer components {
   .bar-item {
-    @apply flex items-center gap-1 tabular-nums whitespace-nowrap;
+    @apply flex items-center gap-1 tabular-nums whitespace-nowrap appearance-none bg-transparent border-0 p-0;
   }
   .hoverable {
     @apply transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105;
