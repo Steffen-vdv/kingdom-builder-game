@@ -1,10 +1,10 @@
 import React from 'react';
-import { GameProvider, useGameEngine } from './state/GameContext';
-import PlayerPanel from './components/player/PlayerPanel';
-import HoverCard from './components/HoverCard';
-import ActionsPanel from './components/actions/ActionsPanel';
-import PhasePanel from './components/phases/PhasePanel';
-import LogPanel from './components/LogPanel';
+import { GameProvider, useGameEngine } from '../state/GameContext';
+import PlayerPanel from '../components/player/PlayerPanel';
+import HoverCard from '../components/HoverCard';
+import ActionsPanel from '../components/actions/ActionsPanel';
+import PhasePanel from '../components/phases/PhasePanel';
+import LogPanel from '../components/LogPanel';
 
 function GameLayout() {
   const { ctx, onExit, darkMode, onToggleDark, devMode, onToggleDev } =

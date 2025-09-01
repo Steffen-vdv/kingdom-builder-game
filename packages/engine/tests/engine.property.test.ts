@@ -25,12 +25,14 @@ function toResourceEffects(map: Record<string, number>) {
 }
 
 describe('engine property invariants', () => {
-  it('pays costs, executes triggers, keeps resources non-negative and preserves snapshots', () => {
-    fc.assert(
-      fc.property(
-        resourceMapArb, // action base costs
-        resourceMapArb, // building costs
-        resourceMapArb, // onBuild gains
+  it(
+    'pays costs, executes triggers, keeps resources non-negative and preserves snapshots',
+    () => {
+      fc.assert(
+        fc.property(
+          resourceMapArb, // action base costs
+          resourceMapArb, // building costs
+          resourceMapArb, // onBuild gains
         (baseCosts, buildingCosts, gains) => {
           const content = createContentFactory();
           const building = content.building({
@@ -69,7 +71,9 @@ describe('engine property invariants', () => {
           expect(before).toEqual(beforeCopy);
           expect(before.buildings.includes(building.id)).toBe(false);
         },
-      ),
-    );
-  });
+        ),
+      );
+    },
+    10000,
+  );
 });

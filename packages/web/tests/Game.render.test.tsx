@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import React from 'react';
-import Game from '../src/Game';
+import Game from '../src/screens/Game';
 
 // Render the application with the real engine to ensure that
 // dynamic action effects (e.g. build with "$id") don't crash
