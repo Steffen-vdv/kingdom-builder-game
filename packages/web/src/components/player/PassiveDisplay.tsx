@@ -5,6 +5,11 @@ import { describeEffects, splitSummary } from '../../translation';
 import type { EffectDef } from '@kingdom-builder/engine';
 import { useAnimate } from '../../utils/useAutoAnimate';
 
+export const ICON_MAP: Record<string, string> = {
+  cost_mod: modifierInfo.cost.icon,
+  result_mod: modifierInfo.result.icon,
+};
+
 export default function PassiveDisplay({
   player,
 }: {
@@ -33,9 +38,7 @@ export default function PassiveDisplay({
 
   const getIcon = (effects: EffectDef[] | undefined) => {
     const first = effects?.[0];
-    if (first?.type === 'cost_mod') return modifierInfo.cost.icon;
-    if (first?.type === 'result_mod') return modifierInfo.result.icon;
-    return '❔';
+    return ICON_MAP[first?.type as keyof typeof ICON_MAP] ?? '❔';
   };
 
   const animatePassives = useAnimate<HTMLDivElement>();
