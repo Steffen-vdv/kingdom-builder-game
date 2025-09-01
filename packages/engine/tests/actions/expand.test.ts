@@ -4,120 +4,166 @@ import {
   getActionCosts,
   type EngineContext,
   advance,
-} from '../../src/index.ts';
-import { createTestEngine } from '../helpers.ts';
-import { PlayerState } from '../../src/state/index.ts';
-import { BUILDINGS, Resource as CResource } from '@kingdom-builder/contents';
+} from '../../src';
+import { createTestEngine } from '../helpers';
+import { PlayerState, Resource as ctxResource } from '../../src/state';
+import {
+  createActionRegistry,
+  createBuildingRegistry,
+  ACTIONS,
+  BUILDINGS,
+} from '@kingdom-builder/contents';
 
-function deepClone<T>(value: T): T {
+function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
+const expandId = 'test_expand';
+const buildId = 'test_build';
+const charterId = 'test_charter';
+
+function setup() {
+  const actions = createActionRegistry();
+  const buildings = createBuildingRegistry();
+
+  const expandDef = clone(ACTIONS.get('expand'));
+  expandDef.id = expandId;
+  actions.add(expandId, expandDef);
+
+  const buildDef = clone(ACTIONS.get('build'));
+  buildDef.id = buildId;
+  actions.add(buildId, buildDef);
+
+  const charterSrc = Array.from(BUILDINGS.map.values()).find((b) =>
+    (b.onBuild || []).some(
+      (e) => ((e.params ?? {}) as { actionId?: string }).actionId === 'expand',
+    ),
+  );
+  if (!charterSrc) throw new Error('charter not found');
+  const charterDef = clone(charterSrc);
+  charterDef.id = charterId;
+  charterDef.onBuild = (charterDef.onBuild || []).map((e) => {
+    const params = { ...(e.params ?? {}) } as { actionId?: string };
+    if (params.actionId === 'expand') params.actionId = expandId;
+    return { ...e, params };
+  });
+  buildings.add(charterId, charterDef);
+
+  const ctx = createTestEngine({ actions, buildings });
+  while (ctx.game.currentPhase !== 'main') advance(ctx);
+  return ctx;
+}
+
 function getExpandExpectations(ctx: EngineContext) {
-  const expandDef = ctx.actions.get('expand');
-  const costs = getActionCosts('expand', ctx);
+  const expandDef = ctx.actions.get(expandId);
+  const costs = getActionCosts(expandId, ctx);
   const landGain = expandDef.effects
-    .filter((effect) => effect.type === 'land' && effect.method === 'add')
-    .reduce((sum, effect) => sum + Number(effect.params?.count ?? 0), 0);
-  const baseHappiness = expandDef.effects
-    .filter(
-      (effect) =>
-        effect.type === 'resource' &&
-        effect.method === 'add' &&
-        effect.params?.key === CResource.happiness,
-    )
-    .reduce((sum, effect) => sum + Number(effect.params?.amount ?? 0), 0);
+    .filter((e) => e.type === 'land' && e.method === 'add')
+    .reduce((sum, e) => sum + Number(e.params?.count ?? 0), 0);
+  const resEffect = expandDef.effects.find(
+    (e) => e.type === 'resource' && e.method === 'add',
+  );
+  const resKey = ((resEffect?.params ?? {}) as { key: string }).key;
+  const baseRes = Number(
+    ((resEffect?.params ?? {}) as { amount?: number }).amount ?? 0,
+  );
   const dummy = new PlayerState(ctx.activePlayer.id, ctx.activePlayer.name);
-  dummy.resources = deepClone(ctx.activePlayer.resources);
-  dummy.stats = deepClone(ctx.activePlayer.stats);
+  dummy.resources = clone(ctx.activePlayer.resources);
+  dummy.stats = clone(ctx.activePlayer.stats);
   const dummyCtx = { ...ctx, activePlayer: dummy } as EngineContext;
-  const happinessBefore = dummy.happiness;
+  const before = dummy.resources[resKey] || 0;
   ctx.passives.runResultMods(expandDef.id, dummyCtx);
-  const extraHappiness = dummy.happiness - happinessBefore;
-  return { costs, landGain, happinessGain: baseHappiness + extraHappiness };
+  const extra = (dummy.resources[resKey] || 0) - before;
+  return { costs, landGain, resKey, resGain: baseRes + extra };
+}
+
+function payResourceKey(costs: Record<string, number>) {
+  return Object.keys(costs).find((k) => k !== ctxResource.ap)!;
 }
 
 describe('Expand action', () => {
-  it('costs gold and AP while granting land and happiness without Town Charter', () => {
-    const ctx = createTestEngine();
-    while (ctx.game.currentPhase !== 'main') advance(ctx);
-    const goldBefore = ctx.activePlayer.gold;
-    const actionPointsBefore = ctx.activePlayer.ap;
-    const landsBefore = ctx.activePlayer.lands.length;
-    const happinessBefore = ctx.activePlayer.happiness;
+  it('costs resources and grants land and happiness', () => {
+    const ctx = setup();
     const expected = getExpandExpectations(ctx);
-    performAction('expand', ctx);
-    expect(ctx.activePlayer.gold).toBe(
-      goldBefore - (expected.costs[CResource.gold] || 0),
+    const payKey = payResourceKey(expected.costs);
+    const apKey = apResourceKey();
+    const goldBefore = ctx.activePlayer.resources[payKey] || 0;
+    const apBefore = ctx.activePlayer.resources[apKey] || 0;
+    const landsBefore = ctx.activePlayer.lands.length;
+    const resBefore = ctx.activePlayer.resources[expected.resKey] || 0;
+    performAction(expandId, ctx);
+    expect(ctx.activePlayer.resources[payKey]).toBe(
+      goldBefore - (expected.costs[payKey] || 0),
     );
-    expect(ctx.activePlayer.ap).toBe(
-      actionPointsBefore - (expected.costs[CResource.ap] || 0),
+    expect(ctx.activePlayer.resources[apKey]).toBe(
+      apBefore - (expected.costs[apKey] || 0),
     );
     expect(ctx.activePlayer.lands.length).toBe(landsBefore + expected.landGain);
-    expect(ctx.activePlayer.happiness).toBe(
-      happinessBefore + expected.happinessGain,
+    expect(ctx.activePlayer.resources[expected.resKey]).toBe(
+      resBefore + expected.resGain,
     );
   });
 
-  it('includes Town Charter modifiers when present', () => {
-    const ctx = createTestEngine();
-    while (ctx.game.currentPhase !== 'main') advance(ctx);
-    const [townCharterId] = Array.from(
-      (BUILDINGS as unknown as { map: Map<string, unknown> }).map.keys(),
-    );
-    performAction('build', ctx, { id: townCharterId });
-    ctx.activePlayer.ap += 1; // allow another action
-    const goldBefore = ctx.activePlayer.gold;
-    const actionPointsBefore = ctx.activePlayer.ap;
-    const happinessBefore = ctx.activePlayer.happiness;
+  it('includes charter modifiers when present', () => {
+    const ctx = setup();
+    const payKey = payResourceKey(getActionCosts(expandId, ctx));
+    performAction(buildId, ctx, { id: charterId });
+    ctx.activePlayer.resources[apResourceKey()] += 1;
     const expected = getExpandExpectations(ctx);
-    performAction('expand', ctx);
-    expect(ctx.activePlayer.gold).toBe(
-      goldBefore - (expected.costs[CResource.gold] || 0),
+    const goldBefore = ctx.activePlayer.resources[payKey] || 0;
+    const apBefore = ctx.activePlayer.resources[apResourceKey()] || 0;
+    const resBefore = ctx.activePlayer.resources[expected.resKey] || 0;
+    performAction(expandId, ctx);
+    expect(ctx.activePlayer.resources[payKey]).toBe(
+      goldBefore - (expected.costs[payKey] || 0),
     );
-    expect(ctx.activePlayer.ap).toBe(
-      actionPointsBefore - (expected.costs[CResource.ap] || 0),
+    expect(ctx.activePlayer.resources[apResourceKey()]).toBe(
+      apBefore - (expected.costs[apResourceKey()] || 0),
     );
-    expect(ctx.activePlayer.happiness).toBe(
-      happinessBefore + expected.happinessGain,
+    expect(ctx.activePlayer.resources[expected.resKey]).toBe(
+      resBefore + expected.resGain,
     );
   });
 
-  it('applies modifiers consistently across multiple expansions', () => {
-    const ctx = createTestEngine();
-    while (ctx.game.currentPhase !== 'main') advance(ctx);
-    const [townCharterId] = Array.from(
-      (BUILDINGS as unknown as { map: Map<string, unknown> }).map.keys(),
-    );
-    performAction('build', ctx, { id: townCharterId });
-    ctx.activePlayer.ap += 2; // allow two expands
-    ctx.activePlayer.gold += 10; // top-up to afford two expands
-    const goldBefore = ctx.activePlayer.gold;
-    const actionPointsBefore = ctx.activePlayer.ap;
-    const happinessBefore = ctx.activePlayer.happiness;
+  it('applies modifiers across multiple expansions', () => {
+    const ctx = setup();
+    performAction(buildId, ctx, { id: charterId });
+    ctx.activePlayer.resources[apResourceKey()] += 2;
+    const payKey = payResourceKey(getActionCosts(expandId, ctx));
+    ctx.activePlayer.resources[payKey] += 10;
+    const expected = getExpandExpectations(ctx);
+    const goldBefore = ctx.activePlayer.resources[payKey] || 0;
+    const apBefore = ctx.activePlayer.resources[apResourceKey()] || 0;
+    const resBefore = ctx.activePlayer.resources[expected.resKey] || 0;
     const landsBefore = ctx.activePlayer.lands.length;
-    const expected = getExpandExpectations(ctx);
-    performAction('expand', ctx);
-    performAction('expand', ctx);
-    expect(ctx.activePlayer.gold).toBe(
-      goldBefore - (expected.costs[CResource.gold] || 0) * 2,
+    performAction(expandId, ctx);
+    performAction(expandId, ctx);
+    expect(ctx.activePlayer.resources[payKey]).toBe(
+      goldBefore - (expected.costs[payKey] || 0) * 2,
     );
-    expect(ctx.activePlayer.ap).toBe(
-      actionPointsBefore - (expected.costs[CResource.ap] || 0) * 2,
+    expect(ctx.activePlayer.resources[apResourceKey()]).toBe(
+      apBefore - (expected.costs[apResourceKey()] || 0) * 2,
     );
-    expect(ctx.activePlayer.happiness).toBe(
-      happinessBefore + expected.happinessGain * 2,
+    expect(ctx.activePlayer.resources[expected.resKey]).toBe(
+      resBefore + expected.resGain * 2,
     );
     expect(ctx.activePlayer.lands.length).toBe(
       landsBefore + expected.landGain * 2,
     );
   });
 
-  it('rejects expand when gold is insufficient', () => {
-    const ctx = createTestEngine();
-    while (ctx.game.currentPhase !== 'main') advance(ctx);
-    const cost = getActionCosts('expand', ctx);
-    ctx.activePlayer.gold = (cost[CResource.gold] || 0) - 1;
-    expect(() => performAction('expand', ctx)).toThrow(/Insufficient gold/);
+  it('rejects expand when resource is insufficient', () => {
+    const ctx = setup();
+    const costs = getActionCosts(expandId, ctx);
+    const payKey = payResourceKey(costs);
+    ctx.activePlayer.resources[payKey] = (costs[payKey] || 0) - 1;
+    const need = costs[payKey];
+    const have = ctx.activePlayer.resources[payKey];
+    const expectedMsg = `Insufficient ${payKey}: need ${need}, have ${have}`;
+    expect(() => performAction(expandId, ctx)).toThrow(expectedMsg);
   });
 });
+
+function apResourceKey() {
+  return ctxResource.ap!;
+}
