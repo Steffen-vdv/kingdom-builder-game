@@ -18,14 +18,6 @@
   - Instead, retrieve those values via content modules or mock registries at runtime.
   - Rationale: Content changes (e.g., different starting gold or altered action effects) shouldn’t break tests unless the engine itself lacks support for such changes.
 
-- **Use content-aware helpers.**
-  - When verifying behavior, always fetch the relevant starting values, resource names, and effect data using content APIs or registries provided for tests.
-  - Example pattern:
-    ```ts
-    const gold = content.getResource('gold');
-    expect(player.getResource(gold.id)).toBe(gold.startingValue);
-    ```
-
 ## ✅ Compliance Checklist for Engine/Web Code
 
 - [ ] No references to specific resource/stat keys or effect behaviors.
