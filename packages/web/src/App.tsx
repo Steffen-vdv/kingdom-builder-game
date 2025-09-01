@@ -17,6 +17,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [gameKey, setGameKey] = useState(0);
   const [darkMode, setDarkMode] = useState(true);
+  const [devGame, setDevGame] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -156,6 +157,7 @@ export default function App() {
         onExit={() => setScreen('menu')}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode((d) => !d)}
+        devMode={devGame}
       />
     );
   }
@@ -168,11 +170,22 @@ export default function App() {
         <button
           className="border px-4 py-2 hoverable cursor-pointer"
           onClick={() => {
+            setDevGame(false);
             setGameKey((k) => k + 1);
             setScreen('game');
           }}
         >
           Start New Game
+        </button>
+        <button
+          className="border px-4 py-2 hoverable cursor-pointer"
+          onClick={() => {
+            setDevGame(true);
+            setGameKey((k) => k + 1);
+            setScreen('game');
+          }}
+        >
+          Start Dev/Debug Game
         </button>
         <button
           className="border px-4 py-2 hoverable cursor-pointer"
