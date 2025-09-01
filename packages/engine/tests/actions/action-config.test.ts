@@ -51,7 +51,8 @@ describe('Action configuration overrides', () => {
     const landsBefore = ctx.activePlayer.lands.length;
     const hapBefore = ctx.activePlayer.happiness;
     const expected = getExpandExpectations(ctx);
-    ctx.activePlayer.ap = expected.costs[Resource.ap] || 0;
+    ctx.activePlayer[ctx.actionCostResource] =
+      expected.costs[ctx.actionCostResource] || 0;
     performAction('expand', ctx);
     expect(ctx.activePlayer.gold).toBe(
       goldBefore - (expected.costs[Resource.gold] || 0),

@@ -25,6 +25,7 @@ export class EngineContext {
       A: {},
       B: {},
     },
+    public actionCostResource: ResourceKey,
   ) {}
   recentResourceGains: { key: ResourceKey; amount: number }[] = [];
   // Cache base values for stat:add_pct per turn/phase/step to ensure

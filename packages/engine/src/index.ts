@@ -51,8 +51,9 @@ function applyCostsWithPassives(
 ): CostBag {
   const withDefaultAP = { ...base };
   const definition = ctx.actions.get(actionId);
-  if (withDefaultAP[Resource.ap!] === undefined)
-    withDefaultAP[Resource.ap!] = definition.system
+  const key = ctx.actionCostResource;
+  if (key && withDefaultAP[key] === undefined)
+    withDefaultAP[key] = definition.system
       ? 0
       : ctx.services.rules.defaultActionAPCost;
   return ctx.passives.applyCostMods(actionId, withDefaultAP, ctx);
@@ -320,6 +321,19 @@ export function createEngine({
   const passives = new PassiveManager();
   const game = new GameState('Player A', 'Player B');
 
+  const actionCostResource: ResourceKey = (() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reg = actions as any as { map: Map<string, ActionDef> };
+    let keys: string[] | undefined;
+    for (const action of reg.map.values()) {
+      if (action.system) continue;
+      const costKeys = Object.keys(action.baseCosts || {});
+      if (!costKeys.length) continue;
+      keys = keys ? keys.filter((k) => costKeys.includes(k)) : costKeys;
+    }
+    return keys?.[0] ?? '';
+  })();
+
   const compA = diffPlayerStart(startCfg.player, startCfg.players?.['A']);
   const compB = diffPlayerStart(startCfg.player, startCfg.players?.['B']);
   const compensations = { A: compA, B: compB } as Record<
@@ -337,6 +351,7 @@ export function createEngine({
     passives,
     phases,
     compensations,
+    actionCostResource,
   );
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;

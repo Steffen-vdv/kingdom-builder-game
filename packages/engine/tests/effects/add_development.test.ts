@@ -87,6 +87,9 @@ function simulateBuild(ctx: EngineContext, id: string, landId: string) {
     ctx.developments,
     ctx.populations,
     new PassiveManager(),
+    ctx.phases,
+    ctx.compensations,
+    ctx.actionCostResource,
   );
   for (const [resourceKey, cost] of Object.entries(costs)) {
     sim.activePlayer.resources[resourceKey as ResourceKey] -= cost;

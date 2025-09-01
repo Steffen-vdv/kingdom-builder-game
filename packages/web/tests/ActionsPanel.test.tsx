@@ -4,12 +4,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
-import {
-  createEngine,
-  getActionCosts,
-  PopulationRole,
-  Stat,
-} from '@kingdom-builder/engine';
+import { createEngine, PopulationRole, Stat } from '@kingdom-builder/engine';
 import {
   RESOURCES,
   ACTIONS,
@@ -40,16 +35,7 @@ const ctx = createEngine({
   start: GAME_START,
   rules: RULES,
 });
-const actionCostResource = (() => {
-  const reg = ACTIONS as unknown as {
-    map: Map<string, { system?: boolean }>;
-  };
-  const first = Array.from(reg.map.entries()).find(([, a]) => !a.system);
-  if (!first) return '';
-  const [id] = first;
-  const costs = getActionCosts(id, ctx);
-  return (Object.keys(costs)[0] ?? '') as string;
-})();
+const actionCostResource = ctx.actionCostResource;
 const mockGame = {
   ctx,
   log: [],

@@ -140,16 +140,7 @@ export function GameProvider({
   const [tabsEnabled, setTabsEnabled] = useState(false);
   const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
 
-  const actionCostResource = useMemo<ResourceKey>(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
-    const reg = ctx.actions as any as { map: Map<string, Action> };
-    const first = Array.from(reg.map.entries()).find(([, a]) => !a.system);
-    if (!first) return '' as ResourceKey;
-    const [id] = first;
-    const costs = getActionCosts(id, ctx);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    return (Object.keys(costs)[0] ?? '') as ResourceKey;
-  }, [ctx]);
+  const actionCostResource = ctx.actionCostResource;
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
@@ -223,12 +214,13 @@ export function GameProvider({
     const total = apStartOverride ?? mainApStart;
     const remaining = ctx.activePlayer.resources[actionCostResource] ?? 0;
     const spent = total - remaining;
+    const info = RESOURCES[actionCostResource as keyof typeof RESOURCES];
     const steps = [
       {
-        title: `Step 1 - Spend all ${RESOURCES[actionCostResource].label}`,
+        title: `Step 1 - Spend all ${info.label}`,
         items: [
           {
-            text: `${RESOURCES[actionCostResource].icon} ${spent}/${total} spent`,
+            text: `${info.icon} ${spent}/${total} spent`,
             done: remaining === 0,
           },
         ],
@@ -473,7 +465,7 @@ export function GameProvider({
     setDisplayPhase,
     phaseHistories,
     tabsEnabled,
-    actionCostResource,
+    actionCostResource: actionCostResource as ResourceKey,
     handlePerform,
     runUntilActionPhase,
     handleEndTurn,
