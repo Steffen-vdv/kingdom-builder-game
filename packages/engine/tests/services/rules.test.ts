@@ -10,21 +10,21 @@ import {
 import { getActionCosts } from '../../src/index.ts';
 
 describe('Services', () => {
-  it('evaluates happiness tiers correctly', () => {
+  it('evaluates resource tiers correctly', () => {
     const services = new Services(RULES, DEVELOPMENTS);
     const getTierEffect = (value: number) =>
-      RULES.happinessTiers.filter((t) => t.threshold <= value).at(-1)?.effect ||
-      {};
-    expect(services.happiness.tier(0)?.incomeMultiplier).toBe(
+      RULES.tierDefinitions.filter((t) => t.threshold <= value).at(-1)
+        ?.effect || {};
+    expect(services.tieredResource.tier(0)?.incomeMultiplier).toBe(
       getTierEffect(0).incomeMultiplier,
     );
-    expect(services.happiness.tier(4)?.incomeMultiplier).toBe(
+    expect(services.tieredResource.tier(4)?.incomeMultiplier).toBe(
       getTierEffect(4).incomeMultiplier,
     );
-    expect(services.happiness.tier(5)?.buildingDiscountPct).toBe(
+    expect(services.tieredResource.tier(5)?.buildingDiscountPct).toBe(
       getTierEffect(5).buildingDiscountPct,
     );
-    expect(services.happiness.tier(8)?.incomeMultiplier).toBe(
+    expect(services.tieredResource.tier(8)?.incomeMultiplier).toBe(
       getTierEffect(8).incomeMultiplier,
     );
   });
