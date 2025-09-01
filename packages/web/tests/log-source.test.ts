@@ -15,8 +15,11 @@ import {
   RULES,
   RESOURCES,
   Resource,
+  type ResourceKey,
 } from '@kingdom-builder/contents';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
+
+const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
@@ -46,7 +49,7 @@ describe('log resource sources', () => {
     const before = snapshotPlayer(ctx.activePlayer, ctx);
     runEffects(step?.effects || [], ctx);
     const after = snapshotPlayer(ctx.activePlayer, ctx);
-    const lines = diffStepSnapshots(before, after, step, ctx);
+    const lines = diffStepSnapshots(before, after, step, ctx, RESOURCE_KEYS);
     const goldInfo = RESOURCES[Resource.gold];
     const farmIcon = DEVELOPMENTS.get('farm')?.icon || '';
     const b = before.resources[Resource.gold] ?? 0;
@@ -76,7 +79,7 @@ describe('log resource sources', () => {
     const before = snapshotPlayer(ctx.activePlayer, ctx);
     performAction('tax', ctx);
     const after = snapshotPlayer(ctx.activePlayer, ctx);
-    const lines = diffStepSnapshots(before, after, step, ctx);
+    const lines = diffStepSnapshots(before, after, step, ctx, RESOURCE_KEYS);
     const goldInfo = RESOURCES[Resource.gold];
     const populationIcon = '👥';
     const marketIcon = BUILDINGS.get('market')?.icon || '';

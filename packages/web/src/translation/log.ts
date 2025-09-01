@@ -9,6 +9,7 @@ import {
   POPULATION_ROLES,
   LAND_ICON as landIcon,
   SLOT_ICON as slotIcon,
+  type ResourceKey,
 } from '@kingdom-builder/contents';
 import { formatStatValue, statDisplaysAsPercent } from '../utils/stats';
 interface StepDef {
@@ -61,13 +62,17 @@ export function diffSnapshots(
   before: PlayerSnapshot,
   after: PlayerSnapshot,
   ctx: EngineContext,
+  resourceKeys: ResourceKey[] = Object.keys({
+    ...before.resources,
+    ...after.resources,
+  }) as ResourceKey[],
 ): string[] {
   const changes: string[] = [];
-  for (const key of Object.keys(after.resources)) {
+  for (const key of resourceKeys) {
     const b = before.resources[key] ?? 0;
     const a = after.resources[key] ?? 0;
     if (a !== b) {
-      const info = RESOURCES[key as keyof typeof RESOURCES];
+      const info = RESOURCES[key];
       const icon = info?.icon ? `${info.icon} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;
@@ -278,14 +283,18 @@ export function diffStepSnapshots(
   after: PlayerSnapshot,
   step: StepDef | undefined,
   ctx: EngineContext,
+  resourceKeys: ResourceKey[] = Object.keys({
+    ...before.resources,
+    ...after.resources,
+  }) as ResourceKey[],
 ): string[] {
   const changes: string[] = [];
   const sources = collectResourceSources(step, ctx);
-  for (const key of Object.keys(after.resources)) {
+  for (const key of resourceKeys) {
     const b = before.resources[key] ?? 0;
     const a = after.resources[key] ?? 0;
     if (a !== b) {
-      const info = RESOURCES[key as keyof typeof RESOURCES];
+      const info = RESOURCES[key];
       const icon = info?.icon ? `${info.icon} ` : '';
       const label = info?.label ?? key;
       const delta = a - b;

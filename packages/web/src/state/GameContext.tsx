@@ -32,6 +32,8 @@ import {
   type Summary,
 } from '../translation';
 
+const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
+
 interface Action {
   id: string;
   name: string;
@@ -202,7 +204,13 @@ export function GameProvider({
         before.resources[k] = (before.resources[k] || 0) - (v ?? 0);
       for (const [k, v] of Object.entries(comp.stats || {}))
         before.stats[k] = (before.stats[k] || 0) - (v ?? 0);
-      const lines = diffStepSnapshots(before, after, undefined, ctx);
+      const lines = diffStepSnapshots(
+        before,
+        after,
+        undefined,
+        ctx,
+        RESOURCE_KEYS,
+      );
       if (lines.length)
         addLog(
           ['Last-player compensation:', ...lines.map((l: string) => `  ${l}`)],
@@ -289,7 +297,13 @@ export function GameProvider({
         lastPhase = phase;
       }
       const after = snapshotPlayer(player, ctx);
-      const changes = diffStepSnapshots(before, after, stepDef, ctx);
+      const changes = diffStepSnapshots(
+        before,
+        after,
+        stepDef,
+        ctx,
+        RESOURCE_KEYS,
+      );
       if (changes.length) {
         addLog(
           changes.map((c) => `  ${c}`),
@@ -339,7 +353,13 @@ export function GameProvider({
 
       const after = snapshotPlayer(player, ctx);
       const stepDef = ctx.actions.get(action.id);
-      const changes = diffStepSnapshots(before, after, stepDef, ctx);
+      const changes = diffStepSnapshots(
+        before,
+        after,
+        stepDef,
+        ctx,
+        RESOURCE_KEYS,
+      );
       const messages = logContent('action', action.id, ctx, params);
       const costLines: string[] = [];
       for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
@@ -364,6 +384,7 @@ export function GameProvider({
           trace.after,
           subStep,
           ctx,
+          RESOURCE_KEYS,
         );
         if (!subChanges.length) continue;
         subLines.push(...subChanges);
