@@ -134,11 +134,59 @@ export function diffSnapshots(
   return changes;
 }
 
+interface ResourceSourceEntry {
+  icons: string;
+  mods: string;
+}
+
+export type EvaluatorIconRenderer = (
+  ev: { type: string; params?: Record<string, unknown> },
+  entry: ResourceSourceEntry,
+  ctx: EngineContext,
+) => void;
+
+function evaluateCount(
+  ev: { type: string; params?: Record<string, unknown> },
+  ctx: EngineContext,
+): number {
+  const handler = EVALUATORS.get(ev.type);
+  return Number(handler(ev, ctx));
+}
+
+function renderDevelopmentIcons(
+  ev: { type: string; params?: Record<string, unknown> },
+  entry: ResourceSourceEntry,
+  ctx: EngineContext,
+): void {
+  const count = evaluateCount(ev, ctx);
+  const id = (ev.params as Record<string, string> | undefined)?.['id'];
+  const icon = id ? ctx.developments.get(id)?.icon || '' : '';
+  entry.icons += icon.repeat(count);
+}
+
+function renderPopulationIcons(
+  ev: { type: string; params?: Record<string, unknown> },
+  entry: ResourceSourceEntry,
+  ctx: EngineContext,
+): void {
+  const count = evaluateCount(ev, ctx);
+  const role = (ev.params as Record<string, string> | undefined)?.['role'] as
+    | keyof typeof POPULATION_ROLES
+    | undefined;
+  const icon = role ? POPULATION_ROLES[role]?.icon || role : '👥';
+  entry.icons += icon.repeat(count);
+}
+
+export const EVALUATOR_ICON_RENDERERS: Record<string, EvaluatorIconRenderer> = {
+  development: renderDevelopmentIcons,
+  population: renderPopulationIcons,
+};
+
 function collectResourceSources(
   step: StepDef | undefined,
   ctx: EngineContext,
 ): Record<string, string> {
-  const map: Record<string, { icons: string; mods: string }> = {};
+  const map: Record<string, ResourceSourceEntry> = {};
   for (const eff of step?.effects || []) {
     if (eff.evaluator && eff.effects) {
       const inner = eff.effects.find((e) => e.type === 'resource');
@@ -151,19 +199,7 @@ function collectResourceSources(
         params?: Record<string, unknown>;
       };
       try {
-        const handler = EVALUATORS.get(ev.type);
-        const count = Number(handler(ev, ctx));
-        if (ev.type === 'development') {
-          const id = (ev.params as Record<string, string> | undefined)?.['id'];
-          const icon = id ? ctx.developments.get(id)?.icon || '' : '';
-          entry.icons += icon.repeat(count);
-        } else if (ev.type === 'population') {
-          const role = (ev.params as Record<string, string> | undefined)?.[
-            'role'
-          ] as keyof typeof POPULATION_ROLES | undefined;
-          const icon = role ? POPULATION_ROLES[role]?.icon || role : '👥';
-          entry.icons += icon.repeat(count);
-        }
+        EVALUATOR_ICON_RENDERERS[ev.type]?.(ev, entry, ctx);
         const idParam = ev.params?.['id'];
         const target =
           ev.params && 'id' in ev.params
