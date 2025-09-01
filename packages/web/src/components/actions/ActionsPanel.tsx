@@ -15,16 +15,10 @@ import {
   splitSummary,
   type Summary,
 } from '../../translation';
-import { renderSummary, renderCosts } from '../../translation/render';
+import ActionCard from './ActionCard';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
-
-function stripSummary(summary: Summary | undefined): Summary | undefined {
-  const first = summary?.[0];
-  if (!first) return summary;
-  return typeof first === 'string' ? summary : first.items;
-}
 
 interface Action {
   id: string;
@@ -86,15 +80,23 @@ function GenericActions({
               ? 'Cannot pay costs'
               : undefined;
         return (
-          <button
+          <ActionCard
             key={action.id}
-            className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
-              enabled
-                ? 'hoverable cursor-pointer'
-                : 'opacity-50 cursor-not-allowed'
-            }`}
-            title={title}
-            onClick={() => enabled && void handlePerform(action)}
+            title={
+              <>
+                {ctx.actions.get(action.id)?.icon || ''} {action.name}
+              </>
+            }
+            costs={costs}
+            playerResources={ctx.activePlayer.resources}
+            actionCostResource={actionCostResource}
+            requirements={requirements}
+            requirementIcons={requirementIcons}
+            summary={summary}
+            implemented={implemented}
+            enabled={enabled}
+            tooltip={title}
+            onClick={() => void handlePerform(action)}
             onMouseEnter={() => {
               const full = describeContent('action', action.id, ctx);
               const { effects, description } = splitSummary(full);
@@ -112,30 +114,7 @@ function GenericActions({
               });
             }}
             onMouseLeave={clearHoverCard}
-          >
-            <span className="text-base font-medium">
-              {ctx.actions.get(action.id)?.icon || ''} {action.name}
-            </span>
-            <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-              {renderCosts(
-                costs,
-                ctx.activePlayer.resources,
-                actionCostResource,
-              )}
-            </span>
-            {requirements.length > 0 && requirementIcons.length > 0 && (
-              <span className="absolute top-7 right-2 text-xs text-red-600">
-                Req {requirementIcons.join('')}
-              </span>
-            )}
-            <ul className="text-sm list-disc pl-4 text-left">
-              {implemented ? (
-                renderSummary(stripSummary(summary))
-              ) : (
-                <li className="italic text-red-600">Not implemented yet</li>
-              )}
-            </ul>
-          </button>
+          />
         );
       })}
     </>
@@ -186,15 +165,24 @@ function RaisePopOptions({
           role,
         });
         return (
-          <button
+          <ActionCard
             key={role}
-            className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
-              enabled
-                ? 'hoverable cursor-pointer'
-                : 'opacity-50 cursor-not-allowed'
-            }`}
-            title={title}
-            onClick={() => enabled && void handlePerform(action, { role })}
+            title={
+              <>
+                {ctx.actions.get(action.id).icon || ''}
+                {POPULATION_ROLES[role]?.icon} Hire{' '}
+                {POPULATION_ROLES[role]?.label}
+              </>
+            }
+            costs={costs}
+            playerResources={ctx.activePlayer.resources}
+            actionCostResource={actionCostResource}
+            requirements={requirements}
+            requirementIcons={requirementIcons}
+            summary={shortSummary}
+            enabled={enabled}
+            tooltip={title}
+            onClick={() => void handlePerform(action, { role })}
             onMouseEnter={() => {
               const { effects, description } = splitSummary(summary);
               handleHoverCard({
@@ -209,28 +197,7 @@ function RaisePopOptions({
               });
             }}
             onMouseLeave={clearHoverCard}
-          >
-            <span className="text-base font-medium">
-              {ctx.actions.get(action.id).icon || ''}
-              {POPULATION_ROLES[role]?.icon} Hire{' '}
-              {POPULATION_ROLES[role]?.label}
-            </span>
-            <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-              {renderCosts(
-                costs,
-                ctx.activePlayer.resources,
-                actionCostResource,
-              )}
-            </span>
-            {requirements.length > 0 && requirementIcons.length > 0 && (
-              <span className="absolute top-7 right-2 text-xs text-red-600">
-                Req {requirementIcons.join('')}
-              </span>
-            )}
-            <ul className="text-sm list-disc pl-4 text-left">
-              {renderSummary(stripSummary(shortSummary))}
-            </ul>
-          </button>
+          />
         );
       })}
     </>
@@ -332,16 +299,23 @@ function DevelopOptions({
                 ? 'Cannot pay costs'
                 : undefined;
           return (
-            <button
+            <ActionCard
               key={d.id}
-              className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
-                enabled
-                  ? 'hoverable cursor-pointer'
-                  : 'opacity-50 cursor-not-allowed'
-              }`}
-              title={title}
+              title={
+                <>
+                  {ctx.developments.get(d.id)?.icon} {d.name}
+                </>
+              }
+              costs={costs}
+              playerResources={ctx.activePlayer.resources}
+              actionCostResource={actionCostResource}
+              requirements={requirements}
+              requirementIcons={[slotIcon]}
+              summary={summary}
+              implemented={implemented}
+              enabled={enabled}
+              tooltip={title}
               onClick={() => {
-                if (!enabled) return;
                 const landId = ctx.activePlayer.lands.find(
                   (l) => l.slotsFree > 0,
                 )?.id;
@@ -366,30 +340,7 @@ function DevelopOptions({
                 });
               }}
               onMouseLeave={clearHoverCard}
-            >
-              <span className="text-base font-medium">
-                {ctx.developments.get(d.id)?.icon} {d.name}
-              </span>
-              <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                {renderCosts(
-                  costs,
-                  ctx.activePlayer.resources,
-                  actionCostResource,
-                )}
-              </span>
-              {requirements.length > 0 && (
-                <span className="absolute top-7 right-2 text-xs text-red-600">
-                  Req {slotIcon}
-                </span>
-              )}
-              <ul className="text-sm list-disc pl-4 text-left">
-                {implemented ? (
-                  renderSummary(stripSummary(summary))
-                ) : (
-                  <li className="italic text-red-600">Not implemented yet</li>
-                )}
-              </ul>
-            </button>
+            />
           );
         })}
       </div>
@@ -443,17 +394,28 @@ function BuildOptions({
               ? 'Cannot pay costs'
               : undefined;
           return (
-            <button
+            <ActionCard
               key={b.id}
-              className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
-                enabled
-                  ? 'hoverable cursor-pointer'
-                  : 'opacity-50 cursor-not-allowed'
-              }`}
-              title={title}
-              onClick={() =>
-                enabled && void handlePerform(action, { id: b.id })
+              title={
+                <>
+                  {ctx.buildings.get(b.id)?.icon ||
+                    ctx.actions.get('build').icon ||
+                    ''}{' '}
+                  {b.name}
+                </>
               }
+              costs={costs}
+              playerResources={ctx.activePlayer.resources}
+              actionCostResource={actionCostResource}
+              requirements={requirements}
+              requirementIcons={[
+                POPULATION_ROLES[PopulationRole.Citizen]?.icon ?? '',
+              ]}
+              summary={summary}
+              implemented={implemented}
+              enabled={enabled}
+              tooltip={title}
+              onClick={() => void handlePerform(action, { id: b.id })}
               onMouseEnter={() => {
                 const full = descriptions.get(b.id) ?? [];
                 const { effects, description } = splitSummary(full);
@@ -473,33 +435,7 @@ function BuildOptions({
                 });
               }}
               onMouseLeave={clearHoverCard}
-            >
-              <span className="text-base font-medium">
-                {ctx.buildings.get(b.id)?.icon ||
-                  ctx.actions.get('build').icon ||
-                  ''}{' '}
-                {b.name}
-              </span>
-              <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-                {renderCosts(
-                  costs,
-                  ctx.activePlayer.resources,
-                  actionCostResource,
-                )}
-              </span>
-              {requirements.length > 0 && (
-                <span className="absolute top-7 right-2 text-xs text-red-600">
-                  Req {POPULATION_ROLES[PopulationRole.Citizen]?.icon}
-                </span>
-              )}
-              <ul className="text-sm list-disc pl-4 text-left">
-                {implemented ? (
-                  renderSummary(stripSummary(summary))
-                ) : (
-                  <li className="italic text-red-600">Not implemented yet</li>
-                )}
-              </ul>
-            </button>
+            />
           );
         })}
       </div>
