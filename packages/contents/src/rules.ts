@@ -1,10 +1,12 @@
 import type { RuleSet } from '@kingdom-builder/engine/services';
+import { Resource } from './resources';
 
 export const RULES: RuleSet = {
   defaultActionAPCost: 1,
   absorptionCapPct: 1,
   absorptionRounding: 'down',
-  happinessTiers: [
+  tieredResourceKey: Resource.happiness,
+  tierDefinitions: [
     { threshold: 0, effect: { incomeMultiplier: 1 } },
     { threshold: 3, effect: { incomeMultiplier: 1.25 } },
     {

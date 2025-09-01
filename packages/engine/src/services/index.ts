@@ -4,7 +4,7 @@ import { runEffects, type EffectDef } from '../effects';
 import type { DevelopmentConfig } from '../config/schema';
 import type { Registry } from '../registry';
 
-export type HappinessTierEffect = {
+export type TierEffect = {
   incomeMultiplier: number;
   buildingDiscountPct?: number; // 0.2 = 20%
   growthBonusPct?: number;
@@ -17,18 +17,22 @@ export type RuleSet = {
   defaultActionAPCost: number;
   absorptionCapPct: number;
   absorptionRounding: 'down' | 'up' | 'nearest';
-  happinessTiers: { threshold: number; effect: HappinessTierEffect }[];
+  tieredResourceKey: ResourceKey;
+  tierDefinitions: { threshold: number; effect: TierEffect }[];
   slotsPerNewLand: number;
   maxSlotsPerLand: number;
   basePopulationCap: number;
 };
 
-class HappinessService {
-  constructor(private rules: RuleSet) {}
-  tier(happiness: number): HappinessTierEffect | undefined {
-    let last: HappinessTierEffect | undefined;
-    for (const tier of this.rules.happinessTiers)
-      if (happiness >= tier.threshold) last = tier.effect;
+class TieredResourceService {
+  resourceKey: ResourceKey;
+  constructor(private rules: RuleSet) {
+    this.resourceKey = rules.tieredResourceKey;
+  }
+  tier(value: number): TierEffect | undefined {
+    let last: TierEffect | undefined;
+    for (const tier of this.rules.tierDefinitions)
+      if (value >= tier.threshold) last = tier.effect;
       else break;
     return last;
   }
@@ -181,13 +185,13 @@ function reverseEffect(effect: EffectDef): EffectDef {
 }
 
 export class Services {
-  happiness: HappinessService;
+  tieredResource: TieredResourceService;
   popcap: PopCapService;
   constructor(
     public rules: RuleSet,
     developments: Registry<DevelopmentConfig>,
   ) {
-    this.happiness = new HappinessService(rules);
+    this.tieredResource = new TieredResourceService(rules);
     this.popcap = new PopCapService(rules, developments);
   }
 }
