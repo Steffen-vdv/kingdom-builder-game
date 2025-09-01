@@ -27,10 +27,7 @@ function GameLayout() {
         )}
       </div>
 
-      <div
-        className="grid gap-x-4 gap-y-6"
-        style={{ gridTemplateColumns: 'minmax(0,1fr) 30rem' }}
-      >
+      <div className="grid gap-x-4 gap-y-6 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_30rem]">
         <section className="border rounded bg-white dark:bg-gray-800 shadow flex min-h-[275px]">
           <div className="flex flex-1 items-stretch rounded overflow-hidden divide-x divide-black/10 dark:divide-white/10">
             {ctx.game.players.map((p, i) => {
@@ -53,11 +50,13 @@ function GameLayout() {
             })}
           </div>
         </section>
-        <PhasePanel />
-        <div className="col-start-1 row-start-2">
+        <div className="w-full lg:w-[30rem] lg:col-start-2">
+          <PhasePanel />
+        </div>
+        <div className="lg:col-start-1 lg:row-start-2">
           <ActionsPanel />
         </div>
-        <div className="col-start-2 row-start-2 w-[30rem] flex flex-col gap-6">
+        <div className="w-full lg:w-[30rem] flex flex-col gap-6 lg:col-start-2 lg:row-start-2">
           <LogPanel />
           <HoverCard />
         </div>
