@@ -50,6 +50,11 @@ export default function App() {
         setScreen('game');
       }}
       onOverview={() => setScreen('overview')}
+      onTutorial={() => {
+        setDevMode(false);
+        setGameKey((k) => k + 1);
+        setScreen('game');
+      }}
     />
   );
 }
