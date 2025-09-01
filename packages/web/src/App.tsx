@@ -9,6 +9,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [gameKey, setGameKey] = useState(0);
   const [darkMode, setDarkMode] = useState(true);
+  const [devMode, setDevMode] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -31,6 +32,7 @@ export default function App() {
         onExit={() => setScreen('menu')}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode((d) => !d)}
+        devMode={devMode}
       />
     );
   }
@@ -38,6 +40,12 @@ export default function App() {
   return (
     <Menu
       onStart={() => {
+        setDevMode(false);
+        setGameKey((k) => k + 1);
+        setScreen('game');
+      }}
+      onStartDev={() => {
+        setDevMode(true);
         setGameKey((k) => k + 1);
         setScreen('game');
       }}

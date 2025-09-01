@@ -55,5 +55,6 @@ describe('<App />', () => {
     const html = renderToString(<App />);
     expect(html).toContain('Kingdom Builder');
     expect(html).toContain('Start New Game');
+    expect(html).toContain('Start Dev/Debug Game');
   });
 });
