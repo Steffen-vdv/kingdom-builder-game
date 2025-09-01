@@ -38,7 +38,19 @@ describe('land till formatter', () => {
 
   it('summarizes till action', () => {
     const ctx = createCtx();
-    const summary = summarizeContent('action', 'till', ctx);
+    const tillId = Array.from(
+      (
+        ACTIONS as unknown as {
+          map: Map<string, { effects: { type: string; method?: string }[] }>;
+        }
+      ).map.entries(),
+    ).find(([, a]) =>
+      a.effects.some(
+        (e: { type: string; method?: string }) =>
+          e.type === 'land' && e.method === 'till',
+      ),
+    )?.[0] as string;
+    const summary = summarizeContent('action', tillId, ctx);
     const hasIcon = summary.some(
       (i) => typeof i === 'string' && i.includes(slotIcon),
     );

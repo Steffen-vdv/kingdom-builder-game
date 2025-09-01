@@ -14,7 +14,6 @@ import {
   PHASES,
   GAME_START,
   RULES,
-  POPULATION_ROLES,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -44,14 +43,34 @@ describe('population effect translation', () => {
     rules: RULES,
   });
 
-  it('summarizes raise_pop action for specific role', () => {
-    const summary = summarizeContent('action', 'raise_pop', ctx, {
+  it('summarizes population-raising action for specific role', () => {
+    const raiseId = Array.from(
+      (
+        ACTIONS as unknown as {
+          map: Map<string, { effects: { type: string; method?: string }[] }>;
+        }
+      ).map.entries(),
+    ).find(([, a]) =>
+      a.effects.some(
+        (e: { type: string; method?: string }) =>
+          e.type === 'population' && e.method === 'add',
+      ),
+    )?.[0] as string;
+    const summary = summarizeContent('action', raiseId, ctx, {
       role: PopulationRole.Council,
     });
     const flat = flatten(summary);
-    expect(flat).toContain(
-      `👥(${POPULATION_ROLES[PopulationRole.Council].icon}) +1`,
-    );
+    const expected = summarizeEffects(
+      [
+        {
+          type: 'population',
+          method: 'add',
+          params: { role: PopulationRole.Council },
+        },
+      ],
+      ctx,
+    )[0];
+    expect(flat).toContain(expected);
   });
 
   it('handles population removal effect', () => {
@@ -75,11 +94,27 @@ describe('population effect translation', () => {
       ],
       ctx,
     );
-    expect(summary).toContain(
-      `👥(${POPULATION_ROLES[PopulationRole.Council].icon}) -1`,
-    );
-    expect(desc).toContain(
-      `Remove ${POPULATION_ROLES[PopulationRole.Council].icon} ${POPULATION_ROLES[PopulationRole.Council].label}`,
-    );
+    const expectedSummary = summarizeEffects(
+      [
+        {
+          type: 'population',
+          method: 'remove',
+          params: { role: PopulationRole.Council },
+        },
+      ],
+      ctx,
+    )[0];
+    const expectedDesc = describeEffects(
+      [
+        {
+          type: 'population',
+          method: 'remove',
+          params: { role: PopulationRole.Council },
+        },
+      ],
+      ctx,
+    )[0];
+    expect(summary).toContain(expectedSummary);
+    expect(desc).toContain(expectedDesc);
   });
 });

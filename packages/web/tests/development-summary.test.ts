@@ -32,7 +32,7 @@ function flatten(summary: Summary): string[] {
 }
 
 describe('development translation', () => {
-  it('includes phase effects for farm', () => {
+  it('includes phase effects for a development', () => {
     const ctx = createEngine({
       actions: ACTIONS,
       buildings: BUILDINGS,
@@ -42,17 +42,22 @@ describe('development translation', () => {
       start: GAME_START,
       rules: RULES,
     });
-    const summary = summarizeContent('development', 'farm', ctx);
+    const phase = ctx.phases.find((p) =>
+      p.steps.some((s: StepDef) =>
+        s.effects?.some((e) => e.evaluator?.type === 'development'),
+      ),
+    );
+    const step = phase?.steps.find((s: StepDef) =>
+      s.effects?.some((e) => e.evaluator?.type === 'development'),
+    ) as StepDef | undefined;
+    const devEffect = step?.effects?.find((e) => e.evaluator);
+    const devId = devEffect?.evaluator?.params?.['id'];
+    const summary = summarizeContent('development', devId, ctx);
     const flat = flatten(summary);
     const goldIcon = RESOURCES[Resource.gold].icon;
-    const farmIcon = DEVELOPMENTS.get('farm')?.icon || '';
-    const growthPhase = ctx.phases.find((p) => p.id === 'growth');
-    const gainIncome = growthPhase?.steps.find(
-      (s) => s.id === 'gain-income',
-    ) as StepDef | undefined;
-    const farmEffect = gainIncome?.effects?.find((e) => e.evaluator);
-    const inner = farmEffect?.effects?.find((e) => e.type === 'resource');
+    const devIcon = DEVELOPMENTS.get(devId)?.icon || '';
+    const inner = devEffect?.effects?.find((e) => e.type === 'resource');
     const amt = (inner?.params as { amount?: number })?.amount ?? 0;
-    expect(flat).toContain(`${goldIcon}+${amt} per ${farmIcon}`);
+    expect(flat).toContain(`${goldIcon}+${amt} per ${devIcon}`);
   });
 });

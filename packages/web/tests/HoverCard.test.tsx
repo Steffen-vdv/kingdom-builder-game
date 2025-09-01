@@ -43,6 +43,22 @@ const actionCostResource = (() => {
   const costs = getActionCosts(id, ctx);
   return (Object.keys(costs)[0] ?? '') as string;
 })();
+
+const findActionWithReq = () => {
+  for (const [id] of (ACTIONS as unknown as { map: Map<string, unknown> })
+    .map) {
+    const requirements = getActionRequirements(id, ctx);
+    const costs = getActionCosts(id, ctx);
+    if (
+      requirements.length &&
+      Object.keys(costs).some((k) => k !== actionCostResource)
+    ) {
+      return { id, requirements, costs } as const;
+    }
+  }
+  return { id: '', requirements: [], costs: {} } as const;
+};
+const actionData = findActionWithReq();
 const mockGame = {
   ctx,
   log: [],
@@ -79,11 +95,9 @@ vi.mock('../src/state/GameContext', () => ({
 
 describe('<HoverCard />', () => {
   it('renders hover card details from context', () => {
-    const actionId = 'raise_pop';
-    const actionName = ctx.actions.get(actionId)?.name || '';
-    const title = `${ctx.actions.get(actionId).icon} ${actionName}`;
-    const costs = getActionCosts(actionId, ctx);
-    const requirements = getActionRequirements(actionId, ctx);
+    const { id, requirements, costs } = actionData;
+    const def = ctx.actions.get(id);
+    const title = `${def.icon} ${def.name}`;
     mockGame.hoverCard = {
       title,
       effects: [],
