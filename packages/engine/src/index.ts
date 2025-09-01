@@ -19,7 +19,12 @@ import type {
 import { Services, PassiveManager } from './services';
 import type { CostBag, RuleSet } from './services';
 import { EngineContext } from './context';
-import { runEffects, EFFECTS, registerCoreEffects } from './effects';
+import {
+  runEffects,
+  EFFECTS,
+  EFFECT_COST_COLLECTORS,
+  registerCoreEffects,
+} from './effects';
 import type { EffectDef } from './effects';
 import { collectTriggerEffects } from './triggers';
 import { EVALUATORS, registerCoreEvaluators } from './evaluators';
@@ -68,13 +73,10 @@ export function getActionCosts<T extends string>(
   const base = { ...(actionDefinition.baseCosts || {}) };
   const resolved = applyParamsToEffects(actionDefinition.effects, params || {});
   for (const effect of resolved) {
-    if (effect.type === 'building' && effect.method === 'add') {
-      const id = effect.params?.['id'] as string;
-      const building = ctx.buildings.get(id);
-      for (const key of Object.keys(building.costs)) {
-        base[key] = (base[key] || 0) + (building.costs[key] || 0);
-      }
-    }
+    if (!effect.type || !effect.method) continue;
+    const key = `${effect.type}:${effect.method}`;
+    if (EFFECT_COST_COLLECTORS.has(key))
+      EFFECT_COST_COLLECTORS.get(key)(effect, base, ctx);
   }
   return applyCostsWithPassives(actionDefinition.id, base, ctx);
 }
@@ -138,13 +140,10 @@ export function performAction<T extends string>(
   const base = { ...(actionDefinition.baseCosts || {}) };
   const resolved = applyParamsToEffects(actionDefinition.effects, params || {});
   for (const effect of resolved) {
-    if (effect.type === 'building' && effect.method === 'add') {
-      const id = effect.params?.['id'] as string;
-      const building = ctx.buildings.get(id);
-      for (const key of Object.keys(building.costs)) {
-        base[key] = (base[key] || 0) + (building.costs[key] || 0);
-      }
-    }
+    if (!effect.type || !effect.method) continue;
+    const key = `${effect.type}:${effect.method}`;
+    if (EFFECT_COST_COLLECTORS.has(key))
+      EFFECT_COST_COLLECTORS.get(key)(effect, base, ctx);
   }
   const costs = applyCostsWithPassives(actionDefinition.id, base, ctx);
   const ok = canPay(costs, ctx.activePlayer);
@@ -371,6 +370,7 @@ export {
   PopulationRole,
   Stat,
   EFFECTS,
+  EFFECT_COST_COLLECTORS,
   EVALUATORS,
   EngineContext,
   Services,
@@ -378,8 +378,13 @@ export {
 };
 
 export type { RuleSet, ResourceKey, StatKey };
-export { registerCoreEffects, EffectRegistry, runEffects } from './effects';
-export type { EffectHandler, EffectDef } from './effects';
+export {
+  registerCoreEffects,
+  EffectRegistry,
+  runEffects,
+  EffectCostRegistry,
+} from './effects';
+export type { EffectHandler, EffectDef, EffectCostCollector } from './effects';
 export { applyParamsToEffects } from './utils';
 export { registerCoreEvaluators, EvaluatorRegistry } from './evaluators';
 export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
