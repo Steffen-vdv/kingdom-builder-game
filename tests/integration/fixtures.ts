@@ -94,3 +94,131 @@ export function getActionOutcome(id: string, ctx: EngineContext) {
   );
   return { costs, results };
 }
+
+function findEffect(
+  effects: EffectDef[],
+  predicate: (e: EffectDef) => boolean,
+): EffectDef | undefined {
+  for (const effect of effects) {
+    if (predicate(effect)) return effect;
+    const nested =
+      (effect as { effects?: EffectDef[] }).effects &&
+      findEffect((effect as { effects?: EffectDef[] }).effects!, predicate);
+    if (nested) return nested;
+  }
+  return undefined;
+}
+
+export function getBuildActionId(ctx: EngineContext) {
+  for (const [id, def] of ctx.actions.entries()) {
+    if (
+      findEffect(
+        def.effects,
+        (e) => e.type === 'building' && e.method === 'add',
+      )
+    ) {
+      return id;
+    }
+  }
+  throw new Error('No build action found');
+}
+
+export function getBuildingWithActionMods() {
+  for (const [id, def] of BUILDINGS.entries()) {
+    const mod = findEffect(
+      def.onBuild ?? [],
+      (e) =>
+        (e.type === 'cost_mod' || e.type === 'result_mod') &&
+        typeof (e.params as { actionId?: unknown }).actionId === 'string',
+    );
+    if (mod) {
+      return {
+        buildingId: id,
+        actionId: (mod.params as { actionId: string }).actionId,
+      };
+    }
+  }
+  throw new Error('No building with action mods found');
+}
+
+export function getBuildingWithStatBonuses() {
+  for (const [id, def] of BUILDINGS.entries()) {
+    const passive = findEffect(
+      def.onBuild ?? [],
+      (e) => e.type === 'passive' && e.method === 'add',
+    );
+    if (passive) {
+      const stats = ((passive as { effects?: EffectDef[] }).effects || [])
+        .filter(
+          (e): e is EffectDef<{ key: string; amount: number }> =>
+            e.type === 'stat' &&
+            e.method === 'add' &&
+            typeof (e.params as { key?: unknown }).key === 'string' &&
+            typeof (e.params as { amount?: unknown }).amount === 'number',
+        )
+        .map((e) => ({
+          key: (e.params as { key: string }).key,
+          amount: (e.params as { amount: number }).amount,
+        }));
+      if (stats.length > 0) return { buildingId: id, stats };
+    }
+  }
+  throw new Error('No building with stat bonuses found');
+}
+
+export function getBuildingWithPopulationBonus() {
+  for (const [id, def] of BUILDINGS.entries()) {
+    const effect = findEffect(
+      def.onBuild ?? [],
+      (e) =>
+        e.type === 'result_mod' &&
+        typeof (e.params as { evaluation?: unknown }).evaluation === 'object' &&
+        (e.params as { evaluation: { type?: string } }).evaluation.type ===
+          'population' &&
+        typeof (e.params as { evaluation: { id?: unknown } }).evaluation.id ===
+          'string',
+    );
+    if (effect) {
+      return {
+        buildingId: id,
+        actionId: (effect.params as { evaluation: { id: string } }).evaluation
+          .id,
+      };
+    }
+  }
+  throw new Error('No building with population bonus found');
+}
+
+export function getActionWithPopulationEvaluator(ctx: EngineContext) {
+  for (const [id, def] of ctx.actions.entries()) {
+    if (
+      findEffect(
+        def.effects,
+        (e) =>
+          typeof (e as { evaluator?: { type?: string } }).evaluator ===
+            'object' &&
+          (e as { evaluator: { type: string } }).evaluator.type ===
+            'population',
+      )
+    ) {
+      return id;
+    }
+  }
+  throw new Error('No action with population evaluator found');
+}
+
+export function getActionWithMultipleCosts(ctx: EngineContext) {
+  for (const [id] of ctx.actions.entries()) {
+    const costs = getActionCosts(id, ctx);
+    if (Object.keys(costs).length > 1) return { actionId: id, costs };
+  }
+  throw new Error('No action with multiple costs found');
+}
+
+export function getActionWithCost(ctx: EngineContext) {
+  for (const [id] of ctx.actions.entries()) {
+    const costs = getActionCosts(id, ctx);
+    if (Object.keys(costs).length > 0) return { actionId: id, costs };
+  }
+  throw new Error('No action with costs found');
+}

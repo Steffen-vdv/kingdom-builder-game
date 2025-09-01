@@ -21,20 +21,21 @@ describe('Turn cycle integration', () => {
       start: GAME_START,
       rules: RULES,
     });
+    const [growthId, , mainId] = PHASES.map((p) => p.id);
     // player A development & upkeep
-    while (ctx.game.currentPhase !== 'main') advance(ctx);
+    while (ctx.game.currentPhase !== mainId) advance(ctx);
     expect(ctx.game.currentPlayerIndex).toBe(0);
-    expect(ctx.game.currentPhase).toBe('main');
+    expect(ctx.game.currentPhase).toBe(mainId);
     // end main for player A
     advance(ctx);
     // player B development & upkeep
-    while (ctx.game.currentPhase !== 'main') advance(ctx);
+    while (ctx.game.currentPhase !== mainId) advance(ctx);
     expect(ctx.game.currentPlayerIndex).toBe(1);
-    expect(ctx.game.currentPhase).toBe('main');
+    expect(ctx.game.currentPhase).toBe(mainId);
     // end main for player B
     advance(ctx);
     expect(ctx.game.turn).toBe(2);
     expect(ctx.game.currentPlayerIndex).toBe(0);
-    expect(ctx.game.currentPhase).toBe('growth');
+    expect(ctx.game.currentPhase).toBe(growthId);
   });
 });
