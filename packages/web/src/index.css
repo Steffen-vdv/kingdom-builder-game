@@ -16,24 +16,42 @@
 }
 
 @keyframes value-rise {
-  from {
+  0% {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translate(-50%, 0) scale(1);
   }
-  to {
+  30% {
+    transform: translate(-50%, -0.5rem) scale(1.25);
+  }
+  100% {
     opacity: 0;
-    transform: translate(-50%, -0.75rem);
+    transform: translate(-50%, -2.5rem) scale(0.8);
   }
 }
 
 @keyframes value-fall {
-  from {
+  0% {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translate(-50%, 0) scale(1);
   }
-  to {
+  30% {
+    transform: translate(-50%, 0.5rem) scale(0.75);
+  }
+  100% {
     opacity: 0;
-    transform: translate(-50%, 0.75rem);
+    transform: translate(-50%, 2.5rem) scale(0.75);
+  }
+}
+
+@keyframes value-bump {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -107,11 +125,14 @@
     color: rgb(254, 226, 226);
   }
   .gain-bubble {
-    @apply absolute left-1/2 -translate-x-1/2 text-green-600 text-sm;
-    animation: value-rise 0.8s forwards;
+    @apply absolute left-1/2 -translate-x-1/2 text-green-500 text-sm font-bold drop-shadow;
+    animation: value-rise 1.5s forwards;
   }
   .loss-bubble {
-    @apply absolute left-1/2 -translate-x-1/2 text-red-600 text-sm;
-    animation: value-fall 0.8s forwards;
+    @apply absolute left-1/2 -translate-x-1/2 text-red-500 text-sm font-bold drop-shadow;
+    animation: value-fall 1.5s forwards;
+  }
+  .value-bump {
+    animation: value-bump 0.4s;
   }
 }

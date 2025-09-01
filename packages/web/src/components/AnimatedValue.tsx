@@ -12,6 +12,7 @@ const AnimatedValue: React.FC<AnimatedValueProps> = ({
   format = String,
 }) => {
   const [delta, setDelta] = useState(0);
+  const [bump, setBump] = useState(false);
   const prev = useRef(value);
   const ref: MutableRefObject<HTMLSpanElement | null> = useAnimate();
 
@@ -19,9 +20,14 @@ const AnimatedValue: React.FC<AnimatedValueProps> = ({
     const diff = value - prev.current;
     if (diff !== 0) {
       setDelta(diff);
-      const timer = setTimeout(() => setDelta(0), 800);
+      setBump(true);
+      const bubbleTimer = setTimeout(() => setDelta(0), 1500);
+      const bumpTimer = setTimeout(() => setBump(false), 400);
       prev.current = value;
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(bubbleTimer);
+        clearTimeout(bumpTimer);
+      };
     }
   }, [value]);
 
@@ -30,10 +36,15 @@ const AnimatedValue: React.FC<AnimatedValueProps> = ({
 
   return (
     <span ref={ref} className="relative inline-block">
-      <span key={formatted}>{formatted}</span>
+      <span
+        key={formatted}
+        className={bump ? 'value-bump inline-block' : 'inline-block'}
+      >
+        {formatted}
+      </span>
       {delta !== 0 && (
         <span className={delta > 0 ? 'gain-bubble' : 'loss-bubble'}>
-          {delta > 0 ? `+${diffFormatted}` : `-${diffFormatted}`}
+          {delta > 0 ? `+${diffFormatted} ✨` : `-${diffFormatted} 😢`}
         </span>
       )}
     </span>
