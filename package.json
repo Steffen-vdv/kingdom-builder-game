@@ -11,9 +11,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build packages/web",
     "preview": "vite preview",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx --rulesdir scripts",
     "typecheck": "tsc -b --noEmit --pretty false",
-    "fix": "eslint . --ext .ts,.tsx --fix",
+    "fix": "eslint . --ext .ts,.tsx --fix --rulesdir scripts",
     "check": "npm run typecheck && npm run lint",
     "pretest": "npm run check",
     "test": "npm run test:coverage",
@@ -53,7 +53,7 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md}": "prettier --write",
-    "*.{js,jsx,ts,tsx}": "eslint --max-warnings=0",
+    "*.{js,jsx,ts,tsx}": "eslint --max-warnings=0 --rulesdir scripts",
     "*.{ts,tsx}": "bash -c 'tsc --noEmit'"
   }
 }

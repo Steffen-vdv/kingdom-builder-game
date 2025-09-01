@@ -45,26 +45,30 @@ describe('Services', () => {
 
 describe('PassiveManager', () => {
   it('applies and unregisters cost modifiers', () => {
-    const ctx = createTestEngine();
-    const baseCost = getActionCosts('expand', ctx);
+    const content = createContentFactory();
+    const action = content.action({ baseCosts: { [CResource.gold]: 1 } });
+    const ctx = createTestEngine({ actions: content.actions });
+    const baseCost = getActionCosts(action.id, ctx);
     const base = { [CResource.gold]: baseCost[CResource.gold] || 0 };
-    ctx.passives.registerCostModifier('tax', (_action, cost) => ({
+    ctx.passives.registerCostModifier('mod', (_a, cost) => ({
       ...cost,
       [CResource.gold]: (cost[CResource.gold] || 0) + 1,
     }));
-    const modified = ctx.passives.applyCostMods('expand', base, ctx);
+    const modified = ctx.passives.applyCostMods(action.id, base, ctx);
     expect(modified[CResource.gold]).toBe((base[CResource.gold] || 0) + 1);
-    ctx.passives.unregisterCostModifier('tax');
-    const reverted = ctx.passives.applyCostMods('expand', base, ctx);
+    ctx.passives.unregisterCostModifier('mod');
+    const reverted = ctx.passives.applyCostMods(action.id, base, ctx);
     expect(reverted[CResource.gold]).toBe(base[CResource.gold]);
   });
 
   it('runs result modifiers and handles passives', () => {
-    const ctx = createTestEngine();
+    const content = createContentFactory();
+    const action = content.action();
+    const ctx = createTestEngine({ actions: content.actions });
     ctx.passives.registerResultModifier('happy', (_a, innerCtx) => {
       innerCtx.activePlayer.happiness += 1;
     });
-    ctx.passives.runResultMods('expand', ctx);
+    ctx.passives.runResultMods(action.id, ctx);
     expect(ctx.activePlayer.happiness).toBe(1);
     ctx.passives.unregisterResultModifier('happy');
 
