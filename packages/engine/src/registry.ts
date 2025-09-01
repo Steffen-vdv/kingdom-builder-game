@@ -12,4 +12,13 @@ export class Registry<T> {
     if (!value) throw new Error(`Unknown id: ${id}`);
     return value;
   }
+  entries(): [string, T][] {
+    return Array.from(this.map.entries());
+  }
+  values(): T[] {
+    return Array.from(this.map.values());
+  }
+  keys(): string[] {
+    return Array.from(this.map.keys());
+  }
 }
