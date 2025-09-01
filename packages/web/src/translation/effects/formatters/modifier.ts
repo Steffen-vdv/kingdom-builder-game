@@ -2,7 +2,11 @@ import {
   MODIFIER_INFO as modifierInfo,
   RESOURCES,
 } from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/contents';
+import type {
+  ActionDef,
+  DevelopmentDef,
+  ResourceKey,
+} from '@kingdom-builder/contents';
 import { increaseOrDecrease, signed } from '../helpers';
 import { describeContent } from '../../content';
 import {
@@ -10,6 +14,122 @@ import {
   summarizeEffects,
   describeEffects,
 } from '../factory';
+import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
+import type { Summary } from '../../content/types';
+
+interface ModifierEvalHandler {
+  summarize: (
+    eff: EffectDef,
+    evaluation: { type: string; id: string },
+    ctx: EngineContext,
+  ) => Summary;
+  describe: (
+    eff: EffectDef,
+    evaluation: { type: string; id: string },
+    ctx: EngineContext,
+  ) => Summary;
+}
+
+export const MODIFIER_EVAL_HANDLERS: Record<string, ModifierEvalHandler> = {};
+
+export function registerModifierEvalHandler(
+  type: string,
+  handler: ModifierEvalHandler,
+) {
+  MODIFIER_EVAL_HANDLERS[type] = handler;
+}
+
+function getActionInfo(ctx: EngineContext, id: string) {
+  try {
+    const action: ActionDef = ctx.actions.get(id);
+    return { icon: action.icon ?? id, name: action.name ?? id };
+  } catch {
+    return { icon: id, name: id };
+  }
+}
+
+function getDevelopmentInfo(ctx: EngineContext, id: string) {
+  try {
+    const dev: DevelopmentDef = ctx.developments.get(id);
+    return { icon: dev.icon ?? '', name: dev.name ?? id };
+  } catch {
+    return { icon: '', name: id };
+  }
+}
+
+function formatDevelopment(
+  eff: EffectDef,
+  evaluation: { id: string },
+  ctx: EngineContext,
+  detailed: boolean,
+) {
+  const { icon, name } = getDevelopmentInfo(ctx, evaluation.id);
+  const resource = eff.effects?.find(
+    (e): e is EffectDef<{ key: string; amount: number }> =>
+      e.type === 'resource' && e.method === 'add',
+  );
+  if (resource) {
+    const key = resource.params?.['key'] as string;
+    const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
+    const amount = Number(resource.params?.['amount']);
+    const suffix = detailed ? ' of that resource' : '';
+    return `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${name}, gain ${resIcon}+${amount} more${suffix}`;
+  }
+  const amount = Number(eff.params?.['amount'] ?? 0);
+  return `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${name}, gain +${amount} more of that resource`;
+}
+
+function formatPopulation(
+  eff: EffectDef,
+  evaluation: { id: string },
+  ctx: EngineContext,
+) {
+  const { icon, name } = getActionInfo(ctx, evaluation.id);
+  const amount = Number(eff.params?.['amount'] ?? 0);
+  return `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${icon} ${name}, gain +${amount} more of that resource`;
+}
+
+registerModifierEvalHandler('development', {
+  summarize: (eff, evaluation, ctx) => [
+    formatDevelopment(eff, evaluation, ctx, false),
+  ],
+  describe: (eff, evaluation, ctx) => [
+    formatDevelopment(eff, evaluation, ctx, true),
+  ],
+});
+
+registerModifierEvalHandler('population', {
+  summarize: (eff, evaluation, ctx) => [formatPopulation(eff, evaluation, ctx)],
+  describe: (eff, evaluation, ctx) => [formatPopulation(eff, evaluation, ctx)],
+});
+
+registerModifierEvalHandler('transfer_pct', {
+  summarize: (eff, _evaluation, ctx) => {
+    const { icon, name } = getActionInfo(ctx, 'plunder');
+    const amount = Number(eff.params?.['adjust'] ?? 0);
+    return [
+      `${modifierInfo.result.icon} ${icon} ${name}: ${signed(amount)}${Math.abs(
+        amount,
+      )}% transfer`,
+    ];
+  },
+  describe: (eff, _evaluation, ctx) => {
+    const { icon, name } = getActionInfo(ctx, 'plunder');
+    const amount = Number(eff.params?.['adjust'] ?? 0);
+    const card = describeContent('action', 'plunder', ctx);
+    return [
+      `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${icon} ${name}: ${increaseOrDecrease(
+        amount,
+      )} transfer by ${Math.abs(amount)}%`,
+      {
+        title: `${icon} ${name}`,
+        items: card,
+        _hoist: true,
+        _desc: true,
+      },
+    ];
+  },
+});
 
 registerEffectFormatter('cost_mod', 'add', {
   summarize: (eff, ctx) => {
@@ -17,9 +137,7 @@ registerEffectFormatter('cost_mod', 'add', {
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
-    const actionIcon = actionId
-      ? ctx.actions.get(actionId)?.icon || actionId
-      : '';
+    const actionIcon = actionId ? getActionInfo(ctx, actionId).icon : '';
     const prefix = actionId ? `${actionIcon}: ` : ': ';
     return `${modifierInfo.cost.icon}${prefix}${icon}${signed(amount)}${Math.abs(amount)}`;
   },
@@ -28,12 +146,9 @@ registerEffectFormatter('cost_mod', 'add', {
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
-    const actionIcon = actionId
-      ? ctx.actions.get(actionId)?.icon || actionId
-      : '';
-    const actionName = actionId
-      ? ctx.actions.get(actionId)?.name || actionId
-      : 'all actions';
+    const { icon: actionIcon, name: actionName } = actionId
+      ? getActionInfo(ctx, actionId)
+      : { icon: '', name: 'all actions' };
     const target = actionId ? `${actionIcon} ${actionName}` : actionName;
     return `${modifierInfo.cost.icon} ${modifierInfo.cost.label} on ${target}: ${increaseOrDecrease(amount)} cost by ${icon}${Math.abs(amount)}`;
   },
@@ -45,9 +160,7 @@ registerEffectFormatter('cost_mod', 'remove', {
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
-    const actionIcon = actionId
-      ? ctx.actions.get(actionId)?.icon || actionId
-      : '';
+    const actionIcon = actionId ? getActionInfo(ctx, actionId).icon : '';
     const prefix = actionId ? `${actionIcon}: ` : ': ';
     const delta = -amount;
     const sign = delta >= 0 ? '+' : '-';
@@ -58,12 +171,9 @@ registerEffectFormatter('cost_mod', 'remove', {
     const icon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(eff.params?.['amount']);
     const actionId = eff.params?.['actionId'] as string | undefined;
-    const actionIcon = actionId
-      ? ctx.actions.get(actionId)?.icon || actionId
-      : '';
-    const actionName = actionId
-      ? ctx.actions.get(actionId)?.name || actionId
-      : 'all actions';
+    const { icon: actionIcon, name: actionName } = actionId
+      ? getActionInfo(ctx, actionId)
+      : { icon: '', name: 'all actions' };
     const target = actionId ? `${actionIcon} ${actionName}` : actionName;
     return `${modifierInfo.cost.icon} ${modifierInfo.cost.label} on ${target}: ${increaseOrDecrease(-amount)} cost by ${icon}${Math.abs(amount)}`;
   },
@@ -76,47 +186,11 @@ registerEffectFormatter('result_mod', 'add', {
       | { type: string; id: string }
       | undefined;
     if (evaluation) {
-      if (evaluation.type === 'development') {
-        const dev = ctx.developments.get(evaluation.id);
-        const icon = ctx.developments.get(evaluation.id)?.icon || '';
-        const resource = eff.effects?.find(
-          (e) => e.type === 'resource' && e.method === 'add',
-        );
-        if (resource) {
-          const key = resource.params?.['key'] as string;
-          const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
-          const amount = Number(resource.params?.['amount']);
-          return [
-            `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more`,
-          ];
-        }
-        const amount = Number(eff.params?.['amount'] ?? 0);
-        return [
-          `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
-        ];
-      }
-      if (evaluation.type === 'population') {
-        const action = ctx.actions.get(evaluation.id);
-        const actionIcon = action?.icon || evaluation.id;
-        const actionName = action?.name || evaluation.id;
-        const amount = Number(eff.params?.['amount'] ?? 0);
-        return [
-          `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${actionIcon} ${actionName}, gain +${amount} more of that resource`,
-        ];
-      }
-      if (evaluation.type === 'transfer_pct') {
-        const action = ctx.actions.get('plunder');
-        const actionIcon = action?.icon || 'plunder';
-        const actionName = action?.name || 'plunder';
-        const amount = Number(eff.params?.['adjust'] ?? 0);
-        return [
-          `${modifierInfo.result.icon} ${actionIcon} ${actionName}: ${signed(amount)}${Math.abs(amount)}% transfer`,
-        ];
-      }
-      return [];
+      const handler = MODIFIER_EVAL_HANDLERS[evaluation.type];
+      return handler ? handler.summarize(eff, evaluation, ctx) : [];
     }
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon = ctx.actions.get(actionId)?.icon || actionId;
+    const { icon: actionIcon } = getActionInfo(ctx, actionId);
     return sub.map((s) =>
       typeof s === 'string'
         ? `${modifierInfo.result.icon} ${actionIcon}: ${s}`
@@ -132,60 +206,11 @@ registerEffectFormatter('result_mod', 'add', {
       | { type: string; id: string }
       | undefined;
     if (evaluation) {
-      if (evaluation.type === 'development') {
-        const dev = ctx.developments.get(evaluation.id);
-        const icon = ctx.developments.get(evaluation.id)?.icon || '';
-        const resource = eff.effects?.find(
-          (e) => e.type === 'resource' && e.method === 'add',
-        );
-        if (resource) {
-          const key = resource.params?.['key'] as string;
-          const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
-          const amount = Number(resource.params?.['amount']);
-          return [
-            `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain ${resIcon}+${amount} more of that resource`,
-          ];
-        }
-        const amount = Number(eff.params?.['amount'] ?? 0);
-        return [
-          `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${dev?.name || evaluation.id}, gain +${amount} more of that resource`,
-        ];
-      }
-      if (evaluation.type === 'population') {
-        const action = ctx.actions.get(evaluation.id);
-        const actionIcon = action?.icon || evaluation.id;
-        const actionName = action?.name || evaluation.id;
-        const amount = Number(eff.params?.['amount'] ?? 0);
-        return [
-          `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${actionIcon} ${actionName}, gain +${amount} more of that resource`,
-        ];
-      }
-      if (evaluation.type === 'transfer_pct') {
-        const action = ctx.actions.get('plunder');
-        const actionIcon = action?.icon || 'plunder';
-        const actionName = action?.name || 'plunder';
-        const amount = Number(eff.params?.['adjust'] ?? 0);
-        const card = describeContent('action', 'plunder', ctx);
-        return [
-          `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,
-          {
-            title: `${actionIcon} ${actionName}`,
-            items: card,
-            _hoist: true,
-            _desc: true,
-          },
-        ];
-      }
-      return [];
+      const handler = MODIFIER_EVAL_HANDLERS[evaluation.type];
+      return handler ? handler.describe(eff, evaluation, ctx) : [];
     }
     const actionId = eff.params?.['actionId'] as string;
-    const actionIcon = ctx.actions.get(actionId)?.icon || actionId;
-    let actionName = actionId;
-    try {
-      actionName = ctx.actions.get(actionId).name;
-    } catch {
-      /* ignore missing action */
-    }
+    const { icon: actionIcon, name: actionName } = getActionInfo(ctx, actionId);
     return sub.map((s) =>
       typeof s === 'string'
         ? `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${actionIcon} ${actionName}: ${s}`
