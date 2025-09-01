@@ -42,6 +42,7 @@ export default function App() {
         setScreen('game');
       }}
       onOverview={() => setScreen('overview')}
+      onTutorial={() => console.log('tutorial')}
     />
   );
 }
