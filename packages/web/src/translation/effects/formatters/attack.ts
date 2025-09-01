@@ -10,6 +10,29 @@ import {
 
 type Mode = 'summarize' | 'describe' | 'log';
 
+type DamageEffectCategories = {
+  [key: string]: (item: SummaryEntry, mode: Mode) => SummaryEntry[];
+};
+
+const DAMAGE_EFFECT_CATEGORIES: DamageEffectCategories = {
+  'action:perform': (item, mode) => [
+    mode === 'summarize' && typeof item !== 'string'
+      ? (item as { title: string }).title
+      : item,
+  ],
+};
+
+function categorizeDamageEffects(
+  def: EffectDef,
+  item: SummaryEntry,
+  mode: Mode,
+): { actions: SummaryEntry[]; others: SummaryEntry[] } {
+  const key = `${def.type}:${def.method}`;
+  const handler = DAMAGE_EFFECT_CATEGORIES[key];
+  if (handler) return { actions: handler(item, mode), others: [] };
+  return { actions: [], others: [item] };
+}
+
 function baseEntry(eff: EffectDef<Record<string, unknown>>, mode: Mode) {
   const army = STATS[Stat.armyStrength];
   const castle = RESOURCES[Resource.castleHP];
@@ -72,41 +95,20 @@ function onCastleDamageEntry(
   const items: SummaryEntry[] = [];
   const actionItems: SummaryEntry[] = [];
 
-  defenderItems.forEach((item, i) => {
-    const def = defenderDefs[i]!;
-    if (def.type === 'action' && def.method === 'perform')
-      actionItems.push(
-        mode === 'summarize'
-          ? typeof item === 'string'
-            ? item
-            : (item as { title: string }).title
-          : item,
-      );
-    else if (typeof item === 'string') items.push(`${item} for opponent`);
-    else
-      items.push({
-        ...item,
-        title: `${item.title} for opponent`,
+  function collect(defs: EffectDef[], entries: SummaryEntry[], suffix: string) {
+    entries.forEach((item, i) => {
+      const def = defs[i]!;
+      const { actions, others } = categorizeDamageEffects(def, item, mode);
+      actionItems.push(...actions);
+      others.forEach((o) => {
+        if (typeof o === 'string') items.push(`${o} ${suffix}`);
+        else items.push({ ...o, title: `${o.title} ${suffix}` });
       });
-  });
+    });
+  }
 
-  attackerItems.forEach((item, i) => {
-    const def = attackerDefs[i]!;
-    if (def.type === 'action' && def.method === 'perform')
-      actionItems.push(
-        mode === 'summarize'
-          ? typeof item === 'string'
-            ? item
-            : (item as { title: string }).title
-          : item,
-      );
-    else if (typeof item === 'string') items.push(`${item} for you`);
-    else
-      items.push({
-        ...item,
-        title: `${item.title} for you`,
-      });
-  });
+  collect(defenderDefs, defenderItems, 'for opponent');
+  collect(attackerDefs, attackerItems, 'for you');
 
   const all = items.concat(actionItems);
   if (!all.length) return null;
