@@ -107,8 +107,10 @@ export class GameState {
   phaseIndex = 0;
   stepIndex = 0;
   players: PlayerState[];
-  constructor(aName = 'Player A', bName = 'Player B') {
+  devMode: boolean;
+  constructor(aName = 'Player A', bName = 'Player B', devMode = false) {
     this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];
+    this.devMode = devMode;
   }
   get active(): PlayerState {
     return this.players[this.currentPlayerIndex]!;

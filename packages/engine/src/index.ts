@@ -269,6 +269,7 @@ export function createEngine({
   start,
   rules,
   config,
+  devMode = false,
 }: {
   actions: Registry<ActionDef>;
   buildings: Registry<BuildingDef>;
@@ -278,6 +279,7 @@ export function createEngine({
   start: StartConfig;
   rules: RuleSet;
   config?: GameConfig;
+  devMode?: boolean;
 }) {
   registerCoreEffects();
   registerCoreEvaluators();
@@ -318,7 +320,7 @@ export function createEngine({
 
   const services = new Services(rules, developments);
   const passives = new PassiveManager();
-  const game = new GameState('Player A', 'Player B');
+  const game = new GameState('Player A', 'Player B', devMode);
 
   let actionCostResource: ResourceKey = '' as ResourceKey;
   let intersect: string[] | null = null;

@@ -8,8 +8,7 @@ import LogPanel from './components/LogPanel';
 import Button from './components/common/Button';
 
 function GameLayout() {
-  const { ctx, onExit, darkMode, onToggleDark, devMode, onToggleDev } =
-    useGameEngine();
+  const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
   return (
     <div className="p-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
       <div className="flex items-center justify-between mb-6">
@@ -18,12 +17,6 @@ function GameLayout() {
         </h1>
         {onExit && (
           <div className="flex items-center gap-2 ml-4">
-            <Button
-              onClick={onToggleDev}
-              variant={devMode ? 'success' : 'secondary'}
-            >
-              {`Dev Mode${devMode ? ': On' : ': Off'}`}
-            </Button>
             <Button onClick={onToggleDark} variant="secondary">
               {darkMode ? 'Light Mode' : 'Dark Mode'}
             </Button>
@@ -77,16 +70,19 @@ export default function Game({
   onExit,
   darkMode = true,
   onToggleDark = () => {},
+  devMode = false,
 }: {
   onExit?: () => void;
   darkMode?: boolean;
   onToggleDark?: () => void;
+  devMode?: boolean;
 }) {
   return (
     <GameProvider
       {...(onExit ? { onExit } : {})}
       darkMode={darkMode}
       onToggleDark={onToggleDark}
+      devMode={devMode}
     >
       <GameLayout />
     </GameProvider>

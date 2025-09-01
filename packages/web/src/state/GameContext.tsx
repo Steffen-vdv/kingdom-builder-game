@@ -99,7 +99,6 @@ interface GameEngineContextValue {
   darkMode: boolean;
   onToggleDark: () => void;
   devMode: boolean;
-  onToggleDev: () => void;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
@@ -109,11 +108,13 @@ export function GameProvider({
   onExit,
   darkMode = true,
   onToggleDark = () => {},
+  devMode = false,
 }: {
   children: React.ReactNode;
   onExit?: () => void;
   darkMode?: boolean;
   onToggleDark?: () => void;
+  devMode?: boolean;
 }) {
   const ctx = useMemo<EngineContext>(
     () =>
@@ -125,8 +126,9 @@ export function GameProvider({
         phases: PHASES,
         start: GAME_START,
         rules: RULES,
+        devMode,
       }),
-    [],
+    [devMode],
   );
   const [, setTick] = useState(0);
   const refresh = () => setTick((t) => t + 1);
@@ -139,8 +141,7 @@ export function GameProvider({
   const [phaseTimer, setPhaseTimer] = useState(0);
   const [phasePaused, setPhasePaused] = useState(false);
   const phasePausedRef = useRef(false);
-  const [devMode, setDevMode] = useState(true);
-  const onToggleDev = () => setDevMode((d) => !d);
+  const devModeValue = ctx.game.devMode;
   const [mainApStart, setMainApStart] = useState(0);
   const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
   const [phaseHistories, setPhaseHistories] = useState<
@@ -254,7 +255,7 @@ export function GameProvider({
   }
 
   function runDelay(total: number) {
-    const speed = devMode ? 0.01 : 1;
+    const speed = devModeValue ? 0.01 : 1;
     const adjustedTotal = total * speed;
     const step = 100 * speed;
     setPhaseTimer(0);
@@ -477,12 +478,12 @@ export function GameProvider({
   }, []);
 
   useEffect(() => {
-    if (!devMode) return;
+    if (!devModeValue) return;
     const phaseDef = ctx.phases[ctx.game.phaseIndex];
     if (!phaseDef?.action) return;
     DEV_AUTOMATIONS[ctx.activePlayer.id]?.run(ctx, enqueue);
   }, [
-    devMode,
+    devModeValue,
     ctx.game.phaseIndex,
     ctx.activePlayer.id,
     ctx.activePlayer.resources[actionCostResource],
@@ -511,8 +512,7 @@ export function GameProvider({
     updateMainPhaseStep,
     darkMode,
     onToggleDark,
-    devMode,
-    onToggleDev,
+    devMode: devModeValue,
     ...(onExit ? { onExit } : {}),
   };
 
