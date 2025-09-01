@@ -1,39 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import { performAction, getActionCosts } from '../../src/index.ts';
-import {
-  createActionRegistry,
-  Resource as CResource,
-  BUILDINGS,
-} from '@kingdom-builder/contents';
-import { createTestEngine } from '../helpers.ts';
-import type { EngineContext } from '../../src/index.ts';
-
-// Custom action that grants Town Charter for free to test the effect handler
-const actions = createActionRegistry();
-const [townCharterId] = Array.from(
-  (BUILDINGS as unknown as { map: Map<string, unknown> }).map.keys(),
-);
-actions.add('free_charter', {
-  id: 'free_charter',
-  name: 'Free Charter',
-  baseCosts: { [CResource.ap]: 0 },
-  effects: [{ type: 'building', method: 'add', params: { id: townCharterId } }],
-});
-
-function getExpandGoldCost(ctx: EngineContext) {
-  const costs = getActionCosts('expand', ctx);
-  return costs[CResource.gold] || 0;
-}
+import { performAction, getActionCosts, advance } from '../../src';
+import { Resource as CResource } from '@kingdom-builder/contents';
+import { createTestEngine } from '../helpers';
+import { createContentFactory } from '../factories/content';
 
 describe('building:add effect', () => {
   it('adds building and applies its passives', () => {
-    const ctx = createTestEngine({ actions });
-    ctx.activePlayer.ap =
-      ctx.buildings.get(townCharterId).costs[CResource.ap] ?? 0;
-    const before = getExpandGoldCost(ctx);
-    performAction('free_charter', ctx);
-    expect(ctx.activePlayer.buildings.has(townCharterId)).toBe(true);
-    const after = getExpandGoldCost(ctx);
-    expect(after).toBeGreaterThan(before);
+    const content = createContentFactory();
+    const target = content.action({ baseCosts: { [CResource.gold]: 4 } });
+    const building = content.building({
+      costs: { [CResource.gold]: 3 },
+      onBuild: [
+        {
+          type: 'cost_mod',
+          method: 'add',
+          params: {
+            id: 'mod',
+            actionId: target.id,
+            key: CResource.gold,
+            amount: 2,
+          },
+        },
+      ],
+    });
+    const grant = content.action({
+      effects: [
+        { type: 'building', method: 'add', params: { id: building.id } },
+      ],
+    });
+    const ctx = createTestEngine(content);
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
+    const before = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+    const cost = getActionCosts(grant.id, ctx, { id: building.id });
+    ctx.activePlayer.gold = cost[CResource.gold] ?? 0;
+    ctx.activePlayer.ap = cost[CResource.ap] ?? 0;
+    performAction(grant.id, ctx, { id: building.id });
+    const after = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+    const bonus = building.onBuild?.find(
+      (e) => e.type === 'cost_mod' && e.method === 'add',
+    )?.params?.['amount'] as number;
+    expect(ctx.activePlayer.buildings.has(building.id)).toBe(true);
+    expect(after).toBe(before + bonus);
   });
 });

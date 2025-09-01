@@ -1,17 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { Services } from '../../src/services/index.ts';
-import { PlayerState, Land } from '../../src/state/index.ts';
-import { createTestEngine } from '../helpers.ts';
-import {
-  DEVELOPMENTS,
-  RULES,
-  Resource as CResource,
-} from '@kingdom-builder/contents';
-import { getActionCosts } from '../../src/index.ts';
+import { Services } from '../../src/services';
+import { PlayerState, Land } from '../../src/state';
+import { createTestEngine } from '../helpers';
+import { RULES, Resource as CResource } from '@kingdom-builder/contents';
+import { getActionCosts } from '../../src';
+import { createContentFactory } from '../factories/content';
 
 describe('Services', () => {
   it('evaluates resource tiers correctly', () => {
-    const services = new Services(RULES, DEVELOPMENTS);
+    const services = new Services(RULES, createContentFactory().developments);
     const getTierEffect = (value: number) =>
       RULES.tierDefinitions.filter((t) => t.threshold <= value).at(-1)
         ?.effect || {};
@@ -30,22 +27,19 @@ describe('Services', () => {
   });
 
   it('calculates population cap from houses on land', () => {
-    const services = new Services(RULES, DEVELOPMENTS);
+    const content = createContentFactory();
+    const house = content.development({ populationCap: 1 });
+    const services = new Services(RULES, content.developments);
     const player = new PlayerState('A', 'Test');
-    const [farmId, houseId] = Array.from(
-      (DEVELOPMENTS as unknown as { map: Map<string, unknown> }).map.keys(),
-    );
     const land1 = new Land('l1', 1);
-    land1.developments.push(houseId);
+    land1.developments.push(house.id);
     const land2 = new Land('l2', 2);
-    land2.developments.push(farmId, houseId);
+    land2.developments.push(house.id, house.id);
     player.lands = [land1, land2];
     const cap = services.popcap.getCap(player);
-    const houseCap =
-      DEVELOPMENTS.get(houseId).onBuild.find((e) => e.type === 'stat')
-        ?.params?.['amount'] ?? 0;
+    const houseCap = house.populationCap || 0;
     const baseCap = RULES.basePopulationCap;
-    expect(cap).toBe(baseCap + houseCap * 2);
+    expect(cap).toBe(baseCap + houseCap * 3);
   });
 });
 
@@ -91,7 +85,6 @@ describe('PassiveManager', () => {
     ctx.passives.removePassive('shiny', ctx);
     expect(ctx.passives.list(ctx.activePlayer.id)).not.toContain('shiny');
     expect(ctx.activePlayer.gold).toBe(before);
-    // removing non-existent passive is a no-op
     ctx.passives.removePassive('unknown', ctx);
   });
 });
