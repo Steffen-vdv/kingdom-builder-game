@@ -58,6 +58,19 @@ function getDevelopmentInfo(ctx: EngineContext, id: string) {
   }
 }
 
+function formatGainFrom(
+  source: string,
+  amount: number,
+  options: { key?: string; detailed?: boolean } = {},
+) {
+  const { key, detailed } = options;
+  const resIcon = key ? RESOURCES[key as ResourceKey]?.icon || key : undefined;
+  const more = resIcon
+    ? `${resIcon}+${amount} more${detailed ? ' of that resource' : ''}`
+    : `+${amount} more of that resource`;
+  return `${modifierInfo.result.icon} Every time you gain resources from ${source}, gain ${more}`;
+}
+
 function formatDevelopment(
   eff: EffectDef,
   evaluation: { id: string },
@@ -71,13 +84,11 @@ function formatDevelopment(
   );
   if (resource) {
     const key = resource.params?.['key'] as string;
-    const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(resource.params?.['amount']);
-    const suffix = detailed ? ' of that resource' : '';
-    return `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${name}, gain ${resIcon}+${amount} more${suffix}`;
+    return formatGainFrom(`${icon} ${name}`, amount, { key, detailed });
   }
   const amount = Number(eff.params?.['amount'] ?? 0);
-  return `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${name}, gain +${amount} more of that resource`;
+  return formatGainFrom(`${icon} ${name}`, amount);
 }
 
 function formatPopulation(
@@ -87,7 +98,10 @@ function formatPopulation(
 ) {
   const { icon, name } = getActionInfo(ctx, evaluation.id);
   const amount = Number(eff.params?.['amount'] ?? 0);
-  return `${modifierInfo.result.icon} Every time you gain resources from ${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${icon} ${name}, gain +${amount} more of that resource`;
+  return formatGainFrom(
+    `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${icon} ${name}`,
+    amount,
+  );
 }
 
 registerModifierEvalHandler('development', {
