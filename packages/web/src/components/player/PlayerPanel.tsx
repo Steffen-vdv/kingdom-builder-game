@@ -10,17 +10,26 @@ import { useAnimate } from '../../utils/useAutoAnimate';
 interface PlayerPanelProps {
   player: EngineContext['activePlayer'];
   className?: string;
+  isActive?: boolean;
 }
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
   player,
   className = '',
+  isActive = false,
 }) => {
   const animateBar = useAnimate<HTMLDivElement>();
   const animateSections = useAnimate<HTMLDivElement>();
   return (
     <div className={`player-panel h-full flex flex-col space-y-1 ${className}`}>
-      <h3 className="font-semibold">{player.name}</h3>
+      <h3 className="font-semibold">
+        {isActive && (
+          <span role="img" aria-label="active player" className="mr-1">
+            👑
+          </span>
+        )}
+        {player.name}
+      </h3>
       <div
         ref={animateBar}
         className="panel-card flex flex-wrap items-center gap-2 px-3 py-2 w-fit"
