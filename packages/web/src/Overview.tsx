@@ -115,8 +115,8 @@ export default function Overview({ onBack }: OverviewProps) {
             extra {icons.ap} AP each round.
           </li>
           <li>
-            {POPULATION_ROLES[PopulationRole.Commander].icon} Commander – boosts
-            your army for {icons.attack} raids.
+            {POPULATION_ROLES[PopulationRole.Legion].icon} Legion – boosts your
+            army for {icons.attack} raids.
           </li>
           <li>
             {POPULATION_ROLES[PopulationRole.Fortifier].icon} Fortifier –

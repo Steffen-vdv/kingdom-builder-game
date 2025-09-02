@@ -82,9 +82,9 @@ describe('Growth phase', () => {
     }
   });
 
-  it('grows commander and fortifier stats', () => {
+  it('grows legion and fortifier stats', () => {
     const ctx = createTestEngine();
-    ctx.activePlayer.population[PopulationRole.Commander] = 1;
+    ctx.activePlayer.population[PopulationRole.Legion] = 1;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 1;
     ctx.activePlayer.stats[Stat.armyStrength] = 8;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 4;
@@ -105,7 +105,7 @@ describe('Growth phase', () => {
 
   it('scales strength additively with multiple leaders', () => {
     const ctx = createTestEngine();
-    ctx.activePlayer.population[PopulationRole.Commander] = 2;
+    ctx.activePlayer.population[PopulationRole.Legion] = 2;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 2;
     ctx.activePlayer.stats[Stat.armyStrength] = 10;
     ctx.activePlayer.stats[Stat.fortificationStrength] = 10;
@@ -136,36 +136,36 @@ describe('Growth phase', () => {
     it.each([
       {
         label: '0 fortifiers',
-        commanders: 0,
+        legions: 0,
         fortifiers: 0,
         expArmy: Math.ceil(baseArmy + baseArmy * baseGrowth * 0),
         expFort: Math.ceil(baseFort + baseFort * baseGrowth * 0),
       },
       {
         label: '3 fortifiers',
-        commanders: 0,
+        legions: 0,
         fortifiers: 3,
         expArmy: Math.ceil(baseArmy + baseArmy * baseGrowth * 0),
         expFort: Math.ceil(baseFort + baseFort * baseGrowth * 3),
       },
       {
         label: '15 fortifiers',
-        commanders: 0,
+        legions: 0,
         fortifiers: 15,
         expArmy: Math.ceil(baseArmy + baseArmy * baseGrowth * 0),
         expFort: Math.ceil(baseFort + baseFort * baseGrowth * 15),
       },
       {
-        label: '5 fortifiers and 5 commanders',
-        commanders: 5,
+        label: '5 fortifiers and 5 legions',
+        legions: 5,
         fortifiers: 5,
         expArmy: Math.ceil(baseArmy + baseArmy * baseGrowth * 5),
         expFort: Math.ceil(baseFort + baseFort * baseGrowth * 5),
       },
-    ])('$label', ({ commanders, fortifiers, expArmy, expFort }) => {
+    ])('$label', ({ legions, fortifiers, expArmy, expFort }) => {
       const ctx = createTestEngine();
       const player = ctx.activePlayer;
-      player.population[PopulationRole.Commander] = commanders;
+      player.population[PopulationRole.Legion] = legions;
       player.population[PopulationRole.Fortifier] = fortifiers;
       player.stats[Stat.armyStrength] = baseArmy;
       player.stats[Stat.fortificationStrength] = baseFort;
@@ -185,7 +185,7 @@ describe('Growth phase', () => {
     it('never drops below zero', () => {
       const ctx = createTestEngine();
       const player = ctx.activePlayer;
-      player.population[PopulationRole.Commander] = 1;
+      player.population[PopulationRole.Legion] = 1;
       player.population[PopulationRole.Fortifier] = 1;
       player.stats[Stat.armyStrength] = -5;
       player.stats[Stat.fortificationStrength] = -5;

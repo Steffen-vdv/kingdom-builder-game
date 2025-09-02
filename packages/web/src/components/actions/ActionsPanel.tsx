@@ -139,7 +139,7 @@ function RaisePopOptions({
     <>
       {[
         PopulationRole.Council,
-        PopulationRole.Commander,
+        PopulationRole.Legion,
         PopulationRole.Fortifier,
       ].map((role) => {
         const costsBag = getActionCosts(action.id, ctx);
