@@ -6,25 +6,39 @@ import ActionsPanel from './components/actions/ActionsPanel';
 import PhasePanel from './components/phases/PhasePanel';
 import LogPanel from './components/LogPanel';
 import Button from './components/common/Button';
+import Tooltip from './components/common/Tooltip';
+import HelpModal from './components/HelpModal';
 
 function GameLayout() {
   const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
+  const [helpOpen, setHelpOpen] = React.useState(false);
   return (
     <div className="p-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-center flex-1">
           Kingdom Builder
         </h1>
-        {onExit && (
-          <div className="flex items-center gap-2 ml-4">
-            <Button onClick={onToggleDark} variant="secondary">
-              {darkMode ? 'Light Mode' : 'Dark Mode'}
+        <div className="flex items-center gap-2 ml-4">
+          <Tooltip content="Game overview">
+            <Button
+              variant="ghost"
+              onClick={() => setHelpOpen(true)}
+              aria-label="Show help"
+            >
+              ?
             </Button>
-            <Button onClick={onExit} variant="danger">
-              Quit
-            </Button>
-          </div>
-        )}
+          </Tooltip>
+          {onExit && (
+            <>
+              <Button onClick={onToggleDark} variant="secondary">
+                {darkMode ? 'Light Mode' : 'Dark Mode'}
+              </Button>
+              <Button onClick={onExit} variant="danger">
+                Quit
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-x-4 gap-y-6 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_30rem]">
@@ -61,6 +75,7 @@ function GameLayout() {
           <HoverCard />
         </div>
       </div>
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

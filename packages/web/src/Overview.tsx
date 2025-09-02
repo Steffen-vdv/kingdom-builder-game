@@ -16,7 +16,7 @@ interface OverviewProps {
   onBack: () => void;
 }
 
-export default function Overview({ onBack }: OverviewProps) {
+export function OverviewContent() {
   const icons = {
     expand: actionInfo.get('expand')?.icon,
     build: actionInfo.get('build')?.icon,
@@ -37,7 +37,7 @@ export default function Overview({ onBack }: OverviewProps) {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-4">
+    <>
       <h1 className="text-3xl font-bold text-center mb-4">Game Overview</h1>
       <p>
         Welcome to <strong>Kingdom Builder</strong>, a brisk duel of wits where
@@ -138,6 +138,14 @@ export default function Overview({ onBack }: OverviewProps) {
           foe!
         </p>
       </section>
+    </>
+  );
+}
+
+export default function Overview({ onBack }: OverviewProps) {
+  return (
+    <div className="p-6 max-w-2xl mx-auto space-y-4">
+      <OverviewContent />
       <button
         className="border px-4 py-2 hoverable cursor-pointer"
         onClick={onBack}
