@@ -78,7 +78,7 @@ const LandTile: React.FC<{
                 <span className="flex-none">
                   {ctx.developments.get(devId)?.icon}
                 </span>
-                <span className="flex-1 truncate">{name}</span>
+                <span className="flex-1 min-w-0 truncate">{name}</span>
               </span>
             );
           }
@@ -105,7 +105,7 @@ const LandTile: React.FC<{
               }}
             >
               <span className="flex-none">{SLOT_INFO.icon}</span>
-              <span className="flex-1 truncate">-empty-</span>
+              <span className="flex-1 min-w-0 truncate">-empty-</span>
             </span>
           );
         })}
