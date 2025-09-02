@@ -1,6 +1,6 @@
 import type { EffectDef, EffectHandler } from '.';
 import type { EngineContext } from '../context';
-import { Resource, type PlayerState } from '../state';
+import type { PlayerState, ResourceKey, StatKey } from '../state';
 import type { ResourceGain } from '../services';
 import { runEffects } from '.';
 import { collectTriggerEffects } from '../triggers';
@@ -10,10 +10,15 @@ export interface AttackCalcOptions {
   ignoreFortification?: boolean;
 }
 
+export type AttackTarget =
+  | { type: 'resource'; key: ResourceKey }
+  | { type: 'stat'; key: StatKey };
+
 export function resolveAttack(
   defender: PlayerState,
   damage: number,
   ctx: EngineContext,
+  target: AttackTarget,
   opts: AttackCalcOptions = {},
 ): number {
   const original = ctx.game.currentPlayerIndex;
@@ -43,12 +48,19 @@ export function resolveAttack(
   if (fortDamage > 0)
     defender.fortificationStrength =
       (defender.fortificationStrength || 0) - fortDamage;
-  const castleDamage = reduced - fortDamage;
-  if (castleDamage > 0)
-    defender.resources[Resource.castleHP!] = Math.max(
-      0,
-      (defender.resources[Resource.castleHP!] || 0) - castleDamage,
-    );
+  const targetDamage = reduced - fortDamage;
+  if (targetDamage > 0) {
+    if (target.type === 'stat')
+      defender.stats[target.key] = Math.max(
+        0,
+        (defender.stats[target.key] || 0) - targetDamage,
+      );
+    else
+      defender.resources[target.key] = Math.max(
+        0,
+        (defender.resources[target.key] || 0) - targetDamage,
+      );
+  }
 
   ctx.game.currentPlayerIndex = defenderIndex;
   const post = collectTriggerEffects('onAttackResolved', ctx, defender);
@@ -56,28 +68,25 @@ export function resolveAttack(
   if ((defender.fortificationStrength || 0) < 0)
     defender.fortificationStrength = 0;
   ctx.game.currentPlayerIndex = original;
-  return castleDamage;
+  return targetDamage;
 }
 
 export const attackPerform: EffectHandler = (effect, ctx) => {
   const attacker = ctx.activePlayer;
   const defender = ctx.opponent;
+  const params = effect.params || {};
+  const target = params['target'] as AttackTarget;
+  if (!target) return;
   const mods: ResourceGain[] = [
-    { key: Resource.castleHP!, amount: attacker.armyStrength as number },
+    { key: target.key, amount: attacker.armyStrength as number },
   ];
   ctx.passives.runEvaluationMods('attack:power', ctx, mods);
   const damage = mods[0]!.amount;
-  const castleDamage = resolveAttack(
-    defender,
-    damage,
-    ctx,
-    effect.params as AttackCalcOptions,
-  );
-  if (castleDamage > 0) {
-    const onDamage = (effect.params?.['onCastleDamage'] || {}) as {
-      attacker?: EffectDef[];
-      defender?: EffectDef[];
-    };
+  const { onDamage, ...calcOpts } = params as {
+    onDamage?: { attacker?: EffectDef[]; defender?: EffectDef[] };
+  } & AttackCalcOptions;
+  const targetDamage = resolveAttack(defender, damage, ctx, target, calcOpts);
+  if (targetDamage > 0 && onDamage) {
     if (onDamage.attacker?.length) runEffects(onDamage.attacker, ctx);
     if (onDamage.defender?.length) {
       const original = ctx.game.currentPlayerIndex;

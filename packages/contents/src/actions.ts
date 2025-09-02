@@ -187,16 +187,17 @@ export function createActionRegistry() {
           .param('operator', 'lt')
           .param('right', {
             type: 'population',
-            params: { role: PopulationRole.Commander },
+            params: { role: PopulationRole.Legion },
           })
           .message(
-            `${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Commander].icon} ${POPULATION_ROLES[PopulationRole.Commander].label}`,
+            `${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Legion].icon} ${POPULATION_ROLES[PopulationRole.Legion].label}`,
           )
           .build(),
       )
       .effect(
         effect('attack', 'perform')
-          .param('onCastleDamage', {
+          .param('target', { type: 'resource', key: Resource.castleHP })
+          .param('onDamage', {
             attacker: [
               effect(Types.Resource, ResourceMethods.ADD)
                 .params({ key: Resource.happiness, amount: 1 })

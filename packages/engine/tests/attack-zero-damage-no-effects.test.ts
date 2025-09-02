@@ -4,7 +4,7 @@ import { Resource } from '../src/state/index.ts';
 import { createTestEngine } from './helpers.ts';
 
 describe('attack:perform', () => {
-  it('does not run onCastleDamage effects when damage is fully absorbed', () => {
+  it('does not run onDamage effects when damage is fully absorbed', () => {
     const ctx = createTestEngine();
     const attacker = ctx.activePlayer;
     const defender = ctx.opponent;
@@ -30,7 +30,8 @@ describe('attack:perform', () => {
       type: 'attack',
       method: 'perform',
       params: {
-        onCastleDamage: {
+        target: { type: 'resource', key: Resource.castleHP },
+        onDamage: {
           attacker: [
             {
               type: 'resource',

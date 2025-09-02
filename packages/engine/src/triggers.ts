@@ -16,14 +16,50 @@ export function collectTriggerEffects(
   const effects: EffectDef[] = [];
   for (const [role, count] of Object.entries(player.population)) {
     const populationDefinition = ctx.populations.get(role);
+    if (trigger === 'onPayUpkeepStep' && populationDefinition?.upkeep) {
+      for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
+        effects.push({
+          type: 'resource',
+          method: 'remove',
+          params: { key, amount: amount * Number(count) },
+        });
+      }
+    }
     const list = getEffects(populationDefinition, trigger);
-    if (!list) continue;
-    for (let i = 0; i < Number(count); i++)
-      effects.push(...list.map((e) => ({ ...e })));
+    if (list)
+      for (let i = 0; i < Number(count); i++)
+        effects.push(...list.map((e) => ({ ...e })));
   }
   for (const land of player.lands) {
+    if (trigger === 'onPayUpkeepStep' && land.upkeep) {
+      for (const [key, amount] of Object.entries(land.upkeep)) {
+        effects.push({
+          type: 'resource',
+          method: 'remove',
+          params: { key, amount },
+        });
+      }
+    }
+    const landList = getEffects(land, trigger);
+    if (landList)
+      effects.push(
+        ...applyParamsToEffects(landList, { landId: land.id }).map((e) => ({
+          ...e,
+        })),
+      );
     for (const id of land.developments) {
       const developmentDefinition = ctx.developments.get(id);
+      if (trigger === 'onPayUpkeepStep' && developmentDefinition?.upkeep) {
+        for (const [key, amount] of Object.entries(
+          developmentDefinition.upkeep,
+        )) {
+          effects.push({
+            type: 'resource',
+            method: 'remove',
+            params: { key, amount },
+          });
+        }
+      }
       const list = getEffects(developmentDefinition, trigger);
       if (!list) continue;
       effects.push(
@@ -35,6 +71,15 @@ export function collectTriggerEffects(
   }
   for (const id of player.buildings) {
     const buildingDefinition = ctx.buildings.get(id);
+    if (trigger === 'onPayUpkeepStep' && buildingDefinition?.upkeep) {
+      for (const [key, amount] of Object.entries(buildingDefinition.upkeep)) {
+        effects.push({
+          type: 'resource',
+          method: 'remove',
+          params: { key, amount },
+        });
+      }
+    }
     const list = getEffects(buildingDefinition, trigger);
     if (list) effects.push(...list.map((e) => ({ ...e })));
   }

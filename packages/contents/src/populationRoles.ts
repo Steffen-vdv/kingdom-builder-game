@@ -6,7 +6,7 @@ import {
 
 export const PopulationRole = {
   Council: 'council',
-  Commander: 'commander',
+  Legion: 'legion',
   Fortifier: 'fortifier',
   Citizen: 'citizen',
 } as const;
@@ -21,11 +21,11 @@ const defs: PopulationRoleInfo[] = [
       'The Council advises the crown and generates Action Points during the Growth phase. Keeping them employed fuels your economy.',
     )
     .build(),
-  populationRole(PopulationRole.Commander)
+  populationRole(PopulationRole.Legion)
     .icon('🎖️')
-    .label('Commander')
+    .label('Legion')
     .description(
-      'Commanders lead your forces, boosting Army Strength and training troops each Growth phase.',
+      'Legions lead your forces, boosting Army Strength and training troops each Growth phase.',
     )
     .build(),
   populationRole(PopulationRole.Fortifier)

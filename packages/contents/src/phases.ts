@@ -1,15 +1,18 @@
-import { Resource } from './resources';
 import { Stat } from './stats';
 import { PopulationRole } from './populationRoles';
 import {
   effect,
   Types,
-  ResourceMethods,
   StatMethods,
   phase,
   step,
   type PhaseDef,
 } from './config/builders';
+import {
+  ON_GAIN_AP_STEP,
+  ON_GAIN_INCOME_STEP,
+  ON_PAY_UPKEEP_STEP,
+} from './defs';
 
 export const PHASES: PhaseDef[] = [
   phase('growth')
@@ -24,37 +27,15 @@ export const PHASES: PhaseDef[] = [
       step('gain-income')
         .title('Gain Income')
         .icon('💰')
-        .effect(
-          effect()
-            .evaluator('development', { id: 'farm' })
-            .effect(
-              effect(Types.Resource, ResourceMethods.ADD)
-                .params({ key: Resource.gold, amount: 2 })
-                .build(),
-            )
-            .build(),
-        ),
+        .triggers(ON_GAIN_INCOME_STEP),
     )
-    .step(
-      step('gain-ap')
-        .title('Gain Action Points')
-        .effect(
-          effect()
-            .evaluator('population', { role: PopulationRole.Council })
-            .effect(
-              effect(Types.Resource, ResourceMethods.ADD)
-                .params({ key: Resource.ap, amount: 1 })
-                .build(),
-            )
-            .build(),
-        ),
-    )
+    .step(step('gain-ap').title('Gain Action Points').triggers(ON_GAIN_AP_STEP))
     .step(
       step('raise-strength')
         .title('Raise Strength')
         .effect(
           effect()
-            .evaluator('population', { role: PopulationRole.Commander })
+            .evaluator('population', { role: PopulationRole.Legion })
             .effect(
               effect(Types.Stat, StatMethods.ADD_PCT)
                 .params({ key: Stat.armyStrength, percentStat: Stat.growth })
@@ -87,40 +68,7 @@ export const PHASES: PhaseDef[] = [
         .title('Resolve dynamic triggers')
         .triggers('onUpkeepPhase'),
     )
-    .step(
-      step('pay-upkeep')
-        .title('Pay Upkeep')
-        .effect(
-          effect()
-            .evaluator('population', { role: PopulationRole.Council })
-            .effect(
-              effect(Types.Resource, ResourceMethods.REMOVE)
-                .params({ key: Resource.gold, amount: 2 })
-                .build(),
-            )
-            .build(),
-        )
-        .effect(
-          effect()
-            .evaluator('population', { role: PopulationRole.Commander })
-            .effect(
-              effect(Types.Resource, ResourceMethods.REMOVE)
-                .params({ key: Resource.gold, amount: 1 })
-                .build(),
-            )
-            .build(),
-        )
-        .effect(
-          effect()
-            .evaluator('population', { role: PopulationRole.Fortifier })
-            .effect(
-              effect(Types.Resource, ResourceMethods.REMOVE)
-                .params({ key: Resource.gold, amount: 1 })
-                .build(),
-            )
-            .build(),
-        ),
-    )
+    .step(step('pay-upkeep').title('Pay Upkeep').triggers(ON_PAY_UPKEEP_STEP))
     .step(
       step('war-recovery')
         .title('War recovery')

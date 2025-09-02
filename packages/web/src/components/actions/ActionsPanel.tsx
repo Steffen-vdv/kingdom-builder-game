@@ -139,12 +139,13 @@ function RaisePopOptions({
     <>
       {[
         PopulationRole.Council,
-        PopulationRole.Commander,
+        PopulationRole.Legion,
         PopulationRole.Fortifier,
       ].map((role) => {
         const costsBag = getActionCosts(action.id, ctx);
         const costs: Record<string, number> = {};
         for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+        const upkeep = ctx.populations.get(role)?.upkeep;
         const requirements = getActionRequirements(action.id, ctx).map(
           formatRequirement,
         );
@@ -173,6 +174,7 @@ function RaisePopOptions({
               </>
             }
             costs={costs}
+            upkeep={upkeep}
             playerResources={ctx.activePlayer.resources}
             actionCostResource={actionCostResource}
             requirements={requirements}
@@ -192,6 +194,7 @@ function RaisePopOptions({
                 effects,
                 requirements,
                 costs,
+                upkeep,
                 ...(description && { description }),
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
               });
@@ -278,6 +281,7 @@ function DevelopOptions({
           });
           const costs: Record<string, number> = {};
           for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+          const upkeep = ctx.developments.get(d.id)?.upkeep;
           const requirements = hasDevelopLand
             ? []
             : [
@@ -307,6 +311,7 @@ function DevelopOptions({
                 </>
               }
               costs={costs}
+              upkeep={upkeep}
               playerResources={ctx.activePlayer.resources}
               actionCostResource={actionCostResource}
               requirements={requirements}
@@ -331,6 +336,7 @@ function DevelopOptions({
                   effects,
                   requirements,
                   costs,
+                  upkeep,
                   ...(description && { description }),
                   ...(!implemented && {
                     description: 'Not implemented yet',
@@ -394,6 +400,7 @@ function BuildOptions({
             : !canPay
               ? 'Cannot pay costs'
               : undefined;
+          const upkeep = ctx.buildings.get(b.id)?.upkeep;
           return (
             <ActionCard
               key={b.id}
@@ -403,6 +410,7 @@ function BuildOptions({
                 </>
               }
               costs={costs}
+              upkeep={upkeep}
               playerResources={ctx.activePlayer.resources}
               actionCostResource={actionCostResource}
               requirements={requirements}
@@ -424,6 +432,7 @@ function BuildOptions({
                   effects,
                   requirements,
                   costs,
+                  upkeep,
                   ...(description && { description }),
                   ...(!implemented && {
                     description: 'Not implemented yet',

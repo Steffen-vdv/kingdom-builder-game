@@ -222,6 +222,11 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
     this.config.costs[key] = amount;
     return this;
   }
+  upkeep(key: ResourceKey, amount: number) {
+    this.config.upkeep = this.config.upkeep || {};
+    (this.config.upkeep as Record<ResourceKey, number>)[key] = amount;
+    return this;
+  }
   onBuild(effect: EffectConfig) {
     this.config.onBuild = this.config.onBuild || [];
     this.config.onBuild.push(effect);
@@ -235,6 +240,21 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
   onUpkeepPhase(effect: EffectConfig) {
     this.config.onUpkeepPhase = this.config.onUpkeepPhase || [];
     this.config.onUpkeepPhase.push(effect);
+    return this;
+  }
+  onPayUpkeepStep(effect: EffectConfig) {
+    this.config.onPayUpkeepStep = this.config.onPayUpkeepStep || [];
+    this.config.onPayUpkeepStep.push(effect);
+    return this;
+  }
+  onGainIncomeStep(effect: EffectConfig) {
+    this.config.onGainIncomeStep = this.config.onGainIncomeStep || [];
+    this.config.onGainIncomeStep.push(effect);
+    return this;
+  }
+  onGainAPStep(effect: EffectConfig) {
+    this.config.onGainAPStep = this.config.onGainAPStep || [];
+    this.config.onGainAPStep.push(effect);
     return this;
   }
   onBeforeAttacked(effect: EffectConfig) {
@@ -253,6 +273,11 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
   constructor() {
     super({});
   }
+  upkeep(key: ResourceKey, amount: number) {
+    this.config.upkeep = this.config.upkeep || {};
+    (this.config.upkeep as Record<ResourceKey, number>)[key] = amount;
+    return this;
+  }
   populationCap(amount: number) {
     this.config.populationCap = amount;
     return this;
@@ -265,6 +290,21 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
   onGrowthPhase(effect: EffectConfig) {
     this.config.onGrowthPhase = this.config.onGrowthPhase || [];
     this.config.onGrowthPhase.push(effect);
+    return this;
+  }
+  onPayUpkeepStep(effect: EffectConfig) {
+    this.config.onPayUpkeepStep = this.config.onPayUpkeepStep || [];
+    this.config.onPayUpkeepStep.push(effect);
+    return this;
+  }
+  onGainIncomeStep(effect: EffectConfig) {
+    this.config.onGainIncomeStep = this.config.onGainIncomeStep || [];
+    this.config.onGainIncomeStep.push(effect);
+    return this;
+  }
+  onGainAPStep(effect: EffectConfig) {
+    this.config.onGainAPStep = this.config.onGainAPStep || [];
+    this.config.onGainAPStep.push(effect);
     return this;
   }
   onBeforeAttacked(effect: EffectConfig) {
@@ -287,6 +327,11 @@ export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
   constructor() {
     super({});
   }
+  upkeep(key: ResourceKey, amount: number) {
+    this.config.upkeep = this.config.upkeep || {};
+    (this.config.upkeep as Record<ResourceKey, number>)[key] = amount;
+    return this;
+  }
   onAssigned(effect: EffectConfig) {
     this.config.onAssigned = this.config.onAssigned || [];
     this.config.onAssigned.push(effect);
@@ -305,6 +350,21 @@ export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
   onUpkeepPhase(effect: EffectConfig) {
     this.config.onUpkeepPhase = this.config.onUpkeepPhase || [];
     this.config.onUpkeepPhase.push(effect);
+    return this;
+  }
+  onPayUpkeepStep(effect: EffectConfig) {
+    this.config.onPayUpkeepStep = this.config.onPayUpkeepStep || [];
+    this.config.onPayUpkeepStep.push(effect);
+    return this;
+  }
+  onGainIncomeStep(effect: EffectConfig) {
+    this.config.onGainIncomeStep = this.config.onGainIncomeStep || [];
+    this.config.onGainIncomeStep.push(effect);
+    return this;
+  }
+  onGainAPStep(effect: EffectConfig) {
+    this.config.onGainAPStep = this.config.onGainAPStep || [];
+    this.config.onGainAPStep.push(effect);
     return this;
   }
 }
@@ -338,11 +398,21 @@ class InfoBuilder<T extends InfoDef> {
   }
 }
 
-export interface ResourceInfo extends InfoDef {}
+export interface ResourceInfo extends InfoDef {
+  /**
+   * Arbitrary tags to mark special behaviours or rules for the resource.
+   * These tags are interpreted by the engine or other systems at runtime.
+   */
+  tags?: string[];
+}
 
 class ResourceBuilder extends InfoBuilder<ResourceInfo> {
   constructor(key: ResourceKey) {
     super(key);
+  }
+  tag(tag: string) {
+    this.config.tags = [...(this.config.tags || []), tag];
+    return this;
   }
 }
 

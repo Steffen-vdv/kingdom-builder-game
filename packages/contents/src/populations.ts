@@ -24,13 +24,9 @@ export function createPopulationRegistry() {
       .id(PopulationRole.Council)
       .name('Council')
       .icon('⚖️')
-      .onAssigned(
+      .upkeep(Resource.gold, 2)
+      .onGainAPStep(
         effect(Types.Resource, ResourceMethods.ADD)
-          .params({ key: Resource.ap, amount: 1 })
-          .build(),
-      )
-      .onUnassigned(
-        effect(Types.Resource, ResourceMethods.REMOVE)
           .params({ key: Resource.ap, amount: 1 })
           .build(),
       )
@@ -38,14 +34,15 @@ export function createPopulationRegistry() {
   );
 
   registry.add(
-    PopulationRole.Commander,
+    PopulationRole.Legion,
     population()
-      .id(PopulationRole.Commander)
-      .name('Commander')
+      .id(PopulationRole.Legion)
+      .name('Legion')
       .icon('🎖️')
+      .upkeep(Resource.gold, 1)
       .onAssigned(
         effect(Types.Passive, PassiveMethods.ADD)
-          .param('id', 'commander_$player_$index')
+          .param('id', 'legion_$player_$index')
           .effect(
             effect(Types.Stat, StatMethods.ADD)
               .params({ key: Stat.armyStrength, amount: 1 })
@@ -55,7 +52,7 @@ export function createPopulationRegistry() {
       )
       .onUnassigned(
         effect(Types.Passive, PassiveMethods.REMOVE)
-          .param('id', 'commander_$player_$index')
+          .param('id', 'legion_$player_$index')
           .build(),
       )
       .build(),
@@ -67,6 +64,7 @@ export function createPopulationRegistry() {
       .id(PopulationRole.Fortifier)
       .name('Fortifier')
       .icon('🔧')
+      .upkeep(Resource.gold, 1)
       .onAssigned(
         effect(Types.Passive, PassiveMethods.ADD)
           .param('id', 'fortifier_$player_$index')

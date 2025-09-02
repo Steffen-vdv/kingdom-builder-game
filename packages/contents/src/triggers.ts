@@ -27,6 +27,21 @@ export const TRIGGER_INFO = {
     future: 'After having been attacked',
     past: 'After attack',
   },
+  onPayUpkeepStep: {
+    icon: '🧹',
+    future: 'During upkeep step',
+    past: 'Upkeep step',
+  },
+  onGainIncomeStep: {
+    icon: '💰',
+    future: 'During income step',
+    past: 'Income step',
+  },
+  onGainAPStep: {
+    icon: '⚡',
+    future: 'During AP step',
+    past: 'AP step',
+  },
   mainPhase: {
     icon: PHASES.find((p) => p.id === 'main')?.icon || '🎯',
     future: '',

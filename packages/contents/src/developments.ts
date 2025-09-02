@@ -1,5 +1,6 @@
 import { Registry } from '@kingdom-builder/engine/registry';
 import { Stat } from './stats';
+import { Resource } from './resources';
 import { developmentSchema } from '@kingdom-builder/engine/config/schema';
 import {
   development,
@@ -7,6 +8,7 @@ import {
   Types,
   StatMethods,
   DevelopmentMethods,
+  ResourceMethods,
 } from './config/builders';
 import type { DevelopmentDef } from './defs';
 
@@ -18,7 +20,21 @@ export function createDevelopmentRegistry() {
   );
 
   registry.add('farm', {
-    ...development().id('farm').name('Farm').icon('🌾').build(),
+    ...development()
+      .id('farm')
+      .name('Farm')
+      .icon('🌾')
+      .onGainIncomeStep(
+        effect()
+          .evaluator('development', { id: '$id' })
+          .effect(
+            effect(Types.Resource, ResourceMethods.ADD)
+              .params({ key: Resource.gold, amount: 2 })
+              .build(),
+          )
+          .build(),
+      )
+      .build(),
     order: 2,
   });
 
