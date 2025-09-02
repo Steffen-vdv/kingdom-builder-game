@@ -223,7 +223,7 @@ function BasicOptions({
           (Effects take place immediately, unless stated otherwise)
         </span>
       </h3>
-      <div className="grid grid-cols-4 gap-2 mt-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
         <GenericActions
           actions={actions}
           summaries={summaries}
@@ -269,7 +269,7 @@ function DevelopOptions({
           (Effects take place on build and last until development is removed)
         </span>
       </h3>
-      <div className="grid grid-cols-4 gap-2 mt-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
         {developments.map((d) => {
           const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
           const costsBag = getActionCosts('develop', ctx, {
@@ -376,7 +376,7 @@ function BuildOptions({
           (Effects take place on build and last until building is removed)
         </span>
       </h3>
-      <div className="grid grid-cols-4 gap-2 mt-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
         {buildings.map((b) => {
           const costsBag = getActionCosts('build', ctx, { id: b.id });
           const costs: Record<string, number> = {};
