@@ -30,6 +30,7 @@ describe('resolveAttack', () => {
 
   it('applies fortification and castle damage before post triggers', () => {
     const ctx = createTestEngine();
+    ctx.services.rules.absorptionRounding = 'down';
     const attacker = ctx.activePlayer;
     const defender = ctx.game.opponent;
     defender.stats[Stat.fortificationStrength] = 1;
@@ -123,5 +124,71 @@ describe('resolveAttack', () => {
     expect(defender.fortificationStrength).toBe(0);
     expect(defender.absorption).toBe(0);
     expect(defender.gold).toBe(beforeGold + 1);
+  });
+
+  it('uses pre-attack stat boosts but ignores post-attack ones for damage', () => {
+    const ctx = createTestEngine();
+    const attacker = ctx.activePlayer;
+    const defender = ctx.game.opponent;
+    ctx.game.currentPlayerIndex = 1; // switch to defender to add passive
+    ctx.passives.addPassive(
+      {
+        id: 'bastion',
+        effects: [],
+        onBeforeAttacked: [
+          {
+            type: 'stat',
+            method: 'add',
+            params: { key: Stat.absorption, amount: 0.5 },
+          },
+          {
+            type: 'stat',
+            method: 'add',
+            params: { key: Stat.fortificationStrength, amount: 1 },
+          },
+        ],
+        onAttackResolved: [
+          {
+            type: 'stat',
+            method: 'add',
+            params: { key: Stat.absorption, amount: 0.5 },
+          },
+          {
+            type: 'stat',
+            method: 'add',
+            params: { key: Stat.fortificationStrength, amount: 5 },
+          },
+        ],
+      },
+      ctx,
+    );
+    ctx.game.currentPlayerIndex = 0; // attacker turn
+
+    runEffects(
+      [
+        {
+          type: 'stat',
+          method: 'add',
+          params: { key: Stat.armyStrength, amount: 5 },
+        },
+      ],
+      ctx,
+    );
+    const startHP = defender.resources[Resource.castleHP];
+    const dmg = resolveAttack(defender, attacker.armyStrength as number, ctx);
+    const rounding = ctx.services.rules.absorptionRounding;
+    const base = attacker.armyStrength as number;
+    const reduced =
+      rounding === 'down'
+        ? Math.floor(base * (1 - 0.5))
+        : rounding === 'up'
+          ? Math.ceil(base * (1 - 0.5))
+          : Math.round(base * (1 - 0.5));
+    const expected = Math.max(0, reduced - 1);
+    expect(dmg).toBe(expected);
+    expect(defender.resources[Resource.castleHP]).toBe(startHP - expected);
+    // post-attack boosts apply after damage calculation
+    expect(defender.absorption).toBe(1);
+    expect(defender.fortificationStrength).toBe(5);
   });
 });
