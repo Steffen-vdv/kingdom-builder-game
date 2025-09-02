@@ -135,7 +135,7 @@ export function createActionRegistry() {
   registry.add('raise_pop', {
     ...action()
       .id('raise_pop')
-      .name('Raise Population')
+      .name('Hire')
       .icon('👶')
       .cost(Resource.ap, 1)
       .cost(Resource.gold, 5)
