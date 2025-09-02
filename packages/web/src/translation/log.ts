@@ -7,8 +7,10 @@ import {
   RESOURCES,
   STATS,
   POPULATION_ROLES,
-  LAND_ICON as landIcon,
-  SLOT_ICON as slotIcon,
+  LAND_INFO,
+  SLOT_INFO,
+  PASSIVE_INFO,
+  POPULATION_INFO,
   type ResourceKey,
 } from '@kingdom-builder/contents';
 import { formatStatValue, statDisplaysAsPercent } from '../utils/stats';
@@ -113,13 +115,13 @@ export function diffSnapshots(
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
     if (!prev) {
-      changes.push(`${landIcon} New land`);
+      changes.push(`${LAND_INFO.icon} New ${LAND_INFO.label}`);
       continue;
     }
     for (const dev of land.developments)
       if (!prev.developments.includes(dev)) {
         const label = logContent('development', dev, ctx)[0] ?? dev;
-        changes.push(`${landIcon} +${label}`);
+        changes.push(`${LAND_INFO.icon} +${label}`);
       }
   }
   const beforeSlots = before.lands.reduce((sum, l) => sum + l.slotsMax, 0);
@@ -130,12 +132,12 @@ export function diffSnapshots(
   const slotDelta = afterSlots - newLandSlots - beforeSlots;
   if (slotDelta !== 0)
     changes.push(
-      `${slotIcon} Development Slot ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
+      `${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
     );
   const beforeP = new Set(before.passives);
   const afterP = new Set(after.passives);
   for (const id of beforeP)
-    if (!afterP.has(id)) changes.push(`Passive ${id} removed`);
+    if (!afterP.has(id)) changes.push(`${PASSIVE_INFO.label} ${id} removed`);
   return changes;
 }
 
@@ -178,7 +180,9 @@ function renderPopulationIcons(
   const role = (ev.params as Record<string, string> | undefined)?.['role'] as
     | keyof typeof POPULATION_ROLES
     | undefined;
-  const icon = role ? POPULATION_ROLES[role]?.icon || role : '👥';
+  const icon = role
+    ? POPULATION_ROLES[role]?.icon || role
+    : POPULATION_INFO.icon;
   entry.icons += icon.repeat(count);
 }
 
@@ -344,13 +348,13 @@ export function diffStepSnapshots(
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
     if (!prev) {
-      changes.push(`${landIcon} New land`);
+      changes.push(`${LAND_INFO.icon} New ${LAND_INFO.label}`);
       continue;
     }
     for (const dev of land.developments)
       if (!prev.developments.includes(dev)) {
         const label = logContent('development', dev, ctx)[0] ?? dev;
-        changes.push(`${landIcon} +${label}`);
+        changes.push(`${LAND_INFO.icon} +${label}`);
       }
   }
   const beforeSlots = before.lands.reduce((sum, l) => sum + l.slotsMax, 0);
@@ -361,11 +365,11 @@ export function diffStepSnapshots(
   const slotDelta = afterSlots - newLandSlots - beforeSlots;
   if (slotDelta !== 0)
     changes.push(
-      `${slotIcon} Development Slot ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
+      `${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
     );
   const beforeP = new Set(before.passives);
   const afterP = new Set(after.passives);
   for (const id of beforeP)
-    if (!afterP.has(id)) changes.push(`Passive ${id} removed`);
+    if (!afterP.has(id)) changes.push(`${PASSIVE_INFO.label} ${id} removed`);
   return changes;
 }

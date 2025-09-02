@@ -1,6 +1,10 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import { MODIFIER_INFO as modifierInfo } from '@kingdom-builder/contents';
+import {
+  MODIFIER_INFO as modifierInfo,
+  PHASES,
+  PASSIVE_INFO,
+} from '@kingdom-builder/contents';
 import { describeEffects, splitSummary } from '../../translation';
 import type { EffectDef } from '@kingdom-builder/engine';
 import { useAnimate } from '../../utils/useAutoAnimate';
@@ -50,8 +54,10 @@ export default function PassiveDisplay({
       {entries.map(([id, def]) => {
         const icon = getIcon(def.effects);
         const items = describeEffects(def.effects || [], ctx);
+        const upkeepLabel =
+          PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
         const summary = def.onUpkeepPhase
-          ? [{ title: 'Until your next Upkeep Phase', items }]
+          ? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
           : items;
         return (
           <span
@@ -60,7 +66,7 @@ export default function PassiveDisplay({
             onMouseEnter={() => {
               const { effects, description } = splitSummary(summary);
               handleHoverCard({
-                title: `${icon} Passive`,
+                title: `${icon} ${PASSIVE_INFO.label}`,
                 effects,
                 requirements: [],
                 ...(description && { description }),

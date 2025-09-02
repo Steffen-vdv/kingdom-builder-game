@@ -16,10 +16,8 @@ import {
   RULES,
   POPULATION_ROLES,
   STATS,
-  SLOT_ICON,
-  LAND_ICON,
-  LAND_LABEL,
-  SLOT_LABEL,
+  SLOT_INFO,
+  LAND_INFO,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -85,10 +83,10 @@ describe('<ActionsPanel />', () => {
     const originalSlots = ctx.activePlayer.lands.map((l) => l.slotsUsed);
     ctx.activePlayer.lands.forEach((l) => (l.slotsUsed = l.slotsMax));
     render(<ActionsPanel />);
-    expect(screen.getAllByText(`Req ${SLOT_ICON}`)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(`Req ${SLOT_INFO.icon}`)[0]).toBeInTheDocument();
     expect(
       screen.getAllByTitle(
-        `No ${LAND_ICON} ${LAND_LABEL} with free ${SLOT_ICON} ${SLOT_LABEL}`,
+        `No ${LAND_INFO.icon} ${LAND_INFO.label} with free ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
       )[0],
     ).toBeInTheDocument();
     ctx.activePlayer.lands.forEach((l, i) => (l.slotsUsed = originalSlots[i]));

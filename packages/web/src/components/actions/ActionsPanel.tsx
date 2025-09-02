@@ -4,10 +4,8 @@ import {
   RESOURCES,
   POPULATION_ROLES,
   PopulationRole,
-  SLOT_ICON as slotIcon,
-  SLOT_LABEL as slotLabel,
-  LAND_ICON as landIcon,
-  LAND_LABEL as landLabel,
+  SLOT_INFO,
+  LAND_INFO,
 } from '@kingdom-builder/contents';
 import {
   describeContent,
@@ -170,8 +168,8 @@ function RaisePopOptions({
             title={
               <>
                 {ctx.actions.get(action.id).icon || ''}
-                {POPULATION_ROLES[role]?.icon} Hire{' '}
-                {POPULATION_ROLES[role]?.label}
+                {POPULATION_ROLES[role]?.icon} {ctx.actions.get(action.id).name}
+                : {POPULATION_ROLES[role]?.label}
               </>
             }
             costs={costs}
@@ -188,7 +186,9 @@ function RaisePopOptions({
               handleHoverCard({
                 title: `${ctx.actions.get(action.id).icon || ''}${
                   POPULATION_ROLES[role]?.icon
-                } Hire ${POPULATION_ROLES[role]?.label || ''}`,
+                } ${ctx.actions.get(action.id).name}: ${
+                  POPULATION_ROLES[role]?.label || ''
+                }`,
                 effects,
                 requirements,
                 costs,
@@ -263,8 +263,8 @@ function DevelopOptions({
   return (
     <div>
       <h3 className="font-medium">
-        {ctx.actions.get('develop').icon || ''}{' '}
-        {ctx.actions.get('develop').name}{' '}
+        {ctx.actions.get(action.id)?.icon || ''}{' '}
+        {ctx.actions.get(action.id)?.name}{' '}
         <span className="italic text-sm font-normal">
           (Effects take place on build and last until development is removed)
         </span>
@@ -272,7 +272,7 @@ function DevelopOptions({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
         {developments.map((d) => {
           const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
-          const costsBag = getActionCosts('develop', ctx, {
+          const costsBag = getActionCosts(action.id, ctx, {
             id: d.id,
             landId: landIdForCost,
           });
@@ -281,7 +281,7 @@ function DevelopOptions({
           const requirements = hasDevelopLand
             ? []
             : [
-                `Requires ${landIcon} ${landLabel} with free ${slotIcon} ${slotLabel}`,
+                `Requires ${LAND_INFO.icon} ${LAND_INFO.label} with free ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
               ];
           const canPay =
             hasDevelopLand &&
@@ -294,7 +294,7 @@ function DevelopOptions({
           const title = !implemented
             ? 'Not implemented yet'
             : !hasDevelopLand
-              ? `No ${landIcon} ${landLabel} with free ${slotIcon} ${slotLabel}`
+              ? `No ${LAND_INFO.icon} ${LAND_INFO.label} with free ${SLOT_INFO.icon} ${SLOT_INFO.label}`
               : !canPay
                 ? 'Cannot pay costs'
                 : undefined;
@@ -310,7 +310,7 @@ function DevelopOptions({
               playerResources={ctx.activePlayer.resources}
               actionCostResource={actionCostResource}
               requirements={requirements}
-              requirementIcons={[slotIcon]}
+              requirementIcons={[SLOT_INFO.icon]}
               summary={summary}
               implemented={implemented}
               enabled={enabled}
@@ -325,9 +325,9 @@ function DevelopOptions({
                 const full = describeContent('development', d.id, ctx);
                 const { effects, description } = splitSummary(full);
                 handleHoverCard({
-                  title: `${ctx.actions.get('develop').icon || ''} ${
-                    ctx.actions.get('develop').name
-                  } - ${ctx.developments.get(d.id)?.icon} ${d.name}`,
+                  title: `${ctx.actions.get(action.id)?.icon || ''} ${
+                    ctx.actions.get(action.id)?.name
+                  } - ${ctx.developments.get(d.id)?.icon || ''} ${d.name}`,
                   effects,
                   requirements,
                   costs,
@@ -371,14 +371,15 @@ function BuildOptions({
   return (
     <div>
       <h3 className="font-medium">
-        {ctx.actions.get('build').icon || ''} {ctx.actions.get('build').name}{' '}
+        {ctx.actions.get(action.id)?.icon || ''}{' '}
+        {ctx.actions.get(action.id)?.name}{' '}
         <span className="italic text-sm font-normal">
           (Effects take place on build and last until building is removed)
         </span>
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
         {buildings.map((b) => {
-          const costsBag = getActionCosts('build', ctx, { id: b.id });
+          const costsBag = getActionCosts(action.id, ctx, { id: b.id });
           const costs: Record<string, number> = {};
           for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
           const requirements: string[] = [];
@@ -398,10 +399,7 @@ function BuildOptions({
               key={b.id}
               title={
                 <>
-                  {ctx.buildings.get(b.id)?.icon ||
-                    ctx.actions.get('build').icon ||
-                    ''}{' '}
-                  {b.name}
+                  {ctx.buildings.get(b.id)?.icon || ''} {b.name}
                 </>
               }
               costs={costs}
@@ -420,8 +418,8 @@ function BuildOptions({
                 const full = descriptions.get(b.id) ?? [];
                 const { effects, description } = splitSummary(full);
                 handleHoverCard({
-                  title: `${ctx.actions.get('build').icon || ''} ${
-                    ctx.actions.get('build').name
+                  title: `${ctx.actions.get(action.id)?.icon || ''} ${
+                    ctx.actions.get(action.id)?.name
                   } - ${ctx.buildings.get(b.id)?.icon || ''} ${b.name}`,
                   effects,
                   requirements,

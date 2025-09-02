@@ -1,4 +1,14 @@
-export const LAND_ICON = '🗺️';
-export const LAND_LABEL = 'Land';
-export const SLOT_ICON = '🧩';
-export const SLOT_LABEL = 'Development Slot';
+export const LAND_INFO = {
+  icon: '🗺️',
+  label: 'Land',
+} as const;
+
+export const SLOT_INFO = {
+  icon: '🧩',
+  label: 'Development Slot',
+} as const;
+
+export const DEVELOPMENTS_INFO = {
+  icon: '🏗️',
+  label: 'Developments',
+} as const;

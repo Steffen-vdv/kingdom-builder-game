@@ -16,8 +16,7 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
     <div ref={animateBuildings} className="flex flex-wrap gap-2 mt-2 w-fit">
       {Array.from(player.buildings).map((b) => {
         const name = ctx.buildings.get(b)?.name || b;
-        const icon =
-          ctx.buildings.get(b)?.icon || ctx.actions.get('build').icon || '';
+        const icon = ctx.buildings.get(b)?.icon || '';
         const title = `${icon} ${name}`;
         return (
           <div

@@ -1,4 +1,4 @@
-import { POPULATION_ROLES } from '@kingdom-builder/contents';
+import { POPULATION_ROLES, POPULATION_INFO } from '@kingdom-builder/contents';
 import { registerEvaluatorFormatter } from '../factory';
 
 registerEvaluatorFormatter('population', {
@@ -6,7 +6,9 @@ registerEvaluatorFormatter('population', {
     const role = (ev.params as Record<string, string>)?.['role'] as
       | keyof typeof POPULATION_ROLES
       | undefined;
-    const icon = role ? POPULATION_ROLES[role]?.icon || role : '👥';
+    const icon = role
+      ? POPULATION_ROLES[role]?.icon || role
+      : POPULATION_INFO.icon;
     return sub.map((s) =>
       typeof s === 'string'
         ? `${s} per ${icon}`
@@ -31,8 +33,11 @@ registerEvaluatorFormatter('population', {
     }
     return sub.map((s) =>
       typeof s === 'string'
-        ? `${s} for each population`
-        : { ...s, title: `${s.title} for each population` },
+        ? `${s} for each ${POPULATION_INFO.label.toLowerCase()}`
+        : {
+            ...s,
+            title: `${s.title} for each ${POPULATION_INFO.label.toLowerCase()}`,
+          },
     );
   },
 });

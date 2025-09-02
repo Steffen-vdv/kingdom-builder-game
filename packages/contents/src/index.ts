@@ -12,7 +12,9 @@ export {
 export { Resource, type ResourceKey, RESOURCES } from './resources';
 export { Stat, type StatKey, STATS } from './stats';
 export { TRIGGER_INFO } from './triggers';
-export { LAND_ICON, LAND_LABEL, SLOT_ICON, SLOT_LABEL } from './land';
+export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
+export { POPULATION_INFO, POPULATION_ARCHETYPE_INFO } from './population';
+export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';
 export { GAME_START } from './game';
 export { RULES } from './rules';

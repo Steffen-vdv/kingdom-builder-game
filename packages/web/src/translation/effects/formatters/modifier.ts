@@ -1,6 +1,7 @@
 import {
   MODIFIER_INFO as modifierInfo,
   RESOURCES,
+  POPULATION_INFO,
 } from '@kingdom-builder/contents';
 import type {
   ActionDef,
@@ -86,7 +87,7 @@ function formatPopulation(
 ) {
   const { icon, name } = getActionInfo(ctx, evaluation.id);
   const amount = Number(eff.params?.['amount'] ?? 0);
-  return `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${icon} ${name}, gain +${amount} more of that resource`;
+  return `${modifierInfo.result.icon} Every time you gain resources from ${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${icon} ${name}, gain +${amount} more of that resource`;
 }
 
 registerModifierEvalHandler('development', {

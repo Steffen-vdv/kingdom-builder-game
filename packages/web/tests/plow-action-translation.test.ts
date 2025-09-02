@@ -15,9 +15,8 @@ import {
   RULES,
   RESOURCES,
   Resource,
-  LAND_ICON,
-  LAND_LABEL,
-  SLOT_ICON,
+  LAND_INFO,
+  SLOT_INFO,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -98,13 +97,15 @@ describe('plow action translation', () => {
       {
         title: `${expand.icon} ${expand.name}`,
         items: [
-          `Gain ${landCount} ${LAND_ICON} ${LAND_LABEL}`,
+          `Gain ${landCount} ${LAND_INFO.icon} ${LAND_INFO.label}`,
           `${hapInfo.icon}+${hapAmt} ${hapInfo.label}`,
         ],
       },
       {
         title: `${till.icon} ${till.name}`,
-        items: [`Till ${LAND_ICON} to unlock ${SLOT_ICON} slot`],
+        items: [
+          `Till ${LAND_INFO.icon} ${LAND_INFO.label} to unlock ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
+        ],
       },
       {
         title: '♾️ Until your next Upkeep Phase',

@@ -1,5 +1,10 @@
 import React from 'react';
-import { POPULATION_ROLES, STATS } from '@kingdom-builder/contents';
+import {
+  POPULATION_ROLES,
+  STATS,
+  POPULATION_INFO,
+  POPULATION_ARCHETYPE_INFO,
+} from '@kingdom-builder/contents';
 import { formatStatValue } from '../../utils/stats';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
@@ -16,14 +21,13 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 
   const showPopulationCard = () =>
     handleHoverCard({
-      title: '👥 Population',
+      title: `${POPULATION_INFO.icon} ${POPULATION_INFO.label}`,
       effects: Object.values(POPULATION_ROLES).map(
         (r) => `${r.icon} ${r.label} - ${r.description}`,
       ),
-      effectsTitle: 'Archetypes',
+      effectsTitle: POPULATION_ARCHETYPE_INFO.label,
       requirements: [],
-      description:
-        'Population represents the people of your kingdom. Manage them wisely and assign roles to benefit your realm.',
+      description: POPULATION_INFO.description,
       bgClass: 'bg-gray-100 dark:bg-gray-700',
     });
 
@@ -45,7 +49,8 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
           }
         }}
       >
-        👥{currentPop}/{player.maxPopulation}
+        {POPULATION_INFO.icon}
+        {currentPop}/{player.maxPopulation}
         {popDetails.length > 0 && (
           <>
             {' ('}
