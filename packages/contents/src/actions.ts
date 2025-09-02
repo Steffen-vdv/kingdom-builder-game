@@ -22,10 +22,12 @@ import {
   BuildingMethods,
   StatMethods,
 } from './config/builders';
+import type { Focus } from './defs';
 
 export interface ActionDef extends ActionConfig {
   category?: string;
   order?: number;
+  focus?: Focus;
 }
 
 export function createActionRegistry() {
@@ -47,6 +49,7 @@ export function createActionRegistry() {
       .build(),
     category: 'basic',
     order: 1,
+    focus: 'economy',
   });
 
   registry.add('overwork', {
@@ -75,6 +78,7 @@ export function createActionRegistry() {
       .build(),
     category: 'basic',
     order: 2,
+    focus: 'economy',
   });
 
   registry.add('develop', {
@@ -92,6 +96,7 @@ export function createActionRegistry() {
       .build(),
     category: 'development',
     order: 1,
+    focus: 'economy',
   });
 
   registry.add('tax', {
@@ -119,6 +124,7 @@ export function createActionRegistry() {
       .build(),
     category: 'basic',
     order: 3,
+    focus: 'economy',
   });
 
   registry.add('reallocate', {
@@ -131,6 +137,7 @@ export function createActionRegistry() {
       .build(),
     category: 'basic',
     order: 4,
+    focus: 'economy',
   });
 
   registry.add('raise_pop', {
@@ -161,6 +168,7 @@ export function createActionRegistry() {
       .build(),
     category: 'population',
     order: 1,
+    focus: 'economy',
   });
 
   registry.add('royal_decree', {
@@ -173,6 +181,7 @@ export function createActionRegistry() {
       .build(),
     category: 'basic',
     order: 5,
+    focus: 'other',
   });
 
   registry.add('army_attack', {
@@ -222,6 +231,7 @@ export function createActionRegistry() {
       .build(),
     category: 'basic',
     order: 6,
+    focus: 'aggressive',
   });
 
   registry.add('hold_festival', {
@@ -279,6 +289,7 @@ export function createActionRegistry() {
       .build(),
     category: 'basic',
     order: 7,
+    focus: 'economy',
   });
 
   registry.add(
@@ -361,6 +372,7 @@ export function createActionRegistry() {
       .build(),
     category: 'building',
     order: 1,
+    focus: 'other',
   });
 
   return registry;
