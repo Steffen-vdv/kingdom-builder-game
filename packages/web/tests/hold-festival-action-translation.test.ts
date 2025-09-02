@@ -53,7 +53,10 @@ describe('hold festival action translation', () => {
       (e: EffectDef) => e.type === 'stat',
     ) as EffectDef<{ key: string; amount: number }>;
     const fortIcon = STATS[fortEff.params.key as keyof typeof STATS].icon;
-    const fortAmt = fortEff.params.amount;
+    const fortAmt =
+      fortEff.method === 'remove'
+        ? -fortEff.params.amount
+        : (fortEff.params.amount as number);
     const passive = holdFestival.effects.find(
       (e: EffectDef) => e.type === 'passive',
     ) as EffectDef;
@@ -96,7 +99,10 @@ describe('hold festival action translation', () => {
       (e: EffectDef) => e.type === 'stat',
     ) as EffectDef<{ key: string; amount: number }>;
     const fortInfo = STATS[fortEff.params.key as keyof typeof STATS];
-    const fortAmt = fortEff.params.amount;
+    const fortAmt =
+      fortEff.method === 'remove'
+        ? -fortEff.params.amount
+        : (fortEff.params.amount as number);
     const passive = holdFestival.effects.find(
       (e: EffectDef) => e.type === 'passive',
     ) as EffectDef;

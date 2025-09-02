@@ -246,8 +246,8 @@ export function createActionRegistry() {
           .build(),
       )
       .effect(
-        effect(Types.Stat, StatMethods.ADD)
-          .params({ key: Stat.fortificationStrength, amount: -3 })
+        effect(Types.Stat, StatMethods.REMOVE)
+          .params({ key: Stat.fortificationStrength, amount: 3 })
           .build(),
       )
       .effect(

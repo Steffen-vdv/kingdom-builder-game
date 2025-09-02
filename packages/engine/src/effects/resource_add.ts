@@ -9,7 +9,7 @@ export const resourceAdd: EffectHandler = (effect, ctx, mult = 1) => {
     total = total >= 0 ? Math.ceil(total) : Math.floor(total);
   else if (effect.round === 'down')
     total = total >= 0 ? Math.floor(total) : Math.ceil(total);
-  ctx.activePlayer.resources[key] =
-    (ctx.activePlayer.resources[key] || 0) + total;
+  const newVal = (ctx.activePlayer.resources[key] || 0) + total;
+  ctx.activePlayer.resources[key] = newVal < 0 ? 0 : newVal;
   if (total > 0) ctx.recentResourceGains.push({ key, amount: total });
 };
