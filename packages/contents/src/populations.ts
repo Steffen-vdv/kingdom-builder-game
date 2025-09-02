@@ -25,19 +25,9 @@ export function createPopulationRegistry() {
       .name('Council')
       .icon('⚖️')
       .upkeep(Resource.gold, 2)
-      .onAssigned(
-        effect(Types.Resource, ResourceMethods.ADD)
-          .params({ key: Resource.ap, amount: 1 })
-          .build(),
-      )
-      .onUnassigned(
-        effect(Types.Resource, ResourceMethods.REMOVE)
-          .params({ key: Resource.ap, amount: 1 })
-          .build(),
-      )
       .onGainAPStep(
         effect(Types.Resource, ResourceMethods.ADD)
-          .params({ key: Resource.ap, amount: 2 })
+          .params({ key: Resource.ap, amount: 1 })
           .build(),
       )
       .build(),
