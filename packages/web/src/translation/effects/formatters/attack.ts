@@ -1,4 +1,12 @@
-import { RESOURCES, STATS, Resource, Stat } from '@kingdom-builder/contents';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+import {
+  RESOURCES,
+  STATS,
+  Resource,
+  Stat,
+  type ResourceKey,
+  type StatKey,
+} from '@kingdom-builder/contents';
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../content';
 import {
@@ -35,13 +43,26 @@ function categorizeDamageEffects(
 
 function baseEntry(eff: EffectDef<Record<string, unknown>>, mode: Mode) {
   const army = STATS[Stat.armyStrength];
-  const castle = RESOURCES[Resource.castleHP];
   const absorption = STATS[Stat.absorption];
   const fort = STATS[Stat.fortificationStrength];
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const targetParam = eff.params?.['target'] as
+    | { type: 'resource'; key: ResourceKey }
+    | { type: 'stat'; key: StatKey }
+    | undefined;
+  let targetInfo: { icon: string; label: string };
+  if (targetParam?.type === 'stat') targetInfo = STATS[targetParam.key];
+  else {
+    const key: ResourceKey =
+      targetParam && targetParam.type === 'resource'
+        ? targetParam.key
+        : Resource.castleHP;
+    targetInfo = RESOURCES[key];
+  }
 
   if (mode === 'summarize') {
-    const title = `${army.icon} opponent's ${fort.icon}${castle.icon}`;
-    return { entry: title, castle };
+    const title = `${army.icon} opponent's ${fort.icon}${targetInfo.icon}`;
+    return { entry: title, target: targetInfo };
   }
 
   const title = `Attack opponent with your ${army.icon} ${army.label}`;
@@ -58,25 +79,38 @@ function baseEntry(eff: EffectDef<Record<string, unknown>>, mode: Mode) {
 
   if (eff.params?.['ignoreFortification'])
     items.push(
-      `Damage applied directly to opponent's ${castle.icon} ${castle.label}`,
+      `Damage applied directly to opponent's ${targetInfo.icon} ${targetInfo.label}`,
     );
   else {
     items.push(`Damage applied to opponent's ${fort.icon} ${fort.label}`);
     items.push(
-      `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${castle.icon} ${castle.label}`,
+      `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${targetInfo.icon} ${targetInfo.label}`,
     );
   }
 
-  return { entry: { title, items }, castle };
+  return { entry: { title, items }, target: targetInfo };
 }
 
-function onCastleDamageEntry(
+function onDamageEntry(
   eff: EffectDef<Record<string, unknown>>,
   ctx: EngineContext,
   mode: Mode,
 ) {
-  const castle = RESOURCES[Resource.castleHP];
-  const onDamage = eff.params?.['onCastleDamage'] as
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const targetParam = eff.params?.['target'] as
+    | { type: 'resource'; key: ResourceKey }
+    | { type: 'stat'; key: StatKey }
+    | undefined;
+  let target: { icon: string; label: string };
+  if (targetParam?.type === 'stat') target = STATS[targetParam.key];
+  else {
+    const key: ResourceKey =
+      targetParam && targetParam.type === 'resource'
+        ? targetParam.key
+        : Resource.castleHP;
+    target = RESOURCES[key];
+  }
+  const onDamage = eff.params?.['onDamage'] as
     | { attacker?: EffectDef[]; defender?: EffectDef[] }
     | undefined;
   if (!onDamage) return null;
@@ -115,8 +149,8 @@ function onCastleDamageEntry(
   return {
     title:
       mode === 'summarize'
-        ? `On opponent ${castle.icon} damage`
-        : `On opponent ${castle.icon} ${castle.label} damage`,
+        ? `On opponent ${target.icon} damage`
+        : `On opponent ${target.icon} ${target.label} damage`,
     items: all,
   };
 }
@@ -125,22 +159,23 @@ registerEffectFormatter('attack', 'perform', {
   summarize: (eff, ctx) => {
     const { entry } = baseEntry(eff, 'summarize');
     const parts: SummaryEntry[] = [entry];
-    const onDamage = onCastleDamageEntry(eff, ctx, 'summarize');
+    const onDamage = onDamageEntry(eff, ctx, 'summarize');
     if (onDamage) parts.push(onDamage);
     return parts;
   },
   describe: (eff, ctx) => {
     const { entry } = baseEntry(eff, 'describe');
     const parts: SummaryEntry[] = [entry];
-    const onDamage = onCastleDamageEntry(eff, ctx, 'describe');
+    const onDamage = onDamageEntry(eff, ctx, 'describe');
     if (onDamage) parts.push(onDamage);
     return parts;
   },
   log: (eff, ctx) => {
     const { entry } = baseEntry(eff, 'describe');
     const parts: SummaryEntry[] = [entry];
-    const onDamage = onCastleDamageEntry(eff, ctx, 'log');
+    const onDamage = onDamageEntry(eff, ctx, 'log');
     if (onDamage) parts.push(onDamage);
     return parts;
   },
 });
+/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */

@@ -119,7 +119,7 @@ fc.assert(
 - 2025-10-28: Dynamic PlayerState properties required disabling `noPropertyAccessFromIndexSignature` in `tsconfig.base.json`.
 - 2025-10-28: Missing `eslint-plugin-import` causes eslint to fail; install with `npm install --no-save eslint-plugin-import`.
 - 2025-10-28: Engine `Resource` and `Stat` constants are empty until `setResourceKeys`/`setStatKeys` run; use content-side keys when configuring tests before engine creation.
-- 2025-08-31: `attack:perform` effect parameters `ignoreAbsorption`, `ignoreFortification` and nested `onCastleDamage` effects require dedicated web formatter for player-facing text.
+- 2025-08-31: `attack:perform` effect parameters `ignoreAbsorption`, `ignoreFortification` and nested `onDamage` effects require dedicated web formatter for player-facing text.
 - 2025-08-31: Merge attacker and defender on-damage summaries by tagging items "for you" or "for opponent" instead of separate groups.
 - 2025-08-31: Compact on-damage summaries further by prefixing entries with "You" or "Opponent".
 - 2025-08-31: Suffix on-damage summary items with "for you"/"for opponent" to keep icons leading each line.

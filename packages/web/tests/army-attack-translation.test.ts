@@ -48,7 +48,7 @@ describe('army attack translation', () => {
     const attackEffect = armyAttack.effects.find(
       (e: EffectDef) => e.type === 'attack',
     );
-    const onDamage = attackEffect?.params?.['onCastleDamage'] as {
+    const onDamage = attackEffect?.params?.['onDamage'] as {
       attacker: EffectDef[];
       defender: EffectDef[];
     };

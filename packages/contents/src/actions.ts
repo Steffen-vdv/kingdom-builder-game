@@ -196,7 +196,8 @@ export function createActionRegistry() {
       )
       .effect(
         effect('attack', 'perform')
-          .param('onCastleDamage', {
+          .param('target', { type: 'resource', key: Resource.castleHP })
+          .param('onDamage', {
             attacker: [
               effect(Types.Resource, ResourceMethods.ADD)
                 .params({ key: Resource.happiness, amount: 1 })

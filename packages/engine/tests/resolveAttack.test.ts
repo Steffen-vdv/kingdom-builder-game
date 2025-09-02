@@ -24,7 +24,10 @@ describe('resolveAttack', () => {
       },
       ctx,
     );
-    const dmg = resolveAttack(defender, 10, ctx);
+    const dmg = resolveAttack(defender, 10, ctx, {
+      type: 'resource',
+      key: Resource.castleHP,
+    });
     expect(dmg).toBe(5);
   });
 
@@ -37,7 +40,10 @@ describe('resolveAttack', () => {
     attacker.gold = 0;
     const startHP = defender.resources[Resource.castleHP];
     const startGold = defender.gold;
-    const dmg = resolveAttack(defender, 5, ctx);
+    const dmg = resolveAttack(defender, 5, ctx, {
+      type: 'resource',
+      key: Resource.castleHP,
+    });
     expect(dmg).toBe(4);
     expect(defender.resources[Resource.castleHP]).toBe(startHP - dmg);
     expect(defender.fortificationStrength).toBe(0);
@@ -55,7 +61,10 @@ describe('resolveAttack', () => {
     ctx.services.rules.absorptionRounding = 'up';
     defender.absorption = 0.5;
     const start = defender.resources[Resource.castleHP];
-    const dmg = resolveAttack(defender, 1, ctx);
+    const dmg = resolveAttack(defender, 1, ctx, {
+      type: 'resource',
+      key: Resource.castleHP,
+    });
     expect(dmg).toBe(1);
     expect(defender.resources[Resource.castleHP]).toBe(start - 1);
   });
@@ -65,7 +74,10 @@ describe('resolveAttack', () => {
     const defender = ctx.game.opponent;
     ctx.services.rules.absorptionRounding = 'nearest';
     defender.absorption = 0.6;
-    const dmg = resolveAttack(defender, 1, ctx);
+    const dmg = resolveAttack(defender, 1, ctx, {
+      type: 'resource',
+      key: Resource.castleHP,
+    });
     expect(dmg).toBe(0);
   });
 
@@ -74,10 +86,16 @@ describe('resolveAttack', () => {
     const defender = ctx.game.opponent;
     defender.absorption = 0.5;
     defender.stats[Stat.fortificationStrength] = 5;
-    const dmg = resolveAttack(defender, 10, ctx, {
-      ignoreAbsorption: true,
-      ignoreFortification: true,
-    });
+    const dmg = resolveAttack(
+      defender,
+      10,
+      ctx,
+      { type: 'resource', key: Resource.castleHP },
+      {
+        ignoreAbsorption: true,
+        ignoreFortification: true,
+      },
+    );
     expect(dmg).toBe(10);
     expect(defender.fortificationStrength).toBe(5);
     expect(defender.resources[Resource.castleHP]).toBe(0);
@@ -117,7 +135,10 @@ describe('resolveAttack', () => {
     );
     ctx.game.currentPlayerIndex = 0; // attacker turn
     const beforeGold = defender.gold;
-    const dmg = resolveAttack(defender, 4, ctx);
+    const dmg = resolveAttack(defender, 4, ctx, {
+      type: 'resource',
+      key: Resource.castleHP,
+    });
     expect(dmg).toBe(0);
     expect(defender.resources[Resource.castleHP]).toBe(10);
     expect(defender.fortificationStrength).toBe(0);
@@ -174,7 +195,10 @@ describe('resolveAttack', () => {
       ctx,
     );
     const startHP = defender.resources[Resource.castleHP];
-    const dmg = resolveAttack(defender, attacker.armyStrength as number, ctx);
+    const dmg = resolveAttack(defender, attacker.armyStrength as number, ctx, {
+      type: 'resource',
+      key: Resource.castleHP,
+    });
     const rounding = ctx.services.rules.absorptionRounding;
     const base = attacker.armyStrength as number;
     const reduced =

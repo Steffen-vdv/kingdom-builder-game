@@ -15,6 +15,7 @@ const defs: ResourceInfo[] = [
     .description(
       'Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.',
     )
+    .tag('bankruptcy-check')
     .build(),
   resource(Resource.ap)
     .icon('⚡')
@@ -36,6 +37,8 @@ const defs: ResourceInfo[] = [
     .description(
       'Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.',
     )
+    .tag('attack-target')
+    .tag('win-condition-zero')
     .build(),
 ];
 
