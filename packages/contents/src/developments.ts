@@ -36,6 +36,7 @@ export function createDevelopmentRegistry() {
       )
       .build(),
     order: 2,
+    focus: 'economy',
   });
 
   registry.add('house', {
@@ -51,6 +52,7 @@ export function createDevelopmentRegistry() {
       )
       .build(),
     order: 1,
+    focus: 'economy',
   });
 
   registry.add('outpost', {
@@ -70,6 +72,7 @@ export function createDevelopmentRegistry() {
       )
       .build(),
     order: 3,
+    focus: 'defense',
   });
 
   registry.add('watchtower', {
@@ -94,6 +97,7 @@ export function createDevelopmentRegistry() {
       )
       .build(),
     order: 4,
+    focus: 'defense',
   });
 
   registry.add(

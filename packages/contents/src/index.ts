@@ -21,7 +21,7 @@ export { RULES } from './rules';
 export type { ActionDef } from './actions';
 export type { BuildingDef } from './buildings';
 export type { DevelopmentDef } from './developments';
-export type { PopulationDef, TriggerKey } from './defs';
+export type { PopulationDef, TriggerKey, Focus } from './defs';
 export {
   ON_PAY_UPKEEP_STEP,
   ON_GAIN_INCOME_STEP,

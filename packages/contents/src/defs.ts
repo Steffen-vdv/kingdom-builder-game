@@ -11,6 +11,8 @@ export const ON_GAIN_AP_STEP = 'onGainAPStep';
 
 export const BROOM_ICON = '🧹';
 
+export type Focus = 'economy' | 'aggressive' | 'defense' | 'other';
+
 export interface Triggered {
   onGrowthPhase?: EffectDef[] | undefined;
   onUpkeepPhase?: EffectDef[] | undefined;
@@ -24,7 +26,10 @@ export interface Triggered {
 export interface PopulationDef extends PopulationConfig, Triggered {}
 export interface DevelopmentDef extends DevelopmentConfig, Triggered {
   order?: number;
+  focus?: Focus;
 }
-export interface BuildingDef extends BuildingConfig, Triggered {}
+export interface BuildingDef extends BuildingConfig, Triggered {
+  focus?: Focus;
+}
 
 export type TriggerKey = keyof Triggered;

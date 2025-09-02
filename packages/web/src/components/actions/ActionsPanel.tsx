@@ -6,6 +6,7 @@ import {
   PopulationRole,
   SLOT_INFO,
   LAND_INFO,
+  type Focus,
 } from '@kingdom-builder/contents';
 import {
   describeContent,
@@ -24,16 +25,19 @@ interface Action {
   system?: boolean;
   order?: number;
   category?: string;
+  focus?: Focus;
 }
 interface Development {
   id: string;
   name: string;
   system?: boolean;
   order?: number;
+  focus?: Focus;
 }
 interface Building {
   id: string;
   name: string;
+  focus?: Focus;
 }
 
 function GenericActions({
@@ -53,12 +57,23 @@ function GenericActions({
     actionCostResource,
   } = useGameEngine();
   const formatRequirement = (req: string) => req;
-  return (
-    <>
-      {actions.map((action) => {
+  const entries = useMemo(() => {
+    return actions
+      .map((action) => {
         const costsBag = getActionCosts(action.id, ctx);
         const costs: Record<string, number> = {};
         for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+        const total = Object.entries(costs).reduce(
+          (sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
+          0,
+        );
+        return { action, costs, total };
+      })
+      .sort((a, b) => a.total - b.total);
+  }, [actions, ctx, actionCostResource]);
+  return (
+    <>
+      {entries.map(({ action, costs }) => {
         const requirements = getActionRequirements(action.id, ctx).map(
           formatRequirement,
         );
@@ -94,6 +109,7 @@ function GenericActions({
             implemented={implemented}
             enabled={enabled}
             tooltip={title}
+            focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
             onClick={() => void handlePerform(action)}
             onMouseEnter={() => {
               const full = describeContent('action', action.id, ctx);
@@ -182,6 +198,7 @@ function RaisePopOptions({
             summary={shortSummary}
             enabled={enabled}
             tooltip={title}
+            focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
             onClick={() => void handlePerform(action, { role })}
             onMouseEnter={() => {
               const { effects, description } = splitSummary(summary);
@@ -263,6 +280,24 @@ function DevelopOptions({
     clearHoverCard,
     actionCostResource,
   } = useGameEngine();
+  const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
+  const entries = useMemo(() => {
+    return developments
+      .map((d) => {
+        const costsBag = getActionCosts(action.id, ctx, {
+          id: d.id,
+          landId: landIdForCost,
+        });
+        const costs: Record<string, number> = {};
+        for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+        const total = Object.entries(costs).reduce(
+          (sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
+          0,
+        );
+        return { d, costs, total };
+      })
+      .sort((a, b) => a.total - b.total);
+  }, [developments, ctx, action.id, landIdForCost, actionCostResource]);
   return (
     <div>
       <h3 className="font-medium">
@@ -273,14 +308,7 @@ function DevelopOptions({
         </span>
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
-        {developments.map((d) => {
-          const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
-          const costsBag = getActionCosts(action.id, ctx, {
-            id: d.id,
-            landId: landIdForCost,
-          });
-          const costs: Record<string, number> = {};
-          for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+        {entries.map(({ d, costs }) => {
           const upkeep = ctx.developments.get(d.id)?.upkeep;
           const requirements = hasDevelopLand
             ? []
@@ -320,6 +348,9 @@ function DevelopOptions({
               implemented={implemented}
               enabled={enabled}
               tooltip={title}
+              focus={
+                (ctx.developments.get(d.id) as Development | undefined)?.focus
+              }
               onClick={() => {
                 const landId = ctx.activePlayer.lands.find(
                   (l) => l.slotsFree > 0,
@@ -374,6 +405,20 @@ function BuildOptions({
     clearHoverCard,
     actionCostResource,
   } = useGameEngine();
+  const entries = useMemo(() => {
+    return buildings
+      .map((b) => {
+        const costsBag = getActionCosts(action.id, ctx, { id: b.id });
+        const costs: Record<string, number> = {};
+        for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+        const total = Object.entries(costs).reduce(
+          (sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
+          0,
+        );
+        return { b, costs, total };
+      })
+      .sort((a, b) => a.total - b.total);
+  }, [buildings, ctx, action.id, actionCostResource]);
   return (
     <div>
       <h3 className="font-medium">
@@ -384,10 +429,7 @@ function BuildOptions({
         </span>
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
-        {buildings.map((b) => {
-          const costsBag = getActionCosts(action.id, ctx, { id: b.id });
-          const costs: Record<string, number> = {};
-          for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+        {entries.map(({ b, costs }) => {
           const requirements: string[] = [];
           const canPay = Object.entries(costs).every(
             ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
@@ -421,6 +463,7 @@ function BuildOptions({
               implemented={implemented}
               enabled={enabled}
               tooltip={title}
+              focus={(ctx.buildings.get(b.id) as Building | undefined)?.focus}
               onClick={() => void handlePerform(action, { id: b.id })}
               onMouseEnter={() => {
                 const full = descriptions.get(b.id) ?? [];

@@ -18,11 +18,10 @@ import type { BuildingDef } from './defs';
 export type { BuildingDef } from './defs';
 
 export function createBuildingRegistry() {
-  const registry = new Registry<BuildingDef>(buildingSchema);
+  const registry = new Registry<BuildingDef>(buildingSchema.passthrough());
 
-  registry.add(
-    'town_charter',
-    building()
+  registry.add('town_charter', {
+    ...building()
       .id('town_charter')
       .name('Town Charter')
       .icon('🏘️')
@@ -48,12 +47,12 @@ export function createBuildingRegistry() {
           .build(),
       )
       .build(),
-  );
+    focus: 'economy',
+  });
 
   // TODO: remaining buildings from original manual config
-  registry.add(
-    'mill',
-    building()
+  registry.add('mill', {
+    ...building()
       .id('mill')
       .name('Mill')
       .icon('⚙️')
@@ -68,10 +67,10 @@ export function createBuildingRegistry() {
           .build(),
       )
       .build(),
-  );
-  registry.add(
-    'raiders_guild',
-    building()
+    focus: 'economy',
+  });
+  registry.add('raiders_guild', {
+    ...building()
       .id('raiders_guild')
       .name("Raider's Guild")
       .icon('🏴‍☠️')
@@ -87,10 +86,10 @@ export function createBuildingRegistry() {
           .build(),
       )
       .build(),
-  );
-  registry.add(
-    'plow_workshop',
-    building()
+    focus: 'aggressive',
+  });
+  registry.add('plow_workshop', {
+    ...building()
       .id('plow_workshop')
       .name('Plow Workshop')
       .icon('🏭')
@@ -99,10 +98,10 @@ export function createBuildingRegistry() {
         effect(Types.Action, ActionMethods.ADD).param('id', 'plow').build(),
       )
       .build(),
-  );
-  registry.add(
-    'market',
-    building()
+    focus: 'economy',
+  });
+  registry.add('market', {
+    ...building()
       .id('market')
       .name('Market')
       .icon('🏪')
@@ -117,28 +116,28 @@ export function createBuildingRegistry() {
           .build(),
       )
       .build(),
-  );
-  registry.add(
-    'barracks',
-    building()
+    focus: 'economy',
+  });
+  registry.add('barracks', {
+    ...building()
       .id('barracks')
       .name('Barracks')
       .icon('🪖')
       .cost(Resource.gold, 12)
       .build(),
-  );
-  registry.add(
-    'citadel',
-    building()
+    focus: 'aggressive',
+  });
+  registry.add('citadel', {
+    ...building()
       .id('citadel')
       .name('Citadel')
       .icon('🏯')
       .cost(Resource.gold, 12)
       .build(),
-  );
-  registry.add(
-    'castle_walls',
-    building()
+    focus: 'defense',
+  });
+  registry.add('castle_walls', {
+    ...building()
       .id('castle_walls')
       .name('Castle Walls')
       .icon('🧱')
@@ -159,43 +158,44 @@ export function createBuildingRegistry() {
           .build(),
       )
       .build(),
-  );
-  registry.add(
-    'castle_gardens',
-    building()
+    focus: 'defense',
+  });
+  registry.add('castle_gardens', {
+    ...building()
       .id('castle_gardens')
       .name('Castle Gardens')
       .icon('🌷')
       .cost(Resource.gold, 15)
       .build(),
-  );
-  registry.add(
-    'temple',
-    building()
+    focus: 'economy',
+  });
+  registry.add('temple', {
+    ...building()
       .id('temple')
       .name('Temple')
       .icon('⛪')
       .cost(Resource.gold, 16)
       .build(),
-  );
-  registry.add(
-    'palace',
-    building()
+    focus: 'other',
+  });
+  registry.add('palace', {
+    ...building()
       .id('palace')
       .name('Palace')
       .icon('👑')
       .cost(Resource.gold, 20)
       .build(),
-  );
-  registry.add(
-    'great_hall',
-    building()
+    focus: 'other',
+  });
+  registry.add('great_hall', {
+    ...building()
       .id('great_hall')
       .name('Great Hall')
       .icon('🏟️')
       .cost(Resource.gold, 22)
       .build(),
-  );
+    focus: 'other',
+  });
 
   return registry;
 }
