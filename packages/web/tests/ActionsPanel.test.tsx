@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
@@ -81,15 +82,18 @@ describe('<ActionsPanel />', () => {
     expect(screen.getAllByText(`Req ${popIcon}`)[0]).toBeInTheDocument();
   });
 
-  it('shows development slot requirement indicator when no slots are free', () => {
+  it('shows development slot requirement indicator when no slots are free', async () => {
     const originalSlots = ctx.activePlayer.lands.map((l) => l.slotsUsed);
     ctx.activePlayer.lands.forEach((l) => (l.slotsUsed = l.slotsMax));
     render(<ActionsPanel />);
     expect(screen.getAllByText(`Req ${SLOT_ICON}`)[0]).toBeInTheDocument();
+    const user = userEvent.setup();
+    const card = screen.getAllByText(`Req ${SLOT_ICON}`)[0].closest('button');
+    if (card) await user.hover(card);
     expect(
-      screen.getAllByTitle(
-        `No ${LAND_ICON} ${LAND_LABEL} with free ${SLOT_ICON} ${SLOT_LABEL}`,
-      )[0],
+      screen.getByRole('tooltip', {
+        name: `No ${LAND_ICON} ${LAND_LABEL} with free ${SLOT_ICON} ${SLOT_LABEL}`,
+      }),
     ).toBeInTheDocument();
     ctx.activePlayer.lands.forEach((l, i) => (l.slotsUsed = originalSlots[i]));
   });

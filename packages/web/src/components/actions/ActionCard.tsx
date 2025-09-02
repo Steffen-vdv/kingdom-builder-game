@@ -1,6 +1,7 @@
 import React from 'react';
 import { type Summary } from '../../translation';
 import { renderSummary, renderCosts } from '../../translation/render';
+import Tooltip from '../common/Tooltip';
 
 function stripSummary(summary: Summary | undefined): Summary | undefined {
   const first = summary?.[0];
@@ -16,12 +17,10 @@ export type ActionCardProps = {
   summary?: Summary | undefined;
   implemented?: boolean;
   enabled: boolean;
-  tooltip?: string | undefined;
+  tooltip?: React.ReactNode;
   requirements?: string[];
   requirementIcons?: string[];
   onClick?: () => void;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
 };
 
 export default function ActionCard({
@@ -36,18 +35,13 @@ export default function ActionCard({
   requirements = [],
   requirementIcons = [],
   onClick,
-  onMouseEnter,
-  onMouseLeave,
 }: ActionCardProps) {
-  return (
+  const card = (
     <button
       className={`relative panel-card border border-black/10 dark:border-white/10 p-2 flex flex-col items-start gap-1 h-full shadow-sm ${
         enabled ? 'hoverable cursor-pointer' : 'opacity-50 cursor-not-allowed'
       }`}
-      title={tooltip}
       onClick={enabled ? onClick : undefined}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
     >
       <span className="text-base font-medium">{title}</span>
       <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
@@ -67,4 +61,5 @@ export default function ActionCard({
       </ul>
     </button>
   );
+  return tooltip ? <Tooltip content={tooltip}>{card}</Tooltip> : card;
 }

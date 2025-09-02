@@ -5,8 +5,10 @@ import {
 } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { describeContent, splitSummary } from '../../translation';
+import { renderSummary } from '../../translation/render';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import Tooltip from '../common/Tooltip';
 
 interface LandDisplayProps {
   player: EngineContext['activePlayer'];
@@ -15,100 +17,93 @@ interface LandDisplayProps {
 const LandTile: React.FC<{
   land: EngineContext['activePlayer']['lands'][number];
   ctx: ReturnType<typeof useGameEngine>['ctx'];
-  handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
-  clearHoverCard: ReturnType<typeof useGameEngine>['clearHoverCard'];
   developAction?: { icon?: string; name: string } | undefined;
-}> = ({ land, ctx, handleHoverCard, clearHoverCard, developAction }) => {
-  const showLandCard = () => {
-    const full = describeContent('land', land, ctx);
-    const { effects, description } = splitSummary(full);
-    handleHoverCard({
-      title: `${landIcon} Land`,
-      effects,
-      requirements: [],
-      effectsTitle: 'Developments',
-      ...(description && { description }),
-      bgClass: 'bg-gray-100 dark:bg-gray-700',
-    });
-  };
+}> = ({ land, ctx, developAction }) => {
+  const landSummary = describeContent('land', land, ctx);
+  const landSplit = splitSummary(landSummary);
+  const landTooltip = (
+    <div>
+      <div className="font-medium">{landIcon} Land</div>
+      {landSplit.description && (
+        <ul className="mt-1 list-disc pl-4">
+          {renderSummary(landSplit.description)}
+        </ul>
+      )}
+      {landSplit.effects.length > 0 && (
+        <ul className="mt-1 list-disc pl-4">
+          {renderSummary(landSplit.effects)}
+        </ul>
+      )}
+    </div>
+  );
   const animateSlots = useAnimate<HTMLDivElement>();
   return (
-    <div
-      className="relative panel-card p-2 text-center hoverable cursor-help"
-      onMouseEnter={showLandCard}
-      onMouseLeave={clearHoverCard}
-    >
-      <span className="font-medium">{landIcon} Land</span>
-      <div
-        ref={animateSlots}
-        className="mt-1 flex flex-wrap justify-center gap-1"
-      >
-        {Array.from({ length: land.slotsMax }).map((_, i) => {
-          const devId = land.developments[i];
-          if (devId) {
-            const name = ctx.developments.get(devId)?.name || devId;
-            const title = `${ctx.developments.get(devId)?.icon || ''} ${name}`;
-            const handleLeave = () => showLandCard();
-            return (
-              <span
-                key={i}
-                className="panel-card p-1 text-xs hoverable cursor-help"
-                onMouseEnter={(e) => {
-                  e.stopPropagation();
-                  const full = describeContent('development', devId, ctx, {
-                    installed: true,
-                  });
-                  const { effects, description } = splitSummary(full);
-                  handleHoverCard({
-                    title,
-                    effects,
-                    requirements: [],
-                    ...(description && { description }),
-                    bgClass: 'bg-gray-100 dark:bg-gray-700',
-                  });
-                }}
-                onMouseLeave={(e) => {
-                  e.stopPropagation();
-                  handleLeave();
-                }}
-              >
-                {ctx.developments.get(devId)?.icon} {name}
-              </span>
+    <Tooltip content={landTooltip}>
+      <div className="relative panel-card p-2 text-center hoverable cursor-default">
+        <span className="font-medium">{landIcon} Land</span>
+        <div
+          ref={animateSlots}
+          className="mt-1 flex flex-wrap justify-center gap-1"
+        >
+          {Array.from({ length: land.slotsMax }).map((_, i) => {
+            const devId = land.developments[i];
+            if (devId) {
+              const name = ctx.developments.get(devId)?.name || devId;
+              const title = `${ctx.developments.get(devId)?.icon || ''} ${name}`;
+              const full = describeContent('development', devId, ctx, {
+                installed: true,
+              });
+              const split = splitSummary(full);
+              const devTooltip = (
+                <div>
+                  <div className="font-medium">{title}</div>
+                  {split.description && (
+                    <ul className="mt-1 list-disc pl-4">
+                      {renderSummary(split.description)}
+                    </ul>
+                  )}
+                  {split.effects.length > 0 && (
+                    <ul className="mt-1 list-disc pl-4">
+                      {renderSummary(split.effects)}
+                    </ul>
+                  )}
+                </div>
+              );
+              return (
+                <Tooltip key={i} content={devTooltip}>
+                  <span className="panel-card p-1 text-xs hoverable cursor-default">
+                    {ctx.developments.get(devId)?.icon} {name}
+                  </span>
+                </Tooltip>
+              );
+            }
+            const emptyTooltip = (
+              <div>
+                <div className="font-medium">{slotIcon} Development Slot</div>
+                {developAction && (
+                  <div className="mt-1">
+                    Use {developAction.icon || ''} {developAction.name} to build
+                    here
+                  </div>
+                )}
+              </div>
             );
-          }
-          const handleLeave = () => showLandCard();
-          return (
-            <span
-              key={i}
-              className="panel-card p-1 text-xs hoverable cursor-help italic"
-              onMouseEnter={(e) => {
-                e.stopPropagation();
-                handleHoverCard({
-                  title: `${slotIcon} Development Slot (empty)`,
-                  effects: [],
-                  ...(developAction && {
-                    description: `Use ${developAction.icon || ''} ${developAction.name} to build here`,
-                  }),
-                  requirements: [],
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                });
-              }}
-              onMouseLeave={(e) => {
-                e.stopPropagation();
-                handleLeave();
-              }}
-            >
-              {slotIcon} -empty-
-            </span>
-          );
-        })}
+            return (
+              <Tooltip key={i} content={emptyTooltip}>
+                <span className="panel-card p-1 text-xs hoverable cursor-default italic">
+                  {slotIcon} -empty-
+                </span>
+              </Tooltip>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </Tooltip>
   );
 };
 
 const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
-  const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+  const { ctx } = useGameEngine();
   const developAction = useMemo(() => {
     const entry = Array.from(
       (
@@ -132,8 +127,6 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
           key={land.id}
           land={land}
           ctx={ctx}
-          handleHoverCard={handleHoverCard}
-          clearHoverCard={clearHoverCard}
           developAction={developAction}
         />
       ))}

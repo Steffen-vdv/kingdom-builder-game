@@ -1,15 +1,17 @@
 import React from 'react';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { describeContent, splitSummary } from '../../translation';
+import { renderSummary } from '../../translation/render';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import Tooltip from '../common/Tooltip';
 
 interface BuildingDisplayProps {
   player: EngineContext['activePlayer'];
 }
 
 const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
-  const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+  const { ctx } = useGameEngine();
   if (player.buildings.size === 0) return null;
   const animateBuildings = useAnimate<HTMLDivElement>();
   return (
@@ -19,29 +21,33 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
         const icon =
           ctx.buildings.get(b)?.icon || ctx.actions.get('build').icon || '';
         const title = `${icon} ${name}`;
-        return (
-          <div
-            key={b}
-            className="panel-card p-2 text-center hoverable cursor-help"
-            onMouseEnter={() => {
-              const full = describeContent('building', b, ctx, {
-                installed: true,
-              });
-              const { effects, description } = splitSummary(full);
-              handleHoverCard({
-                title,
-                effects,
-                requirements: [],
-                ...(description && { description }),
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              });
-            }}
-            onMouseLeave={clearHoverCard}
-          >
-            <span className="font-medium">
-              {icon} {name}
-            </span>
+        const full = describeContent('building', b, ctx, {
+          installed: true,
+        });
+        const split = splitSummary(full);
+        const content = (
+          <div>
+            <div className="font-medium">{title}</div>
+            {split.description && (
+              <ul className="mt-1 list-disc pl-4">
+                {renderSummary(split.description)}
+              </ul>
+            )}
+            {split.effects.length > 0 && (
+              <ul className="mt-1 list-disc pl-4">
+                {renderSummary(split.effects)}
+              </ul>
+            )}
           </div>
+        );
+        return (
+          <Tooltip key={b} content={content}>
+            <div className="panel-card p-2 text-center hoverable cursor-default">
+              <span className="font-medium">
+                {icon} {name}
+              </span>
+            </div>
+          </Tooltip>
         );
       })}
     </div>

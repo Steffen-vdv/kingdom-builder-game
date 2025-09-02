@@ -9,12 +9,7 @@ import {
   LAND_ICON as landIcon,
   LAND_LABEL as landLabel,
 } from '@kingdom-builder/contents';
-import {
-  describeContent,
-  summarizeContent,
-  splitSummary,
-  type Summary,
-} from '../../translation';
+import { summarizeContent, type Summary } from '../../translation';
 import ActionCard from './ActionCard';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
@@ -47,13 +42,7 @@ function GenericActions({
   summaries: Map<string, Summary>;
   isActionPhase: boolean;
 }) {
-  const {
-    ctx,
-    handlePerform,
-    handleHoverCard,
-    clearHoverCard,
-    actionCostResource,
-  } = useGameEngine();
+  const { ctx, handlePerform, actionCostResource } = useGameEngine();
   const formatRequirement = (req: string) => req;
   return (
     <>
@@ -97,23 +86,6 @@ function GenericActions({
             enabled={enabled}
             tooltip={title}
             onClick={() => void handlePerform(action)}
-            onMouseEnter={() => {
-              const full = describeContent('action', action.id, ctx);
-              const { effects, description } = splitSummary(full);
-              handleHoverCard({
-                title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
-                effects,
-                requirements,
-                costs,
-                ...(description && { description }),
-                ...(!implemented && {
-                  description: 'Not implemented yet',
-                  descriptionClass: 'italic text-red-600',
-                }),
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              });
-            }}
-            onMouseLeave={clearHoverCard}
           />
         );
       })}
@@ -128,13 +100,7 @@ function RaisePopOptions({
   action: Action;
   isActionPhase: boolean;
 }) {
-  const {
-    ctx,
-    handlePerform,
-    handleHoverCard,
-    clearHoverCard,
-    actionCostResource,
-  } = useGameEngine();
+  const { ctx, handlePerform, actionCostResource } = useGameEngine();
   const formatRequirement = (req: string) => req;
   const requirementIcons = getRequirementIcons(action.id, ctx);
   return (
@@ -160,7 +126,6 @@ function RaisePopOptions({
           : !canPay
             ? 'Cannot pay costs'
             : undefined;
-        const summary = describeContent('action', action.id, ctx, { role });
         const shortSummary = summarizeContent('action', action.id, ctx, {
           role,
         });
@@ -183,20 +148,6 @@ function RaisePopOptions({
             enabled={enabled}
             tooltip={title}
             onClick={() => void handlePerform(action, { role })}
-            onMouseEnter={() => {
-              const { effects, description } = splitSummary(summary);
-              handleHoverCard({
-                title: `${ctx.actions.get(action.id).icon || ''}${
-                  POPULATION_ROLES[role]?.icon
-                } Hire ${POPULATION_ROLES[role]?.label || ''}`,
-                effects,
-                requirements,
-                costs,
-                ...(description && { description }),
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              });
-            }}
-            onMouseLeave={clearHoverCard}
           />
         );
       })}
@@ -253,13 +204,7 @@ function DevelopOptions({
   summaries: Map<string, Summary>;
   hasDevelopLand: boolean;
 }) {
-  const {
-    ctx,
-    handlePerform,
-    handleHoverCard,
-    clearHoverCard,
-    actionCostResource,
-  } = useGameEngine();
+  const { ctx, handlePerform, actionCostResource } = useGameEngine();
   return (
     <div>
       <h3 className="font-medium">
@@ -321,25 +266,6 @@ function DevelopOptions({
                 )?.id;
                 void handlePerform(action, { id: d.id, landId });
               }}
-              onMouseEnter={() => {
-                const full = describeContent('development', d.id, ctx);
-                const { effects, description } = splitSummary(full);
-                handleHoverCard({
-                  title: `${ctx.actions.get('develop').icon || ''} ${
-                    ctx.actions.get('develop').name
-                  } - ${ctx.developments.get(d.id)?.icon} ${d.name}`,
-                  effects,
-                  requirements,
-                  costs,
-                  ...(description && { description }),
-                  ...(!implemented && {
-                    description: 'Not implemented yet',
-                    descriptionClass: 'italic text-red-600',
-                  }),
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                });
-              }}
-              onMouseLeave={clearHoverCard}
             />
           );
         })}
@@ -353,21 +279,13 @@ function BuildOptions({
   isActionPhase,
   buildings,
   summaries,
-  descriptions,
 }: {
   action: Action;
   isActionPhase: boolean;
   buildings: Building[];
   summaries: Map<string, Summary>;
-  descriptions: Map<string, Summary>;
 }) {
-  const {
-    ctx,
-    handlePerform,
-    handleHoverCard,
-    clearHoverCard,
-    actionCostResource,
-  } = useGameEngine();
+  const { ctx, handlePerform, actionCostResource } = useGameEngine();
   return (
     <div>
       <h3 className="font-medium">
@@ -416,25 +334,6 @@ function BuildOptions({
               enabled={enabled}
               tooltip={title}
               onClick={() => void handlePerform(action, { id: b.id })}
-              onMouseEnter={() => {
-                const full = descriptions.get(b.id) ?? [];
-                const { effects, description } = splitSummary(full);
-                handleHoverCard({
-                  title: `${ctx.actions.get('build').icon || ''} ${
-                    ctx.actions.get('build').name
-                  } - ${ctx.buildings.get(b.id)?.icon || ''} ${b.name}`,
-                  effects,
-                  requirements,
-                  costs,
-                  ...(description && { description }),
-                  ...(!implemented && {
-                    description: 'Not implemented yet',
-                    descriptionClass: 'italic text-red-600',
-                  }),
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                });
-              }}
-              onMouseLeave={clearHoverCard}
             />
           );
         })}
@@ -507,13 +406,6 @@ export default function ActionsPanel() {
     );
     return map;
   }, [buildingOptions, ctx]);
-  const buildingDescriptions = useMemo(() => {
-    const map = new Map<string, Summary>();
-    buildingOptions.forEach((b) =>
-      map.set(b.id, describeContent('building', b.id, ctx)),
-    );
-    return map;
-  }, [buildingOptions, ctx]);
 
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.category === 'development');
@@ -562,7 +454,6 @@ export default function ActionsPanel() {
             isActionPhase={isActionPhase}
             buildings={buildingOptions}
             summaries={buildingSummaries}
-            descriptions={buildingDescriptions}
           />
         )}
       </div>

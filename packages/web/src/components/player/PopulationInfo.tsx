@@ -2,111 +2,71 @@ import React from 'react';
 import { POPULATION_ROLES, STATS } from '@kingdom-builder/contents';
 import { formatStatValue } from '../../utils/stats';
 import type { EngineContext } from '@kingdom-builder/engine';
-import { useGameEngine } from '../../state/GameContext';
+import Tooltip from '../common/Tooltip';
 
 interface PopulationInfoProps {
   player: EngineContext['activePlayer'];
 }
 
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
-  const { handleHoverCard, clearHoverCard } = useGameEngine();
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
   const popDetails = popEntries.map(([role, count]) => ({ role, count }));
-
-  const showPopulationCard = () =>
-    handleHoverCard({
-      title: '👥 Population',
-      effects: Object.values(POPULATION_ROLES).map(
-        (r) => `${r.icon} ${r.label} - ${r.description}`,
-      ),
-      effectsTitle: 'Archetypes',
-      requirements: [],
-      description:
-        'Population represents the people of your kingdom. Manage them wisely and assign roles to benefit your realm.',
-      bgClass: 'bg-gray-100 dark:bg-gray-700',
-    });
+  const popTooltip = (
+    <div>
+      <div className="font-medium">👥 Population</div>
+      <ul className="mt-1 list-disc pl-4">
+        {Object.values(POPULATION_ROLES).map((r) => (
+          <li key={r.label}>
+            {r.icon} {r.label} - {r.description}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 
   return (
     <>
       <div className="h-4 border-l border-black/10 dark:border-white/10" />
-      <div
-        role="button"
-        tabIndex={0}
-        className="bar-item hoverable cursor-help rounded px-1"
-        onMouseEnter={showPopulationCard}
-        onMouseLeave={clearHoverCard}
-        onFocus={showPopulationCard}
-        onBlur={clearHoverCard}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            showPopulationCard();
-          }
-        }}
-      >
-        👥{currentPop}/{player.maxPopulation}
-        {popDetails.length > 0 && (
-          <>
-            {' ('}
-            {popDetails.map(({ role, count }, i) => {
-              const info =
-                POPULATION_ROLES[role as keyof typeof POPULATION_ROLES];
-              return (
-                <React.Fragment key={role}>
-                  {i > 0 && ','}
-                  <button
-                    type="button"
-                    className="cursor-help hoverable rounded px-1"
-                    onMouseEnter={(e) => {
-                      e.stopPropagation();
-                      handleHoverCard({
-                        title: `${info.icon} ${info.label}`,
-                        effects: [],
-                        requirements: [],
-                        description: info.description,
-                        bgClass: 'bg-gray-100 dark:bg-gray-700',
-                      });
-                    }}
-                    onMouseLeave={(e) => {
-                      e.stopPropagation();
-                      showPopulationCard();
-                    }}
-                    onFocus={(e) => {
-                      e.stopPropagation();
-                      handleHoverCard({
-                        title: `${info.icon} ${info.label}`,
-                        effects: [],
-                        requirements: [],
-                        description: info.description,
-                        bgClass: 'bg-gray-100 dark:bg-gray-700',
-                      });
-                    }}
-                    onBlur={(e) => {
-                      e.stopPropagation();
-                      showPopulationCard();
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleHoverCard({
-                        title: `${info.icon} ${info.label}`,
-                        effects: [],
-                        requirements: [],
-                        description: info.description,
-                        bgClass: 'bg-gray-100 dark:bg-gray-700',
-                      });
-                    }}
-                  >
-                    {info.icon}
-                    {count}
-                  </button>
-                </React.Fragment>
-              );
-            })}
-            {')'}
-          </>
-        )}
-      </div>
+      <Tooltip content={popTooltip}>
+        <div
+          role="button"
+          tabIndex={0}
+          className="bar-item hoverable cursor-default rounded px-1"
+        >
+          👥{currentPop}/{player.maxPopulation}
+          {popDetails.length > 0 && (
+            <>
+              {' ('}
+              {popDetails.map(({ role, count }, i) => {
+                const info =
+                  POPULATION_ROLES[role as keyof typeof POPULATION_ROLES];
+                return (
+                  <React.Fragment key={role}>
+                    {i > 0 && ','}
+                    <Tooltip
+                      content={
+                        <span>
+                          {info.icon} {info.label} - {info.description}
+                        </span>
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="cursor-default hoverable rounded px-1"
+                      >
+                        {info.icon}
+                        {count}
+                      </button>
+                    </Tooltip>
+                  </React.Fragment>
+                );
+              })}
+              {')'}
+            </>
+          )}
+        </div>
+      </Tooltip>
       {Object.entries(player.stats)
         .filter(([k, v]) => {
           const info = STATS[k as keyof typeof STATS];
@@ -115,43 +75,22 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
         .map(([k, v]) => {
           const info = STATS[k as keyof typeof STATS];
           return (
-            <button
+            <Tooltip
               key={k}
-              type="button"
-              className="bar-item hoverable cursor-help rounded px-1"
-              onMouseEnter={() =>
-                handleHoverCard({
-                  title: `${info.icon} ${info.label}`,
-                  effects: [],
-                  requirements: [],
-                  description: info.description,
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
-              onMouseLeave={clearHoverCard}
-              onFocus={() =>
-                handleHoverCard({
-                  title: `${info.icon} ${info.label}`,
-                  effects: [],
-                  requirements: [],
-                  description: info.description,
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
-              onBlur={clearHoverCard}
-              onClick={() =>
-                handleHoverCard({
-                  title: `${info.icon} ${info.label}`,
-                  effects: [],
-                  requirements: [],
-                  description: info.description,
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
+              content={
+                <span>
+                  {info.icon} {info.label} - {info.description}
+                </span>
               }
             >
-              {info.icon}
-              {formatStatValue(k, v)}
-            </button>
+              <button
+                type="button"
+                className="bar-item hoverable cursor-default rounded px-1"
+              >
+                {info.icon}
+                {formatStatValue(k, v)}
+              </button>
+            </Tooltip>
           );
         })}
     </>

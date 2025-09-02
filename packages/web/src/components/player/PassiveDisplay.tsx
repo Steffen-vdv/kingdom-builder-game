@@ -2,8 +2,10 @@ import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
 import { MODIFIER_INFO as modifierInfo } from '@kingdom-builder/contents';
 import { describeEffects, splitSummary } from '../../translation';
+import { renderSummary } from '../../translation/render';
 import type { EffectDef } from '@kingdom-builder/engine';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import Tooltip from '../common/Tooltip';
 
 export const ICON_MAP: Record<string, string> = {
   cost_mod: modifierInfo.cost.icon,
@@ -15,7 +17,7 @@ export default function PassiveDisplay({
 }: {
   player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
 }) {
-  const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+  const { ctx } = useGameEngine();
   const ids = ctx.passives.list(player.id);
   const defs = ctx.passives.values(player.id) as {
     effects?: EffectDef[];
@@ -53,24 +55,26 @@ export default function PassiveDisplay({
         const summary = def.onUpkeepPhase
           ? [{ title: 'Until your next Upkeep Phase', items }]
           : items;
+        const split = splitSummary(summary);
+        const content = (
+          <div>
+            <div className="font-medium">{icon} Passive</div>
+            {split.description && (
+              <ul className="mt-1 list-disc pl-4">
+                {renderSummary(split.description)}
+              </ul>
+            )}
+            {split.effects.length > 0 && (
+              <ul className="mt-1 list-disc pl-4">
+                {renderSummary(split.effects)}
+              </ul>
+            )}
+          </div>
+        );
         return (
-          <span
-            key={id}
-            className="hoverable cursor-pointer"
-            onMouseEnter={() => {
-              const { effects, description } = splitSummary(summary);
-              handleHoverCard({
-                title: `${icon} Passive`,
-                effects,
-                requirements: [],
-                ...(description && { description }),
-                bgClass: 'bg-gray-100 dark:bg-gray-700',
-              });
-            }}
-            onMouseLeave={clearHoverCard}
-          >
-            {icon}
-          </span>
+          <Tooltip key={id} content={content}>
+            <span className="hoverable cursor-pointer">{icon}</span>
+          </Tooltip>
         );
       })}
     </div>
