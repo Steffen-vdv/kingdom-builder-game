@@ -9,9 +9,9 @@ describe('RequirementBuilder', () => {
       .param('operator', 'lt')
       .param('right', {
         type: 'population',
-        params: { role: PopulationRole.Commander },
+        params: { role: PopulationRole.Legion },
       })
-      .message('War weariness must be lower than commanders')
+      .message('War weariness must be lower than legions')
       .build();
 
     expect(req).toEqual({
@@ -22,10 +22,10 @@ describe('RequirementBuilder', () => {
         operator: 'lt',
         right: {
           type: 'population',
-          params: { role: PopulationRole.Commander },
+          params: { role: PopulationRole.Legion },
         },
       },
-      message: 'War weariness must be lower than commanders',
+      message: 'War weariness must be lower than legions',
     });
   });
 });

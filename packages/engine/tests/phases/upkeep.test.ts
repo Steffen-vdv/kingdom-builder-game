@@ -17,7 +17,7 @@ function getUpkeep(role: PopulationRole) {
 }
 
 const councilUpkeep = getUpkeep(PopulationRole.Council);
-const commanderUpkeep = getUpkeep(PopulationRole.Commander);
+const legionUpkeep = getUpkeep(PopulationRole.Legion);
 const fortifierUpkeep = getUpkeep(PopulationRole.Fortifier);
 
 describe('Upkeep phase', () => {
@@ -30,7 +30,7 @@ describe('Upkeep phase', () => {
       (s) => s.id === 'pay-upkeep',
     );
     ctx.game.currentStep = payStep.id;
-    ctx.activePlayer.population[PopulationRole.Commander] = 1;
+    ctx.activePlayer.population[PopulationRole.Legion] = 1;
     ctx.activePlayer.population[PopulationRole.Fortifier] = 1;
     const startGold = 5;
     ctx.activePlayer.gold = startGold;
@@ -39,8 +39,7 @@ describe('Upkeep phase', () => {
     advance(ctx);
     ctx.game.currentPlayerIndex = 0;
     const expectedGold =
-      startGold -
-      (councilUpkeep * councils + commanderUpkeep + fortifierUpkeep);
+      startGold - (councilUpkeep * councils + legionUpkeep + fortifierUpkeep);
     expect(player.gold).toBe(expectedGold);
   });
 
@@ -53,9 +52,9 @@ describe('Upkeep phase', () => {
       (s) => s.id === 'pay-upkeep',
     );
     ctx.game.currentStep = payStep.id;
-    ctx.activePlayer.population[PopulationRole.Commander] = 1;
+    ctx.activePlayer.population[PopulationRole.Legion] = 1;
     const councils = ctx.activePlayer.population[PopulationRole.Council];
-    const totalCost = councilUpkeep * councils + commanderUpkeep;
+    const totalCost = councilUpkeep * councils + legionUpkeep;
     ctx.activePlayer.gold = totalCost - 1;
     expect(() => advance(ctx)).toThrow();
   });

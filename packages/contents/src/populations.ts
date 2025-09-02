@@ -34,15 +34,15 @@ export function createPopulationRegistry() {
   );
 
   registry.add(
-    PopulationRole.Commander,
+    PopulationRole.Legion,
     population()
-      .id(PopulationRole.Commander)
-      .name('Commander')
+      .id(PopulationRole.Legion)
+      .name('Legion')
       .icon('🎖️')
       .upkeep(Resource.gold, 1)
       .onAssigned(
         effect(Types.Passive, PassiveMethods.ADD)
-          .param('id', 'commander_$player_$index')
+          .param('id', 'legion_$player_$index')
           .effect(
             effect(Types.Stat, StatMethods.ADD)
               .params({ key: Stat.armyStrength, amount: 1 })
@@ -52,7 +52,7 @@ export function createPopulationRegistry() {
       )
       .onUnassigned(
         effect(Types.Passive, PassiveMethods.REMOVE)
-          .param('id', 'commander_$player_$index')
+          .param('id', 'legion_$player_$index')
           .build(),
       )
       .build(),

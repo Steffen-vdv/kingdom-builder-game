@@ -21,7 +21,7 @@ export const GAME_START: StartConfig = {
     },
     population: {
       [PopulationRole.Council]: 1,
-      [PopulationRole.Commander]: 0,
+      [PopulationRole.Legion]: 0,
       [PopulationRole.Fortifier]: 0,
       [PopulationRole.Citizen]: 0,
     },

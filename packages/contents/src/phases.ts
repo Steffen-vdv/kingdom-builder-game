@@ -35,7 +35,7 @@ export const PHASES: PhaseDef[] = [
         .title('Raise Strength')
         .effect(
           effect()
-            .evaluator('population', { role: PopulationRole.Commander })
+            .evaluator('population', { role: PopulationRole.Legion })
             .effect(
               effect(Types.Stat, StatMethods.ADD_PCT)
                 .params({ key: Stat.armyStrength, percentStat: Stat.growth })

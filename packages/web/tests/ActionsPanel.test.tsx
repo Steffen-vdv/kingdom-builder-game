@@ -92,12 +92,12 @@ describe('<ActionsPanel />', () => {
     ctx.activePlayer.lands.forEach((l, i) => (l.slotsUsed = originalSlots[i]));
   });
 
-  it('shows war weariness vs commander requirement icons when unmet', () => {
+  it('shows war weariness vs legion requirement icons when unmet', () => {
     render(<ActionsPanel />);
     const wwIcon = STATS[Stat.warWeariness].icon;
-    const cmdIcon = POPULATION_ROLES[PopulationRole.Commander].icon;
+    const legIcon = POPULATION_ROLES[PopulationRole.Legion].icon;
     expect(
-      screen.getAllByText(`Req ${wwIcon}${cmdIcon}`)[0],
+      screen.getAllByText(`Req ${wwIcon}${legIcon}`)[0],
     ).toBeInTheDocument();
   });
 });

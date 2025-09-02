@@ -11,7 +11,7 @@ export const statAddPct: EffectHandler = (effect, ctx, mult = 1) => {
   }
 
   // Use a cache keyed by turn/phase/step so multiple evaluations in the
-  // same step (e.g. multiple commanders) scale additively from the
+  // same step (e.g. multiple legions) scale additively from the
   // original stat value rather than compounding.
   const cacheKey = `${ctx.game.turn}:${ctx.game.currentPhase}:${ctx.game.currentStep}:${key}`;
   if (!(cacheKey in ctx.statAddPctBases)) {
