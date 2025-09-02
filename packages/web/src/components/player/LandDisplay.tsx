@@ -75,7 +75,10 @@ const LandTile: React.FC<{
                   handleLeave();
                 }}
               >
-                {ctx.developments.get(devId)?.icon} {name}
+                <span className="flex-none">
+                  {ctx.developments.get(devId)?.icon}
+                </span>
+                <span className="flex-1 truncate">{name}</span>
               </span>
             );
           }
@@ -101,7 +104,8 @@ const LandTile: React.FC<{
                 handleLeave();
               }}
             >
-              {SLOT_INFO.icon} -empty-
+              <span className="flex-none">{SLOT_INFO.icon}</span>
+              <span className="flex-1 truncate">-empty-</span>
             </span>
           );
         })}
