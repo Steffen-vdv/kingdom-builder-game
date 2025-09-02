@@ -15,7 +15,7 @@ import {
   GAME_START,
   RULES,
   RESOURCES,
-  SLOT_ICON as slotIcon,
+  SLOT_INFO,
   type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
@@ -125,7 +125,9 @@ describe('sub-action logging', () => {
     );
     expect(tillDiff.length).toBeGreaterThan(0);
     expect(
-      tillDiff.some((line) => line.startsWith(`${slotIcon} Development Slot`)),
+      tillDiff.some((line) =>
+        line.startsWith(`${SLOT_INFO.icon} Development Slot`),
+      ),
     ).toBe(true);
     tillDiff.forEach((line) => {
       expect(logLines).toContain(`    ${line}`);

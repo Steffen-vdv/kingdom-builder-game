@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import {
-  LAND_ICON as landIcon,
-  SLOT_ICON as slotIcon,
+  LAND_INFO,
+  SLOT_INFO,
+  DEVELOPMENTS_INFO,
 } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { describeContent, splitSummary } from '../../translation';
@@ -23,10 +24,10 @@ const LandTile: React.FC<{
     const full = describeContent('land', land, ctx);
     const { effects, description } = splitSummary(full);
     handleHoverCard({
-      title: `${landIcon} Land`,
+      title: `${LAND_INFO.icon} ${LAND_INFO.label}`,
       effects,
       requirements: [],
-      effectsTitle: 'Developments',
+      effectsTitle: DEVELOPMENTS_INFO.label,
       ...(description && { description }),
       bgClass: 'bg-gray-100 dark:bg-gray-700',
     });
@@ -38,7 +39,9 @@ const LandTile: React.FC<{
       onMouseEnter={showLandCard}
       onMouseLeave={clearHoverCard}
     >
-      <span className="font-medium">{landIcon} Land</span>
+      <span className="font-medium">
+        {LAND_INFO.icon} {LAND_INFO.label}
+      </span>
       <div
         ref={animateSlots}
         className="mt-1 flex flex-wrap justify-center gap-1"
@@ -84,7 +87,7 @@ const LandTile: React.FC<{
               onMouseEnter={(e) => {
                 e.stopPropagation();
                 handleHoverCard({
-                  title: `${slotIcon} Development Slot (empty)`,
+                  title: `${SLOT_INFO.icon} ${SLOT_INFO.label} (empty)`,
                   effects: [],
                   ...(developAction && {
                     description: `Use ${developAction.icon || ''} ${developAction.name} to build here`,
@@ -98,7 +101,7 @@ const LandTile: React.FC<{
                 handleLeave();
               }}
             >
-              {slotIcon} -empty-
+              {SLOT_INFO.icon} -empty-
             </span>
           );
         })}

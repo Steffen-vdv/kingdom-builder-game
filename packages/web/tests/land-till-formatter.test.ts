@@ -10,7 +10,7 @@ import {
   PHASES,
   GAME_START,
   RULES,
-  SLOT_ICON as slotIcon,
+  SLOT_INFO,
 } from '@kingdom-builder/contents';
 import { LandMethods } from '@kingdom-builder/contents/config/builders';
 
@@ -37,7 +37,7 @@ describe('land till formatter', () => {
       [{ type: 'land', method: LandMethods.TILL }],
       ctx,
     );
-    expect(summary).toContain(`${slotIcon}+1`);
+    expect(summary).toContain(`${SLOT_INFO.icon}+1`);
   });
 
   it('summarizes till action', () => {
@@ -56,7 +56,7 @@ describe('land till formatter', () => {
     )?.[0] as string;
     const summary = summarizeContent('action', tillId, ctx);
     const hasIcon = summary.some(
-      (i) => typeof i === 'string' && i.includes(slotIcon),
+      (i) => typeof i === 'string' && i.includes(SLOT_INFO.icon),
     );
     expect(hasIcon).toBe(true);
   });

@@ -2,8 +2,8 @@ import React from 'react';
 import Button from './components/common/Button';
 import {
   ACTIONS as actionInfo,
-  LAND_ICON as landIcon,
-  SLOT_ICON as slotIcon,
+  LAND_INFO,
+  SLOT_INFO,
   RESOURCES,
   Resource,
   PHASES,
@@ -27,8 +27,8 @@ export default function Overview({ onBack }: OverviewProps) {
     growth: PHASES.find((p) => p.id === 'growth')?.icon,
     upkeep: PHASES.find((p) => p.id === 'upkeep')?.icon,
     main: PHASES.find((p) => p.id === 'main')?.icon,
-    land: landIcon,
-    slot: slotIcon,
+    land: LAND_INFO.icon,
+    slot: SLOT_INFO.icon,
     gold: RESOURCES[Resource.gold].icon,
     ap: RESOURCES[Resource.ap].icon,
     happiness: RESOURCES[Resource.happiness].icon,
