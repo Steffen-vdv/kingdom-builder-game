@@ -75,7 +75,10 @@ const LandTile: React.FC<{
                   handleLeave();
                 }}
               >
-                {ctx.developments.get(devId)?.icon} {name}
+                <span className="flex-none">
+                  {ctx.developments.get(devId)?.icon}
+                </span>
+                <span className="flex-1 truncate">{name}</span>
               </span>
             );
           }
@@ -101,7 +104,8 @@ const LandTile: React.FC<{
                 handleLeave();
               }}
             >
-              {SLOT_INFO.icon} -empty-
+              <span className="flex-none">{SLOT_INFO.icon}</span>
+              <span className="flex-1 truncate">-empty-</span>
             </span>
           );
         })}
@@ -131,7 +135,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
   return (
     <div
       ref={animateLands}
-      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 mt-2 w-fit"
+      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 mt-2 w-full"
     >
       {player.lands.map((land) => (
         <LandTile

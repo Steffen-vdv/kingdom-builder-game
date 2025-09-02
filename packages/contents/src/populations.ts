@@ -27,7 +27,7 @@ export function createPopulationRegistry() {
       .upkeep(Resource.gold, 2)
       .onGainAPStep(
         effect(Types.Resource, ResourceMethods.ADD)
-          .params({ key: Resource.ap, amount: 2 })
+          .params({ key: Resource.ap, amount: 1 })
           .build(),
       )
       .build(),
