@@ -11,8 +11,9 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
   const { handleHoverCard, clearHoverCard } = useGameEngine();
   return (
     <>
-      {Object.entries(player.resources).map(([k, v]) => {
-        const info = RESOURCES[k as keyof typeof RESOURCES];
+      {(Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]).map((k) => {
+        const info = RESOURCES[k];
+        const v = player.resources[k] ?? 0;
         const showResourceCard = () =>
           handleHoverCard({
             title: `${info.icon} ${info.label}`,
@@ -31,6 +32,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
             onFocus={showResourceCard}
             onBlur={clearHoverCard}
             onClick={showResourceCard}
+            aria-label={`${info.label}: ${v}`}
           >
             {info.icon}
             {v}
