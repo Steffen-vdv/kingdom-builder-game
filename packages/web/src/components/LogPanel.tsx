@@ -30,12 +30,21 @@ export default function LogPanel() {
               : entry.playerId === bId
                 ? 'log-entry-b'
                 : '';
+          const isLast = idx === entries.length - 1;
           return (
             <li
               key={idx}
-              className={`text-xs font-mono whitespace-pre-wrap ${colorClass}`}
+              className={`flex items-start gap-2 text-sm whitespace-pre-wrap ${colorClass} ${
+                isLast
+                  ? 'font-semibold bg-black/5 dark:bg-white/10 rounded'
+                  : ''
+              }`}
             >
-              [{entry.time}] {entry.text}
+              <span className="w-2 h-2 rounded-full bg-current mt-1 flex-shrink-0" />
+              <span>
+                <span className="font-mono tabular-nums">[{entry.time}]</span>{' '}
+                {entry.text}
+              </span>
             </li>
           );
         })}
