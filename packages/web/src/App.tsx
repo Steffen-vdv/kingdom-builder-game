@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import Game from './Game';
 import Menu from './Menu';
 import Overview from './Overview';
+import Tutorial from './Tutorial';
 
-type Screen = 'menu' | 'overview' | 'game';
+enum Screen {
+  Menu = 'menu',
+  Overview = 'overview',
+  Tutorial = 'tutorial',
+  Game = 'game',
+}
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('menu');
+  const [screen, setScreen] = useState<Screen>(Screen.Menu);
   const [gameKey, setGameKey] = useState(0);
   const [darkMode, setDarkMode] = useState(true);
   const [devMode, setDevMode] = useState(false);
@@ -21,40 +27,38 @@ export default function App() {
     }
   }, []);
 
-  if (screen === 'overview') {
-    return <Overview onBack={() => setScreen('menu')} />;
+  switch (screen) {
+    case Screen.Overview:
+      return <Overview onBack={() => setScreen(Screen.Menu)} />;
+    case Screen.Tutorial:
+      return <Tutorial onBack={() => setScreen(Screen.Menu)} />;
+    case Screen.Game:
+      return (
+        <Game
+          key={gameKey}
+          onExit={() => setScreen(Screen.Menu)}
+          darkMode={darkMode}
+          onToggleDark={() => setDarkMode((d) => !d)}
+          devMode={devMode}
+        />
+      );
+    case Screen.Menu:
+    default:
+      return (
+        <Menu
+          onStart={() => {
+            setDevMode(false);
+            setGameKey((k) => k + 1);
+            setScreen(Screen.Game);
+          }}
+          onStartDev={() => {
+            setDevMode(true);
+            setGameKey((k) => k + 1);
+            setScreen(Screen.Game);
+          }}
+          onOverview={() => setScreen(Screen.Overview)}
+          onTutorial={() => setScreen(Screen.Tutorial)}
+        />
+      );
   }
-
-  if (screen === 'game') {
-    return (
-      <Game
-        key={gameKey}
-        onExit={() => setScreen('menu')}
-        darkMode={darkMode}
-        onToggleDark={() => setDarkMode((d) => !d)}
-        devMode={devMode}
-      />
-    );
-  }
-
-  return (
-    <Menu
-      onStart={() => {
-        setDevMode(false);
-        setGameKey((k) => k + 1);
-        setScreen('game');
-      }}
-      onStartDev={() => {
-        setDevMode(true);
-        setGameKey((k) => k + 1);
-        setScreen('game');
-      }}
-      onOverview={() => setScreen('overview')}
-      onTutorial={() => {
-        setDevMode(false);
-        setGameKey((k) => k + 1);
-        setScreen('game');
-      }}
-    />
-  );
 }
