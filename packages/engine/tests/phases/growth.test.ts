@@ -6,29 +6,25 @@ import {
   Resource as CResource,
   Stat as CStat,
   PopulationRole,
+  DEVELOPMENTS,
+  POPULATIONS,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 const growthPhase = PHASES[0];
 const growthId = growthPhase.id;
-const incomeStep = growthPhase.steps.find((s) => s.id === 'gain-income');
+const farmId = Array.from(
+  (DEVELOPMENTS as unknown as { map: Map<string, unknown> }).map.keys(),
+).find((id) => DEVELOPMENTS.get(id)?.onGainIncomeStep) as string;
 const farmGoldGain = Number(
-  incomeStep?.effects?.[0]?.effects?.find(
-    (e) =>
-      e.type === 'resource' &&
-      e.method === 'add' &&
-      (e as { params: { key: string } }).params.key === CResource.gold,
-  )?.params.amount ?? 0,
+  DEVELOPMENTS.get(farmId)?.onGainIncomeStep?.[0]?.effects?.find(
+    (e) => e.type === 'resource' && e.method === 'add',
+  )?.params?.amount ?? 0,
 );
-
-const apStep = growthPhase.steps.find((s) => s.id === 'gain-ap');
 const councilApGain = Number(
-  apStep?.effects?.[0]?.effects?.find(
-    (e) =>
-      e.type === 'resource' &&
-      e.method === 'add' &&
-      (e as { params: { key: string } }).params.key === CResource.ap,
-  )?.params.amount ?? 0,
+  POPULATIONS.get(PopulationRole.Council)?.onGainAPStep?.find(
+    (e) => e.type === 'resource' && e.method === 'add',
+  )?.params?.amount ?? 0,
 );
 
 describe('Growth phase', () => {

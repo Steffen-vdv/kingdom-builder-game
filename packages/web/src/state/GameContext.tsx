@@ -24,6 +24,7 @@ import {
   GAME_START,
   RULES,
   type ResourceKey,
+  type StepDef,
 } from '@kingdom-builder/contents';
 import {
   snapshotPlayer,
@@ -51,6 +52,7 @@ interface HoverCard {
   effects: Summary;
   requirements: string[];
   costs?: Record<string, number>;
+  upkeep?: Record<string, number> | undefined;
   description?: string | Summary;
   descriptionTitle?: string;
   descriptionClass?: string;
@@ -284,7 +286,7 @@ export function GameProvider({
     let lastPhase: string | null = null;
     while (!ctx.phases[ctx.game.phaseIndex]?.action) {
       const before = snapshotPlayer(ctx.activePlayer, ctx);
-      const { phase, step, player } = advance(ctx);
+      const { phase, step, player, effects } = advance(ctx);
       const phaseDef = ctx.phases.find((p) => p.id === phase)!;
       const stepDef = phaseDef.steps.find((s) => s.id === step);
       if (phase !== lastPhase) {
@@ -295,10 +297,13 @@ export function GameProvider({
         lastPhase = phase;
       }
       const after = snapshotPlayer(player, ctx);
+      const stepWithEffects: StepDef | undefined = stepDef
+        ? ({ ...(stepDef as StepDef), effects } as StepDef)
+        : undefined;
       const changes = diffStepSnapshots(
         before,
         after,
-        stepDef,
+        stepWithEffects,
         ctx,
         RESOURCE_KEYS,
       );

@@ -24,6 +24,7 @@ export default function HoverCard() {
             data.costs,
             ctx.activePlayer.resources,
             actionCostResource,
+            data.upkeep,
           )}
         </span>
       </div>

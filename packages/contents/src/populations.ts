@@ -24,6 +24,7 @@ export function createPopulationRegistry() {
       .id(PopulationRole.Council)
       .name('Council')
       .icon('⚖️')
+      .upkeep(Resource.gold, 2)
       .onAssigned(
         effect(Types.Resource, ResourceMethods.ADD)
           .params({ key: Resource.ap, amount: 1 })
@@ -32,6 +33,11 @@ export function createPopulationRegistry() {
       .onUnassigned(
         effect(Types.Resource, ResourceMethods.REMOVE)
           .params({ key: Resource.ap, amount: 1 })
+          .build(),
+      )
+      .onGainAPStep(
+        effect(Types.Resource, ResourceMethods.ADD)
+          .params({ key: Resource.ap, amount: 2 })
           .build(),
       )
       .build(),
@@ -43,6 +49,7 @@ export function createPopulationRegistry() {
       .id(PopulationRole.Commander)
       .name('Commander')
       .icon('🎖️')
+      .upkeep(Resource.gold, 1)
       .onAssigned(
         effect(Types.Passive, PassiveMethods.ADD)
           .param('id', 'commander_$player_$index')
@@ -67,6 +74,7 @@ export function createPopulationRegistry() {
       .id(PopulationRole.Fortifier)
       .name('Fortifier')
       .icon('🔧')
+      .upkeep(Resource.gold, 1)
       .onAssigned(
         effect(Types.Passive, PassiveMethods.ADD)
           .param('id', 'fortifier_$player_$index')

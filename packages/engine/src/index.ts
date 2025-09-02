@@ -231,6 +231,13 @@ function applyPlayerStart(
       );
       if (landCfg.developments) land.developments.push(...landCfg.developments);
       land.slotsUsed = landCfg.slotsUsed ?? land.developments.length;
+      if (landCfg.upkeep) land.upkeep = { ...landCfg.upkeep };
+      if (landCfg.onPayUpkeepStep)
+        land.onPayUpkeepStep = landCfg.onPayUpkeepStep.map((e) => ({ ...e }));
+      if (landCfg.onGainIncomeStep)
+        land.onGainIncomeStep = landCfg.onGainIncomeStep.map((e) => ({ ...e }));
+      if (landCfg.onGainAPStep)
+        land.onGainAPStep = landCfg.onGainAPStep.map((e) => ({ ...e }));
       player.lands.push(land);
     });
 }
