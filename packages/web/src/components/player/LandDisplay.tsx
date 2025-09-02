@@ -34,7 +34,7 @@ const LandTile: React.FC<{
   const animateSlots = useAnimate<HTMLDivElement>();
   return (
     <div
-      className="relative panel-card p-2 text-center hoverable cursor-help"
+      className="land-tile"
       onMouseEnter={showLandCard}
       onMouseLeave={clearHoverCard}
     >
@@ -52,7 +52,7 @@ const LandTile: React.FC<{
             return (
               <span
                 key={i}
-                className="panel-card p-1 text-xs hoverable cursor-help"
+                className="land-slot"
                 onMouseEnter={(e) => {
                   e.stopPropagation();
                   const full = describeContent('development', devId, ctx, {
@@ -80,7 +80,7 @@ const LandTile: React.FC<{
           return (
             <span
               key={i}
-              className="panel-card p-1 text-xs hoverable cursor-help italic"
+              className="land-slot italic"
               onMouseEnter={(e) => {
                 e.stopPropagation();
                 handleHoverCard({
@@ -126,7 +126,10 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
   if (player.lands.length === 0) return null;
   const animateLands = useAnimate<HTMLDivElement>();
   return (
-    <div ref={animateLands} className="flex flex-wrap gap-2 mt-2 w-fit">
+    <div
+      ref={animateLands}
+      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 mt-2 w-fit"
+    >
       {player.lands.map((land) => (
         <LandTile
           key={land.id}
