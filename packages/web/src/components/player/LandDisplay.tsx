@@ -80,7 +80,7 @@ const LandTile: React.FC<{
           return (
             <span
               key={i}
-              className="land-slot flex items-center justify-center"
+              className="land-slot italic"
               onMouseEnter={(e) => {
                 e.stopPropagation();
                 handleHoverCard({
@@ -98,7 +98,7 @@ const LandTile: React.FC<{
                 handleLeave();
               }}
             >
-              +
+              {slotIcon} -empty-
             </span>
           );
         })}
@@ -128,7 +128,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
   return (
     <div
       ref={animateLands}
-      className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 w-fit"
+      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 mt-2 w-fit"
     >
       {player.lands.map((land) => (
         <LandTile
