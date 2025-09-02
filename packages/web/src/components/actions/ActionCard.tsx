@@ -13,6 +13,7 @@ export type ActionCardProps = {
   costs: Record<string, number>;
   playerResources: Record<string, number>;
   actionCostResource: string;
+  upkeep?: Record<string, number> | undefined;
   summary?: Summary | undefined;
   implemented?: boolean;
   enabled: boolean;
@@ -29,6 +30,7 @@ export default function ActionCard({
   costs,
   playerResources,
   actionCostResource,
+  upkeep,
   summary,
   implemented = true,
   enabled,
@@ -51,7 +53,7 @@ export default function ActionCard({
     >
       <span className="text-base font-medium">{title}</span>
       <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-        {renderCosts(costs, playerResources, actionCostResource)}
+        {renderCosts(costs, playerResources, actionCostResource, upkeep)}
       </span>
       {requirements.length > 0 && requirementIcons.length > 0 && (
         <span className="absolute top-7 right-2 text-xs text-red-600">

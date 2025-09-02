@@ -26,6 +26,17 @@ export class PhasedTranslator {
         });
       }
     }
+    for (const key of [
+      'onPayUpkeepStep',
+      'onGainIncomeStep',
+      'onGainAPStep',
+    ] as const) {
+      const eff = summarizeEffects(def[key], ctx);
+      if (eff.length) {
+        const info = triggerInfo[key];
+        root.push({ title: `${info.icon} ${info.future}`, items: eff });
+      }
+    }
     const pre = summarizeEffects(def.onBeforeAttacked, ctx);
     if (pre.length)
       root.push({
@@ -54,6 +65,17 @@ export class PhasedTranslator {
           title: `${phase.icon} On each ${phase.label} Phase`,
           items: eff,
         });
+      }
+    }
+    for (const key of [
+      'onPayUpkeepStep',
+      'onGainIncomeStep',
+      'onGainAPStep',
+    ] as const) {
+      const eff = describeEffects(def[key], ctx);
+      if (eff.length) {
+        const info = triggerInfo[key];
+        root.push({ title: `${info.icon} ${info.future}`, items: eff });
       }
     }
     const pre = describeEffects(def.onBeforeAttacked, ctx);

@@ -4,6 +4,7 @@ import {
   PHASES,
   Resource as CResource,
   PopulationRole,
+  POPULATIONS,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
@@ -12,16 +13,7 @@ const payStep = upkeepPhase.steps.find((s) => s.id === 'pay-upkeep')!;
 const warStep = upkeepPhase.steps.find((s) => s.id === 'war-recovery')!;
 
 function getUpkeep(role: PopulationRole) {
-  return Number(
-    payStep.effects
-      ?.find((e) => e.evaluator?.params?.role === role)
-      ?.effects?.find(
-        (eff) =>
-          eff.type === 'resource' &&
-          eff.method === 'remove' &&
-          eff.params.key === CResource.gold,
-      )?.params.amount ?? 0,
-  );
+  return Number(POPULATIONS.get(role)?.upkeep?.[CResource.gold] ?? 0);
 }
 
 const councilUpkeep = getUpkeep(PopulationRole.Council);

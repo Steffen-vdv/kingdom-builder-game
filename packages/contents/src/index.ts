@@ -22,3 +22,9 @@ export type { ActionDef } from './actions';
 export type { BuildingDef } from './buildings';
 export type { DevelopmentDef } from './developments';
 export type { PopulationDef, TriggerKey } from './defs';
+export {
+  ON_PAY_UPKEEP_STEP,
+  ON_GAIN_INCOME_STEP,
+  ON_GAIN_AP_STEP,
+  BROOM_ICON,
+} from './defs';

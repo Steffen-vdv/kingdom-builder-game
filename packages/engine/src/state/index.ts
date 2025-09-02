@@ -1,3 +1,5 @@
+import type { EffectDef } from '../effects';
+
 export const Resource: Record<string, string> = {};
 export type ResourceKey = string;
 export function setResourceKeys(keys: string[]) {
@@ -35,6 +37,10 @@ export class Land {
   slotsUsed = 0;
   developments: string[] = [];
   tilled = false;
+  upkeep?: Record<ResourceKey, number>;
+  onPayUpkeepStep?: EffectDef[];
+  onGainIncomeStep?: EffectDef[];
+  onGainAPStep?: EffectDef[];
   constructor(id: string, slotsMax: number, tilled = false) {
     this.id = id;
     this.slotsMax = slotsMax;

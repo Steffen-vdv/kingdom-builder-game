@@ -51,11 +51,15 @@ export const buildingSchema = z.object({
   name: z.string(),
   icon: z.string().optional(),
   costs: costBagSchema,
+  upkeep: costBagSchema.optional(),
   onBuild: z.array(effectSchema).optional(),
   onGrowthPhase: z.array(effectSchema).optional(),
   onUpkeepPhase: z.array(effectSchema).optional(),
   onBeforeAttacked: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
+  onPayUpkeepStep: z.array(effectSchema).optional(),
+  onGainIncomeStep: z.array(effectSchema).optional(),
+  onGainAPStep: z.array(effectSchema).optional(),
 });
 
 export type BuildingConfig = z.infer<typeof buildingSchema>;
@@ -65,10 +69,14 @@ export const developmentSchema = z.object({
   id: z.string(),
   name: z.string(),
   icon: z.string().optional(),
+  upkeep: costBagSchema.optional(),
   onBuild: z.array(effectSchema).optional(),
   onGrowthPhase: z.array(effectSchema).optional(),
   onBeforeAttacked: z.array(effectSchema).optional(),
   onAttackResolved: z.array(effectSchema).optional(),
+  onPayUpkeepStep: z.array(effectSchema).optional(),
+  onGainIncomeStep: z.array(effectSchema).optional(),
+  onGainAPStep: z.array(effectSchema).optional(),
   system: z.boolean().optional(),
   populationCap: z.number().optional(),
 });
@@ -80,10 +88,14 @@ export const populationSchema = z.object({
   id: z.string(),
   name: z.string(),
   icon: z.string().optional(),
+  upkeep: costBagSchema.optional(),
   onAssigned: z.array(effectSchema).optional(),
   onUnassigned: z.array(effectSchema).optional(),
   onGrowthPhase: z.array(effectSchema).optional(),
   onUpkeepPhase: z.array(effectSchema).optional(),
+  onPayUpkeepStep: z.array(effectSchema).optional(),
+  onGainIncomeStep: z.array(effectSchema).optional(),
+  onGainAPStep: z.array(effectSchema).optional(),
 });
 
 export type PopulationConfig = z.infer<typeof populationSchema>;
@@ -94,6 +106,10 @@ const landStartSchema = z.object({
   slotsMax: z.number().optional(),
   slotsUsed: z.number().optional(),
   tilled: z.boolean().optional(),
+  upkeep: costBagSchema.optional(),
+  onPayUpkeepStep: z.array(effectSchema).optional(),
+  onGainIncomeStep: z.array(effectSchema).optional(),
+  onGainAPStep: z.array(effectSchema).optional(),
 });
 
 const playerStartSchema = z.object({

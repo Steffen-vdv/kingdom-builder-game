@@ -4,6 +4,7 @@ import {
   runEffects,
   performAction,
   advance,
+  collectTriggerEffects,
 } from '@kingdom-builder/engine';
 import {
   ACTIONS,
@@ -16,6 +17,7 @@ import {
   RESOURCES,
   Resource,
   type ResourceKey,
+  ON_GAIN_INCOME_STEP,
 } from '@kingdom-builder/contents';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 
@@ -47,9 +49,16 @@ describe('log resource sources', () => {
     const growthPhase = ctx.phases.find((p) => p.id === 'growth');
     const step = growthPhase?.steps.find((s) => s.id === 'gain-income');
     const before = snapshotPlayer(ctx.activePlayer, ctx);
-    runEffects(step?.effects || [], ctx);
+    const effects = collectTriggerEffects(ON_GAIN_INCOME_STEP, ctx);
+    runEffects(effects, ctx);
     const after = snapshotPlayer(ctx.activePlayer, ctx);
-    const lines = diffStepSnapshots(before, after, step, ctx, RESOURCE_KEYS);
+    const lines = diffStepSnapshots(
+      before,
+      after,
+      { ...step, effects } as typeof step,
+      ctx,
+      RESOURCE_KEYS,
+    );
     const goldInfo = RESOURCES[Resource.gold];
     const farmIcon = DEVELOPMENTS.get('farm')?.icon || '';
     const b = before.resources[Resource.gold] ?? 0;

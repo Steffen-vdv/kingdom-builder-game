@@ -1,5 +1,5 @@
 import React from 'react';
-import { RESOURCES } from '@kingdom-builder/contents';
+import { RESOURCES, BROOM_ICON } from '@kingdom-builder/contents';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import type { Summary } from './content';
 
@@ -22,12 +22,13 @@ export function renderCosts(
   costs: Record<string, number | undefined> | undefined,
   resources: Record<string, number>,
   actionCostResource?: string,
+  upkeep?: Record<string, number | undefined> | undefined,
 ) {
-  if (!costs) return null;
-  const entries = Object.entries(costs).filter(
+  const entries = Object.entries(costs || {}).filter(
     ([k]) => !actionCostResource || k !== actionCostResource,
   );
-  if (entries.length === 0)
+  const upkeepEntries = Object.entries(upkeep || {});
+  if (entries.length === 0 && upkeepEntries.length === 0)
     return (
       <span className="mr-1 text-gray-400 dark:text-gray-500 italic">Free</span>
     );
@@ -42,6 +43,14 @@ export function renderCosts(
           {v ?? 0}
         </span>
       ))}
+      {upkeepEntries.length > 0 && (
+        <span className="block text-xs text-gray-600 dark:text-gray-300">
+          {BROOM_ICON}{' '}
+          {upkeepEntries
+            .map(([k, v]) => `${RESOURCES[k as ResourceKey]?.icon}${v ?? 0}`)
+            .join(' ')}
+        </span>
+      )}
     </>
   );
 }

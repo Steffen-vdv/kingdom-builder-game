@@ -12,8 +12,8 @@ import {
   RULES,
   RESOURCES,
   Resource,
-  type StepDef,
 } from '@kingdom-builder/contents';
+import type { DevelopmentDef } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
@@ -42,26 +42,22 @@ describe('development translation', () => {
       start: GAME_START,
       rules: RULES,
     });
-    const phase = ctx.phases.find((p) =>
-      p.steps.some((s: StepDef) =>
-        s.effects?.some((e) => e.evaluator?.type === 'development'),
-      ),
-    );
-    const step = phase?.steps.find((s: StepDef) =>
-      s.effects?.some((e) => e.evaluator?.type === 'development'),
-    ) as StepDef | undefined;
-    const devEffect = step?.effects?.find((e) => e.evaluator);
-    const devId = devEffect?.evaluator?.params?.['id'] as string;
+    const devEntry = Array.from(
+      (
+        DEVELOPMENTS as unknown as { map: Map<string, DevelopmentDef> }
+      ).map.values(),
+    ).find((d) => d.onGainIncomeStep);
+    const devId = (devEntry as { id: string }).id;
     const summary = summarizeContent('development', devId, ctx);
     const flat = flatten(summary);
     const goldIcon = RESOURCES[Resource.gold].icon;
     const dev = DEVELOPMENTS.get(devId);
-    const devIcon = dev?.icon || '';
-    const devLabel = dev?.name || devId;
-    const inner = devEffect?.effects?.find((e) => e.type === 'resource');
-    const amt = (inner?.params as { amount?: number })?.amount ?? 0;
-    expect(flat).toContain(
-      `${goldIcon}+${amt} per ${devIcon} ${devLabel}`.trim(),
-    );
+    const amt =
+      (
+        dev.onGainIncomeStep?.[0]?.effects?.[0]?.params as {
+          amount?: number;
+        }
+      )?.amount ?? 0;
+    expect(flat.some((l) => l.includes(`${goldIcon}+${amt}`))).toBe(true);
   });
 });
