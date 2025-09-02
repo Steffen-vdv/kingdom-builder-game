@@ -30,7 +30,6 @@ describe('resolveAttack', () => {
 
   it('applies fortification and castle damage before post triggers', () => {
     const ctx = createTestEngine();
-    ctx.services.rules.absorptionRounding = 'down';
     const attacker = ctx.activePlayer;
     const defender = ctx.game.opponent;
     defender.stats[Stat.fortificationStrength] = 1;
