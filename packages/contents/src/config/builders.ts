@@ -398,11 +398,21 @@ class InfoBuilder<T extends InfoDef> {
   }
 }
 
-export interface ResourceInfo extends InfoDef {}
+export interface ResourceInfo extends InfoDef {
+  /**
+   * Arbitrary tags to mark special behaviours or rules for the resource.
+   * These tags are interpreted by the engine or other systems at runtime.
+   */
+  tags?: string[];
+}
 
 class ResourceBuilder extends InfoBuilder<ResourceInfo> {
   constructor(key: ResourceKey) {
     super(key);
+  }
+  tag(tag: string) {
+    this.config.tags = [...(this.config.tags || []), tag];
+    return this;
   }
 }
 
