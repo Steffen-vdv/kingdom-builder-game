@@ -51,13 +51,17 @@ describe('development translation', () => {
       s.effects?.some((e) => e.evaluator?.type === 'development'),
     ) as StepDef | undefined;
     const devEffect = step?.effects?.find((e) => e.evaluator);
-    const devId = devEffect?.evaluator?.params?.['id'];
+    const devId = devEffect?.evaluator?.params?.['id'] as string;
     const summary = summarizeContent('development', devId, ctx);
     const flat = flatten(summary);
     const goldIcon = RESOURCES[Resource.gold].icon;
-    const devIcon = DEVELOPMENTS.get(devId)?.icon || '';
+    const dev = DEVELOPMENTS.get(devId);
+    const devIcon = dev?.icon || '';
+    const devLabel = dev?.name || devId;
     const inner = devEffect?.effects?.find((e) => e.type === 'resource');
     const amt = (inner?.params as { amount?: number })?.amount ?? 0;
-    expect(flat).toContain(`${goldIcon}+${amt} per ${devIcon}`);
+    expect(flat).toContain(
+      `${goldIcon}+${amt} per ${devIcon} ${devLabel}`.trim(),
+    );
   });
 });
