@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from './components/common/Button';
 import {
   ACTIONS as actionInfo,
   LAND_ICON as landIcon,
@@ -138,12 +139,7 @@ export default function Overview({ onBack }: OverviewProps) {
           foe!
         </p>
       </section>
-      <button
-        className="border px-4 py-2 hoverable cursor-pointer"
-        onClick={onBack}
-      >
-        Back to Start
-      </button>
+      <Button onClick={onBack}>Back to Start</Button>
     </div>
   );
 }

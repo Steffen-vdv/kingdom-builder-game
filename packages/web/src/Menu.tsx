@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from './components/common/Button';
 
 interface MenuProps {
   onStart: () => void;
@@ -18,30 +19,10 @@ export default function Menu({
       <div className="flex flex-col gap-4 items-center justify-center p-8 rounded-lg shadow-lg bg-white dark:bg-gray-800">
         <div className="text-6xl">🏰</div>
         <h1 className="text-3xl font-bold">Kingdom Builder</h1>
-        <button
-          className="border px-4 py-2 hoverable cursor-pointer"
-          onClick={onStart}
-        >
-          Start New Game
-        </button>
-        <button
-          className="border px-4 py-2 hoverable cursor-pointer"
-          onClick={onStartDev}
-        >
-          Start Dev/Debug Game
-        </button>
-        <button
-          className="border px-4 py-2 hoverable cursor-pointer"
-          onClick={onTutorial}
-        >
-          Tutorial
-        </button>
-        <button
-          className="border px-4 py-2 hoverable cursor-pointer"
-          onClick={onOverview}
-        >
-          Game Overview
-        </button>
+        <Button onClick={onStart}>Start New Game</Button>
+        <Button onClick={onStartDev}>Start Dev/Debug Game</Button>
+        <Button onClick={onTutorial}>Tutorial</Button>
+        <Button onClick={onOverview}>Game Overview</Button>
       </div>
     </div>
   );
