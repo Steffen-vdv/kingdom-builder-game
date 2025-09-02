@@ -2,12 +2,14 @@ import {
   MODIFIER_INFO as modifierInfo,
   RESOURCES,
 } from '@kingdom-builder/contents';
-import type {
-  ActionDef,
-  DevelopmentDef,
-  ResourceKey,
-} from '@kingdom-builder/contents';
-import { increaseOrDecrease, signed } from '../helpers';
+import type { ResourceKey } from '@kingdom-builder/contents';
+import {
+  increaseOrDecrease,
+  signed,
+  getActionInfo,
+  getDevelopmentInfo,
+  getPopulationInfo,
+} from '../helpers';
 import { describeContent } from '../../content';
 import {
   registerEffectFormatter,
@@ -39,31 +41,24 @@ export function registerModifierEvalHandler(
   MODIFIER_EVAL_HANDLERS[type] = handler;
 }
 
-function getActionInfo(ctx: EngineContext, id: string) {
-  try {
-    const action: ActionDef = ctx.actions.get(id);
-    return { icon: action.icon ?? id, name: action.name ?? id };
-  } catch {
-    return { icon: id, name: id };
-  }
-}
-
-function getDevelopmentInfo(ctx: EngineContext, id: string) {
-  try {
-    const dev: DevelopmentDef = ctx.developments.get(id);
-    return { icon: dev.icon ?? '', name: dev.name ?? id };
-  } catch {
-    return { icon: '', name: id };
-  }
-}
-
-function formatDevelopment(
+function formatEvaluatedGain(
   eff: EffectDef,
-  evaluation: { id: string },
+  evaluation: { type: string; id: string },
   ctx: EngineContext,
   detailed: boolean,
 ) {
-  const { icon, name } = getDevelopmentInfo(ctx, evaluation.id);
+  let source = '';
+  if (evaluation.type === 'development') {
+    const { icon, name } = getDevelopmentInfo(ctx, evaluation.id);
+    source = `${icon} ${name}`;
+  } else if (evaluation.type === 'population') {
+    const { icon: actionIcon, name: actionName } = getActionInfo(
+      ctx,
+      evaluation.id,
+    );
+    const { icon: popIcon, name: popName } = getPopulationInfo();
+    source = `${popIcon} ${popName} through ${actionIcon} ${actionName}`;
+  }
   const resource = eff.effects?.find(
     (e): e is EffectDef<{ key: string; amount: number }> =>
       e.type === 'resource' && e.method === 'add',
@@ -73,34 +68,28 @@ function formatDevelopment(
     const resIcon = RESOURCES[key as ResourceKey]?.icon || key;
     const amount = Number(resource.params?.['amount']);
     const suffix = detailed ? ' of that resource' : '';
-    return `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${name}, gain ${resIcon}+${amount} more${suffix}`;
+    return `${modifierInfo.result.icon} Every time you gain resources from ${source}, gain ${resIcon}+${amount} more${suffix}`;
   }
   const amount = Number(eff.params?.['amount'] ?? 0);
-  return `${modifierInfo.result.icon} Every time you gain resources from ${icon} ${name}, gain +${amount} more of that resource`;
-}
-
-function formatPopulation(
-  eff: EffectDef,
-  evaluation: { id: string },
-  ctx: EngineContext,
-) {
-  const { icon, name } = getActionInfo(ctx, evaluation.id);
-  const amount = Number(eff.params?.['amount'] ?? 0);
-  return `${modifierInfo.result.icon} Every time you gain resources from 👥 Population through ${icon} ${name}, gain +${amount} more of that resource`;
+  return `${modifierInfo.result.icon} Every time you gain resources from ${source}, gain +${amount} more of that resource`;
 }
 
 registerModifierEvalHandler('development', {
   summarize: (eff, evaluation, ctx) => [
-    formatDevelopment(eff, evaluation, ctx, false),
+    formatEvaluatedGain(eff, evaluation, ctx, false),
   ],
   describe: (eff, evaluation, ctx) => [
-    formatDevelopment(eff, evaluation, ctx, true),
+    formatEvaluatedGain(eff, evaluation, ctx, true),
   ],
 });
 
 registerModifierEvalHandler('population', {
-  summarize: (eff, evaluation, ctx) => [formatPopulation(eff, evaluation, ctx)],
-  describe: (eff, evaluation, ctx) => [formatPopulation(eff, evaluation, ctx)],
+  summarize: (eff, evaluation, ctx) => [
+    formatEvaluatedGain(eff, evaluation, ctx, false),
+  ],
+  describe: (eff, evaluation, ctx) => [
+    formatEvaluatedGain(eff, evaluation, ctx, true),
+  ],
 });
 
 registerModifierEvalHandler('transfer_pct', {

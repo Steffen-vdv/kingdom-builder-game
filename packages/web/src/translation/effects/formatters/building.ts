@@ -1,32 +1,17 @@
 import { registerEffectFormatter } from '../factory';
+import { getActionInfo, getBuildingInfo } from '../helpers';
 
 registerEffectFormatter('building', 'add', {
   summarize: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    let name = id;
-    let icon = '';
-    try {
-      const def = ctx.buildings.get(id);
-      name = def.name;
-      icon = def.icon || '';
-    } catch {
-      // ignore
-    }
-    if (!icon) icon = ctx.actions.get('build').icon || '';
-    return `${icon}${name}`;
+    const { icon, name } = getBuildingInfo(ctx, id);
+    const buildIcon = icon || getActionInfo(ctx, 'build').icon;
+    return `${buildIcon}${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    let name = id;
-    let icon = '';
-    try {
-      const def = ctx.buildings.get(id);
-      name = def.name;
-      icon = def.icon || '';
-    } catch {
-      // ignore
-    }
-    if (!icon) icon = ctx.actions.get('build').icon || '';
-    return `Construct ${icon}${name}`;
+    const { icon, name } = getBuildingInfo(ctx, id);
+    const buildIcon = icon || getActionInfo(ctx, 'build').icon;
+    return `Construct ${buildIcon}${name}`;
   },
 });

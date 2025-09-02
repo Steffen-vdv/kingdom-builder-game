@@ -1,51 +1,28 @@
 import { registerEffectFormatter } from '../factory';
+import { getDevelopmentInfo } from '../helpers';
 
 registerEffectFormatter('development', 'add', {
   summarize: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    let icon = id;
-    try {
-      icon = ctx.developments.get(id).icon || id;
-    } catch {
-      /* ignore */
-    }
-    return `${icon}`;
+    const { icon } = getDevelopmentInfo(ctx, id);
+    return icon || id;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    let def: { name: string; icon?: string | undefined } | undefined;
-    try {
-      def = ctx.developments.get(id);
-    } catch {
-      /* ignore */
-    }
-    const label = def?.name || id;
-    const icon = def?.icon || '';
-    return `Add ${icon}${label}`;
+    const { icon, name } = getDevelopmentInfo(ctx, id);
+    return `Add ${icon}${name}`;
   },
 });
 
 registerEffectFormatter('development', 'remove', {
   summarize: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    let icon = id;
-    try {
-      icon = ctx.developments.get(id).icon || id;
-    } catch {
-      /* ignore */
-    }
-    return `Remove ${icon}`;
+    const { icon } = getDevelopmentInfo(ctx, id);
+    return `Remove ${icon || id}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
-    let def: { name: string; icon?: string | undefined } | undefined;
-    try {
-      def = ctx.developments.get(id);
-    } catch {
-      /* ignore */
-    }
-    const label = def?.name || id;
-    const icon = def?.icon || '';
-    return `Remove ${icon}${label}`;
+    const { icon, name } = getDevelopmentInfo(ctx, id);
+    return `Remove ${icon}${name}`;
   },
 });

@@ -1,31 +1,18 @@
-import type { EngineContext } from '@kingdom-builder/engine';
 import { describeContent } from '../../content';
 import { registerEffectFormatter, logEffects } from '../factory';
-
-function getActionLabel(id: string, ctx: EngineContext) {
-  let name = id;
-  let icon = '';
-  try {
-    const def = ctx.actions.get(id);
-    name = def.name;
-    icon = def.icon || '';
-  } catch {
-    // ignore missing action
-  }
-  return { icon, name };
-}
+import { getActionInfo } from '../helpers';
 
 registerEffectFormatter('action', 'add', {
   summarize: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     return `Gain action ${icon} ${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     const card = describeContent('action', id, ctx);
     let isSystem = false;
     try {
@@ -46,7 +33,7 @@ registerEffectFormatter('action', 'add', {
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     return `Unlocked ${icon} ${name}`;
   },
 });
@@ -55,19 +42,19 @@ registerEffectFormatter('action', 'remove', {
   summarize: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     return `Lose ${icon} ${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     return `Lose action ${icon} ${name}`;
   },
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     return `Lost ${icon} ${name}`;
   },
 });
@@ -76,13 +63,13 @@ registerEffectFormatter('action', 'perform', {
   summarize: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     return `${icon} ${name}`;
   },
   describe: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     const summary = describeContent('action', id, ctx);
     return [
       {
@@ -94,7 +81,7 @@ registerEffectFormatter('action', 'perform', {
   log: (eff, ctx) => {
     const id = eff.params?.['id'] as string;
     if (!id) return null;
-    const { icon, name } = getActionLabel(id, ctx);
+    const { icon, name } = getActionInfo(ctx, id);
     const def = ctx.actions.get(id);
     const sub = logEffects(def.effects, ctx);
     return [{ title: `${icon} ${name}`, items: sub }];
