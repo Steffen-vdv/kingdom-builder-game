@@ -45,6 +45,7 @@ function GameLayout() {
                   key={p.id}
                   player={p}
                   className={`flex-1 p-4 ${bgClass}`}
+                  isActive={isActive}
                 />
               );
             })}
