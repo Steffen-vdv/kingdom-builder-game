@@ -8,10 +8,34 @@ export default function LogPanel() {
   const listRef = useAnimate<HTMLUListElement>();
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (el.scrollHeight > el.clientHeight)
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    const container = containerRef.current;
+    const list = listRef.current;
+    if (!container || !list) return;
+
+    const scrollToBottom = (behavior: ScrollBehavior) => {
+      if (container.scrollHeight > container.clientHeight)
+        container.scrollTo({ top: container.scrollHeight, behavior });
+    };
+
+    const animations =
+      typeof list.getAnimations === 'function' ? list.getAnimations() : [];
+    if (animations.length === 0) {
+      scrollToBottom('smooth');
+      return;
+    }
+
+    let cancelled = false;
+    const finished = animations.map((animation) =>
+      animation.finished.catch(() => undefined),
+    );
+
+    void Promise.all(finished).then(() => {
+      if (!cancelled) scrollToBottom('smooth');
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [entries]);
 
   return (
