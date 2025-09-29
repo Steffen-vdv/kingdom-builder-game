@@ -188,42 +188,58 @@ function buildEvaluationEntry(log: AttackLog['evaluation']): SummaryEntry {
   return { title, items };
 }
 
+interface DiffFormatOptions {
+  percent?: number;
+  showPercent?: boolean;
+}
+
+function iconLabel(icon: string | undefined, label: string): string {
+  return icon ? `${icon} ${label}` : label;
+}
+
 function formatResourceDiff(
   prefix: string,
   diff: AttackPlayerDiff,
-  includePercent: boolean,
+  options?: DiffFormatOptions,
 ): string {
   const info = RESOURCES[diff.key as ResourceKey];
-  const icon = info?.icon || diff.key;
+  const icon = info?.icon || '';
   const label = info?.label || diff.key;
+  const displayLabel = iconLabel(icon, label);
   const delta = diff.after - diff.before;
   const before = formatNumber(diff.before);
   const after = formatNumber(diff.after);
-  if (includePercent && diff.before !== 0) {
-    const pct = (delta / diff.before) * 100;
-    if (pct !== 0)
-      return `${prefix}: ${icon}${label} ${formatSigned(pct)}% (${before}→${after}) (${formatSigned(delta)})`;
+  if (options?.percent !== undefined) {
+    const magnitude = Math.abs(options.percent);
+    return `${prefix}: ${displayLabel} ${
+      delta >= 0 ? '+' : '-'
+    }${formatNumber(magnitude)}% (${before}→${after}) (${formatSigned(delta)})`;
   }
-  return `${prefix}: ${icon}${label} ${formatSigned(delta)} (${before}→${after})`;
+  if (options?.showPercent && diff.before !== 0 && delta !== 0) {
+    const pct = (delta / diff.before) * 100;
+    return `${prefix}: ${displayLabel} ${formatSigned(pct)}% (${before}→${after}) (${formatSigned(delta)})`;
+  }
+  return `${prefix}: ${displayLabel} ${formatSigned(delta)} (${before}→${after})`;
 }
 
 function formatStatDiff(prefix: string, diff: AttackPlayerDiff): string {
   const info = STATS[diff.key as StatKey];
-  const icon = info?.icon || diff.key;
+  const icon = info?.icon || '';
   const label = info?.label || diff.key;
+  const displayLabel = iconLabel(icon, label);
   const delta = diff.after - diff.before;
   const before = formatStatValue(String(diff.key), diff.before);
   const after = formatStatValue(String(diff.key), diff.after);
-  return `${prefix}: ${icon}${label} ${formatStatSigned(String(diff.key), delta)} (${before}→${after})`;
+  return `${prefix}: ${displayLabel} ${formatStatSigned(String(diff.key), delta)} (${before}→${after})`;
 }
 
 function renderDiff(
   prefix: string,
   diff: AttackPlayerDiff,
-  includePercent = false,
+  options?: DiffFormatOptions,
 ): string {
   if (diff.type === 'resource')
-    return formatResourceDiff(prefix, diff, includePercent);
+    return formatResourceDiff(prefix, diff, options);
   return formatStatDiff(prefix, diff);
 }
 
@@ -234,18 +250,44 @@ function buildActionLog(
   const id = entry.effect.params?.['id'] as string | undefined;
   let icon = '';
   let name = id || 'Unknown action';
+  const transferPercents = new Map<ResourceKey, number>();
   if (id)
     try {
       const def = ctx.actions.get(id);
       icon = def.icon || '';
       name = def.name;
+      const walk = (effects: EffectDef[] | undefined) => {
+        if (!effects) return;
+        for (const eff of effects) {
+          if (
+            eff.type === 'resource' &&
+            eff.method === 'transfer' &&
+            eff.params
+          ) {
+            const key =
+              (eff.params['key'] as ResourceKey | undefined) ?? undefined;
+            const pct = eff.params['percent'] as number | undefined;
+            if (key && pct !== undefined && !transferPercents.has(key))
+              transferPercents.set(key, pct);
+          }
+          if (Array.isArray(eff.effects))
+            walk(eff.effects as EffectDef[] | undefined);
+        }
+      };
+      walk(def.effects as EffectDef[] | undefined);
     } catch {
       /* ignore missing action */
     }
   const items: SummaryEntry[] = [];
-  entry.defender.forEach((diff) =>
-    items.push(renderDiff(ownerLabel('defender'), diff, true)),
-  );
+  entry.defender.forEach((diff) => {
+    const percent =
+      diff.type === 'resource'
+        ? transferPercents.get(diff.key as ResourceKey)
+        : undefined;
+    const options =
+      percent !== undefined ? { percent } : { showPercent: true as const };
+    items.push(renderDiff(ownerLabel('defender'), diff, options));
+  });
   entry.attacker.forEach((diff) =>
     items.push(renderDiff(ownerLabel('attacker'), diff)),
   );
@@ -268,9 +310,17 @@ function buildOnDamageEntry(
       items.push(buildActionLog(entry, ctx));
       continue;
     }
-    entry.defender.forEach((diff) =>
-      items.push(renderDiff(ownerLabel('defender'), diff)),
-    );
+    const percent =
+      entry.effect.type === 'resource' &&
+      entry.effect.method === 'transfer' &&
+      entry.effect.params
+        ? (entry.effect.params['percent'] as number | undefined)
+        : undefined;
+    entry.defender.forEach((diff) => {
+      if (percent !== undefined)
+        items.push(renderDiff(ownerLabel('defender'), diff, { percent }));
+      else items.push(renderDiff(ownerLabel('defender'), diff));
+    });
     entry.attacker.forEach((diff) =>
       items.push(renderDiff(ownerLabel('attacker'), diff)),
     );

@@ -160,11 +160,11 @@ describe('army attack translation', () => {
       `    ${army.icon}2 vs. ${fort.icon}1 --> ${fort.icon}0 ${army.icon}1`,
       `    ${army.icon}1 vs. ${castle.icon}10 --> ${castle.icon}9`,
       `  ${castle.icon} ${castle.label} damage trigger evaluation`,
-      `    Opponent: ${happiness.icon}${happiness.label} -1 (3→2)`,
-      `    You: ${happiness.icon}${happiness.label} +1 (1→2)`,
+      `    Opponent: ${happiness.icon} ${happiness.label} -1 (3→2)`,
+      `    You: ${happiness.icon} ${happiness.label} +1 (1→2)`,
       `    Triggered ${plunder.icon} ${plunder.name}`,
-      `      Opponent: ${RESOURCES[Resource.gold].icon}${RESOURCES[Resource.gold].label} -25% (20→15) (-5)`,
-      `      You: ${RESOURCES[Resource.gold].icon}${RESOURCES[Resource.gold].label} +5 (13→18)`,
+      `      Opponent: ${RESOURCES[Resource.gold].icon} ${RESOURCES[Resource.gold].label} -25% (20→15) (-5)`,
+      `      You: ${RESOURCES[Resource.gold].icon} ${RESOURCES[Resource.gold].label} +5 (13→18)`,
     ]);
   });
 });

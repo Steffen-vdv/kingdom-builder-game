@@ -379,6 +379,9 @@ export function GameProvider({
         messages.splice(1, 0, '  💲 Action cost', ...costLines);
       }
 
+      const normalize = (line: string) =>
+        (line.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
+
       const subLines: string[] = [];
       for (const trace of traces) {
         const subStep = ctx.actions.get(trace.id);
@@ -399,15 +402,25 @@ export function GameProvider({
           messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
       }
 
-      const normalize = (line: string) =>
-        (line.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
       const subPrefixes = subLines.map(normalize);
+
+      const messagePrefixes = new Set<string>();
+      for (const line of messages) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('You:') && !trimmed.startsWith('Opponent:'))
+          continue;
+        const body = trimmed.slice(trimmed.indexOf(':') + 1).trim();
+        const normalized = normalize(body);
+        if (normalized) messagePrefixes.add(normalized);
+      }
 
       const costLabels = new Set(
         Object.keys(costs) as (keyof typeof RESOURCES)[],
       );
       const filtered = changes.filter((line) => {
-        if (subPrefixes.includes(normalize(line))) return false;
+        const normalizedLine = normalize(line);
+        if (messagePrefixes.has(normalizedLine)) return false;
+        if (subPrefixes.includes(normalizedLine)) return false;
         for (const key of costLabels) {
           const info = RESOURCES[key];
           const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
