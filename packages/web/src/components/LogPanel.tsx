@@ -6,12 +6,63 @@ export default function LogPanel() {
   const { log: entries, ctx } = useGameEngine();
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useAnimate<HTMLUListElement>();
+  const shouldAutoScrollRef = useRef(true);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (el.scrollHeight > el.clientHeight)
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateShouldScroll = () => {
+      const distanceFromBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight;
+      shouldAutoScrollRef.current = distanceFromBottom <= 4;
+    };
+
+    updateShouldScroll();
+    container.addEventListener('scroll', updateShouldScroll);
+    return () => container.removeEventListener('scroll', updateShouldScroll);
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const list = listRef.current;
+
+    if (!container || !list) return;
+    if (!shouldAutoScrollRef.current) return;
+
+    const scrollToBottom = (behavior: ScrollBehavior) => {
+      container.scrollTo({ top: container.scrollHeight, behavior });
+    };
+
+    scrollToBottom('smooth');
+
+    const getAnimations = () => {
+      if (typeof list.getAnimations !== 'function') return [] as Animation[];
+      try {
+        return list.getAnimations({ subtree: true });
+      } catch {
+        return list.getAnimations();
+      }
+    };
+
+    const animations = getAnimations();
+    if (!animations.length) return;
+
+    let cancelled = false;
+
+    const handleAnimationsComplete = () => {
+      if (!cancelled) scrollToBottom('smooth');
+    };
+
+    const animationCompletion = Promise.all(
+      animations.map((animation) => animation.finished.catch(() => undefined)),
+    ).then(handleAnimationsComplete);
+
+    void animationCompletion;
+
+    return () => {
+      cancelled = true;
+    };
   }, [entries]);
 
   return (
