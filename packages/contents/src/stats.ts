@@ -47,7 +47,7 @@ const defs: StatInfo[] = [
     .icon('📈')
     .label('Growth')
     .description(
-      'Growth increases Army and Fortification Strength during the Raise Strength step.',
+      'Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase.',
     )
     .displayAsPercent()
     .addFormat({ percent: true })
