@@ -6,6 +6,15 @@ export function applyParamsToEffects<E extends EffectDef>(
 ): E[] {
   const replace = (val: unknown): unknown =>
     typeof val === 'string' && val.startsWith('$') ? params[val.slice(1)] : val;
+  const replaceDeep = (val: unknown): unknown => {
+    if (Array.isArray(val)) return val.map(replaceDeep);
+    if (val && typeof val === 'object') {
+      return Object.fromEntries(
+        Object.entries(val).map(([key, value]) => [key, replaceDeep(value)]),
+      );
+    }
+    return replace(val);
+  };
   const mapEffect = (effect: E): E => ({
     ...effect,
     params: effect.params
@@ -31,6 +40,9 @@ export function applyParamsToEffects<E extends EffectDef>(
       : undefined,
     effects: effect.effects
       ? applyParamsToEffects(effect.effects, params)
+      : undefined,
+    meta: effect.meta
+      ? (replaceDeep(effect.meta) as Record<string, unknown>)
       : undefined,
   });
   return effects.map(mapEffect);

@@ -3,6 +3,10 @@ import type { EngineContext } from '../context';
 import { EVALUATORS } from '../evaluators';
 import type { EvaluatorDef } from '../evaluators';
 import type { CostBag } from '../services';
+import {
+  collectEvaluatorDependencies,
+  withStatSourceFrames,
+} from '../stat_sources';
 import { landAdd } from './land_add';
 import { resourceAdd } from './resource_add';
 import { resourceRemove } from './resource_remove';
@@ -96,10 +100,16 @@ export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
         params && 'id' in params
           ? `${effect.evaluator.type}:${String(params['id'])}`
           : effect.evaluator.type;
+      const dependencies = collectEvaluatorDependencies(effect.evaluator);
+      const frame = dependencies.length
+        ? () => ({ dependsOn: dependencies })
+        : undefined;
       const total = (count as number) * mult;
       for (let i = 0; i < total; i++) {
         ctx.recentResourceGains = [];
-        runEffects(effect.effects || [], ctx);
+        withStatSourceFrames(ctx, frame, () => {
+          runEffects(effect.effects || [], ctx);
+        });
         const gains = [...ctx.recentResourceGains];
         ctx.passives.runEvaluationMods(target, ctx, gains);
       }

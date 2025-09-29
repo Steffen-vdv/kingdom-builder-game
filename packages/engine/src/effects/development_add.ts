@@ -26,6 +26,15 @@ export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
           }),
         },
         ctx,
+        {
+          frames: () => ({
+            kind: 'development',
+            id,
+            longevity: 'ongoing' as const,
+            dependsOn: [{ type: 'development', id }],
+            removal: { type: 'development', id, detail: 'removed' },
+          }),
+        },
       );
   }
 };

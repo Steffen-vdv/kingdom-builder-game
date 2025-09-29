@@ -5,7 +5,7 @@ import {
   POPULATION_INFO,
   POPULATION_ARCHETYPE_INFO,
 } from '@kingdom-builder/contents';
-import { formatStatValue } from '../../utils/stats';
+import { formatStatValue, getStatBreakdownSummary } from '../../utils/stats';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 
@@ -14,7 +14,7 @@ interface PopulationInfoProps {
 }
 
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
-  const { handleHoverCard, clearHoverCard } = useGameEngine();
+  const { handleHoverCard, clearHoverCard, ctx } = useGameEngine();
   const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
   const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
   const popDetails = popEntries.map(([role, count]) => ({ role, count }));
@@ -30,6 +30,20 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
       description: POPULATION_INFO.description,
       bgClass: 'bg-gray-100 dark:bg-gray-700',
     });
+
+  const showStatCard = (statKey: string) => {
+    const info = STATS[statKey as keyof typeof STATS];
+    if (!info) return;
+    const breakdown = getStatBreakdownSummary(statKey, player, ctx);
+    handleHoverCard({
+      title: `${info.icon} ${info.label}`,
+      effects: breakdown,
+      effectsTitle: 'Breakdown',
+      requirements: [],
+      description: info.description,
+      bgClass: 'bg-gray-100 dark:bg-gray-700',
+    });
+  };
 
   return (
     <>
@@ -124,35 +138,11 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
               key={k}
               type="button"
               className="bar-item hoverable cursor-help rounded px-1"
-              onMouseEnter={() =>
-                handleHoverCard({
-                  title: `${info.icon} ${info.label}`,
-                  effects: [],
-                  requirements: [],
-                  description: info.description,
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
+              onMouseEnter={() => showStatCard(k)}
               onMouseLeave={clearHoverCard}
-              onFocus={() =>
-                handleHoverCard({
-                  title: `${info.icon} ${info.label}`,
-                  effects: [],
-                  requirements: [],
-                  description: info.description,
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
+              onFocus={() => showStatCard(k)}
               onBlur={clearHoverCard}
-              onClick={() =>
-                handleHoverCard({
-                  title: `${info.icon} ${info.label}`,
-                  effects: [],
-                  requirements: [],
-                  description: info.description,
-                  bgClass: 'bg-gray-100 dark:bg-gray-700',
-                })
-              }
+              onClick={() => showStatCard(k)}
             >
               {info.icon}
               {formatStatValue(k, v)}

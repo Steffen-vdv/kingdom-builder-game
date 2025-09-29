@@ -4,6 +4,7 @@ import type { PlayerState, ResourceKey, StatKey } from '../state';
 import type { ResourceGain } from '../services';
 import { runEffects } from '.';
 import { collectTriggerEffects } from '../triggers';
+import { withStatSourceFrames } from '../stat_sources';
 import { snapshotPlayer, type PlayerSnapshot } from '../log';
 
 export interface AttackCalcOptions {
@@ -138,7 +139,14 @@ export function resolveAttack(
 
   ctx.game.currentPlayerIndex = defenderIndex;
   const pre = collectTriggerEffects('onBeforeAttacked', ctx, defender);
+
+  for (const bundle of pre)
+    withStatSourceFrames(ctx, bundle.frames, () =>
+      runEffects(bundle.effects, ctx),
+    );
+
   if (pre.length) runEffects(pre, ctx);
+
   ctx.game.currentPlayerIndex = original;
 
   const absorption = opts.ignoreAbsorption
@@ -177,7 +185,17 @@ export function resolveAttack(
 
   ctx.game.currentPlayerIndex = defenderIndex;
   const post = collectTriggerEffects('onAttackResolved', ctx, defender);
+
+  for (const bundle of post)
+    withStatSourceFrames(ctx, bundle.frames, () =>
+      runEffects(bundle.effects, ctx),
+    );
+  
+  if ((defender.fortificationStrength || 0) < 0)
+    defender.fortificationStrength = 0;
+
   if (post.length) runEffects(post, ctx);
+
   ctx.game.currentPlayerIndex = original;
 
   return {
