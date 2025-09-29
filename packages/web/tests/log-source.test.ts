@@ -41,7 +41,7 @@ describe('log resource sources', () => {
       start: GAME_START,
       rules: RULES,
     });
-    // Give opponent (Player B) a mill
+    // Give opponent a mill
     ctx.game.currentPlayerIndex = 1;
     runEffects(
       [{ type: 'building', method: 'add', params: { id: 'mill' } }],

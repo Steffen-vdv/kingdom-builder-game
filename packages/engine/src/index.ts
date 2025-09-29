@@ -31,6 +31,7 @@ import { EVALUATORS, registerCoreEvaluators } from './evaluators';
 import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
+import { createAISystem, createTaxCollectorController } from './ai';
 import {
   validateGameConfig,
   type GameConfig,
@@ -334,7 +335,7 @@ export function createEngine({
 
   const services = new Services(rules, developments);
   const passives = new PassiveManager();
-  const game = new GameState('Player A', 'Player B');
+  const game = new GameState('Player', 'Opponent');
 
   let actionCostResource: ResourceKey = '' as ResourceKey;
   let intersect: string[] | null = null;
@@ -368,6 +369,10 @@ export function createEngine({
   );
   const playerA = ctx.game.players[0]!;
   const playerB = ctx.game.players[1]!;
+
+  const ai = createAISystem({ performAction, advance });
+  ai.register(playerB.id, createTaxCollectorController(playerB.id));
+  ctx.ai = ai;
 
   applyPlayerStart(playerA, startCfg.player, rules);
   applyPlayerStart(playerA, compA, rules);

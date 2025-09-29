@@ -80,13 +80,6 @@ type PhaseStep = {
   active: boolean;
 };
 
-interface DevAutomation {
-  run: (
-    ctx: EngineContext,
-    enqueue: <T>(task: () => Promise<T> | T) => Promise<T>,
-  ) => void;
-}
-
 interface GameEngineContextValue {
   ctx: EngineContext;
   log: LogEntry[];
@@ -186,9 +179,6 @@ export function GameProvider({
   };
 
   const actionCostResource = ctx.actionCostResource as ResourceKey;
-
-  const playerA = ctx.game.players[0]!;
-  const playerB = ctx.game.players[1]!;
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
@@ -508,30 +498,6 @@ export function GameProvider({
 
   const handleEndTurn = () => enqueue(endTurn);
 
-  const DEV_AUTOMATIONS: Record<string, DevAutomation> = {
-    [playerA.id]: {
-      run(ctx, enqueue) {
-        const key = ctx.actionCostResource as ResourceKey;
-        if ((ctx.activePlayer.resources[key] ?? 0) === 0) {
-          void enqueue(endTurn);
-        }
-      },
-    },
-    [playerB.id]: {
-      run(ctx, enqueue) {
-        const key = ctx.actionCostResource as ResourceKey;
-        const taxName = ctx.actions.get('tax').name;
-        const ap = ctx.activePlayer.resources[key] as number;
-        for (let i = 0; i < ap; i++) {
-          void enqueue(() =>
-            perform({ id: 'tax', name: taxName, system: true }),
-          );
-        }
-        void enqueue(endTurn);
-      },
-    },
-  };
-
   // Update main phase steps once action phase becomes active
   useEffect(() => {
     if (ctx.phases[ctx.game.phaseIndex]?.action) {
@@ -546,16 +512,17 @@ export function GameProvider({
   }, []);
 
   useEffect(() => {
-    if (!ctx.game.devMode) return;
     const phaseDef = ctx.phases[ctx.game.phaseIndex];
     if (!phaseDef?.action) return;
-    DEV_AUTOMATIONS[ctx.activePlayer.id]?.run(ctx, enqueue);
-  }, [
-    ctx.game.devMode,
-    ctx.game.phaseIndex,
-    ctx.activePlayer.id,
-    ctx.activePlayer.resources[actionCostResource],
-  ]);
+    const ai = ctx.ai;
+    const activeId = ctx.activePlayer.id;
+    if (!ai?.has(activeId)) return;
+    void ctx.enqueue(async () => {
+      await ai.run(activeId, ctx);
+      setPhaseHistories({});
+      await runUntilActionPhaseCore();
+    });
+  }, [ctx.ai, ctx.game.phaseIndex, ctx.activePlayer.id, ctx]);
 
   const value: GameEngineContextValue = {
     ctx,
