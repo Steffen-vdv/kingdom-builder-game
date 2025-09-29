@@ -487,6 +487,11 @@ export function GameProvider({
   const handlePerform = (action: Action, params?: Record<string, unknown>) =>
     enqueue(() => perform(action, params));
 
+  const performRef = useRef<typeof perform>(perform);
+  useEffect(() => {
+    performRef.current = perform;
+  }, [perform]);
+
   async function endTurn() {
     const phaseDef = ctx.phases[ctx.game.phaseIndex];
     if (!phaseDef?.action) return;
@@ -518,7 +523,23 @@ export function GameProvider({
     const activeId = ctx.activePlayer.id;
     if (!ai?.has(activeId)) return;
     void ctx.enqueue(async () => {
-      await ai.run(activeId, ctx);
+      await ai.run(activeId, ctx, {
+        performAction: async (actionId, engineCtx, params) => {
+          const definition = engineCtx.actions.get(actionId);
+          if (!definition)
+            throw new Error(`Unknown action ${String(actionId)} for AI`);
+          const action: Action = {
+            id: definition.id,
+            name: definition.name,
+          };
+          if (definition.system !== undefined)
+            action.system = definition.system;
+          await performRef.current(action, params as Record<string, unknown>);
+        },
+        advance: (engineCtx) => {
+          advance(engineCtx);
+        },
+      });
       setPhaseHistories({});
       await runUntilActionPhaseCore();
     });

@@ -9,7 +9,7 @@ import { createContentFactory } from '../factories/content';
 import { createTestEngine } from '../helpers';
 
 describe('tax collector AI controller', () => {
-  it('collects tax until action points are spent then ends the turn', () => {
+  it('collects tax until action points are spent then ends the turn', async () => {
     const content = createContentFactory();
     content.action({
       id: TAX_ACTION_ID,
@@ -40,7 +40,7 @@ describe('tax collector AI controller', () => {
     const perform = vi.fn((actionId: string) => performAction(actionId, ctx));
     const endPhase = vi.fn(() => advance(ctx));
 
-    void controller(ctx, { performAction: perform, advance: endPhase });
+    await controller(ctx, { performAction: perform, advance: endPhase });
 
     expect(perform).toHaveBeenCalledTimes(2);
     expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, ctx);
