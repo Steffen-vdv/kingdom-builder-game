@@ -36,8 +36,17 @@
   }
   .player-bg {
     @apply relative overflow-hidden text-gray-900 dark:text-white;
-    --stripe-color: rgba(0, 0, 0, 0.03);
+    --stripe-color: rgba(0, 0, 0, 0.04);
     background-color: var(--player-color);
+  }
+  .dark .player-bg {
+    --stripe-color: rgba(255, 255, 255, 0.04);
+  }
+  .player-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
     background-image: linear-gradient(
       45deg,
       var(--stripe-color) 25%,
@@ -48,13 +57,23 @@
       transparent 75%,
       transparent
     );
-    background-size: 20px 20px;
+    background-size: 32px 32px;
+    background-position: 0 0;
+    background-repeat: repeat;
+    opacity: 0.9;
+    will-change: background-position;
+    transition: opacity 150ms ease-in-out;
   }
-  .dark .player-bg {
-    --stripe-color: rgba(255, 255, 255, 0.03);
+  .player-bg > * {
+    position: relative;
+    z-index: 1;
   }
   .player-bg-animated {
-    animation: player-bg-slide 60s linear infinite;
+    animation: none;
+  }
+  .player-bg-animated::before {
+    opacity: 1;
+    animation: player-bg-slide 18s linear infinite;
   }
   .player-bg-blue {
     --player-color: rgba(219, 234, 254, 0.5);
