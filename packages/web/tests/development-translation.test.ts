@@ -16,6 +16,7 @@ import {
 } from '@kingdom-builder/contents';
 import {
   describeContent,
+  logContent,
   summarizeContent,
   type SummaryEntry,
 } from '../src/translation';
@@ -91,9 +92,21 @@ describe('development translation', () => {
 
     const def = ctx.developments.get(id);
     const icon = def.icon || '';
-    expect(strings.some((line) => line.includes(def.name))).toBe(true);
+
+    expect(strings.some((line) => /During income step/.test(line))).toBe(true);
+    expect(strings.some((line) => /\+2/.test(line))).toBe(true);
+    expect(strings.some((line) => /Gold/.test(line))).toBe(true);
+    const prohibited = strings.filter(
+      (line) =>
+        line.includes(`per ${icon} ${def.name}`) ||
+        line.includes(`for each ${icon} ${def.name}`),
+    );
+    expect(prohibited).toHaveLength(0);
+
+    const logEntry = logContent('development', id, ctx as EngineContext);
+    expect(logEntry.some((line) => line.includes(def.name))).toBe(true);
     if (icon) {
-      expect(strings.some((line) => line.includes(icon))).toBe(true);
+      expect(logEntry.some((line) => line.includes(icon))).toBe(true);
     }
   });
 });

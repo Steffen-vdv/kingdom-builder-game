@@ -12,6 +12,33 @@ interface PhaseEffects {
   [key: string]: EffectDef[] | undefined;
 }
 
+function stripSelfEvaluators(
+  effects: EffectDef[] | undefined,
+  selfId: string | undefined,
+): EffectDef[] | undefined {
+  if (!effects?.length || !selfId) return effects;
+  const result: EffectDef[] = [];
+  for (const effect of effects) {
+    const evaluator = effect.evaluator as
+      | { type?: string; params?: Record<string, unknown> }
+      | undefined;
+    const evaluatorId = evaluator?.params?.['id'];
+    if (evaluator?.type === 'development' && evaluatorId === selfId) {
+      const nested = stripSelfEvaluators(effect.effects, selfId);
+      if (nested?.length) {
+        result.push(...nested);
+      }
+      continue;
+    }
+    const next: EffectDef = { ...effect };
+    if (effect.effects) {
+      next.effects = stripSelfEvaluators(effect.effects, selfId);
+    }
+    result.push(next);
+  }
+  return result;
+}
+
 function gatherEffects(
   effects: EffectDef[] | undefined,
   id: string,
@@ -35,13 +62,13 @@ function applySelfParams(
   params: Record<string, unknown>,
 ): PhasedDef {
   const mapped: PhasedDef = {};
-  const entries = def as unknown as Record<string, unknown>;
-  for (const [key, value] of Object.entries(entries)) {
+  const rawId = params['id'];
+  const selfId = typeof rawId === 'string' ? rawId : undefined;
+  for (const key of Object.keys(def) as (keyof PhasedDef)[]) {
+    const value = def[key];
     if (!Array.isArray(value)) continue;
-    mapped[key as keyof PhasedDef] = applyParamsToEffects(
-      value as EffectDef<Record<string, unknown>>[],
-      params,
-    );
+    const applied = applyParamsToEffects(value, params);
+    mapped[key] = stripSelfEvaluators(applied, selfId) ?? applied;
   }
   return mapped;
 }
@@ -52,6 +79,8 @@ function collectPhaseEffects(
   params: Record<string, unknown>,
 ): PhaseEffects {
   const result: PhaseEffects = {};
+  const rawId = params['id'];
+  const selfId = typeof rawId === 'string' ? rawId : undefined;
   for (const phase of ctx.phases) {
     const key =
       `on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhaseEffects;
@@ -60,7 +89,10 @@ function collectPhaseEffects(
       gatherEffects(step.effects, id, bucket);
       if (bucket.length) {
         const applied = applyParamsToEffects(bucket, params);
-        result[key] = [...(result[key] ?? []), ...applied];
+        const additions = stripSelfEvaluators(applied, selfId) ?? applied;
+        if (additions.length) {
+          result[key] = [...(result[key] ?? []), ...additions];
+        }
       }
     }
   }
@@ -79,10 +111,7 @@ class DevelopmentCore implements ContentTranslator<string> {
     for (const [key, effects] of Object.entries(phases)) {
       if (!effects?.length) continue;
       const current = merged[key as keyof PhasedDef] ?? [];
-      merged[key as keyof PhasedDef] = [
-        ...current,
-        ...applyParamsToEffects(effects, params),
-      ];
+      merged[key as keyof PhasedDef] = [...current, ...effects];
     }
     return this.phased.summarize(merged, ctx);
   }
@@ -96,10 +125,7 @@ class DevelopmentCore implements ContentTranslator<string> {
     for (const [key, effects] of Object.entries(phases)) {
       if (!effects?.length) continue;
       const current = merged[key as keyof PhasedDef] ?? [];
-      merged[key as keyof PhasedDef] = [
-        ...current,
-        ...applyParamsToEffects(effects, params),
-      ];
+      merged[key as keyof PhasedDef] = [...current, ...effects];
     }
     return this.phased.describe(merged, ctx);
   }
