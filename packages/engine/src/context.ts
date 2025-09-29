@@ -1,6 +1,7 @@
 import type { GameState, ResourceKey, PlayerId } from './state';
 import type { Services, PassiveManager } from './services';
 import type { Registry } from './registry';
+import type { StatSourceFrame } from './stat_sources';
 import type {
   ActionConfig as ActionDef,
   BuildingConfig as BuildingDef,
@@ -34,6 +35,7 @@ export class EngineContext {
   statAddPctBases: Record<string, number> = {};
   statAddPctAccums: Record<string, number> = {};
   actionTraces: ActionTrace[] = [];
+  statSourceStack: StatSourceFrame[] = [];
   private _queue: Promise<unknown> = Promise.resolve();
   enqueue<T>(task: () => Promise<T> | T): Promise<T> {
     const next = this._queue.then(() => task());

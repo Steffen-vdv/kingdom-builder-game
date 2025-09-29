@@ -1,6 +1,7 @@
 import type { EffectHandler } from '.';
 import { runEffects } from '.';
 import { applyParamsToEffects } from '../utils';
+import { withStatSourceFrames } from '../stat_sources';
 import type { PopulationRoleId } from '../state';
 
 export const populationAdd: EffectHandler = (effect, ctx, mult = 1) => {
@@ -17,7 +18,26 @@ export const populationAdd: EffectHandler = (effect, ctx, mult = 1) => {
         player: player.id,
         role,
       });
-      runEffects(effects, ctx);
+      const frames = [
+        () => ({
+          kind: 'population',
+          id: role,
+          longevity: 'ongoing' as const,
+          dependsOn: [
+            {
+              type: 'population',
+              id: role,
+              detail: 'assigned',
+            },
+          ],
+          removal: {
+            type: 'population',
+            id: role,
+            detail: 'unassigned',
+          },
+        }),
+      ];
+      withStatSourceFrames(ctx, frames, () => runEffects(effects, ctx));
     }
   }
 };

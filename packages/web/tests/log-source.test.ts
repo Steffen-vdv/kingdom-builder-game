@@ -52,8 +52,9 @@ describe('log resource sources', () => {
     const growthPhase = ctx.phases.find((p) => p.id === 'growth');
     const step = growthPhase?.steps.find((s) => s.id === 'gain-income');
     const before = snapshotPlayer(ctx.activePlayer, ctx);
-    const effects = collectTriggerEffects(ON_GAIN_INCOME_STEP, ctx);
-    runEffects(effects, ctx);
+    const bundles = collectTriggerEffects(ON_GAIN_INCOME_STEP, ctx);
+    for (const bundle of bundles) runEffects(bundle.effects, ctx);
+    const effects = bundles.flatMap((bundle) => bundle.effects);
     const after = snapshotPlayer(ctx.activePlayer, ctx);
     const lines = diffStepSnapshots(
       before,
@@ -116,8 +117,9 @@ describe('log resource sources', () => {
     const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
     const step = upkeepPhase?.steps.find((s) => s.id === 'pay-upkeep');
     const before = snapshotPlayer(ctx.activePlayer, ctx);
-    const effects = collectTriggerEffects(ON_PAY_UPKEEP_STEP, ctx);
-    runEffects(effects, ctx);
+    const bundles = collectTriggerEffects(ON_PAY_UPKEEP_STEP, ctx);
+    for (const bundle of bundles) runEffects(bundle.effects, ctx);
+    const effects = bundles.flatMap((bundle) => bundle.effects);
     const after = snapshotPlayer(ctx.activePlayer, ctx);
     const lines = diffStepSnapshots(
       before,
