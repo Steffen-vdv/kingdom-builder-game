@@ -12,7 +12,6 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
     setPhaseSteps,
     phaseTimer,
     phasePaused,
-    setPaused,
     displayPhase,
     setDisplayPhase,
     phaseHistories,
@@ -42,14 +41,6 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
     <section
       ref={ref}
       className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col h-full min-h-[275px]"
-      onMouseEnter={() => !isActionPhase && setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      style={{
-        cursor:
-          phasePaused && !isActionPhase
-            ? 'url("/pause-cursor.svg"), wait'
-            : 'auto',
-      }}
     >
       <div className="absolute -top-6 left-0 font-semibold">
         Turn {ctx.game.turn} - {ctx.activePlayer.name}
