@@ -72,4 +72,39 @@ describe('resource:transfer percent bounds', () => {
     expect(ctx.activePlayer.gold).toBe(0);
     expect(ctx.opponent.gold).toBe(total);
   });
+
+  it('respects rounding configuration', () => {
+    const ctx = createTestEngine();
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
+    ctx.game.currentPlayerIndex = 0;
+
+    const base: EffectDef<{ key: string; percent: number }> = {
+      type: 'resource',
+      method: 'transfer',
+      params: { key: Resource.gold, percent: 25 },
+    };
+
+    const run = (round?: 'up' | 'down') => {
+      ctx.activePlayer.gold = 0;
+      ctx.opponent.gold = 5;
+      const effect: EffectDef<{ key: string; percent: number }> = {
+        ...base,
+        round,
+      };
+      runEffects([effect], ctx);
+      return { attacker: ctx.activePlayer.gold, defender: ctx.opponent.gold };
+    };
+
+    const floor = run();
+    expect(floor.attacker).toBe(1);
+    expect(floor.defender).toBe(4);
+
+    const roundedUp = run('up');
+    expect(roundedUp.attacker).toBe(2);
+    expect(roundedUp.defender).toBe(3);
+
+    const roundedDown = run('down');
+    expect(roundedDown.attacker).toBe(1);
+    expect(roundedDown.defender).toBe(4);
+  });
 });

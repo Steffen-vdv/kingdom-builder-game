@@ -12,7 +12,6 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
     setPhaseSteps,
     phaseTimer,
     phasePaused,
-    setPaused,
     displayPhase,
     setDisplayPhase,
     phaseHistories,
@@ -42,21 +41,25 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
     <section
       ref={ref}
       className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative w-full flex flex-col h-full min-h-[275px]"
-      onMouseEnter={() => !isActionPhase && setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      style={{
-        cursor:
-          phasePaused && !isActionPhase
-            ? 'url("/pause-cursor.svg"), wait'
-            : 'auto',
-      }}
     >
       <div className="absolute -top-6 left-0 font-semibold">
         Turn {ctx.game.turn} - {ctx.activePlayer.name}
       </div>
-      <div className="flex mb-2 border-b">
+      <div className="flex mb-2 border-b border-gray-200 dark:border-gray-700">
         {ctx.phases.map((p) => {
           const isSelected = displayPhase === p.id;
+          const tabClasses = [
+            'text-sm relative flex items-center gap-1 rounded-none px-3 py-1 transition-shadow hover:scale-100',
+            isSelected
+              ? 'font-semibold text-gray-900 dark:text-gray-100 shadow-[inset_0_-2px_0_rgba(59,130,246,0.95)] dark:shadow-[inset_0_-2px_0_rgba(96,165,250,0.9)]'
+              : 'text-gray-500 shadow-[inset_0_-2px_0_rgba(0,0,0,0)] dark:shadow-[inset_0_-2px_0_rgba(0,0,0,0)]',
+            tabsEnabled ? 'hover:text-gray-800 dark:hover:text-gray-200' : '',
+            !isSelected && tabsEnabled
+              ? 'hover:shadow-[inset_0_-2px_0_rgba(96,165,250,0.75)] dark:hover:shadow-[inset_0_-2px_0_rgba(147,197,253,0.75)]'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
           return (
             <Button
               key={p.id}
@@ -68,15 +71,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
                 setPhaseSteps(phaseHistories[p.id] ?? []);
               }}
               variant="ghost"
-              className={`text-sm flex items-center gap-1 border-b-2 rounded-none ${
-                isSelected
-                  ? 'border-blue-500 font-semibold'
-                  : 'border-transparent text-gray-500'
-              } ${
-                tabsEnabled
-                  ? 'hover:text-gray-800 dark:hover:text-gray-200'
-                  : ''
-              }`}
+              className={tabClasses}
             >
               {p.icon} {p.label}
             </Button>

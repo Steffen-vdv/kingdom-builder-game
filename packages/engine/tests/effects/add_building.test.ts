@@ -97,4 +97,51 @@ describe('building:add effect', () => {
 
     expect(ctx.activePlayer.buildings.has(building.id)).toBe(true);
   });
+
+  it('removes building passives when demolished', () => {
+    const content = createContentFactory();
+    const surcharge = 2;
+    const target = content.action({
+      baseCosts: { [CResource.gold]: 3 },
+    });
+    const building = content.building({
+      onBuild: [
+        {
+          type: 'cost_mod',
+          method: 'add',
+          params: {
+            id: 'building_surcharge',
+            actionId: target.id,
+            key: CResource.gold,
+            amount: surcharge,
+          },
+        },
+      ],
+    });
+    const build = content.action({
+      effects: [
+        { type: 'building', method: 'add', params: { id: building.id } },
+      ],
+    });
+    const demolish = content.action({
+      effects: [
+        { type: 'building', method: 'remove', params: { id: building.id } },
+      ],
+    });
+    const ctx = createTestEngine(content);
+    while (ctx.game.currentPhase !== 'main') advance(ctx);
+
+    for (const key of Object.keys(ctx.activePlayer.resources))
+      ctx.activePlayer.resources[key] = 10;
+
+    const baseCost = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+
+    performAction(build.id, ctx, { id: building.id });
+    const afterBuild = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+    expect(afterBuild - baseCost).toBe(surcharge);
+
+    performAction(demolish.id, ctx, { id: building.id });
+    const afterRemoval = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+    expect(afterRemoval).toBe(baseCost);
+  });
 });

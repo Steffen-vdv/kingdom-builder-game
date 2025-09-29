@@ -6,6 +6,7 @@ import ActionsPanel from './components/actions/ActionsPanel';
 import PhasePanel from './components/phases/PhasePanel';
 import LogPanel from './components/LogPanel';
 import Button from './components/common/Button';
+import TimeControl from './components/common/TimeControl';
 
 function GameLayout() {
   const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
@@ -16,7 +17,8 @@ function GameLayout() {
           Kingdom Builder
         </h1>
         {onExit && (
-          <div className="flex items-center gap-2 ml-4">
+          <div className="flex items-center gap-3 ml-4">
+            <TimeControl />
             <Button onClick={onToggleDark} variant="secondary">
               {darkMode ? 'Light Mode' : 'Dark Mode'}
             </Button>

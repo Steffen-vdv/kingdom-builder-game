@@ -1,5 +1,5 @@
 import { LAND_INFO, SLOT_INFO } from '@kingdom-builder/contents';
-import { gainOrLose, signed } from '../helpers';
+import { signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('land', 'add', {
@@ -9,7 +9,7 @@ registerEffectFormatter('land', 'add', {
   },
   describe: (eff) => {
     const count = Number(eff.params?.['count'] ?? 1);
-    return `${gainOrLose(count)} ${count} ${LAND_INFO.icon} ${LAND_INFO.label}`;
+    return `${LAND_INFO.icon} ${signed(count)}${count} ${LAND_INFO.label}`;
   },
 });
 

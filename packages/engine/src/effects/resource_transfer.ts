@@ -24,7 +24,13 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
   const defender = ctx.opponent;
   const attacker = ctx.activePlayer;
   const available = defender.resources[key] || 0;
-  let amount = Math.floor((available * pct) / 100);
+  const raw = (available * pct) / 100;
+  let amount: number;
+  if (effect.round === 'up')
+    amount = raw >= 0 ? Math.ceil(raw) : Math.floor(raw);
+  else if (effect.round === 'down' || effect.round === undefined)
+    amount = raw >= 0 ? Math.floor(raw) : Math.ceil(raw);
+  else amount = Math.round(raw);
   if (amount < 0) amount = 0;
   if (amount > available) amount = available;
   defender.resources[key] = available - amount;

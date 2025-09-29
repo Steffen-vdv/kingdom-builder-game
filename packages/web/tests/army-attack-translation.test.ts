@@ -1,8 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { SummaryEntry } from '../src/translation/content';
-import { summarizeContent, describeContent } from '../src/translation/content';
+import {
+  summarizeContent,
+  describeContent,
+  logContent,
+} from '../src/translation/content';
 import {
   createEngine,
+  performAction,
   Resource,
   Stat,
   type EffectDef,
@@ -17,6 +22,7 @@ import {
   RULES,
   RESOURCES,
   STATS,
+  PopulationRole,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -101,12 +107,52 @@ describe('army attack translation', () => {
       (i) =>
         typeof i === 'object' &&
         (i as { title: string }).title === `${plunder.icon} ${plunder.name}`,
-    ) as { items: unknown[] } | undefined;
+    ) as { items?: unknown[] } | undefined;
     expect(plunderEntry).toBeDefined();
     expect(
       plunderEntry &&
         Array.isArray(plunderEntry.items) &&
-        plunderEntry.items.length > 0,
+        (plunderEntry.items?.length ?? 0) > 0,
     ).toBeTruthy();
+  });
+
+  it('logs army attack action with concrete evaluation', () => {
+    const ctx = createCtx();
+    const armyAttack = ctx.actions.get('army_attack');
+    const castle = RESOURCES[Resource.castleHP];
+    const army = STATS[Stat.armyStrength];
+    const absorption = STATS[Stat.absorption];
+    const fort = STATS[Stat.fortificationStrength];
+    const happiness = RESOURCES[Resource.happiness];
+    const plunder = ctx.actions.get('plunder');
+
+    ctx.activePlayer.resources[Resource.ap] = 1;
+    ctx.activePlayer.population = {
+      ...ctx.activePlayer.population,
+      [PopulationRole.Legion]: 1,
+      [PopulationRole.Council]: 0,
+    };
+    ctx.activePlayer.stats[Stat.armyStrength] = 2;
+    ctx.activePlayer.resources[Resource.happiness] = 1;
+    ctx.activePlayer.resources[Resource.gold] = 13;
+    ctx.opponent.stats[Stat.fortificationStrength] = 1;
+    ctx.opponent.resources[Resource.happiness] = 3;
+    ctx.opponent.resources[Resource.gold] = 20;
+
+    performAction('army_attack', ctx);
+    const log = logContent('action', 'army_attack', ctx);
+    expect(log).toEqual([
+      `Played ${armyAttack.icon} ${armyAttack.name}`,
+      `  Damage evaluation: ${army.icon}2 vs. ${absorption.icon}0% ${fort.icon}1 ${castle.icon}10`,
+      `    ${army.icon}2 vs. ${absorption.icon}0% --> ${army.icon}2`,
+      `    ${army.icon}2 vs. ${fort.icon}1 --> ${fort.icon}0 ${army.icon}1`,
+      `    ${army.icon}1 vs. ${castle.icon}10 --> ${castle.icon}9`,
+      `  ${castle.icon} ${castle.label} damage trigger evaluation`,
+      `    Opponent: ${happiness.icon} ${happiness.label} -1 (3→2)`,
+      `    You: ${happiness.icon} ${happiness.label} +1 (1→2)`,
+      `    Triggered ${plunder.icon} ${plunder.name}`,
+      `      Opponent: ${RESOURCES[Resource.gold].icon} ${RESOURCES[Resource.gold].label} -25% (20→15) (-5)`,
+      `      You: ${RESOURCES[Resource.gold].icon} ${RESOURCES[Resource.gold].label} +5 (13→18)`,
+    ]);
   });
 });

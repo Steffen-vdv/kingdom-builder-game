@@ -7,6 +7,7 @@ import {
   SLOT_INFO,
   LAND_INFO,
   type Focus,
+  type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
   describeContent,
@@ -18,6 +19,7 @@ import ActionCard from './ActionCard';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
+import { useAnimate } from '../../utils/useAutoAnimate';
 
 interface Action {
   id: string;
@@ -37,7 +39,35 @@ interface Development {
 interface Building {
   id: string;
   name: string;
+  icon?: string;
   focus?: Focus;
+}
+
+function isResourceKey(key: string): key is ResourceKey {
+  return key in RESOURCES;
+}
+
+function formatMissingResources(
+  costs: Record<string, number>,
+  playerResources: Record<string, number | undefined>,
+) {
+  const missing: string[] = [];
+  for (const [key, required] of Object.entries(costs)) {
+    const available = playerResources[key] ?? 0;
+    const shortage = required - available;
+    if (shortage <= 0) continue;
+    if (isResourceKey(key)) {
+      missing.push(
+        `${shortage} ${RESOURCES[key].icon} ${RESOURCES[key].label}`,
+      );
+    } else {
+      missing.push(`${shortage} ${key}`);
+    }
+  }
+
+  if (missing.length === 0) return undefined;
+
+  return `Need ${missing.join(', ')}`;
 }
 
 function GenericActions({
@@ -85,12 +115,16 @@ function GenericActions({
         const summary = summaries.get(action.id);
         const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
         const enabled = canPay && meetsReq && isActionPhase && implemented;
+        const insufficientTooltip = formatMissingResources(
+          costs,
+          ctx.activePlayer.resources,
+        );
         const title = !implemented
           ? 'Not implemented yet'
           : !meetsReq
             ? requirements.join(', ')
             : !canPay
-              ? 'Cannot pay costs'
+              ? (insufficientTooltip ?? 'Cannot pay costs')
               : undefined;
         return (
           <ActionCard
@@ -170,10 +204,14 @@ function RaisePopOptions({
         );
         const meetsReq = requirements.length === 0;
         const enabled = canPay && meetsReq && isActionPhase;
+        const insufficientTooltip = formatMissingResources(
+          costs,
+          ctx.activePlayer.resources,
+        );
         const title = !meetsReq
           ? requirements.join(', ')
           : !canPay
-            ? 'Cannot pay costs'
+            ? (insufficientTooltip ?? 'Cannot pay costs')
             : undefined;
         const summary = describeContent('action', action.id, ctx, { role });
         const shortSummary = summarizeContent('action', action.id, ctx, {
@@ -233,6 +271,7 @@ function BasicOptions({
   summaries: Map<string, Summary>;
   isActionPhase: boolean;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   return (
     <div>
       <h3 className="font-medium">
@@ -241,7 +280,10 @@ function BasicOptions({
           (Effects take place immediately, unless stated otherwise)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         <GenericActions
           actions={actions}
           summaries={summaries}
@@ -259,6 +301,7 @@ function HireOptions({
   action: Action;
   isActionPhase: boolean;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   return (
     <div>
       <h3 className="font-medium">
@@ -268,7 +311,10 @@ function HireOptions({
           they remain)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         <RaisePopOptions action={action} isActionPhase={isActionPhase} />
       </div>
     </div>
@@ -288,6 +334,7 @@ function DevelopOptions({
   summaries: Map<string, Summary>;
   hasDevelopLand: boolean;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   const {
     ctx,
     handlePerform,
@@ -322,7 +369,10 @@ function DevelopOptions({
           (Effects take place on build and last until development is removed)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         {entries.map(({ d, costs }) => {
           const upkeep = ctx.developments.get(d.id)?.upkeep;
           const requirements = hasDevelopLand
@@ -338,12 +388,16 @@ function DevelopOptions({
           const summary = summaries.get(d.id);
           const implemented = (summary?.length ?? 0) > 0; // TODO: implement development effects
           const enabled = canPay && isActionPhase && implemented;
+          const insufficientTooltip = formatMissingResources(
+            costs,
+            ctx.activePlayer.resources,
+          );
           const title = !implemented
             ? 'Not implemented yet'
             : !hasDevelopLand
               ? `No ${LAND_INFO.icon} ${LAND_INFO.label} with free ${SLOT_INFO.icon} ${SLOT_INFO.label}`
               : !canPay
-                ? 'Cannot pay costs'
+                ? (insufficientTooltip ?? 'Cannot pay costs')
                 : undefined;
           return (
             <ActionCard
@@ -413,6 +467,7 @@ function BuildOptions({
   summaries: Map<string, Summary>;
   descriptions: Map<string, Summary>;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   const {
     ctx,
     handlePerform,
@@ -451,7 +506,10 @@ function BuildOptions({
           (Effects take place on build and last until building is removed)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         {entries.map(({ b, costs }) => {
           const requirements: string[] = [];
           const canPay = Object.entries(costs).every(
@@ -460,10 +518,14 @@ function BuildOptions({
           const summary = summaries.get(b.id);
           const implemented = (summary?.length ?? 0) > 0; // TODO: implement building effects
           const enabled = canPay && isActionPhase && implemented;
+          const insufficientTooltip = formatMissingResources(
+            costs,
+            ctx.activePlayer.resources,
+          );
           const title = !implemented
             ? 'Not implemented yet'
             : !canPay
-              ? 'Cannot pay costs'
+              ? (insufficientTooltip ?? 'Cannot pay costs')
               : undefined;
           const upkeep = ctx.buildings.get(b.id)?.upkeep;
           return (
@@ -516,8 +578,139 @@ function BuildOptions({
   );
 }
 
+function DemolishOptions({
+  action,
+  isActionPhase,
+}: {
+  action: Action;
+  isActionPhase: boolean;
+}) {
+  const listRef = useAnimate<HTMLDivElement>();
+  const {
+    ctx,
+    handlePerform,
+    handleHoverCard,
+    clearHoverCard,
+    actionCostResource,
+  } = useGameEngine();
+  const entries = useMemo(() => {
+    return Array.from(ctx.activePlayer.buildings)
+      .map((id) => {
+        const building = ctx.buildings.get(id) as Building | undefined;
+        if (!building) return null;
+        const costsBag = getActionCosts(action.id, ctx, { id });
+        const costs: Record<string, number> = {};
+        for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+        const total = Object.entries(costs).reduce(
+          (sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
+          0,
+        );
+        return { id, building, costs, total };
+      })
+      .filter(
+        (
+          entry,
+        ): entry is {
+          id: string;
+          building: Building;
+          costs: Record<string, number>;
+          total: number;
+        } => entry !== null,
+      )
+      .sort((a, b) => {
+        if (a.total !== b.total) return a.total - b.total;
+        return a.building.name.localeCompare(b.building.name);
+      });
+  }, [ctx, action.id, actionCostResource, ctx.activePlayer.buildings.size]);
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div>
+      <h3 className="font-medium">
+        {ctx.actions.get(action.id)?.icon || ''}{' '}
+        {ctx.actions.get(action.id)?.name}{' '}
+        <span className="italic text-sm font-normal">
+          (Removes a structure and its ongoing benefits)
+        </span>
+      </h3>
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
+        {entries.map(({ id, building, costs }) => {
+          const requirements: string[] = [];
+          const canPay = Object.entries(costs).every(
+            ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
+          );
+          const summary = summarizeContent('building', id, ctx, {
+            installed: true,
+          });
+          const implemented = (summary?.length ?? 0) > 0;
+          const enabled = canPay && isActionPhase && implemented;
+          const insufficientTooltip = formatMissingResources(
+            costs,
+            ctx.activePlayer.resources,
+          );
+          const title = !implemented
+            ? 'Not implemented yet'
+            : !canPay
+              ? (insufficientTooltip ?? 'Cannot pay costs')
+              : undefined;
+          const upkeep = ctx.buildings.get(id)?.upkeep;
+          return (
+            <ActionCard
+              key={id}
+              title={
+                <>
+                  {ctx.buildings.get(id)?.icon || ''} {building.name}
+                </>
+              }
+              costs={costs}
+              upkeep={upkeep}
+              playerResources={ctx.activePlayer.resources}
+              actionCostResource={actionCostResource}
+              requirements={requirements}
+              requirementIcons={[]}
+              summary={summary}
+              implemented={implemented}
+              enabled={enabled}
+              tooltip={title}
+              focus={(ctx.buildings.get(id) as Building | undefined)?.focus}
+              onClick={() => void handlePerform(action, { id })}
+              onMouseEnter={() => {
+                const full = describeContent('building', id, ctx, {
+                  installed: true,
+                });
+                const { effects, description } = splitSummary(full);
+                handleHoverCard({
+                  title: `${ctx.actions.get(action.id)?.icon || ''} ${
+                    ctx.actions.get(action.id)?.name
+                  } - ${ctx.buildings.get(id)?.icon || ''} ${building.name}`,
+                  effects,
+                  requirements,
+                  costs,
+                  upkeep,
+                  ...(description && { description }),
+                  ...(!implemented && {
+                    description: 'Not implemented yet',
+                    descriptionClass: 'italic text-red-600',
+                  }),
+                  bgClass: 'bg-gray-100 dark:bg-gray-700',
+                });
+              }}
+              onMouseLeave={clearHoverCard}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ActionsPanel() {
   const { ctx, tabsEnabled, actionCostResource } = useGameEngine();
+  const sectionRef = useAnimate<HTMLDivElement>();
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
@@ -591,6 +784,7 @@ export default function ActionsPanel() {
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.category === 'development');
   const buildAction = actions.find((a) => a.category === 'building');
+  const demolishAction = actions.find((a) => a.category === 'building_remove');
   const raisePopAction = actions.find((a) => a.category === 'population');
   const otherActions = actions.filter(
     (a) => (a.category ?? 'basic') === 'basic',
@@ -611,7 +805,7 @@ export default function ActionsPanel() {
           </span>
         )}
       </div>
-      <div className="space-y-3">
+      <div ref={sectionRef} className="space-y-3">
         {otherActions.length > 0 && (
           <BasicOptions
             actions={otherActions}
@@ -638,6 +832,12 @@ export default function ActionsPanel() {
             buildings={buildingOptions}
             summaries={buildingSummaries}
             descriptions={buildingDescriptions}
+          />
+        )}
+        {demolishAction && (
+          <DemolishOptions
+            action={demolishAction}
+            isActionPhase={isActionPhase}
           />
         )}
       </div>

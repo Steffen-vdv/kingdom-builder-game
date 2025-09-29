@@ -115,7 +115,7 @@ export function diffSnapshots(
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
     if (!prev) {
-      changes.push(`${LAND_INFO.icon} New ${LAND_INFO.label}`);
+      changes.push(`${LAND_INFO.icon} +1 ${LAND_INFO.label}`);
       continue;
     }
     for (const dev of land.developments)
@@ -419,7 +419,7 @@ export function diffStepSnapshots(
   for (const land of after.lands) {
     const prev = before.lands.find((l) => l.id === land.id);
     if (!prev) {
-      changes.push(`${LAND_INFO.icon} New ${LAND_INFO.label}`);
+      changes.push(`${LAND_INFO.icon} +1 ${LAND_INFO.label}`);
       continue;
     }
     for (const dev of land.developments)
