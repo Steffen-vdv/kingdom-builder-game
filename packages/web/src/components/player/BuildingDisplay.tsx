@@ -17,6 +17,7 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
       {Array.from(player.buildings).map((b) => {
         const name = ctx.buildings.get(b)?.name || b;
         const icon = ctx.buildings.get(b)?.icon || '';
+        const upkeep = ctx.buildings.get(b)?.upkeep;
         const title = `${icon} ${name}`;
         return (
           <div
@@ -31,6 +32,7 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
                 title,
                 effects,
                 requirements: [],
+                upkeep,
                 ...(description && { description }),
                 bgClass: 'bg-gray-100 dark:bg-gray-700',
               });

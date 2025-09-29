@@ -113,6 +113,10 @@ describe('log resource sources', () => {
       start: GAME_START,
       rules: RULES,
     });
+    runEffects(
+      [{ type: 'building', method: 'add', params: { id: 'raiders_guild' } }],
+      ctx,
+    );
     const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
     const step = upkeepPhase?.steps.find((s) => s.id === 'pay-upkeep');
     const before = snapshotPlayer(ctx.activePlayer, ctx);
@@ -167,6 +171,9 @@ describe('log resource sources', () => {
       .filter(Boolean)
       .join('');
     expect(icons).not.toBe('');
+    const raidersGuildIcon = BUILDINGS.get('raiders_guild')?.icon || '';
+    expect(raidersGuildIcon).not.toBe('');
+    expect(icons).toContain(raidersGuildIcon);
     const zeroPopulationIcons = Object.entries(ctx.activePlayer.population)
       .filter(([, count]) => count === 0)
       .map(([role]) => POPULATIONS.get(role)?.icon)
