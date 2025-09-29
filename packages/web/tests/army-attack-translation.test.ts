@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { SummaryEntry } from '../src/translation/content';
-import { summarizeContent, describeContent } from '../src/translation/content';
+import {
+  summarizeContent,
+  describeContent,
+  logContent,
+} from '../src/translation/content';
 import {
   createEngine,
   Resource,
@@ -108,5 +112,30 @@ describe('army attack translation', () => {
         Array.isArray(plunderEntry.items) &&
         plunderEntry.items.length > 0,
     ).toBeTruthy();
+  });
+
+  it('logs army attack action with friendly phrasing', () => {
+    const ctx = createCtx();
+    const log = logContent('action', 'army_attack', ctx);
+    const armyAttack = ctx.actions.get('army_attack');
+    const castle = RESOURCES[Resource.castleHP];
+    const army = STATS[Stat.armyStrength];
+    const absorption = STATS[Stat.absorption];
+    const fort = STATS[Stat.fortificationStrength];
+    const happiness = RESOURCES[Resource.happiness];
+    const plunder = ctx.actions.get('plunder');
+
+    expect(log).toEqual([
+      `Played ${armyAttack.icon} ${armyAttack.name}`,
+      `  Deal damage to opponent's ${castle.icon} ${castle.label}`,
+      `    Deal damage equal to your ${army.icon} ${army.label}`,
+      `    Opponent reduces damage with ${absorption.icon} ${absorption.label}`,
+      `    Damage first hits opponent's ${fort.icon} ${fort.label}`,
+      `    Any leftover damage spills into ${castle.icon} ${castle.label}`,
+      `  When opponent's ${castle.icon} ${castle.label} takes damage`,
+      `    Opponent loses 1 ${happiness.icon} ${happiness.label}`,
+      `    You gain 1 ${happiness.icon} ${happiness.label}`,
+      `    You trigger ${plunder.icon} ${plunder.name}`,
+    ]);
   });
 });
