@@ -97,7 +97,7 @@ describe('plow action translation', () => {
       {
         title: `${expand.icon} ${expand.name}`,
         items: [
-          `Gain ${landCount} ${LAND_INFO.icon} ${LAND_INFO.label}`,
+          `${LAND_INFO.icon} ${landCount >= 0 ? '+' : ''}${landCount} ${LAND_INFO.label}`,
           `${hapInfo.icon}+${hapAmt} ${hapInfo.label}`,
         ],
       },
