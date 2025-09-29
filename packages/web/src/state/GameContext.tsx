@@ -34,7 +34,7 @@ import {
 } from '../translation';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
-export const TIME_SCALE_OPTIONS = [1, 5, 10, 100] as const;
+export const TIME_SCALE_OPTIONS = [1, 2, 5, 100] as const;
 export type TimeScale = (typeof TIME_SCALE_OPTIONS)[number];
 const TIME_SCALE_STORAGE_KEY = 'kingdom-builder:time-scale';
 const ACTION_EFFECT_DELAY = 600;
