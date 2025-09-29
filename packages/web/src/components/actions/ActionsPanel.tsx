@@ -421,7 +421,9 @@ function BuildOptions({
     actionCostResource,
   } = useGameEngine();
   const entries = useMemo(() => {
+    const owned = ctx.activePlayer.buildings;
     return buildings
+      .filter((b) => !owned.has(b.id))
       .map((b) => {
         const costsBag = getActionCosts(action.id, ctx, { id: b.id });
         const costs: Record<string, number> = {};
@@ -433,7 +435,13 @@ function BuildOptions({
         return { b, costs, total };
       })
       .sort((a, b) => a.total - b.total);
-  }, [buildings, ctx, action.id, actionCostResource]);
+  }, [
+    buildings,
+    ctx,
+    action.id,
+    actionCostResource,
+    ctx.activePlayer.buildings.size,
+  ]);
   return (
     <div>
       <h3 className="font-medium">

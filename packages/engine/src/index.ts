@@ -139,6 +139,14 @@ export function performAction<T extends string>(
   }
   const base = { ...(actionDefinition.baseCosts || {}) };
   const resolved = applyParamsToEffects(actionDefinition.effects, params || {});
+  const attemptedBuildingAdds = resolved
+    .filter((effect) => effect.type === 'building' && effect.method === 'add')
+    .map((effect) => effect.params?.['id'])
+    .filter((id): id is string => typeof id === 'string');
+  for (const id of attemptedBuildingAdds) {
+    if (ctx.activePlayer.buildings.has(id))
+      throw new Error(`Building ${id} already built`);
+  }
   for (const effect of resolved) {
     if (!effect.type || !effect.method) continue;
     const key = `${effect.type}:${effect.method}`;
