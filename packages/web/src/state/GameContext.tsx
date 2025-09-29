@@ -34,6 +34,20 @@ import {
 } from '../translation';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
+export const TIME_SCALE_OPTIONS = [1, 2, 5, 100] as const;
+export type TimeScale = (typeof TIME_SCALE_OPTIONS)[number];
+const TIME_SCALE_STORAGE_KEY = 'kingdom-builder:time-scale';
+const ACTION_EFFECT_DELAY = 600;
+
+function readStoredTimeScale(): TimeScale | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem(TIME_SCALE_STORAGE_KEY);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return (TIME_SCALE_OPTIONS as readonly number[]).includes(parsed)
+    ? (parsed as TimeScale)
+    : null;
+}
 
 interface Action {
   id: string;
@@ -100,6 +114,8 @@ interface GameEngineContextValue {
   onExit?: () => void;
   darkMode: boolean;
   onToggleDark: () => void;
+  timeScale: TimeScale;
+  setTimeScale: (value: TimeScale) => void;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
@@ -148,6 +164,26 @@ export function GameProvider({
   >({});
   const [tabsEnabled, setTabsEnabled] = useState(false);
   const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
+
+  const [timeScale, setTimeScaleState] = useState<TimeScale>(() => {
+    if (devMode) return 100;
+    return readStoredTimeScale() ?? 1;
+  });
+  useEffect(() => {
+    if (devMode) {
+      setTimeScaleState(100);
+    } else {
+      setTimeScaleState(readStoredTimeScale() ?? 1);
+    }
+  }, [devMode]);
+  const changeTimeScale = (value: TimeScale) => {
+    setTimeScaleState((prev) => {
+      if (prev === value) return prev;
+      if (typeof window !== 'undefined')
+        window.localStorage.setItem(TIME_SCALE_STORAGE_KEY, String(value));
+      return value;
+    });
+  };
 
   const actionCostResource = ctx.actionCostResource as ResourceKey;
 
@@ -254,23 +290,26 @@ export function GameProvider({
   }
 
   function runDelay(total: number) {
-    const speed = ctx.game.devMode ? 0.01 : 1;
-    const adjustedTotal = total * speed;
-    const step = 100 * speed;
+    const scale = timeScale || 1;
+    const adjustedTotal = total / scale;
+    if (adjustedTotal <= 0) {
+      setPhaseTimer(0);
+      return Promise.resolve();
+    }
+    const tick = Math.max(16, Math.min(100, adjustedTotal / 10));
     setPhaseTimer(0);
     return new Promise<void>((resolve) => {
       let elapsed = 0;
       const interval = window.setInterval(() => {
-        if (!phasePausedRef.current) {
-          elapsed += step;
-          setPhaseTimer(elapsed / adjustedTotal);
-          if (elapsed >= adjustedTotal) {
-            window.clearInterval(interval);
-            setPhaseTimer(0);
-            resolve();
-          }
+        if (phasePausedRef.current) return;
+        elapsed += tick;
+        setPhaseTimer(Math.min(1, elapsed / adjustedTotal));
+        if (elapsed >= adjustedTotal) {
+          window.clearInterval(interval);
+          setPhaseTimer(0);
+          resolve();
         }
-      }, step);
+      }, tick);
     });
   }
 
@@ -339,7 +378,31 @@ export function GameProvider({
 
   const runUntilActionPhase = () => enqueue(runUntilActionPhaseCore);
 
-  function perform(action: Action, params?: Record<string, unknown>) {
+  function waitWithScale(base: number) {
+    const scale = timeScale || 1;
+    const duration = base / scale;
+    if (duration <= 0) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      window.setTimeout(() => resolve(), duration);
+    });
+  }
+
+  async function logWithEffectDelay(
+    lines: string[],
+    player: EngineContext['activePlayer'],
+  ) {
+    if (!lines.length) return;
+    const [first, ...rest] = lines;
+    if (first === undefined) return;
+    addLog(first, player);
+    const delay = ACTION_EFFECT_DELAY;
+    for (const line of rest) {
+      await waitWithScale(delay);
+      addLog(line, player);
+    }
+  }
+
+  async function perform(action: Action, params?: Record<string, unknown>) {
     const player = ctx.activePlayer;
     const before = snapshotPlayer(player, ctx);
     const costs = getActionCosts(
@@ -415,7 +478,8 @@ export function GameProvider({
         }
         return true;
       });
-      addLog([...messages, ...filtered.map((c) => `  ${c}`)], player);
+      const logLines = [...messages, ...filtered.map((c) => `  ${c}`)];
+      await logWithEffectDelay(logLines, player);
     } catch (e) {
       const icon = ctx.actions.get(action.id)?.icon || '';
       addLog(
@@ -514,6 +578,8 @@ export function GameProvider({
     updateMainPhaseStep,
     darkMode,
     onToggleDark,
+    timeScale,
+    setTimeScale: changeTimeScale,
     ...(onExit ? { onExit } : {}),
   };
 
