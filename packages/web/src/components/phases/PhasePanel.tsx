@@ -85,7 +85,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
       </div>
       <ul
         ref={phaseStepsRef}
-        className="text-sm text-left space-y-1 overflow-y-auto flex-1"
+        className="text-sm text-left space-y-1 overflow-hidden flex-1"
       >
         {phaseSteps.map((s, i) => (
           <li key={i} className={s.active ? 'font-semibold' : ''}>
