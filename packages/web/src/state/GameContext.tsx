@@ -479,6 +479,10 @@ export function GameProvider({
         return true;
       });
       const logLines = [...messages, ...filtered.map((c) => `  ${c}`)];
+
+      updateMainPhaseStep();
+      refresh();
+
       await logWithEffectDelay(logLines, player);
     } catch (e) {
       const icon = ctx.actions.get(action.id)?.icon || '';
@@ -488,8 +492,6 @@ export function GameProvider({
       );
       return;
     }
-    updateMainPhaseStep();
-    refresh();
   }
 
   const handlePerform = (action: Action, params?: Record<string, unknown>) =>
