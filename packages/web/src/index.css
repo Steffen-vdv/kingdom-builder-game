@@ -32,7 +32,7 @@
     @apply relative panel-card border border-black/10 dark:border-white/10 p-2 text-center hoverable cursor-help;
   }
   .land-slot {
-    @apply panel-card border border-black/10 dark:border-white/10 p-1 text-xs hoverable cursor-help flex items-center justify-center gap-1 shrink-0;
+    @apply panel-card border border-black/10 dark:border-white/10 p-1 text-lg leading-none hoverable cursor-help flex items-center justify-center gap-1 shrink-0 min-w-8 min-h-8;
   }
   .player-bg {
     @apply relative overflow-hidden text-gray-900 dark:text-white;

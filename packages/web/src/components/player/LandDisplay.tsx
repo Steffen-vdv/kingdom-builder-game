@@ -56,6 +56,7 @@ const LandTile: React.FC<{
               <span
                 key={i}
                 className="land-slot"
+                aria-label={name}
                 onMouseEnter={(e) => {
                   e.stopPropagation();
                   const full = describeContent('development', devId, ctx, {
@@ -75,10 +76,9 @@ const LandTile: React.FC<{
                   handleLeave();
                 }}
               >
-                <span className="flex-none">
+                <span aria-hidden="true">
                   {ctx.developments.get(devId)?.icon}
                 </span>
-                <span className="flex-1 min-w-0 truncate">{name}</span>
               </span>
             );
           }
@@ -87,6 +87,7 @@ const LandTile: React.FC<{
             <span
               key={i}
               className="land-slot italic"
+              aria-label={`${SLOT_INFO.label} (empty)`}
               onMouseEnter={(e) => {
                 e.stopPropagation();
                 handleHoverCard({
@@ -104,8 +105,7 @@ const LandTile: React.FC<{
                 handleLeave();
               }}
             >
-              <span className="flex-none">{SLOT_INFO.icon}</span>
-              <span className="flex-1 min-w-0 truncate">-empty-</span>
+              <span aria-hidden="true">{SLOT_INFO.icon}</span>
             </span>
           );
         })}
