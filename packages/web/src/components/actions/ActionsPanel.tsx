@@ -37,6 +37,7 @@ interface Development {
 interface Building {
   id: string;
   name: string;
+  icon?: string;
   focus?: Focus;
 }
 
@@ -516,6 +517,128 @@ function BuildOptions({
   );
 }
 
+function DemolishOptions({
+  action,
+  isActionPhase,
+}: {
+  action: Action;
+  isActionPhase: boolean;
+}) {
+  const {
+    ctx,
+    handlePerform,
+    handleHoverCard,
+    clearHoverCard,
+    actionCostResource,
+  } = useGameEngine();
+  const entries = useMemo(() => {
+    return Array.from(ctx.activePlayer.buildings)
+      .map((id) => {
+        const building = ctx.buildings.get(id) as Building | undefined;
+        if (!building) return null;
+        const costsBag = getActionCosts(action.id, ctx, { id });
+        const costs: Record<string, number> = {};
+        for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+        const total = Object.entries(costs).reduce(
+          (sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
+          0,
+        );
+        return { id, building, costs, total };
+      })
+      .filter(
+        (
+          entry,
+        ): entry is {
+          id: string;
+          building: Building;
+          costs: Record<string, number>;
+          total: number;
+        } => entry !== null,
+      )
+      .sort((a, b) => {
+        if (a.total !== b.total) return a.total - b.total;
+        return a.building.name.localeCompare(b.building.name);
+      });
+  }, [ctx, action.id, actionCostResource, ctx.activePlayer.buildings.size]);
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div>
+      <h3 className="font-medium">
+        {ctx.actions.get(action.id)?.icon || ''}{' '}
+        {ctx.actions.get(action.id)?.name}{' '}
+        <span className="italic text-sm font-normal">
+          (Removes a structure and its ongoing benefits)
+        </span>
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+        {entries.map(({ id, building, costs }) => {
+          const requirements: string[] = [];
+          const canPay = Object.entries(costs).every(
+            ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
+          );
+          const summary = summarizeContent('building', id, ctx, {
+            installed: true,
+          });
+          const implemented = (summary?.length ?? 0) > 0;
+          const enabled = canPay && isActionPhase && implemented;
+          const title = !implemented
+            ? 'Not implemented yet'
+            : !canPay
+              ? 'Cannot pay costs'
+              : undefined;
+          const upkeep = ctx.buildings.get(id)?.upkeep;
+          return (
+            <ActionCard
+              key={id}
+              title={
+                <>
+                  {ctx.buildings.get(id)?.icon || ''} {building.name}
+                </>
+              }
+              costs={costs}
+              upkeep={upkeep}
+              playerResources={ctx.activePlayer.resources}
+              actionCostResource={actionCostResource}
+              requirements={requirements}
+              requirementIcons={[]}
+              summary={summary}
+              implemented={implemented}
+              enabled={enabled}
+              tooltip={title}
+              focus={(ctx.buildings.get(id) as Building | undefined)?.focus}
+              onClick={() => void handlePerform(action, { id })}
+              onMouseEnter={() => {
+                const full = describeContent('building', id, ctx, {
+                  installed: true,
+                });
+                const { effects, description } = splitSummary(full);
+                handleHoverCard({
+                  title: `${ctx.actions.get(action.id)?.icon || ''} ${
+                    ctx.actions.get(action.id)?.name
+                  } - ${ctx.buildings.get(id)?.icon || ''} ${building.name}`,
+                  effects,
+                  requirements,
+                  costs,
+                  upkeep,
+                  ...(description && { description }),
+                  ...(!implemented && {
+                    description: 'Not implemented yet',
+                    descriptionClass: 'italic text-red-600',
+                  }),
+                  bgClass: 'bg-gray-100 dark:bg-gray-700',
+                });
+              }}
+              onMouseLeave={clearHoverCard}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ActionsPanel() {
   const { ctx, tabsEnabled, actionCostResource } = useGameEngine();
 
@@ -591,6 +714,7 @@ export default function ActionsPanel() {
   const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.category === 'development');
   const buildAction = actions.find((a) => a.category === 'building');
+  const demolishAction = actions.find((a) => a.category === 'building_remove');
   const raisePopAction = actions.find((a) => a.category === 'population');
   const otherActions = actions.filter(
     (a) => (a.category ?? 'basic') === 'basic',
@@ -638,6 +762,12 @@ export default function ActionsPanel() {
             buildings={buildingOptions}
             summaries={buildingSummaries}
             descriptions={buildingDescriptions}
+          />
+        )}
+        {demolishAction && (
+          <DemolishOptions
+            action={demolishAction}
+            isActionPhase={isActionPhase}
           />
         )}
       </div>
