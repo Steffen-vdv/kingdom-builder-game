@@ -9,6 +9,10 @@ import {
   StatMethods,
   DevelopmentMethods,
   ResourceMethods,
+  resourceParams,
+  statParams,
+  developmentParams,
+  developmentEvaluator,
 } from './config/builders';
 import type { DevelopmentDef } from './defs';
 
@@ -26,10 +30,10 @@ export function createDevelopmentRegistry() {
       .icon('🌾')
       .onGainIncomeStep(
         effect()
-          .evaluator('development', { id: '$id' })
+          .evaluator(developmentEvaluator().id('$id'))
           .effect(
             effect(Types.Resource, ResourceMethods.ADD)
-              .params({ key: Resource.gold, amount: 2 })
+              .params(resourceParams().key(Resource.gold).amount(2))
               .build(),
           )
           .build(),
@@ -47,7 +51,7 @@ export function createDevelopmentRegistry() {
       .populationCap(1)
       .onBuild(
         effect(Types.Stat, StatMethods.ADD)
-          .params({ key: Stat.maxPopulation, amount: 1 })
+          .params(statParams().key(Stat.maxPopulation).amount(1))
           .build(),
       )
       .build(),
@@ -62,12 +66,12 @@ export function createDevelopmentRegistry() {
       .icon('🏹')
       .onBuild(
         effect(Types.Stat, StatMethods.ADD)
-          .params({ key: Stat.armyStrength, amount: 1 })
+          .params(statParams().key(Stat.armyStrength).amount(1))
           .build(),
       )
       .onBuild(
         effect(Types.Stat, StatMethods.ADD)
-          .params({ key: Stat.fortificationStrength, amount: 1 })
+          .params(statParams().key(Stat.fortificationStrength).amount(1))
           .build(),
       )
       .build(),
@@ -82,17 +86,17 @@ export function createDevelopmentRegistry() {
       .icon('🗼')
       .onBuild(
         effect(Types.Stat, StatMethods.ADD)
-          .params({ key: Stat.fortificationStrength, amount: 2 })
+          .params(statParams().key(Stat.fortificationStrength).amount(2))
           .build(),
       )
       .onBuild(
         effect(Types.Stat, StatMethods.ADD)
-          .params({ key: Stat.absorption, amount: 0.5 })
+          .params(statParams().key(Stat.absorption).amount(0.5))
           .build(),
       )
       .onAttackResolved(
         effect(Types.Development, DevelopmentMethods.REMOVE)
-          .params({ id: 'watchtower', landId: '$landId' })
+          .params(developmentParams().id('watchtower').landId('$landId'))
           .build(),
       )
       .build(),

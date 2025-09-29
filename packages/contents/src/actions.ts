@@ -21,6 +21,17 @@ import {
   ResultModMethods,
   BuildingMethods,
   StatMethods,
+  resourceParams,
+  statParams,
+  developmentParams,
+  resultModParams,
+  passiveParams,
+  costModParams,
+  developmentEvaluator,
+  populationEvaluator,
+  statEvaluator,
+  attackParams,
+  transferParams,
 } from './config/builders';
 import type { Focus } from './defs';
 
@@ -43,7 +54,7 @@ export function createActionRegistry() {
       .effect(effect(Types.Land, LandMethods.ADD).param('count', 1).build())
       .effect(
         effect(Types.Resource, ResourceMethods.ADD)
-          .params({ key: Resource.happiness, amount: 1 })
+          .params(resourceParams().key(Resource.happiness).amount(1))
           .build(),
       )
       .build(),
@@ -60,17 +71,17 @@ export function createActionRegistry() {
       .cost(Resource.ap, 1)
       .effect(
         effect()
-          .evaluator('development', { id: 'farm' })
+          .evaluator(developmentEvaluator().id('farm'))
           .effect(
             effect(Types.Resource, ResourceMethods.ADD)
               .round('down')
-              .params({ key: Resource.gold, amount: 2 })
+              .params(resourceParams().key(Resource.gold).amount(2))
               .build(),
           )
           .effect(
             effect(Types.Resource, ResourceMethods.ADD)
               .round('up')
-              .params({ key: Resource.happiness, amount: -0.5 })
+              .params(resourceParams().key(Resource.happiness).amount(-0.5))
               .build(),
           )
           .build(),
@@ -90,7 +101,7 @@ export function createActionRegistry() {
       .cost(Resource.gold, 3)
       .effect(
         effect(Types.Development, DevelopmentMethods.ADD)
-          .params({ id: '$id', landId: '$landId' })
+          .params(developmentParams().id('$id').landId('$landId'))
           .build(),
       )
       .build(),
@@ -107,16 +118,16 @@ export function createActionRegistry() {
       .cost(Resource.ap, 1)
       .effect(
         effect()
-          .evaluator('population', { id: 'tax' })
+          .evaluator(populationEvaluator().param('id', 'tax'))
           .effect(
             effect(Types.Resource, ResourceMethods.ADD)
-              .params({ key: Resource.gold, amount: 4 })
+              .params(resourceParams().key(Resource.gold).amount(4))
               .build(),
           )
           .effect(
             effect(Types.Resource, ResourceMethods.ADD)
               .round('up')
-              .params({ key: Resource.happiness, amount: -0.5 })
+              .params(resourceParams().key(Resource.happiness).amount(-0.5))
               .build(),
           )
           .build(),
@@ -149,9 +160,9 @@ export function createActionRegistry() {
       .cost(Resource.gold, 5)
       .requirement(
         requirement('evaluator', 'compare')
-          .param('left', { type: 'population' })
+          .param('left', populationEvaluator().build())
           .param('operator', 'lt')
-          .param('right', { type: 'stat', params: { key: Stat.maxPopulation } })
+          .param('right', statEvaluator().key(Stat.maxPopulation).build())
           .message('Free space for 👥')
           .build(),
       )
@@ -162,7 +173,7 @@ export function createActionRegistry() {
       )
       .effect(
         effect(Types.Resource, ResourceMethods.ADD)
-          .params({ key: Resource.happiness, amount: 1 })
+          .params(resourceParams().key(Resource.happiness).amount(1))
           .build(),
       )
       .build(),
@@ -192,12 +203,12 @@ export function createActionRegistry() {
       .cost(Resource.ap, 1)
       .requirement(
         requirement('evaluator', 'compare')
-          .param('left', { type: 'stat', params: { key: Stat.warWeariness } })
+          .param('left', statEvaluator().key(Stat.warWeariness).build())
           .param('operator', 'lt')
-          .param('right', {
-            type: 'population',
-            params: { role: PopulationRole.Legion },
-          })
+          .param(
+            'right',
+            populationEvaluator().role(PopulationRole.Legion).build(),
+          )
           .message(
             `${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Legion].icon} ${POPULATION_ROLES[PopulationRole.Legion].label}`,
           )
@@ -205,27 +216,28 @@ export function createActionRegistry() {
       )
       .effect(
         effect('attack', 'perform')
-          .param('target', { type: 'resource', key: Resource.castleHP })
-          .param('onDamage', {
-            attacker: [
-              effect(Types.Resource, ResourceMethods.ADD)
-                .params({ key: Resource.happiness, amount: 1 })
-                .build(),
-              effect(Types.Action, ActionMethods.PERFORM)
-                .param('id', 'plunder')
-                .build(),
-            ],
-            defender: [
-              effect(Types.Resource, ResourceMethods.ADD)
-                .params({ key: Resource.happiness, amount: -1 })
-                .build(),
-            ],
-          })
+          .params(
+            attackParams()
+              .targetResource(Resource.castleHP)
+              .onDamageAttacker(
+                effect(Types.Resource, ResourceMethods.ADD)
+                  .params(resourceParams().key(Resource.happiness).amount(1))
+                  .build(),
+                effect(Types.Action, ActionMethods.PERFORM)
+                  .param('id', 'plunder')
+                  .build(),
+              )
+              .onDamageDefender(
+                effect(Types.Resource, ResourceMethods.ADD)
+                  .params(resourceParams().key(Resource.happiness).amount(-1))
+                  .build(),
+              ),
+          )
           .build(),
       )
       .effect(
         effect(Types.Stat, StatMethods.ADD)
-          .params({ key: Stat.warWeariness, amount: 1 })
+          .params(statParams().key(Stat.warWeariness).amount(1))
           .build(),
       )
       .build(),
@@ -243,7 +255,7 @@ export function createActionRegistry() {
       .cost(Resource.gold, 3)
       .requirement(
         requirement('evaluator', 'compare')
-          .param('left', { type: 'stat', params: { key: Stat.warWeariness } })
+          .param('left', statEvaluator().key(Stat.warWeariness).build())
           .param('operator', 'eq')
           .param('right', 0)
           .message(
@@ -253,33 +265,35 @@ export function createActionRegistry() {
       )
       .effect(
         effect(Types.Resource, ResourceMethods.ADD)
-          .params({ key: Resource.happiness, amount: 3 })
+          .params(resourceParams().key(Resource.happiness).amount(3))
           .build(),
       )
       .effect(
         effect(Types.Stat, StatMethods.REMOVE)
-          .params({ key: Stat.fortificationStrength, amount: 3 })
+          .params(statParams().key(Stat.fortificationStrength).amount(3))
           .build(),
       )
       .effect(
         effect(Types.Passive, PassiveMethods.ADD)
-          .params({
-            id: 'hold_festival_penalty',
-            onUpkeepPhase: [
-              effect(Types.Passive, PassiveMethods.REMOVE)
-                .param('id', 'hold_festival_penalty')
-                .build(),
-            ],
-          })
+          .params(
+            passiveParams()
+              .id('hold_festival_penalty')
+              .onUpkeepPhase(
+                effect(Types.Passive, PassiveMethods.REMOVE)
+                  .param('id', 'hold_festival_penalty')
+                  .build(),
+              ),
+          )
           .effect(
             effect(Types.ResultMod, ResultModMethods.ADD)
-              .params({
-                id: 'hold_festival_attack_happiness_penalty',
-                actionId: 'army_attack',
-              })
+              .params(
+                resultModParams()
+                  .id('hold_festival_attack_happiness_penalty')
+                  .actionId('army_attack'),
+              )
               .effect(
                 effect(Types.Resource, ResourceMethods.ADD)
-                  .params({ key: Resource.happiness, amount: -3 })
+                  .params(resourceParams().key(Resource.happiness).amount(-3))
                   .build(),
               )
               .build(),
@@ -303,7 +317,7 @@ export function createActionRegistry() {
       // evaluation { type: 'transfer_pct', id: 'percent' } with an `adjust` value.
       .effect(
         effect(Types.Resource, ResourceMethods.TRANSFER)
-          .params({ key: Resource.gold, percent: 25 })
+          .params(transferParams().key(Resource.gold).percent(25))
           .build(),
       )
       .build(),
@@ -328,21 +342,23 @@ export function createActionRegistry() {
       )
       .effect(
         effect(Types.Passive, PassiveMethods.ADD)
-          .params({
-            id: 'plow_cost_mod',
-            onUpkeepPhase: [
-              effect(Types.Passive, PassiveMethods.REMOVE)
-                .param('id', 'plow_cost_mod')
-                .build(),
-            ],
-          })
+          .params(
+            passiveParams()
+              .id('plow_cost_mod')
+              .onUpkeepPhase(
+                effect(Types.Passive, PassiveMethods.REMOVE)
+                  .param('id', 'plow_cost_mod')
+                  .build(),
+              ),
+          )
           .effect(
             effect(Types.CostMod, CostModMethods.ADD)
-              .params({
-                id: 'plow_cost_all',
-                key: Resource.gold,
-                amount: 2,
-              })
+              .params(
+                costModParams()
+                  .id('plow_cost_all')
+                  .key(Resource.gold)
+                  .amount(2),
+              )
               .build(),
           )
           .build(),

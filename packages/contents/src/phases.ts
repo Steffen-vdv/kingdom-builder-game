@@ -6,6 +6,10 @@ import {
   StatMethods,
   phase,
   step,
+  populationEvaluator,
+  statParams,
+  compareEvaluator,
+  statEvaluator,
   type PhaseDef,
 } from './config/builders';
 import {
@@ -35,10 +39,14 @@ export const PHASES: PhaseDef[] = [
         .title('Raise Strength')
         .effect(
           effect()
-            .evaluator('population', { role: PopulationRole.Legion })
+            .evaluator(populationEvaluator().role(PopulationRole.Legion))
             .effect(
               effect(Types.Stat, StatMethods.ADD_PCT)
-                .params({ key: Stat.armyStrength, percentStat: Stat.growth })
+                .params(
+                  statParams()
+                    .key(Stat.armyStrength)
+                    .percentFromStat(Stat.growth),
+                )
                 .round('up')
                 .build(),
             )
@@ -46,13 +54,14 @@ export const PHASES: PhaseDef[] = [
         )
         .effect(
           effect()
-            .evaluator('population', { role: PopulationRole.Fortifier })
+            .evaluator(populationEvaluator().role(PopulationRole.Fortifier))
             .effect(
               effect(Types.Stat, StatMethods.ADD_PCT)
-                .params({
-                  key: Stat.fortificationStrength,
-                  percentStat: Stat.growth,
-                })
+                .params(
+                  statParams()
+                    .key(Stat.fortificationStrength)
+                    .percentFromStat(Stat.growth),
+                )
                 .round('up')
                 .build(),
             )
@@ -74,14 +83,15 @@ export const PHASES: PhaseDef[] = [
         .title('War recovery')
         .effect(
           effect()
-            .evaluator('compare', {
-              left: { type: 'stat', params: { key: Stat.warWeariness } },
-              operator: 'gt',
-              right: 0,
-            })
+            .evaluator(
+              compareEvaluator()
+                .left(statEvaluator().key(Stat.warWeariness))
+                .operator('gt')
+                .right(0),
+            )
             .effect(
               effect(Types.Stat, StatMethods.REMOVE)
-                .params({ key: Stat.warWeariness, amount: 1 })
+                .params(statParams().key(Stat.warWeariness).amount(1))
                 .build(),
             )
             .build(),

@@ -1,4 +1,8 @@
 import { Registry } from '@kingdom-builder/engine/registry';
+import {
+  TRANSFER_PCT_EVALUATION_ID,
+  TRANSFER_PCT_EVALUATION_TYPE,
+} from '@kingdom-builder/engine/effects/resource_transfer';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { buildingSchema } from '@kingdom-builder/engine/config/schema';
@@ -12,6 +16,11 @@ import {
   ActionMethods,
   PassiveMethods,
   StatMethods,
+  resourceParams,
+  resultModParams,
+  evaluationTarget,
+  costModParams,
+  statParams,
 } from './config/builders';
 import type { BuildingDef } from './defs';
 
@@ -28,20 +37,21 @@ export function createBuildingRegistry() {
       .cost(Resource.gold, 5)
       .onBuild(
         effect(Types.CostMod, CostModMethods.ADD)
-          .params({
-            id: 'tc_expand_cost',
-            actionId: 'expand',
-            key: Resource.gold,
-            amount: 2,
-          })
+          .params(
+            costModParams()
+              .id('tc_expand_cost')
+              .actionId('expand')
+              .key(Resource.gold)
+              .amount(2),
+          )
           .build(),
       )
       .onBuild(
         effect(Types.ResultMod, ResultModMethods.ADD)
-          .params({ id: 'tc_expand_result', actionId: 'expand' })
+          .params(resultModParams().id('tc_expand_result').actionId('expand'))
           .effect(
             effect(Types.Resource, ResourceMethods.ADD)
-              .params({ key: Resource.happiness, amount: 1 })
+              .params(resourceParams().key(Resource.happiness).amount(1))
               .build(),
           )
           .build(),
@@ -59,11 +69,12 @@ export function createBuildingRegistry() {
       .cost(Resource.gold, 7)
       .onBuild(
         effect(Types.ResultMod, ResultModMethods.ADD)
-          .params({
-            id: 'mill_farm_bonus',
-            evaluation: { type: 'development', id: 'farm' },
-            amount: 1,
-          })
+          .params(
+            resultModParams()
+              .id('mill_farm_bonus')
+              .evaluation(evaluationTarget('development').id('farm'))
+              .amount(1),
+          )
           .build(),
       )
       .build(),
@@ -78,11 +89,16 @@ export function createBuildingRegistry() {
       .cost(Resource.ap, 1)
       .onBuild(
         effect(Types.ResultMod, ResultModMethods.ADD)
-          .params({
-            id: 'raiders_guild_plunder_bonus',
-            evaluation: { type: 'transfer_pct', id: 'percent' },
-            adjust: 25,
-          })
+          .params(
+            resultModParams()
+              .id('raiders_guild_plunder_bonus')
+              .evaluation(
+                evaluationTarget(TRANSFER_PCT_EVALUATION_TYPE).id(
+                  TRANSFER_PCT_EVALUATION_ID,
+                ),
+              )
+              .adjust(25),
+          )
           .build(),
       )
       .build(),
@@ -108,11 +124,12 @@ export function createBuildingRegistry() {
       .cost(Resource.gold, 10)
       .onBuild(
         effect(Types.ResultMod, ResultModMethods.ADD)
-          .params({
-            id: 'market_tax_bonus',
-            evaluation: { type: 'population', id: 'tax' },
-            amount: 1,
-          })
+          .params(
+            resultModParams()
+              .id('market_tax_bonus')
+              .evaluation(evaluationTarget('population').id('tax'))
+              .amount(1),
+          )
           .build(),
       )
       .build(),
@@ -147,12 +164,12 @@ export function createBuildingRegistry() {
           .param('id', 'castle_walls_bonus')
           .effect(
             effect(Types.Stat, StatMethods.ADD)
-              .params({ key: Stat.fortificationStrength, amount: 5 })
+              .params(statParams().key(Stat.fortificationStrength).amount(5))
               .build(),
           )
           .effect(
             effect(Types.Stat, StatMethods.ADD)
-              .params({ key: Stat.absorption, amount: 0.2 })
+              .params(statParams().key(Stat.absorption).amount(0.2))
               .build(),
           )
           .build(),
