@@ -23,6 +23,27 @@ import { formatStatValue } from '../../../utils/stats';
 
 type Mode = 'summarize' | 'describe';
 
+type DamageEffectFormatter = (item: SummaryEntry, mode: Mode) => SummaryEntry[];
+
+const DAMAGE_EFFECT_CATEGORIES: Record<string, DamageEffectFormatter> = {
+  'action:perform': (item, mode) => [
+    mode === 'summarize' && typeof item !== 'string'
+      ? (item as { title: string }).title
+      : item,
+  ],
+};
+
+function categorizeDamageEffects(
+  def: EffectDef,
+  item: SummaryEntry,
+  mode: Mode,
+): { actions: SummaryEntry[]; others: SummaryEntry[] } {
+  const key = `${def.type}:${def.method}`;
+  const handler = DAMAGE_EFFECT_CATEGORIES[key];
+  if (handler) return { actions: handler(item, mode), others: [] };
+  return { actions: [], others: [item] };
+}
+
 function ownerLabel(owner: 'attacker' | 'defender') {
   return owner === 'attacker' ? 'You' : 'Opponent';
 }
@@ -84,13 +105,21 @@ function baseEntry(
     };
   }
 
+  const ignoreAbsorption = Boolean(eff.params?.['ignoreAbsorption']);
+  const ignoreFortification = Boolean(eff.params?.['ignoreFortification']);
   return {
     entry: {
       title: `Attack opponent with your ${army.icon} ${army.label}`,
       items: [
-        `${absorption.icon} ${absorption.label} damage reduction applied`,
-        `Damage applied to opponent's ${fort.icon} ${fort.label}`,
-        `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${info.icon} ${info.label}`,
+        ignoreAbsorption
+          ? `Ignoring ${absorption.icon} ${absorption.label} damage reduction`
+          : `${absorption.icon} ${absorption.label} damage reduction applied`,
+        ...(ignoreFortification
+          ? [`Damage applied directly to opponent's ${info.icon} ${info.label}`]
+          : [
+              `Damage applied to opponent's ${fort.icon} ${fort.label}`,
+              `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${info.icon} ${info.label}`,
+            ]),
       ],
     },
     target: info,
@@ -108,25 +137,40 @@ function summarizeOnDamage(
   if (!onDamage) return null;
   const { info } = getTargetInfo(eff);
   const format = mode === 'summarize' ? summarizeEffects : describeEffects;
-  const attacker = format(onDamage.attacker, ctx);
-  const defender = format(onDamage.defender, ctx);
+  const attackerDefs = onDamage.attacker ?? [];
+  const defenderDefs = onDamage.defender ?? [];
+  const attackerEntries = format(attackerDefs, ctx);
+  const defenderEntries = format(defenderDefs, ctx);
   const items: SummaryEntry[] = [];
-  if (defender.length)
-    items.push({
-      title: 'Opponent',
-      items: defender,
-      ...(mode === 'describe' ? { _desc: true } : {}),
+  const actionItems: SummaryEntry[] = [];
+
+  const collect = (
+    defs: EffectDef[],
+    entries: SummaryEntry[],
+    suffix: string,
+  ) => {
+    entries.forEach((entry, index) => {
+      const def = defs[index]!;
+      const { actions, others } = categorizeDamageEffects(def, entry, mode);
+      actionItems.push(...actions);
+      others.forEach((other) => {
+        if (typeof other === 'string') items.push(`${other} ${suffix}`);
+        else items.push({ ...other, title: `${other.title} ${suffix}` });
+      });
     });
-  if (attacker.length)
-    items.push({
-      title: 'You',
-      items: attacker,
-      ...(mode === 'describe' ? { _desc: true } : {}),
-    });
-  if (!items.length) return null;
+  };
+
+  collect(defenderDefs, defenderEntries, 'for opponent');
+  collect(attackerDefs, attackerEntries, 'for you');
+
+  const combined = items.concat(actionItems);
+  if (!combined.length) return null;
   return {
-    title: `On opponent ${info.icon} ${info.label} damage`,
-    items,
+    title:
+      mode === 'summarize'
+        ? `On opponent ${info.icon} damage`
+        : `On opponent ${info.icon} ${info.label} damage`,
+    items: combined,
   };
 }
 

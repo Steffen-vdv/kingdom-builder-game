@@ -238,22 +238,24 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
       if (!defs?.length) return;
       const defenderIndex = ctx.game.players.indexOf(defender);
       const original = ctx.game.currentPlayerIndex;
-      for (const def of defs) {
-        const beforeAttacker = snapshotPlayer(attacker, ctx);
-        const beforeDefender = snapshotPlayer(defender, ctx);
-        if (owner === 'defender') ctx.game.currentPlayerIndex = defenderIndex;
-        runEffects([def], ctx);
+      if (owner === 'defender') ctx.game.currentPlayerIndex = defenderIndex;
+      try {
+        for (const def of defs) {
+          const beforeAttacker = snapshotPlayer(attacker, ctx);
+          const beforeDefender = snapshotPlayer(defender, ctx);
+          runEffects([def], ctx);
+          const afterAttacker = snapshotPlayer(attacker, ctx);
+          const afterDefender = snapshotPlayer(defender, ctx);
+          onDamageLogs.push({
+            owner,
+            effect: def,
+            attacker: diffPlayerSnapshots(beforeAttacker, afterAttacker),
+            defender: diffPlayerSnapshots(beforeDefender, afterDefender),
+          });
+        }
+      } finally {
         if (owner === 'defender') ctx.game.currentPlayerIndex = original;
-        const afterAttacker = snapshotPlayer(attacker, ctx);
-        const afterDefender = snapshotPlayer(defender, ctx);
-        onDamageLogs.push({
-          owner,
-          effect: def,
-          attacker: diffPlayerSnapshots(beforeAttacker, afterAttacker),
-          defender: diffPlayerSnapshots(beforeDefender, afterDefender),
-        });
       }
-      if (owner === 'defender') ctx.game.currentPlayerIndex = original;
     };
 
     runList('defender', onDamage.defender);

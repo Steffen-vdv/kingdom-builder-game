@@ -82,16 +82,11 @@ describe('army attack translation', () => {
     expect(summary).toEqual([
       `${army.icon} opponent's ${fort.icon}${castle.icon}`,
       {
-        title: `On opponent ${castle.icon} ${castle.label} damage`,
+        title: `On opponent ${castle.icon} damage`,
         items: [
-          { title: 'Opponent', items: [`${happiness.icon}${defenderAmt}`] },
-          {
-            title: 'You',
-            items: [
-              `${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt}`,
-              `${plunder.icon} ${plunder.name}`,
-            ],
-          },
+          `${happiness.icon}${defenderAmt} for opponent`,
+          `${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt} for you`,
+          `${plunder.icon} ${plunder.name}`,
         ],
       },
       `${warWeariness.icon}${warAmt >= 0 ? '+' : ''}${warAmt}`,
@@ -108,23 +103,16 @@ describe('army attack translation', () => {
         'title' in e &&
         e.title.startsWith('On opponent'),
     ) as { items: SummaryEntry[] };
-    const youEntry = onDamage.items.find(
-      (i) => typeof i === 'object' && (i as { title: string }).title === 'You',
-    ) as { items: SummaryEntry[] } | undefined;
-    expect(youEntry).toBeDefined();
-    const plunderEntry =
-      youEntry &&
-      youEntry.items.find(
-        (i) =>
-          typeof i === 'object' &&
-          (i as { title: string }).title === `${plunder.icon} ${plunder.name}`,
-      );
+    const plunderEntry = onDamage.items.find(
+      (i) =>
+        typeof i === 'object' &&
+        (i as { title: string }).title === `${plunder.icon} ${plunder.name}`,
+    ) as { items?: unknown[] } | undefined;
     expect(plunderEntry).toBeDefined();
     expect(
       plunderEntry &&
-        typeof plunderEntry === 'object' &&
-        Array.isArray((plunderEntry as { items?: unknown[] }).items) &&
-        ((plunderEntry as { items?: unknown[] }).items?.length ?? 0) > 0,
+        Array.isArray(plunderEntry.items) &&
+        (plunderEntry.items?.length ?? 0) > 0,
     ).toBeTruthy();
   });
 
