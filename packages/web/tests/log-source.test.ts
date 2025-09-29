@@ -114,7 +114,7 @@ describe('log resource sources', () => {
       rules: RULES,
     });
     runEffects(
-      [{ type: 'building', method: 'add', params: { id: 'barracks' } }],
+      [{ type: 'building', method: 'add', params: { id: 'raiders_guild' } }],
       ctx,
     );
     const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
@@ -171,9 +171,9 @@ describe('log resource sources', () => {
       .filter(Boolean)
       .join('');
     expect(icons).not.toBe('');
-    const barracksIcon = BUILDINGS.get('barracks')?.icon || '';
-    expect(barracksIcon).not.toBe('');
-    expect(icons).toContain(barracksIcon);
+    const raidersGuildIcon = BUILDINGS.get('raiders_guild')?.icon || '';
+    expect(raidersGuildIcon).not.toBe('');
+    expect(icons).toContain(raidersGuildIcon);
     const zeroPopulationIcons = Object.entries(ctx.activePlayer.population)
       .filter(([, count]) => count === 0)
       .map(([role]) => POPULATIONS.get(role)?.icon)
