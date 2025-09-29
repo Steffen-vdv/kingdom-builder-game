@@ -87,6 +87,7 @@ export function createBuildingRegistry() {
       .icon('🏴‍☠️')
       .cost(Resource.gold, 8)
       .cost(Resource.ap, 1)
+      .upkeep(Resource.gold, 1)
       .onBuild(
         effect(Types.ResultMod, ResultModMethods.ADD)
           .params(
@@ -141,6 +142,7 @@ export function createBuildingRegistry() {
       .name('Barracks')
       .icon('🪖')
       .cost(Resource.gold, 12)
+      .upkeep(Resource.gold, 2)
       .build(),
     focus: 'aggressive',
   });
@@ -150,6 +152,7 @@ export function createBuildingRegistry() {
       .name('Citadel')
       .icon('🏯')
       .cost(Resource.gold, 12)
+      .upkeep(Resource.gold, 3)
       .build(),
     focus: 'defense',
   });
@@ -159,6 +162,7 @@ export function createBuildingRegistry() {
       .name('Castle Walls')
       .icon('🧱')
       .cost(Resource.gold, 12)
+      .upkeep(Resource.gold, 1)
       .onBuild(
         effect(Types.Passive, PassiveMethods.ADD)
           .param('id', 'castle_walls_bonus')
@@ -183,6 +187,7 @@ export function createBuildingRegistry() {
       .name('Castle Gardens')
       .icon('🌷')
       .cost(Resource.gold, 15)
+      .upkeep(Resource.gold, 2)
       .build(),
     focus: 'economy',
   });
@@ -192,6 +197,7 @@ export function createBuildingRegistry() {
       .name('Temple')
       .icon('⛪')
       .cost(Resource.gold, 16)
+      .upkeep(Resource.gold, 2)
       .build(),
     focus: 'other',
   });
@@ -201,6 +207,7 @@ export function createBuildingRegistry() {
       .name('Palace')
       .icon('👑')
       .cost(Resource.gold, 20)
+      .upkeep(Resource.gold, 3)
       .build(),
     focus: 'other',
   });
@@ -210,6 +217,7 @@ export function createBuildingRegistry() {
       .name('Great Hall')
       .icon('🏟️')
       .cost(Resource.gold, 22)
+      .upkeep(Resource.gold, 3)
       .build(),
     focus: 'other',
   });
