@@ -14,7 +14,8 @@ export interface AttackCalcOptions {
 
 export type AttackTarget =
   | { type: 'resource'; key: ResourceKey }
-  | { type: 'stat'; key: StatKey };
+  | { type: 'stat'; key: StatKey }
+  | { type: 'building'; id: string };
 
 export type AttackLogOwner = 'attacker' | 'defender';
 
@@ -22,6 +23,23 @@ export interface AttackPowerLog {
   base: number;
   modified: number;
 }
+
+interface AttackNumericTargetLog {
+  before: number;
+  damage: number;
+  after: number;
+}
+
+export type AttackEvaluationTargetLog =
+  | ({ type: 'resource'; key: ResourceKey } & AttackNumericTargetLog)
+  | ({ type: 'stat'; key: StatKey } & AttackNumericTargetLog)
+  | {
+      type: 'building';
+      id: string;
+      existed: boolean;
+      destroyed: boolean;
+      damage: number;
+    };
 
 export interface AttackEvaluationLog {
   power: AttackPowerLog;
@@ -36,11 +54,7 @@ export interface AttackEvaluationLog {
     damage: number;
     after: number;
   };
-  target: AttackTarget & {
-    before: number;
-    damage: number;
-    after: number;
-  };
+  target: AttackEvaluationTargetLog;
 }
 
 export type AttackPlayerDiff =
@@ -172,15 +186,60 @@ export function resolveAttack(
     : Math.max(0, fortBefore - fortDamage);
   if (!opts.ignoreFortification) defender.fortificationStrength = fortAfter;
 
-  const targetBefore =
-    target.type === 'stat'
-      ? defender.stats[target.key] || 0
-      : defender.resources[target.key] || 0;
   const targetDamage = Math.max(0, damageAfterAbsorption - fortDamage);
-  const targetAfter = Math.max(0, targetBefore - targetDamage);
-  if (targetDamage > 0) {
-    if (target.type === 'stat') defender.stats[target.key] = targetAfter;
-    else defender.resources[target.key] = targetAfter;
+  let targetLog: AttackEvaluationTargetLog;
+
+  if (target.type === 'stat') {
+    const before = defender.stats[target.key] || 0;
+    const after = Math.max(0, before - targetDamage);
+    if (targetDamage > 0) defender.stats[target.key] = after;
+    targetLog = {
+      type: 'stat',
+      key: target.key,
+      before,
+      damage: targetDamage,
+      after,
+    };
+  } else if (target.type === 'resource') {
+    const before = defender.resources[target.key] || 0;
+    const after = Math.max(0, before - targetDamage);
+    if (targetDamage > 0) defender.resources[target.key] = after;
+    targetLog = {
+      type: 'resource',
+      key: target.key,
+      before,
+      damage: targetDamage,
+      after,
+    };
+  } else {
+    const existed = defender.buildings.has(target.id);
+    let destroyed = false;
+    if (targetDamage > 0 && existed) {
+      const originalIndex = ctx.game.currentPlayerIndex;
+      ctx.game.currentPlayerIndex = defenderIndex;
+      try {
+        runEffects(
+          [
+            {
+              type: 'building',
+              method: 'remove',
+              params: { id: target.id },
+            },
+          ],
+          ctx,
+        );
+      } finally {
+        ctx.game.currentPlayerIndex = originalIndex;
+      }
+      destroyed = !defender.buildings.has(target.id);
+    }
+    targetLog = {
+      type: 'building',
+      id: target.id,
+      existed,
+      destroyed,
+      damage: targetDamage,
+    };
   }
 
   ctx.game.currentPlayerIndex = defenderIndex;
@@ -213,13 +272,7 @@ export function resolveAttack(
         damage: fortDamage,
         after: fortAfter,
       },
-      target: {
-        type: target.type,
-        key: target.key,
-        before: targetBefore,
-        damage: targetDamage,
-        after: targetAfter,
-      },
+      target: targetLog,
     },
   };
 }
@@ -232,7 +285,9 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
   if (!target) return;
 
   const baseDamage = (attacker.armyStrength as number) || 0;
-  const mods: ResourceGain[] = [{ key: target.key, amount: baseDamage }];
+  const evaluationKey =
+    target.type === 'building' ? target.id : target.key;
+  const mods: ResourceGain[] = [{ key: evaluationKey, amount: baseDamage }];
   ctx.passives.runEvaluationMods('attack:power', ctx, mods);
   const modifiedDamage = mods[0]!.amount;
 

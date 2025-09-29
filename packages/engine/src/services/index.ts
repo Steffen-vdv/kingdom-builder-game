@@ -65,7 +65,7 @@ export type CostModifier = (
   ctx: EngineContext,
 ) => CostBag;
 export type ResultModifier = (actionId: string, ctx: EngineContext) => void;
-export type ResourceGain = { key: ResourceKey; amount: number };
+export type ResourceGain = { key: string; amount: number };
 export type EvaluationModifier = (
   ctx: EngineContext,
   gains: ResourceGain[],

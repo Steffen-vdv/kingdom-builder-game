@@ -221,4 +221,130 @@ describe('resolveAttack', () => {
     expect(defender.absorption).toBe(1);
     expect(defender.fortificationStrength).toBe(5);
   });
+
+  it('keeps buildings intact when damage is fully mitigated', () => {
+    const content = createContentFactory();
+    const bastion = content.building({});
+    const ctx = createTestEngine({ buildings: content.buildings });
+    const defender = ctx.game.opponent;
+    ctx.game.currentPlayerIndex = 1;
+    runEffects(
+      [
+        {
+          type: 'building',
+          method: 'add',
+          params: { id: bastion.id },
+        },
+      ],
+      ctx,
+    );
+    ctx.game.currentPlayerIndex = 0;
+    defender.absorption = 1;
+    defender.fortificationStrength = 0;
+
+    const castleBefore = defender.resources[Resource.castleHP];
+    const result = resolveAttack(defender, 3, ctx, {
+      type: 'building',
+      id: bastion.id,
+    });
+
+    expect(result.damageDealt).toBe(0);
+    expect(defender.buildings.has(bastion.id)).toBe(true);
+    expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
+    expect(result.evaluation.target.type).toBe('building');
+    if (result.evaluation.target.type === 'building') {
+      expect(result.evaluation.target.existed).toBe(true);
+      expect(result.evaluation.target.destroyed).toBe(false);
+      expect(result.evaluation.target.damage).toBe(0);
+    }
+  });
+
+  it('destroys buildings without spilling damage onto the castle', () => {
+    const content = createContentFactory();
+    const fortress = content.building({
+      onBuild: [
+        {
+          type: 'stat',
+          method: 'add',
+          params: { key: Stat.fortificationStrength, amount: 3 },
+        },
+      ],
+    });
+    const ctx = createTestEngine({ buildings: content.buildings });
+    const defender = ctx.game.opponent;
+    ctx.game.currentPlayerIndex = 1;
+    runEffects(
+      [
+        {
+          type: 'building',
+          method: 'add',
+          params: { id: fortress.id },
+        },
+      ],
+      ctx,
+    );
+    ctx.game.currentPlayerIndex = 0;
+
+    const castleBefore = defender.resources[Resource.castleHP];
+    expect(defender.fortificationStrength).toBe(3);
+
+    const result = resolveAttack(defender, 5, ctx, {
+      type: 'building',
+      id: fortress.id,
+    });
+
+    expect(result.damageDealt).toBe(2);
+    expect(defender.buildings.has(fortress.id)).toBe(false);
+    expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
+    expect(defender.fortificationStrength).toBe(0);
+    expect(result.evaluation.target.type).toBe('building');
+    if (result.evaluation.target.type === 'building') {
+      expect(result.evaluation.target.destroyed).toBe(true);
+      expect(result.evaluation.target.damage).toBe(result.damageDealt);
+    }
+  });
+
+  it('respects ignore flags when targeting buildings', () => {
+    const content = createContentFactory();
+    const stronghold = content.building({});
+    const ctx = createTestEngine({ buildings: content.buildings });
+    const defender = ctx.game.opponent;
+    ctx.game.currentPlayerIndex = 1;
+    runEffects(
+      [
+        {
+          type: 'building',
+          method: 'add',
+          params: { id: stronghold.id },
+        },
+      ],
+      ctx,
+    );
+    ctx.game.currentPlayerIndex = 0;
+
+    defender.absorption = 0.9;
+    defender.fortificationStrength = 10;
+    const castleBefore = defender.resources[Resource.castleHP];
+
+    const result = resolveAttack(
+      defender,
+      4,
+      ctx,
+      {
+        type: 'building',
+        id: stronghold.id,
+      },
+      { ignoreAbsorption: true, ignoreFortification: true },
+    );
+
+    expect(result.damageDealt).toBe(4);
+    expect(result.evaluation.absorption.ignored).toBe(true);
+    expect(result.evaluation.fortification.ignored).toBe(true);
+    expect(defender.fortificationStrength).toBe(10);
+    expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
+    expect(defender.buildings.has(stronghold.id)).toBe(false);
+    expect(result.evaluation.target.type).toBe('building');
+    if (result.evaluation.target.type === 'building')
+      expect(result.evaluation.target.destroyed).toBe(true);
+  });
 });

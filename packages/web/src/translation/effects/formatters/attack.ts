@@ -1,4 +1,5 @@
 import {
+  BUILDINGS,
   RESOURCES,
   STATS,
   Resource,
@@ -70,18 +71,31 @@ function formatStatSigned(key: string, value: number): string {
   return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
+function getBuildingDisplay(id: string): { icon: string; label: string } {
+  try {
+    const def = BUILDINGS.get(id);
+    return { icon: def.icon ?? '', label: def.name ?? id };
+  } catch {
+    return { icon: '', label: id };
+  }
+}
+
 function getTargetInfo(eff: EffectDef<Record<string, unknown>>): {
   target:
     | { type: 'resource'; key: ResourceKey }
-    | { type: 'stat'; key: StatKey };
+    | { type: 'stat'; key: StatKey }
+    | { type: 'building'; id: string };
   info: { icon: string; label: string };
 } {
   const targetParam = eff.params?.['target'] as
     | { type: 'resource'; key: ResourceKey }
     | { type: 'stat'; key: StatKey }
+    | { type: 'building'; id: string }
     | undefined;
   if (targetParam?.type === 'stat')
     return { target: targetParam, info: STATS[targetParam.key] };
+  if (targetParam?.type === 'building')
+    return { target: targetParam, info: getBuildingDisplay(targetParam.id) };
   const key: ResourceKey =
     targetParam && targetParam.type === 'resource'
       ? targetParam.key
@@ -189,16 +203,54 @@ function buildEvaluationEntry(log: AttackLog['evaluation']): SummaryEntry {
   const army = STATS[Stat.armyStrength];
   const absorption = STATS[Stat.absorption];
   const fort = STATS[Stat.fortificationStrength];
-  const targetInfo =
-    log.target.type === 'stat'
-      ? STATS[log.target.key as StatKey]
-      : RESOURCES[log.target.key as ResourceKey];
   const absorptionPart = log.absorption.ignored
     ? `${absorption.icon} ignored`
     : `${absorption.icon}${formatPercent(log.absorption.before)}`;
   const fortPart = log.fortification.ignored
     ? `${fort.icon} ignored`
     : `${fort.icon}${formatNumber(log.fortification.before)}`;
+  if (log.target.type === 'building') {
+    const targetInfo = getBuildingDisplay(log.target.id);
+    const targetLabel = iconLabel(targetInfo.icon, targetInfo.label);
+    const title = `Damage evaluation: ${army.icon}${formatNumber(log.power.modified)} vs. ${absorptionPart} ${fortPart} ${targetLabel}`;
+    const items: SummaryEntry[] = [];
+
+    if (log.absorption.ignored)
+      items.push(
+        `${army.icon}${formatNumber(log.power.modified)} ignores ${absorption.icon} ${absorption.label}`,
+      );
+    else
+      items.push(
+        `${army.icon}${formatNumber(log.power.modified)} vs. ${absorption.icon}${formatPercent(log.absorption.before)} --> ${army.icon}${formatNumber(log.absorption.damageAfter)}`,
+      );
+
+    if (log.fortification.ignored)
+      items.push(
+        `${army.icon}${formatNumber(log.absorption.damageAfter)} bypasses ${fort.icon} ${fort.label}`,
+      );
+    else {
+      const remaining = Math.max(
+        0,
+        log.absorption.damageAfter - log.fortification.damage,
+      );
+      items.push(
+        `${army.icon}${formatNumber(log.absorption.damageAfter)} vs. ${fort.icon}${formatNumber(log.fortification.before)} --> ${fort.icon}${formatNumber(log.fortification.after)} ${army.icon}${formatNumber(remaining)}`,
+      );
+    }
+
+    const outcome = log.target.destroyed
+      ? `${army.icon}${formatNumber(log.target.damage)} destroys ${targetLabel}`
+      : `${army.icon}${formatNumber(log.target.damage)} fails to destroy ${targetLabel}`;
+    items.push(outcome);
+
+    return { title, items };
+  }
+
+  const targetInfo =
+    log.target.type === 'stat'
+      ? STATS[log.target.key as StatKey]
+      : RESOURCES[log.target.key as ResourceKey];
+  const targetLabel = iconLabel(targetInfo.icon, targetInfo.label);
   const title = `Damage evaluation: ${army.icon}${formatNumber(log.power.modified)} vs. ${absorptionPart} ${fortPart} ${targetInfo.icon}${formatNumber(log.target.before)}`;
   const items: SummaryEntry[] = [];
 
@@ -226,7 +278,7 @@ function buildEvaluationEntry(log: AttackLog['evaluation']): SummaryEntry {
   }
 
   items.push(
-    `${army.icon}${formatNumber(log.target.damage)} vs. ${targetInfo.icon}${formatNumber(log.target.before)} --> ${targetInfo.icon}${formatNumber(log.target.after)}`,
+    `${army.icon}${formatNumber(log.target.damage)} vs. ${targetLabel} --> ${targetInfo.icon}${formatNumber(log.target.after)}`,
   );
 
   return { title, items };
