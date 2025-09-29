@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import TimerCircle from '../TimerCircle';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
@@ -31,9 +31,10 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
   );
 
   const phaseStepsRef = useAnimate<HTMLUListElement>();
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const el = phaseStepsRef.current;
+    const el = scrollContainerRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [phaseSteps]);
@@ -83,28 +84,30 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
           );
         })}
       </div>
-      <ul
-        ref={phaseStepsRef}
-        className="text-sm text-left space-y-1 overflow-y-auto flex-1"
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto text-sm text-left"
       >
-        {phaseSteps.map((s, i) => (
-          <li key={i} className={s.active ? 'font-semibold' : ''}>
-            <div>{s.title}</div>
-            <ul className="pl-4 list-disc list-inside">
-              {s.items.length > 0 ? (
-                s.items.map((it, j) => (
-                  <li key={j} className={it.italic ? 'italic' : ''}>
-                    {it.text}
-                    {it.done && <span className="text-green-600 ml-1">✔️</span>}
-                  </li>
-                ))
-              ) : (
-                <li>...</li>
-              )}
-            </ul>
-          </li>
-        ))}
-      </ul>
+        <ul ref={phaseStepsRef} className="space-y-1">
+          {phaseSteps.map((s, i) => (
+            <li key={i} className={s.active ? 'font-semibold' : ''}>
+              <div>{s.title}</div>
+              <ul className="pl-4 list-disc list-inside">
+                {s.items.length > 0 ? (
+                  s.items.map((it, j) => (
+                    <li key={j} className={it.italic ? 'italic' : ''}>
+                      {it.text}
+                      {it.done && <span className="text-green-600 ml-1">✔️</span>}
+                    </li>
+                  ))
+                ) : (
+                  <li>...</li>
+                )}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
       {(!isActionPhase || phaseTimer > 0) && (
         <div className="absolute top-2 right-2">
           <TimerCircle progress={phaseTimer} paused={phasePaused} />
