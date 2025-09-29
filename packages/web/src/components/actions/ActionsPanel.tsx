@@ -18,6 +18,7 @@ import ActionCard from './ActionCard';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
+import { useAnimate } from '../../utils/useAutoAnimate';
 
 interface Action {
   id: string;
@@ -234,6 +235,7 @@ function BasicOptions({
   summaries: Map<string, Summary>;
   isActionPhase: boolean;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   return (
     <div>
       <h3 className="font-medium">
@@ -242,7 +244,10 @@ function BasicOptions({
           (Effects take place immediately, unless stated otherwise)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         <GenericActions
           actions={actions}
           summaries={summaries}
@@ -260,6 +265,7 @@ function HireOptions({
   action: Action;
   isActionPhase: boolean;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   return (
     <div>
       <h3 className="font-medium">
@@ -269,7 +275,10 @@ function HireOptions({
           they remain)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         <RaisePopOptions action={action} isActionPhase={isActionPhase} />
       </div>
     </div>
@@ -289,6 +298,7 @@ function DevelopOptions({
   summaries: Map<string, Summary>;
   hasDevelopLand: boolean;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   const {
     ctx,
     handlePerform,
@@ -323,7 +333,10 @@ function DevelopOptions({
           (Effects take place on build and last until development is removed)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         {entries.map(({ d, costs }) => {
           const upkeep = ctx.developments.get(d.id)?.upkeep;
           const requirements = hasDevelopLand
@@ -414,6 +427,7 @@ function BuildOptions({
   summaries: Map<string, Summary>;
   descriptions: Map<string, Summary>;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   const {
     ctx,
     handlePerform,
@@ -452,7 +466,10 @@ function BuildOptions({
           (Effects take place on build and last until building is removed)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         {entries.map(({ b, costs }) => {
           const requirements: string[] = [];
           const canPay = Object.entries(costs).every(
@@ -524,6 +541,7 @@ function DemolishOptions({
   action: Action;
   isActionPhase: boolean;
 }) {
+  const listRef = useAnimate<HTMLDivElement>();
   const {
     ctx,
     handlePerform,
@@ -572,7 +590,10 @@ function DemolishOptions({
           (Removes a structure and its ongoing benefits)
         </span>
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+      <div
+        ref={listRef}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+      >
         {entries.map(({ id, building, costs }) => {
           const requirements: string[] = [];
           const canPay = Object.entries(costs).every(
@@ -641,6 +662,7 @@ function DemolishOptions({
 
 export default function ActionsPanel() {
   const { ctx, tabsEnabled, actionCostResource } = useGameEngine();
+  const sectionRef = useAnimate<HTMLDivElement>();
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
@@ -735,7 +757,7 @@ export default function ActionsPanel() {
           </span>
         )}
       </div>
-      <div className="space-y-3">
+      <div ref={sectionRef} className="space-y-3">
         {otherActions.length > 0 && (
           <BasicOptions
             actions={otherActions}
