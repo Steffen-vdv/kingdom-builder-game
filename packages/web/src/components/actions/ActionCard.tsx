@@ -67,14 +67,28 @@ export default function ActionCard({
       onMouseLeave={onMouseLeave}
     >
       <span className="text-base font-medium">{title}</span>
-      <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
-        {renderCosts(costs, playerResources, actionCostResource, upkeep)}
-      </span>
-      {requirements.length > 0 && requirementIcons.length > 0 && (
-        <span className="absolute top-7 right-2 text-xs text-red-600">
-          Req {requirementIcons.join('')}
-        </span>
-      )}
+      <div className="absolute top-2 right-2 flex flex-col items-end gap-1 text-right">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          {renderCosts(costs, playerResources, actionCostResource, upkeep)}
+        </div>
+        {requirements.length > 0 && (
+          <div className="flex flex-col items-end gap-0.5 text-xs text-red-600">
+            {requirementIcons.length > 0 && (
+              <div className="whitespace-nowrap">
+                Req {requirementIcons.join('')}
+              </div>
+            )}
+            {requirements.map((req, index) => (
+              <div
+                key={index}
+                className="max-w-[12rem] whitespace-pre-line text-right"
+              >
+                {req}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       <ul className="text-sm list-disc pl-4 text-left">
         {implemented ? (
           renderSummary(stripSummary(summary))
