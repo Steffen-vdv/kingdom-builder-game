@@ -50,7 +50,7 @@ export default function PassiveDisplay({
 
   const getIcon = (effects: EffectDef[] | undefined) => {
     const first = effects?.[0];
-    return ICON_MAP[first?.type as keyof typeof ICON_MAP] ?? '✨';
+    return ICON_MAP[first?.type as keyof typeof ICON_MAP] ?? PASSIVE_INFO.icon;
   };
 
   const animatePassives = useAnimate<HTMLDivElement>();
