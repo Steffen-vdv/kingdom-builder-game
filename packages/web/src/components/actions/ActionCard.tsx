@@ -99,19 +99,10 @@ export default function ActionCard({
         {renderCosts(costs, playerResources, actionCostResource, upkeep)}
         {requirements.length > 0 && (
           <div className="flex flex-col items-end gap-0.5 text-xs text-red-600">
-            {requirementIcons.length > 0 && (
-              <div className="whitespace-nowrap">
-                Req {requirementIcons.join('')}
-              </div>
-            )}
-            {requirements.map((req, index) => (
-              <div
-                key={index}
-                className="max-w-[12rem] whitespace-pre-line text-right"
-              >
-                {req}
-              </div>
-            ))}
+            <div className="whitespace-nowrap">
+              Req
+              {requirementIcons.length > 0 && ` ${requirementIcons.join('')}`}
+            </div>
           </div>
         )}
       </div>
