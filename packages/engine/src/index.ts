@@ -48,6 +48,13 @@ import {
 import type { PhaseDef } from './phases';
 export { snapshotPlayer } from './log';
 export type { PlayerSnapshot, ActionTrace } from './log';
+export type {
+  AttackLog,
+  AttackEvaluationLog,
+  AttackOnDamageLogEntry,
+  AttackPlayerDiff,
+  AttackPowerLog,
+} from './effects/attack';
 
 function applyCostsWithPassives(
   actionId: string,

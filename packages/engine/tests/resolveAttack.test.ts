@@ -24,11 +24,11 @@ describe('resolveAttack', () => {
       },
       ctx,
     );
-    const dmg = resolveAttack(defender, 10, ctx, {
+    const result = resolveAttack(defender, 10, ctx, {
       type: 'resource',
       key: Resource.castleHP,
     });
-    expect(dmg).toBe(5);
+    expect(result.damageDealt).toBe(5);
   });
 
   it('applies fortification and castle damage before post triggers', () => {
@@ -40,12 +40,14 @@ describe('resolveAttack', () => {
     attacker.gold = 0;
     const startHP = defender.resources[Resource.castleHP];
     const startGold = defender.gold;
-    const dmg = resolveAttack(defender, 5, ctx, {
+    const result = resolveAttack(defender, 5, ctx, {
       type: 'resource',
       key: Resource.castleHP,
     });
-    expect(dmg).toBe(4);
-    expect(defender.resources[Resource.castleHP]).toBe(startHP - dmg);
+    expect(result.damageDealt).toBe(4);
+    expect(defender.resources[Resource.castleHP]).toBe(
+      startHP - result.damageDealt,
+    );
     expect(defender.fortificationStrength).toBe(0);
     // ensure no content-driven effects run inside resolveAttack
     expect(defender.gold).toBe(startGold);
@@ -61,11 +63,11 @@ describe('resolveAttack', () => {
     ctx.services.rules.absorptionRounding = 'up';
     defender.absorption = 0.5;
     const start = defender.resources[Resource.castleHP];
-    const dmg = resolveAttack(defender, 1, ctx, {
+    const result = resolveAttack(defender, 1, ctx, {
       type: 'resource',
       key: Resource.castleHP,
     });
-    expect(dmg).toBe(1);
+    expect(result.damageDealt).toBe(1);
     expect(defender.resources[Resource.castleHP]).toBe(start - 1);
   });
 
@@ -74,11 +76,11 @@ describe('resolveAttack', () => {
     const defender = ctx.game.opponent;
     ctx.services.rules.absorptionRounding = 'nearest';
     defender.absorption = 0.6;
-    const dmg = resolveAttack(defender, 1, ctx, {
+    const result = resolveAttack(defender, 1, ctx, {
       type: 'resource',
       key: Resource.castleHP,
     });
-    expect(dmg).toBe(0);
+    expect(result.damageDealt).toBe(0);
   });
 
   it('can ignore absorption and fortification when options specify', () => {
@@ -86,7 +88,7 @@ describe('resolveAttack', () => {
     const defender = ctx.game.opponent;
     defender.absorption = 0.5;
     defender.stats[Stat.fortificationStrength] = 5;
-    const dmg = resolveAttack(
+    const result = resolveAttack(
       defender,
       10,
       ctx,
@@ -96,7 +98,7 @@ describe('resolveAttack', () => {
         ignoreFortification: true,
       },
     );
-    expect(dmg).toBe(10);
+    expect(result.damageDealt).toBe(10);
     expect(defender.fortificationStrength).toBe(5);
     expect(defender.resources[Resource.castleHP]).toBe(0);
   });
@@ -135,11 +137,11 @@ describe('resolveAttack', () => {
     );
     ctx.game.currentPlayerIndex = 0; // attacker turn
     const beforeGold = defender.gold;
-    const dmg = resolveAttack(defender, 4, ctx, {
+    const result = resolveAttack(defender, 4, ctx, {
       type: 'resource',
       key: Resource.castleHP,
     });
-    expect(dmg).toBe(0);
+    expect(result.damageDealt).toBe(0);
     expect(defender.resources[Resource.castleHP]).toBe(10);
     expect(defender.fortificationStrength).toBe(0);
     expect(defender.absorption).toBe(0);
@@ -195,10 +197,15 @@ describe('resolveAttack', () => {
       ctx,
     );
     const startHP = defender.resources[Resource.castleHP];
-    const dmg = resolveAttack(defender, attacker.armyStrength as number, ctx, {
-      type: 'resource',
-      key: Resource.castleHP,
-    });
+    const result = resolveAttack(
+      defender,
+      attacker.armyStrength as number,
+      ctx,
+      {
+        type: 'resource',
+        key: Resource.castleHP,
+      },
+    );
     const rounding = ctx.services.rules.absorptionRounding;
     const base = attacker.armyStrength as number;
     const reduced =
@@ -208,7 +215,7 @@ describe('resolveAttack', () => {
           ? Math.ceil(base * (1 - 0.5))
           : Math.round(base * (1 - 0.5));
     const expected = Math.max(0, reduced - 1);
-    expect(dmg).toBe(expected);
+    expect(result.damageDealt).toBe(expected);
     expect(defender.resources[Resource.castleHP]).toBe(startHP - expected);
     // post-attack boosts apply after damage calculation
     expect(defender.absorption).toBe(1);
