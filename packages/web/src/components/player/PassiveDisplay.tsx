@@ -4,6 +4,7 @@ import {
   MODIFIER_INFO as modifierInfo,
   PHASES,
   PASSIVE_INFO,
+  POPULATIONS,
 } from '@kingdom-builder/contents';
 import { describeEffects, splitSummary } from '../../translation';
 import type { EffectDef } from '@kingdom-builder/engine';
@@ -13,6 +14,10 @@ export const ICON_MAP: Record<string, string> = {
   cost_mod: modifierInfo.cost.icon,
   result_mod: modifierInfo.result.icon,
 };
+
+const POPULATION_PASSIVE_PREFIXES = new Set(
+  POPULATIONS.keys().map((id) => `${id}_`),
+);
 
 export default function PassiveDisplay({
   player,
@@ -35,14 +40,17 @@ export default function PassiveDisplay({
     player.lands.flatMap((l) => l.developments.map((d) => `${d}_${l.id}`)),
   );
 
-  const entries = Array.from(map.entries()).filter(
-    ([id]) => !buildingIds.has(id) && !developmentIds.has(id),
-  );
+  const entries = Array.from(map.entries()).filter(([id]) => {
+    if (buildingIds.has(id) || developmentIds.has(id)) return false;
+    for (const prefix of POPULATION_PASSIVE_PREFIXES)
+      if (id.startsWith(prefix)) return false;
+    return true;
+  });
   if (entries.length === 0) return null;
 
   const getIcon = (effects: EffectDef[] | undefined) => {
     const first = effects?.[0];
-    return ICON_MAP[first?.type as keyof typeof ICON_MAP] ?? '❔';
+    return ICON_MAP[first?.type as keyof typeof ICON_MAP] ?? '✨';
   };
 
   const animatePassives = useAnimate<HTMLDivElement>();
