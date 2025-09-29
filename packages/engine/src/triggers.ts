@@ -3,6 +3,20 @@ import type { PlayerState } from './state';
 import type { EffectDef } from './effects';
 import { applyParamsToEffects } from './utils';
 
+function pushUpkeepEffect(
+  effects: EffectDef[],
+  source: Record<string, unknown>,
+  key: string,
+  amount: number,
+) {
+  effects.push({
+    type: 'resource',
+    method: 'remove',
+    params: { key, amount },
+    meta: { source },
+  });
+}
+
 function getEffects(def: unknown, trigger: string): EffectDef[] | undefined {
   const val = (def as Record<string, unknown>)[trigger];
   return Array.isArray(val) ? (val as EffectDef[]) : undefined;
@@ -17,13 +31,14 @@ export function collectTriggerEffects(
   for (const [role, count] of Object.entries(player.population)) {
     const populationDefinition = ctx.populations.get(role);
     if (trigger === 'onPayUpkeepStep' && populationDefinition?.upkeep) {
-      for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
-        effects.push({
-          type: 'resource',
-          method: 'remove',
-          params: { key, amount: amount * Number(count) },
-        });
-      }
+      const qty = Number(count);
+      for (const [key, amount] of Object.entries(populationDefinition.upkeep))
+        pushUpkeepEffect(
+          effects,
+          { type: 'population', id: role, count: qty },
+          key,
+          amount * qty,
+        );
     }
     const list = getEffects(populationDefinition, trigger);
     if (list)
@@ -32,13 +47,8 @@ export function collectTriggerEffects(
   }
   for (const land of player.lands) {
     if (trigger === 'onPayUpkeepStep' && land.upkeep) {
-      for (const [key, amount] of Object.entries(land.upkeep)) {
-        effects.push({
-          type: 'resource',
-          method: 'remove',
-          params: { key, amount },
-        });
-      }
+      for (const [key, amount] of Object.entries(land.upkeep))
+        pushUpkeepEffect(effects, { type: 'land', id: land.id }, key, amount);
     }
     const landList = getEffects(land, trigger);
     if (landList)
@@ -53,11 +63,12 @@ export function collectTriggerEffects(
         for (const [key, amount] of Object.entries(
           developmentDefinition.upkeep,
         )) {
-          effects.push({
-            type: 'resource',
-            method: 'remove',
-            params: { key, amount },
-          });
+          pushUpkeepEffect(
+            effects,
+            { type: 'development', id, landId: land.id },
+            key,
+            amount,
+          );
         }
       }
       const list = getEffects(developmentDefinition, trigger);
@@ -72,13 +83,8 @@ export function collectTriggerEffects(
   for (const id of player.buildings) {
     const buildingDefinition = ctx.buildings.get(id);
     if (trigger === 'onPayUpkeepStep' && buildingDefinition?.upkeep) {
-      for (const [key, amount] of Object.entries(buildingDefinition.upkeep)) {
-        effects.push({
-          type: 'resource',
-          method: 'remove',
-          params: { key, amount },
-        });
-      }
+      for (const [key, amount] of Object.entries(buildingDefinition.upkeep))
+        pushUpkeepEffect(effects, { type: 'building', id }, key, amount);
     }
     const list = getEffects(buildingDefinition, trigger);
     if (list) effects.push(...list.map((e) => ({ ...e })));

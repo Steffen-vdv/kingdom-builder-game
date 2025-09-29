@@ -27,6 +27,7 @@ export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
     effects: z.array(effectSchema).optional(),
     evaluator: evaluatorSchema.optional(),
     round: z.enum(['up', 'down']).optional(),
+    meta: z.record(z.unknown()).optional(),
   }),
 );
 

@@ -18,6 +18,9 @@ import {
   Resource,
   type ResourceKey,
   ON_GAIN_INCOME_STEP,
+  ON_PAY_UPKEEP_STEP,
+  LAND_INFO,
+  POPULATION_INFO,
 } from '@kingdom-builder/contents';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 
@@ -97,6 +100,82 @@ describe('log resource sources', () => {
     );
     expect(goldLine).toMatch(
       new RegExp(`from ${populationIcon}\\+${marketIcon}\\)$`),
+    );
+  });
+
+  it('includes upkeep sources when paying upkeep', () => {
+    const ctx = createEngine({
+      actions: ACTIONS,
+      buildings: BUILDINGS,
+      developments: DEVELOPMENTS,
+      populations: POPULATIONS,
+      phases: PHASES,
+      start: GAME_START,
+      rules: RULES,
+    });
+    const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
+    const step = upkeepPhase?.steps.find((s) => s.id === 'pay-upkeep');
+    const before = snapshotPlayer(ctx.activePlayer, ctx);
+    const effects = collectTriggerEffects(ON_PAY_UPKEEP_STEP, ctx);
+    runEffects(effects, ctx);
+    const after = snapshotPlayer(ctx.activePlayer, ctx);
+    const lines = diffStepSnapshots(
+      before,
+      after,
+      { ...step, effects } as typeof step,
+      ctx,
+      RESOURCE_KEYS,
+    );
+    const goldInfo = RESOURCES[Resource.gold];
+    const goldLine = lines.find((l) =>
+      l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+    );
+    expect(goldLine).toBeTruthy();
+    const b = before.resources[Resource.gold] ?? 0;
+    const a = after.resources[Resource.gold] ?? 0;
+    const delta = a - b;
+    const icons = effects
+      .filter((eff) => eff.params?.['key'] === Resource.gold)
+      .map((eff) => {
+        const source = (
+          eff.meta as {
+            source?: { type?: string; id?: string; count?: number };
+          }
+        )?.source;
+        if (!source?.type) return '';
+        if (source.type === 'population') {
+          const role = source.id;
+          const icon = role
+            ? POPULATIONS.get(role)?.icon || role
+            : POPULATION_INFO.icon;
+          if (!icon) return '';
+          if (source.count === undefined) return icon;
+          const rawCount = Number(source.count);
+          if (!Number.isFinite(rawCount)) return icon;
+          const normalizedCount =
+            rawCount > 0 ? Math.max(1, Math.round(rawCount)) : 0;
+          if (normalizedCount === 0) return '';
+          return icon.repeat(normalizedCount);
+        }
+        if (source.type === 'development' && source.id)
+          return ctx.developments.get(source.id)?.icon || '';
+        if (source.type === 'building' && source.id)
+          return ctx.buildings.get(source.id)?.icon || '';
+        if (source.type === 'land') return LAND_INFO.icon || '';
+        return '';
+      })
+      .filter(Boolean)
+      .join('');
+    expect(icons).not.toBe('');
+    const zeroPopulationIcons = Object.entries(ctx.activePlayer.population)
+      .filter(([, count]) => count === 0)
+      .map(([role]) => POPULATIONS.get(role)?.icon)
+      .filter((icon): icon is string => Boolean(icon));
+    for (const icon of zeroPopulationIcons) {
+      expect(icons).not.toContain(icon);
+    }
+    expect(goldLine).toContain(
+      `${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${icons}`,
     );
   });
 });

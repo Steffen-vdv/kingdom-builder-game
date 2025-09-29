@@ -35,6 +35,7 @@ export interface EffectDef<
   effects?: EffectDef[] | undefined;
   evaluator?: EvaluatorDef | undefined;
   round?: 'up' | 'down' | undefined;
+  meta?: Record<string, unknown> | undefined;
 }
 
 export interface EffectHandler<
