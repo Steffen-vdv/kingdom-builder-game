@@ -12,6 +12,36 @@
   }
 }
 
+@keyframes value-change-up {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -0.25rem);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -0.5rem);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -1.5rem);
+  }
+}
+
+@keyframes value-change-down {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0.25rem);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, 0.5rem);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 1.5rem);
+  }
+}
+
 @layer components {
   .bar-item {
     @apply flex items-center gap-1 tabular-nums whitespace-nowrap appearance-none bg-transparent border-0 p-0;
@@ -24,6 +54,21 @@
   }
   .player-panel .panel-card {
     @apply bg-gray-50/40 dark:bg-gray-700/40;
+  }
+  .value-change-indicator {
+    @apply pointer-events-none font-semibold text-xs;
+    left: 50%;
+    position: absolute;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+  }
+  .value-change-indicator--gain {
+    animation: value-change-up 1.2s ease-out forwards;
+    top: 0;
+  }
+  .value-change-indicator--loss {
+    animation: value-change-down 1.2s ease-out forwards;
+    bottom: 0;
   }
   .land-tile {
     @apply relative panel-card border border-black/10 dark:border-white/10 p-2 text-center hoverable cursor-help;

@@ -8,6 +8,56 @@ import {
 import { formatStatValue, getStatBreakdownSummary } from '../../utils/stats';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
+import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
+
+interface StatButtonProps {
+  statKey: keyof typeof STATS;
+  value: number;
+  onShow: () => void;
+  onHide: () => void;
+}
+
+const formatStatDelta = (statKey: keyof typeof STATS, delta: number) => {
+  const formatted = formatStatValue(statKey, Math.abs(delta));
+  return `${delta > 0 ? '+' : '-'}${formatted}`;
+};
+
+const StatButton: React.FC<StatButtonProps> = ({
+  statKey,
+  value,
+  onShow,
+  onHide,
+}) => {
+  const info = STATS[statKey];
+  const changes = useValueChangeIndicators(value);
+
+  return (
+    <button
+      type="button"
+      className="bar-item hoverable cursor-help rounded px-1 relative overflow-visible"
+      onMouseEnter={onShow}
+      onMouseLeave={onHide}
+      onFocus={onShow}
+      onBlur={onHide}
+      onClick={onShow}
+    >
+      {info.icon}
+      {formatStatValue(statKey, value)}
+      {changes.map((change) => (
+        <span
+          key={change.id}
+          className={`value-change-indicator ${
+            change.direction === 'gain'
+              ? 'value-change-indicator--gain text-green-500'
+              : 'value-change-indicator--loss text-red-500'
+          }`}
+        >
+          {formatStatDelta(statKey, change.delta)}
+        </span>
+      ))}
+    </button>
+  );
+};
 
 interface PopulationInfoProps {
   player: EngineContext['activePlayer'];
@@ -131,24 +181,15 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
           const info = STATS[k as keyof typeof STATS];
           return !info.capacity && (v !== 0 || player.statsHistory?.[k]);
         })
-        .map(([k, v]) => {
-          const info = STATS[k as keyof typeof STATS];
-          return (
-            <button
-              key={k}
-              type="button"
-              className="bar-item hoverable cursor-help rounded px-1"
-              onMouseEnter={() => showStatCard(k)}
-              onMouseLeave={clearHoverCard}
-              onFocus={() => showStatCard(k)}
-              onBlur={clearHoverCard}
-              onClick={() => showStatCard(k)}
-            >
-              {info.icon}
-              {formatStatValue(k, v)}
-            </button>
-          );
-        })}
+        .map(([k, v]) => (
+          <StatButton
+            key={k}
+            statKey={k as keyof typeof STATS}
+            value={v}
+            onShow={() => showStatCard(k)}
+            onHide={clearHoverCard}
+          />
+        ))}
     </>
   );
 };
