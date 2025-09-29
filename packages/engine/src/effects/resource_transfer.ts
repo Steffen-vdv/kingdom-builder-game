@@ -2,6 +2,10 @@ import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
 import type { ResourceGain } from '../services';
 
+export const TRANSFER_PCT_EVALUATION_TYPE = 'transfer_pct';
+export const TRANSFER_PCT_EVALUATION_ID = 'percent';
+export const TRANSFER_PCT_EVALUATION_TARGET = `${TRANSFER_PCT_EVALUATION_TYPE}:${TRANSFER_PCT_EVALUATION_ID}`;
+
 interface TransferParams extends Record<string, unknown> {
   key: ResourceKey;
   percent?: number;
@@ -15,7 +19,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
   const { key, percent } = effect.params!;
   const base = percent ?? 25;
   const mods: ResourceGain[] = [{ key, amount: base }];
-  ctx.passives.runEvaluationMods('transfer_pct:percent', ctx, mods);
+  ctx.passives.runEvaluationMods(TRANSFER_PCT_EVALUATION_TARGET, ctx, mods);
   const pct = mods[0]!.amount;
   const defender = ctx.opponent;
   const attacker = ctx.activePlayer;

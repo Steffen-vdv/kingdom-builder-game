@@ -10,6 +10,8 @@ import {
   ResourceMethods,
   PassiveMethods,
   StatMethods,
+  resourceParams,
+  statParams,
 } from './config/builders';
 import type { PopulationDef } from './defs';
 
@@ -27,7 +29,7 @@ export function createPopulationRegistry() {
       .upkeep(Resource.gold, 2)
       .onGainAPStep(
         effect(Types.Resource, ResourceMethods.ADD)
-          .params({ key: Resource.ap, amount: 1 })
+          .params(resourceParams().key(Resource.ap).amount(1))
           .build(),
       )
       .build(),
@@ -45,7 +47,7 @@ export function createPopulationRegistry() {
           .param('id', 'legion_$player_$index')
           .effect(
             effect(Types.Stat, StatMethods.ADD)
-              .params({ key: Stat.armyStrength, amount: 1 })
+              .params(statParams().key(Stat.armyStrength).amount(1))
               .build(),
           )
           .build(),
@@ -70,7 +72,7 @@ export function createPopulationRegistry() {
           .param('id', 'fortifier_$player_$index')
           .effect(
             effect(Types.Stat, StatMethods.ADD)
-              .params({ key: Stat.fortificationStrength, amount: 1 })
+              .params(statParams().key(Stat.fortificationStrength).amount(1))
               .build(),
           )
           .build(),

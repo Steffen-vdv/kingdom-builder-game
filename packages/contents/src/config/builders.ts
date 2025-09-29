@@ -12,6 +12,7 @@ import type { PopulationRoleId } from '../populationRoles';
 import type { TriggerKey } from '../defs';
 import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
 import type { EffectDef } from '@kingdom-builder/engine/effects';
+import type { AttackTarget } from '@kingdom-builder/engine/effects/attack';
 
 export const Types = {
   Land: 'land',
@@ -81,6 +82,393 @@ export const StatMethods = {
 
 type Params = Record<string, unknown>;
 
+abstract class ParamsBuilder<P extends Params = Params> {
+  protected params: P;
+
+  constructor(initial?: P) {
+    this.params = initial ?? ({} as P);
+  }
+
+  protected set<K extends keyof P>(key: K, value: P[K]) {
+    this.params[key] = value;
+    return this;
+  }
+
+  build(): P {
+    return this.params;
+  }
+}
+
+function resolveEffectConfig(effect: EffectConfig | EffectBuilder) {
+  return effect instanceof EffectBuilder ? effect.build() : effect;
+}
+
+class ResourceEffectParamsBuilder extends ParamsBuilder<{
+  key?: ResourceKey;
+  amount?: number;
+  percent?: number;
+}> {
+  key(key: ResourceKey) {
+    return this.set('key', key);
+  }
+  amount(amount: number) {
+    return this.set('amount', amount);
+  }
+  percent(percent: number) {
+    return this.set('percent', percent);
+  }
+}
+
+export function resourceParams() {
+  return new ResourceEffectParamsBuilder();
+}
+
+class StatEffectParamsBuilder extends ParamsBuilder<{
+  key?: StatKey;
+  amount?: number;
+  percent?: number;
+  percentStat?: StatKey;
+}> {
+  key(key: StatKey) {
+    return this.set('key', key);
+  }
+  amount(amount: number) {
+    return this.set('amount', amount);
+  }
+  percent(percent: number) {
+    return this.set('percent', percent);
+  }
+  percentFromStat(stat: StatKey) {
+    return this.set('percentStat', stat);
+  }
+}
+
+export function statParams() {
+  return new StatEffectParamsBuilder();
+}
+
+class DevelopmentEffectParamsBuilder extends ParamsBuilder<{
+  id?: string;
+  landId?: string;
+}> {
+  id(id: string) {
+    return this.set('id', id);
+  }
+  landId(landId: string) {
+    return this.set('landId', landId);
+  }
+}
+
+export function developmentParams() {
+  return new DevelopmentEffectParamsBuilder();
+}
+
+class LandEffectParamsBuilder extends ParamsBuilder<{
+  count?: number;
+  landId?: string;
+}> {
+  count(count: number) {
+    return this.set('count', count);
+  }
+  landId(landId: string) {
+    return this.set('landId', landId);
+  }
+}
+
+export function landParams() {
+  return new LandEffectParamsBuilder();
+}
+
+class PassiveEffectParamsBuilder extends ParamsBuilder<{
+  id?: string;
+  onGrowthPhase?: EffectDef[];
+  onUpkeepPhase?: EffectDef[];
+  onBeforeAttacked?: EffectDef[];
+  onAttackResolved?: EffectDef[];
+}> {
+  id(id: string) {
+    return this.set('id', id);
+  }
+  onGrowthPhase(...effects: Array<EffectConfig | EffectBuilder>) {
+    this.params.onGrowthPhase = this.params.onGrowthPhase || [];
+    this.params.onGrowthPhase.push(
+      ...effects.map((item) => resolveEffectConfig(item)),
+    );
+    return this;
+  }
+  onUpkeepPhase(...effects: Array<EffectConfig | EffectBuilder>) {
+    this.params.onUpkeepPhase = this.params.onUpkeepPhase || [];
+    this.params.onUpkeepPhase.push(
+      ...effects.map((item) => resolveEffectConfig(item)),
+    );
+    return this;
+  }
+  onBeforeAttacked(...effects: Array<EffectConfig | EffectBuilder>) {
+    this.params.onBeforeAttacked = this.params.onBeforeAttacked || [];
+    this.params.onBeforeAttacked.push(
+      ...effects.map((item) => resolveEffectConfig(item)),
+    );
+    return this;
+  }
+  onAttackResolved(...effects: Array<EffectConfig | EffectBuilder>) {
+    this.params.onAttackResolved = this.params.onAttackResolved || [];
+    this.params.onAttackResolved.push(
+      ...effects.map((item) => resolveEffectConfig(item)),
+    );
+    return this;
+  }
+}
+
+export function passiveParams() {
+  return new PassiveEffectParamsBuilder();
+}
+
+class CostModParamsBuilder extends ParamsBuilder<{
+  id?: string;
+  actionId?: string;
+  key?: ResourceKey;
+  amount?: number;
+}> {
+  id(id: string) {
+    return this.set('id', id);
+  }
+  actionId(actionId: string) {
+    return this.set('actionId', actionId);
+  }
+  key(key: ResourceKey) {
+    return this.set('key', key);
+  }
+  amount(amount: number) {
+    return this.set('amount', amount);
+  }
+}
+
+export function costModParams() {
+  return new CostModParamsBuilder();
+}
+
+class EvaluationTargetBuilder extends ParamsBuilder<{
+  type: string;
+  id?: string;
+}> {
+  constructor(type: string) {
+    super();
+    this.set('type', type);
+  }
+  id(id: string) {
+    return this.set('id', id);
+  }
+}
+
+export function evaluationTarget(type: string) {
+  return new EvaluationTargetBuilder(type);
+}
+
+class ResultModParamsBuilder extends ParamsBuilder<{
+  id?: string;
+  actionId?: string;
+  evaluation?: { type: string; id?: string };
+  amount?: number;
+  adjust?: number;
+}> {
+  id(id: string) {
+    return this.set('id', id);
+  }
+  actionId(actionId: string) {
+    return this.set('actionId', actionId);
+  }
+  evaluation(target: EvaluationTargetBuilder | { type: string; id?: string }) {
+    return this.set(
+      'evaluation',
+      target instanceof EvaluationTargetBuilder ? target.build() : target,
+    );
+  }
+  amount(amount: number) {
+    return this.set('amount', amount);
+  }
+  adjust(amount: number) {
+    return this.set('adjust', amount);
+  }
+}
+
+export function resultModParams() {
+  return new ResultModParamsBuilder();
+}
+
+class PopulationEffectParamsBuilder extends ParamsBuilder<{
+  role?: PopulationRoleId;
+}> {
+  role(role: PopulationRoleId) {
+    return this.set('role', role);
+  }
+}
+
+export function populationParams() {
+  return new PopulationEffectParamsBuilder();
+}
+
+class AttackParamsBuilder extends ParamsBuilder<{
+  target?: AttackTarget;
+  ignoreAbsorption?: boolean;
+  ignoreFortification?: boolean;
+  onDamage?: {
+    attacker?: EffectDef[];
+    defender?: EffectDef[];
+  };
+}> {
+  private ensureOnDamage() {
+    if (!this.params.onDamage) this.params.onDamage = {};
+    return this.params.onDamage;
+  }
+  targetResource(key: ResourceKey) {
+    return this.set('target', { type: 'resource', key });
+  }
+  targetStat(key: StatKey) {
+    return this.set('target', { type: 'stat', key });
+  }
+  ignoreAbsorption(flag = true) {
+    return this.set('ignoreAbsorption', flag);
+  }
+  ignoreFortification(flag = true) {
+    return this.set('ignoreFortification', flag);
+  }
+  onDamageAttacker(...effects: Array<EffectConfig | EffectBuilder>) {
+    const onDamage = this.ensureOnDamage();
+    onDamage.attacker = onDamage.attacker || [];
+    onDamage.attacker.push(...effects.map((item) => resolveEffectConfig(item)));
+    return this;
+  }
+  onDamageDefender(...effects: Array<EffectConfig | EffectBuilder>) {
+    const onDamage = this.ensureOnDamage();
+    onDamage.defender = onDamage.defender || [];
+    onDamage.defender.push(...effects.map((item) => resolveEffectConfig(item)));
+    return this;
+  }
+}
+
+export function attackParams() {
+  return new AttackParamsBuilder();
+}
+
+class TransferParamsBuilder extends ParamsBuilder<{
+  key?: ResourceKey;
+  percent?: number;
+}> {
+  key(key: ResourceKey) {
+    return this.set('key', key);
+  }
+  percent(percent: number) {
+    return this.set('percent', percent);
+  }
+}
+
+export function transferParams() {
+  return new TransferParamsBuilder();
+}
+
+export class EvaluatorBuilder<P extends Params = Params> {
+  protected config: EvaluatorDef = { type: '' };
+
+  constructor(type?: string) {
+    if (type) this.config.type = type;
+  }
+
+  type(type: string) {
+    this.config.type = type;
+    return this;
+  }
+
+  param(key: string, value: unknown) {
+    this.config.params = this.config.params || ({} as Params);
+    (this.config.params as Params)[key] = value;
+    return this;
+  }
+
+  params(params: P | ParamsBuilder<P>) {
+    this.config.params =
+      params instanceof ParamsBuilder ? params.build() : params;
+    return this;
+  }
+
+  build(): EvaluatorDef {
+    return this.config;
+  }
+}
+
+class PopulationEvaluatorBuilder extends EvaluatorBuilder<{
+  role?: PopulationRoleId;
+}> {
+  constructor() {
+    super('population');
+  }
+  role(role: PopulationRoleId) {
+    return this.param('role', role);
+  }
+}
+
+export function populationEvaluator() {
+  return new PopulationEvaluatorBuilder();
+}
+
+class StatEvaluatorBuilder extends EvaluatorBuilder<{ key?: StatKey }> {
+  constructor() {
+    super('stat');
+  }
+  key(key: StatKey) {
+    return this.param('key', key);
+  }
+}
+
+export function statEvaluator() {
+  return new StatEvaluatorBuilder();
+}
+
+class DevelopmentEvaluatorBuilder extends EvaluatorBuilder<{ id?: string }> {
+  constructor() {
+    super('development');
+  }
+  id(id: string) {
+    return this.param('id', id);
+  }
+}
+
+export function developmentEvaluator() {
+  return new DevelopmentEvaluatorBuilder();
+}
+
+type CompareValue = number | EvaluatorDef | EvaluatorBuilder;
+
+class CompareEvaluatorBuilder extends EvaluatorBuilder<{
+  left?: CompareValue;
+  right?: CompareValue;
+  operator?: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne';
+}> {
+  constructor() {
+    super('compare');
+  }
+
+  private normalize(value: CompareValue) {
+    if (value instanceof EvaluatorBuilder) return value.build();
+    return value;
+  }
+
+  left(value: CompareValue) {
+    return this.param('left', this.normalize(value));
+  }
+
+  right(value: CompareValue) {
+    return this.param('right', this.normalize(value));
+  }
+
+  operator(op: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne') {
+    return this.param('operator', op);
+  }
+}
+
+export function compareEvaluator() {
+  return new CompareEvaluatorBuilder();
+}
+
 export class EffectBuilder<P extends Params = Params> {
   private config: EffectConfig = {};
   type(type: string) {
@@ -96,8 +484,9 @@ export class EffectBuilder<P extends Params = Params> {
     (this.config.params as Params)[key] = value;
     return this;
   }
-  params(params: P) {
-    this.config.params = params;
+  params(params: P | ParamsBuilder<P>) {
+    this.config.params =
+      params instanceof ParamsBuilder ? params.build() : params;
     return this;
   }
   effect(effect: EffectConfig) {
@@ -105,8 +494,20 @@ export class EffectBuilder<P extends Params = Params> {
     this.config.effects.push(effect);
     return this;
   }
-  evaluator(type: string, params?: Params) {
-    this.config.evaluator = { type, params } as EvaluatorDef;
+  evaluator(type: string, params?: Params | ParamsBuilder): this;
+  evaluator(builder: EvaluatorBuilder): this;
+  evaluator(
+    typeOrBuilder: string | EvaluatorBuilder,
+    params?: Params | ParamsBuilder,
+  ) {
+    if (typeOrBuilder instanceof EvaluatorBuilder)
+      this.config.evaluator = typeOrBuilder.build();
+    else
+      this.config.evaluator = {
+        type: typeOrBuilder,
+        params:
+          params instanceof ParamsBuilder ? params.build() : (params as Params),
+      } as EvaluatorDef;
     return this;
   }
   round(mode: 'up' | 'down') {

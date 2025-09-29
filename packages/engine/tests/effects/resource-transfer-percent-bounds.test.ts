@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, advance, Resource } from '../../src/index.ts';
+import {
+  TRANSFER_PCT_EVALUATION_ID,
+  TRANSFER_PCT_EVALUATION_TYPE,
+} from '../../src/effects/resource_transfer.ts';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
 
@@ -19,7 +23,10 @@ describe('resource:transfer percent bounds', () => {
       method: 'add',
       params: {
         id: 'boost',
-        evaluation: { type: 'transfer_pct', id: 'percent' },
+        evaluation: {
+          type: TRANSFER_PCT_EVALUATION_TYPE,
+          id: TRANSFER_PCT_EVALUATION_ID,
+        },
         adjust: 80,
       },
     };
@@ -28,7 +35,10 @@ describe('resource:transfer percent bounds', () => {
       method: 'remove',
       params: {
         id: 'boost',
-        evaluation: { type: 'transfer_pct', id: 'percent' },
+        evaluation: {
+          type: TRANSFER_PCT_EVALUATION_TYPE,
+          id: TRANSFER_PCT_EVALUATION_ID,
+        },
       },
     };
     const addNerf: EffectDef<{ id: string }> = {
@@ -36,7 +46,10 @@ describe('resource:transfer percent bounds', () => {
       method: 'add',
       params: {
         id: 'nerf',
-        evaluation: { type: 'transfer_pct', id: 'percent' },
+        evaluation: {
+          type: TRANSFER_PCT_EVALUATION_TYPE,
+          id: TRANSFER_PCT_EVALUATION_ID,
+        },
         adjust: -200,
       },
     };
