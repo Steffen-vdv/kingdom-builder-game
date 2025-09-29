@@ -7,11 +7,8 @@
 }
 
 @keyframes player-bg-slide {
-  from {
-    background-position: 0 0;
-  }
   to {
-    background-position: 40px 40px;
+    background-position: -32px 32px;
   }
 }
 
@@ -73,7 +70,7 @@
   }
   .player-bg-animated::before {
     opacity: 1;
-    animation: player-bg-slide 18s linear infinite;
+    animation: player-bg-slide 2s linear infinite;
   }
   .player-bg-blue {
     --player-color: rgba(219, 234, 254, 0.5);
