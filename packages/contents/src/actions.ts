@@ -391,6 +391,22 @@ export function createActionRegistry() {
     focus: 'other',
   });
 
+  registry.add('demolish', {
+    ...action()
+      .id('demolish')
+      .name('Demolish')
+      .icon('🪓')
+      .effect(
+        effect(Types.Building, BuildingMethods.REMOVE)
+          .param('id', '$id')
+          .build(),
+      )
+      .build(),
+    category: 'building_remove',
+    order: 2,
+    focus: 'other',
+  });
+
   return registry;
 }
 

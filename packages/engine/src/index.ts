@@ -116,6 +116,7 @@ function pay(costs: CostBag, player: PlayerState) {
 type ActionParamMap = {
   develop: { id: string; landId: string };
   build: { id: string };
+  demolish: { id: string };
   raise_pop: { role: PopulationRoleId };
   [key: string]: Record<string, unknown>;
 };
