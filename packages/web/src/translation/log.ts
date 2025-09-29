@@ -146,6 +146,17 @@ interface ResourceSourceEntry {
   mods: string;
 }
 
+type ResourceSourceMeta = Record<string, unknown> & {
+  type?: string;
+  id?: string;
+  landId?: string;
+  count?: number;
+};
+
+function isResourceSourceMeta(value: unknown): value is ResourceSourceMeta {
+  return typeof value === 'object' && value !== null && 'type' in value;
+}
+
 export type EvaluatorIconRenderer = (
   ev: { type: string; params?: Record<string, unknown> },
   entry: ResourceSourceEntry,
@@ -190,6 +201,46 @@ export const EVALUATOR_ICON_RENDERERS: Record<string, EvaluatorIconRenderer> = {
   development: renderDevelopmentIcons,
   population: renderPopulationIcons,
 };
+
+function appendMetaSourceIcons(
+  entry: ResourceSourceEntry,
+  source: unknown,
+  ctx: EngineContext,
+) {
+  if (!isResourceSourceMeta(source) || !source.type) return;
+  const meta = source;
+  switch (meta.type) {
+    case 'population': {
+      const role = meta.id as keyof typeof POPULATION_ROLES | undefined;
+      const icon = role
+        ? POPULATION_ROLES[role]?.icon || role
+        : POPULATION_INFO.icon;
+      const count = Math.max(0, Number(meta.count ?? 1));
+      if (icon) entry.icons += icon.repeat(count || 1);
+      break;
+    }
+    case 'development': {
+      if (meta.id) {
+        const icon = ctx.developments.get(meta.id)?.icon || '';
+        entry.icons += icon;
+      }
+      break;
+    }
+    case 'building': {
+      if (meta.id) {
+        const icon = ctx.buildings.get(meta.id)?.icon || '';
+        entry.icons += icon;
+      }
+      break;
+    }
+    case 'land': {
+      entry.icons += LAND_INFO.icon || '';
+      break;
+    }
+    default:
+      break;
+  }
+}
 
 function collectResourceSources(
   step: StepDef | undefined,
@@ -240,6 +291,14 @@ function collectResourceSources(
       } catch {
         // ignore missing evaluators
       }
+      map[key] = entry;
+    }
+    if (eff.type === 'resource') {
+      const key = eff.params?.['key'] as string | undefined;
+      if (!key) continue;
+      const entry = map[key] || { icons: '', mods: '' };
+      const meta = eff.meta?.['source'];
+      appendMetaSourceIcons(entry, meta, ctx);
       map[key] = entry;
     }
   }
