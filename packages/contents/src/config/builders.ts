@@ -84,13 +84,27 @@ type Params = Record<string, unknown>;
 
 abstract class ParamsBuilder<P extends Params = Params> {
   protected params: P;
+  private readonly assigned = new Set<keyof P>();
 
   constructor(initial?: P) {
     this.params = initial ?? ({} as P);
   }
 
-  protected set<K extends keyof P>(key: K, value: P[K]) {
+  protected wasSet(key: keyof P) {
+    return this.assigned.has(key);
+  }
+
+  protected set<K extends keyof P>(key: K, value: P[K], message?: string) {
+    if (this.assigned.has(key)) {
+      throw new Error(
+        message ??
+          `You already set ${String(
+            key,
+          )} for this configuration. Remove the extra ${String(key)} call.`,
+      );
+    }
     this.params[key] = value;
+    this.assigned.add(key);
     return this;
   }
 
@@ -109,13 +123,45 @@ class ResourceEffectParamsBuilder extends ParamsBuilder<{
   percent?: number;
 }> {
   key(key: ResourceKey) {
-    return this.set('key', key);
+    return this.set(
+      'key',
+      key,
+      'You already chose a resource with key(). Remove the extra key() call.',
+    );
   }
   amount(amount: number) {
-    return this.set('amount', amount);
+    if (this.wasSet('percent'))
+      throw new Error(
+        'Resource change cannot use both amount() and percent(). Choose one of them.',
+      );
+    return this.set(
+      'amount',
+      amount,
+      'You already set amount() for this resource change. Remove the duplicate amount() call.',
+    );
   }
   percent(percent: number) {
-    return this.set('percent', percent);
+    if (this.wasSet('amount'))
+      throw new Error(
+        'Resource change cannot use both amount() and percent(). Choose one of them.',
+      );
+    return this.set(
+      'percent',
+      percent,
+      'You already set percent() for this resource change. Remove the duplicate percent() call.',
+    );
+  }
+
+  override build() {
+    if (!this.wasSet('key'))
+      throw new Error(
+        'Resource change is missing key(). Call key(Resource.yourChoice) to choose what should change.',
+      );
+    if (!this.wasSet('amount') && !this.wasSet('percent'))
+      throw new Error(
+        'Resource change needs exactly one of amount() or percent(). Pick how much the resource should change.',
+      );
+    return super.build();
   }
 }
 
@@ -130,16 +176,60 @@ class StatEffectParamsBuilder extends ParamsBuilder<{
   percentStat?: StatKey;
 }> {
   key(key: StatKey) {
-    return this.set('key', key);
+    return this.set(
+      'key',
+      key,
+      'You already chose a stat with key(). Remove the extra key() call.',
+    );
   }
   amount(amount: number) {
-    return this.set('amount', amount);
+    if (this.wasSet('percent') || this.wasSet('percentStat'))
+      throw new Error(
+        'Stat change cannot mix amount() with percent() or percentFromStat(). Pick one approach to describe the change.',
+      );
+    return this.set(
+      'amount',
+      amount,
+      'You already set amount() for this stat change. Remove the duplicate amount() call.',
+    );
   }
   percent(percent: number) {
-    return this.set('percent', percent);
+    if (this.wasSet('amount') || this.wasSet('percentStat'))
+      throw new Error(
+        'Stat change cannot mix percent() with amount() or percentFromStat(). Pick one approach to describe the change.',
+      );
+    return this.set(
+      'percent',
+      percent,
+      'You already set percent() for this stat change. Remove the duplicate percent() call.',
+    );
   }
   percentFromStat(stat: StatKey) {
-    return this.set('percentStat', stat);
+    if (this.wasSet('amount') || this.wasSet('percent'))
+      throw new Error(
+        'Stat change cannot mix percentFromStat() with amount() or percent(). Pick one approach to describe the change.',
+      );
+    return this.set(
+      'percentStat',
+      stat,
+      'You already chose a stat source with percentFromStat(). Remove the duplicate percentFromStat() call.',
+    );
+  }
+
+  override build() {
+    if (!this.wasSet('key'))
+      throw new Error(
+        'Stat change is missing key(). Call key(Stat.yourChoice) to decide which stat should change.',
+      );
+    if (
+      !this.wasSet('amount') &&
+      !this.wasSet('percent') &&
+      !this.wasSet('percentStat')
+    )
+      throw new Error(
+        'Stat change needs amount(), percent(), or percentFromStat(). Choose one to describe how the stat should change.',
+      );
+    return super.build();
   }
 }
 
@@ -152,10 +242,26 @@ class DevelopmentEffectParamsBuilder extends ParamsBuilder<{
   landId?: string;
 }> {
   id(id: string) {
-    return this.set('id', id);
+    return this.set(
+      'id',
+      id,
+      'You already set id() for this development effect. Remove the duplicate id() call.',
+    );
   }
   landId(landId: string) {
-    return this.set('landId', landId);
+    return this.set(
+      'landId',
+      landId,
+      'You already chose a landId() for this development effect. Remove the duplicate landId() call.',
+    );
+  }
+
+  override build() {
+    if (!this.wasSet('id'))
+      throw new Error(
+        'Development effect is missing id(). Call id("your-development-id") so the engine knows which development to reference.',
+      );
+    return super.build();
   }
 }
 
@@ -187,7 +293,11 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
   onAttackResolved?: EffectDef[];
 }> {
   id(id: string) {
-    return this.set('id', id);
+    return this.set(
+      'id',
+      id,
+      'You already set id() for this passive. Remove the duplicate id() call.',
+    );
   }
   onGrowthPhase(...effects: Array<EffectConfig | EffectBuilder>) {
     this.params.onGrowthPhase = this.params.onGrowthPhase || [];
@@ -216,6 +326,14 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
       ...effects.map((item) => resolveEffectConfig(item)),
     );
     return this;
+  }
+
+  override build() {
+    if (!this.wasSet('id'))
+      throw new Error(
+        'Passive effect is missing id(). Call id("your-passive-id") so it can be referenced later.',
+      );
+    return super.build();
   }
 }
 
@@ -299,7 +417,19 @@ class PopulationEffectParamsBuilder extends ParamsBuilder<{
   role?: PopulationRoleId;
 }> {
   role(role: PopulationRoleId) {
-    return this.set('role', role);
+    return this.set(
+      'role',
+      role,
+      'You already chose a role() for this population effect. Remove the duplicate call.',
+    );
+  }
+
+  override build() {
+    if (!this.wasSet('role'))
+      throw new Error(
+        'Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.',
+      );
+    return super.build();
   }
 }
 
@@ -344,6 +474,14 @@ class AttackParamsBuilder extends ParamsBuilder<{
     onDamage.defender.push(...effects.map((item) => resolveEffectConfig(item)));
     return this;
   }
+
+  override build() {
+    if (!this.wasSet('target'))
+      throw new Error(
+        'Attack effect is missing a target. Call targetResource(...) or targetStat(...) once.',
+      );
+    return super.build();
+  }
 }
 
 export function attackParams() {
@@ -355,10 +493,30 @@ class TransferParamsBuilder extends ParamsBuilder<{
   percent?: number;
 }> {
   key(key: ResourceKey) {
-    return this.set('key', key);
+    return this.set(
+      'key',
+      key,
+      'You already chose a resource with key(). Remove the extra key() call.',
+    );
   }
   percent(percent: number) {
-    return this.set('percent', percent);
+    return this.set(
+      'percent',
+      percent,
+      'You already set percent() for this transfer. Remove the duplicate percent() call.',
+    );
+  }
+
+  override build() {
+    if (!this.wasSet('key'))
+      throw new Error(
+        'Resource transfer is missing key(). Call key(Resource.yourChoice) to pick the resource to move.',
+      );
+    if (!this.wasSet('percent'))
+      throw new Error(
+        'Resource transfer is missing percent(). Call percent(amount) to choose how much to move.',
+      );
+    return super.build();
   }
 }
 
@@ -368,29 +526,57 @@ export function transferParams() {
 
 export class EvaluatorBuilder<P extends Params = Params> {
   protected config: EvaluatorDef = { type: '' };
+  private paramsSet = false;
+  private readonly paramKeys = new Set<string>();
 
   constructor(type?: string) {
     if (type) this.config.type = type;
   }
 
   type(type: string) {
+    if (this.config.type && this.config.type.length)
+      throw new Error(
+        'Evaluator already has a type(). Remove the extra type() call.',
+      );
     this.config.type = type;
     return this;
   }
 
   param(key: string, value: unknown) {
+    if (this.paramsSet)
+      throw new Error(
+        'You already supplied params(...) for this evaluator. Remove params(...) before calling param().',
+      );
+    if (this.paramKeys.has(key))
+      throw new Error(
+        `Evaluator already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`,
+      );
     this.config.params = this.config.params || ({} as Params);
     (this.config.params as Params)[key] = value;
+    this.paramKeys.add(key);
     return this;
   }
 
   params(params: P | ParamsBuilder<P>) {
+    if (this.paramsSet)
+      throw new Error(
+        'Evaluator params(...) was already provided. Remove the duplicate params() call.',
+      );
+    if (this.paramKeys.size)
+      throw new Error(
+        'Evaluator already has individual param() values. Remove them before calling params(...).',
+      );
     this.config.params =
       params instanceof ParamsBuilder ? params.build() : params;
+    this.paramsSet = true;
     return this;
   }
 
   build(): EvaluatorDef {
+    if (!this.config.type)
+      throw new Error(
+        'Evaluator is missing type(). Call type("your-evaluator") to describe what should be evaluated.',
+      );
     return this.config;
   }
 }
@@ -471,22 +657,56 @@ export function compareEvaluator() {
 
 export class EffectBuilder<P extends Params = Params> {
   private config: EffectConfig = {};
+  private paramsSet = false;
+  private readonly paramKeys = new Set<string>();
+  private evaluatorSet = false;
+  private roundSet = false;
+  private typeSet = false;
+  private methodSet = false;
   type(type: string) {
+    if (this.typeSet)
+      throw new Error(
+        'Effect already has type(). Remove the extra type() call.',
+      );
     this.config.type = type;
+    this.typeSet = true;
     return this;
   }
   method(method: string) {
+    if (this.methodSet)
+      throw new Error(
+        'Effect already has method(). Remove the extra method() call.',
+      );
     this.config.method = method;
+    this.methodSet = true;
     return this;
   }
   param(key: string, value: unknown) {
+    if (this.paramsSet)
+      throw new Error(
+        'Effect params(...) was already provided. Remove params(...) before calling param().',
+      );
+    if (this.paramKeys.has(key))
+      throw new Error(
+        `Effect already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`,
+      );
     this.config.params = this.config.params || {};
     (this.config.params as Params)[key] = value;
+    this.paramKeys.add(key);
     return this;
   }
   params(params: P | ParamsBuilder<P>) {
+    if (this.paramsSet)
+      throw new Error(
+        'Effect params(...) was already provided. Remove the duplicate params() call.',
+      );
+    if (this.paramKeys.size)
+      throw new Error(
+        'Effect already has individual param() values. Remove them before calling params(...).',
+      );
     this.config.params =
       params instanceof ParamsBuilder ? params.build() : params;
+    this.paramsSet = true;
     return this;
   }
   effect(effect: EffectConfig) {
@@ -500,6 +720,10 @@ export class EffectBuilder<P extends Params = Params> {
     typeOrBuilder: string | EvaluatorBuilder,
     params?: Params | ParamsBuilder,
   ) {
+    if (this.evaluatorSet)
+      throw new Error(
+        'Effect already has an evaluator(). Remove the duplicate evaluator() call.',
+      );
     if (typeOrBuilder instanceof EvaluatorBuilder)
       this.config.evaluator = typeOrBuilder.build();
     else
@@ -508,13 +732,26 @@ export class EffectBuilder<P extends Params = Params> {
         params:
           params instanceof ParamsBuilder ? params.build() : (params as Params),
       } as EvaluatorDef;
+    this.evaluatorSet = true;
     return this;
   }
   round(mode: 'up' | 'down') {
+    if (this.roundSet)
+      throw new Error('Effect already has round(). Remove the duplicate call.');
     this.config.round = mode;
+    this.roundSet = true;
     return this;
   }
   build(): EffectConfig {
+    if (!this.typeSet && !this.methodSet) {
+      const hasNestedEffects = Array.isArray(this.config.effects)
+        ? this.config.effects.length > 0
+        : false;
+      if (!hasNestedEffects)
+        throw new Error(
+          'Effect is missing type() and method(). Call effect(Types.X, Methods.Y) or add nested effect(...) calls before build().',
+        );
+    }
     return this.config;
   }
 }
@@ -528,21 +765,53 @@ export function effect(type?: string, method?: string) {
 
 export class RequirementBuilder<P extends Params = Params> {
   private config: RequirementConfig = {} as RequirementConfig;
+  private paramsSet = false;
+  private readonly paramKeys = new Set<string>();
+  private typeSet = false;
+  private methodSet = false;
   type(type: string) {
+    if (this.typeSet)
+      throw new Error(
+        'Requirement already has type(). Remove the extra type() call.',
+      );
     this.config.type = type;
+    this.typeSet = true;
     return this;
   }
   method(method: string) {
+    if (this.methodSet)
+      throw new Error(
+        'Requirement already has method(). Remove the extra method() call.',
+      );
     this.config.method = method;
+    this.methodSet = true;
     return this;
   }
   param(key: string, value: unknown) {
+    if (this.paramsSet)
+      throw new Error(
+        'Requirement params(...) was already provided. Remove params(...) before calling param().',
+      );
+    if (this.paramKeys.has(key))
+      throw new Error(
+        `Requirement already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`,
+      );
     this.config.params = this.config.params || {};
     (this.config.params as Params)[key] = value;
+    this.paramKeys.add(key);
     return this;
   }
   params(params: P) {
+    if (this.paramsSet)
+      throw new Error(
+        'Requirement params(...) was already provided. Remove the duplicate params() call.',
+      );
+    if (this.paramKeys.size)
+      throw new Error(
+        'Requirement already has individual param() values. Remove them before calling params(...).',
+      );
     this.config.params = params;
+    this.paramsSet = true;
     return this;
   }
   message(message: string) {
@@ -550,6 +819,14 @@ export class RequirementBuilder<P extends Params = Params> {
     return this;
   }
   build(): RequirementConfig {
+    if (!this.typeSet)
+      throw new Error(
+        'Requirement is missing type(). Call type("your-requirement") before build().',
+      );
+    if (!this.methodSet)
+      throw new Error(
+        'Requirement is missing method(). Call method("your-method") before build().',
+      );
     return this.config;
   }
 }
@@ -564,7 +841,12 @@ export function requirement(type?: string, method?: string) {
 class BaseBuilder<T extends { id: string; name: string }> {
   protected config: Omit<T, 'id' | 'name'> &
     Partial<Pick<T, 'id' | 'name'>> & { icon?: string };
-  constructor(base: Omit<T, 'id' | 'name'>) {
+  private readonly kind: string;
+  private idSet = false;
+  private nameSet = false;
+  private iconSet = false;
+  constructor(base: Omit<T, 'id' | 'name'>, kind: string) {
+    this.kind = kind;
     this.config = {
       ...base,
     } as Omit<T, 'id' | 'name'> &
@@ -573,25 +855,48 @@ class BaseBuilder<T extends { id: string; name: string }> {
       };
   }
   id(id: string) {
+    if (this.idSet)
+      throw new Error(
+        `${this.kind} already has an id(). Remove the extra id() call.`,
+      );
     this.config.id = id;
+    this.idSet = true;
     return this;
   }
   name(name: string) {
+    if (this.nameSet)
+      throw new Error(
+        `${this.kind} already has a name(). Remove the extra name() call.`,
+      );
     this.config.name = name;
+    this.nameSet = true;
     return this;
   }
   icon(icon: string) {
+    if (this.iconSet)
+      throw new Error(
+        `${this.kind} already has an icon(). Remove the extra icon() call.`,
+      );
     this.config.icon = icon;
+    this.iconSet = true;
     return this;
   }
   build(): T {
+    if (!this.idSet)
+      throw new Error(
+        `${this.kind} is missing id(). Call id('unique-id') before build().`,
+      );
+    if (!this.nameSet)
+      throw new Error(
+        `${this.kind} is missing name(). Call name('Readable name') before build().`,
+      );
     return this.config as T;
   }
 }
 
 export class ActionBuilder extends BaseBuilder<ActionConfig> {
   constructor() {
-    super({ effects: [] });
+    super({ effects: [] }, 'Action');
   }
   cost(key: ResourceKey, amount: number) {
     this.config.baseCosts = this.config.baseCosts || {};
@@ -616,7 +921,10 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 
 export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
   constructor() {
-    super({ costs: {} as Record<ResourceKey, number>, onBuild: [] });
+    super(
+      { costs: {} as Record<ResourceKey, number>, onBuild: [] },
+      'Building',
+    );
     (this.config.costs as Record<ResourceKey, number>)['ap' as ResourceKey] = 1;
   }
   cost(key: ResourceKey, amount: number) {
@@ -672,7 +980,7 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
 
 export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
   constructor() {
-    super({});
+    super({}, 'Development');
   }
   upkeep(key: ResourceKey, amount: number) {
     this.config.upkeep = this.config.upkeep || {};
@@ -726,7 +1034,7 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
 
 export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
   constructor() {
-    super({});
+    super({}, 'Population');
   }
   upkeep(key: ResourceKey, amount: number) {
     this.config.upkeep = this.config.upkeep || {};
