@@ -32,14 +32,23 @@ function GameLayout() {
           <div className="flex flex-1 items-stretch rounded overflow-hidden divide-x divide-black/10 dark:divide-white/10">
             {ctx.game.players.map((p, i) => {
               const isActive = p.id === ctx.activePlayer.id;
-              const bgClass =
+              const sideClass = i === 0 ? 'pr-6' : 'pl-6';
+              const colorClass =
                 i === 0
                   ? isActive
-                    ? 'player-bg player-bg-blue-active pr-6'
-                    : 'player-bg player-bg-blue pr-6'
+                    ? 'player-bg-blue-active'
+                    : 'player-bg-blue'
                   : isActive
-                    ? 'player-bg player-bg-red-active pl-6'
-                    : 'player-bg player-bg-red pl-6';
+                    ? 'player-bg-red-active'
+                    : 'player-bg-red';
+              const bgClass = [
+                'player-bg',
+                sideClass,
+                colorClass,
+                isActive ? 'player-bg-animated' : null,
+              ]
+                .filter(Boolean)
+                .join(' ');
               return (
                 <PlayerPanel
                   key={p.id}
