@@ -2,6 +2,8 @@ import type { EngineContext } from '../context';
 import type { PlayerId } from '../state';
 import type { ActionParams } from '../index';
 
+export const TAX_ACTION_ID = 'tax';
+
 export type PerformActionFn = <T extends string>(
   actionId: T,
   ctx: EngineContext,
@@ -50,9 +52,12 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
     if (ctx.activePlayer.id !== playerId) return;
     const phase = ctx.phases[ctx.game.phaseIndex];
     if (!phase?.action) return;
+    if (!ctx.actions.has(TAX_ACTION_ID)) return;
+    const definition = ctx.actions.get(TAX_ACTION_ID);
+    if (definition.system && !ctx.activePlayer.actions.has(TAX_ACTION_ID))
+      return;
     const apKey = ctx.actionCostResource;
     if (!apKey) return;
-    if (!ctx.activePlayer.actions.has('tax')) return;
 
     while (
       ctx.activePlayer.id === playerId &&
@@ -60,7 +65,7 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
       (ctx.activePlayer.resources[apKey] ?? 0) > 0
     ) {
       try {
-        deps.performAction('tax', ctx);
+        deps.performAction(TAX_ACTION_ID, ctx);
       } catch (err) {
         break;
       }
