@@ -7,6 +7,7 @@ import {
   SLOT_INFO,
   LAND_INFO,
   type Focus,
+  type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
   describeContent,
@@ -40,6 +41,33 @@ interface Building {
   name: string;
   icon?: string;
   focus?: Focus;
+}
+
+function isResourceKey(key: string): key is ResourceKey {
+  return key in RESOURCES;
+}
+
+function formatMissingResources(
+  costs: Record<string, number>,
+  playerResources: Record<string, number | undefined>,
+) {
+  const missing: string[] = [];
+  for (const [key, required] of Object.entries(costs)) {
+    const available = playerResources[key] ?? 0;
+    const shortage = required - available;
+    if (shortage <= 0) continue;
+    if (isResourceKey(key)) {
+      missing.push(
+        `${shortage} ${RESOURCES[key].icon} ${RESOURCES[key].label}`,
+      );
+    } else {
+      missing.push(`${shortage} ${key}`);
+    }
+  }
+
+  if (missing.length === 0) return undefined;
+
+  return `Need ${missing.join(', ')}`;
 }
 
 function GenericActions({
@@ -87,12 +115,16 @@ function GenericActions({
         const summary = summaries.get(action.id);
         const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
         const enabled = canPay && meetsReq && isActionPhase && implemented;
+        const insufficientTooltip = formatMissingResources(
+          costs,
+          ctx.activePlayer.resources,
+        );
         const title = !implemented
           ? 'Not implemented yet'
           : !meetsReq
             ? requirements.join(', ')
             : !canPay
-              ? 'Cannot pay costs'
+              ? (insufficientTooltip ?? 'Cannot pay costs')
               : undefined;
         return (
           <ActionCard
@@ -172,10 +204,14 @@ function RaisePopOptions({
         );
         const meetsReq = requirements.length === 0;
         const enabled = canPay && meetsReq && isActionPhase;
+        const insufficientTooltip = formatMissingResources(
+          costs,
+          ctx.activePlayer.resources,
+        );
         const title = !meetsReq
           ? requirements.join(', ')
           : !canPay
-            ? 'Cannot pay costs'
+            ? (insufficientTooltip ?? 'Cannot pay costs')
             : undefined;
         const summary = describeContent('action', action.id, ctx, { role });
         const shortSummary = summarizeContent('action', action.id, ctx, {
@@ -352,12 +388,16 @@ function DevelopOptions({
           const summary = summaries.get(d.id);
           const implemented = (summary?.length ?? 0) > 0; // TODO: implement development effects
           const enabled = canPay && isActionPhase && implemented;
+          const insufficientTooltip = formatMissingResources(
+            costs,
+            ctx.activePlayer.resources,
+          );
           const title = !implemented
             ? 'Not implemented yet'
             : !hasDevelopLand
               ? `No ${LAND_INFO.icon} ${LAND_INFO.label} with free ${SLOT_INFO.icon} ${SLOT_INFO.label}`
               : !canPay
-                ? 'Cannot pay costs'
+                ? (insufficientTooltip ?? 'Cannot pay costs')
                 : undefined;
           return (
             <ActionCard
@@ -478,10 +518,14 @@ function BuildOptions({
           const summary = summaries.get(b.id);
           const implemented = (summary?.length ?? 0) > 0; // TODO: implement building effects
           const enabled = canPay && isActionPhase && implemented;
+          const insufficientTooltip = formatMissingResources(
+            costs,
+            ctx.activePlayer.resources,
+          );
           const title = !implemented
             ? 'Not implemented yet'
             : !canPay
-              ? 'Cannot pay costs'
+              ? (insufficientTooltip ?? 'Cannot pay costs')
               : undefined;
           const upkeep = ctx.buildings.get(b.id)?.upkeep;
           return (
@@ -604,10 +648,14 @@ function DemolishOptions({
           });
           const implemented = (summary?.length ?? 0) > 0;
           const enabled = canPay && isActionPhase && implemented;
+          const insufficientTooltip = formatMissingResources(
+            costs,
+            ctx.activePlayer.resources,
+          );
           const title = !implemented
             ? 'Not implemented yet'
             : !canPay
-              ? 'Cannot pay costs'
+              ? (insufficientTooltip ?? 'Cannot pay costs')
               : undefined;
           const upkeep = ctx.buildings.get(id)?.upkeep;
           return (
