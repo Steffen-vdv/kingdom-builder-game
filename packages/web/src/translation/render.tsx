@@ -30,27 +30,36 @@ export function renderCosts(
   const upkeepEntries = Object.entries(upkeep || {});
   if (entries.length === 0 && upkeepEntries.length === 0)
     return (
-      <span className="mr-1 text-gray-400 dark:text-gray-500 italic">Free</span>
+      <div className="text-sm text-right text-gray-400 dark:text-gray-500 italic">
+        Free
+      </div>
     );
   return (
-    <>
-      {entries.map(([k, v]) => (
-        <span
-          key={k}
-          className={`mr-1 ${(resources[k] ?? 0) < (v ?? 0) ? 'text-red-500' : ''}`}
-        >
-          {RESOURCES[k as ResourceKey]?.icon}
-          {v ?? 0}
-        </span>
-      ))}
-      {upkeepEntries.length > 0 && (
-        <span className="block text-xs text-gray-600 dark:text-gray-300">
-          {BROOM_ICON}{' '}
-          {upkeepEntries
-            .map(([k, v]) => `${RESOURCES[k as ResourceKey]?.icon}${v ?? 0}`)
-            .join(' ')}
-        </span>
+    <div className="flex flex-col items-end text-right text-sm leading-tight text-gray-600 dark:text-gray-300">
+      {entries.length > 0 && (
+        <div className="flex flex-wrap justify-end gap-x-1 gap-y-0.5">
+          {entries.map(([k, v]) => (
+            <span
+              key={k}
+              className={`whitespace-nowrap ${(resources[k] ?? 0) < (v ?? 0) ? 'text-red-500' : ''}`}
+            >
+              {RESOURCES[k as ResourceKey]?.icon}
+              {v ?? 0}
+            </span>
+          ))}
+        </div>
       )}
-    </>
+      {upkeepEntries.length > 0 && (
+        <div className="flex flex-wrap justify-end gap-x-1 gap-y-0.5">
+          <span className="whitespace-nowrap">{BROOM_ICON}</span>
+          {upkeepEntries.map(([k, v]) => (
+            <span key={k} className="whitespace-nowrap">
+              {RESOURCES[k as ResourceKey]?.icon}
+              {v ?? 0}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
