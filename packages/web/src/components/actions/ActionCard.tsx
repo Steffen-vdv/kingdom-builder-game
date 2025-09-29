@@ -3,10 +3,38 @@ import { type Summary } from '../../translation';
 import { renderSummary, renderCosts } from '../../translation/render';
 import type { Focus } from '@kingdom-builder/contents';
 
-function stripSummary(summary: Summary | undefined): Summary | undefined {
+function stripSummary(
+  summary: Summary | undefined,
+  requirements: readonly string[],
+): Summary | undefined {
   const first = summary?.[0];
-  if (!first) return summary;
-  return typeof first === 'string' ? summary : first.items;
+  const baseSummary = !first
+    ? summary
+    : typeof first === 'string'
+      ? summary
+      : first.items;
+  if (!baseSummary) return baseSummary;
+  if (requirements.length === 0) return baseSummary;
+  const requirementSet = new Set(
+    requirements.map((req) => req.trim()).filter((req) => req.length > 0),
+  );
+  const filterEntries = (entries: Summary): Summary => {
+    const filtered: Summary = [];
+    for (const entry of entries) {
+      if (typeof entry === 'string') {
+        if (requirementSet.has(entry.trim())) continue;
+        filtered.push(entry);
+      } else {
+        const nested = filterEntries(entry.items);
+        if (nested.length > 0) {
+          filtered.push({ ...entry, items: nested });
+        }
+      }
+    }
+    return filtered;
+  };
+  const filtered = filterEntries(baseSummary);
+  return filtered.length > 0 ? filtered : undefined;
 }
 
 export type ActionCardProps = {
@@ -68,9 +96,7 @@ export default function ActionCard({
     >
       <span className="text-base font-medium">{title}</span>
       <div className="absolute top-2 right-2 flex flex-col items-end gap-1 text-right">
-        <div className="text-sm text-gray-600 dark:text-gray-300">
-          {renderCosts(costs, playerResources, actionCostResource, upkeep)}
-        </div>
+        {renderCosts(costs, playerResources, actionCostResource, upkeep)}
         {requirements.length > 0 && (
           <div className="flex flex-col items-end gap-0.5 text-xs text-red-600">
             {requirementIcons.length > 0 && (
@@ -91,7 +117,7 @@ export default function ActionCard({
       </div>
       <ul className="text-sm list-disc pl-4 text-left">
         {implemented ? (
-          renderSummary(stripSummary(summary))
+          renderSummary(stripSummary(summary, requirements))
         ) : (
           <li className="italic text-red-600">Not implemented yet</li>
         )}

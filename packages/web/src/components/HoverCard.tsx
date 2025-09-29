@@ -19,14 +19,14 @@ export default function HoverCard() {
     >
       <div className="font-semibold mb-2">
         {data.title}
-        <span className="absolute top-2 right-2 text-sm text-gray-600 dark:text-gray-300">
+        <div className="absolute top-2 right-2">
           {renderCosts(
             data.costs,
             ctx.activePlayer.resources,
             actionCostResource,
             data.upkeep,
           )}
-        </span>
+        </div>
       </div>
       {data.effects.length > 0 && (
         <div className="mb-2">
