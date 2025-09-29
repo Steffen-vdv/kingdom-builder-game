@@ -7,6 +7,7 @@ import {
 } from '../src/translation/content';
 import {
   createEngine,
+  performAction,
   Resource,
   Stat,
   type EffectDef,
@@ -21,6 +22,7 @@ import {
   RULES,
   RESOURCES,
   STATS,
+  PopulationRole,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -80,11 +82,16 @@ describe('army attack translation', () => {
     expect(summary).toEqual([
       `${army.icon} opponent's ${fort.icon}${castle.icon}`,
       {
-        title: `On opponent ${castle.icon} damage`,
+        title: `On opponent ${castle.icon} ${castle.label} damage`,
         items: [
-          `${happiness.icon}${defenderAmt} for opponent`,
-          `${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt} for you`,
-          `${plunder.icon} ${plunder.name}`,
+          { title: 'Opponent', items: [`${happiness.icon}${defenderAmt}`] },
+          {
+            title: 'You',
+            items: [
+              `${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt}`,
+              `${plunder.icon} ${plunder.name}`,
+            ],
+          },
         ],
       },
       `${warWeariness.icon}${warAmt >= 0 ? '+' : ''}${warAmt}`,
@@ -101,22 +108,28 @@ describe('army attack translation', () => {
         'title' in e &&
         e.title.startsWith('On opponent'),
     ) as { items: SummaryEntry[] };
-    const plunderEntry = onDamage.items.find(
-      (i) =>
-        typeof i === 'object' &&
-        (i as { title: string }).title === `${plunder.icon} ${plunder.name}`,
-    ) as { items: unknown[] } | undefined;
+    const youEntry = onDamage.items.find(
+      (i) => typeof i === 'object' && (i as { title: string }).title === 'You',
+    ) as { items: SummaryEntry[] } | undefined;
+    expect(youEntry).toBeDefined();
+    const plunderEntry =
+      youEntry &&
+      youEntry.items.find(
+        (i) =>
+          typeof i === 'object' &&
+          (i as { title: string }).title === `${plunder.icon} ${plunder.name}`,
+      );
     expect(plunderEntry).toBeDefined();
     expect(
       plunderEntry &&
-        Array.isArray(plunderEntry.items) &&
-        plunderEntry.items.length > 0,
+        typeof plunderEntry === 'object' &&
+        Array.isArray((plunderEntry as { items?: unknown[] }).items) &&
+        ((plunderEntry as { items?: unknown[] }).items?.length ?? 0) > 0,
     ).toBeTruthy();
   });
 
-  it('logs army attack action with friendly phrasing', () => {
+  it('logs army attack action with concrete evaluation', () => {
     const ctx = createCtx();
-    const log = logContent('action', 'army_attack', ctx);
     const armyAttack = ctx.actions.get('army_attack');
     const castle = RESOURCES[Resource.castleHP];
     const army = STATS[Stat.armyStrength];
@@ -125,17 +138,33 @@ describe('army attack translation', () => {
     const happiness = RESOURCES[Resource.happiness];
     const plunder = ctx.actions.get('plunder');
 
+    ctx.activePlayer.resources[Resource.ap] = 1;
+    ctx.activePlayer.population = {
+      ...ctx.activePlayer.population,
+      [PopulationRole.Legion]: 1,
+      [PopulationRole.Council]: 0,
+    };
+    ctx.activePlayer.stats[Stat.armyStrength] = 2;
+    ctx.activePlayer.resources[Resource.happiness] = 1;
+    ctx.activePlayer.resources[Resource.gold] = 13;
+    ctx.opponent.stats[Stat.fortificationStrength] = 1;
+    ctx.opponent.resources[Resource.happiness] = 3;
+    ctx.opponent.resources[Resource.gold] = 20;
+
+    performAction('army_attack', ctx);
+    const log = logContent('action', 'army_attack', ctx);
     expect(log).toEqual([
       `Played ${armyAttack.icon} ${armyAttack.name}`,
-      `  Deal damage to opponent's ${castle.icon} ${castle.label}`,
-      `    Deal damage equal to your ${army.icon} ${army.label}`,
-      `    Opponent reduces damage with ${absorption.icon} ${absorption.label}`,
-      `    Damage first hits opponent's ${fort.icon} ${fort.label}`,
-      `    Any leftover damage spills into ${castle.icon} ${castle.label}`,
-      `  When opponent's ${castle.icon} ${castle.label} takes damage`,
-      `    Opponent loses 1 ${happiness.icon} ${happiness.label}`,
-      `    You gain 1 ${happiness.icon} ${happiness.label}`,
-      `    You trigger ${plunder.icon} ${plunder.name}`,
+      `  Damage evaluation: ${army.icon}2 vs. ${absorption.icon}0% ${fort.icon}1 ${castle.icon}10`,
+      `    ${army.icon}2 vs. ${absorption.icon}0% --> ${army.icon}2`,
+      `    ${army.icon}2 vs. ${fort.icon}1 --> ${fort.icon}0 ${army.icon}1`,
+      `    ${army.icon}1 vs. ${castle.icon}10 --> ${castle.icon}9`,
+      `  ${castle.icon} ${castle.label} damage trigger evaluation`,
+      `    Opponent: ${happiness.icon}${happiness.label} -1 (3→2)`,
+      `    You: ${happiness.icon}${happiness.label} +1 (1→2)`,
+      `    Triggered ${plunder.icon} ${plunder.name}`,
+      `      Opponent: ${RESOURCES[Resource.gold].icon}${RESOURCES[Resource.gold].label} -25% (20→15) (-5)`,
+      `      You: ${RESOURCES[Resource.gold].icon}${RESOURCES[Resource.gold].label} +5 (13→18)`,
     ]);
   });
 });
