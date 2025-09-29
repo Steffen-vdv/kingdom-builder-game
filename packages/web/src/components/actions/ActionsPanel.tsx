@@ -226,12 +226,10 @@ function RaisePopOptions({
 
 function BasicOptions({
   actions,
-  raisePopAction,
   summaries,
   isActionPhase,
 }: {
   actions: Action[];
-  raisePopAction: Action | undefined;
   summaries: Map<string, Summary>;
   isActionPhase: boolean;
 }) {
@@ -249,12 +247,29 @@ function BasicOptions({
           summaries={summaries}
           isActionPhase={isActionPhase}
         />
-        {raisePopAction && (
-          <RaisePopOptions
-            action={raisePopAction}
-            isActionPhase={isActionPhase}
-          />
-        )}
+      </div>
+    </div>
+  );
+}
+
+function HireOptions({
+  action,
+  isActionPhase,
+}: {
+  action: Action;
+  isActionPhase: boolean;
+}) {
+  return (
+    <div>
+      <h3 className="font-medium">
+        Hire{' '}
+        <span className="italic text-sm font-normal">
+          (Recruit population instantly; upkeep and role effects apply while
+          they remain)
+        </span>
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1">
+        <RaisePopOptions action={action} isActionPhase={isActionPhase} />
       </div>
     </div>
   );
@@ -589,13 +604,15 @@ export default function ActionsPanel() {
         )}
       </div>
       <div className="space-y-3">
-        {(otherActions.length > 0 || raisePopAction) && (
+        {otherActions.length > 0 && (
           <BasicOptions
             actions={otherActions}
-            raisePopAction={raisePopAction}
             summaries={actionSummaries}
             isActionPhase={isActionPhase}
           />
+        )}
+        {raisePopAction && (
+          <HireOptions action={raisePopAction} isActionPhase={isActionPhase} />
         )}
         {developAction && (
           <DevelopOptions
