@@ -215,8 +215,20 @@ function appendMetaSourceIcons(
       const icon = role
         ? POPULATION_ROLES[role]?.icon || role
         : POPULATION_INFO.icon;
-      const count = Math.max(0, Number(meta.count ?? 1));
-      if (icon) entry.icons += icon.repeat(count || 1);
+      if (!icon) break;
+      if (meta.count === undefined) {
+        entry.icons += icon;
+        break;
+      }
+      const rawCount = Number(meta.count);
+      if (!Number.isFinite(rawCount)) {
+        entry.icons += icon;
+        break;
+      }
+      const normalizedCount =
+        rawCount > 0 ? Math.max(1, Math.round(rawCount)) : 0;
+      if (normalizedCount === 0) break;
+      entry.icons += icon.repeat(normalizedCount);
       break;
     }
     case 'development': {

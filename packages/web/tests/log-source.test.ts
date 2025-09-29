@@ -148,8 +148,14 @@ describe('log resource sources', () => {
           const icon = role
             ? POPULATIONS.get(role)?.icon || role
             : POPULATION_INFO.icon;
-          const count = Number(source.count ?? 1);
-          return icon.repeat(count || 1);
+          if (!icon) return '';
+          if (source.count === undefined) return icon;
+          const rawCount = Number(source.count);
+          if (!Number.isFinite(rawCount)) return icon;
+          const normalizedCount =
+            rawCount > 0 ? Math.max(1, Math.round(rawCount)) : 0;
+          if (normalizedCount === 0) return '';
+          return icon.repeat(normalizedCount);
         }
         if (source.type === 'development' && source.id)
           return ctx.developments.get(source.id)?.icon || '';
@@ -158,8 +164,16 @@ describe('log resource sources', () => {
         if (source.type === 'land') return LAND_INFO.icon || '';
         return '';
       })
+      .filter(Boolean)
       .join('');
     expect(icons).not.toBe('');
+    const zeroPopulationIcons = Object.entries(ctx.activePlayer.population)
+      .filter(([, count]) => count === 0)
+      .map(([role]) => POPULATIONS.get(role)?.icon)
+      .filter((icon): icon is string => Boolean(icon));
+    for (const icon of zeroPopulationIcons) {
+      expect(icons).not.toContain(icon);
+    }
     expect(goldLine).toContain(
       `${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${icons}`,
     );
