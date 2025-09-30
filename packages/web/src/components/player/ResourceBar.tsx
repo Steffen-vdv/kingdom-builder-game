@@ -49,9 +49,10 @@ const ResourceButton: React.FC<ResourceButtonProps> = ({
           key={change.id}
           className={`value-change-indicator ${
             change.direction === 'gain'
-              ? 'value-change-indicator--gain text-green-500'
-              : 'value-change-indicator--loss text-red-500'
+              ? 'value-change-indicator--gain text-emerald-300'
+              : 'value-change-indicator--loss text-rose-300'
           }`}
+          aria-hidden="true"
         >
           {formatDelta(change.delta)}
         </span>

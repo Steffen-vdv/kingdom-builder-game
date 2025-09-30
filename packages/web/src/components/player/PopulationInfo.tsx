@@ -48,9 +48,10 @@ const StatButton: React.FC<StatButtonProps> = ({
           key={change.id}
           className={`value-change-indicator ${
             change.direction === 'gain'
-              ? 'value-change-indicator--gain text-green-500'
-              : 'value-change-indicator--loss text-red-500'
+              ? 'value-change-indicator--gain text-emerald-300'
+              : 'value-change-indicator--loss text-rose-300'
           }`}
+          aria-hidden="true"
         >
           {formatStatDelta(statKey, change.delta)}
         </span>
