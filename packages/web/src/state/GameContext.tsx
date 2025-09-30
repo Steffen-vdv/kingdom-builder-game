@@ -308,12 +308,20 @@ export function GameProvider({
 	}
 
 	async function runUntilActionPhaseCore() {
+		if (ctx.phases[ctx.game.phaseIndex]?.action) {
+			setPhaseTimer(0);
+			setTabsEnabled(true);
+			setDisplayPhase(ctx.game.currentPhase);
+			return;
+		}
 		setTabsEnabled(false);
 		setPhaseSteps([]);
 		setDisplayPhase(ctx.game.currentPhase);
 		setPhaseHistories({});
+		let ranSteps = false;
 		let lastPhase: string | null = null;
 		while (!ctx.phases[ctx.game.phaseIndex]?.action) {
+			ranSteps = true;
 			const before = snapshotPlayer(ctx.activePlayer, ctx);
 			const { phase, step, player, effects } = advance(ctx);
 			const phaseDef = ctx.phases.find((p) => p.id === phase)!;
@@ -342,22 +350,41 @@ export function GameProvider({
 					player,
 				);
 			}
+			const phaseId = phase;
 			const entry = {
 				title: stepDef?.title || step,
 				items:
 					changes.length > 0
 						? changes.map((text) => ({ text }))
 						: [{ text: 'No effect', italic: true }],
-				active: false,
+				active: true,
 			};
 			setPhaseSteps((prev) => [...prev, entry]);
 			setPhaseHistories((prev) => ({
 				...prev,
-				[phase]: [...(prev[phase] ?? []), entry],
+				[phaseId]: [...(prev[phaseId] ?? []), entry],
 			}));
 			await runStepDelay();
+			const finalized = { ...entry, active: false };
+			setPhaseSteps((prev) => {
+				if (!prev.length) return prev;
+				const next = [...prev];
+				next[next.length - 1] = finalized;
+				return next;
+			});
+			setPhaseHistories((prev) => {
+				const history = prev[phaseId];
+				if (!history?.length) return prev;
+				const nextHistory = [...history];
+				nextHistory[nextHistory.length - 1] = finalized;
+				return { ...prev, [phaseId]: nextHistory };
+			});
 		}
-		await runDelay(1500);
+		if (ranSteps) {
+			await runDelay(1500);
+		} else {
+			setPhaseTimer(0);
+		}
 		const start = ctx.activePlayer.resources[actionCostResource] as number;
 		setMainApStart(start);
 		updateMainPhaseStep(start);
