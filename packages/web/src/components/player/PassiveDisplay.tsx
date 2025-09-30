@@ -35,13 +35,16 @@ export default function PassiveDisplay({
     { effects?: EffectDef[]; onUpkeepPhase?: EffectDef[] }
   >(ids.map((id, i) => [id, defs[i]!]));
 
-  const buildingIds = new Set(player.buildings);
+  const buildingIds = Array.from(player.buildings);
+  const buildingIdSet = new Set(buildingIds);
+  const buildingPrefixes = buildingIds.map((id) => `${id}_`);
   const developmentIds = new Set(
     player.lands.flatMap((l) => l.developments.map((d) => `${d}_${l.id}`)),
   );
 
   const entries = Array.from(map.entries()).filter(([id]) => {
-    if (buildingIds.has(id) || developmentIds.has(id)) return false;
+    if (buildingIdSet.has(id) || developmentIds.has(id)) return false;
+    if (buildingPrefixes.some((prefix) => id.startsWith(prefix))) return false;
     for (const prefix of POPULATION_PASSIVE_PREFIXES)
       if (id.startsWith(prefix)) return false;
     return true;
