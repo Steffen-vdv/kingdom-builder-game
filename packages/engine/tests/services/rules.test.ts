@@ -83,15 +83,36 @@ describe('PassiveManager', () => {
 		const ctx = createTestEngine({ actions: content.actions });
 		const baseCost = getActionCosts(action.id, ctx);
 		const base = { [CResource.gold]: baseCost[CResource.gold] || 0 };
-		ctx.passives.registerCostModifier('mod', (_a, cost) => ({
-			...cost,
-			[CResource.gold]: (cost[CResource.gold] || 0) + 1,
+		ctx.passives.registerCostModifier('mod', () => ({
+			flat: { [CResource.gold]: 1 },
 		}));
 		const modified = ctx.passives.applyCostMods(action.id, base, ctx);
 		expect(modified[CResource.gold]).toBe((base[CResource.gold] || 0) + 1);
 		ctx.passives.unregisterCostModifier('mod');
 		const reverted = ctx.passives.applyCostMods(action.id, base, ctx);
 		expect(reverted[CResource.gold]).toBe(base[CResource.gold]);
+	});
+
+	it('combines flat and percent cost modifiers additively', () => {
+		const content = createContentFactory();
+		const action = content.action({ baseCosts: { [CResource.gold]: 4 } });
+		const ctx = createTestEngine({ actions: content.actions });
+		const baseCost = getActionCosts(action.id, ctx);
+		const base = { [CResource.gold]: baseCost[CResource.gold] || 0 };
+		ctx.passives.registerCostModifier('flat', () => ({
+			flat: { [CResource.gold]: 5 },
+		}));
+		ctx.passives.registerCostModifier('pctA', () => ({
+			percent: { [CResource.gold]: 0.2 },
+		}));
+		ctx.passives.registerCostModifier('pctB', () => ({
+			percent: { [CResource.gold]: -0.1 },
+		}));
+		const modified = ctx.passives.applyCostMods(action.id, base, ctx);
+		const baseWithFlat = (base[CResource.gold] || 0) + 5;
+		expect(modified[CResource.gold]).toBeCloseTo(
+			baseWithFlat * (1 + 0.2 - 0.1),
+		);
 	});
 
 	it('runs result modifiers and handles passives', () => {
@@ -123,5 +144,48 @@ describe('PassiveManager', () => {
 		expect(ctx.passives.list(ctx.activePlayer.id)).not.toContain('shiny');
 		expect(ctx.activePlayer.gold).toBe(before);
 		ctx.passives.removePassive('unknown', ctx);
+	});
+
+	it('applies percent evaluation modifiers after flat adjustments', () => {
+		const resourceKey = Object.values(CResource)[0];
+		const ctx = createTestEngine();
+		const gains = [{ key: resourceKey, amount: 10 }];
+		ctx.passives.registerEvaluationModifier(
+			'flatPctA',
+			'test:target',
+			(_ctx, localGains) => {
+				localGains[0]!.amount += 5;
+				return { percent: 0.2 };
+			},
+		);
+		ctx.passives.registerEvaluationModifier(
+			'flatPctB',
+			'test:target',
+			(_ctx, localGains) => {
+				localGains[0]!.amount -= 3;
+				return { percent: -0.1 };
+			},
+		);
+		ctx.passives.runEvaluationMods('test:target', ctx, gains);
+		expect(gains[0]!.amount).toBeCloseTo((10 + 5 - 3) * (1 + 0.2 - 0.1));
+	});
+
+	it('scales negative evaluation gains multiplicatively', () => {
+		const resourceKey = Object.values(CResource)[0];
+		const ctx = createTestEngine();
+		const gains = [{ key: resourceKey, amount: 6 }];
+		ctx.passives.registerEvaluationModifier(
+			'negFlat',
+			'test:target',
+			(_ctx, localGains) => {
+				localGains[0]!.amount -= 12;
+				return { percent: 0.5 };
+			},
+		);
+		ctx.passives.registerEvaluationModifier('negPct', 'test:target', () => ({
+			percent: 0.25,
+		}));
+		ctx.passives.runEvaluationMods('test:target', ctx, gains);
+		expect(gains[0]!.amount).toBeCloseTo(-6 * (1 + 0.5 + 0.25));
 	});
 });

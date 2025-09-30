@@ -112,17 +112,29 @@ class PopCapService {
 }
 
 export type CostBag = { [resourceKey in ResourceKey]?: number };
+export type CostModifierFlat = Partial<Record<ResourceKey, number>>;
+export type CostModifierPercent = Partial<Record<ResourceKey, number>>;
+export type CostModifierResult = {
+	flat?: CostModifierFlat;
+	percent?: CostModifierPercent;
+};
 export type CostModifier = (
 	actionId: string,
 	cost: CostBag,
 	ctx: EngineContext,
-) => CostBag;
+) => CostModifierResult | void;
 export type ResultModifier = (actionId: string, ctx: EngineContext) => void;
 export type ResourceGain = { key: string; amount: number };
+export type EvaluationModifierPercent =
+	| number
+	| Partial<Record<string, number>>;
+export type EvaluationModifierResult = {
+	percent?: EvaluationModifierPercent;
+};
 export type EvaluationModifier = (
 	ctx: EngineContext,
 	gains: ResourceGain[],
-) => void;
+) => EvaluationModifierResult | void;
 
 export class PassiveManager {
 	private costMods: Map<string, CostModifier> = new Map();
@@ -183,10 +195,31 @@ export class PassiveManager {
 	}
 
 	applyCostMods(actionId: string, base: CostBag, ctx: EngineContext): CostBag {
-		let acc: CostBag = { ...base };
-		for (const modifier of this.costMods.values())
-			acc = modifier(actionId, acc, ctx);
-		return acc;
+		const running: CostBag = { ...base };
+		const percentTotals: Partial<Record<ResourceKey, number>> = {};
+		for (const modifier of this.costMods.values()) {
+			const result = modifier(actionId, running, ctx);
+			if (!result) continue;
+			if (result.flat) {
+				for (const [key, delta] of Object.entries(result.flat)) {
+					if (typeof delta !== 'number') continue;
+					const current = running[key] ?? 0;
+					running[key] = current + delta;
+				}
+			}
+			if (result.percent) {
+				for (const [key, pct] of Object.entries(result.percent)) {
+					if (typeof pct !== 'number') continue;
+					percentTotals[key] = (percentTotals[key] ?? 0) + pct;
+				}
+			}
+		}
+		for (const [key, pct] of Object.entries(percentTotals)) {
+			if (typeof pct !== 'number') continue;
+			const current = running[key] ?? 0;
+			running[key] = current + current * pct;
+		}
+		return running;
 	}
 
 	runResultMods(actionId: string, ctx: EngineContext) {
@@ -196,7 +229,29 @@ export class PassiveManager {
 	runEvaluationMods(target: string, ctx: EngineContext, gains: ResourceGain[]) {
 		const mods = this.evaluationMods.get(target);
 		if (!mods) return;
-		for (const mod of mods.values()) mod(ctx, gains);
+		let globalPercent = 0;
+		const perResourcePercent: Partial<Record<string, number>> = {};
+		for (const mod of mods.values()) {
+			const result = mod(ctx, gains);
+			if (!result || result.percent === undefined) continue;
+			const percent = result.percent;
+			if (typeof percent === 'number') {
+				globalPercent += percent;
+			} else {
+				for (const [key, value] of Object.entries(percent)) {
+					if (typeof value !== 'number') continue;
+					perResourcePercent[key] = (perResourcePercent[key] ?? 0) + value;
+				}
+			}
+		}
+		if (globalPercent === 0 && Object.keys(perResourcePercent).length === 0)
+			return;
+		for (const gain of gains) {
+			const keyed = perResourcePercent[gain.key] ?? 0;
+			const total = globalPercent + keyed;
+			if (total === 0) continue;
+			gain.amount += gain.amount * total;
+		}
 	}
 
 	addPassive(
