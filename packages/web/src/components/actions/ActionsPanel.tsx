@@ -843,11 +843,13 @@ export default function ActionsPanel() {
 		? 'Show player actions'
 		: 'Show opponent actions';
 
+	const disabledPanelOverlay =
+		'pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-white/80 via-white/60 to-white/20 dark:from-slate-900/30 dark:via-slate-900/45 dark:to-slate-950/60 frosted-surface';
+	const disabledContentOverlay = `${disabledPanelOverlay} backdrop-blur-sm`;
+
 	return (
 		<section className="relative rounded-3xl border border-white/60 bg-white/75 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-      {panelDisabled && (
-				<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 dark:bg-slate-950/60 frosted-surface" />
-			)}
+			{panelDisabled && <div className={disabledPanelOverlay} />}
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
@@ -879,9 +881,7 @@ export default function ActionsPanel() {
 				</div>
 			</div>
 			<div className="relative">
-				{panelDisabled && (
-					<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 backdrop-blur-sm dark:bg-slate-950/60" />
-				)}
+				{panelDisabled && <div className={disabledContentOverlay} />}
 				<div ref={sectionRef} className="space-y-4">
 					{otherActions.length > 0 && (
 						<BasicOptions
