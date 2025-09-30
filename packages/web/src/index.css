@@ -44,16 +44,16 @@
 
 @layer components {
   .bar-item {
-    @apply flex items-center gap-1 tabular-nums whitespace-nowrap appearance-none bg-transparent border-0 p-0;
+    @apply flex items-center gap-1 whitespace-nowrap rounded-full border border-white/40 bg-white/50 px-3 py-1 text-sm font-semibold tabular-nums text-slate-700 shadow-sm shadow-white/30 transition appearance-none dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100;
   }
   .hoverable {
-    @apply transition-colors transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105;
+    @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/60 hover:shadow-lg hover:shadow-amber-500/10 dark:hover:bg-white/10 dark:hover:shadow-black/30;
   }
   .panel-card {
-    @apply rounded-md bg-black/5 dark:bg-white/10;
+    @apply rounded-2xl border border-white/50 bg-white/70 shadow-lg shadow-amber-500/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-black/50;
   }
   .player-panel .panel-card {
-    @apply bg-gray-50/40 dark:bg-gray-700/40;
+    @apply border-white/40 bg-white/80 dark:border-white/10 dark:bg-slate-900/60;
   }
   .value-change-indicator {
     @apply pointer-events-none font-black tracking-wide text-sm sm:text-base;
@@ -76,18 +76,18 @@
     filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.4));
   }
   .land-tile {
-    @apply relative panel-card border border-black/10 dark:border-white/10 p-2 text-center hoverable cursor-help;
+    @apply relative panel-card border border-white/50 p-3 text-center hoverable cursor-help shadow-lg shadow-amber-500/10 dark:border-white/10;
   }
   .land-slot {
-    @apply panel-card border border-black/10 dark:border-white/10 p-1 text-lg leading-none hoverable cursor-help flex items-center justify-center gap-1 shrink-0 min-w-8 min-h-8;
+    @apply panel-card border border-white/40 p-1.5 text-lg leading-none hoverable cursor-help flex items-center justify-center gap-1 shrink-0 min-w-8 min-h-8 dark:border-white/10;
   }
   .player-bg {
-    @apply relative overflow-hidden text-gray-900 dark:text-white;
-    --stripe-color: rgba(0, 0, 0, 0.04);
+    @apply relative overflow-hidden rounded-3xl text-slate-900 shadow-xl shadow-slate-900/10 backdrop-blur-xl dark:text-slate-100 dark:shadow-black/40;
+    --stripe-color: rgba(255, 255, 255, 0.45);
     background-color: var(--player-color);
   }
   .dark .player-bg {
-    --stripe-color: rgba(255, 255, 255, 0.04);
+    --stripe-color: rgba(15, 23, 42, 0.45);
   }
   .player-bg::before {
     content: '';
@@ -107,7 +107,7 @@
     background-size: 32px 32px;
     background-position: 0 0;
     background-repeat: repeat;
-    opacity: 0.9;
+    opacity: 0.65;
     will-change: background-position;
     transition: opacity 150ms ease-in-out;
   }
@@ -123,40 +123,40 @@
     animation: player-bg-slide 2s linear infinite;
   }
   .player-bg-blue {
-    --player-color: rgba(219, 234, 254, 0.5);
+    --player-color: rgba(191, 219, 254, 0.75);
   }
   .player-bg-blue-active {
-    --player-color: rgba(191, 219, 254, 0.7);
+    --player-color: rgba(147, 197, 253, 0.85);
   }
   .player-bg-red {
-    --player-color: rgba(254, 226, 226, 0.5);
+    --player-color: rgba(254, 205, 211, 0.75);
   }
   .player-bg-red-active {
-    --player-color: rgba(254, 202, 202, 0.7);
+    --player-color: rgba(251, 182, 206, 0.85);
   }
   .dark .player-bg-blue {
-    --player-color: rgba(30, 58, 138, 0.3);
+    --player-color: rgba(37, 99, 235, 0.35);
   }
   .dark .player-bg-blue-active {
-    --player-color: rgba(59, 130, 246, 0.4);
+    --player-color: rgba(96, 165, 250, 0.5);
   }
   .dark .player-bg-red {
-    --player-color: rgba(127, 29, 29, 0.3);
+    --player-color: rgba(190, 18, 60, 0.35);
   }
   .dark .player-bg-red-active {
-    --player-color: rgba(220, 38, 38, 0.4);
+    --player-color: rgba(244, 63, 94, 0.5);
   }
   .log-entry-a {
-    color: rgb(30, 58, 138);
+    color: rgb(37, 99, 235);
   }
   .log-entry-b {
-    color: rgb(127, 29, 29);
+    color: rgb(190, 18, 60);
   }
   .dark .log-entry-a {
-    color: rgb(219, 234, 254);
+    color: rgb(191, 219, 254);
   }
   .dark .log-entry-b {
-    color: rgb(254, 226, 226);
+    color: rgb(251, 207, 232);
   }
 }
 
