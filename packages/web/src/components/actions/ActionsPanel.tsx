@@ -845,8 +845,8 @@ export default function ActionsPanel() {
 
 	return (
 		<section className="relative rounded-3xl border border-white/60 bg-white/75 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-      {panelDisabled && (
-				<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 dark:bg-slate-950/60 frosted-surface" />
+			{panelDisabled && (
+				<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/60 dark:bg-slate-900/45 backdrop-blur-sm" />
 			)}
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
@@ -880,7 +880,7 @@ export default function ActionsPanel() {
 			</div>
 			<div className="relative">
 				{panelDisabled && (
-					<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 backdrop-blur-sm dark:bg-slate-950/60" />
+					<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/55 backdrop-blur-sm dark:bg-slate-900/40" />
 				)}
 				<div ref={sectionRef} className="space-y-4">
 					{otherActions.length > 0 && (
