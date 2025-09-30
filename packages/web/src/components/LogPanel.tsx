@@ -161,6 +161,28 @@ export default function LogPanel() {
 		return cleanup;
 	}, [entries.length, isExpanded]);
 
+	const renderToggleButton = (variant: 'inline' | 'floating') => {
+		const baseClasses =
+			'inline-flex h-8 w-8 items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-800';
+		const variantClasses =
+			variant === 'floating'
+				? ' absolute top-3 right-3 border border-slate-300/60 bg-white/95 text-slate-700 shadow-lg backdrop-blur-sm hover:bg-white dark:border-gray-700/60 dark:bg-gray-900/90 dark:text-slate-100 dark:hover:bg-gray-900'
+				: ' border border-transparent bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600';
+
+		return (
+			<button
+				type="button"
+				onClick={handleToggleExpand}
+				aria-label={isExpanded ? 'Collapse log panel' : 'Expand log panel'}
+				className={`${baseClasses} ${variantClasses}`}
+			>
+				<span aria-hidden="true" className="text-lg leading-none">
+					{isExpanded ? '⤡' : '⛶'}
+				</span>
+			</button>
+		);
+	};
+
 	return (
 		<div
 			ref={wrapperRef}
@@ -173,7 +195,7 @@ export default function LogPanel() {
 		>
 			<div
 				ref={containerRef}
-				className={`border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out ${
+				className={`relative border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out ${
 					isOverlay ? 'absolute left-auto' : 'w-full'
 				} ${
 					isExpanded
@@ -197,22 +219,18 @@ export default function LogPanel() {
 				}}
 				onTransitionEnd={handleTransitionEnd}
 			>
-				<div className="flex items-center justify-between gap-2">
+				<div
+					className={`flex items-center gap-2 ${
+						isExpanded ? 'justify-between' : 'pr-12'
+					}`}
+				>
 					<h2 className="text-xl font-semibold">Log</h2>
-					<button
-						type="button"
-						onClick={handleToggleExpand}
-						aria-label={isExpanded ? 'Collapse log panel' : 'Expand log panel'}
-						className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-slate-200 text-slate-700 hover:bg-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600 dark:focus-visible:ring-offset-gray-800"
-					>
-						<span aria-hidden="true" className="text-lg leading-none">
-							{isExpanded ? '⤡' : '⛶'}
-						</span>
-					</button>
+					{isExpanded ? renderToggleButton('inline') : null}
 				</div>
+				{!isExpanded ? renderToggleButton('floating') : null}
 				<ul
 					ref={listRef}
-					className={`mt-2 ${isExpanded ? 'space-y-2' : 'space-y-1'}`}
+					className={`mt-2 ${isExpanded ? 'space-y-2' : 'space-y-1 pr-8'}`}
 				>
 					{entries.map((entry, idx) => {
 						const aId = ctx.game.players[0]?.id;
