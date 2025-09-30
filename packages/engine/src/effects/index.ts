@@ -105,14 +105,13 @@ export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
         ? () => ({ dependsOn: dependencies })
         : undefined;
       const total = (count as number) * mult;
-      for (let i = 0; i < total; i++) {
-        ctx.recentResourceGains = [];
-        withStatSourceFrames(ctx, frame, () => {
-          runEffects(effect.effects || [], ctx);
-        });
-        const gains = [...ctx.recentResourceGains];
-        ctx.passives.runEvaluationMods(target, ctx, gains);
-      }
+      if (total === 0) continue;
+      ctx.recentResourceGains = [];
+      withStatSourceFrames(ctx, frame, () => {
+        runEffects(effect.effects || [], ctx, total);
+      });
+      const gains = [...ctx.recentResourceGains];
+      ctx.passives.runEvaluationMods(target, ctx, gains);
     } else if (effect.type && effect.method) {
       const handler = EFFECTS.get(`${effect.type}:${effect.method}`);
       handler(effect, ctx, mult);

@@ -66,9 +66,10 @@ function formatGainFrom(
 ) {
   const { key, detailed } = options;
   const resIcon = key ? RESOURCES[key as ResourceKey]?.icon || key : undefined;
+  const amountText = `${signed(amount)}${amount}`;
   const more = resIcon
-    ? `${resIcon}+${amount} more${detailed ? ' of that resource' : ''}`
-    : `+${amount} more of that resource`;
+    ? `${resIcon}${amountText} more${detailed ? ' of that resource' : ''}`
+    : `${amountText} more of that resource`;
   return `${modifierInfo.result.icon} Every time you gain resources from ${source}, gain ${more}`;
 }
 
@@ -81,11 +82,12 @@ function formatDevelopment(
   const { icon, name } = getDevelopmentInfo(ctx, evaluation.id);
   const resource = eff.effects?.find(
     (e): e is EffectDef<{ key: string; amount: number }> =>
-      e.type === 'resource' && e.method === 'add',
+      e.type === 'resource' && (e.method === 'add' || e.method === 'remove'),
   );
   if (resource) {
     const key = resource.params?.['key'] as string;
-    const amount = Number(resource.params?.['amount']);
+    const rawAmount = Number(resource.params?.['amount']);
+    const amount = resource.method === 'remove' ? -rawAmount : rawAmount;
     return formatGainFrom(`${icon} ${name}`, amount, { key, detailed });
   }
   const amount = Number(eff.params?.['amount'] ?? 0);

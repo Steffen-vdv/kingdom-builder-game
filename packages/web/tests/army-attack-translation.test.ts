@@ -68,10 +68,14 @@ describe('army attack translation', () => {
         e.type === 'resource' &&
         (e.params as { key?: string }).key === Resource.happiness,
     );
-    const attackerAmt =
+    const attackerAmtRaw =
       (attackerRes?.params as { amount?: number })?.amount ?? 0;
-    const defenderAmt =
+    const defenderAmtRaw =
       (defenderRes?.params as { amount?: number })?.amount ?? 0;
+    const attackerAmt =
+      attackerRes?.method === 'remove' ? -attackerAmtRaw : attackerAmtRaw;
+    const defenderAmt =
+      defenderRes?.method === 'remove' ? -defenderAmtRaw : defenderAmtRaw;
     const warRes = armyAttack.effects.find(
       (e: EffectDef) =>
         e.type === 'stat' &&

@@ -68,7 +68,10 @@ describe('hold festival action translation', () => {
         e.type === 'resource' &&
         (e.params as { key?: string }).key === Resource.happiness,
     ) as EffectDef<{ amount: number }>;
-    const penaltyAmt = innerRes.params.amount;
+    const penaltyAmt =
+      innerRes.method === 'remove'
+        ? -(innerRes.params.amount as number)
+        : (innerRes.params.amount as number);
     const armyAttack = ctx.actions.get('army_attack');
     const upkeepLabel =
       PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
@@ -114,7 +117,10 @@ describe('hold festival action translation', () => {
         e.type === 'resource' &&
         (e.params as { key?: string }).key === Resource.happiness,
     ) as EffectDef<{ amount: number }>;
-    const penaltyAmt = innerRes.params.amount;
+    const penaltyAmt =
+      innerRes.method === 'remove'
+        ? -(innerRes.params.amount as number)
+        : (innerRes.params.amount as number);
     const armyAttack = ctx.actions.get('army_attack');
     const upkeepLabel =
       PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
@@ -149,7 +155,10 @@ describe('hold festival action translation', () => {
         (e.params as { key?: string }).key === Resource.happiness,
     ) as EffectDef<{ amount: number }>;
     const happinessInfo = RESOURCES[Resource.happiness];
-    const penaltyAmt = innerRes.params.amount;
+    const penaltyAmt =
+      innerRes.method === 'remove'
+        ? -(innerRes.params.amount as number)
+        : (innerRes.params.amount as number);
     const upkeepLabel =
       PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
 
