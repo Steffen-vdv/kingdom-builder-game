@@ -5,60 +5,84 @@ import Overview from './Overview';
 import Tutorial from './Tutorial';
 
 enum Screen {
-  Menu = 'menu',
-  Overview = 'overview',
-  Tutorial = 'tutorial',
-  Game = 'game',
+	Menu = 'menu',
+	Overview = 'overview',
+	Tutorial = 'tutorial',
+	Game = 'game',
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>(Screen.Menu);
-  const [gameKey, setGameKey] = useState(0);
-  const [darkMode, setDarkMode] = useState(true);
-  const [devMode, setDevMode] = useState(false);
+	const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Menu);
+	const [currentGameKey, setCurrentGameKey] = useState(0);
+	const [isDarkModeEnabled, setIsDarkModeEnabled] = useState(true);
+	const [isDevModeEnabled, setIsDevModeEnabled] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-  }, [darkMode]);
+	useEffect(() => {
+		document.documentElement.classList.toggle('dark', isDarkModeEnabled);
+	}, [isDarkModeEnabled]);
 
-  useEffect(() => {
-    if (window.location.pathname !== '/') {
-      window.history.replaceState(null, '', '/');
-    }
-  }, []);
+	useEffect(() => {
+		if (window.location.pathname !== '/') {
+			window.history.replaceState(null, '', '/');
+		}
+	}, []);
 
-  switch (screen) {
-    case Screen.Overview:
-      return <Overview onBack={() => setScreen(Screen.Menu)} />;
-    case Screen.Tutorial:
-      return <Tutorial onBack={() => setScreen(Screen.Menu)} />;
-    case Screen.Game:
-      return (
-        <Game
-          key={gameKey}
-          onExit={() => setScreen(Screen.Menu)}
-          darkMode={darkMode}
-          onToggleDark={() => setDarkMode((d) => !d)}
-          devMode={devMode}
-        />
-      );
-    case Screen.Menu:
-    default:
-      return (
-        <Menu
-          onStart={() => {
-            setDevMode(false);
-            setGameKey((k) => k + 1);
-            setScreen(Screen.Game);
-          }}
-          onStartDev={() => {
-            setDevMode(true);
-            setGameKey((k) => k + 1);
-            setScreen(Screen.Game);
-          }}
-          onOverview={() => setScreen(Screen.Overview)}
-          onTutorial={() => setScreen(Screen.Tutorial)}
-        />
-      );
-  }
+	const returnToMenu = () => {
+		setCurrentScreen(Screen.Menu);
+	};
+
+	const toggleDarkMode = () => {
+		setIsDarkModeEnabled((previousDarkMode) => !previousDarkMode);
+	};
+
+	const incrementGameKey = () => {
+		setCurrentGameKey((previousGameKey) => previousGameKey + 1);
+	};
+
+	const startStandardGame = () => {
+		setIsDevModeEnabled(false);
+		incrementGameKey();
+		setCurrentScreen(Screen.Game);
+	};
+
+	const startDeveloperGame = () => {
+		setIsDevModeEnabled(true);
+		incrementGameKey();
+		setCurrentScreen(Screen.Game);
+	};
+
+	const openOverview = () => {
+		setCurrentScreen(Screen.Overview);
+	};
+
+	const openTutorial = () => {
+		setCurrentScreen(Screen.Tutorial);
+	};
+
+	switch (currentScreen) {
+		case Screen.Overview:
+			return <Overview onBack={returnToMenu} />;
+		case Screen.Tutorial:
+			return <Tutorial onBack={returnToMenu} />;
+		case Screen.Game:
+			return (
+				<Game
+					key={currentGameKey}
+					onExit={returnToMenu}
+					darkMode={isDarkModeEnabled}
+					onToggleDark={toggleDarkMode}
+					devMode={isDevModeEnabled}
+				/>
+			);
+		case Screen.Menu:
+		default:
+			return (
+				<Menu
+					onStart={startStandardGame}
+					onStartDev={startDeveloperGame}
+					onOverview={openOverview}
+					onTutorial={openTutorial}
+				/>
+			);
+	}
 }
