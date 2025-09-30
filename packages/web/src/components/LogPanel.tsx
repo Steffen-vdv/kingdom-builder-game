@@ -152,22 +152,26 @@ export default function LogPanel() {
 					...(isExpanded ? {} : { width: '100%' }),
 				}}
 			>
-				<div className="flex items-start gap-2 pb-2">
+				<div className="flex items-center gap-2 pb-2">
 					<h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
 						Log
 					</h2>
-					<button
-						type="button"
-						onClick={handleToggleExpand}
-						aria-label={isExpanded ? 'Collapse log panel' : 'Expand log panel'}
-						className={`sticky ${
-							isExpanded ? 'top-6' : 'top-4'
-						} ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900`}
-					>
-						<span aria-hidden="true" className="text-lg leading-none">
-							{isExpanded ? '⤡' : '⛶'}
-						</span>
-					</button>
+					<div className="ml-auto">
+						<div className={`sticky ${isExpanded ? 'top-6' : 'top-4'}`}>
+							<button
+								type="button"
+								onClick={handleToggleExpand}
+								aria-label={
+									isExpanded ? 'Collapse log panel' : 'Expand log panel'
+								}
+								className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900"
+							>
+								<span aria-hidden="true" className="text-lg leading-none">
+									{isExpanded ? '⤡' : '⛶'}
+								</span>
+							</button>
+						</div>
+					</div>
 				</div>
 				<ul
 					ref={listRef}
