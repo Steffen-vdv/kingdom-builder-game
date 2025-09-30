@@ -663,6 +663,7 @@ class CostModParamsBuilder extends ParamsBuilder<{
 	actionId?: string;
 	key?: ResourceKey;
 	amount?: number;
+	percent?: number;
 }> {
 	id(id: string) {
 		return this.set('id', id);
@@ -675,6 +676,9 @@ class CostModParamsBuilder extends ParamsBuilder<{
 	}
 	amount(amount: number) {
 		return this.set('amount', amount);
+	}
+	percent(percent: number) {
+		return this.set('percent', percent);
 	}
 }
 
@@ -705,6 +709,7 @@ class ResultModParamsBuilder extends ParamsBuilder<{
 	evaluation?: { type: string; id?: string };
 	amount?: number;
 	adjust?: number;
+	percent?: number;
 }> {
 	id(id: string) {
 		return this.set('id', id);
@@ -723,6 +728,9 @@ class ResultModParamsBuilder extends ParamsBuilder<{
 	}
 	adjust(amount: number) {
 		return this.set('adjust', amount);
+	}
+	percent(percent: number) {
+		return this.set('percent', percent);
 	}
 }
 
