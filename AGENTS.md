@@ -106,6 +106,7 @@ fc.assert(
 - 2025-08-31: Compose effects with `effect(type, method).param(key, value)` to avoid manual `{ type, method, params }` objects.
 - 2025-08-31: Content builders now chain `.id().name().icon()` and icons live on config entries; standalone info maps are deprecated.
 - 2025-08-31: Overview screen can pull icons from contents (e.g. ACTION_INFO, LAND_ICON) to keep keywords visually consistent.
+- 2025-10-03: `npm run lint` and all test commands auto-install missing dev deps (`eslint-plugin-import`, `@vitest/coverage-v8`). Network access is required the first time they run in a fresh workspace.
 - 2025-08-31: PlayerState maintains `statsHistory` so stats returning to zero remain visible; initialize new non-zero stats accordingly.
 - 2025-08-31: Restore a file from the previous commit with `git checkout HEAD^ -- path/to/file`.
 - 2025-09-01: `stat:add_pct` effects honor a `round` setting like resources; use `round: 'up'` to keep strength stats integer and non-negative.
