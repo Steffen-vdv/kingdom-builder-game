@@ -12,7 +12,7 @@ export default function HoverCard() {
 	if (!data) return null;
 	return (
 		<div
-			className={`pointer-events-none w-full rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl shadow-amber-500/10 backdrop-blur-xl transition dark:border-white/10 dark:bg-slate-900/80 dark:shadow-slate-900/60 ${
+			className={`pointer-events-none w-full rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl shadow-amber-500/10 transition dark:border-white/10 dark:bg-slate-900/80 dark:shadow-slate-900/60 frosted-surface ${
 				data.bgClass ?? ''
 			}`}
 			onMouseLeave={clearHoverCard}

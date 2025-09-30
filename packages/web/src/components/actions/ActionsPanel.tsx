@@ -844,7 +844,10 @@ export default function ActionsPanel() {
 		: 'Show opponent actions';
 
 	return (
-		<section className="relative rounded-3xl border border-white/60 bg-white/75 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50">
+		<section className="relative rounded-3xl border border-white/60 bg-white/75 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
+      {panelDisabled && (
+				<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 dark:bg-slate-950/60 frosted-surface" />
+			)}
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
@@ -854,13 +857,13 @@ export default function ActionsPanel() {
 				</h2>
 				<div className="flex flex-wrap items-center gap-2">
 					{viewingOpponent && (
-						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-slate-200">
-							Viewing Opponent
+						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-200 frosted-surface">
+							<span>Viewing Opponent</span>
 						</span>
 					)}
 					{!isActionPhase && (
-						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-slate-200">
-							Not In Main Phase
+						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-200 frosted-surface">
+							<span>Not In Main Phase</span>
 						</span>
 					)}
 					{isLocalTurn && (
