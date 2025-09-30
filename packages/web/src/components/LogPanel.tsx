@@ -40,14 +40,12 @@ export default function LogPanel() {
 	useEffect(() => {
 		if (isExpanded) return;
 		const node = containerRef.current;
-		const wrapper = wrapperRef.current;
-		if (!node || !wrapper) return;
+		if (!node) return;
 		const rect = node.getBoundingClientRect();
-		const wrapperRect = wrapper.getBoundingClientRect();
 		setCollapsedSize({ width: rect.width, height: rect.height });
 		setOverlayOffsets({
-			top: rect.top - wrapperRect.top,
-			right: wrapperRect.right - rect.right,
+			top: rect.top,
+			right: viewport.width - rect.right,
 		});
 	}, [entries, isExpanded, viewport.height, viewport.width]);
 
@@ -72,16 +70,14 @@ export default function LogPanel() {
 
 	const handleToggleExpand = () => {
 		const node = containerRef.current;
-		const wrapper = wrapperRef.current;
-		if (!node || !wrapper) return;
+		if (!node) return;
 
 		if (!isExpanded) {
 			const rect = node.getBoundingClientRect();
-			const wrapperRect = wrapper.getBoundingClientRect();
 			setCollapsedSize({ width: rect.width, height: rect.height });
 			setOverlayOffsets({
-				top: rect.top - wrapperRect.top,
-				right: wrapperRect.right - rect.right,
+				top: rect.top,
+				right: viewport.width - rect.right,
 			});
 			setExpandedBase({ width: rect.width * 2, height: rect.height * 4 });
 			setIsOverlay(true);
@@ -173,7 +169,7 @@ export default function LogPanel() {
 			<div
 				ref={containerRef}
 				className={`relative rounded-3xl border border-white/60 bg-white/75 shadow-2xl shadow-amber-500/10 backdrop-blur-xl transition-all duration-300 ease-in-out dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 ${
-					isOverlay ? 'absolute left-auto' : 'w-full'
+					isOverlay ? 'fixed left-auto' : 'w-full'
 				} ${isExpanded ? 'overflow-auto p-6' : 'max-h-80 overflow-y-auto p-4'}`}
 				style={{
 					...(expandedStyle ?? {}),
