@@ -64,12 +64,27 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
     if (ctx.activePlayer.id !== playerId) return;
     const phase = ctx.phases[ctx.game.phaseIndex];
     if (!phase?.action) return;
-    if (!ctx.actions.has(TAX_ACTION_ID)) return;
-    const definition = ctx.actions.get(TAX_ACTION_ID);
-    if (definition.system && !ctx.activePlayer.actions.has(TAX_ACTION_ID))
-      return;
     const apKey = ctx.actionCostResource;
     if (!apKey) return;
+
+    const finishActionPhase = async () => {
+      if (ctx.activePlayer.id !== playerId) return;
+      if (!ctx.phases[ctx.game.phaseIndex]?.action) return;
+      const remaining = ctx.activePlayer.resources[apKey];
+      if (typeof remaining === 'number' && remaining > 0)
+        ctx.activePlayer.resources[apKey] = 0;
+      await deps.advance(ctx);
+    };
+
+    const definition = ctx.actions.get(TAX_ACTION_ID);
+    if (!definition) {
+      await finishActionPhase();
+      return;
+    }
+    if (definition.system && !ctx.activePlayer.actions.has(TAX_ACTION_ID)) {
+      await finishActionPhase();
+      return;
+    }
 
     while (
       ctx.activePlayer.id === playerId &&
@@ -79,7 +94,8 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
       try {
         await deps.performAction(TAX_ACTION_ID, ctx);
       } catch (err) {
-        break;
+        await finishActionPhase();
+        return;
       }
     }
 
@@ -88,7 +104,7 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
       ctx.phases[ctx.game.phaseIndex]?.action &&
       (ctx.activePlayer.resources[apKey] ?? 0) === 0
     ) {
-      await deps.advance(ctx);
+      await finishActionPhase();
     }
   };
 }
