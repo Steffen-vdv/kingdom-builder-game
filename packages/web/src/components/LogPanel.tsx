@@ -150,7 +150,7 @@ export default function LogPanel() {
 		>
 			<div
 				ref={containerRef}
-				className={`relative rounded-3xl border border-white/60 bg-white/75 shadow-2xl shadow-amber-500/10 backdrop-blur-xl transition-all duration-300 ease-in-out dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 ${
+				className={`relative rounded-3xl border border-white/60 bg-white/75 shadow-2xl shadow-amber-500/10 transition-all duration-300 ease-in-out dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface ${
 					isOverlay ? 'absolute left-auto' : 'w-full'
 				} ${isExpanded ? 'overflow-auto p-6' : 'max-h-80 overflow-y-auto p-4'}`}
 				style={{

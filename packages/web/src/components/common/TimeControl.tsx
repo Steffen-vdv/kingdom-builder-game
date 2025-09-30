@@ -7,7 +7,7 @@ export default function TimeControl() {
 
 	return (
 		<div
-			className="flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1.5 text-sm font-medium shadow-inner backdrop-blur dark:border-white/10 dark:bg-slate-900/60"
+			className="flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1.5 text-sm font-medium shadow-inner dark:border-white/10 dark:bg-slate-900/60 frosted-surface"
 			aria-label="Time control"
 		>
 			{devMode && (
@@ -22,7 +22,7 @@ export default function TimeControl() {
 				Speed
 			</span>
 			<div
-				className="flex overflow-hidden rounded-full border border-white/50 bg-white/40 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/50"
+				className="flex overflow-hidden rounded-full border border-white/50 bg-white/40 shadow-sm dark:border-white/10 dark:bg-slate-900/50 frosted-surface"
 				role="group"
 				aria-label="Game speed"
 			>
