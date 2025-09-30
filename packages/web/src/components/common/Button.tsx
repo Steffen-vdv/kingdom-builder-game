@@ -1,7 +1,7 @@
 import React from 'react';
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-	variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'ghost';
+	variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'ghost' | 'dev';
 };
 
 const VARIANT_CLASSES: Record<string, string> = {
@@ -15,6 +15,7 @@ const VARIANT_CLASSES: Record<string, string> = {
 		'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-lg shadow-rose-500/40 hover:from-rose-400 hover:to-red-400 focus-visible:ring-rose-200/70',
 	ghost:
 		'bg-transparent text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10 focus-visible:ring-white/40',
+	dev: 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white shadow-lg shadow-purple-500/40 hover:from-purple-500 hover:to-fuchsia-400 focus-visible:ring-purple-200/70',
 };
 
 export default function Button({
