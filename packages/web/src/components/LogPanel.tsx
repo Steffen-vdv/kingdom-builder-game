@@ -165,7 +165,6 @@ export default function LogPanel() {
 			'inline-flex h-8 w-8 items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-800';
 		const variantClasses =
 			variant === 'floating'
-
 				? ' border border-slate-300/70 bg-white/95 text-slate-700 shadow-lg backdrop-blur-sm hover:bg-white dark:border-gray-700/70 dark:bg-gray-900/90 dark:text-slate-100 dark:hover:bg-gray-900'
 				: ' border border-transparent bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600';
 
@@ -195,7 +194,7 @@ export default function LogPanel() {
 		>
 			<div
 				ref={containerRef}
-				className={`border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out ${
+				className={`border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out no-scrollbar ${
 					isExpanded
 						? 'overflow-auto p-6 shadow-2xl'
 						: 'relative w-full max-h-80 overflow-y-auto p-4'
@@ -203,7 +202,7 @@ export default function LogPanel() {
 				style={expandedStyle}
 			>
 				<div
-					className={`flex items-center gap-2 ${
+					className={`inline-block items-center gap-2 ${
 						isExpanded ? 'justify-between' : ''
 					}`}
 				>
@@ -211,7 +210,7 @@ export default function LogPanel() {
 					{isExpanded ? renderToggleButton('inline') : null}
 				</div>
 				{!isExpanded ? (
-					<div className="pointer-events-none sticky top-4 z-10 flex justify-end">
+					<div className="pointer-events-none sticky float-right top-0 z-500">
 						<div className="pointer-events-auto">
 							{renderToggleButton('floating')}
 						</div>
@@ -219,7 +218,7 @@ export default function LogPanel() {
 				) : null}
 				<ul
 					ref={listRef}
-					className={`mt-2 ${isExpanded ? 'space-y-2' : 'space-y-1 pr-4'}`}
+					className={`mt-2 pointer-events-none ${isExpanded ? 'space-y-2' : 'space-y-1 pr-4'}`}
 				>
 					{entries.map((entry, idx) => {
 						const aId = ctx.game.players[0]?.id;
