@@ -112,29 +112,51 @@ export default function LogPanel() {
 		const list = listRef.current;
 		if (!container || !list) return;
 
+		let rafId: number | null = null;
+
 		const scrollToBottom = (behavior: ScrollBehavior) => {
-			if (container.scrollHeight > container.clientHeight)
-				container.scrollTo({ top: container.scrollHeight, behavior });
+			if (container.scrollHeight <= container.clientHeight) return;
+
+			if (rafId !== null) cancelAnimationFrame(rafId);
+			rafId = requestAnimationFrame(() => {
+				container.scrollTo({
+					top: container.scrollHeight,
+					behavior,
+				});
+			});
 		};
 
-		const animations =
-			typeof list.getAnimations === 'function' ? list.getAnimations() : [];
-		if (animations.length === 0) {
+		const hasWindow = typeof window !== 'undefined';
+		const hasResizeObserver = hasWindow && 'ResizeObserver' in window;
+
+		if (hasResizeObserver) {
+			const observer = new ResizeObserver(() => {
+				scrollToBottom('auto');
+			});
+			observer.observe(list);
+
 			scrollToBottom('smooth');
-			return;
+
+			return () => {
+				if (rafId !== null) cancelAnimationFrame(rafId);
+				observer.disconnect();
+			};
 		}
 
-		let cancelled = false;
-		const finished = animations.map((animation) =>
-			animation.finished.catch(() => undefined),
-		);
+		// Fallback for environments without ResizeObserver support.
+		scrollToBottom('smooth');
+		if (!hasWindow)
+			return () => {
+				if (rafId !== null) cancelAnimationFrame(rafId);
+			};
 
-		void Promise.all(finished).then(() => {
-			if (!cancelled) scrollToBottom('smooth');
-		});
+		const timeout = window.setTimeout(() => {
+			scrollToBottom('auto');
+		}, 150);
 
 		return () => {
-			cancelled = true;
+			if (rafId !== null) cancelAnimationFrame(rafId);
+			window.clearTimeout(timeout);
 		};
 	}, [entries]);
 
@@ -164,7 +186,7 @@ export default function LogPanel() {
 					...(isOverlay && overlayOffsets
 						? {
 								top: `${overlayOffsets.top}px`,
-								right: `${overlayOffsets.right}px`,
+								right: `${Math.max(0, overlayOffsets.right)}px`,
 							}
 						: {}),
 				}}
