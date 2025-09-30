@@ -7,6 +7,7 @@ export default function LogPanel() {
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useAnimate<HTMLUListElement>();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverlay, setIsOverlay] = useState(false);
   const [collapsedSize, setCollapsedSize] = useState<{
     width: number;
     height: number;
@@ -66,12 +67,24 @@ export default function LogPanel() {
       const rect = node.getBoundingClientRect();
       setCollapsedSize({ width: rect.width, height: rect.height });
       setExpandedBase({ width: rect.width * 2, height: rect.height * 4 });
+      setIsOverlay(true);
       setIsExpanded(true);
       return;
     }
 
     setIsExpanded(false);
     setExpandedBase(null);
+  };
+
+  useEffect(() => {
+    if (!isExpanded) return;
+    setIsOverlay(true);
+  }, [isExpanded]);
+
+  const handleTransitionEnd = (event: React.TransitionEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (isExpanded || !isOverlay) return;
+    setIsOverlay(false);
   };
 
   useEffect(() => {
@@ -107,7 +120,7 @@ export default function LogPanel() {
 
   return (
     <div
-      className={`relative ${isExpanded ? 'z-50' : ''}`}
+      className={`relative ${isExpanded || isOverlay ? 'z-50' : ''}`}
       style={
         collapsedSize && collapsedSize.height
           ? { minHeight: `${collapsedSize.height}px` }
@@ -116,12 +129,23 @@ export default function LogPanel() {
     >
       <div
         ref={containerRef}
-        className={`border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out w-full ${
+        className={`border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out ${
+          isOverlay ? 'absolute top-0 right-0 left-auto' : 'w-full'
+        } ${
           isExpanded
-            ? 'absolute top-0 right-0 overflow-auto p-6 shadow-2xl'
+            ? 'overflow-auto p-6 shadow-2xl'
             : 'p-4 overflow-y-auto max-h-80'
         }`}
-        style={expandedStyle}
+        style={{
+          ...(expandedStyle ?? {}),
+          ...(!isExpanded && isOverlay && collapsedSize
+            ? {
+                width: `${collapsedSize.width}px`,
+                height: `${collapsedSize.height}px`,
+              }
+            : {}),
+        }}
+        onTransitionEnd={handleTransitionEnd}
       >
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-xl font-semibold">Log</h2>
