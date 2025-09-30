@@ -74,8 +74,15 @@ describe('content builder safeguards', () => {
 
   it('ensures attacks have a single target', () => {
     expect(() => attackParams().build()).toThrowError(
-      'Attack effect is missing a target. Call targetResource(...) or targetStat(...) once.',
+      'Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.',
     );
+  });
+
+  it('supports building targets for attacks', () => {
+    const params = attackParams().targetBuilding('test-building').build();
+    expect(params).toEqual({
+      target: { type: 'building', id: 'test-building' },
+    });
   });
 
   it('demands transfer amounts', () => {
