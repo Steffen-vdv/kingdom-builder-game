@@ -110,9 +110,15 @@ function baseEntry(
   const army = STATS[Stat.armyStrength];
   const absorption = STATS[Stat.absorption];
   const fort = STATS[Stat.fortificationStrength];
-  const { info } = getTargetInfo(eff);
+  const { target, info } = getTargetInfo(eff);
+  const targetLabel = iconLabel(info.icon, info.label);
 
   if (mode === 'summarize') {
+    if (target.type === 'building')
+      return {
+        entry: `${army.icon} destroy opponent's ${targetLabel}`,
+        target: info,
+      };
     return {
       entry: `${army.icon} opponent's ${fort.icon}${info.icon}`,
       target: info,
@@ -129,11 +135,16 @@ function baseEntry(
           ? `Ignoring ${absorption.icon} ${absorption.label} damage reduction`
           : `${absorption.icon} ${absorption.label} damage reduction applied`,
         ...(ignoreFortification
-          ? [`Damage applied directly to opponent's ${info.icon} ${info.label}`]
-          : [
-              `Damage applied to opponent's ${fort.icon} ${fort.label}`,
-              `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${info.icon} ${info.label}`,
-            ]),
+          ? [`Damage applied directly to opponent's ${targetLabel}`]
+          : target.type === 'building'
+            ? [
+                `Damage applied to opponent's ${fort.icon} ${fort.label}`,
+                `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage attempts to destroy opponent ${targetLabel}`,
+              ]
+            : [
+                `Damage applied to opponent's ${fort.icon} ${fort.label}`,
+                `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${info.icon} ${info.label}`,
+              ]),
       ],
     },
     target: info,
@@ -149,7 +160,7 @@ function summarizeOnDamage(
     | { attacker?: EffectDef[]; defender?: EffectDef[] }
     | undefined;
   if (!onDamage) return null;
-  const { info } = getTargetInfo(eff);
+  const { target, info } = getTargetInfo(eff);
   const format = mode === 'summarize' ? summarizeEffects : describeEffects;
   const attackerDefs = onDamage.attacker ?? [];
   const defenderDefs = onDamage.defender ?? [];
@@ -179,11 +190,21 @@ function summarizeOnDamage(
 
   const combined = items.concat(actionItems);
   if (!combined.length) return null;
+  const summaryTarget =
+    target.type === 'building' ? info.icon || info.label : info.icon;
+  const describeTarget =
+    target.type === 'building'
+      ? iconLabel(info.icon, info.label)
+      : `${info.icon} ${info.label}`;
   return {
     title:
       mode === 'summarize'
-        ? `On opponent ${info.icon} damage`
-        : `On opponent ${info.icon} ${info.label} damage`,
+        ? target.type === 'building'
+          ? `On opponent ${summaryTarget} destruction`
+          : `On opponent ${info.icon} damage`
+        : target.type === 'building'
+          ? `On opponent ${describeTarget} destruction`
+          : `On opponent ${info.icon} ${info.label} damage`,
     items: combined,
   };
 }
@@ -238,10 +259,15 @@ function buildEvaluationEntry(log: AttackLog['evaluation']): SummaryEntry {
       );
     }
 
-    const outcome = log.target.destroyed
-      ? `${army.icon}${formatNumber(log.target.damage)} destroys ${targetLabel}`
-      : `${army.icon}${formatNumber(log.target.damage)} fails to destroy ${targetLabel}`;
-    items.push(outcome);
+    if (!log.target.existed) items.push(`No ${targetLabel} to destroy`);
+    else {
+      const damageText = `${army.icon}${formatNumber(log.target.damage)}`;
+      items.push(
+        log.target.destroyed
+          ? `${damageText} destroys ${targetLabel}`
+          : `${damageText} fails to destroy ${targetLabel}`,
+      );
+    }
 
     return { title, items };
   }
@@ -396,7 +422,7 @@ function buildOnDamageEntry(
   eff: EffectDef<Record<string, unknown>>,
 ): SummaryEntry | null {
   if (!log.length) return null;
-  const { info } = getTargetInfo(eff);
+  const { target, info } = getTargetInfo(eff);
   const items: SummaryEntry[] = [];
   const defenderEntries = log.filter((entry) => entry.owner === 'defender');
   const attackerEntries = log.filter((entry) => entry.owner === 'attacker');
@@ -423,7 +449,10 @@ function buildOnDamageEntry(
   }
   if (!items.length) return null;
   return {
-    title: `${info.icon} ${info.label} damage trigger evaluation`,
+    title:
+      target.type === 'building'
+        ? `${info.icon} ${info.label} destruction trigger evaluation`
+        : `${info.icon} ${info.label} damage trigger evaluation`,
     items,
   };
 }

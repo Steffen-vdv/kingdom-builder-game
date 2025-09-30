@@ -24,6 +24,14 @@ import {
   STATS,
   PopulationRole,
 } from '@kingdom-builder/contents';
+import {
+  action,
+  effect,
+  Types,
+  ResourceMethods,
+  attackParams,
+  resourceParams,
+} from '@kingdom-builder/contents/config/builders';
 
 vi.mock('@kingdom-builder/engine', async () => {
   return await import('../../engine/src');
@@ -39,6 +47,63 @@ function createCtx() {
     start: GAME_START,
     rules: RULES,
   });
+}
+
+function pickBuilding() {
+  const entries = BUILDINGS.entries();
+  const selected =
+    entries.find(([, def]) => def.icon && def.name) ?? entries[0];
+  if (!selected) throw new Error('Expected at least one building definition');
+  const [id, def] = selected;
+  return { id, def } as const;
+}
+
+function iconLabel(
+  icon: string | undefined,
+  label: string | undefined,
+  fallback: string,
+) {
+  const resolved = label ?? fallback;
+  return icon ? `${icon} ${resolved}` : resolved;
+}
+
+function createBuildingAttackCtx() {
+  const { id: buildingId, def: building } = pickBuilding();
+  const attack = {
+    ...action()
+      .id('siege_building')
+      .name('Siege Building')
+      .icon('⚔️')
+      .cost(Resource.ap, 1)
+      .effect(
+        effect('attack', 'perform')
+          .params(
+            attackParams()
+              .targetBuilding(buildingId)
+              .onDamageAttacker(
+                effect(Types.Resource, ResourceMethods.ADD)
+                  .params(resourceParams().key(Resource.gold).amount(1))
+                  .build(),
+              )
+              .build(),
+          )
+          .build(),
+      )
+      .build(),
+  };
+
+  const ctx = createEngine({
+    actions: ACTIONS,
+    buildings: BUILDINGS,
+    developments: DEVELOPMENTS,
+    populations: POPULATIONS,
+    phases: PHASES,
+    start: GAME_START,
+    rules: RULES,
+    config: { actions: [attack] },
+  });
+
+  return { ctx, attack, buildingId, building } as const;
 }
 
 describe('army attack translation', () => {
@@ -153,6 +218,52 @@ describe('army attack translation', () => {
       `    Triggered ${plunder.icon} ${plunder.name}`,
       `      Opponent: ${RESOURCES[Resource.gold].icon} ${RESOURCES[Resource.gold].label} -25% (20→15) (-5)`,
       `      You: ${RESOURCES[Resource.gold].icon} ${RESOURCES[Resource.gold].label} +5 (13→18)`,
+    ]);
+  });
+
+  it('summarizes building attack as destruction', () => {
+    const { ctx, attack, buildingId, building } = createBuildingAttackCtx();
+    const army = STATS[Stat.armyStrength];
+    const gold = RESOURCES[Resource.gold];
+    const buildingDisplay = iconLabel(building.icon, building.name, buildingId);
+    const summaryTitle = building.icon
+      ? `On opponent ${building.icon} destruction`
+      : `On opponent ${building.name ?? buildingId} destruction`;
+
+    const summary = summarizeContent('action', attack.id, ctx);
+    expect(summary).toEqual([
+      `${army.icon} destroy opponent's ${buildingDisplay}`,
+      {
+        title: summaryTitle,
+        items: [`${gold.icon}+1 for you`],
+      },
+    ]);
+  });
+
+  it('logs building attack action with destruction evaluation', () => {
+    const { ctx, attack, buildingId, building } = createBuildingAttackCtx();
+    const army = STATS[Stat.armyStrength];
+    const absorption = STATS[Stat.absorption];
+    const fort = STATS[Stat.fortificationStrength];
+    const gold = RESOURCES[Resource.gold];
+    const buildingDisplay = iconLabel(building.icon, building.name, buildingId);
+
+    ctx.activePlayer.resources[Resource.ap] = 1;
+    ctx.activePlayer.stats[Stat.armyStrength] = 3;
+    ctx.activePlayer.resources[Resource.gold] = 0;
+    ctx.opponent.stats[Stat.fortificationStrength] = 1;
+    ctx.opponent.buildings.add(buildingId);
+
+    performAction(attack.id, ctx);
+    const log = logContent('action', attack.id, ctx);
+    expect(log).toEqual([
+      `Played ${attack.icon} ${attack.name}`,
+      `  Damage evaluation: ${army.icon}3 vs. ${absorption.icon}0% ${fort.icon}1 ${buildingDisplay}`,
+      `    ${army.icon}3 vs. ${absorption.icon}0% --> ${army.icon}3`,
+      `    ${army.icon}3 vs. ${fort.icon}1 --> ${fort.icon}0 ${army.icon}2`,
+      `    ${army.icon}2 destroys ${buildingDisplay}`,
+      `  ${buildingDisplay} destruction trigger evaluation`,
+      `    You: ${gold.icon} ${gold.label} +1 (0→1)`,
     ]);
   });
 });
