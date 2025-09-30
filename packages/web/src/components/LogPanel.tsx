@@ -183,21 +183,13 @@ export default function LogPanel() {
 	};
 
 	return (
-		<div
-			ref={wrapperRef}
-			className={`relative ${isExpanded ? 'z-50' : ''}`}
-			style={
-				collapsedMetrics?.height
-					? { minHeight: `${collapsedMetrics.height}px` }
-					: undefined
-			}
-		>
+		<div ref={wrapperRef} className={`relative ${isExpanded ? 'z-50' : ''}`}>
 			<div
 				ref={containerRef}
-				className={`border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out no-scrollbar ${
+				className={`border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out ${
 					isExpanded
 						? 'overflow-auto p-6 shadow-2xl'
-						: 'relative w-full max-h-80 overflow-y-auto p-4'
+						: 'relative w-full max-h-80 overflow-y-auto p-4 no-scrollbar'
 				}`}
 				style={expandedStyle}
 			>
@@ -207,15 +199,12 @@ export default function LogPanel() {
 					}`}
 				>
 					<h2 className="text-xl font-semibold">Log</h2>
-					{isExpanded ? renderToggleButton('inline') : null}
 				</div>
-				{!isExpanded ? (
-					<div className="pointer-events-none sticky float-right top-0 z-500">
-						<div className="pointer-events-auto">
-							{renderToggleButton('floating')}
-						</div>
+				<div className="pointer-events-none sticky float-right top-0">
+					<div className="pointer-events-auto">
+						{renderToggleButton('floating')}
 					</div>
-				) : null}
+				</div>
 				<ul
 					ref={listRef}
 					className={`mt-2 pointer-events-none ${isExpanded ? 'space-y-2' : 'space-y-1 pr-4'}`}
