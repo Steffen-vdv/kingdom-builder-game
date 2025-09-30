@@ -50,7 +50,24 @@
     @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/60 hover:shadow-lg hover:shadow-amber-500/10 dark:hover:bg-white/10 dark:hover:shadow-black/30;
   }
   .panel-card {
-    @apply rounded-2xl border border-white/50 bg-white/70 shadow-lg shadow-amber-500/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-black/50;
+    @apply relative overflow-hidden rounded-2xl border border-white/50 bg-white/70 shadow-lg shadow-amber-500/10 dark:border-white/10 dark:bg-slate-900/70 dark:shadow-black/50;
+  }
+  .panel-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .dark .panel-card::before {
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(30, 41, 59, 0.05));
+    opacity: 0.9;
+  }
+  .panel-card > * {
+    position: relative;
+    z-index: 1;
   }
   .player-panel .panel-card {
     @apply border-white/40 bg-white/80 dark:border-white/10 dark:bg-slate-900/60;
@@ -75,6 +92,28 @@
     bottom: 0;
     filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.4));
   }
+  .frosted-surface {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .frosted-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .dark .frosted-surface::before {
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(30, 41, 59, 0.05));
+    opacity: 0.9;
+  }
+  .frosted-surface > * {
+    position: relative;
+    z-index: 1;
+  }
   .land-tile {
     @apply relative panel-card border border-white/50 p-3 text-center hoverable cursor-help shadow-lg shadow-amber-500/10 dark:border-white/10;
   }
@@ -82,7 +121,7 @@
     @apply panel-card border border-white/40 p-1.5 text-lg leading-none hoverable cursor-help flex items-center justify-center gap-1 shrink-0 min-w-8 min-h-8 dark:border-white/10;
   }
   .player-bg {
-    @apply relative overflow-hidden rounded-3xl text-slate-900 shadow-xl shadow-slate-900/10 backdrop-blur-xl dark:text-slate-100 dark:shadow-black/40;
+    @apply relative overflow-hidden rounded-3xl text-slate-900 shadow-xl shadow-slate-900/10 dark:text-slate-100 dark:shadow-black/40;
     --stripe-color: rgba(255, 255, 255, 0.45);
     background-color: var(--player-color);
   }
@@ -114,6 +153,21 @@
   .player-bg > * {
     position: relative;
     z-index: 1;
+  }
+  .player-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 25% -10%, rgba(255, 255, 255, 0.35), transparent 55%),
+      radial-gradient(circle at 75% 120%, rgba(255, 255, 255, 0.25), transparent 65%);
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .dark .player-bg::after {
+    background: radial-gradient(circle at 25% -10%, rgba(148, 163, 184, 0.15), transparent 60%),
+      radial-gradient(circle at 75% 120%, rgba(148, 163, 184, 0.12), transparent 70%);
+    opacity: 0.8;
   }
   .player-bg-animated {
     animation: none;

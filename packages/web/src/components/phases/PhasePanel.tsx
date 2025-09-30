@@ -40,10 +40,12 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
 	return (
 		<section
 			ref={ref}
-			className="relative flex h-full min-h-[275px] w-full flex-col gap-3 rounded-3xl border border-white/60 bg-white/75 px-6 py-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50"
+			className="relative flex h-full min-h-[275px] w-full flex-col gap-3 rounded-3xl border border-white/60 bg-white/75 px-6 py-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface"
 		>
-			<div className="absolute -top-6 left-4 rounded-full border border-white/60 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-700 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200">
-				Turn {ctx.game.turn} · {ctx.activePlayer.name}
+			<div className="absolute -top-6 left-4 rounded-full border border-white/60 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200 frosted-surface">
+				<span>
+					Turn {ctx.game.turn} · {ctx.activePlayer.name}
+				</span>
 			</div>
 			<div className="flex flex-wrap gap-2 border-b border-white/40 pb-2 dark:border-white/10">
 				{ctx.phases.map((p) => {

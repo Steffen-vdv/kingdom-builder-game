@@ -20,7 +20,7 @@ function GameLayout() {
 			</div>
 
 			<div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-8 sm:px-8 lg:px-12">
-				<div className="mb-4 flex items-center justify-between rounded-3xl border border-white/50 bg-white/70 px-6 py-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/40">
+				<div className="mb-4 flex items-center justify-between rounded-3xl border border-white/50 bg-white/70 px-6 py-4 shadow-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/40 frosted-surface">
 					<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
 						Kingdom Builder
 					</h1>
@@ -46,7 +46,7 @@ function GameLayout() {
 				</div>
 
 				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
-					<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/70 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50">
+					<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/70 shadow-2xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
 						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
 							{ctx.game.players.map((p, i) => {
 								const isActive = p.id === ctx.activePlayer.id;

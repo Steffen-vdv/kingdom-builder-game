@@ -844,9 +844,9 @@ export default function ActionsPanel() {
 		: 'Show opponent actions';
 
 	return (
-		<section className="relative rounded-3xl border border-white/60 bg-white/75 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50">
-			{panelDisabled && (
-				<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 backdrop-blur-sm dark:bg-slate-950/60" />
+		<section className="relative rounded-3xl border border-white/60 bg-white/75 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
+      {panelDisabled && (
+				<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 dark:bg-slate-950/60 frosted-surface" />
 			)}
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
@@ -857,13 +857,13 @@ export default function ActionsPanel() {
 				</h2>
 				<div className="flex flex-wrap items-center gap-2">
 					{viewingOpponent && (
-						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-slate-200">
-							Viewing Opponent
+						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-200 frosted-surface">
+							<span>Viewing Opponent</span>
 						</span>
 					)}
 					{!isActionPhase && (
-						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-slate-200">
-							Not In Main Phase
+						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-200 frosted-surface">
+							<span>Not In Main Phase</span>
 						</span>
 					)}
 					{isLocalTurn && (
@@ -878,52 +878,57 @@ export default function ActionsPanel() {
 					)}
 				</div>
 			</div>
-			<div ref={sectionRef} className="space-y-4">
-				{otherActions.length > 0 && (
-					<BasicOptions
-						actions={otherActions}
-						summaries={actionSummaries}
-						player={selectedPlayer}
-						canInteract={canInteract}
-					/>
+			<div className="relative">
+				{panelDisabled && (
+					<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 backdrop-blur-sm dark:bg-slate-950/60" />
 				)}
-				{raisePopAction && (
-					<HireOptions
-						action={raisePopAction}
-						player={selectedPlayer}
-						canInteract={canInteract}
-					/>
-				)}
-				{developAction && (
-					<DevelopOptions
-						action={developAction}
-						isActionPhase={isActionPhase}
-						developments={developmentOptions}
-						summaries={developmentSummaries}
-						hasDevelopLand={hasDevelopLand}
-						player={selectedPlayer}
-						canInteract={canInteract}
-					/>
-				)}
-				{buildAction && (
-					<BuildOptions
-						action={buildAction}
-						isActionPhase={isActionPhase}
-						buildings={buildingOptions}
-						summaries={buildingSummaries}
-						descriptions={buildingDescriptions}
-						player={selectedPlayer}
-						canInteract={canInteract}
-					/>
-				)}
-				{demolishAction && (
-					<DemolishOptions
-						action={demolishAction}
-						isActionPhase={isActionPhase}
-						player={selectedPlayer}
-						canInteract={canInteract}
-					/>
-				)}
+				<div ref={sectionRef} className="space-y-4">
+					{otherActions.length > 0 && (
+						<BasicOptions
+							actions={otherActions}
+							summaries={actionSummaries}
+							player={selectedPlayer}
+							canInteract={canInteract}
+						/>
+					)}
+					{raisePopAction && (
+						<HireOptions
+							action={raisePopAction}
+							player={selectedPlayer}
+							canInteract={canInteract}
+						/>
+					)}
+					{developAction && (
+						<DevelopOptions
+							action={developAction}
+							isActionPhase={isActionPhase}
+							developments={developmentOptions}
+							summaries={developmentSummaries}
+							hasDevelopLand={hasDevelopLand}
+							player={selectedPlayer}
+							canInteract={canInteract}
+						/>
+					)}
+					{buildAction && (
+						<BuildOptions
+							action={buildAction}
+							isActionPhase={isActionPhase}
+							buildings={buildingOptions}
+							summaries={buildingSummaries}
+							descriptions={buildingDescriptions}
+							player={selectedPlayer}
+							canInteract={canInteract}
+						/>
+					)}
+					{demolishAction && (
+						<DemolishOptions
+							action={demolishAction}
+							isActionPhase={isActionPhase}
+							player={selectedPlayer}
+							canInteract={canInteract}
+						/>
+					)}
+				</div>
 			</div>
 		</section>
 	);
