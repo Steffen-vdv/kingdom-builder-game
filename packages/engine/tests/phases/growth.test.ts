@@ -49,7 +49,7 @@ describe('Growth phase', () => {
 
     const gainApIdx = growthPhase.steps.findIndex((s) => s.id === 'gain-ap');
 
-    // Player A growth
+    // Player growth
     let player = ctx.activePlayer;
     player.ap = 0;
     ctx.game.currentPhase = growthId;
@@ -59,7 +59,7 @@ describe('Growth phase', () => {
     const councilsA = player.population[PopulationRole.Council];
     expect(player.ap).toBe(councilApGain * councilsA);
 
-    // Player B growth (compensation already applied)
+    // Opponent growth (compensation already applied)
     ctx.game.currentPlayerIndex = 1;
     ctx.game.currentPhase = growthId;
     ctx.game.currentStep = 'gain-ap';
@@ -70,7 +70,7 @@ describe('Growth phase', () => {
     const councilsB = player.population[PopulationRole.Council];
     expect(player.ap).toBe(councilApGain * councilsB);
 
-    // Subsequent Player B growth phases
+    // Subsequent opponent growth phases
     for (let i = 0; i < 3; i++) {
       ctx.game.currentPlayerIndex = 1;
       ctx.game.currentPhase = growthId;

@@ -1,4 +1,5 @@
 import type { GameState, ResourceKey, PlayerId } from './state';
+import type { AISystem } from './ai';
 import type { Services, PassiveManager } from './services';
 import type { Registry } from './registry';
 import type { StatSourceFrame } from './stat_sources';
@@ -28,6 +29,7 @@ export class EngineContext {
       B: {},
     },
   ) {}
+  ai?: AISystem;
   recentResourceGains: { key: ResourceKey; amount: number }[] = [];
   // Cache base values for stat:add_pct per turn/phase/step to ensure
   // additive scaling when effects are evaluated multiple times in the

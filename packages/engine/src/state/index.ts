@@ -148,7 +148,7 @@ export class GameState {
   stepIndex = 0;
   devMode = false;
   players: PlayerState[];
-  constructor(aName = 'Player A', bName = 'Player B') {
+  constructor(aName = 'Player', bName = 'Opponent') {
     this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];
   }
   get active(): PlayerState {

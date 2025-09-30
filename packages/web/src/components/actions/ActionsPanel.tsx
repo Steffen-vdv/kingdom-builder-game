@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
 import {
   RESOURCES,
@@ -43,6 +43,8 @@ interface Building {
   focus?: Focus;
 }
 
+type DisplayPlayer = ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
+
 function isResourceKey(key: string): key is ResourceKey {
   return key in RESOURCES;
 }
@@ -73,11 +75,13 @@ function formatMissingResources(
 function GenericActions({
   actions,
   summaries,
-  isActionPhase,
+  player,
+  canInteract,
 }: {
   actions: Action[];
   summaries: Map<string, Summary>;
-  isActionPhase: boolean;
+  player: DisplayPlayer;
+  canInteract: boolean;
 }) {
   const {
     ctx,
@@ -109,15 +113,15 @@ function GenericActions({
         );
         const requirementIcons = getRequirementIcons(action.id, ctx);
         const canPay = Object.entries(costs).every(
-          ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
+          ([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
         );
         const meetsReq = requirements.length === 0;
         const summary = summaries.get(action.id);
         const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
-        const enabled = canPay && meetsReq && isActionPhase && implemented;
+        const enabled = canPay && meetsReq && canInteract && implemented;
         const insufficientTooltip = formatMissingResources(
           costs,
-          ctx.activePlayer.resources,
+          player.resources,
         );
         const title = !implemented
           ? 'Not implemented yet'
@@ -135,7 +139,7 @@ function GenericActions({
               </>
             }
             costs={costs}
-            playerResources={ctx.activePlayer.resources}
+            playerResources={player.resources}
             actionCostResource={actionCostResource}
             requirements={requirements}
             requirementIcons={requirementIcons}
@@ -144,7 +148,10 @@ function GenericActions({
             enabled={enabled}
             tooltip={title}
             focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
-            onClick={() => void handlePerform(action)}
+            onClick={() => {
+              if (!canInteract) return;
+              void handlePerform(action);
+            }}
             onMouseEnter={() => {
               const full = describeContent('action', action.id, ctx);
               const { effects, description } = splitSummary(full);
@@ -171,10 +178,12 @@ function GenericActions({
 
 function RaisePopOptions({
   action,
-  isActionPhase,
+  player,
+  canInteract,
 }: {
   action: Action;
-  isActionPhase: boolean;
+  player: DisplayPlayer;
+  canInteract: boolean;
 }) {
   const {
     ctx,
@@ -200,13 +209,13 @@ function RaisePopOptions({
           formatRequirement,
         );
         const canPay = Object.entries(costs).every(
-          ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
+          ([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
         );
         const meetsReq = requirements.length === 0;
-        const enabled = canPay && meetsReq && isActionPhase;
+        const enabled = canPay && meetsReq && canInteract;
         const insufficientTooltip = formatMissingResources(
           costs,
-          ctx.activePlayer.resources,
+          player.resources,
         );
         const title = !meetsReq
           ? requirements.join(', ')
@@ -229,7 +238,7 @@ function RaisePopOptions({
             }
             costs={costs}
             upkeep={upkeep}
-            playerResources={ctx.activePlayer.resources}
+            playerResources={player.resources}
             actionCostResource={actionCostResource}
             requirements={requirements}
             requirementIcons={requirementIcons}
@@ -237,7 +246,10 @@ function RaisePopOptions({
             enabled={enabled}
             tooltip={title}
             focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
-            onClick={() => void handlePerform(action, { role })}
+            onClick={() => {
+              if (!canInteract) return;
+              void handlePerform(action, { role });
+            }}
             onMouseEnter={() => {
               const { effects, description } = splitSummary(summary);
               handleHoverCard({
@@ -265,11 +277,13 @@ function RaisePopOptions({
 function BasicOptions({
   actions,
   summaries,
-  isActionPhase,
+  player,
+  canInteract,
 }: {
   actions: Action[];
   summaries: Map<string, Summary>;
-  isActionPhase: boolean;
+  player: DisplayPlayer;
+  canInteract: boolean;
 }) {
   const listRef = useAnimate<HTMLDivElement>();
   return (
@@ -287,7 +301,8 @@ function BasicOptions({
         <GenericActions
           actions={actions}
           summaries={summaries}
-          isActionPhase={isActionPhase}
+          player={player}
+          canInteract={canInteract}
         />
       </div>
     </div>
@@ -296,10 +311,12 @@ function BasicOptions({
 
 function HireOptions({
   action,
-  isActionPhase,
+  player,
+  canInteract,
 }: {
   action: Action;
-  isActionPhase: boolean;
+  player: DisplayPlayer;
+  canInteract: boolean;
 }) {
   const listRef = useAnimate<HTMLDivElement>();
   return (
@@ -315,7 +332,11 @@ function HireOptions({
         ref={listRef}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
       >
-        <RaisePopOptions action={action} isActionPhase={isActionPhase} />
+        <RaisePopOptions
+          action={action}
+          player={player}
+          canInteract={canInteract}
+        />
       </div>
     </div>
   );
@@ -327,12 +348,16 @@ function DevelopOptions({
   developments,
   summaries,
   hasDevelopLand,
+  player,
+  canInteract,
 }: {
   action: Action;
   isActionPhase: boolean;
   developments: Development[];
   summaries: Map<string, Summary>;
   hasDevelopLand: boolean;
+  player: DisplayPlayer;
+  canInteract: boolean;
 }) {
   const listRef = useAnimate<HTMLDivElement>();
   const {
@@ -342,7 +367,7 @@ function DevelopOptions({
     clearHoverCard,
     actionCostResource,
   } = useGameEngine();
-  const landIdForCost = ctx.activePlayer.lands[0]?.id as string;
+  const landIdForCost = player.lands[0]?.id as string;
   const entries = useMemo(() => {
     return developments
       .map((d) => {
@@ -383,14 +408,14 @@ function DevelopOptions({
           const canPay =
             hasDevelopLand &&
             Object.entries(costs).every(
-              ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
+              ([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
             );
           const summary = summaries.get(d.id);
           const implemented = (summary?.length ?? 0) > 0; // TODO: implement development effects
-          const enabled = canPay && isActionPhase && implemented;
+          const enabled = canPay && isActionPhase && canInteract && implemented;
           const insufficientTooltip = formatMissingResources(
             costs,
-            ctx.activePlayer.resources,
+            player.resources,
           );
           const title = !implemented
             ? 'Not implemented yet'
@@ -409,7 +434,7 @@ function DevelopOptions({
               }
               costs={costs}
               upkeep={upkeep}
-              playerResources={ctx.activePlayer.resources}
+              playerResources={player.resources}
               actionCostResource={actionCostResource}
               requirements={requirements}
               requirementIcons={[SLOT_INFO.icon]}
@@ -421,9 +446,8 @@ function DevelopOptions({
                 (ctx.developments.get(d.id) as Development | undefined)?.focus
               }
               onClick={() => {
-                const landId = ctx.activePlayer.lands.find(
-                  (l) => l.slotsFree > 0,
-                )?.id;
+                if (!canInteract) return;
+                const landId = player.lands.find((l) => l.slotsFree > 0)?.id;
                 void handlePerform(action, { id: d.id, landId });
               }}
               onMouseEnter={() => {
@@ -460,12 +484,16 @@ function BuildOptions({
   buildings,
   summaries,
   descriptions,
+  player,
+  canInteract,
 }: {
   action: Action;
   isActionPhase: boolean;
   buildings: Building[];
   summaries: Map<string, Summary>;
   descriptions: Map<string, Summary>;
+  player: DisplayPlayer;
+  canInteract: boolean;
 }) {
   const listRef = useAnimate<HTMLDivElement>();
   const {
@@ -476,7 +504,7 @@ function BuildOptions({
     actionCostResource,
   } = useGameEngine();
   const entries = useMemo(() => {
-    const owned = ctx.activePlayer.buildings;
+    const owned = player.buildings;
     return buildings
       .filter((b) => !owned.has(b.id))
       .map((b) => {
@@ -490,13 +518,7 @@ function BuildOptions({
         return { b, costs, total };
       })
       .sort((a, b) => a.total - b.total);
-  }, [
-    buildings,
-    ctx,
-    action.id,
-    actionCostResource,
-    ctx.activePlayer.buildings.size,
-  ]);
+  }, [buildings, ctx, action.id, actionCostResource, player.buildings.size]);
   return (
     <div>
       <h3 className="font-medium">
@@ -513,14 +535,14 @@ function BuildOptions({
         {entries.map(({ b, costs }) => {
           const requirements: string[] = [];
           const canPay = Object.entries(costs).every(
-            ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
+            ([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
           );
           const summary = summaries.get(b.id);
           const implemented = (summary?.length ?? 0) > 0; // TODO: implement building effects
-          const enabled = canPay && isActionPhase && implemented;
+          const enabled = canPay && isActionPhase && canInteract && implemented;
           const insufficientTooltip = formatMissingResources(
             costs,
-            ctx.activePlayer.resources,
+            player.resources,
           );
           const title = !implemented
             ? 'Not implemented yet'
@@ -538,7 +560,7 @@ function BuildOptions({
               }
               costs={costs}
               upkeep={upkeep}
-              playerResources={ctx.activePlayer.resources}
+              playerResources={player.resources}
               actionCostResource={actionCostResource}
               requirements={requirements}
               requirementIcons={[
@@ -549,7 +571,10 @@ function BuildOptions({
               enabled={enabled}
               tooltip={title}
               focus={(ctx.buildings.get(b.id) as Building | undefined)?.focus}
-              onClick={() => void handlePerform(action, { id: b.id })}
+              onClick={() => {
+                if (!canInteract) return;
+                void handlePerform(action, { id: b.id });
+              }}
               onMouseEnter={() => {
                 const full = descriptions.get(b.id) ?? [];
                 const { effects, description } = splitSummary(full);
@@ -581,9 +606,13 @@ function BuildOptions({
 function DemolishOptions({
   action,
   isActionPhase,
+  player,
+  canInteract,
 }: {
   action: Action;
   isActionPhase: boolean;
+  player: DisplayPlayer;
+  canInteract: boolean;
 }) {
   const listRef = useAnimate<HTMLDivElement>();
   const {
@@ -594,7 +623,7 @@ function DemolishOptions({
     actionCostResource,
   } = useGameEngine();
   const entries = useMemo(() => {
-    return Array.from(ctx.activePlayer.buildings)
+    return Array.from(player.buildings)
       .map((id) => {
         const building = ctx.buildings.get(id) as Building | undefined;
         if (!building) return null;
@@ -621,7 +650,7 @@ function DemolishOptions({
         if (a.total !== b.total) return a.total - b.total;
         return a.building.name.localeCompare(b.building.name);
       });
-  }, [ctx, action.id, actionCostResource, ctx.activePlayer.buildings.size]);
+  }, [ctx, action.id, actionCostResource, player.buildings.size]);
 
   if (entries.length === 0) return null;
 
@@ -641,16 +670,16 @@ function DemolishOptions({
         {entries.map(({ id, building, costs }) => {
           const requirements: string[] = [];
           const canPay = Object.entries(costs).every(
-            ([k, v]) => (ctx.activePlayer.resources[k] || 0) >= (v ?? 0),
+            ([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
           );
           const summary = summarizeContent('building', id, ctx, {
             installed: true,
           });
           const implemented = (summary?.length ?? 0) > 0;
-          const enabled = canPay && isActionPhase && implemented;
+          const enabled = canPay && isActionPhase && canInteract && implemented;
           const insufficientTooltip = formatMissingResources(
             costs,
-            ctx.activePlayer.resources,
+            player.resources,
           );
           const title = !implemented
             ? 'Not implemented yet'
@@ -668,7 +697,7 @@ function DemolishOptions({
               }
               costs={costs}
               upkeep={upkeep}
-              playerResources={ctx.activePlayer.resources}
+              playerResources={player.resources}
               actionCostResource={actionCostResource}
               requirements={requirements}
               requirementIcons={[]}
@@ -677,7 +706,10 @@ function DemolishOptions({
               enabled={enabled}
               tooltip={title}
               focus={(ctx.buildings.get(id) as Building | undefined)?.focus}
-              onClick={() => void handlePerform(action, { id })}
+              onClick={() => {
+                if (!canInteract) return;
+                void handlePerform(action, { id });
+              }}
               onMouseEnter={() => {
                 const full = describeContent('building', id, ctx, {
                   installed: true,
@@ -711,6 +743,9 @@ function DemolishOptions({
 export default function ActionsPanel() {
   const { ctx, tabsEnabled, actionCostResource } = useGameEngine();
   const sectionRef = useAnimate<HTMLDivElement>();
+  const player = ctx.game.players[0]!;
+  const opponent = ctx.game.players[1]!;
+  const [viewingOpponent, setViewingOpponent] = useState(false);
 
   const actionPhaseId = useMemo(
     () => ctx.phases.find((p) => p.action)?.id,
@@ -721,15 +756,24 @@ export default function ActionsPanel() {
     actionPhaseId,
     tabsEnabled,
   );
+  const isLocalTurn = ctx.activePlayer.id === player.id;
+
+  useEffect(() => {
+    if (!isLocalTurn && viewingOpponent) setViewingOpponent(false);
+  }, [isLocalTurn, viewingOpponent]);
+
+  const selectedPlayer = viewingOpponent ? opponent : player;
+  const canInteract = isLocalTurn && isActionPhase && !viewingOpponent;
+  const panelDisabled = !canInteract;
 
   const actions = useMemo<Action[]>(
     () =>
       Array.from(
         (ctx.actions as unknown as { map: Map<string, Action> }).map.values(),
       )
-        .filter((a) => !a.system || ctx.activePlayer.actions.has(a.id))
+        .filter((a) => !a.system || selectedPlayer.actions.has(a.id))
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    [ctx, ctx.activePlayer.actions.size],
+    [ctx, selectedPlayer.actions.size, selectedPlayer.id],
   );
   const developmentOptions = useMemo<Development[]>(
     () =>
@@ -781,7 +825,7 @@ export default function ActionsPanel() {
     return map;
   }, [buildingOptions, ctx]);
 
-  const hasDevelopLand = ctx.activePlayer.lands.some((l) => l.slotsFree > 0);
+  const hasDevelopLand = selectedPlayer.lands.some((l) => l.slotsFree > 0);
   const developAction = actions.find((a) => a.category === 'development');
   const buildAction = actions.find((a) => a.category === 'building');
   const demolishAction = actions.find((a) => a.category === 'building_remove');
@@ -790,31 +834,58 @@ export default function ActionsPanel() {
     (a) => (a.category ?? 'basic') === 'basic',
   );
 
+  const toggleLabel = viewingOpponent
+    ? 'Show player actions'
+    : 'Show opponent actions';
+
   return (
     <section className="border rounded p-4 bg-white dark:bg-gray-800 shadow relative">
-      {!isActionPhase && (
+      {panelDisabled && (
         <div className="absolute inset-0 bg-gray-200/60 dark:bg-gray-900/60 rounded pointer-events-none" />
       )}
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-semibold">
-          Actions (1 {RESOURCES[actionCostResource].icon} each)
+          {viewingOpponent ? `${opponent.name} Actions` : 'Actions'} (1{' '}
+          {RESOURCES[actionCostResource].icon} each)
         </h2>
-        {!isActionPhase && (
-          <span className="text-sm text-gray-600 dark:text-gray-300">
-            Not in Main phase
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {viewingOpponent && (
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Viewing Opponent
+            </span>
+          )}
+          {!isActionPhase && (
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Not in Main phase
+            </span>
+          )}
+          {isLocalTurn && (
+            <button
+              type="button"
+              className="text-lg leading-none px-2 py-1 border rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+              onClick={() => setViewingOpponent((prev) => !prev)}
+              aria-label={toggleLabel}
+            >
+              {viewingOpponent ? '←' : '→'}
+            </button>
+          )}
+        </div>
       </div>
       <div ref={sectionRef} className="space-y-3">
         {otherActions.length > 0 && (
           <BasicOptions
             actions={otherActions}
             summaries={actionSummaries}
-            isActionPhase={isActionPhase}
+            player={selectedPlayer}
+            canInteract={canInteract}
           />
         )}
         {raisePopAction && (
-          <HireOptions action={raisePopAction} isActionPhase={isActionPhase} />
+          <HireOptions
+            action={raisePopAction}
+            player={selectedPlayer}
+            canInteract={canInteract}
+          />
         )}
         {developAction && (
           <DevelopOptions
@@ -823,6 +894,8 @@ export default function ActionsPanel() {
             developments={developmentOptions}
             summaries={developmentSummaries}
             hasDevelopLand={hasDevelopLand}
+            player={selectedPlayer}
+            canInteract={canInteract}
           />
         )}
         {buildAction && (
@@ -832,12 +905,16 @@ export default function ActionsPanel() {
             buildings={buildingOptions}
             summaries={buildingSummaries}
             descriptions={buildingDescriptions}
+            player={selectedPlayer}
+            canInteract={canInteract}
           />
         )}
         {demolishAction && (
           <DemolishOptions
             action={demolishAction}
             isActionPhase={isActionPhase}
+            player={selectedPlayer}
+            canInteract={canInteract}
           />
         )}
       </div>
