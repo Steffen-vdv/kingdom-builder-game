@@ -2,10 +2,19 @@ import React from 'react';
 import { useGameEngine, TIME_SCALE_OPTIONS } from '../../state/GameContext';
 
 export default function TimeControl() {
-  const { timeScale, setTimeScale } = useGameEngine();
+  const { ctx, timeScale, setTimeScale } = useGameEngine();
+  const devMode = ctx.game.devMode;
 
   return (
     <div className="flex items-center gap-2" aria-label="Time control">
+      {devMode && (
+        <span
+          className="rounded bg-purple-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white shadow"
+          title="Developer mode enabled"
+        >
+          Dev
+        </span>
+      )}
       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
         Speed
       </span>

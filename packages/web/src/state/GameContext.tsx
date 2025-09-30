@@ -487,6 +487,13 @@ export function GameProvider({
       refresh();
 
       await logWithEffectDelay(logLines, player);
+
+      if (
+        ctx.game.devMode &&
+        (ctx.activePlayer.resources[actionCostResource] ?? 0) <= 0
+      ) {
+        await endTurn();
+      }
     } catch (e) {
       const icon = ctx.actions.get(action.id)?.icon || '';
       addLog(
