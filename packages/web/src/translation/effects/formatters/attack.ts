@@ -242,6 +242,7 @@ function buildEvaluationEntry(log: AttackLog['evaluation']): SummaryEntry {
     targetLabel,
     formatNumber,
     formatPercent,
+    formatStatValue,
   });
 }
 

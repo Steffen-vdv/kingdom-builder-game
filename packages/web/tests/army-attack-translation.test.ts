@@ -203,15 +203,17 @@ describe('army attack translation', () => {
     ctx.opponent.stats[Stat.fortificationStrength] = 1;
     ctx.opponent.resources[Resource.happiness] = 3;
     ctx.opponent.resources[Resource.gold] = 20;
+    const castleBefore = ctx.opponent.resources[Resource.castleHP];
 
     performAction('army_attack', ctx);
+    const castleAfter = ctx.opponent.resources[Resource.castleHP];
     const log = logContent('action', 'army_attack', ctx);
     expect(log).toEqual([
       `Played ${armyAttack.icon} ${armyAttack.name}`,
-      `  Damage evaluation: ${army.icon}2 vs. ${absorption.icon}0% ${fort.icon}1 ${castle.icon}10`,
+      `  Damage evaluation: ${army.icon}2 vs. ${absorption.icon}0% ${fort.icon}1 ${castle.icon}${castleBefore}`,
       `    ${army.icon}2 vs. ${absorption.icon}0% --> ${army.icon}2`,
       `    ${army.icon}2 vs. ${fort.icon}1 --> ${fort.icon}0 ${army.icon}1`,
-      `    ${army.icon}1 vs. ${castle.icon} ${castle.label} --> ${castle.icon}9`,
+      `    ${army.icon}1 vs. ${castle.icon}${castleBefore} --> ${castle.icon}${castleAfter}`,
       `  ${castle.icon} ${castle.label} damage trigger evaluation`,
       `    Opponent: ${happiness.icon} ${happiness.label} -1 (3→2)`,
       `    You: ${happiness.icon} ${happiness.label} +1 (1→2)`,

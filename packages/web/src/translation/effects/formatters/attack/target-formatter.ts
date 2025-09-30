@@ -31,6 +31,7 @@ type EvaluationContext = {
   targetLabel: string;
   formatNumber: (value: number) => string;
   formatPercent: (value: number) => string;
+  formatStatValue: (key: string, value: number) => string;
 };
 
 type BaseEntryContext = {
@@ -76,7 +77,16 @@ const defaultTargetFormatter: TargetFormatter = {
       : `On opponent ${info.icon} ${info.label} damage`,
   buildEvaluationEntry: (
     log,
-    { army, absorption, fort, info, targetLabel, formatNumber, formatPercent },
+    {
+      army,
+      absorption,
+      fort,
+      info,
+      targetLabel: _targetLabel,
+      formatNumber,
+      formatPercent,
+      formatStatValue,
+    },
   ) => {
     const target = log.target as NonBuildingEvaluationTarget;
     const absorptionPart = log.absorption.ignored
@@ -112,8 +122,17 @@ const defaultTargetFormatter: TargetFormatter = {
       );
     }
 
+    const formatTargetValue = (value: number) =>
+      target.type === 'stat'
+        ? formatStatValue(String(target.key), value)
+        : formatNumber(value);
+    const targetDisplay = (value: number) =>
+      info.icon
+        ? `${info.icon}${formatTargetValue(value)}`
+        : `${info.label} ${formatTargetValue(value)}`;
+
     items.push(
-      `${army.icon}${formatNumber(target.damage)} vs. ${targetLabel} --> ${info.icon}${formatNumber(target.after)}`,
+      `${army.icon}${formatNumber(target.damage)} vs. ${targetDisplay(target.before)} --> ${targetDisplay(target.after)}`,
     );
 
     return { title, items };
