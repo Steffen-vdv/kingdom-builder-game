@@ -549,12 +549,12 @@ export function GameProvider({
 
 	// Update main phase steps once action phase becomes active
 	useEffect(() => {
-		if (ctx.phases[ctx.game.phaseIndex]?.action) {
-			const start = ctx.activePlayer.resources[actionCostResource] as number;
-			setMainApStart(start);
-			updateMainPhaseStep(start);
-		}
-	}, [ctx.game.phaseIndex]);
+		if (!tabsEnabled) return;
+		if (!ctx.phases[ctx.game.phaseIndex]?.action) return;
+		const start = ctx.activePlayer.resources[actionCostResource] as number;
+		setMainApStart(start);
+		updateMainPhaseStep(start);
+	}, [ctx.game.phaseIndex, tabsEnabled]);
 
 	useEffect(() => {
 		void runUntilActionPhase();
