@@ -11,6 +11,9 @@ import {
   PHASES,
   GAME_START,
   RULES,
+  MODIFIER_INFO,
+  RESOURCES,
+  Resource,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -45,5 +48,33 @@ describe('modifier evaluation handlers', () => {
     const description = describeEffects([eff], ctx);
     expect(summary).toContain('handled');
     expect(description).toContain('handled desc');
+  });
+
+  it('formats development result modifiers with resource removal', () => {
+    const ctx = createCtx();
+    const eff: EffectDef = {
+      type: 'result_mod',
+      method: 'add',
+      params: {
+        evaluation: { type: 'development', id: 'farm' },
+      },
+      effects: [
+        {
+          type: 'resource',
+          method: 'remove',
+          params: { key: Resource.happiness, amount: 2 },
+        },
+      ],
+    };
+    const summary = summarizeEffects([eff], ctx);
+    const description = describeEffects([eff], ctx);
+    const farm = ctx.developments.get('farm');
+    const happiness = RESOURCES[Resource.happiness];
+    expect(summary).toEqual([
+      `${MODIFIER_INFO.result.icon} Every time you gain resources from ${farm.icon} ${farm.name}, gain ${happiness.icon}-2 more`,
+    ]);
+    expect(description).toEqual([
+      `${MODIFIER_INFO.result.icon} Every time you gain resources from ${farm.icon} ${farm.name}, gain ${happiness.icon}-2 more of that resource`,
+    ]);
   });
 });

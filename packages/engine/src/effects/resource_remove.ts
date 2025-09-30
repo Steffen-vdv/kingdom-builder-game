@@ -9,8 +9,11 @@ export const resourceRemove: EffectHandler = (effect, ctx, mult = 1) => {
     total = total >= 0 ? Math.ceil(total) : Math.floor(total);
   else if (effect.round === 'down')
     total = total >= 0 ? Math.floor(total) : Math.ceil(total);
+  if (total < 0) total = 0;
   const have = ctx.activePlayer.resources[key] || 0;
-  if (have < total)
-    throw new Error(`Insufficient ${key}: need ${total}, have ${have}`);
-  ctx.activePlayer.resources[key] = have - total;
+  const allowShortfall = Boolean(effect.meta?.['allowShortfall']);
+  const removed = allowShortfall ? Math.min(total, have) : total;
+  if (!allowShortfall && have < removed)
+    throw new Error(`Insufficient ${key}: need ${removed}, have ${have}`);
+  ctx.activePlayer.resources[key] = have - removed;
 };

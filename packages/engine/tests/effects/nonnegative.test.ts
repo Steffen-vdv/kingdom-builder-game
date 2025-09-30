@@ -12,7 +12,7 @@ import {
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
-describe('non-negative resources and stats', () => {
+describe('resource and stat bounds', () => {
   it('clamps stat removal to zero', () => {
     const actions = createActionRegistry();
     actions.add('lower_fort', {
@@ -40,7 +40,7 @@ describe('non-negative resources and stats', () => {
     expect(ctx.activePlayer.fortificationStrength).toBe(0);
   });
 
-  it('clamps negative resource additions to zero', () => {
+  it('clamps resource additions to zero', () => {
     const actions = createActionRegistry();
     actions.add('lose_gold', {
       id: 'lose_gold',

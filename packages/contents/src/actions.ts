@@ -78,12 +78,16 @@ export function createActionRegistry() {
               .params(resourceParams().key(Resource.gold).amount(2))
               .build(),
           )
-          .effect(
-            effect(Types.Resource, ResourceMethods.ADD)
-              .round('up')
-              .params(resourceParams().key(Resource.happiness).amount(-0.5))
+          .effect({
+            type: Types.Resource,
+            method: ResourceMethods.REMOVE,
+            round: 'up',
+            params: resourceParams()
+              .key(Resource.happiness)
+              .amount(0.5)
               .build(),
-          )
+            meta: { allowShortfall: true },
+          })
           .build(),
       )
       .build(),
@@ -124,12 +128,16 @@ export function createActionRegistry() {
               .params(resourceParams().key(Resource.gold).amount(4))
               .build(),
           )
-          .effect(
-            effect(Types.Resource, ResourceMethods.ADD)
-              .round('up')
-              .params(resourceParams().key(Resource.happiness).amount(-0.5))
+          .effect({
+            type: Types.Resource,
+            method: ResourceMethods.REMOVE,
+            round: 'up',
+            params: resourceParams()
+              .key(Resource.happiness)
+              .amount(0.5)
               .build(),
-          )
+            meta: { allowShortfall: true },
+          })
           .build(),
       )
       .build(),
@@ -227,11 +235,15 @@ export function createActionRegistry() {
                   .param('id', 'plunder')
                   .build(),
               )
-              .onDamageDefender(
-                effect(Types.Resource, ResourceMethods.ADD)
-                  .params(resourceParams().key(Resource.happiness).amount(-1))
+              .onDamageDefender({
+                type: Types.Resource,
+                method: ResourceMethods.REMOVE,
+                params: resourceParams()
+                  .key(Resource.happiness)
+                  .amount(1)
                   .build(),
-              ),
+                meta: { allowShortfall: true },
+              }),
           )
           .build(),
       )
@@ -291,11 +303,15 @@ export function createActionRegistry() {
                   .id('hold_festival_attack_happiness_penalty')
                   .actionId('army_attack'),
               )
-              .effect(
-                effect(Types.Resource, ResourceMethods.ADD)
-                  .params(resourceParams().key(Resource.happiness).amount(-3))
+              .effect({
+                type: Types.Resource,
+                method: ResourceMethods.REMOVE,
+                params: resourceParams()
+                  .key(Resource.happiness)
+                  .amount(3)
                   .build(),
-              )
+                meta: { allowShortfall: true },
+              })
               .build(),
           )
           .build(),
