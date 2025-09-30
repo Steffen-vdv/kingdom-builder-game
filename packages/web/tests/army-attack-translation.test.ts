@@ -146,7 +146,7 @@ describe('army attack translation', () => {
       `  Damage evaluation: ${army.icon}2 vs. ${absorption.icon}0% ${fort.icon}1 ${castle.icon}10`,
       `    ${army.icon}2 vs. ${absorption.icon}0% --> ${army.icon}2`,
       `    ${army.icon}2 vs. ${fort.icon}1 --> ${fort.icon}0 ${army.icon}1`,
-      `    ${army.icon}1 vs. ${castle.icon}10 --> ${castle.icon}9`,
+      `    ${army.icon}1 vs. ${castle.icon} ${castle.label} --> ${castle.icon}9`,
       `  ${castle.icon} ${castle.label} damage trigger evaluation`,
       `    Opponent: ${happiness.icon} ${happiness.label} -1 (3→2)`,
       `    You: ${happiness.icon} ${happiness.label} +1 (1→2)`,
