@@ -8,6 +8,7 @@ export default function LogPanel() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const listRef = useAnimate<HTMLUListElement>();
 	const [isExpanded, setIsExpanded] = useState(false);
+
 	const [collapsedMetrics, setCollapsedMetrics] = useState<{
 		width: number;
 		height: number;
@@ -164,6 +165,7 @@ export default function LogPanel() {
 			'inline-flex h-8 w-8 items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-800';
 		const variantClasses =
 			variant === 'floating'
+
 				? ' border border-slate-300/70 bg-white/95 text-slate-700 shadow-lg backdrop-blur-sm hover:bg-white dark:border-gray-700/70 dark:bg-gray-900/90 dark:text-slate-100 dark:hover:bg-gray-900'
 				: ' border border-transparent bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600';
 
