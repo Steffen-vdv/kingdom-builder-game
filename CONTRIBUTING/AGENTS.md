@@ -28,6 +28,16 @@ tests); Markdown documentation and peripheral utilities like the repository
    `npm run check`.
 5. Run `npm run build` only when verifying production builds locally.
 
+## Formatting & Linting
+
+- `npm run lint` enforces mandatory braces, 80-character lines, descriptive
+  identifiers, and a 250-line ceiling for most files. Legacy modules that
+  exceed this limit are temporarily exempt until they can be refactored; new
+  code should comply with the cap.
+- `npm run format` applies Prettier with tab indentation and the shared
+  80-character print width. Run it before committing whenever you touch
+  formatted files (TypeScript, JSON, Markdown, etc.).
+
 ## Testing Conventions
 
 - Tests are split into two levels:
@@ -52,9 +62,9 @@ tests); Markdown documentation and peripheral utilities like the repository
 ```ts
 const content = createContentFactory();
 const effect = {
-  type: 'resource',
-  method: 'add',
-  params: { key: CResource.gold, amount: 2 },
+	type: 'resource',
+	method: 'add',
+	params: { key: CResource.gold, amount: 2 },
 };
 const action = content.action({ effects: [effect] });
 const ctx = createTestEngine(content);
