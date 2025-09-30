@@ -215,6 +215,5 @@ export function createAttackTargetFormatter(
 	if (target.type === 'building') {
 		return buildingTargetFormatter;
 	}
-
 	return defaultTargetFormatter;
 }

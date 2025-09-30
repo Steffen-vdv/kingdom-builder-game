@@ -159,3 +159,7 @@
     color: rgb(251, 207, 232);
   }
 }
+
+.no-scrollbar {
+	scrollbar-width: none;
+}
