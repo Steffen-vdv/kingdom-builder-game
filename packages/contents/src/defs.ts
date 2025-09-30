@@ -10,6 +10,7 @@ export const ON_GAIN_INCOME_STEP = 'onGainIncomeStep';
 export const ON_GAIN_AP_STEP = 'onGainAPStep';
 
 export const BROOM_ICON = '🧹';
+export const RESOURCE_TRANSFER_ICON = '🔁';
 
 export type Focus = 'economy' | 'aggressive' | 'defense' | 'other';
 

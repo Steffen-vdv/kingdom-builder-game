@@ -58,6 +58,14 @@ fc.assert(
 - [ ] Tests fetch expected values dynamically from content or mock registries.
 - [ ] New features are reviewed for adherence to content-driven design.
 
+## 🧩 Uniform Solutions
+
+- When adjusting UI text, icons, or formatting conventions, prefer a single
+  uniform solution that can be reused everywhere that pattern appears. Update
+  helper utilities or shared formatters rather than patching isolated strings.
+- If a divergence from an established uniform solution is unavoidable, call it
+  out explicitly in your PR description so reviewers understand the rationale.
+
 ## 🔁 Enforcement
 
 - Pull requests touching engine, web, or tests will be reviewed for compliance with these rules.

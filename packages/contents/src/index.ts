@@ -27,4 +27,5 @@ export {
   ON_GAIN_INCOME_STEP,
   ON_GAIN_AP_STEP,
   BROOM_ICON,
+  RESOURCE_TRANSFER_ICON,
 } from './defs';
