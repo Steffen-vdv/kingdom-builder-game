@@ -38,9 +38,7 @@ describe('raiders guild translation', () => {
     const { effects, description } = splitSummary(summary);
     expect(effects).toHaveLength(1);
     const build = effects[0] as { title: string; items?: unknown[] };
-    expect(build.items?.[0]).toBe(
-      '✨ Result Modifier on 🏴‍☠️ Plunder: Increase transfer by 25%',
-    );
+    expect(build.items?.[0]).toBe('✨ 🏴‍☠️: 🔁+25%');
     expect(description).toBeDefined();
     const actionCard = (description as Summary)[0] as { title: string };
     expect(actionCard.title).toBe('🏴‍☠️ Plunder');

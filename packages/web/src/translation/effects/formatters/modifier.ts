@@ -2,6 +2,7 @@ import {
   MODIFIER_INFO as modifierInfo,
   RESOURCES,
   POPULATION_INFO,
+  RESOURCE_TRANSFER_ICON,
 } from '@kingdom-builder/contents';
 import type {
   ActionDef,
@@ -120,25 +121,31 @@ registerModifierEvalHandler('population', {
 
 registerModifierEvalHandler('transfer_pct', {
   summarize: (eff, _evaluation, ctx) => {
-    const { icon, name } = getActionInfo(ctx, 'plunder');
+    const { icon } = getActionInfo(ctx, 'plunder');
     const amount = Number(eff.params?.['adjust'] ?? 0);
     return [
-      `${modifierInfo.result.icon} ${icon} ${name}: ${signed(amount)}${Math.abs(
+      `${modifierInfo.result.icon} ${icon}: ${RESOURCE_TRANSFER_ICON}${signed(
         amount,
-      )}% transfer`,
+      )}${Math.abs(amount)}%`,
     ];
   },
   describe: (eff, _evaluation, ctx) => {
     const { icon, name } = getActionInfo(ctx, 'plunder');
     const amount = Number(eff.params?.['adjust'] ?? 0);
     const card = describeContent('action', 'plunder', ctx);
+    const summary = `${modifierInfo.result.icon} ${icon}: ${RESOURCE_TRANSFER_ICON}${signed(
+      amount,
+    )}${Math.abs(amount)}%`;
     return [
-      `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${icon} ${name}: ${increaseOrDecrease(
-        amount,
-      )} transfer by ${Math.abs(amount)}%`,
+      summary,
       {
         title: `${icon} ${name}`,
-        items: card,
+        items: [
+          `${modifierInfo.result.icon} ${modifierInfo.result.label} on ${icon} ${name}: ${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
+            amount,
+          )} transfer by ${Math.abs(amount)}%`,
+          ...card,
+        ],
         _hoist: true,
         _desc: true,
       },
