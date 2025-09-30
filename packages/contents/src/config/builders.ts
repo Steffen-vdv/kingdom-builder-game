@@ -456,6 +456,9 @@ class AttackParamsBuilder extends ParamsBuilder<{
   targetStat(key: StatKey) {
     return this.set('target', { type: 'stat', key });
   }
+  targetBuilding(id: string) {
+    return this.set('target', { type: 'building', id });
+  }
   ignoreAbsorption(flag = true) {
     return this.set('ignoreAbsorption', flag);
   }
@@ -478,7 +481,7 @@ class AttackParamsBuilder extends ParamsBuilder<{
   override build() {
     if (!this.wasSet('target'))
       throw new Error(
-        'Attack effect is missing a target. Call targetResource(...) or targetStat(...) once.',
+        'Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.',
       );
     return super.build();
   }
