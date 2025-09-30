@@ -43,8 +43,6 @@ const mockGame = {
 	phaseSteps: [],
 	setPhaseSteps: vi.fn(),
 	phaseTimer: 0,
-	phasePaused: false,
-	setPaused: vi.fn(),
 	mainApStart: 0,
 	displayPhase: ctx.game.currentPhase,
 	setDisplayPhase: vi.fn(),
