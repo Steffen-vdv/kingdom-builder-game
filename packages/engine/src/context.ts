@@ -4,66 +4,77 @@ import type { Services, PassiveManager } from './services';
 import type { Registry } from './registry';
 import type { StatSourceFrame } from './stat_sources';
 import type {
-  ActionConfig as ActionDef,
-  BuildingConfig as BuildingDef,
-  DevelopmentConfig as DevelopmentDef,
-  PopulationConfig as PopulationDef,
-  PlayerStartConfig,
+	ActionConfig as ActionDef,
+	BuildingConfig as BuildingDef,
+	DevelopmentConfig as DevelopmentDef,
+	PopulationConfig as PopulationDef,
+	PlayerStartConfig,
 } from './config/schema';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
 
 export class EngineContext {
-  constructor(
-    public game: GameState,
-    public services: Services,
-    public actions: Registry<ActionDef>,
-    public buildings: Registry<BuildingDef>,
-    public developments: Registry<DevelopmentDef>,
-    public populations: Registry<PopulationDef>,
-    public passives: PassiveManager,
-    public phases: PhaseDef[],
-    public actionCostResource: ResourceKey,
-    public compensations: Record<PlayerId, PlayerStartConfig> = {
-      A: {},
-      B: {},
-    },
-  ) {}
-  ai?: AISystem;
-  recentResourceGains: { key: ResourceKey; amount: number }[] = [];
-  // Cache base values for stat:add_pct per turn/phase/step to ensure
-  // additive scaling when effects are evaluated multiple times in the
-  // same step (e.g. multiple leaders raising strength).
-  statAddPctBases: Record<string, number> = {};
-  statAddPctAccums: Record<string, number> = {};
-  actionTraces: ActionTrace[] = [];
-  statSourceStack: StatSourceFrame[] = [];
+	constructor(
+		public game: GameState,
+		public services: Services,
+		public actions: Registry<ActionDef>,
+		public buildings: Registry<BuildingDef>,
+		public developments: Registry<DevelopmentDef>,
+		public populations: Registry<PopulationDef>,
+		public passives: PassiveManager,
+		public phases: PhaseDef[],
+		public actionCostResource: ResourceKey,
+		public compensations: Record<PlayerId, PlayerStartConfig> = {
+			A: {},
+			B: {},
+		},
+	) {}
+	aiSystem?: AISystem;
+	recentResourceGains: {
+		key: ResourceKey;
+		amount: number;
+	}[] = [];
+	// Cache base values for stat:add_pct per turn/phase/step to ensure
+	// additive scaling when effects are evaluated multiple times in the
+	// same step (e.g. multiple leaders raising strength).
+	statAddPctBases: Record<string, number> = {};
+	statAddPctAccums: Record<string, number> = {};
+	actionTraces: ActionTrace[] = [];
+	statSourceStack: StatSourceFrame[] = [];
 
-  private _effectLogs: Map<string, unknown[]> = new Map();
+	private _effectLogs: Map<string, unknown[]> = new Map();
 
-  private _queue: Promise<unknown> = Promise.resolve();
-  enqueue<T>(task: () => Promise<T> | T): Promise<T> {
-    const next = this._queue.then(() => task());
-    this._queue = next.catch(() => {});
-    return next;
-  }
-  pushEffectLog(key: string, data: unknown): void {
-    const existing = this._effectLogs.get(key);
-    if (existing) existing.push(data);
-    else this._effectLogs.set(key, [data]);
-  }
-  pullEffectLog<T>(key: string): T | undefined {
-    const existing = this._effectLogs.get(key);
-    if (!existing || existing.length === 0) return undefined;
-    const [next, ...rest] = existing as T[];
-    if (rest.length) this._effectLogs.set(key, rest);
-    else this._effectLogs.delete(key);
-    return next;
-  }
-  get activePlayer() {
-    return this.game.active;
-  }
-  get opponent() {
-    return this.game.opponent;
-  }
+	private _queue: Promise<unknown> = Promise.resolve();
+	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T> {
+		const nextTask = this._queue.then(() => taskFactory());
+		this._queue = nextTask.catch(() => {});
+		return nextTask;
+	}
+	pushEffectLog(key: string, data: unknown): void {
+		const existingEntries = this._effectLogs.get(key);
+		if (existingEntries) {
+			existingEntries.push(data);
+		} else {
+			this._effectLogs.set(key, [data]);
+		}
+	}
+	pullEffectLog<T>(key: string): T | undefined {
+		const existingEntries = this._effectLogs.get(key);
+		if (!existingEntries || existingEntries.length === 0) {
+			return undefined;
+		}
+		const [nextEntry, ...remainingEntries] = existingEntries as T[];
+		if (remainingEntries.length) {
+			this._effectLogs.set(key, remainingEntries);
+		} else {
+			this._effectLogs.delete(key);
+		}
+		return nextEntry;
+	}
+	get activePlayer() {
+		return this.game.active;
+	}
+	get opponent() {
+		return this.game.opponent;
+	}
 }
