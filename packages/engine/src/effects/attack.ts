@@ -256,6 +256,7 @@ export function resolveAttack(
   if (post.length) runEffects(post, ctx);
 
   ctx.game.currentPlayerIndex = original;
+  ctx.services.happinessThresholds.syncPlayer(ctx, defender);
 
   return {
     damageDealt: targetDamage,

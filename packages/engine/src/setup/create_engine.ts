@@ -184,8 +184,10 @@ export function createEngine({
 	engineContext.aiSystem = aiSystem;
 	applyPlayerStartConfiguration(playerOne, startConfig.player, rules);
 	applyPlayerStartConfiguration(playerOne, playerACompensation, rules);
+	services.happinessThresholds.syncPlayer(engineContext, playerOne);
 	applyPlayerStartConfiguration(playerTwo, startConfig.player, rules);
 	applyPlayerStartConfiguration(playerTwo, playerBCompensation, rules);
+	services.happinessThresholds.syncPlayer(engineContext, playerTwo);
 	engineContext.game.currentPlayerIndex = 0;
 	engineContext.game.currentPhase = phases[0]?.id || '';
 	engineContext.game.currentStep = phases[0]?.steps[0]?.id || '';

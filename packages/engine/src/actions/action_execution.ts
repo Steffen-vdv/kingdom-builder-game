@@ -78,6 +78,7 @@ export function performAction<T extends string>(
 ) {
 	engineContext.actionTraces = [];
 	const actionDefinition = engineContext.actions.get(actionId);
+	const player = engineContext.activePlayer;
 	assertSystemActionUnlocked(actionId, engineContext);
 	evaluateRequirements(actionId, engineContext);
 	const baseCosts = { ...(actionDefinition.baseCosts || {}) };
@@ -93,14 +94,11 @@ export function performAction<T extends string>(
 		baseCosts,
 		engineContext,
 	);
-	const affordability = verifyCostAffordability(
-		finalCosts,
-		engineContext.activePlayer,
-	);
+	const affordability = verifyCostAffordability(finalCosts, player);
 	if (affordability !== true) {
 		throw new Error(affordability);
 	}
-	deductCostsFromPlayer(finalCosts, engineContext.activePlayer);
+	deductCostsFromPlayer(finalCosts, player, engineContext);
 	const passiveManager = engineContext.passives;
 	withStatSourceFrames(
 		engineContext,
