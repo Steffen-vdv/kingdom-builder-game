@@ -89,8 +89,6 @@ interface GameEngineContextValue {
 	phaseSteps: PhaseStep[];
 	setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
 	phaseTimer: number;
-	phasePaused: boolean;
-	setPaused: (v: boolean) => void;
 	mainApStart: number;
 	displayPhase: string;
 	setDisplayPhase: (id: string) => void;
@@ -145,11 +143,8 @@ export function GameProvider({
 	const [log, setLog] = useState<LogEntry[]>([]);
 	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
 	const hoverTimeout = useRef<number>();
-
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
-	const [phasePaused, setPhasePaused] = useState(false);
-	const phasePausedRef = useRef(false);
 	const [mainApStart, setMainApStart] = useState(0);
 	const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
 	const [phaseHistories, setPhaseHistories] = useState<
@@ -184,11 +179,6 @@ export function GameProvider({
 		() => ctx.phases.find((p) => p.action)?.id,
 		[ctx],
 	);
-
-	function setPaused(v: boolean) {
-		phasePausedRef.current = v;
-		setPhasePaused(v);
-	}
 
 	const addLog = (
 		entry: string | string[],
@@ -291,7 +281,6 @@ export function GameProvider({
 		return new Promise<void>((resolve) => {
 			let elapsed = 0;
 			const interval = window.setInterval(() => {
-				if (phasePausedRef.current) return;
 				elapsed += tick;
 				setPhaseTimer(Math.min(1, elapsed / adjustedTotal));
 				if (elapsed >= adjustedTotal) {
@@ -605,8 +594,6 @@ export function GameProvider({
 		phaseSteps,
 		setPhaseSteps,
 		phaseTimer,
-		phasePaused,
-		setPaused,
 		mainApStart,
 		displayPhase,
 		setDisplayPhase,

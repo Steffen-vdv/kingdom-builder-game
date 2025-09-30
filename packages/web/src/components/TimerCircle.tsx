@@ -2,13 +2,9 @@ import React, { useId } from 'react';
 
 interface TimerCircleProps {
 	progress: number;
-	paused?: boolean;
 }
 
-const TimerCircle: React.FC<TimerCircleProps> = ({
-	progress,
-	paused = false,
-}) => {
+const TimerCircle: React.FC<TimerCircleProps> = ({ progress }) => {
 	const id = useId();
 	const size = 36;
 	const strokeWidth = 4;
@@ -19,10 +15,6 @@ const TimerCircle: React.FC<TimerCircleProps> = ({
 		: 0;
 	const strokeDashoffset = (1 - clampedProgress) * circumference;
 
-	const pauseBarWidth = 4;
-	const pauseBarHeight = 14;
-	const pauseBarY = size / 2 - pauseBarHeight / 2;
-
 	return (
 		<svg
 			width={size}
@@ -32,11 +24,6 @@ const TimerCircle: React.FC<TimerCircleProps> = ({
 			aria-hidden
 			className="text-blue-500"
 		>
-			<title>
-				{paused
-					? 'Auto-resolution paused'
-					: `Auto-resolution ${Math.round(clampedProgress * 100)}%`}
-			</title>
 			<defs>
 				<radialGradient id={`${id}-bg`} cx="50%" cy="50%" r="65%">
 					<stop offset="0%" stopColor="rgba(255,255,255,0.9)" />
@@ -84,34 +71,7 @@ const TimerCircle: React.FC<TimerCircleProps> = ({
 				strokeDashoffset={strokeDashoffset}
 				transform={`rotate(-90 ${size / 2} ${size / 2})`}
 			/>
-			{paused ? (
-				<g>
-					<rect
-						x={size / 2 - pauseBarWidth - 2}
-						y={pauseBarY}
-						width={pauseBarWidth}
-						height={pauseBarHeight}
-						rx={2}
-						fill="#38bdf8"
-					/>
-					<rect
-						x={size / 2 + 2}
-						y={pauseBarY}
-						width={pauseBarWidth}
-						height={pauseBarHeight}
-						rx={2}
-						fill="#38bdf8"
-					/>
-				</g>
-			) : (
-				<circle
-					cx={size / 2}
-					cy={size / 2}
-					r={4}
-					fill="#1d4ed8"
-					opacity={0.85}
-				/>
-			)}
+			<circle cx={size / 2} cy={size / 2} r={4} fill="#1d4ed8" opacity={0.85} />
 		</svg>
 	);
 };

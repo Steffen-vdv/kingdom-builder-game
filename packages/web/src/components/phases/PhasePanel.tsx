@@ -11,7 +11,6 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
 		phaseSteps,
 		setPhaseSteps,
 		phaseTimer,
-		phasePaused,
 		displayPhase,
 		setDisplayPhase,
 		phaseHistories,
@@ -144,9 +143,8 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
 			{(!isActionPhase || phaseTimer > 0) && (
 				<div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-white/60 bg-white/80 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200">
 					<div className="h-9 w-9">
-						<TimerCircle progress={phaseTimer} paused={phasePaused} />
+						<TimerCircle progress={phaseTimer} />
 					</div>
-					<span>{phasePaused ? 'Paused' : 'Auto'}</span>
 				</div>
 			)}
 			{isActionPhase && (
