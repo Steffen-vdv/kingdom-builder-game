@@ -83,6 +83,7 @@ type PhaseStep = {
 interface GameEngineContextValue {
 	ctx: EngineContext;
 	log: LogEntry[];
+	logOverflowed: boolean;
 	hoverCard: HoverCard | null;
 	handleHoverCard: (data: HoverCard) => void;
 	clearHoverCard: () => void;
@@ -142,7 +143,9 @@ export function GameProvider({
 	const [, setTick] = useState(0);
 	const refresh = () => setTick((t) => t + 1);
 
+	const MAX_LOG_ENTRIES = 250;
 	const [log, setLog] = useState<LogEntry[]>([]);
+	const [logOverflowed, setLogOverflowed] = useState(false);
 	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
 	const hoverTimeout = useRef<number>();
 
@@ -201,7 +204,12 @@ export function GameProvider({
 				text: `[${p.name}] ${text}`,
 				playerId: p.id,
 			}));
-			return [...prev, ...items];
+			const combined = [...prev, ...items];
+			if (combined.length > MAX_LOG_ENTRIES) {
+				setLogOverflowed(true);
+				return combined.slice(-MAX_LOG_ENTRIES);
+			}
+			return combined;
 		});
 	};
 
@@ -572,6 +580,7 @@ export function GameProvider({
 	const value: GameEngineContextValue = {
 		ctx,
 		log,
+		logOverflowed,
 		hoverCard,
 		handleHoverCard,
 		clearHoverCard,

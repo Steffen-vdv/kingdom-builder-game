@@ -3,7 +3,7 @@ import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
 
 export default function LogPanel() {
-	const { log: entries, ctx } = useGameEngine();
+	const { log: entries, logOverflowed, ctx } = useGameEngine();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const listRef = useAnimate<HTMLUListElement>();
 	const [isExpanded, setIsExpanded] = useState(false);
@@ -173,6 +173,11 @@ export default function LogPanel() {
 						</div>
 					</div>
 				</div>
+				{logOverflowed ? (
+					<p className="mt-2 text-xs italic text-amber-700 dark:text-amber-300">
+						Older log entries were trimmed.
+					</p>
+				) : null}
 				<ul
 					ref={listRef}
 					className={`mt-3 ${isExpanded ? 'space-y-3 text-sm' : 'space-y-2 text-xs'} text-slate-700 dark:text-slate-200`}
