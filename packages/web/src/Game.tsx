@@ -46,7 +46,7 @@ function GameLayout() {
 				</div>
 
 				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
-					<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/70 shadow-2xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
+					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
 						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
 							{ctx.game.players.map((p, i) => {
 								const isActive = p.id === ctx.activePlayer.id;
