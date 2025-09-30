@@ -10,7 +10,15 @@ export const buildingAdd: EffectHandler = (effect, ctx, mult = 1) => {
     ctx.activePlayer.buildings.add(id);
     const building = ctx.buildings.get(id);
     if (building.onBuild)
-      ctx.passives.addPassive({ id, effects: building.onBuild }, ctx);
+      ctx.passives.addPassive({ id, effects: building.onBuild }, ctx, {
+        frames: () => ({
+          kind: 'building',
+          id,
+          longevity: 'ongoing' as const,
+          dependsOn: [{ type: 'building', id }],
+          removal: { type: 'building', id, detail: 'removed' },
+        }),
+      });
   }
 };
 

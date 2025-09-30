@@ -2,6 +2,7 @@ import type { GameState, ResourceKey, PlayerId } from './state';
 import type { AISystem } from './ai';
 import type { Services, PassiveManager } from './services';
 import type { Registry } from './registry';
+import type { StatSourceFrame } from './stat_sources';
 import type {
   ActionConfig as ActionDef,
   BuildingConfig as BuildingDef,
@@ -36,10 +37,27 @@ export class EngineContext {
   statAddPctBases: Record<string, number> = {};
   statAddPctAccums: Record<string, number> = {};
   actionTraces: ActionTrace[] = [];
+  statSourceStack: StatSourceFrame[] = [];
+
+  private _effectLogs: Map<string, unknown[]> = new Map();
+
   private _queue: Promise<unknown> = Promise.resolve();
   enqueue<T>(task: () => Promise<T> | T): Promise<T> {
     const next = this._queue.then(() => task());
     this._queue = next.catch(() => {});
+    return next;
+  }
+  pushEffectLog(key: string, data: unknown): void {
+    const existing = this._effectLogs.get(key);
+    if (existing) existing.push(data);
+    else this._effectLogs.set(key, [data]);
+  }
+  pullEffectLog<T>(key: string): T | undefined {
+    const existing = this._effectLogs.get(key);
+    if (!existing || existing.length === 0) return undefined;
+    const [next, ...rest] = existing as T[];
+    if (rest.length) this._effectLogs.set(key, rest);
+    else this._effectLogs.delete(key);
     return next;
   }
   get activePlayer() {

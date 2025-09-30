@@ -15,6 +15,9 @@ import type {
   PlayerState,
   StatKey,
   PopulationRoleId,
+  StatSourceMeta,
+  StatSourceContribution,
+  StatSourceLink,
 } from './state';
 import { Services, PassiveManager } from './services';
 import type { CostBag, RuleSet } from './services';
@@ -32,6 +35,7 @@ import { runRequirement, registerCoreRequirements } from './requirements';
 import { Registry } from './registry';
 import { applyParamsToEffects } from './utils';
 import { createAISystem, createTaxCollectorController } from './ai';
+import { applyStatDelta, withStatSourceFrames } from './stat_sources';
 import {
   validateGameConfig,
   type GameConfig,
@@ -49,6 +53,24 @@ import {
 import type { PhaseDef } from './phases';
 export { snapshotPlayer } from './log';
 export type { PlayerSnapshot, ActionTrace } from './log';
+export type {
+  AttackLog,
+  AttackEvaluationLog,
+  AttackOnDamageLogEntry,
+  AttackPlayerDiff,
+  AttackPowerLog,
+} from './effects/attack';
+
+function isStatKey(key: string): key is StatKey {
+  return key in Stat;
+}
+
+const START_STAT_SOURCE_META: StatSourceMeta = {
+  key: 'start:setup',
+  longevity: 'permanent',
+  kind: 'start',
+  detail: 'Initial setup',
+};
 
 function applyCostsWithPassives(
   actionId: string,
@@ -160,8 +182,20 @@ export function performAction<T extends string>(
   if (ok !== true) throw new Error(ok);
   pay(costs, ctx.activePlayer);
 
-  runEffects(resolved, ctx);
-  ctx.passives.runResultMods(actionDefinition.id, ctx);
+  withStatSourceFrames(
+    ctx,
+    (_effect, _ctx, statKey) => ({
+      key: `action:${actionDefinition.id}:${statKey}`,
+      kind: 'action',
+      id: actionDefinition.id,
+      detail: 'Resolution',
+      longevity: 'permanent',
+    }),
+    () => {
+      runEffects(resolved, ctx);
+      ctx.passives.runResultMods(actionDefinition.id, ctx);
+    },
+  );
   const traces = ctx.actionTraces;
   ctx.actionTraces = [];
   return traces;
@@ -179,21 +213,47 @@ export function advance(ctx: EngineContext): AdvanceResult {
   const step = phase.steps[ctx.game.stepIndex];
   const player = ctx.activePlayer;
   const effects: EffectDef[] = [];
-  if (step?.triggers) {
-    for (const trig of step.triggers) {
-      const collected = collectTriggerEffects(trig, ctx, player);
-      if (collected.length) {
-        runEffects(collected, ctx);
-        effects.push(...collected);
+  const phaseFrame = (
+    _effect: EffectDef,
+    _ctx: EngineContext,
+    statKey: StatKey,
+  ) => {
+    const partial = {
+      key: `phase:${phase.id}:${step?.id ?? 'step'}:${statKey}`,
+      kind: 'phase',
+      id: phase.id,
+      longevity: 'permanent' as const,
+    } as const;
+    const stepId = step?.id;
+    return stepId ? { ...partial, detail: stepId } : partial;
+  };
+
+  const triggers = step?.triggers ?? [];
+  if (triggers.length) {
+    withStatSourceFrames(ctx, phaseFrame, () => {
+      for (const trig of triggers) {
+        const bundles = collectTriggerEffects(trig, ctx, player);
+        for (const bundle of bundles) {
+          withStatSourceFrames(ctx, bundle.frames, () =>
+            runEffects(bundle.effects, ctx),
+          );
+          effects.push(...bundle.effects);
+        }
       }
-    }
+    });
   }
   if (step?.effects) {
-    runEffects(step.effects, ctx);
-    effects.push(...step.effects);
+    const stepEffects = step.effects;
+    withStatSourceFrames(ctx, phaseFrame, () => {
+      runEffects(stepEffects, ctx);
+    });
+    effects.push(...stepEffects);
   }
 
-  if (step) ctx.passives.runResultMods(step.id, ctx);
+  if (step)
+    withStatSourceFrames(ctx, phaseFrame, () =>
+      ctx.passives.runResultMods(step.id, ctx),
+    );
 
   ctx.game.stepIndex += 1;
   if (ctx.game.stepIndex >= phase.steps.length) {
@@ -226,9 +286,13 @@ function applyPlayerStart(
   for (const [key, value] of Object.entries(config.resources || {}))
     player.resources[key] = value ?? 0;
   for (const [key, value] of Object.entries(config.stats || {})) {
+    if (!isStatKey(key)) continue;
     const val = value ?? 0;
+    const prev = player.stats[key] ?? 0;
     player.stats[key] = val;
     if (val !== 0) player.statsHistory[key] = true;
+    const delta = val - prev;
+    if (delta !== 0) applyStatDelta(player, key, delta, START_STAT_SOURCE_META);
   }
   for (const [key, value] of Object.entries(config.population || {}))
     player.population[key] = value ?? 0;
@@ -398,7 +462,14 @@ export {
   PassiveManager,
 };
 
-export type { RuleSet, ResourceKey, StatKey };
+export type {
+  RuleSet,
+  ResourceKey,
+  StatKey,
+  StatSourceMeta,
+  StatSourceContribution,
+  StatSourceLink,
+};
 export {
   registerCoreEffects,
   EffectRegistry,

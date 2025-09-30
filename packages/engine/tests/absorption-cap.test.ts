@@ -9,11 +9,11 @@ describe('absorption cap', () => {
     const defender = ctx.game.opponent;
     defender.absorption = 1.5;
     const start = defender.resources[Resource.castleHP];
-    const dmg = resolveAttack(defender, 5, ctx, {
+    const result = resolveAttack(defender, 5, ctx, {
       type: 'resource',
       key: Resource.castleHP,
     });
-    expect(dmg).toBe(0);
+    expect(result.damageDealt).toBe(0);
     expect(defender.resources[Resource.castleHP]).toBe(start);
   });
 });

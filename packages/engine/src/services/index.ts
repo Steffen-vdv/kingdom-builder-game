@@ -1,6 +1,8 @@
 import type { ResourceKey, PlayerState, PlayerId } from '../state';
 import type { EngineContext } from '../context';
 import { runEffects, type EffectDef } from '../effects';
+import type { StatSourceFrame } from '../stat_sources';
+import { withStatSourceFrames } from '../stat_sources';
 import type { DevelopmentConfig } from '../config/schema';
 import type { Registry } from '../registry';
 
@@ -63,7 +65,7 @@ export type CostModifier = (
   ctx: EngineContext,
 ) => CostBag;
 export type ResultModifier = (actionId: string, ctx: EngineContext) => void;
-export type ResourceGain = { key: ResourceKey; amount: number };
+export type ResourceGain = { key: string; amount: number };
 export type EvaluationModifier = (
   ctx: EngineContext,
   gains: ResourceGain[],
@@ -84,8 +86,16 @@ export class PassiveManager {
       onBeforeAttacked?: EffectDef[];
       onAttackResolved?: EffectDef[];
       owner: PlayerId;
+      frames: StatSourceFrame[];
     }
   > = new Map();
+
+  private ensureFrameList(
+    frames?: StatSourceFrame | StatSourceFrame[],
+  ): StatSourceFrame[] {
+    if (!frames) return [];
+    return Array.isArray(frames) ? [...frames] : [frames];
+  }
 
   registerCostModifier(id: string, mod: CostModifier) {
     this.costMods.set(id, mod);
@@ -146,17 +156,31 @@ export class PassiveManager {
       onAttackResolved?: EffectDef[];
     },
     ctx: EngineContext,
+    options?: {
+      frames?: StatSourceFrame | StatSourceFrame[];
+      detail?: string;
+    },
   ) {
     const key = `${passive.id}_${ctx.activePlayer.id}`;
-    this.passives.set(key, { ...passive, owner: ctx.activePlayer.id });
-    runEffects(passive.effects, ctx);
+    const providedFrames = this.ensureFrameList(options?.frames);
+    const passiveFrame: StatSourceFrame = (_effect, _ctx, statKey) => ({
+      key: `passive:${key}:${statKey}`,
+      instance: key,
+      detail: options?.detail ?? 'Passive',
+      longevity: 'ongoing' as const,
+    });
+    const frames = [...providedFrames, passiveFrame];
+    this.passives.set(key, { ...passive, owner: ctx.activePlayer.id, frames });
+    withStatSourceFrames(ctx, frames, () => runEffects(passive.effects, ctx));
   }
 
   removePassive(id: string, ctx: EngineContext) {
     const key = `${id}_${ctx.activePlayer.id}`;
     const passive = this.passives.get(key);
     if (!passive) return;
-    runEffects(passive.effects.map(reverseEffect), ctx);
+    withStatSourceFrames(ctx, passive.frames, () =>
+      runEffects(passive.effects.map(reverseEffect), ctx),
+    );
     this.passives.delete(key);
   }
 

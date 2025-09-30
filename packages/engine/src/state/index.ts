@@ -29,6 +29,34 @@ export function setPopulationRoleKeys(keys: string[]) {
     PopulationRole[id.charAt(0).toUpperCase() + id.slice(1)] = id;
 }
 
+export interface StatSourceLink {
+  type?: string;
+  id?: string;
+  detail?: string;
+  extra?: Record<string, unknown>;
+}
+
+export interface StatSourceMeta {
+  key: string;
+  longevity: 'ongoing' | 'permanent';
+  kind?: string;
+  id?: string;
+  detail?: string;
+  instance?: string;
+  dependsOn?: StatSourceLink[];
+  removal?: StatSourceLink;
+  effect?: {
+    type?: string | undefined;
+    method?: string | undefined;
+  };
+  extra?: Record<string, unknown>;
+}
+
+export interface StatSourceContribution {
+  amount: number;
+  meta: StatSourceMeta;
+}
+
 export type PlayerId = 'A' | 'B';
 
 export class Land {
@@ -66,6 +94,7 @@ export class PlayerState {
   lands: Land[] = [];
   buildings: Set<string> = new Set();
   actions: Set<string> = new Set();
+  statSources: Record<StatKey, Record<string, StatSourceContribution>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
   constructor(id: PlayerId, name: string) {
@@ -85,9 +114,14 @@ export class PlayerState {
     }
     this.stats = {};
     this.statsHistory = {};
+    this.statSources = {} as Record<
+      StatKey,
+      Record<string, StatSourceContribution>
+    >;
     for (const key of Object.values(Stat)) {
       this.stats[key] = 0;
       this.statsHistory[key] = false;
+      this.statSources[key] = {};
       Object.defineProperty(this, key, {
         get: () => this.stats[key],
         set: (v: number) => {
