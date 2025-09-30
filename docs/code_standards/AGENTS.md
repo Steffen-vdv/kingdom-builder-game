@@ -15,9 +15,24 @@ maintainable.
   - Abbreviations should be expanded (`populationDefinition` instead of `def`).
 - Variables and functions use `camelCase`; classes and types use `PascalCase`.
 
-## Style
+## Formatting
 
-- The repository is formatted with Prettier; run `npm run lint` to format code.
+These formatting rules apply to source files that participate in the game
+runtime (engine packages, shared utilities, the web client, and automated
+tests). Documentation (`*.md`) and peripheral tooling that does not run in the
+game experience (e.g., `overview.tsx` used for repository overviews) can follow
+context-specific conventions.
+
+- **Indent with tabs.** Tabs keep indentation consistent across editors while
+  letting contributors choose their preferred display width.
+- **Limit lines to 80 characters.** Break up long expressions with intermediate
+  variables or helper functions.
+- **Wrap every scope in braces.** Conditionals, loops and other block
+  statements must always use braces even when the body is a single statement.
+- **Keep files under 250 lines.** When a module grows beyond this limit,
+  extract helpers into neighbouring files or dedicated utility modules. Splits
+  should follow logical boundaries (e.g., grouping related evaluators or
+  separating React components by concern).
 - Prefer clarity over brevity and keep functions focused on a single task.
 - Derive values from configuration or registries rather than hard coding
   numbers in tests.

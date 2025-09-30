@@ -11,7 +11,12 @@ Thanks for your interest in improving Kingdom Builder! This guide describes the
 workflow for contributors so that changes remain consistent and easy to review.
 
 Please also review our [Code Standards](../docs/code_standards/AGENTS.md) for naming and
-style conventions used throughout the repository.
+style conventions used throughout the repository. Key highlights include tab-based
+indentation, 80-character lines, mandatory braces around every scope, and keeping
+files under 250 lines by splitting related helpers into focused modules. These
+formatting expectations apply to runtime code (engine, shared packages, web, and
+tests); Markdown documentation and peripheral utilities like the repository
+`overview.tsx` may follow context-specific formatting where that improves clarity.
 
 ## Development Setup
 
