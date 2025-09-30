@@ -12,7 +12,7 @@ describe('resource removal penalties', () => {
     advance(ctx);
     const original = ctx.game.currentPlayerIndex;
     ctx.game.currentPlayerIndex = 1;
-    ctx.activePlayer.resources[Resource.happiness] = 3;
+    ctx.activePlayer.resources[Resource.happiness] = 0;
     const before = ctx.activePlayer.resources[Resource.happiness] ?? 0;
     runEffects(
       [
@@ -27,6 +27,7 @@ describe('resource removal penalties', () => {
     );
     const after = ctx.activePlayer.resources[Resource.happiness] ?? 0;
     expect(after).toBe(before - 1);
+    expect(after).toBeLessThan(0);
     ctx.game.currentPlayerIndex = original;
   });
 });
