@@ -4,6 +4,7 @@ import { useAnimate } from '../utils/useAutoAnimate';
 
 export default function LogPanel() {
   const { log: entries, ctx } = useGameEngine();
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useAnimate<HTMLUListElement>();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -15,6 +16,10 @@ export default function LogPanel() {
   const [expandedBase, setExpandedBase] = useState<{
     width: number;
     height: number;
+  } | null>(null);
+  const [overlayOffsets, setOverlayOffsets] = useState<{
+    top: number;
+    right: number;
   } | null>(null);
   const [viewport, setViewport] = useState(() => ({
     width: typeof window === 'undefined' ? 0 : window.innerWidth,
@@ -35,10 +40,16 @@ export default function LogPanel() {
   useEffect(() => {
     if (isExpanded) return;
     const node = containerRef.current;
-    if (!node) return;
+    const wrapper = wrapperRef.current;
+    if (!node || !wrapper) return;
     const rect = node.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
     setCollapsedSize({ width: rect.width, height: rect.height });
-  }, [entries, isExpanded]);
+    setOverlayOffsets({
+      top: rect.top - wrapperRect.top,
+      right: wrapperRect.right - rect.right,
+    });
+  }, [entries, isExpanded, viewport.height, viewport.width]);
 
   const clampDimension = (target: number, viewportLimit: number) => {
     if (viewportLimit <= 0) return target;
@@ -61,11 +72,17 @@ export default function LogPanel() {
 
   const handleToggleExpand = () => {
     const node = containerRef.current;
-    if (!node) return;
+    const wrapper = wrapperRef.current;
+    if (!node || !wrapper) return;
 
     if (!isExpanded) {
       const rect = node.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
       setCollapsedSize({ width: rect.width, height: rect.height });
+      setOverlayOffsets({
+        top: rect.top - wrapperRect.top,
+        right: wrapperRect.right - rect.right,
+      });
       setExpandedBase({ width: rect.width * 2, height: rect.height * 4 });
       setIsOverlay(true);
       setIsExpanded(true);
@@ -85,6 +102,7 @@ export default function LogPanel() {
     if (event.target !== event.currentTarget) return;
     if (isExpanded || !isOverlay) return;
     setIsOverlay(false);
+    setOverlayOffsets(null);
   };
 
   useEffect(() => {
@@ -120,6 +138,7 @@ export default function LogPanel() {
 
   return (
     <div
+      ref={wrapperRef}
       className={`relative ${isExpanded || isOverlay ? 'z-50' : ''}`}
       style={
         collapsedSize && collapsedSize.height
@@ -130,7 +149,7 @@ export default function LogPanel() {
       <div
         ref={containerRef}
         className={`border rounded bg-white dark:bg-gray-800 shadow transition-all duration-300 ease-in-out ${
-          isOverlay ? 'absolute top-0 right-0 left-auto' : 'w-full'
+          isOverlay ? 'absolute left-auto' : 'w-full'
         } ${
           isExpanded
             ? 'overflow-auto p-6 shadow-2xl'
@@ -142,6 +161,12 @@ export default function LogPanel() {
             ? {
                 width: `${collapsedSize.width}px`,
                 height: `${collapsedSize.height}px`,
+              }
+            : {}),
+          ...(isOverlay && overlayOffsets
+            ? {
+                top: `${overlayOffsets.top}px`,
+                right: `${overlayOffsets.right}px`,
               }
             : {}),
         }}
