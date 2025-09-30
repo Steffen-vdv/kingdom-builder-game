@@ -21,6 +21,7 @@ import {
   describeEffects,
 } from '../factory';
 import { formatStatValue } from '../../../utils/stats';
+import { createAttackTargetFormatter } from './attack/target-formatter';
 
 type Mode = 'summarize' | 'describe';
 
@@ -112,15 +113,16 @@ function baseEntry(
   const fort = STATS[Stat.fortificationStrength];
   const { target, info } = getTargetInfo(eff);
   const targetLabel = iconLabel(info.icon, info.label);
+  const targetFormatter = createAttackTargetFormatter(target);
 
   if (mode === 'summarize') {
-    if (target.type === 'building')
-      return {
-        entry: `${army.icon} destroy opponent's ${targetLabel}`,
-        target: info,
-      };
     return {
-      entry: `${army.icon} opponent's ${fort.icon}${info.icon}`,
+      entry: targetFormatter.summarizeBaseEntry({
+        army,
+        fort,
+        info,
+        targetLabel,
+      }),
       target: info,
     };
   }
@@ -136,15 +138,11 @@ function baseEntry(
           : `${absorption.icon} ${absorption.label} damage reduction applied`,
         ...(ignoreFortification
           ? [`Damage applied directly to opponent's ${targetLabel}`]
-          : target.type === 'building'
-            ? [
-                `Damage applied to opponent's ${fort.icon} ${fort.label}`,
-                `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage attempts to destroy opponent ${targetLabel}`,
-              ]
-            : [
-                `Damage applied to opponent's ${fort.icon} ${fort.label}`,
-                `If opponent ${fort.icon} ${fort.label} reduced to 0, overflow remaining damage on opponent ${info.icon} ${info.label}`,
-              ]),
+          : targetFormatter.describeFortificationItems({
+              fort,
+              info,
+              targetLabel,
+            })),
       ],
     },
     target: info,
@@ -161,6 +159,7 @@ function summarizeOnDamage(
     | undefined;
   if (!onDamage) return null;
   const { target, info } = getTargetInfo(eff);
+  const targetFormatter = createAttackTargetFormatter(target);
   const format = mode === 'summarize' ? summarizeEffects : describeEffects;
   const attackerDefs = onDamage.attacker ?? [];
   const defenderDefs = onDamage.defender ?? [];
@@ -197,14 +196,11 @@ function summarizeOnDamage(
       ? iconLabel(info.icon, info.label)
       : `${info.icon} ${info.label}`;
   return {
-    title:
-      mode === 'summarize'
-        ? target.type === 'building'
-          ? `On opponent ${summaryTarget} destruction`
-          : `On opponent ${info.icon} damage`
-        : target.type === 'building'
-          ? `On opponent ${describeTarget} destruction`
-          : `On opponent ${info.icon} ${info.label} damage`,
+    title: targetFormatter.onDamageTitle(mode, {
+      info,
+      summaryTarget,
+      describeTarget,
+    }),
     items: combined,
   };
 }
@@ -224,90 +220,29 @@ function buildEvaluationEntry(log: AttackLog['evaluation']): SummaryEntry {
   const army = STATS[Stat.armyStrength];
   const absorption = STATS[Stat.absorption];
   const fort = STATS[Stat.fortificationStrength];
-  const absorptionPart = log.absorption.ignored
-    ? `${absorption.icon} ignored`
-    : `${absorption.icon}${formatPercent(log.absorption.before)}`;
-  const fortPart = log.fortification.ignored
-    ? `${fort.icon} ignored`
-    : `${fort.icon}${formatNumber(log.fortification.before)}`;
-  if (log.target.type === 'building') {
-    const targetInfo = getBuildingDisplay(log.target.id);
-    const targetLabel = iconLabel(targetInfo.icon, targetInfo.label);
-    const title = `Damage evaluation: ${army.icon}${formatNumber(log.power.modified)} vs. ${absorptionPart} ${fortPart} ${targetLabel}`;
-    const items: SummaryEntry[] = [];
-
-    if (log.absorption.ignored)
-      items.push(
-        `${army.icon}${formatNumber(log.power.modified)} ignores ${absorption.icon} ${absorption.label}`,
-      );
-    else
-      items.push(
-        `${army.icon}${formatNumber(log.power.modified)} vs. ${absorption.icon}${formatPercent(log.absorption.before)} --> ${army.icon}${formatNumber(log.absorption.damageAfter)}`,
-      );
-
-    if (log.fortification.ignored)
-      items.push(
-        `${army.icon}${formatNumber(log.absorption.damageAfter)} bypasses ${fort.icon} ${fort.label}`,
-      );
-    else {
-      const remaining = Math.max(
-        0,
-        log.absorption.damageAfter - log.fortification.damage,
-      );
-      items.push(
-        `${army.icon}${formatNumber(log.absorption.damageAfter)} vs. ${fort.icon}${formatNumber(log.fortification.before)} --> ${fort.icon}${formatNumber(log.fortification.after)} ${army.icon}${formatNumber(remaining)}`,
-      );
-    }
-
-    if (!log.target.existed) items.push(`No ${targetLabel} to destroy`);
-    else {
-      const damageText = `${army.icon}${formatNumber(log.target.damage)}`;
-      items.push(
-        log.target.destroyed
-          ? `${damageText} destroys ${targetLabel}`
-          : `${damageText} fails to destroy ${targetLabel}`,
-      );
-    }
-
-    return { title, items };
-  }
-
   const targetInfo =
-    log.target.type === 'stat'
-      ? STATS[log.target.key as StatKey]
-      : RESOURCES[log.target.key as ResourceKey];
+    log.target.type === 'building'
+      ? getBuildingDisplay(log.target.id)
+      : log.target.type === 'stat'
+        ? STATS[log.target.key as StatKey]
+        : RESOURCES[log.target.key as ResourceKey];
   const targetLabel = iconLabel(targetInfo.icon, targetInfo.label);
-  const title = `Damage evaluation: ${army.icon}${formatNumber(log.power.modified)} vs. ${absorptionPart} ${fortPart} ${targetInfo.icon}${formatNumber(log.target.before)}`;
-  const items: SummaryEntry[] = [];
-
-  if (log.absorption.ignored)
-    items.push(
-      `${army.icon}${formatNumber(log.power.modified)} ignores ${absorption.icon} ${absorption.label}`,
-    );
-  else
-    items.push(
-      `${army.icon}${formatNumber(log.power.modified)} vs. ${absorption.icon}${formatPercent(log.absorption.before)} --> ${army.icon}${formatNumber(log.absorption.damageAfter)}`,
-    );
-
-  if (log.fortification.ignored)
-    items.push(
-      `${army.icon}${formatNumber(log.absorption.damageAfter)} bypasses ${fort.icon} ${fort.label}`,
-    );
-  else {
-    const remaining = Math.max(
-      0,
-      log.absorption.damageAfter - log.fortification.damage,
-    );
-    items.push(
-      `${army.icon}${formatNumber(log.absorption.damageAfter)} vs. ${fort.icon}${formatNumber(log.fortification.before)} --> ${fort.icon}${formatNumber(log.fortification.after)} ${army.icon}${formatNumber(remaining)}`,
-    );
-  }
-
-  items.push(
-    `${army.icon}${formatNumber(log.target.damage)} vs. ${targetLabel} --> ${targetInfo.icon}${formatNumber(log.target.after)}`,
+  const formatter = createAttackTargetFormatter(
+    log.target.type === 'building'
+      ? { type: 'building', id: log.target.id }
+      : log.target.type === 'stat'
+        ? { type: 'stat', key: log.target.key as StatKey }
+        : { type: 'resource', key: log.target.key as ResourceKey },
   );
-
-  return { title, items };
+  return formatter.buildEvaluationEntry(log, {
+    army,
+    absorption,
+    fort,
+    info: targetInfo,
+    targetLabel,
+    formatNumber,
+    formatPercent,
+  });
 }
 
 interface DiffFormatOptions {
@@ -423,6 +358,7 @@ function buildOnDamageEntry(
 ): SummaryEntry | null {
   if (!log.length) return null;
   const { target, info } = getTargetInfo(eff);
+  const targetFormatter = createAttackTargetFormatter(target);
   const items: SummaryEntry[] = [];
   const defenderEntries = log.filter((entry) => entry.owner === 'defender');
   const attackerEntries = log.filter((entry) => entry.owner === 'attacker');
@@ -449,10 +385,7 @@ function buildOnDamageEntry(
   }
   if (!items.length) return null;
   return {
-    title:
-      target.type === 'building'
-        ? `${info.icon} ${info.label} destruction trigger evaluation`
-        : `${info.icon} ${info.label} damage trigger evaluation`,
+    title: targetFormatter.onDamageLogTitle(info),
     items,
   };
 }
