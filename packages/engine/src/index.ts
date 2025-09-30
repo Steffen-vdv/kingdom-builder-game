@@ -44,6 +44,7 @@ export type {
 	AttackEvaluationLog,
 	AttackOnDamageLogEntry,
 	AttackPlayerDiff,
+	AttackPowerLog,
 } from './effects/attack';
 export { collectTriggerEffects } from './triggers';
 export { applyParamsToEffects } from './utils';
