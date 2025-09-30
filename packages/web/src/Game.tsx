@@ -9,93 +9,110 @@ import Button from './components/common/Button';
 import TimeControl from './components/common/TimeControl';
 
 function GameLayout() {
-  const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
-  return (
-    <div className="p-4 w-full bg-slate-100 text-gray-900 dark:bg-slate-900 dark:text-gray-100 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-center flex-1">
-          Kingdom Builder
-        </h1>
-        {onExit && (
-          <div className="flex items-center gap-3 ml-4">
-            <TimeControl />
-            <Button onClick={onToggleDark} variant="secondary">
-              {darkMode ? 'Light Mode' : 'Dark Mode'}
-            </Button>
-            <Button onClick={onExit} variant="danger">
-              Quit
-            </Button>
-          </div>
-        )}
-      </div>
+	const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
+	return (
+		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
+			<div className="pointer-events-none absolute inset-0">
+				<div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
+				<div className="absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-500/20" />
+				<div className="absolute top-1/4 right-0 h-72 w-72 translate-x-1/3 rounded-full bg-rose-300/30 blur-3xl dark:bg-rose-500/20" />
+				<div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.55),_rgba(255,255,255,0)_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.6),_rgba(15,23,42,0)_60%)]" />
+			</div>
 
-      <div className="grid gap-x-4 gap-y-6 grid-cols-1 sm:grid-cols-1 lg:grid-cols-[minmax(0,1fr)_30rem]">
-        <section className="border rounded bg-white dark:bg-gray-800 shadow flex min-h-[275px]">
-          <div className="flex flex-1 items-stretch rounded overflow-hidden divide-x divide-black/10 dark:divide-white/10">
-            {ctx.game.players.map((p, i) => {
-              const isActive = p.id === ctx.activePlayer.id;
-              const sideClass = i === 0 ? 'pr-6' : 'pl-6';
-              const colorClass =
-                i === 0
-                  ? isActive
-                    ? 'player-bg-blue-active'
-                    : 'player-bg-blue'
-                  : isActive
-                    ? 'player-bg-red-active'
-                    : 'player-bg-red';
-              const bgClass = [
-                'player-bg',
-                sideClass,
-                colorClass,
-                isActive ? 'player-bg-animated' : null,
-              ]
-                .filter(Boolean)
-                .join(' ');
-              return (
-                <PlayerPanel
-                  key={p.id}
-                  player={p}
-                  className={`flex-1 p-4 ${bgClass}`}
-                  isActive={isActive}
-                />
-              );
-            })}
-          </div>
-        </section>
-        <div className="w-full lg:col-start-2">
-          <PhasePanel />
-        </div>
-        <div className="lg:col-start-1 lg:row-start-2">
-          <ActionsPanel />
-        </div>
-        <div className="w-full flex flex-col gap-6 lg:col-start-2 lg:row-start-2">
-          <LogPanel />
-          <HoverCard />
-        </div>
-      </div>
-    </div>
-  );
+			<div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-8 sm:px-8 lg:px-12">
+				<div className="mb-4 flex items-center justify-between rounded-3xl border border-white/50 bg-white/70 px-6 py-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/40">
+					<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+						Kingdom Builder
+					</h1>
+					{onExit && (
+						<div className="ml-4 flex items-center gap-3">
+							<TimeControl />
+							<Button
+								onClick={onToggleDark}
+								variant="secondary"
+								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-slate-900/10 dark:shadow-black/30"
+							>
+								{darkMode ? 'Light Mode' : 'Dark Mode'}
+							</Button>
+							<Button
+								onClick={onExit}
+								variant="danger"
+								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
+							>
+								Quit
+							</Button>
+						</div>
+					)}
+				</div>
+
+				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
+					<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/70 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50">
+						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
+							{ctx.game.players.map((p, i) => {
+								const isActive = p.id === ctx.activePlayer.id;
+								const sideClass = i === 0 ? 'pr-6' : 'pl-6';
+								const colorClass =
+									i === 0
+										? isActive
+											? 'player-bg-blue-active'
+											: 'player-bg-blue'
+										: isActive
+											? 'player-bg-red-active'
+											: 'player-bg-red';
+								const bgClass = [
+									'player-bg',
+									sideClass,
+									colorClass,
+									isActive ? 'player-bg-animated' : null,
+								]
+									.filter(Boolean)
+									.join(' ');
+								return (
+									<PlayerPanel
+										key={p.id}
+										player={p}
+										className={`flex-1 p-4 ${bgClass}`}
+										isActive={isActive}
+									/>
+								);
+							})}
+						</div>
+					</section>
+					<div className="w-full lg:col-start-2">
+						<PhasePanel />
+					</div>
+					<div className="lg:col-start-1 lg:row-start-2">
+						<ActionsPanel />
+					</div>
+					<div className="flex w-full flex-col gap-6 lg:col-start-2 lg:row-start-2">
+						<LogPanel />
+						<HoverCard />
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export default function Game({
-  onExit,
-  darkMode = true,
-  onToggleDark = () => {},
-  devMode = false,
+	onExit,
+	darkMode = true,
+	onToggleDark = () => {},
+	devMode = false,
 }: {
-  onExit?: () => void;
-  darkMode?: boolean;
-  onToggleDark?: () => void;
-  devMode?: boolean;
+	onExit?: () => void;
+	darkMode?: boolean;
+	onToggleDark?: () => void;
+	devMode?: boolean;
 }) {
-  return (
-    <GameProvider
-      {...(onExit ? { onExit } : {})}
-      darkMode={darkMode}
-      onToggleDark={onToggleDark}
-      devMode={devMode}
-    >
-      <GameLayout />
-    </GameProvider>
-  );
+	return (
+		<GameProvider
+			{...(onExit ? { onExit } : {})}
+			darkMode={darkMode}
+			onToggleDark={onToggleDark}
+			devMode={devMode}
+		>
+			<GameLayout />
+		</GameProvider>
+	);
 }
