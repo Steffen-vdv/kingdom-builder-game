@@ -138,8 +138,10 @@ export default function LogPanel() {
 		>
 			<div
 				ref={containerRef}
-				className={`relative rounded-3xl border border-white/60 bg-white/75 shadow-2xl shadow-amber-500/10 transition-all duration-300 ease-in-out dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface ${
-					isExpanded ? 'p-6' : 'max-h-80 p-4'
+				className={`relative rounded-3xl border border-white/60 shadow-2xl shadow-amber-500/10 transition-all duration-300 ease-in-out dark:border-white/10 dark:shadow-slate-900/50 frosted-surface ${
+					isExpanded
+						? 'bg-white/90 p-6 dark:bg-slate-900/90'
+						: 'max-h-80 bg-white/75 p-4 dark:bg-slate-900/75'
 				} ${
 					isExpanded
 						? 'overflow-y-auto custom-scrollbar'
@@ -150,20 +152,26 @@ export default function LogPanel() {
 					...(isExpanded ? {} : { width: '100%' }),
 				}}
 			>
-				<div className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-2xl bg-white/70 pb-2 pt-1 backdrop-blur-sm dark:bg-slate-900/70">
+				<div className="flex items-center gap-2 pb-2">
 					<h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
 						Log
 					</h2>
-					<button
-						type="button"
-						onClick={handleToggleExpand}
-						aria-label={isExpanded ? 'Collapse log panel' : 'Expand log panel'}
-						className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg font-semibold text-slate-700 shadow hover:bg-white/90 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-900"
-					>
-						<span aria-hidden="true" className="text-lg leading-none">
-							{isExpanded ? '⤡' : '⛶'}
-						</span>
-					</button>
+					<div className="ml-auto">
+						<div className={`sticky ${isExpanded ? 'top-6' : 'top-4'}`}>
+							<button
+								type="button"
+								onClick={handleToggleExpand}
+								aria-label={
+									isExpanded ? 'Collapse log panel' : 'Expand log panel'
+								}
+								className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900"
+							>
+								<span aria-hidden="true" className="text-lg leading-none">
+									{isExpanded ? '⤡' : '⛶'}
+								</span>
+							</button>
+						</div>
+					</div>
 				</div>
 				<ul
 					ref={listRef}
