@@ -5,6 +5,7 @@ type ActionParameterMap = {
 	build: { id: string };
 	demolish: { id: string };
 	raise_pop: { role: PopulationRoleId };
+	royal_decree: { developmentId: string; landId: string };
 	[key: string]: Record<string, unknown>;
 };
 

@@ -7,6 +7,7 @@ import {
 	SLOT_INFO,
 	LAND_INFO,
 	type Focus,
+	type ActionChoice,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
@@ -28,6 +29,8 @@ interface Action {
 	order?: number;
 	category?: string;
 	focus?: Focus;
+	choice?: ActionChoice;
+	icon?: string;
 }
 interface Development {
 	id: string;
@@ -72,6 +75,19 @@ function formatMissingResources(
 	return `Need ${missing.join(', ')}`;
 }
 
+function MultiStepBadge() {
+	return (
+		<span className="relative flex items-center gap-0.5">
+			<span className="sr-only">Requires additional selection</span>
+			<span aria-hidden className="flex items-center gap-0.5">
+				<span className="h-1.5 w-1.5 rounded-full bg-white/80 dark:bg-white/70" />
+				<span className="h-1.5 w-1.5 rounded-full bg-white/60 dark:bg-white/50" />
+				<span className="h-1.5 w-1.5 rounded-full bg-white/40 dark:bg-white/30" />
+			</span>
+		</span>
+	);
+}
+
 function GenericActions({
 	actions,
 	summaries,
@@ -90,6 +106,10 @@ function GenericActions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const [choiceActionId, setChoiceActionId] = useState<string | null>(null);
+	useEffect(() => {
+		if (!canInteract) setChoiceActionId(null);
+	}, [canInteract]);
 	const formatRequirement = (req: string) => req;
 	const entries = useMemo(() => {
 		return actions
@@ -130,12 +150,80 @@ function GenericActions({
 						: !canPay
 							? (insufficientTooltip ?? 'Cannot pay costs')
 							: undefined;
+				const definition = ctx.actions.get(action.id) as Action | undefined;
+				const choice = definition?.choice;
+				const isChoiceOpen =
+					Boolean(choice) && choiceActionId === action.id && enabled;
+				const renderChoiceBack = choice
+					? ({ focusClass: _focusClass }: { focusClass: string }) => {
+							const options = choice.options
+								.map((optionId) => {
+									const def = ctx.developments.get(optionId);
+									if (!def) return null;
+									return {
+										id: optionId,
+										icon: def.icon ?? '',
+										name: def.name ?? optionId,
+									};
+								})
+								.filter(
+									(item): item is { id: string; icon: string; name: string } =>
+										Boolean(item),
+								);
+							const handleSelect = (optionId: string) => {
+								if (!enabled) return;
+								const landId = `${player.id}-L${player.lands.length + 1}`;
+								setChoiceActionId(null);
+								void handlePerform(action, {
+									developmentId: optionId,
+									landId,
+								});
+							};
+							return (
+								<div className="flex h-full flex-col gap-3 text-sm text-slate-800 dark:text-slate-100">
+									<div className="flex items-start justify-between gap-2">
+										<div className="flex flex-col gap-0.5">
+											<span className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-100/80">
+												Select development
+											</span>
+											<span className="text-[0.7rem] text-slate-600 dark:text-slate-200/70">
+												Expand, till, then build on the new land.
+											</span>
+										</div>
+										<button
+											type="button"
+											onClick={() => setChoiceActionId(null)}
+											className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/40 bg-white/20 text-xs font-semibold text-slate-600 transition hover:bg-white/40 dark:border-white/10 dark:bg-white/10 dark:text-slate-100 dark:hover:bg-white/20"
+											aria-label="Cancel selection"
+										>
+											×
+										</button>
+									</div>
+									<div className="grid grid-cols-2 gap-2">
+										{options.map((option) => (
+											<button
+												key={option.id}
+												type="button"
+												className="group flex flex-col items-start gap-1 rounded-md border border-white/40 bg-white/10 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 transition hover:bg-white/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/15 dark:focus-visible:outline-white/40"
+												onClick={() => handleSelect(option.id)}
+											>
+												<span className="text-lg leading-none">
+													{option.icon}
+												</span>
+												<span>{option.name}</span>
+											</button>
+										))}
+									</div>
+								</div>
+							);
+						}
+					: undefined;
 				return (
 					<ActionCard
 						key={action.id}
 						title={
 							<>
-								{ctx.actions.get(action.id)?.icon || ''} {action.name}
+								{definition?.icon || ''} {action.name}
 							</>
 						}
 						costs={costs}
@@ -147,16 +235,26 @@ function GenericActions({
 						implemented={implemented}
 						enabled={enabled}
 						tooltip={title}
-						focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
+						focus={definition?.focus}
+						badge={choice ? <MultiStepBadge /> : undefined}
+						flipped={isChoiceOpen}
+						backFace={renderChoiceBack}
 						onClick={() => {
-							if (!canInteract) return;
+							if (!canInteract || !enabled) return;
+							if (choice) {
+								setChoiceActionId(action.id);
+								clearHoverCard();
+								return;
+							}
+							setChoiceActionId(null);
 							void handlePerform(action);
 						}}
 						onMouseEnter={() => {
+							if (choice && choiceActionId === action.id) return;
 							const full = describeContent('action', action.id, ctx);
 							const { effects, description } = splitSummary(full);
 							handleHoverCard({
-								title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
+								title: `${definition?.icon || ''} ${action.name}`,
 								effects,
 								requirements,
 								costs,
@@ -845,7 +943,7 @@ export default function ActionsPanel() {
 
 	return (
 		<section className="relative rounded-3xl border border-white/60 bg-white/75 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-      {panelDisabled && (
+			{panelDisabled && (
 				<div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/70 dark:bg-slate-950/60 frosted-surface" />
 			)}
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
