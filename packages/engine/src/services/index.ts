@@ -360,7 +360,7 @@ export class PassiveManager {
 			.map(([, v]) => v);
 	}
 
-	get(id: string, owner: PlayerId): StoredPassive | undefined {
+	get(id: string, owner: PlayerId): PassiveRecord | undefined {
 		return this.passives.get(this.makeKey(id, owner));
 	}
 }
