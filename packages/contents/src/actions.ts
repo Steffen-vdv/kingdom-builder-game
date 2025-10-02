@@ -324,57 +324,6 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
-	registry.add('demo_choice_once', {
-		...action()
-			.id('demo_choice_once')
-			.name('Demo: Choose Reward')
-			.icon('🎲')
-			.cost(Resource.ap, 1)
-			.effectGroup(
-				'Pick your prize',
-				effect(Types.Resource, ResourceMethods.ADD)
-					.params(resourceParams().key(Resource.gold).amount(2))
-					.build(),
-				effect(Types.Resource, ResourceMethods.ADD)
-					.params(resourceParams().key(Resource.happiness).amount(2))
-					.build(),
-			)
-			.build(),
-		category: 'basic',
-		order: 8,
-		focus: 'economy',
-	});
-
-	registry.add('demo_choice_twice', {
-		...action()
-			.id('demo_choice_twice')
-			.name('Demo: Story Path')
-			.icon('📜')
-			.cost(Resource.ap, 1)
-			.effectGroup(
-				'Choose the opening',
-				effect(Types.Resource, ResourceMethods.ADD)
-					.params(resourceParams().key(Resource.gold).amount(3))
-					.build(),
-				effect(Types.Resource, ResourceMethods.ADD)
-					.params(resourceParams().key(Resource.happiness).amount(1))
-					.build(),
-			)
-			.effectGroup(
-				'Choose the finale',
-				effect(Types.Stat, StatMethods.ADD)
-					.params(statParams().key(Stat.fortificationStrength).amount(1))
-					.build(),
-				effect(Types.Resource, ResourceMethods.ADD)
-					.params(resourceParams().key(Resource.ap).amount(1))
-					.build(),
-			)
-			.build(),
-		category: 'basic',
-		order: 9,
-		focus: 'economy',
-	});
-
 	registry.add(
 		'plunder',
 		action()

@@ -116,10 +116,19 @@ export default function ActionCard({
 	const showOptions =
 		hasMultiStep && isActiveMultiStep && visibleKey !== 'front';
 	const options = showOptions ? (multiStep?.options ?? []) : [];
+	const showFrontIcon = Boolean(multiStepIcon && !showOptions);
 	const currentStep = multiStep?.currentStep ?? 0;
 	const totalSteps = multiStep?.totalSteps ?? 0;
 	const showCancel = Boolean(showOptions && multiStep?.onCancel);
 	const clickable = enabled && !isActiveMultiStep;
+	const optionButtonBaseClasses =
+		'flex h-full w-full flex-col items-start gap-1 rounded-xl border border-white/40 bg-white/70 px-4 py-3 text-left text-sm font-medium text-slate-800 shadow transition dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-100';
+	const optionButtonInteractiveClasses = `${optionButtonBaseClasses} hoverable hover:border-amber-400 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:hover:border-amber-400/60 dark:hover:bg-slate-800`;
+	const useGridLayout = options.length >= 3;
+	const optionsContainerClass = useGridLayout
+		? 'grid grid-cols-2 gap-2 auto-rows-fr'
+		: 'flex flex-col gap-2';
+	const fillerCount = useGridLayout && options.length === 3 ? 1 : 0;
 
 	React.useEffect(() => {
 		if (targetKey === visibleKey) return;
@@ -174,14 +183,6 @@ export default function ActionCard({
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 		>
-			{multiStepIcon && (
-				<span
-					className="pointer-events-none absolute left-3 top-3 text-lg"
-					aria-hidden
-				>
-					{multiStepIcon}
-				</span>
-			)}
 			<div className="relative w-full" style={{ perspective: '1200px' }}>
 				<div
 					className="flex h-full w-full flex-col gap-2"
@@ -194,7 +195,7 @@ export default function ActionCard({
 					}}
 				>
 					{showOptions ? (
-						<>
+						<div className="flex h-full flex-col gap-3">
 							<div className="flex items-start justify-between gap-2">
 								<div>
 									<p className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-300">
@@ -212,48 +213,65 @@ export default function ActionCard({
 											event.stopPropagation();
 											multiStep?.onCancel?.();
 										}}
-										className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/60 bg-white/80 text-sm font-semibold text-slate-700 shadow transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-800"
+										className="hoverable inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-red-500 text-base font-semibold text-white shadow-lg shadow-rose-500/40 transition hover:from-rose-400 hover:to-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-200/70"
 										aria-label="Cancel action"
 									>
 										×
 									</button>
 								)}
 							</div>
-							<div className="flex flex-col gap-2">
+							<div className={optionsContainerClass}>
 								{options.length > 0 ? (
-									options.map((option) => (
-										<button
-											key={option.key}
-											type="button"
-											onClick={(event) => {
-												event.stopPropagation();
-												option.onSelect();
-											}}
-											className="flex flex-col items-start gap-1 rounded-xl border border-white/40 bg-white/70 px-4 py-3 text-left text-sm font-medium text-slate-800 shadow hover:border-amber-400 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:border-amber-400/60 dark:hover:bg-slate-800"
-										>
-											<span>{option.label}</span>
-											{option.description && (
-												<span className="text-xs font-normal text-slate-600 dark:text-slate-300">
-													{option.description}
-												</span>
-											)}
-										</button>
-									))
+									<>
+										{options.map((option) => (
+											<button
+												key={option.key}
+												type="button"
+												onClick={(event) => {
+													event.stopPropagation();
+													option.onSelect();
+												}}
+												className={optionButtonInteractiveClasses}
+											>
+												<span>{option.label}</span>
+												{option.description && (
+													<span className="text-xs font-normal text-slate-600 dark:text-slate-300">
+														{option.description}
+													</span>
+												)}
+											</button>
+										))}
+										{Array.from({ length: fillerCount }).map((_, index) => (
+											<div
+												key={`filler-${index}`}
+												aria-hidden
+												className={`${optionButtonBaseClasses} pointer-events-none opacity-0`}
+											/>
+										))}
+									</>
 								) : (
 									<div className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-300">
 										No options available
 									</div>
 								)}
 							</div>
-						</>
+						</div>
 					) : (
-						<>
+						<div className="relative flex h-full flex-col gap-2">
+							{showFrontIcon && (
+								<span
+									className="pointer-events-none absolute left-0 top-0 text-lg"
+									aria-hidden
+								>
+									{multiStepIcon}
+								</span>
+							)}
 							<span
-								className={`text-base font-medium ${multiStepIcon ? 'ml-6' : ''}`}
+								className={`text-base font-medium ${showFrontIcon ? 'pl-8' : ''}`}
 							>
 								{title}
 							</span>
-							<div className="absolute top-2 right-2 flex flex-col items-end gap-1 text-right">
+							<div className="pointer-events-none absolute top-0 right-0 flex flex-col items-end gap-1 text-right">
 								{renderCosts(
 									costs,
 									playerResources,
@@ -270,7 +288,7 @@ export default function ActionCard({
 									</div>
 								)}
 							</div>
-							<ul className="text-sm list-disc pl-4 text-left">
+							<ul className="list-disc pl-4 text-left text-sm">
 								{implemented ? (
 									renderSummary(stripSummary(summary, requirements))
 								) : (
@@ -279,7 +297,7 @@ export default function ActionCard({
 									</li>
 								)}
 							</ul>
-						</>
+						</div>
 					)}
 				</div>
 			</div>
