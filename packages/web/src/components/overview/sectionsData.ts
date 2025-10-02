@@ -54,6 +54,10 @@ export type OverviewContentSection =
 	| OverviewParagraphContent
 	| OverviewListContent;
 
+function spanProps(span?: boolean) {
+	return span === undefined ? {} : { span };
+}
+
 export function createOverviewSections(
 	icons: OverviewIconSet,
 	content: OverviewContentSection[],
@@ -65,8 +69,8 @@ export function createOverviewSections(
 				id: section.id,
 				icon: icons[section.icon],
 				title: section.title,
-				span: section.span,
 				paragraphs: section.paragraphs,
+				...spanProps(section.span),
 			} satisfies OverviewSectionDef;
 		}
 
@@ -75,12 +79,12 @@ export function createOverviewSections(
 			id: section.id,
 			icon: icons[section.icon],
 			title: section.title,
-			span: section.span,
 			items: section.items.map((item) => ({
 				icon: item.icon ? icons[item.icon] : undefined,
 				label: item.label,
 				body: item.body,
 			})),
+			...spanProps(section.span),
 		} satisfies OverviewSectionDef;
 	});
 }
