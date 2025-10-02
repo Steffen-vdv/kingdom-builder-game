@@ -1,8 +1,16 @@
-export { collectEvaluatorDependencies } from './dependencies';
+export {
+	collectEvaluatorDependencies,
+	evaluatorDependencyCollectorRegistry,
+	registerEvaluatorDependencyCollector,
+} from './dependencies';
 export { withStatSourceFrames } from './frames';
 export {
 	applyStatDelta,
 	recordEffectStatDelta,
 	resolveStatSourceMeta,
 } from './resolver';
-export type { StatSourceFrame, StatSourceMetaPartial } from './types';
+export type {
+	StatSourceFrame,
+	StatSourceMetaPartial,
+	EvaluatorDependencyCollector,
+} from './types';

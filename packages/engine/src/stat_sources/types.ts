@@ -1,5 +1,6 @@
 import type { EffectDef } from '../effects';
 import type { EngineContext } from '../context';
+import type { EvaluatorDef } from '../evaluators';
 import type {
 	PlayerState,
 	StatKey,
@@ -29,3 +30,7 @@ export type StatSourceFrame = (
 ) => StatSourceMetaPartial | undefined;
 
 export type { PlayerState, StatKey, StatSourceLink, StatSourceMeta };
+
+export interface EvaluatorDependencyCollector {
+	(evaluator: EvaluatorDef): StatSourceLink[];
+}
