@@ -1,6 +1,19 @@
 import type { EvaluatorDef } from '../evaluators';
 import type { StatSourceLink } from '../state';
 import { isPlainObject } from './link_helpers';
+import type { EvaluatorDependencyCollector } from './types';
+
+export const evaluatorDependencyCollectorRegistry = new Map<
+	EvaluatorDef['type'],
+	EvaluatorDependencyCollector
+>();
+
+export function registerEvaluatorDependencyCollector(
+	type: EvaluatorDef['type'],
+	collector: EvaluatorDependencyCollector,
+): void {
+	evaluatorDependencyCollectorRegistry.set(type, collector);
+}
 
 function collectFromEvaluatorDefinition(
 	evaluatorDefinition: EvaluatorDef | number | undefined,
@@ -8,59 +21,70 @@ function collectFromEvaluatorDefinition(
 	if (!evaluatorDefinition || typeof evaluatorDefinition === 'number') {
 		return [];
 	}
-	if (evaluatorDefinition.type === 'population') {
-		const evaluatorParams = isPlainObject(evaluatorDefinition.params)
-			? evaluatorDefinition.params
-			: undefined;
-		const roleIdentifier =
-			typeof evaluatorParams?.['role'] === 'string'
-				? evaluatorParams['role'].trim()
-				: '';
-		if (roleIdentifier) {
-			return [{ type: 'population', id: roleIdentifier }];
-		}
+	const collector = evaluatorDependencyCollectorRegistry.get(
+		evaluatorDefinition.type,
+	);
+	if (!collector) {
+		return [];
 	}
-	if (evaluatorDefinition.type === 'development') {
-		const evaluatorParams = isPlainObject(evaluatorDefinition.params)
-			? evaluatorDefinition.params
-			: undefined;
-		const developmentIdentifier =
-			typeof evaluatorParams?.['id'] === 'string'
-				? evaluatorParams['id'].trim()
-				: '';
-		if (developmentIdentifier) {
-			return [{ type: 'development', id: developmentIdentifier }];
-		}
-	}
-	if (evaluatorDefinition.type === 'stat') {
-		const evaluatorParams = isPlainObject(evaluatorDefinition.params)
-			? evaluatorDefinition.params
-			: undefined;
-		const statIdentifier =
-			typeof evaluatorParams?.['key'] === 'string'
-				? evaluatorParams['key'].trim()
-				: '';
-		if (statIdentifier) {
-			return [{ type: 'stat', id: statIdentifier }];
-		}
-	}
-	if (evaluatorDefinition.type === 'compare') {
-		const evaluatorParams = isPlainObject(evaluatorDefinition.params)
-			? evaluatorDefinition.params
-			: undefined;
-		if (!evaluatorParams) {
-			return [];
-		}
-		const leftDependencies = collectFromEvaluatorDefinition(
-			evaluatorParams['left'] as EvaluatorDef | number,
-		);
-		const rightDependencies = collectFromEvaluatorDefinition(
-			evaluatorParams['right'] as EvaluatorDef | number,
-		);
-		return [...leftDependencies, ...rightDependencies];
-	}
-	return [];
+	return collector(evaluatorDefinition);
 }
+
+const populationCollector: EvaluatorDependencyCollector = (evaluator) => {
+	const evaluatorParams = isPlainObject(evaluator.params)
+		? evaluator.params
+		: undefined;
+	const roleIdentifier =
+		typeof evaluatorParams?.['role'] === 'string'
+			? evaluatorParams['role'].trim()
+			: '';
+	return roleIdentifier ? [{ type: 'population', id: roleIdentifier }] : [];
+};
+
+const developmentCollector: EvaluatorDependencyCollector = (evaluator) => {
+	const evaluatorParams = isPlainObject(evaluator.params)
+		? evaluator.params
+		: undefined;
+	const developmentIdentifier =
+		typeof evaluatorParams?.['id'] === 'string'
+			? evaluatorParams['id'].trim()
+			: '';
+	return developmentIdentifier
+		? [{ type: 'development', id: developmentIdentifier }]
+		: [];
+};
+
+const statCollector: EvaluatorDependencyCollector = (evaluator) => {
+	const evaluatorParams = isPlainObject(evaluator.params)
+		? evaluator.params
+		: undefined;
+	const statIdentifier =
+		typeof evaluatorParams?.['key'] === 'string'
+			? evaluatorParams['key'].trim()
+			: '';
+	return statIdentifier ? [{ type: 'stat', id: statIdentifier }] : [];
+};
+
+const compareCollector: EvaluatorDependencyCollector = (evaluator) => {
+	const evaluatorParams = isPlainObject(evaluator.params)
+		? evaluator.params
+		: undefined;
+	if (!evaluatorParams) {
+		return [];
+	}
+	const leftDependencies = collectFromEvaluatorDefinition(
+		evaluatorParams['left'] as EvaluatorDef | number,
+	);
+	const rightDependencies = collectFromEvaluatorDefinition(
+		evaluatorParams['right'] as EvaluatorDef | number,
+	);
+	return [...leftDependencies, ...rightDependencies];
+};
+
+registerEvaluatorDependencyCollector('population', populationCollector);
+registerEvaluatorDependencyCollector('development', developmentCollector);
+registerEvaluatorDependencyCollector('stat', statCollector);
+registerEvaluatorDependencyCollector('compare', compareCollector);
 
 export function collectEvaluatorDependencies(
 	evaluatorDefinition: EvaluatorDef | undefined,

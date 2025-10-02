@@ -7,8 +7,11 @@ import {
 	withStatSourceFrames,
 	collectEvaluatorDependencies,
 	recordEffectStatDelta,
+	registerEvaluatorDependencyCollector,
+	evaluatorDependencyCollectorRegistry,
 } from '../src/stat_sources.ts';
 import type { EffectDef } from '../src/effects/index.ts';
+import type { EvaluatorDependencyCollector } from '../src/stat_sources.ts';
 
 describe('stat sources metadata', () => {
 	it('merges frame metadata with effect overrides when recording stat deltas', () => {
@@ -203,5 +206,29 @@ describe('stat sources metadata', () => {
 		expect(pctEntry?.meta.dependsOn).toEqual(
 			expect.arrayContaining([{ type: 'stat', id: Stat.growth }]),
 		);
+	});
+
+	it('allows overriding evaluator dependency collectors via the registry', () => {
+		const originalCollector = evaluatorDependencyCollectorRegistry.get('stat');
+		const customCollector: EvaluatorDependencyCollector = () => [
+			{ type: 'stat', id: Stat.armyStrength },
+		];
+
+		registerEvaluatorDependencyCollector('stat', customCollector);
+
+		try {
+			const dependencies = collectEvaluatorDependencies({
+				type: 'stat',
+				params: { key: Stat.growth },
+			});
+
+			expect(dependencies).toEqual([{ type: 'stat', id: Stat.armyStrength }]);
+		} finally {
+			if (originalCollector) {
+				registerEvaluatorDependencyCollector('stat', originalCollector);
+			} else {
+				evaluatorDependencyCollectorRegistry.delete('stat');
+			}
+		}
 	});
 });
