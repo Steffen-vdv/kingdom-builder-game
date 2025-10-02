@@ -74,8 +74,22 @@ describe('harvest action translation', () => {
 		titles.forEach((t) => expect(t).not.toMatch(/^Perform action/));
 		const passiveLine = desc.find(
 			(d) => typeof d === 'string' && d.startsWith('💲 Cost Modifier'),
-		);
+		) as string | undefined;
 		expect(passiveLine).toBeDefined();
+		const harvest = ctx.actions.get(harvestId);
+		const passive = harvest?.effects.find(
+			(e: EffectDef) => e.type === 'passive',
+		);
+		const costMod = passive?.effects.find(
+			(e: EffectDef) => e.type === 'cost_mod',
+		);
+		const modKey = (costMod?.params as { key?: keyof typeof RESOURCES })
+			?.key as keyof typeof RESOURCES;
+		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
+		const modIcon = RESOURCES[modKey].icon;
+		expect(passiveLine).toBe(
+			`💲 Cost Modifier on all actions: Increase cost by ${modIcon}${modAmt}`,
+		);
 	});
 
 	it('keeps performed system actions in effects', () => {
