@@ -43,9 +43,10 @@ tests); Markdown documentation and peripheral utilities like the repository
 - Tests are split into two levels:
   - **Unit tests** under `packages/engine/tests`.
   - **Integration tests** under `tests/integration`.
-- The pre-commit hook runs `npm test` for unit and integration tests on staged
-  files.
-- GitHub Actions runs `npm run test:coverage` and `npm run build` for every pull
+- The pre-commit hook runs `npm run test:quick` for unit and integration tests
+  on staged files after `lint-staged` handles formatting, linting, and type
+  checking.
+- GitHub Actions runs `npm run test:ci` (coverage) and `npm run build` for every pull
   request. Run these scripts locally only when working on related areas or
   debugging failures.
 - New features and bug fixes **must** include tests. Derive expectations from
@@ -80,9 +81,10 @@ expect(ctx.activePlayer.gold).toBe(before + effect.params.amount);
 - Keep commits focused; avoid mixing unrelated changes or drive-by edits.
 - Update documentation and tests in the same commit as the code change when
   possible.
-- Ensure the pre-commit hook passes before pushing. It runs `lint-staged`,
-  `npm run lint`, `npm run type-check`, and `npm test` on staged files.
-  Additional checks such as the production build run in CI.
+- Ensure the pre-commit hook passes before pushing. It runs `lint-staged`
+  (formatting, linting, and type checks on staged files) followed by
+  `npm run test:quick`. Additional checks such as the production build run in
+  CI.
 - Limit commit message subject lines to ~70 characters.
 
 For architectural details see [ARCHITECTURE](../docs/architecture/AGENTS.md). If in
