@@ -885,12 +885,6 @@ export default function ActionsPanel() {
 				</div>
 			</div>
 			<div className="relative">
-				{panelDisabled && (
-					<div
-						aria-hidden
-						className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-white/75 via-white/55 to-transparent backdrop-blur-sm ring-1 ring-inset ring-white/50 dark:from-slate-100/15 dark:via-slate-100/10 dark:to-transparent dark:ring-white/10"
-					/>
-				)}
 				<div ref={sectionRef} className="space-y-4">
 					{otherActions.length > 0 && (
 						<BasicOptions
