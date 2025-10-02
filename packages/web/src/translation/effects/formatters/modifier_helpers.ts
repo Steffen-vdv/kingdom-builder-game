@@ -1,5 +1,6 @@
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
 import { POPULATION_INFO, RESOURCES } from '@kingdom-builder/contents';
+import { GENERAL_RESOURCE_ICON } from '../../../icons';
 import type {
 	ActionDef,
 	DevelopmentDef,
@@ -7,8 +8,6 @@ import type {
 } from '@kingdom-builder/contents';
 import { signed } from '../helpers';
 import type { SummaryEntry } from '../../content/types';
-
-const GENERIC_RESOURCE_ICON = '🧺';
 
 const joinParts = (...parts: Array<string | undefined>) =>
 	parts.filter(Boolean).join(' ').trim();
@@ -90,7 +89,7 @@ interface ResultModifierSource {
 }
 
 const resolveIcon = (icon?: string) =>
-	icon && icon.trim() ? icon : GENERIC_RESOURCE_ICON;
+	icon && icon.trim() ? icon : GENERAL_RESOURCE_ICON;
 
 export function formatGainFrom(
 	label: ResultModifierLabel,
