@@ -156,25 +156,29 @@ export type EvaluationModifier = (
 	gains: ResourceGain[],
 ) => EvaluationModifierResult | void;
 
+type StoredPassive = {
+	effects?: EffectDef[];
+	onGrowthPhase?: EffectDef[];
+	onUpkeepPhase?: EffectDef[];
+	onBeforeAttacked?: EffectDef[];
+	onAttackResolved?: EffectDef[];
+	owner: PlayerId;
+	frames: StatSourceFrame[];
+	detail?: string;
+	meta?: PassiveMetadata;
+};
+
 export class PassiveManager {
 	private costMods: Map<string, CostModifier> = new Map();
 	private resultMods: Map<string, ResultModifier> = new Map();
 	private evaluationMods: Map<string, Map<string, EvaluationModifier>> =
 		new Map();
 	private evaluationIndex: Map<string, string> = new Map();
-	private passives: Map<
-		string,
-		{
-			effects?: EffectDef[];
-			onGrowthPhase?: EffectDef[];
-			onUpkeepPhase?: EffectDef[];
-			onBeforeAttacked?: EffectDef[];
-			onAttackResolved?: EffectDef[];
-			owner: PlayerId;
-			frames: StatSourceFrame[];
-			meta?: PassiveMetadata;
-		}
-	> = new Map();
+	private passives: Map<string, StoredPassive> = new Map();
+
+	private makeKey(id: string, owner: PlayerId) {
+		return `${id}_${owner}`;
+	}
 
 	private ensureFrameList(
 		frames?: StatSourceFrame | StatSourceFrame[],
@@ -291,7 +295,7 @@ export class PassiveManager {
 			meta?: PassiveMetadata;
 		},
 	) {
-		const key = `${passive.id}_${ctx.activePlayer.id}`;
+		const key = this.makeKey(passive.id, ctx.activePlayer.id);
 		const providedFrames = this.ensureFrameList(options?.frames);
 		const passiveFrame: StatSourceFrame = (_effect, _ctx, statKey) => ({
 			key: `passive:${key}:${statKey}`,
@@ -304,6 +308,7 @@ export class PassiveManager {
 			...passive,
 			owner: ctx.activePlayer.id,
 			frames,
+			...(options?.detail ? { detail: options.detail } : {}),
 			...(options?.meta ? { meta: options.meta } : {}),
 		});
 		const setupEffects = passive.effects;
@@ -313,7 +318,7 @@ export class PassiveManager {
 	}
 
 	removePassive(id: string, ctx: EngineContext) {
-		const key = `${id}_${ctx.activePlayer.id}`;
+		const key = this.makeKey(id, ctx.activePlayer.id);
 		const passive = this.passives.get(key);
 		if (!passive) return;
 		const teardownEffects = passive.effects;
@@ -338,6 +343,10 @@ export class PassiveManager {
 		return Array.from(this.passives.entries())
 			.filter(([k]) => k.endsWith(suffix))
 			.map(([, v]) => v);
+	}
+
+	get(id: string, owner: PlayerId): StoredPassive | undefined {
+		return this.passives.get(this.makeKey(id, owner));
 	}
 }
 
