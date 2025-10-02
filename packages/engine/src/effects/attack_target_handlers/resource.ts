@@ -1,9 +1,9 @@
-import type { AttackTargetHandler } from './index';
+import type { AttackTargetHandler, AttackTargetMutationResult } from './index';
 import type { ResourceAttackTarget } from '../attack.types';
 
 const resourceHandler: AttackTargetHandler<
 	ResourceAttackTarget,
-	{ before: number; after: number }
+	AttackTargetMutationResult<'resource'>
 > = {
 	applyDamage(target, damage, _ctx, defender) {
 		const before = defender.resources[target.key] || 0;
