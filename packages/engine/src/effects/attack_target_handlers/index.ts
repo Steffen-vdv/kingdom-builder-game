@@ -30,6 +30,7 @@ export interface AttackTargetHandler<
 	T extends AttackTarget,
 	Mutation = unknown,
 > {
+	getEvaluationModifierKey(target: T): string;
 	applyDamage(
 		target: T,
 		damage: number,

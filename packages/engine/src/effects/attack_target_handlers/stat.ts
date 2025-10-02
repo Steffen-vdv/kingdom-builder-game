@@ -5,6 +5,9 @@ const statHandler: AttackTargetHandler<
 	StatAttackTarget,
 	AttackTargetMutationResult<'stat'>
 > = {
+	getEvaluationModifierKey(target) {
+		return target.key;
+	},
 	applyDamage(target, damage, _ctx, defender) {
 		const before = defender.stats[target.key] || 0;
 		const after = Math.max(0, before - damage);
