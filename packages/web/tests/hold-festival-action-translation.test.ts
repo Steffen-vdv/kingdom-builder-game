@@ -87,7 +87,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until next ${upkeepLabel}`,
 				items: [
-					`${MODIFIER_INFO.result.icon} ${armyAttack.icon}: ${happinessIcon}${sign(penaltyAmt)}${penaltyAmt}`,
+					`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: Whenever it resolves, ${happinessIcon}${sign(penaltyAmt)}${penaltyAmt}`,
 				],
 			},
 		]);
@@ -141,7 +141,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${upkeepLabel} Phase`,
 				items: [
-					`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: ${happinessInfo.icon}${sign(penaltyAmt)}${penaltyAmt} ${happinessInfo.label}`,
+					`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: Whenever it resolves, ${happinessInfo.icon}${sign(penaltyAmt)}${penaltyAmt} ${happinessInfo.label}`,
 				],
 			},
 		]);
@@ -179,7 +179,7 @@ describe('hold festival action translation', () => {
 		expect(log).toEqual([
 			`Played ${holdFestival.icon} ${holdFestival.name}`,
 			`  ${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} added`,
-			`    ${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: ${happinessInfo.icon}${sign(penaltyAmt)}${penaltyAmt} ${happinessInfo.label}`,
+			`    ${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: Whenever it resolves, ${happinessInfo.icon}${sign(penaltyAmt)}${penaltyAmt} ${happinessInfo.label}`,
 			`    ${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} duration: Until player's next ${upkeepLabel} Phase`,
 		]);
 	});
