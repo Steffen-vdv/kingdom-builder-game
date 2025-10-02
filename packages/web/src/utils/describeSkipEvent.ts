@@ -19,6 +19,15 @@ type SkipDescription = {
 	history: { title: string; items: HistoryItem[] };
 };
 
+type DescriptorContext = {
+	skip: AdvanceSkip;
+	phase: PhaseLike;
+	phaseLabel: string;
+	step?: StepLike;
+	stepLabel?: string;
+	sources: ReturnType<typeof describeSources>;
+};
+
 function renderLabel(
 	icon: string | undefined,
 	label: string | undefined,
@@ -49,32 +58,111 @@ function describeSources(skip: AdvanceSkip) {
 	return { list, summary: `Skipped due to: ${list.join(', ')}` };
 }
 
+function createHistoryItems(summary: string): HistoryItem[] {
+	return [
+		{
+			text: summary,
+			italic: true,
+		},
+	];
+}
+
 export function describeSkipEvent(
 	skip: AdvanceSkip,
 	phase: PhaseLike,
 	step?: StepLike,
 ): SkipDescription {
 	const phaseLabel = renderLabel(phase.icon, phase.label, phase.id);
-	if (skip.type === 'phase') {
-		const { list, summary } = describeSources(skip);
-		const header = `⏭️ ${phaseLabel} Phase skipped`;
+	const renderedStepLabel = renderLabel(
+		step?.icon,
+		step?.title,
+		skip.stepId ?? '',
+	);
+	const stepLabel =
+		renderedStepLabel.trim().length > 0 ? renderedStepLabel : undefined;
+	const sources = describeSources(skip);
+
+	const descriptorContext: DescriptorContext = {
+		skip,
+		phase,
+		phaseLabel,
+		sources,
+		...(step ? { step } : {}),
+		...(stepLabel ? { stepLabel } : {}),
+	};
+
+	const descriptorMap: Record<
+		AdvanceSkip['type'],
+		(context: DescriptorContext) => SkipDescription
+	> = {
+		phase: ({ phaseLabel: label, sources: { list, summary } }) => {
+			const header = `⏭️ ${label} Phase skipped`;
+			const logLines = list.length
+				? [header, ...list.map((item) => `  • ${item}`)]
+				: [header];
+			const historyItems = createHistoryItems(summary);
+			return {
+				logLines,
+				history: {
+					title: `${label} Phase`,
+					items: historyItems,
+				},
+			};
+		},
+		step: ({
+			step,
+			stepLabel: label,
+			skip: { stepId },
+			sources: { list, summary },
+		}) => {
+			const header = label ? `⏭️ ${label} skipped` : '⏭️ Step skipped';
+			const logLines = list.length
+				? [header, ...list.map((item) => `  • ${item}`)]
+				: [header];
+			const historyItems = createHistoryItems(summary);
+			const title = step?.title ?? stepId ?? 'Skipped Step';
+			return {
+				logLines,
+				history: {
+					title,
+					items: historyItems,
+				},
+			};
+		},
+	};
+
+	const defaultDescriptor = ({
+		phaseLabel: label,
+		stepLabel: labelOverride,
+		skip: { stepId },
+		phase: phaseContext,
+		sources: { list, summary },
+	}: DescriptorContext) => {
+		const headerLabel = labelOverride ?? label;
+		const header = headerLabel
+			? `⏭️ ${headerLabel} skipped`
+			: '⏭️ Step skipped';
 		const logLines = list.length
 			? [header, ...list.map((item) => `  • ${item}`)]
 			: [header];
-		const historyItems: HistoryItem[] = [{ text: summary, italic: true }];
+		const historyItems = createHistoryItems(summary);
+		const historyTitle =
+			labelOverride ??
+			stepId ??
+			(phaseContext.label ? `${phaseContext.label} Phase` : phaseContext.id);
 		return {
 			logLines,
-			history: { title: `${phaseLabel} Phase`, items: historyItems },
+			history: { title: historyTitle, items: historyItems },
 		};
-	}
+	};
 
-	const stepLabel = renderLabel(step?.icon, step?.title, skip.stepId ?? '');
-	const { list, summary } = describeSources(skip);
-	const header = stepLabel ? `⏭️ ${stepLabel} skipped` : '⏭️ Step skipped';
-	const logLines = list.length
-		? [header, ...list.map((item) => `  • ${item}`)]
-		: [header];
-	const historyItems: HistoryItem[] = [{ text: summary, italic: true }];
-	const title = step?.title ?? skip.stepId ?? 'Skipped Step';
-	return { logLines, history: { title, items: historyItems } };
+	const descriptor =
+		(
+			descriptorMap as Record<
+				string,
+				(context: DescriptorContext) => SkipDescription
+			>
+		)[skip.type] ?? defaultDescriptor;
+
+	return descriptor(descriptorContext);
 }
