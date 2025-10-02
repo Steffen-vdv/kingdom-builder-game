@@ -44,8 +44,10 @@ describe('plow action translation', () => {
 		const till = ctx.actions.get('till');
 		const plow = ctx.actions.get('plow');
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
-		const upkeepLabel =
-			PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
+		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
+		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
+		const upkeepIcon = upkeepPhase?.icon;
+		const upkeepSummaryLabel = `${upkeepIcon ? `${upkeepIcon} ` : ''}${upkeepLabel}`;
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
@@ -57,7 +59,7 @@ describe('plow action translation', () => {
 			`${expand.icon} ${expand.name}`,
 			`${till.icon} ${till.name}`,
 			{
-				title: `⏳ Until next ${upkeepLabel}`,
+				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [`💲: ${modIcon}+${modAmt}`],
 			},
 		]);
@@ -95,8 +97,12 @@ describe('plow action translation', () => {
 			| undefined;
 		const passiveName = passiveMeta?.name ?? PASSIVE_INFO.label;
 		const passiveIcon = passiveMeta?.icon ?? PASSIVE_INFO.icon;
-		const upkeepLabel =
-			PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
+		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
+		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
+		const upkeepIcon = upkeepPhase?.icon;
+		const upkeepDescriptionLabel = `${
+			upkeepIcon ? `${upkeepIcon} ` : ''
+		}${upkeepLabel} Phase`;
 		const expandLand = expand.effects.find((e: EffectDef) => e.type === 'land');
 		const landCount = (expandLand?.params as { count?: number })?.count ?? 0;
 		const expandHap = expand.effects.find(
@@ -121,7 +127,7 @@ describe('plow action translation', () => {
 				],
 			},
 			{
-				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${upkeepLabel} Phase`,
+				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
 					`💲 Cost Modifier on all actions: Increase cost by ${modIcon}${modAmt}`,
 				],

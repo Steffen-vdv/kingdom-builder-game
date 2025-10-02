@@ -73,14 +73,16 @@ describe('hold festival action translation', () => {
 				? -(innerRes.params.amount as number)
 				: (innerRes.params.amount as number);
 		const armyAttack = ctx.actions.get('army_attack');
-		const upkeepLabel =
-			PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
+		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
+		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
+		const upkeepIcon = upkeepPhase?.icon;
+		const upkeepSummaryLabel = `${upkeepIcon ? `${upkeepIcon} ` : ''}${upkeepLabel}`;
 
 		expect(summary).toEqual([
 			`${happinessIcon}${sign(happinessAmt)}${happinessAmt}`,
 			`${fortIcon}${sign(fortAmt)}${fortAmt}`,
 			{
-				title: `⏳ Until next ${upkeepLabel}`,
+				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
 					`${MODIFIER_INFO.result.icon}${armyAttack.icon}: ${happinessIcon}${sign(penaltyAmt)}${penaltyAmt}`,
 				],
@@ -127,14 +129,18 @@ describe('hold festival action translation', () => {
 				? -(innerRes.params.amount as number)
 				: (innerRes.params.amount as number);
 		const armyAttack = ctx.actions.get('army_attack');
-		const upkeepLabel =
-			PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
+		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
+		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
+		const upkeepIcon = upkeepPhase?.icon;
+		const upkeepDescriptionLabel = `${
+			upkeepIcon ? `${upkeepIcon} ` : ''
+		}${upkeepLabel} Phase`;
 
 		expect(desc).toEqual([
 			`${happinessInfo.icon}${sign(happinessAmt)}${happinessAmt} ${happinessInfo.label}`,
 			`${fortAmt >= 0 ? 'Gain' : 'Lose'} ${Math.abs(fortAmt)} ${fortInfo.icon} ${fortInfo.label}`,
 			{
-				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${upkeepLabel} Phase`,
+				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
 					`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: Whenever it resolves, ${happinessInfo.icon}${sign(penaltyAmt)}${penaltyAmt} ${happinessInfo.label}`,
 				],
@@ -168,14 +174,18 @@ describe('hold festival action translation', () => {
 			innerRes.method === 'remove'
 				? -(innerRes.params.amount as number)
 				: (innerRes.params.amount as number);
-		const upkeepLabel =
-			PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
+		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
+		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
+		const upkeepIcon = upkeepPhase?.icon;
+		const upkeepDescriptionLabel = `${
+			upkeepIcon ? `${upkeepIcon} ` : ''
+		}${upkeepLabel} Phase`;
 
 		expect(log).toEqual([
 			`Played ${holdFestival.icon} ${holdFestival.name}`,
 			`  ${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} added`,
 			`    ${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: Whenever it resolves, ${happinessInfo.icon}${sign(penaltyAmt)}${penaltyAmt} ${happinessInfo.label}`,
-			`    ${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} duration: Until player's next ${upkeepLabel} Phase`,
+			`    ${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} duration: Until player's next ${upkeepDescriptionLabel}`,
 		]);
 	});
 });
