@@ -1,12 +1,6 @@
 import type { EngineContext } from '../../context';
 import type { PlayerState } from '../../state';
-import type {
-	AttackEvaluationTargetLog,
-	AttackTarget,
-	BuildingAttackTarget,
-	ResourceAttackTarget,
-	StatAttackTarget,
-} from '../attack.types';
+import type { AttackEvaluationTargetLog, AttackTarget } from '../attack.types';
 
 import buildingHandler from './building';
 import resourceHandler from './resource';
@@ -16,6 +10,21 @@ export interface AttackTargetHandlerMeta {
 	defenderIndex: number;
 	originalIndex: number;
 }
+
+export type AttackTargetType = AttackTarget['type'];
+
+type AttackTargetForType<T extends AttackTargetType> = Extract<
+	AttackTarget,
+	{ type: T }
+>;
+
+export type AttackTargetMutationResult<T extends AttackTargetType> = T extends
+	| 'resource'
+	| 'stat'
+	? { before: number; after: number }
+	: T extends 'building'
+		? { existed: boolean; destroyed: boolean }
+		: never;
 
 export interface AttackTargetHandler<
 	T extends AttackTarget,
@@ -39,17 +48,9 @@ export interface AttackTargetHandler<
 }
 
 export type AttackTargetHandlerMap = {
-	resource: AttackTargetHandler<
-		ResourceAttackTarget,
-		{ before: number; after: number }
-	>;
-	stat: AttackTargetHandler<
-		StatAttackTarget,
-		{ before: number; after: number }
-	>;
-	building: AttackTargetHandler<
-		BuildingAttackTarget,
-		{ existed: boolean; destroyed: boolean }
+	[Type in AttackTargetType]: AttackTargetHandler<
+		AttackTargetForType<Type>,
+		AttackTargetMutationResult<Type>
 	>;
 };
 

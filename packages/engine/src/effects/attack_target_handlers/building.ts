@@ -1,10 +1,10 @@
 import { runEffects } from '..';
-import type { AttackTargetHandler } from './index';
+import type { AttackTargetHandler, AttackTargetMutationResult } from './index';
 import type { BuildingAttackTarget } from '../attack.types';
 
 const buildingHandler: AttackTargetHandler<
 	BuildingAttackTarget,
-	{ existed: boolean; destroyed: boolean }
+	AttackTargetMutationResult<'building'>
 > = {
 	applyDamage(target, damage, ctx, defender, meta) {
 		const existed = defender.buildings.has(target.id);
