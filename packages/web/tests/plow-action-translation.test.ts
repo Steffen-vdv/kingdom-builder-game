@@ -17,7 +17,7 @@ import {
 	LAND_INFO,
 	SLOT_INFO,
 } from '@kingdom-builder/contents';
-import { cloneStart, SYNTHETIC_IDS } from './syntheticContent';
+import { cloneStart, SYNTHETIC_IDS, MODIFIER_INFO } from './syntheticContent';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -63,7 +63,7 @@ describe('harvest action translation', () => {
 		expect(summary).toEqual([
 			`${expand.icon} ${expand.name}`,
 			`${cultivate.icon} ${cultivate.name}`,
-			`💲: ${modIcon}+${modAmt}`,
+			`${MODIFIER_INFO.cost.icon}: ${modIcon}+${modAmt}`,
 		]);
 	});
 
@@ -73,7 +73,9 @@ describe('harvest action translation', () => {
 		const titles = desc.map((d) => (typeof d === 'string' ? d : d.title));
 		titles.forEach((t) => expect(t).not.toMatch(/^Perform action/));
 		const passiveLine = desc.find(
-			(d) => typeof d === 'string' && d.startsWith('💲 Cost Modifier'),
+			(d) =>
+				typeof d === 'string' &&
+				d.startsWith(`${MODIFIER_INFO.cost.icon} ${MODIFIER_INFO.cost.label}`),
 		) as string | undefined;
 		expect(passiveLine).toBeDefined();
 		const harvest = ctx.actions.get(harvestId);
@@ -88,7 +90,7 @@ describe('harvest action translation', () => {
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
 		const modIcon = RESOURCES[modKey].icon;
 		expect(passiveLine).toBe(
-			`💲 Cost Modifier on all actions: Increase cost by ${modIcon}${modAmt}`,
+			`${MODIFIER_INFO.cost.icon} ${MODIFIER_INFO.cost.label} on all actions: Increase cost by ${modIcon}${modAmt}`,
 		);
 	});
 
@@ -133,7 +135,7 @@ describe('harvest action translation', () => {
 					`Till ${LAND_INFO.icon} ${LAND_INFO.label} to unlock ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
 				],
 			},
-			`💲 Cost Modifier on all actions: Increase cost by ${modIcon}${modAmt}`,
+			`${MODIFIER_INFO.cost.icon} ${MODIFIER_INFO.cost.label} on all actions: Increase cost by ${modIcon}${modAmt}`,
 		]);
 	});
 });
