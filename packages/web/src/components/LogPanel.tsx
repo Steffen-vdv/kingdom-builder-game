@@ -285,11 +285,7 @@ export default function LogPanel() {
 							: 'max-h-80 overflow-y-auto px-4 pb-4 pt-4 no-scrollbar'
 					}`}
 				>
-					<div
-						className={`flex items-start gap-2 pb-2 pr-12 ${
-							isExpanded ? 'mt-16' : 'mt-14'
-						}`}
-					>
+					<div className={`flex items-start gap-2 pb-2 pr-12`}>
 						<h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
 							Log
 						</h2>
