@@ -6,6 +6,7 @@ export default function LogPanel() {
 	const { log: entries, logOverflowed, ctx } = useGameEngine();
 	const outerRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
+	const settleAnimationFrameRef = useRef<number | null>(null);
 	const listRef = useAnimate<HTMLUListElement>();
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [collapsedSize, setCollapsedSize] = useState<{
@@ -82,16 +83,64 @@ export default function LogPanel() {
 		pendingScrollRef.current = true;
 	};
 
+	const cancelSettleFrame = React.useCallback(() => {
+		if (
+			typeof window === 'undefined' ||
+			settleAnimationFrameRef.current === null
+		) {
+			return;
+		}
+		window.cancelAnimationFrame(settleAnimationFrameRef.current);
+		settleAnimationFrameRef.current = null;
+	}, []);
+
 	const scrollToBottom = React.useCallback(
 		(element: HTMLDivElement, behavior: ScrollBehavior) => {
 			const maxScrollTop = Math.max(
 				0,
 				element.scrollHeight - element.clientHeight,
 			);
+			if (typeof window === 'undefined') {
+				element.scrollTop = maxScrollTop;
+				return;
+			}
+
+			cancelSettleFrame();
 			element.scrollTo({ top: maxScrollTop, behavior });
+
+			if (behavior !== 'smooth') {
+				return;
+			}
+
+			let remainingAttempts = 5;
+			const tolerance = 1;
+			const step = () => {
+				const latestMax = Math.max(
+					0,
+					element.scrollHeight - element.clientHeight,
+				);
+				const distance = Math.abs(latestMax - element.scrollTop);
+
+				if (distance <= tolerance || remainingAttempts <= 0) {
+					settleAnimationFrameRef.current = null;
+					return;
+				}
+
+				remainingAttempts -= 1;
+				element.scrollTo({ top: latestMax, behavior: 'auto' });
+				settleAnimationFrameRef.current = window.requestAnimationFrame(step);
+			};
+
+			settleAnimationFrameRef.current = window.requestAnimationFrame(step);
 		},
-		[],
+		[cancelSettleFrame],
 	);
+
+	useEffect(() => {
+		return () => {
+			cancelSettleFrame();
+		};
+	}, [cancelSettleFrame]);
 
 	useEffect(() => {
 		if (!isExpanded) return;
