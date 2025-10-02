@@ -1,9 +1,9 @@
-import type { AttackTargetHandler } from './index';
+import type { AttackTargetHandler, AttackTargetMutationResult } from './index';
 import type { StatAttackTarget } from '../attack.types';
 
 const statHandler: AttackTargetHandler<
 	StatAttackTarget,
-	{ before: number; after: number }
+	AttackTargetMutationResult<'stat'>
 > = {
 	applyDamage(target, damage, _ctx, defender) {
 		const before = defender.stats[target.key] || 0;

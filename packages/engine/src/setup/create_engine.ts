@@ -189,6 +189,7 @@ export function createEngine({
 	engineContext.game.currentPlayerIndex = 0;
 	engineContext.game.currentPhase = phases[0]?.id || '';
 	engineContext.game.currentStep = phases[0]?.steps[0]?.id || '';
+	services.initializeTierPassives(engineContext);
 	return engineContext;
 }
 
