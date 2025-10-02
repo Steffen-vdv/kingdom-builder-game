@@ -10,6 +10,18 @@ import type { SummaryEntry } from '../../content/types';
 
 const TRANSFER_DEFAULT_ID = 'percent';
 
+export interface TransferTarget {
+	icon?: string;
+	name: string;
+	actionId?: string;
+}
+
+type TransferEvaluation = {
+	type: string;
+	id?: string;
+	actionId?: string;
+};
+
 const isResourceTransferEffect = (effect: EffectDef): boolean => {
 	if (effect.type === 'resource' && effect.method === 'transfer') {
 		return true;
@@ -32,9 +44,9 @@ const findUniqueTransferActionId = (ctx: EngineContext): string | undefined => {
 
 export const resolveTransferTarget = (
 	eff: EffectDef,
-	evaluation: { type: string; id?: string; actionId?: string } | undefined,
+	evaluation: TransferEvaluation | undefined,
 	ctx: EngineContext,
-) => {
+): TransferTarget => {
 	const candidates = [
 		eff.params?.['actionId'],
 		evaluation?.actionId,
