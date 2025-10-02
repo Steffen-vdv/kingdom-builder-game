@@ -13,8 +13,10 @@ import {
 	RULES,
 	MODIFIER_INFO,
 	RESOURCES,
+	RESOURCE_TRANSFER_ICON,
 	Resource,
 } from '@kingdom-builder/contents';
+import { createContentFactory } from '../../engine/tests/factories/content';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -76,5 +78,39 @@ describe('modifier evaluation handlers', () => {
 		expect(description).toEqual([
 			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${farm.icon} ${farm.name}: Whenever it grants resources, gain ${happiness.icon}-2 more of that resource`,
 		]);
+	});
+
+	it('formats transfer percentage modifiers targeting non-plunder actions', () => {
+		const ctx = createCtx();
+		const content = createContentFactory();
+		const raid = content.action({
+			id: 'raid',
+			name: 'Raid',
+			icon: '🏴',
+			effects: [],
+		});
+		ctx.actions.add(raid.id, raid);
+
+		const eff: EffectDef = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				actionId: raid.id,
+				evaluation: { type: 'transfer_pct', id: raid.id },
+				adjust: 12,
+			},
+		};
+
+		const summary = summarizeEffects([eff], ctx);
+		expect(summary).toEqual([
+			`${MODIFIER_INFO.result.icon}${raid.icon}: ${RESOURCE_TRANSFER_ICON}+12%`,
+		]);
+
+		const description = describeEffects([eff], ctx);
+		expect(description[0]).toBe(
+			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${raid.icon} ${raid.name}: Whenever it transfers resources, ${RESOURCE_TRANSFER_ICON} Increase transfer by 12%`,
+		);
+		const card = description[1] as { title: string; items?: unknown[] };
+		expect(card.title).toBe(`${raid.icon} ${raid.name}`);
 	});
 });

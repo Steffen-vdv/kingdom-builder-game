@@ -8,6 +8,63 @@ import type {
 import { signed } from '../helpers';
 import type { SummaryEntry } from '../../content/types';
 
+const TRANSFER_DEFAULT_ID = 'percent';
+
+const isResourceTransferEffect = (effect: EffectDef): boolean => {
+	if (effect.type === 'resource' && effect.method === 'transfer') {
+		return true;
+	}
+	return (effect.effects ?? []).some(isResourceTransferEffect);
+};
+
+const findUniqueTransferActionId = (ctx: EngineContext): string | undefined => {
+	const matches: string[] = [];
+	for (const [id, action] of ctx.actions.entries()) {
+		if ((action.effects || []).some(isResourceTransferEffect)) {
+			matches.push(id);
+			if (matches.length > 1) {
+				return undefined;
+			}
+		}
+	}
+	return matches[0];
+};
+
+export const resolveTransferTarget = (
+	eff: EffectDef,
+	evaluation: { type: string; id?: string; actionId?: string } | undefined,
+	ctx: EngineContext,
+) => {
+	const candidates = [
+		eff.params?.['actionId'],
+		evaluation?.actionId,
+		evaluation?.id,
+	].filter(
+		(id): id is string => typeof id === 'string' && id.trim().length > 0,
+	);
+
+	for (const candidate of candidates) {
+		if (ctx.actions.has(candidate)) {
+			const info = getActionInfo(ctx, candidate);
+			return { actionId: candidate, ...info };
+		}
+	}
+
+	const transferActionId = findUniqueTransferActionId(ctx);
+	if (transferActionId) {
+		const info = getActionInfo(ctx, transferActionId);
+		return { actionId: transferActionId, ...info };
+	}
+
+	const fallbackName =
+		candidates.find((id) => id !== TRANSFER_DEFAULT_ID) ||
+		(evaluation?.id && evaluation.id !== TRANSFER_DEFAULT_ID
+			? evaluation.id
+			: 'resource transfers');
+
+	return { icon: '', name: fallbackName };
+};
+
 const GENERIC_RESOURCE_ICON = '🧺';
 
 const joinParts = (...parts: Array<string | undefined>) =>

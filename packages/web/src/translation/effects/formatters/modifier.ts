@@ -13,6 +13,7 @@ import {
 	formatResultModifierClause,
 	formatTargetLabel,
 	getActionInfo,
+	resolveTransferTarget,
 	wrapResultModifierEntries,
 } from './modifier_helpers';
 import { describeContent } from '../../content';
@@ -98,10 +99,11 @@ registerModifierEvalHandler('population', {
 });
 
 registerModifierEvalHandler('transfer_pct', {
-	summarize: (eff, _evaluation, ctx) => {
-		const { icon, name } = getActionInfo(ctx, 'plunder');
+	summarize: (eff, evaluation, ctx) => {
+		const target = resolveTransferTarget(eff, evaluation, ctx);
 		const amount = Number(eff.params?.['adjust'] ?? 0);
-		const targetIcon = icon && icon.trim() ? icon : name;
+		const targetIcon =
+			target.icon && target.icon.trim() ? target.icon : target.name;
 		const sign = amount >= 0 ? '+' : '';
 		return [
 			`${RESULT_MODIFIER_INFO.icon}${targetIcon}: ${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(
@@ -109,28 +111,31 @@ registerModifierEvalHandler('transfer_pct', {
 			)}%`,
 		];
 	},
-	describe: (eff, _evaluation, ctx) => {
-		const { icon, name } = getActionInfo(ctx, 'plunder');
+	describe: (eff, evaluation, ctx) => {
+		const target = resolveTransferTarget(eff, evaluation, ctx);
 		const amount = Number(eff.params?.['adjust'] ?? 0);
-		const card = describeContent('action', 'plunder', ctx);
-		const target = formatTargetLabel(icon, name);
+		const card = target.actionId
+			? describeContent('action', target.actionId, ctx)
+			: [];
+		const targetLabel = formatTargetLabel(target.icon ?? '', target.name);
 		const modifierDescription = formatResultModifierClause(
 			RESULT_MODIFIER_LABEL,
-			target,
+			targetLabel,
 			RESULT_EVENT_TRANSFER,
 			`${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
 				amount,
 			)} transfer by ${Math.abs(amount)}%`,
 		);
-		return [
-			modifierDescription,
-			{
-				title: formatTargetLabel(icon, name),
+		const entries: Summary = [modifierDescription];
+		if (target.actionId) {
+			entries.push({
+				title: targetLabel,
 				items: card,
 				_hoist: true,
 				_desc: true,
-			},
-		];
+			});
+		}
+		return entries;
 	},
 });
 
