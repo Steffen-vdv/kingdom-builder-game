@@ -23,6 +23,7 @@ interface StepDef {
 	effects?: EffectDef[];
 }
 import { logContent, type Land } from './content';
+import { resolveBuildingIcon } from './content/buildingIcons';
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
@@ -153,6 +154,11 @@ interface ResourceSourceEntry {
 	mods: string;
 }
 
+type PassiveDescriptor = {
+	icon?: string;
+	meta?: { source?: { icon?: string } };
+};
+
 type ResourceSourceMeta = Record<string, unknown> & {
 	type?: string;
 	id?: string;
@@ -244,7 +250,7 @@ function renderBuildingMetaIcons(
 	ctx: EngineContext,
 ): string {
 	if (!meta.id) return '';
-	return ctx.buildings.get(meta.id)?.icon || '';
+	return resolveBuildingIcon(meta.id, ctx);
 }
 
 function renderLandMetaIcons(): string {
@@ -293,9 +299,11 @@ function collectResourceSources(
 					ev.params && 'id' in ev.params
 						? `${ev.type}:${String(idParam)}`
 						: ev.type;
-				const passives = ctx.passives as unknown as {
+				type PassiveLookup = {
 					evaluationMods?: Map<string, Map<string, unknown>>;
+					get?: (id: string, owner: PlayerId) => PassiveDescriptor | undefined;
 				};
+				const passives = ctx.passives as unknown as PassiveLookup;
 				const modsMap = passives.evaluationMods?.get(target);
 				if (modsMap) {
 					for (const key of modsMap.keys()) {
@@ -305,15 +313,15 @@ function collectResourceSources(
 						let icon = '';
 						for (let i = parts.length; i > 0; i--) {
 							const candidate = parts.slice(0, i).join('_');
-							try {
-								icon = ctx.buildings.get(candidate)?.icon || '';
-							} catch {
-								/* ignore */
-							}
+							icon = resolveBuildingIcon(candidate, ctx);
 							if (icon) break;
 						}
-						if (!icon) icon = ctx.actions.get('build').icon || '';
-						entry.mods += icon;
+						if (!icon && passives.get) {
+							const passive = passives.get(base, ctx.activePlayer.id);
+							icon = passive?.icon || passive?.meta?.source?.icon || '';
+						}
+						if (!icon) icon = PASSIVE_INFO.icon || '';
+						if (icon) entry.mods += icon;
 					}
 				}
 			} catch {
