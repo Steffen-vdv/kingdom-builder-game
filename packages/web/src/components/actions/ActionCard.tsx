@@ -3,6 +3,19 @@ import { type Summary } from '../../translation';
 import { renderSummary, renderCosts } from '../../translation/render';
 import type { Focus } from '@kingdom-builder/contents';
 
+const FOCUS_GRADIENTS: Record<Focus, string> & { default: string } = {
+	economy:
+		'from-emerald-200/70 to-emerald-100/40 dark:from-emerald-900/40 dark:to-emerald-800/20',
+	aggressive:
+		'from-amber-200/70 to-orange-100/40 dark:from-amber-900/40 dark:to-orange-900/20',
+	defense:
+		'from-blue-200/70 to-sky-100/40 dark:from-blue-900/40 dark:to-sky-900/20',
+	other:
+		'from-rose-200/70 to-rose-100/40 dark:from-rose-900/40 dark:to-rose-800/20',
+	default:
+		'from-rose-200/70 to-rose-100/40 dark:from-rose-900/40 dark:to-rose-800/20',
+};
+
 function stripSummary(
 	summary: Summary | undefined,
 	requirements: readonly string[],
@@ -92,18 +105,8 @@ export default function ActionCard({
 	focus,
 	multiStep,
 }: ActionCardProps) {
-	const focusClass = (() => {
-		switch (focus) {
-			case 'economy':
-				return 'from-emerald-200/70 to-emerald-100/40 dark:from-emerald-900/40 dark:to-emerald-800/20';
-			case 'aggressive':
-				return 'from-amber-200/70 to-orange-100/40 dark:from-amber-900/40 dark:to-orange-900/20';
-			case 'defense':
-				return 'from-blue-200/70 to-sky-100/40 dark:from-blue-900/40 dark:to-sky-900/20';
-			default:
-				return 'from-rose-200/70 to-rose-100/40 dark:from-rose-900/40 dark:to-rose-800/20';
-		}
-	})();
+	const focusClass =
+		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
 	const multiStepIcon = multiStep ? (multiStep.icon ?? '🔀') : null;
 	const [visibleKey, setVisibleKey] = React.useState(
 		multiStep?.contentKey ?? 'front',
@@ -154,7 +157,6 @@ export default function ActionCard({
 			window.clearTimeout(finish);
 		};
 	}, [targetKey, visibleKey]);
-
 	return (
 		<div
 			className={`relative panel-card flex h-full min-h-[11rem] flex-col items-start gap-2 border border-white/40 bg-gradient-to-br p-4 text-left shadow-lg shadow-amber-500/10 transition ${

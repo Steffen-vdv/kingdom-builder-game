@@ -20,6 +20,34 @@ import {
 	type Mode,
 } from './attack/target-formatter';
 
+type AttackOnDamageFormatterArgs = {
+	entry: AttackOnDamageLogEntry;
+	ctx: EngineContext;
+	formatter: AttackTargetFormatter;
+};
+
+type AttackOnDamageFormatter = (
+	args: AttackOnDamageFormatterArgs,
+) => SummaryEntry[];
+
+const onDamageFormatterRegistry = new Map<string, AttackOnDamageFormatter>();
+
+export function registerAttackOnDamageFormatter(
+	type: string,
+	method: string,
+	handler: AttackOnDamageFormatter,
+): void {
+	onDamageFormatterRegistry.set(`${type}:${method}`, handler);
+}
+
+function resolveAttackOnDamageFormatter(
+	entry: AttackOnDamageLogEntry,
+): AttackOnDamageFormatter | undefined {
+	return onDamageFormatterRegistry.get(
+		`${entry.effect.type}:${entry.effect.method}`,
+	);
+}
+
 const DAMAGE_EFFECT_CATEGORIES: Record<
 	string,
 	(item: SummaryEntry, mode: Mode) => SummaryEntry[]
@@ -52,6 +80,20 @@ function categorizeDamageEffects(
 
 function ownerLabel(owner: 'attacker' | 'defender') {
 	return owner === 'attacker' ? 'You' : 'Opponent';
+}
+
+function formatDiffEntries(
+	entry: AttackOnDamageLogEntry,
+	formatter: AttackTargetFormatter,
+): SummaryEntry[] {
+	const parts: SummaryEntry[] = [];
+	entry.defender.forEach((diff) =>
+		parts.push(formatter.formatDiff(ownerLabel('defender'), diff)),
+	);
+	entry.attacker.forEach((diff) =>
+		parts.push(formatter.formatDiff(ownerLabel('attacker'), diff)),
+	);
+	return parts;
 }
 
 function buildBaseEntry(
@@ -208,7 +250,7 @@ function buildActionLog(
 	return { title: `Triggered ${icon} ${name}`.trim(), items };
 }
 
-function buildOnDamageEntry(
+export function buildOnDamageEntry(
 	logEntries: AttackLog['onDamage'],
 	ctx: EngineContext,
 	eff: EffectDef<Record<string, unknown>>,
@@ -224,26 +266,11 @@ function buildOnDamageEntry(
 	);
 	const ordered = defenderEntries.concat(attackerEntries);
 	for (const entry of ordered) {
-		if (entry.effect.type === 'action' && entry.effect.method === 'perform') {
-			items.push(buildActionLog(entry, ctx, formatter));
-			continue;
-		}
-		const percent =
-			entry.effect.type === 'resource' &&
-			entry.effect.method === 'transfer' &&
-			entry.effect.params
-				? (entry.effect.params['percent'] as number | undefined)
-				: undefined;
-		entry.defender.forEach((diff) => {
-			if (percent !== undefined)
-				items.push(
-					formatter.formatDiff(ownerLabel('defender'), diff, { percent }),
-				);
-			else items.push(formatter.formatDiff(ownerLabel('defender'), diff));
-		});
-		entry.attacker.forEach((diff) =>
-			items.push(formatter.formatDiff(ownerLabel('attacker'), diff)),
-		);
+		const handler = resolveAttackOnDamageFormatter(entry);
+		const formatted = handler
+			? handler({ entry, ctx, formatter })
+			: formatDiffEntries(entry, formatter);
+		items.push(...formatted);
 	}
 	if (!items.length) return null;
 	return {
@@ -251,6 +278,33 @@ function buildOnDamageEntry(
 		items,
 	};
 }
+
+registerAttackOnDamageFormatter(
+	'action',
+	'perform',
+	({ entry, ctx, formatter }) => [buildActionLog(entry, ctx, formatter)],
+);
+
+registerAttackOnDamageFormatter(
+	'resource',
+	'transfer',
+	({ entry, formatter }) => {
+		const percent = entry.effect.params
+			? (entry.effect.params['percent'] as number | undefined)
+			: undefined;
+		if (percent === undefined) return formatDiffEntries(entry, formatter);
+		const parts: SummaryEntry[] = [];
+		entry.defender.forEach((diff) =>
+			parts.push(
+				formatter.formatDiff(ownerLabel('defender'), diff, { percent }),
+			),
+		);
+		entry.attacker.forEach((diff) =>
+			parts.push(formatter.formatDiff(ownerLabel('attacker'), diff)),
+		);
+		return parts;
+	},
+);
 
 registerEffectFormatter('attack', 'perform', {
 	summarize: (eff, ctx) => {

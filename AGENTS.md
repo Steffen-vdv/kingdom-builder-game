@@ -30,9 +30,9 @@
 ```ts
 const content = createContentFactory();
 const effect = {
-  type: 'resource',
-  method: 'add',
-  params: { key: CResource.gold, amount: 2 },
+	type: 'resource',
+	method: 'add',
+	params: { key: CResource.gold, amount: 2 },
 };
 const action = content.action({ effects: [effect] });
 const ctx = createTestEngine(content);
@@ -43,11 +43,11 @@ expect(ctx.activePlayer.gold).toBe(before + effect.params.amount);
 
 ```ts
 fc.assert(
-  fc.property(resourceMapArb, (costs) => {
-    const content = createContentFactory();
-    const action = content.action({ baseCosts: costs });
-    // ...assert invariants
-  }),
+	fc.property(resourceMapArb, (costs) => {
+		const content = createContentFactory();
+		const action = content.action({ baseCosts: costs });
+		// ...assert invariants
+	}),
 );
 ```
 
@@ -79,15 +79,12 @@ fc.assert(
 
 # Agent discovery log
 
-- 2025-08-31: Run tests with `npm run test:coverage >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log`; avoid running extra test commands.
-- 2025-08-31: `git commit` triggers a Husky pre-commit hook running lint-staged, type checking, linting and tests.
+- 2025-08-31: Run tests with `npm run test:quick >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log`; avoid running extra test commands unless specifically asked.
+- 2025-08-31: `git commit` triggers a Husky pre-commit hook running lint-staged and the fast Vitest suite.
 - 2025-08-31: Use `rg` for code searches; `grep -R` and `ls -R` are discouraged for performance.
 - 2025-08-31: Registries can validate entries with Zod schemas; invalid data will throw during `add`.
 - 2025-08-31: A quick Node script can scan content files to detect duplicate icons across actions, buildings, stats, population roles and developments.
 - 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
-- 2025-09-24: That prebuild currently fails in this environment (the contents TypeScript project rejects engine sources outside
-  its `rootDir`). To launch Vite for screenshots, run it from the web workspace instead:
-  `npm run --workspace @kingdom-builder/web dev -- --host 0.0.0.0 --port 4173`.
 - 2025-08-31: Player snapshots now require the engine context to include active passive IDs; use `snapshotPlayer(player, ctx)`.
 - 2025-08-31: `handleEndTurn` will not advance phases if a player has remaining AP; automated tests must spend or clear AP first.
 - 2025-08-31: Log entries include `playerId` so the web UI can style messages per player.
@@ -100,7 +97,7 @@ fc.assert(
 - 2025-08-31: Trigger handling now uses `collectTriggerEffects`; direct
   `runTrigger` helper has been removed. Switch the active player index when
   resolving triggers for non-active players.
-- 2025-08-31: `npm run test:coverage` requires `@vitest/coverage-v8`; install with `npm install --no-save @vitest/coverage-v8` if missing.
+- 2025-08-31: `npm run test:coverage` (also used by `npm run test:ci`) requires `@vitest/coverage-v8`; install with `npm install --no-save @vitest/coverage-v8` if missing.
 - 2025-08-31: `performAction` returns sub-action traces via `ctx.actionTraces` for nested log attribution.
 - 2025-08-31: Use `buildInfo(registry, { id: icon })` to derive icon/label maps from content registries.
 - 2025-08-31: Compose effects with `effect(type, method).param(key, value)` to avoid manual `{ type, method, params }` objects.
@@ -182,14 +179,14 @@ Tests live in:
 - `packages/engine/tests` for unit tests
 - `tests/integration` for integration tests
 
-To run the test suite and capture a reliable summary without redundant
+To run the fast test suite and capture a reliable summary without redundant
 checks, execute:
 
 ```sh
-npm run test:coverage >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log
+npm run test:quick >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log
 ```
 
-This command runs the tests with coverage and saves the output to
+This command runs Vitest without coverage and saves the output to
 `/tmp/unit.log`. The `tail` command prints the final portion of the log so
 you can quickly confirm whether tests passed or inspect any failures.
 
@@ -197,11 +194,12 @@ you can quickly confirm whether tests passed or inspect any failures.
 verify the tail output looks correct, and proceed without running any
 extra test or build commands.
 
-The pre-commit hook already runs `lint-staged`, type checking, linting, and
-`npm test` (which triggers a `pretest` step). Running `npm test` manually
-would repeat those checks. GitHub Actions executes `npm run test:coverage`
-and `npm run build` for each pull request. Run these scripts locally only
-when debugging or when changes could affect them. See
+The pre-commit hook already runs `lint-staged` and `npm run test:quick`
+(which triggers the `pretest` dependency install step). Running the test
+command again manually would repeat those checks. GitHub Actions executes
+`npm run test:ci` (coverage) and `npm run build` for each pull request. Run
+these scripts locally only when debugging or when changes could affect
+them. See
 [CONTRIBUTING](CONTRIBUTING/AGENTS.md) for details.
 
 # Game overview

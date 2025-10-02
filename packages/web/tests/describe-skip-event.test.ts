@@ -76,4 +76,57 @@ describe('describeSkipEvent', () => {
 		expect(result.history.items[0]?.text).toContain('First Source');
 		expect(result.history.items[0]?.text).toContain('tier:second');
 	});
+
+	it('uses the phase descriptor strategy when the skip type is phase', () => {
+		const skip: AdvanceSkip = {
+			type: 'phase',
+			phaseId: 'dawn',
+			sources: [],
+		};
+		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
+
+		const result = describeSkipEvent(skip, phase);
+
+		expect(result.logLines).toEqual(['⏭️ 🌅 Dawn Phase skipped']);
+		expect(result.history).toEqual({
+			title: '🌅 Dawn Phase',
+			items: [{ text: 'Skipped', italic: true }],
+		});
+	});
+
+	it('uses the step descriptor strategy when the skip type is step', () => {
+		const skip: AdvanceSkip = {
+			type: 'step',
+			phaseId: 'dawn',
+			stepId: 'prepare',
+			sources: [],
+		};
+		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
+
+		const result = describeSkipEvent(skip, phase);
+
+		expect(result.logLines).toEqual(['⏭️ prepare skipped']);
+		expect(result.history).toEqual({
+			title: 'prepare',
+			items: [{ text: 'Skipped', italic: true }],
+		});
+	});
+
+	it('falls back to the default descriptor for unrecognised skip types', () => {
+		const skip = {
+			type: 'unknown',
+			phaseId: 'dawn',
+			stepId: 'prepare',
+			sources: [],
+		} as AdvanceSkip;
+		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
+
+		const result = describeSkipEvent(skip, phase);
+
+		expect(result.logLines).toEqual(['⏭️ prepare skipped']);
+		expect(result.history).toEqual({
+			title: 'prepare',
+			items: [{ text: 'Skipped', italic: true }],
+		});
+	});
 });

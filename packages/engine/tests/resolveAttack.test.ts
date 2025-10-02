@@ -382,6 +382,9 @@ describe('resolveAttack', () => {
 			ResourceAttackTarget,
 			typeof mutation
 		> = {
+			getEvaluationModifierKey: vi.fn(
+				() => target.key,
+			) as typeof originalHandler.getEvaluationModifierKey,
 			applyDamage: applySpy,
 			buildLog: buildSpy,
 		};

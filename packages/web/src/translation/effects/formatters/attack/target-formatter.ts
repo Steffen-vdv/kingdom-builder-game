@@ -10,11 +10,60 @@ export type {
 	TargetInfo,
 } from './types';
 
-export const ATTACK_TARGET_FORMATTERS = {
+type AttackTargetFormatterRegistry = {
+	[Type in AttackTarget['type']]: AttackTargetFormatter<
+		Extract<AttackTarget, { type: Type }>
+	>;
+};
+
+export const ATTACK_TARGET_FORMATTERS: AttackTargetFormatterRegistry = {
 	resource: resourceFormatter,
 	stat: statFormatter,
 	building: buildingFormatter,
-} as const;
+};
+
+type AttackTargetFormatterType = keyof AttackTargetFormatterRegistry;
+
+type AttackTargetFormatterMapEntry = AttackTargetFormatter<AttackTarget>;
+
+function isAttackTargetFormatterType(
+	type: string,
+): type is AttackTargetFormatterType {
+	return type in ATTACK_TARGET_FORMATTERS;
+}
+
+function resolveTargetWithFormatter(
+	type: string | undefined,
+	parseTarget: (formatter: AttackTargetFormatterMapEntry) => AttackTarget,
+): {
+	formatter: AttackTargetFormatter;
+	target: AttackTarget;
+	info: TargetInfo;
+	targetLabel: string;
+} {
+	const resolvedType: AttackTargetFormatterType =
+		type && isAttackTargetFormatterType(type) ? type : 'resource';
+	const formatter = ATTACK_TARGET_FORMATTERS[
+		resolvedType
+	] as AttackTargetFormatterMapEntry;
+	const target = parseTarget(formatter);
+	if (target.type !== formatter.type) {
+		const expectedType = formatter.type;
+		const receivedType = target.type;
+
+		throw new Error(
+			`Formatter mismatch: expected type "${expectedType}" but received "${receivedType}"`,
+		);
+	}
+	const info = formatter.getInfo(target);
+
+	return {
+		formatter: formatter as AttackTargetFormatter,
+		target,
+		info,
+		targetLabel: formatter.getTargetLabel(info, target),
+	};
+}
 
 export function resolveAttackTargetFormatter(
 	effect: EffectDef<Record<string, unknown>>,
@@ -25,43 +74,13 @@ export function resolveAttackTargetFormatter(
 	targetLabel: string;
 } {
 	const targetParam = effect.params?.['target'] as
-		| { type: AttackTarget['type'] }
+		| { type?: string }
 		| undefined;
-	const type = targetParam?.type ?? 'resource';
+	const type = targetParam?.type;
 
-	if (type === 'stat') {
-		const formatter = ATTACK_TARGET_FORMATTERS.stat;
-		const target = formatter.parseEffectTarget(effect);
-		const info = formatter.getInfo(target);
-		return {
-			formatter,
-			target,
-			info,
-			targetLabel: formatter.getTargetLabel(info, target),
-		};
-	}
-
-	if (type === 'building') {
-		const formatter = ATTACK_TARGET_FORMATTERS.building;
-		const target = formatter.parseEffectTarget(effect);
-		const info = formatter.getInfo(target);
-		return {
-			formatter,
-			target,
-			info,
-			targetLabel: formatter.getTargetLabel(info, target),
-		};
-	}
-
-	const formatter = ATTACK_TARGET_FORMATTERS.resource;
-	const target = formatter.parseEffectTarget(effect);
-	const info = formatter.getInfo(target);
-	return {
-		formatter,
-		target,
-		info,
-		targetLabel: formatter.getTargetLabel(info, target),
-	};
+	return resolveTargetWithFormatter(type, (formatter) =>
+		formatter.parseEffectTarget(effect),
+	);
 }
 
 export function resolveAttackTargetFormatterFromLogTarget(
@@ -72,37 +91,7 @@ export function resolveAttackTargetFormatterFromLogTarget(
 	info: TargetInfo;
 	targetLabel: string;
 } {
-	if (target.type === 'stat') {
-		const formatter = ATTACK_TARGET_FORMATTERS.stat;
-		const normalized = formatter.normalizeLogTarget(target);
-		const info = formatter.getInfo(normalized);
-		return {
-			formatter,
-			target: normalized,
-			info,
-			targetLabel: formatter.getTargetLabel(info, normalized),
-		};
-	}
-
-	if (target.type === 'building') {
-		const formatter = ATTACK_TARGET_FORMATTERS.building;
-		const normalized = formatter.normalizeLogTarget(target);
-		const info = formatter.getInfo(normalized);
-		return {
-			formatter,
-			target: normalized,
-			info,
-			targetLabel: formatter.getTargetLabel(info, normalized),
-		};
-	}
-
-	const formatter = ATTACK_TARGET_FORMATTERS.resource;
-	const normalized = formatter.normalizeLogTarget(target);
-	const info = formatter.getInfo(normalized);
-	return {
-		formatter,
-		target: normalized,
-		info,
-		targetLabel: formatter.getTargetLabel(info, normalized),
-	};
+	return resolveTargetWithFormatter(target.type, (formatter) =>
+		formatter.normalizeLogTarget(target),
+	);
 }

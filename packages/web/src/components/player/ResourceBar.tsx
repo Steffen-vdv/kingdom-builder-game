@@ -1,8 +1,10 @@
 import React from 'react';
-import { RESOURCES } from '@kingdom-builder/contents';
+import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
+import { GENERAL_RESOURCE_ICON } from '../../icons';
+import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
 
 interface ResourceButtonProps {
 	resourceKey: keyof typeof RESOURCES;
@@ -67,9 +69,31 @@ interface ResourceBarProps {
 
 const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 	const { handleHoverCard, clearHoverCard } = useGameEngine();
+	const resourceKeys = Object.keys(RESOURCES) as ResourceKey[];
+	const showGeneralResourceCard = () =>
+		handleHoverCard({
+			title: `${GENERAL_RESOURCE_INFO.icon} ${GENERAL_RESOURCE_INFO.label}`,
+			effects: [],
+			requirements: [],
+			description: GENERAL_RESOURCE_INFO.description,
+			bgClass: PLAYER_INFO_CARD_BG,
+		});
+
 	return (
-		<>
-			{(Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]).map((k) => {
+		<div className="info-bar resource-bar">
+			<button
+				type="button"
+				className="info-bar__icon hoverable cursor-help"
+				aria-label={`${GENERAL_RESOURCE_INFO.label} overview`}
+				onMouseEnter={showGeneralResourceCard}
+				onMouseLeave={clearHoverCard}
+				onFocus={showGeneralResourceCard}
+				onBlur={clearHoverCard}
+				onClick={showGeneralResourceCard}
+			>
+				{GENERAL_RESOURCE_ICON}
+			</button>
+			{resourceKeys.map((k) => {
 				const info = RESOURCES[k];
 				const v = player.resources[k] ?? 0;
 				const showResourceCard = () =>
@@ -78,8 +102,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 						effects: [],
 						requirements: [],
 						description: info.description,
-						bgClass:
-							'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+						bgClass: PLAYER_INFO_CARD_BG,
 					});
 				return (
 					<ResourceButton
@@ -91,7 +114,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 					/>
 				);
 			})}
-		</>
+		</div>
 	);
 };
 

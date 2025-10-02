@@ -9,6 +9,7 @@ import { formatStatValue, getStatBreakdownSummary } from '../../utils/stats';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
+import { GENERAL_STAT_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
 
 interface StatButtonProps {
 	statKey: keyof typeof STATS;
@@ -70,6 +71,15 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
 	const popDetails = popEntries.map(([role, count]) => ({ role, count }));
 
+	const showGeneralStatCard = () =>
+		handleHoverCard({
+			title: `${GENERAL_STAT_INFO.icon} ${GENERAL_STAT_INFO.label}`,
+			effects: [],
+			requirements: [],
+			description: GENERAL_STAT_INFO.description,
+			bgClass: PLAYER_INFO_CARD_BG,
+		});
+
 	const showPopulationCard = () =>
 		handleHoverCard({
 			title: `${POPULATION_INFO.icon} ${POPULATION_INFO.label}`,
@@ -79,8 +89,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			effectsTitle: POPULATION_ARCHETYPE_INFO.label,
 			requirements: [],
 			description: POPULATION_INFO.description,
-			bgClass:
-				'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+			bgClass: PLAYER_INFO_CARD_BG,
 		});
 
 	const showStatCard = (statKey: string) => {
@@ -93,14 +102,24 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			effectsTitle: 'Breakdown',
 			requirements: [],
 			description: info.description,
-			bgClass:
-				'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+			bgClass: PLAYER_INFO_CARD_BG,
 		});
 	};
 
 	return (
-		<>
-			<div className="h-6 border-l border-white/40 dark:border-white/10" />
+		<div className="info-bar stat-bar">
+			<button
+				type="button"
+				className="info-bar__icon hoverable cursor-help"
+				aria-label={`${GENERAL_STAT_INFO.label} overview`}
+				onMouseEnter={showGeneralStatCard}
+				onMouseLeave={clearHoverCard}
+				onFocus={showGeneralStatCard}
+				onBlur={clearHoverCard}
+				onClick={showGeneralStatCard}
+			>
+				{GENERAL_STAT_INFO.icon}
+			</button>
 			<div
 				role="button"
 				tabIndex={0}
@@ -137,8 +156,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 												effects: [],
 												requirements: [],
 												description: info.description,
-												bgClass:
-													'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+												bgClass: PLAYER_INFO_CARD_BG,
 											});
 										}}
 										onMouseLeave={(e) => {
@@ -152,8 +170,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 												effects: [],
 												requirements: [],
 												description: info.description,
-												bgClass:
-													'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+												bgClass: PLAYER_INFO_CARD_BG,
 											});
 										}}
 										onBlur={(e) => {
@@ -167,8 +184,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 												effects: [],
 												requirements: [],
 												description: info.description,
-												bgClass:
-													'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+												bgClass: PLAYER_INFO_CARD_BG,
 											});
 										}}
 									>
@@ -196,7 +212,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 						onHide={clearHoverCard}
 					/>
 				))}
-		</>
+		</div>
 	);
 };
 

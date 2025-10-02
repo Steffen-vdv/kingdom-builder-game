@@ -5,13 +5,14 @@ module.exports = {
     project: ['./tsconfig.eslint.json'],
     ecmaVersion: 'latest',
     sourceType: 'module',
+    extraFileExtensions: ['.md'],
   },
   env: {
     browser: true,
     node: true,
     es2022: true,
   },
-  plugins: ['@typescript-eslint', 'unused-imports', 'import'],
+  plugins: ['@typescript-eslint', 'unused-imports', 'import', 'markdown'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
@@ -140,6 +141,20 @@ module.exports = {
       ],
       rules: {
         'check-test-content': 'error',
+      },
+    },
+    {
+      files: ['**/*.md'],
+      processor: 'markdown/markdown',
+    },
+    {
+      files: ['**/*.md/*.ts', '**/*.md/*.tsx'],
+      parserOptions: {
+        project: null,
+      },
+      rules: {
+        'max-len': 'off',
+        'max-lines': 'off',
       },
     },
     {
