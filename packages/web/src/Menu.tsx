@@ -7,7 +7,10 @@ import {
 } from './components/layouts/ShowcasePage';
 import ConfirmDialog from './components/common/ConfirmDialog';
 import { HighlightsSection } from './components/menu/HighlightsSection';
-import { CallToActionSection } from './components/menu/CallToActionSection';
+import {
+	CallToActionSection,
+	type CallToActionSectionProps,
+} from './components/menu/CallToActionSection';
 import type { SavedGameMeta } from './state/persistence';
 
 interface MenuProps {
@@ -48,10 +51,10 @@ export default function Menu({
 	onTutorial,
 	onContinue,
 	onDiscardSave,
-	savedGameMeta,
+	savedGameMeta = null,
 }: MenuProps) {
 	const [overwriteDialogOpen, setOverwriteDialogOpen] = useState(false);
-	const hasSave = Boolean(savedGameMeta);
+	const hasSave = savedGameMeta !== null;
 
 	const handleStart = () => {
 		if (hasSave) {
@@ -83,18 +86,26 @@ export default function Menu({
 		].join(' ');
 	}, [savedGameMeta]);
 
+	const callToActionProps: CallToActionSectionProps = {
+		onStart: handleStart,
+		onStartDev,
+		onOverview,
+		onTutorial,
+	};
+
+	if (hasSave && onContinue) {
+		callToActionProps.onContinue = handleContinue;
+	}
+
+	if (savedGameMeta !== null) {
+		callToActionProps.savedGameMeta = savedGameMeta;
+	}
+
 	return (
 		<ShowcaseBackground>
 			<ShowcaseLayout>
 				<HeroSection />
-				<CallToActionSection
-					onStart={handleStart}
-					onStartDev={onStartDev}
-					onOverview={onOverview}
-					onTutorial={onTutorial}
-					onContinue={hasSave ? handleContinue : undefined}
-					savedGameMeta={savedGameMeta}
-				/>
+				<CallToActionSection {...callToActionProps} />
 				<HighlightsSection />
 			</ShowcaseLayout>
 			<ConfirmDialog

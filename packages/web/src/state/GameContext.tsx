@@ -71,11 +71,25 @@ function cloneParams(
 }
 
 function cloneEvents(events: SavedGameEvent[]): SavedGameEvent[] {
-	return events.map((event) =>
-		event.type === 'action'
-			? { ...event, params: cloneParams(event.params) }
-			: { ...event },
-	);
+	return events.map((event) => {
+		if (event.type === 'action') {
+			const clonedParams = cloneParams(event.params);
+			if (clonedParams === undefined) {
+				return {
+					type: 'action',
+					playerId: event.playerId,
+					actionId: event.actionId,
+				} satisfies SavedGameEvent;
+			}
+			return {
+				type: 'action',
+				playerId: event.playerId,
+				actionId: event.actionId,
+				params: clonedParams,
+			} satisfies SavedGameEvent;
+		}
+		return { ...event } satisfies SavedGameEvent;
+	});
 }
 
 interface Action {
