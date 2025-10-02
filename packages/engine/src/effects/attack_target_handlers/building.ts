@@ -6,6 +6,9 @@ const buildingHandler: AttackTargetHandler<
 	BuildingAttackTarget,
 	AttackTargetMutationResult<'building'>
 > = {
+	getEvaluationModifierKey(target) {
+		return target.id;
+	},
 	applyDamage(target, damage, ctx, defender, meta) {
 		const existed = defender.buildings.has(target.id);
 		let destroyed = false;
