@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { GameProvider, useGameEngine } from './state/GameContext';
 import PlayerPanel from './components/player/PlayerPanel';
 import HoverCard from './components/HoverCard';
@@ -10,6 +10,60 @@ import TimeControl from './components/common/TimeControl';
 
 function GameLayout() {
 	const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
+	const [playerHeights, setPlayerHeights] = useState<Record<string, number>>(
+		{},
+	);
+	const handlePlayerHeight = (playerId: string, height: number) => {
+		setPlayerHeights((prev) => {
+			if (prev[playerId] === height) {
+				return prev;
+			}
+			return { ...prev, [playerId]: height };
+		});
+	};
+	const phasePanelHeight = useMemo(() => {
+		const heights = Object.values(playerHeights);
+		if (!heights.length) {
+			return 320;
+		}
+		return Math.max(320, ...heights);
+	}, [playerHeights]);
+	const playerPanels = ctx.game.players.map((p, i) => {
+		const isActive = p.id === ctx.activePlayer.id;
+		const sideClass = i === 0 ? 'pr-6' : 'pl-6';
+		const colorClass =
+			i === 0
+				? isActive
+					? 'player-bg-blue-active'
+					: 'player-bg-blue'
+				: isActive
+					? 'player-bg-red-active'
+					: 'player-bg-red';
+		const bgClass = [
+			'player-bg',
+			sideClass,
+			colorClass,
+			isActive ? 'player-bg-animated' : null,
+		]
+			.filter(Boolean)
+			.join(' ');
+		return (
+			<PlayerPanel
+				key={p.id}
+				player={p}
+				className={`flex-1 p-4 ${bgClass}`}
+				isActive={isActive}
+				onHeightChange={(height) => {
+					handlePlayerHeight(p.id, height);
+				}}
+			/>
+		);
+	});
+	const phasePanelElement = (
+		<div className="w-full lg:col-start-2">
+			<PhasePanel height={phasePanelHeight} />
+		</div>
+	);
 	return (
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
 			<div className="pointer-events-none absolute inset-0">
@@ -48,39 +102,10 @@ function GameLayout() {
 				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
 					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
 						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
-							{ctx.game.players.map((p, i) => {
-								const isActive = p.id === ctx.activePlayer.id;
-								const sideClass = i === 0 ? 'pr-6' : 'pl-6';
-								const colorClass =
-									i === 0
-										? isActive
-											? 'player-bg-blue-active'
-											: 'player-bg-blue'
-										: isActive
-											? 'player-bg-red-active'
-											: 'player-bg-red';
-								const bgClass = [
-									'player-bg',
-									sideClass,
-									colorClass,
-									isActive ? 'player-bg-animated' : null,
-								]
-									.filter(Boolean)
-									.join(' ');
-								return (
-									<PlayerPanel
-										key={p.id}
-										player={p}
-										className={`flex-1 p-4 ${bgClass}`}
-										isActive={isActive}
-									/>
-								);
-							})}
+							{playerPanels}
 						</div>
 					</section>
-					<div className="w-full lg:col-start-2">
-						<PhasePanel />
-					</div>
+					{phasePanelElement}
 					<div className="lg:col-start-1 lg:row-start-2">
 						<ActionsPanel />
 					</div>

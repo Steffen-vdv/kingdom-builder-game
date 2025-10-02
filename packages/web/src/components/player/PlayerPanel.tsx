@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { EngineContext } from '@kingdom-builder/engine';
 import ResourceBar from './ResourceBar';
 import PopulationInfo from './PopulationInfo';
@@ -11,18 +11,64 @@ interface PlayerPanelProps {
 	player: EngineContext['activePlayer'];
 	className?: string;
 	isActive?: boolean;
+	onHeightChange?: (height: number) => void;
 }
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
 	player,
 	className = '',
 	isActive = false,
+	onHeightChange,
 }) => {
+	const panelRef = useRef<HTMLDivElement | null>(null);
+	const heightCallbackRef = useRef<typeof onHeightChange>();
 	const animateBar = useAnimate<HTMLDivElement>();
 	const animateSections = useAnimate<HTMLDivElement>();
+	useEffect(() => {
+		heightCallbackRef.current = onHeightChange;
+	}, [onHeightChange]);
+	useEffect(() => {
+		const node = panelRef.current;
+		if (!node) {
+			return;
+		}
+
+		let frame = 0;
+		const updateHeight = () => {
+			if (!panelRef.current || !heightCallbackRef.current) {
+				return;
+			}
+			heightCallbackRef.current(
+				panelRef.current.getBoundingClientRect().height,
+			);
+		};
+
+		updateHeight();
+
+		if (typeof ResizeObserver === 'undefined') {
+			window.addEventListener('resize', updateHeight);
+			return () => {
+				window.removeEventListener('resize', updateHeight);
+			};
+		}
+
+		const observer = new ResizeObserver(() => {
+			frame = window.requestAnimationFrame(updateHeight);
+		});
+
+		observer.observe(node);
+
+		return () => {
+			observer.disconnect();
+			if (frame) {
+				window.cancelAnimationFrame(frame);
+			}
+		};
+	}, []);
 	return (
 		<div
-			className={`player-panel flex h-[320px] flex-col gap-2 overflow-y-auto text-slate-800 custom-scrollbar dark:text-slate-100 ${className}`}
+			ref={panelRef}
+			className={`player-panel flex min-h-[320px] flex-col gap-2 text-slate-800 dark:text-slate-100 ${className}`}
 		>
 			<h3 className="text-lg font-semibold tracking-tight">
 				{isActive && (
