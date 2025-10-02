@@ -10,16 +10,21 @@ export type {
 	TargetInfo,
 } from './types';
 
-export const ATTACK_TARGET_FORMATTERS = {
+type AttackTargetFormatterRegistry = {
+	[Type in AttackTarget['type']]: AttackTargetFormatter<
+		Extract<AttackTarget, { type: Type }>
+	>;
+};
+
+export const ATTACK_TARGET_FORMATTERS: AttackTargetFormatterRegistry = {
 	resource: resourceFormatter,
 	stat: statFormatter,
 	building: buildingFormatter,
-} as const;
+};
 
-type AttackTargetFormatterType = keyof typeof ATTACK_TARGET_FORMATTERS;
+type AttackTargetFormatterType = keyof AttackTargetFormatterRegistry;
 
-type AttackTargetFormatterMapEntry =
-	(typeof ATTACK_TARGET_FORMATTERS)[AttackTargetFormatterType];
+type AttackTargetFormatterMapEntry = AttackTargetFormatter<AttackTarget>;
 
 function isAttackTargetFormatterType(
 	type: string,
@@ -42,6 +47,14 @@ function resolveTargetWithFormatter(
 		resolvedType
 	] as AttackTargetFormatterMapEntry;
 	const target = parseTarget(formatter);
+	if (target.type !== formatter.type) {
+		const expectedType = formatter.type;
+		const receivedType = target.type;
+
+		throw new Error(
+			`Formatter mismatch: expected type "${expectedType}" but received "${receivedType}"`,
+		);
+	}
 	const info = formatter.getInfo(target);
 
 	return {
