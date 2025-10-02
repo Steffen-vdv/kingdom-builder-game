@@ -146,6 +146,9 @@ export function GameProvider({
 	const [logOverflowed, setLogOverflowed] = useState(false);
 	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
 	const hoverTimeout = useRef<number>();
+	const timeouts = useRef(new Set<number>());
+	const intervals = useRef(new Set<number>());
+	const isMounted = useRef(true);
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
 	const [mainApStart, setMainApStart] = useState(0);
@@ -177,6 +180,49 @@ export function GameProvider({
 	};
 
 	const actionCostResource = ctx.actionCostResource as ResourceKey;
+
+	const clearTrackedTimeout = (id: number) => {
+		window.clearTimeout(id);
+		timeouts.current.delete(id);
+	};
+
+	const setTrackedTimeout = (handler: () => void, delay: number) => {
+		const timeoutId = window.setTimeout(() => {
+			timeouts.current.delete(timeoutId);
+			if (!isMounted.current) return;
+			handler();
+		}, delay);
+		timeouts.current.add(timeoutId);
+		return timeoutId;
+	};
+
+	const clearTrackedInterval = (id: number) => {
+		window.clearInterval(id);
+		intervals.current.delete(id);
+	};
+
+	const setTrackedInterval = (handler: () => void, delay: number) => {
+		const intervalId = window.setInterval(() => {
+			if (!isMounted.current) {
+				clearTrackedInterval(intervalId);
+				return;
+			}
+			handler();
+		}, delay);
+		intervals.current.add(intervalId);
+		return intervalId;
+	};
+
+	useEffect(() => {
+		return () => {
+			isMounted.current = false;
+			hoverTimeout.current = undefined;
+			timeouts.current.forEach((id) => window.clearTimeout(id));
+			intervals.current.forEach((id) => window.clearInterval(id));
+			timeouts.current.clear();
+			intervals.current.clear();
+		};
+	}, []);
 
 	const actionPhaseId = useMemo(
 		() => ctx.phases.find((p) => p.action)?.id,
@@ -244,11 +290,19 @@ export function GameProvider({
 	}, [ctx]);
 
 	function handleHoverCard(data: HoverCard) {
-		if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
-		hoverTimeout.current = window.setTimeout(() => setHoverCard(data), 300);
+		if (hoverTimeout.current) {
+			clearTrackedTimeout(hoverTimeout.current);
+		}
+		hoverTimeout.current = setTrackedTimeout(() => {
+			hoverTimeout.current = undefined;
+			setHoverCard(data);
+		}, 300);
 	}
 	function clearHoverCard() {
-		if (hoverTimeout.current) window.clearTimeout(hoverTimeout.current);
+		if (hoverTimeout.current) {
+			clearTrackedTimeout(hoverTimeout.current);
+			hoverTimeout.current = undefined;
+		}
 		setHoverCard(null);
 	}
 
@@ -281,19 +335,20 @@ export function GameProvider({
 		const scale = timeScale || 1;
 		const adjustedTotal = total / scale;
 		if (adjustedTotal <= 0) {
-			setPhaseTimer(0);
+			if (isMounted.current) setPhaseTimer(0);
 			return Promise.resolve();
 		}
 		const tick = Math.max(16, Math.min(100, adjustedTotal / 10));
-		setPhaseTimer(0);
+		if (isMounted.current) setPhaseTimer(0);
 		return new Promise<void>((resolve) => {
 			let elapsed = 0;
-			const interval = window.setInterval(() => {
+			const interval = setTrackedInterval(() => {
 				elapsed += tick;
-				setPhaseTimer(Math.min(1, elapsed / adjustedTotal));
+				if (isMounted.current)
+					setPhaseTimer(Math.min(1, elapsed / adjustedTotal));
 				if (elapsed >= adjustedTotal) {
-					window.clearInterval(interval);
-					setPhaseTimer(0);
+					clearTrackedInterval(interval);
+					if (isMounted.current) setPhaseTimer(0);
 					resolve();
 				}
 			}, tick);
@@ -306,6 +361,7 @@ export function GameProvider({
 
 	async function runUntilActionPhaseCore() {
 		if (ctx.phases[ctx.game.phaseIndex]?.action) {
+			if (!isMounted.current) return;
 			setPhaseTimer(0);
 			setTabsEnabled(true);
 			setDisplayPhase(ctx.game.currentPhase);
@@ -325,6 +381,7 @@ export function GameProvider({
 			const stepDef = phaseDef.steps.find((s) => s.id === step);
 			if (phase !== lastPhase) {
 				await runDelay(1500);
+				if (!isMounted.current) return;
 				setPhaseSteps([]);
 				setDisplayPhase(phase);
 				addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player);
@@ -362,6 +419,7 @@ export function GameProvider({
 				[phaseId]: [...(prev[phaseId] ?? []), entry],
 			}));
 			await runStepDelay();
+			if (!isMounted.current) return;
 			const finalized = { ...entry, active: false };
 			setPhaseSteps((prev) => {
 				if (!prev.length) return prev;
@@ -379,10 +437,13 @@ export function GameProvider({
 		}
 		if (ranSteps) {
 			await runDelay(1500);
+			if (!isMounted.current) return;
 		} else {
+			if (!isMounted.current) return;
 			setPhaseTimer(0);
 		}
 		const start = ctx.activePlayer.resources[actionCostResource] as number;
+		if (!isMounted.current) return;
 		setMainApStart(start);
 		updateMainPhaseStep(start);
 		setDisplayPhase(ctx.game.currentPhase);
@@ -397,7 +458,7 @@ export function GameProvider({
 		const duration = base / scale;
 		if (duration <= 0) return Promise.resolve();
 		return new Promise<void>((resolve) => {
-			window.setTimeout(() => resolve(), duration);
+			setTrackedTimeout(() => resolve(), duration);
 		});
 	}
 
@@ -408,10 +469,12 @@ export function GameProvider({
 		if (!lines.length) return;
 		const [first, ...rest] = lines;
 		if (first === undefined) return;
+		if (!isMounted.current) return;
 		addLog(first, player);
 		const delay = ACTION_EFFECT_DELAY;
 		for (const line of rest) {
 			await waitWithScale(delay);
+			if (!isMounted.current) return;
 			addLog(line, player);
 		}
 	}
@@ -512,6 +575,7 @@ export function GameProvider({
 
 			await logWithEffectDelay(logLines, player);
 
+			if (!isMounted.current) return;
 			if (
 				ctx.game.devMode &&
 				(ctx.activePlayer.resources[actionCostResource] ?? 0) <= 0
@@ -588,6 +652,7 @@ export function GameProvider({
 					advance(engineCtx);
 				},
 			});
+			if (!isMounted.current) return;
 			setPhaseHistories({});
 			await runUntilActionPhaseCore();
 		});
