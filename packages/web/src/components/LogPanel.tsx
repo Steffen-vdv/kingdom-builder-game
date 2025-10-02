@@ -262,33 +262,37 @@ export default function LogPanel() {
 					...(isExpanded ? {} : { width: '100%' }),
 				}}
 			>
+				<button
+					type="button"
+					onClick={handleToggleExpand}
+					aria-label={isExpanded ? 'Collapse log panel' : 'Expand log panel'}
+					className="absolute inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900"
+					style={{
+						zIndex: 5,
+						top: isExpanded ? '1.5rem' : '1rem',
+						right: isExpanded ? '1.5rem' : '1rem',
+					}}
+				>
+					<span aria-hidden="true" className="text-lg leading-none">
+						{isExpanded ? '⤡' : '⛶'}
+					</span>
+				</button>
 				<div
 					ref={scrollRef}
 					className={`relative flex flex-col ${
 						isExpanded
-							? 'h-full overflow-y-auto p-6 custom-scrollbar'
-							: 'max-h-80 overflow-y-auto p-4 no-scrollbar'
+							? 'h-full overflow-y-auto px-6 pb-6 pt-6 custom-scrollbar'
+							: 'max-h-80 overflow-y-auto px-4 pb-4 pt-4 no-scrollbar'
 					}`}
 				>
-					<div className="flex items-start gap-2 pb-2">
+					<div
+						className={`flex items-start gap-2 pb-2 pr-12 ${
+							isExpanded ? 'mt-16' : 'mt-14'
+						}`}
+					>
 						<h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
 							Log
 						</h2>
-						<button
-							type="button"
-							onClick={handleToggleExpand}
-							aria-label={
-								isExpanded ? 'Collapse log panel' : 'Expand log panel'
-							}
-							className={`sticky ${
-								isExpanded ? 'top-6' : 'top-4'
-							} ml-auto inline-flex h-9 w-9 items-center justify-center self-start rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900`}
-							style={{ zIndex: 5 }}
-						>
-							<span aria-hidden="true" className="text-lg leading-none">
-								{isExpanded ? '⤡' : '⛶'}
-							</span>
-						</button>
 					</div>
 					{logOverflowed ? (
 						<p className="mt-2 text-xs italic text-amber-700 dark:text-amber-300">
