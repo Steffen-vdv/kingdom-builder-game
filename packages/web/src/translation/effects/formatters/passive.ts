@@ -13,6 +13,16 @@ type PassiveDurationMeta = {
 	source: 'manual' | 'phase' | 'fallback';
 };
 
+function createMeta(meta: PassiveDurationMeta): PassiveDurationMeta {
+	const result: PassiveDurationMeta = {
+		label: meta.label,
+		source: meta.source,
+	};
+	if (meta.icon !== undefined) result.icon = meta.icon;
+	if (meta.phaseId !== undefined) result.phaseId = meta.phaseId;
+	return result;
+}
+
 function resolvePhaseMeta(ctx: EngineContext, id: string | undefined) {
 	if (!id) return undefined;
 	return (
@@ -69,18 +79,33 @@ function resolveDurationMeta(
 
 	if (label) {
 		if (!source) source = manualLabel ? 'manual' : 'phase';
-		return { label, icon, phaseId, source };
+		return createMeta({
+			label,
+			...(icon !== undefined ? { icon } : {}),
+			...(phaseId !== undefined ? { phaseId } : {}),
+			source,
+		});
 	}
 
 	if (icon) {
 		if (phaseId) {
 			const phase = resolvePhaseMeta(ctx, phaseId);
 			if (phase?.label) {
-				return { label: phase.label, icon, phaseId, source: source ?? 'phase' };
+				return createMeta({
+					label: phase.label,
+					icon,
+					phaseId,
+					source: source ?? 'phase',
+				});
 			}
 		}
 		if (params['onUpkeepPhase']) {
-			return { label: 'Upkeep', icon, phaseId: 'upkeep', source: 'fallback' };
+			return createMeta({
+				label: 'Upkeep',
+				icon,
+				phaseId: 'upkeep',
+				source: 'fallback',
+			});
 		}
 	}
 
