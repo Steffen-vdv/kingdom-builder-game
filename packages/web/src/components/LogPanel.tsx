@@ -11,6 +11,8 @@ export default function LogPanel() {
 	const [collapsedSize, setCollapsedSize] = useState<{
 		width: number;
 		height: number;
+	} | null>(null);
+	const [overlayOffsets, setOverlayOffsets] = useState<{
 		top: number;
 		right: number;
 	} | null>(null);
@@ -33,18 +35,19 @@ export default function LogPanel() {
 
 	const expandedStyle = useMemo(() => {
 		if (!isExpanded || !collapsedSize) return undefined;
+		const offsets = overlayOffsets ?? { top: 16, right: 16 };
 		const horizontalPadding = viewport.width > 32 ? 32 : 16;
 		const verticalPadding = viewport.height > 32 ? 32 : 16;
 		const maxWidth = Math.max(0, viewport.width - horizontalPadding);
 		const maxHeight = Math.max(0, viewport.height - verticalPadding);
 		const targetWidth = Math.min(collapsedSize.width * 2, maxWidth);
 		const targetHeight = Math.min(collapsedSize.height * 4, maxHeight);
-		const desiredRight = Math.max(16, collapsedSize.right);
+		const desiredRight = Math.max(16, offsets.right);
 		const maxRight = Math.max(16, viewport.width - targetWidth - 16);
 		const availableRight = Math.min(desiredRight, maxRight);
 		const availableTop = Math.max(
 			16,
-			Math.min(collapsedSize.top, viewport.height - targetHeight - 16),
+			Math.min(offsets.top, viewport.height - targetHeight - 16),
 		);
 		return {
 			position: 'fixed' as const,
@@ -60,13 +63,17 @@ export default function LogPanel() {
 		if (!node) return;
 
 		if (!isExpanded) {
-			const rect = node.getBoundingClientRect();
-			setCollapsedSize({
-				width: rect.width,
-				height: rect.height,
-				top: rect.top,
-				right: viewport.width - rect.right,
-			});
+			if (!collapsedSize || !overlayOffsets) {
+				const rect = node.getBoundingClientRect();
+				setCollapsedSize({
+					width: rect.width,
+					height: rect.height,
+				});
+				setOverlayOffsets({
+					top: rect.top,
+					right: viewport.width - rect.right,
+				});
+			}
 			setIsExpanded(true);
 			return;
 		}
@@ -116,17 +123,54 @@ export default function LogPanel() {
 	}, [entries, isExpanded, listRef]);
 
 	useEffect(() => {
+		if (typeof window === 'undefined') return;
 		if (isExpanded) return;
+
 		const node = outerRef.current;
 		if (!node) return;
-		const rect = node.getBoundingClientRect();
-		setCollapsedSize({
-			width: rect.width,
-			height: rect.height,
-			top: rect.top,
-			right: viewport.width - rect.right,
+
+		const ResizeObserverCtor: typeof ResizeObserver | undefined =
+			window.ResizeObserver ??
+			(typeof ResizeObserver !== 'undefined' ? ResizeObserver : undefined);
+
+		const updateFromRect = (rect: DOMRect) => {
+			setCollapsedSize({ width: rect.width, height: rect.height });
+			setOverlayOffsets({ top: rect.top, right: viewport.width - rect.right });
+		};
+
+		if (!ResizeObserverCtor) {
+			updateFromRect(node.getBoundingClientRect());
+			return;
+		}
+
+		let animationFrame = 0;
+		const observer = new ResizeObserverCtor((entries) => {
+			for (const entry of entries) {
+				const { width, height } = entry.contentRect;
+				setCollapsedSize({ width, height });
+				if (animationFrame) {
+					window.cancelAnimationFrame(animationFrame);
+				}
+				animationFrame = window.requestAnimationFrame(() => {
+					const rect = entry.target.getBoundingClientRect();
+					setOverlayOffsets({
+						top: rect.top,
+						right: viewport.width - rect.right,
+					});
+				});
+			}
 		});
-	}, [entries, isExpanded, viewport.width, viewport.height]);
+
+		observer.observe(node);
+		updateFromRect(node.getBoundingClientRect());
+
+		return () => {
+			observer.disconnect();
+			if (animationFrame) {
+				window.cancelAnimationFrame(animationFrame);
+			}
+		};
+	}, [isExpanded, viewport.width, viewport.height]);
 
 	return (
 		<div
