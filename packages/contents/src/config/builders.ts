@@ -296,6 +296,8 @@ export function landParams() {
 
 class PassiveEffectParamsBuilder extends ParamsBuilder<{
 	id?: string;
+	name?: string;
+	icon?: string;
 	onGrowthPhase?: EffectDef[];
 	onUpkeepPhase?: EffectDef[];
 	onBeforeAttacked?: EffectDef[];
@@ -306,6 +308,20 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 			'id',
 			id,
 			'You already set id() for this passive. Remove the duplicate id() call.',
+		);
+	}
+	name(name: string) {
+		return this.set(
+			'name',
+			name,
+			'You already set name() for this passive. Remove the duplicate name() call.',
+		);
+	}
+	icon(icon: string) {
+		return this.set(
+			'icon',
+			icon,
+			'You already set icon() for this passive. Remove the duplicate icon() call.',
 		);
 	}
 	onGrowthPhase(...effects: Array<EffectConfig | EffectBuilder>) {

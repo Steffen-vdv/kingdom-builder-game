@@ -6,6 +6,23 @@ import { withStatSourceFrames } from '../stat_sources';
 import type { DevelopmentConfig } from '../config/schema';
 import type { Registry } from '../registry';
 
+export interface PassiveSummary {
+	id: string;
+	name?: string | undefined;
+	icon?: string | undefined;
+}
+
+type PassiveRecord = PassiveSummary & {
+	effects?: EffectDef[];
+	onGrowthPhase?: EffectDef[];
+	onUpkeepPhase?: EffectDef[];
+	onBeforeAttacked?: EffectDef[];
+	onAttackResolved?: EffectDef[];
+	owner: PlayerId;
+	frames: StatSourceFrame[];
+  meta?: PassiveMetadata;
+};
+
 export type TierRange = {
 	/** Inclusive lower bound for the tier. */
 	min: number;
@@ -162,19 +179,8 @@ export class PassiveManager {
 	private evaluationMods: Map<string, Map<string, EvaluationModifier>> =
 		new Map();
 	private evaluationIndex: Map<string, string> = new Map();
-	private passives: Map<
-		string,
-		{
-			effects?: EffectDef[];
-			onGrowthPhase?: EffectDef[];
-			onUpkeepPhase?: EffectDef[];
-			onBeforeAttacked?: EffectDef[];
-			onAttackResolved?: EffectDef[];
-			owner: PlayerId;
-			frames: StatSourceFrame[];
-			meta?: PassiveMetadata;
-		}
-	> = new Map();
+
+	private passives: Map<string, PassiveRecord> = new Map();
 
 	private ensureFrameList(
 		frames?: StatSourceFrame | StatSourceFrame[],
@@ -278,6 +284,8 @@ export class PassiveManager {
 	addPassive(
 		passive: {
 			id: string;
+			name?: string | undefined;
+			icon?: string | undefined;
 			effects?: EffectDef[];
 			onGrowthPhase?: EffectDef[];
 			onUpkeepPhase?: EffectDef[];
@@ -296,7 +304,7 @@ export class PassiveManager {
 		const passiveFrame: StatSourceFrame = (_effect, _ctx, statKey) => ({
 			key: `passive:${key}:${statKey}`,
 			instance: key,
-			detail: options?.detail ?? 'Passive',
+			detail: options?.detail ?? passive.name ?? 'Passive',
 			longevity: 'ongoing' as const,
 		});
 		const frames = [...providedFrames, passiveFrame];
@@ -304,7 +312,7 @@ export class PassiveManager {
 			...passive,
 			owner: ctx.activePlayer.id,
 			frames,
-			...(options?.meta ? { meta: options.meta } : {}),
+      ...(options?.meta ? { meta: options.meta } : {}),
 		});
 		const setupEffects = passive.effects;
 		if (setupEffects && setupEffects.length > 0) {
@@ -325,15 +333,21 @@ export class PassiveManager {
 		this.passives.delete(key);
 	}
 
-	list(owner?: PlayerId) {
-		if (!owner) return Array.from(this.passives.keys());
-		const suffix = `_${owner}`;
-		return Array.from(this.passives.keys())
-			.filter((k) => k.endsWith(suffix))
-			.map((k) => k.slice(0, -suffix.length));
+	list(owner?: PlayerId): PassiveSummary[] {
+		const entries = owner
+			? Array.from(this.passives.entries()).filter(([key]) =>
+					key.endsWith(`_${owner}`),
+				)
+			: Array.from(this.passives.entries());
+		return entries.map(([, value]) => {
+			const summary: PassiveSummary = { id: value.id };
+			if (value.name !== undefined) summary.name = value.name;
+			if (value.icon !== undefined) summary.icon = value.icon;
+			return summary;
+		});
 	}
 
-	values(owner: PlayerId) {
+	values(owner: PlayerId): PassiveRecord[] {
 		const suffix = `_${owner}`;
 		return Array.from(this.passives.entries())
 			.filter(([k]) => k.endsWith(suffix))

@@ -138,10 +138,18 @@ describe('PassiveManager', () => {
 		};
 		const before = ctx.activePlayer.gold;
 		ctx.passives.addPassive(passive, ctx);
-		expect(ctx.passives.list(ctx.activePlayer.id)).toContain('shiny');
+		expect(
+			ctx.passives
+				.list(ctx.activePlayer.id)
+				.some((entry) => entry.id === 'shiny'),
+		).toBe(true);
 		expect(ctx.activePlayer.gold).toBe(before + 2);
 		ctx.passives.removePassive('shiny', ctx);
-		expect(ctx.passives.list(ctx.activePlayer.id)).not.toContain('shiny');
+		expect(
+			ctx.passives
+				.list(ctx.activePlayer.id)
+				.some((entry) => entry.id === 'shiny'),
+		).toBe(false);
 		expect(ctx.activePlayer.gold).toBe(before);
 		ctx.passives.removePassive('unknown', ctx);
 	});
