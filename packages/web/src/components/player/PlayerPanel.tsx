@@ -22,7 +22,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 	const animateSections = useAnimate<HTMLDivElement>();
 	return (
 		<div
-			className={`player-panel flex h-full flex-col gap-2 text-slate-800 dark:text-slate-100 ${className}`}
+			className={`player-panel flex h-[320px] flex-col gap-2 overflow-y-auto text-slate-800 custom-scrollbar dark:text-slate-100 ${className}`}
 		>
 			<h3 className="text-lg font-semibold tracking-tight">
 				{isActive && (
