@@ -1,47 +1,79 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface TimerCircleProps {
-  progress: number;
-  paused?: boolean;
+	progress: number;
 }
 
-const TimerCircle: React.FC<TimerCircleProps> = ({
-  progress,
-  paused = false,
-}) => {
-  const radius = 12;
-  const circumference = 2 * Math.PI * radius;
+const TimerCircle: React.FC<TimerCircleProps> = ({ progress }) => {
+	const id = useId();
+	const size = 36;
+	const strokeWidth = 4;
+	const radius = size / 2 - strokeWidth / 2;
+	const circumference = 2 * Math.PI * radius;
+	const clampedProgress = Number.isFinite(progress)
+		? Math.max(0, Math.min(1, progress))
+		: 0;
+	const strokeDashoffset = (1 - clampedProgress) * circumference;
 
-  if (paused)
-    return (
-      <svg width={24} height={24} viewBox="0 0 24 24">
-        <rect x="6" y="4" width="4" height="16" fill="#10b981" />
-        <rect x="14" y="4" width="4" height="16" fill="#10b981" />
-      </svg>
-    );
-
-  return (
-    <svg width={24} height={24}>
-      <circle
-        cx="12"
-        cy="12"
-        r={radius}
-        stroke="#e5e7eb"
-        strokeWidth="2"
-        fill="none"
-      />
-      <circle
-        cx="12"
-        cy="12"
-        r={radius}
-        stroke="#10b981"
-        strokeWidth="2"
-        fill="none"
-        strokeDasharray={circumference}
-        strokeDashoffset={(1 - progress) * circumference}
-      />
-    </svg>
-  );
+	return (
+		<svg
+			width={size}
+			height={size}
+			viewBox={`0 0 ${size} ${size}`}
+			role="img"
+			aria-hidden
+			className="text-blue-500"
+		>
+			<defs>
+				<radialGradient id={`${id}-bg`} cx="50%" cy="50%" r="65%">
+					<stop offset="0%" stopColor="rgba(255,255,255,0.9)" />
+					<stop offset="100%" stopColor="rgba(226,232,240,0.35)" />
+				</radialGradient>
+				<linearGradient id={`${id}-track`} x1="0%" y1="0%" x2="100%" y2="100%">
+					<stop offset="0%" stopColor="rgba(148,163,184,0.45)" />
+					<stop offset="100%" stopColor="rgba(148,163,184,0.2)" />
+				</linearGradient>
+				<linearGradient
+					id={`${id}-progress`}
+					x1="0%"
+					y1="0%"
+					x2="100%"
+					y2="100%"
+				>
+					<stop offset="0%" stopColor="#60a5fa" />
+					<stop offset="100%" stopColor="#a855f7" />
+				</linearGradient>
+			</defs>
+			<circle
+				cx={size / 2}
+				cy={size / 2}
+				r={radius}
+				fill={`url(#${id}-bg)`}
+				opacity={0.85}
+			/>
+			<circle
+				cx={size / 2}
+				cy={size / 2}
+				r={radius}
+				stroke={`url(#${id}-track)`}
+				strokeWidth={strokeWidth}
+				fill="none"
+			/>
+			<circle
+				cx={size / 2}
+				cy={size / 2}
+				r={radius}
+				stroke={`url(#${id}-progress)`}
+				strokeWidth={strokeWidth}
+				strokeLinecap="round"
+				fill="none"
+				strokeDasharray={circumference}
+				strokeDashoffset={strokeDashoffset}
+				transform={`rotate(-90 ${size / 2} ${size / 2})`}
+			/>
+			<circle cx={size / 2} cy={size / 2} r={4} fill="#1d4ed8" opacity={0.85} />
+		</svg>
+	);
 };
 
 export default TimerCircle;

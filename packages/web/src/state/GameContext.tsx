@@ -83,14 +83,13 @@ type PhaseStep = {
 interface GameEngineContextValue {
 	ctx: EngineContext;
 	log: LogEntry[];
+	logOverflowed: boolean;
 	hoverCard: HoverCard | null;
 	handleHoverCard: (data: HoverCard) => void;
 	clearHoverCard: () => void;
 	phaseSteps: PhaseStep[];
 	setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
 	phaseTimer: number;
-	phasePaused: boolean;
-	setPaused: (v: boolean) => void;
 	mainApStart: number;
 	displayPhase: string;
 	setDisplayPhase: (id: string) => void;
@@ -142,14 +141,13 @@ export function GameProvider({
 	const [, setTick] = useState(0);
 	const refresh = () => setTick((t) => t + 1);
 
+	const MAX_LOG_ENTRIES = 250;
 	const [log, setLog] = useState<LogEntry[]>([]);
+	const [logOverflowed, setLogOverflowed] = useState(false);
 	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
 	const hoverTimeout = useRef<number>();
-
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
-	const [phasePaused, setPhasePaused] = useState(false);
-	const phasePausedRef = useRef(false);
 	const [mainApStart, setMainApStart] = useState(0);
 	const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
 	const [phaseHistories, setPhaseHistories] = useState<
@@ -185,11 +183,6 @@ export function GameProvider({
 		[ctx],
 	);
 
-	function setPaused(v: boolean) {
-		phasePausedRef.current = v;
-		setPhasePaused(v);
-	}
-
 	const addLog = (
 		entry: string | string[],
 		player?: EngineContext['activePlayer'],
@@ -201,7 +194,12 @@ export function GameProvider({
 				text: `[${p.name}] ${text}`,
 				playerId: p.id,
 			}));
-			return [...prev, ...items];
+			const combined = [...prev, ...items];
+			if (combined.length > MAX_LOG_ENTRIES) {
+				setLogOverflowed(true);
+				return combined.slice(-MAX_LOG_ENTRIES);
+			}
+			return combined;
 		});
 	};
 
@@ -291,7 +289,6 @@ export function GameProvider({
 		return new Promise<void>((resolve) => {
 			let elapsed = 0;
 			const interval = window.setInterval(() => {
-				if (phasePausedRef.current) return;
 				elapsed += tick;
 				setPhaseTimer(Math.min(1, elapsed / adjustedTotal));
 				if (elapsed >= adjustedTotal) {
@@ -308,12 +305,20 @@ export function GameProvider({
 	}
 
 	async function runUntilActionPhaseCore() {
+		if (ctx.phases[ctx.game.phaseIndex]?.action) {
+			setPhaseTimer(0);
+			setTabsEnabled(true);
+			setDisplayPhase(ctx.game.currentPhase);
+			return;
+		}
 		setTabsEnabled(false);
 		setPhaseSteps([]);
 		setDisplayPhase(ctx.game.currentPhase);
 		setPhaseHistories({});
+		let ranSteps = false;
 		let lastPhase: string | null = null;
 		while (!ctx.phases[ctx.game.phaseIndex]?.action) {
+			ranSteps = true;
 			const before = snapshotPlayer(ctx.activePlayer, ctx);
 			const { phase, step, player, effects } = advance(ctx);
 			const phaseDef = ctx.phases.find((p) => p.id === phase)!;
@@ -342,22 +347,41 @@ export function GameProvider({
 					player,
 				);
 			}
+			const phaseId = phase;
 			const entry = {
 				title: stepDef?.title || step,
 				items:
 					changes.length > 0
 						? changes.map((text) => ({ text }))
 						: [{ text: 'No effect', italic: true }],
-				active: false,
+				active: true,
 			};
 			setPhaseSteps((prev) => [...prev, entry]);
 			setPhaseHistories((prev) => ({
 				...prev,
-				[phase]: [...(prev[phase] ?? []), entry],
+				[phaseId]: [...(prev[phaseId] ?? []), entry],
 			}));
 			await runStepDelay();
+			const finalized = { ...entry, active: false };
+			setPhaseSteps((prev) => {
+				if (!prev.length) return prev;
+				const next = [...prev];
+				next[next.length - 1] = finalized;
+				return next;
+			});
+			setPhaseHistories((prev) => {
+				const history = prev[phaseId];
+				if (!history?.length) return prev;
+				const nextHistory = [...history];
+				nextHistory[nextHistory.length - 1] = finalized;
+				return { ...prev, [phaseId]: nextHistory };
+			});
 		}
-		await runDelay(1500);
+		if (ranSteps) {
+			await runDelay(1500);
+		} else {
+			setPhaseTimer(0);
+		}
 		const start = ctx.activePlayer.resources[actionCostResource] as number;
 		setMainApStart(start);
 		updateMainPhaseStep(start);
@@ -525,12 +549,12 @@ export function GameProvider({
 
 	// Update main phase steps once action phase becomes active
 	useEffect(() => {
-		if (ctx.phases[ctx.game.phaseIndex]?.action) {
-			const start = ctx.activePlayer.resources[actionCostResource] as number;
-			setMainApStart(start);
-			updateMainPhaseStep(start);
-		}
-	}, [ctx.game.phaseIndex]);
+		if (!tabsEnabled) return;
+		if (!ctx.phases[ctx.game.phaseIndex]?.action) return;
+		const start = ctx.activePlayer.resources[actionCostResource] as number;
+		setMainApStart(start);
+		updateMainPhaseStep(start);
+	}, [ctx.game.phaseIndex, tabsEnabled]);
 
 	useEffect(() => {
 		void runUntilActionPhase();
@@ -572,14 +596,13 @@ export function GameProvider({
 	const value: GameEngineContextValue = {
 		ctx,
 		log,
+		logOverflowed,
 		hoverCard,
 		handleHoverCard,
 		clearHoverCard,
 		phaseSteps,
 		setPhaseSteps,
 		phaseTimer,
-		phasePaused,
-		setPaused,
 		mainApStart,
 		displayPhase,
 		setDisplayPhase,

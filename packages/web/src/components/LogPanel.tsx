@@ -1,23 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
 
 export default function LogPanel() {
-	const { log: entries, ctx } = useGameEngine();
-	const wrapperRef = useRef<HTMLDivElement>(null);
-	const containerRef = useRef<HTMLDivElement>(null);
+	const { log: entries, logOverflowed, ctx } = useGameEngine();
+	const outerRef = useRef<HTMLDivElement>(null);
+	const scrollRef = useRef<HTMLDivElement>(null);
 	const listRef = useAnimate<HTMLUListElement>();
 	const [isExpanded, setIsExpanded] = useState(false);
-	const [isOverlay, setIsOverlay] = useState(false);
 	const [collapsedSize, setCollapsedSize] = useState<{
 		width: number;
 		height: number;
-	} | null>(null);
-	const [expandedBase, setExpandedBase] = useState<{
-		width: number;
-		height: number;
-	} | null>(null);
-	const [overlayOffsets, setOverlayOffsets] = useState<{
 		top: number;
 		right: number;
 	} | null>(null);
@@ -25,6 +18,7 @@ export default function LogPanel() {
 		width: typeof window === 'undefined' ? 0 : window.innerWidth,
 		height: typeof window === 'undefined' ? 0 : window.innerHeight,
 	}));
+	const pendingScrollRef = useRef(false);
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
@@ -37,111 +31,106 @@ export default function LogPanel() {
 		};
 	}, []);
 
-	useEffect(() => {
-		if (isExpanded) return;
-		const node = containerRef.current;
-		const wrapper = wrapperRef.current;
-		if (!node || !wrapper) return;
-		const rect = node.getBoundingClientRect();
-		const wrapperRect = wrapper.getBoundingClientRect();
-		setCollapsedSize({ width: rect.width, height: rect.height });
-		setOverlayOffsets({
-			top: rect.top - wrapperRect.top,
-			right: wrapperRect.right - rect.right,
-		});
-	}, [entries, isExpanded, viewport.height, viewport.width]);
-
-	const clampDimension = (target: number, viewportLimit: number) => {
-		if (viewportLimit <= 0) return target;
-		return Math.min(target, viewportLimit);
-	};
-
-	const expandedStyle =
-		isExpanded && expandedBase
-			? {
-					width: `${clampDimension(
-						expandedBase.width,
-						viewport.width > 32 ? viewport.width - 32 : viewport.width,
-					)}px`,
-					height: `${clampDimension(
-						expandedBase.height,
-						viewport.height > 32 ? viewport.height - 32 : viewport.height,
-					)}px`,
-				}
-			: undefined;
+	const expandedStyle = useMemo(() => {
+		if (!isExpanded || !collapsedSize) return undefined;
+		const horizontalPadding = viewport.width > 32 ? 32 : 16;
+		const verticalPadding = viewport.height > 32 ? 32 : 16;
+		const maxWidth = Math.max(0, viewport.width - horizontalPadding);
+		const maxHeight = Math.max(0, viewport.height - verticalPadding);
+		const targetWidth = Math.min(collapsedSize.width * 2, maxWidth);
+		const targetHeight = Math.min(collapsedSize.height * 4, maxHeight);
+		const desiredRight = Math.max(16, collapsedSize.right);
+		const maxRight = Math.max(16, viewport.width - targetWidth - 16);
+		const availableRight = Math.min(desiredRight, maxRight);
+		const availableTop = Math.max(
+			16,
+			Math.min(collapsedSize.top, viewport.height - targetHeight - 16),
+		);
+		return {
+			position: 'fixed' as const,
+			width: `${targetWidth}px`,
+			height: `${targetHeight}px`,
+			top: `${availableTop}px`,
+			right: `${availableRight}px`,
+		};
+	}, [collapsedSize, isExpanded, viewport.height, viewport.width]);
 
 	const handleToggleExpand = () => {
-		const node = containerRef.current;
-		const wrapper = wrapperRef.current;
-		if (!node || !wrapper) return;
+		const node = outerRef.current;
+		if (!node) return;
 
 		if (!isExpanded) {
 			const rect = node.getBoundingClientRect();
-			const wrapperRect = wrapper.getBoundingClientRect();
-			setCollapsedSize({ width: rect.width, height: rect.height });
-			setOverlayOffsets({
-				top: rect.top - wrapperRect.top,
-				right: wrapperRect.right - rect.right,
+			setCollapsedSize({
+				width: rect.width,
+				height: rect.height,
+				top: rect.top,
+				right: viewport.width - rect.right,
 			});
-			setExpandedBase({ width: rect.width * 2, height: rect.height * 4 });
-			setIsOverlay(true);
 			setIsExpanded(true);
 			return;
 		}
 
 		setIsExpanded(false);
-		setExpandedBase(null);
+		pendingScrollRef.current = true;
 	};
 
 	useEffect(() => {
 		if (!isExpanded) return;
-		setIsOverlay(true);
+		const container = scrollRef.current;
+		if (!container) return;
+		container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
 	}, [isExpanded]);
 
-	const handleTransitionEnd = (
-		event: React.TransitionEvent<HTMLDivElement>,
-	) => {
-		if (event.target !== event.currentTarget) return;
-		if (isExpanded || !isOverlay) return;
-		setIsOverlay(false);
-		setOverlayOffsets(null);
-	};
-
 	useEffect(() => {
-		const container = containerRef.current;
+		const container = scrollRef.current;
 		const list = listRef.current;
 		if (!container || !list) return;
 
-		const scrollToBottom = (behavior: ScrollBehavior) => {
-			if (container.scrollHeight > container.clientHeight)
-				container.scrollTo({ top: container.scrollHeight, behavior });
-		};
+		pendingScrollRef.current = true;
 
-		const animations =
-			typeof list.getAnimations === 'function' ? list.getAnimations() : [];
-		if (animations.length === 0) {
-			scrollToBottom('smooth');
+		if (typeof ResizeObserver === 'undefined') {
+			container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 			return;
 		}
 
-		let cancelled = false;
-		const finished = animations.map((animation) =>
-			animation.finished.catch(() => undefined),
-		);
-
-		void Promise.all(finished).then(() => {
-			if (!cancelled) scrollToBottom('smooth');
+		let raf = 0;
+		const observer = new ResizeObserver(() => {
+			if (!pendingScrollRef.current) return;
+			pendingScrollRef.current = false;
+			raf = window.requestAnimationFrame(() => {
+				container.scrollTo({
+					top: container.scrollHeight,
+					behavior: 'smooth',
+				});
+			});
 		});
 
+		observer.observe(list);
+
 		return () => {
-			cancelled = true;
+			pendingScrollRef.current = false;
+			observer.disconnect();
+			if (raf) window.cancelAnimationFrame(raf);
 		};
-	}, [entries]);
+	}, [entries, isExpanded, listRef]);
+
+	useEffect(() => {
+		if (isExpanded) return;
+		const node = outerRef.current;
+		if (!node) return;
+		const rect = node.getBoundingClientRect();
+		setCollapsedSize({
+			width: rect.width,
+			height: rect.height,
+			top: rect.top,
+			right: viewport.width - rect.right,
+		});
+	}, [entries, isExpanded, viewport.width, viewport.height]);
 
 	return (
 		<div
-			ref={wrapperRef}
-			className={`relative ${isExpanded || isOverlay ? 'z-50' : ''}`}
+			className={`relative ${isExpanded ? 'z-50' : ''}`}
 			style={
 				collapsedSize && collapsedSize.height
 					? { minHeight: `${collapsedSize.height}px` }
@@ -149,67 +138,77 @@ export default function LogPanel() {
 			}
 		>
 			<div
-				ref={containerRef}
-				className={`relative rounded-3xl border border-white/60 bg-white/75 shadow-2xl shadow-amber-500/10 transition-all duration-300 ease-in-out dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface ${
-					isOverlay ? 'absolute left-auto' : 'w-full'
-				} ${isExpanded ? 'overflow-auto p-6' : 'max-h-80 overflow-y-auto p-4'}`}
+				ref={outerRef}
+				className={`relative rounded-3xl border border-white/60 shadow-2xl shadow-amber-500/10 transition-all duration-300 ease-in-out dark:border-white/10 dark:shadow-slate-900/50 frosted-surface ${
+					isExpanded
+						? 'bg-white/90 dark:bg-slate-900/90'
+						: 'bg-white/75 dark:bg-slate-900/75'
+				}`}
 				style={{
 					...(expandedStyle ?? {}),
-					...(!isExpanded && isOverlay && collapsedSize
-						? {
-								width: `${collapsedSize.width}px`,
-								height: `${collapsedSize.height}px`,
-							}
-						: {}),
-					...(isOverlay && overlayOffsets
-						? {
-								top: `${overlayOffsets.top}px`,
-								right: `${overlayOffsets.right}px`,
-							}
-						: {}),
+					...(isExpanded ? {} : { width: '100%' }),
 				}}
-				onTransitionEnd={handleTransitionEnd}
 			>
-				<div className="flex items-center justify-between gap-2">
-					<h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-						Log
-					</h2>
-					<button
-						type="button"
-						onClick={handleToggleExpand}
-						aria-label={isExpanded ? 'Collapse log panel' : 'Expand log panel'}
-						className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg font-semibold text-slate-700 shadow hover:bg-white/90 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-900"
-					>
-						<span aria-hidden="true" className="text-lg leading-none">
-							{isExpanded ? '⤡' : '⛶'}
-						</span>
-					</button>
-				</div>
-				<ul
-					ref={listRef}
-					className={`mt-3 ${isExpanded ? 'space-y-3 text-sm' : 'space-y-2 text-xs'} text-slate-700 dark:text-slate-200`}
+				<div
+					ref={scrollRef}
+					className={`relative flex flex-col ${
+						isExpanded
+							? 'h-full overflow-y-auto p-6 custom-scrollbar'
+							: 'max-h-80 overflow-y-auto p-4 no-scrollbar'
+					}`}
 				>
-					{entries.map((entry, idx) => {
-						const aId = ctx.game.players[0]?.id;
-						const bId = ctx.game.players[1]?.id;
-						const colorClass =
-							entry.playerId === aId
-								? 'log-entry-a'
-								: entry.playerId === bId
-									? 'log-entry-b'
-									: '';
-						return (
-							<li
-								key={idx}
-								className={`${
-									isExpanded ? 'text-sm leading-relaxed' : 'text-xs'
-								} font-mono whitespace-pre-wrap ${colorClass}`}
-							>
-								[{entry.time}] {entry.text}
-							</li>
-						);
-					})}
-				</ul>
+					<div className="flex items-center gap-2 pb-2">
+						<h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+							Log
+						</h2>
+						<div className="ml-auto">
+							<div className={`sticky ${isExpanded ? 'top-6' : 'top-4'}`}>
+								<button
+									type="button"
+									onClick={handleToggleExpand}
+									aria-label={
+										isExpanded ? 'Collapse log panel' : 'Expand log panel'
+									}
+									className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900"
+								>
+									<span aria-hidden="true" className="text-lg leading-none">
+										{isExpanded ? '⤡' : '⛶'}
+									</span>
+								</button>
+							</div>
+						</div>
+					</div>
+					{logOverflowed ? (
+						<p className="mt-2 text-xs italic text-amber-700 dark:text-amber-300">
+							Older log entries were trimmed.
+						</p>
+					) : null}
+					<ul
+						ref={listRef}
+						className={`mt-3 ${isExpanded ? 'space-y-3 text-sm' : 'space-y-2 text-xs'} text-slate-700 dark:text-slate-200`}
+					>
+						{entries.map((entry, idx) => {
+							const aId = ctx.game.players[0]?.id;
+							const bId = ctx.game.players[1]?.id;
+							const colorClass =
+								entry.playerId === aId
+									? 'log-entry-a'
+									: entry.playerId === bId
+										? 'log-entry-b'
+										: '';
+							return (
+								<li
+									key={idx}
+									className={`${
+										isExpanded ? 'text-sm leading-relaxed' : 'text-xs'
+									} font-mono whitespace-pre-wrap ${colorClass}`}
+								>
+									[{entry.time}] {entry.text}
+								</li>
+							);
+						})}
+					</ul>
+				</div>
 			</div>
 		</div>
 	);

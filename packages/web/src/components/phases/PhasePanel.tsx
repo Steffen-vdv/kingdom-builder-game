@@ -11,7 +11,6 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
 		phaseSteps,
 		setPhaseSteps,
 		phaseTimer,
-		phasePaused,
 		displayPhase,
 		setDisplayPhase,
 		phaseHistories,
@@ -82,29 +81,70 @@ const PhasePanel = React.forwardRef<HTMLDivElement>((_, ref) => {
 			</div>
 			<ul
 				ref={phaseStepsRef}
-				className="flex-1 space-y-2 overflow-hidden text-left text-sm"
+				className="flex-1 space-y-3 overflow-hidden text-left text-sm"
 			>
-				{phaseSteps.map((s, i) => (
-					<li key={i} className={s.active ? 'font-semibold' : ''}>
-						<div>{s.title}</div>
-						<ul className="pl-4 list-disc list-inside">
-							{s.items.length > 0 ? (
-								s.items.map((it, j) => (
-									<li key={j} className={it.italic ? 'italic' : ''}>
-										{it.text}
-										{it.done && <span className="text-green-600 ml-1">✔️</span>}
+				{phaseSteps.map((s, i) => {
+					const stepClasses = [
+						'rounded-2xl border px-4 py-3 shadow-sm transition-all',
+						s.active
+							? 'border-blue-500/50 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-slate-800 shadow-blue-500/30 dark:border-indigo-400/40 dark:from-blue-500/30 dark:to-indigo-500/30 dark:text-slate-50'
+							: 'border-white/40 bg-white/60 text-slate-600 dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-200',
+					]
+						.filter(Boolean)
+						.join(' ');
+					const titleClasses = [
+						'text-sm font-semibold',
+						s.active
+							? 'text-slate-900 dark:text-white'
+							: 'text-slate-700 dark:text-slate-100',
+					]
+						.filter(Boolean)
+						.join(' ');
+					return (
+						<li key={i} className={stepClasses}>
+							<div className={titleClasses}>{s.title}</div>
+							<ul
+								className={[
+									'mt-2 space-y-1 pl-4 text-[0.85rem] leading-snug list-disc list-inside',
+									s.active
+										? 'text-slate-700 dark:text-slate-100'
+										: 'text-slate-600 dark:text-slate-300',
+								]
+									.filter(Boolean)
+									.join(' ')}
+							>
+								{s.items.length > 0 ? (
+									s.items.map((it, j) => (
+										<li
+											key={j}
+											className={[
+												it.italic ? 'italic' : '',
+												it.done
+													? 'font-semibold text-emerald-600 dark:text-emerald-400'
+													: '',
+											]
+												.filter(Boolean)
+												.join(' ')}
+										>
+											{it.text}
+											{it.done && <span className="ml-1">✔️</span>}
+										</li>
+									))
+								) : (
+									<li className="italic text-slate-400 dark:text-slate-500">
+										...
 									</li>
-								))
-							) : (
-								<li>...</li>
-							)}
-						</ul>
-					</li>
-				))}
+								)}
+							</ul>
+						</li>
+					);
+				})}
 			</ul>
 			{(!isActionPhase || phaseTimer > 0) && (
-				<div className="absolute top-2 right-2">
-					<TimerCircle progress={phaseTimer} paused={phasePaused} />
+				<div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-white/60 bg-white/80 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200">
+					<div className="h-9 w-9">
+						<TimerCircle progress={phaseTimer} />
+					</div>
 				</div>
 			)}
 			{isActionPhase && (

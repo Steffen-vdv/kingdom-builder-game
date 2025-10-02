@@ -6,6 +6,16 @@ import { runEffects } from '.';
 import { collectTriggerEffects } from '../triggers';
 import { withStatSourceFrames } from '../stat_sources';
 import { snapshotPlayer, type PlayerSnapshot } from '../log';
+import type { AttackEvaluationTargetLog, AttackTarget } from './attack.types';
+import {
+	attackTargetHandlers,
+	type AttackTargetHandlerMeta,
+} from './attack_target_handlers';
+
+export {
+	type AttackTarget,
+	type AttackEvaluationTargetLog,
+} from './attack.types';
 
 export interface AttackCalcOptions {
 	ignoreAbsorption?: boolean;
@@ -255,6 +265,27 @@ export function resolveAttack(
 			damage: targetDamage,
 		};
 	}
+
+	const handlerMeta: AttackTargetHandlerMeta = {
+		defenderIndex,
+		originalIndex: original,
+	};
+	const handler = attackTargetHandlers[target.type];
+	const mutation = handler.applyDamage(
+		target as never,
+		targetDamage,
+		ctx,
+		defender,
+		handlerMeta,
+	);
+	const targetLog = handler.buildLog(
+		target as never,
+		targetDamage,
+		ctx,
+		defender,
+		handlerMeta,
+		mutation as never,
+	);
 
 	ctx.game.currentPlayerIndex = defenderIndex;
 	const post = collectTriggerEffects('onAttackResolved', ctx, defender);
