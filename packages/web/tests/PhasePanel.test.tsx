@@ -11,13 +11,17 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 } from '@kingdom-builder/contents';
+import { cloneStart, SYNTHETIC_IDS } from './syntheticContent';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+vi.mock(
+	'@kingdom-builder/contents',
+	async () => (await import('./syntheticContent')).syntheticModule,
+);
 
 const ctx = createEngine({
 	actions: ACTIONS,
@@ -25,7 +29,7 @@ const ctx = createEngine({
 	developments: DEVELOPMENTS,
 	populations: POPULATIONS,
 	phases: PHASES,
-	start: GAME_START,
+	start: cloneStart(),
 	rules: RULES,
 });
 const actionCostResource = ctx.actionCostResource;
@@ -76,7 +80,9 @@ describe('<PhasePanel />', () => {
 				);
 			}),
 		).toBeInTheDocument();
-		const firstPhase = ctx.phases[0];
+		const firstPhase =
+			PHASES.find((phase) => phase.id === SYNTHETIC_IDS.phases.growth) ??
+			ctx.phases[0];
 		const phaseLabel = `${firstPhase.icon} ${firstPhase.label}`;
 		expect(
 			screen.getByRole('button', { name: phaseLabel }),

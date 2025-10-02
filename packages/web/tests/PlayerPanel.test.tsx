@@ -12,13 +12,17 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 } from '@kingdom-builder/contents';
+import { cloneStart } from './syntheticContent';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+vi.mock(
+	'@kingdom-builder/contents',
+	async () => (await import('./syntheticContent')).syntheticModule,
+);
 
 const ctx = createEngine({
 	actions: ACTIONS,
@@ -26,7 +30,7 @@ const ctx = createEngine({
 	developments: DEVELOPMENTS,
 	populations: POPULATIONS,
 	phases: PHASES,
-	start: GAME_START,
+	start: cloneStart(),
 	rules: RULES,
 });
 const actionCostResource = ctx.actionCostResource;

@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import type { AdvanceSkip } from '@kingdom-builder/engine';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
+import { PHASES, SYNTHETIC_IDS } from './syntheticContent';
 
 describe('describeSkipEvent', () => {
 	it('formats phase skip entries with source summaries', () => {
 		const skip: AdvanceSkip = {
 			type: 'phase',
-			phaseId: 'growth',
+			phaseId: SYNTHETIC_IDS.phases.growth,
 			sources: [
 				{
 					id: 'passive:golden-age',
@@ -15,13 +16,14 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: 'growth', label: 'Growth', icon: '🌱' };
+		const phase = PHASES.find((p) => p.id === SYNTHETIC_IDS.phases.growth);
+		expect(phase).toBeDefined();
 
-		const result = describeSkipEvent(skip, phase);
+		const result = describeSkipEvent(skip, phase!);
 
 		expect(result.logLines[0]).toContain('Phase skipped');
 		expect(result.logLines[1]).toContain('Golden Age');
-		expect(result.history.title).toBe('🌱 Growth Phase');
+		expect(result.history.title).toBe(`${phase?.icon} ${phase?.label} Phase`);
 		expect(result.history.items[0]?.italic).toBe(true);
 		expect(result.history.items[0]?.text).toContain('Golden Age');
 	});
@@ -29,7 +31,7 @@ describe('describeSkipEvent', () => {
 	it('formats step skip entries with fallback labels', () => {
 		const skip: AdvanceSkip = {
 			type: 'step',
-			phaseId: 'upkeep',
+			phaseId: SYNTHETIC_IDS.phases.upkeep,
 			stepId: 'war-recovery',
 			sources: [
 				{
@@ -38,7 +40,11 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: 'upkeep', label: 'Upkeep', icon: '🧹' };
+		const phase = {
+			id: SYNTHETIC_IDS.phases.upkeep,
+			label: 'Upkeep',
+			icon: '🧹',
+		};
 		const step = { id: 'war-recovery', title: 'War recovery', icon: '🛡️' };
 
 		const result = describeSkipEvent(skip, phase, step);

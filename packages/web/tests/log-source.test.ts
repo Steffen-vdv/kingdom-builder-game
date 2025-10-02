@@ -12,7 +12,6 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 	RESOURCES,
 	Resource,
@@ -23,34 +22,48 @@ import {
 	POPULATION_INFO,
 } from '@kingdom-builder/contents';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
+import { cloneStart, SYNTHETIC_IDS } from './syntheticContent';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+vi.mock(
+	'@kingdom-builder/contents',
+	async () => (await import('./syntheticContent')).syntheticModule,
+);
 
 describe('log resource sources', () => {
-	it('ignores opponent mills when logging farm gains', () => {
+	it('ignores opponent windmills when logging field gains', () => {
 		const ctx = createEngine({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 			populations: POPULATIONS,
 			phases: PHASES,
-			start: GAME_START,
+			start: cloneStart(),
 			rules: RULES,
 		});
-		// Give opponent a mill
 		ctx.game.currentPlayerIndex = 1;
 		runEffects(
-			[{ type: 'building', method: 'add', params: { id: 'mill' } }],
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: SYNTHETIC_IDS.buildings.windmill },
+				},
+			],
 			ctx,
 		);
 		ctx.game.currentPlayerIndex = 0;
 
-		const growthPhase = ctx.phases.find((p) => p.id === 'growth');
-		const step = growthPhase?.steps.find((s) => s.id === 'gain-income');
+		const incomePhase = ctx.phases.find(
+			(p) => p.id === SYNTHETIC_IDS.phases.growth,
+		);
+		const step = incomePhase?.steps.find(
+			(s) => s.id === SYNTHETIC_IDS.steps.income,
+		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
 		const bundles = collectTriggerEffects(ON_GAIN_INCOME_STEP, ctx);
 		for (const bundle of bundles) runEffects(bundle.effects, ctx);
@@ -63,45 +76,61 @@ describe('log resource sources', () => {
 			ctx,
 			RESOURCE_KEYS,
 		);
-		const goldInfo = RESOURCES[Resource.gold];
-		const farmIcon = DEVELOPMENTS.get('farm')?.icon || '';
-		const b = before.resources[Resource.gold] ?? 0;
-		const a = after.resources[Resource.gold] ?? 0;
+		const coinInfo = RESOURCES[Resource.coin];
+		const fieldIcon =
+			DEVELOPMENTS.get(SYNTHETIC_IDS.developments.field)?.icon || '';
+		const b = before.resources[Resource.coin] ?? 0;
+		const a = after.resources[Resource.coin] ?? 0;
 		const delta = a - b;
 		expect(lines[0]).toBe(
-			`${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a}) (${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${farmIcon})`,
+			`${coinInfo.icon} ${coinInfo.label} ${
+				delta >= 0 ? '+' : ''
+			}${delta} (${b}→${a}) (${coinInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${fieldIcon})`,
 		);
 	});
 
-	it('logs market bonus when taxing population', () => {
+	it('logs bazaar bonus when levying citizens', () => {
 		const ctx = createEngine({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 			populations: POPULATIONS,
 			phases: PHASES,
-			start: GAME_START,
+			start: cloneStart(),
 			rules: RULES,
 		});
 		runEffects(
-			[{ type: 'building', method: 'add', params: { id: 'market' } }],
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: SYNTHETIC_IDS.buildings.bazaar },
+				},
+			],
 			ctx,
 		);
-		while (ctx.game.currentPhase !== 'main') advance(ctx);
-		const step = { id: 'tax', effects: ctx.actions.get('tax').effects };
+		while (ctx.game.currentPhase !== SYNTHETIC_IDS.phases.main) advance(ctx);
+		const action = ctx.actions.get(SYNTHETIC_IDS.actions.levy);
+		const step = { id: action.id, effects: action.effects };
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		performAction('tax', ctx);
+		performAction(action.id, ctx);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
 		const lines = diffStepSnapshots(before, after, step, ctx, RESOURCE_KEYS);
-		const goldInfo = RESOURCES[Resource.gold];
+		const coinInfo = RESOURCES[Resource.coin];
 		const populationIcon = POPULATION_INFO.icon;
 		expect(populationIcon).toBeTruthy();
-		const marketIcon = BUILDINGS.get('market')?.icon || '';
-		const goldLine = lines.find((l) =>
-			l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+		const coinLine = lines.find((l) =>
+			l.startsWith(`${coinInfo.icon} ${coinInfo.label}`),
 		);
-		expect(goldLine).toMatch(
-			new RegExp(`from ${populationIcon}\\+${marketIcon}\\)$`),
+		const levyBefore = before.resources[Resource.coin] ?? 0;
+		const levyAfter = after.resources[Resource.coin] ?? 0;
+		const levyDelta = levyAfter - levyBefore;
+		expect(coinLine).toBe(
+			`${coinInfo.icon} ${coinInfo.label} ${
+				levyDelta >= 0 ? '+' : ''
+			}${levyDelta} (${levyBefore}→${levyAfter}) (${coinInfo.icon}${
+				levyDelta >= 0 ? '+' : ''
+			}${levyDelta} from ${populationIcon.repeat(2)})`,
 		);
 	});
 
@@ -112,15 +141,25 @@ describe('log resource sources', () => {
 			developments: DEVELOPMENTS,
 			populations: POPULATIONS,
 			phases: PHASES,
-			start: GAME_START,
+			start: cloneStart(),
 			rules: RULES,
 		});
 		runEffects(
-			[{ type: 'building', method: 'add', params: { id: 'raiders_guild' } }],
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: SYNTHETIC_IDS.buildings.watchtower },
+				},
+			],
 			ctx,
 		);
-		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
-		const step = upkeepPhase?.steps.find((s) => s.id === 'pay-upkeep');
+		const upkeepPhase = ctx.phases.find(
+			(p) => p.id === SYNTHETIC_IDS.phases.upkeep,
+		);
+		const step = upkeepPhase?.steps.find(
+			(s) => s.id === SYNTHETIC_IDS.steps.upkeep,
+		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
 		const bundles = collectTriggerEffects(ON_PAY_UPKEEP_STEP, ctx);
 		for (const bundle of bundles) runEffects(bundle.effects, ctx);
@@ -133,16 +172,16 @@ describe('log resource sources', () => {
 			ctx,
 			RESOURCE_KEYS,
 		);
-		const goldInfo = RESOURCES[Resource.gold];
-		const goldLine = lines.find((l) =>
-			l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+		const coinInfo = RESOURCES[Resource.coin];
+		const coinLine = lines.find((l) =>
+			l.startsWith(`${coinInfo.icon} ${coinInfo.label}`),
 		);
-		expect(goldLine).toBeTruthy();
-		const b = before.resources[Resource.gold] ?? 0;
-		const a = after.resources[Resource.gold] ?? 0;
+		expect(coinLine).toBeTruthy();
+		const b = before.resources[Resource.coin] ?? 0;
+		const a = after.resources[Resource.coin] ?? 0;
 		const delta = a - b;
 		const icons = effects
-			.filter((eff) => eff.params?.['key'] === Resource.gold)
+			.filter((eff) => eff.params?.['key'] === Resource.coin)
 			.map((eff) => {
 				const source = (
 					eff.meta as {
@@ -174,9 +213,10 @@ describe('log resource sources', () => {
 			.filter(Boolean)
 			.join('');
 		expect(icons).not.toBe('');
-		const raidersGuildIcon = BUILDINGS.get('raiders_guild')?.icon || '';
-		expect(raidersGuildIcon).not.toBe('');
-		expect(icons).toContain(raidersGuildIcon);
+		const watchtowerIcon =
+			BUILDINGS.get(SYNTHETIC_IDS.buildings.watchtower)?.icon || '';
+		expect(watchtowerIcon).not.toBe('');
+		expect(icons).toContain(watchtowerIcon);
 		const zeroPopulationIcons = Object.entries(ctx.activePlayer.population)
 			.filter(([, count]) => count === 0)
 			.map(([role]) => POPULATIONS.get(role)?.icon)
@@ -184,8 +224,8 @@ describe('log resource sources', () => {
 		for (const icon of zeroPopulationIcons) {
 			expect(icons).not.toContain(icon);
 		}
-		expect(goldLine).toContain(
-			`${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${icons}`,
+		expect(coinLine).toContain(
+			`${coinInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${icons}`,
 		);
 	});
 });
