@@ -44,11 +44,6 @@ describe('plow action translation', () => {
 		const till = ctx.actions.get('till');
 		const plow = ctx.actions.get('plow');
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
-		const passiveMeta = passive?.params as
-			| { name?: string; icon?: string }
-			| undefined;
-		const passiveName = passiveMeta?.name ?? PASSIVE_INFO.label;
-		const passiveIcon = passiveMeta?.icon ?? PASSIVE_INFO.icon;
 		const upkeepLabel =
 			PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
 		const costMod = passive?.effects.find(
@@ -62,7 +57,7 @@ describe('plow action translation', () => {
 			`${expand.icon} ${expand.name}`,
 			`${till.icon} ${till.name}`,
 			{
-				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until next ${upkeepLabel}`,
+				title: `⏳ Until next ${upkeepLabel}`,
 				items: [`💲: ${modIcon}+${modAmt}`],
 			},
 		]);
