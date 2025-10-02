@@ -44,9 +44,26 @@ function formatStatSigned(key: string, value: number): string {
 	return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
+type ResourceDiff = Extract<AttackPlayerDiff, { type: 'resource' }>;
+type StatDiff = Extract<AttackPlayerDiff, { type: 'stat' }>;
+
+type DiffFormatterMap = {
+	[T in AttackPlayerDiff['type']]: (
+		prefix: string,
+		diff: Extract<AttackPlayerDiff, { type: T }>,
+		options?: DiffFormatOptions,
+	) => string;
+};
+
+const DIFF_FORMATTERS: DiffFormatterMap = {
+	resource: (prefix, diff, options) =>
+		formatResourceDiff(prefix, diff, options),
+	stat: (prefix, diff) => formatStatDiff(prefix, diff),
+};
+
 export function formatResourceDiff(
 	prefix: string,
-	diff: AttackPlayerDiff,
+	diff: ResourceDiff,
 	options?: DiffFormatOptions,
 ): string {
 	const info = RESOURCES[diff.key as ResourceKey];
@@ -69,7 +86,7 @@ export function formatResourceDiff(
 	return `${prefix}: ${displayLabel} ${formatSigned(delta)} (${before}→${after})`;
 }
 
-export function formatStatDiff(prefix: string, diff: AttackPlayerDiff): string {
+export function formatStatDiff(prefix: string, diff: StatDiff): string {
 	const info = STATS[diff.key as StatKey];
 	const icon = info?.icon || '';
 	const label = info?.label || diff.key;
@@ -88,14 +105,11 @@ export function formatDiffCommon(
 	diff: AttackPlayerDiff,
 	options?: DiffFormatOptions,
 ): string {
-	if (diff.type === 'resource') {
-		return formatResourceDiff(prefix, diff, options);
+	const formatter = DIFF_FORMATTERS[diff.type];
+	if (!formatter) {
+		throw new Error(`Unsupported attack diff type: ${diff.type}`);
 	}
-	if (diff.type === 'stat') {
-		return formatStatDiff(prefix, diff);
-	}
-	const exhaustive: never = diff;
-	throw new Error(`Unsupported attack diff: ${JSON.stringify(exhaustive)}`);
+	return formatter(prefix, diff as never, options);
 }
 
 export function buildDescribeEntry(
