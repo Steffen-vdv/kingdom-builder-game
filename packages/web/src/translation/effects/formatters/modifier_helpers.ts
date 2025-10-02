@@ -8,6 +8,8 @@ import type {
 import { signed } from '../helpers';
 import type { SummaryEntry } from '../../content/types';
 
+const GENERIC_RESOURCE_ICON = '🧺';
+
 const joinParts = (...parts: Array<string | undefined>) =>
 	parts.filter(Boolean).join(' ').trim();
 
@@ -28,16 +30,44 @@ export function formatResultModifierClause(
 	return `${prefix}, ${effect}`;
 }
 
+interface ResultModifierWrapTarget {
+	icon?: string;
+	name: string;
+}
+
+interface ResultModifierWrapOptions {
+	mode: 'summary' | 'describe';
+	contextIcon?: string;
+}
+
 export function wrapResultModifierEntries(
-	label: string,
+	label: ResultModifierLabel,
 	entries: SummaryEntry[],
-	target: string,
+	target: ResultModifierWrapTarget,
 	event: string,
+	options: ResultModifierWrapOptions,
 ): SummaryEntry[] {
 	if (!entries.length) {
 		return [];
 	}
-	const prefix = `${label} on ${target}: ${event}`;
+	if (options.mode === 'summary') {
+		const targetIcon =
+			target.icon && target.icon.trim() ? target.icon : target.name;
+		const prefix = `${label.icon}${targetIcon}${
+			options.contextIcon ? `(${options.contextIcon})` : ''
+		}:`;
+		return entries.map((entry) =>
+			typeof entry === 'string'
+				? `${prefix} ${entry}`
+				: {
+						...entry,
+						title: `${prefix} ${entry.title}`,
+					},
+		);
+	}
+	const labelText = `${label.icon} ${label.label}`;
+	const targetLabel = formatTargetLabel(target.icon ?? '', target.name);
+	const prefix = `${labelText} on ${targetLabel}: ${event}`;
 	return entries.map((entry) =>
 		typeof entry === 'string'
 			? `${prefix}, ${entry}`
@@ -48,9 +78,23 @@ export function wrapResultModifierEntries(
 	);
 }
 
+interface ResultModifierLabel {
+	icon: string;
+	label: string;
+}
+
+interface ResultModifierSource {
+	summaryTargetIcon: string;
+	summaryContextIcon?: string;
+	description: string;
+}
+
+const resolveIcon = (icon?: string) =>
+	icon && icon.trim() ? icon : GENERIC_RESOURCE_ICON;
+
 export function formatGainFrom(
-	label: string,
-	source: string,
+	label: ResultModifierLabel,
+	source: ResultModifierSource,
 	amount: number,
 	options: { key?: string; detailed?: boolean } = {},
 ) {
@@ -58,19 +102,28 @@ export function formatGainFrom(
 	const resourceInfo = key ? RESOURCES[key as ResourceKey] : undefined;
 	const resIcon = resourceInfo?.icon || key;
 	const amountText = `${signed(amount)}${amount}`;
-	const more = resIcon
-		? `${resIcon}${amountText} more${detailed ? ' of that resource' : ''}`
-		: `${amountText} more of that resource`;
+
+	if (!detailed) {
+		const context = source.summaryContextIcon
+			? `(${source.summaryContextIcon})`
+			: '';
+		const prefix = `${label.icon}${source.summaryTargetIcon}${context}:`;
+		const icon = resolveIcon(resIcon);
+		return `${prefix} ${icon}${amountText}`;
+	}
+
+	const moreIcon = resolveIcon(resIcon);
+	const more = `${moreIcon}${amountText} more${detailed ? ' of that resource' : ''}`;
 	return formatResultModifierClause(
-		label,
-		source,
+		`${label.icon} ${label.label}`,
+		source.description,
 		RESULT_EVENT_GRANT_RESOURCES,
 		`gain ${more}`,
 	);
 }
 
 export function formatDevelopment(
-	label: string,
+	label: ResultModifierLabel,
 	eff: EffectDef,
 	evaluation: { id: string },
 	ctx: EngineContext,
@@ -78,6 +131,10 @@ export function formatDevelopment(
 ) {
 	const { icon, name } = getDevelopmentInfo(ctx, evaluation.id);
 	const target = formatTargetLabel(icon, name);
+	const source = {
+		summaryTargetIcon: icon || name,
+		description: target,
+	};
 	const resource = eff.effects?.find(
 		(e): e is EffectDef<{ key: string; amount: number }> =>
 			e.type === 'resource' && (e.method === 'add' || e.method === 'remove'),
@@ -86,14 +143,14 @@ export function formatDevelopment(
 		const key = resource.params?.['key'] as string;
 		const rawAmount = Number(resource.params?.['amount']);
 		const amount = resource.method === 'remove' ? -rawAmount : rawAmount;
-		return formatGainFrom(label, target, amount, { key, detailed });
+		return formatGainFrom(label, source, amount, { key, detailed });
 	}
 	const amount = Number(eff.params?.['amount'] ?? 0);
-	return formatGainFrom(label, target, amount);
+	return formatGainFrom(label, source, amount);
 }
 
 export function formatPopulation(
-	label: string,
+	label: ResultModifierLabel,
 	eff: EffectDef,
 	evaluation: { id: string },
 	ctx: EngineContext,
@@ -102,7 +159,11 @@ export function formatPopulation(
 	const amount = Number(eff.params?.['amount'] ?? 0);
 	return formatGainFrom(
 		label,
-		`${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${icon} ${name}`,
+		{
+			summaryTargetIcon: POPULATION_INFO.icon,
+			summaryContextIcon: icon,
+			description: `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${icon} ${name}`,
+		},
 		amount,
 	);
 }

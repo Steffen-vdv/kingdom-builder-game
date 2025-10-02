@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
 	describeContent,
 	splitSummary,
+	summarizeContent,
 	type Summary,
 } from '../src/translation/content';
 import { createEngine } from '@kingdom-builder/engine';
@@ -13,6 +14,8 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	MODIFIER_INFO,
+	POPULATION_INFO,
 } from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -56,5 +59,38 @@ describe('raiders guild translation', () => {
 		expect(JSON.stringify({ effects, description })).not.toMatch(
 			/Immediately|🎯/,
 		);
+	});
+
+	it('summarizes market modifier compactly', () => {
+		const ctx = createCtx();
+		const summary = summarizeContent('building', 'market', ctx);
+		const market = ctx.buildings.get('market');
+		expect(market).toBeDefined();
+		const tax = ctx.actions.get('tax');
+		const expected = `${MODIFIER_INFO.result.icon}${POPULATION_INFO.icon}(${tax.icon}): 🧺+1`;
+		const lines = summary.flatMap((entry) =>
+			typeof entry === 'string'
+				? [entry]
+				: Array.isArray(entry.items)
+					? (entry.items as string[])
+					: [],
+		);
+		expect(lines).toContain(expected);
+	});
+
+	it('summarizes mill modifier compactly', () => {
+		const ctx = createCtx();
+		const summary = summarizeContent('building', 'mill', ctx);
+		const farm = ctx.developments.get('farm');
+		expect(farm).toBeDefined();
+		const expected = `${MODIFIER_INFO.result.icon}${farm.icon}: 🧺+1`;
+		const lines = summary.flatMap((entry) =>
+			typeof entry === 'string'
+				? [entry]
+				: Array.isArray(entry.items)
+					? (entry.items as string[])
+					: [],
+		);
+		expect(lines).toContain(expected);
 	});
 });

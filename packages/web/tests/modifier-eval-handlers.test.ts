@@ -71,7 +71,7 @@ describe('modifier evaluation handlers', () => {
 		const farm = ctx.developments.get('farm');
 		const happiness = RESOURCES[Resource.happiness];
 		expect(summary).toEqual([
-			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${farm.icon} ${farm.name}: Whenever it grants resources, gain ${happiness.icon}-2 more`,
+			`${MODIFIER_INFO.result.icon}${farm.icon}: ${happiness.icon}-2`,
 		]);
 		expect(description).toEqual([
 			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${farm.icon} ${farm.name}: Whenever it grants resources, gain ${happiness.icon}-2 more of that resource`,

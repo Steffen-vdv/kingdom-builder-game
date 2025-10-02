@@ -51,11 +51,12 @@ const resultModifier = modifierInfo.result;
 const costModifier = modifierInfo.cost;
 const RESULT_MODIFIER_LABEL = `${resultModifier.icon} ${resultModifier.label}`;
 const COST_MODIFIER_LABEL = `${costModifier.icon} ${costModifier.label}`;
+const RESULT_MODIFIER_INFO = modifierInfo.result;
 
 registerModifierEvalHandler('development', {
 	summarize: (eff, evaluation, ctx) => {
 		const summary = formatDevelopment(
-			RESULT_MODIFIER_LABEL,
+			RESULT_MODIFIER_INFO,
 			eff,
 			evaluation,
 			ctx,
@@ -65,7 +66,7 @@ registerModifierEvalHandler('development', {
 	},
 	describe: (eff, evaluation, ctx) => {
 		const description = formatDevelopment(
-			RESULT_MODIFIER_LABEL,
+			RESULT_MODIFIER_INFO,
 			eff,
 			evaluation,
 			ctx,
@@ -78,7 +79,7 @@ registerModifierEvalHandler('development', {
 registerModifierEvalHandler('population', {
 	summarize: (eff, evaluation, ctx) => {
 		const summary = formatPopulation(
-			RESULT_MODIFIER_LABEL,
+			RESULT_MODIFIER_INFO,
 			eff,
 			evaluation,
 			ctx,
@@ -87,7 +88,7 @@ registerModifierEvalHandler('population', {
 	},
 	describe: (eff, evaluation, ctx) => {
 		const description = formatPopulation(
-			RESULT_MODIFIER_LABEL,
+			RESULT_MODIFIER_INFO,
 			eff,
 			evaluation,
 			ctx,
@@ -100,17 +101,12 @@ registerModifierEvalHandler('transfer_pct', {
 	summarize: (eff, _evaluation, ctx) => {
 		const { icon, name } = getActionInfo(ctx, 'plunder');
 		const amount = Number(eff.params?.['adjust'] ?? 0);
-		const target = formatTargetLabel(icon, name);
-		const effect = `${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
-			amount,
-		)} transfer by ${Math.abs(amount)}%`;
+		const targetIcon = icon && icon.trim() ? icon : name;
+		const sign = amount >= 0 ? '+' : '';
 		return [
-			formatResultModifierClause(
-				RESULT_MODIFIER_LABEL,
-				target,
-				RESULT_EVENT_TRANSFER,
-				effect,
-			),
+			`${RESULT_MODIFIER_INFO.icon}${targetIcon}: ${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(
+				amount,
+			)}%`,
 		];
 	},
 	describe: (eff, _evaluation, ctx) => {
@@ -206,12 +202,12 @@ registerEffectFormatter('result_mod', 'add', {
 		const { icon: actionIcon, name: actionName } = actionId
 			? getActionInfo(ctx, actionId)
 			: { icon: '', name: 'all actions' };
-		const target = formatTargetLabel(actionIcon, actionName);
 		return wrapResultModifierEntries(
-			RESULT_MODIFIER_LABEL,
+			RESULT_MODIFIER_INFO,
 			sub,
-			target,
+			{ icon: actionIcon, name: actionName },
 			RESULT_EVENT_RESOLVE,
+			{ mode: 'summary' },
 		);
 	},
 	describe: (eff, ctx) => {
@@ -227,12 +223,12 @@ registerEffectFormatter('result_mod', 'add', {
 		const actionInfo = actionId
 			? getActionInfo(ctx, actionId)
 			: { icon: '', name: 'all actions' };
-		const target = formatTargetLabel(actionInfo.icon, actionInfo.name);
 		return wrapResultModifierEntries(
-			RESULT_MODIFIER_LABEL,
+			RESULT_MODIFIER_INFO,
 			sub,
-			target,
+			actionInfo,
 			RESULT_EVENT_RESOLVE,
+			{ mode: 'describe' },
 		);
 	},
 });

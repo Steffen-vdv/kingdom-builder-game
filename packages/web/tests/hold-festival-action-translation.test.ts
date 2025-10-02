@@ -60,11 +60,6 @@ describe('hold festival action translation', () => {
 		const passive = holdFestival.effects.find(
 			(e: EffectDef) => e.type === 'passive',
 		) as EffectDef;
-		const passiveMeta = passive.params as
-			| { name?: string; icon?: string }
-			| undefined;
-		const passiveName = passiveMeta?.name ?? PASSIVE_INFO.label;
-		const passiveIcon = passiveMeta?.icon ?? PASSIVE_INFO.icon;
 		const resMod = passive.effects?.find(
 			(e: EffectDef) => e.type === 'result_mod',
 		) as EffectDef;
@@ -85,9 +80,9 @@ describe('hold festival action translation', () => {
 			`${happinessIcon}${sign(happinessAmt)}${happinessAmt}`,
 			`${fortIcon}${sign(fortAmt)}${fortAmt}`,
 			{
-				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until next ${upkeepLabel}`,
+				title: `⏳ Until next ${upkeepLabel}`,
 				items: [
-					`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: Whenever it resolves, ${happinessIcon}${sign(penaltyAmt)}${penaltyAmt}`,
+					`${MODIFIER_INFO.result.icon}${armyAttack.icon}: ${happinessIcon}${sign(penaltyAmt)}${penaltyAmt}`,
 				],
 			},
 		]);
