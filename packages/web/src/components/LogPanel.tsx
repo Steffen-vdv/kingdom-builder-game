@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
 
@@ -21,6 +27,7 @@ export default function LogPanel() {
 		height: typeof window === 'undefined' ? 0 : window.innerHeight,
 	}));
 	const pendingScrollRef = useRef(false);
+	const previousRectRef = useRef<DOMRect | null>(null);
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
@@ -56,11 +63,19 @@ export default function LogPanel() {
 			top: `${availableTop}px`,
 			right: `${availableRight}px`,
 		};
-	}, [collapsedSize, isExpanded, viewport.height, viewport.width]);
+	}, [
+		collapsedSize,
+		isExpanded,
+		overlayOffsets,
+		viewport.height,
+		viewport.width,
+	]);
 
 	const handleToggleExpand = () => {
 		const node = outerRef.current;
 		if (!node) return;
+
+		previousRectRef.current = node.getBoundingClientRect();
 
 		if (!isExpanded) {
 			if (!collapsedSize || !overlayOffsets) {
@@ -81,6 +96,60 @@ export default function LogPanel() {
 		setIsExpanded(false);
 		pendingScrollRef.current = true;
 	};
+
+	useLayoutEffect(() => {
+		const node = outerRef.current;
+		const previous = previousRectRef.current;
+		previousRectRef.current = null;
+
+		if (!node || !previous) {
+			return;
+		}
+
+		const next = node.getBoundingClientRect();
+		const scaleX = next.width > 0 ? previous.width / next.width : 1;
+		const scaleY = next.height > 0 ? previous.height / next.height : 1;
+		const translateX = previous.left - next.left;
+		const translateY = previous.top - next.top;
+
+		if (
+			Math.abs(translateX) < 0.5 &&
+			Math.abs(translateY) < 0.5 &&
+			Math.abs(scaleX - 1) < 0.01 &&
+			Math.abs(scaleY - 1) < 0.01
+		) {
+			return;
+		}
+
+		const previousOrigin = node.style.transformOrigin;
+		node.style.transformOrigin = 'top right';
+
+		if (typeof node.animate !== 'function') {
+			node.style.transformOrigin = previousOrigin;
+			return;
+		}
+
+		const animation = node.animate(
+			[
+				{
+					transform: `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`,
+				},
+				{ transform: 'none' },
+			],
+			{
+				duration: 300,
+				easing: 'ease-in-out',
+				fill: 'both',
+			},
+		);
+
+		const cleanup = () => {
+			node.style.transformOrigin = previousOrigin;
+		};
+
+		animation.addEventListener('finish', cleanup, { once: true });
+		animation.addEventListener('cancel', cleanup, { once: true });
+	}, [isExpanded]);
 
 	useEffect(() => {
 		if (!isExpanded) return;
@@ -193,34 +262,33 @@ export default function LogPanel() {
 					...(isExpanded ? {} : { width: '100%' }),
 				}}
 			>
+				<button
+					type="button"
+					onClick={handleToggleExpand}
+					aria-label={isExpanded ? 'Collapse log panel' : 'Expand log panel'}
+					className="absolute inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900"
+					style={{
+						zIndex: 5,
+						top: isExpanded ? '1.5rem' : '1rem',
+						right: isExpanded ? '1.5rem' : '1rem',
+					}}
+				>
+					<span aria-hidden="true" className="text-lg leading-none">
+						{isExpanded ? '⤡' : '⛶'}
+					</span>
+				</button>
 				<div
 					ref={scrollRef}
 					className={`relative flex flex-col ${
 						isExpanded
-							? 'h-full overflow-y-auto p-6 custom-scrollbar'
-							: 'max-h-80 overflow-y-auto p-4 no-scrollbar'
+							? 'h-full overflow-y-auto px-6 pb-6 pt-6 custom-scrollbar'
+							: 'max-h-80 overflow-y-auto px-4 pb-4 pt-4 no-scrollbar'
 					}`}
 				>
-					<div className="flex items-center gap-2 pb-2">
+					<div className={`flex items-start gap-2 pb-2 pr-12`}>
 						<h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
 							Log
 						</h2>
-						<div className="ml-auto">
-							<div className={`sticky ${isExpanded ? 'top-6' : 'top-4'}`}>
-								<button
-									type="button"
-									onClick={handleToggleExpand}
-									aria-label={
-										isExpanded ? 'Collapse log panel' : 'Expand log panel'
-									}
-									className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900"
-								>
-									<span aria-hidden="true" className="text-lg leading-none">
-										{isExpanded ? '⤡' : '⛶'}
-									</span>
-								</button>
-							</div>
-						</div>
 					</div>
 					{logOverflowed ? (
 						<p className="mt-2 text-xs italic text-amber-700 dark:text-amber-300">
