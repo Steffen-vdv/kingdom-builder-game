@@ -82,12 +82,23 @@ export default function LogPanel() {
 		pendingScrollRef.current = true;
 	};
 
+	const scrollToBottom = React.useCallback(
+		(element: HTMLDivElement, behavior: ScrollBehavior) => {
+			const maxScrollTop = Math.max(
+				0,
+				element.scrollHeight - element.clientHeight,
+			);
+			element.scrollTo({ top: maxScrollTop, behavior });
+		},
+		[],
+	);
+
 	useEffect(() => {
 		if (!isExpanded) return;
 		const container = scrollRef.current;
 		if (!container) return;
-		container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
-	}, [isExpanded]);
+		scrollToBottom(container, 'auto');
+	}, [isExpanded, scrollToBottom]);
 
 	useEffect(() => {
 		const container = scrollRef.current;
@@ -97,7 +108,7 @@ export default function LogPanel() {
 		pendingScrollRef.current = true;
 
 		if (typeof ResizeObserver === 'undefined') {
-			container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+			scrollToBottom(container, 'smooth');
 			return;
 		}
 
@@ -106,10 +117,7 @@ export default function LogPanel() {
 			if (!pendingScrollRef.current) return;
 			pendingScrollRef.current = false;
 			raf = window.requestAnimationFrame(() => {
-				container.scrollTo({
-					top: container.scrollHeight,
-					behavior: 'smooth',
-				});
+				scrollToBottom(container, 'smooth');
 			});
 		});
 
