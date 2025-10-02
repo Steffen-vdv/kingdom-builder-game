@@ -80,7 +80,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 			</h3>
 			<div
 				ref={animateBar}
-				className="panel-card flex w-fit flex-wrap items-center gap-3 px-4 py-3"
+				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
 			>
 				<ResourceBar player={player} />
 				<PopulationInfo player={player} />
