@@ -7,7 +7,11 @@ import {
 	POPULATIONS,
 } from '@kingdom-builder/contents';
 import { describeEffects, splitSummary } from '../../translation';
-import type { EffectDef } from '@kingdom-builder/engine';
+import type {
+	EffectDef,
+	PassiveSummary,
+	PlayerId,
+} from '@kingdom-builder/engine';
 import { useAnimate } from '../../utils/useAutoAnimate';
 
 export const ICON_MAP: Record<string, string> = {
@@ -25,15 +29,14 @@ export default function PassiveDisplay({
 	player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
 }) {
 	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
-	const ids = ctx.passives.list(player.id);
-	const defs = ctx.passives.values(player.id) as {
+	const playerId: PlayerId = player.id;
+	const summaries: PassiveSummary[] = ctx.passives.list(playerId);
+	const defs = ctx.passives.values(playerId) as Array<{
+		id: string;
 		effects?: EffectDef[];
 		onUpkeepPhase?: EffectDef[];
-	}[];
-	const map = new Map<
-		string,
-		{ effects?: EffectDef[]; onUpkeepPhase?: EffectDef[] }
-	>(ids.map((id, i) => [id, defs[i]!]));
+	}>;
+	const defMap = new Map(defs.map((def) => [def.id, def]));
 
 	const buildingIds = Array.from(player.buildings);
 	const buildingIdSet = new Set(buildingIds);
@@ -42,16 +45,35 @@ export default function PassiveDisplay({
 		player.lands.flatMap((l) => l.developments.map((d) => `${d}_${l.id}`)),
 	);
 
-	const entries = Array.from(map.entries()).filter(([id]) => {
-		if (buildingIdSet.has(id) || developmentIds.has(id)) return false;
-		if (buildingPrefixes.some((prefix) => id.startsWith(prefix))) return false;
-		for (const prefix of POPULATION_PASSIVE_PREFIXES)
-			if (id.startsWith(prefix)) return false;
-		return true;
-	});
+	const entries = summaries
+		.map((summary) => ({ summary, def: defMap.get(summary.id) }))
+		.filter(
+			(
+				entry,
+			): entry is {
+				summary: PassiveSummary;
+				def: { effects?: EffectDef[]; onUpkeepPhase?: EffectDef[] } & {
+					id: string;
+				};
+			} => {
+				const { summary, def } = entry;
+				if (!def) return false;
+				if (buildingIdSet.has(summary.id)) return false;
+				if (developmentIds.has(summary.id)) return false;
+				if (buildingPrefixes.some((prefix) => summary.id.startsWith(prefix)))
+					return false;
+				for (const prefix of POPULATION_PASSIVE_PREFIXES)
+					if (summary.id.startsWith(prefix)) return false;
+				return true;
+			},
+		);
 	if (entries.length === 0) return null;
 
-	const getIcon = (effects: EffectDef[] | undefined) => {
+	const getIcon = (
+		summary: PassiveSummary,
+		effects: EffectDef[] | undefined,
+	) => {
+		if (summary.icon) return summary.icon;
 		const first = effects?.[0];
 		return ICON_MAP[first?.type as keyof typeof ICON_MAP] ?? PASSIVE_INFO.icon;
 	};
@@ -62,22 +84,23 @@ export default function PassiveDisplay({
 			ref={animatePassives}
 			className="panel-card flex w-fit items-center gap-3 px-4 py-3 text-lg"
 		>
-			{entries.map(([id, def]) => {
-				const icon = getIcon(def.effects);
+			{entries.map(({ summary: passive, def }) => {
+				const icon = getIcon(passive, def.effects);
 				const items = describeEffects(def.effects || [], ctx);
 				const upkeepLabel =
 					PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
-				const summary = def.onUpkeepPhase
+				const sections = def.onUpkeepPhase
 					? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
 					: items;
+				const passiveName = passive.name ?? PASSIVE_INFO.label;
 				return (
 					<span
-						key={id}
+						key={passive.id}
 						className="hoverable cursor-pointer"
 						onMouseEnter={() => {
-							const { effects, description } = splitSummary(summary);
+							const { effects, description } = splitSummary(sections);
 							handleHoverCard({
-								title: `${icon} ${PASSIVE_INFO.label}`,
+								title: `${icon} ${passiveName || PASSIVE_INFO.label}`,
 								effects,
 								requirements: [],
 								...(description && { description }),
