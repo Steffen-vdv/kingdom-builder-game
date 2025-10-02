@@ -19,6 +19,7 @@ export { performAction } from './actions/action_execution';
 export { advance } from './phases/advance';
 export { EngineContext } from './context';
 export { Services, PassiveManager } from './services';
+export type { PassiveSummary } from './services';
 export {
 	EFFECTS,
 	EFFECT_COST_COLLECTORS,
@@ -50,5 +51,6 @@ export { collectTriggerEffects } from './triggers';
 export { applyParamsToEffects } from './utils';
 export { snapshotPlayer } from './log';
 export type { PlayerSnapshot, ActionTrace } from './log';
+export type { PlayerId } from './state';
 export type { ActionParameters as ActionParams } from './actions/action_parameters';
 export type { AdvanceResult } from './phases/advance';

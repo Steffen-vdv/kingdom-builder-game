@@ -2,6 +2,8 @@ import {
 	EVALUATORS,
 	type EffectDef,
 	type EngineContext,
+	type PassiveSummary,
+	type PlayerId,
 } from '@kingdom-builder/engine';
 import {
 	RESOURCES,
@@ -32,7 +34,7 @@ export interface PlayerSnapshot {
 		slotsUsed: number;
 		developments: string[];
 	}[];
-	passives: string[];
+	passives: PassiveSummary[];
 }
 
 export function snapshotPlayer(
@@ -56,7 +58,7 @@ export function snapshotPlayer(
 			developments: [...l.developments],
 		})),
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-		passives: ctx.passives.list(player.id as any),
+		passives: ctx.passives.list(player.id as PlayerId),
 	};
 }
 
@@ -134,10 +136,15 @@ export function diffSnapshots(
 		changes.push(
 			`${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
 		);
-	const beforeP = new Set(before.passives);
-	const afterP = new Set(after.passives);
-	for (const id of beforeP)
-		if (!afterP.has(id)) changes.push(`${PASSIVE_INFO.label} ${id} removed`);
+	const beforePassives = new Map(before.passives.map((p) => [p.id, p]));
+	const afterPassives = new Set(after.passives.map((p) => p.id));
+	for (const [id, passive] of beforePassives) {
+		if (afterPassives.has(id)) continue;
+		const icon = passive.icon ?? PASSIVE_INFO.icon;
+		const label = passive.name ?? id;
+		const prefix = icon ? `${icon} ` : '';
+		changes.push(`${prefix}${label} expired`);
+	}
 	return changes;
 }
 
@@ -447,9 +454,14 @@ export function diffStepSnapshots(
 		changes.push(
 			`${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
 		);
-	const beforeP = new Set(before.passives);
-	const afterP = new Set(after.passives);
-	for (const id of beforeP)
-		if (!afterP.has(id)) changes.push(`${PASSIVE_INFO.label} ${id} removed`);
+	const beforePassives = new Map(before.passives.map((p) => [p.id, p]));
+	const afterPassives = new Set(after.passives.map((p) => p.id));
+	for (const [id, passive] of beforePassives)
+		if (!afterPassives.has(id)) {
+			const icon = passive.icon ?? PASSIVE_INFO.icon;
+			const label = passive.name ?? id;
+			const prefix = icon ? `${icon} ` : '';
+			changes.push(`${prefix}${label} expired`);
+		}
 	return changes;
 }
