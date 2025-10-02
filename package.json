@@ -43,6 +43,7 @@
 		"autoprefixer": "^10.4.21",
 		"eslint": "^8.57.0",
 		"eslint-plugin-import": "^2.32.0",
+		"eslint-plugin-markdown": "^5.1.0",
 		"eslint-plugin-unused-imports": "^3.1.0",
 		"fast-check": "^3.23.2",
 		"husky": "^9.1.7",
