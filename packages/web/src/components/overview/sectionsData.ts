@@ -24,134 +24,67 @@ export interface OverviewIconSet {
 	citizen?: ReactNode;
 }
 
+export type OverviewIconKey = keyof OverviewIconSet;
+
+export type OverviewParagraphContent = {
+	kind: 'paragraph';
+	id: string;
+	icon: OverviewIconKey;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+};
+
+export type OverviewListItemContent = {
+	icon?: OverviewIconKey;
+	label: string;
+	body: string[];
+};
+
+export type OverviewListContent = {
+	kind: 'list';
+	id: string;
+	icon: OverviewIconKey;
+	title: string;
+	span?: boolean;
+	items: OverviewListItemContent[];
+};
+
+export type OverviewContentSection =
+	| OverviewParagraphContent
+	| OverviewListContent;
+
+function spanProps(span?: boolean) {
+	return span === undefined ? {} : { span };
+}
+
 export function createOverviewSections(
 	icons: OverviewIconSet,
+	content: OverviewContentSection[],
 ): OverviewSectionDef[] {
-	return [
-		{
-			kind: 'paragraph',
-			id: 'objective',
-			icon: icons.castle,
-			title: 'Your Objective',
-			span: true,
-			paragraphs: [
-				'Keep your {castle} castle standing through every assault.',
-				"Plot daring turns that unravel your rival's engine.",
-				'Victory strikes when a stronghold falls or a ruler stalls out.',
-				'The final round crowns the monarch with the healthiest realm.',
-			],
-		},
-		{
+	return content.map((section) => {
+		if (section.kind === 'paragraph') {
+			return {
+				kind: 'paragraph',
+				id: section.id,
+				icon: icons[section.icon],
+				title: section.title,
+				paragraphs: section.paragraphs,
+				...spanProps(section.span),
+			} satisfies OverviewSectionDef;
+		}
+
+		return {
 			kind: 'list',
-			id: 'turn-flow',
-			icon: icons.growth,
-			title: 'Turn Flow',
-			span: true,
-			items: [
-				{
-					icon: icons.growth,
-					label: 'Growth',
-					body: [
-						'Kickstarts your engine with income and {army} Army strength.',
-						'Stacks {fort} Fortification bonuses and triggers automatic boons.',
-					],
-				},
-				{
-					icon: icons.upkeep,
-					label: 'Upkeep',
-					body: [
-						'Settles wages, ongoing effects, and any debts your realm has racked up.',
-					],
-				},
-				{
-					icon: icons.main,
-					label: 'Main Phase',
-					body: [
-						'Both players secretly queue actions.',
-						'Reveal them in a flurry of {ap} AP-powered maneuvers.',
-					],
-				},
-			],
-		},
-		{
-			kind: 'list',
-			id: 'resources',
-			icon: icons.gold,
-			title: 'Resources',
-			items: [
-				{
-					icon: icons.gold,
-					label: 'Gold',
-					body: ['Fuels {build} buildings, diplomacy, and daring plays.'],
-				},
-				{
-					icon: icons.ap,
-					label: 'Action Points',
-					body: ['Are the energy for every turn in the {main} Main phase.'],
-				},
-				{
-					icon: icons.happiness,
-					label: 'Happiness',
-					body: ['Keeps the populace cheering instead of rioting.'],
-				},
-				{
-					icon: icons.castle,
-					label: 'Castle HP',
-					body: ['Is your lifeline—lose it and the dynasty topples.'],
-				},
-			],
-		},
-		{
-			kind: 'paragraph',
-			id: 'land',
-			icon: icons.land,
-			title: 'Land & Developments',
-			paragraphs: [
-				'Claim {land} land and slot in {slot} developments to unlock perks.',
-				'Farms pump {gold} gold while signature projects open slots or unleash passives.',
-			],
-		},
-		{
-			kind: 'list',
-			id: 'population',
-			icon: icons.council,
-			title: 'Population Roles',
-			span: true,
-			items: [
-				{
-					icon: icons.council,
-					label: 'Council',
-					body: ['Rallies extra {ap} Action Points each round.'],
-				},
-				{
-					icon: icons.legion,
-					label: 'Legion',
-					body: [
-						'Reinforces {army} Army strength for devastating {attack} raids.',
-					],
-				},
-				{
-					icon: icons.fortifier,
-					label: 'Fortifier',
-					body: ['Cements your defenses with persistent buffs.'],
-				},
-				{
-					icon: icons.citizen,
-					label: 'Citizens',
-					body: ['Wait in the wings, ready to specialize as needed.'],
-				},
-			],
-		},
-		{
-			kind: 'paragraph',
-			id: 'actions',
-			icon: icons.develop,
-			title: 'Actions & Strategy',
-			span: true,
-			paragraphs: [
-				'Spend {ap} AP to {expand} grow territory or {develop} upgrade key lands.',
-				'Field {raisePop} specialists or launch {attack} attacks to snowball momentum.',
-			],
-		},
-	];
+			id: section.id,
+			icon: icons[section.icon],
+			title: section.title,
+			items: section.items.map((item) => ({
+				icon: item.icon ? icons[item.icon] : undefined,
+				label: item.label,
+				body: item.body,
+			})),
+			...spanProps(section.span),
+		} satisfies OverviewSectionDef;
+	});
 }

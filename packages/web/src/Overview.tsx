@@ -1,18 +1,6 @@
 import React from 'react';
 import Button from './components/common/Button';
 import {
-	ACTIONS as actionInfo,
-	LAND_INFO,
-	SLOT_INFO,
-	RESOURCES,
-	Resource,
-	PHASES,
-	POPULATION_ROLES,
-	PopulationRole,
-	STATS,
-	Stat,
-} from '@kingdom-builder/contents';
-import {
 	ShowcaseBackground,
 	ShowcaseLayout,
 	ShowcaseCard,
@@ -29,10 +17,17 @@ import {
 } from './components/overview/OverviewLayout';
 import type { OverviewSectionDef } from './components/overview/OverviewLayout';
 import { createOverviewSections } from './components/overview/sectionsData';
-import type { OverviewIconSet } from './components/overview/sectionsData';
+import type { OverviewContentSection } from './components/overview/sectionsData';
+import { buildOverviewIconSet } from './components/overview/overviewTokens';
+import type { OverviewTokenConfig } from './components/overview/overviewTokens';
+import { DEFAULT_OVERVIEW_CONTENT } from './components/overview/defaultContent';
 
-interface OverviewProps {
+export type { OverviewTokenConfig } from './components/overview/overviewTokens';
+
+export interface OverviewProps {
 	onBack: () => void;
+	tokenConfig?: OverviewTokenConfig;
+	content?: OverviewContentSection[];
 }
 
 const HERO_INTRO_TEXT = [
@@ -45,29 +40,17 @@ const HERO_PARAGRAPH_TEXT = [
 	'{build} clever construction, and {attack} daring raids decide who steers the crown.',
 ].join(' ');
 
-export default function Overview({ onBack }: OverviewProps) {
-	const icons: OverviewIconSet = {
-		expand: actionInfo.get('expand')?.icon,
-		build: actionInfo.get('build')?.icon,
-		attack: actionInfo.get('army_attack')?.icon,
-		develop: actionInfo.get('develop')?.icon,
-		raisePop: actionInfo.get('raise_pop')?.icon,
-		growth: PHASES.find((p) => p.id === 'growth')?.icon,
-		upkeep: PHASES.find((p) => p.id === 'upkeep')?.icon,
-		main: PHASES.find((p) => p.id === 'main')?.icon,
-		land: LAND_INFO.icon,
-		slot: SLOT_INFO.icon,
-		gold: RESOURCES[Resource.gold].icon,
-		ap: RESOURCES[Resource.ap].icon,
-		happiness: RESOURCES[Resource.happiness].icon,
-		castle: RESOURCES[Resource.castleHP].icon,
-		army: STATS[Stat.armyStrength].icon,
-		fort: STATS[Stat.fortificationStrength].icon,
-		council: POPULATION_ROLES[PopulationRole.Council].icon,
-		legion: POPULATION_ROLES[PopulationRole.Legion].icon,
-		fortifier: POPULATION_ROLES[PopulationRole.Fortifier].icon,
-		citizen: POPULATION_ROLES[PopulationRole.Citizen].icon,
-	};
+export default function Overview({
+	onBack,
+	tokenConfig,
+	content,
+}: OverviewProps) {
+	const icons = React.useMemo(
+		() => buildOverviewIconSet(tokenConfig),
+		[tokenConfig],
+	);
+
+	const sections = content ?? DEFAULT_OVERVIEW_CONTENT;
 
 	const tokens: Record<string, React.ReactNode> = {
 		castle: icons.castle,
@@ -83,6 +66,13 @@ export default function Overview({ onBack }: OverviewProps) {
 		slot: icons.slot,
 		gold: icons.gold,
 		main: icons.main,
+		growth: icons.growth,
+		upkeep: icons.upkeep,
+		happiness: icons.happiness,
+		council: icons.council,
+		legion: icons.legion,
+		fortifier: icons.fortifier,
+		citizen: icons.citizen,
 	};
 
 	const heroTokens: Record<string, React.ReactNode> = {
@@ -90,7 +80,7 @@ export default function Overview({ onBack }: OverviewProps) {
 		game: <strong>Kingdom Builder</strong>,
 	};
 
-	const sections: OverviewSectionDef[] = createOverviewSections(icons);
+	const renderedSections = createOverviewSections(icons, sections);
 
 	const renderSection = (section: OverviewSectionDef) => {
 		if (section.kind === 'paragraph') {
@@ -143,7 +133,7 @@ export default function Overview({ onBack }: OverviewProps) {
 					</p>
 
 					<div className={OVERVIEW_GRID_CLASS}>
-						{sections.map(renderSection)}
+						{renderedSections.map(renderSection)}
 					</div>
 				</ShowcaseCard>
 

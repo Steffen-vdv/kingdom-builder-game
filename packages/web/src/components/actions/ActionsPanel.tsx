@@ -1,13 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
 import {
 	RESOURCES,
 	POPULATION_ROLES,
-	PopulationRole,
+	POPULATION_INFO,
 	SLOT_INFO,
 	LAND_INFO,
 	type Focus,
 	type ResourceKey,
+	type PopulationRoleId,
 } from '@kingdom-builder/contents';
 import {
 	describeContent,
@@ -28,6 +29,8 @@ interface Action {
 	order?: number;
 	category?: string;
 	focus?: Focus;
+	requirements?: unknown[];
+	effects?: unknown[];
 }
 interface Development {
 	id: string;
@@ -41,6 +44,20 @@ interface Building {
 	name: string;
 	icon?: string;
 	focus?: Focus;
+}
+
+interface PopulationDefinition {
+	id: string;
+	name: string;
+	icon?: string;
+	upkeep?: Record<string, number>;
+	onAssigned?: unknown[];
+	onUnassigned?: unknown[];
+	onGrowthPhase?: unknown[];
+	onUpkeepPhase?: unknown[];
+	onPayUpkeepStep?: unknown[];
+	onGainIncomeStep?: unknown[];
+	onGainAPStep?: unknown[];
 }
 
 type DisplayPlayer = ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
@@ -70,6 +87,181 @@ function formatMissingResources(
 	if (missing.length === 0) return undefined;
 
 	return `Need ${missing.join(', ')}`;
+}
+
+type EffectConfig = {
+	type?: string;
+	method?: string;
+	params?: Record<string, unknown>;
+	effects?: EffectConfig[];
+};
+
+type RequirementConfig = {
+	type?: string;
+	method?: string;
+	params?: Record<string, unknown>;
+};
+
+type EvaluatorConfig = {
+	type?: string;
+	params?: Record<string, unknown>;
+};
+
+type PopulationRegistryLike = {
+	get(id: string): PopulationDefinition;
+	entries(): [string, PopulationDefinition][];
+};
+
+function isHirablePopulation(
+	population: PopulationDefinition | undefined,
+): boolean {
+	if (!population) return false;
+	if (population.upkeep && Object.keys(population.upkeep).length > 0) {
+		return true;
+	}
+	const effectLists: (keyof PopulationDefinition)[] = [
+		'onAssigned',
+		'onUnassigned',
+		'onGrowthPhase',
+		'onUpkeepPhase',
+		'onPayUpkeepStep',
+		'onGainIncomeStep',
+		'onGainAPStep',
+	];
+	return effectLists.some((key) => {
+		const effects = population[key];
+		return Array.isArray(effects) && effects.length > 0;
+	});
+}
+
+function collectPopulationRolesFromEffects(
+	effects: EffectConfig[] | undefined,
+	explicitRoles: Set<string>,
+): boolean {
+	let usesPlaceholder = false;
+	for (const effect of effects ?? []) {
+		if (effect.type === 'population' && effect.method === 'add') {
+			const role = effect.params?.['role'];
+			if (typeof role === 'string') {
+				if (role.startsWith('$')) {
+					usesPlaceholder = true;
+				} else {
+					explicitRoles.add(role);
+				}
+			}
+		}
+		if (effect.effects?.length) {
+			if (collectPopulationRolesFromEffects(effect.effects, explicitRoles)) {
+				usesPlaceholder = true;
+			}
+		}
+	}
+	return usesPlaceholder;
+}
+
+function getPopulationIconFromRole(
+	role: string,
+	populations: PopulationRegistryLike,
+): string {
+	if (!role) return '';
+	const infoIcon = POPULATION_ROLES[role as PopulationRoleId]?.icon;
+	if (infoIcon) return infoIcon;
+	try {
+		const population = populations.get(role);
+		if (typeof population?.icon === 'string') {
+			return population.icon;
+		}
+	} catch {
+		// Ignore missing population entries when deriving icons.
+	}
+	return '';
+}
+
+function getIconsFromEvaluator(
+	evaluator: EvaluatorConfig | undefined,
+	roleId: PopulationRoleId,
+	populations: PopulationRegistryLike,
+): string[] {
+	if (!evaluator || evaluator.type !== 'population') return [];
+	const params = evaluator.params ?? {};
+	const rawRole = params['role'];
+	if (typeof rawRole === 'string') {
+		if (rawRole.startsWith('$')) {
+			if (rawRole === '$role') {
+				const icon = getPopulationIconFromRole(roleId, populations);
+				return icon ? [icon] : [];
+			}
+			const placeholderIcon = getPopulationIconFromRole(
+				rawRole.slice(1),
+				populations,
+			);
+			return placeholderIcon ? [placeholderIcon] : [];
+		}
+		const icon = getPopulationIconFromRole(rawRole, populations);
+		return icon ? [icon] : [];
+	}
+	const genericIcon = POPULATION_INFO.icon;
+	return genericIcon ? [genericIcon] : [];
+}
+
+function determineRaisePopRoles(
+	actionDefinition: Action | undefined,
+	populations: PopulationRegistryLike,
+): PopulationRoleId[] {
+	const explicitRoles = new Set<string>();
+	const usesPlaceholder = collectPopulationRolesFromEffects(
+		(actionDefinition?.effects as EffectConfig[]) ?? [],
+		explicitRoles,
+	);
+	const orderedRoles = new Set<string>(explicitRoles);
+	if (usesPlaceholder || explicitRoles.size === 0) {
+		for (const [roleId, populationDef] of populations.entries()) {
+			if (!explicitRoles.has(roleId) && !isHirablePopulation(populationDef)) {
+				continue;
+			}
+			orderedRoles.add(roleId);
+		}
+	}
+	const result: PopulationRoleId[] = [];
+	for (const roleId of orderedRoles) {
+		try {
+			const population = populations.get(roleId);
+			if (!explicitRoles.has(roleId) && !isHirablePopulation(population)) {
+				continue;
+			}
+			result.push(roleId as PopulationRoleId);
+		} catch {
+			// Skip unknown population ids.
+		}
+	}
+	return result;
+}
+
+function buildRequirementIconsForRole(
+	actionDefinition: Action | undefined,
+	roleId: PopulationRoleId,
+	baseIcons: string[],
+	populations: PopulationRegistryLike,
+): string[] {
+	const icons = new Set(baseIcons);
+	const requirements = actionDefinition?.requirements as
+		| RequirementConfig[]
+		| undefined;
+	if (!requirements) {
+		return Array.from(icons).filter(Boolean);
+	}
+	for (const requirement of requirements) {
+		if (requirement.type !== 'evaluator' || requirement.method !== 'compare')
+			continue;
+		const params = requirement.params ?? {};
+		const left = params['left'] as EvaluatorConfig | undefined;
+		const right = params['right'] as EvaluatorConfig | undefined;
+		for (const icon of getIconsFromEvaluator(left, roleId, populations))
+			icons.add(icon);
+		for (const icon of getIconsFromEvaluator(right, roleId, populations))
+			icons.add(icon);
+	}
+	return Array.from(icons).filter(Boolean);
 }
 
 function GenericActions({
@@ -194,18 +386,44 @@ function RaisePopOptions({
 		actionCostResource,
 	} = useGameEngine();
 	const formatRequirement = (req: string) => req;
-	const requirementIcons = getRequirementIcons(action.id, ctx);
+	const populationRegistry = useMemo(
+		() => ctx.populations as unknown as PopulationRegistryLike,
+		[ctx.populations],
+	);
+	const actionDefinition = useMemo(
+		() => ctx.actions.get(action.id) as Action | undefined,
+		[ctx.actions, action.id],
+	);
+	const baseRequirementIcons = useMemo(
+		() => getRequirementIcons(action.id, ctx),
+		[action.id, ctx],
+	);
+	const roleOptions = useMemo(
+		() => determineRaisePopRoles(actionDefinition, populationRegistry),
+		[actionDefinition, populationRegistry],
+	);
+	const getRequirementIconsForRole = useCallback(
+		(role: PopulationRoleId) =>
+			buildRequirementIconsForRole(
+				actionDefinition,
+				role,
+				baseRequirementIcons,
+				populationRegistry,
+			),
+		[actionDefinition, baseRequirementIcons, populationRegistry],
+	);
 	return (
 		<>
-			{[
-				PopulationRole.Council,
-				PopulationRole.Legion,
-				PopulationRole.Fortifier,
-			].map((role) => {
+			{roleOptions.map((role) => {
 				const costsBag = getActionCosts(action.id, ctx);
 				const costs: Record<string, number> = {};
 				for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
-				const upkeep = ctx.populations.get(role)?.upkeep;
+				let upkeep: Record<string, number> | undefined;
+				try {
+					upkeep = populationRegistry.get(role)?.upkeep;
+				} catch {
+					upkeep = undefined;
+				}
 				const requirements = getActionRequirements(action.id, ctx).map(
 					formatRequirement,
 				);
@@ -214,6 +432,7 @@ function RaisePopOptions({
 				);
 				const meetsReq = requirements.length === 0;
 				const enabled = canPay && meetsReq && canInteract;
+				const requirementIcons = getRequirementIconsForRole(role);
 				const insufficientTooltip = formatMissingResources(
 					costs,
 					player.resources,
@@ -506,6 +725,10 @@ function BuildOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const requirementIcons = useMemo(
+		() => getRequirementIcons(action.id, ctx),
+		[action.id, ctx],
+	);
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings
@@ -536,7 +759,9 @@ function BuildOptions({
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
 				{entries.map(({ b, costs }) => {
-					const requirements: string[] = [];
+					const requirements = getActionRequirements(action.id, ctx).map(
+						(req) => req,
+					);
 					const canPay = Object.entries(costs).every(
 						([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
 					);
@@ -566,9 +791,7 @@ function BuildOptions({
 							playerResources={player.resources}
 							actionCostResource={actionCostResource}
 							requirements={requirements}
-							requirementIcons={[
-								POPULATION_ROLES[PopulationRole.Citizen]?.icon ?? '',
-							]}
+							requirementIcons={requirementIcons}
 							summary={summary}
 							implemented={implemented}
 							enabled={enabled}
