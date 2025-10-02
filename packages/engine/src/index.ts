@@ -53,4 +53,8 @@ export { snapshotPlayer } from './log';
 export type { PlayerSnapshot, ActionTrace } from './log';
 export type { PlayerId } from './state';
 export type { ActionParameters as ActionParams } from './actions/action_parameters';
-export type { AdvanceResult } from './phases/advance';
+export type {
+	AdvanceResult,
+	AdvanceSkip,
+	AdvanceSkipSource,
+} from './phases/advance';

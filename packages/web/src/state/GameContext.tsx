@@ -32,6 +32,7 @@ import {
 	logContent,
 	type Summary,
 } from '../translation';
+import { describeSkipEvent } from '../utils/describeSkipEvent';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 export const TIME_SCALE_OPTIONS = [1, 2, 5, 100] as const;
@@ -376,7 +377,7 @@ export function GameProvider({
 		while (!ctx.phases[ctx.game.phaseIndex]?.action) {
 			ranSteps = true;
 			const before = snapshotPlayer(ctx.activePlayer, ctx);
-			const { phase, step, player, effects } = advance(ctx);
+			const { phase, step, player, effects, skipped } = advance(ctx);
 			const phaseDef = ctx.phases.find((p) => p.id === phase)!;
 			const stepDef = phaseDef.steps.find((s) => s.id === step);
 			if (phase !== lastPhase) {
@@ -387,32 +388,47 @@ export function GameProvider({
 				addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player);
 				lastPhase = phase;
 			}
-			const after = snapshotPlayer(player, ctx);
-			const stepWithEffects: StepDef | undefined = stepDef
-				? ({ ...(stepDef as StepDef), effects } as StepDef)
-				: undefined;
-			const changes = diffStepSnapshots(
-				before,
-				after,
-				stepWithEffects,
-				ctx,
-				RESOURCE_KEYS,
-			);
-			if (changes.length) {
-				addLog(
-					changes.map((c) => `  ${c}`),
-					player,
-				);
-			}
 			const phaseId = phase;
-			const entry = {
-				title: stepDef?.title || step,
-				items:
-					changes.length > 0
-						? changes.map((text) => ({ text }))
-						: [{ text: 'No effect', italic: true }],
-				active: true,
+			let entry: {
+				title: string;
+				items: { text: string; italic?: boolean }[];
+				active: true;
 			};
+			if (skipped) {
+				const summary = describeSkipEvent(skipped, phaseDef, stepDef);
+				addLog(summary.logLines, player);
+				entry = {
+					title: summary.history.title,
+					items: summary.history.items,
+					active: true,
+				};
+			} else {
+				const after = snapshotPlayer(player, ctx);
+				const stepWithEffects: StepDef | undefined = stepDef
+					? ({ ...(stepDef as StepDef), effects } as StepDef)
+					: undefined;
+				const changes = diffStepSnapshots(
+					before,
+					after,
+					stepWithEffects,
+					ctx,
+					RESOURCE_KEYS,
+				);
+				if (changes.length) {
+					addLog(
+						changes.map((c) => `  ${c}`),
+						player,
+					);
+				}
+				entry = {
+					title: stepDef?.title || step,
+					items:
+						changes.length > 0
+							? changes.map((text) => ({ text }))
+							: [{ text: 'No effect', italic: true }],
+					active: true,
+				};
+			}
 			setPhaseSteps((prev) => [...prev, entry]);
 			setPhaseHistories((prev) => ({
 				...prev,
