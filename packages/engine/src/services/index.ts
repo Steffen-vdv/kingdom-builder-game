@@ -66,6 +66,23 @@ export type HappinessTierDefinition = {
 	display?: TierDisplayMetadata;
 };
 
+export type PassiveSourceMetadata = {
+	type: string;
+	id: string;
+	icon?: string;
+	labelToken?: string;
+};
+
+export type PassiveRemovalMetadata = {
+	token?: string;
+	text?: string;
+};
+
+export type PassiveMetadata = {
+	source?: PassiveSourceMetadata;
+	removal?: PassiveRemovalMetadata;
+};
+
 export type RuleSet = {
 	defaultActionAPCost: number;
 	absorptionCapPct: number;
@@ -82,14 +99,17 @@ class TieredResourceService {
 	constructor(private rules: RuleSet) {
 		this.resourceKey = rules.tieredResourceKey;
 	}
-	tier(value: number): TierEffect | undefined {
-		let last: TierEffect | undefined;
+	definition(value: number): HappinessTierDefinition | undefined {
+		let match: HappinessTierDefinition | undefined;
 		for (const tier of this.rules.tierDefinitions) {
 			if (value < tier.range.min) break;
 			if (tier.range.max !== undefined && value > tier.range.max) continue;
-			last = tier.effect;
+			match = tier;
 		}
-		return last;
+		return match;
+	}
+	tier(value: number): TierEffect | undefined {
+		return this.definition(value)?.effect;
 	}
 }
 
@@ -145,13 +165,14 @@ export class PassiveManager {
 	private passives: Map<
 		string,
 		{
-			effects: EffectDef[];
+			effects?: EffectDef[];
 			onGrowthPhase?: EffectDef[];
 			onUpkeepPhase?: EffectDef[];
 			onBeforeAttacked?: EffectDef[];
 			onAttackResolved?: EffectDef[];
 			owner: PlayerId;
 			frames: StatSourceFrame[];
+			meta?: PassiveMetadata;
 		}
 	> = new Map();
 
@@ -257,7 +278,7 @@ export class PassiveManager {
 	addPassive(
 		passive: {
 			id: string;
-			effects: EffectDef[];
+			effects?: EffectDef[];
 			onGrowthPhase?: EffectDef[];
 			onUpkeepPhase?: EffectDef[];
 			onBeforeAttacked?: EffectDef[];
@@ -267,6 +288,7 @@ export class PassiveManager {
 		options?: {
 			frames?: StatSourceFrame | StatSourceFrame[];
 			detail?: string;
+			meta?: PassiveMetadata;
 		},
 	) {
 		const key = `${passive.id}_${ctx.activePlayer.id}`;
@@ -278,17 +300,28 @@ export class PassiveManager {
 			longevity: 'ongoing' as const,
 		});
 		const frames = [...providedFrames, passiveFrame];
-		this.passives.set(key, { ...passive, owner: ctx.activePlayer.id, frames });
-		withStatSourceFrames(ctx, frames, () => runEffects(passive.effects, ctx));
+		this.passives.set(key, {
+			...passive,
+			owner: ctx.activePlayer.id,
+			frames,
+			...(options?.meta ? { meta: options.meta } : {}),
+		});
+		const setupEffects = passive.effects;
+		if (setupEffects && setupEffects.length > 0) {
+			withStatSourceFrames(ctx, frames, () => runEffects(setupEffects, ctx));
+		}
 	}
 
 	removePassive(id: string, ctx: EngineContext) {
 		const key = `${id}_${ctx.activePlayer.id}`;
 		const passive = this.passives.get(key);
 		if (!passive) return;
-		withStatSourceFrames(ctx, passive.frames, () =>
-			runEffects(passive.effects.map(reverseEffect), ctx),
-		);
+		const teardownEffects = passive.effects;
+		if (teardownEffects && teardownEffects.length > 0) {
+			withStatSourceFrames(ctx, passive.frames, () =>
+				runEffects(teardownEffects.map(reverseEffect), ctx),
+			);
+		}
 		this.passives.delete(key);
 	}
 
@@ -319,11 +352,106 @@ function reverseEffect(effect: EffectDef): EffectDef {
 export class Services {
 	tieredResource: TieredResourceService;
 	popcap: PopCapService;
+	private activeTiers: Map<PlayerId, HappinessTierDefinition> = new Map();
 	constructor(
 		public rules: RuleSet,
 		developments: Registry<DevelopmentConfig>,
 	) {
 		this.tieredResource = new TieredResourceService(rules);
 		this.popcap = new PopCapService(rules, developments);
+	}
+
+	private registerSkipFlags(player: PlayerState, passive: TierPassivePayload) {
+		const skip = passive.skip;
+		if (!skip) return;
+		const sourceId = passive.id;
+		if (skip.phases) {
+			for (const phaseId of skip.phases) {
+				const phaseBucket = player.skipPhases[phaseId] ?? {};
+				phaseBucket[sourceId] = true;
+				player.skipPhases[phaseId] = phaseBucket;
+			}
+		}
+		if (skip.steps) {
+			for (const { phaseId, stepId } of skip.steps) {
+				const phaseBucket = player.skipSteps[phaseId] ?? {};
+				const stepBucket = phaseBucket[stepId] ?? {};
+				stepBucket[sourceId] = true;
+				phaseBucket[stepId] = stepBucket;
+				player.skipSteps[phaseId] = phaseBucket;
+			}
+		}
+	}
+
+	private clearSkipFlags(player: PlayerState, passive: TierPassivePayload) {
+		const skip = passive.skip;
+		if (!skip) return;
+		const sourceId = passive.id;
+		if (skip.phases) {
+			for (const phaseId of skip.phases) {
+				const bucket = player.skipPhases[phaseId];
+				if (!bucket) continue;
+				delete bucket[sourceId];
+				if (Object.keys(bucket).length === 0) delete player.skipPhases[phaseId];
+			}
+		}
+		if (skip.steps) {
+			for (const { phaseId, stepId } of skip.steps) {
+				const phaseBucket = player.skipSteps[phaseId];
+				if (!phaseBucket) continue;
+				const stepBucket = phaseBucket[stepId];
+				if (!stepBucket) continue;
+				delete stepBucket[sourceId];
+				if (Object.keys(stepBucket).length === 0) delete phaseBucket[stepId];
+				if (Object.keys(phaseBucket).length === 0)
+					delete player.skipSteps[phaseId];
+			}
+		}
+	}
+
+	handleTieredResourceChange(ctx: EngineContext, resourceKey: ResourceKey) {
+		if (resourceKey !== this.tieredResource.resourceKey) return;
+		const player = ctx.activePlayer;
+		const value = player.resources[resourceKey] ?? 0;
+		const nextTier = this.tieredResource.definition(value);
+		const currentTier = this.activeTiers.get(player.id);
+		if (currentTier?.id === nextTier?.id) return;
+		if (currentTier) {
+			this.clearSkipFlags(player, currentTier.passive);
+			ctx.passives.removePassive(currentTier.passive.id, ctx);
+			this.activeTiers.delete(player.id);
+		}
+		if (nextTier) {
+			const sourceMeta: PassiveSourceMetadata = {
+				type: 'tiered-resource',
+				id: nextTier.id,
+			};
+			if (nextTier.display?.icon) sourceMeta.icon = nextTier.display.icon;
+			if (nextTier.display?.summaryToken)
+				sourceMeta.labelToken = nextTier.display.summaryToken;
+			const removalMeta: PassiveRemovalMetadata = {};
+			if (nextTier.display?.removalCondition)
+				removalMeta.token = nextTier.display.removalCondition;
+			if (nextTier.passive.text?.removal)
+				removalMeta.text = nextTier.passive.text.removal;
+			const metadata: PassiveMetadata = { source: sourceMeta };
+			if (Object.keys(removalMeta).length > 0) metadata.removal = removalMeta;
+			ctx.passives.addPassive(nextTier.passive, ctx, {
+				detail: nextTier.passive.text?.summary ?? nextTier.id,
+				meta: metadata,
+			});
+			this.registerSkipFlags(player, nextTier.passive);
+			this.activeTiers.set(player.id, nextTier);
+		}
+	}
+
+	initializeTierPassives(ctx: EngineContext) {
+		const resourceKey = this.tieredResource.resourceKey;
+		const previousIndex = ctx.game.currentPlayerIndex;
+		ctx.game.players.forEach((_player, index) => {
+			ctx.game.currentPlayerIndex = index;
+			this.handleTieredResourceChange(ctx, resourceKey);
+		});
+		ctx.game.currentPlayerIndex = previousIndex;
 	}
 }
