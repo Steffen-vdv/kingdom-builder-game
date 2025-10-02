@@ -8,6 +8,7 @@ import type { EngineContext } from '@kingdom-builder/engine';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import { HOVER_CARD_BG } from './constants';
 
 interface LandDisplayProps {
 	player: EngineContext['activePlayer'];
@@ -29,8 +30,7 @@ const LandTile: React.FC<{
 			requirements: [],
 			effectsTitle: DEVELOPMENTS_INFO.label,
 			...(description && { description }),
-			bgClass:
-				'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+			bgClass: HOVER_CARD_BG,
 		});
 	};
 	const animateSlots = useAnimate<HTMLDivElement>();
@@ -69,8 +69,7 @@ const LandTile: React.FC<{
 										effects,
 										requirements: [],
 										...(description && { description }),
-										bgClass:
-											'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+										bgClass: HOVER_CARD_BG,
 									});
 								}}
 								onMouseLeave={(e) => {
@@ -99,8 +98,7 @@ const LandTile: React.FC<{
 										description: `Use ${developAction.icon || ''} ${developAction.name} to build here`,
 									}),
 									requirements: [],
-									bgClass:
-										'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+									bgClass: HOVER_CARD_BG,
 								});
 							}}
 							onMouseLeave={(e) => {
@@ -136,21 +134,27 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 	if (player.lands.length === 0) return null;
 	const animateLands = useAnimate<HTMLDivElement>();
 	return (
-		<div
-			ref={animateLands}
-			className="mt-3 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
-		>
-			{player.lands.map((land) => (
-				<LandTile
-					key={land.id}
-					land={land}
-					ctx={ctx}
-					handleHoverCard={handleHoverCard}
-					clearHoverCard={clearHoverCard}
-					developAction={developAction}
-				/>
-			))}
-		</div>
+		<section className="panel-section">
+			<header className="panel-section__heading">
+				<span className="text-base leading-none">{LAND_INFO.icon}</span>
+				<span className="panel-section__label">{LAND_INFO.label}</span>
+			</header>
+			<div
+				ref={animateLands}
+				className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+			>
+				{player.lands.map((land) => (
+					<LandTile
+						key={land.id}
+						land={land}
+						ctx={ctx}
+						handleHoverCard={handleHoverCard}
+						clearHoverCard={clearHoverCard}
+						developAction={developAction}
+					/>
+				))}
+			</div>
+		</section>
 	);
 };
 

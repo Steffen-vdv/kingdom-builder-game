@@ -100,8 +100,8 @@ function GameLayout() {
 				</div>
 
 				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
-					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
+					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 p-2 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
+						<div className="flex flex-1 items-stretch gap-4 rounded-3xl p-2">
 							{playerPanels}
 						</div>
 					</section>

@@ -13,6 +13,7 @@ import type {
 	PlayerId,
 } from '@kingdom-builder/engine';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import { HOVER_CARD_BG } from './constants';
 
 export const ICON_MAP: Record<string, string> = {
 	cost_mod: modifierInfo.cost.icon,
@@ -80,40 +81,57 @@ export default function PassiveDisplay({
 
 	const animatePassives = useAnimate<HTMLDivElement>();
 	return (
-		<div
-			ref={animatePassives}
-			className="panel-card flex w-fit items-center gap-3 px-4 py-3 text-lg"
-		>
-			{entries.map(({ summary: passive, def }) => {
-				const icon = getIcon(passive, def.effects);
-				const items = describeEffects(def.effects || [], ctx);
-				const upkeepLabel =
-					PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
-				const sections = def.onUpkeepPhase
-					? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
-					: items;
-				const passiveName = passive.name ?? PASSIVE_INFO.label;
-				return (
-					<span
-						key={passive.id}
-						className="hoverable cursor-pointer"
-						onMouseEnter={() => {
-							const { effects, description } = splitSummary(sections);
-							handleHoverCard({
-								title: `${icon} ${passiveName || PASSIVE_INFO.label}`,
-								effects,
-								requirements: [],
-								...(description && { description }),
-								bgClass:
-									'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
-							});
-						}}
-						onMouseLeave={clearHoverCard}
-					>
-						{icon}
-					</span>
-				);
-			})}
-		</div>
+		<section className="panel-section">
+			<header className="panel-section__heading">
+				<span className="text-base leading-none">{PASSIVE_INFO.icon}</span>
+				<span className="panel-section__label">{PASSIVE_INFO.label}</span>
+			</header>
+			<div
+				ref={animatePassives}
+				className="flex w-full flex-wrap items-center gap-2 text-lg"
+			>
+				{entries.map(({ summary: passive, def }) => {
+					const icon = getIcon(passive, def.effects);
+					const items = describeEffects(def.effects || [], ctx);
+					const upkeepLabel =
+						PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
+					const sections = def.onUpkeepPhase
+						? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
+						: items;
+					const passiveName = passive.name ?? PASSIVE_INFO.label;
+					return (
+						<button
+							key={passive.id}
+							type="button"
+							className="panel-chip hoverable"
+							onMouseEnter={() => {
+								const { effects, description } = splitSummary(sections);
+								handleHoverCard({
+									title: `${icon} ${passiveName || PASSIVE_INFO.label}`,
+									effects,
+									requirements: [],
+									...(description && { description }),
+									bgClass: HOVER_CARD_BG,
+								});
+							}}
+							onMouseLeave={clearHoverCard}
+							onClick={() => {
+								const { effects, description } = splitSummary(sections);
+								handleHoverCard({
+									title: `${icon} ${passiveName || PASSIVE_INFO.label}`,
+									effects,
+									requirements: [],
+									...(description && { description }),
+									bgClass: HOVER_CARD_BG,
+								});
+							}}
+						>
+							<span className="text-base leading-none">{icon}</span>
+							<span className="font-semibold">{passiveName}</span>
+						</button>
+					);
+				})}
+			</div>
+		</section>
 	);
 }

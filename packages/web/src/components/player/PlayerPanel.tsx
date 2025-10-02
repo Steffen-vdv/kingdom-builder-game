@@ -68,9 +68,9 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 	return (
 		<div
 			ref={panelRef}
-			className={`player-panel flex min-h-[320px] flex-col gap-2 text-slate-800 dark:text-slate-100 ${className}`}
+			className={`player-panel flex min-h-[320px] flex-col gap-4 text-slate-800 dark:text-slate-100 ${className}`}
 		>
-			<h3 className="text-lg font-semibold tracking-tight">
+			<h3 className="flex items-center justify-between text-lg font-semibold tracking-tight">
 				{isActive && (
 					<span role="img" aria-label="active player" className="mr-1">
 						👑
@@ -80,12 +80,16 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 			</h3>
 			<div
 				ref={animateBar}
-				className="panel-card flex w-fit flex-wrap items-center gap-3 px-4 py-3"
+				className="panel-card flex w-full items-center gap-4 overflow-hidden px-5 py-4"
 			>
-				<ResourceBar player={player} />
-				<PopulationInfo player={player} />
+				<div className="flex min-w-0 flex-1 items-center gap-2">
+					<ResourceBar player={player} />
+				</div>
+				<div className="flex flex-none items-center gap-2">
+					<PopulationInfo player={player} />
+				</div>
 			</div>
-			<div ref={animateSections} className="flex flex-col gap-2">
+			<div ref={animateSections} className="flex flex-col gap-4">
 				<LandDisplay player={player} />
 				<BuildingDisplay player={player} />
 				<PassiveDisplay player={player} />

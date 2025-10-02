@@ -44,7 +44,7 @@
 
 @layer components {
   .bar-item {
-    @apply flex items-center gap-1 whitespace-nowrap rounded-full border border-white/40 bg-white/50 px-3 py-1 text-sm font-semibold tabular-nums text-slate-700 shadow-sm shadow-white/30 transition appearance-none dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100;
+    @apply flex items-center gap-1 whitespace-nowrap rounded-full border border-white/40 bg-white/50 px-2.5 py-1 text-xs font-semibold tabular-nums text-slate-700 shadow-sm shadow-white/30 transition appearance-none sm:px-3 sm:text-sm dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100;
   }
   .hoverable {
     @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/60 hover:shadow-lg hover:shadow-amber-500/10 dark:hover:bg-white/10 dark:hover:shadow-black/30;
@@ -71,6 +71,18 @@
   }
   .player-panel .panel-card {
     @apply border-white/40 bg-white/80 dark:border-white/10 dark:bg-slate-900/60;
+  }
+  .panel-section {
+    @apply panel-card flex w-full flex-col gap-3 px-5 py-4;
+  }
+  .panel-section__heading {
+    @apply flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-slate-500 dark:text-slate-300;
+  }
+  .panel-section__label {
+    @apply truncate text-[0.8rem] tracking-normal text-slate-700 dark:text-slate-100;
+  }
+  .panel-chip {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/60 px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm shadow-white/20 transition-colors dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100;
   }
   .value-change-indicator {
     @apply pointer-events-none font-black tracking-wide text-sm sm:text-base;
