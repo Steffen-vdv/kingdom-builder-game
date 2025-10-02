@@ -30,7 +30,7 @@ function GameLayout() {
 	}, [playerHeights]);
 	const playerPanels = ctx.game.players.map((p, i) => {
 		const isActive = p.id === ctx.activePlayer.id;
-		const sideClass = i === 0 ? 'pr-6' : 'pl-6';
+		const sideClass = i === 0 ? 'lg:pr-6' : 'lg:pl-6';
 		const colorClass =
 			i === 0
 				? isActive
@@ -100,8 +100,8 @@ function GameLayout() {
 				</div>
 
 				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
-					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
+					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 p-6 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
+						<div className="flex w-full flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
 							{playerPanels}
 						</div>
 					</section>

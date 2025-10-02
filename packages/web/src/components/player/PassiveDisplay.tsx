@@ -9,6 +9,7 @@ import {
 import { describeEffects, splitSummary } from '../../translation';
 import type {
 	EffectDef,
+	EngineContext,
 	PassiveSummary,
 	PlayerId,
 } from '@kingdom-builder/engine';
@@ -23,19 +24,28 @@ const POPULATION_PASSIVE_PREFIXES = new Set(
 	POPULATIONS.keys().map((id) => `${id}_`),
 );
 
-export default function PassiveDisplay({
-	player,
-}: {
-	player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
-}) {
-	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
-	const playerId: PlayerId = player.id;
-	const summaries: PassiveSummary[] = ctx.passives.list(playerId);
-	const defs = ctx.passives.values(playerId) as Array<{
+export interface PassiveEntry {
+	summary: PassiveSummary;
+	def: {
 		id: string;
 		effects?: EffectDef[];
 		onUpkeepPhase?: EffectDef[];
-	}>;
+	};
+}
+
+export const getVisiblePassiveEntries = (
+	player: EngineContext['activePlayer'],
+	ctx: EngineContext,
+): PassiveEntry[] => {
+	const playerId: PlayerId = player.id;
+	const summaries: PassiveSummary[] = ctx.passives.list(playerId);
+	const defs = Array.from(
+		ctx.passives.values(playerId) as Iterable<{
+			id: string;
+			effects?: EffectDef[];
+			onUpkeepPhase?: EffectDef[];
+		}>,
+	);
 	const defMap = new Map(defs.map((def) => [def.id, def]));
 
 	const buildingIds = Array.from(player.buildings);
@@ -45,28 +55,30 @@ export default function PassiveDisplay({
 		player.lands.flatMap((l) => l.developments.map((d) => `${d}_${l.id}`)),
 	);
 
-	const entries = summaries
+	return summaries
 		.map((summary) => ({ summary, def: defMap.get(summary.id) }))
-		.filter(
-			(
-				entry,
-			): entry is {
-				summary: PassiveSummary;
-				def: { effects?: EffectDef[]; onUpkeepPhase?: EffectDef[] } & {
-					id: string;
-				};
-			} => {
-				const { summary, def } = entry;
-				if (!def) return false;
-				if (buildingIdSet.has(summary.id)) return false;
-				if (developmentIds.has(summary.id)) return false;
-				if (buildingPrefixes.some((prefix) => summary.id.startsWith(prefix)))
-					return false;
-				for (const prefix of POPULATION_PASSIVE_PREFIXES)
-					if (summary.id.startsWith(prefix)) return false;
-				return true;
-			},
-		);
+		.filter((entry): entry is PassiveEntry => {
+			const { summary, def } = entry;
+			if (!def) return false;
+			if (buildingIdSet.has(summary.id)) return false;
+			if (developmentIds.has(summary.id)) return false;
+			if (buildingPrefixes.some((prefix) => summary.id.startsWith(prefix)))
+				return false;
+			for (const prefix of POPULATION_PASSIVE_PREFIXES)
+				if (summary.id.startsWith(prefix)) return false;
+			return true;
+		});
+};
+
+export default function PassiveDisplay({
+	player,
+	entries: providedEntries,
+}: {
+	player: EngineContext['activePlayer'];
+	entries?: PassiveEntry[];
+}) {
+	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+	const entries = providedEntries ?? getVisiblePassiveEntries(player, ctx);
 	if (entries.length === 0) return null;
 
 	const getIcon = (
@@ -82,7 +94,7 @@ export default function PassiveDisplay({
 	return (
 		<div
 			ref={animatePassives}
-			className="panel-card flex w-fit items-center gap-3 px-4 py-3 text-lg"
+			className="flex flex-wrap items-center gap-3 text-lg text-slate-700 dark:text-slate-100"
 		>
 			{entries.map(({ summary: passive, def }) => {
 				const icon = getIcon(passive, def.effects);

@@ -13,7 +13,7 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
 	if (player.buildings.size === 0) return null;
 	const animateBuildings = useAnimate<HTMLDivElement>();
 	return (
-		<div ref={animateBuildings} className="mt-3 flex w-full flex-wrap gap-3">
+		<div ref={animateBuildings} className="flex w-full flex-wrap gap-3">
 			{Array.from(player.buildings).map((b) => {
 				const name = ctx.buildings.get(b)?.name || b;
 				const icon = ctx.buildings.get(b)?.icon || '';

@@ -138,7 +138,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 	return (
 		<div
 			ref={animateLands}
-			className="mt-3 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+			className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
 		>
 			{player.lands.map((land) => (
 				<LandTile

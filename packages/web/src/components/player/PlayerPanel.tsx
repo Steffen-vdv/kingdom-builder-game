@@ -4,8 +4,32 @@ import ResourceBar from './ResourceBar';
 import PopulationInfo from './PopulationInfo';
 import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
-import PassiveDisplay from './PassiveDisplay';
+import PassiveDisplay, { getVisiblePassiveEntries } from './PassiveDisplay';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import { useGameEngine } from '../../state/GameContext';
+
+interface SectionCardProps {
+	title: string;
+	children: React.ReactNode;
+	className?: string;
+}
+
+const SectionCard: React.FC<SectionCardProps> = ({
+	title,
+	className = '',
+	children,
+}) => (
+	<section
+		className={`panel-card flex flex-col gap-3 rounded-2xl px-4 py-4 backdrop-blur-sm ${className}`}
+	>
+		<h4 className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-600 dark:text-slate-300">
+			{title}
+		</h4>
+		{children}
+	</section>
+);
+
+const PASSIVE_SECTION_TITLE = 'Passives & Modifiers';
 
 interface PlayerPanelProps {
 	player: EngineContext['activePlayer'];
@@ -24,6 +48,11 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 	const heightCallbackRef = useRef<typeof onHeightChange>();
 	const animateBar = useAnimate<HTMLDivElement>();
 	const animateSections = useAnimate<HTMLDivElement>();
+	const { ctx } = useGameEngine();
+	const passiveEntries = getVisiblePassiveEntries(player, ctx);
+	const hasLands = player.lands.length > 0;
+	const hasBuildings = player.buildings.size > 0;
+	const hasPassives = passiveEntries.length > 0;
 	useEffect(() => {
 		heightCallbackRef.current = onHeightChange;
 	}, [onHeightChange]);
@@ -68,7 +97,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 	return (
 		<div
 			ref={panelRef}
-			className={`player-panel flex min-h-[320px] flex-col gap-2 text-slate-800 dark:text-slate-100 ${className}`}
+			className={`player-panel flex min-h-[320px] flex-col gap-4 text-slate-800 dark:text-slate-100 ${className}`}
 		>
 			<h3 className="text-lg font-semibold tracking-tight">
 				{isActive && (
@@ -78,17 +107,40 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 				)}
 				{player.name}
 			</h3>
-			<div
-				ref={animateBar}
-				className="panel-card flex w-fit flex-wrap items-center gap-3 px-4 py-3"
-			>
-				<ResourceBar player={player} />
-				<PopulationInfo player={player} />
-			</div>
-			<div ref={animateSections} className="flex flex-col gap-2">
-				<LandDisplay player={player} />
-				<BuildingDisplay player={player} />
-				<PassiveDisplay player={player} />
+			<SectionCard title="Resources & Stats">
+				<div
+					ref={animateBar}
+					className="flex flex-nowrap items-center gap-3 overflow-x-auto pb-1 pt-1 text-sm sm:text-base"
+				>
+					<div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
+						<ResourceBar player={player} />
+					</div>
+					<div className="hidden h-6 w-px shrink-0 bg-white/50 dark:bg-white/10 sm:block" />
+					<div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
+						<PopulationInfo player={player} />
+					</div>
+				</div>
+			</SectionCard>
+			<div ref={animateSections} className="flex flex-col gap-4">
+				{hasLands && (
+					<SectionCard title="Territories">
+						<LandDisplay player={player} />
+					</SectionCard>
+				)}
+				{hasBuildings && (
+					<SectionCard title="Structures">
+						<BuildingDisplay player={player} />
+					</SectionCard>
+				)}
+				{hasPassives && (
+					<SectionCard title={PASSIVE_SECTION_TITLE}>
+						{/* prettier-ignore */}
+						<PassiveDisplay
+                                                        player={player}
+                                                        entries={passiveEntries}
+                                                />
+					</SectionCard>
+				)}
 			</div>
 		</div>
 	);
