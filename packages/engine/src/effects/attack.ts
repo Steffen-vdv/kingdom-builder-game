@@ -241,7 +241,8 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
 	if (!target) return;
 
 	const baseDamage = (attacker.armyStrength as number) || 0;
-	const evaluationKey = target.type === 'building' ? target.id : target.key;
+	const targetHandler = attackTargetHandlers[target.type];
+	const evaluationKey = targetHandler.getEvaluationModifierKey(target as never);
 	const mods: ResourceGain[] = [{ key: evaluationKey, amount: baseDamage }];
 	ctx.passives.runEvaluationMods('attack:power', ctx, mods);
 	const modifiedDamage = mods[0]!.amount;

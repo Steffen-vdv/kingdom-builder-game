@@ -5,6 +5,9 @@ const resourceHandler: AttackTargetHandler<
 	ResourceAttackTarget,
 	AttackTargetMutationResult<'resource'>
 > = {
+	getEvaluationModifierKey(target) {
+		return target.key;
+	},
 	applyDamage(target, damage, _ctx, defender) {
 		const before = defender.resources[target.key] || 0;
 		const after = Math.max(0, before - damage);

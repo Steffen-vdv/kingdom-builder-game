@@ -14,6 +14,18 @@ Edit those configs or supply your own registries when creating an engine.
 
 Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, manage resources, and try to outlast or conquer the opponent. Victory is achieved by capturing the opposing castle, forcing bankruptcy, or holding the most victory points when the game ends after the final round.
 
+### Code Standards
+
+Development follows five core rules:
+
+- Always wrap conditional and loop bodies in braces, even for single statements.
+- Keep each line at 80 characters or fewer.
+- Limit files to 250 lines to stay maintainable.
+- Use descriptive variable names that explain their purpose.
+- Indent with tab characters for code blocks.
+
+See the [Code Standards guide](docs/code_standards/AGENTS.md) for details.
+
 ### Turn Structure
 
 Each turn flows through three phases:
