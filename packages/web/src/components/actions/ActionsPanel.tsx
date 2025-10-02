@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
+import type { EffectConfig } from '@kingdom-builder/engine/config/schema';
 import {
 	RESOURCES,
 	POPULATION_ROLES,
@@ -16,6 +17,7 @@ import {
 	type Summary,
 } from '../../translation';
 import ActionCard from './ActionCard';
+import type { MultiStepConfig } from './ActionCard';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
@@ -28,6 +30,7 @@ interface Action {
 	order?: number;
 	category?: string;
 	focus?: Focus;
+	effectGroups?: ActionEffectGroup[];
 }
 interface Development {
 	id: string;
@@ -44,6 +47,20 @@ interface Building {
 }
 
 type DisplayPlayer = ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
+
+interface ActionEffectGroup {
+	title?: string;
+	effects: EffectConfig[];
+}
+
+interface MultiStepState {
+	action: Action;
+	groups: ActionEffectGroup[];
+	index: number;
+	selections: number[];
+	displayKey: string;
+	status: 'selecting' | 'returning';
+}
 
 function isResourceKey(key: string): key is ResourceKey {
 	return key in RESOURCES;
@@ -89,8 +106,78 @@ function GenericActions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		logMessage,
 	} = useGameEngine();
 	const formatRequirement = (req: string) => req;
+	const [multiStepState, setMultiStepState] = useState<MultiStepState | null>(
+		null,
+	);
+	useEffect(() => {
+		if (!canInteract) {
+			setMultiStepState(null);
+		}
+	}, [canInteract]);
+	useEffect(() => {
+		if (!multiStepState) return;
+		if (multiStepState.status !== 'returning') return;
+		const timer = window.setTimeout(() => {
+			logMessage(
+				'Demo: All actions of multi-step action chosen, if i had engine support I would now execute..',
+			);
+			clearHoverCard();
+			setMultiStepState(null);
+		}, 420);
+		return () => window.clearTimeout(timer);
+	}, [multiStepState, logMessage, clearHoverCard]);
+	useEffect(() => {
+		if (!multiStepState) return;
+		const stillExists = actions.some(
+			(candidate) => candidate.id === multiStepState.action.id,
+		);
+		if (!stillExists) setMultiStepState(null);
+	}, [actions, multiStepState]);
+
+	const stepKey = (index: number) => (index >= 0 ? `step-${index}` : 'front');
+
+	const startMultiStep = (action: Action, groups: ActionEffectGroup[]) => {
+		if (groups.length === 0) return;
+		clearHoverCard();
+		setMultiStepState({
+			action,
+			groups,
+			index: 0,
+			selections: Array.from({ length: groups.length }, () => -1),
+			displayKey: stepKey(0),
+			status: 'selecting',
+		});
+	};
+	const cancelMultiStep = () => {
+		clearHoverCard();
+		setMultiStepState(null);
+	};
+	const selectOption = (optionIndex: number) => {
+		setMultiStepState((prev) => {
+			if (!prev) return prev;
+			const selections = [...prev.selections];
+			selections[prev.index] = optionIndex;
+			const nextIndex = prev.index + 1;
+			if (nextIndex >= prev.groups.length) {
+				return {
+					...prev,
+					selections,
+					displayKey: 'front',
+					status: 'returning',
+				} satisfies MultiStepState;
+			}
+			return {
+				...prev,
+				selections,
+				index: nextIndex,
+				displayKey: stepKey(nextIndex),
+				status: 'selecting',
+			} satisfies MultiStepState;
+		});
+	};
 	const entries = useMemo(() => {
 		return actions
 			.map((action) => {
@@ -112,13 +199,23 @@ function GenericActions({
 					formatRequirement,
 				);
 				const requirementIcons = getRequirementIcons(action.id, ctx);
+				const definition = ctx.actions.get(action.id) as Action | undefined;
+				const groups = definition?.effectGroups ?? [];
+				const hasMultiStep = groups.length > 0;
+				const isActiveMultiStep = multiStepState?.action.id === action.id;
+				const isReturning =
+					isActiveMultiStep && multiStepState?.status === 'returning';
 				const canPay = Object.entries(costs).every(
 					([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
 				);
 				const meetsReq = requirements.length === 0;
 				const summary = summaries.get(action.id);
-				const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
-				const enabled = canPay && meetsReq && canInteract && implemented;
+				const implemented = hasMultiStep || (summary?.length ?? 0) > 0; // TODO: implement action effects
+				const disabledByChoice = Boolean(
+					multiStepState && multiStepState.action.id !== action.id,
+				);
+				const enabled =
+					canPay && meetsReq && canInteract && implemented && !disabledByChoice;
 				const insufficientTooltip = formatMissingResources(
 					costs,
 					player.resources,
@@ -129,7 +226,61 @@ function GenericActions({
 						? requirements.join(', ')
 						: !canPay
 							? (insufficientTooltip ?? 'Cannot pay costs')
-							: undefined;
+							: disabledByChoice
+								? 'Finish the current multi-step action first'
+								: undefined;
+				const summaryForCard =
+					summary && summary.length > 0
+						? summary
+						: hasMultiStep
+							? ['Choose which effect should resolve for each step.']
+							: summary;
+				const activeIndex =
+					hasMultiStep && isActiveMultiStep
+						? Math.min(multiStepState?.index ?? 0, groups.length - 1)
+						: 0;
+				const activeGroup = hasMultiStep ? groups[activeIndex] : undefined;
+				const showingOptions =
+					hasMultiStep && isActiveMultiStep && !isReturning;
+				const multiStepOptions = showingOptions
+					? (activeGroup?.effects ?? []).map((effect, optionIndex) => {
+							const detailParts = [effect.type, effect.method]
+								.filter(Boolean)
+								.join(' · ');
+							return {
+								key: `${action.id}-step-${activeIndex}-option-${optionIndex}`,
+								label: `Option ${optionIndex + 1}`,
+								description: detailParts.length > 0 ? detailParts : undefined,
+								onSelect: () => selectOption(optionIndex),
+							};
+						})
+					: undefined;
+				const baseTitle = groups[0]?.title;
+				const stepTitle = showingOptions
+					? (activeGroup?.title ?? baseTitle)
+					: baseTitle;
+				const contentKey = isActiveMultiStep
+					? (multiStepState?.displayKey ?? 'front')
+					: 'front';
+				const multiStepConfig: MultiStepConfig | undefined = hasMultiStep
+					? {
+							icon: '🔀',
+							isActive: Boolean(isActiveMultiStep),
+							totalSteps: groups.length,
+							currentStep: isActiveMultiStep
+								? showingOptions
+									? activeIndex
+									: groups.length - 1
+								: 0,
+							...(stepTitle ? { title: stepTitle } : {}),
+							...(multiStepOptions ? { options: multiStepOptions } : {}),
+							...(showingOptions ? { onCancel: cancelMultiStep } : {}),
+							contentKey,
+						}
+					: undefined;
+				const multiStepProps = multiStepConfig
+					? { multiStep: multiStepConfig }
+					: {};
 				return (
 					<ActionCard
 						key={action.id}
@@ -143,13 +294,23 @@ function GenericActions({
 						actionCostResource={actionCostResource}
 						requirements={requirements}
 						requirementIcons={requirementIcons}
-						summary={summary}
+						summary={summaryForCard}
 						implemented={implemented}
 						enabled={enabled}
 						tooltip={title}
 						focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
+						{...multiStepProps}
 						onClick={() => {
 							if (!canInteract) return;
+							if (hasMultiStep) {
+								if (multiStepState) {
+									if (multiStepState.action.id !== action.id) return;
+									return;
+								}
+								if (!enabled) return;
+								startMultiStep(action, groups);
+								return;
+							}
 							void handlePerform(action);
 						}}
 						onMouseEnter={() => {
@@ -160,7 +321,14 @@ function GenericActions({
 								effects,
 								requirements,
 								costs,
-								...(description && { description }),
+								...(description
+									? { description }
+									: hasMultiStep
+										? {
+												description:
+													'Choose which option you want to resolve before the action continues.',
+											}
+										: {}),
 								...(!implemented && {
 									description: 'Not implemented yet',
 									descriptionClass: 'italic text-red-600',
@@ -195,6 +363,23 @@ function RaisePopOptions({
 	} = useGameEngine();
 	const formatRequirement = (req: string) => req;
 	const requirementIcons = getRequirementIcons(action.id, ctx);
+	const baseDefinition = ctx.actions.get(action.id) as Action | undefined;
+	const multiStepIndicator: MultiStepConfig | undefined =
+		baseDefinition?.effectGroups && baseDefinition.effectGroups.length > 0
+			? {
+					icon: '🔀',
+					isActive: false,
+					totalSteps: baseDefinition.effectGroups.length,
+					currentStep: 0,
+					...(baseDefinition.effectGroups[0]?.title
+						? { title: baseDefinition.effectGroups[0]?.title }
+						: {}),
+					contentKey: 'front',
+				}
+			: undefined;
+	const multiStepProps = multiStepIndicator
+		? { multiStep: multiStepIndicator }
+		: {};
 	return (
 		<>
 			{[
@@ -247,6 +432,7 @@ function RaisePopOptions({
 						enabled={enabled}
 						tooltip={title}
 						focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
+						{...multiStepProps}
 						onClick={() => {
 							if (!canInteract) return;
 							void handlePerform(action, { role });
@@ -369,6 +555,23 @@ function DevelopOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const baseDefinition = ctx.actions.get(action.id) as Action | undefined;
+	const multiStepIndicator: MultiStepConfig | undefined =
+		baseDefinition?.effectGroups && baseDefinition.effectGroups.length > 0
+			? {
+					icon: '🔀',
+					isActive: false,
+					totalSteps: baseDefinition.effectGroups.length,
+					currentStep: 0,
+					...(baseDefinition.effectGroups[0]?.title
+						? { title: baseDefinition.effectGroups[0]?.title }
+						: {}),
+					contentKey: 'front',
+				}
+			: undefined;
+	const multiStepProps = multiStepIndicator
+		? { multiStep: multiStepIndicator }
+		: {};
 	const landIdForCost = player.lands[0]?.id as string;
 	const entries = useMemo(() => {
 		return developments
@@ -447,6 +650,7 @@ function DevelopOptions({
 							focus={
 								(ctx.developments.get(d.id) as Development | undefined)?.focus
 							}
+							{...multiStepProps}
 							onClick={() => {
 								if (!canInteract) return;
 								const landId = player.lands.find((l) => l.slotsFree > 0)?.id;
@@ -506,6 +710,23 @@ function BuildOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const baseDefinition = ctx.actions.get(action.id) as Action | undefined;
+	const multiStepIndicator: MultiStepConfig | undefined =
+		baseDefinition?.effectGroups && baseDefinition.effectGroups.length > 0
+			? {
+					icon: '🔀',
+					isActive: false,
+					totalSteps: baseDefinition.effectGroups.length,
+					currentStep: 0,
+					...(baseDefinition.effectGroups[0]?.title
+						? { title: baseDefinition.effectGroups[0]?.title }
+						: {}),
+					contentKey: 'front',
+				}
+			: undefined;
+	const multiStepProps = multiStepIndicator
+		? { multiStep: multiStepIndicator }
+		: {};
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings
@@ -574,6 +795,7 @@ function BuildOptions({
 							enabled={enabled}
 							tooltip={title}
 							focus={(ctx.buildings.get(b.id) as Building | undefined)?.focus}
+							{...multiStepProps}
 							onClick={() => {
 								if (!canInteract) return;
 								void handlePerform(action, { id: b.id });
@@ -626,6 +848,23 @@ function DemolishOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const baseDefinition = ctx.actions.get(action.id) as Action | undefined;
+	const multiStepIndicator: MultiStepConfig | undefined =
+		baseDefinition?.effectGroups && baseDefinition.effectGroups.length > 0
+			? {
+					icon: '🔀',
+					isActive: false,
+					totalSteps: baseDefinition.effectGroups.length,
+					currentStep: 0,
+					...(baseDefinition.effectGroups[0]?.title
+						? { title: baseDefinition.effectGroups[0]?.title }
+						: {}),
+					contentKey: 'front',
+				}
+			: undefined;
+	const multiStepProps = multiStepIndicator
+		? { multiStep: multiStepIndicator }
+		: {};
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)
 			.map((id) => {
@@ -710,6 +949,7 @@ function DemolishOptions({
 							enabled={enabled}
 							tooltip={title}
 							focus={(ctx.buildings.get(id) as Building | undefined)?.focus}
+							{...multiStepProps}
 							onClick={() => {
 								if (!canInteract) return;
 								void handlePerform(action, { id });
