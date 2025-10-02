@@ -1,11 +1,19 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "composite": true,
-    "declaration": true
-  },
-  "include": ["src"],
-  "exclude": ["dist", "tests"]
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"composite": true,
+		"declaration": true,
+		"paths": {
+			"@kingdom-builder/engine": ["packages/engine/dist/index"],
+			"@kingdom-builder/engine/*": ["packages/engine/dist/*"],
+			"@kingdom-builder/contents": ["packages/contents/src/index"],
+			"@kingdom-builder/contents/*": ["packages/contents/src/*"],
+			"@kingdom-builder/*": ["packages/*/src"]
+		}
+	},
+	"include": ["src"],
+	"exclude": ["dist", "tests"],
+	"references": [{ "path": "../engine/tsconfig.json" }]
 }

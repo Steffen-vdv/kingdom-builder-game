@@ -30,9 +30,9 @@
 ```ts
 const content = createContentFactory();
 const effect = {
-  type: 'resource',
-  method: 'add',
-  params: { key: CResource.gold, amount: 2 },
+	type: 'resource',
+	method: 'add',
+	params: { key: CResource.gold, amount: 2 },
 };
 const action = content.action({ effects: [effect] });
 const ctx = createTestEngine(content);
@@ -43,11 +43,11 @@ expect(ctx.activePlayer.gold).toBe(before + effect.params.amount);
 
 ```ts
 fc.assert(
-  fc.property(resourceMapArb, (costs) => {
-    const content = createContentFactory();
-    const action = content.action({ baseCosts: costs });
-    // ...assert invariants
-  }),
+	fc.property(resourceMapArb, (costs) => {
+		const content = createContentFactory();
+		const action = content.action({ baseCosts: costs });
+		// ...assert invariants
+	}),
 );
 ```
 
@@ -85,9 +85,6 @@ fc.assert(
 - 2025-08-31: Registries can validate entries with Zod schemas; invalid data will throw during `add`.
 - 2025-08-31: A quick Node script can scan content files to detect duplicate icons across actions, buildings, stats, population roles and developments.
 - 2025-08-31: `npm run dev` prebuilds `@kingdom-builder/contents` via a `predev` script to avoid missing dist files.
-- 2025-09-24: That prebuild currently fails in this environment (the contents TypeScript project rejects engine sources outside
-  its `rootDir`). To launch Vite for screenshots, run it from the web workspace instead:
-  `npm run --workspace @kingdom-builder/web dev -- --host 0.0.0.0 --port 4173`.
 - 2025-08-31: Player snapshots now require the engine context to include active passive IDs; use `snapshotPlayer(player, ctx)`.
 - 2025-08-31: `handleEndTurn` will not advance phases if a player has remaining AP; automated tests must spend or clear AP first.
 - 2025-08-31: Log entries include `playerId` so the web UI can style messages per player.
