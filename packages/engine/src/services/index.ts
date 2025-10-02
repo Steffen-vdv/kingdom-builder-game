@@ -20,7 +20,8 @@ type PassiveRecord = PassiveSummary & {
 	onAttackResolved?: EffectDef[];
 	owner: PlayerId;
 	frames: StatSourceFrame[];
-  meta?: PassiveMetadata;
+	detail?: string;
+	meta?: PassiveMetadata;
 };
 
 export type TierRange = {
@@ -173,25 +174,13 @@ export type EvaluationModifier = (
 	gains: ResourceGain[],
 ) => EvaluationModifierResult | void;
 
-type StoredPassive = {
-	effects?: EffectDef[];
-	onGrowthPhase?: EffectDef[];
-	onUpkeepPhase?: EffectDef[];
-	onBeforeAttacked?: EffectDef[];
-	onAttackResolved?: EffectDef[];
-	owner: PlayerId;
-	frames: StatSourceFrame[];
-	detail?: string;
-	meta?: PassiveMetadata;
-};
-
 export class PassiveManager {
 	private costMods: Map<string, CostModifier> = new Map();
 	private resultMods: Map<string, ResultModifier> = new Map();
 	private evaluationMods: Map<string, Map<string, EvaluationModifier>> =
 		new Map();
 	private evaluationIndex: Map<string, string> = new Map();
-	private passives: Map<string, StoredPassive> = new Map();
+	private passives: Map<string, PassiveRecord> = new Map();
 
 	private makeKey(id: string, owner: PlayerId) {
 		return `${id}_${owner}`;
