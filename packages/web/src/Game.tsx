@@ -5,14 +5,53 @@ import HoverCard from './components/HoverCard';
 import ActionsPanel from './components/actions/ActionsPanel';
 import PhasePanel from './components/phases/PhasePanel';
 import LogPanel from './components/LogPanel';
-import Button from './components/common/Button';
-import TimeControl from './components/common/TimeControl';
+import ConfirmDialog from './components/common/ConfirmDialog';
+import {
+	GAME_BACKGROUND_CLASS,
+	GAME_CONTENT_CLASS,
+	GAME_GRID_CLASS,
+	GAME_HEADER_CARD_CLASS,
+	HEADER_TITLE_CLASS,
+	GAME_QUIT_BUTTON_CLASS,
+	GAME_TOGGLE_BUTTON_CLASS,
+	GAME_PLAYER_SECTION_CLASS,
+	PRIMARY_COLUMN_CLASS,
+	PLAYER_PANEL_WRAPPER_CLASS,
+	QUIT_NOTE_CLASS,
+	SECONDARY_COLUMN_CLASS,
+	LOADING_WRAPPER_CLASS,
+} from './components/game/layoutClasses';
+import {
+	GameBackdrop,
+	LoadingCardContent,
+	HeaderControls,
+} from './components/game/GameLayoutFragments';
+import { clearSavedGame, type SavedGame } from './state/persistence';
+
+const LOADING_DESCRIPTION = [
+	'Restoring your campaign state.',
+	'This may take a moment.',
+].join(' ');
+const QUIT_DIALOG_PROMPT = [
+	'Do you want to keep this campaign to continue later',
+	'or discard the save?',
+].join(' ');
+const QUIT_DIALOG_NOTE = 'Progress is stored at the end of each turn.';
 
 function GameLayout() {
-	const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
+	const engine = useGameEngine();
+	const { ctx, onExit } = engine;
+	const { darkMode, onToggleDark, initialized } = engine;
 	const [playerHeights, setPlayerHeights] = useState<Record<string, number>>(
 		{},
 	);
+	const [quitDialogOpen, setQuitDialogOpen] = useState(false);
+	const handleOpenQuitDialog = () => {
+		setQuitDialogOpen(true);
+	};
+	const handleCloseQuitDialog = () => {
+		setQuitDialogOpen(false);
+	};
 	const handlePlayerHeight = (playerId: string, height: number) => {
 		setPlayerHeights((prev) => {
 			if (prev[playerId] === height) {
@@ -64,57 +103,101 @@ function GameLayout() {
 			<PhasePanel height={phasePanelHeight} />
 		</div>
 	);
-	return (
-		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
-			<div className="pointer-events-none absolute inset-0">
-				<div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
-				<div className="absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-500/20" />
-				<div className="absolute top-1/4 right-0 h-72 w-72 translate-x-1/3 rounded-full bg-rose-300/30 blur-3xl dark:bg-rose-500/20" />
-				<div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.55),_rgba(255,255,255,0)_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.6),_rgba(15,23,42,0)_60%)]" />
-			</div>
+	const playerSection = (
+		<section className={GAME_PLAYER_SECTION_CLASS}>
+			<div className={PLAYER_PANEL_WRAPPER_CLASS}>{playerPanels}</div>
+		</section>
+	);
 
-			<div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-8 sm:px-8 lg:px-12">
-				<div className="mb-4 flex items-center justify-between rounded-3xl border border-white/50 bg-white/70 px-6 py-4 shadow-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/40 frosted-surface">
-					<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-						Kingdom Builder
-					</h1>
-					{onExit && (
-						<div className="ml-4 flex items-center gap-3">
-							<TimeControl />
-							<Button
-								onClick={onToggleDark}
-								variant="secondary"
-								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-slate-900/10 dark:shadow-black/30"
-							>
-								{darkMode ? 'Light Mode' : 'Dark Mode'}
-							</Button>
-							<Button
-								onClick={onExit}
-								variant="danger"
-								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
-							>
-								Quit
-							</Button>
-						</div>
-					)}
+	const handleKeepForLater = () => {
+		if (onExit) {
+			onExit();
+		}
+	};
+
+	const handleDiscardAndExit = () => {
+		clearSavedGame();
+		if (onExit) {
+			onExit();
+		}
+	};
+
+	const darkModeButtonProps = {
+		onClick: onToggleDark,
+		variant: 'secondary' as const,
+		className: GAME_TOGGLE_BUTTON_CLASS,
+	};
+
+	const quitButtonProps = {
+		onClick: handleOpenQuitDialog,
+		variant: 'danger' as const,
+		className: GAME_QUIT_BUTTON_CLASS,
+	};
+
+	const headerControlsProps = {
+		darkMode,
+		darkModeButtonProps,
+		quitButtonProps,
+	};
+
+	if (!initialized) {
+		return (
+			<div className={GAME_BACKGROUND_CLASS}>
+				<GameBackdrop />
+
+				<div className={LOADING_WRAPPER_CLASS}>
+					<LoadingCardContent description={LOADING_DESCRIPTION} />
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className={GAME_BACKGROUND_CLASS}>
+			<GameBackdrop />
+
+			<div className={GAME_CONTENT_CLASS}>
+				<div className={GAME_HEADER_CARD_CLASS}>
+					<h1 className={HEADER_TITLE_CLASS}>Kingdom Builder</h1>
+					{onExit && <HeaderControls {...headerControlsProps} />}
 				</div>
 
-				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
-					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
-							{playerPanels}
-						</div>
-					</section>
+				<div className={GAME_GRID_CLASS}>
+					{playerSection}
 					{phasePanelElement}
-					<div className="lg:col-start-1 lg:row-start-2">
+					<div className={PRIMARY_COLUMN_CLASS}>
 						<ActionsPanel />
 					</div>
-					<div className="flex w-full flex-col gap-6 lg:col-start-2 lg:row-start-2">
+					<div className={SECONDARY_COLUMN_CLASS}>
 						<LogPanel />
 						<HoverCard />
 					</div>
 				</div>
 			</div>
+
+			<ConfirmDialog
+				open={quitDialogOpen}
+				onClose={handleCloseQuitDialog}
+				title="Exit to Main Menu?"
+				description={
+					<>
+						<p>{QUIT_DIALOG_PROMPT}</p>
+						<p className={QUIT_NOTE_CLASS}>{QUIT_DIALOG_NOTE}</p>
+					</>
+				}
+				actions={[
+					{
+						label: 'Keep for later',
+						variant: 'primary',
+						onClick: handleKeepForLater,
+					},
+					{
+						label: 'Discard save',
+						variant: 'danger',
+						onClick: handleDiscardAndExit,
+					},
+				]}
+			/>
 		</div>
 	);
 }
@@ -124,11 +207,13 @@ export default function Game({
 	darkMode = true,
 	onToggleDark = () => {},
 	devMode = false,
+	initialSave = null,
 }: {
 	onExit?: () => void;
 	darkMode?: boolean;
 	onToggleDark?: () => void;
 	devMode?: boolean;
+	initialSave?: SavedGame | null;
 }) {
 	return (
 		<GameProvider
@@ -136,6 +221,7 @@ export default function Game({
 			darkMode={darkMode}
 			onToggleDark={onToggleDark}
 			devMode={devMode}
+			initialSave={initialSave}
 		>
 			<GameLayout />
 		</GameProvider>

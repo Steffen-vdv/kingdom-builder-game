@@ -3,6 +3,13 @@ import Game from './Game';
 import Menu from './Menu';
 import Overview from './Overview';
 import Tutorial from './Tutorial';
+import {
+	clearSavedGame,
+	loadSavedGame,
+	loadSavedGameMeta,
+	type SavedGame,
+	type SavedGameMeta,
+} from './state/persistence';
 
 enum Screen {
 	Menu = 'menu',
@@ -16,6 +23,15 @@ export default function App() {
 	const [currentGameKey, setCurrentGameKey] = useState(0);
 	const [isDarkModeEnabled, setIsDarkModeEnabled] = useState(true);
 	const [isDevModeEnabled, setIsDevModeEnabled] = useState(false);
+	const [initialSave, setInitialSave] = useState<SavedGame | null>(null);
+	const [savedGameMeta, setSavedGameMeta] = useState<SavedGameMeta | null>(
+		() => {
+			if (typeof window === 'undefined') {
+				return null;
+			}
+			return loadSavedGameMeta();
+		},
+	);
 
 	useEffect(() => {
 		document.documentElement.classList.toggle('dark', isDarkModeEnabled);
@@ -28,6 +44,12 @@ export default function App() {
 	}, []);
 
 	const returnToMenu = () => {
+		setInitialSave(null);
+		if (typeof window !== 'undefined') {
+			setSavedGameMeta(loadSavedGameMeta());
+		} else {
+			setSavedGameMeta(null);
+		}
 		setCurrentScreen(Screen.Menu);
 	};
 
@@ -40,15 +62,42 @@ export default function App() {
 	};
 
 	const startStandardGame = () => {
+		setInitialSave(null);
 		setIsDevModeEnabled(false);
 		incrementGameKey();
 		setCurrentScreen(Screen.Game);
 	};
 
 	const startDeveloperGame = () => {
+		setInitialSave(null);
 		setIsDevModeEnabled(true);
 		incrementGameKey();
 		setCurrentScreen(Screen.Game);
+	};
+
+	const continueSavedGame = () => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		const save = loadSavedGame();
+		if (!save) {
+			setSavedGameMeta(null);
+			return;
+		}
+		setInitialSave(save);
+		setIsDevModeEnabled(save.devMode);
+		setSavedGameMeta(loadSavedGameMeta());
+		incrementGameKey();
+		setCurrentScreen(Screen.Game);
+	};
+
+	const discardSavedGame = () => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		clearSavedGame();
+		setSavedGameMeta(null);
+		setInitialSave(null);
 	};
 
 	const openOverview = () => {
@@ -72,6 +121,7 @@ export default function App() {
 					darkMode={isDarkModeEnabled}
 					onToggleDark={toggleDarkMode}
 					devMode={isDevModeEnabled}
+					initialSave={initialSave}
 				/>
 			);
 		case Screen.Menu:
@@ -82,6 +132,9 @@ export default function App() {
 					onStartDev={startDeveloperGame}
 					onOverview={openOverview}
 					onTutorial={openTutorial}
+					onContinue={continueSavedGame}
+					savedGameMeta={savedGameMeta}
+					onDiscardSave={discardSavedGame}
 				/>
 			);
 	}

@@ -33,6 +33,13 @@ import {
 	type Summary,
 } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
+import {
+	replaySavedGame,
+	saveGame,
+	type SavedGame,
+	type SavedGameEvent,
+} from './persistence';
+import type { LogEntry } from './types';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 export const TIME_SCALE_OPTIONS = [1, 2, 5, 100] as const;
@@ -51,17 +58,31 @@ function readStoredTimeScale(): TimeScale | null {
 		: null;
 }
 
+function cloneParams(
+	params?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+	if (!params) return undefined;
+	try {
+		return JSON.parse(JSON.stringify(params)) as Record<string, unknown>;
+	} catch (error) {
+		console.warn('Failed to clone action params for persistence', error);
+		return undefined;
+	}
+}
+
+function cloneEvents(events: SavedGameEvent[]): SavedGameEvent[] {
+	return events.map((event) =>
+		event.type === 'action'
+			? { ...event, params: cloneParams(event.params) }
+			: { ...event },
+	);
+}
+
 interface Action {
 	id: string;
 	name: string;
 	system?: boolean;
 }
-
-type LogEntry = {
-	time: string;
-	text: string;
-	playerId: string;
-};
 
 interface HoverCard {
 	title: string;
@@ -110,6 +131,7 @@ interface GameEngineContextValue {
 	onToggleDark: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
+	initialized: boolean;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
@@ -120,12 +142,14 @@ export function GameProvider({
 	darkMode = true,
 	onToggleDark = () => {},
 	devMode = false,
+	initialSave = null,
 }: {
 	children: React.ReactNode;
 	onExit?: () => void;
 	darkMode?: boolean;
 	onToggleDark?: () => void;
 	devMode?: boolean;
+	initialSave?: SavedGame | null;
 }) {
 	const ctx = useMemo<EngineContext>(() => {
 		const engine = createEngine({
@@ -143,8 +167,10 @@ export function GameProvider({
 	const [, setTick] = useState(0);
 	const refresh = () => setTick((t) => t + 1);
 
-	const [log, setLog] = useState<LogEntry[]>([]);
-	const [logOverflowed, setLogOverflowed] = useState(false);
+	const [log, setLog] = useState<LogEntry[]>(() => initialSave?.log ?? []);
+	const [logOverflowed, setLogOverflowed] = useState(
+		initialSave?.logOverflowed ?? false,
+	);
 	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
 	const hoverTimeout = useRef<number>();
 	const timeouts = useRef(new Set<number>());
@@ -159,6 +185,12 @@ export function GameProvider({
 	>({});
 	const [tabsEnabled, setTabsEnabled] = useState(false);
 	const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
+
+	const historyRef = useRef<SavedGameEvent[]>(
+		initialSave ? cloneEvents(initialSave.events) : [],
+	);
+	const isReplayingRef = useRef(false);
+	const [initialized, setInitialized] = useState(initialSave ? false : true);
 
 	const [timeScale, setTimeScaleState] = useState<TimeScale>(() => {
 		if (devMode) return 100;
@@ -230,6 +262,20 @@ export function GameProvider({
 		[ctx],
 	);
 
+	const commitSave = React.useCallback(() => {
+		if (!initialized || isReplayingRef.current) return;
+		const snapshot: SavedGame = {
+			version: 1,
+			events: cloneEvents(historyRef.current),
+			turn: ctx.game.turn,
+			nextPlayerId: ctx.activePlayer.id,
+			log,
+			logOverflowed,
+			devMode: ctx.game.devMode,
+		};
+		saveGame(snapshot);
+	}, [initialized, ctx, log, logOverflowed]);
+
 	const addLog = (
 		entry: string | string[],
 		player?: EngineContext['activePlayer'],
@@ -251,6 +297,7 @@ export function GameProvider({
 	};
 
 	useEffect(() => {
+		if (initialSave) return;
 		ctx.game.players.forEach((player) => {
 			const comp = ctx.compensations[player.id];
 			if (
@@ -288,7 +335,21 @@ export function GameProvider({
 					player,
 				);
 		});
-	}, [ctx]);
+	}, [ctx, initialSave]);
+
+	useEffect(() => {
+		if (!initialSave) return;
+		historyRef.current = cloneEvents(initialSave.events);
+		try {
+			isReplayingRef.current = true;
+			replaySavedGame(ctx, initialSave);
+		} catch (error) {
+			console.error('Failed to replay saved game', error);
+		} finally {
+			isReplayingRef.current = false;
+			setInitialized(true);
+		}
+	}, [ctx, initialSave]);
 
 	function handleHoverCard(data: HoverCard) {
 		if (hoverTimeout.current) {
@@ -510,6 +571,19 @@ export function GameProvider({
 				params as ActionParams<string>,
 			);
 
+			if (!isReplayingRef.current) {
+				const clonedParams = cloneParams(params);
+				const event: SavedGameEvent = {
+					type: 'action',
+					playerId: player.id,
+					actionId: action.id,
+				};
+				if (clonedParams !== undefined) {
+					event.params = clonedParams;
+				}
+				historyRef.current.push(event);
+			}
+
 			const after = snapshotPlayer(player, ctx);
 			const stepDef = ctx.actions.get(action.id);
 			const changes = diffStepSnapshots(
@@ -620,27 +694,38 @@ export function GameProvider({
 		const phaseDef = ctx.phases[ctx.game.phaseIndex];
 		if (!phaseDef?.action) return;
 		if ((ctx.activePlayer.resources[actionCostResource] ?? 0) > 0) return;
+		const endedPlayerId = ctx.activePlayer.id;
 		advance(ctx);
 		setPhaseHistories({});
 		await runUntilActionPhaseCore();
+		if (!isReplayingRef.current) {
+			historyRef.current.push({
+				type: 'end-turn',
+				playerId: endedPlayerId,
+			});
+			commitSave();
+		}
 	}
 
 	const handleEndTurn = () => enqueue(endTurn);
 
 	// Update main phase steps once action phase becomes active
 	useEffect(() => {
+		if (!initialized) return;
 		if (!tabsEnabled) return;
 		if (!ctx.phases[ctx.game.phaseIndex]?.action) return;
 		const start = ctx.activePlayer.resources[actionCostResource] as number;
 		setMainApStart(start);
 		updateMainPhaseStep(start);
-	}, [ctx.game.phaseIndex, tabsEnabled]);
+	}, [ctx.game.phaseIndex, tabsEnabled, initialized]);
 
 	useEffect(() => {
+		if (!initialized) return;
 		void runUntilActionPhase();
-	}, []);
+	}, [initialized]);
 
 	useEffect(() => {
+		if (!initialized) return;
 		const phaseDef = ctx.phases[ctx.game.phaseIndex];
 		if (!phaseDef?.action) return;
 		const aiSystem = ctx.aiSystem;
@@ -672,7 +757,13 @@ export function GameProvider({
 			setPhaseHistories({});
 			await runUntilActionPhaseCore();
 		});
-	}, [ctx.aiSystem, ctx.game.phaseIndex, ctx.activePlayer.id, ctx]);
+	}, [
+		ctx.aiSystem,
+		ctx.game.phaseIndex,
+		ctx.activePlayer.id,
+		ctx,
+		initialized,
+	]);
 
 	const value: GameEngineContextValue = {
 		ctx,
@@ -698,6 +789,7 @@ export function GameProvider({
 		onToggleDark,
 		timeScale,
 		setTimeScale: changeTimeScale,
+		initialized,
 		...(onExit ? { onExit } : {}),
 	};
 
