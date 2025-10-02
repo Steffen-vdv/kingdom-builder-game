@@ -51,7 +51,10 @@ describe('happiness tier controller', () => {
 		const lowPassiveId = customRules.tierDefinitions[0]!.passive.id;
 		const highPassiveId = customRules.tierDefinitions[1]!.passive.id;
 
-		expect(ctx.passives.list(player.id)).toContain(lowPassiveId);
+		const initialPassives = ctx.passives
+			.list(player.id)
+			.map((passive) => passive.id);
+		expect(initialPassives).toContain(lowPassiveId);
 		expect(player.skipPhases[growthPhaseId]?.[lowPassiveId]).toBe(true);
 
 		runEffects(
@@ -65,17 +68,19 @@ describe('happiness tier controller', () => {
 			ctx,
 		);
 
-		const idsAfterGain = ctx.passives.list(player.id);
+		const summariesAfterGain = ctx.passives.list(player.id);
+		const idsAfterGain = summariesAfterGain.map((summary) => summary.id);
 		expect(idsAfterGain).toContain(highPassiveId);
 		expect(idsAfterGain).not.toContain(lowPassiveId);
 		expect(player.skipPhases[growthPhaseId]).toBeUndefined();
 		const highSkipBucket = player.skipSteps[upkeepPhaseId]?.[payUpkeepStepId];
 		expect(highSkipBucket?.[highPassiveId]).toBe(true);
 
-		const defsAfterGain = ctx.passives.values(player.id);
-		const highIndex = idsAfterGain.indexOf(highPassiveId);
-		expect(highIndex).toBeGreaterThan(-1);
-		const highMeta = defsAfterGain[highIndex]!.meta;
+		const highRecord = ctx.passives
+			.values(player.id)
+			.find((passive) => passive.id === highPassiveId);
+		expect(highRecord).toBeDefined();
+		const highMeta = highRecord!.meta;
 		const highTier = customRules.tierDefinitions[1]!;
 		expect(highMeta?.source?.id).toBe(highTier.id);
 		expect(highMeta?.removal?.token).toBe(highTier.display?.removalCondition);
@@ -158,7 +163,9 @@ describe('happiness tier controller', () => {
 			ctx,
 		);
 
-		const idsAfterGain = ctx.passives.list(ctx.activePlayer.id);
+		const idsAfterGain = ctx.passives
+			.list(ctx.activePlayer.id)
+			.map((passive) => passive.id);
 		const boostedPassiveId = customRules.tierDefinitions[1]!.passive.id;
 		expect(idsAfterGain).toContain(boostedPassiveId);
 
