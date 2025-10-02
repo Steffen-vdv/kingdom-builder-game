@@ -38,6 +38,7 @@ export const TIME_SCALE_OPTIONS = [1, 2, 5, 100] as const;
 export type TimeScale = (typeof TIME_SCALE_OPTIONS)[number];
 const TIME_SCALE_STORAGE_KEY = 'kingdom-builder:time-scale';
 const ACTION_EFFECT_DELAY = 600;
+const MAX_LOG_ENTRIES = 250;
 
 function readStoredTimeScale(): TimeScale | null {
 	if (typeof window === 'undefined') return null;
@@ -141,7 +142,6 @@ export function GameProvider({
 	const [, setTick] = useState(0);
 	const refresh = () => setTick((t) => t + 1);
 
-	const MAX_LOG_ENTRIES = 250;
 	const [log, setLog] = useState<LogEntry[]>([]);
 	const [logOverflowed, setLogOverflowed] = useState(false);
 	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
@@ -195,11 +195,11 @@ export function GameProvider({
 				playerId: p.id,
 			}));
 			const combined = [...prev, ...items];
-			if (combined.length > MAX_LOG_ENTRIES) {
+			const next = combined.slice(-MAX_LOG_ENTRIES);
+			if (next.length < combined.length) {
 				setLogOverflowed(true);
-				return combined.slice(-MAX_LOG_ENTRIES);
 			}
-			return combined;
+			return next;
 		});
 	};
 
