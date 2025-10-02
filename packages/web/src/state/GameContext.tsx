@@ -105,6 +105,10 @@ interface GameEngineContextValue {
 	runUntilActionPhase: () => Promise<void>;
 	handleEndTurn: () => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;
+	logMessage: (
+		entry: string | string[],
+		player?: EngineContext['activePlayer'],
+	) => void;
 	onExit?: () => void;
 	darkMode: boolean;
 	onToggleDark: () => void;
@@ -694,6 +698,9 @@ export function GameProvider({
 		runUntilActionPhase,
 		handleEndTurn,
 		updateMainPhaseStep,
+		logMessage: (entry, playerOverride) => {
+			addLog(entry, playerOverride);
+		},
 		darkMode,
 		onToggleDark,
 		timeScale,

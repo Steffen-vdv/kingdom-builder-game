@@ -1240,7 +1240,7 @@ class BaseBuilder<T extends { id: string; name: string }> {
 
 export class ActionBuilder extends BaseBuilder<ActionConfig> {
 	constructor() {
-		super({ effects: [] }, 'Action');
+		super({ effects: [], effectGroups: [] }, 'Action');
 	}
 	cost(key: ResourceKey, amount: number) {
 		this.config.baseCosts = this.config.baseCosts || {};
@@ -1255,6 +1255,31 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 	}
 	effect(effect: EffectConfig) {
 		this.config.effects.push(effect);
+		return this;
+	}
+	effectGroup(
+		first: string | EffectConfig | EffectBuilder,
+		...rest: (EffectConfig | EffectBuilder)[]
+	) {
+		let label: string | undefined;
+		let options: (EffectConfig | EffectBuilder)[];
+		if (typeof first === 'string') {
+			label = first;
+			options = rest;
+		} else {
+			options = [first, ...rest];
+		}
+		if (options.length < 2)
+			throw new Error(
+				'Action effectGroup() requires at least two effect options to choose from.',
+			);
+		const effects = options.map((option) => resolveEffectConfig(option));
+		const group = {
+			...(label ? { title: label } : {}),
+			effects,
+		};
+		this.config.effectGroups = this.config.effectGroups || [];
+		this.config.effectGroups.push(group);
 		return this;
 	}
 	system(flag = true) {
