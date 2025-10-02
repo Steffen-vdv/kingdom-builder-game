@@ -86,9 +86,9 @@ export function describeSkipEvent(
 		skip,
 		phase,
 		phaseLabel,
-		step,
-		stepLabel,
 		sources,
+		...(step ? { step } : {}),
+		...(stepLabel ? { stepLabel } : {}),
 	};
 
 	const descriptorMap: Record<
