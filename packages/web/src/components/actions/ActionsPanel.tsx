@@ -9,6 +9,7 @@ import {
 	type Focus,
 	type ResourceKey,
 	type PopulationRoleId,
+	type ActionEffectGroupConfig,
 } from '@kingdom-builder/contents';
 import {
 	describeContent,
@@ -31,6 +32,8 @@ interface Action {
 	focus?: Focus;
 	requirements?: unknown[];
 	effects?: unknown[];
+	effectGroups?: ActionEffectGroupConfig[];
+	icon?: string;
 }
 interface Development {
 	id: string;
@@ -281,6 +284,7 @@ function GenericActions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		addFrontendLog,
 	} = useGameEngine();
 	const formatRequirement = (req: string) => req;
 	const entries = useMemo(() => {
@@ -308,8 +312,14 @@ function GenericActions({
 					([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
 				);
 				const meetsReq = requirements.length === 0;
+				const actionDefinition = ctx.actions.get(action.id) as
+					| Action
+					| undefined;
+				const effectGroups: ActionEffectGroupConfig[] =
+					actionDefinition?.effectGroups ?? [];
+				const hasMultiStep = effectGroups.length > 0;
 				const summary = summaries.get(action.id);
-				const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
+				const implemented = hasMultiStep || (summary?.length ?? 0) > 0;
 				const enabled = canPay && meetsReq && canInteract && implemented;
 				const insufficientTooltip = formatMissingResources(
 					costs,
@@ -322,12 +332,18 @@ function GenericActions({
 						: !canPay
 							? (insufficientTooltip ?? 'Cannot pay costs')
 							: undefined;
+				const focusValue = actionDefinition?.focus;
+				const icon = actionDefinition?.icon || '';
+				const handleCardClick = () => {
+					if (!canInteract) return;
+					void handlePerform(action);
+				};
 				return (
 					<ActionCard
 						key={action.id}
 						title={
 							<>
-								{ctx.actions.get(action.id)?.icon || ''} {action.name}
+								{icon} {action.name}
 							</>
 						}
 						costs={costs}
@@ -339,16 +355,25 @@ function GenericActions({
 						implemented={implemented}
 						enabled={enabled}
 						tooltip={title}
-						focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
-						onClick={() => {
-							if (!canInteract) return;
-							void handlePerform(action);
-						}}
+						focus={focusValue}
+						onClick={!hasMultiStep ? handleCardClick : undefined}
+						multiStep={
+							hasMultiStep
+								? {
+										groups: effectGroups,
+										onComplete: () => {
+											addFrontendLog(
+												'Demo: All actions of multi-step action chosen, if i had engine support I would now execute..',
+											);
+										},
+									}
+								: undefined
+						}
 						onMouseEnter={() => {
 							const full = describeContent('action', action.id, ctx);
 							const { effects, description } = splitSummary(full);
 							handleHoverCard({
-								title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
+								title: `${icon} ${action.name}`,
 								effects,
 								requirements,
 								costs,

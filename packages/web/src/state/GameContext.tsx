@@ -110,6 +110,7 @@ interface GameEngineContextValue {
 	onToggleDark: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
+	addFrontendLog: (entry: string | string[]) => void;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
@@ -248,6 +249,10 @@ export function GameProvider({
 			}
 			return next;
 		});
+	};
+
+	const addFrontendLog = (entry: string | string[]) => {
+		addLog(entry);
 	};
 
 	useEffect(() => {
@@ -698,6 +703,7 @@ export function GameProvider({
 		onToggleDark,
 		timeScale,
 		setTimeScale: changeTimeScale,
+		addFrontendLog,
 		...(onExit ? { onExit } : {}),
 	};
 

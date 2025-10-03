@@ -159,6 +159,122 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
+	registry.add('festival-planning', {
+		...action()
+			.id('festival-planning')
+			.name('Festival Planning')
+			.icon('🎭')
+			.cost(Resource.ap, 1)
+			.effectGroup('festival-perk', (group) =>
+				group
+					.title('Choose a festival perk')
+					.option((option) =>
+						option
+							.id('crowd-boost')
+							.label('Invite travelling performers')
+							.description('Placeholder: Gain excitement rewards (demo).')
+							.effect(
+								effect(Types.Resource, ResourceMethods.ADD)
+									.params(resourceParams().key(Resource.happiness).amount(2))
+									.build(),
+							),
+					)
+					.option((option) =>
+						option
+							.id('market-rush')
+							.label('Open a vibrant market')
+							.description('Placeholder: Generate trade income (demo).')
+							.effect(
+								effect(Types.Resource, ResourceMethods.ADD)
+									.params(resourceParams().key(Resource.gold).amount(3))
+									.build(),
+							),
+					),
+			)
+			.build(),
+		category: 'basic',
+		order: 5,
+		focus: 'economy',
+	});
+
+	registry.add('strategic-council', {
+		...action()
+			.id('strategic-council')
+			.name('Strategic Council')
+			.icon('🗺️')
+			.cost(Resource.ap, 1)
+			.effectGroup('council-agenda', (group) =>
+				group
+					.title('Set the council agenda')
+					.option((option) =>
+						option
+							.id('fortify')
+							.label('Plan fortifications')
+							.description('Placeholder: Prepare defenses (demo).')
+							.effect(
+								effect(Types.Stat, StatMethods.ADD)
+									.params(
+										statParams().key(Stat.fortificationStrength).amount(1),
+									)
+									.build(),
+							),
+					)
+					.option((option) =>
+						option
+							.id('recruit')
+							.label('Recruit volunteers')
+							.description('Placeholder: Rally supporters (demo).')
+							.effect(
+								effect(Types.Population, PopulationMethods.ADD)
+									.param('role', PopulationRole.Citizen)
+									.param('count', 1)
+									.build(),
+							),
+					),
+			)
+			.effectGroup('council-outcome', (group) =>
+				group
+					.title('Finalize the strategy')
+					.option((option) =>
+						option
+							.id('treasury')
+							.label('Secure treasury support')
+							.description('Placeholder: Leverage savings (demo).')
+							.effect(
+								effect(Types.Resource, ResourceMethods.ADD)
+									.params(resourceParams().key(Resource.gold).amount(2))
+									.build(),
+							),
+					)
+					.option((option) =>
+						option
+							.id('morale')
+							.label('Boost morale')
+							.description('Placeholder: Encourage citizens (demo).')
+							.effect(
+								effect(Types.Resource, ResourceMethods.ADD)
+									.params(resourceParams().key(Resource.happiness).amount(1))
+									.build(),
+							),
+					)
+					.option((option) =>
+						option
+							.id('intel')
+							.label('Gather intelligence')
+							.description('Placeholder: Scout opportunities (demo).')
+							.effect(
+								effect(Types.Action, ActionMethods.ADD)
+									.params({ id: 'scout-placeholder' })
+									.build(),
+							),
+					),
+			)
+			.build(),
+		category: 'basic',
+		order: 6,
+		focus: 'other',
+	});
+
 	registry.add('raise_pop', {
 		...action()
 			.id('raise_pop')

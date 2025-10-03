@@ -5,9 +5,9 @@ export { POPULATIONS, createPopulationRegistry } from './populations';
 export { PHASES } from './phases';
 export type { PhaseDef, StepDef } from './config/builders';
 export {
-  POPULATION_ROLES,
-  PopulationRole,
-  type PopulationRoleId,
+	POPULATION_ROLES,
+	PopulationRole,
+	type PopulationRoleId,
 } from './populationRoles';
 export { Resource, type ResourceKey, RESOURCES } from './resources';
 export { Stat, type StatKey, STATS } from './stats';
@@ -19,13 +19,17 @@ export { MODIFIER_INFO } from './modifiers';
 export { GAME_START } from './game';
 export { RULES } from './rules';
 export type { ActionDef } from './actions';
+export type {
+	ActionEffectGroupConfig,
+	ActionEffectGroupOptionConfig,
+} from '@kingdom-builder/engine/config/schema';
 export type { BuildingDef } from './buildings';
 export type { DevelopmentDef } from './developments';
 export type { PopulationDef, TriggerKey, Focus } from './defs';
 export {
-  ON_PAY_UPKEEP_STEP,
-  ON_GAIN_INCOME_STEP,
-  ON_GAIN_AP_STEP,
-  BROOM_ICON,
-  RESOURCE_TRANSFER_ICON,
+	ON_PAY_UPKEEP_STEP,
+	ON_GAIN_INCOME_STEP,
+	ON_GAIN_AP_STEP,
+	BROOM_ICON,
+	RESOURCE_TRANSFER_ICON,
 } from './defs';

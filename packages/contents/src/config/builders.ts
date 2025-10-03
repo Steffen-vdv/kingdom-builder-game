@@ -5,6 +5,8 @@ import type {
 	PopulationConfig,
 	RequirementConfig,
 	EffectConfig,
+	ActionEffectGroupConfig,
+	ActionEffectGroupOptionConfig,
 } from '@kingdom-builder/engine/config/schema';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
@@ -1053,9 +1055,9 @@ export class EffectBuilder<P extends Params = Params> {
 		this.paramsSet = true;
 		return this;
 	}
-	effect(effect: EffectConfig) {
+	effect(effect: EffectConfig | EffectBuilder) {
 		this.config.effects = this.config.effects || [];
-		this.config.effects.push(effect);
+		this.config.effects.push(resolveEffectConfig(effect));
 		return this;
 	}
 	evaluator(type: string, params?: Params | ParamsBuilder): this;
@@ -1253,13 +1255,165 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 		this.config.requirements.push(built);
 		return this;
 	}
-	effect(effect: EffectConfig) {
-		this.config.effects.push(effect);
+	effect(effect: EffectConfig | EffectBuilder) {
+		this.config.effects.push(resolveEffectConfig(effect));
+		return this;
+	}
+	effectGroup(
+		idOrGroup: string | ActionEffectGroupConfig | ActionEffectGroupBuilder,
+		configure?: (builder: ActionEffectGroupBuilder) => ActionEffectGroupBuilder,
+	) {
+		let group: ActionEffectGroupConfig;
+		if (typeof idOrGroup === 'string') {
+			const builder = configure
+				? configure(new ActionEffectGroupBuilder(idOrGroup))
+				: new ActionEffectGroupBuilder(idOrGroup);
+			group = builder.build();
+		} else if (idOrGroup instanceof ActionEffectGroupBuilder) {
+			group = idOrGroup.build();
+		} else {
+			group = idOrGroup;
+		}
+		if (!group.options || group.options.length < 2)
+			throw new Error('Action effect groups must define at least two options.');
+		this.config.effectGroups = this.config.effectGroups || [];
+		this.config.effectGroups.push({
+			...group,
+			options: group.options.map((option) => ({
+				...option,
+				effects: option.effects.map((item) => resolveEffectConfig(item)),
+			})),
+		});
 		return this;
 	}
 	system(flag = true) {
 		this.config.system = flag;
 		return this;
+	}
+}
+
+export class ActionEffectGroupOptionBuilder {
+	private config: ActionEffectGroupOptionConfig;
+	private idSet = false;
+	private labelSet = false;
+
+	constructor(id?: string) {
+		this.config = {
+			id: id ?? '',
+			label: '',
+			effects: [],
+		};
+		if (id) this.idSet = true;
+	}
+
+	id(id: string) {
+		if (this.idSet)
+			throw new Error(
+				'Action effect option already has id(). Remove the duplicate call.',
+			);
+		this.config.id = id;
+		this.idSet = true;
+		return this;
+	}
+
+	label(label: string) {
+		if (this.labelSet)
+			throw new Error(
+				'Action effect option already has label(). Remove the duplicate call.',
+			);
+		this.config.label = label;
+		this.labelSet = true;
+		return this;
+	}
+
+	description(description: string) {
+		this.config.description = description;
+		return this;
+	}
+
+	effect(effect: EffectConfig | EffectBuilder) {
+		this.config.effects.push(resolveEffectConfig(effect));
+		return this;
+	}
+
+	build(): ActionEffectGroupOptionConfig {
+		if (!this.idSet)
+			throw new Error(
+				'Action effect option is missing id(). Call id(...) before build().',
+			);
+		if (!this.labelSet)
+			throw new Error(
+				'Action effect option is missing label(). Call label(...) before build().',
+			);
+		if (this.config.effects.length === 0)
+			throw new Error(
+				'Action effect option must include at least one effect().',
+			);
+		return this.config;
+	}
+}
+
+type ActionEffectGroupOptionCallback = (
+	builder: ActionEffectGroupOptionBuilder,
+) => ActionEffectGroupOptionBuilder;
+
+type ActionEffectGroupOptionInput =
+	| ActionEffectGroupOptionConfig
+	| ActionEffectGroupOptionBuilder
+	| ActionEffectGroupOptionCallback;
+
+export class ActionEffectGroupBuilder {
+	private config: ActionEffectGroupConfig;
+
+	constructor(id: string) {
+		this.config = {
+			id,
+			options: [],
+		};
+	}
+
+	title(title: string) {
+		this.config.title = title;
+		return this;
+	}
+
+	order(order: number) {
+		this.config.order = order;
+		return this;
+	}
+
+	option(optionOrBuilder: ActionEffectGroupOptionInput) {
+		let option: ActionEffectGroupOptionConfig;
+		if (optionOrBuilder instanceof ActionEffectGroupOptionBuilder) {
+			option = optionOrBuilder.build();
+		} else if (typeof optionOrBuilder === 'function') {
+			option = optionOrBuilder(new ActionEffectGroupOptionBuilder()).build();
+		} else {
+			option = optionOrBuilder;
+		}
+		if (!option.id) throw new Error('Action effect option must include an id.');
+		if (!option.label)
+			throw new Error('Action effect option must include a label.');
+		if (!option.effects || option.effects.length === 0)
+			throw new Error('Action effect option must include at least one effect.');
+		this.config.options.push(option);
+		return this;
+	}
+
+	build(): ActionEffectGroupConfig {
+		if (!this.config.id)
+			throw new Error(
+				'Action effect group requires an id. Provide it to effectGroup(id, ...).',
+			);
+		if (this.config.options.length < 2)
+			throw new Error('Action effect group must define at least two options.');
+		return {
+			...this.config,
+			options: this.config.options.map((option) => ({
+				...option,
+				effects: option.effects.map((item) => resolveEffectConfig(item)),
+			})),
+		};
 	}
 }
 
