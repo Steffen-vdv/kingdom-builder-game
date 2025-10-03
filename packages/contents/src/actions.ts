@@ -395,6 +395,21 @@ export function createActionRegistry() {
 			.build(),
 	);
 
+	registry.add('triple_till', {
+		...action()
+			.id('triple_till')
+			.name('Triple Till')
+			.icon('🌾')
+			.cost(Resource.ap, 1)
+			.effect(effect(Types.Land, LandMethods.TILL).build())
+			.effect(effect(Types.Land, LandMethods.TILL).build())
+			.effect(effect(Types.Land, LandMethods.TILL).build())
+			.build(),
+		category: 'basic',
+		order: 5,
+		focus: 'economy',
+	});
+
 	registry.add('build', {
 		...action()
 			.id('build')
