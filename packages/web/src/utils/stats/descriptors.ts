@@ -280,7 +280,10 @@ export function formatLinkLabel(link?: StatSourceLink): string | undefined {
 
 function resolveLinkDescriptor(
 	link?: StatSourceLink,
-	options: { omitAssignmentDetail?: boolean } = {},
+	options: {
+		omitAssignmentDetail?: boolean;
+		omitRemovalDetail?: boolean;
+	} = {},
 ): ResolveResult | undefined {
 	if (!link?.type) {
 		return undefined;
@@ -292,9 +295,14 @@ function resolveLinkDescriptor(
 	if (detail === undefined && link?.detail) {
 		detail = defaultFormatDetail(link.id, link.detail);
 	}
-	if (options.omitAssignmentDetail && detail) {
+	if (detail) {
 		const normalized = detail.trim().toLowerCase();
-		if (normalized === 'assigned' || normalized === 'unassigned') {
+		if (options.omitAssignmentDetail) {
+			if (normalized === 'assigned' || normalized === 'unassigned') {
+				detail = undefined;
+			}
+		}
+		if (options.omitRemovalDetail && normalized === 'removed') {
 			detail = undefined;
 		}
 	}
@@ -332,6 +340,7 @@ function deriveResolutionSuffix(
 		}
 		const resolved = resolveLinkDescriptor(match, {
 			omitAssignmentDetail: true,
+			omitRemovalDetail: true,
 		});
 		if (resolved) {
 			return resolved;
@@ -340,6 +349,7 @@ function deriveResolutionSuffix(
 	if (meta.removal) {
 		const fallback = resolveLinkDescriptor(meta.removal, {
 			omitAssignmentDetail: true,
+			omitRemovalDetail: true,
 		});
 		if (fallback) {
 			return fallback;
