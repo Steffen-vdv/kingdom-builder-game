@@ -7,6 +7,7 @@ import PhasePanel from './components/phases/PhasePanel';
 import LogPanel from './components/LogPanel';
 import Button from './components/common/Button';
 import TimeControl from './components/common/TimeControl';
+import ErrorToaster from './components/common/ErrorToaster';
 
 function GameLayout() {
 	const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
@@ -66,6 +67,7 @@ function GameLayout() {
 	);
 	return (
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
+			<ErrorToaster />
 			<div className="pointer-events-none absolute inset-0">
 				<div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
 				<div className="absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-500/20" />

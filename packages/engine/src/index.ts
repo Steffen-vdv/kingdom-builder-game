@@ -15,7 +15,7 @@ export type {
 	StatSourceLink,
 } from './setup/create_engine';
 export { getActionCosts, getActionRequirements } from './actions/costs';
-export { performAction } from './actions/action_execution';
+export { performAction, simulateAction } from './actions/action_execution';
 export { advance } from './phases/advance';
 export { EngineContext } from './context';
 export { Services, PassiveManager } from './services';

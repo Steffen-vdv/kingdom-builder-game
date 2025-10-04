@@ -9,6 +9,7 @@ import React, {
 import {
 	createEngine,
 	performAction,
+	simulateAction,
 	advance,
 	getActionCosts,
 	type EngineContext,
@@ -63,6 +64,11 @@ type LogEntry = {
 	playerId: string;
 };
 
+type ErrorToast = {
+	id: number;
+	message: string;
+};
+
 interface HoverCard {
 	title: string;
 	effects: Summary;
@@ -110,6 +116,9 @@ interface GameEngineContextValue {
 	onToggleDark: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
+	errorToasts: ErrorToast[];
+	pushErrorToast: (message: string) => void;
+	dismissErrorToast: (id: number) => void;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
@@ -212,6 +221,21 @@ export function GameProvider({
 		}, delay);
 		intervals.current.add(intervalId);
 		return intervalId;
+	};
+
+	const nextToastId = useRef(0);
+	const [errorToasts, setErrorToasts] = useState<ErrorToast[]>([]);
+	const dismissErrorToast = (id: number) => {
+		setErrorToasts((prev) => prev.filter((toast) => toast.id !== id));
+	};
+	const pushErrorToast = (message: string) => {
+		const id = nextToastId.current++;
+		const trimmed = message.trim();
+		const normalized = trimmed || 'Action failed';
+		setErrorToasts((prev) => [...prev, { id, message: normalized }]);
+		setTrackedTimeout(() => {
+			dismissErrorToast(id);
+		}, 5000);
 	};
 
 	useEffect(() => {
@@ -504,6 +528,7 @@ export function GameProvider({
 			params as ActionParams<string>,
 		);
 		try {
+			simulateAction(action.id, ctx, params as ActionParams<string>);
 			const traces = performAction(
 				action.id,
 				ctx,
@@ -600,10 +625,9 @@ export function GameProvider({
 			}
 		} catch (e) {
 			const icon = ctx.actions.get(action.id)?.icon || '';
-			addLog(
-				`Failed to play ${icon} ${action.name}: ${(e as Error).message}`,
-				player,
-			);
+			const message = (e as Error).message || 'Action failed';
+			pushErrorToast(message);
+			addLog(`Failed to play ${icon} ${action.name}: ${message}`, player);
 			return;
 		}
 	}
@@ -698,6 +722,9 @@ export function GameProvider({
 		onToggleDark,
 		timeScale,
 		setTimeScale: changeTimeScale,
+		errorToasts,
+		pushErrorToast,
+		dismissErrorToast,
 		...(onExit ? { onExit } : {}),
 	};
 
