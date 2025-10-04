@@ -10,7 +10,7 @@ import {
 import { formatStatValue, statDisplaysAsPercent } from '../../utils/stats';
 import { logContent } from '../content';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
-import { resolvePassiveLogDetails } from './passives';
+import { resolvePassivePresentation } from './passives';
 import {
 	buildSignedDelta,
 	formatResourceChange,
@@ -241,7 +241,7 @@ export function appendPassiveChanges(
 		if (isBuildingPassive(id, newBuildings)) {
 			continue;
 		}
-		const { icon, label, removal } = resolvePassiveLogDetails(passive);
+		const { icon, label, removal } = resolvePassivePresentation(passive);
 		const decoratedLabel = decoratePassiveLabel(icon, label);
 		const suffix = removal ? ` (${removal})` : '';
 		changes.push(`${decoratedLabel} activated${suffix}`);
@@ -250,7 +250,7 @@ export function appendPassiveChanges(
 		if (next.has(id)) {
 			continue;
 		}
-		const { icon, label } = resolvePassiveLogDetails(passive);
+		const { icon, label } = resolvePassivePresentation(passive);
 		const decoratedLabel = decoratePassiveLabel(icon, label);
 		changes.push(`${decoratedLabel} expired`);
 	}

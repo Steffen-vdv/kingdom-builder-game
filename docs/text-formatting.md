@@ -134,7 +134,7 @@ suffixes like "per 🧩 Development" (see
   mirrors `summarizeEffects`/`describeEffects` but produces flattened entries
   suitable for the action log. Always extend existing effect formatters with a
   `log` handler when new actions need specific log phrasing.
-- `diffStepSnapshots` and `resolvePassiveLogDetails` under `translation/log`
+- `diffStepSnapshots` and `resolvePassivePresentation` under `translation/log`
   combine the canonical passive icons and removal reasons—refer to
   [`log/passives.ts`](../packages/web/src/translation/log/passives.ts) and
   [`log/diffSections.ts`](../packages/web/src/translation/log/diffSections.ts)

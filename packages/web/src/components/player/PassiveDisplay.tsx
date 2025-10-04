@@ -1,30 +1,14 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import {
-	MODIFIER_INFO as modifierInfo,
-	PHASES,
-	PASSIVE_INFO,
-	POPULATIONS,
-	formatPassiveRemoval,
-} from '@kingdom-builder/contents';
-import {
-	describeEffects,
-	splitSummary,
-	hasTierSummaryTranslation,
-	translateTierSummary,
-} from '../../translation';
+import { PHASES, PASSIVE_INFO, POPULATIONS } from '@kingdom-builder/contents';
+import { describeEffects, splitSummary } from '../../translation';
 import type {
-	EffectDef,
 	EngineContext,
 	PassiveSummary,
 	PlayerId,
 } from '@kingdom-builder/engine';
 import { useAnimate } from '../../utils/useAutoAnimate';
-
-export const ICON_MAP: Record<string, string> = {
-	cost_mod: modifierInfo.cost.icon,
-	result_mod: modifierInfo.result.icon,
-};
+import { resolvePassivePresentation } from '../../translation/log/passives';
 
 const POPULATION_PASSIVE_PREFIXES = new Set(
 	POPULATIONS.keys().map((id) => `${id}_`),
@@ -82,129 +66,6 @@ export default function PassiveDisplay({
 		return null;
 	}
 
-	const getIcon = (
-		summary: PassiveSummary,
-		effects: EffectDef[] | undefined,
-		meta: PassiveSummary['meta'],
-	) => {
-		if (meta?.source?.icon) {
-			return meta.source.icon;
-		}
-		if (summary.icon) {
-			return summary.icon;
-		}
-		const first = effects?.[0];
-		return ICON_MAP[first?.type as keyof typeof ICON_MAP] ?? PASSIVE_INFO.icon;
-	};
-
-	const resolveRemovalText = (meta: PassiveSummary['meta']) => {
-		if (!meta?.removal) {
-			return undefined;
-		}
-		if (
-			typeof meta.removal.text === 'string' &&
-			meta.removal.text.trim().length > 0
-		) {
-			return meta.removal.text;
-		}
-		if (
-			typeof meta.removal.token === 'string' &&
-			meta.removal.token.trim().length > 0
-		) {
-			return formatPassiveRemoval(meta.removal.token);
-		}
-		return undefined;
-	};
-
-	const formatSlug = (slug: string) =>
-		slug
-			.split(/[_-]/g)
-			.filter(Boolean)
-			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-			.join(' ');
-
-	const extractTokenSlug = (value: string | undefined) => {
-		if (!value) {
-			return undefined;
-		}
-		const trimmed = value.trim();
-		if (!trimmed) {
-			return undefined;
-		}
-		for (const delimiter of ['.', ':', '/']) {
-			if (trimmed.includes(delimiter)) {
-				const slug = trimmed.slice(trimmed.lastIndexOf(delimiter) + 1);
-				if (slug && slug !== trimmed) {
-					return formatSlug(slug);
-				}
-			}
-		}
-		return undefined;
-	};
-
-	const normalize = (value: string | undefined) => {
-		if (!value) {
-			return undefined;
-		}
-		const trimmed = value.trim();
-		return trimmed.length > 0 ? trimmed : undefined;
-	};
-
-	const resolveLabel = (
-		summary: PassiveSummary,
-		def: Pick<
-			ReturnType<EngineContext['passives']['values']>[number],
-			'detail' | 'meta'
-		>,
-	) => {
-		const meta = def.meta ?? summary.meta;
-		const slug =
-			extractTokenSlug(meta?.source?.labelToken) ||
-			extractTokenSlug(def.detail) ||
-			extractTokenSlug(summary.detail) ||
-			extractTokenSlug(meta?.source?.id) ||
-			extractTokenSlug(summary.id);
-		if (slug) {
-			return slug;
-		}
-		const readable =
-			normalize(summary.name) ||
-			normalize(summary.detail) ||
-			normalize(def.detail);
-		if (readable) {
-			return readable;
-		}
-		const fallbackId = normalize(summary.id);
-		if (fallbackId && !fallbackId.includes(':') && !fallbackId.includes('.')) {
-			return fallbackId;
-		}
-		return PASSIVE_INFO.label ?? 'Passive';
-	};
-
-	const resolveSummaryText = (
-		summary: PassiveSummary,
-		def: Pick<
-			ReturnType<EngineContext['passives']['values']>[number],
-			'detail' | 'meta'
-		>,
-	) => {
-		const meta = def.meta ?? summary.meta;
-		const candidates = [meta?.source?.labelToken, def.detail, summary.detail];
-		for (const candidate of candidates) {
-			const token = normalize(candidate);
-			if (token && hasTierSummaryTranslation(token)) {
-				return translateTierSummary(token) ?? token;
-			}
-		}
-		for (const candidate of candidates) {
-			const text = normalize(candidate);
-			if (text) {
-				return text;
-			}
-		}
-		return undefined;
-	};
-
 	const animatePassives = useAnimate<HTMLDivElement>();
 	return (
 		<div
@@ -212,11 +73,17 @@ export default function PassiveDisplay({
 			className="panel-card flex w-fit flex-col gap-3 px-4 py-3 text-left text-base"
 		>
 			{entries.map(({ summary: passive, def }) => {
-				const meta = def.meta ?? passive.meta;
-				const icon = getIcon(passive, def.effects, meta);
-				const label = resolveLabel(passive, def);
-				const removalText = resolveRemovalText(meta);
-				const summaryText = resolveSummaryText(passive, def);
+				const presentation = resolvePassivePresentation(passive, {
+					definition: {
+						detail: def.detail,
+						meta: def.meta,
+						effects: def.effects,
+					},
+				});
+				const icon = presentation.icon || PASSIVE_INFO.icon || '';
+				const label = presentation.label;
+				const removalText = presentation.removal;
+				const summaryText = presentation.summary;
 				const items = describeEffects(def.effects || [], ctx);
 				const upkeepLabel =
 					PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
