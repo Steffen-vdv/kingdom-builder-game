@@ -22,6 +22,20 @@ import {
 	reverseEffect,
 } from './passive_helpers';
 
+type PassivePayload = {
+	id: string;
+	name?: string | undefined;
+	icon?: string | undefined;
+	detail?: string | undefined;
+	meta?: PassiveMetadata | undefined;
+	effects?: PassiveRecord['effects'];
+	onGrowthPhase?: PassiveRecord['onGrowthPhase'];
+	onUpkeepPhase?: PassiveRecord['onUpkeepPhase'];
+	onBeforeAttacked?: PassiveRecord['onBeforeAttacked'];
+	onAttackResolved?: PassiveRecord['onAttackResolved'];
+	[trigger: string]: unknown;
+};
+
 export class PassiveManager {
 	private costModifiers = new CostModifierService();
 	private resultModifiers = new ResultModifierService();
@@ -114,16 +128,7 @@ export class PassiveManager {
 	}
 
 	addPassive(
-		passive: {
-			id: string;
-			name?: string | undefined;
-			icon?: string | undefined;
-			effects?: PassiveRecord['effects'];
-			onGrowthPhase?: PassiveRecord['onGrowthPhase'];
-			onUpkeepPhase?: PassiveRecord['onUpkeepPhase'];
-			onBeforeAttacked?: PassiveRecord['onBeforeAttacked'];
-			onAttackResolved?: PassiveRecord['onAttackResolved'];
-		},
+		passive: PassivePayload,
 		context: EngineContext,
 		options?: {
 			frames?: StatSourceFrame | StatSourceFrame[];
@@ -140,32 +145,11 @@ export class PassiveManager {
 			longevity: 'ongoing' as const,
 		});
 		const frames = [...providedFrames, passiveFrame];
-		const record: PassiveRecord = {
-			id: passive.id,
+		const record = {
+			...passive,
 			owner: context.activePlayer.id,
 			frames,
-		};
-		if (passive.name !== undefined) {
-			record.name = passive.name;
-		}
-		if (passive.icon !== undefined) {
-			record.icon = passive.icon;
-		}
-		if (passive.effects !== undefined) {
-			record.effects = passive.effects;
-		}
-		if (passive.onGrowthPhase !== undefined) {
-			record.onGrowthPhase = passive.onGrowthPhase;
-		}
-		if (passive.onUpkeepPhase !== undefined) {
-			record.onUpkeepPhase = passive.onUpkeepPhase;
-		}
-		if (passive.onBeforeAttacked !== undefined) {
-			record.onBeforeAttacked = passive.onBeforeAttacked;
-		}
-		if (passive.onAttackResolved !== undefined) {
-			record.onAttackResolved = passive.onAttackResolved;
-		}
+		} as PassiveRecord;
 		if (options?.detail !== undefined) {
 			record.detail = options.detail;
 		}
@@ -173,7 +157,7 @@ export class PassiveManager {
 			record.meta = options.meta;
 		}
 		this.passives.set(key, record);
-		const setupEffects = passive.effects;
+		const setupEffects = record.effects;
 		if (setupEffects && setupEffects.length > 0) {
 			withStatSourceFrames(context, frames, () =>
 				runEffects(setupEffects, context),

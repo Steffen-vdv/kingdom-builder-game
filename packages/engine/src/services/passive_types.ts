@@ -38,6 +38,7 @@ export type PassiveRecord = PassiveSummary & {
 	frames: StatSourceFrame[];
 	detail?: string;
 	meta?: PassiveMetadata;
+	[trigger: string]: unknown;
 };
 
 export type CostBag = { [resourceKey in ResourceKey]?: number };
