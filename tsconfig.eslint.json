@@ -1,5 +1,14 @@
 {
-  "extends": "./tsconfig.base.json",
-  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"],
-  "exclude": ["dist", "node_modules"]
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"allowJs": true
+	},
+	"include": [
+		"**/*.ts",
+		"**/*.tsx",
+		"**/*.d.ts",
+		"scripts/**/*.js",
+		"scripts/**/*.cjs"
+	],
+	"exclude": ["dist", "node_modules"]
 }
