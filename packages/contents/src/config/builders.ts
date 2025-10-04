@@ -943,11 +943,22 @@ export function costModParams() {
 	return new CostModParamsBuilder();
 }
 
+export enum EvaluationTargetTypes {
+	Development = 'development',
+	Population = 'population',
+}
+
+type LooseEvaluationTargetType = string & {
+	readonly __evaluationTargetBrand?: never;
+};
+
+type EvaluationTargetType = EvaluationTargetTypes | LooseEvaluationTargetType;
+
 class EvaluationTargetBuilder extends ParamsBuilder<{
-	type: string;
+	type: EvaluationTargetType;
 	id?: string;
 }> {
-	constructor(type: string) {
+	constructor(type: EvaluationTargetType) {
 		super();
 		this.set('type', type);
 	}
@@ -956,14 +967,22 @@ class EvaluationTargetBuilder extends ParamsBuilder<{
 	}
 }
 
-export function evaluationTarget(type: string) {
+export function evaluationTarget(type: EvaluationTargetTypes | string) {
 	return new EvaluationTargetBuilder(type);
+}
+
+export function developmentTarget() {
+	return evaluationTarget(EvaluationTargetTypes.Development);
+}
+
+export function populationTarget() {
+	return evaluationTarget(EvaluationTargetTypes.Population);
 }
 
 class ResultModParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	actionId?: string;
-	evaluation?: { type: string; id?: string };
+	evaluation?: { type: EvaluationTargetType; id?: string };
 	amount?: number;
 	adjust?: number;
 	percent?: number;
@@ -974,7 +993,11 @@ class ResultModParamsBuilder extends ParamsBuilder<{
 	actionId(actionId: string) {
 		return this.set('actionId', actionId);
 	}
-	evaluation(target: EvaluationTargetBuilder | { type: string; id?: string }) {
+	evaluation(
+		target:
+			| EvaluationTargetBuilder
+			| { type: EvaluationTargetType; id?: string },
+	) {
 		return this.set(
 			'evaluation',
 			target instanceof EvaluationTargetBuilder ? target.build() : target,
