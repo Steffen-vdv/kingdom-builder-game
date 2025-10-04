@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { GameProvider, useGameEngine } from './state/GameContext';
 import PlayerPanel from './components/player/PlayerPanel';
 import HoverCard from './components/HoverCard';
@@ -8,23 +8,27 @@ import LogPanel from './components/LogPanel';
 import Button from './components/common/Button';
 import TimeControl from './components/common/TimeControl';
 import ErrorToaster from './components/common/ErrorToaster';
+import ConfirmDialog from './components/common/ConfirmDialog';
 
 function GameLayout() {
 	const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
-	const confirmExit = () => {
+	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
+	const requestQuit = useCallback(() => {
 		if (!onExit) {
 			return;
 		}
-		const shouldExit =
-			typeof window === 'undefined'
-				? true
-				: window.confirm(
-						'Are you sure you want to quit the current game? This progress will be lost.',
-					);
-		if (shouldExit) {
-			onExit();
+		setQuitDialogOpen(true);
+	}, [onExit]);
+	const closeDialog = useCallback(() => {
+		setQuitDialogOpen(false);
+	}, []);
+	const confirmExit = useCallback(() => {
+		if (!onExit) {
+			return;
 		}
-	};
+		setQuitDialogOpen(false);
+		onExit();
+	}, [onExit]);
 	const [playerHeights, setPlayerHeights] = useState<Record<string, number>>(
 		{},
 	);
@@ -81,6 +85,15 @@ function GameLayout() {
 	);
 	return (
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
+			<ConfirmDialog
+				open={isQuitDialogOpen}
+				title="Leave the battlefield?"
+				description="If you quit now, the current game will end and any progress will be lost. Are you sure you want to retreat?"
+				confirmLabel="Quit game"
+				cancelLabel="Continue playing"
+				onCancel={closeDialog}
+				onConfirm={confirmExit}
+			/>
 			<ErrorToaster />
 			<div className="pointer-events-none absolute inset-0">
 				<div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
@@ -105,7 +118,7 @@ function GameLayout() {
 								{darkMode ? 'Light Mode' : 'Dark Mode'}
 							</Button>
 							<Button
-								onClick={confirmExit}
+								onClick={requestQuit}
 								variant="danger"
 								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
 							>

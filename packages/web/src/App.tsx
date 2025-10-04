@@ -11,6 +11,24 @@ enum Screen {
 	Game = 'game',
 }
 
+const SCREEN_PATHS: Record<Screen, string> = {
+	[Screen.Menu]: '/',
+	[Screen.Overview]: '/overview',
+	[Screen.Tutorial]: '/tutorial',
+	[Screen.Game]: '/game',
+};
+
+const getScreenFromPath = (pathname: string): Screen => {
+	const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+	const screenEntry = Object.entries(SCREEN_PATHS).find(
+		([, path]) => path === normalizedPath,
+	);
+	if (!screenEntry) {
+		return Screen.Menu;
+	}
+	return screenEntry[0] as Screen;
+};
+
 interface HistoryState {
 	screen: Screen;
 	gameKey: number;
@@ -45,21 +63,27 @@ export default function App() {
 		[currentScreen, currentGameKey, isDarkMode, isDevMode],
 	);
 
-	const pushHistoryState = useCallback((nextState: HistoryState) => {
-		if (typeof window === 'undefined') {
-			return;
-		}
-		const { history, location } = window;
-		history.pushState(nextState, '', location.pathname);
-	}, []);
+	const pushHistoryState = useCallback(
+		(nextState: HistoryState, path: string) => {
+			if (typeof window === 'undefined') {
+				return;
+			}
+			const { history } = window;
+			history.pushState(nextState, '', path);
+		},
+		[],
+	);
 
-	const replaceHistoryState = useCallback((nextState: HistoryState) => {
-		if (typeof window === 'undefined') {
-			return;
-		}
-		const { history, location } = window;
-		history.replaceState(nextState, '', location.pathname);
-	}, []);
+	const replaceHistoryState = useCallback(
+		(nextState: HistoryState, path?: string) => {
+			if (typeof window === 'undefined') {
+				return;
+			}
+			const { history, location } = window;
+			history.replaceState(nextState, '', path ?? location.pathname);
+		},
+		[],
+	);
 
 	useEffect(() => {
 		document.documentElement.classList.toggle('dark', isDarkMode);
@@ -70,29 +94,30 @@ export default function App() {
 			return;
 		}
 		const { history, location } = window;
-		if (location.pathname !== '/') {
-			history.replaceState(history.state, '', '/');
-		}
-
+		const initialScreenFromPath = getScreenFromPath(location.pathname);
 		const historyState = history.state as HistoryState | null;
 		const {
-			screen: savedScreen = Screen.Menu,
+			screen: historyScreen,
 			gameKey: savedGameKey = 0,
 			isDarkModeEnabled: savedDark = true,
 			isDevModeEnabled: savedDev = false,
 		} = historyState ?? {};
 
-		setCurrentScreen(savedScreen);
+		const nextScreen = historyScreen ?? initialScreenFromPath;
+		const derivedState: HistoryState = {
+			screen: nextScreen,
+			gameKey: savedGameKey,
+			isDarkModeEnabled: savedDark,
+			isDevModeEnabled: savedDev,
+		};
+
+		setCurrentScreen(nextScreen);
 		setCurrentGameKey(savedGameKey);
 		setIsDarkMode(savedDark);
 		setIsDevMode(savedDev);
 
-		replaceHistoryState({
-			screen: savedScreen,
-			gameKey: savedGameKey,
-			isDarkModeEnabled: savedDark,
-			isDevModeEnabled: savedDev,
-		});
+		const targetPath = SCREEN_PATHS[nextScreen];
+		replaceHistoryState(derivedState, targetPath);
 	}, [replaceHistoryState]);
 
 	useEffect(() => {
@@ -123,7 +148,7 @@ export default function App() {
 	const returnToMenu = () => {
 		const nextState = buildHistoryState({ screen: Screen.Menu });
 		setCurrentScreen(Screen.Menu);
-		pushHistoryState(nextState);
+		pushHistoryState(nextState, SCREEN_PATHS[Screen.Menu]);
 	};
 
 	const toggleDarkMode = () => {
@@ -149,6 +174,7 @@ export default function App() {
 				gameKey: nextGameKey,
 				isDevModeEnabled: false,
 			}),
+			SCREEN_PATHS[Screen.Game],
 		);
 	};
 
@@ -163,6 +189,7 @@ export default function App() {
 				gameKey: nextGameKey,
 				isDevModeEnabled: true,
 			}),
+			SCREEN_PATHS[Screen.Game],
 		);
 	};
 
@@ -171,7 +198,7 @@ export default function App() {
 		const overviewState = buildHistoryState({
 			screen: Screen.Overview,
 		});
-		pushHistoryState(overviewState);
+		pushHistoryState(overviewState, SCREEN_PATHS[Screen.Overview]);
 	};
 
 	const openTutorial = () => {
@@ -179,7 +206,7 @@ export default function App() {
 		const tutorialState = buildHistoryState({
 			screen: Screen.Tutorial,
 		});
-		pushHistoryState(tutorialState);
+		pushHistoryState(tutorialState, SCREEN_PATHS[Screen.Tutorial]);
 	};
 
 	switch (currentScreen) {
