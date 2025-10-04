@@ -7,24 +7,23 @@ import {
 	collectTriggerEffects,
 } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	RESOURCES,
-	Resource,
-	type ResourceKey,
-	ON_GAIN_INCOME_STEP,
-	ON_PAY_UPKEEP_STEP,
-	LAND_INFO,
-	POPULATION_INFO,
-} from '@kingdom-builder/contents';
+	createSyntheticTaxScenario,
+	SYNTHETIC_IDS,
+	SYNTHETIC_RESOURCES,
+	SYNTHETIC_RESOURCE_KEYS,
+	type SyntheticResourceKey,
+	SYNTHETIC_PHASE_IDS,
+	SYNTHETIC_STEP_IDS,
+	SYNTHETIC_POPULATION_INFO,
+	SYNTHETIC_POPULATION_ROLES,
+	SYNTHETIC_POPULATION_ROLE_ID,
+	SYNTHETIC_LAND_INFO,
+} from './fixtures/syntheticTaxLog';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 
-const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
+const RESOURCE_KEYS = Object.keys(
+	SYNTHETIC_RESOURCES,
+) as SyntheticResourceKey[];
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -32,27 +31,38 @@ vi.mock('@kingdom-builder/engine', async () => {
 
 describe('log resource sources', () => {
 	it('ignores opponent mills when logging farm gains', () => {
+		const scenario = createSyntheticTaxScenario();
 		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
+			actions: scenario.factory.actions,
+			buildings: scenario.factory.buildings,
+			developments: scenario.factory.developments,
+			populations: scenario.factory.populations,
+			phases: scenario.phases,
+			start: scenario.start,
+			rules: scenario.rules,
 		});
 		// Give opponent a mill
 		ctx.game.currentPlayerIndex = 1;
 		runEffects(
-			[{ type: 'building', method: 'add', params: { id: 'mill' } }],
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: SYNTHETIC_IDS.millBuilding },
+				},
+			],
 			ctx,
 		);
 		ctx.game.currentPlayerIndex = 0;
 
-		const growthPhase = ctx.phases.find((p) => p.id === 'growth');
-		const step = growthPhase?.steps.find((s) => s.id === 'gain-income');
+		const growthPhase = ctx.phases.find(
+			(p) => p.id === SYNTHETIC_PHASE_IDS.growth,
+		);
+		const step = growthPhase?.steps.find(
+			(s) => s.id === SYNTHETIC_STEP_IDS.gainIncome,
+		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		const bundles = collectTriggerEffects(ON_GAIN_INCOME_STEP, ctx);
+		const bundles = collectTriggerEffects('onGainIncomeStep', ctx);
 		for (const bundle of bundles) runEffects(bundle.effects, ctx);
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
@@ -63,10 +73,11 @@ describe('log resource sources', () => {
 			ctx,
 			RESOURCE_KEYS,
 		);
-		const goldInfo = RESOURCES[Resource.gold];
-		const farmIcon = DEVELOPMENTS.get('farm')?.icon || '';
-		const b = before.resources[Resource.gold] ?? 0;
-		const a = after.resources[Resource.gold] ?? 0;
+		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
+		const farmIcon =
+			ctx.developments.get(SYNTHETIC_IDS.farmDevelopment)?.icon || '';
+		const b = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const a = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = a - b;
 		expect(lines[0]).toBe(
 			`${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a}) (${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${farmIcon})`,
@@ -74,55 +85,78 @@ describe('log resource sources', () => {
 	});
 
 	it('logs market bonus when taxing population', () => {
+		const scenario = createSyntheticTaxScenario();
 		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
+			actions: scenario.factory.actions,
+			buildings: scenario.factory.buildings,
+			developments: scenario.factory.developments,
+			populations: scenario.factory.populations,
+			phases: scenario.phases,
+			start: scenario.start,
+			rules: scenario.rules,
 		});
 		runEffects(
-			[{ type: 'building', method: 'add', params: { id: 'market' } }],
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: SYNTHETIC_IDS.marketBuilding },
+				},
+			],
 			ctx,
 		);
-		while (ctx.game.currentPhase !== 'main') advance(ctx);
-		const step = { id: 'tax', effects: ctx.actions.get('tax').effects };
+		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) advance(ctx);
+		const step = {
+			id: SYNTHETIC_IDS.taxAction,
+			effects: ctx.actions.get(SYNTHETIC_IDS.taxAction).effects,
+		};
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		performAction('tax', ctx);
+		performAction(SYNTHETIC_IDS.taxAction, ctx);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
 		const lines = diffStepSnapshots(before, after, step, ctx, RESOURCE_KEYS);
-		const goldInfo = RESOURCES[Resource.gold];
-		const populationIcon = POPULATION_INFO.icon;
-		expect(populationIcon).toBeTruthy();
-		const marketIcon = BUILDINGS.get('market')?.icon || '';
+		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
+		const populationRoleIcon =
+			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon || '';
+		expect(populationRoleIcon).toBeTruthy();
+		const marketIcon =
+			ctx.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
 		const goldLine = lines.find((l) =>
 			l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
 		expect(goldLine).toMatch(
-			new RegExp(`from ${populationIcon}\\+${marketIcon}\\)$`),
+			new RegExp(`from ${populationRoleIcon}${marketIcon}\\)$`),
 		);
 	});
 
 	it('includes upkeep sources when paying upkeep', () => {
+		const scenario = createSyntheticTaxScenario();
 		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
+			actions: scenario.factory.actions,
+			buildings: scenario.factory.buildings,
+			developments: scenario.factory.developments,
+			populations: scenario.factory.populations,
+			phases: scenario.phases,
+			start: scenario.start,
+			rules: scenario.rules,
 		});
 		runEffects(
-			[{ type: 'building', method: 'add', params: { id: 'raiders_guild' } }],
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: SYNTHETIC_IDS.raidersGuild },
+				},
+			],
 			ctx,
 		);
-		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
-		const step = upkeepPhase?.steps.find((s) => s.id === 'pay-upkeep');
+		const upkeepPhase = ctx.phases.find(
+			(p) => p.id === SYNTHETIC_PHASE_IDS.upkeep,
+		);
+		const step = upkeepPhase?.steps.find(
+			(s) => s.id === SYNTHETIC_STEP_IDS.payUpkeep,
+		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		const bundles = collectTriggerEffects(ON_PAY_UPKEEP_STEP, ctx);
+		const bundles = collectTriggerEffects('onPayUpkeepStep', ctx);
 		for (const bundle of bundles) runEffects(bundle.effects, ctx);
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
@@ -133,16 +167,16 @@ describe('log resource sources', () => {
 			ctx,
 			RESOURCE_KEYS,
 		);
-		const goldInfo = RESOURCES[Resource.gold];
+		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const goldLine = lines.find((l) =>
 			l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
 		expect(goldLine).toBeTruthy();
-		const b = before.resources[Resource.gold] ?? 0;
-		const a = after.resources[Resource.gold] ?? 0;
+		const b = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const a = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = a - b;
 		const icons = effects
-			.filter((eff) => eff.params?.['key'] === Resource.gold)
+			.filter((eff) => eff.params?.['key'] === SYNTHETIC_RESOURCE_KEYS.coin)
 			.map((eff) => {
 				const source = (
 					eff.meta as {
@@ -153,8 +187,8 @@ describe('log resource sources', () => {
 				if (source.type === 'population') {
 					const role = source.id;
 					const icon = role
-						? POPULATIONS.get(role)?.icon || role
-						: POPULATION_INFO.icon;
+						? ctx.populations.get(role)?.icon || role
+						: SYNTHETIC_POPULATION_INFO.icon;
 					if (!icon) return '';
 					if (source.count === undefined) return icon;
 					const rawCount = Number(source.count);
@@ -168,18 +202,19 @@ describe('log resource sources', () => {
 					return ctx.developments.get(source.id)?.icon || '';
 				if (source.type === 'building' && source.id)
 					return ctx.buildings.get(source.id)?.icon || '';
-				if (source.type === 'land') return LAND_INFO.icon || '';
+				if (source.type === 'land') return SYNTHETIC_LAND_INFO.icon || '';
 				return '';
 			})
 			.filter(Boolean)
 			.join('');
 		expect(icons).not.toBe('');
-		const raidersGuildIcon = BUILDINGS.get('raiders_guild')?.icon || '';
+		const raidersGuildIcon =
+			ctx.buildings.get(SYNTHETIC_IDS.raidersGuild)?.icon || '';
 		expect(raidersGuildIcon).not.toBe('');
 		expect(icons).toContain(raidersGuildIcon);
 		const zeroPopulationIcons = Object.entries(ctx.activePlayer.population)
 			.filter(([, count]) => count === 0)
-			.map(([role]) => POPULATIONS.get(role)?.icon)
+			.map(([role]) => ctx.populations.get(role)?.icon)
 			.filter((icon): icon is string => Boolean(icon));
 		for (const icon of zeroPopulationIcons) {
 			expect(icons).not.toContain(icon);
