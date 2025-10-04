@@ -16,6 +16,7 @@ import {
 	DevelopmentMethods,
 	PopulationMethods,
 	ActionMethods,
+	AttackMethods,
 	PassiveMethods,
 	CostModMethods,
 	ResultModMethods,
@@ -80,16 +81,13 @@ export function createActionRegistry() {
 							.params(resourceParams().key(Resource.gold).amount(2))
 							.build(),
 					)
-					.effect({
-						type: Types.Resource,
-						method: ResourceMethods.REMOVE,
-						round: 'up',
-						params: resourceParams()
-							.key(Resource.happiness)
-							.amount(0.5)
+					.effect(
+						effect(Types.Resource, ResourceMethods.REMOVE)
+							.round('up')
+							.params(resourceParams().key(Resource.happiness).amount(0.5))
+							.allowShortfall()
 							.build(),
-						meta: { allowShortfall: true },
-					})
+					)
 					.build(),
 			)
 			.build(),
@@ -124,22 +122,19 @@ export function createActionRegistry() {
 			.cost(Resource.ap, 1)
 			.effect(
 				effect()
-					.evaluator(populationEvaluator().param('id', 'tax'))
+					.evaluator(populationEvaluator().id('tax'))
 					.effect(
 						effect(Types.Resource, ResourceMethods.ADD)
 							.params(resourceParams().key(Resource.gold).amount(4))
 							.build(),
 					)
-					.effect({
-						type: Types.Resource,
-						method: ResourceMethods.REMOVE,
-						round: 'up',
-						params: resourceParams()
-							.key(Resource.happiness)
-							.amount(0.5)
+					.effect(
+						effect(Types.Resource, ResourceMethods.REMOVE)
+							.round('up')
+							.params(resourceParams().key(Resource.happiness).amount(0.5))
+							.allowShortfall()
 							.build(),
-						meta: { allowShortfall: true },
-					})
+					)
 					.build(),
 			)
 			.build(),
@@ -246,12 +241,12 @@ export function createActionRegistry() {
 							.param('id', 'watchtower'),
 					),
 			)
-			.effect({
-				type: Types.Resource,
-				method: ResourceMethods.REMOVE,
-				params: resourceParams().key(Resource.happiness).amount(3).build(),
-				meta: { allowShortfall: true },
-			})
+			.effect(
+				effect(Types.Resource, ResourceMethods.REMOVE)
+					.params(resourceParams().key(Resource.happiness).amount(3))
+					.allowShortfall()
+					.build(),
+			)
 			.build(),
 		category: 'basic',
 		order: 5,
@@ -278,7 +273,7 @@ export function createActionRegistry() {
 					.build(),
 			)
 			.effect(
-				effect('attack', 'perform')
+				effect(Types.Attack, AttackMethods.PERFORM)
 					.params(
 						attackParams()
 							.powerStat(Stat.armyStrength)
@@ -293,15 +288,12 @@ export function createActionRegistry() {
 									.param('id', 'plunder')
 									.build(),
 							)
-							.onDamageDefender({
-								type: Types.Resource,
-								method: ResourceMethods.REMOVE,
-								params: resourceParams()
-									.key(Resource.happiness)
-									.amount(1)
+							.onDamageDefender(
+								effect(Types.Resource, ResourceMethods.REMOVE)
+									.params(resourceParams().key(Resource.happiness).amount(1))
+									.allowShortfall()
 									.build(),
-								meta: { allowShortfall: true },
-							}),
+							),
 					)
 					.build(),
 			)
@@ -363,15 +355,12 @@ export function createActionRegistry() {
 									.id('hold_festival_attack_happiness_penalty')
 									.actionId('army_attack'),
 							)
-							.effect({
-								type: Types.Resource,
-								method: ResourceMethods.REMOVE,
-								params: resourceParams()
-									.key(Resource.happiness)
-									.amount(3)
+							.effect(
+								effect(Types.Resource, ResourceMethods.REMOVE)
+									.params(resourceParams().key(Resource.happiness).amount(3))
+									.allowShortfall()
 									.build(),
-								meta: { allowShortfall: true },
-							})
+							)
 							.build(),
 					)
 					.build(),

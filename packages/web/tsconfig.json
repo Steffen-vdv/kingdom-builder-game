@@ -1,7 +1,7 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "composite": true
-  },
-  "include": ["src", "../engine/src", "../contents/src"]
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"composite": true
+	},
+	"include": ["src", "../engine/src", "../contents/src"]
 }

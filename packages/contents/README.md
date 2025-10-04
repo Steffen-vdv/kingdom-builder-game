@@ -21,16 +21,16 @@ messages point you to the fix.
 
   ```ts
   import {
-    effect,
-    resourceParams,
-    Types,
-    ResourceMethods,
+  	effect,
+  	resourceParams,
+  	Types,
+  	ResourceMethods,
   } from './config/builders';
   import { Resource } from './resources';
 
   const gainGold = effect(Types.Resource, ResourceMethods.ADD)
-    .params(resourceParams().key(Resource.gold).amount(2))
-    .build();
+  	.params(resourceParams().key(Resource.gold).amount(2))
+  	.build();
   ```
 
 - **Passives, developments, population effects and attacks all need a target id
