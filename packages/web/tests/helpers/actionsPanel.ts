@@ -1,162 +1,222 @@
-import { vi } from 'vitest';
 import {
-	PopulationRole,
+	POPULATION_INFO,
 	POPULATION_ROLES,
+	Resource,
+	Stat,
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
+import type { PopulationConfig } from '@kingdom-builder/engine/config/schema';
+import { createContentFactory } from '../../../engine/tests/factories/content';
+import { Registry } from '@kingdom-builder/engine/registry';
+import { createActionsPanelState } from './createActionsPanelState';
+import {
+	compareRequirement,
+	populationEvaluator,
+	statEvaluator,
+} from './evaluators';
 
-type ActionLike = {
-	id: string;
-	name: string;
-	icon?: string;
-	category?: string;
-	order?: number;
-	focus?: string;
-	requirements?: unknown[];
-	effects?: unknown[];
-};
-
-type PopulationLike = {
-	id: string;
-	icon?: string;
-	upkeep?: Record<string, number>;
-	onAssigned?: unknown[];
-};
-
-type RegistryLike<T extends { id: string }> = {
-	map: Map<string, T>;
-	get(id: string): T;
-	entries(): [string, T][];
-};
-
-const compareRequirement = (left: unknown, right: unknown) => ({
-	type: 'evaluator',
-	method: 'compare',
-	params: { left, operator: 'lt', right },
-});
-
-const populationEval = (role?: string) => ({
-	type: 'population',
-	params: role ? { role } : {},
-});
-
-const statEval = (key: string) => ({
-	type: 'stat',
-	params: { key },
-});
-
-function createRegistry<T extends { id: string }>(items: T[]): RegistryLike<T> {
-	const map = new Map(items.map((item) => [item.id, item] as const));
-	return {
-		map,
-		get(id: string) {
-			const value = map.get(id);
-			if (!value) throw new Error(`Unknown id: ${id}`);
-			return value;
-		},
-		entries: () => Array.from(map.entries()),
+export interface ActionsPanelGameOptions {
+	populationRoles?: Array<Partial<PopulationConfig>>;
+	showBuilding?: boolean;
+	actionCategories?: {
+		population?: string;
+		basic?: string;
+		building?: string;
+	};
+	requirementBuilder?: (context: {
+		capacityStat: string;
+		populationPlaceholder: string;
+	}) => unknown[];
+	resourceKeys?: {
+		actionCost?: string;
+		upkeep?: string;
+	};
+	statKeys?: {
+		capacity?: string;
 	};
 }
 
-export interface ActionsPanelGameOptions {
-	availableRoles?: PopulationRoleId[];
-	showBuilding?: boolean;
+export type ActionsPanelTestHarness = ReturnType<typeof createActionsPanelGame>;
+
+function createRegistry<T extends { id: string }>(items: T[]) {
+	const registry = new Registry<T>();
+	for (const item of items) {
+		registry.add(item.id, item);
+	}
+	return registry;
 }
 
 export function createActionsPanelGame({
-	availableRoles = [PopulationRole.Council, PopulationRole.Legion],
+	populationRoles,
 	showBuilding = false,
+	actionCategories: providedCategories,
+	requirementBuilder,
+	resourceKeys,
+	statKeys,
 }: ActionsPanelGameOptions = {}) {
-	const actions: ActionLike[] = [
-		{
-			id: 'raise_pop',
-			name: 'Hire',
-			icon: '👶',
-			category: 'population',
-			order: 1,
-			focus: 'economy',
-			requirements: [
-				compareRequirement(populationEval(), statEval('maxPopulation')),
-				compareRequirement(populationEval('$role'), 2),
-			],
-			effects: [
-				{ type: 'population', method: 'add', params: { role: '$role' } },
-			],
-		},
-		{
-			id: 'basic_action',
-			name: 'Survey',
-			icon: '✨',
-			category: 'basic',
-			order: 2,
-			focus: 'other',
-			requirements: [],
-			effects: [],
-		},
-	];
+	const categories = {
+		population: providedCategories?.population ?? 'population',
+		basic: providedCategories?.basic ?? 'basic',
+		building: providedCategories?.building ?? 'building',
+	} as const;
+
+	const actionCostResource = resourceKeys?.actionCost ?? Resource.ap;
+	const upkeepResource = resourceKeys?.upkeep ?? Resource.gold;
+	const capacityStat = statKeys?.capacity ?? Stat.populationCap;
+
+	const factory = createContentFactory();
+
+	const defaultPopulationRoles = populationRoles?.length
+		? populationRoles
+		: Object.keys(POPULATION_ROLES)
+				.slice(0, 2)
+				.map((key, index) => ({
+					name: index === 0 ? 'Council Role' : 'Legion Role',
+					icon:
+						POPULATION_ROLES[key as PopulationRoleId]?.icon ??
+						(index === 0 ? '⚖️' : '🎖️'),
+					upkeep: { [upkeepResource]: 1 },
+					onAssigned: [{}],
+				}));
+
+	const registeredPopulationRoles = defaultPopulationRoles.map((def) =>
+		factory.population(def),
+	);
+
+	const passivePopulation = factory.population({
+		name: 'Passive Role',
+		icon:
+			POPULATION_ROLES[Object.keys(POPULATION_ROLES)[3] as PopulationRoleId]
+				?.icon ?? '👤',
+	});
+
+	const populationPlaceholder = '$role';
+	const buildRequirements = requirementBuilder
+		? requirementBuilder({
+				capacityStat,
+				populationPlaceholder,
+			})
+		: [
+				compareRequirement(populationEvaluator(), statEvaluator(capacityStat)),
+				compareRequirement(
+					populationEvaluator(populationPlaceholder),
+					populationEvaluator(populationPlaceholder),
+				),
+			];
+
+	const raisePopulationAction = factory.action({
+		name: 'Hire',
+		icon: '👶',
+		requirements: buildRequirements,
+		effects: [
+			{
+				type: 'population',
+				method: 'add',
+				params: { role: populationPlaceholder },
+			},
+		],
+	});
+	Object.assign(raisePopulationAction, {
+		category: categories.population,
+		order: 1,
+		focus: 'economy',
+	});
+
+	const basicAction = factory.action({
+		name: 'Survey',
+		icon: '✨',
+		requirements: [],
+		effects: [],
+	});
+	Object.assign(basicAction, {
+		category: categories.basic,
+		order: 2,
+		focus: 'other',
+	});
+
+	let buildingAction: ReturnType<typeof factory.action> | undefined;
+	let buildingDefinition: ReturnType<typeof factory.building> | undefined;
 	if (showBuilding) {
-		actions.push({
-			id: 'build',
+		buildingAction = factory.action({
 			name: 'Construct',
 			icon: '🏛️',
-			category: 'building',
-			order: 3,
-			focus: 'other',
 			requirements: [],
 			effects: [],
 		});
+		Object.assign(buildingAction, {
+			category: categories.building,
+			order: 3,
+			focus: 'other',
+		});
+		buildingDefinition = factory.building({
+			name: 'Great Hall',
+			icon: '🏰',
+			costs: { [upkeepResource]: 5 },
+		});
 	}
 
-	const populations: PopulationLike[] = [
-		...availableRoles.map((role) => ({
-			id: role,
-			icon: POPULATION_ROLES[role]?.icon ?? role,
-			upkeep: { gold: 1 },
-			onAssigned: [{}],
-		})),
-		{
-			id: PopulationRole.Citizen,
-			icon: POPULATION_ROLES[PopulationRole.Citizen]?.icon ?? '👤',
-		},
-	];
+	const initialPopulation = [
+		...registeredPopulationRoles,
+		passivePopulation,
+	].reduce<Record<string, number>>((acc, population) => {
+		acc[population.id] = 0;
+		return acc;
+	}, {});
 
-	const actionsRegistry = createRegistry(actions);
-	const populationRegistry = createRegistry(populations);
+	const actionIds = [raisePopulationAction, basicAction, buildingAction]
+		.filter(Boolean)
+		.map((action) => action!.id);
+	const baseResources = { [actionCostResource]: 3, [upkeepResource]: 10 };
+	const createParticipant = (
+		id: string,
+		name: string,
+		actionList: string[],
+	) => ({
+		id,
+		name,
+		resources: { ...baseResources },
+		population: { ...initialPopulation },
+		lands: [] as { id: string; slotsFree: number }[],
+		buildings: new Set<string>(),
+		actions: new Set(actionList),
+	});
+	const player = createParticipant('A', 'Player', actionIds);
+	const opponent = createParticipant('B', 'Opponent', []);
+
+	const costMap = new Map<string, Record<string, number>>(
+		actionIds.map((id) => [id, { [actionCostResource]: 1 }]),
+	);
+
+	const requirementMessages = new Map<string, string[]>([
+		[
+			raisePopulationAction.id,
+			['Requires available housing', 'Requires open role slot'],
+		],
+	]);
+	if (buildingAction) {
+		requirementMessages.set(buildingAction.id, ['Requires assigned worker']);
+	}
+
+	const requirementIcons = new Map<string, string[]>([
+		[raisePopulationAction.id, []],
+	]);
+	if (buildingAction) {
+		requirementIcons.set(buildingAction.id, ['🛠️']);
+	}
+
+	const actionsRegistry = createRegistry(
+		[raisePopulationAction, basicAction, buildingAction].filter(
+			Boolean,
+		) as ReturnType<typeof factory.action>[],
+	);
+	const populationRegistry = createRegistry([
+		...registeredPopulationRoles,
+		passivePopulation,
+	]);
 	const buildingsRegistry = createRegistry(
-		showBuilding ? [{ id: 'hall', name: 'Great Hall', icon: '🏰' }] : [],
+		buildingDefinition ? [buildingDefinition] : [],
 	);
-	const developmentsRegistry = createRegistry<{ id: string; name: string }>([]);
-
-	const initialPopulation = populations.reduce<Record<string, number>>(
-		(acc, population) => {
-			acc[population.id] = 0;
-			return acc;
-		},
-		{},
-	);
-
-	const player = {
-		id: 'A',
-		name: 'Player',
-		resources: { ap: 3, gold: 10 },
-		population: { ...initialPopulation },
-		lands: [] as { id: string; slotsFree: number }[],
-		buildings: new Set<string>(),
-		actions: new Set(actions.map((action) => action.id)),
-	};
-	if (!showBuilding) {
-		player.actions.delete('build');
-	}
-
-	const opponent = {
-		id: 'B',
-		name: 'Opponent',
-		resources: { ap: 3, gold: 10 },
-		population: { ...initialPopulation },
-		lands: [] as { id: string; slotsFree: number }[],
-		buildings: new Set<string>(),
-		actions: new Set<string>(),
-	};
+	const developmentsRegistry = createRegistry<{ id: string }>([]);
 
 	return {
 		ctx: {
@@ -170,29 +230,24 @@ export function createActionsPanelGame({
 				currentStep: '',
 			},
 			activePlayer: player,
-			actionCostResource: 'ap',
+			actionCostResource,
 			phases: [{ id: 'main', action: true, steps: [] }],
 		},
-		log: [],
-		hoverCard: null,
-		handleHoverCard: vi.fn(),
-		clearHoverCard: vi.fn(),
-		phaseSteps: [],
-		setPhaseSteps: vi.fn(),
-		phaseTimer: 0,
-		mainApStart: 0,
-		displayPhase: 'main',
-		setDisplayPhase: vi.fn(),
-		phaseHistories: {},
-		tabsEnabled: true,
-		actionCostResource: 'ap',
-		handlePerform: vi.fn().mockResolvedValue(undefined),
-		runUntilActionPhase: vi.fn(),
-		handleEndTurn: vi.fn().mockResolvedValue(undefined),
-		updateMainPhaseStep: vi.fn(),
-		darkMode: false,
-		onToggleDark: vi.fn(),
-		timeScale: 1,
-		setTimeScale: vi.fn(),
+		...createActionsPanelState(actionCostResource),
+		metadata: {
+			upkeepResource,
+			capacityStat,
+			actions: {
+				raise: raisePopulationAction,
+				basic: basicAction,
+				building: buildingAction,
+			},
+			populationRoles: registeredPopulationRoles,
+			costMap,
+			requirementMessages,
+			requirementIcons,
+			populationInfoIcon: POPULATION_INFO.icon,
+			building: buildingDefinition,
+		},
 	};
 }

@@ -1,10 +1,13 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, within, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
-import { createActionsPanelGame } from './helpers/actionsPanel';
+import {
+	createActionsPanelGame,
+	type ActionsPanelGameOptions,
+} from './helpers/actionsPanel';
 
 const actionCostsMock = vi.fn();
 const actionRequirementsMock = vi.fn();
@@ -31,47 +34,141 @@ vi.mock('../src/translation', () => ({
 }));
 
 let mockGame = createActionsPanelGame();
+let metadata = mockGame.metadata;
+
+function setScenario(options?: ActionsPanelGameOptions) {
+	mockGame = createActionsPanelGame(options);
+	metadata = mockGame.metadata;
+	actionCostsMock.mockImplementation((actionId: string) => {
+		return metadata.costMap.get(actionId) ?? {};
+	});
+	actionRequirementsMock.mockImplementation((actionId: string) => {
+		return metadata.requirementMessages.get(actionId) ?? [];
+	});
+	requirementIconsMock.mockImplementation((actionId: string) => {
+		return metadata.requirementIcons.get(actionId) ?? [];
+	});
+}
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
 }));
 
+afterEach(() => {
+	cleanup();
+});
+
 beforeEach(() => {
 	actionCostsMock.mockReset();
 	actionRequirementsMock.mockReset();
 	requirementIconsMock.mockReset();
-	actionCostsMock.mockImplementation(() => ({ ap: 1 }));
-	actionRequirementsMock.mockImplementation((actionId: string) => {
-		if (actionId === 'raise_pop') return ['Need capacity', 'Role available'];
-		if (actionId === 'build') return ['Need worker'];
-		return [];
-	});
-	requirementIconsMock.mockImplementation((actionId: string) => {
-		if (actionId === 'raise_pop') return ['📈'];
-		if (actionId === 'build') return ['🛠️'];
-		return [];
-	});
-	mockGame = createActionsPanelGame();
+	setScenario();
 });
 
 describe('<ActionsPanel />', () => {
-	it('renders hire options for available population roles with derived requirement icons', () => {
+	it('renders hire options for generated population roles with derived requirement icons', () => {
 		render(<ActionsPanel />);
-		expect(screen.getByText('👶⚖️ Hire: Council')).toBeInTheDocument();
-		expect(screen.getByText('👶🎖️ Hire: Legion')).toBeInTheDocument();
-		expect(screen.queryByText(/Fortifier/)).not.toBeInTheDocument();
-		expect(screen.queryByText(/Citizen/)).not.toBeInTheDocument();
-		expect(screen.getByText('Req 📈👥⚖️')).toBeInTheDocument();
-		expect(screen.getByText('Req 📈👥🎖️')).toBeInTheDocument();
+		const raiseAction = metadata.actions.raise;
+		expect(requirementIconsMock).toHaveBeenCalledWith(
+			raiseAction.id,
+			expect.anything(),
+		);
+		const baseIcons = metadata.requirementIcons.get(raiseAction.id) ?? [];
+		const hireButtons = screen.getAllByRole('button', {
+			name: /Hire\s*:/,
+		});
+		const requirementTexts = hireButtons.map(
+			(button) => within(button).getByText(/^Req/).textContent ?? '',
+		);
+		for (const role of metadata.populationRoles) {
+			expect(
+				requirementTexts.some((text) => {
+					if (!text.includes('Req')) {
+						return false;
+					}
+					if (baseIcons.some((icon) => !text.includes(icon))) {
+						return false;
+					}
+					if (
+						metadata.populationInfoIcon &&
+						!text.includes(metadata.populationInfoIcon)
+					) {
+						return false;
+					}
+					return role.icon ? text.includes(role.icon) : true;
+				}),
+			).toBe(true);
+		}
+		expect(hireButtons).toHaveLength(metadata.populationRoles.length);
 	});
 
 	it('falls back to requirement helper icons for building cards', () => {
-		mockGame = createActionsPanelGame({ showBuilding: true });
+		setScenario({ showBuilding: true });
 		render(<ActionsPanel />);
+		const buildingAction = metadata.actions.building;
+		if (!buildingAction) {
+			throw new Error('Expected building action to be defined');
+		}
 		expect(requirementIconsMock).toHaveBeenCalledWith(
-			'build',
+			buildingAction.id,
 			expect.anything(),
 		);
-		expect(screen.getByText('Req 🛠️')).toBeInTheDocument();
+		const icons = metadata.requirementIcons.get(buildingAction.id) ?? [];
+		const buildingDefinition = metadata.building;
+		if (!buildingDefinition) {
+			throw new Error('Expected building definition to exist');
+		}
+		const buildingButton = screen.getByRole('button', {
+			name: new RegExp(buildingDefinition.name),
+		});
+		const requirementText =
+			within(buildingButton).getByText(/^Req/).textContent ?? '';
+		expect(icons.every((icon) => requirementText.includes(icon))).toBe(true);
+	});
+
+	it('omits the hire section when the helper supplies a non-population action category', () => {
+		setScenario({ actionCategories: { population: 'custom-population' } });
+		expect(metadata.actions.raise.category).toBe('custom-population');
+		render(<ActionsPanel />);
+		expect(screen.queryAllByRole('button', { name: /Hire\s*:/ })).toHaveLength(
+			0,
+		);
+	});
+
+	it('renders requirement icons for custom generated population roles', () => {
+		setScenario({
+			populationRoles: [
+				{
+					name: 'Mystic',
+					icon: '🔮',
+					upkeep: { [metadata.upkeepResource]: 2 },
+					onAssigned: [{}],
+				},
+			],
+			statKeys: { capacity: `${metadata.capacityStat}-alt` },
+		});
+		render(<ActionsPanel />);
+		const hireButtons = screen.getAllByRole('button', {
+			name: /Hire\s*:/,
+		});
+		const requirementTexts = hireButtons.map(
+			(button) => within(button).getByText(/^Req/).textContent ?? '',
+		);
+		const roleIcon = metadata.populationRoles[0]?.icon ?? '';
+		expect(
+			requirementTexts.some((text) => {
+				if (
+					metadata.populationInfoIcon &&
+					!text.includes(metadata.populationInfoIcon)
+				) {
+					return false;
+				}
+				if (roleIcon && !text.includes(roleIcon)) {
+					return false;
+				}
+				return true;
+			}),
+		).toBe(true);
+		expect(hireButtons).toHaveLength(1);
 	});
 });
