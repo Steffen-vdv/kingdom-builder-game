@@ -20,14 +20,16 @@ export function iconLabel(icon: string | undefined, label: string): string {
 	return icon ? `${icon} ${label}` : label;
 }
 
+const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 2,
+});
+
 export function formatNumber(value: number): string {
 	if (Number.isInteger(value)) {
 		return value.toString();
 	}
-	return value.toLocaleString(undefined, {
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 2,
-	});
+	return NUMBER_FORMATTER.format(value);
 }
 
 export function formatPercent(value: number): string {
