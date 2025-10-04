@@ -12,8 +12,11 @@ export default function HoverCard() {
 		actionCostResource,
 	} = useGameEngine();
 	const [renderedData, setRenderedData] = useState(data);
-	const [isVisible, setIsVisible] = useState(Boolean(data));
+	const [transitionState, setTransitionState] = useState<'enter' | 'exit'>(
+		data ? 'enter' : 'exit',
+	);
 	const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+	const showRafRef = useRef<number>();
 
 	useEffect(() => {
 		if (!data) {
@@ -26,20 +29,33 @@ export default function HoverCard() {
 		}
 
 		setRenderedData(data);
+
+		if (typeof window === 'undefined') {
+			setTransitionState('enter');
+			return;
+		}
+
+		if (showRafRef.current) {
+			cancelAnimationFrame(showRafRef.current);
+		}
+
+		showRafRef.current = window.requestAnimationFrame(() => {
+			setTransitionState('enter');
+			showRafRef.current = undefined;
+		});
 	}, [data]);
 
 	useEffect(() => {
 		if (data) {
-			setIsVisible(true);
 			return;
 		}
 
 		if (!renderedData) {
-			setIsVisible(false);
+			setTransitionState('exit');
 			return;
 		}
 
-		setIsVisible(false);
+		setTransitionState('exit');
 		hideTimeoutRef.current = setTimeout(() => {
 			setRenderedData(null);
 			hideTimeoutRef.current = undefined;
@@ -58,6 +74,9 @@ export default function HoverCard() {
 			if (hideTimeoutRef.current) {
 				clearTimeout(hideTimeoutRef.current);
 			}
+			if (showRafRef.current) {
+				cancelAnimationFrame(showRafRef.current);
+			}
 		},
 		[],
 	);
@@ -66,15 +85,12 @@ export default function HoverCard() {
 		return null;
 	}
 
-	const cardVisibilityClass = isVisible
-		? 'opacity-100 translate-y-0'
-		: 'opacity-0 translate-y-1';
-
 	return (
 		<div
-			className={`pointer-events-none w-full rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl shadow-amber-500/10 transition-opacity transition-transform duration-200 ease-out dark:border-white/10 dark:bg-slate-900/80 dark:shadow-slate-900/60 frosted-surface ${
+			data-state={transitionState}
+			className={`hover-card-transition pointer-events-none w-full rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl shadow-amber-500/10 dark:border-white/10 dark:bg-slate-900/80 dark:shadow-slate-900/60 frosted-surface ${
 				renderedData.bgClass ?? ''
-			} ${cardVisibilityClass}`}
+			}`}
 			onMouseLeave={clearHoverCard}
 		>
 			<div className="mb-3 flex items-start justify-between gap-4">
