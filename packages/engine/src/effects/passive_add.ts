@@ -28,14 +28,16 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		onUpkeepPhase,
 		onBeforeAttacked,
 		onAttackResolved,
+		detail,
+		meta,
 	} = params;
 	if (!id) {
 		throw new Error('passive:add requires id');
 	}
 	const passive: {
 		id: string;
-		name?: string | undefined;
-		icon?: string | undefined;
+		name?: string;
+		icon?: string;
 		effects: EffectDef[];
 		onGrowthPhase?: EffectDef[];
 		onUpkeepPhase?: EffectDef[];
@@ -44,32 +46,20 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 	} = {
 		id,
 		effects: effect.effects || [],
+		...(name !== undefined ? { name } : {}),
+		...(icon !== undefined ? { icon } : {}),
+		...(onGrowthPhase ? { onGrowthPhase } : {}),
+		...(onUpkeepPhase ? { onUpkeepPhase } : {}),
+		...(onBeforeAttacked ? { onBeforeAttacked } : {}),
+		...(onAttackResolved ? { onAttackResolved } : {}),
 	};
-	if (name !== undefined) {
-		passive.name = name;
-	}
-	if (icon !== undefined) {
-		passive.icon = icon;
-	}
-	if (onGrowthPhase) {
-		passive.onGrowthPhase = onGrowthPhase;
-	}
-	if (onUpkeepPhase) {
-		passive.onUpkeepPhase = onUpkeepPhase;
-	}
-	if (onBeforeAttacked) {
-		passive.onBeforeAttacked = onBeforeAttacked;
-	}
-	if (onAttackResolved) {
-		passive.onAttackResolved = onAttackResolved;
-	}
-	const options = {
-		detail: params.detail,
-		meta: params.meta,
-	} as {
-		detail?: string;
-		meta?: PassiveMetadata;
-	};
+	const options =
+		detail === undefined && meta === undefined
+			? undefined
+			: {
+					...(detail !== undefined ? { detail } : {}),
+					...(meta !== undefined ? { meta } : {}),
+				};
 	for (let index = 0; index < Math.floor(mult); index++) {
 		ctx.passives.addPassive(passive, ctx, options);
 	}

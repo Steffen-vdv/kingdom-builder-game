@@ -87,30 +87,23 @@ function buildTierPassiveEffect({
 }): EffectConfig {
 	const paramsBuilder = passiveParams().id(passiveId);
 	paramsBuilder.detail(summary ?? tierId);
-	const meta: PassiveMetadata = {
-		source: {
-			type: 'tiered-resource',
-			id: tierId,
-		},
+	const source: PassiveMetadata['source'] = {
+		type: 'tiered-resource',
+		id: tierId,
+		...(icon ? { icon } : {}),
+		...(summaryToken ? { labelToken: summaryToken } : {}),
 	};
-	if (icon) {
-		meta.source!.icon = icon;
-	}
-	if (summaryToken) {
-		meta.source!.labelToken = summaryToken;
-	}
-	if (removalCondition || removalText) {
-		const removal: PassiveMetadata['removal'] = {};
-		if (removalCondition) {
-			removal.token = removalCondition;
-		}
-		if (removalText) {
-			removal.text = removalText;
-		}
-		if (Object.keys(removal).length > 0) {
-			meta.removal = removal;
-		}
-	}
+	const removal: PassiveMetadata['removal'] | undefined =
+		removalCondition || removalText
+			? {
+					...(removalCondition ? { token: removalCondition } : {}),
+					...(removalText ? { text: removalText } : {}),
+				}
+			: undefined;
+	const meta: PassiveMetadata = {
+		source,
+		...(removal ? { removal } : {}),
+	};
 	paramsBuilder.meta(meta);
 
 	const passiveEffectBuilder = effect(Types.Passive, PassiveMethods.ADD);
