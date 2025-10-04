@@ -5,15 +5,15 @@ import type { SummaryEntry } from '../content';
 export interface EffectFormatter {
 	summarize?: (
 		effect: EffectDef<Record<string, unknown>>,
-		ctx: EngineContext,
+		context: EngineContext,
 	) => SummaryEntry | SummaryEntry[] | null;
 	describe?: (
 		effect: EffectDef<Record<string, unknown>>,
-		ctx: EngineContext,
+		context: EngineContext,
 	) => SummaryEntry | SummaryEntry[] | null;
 	log?: (
 		effect: EffectDef<Record<string, unknown>>,
-		ctx: EngineContext,
+		context: EngineContext,
 	) => SummaryEntry | SummaryEntry[] | null;
 }
 
@@ -30,19 +30,19 @@ export function registerEffectFormatter(
 
 export interface EvaluatorFormatter {
 	summarize?: (
-		ev: { type: string; params: Record<string, unknown> },
-		sub: SummaryEntry[],
-		ctx: EngineContext,
+		evaluator: { type: string; params: Record<string, unknown> },
+		subEntries: SummaryEntry[],
+		context: EngineContext,
 	) => SummaryEntry[];
 	describe?: (
-		ev: { type: string; params: Record<string, unknown> },
-		sub: SummaryEntry[],
-		ctx: EngineContext,
+		evaluator: { type: string; params: Record<string, unknown> },
+		subEntries: SummaryEntry[],
+		context: EngineContext,
 	) => SummaryEntry[];
 	log?: (
-		ev: { type: string; params: Record<string, unknown> },
-		sub: SummaryEntry[],
-		ctx: EngineContext,
+		evaluator: { type: string; params: Record<string, unknown> },
+		subEntries: SummaryEntry[],
+		context: EngineContext,
 	) => SummaryEntry[];
 }
 
@@ -55,7 +55,7 @@ export function registerEvaluatorFormatter(
 
 function applyFormatter(
 	effect: EffectDef<Record<string, unknown>>,
-	ctx: EngineContext,
+	context: EngineContext,
 	mode: 'summarize' | 'describe' | 'log',
 ): SummaryEntry[] {
 	const key = `${effect.type}:${effect.method ?? ''}`;
@@ -63,88 +63,117 @@ function applyFormatter(
 	if (!handler) {
 		return [];
 	}
-	const fn = handler[mode];
-	if (!fn) {
+	const formatterFn = handler[mode];
+	if (!formatterFn) {
 		return [];
 	}
-	const result = fn(effect, ctx);
+	const result = formatterFn(effect, context);
 	if (!result) {
 		return [];
 	}
-	return Array.isArray(result) ? result : [result];
+	if (Array.isArray(result)) {
+		return result;
+	}
+	return [result];
 }
 
 export function summarizeEffects(
 	effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-	ctx: EngineContext,
+	context: EngineContext,
 ): SummaryEntry[] {
 	const parts: SummaryEntry[] = [];
-	for (const eff of effects || []) {
-		if (eff.evaluator) {
-			const ev = eff.evaluator as {
+	for (const effectDef of effects || []) {
+		if (effectDef.evaluator) {
+			const evaluator = effectDef.evaluator as {
 				type: string;
 				params: Record<string, unknown>;
 			};
-			const sub = summarizeEffects(eff.effects, ctx);
-			const handler = EVALUATOR_FORMATTERS.get(ev.type);
+			const subEntries = summarizeEffects(effectDef.effects, context);
+			const handler = EVALUATOR_FORMATTERS.get(evaluator.type);
 			if (handler?.summarize) {
-				parts.push(...handler.summarize(ev, sub, ctx));
+				const formattedSummaries = handler.summarize(
+					evaluator,
+					subEntries,
+					context,
+				);
+				parts.push(...formattedSummaries);
 			} else {
-				parts.push(...sub);
+				parts.push(...subEntries);
 			}
 			continue;
 		}
-		parts.push(...applyFormatter(eff, ctx, 'summarize'));
+		parts.push(...applyFormatter(effectDef, context, 'summarize'));
 	}
-	return parts.map((p) => (typeof p === 'string' ? p.trim() : p));
+	return parts.map((part) => {
+		if (typeof part === 'string') {
+			return part.trim();
+		}
+		return part;
+	});
 }
 
 export function describeEffects(
 	effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-	ctx: EngineContext,
+	context: EngineContext,
 ): SummaryEntry[] {
 	const parts: SummaryEntry[] = [];
-	for (const eff of effects || []) {
-		if (eff.evaluator) {
-			const ev = eff.evaluator as {
+	for (const effectDef of effects || []) {
+		if (effectDef.evaluator) {
+			const evaluator = effectDef.evaluator as {
 				type: string;
 				params: Record<string, unknown>;
 			};
-			const sub = describeEffects(eff.effects, ctx);
-			const handler = EVALUATOR_FORMATTERS.get(ev.type);
+			const subEntries = describeEffects(effectDef.effects, context);
+			const handler = EVALUATOR_FORMATTERS.get(evaluator.type);
 			if (handler?.describe) {
-				parts.push(...handler.describe(ev, sub, ctx));
+				const formattedDescriptions = handler.describe(
+					evaluator,
+					subEntries,
+					context,
+				);
+				parts.push(...formattedDescriptions);
 			} else {
-				parts.push(...sub);
+				parts.push(...subEntries);
 			}
 			continue;
 		}
-		parts.push(...applyFormatter(eff, ctx, 'describe'));
+		parts.push(...applyFormatter(effectDef, context, 'describe'));
 	}
-	return parts.map((p) => (typeof p === 'string' ? p.trim() : p));
+	return parts.map((part) => {
+		if (typeof part === 'string') {
+			return part.trim();
+		}
+		return part;
+	});
 }
 
 export function logEffects(
 	effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-	ctx: EngineContext,
+	context: EngineContext,
 ): SummaryEntry[] {
 	const parts: SummaryEntry[] = [];
-	for (const eff of effects || []) {
-		if (eff.evaluator) {
-			const ev = eff.evaluator as {
+	for (const effectDef of effects || []) {
+		if (effectDef.evaluator) {
+			const evaluator = effectDef.evaluator as {
 				type: string;
 				params: Record<string, unknown>;
 			};
-			const sub = logEffects(eff.effects, ctx);
-			const handler = EVALUATOR_FORMATTERS.get(ev.type);
+			const subEntries = logEffects(effectDef.effects, context);
+			const handler = EVALUATOR_FORMATTERS.get(evaluator.type);
 			if (handler?.log) {
-				parts.push(...handler.log(ev, sub, ctx));
+				const formattedLogEntries = handler.log(evaluator, subEntries, context);
+				parts.push(...formattedLogEntries);
 			} else {
-				parts.push(...sub);
+				parts.push(...subEntries);
 			}
 			continue;
 		}
-		parts.push(...applyFormatter(eff, ctx, 'log'));
+		parts.push(...applyFormatter(effectDef, context, 'log'));
 	}
-	return parts.map((p) => (typeof p === 'string' ? p.trim() : p));
+	return parts.map((part) => {
+		if (typeof part === 'string') {
+			return part.trim();
+		}
+		return part;
+	});
 }
