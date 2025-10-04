@@ -1,4 +1,5 @@
 import type { PopulationRoleId } from '../state';
+import type { ActionEffectGroupChoiceMap } from './effect_groups';
 
 type ActionParameterMap = {
 	develop: { id: string; landId: string };
@@ -8,7 +9,10 @@ type ActionParameterMap = {
 	[key: string]: Record<string, unknown>;
 };
 
-export type ActionParameters<T extends string> =
-	T extends keyof ActionParameterMap
-		? ActionParameterMap[T]
-		: Record<string, unknown>;
+type BaseActionParameters<T extends string> = T extends keyof ActionParameterMap
+	? ActionParameterMap[T]
+	: Record<string, unknown>;
+
+export type ActionParameters<T extends string> = BaseActionParameters<T> & {
+	choices?: ActionEffectGroupChoiceMap;
+};

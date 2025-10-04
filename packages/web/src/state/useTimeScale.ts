@@ -36,40 +36,52 @@ export interface TimeScaleControls {
 	clearTrackedInterval: (id: number) => void;
 	setTrackedInterval: (handler: () => void, delay: number) => number;
 	isMountedRef: MutableRefObject<boolean>;
+	timeScaleRef: MutableRefObject<TimeScale>;
 }
 
 export function useTimeScale({
 	devMode,
 }: UseTimeScaleOptions): TimeScaleControls {
+	const timeScaleRef = useRef<TimeScale>(1);
 	const [timeScale, setTimeScaleState] = useState<TimeScale>(() => {
 		if (devMode) {
+			timeScaleRef.current = 100;
 			return 100;
 		}
 		const stored = readStoredTimeScale();
-		return stored ?? 1;
+		const next = stored ?? 1;
+		timeScaleRef.current = next;
+		return next;
 	});
 
 	useEffect(() => {
 		if (devMode) {
+			timeScaleRef.current = 100;
 			setTimeScaleState(100);
 			return;
 		}
 		const stored = readStoredTimeScale();
-		setTimeScaleState(stored ?? 1);
+		const next = stored ?? 1;
+		timeScaleRef.current = next;
+		setTimeScaleState(next);
 	}, [devMode]);
 
-	const updateTimeScale = useCallback((value: TimeScale) => {
-		setTimeScaleState((prev) => {
-			if (prev === value) {
-				return prev;
-			}
-			if (typeof window !== 'undefined') {
-				const storage = window.localStorage;
-				storage.setItem(TIME_SCALE_STORAGE_KEY, String(value));
-			}
-			return value;
-		});
-	}, []);
+	const updateTimeScale = useCallback(
+		(value: TimeScale) => {
+			setTimeScaleState((prev) => {
+				if (prev === value) {
+					return prev;
+				}
+				if (typeof window !== 'undefined') {
+					const storage = window.localStorage;
+					storage.setItem(TIME_SCALE_STORAGE_KEY, String(value));
+				}
+				timeScaleRef.current = value;
+				return value;
+			});
+		},
+		[timeScaleRef],
+	);
 
 	const timeouts = useRef(new Set<number>());
 	const intervals = useRef(new Set<number>());
@@ -137,5 +149,6 @@ export function useTimeScale({
 		clearTrackedInterval,
 		setTrackedInterval,
 		isMountedRef,
+		timeScaleRef,
 	};
 }

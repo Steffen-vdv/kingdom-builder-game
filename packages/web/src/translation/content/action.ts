@@ -1,6 +1,15 @@
 import type { EngineContext } from '@kingdom-builder/engine';
-import { summarizeEffects, describeEffects, logEffects } from '../effects';
-import { applyParamsToEffects } from '@kingdom-builder/engine';
+import {
+	applyParamsToEffects,
+	coerceActionEffectGroupChoices,
+	getActionEffectGroups,
+} from '@kingdom-builder/engine';
+import {
+	summarizeEffects,
+	describeEffects,
+	logEffects,
+	formatEffectGroups,
+} from '../effects';
 import { registerContentTranslator } from './factory';
 import type { ContentTranslator, Summary } from './types';
 import { getActionLogHook } from './actionLogHooks';
@@ -18,7 +27,12 @@ class ActionTranslator
 			? applyParamsToEffects(def.effects, opts)
 			: def.effects;
 		const eff = summarizeEffects(effects, ctx);
-		return eff.length ? eff : [];
+		const groups = formatEffectGroups(
+			getActionEffectGroups(id, ctx),
+			'summarize',
+		);
+		const combined = [...eff, ...groups];
+		return combined.length ? combined : [];
 	}
 	describe(
 		id: string,
@@ -30,7 +44,12 @@ class ActionTranslator
 			? applyParamsToEffects(def.effects, opts)
 			: def.effects;
 		const eff = describeEffects(effects, ctx);
-		return eff.length ? eff : [];
+		const groups = formatEffectGroups(
+			getActionEffectGroups(id, ctx),
+			'describe',
+		);
+		const combined = [...eff, ...groups];
+		return combined.length ? combined : [];
 	}
 	log(
 		id: string,
@@ -48,7 +67,11 @@ class ActionTranslator
 		const effects = params
 			? applyParamsToEffects(def.effects, params)
 			: def.effects;
-		const effLogs = logEffects(effects, ctx);
+		const choiceMap = coerceActionEffectGroupChoices(params?.['choices']);
+		const effLogs = [
+			...logEffects(effects, ctx),
+			...formatEffectGroups(getActionEffectGroups(id, ctx), 'log', choiceMap),
+		];
 		const lines = [message];
 		function push(entry: unknown, depth: number) {
 			if (typeof entry === 'string') {

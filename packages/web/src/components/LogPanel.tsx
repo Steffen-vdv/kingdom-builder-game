@@ -1,79 +1,29 @@
-import React, {
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
+import { useLogExpandedStyle, useLogViewport } from './hooks/useLogViewport';
 
 export default function LogPanel() {
-	const { log: entries, logOverflowed, ctx } = useGameEngine();
+	const { log: entries, logOverflowed, ctx: engineContext } = useGameEngine();
 	const outerRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const listRef = useAnimate<HTMLUListElement>();
 	const [isExpanded, setIsExpanded] = useState(false);
-	const [collapsedSize, setCollapsedSize] = useState<{
-		width: number;
-		height: number;
-	} | null>(null);
-	const [overlayOffsets, setOverlayOffsets] = useState<{
-		top: number;
-		right: number;
-	} | null>(null);
-	const [viewport, setViewport] = useState(() => ({
-		width: typeof window === 'undefined' ? 0 : window.innerWidth,
-		height: typeof window === 'undefined' ? 0 : window.innerHeight,
-	}));
-	const pendingScrollRef = useRef(false);
-	const previousRectRef = useRef<DOMRect | null>(null);
-
-	useEffect(() => {
-		if (typeof window === 'undefined') {
-			return;
-		}
-		const handleResize = () => {
-			setViewport({ width: window.innerWidth, height: window.innerHeight });
-		};
-		window.addEventListener('resize', handleResize);
-		return () => {
-			window.removeEventListener('resize', handleResize);
-		};
-	}, []);
-
-	const expandedStyle = useMemo(() => {
-		if (!isExpanded || !collapsedSize) {
-			return undefined;
-		}
-		const offsets = overlayOffsets ?? { top: 16, right: 16 };
-		const horizontalPadding = viewport.width > 32 ? 32 : 16;
-		const verticalPadding = viewport.height > 32 ? 32 : 16;
-		const maxWidth = Math.max(0, viewport.width - horizontalPadding);
-		const maxHeight = Math.max(0, viewport.height - verticalPadding);
-		const targetWidth = Math.min(collapsedSize.width * 2, maxWidth);
-		const targetHeight = Math.min(collapsedSize.height * 4, maxHeight);
-		const desiredRight = Math.max(16, offsets.right);
-		const maxRight = Math.max(16, viewport.width - targetWidth - 16);
-		const availableRight = Math.min(desiredRight, maxRight);
-		const availableTop = Math.max(
-			16,
-			Math.min(offsets.top, viewport.height - targetHeight - 16),
-		);
-		return {
-			position: 'fixed' as const,
-			width: `${targetWidth}px`,
-			height: `${targetHeight}px`,
-			top: `${availableTop}px`,
-			right: `${availableRight}px`,
-		};
-	}, [
+	const {
+		collapsedSize,
+		setCollapsedSize,
+		overlayOffsets,
+		setOverlayOffsets,
+		viewport,
+	} = useLogViewport({ outerRef, isExpanded });
+	const expandedStyle = useLogExpandedStyle({
 		collapsedSize,
 		isExpanded,
 		overlayOffsets,
-		viewport.height,
-		viewport.width,
-	]);
+		viewport,
+	});
+	const pendingScrollRef = useRef(false);
+	const previousRectRef = useRef<DOMRect | null>(null);
 
 	const handleToggleExpand = () => {
 		const node = outerRef.current;
@@ -207,62 +157,6 @@ export default function LogPanel() {
 		};
 	}, [entries, isExpanded, listRef]);
 
-	useEffect(() => {
-		if (typeof window === 'undefined') {
-			return;
-		}
-		if (isExpanded) {
-			return;
-		}
-
-		const node = outerRef.current;
-		if (!node) {
-			return;
-		}
-
-		const ResizeObserverCtor: typeof ResizeObserver | undefined =
-			window.ResizeObserver ??
-			(typeof ResizeObserver !== 'undefined' ? ResizeObserver : undefined);
-
-		const updateFromRect = (rect: DOMRect) => {
-			setCollapsedSize({ width: rect.width, height: rect.height });
-			setOverlayOffsets({ top: rect.top, right: viewport.width - rect.right });
-		};
-
-		if (!ResizeObserverCtor) {
-			updateFromRect(node.getBoundingClientRect());
-			return;
-		}
-
-		let animationFrame = 0;
-		const observer = new ResizeObserverCtor((entries) => {
-			for (const entry of entries) {
-				const { width, height } = entry.contentRect;
-				setCollapsedSize({ width, height });
-				if (animationFrame) {
-					window.cancelAnimationFrame(animationFrame);
-				}
-				animationFrame = window.requestAnimationFrame(() => {
-					const rect = entry.target.getBoundingClientRect();
-					setOverlayOffsets({
-						top: rect.top,
-						right: viewport.width - rect.right,
-					});
-				});
-			}
-		});
-
-		observer.observe(node);
-		updateFromRect(node.getBoundingClientRect());
-
-		return () => {
-			observer.disconnect();
-			if (animationFrame) {
-				window.cancelAnimationFrame(animationFrame);
-			}
-		};
-	}, [isExpanded, viewport.width, viewport.height]);
-
 	return (
 		<div
 			className={`relative ${isExpanded ? 'z-50' : ''}`}
@@ -322,8 +216,8 @@ export default function LogPanel() {
 						className={`mt-3 ${isExpanded ? 'space-y-3 text-sm' : 'space-y-2 text-xs'} text-slate-700 dark:text-slate-200`}
 					>
 						{entries.map((entry, idx) => {
-							const aId = ctx.game.players[0]?.id;
-							const bId = ctx.game.players[1]?.id;
+							const aId = engineContext.game.players[0]?.id;
+							const bId = engineContext.game.players[1]?.id;
 							const colorClass =
 								entry.playerId === aId
 									? 'log-entry-a'
