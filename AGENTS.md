@@ -78,6 +78,14 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Legacy files above 250 lines remain until refactored; new code should respect
   the limit.
 
+#### Coding Standards Checklist
+
+- [ ] Wrap every conditional or loop body in braces, even for single statements.
+- [ ] Keep lines at or below 80 characters.
+- [ ] Ensure files stay at or under 250 lines unless grandfathered.
+- [ ] Use descriptive, human-readable identifiers instead of abbreviations.
+- [ ] Indent code with tabs to preserve consistent formatting.
+
 ### 2.3 Code Standards & Naming
 
 - Prefer descriptive names; avoid one-letter identifiers except for familiar
