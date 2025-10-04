@@ -211,7 +211,6 @@ module.exports = {
 			],
 			rules: {
 				'max-lines': 'off',
-				'id-length': 'off',
 			},
 		},
 		{
