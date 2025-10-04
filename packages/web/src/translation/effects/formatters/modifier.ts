@@ -84,6 +84,7 @@ registerModifierEvalHandler('population', {
 			eff,
 			evaluation,
 			ctx,
+			false,
 		);
 		return toArray(summary);
 	},
@@ -93,6 +94,7 @@ registerModifierEvalHandler('population', {
 			eff,
 			evaluation,
 			ctx,
+			true,
 		);
 		return toArray(description);
 	},

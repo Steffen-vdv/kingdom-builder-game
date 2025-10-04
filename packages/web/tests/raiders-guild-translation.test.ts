@@ -34,6 +34,26 @@ function createCtx() {
 	});
 }
 
+function collectText(summary: Summary | undefined): string[] {
+	if (!summary) {
+		return [];
+	}
+	const lines: string[] = [];
+	const visit = (entries: Summary) => {
+		for (const entry of entries) {
+			if (typeof entry === 'string') {
+				lines.push(entry);
+				continue;
+			}
+			if (Array.isArray(entry.items)) {
+				visit(entry.items as Summary);
+			}
+		}
+	};
+	visit(summary);
+	return lines;
+}
+
 describe('raiders guild translation', () => {
 	it('describes plunder action', () => {
 		const ctx = createCtx();
@@ -96,5 +116,23 @@ describe('raiders guild translation', () => {
 					: [],
 		);
 		expect(lines).toContain(expected);
+	});
+
+	it('describes market modifier with detailed clause', () => {
+		const ctx = createCtx();
+		const summary = describeContent('building', 'market', ctx);
+		const lines = collectText(summary);
+		expect(lines).toContain(
+			'✨ Result Modifier on 👥 Population through 💰 Tax: Whenever it grants resources, gain 🧺+1 more of that resource',
+		);
+	});
+
+	it('describes mill modifier with detailed clause', () => {
+		const ctx = createCtx();
+		const summary = describeContent('building', 'mill', ctx);
+		const lines = collectText(summary);
+		expect(lines).toContain(
+			'✨ Result Modifier on 🌾 Farm: Whenever it grants resources, gain 🧺+1 more of that resource',
+		);
 	});
 });
