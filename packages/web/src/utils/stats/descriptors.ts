@@ -23,7 +23,10 @@ type TriggerInfoRecord = Record<
 	{ icon?: string; future?: string; past?: string }
 >;
 
-export type SourceDescriptor = ResolveResult & { suffix?: string };
+export type SourceDescriptor = ResolveResult & {
+	suffix?: ResolveResult;
+	kind?: string;
+};
 
 export type DescriptorRegistryEntry = {
 	resolve(id?: string): ResolveResult;
@@ -222,7 +225,7 @@ const DESCRIPTOR_REGISTRY: Record<string, DescriptorRegistryEntry> = {
 		formatDetail: defaultFormatDetail,
 	},
 	start: {
-		resolve: () => ({ icon: '', label: 'Initial setup' }),
+		resolve: () => ({ icon: '', label: 'Initial Setup' }),
 		formatDetail: defaultFormatDetail,
 	},
 };
@@ -241,6 +244,120 @@ export function getDescriptor(kind?: string): DescriptorRegistryEntry {
 	return DESCRIPTOR_REGISTRY[kind] ?? createDefaultDescriptor(kind);
 }
 
+function formatKindLabel(kind?: string, id?: string): string | undefined {
+	if (!kind) {
+		return undefined;
+	}
+	const descriptor = getDescriptor(kind);
+	const resolved = descriptor.resolve(id);
+	const parts: string[] = [];
+	if (resolved.icon) {
+		parts.push(resolved.icon);
+	}
+	if (resolved.label) {
+		parts.push(resolved.label);
+	}
+	const label = parts.join(' ').trim();
+	return label || undefined;
+}
+
+export function formatLinkLabel(link?: StatSourceLink): string | undefined {
+	if (!link) {
+		return undefined;
+	}
+	const descriptor = getDescriptor(link.type);
+	const resolved = descriptor.resolve(link.id);
+	const parts: string[] = [];
+	if (resolved.icon) {
+		parts.push(resolved.icon);
+	}
+	if (resolved.label) {
+		parts.push(resolved.label);
+	}
+	const label = parts.join(' ').trim();
+	return label || undefined;
+}
+
+function resolveLinkDescriptor(
+	link?: StatSourceLink,
+	options: {
+		omitAssignmentDetail?: boolean;
+		omitRemovalDetail?: boolean;
+	} = {},
+): ResolveResult | undefined {
+	if (!link?.type) {
+		return undefined;
+	}
+	const descriptor = getDescriptor(link.type);
+	const resolved = descriptor.resolve(link.id);
+	let label = resolved.label;
+	let detail = descriptor.formatDetail?.(link.id, link.detail);
+	if (detail === undefined && link?.detail) {
+		detail = defaultFormatDetail(link.id, link.detail);
+	}
+	if (detail) {
+		const normalized = detail.trim().toLowerCase();
+		if (options.omitAssignmentDetail) {
+			if (normalized === 'assigned' || normalized === 'unassigned') {
+				detail = undefined;
+			}
+		}
+		if (options.omitRemovalDetail && normalized === 'removed') {
+			detail = undefined;
+		}
+	}
+	if (detail) {
+		label = label ? `${label} ${detail}`.trim() : detail;
+	}
+	if (!label && !resolved.icon) {
+		return undefined;
+	}
+	return {
+		icon: resolved.icon,
+		label: label ?? '',
+	} satisfies ResolveResult;
+}
+
+function deriveResolutionSuffix(
+	meta: StatSourceMeta,
+): ResolveResult | undefined {
+	if (meta.kind !== 'action') {
+		return undefined;
+	}
+	const detail = meta.detail?.trim().toLowerCase();
+	if (detail !== 'resolution') {
+		return undefined;
+	}
+	const candidates: (StatSourceLink | undefined)[] = [meta.removal];
+	if (meta.dependsOn) {
+		candidates.push(...meta.dependsOn);
+	}
+	const priority = ['development', 'building', 'population', 'passive', 'land'];
+	for (const type of priority) {
+		const match = candidates.find((link) => link?.type === type);
+		if (!match) {
+			continue;
+		}
+		const resolved = resolveLinkDescriptor(match, {
+			omitAssignmentDetail: true,
+			omitRemovalDetail: true,
+		});
+		if (resolved) {
+			return resolved;
+		}
+	}
+	if (meta.removal) {
+		const fallback = resolveLinkDescriptor(meta.removal, {
+			omitAssignmentDetail: true,
+			omitRemovalDetail: true,
+		});
+		if (fallback) {
+			return fallback;
+		}
+	}
+	return undefined;
+}
+
 export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 	const entry = getDescriptor(meta.kind);
 	const base = entry.resolve(meta.id);
@@ -248,36 +365,79 @@ export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 		icon: base.icon,
 		label: base.label,
 	};
-	let suffix = entry.formatDetail?.(meta.id, meta.detail);
-	if (suffix === undefined && meta.detail) {
-		suffix = defaultFormatDetail(meta.id, meta.detail);
+	if (meta.kind) {
+		descriptor.kind = meta.kind;
+	}
+	let suffixText = entry.formatDetail?.(meta.id, meta.detail);
+	if (suffixText === undefined && meta.detail) {
+		suffixText = defaultFormatDetail(meta.id, meta.detail);
+	}
+	let suffix = suffixText
+		? ({ icon: '', label: suffixText } satisfies ResolveResult)
+		: undefined;
+	const resolutionSuffix = deriveResolutionSuffix(meta);
+	if (resolutionSuffix) {
+		suffix = resolutionSuffix;
+	}
+	const isAction = meta.kind === 'action';
+	const noResolutionOverride = resolutionSuffix === undefined;
+	if (suffix != null && noResolutionOverride && isAction) {
+		const detail = suffix.label.trim().toLowerCase();
+		if (detail === 'resolution') {
+			suffix = undefined;
+		}
 	}
 	if (suffix) {
 		descriptor.suffix = suffix;
+	}
+	if (!descriptor.label) {
+		const fallbackLabel = formatKindLabel(meta.kind, meta.id);
+		if (fallbackLabel) {
+			descriptor.label = fallbackLabel;
+		}
 	}
 	return descriptor;
 }
 
 export function formatSourceTitle(descriptor: SourceDescriptor): string {
-	const titleParts: string[] = [];
-	if (descriptor.icon) {
-		titleParts.push(descriptor.icon);
+	const iconParts: string[] = [];
+	const pushIcon = (icon?: string) => {
+		if (!icon) {
+			return;
+		}
+		if (!iconParts.includes(icon)) {
+			iconParts.push(icon);
+		}
+	};
+	pushIcon(descriptor.icon);
+	pushIcon(descriptor.suffix?.icon);
+	const iconText = iconParts.join('');
+	const baseLabel = descriptor.label?.trim() ?? '';
+	const suffixLabel = descriptor.suffix?.label?.trim() ?? '';
+	let labelText = baseLabel;
+	if (descriptor.kind === 'action') {
+		if (baseLabel && suffixLabel) {
+			labelText = `${baseLabel}: ${suffixLabel}`;
+		} else if (suffixLabel) {
+			labelText = suffixLabel;
+		}
+	} else if (suffixLabel) {
+		const normalizedBase = baseLabel.toLowerCase();
+		const normalizedSuffix = suffixLabel.toLowerCase();
+		if (baseLabel && normalizedBase !== normalizedSuffix) {
+			labelText = `${baseLabel} · ${suffixLabel}`;
+		} else {
+			labelText = suffixLabel || baseLabel;
+		}
 	}
-	const labelParts: string[] = [];
-	if (descriptor.label?.trim()) {
-		labelParts.push(descriptor.label.trim());
+	const parts: string[] = [];
+	if (iconText) {
+		parts.push(iconText);
 	}
-	if (descriptor.suffix?.trim()) {
-		labelParts.push(descriptor.suffix.trim());
+	if (labelText) {
+		parts.push(labelText);
 	}
-	if (labelParts.length) {
-		titleParts.push(
-			labelParts.length > 1
-				? `${labelParts[0]!} · ${labelParts.slice(1).join(' · ')}`
-				: labelParts[0]!,
-		);
-	}
-	return titleParts.join(' ').trim();
+	return parts.join(' ').trim();
 }
 
 export function formatDependency(
