@@ -207,22 +207,7 @@ describe('content happiness tiers', () => {
         },
         "steady": {
           "happiness": 0,
-          "passives": [
-            {
-              "detail": "Morale is steady. No tier bonuses are active.",
-              "id": "passive:happiness:steady",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness leaves the -2 to +2 range",
-                  "token": "happiness leaves the -2 to +2 range",
-                },
-                "source": {
-                  "id": "happiness:tier:steady",
-                  "type": "tiered-resource",
-                },
-              },
-            },
-          ],
+          "passives": [],
           "skipPhases": {},
           "skipSteps": {},
         },

@@ -88,7 +88,7 @@ function createTierPassiveEffect({
 
 type TierConfig = {
 	id: string;
-	passiveId: string;
+	passiveId?: string;
 	range: { min: number; max?: number };
 	incomeMultiplier: number;
 	buildingDiscountPct?: number;
@@ -147,7 +147,6 @@ const TIER_CONFIGS: TierConfig[] = [
 	},
 	{
 		id: 'happiness:tier:steady',
-		passiveId: 'passive:happiness:steady',
 		range: { min: -2, max: 2 },
 		incomeMultiplier: 1,
 		summary: 'Morale is steady. No tier bonuses are active.',
@@ -207,27 +206,29 @@ const TIER_CONFIGS: TierConfig[] = [
 ];
 
 function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
-	const params = passiveParams().id(config.passiveId);
-	config.skipPhases?.forEach((phaseId) => params.skipPhase(phaseId));
-	config.skipSteps?.forEach(({ phase, step }) => {
-		params.skipStep(phase, step);
-	});
-	const passive = createTierPassiveEffect({
-		tierId: config.id,
-		summary: config.summary,
-		removalDetail: config.removal,
-		params,
-		...(config.effects ? { effects: config.effects } : {}),
-	});
 	const builder = happinessTier(config.id)
 		.range(config.range.min, config.range.max)
 		.incomeMultiplier(config.incomeMultiplier)
-		.passive(passive)
 		.text((text) => {
 			text.summary(config.summary).removal(formatRemoval(config.removal));
 			return text;
 		})
 		.display((display) => display.removalCondition(config.removal));
+	if (config.passiveId) {
+		const params = passiveParams().id(config.passiveId);
+		config.skipPhases?.forEach((phaseId) => params.skipPhase(phaseId));
+		config.skipSteps?.forEach(({ phase, step }) => {
+			params.skipStep(phase, step);
+		});
+		const passive = createTierPassiveEffect({
+			tierId: config.id,
+			summary: config.summary,
+			removalDetail: config.removal,
+			params,
+			...(config.effects ? { effects: config.effects } : {}),
+		});
+		builder.passive(passive);
+	}
 	if (config.disableGrowth) {
 		builder.disableGrowth();
 	}

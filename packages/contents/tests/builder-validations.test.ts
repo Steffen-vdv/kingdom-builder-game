@@ -223,10 +223,11 @@ describe('content builder safeguards', () => {
 		);
 	});
 
-	it('demands happiness tiers to define a passive payload', () => {
-		expect(() => happinessTier('tier:test').range(0, 1).build()).toThrowError(
-			'Happiness tier is missing passive(). Call passive(...) with a passive:add effect before build().',
-		);
+	it('allows happiness tiers to omit a passive payload', () => {
+		const tier = happinessTier('tier:test').range(0, 1).build();
+		expect(tier.enterEffects).toBeUndefined();
+		expect(tier.exitEffects).toBeUndefined();
+		expect(tier.preview).toBeUndefined();
 	});
 
 	it('requires tier passives to provide an id', () => {

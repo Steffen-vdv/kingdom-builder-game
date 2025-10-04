@@ -877,11 +877,6 @@ class HappinessTierBuilder {
 				'Happiness tier is missing range(). Call range(min, max?) before build().',
 			);
 		}
-		if (!this.passiveSet) {
-			throw new Error(
-				'Happiness tier is missing passive(). Call passive(...) with a passive:add effect before build().',
-			);
-		}
 		const definition: HappinessTierDefinition = {
 			id: this.config.id!,
 			range: this.config.range!,
