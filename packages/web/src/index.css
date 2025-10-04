@@ -105,13 +105,18 @@
     z-index: 1;
   }
   .action-card {
+    display: flex;
+    flex-direction: column;
     perspective: 1200px;
+    cursor: inherit;
   }
   .action-card__inner {
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
+    flex: 1;
+    height: 100%;
     transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
     transform-style: preserve-3d;
   }
@@ -125,9 +130,12 @@
     border-radius: inherit;
     background: transparent;
     grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
   }
   .action-card__face--front {
     transform: rotateY(0deg);
+    cursor: inherit;
   }
   .action-card__face--back {
     transform: rotateY(180deg);

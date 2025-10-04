@@ -211,7 +211,7 @@ export default function ActionCard({
 	const interactive = !isBack && enabled;
 	const containerClass = `action-card panel-card relative h-full bg-gradient-to-br ${focusClass} ${
 		interactive
-			? 'hoverable'
+			? 'hoverable cursor-pointer'
 			: isBack
 				? 'cursor-default'
 				: 'cursor-not-allowed opacity-50'
