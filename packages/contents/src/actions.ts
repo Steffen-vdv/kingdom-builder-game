@@ -205,7 +205,10 @@ export function createActionRegistry() {
 					.build(),
 			)
 			.effect(
-				effect(Types.Action, ActionMethods.PERFORM).param('id', 'till').build(),
+				effect(Types.Action, ActionMethods.PERFORM)
+					.param('id', 'till')
+					.param('landId', '$landId')
+					.build(),
 			)
 			.effectGroup(
 				actionEffectGroup('royal_decree_develop')
@@ -275,8 +278,8 @@ export function createActionRegistry() {
 				meta: { allowShortfall: true },
 			})
 			.build(),
-		category: 'development',
-		order: 2,
+		category: 'basic',
+		order: 5,
 		focus: 'economy',
 	});
 
