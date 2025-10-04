@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-import { PASSIVE_INFO } from '@kingdom-builder/contents';
+import { PASSIVE_INFO, formatPassiveRemoval } from '@kingdom-builder/contents';
 import type {
 	EngineContext,
 	StatSourceLink,
@@ -88,9 +88,9 @@ function buildLongevityEntries(
 		collectRemovalLabels(removalLink),
 	);
 	if (removalCondition) {
-		pushSummaryEntry(items, `Active as long as ${removalCondition}`);
+		pushSummaryEntry(items, formatPassiveRemoval(removalCondition));
 	} else if (removal) {
-		pushSummaryEntry(items, `Active as long as ${removal}`);
+		pushSummaryEntry(items, formatPassiveRemoval(removal));
 	}
 	entries.push(`${PERMANENT_ICON} Permanent`);
 	items.forEach((item) => {

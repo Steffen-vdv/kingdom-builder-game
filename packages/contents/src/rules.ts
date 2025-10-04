@@ -5,7 +5,6 @@ import type {
 import {
 	buildingDiscountModifier,
 	createTierPassiveEffect,
-	formatRemoval,
 	GROWTH_PHASE_ID,
 	growthBonusEffect,
 	incomeModifier,
@@ -14,6 +13,7 @@ import {
 } from './happinessHelpers';
 import { happinessTier, passiveParams } from './config/builders';
 import { Resource } from './resources';
+import { formatPassiveRemoval } from './text';
 
 const happinessSummaryToken = (slug: string) =>
 	`happiness.tier.summary.${slug}`;
@@ -159,7 +159,9 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 		.range(config.range.min, config.range.max)
 		.incomeMultiplier(config.incomeMultiplier)
 		.text((text) =>
-			text.summary(config.summary).removal(formatRemoval(config.removal)),
+			text
+				.summary(config.summary)
+				.removal(formatPassiveRemoval(config.removal)),
 		)
 		.display((display) =>
 			display
