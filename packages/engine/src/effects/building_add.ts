@@ -1,25 +1,34 @@
 import type { EffectHandler, EffectCostCollector } from '.';
 
-export const buildingAdd: EffectHandler = (effect, ctx, mult = 1) => {
+export const buildingAdd: EffectHandler = (
+	effect,
+	context,
+	multiplier = 1, // default iteration count for add effects
+) => {
 	const id = effect.params?.['id'] as string;
 	if (!id) {
 		throw new Error('building:add requires id');
 	}
-	const iterations = Math.floor(mult);
+	const iterations = Math.floor(multiplier);
 	for (let index = 0; index < iterations; index++) {
-		if (ctx.activePlayer.buildings.has(id)) {
+		if (context.activePlayer.buildings.has(id)) {
 			throw new Error(`Building ${id} already built`);
 		}
-		ctx.activePlayer.buildings.add(id);
-		const building = ctx.buildings.get(id);
+		context.activePlayer.buildings.add(id);
+		const building = context.buildings.get(id);
 		if (building.onBuild) {
-			ctx.passives.addPassive({ id, effects: building.onBuild }, ctx, {
+			const passiveConfig = { id, effects: building.onBuild };
+			context.passives.addPassive(passiveConfig, context, {
 				frames: () => ({
 					kind: 'building',
 					id,
 					longevity: 'ongoing' as const,
 					dependsOn: [{ type: 'building', id }],
-					removal: { type: 'building', id, detail: 'removed' },
+					removal: {
+						type: 'building',
+						id,
+						detail: 'removed',
+					},
 				}),
 			});
 		}
@@ -29,14 +38,16 @@ export const buildingAdd: EffectHandler = (effect, ctx, mult = 1) => {
 export const collectBuildingAddCosts: EffectCostCollector = (
 	effect,
 	base,
-	ctx,
+	context,
 ) => {
 	const id = effect.params?.['id'] as string;
 	if (!id) {
 		return;
 	}
-	const building = ctx.buildings.get(id);
-	for (const key of Object.keys(building.costs)) {
-		base[key] = (base[key] || 0) + (building.costs[key] || 0);
+	const building = context.buildings.get(id);
+	for (const costKey of Object.keys(building.costs)) {
+		const baseCost = base[costKey] || 0;
+		const buildingCost = building.costs[costKey] || 0;
+		base[costKey] = baseCost + buildingCost;
 	}
 };

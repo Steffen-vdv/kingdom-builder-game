@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { GameProvider, useGameEngine } from './state/GameContext';
 import PlayerPanel from './components/player/PlayerPanel';
 import HoverCard from './components/HoverCard';
@@ -8,9 +8,27 @@ import LogPanel from './components/LogPanel';
 import Button from './components/common/Button';
 import TimeControl from './components/common/TimeControl';
 import ErrorToaster from './components/common/ErrorToaster';
+import ConfirmDialog from './components/common/ConfirmDialog';
 
 function GameLayout() {
 	const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
+	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
+	const requestQuit = useCallback(() => {
+		if (!onExit) {
+			return;
+		}
+		setQuitDialogOpen(true);
+	}, [onExit]);
+	const closeDialog = useCallback(() => {
+		setQuitDialogOpen(false);
+	}, []);
+	const confirmExit = useCallback(() => {
+		if (!onExit) {
+			return;
+		}
+		setQuitDialogOpen(false);
+		onExit();
+	}, [onExit]);
 	const [playerHeights, setPlayerHeights] = useState<Record<string, number>>(
 		{},
 	);
@@ -52,7 +70,7 @@ function GameLayout() {
 			<PlayerPanel
 				key={p.id}
 				player={p}
-				className={`flex-1 p-4 ${bgClass}`}
+				className={`grow basis-[calc(50%-1rem)] max-w-[calc(50%-1rem)] p-4 ${bgClass}`}
 				isActive={isActive}
 				onHeightChange={(height) => {
 					handlePlayerHeight(p.id, height);
@@ -67,6 +85,15 @@ function GameLayout() {
 	);
 	return (
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
+			<ConfirmDialog
+				open={isQuitDialogOpen}
+				title="Leave the battlefield?"
+				description="If you quit now, the current game will end and any progress will be lost. Are you sure you want to retreat?"
+				confirmLabel="Quit game"
+				cancelLabel="Continue playing"
+				onCancel={closeDialog}
+				onConfirm={confirmExit}
+			/>
 			<ErrorToaster />
 			<div className="pointer-events-none absolute inset-0">
 				<div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
@@ -91,7 +118,7 @@ function GameLayout() {
 								{darkMode ? 'Light Mode' : 'Dark Mode'}
 							</Button>
 							<Button
-								onClick={onExit}
+								onClick={requestQuit}
 								variant="danger"
 								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
 							>
@@ -103,7 +130,7 @@ function GameLayout() {
 
 				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
 					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
+						<div className="flex flex-1 items-stretch gap-6 overflow-hidden rounded-3xl px-6 py-6">
 							{playerPanels}
 						</div>
 					</section>

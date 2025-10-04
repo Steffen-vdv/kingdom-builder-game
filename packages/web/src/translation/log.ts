@@ -140,14 +140,22 @@ export function diffSnapshots(
 			`${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
 		);
 	}
-	const beforePassives = new Map(before.passives.map((p) => [p.id, p]));
-	const afterPassives = new Set(after.passives.map((p) => p.id));
-	for (const [id, passive] of beforePassives) {
-		if (afterPassives.has(id)) {
+	const beforePassiveMap = new Map(before.passives.map((p) => [p.id, p]));
+	const afterPassiveMap = new Map(after.passives.map((p) => [p.id, p]));
+	for (const [id, passive] of afterPassiveMap) {
+		if (beforePassiveMap.has(id)) {
 			continue;
 		}
-		const icon = passive.icon ?? PASSIVE_INFO.icon;
-		const label = passive.name ?? id;
+		const { icon, label, removal } = resolvePassiveLogDetails(passive);
+		const prefix = icon ? `${icon} ` : '';
+		const suffix = removal ? ` (${removal})` : '';
+		changes.push(`${prefix}${label} activated${suffix}`);
+	}
+	for (const [id, passive] of beforePassiveMap) {
+		if (afterPassiveMap.has(id)) {
+			continue;
+		}
+		const { icon, label } = resolvePassiveLogDetails(passive);
 		const prefix = icon ? `${icon} ` : '';
 		changes.push(`${prefix}${label} expired`);
 	}
@@ -420,6 +428,26 @@ function findStatPctBreakdown(
 	return walk(step?.effects, undefined);
 }
 
+function resolvePassiveLogDetails(passive: PassiveSummary) {
+	const icon =
+		passive.meta?.source?.icon ?? passive.icon ?? PASSIVE_INFO.icon ?? '';
+	const label =
+		[passive.meta?.source?.labelToken, passive.detail, passive.name, passive.id]
+			.map((candidate) => candidate?.trim())
+			.find((candidate) => candidate && candidate.length > 0) ?? passive.id;
+	let removal: string | undefined;
+	const removalText = passive.meta?.removal?.text;
+	if (removalText && removalText.trim().length > 0) {
+		removal = removalText;
+	} else {
+		const removalToken = passive.meta?.removal?.token;
+		if (removalToken && removalToken.trim().length > 0) {
+			removal = `Removed when ${removalToken}`;
+		}
+	}
+	return { icon, label, removal };
+}
+
 export function diffStepSnapshots(
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
@@ -509,15 +537,24 @@ export function diffStepSnapshots(
 			`${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
 		);
 	}
-	const beforePassives = new Map(before.passives.map((p) => [p.id, p]));
-	const afterPassives = new Set(after.passives.map((p) => p.id));
-	for (const [id, passive] of beforePassives) {
-		if (!afterPassives.has(id)) {
-			const icon = passive.icon ?? PASSIVE_INFO.icon;
-			const label = passive.name ?? id;
-			const prefix = icon ? `${icon} ` : '';
-			changes.push(`${prefix}${label} expired`);
+	const beforePassiveMap = new Map(before.passives.map((p) => [p.id, p]));
+	const afterPassiveMap = new Map(after.passives.map((p) => [p.id, p]));
+	for (const [id, passive] of afterPassiveMap) {
+		if (beforePassiveMap.has(id)) {
+			continue;
 		}
+		const { icon, label, removal } = resolvePassiveLogDetails(passive);
+		const prefix = icon ? `${icon} ` : '';
+		const suffix = removal ? ` (${removal})` : '';
+		changes.push(`${prefix}${label} activated${suffix}`);
+	}
+	for (const [id, passive] of beforePassiveMap) {
+		if (afterPassiveMap.has(id)) {
+			continue;
+		}
+		const { icon, label } = resolvePassiveLogDetails(passive);
+		const prefix = icon ? `${icon} ` : '';
+		changes.push(`${prefix}${label} expired`);
 	}
 	return changes;
 }

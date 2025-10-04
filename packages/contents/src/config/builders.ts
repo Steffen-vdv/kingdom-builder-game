@@ -126,6 +126,215 @@ function resolveEffectConfig(effect: EffectConfig | EffectBuilder) {
 	return effect instanceof EffectBuilder ? effect.build() : effect;
 }
 
+export interface ActionEffectGroupOptionDef {
+	id: string;
+	label: string;
+	icon?: string;
+	summary?: string;
+	description?: string;
+	actionId: string;
+	params?: Record<string, unknown>;
+}
+
+class ActionEffectGroupOptionBuilder extends ParamsBuilder<{
+	id?: string;
+	label?: string;
+	icon?: string;
+	summary?: string;
+	description?: string;
+	actionId?: string;
+	params?: Record<string, unknown>;
+}> {
+	constructor(id?: string) {
+		super();
+		if (id) {
+			this.id(id);
+		}
+	}
+
+	id(id: string) {
+		return this.set(
+			'id',
+			id,
+			'Action effect group option already has an id(). Remove the extra id() call.',
+		);
+	}
+
+	label(label: string) {
+		return this.set(
+			'label',
+			label,
+			'Action effect group option already set label(). Remove the duplicate label() call.',
+		);
+	}
+
+	icon(icon: string) {
+		return this.set(
+			'icon',
+			icon,
+			'Action effect group option already set icon(). Remove the duplicate icon() call.',
+		);
+	}
+
+	summary(summary: string) {
+		return this.set(
+			'summary',
+			summary,
+			'Action effect group option already set summary(). Remove the duplicate summary() call.',
+		);
+	}
+
+	description(description: string) {
+		return this.set(
+			'description',
+			description,
+			'Action effect group option already set description(). Remove the duplicate description() call.',
+		);
+	}
+
+	action(actionId: string) {
+		return this.set(
+			'actionId',
+			actionId,
+			'Action effect group option already set action(). Remove the duplicate action() call.',
+		);
+	}
+
+	param(key: string, value: unknown) {
+		this.params.params = this.params.params || {};
+		if (Object.prototype.hasOwnProperty.call(this.params.params, key)) {
+			throw new Error(
+				`Action effect group option already set param "${key}". Remove the duplicate param() call.`,
+			);
+		}
+		this.params.params[key] = value;
+		return this;
+	}
+
+	override build() {
+		if (!this.wasSet('id')) {
+			throw new Error(
+				'Action effect group option is missing id(). Call id("your-option-id") before build().',
+			);
+		}
+		if (!this.wasSet('label')) {
+			throw new Error(
+				'Action effect group option is missing label(). Call label("Readable choice") before build().',
+			);
+		}
+		if (!this.wasSet('actionId')) {
+			throw new Error(
+				'Action effect group option is missing action(). Call action("action-id") before build().',
+			);
+		}
+		return super.build() as ActionEffectGroupOptionDef;
+	}
+}
+
+export function actionEffectGroupOption(id?: string) {
+	return new ActionEffectGroupOptionBuilder(id);
+}
+
+export interface ActionEffectGroupDef {
+	id: string;
+	title: string;
+	summary?: string;
+	description?: string;
+	icon?: string;
+	options: ActionEffectGroupOptionDef[];
+}
+
+class ActionEffectGroupBuilder {
+	private config: Partial<ActionEffectGroupDef> & {
+		options: ActionEffectGroupOptionDef[];
+	};
+	private readonly optionIds = new Set<string>();
+	private idSet = false;
+	private titleSet = false;
+
+	constructor(id?: string) {
+		this.config = { options: [] };
+		if (id) {
+			this.id(id);
+		}
+	}
+
+	id(id: string) {
+		if (this.idSet) {
+			throw new Error(
+				'Action effect group already has an id(). Remove the extra id() call.',
+			);
+		}
+		this.config.id = id;
+		this.idSet = true;
+		return this;
+	}
+
+	title(title: string) {
+		if (this.titleSet) {
+			throw new Error(
+				'Action effect group already has a title(). Remove the extra title() call.',
+			);
+		}
+		this.config.title = title;
+		this.titleSet = true;
+		return this;
+	}
+
+	icon(icon: string) {
+		this.config.icon = icon;
+		return this;
+	}
+
+	summary(summary: string) {
+		this.config.summary = summary;
+		return this;
+	}
+
+	description(description: string) {
+		this.config.description = description;
+		return this;
+	}
+
+	option(option: ActionEffectGroupOptionBuilder | ActionEffectGroupOptionDef) {
+		const built =
+			option instanceof ActionEffectGroupOptionBuilder
+				? option.build()
+				: option;
+		if (this.optionIds.has(built.id)) {
+			throw new Error(
+				`Action effect group option id "${built.id}" already exists. Use unique option ids within a group.`,
+			);
+		}
+		this.optionIds.add(built.id);
+		this.config.options.push(built);
+		return this;
+	}
+
+	build(): ActionEffectGroupDef {
+		if (!this.idSet) {
+			throw new Error(
+				"Action effect group is missing id(). Call id('your-group-id') before build().",
+			);
+		}
+		if (!this.titleSet) {
+			throw new Error(
+				"Action effect group is missing title(). Call title('Readable prompt') before build().",
+			);
+		}
+		if (this.config.options.length === 0) {
+			throw new Error(
+				'Action effect group needs at least one option(). Add option(...) before build().',
+			);
+		}
+		return this.config as ActionEffectGroupDef;
+	}
+}
+
+export function actionEffectGroup(id?: string) {
+	return new ActionEffectGroupBuilder(id);
+}
+
 class ResourceEffectParamsBuilder extends ParamsBuilder<{
 	key?: ResourceKey;
 	amount?: number;
@@ -1322,7 +1531,13 @@ class BaseBuilder<T extends { id: string; name: string }> {
 	}
 }
 
-export class ActionBuilder extends BaseBuilder<ActionConfig> {
+type ActionBuilderConfig = ActionConfig & {
+	effectGroups?: ActionEffectGroupDef[];
+};
+
+export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
+	private readonly effectGroupIds = new Set<string>();
+
 	constructor() {
 		super({ effects: [] }, 'Action');
 	}
@@ -1339,6 +1554,24 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 	}
 	effect(effect: EffectConfig) {
 		this.config.effects.push(effect);
+		return this;
+	}
+	effectGroup(group: ActionEffectGroupBuilder | ActionEffectGroupDef) {
+		if (!(this instanceof ActionBuilder)) {
+			throw new Error(
+				'Action effect groups can only be used on actions. Use action().effectGroup(...).',
+			);
+		}
+		const built =
+			group instanceof ActionEffectGroupBuilder ? group.build() : group;
+		if (this.effectGroupIds.has(built.id)) {
+			throw new Error(
+				`Action effect group id "${built.id}" already exists on this action. Use unique group ids.`,
+			);
+		}
+		this.effectGroupIds.add(built.id);
+		this.config.effectGroups = this.config.effectGroups || [];
+		this.config.effectGroups.push(built);
 		return this;
 	}
 	system(flag = true) {
