@@ -2,93 +2,23 @@ import type {
 	RuleSet,
 	HappinessTierDefinition,
 } from '@kingdom-builder/engine/services';
-import type { EffectConfig } from '@kingdom-builder/engine/config/schema';
-import { Resource } from './resources';
-import { Stat } from './stats';
 import {
-	Types,
-	CostModMethods,
-	ResultModMethods,
-	StatMethods,
-	costModParams,
-	evaluationTarget,
-	happinessTier,
-	resultModParams,
-	statParams,
-	effect,
-	passiveParams,
-	PassiveMethods,
-} from './config/builders';
-
-const GROWTH_PHASE_ID = 'growth';
-const UPKEEP_PHASE_ID = 'upkeep';
-const WAR_RECOVERY_STEP_ID = 'war-recovery';
-const BUILD_ACTION_ID = 'build';
-
-const DEVELOPMENT_EVALUATION = evaluationTarget('development');
-const incomeModifier = (id: string, percent: number) =>
-	({
-		type: Types.ResultMod,
-		method: ResultModMethods.ADD,
-		params: resultModParams()
-			.id(id)
-			.evaluation(DEVELOPMENT_EVALUATION)
-			.percent(percent)
-			.build(),
-	}) as const;
-
-const buildingDiscountModifier = (id: string) =>
-	({
-		type: Types.CostMod,
-		method: CostModMethods.ADD,
-		params: costModParams()
-			.id(id)
-			.actionId(BUILD_ACTION_ID)
-			.key(Resource.gold)
-			.percent(-0.2)
-			.build(),
-	}) as const;
-
-const growthBonusEffect = (amount: number) =>
-	({
-		type: Types.Stat,
-		method: StatMethods.ADD,
-		params: statParams().key(Stat.growth).amount(amount).build(),
-	}) as const;
-
-const formatRemoval = (description: string) =>
-	`Active as long as ${description}`;
-
-type TierPassiveEffectOptions = {
-	tierId: string;
-	summary: string;
-	removalDetail: string;
-	params: ReturnType<typeof passiveParams>;
-	effects?: EffectConfig[];
-};
-
-function createTierPassiveEffect({
-	tierId,
-	summary,
-	removalDetail,
-	params,
-	effects = [],
-}: TierPassiveEffectOptions) {
-	params.detail(summary);
-	params.meta({
-		source: { type: 'tiered-resource', id: tierId },
-		removal: { token: removalDetail, text: formatRemoval(removalDetail) },
-	});
-	const builder = effect()
-		.type(Types.Passive)
-		.method(PassiveMethods.ADD)
-		.params(params);
-	effects.forEach((entry) => builder.effect(entry));
-	return builder;
-}
+	buildingDiscountModifier,
+	createTierPassiveEffect,
+	formatRemoval,
+	GROWTH_PHASE_ID,
+	growthBonusEffect,
+	incomeModifier,
+	UPKEEP_PHASE_ID,
+	WAR_RECOVERY_STEP_ID,
+} from './happinessHelpers';
+import { happinessTier, passiveParams } from './config/builders';
+import { Resource } from './resources';
 
 const happinessSummaryToken = (slug: string) =>
 	`happiness.tier.summary.${slug}`;
+
+const joinSummary = (...lines: string[]) => lines.join('\n');
 
 const TIER_CONFIGS = [
 	{
@@ -100,7 +30,11 @@ const TIER_CONFIGS = [
 		skipPhases: [GROWTH_PHASE_ID],
 		skipSteps: [{ phase: UPKEEP_PHASE_ID, step: WAR_RECOVERY_STEP_ID }],
 		summaryToken: happinessSummaryToken('despair'),
-		summary: '💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.',
+		summary: joinSummary(
+			'During income step, gain 50% less 🪙 gold.',
+			'Skip Growth phase.',
+			'Skip War Recovery step during Upkeep phase.',
+		),
 		removal: 'happiness is -10 or lower',
 		effects: [incomeModifier('happiness:despair:income', -0.5)],
 	},
@@ -112,7 +46,10 @@ const TIER_CONFIGS = [
 		disableGrowth: true,
 		skipPhases: [GROWTH_PHASE_ID],
 		summaryToken: happinessSummaryToken('misery'),
-		summary: '💰 Income -50%. ⏭️ Skip Growth while morale is ' + 'desperate.',
+		summary: joinSummary(
+			'During income step, gain 50% less 🪙 gold.',
+			'Skip Growth phase.',
+		),
 		removal: 'happiness stays between -9 and -8',
 		effects: [incomeModifier('happiness:misery:income', -0.5)],
 	},
@@ -124,7 +61,10 @@ const TIER_CONFIGS = [
 		disableGrowth: true,
 		skipPhases: [GROWTH_PHASE_ID],
 		summaryToken: happinessSummaryToken('grim'),
-		summary: '💰 Income -25%. ⏭️ Skip Growth until spirits recover.',
+		summary: joinSummary(
+			'During income step, gain 25% less 🪙 gold.',
+			'Skip Growth phase.',
+		),
 		removal: 'happiness stays between -7 and -5',
 		effects: [incomeModifier('happiness:grim:income', -0.25)],
 	},
@@ -134,7 +74,7 @@ const TIER_CONFIGS = [
 		range: { min: -4, max: -3 },
 		incomeMultiplier: 0.75,
 		summaryToken: happinessSummaryToken('unrest'),
-		summary: '💰 Income -25% while unrest simmers.',
+		summary: 'During income step, gain 25% less 🪙 gold.',
 		removal: 'happiness stays between -4 and -3',
 		effects: [incomeModifier('happiness:unrest:income', -0.25)],
 	},
@@ -143,7 +83,7 @@ const TIER_CONFIGS = [
 		range: { min: -2, max: 2 },
 		incomeMultiplier: 1,
 		summaryToken: happinessSummaryToken('steady'),
-		summary: 'Morale is steady. No tier bonuses are active.',
+		summary: 'No tier bonuses active.',
 		removal: 'happiness stays between -2 and +2',
 	},
 	{
@@ -152,7 +92,7 @@ const TIER_CONFIGS = [
 		range: { min: 3, max: 4 },
 		incomeMultiplier: 1.2,
 		summaryToken: happinessSummaryToken('content'),
-		summary: '💰 Income +20% while the realm is content.',
+		summary: 'During income step, gain 20% more 🪙 gold.',
 		removal: 'happiness stays between +3 and +4',
 		effects: [incomeModifier('happiness:content:income', 0.2)],
 	},
@@ -163,7 +103,10 @@ const TIER_CONFIGS = [
 		incomeMultiplier: 1.25,
 		buildingDiscountPct: 0.2,
 		summaryToken: happinessSummaryToken('joyful'),
-		summary: '💰 Income +25%. 🏛️ Building costs reduced by 20%.',
+		summary: joinSummary(
+			'During income step, gain 25% more 🪙 gold.',
+			'Build action costs 20% less 🪙 gold.',
+		),
 		removal: 'happiness stays between +5 and +7',
 		effects: [
 			incomeModifier('happiness:joyful:income', 0.25),
@@ -177,7 +120,10 @@ const TIER_CONFIGS = [
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
 		summaryToken: happinessSummaryToken('elated'),
-		summary: '💰 Income +50%. 🏛️ Building costs reduced by 20%.',
+		summary: joinSummary(
+			'During income step, gain 50% more 🪙 gold.',
+			'Build action costs 20% less 🪙 gold.',
+		),
 		removal: 'happiness stays between +8 and +9',
 		effects: [
 			incomeModifier('happiness:elated:income', 0.5),
@@ -192,8 +138,11 @@ const TIER_CONFIGS = [
 		buildingDiscountPct: 0.2,
 		growthBonusPct: 0.2,
 		summaryToken: happinessSummaryToken('ecstatic'),
-		summary:
-			'💰 Income +50%. 🏛️ Building costs reduced by 20%. ' + '📈 Growth +20%.',
+		summary: joinSummary(
+			'During income step, gain 50% more 🪙 gold.',
+			'Build action costs 20% less 🪙 gold.',
+			'During Growth phase, gain 20% more 📈 Growth.',
+		),
 		removal: 'happiness is +10 or higher',
 		effects: [
 			incomeModifier('happiness:ecstatic:income', 0.5),

@@ -1,110 +1,11 @@
 import React from 'react';
-import {
-	PASSIVE_INFO,
-	RESOURCES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
+import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
-import { summarizeEffects, translateTierSummary } from '../../translation';
-
-type TierDefinition =
-	EngineContext['services']['rules']['tierDefinitions'][number];
-type TierSummaryEntry = TierDefinition & { active: boolean };
-
-function formatTierRange(tier: TierDefinition) {
-	const { min, max } = tier.range;
-	if (max === undefined) {
-		return `${min}+`;
-	}
-	if (min === max) {
-		return `${min}`;
-	}
-	return `${min} to ${max}`;
-}
-
-function collectSummaryLines(
-	entries: ReturnType<typeof summarizeEffects>,
-	limit: number,
-) {
-	if (limit <= 0) {
-		return [] as string[];
-	}
-	const lines: string[] = [];
-	const queue = [...entries];
-	while (queue.length && lines.length < limit) {
-		const entry = queue.shift();
-		if (entry === undefined) {
-			continue;
-		}
-		if (typeof entry === 'string') {
-			const trimmed = entry.trim();
-			if (trimmed && !lines.includes(trimmed)) {
-				lines.push(trimmed);
-			}
-			continue;
-		}
-		const title = entry.title.trim();
-		if (title && !lines.includes(title)) {
-			lines.push(title);
-		}
-		if (lines.length >= limit) {
-			break;
-		}
-		if (entry.items?.length) {
-			queue.unshift(...entry.items);
-		}
-	}
-	return lines;
-}
-
-function buildTierEntries(
-	tiers: TierDefinition[],
-	activeId: string | undefined,
-	ctx: EngineContext,
-) {
-	const entries: TierSummaryEntry[] = tiers.map((tier) => ({
-		...tier,
-		active: tier.id === activeId,
-	}));
-	return entries.map((entry) => {
-		const { preview, display, text, active } = entry;
-		const rangeLabel = formatTierRange(entry);
-		const statusIcon = active ? '🟢' : '⚪';
-		const icon = display?.icon ?? PASSIVE_INFO.icon ?? '';
-		const titleParts = [statusIcon, icon, rangeLabel].filter(
-			(part) => part && String(part).trim().length > 0,
-		);
-		const title = titleParts.join(' ').trim();
-
-		const summaryToken = display?.summaryToken;
-		const items: string[] = [];
-		const translatedSummary = translateTierSummary(summaryToken);
-		if (translatedSummary) {
-			items.push(translatedSummary);
-		} else if (text?.summary) {
-			items.push(text.summary.trim());
-		}
-
-		const remainingSlots = Math.max(0, 2 - items.length);
-		if (remainingSlots > 0) {
-			const summaries = collectSummaryLines(
-				summarizeEffects(preview?.effects || [], ctx),
-				remainingSlots,
-			);
-			items.push(...summaries);
-		}
-
-		if (!items.length) {
-			items.push('No tier bonuses active');
-		}
-
-		return { title, items };
-	});
-}
+import { buildTierEntries } from './buildTierEntries';
 
 interface ResourceButtonProps {
 	resourceKey: keyof typeof RESOURCES;

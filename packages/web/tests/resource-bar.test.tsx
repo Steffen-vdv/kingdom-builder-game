@@ -18,23 +18,39 @@ import {
 } from '@kingdom-builder/contents';
 import ResourceBar from '../src/components/player/ResourceBar';
 import { translateTierSummary } from '../src/translation';
-
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
-
 type MockGame = {
 	ctx: EngineContext;
 	handleHoverCard: ReturnType<typeof vi.fn>;
 	clearHoverCard: ReturnType<typeof vi.fn>;
 };
+type TierDefinition =
+	EngineContext['services']['rules']['tierDefinitions'][number];
 
+const REMOVAL_PATTERN = /Active as long as/i;
+
+function expectNoRemovalLore(items: unknown[]) {
+	items.forEach((item) => {
+		if (typeof item === 'string') {
+			expect(item).not.toMatch(REMOVAL_PATTERN);
+		}
+	});
+}
+
+function expectSummaryMatches(items: unknown[], summary: string) {
+	const summaryLines = summary
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0)
+		.map((line) => `- ${line}`);
+	expect(items).toEqual(expect.arrayContaining(summaryLines));
+}
 let currentGame: MockGame;
-
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => currentGame,
 }));
-
 describe('<ResourceBar /> happiness hover card', () => {
 	it('lists happiness tiers with concise summaries and highlights the active threshold', () => {
 		const ctx = createEngine({
@@ -49,7 +65,6 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 6;
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
-
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
 		currentGame = {
@@ -57,16 +72,13 @@ describe('<ResourceBar /> happiness hover card', () => {
 			handleHoverCard,
 			clearHoverCard,
 		} as MockGame;
-
 		render(<ResourceBar player={ctx.activePlayer} />);
-
 		const info = RESOURCES[happinessKey];
 		const value = ctx.activePlayer.resources[happinessKey] ?? 0;
 		const button = screen.getByRole('button', {
 			name: `${info.label}: ${value}`,
 		});
 		fireEvent.mouseEnter(button);
-
 		expect(handleHoverCard).toHaveBeenCalled();
 		const call = handleHoverCard.mock.calls.at(-1)?.[0];
 		expect(call).toBeTruthy();
@@ -81,20 +93,21 @@ describe('<ResourceBar /> happiness hover card', () => {
 		) as { items: unknown[] } | undefined;
 		expect(activeEntry).toBeTruthy();
 		const tiers = ctx.services.rules.tierDefinitions;
-		tiers.forEach((tier, index) => {
+		const getRangeStart = (tier: TierDefinition) =>
+			tier.range.min ?? Number.NEGATIVE_INFINITY;
+		const orderedTiers = [...tiers].sort(
+			(a, b) => getRangeStart(b) - getRangeStart(a),
+		);
+		orderedTiers.forEach((tier, index) => {
 			const entry = tierEntries.at(index) as { items?: unknown[] } | undefined;
 			expect(entry).toBeTruthy();
 			const items = entry?.items ?? [];
-			expect(items.length).toBeLessThanOrEqual(2);
-			items.forEach((item) => {
-				if (typeof item === 'string') {
-					expect(item).not.toMatch(/Active as long as/i);
-				}
-			});
+			expect(items.length).toBeLessThanOrEqual(4);
+			expectNoRemovalLore(items);
 			const summaryToken = tier.display?.summaryToken;
 			const translatedSummary = translateTierSummary(summaryToken);
 			if (translatedSummary) {
-				expect(items).toContain(translatedSummary);
+				expectSummaryMatches(items, translatedSummary);
 			}
 		});
 	});
