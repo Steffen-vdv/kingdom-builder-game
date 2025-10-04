@@ -56,12 +56,12 @@ beforeEach(() => {
 describe('<ActionsPanel />', () => {
 	it('renders hire options for available population roles with derived requirement icons', () => {
 		render(<ActionsPanel />);
-		expect(screen.getByText('👶⚖️ Hire: Council')).toBeInTheDocument();
-		expect(screen.getByText('👶🎖️ Hire: Legion')).toBeInTheDocument();
+		expect(screen.getAllByText('👶⚖️ Hire: Council')).not.toHaveLength(0);
+		expect(screen.getAllByText('👶🎖️ Hire: Legion')).not.toHaveLength(0);
 		expect(screen.queryByText(/Fortifier/)).not.toBeInTheDocument();
 		expect(screen.queryByText(/Citizen/)).not.toBeInTheDocument();
-		expect(screen.getByText('Req 📈👥⚖️')).toBeInTheDocument();
-		expect(screen.getByText('Req 📈👥🎖️')).toBeInTheDocument();
+		expect(screen.getAllByText('Req 📈👥⚖️')).not.toHaveLength(0);
+		expect(screen.getAllByText('Req 📈👥🎖️')).not.toHaveLength(0);
 	});
 
 	it('falls back to requirement helper icons for building cards', () => {
@@ -71,6 +71,6 @@ describe('<ActionsPanel />', () => {
 			'build',
 			expect.anything(),
 		);
-		expect(screen.getByText('Req 🛠️')).toBeInTheDocument();
+		expect(screen.getAllByText('Req 🛠️')).not.toHaveLength(0);
 	});
 });

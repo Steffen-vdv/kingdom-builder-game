@@ -1,4 +1,7 @@
-import type { EngineContext } from '@kingdom-builder/engine';
+import type {
+	EngineContext,
+	ActionEffectGroupConfig,
+} from '@kingdom-builder/engine';
 import { summarizeEffects, describeEffects, logEffects } from '../effects';
 import { applyParamsToEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator } from './factory';
@@ -8,6 +11,14 @@ import { getActionLogHook } from './actionLogHooks';
 class ActionTranslator
 	implements ContentTranslator<string, Record<string, unknown>>
 {
+	private summarizeGroups(groups: ActionEffectGroupConfig[] | undefined) {
+		if (!groups?.length) return [];
+		return groups.map((group, index) => ({
+			title: `Choice ${index + 1}: ${group.label}`,
+			items: group.options.map((option) => option.label),
+		}));
+	}
+
 	summarize(
 		id: string,
 		ctx: EngineContext,
@@ -18,7 +29,9 @@ class ActionTranslator
 			? applyParamsToEffects(def.effects, opts)
 			: def.effects;
 		const eff = summarizeEffects(effects, ctx);
-		return eff.length ? eff : [];
+		const choices = this.summarizeGroups(def.effectGroups);
+		const combined: Summary = [...choices, ...eff];
+		return combined.length ? combined : [];
 	}
 	describe(
 		id: string,
@@ -30,7 +43,9 @@ class ActionTranslator
 			? applyParamsToEffects(def.effects, opts)
 			: def.effects;
 		const eff = describeEffects(effects, ctx);
-		return eff.length ? eff : [];
+		const choices = this.summarizeGroups(def.effectGroups);
+		const combined: Summary = [...choices, ...eff];
+		return combined.length ? combined : [];
 	}
 	log(
 		id: string,

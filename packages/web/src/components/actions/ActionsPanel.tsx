@@ -1,5 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import {
+	getActionCosts,
+	getActionRequirements,
+	type ActionEffectGroupConfig,
+} from '@kingdom-builder/engine';
 import {
 	RESOURCES,
 	POPULATION_ROLES,
@@ -31,6 +41,7 @@ interface Action {
 	focus?: Focus;
 	requirements?: unknown[];
 	effects?: unknown[];
+	effectGroups?: ActionEffectGroupConfig[];
 }
 interface Development {
 	id: string;
@@ -111,6 +122,53 @@ type PopulationRegistryLike = {
 	get(id: string): PopulationDefinition;
 	entries(): [string, PopulationDefinition][];
 };
+
+interface MultiStepCardDefaultFace {
+	kind: 'default';
+}
+
+interface MultiStepCardOptionsFace {
+	kind: 'options';
+	groupId: string;
+	label: string;
+	step: number;
+	total: number;
+	options: { id: string; label: string }[];
+}
+
+type MultiStepCardFace = MultiStepCardDefaultFace | MultiStepCardOptionsFace;
+
+interface MultiStepActionState {
+	actionId: string;
+	groups: ActionEffectGroupConfig[];
+	faces: {
+		front: MultiStepCardFace;
+		back: MultiStepCardFace;
+	};
+	visibleFace: 'front' | 'back';
+	selections: Record<string, string>;
+	interactive: boolean;
+}
+
+const MULTI_STEP_RESET_DELAY = 500;
+
+function toOptionsFace(
+	group: ActionEffectGroupConfig,
+	step: number,
+	total: number,
+): MultiStepCardFace {
+	return {
+		kind: 'options',
+		groupId: group.id,
+		label: group.label,
+		step,
+		total,
+		options: group.options.map((option) => ({
+			id: option.id,
+			label: option.label,
+		})),
+	};
+}
 
 function isHirablePopulation(
 	population: PopulationDefinition | undefined,
@@ -281,8 +339,97 @@ function GenericActions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		addLogEntry,
 	} = useGameEngine();
 	const formatRequirement = (req: string) => req;
+	const [activeMultiStep, setActiveMultiStep] =
+		useState<MultiStepActionState | null>(null);
+	const completionTimeout = useRef<number | null>(null);
+
+	const clearCompletionTimeout = useCallback(() => {
+		if (completionTimeout.current !== null) {
+			window.clearTimeout(completionTimeout.current);
+			completionTimeout.current = null;
+		}
+	}, []);
+
+	useEffect(() => () => clearCompletionTimeout(), [clearCompletionTimeout]);
+
+	const scheduleReset = useCallback(
+		(mode: 'complete' | 'cancel') => {
+			clearCompletionTimeout();
+			completionTimeout.current = window.setTimeout(() => {
+				completionTimeout.current = null;
+				setActiveMultiStep(null);
+				if (mode === 'complete') {
+					addLogEntry(
+						'Demo: All actions of multi-step action chosen, if i had engine support I would now execute..',
+					);
+				}
+			}, MULTI_STEP_RESET_DELAY);
+		},
+		[addLogEntry, clearCompletionTimeout],
+	);
+
+	const handleSelectOption = useCallback(
+		(groupId: string, optionId: string) => {
+			let shouldFinish: 'complete' | undefined;
+			setActiveMultiStep((prev) => {
+				if (!prev || !prev.interactive) return prev;
+				if (!prev.groups.some((group) => group.id === groupId)) return prev;
+				const selections = { ...prev.selections, [groupId]: optionId };
+				const completedCount = Object.keys(selections).length;
+				const total = prev.groups.length;
+				if (completedCount < total) {
+					const nextGroup = prev.groups[completedCount];
+					const nextFace = prev.visibleFace === 'front' ? 'back' : 'front';
+					return {
+						...prev,
+						selections,
+						faces: {
+							...prev.faces,
+							[nextFace]: toOptionsFace(nextGroup, completedCount + 1, total),
+						},
+						visibleFace: nextFace,
+					};
+				}
+				const nextFace = prev.visibleFace === 'front' ? 'back' : 'front';
+				shouldFinish = 'complete';
+				return {
+					...prev,
+					selections,
+					faces: {
+						...prev.faces,
+						[nextFace]: { kind: 'default' },
+					},
+					visibleFace: nextFace,
+					interactive: false,
+				};
+			});
+			if (shouldFinish) scheduleReset(shouldFinish);
+		},
+		[scheduleReset],
+	);
+
+	const handleCancelMultiStep = useCallback(() => {
+		let shouldCancel = false;
+		setActiveMultiStep((prev) => {
+			if (!prev) return prev;
+			shouldCancel = true;
+			const nextFace = prev.visibleFace === 'front' ? 'back' : 'front';
+			return {
+				...prev,
+				faces: {
+					...prev.faces,
+					[nextFace]: { kind: 'default' },
+				},
+				visibleFace: nextFace,
+				interactive: false,
+			};
+		});
+		if (shouldCancel) scheduleReset('cancel');
+	}, [scheduleReset]);
+
 	const entries = useMemo(() => {
 		return actions
 			.map((action) => {
@@ -300,6 +447,10 @@ function GenericActions({
 	return (
 		<>
 			{entries.map(({ action, costs }) => {
+				const definition = ctx.actions.get(action.id) as Action | undefined;
+				const effectGroups = definition?.effectGroups ?? [];
+				const hasMultiStep = effectGroups.length > 0;
+				const isActiveMultiStep = activeMultiStep?.actionId === action.id;
 				const requirements = getActionRequirements(action.id, ctx).map(
 					formatRequirement,
 				);
@@ -310,7 +461,14 @@ function GenericActions({
 				const meetsReq = requirements.length === 0;
 				const summary = summaries.get(action.id);
 				const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
-				const enabled = canPay && meetsReq && canInteract && implemented;
+				const lockedByMultiStep =
+					activeMultiStep !== null && !isActiveMultiStep;
+				const enabled =
+					canPay &&
+					meetsReq &&
+					canInteract &&
+					implemented &&
+					!lockedByMultiStep;
 				const insufficientTooltip = formatMissingResources(
 					costs,
 					player.resources,
@@ -322,12 +480,21 @@ function GenericActions({
 						: !canPay
 							? (insufficientTooltip ?? 'Cannot pay costs')
 							: undefined;
+				const multiStepState = isActiveMultiStep
+					? {
+							front: activeMultiStep.faces.front,
+							back: activeMultiStep.faces.back,
+							flipped: activeMultiStep.visibleFace === 'back',
+							visibleFace: activeMultiStep.visibleFace,
+							interactive: activeMultiStep.interactive,
+						}
+					: undefined;
 				return (
 					<ActionCard
 						key={action.id}
 						title={
 							<>
-								{ctx.actions.get(action.id)?.icon || ''} {action.name}
+								{definition?.icon || ''} {action.name}
 							</>
 						}
 						costs={costs}
@@ -339,16 +506,47 @@ function GenericActions({
 						implemented={implemented}
 						enabled={enabled}
 						tooltip={title}
-						focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
+						focus={definition?.focus}
+						isMultiStep={hasMultiStep}
+						multiStepState={multiStepState}
+						onSelectMultiStepOption={
+							isActiveMultiStep
+								? (groupId, optionId) => handleSelectOption(groupId, optionId)
+								: undefined
+						}
+						onCancelMultiStep={
+							isActiveMultiStep ? handleCancelMultiStep : undefined
+						}
 						onClick={() => {
-							if (!canInteract) return;
+							if (!canInteract || !enabled) return;
+							if (hasMultiStep) {
+								if (activeMultiStep) return;
+								clearHoverCard();
+								clearCompletionTimeout();
+								setActiveMultiStep({
+									actionId: action.id,
+									groups: effectGroups,
+									faces: {
+										front: { kind: 'default' },
+										back: toOptionsFace(
+											effectGroups[0],
+											1,
+											effectGroups.length,
+										),
+									},
+									visibleFace: 'back',
+									selections: {},
+									interactive: true,
+								});
+								return;
+							}
 							void handlePerform(action);
 						}}
 						onMouseEnter={() => {
 							const full = describeContent('action', action.id, ctx);
 							const { effects, description } = splitSummary(full);
 							handleHoverCard({
-								title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
+								title: `${definition?.icon || ''} ${action.name}`,
 								effects,
 								requirements,
 								costs,

@@ -5,6 +5,8 @@ import type {
 	PopulationConfig,
 	RequirementConfig,
 	EffectConfig,
+	ActionEffectGroupConfig,
+	ActionEffectGroupOptionConfig,
 } from '@kingdom-builder/engine/config/schema';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
@@ -124,6 +126,75 @@ abstract class ParamsBuilder<P extends Params = Params> {
 
 function resolveEffectConfig(effect: EffectConfig | EffectBuilder) {
 	return effect instanceof EffectBuilder ? effect.build() : effect;
+}
+
+class ActionEffectGroupBuilder {
+	private config: Partial<ActionEffectGroupConfig> & {
+		options: ActionEffectGroupOptionConfig[];
+	} = { options: [] };
+	private idSet = false;
+	private labelSet = false;
+
+	id(id: string) {
+		if (this.idSet) throw new Error('Action effect group already has id().');
+		this.config.id = id;
+		this.idSet = true;
+		return this;
+	}
+
+	label(label: string) {
+		if (this.labelSet)
+			throw new Error('Action effect group already has label().');
+		this.config.label = label;
+		this.labelSet = true;
+		return this;
+	}
+
+	option(id: string, label: string, effect: EffectConfig | EffectBuilder) {
+		if (!id)
+			throw new Error(
+				'Action effect group option requires a non-empty id string.',
+			);
+		if (!label)
+			throw new Error(
+				'Action effect group option requires a non-empty label string.',
+			);
+		const built: ActionEffectGroupOptionConfig = {
+			id,
+			label,
+			effect: resolveEffectConfig(effect),
+		};
+		this.config.options.push(built);
+		return this;
+	}
+
+	build(): ActionEffectGroupConfig {
+		if (!this.config.id)
+			throw new Error(
+				'Action effect group is missing id(). Call id("your-group") before build().',
+			);
+		if (!this.config.label)
+			throw new Error(
+				'Action effect group is missing label(). Call label("Readable label") before build().',
+			);
+		if (this.config.options.length < 2)
+			throw new Error('Action effect group requires at least two options.');
+		const optionIds = new Set<string>();
+		for (const option of this.config.options) {
+			if (optionIds.has(option.id))
+				throw new Error(
+					`Action effect group option id "${option.id}" is used more than once.`,
+				);
+			optionIds.add(option.id);
+		}
+		return this.config as ActionEffectGroupConfig;
+	}
+}
+
+export function actionEffectGroup(id?: string) {
+	const builder = new ActionEffectGroupBuilder();
+	if (id) builder.id(id);
+	return builder;
 }
 
 class ResourceEffectParamsBuilder extends ParamsBuilder<{
@@ -1240,7 +1311,7 @@ class BaseBuilder<T extends { id: string; name: string }> {
 
 export class ActionBuilder extends BaseBuilder<ActionConfig> {
 	constructor() {
-		super({ effects: [] }, 'Action');
+		super({ effects: [], effectGroups: [] }, 'Action');
 	}
 	cost(key: ResourceKey, amount: number) {
 		this.config.baseCosts = this.config.baseCosts || {};
@@ -1253,8 +1324,15 @@ export class ActionBuilder extends BaseBuilder<ActionConfig> {
 		this.config.requirements.push(built);
 		return this;
 	}
-	effect(effect: EffectConfig) {
-		this.config.effects.push(effect);
+	effect(effect: EffectConfig | EffectBuilder) {
+		this.config.effects.push(resolveEffectConfig(effect));
+		return this;
+	}
+	effectGroup(group: ActionEffectGroupConfig | ActionEffectGroupBuilder) {
+		const built =
+			group instanceof ActionEffectGroupBuilder ? group.build() : group;
+		this.config.effectGroups = this.config.effectGroups || [];
+		this.config.effectGroups.push(built);
 		return this;
 	}
 	system(flag = true) {

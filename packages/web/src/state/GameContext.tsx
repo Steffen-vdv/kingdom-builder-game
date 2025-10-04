@@ -110,6 +110,10 @@ interface GameEngineContextValue {
 	onToggleDark: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
+	addLogEntry: (
+		entry: string | string[],
+		player?: EngineContext['activePlayer'],
+	) => void;
 }
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
@@ -698,6 +702,7 @@ export function GameProvider({
 		onToggleDark,
 		timeScale,
 		setTimeScale: changeTimeScale,
+		addLogEntry: addLog,
 		...(onExit ? { onExit } : {}),
 	};
 

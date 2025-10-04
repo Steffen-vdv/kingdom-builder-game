@@ -38,7 +38,12 @@ export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
 export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
-export type { GameConfig } from './config/schema';
+export type {
+	GameConfig,
+	ActionConfig,
+	ActionEffectGroupConfig,
+	ActionEffectGroupOptionConfig,
+} from './config/schema';
 export { resolveAttack } from './effects/attack';
 export type {
 	AttackLog,

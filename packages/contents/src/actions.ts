@@ -32,6 +32,7 @@ import {
 	statEvaluator,
 	attackParams,
 	transferParams,
+	actionEffectGroup,
 } from './config/builders';
 import type { Focus } from './defs';
 
@@ -157,6 +158,87 @@ export function createActionRegistry() {
 		category: 'basic',
 		order: 4,
 		focus: 'economy',
+	});
+
+	registry.add('festival_choice', {
+		...action()
+			.id('festival_choice')
+			.name('Festival of Choices')
+			.icon('🎭')
+			.cost(Resource.ap, 1)
+			.effectGroup(
+				actionEffectGroup('festival-reward')
+					.label('Select your celebration reward')
+					.option(
+						'festival-gold',
+						'Gain 3 Gold',
+						effect(Types.Resource, ResourceMethods.ADD)
+							.params(resourceParams().key(Resource.gold).amount(3))
+							.build(),
+					)
+					.option(
+						'festival-joy',
+						'Gain 2 Happiness',
+						effect(Types.Resource, ResourceMethods.ADD)
+							.params(resourceParams().key(Resource.happiness).amount(2))
+							.build(),
+					)
+					.build(),
+			)
+			.build(),
+		category: 'basic',
+		order: 5,
+		focus: 'economy',
+	});
+
+	registry.add('strategic_campaign', {
+		...action()
+			.id('strategic_campaign')
+			.name('Strategic Campaign')
+			.icon('🧭')
+			.cost(Resource.ap, 1)
+			.effectGroup(
+				actionEffectGroup('campaign-prep')
+					.label('Prepare your forces')
+					.option(
+						'campaign-train',
+						'Train the Legion (+1 Army Strength)',
+						effect(Types.Stat, StatMethods.ADD)
+							.params(statParams().key(Stat.armyStrength).amount(1))
+							.build(),
+					)
+					.option(
+						'campaign-fortify',
+						'Fortify the walls (+1 Fortification Strength)',
+						effect(Types.Stat, StatMethods.ADD)
+							.params(statParams().key(Stat.fortificationStrength).amount(1))
+							.build(),
+					)
+					.build(),
+			)
+			.effectGroup(
+				actionEffectGroup('campaign-march')
+					.label('Decide the campaign reward')
+					.option(
+						'campaign-gold',
+						'Collect 2 Gold',
+						effect(Types.Resource, ResourceMethods.ADD)
+							.params(resourceParams().key(Resource.gold).amount(2))
+							.build(),
+					)
+					.option(
+						'campaign-morale',
+						'Boost morale (+1 Happiness)',
+						effect(Types.Resource, ResourceMethods.ADD)
+							.params(resourceParams().key(Resource.happiness).amount(1))
+							.build(),
+					)
+					.build(),
+			)
+			.build(),
+		category: 'basic',
+		order: 6,
+		focus: 'aggressive',
 	});
 
 	registry.add('raise_pop', {
