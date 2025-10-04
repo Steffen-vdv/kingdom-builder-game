@@ -9,6 +9,12 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 	const audioRef = useRef<HTMLAudioElement | null>(null);
 	const resumeCleanupRef = useRef<Cleanup | null>(null);
 	const fadeFrameRef = useRef<number | null>(null);
+	const playbackRequestRef = useRef(0);
+	const enabledRef = useRef(enabled);
+
+	useEffect(() => {
+		enabledRef.current = enabled;
+	}, [enabled]);
 
 	useEffect(() => {
 		return () => {
@@ -59,11 +65,17 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 			}
 
 			const resumePlayback = async () => {
+				const requestId = (playbackRequestRef.current += 1);
 				clearPendingFade();
 				audio.volume = 0;
 				try {
 					await audio.play();
-					fadeTo(BASE_VOLUME);
+					if (
+						playbackRequestRef.current === requestId &&
+						enabledRef.current
+					) {
+						fadeTo(BASE_VOLUME);
+					}
 				} catch (error) {
 					const domError = error as DOMException;
 					if (
@@ -129,6 +141,7 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 		};
 
 		const stopPlayback = () => {
+			playbackRequestRef.current += 1;
 			resumeCleanupRef.current?.();
 			resumeCleanupRef.current = null;
 			fadeTo(0, () => {
@@ -138,12 +151,18 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 		};
 
 		const startPlayback = async () => {
+			const requestId = (playbackRequestRef.current += 1);
 			resumeCleanupRef.current?.();
 			resumeCleanupRef.current = null;
 			audio.volume = 0;
 			try {
 				await audio.play();
-				fadeTo(BASE_VOLUME);
+				if (
+					playbackRequestRef.current === requestId &&
+					enabledRef.current
+				) {
+					fadeTo(BASE_VOLUME);
+				}
 			} catch (error) {
 				const domError = error as DOMException;
 				if (
