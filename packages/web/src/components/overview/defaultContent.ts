@@ -4,11 +4,11 @@ export const DEFAULT_OVERVIEW_CONTENT: OverviewContentSection[] = [
 	{
 		kind: 'paragraph',
 		id: 'objective',
-		icon: 'castle',
+		icon: 'castleHP',
 		title: 'Your Objective',
 		span: true,
 		paragraphs: [
-			'Keep your {castle} castle standing through every assault.',
+			'Keep your {castleHP} castle standing through every assault.',
 			"Plot daring turns that unravel your rival's engine.",
 			'Victory strikes when a stronghold falls or a ruler stalls out.',
 			'The final round crowns the monarch with the healthiest realm.',
@@ -25,8 +25,8 @@ export const DEFAULT_OVERVIEW_CONTENT: OverviewContentSection[] = [
 				icon: 'growth',
 				label: 'Growth',
 				body: [
-					'Kickstarts your engine with income and {army} Army strength.',
-					'Stacks {fort} Fortification bonuses and triggers automatic boons.',
+					'Kickstarts your engine with income and {armyStrength} Army strength.',
+					'Stacks {fortificationStrength} Fortification bonuses and triggers automatic boons.',
 				],
 			},
 			{
@@ -68,7 +68,7 @@ export const DEFAULT_OVERVIEW_CONTENT: OverviewContentSection[] = [
 				body: ['Keeps the populace cheering instead of rioting.'],
 			},
 			{
-				icon: 'castle',
+				icon: 'castleHP',
 				label: 'Castle HP',
 				body: ['Is your lifeline—lose it and the dynasty topples.'],
 			},
@@ -100,7 +100,7 @@ export const DEFAULT_OVERVIEW_CONTENT: OverviewContentSection[] = [
 				icon: 'legion',
 				label: 'Legion',
 				body: [
-					'Reinforces {army} Army strength for devastating {attack} raids.',
+					'Reinforces {armyStrength} Army strength for devastating {army_attack} raids.',
 				],
 			},
 			{
@@ -123,7 +123,7 @@ export const DEFAULT_OVERVIEW_CONTENT: OverviewContentSection[] = [
 		span: true,
 		paragraphs: [
 			'Spend {ap} AP to {expand} grow territory or {develop} upgrade key lands.',
-			'Field {raisePop} specialists or launch {attack} attacks to snowball momentum.',
+			'Field {raise_pop} specialists or launch {army_attack} attacks to snowball momentum.',
 		],
 	},
 ];

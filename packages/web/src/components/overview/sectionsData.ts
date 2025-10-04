@@ -1,30 +1,9 @@
 import type { ReactNode } from 'react';
 import type { OverviewSectionDef } from './OverviewLayout';
 
-export interface OverviewIconSet {
-	expand?: ReactNode;
-	build?: ReactNode;
-	attack?: ReactNode;
-	develop?: ReactNode;
-	raisePop?: ReactNode;
-	growth?: ReactNode;
-	upkeep?: ReactNode;
-	main?: ReactNode;
-	land?: ReactNode;
-	slot?: ReactNode;
-	gold?: ReactNode;
-	ap?: ReactNode;
-	happiness?: ReactNode;
-	castle?: ReactNode;
-	army?: ReactNode;
-	fort?: ReactNode;
-	council?: ReactNode;
-	legion?: ReactNode;
-	fortifier?: ReactNode;
-	citizen?: ReactNode;
-}
+export type OverviewIconSet = Record<string, ReactNode | undefined>;
 
-export type OverviewIconKey = keyof OverviewIconSet;
+export type OverviewIconKey = string;
 
 export type OverviewParagraphContent = {
 	kind: 'paragraph';
@@ -67,7 +46,7 @@ export function createOverviewSections(
 			return {
 				kind: 'paragraph',
 				id: section.id,
-				icon: icons[section.icon],
+				icon: icons[section.icon] ?? null,
 				title: section.title,
 				paragraphs: section.paragraphs,
 				...spanProps(section.span),
@@ -77,10 +56,10 @@ export function createOverviewSections(
 		return {
 			kind: 'list',
 			id: section.id,
-			icon: icons[section.icon],
+			icon: icons[section.icon] ?? null,
 			title: section.title,
 			items: section.items.map((item) => ({
-				icon: item.icon ? icons[item.icon] : undefined,
+				icon: item.icon ? (icons[item.icon] ?? null) : undefined,
 				label: item.label,
 				body: item.body,
 			})),

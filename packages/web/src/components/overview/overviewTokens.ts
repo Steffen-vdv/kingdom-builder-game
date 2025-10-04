@@ -4,63 +4,94 @@ import {
 	LAND_INFO,
 	SLOT_INFO,
 	RESOURCES,
-	Resource,
 	PHASES,
 	POPULATION_ROLES,
-	PopulationRole,
 	STATS,
-	Stat,
 } from '@kingdom-builder/contents';
 import type { OverviewIconSet } from './sectionsData';
 
 type TokenCandidateInput = string | ReadonlyArray<string>;
-
-type OverviewTokenCategory<TKeys extends string> = Partial<
-	Record<TKeys, TokenCandidateInput>
+type OverviewTokenCategoryOverrides = Record<string, TokenCandidateInput>;
+type OverviewTokenCategoryConfig = Record<string, string[]>;
+type OverviewTokenCategoryName =
+	| 'actions'
+	| 'phases'
+	| 'resources'
+	| 'stats'
+	| 'population'
+	| 'static';
+type OverviewTokenConfigResolved = Record<
+	OverviewTokenCategoryName,
+	OverviewTokenCategoryConfig
 >;
-
-type TokenCategoryKeys = {
-	actions: 'expand' | 'build' | 'attack' | 'develop' | 'raisePop';
-	phases: 'growth' | 'upkeep' | 'main';
-	resources: 'gold' | 'ap' | 'happiness' | 'castle';
-	stats: 'army' | 'fort';
-	population: 'council' | 'legion' | 'fortifier' | 'citizen';
+const actionRegistry = actionInfo as unknown as {
+	keys(): string[];
+	has(id: string): boolean;
+	get(id: string): { icon?: ReactNode };
 };
-
-type OverviewTokenConfigResolved = {
-	[K in keyof TokenCategoryKeys]: Record<TokenCategoryKeys[K], string[]>;
+const STATIC_ICON_INFO: Record<string, { icon?: ReactNode }> = {
+	land: LAND_INFO,
+	slot: SLOT_INFO,
 };
+const PHASE_ICON_LOOKUP = new Map(
+	PHASES.map((phase) => [phase.id, phase.icon] as const),
+);
 
-const DEFAULT_TOKEN_CONFIG: OverviewTokenConfigResolved = {
-	actions: {
-		expand: ['expand'],
-		build: ['build'],
-		attack: ['army_attack', 'attack'],
-		develop: ['develop'],
-		raisePop: ['raise_pop'],
+const resolveResourceIcon = (candidates: string[]) =>
+	resolveFromRecord(RESOURCES, candidates);
+const resolveStatIcon = (candidates: string[]) =>
+	resolveFromRecord(STATS, candidates);
+const resolvePopulationIcon = (candidates: string[]) =>
+	resolveFromRecord(POPULATION_ROLES, candidates);
+const resolveStaticIcon = (candidates: string[]) =>
+	resolveFromRecord(STATIC_ICON_INFO, candidates);
+
+const CATEGORY_CONFIG = [
+	{
+		name: 'actions',
+		keys: () => actionRegistry.keys(),
+		resolve: (candidates: string[]) =>
+			resolveByCandidates(candidates, (id) => {
+				if (!actionRegistry.has(id)) {
+					return undefined;
+				}
+				return actionRegistry.get(id)?.icon;
+			}),
 	},
-	phases: {
-		growth: ['growth'],
-		upkeep: ['upkeep'],
-		main: ['main'],
+	{
+		name: 'phases',
+		keys: () => PHASES.map((phase) => phase.id),
+		resolve: (candidates: string[]) =>
+			resolveByCandidates(candidates, (id) => PHASE_ICON_LOOKUP.get(id)),
 	},
-	resources: {
-		gold: [Resource.gold],
-		ap: [Resource.ap],
-		happiness: [Resource.happiness],
-		castle: [Resource.castleHP],
+	{
+		name: 'resources',
+		keys: () => Object.keys(RESOURCES),
+		resolve: resolveResourceIcon,
 	},
-	stats: {
-		army: [Stat.armyStrength],
-		fort: [Stat.fortificationStrength],
+	{
+		name: 'stats',
+		keys: () => Object.keys(STATS),
+		resolve: resolveStatIcon,
 	},
-	population: {
-		council: [PopulationRole.Council],
-		legion: [PopulationRole.Legion],
-		fortifier: [PopulationRole.Fortifier],
-		citizen: [PopulationRole.Citizen],
+	{
+		name: 'population',
+		keys: () => Object.keys(POPULATION_ROLES),
+		resolve: resolvePopulationIcon,
 	},
-};
+	{
+		name: 'static',
+		keys: () => Object.keys(STATIC_ICON_INFO),
+		resolve: resolveStaticIcon,
+	},
+] satisfies ReadonlyArray<{
+	name: OverviewTokenCategoryName;
+	keys: () => string[];
+	resolve: (candidates: string[]) => ReactNode | undefined;
+}>;
+
+const hasOwn = (target: object | undefined, key: PropertyKey) =>
+	target !== undefined && Object.prototype.hasOwnProperty.call(target, key);
 
 function isStringArray(
 	value: TokenCandidateInput,
@@ -78,61 +109,89 @@ function normalizeCandidates(input?: TokenCandidateInput): string[] {
 	return [input];
 }
 
-function mergeTokenCategory<TKeys extends string>(
-	defaults: Record<TKeys, string[]>,
-	overrides?: OverviewTokenCategory<TKeys>,
-): Record<TKeys, string[]> {
-	const result: Record<TKeys, string[]> = {} as Record<TKeys, string[]>;
-	for (const key of Object.keys(defaults) as TKeys[]) {
+function mergeTokenCategory(
+	defaults: OverviewTokenCategoryConfig,
+	overrides?: OverviewTokenCategoryOverrides,
+): OverviewTokenCategoryConfig {
+	const result: OverviewTokenCategoryConfig = {};
+	const keys = new Set([
+		...Object.keys(defaults),
+		...(overrides ? Object.keys(overrides) : []),
+	]);
+
+	for (const key of keys) {
+		const defaultCandidates = defaults[key] ?? [];
 		const overrideCandidates = normalizeCandidates(overrides?.[key]);
-		const merged = overrideCandidates.slice();
-		for (const candidate of defaults[key]) {
+		const merged: string[] = [];
+
+		for (const candidate of overrideCandidates) {
 			if (!merged.includes(candidate)) {
 				merged.push(candidate);
 			}
 		}
+
+		for (const candidate of defaultCandidates) {
+			if (!merged.includes(candidate)) {
+				merged.push(candidate);
+			}
+		}
+
 		result[key] = merged;
 	}
+
 	return result;
 }
 
-export interface OverviewTokenConfig {
-	actions?: OverviewTokenCategory<TokenCategoryKeys['actions']>;
-	phases?: OverviewTokenCategory<TokenCategoryKeys['phases']>;
-	resources?: OverviewTokenCategory<TokenCategoryKeys['resources']>;
-	stats?: OverviewTokenCategory<TokenCategoryKeys['stats']>;
-	population?: OverviewTokenCategory<TokenCategoryKeys['population']>;
+export type OverviewTokenConfig = Partial<
+	Record<OverviewTokenCategoryName, OverviewTokenCategoryOverrides>
+>;
+
+function createDefaultTokenConfig(): OverviewTokenConfigResolved {
+	const result = {} as OverviewTokenConfigResolved;
+
+	const addDefaultCandidate = (
+		acc: OverviewTokenCategoryConfig,
+		key: string,
+	) => {
+		acc[key] = [key];
+		return acc;
+	};
+
+	for (const { name, keys } of CATEGORY_CONFIG) {
+		const entries = keys();
+		result[name] = entries.reduce<OverviewTokenCategoryConfig>(
+			addDefaultCandidate,
+			{},
+		);
+	}
+
+	return result;
 }
 
 function mergeTokenConfig(
 	overrides?: OverviewTokenConfig,
 ): OverviewTokenConfigResolved {
+	const defaults = createDefaultTokenConfig();
+	const actions = mergeTokenCategory(defaults.actions, overrides?.actions);
+	const phases = mergeTokenCategory(defaults.phases, overrides?.phases);
+	const resources = mergeTokenCategory(
+		defaults.resources,
+		overrides?.resources,
+	);
+	const stats = mergeTokenCategory(defaults.stats, overrides?.stats);
+	const population = mergeTokenCategory(
+		defaults.population,
+		overrides?.population,
+	);
+	const staticIcons = mergeTokenCategory(defaults.static, overrides?.static);
+
 	return {
-		// prettier-ignore
-		actions: mergeTokenCategory(
-                        DEFAULT_TOKEN_CONFIG.actions,
-                        overrides?.actions,
-                ),
-		// prettier-ignore
-		phases: mergeTokenCategory(
-                        DEFAULT_TOKEN_CONFIG.phases,
-                        overrides?.phases,
-                ),
-		// prettier-ignore
-		resources: mergeTokenCategory(
-                        DEFAULT_TOKEN_CONFIG.resources,
-                        overrides?.resources,
-                ),
-		// prettier-ignore
-		stats: mergeTokenCategory(
-                        DEFAULT_TOKEN_CONFIG.stats,
-                        overrides?.stats,
-                ),
-		// prettier-ignore
-		population: mergeTokenCategory(
-                        DEFAULT_TOKEN_CONFIG.population,
-                        overrides?.population,
-                ),
+		actions,
+		phases,
+		resources,
+		stats,
+		population,
+		static: staticIcons,
 	};
 }
 
@@ -149,51 +208,14 @@ function resolveByCandidates<T>(
 	return undefined;
 }
 
-function resolveActionIcon(candidates: string[]) {
-	const registry = actionInfo as unknown as {
-		has(id: string): boolean;
-		get(id: string): { icon?: ReactNode };
-	};
+function resolveFromRecord<T extends Record<string, { icon?: ReactNode }>>(
+	record: T,
+	candidates: string[],
+) {
 	return resolveByCandidates(candidates, (id) => {
-		if (!registry.has(id)) {
-			return undefined;
-		}
-		return registry.get(id)?.icon;
-	});
-}
-
-function resolvePhaseIcon(candidates: string[]) {
-	return resolveByCandidates(
-		candidates,
-		(id) => PHASES.find((phase) => phase.id === id)?.icon,
-	);
-}
-
-function resolveResourceIcon(candidates: string[]) {
-	return resolveByCandidates(candidates, (id) => {
-		if (Object.prototype.hasOwnProperty.call(RESOURCES, id)) {
-			const key = id as keyof typeof RESOURCES;
-			return RESOURCES[key]?.icon;
-		}
-		return undefined;
-	});
-}
-
-function resolveStatIcon(candidates: string[]) {
-	return resolveByCandidates(candidates, (id) => {
-		if (Object.prototype.hasOwnProperty.call(STATS, id)) {
-			const key = id as keyof typeof STATS;
-			return STATS[key]?.icon;
-		}
-		return undefined;
-	});
-}
-
-function resolvePopulationIcon(candidates: string[]) {
-	return resolveByCandidates(candidates, (id) => {
-		if (Object.prototype.hasOwnProperty.call(POPULATION_ROLES, id)) {
-			const key = id as keyof typeof POPULATION_ROLES;
-			return POPULATION_ROLES[key]?.icon;
+		if (Object.prototype.hasOwnProperty.call(record, id)) {
+			const key = id as keyof T;
+			return record[key]?.icon;
 		}
 		return undefined;
 	});
@@ -203,26 +225,31 @@ export function buildOverviewIconSet(
 	overrides?: OverviewTokenConfig,
 ): OverviewIconSet {
 	const config = mergeTokenConfig(overrides);
-	return {
-		expand: resolveActionIcon(config.actions.expand),
-		build: resolveActionIcon(config.actions.build),
-		attack: resolveActionIcon(config.actions.attack),
-		develop: resolveActionIcon(config.actions.develop),
-		raisePop: resolveActionIcon(config.actions.raisePop),
-		growth: resolvePhaseIcon(config.phases.growth),
-		upkeep: resolvePhaseIcon(config.phases.upkeep),
-		main: resolvePhaseIcon(config.phases.main),
-		land: LAND_INFO.icon,
-		slot: SLOT_INFO.icon,
-		gold: resolveResourceIcon(config.resources.gold),
-		ap: resolveResourceIcon(config.resources.ap),
-		happiness: resolveResourceIcon(config.resources.happiness),
-		castle: resolveResourceIcon(config.resources.castle),
-		army: resolveStatIcon(config.stats.army),
-		fort: resolveStatIcon(config.stats.fort),
-		council: resolvePopulationIcon(config.population.council),
-		legion: resolvePopulationIcon(config.population.legion),
-		fortifier: resolvePopulationIcon(config.population.fortifier),
-		citizen: resolvePopulationIcon(config.population.citizen),
-	} satisfies OverviewIconSet;
+	const icons: OverviewIconSet = {};
+
+	for (const { name, resolve } of CATEGORY_CONFIG) {
+		const overrideSource = overrides?.[name];
+
+		for (const [tokenKey, candidates] of Object.entries(config[name])) {
+			const hasOverride = hasOwn(overrideSource, tokenKey);
+			const hasExistingValue =
+				hasOwn(icons, tokenKey) &&
+				icons[tokenKey] !== undefined &&
+				icons[tokenKey] !== null;
+
+			if (hasExistingValue && !hasOverride) {
+				continue;
+			}
+
+			const resolvedIcon = resolve(candidates);
+
+			if (resolvedIcon !== undefined) {
+				icons[tokenKey] = resolvedIcon;
+			} else if (!hasExistingValue) {
+				icons[tokenKey] = undefined;
+			}
+		}
+	}
+
+	return icons;
 }

@@ -37,7 +37,7 @@ const HERO_INTRO_TEXT = [
 
 const HERO_PARAGRAPH_TEXT = [
 	'Welcome to {game}, a brisk duel of wits where {expand} expansion,',
-	'{build} clever construction, and {attack} daring raids decide who steers the crown.',
+	'{build} clever construction, and {army_attack} daring raids decide who steers the crown.',
 ].join(' ');
 
 export default function Overview({
@@ -51,34 +51,15 @@ export default function Overview({
 	);
 
 	const sections = content ?? DEFAULT_OVERVIEW_CONTENT;
+	const tokens = React.useMemo(() => ({ ...icons }), [icons]);
 
-	const tokens: Record<string, React.ReactNode> = {
-		castle: icons.castle,
-		army: icons.army,
-		fort: icons.fort,
-		ap: icons.ap,
-		expand: icons.expand,
-		develop: icons.develop,
-		raisePop: icons.raisePop,
-		attack: icons.attack,
-		build: icons.build,
-		land: icons.land,
-		slot: icons.slot,
-		gold: icons.gold,
-		main: icons.main,
-		growth: icons.growth,
-		upkeep: icons.upkeep,
-		happiness: icons.happiness,
-		council: icons.council,
-		legion: icons.legion,
-		fortifier: icons.fortifier,
-		citizen: icons.citizen,
-	};
-
-	const heroTokens: Record<string, React.ReactNode> = {
-		...tokens,
-		game: <strong>Kingdom Builder</strong>,
-	};
+	const heroTokens: Record<string, React.ReactNode> = React.useMemo(
+		() => ({
+			...tokens,
+			game: <strong>Kingdom Builder</strong>,
+		}),
+		[tokens],
+	);
 
 	const renderedSections = createOverviewSections(icons, sections);
 
