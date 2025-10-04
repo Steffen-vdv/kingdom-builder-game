@@ -15,13 +15,28 @@ export type AttackTarget =
 	| { type: 'stat'; key: StatKey }
 	| { type: 'building'; id: string };
 
-export type StatInfo = { icon?: string; label: string };
+export type AttackStatRole = 'power' | 'absorption' | 'fortification';
+
+export type AttackStatDescriptor = {
+	role: AttackStatRole;
+	label: string;
+	icon?: string;
+	key?: StatKey;
+};
+
+export type AttackStatContext = Partial<
+	Record<AttackStatRole, AttackStatDescriptor>
+>;
+
+export const DEFAULT_ATTACK_STAT_LABELS: Record<AttackStatRole, string> = {
+	power: 'Attack Power',
+	absorption: 'Absorption',
+	fortification: 'Fortification',
+};
 
 export type BaseEntryContext<TTarget extends AttackTarget> = {
 	mode: Mode;
-	army: StatInfo;
-	absorption: StatInfo;
-	fort: StatInfo;
+	stats: AttackStatContext;
 	info: TargetInfo;
 	target: TTarget;
 	targetLabel: string;
@@ -36,9 +51,7 @@ export type OnDamageTitleContext<TTarget extends AttackTarget> = {
 };
 
 export type EvaluationContext<TTarget extends AttackTarget> = {
-	army: StatInfo;
-	absorption: StatInfo;
-	fort: StatInfo;
+	stats: AttackStatContext;
 	info: TargetInfo;
 	target: TTarget;
 	targetLabel: string;

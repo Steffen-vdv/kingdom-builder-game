@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import type { SummaryEntry } from '../src/translation/content';
 import {
 	summarizeContent,
@@ -19,7 +19,12 @@ import {
 	BUILDINGS,
 	Resource as ContentResource,
 	Stat as ContentStat,
+	type StatKey,
 } from '@kingdom-builder/contents';
+import {
+	formatNumber,
+	formatPercent,
+} from '../src/translation/effects/formatters/attack/shared';
 import {
 	effect,
 	Types,
@@ -52,6 +57,9 @@ const SYNTH_BUILDING_ICON = '🏯';
 const SYNTH_BUILDING_ATTACK_ID = 'synthetic:building_attack';
 const SYNTH_BUILDING_ATTACK_NAME = 'Raze Stronghold';
 const SYNTH_BUILDING_ATTACK_ICON = '🔥';
+const SYNTH_PARTIAL_ATTACK_ID = 'synthetic:partial_attack';
+const SYNTH_PARTIAL_ATTACK_NAME = 'Partial Assault';
+const SYNTH_PARTIAL_ATTACK_ICON = '🗡️';
 
 const ATTACKER_HAPPINESS_GAIN = 2;
 const DEFENDER_HAPPINESS_LOSS = 3;
@@ -60,6 +68,16 @@ const BUILDING_REWARD_GOLD = 6;
 const PLUNDER_PERCENT = 40;
 
 const TIER_RESOURCE_KEY = 'synthetic:tier';
+
+const SYNTH_POWER_STAT_KEY = 'synthetic:valor';
+const SYNTH_ABSORPTION_STAT_KEY = 'synthetic:veil';
+const SYNTH_FORT_STAT_KEY = 'synthetic:rampart';
+const SYNTH_POWER_ICON = '⚔️';
+const SYNTH_POWER_LABEL = 'Valor';
+const SYNTH_ABSORPTION_ICON = '🌫️';
+const SYNTH_ABSORPTION_LABEL = 'Veil';
+const SYNTH_FORT_ICON = '🧱';
+const SYNTH_FORT_LABEL = 'Rampart';
 
 const PHASES: PhaseDef[] = [
 	{
@@ -130,6 +148,9 @@ function createSyntheticCtx() {
 			effect('attack', 'perform')
 				.params(
 					attackParams()
+						.powerStat(SYNTH_POWER_STAT_KEY as unknown as StatKey)
+						.absorptionStat(SYNTH_ABSORPTION_STAT_KEY as unknown as StatKey)
+						.fortificationStat(SYNTH_FORT_STAT_KEY as unknown as StatKey)
 						.targetResource(ContentResource.castleHP)
 						.onDamageAttacker(
 							effect(Types.Resource, ResourceMethods.ADD)
@@ -171,6 +192,9 @@ function createSyntheticCtx() {
 			effect('attack', 'perform')
 				.params(
 					attackParams()
+						.powerStat(SYNTH_POWER_STAT_KEY as unknown as StatKey)
+						.absorptionStat(SYNTH_ABSORPTION_STAT_KEY as unknown as StatKey)
+						.fortificationStat(SYNTH_FORT_STAT_KEY as unknown as StatKey)
 						.targetBuilding(SYNTH_BUILDING_ID)
 						.onDamageAttacker(
 							effect(Types.Resource, ResourceMethods.ADD)
@@ -200,6 +224,37 @@ function createSyntheticCtx() {
 	return { ctx, attack, plunder, building, buildingAttack } as const;
 }
 
+function createPartialStatCtx() {
+	const factory = createContentFactory();
+	const attack = factory.action({
+		id: SYNTH_PARTIAL_ATTACK_ID,
+		name: SYNTH_PARTIAL_ATTACK_NAME,
+		icon: SYNTH_PARTIAL_ATTACK_ICON,
+		baseCosts: { [ContentResource.ap]: 0 },
+		effects: [
+			effect('attack', 'perform')
+				.params(
+					attackParams()
+						.powerStat(SYNTH_POWER_STAT_KEY as unknown as StatKey)
+						.targetResource(ContentResource.castleHP)
+						.build(),
+				)
+				.build(),
+		],
+	});
+	const ctx = createEngine({
+		actions: factory.actions,
+		buildings: factory.buildings,
+		developments: factory.developments,
+		populations: factory.populations,
+		phases: PHASES,
+		start: START,
+		rules: RULES,
+	});
+
+	return { ctx, attack } as const;
+}
+
 function iconLabel(
 	icon: string | undefined,
 	label: string | undefined,
@@ -209,12 +264,85 @@ function iconLabel(
 	return icon ? `${icon} ${resolved}` : resolved;
 }
 
+type StatInfo = (typeof STATS)[keyof typeof STATS];
+
+const STAT_OVERRIDES: Array<{
+	key: string;
+	icon: string;
+	label: string;
+	base: StatInfo;
+}> = [
+	{
+		key: SYNTH_POWER_STAT_KEY,
+		icon: SYNTH_POWER_ICON,
+		label: SYNTH_POWER_LABEL,
+		base: STATS[Stat.armyStrength],
+	},
+	{
+		key: SYNTH_ABSORPTION_STAT_KEY,
+		icon: SYNTH_ABSORPTION_ICON,
+		label: SYNTH_ABSORPTION_LABEL,
+		base: STATS[Stat.absorption],
+	},
+	{
+		key: SYNTH_FORT_STAT_KEY,
+		icon: SYNTH_FORT_ICON,
+		label: SYNTH_FORT_LABEL,
+		base: STATS[Stat.fortificationStrength],
+	},
+];
+
+const originalStatEntries = new Map<string, StatInfo | undefined>();
+
+beforeAll(() => {
+	for (const override of STAT_OVERRIDES) {
+		originalStatEntries.set(
+			override.key,
+			(STATS as Record<string, StatInfo | undefined>)[override.key],
+		);
+		(STATS as Record<string, StatInfo>)[override.key] = {
+			...override.base,
+			icon: override.icon,
+			label: override.label,
+		};
+	}
+});
+
+afterAll(() => {
+	for (const override of STAT_OVERRIDES) {
+		const original = originalStatEntries.get(override.key);
+		if (original) {
+			(STATS as Record<string, StatInfo | undefined>)[override.key] = original;
+		} else {
+			delete (STATS as Record<string, StatInfo | undefined>)[override.key];
+		}
+	}
+	originalStatEntries.clear();
+});
+
+function statToken(
+	stat: StatInfo | undefined,
+	fallback: string,
+	value: string,
+): string {
+	if (stat?.icon) {
+		return `${stat.icon}${value}`;
+	}
+	if (stat?.label) {
+		return `${stat.label} ${value}`;
+	}
+	return `${fallback} ${value}`;
+}
+
+function getStat(key: string): StatInfo | undefined {
+	return (STATS as Record<string, StatInfo | undefined>)[key];
+}
+
 describe('army attack translation', () => {
 	it('summarizes attack action with on-damage effects', () => {
 		const { ctx, attack, plunder } = createSyntheticCtx();
 		const castle = RESOURCES[Resource.castleHP];
-		const army = STATS[Stat.armyStrength];
-		const fort = STATS[Stat.fortificationStrength];
+		const powerStat = getStat(SYNTH_POWER_STAT_KEY)!;
 		const happiness = RESOURCES[Resource.happiness];
 		const warWeariness = STATS[Stat.warWeariness];
 		const attackEffect = attack.effects.find(
@@ -253,8 +381,9 @@ describe('army attack translation', () => {
 		);
 		const warAmt = (warRes?.params as { amount?: number })?.amount ?? 0;
 		const summary = summarizeContent('action', attack.id, ctx);
+		const targetDisplay = iconLabel(castle.icon, castle.label, castle.id);
 		expect(summary).toEqual([
-			`${army.icon} opponent's ${fort.icon}${castle.icon}`,
+			`${powerStat.icon ?? powerStat.label} vs opponent's ${targetDisplay}`,
 			{
 				title: `On opponent ${castle.icon} damage`,
 				items: [
@@ -292,9 +421,9 @@ describe('army attack translation', () => {
 	it('logs army attack action with concrete evaluation', () => {
 		const { ctx, attack, plunder } = createSyntheticCtx();
 		const castle = RESOURCES[Resource.castleHP];
-		const army = STATS[Stat.armyStrength];
-		const absorption = STATS[Stat.absorption];
-		const fort = STATS[Stat.fortificationStrength];
+		const powerStat = getStat(SYNTH_POWER_STAT_KEY)!;
+		const absorptionStat = getStat(SYNTH_ABSORPTION_STAT_KEY)!;
+		const fortStat = getStat(SYNTH_FORT_STAT_KEY)!;
 		const happiness = RESOURCES[Resource.happiness];
 		const gold = RESOURCES[Resource.gold];
 
@@ -334,12 +463,20 @@ describe('army attack translation', () => {
 		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
 
 		const log = logContent('action', attack.id, ctx);
+		const powerValue = (value: number) =>
+			statToken(powerStat, 'Attack', formatNumber(value));
+		const absorptionValue = (value: number) =>
+			statToken(absorptionStat, 'Absorption', formatPercent(value));
+		const fortValue = (value: number) =>
+			statToken(fortStat, 'Fortification', formatNumber(value));
+		const castleValue = `${castle.icon}${castleBefore}`;
+		const castleAfterValue = `${castle.icon}${castleAfter}`;
 		expect(log).toEqual([
 			`Played ${attack.icon} ${attack.name}`,
-			`  Damage evaluation: ${army.icon}${armyStrength} vs. ${absorption.icon}0% ${fort.icon}${fortBefore} ${castle.icon}${castleBefore}`,
-			`    ${army.icon}${armyStrength} vs. ${absorption.icon}0% --> ${army.icon}${remainingAfterAbsorption}`,
-			`    ${army.icon}${remainingAfterAbsorption} vs. ${fort.icon}${fortBefore} --> ${fort.icon}0 ${army.icon}${remainingAfterFort}`,
-			`    ${army.icon}${remainingAfterFort} vs. ${castle.icon}${castleBefore} --> ${castle.icon}${castleAfter}`,
+			`  Damage evaluation: ${powerValue(armyStrength)} vs. ${absorptionValue(0)} ${fortValue(fortBefore)} ${castleValue}`,
+			`    ${powerValue(armyStrength)} vs. ${absorptionValue(0)} --> ${powerValue(remainingAfterAbsorption)}`,
+			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,
+			`    ${powerValue(remainingAfterFort)} vs. ${castleValue} --> ${castleAfterValue}`,
 			`  ${castle.icon} ${castle.label} damage trigger evaluation`,
 			`    Opponent: ${happiness.icon} ${happiness.label} ${opponentHappinessDelta} (${opponentHappinessBefore}→${opponentHappinessAfter})`,
 			`    You: ${happiness.icon} ${happiness.label} ${
@@ -353,9 +490,64 @@ describe('army attack translation', () => {
 		]);
 	});
 
+	it('falls back to generic labels when combat stat descriptors are omitted', () => {
+		const { ctx, attack } = createPartialStatCtx();
+		const castle = RESOURCES[Resource.castleHP];
+		const powerStat = getStat(SYNTH_POWER_STAT_KEY)!;
+		const targetDisplay = iconLabel(castle.icon, castle.label, castle.id);
+
+		const summary = summarizeContent('action', attack.id, ctx);
+		expect(summary).toEqual([
+			`${powerStat.icon ?? powerStat.label} vs opponent's ${targetDisplay}`,
+		]);
+
+		const description = describeContent('action', attack.id, ctx);
+		expect(description).toEqual([
+			{
+				title: `Attack opponent with your ${iconLabel(powerStat.icon, powerStat.label, 'attack power')}`,
+				items: [
+					'Damage reduction applied',
+					`Damage applied to opponent's defenses`,
+					`If opponent defenses fall, overflow remaining damage on opponent ${targetDisplay}`,
+				],
+			},
+		]);
+
+		ctx.activePlayer.stats[Stat.armyStrength] = 4;
+		ctx.opponent.stats[Stat.fortificationStrength] = 1;
+		const castleBefore = ctx.opponent.resources[Resource.castleHP];
+		const fortBefore = ctx.opponent.stats[Stat.fortificationStrength];
+
+		performAction(attack.id, ctx);
+
+		const log = logContent('action', attack.id, ctx);
+		const castleAfter = ctx.opponent.resources[Resource.castleHP];
+		const armyStrength = ctx.activePlayer.stats[Stat.armyStrength];
+		const remainingAfterAbsorption = armyStrength;
+		const remainingAfterFort = Math.max(
+			remainingAfterAbsorption - fortBefore,
+			0,
+		);
+		const powerValue = (value: number) =>
+			statToken(powerStat, 'Attack', formatNumber(value));
+		const absorptionValue = (value: number) =>
+			`Absorption ${formatPercent(value)}`;
+		const fortValue = (value: number) => `Fortification ${formatNumber(value)}`;
+		const targetValue = (value: number) =>
+			`${castle.icon}${formatNumber(value)}`;
+
+		expect(log).toEqual([
+			`Played ${attack.icon} ${attack.name}`,
+			`  Damage evaluation: ${powerValue(armyStrength)} vs. ${absorptionValue(0)} ${fortValue(fortBefore)} ${targetValue(castleBefore)}`,
+			`    ${powerValue(armyStrength)} vs. ${absorptionValue(0)} --> ${powerValue(remainingAfterAbsorption)}`,
+			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,
+			`    ${powerValue(remainingAfterFort)} vs. ${targetValue(castleBefore)} --> ${targetValue(castleAfter)}`,
+		]);
+	});
+
 	it('summarizes building attack as destruction', () => {
 		const { ctx, buildingAttack, building } = createSyntheticCtx();
-		const army = STATS[Stat.armyStrength];
+		const powerStat = getStat(SYNTH_POWER_STAT_KEY)!;
 		const gold = RESOURCES[Resource.gold];
 		const buildingDisplay = iconLabel(
 			building.icon,
@@ -381,7 +573,7 @@ describe('army attack translation', () => {
 
 		const summary = summarizeContent('action', buildingAttack.id, ctx);
 		expect(summary).toEqual([
-			`${army.icon} destroy opponent's ${buildingDisplay}`,
+			`${powerStat.icon ?? powerStat.label} destroy opponent's ${buildingDisplay}`,
 			{
 				title: summaryTitle,
 				items: [`${gold.icon}+${rewardAmount} for you`],
@@ -391,9 +583,9 @@ describe('army attack translation', () => {
 
 	it('logs building attack action with destruction evaluation', () => {
 		const { ctx, buildingAttack, building } = createSyntheticCtx();
-		const army = STATS[Stat.armyStrength];
-		const absorption = STATS[Stat.absorption];
-		const fort = STATS[Stat.fortificationStrength];
+		const powerStat = getStat(SYNTH_POWER_STAT_KEY)!;
+		const absorptionStat = getStat(SYNTH_ABSORPTION_STAT_KEY)!;
+		const fortStat = getStat(SYNTH_FORT_STAT_KEY)!;
 		const gold = RESOURCES[Resource.gold];
 		const buildingDisplay = iconLabel(
 			building.icon,
@@ -419,12 +611,18 @@ describe('army attack translation', () => {
 		const playerGoldAfter = ctx.activePlayer.resources[Resource.gold];
 		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
 		const log = logContent('action', buildingAttack.id, ctx);
+		const powerValue = (value: number) =>
+			statToken(powerStat, 'Attack', formatNumber(value));
+		const absorptionValue = (value: number) =>
+			statToken(absorptionStat, 'Absorption', formatPercent(value));
+		const fortValue = (value: number) =>
+			statToken(fortStat, 'Fortification', formatNumber(value));
 		expect(log).toEqual([
 			`Played ${buildingAttack.icon} ${buildingAttack.name}`,
-			`  Damage evaluation: ${army.icon}${armyStrength} vs. ${absorption.icon}0% ${fort.icon}${fortBefore} ${buildingDisplay}`,
-			`    ${army.icon}${armyStrength} vs. ${absorption.icon}0% --> ${army.icon}${remainingAfterAbsorption}`,
-			`    ${army.icon}${remainingAfterAbsorption} vs. ${fort.icon}${fortBefore} --> ${fort.icon}0 ${army.icon}${remainingAfterFort}`,
-			`    ${army.icon}${remainingAfterFort} destroys ${buildingDisplay}`,
+			`  Damage evaluation: ${powerValue(armyStrength)} vs. ${absorptionValue(0)} ${fortValue(fortBefore)} ${buildingDisplay}`,
+			`    ${powerValue(armyStrength)} vs. ${absorptionValue(0)} --> ${powerValue(remainingAfterAbsorption)}`,
+			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,
+			`    ${powerValue(remainingAfterFort)} destroys ${buildingDisplay}`,
 			`  ${buildingDisplay} destruction trigger evaluation`,
 			`    You: ${gold.icon} ${gold.label} ${
 				playerGoldDelta >= 0 ? '+' : ''

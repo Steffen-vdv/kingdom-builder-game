@@ -4,13 +4,12 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/engine';
+import { formatDiffCommon, iconLabel } from './shared';
 import {
 	buildDescribeEntry,
 	buildStandardEvaluationEntry,
 	defaultFortificationItems,
-	formatDiffCommon,
-	iconLabel,
-} from './shared';
+} from './evaluation';
 import type { AttackTargetFormatter } from './types';
 
 const resourceFormatter: AttackTargetFormatter<{
@@ -42,7 +41,9 @@ const resourceFormatter: AttackTargetFormatter<{
 	},
 	buildBaseEntry(context) {
 		if (context.mode === 'summarize') {
-			return `${context.army.icon} opponent's ${context.fort.icon}${context.info.icon}`;
+			const power = context.stats.power;
+			const powerDisplay = power ? power.icon || power.label : 'Attack';
+			return `${powerDisplay} vs opponent's ${context.targetLabel}`;
 		}
 		return buildDescribeEntry(context, defaultFortificationItems(context));
 	},
