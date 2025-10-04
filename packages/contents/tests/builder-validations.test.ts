@@ -14,6 +14,7 @@ import {
 	happinessTier,
 	tierPassive,
 } from '../src/config/builders';
+import type { ActionEffectGroupDef } from '../src/config/builders';
 import { RESOURCES, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
 import { describe, expect, it } from 'vitest';
@@ -120,21 +121,22 @@ describe('content builder safeguards', () => {
 			)
 			.build();
 
-		expect(built.effectGroups).toEqual([
-			{
-				id: 'choose',
-				title: 'Pick a project',
-				summary: 'Choose one follow-up action to resolve immediately.',
-				options: [
-					{
-						id: 'farm',
-						label: 'Farm',
-						actionId: 'develop',
-						params: { id: 'farm', landId: '$landId' },
-					},
-				],
-			},
-		]);
+		expect(built.effects).toHaveLength(1);
+		expect('options' in built.effects[0]).toBe(true);
+		const group = built.effects[0] as ActionEffectGroupDef;
+		expect(group).toEqual({
+			id: 'choose',
+			title: 'Pick a project',
+			summary: 'Choose one follow-up action to resolve immediately.',
+			options: [
+				{
+					id: 'farm',
+					label: 'Farm',
+					actionId: 'develop',
+					params: { id: 'farm', landId: '$landId' },
+				},
+			],
+		});
 	});
 
 	it('prevents mixing amount and percent for resource changes', () => {

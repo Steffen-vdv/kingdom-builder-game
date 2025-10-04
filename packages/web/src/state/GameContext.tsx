@@ -12,6 +12,7 @@ import {
 	simulateAction,
 	advance,
 	getActionCosts,
+	resolveActionEffects,
 	type EngineContext,
 	type ActionParams,
 } from '@kingdom-builder/engine';
@@ -515,10 +516,11 @@ export function GameProvider({
 
 			const after = snapshotPlayer(player, ctx);
 			const stepDef = ctx.actions.get(action.id);
+			const resolvedStep = resolveActionEffects(stepDef, params);
 			const changes = diffStepSnapshots(
 				before,
 				after,
-				stepDef,
+				resolvedStep,
 				ctx,
 				RESOURCE_KEYS,
 			);
@@ -546,10 +548,11 @@ export function GameProvider({
 			const subLines: string[] = [];
 			for (const trace of traces) {
 				const subStep = ctx.actions.get(trace.id);
+				const subResolved = resolveActionEffects(subStep);
 				const subChanges = diffStepSnapshots(
 					trace.before,
 					trace.after,
-					subStep,
+					subResolved,
 					ctx,
 					RESOURCE_KEYS,
 				);

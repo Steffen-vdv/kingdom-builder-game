@@ -1,4 +1,9 @@
-import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
+import type {
+	EngineContext,
+	EffectDef,
+	ActionEffect,
+	ActionEffectGroup,
+} from '@kingdom-builder/engine';
 import type { ActionConfig } from '@kingdom-builder/engine/config/schema';
 import { logContent } from './factory';
 
@@ -25,14 +30,24 @@ export function registerActionLogHookResolver(
 	derivedCache.clear();
 }
 
+function isEffectGroup(effect: ActionEffect): effect is ActionEffectGroup {
+	return Boolean(effect && typeof effect === 'object' && 'options' in effect);
+}
+
 function findEffect(
-	effects: EffectDef[] | undefined,
+	effects: ActionEffect[] | undefined,
 	predicate: (effect: EffectDef) => boolean,
 ): EffectDef | undefined {
 	if (!effects) {
 		return undefined;
 	}
 	for (const effect of effects) {
+		if (!effect || typeof effect !== 'object') {
+			continue;
+		}
+		if (isEffectGroup(effect)) {
+			continue;
+		}
 		if (predicate(effect)) {
 			return effect;
 		}

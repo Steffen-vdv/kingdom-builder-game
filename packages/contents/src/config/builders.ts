@@ -1,5 +1,8 @@
 import type {
 	ActionConfig,
+	ActionEffect,
+	ActionEffectGroup,
+	ActionEffectGroupOption,
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
@@ -126,24 +129,16 @@ function resolveEffectConfig(effect: EffectConfig | EffectBuilder) {
 	return effect instanceof EffectBuilder ? effect.build() : effect;
 }
 
-export interface ActionEffectGroupOptionDef {
-	id: string;
-	label: string;
-	icon?: string;
-	summary?: string;
-	description?: string;
-	actionId: string;
-	params?: Record<string, unknown>;
-}
+export type ActionEffectGroupOptionDef = ActionEffectGroupOption;
 
 class ActionEffectGroupOptionBuilder extends ParamsBuilder<{
 	id?: string;
 	label?: string;
-	icon?: string;
-	summary?: string;
-	description?: string;
+	icon?: string | undefined;
+	summary?: string | undefined;
+	description?: string | undefined;
 	actionId?: string;
-	params?: Record<string, unknown>;
+	params?: Record<string, unknown> | undefined;
 }> {
 	constructor(id?: string) {
 		super();
@@ -211,7 +206,7 @@ class ActionEffectGroupOptionBuilder extends ParamsBuilder<{
 		return this;
 	}
 
-	override build() {
+	override build(): ActionEffectGroupOptionDef {
 		if (!this.wasSet('id')) {
 			throw new Error(
 				'Action effect group option is missing id(). Call id("your-option-id") before build().',
@@ -235,14 +230,7 @@ export function actionEffectGroupOption(id?: string) {
 	return new ActionEffectGroupOptionBuilder(id);
 }
 
-export interface ActionEffectGroupDef {
-	id: string;
-	title: string;
-	summary?: string;
-	description?: string;
-	icon?: string;
-	options: ActionEffectGroupOptionDef[];
-}
+export type ActionEffectGroupDef = ActionEffectGroup;
 
 class ActionEffectGroupBuilder {
 	private config: Partial<ActionEffectGroupDef> & {
@@ -1531,9 +1519,7 @@ class BaseBuilder<T extends { id: string; name: string }> {
 	}
 }
 
-type ActionBuilderConfig = ActionConfig & {
-	effectGroups?: ActionEffectGroupDef[];
-};
+type ActionBuilderConfig = ActionConfig;
 
 export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	private readonly effectGroupIds = new Set<string>();
@@ -1570,8 +1556,7 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 			);
 		}
 		this.effectGroupIds.add(built.id);
-		this.config.effectGroups = this.config.effectGroups || [];
-		this.config.effectGroups.push(built);
+		this.config.effects.push(built as ActionEffect);
 		return this;
 	}
 	system(flag = true) {

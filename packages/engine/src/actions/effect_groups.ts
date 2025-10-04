@@ -1,72 +1,90 @@
-import { z } from 'zod';
+import { applyParamsToEffects } from '../utils';
 import type { EngineContext } from '../context';
+import type { EffectDef } from '../effects';
+import type {
+	ActionEffect,
+	ActionEffectGroup,
+	ActionEffectGroupOption,
+} from '../config/schema';
+import type { ActionParameters } from './action_parameters';
 
-const actionEffectGroupOptionSchema = z.object({
-	id: z.string(),
-	label: z.string(),
-	icon: z.string().optional(),
-	summary: z.string().optional(),
-	description: z.string().optional(),
-	actionId: z.string(),
-	params: z.record(z.unknown()).optional(),
-});
+export interface ActionEffectGroupChoice {
+	optionId: string;
+	params?: Record<string, unknown>;
+}
 
-const actionEffectGroupSchema = z.object({
-	id: z.string(),
-	title: z.string(),
-	summary: z.string().optional(),
-	description: z.string().optional(),
-	icon: z.string().optional(),
-	options: z.array(actionEffectGroupOptionSchema),
-});
-
-export type ActionEffectGroup = z.infer<typeof actionEffectGroupSchema>;
-export type ActionEffectGroupOption = z.infer<
-	typeof actionEffectGroupOptionSchema
->;
-
-const actionChoiceSchema = z.object({
-	optionId: z.string(),
-	params: z.record(z.unknown()).optional(),
-});
-
-export type ActionEffectGroupChoice = z.infer<typeof actionChoiceSchema>;
 export type ActionEffectGroupChoiceMap = Record<
 	string,
 	ActionEffectGroupChoice
 >;
 
-function readActionMetadata(
-	actionId: string,
-	ctx: EngineContext,
-): { effectGroups?: unknown } | undefined {
-	try {
-		const def = ctx.actions.get(actionId);
-		if (!def) {
-			return undefined;
-		}
-		const meta = def as unknown as { effectGroups?: unknown };
-		if (!meta.effectGroups) {
-			return undefined;
-		}
-		return meta;
-	} catch {
-		return undefined;
-	}
+function isActionEffectGroup(
+	effect: ActionEffect,
+): effect is ActionEffectGroup {
+	return Boolean(effect && typeof effect === 'object' && 'options' in effect);
 }
+
+function extractActionParams(
+	params?: ActionParameters<string>,
+): Record<string, unknown> {
+	if (!params || typeof params !== 'object') {
+		return {};
+	}
+	const entries = Object.entries(params as Record<string, unknown>);
+	const baseEntries = entries.filter(([key]) => key !== 'choices');
+	return Object.fromEntries(baseEntries);
+}
+
+function buildOptionEffects(
+	option: ActionEffectGroupOption,
+	substitutionParams: Record<string, unknown>,
+): EffectDef[] {
+	const effect: EffectDef = {
+		type: 'action',
+		method: 'perform',
+		params: {
+			id: option.actionId,
+			...(option.params || {}),
+		},
+	};
+	return applyParamsToEffects([effect], substitutionParams);
+}
+
+export interface ResolvedActionEffectGroupOption {
+	option: ActionEffectGroupOption;
+	effects: EffectDef[];
+	params: Record<string, unknown>;
+}
+
+export interface ResolvedActionEffectGroup {
+	group: ActionEffectGroup;
+	selection?: ResolvedActionEffectGroupOption;
+}
+
+export interface ResolvedActionEffects {
+	effects: EffectDef[];
+	groups: ResolvedActionEffectGroup[];
+	choices: ActionEffectGroupChoiceMap;
+	missingSelections: string[];
+}
+
+export type {
+	ActionEffectGroup,
+	ActionEffectGroupOption,
+} from '../config/schema';
 
 export function getActionEffectGroups(
 	actionId: string,
 	ctx: EngineContext,
 ): ActionEffectGroup[] {
-	const metadata = readActionMetadata(actionId, ctx);
-	if (!metadata?.effectGroups) {
-		return [];
+	const definition = ctx.actions.get(actionId);
+	const groups: ActionEffectGroup[] = [];
+	for (const effect of definition.effects) {
+		if (isActionEffectGroup(effect)) {
+			groups.push(effect);
+		}
 	}
-	const parsed = z
-		.array(actionEffectGroupSchema)
-		.safeParse(metadata.effectGroups);
-	return parsed.success ? parsed.data : [];
+	return groups;
 }
 
 export function coerceActionEffectGroupChoices(
@@ -75,8 +93,80 @@ export function coerceActionEffectGroupChoices(
 	if (!value || typeof value !== 'object') {
 		return {};
 	}
-	const parsed = z
-		.record(actionChoiceSchema)
-		.safeParse(value as Record<string, unknown>);
-	return parsed.success ? parsed.data : {};
+	const entries: [string, ActionEffectGroupChoice][] = [];
+	for (const [key, raw] of Object.entries(value)) {
+		if (!raw || typeof raw !== 'object') {
+			continue;
+		}
+		const optionId = (raw as Record<string, unknown>)['optionId'];
+		if (typeof optionId !== 'string') {
+			continue;
+		}
+		const rawParams = (raw as Record<string, unknown>)['params'];
+		let normalizedParams: Record<string, unknown> | undefined;
+		if (rawParams && typeof rawParams === 'object') {
+			normalizedParams = rawParams as Record<string, unknown>;
+		}
+		const choice: ActionEffectGroupChoice = { optionId };
+		if (normalizedParams) {
+			choice.params = normalizedParams;
+		}
+		entries.push([key, choice]);
+	}
+	return Object.fromEntries(entries);
+}
+
+export function resolveActionEffects<T extends string>(
+	actionDefinition: { id: string; effects: ActionEffect[] },
+	params?: ActionParameters<T>,
+): ResolvedActionEffects {
+	const substitutionParams = extractActionParams(params);
+	const choices = coerceActionEffectGroupChoices(params?.choices);
+	const resolvedEffects: EffectDef[] = [];
+	const resolvedGroups: ResolvedActionEffectGroup[] = [];
+	const missingSelections: string[] = [];
+
+	for (const effect of actionDefinition.effects) {
+		if (!isActionEffectGroup(effect)) {
+			const applied = applyParamsToEffects([effect], substitutionParams);
+			resolvedEffects.push(...applied);
+			continue;
+		}
+
+		const group: ResolvedActionEffectGroup = { group: effect };
+		const selection = choices[effect.id];
+		if (!selection) {
+			missingSelections.push(effect.id);
+			resolvedGroups.push(group);
+			continue;
+		}
+		const option = effect.options.find(
+			(candidate) => candidate.id === selection.optionId,
+		);
+		if (!option) {
+			throw new Error(
+				`Unknown option "${selection.optionId}" for effect group "${effect.id}" on action ${actionDefinition.id}`,
+			);
+		}
+		const mergedParams = {
+			...substitutionParams,
+			...(selection.params || {}),
+		};
+		const optionEffects = buildOptionEffects(option, mergedParams);
+		const resolvedOption: ResolvedActionEffectGroupOption = {
+			option,
+			effects: optionEffects,
+			params: mergedParams,
+		};
+		group.selection = resolvedOption;
+		resolvedGroups.push(group);
+		resolvedEffects.push(...optionEffects);
+	}
+
+	return {
+		effects: resolvedEffects,
+		groups: resolvedGroups,
+		choices,
+		missingSelections,
+	};
 }

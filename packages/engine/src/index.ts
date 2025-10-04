@@ -19,10 +19,14 @@ export { performAction, simulateAction } from './actions/action_execution';
 export {
 	getActionEffectGroups,
 	coerceActionEffectGroupChoices,
+	resolveActionEffects,
 	type ActionEffectGroup,
 	type ActionEffectGroupOption,
 	type ActionEffectGroupChoice,
 	type ActionEffectGroupChoiceMap,
+	type ResolvedActionEffects,
+	type ResolvedActionEffectGroup,
+	type ResolvedActionEffectGroupOption,
 } from './actions/effect_groups';
 export { advance } from './phases/advance';
 export { EngineContext } from './context';
@@ -46,7 +50,11 @@ export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
 export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
-export type { GameConfig } from './config/schema';
+export type {
+	GameConfig,
+	ActionEffect,
+	ActionEffectGroup as ActionEffectGroupConfig,
+} from './config/schema';
 export { resolveAttack } from './effects/attack';
 export type {
 	AttackLog,

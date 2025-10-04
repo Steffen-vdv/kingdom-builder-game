@@ -34,7 +34,6 @@ import {
 	transferParams,
 	actionEffectGroup,
 	actionEffectGroupOption,
-	type ActionEffectGroupDef,
 } from './config/builders';
 import type { Focus } from './defs';
 
@@ -42,7 +41,6 @@ export interface ActionDef extends ActionConfig {
 	category?: string;
 	order?: number;
 	focus?: Focus;
-	effectGroups?: ActionEffectGroupDef[];
 }
 
 export function createActionRegistry() {

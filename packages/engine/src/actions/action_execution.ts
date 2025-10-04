@@ -1,5 +1,4 @@
 import { runEffects } from '../effects';
-import { applyParamsToEffects } from '../utils';
 import { withStatSourceFrames } from '../stat_sources';
 import { runRequirement } from '../requirements';
 import type { EngineContext } from '../context';
@@ -12,10 +11,7 @@ import {
 	verifyCostAffordability,
 } from './costs';
 import { cloneEngineContext } from './context_clone';
-import {
-	coerceActionEffectGroupChoices,
-	getActionEffectGroups,
-} from './effect_groups';
+import { resolveActionEffects } from './effect_groups';
 
 function assertSystemActionUnlocked(
 	actionId: string,
@@ -76,24 +72,6 @@ function assertBuildingsNotYetConstructed(
 	}
 }
 
-function ensureEffectGroupSelections(
-	actionId: string,
-	groups: ReturnType<typeof getActionEffectGroups>,
-	choices: ReturnType<typeof coerceActionEffectGroupChoices>,
-) {
-	if (groups.length === 0) {
-		return;
-	}
-	for (const group of groups) {
-		if (choices[group.id]) {
-			continue;
-		}
-		throw new Error(
-			`Action ${actionId} requires a selection for effect group "${group.id}"`,
-		);
-	}
-}
-
 function executeAction<T extends string>(
 	actionId: T,
 	engineContext: EngineContext,
@@ -104,23 +82,19 @@ function executeAction<T extends string>(
 	assertSystemActionUnlocked(actionId, engineContext);
 	evaluateRequirements(actionId, engineContext);
 	const baseCosts = { ...(actionDefinition.baseCosts || {}) };
-	const resolvedEffects = applyParamsToEffects(
-		actionDefinition.effects,
-		params || {},
-	);
-	const effectGroups = getActionEffectGroups(
-		actionDefinition.id,
-		engineContext,
-	);
-	const choiceMap = coerceActionEffectGroupChoices(
-		params && typeof params === 'object'
-			? (params as Record<string, unknown>)['choices']
-			: undefined,
-	);
-	ensureEffectGroupSelections(actionDefinition.id, effectGroups, choiceMap);
-	const pendingBuildingIds = collectPendingBuildingAdds(resolvedEffects);
+	const resolved = resolveActionEffects(actionDefinition, params);
+	if (resolved.missingSelections.length > 0) {
+		const formatted = resolved.missingSelections
+			.map((id) => `"${id}"`)
+			.join(', ');
+		const suffix = resolved.missingSelections.length > 1 ? 'groups' : 'group';
+		throw new Error(
+			`Action ${actionDefinition.id} requires a selection for effect ${suffix} ${formatted}`,
+		);
+	}
+	const pendingBuildingIds = collectPendingBuildingAdds(resolved.effects);
 	assertBuildingsNotYetConstructed(pendingBuildingIds, engineContext);
-	applyEffectCostCollectors(resolvedEffects, baseCosts, engineContext);
+	applyEffectCostCollectors(resolved.effects, baseCosts, engineContext);
 	const finalCosts = applyCostsWithPassives(
 		actionDefinition.id,
 		baseCosts,
@@ -145,41 +119,7 @@ function executeAction<T extends string>(
 			longevity: 'permanent',
 		}),
 		() => {
-			runEffects(resolvedEffects, engineContext);
-			if (effectGroups.length > 0) {
-				for (const group of effectGroups) {
-					const selection = choiceMap[group.id];
-					if (!selection) {
-						continue;
-					}
-					const option = group.options.find(
-						(candidate) => candidate.id === selection.optionId,
-					);
-					if (!option) {
-						throw new Error(
-							`Unknown option "${selection.optionId}" for effect group "${group.id}" on action ${actionDefinition.id}`,
-						);
-					}
-					const mergedParams = {
-						...(params || {}),
-						...(selection.params || {}),
-					} as Record<string, unknown>;
-					const followUp = applyParamsToEffects(
-						[
-							{
-								type: 'action',
-								method: 'perform',
-								params: {
-									id: option.actionId,
-									...(option.params || {}),
-								},
-							},
-						],
-						mergedParams,
-					);
-					runEffects(followUp, engineContext);
-				}
-			}
+			runEffects(resolved.effects, engineContext);
 			passiveManager.runResultMods(actionDefinition.id, engineContext);
 		},
 	);
