@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { Resource } from '@kingdom-builder/contents';
 import { createTestContext } from './fixtures';
+import { translateTierSummary } from '../../packages/web/src/translation/content/tierSummaries';
 
 describe('content happiness tiers', () => {
 	it('exposes tier passive metadata for web presentation', () => {
 		const ctx = createTestContext();
 		const player = ctx.activePlayer;
+		const tiersById = new Map(
+			ctx.services.rules.tierDefinitions.map((tier) => [tier.id, tier]),
+		);
 		const samples = [
 			{ value: -10, label: 'despair' },
 			{ value: -8, label: 'misery' },
@@ -24,11 +28,19 @@ describe('content happiness tiers', () => {
 			player.resources[Resource.happiness] = sample.value;
 			ctx.services.handleTieredResourceChange(ctx, Resource.happiness);
 
-			const passives = ctx.passives.values(player.id).map((passive) => ({
-				id: passive.id,
-				detail: passive.detail,
-				meta: passive.meta,
-			}));
+			const passives = ctx.passives.values(player.id).map((passive) => {
+				const sourceId = passive.meta?.source?.id;
+				const tier = sourceId ? tiersById.get(sourceId) : undefined;
+				const summaryToken = tier?.display?.summaryToken;
+				const summary = translateTierSummary(summaryToken);
+				const removalToken = passive.meta?.removal?.token;
+				return {
+					id: passive.id,
+					removalToken,
+					summary,
+					summaryToken,
+				};
+			});
 
 			snapshot[sample.label] = {
 				happiness: sample.value,
@@ -44,18 +56,10 @@ describe('content happiness tiers', () => {
           "happiness": 3,
           "passives": [
             {
-              "detail": "💰 Income +20% while the realm is content.",
               "id": "passive:happiness:content",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness leaves the +3 to +4 range",
-                  "token": "happiness leaves the +3 to +4 range",
-                },
-                "source": {
-                  "id": "happiness:tier:content",
-                  "type": "tiered-resource",
-                },
-              },
+              "removalToken": "happiness leaves the +3 to +4 range",
+              "summary": "💰 Income +20% while the realm is content.",
+              "summaryToken": "happiness.tier.summary.content",
             },
           ],
           "skipPhases": {},
@@ -65,18 +69,10 @@ describe('content happiness tiers', () => {
           "happiness": -10,
           "passives": [
             {
-              "detail": "💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.",
               "id": "passive:happiness:despair",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness rises to -9 or higher",
-                  "token": "happiness rises to -9 or higher",
-                },
-                "source": {
-                  "id": "happiness:tier:despair",
-                  "type": "tiered-resource",
-                },
-              },
+              "removalToken": "happiness rises to -9 or higher",
+              "summary": "💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.",
+              "summaryToken": "happiness.tier.summary.despair",
             },
           ],
           "skipPhases": {
@@ -96,18 +92,10 @@ describe('content happiness tiers', () => {
           "happiness": 10,
           "passives": [
             {
-              "detail": "💰 Income +50%. 🏛️ Building costs reduced by 20%. 📈 Growth +20%.",
               "id": "passive:happiness:ecstatic",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness drops below +10",
-                  "token": "happiness drops below +10",
-                },
-                "source": {
-                  "id": "happiness:tier:ecstatic",
-                  "type": "tiered-resource",
-                },
-              },
+              "removalToken": "happiness drops below +10",
+              "summary": "💰 Income +50%. 🏛️ Building costs reduced by 20%. 📈 Growth +20%.",
+              "summaryToken": "happiness.tier.summary.ecstatic",
             },
           ],
           "skipPhases": {},
@@ -117,18 +105,10 @@ describe('content happiness tiers', () => {
           "happiness": 8,
           "passives": [
             {
-              "detail": "💰 Income +50%. 🏛️ Building costs reduced by 20%.",
               "id": "passive:happiness:elated",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness leaves the +8 to +9 range",
-                  "token": "happiness leaves the +8 to +9 range",
-                },
-                "source": {
-                  "id": "happiness:tier:elated",
-                  "type": "tiered-resource",
-                },
-              },
+              "removalToken": "happiness leaves the +8 to +9 range",
+              "summary": "💰 Income +50%. 🏛️ Building costs reduced by 20%.",
+              "summaryToken": "happiness.tier.summary.elated",
             },
           ],
           "skipPhases": {},
@@ -138,18 +118,10 @@ describe('content happiness tiers', () => {
           "happiness": -5,
           "passives": [
             {
-              "detail": "💰 Income -25%. ⏭️ Skip Growth until spirits recover.",
               "id": "passive:happiness:grim",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness leaves the -7 to -5 range",
-                  "token": "happiness leaves the -7 to -5 range",
-                },
-                "source": {
-                  "id": "happiness:tier:grim",
-                  "type": "tiered-resource",
-                },
-              },
+              "removalToken": "happiness leaves the -7 to -5 range",
+              "summary": "💰 Income -25%. ⏭️ Skip Growth until spirits recover.",
+              "summaryToken": "happiness.tier.summary.grim",
             },
           ],
           "skipPhases": {
@@ -163,18 +135,10 @@ describe('content happiness tiers', () => {
           "happiness": 5,
           "passives": [
             {
-              "detail": "💰 Income +25%. 🏛️ Building costs reduced by 20%.",
               "id": "passive:happiness:joyful",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness leaves the +5 to +7 range",
-                  "token": "happiness leaves the +5 to +7 range",
-                },
-                "source": {
-                  "id": "happiness:tier:joyful",
-                  "type": "tiered-resource",
-                },
-              },
+              "removalToken": "happiness leaves the +5 to +7 range",
+              "summary": "💰 Income +25%. 🏛️ Building costs reduced by 20%.",
+              "summaryToken": "happiness.tier.summary.joyful",
             },
           ],
           "skipPhases": {},
@@ -184,18 +148,10 @@ describe('content happiness tiers', () => {
           "happiness": -8,
           "passives": [
             {
-              "detail": "💰 Income -50%. ⏭️ Skip Growth while morale is desperate.",
               "id": "passive:happiness:misery",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness leaves the -9 to -8 range",
-                  "token": "happiness leaves the -9 to -8 range",
-                },
-                "source": {
-                  "id": "happiness:tier:misery",
-                  "type": "tiered-resource",
-                },
-              },
+              "removalToken": "happiness leaves the -9 to -8 range",
+              "summary": "💰 Income -50%. ⏭️ Skip Growth while morale is desperate.",
+              "summaryToken": "happiness.tier.summary.misery",
             },
           ],
           "skipPhases": {
@@ -215,18 +171,10 @@ describe('content happiness tiers', () => {
           "happiness": -3,
           "passives": [
             {
-              "detail": "💰 Income -25% while unrest simmers.",
               "id": "passive:happiness:unrest",
-              "meta": {
-                "removal": {
-                  "text": "Removed when happiness leaves the -4 to -3 range",
-                  "token": "happiness leaves the -4 to -3 range",
-                },
-                "source": {
-                  "id": "happiness:tier:unrest",
-                  "type": "tiered-resource",
-                },
-              },
+              "removalToken": "happiness leaves the -4 to -3 range",
+              "summary": "💰 Income -25% while unrest simmers.",
+              "summaryToken": "happiness.tier.summary.unrest",
             },
           ],
           "skipPhases": {},
