@@ -2,7 +2,7 @@
 
 ## 0) Preface
 
-This repository has been entirely brought to life through AI (ChatGPT Codex). The technical and conceptual vision of the game was invented and curated by a human, but every single line of code (bar some `.md` files) were generated solely by AI, through a human-curated iterative process over the course of weeks. Several `AGENTS.md` files have been strategically sprinkled across the codebase to ensure AI agents understand and conform to the vision. 
+This repository has been entirely brought to life through AI (ChatGPT Codex). The technical and conceptual vision of the game was invented and curated by a human, but every single line of code (bar some `.md` files) were generated solely by AI, through a human-curated iterative process over the course of weeks. A consolidated `AGENTS.md` at the repository root now captures all guidelines so AI agents understand and conform to the vision.
 
 At time of writing, this project is still heavily W.I.P. and should not by any means be interpreted as a reflection of the final product. Lots left to do!
 
@@ -18,7 +18,9 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, manage resources, and try to outlast or conquer the opponent. Victory is achieved by capturing the opposing castle, forcing enemy bankruptcy, or holding the most victory points when the game ends after the final round.
 
 ## 3) Repository overview
+
 The repository consists of three isolated domains: Web, Content and Engine. Each is represented as a directory inside `/packages`
+
 - Engine: The _technical_ heart of the game. Engine is responsible for driving the core game loop, execute actions, maintaining game state and evaluating effects. It can be considered 'the backend'.
 - Web: The _visual_ heart of the game. This domain is responsible for housing the game's frontend. It talks to Engine domain to receive game state updates and inform Engine of player-driven actions.
 - Content: The _practical_ heart of the game. This domain houses all of the game's configurations. The domain is configured in a way that allows extremely broad and deep updates to the game's configuration. The intent is for this domain to eventually become separated into it's own service and either passed to a content curation team or even allow players themselves to build gamemodes by giving them access, through some interface, to manipulate/override parts of 'Contents' domain at runtime.
