@@ -120,18 +120,15 @@ module.exports = {
 				'tests/**/*.ts',
 				'tests/**/*.tsx',
 			],
-			rules: {
-				'@typescript-eslint/no-unsafe-assignment': 'off',
-				'@typescript-eslint/no-unsafe-member-access': 'off',
-				'@typescript-eslint/no-unsafe-argument': 'off',
-				'@typescript-eslint/no-unsafe-return': 'off',
-				'@typescript-eslint/no-unsafe-call': 'off',
-				'@typescript-eslint/no-unnecessary-type-assertion': 'off',
-				curly: 'off',
-				'id-length': 'off',
-				'max-len': 'off',
-			},
-		},
+                        rules: {
+                                '@typescript-eslint/no-unsafe-assignment': 'off',
+                                '@typescript-eslint/no-unsafe-member-access': 'off',
+                                '@typescript-eslint/no-unsafe-argument': 'off',
+                                '@typescript-eslint/no-unsafe-return': 'off',
+                                '@typescript-eslint/no-unsafe-call': 'off',
+                                '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+                        },
+                },
 		{
 			files: [
 				'packages/engine/tests/**/*.ts',
