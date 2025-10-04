@@ -164,6 +164,7 @@ export function GameProvider({
 		clearTrackedInterval,
 		setTrackedInterval,
 		isMountedRef: mountedRef,
+		timeScaleRef,
 	} = useTimeScale({ devMode });
 
 	const actionCostResource = ctx.actionCostResource as ResourceKey;
@@ -308,7 +309,7 @@ export function GameProvider({
 	}
 
 	function runDelay(total: number) {
-		const scale = timeScale || 1;
+		const scale = timeScaleRef.current || 1;
 		const adjustedTotal = total / scale;
 		if (adjustedTotal <= 0) {
 			if (mountedRef.current) {
@@ -468,7 +469,7 @@ export function GameProvider({
 	const runUntilActionPhase = () => enqueue(runUntilActionPhaseCore);
 
 	function waitWithScale(base: number) {
-		const scale = timeScale || 1;
+		const scale = timeScaleRef.current || 1;
 		const duration = base / scale;
 		if (duration <= 0) {
 			return Promise.resolve();
