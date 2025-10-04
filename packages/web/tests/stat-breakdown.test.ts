@@ -92,27 +92,16 @@ describe('stat breakdown summary', () => {
 		expect(permanent?.items).toEqual(
 			expect.arrayContaining([
 				expect.stringContaining('⚔️ +1'),
-				expect.objectContaining({
-					title: expect.stringContaining('Permanent'),
-				}),
-			]),
-		);
-		const permanentDetails = permanent?.items.find(
-			(entry): entry is { title: string; items: unknown[] } =>
-				isSummaryObject(entry) && entry.title.includes('Permanent'),
-		);
-		expect(permanentDetails).toBeTruthy();
-		expect(permanentDetails?.items).toEqual(
-			expect.arrayContaining([
+				expect.stringContaining('🗿 Permanent'),
 				expect.stringContaining('Triggered by 🎖️ Legion'),
 				expect.stringContaining('Triggered by 📈 Growth'),
 			]),
 		);
-		const permanentStrings = permanentDetails?.items.filter(
-			(item): item is string => typeof item === 'string',
-		);
 		expect(
-			permanentStrings?.some((item) => item.includes('Applies immediately')),
+			permanent?.items.some(
+				(item) =>
+					typeof item === 'string' && item.includes('Applies immediately'),
+			),
 		).toBe(false);
 	});
 });

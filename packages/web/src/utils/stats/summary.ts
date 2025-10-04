@@ -13,6 +13,8 @@ import {
 	formatLinkLabel,
 } from './descriptors';
 
+const PERMANENT_ICON = '🗿';
+
 type SummaryGroup = Exclude<SummaryEntry, string>;
 
 type SummaryGroupExtras = { _desc?: true; _hoist?: true };
@@ -90,11 +92,10 @@ function buildLongevityEntries(
 	} else if (removal) {
 		pushSummaryEntry(items, `Active as long as ${removal}`);
 	}
-	if (items.length) {
-		entries.push({ title: 'Permanent', items });
-	} else {
-		entries.push('Permanent');
-	}
+	entries.push(`${PERMANENT_ICON} Permanent`);
+	items.forEach((item) => {
+		pushSummaryEntry(entries, item);
+	});
 	return entries;
 }
 
@@ -112,17 +113,19 @@ function collectAnchorLabels(meta: StatSourceMeta): string[] {
 		seen.add(normalized);
 		labels.push(label.trim());
 	};
-	const queue: StatSourceLink[] = [];
-	if (meta.removal) {
-		queue.push(meta.removal);
-	}
+	const includeLink = (link?: StatSourceLink) => {
+		if (!link || link.type === 'action') {
+			return;
+		}
+		add(formatLinkLabel(link));
+	};
+	includeLink(meta.removal);
 	if (meta.dependsOn) {
-		queue.push(...meta.dependsOn);
+		meta.dependsOn.forEach((link) => includeLink(link));
 	}
-	if (meta.kind && meta.id) {
-		queue.push({ type: meta.kind, id: meta.id });
+	if (meta.kind && meta.id && meta.kind !== 'action') {
+		includeLink({ type: meta.kind, id: meta.id });
 	}
-	queue.forEach((link) => add(formatLinkLabel(link)));
 	return labels;
 }
 

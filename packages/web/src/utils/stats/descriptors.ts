@@ -23,7 +23,10 @@ type TriggerInfoRecord = Record<
 	{ icon?: string; future?: string; past?: string }
 >;
 
-export type SourceDescriptor = ResolveResult & { suffix?: string };
+export type SourceDescriptor = ResolveResult & {
+	suffix?: ResolveResult;
+	kind?: string;
+};
 
 export type DescriptorRegistryEntry = {
 	resolve(id?: string): ResolveResult;
@@ -275,7 +278,34 @@ export function formatLinkLabel(link?: StatSourceLink): string | undefined {
 	return label || undefined;
 }
 
-function deriveResolutionSuffix(meta: StatSourceMeta): string | undefined {
+function resolveLinkDescriptor(
+	link?: StatSourceLink,
+): ResolveResult | undefined {
+	if (!link?.type) {
+		return undefined;
+	}
+	const descriptor = getDescriptor(link.type);
+	const resolved = descriptor.resolve(link.id);
+	let label = resolved.label;
+	let detail = descriptor.formatDetail?.(link.id, link.detail);
+	if (detail === undefined && link?.detail) {
+		detail = defaultFormatDetail(link.id, link.detail);
+	}
+	if (detail) {
+		label = label ? `${label} ${detail}`.trim() : detail;
+	}
+	if (!label && !resolved.icon) {
+		return undefined;
+	}
+	return {
+		icon: resolved.icon,
+		label: label ?? '',
+	} satisfies ResolveResult;
+}
+
+function deriveResolutionSuffix(
+	meta: StatSourceMeta,
+): ResolveResult | undefined {
 	if (meta.kind !== 'action') {
 		return undefined;
 	}
@@ -293,13 +323,13 @@ function deriveResolutionSuffix(meta: StatSourceMeta): string | undefined {
 		if (!match) {
 			continue;
 		}
-		const label = formatLinkLabel(match);
-		if (label) {
-			return label;
+		const resolved = resolveLinkDescriptor(match);
+		if (resolved) {
+			return resolved;
 		}
 	}
 	if (meta.removal) {
-		const fallback = formatLinkLabel(meta.removal);
+		const fallback = resolveLinkDescriptor(meta.removal);
 		if (fallback) {
 			return fallback;
 		}
@@ -314,10 +344,16 @@ export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 		icon: base.icon,
 		label: base.label,
 	};
-	let suffix = entry.formatDetail?.(meta.id, meta.detail);
-	if (suffix === undefined && meta.detail) {
-		suffix = defaultFormatDetail(meta.id, meta.detail);
+	if (meta.kind) {
+		descriptor.kind = meta.kind;
 	}
+	let suffixText = entry.formatDetail?.(meta.id, meta.detail);
+	if (suffixText === undefined && meta.detail) {
+		suffixText = defaultFormatDetail(meta.id, meta.detail);
+	}
+	let suffix = suffixText
+		? ({ icon: '', label: suffixText } satisfies ResolveResult)
+		: undefined;
 	const resolutionSuffix = deriveResolutionSuffix(meta);
 	if (resolutionSuffix) {
 		suffix = resolutionSuffix;
@@ -325,7 +361,7 @@ export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 	const isAction = meta.kind === 'action';
 	const noResolutionOverride = resolutionSuffix === undefined;
 	if (suffix != null && noResolutionOverride && isAction) {
-		const detail = suffix.trim().toLowerCase();
+		const detail = suffix.label.trim().toLowerCase();
 		if (detail === 'resolution') {
 			suffix = undefined;
 		}
@@ -343,38 +379,44 @@ export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 }
 
 export function formatSourceTitle(descriptor: SourceDescriptor): string {
-	const titleParts: string[] = [];
-	if (descriptor.icon) {
-		titleParts.push(descriptor.icon);
-	}
-	const labelParts: string[] = [];
-	const seen = new Set<string>();
-	const pushUnique = (value?: string) => {
-		if (!value) {
+	const iconParts: string[] = [];
+	const pushIcon = (icon?: string) => {
+		if (!icon) {
 			return;
 		}
-		const trimmed = value.trim();
-		if (!trimmed) {
-			return;
+		if (!iconParts.includes(icon)) {
+			iconParts.push(icon);
 		}
-		const normalized = trimmed.toLowerCase();
-		if (seen.has(normalized)) {
-			return;
-		}
-		seen.add(normalized);
-		labelParts.push(trimmed);
 	};
-	pushUnique(descriptor.label);
-	pushUnique(descriptor.suffix);
-	if (labelParts.length) {
-		let combined = labelParts[0]!;
-		if (labelParts.length > 1) {
-			const remainder = labelParts.slice(1).join(' · ');
-			combined = `${combined} · ${remainder}`;
+	pushIcon(descriptor.icon);
+	pushIcon(descriptor.suffix?.icon);
+	const iconText = iconParts.join('');
+	const baseLabel = descriptor.label?.trim() ?? '';
+	const suffixLabel = descriptor.suffix?.label?.trim() ?? '';
+	let labelText = baseLabel;
+	if (descriptor.kind === 'action') {
+		if (baseLabel && suffixLabel) {
+			labelText = `${baseLabel}: ${suffixLabel}`;
+		} else if (suffixLabel) {
+			labelText = suffixLabel;
 		}
-		titleParts.push(combined);
+	} else if (suffixLabel) {
+		const normalizedBase = baseLabel.toLowerCase();
+		const normalizedSuffix = suffixLabel.toLowerCase();
+		if (baseLabel && normalizedBase !== normalizedSuffix) {
+			labelText = `${baseLabel} · ${suffixLabel}`;
+		} else {
+			labelText = suffixLabel || baseLabel;
+		}
 	}
-	return titleParts.join(' ').trim();
+	const parts: string[] = [];
+	if (iconText) {
+		parts.push(iconText);
+	}
+	if (labelText) {
+		parts.push(labelText);
+	}
+	return parts.join(' ').trim();
 }
 
 export function formatDependency(
