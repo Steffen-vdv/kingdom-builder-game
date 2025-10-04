@@ -47,3 +47,4 @@ export {
 	BROOM_ICON,
 	RESOURCE_TRANSFER_ICON,
 } from './defs';
+export { formatPassiveRemoval } from './text';
