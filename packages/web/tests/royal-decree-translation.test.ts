@@ -45,6 +45,29 @@ function combineLabels(left: string, right: string): string {
 	return `${base} - ${entry}`;
 }
 
+function normalizeDescribedTitle(
+	describedTitle: string | undefined,
+	developmentLabel: string,
+): string {
+	if (!describedTitle) {
+		return developmentLabel;
+	}
+	const trimmed = describedTitle.trim();
+	if (trimmed.length === 0) {
+		return developmentLabel;
+	}
+	if (developmentLabel.startsWith(trimmed)) {
+		return developmentLabel;
+	}
+	if (trimmed.startsWith('Add ')) {
+		const withoutAdd = trimmed.slice(4).trim();
+		if (withoutAdd.length > 0 && developmentLabel.startsWith(withoutAdd)) {
+			return developmentLabel;
+		}
+	}
+	return trimmed;
+}
+
 function findGroupEntry(
 	entries: SummaryEntry[],
 ): Extract<SummaryEntry, { title: string; items: SummaryEntry[] }> {
@@ -123,20 +146,37 @@ describe('royal decree translation', () => {
 				`${development.icon ?? ''} ${development.name ?? ''}`,
 				'',
 			);
-			const expectedTitle = combineLabels(developLabel, developmentLabel);
+			const described = describeContent(
+				'action',
+				'develop',
+				context as EngineContext,
+				{ id },
+			);
+			const describedLabel = described[0];
+			const describedTitle =
+				typeof describedLabel === 'string'
+					? describedLabel
+					: describedLabel?.title;
+			const normalizedTitle = normalizeDescribedTitle(
+				describedTitle,
+				developmentLabel,
+			);
+			const expectedTitle = combineLabels(developLabel, normalizedTitle);
 			const entry = group.items.find((item) =>
 				typeof item === 'string'
 					? item === expectedTitle
 					: item.title === expectedTitle,
-			) as
-				| Extract<SummaryEntry, { title: string; items: SummaryEntry[] }>
-				| undefined;
+			);
 			expect(entry).toBeDefined();
 			if (!entry) {
 				continue;
 			}
-			expect(typeof entry).toBe('object');
-			expect(entry.items.length).toBeGreaterThan(0);
+			if (typeof entry === 'string') {
+				expect(entry).toBe(expectedTitle);
+				continue;
+			}
+			expect(entry.title).toBe(expectedTitle);
+			expect(entry.items).toContain(normalizedTitle);
 		}
 	});
 });

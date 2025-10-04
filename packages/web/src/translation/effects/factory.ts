@@ -244,7 +244,12 @@ function buildOptionEntry(
 			? summarizeContent('action', option.actionId, context, mergedParams)
 			: describeContent('action', option.actionId, context, mergedParams);
 
-	const { entry } = buildActionOptionTranslation(option, context, translated);
+	const { entry } = buildActionOptionTranslation(
+		option,
+		context,
+		translated,
+		mode,
+	);
 	return entry;
 }
 

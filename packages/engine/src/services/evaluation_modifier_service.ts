@@ -1,5 +1,49 @@
 import type { EngineContext } from '../context';
-import type { EvaluationModifier, ResourceGain } from './passive_types';
+import type {
+	EvaluationModifier,
+	ResourceGain,
+	RoundingInstruction,
+	RoundingMode,
+} from './passive_types';
+
+function applyRound(value: number, mode: RoundingMode | undefined) {
+	if (!mode) {
+		return value;
+	}
+	if (mode === 'up') {
+		return value >= 0 ? Math.ceil(value) : Math.floor(value);
+	}
+	if (mode === 'down') {
+		return value >= 0 ? Math.floor(value) : Math.ceil(value);
+	}
+	return value;
+}
+
+function mergeRoundInstruction(
+	target: Partial<Record<string, RoundingMode>>,
+	instruction: RoundingInstruction | undefined,
+) {
+	if (!instruction) {
+		return;
+	}
+	if (typeof instruction === 'string') {
+		target['*'] = instruction;
+		return;
+	}
+	const entries = Object.entries(instruction);
+	for (const [key, mode] of entries) {
+		if (mode === 'up' || mode === 'down') {
+			target[key] = mode;
+		}
+	}
+}
+
+function resolveRoundMode(
+	map: Partial<Record<string, RoundingMode>>,
+	key: string,
+) {
+	return map[key] ?? map['*'];
+}
 
 export class EvaluationModifierService {
 	private modifiers: Map<string, Map<string, EvaluationModifier>> = new Map();
@@ -37,12 +81,17 @@ export class EvaluationModifierService {
 		}
 		let globalPercent = 0;
 		const perResourcePercent: Partial<Record<string, number>> = {};
+		const rounding: Partial<Record<string, RoundingMode>> = {};
 		for (const modifier of modifierMap.values()) {
 			const result = modifier(context, gains);
 			if (!result || result.percent === undefined) {
+				if (result && 'round' in result) {
+					mergeRoundInstruction(rounding, result.round);
+				}
 				continue;
 			}
 			const percent = result.percent;
+			mergeRoundInstruction(rounding, result.round);
 			if (typeof percent === 'number') {
 				globalPercent += percent;
 				continue;
@@ -68,8 +117,10 @@ export class EvaluationModifierService {
 			if (totalPercent === 0) {
 				continue;
 			}
+			const roundMode = resolveRoundMode(rounding, gain.key);
 			const additionalGain = gain.amount * totalPercent;
-			gain.amount += additionalGain;
+			const adjusted = applyRound(additionalGain, roundMode);
+			gain.amount += adjusted;
 		}
 	}
 

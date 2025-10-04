@@ -43,8 +43,7 @@ function expectSummaryMatches(items: unknown[], summary: string) {
 	const summaryLines = summary
 		.split(/\r?\n/)
 		.map((line) => line.trim())
-		.filter((line) => line.length > 0)
-		.map((line) => `- ${line}`);
+		.filter((line) => line.length > 0);
 	expect(items).toEqual(expect.arrayContaining(summaryLines));
 }
 let currentGame: MockGame;
@@ -83,7 +82,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const call = handleHoverCard.mock.calls.at(-1)?.[0];
 		expect(call).toBeTruthy();
 		expect(call?.title).toBe(`${info.icon} ${info.label}`);
-		expect(call?.description).toEqual([`Current value: ${value}`]);
+		expect(call?.description).toBeUndefined();
+		expect(call?.effectsTitle).toBe(`Tiers (Current: ${value})`);
 		const tierEntries = call?.effects ?? [];
 		expect(tierEntries).toHaveLength(ctx.services.rules.tierDefinitions.length);
 		const activeEntry = tierEntries.find(
