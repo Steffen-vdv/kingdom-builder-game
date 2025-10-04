@@ -21,16 +21,22 @@ import {
 import { getStatBreakdownSummary, formatStatValue } from '../src/utils/stats';
 
 const collectSummaryLines = (entry: unknown): string[] => {
-	if (typeof entry === 'string') return [entry];
-	if (!entry || typeof entry !== 'object') return [];
+	if (typeof entry === 'string') {
+		return [entry];
+	}
+	if (!entry || typeof entry !== 'object') {
+		return [];
+	}
 	const record = entry as { title?: unknown; items?: unknown[] };
 	const lines: string[] = [];
-	if (typeof record.title === 'string' && record.title.trim())
+	if (typeof record.title === 'string' && record.title.trim()) {
 		lines.push(record.title);
-	if (Array.isArray(record.items))
+	}
+	if (Array.isArray(record.items)) {
 		record.items.forEach((item) => {
 			collectSummaryLines(item).forEach((line) => lines.push(line));
 		});
+	}
 	return lines;
 };
 
@@ -120,38 +126,59 @@ describe('stat descriptor registry', () => {
 			startLine,
 			unknownLine,
 		] = triggered;
-		if (populationRole.icon)
+		if (populationRole.icon) {
 			expect(populationLine).toContain(populationRole.icon);
+		}
 		expect(populationLine).toContain(populationRole.label ?? populationId);
 		expect(populationLine).toContain(`×${player.population[populationId]}`);
-		if (building.icon) expect(buildingLine).toContain(building.icon);
+		if (building.icon) {
+			expect(buildingLine).toContain(building.icon);
+		}
 		expect(buildingLine).toContain(building.name ?? buildingId);
-		if (development.icon) expect(developmentLine).toContain(development.icon);
+		if (development.icon) {
+			expect(developmentLine).toContain(development.icon);
+		}
 		expect(developmentLine).toContain(development.name ?? developmentId);
 		const phaseParts: string[] = [];
-		if (phaseWithStep!.icon) phaseParts.push(phaseWithStep!.icon);
-		if (phaseWithStep!.label) phaseParts.push(phaseWithStep!.label);
+		if (phaseWithStep!.icon) {
+			phaseParts.push(phaseWithStep!.icon);
+		}
+		if (phaseWithStep!.label) {
+			phaseParts.push(phaseWithStep!.label);
+		}
 		const phaseText = phaseParts.join(' ').trim();
 		const stepParts: string[] = [];
-		if (step!.icon) stepParts.push(step!.icon);
+		if (step!.icon) {
+			stepParts.push(step!.icon);
+		}
 		const stepLabel = step!.title ?? step!.id;
-		if (stepLabel) stepParts.push(stepLabel);
+		if (stepLabel) {
+			stepParts.push(stepLabel);
+		}
 		const stepText = stepParts.join(' ').trim();
 		const expectedPhaseText = stepText
 			? phaseText
 				? `${phaseText} · ${stepText}`
 				: stepText
 			: phaseText;
-		if (expectedPhaseText) expect(phaseLine).toContain(expectedPhaseText);
-		if (action.icon) expect(actionLine).toContain(action.icon);
+		if (expectedPhaseText) {
+			expect(phaseLine).toContain(expectedPhaseText);
+		}
+		if (action.icon) {
+			expect(actionLine).toContain(action.icon);
+		}
 		expect(actionLine).toContain(action.name ?? actionId);
 		const statInfo = STATS[secondaryStatKey as keyof typeof STATS];
-		if (statInfo?.icon) expect(statLine).toContain(statInfo.icon);
+		if (statInfo?.icon) {
+			expect(statLine).toContain(statInfo.icon);
+		}
 		expect(statLine).toContain(statInfo?.label ?? secondaryStatKey);
 		expect(statLine).toContain(
 			formatStatValue(secondaryStatKey, player.stats[secondaryStatKey]!),
 		);
-		if (resource?.icon) expect(resourceLine).toContain(resource.icon);
+		if (resource?.icon) {
+			expect(resourceLine).toContain(resource.icon);
+		}
 		expect(resourceLine).toContain(resource?.label ?? resourceKey);
 		const formatDetail = (detail: string) =>
 			detail
@@ -160,11 +187,15 @@ describe('stat descriptor registry', () => {
 				.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
 				.join(' ');
 		expect(resourceLine).toContain(formatDetail(resourceDetail));
-		if (triggerInfo?.icon) expect(triggerLine).toContain(triggerInfo.icon);
+		if (triggerInfo?.icon) {
+			expect(triggerLine).toContain(triggerInfo.icon);
+		}
 		expect(triggerLine).toContain(
 			triggerInfo?.past ?? triggerInfo?.future ?? triggerId,
 		);
-		if (PASSIVE_INFO.icon) expect(passiveLine).toContain(PASSIVE_INFO.icon);
+		if (PASSIVE_INFO.icon) {
+			expect(passiveLine).toContain(PASSIVE_INFO.icon);
+		}
 		expect(passiveLine).toContain(PASSIVE_INFO.label);
 		expect(landLine).toContain(String(landId));
 		expect(startLine).toContain('Initial Setup');

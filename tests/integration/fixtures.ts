@@ -51,7 +51,9 @@ export function createTestContext(
 	if (overrides) {
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
 			const value = overrides[key];
-			if (value !== undefined) ctx.activePlayer.resources[key] = value;
+			if (value !== undefined) {
+				ctx.activePlayer.resources[key] = value;
+			}
 		}
 	}
 	return ctx;
@@ -66,14 +68,18 @@ export function simulateEffects(
 	const dummy = clonePlayer(ctx.activePlayer);
 	const dummyCtx = { ...ctx, activePlayer: dummy } as EngineContext;
 	runEffects(effects, dummyCtx);
-	if (actionId) ctx.passives.runResultMods(actionId, dummyCtx);
+	if (actionId) {
+		ctx.passives.runResultMods(actionId, dummyCtx);
+	}
 
 	const resources: Record<string, number> = {};
 	for (const key of Object.keys(before.resources)) {
 		const delta =
 			dummy.resources[key as keyof typeof dummy.resources] -
 			before.resources[key as keyof typeof before.resources];
-		if (delta !== 0) resources[key] = delta;
+		if (delta !== 0) {
+			resources[key] = delta;
+		}
 	}
 
 	const stats: Record<string, number> = {};
@@ -81,7 +87,9 @@ export function simulateEffects(
 		const delta =
 			dummy.stats[key as keyof typeof dummy.stats] -
 			before.stats[key as keyof typeof before.stats];
-		if (delta !== 0) stats[key] = delta;
+		if (delta !== 0) {
+			stats[key] = delta;
+		}
 	}
 
 	const land = dummy.lands.length - before.lands.length;
@@ -101,11 +109,15 @@ function findEffect(
 	predicate: (e: EffectDef) => boolean,
 ): EffectDef | undefined {
 	for (const effect of effects) {
-		if (predicate(effect)) return effect;
+		if (predicate(effect)) {
+			return effect;
+		}
 		const nested =
 			(effect as { effects?: EffectDef[] }).effects &&
 			findEffect((effect as { effects?: EffectDef[] }).effects!, predicate);
-		if (nested) return nested;
+		if (nested) {
+			return nested;
+		}
 	}
 	return undefined;
 }
@@ -161,7 +173,9 @@ export function getBuildingWithStatBonuses() {
 					key: (e.params as { key: string }).key,
 					amount: (e.params as { amount: number }).amount,
 				}));
-			if (stats.length > 0) return { buildingId: id, stats };
+			if (stats.length > 0) {
+				return { buildingId: id, stats };
+			}
 		}
 	}
 	throw new Error('No building with stat bonuses found');
@@ -170,7 +184,9 @@ export function getBuildingWithStatBonuses() {
 export function getActionWithMultipleCosts(ctx: EngineContext) {
 	for (const [id] of ctx.actions.entries()) {
 		const costs = getActionCosts(id, ctx);
-		if (Object.keys(costs).length > 1) return { actionId: id, costs };
+		if (Object.keys(costs).length > 1) {
+			return { actionId: id, costs };
+		}
 	}
 	throw new Error('No action with multiple costs found');
 }
@@ -178,7 +194,9 @@ export function getActionWithMultipleCosts(ctx: EngineContext) {
 export function getActionWithCost(ctx: EngineContext) {
 	for (const [id] of ctx.actions.entries()) {
 		const costs = getActionCosts(id, ctx);
-		if (Object.keys(costs).length > 0) return { actionId: id, costs };
+		if (Object.keys(costs).length > 0) {
+			return { actionId: id, costs };
+		}
 	}
 	throw new Error('No action with costs found');
 }

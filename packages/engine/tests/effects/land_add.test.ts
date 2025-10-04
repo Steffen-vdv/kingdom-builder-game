@@ -3,30 +3,30 @@ import { runEffects } from '../../src/effects/index.ts';
 import { createTestEngine } from '../helpers.ts';
 
 describe('land:add effect', () => {
-  it('appends new lands to the end', () => {
-    const ctx = createTestEngine();
-    const beforeIds = ctx.activePlayer.lands.map((l) => l.id);
-    const beforeCount = beforeIds.length;
+	it('appends new lands to the end', () => {
+		const ctx = createTestEngine();
+		const beforeIds = ctx.activePlayer.lands.map((l) => l.id);
+		const beforeCount = beforeIds.length;
 
-    runEffects(
-      [
-        {
-          type: 'land',
-          method: 'add',
-          params: { count: 2 },
-        },
-      ],
-      ctx,
-    );
+		runEffects(
+			[
+				{
+					type: 'land',
+					method: 'add',
+					params: { count: 2 },
+				},
+			],
+			ctx,
+		);
 
-    const lands = ctx.activePlayer.lands;
-    expect(lands.length).toBe(beforeCount + 2);
-    expect(lands.slice(0, beforeCount).map((l) => l.id)).toEqual(beforeIds);
-    expect(lands[beforeCount]?.id).toBe(
-      `${ctx.activePlayer.id}-L${beforeCount + 1}`,
-    );
-    expect(lands[beforeCount + 1]?.id).toBe(
-      `${ctx.activePlayer.id}-L${beforeCount + 2}`,
-    );
-  });
+		const lands = ctx.activePlayer.lands;
+		expect(lands.length).toBe(beforeCount + 2);
+		expect(lands.slice(0, beforeCount).map((l) => l.id)).toEqual(beforeIds);
+		expect(lands[beforeCount]?.id).toBe(
+			`${ctx.activePlayer.id}-L${beforeCount + 1}`,
+		);
+		expect(lands[beforeCount + 1]?.id).toBe(
+			`${ctx.activePlayer.id}-L${beforeCount + 2}`,
+		);
+	});
 });

@@ -63,7 +63,9 @@ describe('log resource sources', () => {
 		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
 		const bundles = collectTriggerEffects('onGainIncomeStep', ctx);
-		for (const bundle of bundles) runEffects(bundle.effects, ctx);
+		for (const bundle of bundles) {
+			runEffects(bundle.effects, ctx);
+		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
 		const lines = diffStepSnapshots(
@@ -105,7 +107,9 @@ describe('log resource sources', () => {
 			],
 			ctx,
 		);
-		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) advance(ctx);
+		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
+			advance(ctx);
+		}
 		const step = {
 			id: SYNTHETIC_IDS.taxAction,
 			effects: ctx.actions.get(SYNTHETIC_IDS.taxAction).effects,
@@ -157,7 +161,9 @@ describe('log resource sources', () => {
 		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
 		const bundles = collectTriggerEffects('onPayUpkeepStep', ctx);
-		for (const bundle of bundles) runEffects(bundle.effects, ctx);
+		for (const bundle of bundles) {
+			runEffects(bundle.effects, ctx);
+		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
 		const lines = diffStepSnapshots(
@@ -183,26 +189,40 @@ describe('log resource sources', () => {
 						source?: { type?: string; id?: string; count?: number };
 					}
 				)?.source;
-				if (!source?.type) return '';
+				if (!source?.type) {
+					return '';
+				}
 				if (source.type === 'population') {
 					const role = source.id;
 					const icon = role
 						? ctx.populations.get(role)?.icon || role
 						: SYNTHETIC_POPULATION_INFO.icon;
-					if (!icon) return '';
-					if (source.count === undefined) return icon;
+					if (!icon) {
+						return '';
+					}
+					if (source.count === undefined) {
+						return icon;
+					}
 					const rawCount = Number(source.count);
-					if (!Number.isFinite(rawCount)) return icon;
+					if (!Number.isFinite(rawCount)) {
+						return icon;
+					}
 					const normalizedCount =
 						rawCount > 0 ? Math.max(1, Math.round(rawCount)) : 0;
-					if (normalizedCount === 0) return '';
+					if (normalizedCount === 0) {
+						return '';
+					}
 					return icon.repeat(normalizedCount);
 				}
-				if (source.type === 'development' && source.id)
+				if (source.type === 'development' && source.id) {
 					return ctx.developments.get(source.id)?.icon || '';
-				if (source.type === 'building' && source.id)
+				}
+				if (source.type === 'building' && source.id) {
 					return ctx.buildings.get(source.id)?.icon || '';
-				if (source.type === 'land') return SYNTHETIC_LAND_INFO.icon || '';
+				}
+				if (source.type === 'land') {
+					return SYNTHETIC_LAND_INFO.icon || '';
+				}
 				return '';
 			})
 			.filter(Boolean)

@@ -50,10 +50,14 @@ export type RequirementIconGetter = (
  * Register additional handlers via {@link registerRequirementIconGetter}:
  *
  * ```ts
- * const unregister = registerRequirementIconGetter('myType', 'myMethod', (requirement, ctx) => {
+ * const unregister = registerRequirementIconGetter(
+ *         'myType',
+ *         'myMethod',
+ *         (requirement, ctx) => {
  *         // derive icons from requirement.params / ctx
  *         return ['🛠️'];
- * });
+ *         },
+ * );
  * // Call unregister() in tests or teardown logic if necessary.
  * ```
  */
@@ -94,7 +98,8 @@ export function getRequirementIcons(
 		return [];
 	}
 	const icons: string[] = [];
-	for (const requirement of actionDefinition.requirements as RequirementConfig[]) {
+	const requirements = actionDefinition.requirements as RequirementConfig[];
+	for (const requirement of requirements) {
 		const registryKey = `${requirement.type}:${requirement.method}`;
 		const getter = REQUIREMENT_ICON_GETTERS.get(registryKey);
 		if (!getter) {
