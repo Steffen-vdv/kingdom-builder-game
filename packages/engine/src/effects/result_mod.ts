@@ -53,19 +53,19 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 						runEffects(effects, innerContext);
 					}
 					if (adjust !== undefined) {
-						for (const g of gains) {
-							g.amount += adjust;
+						for (const gainEntry of gains) {
+							gainEntry.amount += adjust;
 						}
 					}
 					if (amount !== undefined) {
-						for (const g of gains) {
-							if (g.amount > 0) {
+						for (const gainEntry of gains) {
+							if (gainEntry.amount > 0) {
 								runEffects(
 									[
 										{
 											type: 'resource',
 											method: 'add',
-											params: { key: g.key, amount },
+											params: { key: gainEntry.key, amount },
 										},
 									],
 									innerContext,
