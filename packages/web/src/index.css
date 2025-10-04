@@ -191,16 +191,16 @@
 		height: 0.75rem;
 	}
 	.action-card__option {
-		@apply panel-card cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;
+		@apply panel-card w-full cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition whitespace-normal break-words dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;
 	}
 	.action-card__option--compact {
-		@apply flex min-h-[4.25rem] items-center justify-center gap-2 text-base font-semibold;
+		@apply flex min-h-[4.25rem] items-center justify-center gap-2 text-base font-semibold text-center whitespace-normal break-words;
 	}
 	.action-card__option--compact .action-card__option-title {
-		@apply text-base font-semibold text-center;
+		@apply block text-base font-semibold text-center whitespace-normal break-words;
 	}
 	.action-card__option-title {
-		@apply text-base font-semibold;
+		@apply block text-base font-semibold leading-snug whitespace-normal break-words;
 	}
 	.action-card__option-summary {
 		@apply text-sm text-slate-600 dark:text-slate-300;

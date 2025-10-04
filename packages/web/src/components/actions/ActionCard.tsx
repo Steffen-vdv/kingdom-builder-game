@@ -100,8 +100,8 @@ export interface ActionCardProps {
 }
 
 function StepBadge({
-	stepIndex,
-	stepCount,
+	stepIndex: _stepIndex,
+	stepCount: _stepCount,
 	stepLabel,
 	variant,
 	multiStep,
@@ -112,10 +112,11 @@ function StepBadge({
 	variant: ActionCardVariant;
 	multiStep: boolean | undefined;
 }) {
-	if (variant === 'back' && stepCount && stepCount > 0) {
-		const current = stepIndex && stepIndex > 0 ? stepIndex : 1;
-		const label =
-			stepLabel ?? `Step ${Math.min(current, stepCount)} of ${stepCount}`;
+	if (variant === 'back') {
+		const label = stepLabel?.trim();
+		if (!label) {
+			return null;
+		}
 		return (
 			<div className="action-card__badge">
 				<span className="action-card__badge-pill">{label}</span>

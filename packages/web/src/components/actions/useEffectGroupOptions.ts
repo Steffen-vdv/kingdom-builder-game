@@ -25,6 +25,7 @@ type BuildOptionsParams = {
 	handleOptionSelect: (
 		group: ActionEffectGroup,
 		option: ActionEffectGroupOption,
+		params?: Record<string, unknown>,
 	) => void;
 	clearHoverCard: () => void;
 	handleHoverCard: (data: HoverCardData) => void;
@@ -125,7 +126,7 @@ export function useEffectGroupOptions({
 				label: optionLabel,
 				onSelect: () => {
 					clearHoverCard();
-					handleOptionSelect(currentGroup, option);
+					handleOptionSelect(currentGroup, option, resolved);
 				},
 				compact: currentGroup.layout === 'compact',
 			};
