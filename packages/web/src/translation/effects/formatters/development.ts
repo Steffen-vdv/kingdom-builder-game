@@ -1,6 +1,4 @@
 import { registerEffectFormatter } from '../factory';
-import { describeContent } from '../../content';
-
 registerEffectFormatter('development', 'add', {
 	summarize: (eff, ctx) => {
 		const id = eff.params?.['id'] as string;
@@ -22,7 +20,8 @@ registerEffectFormatter('development', 'add', {
 		}
 		const label = def?.name || id;
 		const icon = def?.icon || '';
-		return `Add ${icon}${label}`;
+		const decoratedLabel = [icon, label].filter(Boolean).join(' ').trim();
+		return `Add ${decoratedLabel}`.trim();
 	},
 });
 
@@ -47,6 +46,7 @@ registerEffectFormatter('development', 'remove', {
 		}
 		const label = def?.name || id;
 		const icon = def?.icon || '';
-		return `Remove ${icon}${label}`;
+		const decoratedLabel = [icon, label].filter(Boolean).join(' ').trim();
+		return `Remove ${decoratedLabel}`.trim();
 	},
 });

@@ -61,7 +61,9 @@
 	},
 	"lint-staged": {
 		"*.{js,jsx,ts,tsx,json,md,cjs}": "prettier --write",
-		"*.{ts,tsx}": "eslint --max-warnings=0 --rulesdir scripts",
-		"*.{ts,tsx}": "bash -c 'tsc --noEmit'"
+		"*.{ts,tsx}": [
+			"eslint --max-warnings=0 --rulesdir scripts",
+			"bash -c 'tsc --noEmit'"
+		]
 	}
 }
