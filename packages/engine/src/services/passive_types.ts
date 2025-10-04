@@ -55,9 +55,14 @@ export type PassiveRecord = PassiveSummary & {
 export type CostBag = { [resourceKey in ResourceKey]?: number };
 export type CostModifierFlat = Partial<Record<ResourceKey, number>>;
 export type CostModifierPercent = Partial<Record<ResourceKey, number>>;
+export type RoundingMode = 'up' | 'down';
+export type RoundingInstruction =
+	| RoundingMode
+	| Partial<Record<string, RoundingMode>>;
 export type CostModifierResult = {
 	flat?: CostModifierFlat;
 	percent?: CostModifierPercent;
+	round?: RoundingInstruction;
 };
 
 export type CostModifier = (
@@ -79,6 +84,7 @@ export type EvaluationModifierPercent =
 
 export type EvaluationModifierResult = {
 	percent?: EvaluationModifierPercent;
+	round?: RoundingInstruction;
 };
 
 export type EvaluationModifier = (

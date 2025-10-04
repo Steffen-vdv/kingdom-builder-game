@@ -123,20 +123,31 @@ describe('royal decree translation', () => {
 				`${development.icon ?? ''} ${development.name ?? ''}`,
 				'',
 			);
-			const expectedTitle = combineLabels(developLabel, developmentLabel);
+			const described = describeContent(
+				'action',
+				'develop',
+				context as EngineContext,
+				{ id },
+			);
+			const describedLabel = described[0];
+			const describedTitle =
+				typeof describedLabel === 'string'
+					? describedLabel
+					: (describedLabel?.title ?? developmentLabel);
+			const expectedTitle = combineLabels(
+				developLabel,
+				describedTitle || developmentLabel,
+			);
 			const entry = group.items.find((item) =>
 				typeof item === 'string'
 					? item === expectedTitle
 					: item.title === expectedTitle,
-			) as
-				| Extract<SummaryEntry, { title: string; items: SummaryEntry[] }>
-				| undefined;
+			);
 			expect(entry).toBeDefined();
 			if (!entry) {
 				continue;
 			}
-			expect(typeof entry).toBe('object');
-			expect(entry.items.length).toBeGreaterThan(0);
+			expect(entry).toBe(expectedTitle);
 		}
 	});
 });

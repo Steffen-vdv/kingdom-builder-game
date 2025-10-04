@@ -30,15 +30,12 @@ function splitSummary(summary?: string) {
 		.filter((line) => line.length > 0);
 }
 
-function toBullet(line: string) {
+function normalizeLine(line: string) {
 	const trimmed = line.trim();
 	if (!trimmed) {
 		return trimmed;
 	}
-	if (/^[-•]/u.test(trimmed)) {
-		return trimmed;
-	}
-	return `- ${trimmed}`;
+	return trimmed.replace(/^[-•–]\s*/u, '').trim();
 }
 
 function appendUnique(target: string[], values: string[]) {
@@ -114,13 +111,13 @@ export function buildTierEntries(
 		const translatedSummary = translateTierSummary(summaryToken);
 		const summaryLines = splitSummary(translatedSummary ?? text?.summary);
 		if (summaryLines.length > 0) {
-			const bulletLines = summaryLines.map(toBullet);
-			appendUnique(items, bulletLines);
+			const normalized = summaryLines.map(normalizeLine);
+			appendUnique(items, normalized);
 		}
 
 		if (!items.length && text?.summary) {
-			const summaryBullet = toBullet(text.summary);
-			appendUnique(items, [summaryBullet]);
+			const summaryLine = normalizeLine(text.summary);
+			appendUnique(items, [summaryLine]);
 		}
 		if (!items.length) {
 			const slots = MAX_SUMMARY_LINES - items.length;
@@ -128,13 +125,13 @@ export function buildTierEntries(
 				const effectArgs = preview?.effects || [];
 				const summaries = summarizeEffects(effectArgs, ctx);
 				const lines = collectSummaryLines(summaries, slots);
-				const bulletLines = lines.map(toBullet);
-				appendUnique(items, bulletLines);
+				const normalized = lines.map(normalizeLine);
+				appendUnique(items, normalized);
 			}
 		}
 
 		if (!items.length) {
-			items.push('- No tier bonuses active.');
+			items.push('No tier bonuses active.');
 		}
 
 		return { title, items };

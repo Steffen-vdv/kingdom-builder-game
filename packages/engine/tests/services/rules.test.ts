@@ -128,6 +128,21 @@ describe('PassiveManager', () => {
 		);
 	});
 
+	it('rounds percent cost modifiers up when requested', () => {
+		const content = createContentFactory();
+		const action = content.action({ baseCosts: { [CResource.gold]: 7 } });
+		const ctx = createTestEngine({ actions: content.actions });
+		const baseCost = getActionCosts(action.id, ctx);
+		const base = { [CResource.gold]: baseCost[CResource.gold] || 0 };
+		ctx.passives.registerCostModifier('roundedDiscount', () => ({
+			percent: { [CResource.gold]: -0.2 },
+			round: 'up',
+		}));
+		const modified = ctx.passives.applyCostMods(action.id, base, ctx);
+		const baseValue = base[CResource.gold] || 0;
+		expect(modified[CResource.gold]).toBe(baseValue - 2);
+	});
+
 	it('runs result modifiers and handles passives', () => {
 		const content = createContentFactory();
 		const action = content.action();
@@ -208,5 +223,30 @@ describe('PassiveManager', () => {
 		}));
 		ctx.passives.runEvaluationMods('test:target', ctx, gains);
 		expect(gains[0]!.amount).toBeCloseTo(-6 * (1 + 0.5 + 0.25));
+	});
+
+	it('rounds evaluation percent modifiers up when requested', () => {
+		const resourceKey = Object.values(CResource)[0];
+		const ctx = createTestEngine();
+		const gains = [{ key: resourceKey, amount: 1 }];
+		ctx.passives.registerEvaluationModifier('roundedUp', 'test:target', () => ({
+			percent: 0.25,
+			round: 'up',
+		}));
+		ctx.passives.runEvaluationMods('test:target', ctx, gains);
+		expect(gains[0]!.amount).toBe(2);
+	});
+
+	it('rounds evaluation penalties up against the player', () => {
+		const resourceKey = Object.values(CResource)[0];
+		const ctx = createTestEngine();
+		const gains = [{ key: resourceKey, amount: 4 }];
+		ctx.passives.registerEvaluationModifier(
+			'roundedPenalty',
+			'test:target',
+			() => ({ percent: -0.25, round: 'up' }),
+		);
+		ctx.passives.runEvaluationMods('test:target', ctx, gains);
+		expect(gains[0]!.amount).toBe(3);
 	});
 });

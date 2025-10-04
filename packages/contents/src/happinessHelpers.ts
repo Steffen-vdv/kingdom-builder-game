@@ -24,27 +24,29 @@ const BUILD_ACTION_ID = 'build';
 const DEVELOPMENT_EVALUATION = developmentTarget();
 
 export const incomeModifier = (id: string, percent: number) =>
-	({
-		type: Types.ResultMod,
-		method: ResultModMethods.ADD,
-		params: resultModParams()
-			.id(id)
-			.evaluation(DEVELOPMENT_EVALUATION)
-			.percent(percent)
-			.build(),
-	}) as const;
+	effect(Types.ResultMod, ResultModMethods.ADD)
+		.round('up')
+		.params(
+			resultModParams()
+				.id(id)
+				.evaluation(DEVELOPMENT_EVALUATION)
+				.percent(percent)
+				.build(),
+		)
+		.build();
 
 export const buildingDiscountModifier = (id: string) =>
-	({
-		type: Types.CostMod,
-		method: CostModMethods.ADD,
-		params: costModParams()
-			.id(id)
-			.actionId(BUILD_ACTION_ID)
-			.key(Resource.gold)
-			.percent(-0.2)
-			.build(),
-	}) as const;
+	effect(Types.CostMod, CostModMethods.ADD)
+		.round('up')
+		.params(
+			costModParams()
+				.id(id)
+				.actionId(BUILD_ACTION_ID)
+				.key(Resource.gold)
+				.percent(-0.2)
+				.build(),
+		)
+		.build();
 
 export const growthBonusEffect = (amount: number) =>
 	({
