@@ -1,12 +1,19 @@
 /* eslint-disable max-lines */
 import { PASSIVE_INFO } from '@kingdom-builder/contents';
-import type { EngineContext, StatSourceMeta } from '@kingdom-builder/engine';
+import type {
+	EngineContext,
+	StatSourceLink,
+	StatSourceMeta,
+} from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../translation/content/types';
 import {
 	formatDependency,
 	formatPhaseStep,
 	formatTriggerLabel,
+	formatLinkLabel,
 } from './descriptors';
+
+const PERMANENT_ICON = '🗿';
 
 type SummaryGroup = Exclude<SummaryEntry, string>;
 
@@ -24,15 +31,18 @@ export function buildDetailEntries(
 	const dependencies = (meta.dependsOn ?? [])
 		.map((link) => formatDependency(link, player, context))
 		.filter((text) => text.length > 0);
-	const removal = meta.removal
-		? formatDependency(meta.removal, player, context, {
+	const removalLink = meta.removal;
+	const removal = removalLink
+		? formatDependency(removalLink, player, context, {
 				includeCounts: false,
 			})
 		: undefined;
 	const entries: SummaryEntry[] = [];
-	buildLongevityEntries(meta, dependencies, removal).forEach((entry) => {
-		pushSummaryEntry(entries, entry);
-	});
+	buildLongevityEntries(meta, dependencies, removal, removalLink).forEach(
+		(entry) => {
+			pushSummaryEntry(entries, entry);
+		},
+	);
 	buildHistoryEntries(meta).forEach((entry) => {
 		pushSummaryEntry(entries, entry);
 	});
@@ -53,50 +63,109 @@ function buildLongevityEntries(
 	meta: StatSourceMeta,
 	dependencies: string[],
 	removal?: string,
+	removalLink?: StatSourceLink,
 ): SummaryEntry[] {
 	const entries: SummaryEntry[] = [];
 	if (meta.longevity === 'ongoing') {
-		const items: SummaryEntry[] = [];
-		if (!dependencies.length) {
-			pushSummaryEntry(items, 'Active at all times');
-		} else if (dependencies.length === 1) {
-			pushSummaryEntry(items, `While ${dependencies[0]}`);
-		} else {
-			pushSummaryEntry(items, {
-				title: 'While all of:',
-				items: dependencies,
-			});
-		}
-		if (removal) {
-			pushSummaryEntry(items, `Active as long as ${removal}`);
-		}
-		if (items.length) {
-			entries.push({
-				title: `${PASSIVE_INFO.icon ?? '♾️'} Ongoing`,
-				items,
-			});
+		const anchors = collectAnchorLabels(meta);
+		const condition = formatInPlayCondition(anchors);
+		if (condition) {
+			entries.push(
+				`${PASSIVE_INFO.icon ?? '♾️'} Ongoing as long as ${condition}`,
+			);
 		} else {
 			entries.push(`${PASSIVE_INFO.icon ?? '♾️'} Ongoing`);
 		}
 		return entries;
 	}
 	const items: SummaryEntry[] = [];
-	if (!dependencies.length) {
-		pushSummaryEntry(items, 'Applies immediately and remains in effect');
-	} else {
+	if (dependencies.length && shouldDisplayPermanentDependencies(meta)) {
 		dependencies.forEach((link) => {
 			pushSummaryEntry(items, `Triggered by ${link}`);
 		});
 	}
-	if (removal) {
+	const removalCondition = formatInPlayCondition(
+		collectRemovalLabels(removalLink),
+	);
+	if (removalCondition) {
+		pushSummaryEntry(items, `Active as long as ${removalCondition}`);
+	} else if (removal) {
 		pushSummaryEntry(items, `Active as long as ${removal}`);
 	}
-	if (items.length) {
-		entries.push({ title: 'Permanent', items });
-	} else {
-		entries.push('Permanent');
-	}
+	entries.push(`${PERMANENT_ICON} Permanent`);
+	items.forEach((item) => {
+		pushSummaryEntry(entries, item);
+	});
 	return entries;
+}
+
+function shouldDisplayPermanentDependencies(meta: StatSourceMeta): boolean {
+	if (meta.kind === 'phase') {
+		const detail = meta.detail?.trim().toLowerCase();
+		if (detail === 'raise-strength') {
+			return false;
+		}
+	}
+	return true;
+}
+
+function collectAnchorLabels(meta: StatSourceMeta): string[] {
+	const labels: string[] = [];
+	const seen = new Set<string>();
+	const add = (label?: string) => {
+		if (!label) {
+			return;
+		}
+		const normalized = label.replace(/\s+/g, ' ').trim().toLowerCase();
+		if (!normalized || seen.has(normalized)) {
+			return;
+		}
+		seen.add(normalized);
+		labels.push(label.trim());
+	};
+	const includeLink = (link?: StatSourceLink) => {
+		if (!link || link.type === 'action') {
+			return;
+		}
+		add(formatLinkLabel(link));
+	};
+	includeLink(meta.removal);
+	if (meta.dependsOn) {
+		meta.dependsOn.forEach((link) => includeLink(link));
+	}
+	if (meta.kind && meta.id && meta.kind !== 'action') {
+		includeLink({ type: meta.kind, id: meta.id });
+	}
+	return labels;
+}
+
+function collectRemovalLabels(removal?: StatSourceLink): string[] {
+	if (!removal) {
+		return [];
+	}
+	const label = formatLinkLabel(removal);
+	return label ? [label] : [];
+}
+
+function joinWithAnd(values: string[]): string {
+	if (values.length <= 1) {
+		return values[0] ?? '';
+	}
+	if (values.length === 2) {
+		return `${values[0]!} and ${values[1]!}`;
+	}
+	const head = values.slice(0, -1).join(', ');
+	const tail = values[values.length - 1];
+	return `${head}, and ${tail}`;
+}
+
+function formatInPlayCondition(labels: string[]): string | undefined {
+	if (!labels.length) {
+		return undefined;
+	}
+	const joined = joinWithAnd(labels);
+	const verb = labels.length > 1 ? 'are' : 'is';
+	return `${joined} ${verb} in play`;
 }
 
 function buildHistoryEntries(meta: StatSourceMeta): SummaryEntry[] {

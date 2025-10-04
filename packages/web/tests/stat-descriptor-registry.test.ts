@@ -167,7 +167,7 @@ describe('stat descriptor registry', () => {
 		if (PASSIVE_INFO.icon) expect(passiveLine).toContain(PASSIVE_INFO.icon);
 		expect(passiveLine).toContain(PASSIVE_INFO.label);
 		expect(landLine).toContain(String(landId));
-		expect(startLine).toContain('Initial setup');
+		expect(startLine).toContain('Initial Setup');
 		expect(unknownLine).toContain(unknownId);
 		expect(unknownLine).toContain(formatDetail(unknownDetail));
 	});
