@@ -9,7 +9,7 @@ import { useGameEngine } from '../../state/GameContext';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
-import { describeEffects, translateTierSummary } from '../../translation';
+import { summarizeEffects, translateTierSummary } from '../../translation';
 
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
@@ -24,6 +24,41 @@ function formatTierRange(tier: TierDefinition) {
 		return `${min}`;
 	}
 	return `${min} to ${max}`;
+}
+
+function collectSummaryLines(
+	entries: ReturnType<typeof summarizeEffects>,
+	limit: number,
+) {
+	if (limit <= 0) {
+		return [] as string[];
+	}
+	const lines: string[] = [];
+	const queue = [...entries];
+	while (queue.length && lines.length < limit) {
+		const entry = queue.shift();
+		if (entry === undefined) {
+			continue;
+		}
+		if (typeof entry === 'string') {
+			const trimmed = entry.trim();
+			if (trimmed && !lines.includes(trimmed)) {
+				lines.push(trimmed);
+			}
+			continue;
+		}
+		const title = entry.title.trim();
+		if (title && !lines.includes(title)) {
+			lines.push(title);
+		}
+		if (lines.length >= limit) {
+			break;
+		}
+		if (entry.items?.length) {
+			queue.unshift(...entry.items);
+		}
+	}
+	return lines;
 }
 
 function buildTierEntries(
@@ -44,25 +79,29 @@ function buildTierEntries(
 			(part) => part && String(part).trim().length > 0,
 		);
 		const title = titleParts.join(' ').trim();
+
 		const summaryToken = display?.summaryToken;
-		const summary = translateTierSummary(summaryToken) ?? text?.summary;
-		const removalText =
-			text?.removal ??
-			(display?.removalCondition
-				? `Active as long as ${display.removalCondition}`
-				: undefined);
-		const items = [] as ReturnType<typeof describeEffects>;
-		if (summary) {
-			items.push(summary);
+		const items: string[] = [];
+		const translatedSummary = translateTierSummary(summaryToken);
+		if (translatedSummary) {
+			items.push(translatedSummary);
+		} else if (text?.summary) {
+			items.push(text.summary.trim());
 		}
-		const described = describeEffects(preview?.effects || [], ctx);
-		described.forEach((item) => items.push(item));
-		if (removalText) {
-			items.push(removalText);
+
+		const remainingSlots = Math.max(0, 2 - items.length);
+		if (remainingSlots > 0) {
+			const summaries = collectSummaryLines(
+				summarizeEffects(preview?.effects || [], ctx),
+				remainingSlots,
+			);
+			items.push(...summaries);
 		}
+
 		if (!items.length) {
-			items.push('No additional effects');
+			items.push('No tier bonuses active');
 		}
+
 		return { title, items };
 	});
 }
