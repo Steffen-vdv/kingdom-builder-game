@@ -14,7 +14,12 @@ import {
 	MODIFIER_INFO,
 	RESOURCES,
 	Resource,
+	RESOURCE_TRANSFER_ICON,
 } from '@kingdom-builder/contents';
+import { createContentFactory } from '../../engine/tests/factories/content';
+import type { PhaseDef } from '@kingdom-builder/engine/phases';
+import type { StartConfig } from '@kingdom-builder/engine/config/schema';
+import type { RuleSet } from '@kingdom-builder/engine/services';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -76,5 +81,72 @@ describe('modifier evaluation handlers', () => {
 		expect(description).toEqual([
 			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${farm.icon} ${farm.name}: Whenever it grants resources, gain ${happiness.icon}-2 more of that resource`,
 		]);
+	});
+
+	it('formats transfer percent evaluation modifiers for arbitrary actions', () => {
+		const content = createContentFactory();
+		const raid = content.action({ id: 'raid', name: 'Raid', icon: '⚔️' });
+		const tierResourceKey = 'synthetic:resource:tier';
+		const phases: PhaseDef[] = [
+			{
+				id: 'phase:synthetic',
+				label: 'Synthetic',
+				icon: '🧪',
+				steps: [{ id: 'phase:synthetic:step' }],
+			},
+		];
+		const start: StartConfig = {
+			player: {
+				resources: { [tierResourceKey]: 0 },
+				stats: {},
+				population: {},
+				lands: [],
+			},
+		};
+		const rules: RuleSet = {
+			defaultActionAPCost: 1,
+			absorptionCapPct: 1,
+			absorptionRounding: 'down',
+			tieredResourceKey: tierResourceKey,
+			tierDefinitions: [],
+			slotsPerNewLand: 1,
+			maxSlotsPerLand: 1,
+			basePopulationCap: 1,
+		};
+		const ctx = createEngine({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+			phases,
+			start,
+			rules,
+		});
+		const eff: EffectDef = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				id: 'synthetic:transfer-bonus',
+				evaluation: { type: 'transfer_pct', id: raid.id },
+				adjust: 10,
+			},
+		};
+
+		const summary = summarizeEffects([eff], ctx);
+		const description = describeEffects([eff], ctx);
+		const targetIcon = raid.icon?.trim() ? raid.icon : raid.name;
+		expect(summary).toEqual([
+			`${MODIFIER_INFO.result.icon}${targetIcon}: ${RESOURCE_TRANSFER_ICON}+10%`,
+		]);
+		const targetLabel = raid.icon ? `${raid.icon} ${raid.name}` : raid.name;
+		expect(description[0]).toBe(
+			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${targetLabel}: Whenever it transfers resources, ${RESOURCE_TRANSFER_ICON} Increase transfer by 10%`,
+		);
+		const card = description[1];
+		expect(card).toMatchObject({
+			title: targetLabel,
+			_hoist: true,
+			_desc: true,
+		});
 	});
 });
