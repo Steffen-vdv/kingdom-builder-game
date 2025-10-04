@@ -14,49 +14,190 @@ import {
 	type EffectDef,
 } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
 	RESOURCES,
 	STATS,
-	PopulationRole,
+	BUILDINGS,
+	Resource as ContentResource,
+	Stat as ContentStat,
 } from '@kingdom-builder/contents';
 import {
-	action,
 	effect,
 	Types,
 	ResourceMethods,
+	ActionMethods,
+	StatMethods,
 	attackParams,
 	resourceParams,
+	transferParams,
+	statParams,
 } from '@kingdom-builder/contents/config/builders';
+import { createContentFactory } from '../../engine/tests/factories/content';
+import type { PhaseDef } from '@kingdom-builder/engine/phases';
+import type { StartConfig } from '@kingdom-builder/engine/config/schema';
+import type { RuleSet } from '@kingdom-builder/engine/services';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-function createCtx() {
-	return createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
+const SYNTH_ATTACK_ID = 'synthetic:army_attack';
+const SYNTH_ATTACK_NAME = 'Synthetic Assault';
+const SYNTH_ATTACK_ICON = '🛡️';
+const SYNTH_PLUNDER_ID = 'synthetic:plunder';
+const SYNTH_PLUNDER_NAME = 'Synthetic Plunder';
+const SYNTH_PLUNDER_ICON = '💰';
+const SYNTH_BUILDING_ID = 'synthetic:stronghold';
+const SYNTH_BUILDING_NAME = 'Training Stronghold';
+const SYNTH_BUILDING_ICON = '🏯';
+const SYNTH_BUILDING_ATTACK_ID = 'synthetic:building_attack';
+const SYNTH_BUILDING_ATTACK_NAME = 'Raze Stronghold';
+const SYNTH_BUILDING_ATTACK_ICON = '🔥';
+
+const ATTACKER_HAPPINESS_GAIN = 2;
+const DEFENDER_HAPPINESS_LOSS = 3;
+const WAR_WEARINESS_GAIN = 4;
+const BUILDING_REWARD_GOLD = 6;
+const PLUNDER_PERCENT = 40;
+
+const TIER_RESOURCE_KEY = 'synthetic:tier';
+
+const PHASES: PhaseDef[] = [
+	{
+		id: 'phase:action',
+		label: 'Action',
+		icon: '🎲',
+		steps: [{ id: 'phase:action:step', label: 'Resolve' }],
+	},
+];
+
+const START: StartConfig = {
+	player: {
+		resources: {
+			[ContentResource.ap]: 0,
+			[ContentResource.gold]: 0,
+			[ContentResource.happiness]: 0,
+			[ContentResource.castleHP]: 12,
+		},
+		stats: {
+			[ContentStat.armyStrength]: 0,
+			[ContentStat.absorption]: 0,
+			[ContentStat.fortificationStrength]: 0,
+			[ContentStat.warWeariness]: 0,
+		},
+		population: {},
+		lands: [],
+	},
+};
+
+const RULES: RuleSet = {
+	defaultActionAPCost: 1,
+	absorptionCapPct: 1,
+	absorptionRounding: 'down',
+	tieredResourceKey: TIER_RESOURCE_KEY,
+	tierDefinitions: [],
+	slotsPerNewLand: 1,
+	maxSlotsPerLand: 1,
+	basePopulationCap: 1,
+};
+
+function createSyntheticCtx() {
+	const factory = createContentFactory();
+	const building = factory.building({
+		id: SYNTH_BUILDING_ID,
+		name: SYNTH_BUILDING_NAME,
+		icon: SYNTH_BUILDING_ICON,
+	});
+	BUILDINGS.add(building.id, building);
+	const plunder = factory.action({
+		id: SYNTH_PLUNDER_ID,
+		name: SYNTH_PLUNDER_NAME,
+		icon: SYNTH_PLUNDER_ICON,
+		system: true,
+		effects: [
+			effect(Types.Resource, ResourceMethods.TRANSFER)
+				.params(
+					transferParams().key(ContentResource.gold).percent(PLUNDER_PERCENT),
+				)
+				.build(),
+		],
+	});
+	const attack = factory.action({
+		id: SYNTH_ATTACK_ID,
+		name: SYNTH_ATTACK_NAME,
+		icon: SYNTH_ATTACK_ICON,
+		baseCosts: { [ContentResource.ap]: 1 },
+		effects: [
+			effect('attack', 'perform')
+				.params(
+					attackParams()
+						.targetResource(ContentResource.castleHP)
+						.onDamageAttacker(
+							effect(Types.Resource, ResourceMethods.ADD)
+								.params(
+									resourceParams()
+										.key(ContentResource.happiness)
+										.amount(ATTACKER_HAPPINESS_GAIN),
+								)
+								.build(),
+							effect(Types.Action, ActionMethods.PERFORM)
+								.param('id', SYNTH_PLUNDER_ID)
+								.build(),
+						)
+						.onDamageDefender(
+							effect(Types.Resource, ResourceMethods.REMOVE)
+								.params(
+									resourceParams()
+										.key(ContentResource.happiness)
+										.amount(DEFENDER_HAPPINESS_LOSS),
+								)
+								.build(),
+						)
+						.build(),
+				)
+				.build(),
+			effect(Types.Stat, StatMethods.ADD)
+				.params(
+					statParams().key(ContentStat.warWeariness).amount(WAR_WEARINESS_GAIN),
+				)
+				.build(),
+		],
+	});
+	const buildingAttack = factory.action({
+		id: SYNTH_BUILDING_ATTACK_ID,
+		name: SYNTH_BUILDING_ATTACK_NAME,
+		icon: SYNTH_BUILDING_ATTACK_ICON,
+		baseCosts: { [ContentResource.ap]: 1 },
+		effects: [
+			effect('attack', 'perform')
+				.params(
+					attackParams()
+						.targetBuilding(SYNTH_BUILDING_ID)
+						.onDamageAttacker(
+							effect(Types.Resource, ResourceMethods.ADD)
+								.params(
+									resourceParams()
+										.key(ContentResource.gold)
+										.amount(BUILDING_REWARD_GOLD),
+								)
+								.build(),
+						)
+						.build(),
+				)
+				.build(),
+		],
+	});
+
+	const ctx = createEngine({
+		actions: factory.actions,
+		buildings: factory.buildings,
+		developments: factory.developments,
+		populations: factory.populations,
 		phases: PHASES,
-		start: GAME_START,
+		start: START,
 		rules: RULES,
 	});
-}
 
-function pickBuilding() {
-	const entries = BUILDINGS.entries();
-	const selected =
-		entries.find(([, def]) => def.icon && def.name) ?? entries[0];
-	if (!selected) throw new Error('Expected at least one building definition');
-	const [id, def] = selected;
-	return { id, def } as const;
+	return { ctx, attack, plunder, building, buildingAttack } as const;
 }
 
 function iconLabel(
@@ -68,87 +209,50 @@ function iconLabel(
 	return icon ? `${icon} ${resolved}` : resolved;
 }
 
-function createBuildingAttackCtx() {
-	const { id: buildingId, def: building } = pickBuilding();
-	const attack = {
-		...action()
-			.id('siege_building')
-			.name('Siege Building')
-			.icon('⚔️')
-			.cost(Resource.ap, 1)
-			.effect(
-				effect('attack', 'perform')
-					.params(
-						attackParams()
-							.targetBuilding(buildingId)
-							.onDamageAttacker(
-								effect(Types.Resource, ResourceMethods.ADD)
-									.params(resourceParams().key(Resource.gold).amount(1))
-									.build(),
-							)
-							.build(),
-					)
-					.build(),
-			)
-			.build(),
-	};
-
-	const ctx = createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
-		config: { actions: [attack] },
-	});
-
-	return { ctx, attack, buildingId, building } as const;
-}
-
 describe('army attack translation', () => {
 	it('summarizes attack action with on-damage effects', () => {
-		const ctx = createCtx();
+		const { ctx, attack, plunder } = createSyntheticCtx();
 		const castle = RESOURCES[Resource.castleHP];
 		const army = STATS[Stat.armyStrength];
 		const fort = STATS[Stat.fortificationStrength];
 		const happiness = RESOURCES[Resource.happiness];
-		const plunder = ctx.actions.get('plunder');
 		const warWeariness = STATS[Stat.warWeariness];
-		const armyAttack = ctx.actions.get('army_attack');
-		const attackEffect = armyAttack.effects.find(
+		const attackEffect = attack.effects.find(
 			(e: EffectDef) => e.type === 'attack',
 		);
-		const onDamage = attackEffect?.params?.['onDamage'] as {
-			attacker: EffectDef[];
-			defender: EffectDef[];
+		const onDamage = (attackEffect?.params?.['onDamage'] ?? {}) as {
+			attacker?: EffectDef[];
+			defender?: EffectDef[];
 		};
-		const attackerRes = onDamage?.attacker.find(
+		const attackerRes = (onDamage.attacker ?? []).find(
 			(e: EffectDef) =>
 				e.type === 'resource' &&
-				(e.params as { key?: string }).key === Resource.happiness,
+				(e.params as { key?: string }).key === ContentResource.happiness,
 		);
-		const defenderRes = onDamage?.defender.find(
+		const defenderRes = (onDamage.defender ?? []).find(
 			(e: EffectDef) =>
 				e.type === 'resource' &&
-				(e.params as { key?: string }).key === Resource.happiness,
+				(e.params as { key?: string }).key === ContentResource.happiness,
 		);
 		const attackerAmtRaw =
 			(attackerRes?.params as { amount?: number })?.amount ?? 0;
 		const defenderAmtRaw =
 			(defenderRes?.params as { amount?: number })?.amount ?? 0;
 		const attackerAmt =
-			attackerRes?.method === 'remove' ? -attackerAmtRaw : attackerAmtRaw;
+			attackerRes?.method === ResourceMethods.REMOVE
+				? -attackerAmtRaw
+				: attackerAmtRaw;
 		const defenderAmt =
-			defenderRes?.method === 'remove' ? -defenderAmtRaw : defenderAmtRaw;
-		const warRes = armyAttack.effects.find(
+			defenderRes?.method === ResourceMethods.REMOVE
+				? -defenderAmtRaw
+				: defenderAmtRaw;
+		const warRes = attack.effects.find(
 			(e: EffectDef) =>
 				e.type === 'stat' &&
-				(e.params as { key?: string }).key === Stat.warWeariness,
+				(e.params as { key?: string }).key === ContentStat.warWeariness,
 		);
 		const warAmt = (warRes?.params as { amount?: number })?.amount ?? 0;
-		const summary = summarizeContent('action', 'army_attack', ctx);
+		const summary = summarizeContent('action', attack.id, ctx);
 		expect(summary).toEqual([
 			`${army.icon} opponent's ${fort.icon}${castle.icon}`,
 			{
@@ -164,9 +268,8 @@ describe('army attack translation', () => {
 	});
 
 	it('describes plunder effects under on-damage entry', () => {
-		const ctx = createCtx();
-		const plunder = ctx.actions.get('plunder');
-		const desc = describeContent('action', 'army_attack', ctx);
+		const { ctx, plunder } = createSyntheticCtx();
+		const desc = describeContent('action', SYNTH_ATTACK_ID, ctx);
 		const onDamage = desc.find(
 			(e) =>
 				typeof e === 'object' &&
@@ -187,90 +290,145 @@ describe('army attack translation', () => {
 	});
 
 	it('logs army attack action with concrete evaluation', () => {
-		const ctx = createCtx();
-		const armyAttack = ctx.actions.get('army_attack');
+		const { ctx, attack, plunder } = createSyntheticCtx();
 		const castle = RESOURCES[Resource.castleHP];
 		const army = STATS[Stat.armyStrength];
 		const absorption = STATS[Stat.absorption];
 		const fort = STATS[Stat.fortificationStrength];
 		const happiness = RESOURCES[Resource.happiness];
-		const plunder = ctx.actions.get('plunder');
+		const gold = RESOURCES[Resource.gold];
 
 		ctx.activePlayer.resources[Resource.ap] = 1;
-		ctx.activePlayer.population = {
-			...ctx.activePlayer.population,
-			[PopulationRole.Legion]: 1,
-			[PopulationRole.Council]: 0,
-		};
 		ctx.activePlayer.stats[Stat.armyStrength] = 2;
-		ctx.activePlayer.resources[Resource.happiness] = 1;
-		ctx.activePlayer.resources[Resource.gold] = 13;
+		ctx.activePlayer.resources[Resource.happiness] = 2;
+		ctx.activePlayer.resources[Resource.gold] = 7;
 		ctx.opponent.stats[Stat.fortificationStrength] = 1;
-		ctx.opponent.resources[Resource.happiness] = 3;
-		ctx.opponent.resources[Resource.gold] = 20;
+		ctx.opponent.resources[Resource.happiness] = 5;
+		ctx.opponent.resources[Resource.gold] = 25;
 		const castleBefore = ctx.opponent.resources[Resource.castleHP];
+		const fortBefore = ctx.opponent.stats[Stat.fortificationStrength];
+		const armyStrength = ctx.activePlayer.stats[Stat.armyStrength];
+		const opponentHappinessBefore = ctx.opponent.resources[Resource.happiness];
+		const attackerHappinessBefore =
+			ctx.activePlayer.resources[Resource.happiness];
+		const opponentGoldBefore = ctx.opponent.resources[Resource.gold];
+		const playerGoldBefore = ctx.activePlayer.resources[Resource.gold];
+		const remainingAfterAbsorption = armyStrength;
+		const remainingAfterFort = Math.max(
+			remainingAfterAbsorption - fortBefore,
+			0,
+		);
 
-		performAction('army_attack', ctx);
+		performAction(attack.id, ctx);
 		const castleAfter = ctx.opponent.resources[Resource.castleHP];
-		const log = logContent('action', 'army_attack', ctx);
+		const opponentHappinessAfter = ctx.opponent.resources[Resource.happiness];
+		const attackerHappinessAfter =
+			ctx.activePlayer.resources[Resource.happiness];
+		const opponentGoldAfter = ctx.opponent.resources[Resource.gold];
+		const playerGoldAfter = ctx.activePlayer.resources[Resource.gold];
+		const opponentHappinessDelta =
+			opponentHappinessAfter - opponentHappinessBefore;
+		const attackerHappinessDelta =
+			attackerHappinessAfter - attackerHappinessBefore;
+		const opponentGoldDelta = opponentGoldAfter - opponentGoldBefore;
+		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
+
+		const log = logContent('action', attack.id, ctx);
 		expect(log).toEqual([
-			`Played ${armyAttack.icon} ${armyAttack.name}`,
-			`  Damage evaluation: ${army.icon}2 vs. ${absorption.icon}0% ${fort.icon}1 ${castle.icon}${castleBefore}`,
-			`    ${army.icon}2 vs. ${absorption.icon}0% --> ${army.icon}2`,
-			`    ${army.icon}2 vs. ${fort.icon}1 --> ${fort.icon}0 ${army.icon}1`,
-			`    ${army.icon}1 vs. ${castle.icon}${castleBefore} --> ${castle.icon}${castleAfter}`,
+			`Played ${attack.icon} ${attack.name}`,
+			`  Damage evaluation: ${army.icon}${armyStrength} vs. ${absorption.icon}0% ${fort.icon}${fortBefore} ${castle.icon}${castleBefore}`,
+			`    ${army.icon}${armyStrength} vs. ${absorption.icon}0% --> ${army.icon}${remainingAfterAbsorption}`,
+			`    ${army.icon}${remainingAfterAbsorption} vs. ${fort.icon}${fortBefore} --> ${fort.icon}0 ${army.icon}${remainingAfterFort}`,
+			`    ${army.icon}${remainingAfterFort} vs. ${castle.icon}${castleBefore} --> ${castle.icon}${castleAfter}`,
 			`  ${castle.icon} ${castle.label} damage trigger evaluation`,
-			`    Opponent: ${happiness.icon} ${happiness.label} -1 (3→2)`,
-			`    You: ${happiness.icon} ${happiness.label} +1 (1→2)`,
+			`    Opponent: ${happiness.icon} ${happiness.label} ${opponentHappinessDelta} (${opponentHappinessBefore}→${opponentHappinessAfter})`,
+			`    You: ${happiness.icon} ${happiness.label} ${
+				attackerHappinessDelta >= 0 ? '+' : ''
+			}${attackerHappinessDelta} (${attackerHappinessBefore}→${attackerHappinessAfter})`,
 			`    Triggered ${plunder.icon} ${plunder.name}`,
-			`      Opponent: ${RESOURCES[Resource.gold].icon} ${RESOURCES[Resource.gold].label} -25% (20→15) (-5)`,
-			`      You: ${RESOURCES[Resource.gold].icon} ${RESOURCES[Resource.gold].label} +5 (13→18)`,
+			`      Opponent: ${gold.icon} ${gold.label} -${PLUNDER_PERCENT}% (${opponentGoldBefore}→${opponentGoldAfter}) (${opponentGoldDelta})`,
+			`      You: ${gold.icon} ${gold.label} ${
+				playerGoldDelta >= 0 ? '+' : ''
+			}${playerGoldDelta} (${playerGoldBefore}→${playerGoldAfter})`,
 		]);
 	});
 
 	it('summarizes building attack as destruction', () => {
-		const { ctx, attack, buildingId, building } = createBuildingAttackCtx();
+		const { ctx, buildingAttack, building } = createSyntheticCtx();
 		const army = STATS[Stat.armyStrength];
 		const gold = RESOURCES[Resource.gold];
-		const buildingDisplay = iconLabel(building.icon, building.name, buildingId);
+		const buildingDisplay = iconLabel(
+			building.icon,
+			building.name,
+			building.id,
+		);
 		const summaryTitle = building.icon
 			? `On opponent ${building.icon} destruction`
-			: `On opponent ${building.name ?? buildingId} destruction`;
+			: `On opponent ${building.name ?? building.id} destruction`;
+		const attackEffect = buildingAttack.effects.find(
+			(e: EffectDef) => e.type === 'attack',
+		);
+		const onDamage = (attackEffect?.params?.['onDamage'] ?? {}) as {
+			attacker?: EffectDef[];
+		};
+		const rewardEffect = (onDamage.attacker ?? []).find(
+			(e: EffectDef) =>
+				e.type === 'resource' &&
+				(e.params as { key?: string }).key === ContentResource.gold,
+		);
+		const rewardAmount =
+			(rewardEffect?.params as { amount?: number })?.amount ?? 0;
 
-		const summary = summarizeContent('action', attack.id, ctx);
+		const summary = summarizeContent('action', buildingAttack.id, ctx);
 		expect(summary).toEqual([
 			`${army.icon} destroy opponent's ${buildingDisplay}`,
 			{
 				title: summaryTitle,
-				items: [`${gold.icon}+1 for you`],
+				items: [`${gold.icon}+${rewardAmount} for you`],
 			},
 		]);
 	});
 
 	it('logs building attack action with destruction evaluation', () => {
-		const { ctx, attack, buildingId, building } = createBuildingAttackCtx();
+		const { ctx, buildingAttack, building } = createSyntheticCtx();
 		const army = STATS[Stat.armyStrength];
 		const absorption = STATS[Stat.absorption];
 		const fort = STATS[Stat.fortificationStrength];
 		const gold = RESOURCES[Resource.gold];
-		const buildingDisplay = iconLabel(building.icon, building.name, buildingId);
+		const buildingDisplay = iconLabel(
+			building.icon,
+			building.name,
+			building.id,
+		);
 
 		ctx.activePlayer.resources[Resource.ap] = 1;
 		ctx.activePlayer.stats[Stat.armyStrength] = 3;
 		ctx.activePlayer.resources[Resource.gold] = 0;
 		ctx.opponent.stats[Stat.fortificationStrength] = 1;
-		ctx.opponent.buildings.add(buildingId);
+		ctx.opponent.buildings.add(building.id);
+		const armyStrength = ctx.activePlayer.stats[Stat.armyStrength];
+		const fortBefore = ctx.opponent.stats[Stat.fortificationStrength];
+		const remainingAfterAbsorption = armyStrength;
+		const remainingAfterFort = Math.max(
+			remainingAfterAbsorption - fortBefore,
+			0,
+		);
+		const playerGoldBefore = ctx.activePlayer.resources[Resource.gold];
 
-		performAction(attack.id, ctx);
-		const log = logContent('action', attack.id, ctx);
+		performAction(buildingAttack.id, ctx);
+		const playerGoldAfter = ctx.activePlayer.resources[Resource.gold];
+		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
+		const log = logContent('action', buildingAttack.id, ctx);
 		expect(log).toEqual([
-			`Played ${attack.icon} ${attack.name}`,
-			`  Damage evaluation: ${army.icon}3 vs. ${absorption.icon}0% ${fort.icon}1 ${buildingDisplay}`,
-			`    ${army.icon}3 vs. ${absorption.icon}0% --> ${army.icon}3`,
-			`    ${army.icon}3 vs. ${fort.icon}1 --> ${fort.icon}0 ${army.icon}2`,
-			`    ${army.icon}2 destroys ${buildingDisplay}`,
+			`Played ${buildingAttack.icon} ${buildingAttack.name}`,
+			`  Damage evaluation: ${army.icon}${armyStrength} vs. ${absorption.icon}0% ${fort.icon}${fortBefore} ${buildingDisplay}`,
+			`    ${army.icon}${armyStrength} vs. ${absorption.icon}0% --> ${army.icon}${remainingAfterAbsorption}`,
+			`    ${army.icon}${remainingAfterAbsorption} vs. ${fort.icon}${fortBefore} --> ${fort.icon}0 ${army.icon}${remainingAfterFort}`,
+			`    ${army.icon}${remainingAfterFort} destroys ${buildingDisplay}`,
 			`  ${buildingDisplay} destruction trigger evaluation`,
-			`    You: ${gold.icon} ${gold.label} +1 (0→1)`,
+			`    You: ${gold.icon} ${gold.label} ${
+				playerGoldDelta >= 0 ? '+' : ''
+			}${playerGoldDelta} (${playerGoldBefore}→${playerGoldAfter})`,
 		]);
 	});
 });
