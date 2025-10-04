@@ -54,8 +54,8 @@ export const actionEffectGroupSchema = z.object({
 });
 
 export const actionEffectSchema = z.union([
-	effectSchema,
 	actionEffectGroupSchema,
+	effectSchema,
 ]);
 
 export type ActionEffectGroupOption = z.infer<

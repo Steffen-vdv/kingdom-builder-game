@@ -43,8 +43,8 @@ function buildOptionEffects(
 		type: 'action',
 		method: 'perform',
 		params: {
-			id: option.actionId,
 			...(option.params || {}),
+			__actionId: option.actionId,
 		},
 	};
 	return applyParamsToEffects([effect], substitutionParams);
