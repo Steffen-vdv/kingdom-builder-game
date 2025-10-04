@@ -3,6 +3,15 @@ import {
 	registerAttackOnDamageFormatter,
 	buildOnDamageEntry,
 } from '../src/translation/effects/formatters/attack';
+
+vi.mock('../src/translation/effects/factory', () => ({
+	registerEffectFormatter: vi.fn(),
+	registerEvaluatorFormatter: vi.fn(),
+	summarizeEffects: vi.fn(() => []),
+	describeEffects: vi.fn(() => []),
+	logEffects: vi.fn(() => []),
+	formatEffectGroups: vi.fn(() => []),
+}));
 import type {
 	AttackOnDamageLogEntry,
 	EngineContext,

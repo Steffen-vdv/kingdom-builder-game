@@ -242,7 +242,7 @@ class ActionEffectGroupBuilder {
 	private titleSet = false;
 
 	constructor(id?: string) {
-		this.config = { options: [] };
+		this.config = { options: [], title: 'Choose one:' };
 		if (id) {
 			this.id(id);
 		}
@@ -311,11 +311,7 @@ class ActionEffectGroupBuilder {
 				"Action effect group is missing id(). Call id('your-group-id') before build().",
 			);
 		}
-		if (!this.titleSet) {
-			throw new Error(
-				"Action effect group is missing title(). Call title('Readable prompt') before build().",
-			);
-		}
+		this.config.title = this.config.title || 'Choose one:';
 		if (this.config.options.length === 0) {
 			throw new Error(
 				'Action effect group needs at least one option(). Add option(...) before build().',

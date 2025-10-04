@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import GenericActions from '../src/components/actions/GenericActions';
+import type * as TranslationModule from '../src/translation';
+import type * as TranslationContentModule from '../src/translation/content';
 
 const getActionCostsMock = vi.fn();
 const getActionRequirementsMock = vi.fn();
@@ -24,13 +26,34 @@ vi.mock('../src/utils/getRequirementIcons', () => ({
 
 const describeContentMock = vi.fn(() => []);
 const summarizeContentMock = vi.fn(() => []);
+const logContentMock = vi.fn(() => []);
 const splitSummaryMock = vi.fn(() => ({ effects: [], description: undefined }));
 
-vi.mock('../src/translation', () => ({
-	describeContent: (...args: unknown[]) => describeContentMock(...args),
-	summarizeContent: (...args: unknown[]) => summarizeContentMock(...args),
-	splitSummary: (...args: unknown[]) => splitSummaryMock(...args),
-}));
+vi.mock('../src/translation', async () => {
+	const actual = (await vi.importActual(
+		'../src/translation',
+	)) as TranslationModule;
+	return {
+		...actual,
+		registerEffectFormatter: vi.fn(),
+		registerEvaluatorFormatter: vi.fn(),
+		describeContent: (...args: unknown[]) => describeContentMock(...args),
+		summarizeContent: (...args: unknown[]) => summarizeContentMock(...args),
+		splitSummary: (...args: unknown[]) => splitSummaryMock(...args),
+	};
+});
+
+vi.mock('../src/translation/content', async () => {
+	const actual = (await vi.importActual(
+		'../src/translation/content',
+	)) as TranslationContentModule;
+	return {
+		...actual,
+		describeContent: (...args: unknown[]) => describeContentMock(...args),
+		summarizeContent: (...args: unknown[]) => summarizeContentMock(...args),
+		logContent: (...args: unknown[]) => logContentMock(...args),
+	};
+});
 
 const actionsMap = new Map([
 	[
@@ -88,6 +111,7 @@ describe('GenericActions effect group handling', () => {
 		getRequirementIconsMock.mockReset();
 		describeContentMock.mockReset();
 		summarizeContentMock.mockReset();
+		logContentMock.mockReset();
 		splitSummaryMock.mockReset();
 
 		getActionCostsMock.mockImplementation(() => ({ ap: 1, gold: 12 }));
@@ -100,17 +124,13 @@ describe('GenericActions effect group handling', () => {
 			return [
 				{
 					id: 'royal_decree_develop',
-					title: 'Decree a development',
-					summary: 'Pick a project to finish immediately.',
-					description: 'Select which development to complete after expanding.',
+					title: 'Choose one:',
 					layout: 'compact',
 					options: [
 						{
 							id: 'royal_decree_house',
 							label: 'Raise a House',
 							icon: '🏠',
-							summary: 'Build a House on the new land.',
-							description: 'Completes Develop with the House immediately.',
 							actionId: 'develop',
 							params: { landId: '$landId', id: 'house' },
 						},

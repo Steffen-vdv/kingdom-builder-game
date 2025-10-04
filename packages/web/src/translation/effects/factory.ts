@@ -1,11 +1,12 @@
 import type {
-	ActionEffectGroup,
-	ActionEffectGroupChoiceMap,
 	ActionEffectGroupOption,
 	EffectDef,
 	EngineContext,
+	ResolvedActionEffectStep,
+	ResolvedActionEffectGroupOption,
 } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../content';
+import { describeContent, logContent, summarizeContent } from '../content';
 // Effect and evaluator formatter registries drive translation lookups.
 
 export interface EffectFormatter {
@@ -186,39 +187,80 @@ export function logEffects(
 
 type EffectGroupMode = 'summarize' | 'describe' | 'log';
 
+function mergeOptionParams(
+	option: ActionEffectGroupOption,
+	baseParams: Record<string, unknown>,
+): Record<string, unknown> {
+	const merged: Record<string, unknown> = { ...baseParams };
+	for (const [key, value] of Object.entries(option.params || {})) {
+		if (typeof value === 'string' && value.startsWith('$')) {
+			const placeholder = value.slice(1);
+			if (placeholder in baseParams) {
+				merged[key] = baseParams[placeholder];
+			}
+			continue;
+		}
+		merged[key] = value;
+	}
+	return merged;
+}
+
 function buildOptionEntry(
 	option: ActionEffectGroupOption,
 	mode: EffectGroupMode,
+	context: EngineContext,
+	baseParams: Record<string, unknown>,
+	selection?: ResolvedActionEffectGroupOption,
 ): SummaryEntry {
 	const title = [option.icon, option.label].filter(Boolean).join(' ').trim();
-	const detailItems: SummaryEntry[] = [];
-	if (mode !== 'log' && option.summary) {
-		detailItems.push(option.summary);
-	}
-	if (mode === 'describe' && option.description) {
-		if (!option.summary || option.summary !== option.description) {
-			detailItems.push(option.description);
-		}
-	}
+	const mergedParams =
+		selection?.params || mergeOptionParams(option, baseParams);
+
 	if (mode === 'log') {
-		const detail = option.summary || option.description;
-		if (detail) {
-			detailItems.push(detail);
+		if (selection) {
+			const logs = logEffects(selection.effects, context);
+			if (!title) {
+				return logs.length ? { title: option.id, items: logs } : option.id;
+			}
+			return logs.length ? { title, items: logs } : title;
 		}
+		const logged = logContent('action', option.actionId, context, mergedParams);
+		if (!title) {
+			return logged.length ? { title: option.id, items: logged } : option.id;
+		}
+		return logged.length ? { title, items: logged } : title;
 	}
-	if (detailItems.length === 0 || !title) {
-		return title || option.label;
+
+	const translated =
+		mode === 'summarize'
+			? summarizeContent('action', option.actionId, context, mergedParams)
+			: describeContent('action', option.actionId, context, mergedParams);
+
+	if (!title) {
+		if (translated.length === 0) {
+			return option.id;
+		}
+		return { title: option.id, items: translated };
 	}
-	return { title, items: detailItems };
+
+	if (translated.length === 0) {
+		return title;
+	}
+
+	return { title, items: translated };
 }
 
 function buildGroupEntry(
-	group: ActionEffectGroup,
+	step: Extract<ResolvedActionEffectStep, { type: 'group' }>,
 	mode: EffectGroupMode,
-	selection?: ActionEffectGroupOption,
+	context: EngineContext,
 ): SummaryEntry {
+	const { group, selection, params } = step;
 	const title =
-		[group.icon, group.title].filter(Boolean).join(' ').trim() || group.id;
+		[group.icon, group.title || 'Choose one:']
+			.filter(Boolean)
+			.join(' ')
+			.trim() || group.id;
 	const items: SummaryEntry[] = [];
 	if (mode !== 'log' && group.summary) {
 		items.push(group.summary);
@@ -228,40 +270,40 @@ function buildGroupEntry(
 			items.push(group.description);
 		}
 	}
-	if (mode === 'log') {
-		const detail = group.summary || group.description;
-		if (detail) {
-			items.push(detail);
+	if (mode === 'log' && group.summary && !selection) {
+		items.push(group.summary);
+	}
+	if (mode === 'log' && group.description && !selection) {
+		if (!group.summary || group.summary !== group.description) {
+			items.push(group.description);
 		}
 	}
-	const options = selection ? [selection] : group.options;
-	for (const option of options) {
-		items.push(buildOptionEntry(option, mode));
+	if (selection) {
+		items.push(
+			buildOptionEntry(selection.option, mode, context, params, selection),
+		);
+	} else {
+		for (const option of group.options) {
+			items.push(buildOptionEntry(option, mode, context, params));
+		}
 	}
 	return { title, items };
 }
 
 export function formatEffectGroups(
-	groups: readonly ActionEffectGroup[] | undefined,
+	steps: readonly ResolvedActionEffectStep[] | undefined,
 	mode: EffectGroupMode,
-	choices?: ActionEffectGroupChoiceMap,
+	context: EngineContext,
 ): SummaryEntry[] {
-	if (!groups || groups.length === 0) {
+	if (!steps || steps.length === 0) {
 		return [];
 	}
 	const entries: SummaryEntry[] = [];
-	for (const group of groups) {
-		const selection = choices?.[group.id];
-		if (selection) {
-			const option = group.options.find(
-				(candidate) => candidate.id === selection.optionId,
-			);
-			if (option) {
-				entries.push(buildGroupEntry(group, mode, option));
-				continue;
-			}
+	for (const step of steps) {
+		if (step.type !== 'group') {
+			continue;
 		}
-		entries.push(buildGroupEntry(group, mode));
+		entries.push(buildGroupEntry(step, mode, context));
 	}
 	return entries;
 }

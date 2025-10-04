@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { advance, getActionCosts, performAction } from '../../src';
+import {
+	advance,
+	getActionCosts,
+	performAction,
+	resolveActionEffects,
+	type EffectDef,
+} from '../../src';
 import { createTestEngine } from '../helpers';
 import { Resource as CResource } from '@kingdom-builder/contents';
 
@@ -126,5 +132,36 @@ describe('royal decree action effect group', () => {
 		expect(ctx.activePlayer.gold).toBe(
 			beforeGold - (costs[CResource.gold] ?? 0),
 		);
+
+		const resolved = resolveActionEffects(ctx.actions.get(actionId), params);
+		const performEffects = resolved.effects.filter(
+			(effect): effect is EffectDef =>
+				effect.type === 'action' && effect.method === 'perform',
+		);
+		const nestedActionId = chosenOption.actionId;
+		expect(
+			performEffects.some(
+				(effect) =>
+					(effect.params as Record<string, unknown>)?.['__actionId'] ===
+					nestedActionId,
+			),
+		).toBe(true);
+		expect(
+			performEffects.some(
+				(effect) =>
+					(effect.params as Record<string, unknown>)?.['actionId'] ===
+					nestedActionId,
+			),
+		).toBe(true);
+		expect(resolved.steps.some((step) => step.type === 'group')).toBe(true);
+		const stepTypes = resolved.steps.map((step) => step.type);
+		expect(stepTypes).toEqual(['effects', 'effects', 'group', 'effects']);
+		const resolvedGroup = resolved.groups.find(
+			(candidate) => candidate.group.id === group.id,
+		);
+		expect(resolvedGroup?.selection?.params).toMatchObject({
+			id: developmentId,
+			landId: params.landId,
+		});
 	});
 });

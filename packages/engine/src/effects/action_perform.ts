@@ -7,18 +7,27 @@ import type { ActionParameters } from '../actions/action_parameters';
 
 type ActionPerformParams = ActionParameters<string> & {
 	__actionId?: string;
+	actionId?: string;
 };
 
 export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 	const rawParams = effect.params as ActionPerformParams | undefined;
-	const idParam = rawParams?.__actionId ?? rawParams?.id;
-	const id = typeof idParam === 'string' ? idParam : undefined;
+	let id: string | undefined;
+	if (typeof rawParams?.__actionId === 'string') {
+		id = rawParams.__actionId;
+	} else if (typeof rawParams?.actionId === 'string') {
+		id = rawParams.actionId;
+	} else if (typeof rawParams?.id === 'string') {
+		id = rawParams.id;
+	}
 	if (!id) {
 		throw new Error('action:perform requires id');
 	}
 	let forwarded: ActionParameters<string> | undefined;
 	if (rawParams) {
-		const { __actionId: _ignored, ...rest } = rawParams;
+		const rest = { ...rawParams } as ActionParameters<string>;
+		delete (rest as { __actionId?: string }).__actionId;
+		delete (rest as { actionId?: string }).actionId;
 		forwarded = rest;
 	}
 	for (let i = 0; i < Math.floor(mult); i++) {

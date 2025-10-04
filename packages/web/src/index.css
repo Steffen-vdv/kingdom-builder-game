@@ -144,25 +144,19 @@
   }
   .action-card__badge {
     position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
+    top: 0.35rem;
+    left: 0.4rem;
     z-index: 2;
   }
   .action-card__badge-pill {
     @apply rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-600 shadow-sm shadow-amber-400/30 dark:bg-slate-800/70 dark:text-amber-300;
   }
   .action-card__multi-step {
-    @apply flex items-center justify-center rounded-full border border-white/40 bg-white/70 p-1 text-emerald-700 shadow-sm shadow-emerald-400/30 dark:border-white/10 dark:bg-slate-900/70 dark:text-emerald-200;
+    @apply flex items-center justify-center rounded-md border border-white/20 bg-white/55 p-0.5 text-emerald-700/90 shadow-sm shadow-emerald-200/10 dark:border-white/10 dark:bg-slate-900/70 dark:text-emerald-200/90;
   }
   .action-card__multi-step-icon {
-    width: 1.5rem;
-    height: 1.5rem;
-    stroke: currentColor;
-    stroke-width: 1.5;
-  }
-  .action-card__multi-step-icon circle {
-    fill: currentColor;
-    opacity: 0.85;
+    width: 0.75rem;
+    height: 0.75rem;
   }
   .action-card__option {
     @apply panel-card cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;

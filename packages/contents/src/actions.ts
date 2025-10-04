@@ -212,20 +212,11 @@ export function createActionRegistry() {
 			)
 			.effectGroup(
 				actionEffectGroup('royal_decree_develop')
-					.title('Decree a development')
-					.summary('Select one project to finish on the freshly claimed land.')
-					.description(
-						'After expanding and tilling, decree which development is completed immediately. Each choice performs Develop on the new territory before unrest grows.',
-					)
 					.layout('compact')
 					.option(
 						actionEffectGroupOption('royal_decree_house')
 							.label('Raise a House')
 							.icon('🏠')
-							.summary('Build a House to increase the population cap by 1.')
-							.description(
-								'Perform Develop to add House on the prepared land, granting +1 Max Population.',
-							)
 							.action('develop')
 							.param('landId', '$landId')
 							.param('id', 'house'),
@@ -234,10 +225,6 @@ export function createActionRegistry() {
 						actionEffectGroupOption('royal_decree_farm')
 							.label('Establish a Farm')
 							.icon('🌾')
-							.summary('Build a Farm to gain +2 gold during each income step.')
-							.description(
-								'Perform Develop to add Farm on the decree land, securing +2 gold income each Growth phase.',
-							)
 							.action('develop')
 							.param('landId', '$landId')
 							.param('id', 'farm'),
@@ -246,12 +233,6 @@ export function createActionRegistry() {
 						actionEffectGroupOption('royal_decree_outpost')
 							.label('Fortify with an Outpost')
 							.icon('🏹')
-							.summary(
-								'Build an Outpost for +1 Army and +1 Fortification Strength.',
-							)
-							.description(
-								'Perform Develop to add Outpost on the decreed land, bolstering both Army and Fortification Strength by 1.',
-							)
 							.action('develop')
 							.param('landId', '$landId')
 							.param('id', 'outpost'),
@@ -260,12 +241,6 @@ export function createActionRegistry() {
 						actionEffectGroupOption('royal_decree_watchtower')
 							.label('Raise a Watchtower')
 							.icon('🗼')
-							.summary(
-								'Build a Watchtower for +2 Fortification and 0.5 Absorption once.',
-							)
-							.description(
-								'Perform Develop to add Watchtower on the decreed land, adding +2 Fortification Strength and +0.5 Absorption before it spends itself defending once.',
-							)
 							.action('develop')
 							.param('landId', '$landId')
 							.param('id', 'watchtower'),
