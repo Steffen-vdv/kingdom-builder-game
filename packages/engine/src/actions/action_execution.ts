@@ -11,6 +11,7 @@ import {
 	deductCostsFromPlayer,
 	verifyCostAffordability,
 } from './costs';
+import { cloneEngineContext } from './context_clone';
 
 function assertSystemActionUnlocked(
 	actionId: string,
@@ -71,7 +72,7 @@ function assertBuildingsNotYetConstructed(
 	}
 }
 
-export function performAction<T extends string>(
+function executeAction<T extends string>(
 	actionId: T,
 	engineContext: EngineContext,
 	params?: ActionParameters<T>,
@@ -119,4 +120,21 @@ export function performAction<T extends string>(
 	const actionTraces = engineContext.actionTraces;
 	engineContext.actionTraces = [];
 	return actionTraces;
+}
+
+export function performAction<T extends string>(
+	actionId: T,
+	engineContext: EngineContext,
+	params?: ActionParameters<T>,
+) {
+	return executeAction(actionId, engineContext, params);
+}
+
+export function simulateAction<T extends string>(
+	actionId: T,
+	engineContext: EngineContext,
+	params?: ActionParameters<T>,
+) {
+	const simulatedContext = cloneEngineContext(engineContext);
+	return executeAction(actionId, simulatedContext, params);
 }

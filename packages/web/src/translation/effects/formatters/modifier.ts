@@ -13,6 +13,7 @@ import {
 	formatResultModifierClause,
 	formatTargetLabel,
 	getActionInfo,
+	resolveTransferModifierTarget,
 	wrapResultModifierEntries,
 } from './modifier_helpers';
 import { describeContent } from '../../content';
@@ -98,39 +99,38 @@ registerModifierEvalHandler('population', {
 });
 
 registerModifierEvalHandler('transfer_pct', {
-	summarize: (eff, _evaluation, ctx) => {
-		const { icon, name } = getActionInfo(ctx, 'plunder');
+	summarize: (eff, evaluation, ctx) => {
+		const target = resolveTransferModifierTarget(eff, evaluation, ctx);
 		const amount = Number(eff.params?.['adjust'] ?? 0);
-		const targetIcon = icon && icon.trim() ? icon : name;
 		const sign = amount >= 0 ? '+' : '';
 		return [
-			`${RESULT_MODIFIER_INFO.icon}${targetIcon}: ${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(
+			`${RESULT_MODIFIER_INFO.icon}${target.summaryLabel}: ${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(
 				amount,
 			)}%`,
 		];
 	},
-	describe: (eff, _evaluation, ctx) => {
-		const { icon, name } = getActionInfo(ctx, 'plunder');
+	describe: (eff, evaluation, ctx) => {
+		const target = resolveTransferModifierTarget(eff, evaluation, ctx);
 		const amount = Number(eff.params?.['adjust'] ?? 0);
-		const card = describeContent('action', 'plunder', ctx);
-		const target = formatTargetLabel(icon, name);
 		const modifierDescription = formatResultModifierClause(
 			RESULT_MODIFIER_LABEL,
-			target,
+			target.clauseTarget,
 			RESULT_EVENT_TRANSFER,
 			`${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
 				amount,
 			)} transfer by ${Math.abs(amount)}%`,
 		);
-		return [
-			modifierDescription,
-			{
-				title: formatTargetLabel(icon, name),
+		const entries: Summary = [modifierDescription];
+		if (target.actionId) {
+			const card = describeContent('action', target.actionId, ctx);
+			entries.push({
+				title: formatTargetLabel(target.icon, target.name),
 				items: card,
 				_hoist: true,
 				_desc: true,
-			},
-		];
+			});
+		}
+		return entries;
 	},
 });
 

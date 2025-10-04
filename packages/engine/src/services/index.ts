@@ -5,6 +5,7 @@ import type { StatSourceFrame } from '../stat_sources';
 import { withStatSourceFrames } from '../stat_sources';
 import type { DevelopmentConfig } from '../config/schema';
 import type { Registry } from '../registry';
+import { cloneEffectList } from '../utils';
 
 export interface PassiveSummary {
 	id: string;
@@ -100,6 +101,62 @@ export type PassiveMetadata = {
 	source?: PassiveSourceMetadata;
 	removal?: PassiveRemovalMetadata;
 };
+
+function clonePassiveMetadata(
+	metadata: PassiveMetadata | undefined,
+): PassiveMetadata | undefined {
+	if (!metadata) return undefined;
+	const cloned: PassiveMetadata = {};
+	if (metadata.source) {
+		cloned.source = { ...metadata.source };
+	}
+	if (metadata.removal) {
+		cloned.removal = { ...metadata.removal };
+	}
+	return cloned;
+}
+
+function clonePassiveRecord(record: PassiveRecord): PassiveRecord {
+	const cloned: PassiveRecord = {
+		id: record.id,
+		owner: record.owner,
+		frames: [...record.frames],
+	};
+	if (record.name !== undefined) {
+		cloned.name = record.name;
+	}
+	if (record.icon !== undefined) {
+		cloned.icon = record.icon;
+	}
+	const effects = cloneEffectList(record.effects);
+	if (effects) {
+		cloned.effects = effects;
+	}
+	const onGrowth = cloneEffectList(record.onGrowthPhase);
+	if (onGrowth) {
+		cloned.onGrowthPhase = onGrowth;
+	}
+	const onUpkeep = cloneEffectList(record.onUpkeepPhase);
+	if (onUpkeep) {
+		cloned.onUpkeepPhase = onUpkeep;
+	}
+	const onBefore = cloneEffectList(record.onBeforeAttacked);
+	if (onBefore) {
+		cloned.onBeforeAttacked = onBefore;
+	}
+	const onAfter = cloneEffectList(record.onAttackResolved);
+	if (onAfter) {
+		cloned.onAttackResolved = onAfter;
+	}
+	if (record.detail !== undefined) {
+		cloned.detail = record.detail;
+	}
+	const meta = clonePassiveMetadata(record.meta);
+	if (meta) {
+		cloned.meta = meta;
+	}
+	return cloned;
+}
 
 export type RuleSet = {
 	defaultActionAPCost: number;
@@ -399,6 +456,26 @@ export class PassiveManager {
 	get(id: string, owner: PlayerId): PassiveRecord | undefined {
 		return this.passives.get(this.makeKey(id, owner));
 	}
+
+	clone(): PassiveManager {
+		const cloned = new PassiveManager();
+		cloned.costMods = new Map(this.costMods);
+		cloned.resultMods = new Map(this.resultMods);
+		cloned.evaluationIndex = new Map(this.evaluationIndex);
+		cloned.evaluationMods = new Map(
+			Array.from(this.evaluationMods.entries()).map(([target, mods]) => [
+				target,
+				new Map(mods),
+			]),
+		);
+		cloned.passives = new Map(
+			Array.from(this.passives.entries()).map(([key, value]) => [
+				key,
+				clonePassiveRecord(value),
+			]),
+		);
+		return cloned;
+	}
 }
 
 function reverseEffect(effect: EffectDef): EffectDef {
@@ -544,5 +621,11 @@ export class Services {
 			this.handleTieredResourceChange(ctx, resourceKey);
 		});
 		ctx.game.currentPlayerIndex = previousIndex;
+	}
+
+	clone(developments: Registry<DevelopmentConfig>): Services {
+		const cloned = new Services(this.rules, developments);
+		cloned.activeTiers = new Map(this.activeTiers);
+		return cloned;
 	}
 }
