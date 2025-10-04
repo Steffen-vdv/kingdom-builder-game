@@ -21,7 +21,7 @@ import {
 	signedNumber,
 	type SignedDelta,
 } from './diffFormatting';
-import { type PlayerSnapshot } from './playerSnapshot';
+import { type PlayerSnapshot } from './snapshots';
 
 function describeResourceChange(
 	key: ResourceKey,
