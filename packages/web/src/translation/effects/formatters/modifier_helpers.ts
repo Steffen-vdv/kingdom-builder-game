@@ -145,7 +145,7 @@ export function formatDevelopment(
 		return formatGainFrom(label, source, amount, { key, detailed });
 	}
 	const amount = Number(eff.params?.['amount'] ?? 0);
-	return formatGainFrom(label, source, amount);
+	return formatGainFrom(label, source, amount, { detailed });
 }
 
 export function formatPopulation(
@@ -153,6 +153,7 @@ export function formatPopulation(
 	eff: EffectDef,
 	evaluation: { id: string },
 	ctx: EngineContext,
+	detailed: boolean,
 ) {
 	const { icon, name } = getActionInfo(ctx, evaluation.id);
 	const amount = Number(eff.params?.['amount'] ?? 0);
@@ -161,9 +162,13 @@ export function formatPopulation(
 		{
 			summaryTargetIcon: POPULATION_INFO.icon,
 			summaryContextIcon: icon,
-			description: `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${icon} ${name}`,
+			description: `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${formatTargetLabel(
+				icon,
+				name,
+			)}`,
 		},
 		amount,
+		{ detailed },
 	);
 }
 
