@@ -56,23 +56,88 @@ function stripSummary(
 	return filtered.length > 0 ? filtered : undefined;
 }
 
-export type ActionCardProps = {
+export type ActionCardOption = {
+	id: string;
+	label: string;
+	icon?: string;
+	summary?: string;
+	description?: string;
+	disabled?: boolean;
+	onSelect: () => void;
+};
+
+export type ActionCardVariant = 'front' | 'back';
+
+export interface ActionCardProps {
 	title: React.ReactNode;
 	costs: Record<string, number>;
 	playerResources: Record<string, number>;
 	actionCostResource: string;
 	upkeep?: Record<string, number> | undefined;
 	summary?: Summary | undefined;
-	implemented?: boolean;
+	implemented?: boolean | undefined;
 	enabled: boolean;
 	tooltip?: string | undefined;
 	requirements?: string[];
 	requirementIcons?: string[];
-	onClick?: () => void;
-	onMouseEnter?: () => void;
-	onMouseLeave?: () => void;
+	onClick?: (() => void) | undefined;
+	onMouseEnter?: (() => void) | undefined;
+	onMouseLeave?: (() => void) | undefined;
 	focus?: Focus | undefined;
-};
+	variant?: ActionCardVariant | undefined;
+	stepIndex?: number | undefined;
+	stepCount?: number | undefined;
+	stepLabel?: string | undefined;
+	promptTitle?: React.ReactNode | undefined;
+	promptSummary?: string | undefined;
+	promptDescription?: string | undefined;
+	options?: ActionCardOption[] | undefined;
+	onCancel?: (() => void) | undefined;
+}
+
+function StepBadge({
+	stepIndex,
+	stepCount,
+	stepLabel,
+}: {
+	stepIndex: number | undefined;
+	stepCount: number | undefined;
+	stepLabel: string | undefined;
+}) {
+	if (!stepCount || stepCount <= 0) {
+		return null;
+	}
+	const current = stepIndex && stepIndex > 0 ? stepIndex : 1;
+	const label =
+		stepLabel ?? `Step ${Math.min(current, stepCount)} of ${stepCount}`;
+	return (
+		<div className="action-card__badge">
+			<span className="action-card__badge-pill">{label}</span>
+		</div>
+	);
+}
+
+function OptionCard({ option }: { option: ActionCardOption }) {
+	const label = [option.icon, option.label].filter(Boolean).join(' ').trim();
+	return (
+		<button
+			type="button"
+			className={`action-card__option ${
+				option.disabled ? 'opacity-50 cursor-not-allowed' : 'hoverable'
+			}`}
+			onClick={option.disabled ? undefined : option.onSelect}
+			disabled={option.disabled}
+		>
+			<span className="action-card__option-title">{label}</span>
+			{option.summary && (
+				<p className="action-card__option-summary">{option.summary}</p>
+			)}
+			{option.description && (
+				<p className="action-card__option-description">{option.description}</p>
+			)}
+		</button>
+	);
+}
 
 export default function ActionCard({
 	title,
@@ -90,40 +155,119 @@ export default function ActionCard({
 	onMouseEnter,
 	onMouseLeave,
 	focus,
+	variant = 'front',
+	stepIndex,
+	stepCount,
+	stepLabel,
+	promptTitle,
+	promptSummary,
+	promptDescription,
+	options = [],
+	onCancel,
 }: ActionCardProps) {
 	const focusClass =
 		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
+	const isBack = variant === 'back';
+	const interactive = !isBack && enabled;
+	const containerClass = `action-card panel-card relative h-full bg-gradient-to-br ${focusClass} ${
+		interactive
+			? 'hoverable'
+			: isBack
+				? 'cursor-default'
+				: 'cursor-not-allowed opacity-50'
+	}`;
+
+	const requirementBadge =
+		requirements.length > 0 ? (
+			<div className="flex flex-col items-end gap-0.5 text-xs text-rose-500 dark:text-rose-300">
+				<div className="whitespace-nowrap">
+					Req
+					{requirementIcons.length > 0 && ` ${requirementIcons.join('')}`}
+				</div>
+			</div>
+		) : null;
+
+	const renderedSummary = implemented ? (
+		renderSummary(stripSummary(summary, requirements))
+	) : (
+		<li className="italic text-rose-500 dark:text-rose-300">
+			Not implemented yet
+		</li>
+	);
+
 	return (
-		<button
-			className={`relative panel-card flex h-full flex-col items-start gap-2 border border-white/40 bg-gradient-to-br p-4 text-left shadow-lg shadow-amber-500/10 transition ${
-				enabled ? 'hoverable cursor-pointer' : 'cursor-not-allowed opacity-50'
-			} ${focusClass}`}
+		<div
+			className={containerClass}
+			data-face={variant}
 			title={tooltip}
-			onClick={enabled ? onClick : undefined}
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 		>
-			<span className="text-base font-medium">{title}</span>
-			<div className="absolute top-2 right-2 flex flex-col items-end gap-1 text-right">
-				{renderCosts(costs, playerResources, actionCostResource, upkeep)}
-				{requirements.length > 0 && (
-					<div className="flex flex-col items-end gap-0.5 text-xs text-rose-500 dark:text-rose-300">
-						<div className="whitespace-nowrap">
-							Req
-							{requirementIcons.length > 0 && ` ${requirementIcons.join('')}`}
+			<StepBadge
+				stepIndex={stepIndex}
+				stepCount={stepCount}
+				stepLabel={stepLabel}
+			/>
+			<div className="action-card__inner">
+				<button
+					type="button"
+					className="action-card__face action-card__face--front"
+					onClick={interactive ? onClick : undefined}
+					disabled={!interactive}
+				>
+					<div className="flex h-full flex-col items-start gap-2 p-4 text-left">
+						<span className="text-base font-medium">{title}</span>
+						<div className="absolute top-2 right-2 flex flex-col items-end gap-1 text-right">
+							{renderCosts(costs, playerResources, actionCostResource, upkeep)}
+							{requirementBadge}
+						</div>
+						<ul className="text-sm list-disc pl-4 text-left">
+							{renderedSummary}
+						</ul>
+					</div>
+				</button>
+				<div className="action-card__face action-card__face--back">
+					<div className="flex h-full flex-col gap-3 p-4">
+						<div className="flex items-start justify-between gap-2">
+							<div className="flex flex-col gap-1">
+								{promptTitle && (
+									<span className="text-base font-semibold">{promptTitle}</span>
+								)}
+								{promptSummary && (
+									<p className="text-sm text-slate-600 dark:text-slate-300">
+										{promptSummary}
+									</p>
+								)}
+								{promptDescription && (
+									<p className="text-xs text-slate-500 dark:text-slate-400">
+										{promptDescription}
+									</p>
+								)}
+							</div>
+							{onCancel && (
+								<button
+									type="button"
+									className="action-card__cancel"
+									onClick={onCancel}
+								>
+									Cancel
+								</button>
+							)}
+						</div>
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+							{options.length > 0 ? (
+								options.map((option) => (
+									<OptionCard key={option.id} option={option} />
+								))
+							) : (
+								<div className="text-sm text-slate-600 dark:text-slate-300">
+									No options available.
+								</div>
+							)}
 						</div>
 					</div>
-				)}
+				</div>
 			</div>
-			<ul className="text-sm list-disc pl-4 text-left">
-				{implemented ? (
-					renderSummary(stripSummary(summary, requirements))
-				) : (
-					<li className="italic text-rose-500 dark:text-rose-300">
-						Not implemented yet
-					</li>
-				)}
-			</ul>
-		</button>
+		</div>
 	);
 }

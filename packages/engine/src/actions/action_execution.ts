@@ -12,6 +12,10 @@ import {
 	verifyCostAffordability,
 } from './costs';
 import { cloneEngineContext } from './context_clone';
+import {
+	coerceActionEffectGroupChoices,
+	getActionEffectGroups,
+} from './effect_groups';
 
 function assertSystemActionUnlocked(
 	actionId: string,
@@ -72,6 +76,24 @@ function assertBuildingsNotYetConstructed(
 	}
 }
 
+function ensureEffectGroupSelections(
+	actionId: string,
+	groups: ReturnType<typeof getActionEffectGroups>,
+	choices: ReturnType<typeof coerceActionEffectGroupChoices>,
+) {
+	if (groups.length === 0) {
+		return;
+	}
+	for (const group of groups) {
+		if (choices[group.id]) {
+			continue;
+		}
+		throw new Error(
+			`Action ${actionId} requires a selection for effect group "${group.id}"`,
+		);
+	}
+}
+
 function executeAction<T extends string>(
 	actionId: T,
 	engineContext: EngineContext,
@@ -86,6 +108,16 @@ function executeAction<T extends string>(
 		actionDefinition.effects,
 		params || {},
 	);
+	const effectGroups = getActionEffectGroups(
+		actionDefinition.id,
+		engineContext,
+	);
+	const choiceMap = coerceActionEffectGroupChoices(
+		params && typeof params === 'object'
+			? (params as Record<string, unknown>)['choices']
+			: undefined,
+	);
+	ensureEffectGroupSelections(actionDefinition.id, effectGroups, choiceMap);
 	const pendingBuildingIds = collectPendingBuildingAdds(resolvedEffects);
 	assertBuildingsNotYetConstructed(pendingBuildingIds, engineContext);
 	applyEffectCostCollectors(resolvedEffects, baseCosts, engineContext);
@@ -114,6 +146,40 @@ function executeAction<T extends string>(
 		}),
 		() => {
 			runEffects(resolvedEffects, engineContext);
+			if (effectGroups.length > 0) {
+				for (const group of effectGroups) {
+					const selection = choiceMap[group.id];
+					if (!selection) {
+						continue;
+					}
+					const option = group.options.find(
+						(candidate) => candidate.id === selection.optionId,
+					);
+					if (!option) {
+						throw new Error(
+							`Unknown option "${selection.optionId}" for effect group "${group.id}" on action ${actionDefinition.id}`,
+						);
+					}
+					const mergedParams = {
+						...(params || {}),
+						...(selection.params || {}),
+					} as Record<string, unknown>;
+					const followUp = applyParamsToEffects(
+						[
+							{
+								type: 'action',
+								method: 'perform',
+								params: {
+									id: option.actionId,
+									...(option.params || {}),
+								},
+							},
+						],
+						mergedParams,
+					);
+					runEffects(followUp, engineContext);
+				}
+			}
 			passiveManager.runResultMods(actionDefinition.id, engineContext);
 		},
 	);

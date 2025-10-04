@@ -567,21 +567,13 @@ export function GameProvider({
 		}
 	}
 
-	async function perform(action: Action, params?: Record<string, unknown>) {
+	async function perform(action: Action, params?: ActionParams<string>) {
 		const player = ctx.activePlayer;
 		const before = snapshotPlayer(player, ctx);
-		const costs = getActionCosts(
-			action.id,
-			ctx,
-			params as ActionParams<string>,
-		);
+		const costs = getActionCosts(action.id, ctx, params);
 		try {
-			simulateAction(action.id, ctx, params as ActionParams<string>);
-			const traces = performAction(
-				action.id,
-				ctx,
-				params as ActionParams<string>,
-			);
+			simulateAction(action.id, ctx, params);
+			const traces = performAction(action.id, ctx, params);
 
 			const after = snapshotPlayer(player, ctx);
 			const stepDef = ctx.actions.get(action.id);
@@ -696,7 +688,7 @@ export function GameProvider({
 		}
 	}
 
-	const handlePerform = (action: Action, params?: Record<string, unknown>) =>
+	const handlePerform = (action: Action, params?: ActionParams<string>) =>
 		enqueue(() => perform(action, params));
 
 	const performRef = useRef<typeof perform>(perform);
