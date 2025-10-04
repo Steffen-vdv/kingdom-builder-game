@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameProvider, useGameEngine } from './state/GameContext';
 import PlayerPanel from './components/player/PlayerPanel';
 import HoverCard from './components/HoverCard';
@@ -40,24 +40,51 @@ function GameLayout() {
 		setQuitDialogOpen(false);
 		onExit();
 	}, [onExit]);
-	const [playerHeights, setPlayerHeights] = useState<Record<string, number>>(
-		{},
-	);
-	const handlePlayerHeight = (playerId: string, height: number) => {
-		setPlayerHeights((prev) => {
-			if (prev[playerId] === height) {
-				return prev;
-			}
-			return { ...prev, [playerId]: height };
-		});
-	};
-	const phasePanelHeight = useMemo(() => {
-		const heights = Object.values(playerHeights);
-		if (!heights.length) {
-			return 320;
+	const playerAreaRef = useRef<HTMLDivElement | null>(null);
+	const [phasePanelHeight, setPhasePanelHeight] = useState(320);
+	useEffect(() => {
+		const node = playerAreaRef.current;
+		if (!node) {
+			return;
 		}
-		return Math.max(320, ...heights);
-	}, [playerHeights]);
+
+		let frame = 0;
+		const updateHeight = () => {
+			if (!playerAreaRef.current) {
+				return;
+			}
+			const { height } = playerAreaRef.current.getBoundingClientRect();
+			setPhasePanelHeight((prev) => {
+				const nextHeight = Math.max(320, Math.ceil(height));
+				if (prev === nextHeight) {
+					return prev;
+				}
+				return nextHeight;
+			});
+		};
+
+		updateHeight();
+
+		if (typeof ResizeObserver === 'undefined') {
+			window.addEventListener('resize', updateHeight);
+			return () => {
+				window.removeEventListener('resize', updateHeight);
+			};
+		}
+
+		const observer = new ResizeObserver(() => {
+			frame = window.requestAnimationFrame(updateHeight);
+		});
+
+		observer.observe(node);
+
+		return () => {
+			observer.disconnect();
+			if (frame) {
+				window.cancelAnimationFrame(frame);
+			}
+		};
+	}, [ctx.game.players.length]);
 	const playerPanels = ctx.game.players.map((p, i) => {
 		const isActive = p.id === ctx.activePlayer.id;
 		const sideClass = i === 0 ? 'pr-6' : 'pl-6';
@@ -83,9 +110,6 @@ function GameLayout() {
 				player={p}
 				className={`grow basis-[calc(50%-1rem)] max-w-[calc(50%-1rem)] p-4 ${bgClass}`}
 				isActive={isActive}
-				onHeightChange={(height) => {
-					handlePlayerHeight(p.id, height);
-				}}
 			/>
 		);
 	});
@@ -153,7 +177,10 @@ function GameLayout() {
 
 				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
 					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-						<div className="flex flex-1 items-stretch gap-6 overflow-hidden rounded-3xl px-6 py-6">
+						<div
+							ref={playerAreaRef}
+							className="flex flex-1 items-stretch gap-6 overflow-hidden rounded-3xl px-6 py-6"
+						>
 							{playerPanels}
 						</div>
 					</section>
