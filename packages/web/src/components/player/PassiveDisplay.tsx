@@ -57,23 +57,37 @@ export default function PassiveDisplay({
 				};
 			} => {
 				const { summary, def } = entry;
-				if (!def) return false;
-				if (buildingIdSet.has(summary.id)) return false;
-				if (developmentIds.has(summary.id)) return false;
-				if (buildingPrefixes.some((prefix) => summary.id.startsWith(prefix)))
+				if (!def) {
 					return false;
-				for (const prefix of POPULATION_PASSIVE_PREFIXES)
-					if (summary.id.startsWith(prefix)) return false;
+				}
+				if (buildingIdSet.has(summary.id)) {
+					return false;
+				}
+				if (developmentIds.has(summary.id)) {
+					return false;
+				}
+				if (buildingPrefixes.some((prefix) => summary.id.startsWith(prefix))) {
+					return false;
+				}
+				for (const prefix of POPULATION_PASSIVE_PREFIXES) {
+					if (summary.id.startsWith(prefix)) {
+						return false;
+					}
+				}
 				return true;
 			},
 		);
-	if (entries.length === 0) return null;
+	if (entries.length === 0) {
+		return null;
+	}
 
 	const getIcon = (
 		summary: PassiveSummary,
 		effects: EffectDef[] | undefined,
 	) => {
-		if (summary.icon) return summary.icon;
+		if (summary.icon) {
+			return summary.icon;
+		}
 		const first = effects?.[0];
 		return ICON_MAP[first?.type as keyof typeof ICON_MAP] ?? PASSIVE_INFO.icon;
 	};

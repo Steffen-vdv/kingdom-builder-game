@@ -18,13 +18,19 @@ function createMeta(meta: PassiveDurationMeta): PassiveDurationMeta {
 		label: meta.label,
 		source: meta.source,
 	};
-	if (meta.icon !== undefined) result.icon = meta.icon;
-	if (meta.phaseId !== undefined) result.phaseId = meta.phaseId;
+	if (meta.icon !== undefined) {
+		result.icon = meta.icon;
+	}
+	if (meta.phaseId !== undefined) {
+		result.phaseId = meta.phaseId;
+	}
 	return result;
 }
 
 function resolvePhaseMeta(ctx: EngineContext, id: string | undefined) {
-	if (!id) return undefined;
+	if (!id) {
+		return undefined;
+	}
 	return (
 		ctx.phases.find((phase) => phase.id === id) ??
 		PHASES.find((p) => p.id === id)
@@ -61,7 +67,9 @@ function resolveDurationMeta(
 			label = phase.label;
 			source = 'phase';
 		}
-		if (!icon && phase?.icon) icon = phase.icon;
+		if (!icon && phase?.icon) {
+			icon = phase.icon;
+		}
 	}
 
 	if (!label && params['onUpkeepPhase']) {
@@ -74,11 +82,15 @@ function resolveDurationMeta(
 			label = 'Upkeep';
 			source = 'fallback';
 		}
-		if (!icon && phase?.icon) icon = phase.icon;
+		if (!icon && phase?.icon) {
+			icon = phase.icon;
+		}
 	}
 
 	if (label) {
-		if (!source) source = manualLabel ? 'manual' : 'phase';
+		if (!source) {
+			source = manualLabel ? 'manual' : 'phase';
+		}
 		return createMeta({
 			label,
 			...(icon !== undefined ? { icon } : {}),
@@ -126,7 +138,9 @@ registerEffectFormatter('passive', 'add', {
 	summarize: (eff, ctx) => {
 		const inner = summarizeEffects(eff.effects || [], ctx);
 		const duration = resolveDurationMeta(eff, ctx);
-		if (!duration) return inner;
+		if (!duration) {
+			return inner;
+		}
 		return [
 			{
 				title: `⏳ Until next ${formatDuration(duration, {
@@ -144,7 +158,9 @@ registerEffectFormatter('passive', 'add', {
 		const prefix = icon ? `${icon} ` : '';
 		const inner = describeEffects(eff.effects || [], ctx);
 		const duration = resolveDurationMeta(eff, ctx);
-		if (!duration) return inner;
+		if (!duration) {
+			return inner;
+		}
 		return [
 			{
 				title: `${prefix}${name} – Until your next ${formatDuration(duration, {
@@ -163,13 +179,14 @@ registerEffectFormatter('passive', 'add', {
 		const inner = describeEffects(eff.effects || [], ctx);
 		const items = [...(inner.length ? inner : [])];
 		const duration = resolveDurationMeta(eff, ctx);
-		if (duration)
+		if (duration) {
 			items.push(
 				`${prefix}${name} duration: Until player's next ${formatDuration(
 					duration,
 					{ includePhase: true },
 				)}`,
 			);
+		}
 		return { title: `${prefix}${name} added`, items };
 	},
 });

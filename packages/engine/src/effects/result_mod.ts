@@ -14,13 +14,14 @@ interface ResultModParams {
 export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 	const params = effect.params || ({} as ResultModParams);
 	const { id, actionId, evaluation } = params;
-	if (!id || (!actionId && !evaluation))
+	if (!id || (!actionId && !evaluation)) {
 		throw new Error('result_mod requires id and actionId or evaluation');
+	}
 	const ownerId = ctx.activePlayer.id;
 	const modId = `${id}_${ownerId}`;
 	if (effect.method === 'add') {
 		const effects = effect.effects || [];
-		if (actionId)
+		if (actionId) {
 			ctx.passives.registerResultModifier(
 				modId,
 				(executedActionId, innerContext) => {
@@ -32,7 +33,7 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 					}
 				},
 			);
-		else if (evaluation) {
+		} else if (evaluation) {
 			const target = `${evaluation.type}:${evaluation.id}`;
 			const rawAmount = params['amount'];
 			const amount = typeof rawAmount === 'number' ? rawAmount : undefined;
@@ -44,14 +45,20 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 				modId,
 				target,
 				(innerContext, gains) => {
-					if (innerContext.activePlayer.id !== ownerId) return;
-					if (effects.length) runEffects(effects, innerContext);
+					if (innerContext.activePlayer.id !== ownerId) {
+						return;
+					}
+					if (effects.length) {
+						runEffects(effects, innerContext);
+					}
 					if (adjust !== undefined) {
-						for (const g of gains) g.amount += adjust;
+						for (const g of gains) {
+							g.amount += adjust;
+						}
 					}
 					if (amount !== undefined) {
 						for (const g of gains) {
-							if (g.amount > 0)
+							if (g.amount > 0) {
 								runEffects(
 									[
 										{
@@ -62,6 +69,7 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 									],
 									innerContext,
 								);
+							}
 						}
 					}
 					if (percent !== undefined) {
@@ -71,7 +79,10 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 			);
 		}
 	} else if (effect.method === 'remove') {
-		if (actionId) ctx.passives.unregisterResultModifier(modId);
-		else if (evaluation) ctx.passives.unregisterEvaluationModifier(modId);
+		if (actionId) {
+			ctx.passives.unregisterResultModifier(modId);
+		} else if (evaluation) {
+			ctx.passives.unregisterEvaluationModifier(modId);
+		}
 	}
 };

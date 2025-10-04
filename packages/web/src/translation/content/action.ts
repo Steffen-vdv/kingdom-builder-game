@@ -42,16 +42,18 @@ class ActionTranslator
 		const label = def.name;
 		let message = `Played ${icon} ${label}`;
 		const extra = getActionLogHook(def)?.(ctx, params);
-		if (extra) message += extra;
+		if (extra) {
+			message += extra;
+		}
 		const effects = params
 			? applyParamsToEffects(def.effects, params)
 			: def.effects;
 		const effLogs = logEffects(effects, ctx);
 		const lines = [message];
 		function push(entry: unknown, depth: number) {
-			if (typeof entry === 'string')
+			if (typeof entry === 'string') {
 				lines.push(`${'  '.repeat(depth)}${entry}`);
-			else if (entry && typeof entry === 'object') {
+			} else if (entry && typeof entry === 'object') {
 				const e = entry as { title: string; items: unknown[] };
 				lines.push(`${'  '.repeat(depth)}${e.title}`);
 				e.items.forEach((i) => push(i, depth + 1));

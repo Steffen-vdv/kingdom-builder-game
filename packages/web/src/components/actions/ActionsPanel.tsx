@@ -74,7 +74,9 @@ function formatMissingResources(
 	for (const [key, required] of Object.entries(costs)) {
 		const available = playerResources[key] ?? 0;
 		const shortage = required - available;
-		if (shortage <= 0) continue;
+		if (shortage <= 0) {
+			continue;
+		}
 		if (isResourceKey(key)) {
 			missing.push(
 				`${shortage} ${RESOURCES[key].icon} ${RESOURCES[key].label}`,
@@ -84,7 +86,9 @@ function formatMissingResources(
 		}
 	}
 
-	if (missing.length === 0) return undefined;
+	if (missing.length === 0) {
+		return undefined;
+	}
 
 	return `Need ${missing.join(', ')}`;
 }
@@ -115,7 +119,9 @@ type PopulationRegistryLike = {
 function isHirablePopulation(
 	population: PopulationDefinition | undefined,
 ): boolean {
-	if (!population) return false;
+	if (!population) {
+		return false;
+	}
 	if (population.upkeep && Object.keys(population.upkeep).length > 0) {
 		return true;
 	}
@@ -163,9 +169,13 @@ function getPopulationIconFromRole(
 	role: string,
 	populations: PopulationRegistryLike,
 ): string {
-	if (!role) return '';
+	if (!role) {
+		return '';
+	}
 	const infoIcon = POPULATION_ROLES[role as PopulationRoleId]?.icon;
-	if (infoIcon) return infoIcon;
+	if (infoIcon) {
+		return infoIcon;
+	}
 	try {
 		const population = populations.get(role);
 		if (typeof population?.icon === 'string') {
@@ -182,7 +192,9 @@ function getIconsFromEvaluator(
 	roleId: PopulationRoleId,
 	populations: PopulationRegistryLike,
 ): string[] {
-	if (!evaluator || evaluator.type !== 'population') return [];
+	if (!evaluator || evaluator.type !== 'population') {
+		return [];
+	}
 	const params = evaluator.params ?? {};
 	const rawRole = params['role'];
 	if (typeof rawRole === 'string') {
@@ -251,15 +263,18 @@ function buildRequirementIconsForRole(
 		return Array.from(icons).filter(Boolean);
 	}
 	for (const requirement of requirements) {
-		if (requirement.type !== 'evaluator' || requirement.method !== 'compare')
+		if (requirement.type !== 'evaluator' || requirement.method !== 'compare') {
 			continue;
+		}
 		const params = requirement.params ?? {};
 		const left = params['left'] as EvaluatorConfig | undefined;
 		const right = params['right'] as EvaluatorConfig | undefined;
-		for (const icon of getIconsFromEvaluator(left, roleId, populations))
+		for (const icon of getIconsFromEvaluator(left, roleId, populations)) {
 			icons.add(icon);
-		for (const icon of getIconsFromEvaluator(right, roleId, populations))
+		}
+		for (const icon of getIconsFromEvaluator(right, roleId, populations)) {
 			icons.add(icon);
+		}
 	}
 	return Array.from(icons).filter(Boolean);
 }
@@ -288,7 +303,9 @@ function GenericActions({
 			.map((action) => {
 				const costsBag = getActionCosts(action.id, ctx);
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+				for (const [k, v] of Object.entries(costsBag)) {
+					costs[k] = v ?? 0;
+				}
 				const total = Object.entries(costs).reduce(
 					(sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
 					0,
@@ -341,7 +358,9 @@ function GenericActions({
 						tooltip={title}
 						focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
 						onClick={() => {
-							if (!canInteract) return;
+							if (!canInteract) {
+								return;
+							}
 							void handlePerform(action);
 						}}
 						onMouseEnter={() => {
@@ -417,7 +436,9 @@ function RaisePopOptions({
 			{roleOptions.map((role) => {
 				const costsBag = getActionCosts(action.id, ctx);
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+				for (const [k, v] of Object.entries(costsBag)) {
+					costs[k] = v ?? 0;
+				}
 				let upkeep: Record<string, number> | undefined;
 				try {
 					upkeep = populationRegistry.get(role)?.upkeep;
@@ -467,7 +488,9 @@ function RaisePopOptions({
 						tooltip={title}
 						focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
 						onClick={() => {
-							if (!canInteract) return;
+							if (!canInteract) {
+								return;
+							}
 							void handlePerform(action, { role });
 						}}
 						onMouseEnter={() => {
@@ -597,7 +620,9 @@ function DevelopOptions({
 					landId: landIdForCost,
 				});
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+				for (const [k, v] of Object.entries(costsBag)) {
+					costs[k] = v ?? 0;
+				}
 				const total = Object.entries(costs).reduce(
 					(sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
 					0,
@@ -667,7 +692,9 @@ function DevelopOptions({
 								(ctx.developments.get(d.id) as Development | undefined)?.focus
 							}
 							onClick={() => {
-								if (!canInteract) return;
+								if (!canInteract) {
+									return;
+								}
 								const landId = player.lands.find((l) => l.slotsFree > 0)?.id;
 								void handlePerform(action, { id: d.id, landId });
 							}}
@@ -736,7 +763,9 @@ function BuildOptions({
 			.map((b) => {
 				const costsBag = getActionCosts(action.id, ctx, { id: b.id });
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+				for (const [k, v] of Object.entries(costsBag)) {
+					costs[k] = v ?? 0;
+				}
 				const total = Object.entries(costs).reduce(
 					(sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
 					0,
@@ -798,7 +827,9 @@ function BuildOptions({
 							tooltip={title}
 							focus={(ctx.buildings.get(b.id) as Building | undefined)?.focus}
 							onClick={() => {
-								if (!canInteract) return;
+								if (!canInteract) {
+									return;
+								}
 								void handlePerform(action, { id: b.id });
 							}}
 							onMouseEnter={() => {
@@ -853,10 +884,14 @@ function DemolishOptions({
 		return Array.from(player.buildings)
 			.map((id) => {
 				const building = ctx.buildings.get(id) as Building | undefined;
-				if (!building) return null;
+				if (!building) {
+					return null;
+				}
 				const costsBag = getActionCosts(action.id, ctx, { id });
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) costs[k] = v ?? 0;
+				for (const [k, v] of Object.entries(costsBag)) {
+					costs[k] = v ?? 0;
+				}
 				const total = Object.entries(costs).reduce(
 					(sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
 					0,
@@ -874,12 +909,16 @@ function DemolishOptions({
 				} => entry !== null,
 			)
 			.sort((a, b) => {
-				if (a.total !== b.total) return a.total - b.total;
+				if (a.total !== b.total) {
+					return a.total - b.total;
+				}
 				return a.building.name.localeCompare(b.building.name);
 			});
 	}, [ctx, action.id, actionCostResource, player.buildings.size]);
 
-	if (entries.length === 0) return null;
+	if (entries.length === 0) {
+		return null;
+	}
 
 	return (
 		<div>
@@ -934,7 +973,9 @@ function DemolishOptions({
 							tooltip={title}
 							focus={(ctx.buildings.get(id) as Building | undefined)?.focus}
 							onClick={() => {
-								if (!canInteract) return;
+								if (!canInteract) {
+									return;
+								}
 								void handlePerform(action, { id });
 							}}
 							onMouseEnter={() => {
@@ -987,7 +1028,9 @@ export default function ActionsPanel() {
 	const isLocalTurn = ctx.activePlayer.id === player.id;
 
 	useEffect(() => {
-		if (!isLocalTurn && viewingOpponent) setViewingOpponent(false);
+		if (!isLocalTurn && viewingOpponent) {
+			setViewingOpponent(false);
+		}
 	}, [isLocalTurn, viewingOpponent]);
 
 	const selectedPlayer = viewingOpponent ? opponent : player;

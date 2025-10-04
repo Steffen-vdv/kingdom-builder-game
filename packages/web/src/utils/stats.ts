@@ -98,9 +98,13 @@ const DESCRIPTOR_REGISTRY: Record<string, DescriptorRegistryEntry> = {
 		formatDetail: defaultFormatDetail,
 		augmentDependencyDetail: (detail, dep, player, _ctx, options) => {
 			const includeCounts = options.includeCounts ?? true;
-			if (!includeCounts || !dep.id) return detail;
+			if (!includeCounts || !dep.id) {
+				return detail;
+			}
 			const count = player.population?.[dep.id] ?? 0;
-			if (count > 0) return detail ? `${detail} ×${count}` : `×${count}`;
+			if (count > 0) {
+				return detail ? `${detail} ×${count}` : `×${count}`;
+			}
 			return detail;
 		},
 	},
@@ -134,7 +138,9 @@ const DESCRIPTOR_REGISTRY: Record<string, DescriptorRegistryEntry> = {
 			formatDetail: (id, detail) => formatStepLabel(id, detail),
 			formatDependency: (dep) => {
 				const label = formatPhaseStep(dep.id, dep.detail);
-				if (label) return label.trim();
+				if (label) {
+					return label.trim();
+				}
 				const base = resolvePhase(dep.id);
 				return base.label.trim();
 			},
@@ -160,7 +166,9 @@ const DESCRIPTOR_REGISTRY: Record<string, DescriptorRegistryEntry> = {
 		},
 		formatDetail: defaultFormatDetail,
 		augmentDependencyDetail: (detail, dep, player, ctx) => {
-			if (!dep.id) return detail;
+			if (!dep.id) {
+				return detail;
+			}
 			const statValue =
 				player.stats?.[dep.id] ?? ctx.activePlayer.stats?.[dep.id] ?? 0;
 			const valueStr = formatStatValue(dep.id, statValue);
@@ -217,7 +225,9 @@ function createDefaultDescriptor(kind?: string): DescriptorRegistryEntry {
 }
 
 function getDescriptor(kind?: string): DescriptorRegistryEntry {
-	if (!kind) return createDefaultDescriptor();
+	if (!kind) {
+		return createDefaultDescriptor();
+	}
 	return DESCRIPTOR_REGISTRY[kind] ?? createDefaultDescriptor(kind);
 }
 
@@ -226,10 +236,14 @@ export function getStatBreakdownSummary(
 	player: EngineContext['activePlayer'],
 	ctx: EngineContext,
 ): Summary {
-	if (!isStatKey(statKey)) return [];
+	if (!isStatKey(statKey)) {
+		return [];
+	}
 	const sources = player.statSources?.[statKey] ?? {};
 	const contributions = Object.values(sources);
-	if (!contributions.length) return [];
+	if (!contributions.length) {
+		return [];
+	}
 	const annotated = contributions.map((entry) => ({
 		entry,
 		descriptor: getSourceDescriptor(entry.meta),
@@ -237,7 +251,9 @@ export function getStatBreakdownSummary(
 	annotated.sort((a, b) => {
 		const aOrder = a.entry.meta.longevity === 'ongoing' ? 0 : 1;
 		const bOrder = b.entry.meta.longevity === 'ongoing' ? 0 : 1;
-		if (aOrder !== bOrder) return aOrder - bOrder;
+		if (aOrder !== bOrder) {
+			return aOrder - bOrder;
+		}
 		return a.descriptor.label.localeCompare(b.descriptor.label);
 	});
 	return annotated.map(({ entry, descriptor }) =>
@@ -253,9 +269,12 @@ function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 		label: base.label,
 	};
 	let suffix = descriptorEntry.formatDetail?.(meta.id, meta.detail);
-	if (suffix === undefined && meta.detail)
+	if (suffix === undefined && meta.detail) {
 		suffix = defaultFormatDetail(meta.id, meta.detail);
-	if (suffix) descriptor.suffix = suffix;
+	}
+	if (suffix) {
+		descriptor.suffix = suffix;
+	}
 	return descriptor;
 }
 
@@ -271,14 +290,20 @@ function formatContribution(
 	const valueStr = formatStatValue(statKey, amount);
 	const sign = amount >= 0 ? '+' : '';
 	const amountParts: string[] = [];
-	if (statInfo?.icon) amountParts.push(statInfo.icon);
+	if (statInfo?.icon) {
+		amountParts.push(statInfo.icon);
+	}
 	amountParts.push(`${sign}${valueStr}`);
-	if (statInfo?.label) amountParts.push(statInfo.label);
+	if (statInfo?.label) {
+		amountParts.push(statInfo.label);
+	}
 	const amountEntry = amountParts.join(' ').trim();
 	const detailEntries = buildDetailEntries(meta, player, ctx);
 	const title = formatSourceTitle(descriptor);
 	if (!title) {
-		if (!detailEntries.length) return amountEntry;
+		if (!detailEntries.length) {
+			return amountEntry;
+		}
 		return { title: amountEntry, items: detailEntries };
 	}
 	const items: SummaryEntry[] = [];
@@ -289,16 +314,23 @@ function formatContribution(
 
 function formatSourceTitle(descriptor: SourceDescriptor): string {
 	const titleParts: string[] = [];
-	if (descriptor.icon) titleParts.push(descriptor.icon);
+	if (descriptor.icon) {
+		titleParts.push(descriptor.icon);
+	}
 	const labelParts: string[] = [];
-	if (descriptor.label?.trim()) labelParts.push(descriptor.label.trim());
-	if (descriptor.suffix?.trim()) labelParts.push(descriptor.suffix.trim());
-	if (labelParts.length)
+	if (descriptor.label?.trim()) {
+		labelParts.push(descriptor.label.trim());
+	}
+	if (descriptor.suffix?.trim()) {
+		labelParts.push(descriptor.suffix.trim());
+	}
+	if (labelParts.length) {
 		titleParts.push(
 			labelParts.length > 1
 				? `${labelParts[0]!} · ${labelParts.slice(1).join(' · ')}`
 				: labelParts[0]!,
 		);
+	}
 	return titleParts.join(' ').trim();
 }
 
@@ -331,59 +363,83 @@ function buildLongevityEntries(
 	const entries: SummaryEntry[] = [];
 	if (meta.longevity === 'ongoing') {
 		const items: SummaryEntry[] = [];
-		if (!dependencies.length) pushSummaryEntry(items, 'Active at all times');
-		else if (dependencies.length === 1)
+		if (!dependencies.length) {
+			pushSummaryEntry(items, 'Active at all times');
+		} else if (dependencies.length === 1) {
 			pushSummaryEntry(items, `While ${dependencies[0]}`);
-		else
+		} else {
 			pushSummaryEntry(items, {
 				title: 'While all of:',
 				items: dependencies,
 			});
-		if (removal) pushSummaryEntry(items, `Removed when ${removal}`);
-		if (items.length)
+		}
+		if (removal) {
+			pushSummaryEntry(items, `Removed when ${removal}`);
+		}
+		if (items.length) {
 			entries.push({
 				title: `${PASSIVE_INFO.icon ?? '♾️'} Ongoing`,
 				items,
 			});
-		else entries.push(`${PASSIVE_INFO.icon ?? '♾️'} Ongoing`);
+		} else {
+			entries.push(`${PASSIVE_INFO.icon ?? '♾️'} Ongoing`);
+		}
 		return entries;
 	}
 	const items: SummaryEntry[] = [];
-	if (!dependencies.length)
+	if (!dependencies.length) {
 		pushSummaryEntry(items, 'Applies immediately and remains in effect');
-	else
+	} else {
 		dependencies.forEach((dep) =>
 			pushSummaryEntry(items, `Triggered by ${dep}`),
 		);
-	if (removal) pushSummaryEntry(items, `Can be removed when ${removal}`);
-	if (items.length) entries.push({ title: 'Permanent', items });
-	else entries.push('Permanent');
+	}
+	if (removal) {
+		pushSummaryEntry(items, `Can be removed when ${removal}`);
+	}
+	if (items.length) {
+		entries.push({ title: 'Permanent', items });
+	} else {
+		entries.push('Permanent');
+	}
 	return entries;
 }
 
 function buildHistoryEntries(meta: StatSourceMeta): SummaryEntry[] {
 	const extra = meta.extra;
-	if (!extra) return [];
+	if (!extra) {
+		return [];
+	}
 	const entries: SummaryEntry[] = [];
 	const seen = new Set<string>();
 	const add = (text: string | undefined) => {
-		if (!text) return;
+		if (!text) {
+			return;
+		}
 		const trimmed = text.trim();
-		if (!trimmed || seen.has(trimmed)) return;
+		if (!trimmed || seen.has(trimmed)) {
+			return;
+		}
 		seen.add(trimmed);
 		pushSummaryEntry(entries, trimmed);
 	};
 	const history = extra['history'];
-	if (Array.isArray(history))
+	if (Array.isArray(history)) {
 		history.forEach((item) => add(formatHistoryItem(item)));
+	}
 	const triggerLabels = extractTriggerList(extra);
 	triggerLabels.forEach((label) => add(`Triggered by ${label}`));
 	const turns = new Set<number>();
-	if (typeof extra['turn'] === 'number') turns.add(extra['turn']);
-	if (Array.isArray(extra['turns']))
+	if (typeof extra['turn'] === 'number') {
+		turns.add(extra['turn']);
+	}
+	if (Array.isArray(extra['turns'])) {
 		extra['turns'].forEach((value) => {
-			if (typeof value === 'number') turns.add(value);
+			if (typeof value === 'number') {
+				turns.add(value);
+			}
 		});
+	}
 	const phaseHint = formatPhaseStep(
 		typeof extra['phase'] === 'string' ? extra['phase'] : undefined,
 		typeof extra['step'] === 'string' ? extra['step'] : undefined,
@@ -394,44 +450,63 @@ function buildHistoryEntries(meta: StatSourceMeta): SummaryEntry[] {
 			.forEach((turn) =>
 				add(phaseHint ? `Turn ${turn} – ${phaseHint}` : `Turn ${turn}`),
 			);
-	} else if (phaseHint) add(phaseHint);
+	} else if (phaseHint) {
+		add(phaseHint);
+	}
 	return entries;
 }
 
 function extractTriggerList(extra: Record<string, unknown>): string[] {
 	const triggers: string[] = [];
 	const list = extra['triggers'];
-	if (Array.isArray(list))
+	if (Array.isArray(list)) {
 		list.forEach((value) => {
 			if (typeof value === 'string') {
 				const label = formatTriggerLabel(value);
-				if (label) triggers.push(label);
+				if (label) {
+					triggers.push(label);
+				}
 			}
 		});
+	}
 	if (typeof extra['trigger'] === 'string') {
 		const label = formatTriggerLabel(extra['trigger']);
-		if (label) triggers.push(label);
+		if (label) {
+			triggers.push(label);
+		}
 	}
 	return triggers;
 }
 
 function formatTriggerLabel(id: string): string | undefined {
-	if (!id) return undefined;
+	if (!id) {
+		return undefined;
+	}
 	const info = TRIGGER_LOOKUP[id];
 	if (info) {
 		const parts: string[] = [];
-		if (info.icon) parts.push(info.icon);
+		if (info.icon) {
+			parts.push(info.icon);
+		}
 		const label = info.past ?? info.future ?? id;
-		if (label) parts.push(label);
+		if (label) {
+			parts.push(label);
+		}
 		return parts.join(' ').trim();
 	}
 	return id;
 }
 
 function formatHistoryItem(entry: unknown): string | undefined {
-	if (typeof entry === 'number') return `Turn ${entry}`;
-	if (typeof entry === 'string') return entry;
-	if (!entry || typeof entry !== 'object') return undefined;
+	if (typeof entry === 'number') {
+		return `Turn ${entry}`;
+	}
+	if (typeof entry === 'string') {
+		return entry;
+	}
+	if (!entry || typeof entry !== 'object') {
+		return undefined;
+	}
 	const record = entry as Record<string, unknown>;
 	const turn = typeof record['turn'] === 'number' ? record['turn'] : undefined;
 	const phaseId =
@@ -454,10 +529,18 @@ function formatHistoryItem(entry: unknown): string | undefined {
 			? record['description']
 			: undefined;
 	const parts: string[] = [];
-	if (turn !== undefined) parts.push(`Turn ${turn}`);
-	if (phaseText) parts.push(phaseText);
-	if (description) parts.push(description);
-	if (!parts.length) return undefined;
+	if (turn !== undefined) {
+		parts.push(`Turn ${turn}`);
+	}
+	if (phaseText) {
+		parts.push(phaseText);
+	}
+	if (description) {
+		parts.push(description);
+	}
+	if (!parts.length) {
+		return undefined;
+	}
 	return parts.join(' – ');
 }
 
@@ -465,15 +548,25 @@ function formatPhaseStep(
 	phaseId?: string,
 	stepId?: string,
 ): string | undefined {
-	if (!phaseId) return undefined;
+	if (!phaseId) {
+		return undefined;
+	}
 	const phase = PHASES.find((p) => p.id === phaseId);
-	if (!phase) return undefined;
+	if (!phase) {
+		return undefined;
+	}
 	const parts: string[] = [];
-	if (phase.icon) parts.push(phase.icon);
-	if (phase.label) parts.push(phase.label);
+	if (phase.icon) {
+		parts.push(phase.icon);
+	}
+	if (phase.label) {
+		parts.push(phase.label);
+	}
 	const base = parts.join(' ').trim();
 	const stepText = formatStepLabel(phaseId, stepId);
-	if (stepText) return base ? `${base} · ${stepText}` : stepText;
+	if (stepText) {
+		return base ? `${base} · ${stepText}` : stepText;
+	}
 	return base || undefined;
 }
 
@@ -481,27 +574,39 @@ function formatStepLabel(
 	phaseId?: string,
 	stepId?: string,
 ): string | undefined {
-	if (!stepId) return undefined;
+	if (!stepId) {
+		return undefined;
+	}
 	const phase = phaseId ? PHASES.find((p) => p.id === phaseId) : undefined;
 	const step = phase?.steps.find((s) => s.id === stepId);
-	if (!step) return formatDetailText(stepId);
+	if (!step) {
+		return formatDetailText(stepId);
+	}
 	const parts: string[] = [];
-	if (step.icon) parts.push(step.icon);
+	if (step.icon) {
+		parts.push(step.icon);
+	}
 	const label = step.title ?? step.id;
-	if (label) parts.push(label);
+	if (label) {
+		parts.push(label);
+	}
 	return parts.join(' ').trim();
 }
 
 function formatDetailText(detail: string): string {
-	if (!detail) return '';
-	if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(detail))
+	if (!detail) {
+		return '';
+	}
+	if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(detail)) {
 		return detail
 			.split('-')
 			.filter((segment) => segment.length)
 			.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
 			.join(' ');
-	if (/^[a-z]/.test(detail))
+	}
+	if (/^[a-z]/.test(detail)) {
 		return detail.charAt(0).toUpperCase() + detail.slice(1);
+	}
 	return detail;
 }
 
@@ -512,15 +617,21 @@ function formatDependency(
 	options: { includeCounts?: boolean } = {},
 ): string {
 	const descriptor = getDescriptor(dep.type);
-	if (descriptor.formatDependency)
+	if (descriptor.formatDependency) {
 		return descriptor.formatDependency(dep, player, ctx, options);
+	}
 	const entity = descriptor.resolve(dep.id);
 	const fragments: string[] = [];
-	if (entity.icon) fragments.push(entity.icon);
-	if (entity.label) fragments.push(entity.label);
+	if (entity.icon) {
+		fragments.push(entity.icon);
+	}
+	if (entity.label) {
+		fragments.push(entity.label);
+	}
 	let detail = descriptor.formatDetail?.(dep.id, dep.detail);
-	if (detail === undefined && dep.detail)
+	if (detail === undefined && dep.detail) {
 		detail = defaultFormatDetail(dep.id, dep.detail);
+	}
 	const augmented = descriptor.augmentDependencyDetail?.(
 		detail,
 		dep,
@@ -528,8 +639,12 @@ function formatDependency(
 		ctx,
 		options,
 	);
-	if (augmented !== undefined) detail = augmented;
-	if (detail) fragments.push(detail);
+	if (augmented !== undefined) {
+		detail = augmented;
+	}
+	if (detail) {
+		fragments.push(detail);
+	}
 	return fragments.join(' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -543,7 +658,9 @@ function normalizeSummaryEntry(entry: SummaryEntry): SummaryEntry | undefined {
 		.map((item) => normalizeSummaryEntry(item))
 		.filter((item): item is SummaryEntry => Boolean(item));
 	const trimmedTitle = title.trim();
-	if (!trimmedTitle && !normalizedItems.length) return undefined;
+	if (!trimmedTitle && !normalizedItems.length) {
+		return undefined;
+	}
 	return { title: trimmedTitle || title, items: normalizedItems, ...rest };
 }
 
@@ -551,7 +668,11 @@ function pushSummaryEntry(
 	target: SummaryEntry[],
 	entry: SummaryEntry | undefined,
 ) {
-	if (!entry) return;
+	if (!entry) {
+		return;
+	}
 	const normalized = normalizeSummaryEntry(entry);
-	if (normalized) target.push(normalized);
+	if (normalized) {
+		target.push(normalized);
+	}
 }

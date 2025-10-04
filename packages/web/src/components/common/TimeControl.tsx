@@ -39,7 +39,9 @@ export default function TimeControl() {
 							} ${index > 0 ? 'border-l border-white/40 dark:border-white/10' : ''}`}
 							aria-pressed={active}
 							onClick={() => {
-								if (!active) setTimeScale(option);
+								if (!active) {
+									setTimeScale(option);
+								}
 							}}
 						>
 							x{option}

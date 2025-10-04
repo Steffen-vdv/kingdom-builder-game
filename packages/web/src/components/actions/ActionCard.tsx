@@ -26,8 +26,12 @@ function stripSummary(
 		: typeof first === 'string'
 			? summary
 			: first.items;
-	if (!baseSummary) return baseSummary;
-	if (requirements.length === 0) return baseSummary;
+	if (!baseSummary) {
+		return baseSummary;
+	}
+	if (requirements.length === 0) {
+		return baseSummary;
+	}
 	const requirementSet = new Set(
 		requirements.map((req) => req.trim()).filter((req) => req.length > 0),
 	);
@@ -35,7 +39,9 @@ function stripSummary(
 		const filtered: Summary = [];
 		for (const entry of entries) {
 			if (typeof entry === 'string') {
-				if (requirementSet.has(entry.trim())) continue;
+				if (requirementSet.has(entry.trim())) {
+					continue;
+				}
 				filtered.push(entry);
 			} else {
 				const nested = filterEntries(entry.items);

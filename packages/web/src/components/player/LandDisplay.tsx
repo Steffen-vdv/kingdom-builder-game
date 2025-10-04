@@ -127,13 +127,17 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 				}
 			).map.entries(),
 		).find(([, a]) => a.category === 'development');
-		if (!entry) return undefined;
+		if (!entry) {
+			return undefined;
+		}
 		const [, info] = entry;
 		return info.icon
 			? { icon: info.icon, name: info.name }
 			: { name: info.name };
 	}, [ctx]);
-	if (player.lands.length === 0) return null;
+	if (player.lands.length === 0) {
+		return null;
+	}
 	const animateLands = useAnimate<HTMLDivElement>();
 	return (
 		<div
