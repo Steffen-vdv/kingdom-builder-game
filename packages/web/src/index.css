@@ -261,7 +261,7 @@
     @apply panel-card border border-white/40 p-1.5 text-lg leading-none hoverable cursor-help flex items-center justify-center gap-1 shrink-0 min-w-8 min-h-8 dark:border-white/10;
   }
   .player-bg {
-    @apply relative overflow-hidden rounded-3xl text-slate-900 shadow-xl shadow-slate-900/10 dark:text-slate-100 dark:shadow-black/40;
+    @apply relative overflow-hidden rounded-3xl border border-white/60 text-slate-900 shadow-xl shadow-slate-900/10 dark:border-white/10 dark:text-slate-100 dark:shadow-black/40;
     --stripe-color: rgba(255, 255, 255, 0.45);
     background-color: var(--player-color);
   }
