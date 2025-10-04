@@ -21,14 +21,13 @@ export { EvaluationModifierService } from './evaluation_modifier_service';
 export { TieredResourceService } from './tiered_resource_service';
 export type {
 	TierRange,
-	TierPassiveSkipStep,
-	TierPassiveSkipConfig,
 	TierPassiveTextTokens,
-	TierPassivePayload,
 	TierDisplayMetadata,
 	TierEffect,
 	HappinessTierDefinition,
+	TierPassivePreview,
 } from './tiered_resource_types';
+export type { PhaseSkipConfig, PhaseSkipStep } from './passive_types';
 export { PopCapService } from './pop_cap_service';
 export { Services } from './services';
 export type { RuleSet } from './services_types';
