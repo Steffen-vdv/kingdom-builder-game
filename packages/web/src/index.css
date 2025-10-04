@@ -108,6 +108,7 @@
     display: flex;
     flex-direction: column;
     perspective: 1200px;
+    cursor: inherit;
   }
   .action-card__inner {
     position: relative;
