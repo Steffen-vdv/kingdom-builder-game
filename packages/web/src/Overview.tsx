@@ -1,4 +1,5 @@
 import React from 'react';
+import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 import Button from './components/common/Button';
 import {
 	ShowcaseBackground,
@@ -18,9 +19,7 @@ import {
 import type { OverviewSectionDef } from './components/overview/OverviewLayout';
 import { createOverviewSections } from './components/overview/sectionsData';
 import type { OverviewContentSection } from './components/overview/sectionsData';
-import { buildOverviewIconSet } from './components/overview/overviewTokens';
 import type { OverviewTokenConfig } from './components/overview/overviewTokens';
-import { DEFAULT_OVERVIEW_CONTENT } from './components/overview/defaultContent';
 
 export type { OverviewTokenConfig } from './components/overview/overviewTokens';
 
@@ -30,38 +29,29 @@ export interface OverviewProps {
 	content?: OverviewContentSection[];
 }
 
-const HERO_INTRO_TEXT = [
-	'Map the rhythms of the realm before you issue your first decree.',
-	'Know where every resource, phase, and population surge will carry you.',
-].join(' ');
-
-const HERO_PARAGRAPH_TEXT = [
-	'Welcome to {game}, a brisk duel of wits where {expand} expansion,',
-	'{build} clever construction, and {army_attack} daring raids decide who steers the crown.',
-].join(' ');
+const DEFAULT_SECTIONS = OVERVIEW_CONTENT.sections;
+const DEFAULT_TOKENS = OVERVIEW_CONTENT.tokens;
+const HERO_CONTENT = OVERVIEW_CONTENT.hero;
 
 export default function Overview({
 	onBack,
 	tokenConfig,
 	content,
 }: OverviewProps) {
-	const icons = React.useMemo(
-		() => buildOverviewIconSet(tokenConfig),
-		[tokenConfig],
+	const sections = content ?? DEFAULT_SECTIONS;
+	const { sections: renderedSections, tokens: iconTokens } = React.useMemo(
+		() => createOverviewSections(DEFAULT_TOKENS, tokenConfig, sections),
+		[sections, tokenConfig],
 	);
+	const tokens = React.useMemo(() => ({ ...iconTokens }), [iconTokens]);
 
-	const sections = content ?? DEFAULT_OVERVIEW_CONTENT;
-	const tokens = React.useMemo(() => ({ ...icons }), [icons]);
-
-	const heroTokens: Record<string, React.ReactNode> = React.useMemo(
-		() => ({
-			...tokens,
-			game: <strong>Kingdom Builder</strong>,
-		}),
-		[tokens],
-	);
-
-	const renderedSections = createOverviewSections(icons, sections);
+	const heroTokens: Record<string, React.ReactNode> = React.useMemo(() => {
+		const heroTokenNodes: Record<string, React.ReactNode> = {};
+		for (const [tokenKey, label] of Object.entries(HERO_CONTENT.tokens)) {
+			heroTokenNodes[tokenKey] = <strong>{label}</strong>;
+		}
+		return { ...tokens, ...heroTokenNodes };
+	}, [tokens]);
 
 	const renderSection = (section: OverviewSectionDef) => {
 		if (section.kind === 'paragraph') {
@@ -99,18 +89,20 @@ export default function Overview({
 			<ShowcaseLayout className="items-center">
 				<header className="flex flex-col items-center text-center">
 					<span className={SHOWCASE_BADGE_CLASS}>
-						<span className="text-lg">📘</span>
-						<span>Know The Realm</span>
+						<span className="text-lg">{HERO_CONTENT.badgeIcon}</span>
+						<span>{HERO_CONTENT.badgeLabel}</span>
 					</span>
 					<h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl md:text-6xl">
-						Game Overview
+						{HERO_CONTENT.title}
 					</h1>
-					<p className={SHOWCASE_INTRO_CLASS}>{HERO_INTRO_TEXT}</p>
+					<p className={SHOWCASE_INTRO_CLASS}>
+						{renderTokens(HERO_CONTENT.intro, heroTokens)}
+					</p>
 				</header>
 
 				<ShowcaseCard as="article" className={OVERVIEW_CARD_CLASS}>
 					<p className="text-base leading-relaxed">
-						{renderTokens(HERO_PARAGRAPH_TEXT, heroTokens)}
+						{renderTokens(HERO_CONTENT.paragraph, heroTokens)}
 					</p>
 
 					<div className={OVERVIEW_GRID_CLASS}>

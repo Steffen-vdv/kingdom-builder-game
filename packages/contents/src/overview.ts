@@ -1,6 +1,104 @@
-import type { OverviewContentSection } from './sectionsData';
+export type OverviewTokenCategoryName =
+	| 'actions'
+	| 'phases'
+	| 'resources'
+	| 'stats'
+	| 'population'
+	| 'static';
 
-export const DEFAULT_OVERVIEW_CONTENT: OverviewContentSection[] = [
+export type OverviewTokenCandidates = Partial<
+	Record<OverviewTokenCategoryName, Record<string, string[]>>
+>;
+
+export type OverviewListItemTemplate = {
+	icon?: string;
+	label: string;
+	body: string[];
+};
+
+export type OverviewParagraphTemplate = {
+	kind: 'paragraph';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+};
+
+export type OverviewListTemplate = {
+	kind: 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	items: OverviewListItemTemplate[];
+};
+
+export type OverviewSectionTemplate =
+	| OverviewParagraphTemplate
+	| OverviewListTemplate;
+
+export type OverviewHeroTemplate = {
+	badgeIcon: string;
+	badgeLabel: string;
+	title: string;
+	intro: string;
+	paragraph: string;
+	tokens: Record<string, string>;
+};
+
+export type OverviewContentTemplate = {
+	hero: OverviewHeroTemplate;
+	sections: OverviewSectionTemplate[];
+	tokens: OverviewTokenCandidates;
+};
+
+const HERO_INTRO_TEXT = [
+	'Map the rhythms of the realm before you issue your first decree.',
+	'Know where every resource, phase, and population surge will carry you.',
+].join(' ');
+
+const HERO_PARAGRAPH_TEXT = [
+	'Welcome to {game}, a brisk duel of wits where {expand} expansion,',
+	'{build} clever construction, and {army_attack} daring raids decide who steers the crown.',
+].join(' ');
+
+const DEFAULT_TOKENS: OverviewTokenCandidates = {
+	actions: {
+		expand: ['expand'],
+		build: ['build'],
+		develop: ['develop'],
+		raise_pop: ['raise_pop'],
+		army_attack: ['army_attack'],
+	},
+	phases: {
+		growth: ['growth'],
+		upkeep: ['upkeep'],
+		main: ['main'],
+	},
+	resources: {
+		gold: ['gold'],
+		ap: ['ap'],
+		happiness: ['happiness'],
+		castleHP: ['castleHP'],
+	},
+	stats: {
+		armyStrength: ['armyStrength'],
+		fortificationStrength: ['fortificationStrength'],
+	},
+	population: {
+		council: ['council'],
+		legion: ['legion'],
+		fortifier: ['fortifier'],
+		citizen: ['citizen'],
+	},
+	static: {
+		land: ['land'],
+		slot: ['slot'],
+	},
+};
+
+const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 	{
 		kind: 'paragraph',
 		id: 'objective',
@@ -127,3 +225,18 @@ export const DEFAULT_OVERVIEW_CONTENT: OverviewContentSection[] = [
 		],
 	},
 ];
+
+export const OVERVIEW_CONTENT: OverviewContentTemplate = {
+	hero: {
+		badgeIcon: '📘',
+		badgeLabel: 'Know The Realm',
+		title: 'Game Overview',
+		intro: HERO_INTRO_TEXT,
+		paragraph: HERO_PARAGRAPH_TEXT,
+		tokens: {
+			game: 'Kingdom Builder',
+		},
+	},
+	sections: DEFAULT_SECTIONS,
+	tokens: DEFAULT_TOKENS,
+};
