@@ -67,9 +67,17 @@ interface PopulationInfoProps {
 
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const { handleHoverCard, clearHoverCard, ctx } = useGameEngine();
-	const popEntries = Object.entries(player.population).filter(([, v]) => v > 0);
-	const currentPop = popEntries.reduce((sum, [, v]) => sum + v, 0);
-	const popDetails = popEntries.map(([role, count]) => ({ role, count }));
+	const popEntries = Object.entries(player.population).filter(
+		([, populationCount]) => populationCount > 0,
+	);
+	const currentPop = popEntries.reduce(
+		(sum, [, populationCount]) => sum + populationCount,
+		0,
+	);
+	const popDetails = popEntries.map(([populationRole, populationCount]) => ({
+		role: populationRole,
+		count: populationCount,
+	}));
 
 	const showGeneralStatCard = () =>
 		handleHoverCard({
@@ -201,16 +209,19 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				)}
 			</div>
 			{Object.entries(player.stats)
-				.filter(([k, v]) => {
-					const info = STATS[k as keyof typeof STATS];
-					return !info.capacity && (v !== 0 || player.statsHistory?.[k]);
+				.filter(([statKey, statValue]) => {
+					const info = STATS[statKey as keyof typeof STATS];
+					return (
+						!info.capacity &&
+						(statValue !== 0 || player.statsHistory?.[statKey])
+					);
 				})
-				.map(([k, v]) => (
+				.map(([statKey, statValue]) => (
 					<StatButton
-						key={k}
-						statKey={k as keyof typeof STATS}
-						value={v}
-						onShow={() => showStatCard(k)}
+						key={statKey}
+						statKey={statKey as keyof typeof STATS}
+						value={statValue}
+						onShow={() => showStatCard(statKey)}
 						onHide={clearHoverCard}
 					/>
 				))}

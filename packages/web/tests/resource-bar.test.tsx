@@ -72,19 +72,18 @@ describe('<ResourceBar /> happiness hover card', () => {
 			clearHoverCard,
 		} as MockGame;
 		render(<ResourceBar player={ctx.activePlayer} />);
-		const info = RESOURCES[happinessKey];
-		const value = ctx.activePlayer.resources[happinessKey] ?? 0;
+		const resourceInfo = RESOURCES[happinessKey];
+		const resourceValue = ctx.activePlayer.resources[happinessKey] ?? 0;
 		const button = screen.getByRole('button', {
-			name: `${info.label}: ${value}`,
+			name: `${resourceInfo.label}: ${resourceValue}`,
 		});
 		fireEvent.mouseEnter(button);
 		expect(handleHoverCard).toHaveBeenCalled();
-		const call = handleHoverCard.mock.calls.at(-1)?.[0];
-		expect(call).toBeTruthy();
-		expect(call?.title).toBe(`${info.icon} ${info.label}`);
-		expect(call?.description).toBeUndefined();
-		expect(call?.effectsTitle).toBe(`Tiers (Current: ${value})`);
-		const tierEntries = call?.effects ?? [];
+		const hoverCard = handleHoverCard.mock.calls.at(-1)?.[0];
+		expect(hoverCard).toBeTruthy();
+		expect(hoverCard?.title).toBe(`${resourceInfo.icon} ${resourceInfo.label}`);
+		expect(hoverCard?.description).toEqual([`Current value: ${resourceValue}`]);
+		const tierEntries = hoverCard?.effects ?? [];
 		expect(tierEntries).toHaveLength(ctx.services.rules.tierDefinitions.length);
 		const activeEntry = tierEntries.find(
 			(entry: unknown) =>

@@ -108,27 +108,27 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 			>
 				{GENERAL_RESOURCE_ICON}
 			</button>
-			{resourceKeys.map((k) => {
-				const info = RESOURCES[k];
-				const v = player.resources[k] ?? 0;
+			{resourceKeys.map((resourceKey) => {
+				const resourceInfo = RESOURCES[resourceKey];
+				const resourceValue = player.resources[resourceKey] ?? 0;
 				const showResourceCard = () => {
-					if (k === happinessKey) {
-						showHappinessCard(v);
+					if (resourceKey === happinessKey) {
+						showHappinessCard(resourceValue);
 						return;
 					}
 					handleHoverCard({
-						title: `${info.icon} ${info.label}`,
+						title: `${resourceInfo.icon} ${resourceInfo.label}`,
 						effects: [],
 						requirements: [],
-						description: info.description,
+						description: resourceInfo.description,
 						bgClass: PLAYER_INFO_CARD_BG,
 					});
 				};
 				return (
 					<ResourceButton
-						key={k}
-						resourceKey={k}
-						value={v}
+						key={resourceKey}
+						resourceKey={resourceKey}
+						value={resourceValue}
 						onShow={showResourceCard}
 						onHide={clearHoverCard}
 					/>
