@@ -86,22 +86,10 @@ function createTierPassiveEffect({
 	return builder;
 }
 
-type TierConfig = {
-	id: string;
-	passiveId?: string;
-	range: { min: number; max?: number };
-	incomeMultiplier: number;
-	buildingDiscountPct?: number;
-	growthBonusPct?: number;
-	disableGrowth?: boolean;
-	skipPhases?: string[];
-	skipSteps?: Array<{ phase: string; step: string }>;
-	summary: string;
-	removal: string;
-	effects?: EffectConfig[];
-};
+const happinessSummaryToken = (slug: string) =>
+	`happiness.tier.summary.${slug}`;
 
-const TIER_CONFIGS: TierConfig[] = [
+const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:despair',
 		passiveId: 'passive:happiness:despair',
@@ -110,6 +98,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		disableGrowth: true,
 		skipPhases: [GROWTH_PHASE_ID],
 		skipSteps: [{ phase: UPKEEP_PHASE_ID, step: WAR_RECOVERY_STEP_ID }],
+		summaryToken: happinessSummaryToken('despair'),
 		summary: '💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.',
 		removal: 'happiness rises to -9 or higher',
 		effects: [incomeModifier('happiness:despair:income', -0.5)],
@@ -121,6 +110,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		incomeMultiplier: 0.5,
 		disableGrowth: true,
 		skipPhases: [GROWTH_PHASE_ID],
+		summaryToken: happinessSummaryToken('misery'),
 		summary: '💰 Income -50%. ⏭️ Skip Growth while morale is ' + 'desperate.',
 		removal: 'happiness leaves the -9 to -8 range',
 		effects: [incomeModifier('happiness:misery:income', -0.5)],
@@ -132,6 +122,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		incomeMultiplier: 0.75,
 		disableGrowth: true,
 		skipPhases: [GROWTH_PHASE_ID],
+		summaryToken: happinessSummaryToken('grim'),
 		summary: '💰 Income -25%. ⏭️ Skip Growth until spirits recover.',
 		removal: 'happiness leaves the -7 to -5 range',
 		effects: [incomeModifier('happiness:grim:income', -0.25)],
@@ -141,6 +132,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		passiveId: 'passive:happiness:unrest',
 		range: { min: -4, max: -3 },
 		incomeMultiplier: 0.75,
+		summaryToken: happinessSummaryToken('unrest'),
 		summary: '💰 Income -25% while unrest simmers.',
 		removal: 'happiness leaves the -4 to -3 range',
 		effects: [incomeModifier('happiness:unrest:income', -0.25)],
@@ -149,6 +141,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		id: 'happiness:tier:steady',
 		range: { min: -2, max: 2 },
 		incomeMultiplier: 1,
+		summaryToken: happinessSummaryToken('steady'),
 		summary: 'Morale is steady. No tier bonuses are active.',
 		removal: 'happiness leaves the -2 to +2 range',
 	},
@@ -157,6 +150,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		passiveId: 'passive:happiness:content',
 		range: { min: 3, max: 4 },
 		incomeMultiplier: 1.2,
+		summaryToken: happinessSummaryToken('content'),
 		summary: '💰 Income +20% while the realm is content.',
 		removal: 'happiness leaves the +3 to +4 range',
 		effects: [incomeModifier('happiness:content:income', 0.2)],
@@ -167,6 +161,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		range: { min: 5, max: 7 },
 		incomeMultiplier: 1.25,
 		buildingDiscountPct: 0.2,
+		summaryToken: happinessSummaryToken('joyful'),
 		summary: '💰 Income +25%. 🏛️ Building costs reduced by 20%.',
 		removal: 'happiness leaves the +5 to +7 range',
 		effects: [
@@ -180,6 +175,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		range: { min: 8, max: 9 },
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
+		summaryToken: happinessSummaryToken('elated'),
 		summary: '💰 Income +50%. 🏛️ Building costs reduced by 20%.',
 		removal: 'happiness leaves the +8 to +9 range',
 		effects: [
@@ -194,6 +190,7 @@ const TIER_CONFIGS: TierConfig[] = [
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
 		growthBonusPct: 0.2,
+		summaryToken: happinessSummaryToken('ecstatic'),
 		summary:
 			'💰 Income +50%. 🏛️ Building costs reduced by 20%. ' + '📈 Growth +20%.',
 		removal: 'happiness drops below +10',
@@ -205,15 +202,18 @@ const TIER_CONFIGS: TierConfig[] = [
 	},
 ];
 
+type TierConfig = (typeof TIER_CONFIGS)[number];
+
 function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 	const builder = happinessTier(config.id)
 		.range(config.range.min, config.range.max)
 		.incomeMultiplier(config.incomeMultiplier)
-		.text((text) => {
-			text.summary(config.summary).removal(formatRemoval(config.removal));
-			return text;
-		})
-		.display((display) => display.removalCondition(config.removal));
+		.text((text) => text.removal(formatRemoval(config.removal)))
+		.display((display) =>
+			display
+				.summaryToken(config.summaryToken)
+				.removalCondition(config.removal),
+		);
 	if (config.passiveId) {
 		const params = passiveParams().id(config.passiveId);
 		config.skipPhases?.forEach((phaseId) => params.skipPhase(phaseId));

@@ -9,7 +9,7 @@ import { useGameEngine } from '../../state/GameContext';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
-import { describeEffects } from '../../translation';
+import { describeEffects, translateTierSummary } from '../../translation';
 
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
@@ -44,7 +44,8 @@ function buildTierEntries(
 			(part) => part && String(part).trim().length > 0,
 		);
 		const title = titleParts.join(' ').trim();
-		const summary = text?.summary;
+		const summaryToken = display?.summaryToken;
+		const summary = translateTierSummary(summaryToken) ?? text?.summary;
 		const removalText =
 			text?.removal ??
 			(display?.removalCondition
