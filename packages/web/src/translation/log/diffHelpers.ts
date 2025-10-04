@@ -99,7 +99,9 @@ export function appendStructureChanges(
 		}
 	}
 	for (const land of after.lands) {
-		const previous = before.lands.find((entry) => entry.id === land.id);
+		const previous = before.lands.find(
+			(entry: PlayerSnapshot['lands'][number]) => entry.id === land.id,
+		);
 		if (!previous) {
 			const newLandSummary = `${landIcon} +1 ${landLabel}`;
 			changes.push(newLandSummary);
@@ -152,12 +154,14 @@ export function appendStructureChanges(
 		];
 		changes.push(slotParts.join(' '));
 	}
-	const beforePassiveMap = new Map(
-		before.passives.map((passive) => [passive.id, passive]),
-	);
-	const afterPassiveMap = new Map(
-		after.passives.map((passive) => [passive.id, passive]),
-	);
+	const beforePassiveMap = new Map<string, PassiveSummary>();
+	for (const passive of before.passives) {
+		beforePassiveMap.set(passive.id, passive);
+	}
+	const afterPassiveMap = new Map<string, PassiveSummary>();
+	for (const passive of after.passives) {
+		afterPassiveMap.set(passive.id, passive);
+	}
 	for (const [id, passive] of afterPassiveMap) {
 		if (beforePassiveMap.has(id)) {
 			continue;
