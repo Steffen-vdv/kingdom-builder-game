@@ -24,7 +24,7 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
 				return (
 					<div
 						key={b}
-						className="panel-card flex min-w-[9rem] flex-col items-center gap-1 px-4 py-3 text-center text-sm font-semibold text-slate-700 hoverable dark:text-slate-100"
+						className="panel-card flex min-w-[9rem] flex-col items-center gap-1 px-4 py-3 text-center text-sm font-semibold text-slate-700 hoverable cursor-help dark:text-slate-100"
 						onMouseEnter={() => {
 							const full = describeContent('building', b, ctx, {
 								installed: true,
