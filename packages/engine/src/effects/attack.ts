@@ -83,11 +83,15 @@ function diffPlayerSnapshots(
 	after: PlayerSnapshot,
 ): AttackPlayerDiff[] {
 	const diffs: AttackPlayerDiff[] = [];
+	const resourceEntries = {
+		...before.resources,
+		...after.resources,
+	};
 	const resourceKeys = new Set<ResourceKey>(
-		// Cast snapshot keys to ResourceKey so downstream consumers can rely on
-		// resource metadata lookups during logging.
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		Object.keys({ ...before.resources, ...after.resources }) as ResourceKey[],
+		// Cast snapshot keys to ResourceKey so downstream consumers
+		// can rely on resource metadata lookups during logging.
+		// eslint-disable-next-line
+		Object.keys(resourceEntries) as ResourceKey[],
 	);
 	for (const key of resourceKeys) {
 		const beforeVal = before.resources[key] ?? 0;
@@ -101,9 +105,13 @@ function diffPlayerSnapshots(
 			});
 		}
 	}
+	const statEntries = {
+		...before.stats,
+		...after.stats,
+	};
 	const statKeys = new Set<StatKey>(
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		Object.keys({ ...before.stats, ...after.stats }) as StatKey[],
+		// eslint-disable-next-line
+		Object.keys(statEntries) as StatKey[],
 	);
 	for (const key of statKeys) {
 		const beforeVal = before.stats[key] ?? 0;
@@ -141,51 +149,55 @@ function applyAbsorption(
 export function resolveAttack(
 	defender: PlayerState,
 	damage: number,
-	ctx: EngineContext,
+	context: EngineContext,
 	target: AttackTarget,
-	opts: AttackCalcOptions = {},
+	options: AttackCalcOptions = {},
 	baseDamage = damage,
 ): AttackResolution {
-	const original = ctx.game.currentPlayerIndex;
-	const defenderIndex = ctx.game.players.indexOf(defender);
+	const original = context.game.currentPlayerIndex;
+	const defenderIndex = context.game.players.indexOf(defender);
 
-	ctx.game.currentPlayerIndex = defenderIndex;
-	const pre = collectTriggerEffects('onBeforeAttacked', ctx, defender);
+	context.game.currentPlayerIndex = defenderIndex;
+	const beforeTriggers = collectTriggerEffects(
+		'onBeforeAttacked',
+		context,
+		defender,
+	);
 
-	for (const bundle of pre) {
-		withStatSourceFrames(ctx, bundle.frames, () =>
-			runEffects(bundle.effects, ctx),
+	for (const bundle of beforeTriggers) {
+		withStatSourceFrames(context, bundle.frames, () =>
+			runEffects(bundle.effects, context),
 		);
 	}
 
-	if (pre.length) {
-		runEffects(pre, ctx);
+	if (beforeTriggers.length) {
+		runEffects(beforeTriggers, context);
 	}
 
-	ctx.game.currentPlayerIndex = original;
+	context.game.currentPlayerIndex = original;
 
-	const absorption = opts.ignoreAbsorption
+	const absorption = options.ignoreAbsorption
 		? 0
 		: Math.min(
 				(defender.absorption as number) || 0,
-				ctx.services.rules.absorptionCapPct,
+				context.services.rules.absorptionCapPct,
 			);
-	const damageAfterAbsorption = opts.ignoreAbsorption
+	const damageAfterAbsorption = options.ignoreAbsorption
 		? damage
 		: applyAbsorption(
 				damage,
 				absorption,
-				ctx.services.rules.absorptionRounding,
+				context.services.rules.absorptionRounding,
 			);
 
 	const fortBefore = (defender.fortificationStrength as number) || 0;
-	const fortDamage = opts.ignoreFortification
+	const fortDamage = options.ignoreFortification
 		? 0
 		: Math.min(fortBefore, damageAfterAbsorption);
-	const fortAfter = opts.ignoreFortification
+	const fortAfter = options.ignoreFortification
 		? fortBefore
 		: Math.max(0, fortBefore - fortDamage);
-	if (!opts.ignoreFortification) {
+	if (!options.ignoreFortification) {
 		defender.fortificationStrength = fortAfter;
 	}
 
@@ -198,25 +210,29 @@ export function resolveAttack(
 	const mutation = handler.applyDamage(
 		target as never,
 		targetDamage,
-		ctx,
+		context,
 		defender,
 		handlerMeta,
 	);
 	const targetLog = handler.buildLog(
 		target as never,
 		targetDamage,
-		ctx,
+		context,
 		defender,
 		handlerMeta,
 		mutation as never,
 	);
 
-	ctx.game.currentPlayerIndex = defenderIndex;
-	const post = collectTriggerEffects('onAttackResolved', ctx, defender);
+	context.game.currentPlayerIndex = defenderIndex;
+	const afterTriggers = collectTriggerEffects(
+		'onAttackResolved',
+		context,
+		defender,
+	);
 
-	for (const bundle of post) {
-		withStatSourceFrames(ctx, bundle.frames, () =>
-			runEffects(bundle.effects, ctx),
+	for (const bundle of afterTriggers) {
+		withStatSourceFrames(context, bundle.frames, () =>
+			runEffects(bundle.effects, context),
 		);
 	}
 
@@ -224,23 +240,23 @@ export function resolveAttack(
 		defender.fortificationStrength = 0;
 	}
 
-	if (post.length) {
-		runEffects(post, ctx);
+	if (afterTriggers.length) {
+		runEffects(afterTriggers, context);
 	}
 
-	ctx.game.currentPlayerIndex = original;
+	context.game.currentPlayerIndex = original;
 
 	return {
 		damageDealt: targetDamage,
 		evaluation: {
 			power: { base: baseDamage, modified: damage },
 			absorption: {
-				ignored: Boolean(opts.ignoreAbsorption),
+				ignored: Boolean(options.ignoreAbsorption),
 				before: absorption,
 				damageAfter: damageAfterAbsorption,
 			},
 			fortification: {
-				ignored: Boolean(opts.ignoreFortification),
+				ignored: Boolean(options.ignoreFortification),
 				before: fortBefore,
 				damage: fortDamage,
 				after: fortAfter,
@@ -250,9 +266,9 @@ export function resolveAttack(
 	};
 }
 
-export const attackPerform: EffectHandler = (effect, ctx) => {
-	const attacker = ctx.activePlayer;
-	const defender = ctx.opponent;
+export const attackPerform: EffectHandler = (effect, context) => {
+	const attacker = context.activePlayer;
+	const defender = context.opponent;
 	const params = effect.params || {};
 	const target = params['target'] as AttackTarget | undefined;
 	if (!target) {
@@ -262,20 +278,22 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
 	const baseDamage = (attacker.armyStrength as number) || 0;
 	const targetHandler = attackTargetHandlers[target.type];
 	const evaluationKey = targetHandler.getEvaluationModifierKey(target as never);
-	const mods: ResourceGain[] = [{ key: evaluationKey, amount: baseDamage }];
-	ctx.passives.runEvaluationMods('attack:power', ctx, mods);
-	const modifiedDamage = mods[0]!.amount;
+	const modifiers: ResourceGain[] = [
+		{ key: evaluationKey, amount: baseDamage },
+	];
+	context.passives.runEvaluationModifiers('attack:power', context, modifiers);
+	const modifiedDamage = modifiers[0]!.amount;
 
-	const { onDamage, ...calcOpts } = params as {
+	const { onDamage, ...calculationOptions } = params as {
 		onDamage?: { attacker?: EffectDef[]; defender?: EffectDef[] };
 	} & AttackCalcOptions;
 
 	const result = resolveAttack(
 		defender,
 		modifiedDamage,
-		ctx,
+		context,
 		target,
-		calcOpts,
+		calculationOptions,
 		baseDamage,
 	);
 
@@ -286,18 +304,18 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
 			if (!defs?.length) {
 				return;
 			}
-			const defenderIndex = ctx.game.players.indexOf(defender);
-			const original = ctx.game.currentPlayerIndex;
+			const defenderIndex = context.game.players.indexOf(defender);
+			const original = context.game.currentPlayerIndex;
 			if (owner === 'defender') {
-				ctx.game.currentPlayerIndex = defenderIndex;
+				context.game.currentPlayerIndex = defenderIndex;
 			}
 			try {
 				for (const def of defs) {
-					const beforeAttacker = snapshotPlayer(attacker, ctx);
-					const beforeDefender = snapshotPlayer(defender, ctx);
-					runEffects([def], ctx);
-					const afterAttacker = snapshotPlayer(attacker, ctx);
-					const afterDefender = snapshotPlayer(defender, ctx);
+					const beforeAttacker = snapshotPlayer(attacker, context);
+					const beforeDefender = snapshotPlayer(defender, context);
+					runEffects([def], context);
+					const afterAttacker = snapshotPlayer(attacker, context);
+					const afterDefender = snapshotPlayer(defender, context);
 					onDamageLogs.push({
 						owner,
 						effect: def,
@@ -307,7 +325,7 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
 				}
 			} finally {
 				if (owner === 'defender') {
-					ctx.game.currentPlayerIndex = original;
+					context.game.currentPlayerIndex = original;
 				}
 			}
 		};
@@ -316,7 +334,7 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
 		runList('attacker', onDamage.attacker);
 	}
 
-	ctx.pushEffectLog('attack:perform', {
+	context.pushEffectLog('attack:perform', {
 		evaluation: result.evaluation,
 		onDamage: onDamageLogs,
 	});

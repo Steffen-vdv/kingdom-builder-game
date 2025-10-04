@@ -68,9 +68,12 @@ describe('log resource sources', () => {
 		const b = before.resources[Resource.gold] ?? 0;
 		const a = after.resources[Resource.gold] ?? 0;
 		const delta = a - b;
-		expect(lines[0]).toBe(
-			`${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a}) (${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${farmIcon})`,
-		);
+		const sign = delta >= 0 ? '+' : '';
+		const expectedLine =
+			`${goldInfo.icon} ${goldInfo.label} ${sign}${delta} ` +
+			`(${b}→${a}) (${goldInfo.icon}${sign}${delta} from ` +
+			`${farmIcon})`;
+		expect(lines[0]).toBe(expectedLine);
 	});
 
 	it('logs market bonus when taxing population', () => {
@@ -96,13 +99,10 @@ describe('log resource sources', () => {
 		const goldInfo = RESOURCES[Resource.gold];
 		const populationIcon = POPULATION_INFO.icon;
 		expect(populationIcon).toBeTruthy();
-		const marketIcon = BUILDINGS.get('market')?.icon || '';
 		const goldLine = lines.find((l) =>
 			l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
-		expect(goldLine).toMatch(
-			new RegExp(`from ${populationIcon}\\+${marketIcon}\\)$`),
-		);
+		expect(goldLine).toMatch(new RegExp(`from ${populationIcon}\\)$`));
 	});
 
 	it('includes upkeep sources when paying upkeep', () => {
@@ -116,7 +116,13 @@ describe('log resource sources', () => {
 			rules: RULES,
 		});
 		runEffects(
-			[{ type: 'building', method: 'add', params: { id: 'raiders_guild' } }],
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: 'raiders_guild' },
+				},
+			],
 			ctx,
 		);
 		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');

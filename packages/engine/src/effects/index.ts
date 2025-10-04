@@ -45,14 +45,14 @@ export interface EffectDef<
 export interface EffectHandler<
 	P extends Record<string, unknown> = Record<string, unknown>,
 > {
-	(effect: EffectDef<P>, ctx: EngineContext, mult: number): void;
+	(effect: EffectDef<P>, context: EngineContext, multiplier: number): void;
 }
 
 export class EffectRegistry extends Registry<EffectHandler> {}
 export const EFFECTS = new EffectRegistry();
 
 export interface EffectCostCollector {
-	(effect: EffectDef, base: CostBag, ctx: EngineContext): void;
+	(effect: EffectDef, base: CostBag, context: EngineContext): void;
 }
 
 export class EffectCostRegistry extends Registry<EffectCostCollector> {}
@@ -90,11 +90,15 @@ export function registerCoreEffects(
 	costRegistry.add('building:add', collectBuildingAddCosts);
 }
 
-export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
+export function runEffects(
+	effects: EffectDef[],
+	context: EngineContext,
+	multiplier = 1,
+) {
 	for (const effect of effects) {
 		if (effect.evaluator) {
 			const evaluatorHandler = EVALUATORS.get(effect.evaluator.type);
-			const count = evaluatorHandler(effect.evaluator, ctx);
+			const count = evaluatorHandler(effect.evaluator, context);
 			const params = effect.evaluator.params as Record<string, unknown>;
 			const target =
 				params && 'id' in params
@@ -104,19 +108,19 @@ export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
 			const frame = dependencies.length
 				? () => ({ dependsOn: dependencies })
 				: undefined;
-			const total = (count as number) * mult;
+			const total = (count as number) * multiplier;
 			if (total === 0) {
 				continue;
 			}
-			ctx.recentResourceGains = [];
-			withStatSourceFrames(ctx, frame, () => {
-				runEffects(effect.effects || [], ctx, total);
+			context.recentResourceGains = [];
+			withStatSourceFrames(context, frame, () => {
+				runEffects(effect.effects || [], context, total);
 			});
-			const gains = [...ctx.recentResourceGains];
-			ctx.passives.runEvaluationMods(target, ctx, gains);
+			const gains = [...context.recentResourceGains];
+			context.passives.runEvaluationModifiers(target, context, gains);
 		} else if (effect.type && effect.method) {
 			const handler = EFFECTS.get(`${effect.type}:${effect.method}`);
-			handler(effect, ctx, mult);
+			handler(effect, context, multiplier);
 		}
 	}
 }

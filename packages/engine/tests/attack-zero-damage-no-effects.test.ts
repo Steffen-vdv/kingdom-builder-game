@@ -190,7 +190,7 @@ describe('attack:perform', () => {
 		const derivedKey = 'resource-eval-key';
 		const getKeySpy = vi.fn(() => derivedKey) as typeof originalGetKey;
 		attackTargetHandlers.resource.getEvaluationModifierKey = getKeySpy;
-		const evalSpy = vi.spyOn(ctx.passives, 'runEvaluationMods');
+		const evalSpy = vi.spyOn(ctx.passives, 'runEvaluationModifiers');
 
 		try {
 			runEffects(
@@ -229,7 +229,7 @@ describe('attack:perform', () => {
 		const derivedKey = 'building-eval-key';
 		const getKeySpy = vi.fn(() => derivedKey) as typeof originalGetKey;
 		attackTargetHandlers.building.getEvaluationModifierKey = getKeySpy;
-		const evalSpy = vi.spyOn(ctx.passives, 'runEvaluationMods');
+		const evalSpy = vi.spyOn(ctx.passives, 'runEvaluationModifiers');
 
 		try {
 			runEffects(

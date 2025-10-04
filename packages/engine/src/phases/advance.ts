@@ -221,7 +221,7 @@ export function advance(engineContext: EngineContext): AdvanceResult {
 		}
 		if (currentStepDefinition) {
 			withStatSourceFrames(engineContext, phaseFrame, () => {
-				engineContext.passives.runResultMods(
+				engineContext.passives.runResultModifiers(
 					currentStepDefinition.id,
 					engineContext,
 				);

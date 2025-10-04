@@ -102,7 +102,7 @@ function executeAction<T extends string>(
 		throw new Error(affordability);
 	}
 	deductCostsFromPlayer(finalCosts, engineContext.activePlayer);
-	const passiveManager = engineContext.passives;
+	const manager = engineContext.passives;
 	withStatSourceFrames(
 		engineContext,
 		(_effect, _context, statKey) => ({
@@ -114,7 +114,7 @@ function executeAction<T extends string>(
 		}),
 		() => {
 			runEffects(resolvedEffects, engineContext);
-			passiveManager.runResultMods(actionDefinition.id, engineContext);
+			manager.runResultModifiers(actionDefinition.id, engineContext);
 		},
 	);
 	const actionTraces = engineContext.actionTraces;

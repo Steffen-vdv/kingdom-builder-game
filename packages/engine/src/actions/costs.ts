@@ -24,7 +24,7 @@ export function applyCostsWithPassives(
 			? 0
 			: engineContext.services.rules.defaultActionAPCost;
 	}
-	return engineContext.passives.applyCostMods(
+	return engineContext.passives.applyCostModifiers(
 		actionDefinition.id,
 		defaultedCosts,
 		engineContext,
@@ -40,7 +40,8 @@ export function applyEffectCostCollectors(
 		if (!effectDefinition.type || !effectDefinition.method) {
 			continue;
 		}
-		const collectorKey = `${effectDefinition.type}:${effectDefinition.method}`;
+		const { type, method } = effectDefinition;
+		const collectorKey = `${type}:${method}`;
 		if (!EFFECT_COST_COLLECTORS.has(collectorKey)) {
 			continue;
 		}
@@ -94,7 +95,8 @@ export function verifyCostAffordability(
 		const requiredAmount = costs[resourceKey] ?? 0;
 		const availableAmount = playerState.resources[resourceKey] ?? 0;
 		if (availableAmount < requiredAmount) {
-			const shortageDetail = `Insufficient ${resourceKey}: need ${requiredAmount}`;
+			const shortageDetail =
+				'Insufficient ' + resourceKey + ': need ' + requiredAmount;
 			return `${shortageDetail}, have ${availableAmount}`;
 		}
 	}
@@ -107,7 +109,7 @@ export function deductCostsFromPlayer(
 ): void {
 	for (const resourceKey of Object.keys(costs)) {
 		const amount = costs[resourceKey] ?? 0;
-		playerState.resources[resourceKey] =
-			(playerState.resources[resourceKey] || 0) - amount;
+		const current = playerState.resources[resourceKey] || 0;
+		playerState.resources[resourceKey] = current - amount;
 	}
 }

@@ -13,16 +13,20 @@ interface TransferParams extends Record<string, unknown> {
 
 export const resourceTransfer: EffectHandler<TransferParams> = (
 	effect,
-	ctx,
-	_mult = 1,
+	context,
+	_multiplier = 1,
 ) => {
 	const { key, percent } = effect.params!;
 	const base = percent ?? 25;
-	const mods: ResourceGain[] = [{ key, amount: base }];
-	ctx.passives.runEvaluationMods(TRANSFER_PCT_EVALUATION_TARGET, ctx, mods);
-	const pct = mods[0]!.amount;
-	const defender = ctx.opponent;
-	const attacker = ctx.activePlayer;
+	const modifiers: ResourceGain[] = [{ key, amount: base }];
+	context.passives.runEvaluationModifiers(
+		TRANSFER_PCT_EVALUATION_TARGET,
+		context,
+		modifiers,
+	);
+	const pct = modifiers[0]!.amount;
+	const defender = context.opponent;
+	const attacker = context.activePlayer;
 	const available = defender.resources[key] || 0;
 	const raw = (available * pct) / 100;
 	let amount: number;
