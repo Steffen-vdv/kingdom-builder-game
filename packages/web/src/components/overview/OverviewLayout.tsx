@@ -99,11 +99,11 @@ export function renderTokens<TTokens extends Record<string, React.ReactNode>>(
 	text: string,
 	tokens: TTokens,
 ): React.ReactNode {
-	const parts = text.split(/(\{[a-zA-Z]+\})/g);
+	const parts = text.split(/(\{[\w]+\})/g);
 	return (
 		<>
 			{parts.map((part, index) => {
-				const match = part.match(/^\{([a-zA-Z]+)\}$/);
+				const match = part.match(/^\{([\w]+)\}$/);
 				if (match) {
 					const tokenKey = match[1] as keyof TTokens;
 					const hasToken = Object.prototype.hasOwnProperty.call(
