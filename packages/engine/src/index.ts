@@ -27,6 +27,7 @@ export {
 	type ResolvedActionEffects,
 	type ResolvedActionEffectGroup,
 	type ResolvedActionEffectGroupOption,
+	type ResolvedActionEffectStep,
 } from './actions/effect_groups';
 export { advance } from './phases/advance';
 export { EngineContext } from './context';

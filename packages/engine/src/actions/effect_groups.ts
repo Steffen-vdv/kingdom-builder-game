@@ -35,19 +35,39 @@ function extractActionParams(
 	return Object.fromEntries(baseEntries);
 }
 
+function mergeOptionParams(
+	option: ActionEffectGroupOption,
+	baseParams: Record<string, unknown>,
+): Record<string, unknown> {
+	const merged: Record<string, unknown> = { ...baseParams };
+	const optionParams = option.params || {};
+	for (const [key, value] of Object.entries(optionParams)) {
+		if (typeof value === 'string' && value.startsWith('$')) {
+			const placeholder = value.slice(1);
+			if (placeholder in baseParams) {
+				merged[key] = baseParams[placeholder];
+			}
+			continue;
+		}
+		merged[key] = value;
+	}
+	return merged;
+}
+
 function buildOptionEffects(
 	option: ActionEffectGroupOption,
-	substitutionParams: Record<string, unknown>,
+	optionParams: Record<string, unknown>,
 ): EffectDef[] {
 	const effect: EffectDef = {
 		type: 'action',
 		method: 'perform',
 		params: {
-			id: option.actionId,
-			...(option.params || {}),
+			...optionParams,
+			actionId: option.actionId,
+			__actionId: option.actionId,
 		},
 	};
-	return applyParamsToEffects([effect], substitutionParams);
+	return applyParamsToEffects([effect], optionParams);
 }
 
 export interface ResolvedActionEffectGroupOption {
@@ -61,11 +81,24 @@ export interface ResolvedActionEffectGroup {
 	selection?: ResolvedActionEffectGroupOption;
 }
 
+export interface ResolvedActionEffectGroupStep {
+	type: 'group';
+	group: ActionEffectGroup;
+	selection?: ResolvedActionEffectGroupOption;
+	params: Record<string, unknown>;
+}
+
+export type ResolvedActionEffectStep =
+	| { type: 'effects'; effects: EffectDef[] }
+	| ResolvedActionEffectGroupStep;
+
 export interface ResolvedActionEffects {
 	effects: EffectDef[];
 	groups: ResolvedActionEffectGroup[];
 	choices: ActionEffectGroupChoiceMap;
 	missingSelections: string[];
+	params: Record<string, unknown>;
+	steps: ResolvedActionEffectStep[];
 }
 
 export type {
@@ -125,11 +158,15 @@ export function resolveActionEffects<T extends string>(
 	const resolvedEffects: EffectDef[] = [];
 	const resolvedGroups: ResolvedActionEffectGroup[] = [];
 	const missingSelections: string[] = [];
+	const steps: ResolvedActionEffectStep[] = [];
 
 	for (const effect of actionDefinition.effects) {
 		if (!isActionEffectGroup(effect)) {
 			const applied = applyParamsToEffects([effect], substitutionParams);
 			resolvedEffects.push(...applied);
+			if (applied.length > 0) {
+				steps.push({ type: 'effects', effects: applied });
+			}
 			continue;
 		}
 
@@ -138,6 +175,11 @@ export function resolveActionEffects<T extends string>(
 		if (!selection) {
 			missingSelections.push(effect.id);
 			resolvedGroups.push(group);
+			steps.push({
+				type: 'group',
+				group: effect,
+				params: { ...substitutionParams },
+			});
 			continue;
 		}
 		const option = effect.options.find(
@@ -152,15 +194,22 @@ export function resolveActionEffects<T extends string>(
 			...substitutionParams,
 			...(selection.params || {}),
 		};
-		const optionEffects = buildOptionEffects(option, mergedParams);
+		const optionParams = mergeOptionParams(option, mergedParams);
+		const optionEffects = buildOptionEffects(option, optionParams);
 		const resolvedOption: ResolvedActionEffectGroupOption = {
 			option,
 			effects: optionEffects,
-			params: mergedParams,
+			params: optionParams,
 		};
 		group.selection = resolvedOption;
 		resolvedGroups.push(group);
 		resolvedEffects.push(...optionEffects);
+		steps.push({
+			type: 'group',
+			group: effect,
+			selection: resolvedOption,
+			params: { ...substitutionParams },
+		});
 	}
 
 	return {
@@ -168,5 +217,7 @@ export function resolveActionEffects<T extends string>(
 		groups: resolvedGroups,
 		choices,
 		missingSelections,
+		params: { ...substitutionParams },
+		steps,
 	};
 }

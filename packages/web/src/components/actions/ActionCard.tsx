@@ -135,14 +135,24 @@ function StepBadge({
 			>
 				<svg
 					className="action-card__multi-step-icon"
-					viewBox="0 0 24 24"
+					viewBox="0 0 16 16"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 				>
-					<circle cx="6" cy="12" r="2.25" />
-					<circle cx="12" cy="12" r="2.25" />
-					<circle cx="18" cy="12" r="2.25" />
-					<path d="M8.25 12h3.5M14.25 12h3.5" strokeLinecap="round" />
+					<path
+						d="M3.25 12.75h3.5v-3.5h3.5V5.75H13.5"
+						stroke="currentColor"
+						strokeWidth="1.25"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					/>
+					<path
+						d="M11.25 3.75L13.75 6l-2.5 2.25"
+						stroke="currentColor"
+						strokeWidth="1.25"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					/>
 				</svg>
 			</span>
 		</div>

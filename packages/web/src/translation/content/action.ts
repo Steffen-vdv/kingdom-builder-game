@@ -1,5 +1,4 @@
 import {
-	coerceActionEffectGroupChoices,
 	resolveActionEffects,
 	type ActionParams,
 	type EngineContext,
@@ -27,12 +26,14 @@ class ActionTranslator
 			def,
 			opts as ActionParams<string> | undefined,
 		);
-		const eff = summarizeEffects(resolved.effects, ctx);
-		const groups = formatEffectGroups(
-			resolved.groups.map((group) => group.group),
-			'summarize',
-		);
-		const combined = [...eff, ...groups];
+		const combined: Summary = [];
+		for (const step of resolved.steps) {
+			if (step.type === 'effects') {
+				combined.push(...summarizeEffects(step.effects, ctx));
+				continue;
+			}
+			combined.push(...formatEffectGroups([step], 'summarize', ctx));
+		}
 		return combined.length ? combined : [];
 	}
 	describe(
@@ -45,12 +46,14 @@ class ActionTranslator
 			def,
 			opts as ActionParams<string> | undefined,
 		);
-		const eff = describeEffects(resolved.effects, ctx);
-		const groups = formatEffectGroups(
-			resolved.groups.map((group) => group.group),
-			'describe',
-		);
-		const combined = [...eff, ...groups];
+		const combined: Summary = [];
+		for (const step of resolved.steps) {
+			if (step.type === 'effects') {
+				combined.push(...describeEffects(step.effects, ctx));
+				continue;
+			}
+			combined.push(...formatEffectGroups([step], 'describe', ctx));
+		}
 		return combined.length ? combined : [];
 	}
 	log(
@@ -70,15 +73,14 @@ class ActionTranslator
 			def,
 			params as ActionParams<string> | undefined,
 		);
-		const choiceMap = coerceActionEffectGroupChoices(params?.['choices']);
-		const effLogs = [
-			...logEffects(resolved.effects, ctx),
-			...formatEffectGroups(
-				resolved.groups.map((group) => group.group),
-				'log',
-				choiceMap,
-			),
-		];
+		const effLogs: Summary = [];
+		for (const step of resolved.steps) {
+			if (step.type === 'effects') {
+				effLogs.push(...logEffects(step.effects, ctx));
+				continue;
+			}
+			effLogs.push(...formatEffectGroups([step], 'log', ctx));
+		}
 		const lines = [message];
 		function push(entry: unknown, depth: number) {
 			if (typeof entry === 'string') {
