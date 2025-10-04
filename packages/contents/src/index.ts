@@ -18,6 +18,7 @@ export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';
 export { GAME_START } from './game';
 export { RULES } from './rules';
+export { PRIMARY_ICON_ID } from './startup';
 export type { ActionDef } from './actions';
 export type { BuildingDef } from './buildings';
 export type { DevelopmentDef } from './developments';
