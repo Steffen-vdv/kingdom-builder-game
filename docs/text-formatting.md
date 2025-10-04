@@ -1,0 +1,151 @@
+# Text Formatting & Translation Guide
+
+This guide documents the web translation pipeline and the utilities that keep
+player-facing text consistent across Kingdom Builder. Refer to it before adding
+any new strings in the web client, engine-derived logs, or supporting tests.
+
+## 1. Translation Pipeline Overview
+
+The translation layer lives in `packages/web/src/translation` and is composed of
+three tiers that build on one another:
+
+1. **Effect formatters** describe individual engine effects. They are
+   registered via `registerEffectFormatter` in
+   [`effects/factory.ts`](../packages/web/src/translation/effects/factory.ts) and
+   translate an `{ type, method }` pair into text for three modes:
+   - `summarize` → short bullet points rendered on cards and list views.
+   - `describe` → detailed breakdowns used on hover tooltips, modal bodies, and
+     other expanded UI states.
+   - `log` → flattened strings or nested summaries that the action log renders.
+2. **Evaluator formatters** decorate nested effects produced by dynamic
+   evaluators (per-development, per-population, etc.). They reuse the same
+   registry pattern exposed by
+   [`effects/factory.ts`](../packages/web/src/translation/effects/factory.ts).
+3. **Content translators** (actions, buildings, developments, lands, etc.)
+   orchestrate effect formatters into full card descriptions. They are
+   registered via `registerContentTranslator` in
+   [`content/factory.ts`](../packages/web/src/translation/content/factory.ts) and
+   expose `summarize`, `describe`, and optional `log` functions via the
+   `ContentTranslator` interface defined in
+   [`content/types.ts`](../packages/web/src/translation/content/types.ts).
+
+Consumers pick the appropriate mode through the factory helpers:
+
+- `summarizeContent` for compact previews such as the action tray and quick
+  lookup caches in [`ActionsPanel.tsx`](../packages/web/src/components/actions/ActionsPanel.tsx).
+- `describeContent` for detailed overlays (e.g.,
+  [`LandDisplay.tsx`](../packages/web/src/components/player/LandDisplay.tsx),
+  [`BuildingDisplay.tsx`](../packages/web/src/components/player/BuildingDisplay.tsx)).
+- `logContent` for action resolution messages (see
+  [`GameContext.tsx`](../packages/web/src/state/GameContext.tsx)).
+
+When adding a new UI surface, decide whether the reader needs a quick summary,
+a full explanation, or a chronological log entry and call the matching helper.
+
+### 1.1 Summary partitioning & hoisting
+
+`splitSummary` in
+[`content/partition.ts`](../packages/web/src/translation/content/partition.ts)
+separates effect bullet points from longer narrative descriptions. Translators
+can mark entries with `_desc` to push them into the narrative section, and with
+`_hoist` to bubble items above wrappers like the "On build" header applied by
+[`content/decorators.ts`](../packages/web/src/translation/content/decorators.ts).
+
+## 2. Content Translator Inventory
+
+| Translator             | Module                                                                                   | Notes                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Actions                | [`content/action.ts`](../packages/web/src/translation/content/action.ts)                 | Composes resolved action effects and effect groups. Honors role-specific options. |
+| Buildings              | [`content/building.ts`](../packages/web/src/translation/content/building.ts)             | Wraps phased definitions and respects installation wrappers.                      |
+| Developments           | [`content/development.ts`](../packages/web/src/translation/content/development.ts)       | Merges synthetic phase data before delegating to the phased translator.           |
+| Lands                  | [`content/land.ts`](../packages/web/src/translation/content/land.ts)                     | Surface-level land summary and per-development descriptions.                      |
+| Phased content         | [`content/phased.ts`](../packages/web/src/translation/content/phased.ts)                 | Shared helper translating per-phase triggers using effect formatters.             |
+| Installation decorator | [`content/decorators.ts`](../packages/web/src/translation/content/decorators.ts)         | Adds the canonical "On build" wrapper and hoist handling.                         |
+| Action log hooks       | [`content/actionLogHooks.ts`](../packages/web/src/translation/content/actionLogHooks.ts) | Rewrites option labels when effect groups fire during action resolution.          |
+
+Consult the translator above before creating new files—most content fits one of
+these pathways or can be extended via existing decorators.
+
+## 3. Effect Formatter Inventory
+
+Effect formatters live under `effects/formatters`. Reuse these modules instead
+of rephrasing the same mechanic elsewhere.
+
+| Formatter        | Module                                                                                                                                                                                    | Handles                                                                                                  |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Actions          | [`effects/formatters/action.ts`](../packages/web/src/translation/effects/formatters/action.ts)                                                                                            | Adding/removing/unlocking/performing actions.                                                            |
+| Attacks          | [`effects/formatters/attack.ts`](../packages/web/src/translation/effects/formatters/attack.ts) & [`effects/formatters/attack`](../packages/web/src/translation/effects/formatters/attack) | Army, building, stat, and resource attack variants plus on-damage summaries.                             |
+| Buildings        | [`effects/formatters/building.ts`](../packages/web/src/translation/effects/formatters/building.ts)                                                                                        | Gain/remove/building slot interactions.                                                                  |
+| Developments     | [`effects/formatters/development.ts`](../packages/web/src/translation/effects/formatters/development.ts)                                                                                  | Create/destroy/toggle development slots.                                                                 |
+| Land slots       | [`effects/formatters/land.ts`](../packages/web/src/translation/effects/formatters/land.ts)                                                                                                | Slot count adjustments and till bonuses.                                                                 |
+| Modifiers        | [`effects/formatters/modifier.ts`](../packages/web/src/translation/effects/formatters/modifier.ts)                                                                                        | Result modifiers, stacking hooks, and evaluation context. Uses helper utilities for consistent phrasing. |
+| Modifier helpers | [`effects/formatters/modifier_helpers.ts`](../packages/web/src/translation/effects/formatters/modifier_helpers.ts)                                                                        | Canonical "Whenever it grants…" clauses, result labels, and percent math.                                |
+| Transfer helpers | [`effects/formatters/transfer_helpers.ts`](../packages/web/src/translation/effects/formatters/transfer_helpers.ts)                                                                        | Resolves action labels for resource transfer modifiers.                                                  |
+| Passives         | [`effects/formatters/passive.ts`](../packages/web/src/translation/effects/formatters/passive.ts)                                                                                          | Passive duration labels, phase detection, and nested summaries.                                          |
+| Population       | [`effects/formatters/population.ts`](../packages/web/src/translation/effects/formatters/population.ts)                                                                                    | Role icons/labels and movement verbs.                                                                    |
+| Resources        | [`effects/formatters/resource.ts`](../packages/web/src/translation/effects/formatters/resource.ts)                                                                                        | Gain/lose/transfer resource amounts with signed values.                                                  |
+| Stats            | [`effects/formatters/stat/index.ts`](../packages/web/src/translation/effects/formatters/stat/index.ts)                                                                                    | Flat and percent stat adjustments keyed to `STATS`.                                                      |
+
+Evaluator formatters live under `effects/evaluators` and provide consistent
+suffixes like "per 🧩 Development" (see
+[`effects/evaluators/development.ts`](../packages/web/src/translation/effects/evaluators/development.ts) and
+[`effects/evaluators/population.ts`](../packages/web/src/translation/effects/evaluators/population.ts)).
+
+## 4. Canonical Keywords, Icons, & Helper Utilities
+
+- **General verbs** — `gainOrLose`, `increaseOrDecrease`, and `signed` in
+  [`effects/helpers.ts`](../packages/web/src/translation/effects/helpers.ts)
+  produce the preferred wording for deltas. Always pipe numeric changes through
+  these helpers before concatenating strings.
+- **Result modifier clauses** — The modifier helpers in
+  [`effects/formatters/modifier_helpers.ts`](../packages/web/src/translation/effects/formatters/modifier_helpers.ts)
+  standardise phrases such as "Whenever it grants resources" and handle
+  percent-based math and icon fallbacks.
+- **Resource transfers** —
+  [`effects/formatters/transfer_helpers.ts`](../packages/web/src/translation/effects/formatters/transfer_helpers.ts)
+  resolves action labels and clause targets so modifiers describe the correct
+  source ("affected actions", "resource transfers", etc.).
+- **Passive longevity** — The passive formatter automatically renders
+  "⏳ Until your next …" headers, detects phase icons, and merges manual labels
+  (`durationLabel`, `durationIcon`) using
+  [`resolveDurationMeta`](../packages/web/src/translation/effects/formatters/passive.ts).
+  Reuse this formatter instead of rephrasing passive timers.
+- **Cost labels & upkeep** — `renderCosts` in
+  [`translation/render.tsx`](../packages/web/src/translation/render.tsx) applies
+  the canonical "Free" label, uses `RESOURCES` for icons, and prefixes upkeep
+  with the `BROOM_ICON`. Let UI components rely on this renderer rather than
+  duplicating cost strings.
+- **Skip messaging** — Use `describeSkipEvent` in
+  [`utils/describeSkipEvent.ts`](../packages/web/src/utils/describeSkipEvent.ts)
+  to explain skipped steps. It already aggregates sources and produces the
+  "Skipped" summary consumed by the log view.
+- **Generic icons** — `GENERAL_RESOURCE_ICON` and related glyphs live in
+  [`web/src/icons/index.ts`](../packages/web/src/icons/index.ts) and are reused
+  by modifier helpers to avoid ad-hoc emoji choices.
+- **Phase triggers** — `TRIGGER_INFO` from contents (see
+  [`content/decorators.ts`](../packages/web/src/translation/content/decorators.ts))
+  contains the approved "On build" / "On each" phrasing. Use it when writing new
+  trigger copy.
+
+## 5. Working With Logs
+
+- `logEffects` in
+  [`effects/factory.ts`](../packages/web/src/translation/effects/factory.ts)
+  mirrors `summarizeEffects`/`describeEffects` but produces flattened entries
+  suitable for the action log. Always extend existing effect formatters with a
+  `log` handler when new actions need specific log phrasing.
+- `diffStepSnapshots` and `resolvePassiveLogDetails` under `translation/log`
+  combine the canonical passive icons and removal reasons—refer to
+  [`log/passives.ts`](../packages/web/src/translation/log/passives.ts) and
+  [`log/diffSections.ts`](../packages/web/src/translation/log/diffSections.ts)
+  before formatting manual passive changes.
+
+## 6. Checklist Before Adding Text
+
+1. Identify which content translator or effect formatter already covers your
+   mechanic. Prefer extending it over creating parallel wording.
+2. Choose the correct mode (`summarize`, `describe`, `log`) for the UI surface.
+3. Use the helper utilities above for verbs, icons, costs, passives, and skip
+   descriptions.
+4. Mark long-form narrative text with `_desc` so `splitSummary` can route it to
+   the description panel.
