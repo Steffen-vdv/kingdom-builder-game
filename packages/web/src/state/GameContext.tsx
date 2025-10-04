@@ -106,6 +106,10 @@ interface GameEngineContextValue {
 	onExit?: () => void;
 	darkMode: boolean;
 	onToggleDark: () => void;
+	musicEnabled: boolean;
+	onToggleMusic: () => void;
+	soundEnabled: boolean;
+	onToggleSound: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
 	errorToasts: ErrorToast[];
@@ -121,12 +125,20 @@ export function GameProvider({
 	darkMode = true,
 	onToggleDark = () => {},
 	devMode = false,
+	musicEnabled = true,
+	onToggleMusic = () => {},
+	soundEnabled = true,
+	onToggleSound = () => {},
 }: {
 	children: React.ReactNode;
 	onExit?: () => void;
 	darkMode?: boolean;
 	onToggleDark?: () => void;
 	devMode?: boolean;
+	musicEnabled?: boolean;
+	onToggleMusic?: () => void;
+	soundEnabled?: boolean;
+	onToggleSound?: () => void;
 }) {
 	const ctx = useMemo<EngineContext>(() => {
 		const engine = createEngine({
@@ -733,6 +745,10 @@ export function GameProvider({
 		updateMainPhaseStep,
 		darkMode,
 		onToggleDark,
+		musicEnabled,
+		onToggleMusic,
+		soundEnabled,
+		onToggleSound,
 		timeScale,
 		setTimeScale,
 		errorToasts,
