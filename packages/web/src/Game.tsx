@@ -70,7 +70,7 @@ function GameLayout() {
 			<PlayerPanel
 				key={p.id}
 				player={p}
-				className={`flex-1 p-4 ${bgClass}`}
+				className={`grow basis-[calc(50%-1rem)] max-w-[calc(50%-1rem)] p-4 ${bgClass}`}
 				isActive={isActive}
 				onHeightChange={(height) => {
 					handlePlayerHeight(p.id, height);
@@ -130,7 +130,7 @@ function GameLayout() {
 
 				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
 					<section className="relative flex min-h-[275px] items-stretch rounded-3xl bg-white/70 shadow-2xl dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface">
-						<div className="flex flex-1 items-stretch overflow-hidden rounded-3xl divide-x divide-white/50 dark:divide-white/10">
+						<div className="flex flex-1 items-stretch gap-6 overflow-hidden rounded-3xl px-6 py-6">
 							{playerPanels}
 						</div>
 					</section>
