@@ -32,6 +32,9 @@ import {
 	statEvaluator,
 	attackParams,
 	transferParams,
+	actionEffectGroup,
+	actionEffectGroupOption,
+	type ActionEffectGroupDef,
 } from './config/builders';
 import type { Focus } from './defs';
 
@@ -39,6 +42,7 @@ export interface ActionDef extends ActionConfig {
 	category?: string;
 	order?: number;
 	focus?: Focus;
+	effectGroups?: ActionEffectGroupDef[];
 }
 
 export function createActionRegistry() {
@@ -197,10 +201,70 @@ export function createActionRegistry() {
 			.icon('📜')
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 12)
+			.effect(
+				effect(Types.Action, ActionMethods.PERFORM)
+					.param('id', 'expand')
+					.build(),
+			)
+			.effect(
+				effect(Types.Action, ActionMethods.PERFORM).param('id', 'till').build(),
+			)
+			.effect({
+				type: Types.Resource,
+				method: ResourceMethods.REMOVE,
+				params: resourceParams().key(Resource.happiness).amount(3).build(),
+				meta: { allowShortfall: true },
+			})
+			.effectGroup(
+				actionEffectGroup('royal_decree_develop')
+					.title('Decree a development')
+					.summary('Choose what to raise on the prepared land.')
+					.description(
+						'After expanding and tilling, select one project to complete. Each option runs Develop on the chosen land.',
+					)
+					.option(
+						actionEffectGroupOption('royal_decree_house')
+							.label('Raise a House')
+							.icon('🏠')
+							.summary('Expand housing and increase the population cap by 1.')
+							.action('develop')
+							.param('landId', '$landId')
+							.param('id', 'house'),
+					)
+					.option(
+						actionEffectGroupOption('royal_decree_farm')
+							.label('Establish a Farm')
+							.icon('🌾')
+							.summary('Gain +2 gold during the income step each round.')
+							.action('develop')
+							.param('landId', '$landId')
+							.param('id', 'farm'),
+					)
+					.option(
+						actionEffectGroupOption('royal_decree_outpost')
+							.label('Fortify with an Outpost')
+							.icon('🏹')
+							.summary('Gain +1 Army Strength and +1 Fortification Strength.')
+							.action('develop')
+							.param('landId', '$landId')
+							.param('id', 'outpost'),
+					)
+					.option(
+						actionEffectGroupOption('royal_decree_watchtower')
+							.label('Raise a Watchtower')
+							.icon('🗼')
+							.summary(
+								'Add +2 Fortification Strength and absorption after defending once.',
+							)
+							.action('develop')
+							.param('landId', '$landId')
+							.param('id', 'watchtower'),
+					),
+			)
 			.build(),
-		category: 'basic',
-		order: 5,
-		focus: 'other',
+		category: 'development',
+		order: 2,
+		focus: 'economy',
 	});
 
 	registry.add('army_attack', {
