@@ -11,6 +11,8 @@ export interface PassiveSummary {
 	id: string;
 	name?: string | undefined;
 	icon?: string | undefined;
+	detail?: string | undefined;
+	meta?: PassiveMetadata | undefined;
 }
 
 type PassiveRecord = PassiveSummary & {
@@ -443,6 +445,13 @@ export class PassiveManager {
 			}
 			if (value.icon !== undefined) {
 				summary.icon = value.icon;
+			}
+			if (value.detail !== undefined) {
+				summary.detail = value.detail;
+			}
+			const meta = clonePassiveMetadata(value.meta);
+			if (meta) {
+				summary.meta = meta;
 			}
 			return summary;
 		});
