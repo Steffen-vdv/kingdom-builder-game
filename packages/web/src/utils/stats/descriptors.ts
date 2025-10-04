@@ -1,4 +1,4 @@
-/* eslint-disable max-lines, max-len */
+/* eslint-disable max-lines */
 import {
 	STATS,
 	POPULATION_ROLES,
@@ -17,6 +17,11 @@ import type {
 } from '@kingdom-builder/engine';
 
 type ResolveResult = { icon: string; label: string };
+
+type TriggerInfoRecord = Record<
+	string,
+	{ icon?: string; future?: string; past?: string }
+>;
 
 export type SourceDescriptor = ResolveResult & { suffix?: string };
 
@@ -50,10 +55,7 @@ export function formatStatValue(key: string, value: number): string {
 	return statDisplaysAsPercent(key) ? `${value * 100}%` : String(value);
 }
 
-const TRIGGER_LOOKUP = TRIGGER_INFO as Record<
-	string,
-	{ icon?: string; future?: string; past?: string }
->;
+const TRIGGER_LOOKUP = TRIGGER_INFO as TriggerInfoRecord;
 
 const defaultFormatDetail: NonNullable<
 	DescriptorRegistryEntry['formatDetail']
@@ -151,7 +153,9 @@ const DESCRIPTOR_REGISTRY: Record<string, DescriptorRegistryEntry> = {
 		};
 		return {
 			resolve: resolvePhase,
-			formatDetail: (id, detail) => formatStepLabel(id, detail),
+			// prettier-ignore
+			formatDetail: (id, detail) =>
+				formatStepLabel(id, detail),
 			formatDependency: (link) => {
 				const label = formatPhaseStep(link.id, link.detail);
 				if (label) {
@@ -163,14 +167,26 @@ const DESCRIPTOR_REGISTRY: Record<string, DescriptorRegistryEntry> = {
 		} satisfies DescriptorRegistryEntry;
 	})(),
 	stat: {
-		resolve: createRecordResolver(STATS, 'Stat'),
+		// prettier-ignore
+		resolve: createRecordResolver(
+			STATS,
+			'Stat',
+		),
 		formatDetail: defaultFormatDetail,
-		augmentDependencyDetail: (detail, link, player, context) => {
+		// prettier-ignore
+		augmentDependencyDetail: (
+			detail,
+			link,
+			player,
+			context,
+		) => {
 			if (!link.id) {
 				return detail;
 			}
 			const statValue =
-				player.stats?.[link.id] ?? context.activePlayer.stats?.[link.id] ?? 0;
+				player.stats?.[link.id] ??
+				context.activePlayer.stats?.[link.id] ??
+				0;
 			const valueText = formatStatValue(link.id, statValue);
 			return detail ? `${detail} ${valueText}` : valueText;
 		},
@@ -228,7 +244,10 @@ export function getDescriptor(kind?: string): DescriptorRegistryEntry {
 export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 	const entry = getDescriptor(meta.kind);
 	const base = entry.resolve(meta.id);
-	const descriptor: SourceDescriptor = { icon: base.icon, label: base.label };
+	const descriptor: SourceDescriptor = {
+		icon: base.icon,
+		label: base.label,
+	};
 	let suffix = entry.formatDetail?.(meta.id, meta.detail);
 	if (suffix === undefined && meta.detail) {
 		suffix = defaultFormatDetail(meta.id, meta.detail);
