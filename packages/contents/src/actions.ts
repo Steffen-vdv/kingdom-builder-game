@@ -125,7 +125,7 @@ export function createActionRegistry() {
 			.cost(Resource.ap, 1)
 			.effect(
 				effect()
-					.evaluator(populationEvaluator().param('id', 'tax'))
+					.evaluator(populationEvaluator().id('tax'))
 					.effect(
 						effect(Types.Resource, ResourceMethods.ADD)
 							.params(resourceParams().key(Resource.gold).amount(4))

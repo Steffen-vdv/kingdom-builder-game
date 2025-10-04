@@ -1222,10 +1222,15 @@ export class EvaluatorBuilder<P extends Params = Params> {
 }
 
 class PopulationEvaluatorBuilder extends EvaluatorBuilder<{
+	id?: string;
 	role?: PopulationRoleId;
 }> {
 	constructor() {
 		super('population');
+	}
+	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+	id(populationId: PopulationRoleId | string) {
+		return this.param('id', populationId);
 	}
 	role(role: PopulationRoleId) {
 		return this.param('role', role);
