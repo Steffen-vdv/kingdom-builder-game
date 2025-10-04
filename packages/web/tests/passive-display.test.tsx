@@ -17,7 +17,7 @@ import {
 	formatPassiveRemoval,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import { resolvePassiveLogDetails } from '../src/translation/log/passives';
+import { resolvePassivePresentation } from '../src/translation/log/passives';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -62,16 +62,15 @@ describe('<PassiveDisplay />', () => {
 		render(<PassiveDisplay player={ctx.activePlayer} />);
 		const [summary] = ctx.passives.list(ctx.activePlayer.id);
 		expect(summary).toBeDefined();
-		const removalToken = summary?.meta?.removal?.token;
-		expect(removalToken).toBeDefined();
-		const expectedRemoval = formatPassiveRemoval(removalToken!);
-		const summaryLabel = summary?.name;
+		const definitions = ctx.passives.values(ctx.activePlayer.id);
+		const definition = definitions.find((def) => def.id === summary?.id);
+		expect(definition).toBeDefined();
+		const presentation = resolvePassivePresentation(summary!, { definition });
+		expect(presentation.removal).toBeDefined();
 		const hoverTarget = document.querySelector('div.hoverable');
 		expect(hoverTarget).not.toBeNull();
-		if (summaryLabel) {
-			expect(hoverTarget?.textContent ?? '').toContain(summaryLabel);
-		}
-		expect(document.body).not.toHaveTextContent(expectedRemoval);
+		expect(hoverTarget?.textContent ?? '').toContain(presentation.label);
+		expect(document.body).not.toHaveTextContent(presentation.removal ?? '');
 		fireEvent.mouseEnter(hoverTarget!);
 		expect(handleHoverCard).toHaveBeenCalled();
 		const [{ description }] = handleHoverCard.mock.calls.at(-1) ?? [{}];
@@ -79,7 +78,10 @@ describe('<PassiveDisplay />', () => {
 			? (description as string[])
 			: [];
 		expect(descriptionEntries.length).toBeGreaterThan(0);
-		expect(descriptionEntries).toContain(expectedRemoval);
+		if (presentation.summary) {
+			expect(descriptionEntries).toContain(presentation.summary);
+		}
+		expect(descriptionEntries).toContain(presentation.removal!);
 	});
 
 	it('uses shared passive removal formatter for UI and logs', () => {
@@ -107,9 +109,11 @@ describe('<PassiveDisplay />', () => {
 		const { container } = view;
 		const [summary] = ctx.passives.list(ctx.activePlayer.id);
 		expect(summary).toBeDefined();
-		const removalToken = summary?.meta?.removal?.token;
-		expect(removalToken).toBeDefined();
-		const expectedRemoval = formatPassiveRemoval(removalToken!);
+		const definitions = ctx.passives.values(ctx.activePlayer.id);
+		const definition = definitions.find((def) => def.id === summary?.id);
+		expect(definition).toBeDefined();
+		const presentation = resolvePassivePresentation(summary!, { definition });
+		expect(presentation.removal).toBeDefined();
 		const hoverTarget = container.querySelector('div.hoverable');
 		expect(hoverTarget).not.toBeNull();
 		fireEvent.mouseEnter(hoverTarget!);
@@ -119,9 +123,14 @@ describe('<PassiveDisplay />', () => {
 		const descriptionEntries = Array.isArray(lastCall?.[0]?.description)
 			? (lastCall?.[0]?.description as string[])
 			: [];
-		expect(descriptionEntries).toContain(expectedRemoval);
-		const logDetails = resolvePassiveLogDetails(summary!);
-		expect(logDetails.removal).toBe(expectedRemoval);
+		expect(descriptionEntries).toContain(presentation.removal!);
+		const removalToken = summary?.meta?.removal?.token;
+		if (removalToken) {
+			expect(presentation.removal).toBe(formatPassiveRemoval(removalToken));
+		}
+		const logDetails = resolvePassivePresentation(summary!);
+		expect(logDetails.removal).toBe(presentation.removal);
+		expect(logDetails.label).toBe(presentation.label);
 	});
 
 	it('renders no passive cards when the active tier lacks passives', () => {
