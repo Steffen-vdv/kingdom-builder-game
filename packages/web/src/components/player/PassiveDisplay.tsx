@@ -115,6 +115,40 @@ export default function PassiveDisplay({
 		return undefined;
 	};
 
+	const formatSlug = (slug: string) =>
+		slug
+			.split(/[_-]/g)
+			.filter(Boolean)
+			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+			.join(' ');
+
+	const extractTokenSlug = (value: string | undefined) => {
+		if (!value) {
+			return undefined;
+		}
+		const trimmed = value.trim();
+		if (!trimmed) {
+			return undefined;
+		}
+		for (const delimiter of ['.', ':', '/']) {
+			if (trimmed.includes(delimiter)) {
+				const slug = trimmed.slice(trimmed.lastIndexOf(delimiter) + 1);
+				if (slug && slug !== trimmed) {
+					return formatSlug(slug);
+				}
+			}
+		}
+		return undefined;
+	};
+
+	const normalize = (value: string | undefined) => {
+		if (!value) {
+			return undefined;
+		}
+		const trimmed = value.trim();
+		return trimmed.length > 0 ? trimmed : undefined;
+	};
+
 	const resolveLabel = (
 		summary: PassiveSummary,
 		def: Pick<
@@ -123,33 +157,51 @@ export default function PassiveDisplay({
 		>,
 	) => {
 		const meta = def.meta ?? summary.meta;
-		const normalize = (value: string | undefined) => {
-			if (!value) {
-				return undefined;
-			}
-			const trimmed = value.trim();
-			return trimmed.length > 0 ? trimmed : undefined;
-		};
-		const translateToken = (value: string | undefined) => {
-			const token = normalize(value);
-			if (!token) {
-				return undefined;
-			}
-			if (!hasTierSummaryTranslation(token)) {
-				return undefined;
-			}
-			return translateTierSummary(token) ?? token;
-		};
-		return (
-			translateToken(meta?.source?.labelToken) ||
-			translateToken(def.detail) ||
-			translateToken(summary.detail) ||
-			normalize(meta?.source?.labelToken) ||
-			normalize(def.detail) ||
-			normalize(summary.detail) ||
+		const slug =
+			extractTokenSlug(meta?.source?.labelToken) ||
+			extractTokenSlug(def.detail) ||
+			extractTokenSlug(summary.detail) ||
+			extractTokenSlug(meta?.source?.id) ||
+			extractTokenSlug(summary.id);
+		if (slug) {
+			return slug;
+		}
+		const readable =
 			normalize(summary.name) ||
-			summary.id
-		);
+			normalize(summary.detail) ||
+			normalize(def.detail);
+		if (readable) {
+			return readable;
+		}
+		const fallbackId = normalize(summary.id);
+		if (fallbackId && !fallbackId.includes(':') && !fallbackId.includes('.')) {
+			return fallbackId;
+		}
+		return PASSIVE_INFO.label ?? 'Passive';
+	};
+
+	const resolveSummaryText = (
+		summary: PassiveSummary,
+		def: Pick<
+			ReturnType<EngineContext['passives']['values']>[number],
+			'detail' | 'meta'
+		>,
+	) => {
+		const meta = def.meta ?? summary.meta;
+		const candidates = [meta?.source?.labelToken, def.detail, summary.detail];
+		for (const candidate of candidates) {
+			const token = normalize(candidate);
+			if (token && hasTierSummaryTranslation(token)) {
+				return translateTierSummary(token) ?? token;
+			}
+		}
+		for (const candidate of candidates) {
+			const text = normalize(candidate);
+			if (text) {
+				return text;
+			}
+		}
+		return undefined;
 	};
 
 	const animatePassives = useAnimate<HTMLDivElement>();
@@ -163,6 +215,7 @@ export default function PassiveDisplay({
 				const icon = getIcon(passive, def.effects, meta);
 				const label = resolveLabel(passive, def);
 				const removalText = resolveRemovalText(meta);
+				const summaryText = resolveSummaryText(passive, def);
 				const items = describeEffects(def.effects || [], ctx);
 				const upkeepLabel =
 					PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
@@ -179,6 +232,9 @@ export default function PassiveDisplay({
 							const descriptionEntries = [...(description ?? [])] as ReturnType<
 								typeof splitSummary
 							>['effects'];
+							if (summaryText) {
+								descriptionEntries.unshift(summaryText);
+							}
 							if (removalText) {
 								descriptionEntries.push(removalText);
 							}
@@ -201,11 +257,6 @@ export default function PassiveDisplay({
 								<span className="font-semibold text-slate-700 dark:text-slate-100">
 									{label}
 								</span>
-								{removalText && (
-									<span className="text-xs text-slate-600 dark:text-slate-300">
-										{removalText}
-									</span>
-								)}
 							</div>
 						</div>
 					</div>

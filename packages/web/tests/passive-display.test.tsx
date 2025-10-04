@@ -58,21 +58,22 @@ describe('<PassiveDisplay />', () => {
 
 		render(<PassiveDisplay player={ctx.activePlayer} />);
 
-		const summaryText = screen.getByText(/Income \+25%/i);
-		expect(summaryText).toBeInTheDocument();
+		const badgeLabel = screen.getByText(/joyful/i);
+		expect(badgeLabel).toBeInTheDocument();
 		expect(
-			screen.getByText(
+			screen.queryByText(
 				/Active as long as happiness stays between \+5 and \+7/i,
 			),
-		).toBeInTheDocument();
+		).not.toBeInTheDocument();
 
-		const hoverTarget = summaryText.closest('div.hoverable');
+		const hoverTarget = badgeLabel.closest('div.hoverable');
 		expect(hoverTarget).not.toBeNull();
 		fireEvent.mouseEnter(hoverTarget!);
 		expect(handleHoverCard).toHaveBeenCalled();
 		const [{ description }] = handleHoverCard.mock.calls.at(-1) ?? [{}];
 		expect(description).toEqual(
 			expect.arrayContaining([
+				expect.stringMatching(/Income \+25%/i),
 				expect.stringMatching(
 					/Active as long as happiness stays between \+5 and \+7/i,
 				),
