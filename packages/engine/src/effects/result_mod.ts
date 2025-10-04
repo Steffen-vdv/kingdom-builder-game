@@ -1,5 +1,7 @@
 import type { EffectHandler } from '.';
 import { runEffects } from '.';
+import type { EngineContext } from '../context';
+import type { ResourceGain } from '../services';
 
 interface ResultModParams {
 	id: string;
@@ -41,41 +43,46 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 			const adjust = typeof rawAdjust === 'number' ? rawAdjust : undefined;
 			const rawPercent = params['percent'];
 			const percent = typeof rawPercent === 'number' ? rawPercent : undefined;
+			const handleEvaluationModifier = (
+				innerContext: EngineContext,
+				gains: ResourceGain[],
+			) => {
+				if (innerContext.activePlayer.id !== ownerId) {
+					return;
+				}
+				if (effects.length) {
+					runEffects(effects, innerContext);
+				}
+				if (adjust !== undefined) {
+					for (const gainEntry of gains) {
+						gainEntry.amount += adjust;
+					}
+				}
+				if (amount !== undefined) {
+					for (const gainEntry of gains) {
+						if (gainEntry.amount <= 0) {
+							continue;
+						}
+						const key = gainEntry.key;
+						const gainEffect = {
+							type: 'resource',
+							method: 'add',
+							params: {
+								key,
+								amount,
+							},
+						};
+						runEffects([gainEffect], innerContext);
+					}
+				}
+				if (percent !== undefined) {
+					return { percent };
+				}
+			};
 			ctx.passives.registerEvaluationModifier(
 				modId,
 				target,
-				(innerContext, gains) => {
-					if (innerContext.activePlayer.id !== ownerId) {
-						return;
-					}
-					if (effects.length) {
-						runEffects(effects, innerContext);
-					}
-					if (adjust !== undefined) {
-						for (const g of gains) {
-							g.amount += adjust;
-						}
-					}
-					if (amount !== undefined) {
-						for (const g of gains) {
-							if (g.amount > 0) {
-								runEffects(
-									[
-										{
-											type: 'resource',
-											method: 'add',
-											params: { key: g.key, amount },
-										},
-									],
-									innerContext,
-								);
-							}
-						}
-					}
-					if (percent !== undefined) {
-						return { percent };
-					}
-				},
+				handleEvaluationModifier,
 			);
 		}
 	} else if (effect.method === 'remove') {
