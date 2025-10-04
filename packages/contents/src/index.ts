@@ -23,6 +23,7 @@ export {
 	type TierSummaryStore,
 	type TierSummaryGroup,
 } from './tieredResources';
+export { PRIMARY_ICON_ID } from './startup';
 export type { ActionDef } from './actions';
 export type { BuildingDef } from './buildings';
 export type { DevelopmentDef } from './developments';
