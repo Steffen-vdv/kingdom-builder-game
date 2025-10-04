@@ -1,7 +1,6 @@
 import type { EngineContext } from '../context';
 import type {
 	EvaluationModifier,
-	EvaluationModifierResult,
 	ResourceGain,
 	RoundingInstruction,
 	RoundingMode,
@@ -84,10 +83,7 @@ export class EvaluationModifierService {
 		const perResourcePercent: Partial<Record<string, number>> = {};
 		const rounding: Partial<Record<string, RoundingMode>> = {};
 		for (const modifier of modifierMap.values()) {
-			const result = modifier(
-				context,
-				gains,
-			) as EvaluationModifierResult | void;
+			const result = modifier(context, gains);
 			if (!result || result.percent === undefined) {
 				if (result && 'round' in result) {
 					mergeRoundInstruction(rounding, result.round);
