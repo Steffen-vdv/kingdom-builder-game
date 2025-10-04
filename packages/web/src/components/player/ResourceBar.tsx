@@ -79,6 +79,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 		const info = RESOURCES[happinessKey];
 		handleHoverCard({
 			title: `${info.icon} ${info.label}`,
+			description: [`Current value: ${value}`],
 			effects: entries,
 			effectsTitle: `Tiers (Current: ${value})`,
 			requirements: [],

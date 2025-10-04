@@ -9,7 +9,7 @@ import {
 import {
 	action,
 	effect,
-	requirement,
+	requirementEvaluatorCompare,
 	Types,
 	LandMethods,
 	ResourceMethods,
@@ -164,10 +164,10 @@ export function createActionRegistry() {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(
-				requirement('evaluator', 'compare')
-					.param('left', populationEvaluator().build())
-					.param('operator', 'lt')
-					.param('right', statEvaluator().key(Stat.maxPopulation).build())
+				requirementEvaluatorCompare()
+					.left(populationEvaluator())
+					.operator('lt')
+					.right(statEvaluator().key(Stat.maxPopulation))
 					.message('Free space for 👥')
 					.build(),
 			)
@@ -260,13 +260,10 @@ export function createActionRegistry() {
 			.icon('🗡️')
 			.cost(Resource.ap, 1)
 			.requirement(
-				requirement('evaluator', 'compare')
-					.param('left', statEvaluator().key(Stat.warWeariness).build())
-					.param('operator', 'lt')
-					.param(
-						'right',
-						populationEvaluator().role(PopulationRole.Legion).build(),
-					)
+				requirementEvaluatorCompare()
+					.left(statEvaluator().key(Stat.warWeariness))
+					.operator('lt')
+					.right(populationEvaluator().role(PopulationRole.Legion))
 					.message(
 						`${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Legion].icon} ${POPULATION_ROLES[PopulationRole.Legion].label}`,
 					)
@@ -316,10 +313,10 @@ export function createActionRegistry() {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
 			.requirement(
-				requirement('evaluator', 'compare')
-					.param('left', statEvaluator().key(Stat.warWeariness).build())
-					.param('operator', 'eq')
-					.param('right', 0)
+				requirementEvaluatorCompare()
+					.left(statEvaluator().key(Stat.warWeariness))
+					.operator('eq')
+					.right(0)
 					.message(
 						`${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be 0`,
 					)
