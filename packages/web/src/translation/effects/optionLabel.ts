@@ -137,10 +137,13 @@ export interface ActionOptionTranslationResult {
 	entry: SummaryEntry;
 }
 
+type EffectGroupMode = 'summarize' | 'describe' | 'log';
+
 export function buildActionOptionTranslation(
 	option: ActionEffectGroupOption,
 	context: EngineContext,
 	translated: SummaryEntry[],
+	mode: EffectGroupMode,
 ): ActionOptionTranslationResult {
 	const fallback = fallbackOptionLabel(option);
 	const actionLabel = resolveActionLabel(option, context) || fallback;
@@ -156,10 +159,16 @@ export function buildActionOptionTranslation(
 	if (typeof first === 'string') {
 		const normalizedFirst = normalizeEntryLabel(first, targetLabel);
 		const title = combineLabels(actionLabel, normalizedFirst, fallback);
-		if (restEntries.length === 0) {
+		const detailEntries =
+			restEntries.length > 0
+				? restEntries
+				: mode === 'describe'
+					? [normalizedFirst]
+					: [];
+		if (detailEntries.length === 0) {
 			return { label: title, entry: title };
 		}
-		return { label: title, entry: { title, items: restEntries } };
+		return { label: title, entry: { title, items: detailEntries } };
 	}
 	const firstObject = cloneSummaryEntry(first) as ObjectSummaryEntry;
 	const normalizedTitle = normalizeEntryLabel(firstObject.title, targetLabel);
@@ -177,5 +186,6 @@ export function deriveActionOptionLabel(
 	context: EngineContext,
 	translated: SummaryEntry[],
 ): string {
-	return buildActionOptionTranslation(option, context, translated).label;
+	return buildActionOptionTranslation(option, context, translated, 'summarize')
+		.label;
 }
