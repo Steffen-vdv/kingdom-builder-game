@@ -9,49 +9,43 @@ import {
 	appendSlotChanges,
 	appendPassiveChanges,
 } from './diffSections';
-import { type PlayerSnapshot } from './playerSnapshot';
+import { collectResourceKeys, type PlayerSnapshot } from './snapshots';
 import { type StepEffects } from './statBreakdown';
 
-function collectResourceKeys(
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-): ResourceKey[] {
-	return Object.keys({
-		...before.resources,
-		...after.resources,
-	}) as ResourceKey[];
-}
-
-export function diffSnapshots(
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-	context: EngineContext,
-	resourceKeys: ResourceKey[] = collectResourceKeys(before, after),
-): string[] {
-	const changes: string[] = [];
-	appendResourceChanges(changes, before, after, resourceKeys);
-	appendStatChanges(changes, before, after, context, undefined);
-	appendBuildingChanges(changes, before, after, context);
-	appendLandChanges(changes, before, after, context);
-	appendSlotChanges(changes, before, after);
-	appendPassiveChanges(changes, before, after);
-	return changes;
-}
-
 export function diffStepSnapshots(
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-	step: StepEffects,
+	previousSnapshot: PlayerSnapshot,
+	nextSnapshot: PlayerSnapshot,
+	stepEffects: StepEffects,
 	context: EngineContext,
-	resourceKeys: ResourceKey[] = collectResourceKeys(before, after),
+	resourceKeys: ResourceKey[] = collectResourceKeys(
+		previousSnapshot,
+		nextSnapshot,
+	),
 ): string[] {
-	const changes: string[] = [];
-	const sources = collectResourceSources(step, context);
-	appendResourceChanges(changes, before, after, resourceKeys, sources);
-	appendStatChanges(changes, before, after, context, step);
-	appendBuildingChanges(changes, before, after, context);
-	appendLandChanges(changes, before, after, context);
-	appendSlotChanges(changes, before, after);
-	appendPassiveChanges(changes, before, after);
-	return changes;
+	const changeSummaries: string[] = [];
+	const sources = collectResourceSources(stepEffects, context);
+	appendResourceChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		resourceKeys,
+		sources,
+	);
+	appendStatChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		context,
+		stepEffects,
+	);
+	appendBuildingChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		context,
+	);
+	appendLandChanges(changeSummaries, previousSnapshot, nextSnapshot, context);
+	appendSlotChanges(changeSummaries, previousSnapshot, nextSnapshot);
+	appendPassiveChanges(changeSummaries, previousSnapshot, nextSnapshot);
+	return changeSummaries;
 }

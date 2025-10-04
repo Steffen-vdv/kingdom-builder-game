@@ -1,0 +1,99 @@
+import {
+	type EngineContext,
+	type PassiveSummary,
+	type PlayerId,
+} from '@kingdom-builder/engine';
+import { type ResourceKey } from '@kingdom-builder/contents';
+import { type Land } from '../content';
+import {
+	appendResourceChanges,
+	appendStatChanges,
+	appendBuildingChanges,
+	appendLandChanges,
+	appendSlotChanges,
+	appendPassiveChanges,
+} from './diffSections';
+
+export interface PlayerSnapshot {
+	resources: Record<string, number>;
+	stats: Record<string, number>;
+	buildings: string[];
+	lands: Array<{
+		id: string;
+		slotsMax: number;
+		slotsUsed: number;
+		developments: string[];
+	}>;
+	passives: PassiveSummary[];
+}
+
+export function snapshotPlayer(
+	playerState: {
+		id: string;
+		resources: Record<string, number>;
+		stats: Record<string, number>;
+		buildings: Set<string>;
+		lands: Land[];
+	},
+	context: EngineContext,
+): PlayerSnapshot {
+	const playerIdentifier = playerState.id as PlayerId;
+	const passiveSummaries = context.passives.list(playerIdentifier);
+	return {
+		resources: { ...playerState.resources },
+		stats: { ...playerState.stats },
+		buildings: Array.from(playerState.buildings ?? []),
+		lands: playerState.lands.map((land) => ({
+			id: land.id,
+			slotsMax: land.slotsMax,
+			slotsUsed: land.slotsUsed,
+			developments: [...land.developments],
+		})),
+		passives: passiveSummaries,
+	};
+}
+
+export function collectResourceKeys(
+	previousSnapshot: PlayerSnapshot,
+	nextSnapshot: PlayerSnapshot,
+): ResourceKey[] {
+	return Object.keys({
+		...previousSnapshot.resources,
+		...nextSnapshot.resources,
+	}) as ResourceKey[];
+}
+
+export function diffSnapshots(
+	previousSnapshot: PlayerSnapshot,
+	nextSnapshot: PlayerSnapshot,
+	context: EngineContext,
+	resourceKeys: ResourceKey[] = collectResourceKeys(
+		previousSnapshot,
+		nextSnapshot,
+	),
+): string[] {
+	const changeSummaries: string[] = [];
+	appendResourceChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		resourceKeys,
+	);
+	appendStatChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		context,
+		undefined,
+	);
+	appendBuildingChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		context,
+	);
+	appendLandChanges(changeSummaries, previousSnapshot, nextSnapshot, context);
+	appendSlotChanges(changeSummaries, previousSnapshot, nextSnapshot);
+	appendPassiveChanges(changeSummaries, previousSnapshot, nextSnapshot);
+	return changeSummaries;
+}
