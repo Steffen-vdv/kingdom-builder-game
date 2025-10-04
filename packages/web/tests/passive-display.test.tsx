@@ -77,4 +77,31 @@ describe('<PassiveDisplay />', () => {
 			]),
 		);
 	});
+
+	it('renders no passive cards when the active tier has no passive effects', () => {
+		const ctx = createEngine({
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+			populations: POPULATIONS,
+			phases: PHASES,
+			start: GAME_START,
+			rules: RULES,
+		});
+		const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
+		ctx.activePlayer.resources[happinessKey] = 0;
+		ctx.services.handleTieredResourceChange(ctx, happinessKey);
+
+		const handleHoverCard = vi.fn();
+		const clearHoverCard = vi.fn();
+		currentGame = {
+			ctx,
+			handleHoverCard,
+			clearHoverCard,
+		} as MockGame;
+
+		const { container } = render(<PassiveDisplay player={ctx.activePlayer} />);
+
+		expect(container).toBeEmptyDOMElement();
+	});
 });

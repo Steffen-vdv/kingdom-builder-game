@@ -36,14 +36,16 @@ export class Services {
 			return;
 		}
 		if (currentTier) {
-			if (currentTier.exitEffects?.length) {
-				runEffects(currentTier.exitEffects, context);
+			const exitEffects = currentTier.exitEffects ?? [];
+			if (exitEffects.length) {
+				runEffects(exitEffects, context);
 			}
 			this.activeTiers.delete(player.id);
 		}
 		if (nextTier) {
-			if (nextTier.enterEffects?.length) {
-				runEffects(nextTier.enterEffects, context);
+			const enterEffects = nextTier.enterEffects ?? [];
+			if (enterEffects.length) {
+				runEffects(enterEffects, context);
 			}
 			this.activeTiers.set(player.id, nextTier);
 		} else {
