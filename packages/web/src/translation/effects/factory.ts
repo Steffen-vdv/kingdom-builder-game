@@ -7,6 +7,7 @@ import type {
 } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../content';
 import { describeContent, logContent, summarizeContent } from '../content';
+import { buildActionOptionTranslation } from './optionLabel';
 // Effect and evaluator formatter registries drive translation lookups.
 
 export interface EffectFormatter {
@@ -212,23 +213,30 @@ function buildOptionEntry(
 	baseParams: Record<string, unknown>,
 	selection?: ResolvedActionEffectGroupOption,
 ): SummaryEntry {
-	const title = [option.icon, option.label].filter(Boolean).join(' ').trim();
 	const mergedParams =
 		selection?.params || mergeOptionParams(option, baseParams);
 
 	if (mode === 'log') {
+		const fallbackTitle = [option.icon, option.label]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
 		if (selection) {
 			const logs = logEffects(selection.effects, context);
-			if (!title) {
+			if (!fallbackTitle) {
 				return logs.length ? { title: option.id, items: logs } : option.id;
 			}
-			return logs.length ? { title, items: logs } : title;
+			return logs.length
+				? { title: fallbackTitle, items: logs }
+				: fallbackTitle;
 		}
 		const logged = logContent('action', option.actionId, context, mergedParams);
-		if (!title) {
+		if (!fallbackTitle) {
 			return logged.length ? { title: option.id, items: logged } : option.id;
 		}
-		return logged.length ? { title, items: logged } : title;
+		return logged.length
+			? { title: fallbackTitle, items: logged }
+			: fallbackTitle;
 	}
 
 	const translated =
@@ -236,18 +244,8 @@ function buildOptionEntry(
 			? summarizeContent('action', option.actionId, context, mergedParams)
 			: describeContent('action', option.actionId, context, mergedParams);
 
-	if (!title) {
-		if (translated.length === 0) {
-			return option.id;
-		}
-		return { title: option.id, items: translated };
-	}
-
-	if (translated.length === 0) {
-		return title;
-	}
-
-	return { title, items: translated };
+	const { entry } = buildActionOptionTranslation(option, context, translated);
+	return entry;
 }
 
 function buildGroupEntry(

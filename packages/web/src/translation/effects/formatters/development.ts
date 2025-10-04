@@ -1,4 +1,5 @@
 import { registerEffectFormatter } from '../factory';
+import { describeContent } from '../../content';
 
 registerEffectFormatter('development', 'add', {
 	summarize: (eff, ctx) => {
