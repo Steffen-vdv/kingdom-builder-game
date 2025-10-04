@@ -61,7 +61,9 @@ describe('<PassiveDisplay />', () => {
 		const summaryText = screen.getByText(/Income \+25%/i);
 		expect(summaryText).toBeInTheDocument();
 		expect(
-			screen.getByText(/Removed when happiness leaves the \+5 to \+7 range/i),
+			screen.getByText(
+				/Active as long as happiness stays between \+5 and \+7/i,
+			),
 		).toBeInTheDocument();
 
 		const hoverTarget = summaryText.closest('div.hoverable');
@@ -72,7 +74,7 @@ describe('<PassiveDisplay />', () => {
 		expect(description).toEqual(
 			expect.arrayContaining([
 				expect.stringMatching(
-					/Removed when happiness leaves the \+5 to \+7 range/i,
+					/Active as long as happiness stays between \+5 and \+7/i,
 				),
 			]),
 		);

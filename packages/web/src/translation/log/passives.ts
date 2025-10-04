@@ -23,7 +23,7 @@ function describeRemoval(meta: PassiveSummary['meta']): string | undefined {
 	}
 	const removalToken = meta?.removal?.token;
 	if (removalToken && removalToken.trim().length > 0) {
-		return `Removed when ${removalToken}`;
+		return `Active as long as ${removalToken}`;
 	}
 	return undefined;
 }

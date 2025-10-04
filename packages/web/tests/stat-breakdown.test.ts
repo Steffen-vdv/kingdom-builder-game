@@ -79,7 +79,7 @@ describe('stat breakdown summary', () => {
 					title: expect.stringContaining('Ongoing'),
 					items: expect.arrayContaining([
 						expect.stringContaining('While 🎖️ Legion'),
-						expect.stringContaining('Removed when'),
+						expect.stringContaining('Active as long as'),
 					]),
 				}),
 			]),

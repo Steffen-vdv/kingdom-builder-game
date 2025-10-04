@@ -49,7 +49,7 @@ function buildTierEntries(
 		const removalText =
 			text?.removal ??
 			(display?.removalCondition
-				? `Removed when ${display.removalCondition}`
+				? `Active as long as ${display.removalCondition}`
 				: undefined);
 		const items = [] as ReturnType<typeof describeEffects>;
 		if (summary) {

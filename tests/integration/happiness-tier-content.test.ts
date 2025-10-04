@@ -57,7 +57,7 @@ describe('content happiness tiers', () => {
           "passives": [
             {
               "id": "passive:happiness:content",
-              "removalToken": "happiness leaves the +3 to +4 range",
+              "removalToken": "happiness stays between +3 and +4",
               "summary": "💰 Income +20% while the realm is content.",
               "summaryToken": "happiness.tier.summary.content",
             },
@@ -70,7 +70,7 @@ describe('content happiness tiers', () => {
           "passives": [
             {
               "id": "passive:happiness:despair",
-              "removalToken": "happiness rises to -9 or higher",
+              "removalToken": "happiness is -10 or lower",
               "summary": "💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.",
               "summaryToken": "happiness.tier.summary.despair",
             },
@@ -93,7 +93,7 @@ describe('content happiness tiers', () => {
           "passives": [
             {
               "id": "passive:happiness:ecstatic",
-              "removalToken": "happiness drops below +10",
+              "removalToken": "happiness is +10 or higher",
               "summary": "💰 Income +50%. 🏛️ Building costs reduced by 20%. 📈 Growth +20%.",
               "summaryToken": "happiness.tier.summary.ecstatic",
             },
@@ -106,7 +106,7 @@ describe('content happiness tiers', () => {
           "passives": [
             {
               "id": "passive:happiness:elated",
-              "removalToken": "happiness leaves the +8 to +9 range",
+              "removalToken": "happiness stays between +8 and +9",
               "summary": "💰 Income +50%. 🏛️ Building costs reduced by 20%.",
               "summaryToken": "happiness.tier.summary.elated",
             },
@@ -119,7 +119,7 @@ describe('content happiness tiers', () => {
           "passives": [
             {
               "id": "passive:happiness:grim",
-              "removalToken": "happiness leaves the -7 to -5 range",
+              "removalToken": "happiness stays between -7 and -5",
               "summary": "💰 Income -25%. ⏭️ Skip Growth until spirits recover.",
               "summaryToken": "happiness.tier.summary.grim",
             },
@@ -136,7 +136,7 @@ describe('content happiness tiers', () => {
           "passives": [
             {
               "id": "passive:happiness:joyful",
-              "removalToken": "happiness leaves the +5 to +7 range",
+              "removalToken": "happiness stays between +5 and +7",
               "summary": "💰 Income +25%. 🏛️ Building costs reduced by 20%.",
               "summaryToken": "happiness.tier.summary.joyful",
             },
@@ -149,7 +149,7 @@ describe('content happiness tiers', () => {
           "passives": [
             {
               "id": "passive:happiness:misery",
-              "removalToken": "happiness leaves the -9 to -8 range",
+              "removalToken": "happiness stays between -9 and -8",
               "summary": "💰 Income -50%. ⏭️ Skip Growth while morale is desperate.",
               "summaryToken": "happiness.tier.summary.misery",
             },
@@ -172,7 +172,7 @@ describe('content happiness tiers', () => {
           "passives": [
             {
               "id": "passive:happiness:unrest",
-              "removalToken": "happiness leaves the -4 to -3 range",
+              "removalToken": "happiness stays between -4 and -3",
               "summary": "💰 Income -25% while unrest simmers.",
               "summaryToken": "happiness.tier.summary.unrest",
             },

@@ -56,7 +56,8 @@ const growthBonusEffect = (amount: number) =>
 		params: statParams().key(Stat.growth).amount(amount).build(),
 	}) as const;
 
-const formatRemoval = (description: string) => `Removed when ${description}`;
+const formatRemoval = (description: string) =>
+	`Active as long as ${description}`;
 
 type TierPassiveEffectOptions = {
 	tierId: string;
@@ -100,7 +101,7 @@ const TIER_CONFIGS = [
 		skipSteps: [{ phase: UPKEEP_PHASE_ID, step: WAR_RECOVERY_STEP_ID }],
 		summaryToken: happinessSummaryToken('despair'),
 		summary: '💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.',
-		removal: 'happiness rises to -9 or higher',
+		removal: 'happiness is -10 or lower',
 		effects: [incomeModifier('happiness:despair:income', -0.5)],
 	},
 	{
@@ -112,7 +113,7 @@ const TIER_CONFIGS = [
 		skipPhases: [GROWTH_PHASE_ID],
 		summaryToken: happinessSummaryToken('misery'),
 		summary: '💰 Income -50%. ⏭️ Skip Growth while morale is ' + 'desperate.',
-		removal: 'happiness leaves the -9 to -8 range',
+		removal: 'happiness stays between -9 and -8',
 		effects: [incomeModifier('happiness:misery:income', -0.5)],
 	},
 	{
@@ -124,7 +125,7 @@ const TIER_CONFIGS = [
 		skipPhases: [GROWTH_PHASE_ID],
 		summaryToken: happinessSummaryToken('grim'),
 		summary: '💰 Income -25%. ⏭️ Skip Growth until spirits recover.',
-		removal: 'happiness leaves the -7 to -5 range',
+		removal: 'happiness stays between -7 and -5',
 		effects: [incomeModifier('happiness:grim:income', -0.25)],
 	},
 	{
@@ -134,7 +135,7 @@ const TIER_CONFIGS = [
 		incomeMultiplier: 0.75,
 		summaryToken: happinessSummaryToken('unrest'),
 		summary: '💰 Income -25% while unrest simmers.',
-		removal: 'happiness leaves the -4 to -3 range',
+		removal: 'happiness stays between -4 and -3',
 		effects: [incomeModifier('happiness:unrest:income', -0.25)],
 	},
 	{
@@ -143,7 +144,7 @@ const TIER_CONFIGS = [
 		incomeMultiplier: 1,
 		summaryToken: happinessSummaryToken('steady'),
 		summary: 'Morale is steady. No tier bonuses are active.',
-		removal: 'happiness leaves the -2 to +2 range',
+		removal: 'happiness stays between -2 and +2',
 	},
 	{
 		id: 'happiness:tier:content',
@@ -152,7 +153,7 @@ const TIER_CONFIGS = [
 		incomeMultiplier: 1.2,
 		summaryToken: happinessSummaryToken('content'),
 		summary: '💰 Income +20% while the realm is content.',
-		removal: 'happiness leaves the +3 to +4 range',
+		removal: 'happiness stays between +3 and +4',
 		effects: [incomeModifier('happiness:content:income', 0.2)],
 	},
 	{
@@ -163,7 +164,7 @@ const TIER_CONFIGS = [
 		buildingDiscountPct: 0.2,
 		summaryToken: happinessSummaryToken('joyful'),
 		summary: '💰 Income +25%. 🏛️ Building costs reduced by 20%.',
-		removal: 'happiness leaves the +5 to +7 range',
+		removal: 'happiness stays between +5 and +7',
 		effects: [
 			incomeModifier('happiness:joyful:income', 0.25),
 			buildingDiscountModifier('happiness:joyful:build-discount'),
@@ -177,7 +178,7 @@ const TIER_CONFIGS = [
 		buildingDiscountPct: 0.2,
 		summaryToken: happinessSummaryToken('elated'),
 		summary: '💰 Income +50%. 🏛️ Building costs reduced by 20%.',
-		removal: 'happiness leaves the +8 to +9 range',
+		removal: 'happiness stays between +8 and +9',
 		effects: [
 			incomeModifier('happiness:elated:income', 0.5),
 			buildingDiscountModifier('happiness:elated:build-discount'),
@@ -193,7 +194,7 @@ const TIER_CONFIGS = [
 		summaryToken: happinessSummaryToken('ecstatic'),
 		summary:
 			'💰 Income +50%. 🏛️ Building costs reduced by 20%. ' + '📈 Growth +20%.',
-		removal: 'happiness drops below +10',
+		removal: 'happiness is +10 or higher',
 		effects: [
 			incomeModifier('happiness:ecstatic:income', 0.5),
 			buildingDiscountModifier('happiness:ecstatic:build-discount'),

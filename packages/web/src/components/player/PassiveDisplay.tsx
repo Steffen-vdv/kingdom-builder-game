@@ -105,7 +105,7 @@ export default function PassiveDisplay({
 			typeof meta.removal.token === 'string' &&
 			meta.removal.token.trim().length > 0
 		) {
-			return `Removed when ${meta.removal.token}`;
+			return `Active as long as ${meta.removal.token}`;
 		}
 		return undefined;
 	};
