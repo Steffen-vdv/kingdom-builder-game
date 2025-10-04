@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngine, runEffects } from '@kingdom-builder/engine';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
 	ACTIONS,
@@ -67,5 +67,38 @@ describe('passive log labels', () => {
 		);
 		expect(expirationLog).toBeTruthy();
 		expect(expirationLog).not.toContain('happiness.tier.summary');
+	});
+
+	it('formats building passives and skips bonus activations', () => {
+		const ctx = createEngine({
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+			populations: POPULATIONS,
+			phases: PHASES,
+			start: GAME_START,
+			rules: RULES,
+		});
+
+		const before = snapshotPlayer(ctx.activePlayer, ctx);
+		runEffects(
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: 'castle_walls' },
+				},
+			],
+			ctx,
+		);
+		const after = snapshotPlayer(ctx.activePlayer, ctx);
+
+		const lines = diffStepSnapshots(before, after, undefined, ctx);
+		expect(lines.some((line) => line.includes('Castle Walls activated'))).toBe(
+			false,
+		);
+		expect(lines.some((line) => line.includes('castle_walls_bonus'))).toBe(
+			false,
+		);
 	});
 });

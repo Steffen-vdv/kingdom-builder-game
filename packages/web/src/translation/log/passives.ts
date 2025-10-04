@@ -19,6 +19,14 @@ function normalizeLabel(value: string | undefined): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function formatFallbackLabel(value: string): string {
+	const spaced = value.replace(/[_-]+/g, ' ').trim();
+	if (spaced.length === 0) {
+		return value;
+	}
+	return spaced.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function resolveSummaryToken(value: string | undefined): string | undefined {
 	const token = normalizeLabel(value);
 	if (!token) {
@@ -47,7 +55,8 @@ export function resolvePassiveLogDetails(
 ): PassiveLogDetails {
 	const icon =
 		passive.meta?.source?.icon ?? passive.icon ?? PASSIVE_INFO.icon ?? '';
-	const label =
+	const fallbackLabel = formatFallbackLabel(passive.id);
+	const rawLabel =
 		normalizeLabel(
 			resolveSummaryToken(passive.meta?.source?.labelToken) ||
 				resolveSummaryToken(passive.detail) ||
@@ -55,7 +64,8 @@ export function resolvePassiveLogDetails(
 				normalizeLabel(passive.detail) ||
 				normalizeLabel(passive.name) ||
 				normalizeLabel(passive.id),
-		) || passive.id;
+		) || fallbackLabel;
+	const label = rawLabel === passive.id ? fallbackLabel : rawLabel;
 	const removal = describeRemoval(passive.meta);
 	const details: PassiveLogDetails = { icon, label };
 	if (removal) {

@@ -17,7 +17,6 @@ import {
 	formatResourceSource,
 	formatStatChange,
 	formatPercentBreakdown,
-	iconPrefix,
 	signedNumber,
 	type SignedDelta,
 } from './diffFormatting';
@@ -202,6 +201,31 @@ function createPassiveMap(passives: PlayerSnapshot['passives']) {
 	return new Map(passives.map((passive) => [passive.id, passive]));
 }
 
+function collectNewBuildings(
+	before: PlayerSnapshot,
+	after: PlayerSnapshot,
+): Set<string> {
+	const previous = new Set(before.buildings);
+	const additions = after.buildings.filter((id) => !previous.has(id));
+	return new Set(additions);
+}
+
+function isBuildingPassive(
+	passiveId: string,
+	newBuildings: Set<string>,
+): boolean {
+	for (const buildingId of newBuildings) {
+		if (passiveId === buildingId || passiveId.startsWith(`${buildingId}_`)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function decoratePassiveLabel(icon: string, label: string): string {
+	return icon ? `${icon}${label}` : label;
+}
+
 export function appendPassiveChanges(
 	changes: string[],
 	before: PlayerSnapshot,
@@ -209,21 +233,25 @@ export function appendPassiveChanges(
 ) {
 	const previous = createPassiveMap(before.passives);
 	const next = createPassiveMap(after.passives);
+	const newBuildings = collectNewBuildings(before, after);
 	for (const [id, passive] of next) {
 		if (previous.has(id)) {
 			continue;
 		}
+		if (isBuildingPassive(id, newBuildings)) {
+			continue;
+		}
 		const { icon, label, removal } = resolvePassiveLogDetails(passive);
-		const prefix = iconPrefix(icon);
+		const decoratedLabel = decoratePassiveLabel(icon, label);
 		const suffix = removal ? ` (${removal})` : '';
-		changes.push(`${prefix}${label} activated${suffix}`);
+		changes.push(`${decoratedLabel} activated${suffix}`);
 	}
 	for (const [id, passive] of previous) {
 		if (next.has(id)) {
 			continue;
 		}
 		const { icon, label } = resolvePassiveLogDetails(passive);
-		const prefix = iconPrefix(icon);
-		changes.push(`${prefix}${label} expired`);
+		const decoratedLabel = decoratePassiveLabel(icon, label);
+		changes.push(`${decoratedLabel} expired`);
 	}
 }
