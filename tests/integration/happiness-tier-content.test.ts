@@ -44,7 +44,7 @@ describe('content happiness tiers', () => {
           "happiness": 3,
           "passives": [
             {
-              "detail": "💰 Income +25% while the realm is content.",
+              "detail": "💰 Income +20% while the realm is content.",
               "id": "passive:happiness:content",
               "meta": {
                 "removal": {
@@ -65,7 +65,7 @@ describe('content happiness tiers', () => {
           "happiness": -10,
           "passives": [
             {
-              "detail": "💰 Income -50%. 📉 Skip Raise Strength. ⚖️ Councils grant half ⚡.",
+              "detail": "💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.",
               "id": "passive:happiness:despair",
               "meta": {
                 "removal": {
@@ -79,10 +79,14 @@ describe('content happiness tiers', () => {
               },
             },
           ],
-          "skipPhases": {},
-          "skipSteps": {
+          "skipPhases": {
             "growth": {
-              "raise-strength": {
+              "passive:happiness:despair": true,
+            },
+          },
+          "skipSteps": {
+            "upkeep": {
+              "war-recovery": {
                 "passive:happiness:despair": true,
               },
             },
@@ -92,7 +96,7 @@ describe('content happiness tiers', () => {
           "happiness": 10,
           "passives": [
             {
-              "detail": "💰 Income +50%. 🏛️ Building costs reduced by 20%.",
+              "detail": "💰 Income +50%. 🏛️ Building costs reduced by 20%. 📈 Growth +20%.",
               "id": "passive:happiness:ecstatic",
               "meta": {
                 "removal": {
@@ -134,12 +138,12 @@ describe('content happiness tiers', () => {
           "happiness": -5,
           "passives": [
             {
-              "detail": "💰 Income -25%. 📉 Skip Raise Strength until spirits recover.",
+              "detail": "💰 Income -25%. ⏭️ Skip Growth until spirits recover.",
               "id": "passive:happiness:grim",
               "meta": {
                 "removal": {
-                  "text": "Removed when happiness leaves the -5 to -4 range",
-                  "token": "happiness leaves the -5 to -4 range",
+                  "text": "Removed when happiness leaves the -7 to -5 range",
+                  "token": "happiness leaves the -7 to -5 range",
                 },
                 "source": {
                   "id": "happiness:tier:grim",
@@ -148,14 +152,12 @@ describe('content happiness tiers', () => {
               },
             },
           ],
-          "skipPhases": {},
-          "skipSteps": {
+          "skipPhases": {
             "growth": {
-              "raise-strength": {
-                "passive:happiness:grim": true,
-              },
+              "passive:happiness:grim": true,
             },
           },
+          "skipSteps": {},
         },
         "joyful": {
           "happiness": 5,
@@ -182,12 +184,12 @@ describe('content happiness tiers', () => {
           "happiness": -8,
           "passives": [
             {
-              "detail": "💰 Income -50%. 📉 Skip Raise Strength while morale is desperate.",
+              "detail": "💰 Income -50%. ⏭️ Skip Growth while morale is desperate.",
               "id": "passive:happiness:misery",
               "meta": {
                 "removal": {
-                  "text": "Removed when happiness leaves the -8 to -6 range",
-                  "token": "happiness leaves the -8 to -6 range",
+                  "text": "Removed when happiness leaves the -9 to -8 range",
+                  "token": "happiness leaves the -9 to -8 range",
                 },
                 "source": {
                   "id": "happiness:tier:misery",
@@ -196,14 +198,12 @@ describe('content happiness tiers', () => {
               },
             },
           ],
-          "skipPhases": {},
-          "skipSteps": {
+          "skipPhases": {
             "growth": {
-              "raise-strength": {
-                "passive:happiness:misery": true,
-              },
+              "passive:happiness:misery": true,
             },
           },
+          "skipSteps": {},
         },
         "steady": {
           "happiness": 0,
@@ -213,8 +213,8 @@ describe('content happiness tiers', () => {
               "id": "passive:happiness:steady",
               "meta": {
                 "removal": {
-                  "text": "Removed when happiness leaves the 0 to 2 range",
-                  "token": "happiness leaves the 0 to 2 range",
+                  "text": "Removed when happiness leaves the -2 to +2 range",
+                  "token": "happiness leaves the -2 to +2 range",
                 },
                 "source": {
                   "id": "happiness:tier:steady",
@@ -234,8 +234,8 @@ describe('content happiness tiers', () => {
               "id": "passive:happiness:unrest",
               "meta": {
                 "removal": {
-                  "text": "Removed when happiness leaves the -3 to -1 range",
-                  "token": "happiness leaves the -3 to -1 range",
+                  "text": "Removed when happiness leaves the -4 to -3 range",
+                  "token": "happiness leaves the -4 to -3 range",
                 },
                 "source": {
                   "id": "happiness:tier:unrest",
