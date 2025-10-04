@@ -151,8 +151,27 @@
   .action-card__badge-pill {
     @apply rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-600 shadow-sm shadow-amber-400/30 dark:bg-slate-800/70 dark:text-amber-300;
   }
+  .action-card__multi-step {
+    @apply flex items-center justify-center rounded-full border border-white/40 bg-white/70 p-1 text-emerald-700 shadow-sm shadow-emerald-400/30 dark:border-white/10 dark:bg-slate-900/70 dark:text-emerald-200;
+  }
+  .action-card__multi-step-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    stroke: currentColor;
+    stroke-width: 1.5;
+  }
+  .action-card__multi-step-icon circle {
+    fill: currentColor;
+    opacity: 0.85;
+  }
   .action-card__option {
     @apply panel-card cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;
+  }
+  .action-card__option--compact {
+    @apply flex min-h-[4.25rem] items-center justify-center gap-2 text-base font-semibold;
+  }
+  .action-card__option--compact .action-card__option-title {
+    @apply text-base font-semibold text-center;
   }
   .action-card__option-title {
     @apply text-base font-semibold;

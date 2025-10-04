@@ -285,6 +285,11 @@ class ActionEffectGroupBuilder {
 		return this;
 	}
 
+	layout(layout: 'default' | 'compact') {
+		this.config.layout = layout;
+		return this;
+	}
+
 	option(option: ActionEffectGroupOptionBuilder | ActionEffectGroupOptionDef) {
 		const built =
 			option instanceof ActionEffectGroupOptionBuilder

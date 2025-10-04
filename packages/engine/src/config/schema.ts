@@ -49,6 +49,7 @@ export const actionEffectGroupSchema = z.object({
 	summary: z.string().optional(),
 	description: z.string().optional(),
 	icon: z.string().optional(),
+	layout: z.enum(['default', 'compact']).optional(),
 	options: z.array(actionEffectGroupOptionSchema).min(1),
 });
 
