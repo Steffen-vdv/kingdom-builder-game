@@ -192,75 +192,72 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
+	const royalDecreeBase = action()
+		.id('royal_decree')
+		.name('Royal Decree')
+		.icon('📜')
+		.cost(Resource.ap, 1)
+		.cost(Resource.gold, 12)
+		.build();
+	const royalDecreeDevelopGroup = actionEffectGroup('royal_decree_develop')
+		.title('Decree a development')
+		.summary('Choose what to raise on the newly claimed land.')
+		.description(
+			'After expanding and tilling, select one project to complete before unrest rises. Each option runs Develop on the prepared land.',
+		)
+		.layout('compact')
+		.option(
+			actionEffectGroupOption('royal_decree_house')
+				.label('Raise a House')
+				.icon('🏠')
+				.summary('Expand housing and raise the population cap by 1.')
+				.action('develop')
+				.param('landId', '$landId')
+				.param('id', 'house'),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_farm')
+				.label('Establish a Farm')
+				.icon('🌾')
+				.summary('Gain +2 gold during each income step.')
+				.action('develop')
+				.param('landId', '$landId')
+				.param('id', 'farm'),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_outpost')
+				.label('Fortify with an Outpost')
+				.icon('🏹')
+				.summary('Gain +1 Army Strength and +1 Fortification Strength.')
+				.action('develop')
+				.param('landId', '$landId')
+				.param('id', 'outpost'),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_watchtower')
+				.label('Raise a Watchtower')
+				.icon('🗼')
+				.summary(
+					'Add +2 Fortification Strength and absorption after one defense.',
+				)
+				.action('develop')
+				.param('landId', '$landId')
+				.param('id', 'watchtower'),
+		)
+		.build();
 	registry.add('royal_decree', {
-		...action()
-			.id('royal_decree')
-			.name('Royal Decree')
-			.icon('📜')
-			.cost(Resource.ap, 1)
-			.cost(Resource.gold, 12)
-			.effect(
-				effect(Types.Action, ActionMethods.PERFORM)
-					.param('id', 'expand')
-					.build(),
-			)
-			.effect(
-				effect(Types.Action, ActionMethods.PERFORM).param('id', 'till').build(),
-			)
-			.effectGroup(
-				actionEffectGroup('royal_decree_develop')
-					.title('Decree a development')
-					.summary('Choose what to raise on the newly claimed land.')
-					.description(
-						'After expanding and tilling, select one project to complete before unrest rises. Each option runs Develop on the prepared land.',
-					)
-					.layout('compact')
-					.option(
-						actionEffectGroupOption('royal_decree_house')
-							.label('Raise a House')
-							.icon('🏠')
-							.summary('Expand housing and raise the population cap by 1.')
-							.action('develop')
-							.param('landId', '$landId')
-							.param('id', 'house'),
-					)
-					.option(
-						actionEffectGroupOption('royal_decree_farm')
-							.label('Establish a Farm')
-							.icon('🌾')
-							.summary('Gain +2 gold during each income step.')
-							.action('develop')
-							.param('landId', '$landId')
-							.param('id', 'farm'),
-					)
-					.option(
-						actionEffectGroupOption('royal_decree_outpost')
-							.label('Fortify with an Outpost')
-							.icon('🏹')
-							.summary('Gain +1 Army Strength and +1 Fortification Strength.')
-							.action('develop')
-							.param('landId', '$landId')
-							.param('id', 'outpost'),
-					)
-					.option(
-						actionEffectGroupOption('royal_decree_watchtower')
-							.label('Raise a Watchtower')
-							.icon('🗼')
-							.summary(
-								'Add +2 Fortification Strength and absorption after one defense.',
-							)
-							.action('develop')
-							.param('landId', '$landId')
-							.param('id', 'watchtower'),
-					),
-			)
-			.effect({
+		...royalDecreeBase,
+		effects: [
+			effect(Types.Action, ActionMethods.PERFORM).param('id', 'expand').build(),
+			effect(Types.Action, ActionMethods.PERFORM).param('id', 'till').build(),
+			royalDecreeDevelopGroup,
+			{
 				type: Types.Resource,
 				method: ResourceMethods.REMOVE,
 				params: resourceParams().key(Resource.happiness).amount(3).build(),
 				meta: { allowShortfall: true },
-			})
-			.build(),
+			},
+		],
 		category: 'basic',
 		order: 5,
 		focus: 'economy',
