@@ -2,7 +2,6 @@ import {
 	EVALUATORS,
 	type EffectDef,
 	type EngineContext,
-	type PassiveSummary,
 	type PlayerId,
 } from '@kingdom-builder/engine';
 import {
@@ -16,151 +15,22 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import { formatStatValue, statDisplaysAsPercent } from '../utils/stats';
+import type { PlayerSnapshot } from './log/snapshots';
+import { resolvePassiveLogDetails } from './log/snapshots';
+export {
+	diffSnapshots,
+	snapshotPlayer,
+	resolvePassiveLogDetails,
+} from './log/snapshots';
+export type { PlayerSnapshot } from './log/snapshots';
 interface StepDef {
 	id: string;
 	title?: string;
 	triggers?: string[];
 	effects?: EffectDef[];
 }
-import { logContent, type Land } from './content';
+import { logContent } from './content';
 import { resolveBuildingIcon } from './content/buildingIcons';
-
-export interface PlayerSnapshot {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	buildings: string[];
-	lands: {
-		id: string;
-		slotsMax: number;
-		slotsUsed: number;
-		developments: string[];
-	}[];
-	passives: PassiveSummary[];
-}
-
-export function snapshotPlayer(
-	player: {
-		id: string;
-		resources: Record<string, number>;
-		stats: Record<string, number>;
-		buildings: Set<string>;
-		lands: Land[];
-	},
-	ctx: EngineContext,
-): PlayerSnapshot {
-	return {
-		resources: { ...player.resources },
-		stats: { ...player.stats },
-		buildings: Array.from(player.buildings ?? []),
-		lands: player.lands.map((l) => ({
-			id: l.id,
-			slotsMax: l.slotsMax,
-			slotsUsed: l.slotsUsed,
-			developments: [...l.developments],
-		})),
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-		passives: ctx.passives.list(player.id as PlayerId),
-	};
-}
-
-export function diffSnapshots(
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-	ctx: EngineContext,
-	resourceKeys: ResourceKey[] = Object.keys({
-		...before.resources,
-		...after.resources,
-	}) as ResourceKey[],
-): string[] {
-	const changes: string[] = [];
-	for (const key of resourceKeys) {
-		const b = before.resources[key] ?? 0;
-		const a = after.resources[key] ?? 0;
-		if (a !== b) {
-			const info = RESOURCES[key];
-			const icon = info?.icon ? `${info.icon} ` : '';
-			const label = info?.label ?? key;
-			const delta = a - b;
-			changes.push(
-				`${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-			);
-		}
-	}
-	for (const key of Object.keys(after.stats)) {
-		const b = before.stats[key] ?? 0;
-		const a = after.stats[key] ?? 0;
-		if (a !== b) {
-			const info = STATS[key as keyof typeof STATS];
-			const icon = info?.icon ? `${info.icon} ` : '';
-			const label = info?.label ?? key;
-			const delta = a - b;
-			if (statDisplaysAsPercent(key)) {
-				const bPerc = b * 100;
-				const aPerc = a * 100;
-				const dPerc = delta * 100;
-				changes.push(
-					`${icon}${label} ${dPerc >= 0 ? '+' : ''}${dPerc}% (${bPerc}→${aPerc}%)`,
-				);
-			} else {
-				changes.push(
-					`${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`,
-				);
-			}
-		}
-	}
-	const beforeB = new Set(before.buildings);
-	const afterB = new Set(after.buildings);
-	for (const id of afterB) {
-		if (!beforeB.has(id)) {
-			const label = logContent('building', id, ctx)[0] ?? id;
-			changes.push(`${label} built`);
-		}
-	}
-	for (const land of after.lands) {
-		const prev = before.lands.find((l) => l.id === land.id);
-		if (!prev) {
-			changes.push(`${LAND_INFO.icon} +1 ${LAND_INFO.label}`);
-			continue;
-		}
-		for (const dev of land.developments) {
-			if (!prev.developments.includes(dev)) {
-				const label = logContent('development', dev, ctx)[0] ?? dev;
-				changes.push(`${LAND_INFO.icon} +${label}`);
-			}
-		}
-	}
-	const beforeSlots = before.lands.reduce((sum, l) => sum + l.slotsMax, 0);
-	const afterSlots = after.lands.reduce((sum, l) => sum + l.slotsMax, 0);
-	const newLandSlots = after.lands
-		.filter((l) => !before.lands.some((b) => b.id === l.id))
-		.reduce((sum, l) => sum + l.slotsMax, 0);
-	const slotDelta = afterSlots - newLandSlots - beforeSlots;
-	if (slotDelta !== 0) {
-		changes.push(
-			`${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
-		);
-	}
-	const beforePassiveMap = new Map(before.passives.map((p) => [p.id, p]));
-	const afterPassiveMap = new Map(after.passives.map((p) => [p.id, p]));
-	for (const [id, passive] of afterPassiveMap) {
-		if (beforePassiveMap.has(id)) {
-			continue;
-		}
-		const { icon, label, removal } = resolvePassiveLogDetails(passive);
-		const prefix = icon ? `${icon} ` : '';
-		const suffix = removal ? ` (${removal})` : '';
-		changes.push(`${prefix}${label} activated${suffix}`);
-	}
-	for (const [id, passive] of beforePassiveMap) {
-		if (afterPassiveMap.has(id)) {
-			continue;
-		}
-		const { icon, label } = resolvePassiveLogDetails(passive);
-		const prefix = icon ? `${icon} ` : '';
-		changes.push(`${prefix}${label} expired`);
-	}
-	return changes;
-}
 
 interface ResourceSourceEntry {
 	icons: string;
@@ -426,26 +296,6 @@ function findStatPctBreakdown(
 		return undefined;
 	};
 	return walk(step?.effects, undefined);
-}
-
-function resolvePassiveLogDetails(passive: PassiveSummary) {
-	const icon =
-		passive.meta?.source?.icon ?? passive.icon ?? PASSIVE_INFO.icon ?? '';
-	const label =
-		[passive.meta?.source?.labelToken, passive.detail, passive.name, passive.id]
-			.map((candidate) => candidate?.trim())
-			.find((candidate) => candidate && candidate.length > 0) ?? passive.id;
-	let removal: string | undefined;
-	const removalText = passive.meta?.removal?.text;
-	if (removalText && removalText.trim().length > 0) {
-		removal = removalText;
-	} else {
-		const removalToken = passive.meta?.removal?.token;
-		if (removalToken && removalToken.trim().length > 0) {
-			removal = `Removed when ${removalToken}`;
-		}
-	}
-	return { icon, label, removal };
 }
 
 export function diffStepSnapshots(
