@@ -91,28 +91,42 @@ interface ResultModifierSource {
 const resolveIcon = (icon?: string) =>
 	icon && icon.trim() ? icon : GENERAL_RESOURCE_ICON;
 
+const formatPercentText = (percent: number) => {
+	const scaled = Number((percent * 100).toFixed(2));
+	const normalized = Object.is(scaled, -0) ? 0 : scaled;
+	const sign = percent >= 0 ? '+' : '';
+	return `${sign}${normalized}%`;
+};
+
 export function formatGainFrom(
 	label: ResultModifierLabel,
 	source: ResultModifierSource,
 	amount: number,
-	options: { key?: string; detailed?: boolean } = {},
+	options: { key?: string; detailed?: boolean; percent?: number } = {},
 ) {
-	const { key, detailed } = options;
+	const { key, detailed, percent } = options;
 	const resourceInfo = key ? RESOURCES[key as ResourceKey] : undefined;
 	const resIcon = resourceInfo?.icon || key;
-	const amountText = `${signed(amount)}${amount}`;
+	const usePercent = typeof percent === 'number' && !Number.isNaN(percent);
+	const value = usePercent ? Number(percent) : amount;
+	const normalizedValue = Object.is(value, -0) ? 0 : value;
+	const amountText = usePercent
+		? formatPercentText(normalizedValue)
+		: `${signed(normalizedValue)}${normalizedValue}`;
 
 	if (!detailed) {
 		const context = source.summaryContextIcon
 			? `(${source.summaryContextIcon})`
 			: '';
 		const prefix = `${label.icon}${source.summaryTargetIcon}${context}:`;
-		const icon = resolveIcon(resIcon);
-		return `${prefix} ${icon}${amountText}`;
+		const icon = usePercent ? '' : resolveIcon(resIcon);
+		const valueText = icon ? `${icon}${amountText}` : amountText;
+		return `${prefix} ${valueText}`;
 	}
 
-	const moreIcon = resolveIcon(resIcon);
-	const more = `${moreIcon}${amountText} more${detailed ? ' of that resource' : ''}`;
+	const moreIcon = usePercent ? '' : resolveIcon(resIcon);
+	const moreValue = moreIcon ? `${moreIcon}${amountText}` : amountText;
+	const more = `${moreValue} more${detailed ? ' of that resource' : ''}`;
 	return formatResultModifierClause(
 		`${label.icon} ${label.label}`,
 		source.description,
@@ -129,9 +143,30 @@ export function formatDevelopment(
 	detailed: boolean,
 ) {
 	const { icon, name } = getDevelopmentInfo(ctx, evaluation.id);
-	const target = formatTargetLabel(icon, name);
+	const fallbackLabelFromId = () => {
+		const rawId = eff.params?.['id'];
+		if (typeof rawId !== 'string' || rawId.trim().length === 0) {
+			return undefined;
+		}
+		const slug = rawId.split(':').pop();
+		if (!slug) {
+			return undefined;
+		}
+		return slug
+			.split(/[-_]/)
+			.filter(Boolean)
+			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+			.join(' ');
+	};
+	const fallback = fallbackLabelFromId() ?? 'Income';
+	const target = formatTargetLabel(icon, name) || fallback;
+	const summaryTargetIcon = icon?.trim()
+		? icon
+		: name?.trim()
+			? name
+			: fallback;
 	const source = {
-		summaryTargetIcon: icon || name,
+		summaryTargetIcon,
 		description: target,
 	};
 	const resource = eff.effects?.find(
@@ -143,6 +178,11 @@ export function formatDevelopment(
 		const rawAmount = Number(resource.params?.['amount']);
 		const amount = resource.method === 'remove' ? -rawAmount : rawAmount;
 		return formatGainFrom(label, source, amount, { key, detailed });
+	}
+	const percentParam = eff.params?.['percent'];
+	if (percentParam !== undefined) {
+		const percent = Number(percentParam);
+		return formatGainFrom(label, source, percent, { detailed, percent });
 	}
 	const amount = Number(eff.params?.['amount'] ?? 0);
 	return formatGainFrom(label, source, amount, { detailed });
@@ -179,70 +219,6 @@ export function getActionInfo(ctx: EngineContext, id: string) {
 	} catch {
 		return { icon: id, name: id };
 	}
-}
-
-export interface TransferModifierTarget {
-	actionId?: string;
-	icon: string;
-	name: string;
-	summaryLabel: string;
-	clauseTarget: string;
-}
-
-export function resolveTransferModifierTarget(
-	eff: EffectDef,
-	evaluation: { type: string; id: string } | undefined,
-	ctx: EngineContext,
-): TransferModifierTarget {
-	const params = eff.params ?? {};
-	const rawActionId = params['actionId'];
-	const paramActionId =
-		typeof rawActionId === 'string' ? rawActionId : undefined;
-	const evaluationId = evaluation?.id;
-	const candidates = [paramActionId, evaluationId].filter(
-		(id): id is string => typeof id === 'string' && id.length > 0,
-	);
-
-	for (const candidate of candidates) {
-		if (!ctx.actions.has(candidate)) {
-			continue;
-		}
-		const info = getActionInfo(ctx, candidate);
-		const hasIcon = info.icon && info.icon.trim().length > 0;
-		const summaryLabel = hasIcon ? info.icon : info.name;
-		return {
-			actionId: candidate,
-			icon: info.icon,
-			name: info.name,
-			summaryLabel,
-			clauseTarget: formatTargetLabel(info.icon, info.name),
-		};
-	}
-
-	let fallbackName = 'affected actions';
-	if (paramActionId) {
-		fallbackName = paramActionId;
-	} else if (evaluationId) {
-		fallbackName = evaluationId;
-	} else if (evaluation?.type === 'transfer_pct') {
-		fallbackName = 'resource transfers';
-	} else if (evaluation) {
-		fallbackName = evaluation.type;
-	}
-	if (
-		evaluation?.type === 'transfer_pct' &&
-		(!evaluationId || evaluationId === 'percent')
-	) {
-		fallbackName = 'resource transfers';
-	}
-
-	const clauseTarget = formatTargetLabel('', fallbackName);
-	return {
-		icon: '',
-		name: fallbackName,
-		summaryLabel: fallbackName,
-		clauseTarget,
-	};
 }
 
 export function getDevelopmentInfo(ctx: EngineContext, id: string) {
