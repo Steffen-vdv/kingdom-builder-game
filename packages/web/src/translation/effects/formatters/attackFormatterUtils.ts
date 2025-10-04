@@ -1,4 +1,4 @@
-import { STATS, Stat, type ResourceKey } from '@kingdom-builder/contents';
+import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	EngineContext,
 	EffectDef,
@@ -7,12 +7,13 @@ import type {
 import type { SummaryEntry } from '../../content';
 import { summarizeEffects, describeEffects } from '../factory';
 import {
-	resolveAttackTargetFormatter,
 	type AttackTargetFormatter,
-	type TargetInfo,
-	type AttackTarget,
 	type Mode,
 } from './attack/target-formatter';
+import {
+	resolveAttackFormatterContext,
+	type AttackFormatterContext,
+} from './attack/statContext';
 
 type DamageEffectCategorizer = (
 	item: SummaryEntry,
@@ -27,13 +28,7 @@ const DAMAGE_EFFECT_CATEGORIES: Record<string, DamageEffectCategorizer> = {
 	],
 };
 
-export type BaseEntryResult = {
-	entry: SummaryEntry;
-	formatter: AttackTargetFormatter;
-	info: TargetInfo;
-	target: AttackTarget;
-	targetLabel: string;
-};
+export type BaseEntryResult = AttackFormatterContext & { entry: SummaryEntry };
 
 export function categorizeDamageEffects(
 	effectDefinition: EffectDef,
@@ -56,29 +51,30 @@ export function buildBaseEntry(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	mode: Mode,
 ): BaseEntryResult {
-	const army = STATS[Stat.armyStrength];
-	const absorption = STATS[Stat.absorption];
-	const fort = STATS[Stat.fortificationStrength];
-	const { formatter, target, info, targetLabel } =
-		resolveAttackTargetFormatter(effectDefinition);
+	const context = resolveAttackFormatterContext(effectDefinition);
 	const ignoreAbsorption = Boolean(
 		effectDefinition.params?.['ignoreAbsorption'],
 	);
 	const ignoreFortification = Boolean(
 		effectDefinition.params?.['ignoreFortification'],
 	);
-	const entry = formatter.buildBaseEntry({
+	const entry = context.formatter.buildBaseEntry({
 		mode,
-		army,
-		absorption,
-		fort,
-		info,
-		target,
-		targetLabel,
+		stats: context.stats,
+		info: context.info,
+		target: context.target,
+		targetLabel: context.targetLabel,
 		ignoreAbsorption,
 		ignoreFortification,
 	});
-	return { entry, formatter, info, target, targetLabel };
+	return {
+		entry,
+		formatter: context.formatter,
+		info: context.info,
+		target: context.target,
+		targetLabel: context.targetLabel,
+		stats: context.stats,
+	};
 }
 
 export function summarizeOnDamage(

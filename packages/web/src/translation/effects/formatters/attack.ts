@@ -1,4 +1,4 @@
-import { STATS, Stat, type ResourceKey } from '@kingdom-builder/contents';
+import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	AttackLog,
 	AttackOnDamageLogEntry,
@@ -15,8 +15,11 @@ import {
 	collectTransferPercents,
 } from './attackFormatterUtils';
 import {
+	resolveAttackFormatterContext,
+	type AttackFormatterContext,
+} from './attack/statContext';
+import {
 	resolveAttackTargetFormatter,
-	resolveAttackTargetFormatterFromLogTarget,
 	type AttackTargetFormatter,
 } from './attack/target-formatter';
 
@@ -66,19 +69,15 @@ function fallbackLog(
 	return parts;
 }
 
-function buildEvaluationEntry(log: AttackLog['evaluation']): SummaryEntry {
-	const { formatter, info, target, targetLabel } =
-		resolveAttackTargetFormatterFromLogTarget(log.target);
-	const army = STATS[Stat.armyStrength];
-	const absorption = STATS[Stat.absorption];
-	const fort = STATS[Stat.fortificationStrength];
-	return formatter.buildEvaluationEntry(log, {
-		army,
-		absorption,
-		fort,
-		info,
-		target,
-		targetLabel,
+function buildEvaluationEntry(
+	log: AttackLog['evaluation'],
+	context: AttackFormatterContext,
+): SummaryEntry {
+	return context.formatter.buildEvaluationEntry(log, {
+		stats: context.stats,
+		info: context.info,
+		target: context.target,
+		targetLabel: context.targetLabel,
 	});
 }
 
@@ -211,7 +210,10 @@ registerEffectFormatter('attack', 'perform', {
 		if (!log) {
 			return fallbackLog(effect, ctx);
 		}
-		const entries: SummaryEntry[] = [buildEvaluationEntry(log.evaluation)];
+		const contextDetails = resolveAttackFormatterContext(effect);
+		const entries: SummaryEntry[] = [
+			buildEvaluationEntry(log.evaluation, contextDetails),
+		];
 		const onDamage = buildOnDamageEntry(log.onDamage, ctx, effect);
 		if (onDamage) {
 			entries.push(onDamage);

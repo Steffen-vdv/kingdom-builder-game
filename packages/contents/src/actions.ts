@@ -289,6 +289,9 @@ export function createActionRegistry() {
 				effect('attack', 'perform')
 					.params(
 						attackParams()
+							.powerStat(Stat.armyStrength)
+							.absorptionStat(Stat.absorption)
+							.fortificationStat(Stat.fortificationStrength)
 							.targetResource(Resource.castleHP)
 							.onDamageAttacker(
 								effect(Types.Resource, ResourceMethods.ADD)
