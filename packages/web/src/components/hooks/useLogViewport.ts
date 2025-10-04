@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, Dispatch, RefObject, SetStateAction } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 interface ViewportSize {
@@ -12,17 +12,15 @@ interface OverlayOffsets {
 }
 
 interface UseLogViewportOptions {
-	outerRef: React.RefObject<HTMLDivElement>;
+	outerRef: RefObject<HTMLDivElement>;
 	isExpanded: boolean;
 }
 
 interface UseLogViewportResult {
 	collapsedSize: ViewportSize | null;
-	setCollapsedSize: React.Dispatch<React.SetStateAction<ViewportSize | null>>;
+	setCollapsedSize: Dispatch<SetStateAction<ViewportSize | null>>;
 	overlayOffsets: OverlayOffsets | null;
-	setOverlayOffsets: React.Dispatch<
-		React.SetStateAction<OverlayOffsets | null>
-	>;
+	setOverlayOffsets: Dispatch<SetStateAction<OverlayOffsets | null>>;
 	viewport: ViewportSize;
 }
 
