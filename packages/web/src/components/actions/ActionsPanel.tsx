@@ -1,12 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-	getActionCosts,
-	getActionRequirements,
-	getActionEffectGroups,
-	type ActionEffectGroup,
-	type ActionEffectGroupOption,
-	type ActionEffectGroupChoiceMap,
-} from '@kingdom-builder/engine';
+import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
 import {
 	RESOURCES,
 	POPULATION_ROLES,
@@ -14,7 +7,6 @@ import {
 	SLOT_INFO,
 	LAND_INFO,
 	type Focus,
-	type ResourceKey,
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
 import {
@@ -23,13 +15,15 @@ import {
 	splitSummary,
 	type Summary,
 } from '../../translation';
-import ActionCard, { type ActionCardOption } from './ActionCard';
+import ActionCard from './ActionCard';
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import GenericActions from './GenericActions';
+import { formatMissingResources } from './utils';
 
-interface Action {
+export interface Action {
 	id: string;
 	name: string;
 	system?: boolean;
@@ -67,38 +61,9 @@ interface PopulationDefinition {
 	onGainAPStep?: unknown[];
 }
 
-type DisplayPlayer = ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
-
-function isResourceKey(key: string): key is ResourceKey {
-	return key in RESOURCES;
-}
-
-function formatMissingResources(
-	costs: Record<string, number>,
-	playerResources: Record<string, number | undefined>,
-) {
-	const missing: string[] = [];
-	for (const [key, required] of Object.entries(costs)) {
-		const available = playerResources[key] ?? 0;
-		const shortage = required - available;
-		if (shortage <= 0) {
-			continue;
-		}
-		if (isResourceKey(key)) {
-			missing.push(
-				`${shortage} ${RESOURCES[key].icon} ${RESOURCES[key].label}`,
-			);
-		} else {
-			missing.push(`${shortage} ${key}`);
-		}
-	}
-
-	if (missing.length === 0) {
-		return undefined;
-	}
-
-	return `Need ${missing.join(', ')}`;
-}
+export type DisplayPlayer = ReturnType<
+	typeof useGameEngine
+>['ctx']['activePlayer'];
 
 type EffectConfig = {
 	type?: string;
@@ -122,14 +87,6 @@ type PopulationRegistryLike = {
 	get(id: string): PopulationDefinition;
 	entries(): [string, PopulationDefinition][];
 };
-
-interface PendingActionState {
-	action: Action;
-	groups: ActionEffectGroup[];
-	step: number;
-	params: Record<string, unknown>;
-	choices: ActionEffectGroupChoiceMap;
-}
 
 function isHirablePopulation(
 	population: PopulationDefinition | undefined,
@@ -292,237 +249,6 @@ function buildRequirementIconsForRole(
 		}
 	}
 	return Array.from(icons).filter(Boolean);
-}
-
-function GenericActions({
-	actions,
-	summaries,
-	player,
-	canInteract,
-}: {
-	actions: Action[];
-	summaries: Map<string, Summary>;
-	player: DisplayPlayer;
-	canInteract: boolean;
-}) {
-	const {
-		ctx,
-		handlePerform,
-		handleHoverCard,
-		clearHoverCard,
-		actionCostResource,
-	} = useGameEngine();
-	const formatRequirement = (req: string) => req;
-	const [pending, setPending] = useState<PendingActionState | null>(null);
-
-	useEffect(() => {
-		if (!canInteract) {
-			setPending(null);
-		}
-	}, [canInteract]);
-
-	const cancelPending = useCallback(() => {
-		clearHoverCard();
-		setPending(null);
-	}, [clearHoverCard]);
-
-	const beginSelection = useCallback(
-		(targetAction: Action, groups: ActionEffectGroup[]) => {
-			if (groups.length === 0) {
-				return;
-			}
-			const placeholders = new Set<string>();
-			for (const group of groups) {
-				for (const option of group.options) {
-					for (const value of Object.values(option.params || {})) {
-						if (typeof value === 'string' && value.startsWith('$')) {
-							placeholders.add(value.slice(1));
-						}
-					}
-				}
-			}
-			const params: Record<string, unknown> = {};
-			if (placeholders.has('landId')) {
-				const nextIndex = ctx.activePlayer.lands.length + 1;
-				params.landId = `${ctx.activePlayer.id}-L${nextIndex}`;
-			}
-			if (placeholders.has('playerId')) {
-				params.playerId = ctx.activePlayer.id;
-			}
-			clearHoverCard();
-			setPending({
-				action: targetAction,
-				groups,
-				step: 0,
-				params,
-				choices: {},
-			});
-		},
-		[clearHoverCard, ctx.activePlayer.id, ctx.activePlayer.lands.length],
-	);
-
-	const handleOptionSelect = useCallback(
-		(group: ActionEffectGroup, option: ActionEffectGroupOption) => {
-			setPending((prev) => {
-				if (!prev) {
-					return prev;
-				}
-				const current = prev.groups[prev.step];
-				if (!current || current.id !== group.id) {
-					return prev;
-				}
-				const nextChoices: ActionEffectGroupChoiceMap = {
-					...prev.choices,
-					[group.id]: { optionId: option.id },
-				};
-				if (prev.step + 1 < prev.groups.length) {
-					return { ...prev, step: prev.step + 1, choices: nextChoices };
-				}
-				void handlePerform(prev.action, {
-					...prev.params,
-					choices: nextChoices,
-				});
-				return null;
-			});
-		},
-		[handlePerform],
-	);
-	const entries = useMemo(() => {
-		return actions
-			.map((action) => {
-				const costsBag = getActionCosts(action.id, ctx);
-				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) {
-					costs[k] = v ?? 0;
-				}
-				const total = Object.entries(costs).reduce(
-					(sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
-					0,
-				);
-				const groups = getActionEffectGroups(action.id, ctx);
-				return { action, costs, total, groups };
-			})
-			.sort((a, b) => a.total - b.total);
-	}, [actions, ctx, actionCostResource]);
-	return (
-		<>
-			{entries.map(({ action, costs, groups }) => {
-				const requirements = getActionRequirements(action.id, ctx).map(
-					formatRequirement,
-				);
-				const requirementIcons = getRequirementIcons(action.id, ctx);
-				const canPay = Object.entries(costs).every(
-					([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
-				);
-				const meetsReq = requirements.length === 0;
-				const summary = summaries.get(action.id);
-				const implemented = (summary?.length ?? 0) > 0; // TODO: implement action effects
-				const baseEnabled = canPay && meetsReq && canInteract && implemented;
-				const isPending = pending?.action.id === action.id;
-				const cardEnabled = isPending ? true : baseEnabled && !pending;
-				const insufficientTooltip = formatMissingResources(
-					costs,
-					player.resources,
-				);
-				const title = !implemented
-					? 'Not implemented yet'
-					: !meetsReq
-						? requirements.join(', ')
-						: !canPay
-							? (insufficientTooltip ?? 'Cannot pay costs')
-							: undefined;
-				const stepCount = groups.length > 0 ? groups.length : undefined;
-				const stepIndex = stepCount
-					? isPending
-						? Math.min(stepCount, (pending?.step ?? 0) + 1)
-						: 1
-					: undefined;
-				const currentGroup = isPending
-					? pending?.groups[pending.step]
-					: undefined;
-				const optionCards = currentGroup
-					? currentGroup.options.map((option) => {
-							const opt: ActionCardOption = {
-								id: option.id,
-								label: option.label,
-								onSelect: () => handleOptionSelect(currentGroup, option),
-							};
-							if (option.icon) {
-								opt.icon = option.icon;
-							}
-							if (option.summary) {
-								opt.summary = option.summary;
-							}
-							if (option.description) {
-								opt.description = option.description;
-							}
-							return opt;
-						})
-					: undefined;
-				return (
-					<ActionCard
-						key={action.id}
-						title={
-							<>
-								{ctx.actions.get(action.id)?.icon || ''} {action.name}
-							</>
-						}
-						costs={costs}
-						playerResources={player.resources}
-						actionCostResource={actionCostResource}
-						requirements={requirements}
-						requirementIcons={requirementIcons}
-						summary={summary}
-						implemented={implemented}
-						enabled={cardEnabled}
-						tooltip={title}
-						focus={(ctx.actions.get(action.id) as Action | undefined)?.focus}
-						variant={isPending ? 'back' : 'front'}
-						stepCount={stepCount}
-						stepIndex={stepIndex}
-						promptTitle={currentGroup?.title}
-						promptSummary={currentGroup?.summary}
-						promptDescription={currentGroup?.description}
-						options={optionCards}
-						onCancel={isPending ? cancelPending : undefined}
-						onClick={() => {
-							if (!canInteract || !baseEnabled) {
-								return;
-							}
-							if (groups.length > 0) {
-								beginSelection(action, groups);
-								return;
-							}
-							setPending(null);
-							void handlePerform(action);
-						}}
-						onMouseEnter={
-							isPending
-								? undefined
-								: () => {
-										const full = describeContent('action', action.id, ctx);
-										const { effects, description } = splitSummary(full);
-										handleHoverCard({
-											title: `${ctx.actions.get(action.id)?.icon || ''} ${action.name}`,
-											effects,
-											requirements,
-											costs,
-											...(description && { description }),
-											...(!implemented && {
-												description: 'Not implemented yet',
-												descriptionClass: 'italic text-red-600',
-											}),
-											bgClass:
-												'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
-										});
-									}
-						}
-						onMouseLeave={isPending ? undefined : clearHoverCard}
-					/>
-				);
-			})}
-		</>
-	);
 }
 
 function RaisePopOptions({
