@@ -4,18 +4,27 @@ import type { ResourceKey } from '@kingdom-builder/contents';
 import type { Summary } from './content';
 
 export function renderSummary(summary: Summary | undefined): React.ReactNode {
-	return summary?.map((e, i) =>
-		typeof e === 'string' ? (
-			<li key={i} className="whitespace-pre-line">
-				{e}
-			</li>
-		) : (
+	return summary?.map((e, i) => {
+		if (typeof e === 'string') {
+			const trimmed = e.trim();
+			const isNoEffect = trimmed === 'No effect';
+			const baseClass = 'whitespace-pre-line';
+			const className = isNoEffect
+				? `${baseClass} italic text-slate-500 dark:text-slate-300`
+				: baseClass;
+			return (
+				<li key={i} className={className}>
+					{trimmed}
+				</li>
+			);
+		}
+		return (
 			<li key={i}>
 				<span className="font-semibold">{e.title}</span>
 				<ul className="list-disc pl-4">{renderSummary(e.items)}</ul>
 			</li>
-		),
-	);
+		);
+	});
 }
 
 export function renderCosts(
