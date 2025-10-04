@@ -47,6 +47,27 @@ export class Services {
 			if (enterEffects.length) {
 				runEffects(enterEffects, context);
 			}
+			const passiveId = nextTier.preview?.id;
+			const summaryToken =
+				nextTier.display?.summaryToken ?? nextTier.text?.summary;
+			if (passiveId && summaryToken) {
+				const passive = context.passives.get(passiveId, player.id);
+				if (passive) {
+					passive.detail = summaryToken;
+					const existingMeta = passive.meta ?? {};
+					const baseSource = existingMeta.source ?? {
+						type: 'tiered-resource',
+						id: nextTier.id,
+					};
+					passive.meta = {
+						...existingMeta,
+						source: {
+							...baseSource,
+							labelToken: summaryToken,
+						},
+					};
+				}
+			}
 			this.activeTiers.set(player.id, nextTier);
 		} else {
 			this.activeTiers.delete(player.id);

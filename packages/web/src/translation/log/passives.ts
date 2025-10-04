@@ -1,5 +1,9 @@
 import { PASSIVE_INFO } from '@kingdom-builder/contents';
 import { type PassiveSummary } from '@kingdom-builder/engine';
+import {
+	hasTierSummaryTranslation,
+	translateTierSummary,
+} from '../content/tierSummaries';
 
 interface PassiveLogDetails {
 	icon: string;
@@ -7,13 +11,23 @@ interface PassiveLogDetails {
 	removal?: string;
 }
 
-function pickFirstLabelCandidate(values: Array<string | undefined>): string {
-	for (const value of values) {
-		if (value && value.trim().length > 0) {
-			return value.trim();
-		}
+function normalizeLabel(value: string | undefined): string | undefined {
+	if (!value) {
+		return undefined;
 	}
-	return '';
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function resolveSummaryToken(value: string | undefined): string | undefined {
+	const token = normalizeLabel(value);
+	if (!token) {
+		return undefined;
+	}
+	if (!hasTierSummaryTranslation(token)) {
+		return undefined;
+	}
+	return translateTierSummary(token) ?? token;
 }
 
 function describeRemoval(meta: PassiveSummary['meta']): string | undefined {
@@ -34,12 +48,14 @@ export function resolvePassiveLogDetails(
 	const icon =
 		passive.meta?.source?.icon ?? passive.icon ?? PASSIVE_INFO.icon ?? '';
 	const label =
-		pickFirstLabelCandidate([
-			passive.meta?.source?.labelToken,
-			passive.detail,
-			passive.name,
-			passive.id,
-		]) || passive.id;
+		normalizeLabel(
+			resolveSummaryToken(passive.meta?.source?.labelToken) ||
+				resolveSummaryToken(passive.detail) ||
+				normalizeLabel(passive.meta?.source?.labelToken) ||
+				normalizeLabel(passive.detail) ||
+				normalizeLabel(passive.name) ||
+				normalizeLabel(passive.id),
+		) || passive.id;
 	const removal = describeRemoval(passive.meta);
 	const details: PassiveLogDetails = { icon, label };
 	if (removal) {

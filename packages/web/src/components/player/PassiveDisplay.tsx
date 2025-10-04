@@ -6,7 +6,12 @@ import {
 	PASSIVE_INFO,
 	POPULATIONS,
 } from '@kingdom-builder/contents';
-import { describeEffects, splitSummary } from '../../translation';
+import {
+	describeEffects,
+	splitSummary,
+	hasTierSummaryTranslation,
+	translateTierSummary,
+} from '../../translation';
 import type {
 	EffectDef,
 	EngineContext,
@@ -118,20 +123,33 @@ export default function PassiveDisplay({
 		>,
 	) => {
 		const meta = def.meta ?? summary.meta;
-		const labelToken = meta?.source?.labelToken;
-		if (labelToken && labelToken.trim().length > 0) {
-			return labelToken;
-		}
-		if (def.detail && def.detail.trim().length > 0) {
-			return def.detail;
-		}
-		if (summary.detail && summary.detail.trim().length > 0) {
-			return summary.detail;
-		}
-		if (summary.name && summary.name.trim().length > 0) {
-			return summary.name;
-		}
-		return summary.id;
+		const normalize = (value: string | undefined) => {
+			if (!value) {
+				return undefined;
+			}
+			const trimmed = value.trim();
+			return trimmed.length > 0 ? trimmed : undefined;
+		};
+		const translateToken = (value: string | undefined) => {
+			const token = normalize(value);
+			if (!token) {
+				return undefined;
+			}
+			if (!hasTierSummaryTranslation(token)) {
+				return undefined;
+			}
+			return translateTierSummary(token) ?? token;
+		};
+		return (
+			translateToken(meta?.source?.labelToken) ||
+			translateToken(def.detail) ||
+			translateToken(summary.detail) ||
+			normalize(meta?.source?.labelToken) ||
+			normalize(def.detail) ||
+			normalize(summary.detail) ||
+			normalize(summary.name) ||
+			summary.id
+		);
 	};
 
 	const animatePassives = useAnimate<HTMLDivElement>();

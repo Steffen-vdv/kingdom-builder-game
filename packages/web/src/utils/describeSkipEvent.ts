@@ -1,4 +1,8 @@
 import type { AdvanceSkip } from '@kingdom-builder/engine';
+import {
+	hasTierSummaryTranslation,
+	translateTierSummary,
+} from '../translation/content';
 
 type PhaseLike = {
 	id: string;
@@ -40,6 +44,37 @@ function renderLabel(
 	return trimmedLabel;
 }
 
+function resolveSourceLabel(
+	detail: string | undefined,
+	labelToken: string | undefined,
+	fallback: string,
+) {
+	const normalize = (value: string | undefined) => {
+		if (!value) {
+			return undefined;
+		}
+		const trimmed = value.trim();
+		return trimmed.length > 0 ? trimmed : undefined;
+	};
+	const translateToken = (value: string | undefined) => {
+		const token = normalize(value);
+		if (!token) {
+			return undefined;
+		}
+		if (!hasTierSummaryTranslation(token)) {
+			return undefined;
+		}
+		return translateTierSummary(token) ?? token;
+	};
+	return (
+		translateToken(detail) ||
+		translateToken(labelToken) ||
+		normalize(detail) ||
+		normalize(labelToken) ||
+		fallback
+	);
+}
+
 function describeSources(skip: AdvanceSkip) {
 	if (!skip.sources.length) {
 		return { list: [] as string[], summary: 'Skipped' };
@@ -49,7 +84,7 @@ function describeSources(skip: AdvanceSkip) {
 		const detail = source.detail;
 		const labelToken = source.meta?.source?.labelToken;
 		const id = source.meta?.source?.id ?? source.id;
-		const label = detail ?? labelToken ?? id;
+		const label = resolveSourceLabel(detail, labelToken, id);
 		if (icon) {
 			return `${icon} ${label}`;
 		}
