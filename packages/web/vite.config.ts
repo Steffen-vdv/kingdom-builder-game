@@ -7,16 +7,16 @@ const rootDir = fileURLToPath(new URL('.', import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@kingdom-builder/contents': path.resolve(rootDir, '../contents/src'),
-      '@kingdom-builder/engine': path.resolve(rootDir, '../engine/src'),
-    },
-  },
-  build: {
-    rollupOptions: {
-      input: path.resolve(rootDir, 'index.html'),
-    },
-  },
+	plugins: [react()],
+	resolve: {
+		alias: {
+			'@kingdom-builder/contents': path.resolve(rootDir, '../contents/src'),
+			'@kingdom-builder/engine': path.resolve(rootDir, '../engine/src'),
+		},
+	},
+	build: {
+		rollupOptions: {
+			input: path.resolve(rootDir, 'index.html'),
+		},
+	},
 });

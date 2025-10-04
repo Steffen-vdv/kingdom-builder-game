@@ -1,4 +1,4 @@
 export const PASSIVE_INFO = {
-  icon: '♾️',
-  label: 'Passive',
+	icon: '♾️',
+	label: 'Passive',
 } as const;

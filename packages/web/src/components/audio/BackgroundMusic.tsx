@@ -70,10 +70,7 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 				audio.volume = 0;
 				try {
 					await audio.play();
-					if (
-						playbackRequestRef.current === requestId &&
-						enabledRef.current
-					) {
+					if (playbackRequestRef.current === requestId && enabledRef.current) {
 						fadeTo(BASE_VOLUME);
 					}
 				} catch (error) {
@@ -157,10 +154,7 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 			audio.volume = 0;
 			try {
 				await audio.play();
-				if (
-					playbackRequestRef.current === requestId &&
-					enabledRef.current
-				) {
+				if (playbackRequestRef.current === requestId && enabledRef.current) {
 					fadeTo(BASE_VOLUME);
 				}
 			} catch (error) {

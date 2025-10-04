@@ -5,7 +5,7 @@ import {
 	ResultModMethods,
 	StatMethods,
 	costModParams,
-	evaluationTarget,
+	developmentTarget,
 	resultModParams,
 	statParams,
 	effect,
@@ -14,13 +14,14 @@ import {
 import type { passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { Stat } from './stats';
+import { formatPassiveRemoval } from './text';
 
 export const GROWTH_PHASE_ID = 'growth';
 export const UPKEEP_PHASE_ID = 'upkeep';
 export const WAR_RECOVERY_STEP_ID = 'war-recovery';
 const BUILD_ACTION_ID = 'build';
 
-const DEVELOPMENT_EVALUATION = evaluationTarget('development');
+const DEVELOPMENT_EVALUATION = developmentTarget();
 
 export const incomeModifier = (id: string, percent: number) =>
 	({
@@ -52,9 +53,6 @@ export const growthBonusEffect = (amount: number) =>
 		params: statParams().key(Stat.growth).amount(amount).build(),
 	}) as const;
 
-export const formatRemoval = (description: string) =>
-	`Active as long as ${description}`;
-
 type TierPassiveEffectOptions = {
 	tierId: string;
 	summary: string;
@@ -73,7 +71,10 @@ export function createTierPassiveEffect({
 	params.detail(summary);
 	params.meta({
 		source: { type: 'tiered-resource', id: tierId },
-		removal: { token: removalDetail, text: formatRemoval(removalDetail) },
+		removal: {
+			token: removalDetail,
+			text: formatPassiveRemoval(removalDetail),
+		},
 	});
 	const builder = effect()
 		.type(Types.Passive)

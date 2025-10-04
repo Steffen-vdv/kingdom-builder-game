@@ -6,9 +6,14 @@ import {
 	type ActionEffectGroupOption,
 	type EngineContext,
 } from '@kingdom-builder/engine';
-import { describeContent, splitSummary } from '../../translation';
+import {
+	describeContent,
+	splitSummary,
+	summarizeContent,
+} from '../../translation';
 import { type ActionCardOption } from './ActionCard';
 import type { HoverCardData } from './types';
+import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
 
 type ResolveParams = Record<string, unknown> | undefined;
 
@@ -54,22 +59,9 @@ function buildHoverDetails(
 	context: EngineContext,
 	formatRequirement: (requirement: string) => string,
 	hoverBackground: string,
+	optionLabel: string,
 ): HoverCardData {
-	let optionIcon = '';
-	let optionName = option.label;
-	try {
-		const definition = context.actions.get(option.actionId);
-		const possible = definition as { icon?: unknown; name?: unknown };
-		if (possible && typeof possible.icon === 'string') {
-			optionIcon = possible.icon;
-		}
-		if (possible && typeof possible.name === 'string') {
-			optionName = possible.name;
-		}
-	} catch {
-		// ignore missing action definitions
-	}
-	const hoverTitle = `${optionIcon} ${optionName}`.trim() || optionName;
+	const hoverTitle = optionLabel.trim() || option.label;
 	const hoverSummary = describeContent(
 		'action',
 		option.actionId,
@@ -117,18 +109,26 @@ export function useEffectGroupOptions({
 				...(pendingParams ?? {}),
 				...resolved,
 			};
+			const summaryEntries = summarizeContent(
+				'action',
+				option.actionId,
+				context,
+				mergedParams,
+			);
+			const optionLabel = deriveActionOptionLabel(
+				option,
+				context,
+				summaryEntries,
+			);
 			const card: ActionCardOption = {
 				id: option.id,
-				label: option.label,
+				label: optionLabel,
 				onSelect: () => {
 					clearHoverCard();
 					handleOptionSelect(currentGroup, option);
 				},
 				compact: currentGroup.layout === 'compact',
 			};
-			if (option.icon) {
-				card.icon = option.icon;
-			}
 			if (option.summary) {
 				card.summary = option.summary;
 			}
@@ -142,6 +142,7 @@ export function useEffectGroupOptions({
 					context,
 					formatRequirement,
 					hoverBackground,
+					optionLabel,
 				);
 				handleHoverCard(hoverDetails);
 			};

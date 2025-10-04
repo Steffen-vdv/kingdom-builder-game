@@ -948,11 +948,22 @@ export function costModParams() {
 	return new CostModParamsBuilder();
 }
 
+export enum EvaluationTargetTypes {
+	Development = 'development',
+	Population = 'population',
+}
+
+type LooseEvaluationTargetType = string & {
+	readonly __evaluationTargetBrand?: never;
+};
+
+type EvaluationTargetType = EvaluationTargetTypes | LooseEvaluationTargetType;
+
 class EvaluationTargetBuilder extends ParamsBuilder<{
-	type: string;
+	type: EvaluationTargetType;
 	id?: string;
 }> {
-	constructor(type: string) {
+	constructor(type: EvaluationTargetType) {
 		super();
 		this.set('type', type);
 	}
@@ -961,14 +972,22 @@ class EvaluationTargetBuilder extends ParamsBuilder<{
 	}
 }
 
-export function evaluationTarget(type: string) {
+export function evaluationTarget(type: EvaluationTargetTypes | string) {
 	return new EvaluationTargetBuilder(type);
+}
+
+export function developmentTarget() {
+	return evaluationTarget(EvaluationTargetTypes.Development);
+}
+
+export function populationTarget() {
+	return evaluationTarget(EvaluationTargetTypes.Population);
 }
 
 class ResultModParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	actionId?: string;
-	evaluation?: { type: string; id?: string };
+	evaluation?: { type: EvaluationTargetType; id?: string };
 	amount?: number;
 	adjust?: number;
 	percent?: number;
@@ -979,7 +998,11 @@ class ResultModParamsBuilder extends ParamsBuilder<{
 	actionId(actionId: string) {
 		return this.set('actionId', actionId);
 	}
-	evaluation(target: EvaluationTargetBuilder | { type: string; id?: string }) {
+	evaluation(
+		target:
+			| EvaluationTargetBuilder
+			| { type: EvaluationTargetType; id?: string },
+	) {
 		return this.set(
 			'evaluation',
 			target instanceof EvaluationTargetBuilder ? target.build() : target,
@@ -1227,10 +1250,15 @@ export class EvaluatorBuilder<P extends Params = Params> {
 }
 
 class PopulationEvaluatorBuilder extends EvaluatorBuilder<{
+	id?: string;
 	role?: PopulationRoleId;
 }> {
 	constructor() {
 		super('population');
+	}
+	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+	id(populationId: PopulationRoleId | string) {
+		return this.param('id', populationId);
 	}
 	role(role: PopulationRoleId) {
 		return this.param('role', role);
@@ -1310,6 +1338,7 @@ export class EffectBuilder<P extends Params = Params> {
 	private roundSet = false;
 	private typeSet = false;
 	private methodSet = false;
+	private metaSet = false;
 	type(type: string) {
 		if (this.typeSet) {
 			throw new Error(
@@ -1397,6 +1426,19 @@ export class EffectBuilder<P extends Params = Params> {
 		this.config.round = mode;
 		this.roundSet = true;
 		return this;
+	}
+	meta(meta: EffectConfig['meta']) {
+		if (this.metaSet) {
+			throw new Error(
+				'Effect already has meta(). Remove the duplicate meta() call.',
+			);
+		}
+		this.config.meta = meta;
+		this.metaSet = true;
+		return this;
+	}
+	allowShortfall() {
+		return this.meta({ allowShortfall: true });
 	}
 	build(): EffectConfig {
 		if (!this.typeSet && !this.methodSet) {
