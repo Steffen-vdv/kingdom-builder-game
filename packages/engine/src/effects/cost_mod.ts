@@ -1,4 +1,5 @@
 import type { EffectHandler } from '.';
+import type { CostModifierResult } from '../services/passive_types';
 import type { ResourceKey } from '../state';
 
 interface CostModParams {
@@ -45,15 +46,15 @@ export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
 				if (!flat && !percentMap) {
 					return;
 				}
-				const result: {
-					flat?: Record<string, number>;
-					percent?: Record<string, number>;
-				} = {};
+				const result: CostModifierResult = {};
 				if (flat) {
 					result.flat = flat;
 				}
 				if (percentMap) {
 					result.percent = percentMap;
+				}
+				if (effect.round) {
+					result.round = effect.round;
 				}
 				return result;
 			},
