@@ -45,6 +45,29 @@ function combineLabels(left: string, right: string): string {
 	return `${base} - ${entry}`;
 }
 
+function normalizeDescribedTitle(
+	describedTitle: string | undefined,
+	developmentLabel: string,
+): string {
+	if (!describedTitle) {
+		return developmentLabel;
+	}
+	const trimmed = describedTitle.trim();
+	if (trimmed.length === 0) {
+		return developmentLabel;
+	}
+	if (developmentLabel.startsWith(trimmed)) {
+		return developmentLabel;
+	}
+	if (trimmed.startsWith('Add ')) {
+		const withoutAdd = trimmed.slice(4).trim();
+		if (withoutAdd.length > 0 && developmentLabel.startsWith(withoutAdd)) {
+			return developmentLabel;
+		}
+	}
+	return trimmed;
+}
+
 function findGroupEntry(
 	entries: SummaryEntry[],
 ): Extract<SummaryEntry, { title: string; items: SummaryEntry[] }> {
@@ -133,11 +156,12 @@ describe('royal decree translation', () => {
 			const describedTitle =
 				typeof describedLabel === 'string'
 					? describedLabel
-					: (describedLabel?.title ?? developmentLabel);
-			const expectedTitle = combineLabels(
-				developLabel,
-				describedTitle || developmentLabel,
+					: describedLabel?.title;
+			const normalizedTitle = normalizeDescribedTitle(
+				describedTitle,
+				developmentLabel,
 			);
+			const expectedTitle = combineLabels(developLabel, normalizedTitle);
 			const entry = group.items.find((item) =>
 				typeof item === 'string'
 					? item === expectedTitle
@@ -147,7 +171,12 @@ describe('royal decree translation', () => {
 			if (!entry) {
 				continue;
 			}
-			expect(entry).toBe(expectedTitle);
+			if (typeof entry === 'string') {
+				expect(entry).toBe(expectedTitle);
+				continue;
+			}
+			expect(entry.title).toBe(expectedTitle);
+			expect(entry.items).toContain(normalizedTitle);
 		}
 	});
 });
