@@ -195,6 +195,12 @@ export const getSyntheticFestivalDetails = (
 			: Number(innerRes.params.amount);
 	const armyAttack = ctx.actions.get(attackActionId)!;
 	const upkeepPhase =
+		ctx.phases.find((phase) =>
+			phase.steps.some((step) => step.triggers?.includes('onUpkeepPhase')),
+		) ??
+		PHASES.find((phase) =>
+			phase.steps.some((step) => step.triggers?.includes('onUpkeepPhase')),
+		) ??
 		ctx.phases.find((p) => p.id === 'upkeep') ??
 		PHASES.find((p) => p.id === 'upkeep');
 	const upkeepLabel = upkeepPhase?.label || 'Upkeep';
