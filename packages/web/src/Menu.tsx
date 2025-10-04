@@ -153,8 +153,8 @@ function CallToActionSection({
 					</h2>
 					{/* prettier-ignore */}
 					<p className={CTA_DESCRIPTION_CLASS}>
-                                        {CTA_DESCRIPTION_TEXT}
-                                </p>
+						{CTA_DESCRIPTION_TEXT}
+					</p>
 				</div>
 				<div className={CTA_BUTTON_COLUMN_CLASS}>
 					<Button
@@ -178,8 +178,8 @@ function CallToActionSection({
 				<div className={KNOWLEDGE_HEADER_LAYOUT_CLASS}>
 					{/* prettier-ignore */}
 					<div className={KNOWLEDGE_TITLE_CLASS}>
-                                        Learn The Basics
-                                </div>
+						Learn The Basics
+					</div>
 					<div className={KNOWLEDGE_ACTIONS_CLASS}>
 						<Button
 							variant="ghost"
