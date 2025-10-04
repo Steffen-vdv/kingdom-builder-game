@@ -9,12 +9,18 @@ import {
 	translateTierSummary,
 } from '../content/tierSummaries';
 
-const MODIFIER_ICON_MAP: Record<string, string> = {
+const MODIFIER_ICON_MAP = {
 	cost_mod: MODIFIER_INFO.cost.icon,
 	result_mod: MODIFIER_INFO.result.icon,
-};
+} as const;
 
-interface PassiveDefinitionLike {
+type ModifierIconKey = keyof typeof MODIFIER_ICON_MAP;
+
+function hasModifierIconKey(value: string): value is ModifierIconKey {
+	return value in MODIFIER_ICON_MAP;
+}
+
+export interface PassiveDefinitionLike {
 	detail?: string;
 	meta?: PassiveSummary['meta'];
 	effects?: EffectDef[];
@@ -93,7 +99,7 @@ function extractTokenSlug(value: string | undefined): string | undefined {
 function deriveIcon(
 	passive: PassiveSummary,
 	effects: EffectDef[] | undefined,
-	meta: PassiveSummary['meta'],
+	meta: PassiveSummary['meta'] | undefined,
 ): string {
 	if (meta?.source?.icon) {
 		return meta.source.icon;
@@ -102,8 +108,9 @@ function deriveIcon(
 		return passive.icon;
 	}
 	const firstEffect = effects?.[0];
-	if (firstEffect?.type && firstEffect.type in MODIFIER_ICON_MAP) {
-		return MODIFIER_ICON_MAP[firstEffect.type];
+	const modifierType = firstEffect?.type;
+	if (modifierType && hasModifierIconKey(modifierType)) {
+		return MODIFIER_ICON_MAP[modifierType];
 	}
 	return PASSIVE_INFO.icon ?? '';
 }

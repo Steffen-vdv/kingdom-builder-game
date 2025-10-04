@@ -8,7 +8,10 @@ import type {
 	PlayerId,
 } from '@kingdom-builder/engine';
 import { useAnimate } from '../../utils/useAutoAnimate';
-import { resolvePassivePresentation } from '../../translation/log/passives';
+import {
+	resolvePassivePresentation,
+	type PassiveDefinitionLike,
+} from '../../translation/log/passives';
 
 const POPULATION_PASSIVE_PREFIXES = new Set(
 	POPULATIONS.keys().map((id) => `${id}_`),
@@ -73,12 +76,18 @@ export default function PassiveDisplay({
 			className="panel-card flex w-fit flex-col gap-3 px-4 py-3 text-left text-base"
 		>
 			{entries.map(({ summary: passive, def }) => {
+				const definition: PassiveDefinitionLike = {};
+				if (def.detail !== undefined) {
+					definition.detail = def.detail;
+				}
+				if (def.meta !== undefined) {
+					definition.meta = def.meta;
+				}
+				if (def.effects !== undefined) {
+					definition.effects = def.effects;
+				}
 				const presentation = resolvePassivePresentation(passive, {
-					definition: {
-						detail: def.detail,
-						meta: def.meta,
-						effects: def.effects,
-					},
+					definition,
 				});
 				const icon = presentation.icon || PASSIVE_INFO.icon || '';
 				const label = presentation.label;
