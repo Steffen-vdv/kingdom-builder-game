@@ -139,10 +139,11 @@ class ResourceEffectParamsBuilder extends ParamsBuilder<{
 		);
 	}
 	amount(amount: number) {
-		if (this.wasSet('percent'))
+		if (this.wasSet('percent')) {
 			throw new Error(
 				'Resource change cannot use both amount() and percent(). Choose one of them.',
 			);
+		}
 		return this.set(
 			'amount',
 			amount,
@@ -150,10 +151,11 @@ class ResourceEffectParamsBuilder extends ParamsBuilder<{
 		);
 	}
 	percent(percent: number) {
-		if (this.wasSet('amount'))
+		if (this.wasSet('amount')) {
 			throw new Error(
 				'Resource change cannot use both amount() and percent(). Choose one of them.',
 			);
+		}
 		return this.set(
 			'percent',
 			percent,
@@ -162,14 +164,16 @@ class ResourceEffectParamsBuilder extends ParamsBuilder<{
 	}
 
 	override build() {
-		if (!this.wasSet('key'))
+		if (!this.wasSet('key')) {
 			throw new Error(
 				'Resource change is missing key(). Call key(Resource.yourChoice) to choose what should change.',
 			);
-		if (!this.wasSet('amount') && !this.wasSet('percent'))
+		}
+		if (!this.wasSet('amount') && !this.wasSet('percent')) {
 			throw new Error(
 				'Resource change needs exactly one of amount() or percent(). Pick how much the resource should change.',
 			);
+		}
 		return super.build();
 	}
 }
@@ -192,10 +196,11 @@ class StatEffectParamsBuilder extends ParamsBuilder<{
 		);
 	}
 	amount(amount: number) {
-		if (this.wasSet('percent') || this.wasSet('percentStat'))
+		if (this.wasSet('percent') || this.wasSet('percentStat')) {
 			throw new Error(
 				'Stat change cannot mix amount() with percent() or percentFromStat(). Pick one approach to describe the change.',
 			);
+		}
 		return this.set(
 			'amount',
 			amount,
@@ -203,10 +208,11 @@ class StatEffectParamsBuilder extends ParamsBuilder<{
 		);
 	}
 	percent(percent: number) {
-		if (this.wasSet('amount') || this.wasSet('percentStat'))
+		if (this.wasSet('amount') || this.wasSet('percentStat')) {
 			throw new Error(
 				'Stat change cannot mix percent() with amount() or percentFromStat(). Pick one approach to describe the change.',
 			);
+		}
 		return this.set(
 			'percent',
 			percent,
@@ -214,10 +220,11 @@ class StatEffectParamsBuilder extends ParamsBuilder<{
 		);
 	}
 	percentFromStat(stat: StatKey) {
-		if (this.wasSet('amount') || this.wasSet('percent'))
+		if (this.wasSet('amount') || this.wasSet('percent')) {
 			throw new Error(
 				'Stat change cannot mix percentFromStat() with amount() or percent(). Pick one approach to describe the change.',
 			);
+		}
 		return this.set(
 			'percentStat',
 			stat,
@@ -226,18 +233,20 @@ class StatEffectParamsBuilder extends ParamsBuilder<{
 	}
 
 	override build() {
-		if (!this.wasSet('key'))
+		if (!this.wasSet('key')) {
 			throw new Error(
 				'Stat change is missing key(). Call key(Stat.yourChoice) to decide which stat should change.',
 			);
+		}
 		if (
 			!this.wasSet('amount') &&
 			!this.wasSet('percent') &&
 			!this.wasSet('percentStat')
-		)
+		) {
 			throw new Error(
 				'Stat change needs amount(), percent(), or percentFromStat(). Choose one to describe how the stat should change.',
 			);
+		}
 		return super.build();
 	}
 }
@@ -266,10 +275,11 @@ class DevelopmentEffectParamsBuilder extends ParamsBuilder<{
 	}
 
 	override build() {
-		if (!this.wasSet('id'))
+		if (!this.wasSet('id')) {
 			throw new Error(
 				'Development effect is missing id(). Call id("your-development-id") so the engine knows which development to reference.',
 			);
+		}
 		return super.build();
 	}
 }
@@ -354,10 +364,11 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 	}
 
 	override build() {
-		if (!this.wasSet('id'))
+		if (!this.wasSet('id')) {
 			throw new Error(
 				'Passive effect is missing id(). Call id("your-passive-id") so it can be referenced later.',
 			);
+		}
 		return super.build();
 	}
 }
@@ -402,10 +413,11 @@ class TierPassiveBuilder {
 	}
 
 	id(id: string) {
-		if (this.idSet)
+		if (this.idSet) {
 			throw new Error(
 				'Happiness tier passive already has an id(). Remove the extra id() call.',
 			);
+		}
 		this.config.id = id;
 		this.idSet = true;
 		return this;
@@ -472,10 +484,11 @@ class TierPassiveBuilder {
 	}
 
 	skipStep(phaseId: string, stepId: string) {
-		if (!phaseId || !stepId)
+		if (!phaseId || !stepId) {
 			throw new Error(
 				'Happiness tier passive skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
 			);
+		}
 		this.config.skip = this.config.skip || ({} as TierPassiveSkipConfig);
 		this.config.skip.steps = this.config.skip.steps || [];
 		this.config.skip.steps.push({ phaseId, stepId });
@@ -489,25 +502,32 @@ class TierPassiveBuilder {
 			| ((builder: TierPassiveTextBuilder) => TierPassiveTextBuilder),
 	) {
 		let tokens: TierPassiveTextTokens;
-		if (typeof value === 'function') tokens = value(tierPassiveText()).build();
-		else if (value instanceof TierPassiveTextBuilder) tokens = value.build();
-		else tokens = value;
+		if (typeof value === 'function') {
+			tokens = value(tierPassiveText()).build();
+		} else if (value instanceof TierPassiveTextBuilder) {
+			tokens = value.build();
+		} else {
+			tokens = value;
+		}
 		this.config.text = { ...this.config.text, ...tokens };
 		return this;
 	}
 
 	build(): TierPassivePayload {
-		if (!this.idSet)
+		if (!this.idSet) {
 			throw new Error(
 				'Happiness tier passive is missing id(). Call id("your-passive-id") before build().',
 			);
+		}
 		return this.config;
 	}
 }
 
 export function tierPassive(id?: string) {
 	const builder = new TierPassiveBuilder();
-	if (id) builder.id(id);
+	if (id) {
+		builder.id(id);
+	}
 	return builder;
 }
 
@@ -553,24 +573,27 @@ class HappinessTierBuilder {
 	}
 
 	id(id: string) {
-		if (this.idSet)
+		if (this.idSet) {
 			throw new Error(
 				'Happiness tier already has an id(). Remove the extra id() call.',
 			);
+		}
 		this.config.id = id;
 		this.idSet = true;
 		return this;
 	}
 
 	range(min: number, max?: number) {
-		if (this.rangeSet)
+		if (this.rangeSet) {
 			throw new Error(
 				'Happiness tier already has range(). Remove the extra range() call.',
 			);
-		if (max !== undefined && max < min)
+		}
+		if (max !== undefined && max < min) {
 			throw new Error(
 				'Happiness tier range(min, max?) requires max to be greater than or equal to min.',
 			);
+		}
 		this.config.range =
 			max === undefined ? ({ min } as TierRange) : ({ min, max } as TierRange);
 		this.rangeSet = true;
@@ -618,14 +641,19 @@ class HappinessTierBuilder {
 			| TierPassiveBuilder
 			| ((builder: TierPassiveBuilder) => TierPassiveBuilder),
 	) {
-		if (this.passiveSet)
+		if (this.passiveSet) {
 			throw new Error(
 				'Happiness tier already has passive(). Remove the extra passive() call.',
 			);
+		}
 		let passive: TierPassivePayload;
-		if (typeof value === 'function') passive = value(tierPassive()).build();
-		else if (value instanceof TierPassiveBuilder) passive = value.build();
-		else passive = value;
+		if (typeof value === 'function') {
+			passive = value(tierPassive()).build();
+		} else if (value instanceof TierPassiveBuilder) {
+			passive = value.build();
+		} else {
+			passive = value;
+		}
 		this.config.passive = passive;
 		this.passiveSet = true;
 		return this;
@@ -638,26 +666,33 @@ class HappinessTierBuilder {
 			| ((builder: TierDisplayBuilder) => TierDisplayBuilder),
 	) {
 		let display: TierDisplayMetadata;
-		if (typeof value === 'function') display = value(tierDisplay()).build();
-		else if (value instanceof TierDisplayBuilder) display = value.build();
-		else display = value;
+		if (typeof value === 'function') {
+			display = value(tierDisplay()).build();
+		} else if (value instanceof TierDisplayBuilder) {
+			display = value.build();
+		} else {
+			display = value;
+		}
 		this.config.display = display;
 		return this;
 	}
 
 	build(): HappinessTierDefinition {
-		if (!this.idSet)
+		if (!this.idSet) {
 			throw new Error(
 				"Happiness tier is missing id(). Call id('your-tier-id') before build().",
 			);
-		if (!this.rangeSet)
+		}
+		if (!this.rangeSet) {
 			throw new Error(
 				'Happiness tier is missing range(). Call range(min, max?) before build().',
 			);
-		if (!this.passiveSet)
+		}
+		if (!this.passiveSet) {
 			throw new Error(
 				'Happiness tier is missing passive(). Call passive(...) with tierPassive(...) before build().',
 			);
+		}
 		return {
 			id: this.config.id!,
 			range: this.config.range!,
@@ -670,7 +705,9 @@ class HappinessTierBuilder {
 
 export function happinessTier(id?: string) {
 	const builder = new HappinessTierBuilder();
-	if (id) builder.id(id);
+	if (id) {
+		builder.id(id);
+	}
 	return builder;
 }
 
@@ -766,10 +803,11 @@ class PopulationEffectParamsBuilder extends ParamsBuilder<{
 	}
 
 	override build() {
-		if (!this.wasSet('role'))
+		if (!this.wasSet('role')) {
 			throw new Error(
 				'Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.',
 			);
+		}
 		return super.build();
 	}
 }
@@ -788,7 +826,9 @@ class AttackParamsBuilder extends ParamsBuilder<{
 	};
 }> {
 	private ensureOnDamage() {
-		if (!this.params.onDamage) this.params.onDamage = {};
+		if (!this.params.onDamage) {
+			this.params.onDamage = {};
+		}
 		return this.params.onDamage;
 	}
 	targetResource(key: ResourceKey) {
@@ -820,10 +860,11 @@ class AttackParamsBuilder extends ParamsBuilder<{
 	}
 
 	override build() {
-		if (!this.wasSet('target'))
+		if (!this.wasSet('target')) {
 			throw new Error(
 				'Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.',
 			);
+		}
 		return super.build();
 	}
 }
@@ -852,14 +893,16 @@ class TransferParamsBuilder extends ParamsBuilder<{
 	}
 
 	override build() {
-		if (!this.wasSet('key'))
+		if (!this.wasSet('key')) {
 			throw new Error(
 				'Resource transfer is missing key(). Call key(Resource.yourChoice) to pick the resource to move.',
 			);
-		if (!this.wasSet('percent'))
+		}
+		if (!this.wasSet('percent')) {
 			throw new Error(
 				'Resource transfer is missing percent(). Call percent(amount) to choose how much to move.',
 			);
+		}
 		return super.build();
 	}
 }
@@ -874,27 +917,32 @@ export class EvaluatorBuilder<P extends Params = Params> {
 	private readonly paramKeys = new Set<string>();
 
 	constructor(type?: string) {
-		if (type) this.config.type = type;
+		if (type) {
+			this.config.type = type;
+		}
 	}
 
 	type(type: string) {
-		if (this.config.type && this.config.type.length)
+		if (this.config.type && this.config.type.length) {
 			throw new Error(
 				'Evaluator already has a type(). Remove the extra type() call.',
 			);
+		}
 		this.config.type = type;
 		return this;
 	}
 
 	param(key: string, value: unknown) {
-		if (this.paramsSet)
+		if (this.paramsSet) {
 			throw new Error(
 				'You already supplied params(...) for this evaluator. Remove params(...) before calling param().',
 			);
-		if (this.paramKeys.has(key))
+		}
+		if (this.paramKeys.has(key)) {
 			throw new Error(
 				`Evaluator already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`,
 			);
+		}
 		this.config.params = this.config.params || ({} as Params);
 		(this.config.params as Params)[key] = value;
 		this.paramKeys.add(key);
@@ -902,14 +950,16 @@ export class EvaluatorBuilder<P extends Params = Params> {
 	}
 
 	params(params: P | ParamsBuilder<P>) {
-		if (this.paramsSet)
+		if (this.paramsSet) {
 			throw new Error(
 				'Evaluator params(...) was already provided. Remove the duplicate params() call.',
 			);
-		if (this.paramKeys.size)
+		}
+		if (this.paramKeys.size) {
 			throw new Error(
 				'Evaluator already has individual param() values. Remove them before calling params(...).',
 			);
+		}
 		this.config.params =
 			params instanceof ParamsBuilder ? params.build() : params;
 		this.paramsSet = true;
@@ -917,10 +967,11 @@ export class EvaluatorBuilder<P extends Params = Params> {
 	}
 
 	build(): EvaluatorDef {
-		if (!this.config.type)
+		if (!this.config.type) {
 			throw new Error(
 				'Evaluator is missing type(). Call type("your-evaluator") to describe what should be evaluated.',
 			);
+		}
 		return this.config;
 	}
 }
@@ -978,7 +1029,9 @@ class CompareEvaluatorBuilder extends EvaluatorBuilder<{
 	}
 
 	private normalize(value: CompareValue) {
-		if (value instanceof EvaluatorBuilder) return value.build();
+		if (value instanceof EvaluatorBuilder) {
+			return value.build();
+		}
 		return value;
 	}
 
@@ -1008,46 +1061,52 @@ export class EffectBuilder<P extends Params = Params> {
 	private typeSet = false;
 	private methodSet = false;
 	type(type: string) {
-		if (this.typeSet)
+		if (this.typeSet) {
 			throw new Error(
 				'Effect already has type(). Remove the extra type() call.',
 			);
+		}
 		this.config.type = type;
 		this.typeSet = true;
 		return this;
 	}
 	method(method: string) {
-		if (this.methodSet)
+		if (this.methodSet) {
 			throw new Error(
 				'Effect already has method(). Remove the extra method() call.',
 			);
+		}
 		this.config.method = method;
 		this.methodSet = true;
 		return this;
 	}
 	param(key: string, value: unknown) {
-		if (this.paramsSet)
+		if (this.paramsSet) {
 			throw new Error(
 				'Effect params(...) was already provided. Remove params(...) before calling param().',
 			);
-		if (this.paramKeys.has(key))
+		}
+		if (this.paramKeys.has(key)) {
 			throw new Error(
 				`Effect already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`,
 			);
+		}
 		this.config.params = this.config.params || {};
 		(this.config.params as Params)[key] = value;
 		this.paramKeys.add(key);
 		return this;
 	}
 	params(params: P | ParamsBuilder<P>) {
-		if (this.paramsSet)
+		if (this.paramsSet) {
 			throw new Error(
 				'Effect params(...) was already provided. Remove the duplicate params() call.',
 			);
-		if (this.paramKeys.size)
+		}
+		if (this.paramKeys.size) {
 			throw new Error(
 				'Effect already has individual param() values. Remove them before calling params(...).',
 			);
+		}
 		this.config.params =
 			params instanceof ParamsBuilder ? params.build() : params;
 		this.paramsSet = true;
@@ -1064,24 +1123,27 @@ export class EffectBuilder<P extends Params = Params> {
 		typeOrBuilder: string | EvaluatorBuilder,
 		params?: Params | ParamsBuilder,
 	) {
-		if (this.evaluatorSet)
+		if (this.evaluatorSet) {
 			throw new Error(
 				'Effect already has an evaluator(). Remove the duplicate evaluator() call.',
 			);
-		if (typeOrBuilder instanceof EvaluatorBuilder)
+		}
+		if (typeOrBuilder instanceof EvaluatorBuilder) {
 			this.config.evaluator = typeOrBuilder.build();
-		else
+		} else {
 			this.config.evaluator = {
 				type: typeOrBuilder,
 				params:
 					params instanceof ParamsBuilder ? params.build() : (params as Params),
 			} as EvaluatorDef;
+		}
 		this.evaluatorSet = true;
 		return this;
 	}
 	round(mode: 'up' | 'down') {
-		if (this.roundSet)
+		if (this.roundSet) {
 			throw new Error('Effect already has round(). Remove the duplicate call.');
+		}
 		this.config.round = mode;
 		this.roundSet = true;
 		return this;
@@ -1091,10 +1153,11 @@ export class EffectBuilder<P extends Params = Params> {
 			const hasNestedEffects = Array.isArray(this.config.effects)
 				? this.config.effects.length > 0
 				: false;
-			if (!hasNestedEffects)
+			if (!hasNestedEffects) {
 				throw new Error(
 					'Effect is missing type() and method(). Call effect(Types.X, Methods.Y) or add nested effect(...) calls before build().',
 				);
+			}
 		}
 		return this.config;
 	}
@@ -1102,8 +1165,12 @@ export class EffectBuilder<P extends Params = Params> {
 
 export function effect(type?: string, method?: string) {
 	const builder = new EffectBuilder();
-	if (type) builder.type(type);
-	if (method) builder.method(method);
+	if (type) {
+		builder.type(type);
+	}
+	if (method) {
+		builder.method(method);
+	}
 	return builder;
 }
 
@@ -1114,46 +1181,52 @@ export class RequirementBuilder<P extends Params = Params> {
 	private typeSet = false;
 	private methodSet = false;
 	type(type: string) {
-		if (this.typeSet)
+		if (this.typeSet) {
 			throw new Error(
 				'Requirement already has type(). Remove the extra type() call.',
 			);
+		}
 		this.config.type = type;
 		this.typeSet = true;
 		return this;
 	}
 	method(method: string) {
-		if (this.methodSet)
+		if (this.methodSet) {
 			throw new Error(
 				'Requirement already has method(). Remove the extra method() call.',
 			);
+		}
 		this.config.method = method;
 		this.methodSet = true;
 		return this;
 	}
 	param(key: string, value: unknown) {
-		if (this.paramsSet)
+		if (this.paramsSet) {
 			throw new Error(
 				'Requirement params(...) was already provided. Remove params(...) before calling param().',
 			);
-		if (this.paramKeys.has(key))
+		}
+		if (this.paramKeys.has(key)) {
 			throw new Error(
 				`Requirement already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`,
 			);
+		}
 		this.config.params = this.config.params || {};
 		(this.config.params as Params)[key] = value;
 		this.paramKeys.add(key);
 		return this;
 	}
 	params(params: P) {
-		if (this.paramsSet)
+		if (this.paramsSet) {
 			throw new Error(
 				'Requirement params(...) was already provided. Remove the duplicate params() call.',
 			);
-		if (this.paramKeys.size)
+		}
+		if (this.paramKeys.size) {
 			throw new Error(
 				'Requirement already has individual param() values. Remove them before calling params(...).',
 			);
+		}
 		this.config.params = params;
 		this.paramsSet = true;
 		return this;
@@ -1163,22 +1236,28 @@ export class RequirementBuilder<P extends Params = Params> {
 		return this;
 	}
 	build(): RequirementConfig {
-		if (!this.typeSet)
+		if (!this.typeSet) {
 			throw new Error(
 				'Requirement is missing type(). Call type("your-requirement") before build().',
 			);
-		if (!this.methodSet)
+		}
+		if (!this.methodSet) {
 			throw new Error(
 				'Requirement is missing method(). Call method("your-method") before build().',
 			);
+		}
 		return this.config;
 	}
 }
 
 export function requirement(type?: string, method?: string) {
 	const builder = new RequirementBuilder();
-	if (type) builder.type(type);
-	if (method) builder.method(method);
+	if (type) {
+		builder.type(type);
+	}
+	if (method) {
+		builder.method(method);
+	}
 	return builder;
 }
 
@@ -1199,41 +1278,46 @@ class BaseBuilder<T extends { id: string; name: string }> {
 			};
 	}
 	id(id: string) {
-		if (this.idSet)
+		if (this.idSet) {
 			throw new Error(
 				`${this.kind} already has an id(). Remove the extra id() call.`,
 			);
+		}
 		this.config.id = id;
 		this.idSet = true;
 		return this;
 	}
 	name(name: string) {
-		if (this.nameSet)
+		if (this.nameSet) {
 			throw new Error(
 				`${this.kind} already has a name(). Remove the extra name() call.`,
 			);
+		}
 		this.config.name = name;
 		this.nameSet = true;
 		return this;
 	}
 	icon(icon: string) {
-		if (this.iconSet)
+		if (this.iconSet) {
 			throw new Error(
 				`${this.kind} already has an icon(). Remove the extra icon() call.`,
 			);
+		}
 		this.config.icon = icon;
 		this.iconSet = true;
 		return this;
 	}
 	build(): T {
-		if (!this.idSet)
+		if (!this.idSet) {
 			throw new Error(
 				`${this.kind} is missing id(). Call id('unique-id') before build().`,
 			);
-		if (!this.nameSet)
+		}
+		if (!this.nameSet) {
 			throw new Error(
 				`${this.kind} is missing name(). Call name('Readable name') before build().`,
 			);
+		}
 		return this.config as T;
 	}
 }

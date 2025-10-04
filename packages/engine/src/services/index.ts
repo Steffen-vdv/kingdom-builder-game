@@ -105,7 +105,9 @@ export type PassiveMetadata = {
 function clonePassiveMetadata(
 	metadata: PassiveMetadata | undefined,
 ): PassiveMetadata | undefined {
-	if (!metadata) return undefined;
+	if (!metadata) {
+		return undefined;
+	}
 	const cloned: PassiveMetadata = {};
 	if (metadata.source) {
 		cloned.source = { ...metadata.source };
@@ -177,8 +179,12 @@ class TieredResourceService {
 	definition(value: number): HappinessTierDefinition | undefined {
 		let match: HappinessTierDefinition | undefined;
 		for (const tier of this.rules.tierDefinitions) {
-			if (value < tier.range.min) break;
-			if (tier.range.max !== undefined && value > tier.range.max) continue;
+			if (value < tier.range.min) {
+				break;
+			}
+			if (tier.range.max !== undefined && value > tier.range.max) {
+				continue;
+			}
 			match = tier;
 		}
 		return match;
@@ -246,7 +252,9 @@ export class PassiveManager {
 	private ensureFrameList(
 		frames?: StatSourceFrame | StatSourceFrame[],
 	): StatSourceFrame[] {
-		if (!frames) return [];
+		if (!frames) {
+			return [];
+		}
 		return Array.isArray(frames) ? [...frames] : [frames];
 	}
 
@@ -268,17 +276,22 @@ export class PassiveManager {
 		target: string,
 		mod: EvaluationModifier,
 	) {
-		if (!this.evaluationMods.has(target))
+		if (!this.evaluationMods.has(target)) {
 			this.evaluationMods.set(target, new Map());
+		}
 		this.evaluationMods.get(target)!.set(id, mod);
 		this.evaluationIndex.set(id, target);
 	}
 	unregisterEvaluationModifier(id: string) {
 		const target = this.evaluationIndex.get(id);
-		if (!target) return;
+		if (!target) {
+			return;
+		}
 		const mods = this.evaluationMods.get(target);
 		mods?.delete(id);
-		if (mods && mods.size === 0) this.evaluationMods.delete(target);
+		if (mods && mods.size === 0) {
+			this.evaluationMods.delete(target);
+		}
 		this.evaluationIndex.delete(id);
 	}
 
@@ -287,23 +300,31 @@ export class PassiveManager {
 		const percentTotals: Partial<Record<ResourceKey, number>> = {};
 		for (const modifier of this.costMods.values()) {
 			const result = modifier(actionId, running, ctx);
-			if (!result) continue;
+			if (!result) {
+				continue;
+			}
 			if (result.flat) {
 				for (const [key, delta] of Object.entries(result.flat)) {
-					if (typeof delta !== 'number') continue;
+					if (typeof delta !== 'number') {
+						continue;
+					}
 					const current = running[key] ?? 0;
 					running[key] = current + delta;
 				}
 			}
 			if (result.percent) {
 				for (const [key, pct] of Object.entries(result.percent)) {
-					if (typeof pct !== 'number') continue;
+					if (typeof pct !== 'number') {
+						continue;
+					}
 					percentTotals[key] = (percentTotals[key] ?? 0) + pct;
 				}
 			}
 		}
 		for (const [key, pct] of Object.entries(percentTotals)) {
-			if (typeof pct !== 'number') continue;
+			if (typeof pct !== 'number') {
+				continue;
+			}
 			const current = running[key] ?? 0;
 			running[key] = current + current * pct;
 		}
@@ -311,33 +332,44 @@ export class PassiveManager {
 	}
 
 	runResultMods(actionId: string, ctx: EngineContext) {
-		for (const modifier of this.resultMods.values()) modifier(actionId, ctx);
+		for (const modifier of this.resultMods.values()) {
+			modifier(actionId, ctx);
+		}
 	}
 
 	runEvaluationMods(target: string, ctx: EngineContext, gains: ResourceGain[]) {
 		const mods = this.evaluationMods.get(target);
-		if (!mods) return;
+		if (!mods) {
+			return;
+		}
 		let globalPercent = 0;
 		const perResourcePercent: Partial<Record<string, number>> = {};
 		for (const mod of mods.values()) {
 			const result = mod(ctx, gains);
-			if (!result || result.percent === undefined) continue;
+			if (!result || result.percent === undefined) {
+				continue;
+			}
 			const percent = result.percent;
 			if (typeof percent === 'number') {
 				globalPercent += percent;
 			} else {
 				for (const [key, value] of Object.entries(percent)) {
-					if (typeof value !== 'number') continue;
+					if (typeof value !== 'number') {
+						continue;
+					}
 					perResourcePercent[key] = (perResourcePercent[key] ?? 0) + value;
 				}
 			}
 		}
-		if (globalPercent === 0 && Object.keys(perResourcePercent).length === 0)
+		if (globalPercent === 0 && Object.keys(perResourcePercent).length === 0) {
 			return;
+		}
 		for (const gain of gains) {
 			const keyed = perResourcePercent[gain.key] ?? 0;
 			const total = globalPercent + keyed;
-			if (total === 0) continue;
+			if (total === 0) {
+				continue;
+			}
 			gain.amount += gain.amount * total;
 		}
 	}
@@ -386,7 +418,9 @@ export class PassiveManager {
 	removePassive(id: string, ctx: EngineContext) {
 		const key = this.makeKey(id, ctx.activePlayer.id);
 		const passive = this.passives.get(key);
-		if (!passive) return;
+		if (!passive) {
+			return;
+		}
 		const teardownEffects = passive.effects;
 		if (teardownEffects && teardownEffects.length > 0) {
 			withStatSourceFrames(ctx, passive.frames, () =>
@@ -404,8 +438,12 @@ export class PassiveManager {
 			: Array.from(this.passives.entries());
 		return entries.map(([, value]) => {
 			const summary: PassiveSummary = { id: value.id };
-			if (value.name !== undefined) summary.name = value.name;
-			if (value.icon !== undefined) summary.icon = value.icon;
+			if (value.name !== undefined) {
+				summary.name = value.name;
+			}
+			if (value.icon !== undefined) {
+				summary.icon = value.icon;
+			}
 			return summary;
 		});
 	}
@@ -444,9 +482,14 @@ export class PassiveManager {
 
 function reverseEffect(effect: EffectDef): EffectDef {
 	const reversed: EffectDef = { ...effect };
-	if (effect.effects) reversed.effects = effect.effects.map(reverseEffect);
-	if (effect.method === 'add') reversed.method = 'remove';
-	else if (effect.method === 'remove') reversed.method = 'add';
+	if (effect.effects) {
+		reversed.effects = effect.effects.map(reverseEffect);
+	}
+	if (effect.method === 'add') {
+		reversed.method = 'remove';
+	} else if (effect.method === 'remove') {
+		reversed.method = 'add';
+	}
 	return reversed;
 }
 
@@ -464,7 +507,9 @@ export class Services {
 
 	private registerSkipFlags(player: PlayerState, passive: TierPassivePayload) {
 		const skip = passive.skip;
-		if (!skip) return;
+		if (!skip) {
+			return;
+		}
 		const sourceId = passive.id;
 		if (skip.phases) {
 			for (const phaseId of skip.phases) {
@@ -486,37 +531,54 @@ export class Services {
 
 	private clearSkipFlags(player: PlayerState, passive: TierPassivePayload) {
 		const skip = passive.skip;
-		if (!skip) return;
+		if (!skip) {
+			return;
+		}
 		const sourceId = passive.id;
 		if (skip.phases) {
 			for (const phaseId of skip.phases) {
 				const bucket = player.skipPhases[phaseId];
-				if (!bucket) continue;
+				if (!bucket) {
+					continue;
+				}
 				delete bucket[sourceId];
-				if (Object.keys(bucket).length === 0) delete player.skipPhases[phaseId];
+				if (Object.keys(bucket).length === 0) {
+					delete player.skipPhases[phaseId];
+				}
 			}
 		}
 		if (skip.steps) {
 			for (const { phaseId, stepId } of skip.steps) {
 				const phaseBucket = player.skipSteps[phaseId];
-				if (!phaseBucket) continue;
+				if (!phaseBucket) {
+					continue;
+				}
 				const stepBucket = phaseBucket[stepId];
-				if (!stepBucket) continue;
+				if (!stepBucket) {
+					continue;
+				}
 				delete stepBucket[sourceId];
-				if (Object.keys(stepBucket).length === 0) delete phaseBucket[stepId];
-				if (Object.keys(phaseBucket).length === 0)
+				if (Object.keys(stepBucket).length === 0) {
+					delete phaseBucket[stepId];
+				}
+				if (Object.keys(phaseBucket).length === 0) {
 					delete player.skipSteps[phaseId];
+				}
 			}
 		}
 	}
 
 	handleTieredResourceChange(ctx: EngineContext, resourceKey: ResourceKey) {
-		if (resourceKey !== this.tieredResource.resourceKey) return;
+		if (resourceKey !== this.tieredResource.resourceKey) {
+			return;
+		}
 		const player = ctx.activePlayer;
 		const value = player.resources[resourceKey] ?? 0;
 		const nextTier = this.tieredResource.definition(value);
 		const currentTier = this.activeTiers.get(player.id);
-		if (currentTier?.id === nextTier?.id) return;
+		if (currentTier?.id === nextTier?.id) {
+			return;
+		}
 		if (currentTier) {
 			this.clearSkipFlags(player, currentTier.passive);
 			ctx.passives.removePassive(currentTier.passive.id, ctx);
@@ -527,16 +589,23 @@ export class Services {
 				type: 'tiered-resource',
 				id: nextTier.id,
 			};
-			if (nextTier.display?.icon) sourceMeta.icon = nextTier.display.icon;
-			if (nextTier.display?.summaryToken)
+			if (nextTier.display?.icon) {
+				sourceMeta.icon = nextTier.display.icon;
+			}
+			if (nextTier.display?.summaryToken) {
 				sourceMeta.labelToken = nextTier.display.summaryToken;
+			}
 			const removalMeta: PassiveRemovalMetadata = {};
-			if (nextTier.display?.removalCondition)
+			if (nextTier.display?.removalCondition) {
 				removalMeta.token = nextTier.display.removalCondition;
-			if (nextTier.passive.text?.removal)
+			}
+			if (nextTier.passive.text?.removal) {
 				removalMeta.text = nextTier.passive.text.removal;
+			}
 			const metadata: PassiveMetadata = { source: sourceMeta };
-			if (Object.keys(removalMeta).length > 0) metadata.removal = removalMeta;
+			if (Object.keys(removalMeta).length > 0) {
+				metadata.removal = removalMeta;
+			}
 			ctx.passives.addPassive(nextTier.passive, ctx, {
 				detail: nextTier.passive.text?.summary ?? nextTier.id,
 				meta: metadata,

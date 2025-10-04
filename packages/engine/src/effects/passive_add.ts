@@ -26,7 +26,9 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		onBeforeAttacked,
 		onAttackResolved,
 	} = params;
-	if (!id) throw new Error('passive:add requires id');
+	if (!id) {
+		throw new Error('passive:add requires id');
+	}
 	const passive: {
 		id: string;
 		name?: string | undefined;
@@ -40,12 +42,24 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		id,
 		effects: effect.effects || [],
 	};
-	if (name !== undefined) passive.name = name;
-	if (icon !== undefined) passive.icon = icon;
-	if (onGrowthPhase) passive.onGrowthPhase = onGrowthPhase;
-	if (onUpkeepPhase) passive.onUpkeepPhase = onUpkeepPhase;
-	if (onBeforeAttacked) passive.onBeforeAttacked = onBeforeAttacked;
-	if (onAttackResolved) passive.onAttackResolved = onAttackResolved;
+	if (name !== undefined) {
+		passive.name = name;
+	}
+	if (icon !== undefined) {
+		passive.icon = icon;
+	}
+	if (onGrowthPhase) {
+		passive.onGrowthPhase = onGrowthPhase;
+	}
+	if (onUpkeepPhase) {
+		passive.onUpkeepPhase = onUpkeepPhase;
+	}
+	if (onBeforeAttacked) {
+		passive.onBeforeAttacked = onBeforeAttacked;
+	}
+	if (onAttackResolved) {
+		passive.onAttackResolved = onAttackResolved;
+	}
 	for (let index = 0; index < Math.floor(mult); index++) {
 		ctx.passives.addPassive(passive, ctx);
 	}

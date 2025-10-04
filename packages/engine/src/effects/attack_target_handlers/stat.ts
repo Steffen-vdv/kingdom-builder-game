@@ -11,7 +11,9 @@ const statHandler: AttackTargetHandler<
 	applyDamage(target, damage, _ctx, defender) {
 		const before = defender.stats[target.key] || 0;
 		const after = Math.max(0, before - damage);
-		if (damage > 0) defender.stats[target.key] = after;
+		if (damage > 0) {
+			defender.stats[target.key] = after;
+		}
 		return { before, after };
 	},
 	buildLog(target, damage, _ctx, _defender, _meta, mutation) {

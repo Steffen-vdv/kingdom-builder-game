@@ -29,11 +29,17 @@ function findEffect(
 	effects: EffectDef[] | undefined,
 	predicate: (effect: EffectDef) => boolean,
 ): EffectDef | undefined {
-	if (!effects) return undefined;
+	if (!effects) {
+		return undefined;
+	}
 	for (const effect of effects) {
-		if (predicate(effect)) return effect;
+		if (predicate(effect)) {
+			return effect;
+		}
 		const nested = findEffect(effect.effects, predicate);
-		if (nested) return nested;
+		if (nested) {
+			return nested;
+		}
 	}
 	return undefined;
 }
@@ -47,7 +53,9 @@ function extractTemplateParam(
 	key: string,
 ): string | undefined {
 	const raw = extractString(params?.[key]);
-	if (!raw) return undefined;
+	if (!raw) {
+		return undefined;
+	}
 	return raw.startsWith('$') ? raw.slice(1) : undefined;
 }
 
@@ -56,7 +64,9 @@ function extractStaticParam(
 	key: string,
 ): string | undefined {
 	const raw = extractString(params?.[key]);
-	if (!raw) return undefined;
+	if (!raw) {
+		return undefined;
+	}
 	return raw.startsWith('$') ? undefined : raw;
 }
 
@@ -75,7 +85,9 @@ function createLinkedContentResolver({
 		const effect = findEffect(def.effects, (candidate) => {
 			return candidate.type === effectType && candidate.method === method;
 		});
-		if (!effect) return undefined;
+		if (!effect) {
+			return undefined;
+		}
 		const templateParam = extractTemplateParam(effect.params, paramKey);
 		const staticValue = extractStaticParam(effect.params, paramKey);
 		return (ctx, params) => {
@@ -89,7 +101,9 @@ function createLinkedContentResolver({
 			if (!targetId) {
 				targetId = staticValue;
 			}
-			if (!targetId) return '';
+			if (!targetId) {
+				return '';
+			}
 			const target = logContent(contentType, targetId, ctx)[0];
 			return target ? ` - ${target}` : '';
 		};
@@ -98,8 +112,12 @@ function createLinkedContentResolver({
 
 export function getActionLogHook(def: ActionConfig): ActionLogHook | undefined {
 	const manual = manualHooks.get(def.id);
-	if (manual) return manual;
-	if (derivedCache.has(def.id)) return derivedCache.get(def.id) ?? undefined;
+	if (manual) {
+		return manual;
+	}
+	if (derivedCache.has(def.id)) {
+		return derivedCache.get(def.id) ?? undefined;
+	}
 	for (const resolver of resolvers) {
 		const hook = resolver(def);
 		if (hook) {

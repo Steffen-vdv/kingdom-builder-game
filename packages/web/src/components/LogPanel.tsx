@@ -30,7 +30,9 @@ export default function LogPanel() {
 	const previousRectRef = useRef<DOMRect | null>(null);
 
 	useEffect(() => {
-		if (typeof window === 'undefined') return;
+		if (typeof window === 'undefined') {
+			return;
+		}
 		const handleResize = () => {
 			setViewport({ width: window.innerWidth, height: window.innerHeight });
 		};
@@ -41,7 +43,9 @@ export default function LogPanel() {
 	}, []);
 
 	const expandedStyle = useMemo(() => {
-		if (!isExpanded || !collapsedSize) return undefined;
+		if (!isExpanded || !collapsedSize) {
+			return undefined;
+		}
 		const offsets = overlayOffsets ?? { top: 16, right: 16 };
 		const horizontalPadding = viewport.width > 32 ? 32 : 16;
 		const verticalPadding = viewport.height > 32 ? 32 : 16;
@@ -73,7 +77,9 @@ export default function LogPanel() {
 
 	const handleToggleExpand = () => {
 		const node = outerRef.current;
-		if (!node) return;
+		if (!node) {
+			return;
+		}
 
 		previousRectRef.current = node.getBoundingClientRect();
 
@@ -152,16 +158,22 @@ export default function LogPanel() {
 	}, [isExpanded]);
 
 	useEffect(() => {
-		if (!isExpanded) return;
+		if (!isExpanded) {
+			return;
+		}
 		const container = scrollRef.current;
-		if (!container) return;
+		if (!container) {
+			return;
+		}
 		container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
 	}, [isExpanded]);
 
 	useEffect(() => {
 		const container = scrollRef.current;
 		const list = listRef.current;
-		if (!container || !list) return;
+		if (!container || !list) {
+			return;
+		}
 
 		pendingScrollRef.current = true;
 
@@ -172,7 +184,9 @@ export default function LogPanel() {
 
 		let raf = 0;
 		const observer = new ResizeObserver(() => {
-			if (!pendingScrollRef.current) return;
+			if (!pendingScrollRef.current) {
+				return;
+			}
 			pendingScrollRef.current = false;
 			raf = window.requestAnimationFrame(() => {
 				container.scrollTo({
@@ -187,16 +201,24 @@ export default function LogPanel() {
 		return () => {
 			pendingScrollRef.current = false;
 			observer.disconnect();
-			if (raf) window.cancelAnimationFrame(raf);
+			if (raf) {
+				window.cancelAnimationFrame(raf);
+			}
 		};
 	}, [entries, isExpanded, listRef]);
 
 	useEffect(() => {
-		if (typeof window === 'undefined') return;
-		if (isExpanded) return;
+		if (typeof window === 'undefined') {
+			return;
+		}
+		if (isExpanded) {
+			return;
+		}
 
 		const node = outerRef.current;
-		if (!node) return;
+		if (!node) {
+			return;
+		}
 
 		const ResizeObserverCtor: typeof ResizeObserver | undefined =
 			window.ResizeObserver ??

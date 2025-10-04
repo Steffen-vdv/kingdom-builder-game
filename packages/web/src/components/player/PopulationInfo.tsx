@@ -94,7 +94,9 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 
 	const showStatCard = (statKey: string) => {
 		const info = STATS[statKey as keyof typeof STATS];
-		if (!info) return;
+		if (!info) {
+			return;
+		}
 		const breakdown = getStatBreakdownSummary(statKey, player, ctx);
 		handleHoverCard({
 			title: `${info.icon} ${info.label}`,

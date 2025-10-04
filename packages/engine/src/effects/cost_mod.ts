@@ -31,19 +31,30 @@ export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
 				if (
 					innerCtx.activePlayer.id !== ownerId ||
 					(actionId && targetActionId !== actionId)
-				)
+				) {
 					return;
+				}
 				let flat: Record<string, number> | undefined;
-				if (amount !== undefined) flat = { [key]: amount };
+				if (amount !== undefined) {
+					flat = { [key]: amount };
+				}
 				let percentMap: Record<string, number> | undefined;
-				if (percent !== undefined) percentMap = { [key]: percent };
-				if (!flat && !percentMap) return;
+				if (percent !== undefined) {
+					percentMap = { [key]: percent };
+				}
+				if (!flat && !percentMap) {
+					return;
+				}
 				const result: {
 					flat?: Record<string, number>;
 					percent?: Record<string, number>;
 				} = {};
-				if (flat) result.flat = flat;
-				if (percentMap) result.percent = percentMap;
+				if (flat) {
+					result.flat = flat;
+				}
+				if (percentMap) {
+					result.percent = percentMap;
+				}
 				return result;
 			},
 		);

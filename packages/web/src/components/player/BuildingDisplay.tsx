@@ -10,7 +10,9 @@ interface BuildingDisplayProps {
 
 const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
 	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
-	if (player.buildings.size === 0) return null;
+	if (player.buildings.size === 0) {
+		return null;
+	}
 	const animateBuildings = useAnimate<HTMLDivElement>();
 	return (
 		<div ref={animateBuildings} className="mt-3 flex w-full flex-wrap gap-3">

@@ -9,7 +9,9 @@ export default function HoverCard() {
 		ctx,
 		actionCostResource,
 	} = useGameEngine();
-	if (!data) return null;
+	if (!data) {
+		return null;
+	}
 	return (
 		<div
 			className={`pointer-events-none w-full rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl shadow-amber-500/10 transition dark:border-white/10 dark:bg-slate-900/80 dark:shadow-slate-900/60 frosted-surface ${
@@ -46,7 +48,9 @@ export default function HoverCard() {
 					typeof desc === 'string'
 						? desc.trim().length > 0
 						: Array.isArray(desc) && desc.length > 0;
-				if (!hasDescription) return null;
+				if (!hasDescription) {
+					return null;
+				}
 				return (
 					<div className="mt-2">
 						<div

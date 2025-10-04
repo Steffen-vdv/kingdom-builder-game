@@ -110,22 +110,24 @@ export function diffSnapshots(
 	}
 	const beforeB = new Set(before.buildings);
 	const afterB = new Set(after.buildings);
-	for (const id of afterB)
+	for (const id of afterB) {
 		if (!beforeB.has(id)) {
 			const label = logContent('building', id, ctx)[0] ?? id;
 			changes.push(`${label} built`);
 		}
+	}
 	for (const land of after.lands) {
 		const prev = before.lands.find((l) => l.id === land.id);
 		if (!prev) {
 			changes.push(`${LAND_INFO.icon} +1 ${LAND_INFO.label}`);
 			continue;
 		}
-		for (const dev of land.developments)
+		for (const dev of land.developments) {
 			if (!prev.developments.includes(dev)) {
 				const label = logContent('development', dev, ctx)[0] ?? dev;
 				changes.push(`${LAND_INFO.icon} +${label}`);
 			}
+		}
 	}
 	const beforeSlots = before.lands.reduce((sum, l) => sum + l.slotsMax, 0);
 	const afterSlots = after.lands.reduce((sum, l) => sum + l.slotsMax, 0);
@@ -133,14 +135,17 @@ export function diffSnapshots(
 		.filter((l) => !before.lands.some((b) => b.id === l.id))
 		.reduce((sum, l) => sum + l.slotsMax, 0);
 	const slotDelta = afterSlots - newLandSlots - beforeSlots;
-	if (slotDelta !== 0)
+	if (slotDelta !== 0) {
 		changes.push(
 			`${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
 		);
+	}
 	const beforePassives = new Map(before.passives.map((p) => [p.id, p]));
 	const afterPassives = new Set(after.passives.map((p) => p.id));
 	for (const [id, passive] of beforePassives) {
-		if (afterPassives.has(id)) continue;
+		if (afterPassives.has(id)) {
+			continue;
+		}
 		const icon = passive.icon ?? PASSIVE_INFO.icon;
 		const label = passive.name ?? id;
 		const prefix = icon ? `${icon} ` : '';
@@ -228,12 +233,20 @@ function renderPopulationMetaIcons(
 	const icon = role
 		? POPULATION_ROLES[role]?.icon || role
 		: POPULATION_INFO.icon;
-	if (!icon) return '';
-	if (meta.count === undefined) return icon;
+	if (!icon) {
+		return '';
+	}
+	if (meta.count === undefined) {
+		return icon;
+	}
 	const rawCount = Number(meta.count);
-	if (!Number.isFinite(rawCount)) return icon;
+	if (!Number.isFinite(rawCount)) {
+		return icon;
+	}
 	const normalizedCount = rawCount > 0 ? Math.max(1, Math.round(rawCount)) : 0;
-	if (normalizedCount === 0) return '';
+	if (normalizedCount === 0) {
+		return '';
+	}
 	return icon.repeat(normalizedCount);
 }
 
@@ -241,7 +254,9 @@ function renderDevelopmentMetaIcons(
 	meta: ResourceSourceMeta,
 	ctx: EngineContext,
 ): string {
-	if (!meta.id) return '';
+	if (!meta.id) {
+		return '';
+	}
 	return ctx.developments.get(meta.id)?.icon || '';
 }
 
@@ -249,7 +264,9 @@ function renderBuildingMetaIcons(
 	meta: ResourceSourceMeta,
 	ctx: EngineContext,
 ): string {
-	if (!meta.id) return '';
+	if (!meta.id) {
+		return '';
+	}
 	return resolveBuildingIcon(meta.id, ctx);
 }
 
@@ -269,11 +286,17 @@ function appendMetaSourceIcons(
 	source: unknown,
 	ctx: EngineContext,
 ) {
-	if (!isResourceSourceMeta(source) || !source.type) return;
+	if (!isResourceSourceMeta(source) || !source.type) {
+		return;
+	}
 	const renderer = META_ICON_RENDERERS[source.type];
-	if (!renderer) return;
+	if (!renderer) {
+		return;
+	}
 	const icons = renderer(source, ctx);
-	if (icons) entry.icons += icons;
+	if (icons) {
+		entry.icons += icons;
+	}
 }
 
 function collectResourceSources(
@@ -284,9 +307,13 @@ function collectResourceSources(
 	for (const eff of step?.effects || []) {
 		if (eff.evaluator && eff.effects) {
 			const inner = eff.effects.find((e) => e.type === 'resource');
-			if (!inner) continue;
+			if (!inner) {
+				continue;
+			}
 			const key = inner.params?.['key'] as string | undefined;
-			if (!key) continue;
+			if (!key) {
+				continue;
+			}
 			const entry = map[key] || { icons: '', mods: '' };
 			const ev = eff.evaluator as {
 				type: string;
@@ -307,21 +334,29 @@ function collectResourceSources(
 				const modsMap = passives.evaluationMods?.get(target);
 				if (modsMap) {
 					for (const key of modsMap.keys()) {
-						if (!key.endsWith(`_${ctx.activePlayer.id}`)) continue;
+						if (!key.endsWith(`_${ctx.activePlayer.id}`)) {
+							continue;
+						}
 						const base = key.replace(`_${ctx.activePlayer.id}`, '');
 						const parts = base.split('_');
 						let icon = '';
 						for (let i = parts.length; i > 0; i--) {
 							const candidate = parts.slice(0, i).join('_');
 							icon = resolveBuildingIcon(candidate, ctx);
-							if (icon) break;
+							if (icon) {
+								break;
+							}
 						}
 						if (!icon && passives.get) {
 							const passive = passives.get(base, ctx.activePlayer.id);
 							icon = passive?.icon || passive?.meta?.source?.icon || '';
 						}
-						if (!icon) icon = PASSIVE_INFO.icon || '';
-						if (icon) entry.mods += icon;
+						if (!icon) {
+							icon = PASSIVE_INFO.icon || '';
+						}
+						if (icon) {
+							entry.mods += icon;
+						}
 					}
 				}
 			} catch {
@@ -331,7 +366,9 @@ function collectResourceSources(
 		}
 		if (eff.type === 'resource') {
 			const key = eff.params?.['key'] as string | undefined;
-			if (!key) continue;
+			if (!key) {
+				continue;
+			}
 			const entry = map[key] || { icons: '', mods: '' };
 			const meta = eff.meta?.['source'];
 			appendMetaSourceIcons(entry, meta, ctx);
@@ -341,7 +378,9 @@ function collectResourceSources(
 	const result: Record<string, string> = {};
 	for (const [key, { icons, mods }] of Object.entries(map)) {
 		let part = icons;
-		if (mods) part += `+${mods}`;
+		if (mods) {
+			part += `+${mods}`;
+		}
 		result[key] = part;
 	}
 	return result;
@@ -355,7 +394,9 @@ function findStatPctBreakdown(
 		effects: EffectDef[] | undefined,
 		currentRole: string | undefined,
 	): { role: string; percentStat: string } | undefined => {
-		if (!effects) return undefined;
+		if (!effects) {
+			return undefined;
+		}
 		for (const eff of effects) {
 			let role = currentRole;
 			if (eff.evaluator?.type === 'population') {
@@ -370,7 +411,9 @@ function findStatPctBreakdown(
 				}
 			}
 			const nested = walk(eff.effects, role);
-			if (nested) return nested;
+			if (nested) {
+				return nested;
+			}
 		}
 		return undefined;
 	};
@@ -399,8 +442,9 @@ export function diffStepSnapshots(
 			const delta = a - b;
 			let line = `${icon}${label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a})`;
 			const src = sources[key];
-			if (src)
+			if (src) {
 				line += ` (${info?.icon || key}${delta >= 0 ? '+' : ''}${delta} from ${src})`;
+			}
 			changes.push(line);
 		}
 	}
@@ -435,22 +479,24 @@ export function diffStepSnapshots(
 	}
 	const beforeB = new Set(before.buildings);
 	const afterB = new Set(after.buildings);
-	for (const id of afterB)
+	for (const id of afterB) {
 		if (!beforeB.has(id)) {
 			const label = logContent('building', id, ctx)[0] ?? id;
 			changes.push(`${label} built`);
 		}
+	}
 	for (const land of after.lands) {
 		const prev = before.lands.find((l) => l.id === land.id);
 		if (!prev) {
 			changes.push(`${LAND_INFO.icon} +1 ${LAND_INFO.label}`);
 			continue;
 		}
-		for (const dev of land.developments)
+		for (const dev of land.developments) {
 			if (!prev.developments.includes(dev)) {
 				const label = logContent('development', dev, ctx)[0] ?? dev;
 				changes.push(`${LAND_INFO.icon} +${label}`);
 			}
+		}
 	}
 	const beforeSlots = before.lands.reduce((sum, l) => sum + l.slotsMax, 0);
 	const afterSlots = after.lands.reduce((sum, l) => sum + l.slotsMax, 0);
@@ -458,18 +504,20 @@ export function diffStepSnapshots(
 		.filter((l) => !before.lands.some((b) => b.id === l.id))
 		.reduce((sum, l) => sum + l.slotsMax, 0);
 	const slotDelta = afterSlots - newLandSlots - beforeSlots;
-	if (slotDelta !== 0)
+	if (slotDelta !== 0) {
 		changes.push(
 			`${SLOT_INFO.icon} ${SLOT_INFO.label} ${slotDelta >= 0 ? '+' : ''}${slotDelta} (${beforeSlots}→${beforeSlots + slotDelta})`,
 		);
+	}
 	const beforePassives = new Map(before.passives.map((p) => [p.id, p]));
 	const afterPassives = new Set(after.passives.map((p) => p.id));
-	for (const [id, passive] of beforePassives)
+	for (const [id, passive] of beforePassives) {
 		if (!afterPassives.has(id)) {
 			const icon = passive.icon ?? PASSIVE_INFO.icon;
 			const label = passive.name ?? id;
 			const prefix = icon ? `${icon} ` : '';
 			changes.push(`${prefix}${label} expired`);
 		}
+	}
 	return changes;
 }

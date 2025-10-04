@@ -92,13 +92,14 @@ function diffPlayerSnapshots(
 	for (const key of resourceKeys) {
 		const beforeVal = before.resources[key] ?? 0;
 		const afterVal = after.resources[key] ?? 0;
-		if (beforeVal !== afterVal)
+		if (beforeVal !== afterVal) {
 			diffs.push({
 				type: 'resource',
 				key,
 				before: beforeVal,
 				after: afterVal,
 			});
+		}
 	}
 	const statKeys = new Set<StatKey>(
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -107,13 +108,14 @@ function diffPlayerSnapshots(
 	for (const key of statKeys) {
 		const beforeVal = before.stats[key] ?? 0;
 		const afterVal = after.stats[key] ?? 0;
-		if (beforeVal !== afterVal)
+		if (beforeVal !== afterVal) {
 			diffs.push({
 				type: 'stat',
 				key,
 				before: beforeVal,
 				after: afterVal,
 			});
+		}
 	}
 	return diffs;
 }
@@ -123,10 +125,16 @@ function applyAbsorption(
 	absorption: number,
 	rounding: 'up' | 'down' | 'nearest',
 ): number {
-	if (absorption <= 0) return damage;
+	if (absorption <= 0) {
+		return damage;
+	}
 	const reduced = damage * (1 - absorption);
-	if (rounding === 'down') return Math.floor(reduced);
-	if (rounding === 'up') return Math.ceil(reduced);
+	if (rounding === 'down') {
+		return Math.floor(reduced);
+	}
+	if (rounding === 'up') {
+		return Math.ceil(reduced);
+	}
 	return Math.round(reduced);
 }
 
@@ -144,12 +152,15 @@ export function resolveAttack(
 	ctx.game.currentPlayerIndex = defenderIndex;
 	const pre = collectTriggerEffects('onBeforeAttacked', ctx, defender);
 
-	for (const bundle of pre)
+	for (const bundle of pre) {
 		withStatSourceFrames(ctx, bundle.frames, () =>
 			runEffects(bundle.effects, ctx),
 		);
+	}
 
-	if (pre.length) runEffects(pre, ctx);
+	if (pre.length) {
+		runEffects(pre, ctx);
+	}
 
 	ctx.game.currentPlayerIndex = original;
 
@@ -174,7 +185,9 @@ export function resolveAttack(
 	const fortAfter = opts.ignoreFortification
 		? fortBefore
 		: Math.max(0, fortBefore - fortDamage);
-	if (!opts.ignoreFortification) defender.fortificationStrength = fortAfter;
+	if (!opts.ignoreFortification) {
+		defender.fortificationStrength = fortAfter;
+	}
 
 	const targetDamage = Math.max(0, damageAfterAbsorption - fortDamage);
 	const handlerMeta: AttackTargetHandlerMeta = {
@@ -201,15 +214,19 @@ export function resolveAttack(
 	ctx.game.currentPlayerIndex = defenderIndex;
 	const post = collectTriggerEffects('onAttackResolved', ctx, defender);
 
-	for (const bundle of post)
+	for (const bundle of post) {
 		withStatSourceFrames(ctx, bundle.frames, () =>
 			runEffects(bundle.effects, ctx),
 		);
+	}
 
-	if ((defender.fortificationStrength || 0) < 0)
+	if ((defender.fortificationStrength || 0) < 0) {
 		defender.fortificationStrength = 0;
+	}
 
-	if (post.length) runEffects(post, ctx);
+	if (post.length) {
+		runEffects(post, ctx);
+	}
 
 	ctx.game.currentPlayerIndex = original;
 
@@ -238,7 +255,9 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
 	const defender = ctx.opponent;
 	const params = effect.params || {};
 	const target = params['target'] as AttackTarget | undefined;
-	if (!target) return;
+	if (!target) {
+		return;
+	}
 
 	const baseDamage = (attacker.armyStrength as number) || 0;
 	const targetHandler = attackTargetHandlers[target.type];
@@ -264,10 +283,14 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
 
 	if (result.damageDealt > 0 && onDamage) {
 		const runList = (owner: AttackLogOwner, defs: EffectDef[] | undefined) => {
-			if (!defs?.length) return;
+			if (!defs?.length) {
+				return;
+			}
 			const defenderIndex = ctx.game.players.indexOf(defender);
 			const original = ctx.game.currentPlayerIndex;
-			if (owner === 'defender') ctx.game.currentPlayerIndex = defenderIndex;
+			if (owner === 'defender') {
+				ctx.game.currentPlayerIndex = defenderIndex;
+			}
 			try {
 				for (const def of defs) {
 					const beforeAttacker = snapshotPlayer(attacker, ctx);
@@ -283,7 +306,9 @@ export const attackPerform: EffectHandler = (effect, ctx) => {
 					});
 				}
 			} finally {
-				if (owner === 'defender') ctx.game.currentPlayerIndex = original;
+				if (owner === 'defender') {
+					ctx.game.currentPlayerIndex = original;
+				}
 			}
 		};
 

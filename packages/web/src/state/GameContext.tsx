@@ -43,9 +43,13 @@ const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
 
 function readStoredTimeScale(): TimeScale | null {
-	if (typeof window === 'undefined') return null;
+	if (typeof window === 'undefined') {
+		return null;
+	}
 	const raw = window.localStorage.getItem(TIME_SCALE_STORAGE_KEY);
-	if (!raw) return null;
+	if (!raw) {
+		return null;
+	}
 	const parsed = Number(raw);
 	return (TIME_SCALE_OPTIONS as readonly number[]).includes(parsed)
 		? (parsed as TimeScale)
@@ -170,7 +174,9 @@ export function GameProvider({
 	const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
 
 	const [timeScale, setTimeScaleState] = useState<TimeScale>(() => {
-		if (devMode) return 100;
+		if (devMode) {
+			return 100;
+		}
 		return readStoredTimeScale() ?? 1;
 	});
 	useEffect(() => {
@@ -182,9 +188,12 @@ export function GameProvider({
 	}, [devMode]);
 	const changeTimeScale = (value: TimeScale) => {
 		setTimeScaleState((prev) => {
-			if (prev === value) return prev;
-			if (typeof window !== 'undefined')
+			if (prev === value) {
+				return prev;
+			}
+			if (typeof window !== 'undefined') {
 				window.localStorage.setItem(TIME_SCALE_STORAGE_KEY, String(value));
+			}
 			return value;
 		});
 	};
@@ -199,7 +208,9 @@ export function GameProvider({
 	const setTrackedTimeout = (handler: () => void, delay: number) => {
 		const timeoutId = window.setTimeout(() => {
 			timeouts.current.delete(timeoutId);
-			if (!isMounted.current) return;
+			if (!isMounted.current) {
+				return;
+			}
 			handler();
 		}, delay);
 		timeouts.current.add(timeoutId);
@@ -281,8 +292,9 @@ export function GameProvider({
 				!comp ||
 				(Object.keys(comp.resources || {}).length === 0 &&
 					Object.keys(comp.stats || {}).length === 0)
-			)
+			) {
 				return;
+			}
 			const after = snapshotPlayer(player, ctx);
 			const before = {
 				...after,
@@ -295,10 +307,12 @@ export function GameProvider({
 				})),
 				passives: [...after.passives],
 			};
-			for (const [k, v] of Object.entries(comp.resources || {}))
+			for (const [k, v] of Object.entries(comp.resources || {})) {
 				before.resources[k] = (before.resources[k] || 0) - (v ?? 0);
-			for (const [k, v] of Object.entries(comp.stats || {}))
+			}
+			for (const [k, v] of Object.entries(comp.stats || {})) {
 				before.stats[k] = (before.stats[k] || 0) - (v ?? 0);
+			}
 			const lines = diffStepSnapshots(
 				before,
 				after,
@@ -306,11 +320,12 @@ export function GameProvider({
 				ctx,
 				RESOURCE_KEYS,
 			);
-			if (lines.length)
+			if (lines.length) {
 				addLog(
 					['Last-player compensation:', ...lines.map((l: string) => `  ${l}`)],
 					player,
 				);
+			}
 		});
 	}, [ctx]);
 
@@ -360,20 +375,27 @@ export function GameProvider({
 		const scale = timeScale || 1;
 		const adjustedTotal = total / scale;
 		if (adjustedTotal <= 0) {
-			if (isMounted.current) setPhaseTimer(0);
+			if (isMounted.current) {
+				setPhaseTimer(0);
+			}
 			return Promise.resolve();
 		}
 		const tick = Math.max(16, Math.min(100, adjustedTotal / 10));
-		if (isMounted.current) setPhaseTimer(0);
+		if (isMounted.current) {
+			setPhaseTimer(0);
+		}
 		return new Promise<void>((resolve) => {
 			let elapsed = 0;
 			const interval = setTrackedInterval(() => {
 				elapsed += tick;
-				if (isMounted.current)
+				if (isMounted.current) {
 					setPhaseTimer(Math.min(1, elapsed / adjustedTotal));
+				}
 				if (elapsed >= adjustedTotal) {
 					clearTrackedInterval(interval);
-					if (isMounted.current) setPhaseTimer(0);
+					if (isMounted.current) {
+						setPhaseTimer(0);
+					}
 					resolve();
 				}
 			}, tick);
@@ -386,7 +408,9 @@ export function GameProvider({
 
 	async function runUntilActionPhaseCore() {
 		if (ctx.phases[ctx.game.phaseIndex]?.action) {
-			if (!isMounted.current) return;
+			if (!isMounted.current) {
+				return;
+			}
 			setPhaseTimer(0);
 			setTabsEnabled(true);
 			setDisplayPhase(ctx.game.currentPhase);
@@ -406,7 +430,9 @@ export function GameProvider({
 			const stepDef = phaseDef.steps.find((s) => s.id === step);
 			if (phase !== lastPhase) {
 				await runDelay(1500);
-				if (!isMounted.current) return;
+				if (!isMounted.current) {
+					return;
+				}
 				setPhaseSteps([]);
 				setDisplayPhase(phase);
 				addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player);
@@ -459,17 +485,23 @@ export function GameProvider({
 				[phaseId]: [...(prev[phaseId] ?? []), entry],
 			}));
 			await runStepDelay();
-			if (!isMounted.current) return;
+			if (!isMounted.current) {
+				return;
+			}
 			const finalized = { ...entry, active: false };
 			setPhaseSteps((prev) => {
-				if (!prev.length) return prev;
+				if (!prev.length) {
+					return prev;
+				}
 				const next = [...prev];
 				next[next.length - 1] = finalized;
 				return next;
 			});
 			setPhaseHistories((prev) => {
 				const history = prev[phaseId];
-				if (!history?.length) return prev;
+				if (!history?.length) {
+					return prev;
+				}
 				const nextHistory = [...history];
 				nextHistory[nextHistory.length - 1] = finalized;
 				return { ...prev, [phaseId]: nextHistory };
@@ -477,13 +509,19 @@ export function GameProvider({
 		}
 		if (ranSteps) {
 			await runDelay(1500);
-			if (!isMounted.current) return;
+			if (!isMounted.current) {
+				return;
+			}
 		} else {
-			if (!isMounted.current) return;
+			if (!isMounted.current) {
+				return;
+			}
 			setPhaseTimer(0);
 		}
 		const start = ctx.activePlayer.resources[actionCostResource] as number;
-		if (!isMounted.current) return;
+		if (!isMounted.current) {
+			return;
+		}
 		setMainApStart(start);
 		updateMainPhaseStep(start);
 		setDisplayPhase(ctx.game.currentPhase);
@@ -496,7 +534,9 @@ export function GameProvider({
 	function waitWithScale(base: number) {
 		const scale = timeScale || 1;
 		const duration = base / scale;
-		if (duration <= 0) return Promise.resolve();
+		if (duration <= 0) {
+			return Promise.resolve();
+		}
 		return new Promise<void>((resolve) => {
 			setTrackedTimeout(() => resolve(), duration);
 		});
@@ -506,15 +546,23 @@ export function GameProvider({
 		lines: string[],
 		player: EngineContext['activePlayer'],
 	) {
-		if (!lines.length) return;
+		if (!lines.length) {
+			return;
+		}
 		const [first, ...rest] = lines;
-		if (first === undefined) return;
-		if (!isMounted.current) return;
+		if (first === undefined) {
+			return;
+		}
+		if (!isMounted.current) {
+			return;
+		}
 		addLog(first, player);
 		const delay = ACTION_EFFECT_DELAY;
 		for (const line of rest) {
 			await waitWithScale(delay);
-			if (!isMounted.current) return;
+			if (!isMounted.current) {
+				return;
+			}
 			addLog(line, player);
 		}
 	}
@@ -548,7 +596,9 @@ export function GameProvider({
 			const costLines: string[] = [];
 			for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
 				const amt = costs[key] ?? 0;
-				if (!amt) continue;
+				if (!amt) {
+					continue;
+				}
 				const info = RESOURCES[key];
 				const icon = info?.icon ? `${info.icon} ` : '';
 				const label = info?.label ?? key;
@@ -573,14 +623,17 @@ export function GameProvider({
 					ctx,
 					RESOURCE_KEYS,
 				);
-				if (!subChanges.length) continue;
+				if (!subChanges.length) {
+					continue;
+				}
 				subLines.push(...subChanges);
 				const icon = ctx.actions.get(trace.id)?.icon || '';
 				const name = ctx.actions.get(trace.id).name;
 				const line = `  ${icon} ${name}`;
 				const idx = messages.indexOf(line);
-				if (idx !== -1)
+				if (idx !== -1) {
 					messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
+				}
 			}
 
 			const subPrefixes = subLines.map(normalize);
@@ -588,11 +641,14 @@ export function GameProvider({
 			const messagePrefixes = new Set<string>();
 			for (const line of messages) {
 				const trimmed = line.trim();
-				if (!trimmed.startsWith('You:') && !trimmed.startsWith('Opponent:'))
+				if (!trimmed.startsWith('You:') && !trimmed.startsWith('Opponent:')) {
 					continue;
+				}
 				const body = trimmed.slice(trimmed.indexOf(':') + 1).trim();
 				const normalized = normalize(body);
-				if (normalized) messagePrefixes.add(normalized);
+				if (normalized) {
+					messagePrefixes.add(normalized);
+				}
 			}
 
 			const costLabels = new Set(
@@ -600,12 +656,18 @@ export function GameProvider({
 			);
 			const filtered = changes.filter((line) => {
 				const normalizedLine = normalize(line);
-				if (messagePrefixes.has(normalizedLine)) return false;
-				if (subPrefixes.includes(normalizedLine)) return false;
+				if (messagePrefixes.has(normalizedLine)) {
+					return false;
+				}
+				if (subPrefixes.includes(normalizedLine)) {
+					return false;
+				}
 				for (const key of costLabels) {
 					const info = RESOURCES[key];
 					const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
-					if (line.startsWith(prefix)) return false;
+					if (line.startsWith(prefix)) {
+						return false;
+					}
 				}
 				return true;
 			});
@@ -616,7 +678,9 @@ export function GameProvider({
 
 			await logWithEffectDelay(logLines, player);
 
-			if (!isMounted.current) return;
+			if (!isMounted.current) {
+				return;
+			}
 			if (
 				ctx.game.devMode &&
 				(ctx.activePlayer.resources[actionCostResource] ?? 0) <= 0
@@ -642,8 +706,12 @@ export function GameProvider({
 
 	async function endTurn() {
 		const phaseDef = ctx.phases[ctx.game.phaseIndex];
-		if (!phaseDef?.action) return;
-		if ((ctx.activePlayer.resources[actionCostResource] ?? 0) > 0) return;
+		if (!phaseDef?.action) {
+			return;
+		}
+		if ((ctx.activePlayer.resources[actionCostResource] ?? 0) > 0) {
+			return;
+		}
 		advance(ctx);
 		setPhaseHistories({});
 		await runUntilActionPhaseCore();
@@ -653,8 +721,12 @@ export function GameProvider({
 
 	// Update main phase steps once action phase becomes active
 	useEffect(() => {
-		if (!tabsEnabled) return;
-		if (!ctx.phases[ctx.game.phaseIndex]?.action) return;
+		if (!tabsEnabled) {
+			return;
+		}
+		if (!ctx.phases[ctx.game.phaseIndex]?.action) {
+			return;
+		}
 		const start = ctx.activePlayer.resources[actionCostResource] as number;
 		setMainApStart(start);
 		updateMainPhaseStep(start);
@@ -666,10 +738,14 @@ export function GameProvider({
 
 	useEffect(() => {
 		const phaseDef = ctx.phases[ctx.game.phaseIndex];
-		if (!phaseDef?.action) return;
+		if (!phaseDef?.action) {
+			return;
+		}
 		const aiSystem = ctx.aiSystem;
 		const activeId = ctx.activePlayer.id;
-		if (!aiSystem?.has(activeId)) return;
+		if (!aiSystem?.has(activeId)) {
+			return;
+		}
 		void ctx.enqueue(async () => {
 			await aiSystem.run(activeId, ctx, {
 				performAction: async (
@@ -678,21 +754,25 @@ export function GameProvider({
 					params?: ActionParams<string>,
 				) => {
 					const definition = engineCtx.actions.get(actionId);
-					if (!definition)
+					if (!definition) {
 						throw new Error(`Unknown action ${String(actionId)} for AI`);
+					}
 					const action: Action = {
 						id: definition.id,
 						name: definition.name,
 					};
-					if (definition.system !== undefined)
+					if (definition.system !== undefined) {
 						action.system = definition.system;
+					}
 					await performRef.current(action, params as Record<string, unknown>);
 				},
 				advance: (engineCtx: EngineContext) => {
 					advance(engineCtx);
 				},
 			});
-			if (!isMounted.current) return;
+			if (!isMounted.current) {
+				return;
+			}
 			setPhaseHistories({});
 			await runUntilActionPhaseCore();
 		});
@@ -737,6 +817,8 @@ export function GameProvider({
 
 export const useGameEngine = (): GameEngineContextValue => {
 	const value = useContext(GameEngineContext);
-	if (!value) throw new Error('useGameEngine must be used within GameProvider');
+	if (!value) {
+		throw new Error('useGameEngine must be used within GameProvider');
+	}
 	return value;
 };

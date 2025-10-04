@@ -37,7 +37,9 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 
 		useEffect(() => {
 			const el = phaseStepsRef.current;
-			if (!el) return;
+			if (!el) {
+				return;
+			}
 			el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
 		}, [phaseSteps]);
 
@@ -72,7 +74,9 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 								type="button"
 								disabled={!tabsEnabled}
 								onClick={() => {
-									if (!tabsEnabled) return;
+									if (!tabsEnabled) {
+										return;
+									}
 									setDisplayPhase(p.id);
 									setPhaseSteps(phaseHistories[p.id] ?? []);
 								}}

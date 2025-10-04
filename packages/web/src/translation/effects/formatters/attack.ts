@@ -74,7 +74,9 @@ function categorizeDamageEffects(
 ): { actions: SummaryEntry[]; others: SummaryEntry[] } {
 	const key = `${def.type}:${def.method}`;
 	const handler = DAMAGE_EFFECT_CATEGORIES[key];
-	if (handler) return { actions: handler(item, mode), others: [] };
+	if (handler) {
+		return { actions: handler(item, mode), others: [] };
+	}
 	return { actions: [], others: [item] };
 }
 
@@ -130,7 +132,9 @@ function summarizeOnDamage(
 	const onDamage = eff.params?.['onDamage'] as
 		| { attacker?: EffectDef[]; defender?: EffectDef[] }
 		| undefined;
-	if (!onDamage) return null;
+	if (!onDamage) {
+		return null;
+	}
 	const { formatter, info, target, targetLabel } = base;
 	const format = mode === 'summarize' ? summarizeEffects : describeEffects;
 	const attackerDefs = onDamage.attacker ?? [];
@@ -150,8 +154,11 @@ function summarizeOnDamage(
 			const { actions, others } = categorizeDamageEffects(def, entry, mode);
 			actionItems.push(...actions);
 			others.forEach((other) => {
-				if (typeof other === 'string') items.push(`${other} ${suffix}`);
-				else items.push({ ...other, title: `${other.title} ${suffix}` });
+				if (typeof other === 'string') {
+					items.push(`${other} ${suffix}`);
+				} else {
+					items.push({ ...other, title: `${other.title} ${suffix}` });
+				}
 			});
 		});
 	};
@@ -160,7 +167,9 @@ function summarizeOnDamage(
 	collect(attackerDefs, attackerEntries, 'for you');
 
 	const combined = items.concat(actionItems);
-	if (!combined.length) return null;
+	if (!combined.length) {
+		return null;
+	}
 	return {
 		title: formatter.buildOnDamageTitle(mode, { info, target, targetLabel }),
 		items: combined,
@@ -174,7 +183,9 @@ function fallbackLog(
 	const base = buildBaseEntry(eff, 'describe');
 	const onDamage = summarizeOnDamage(eff, ctx, 'describe', base);
 	const parts: SummaryEntry[] = [base.entry];
-	if (onDamage) parts.push(onDamage);
+	if (onDamage) {
+		parts.push(onDamage);
+	}
 	return parts;
 }
 
@@ -203,13 +214,15 @@ function buildActionLog(
 	let icon = '';
 	let name = id || 'Unknown action';
 	const transferPercents = new Map<ResourceKey, number>();
-	if (id)
+	if (id) {
 		try {
 			const def = ctx.actions.get(id);
 			icon = def.icon || '';
 			name = def.name;
 			const walk = (effects: EffectDef[] | undefined) => {
-				if (!effects) return;
+				if (!effects) {
+					return;
+				}
 				for (const eff of effects) {
 					if (
 						eff.type === 'resource' &&
@@ -219,17 +232,20 @@ function buildActionLog(
 						const key =
 							(eff.params['key'] as ResourceKey | undefined) ?? undefined;
 						const pct = eff.params['percent'] as number | undefined;
-						if (key && pct !== undefined && !transferPercents.has(key))
+						if (key && pct !== undefined && !transferPercents.has(key)) {
 							transferPercents.set(key, pct);
+						}
 					}
-					if (Array.isArray(eff.effects))
+					if (Array.isArray(eff.effects)) {
 						walk(eff.effects as EffectDef[] | undefined);
+					}
 				}
 			};
 			walk(def.effects as EffectDef[] | undefined);
 		} catch {
 			/* ignore missing action */
 		}
+	}
 	const items: SummaryEntry[] = [];
 	entry.defender.forEach((diff) => {
 		const percent =
@@ -255,7 +271,9 @@ export function buildOnDamageEntry(
 	ctx: EngineContext,
 	eff: EffectDef<Record<string, unknown>>,
 ): SummaryEntry | null {
-	if (!logEntries.length) return null;
+	if (!logEntries.length) {
+		return null;
+	}
 	const { formatter, info, target } = resolveAttackTargetFormatter(eff);
 	const items: SummaryEntry[] = [];
 	const defenderEntries = logEntries.filter(
@@ -272,7 +290,9 @@ export function buildOnDamageEntry(
 			: formatDiffEntries(entry, formatter);
 		items.push(...formatted);
 	}
-	if (!items.length) return null;
+	if (!items.length) {
+		return null;
+	}
 	return {
 		title: formatter.onDamageLogTitle(info, target),
 		items,
@@ -292,7 +312,9 @@ registerAttackOnDamageFormatter(
 		const percent = entry.effect.params
 			? (entry.effect.params['percent'] as number | undefined)
 			: undefined;
-		if (percent === undefined) return formatDiffEntries(entry, formatter);
+		if (percent === undefined) {
+			return formatDiffEntries(entry, formatter);
+		}
 		const parts: SummaryEntry[] = [];
 		entry.defender.forEach((diff) =>
 			parts.push(
@@ -311,22 +333,30 @@ registerEffectFormatter('attack', 'perform', {
 		const base = buildBaseEntry(eff, 'summarize');
 		const parts: SummaryEntry[] = [base.entry];
 		const onDamage = summarizeOnDamage(eff, ctx, 'summarize', base);
-		if (onDamage) parts.push(onDamage);
+		if (onDamage) {
+			parts.push(onDamage);
+		}
 		return parts;
 	},
 	describe: (eff, ctx) => {
 		const base = buildBaseEntry(eff, 'describe');
 		const parts: SummaryEntry[] = [base.entry];
 		const onDamage = summarizeOnDamage(eff, ctx, 'describe', base);
-		if (onDamage) parts.push(onDamage);
+		if (onDamage) {
+			parts.push(onDamage);
+		}
 		return parts;
 	},
 	log: (eff, ctx) => {
 		const log = ctx.pullEffectLog<AttackLog>('attack:perform');
-		if (!log) return fallbackLog(eff, ctx);
+		if (!log) {
+			return fallbackLog(eff, ctx);
+		}
 		const entries: SummaryEntry[] = [buildEvaluationEntry(log.evaluation)];
 		const onDamage = buildOnDamageEntry(log.onDamage, ctx, eff);
-		if (onDamage) entries.push(onDamage);
+		if (onDamage) {
+			entries.push(onDamage);
+		}
 		return entries;
 	},
 });

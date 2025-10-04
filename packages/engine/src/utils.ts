@@ -7,7 +7,9 @@ export function applyParamsToEffects<E extends EffectDef>(
 	const replace = (val: unknown): unknown =>
 		typeof val === 'string' && val.startsWith('$') ? params[val.slice(1)] : val;
 	const replaceDeep = (val: unknown): unknown => {
-		if (Array.isArray(val)) return val.map(replaceDeep);
+		if (Array.isArray(val)) {
+			return val.map(replaceDeep);
+		}
 		if (val && typeof val === 'object') {
 			return Object.fromEntries(
 				Object.entries(val).map(([key, value]) => [key, replaceDeep(value)]),
@@ -50,10 +52,18 @@ export function applyParamsToEffects<E extends EffectDef>(
 
 export function cloneEffectDef(effect: EffectDef): EffectDef {
 	const cloned: EffectDef = { ...effect };
-	if (effect.params) cloned.params = structuredClone(effect.params);
-	if (effect.meta) cloned.meta = structuredClone(effect.meta);
-	if (effect.evaluator) cloned.evaluator = structuredClone(effect.evaluator);
-	if (effect.effects) cloned.effects = effect.effects.map(cloneEffectDef);
+	if (effect.params) {
+		cloned.params = structuredClone(effect.params);
+	}
+	if (effect.meta) {
+		cloned.meta = structuredClone(effect.meta);
+	}
+	if (effect.evaluator) {
+		cloned.evaluator = structuredClone(effect.evaluator);
+	}
+	if (effect.effects) {
+		cloned.effects = effect.effects.map(cloneEffectDef);
+	}
 	return cloned;
 }
 
