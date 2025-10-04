@@ -64,6 +64,9 @@ export type ActionCardOption = {
 	description?: string;
 	disabled?: boolean;
 	onSelect: () => void;
+	onMouseEnter?: (() => void) | undefined;
+	onMouseLeave?: (() => void) | undefined;
+	compact?: boolean;
 };
 
 export type ActionCardVariant = 'front' | 'back';
@@ -93,46 +96,82 @@ export interface ActionCardProps {
 	promptDescription?: string | undefined;
 	options?: ActionCardOption[] | undefined;
 	onCancel?: (() => void) | undefined;
+	multiStep?: boolean | undefined;
 }
 
 function StepBadge({
 	stepIndex,
 	stepCount,
 	stepLabel,
+	variant,
+	multiStep,
 }: {
 	stepIndex: number | undefined;
 	stepCount: number | undefined;
 	stepLabel: string | undefined;
+	variant: ActionCardVariant;
+	multiStep: boolean | undefined;
 }) {
-	if (!stepCount || stepCount <= 0) {
+	if (variant === 'back' && stepCount && stepCount > 0) {
+		const current = stepIndex && stepIndex > 0 ? stepIndex : 1;
+		const label =
+			stepLabel ?? `Step ${Math.min(current, stepCount)} of ${stepCount}`;
+		return (
+			<div className="action-card__badge">
+				<span className="action-card__badge-pill">{label}</span>
+			</div>
+		);
+	}
+	if (!multiStep || variant !== 'front') {
 		return null;
 	}
-	const current = stepIndex && stepIndex > 0 ? stepIndex : 1;
-	const label =
-		stepLabel ?? `Step ${Math.min(current, stepCount)} of ${stepCount}`;
 	return (
 		<div className="action-card__badge">
-			<span className="action-card__badge-pill">{label}</span>
+			<span
+				className="action-card__multi-step"
+				role="img"
+				aria-label="Multi-step action"
+				title="Multi-step action"
+			>
+				<svg
+					className="action-card__multi-step-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<circle cx="6" cy="12" r="2.25" />
+					<circle cx="12" cy="12" r="2.25" />
+					<circle cx="18" cy="12" r="2.25" />
+					<path d="M8.25 12h3.5M14.25 12h3.5" strokeLinecap="round" />
+				</svg>
+			</span>
 		</div>
 	);
 }
 
 function OptionCard({ option }: { option: ActionCardOption }) {
 	const label = [option.icon, option.label].filter(Boolean).join(' ').trim();
+	const optionClass = [
+		'action-card__option',
+		option.compact ? 'action-card__option--compact' : '',
+		option.disabled ? 'opacity-50 cursor-not-allowed' : 'hoverable',
+	]
+		.filter(Boolean)
+		.join(' ');
 	return (
 		<button
 			type="button"
-			className={`action-card__option ${
-				option.disabled ? 'opacity-50 cursor-not-allowed' : 'hoverable'
-			}`}
+			className={optionClass}
 			onClick={option.disabled ? undefined : option.onSelect}
 			disabled={option.disabled}
+			onMouseEnter={option.onMouseEnter}
+			onMouseLeave={option.onMouseLeave}
 		>
 			<span className="action-card__option-title">{label}</span>
-			{option.summary && (
+			{!option.compact && option.summary && (
 				<p className="action-card__option-summary">{option.summary}</p>
 			)}
-			{option.description && (
+			{!option.compact && option.description && (
 				<p className="action-card__option-description">{option.description}</p>
 			)}
 		</button>
@@ -164,6 +203,7 @@ export default function ActionCard({
 	promptDescription,
 	options = [],
 	onCancel,
+	multiStep = false,
 }: ActionCardProps) {
 	const focusClass =
 		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
@@ -207,6 +247,8 @@ export default function ActionCard({
 				stepIndex={stepIndex}
 				stepCount={stepCount}
 				stepLabel={stepLabel}
+				variant={variant}
+				multiStep={multiStep}
 			/>
 			<div className="action-card__inner">
 				<button
@@ -249,8 +291,10 @@ export default function ActionCard({
 									type="button"
 									className="action-card__cancel"
 									onClick={onCancel}
+									aria-label="Cancel selection"
+									title="Cancel selection"
 								>
-									Cancel
+									×
 								</button>
 							)}
 						</div>
