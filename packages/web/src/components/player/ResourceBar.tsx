@@ -80,6 +80,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 		handleHoverCard({
 			title: `${info.icon} ${info.label}`,
 			effects: entries,
+			description: [`Current value: ${value}`],
 			effectsTitle: `Tiers (Current: ${value})`,
 			requirements: [],
 			bgClass: PLAYER_INFO_CARD_BG,
