@@ -7,19 +7,13 @@ import {
 	PHASES,
 	POPULATION_ROLES,
 	STATS,
+	type OverviewTokenCategoryName,
 } from '@kingdom-builder/contents';
 import type { OverviewIconSet } from './sectionsData';
 
-type TokenCandidateInput = string | ReadonlyArray<string>;
+export type TokenCandidateInput = string | ReadonlyArray<string>;
 type OverviewTokenCategoryOverrides = Record<string, TokenCandidateInput>;
 type OverviewTokenCategoryConfig = Record<string, string[]>;
-type OverviewTokenCategoryName =
-	| 'actions'
-	| 'phases'
-	| 'resources'
-	| 'stats'
-	| 'population'
-	| 'static';
 type OverviewTokenConfigResolved = Record<
 	OverviewTokenCategoryName,
 	OverviewTokenCategoryConfig

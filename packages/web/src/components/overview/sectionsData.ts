@@ -1,47 +1,102 @@
 import type { ReactNode } from 'react';
+import {
+	type OverviewSectionTemplate,
+	type OverviewTokenCandidates,
+	type OverviewTokenCategoryName,
+} from '@kingdom-builder/contents';
 import type { OverviewSectionDef } from './OverviewLayout';
+import {
+	buildOverviewIconSet,
+	type OverviewTokenConfig,
+	type TokenCandidateInput,
+} from './overviewTokens';
 
 export type OverviewIconSet = Record<string, ReactNode | undefined>;
 
-export type OverviewIconKey = string;
-
-export type OverviewParagraphContent = {
-	kind: 'paragraph';
-	id: string;
-	icon: OverviewIconKey;
-	title: string;
-	span?: boolean;
-	paragraphs: string[];
-};
-
-export type OverviewListItemContent = {
-	icon?: OverviewIconKey;
-	label: string;
-	body: string[];
-};
-
-export type OverviewListContent = {
-	kind: 'list';
-	id: string;
-	icon: OverviewIconKey;
-	title: string;
-	span?: boolean;
-	items: OverviewListItemContent[];
-};
-
-export type OverviewContentSection =
-	| OverviewParagraphContent
-	| OverviewListContent;
+export type OverviewContentSection = OverviewSectionTemplate;
 
 function spanProps(span?: boolean) {
 	return span === undefined ? {} : { span };
 }
 
+function isStringArray(
+	input: TokenCandidateInput | undefined,
+): input is ReadonlyArray<string> {
+	return Array.isArray(input);
+}
+
+function normalizeCandidates(input?: TokenCandidateInput): string[] {
+	if (!input) {
+		return [];
+	}
+	if (isStringArray(input)) {
+		return [...input];
+	}
+	return [input];
+}
+
+function mergeTokenSources(
+	base: OverviewTokenCandidates,
+	overrides?: OverviewTokenConfig,
+): OverviewTokenConfig {
+	const merged: OverviewTokenConfig = {};
+	const categories = new Set<OverviewTokenCategoryName>([
+		...(Object.keys(base ?? {}) as OverviewTokenCategoryName[]),
+		...(overrides
+			? (Object.keys(overrides) as OverviewTokenCategoryName[])
+			: []),
+	]);
+
+	for (const category of categories) {
+		const baseEntries = base?.[category] ?? {};
+		const overrideEntries = overrides?.[category];
+		const categoryResult: Record<string, TokenCandidateInput> = {};
+		const tokens = new Set<string>([
+			...Object.keys(baseEntries),
+			...(overrideEntries ? Object.keys(overrideEntries) : []),
+		]);
+
+		for (const tokenKey of tokens) {
+			const baseCandidates = baseEntries[tokenKey] ?? [];
+			const overrideCandidates = normalizeCandidates(
+				overrideEntries?.[tokenKey],
+			);
+			const combined: string[] = [];
+
+			for (const candidate of overrideCandidates) {
+				if (!combined.includes(candidate)) {
+					combined.push(candidate);
+				}
+			}
+
+			for (const candidate of baseCandidates) {
+				if (!combined.includes(candidate)) {
+					combined.push(candidate);
+				}
+			}
+
+			if (combined.length > 0) {
+				categoryResult[tokenKey] = combined;
+			}
+		}
+
+		if (Object.keys(categoryResult).length > 0) {
+			merged[category] = categoryResult;
+		}
+	}
+
+	return merged;
+}
+
 export function createOverviewSections(
-	icons: OverviewIconSet,
+	tokenCandidates: OverviewTokenCandidates,
+	overrides: OverviewTokenConfig | undefined,
 	content: OverviewContentSection[],
-): OverviewSectionDef[] {
-	return content.map((section) => {
+): { sections: OverviewSectionDef[]; tokens: OverviewIconSet } {
+	const mergedTokenConfig = mergeTokenSources(tokenCandidates, overrides);
+	const icons = buildOverviewIconSet(mergedTokenConfig);
+
+	const sections = content.map((section) => {
 		if (section.kind === 'paragraph') {
 			return {
 				kind: 'paragraph',
@@ -66,4 +121,6 @@ export function createOverviewSections(
 			...spanProps(section.span),
 		} satisfies OverviewSectionDef;
 	});
+
+	return { sections, tokens: icons };
 }
