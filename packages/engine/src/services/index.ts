@@ -105,7 +105,9 @@ export type PassiveMetadata = {
 function clonePassiveMetadata(
 	metadata: PassiveMetadata | undefined,
 ): PassiveMetadata | undefined {
-	if (!metadata) return undefined;
+	if (!metadata) {
+		return undefined;
+	}
 	const cloned: PassiveMetadata = {};
 	if (metadata.source) {
 		cloned.source = { ...metadata.source };
