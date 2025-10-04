@@ -1305,6 +1305,7 @@ export class EffectBuilder<P extends Params = Params> {
 	private roundSet = false;
 	private typeSet = false;
 	private methodSet = false;
+	private metaSet = false;
 	type(type: string) {
 		if (this.typeSet) {
 			throw new Error(
@@ -1392,6 +1393,19 @@ export class EffectBuilder<P extends Params = Params> {
 		this.config.round = mode;
 		this.roundSet = true;
 		return this;
+	}
+	meta(meta: EffectConfig['meta']) {
+		if (this.metaSet) {
+			throw new Error(
+				'Effect already has meta(). Remove the duplicate meta() call.',
+			);
+		}
+		this.config.meta = meta;
+		this.metaSet = true;
+		return this;
+	}
+	allowShortfall() {
+		return this.meta({ allowShortfall: true });
 	}
 	build(): EffectConfig {
 		if (!this.typeSet && !this.methodSet) {
