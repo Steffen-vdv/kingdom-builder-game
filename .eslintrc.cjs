@@ -127,9 +127,6 @@ module.exports = {
 				'@typescript-eslint/no-unsafe-return': 'off',
 				'@typescript-eslint/no-unsafe-call': 'off',
 				'@typescript-eslint/no-unnecessary-type-assertion': 'off',
-				curly: 'off',
-				'id-length': 'off',
-				'max-len': 'off',
 			},
 		},
 		{
@@ -157,10 +154,10 @@ module.exports = {
 				'max-lines': 'off',
 			},
 		},
-                {
-                        files: [
-                                'packages/engine/src/action_perform.ts',
-                                'packages/engine/src/effects/**/*.ts',
+		{
+			files: [
+				'packages/engine/src/action_perform.ts',
+				'packages/engine/src/effects/**/*.ts',
 				'packages/engine/src/evaluators/**/*.ts',
 				'packages/engine/src/index.ts',
 			],
@@ -210,25 +207,25 @@ module.exports = {
 				'packages/web/src/translation/effects/formatters/action.ts',
 				'packages/web/src/translation/effects/formatters/building.ts',
 				'packages/web/src/translation/effects/formatters/passive.ts',
-                        ],
-                        rules: {
-                                'max-lines': 'off',
-                                'max-len': 'off',
-                                'id-length': 'off',
-                        },
-                },
-                {
-                        files: [
-                                'packages/web/src/utils/stats.ts',
-                                'packages/web/src/utils/stats/summary.ts',
-                        ],
-                        rules: {
-                                '@typescript-eslint/no-unsafe-assignment': 'off',
-                                '@typescript-eslint/no-unsafe-call': 'off',
-                                '@typescript-eslint/no-unsafe-member-access': 'off',
-                                '@typescript-eslint/no-unsafe-return': 'off',
-                                '@typescript-eslint/no-redundant-type-constituents': 'off',
-                        },
-                },
-        ],
+			],
+			rules: {
+				'max-lines': 'off',
+				'max-len': 'off',
+				'id-length': 'off',
+			},
+		},
+		{
+			files: [
+				'packages/web/src/utils/stats.ts',
+				'packages/web/src/utils/stats/summary.ts',
+			],
+			rules: {
+				'@typescript-eslint/no-unsafe-assignment': 'off',
+				'@typescript-eslint/no-unsafe-call': 'off',
+				'@typescript-eslint/no-unsafe-member-access': 'off',
+				'@typescript-eslint/no-unsafe-return': 'off',
+				'@typescript-eslint/no-redundant-type-constituents': 'off',
+			},
+		},
+	],
 };
