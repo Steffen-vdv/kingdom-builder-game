@@ -51,136 +51,136 @@ describe('content happiness tiers', () => {
 		}
 
 		expect(snapshot).toMatchInlineSnapshot(`
+{
+  "content": {
+    "happiness": 3,
+    "passives": [
       {
-        "content": {
-          "happiness": 3,
-          "passives": [
-            {
-              "id": "passive:happiness:content",
-              "removalToken": "happiness stays between +3 and +4",
-              "summary": "💰 Income +20% while the realm is content.",
-              "summaryToken": "happiness.tier.summary.content",
-            },
-          ],
-          "skipPhases": {},
-          "skipSteps": {},
+        "id": "passive:happiness:content",
+        "removalToken": "happiness stays between +3 and +4",
+        "summary": "During income step, gain 20% more 🪙 gold.",
+        "summaryToken": "happiness.tier.summary.content",
+      },
+    ],
+    "skipPhases": {},
+    "skipSteps": {},
+  },
+  "despair": {
+    "happiness": -10,
+    "passives": [
+      {
+        "id": "passive:happiness:despair",
+        "removalToken": "happiness is -10 or lower",
+        "summary": "During income step, gain 50% less 🪙 gold.\nSkip Growth phase.\nSkip War Recovery step during Upkeep phase.",
+        "summaryToken": "happiness.tier.summary.despair",
+      },
+    ],
+    "skipPhases": {
+      "growth": {
+        "passive:happiness:despair": true,
+      },
+    },
+    "skipSteps": {
+      "upkeep": {
+        "war-recovery": {
+          "passive:happiness:despair": true,
         },
-        "despair": {
-          "happiness": -10,
-          "passives": [
-            {
-              "id": "passive:happiness:despair",
-              "removalToken": "happiness is -10 or lower",
-              "summary": "💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.",
-              "summaryToken": "happiness.tier.summary.despair",
-            },
-          ],
-          "skipPhases": {
-            "growth": {
-              "passive:happiness:despair": true,
-            },
-          },
-          "skipSteps": {
-            "upkeep": {
-              "war-recovery": {
-                "passive:happiness:despair": true,
-              },
-            },
-          },
-        },
-        "ecstatic": {
-          "happiness": 10,
-          "passives": [
-            {
-              "id": "passive:happiness:ecstatic",
-              "removalToken": "happiness is +10 or higher",
-              "summary": "💰 Income +50%. 🏛️ Building costs reduced by 20%. 📈 Growth +20%.",
-              "summaryToken": "happiness.tier.summary.ecstatic",
-            },
-          ],
-          "skipPhases": {},
-          "skipSteps": {},
-        },
-        "elated": {
-          "happiness": 8,
-          "passives": [
-            {
-              "id": "passive:happiness:elated",
-              "removalToken": "happiness stays between +8 and +9",
-              "summary": "💰 Income +50%. 🏛️ Building costs reduced by 20%.",
-              "summaryToken": "happiness.tier.summary.elated",
-            },
-          ],
-          "skipPhases": {},
-          "skipSteps": {},
-        },
-        "grim": {
-          "happiness": -5,
-          "passives": [
-            {
-              "id": "passive:happiness:grim",
-              "removalToken": "happiness stays between -7 and -5",
-              "summary": "💰 Income -25%. ⏭️ Skip Growth until spirits recover.",
-              "summaryToken": "happiness.tier.summary.grim",
-            },
-          ],
-          "skipPhases": {
-            "growth": {
-              "passive:happiness:grim": true,
-            },
-          },
-          "skipSteps": {},
-        },
-        "joyful": {
-          "happiness": 5,
-          "passives": [
-            {
-              "id": "passive:happiness:joyful",
-              "removalToken": "happiness stays between +5 and +7",
-              "summary": "💰 Income +25%. 🏛️ Building costs reduced by 20%.",
-              "summaryToken": "happiness.tier.summary.joyful",
-            },
-          ],
-          "skipPhases": {},
-          "skipSteps": {},
-        },
-        "misery": {
-          "happiness": -8,
-          "passives": [
-            {
-              "id": "passive:happiness:misery",
-              "removalToken": "happiness stays between -9 and -8",
-              "summary": "💰 Income -50%. ⏭️ Skip Growth while morale is desperate.",
-              "summaryToken": "happiness.tier.summary.misery",
-            },
-          ],
-          "skipPhases": {
-            "growth": {
-              "passive:happiness:misery": true,
-            },
-          },
-          "skipSteps": {},
-        },
-        "steady": {
-          "happiness": 0,
-          "passives": [],
-          "skipPhases": {},
-          "skipSteps": {},
-        },
-        "unrest": {
-          "happiness": -3,
-          "passives": [
-            {
-              "id": "passive:happiness:unrest",
-              "removalToken": "happiness stays between -4 and -3",
-              "summary": "💰 Income -25% while unrest simmers.",
-              "summaryToken": "happiness.tier.summary.unrest",
-            },
-          ],
-          "skipPhases": {},
-          "skipSteps": {},
-        },
-      }
-    `);
+      },
+    },
+  },
+  "ecstatic": {
+    "happiness": 10,
+    "passives": [
+      {
+        "id": "passive:happiness:ecstatic",
+        "removalToken": "happiness is +10 or higher",
+        "summary": "During income step, gain 50% more 🪙 gold.\nBuild action costs 20% less 🪙 gold.\nDuring Growth phase, gain 20% more 📈 Growth.",
+        "summaryToken": "happiness.tier.summary.ecstatic",
+      },
+    ],
+    "skipPhases": {},
+    "skipSteps": {},
+  },
+  "elated": {
+    "happiness": 8,
+    "passives": [
+      {
+        "id": "passive:happiness:elated",
+        "removalToken": "happiness stays between +8 and +9",
+        "summary": "During income step, gain 50% more 🪙 gold.\nBuild action costs 20% less 🪙 gold.",
+        "summaryToken": "happiness.tier.summary.elated",
+      },
+    ],
+    "skipPhases": {},
+    "skipSteps": {},
+  },
+  "grim": {
+    "happiness": -5,
+    "passives": [
+      {
+        "id": "passive:happiness:grim",
+        "removalToken": "happiness stays between -7 and -5",
+        "summary": "During income step, gain 25% less 🪙 gold.\nSkip Growth phase.",
+        "summaryToken": "happiness.tier.summary.grim",
+      },
+    ],
+    "skipPhases": {
+      "growth": {
+        "passive:happiness:grim": true,
+      },
+    },
+    "skipSteps": {},
+  },
+  "joyful": {
+    "happiness": 5,
+    "passives": [
+      {
+        "id": "passive:happiness:joyful",
+        "removalToken": "happiness stays between +5 and +7",
+        "summary": "During income step, gain 25% more 🪙 gold.\nBuild action costs 20% less 🪙 gold.",
+        "summaryToken": "happiness.tier.summary.joyful",
+      },
+    ],
+    "skipPhases": {},
+    "skipSteps": {},
+  },
+  "misery": {
+    "happiness": -8,
+    "passives": [
+      {
+        "id": "passive:happiness:misery",
+        "removalToken": "happiness stays between -9 and -8",
+        "summary": "During income step, gain 50% less 🪙 gold.\nSkip Growth phase.",
+        "summaryToken": "happiness.tier.summary.misery",
+      },
+    ],
+    "skipPhases": {
+      "growth": {
+        "passive:happiness:misery": true,
+      },
+    },
+    "skipSteps": {},
+  },
+  "steady": {
+    "happiness": 0,
+    "passives": [],
+    "skipPhases": {},
+    "skipSteps": {},
+  },
+  "unrest": {
+    "happiness": -3,
+    "passives": [
+      {
+        "id": "passive:happiness:unrest",
+        "removalToken": "happiness stays between -4 and -3",
+        "summary": "During income step, gain 25% less 🪙 gold.",
+        "summaryToken": "happiness.tier.summary.unrest",
+      },
+    ],
+    "skipPhases": {},
+    "skipSteps": {},
+  },
+}
+`);
 	});
 });

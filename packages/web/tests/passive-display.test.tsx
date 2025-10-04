@@ -29,6 +29,9 @@ type MockGame = {
 
 let currentGame: MockGame;
 
+const INCOME_BONUS_TEXT = 'During income step, gain 25% more 🪙 gold.';
+const BUILD_DISCOUNT_TEXT = 'Build action costs 20% less 🪙 gold.';
+
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => currentGame,
 }));
@@ -71,9 +74,14 @@ describe('<PassiveDisplay />', () => {
 		fireEvent.mouseEnter(hoverTarget!);
 		expect(handleHoverCard).toHaveBeenCalled();
 		const [{ description }] = handleHoverCard.mock.calls.at(-1) ?? [{}];
+		const primaryLine = Array.isArray(description)
+			? (description[0] as string | undefined)
+			: undefined;
+		expect(primaryLine).toBeDefined();
+		expect(primaryLine).toContain(INCOME_BONUS_TEXT);
+		expect(primaryLine).toContain(BUILD_DISCOUNT_TEXT);
 		expect(description).toEqual(
 			expect.arrayContaining([
-				expect.stringMatching(/Income \+25%/i),
 				expect.stringMatching(
 					/Active as long as happiness stays between \+5 and \+7/i,
 				),
