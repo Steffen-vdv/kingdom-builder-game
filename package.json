@@ -15,7 +15,8 @@
 		"lint": "eslint . --ext .ts,.tsx --rulesdir scripts",
 		"typecheck": "tsc -b --noEmit --pretty false",
 		"fix": "eslint . --ext .ts,.tsx --fix --rulesdir scripts",
-		"check": "npm run typecheck && npm run lint",
+		"format:check": "prettier --check .",
+		"check": "npm run format:check && npm run typecheck && npm run lint",
 		"pretest": "node scripts/ensure-dev-dependencies.cjs",
 		"test": "vitest run",
 		"test:quick": "npm test",
@@ -59,8 +60,8 @@
 		"vitest": "^3.2.4"
 	},
 	"lint-staged": {
-		"*.{js,jsx,ts,tsx,json,md}": "prettier --write",
-		"*.{js,jsx,ts,tsx}": "eslint --max-warnings=0 --rulesdir scripts",
+		"*.{js,jsx,ts,tsx,json,md,cjs}": "prettier --write",
+		"*.{ts,tsx}": "eslint --max-warnings=0 --rulesdir scripts",
 		"*.{ts,tsx}": "bash -c 'tsc --noEmit'"
 	}
 }
