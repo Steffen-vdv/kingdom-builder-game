@@ -57,15 +57,6 @@ export function getActionCosts<T extends string>(
 	const actionDefinition = engineContext.actions.get(actionId);
 	const baseCosts = cloneCostBag(actionDefinition.baseCosts || {});
 	const resolved = resolveActionEffects(actionDefinition, params);
-	if (resolved.missingSelections.length > 0) {
-		const formatted = resolved.missingSelections
-			.map((id) => `"${id}"`)
-			.join(', ');
-		const suffix = resolved.missingSelections.length > 1 ? 'groups' : 'group';
-		throw new Error(
-			`Action ${actionDefinition.id} requires a selection for effect ${suffix} ${formatted}`,
-		);
-	}
 	applyEffectCostCollectors(resolved.effects, baseCosts, engineContext);
 	const finalCosts = applyCostsWithPassives(
 		actionDefinition.id,
