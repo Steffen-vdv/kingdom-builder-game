@@ -136,6 +136,27 @@ describe('modifier evaluation handlers', () => {
 		}
 	});
 
+	it('formats development result modifiers with percent adjustments', () => {
+		const ctx = createCtx();
+		const eff: EffectDef = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				id: 'synthetic:income',
+				evaluation: { type: 'development' },
+				percent: 0.2,
+			},
+		};
+		const summary = summarizeEffects([eff], ctx);
+		expect(summary).toEqual([expect.stringContaining('Income')]);
+		expect(summary[0]).toContain('+20%');
+		expect(summary[0]).not.toContain('+0');
+
+		const description = describeEffects([eff], ctx);
+		expect(description[0]).toContain('Income');
+		expect(description[0]).toContain('20%');
+	});
+
 	it('formats transfer percent evaluation modifiers for arbitrary actions', () => {
 		const content = createContentFactory();
 		const raid = content.action({ id: 'raid', name: 'Raid', icon: '⚔️' });

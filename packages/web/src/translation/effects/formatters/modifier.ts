@@ -13,9 +13,9 @@ import {
 	formatResultModifierClause,
 	formatTargetLabel,
 	getActionInfo,
-	resolveTransferModifierTarget,
 	wrapResultModifierEntries,
 } from './modifier_helpers';
+import { resolveTransferModifierTarget } from './transfer_helpers';
 import { describeContent } from '../../content';
 import {
 	registerEffectFormatter,
