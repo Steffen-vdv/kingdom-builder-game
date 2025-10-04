@@ -117,6 +117,12 @@ describe('GenericActions effect group handling', () => {
 		getActionCostsMock.mockImplementation(() => ({ ap: 1, gold: 12 }));
 		getActionRequirementsMock.mockImplementation(() => []);
 		getRequirementIconsMock.mockImplementation(() => []);
+		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
+			if (type === 'action' && id === 'develop') {
+				return ['🏠 House'];
+			}
+			return [];
+		});
 		getActionEffectGroupsMock.mockImplementation((actionId: string) => {
 			if (actionId !== 'royal_decree') {
 				return [];
@@ -162,7 +168,7 @@ describe('GenericActions effect group handling', () => {
 		fireEvent.click(actionButton);
 
 		const optionButton = await screen.findByRole('button', {
-			name: /Raise a House/,
+			name: /Develop - 🏠 House/,
 		});
 		fireEvent.click(optionButton);
 
