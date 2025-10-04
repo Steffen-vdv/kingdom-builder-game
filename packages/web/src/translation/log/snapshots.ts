@@ -55,6 +55,27 @@ function formatDelta(delta: number): string {
 	return `${delta >= 0 ? '+' : ''}${delta}`;
 }
 
+function firstNonEmptyString(...candidates: unknown[]): string | undefined {
+	for (const candidate of candidates) {
+		if (typeof candidate !== 'string') {
+			continue;
+		}
+		const trimmed = candidate.trim();
+		if (trimmed.length > 0) {
+			return trimmed;
+		}
+	}
+	return undefined;
+}
+
+function getMetaString(meta: unknown, key: string): string | undefined {
+	if (typeof meta !== 'object' || meta === null) {
+		return undefined;
+	}
+	const value = (meta as Record<string, unknown>)[key];
+	return typeof value === 'string' ? value : undefined;
+}
+
 export function diffSnapshots(
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
@@ -211,31 +232,24 @@ context,
 	return changes;
 }
 export function resolvePassiveLogDetails(passive: PassiveSummary) {
-	// prettier-ignore
 	const icon =
-passive.meta?.source?.icon ??
-passive.icon ??
-PASSIVE_INFO.icon ??
-'';
-	// prettier-ignore
+		passive.meta?.source?.icon ?? passive.icon ?? PASSIVE_INFO.icon ?? '';
 	const label =
-[
-passive.meta?.source?.labelToken,
-passive.detail,
-passive.name,
-passive.id,
-]
-.map((candidate) => candidate?.trim())
-.find(
-(candidate) => candidate !== undefined && candidate.length > 0,
-) ?? passive.id;
-	let removal: string | undefined;
-	const removalText = passive.meta?.removal?.text;
-	if (removalText && removalText.trim().length > 0) {
-		removal = removalText;
-	} else {
-		const removalToken = passive.meta?.removal?.token;
-		if (removalToken && removalToken.trim().length > 0) {
+		firstNonEmptyString(
+			getMetaString(passive.meta?.source, 'label'),
+			getMetaString(passive.meta?.source, 'labelToken'),
+			getMetaString(passive.meta, 'label'),
+			passive.detail,
+			passive.name,
+			passive.id,
+		) ?? passive.id;
+	let removal = firstNonEmptyString(
+		getMetaString(passive.meta?.removal, 'text'),
+		getMetaString(passive.meta?.removal, 'label'),
+	);
+	if (!removal) {
+		const removalToken = getMetaString(passive.meta?.removal, 'token');
+		if (removalToken) {
 			removal = `Removed when ${removalToken}`;
 		}
 	}
