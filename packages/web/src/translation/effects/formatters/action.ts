@@ -1,4 +1,7 @@
-import type { EngineContext } from '@kingdom-builder/engine';
+import {
+	resolveActionEffects,
+	type EngineContext,
+} from '@kingdom-builder/engine';
 import { describeContent } from '../../content';
 import { registerEffectFormatter, logEffects } from '../factory';
 
@@ -114,7 +117,8 @@ registerEffectFormatter('action', 'perform', {
 		}
 		const { icon, name } = getActionLabel(id, ctx);
 		const def = ctx.actions.get(id);
-		const sub = logEffects(def.effects, ctx);
+		const resolved = resolveActionEffects(def);
+		const sub = logEffects(resolved.effects, ctx);
 		return [{ title: `${icon} ${name}`, items: sub }];
 	},
 });

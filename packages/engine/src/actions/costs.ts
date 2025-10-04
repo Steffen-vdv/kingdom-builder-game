@@ -1,4 +1,3 @@
-import { applyParamsToEffects } from '../utils';
 import { EFFECT_COST_COLLECTORS } from '../effects';
 import { runRequirement } from '../requirements';
 import type { EffectDef } from '../effects';
@@ -6,6 +5,7 @@ import type { EngineContext } from '../context';
 import type { CostBag } from '../services';
 import type { PlayerState } from '../state';
 import type { ActionParameters } from './action_parameters';
+import { resolveActionEffects } from './effect_groups';
 
 function cloneCostBag(costBag: CostBag): CostBag {
 	return { ...costBag };
@@ -56,11 +56,17 @@ export function getActionCosts<T extends string>(
 ): CostBag {
 	const actionDefinition = engineContext.actions.get(actionId);
 	const baseCosts = cloneCostBag(actionDefinition.baseCosts || {});
-	const resolvedEffects = applyParamsToEffects(
-		actionDefinition.effects,
-		params || {},
-	);
-	applyEffectCostCollectors(resolvedEffects, baseCosts, engineContext);
+	const resolved = resolveActionEffects(actionDefinition, params);
+	if (resolved.missingSelections.length > 0) {
+		const formatted = resolved.missingSelections
+			.map((id) => `"${id}"`)
+			.join(', ');
+		const suffix = resolved.missingSelections.length > 1 ? 'groups' : 'group';
+		throw new Error(
+			`Action ${actionDefinition.id} requires a selection for effect ${suffix} ${formatted}`,
+		);
+	}
+	applyEffectCostCollectors(resolved.effects, baseCosts, engineContext);
 	const finalCosts = applyCostsWithPassives(
 		actionDefinition.id,
 		baseCosts,

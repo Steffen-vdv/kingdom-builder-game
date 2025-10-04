@@ -1,8 +1,8 @@
-import type { EngineContext } from '@kingdom-builder/engine';
 import {
-	applyParamsToEffects,
 	coerceActionEffectGroupChoices,
-	getActionEffectGroups,
+	resolveActionEffects,
+	type ActionParams,
+	type EngineContext,
 } from '@kingdom-builder/engine';
 import {
 	summarizeEffects,
@@ -23,12 +23,13 @@ class ActionTranslator
 		opts?: Record<string, unknown>,
 	): Summary {
 		const def = ctx.actions.get(id);
-		const effects = opts
-			? applyParamsToEffects(def.effects, opts)
-			: def.effects;
-		const eff = summarizeEffects(effects, ctx);
+		const resolved = resolveActionEffects(
+			def,
+			opts as ActionParams<string> | undefined,
+		);
+		const eff = summarizeEffects(resolved.effects, ctx);
 		const groups = formatEffectGroups(
-			getActionEffectGroups(id, ctx),
+			resolved.groups.map((group) => group.group),
 			'summarize',
 		);
 		const combined = [...eff, ...groups];
@@ -40,12 +41,13 @@ class ActionTranslator
 		opts?: Record<string, unknown>,
 	): Summary {
 		const def = ctx.actions.get(id);
-		const effects = opts
-			? applyParamsToEffects(def.effects, opts)
-			: def.effects;
-		const eff = describeEffects(effects, ctx);
+		const resolved = resolveActionEffects(
+			def,
+			opts as ActionParams<string> | undefined,
+		);
+		const eff = describeEffects(resolved.effects, ctx);
 		const groups = formatEffectGroups(
-			getActionEffectGroups(id, ctx),
+			resolved.groups.map((group) => group.group),
 			'describe',
 		);
 		const combined = [...eff, ...groups];
@@ -64,13 +66,18 @@ class ActionTranslator
 		if (extra) {
 			message += extra;
 		}
-		const effects = params
-			? applyParamsToEffects(def.effects, params)
-			: def.effects;
+		const resolved = resolveActionEffects(
+			def,
+			params as ActionParams<string> | undefined,
+		);
 		const choiceMap = coerceActionEffectGroupChoices(params?.['choices']);
 		const effLogs = [
-			...logEffects(effects, ctx),
-			...formatEffectGroups(getActionEffectGroups(id, ctx), 'log', choiceMap),
+			...logEffects(resolved.effects, ctx),
+			...formatEffectGroups(
+				resolved.groups.map((group) => group.group),
+				'log',
+				choiceMap,
+			),
 		];
 		const lines = [message];
 		function push(entry: unknown, depth: number) {
