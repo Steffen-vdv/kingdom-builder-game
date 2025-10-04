@@ -8,43 +8,12 @@ import {
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
-import ActionCard, { type ActionCardOption } from './ActionCard';
+import ActionCard from './ActionCard';
 import { formatMissingResources } from './utils';
 import type { Action, DisplayPlayer } from './ActionsPanel';
 import type { PendingActionState } from './GenericActions';
-import type { useGameEngine } from '../../state/GameContext';
-
-function buildOptionCards(
-	group: ActionEffectGroup | undefined,
-	handleOptionSelect: (
-		group: ActionEffectGroup,
-		option: ActionEffectGroupOption,
-	) => void,
-): ActionCardOption[] | undefined {
-	if (!group) {
-		return undefined;
-	}
-	return group.options.map((option) => {
-		const card: ActionCardOption = {
-			id: option.id,
-			label: option.label,
-			onSelect: () => handleOptionSelect(group, option),
-		};
-		if (option.icon) {
-			card.icon = option.icon;
-		}
-		if (option.summary) {
-			card.summary = option.summary;
-		}
-		if (option.description) {
-			card.description = option.description;
-		}
-		return card;
-	});
-}
-
-type GameEngineApi = ReturnType<typeof useGameEngine>;
-type HoverCardData = Parameters<GameEngineApi['handleHoverCard']>[0];
+import { useEffectGroupOptions } from './useEffectGroupOptions';
+import type { HoverCardData } from './types';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -122,14 +91,25 @@ function GenericActionCard({
 			: !canPay
 				? (insufficientTooltip ?? 'Cannot pay costs')
 				: undefined;
-	const stepCount = groups.length > 0 ? groups.length : undefined;
-	const stepIndex = stepCount
-		? isPending
-			? Math.min(stepCount, (pending?.step ?? 0) + 1)
-			: 1
-		: undefined;
+	const hoverBackground =
+		'bg-gradient-to-br from-white/80 to-white/60 ' +
+		'dark:from-slate-900/80 dark:to-slate-900/60';
+	const hasGroups = groups.length > 0;
 	const currentGroup = isPending ? pending?.groups[pending.step] : undefined;
-	const optionCards = buildOptionCards(currentGroup, handleOptionSelect);
+	const stepCount = isPending && hasGroups ? groups.length : undefined;
+	const stepIndex = stepCount
+		? Math.min(stepCount, (pending?.step ?? 0) + 1)
+		: undefined;
+	const optionCards = useEffectGroupOptions({
+		currentGroup,
+		pendingParams: pending?.params,
+		context,
+		formatRequirement,
+		handleOptionSelect,
+		clearHoverCard,
+		handleHoverCard,
+		hoverBackground,
+	});
 	const rawAction = context.actions.get(action.id);
 	let actionIcon = '';
 	let actionFocus: Action['focus'] | undefined;
@@ -146,9 +126,6 @@ function GenericActionCard({
 	const hoverTitle = `${actionIcon} ${action.name}`;
 	const hoverContent = describeContent('action', action.id, context);
 	const { effects, description } = splitSummary(hoverContent);
-	const hoverBackground =
-		'bg-gradient-to-br from-white/80 to-white/60 ' +
-		'dark:from-slate-900/80 dark:to-slate-900/60';
 	return (
 		<ActionCard
 			key={action.id}
@@ -168,6 +145,7 @@ function GenericActionCard({
 			tooltip={title}
 			focus={actionFocus}
 			variant={isPending ? 'back' : 'front'}
+			multiStep={hasGroups}
 			stepCount={stepCount}
 			stepIndex={stepIndex}
 			promptTitle={currentGroup?.title}

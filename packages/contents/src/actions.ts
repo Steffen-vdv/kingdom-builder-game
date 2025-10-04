@@ -207,24 +207,19 @@ export function createActionRegistry() {
 			.effect(
 				effect(Types.Action, ActionMethods.PERFORM).param('id', 'till').build(),
 			)
-			.effect({
-				type: Types.Resource,
-				method: ResourceMethods.REMOVE,
-				params: resourceParams().key(Resource.happiness).amount(3).build(),
-				meta: { allowShortfall: true },
-			})
 			.effectGroup(
 				actionEffectGroup('royal_decree_develop')
 					.title('Decree a development')
-					.summary('Choose what to raise on the prepared land.')
+					.summary('Choose what to raise on the newly claimed land.')
 					.description(
-						'After expanding and tilling, select one project to complete. Each option runs Develop on the chosen land.',
+						'After expanding and tilling, select one project to complete before unrest rises. Each option runs Develop on the prepared land.',
 					)
+					.layout('compact')
 					.option(
 						actionEffectGroupOption('royal_decree_house')
 							.label('Raise a House')
 							.icon('🏠')
-							.summary('Expand housing and increase the population cap by 1.')
+							.summary('Expand housing and raise the population cap by 1.')
 							.action('develop')
 							.param('landId', '$landId')
 							.param('id', 'house'),
@@ -233,7 +228,7 @@ export function createActionRegistry() {
 						actionEffectGroupOption('royal_decree_farm')
 							.label('Establish a Farm')
 							.icon('🌾')
-							.summary('Gain +2 gold during the income step each round.')
+							.summary('Gain +2 gold during each income step.')
 							.action('develop')
 							.param('landId', '$landId')
 							.param('id', 'farm'),
@@ -252,16 +247,22 @@ export function createActionRegistry() {
 							.label('Raise a Watchtower')
 							.icon('🗼')
 							.summary(
-								'Add +2 Fortification Strength and absorption after defending once.',
+								'Add +2 Fortification Strength and absorption after one defense.',
 							)
 							.action('develop')
 							.param('landId', '$landId')
 							.param('id', 'watchtower'),
 					),
 			)
+			.effect({
+				type: Types.Resource,
+				method: ResourceMethods.REMOVE,
+				params: resourceParams().key(Resource.happiness).amount(3).build(),
+				meta: { allowShortfall: true },
+			})
 			.build(),
-		category: 'development',
-		order: 2,
+		category: 'basic',
+		order: 5,
 		focus: 'economy',
 	});
 
