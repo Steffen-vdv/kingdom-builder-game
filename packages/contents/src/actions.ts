@@ -16,6 +16,7 @@ import {
 	DevelopmentMethods,
 	PopulationMethods,
 	ActionMethods,
+	AttackMethods,
 	PassiveMethods,
 	CostModMethods,
 	ResultModMethods,
@@ -278,7 +279,7 @@ export function createActionRegistry() {
 					.build(),
 			)
 			.effect(
-				effect('attack', 'perform')
+				effect(Types.Attack, AttackMethods.PERFORM)
 					.params(
 						attackParams()
 							.powerStat(Stat.armyStrength)
