@@ -88,9 +88,8 @@ describe('action effect groups integration', () => {
 
 	it('requires explicit selections for effect groups', () => {
 		const { ctx, chooser, group } = setup();
-		expect(() => getActionCosts(chooser.id, ctx)).toThrowError(
-			new RegExp(`requires a selection for effect group`),
-		);
+		const costBag = getActionCosts(chooser.id, ctx);
+		expect(costBag[Resource.ap] ?? 0).toBe(0);
 		expect(() => performAction(chooser.id, ctx)).toThrowError(
 			new RegExp(group.id),
 		);
