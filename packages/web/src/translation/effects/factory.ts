@@ -1,4 +1,10 @@
-import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type {
+	ActionEffectGroup,
+	ActionEffectGroupChoiceMap,
+	ActionEffectGroupOption,
+	EffectDef,
+	EngineContext,
+} from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../content';
 // Effect and evaluator formatter registries drive translation lookups.
 
@@ -176,4 +182,86 @@ export function logEffects(
 		}
 		return part;
 	});
+}
+
+type EffectGroupMode = 'summarize' | 'describe' | 'log';
+
+function buildOptionEntry(
+	option: ActionEffectGroupOption,
+	mode: EffectGroupMode,
+): SummaryEntry {
+	const title = [option.icon, option.label].filter(Boolean).join(' ').trim();
+	const detailItems: SummaryEntry[] = [];
+	if (mode !== 'log' && option.summary) {
+		detailItems.push(option.summary);
+	}
+	if (mode === 'describe' && option.description) {
+		if (!option.summary || option.summary !== option.description) {
+			detailItems.push(option.description);
+		}
+	}
+	if (mode === 'log') {
+		const detail = option.summary || option.description;
+		if (detail) {
+			detailItems.push(detail);
+		}
+	}
+	if (detailItems.length === 0 || !title) {
+		return title || option.label;
+	}
+	return { title, items: detailItems };
+}
+
+function buildGroupEntry(
+	group: ActionEffectGroup,
+	mode: EffectGroupMode,
+	selection?: ActionEffectGroupOption,
+): SummaryEntry {
+	const title =
+		[group.icon, group.title].filter(Boolean).join(' ').trim() || group.id;
+	const items: SummaryEntry[] = [];
+	if (mode !== 'log' && group.summary) {
+		items.push(group.summary);
+	}
+	if (mode === 'describe' && group.description) {
+		if (!group.summary || group.summary !== group.description) {
+			items.push(group.description);
+		}
+	}
+	if (mode === 'log') {
+		const detail = group.summary || group.description;
+		if (detail) {
+			items.push(detail);
+		}
+	}
+	const options = selection ? [selection] : group.options;
+	for (const option of options) {
+		items.push(buildOptionEntry(option, mode));
+	}
+	return { title, items };
+}
+
+export function formatEffectGroups(
+	groups: readonly ActionEffectGroup[] | undefined,
+	mode: EffectGroupMode,
+	choices?: ActionEffectGroupChoiceMap,
+): SummaryEntry[] {
+	if (!groups || groups.length === 0) {
+		return [];
+	}
+	const entries: SummaryEntry[] = [];
+	for (const group of groups) {
+		const selection = choices?.[group.id];
+		if (selection) {
+			const option = group.options.find(
+				(candidate) => candidate.id === selection.optionId,
+			);
+			if (option) {
+				entries.push(buildGroupEntry(group, mode, option));
+				continue;
+			}
+		}
+		entries.push(buildGroupEntry(group, mode));
+	}
+	return entries;
 }

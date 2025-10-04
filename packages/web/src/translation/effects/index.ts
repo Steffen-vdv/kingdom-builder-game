@@ -1,9 +1,10 @@
 export {
-  summarizeEffects,
-  describeEffects,
-  logEffects,
-  registerEffectFormatter,
-  registerEvaluatorFormatter,
+	summarizeEffects,
+	describeEffects,
+	logEffects,
+	formatEffectGroups,
+	registerEffectFormatter,
+	registerEvaluatorFormatter,
 } from './factory';
 
 import './formatters/resource';

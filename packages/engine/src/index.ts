@@ -16,6 +16,14 @@ export type {
 } from './setup/create_engine';
 export { getActionCosts, getActionRequirements } from './actions/costs';
 export { performAction, simulateAction } from './actions/action_execution';
+export {
+	getActionEffectGroups,
+	coerceActionEffectGroupChoices,
+	type ActionEffectGroup,
+	type ActionEffectGroupOption,
+	type ActionEffectGroupChoice,
+	type ActionEffectGroupChoiceMap,
+} from './actions/effect_groups';
 export { advance } from './phases/advance';
 export { EngineContext } from './context';
 export { Services, PassiveManager } from './services';

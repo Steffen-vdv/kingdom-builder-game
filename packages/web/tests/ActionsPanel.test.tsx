@@ -14,6 +14,7 @@ vi.mock('@kingdom-builder/engine', () => ({
 	getActionCosts: (...args: unknown[]) => actionCostsMock(...args),
 	getActionRequirements: (...args: unknown[]) =>
 		actionRequirementsMock(...args),
+	getActionEffectGroups: () => [],
 }));
 
 vi.mock('../src/utils/getRequirementIcons', () => ({
