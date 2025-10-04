@@ -71,16 +71,22 @@ function formatContribution(
 	const amountEntry = amountParts.join(' ').trim();
 	const detailEntries = buildDetailEntries(meta, player, context);
 	const title = formatSourceTitle(descriptor);
+	const prefixedTitle = title ? `Source: ${title}` : 'Source';
 	if (!title) {
-		if (!detailEntries.length) {
-			return amountEntry;
+		const items: SummaryEntry[] = [];
+		pushSummaryEntry(items, amountEntry);
+		detailEntries.forEach((entry) => {
+			pushSummaryEntry(items, entry);
+		});
+		if (!items.length) {
+			return prefixedTitle;
 		}
-		return { title: amountEntry, items: detailEntries };
+		return { title: prefixedTitle, items };
 	}
 	const items: SummaryEntry[] = [];
 	pushSummaryEntry(items, amountEntry);
 	detailEntries.forEach((entry) => {
 		pushSummaryEntry(items, entry);
 	});
-	return { title, items };
+	return { title: prefixedTitle, items };
 }
