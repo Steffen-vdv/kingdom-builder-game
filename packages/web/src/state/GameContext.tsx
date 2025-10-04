@@ -254,11 +254,14 @@ export function GameProvider({
 				})),
 				passives: [...after.passives],
 			};
-			for (const [k, v] of Object.entries(comp.resources || {})) {
-				before.resources[k] = (before.resources[k] || 0) - (v ?? 0);
+			for (const [resourceKey, resourceDelta] of Object.entries(
+				comp.resources || {},
+			)) {
+				before.resources[resourceKey] =
+					(before.resources[resourceKey] || 0) - (resourceDelta ?? 0);
 			}
-			for (const [k, v] of Object.entries(comp.stats || {})) {
-				before.stats[k] = (before.stats[k] || 0) - (v ?? 0);
+			for (const [statKey, statDelta] of Object.entries(comp.stats || {})) {
+				before.stats[statKey] = (before.stats[statKey] || 0) - (statDelta ?? 0);
 			}
 			const lines = diffStepSnapshots(
 				before,
