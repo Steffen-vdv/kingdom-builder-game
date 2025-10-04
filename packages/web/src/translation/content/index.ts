@@ -9,7 +9,6 @@ export { splitSummary } from './partition';
 export {
 	translateTierSummary,
 	hasTierSummaryTranslation,
-	HAPPINESS_TIER_SUMMARIES,
 } from './tierSummaries';
 
 import './action';

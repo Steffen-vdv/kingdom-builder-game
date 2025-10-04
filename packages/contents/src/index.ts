@@ -26,6 +26,11 @@ export {
 	type OverviewTokenCandidates,
 	type OverviewTokenCategoryName,
 } from './overview';
+export {
+	TIER_SUMMARY_STORE,
+	type TierSummaryStore,
+	type TierSummaryGroup,
+} from './tieredResources';
 export { PRIMARY_ICON_ID } from './startup';
 export type { ActionDef } from './actions';
 export type { BuildingDef } from './buildings';

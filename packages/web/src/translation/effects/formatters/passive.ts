@@ -5,6 +5,7 @@ import {
 } from '../factory';
 import { PHASES, PASSIVE_INFO } from '@kingdom-builder/contents';
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type { PhaseDef } from '@kingdom-builder/engine/phases';
 
 type PassiveDurationMeta = {
 	label: string;
@@ -27,7 +28,10 @@ function createMeta(meta: PassiveDurationMeta): PassiveDurationMeta {
 	return result;
 }
 
-function resolvePhaseMeta(ctx: EngineContext, id: string | undefined) {
+function resolvePhaseMeta(
+	ctx: EngineContext,
+	id: string | undefined,
+): PhaseDef | undefined {
 	if (!id) {
 		return undefined;
 	}
@@ -35,6 +39,42 @@ function resolvePhaseMeta(ctx: EngineContext, id: string | undefined) {
 		ctx.phases.find((phase) => phase.id === id) ??
 		PHASES.find((p) => p.id === id)
 	);
+}
+
+const PHASE_TRIGGER_KEY_PATTERN = /^on[A-Z][A-Za-z0-9]*Phase$/;
+const PHASE_TRIGGER_FALLBACK_LABELS: Record<string, string> = {
+	onGrowthPhase: 'Growth',
+	onUpkeepPhase: 'Upkeep',
+};
+
+function resolvePhaseByTrigger(
+	ctx: EngineContext,
+	triggerId: string,
+): PhaseDef | undefined {
+	const fromContext = ctx.phases.find((phase) =>
+		phase.steps.some((step) => {
+			const triggers = step.triggers as readonly string[] | undefined;
+			return triggers?.includes(triggerId);
+		}),
+	);
+	if (fromContext) {
+		return fromContext;
+	}
+	return PHASES.find((phase) =>
+		phase.steps.some((step) => {
+			const triggers = step.triggers as readonly string[] | undefined;
+			return triggers?.includes(triggerId);
+		}),
+	);
+}
+
+function collectPhaseTriggerKeys(params: Record<string, unknown>) {
+	return Object.keys(params).filter((key) => {
+		if (!PHASE_TRIGGER_KEY_PATTERN.test(key)) {
+			return false;
+		}
+		return params[key] !== undefined;
+	});
 }
 
 function resolveDurationMeta(
@@ -57,71 +97,62 @@ function resolveDurationMeta(
 
 	let label = manualLabel;
 	let icon = manualIcon;
-	let source: PassiveDurationMeta['source'] | undefined;
-	let phaseId: string | undefined;
+	let source: PassiveDurationMeta['source'] | undefined = manualLabel
+		? 'manual'
+		: undefined;
+	let phaseId: string | undefined = durationPhaseId;
 
-	if (durationPhaseId) {
-		phaseId = durationPhaseId;
-		const phase = resolvePhaseMeta(ctx, durationPhaseId);
-		if (!label && phase?.label) {
-			label = phase.label;
-			source = 'phase';
-		}
-		if (!icon && phase?.icon) {
-			icon = phase.icon;
-		}
-	}
+	let resolvedPhase = resolvePhaseMeta(ctx, durationPhaseId);
 
-	if (!label && params['onUpkeepPhase']) {
-		phaseId = 'upkeep';
-		const phase = resolvePhaseMeta(ctx, 'upkeep');
-		if (phase?.label) {
-			label = phase.label;
-			source = 'phase';
-		} else {
-			label = 'Upkeep';
-			source = 'fallback';
-		}
-		if (!icon && phase?.icon) {
-			icon = phase.icon;
-		}
-	}
-
-	if (label) {
-		if (!source) {
-			source = manualLabel ? 'manual' : 'phase';
-		}
-		return createMeta({
-			label,
-			...(icon !== undefined ? { icon } : {}),
-			...(phaseId !== undefined ? { phaseId } : {}),
-			source,
-		});
-	}
-
-	if (icon) {
-		if (phaseId) {
-			const phase = resolvePhaseMeta(ctx, phaseId);
-			if (phase?.label) {
-				return createMeta({
-					label: phase.label,
-					icon,
-					phaseId,
-					source: source ?? 'phase',
-				});
+	const triggerKeys = collectPhaseTriggerKeys(params);
+	if (!resolvedPhase) {
+		for (const triggerId of triggerKeys) {
+			const phase = resolvePhaseByTrigger(ctx, triggerId);
+			if (phase) {
+				resolvedPhase = phase;
+				break;
 			}
 		}
-		if (params['onUpkeepPhase']) {
-			return createMeta({
-				label: 'Upkeep',
-				icon,
-				phaseId: 'upkeep',
-				source: 'fallback',
-			});
+	}
+
+	if (resolvedPhase && !phaseId) {
+		phaseId = resolvedPhase.id;
+	}
+
+	if (!label && resolvedPhase?.label) {
+		label = resolvedPhase.label;
+		source = 'phase';
+	}
+
+	if (!icon && resolvedPhase?.icon) {
+		icon = resolvedPhase.icon;
+	}
+
+	if (!label && !resolvedPhase) {
+		for (const triggerId of triggerKeys) {
+			const fallbackLabel = PHASE_TRIGGER_FALLBACK_LABELS[triggerId];
+			if (fallbackLabel) {
+				label = fallbackLabel;
+				source = 'fallback';
+				break;
+			}
 		}
 	}
 
-	return null;
+	if (!label) {
+		return null;
+	}
+
+	if (!source) {
+		source = manualLabel ? 'manual' : 'phase';
+	}
+
+	return createMeta({
+		label,
+		...(icon !== undefined ? { icon } : {}),
+		...(phaseId !== undefined ? { phaseId } : {}),
+		source,
+	});
 }
 
 function formatDuration(
@@ -129,8 +160,7 @@ function formatDuration(
 	{ includePhase }: { includePhase: boolean },
 ) {
 	const icon = meta.icon ? `${meta.icon} ` : '';
-	const suffix =
-		includePhase && meta.source !== 'manual' && meta.phaseId ? ' Phase' : '';
+	const suffix = includePhase && meta.source === 'fallback' ? ' Phase' : '';
 	return `${icon}${meta.label}${suffix}`;
 }
 
