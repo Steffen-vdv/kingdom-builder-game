@@ -5,31 +5,23 @@ import {
 	getScreenFromPath,
 	type HistoryState,
 } from './appHistory';
-
-interface AppNavigationState {
-	currentScreen: Screen;
-	currentGameKey: number;
-	isDarkMode: boolean;
-	isDevMode: boolean;
-	isMusicEnabled: boolean;
-	isSoundEnabled: boolean;
-	startStandardGame: () => void;
-	startDeveloperGame: () => void;
-	openOverview: () => void;
-	openTutorial: () => void;
-	returnToMenu: () => void;
-	toggleDarkMode: () => void;
-	toggleMusic: () => void;
-	toggleSound: () => void;
-}
+import {
+	getStoredAudioPreferences,
+	useAudioPreferences,
+} from './audioPreferences';
+import type { AppNavigationState } from './appNavigationState';
 
 export function useAppNavigation(): AppNavigationState {
 	const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Menu);
 	const [currentGameKey, setCurrentGameKey] = useState(0);
 	const [isDarkMode, setIsDarkMode] = useState(true);
 	const [isDevMode, setIsDevMode] = useState(false);
-	const [isMusicEnabled, setIsMusicEnabled] = useState(true);
-	const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+	const {
+		isMusicEnabled,
+		setIsMusicEnabled,
+		isSoundEnabled,
+		setIsSoundEnabled,
+	} = useAudioPreferences();
 	const buildHistoryState = useCallback(
 		(overrides?: Partial<HistoryState>): HistoryState => {
 			const {
@@ -63,6 +55,36 @@ export function useAppNavigation(): AppNavigationState {
 			isSoundEnabled,
 		],
 	);
+	const applyHistoryState = useCallback(
+		(state: HistoryState | null, fallbackScreen: Screen): HistoryState => {
+			const { music, sound } = getStoredAudioPreferences();
+			const nextState: HistoryState = {
+				screen: state?.screen ?? fallbackScreen,
+				gameKey: state?.gameKey ?? 0,
+				isDarkModeEnabled: state?.isDarkModeEnabled ?? true,
+				isDevModeEnabled: state?.isDevModeEnabled ?? false,
+				isMusicEnabled: state?.isMusicEnabled ?? music,
+				isSoundEnabled: state?.isSoundEnabled ?? sound,
+			};
+
+			setCurrentScreen(nextState.screen);
+			setCurrentGameKey(nextState.gameKey);
+			setIsDarkMode(nextState.isDarkModeEnabled);
+			setIsDevMode(nextState.isDevModeEnabled);
+			setIsMusicEnabled(nextState.isMusicEnabled);
+			setIsSoundEnabled(nextState.isSoundEnabled);
+
+			return nextState;
+		},
+		[
+			setCurrentScreen,
+			setCurrentGameKey,
+			setIsDarkMode,
+			setIsDevMode,
+			setIsMusicEnabled,
+			setIsSoundEnabled,
+		],
+	);
 	const pushHistoryState = useCallback(
 		(nextState: HistoryState, path: string) => {
 			if (typeof window === 'undefined') {
@@ -94,61 +116,28 @@ export function useAppNavigation(): AppNavigationState {
 		const { history, location } = window;
 		const initialScreenFromPath = getScreenFromPath(location.pathname);
 		const historyState = history.state as HistoryState | null;
-		const {
-			screen: historyScreen,
-			gameKey: savedGameKey = 0,
-			isDarkModeEnabled: savedDark = true,
-			isDevModeEnabled: savedDev = false,
-		} = historyState ?? {};
-
-		const nextScreen = historyScreen ?? initialScreenFromPath;
-		const derivedState: HistoryState = {
-			screen: nextScreen,
-			gameKey: savedGameKey,
-			isDarkModeEnabled: savedDark,
-			isDevModeEnabled: savedDev,
-			isMusicEnabled: historyState?.isMusicEnabled ?? true,
-			isSoundEnabled: historyState?.isSoundEnabled ?? true,
-		};
-
-		setCurrentScreen(nextScreen);
-		setCurrentGameKey(savedGameKey);
-		setIsDarkMode(savedDark);
-		setIsDevMode(savedDev);
-		setIsMusicEnabled(historyState?.isMusicEnabled ?? true);
-		setIsSoundEnabled(historyState?.isSoundEnabled ?? true);
-
-		const targetPath = SCREEN_PATHS[nextScreen];
-		replaceHistoryState(derivedState, targetPath);
-	}, [replaceHistoryState]);
+		// prettier-ignore
+		const nextState = applyHistoryState(
+                historyState,
+                initialScreenFromPath,
+        );
+		const targetPath = SCREEN_PATHS[nextState.screen];
+		replaceHistoryState(nextState, targetPath);
+	}, [applyHistoryState, replaceHistoryState]);
 	useEffect(() => {
 		if (typeof window === 'undefined') {
 			return;
 		}
 		const handlePopState = (event: PopStateEvent) => {
 			const state = event.state as HistoryState | null;
-			if (state?.screen) {
-				setCurrentScreen(state.screen);
-				setCurrentGameKey(state.gameKey ?? 0);
-				setIsDarkMode(state.isDarkModeEnabled ?? true);
-				setIsDevMode(state.isDevModeEnabled ?? false);
-				setIsMusicEnabled(state.isMusicEnabled ?? true);
-				setIsSoundEnabled(state.isSoundEnabled ?? true);
-			} else {
-				setCurrentScreen(Screen.Menu);
-				setCurrentGameKey(0);
-				setIsDarkMode(true);
-				setIsDevMode(false);
-				setIsMusicEnabled(true);
-				setIsSoundEnabled(true);
-			}
+			applyHistoryState(state, Screen.Menu);
 		};
 
 		window.addEventListener('popstate', handlePopState);
 		return () => {
 			window.removeEventListener('popstate', handlePopState);
 		};
-	}, []);
+	}, [applyHistoryState]);
 	const returnToMenu = useCallback(() => {
 		const nextState = buildHistoryState({ screen: Screen.Menu });
 		setCurrentScreen(Screen.Menu);
@@ -222,7 +211,7 @@ export function useAppNavigation(): AppNavigationState {
 			);
 			return nextValue;
 		});
-	}, [buildHistoryState, replaceHistoryState]);
+	}, [buildHistoryState, replaceHistoryState, setIsMusicEnabled]);
 
 	const toggleSound = useCallback(() => {
 		setIsSoundEnabled((previousValue) => {
@@ -234,7 +223,7 @@ export function useAppNavigation(): AppNavigationState {
 			);
 			return nextValue;
 		});
-	}, [buildHistoryState, replaceHistoryState]);
+	}, [buildHistoryState, replaceHistoryState, setIsSoundEnabled]);
 
 	return {
 		currentScreen,

@@ -59,8 +59,11 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 			}
 
 			const resumePlayback = async () => {
+				clearPendingFade();
+				audio.volume = 0;
 				try {
 					await audio.play();
+					fadeTo(BASE_VOLUME);
 				} catch (error) {
 					const domError = error as DOMException;
 					if (
