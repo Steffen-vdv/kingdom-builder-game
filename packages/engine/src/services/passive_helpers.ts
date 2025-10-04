@@ -1,5 +1,5 @@
 import { cloneEffectList } from '../utils';
-import type { EffectDef } from '../effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { PlayerState } from '../state';
 import type {
 	PassiveMetadata,

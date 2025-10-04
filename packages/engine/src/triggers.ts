@@ -1,6 +1,6 @@
 import type { EngineContext } from './context';
 import type { PlayerState } from './state';
-import type { EffectDef } from './effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { StatSourceFrame } from './stat_sources';
 import { applyParamsToEffects } from './utils';
 

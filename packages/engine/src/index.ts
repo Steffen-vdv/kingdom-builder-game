@@ -41,21 +41,27 @@ export {
 	EffectRegistry,
 	EffectCostRegistry,
 } from './effects';
-export type { EffectHandler, EffectDef, EffectCostCollector } from './effects';
+export type { EffectHandler, EffectCostCollector } from './effects';
+/** @deprecated Import from @kingdom-builder/protocol instead. */
+export type { EffectDef } from '@kingdom-builder/protocol';
 export {
 	registerCoreEvaluators,
 	EvaluatorRegistry,
 	EVALUATORS,
 } from './evaluators';
-export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
+export type { EvaluatorHandler } from './evaluators';
+/** @deprecated Import from @kingdom-builder/protocol instead. */
+export type { EvaluatorDef } from '@kingdom-builder/protocol';
 export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
-export { validateGameConfig } from './config/schema';
+/** @deprecated Import from @kingdom-builder/protocol instead. */
+export { validateGameConfig } from '@kingdom-builder/protocol';
+/** @deprecated Import from @kingdom-builder/protocol instead. */
 export type {
 	GameConfig,
 	ActionEffect,
 	ActionEffectGroup as ActionEffectGroupConfig,
-} from './config/schema';
+} from '@kingdom-builder/protocol';
 export { resolveAttack } from './effects/attack';
 export type {
 	AttackLog,

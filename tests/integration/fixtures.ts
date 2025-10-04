@@ -13,7 +13,8 @@ import {
 	RULES,
 	RESOURCES,
 } from '@kingdom-builder/contents';
-import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
+import type { EngineContext } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
 

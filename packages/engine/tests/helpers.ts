@@ -14,8 +14,8 @@ import type {
 	DevelopmentConfig as DevelopmentDef,
 	PopulationConfig as PopulationDef,
 	StartConfig,
-} from '../src/config/schema.ts';
-import type { Registry } from '../src/registry.ts';
+	Registry,
+} from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../src/phases.ts';
 import type { RuleSet } from '../src/services';
 

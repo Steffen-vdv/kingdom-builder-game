@@ -1,4 +1,5 @@
-import type { EffectDef, EffectHandler } from '.';
+import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectHandler } from '.';
 import type { ResourceGain } from '../services';
 import { runEffects } from '.';
 import { snapshotPlayer } from '../log';

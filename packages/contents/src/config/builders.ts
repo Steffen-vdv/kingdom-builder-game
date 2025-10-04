@@ -8,13 +8,13 @@ import type {
 	PopulationConfig,
 	RequirementConfig,
 	EffectConfig,
-} from '@kingdom-builder/engine/config/schema';
+	EvaluatorDef,
+	EffectDef,
+} from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
 import type { TriggerKey } from '../defs';
-import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
-import type { EffectDef } from '@kingdom-builder/engine/effects';
 import type { AttackTarget } from '@kingdom-builder/engine/effects/attack';
 import type {
 	TierDisplayMetadata,

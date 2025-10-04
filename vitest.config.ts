@@ -1,15 +1,20 @@
 import path from 'path';
 import { defineConfig } from 'vitest/config';
 
+const resolveSrcDir = (pkg: string) =>
+	path.resolve(__dirname, 'packages', pkg, 'src');
+
 export default defineConfig({
 	resolve: {
 		alias: {
-			'@kingdom-builder/engine': path.resolve(__dirname, 'packages/engine/src'),
-			'@kingdom-builder/contents': path.resolve(
-				__dirname,
-				'packages/contents/src',
-			),
-			'@kingdom-builder/web': path.resolve(__dirname, 'packages/web/src'),
+			'@kingdom-builder/engine': resolveSrcDir('engine'),
+			'@kingdom-builder/engine/': `${resolveSrcDir('engine')}/`,
+			'@kingdom-builder/contents': resolveSrcDir('contents'),
+			'@kingdom-builder/contents/': `${resolveSrcDir('contents')}/`,
+			'@kingdom-builder/protocol': resolveSrcDir('protocol'),
+			'@kingdom-builder/protocol/': `${resolveSrcDir('protocol')}/`,
+			'@kingdom-builder/web': resolveSrcDir('web'),
+			'@kingdom-builder/web/': `${resolveSrcDir('web')}/`,
 		},
 	},
 	test: {

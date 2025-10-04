@@ -1,6 +1,6 @@
 import type { ResourceKey, PlayerId } from '../state';
 import type { EngineContext } from '../context';
-import type { EffectDef } from '../effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { StatSourceFrame } from '../stat_sources';
 
 export type PhaseSkipStep = {

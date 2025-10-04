@@ -2,7 +2,7 @@ import { collectTriggerEffects } from '../triggers';
 import { runEffects } from '../effects';
 import { withStatSourceFrames } from '../stat_sources';
 import type { EngineContext } from '../context';
-import type { EffectDef } from '../effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { PlayerState, StatKey } from '../state';
 import type { PassiveMetadata } from '../services';
 

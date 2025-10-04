@@ -1,11 +1,11 @@
 import { applyParamsToEffects } from '../utils';
 import type { EngineContext } from '../context';
-import type { EffectDef } from '../effects';
 import type {
+	EffectDef,
 	ActionEffect,
 	ActionEffectGroup,
 	ActionEffectGroupOption,
-} from '../config/schema';
+} from '@kingdom-builder/protocol';
 import type { ActionParameters } from './action_parameters';
 
 export interface ActionEffectGroupChoice {
@@ -104,7 +104,7 @@ export interface ResolvedActionEffects {
 export type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
-} from '../config/schema';
+} from '@kingdom-builder/protocol';
 
 export function getActionEffectGroups(
 	actionId: string,

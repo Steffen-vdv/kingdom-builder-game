@@ -1,16 +1,16 @@
-import type { EffectDef } from './effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 
 export interface StepDef {
-  id: string;
-  title?: string;
-  effects?: EffectDef[];
-  triggers?: string[];
+	id: string;
+	title?: string;
+	effects?: EffectDef[];
+	triggers?: string[];
 }
 
 export interface PhaseDef {
-  id: string;
-  steps: StepDef[];
-  action?: boolean;
-  icon?: string;
-  label?: string;
+	id: string;
+	steps: StepDef[];
+	action?: boolean;
+	icon?: string;
+	label?: string;
 }

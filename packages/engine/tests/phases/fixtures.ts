@@ -1,6 +1,6 @@
 import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
-import type { StartConfig } from '../../src/config/schema.ts';
+import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '../../src/services/index.ts';
 import { createContentFactory } from '../factories/content.ts';
 

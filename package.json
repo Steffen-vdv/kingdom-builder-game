@@ -13,7 +13,7 @@
 		"preview": "vite preview",
 		"prelint": "node scripts/ensure-dev-dependencies.cjs",
 		"lint": "eslint . --ext .ts,.tsx --rulesdir scripts",
-		"typecheck": "tsc -b --noEmit --pretty false",
+		"typecheck": "tsc --project tsconfig.typecheck.json --pretty false",
 		"fix": "eslint . --ext .ts,.tsx --fix --rulesdir scripts",
 		"check": "npm run typecheck && npm run lint",
 		"pretest": "node scripts/ensure-dev-dependencies.cjs",

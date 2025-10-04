@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { EffectDef } from '../effects';
+import type { EvaluatorDef } from '../evaluators';
 
 const requirementSchema = z.object({
 	type: z.string(),
@@ -13,7 +14,7 @@ export type RequirementConfig = z.infer<typeof requirementSchema>;
 // Basic schemas
 const costBagSchema = z.record(z.string(), z.number());
 
-const evaluatorSchema = z.object({
+const evaluatorSchema: z.ZodType<EvaluatorDef> = z.object({
 	type: z.string(),
 	params: z.record(z.unknown()).optional(),
 });

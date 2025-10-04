@@ -1,15 +1,15 @@
 import type { GameState, ResourceKey, PlayerId } from './state';
 import type { AISystem } from './ai';
 import type { Services, PassiveManager } from './services';
-import type { Registry } from './registry';
 import type { StatSourceFrame } from './stat_sources';
 import type {
+	Registry,
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
 	DevelopmentConfig as DevelopmentDef,
 	PopulationConfig as PopulationDef,
 	PlayerStartConfig,
-} from './config/schema';
+} from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
 

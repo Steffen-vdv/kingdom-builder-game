@@ -1,4 +1,4 @@
-import type { EffectConfig } from '@kingdom-builder/engine/config/schema';
+import type { EffectConfig } from '@kingdom-builder/protocol';
 import {
 	Types,
 	CostModMethods,

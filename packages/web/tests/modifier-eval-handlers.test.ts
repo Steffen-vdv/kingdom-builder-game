@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { registerModifierEvalHandler } from '../src/translation/effects/formatters/modifier';
 import { createEngine } from '@kingdom-builder/engine';
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef, StartConfig } from '@kingdom-builder/protocol';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -18,7 +18,6 @@ import {
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '../../engine/tests/factories/content';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
-import type { StartConfig } from '@kingdom-builder/engine/config/schema';
 import type { RuleSet } from '@kingdom-builder/engine/services';
 
 vi.mock('@kingdom-builder/engine', async () => {

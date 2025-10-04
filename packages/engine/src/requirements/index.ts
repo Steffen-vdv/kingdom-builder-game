@@ -1,13 +1,12 @@
-import { Registry } from '../registry';
+import { Registry, type RequirementConfig } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 import { evaluatorCompare } from './evaluator_compare';
-import type { RequirementConfig } from '../config/schema';
 
 export type RequirementDef = RequirementConfig;
 
 export type RequirementHandler = (
-  req: RequirementDef,
-  ctx: EngineContext,
+	req: RequirementDef,
+	ctx: EngineContext,
 ) => true | string;
 
 export class RequirementRegistry extends Registry<RequirementHandler> {}
@@ -15,17 +14,17 @@ export class RequirementRegistry extends Registry<RequirementHandler> {}
 export const REQUIREMENTS = new RequirementRegistry();
 
 export function runRequirement(
-  req: RequirementDef,
-  ctx: EngineContext,
+	req: RequirementDef,
+	ctx: EngineContext,
 ): true | string {
-  const handler = REQUIREMENTS.get(`${req.type}:${req.method}`);
-  return handler(req, ctx);
+	const handler = REQUIREMENTS.get(`${req.type}:${req.method}`);
+	return handler(req, ctx);
 }
 
 export function registerCoreRequirements(
-  registry: RequirementRegistry = REQUIREMENTS,
+	registry: RequirementRegistry = REQUIREMENTS,
 ) {
-  registry.add('evaluator:compare', evaluatorCompare);
+	registry.add('evaluator:compare', evaluatorCompare);
 }
 
 export { evaluatorCompare };

@@ -4,11 +4,7 @@
 		"rootDir": "src",
 		"outDir": "dist",
 		"composite": true,
-		"declaration": true,
-		"paths": {
-			"@kingdom-builder/protocol": ["packages/protocol/dist/index"],
-			"@kingdom-builder/protocol/*": ["packages/protocol/dist/*"]
-		}
+		"declaration": true
 	},
 	"include": ["src"],
 	"exclude": ["dist", "tests"]

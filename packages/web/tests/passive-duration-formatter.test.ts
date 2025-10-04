@@ -4,10 +4,10 @@ import {
 	describeEffects,
 	logEffects,
 } from '../src/translation/effects';
-import { createEngine, type EffectDef } from '@kingdom-builder/engine';
+import { createEngine } from '@kingdom-builder/engine';
+import type { EffectDef, StartConfig } from '@kingdom-builder/protocol';
 import { createContentFactory } from '../../engine/tests/factories/content';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
-import type { StartConfig } from '@kingdom-builder/engine/config/schema';
 import type { RuleSet } from '@kingdom-builder/engine/services';
 
 vi.mock('@kingdom-builder/engine', async () => {

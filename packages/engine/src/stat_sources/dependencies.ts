@@ -1,4 +1,4 @@
-import type { EvaluatorDef } from '../evaluators';
+import type { EvaluatorDef } from '@kingdom-builder/protocol';
 import type { StatSourceLink } from '../state';
 import { isPlainObject } from './link_helpers';
 import type { EvaluatorDependencyCollector } from './types';

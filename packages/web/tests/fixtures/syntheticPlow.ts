@@ -8,9 +8,9 @@ import type {
 	StartConfig,
 	ActionConfig,
 	BuildingConfig,
-} from '@kingdom-builder/engine/config/schema';
+	EffectDef,
+} from '@kingdom-builder/protocol';
 import type { RuleSet } from '@kingdom-builder/engine/services';
-import type { EffectDef } from '@kingdom-builder/engine';
 
 type SyntheticResourceKey = 'gold' | 'ap' | 'happiness';
 

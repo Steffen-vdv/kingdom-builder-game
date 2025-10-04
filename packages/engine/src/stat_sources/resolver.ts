@@ -1,4 +1,4 @@
-import type { EffectDef } from '../effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 import type { PlayerState, StatKey, StatSourceMeta } from '../state';
 import { appendDependencyLink, isPlainObject } from './link_helpers';

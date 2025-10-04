@@ -2,7 +2,7 @@ import { runEffects } from '../effects';
 import { withStatSourceFrames } from '../stat_sources';
 import { runRequirement } from '../requirements';
 import type { EngineContext } from '../context';
-import type { EffectDef } from '../effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { ActionParameters } from './action_parameters';
 import {
 	applyCostsWithPassives,

@@ -1,4 +1,5 @@
-import type { EffectHandler, EffectDef } from '.';
+import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectHandler } from '.';
 import type {
 	PassiveMetadata,
 	PhaseSkipConfig,

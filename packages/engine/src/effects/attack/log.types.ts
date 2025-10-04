@@ -1,4 +1,4 @@
-import type { EffectDef } from '..';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { AttackEvaluationTargetLog } from '../attack.types';
 import type { AttackPlayerDiff } from './snapshot_diff';
 

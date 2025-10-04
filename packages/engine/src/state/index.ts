@@ -1,4 +1,4 @@
-import type { EffectDef } from '../effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 
 export const Resource: Record<string, string> = {};
 export type ResourceKey = string;

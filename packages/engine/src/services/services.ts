@@ -1,7 +1,6 @@
+import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
 import type { ResourceKey, PlayerId } from '../state';
 import type { EngineContext } from '../context';
-import type { DevelopmentConfig } from '../config/schema';
-import type { Registry } from '../registry';
 import { runEffects } from '../effects';
 import { TieredResourceService } from './tiered_resource_service';
 import { PopCapService } from './pop_cap_service';

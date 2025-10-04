@@ -1,6 +1,5 @@
-import type { EffectDef } from '../effects';
+import type { EffectDef, EvaluatorDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
-import type { EvaluatorDef } from '../evaluators';
 import type {
 	PlayerState,
 	StatKey,

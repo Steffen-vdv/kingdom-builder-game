@@ -1,4 +1,4 @@
-import type { EffectDef } from '../effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { StatKey, StatSourceLink, StatSourceMeta } from '../state';
 import {
 	cloneStatSourceLink,

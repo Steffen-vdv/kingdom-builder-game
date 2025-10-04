@@ -1,4 +1,4 @@
-import type { EffectDef } from './effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 
 export function applyParamsToEffects<E extends EffectDef>(
 	effects: E[],

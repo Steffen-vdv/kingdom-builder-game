@@ -1,7 +1,6 @@
 import { createEngine } from '@kingdom-builder/engine';
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef, StartConfig } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
-import type { StartConfig } from '@kingdom-builder/engine/config/schema';
 import type { RuleSet } from '@kingdom-builder/engine/services';
 import { Resource } from '@kingdom-builder/contents';
 import {

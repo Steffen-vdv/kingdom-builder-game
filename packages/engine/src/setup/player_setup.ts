@@ -2,11 +2,11 @@ import { Land, Stat } from '../state';
 import type { PlayerState, StatKey, ResourceKey } from '../state';
 import type { RuleSet } from '../services';
 import { applyStatDelta } from '../stat_sources';
-import type { Registry } from '../registry';
 import type {
 	ActionConfig as ActionDef,
 	PlayerStartConfig,
-} from '../config/schema';
+	Registry,
+} from '@kingdom-builder/protocol';
 import { START_STAT_SOURCE_META } from './stat_source_meta';
 
 function cloneEffectList<EffectType extends object>(

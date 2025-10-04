@@ -10,6 +10,8 @@
 			"@kingdom-builder/engine/*": ["packages/engine/dist/*"],
 			"@kingdom-builder/contents": ["packages/contents/src/index"],
 			"@kingdom-builder/contents/*": ["packages/contents/src/*"],
+			"@kingdom-builder/protocol": ["packages/protocol/dist/index"],
+			"@kingdom-builder/protocol/*": ["packages/protocol/dist/*"],
 			"@kingdom-builder/*": ["packages/*/src"]
 		}
 	},

@@ -1,6 +1,6 @@
 import { EFFECT_COST_COLLECTORS } from '../effects';
 import { runRequirement } from '../requirements';
-import type { EffectDef } from '../effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 import type { CostBag } from '../services';
 import type { PlayerState } from '../state';
