@@ -32,6 +32,7 @@ import {
 	diffStepSnapshots,
 	logContent,
 	type Summary,
+	type PlayerSnapshot,
 } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import { useTimeScale, type TimeScale } from './useTimeScale';
@@ -228,8 +229,8 @@ export function GameProvider({
 			) {
 				return;
 			}
-			const after = snapshotPlayer(player, ctx);
-			const before = {
+			const after: PlayerSnapshot = snapshotPlayer(player, ctx);
+			const before: PlayerSnapshot = {
 				...after,
 				resources: { ...after.resources },
 				stats: { ...after.stats },
