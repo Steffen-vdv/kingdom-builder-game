@@ -1,5 +1,11 @@
 # 👑 Kingdom Builder v5.11
 
+## 0) Preface
+
+This repository has been entirely brought to life through AI (ChatGPT Codex). The technical and conceptual vision of the game was invented and curated by a human, but every single line of code (bar some `.md` files) were generated solely by AI, through a human-curated iterative process over the course of weeks. Several `AGENTS.md` files have been strategically sprinkled across the codebase to ensure AI agents understand and conform to the vision. 
+
+At time of writing, this project is still heavily W.I.P. and should not by any means be interpreted as a reflection of the final product. Lots left to do!
+
 ## 1) Setup
 
 1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
@@ -16,18 +22,6 @@ The repository consists of three isolated domains: Web, Content and Engine. Each
 - Engine: The _technical_ heart of the game. Engine is responsible for driving the core game loop, execute actions, maintaining game state and evaluating effects. It can be considered 'the backend'.
 - Web: The _visual_ heart of the game. This domain is responsible for housing the game's frontend. It talks to Engine domain to receive game state updates and inform Engine of player-driven actions.
 - Content: The _practical_ heart of the game. This domain houses all of the game's configurations. The domain is configured in a way that allows extremely broad and deep updates to the game's configuration. The intent is for this domain to eventually become separated into it's own service and either passed to a content curation team or even allow players themselves to build gamemodes by giving them access, through some interface, to manipulate/override parts of 'Contents' domain at runtime.
-
-## 4) Code Standards
-
-Development follows five core rules:
-
-- Always wrap conditional and loop bodies in braces, even for single statements.
-- Keep each line at 80 characters or fewer.
-- Limit files to 250 lines to stay maintainable.
-- Use descriptive variable names that explain their purpose.
-- Indent with tab characters for code blocks.
-
-See the [Code Standards guide](docs/code_standards/AGENTS.md) for details.
 
 ## 5) Turn Structure
 
