@@ -80,7 +80,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		) as { items: unknown[] } | undefined;
 		expect(activeEntry).toBeTruthy();
 		const removal = activeEntry?.items.find(
-			(item) => typeof item === 'string' && /Removed when/i.test(item),
+			(item) => typeof item === 'string' && /Active as long as/i.test(item),
 		);
 		expect(removal).toBeTruthy();
 	});

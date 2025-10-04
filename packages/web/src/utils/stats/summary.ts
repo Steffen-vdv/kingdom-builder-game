@@ -68,7 +68,7 @@ function buildLongevityEntries(
 			});
 		}
 		if (removal) {
-			pushSummaryEntry(items, `Removed when ${removal}`);
+			pushSummaryEntry(items, `Active as long as ${removal}`);
 		}
 		if (items.length) {
 			entries.push({
@@ -89,7 +89,7 @@ function buildLongevityEntries(
 		});
 	}
 	if (removal) {
-		pushSummaryEntry(items, `Can be removed when ${removal}`);
+		pushSummaryEntry(items, `Active as long as ${removal}`);
 	}
 	if (items.length) {
 		entries.push({ title: 'Permanent', items });
