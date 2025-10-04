@@ -1,13 +1,35 @@
-import { PASSIVE_INFO, formatPassiveRemoval } from '@kingdom-builder/contents';
-import { type PassiveSummary } from '@kingdom-builder/engine';
+import {
+	PASSIVE_INFO,
+	MODIFIER_INFO,
+	formatPassiveRemoval,
+} from '@kingdom-builder/contents';
+import { type PassiveSummary, type EffectDef } from '@kingdom-builder/engine';
 import {
 	hasTierSummaryTranslation,
 	translateTierSummary,
 } from '../content/tierSummaries';
 
-interface PassiveLogDetails {
+const MODIFIER_ICON_MAP = {
+	cost_mod: MODIFIER_INFO.cost.icon,
+	result_mod: MODIFIER_INFO.result.icon,
+} as const;
+
+type ModifierIconKey = keyof typeof MODIFIER_ICON_MAP;
+
+function hasModifierIconKey(value: string): value is ModifierIconKey {
+	return value in MODIFIER_ICON_MAP;
+}
+
+export interface PassiveDefinitionLike {
+	detail?: string;
+	meta?: PassiveSummary['meta'];
+	effects?: EffectDef[];
+}
+
+export interface PassivePresentation {
 	icon: string;
 	label: string;
+	summary?: string;
 	removal?: string;
 }
 
@@ -50,26 +72,116 @@ function describeRemoval(meta: PassiveSummary['meta']): string | undefined {
 	return undefined;
 }
 
-export function resolvePassiveLogDetails(
-	passive: PassiveSummary,
-): PassiveLogDetails {
-	const icon =
-		passive.meta?.source?.icon ?? passive.icon ?? PASSIVE_INFO.icon ?? '';
-	const fallbackLabel = formatFallbackLabel(passive.id);
-	const rawLabel =
-		normalizeLabel(
-			resolveSummaryToken(passive.meta?.source?.labelToken) ||
-				resolveSummaryToken(passive.detail) ||
-				normalizeLabel(passive.meta?.source?.labelToken) ||
-				normalizeLabel(passive.detail) ||
-				normalizeLabel(passive.name) ||
-				normalizeLabel(passive.id),
-		) || fallbackLabel;
-	const label = rawLabel === passive.id ? fallbackLabel : rawLabel;
-	const removal = describeRemoval(passive.meta);
-	const details: PassiveLogDetails = { icon, label };
-	if (removal) {
-		details.removal = removal;
+function formatSlug(value: string): string {
+	return value
+		.split(/[_-]/g)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(' ');
+}
+
+function extractTokenSlug(value: string | undefined): string | undefined {
+	const normalized = normalizeLabel(value);
+	if (!normalized) {
+		return undefined;
 	}
-	return details;
+	for (const delimiter of ['.', ':', '/']) {
+		if (normalized.includes(delimiter)) {
+			const slug = normalized.slice(normalized.lastIndexOf(delimiter) + 1);
+			if (slug && slug !== normalized) {
+				return formatSlug(slug);
+			}
+		}
+	}
+	return undefined;
+}
+
+function deriveIcon(
+	passive: PassiveSummary,
+	effects: EffectDef[] | undefined,
+	meta: PassiveSummary['meta'] | undefined,
+): string {
+	if (meta?.source?.icon) {
+		return meta.source.icon;
+	}
+	if (passive.icon) {
+		return passive.icon;
+	}
+	const firstEffect = effects?.[0];
+	const modifierType = firstEffect?.type;
+	if (modifierType && hasModifierIconKey(modifierType)) {
+		return MODIFIER_ICON_MAP[modifierType];
+	}
+	return PASSIVE_INFO.icon ?? '';
+}
+
+function resolveLabel(
+	passive: PassiveSummary,
+	definition: PassiveDefinitionLike,
+	meta: PassiveSummary['meta'],
+): string {
+	const fallbackLabel = formatFallbackLabel(passive.id);
+	const translated =
+		resolveSummaryToken(meta?.source?.labelToken) ||
+		resolveSummaryToken(definition.detail) ||
+		resolveSummaryToken(passive.detail);
+	const slug =
+		extractTokenSlug(meta?.source?.labelToken) ||
+		extractTokenSlug(definition.detail) ||
+		extractTokenSlug(passive.detail) ||
+		extractTokenSlug(meta?.source?.id) ||
+		extractTokenSlug(passive.id);
+	const normalized =
+		normalizeLabel(passive.name) ||
+		normalizeLabel(passive.detail) ||
+		normalizeLabel(definition.detail) ||
+		normalizeLabel(passive.id);
+	const rawLabel =
+		translated || slug || normalized || PASSIVE_INFO.label || fallbackLabel;
+	return rawLabel === passive.id ? fallbackLabel : rawLabel;
+}
+
+function resolveSummary(
+	definition: PassiveDefinitionLike,
+	meta: PassiveSummary['meta'],
+	passive: PassiveSummary,
+): string | undefined {
+	const candidates = [
+		meta?.source?.labelToken,
+		definition.detail,
+		passive.detail,
+	];
+	for (const candidate of candidates) {
+		const summary = resolveSummaryToken(candidate);
+		if (summary) {
+			return summary;
+		}
+	}
+	for (const candidate of candidates) {
+		const text = normalizeLabel(candidate);
+		if (text) {
+			return text;
+		}
+	}
+	return undefined;
+}
+
+export function resolvePassivePresentation(
+	passive: PassiveSummary,
+	options: { definition?: PassiveDefinitionLike } = {},
+): PassivePresentation {
+	const definition = options.definition ?? {};
+	const meta = definition.meta ?? passive.meta;
+	const icon = deriveIcon(passive, definition.effects, meta);
+	const label = resolveLabel(passive, definition, meta);
+	const summary = resolveSummary(definition, meta, passive);
+	const removal = meta ? describeRemoval(meta) : undefined;
+	const presentation: PassivePresentation = { icon, label };
+	if (summary) {
+		presentation.summary = summary;
+	}
+	if (removal) {
+		presentation.removal = removal;
+	}
+	return presentation;
 }

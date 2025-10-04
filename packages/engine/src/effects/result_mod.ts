@@ -1,5 +1,6 @@
 import type { EffectHandler } from '.';
 import { runEffects } from '.';
+import type { EvaluationModifierResult } from '../services/passive_types';
 
 interface ResultModParams {
 	id: string;
@@ -73,7 +74,13 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 						}
 					}
 					if (percent !== undefined) {
-						return { percent };
+						const modifierResult: EvaluationModifierResult = {
+							percent,
+						};
+						if (effect.round) {
+							modifierResult.round = effect.round;
+						}
+						return modifierResult;
 					}
 				},
 			);

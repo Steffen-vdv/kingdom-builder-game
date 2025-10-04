@@ -7,9 +7,9 @@ export function useAnimate<
 >(): MutableRefObject<T | null> {
 	const ref = useRef<T>(null);
 	useEffect(() => {
-		const el = ref.current;
-		if (el) {
-			autoAnimate(el);
+		const element = ref.current;
+		if (element) {
+			autoAnimate(element);
 		}
 	}, []);
 	return ref;

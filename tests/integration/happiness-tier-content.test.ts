@@ -58,7 +58,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:content",
         "removalToken": "happiness stays between +3 and +4",
-        "summary": "During income step, gain 20% more 🪙 gold.",
+        "summary": "During income step, gain 20% more 🪙 gold (rounded up).",
         "summaryToken": "happiness.tier.summary.content",
       },
     ],
@@ -71,7 +71,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:despair",
         "removalToken": "happiness is -10 or lower",
-        "summary": "During income step, gain 50% less 🪙 gold.\nSkip Growth phase.\nSkip War Recovery step during Upkeep phase.",
+        "summary": "During income step, gain 50% less 🪙 gold (rounded up).\nSkip Growth phase.\nSkip War Recovery step during Upkeep phase.",
         "summaryToken": "happiness.tier.summary.despair",
       },
     ],
@@ -94,7 +94,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:ecstatic",
         "removalToken": "happiness is +10 or higher",
-        "summary": "During income step, gain 50% more 🪙 gold.\nBuild action costs 20% less 🪙 gold.\nDuring Growth phase, gain 20% more 📈 Growth.",
+        "summary": "During income step, gain 50% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).\nDuring Growth phase, gain 20% more 📈 Growth.",
         "summaryToken": "happiness.tier.summary.ecstatic",
       },
     ],
@@ -107,7 +107,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:elated",
         "removalToken": "happiness stays between +8 and +9",
-        "summary": "During income step, gain 50% more 🪙 gold.\nBuild action costs 20% less 🪙 gold.",
+        "summary": "During income step, gain 50% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).",
         "summaryToken": "happiness.tier.summary.elated",
       },
     ],
@@ -120,7 +120,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:grim",
         "removalToken": "happiness stays between -7 and -5",
-        "summary": "During income step, gain 25% less 🪙 gold.\nSkip Growth phase.",
+        "summary": "During income step, gain 25% less 🪙 gold (rounded up).\nSkip Growth phase.",
         "summaryToken": "happiness.tier.summary.grim",
       },
     ],
@@ -137,7 +137,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:joyful",
         "removalToken": "happiness stays between +5 and +7",
-        "summary": "During income step, gain 25% more 🪙 gold.\nBuild action costs 20% less 🪙 gold.",
+        "summary": "During income step, gain 25% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).",
         "summaryToken": "happiness.tier.summary.joyful",
       },
     ],
@@ -150,7 +150,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:misery",
         "removalToken": "happiness stays between -9 and -8",
-        "summary": "During income step, gain 50% less 🪙 gold.\nSkip Growth phase.",
+        "summary": "During income step, gain 50% less 🪙 gold (rounded up).\nSkip Growth phase.",
         "summaryToken": "happiness.tier.summary.misery",
       },
     ],
@@ -173,7 +173,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:unrest",
         "removalToken": "happiness stays between -4 and -3",
-        "summary": "During income step, gain 25% less 🪙 gold.",
+        "summary": "During income step, gain 25% less 🪙 gold (rounded up).",
         "summaryToken": "happiness.tier.summary.unrest",
       },
     ],

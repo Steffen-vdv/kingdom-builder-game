@@ -43,8 +43,7 @@ function expectSummaryMatches(items: unknown[], summary: string) {
 	const summaryLines = summary
 		.split(/\r?\n/)
 		.map((line) => line.trim())
-		.filter((line) => line.length > 0)
-		.map((line) => `- ${line}`);
+		.filter((line) => line.length > 0);
 	expect(items).toEqual(expect.arrayContaining(summaryLines));
 }
 let currentGame: MockGame;

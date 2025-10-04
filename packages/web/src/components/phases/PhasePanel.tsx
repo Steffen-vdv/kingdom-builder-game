@@ -36,11 +36,14 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 		const phaseStepsRef = useAnimate<HTMLUListElement>();
 
 		useEffect(() => {
-			const el = phaseStepsRef.current;
-			if (!el) {
+			const phaseStepsElement = phaseStepsRef.current;
+			if (!phaseStepsElement) {
 				return;
 			}
-			el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+			phaseStepsElement.scrollTo({
+				top: phaseStepsElement.scrollHeight,
+				behavior: 'smooth',
+			});
 		}, [phaseSteps]);
 
 		const panelHeight = Math.max(320, height ?? 0);

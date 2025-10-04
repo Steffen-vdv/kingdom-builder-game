@@ -1,5 +1,49 @@
 import type { EngineContext } from '../context';
-import type { CostBag, CostModifier } from './passive_types';
+import type {
+	CostBag,
+	CostModifier,
+	RoundingInstruction,
+	RoundingMode,
+} from './passive_types';
+
+function applyRound(value: number, mode: RoundingMode | undefined) {
+	if (!mode) {
+		return value;
+	}
+	if (mode === 'up') {
+		return value >= 0 ? Math.ceil(value) : Math.floor(value);
+	}
+	if (mode === 'down') {
+		return value >= 0 ? Math.floor(value) : Math.ceil(value);
+	}
+	return value;
+}
+
+function mergeRoundInstruction(
+	target: Partial<Record<string, RoundingMode>>,
+	instruction: RoundingInstruction | undefined,
+) {
+	if (!instruction) {
+		return;
+	}
+	if (typeof instruction === 'string') {
+		target['*'] = instruction;
+		return;
+	}
+	const entries = Object.entries(instruction);
+	for (const [key, mode] of entries) {
+		if (mode === 'up' || mode === 'down') {
+			target[key] = mode;
+		}
+	}
+}
+
+function resolveRoundMode(
+	map: Partial<Record<string, RoundingMode>>,
+	key: string,
+) {
+	return map[key] ?? map['*'];
+}
 
 export class CostModifierService {
 	private modifiers: Map<string, CostModifier> = new Map();
@@ -15,6 +59,7 @@ export class CostModifierService {
 	apply(actionId: string, base: CostBag, context: EngineContext): CostBag {
 		const running: CostBag = { ...base };
 		const percentTotals: Partial<Record<string, number>> = {};
+		const percentRounds: Partial<Record<string, RoundingMode>> = {};
 		for (const modifier of this.modifiers.values()) {
 			const result = modifier(actionId, running, context);
 			if (!result) {
@@ -36,6 +81,7 @@ export class CostModifierService {
 					}
 					percentTotals[key] = (percentTotals[key] ?? 0) + percent;
 				}
+				mergeRoundInstruction(percentRounds, result.round);
 			}
 		}
 		for (const [key, percent] of Object.entries(percentTotals)) {
@@ -43,7 +89,10 @@ export class CostModifierService {
 				continue;
 			}
 			const current = running[key] ?? 0;
-			running[key] = current + current * percent;
+			const roundMode = resolveRoundMode(percentRounds, key);
+			const delta = current * percent;
+			const adjusted = applyRound(delta, roundMode);
+			running[key] = current + adjusted;
 		}
 		return running;
 	}
