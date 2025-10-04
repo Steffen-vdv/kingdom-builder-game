@@ -4,188 +4,87 @@ import {
 	describeContent,
 	logContent,
 } from '../src/translation/content';
-import { createEngine, type EffectDef } from '@kingdom-builder/engine';
+import { MODIFIER_INFO } from '@kingdom-builder/contents';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	RESOURCES,
-	STATS,
-	Resource,
-	PASSIVE_INFO,
-	MODIFIER_INFO,
-} from '@kingdom-builder/contents';
+	createSyntheticFestivalScenario,
+	getSyntheticFestivalDetails,
+} from './fixtures/syntheticFestival';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-function createCtx() {
-	return createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
-	});
-}
-
 const sign = (n: number) => (n >= 0 ? '+' : '');
 
 describe('hold festival action translation', () => {
 	it('summarizes hold festival action', () => {
-		const ctx = createCtx();
-		const summary = summarizeContent('action', 'hold_festival', ctx);
-		const holdFestival = ctx.actions.get('hold_festival');
-		const happinessEff = holdFestival.effects.find(
-			(e: EffectDef) => e.type === 'resource',
-		) as EffectDef<{ key: string; amount: number }>;
-		const happinessIcon =
-			RESOURCES[happinessEff.params.key as keyof typeof RESOURCES].icon;
-		const happinessAmt = happinessEff.params.amount;
-		const fortEff = holdFestival.effects.find(
-			(e: EffectDef) => e.type === 'stat',
-		) as EffectDef<{ key: string; amount: number }>;
-		const fortIcon = STATS[fortEff.params.key as keyof typeof STATS].icon;
-		const fortAmt =
-			fortEff.method === 'remove'
-				? -fortEff.params.amount
-				: (fortEff.params.amount as number);
-		const passive = holdFestival.effects.find(
-			(e: EffectDef) => e.type === 'passive',
-		) as EffectDef;
-		const resMod = passive.effects?.find(
-			(e: EffectDef) => e.type === 'result_mod',
-		) as EffectDef;
-		const innerRes = resMod.effects?.find(
-			(e: EffectDef) =>
-				e.type === 'resource' &&
-				(e.params as { key?: string }).key === Resource.happiness,
-		) as EffectDef<{ amount: number }>;
-		const penaltyAmt =
-			innerRes.method === 'remove'
-				? -(innerRes.params.amount as number)
-				: (innerRes.params.amount as number);
-		const armyAttack = ctx.actions.get('army_attack');
-		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
-		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
-		const upkeepIcon = upkeepPhase?.icon;
-		const upkeepSummaryLabel = `${upkeepIcon ? `${upkeepIcon} ` : ''}${upkeepLabel}`;
+		const { ctx, festivalActionId, attackActionId } =
+			createSyntheticFestivalScenario();
+		const summary = summarizeContent('action', festivalActionId, ctx);
+		const details = getSyntheticFestivalDetails(
+			ctx,
+			festivalActionId,
+			attackActionId,
+		);
+		const upkeepSummaryLabel = `${
+			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
+		}${details.upkeepLabel}`;
 
 		expect(summary).toEqual([
-			`${happinessIcon}${sign(happinessAmt)}${happinessAmt}`,
-			`${fortIcon}${sign(fortAmt)}${fortAmt}`,
+			`${details.happinessIcon}${sign(details.happinessAmt)}${details.happinessAmt}`,
+			`${details.fortIcon}${sign(details.fortAmt)}${details.fortAmt}`,
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
-					`${MODIFIER_INFO.result.icon}${armyAttack.icon}: ${happinessIcon}${sign(penaltyAmt)}${penaltyAmt}`,
+					`${MODIFIER_INFO.result.icon}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
 				],
 			},
 		]);
 	});
 
 	it('describes hold festival action', () => {
-		const ctx = createCtx();
-		const desc = describeContent('action', 'hold_festival', ctx);
-		const holdFestival = ctx.actions.get('hold_festival');
-		const happinessEff = holdFestival.effects.find(
-			(e: EffectDef) => e.type === 'resource',
-		) as EffectDef<{ key: string; amount: number }>;
-		const happinessInfo =
-			RESOURCES[happinessEff.params.key as keyof typeof RESOURCES];
-		const happinessAmt = happinessEff.params.amount;
-		const fortEff = holdFestival.effects.find(
-			(e: EffectDef) => e.type === 'stat',
-		) as EffectDef<{ key: string; amount: number }>;
-		const fortInfo = STATS[fortEff.params.key as keyof typeof STATS];
-		const fortAmt =
-			fortEff.method === 'remove'
-				? -fortEff.params.amount
-				: (fortEff.params.amount as number);
-		const passive = holdFestival.effects.find(
-			(e: EffectDef) => e.type === 'passive',
-		) as EffectDef;
-		const passiveMeta = passive.params as
-			| { name?: string; icon?: string }
-			| undefined;
-		const passiveName = passiveMeta?.name ?? PASSIVE_INFO.label;
-		const passiveIcon = passiveMeta?.icon ?? PASSIVE_INFO.icon;
-		const resMod = passive.effects?.find(
-			(e: EffectDef) => e.type === 'result_mod',
-		) as EffectDef;
-		const innerRes = resMod.effects?.find(
-			(e: EffectDef) =>
-				e.type === 'resource' &&
-				(e.params as { key?: string }).key === Resource.happiness,
-		) as EffectDef<{ amount: number }>;
-		const penaltyAmt =
-			innerRes.method === 'remove'
-				? -(innerRes.params.amount as number)
-				: (innerRes.params.amount as number);
-		const armyAttack = ctx.actions.get('army_attack');
-		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
-		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
-		const upkeepIcon = upkeepPhase?.icon;
+		const { ctx, festivalActionId, attackActionId } =
+			createSyntheticFestivalScenario();
+		const desc = describeContent('action', festivalActionId, ctx);
+		const details = getSyntheticFestivalDetails(
+			ctx,
+			festivalActionId,
+			attackActionId,
+		);
 		const upkeepDescriptionLabel = `${
-			upkeepIcon ? `${upkeepIcon} ` : ''
-		}${upkeepLabel} Phase`;
+			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
+		}${details.upkeepLabel} Phase`;
 
 		expect(desc).toEqual([
-			`${happinessInfo.icon}${sign(happinessAmt)}${happinessAmt} ${happinessInfo.label}`,
-			`${fortAmt >= 0 ? 'Gain' : 'Lose'} ${Math.abs(fortAmt)} ${fortInfo.icon} ${fortInfo.label}`,
+			`${details.happinessInfo.icon}${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
+			`${details.fortAmt >= 0 ? 'Gain' : 'Lose'} ${Math.abs(details.fortAmt)} ${details.fortInfo.icon} ${details.fortInfo.label}`,
 			{
-				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${upkeepDescriptionLabel}`,
+				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
-					`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: Whenever it resolves, ${happinessInfo.icon}${sign(penaltyAmt)}${penaltyAmt} ${happinessInfo.label}`,
+					`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 		]);
 	});
 
 	it('logs hold festival action', () => {
-		const ctx = createCtx();
-		const log = logContent('action', 'hold_festival', ctx);
-		const holdFestival = ctx.actions.get('hold_festival');
-		const armyAttack = ctx.actions.get('army_attack');
-		const passive = holdFestival.effects.find(
-			(e: EffectDef) => e.type === 'passive',
-		) as EffectDef;
-		const passiveMeta = passive.params as
-			| { name?: string; icon?: string }
-			| undefined;
-		const passiveName = passiveMeta?.name ?? PASSIVE_INFO.label;
-		const passiveIcon = passiveMeta?.icon ?? PASSIVE_INFO.icon;
-		const resMod = passive.effects?.find(
-			(e: EffectDef) => e.type === 'result_mod',
-		) as EffectDef;
-		const innerRes = resMod.effects?.find(
-			(e: EffectDef) =>
-				e.type === 'resource' &&
-				(e.params as { key?: string }).key === Resource.happiness,
-		) as EffectDef<{ amount: number }>;
-		const happinessInfo = RESOURCES[Resource.happiness];
-		const penaltyAmt =
-			innerRes.method === 'remove'
-				? -(innerRes.params.amount as number)
-				: (innerRes.params.amount as number);
-		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
-		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
-		const upkeepIcon = upkeepPhase?.icon;
+		const { ctx, festivalActionId, attackActionId } =
+			createSyntheticFestivalScenario();
+		const log = logContent('action', festivalActionId, ctx);
+		const details = getSyntheticFestivalDetails(
+			ctx,
+			festivalActionId,
+			attackActionId,
+		);
 		const upkeepDescriptionLabel = `${
-			upkeepIcon ? `${upkeepIcon} ` : ''
-		}${upkeepLabel} Phase`;
+			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
+		}${details.upkeepLabel} Phase`;
 
 		expect(log).toEqual([
-			`Played ${holdFestival.icon} ${holdFestival.name}`,
-			`  ${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} added`,
-			`    ${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${armyAttack.icon} ${armyAttack.name}: Whenever it resolves, ${happinessInfo.icon}${sign(penaltyAmt)}${penaltyAmt} ${happinessInfo.label}`,
-			`    ${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} duration: Until player's next ${upkeepDescriptionLabel}`,
+			`Played ${details.festival.icon} ${details.festival.name}`,
+			`  ${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
+			`    ${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+			`    ${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} duration: Until player's next ${upkeepDescriptionLabel}`,
 		]);
 	});
 });
