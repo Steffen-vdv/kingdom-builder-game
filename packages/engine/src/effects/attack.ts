@@ -12,6 +12,8 @@ import type {
 } from './attack/log.types';
 import { resolveAttack } from './attack/resolve';
 
+export const ATTACK_POWER_EVALUATION_TARGET = 'attack:power';
+
 export type { AttackPlayerDiff } from './attack/snapshot_diff';
 export type {
 	AttackCalcOptions,
@@ -43,7 +45,7 @@ export const attackPerform: EffectHandler = (effectDefinition, context) => {
 		{ key: evaluationKey, amount: baseDamage },
 	];
 	context.passives.runEvaluationModifiers(
-		'attack:power',
+		ATTACK_POWER_EVALUATION_TARGET,
 		context,
 		powerModifiers,
 	);
