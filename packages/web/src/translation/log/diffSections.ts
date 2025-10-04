@@ -210,12 +210,12 @@ function collectNewBuildings(
 	return new Set(additions);
 }
 
-function isBuildingBonusPassive(
+function isBuildingPassive(
 	passiveId: string,
 	newBuildings: Set<string>,
 ): boolean {
 	for (const buildingId of newBuildings) {
-		if (passiveId.startsWith(`${buildingId}_`)) {
+		if (passiveId === buildingId || passiveId.startsWith(`${buildingId}_`)) {
 			return true;
 		}
 	}
@@ -238,7 +238,7 @@ export function appendPassiveChanges(
 		if (previous.has(id)) {
 			continue;
 		}
-		if (isBuildingBonusPassive(id, newBuildings)) {
+		if (isBuildingPassive(id, newBuildings)) {
 			continue;
 		}
 		const { icon, label, removal } = resolvePassiveLogDetails(passive);

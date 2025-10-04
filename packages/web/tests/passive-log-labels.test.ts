@@ -94,7 +94,9 @@ describe('passive log labels', () => {
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
 
 		const lines = diffStepSnapshots(before, after, undefined, ctx);
-		expect(lines).toContain('♾️Castle Walls activated');
+		expect(lines.some((line) => line.includes('Castle Walls activated'))).toBe(
+			false,
+		);
 		expect(lines.some((line) => line.includes('castle_walls_bonus'))).toBe(
 			false,
 		);
