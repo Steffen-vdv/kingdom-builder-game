@@ -1,6 +1,11 @@
 import { cloneEffectList } from '../utils';
 import type { EffectDef } from '../effects';
-import type { PassiveMetadata, PassiveRecord } from './passive_types';
+import type { PlayerState } from '../state';
+import type {
+	PassiveMetadata,
+	PassiveRecord,
+	PhaseSkipConfig,
+} from './passive_types';
 
 export function clonePassiveMetadata(
 	metadata: PassiveMetadata | undefined,
@@ -120,4 +125,71 @@ export function reverseEffect(effect: EffectDef): EffectDef {
 		reversed.method = 'add';
 	}
 	return reversed;
+}
+
+export function registerSkipFlags(
+	player: PlayerState,
+	sourceId: string,
+	skip?: PhaseSkipConfig,
+) {
+	if (!skip) {
+		return;
+	}
+	if (skip.phases) {
+		for (const phaseId of skip.phases) {
+			const phaseBucket = player.skipPhases[phaseId] ?? {};
+			phaseBucket[sourceId] = true;
+			player.skipPhases[phaseId] = phaseBucket;
+		}
+	}
+	if (skip.steps) {
+		for (const { phaseId, stepId } of skip.steps) {
+			const phaseBucket = player.skipSteps[phaseId] ?? {};
+			const stepBucket = phaseBucket[stepId] ?? {};
+			stepBucket[sourceId] = true;
+			phaseBucket[stepId] = stepBucket;
+			player.skipSteps[phaseId] = phaseBucket;
+		}
+	}
+}
+
+export function clearSkipFlags(
+	player: PlayerState,
+	sourceId: string,
+	skip?: PhaseSkipConfig,
+) {
+	if (!skip) {
+		return;
+	}
+	if (skip.phases) {
+		for (const phaseId of skip.phases) {
+			const bucket = player.skipPhases[phaseId];
+			if (!bucket) {
+				continue;
+			}
+			delete bucket[sourceId];
+			if (Object.keys(bucket).length === 0) {
+				delete player.skipPhases[phaseId];
+			}
+		}
+	}
+	if (skip.steps) {
+		for (const { phaseId, stepId } of skip.steps) {
+			const phaseBucket = player.skipSteps[phaseId];
+			if (!phaseBucket) {
+				continue;
+			}
+			const stepBucket = phaseBucket[stepId];
+			if (!stepBucket) {
+				continue;
+			}
+			delete stepBucket[sourceId];
+			if (Object.keys(stepBucket).length === 0) {
+				delete phaseBucket[stepId];
+			}
+			if (Object.keys(phaseBucket).length === 0) {
+				delete player.skipSteps[phaseId];
+			}
+		}
+	}
 }

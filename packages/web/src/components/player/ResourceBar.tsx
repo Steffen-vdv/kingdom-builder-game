@@ -36,7 +36,7 @@ function buildTierEntries(
 		active: tier.id === activeId,
 	}));
 	return entries.map((entry) => {
-		const { passive, display, active } = entry;
+		const { preview, display, text, active } = entry;
 		const rangeLabel = formatTierRange(entry);
 		const statusIcon = active ? '🟢' : '⚪';
 		const icon = display?.icon ?? PASSIVE_INFO.icon ?? '';
@@ -44,9 +44,9 @@ function buildTierEntries(
 			(part) => part && String(part).trim().length > 0,
 		);
 		const title = titleParts.join(' ').trim();
-		const summary = passive.text?.summary;
+		const summary = text?.summary;
 		const removalText =
-			passive.text?.removal ??
+			text?.removal ??
 			(display?.removalCondition
 				? `Removed when ${display.removalCondition}`
 				: undefined);
@@ -54,7 +54,7 @@ function buildTierEntries(
 		if (summary) {
 			items.push(summary);
 		}
-		const described = describeEffects(passive.effects || [], ctx);
+		const described = describeEffects(preview?.effects || [], ctx);
 		described.forEach((item) => items.push(item));
 		if (removalText) {
 			items.push(removalText);

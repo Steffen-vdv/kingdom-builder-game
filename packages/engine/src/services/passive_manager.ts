@@ -15,11 +15,14 @@ import {
 	type EvaluationModifier,
 	type ResourceGain,
 	type ResultModifier,
+	type PhaseSkipConfig,
 } from './passive_types';
 import {
 	clonePassiveMetadata,
 	clonePassiveRecord,
 	reverseEffect,
+	registerSkipFlags,
+	clearSkipFlags,
 } from './passive_helpers';
 
 type PassivePayload = {
@@ -33,6 +36,7 @@ type PassivePayload = {
 	onUpkeepPhase?: PassiveRecord['onUpkeepPhase'];
 	onBeforeAttacked?: PassiveRecord['onBeforeAttacked'];
 	onAttackResolved?: PassiveRecord['onAttackResolved'];
+	skip?: PhaseSkipConfig;
 	[trigger: string]: unknown;
 };
 
@@ -156,6 +160,7 @@ export class PassiveManager {
 		if (options?.meta !== undefined) {
 			record.meta = options.meta;
 		}
+		registerSkipFlags(context.activePlayer, record.id, record.skip);
 		this.passives.set(key, record);
 		const setupEffects = record.effects;
 		if (setupEffects && setupEffects.length > 0) {
@@ -171,6 +176,7 @@ export class PassiveManager {
 		if (!passive) {
 			return;
 		}
+		clearSkipFlags(context.activePlayer, passive.id, passive.skip);
 		const teardownEffects = passive.effects;
 		if (teardownEffects && teardownEffects.length > 0) {
 			withStatSourceFrames(context, passive.frames, () =>

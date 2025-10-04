@@ -6,7 +6,10 @@ import {
 } from '@kingdom-builder/contents';
 import {
 	happinessTier,
-	tierPassive,
+	effect,
+	passiveParams,
+	Types,
+	PassiveMethods,
 } from '@kingdom-builder/contents/config/builders';
 import { runEffects, getActionCosts } from '../src';
 import { createTestEngine } from './helpers';
@@ -21,26 +24,59 @@ describe('happiness tier controller', () => {
 		const payUpkeepStepId =
 			secondPhase?.steps?.[0]?.id ?? firstPhase?.steps?.[0]?.id ?? '';
 
+		const lowRemovalToken = 'test.removal.low';
+		const highRemovalToken = 'test.removal.high';
 		const customRules: RuleSet = {
 			...RULES,
 			tierDefinitions: [
 				happinessTier('test:tier:low')
 					.range(0, 2)
 					.passive(
-						tierPassive('test:passive:low')
-							.skipPhase(growthPhaseId)
-							.text((text) => text.removal('test.removal.low')),
+						effect()
+							.type(Types.Passive)
+							.method(PassiveMethods.ADD)
+							.params(
+								passiveParams()
+									.id('test:passive:low')
+									.meta({
+										source: {
+											type: 'tiered-resource',
+											id: 'test:tier:low',
+										},
+										removal: { token: lowRemovalToken },
+									})
+									.skipPhase(growthPhaseId)
+									.build(),
+							),
 					)
-					.display((display) => display.removalCondition('test.removal.low'))
+					.text((text) => text.removal(lowRemovalToken))
+					.display((display) => display.removalCondition(lowRemovalToken))
 					.build(),
 				happinessTier('test:tier:high')
 					.range(3)
 					.passive(
-						tierPassive('test:passive:high')
-							.skipStep(upkeepPhaseId, payUpkeepStepId)
-							.text((text) => text.removal('test.removal.high')),
+						effect()
+							.type(Types.Passive)
+							.method(PassiveMethods.ADD)
+							.params(
+								passiveParams()
+									.id('test:passive:high')
+									.meta({
+										source: {
+											type: 'tiered-resource',
+											id: 'test:tier:high',
+										},
+										removal: {
+											token: highRemovalToken,
+											text: 'test.removal.high',
+										},
+									})
+									.skipStep(upkeepPhaseId, payUpkeepStepId)
+									.build(),
+							),
 					)
-					.display((display) => display.removalCondition('test.removal.high'))
+					.text((text) => text.removal(highRemovalToken))
+					.display((display) => display.removalCondition(highRemovalToken))
 					.build(),
 			],
 		};
@@ -48,8 +84,8 @@ describe('happiness tier controller', () => {
 		const ctx = createTestEngine({ rules: customRules });
 		const player = ctx.activePlayer;
 		const happinessKey = customRules.tieredResourceKey;
-		const lowPassiveId = customRules.tierDefinitions[0]!.passive.id;
-		const highPassiveId = customRules.tierDefinitions[1]!.passive.id;
+		const lowPassiveId = customRules.tierDefinitions[0]!.preview?.id ?? '';
+		const highPassiveId = customRules.tierDefinitions[1]!.preview?.id ?? '';
 
 		const initialPassives = ctx.passives
 			.list(player.id)
@@ -84,7 +120,7 @@ describe('happiness tier controller', () => {
 		const highTier = customRules.tierDefinitions[1]!;
 		expect(highMeta?.source?.id).toBe(highTier.id);
 		expect(highMeta?.removal?.token).toBe(highTier.display?.removalCondition);
-		expect(highMeta?.removal?.text).toBe(highTier.passive.text?.removal);
+		expect(highMeta?.removal?.text).toBe(highTier.text?.removal);
 
 		runEffects(
 			[
@@ -108,15 +144,42 @@ describe('happiness tier controller', () => {
 				happinessTier('test:tier:base')
 					.range(0, 2)
 					.passive(
-						tierPassive('test:passive:base').text((text) =>
-							text.summary('test.base'),
-						),
+						effect()
+							.type(Types.Passive)
+							.method(PassiveMethods.ADD)
+							.params(
+								passiveParams()
+									.id('test:passive:base')
+									.detail('test.base')
+									.meta({
+										source: {
+											type: 'tiered-resource',
+											id: 'test:tier:base',
+										},
+									})
+									.build(),
+							),
 					)
+					.text((text) => text.summary('test.base'))
 					.build(),
 				happinessTier('test:tier:boosted')
 					.range(3)
 					.passive(
-						tierPassive('test:passive:boosted')
+						effect()
+							.type(Types.Passive)
+							.method(PassiveMethods.ADD)
+							.params(
+								passiveParams()
+									.id('test:passive:boosted')
+									.detail('test.boosted')
+									.meta({
+										source: {
+											type: 'tiered-resource',
+											id: 'test:tier:boosted',
+										},
+									})
+									.build(),
+							)
 							.effect({
 								type: 'cost_mod',
 								method: 'add',
@@ -125,9 +188,9 @@ describe('happiness tier controller', () => {
 									key: CResource.gold,
 									percent: 0.1,
 								},
-							})
-							.text((text) => text.summary('test.boosted')),
+							}),
 					)
+					.text((text) => text.summary('test.boosted'))
 					.build(),
 			],
 		};
@@ -166,7 +229,7 @@ describe('happiness tier controller', () => {
 		const idsAfterGain = ctx.passives
 			.list(ctx.activePlayer.id)
 			.map((passive) => passive.id);
-		const boostedPassiveId = customRules.tierDefinitions[1]!.passive.id;
+		const boostedPassiveId = customRules.tierDefinitions[1]!.preview?.id ?? '';
 		expect(idsAfterGain).toContain(boostedPassiveId);
 
 		const withTierPassive =
