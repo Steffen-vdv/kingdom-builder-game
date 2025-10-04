@@ -209,7 +209,9 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 	const builder = happinessTier(config.id)
 		.range(config.range.min, config.range.max)
 		.incomeMultiplier(config.incomeMultiplier)
-		.text((text) => text.removal(formatRemoval(config.removal)))
+		.text((text) =>
+			text.summary(config.summary).removal(formatRemoval(config.removal)),
+		)
 		.display((display) =>
 			display
 				.summaryToken(config.summaryToken)

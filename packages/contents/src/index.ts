@@ -18,6 +18,11 @@ export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';
 export { GAME_START } from './game';
 export { RULES } from './rules';
+export {
+	TIER_SUMMARY_STORE,
+	type TierSummaryStore,
+	type TierSummaryGroup,
+} from './tieredResources';
 export type { ActionDef } from './actions';
 export type { BuildingDef } from './buildings';
 export type { DevelopmentDef } from './developments';
