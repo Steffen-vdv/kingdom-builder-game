@@ -11,6 +11,20 @@ import ErrorToaster from './components/common/ErrorToaster';
 
 function GameLayout() {
 	const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
+	const confirmExit = () => {
+		if (!onExit) {
+			return;
+		}
+		const shouldExit =
+			typeof window === 'undefined'
+				? true
+				: window.confirm(
+						'Are you sure you want to quit the current game? This progress will be lost.',
+					);
+		if (shouldExit) {
+			onExit();
+		}
+	};
 	const [playerHeights, setPlayerHeights] = useState<Record<string, number>>(
 		{},
 	);
@@ -91,7 +105,7 @@ function GameLayout() {
 								{darkMode ? 'Light Mode' : 'Dark Mode'}
 							</Button>
 							<Button
-								onClick={onExit}
+								onClick={confirmExit}
 								variant="danger"
 								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
 							>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Game from './Game';
 import Menu from './Menu';
 import Overview from './Overview';
@@ -11,52 +11,175 @@ enum Screen {
 	Game = 'game',
 }
 
+interface HistoryState {
+	screen: Screen;
+	gameKey: number;
+	isDarkModeEnabled: boolean;
+	isDevModeEnabled: boolean;
+}
+
 export default function App() {
 	const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Menu);
 	const [currentGameKey, setCurrentGameKey] = useState(0);
-	const [isDarkModeEnabled, setIsDarkModeEnabled] = useState(true);
-	const [isDevModeEnabled, setIsDevModeEnabled] = useState(false);
+	const [isDarkMode, setIsDarkMode] = useState(true);
+	const [isDevMode, setIsDevMode] = useState(false);
 
-	useEffect(() => {
-		document.documentElement.classList.toggle('dark', isDarkModeEnabled);
-	}, [isDarkModeEnabled]);
+	const buildHistoryState = useCallback(
+		(overrides?: Partial<HistoryState>): HistoryState => {
+			const {
+				screen: nextScreen = currentScreen,
+				gameKey: nextGameKey = currentGameKey,
+				isDarkModeEnabled: overrideDark,
+				isDevModeEnabled: overrideDev,
+			} = overrides ?? {};
+			const nextDarkMode = overrideDark ?? isDarkMode;
+			const nextDevMode = overrideDev ?? isDevMode;
 
-	useEffect(() => {
-		if (window.location.pathname !== '/') {
-			window.history.replaceState(null, '', '/');
+			return {
+				screen: nextScreen,
+				gameKey: nextGameKey,
+				isDarkModeEnabled: nextDarkMode,
+				isDevModeEnabled: nextDevMode,
+			};
+		},
+		[currentScreen, currentGameKey, isDarkMode, isDevMode],
+	);
+
+	const pushHistoryState = useCallback((nextState: HistoryState) => {
+		if (typeof window === 'undefined') {
+			return;
 		}
+		const { history, location } = window;
+		history.pushState(nextState, '', location.pathname);
+	}, []);
+
+	const replaceHistoryState = useCallback((nextState: HistoryState) => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		const { history, location } = window;
+		history.replaceState(nextState, '', location.pathname);
+	}, []);
+
+	useEffect(() => {
+		document.documentElement.classList.toggle('dark', isDarkMode);
+	}, [isDarkMode]);
+
+	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		const { history, location } = window;
+		if (location.pathname !== '/') {
+			history.replaceState(history.state, '', '/');
+		}
+
+		const historyState = history.state as HistoryState | null;
+		const {
+			screen: savedScreen = Screen.Menu,
+			gameKey: savedGameKey = 0,
+			isDarkModeEnabled: savedDark = true,
+			isDevModeEnabled: savedDev = false,
+		} = historyState ?? {};
+
+		setCurrentScreen(savedScreen);
+		setCurrentGameKey(savedGameKey);
+		setIsDarkMode(savedDark);
+		setIsDevMode(savedDev);
+
+		replaceHistoryState({
+			screen: savedScreen,
+			gameKey: savedGameKey,
+			isDarkModeEnabled: savedDark,
+			isDevModeEnabled: savedDev,
+		});
+	}, [replaceHistoryState]);
+
+	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		const handlePopState = (event: PopStateEvent) => {
+			const state = event.state as HistoryState | null;
+			if (state?.screen) {
+				setCurrentScreen(state.screen);
+				setCurrentGameKey(state.gameKey ?? 0);
+				setIsDarkMode(state.isDarkModeEnabled ?? true);
+				setIsDevMode(state.isDevModeEnabled ?? false);
+			} else {
+				setCurrentScreen(Screen.Menu);
+				setCurrentGameKey(0);
+				setIsDarkMode(true);
+				setIsDevMode(false);
+			}
+		};
+
+		window.addEventListener('popstate', handlePopState);
+		return () => {
+			window.removeEventListener('popstate', handlePopState);
+		};
 	}, []);
 
 	const returnToMenu = () => {
+		const nextState = buildHistoryState({ screen: Screen.Menu });
 		setCurrentScreen(Screen.Menu);
+		pushHistoryState(nextState);
 	};
 
 	const toggleDarkMode = () => {
-		setIsDarkModeEnabled((previousDarkMode) => !previousDarkMode);
-	};
-
-	const incrementGameKey = () => {
-		setCurrentGameKey((previousGameKey) => previousGameKey + 1);
+		setIsDarkMode((previousDarkMode) => {
+			const nextDarkMode = !previousDarkMode;
+			replaceHistoryState(
+				buildHistoryState({
+					isDarkModeEnabled: nextDarkMode,
+				}),
+			);
+			return nextDarkMode;
+		});
 	};
 
 	const startStandardGame = () => {
-		setIsDevModeEnabled(false);
-		incrementGameKey();
+		const nextGameKey = currentGameKey + 1;
+		setIsDevMode(false);
+		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);
+		pushHistoryState(
+			buildHistoryState({
+				screen: Screen.Game,
+				gameKey: nextGameKey,
+				isDevModeEnabled: false,
+			}),
+		);
 	};
 
 	const startDeveloperGame = () => {
-		setIsDevModeEnabled(true);
-		incrementGameKey();
+		const nextGameKey = currentGameKey + 1;
+		setIsDevMode(true);
+		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);
+		pushHistoryState(
+			buildHistoryState({
+				screen: Screen.Game,
+				gameKey: nextGameKey,
+				isDevModeEnabled: true,
+			}),
+		);
 	};
 
 	const openOverview = () => {
 		setCurrentScreen(Screen.Overview);
+		const overviewState = buildHistoryState({
+			screen: Screen.Overview,
+		});
+		pushHistoryState(overviewState);
 	};
 
 	const openTutorial = () => {
 		setCurrentScreen(Screen.Tutorial);
+		const tutorialState = buildHistoryState({
+			screen: Screen.Tutorial,
+		});
+		pushHistoryState(tutorialState);
 	};
 
 	switch (currentScreen) {
@@ -69,9 +192,9 @@ export default function App() {
 				<Game
 					key={currentGameKey}
 					onExit={returnToMenu}
-					darkMode={isDarkModeEnabled}
+					darkMode={isDarkMode}
 					onToggleDark={toggleDarkMode}
-					devMode={isDevModeEnabled}
+					devMode={isDevMode}
 				/>
 			);
 		case Screen.Menu:
