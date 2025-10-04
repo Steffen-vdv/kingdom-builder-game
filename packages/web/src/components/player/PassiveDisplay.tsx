@@ -5,6 +5,7 @@ import {
 	PHASES,
 	PASSIVE_INFO,
 	POPULATIONS,
+	formatPassiveRemoval,
 } from '@kingdom-builder/contents';
 import {
 	describeEffects,
@@ -110,7 +111,7 @@ export default function PassiveDisplay({
 			typeof meta.removal.token === 'string' &&
 			meta.removal.token.trim().length > 0
 		) {
-			return `Active as long as ${meta.removal.token}`;
+			return formatPassiveRemoval(meta.removal.token);
 		}
 		return undefined;
 	};

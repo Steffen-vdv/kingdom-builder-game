@@ -1,4 +1,4 @@
-import { PASSIVE_INFO } from '@kingdom-builder/contents';
+import { PASSIVE_INFO, formatPassiveRemoval } from '@kingdom-builder/contents';
 import { type PassiveSummary } from '@kingdom-builder/engine';
 import {
 	hasTierSummaryTranslation,
@@ -45,7 +45,7 @@ function describeRemoval(meta: PassiveSummary['meta']): string | undefined {
 	}
 	const removalToken = meta?.removal?.token;
 	if (removalToken && removalToken.trim().length > 0) {
-		return `Active as long as ${removalToken}`;
+		return formatPassiveRemoval(removalToken);
 	}
 	return undefined;
 }
