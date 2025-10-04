@@ -9,10 +9,21 @@ import Button from './components/common/Button';
 import TimeControl from './components/common/TimeControl';
 import ErrorToaster from './components/common/ErrorToaster';
 import ConfirmDialog from './components/common/ConfirmDialog';
+import SettingsDialog from './components/settings/SettingsDialog';
 
 function GameLayout() {
-	const { ctx, onExit, darkMode, onToggleDark } = useGameEngine();
+	const {
+		ctx,
+		onExit,
+		darkMode,
+		onToggleDark,
+		musicEnabled,
+		onToggleMusic,
+		soundEnabled,
+		onToggleSound,
+	} = useGameEngine();
 	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
+	const [isSettingsOpen, setSettingsOpen] = useState(false);
 	const requestQuit = useCallback(() => {
 		if (!onExit) {
 			return;
@@ -85,6 +96,16 @@ function GameLayout() {
 	);
 	return (
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
+			<SettingsDialog
+				open={isSettingsOpen}
+				onClose={() => setSettingsOpen(false)}
+				darkMode={darkMode}
+				onToggleDark={onToggleDark}
+				musicEnabled={musicEnabled}
+				onToggleMusic={onToggleMusic}
+				soundEnabled={soundEnabled}
+				onToggleSound={onToggleSound}
+			/>
 			<ConfirmDialog
 				open={isQuitDialogOpen}
 				title="Leave the battlefield?"
@@ -111,11 +132,13 @@ function GameLayout() {
 						<div className="ml-4 flex items-center gap-3">
 							<TimeControl />
 							<Button
-								onClick={onToggleDark}
+								onClick={() => setSettingsOpen(true)}
 								variant="secondary"
-								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-slate-900/10 dark:shadow-black/30"
+								aria-label="Open settings"
+								title="Settings"
+								className="h-10 w-10 rounded-full p-0 text-lg shadow-lg shadow-slate-900/10 dark:shadow-black/30"
 							>
-								{darkMode ? 'Light Mode' : 'Dark Mode'}
+								<span aria-hidden>⚙️</span>
 							</Button>
 							<Button
 								onClick={requestQuit}
@@ -153,11 +176,19 @@ export default function Game({
 	darkMode = true,
 	onToggleDark = () => {},
 	devMode = false,
+	musicEnabled = true,
+	onToggleMusic = () => {},
+	soundEnabled = true,
+	onToggleSound = () => {},
 }: {
 	onExit?: () => void;
 	darkMode?: boolean;
 	onToggleDark?: () => void;
 	devMode?: boolean;
+	musicEnabled?: boolean;
+	onToggleMusic?: () => void;
+	soundEnabled?: boolean;
+	onToggleSound?: () => void;
 }) {
 	return (
 		<GameProvider
@@ -165,6 +196,10 @@ export default function Game({
 			darkMode={darkMode}
 			onToggleDark={onToggleDark}
 			devMode={devMode}
+			musicEnabled={musicEnabled}
+			onToggleMusic={onToggleMusic}
+			soundEnabled={soundEnabled}
+			onToggleSound={onToggleSound}
 		>
 			<GameLayout />
 		</GameProvider>
