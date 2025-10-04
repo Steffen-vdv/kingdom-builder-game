@@ -37,6 +37,7 @@ export const Types = {
 	ResultMod: 'result_mod',
 	Population: 'population',
 	Action: 'action',
+	Attack: 'attack',
 	Stat: 'stat',
 } as const;
 
@@ -84,6 +85,10 @@ export const PopulationMethods = {
 export const ActionMethods = {
 	ADD: 'add',
 	REMOVE: 'remove',
+	PERFORM: 'perform',
+} as const;
+
+export const AttackMethods = {
 	PERFORM: 'perform',
 } as const;
 
