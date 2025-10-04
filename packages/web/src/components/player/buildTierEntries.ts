@@ -131,7 +131,7 @@ export function buildTierEntries(
 		}
 
 		if (!items.length) {
-			items.push('No tier bonuses active.');
+			items.push('No effect');
 		}
 
 		return { title, items };

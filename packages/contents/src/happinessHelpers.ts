@@ -58,6 +58,7 @@ export const growthBonusEffect = (amount: number) =>
 type TierPassiveEffectOptions = {
 	tierId: string;
 	summary: string;
+	summaryToken?: string;
 	removalDetail: string;
 	params: ReturnType<typeof passiveParams>;
 	effects?: EffectConfig[];
@@ -66,13 +67,18 @@ type TierPassiveEffectOptions = {
 export function createTierPassiveEffect({
 	tierId,
 	summary,
+	summaryToken,
 	removalDetail,
 	params,
 	effects = [],
 }: TierPassiveEffectOptions) {
-	params.detail(summary);
+	params.detail(summaryToken ?? summary);
 	params.meta({
-		source: { type: 'tiered-resource', id: tierId },
+		source: {
+			type: 'tiered-resource',
+			id: tierId,
+			...(summaryToken ? { labelToken: summaryToken } : {}),
+		},
 		removal: {
 			token: removalDetail,
 			text: formatPassiveRemoval(removalDetail),

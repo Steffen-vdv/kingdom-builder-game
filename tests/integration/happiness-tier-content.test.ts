@@ -58,7 +58,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:content",
         "removalToken": "happiness stays between +3 and +4",
-        "summary": "During income step, gain 20% more 🪙 gold (rounded up).",
+        "summary": "During income step, gain 25% more 🪙 gold (rounded up).",
         "summaryToken": "happiness.tier.summary.content",
       },
     ],
@@ -94,7 +94,7 @@ describe('content happiness tiers', () => {
       {
         "id": "passive:happiness:ecstatic",
         "removalToken": "happiness is +10 or higher",
-        "summary": "During income step, gain 50% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).\nDuring Growth phase, gain 20% more 📈 Growth.",
+        "summary": "During income step, gain 50% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).\nGain +20% 📈 Growth.",
         "summaryToken": "happiness.tier.summary.ecstatic",
       },
     ],

@@ -103,7 +103,7 @@ export default function PassiveDisplay({
 				return (
 					<div
 						key={passive.id}
-						className="hoverable cursor-pointer rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm transition hover:border-blue-400/70 hover:bg-white/80 dark:border-white/10 dark:bg-slate-900/50 dark:hover:border-blue-300/60 dark:hover:bg-slate-900/70"
+						className="hoverable cursor-help rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm transition hover:border-blue-400/70 hover:bg-white/80 dark:border-white/10 dark:bg-slate-900/50 dark:hover:border-blue-300/60 dark:hover:bg-slate-900/70"
 						onMouseEnter={() => {
 							const { effects, description } = splitSummary(sections);
 							const descriptionEntries = [...(description ?? [])] as ReturnType<

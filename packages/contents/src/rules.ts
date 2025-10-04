@@ -83,18 +83,18 @@ const TIER_CONFIGS = [
 		range: { min: -2, max: 2 },
 		incomeMultiplier: 1,
 		summaryToken: happinessSummaryToken('steady'),
-		summary: 'No tier bonuses active.',
+		summary: 'No effect',
 		removal: 'happiness stays between -2 and +2',
 	},
 	{
 		id: 'happiness:tier:content',
 		passiveId: 'passive:happiness:content',
 		range: { min: 3, max: 4 },
-		incomeMultiplier: 1.2,
+		incomeMultiplier: 1.25,
 		summaryToken: happinessSummaryToken('content'),
-		summary: 'During income step, gain 20% more 🪙 gold (rounded up).',
+		summary: 'During income step, gain 25% more 🪙 gold (rounded up).',
 		removal: 'happiness stays between +3 and +4',
-		effects: [incomeModifier('happiness:content:income', 0.2)],
+		effects: [incomeModifier('happiness:content:income', 0.25)],
 	},
 	{
 		id: 'happiness:tier:joyful',
@@ -136,12 +136,11 @@ const TIER_CONFIGS = [
 		range: { min: 10 },
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
-		growthBonusPct: 0.2,
 		summaryToken: happinessSummaryToken('ecstatic'),
 		summary: joinSummary(
 			'During income step, gain 50% more 🪙 gold (rounded up).',
 			'Build action costs 20% less 🪙 gold (rounded up).',
-			'During Growth phase, gain 20% more 📈 Growth.',
+			'Gain +20% 📈 Growth.',
 		),
 		removal: 'happiness is +10 or higher',
 		effects: [
@@ -152,7 +151,9 @@ const TIER_CONFIGS = [
 	},
 ];
 
-type TierConfig = (typeof TIER_CONFIGS)[number];
+type TierConfig = (typeof TIER_CONFIGS)[number] & {
+	growthBonusPct?: number;
+};
 
 function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 	const builder = happinessTier(config.id)
@@ -177,6 +178,7 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 		const passive = createTierPassiveEffect({
 			tierId: config.id,
 			summary: config.summary,
+			summaryToken: config.summaryToken,
 			removalDetail: config.removal,
 			params,
 			...(config.effects ? { effects: config.effects } : {}),
@@ -189,7 +191,7 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 	if (config.buildingDiscountPct) {
 		builder.buildingDiscountPct(config.buildingDiscountPct);
 	}
-	if (config.growthBonusPct) {
+	if ('growthBonusPct' in config && config.growthBonusPct) {
 		builder.growthBonusPct(config.growthBonusPct);
 	}
 	return builder.build();
