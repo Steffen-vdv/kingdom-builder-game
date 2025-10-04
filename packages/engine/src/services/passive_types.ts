@@ -3,6 +3,16 @@ import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
 import type { StatSourceFrame } from '../stat_sources';
 
+export type PhaseSkipStep = {
+	phaseId: string;
+	stepId: string;
+};
+
+export type PhaseSkipConfig = {
+	phases?: string[];
+	steps?: PhaseSkipStep[];
+};
+
 export interface PassiveSummary {
 	id: string;
 	name?: string | undefined;
@@ -38,6 +48,7 @@ export type PassiveRecord = PassiveSummary & {
 	frames: StatSourceFrame[];
 	detail?: string;
 	meta?: PassiveMetadata;
+	skip?: PhaseSkipConfig;
 	[trigger: string]: unknown;
 };
 

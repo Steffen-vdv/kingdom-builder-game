@@ -13,7 +13,7 @@ import {
 	RULES,
 	MODIFIER_INFO,
 	RESOURCES,
-	Resource,
+	type ResourceKey,
 	RESOURCE_TRANSFER_ICON,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '../../engine/tests/factories/content';
@@ -56,31 +56,84 @@ describe('modifier evaluation handlers', () => {
 	});
 
 	it('formats development result modifiers with resource removal', () => {
-		const ctx = createCtx();
-		const eff: EffectDef = {
-			type: 'result_mod',
-			method: 'add',
-			params: {
-				evaluation: { type: 'development', id: 'farm' },
-			},
-			effects: [
-				{
-					type: 'resource',
-					method: 'remove',
-					params: { key: Resource.happiness, amount: 2 },
-				},
-			],
+		const content = createContentFactory();
+		const development = content.development({
+			id: 'development:synthetic',
+			name: 'Synthetic Development',
+			icon: '🧬',
+		});
+		const resourceKey = 'resource:synthetic' as unknown as ResourceKey;
+		const syntheticResource = {
+			key: resourceKey,
+			icon: '💠',
+			label: 'Synthetic Resource',
+			description: 'A synthetic resource for formatting assertions.',
 		};
-		const summary = summarizeEffects([eff], ctx);
-		const description = describeEffects([eff], ctx);
-		const farm = ctx.developments.get('farm');
-		const happiness = RESOURCES[Resource.happiness];
-		expect(summary).toEqual([
-			`${MODIFIER_INFO.result.icon}${farm.icon}: ${happiness.icon}-2`,
-		]);
-		expect(description).toEqual([
-			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${farm.icon} ${farm.name}: Whenever it grants resources, gain ${happiness.icon}-2 more of that resource`,
-		]);
+		const resources = RESOURCES as unknown as Record<
+			string,
+			typeof syntheticResource | undefined
+		>;
+		const previousResource = resources[resourceKey];
+		resources[resourceKey] = syntheticResource;
+
+		const playerStart = {
+			resources: {} as Record<ResourceKey, number>,
+			stats: {},
+			population: {},
+			lands: [],
+		};
+		playerStart.resources[resourceKey] = 0;
+
+		const start: StartConfig = {
+			player: playerStart,
+		};
+		const rules: RuleSet = {
+			defaultActionAPCost: 1,
+			absorptionCapPct: 1,
+			absorptionRounding: 'down',
+			tieredResourceKey: resourceKey,
+			tierDefinitions: [],
+			slotsPerNewLand: 1,
+			maxSlotsPerLand: 1,
+			basePopulationCap: 1,
+		};
+		try {
+			const ctx = createEngine({
+				actions: content.actions,
+				buildings: content.buildings,
+				developments: content.developments,
+				populations: content.populations,
+				phases: [],
+				start,
+				rules,
+			});
+			const eff: EffectDef = {
+				type: 'result_mod',
+				method: 'add',
+				params: {
+					evaluation: { type: 'development', id: development.id },
+				},
+				effects: [
+					{
+						type: 'resource',
+						method: 'remove',
+						params: { key: resourceKey, amount: 2 },
+					},
+				],
+			};
+			const summary = summarizeEffects([eff], ctx);
+			const description = describeEffects([eff], ctx);
+			const expectedSummary = `${MODIFIER_INFO.result.icon}${development.icon}: ${syntheticResource.icon}-2`;
+			expect(summary).toEqual([expectedSummary]);
+			const expectedDescription = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${development.icon} ${development.name}: Whenever it grants resources, gain ${syntheticResource.icon}-2 more of that resource`;
+			expect(description).toEqual([expectedDescription]);
+		} finally {
+			if (previousResource) {
+				resources[resourceKey] = previousResource;
+			} else {
+				delete resources[resourceKey];
+			}
+		}
 	});
 
 	it('formats transfer percent evaluation modifiers for arbitrary actions', () => {

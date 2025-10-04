@@ -1,9 +1,16 @@
 import type { EffectHandler, EffectDef } from '.';
+import type {
+	PassiveMetadata,
+	PhaseSkipConfig,
+} from '../services/passive_types';
 
 interface PassiveParams {
 	id: string;
 	name?: string;
 	icon?: string;
+	detail?: string;
+	meta?: PassiveMetadata;
+	skip?: PhaseSkipConfig;
 	onGrowthPhase?: EffectDef[];
 	onUpkeepPhase?: EffectDef[];
 	onBeforeAttacked?: EffectDef[];
@@ -21,6 +28,9 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		id,
 		name,
 		icon,
+		detail,
+		meta,
+		skip,
 		onGrowthPhase,
 		onUpkeepPhase,
 		onBeforeAttacked,
@@ -33,6 +43,9 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		id: string;
 		name?: string | undefined;
 		icon?: string | undefined;
+		detail?: string | undefined;
+		meta?: PassiveMetadata | undefined;
+		skip?: PhaseSkipConfig;
 		effects: EffectDef[];
 		onGrowthPhase?: EffectDef[];
 		onUpkeepPhase?: EffectDef[];
@@ -47,6 +60,15 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 	}
 	if (icon !== undefined) {
 		passive.icon = icon;
+	}
+	if (detail !== undefined) {
+		passive.detail = detail;
+	}
+	if (meta !== undefined) {
+		passive.meta = meta;
+	}
+	if (skip !== undefined) {
+		passive.skip = skip;
 	}
 	if (onGrowthPhase) {
 		passive.onGrowthPhase = onGrowthPhase;

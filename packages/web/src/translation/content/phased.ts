@@ -12,92 +12,93 @@ export interface PhasedDef {
 
 export class PhasedTranslator {
 	summarize(def: PhasedDef, ctx: EngineContext): Summary {
-		const root: SummaryEntry[] = [];
-		const build = summarizeEffects(def.onBuild, ctx);
-		if (build.length) {
-			root.push(...build);
-		}
-		for (const phase of ctx.phases) {
-			const key =
-				`on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhasedDef;
-			const eff = summarizeEffects(def[key], ctx);
-			if (eff.length) {
-				root.push({
-					title: `${phase.icon} On each ${phase.label} Phase`,
-					items: eff,
-				});
-			}
-		}
-		for (const key of [
-			'onPayUpkeepStep',
-			'onGainIncomeStep',
-			'onGainAPStep',
-		] as const) {
-			const eff = summarizeEffects(def[key], ctx);
-			if (eff.length) {
-				const info = triggerInfo[key];
-				root.push({ title: `${info.icon} ${info.future}`, items: eff });
-			}
-		}
-		const pre = summarizeEffects(def.onBeforeAttacked, ctx);
-		if (pre.length) {
-			root.push({
-				title: `${triggerInfo.onBeforeAttacked.icon} ${triggerInfo.onBeforeAttacked.future}`,
-				items: pre,
-			});
-		}
-		const atk = summarizeEffects(def.onAttackResolved, ctx);
-		if (atk.length) {
-			root.push({
-				title: `${triggerInfo.onAttackResolved.icon} ${triggerInfo.onAttackResolved.future}`,
-				items: atk,
-			});
-		}
-		return root;
+		return this.translate(def, ctx, summarizeEffects);
 	}
 
 	describe(def: PhasedDef, ctx: EngineContext): Summary {
+		return this.translate(def, ctx, describeEffects);
+	}
+
+	private translate(
+		def: PhasedDef,
+		ctx: EngineContext,
+		effectMapper: (
+			effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
+			context: EngineContext,
+		) => SummaryEntry[],
+	): Summary {
 		const root: SummaryEntry[] = [];
-		const build = describeEffects(def.onBuild, ctx);
+		const handled = new Set<string>();
+		const triggerMeta = triggerInfo as Record<
+			string,
+			{ icon: string; future: string } | undefined
+		>;
+
+		const applyTrigger = (
+			key: keyof PhasedDef,
+			fallbackTitle?: string,
+		): void => {
+			const identifier = key as string;
+			if (handled.has(identifier)) {
+				return;
+			}
+			handled.add(identifier);
+			const effects = effectMapper(def[key], ctx);
+			if (!effects.length) {
+				return;
+			}
+			const info = triggerMeta[key as string];
+			const title = (() => {
+				if (info) {
+					const label = [info.icon, info.future]
+						.filter(Boolean)
+						.join(' ')
+						.trim();
+					if (label.length) {
+						return label;
+					}
+				}
+				return fallbackTitle;
+			})();
+			if (title) {
+				root.push({ title, items: effects });
+				return;
+			}
+			root.push(...effects);
+		};
+
+		const build = effectMapper(def.onBuild, ctx);
 		if (build.length) {
 			root.push(...build);
 		}
+		handled.add('onBuild');
+
 		for (const phase of ctx.phases) {
 			const key =
 				`on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhasedDef;
-			const eff = describeEffects(def[key], ctx);
-			if (eff.length) {
-				root.push({
-					title: `${phase.icon} On each ${phase.label} Phase`,
-					items: eff,
-				});
+			applyTrigger(key, `${phase.icon} On each ${phase.label} Phase`);
+		}
+
+		const stepKeysFromInfo = Object.keys(triggerInfo).filter((key) =>
+			key.endsWith('Step'),
+		);
+		for (const key of stepKeysFromInfo) {
+			applyTrigger(key as keyof PhasedDef, key);
+		}
+
+		applyTrigger('onBeforeAttacked');
+		applyTrigger('onAttackResolved');
+
+		for (const key of Object.keys(def)) {
+			if (key === 'onBuild' || handled.has(key)) {
+				continue;
 			}
-		}
-		for (const key of [
-			'onPayUpkeepStep',
-			'onGainIncomeStep',
-			'onGainAPStep',
-		] as const) {
-			const eff = describeEffects(def[key], ctx);
-			if (eff.length) {
-				const info = triggerInfo[key];
-				root.push({ title: `${info.icon} ${info.future}`, items: eff });
+			if (!key.startsWith('on')) {
+				continue;
 			}
+			applyTrigger(key as keyof PhasedDef, key);
 		}
-		const pre = describeEffects(def.onBeforeAttacked, ctx);
-		if (pre.length) {
-			root.push({
-				title: `${triggerInfo.onBeforeAttacked.icon} ${triggerInfo.onBeforeAttacked.future}`,
-				items: pre,
-			});
-		}
-		const atk = describeEffects(def.onAttackResolved, ctx);
-		if (atk.length) {
-			root.push({
-				title: `${triggerInfo.onAttackResolved.icon} ${triggerInfo.onAttackResolved.future}`,
-				items: atk,
-			});
-		}
+
 		return root;
 	}
 }

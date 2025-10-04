@@ -5,34 +5,15 @@ export type TierRange = {
 	max?: number;
 };
 
-export type TierPassiveSkipStep = {
-	phaseId: string;
-	stepId: string;
-};
-
-export type TierPassiveSkipConfig = {
-	phases?: string[];
-	steps?: TierPassiveSkipStep[];
-};
-
 export type TierPassiveTextTokens = {
 	summary?: string;
 	description?: string;
 	removal?: string;
 };
 
-export type TierPassivePayload = {
+export type TierPassivePreview = {
 	id: string;
 	effects?: EffectDef[];
-	onGrowthPhase?: EffectDef[];
-	onUpkeepPhase?: EffectDef[];
-	onBeforeAttacked?: EffectDef[];
-	onAttackResolved?: EffectDef[];
-	onPayUpkeepStep?: EffectDef[];
-	onGainIncomeStep?: EffectDef[];
-	onGainAPStep?: EffectDef[];
-	skip?: TierPassiveSkipConfig;
-	text?: TierPassiveTextTokens;
 };
 
 export type TierDisplayMetadata = {
@@ -54,6 +35,9 @@ export type HappinessTierDefinition = {
 	id: string;
 	range: TierRange;
 	effect: TierEffect;
-	passive: TierPassivePayload;
+	enterEffects?: EffectDef[];
+	exitEffects?: EffectDef[];
+	preview?: TierPassivePreview;
+	text?: TierPassiveTextTokens;
 	display?: TierDisplayMetadata;
 };

@@ -12,7 +12,8 @@ import {
 	attackParams,
 	transferParams,
 	happinessTier,
-	tierPassive,
+	Types,
+	PassiveMethods,
 } from '../src/config/builders';
 import type { ActionEffectGroupDef } from '../src/config/builders';
 import { RESOURCES, type ResourceKey } from '../src/resources';
@@ -21,6 +22,13 @@ import { describe, expect, it } from 'vitest';
 
 const firstResourceKey = Object.keys(RESOURCES)[0] as ResourceKey;
 const firstStatKey = Object.keys(STATS)[0] as StatKey;
+
+const buildTierPassiveEffect = () =>
+	effect()
+		.type(Types.Passive)
+		.method(PassiveMethods.ADD)
+		.params(passiveParams().id('passive:test').build())
+		.build();
 
 describe('content builder safeguards', () => {
 	it('explains when an action id is missing', () => {
@@ -198,7 +206,7 @@ describe('content builder safeguards', () => {
 
 	it('requires happiness tiers to declare an id', () => {
 		expect(() =>
-			happinessTier().range(0, 1).passive(tierPassive('passive:test')).build(),
+			happinessTier().range(0, 1).passive(buildTierPassiveEffect()).build(),
 		).toThrowError(
 			"Happiness tier is missing id(). Call id('your-tier-id') before build().",
 		);
@@ -208,30 +216,36 @@ describe('content builder safeguards', () => {
 		expect(() =>
 			happinessTier('tier:test')
 				.range(5, 3)
-				.passive(tierPassive('passive:test'))
+				.passive(buildTierPassiveEffect())
 				.build(),
 		).toThrowError(
 			'Happiness tier range(min, max?) requires max to be greater than or equal to min.',
 		);
 	});
 
-	it('demands happiness tiers to define a passive payload', () => {
-		expect(() => happinessTier('tier:test').range(0, 1).build()).toThrowError(
-			'Happiness tier is missing passive(). Call passive(...) with tierPassive(...) before build().',
-		);
+	it('allows happiness tiers to omit a passive payload', () => {
+		const tier = happinessTier('tier:test').range(0, 1).build();
+		expect(tier.enterEffects).toBeUndefined();
+		expect(tier.exitEffects).toBeUndefined();
+		expect(tier.preview).toBeUndefined();
 	});
 
 	it('requires tier passives to provide an id', () => {
 		expect(() =>
-			happinessTier('tier:test').range(0, 1).passive(tierPassive()).build(),
+			happinessTier('tier:test')
+				.range(0, 1)
+				.passive(effect().type(Types.Passive).method(PassiveMethods.ADD))
+				.build(),
 		).toThrowError(
-			'Happiness tier passive is missing id(). Call id("your-passive-id") before build().',
+			'Happiness tier passive(...) requires the passive:add effect to include params.id.',
 		);
 	});
 
 	it('verifies skipStep receives both identifiers', () => {
-		expect(() => tierPassive('passive:test').skipStep('', 'step')).toThrowError(
-			'Happiness tier passive skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
+		expect(() =>
+			passiveParams().id('passive:test').skipStep('', 'step'),
+		).toThrowError(
+			'Passive params skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
 		);
 	});
 });

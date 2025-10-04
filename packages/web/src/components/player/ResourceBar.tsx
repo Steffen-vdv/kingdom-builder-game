@@ -9,7 +9,7 @@ import { useGameEngine } from '../../state/GameContext';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
-import { describeEffects } from '../../translation';
+import { describeEffects, translateTierSummary } from '../../translation';
 
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
@@ -36,7 +36,7 @@ function buildTierEntries(
 		active: tier.id === activeId,
 	}));
 	return entries.map((entry) => {
-		const { passive, display, active } = entry;
+		const { preview, display, text, active } = entry;
 		const rangeLabel = formatTierRange(entry);
 		const statusIcon = active ? '🟢' : '⚪';
 		const icon = display?.icon ?? PASSIVE_INFO.icon ?? '';
@@ -44,9 +44,10 @@ function buildTierEntries(
 			(part) => part && String(part).trim().length > 0,
 		);
 		const title = titleParts.join(' ').trim();
-		const summary = passive.text?.summary;
+		const summaryToken = display?.summaryToken;
+		const summary = translateTierSummary(summaryToken) ?? text?.summary;
 		const removalText =
-			passive.text?.removal ??
+			text?.removal ??
 			(display?.removalCondition
 				? `Removed when ${display.removalCondition}`
 				: undefined);
@@ -54,7 +55,7 @@ function buildTierEntries(
 		if (summary) {
 			items.push(summary);
 		}
-		const described = describeEffects(passive.effects || [], ctx);
+		const described = describeEffects(preview?.effects || [], ctx);
 		described.forEach((item) => items.push(item));
 		if (removalText) {
 			items.push(removalText);

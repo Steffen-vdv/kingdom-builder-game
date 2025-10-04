@@ -5,7 +5,10 @@ import { createTestEngine } from '../helpers';
 import { RULES, Resource as CResource } from '@kingdom-builder/contents';
 import {
 	happinessTier,
-	tierPassive,
+	effect,
+	passiveParams,
+	Types,
+	PassiveMethods,
 } from '@kingdom-builder/contents/config/builders';
 import { getActionCosts } from '../../src';
 import { createContentFactory } from '../factories/content';
@@ -44,12 +47,22 @@ describe('Services', () => {
 					happinessTier('test:tier:low')
 						.range(0, 5)
 						.incomeMultiplier(1)
-						.passive(tierPassive('test:passive:low'))
+						.passive(
+							effect()
+								.type(Types.Passive)
+								.method(PassiveMethods.ADD)
+								.params(passiveParams().id('test:passive:low').build()),
+						)
 						.build(),
 					happinessTier('test:tier:high')
 						.range(6)
 						.incomeMultiplier(2)
-						.passive(tierPassive('test:passive:high'))
+						.passive(
+							effect()
+								.type(Types.Passive)
+								.method(PassiveMethods.ADD)
+								.params(passiveParams().id('test:passive:high').build()),
+						)
 						.build(),
 				],
 			},

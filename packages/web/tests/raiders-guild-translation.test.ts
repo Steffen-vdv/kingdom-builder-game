@@ -1,138 +1,133 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import {
 	describeContent,
 	splitSummary,
 	summarizeContent,
 	type Summary,
 } from '../src/translation/content';
-import { createEngine } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
 	MODIFIER_INFO,
 	POPULATION_INFO,
+	RESOURCE_TRANSFER_ICON,
+	RESOURCES,
 } from '@kingdom-builder/contents';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
+import { increaseOrDecrease, signed } from '../src/translation/effects/helpers';
+import { formatTargetLabel } from '../src/translation/effects/formatters/modifier_helpers';
+import {
+	collectText,
+	createRaidersGuildContext,
+	getActionSummaryItems,
+	getModifier,
+	getResourceEffect,
+	type RaidersGuildSyntheticContext,
+} from './fixtures/syntheticRaidersGuild';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
-
-function createCtx() {
-	return createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
-	});
-}
-
-function collectText(summary: Summary | undefined): string[] {
-	if (!summary) {
-		return [];
+function expectHoistedActionCard(
+	ctx: RaidersGuildSyntheticContext['ctx'],
+	description: Summary | undefined,
+	actionId: string,
+) {
+	expect(description).toBeDefined();
+	const hoisted = description?.[0];
+	expect(typeof hoisted).toBe('object');
+	if (!hoisted || typeof hoisted === 'string') {
+		return;
 	}
-	const lines: string[] = [];
-	const visit = (entries: Summary) => {
-		for (const entry of entries) {
-			if (typeof entry === 'string') {
-				lines.push(entry);
-				continue;
-			}
-			if (Array.isArray(entry.items)) {
-				visit(entry.items as Summary);
-			}
-		}
-	};
-	visit(summary);
-	return lines;
+	const action = ctx.actions.get(actionId);
+	expect(hoisted.title).toBe(formatTargetLabel(action.icon ?? '', action.name));
+	expect(hoisted.items as Summary).toEqual(
+		getActionSummaryItems(ctx, actionId),
+	);
 }
 
 describe('raiders guild translation', () => {
-	it('describes plunder action', () => {
-		const ctx = createCtx();
-		const summary = describeContent('building', 'raiders_guild', ctx);
+	let synthetic: RaidersGuildSyntheticContext;
+
+	beforeEach(() => {
+		synthetic = createRaidersGuildContext();
+	});
+
+	it('describes transfer modifier with hoisted action card', () => {
+		const { ctx, ids } = synthetic;
+		const summary = describeContent('building', ids.transferBuilding, ctx);
 		const { effects, description } = splitSummary(summary);
-		expect(effects).toHaveLength(1);
-		const build = effects[0] as { title: string; items?: unknown[] };
-		const modifierLine = build.items?.[0];
-		expect(typeof modifierLine).toBe('string');
-		expect(modifierLine).toMatch(
-			/^✨ Result Modifier on .*: Whenever it transfers resources, 🔁 (Increase|Decrease) transfer by 25%$/,
-		);
-		if (description) {
-			const actionCard = (description as Summary)[0] as
-				| string
-				| { title: string; items?: unknown[]; _hoist?: true; _desc?: true };
-			if (actionCard && typeof actionCard !== 'string') {
-				expect(actionCard).toMatchObject({ _hoist: true, _desc: true });
-				const cardItems = (actionCard.items ?? []) as string[];
-				for (const item of cardItems) {
-					expect(typeof item === 'string' ? item : '').not.toMatch(
-						/Result Modifier/,
-					);
-				}
-			}
-		}
-		expect(JSON.stringify({ effects, description })).not.toMatch(
-			/Immediately|🎯/,
-		);
+		const modifier = getModifier(ctx, ids.transferBuilding);
+		const adjust = Number(modifier.params?.['adjust'] ?? 0);
+		const raid = ctx.actions.get(ids.raidAction);
+		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${formatTargetLabel(
+			raid.icon ?? '',
+			raid.name,
+		)}: Whenever it transfers resources, ${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
+			adjust,
+		)} transfer by ${Math.abs(adjust)}%`;
+		expect(collectText(effects)).toContain(clause);
+		expectHoistedActionCard(ctx, description, ids.raidAction);
 	});
 
-	it('summarizes market modifier compactly', () => {
-		const ctx = createCtx();
-		const summary = summarizeContent('building', 'market', ctx);
-		const market = ctx.buildings.get('market');
-		expect(market).toBeDefined();
-		const tax = ctx.actions.get('tax');
-		const expected = `${MODIFIER_INFO.result.icon}${POPULATION_INFO.icon}(${tax.icon}): 🧺+1`;
-		const lines = summary.flatMap((entry) =>
-			typeof entry === 'string'
-				? [entry]
-				: Array.isArray(entry.items)
-					? (entry.items as string[])
-					: [],
-		);
-		expect(lines).toContain(expected);
+	it('summarizes population modifier compactly', () => {
+		const { ctx, ids } = synthetic;
+		const summary = summarizeContent('building', ids.populationBuilding, ctx);
+		const ledger = ctx.actions.get(ids.ledgerAction);
+		const modifier = getModifier(ctx, ids.populationBuilding);
+		const amount = Number(modifier.params?.['amount'] ?? 0);
+		const actionIcon =
+			ledger.icon && ledger.icon.trim().length ? ledger.icon : ledger.name;
+		const expected = `${MODIFIER_INFO.result.icon}${POPULATION_INFO.icon}(${actionIcon}): ${GENERAL_RESOURCE_ICON}${signed(
+			amount,
+		)}${Math.abs(amount)}`;
+		expect(collectText(summary)).toContain(expected);
 	});
 
-	it('summarizes mill modifier compactly', () => {
-		const ctx = createCtx();
-		const summary = summarizeContent('building', 'mill', ctx);
-		const farm = ctx.developments.get('farm');
-		expect(farm).toBeDefined();
-		const expected = `${MODIFIER_INFO.result.icon}${farm.icon}: 🧺+1`;
-		const lines = summary.flatMap((entry) =>
-			typeof entry === 'string'
-				? [entry]
-				: Array.isArray(entry.items)
-					? (entry.items as string[])
-					: [],
-		);
-		expect(lines).toContain(expected);
+	it('summarizes development modifier compactly', () => {
+		const { ctx, ids } = synthetic;
+		const summary = summarizeContent('building', ids.developmentBuilding, ctx);
+		const development = ctx.developments.get(ids.harvestDevelopment);
+		const modifier = getModifier(ctx, ids.developmentBuilding);
+		const resourceEffect = getResourceEffect(modifier);
+		const key = resourceEffect.params?.['key'] as string;
+		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
+		const resourceIcon = RESOURCES[key as keyof typeof RESOURCES]?.icon || key;
+		const expected = `${MODIFIER_INFO.result.icon}${development.icon}: ${resourceIcon}${signed(
+			amount,
+		)}${Math.abs(amount)}`;
+		expect(collectText(summary)).toContain(expected);
 	});
 
-	it('describes market modifier with detailed clause', () => {
-		const ctx = createCtx();
-		const summary = describeContent('building', 'market', ctx);
-		const lines = collectText(summary);
-		expect(lines).toContain(
-			'✨ Result Modifier on 👥 Population through 💰 Tax: Whenever it grants resources, gain 🧺+1 more of that resource',
-		);
+	it('describes population modifier with detailed clause', () => {
+		const { ctx, ids } = synthetic;
+		const summary = describeContent('building', ids.populationBuilding, ctx);
+		const ledger = ctx.actions.get(ids.ledgerAction);
+		const modifier = getModifier(ctx, ids.populationBuilding);
+		const amount = Number(modifier.params?.['amount'] ?? 0);
+		const target = `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${formatTargetLabel(
+			ledger.icon ?? '',
+			ledger.name,
+		)}`;
+		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${target}: Whenever it grants resources, gain ${GENERAL_RESOURCE_ICON}${signed(
+			amount,
+		)}${Math.abs(amount)} more of that resource`;
+		expect(collectText(summary)).toContain(clause);
 	});
 
-	it('describes mill modifier with detailed clause', () => {
-		const ctx = createCtx();
-		const summary = describeContent('building', 'mill', ctx);
-		const lines = collectText(summary);
-		expect(lines).toContain(
-			'✨ Result Modifier on 🌾 Farm: Whenever it grants resources, gain 🧺+1 more of that resource',
-		);
+	it('describes development modifier with detailed clause', () => {
+		const { ctx, ids } = synthetic;
+		const summary = describeContent('building', ids.developmentBuilding, ctx);
+		const development = ctx.developments.get(ids.harvestDevelopment);
+		const modifier = getModifier(ctx, ids.developmentBuilding);
+		const resourceEffect = getResourceEffect(modifier);
+		const key = resourceEffect.params?.['key'] as string;
+		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
+		const icon = RESOURCES[key as keyof typeof RESOURCES]?.icon || key;
+		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${formatTargetLabel(
+			development.icon ?? '',
+			development.name,
+		)}: Whenever it grants resources, gain ${icon}${signed(amount)}${Math.abs(
+			amount,
+		)} more of that resource`;
+		expect(collectText(summary)).toContain(clause);
 	});
 });
