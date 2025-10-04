@@ -57,6 +57,7 @@ function resolveOptionTargetLabel(
 function normalizeEntryLabel(
 	label: string,
 	targetLabel: string | undefined,
+	preserveVerb: boolean,
 ): string {
 	if (!targetLabel) {
 		return label.trim();
@@ -69,7 +70,7 @@ function normalizeEntryLabel(
 	if (normalizedTarget.startsWith(trimmedLabel)) {
 		return normalizedTarget;
 	}
-	if (trimmedLabel.startsWith('Add ')) {
+	if (!preserveVerb && trimmedLabel.startsWith('Add ')) {
 		const withoutAdd = trimmedLabel.slice(4).trim();
 		if (normalizedTarget.startsWith(withoutAdd)) {
 			return normalizedTarget;
@@ -157,21 +158,27 @@ export function buildActionOptionTranslation(
 	}
 	const restEntries = translated.slice(1).map(cloneSummaryEntry);
 	if (typeof first === 'string') {
-		const normalizedFirst = normalizeEntryLabel(first, targetLabel);
+		const normalizedFirst = normalizeEntryLabel(
+			first,
+			targetLabel,
+			mode === 'describe',
+		);
 		const title = combineLabels(actionLabel, normalizedFirst, fallback);
-		const detailEntries =
-			restEntries.length > 0
-				? restEntries
-				: mode === 'describe'
-					? [normalizedFirst]
-					: [];
+		const includeFirstDetail = mode === 'describe' && restEntries.length > 0;
+		const detailEntries = includeFirstDetail
+			? [normalizedFirst, ...restEntries]
+			: restEntries;
 		if (detailEntries.length === 0) {
 			return { label: title, entry: title };
 		}
 		return { label: title, entry: { title, items: detailEntries } };
 	}
 	const firstObject = cloneSummaryEntry(first) as ObjectSummaryEntry;
-	const normalizedTitle = normalizeEntryLabel(firstObject.title, targetLabel);
+	const normalizedTitle = normalizeEntryLabel(
+		firstObject.title,
+		targetLabel,
+		mode === 'describe',
+	);
 	const combinedTitle = combineLabels(actionLabel, normalizedTitle, fallback);
 	const entry: ObjectSummaryEntry = {
 		...firstObject,
