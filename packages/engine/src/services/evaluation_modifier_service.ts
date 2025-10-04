@@ -26,6 +26,10 @@ export class EvaluationModifierService {
 		this.index.delete(id);
 	}
 
+	getMap(): ReadonlyMap<string, Map<string, EvaluationModifier>> {
+		return this.modifiers;
+	}
+
 	run(target: string, context: EngineContext, gains: ResourceGain[]) {
 		const modifierMap = this.modifiers.get(target);
 		if (!modifierMap) {

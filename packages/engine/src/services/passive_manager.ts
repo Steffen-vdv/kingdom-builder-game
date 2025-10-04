@@ -69,6 +69,10 @@ export class PassiveManager {
 		this.evaluationModifiers.unregister(id);
 	}
 
+	get evaluationMods(): ReadonlyMap<string, Map<string, EvaluationModifier>> {
+		return this.evaluationModifiers.getMap();
+	}
+
 	applyCostModifiers(
 		actionId: string,
 		base: CostBag,
