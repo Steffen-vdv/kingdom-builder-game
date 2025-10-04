@@ -208,11 +208,11 @@ module.exports = {
 				'packages/web/src/translation/effects/formatters/action.ts',
 				'packages/web/src/translation/effects/formatters/building.ts',
 				'packages/web/src/translation/effects/formatters/passive.ts',
-                        ],
-                        rules: {
-                                'max-lines': 'off',
-                        },
-                },
+			],
+			rules: {
+				'max-lines': 'off',
+			},
+		},
 		{
 			files: [
 				'packages/web/src/utils/stats.ts',
