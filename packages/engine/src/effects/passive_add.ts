@@ -1,4 +1,5 @@
 import type { EffectHandler, EffectDef } from '.';
+import type { PassiveMetadata } from '../services';
 
 interface PassiveParams {
 	id: string;
@@ -8,6 +9,8 @@ interface PassiveParams {
 	onUpkeepPhase?: EffectDef[];
 	onBeforeAttacked?: EffectDef[];
 	onAttackResolved?: EffectDef[];
+	detail?: string;
+	meta?: PassiveMetadata;
 	[key: string]: unknown;
 }
 
@@ -60,7 +63,14 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 	if (onAttackResolved) {
 		passive.onAttackResolved = onAttackResolved;
 	}
+	const options = {
+		detail: params.detail,
+		meta: params.meta,
+	} as {
+		detail?: string;
+		meta?: PassiveMetadata;
+	};
 	for (let index = 0; index < Math.floor(mult); index++) {
-		ctx.passives.addPassive(passive, ctx);
+		ctx.passives.addPassive(passive, ctx, options);
 	}
 };

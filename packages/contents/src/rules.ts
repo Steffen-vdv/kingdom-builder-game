@@ -1,9 +1,15 @@
-import type { RuleSet } from '@kingdom-builder/engine/services';
+/* eslint-disable max-lines */
+import type { EffectConfig } from '@kingdom-builder/engine/config/schema';
+import type {
+	PassiveMetadata,
+	RuleSet,
+} from '@kingdom-builder/engine/services';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import {
 	Types,
 	CostModMethods,
+	PassiveMethods,
 	ResultModMethods,
 	StatMethods,
 	costModParams,
@@ -11,7 +17,8 @@ import {
 	happinessTier,
 	resultModParams,
 	statParams,
-	tierPassive,
+	passiveParams,
+	effect,
 } from './config/builders';
 
 const GROWTH_PHASE_ID = 'growth';
@@ -52,6 +59,84 @@ const growthBonusEffect = (amount: number) =>
 
 const formatRemoval = (description: string) => `Removed when ${description}`;
 
+type TierSkipConfig = {
+	phases?: string[];
+	steps?: Array<{ phaseId: string; stepId: string }>;
+};
+
+function buildTierPassiveEffect({
+	tierId,
+	passiveId,
+	summary,
+	removalText,
+	removalCondition,
+	icon,
+	summaryToken,
+	nestedEffects = [],
+	skip,
+}: {
+	tierId: string;
+	passiveId: string;
+	summary?: string;
+	removalText?: string;
+	removalCondition?: string;
+	icon?: string;
+	summaryToken?: string;
+	nestedEffects?: EffectConfig[];
+	skip?: TierSkipConfig;
+}): EffectConfig {
+	const paramsBuilder = passiveParams().id(passiveId);
+	paramsBuilder.detail(summary ?? tierId);
+	const meta: PassiveMetadata = {
+		source: {
+			type: 'tiered-resource',
+			id: tierId,
+		},
+	};
+	if (icon) {
+		meta.source!.icon = icon;
+	}
+	if (summaryToken) {
+		meta.source!.labelToken = summaryToken;
+	}
+	if (removalCondition || removalText) {
+		const removal: PassiveMetadata['removal'] = {};
+		if (removalCondition) {
+			removal.token = removalCondition;
+		}
+		if (removalText) {
+			removal.text = removalText;
+		}
+		if (Object.keys(removal).length > 0) {
+			meta.removal = removal;
+		}
+	}
+	paramsBuilder.meta(meta);
+
+	const passiveEffectBuilder = effect(Types.Passive, PassiveMethods.ADD);
+	passiveEffectBuilder.params(paramsBuilder.build());
+
+	const skipPhases = skip?.phases ?? [];
+	const skipSteps = skip?.steps ?? [];
+	if (skipPhases.length > 0 || skipSteps.length > 0) {
+		passiveEffectBuilder.effect(
+			effect('phase_skip', 'add')
+				.params({
+					source: passiveId,
+					...(skipPhases.length > 0 ? { phases: skipPhases } : {}),
+					...(skipSteps.length > 0 ? { steps: skipSteps } : {}),
+				})
+				.build(),
+		);
+	}
+
+	for (const nested of nestedEffects) {
+		passiveEffectBuilder.effect(nested);
+	}
+
+	return passiveEffectBuilder.build();
+}
+
 export const RULES: RuleSet = {
 	defaultActionAPCost: 1,
 	absorptionCapPct: 1,
@@ -62,21 +147,32 @@ export const RULES: RuleSet = {
 			.range(-10)
 			.incomeMultiplier(0.5)
 			.disableGrowth()
-			.passive(
-				tierPassive('passive:happiness:despair')
-					.effect(incomeModifier('happiness:despair:income', -0.5))
-					.skipPhase(GROWTH_PHASE_ID)
-					.skipStep(UPKEEP_PHASE_ID, WAR_RECOVERY_STEP_ID)
-					.text((text) => {
-						const removalDetail = 'happiness rises to -9 or higher';
-						text
-							.summary(
-								'💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.',
-							)
-							.removal(formatRemoval(removalDetail));
-						return text;
-					}),
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:despair',
+					passiveId: 'passive:happiness:despair',
+					summary: '💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.',
+					removalCondition: 'happiness rises to -9 or higher',
+					removalText: formatRemoval('happiness rises to -9 or higher'),
+					nestedEffects: [incomeModifier('happiness:despair:income', -0.5)],
+					skip: {
+						phases: [GROWTH_PHASE_ID],
+						steps: [
+							{
+								phaseId: UPKEEP_PHASE_ID,
+								stepId: WAR_RECOVERY_STEP_ID,
+							},
+						],
+					},
+				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness rises to -9 or higher';
+				text
+					.summary('💰 Income -50%. ⏭️ Skip Growth. 🛡️ War Recovery skipped.')
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness rises to -9 or higher'),
 			)
@@ -85,20 +181,26 @@ export const RULES: RuleSet = {
 			.range(-9, -8)
 			.incomeMultiplier(0.5)
 			.disableGrowth()
-			.passive(
-				tierPassive('passive:happiness:misery')
-					.effect(incomeModifier('happiness:misery:income', -0.5))
-					.skipPhase(GROWTH_PHASE_ID)
-					.text((text) => {
-						const removalDetail = 'happiness leaves the -9 to -8 range';
-						text
-							.summary(
-								'💰 Income -50%. ⏭️ Skip Growth while morale is desperate.',
-							)
-							.removal(formatRemoval(removalDetail));
-						return text;
-					}),
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:misery',
+					passiveId: 'passive:happiness:misery',
+					summary: '💰 Income -50%. ⏭️ Skip Growth while morale is desperate.',
+					removalCondition: 'happiness leaves the -9 to -8 range',
+					removalText: formatRemoval('happiness leaves the -9 to -8 range'),
+					nestedEffects: [incomeModifier('happiness:misery:income', -0.5)],
+					skip: {
+						phases: [GROWTH_PHASE_ID],
+					},
+				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness leaves the -9 to -8 range';
+				text
+					.summary('💰 Income -50%. ⏭️ Skip Growth while morale is desperate.')
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness leaves the -9 to -8 range'),
 			)
@@ -107,18 +209,26 @@ export const RULES: RuleSet = {
 			.range(-7, -5)
 			.incomeMultiplier(0.75)
 			.disableGrowth()
-			.passive(
-				tierPassive('passive:happiness:grim')
-					.effect(incomeModifier('happiness:grim:income', -0.25))
-					.skipPhase(GROWTH_PHASE_ID)
-					.text((text) => {
-						const removalDetail = 'happiness leaves the -7 to -5 range';
-						text
-							.summary('💰 Income -25%. ⏭️ Skip Growth until spirits recover.')
-							.removal(formatRemoval(removalDetail));
-						return text;
-					}),
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:grim',
+					passiveId: 'passive:happiness:grim',
+					summary: '💰 Income -25%. ⏭️ Skip Growth until spirits recover.',
+					removalCondition: 'happiness leaves the -7 to -5 range',
+					removalText: formatRemoval('happiness leaves the -7 to -5 range'),
+					nestedEffects: [incomeModifier('happiness:grim:income', -0.25)],
+					skip: {
+						phases: [GROWTH_PHASE_ID],
+					},
+				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness leaves the -7 to -5 range';
+				text
+					.summary('💰 Income -25%. ⏭️ Skip Growth until spirits recover.')
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness leaves the -7 to -5 range'),
 			)
@@ -126,17 +236,23 @@ export const RULES: RuleSet = {
 		happinessTier('happiness:tier:unrest')
 			.range(-4, -3)
 			.incomeMultiplier(0.75)
-			.passive(
-				tierPassive('passive:happiness:unrest')
-					.effect(incomeModifier('happiness:unrest:income', -0.25))
-					.text((text) => {
-						const removalDetail = 'happiness leaves the -4 to -3 range';
-						text
-							.summary('💰 Income -25% while unrest simmers.')
-							.removal(formatRemoval(removalDetail));
-						return text;
-					}),
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:unrest',
+					passiveId: 'passive:happiness:unrest',
+					summary: '💰 Income -25% while unrest simmers.',
+					removalCondition: 'happiness leaves the -4 to -3 range',
+					removalText: formatRemoval('happiness leaves the -4 to -3 range'),
+					nestedEffects: [incomeModifier('happiness:unrest:income', -0.25)],
+				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness leaves the -4 to -3 range';
+				text
+					.summary('💰 Income -25% while unrest simmers.')
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness leaves the -4 to -3 range'),
 			)
@@ -144,15 +260,22 @@ export const RULES: RuleSet = {
 		happinessTier('happiness:tier:steady')
 			.range(-2, 2)
 			.incomeMultiplier(1)
-			.passive(
-				tierPassive('passive:happiness:steady').text((text) => {
-					const removalDetail = 'happiness leaves the -2 to +2 range';
-					text
-						.summary('Morale is steady. No tier bonuses are active.')
-						.removal(formatRemoval(removalDetail));
-					return text;
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:steady',
+					passiveId: 'passive:happiness:steady',
+					summary: 'Morale is steady. No tier bonuses are active.',
+					removalCondition: 'happiness leaves the -2 to +2 range',
+					removalText: formatRemoval('happiness leaves the -2 to +2 range'),
 				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness leaves the -2 to +2 range';
+				text
+					.summary('Morale is steady. No tier bonuses are active.')
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness leaves the -2 to +2 range'),
 			)
@@ -160,17 +283,23 @@ export const RULES: RuleSet = {
 		happinessTier('happiness:tier:content')
 			.range(3, 4)
 			.incomeMultiplier(1.2)
-			.passive(
-				tierPassive('passive:happiness:content')
-					.effect(incomeModifier('happiness:content:income', 0.2))
-					.text((text) => {
-						const removalDetail = 'happiness leaves the +3 to +4 range';
-						text
-							.summary('💰 Income +20% while the realm is content.')
-							.removal(formatRemoval(removalDetail));
-						return text;
-					}),
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:content',
+					passiveId: 'passive:happiness:content',
+					summary: '💰 Income +20% while the realm is content.',
+					removalCondition: 'happiness leaves the +3 to +4 range',
+					removalText: formatRemoval('happiness leaves the +3 to +4 range'),
+					nestedEffects: [incomeModifier('happiness:content:income', 0.2)],
+				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness leaves the +3 to +4 range';
+				text
+					.summary('💰 Income +20% while the realm is content.')
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness leaves the +3 to +4 range'),
 			)
@@ -179,18 +308,26 @@ export const RULES: RuleSet = {
 			.range(5, 7)
 			.incomeMultiplier(1.25)
 			.buildingDiscountPct(0.2)
-			.passive(
-				tierPassive('passive:happiness:joyful')
-					.effect(incomeModifier('happiness:joyful:income', 0.25))
-					.effect(buildingDiscountModifier('happiness:joyful:build-discount'))
-					.text((text) => {
-						const removalDetail = 'happiness leaves the +5 to +7 range';
-						text
-							.summary('💰 Income +25%. 🏛️ Building costs reduced by 20%.')
-							.removal(formatRemoval(removalDetail));
-						return text;
-					}),
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:joyful',
+					passiveId: 'passive:happiness:joyful',
+					summary: '💰 Income +25%. 🏛️ Building costs reduced by 20%.',
+					removalCondition: 'happiness leaves the +5 to +7 range',
+					removalText: formatRemoval('happiness leaves the +5 to +7 range'),
+					nestedEffects: [
+						incomeModifier('happiness:joyful:income', 0.25),
+						buildingDiscountModifier('happiness:joyful:build-discount'),
+					],
+				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness leaves the +5 to +7 range';
+				text
+					.summary('💰 Income +25%. 🏛️ Building costs reduced by 20%.')
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness leaves the +5 to +7 range'),
 			)
@@ -199,18 +336,26 @@ export const RULES: RuleSet = {
 			.range(8, 9)
 			.incomeMultiplier(1.5)
 			.buildingDiscountPct(0.2)
-			.passive(
-				tierPassive('passive:happiness:elated')
-					.effect(incomeModifier('happiness:elated:income', 0.5))
-					.effect(buildingDiscountModifier('happiness:elated:build-discount'))
-					.text((text) => {
-						const removalDetail = 'happiness leaves the +8 to +9 range';
-						text
-							.summary('💰 Income +50%. 🏛️ Building costs reduced by 20%.')
-							.removal(formatRemoval(removalDetail));
-						return text;
-					}),
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:elated',
+					passiveId: 'passive:happiness:elated',
+					summary: '💰 Income +50%. 🏛️ Building costs reduced by 20%.',
+					removalCondition: 'happiness leaves the +8 to +9 range',
+					removalText: formatRemoval('happiness leaves the +8 to +9 range'),
+					nestedEffects: [
+						incomeModifier('happiness:elated:income', 0.5),
+						buildingDiscountModifier('happiness:elated:build-discount'),
+					],
+				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness leaves the +8 to +9 range';
+				text
+					.summary('💰 Income +50%. 🏛️ Building costs reduced by 20%.')
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness leaves the +8 to +9 range'),
 			)
@@ -220,21 +365,30 @@ export const RULES: RuleSet = {
 			.incomeMultiplier(1.5)
 			.buildingDiscountPct(0.2)
 			.growthBonusPct(0.2)
-			.passive(
-				tierPassive('passive:happiness:ecstatic')
-					.effect(incomeModifier('happiness:ecstatic:income', 0.5))
-					.effect(buildingDiscountModifier('happiness:ecstatic:build-discount'))
-					.effect(growthBonusEffect(0.2))
-					.text((text) => {
-						const removalDetail = 'happiness drops below +10';
-						text
-							.summary(
-								'💰 Income +50%. 🏛️ Building costs reduced by 20%. 📈 Growth +20%.',
-							)
-							.removal(formatRemoval(removalDetail));
-						return text;
-					}),
+			.enter(
+				buildTierPassiveEffect({
+					tierId: 'happiness:tier:ecstatic',
+					passiveId: 'passive:happiness:ecstatic',
+					summary:
+						'💰 Income +50%. 🏛️ Building costs reduced by 20%. 📈 Growth +20%.',
+					removalCondition: 'happiness drops below +10',
+					removalText: formatRemoval('happiness drops below +10'),
+					nestedEffects: [
+						incomeModifier('happiness:ecstatic:income', 0.5),
+						buildingDiscountModifier('happiness:ecstatic:build-discount'),
+						growthBonusEffect(0.2),
+					],
+				}),
 			)
+			.text((text) => {
+				const removalDetail = 'happiness drops below +10';
+				text
+					.summary(
+						'💰 Income +50%. 🏛️ Building costs reduced by 20%. 📈 Growth +20%.',
+					)
+					.removal(formatRemoval(removalDetail));
+				return text;
+			})
 			.display((display) =>
 				display.removalCondition('happiness drops below +10'),
 			)
@@ -244,3 +398,4 @@ export const RULES: RuleSet = {
 	maxSlotsPerLand: 2,
 	basePopulationCap: 1,
 };
+/* eslint-enable max-lines */

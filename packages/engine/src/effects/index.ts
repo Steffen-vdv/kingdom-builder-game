@@ -29,6 +29,7 @@ import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
 import { attackPerform } from './attack';
+import { phaseSkipAdd, phaseSkipRemove } from './phase_skip';
 
 export interface EffectDef<
 	P extends Record<string, unknown> = Record<string, unknown>,
@@ -76,6 +77,8 @@ export function registerCoreEffects(
 	registry.add('land:till', landTill);
 	registry.add('passive:add', passiveAdd);
 	registry.add('passive:remove', passiveRemove);
+	registry.add('phase_skip:add', phaseSkipAdd);
+	registry.add('phase_skip:remove', phaseSkipRemove);
 	registry.add('cost_mod:add', costMod);
 	registry.add('cost_mod:remove', costMod);
 	registry.add('result_mod:add', resultMod);

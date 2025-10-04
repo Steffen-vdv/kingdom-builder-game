@@ -34,33 +34,15 @@ export type TierRange = {
 	max?: number;
 };
 
-export type TierPassiveSkipStep = {
-	phaseId: string;
-	stepId: string;
-};
-
-export type TierPassiveSkipConfig = {
-	phases?: string[];
-	steps?: TierPassiveSkipStep[];
-};
-
 export type TierPassiveTextTokens = {
 	summary?: string;
 	description?: string;
 	removal?: string;
 };
 
-export type TierPassivePayload = {
-	id: string;
-	effects?: EffectDef[];
-	onGrowthPhase?: EffectDef[];
-	onUpkeepPhase?: EffectDef[];
-	onBeforeAttacked?: EffectDef[];
-	onAttackResolved?: EffectDef[];
-	onPayUpkeepStep?: EffectDef[];
-	onGainIncomeStep?: EffectDef[];
-	onGainAPStep?: EffectDef[];
-	skip?: TierPassiveSkipConfig;
+export type TierTransitionDefinition = {
+	enter: EffectDef[];
+	exit?: EffectDef[];
 	text?: TierPassiveTextTokens;
 };
 
@@ -83,7 +65,7 @@ export type HappinessTierDefinition = {
 	id: string;
 	range: TierRange;
 	effect: TierEffect;
-	passive: TierPassivePayload;
+	transition: TierTransitionDefinition;
 	display?: TierDisplayMetadata;
 };
 
@@ -409,7 +391,6 @@ export class PassiveManager {
 			frames,
 			...(options?.detail ? { detail: options.detail } : {}),
 			...(options?.meta ? { meta: options.meta } : {}),
-			...(options?.meta ? { meta: options.meta } : {}),
 		});
 		const setupEffects = passive.effects;
 		if (setupEffects && setupEffects.length > 0) {
@@ -514,69 +495,6 @@ export class Services {
 		this.popcap = new PopCapService(rules, developments);
 	}
 
-	private registerSkipFlags(player: PlayerState, passive: TierPassivePayload) {
-		const skip = passive.skip;
-		if (!skip) {
-			return;
-		}
-		const sourceId = passive.id;
-		if (skip.phases) {
-			for (const phaseId of skip.phases) {
-				const phaseBucket = player.skipPhases[phaseId] ?? {};
-				phaseBucket[sourceId] = true;
-				player.skipPhases[phaseId] = phaseBucket;
-			}
-		}
-		if (skip.steps) {
-			for (const { phaseId, stepId } of skip.steps) {
-				const phaseBucket = player.skipSteps[phaseId] ?? {};
-				const stepBucket = phaseBucket[stepId] ?? {};
-				stepBucket[sourceId] = true;
-				phaseBucket[stepId] = stepBucket;
-				player.skipSteps[phaseId] = phaseBucket;
-			}
-		}
-	}
-
-	private clearSkipFlags(player: PlayerState, passive: TierPassivePayload) {
-		const skip = passive.skip;
-		if (!skip) {
-			return;
-		}
-		const sourceId = passive.id;
-		if (skip.phases) {
-			for (const phaseId of skip.phases) {
-				const bucket = player.skipPhases[phaseId];
-				if (!bucket) {
-					continue;
-				}
-				delete bucket[sourceId];
-				if (Object.keys(bucket).length === 0) {
-					delete player.skipPhases[phaseId];
-				}
-			}
-		}
-		if (skip.steps) {
-			for (const { phaseId, stepId } of skip.steps) {
-				const phaseBucket = player.skipSteps[phaseId];
-				if (!phaseBucket) {
-					continue;
-				}
-				const stepBucket = phaseBucket[stepId];
-				if (!stepBucket) {
-					continue;
-				}
-				delete stepBucket[sourceId];
-				if (Object.keys(stepBucket).length === 0) {
-					delete phaseBucket[stepId];
-				}
-				if (Object.keys(phaseBucket).length === 0) {
-					delete player.skipSteps[phaseId];
-				}
-			}
-		}
-	}
-
 	handleTieredResourceChange(ctx: EngineContext, resourceKey: ResourceKey) {
 		if (resourceKey !== this.tieredResource.resourceKey) {
 			return;
@@ -589,37 +507,17 @@ export class Services {
 			return;
 		}
 		if (currentTier) {
-			this.clearSkipFlags(player, currentTier.passive);
-			ctx.passives.removePassive(currentTier.passive.id, ctx);
+			const exitEffects = currentTier.transition.exit;
+			if (exitEffects && exitEffects.length > 0) {
+				runEffects(exitEffects, ctx);
+			}
 			this.activeTiers.delete(player.id);
 		}
 		if (nextTier) {
-			const sourceMeta: PassiveSourceMetadata = {
-				type: 'tiered-resource',
-				id: nextTier.id,
-			};
-			if (nextTier.display?.icon) {
-				sourceMeta.icon = nextTier.display.icon;
+			const entryEffects = nextTier.transition.enter;
+			if (entryEffects && entryEffects.length > 0) {
+				runEffects(entryEffects, ctx);
 			}
-			if (nextTier.display?.summaryToken) {
-				sourceMeta.labelToken = nextTier.display.summaryToken;
-			}
-			const removalMeta: PassiveRemovalMetadata = {};
-			if (nextTier.display?.removalCondition) {
-				removalMeta.token = nextTier.display.removalCondition;
-			}
-			if (nextTier.passive.text?.removal) {
-				removalMeta.text = nextTier.passive.text.removal;
-			}
-			const metadata: PassiveMetadata = { source: sourceMeta };
-			if (Object.keys(removalMeta).length > 0) {
-				metadata.removal = removalMeta;
-			}
-			ctx.passives.addPassive(nextTier.passive, ctx, {
-				detail: nextTier.passive.text?.summary ?? nextTier.id,
-				meta: metadata,
-			});
-			this.registerSkipFlags(player, nextTier.passive);
 			this.activeTiers.set(player.id, nextTier);
 		}
 	}

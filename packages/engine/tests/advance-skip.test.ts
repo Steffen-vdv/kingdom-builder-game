@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { RULES, PHASES } from '@kingdom-builder/contents';
 import {
 	happinessTier,
-	tierPassive,
+	passiveParams,
+	effect,
+	Types,
+	PassiveMethods,
 } from '@kingdom-builder/contents/config/builders';
 import { advance } from '../src';
 import { createTestEngine } from './helpers';
@@ -23,6 +26,57 @@ const mainPhase =
 const phaseSummary = 'test.summary.phase';
 const stepSummary = 'test.summary.step';
 
+function createTierPassiveEffect({
+	tierId,
+	passiveId,
+	summary,
+	skip,
+}: {
+	tierId: string;
+	passiveId: string;
+	summary: string;
+	skip?: {
+		phases?: string[];
+		steps?: Array<{ phaseId: string; stepId: string }>;
+	};
+}) {
+	const params = passiveParams()
+		.id(passiveId)
+		.detail(summary)
+		.meta({
+			source: { type: 'tiered-resource', id: tierId },
+		})
+		.build();
+	const builder = effect(Types.Passive, PassiveMethods.ADD).params(params);
+	const phases = skip?.phases ?? [];
+	const steps = skip?.steps ?? [];
+	if (phases.length > 0 || steps.length > 0) {
+		builder.effect(
+			effect('phase_skip', 'add')
+				.params({
+					source: passiveId,
+					...(phases.length > 0 ? { phases } : {}),
+					...(steps.length > 0 ? { steps } : {}),
+				})
+				.build(),
+		);
+	}
+	return builder.build();
+}
+
+function getTierPassiveIds(tier: RuleSet['tierDefinitions'][number]): string[] {
+	return tier.transition.enter
+		.filter(
+			(entry) =>
+				entry.type === Types.Passive && entry.method === PassiveMethods.ADD,
+		)
+		.map((entry) => {
+			const params = entry.params as { id?: string } | undefined;
+			return params?.id;
+		})
+		.filter((id): id is string => Boolean(id));
+}
+
 describe('advance skip handling', () => {
 	it('skips an entire phase when markers are present', () => {
 		const customRules: RuleSet = {
@@ -30,11 +84,15 @@ describe('advance skip handling', () => {
 			tierDefinitions: [
 				happinessTier('test:tier:skip-phase')
 					.range(0, 5)
-					.passive(
-						tierPassive('test:passive:skip-phase')
-							.skipPhase(growthPhaseId)
-							.text((text) => text.summary(phaseSummary)),
+					.enter(
+						createTierPassiveEffect({
+							tierId: 'test:tier:skip-phase',
+							passiveId: 'test:passive:skip-phase',
+							summary: phaseSummary,
+							skip: { phases: [growthPhaseId] },
+						}),
 					)
+					.text((text) => text.summary(phaseSummary))
 					.build(),
 			],
 		};
@@ -46,9 +104,8 @@ describe('advance skip handling', () => {
 		expect(result.phase).toBe(growthPhaseId);
 		expect(result.skipped?.type).toBe('phase');
 		expect(result.skipped?.phaseId).toBe(growthPhaseId);
-		expect(result.skipped?.sources[0]?.id).toBe(
-			customRules.tierDefinitions[0]?.passive.id,
-		);
+		const passiveId = getTierPassiveIds(customRules.tierDefinitions[0]!)[0];
+		expect(result.skipped?.sources[0]?.id).toBe(passiveId);
 		expect(result.skipped?.sources[0]?.detail).toBe(phaseSummary);
 
 		expect(ctx.game.currentPhase).toBe(upkeepPhaseId);
@@ -63,11 +120,22 @@ describe('advance skip handling', () => {
 			tierDefinitions: [
 				happinessTier('test:tier:skip-step')
 					.range(0, 5)
-					.passive(
-						tierPassive('test:passive:skip-step')
-							.skipStep(upkeepPhaseId, warRecoveryStepId)
-							.text((text) => text.summary(stepSummary)),
+					.enter(
+						createTierPassiveEffect({
+							tierId: 'test:tier:skip-step',
+							passiveId: 'test:passive:skip-step',
+							summary: stepSummary,
+							skip: {
+								steps: [
+									{
+										phaseId: upkeepPhaseId,
+										stepId: warRecoveryStepId,
+									},
+								],
+							},
+						}),
 					)
+					.text((text) => text.summary(stepSummary))
 					.build(),
 			],
 		};
@@ -104,11 +172,15 @@ describe('advance skip handling', () => {
 			tierDefinitions: [
 				happinessTier('test:tier:skip-phase')
 					.range(0, 5)
-					.passive(
-						tierPassive('test:passive:skip-phase')
-							.skipPhase(growthPhaseId)
-							.text((text) => text.summary(phaseSummary)),
+					.enter(
+						createTierPassiveEffect({
+							tierId: 'test:tier:skip-phase',
+							passiveId: 'test:passive:skip-phase',
+							summary: phaseSummary,
+							skip: { phases: [growthPhaseId] },
+						}),
 					)
+					.text((text) => text.summary(phaseSummary))
 					.build(),
 			],
 		};
@@ -136,7 +208,7 @@ describe('advance skip handling', () => {
 		const byId = Object.fromEntries(
 			sources.map((source) => [source.id, source]),
 		);
-		const tierPassiveId = customRules.tierDefinitions[0]?.passive.id ?? '';
+		const [tierPassiveId] = getTierPassiveIds(customRules.tierDefinitions[0]!);
 		expect(byId[tierPassiveId]?.detail).toBe(phaseSummary);
 		expect(byId['test:passive:extra']?.detail).toBe('Extra skip detail');
 		expect(byId['test:passive:extra']?.meta?.source?.icon).toBe('🔥');

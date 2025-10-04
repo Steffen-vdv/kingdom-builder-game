@@ -5,10 +5,26 @@ import { createTestEngine } from '../helpers';
 import { RULES, Resource as CResource } from '@kingdom-builder/contents';
 import {
 	happinessTier,
-	tierPassive,
+	passiveParams,
+	effect,
+	Types,
+	PassiveMethods,
 } from '@kingdom-builder/contents/config/builders';
 import { getActionCosts } from '../../src';
 import { createContentFactory } from '../factories/content';
+
+function buildSimpleTierEntry(
+	tierId: string,
+	passiveId: string,
+	summary?: string,
+) {
+	const params = passiveParams()
+		.id(passiveId)
+		.detail(summary ?? tierId)
+		.meta({ source: { type: 'tiered-resource', id: tierId } })
+		.build();
+	return effect(Types.Passive, PassiveMethods.ADD).params(params).build();
+}
 
 describe('Services', () => {
 	it('evaluates resource tiers correctly', () => {
@@ -44,12 +60,12 @@ describe('Services', () => {
 					happinessTier('test:tier:low')
 						.range(0, 5)
 						.incomeMultiplier(1)
-						.passive(tierPassive('test:passive:low'))
+						.enter(buildSimpleTierEntry('test:tier:low', 'test:passive:low'))
 						.build(),
 					happinessTier('test:tier:high')
 						.range(6)
 						.incomeMultiplier(2)
-						.passive(tierPassive('test:passive:high'))
+						.enter(buildSimpleTierEntry('test:tier:high', 'test:passive:high'))
 						.build(),
 				],
 			},

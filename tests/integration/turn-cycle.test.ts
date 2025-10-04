@@ -41,7 +41,15 @@ const rules: RuleSet = {
 			id: 'turn:tier:baseline',
 			range: { min: 0 },
 			effect: { incomeMultiplier: 1 },
-			passive: { id: 'turn:passive:baseline' },
+			transition: {
+				enter: [
+					{
+						type: 'passive',
+						method: 'add',
+						params: { id: 'turn:passive:baseline' },
+					},
+				],
+			},
 		},
 	],
 	slotsPerNewLand: 1,

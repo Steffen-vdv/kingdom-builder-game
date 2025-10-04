@@ -14,13 +14,13 @@ import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
 import type { EffectDef } from '@kingdom-builder/engine/effects';
 import type { AttackTarget } from '@kingdom-builder/engine/effects/attack';
 import type {
-	TierPassivePayload,
 	TierDisplayMetadata,
 	TierPassiveTextTokens,
 	TierRange,
-	TierPassiveSkipConfig,
+	TierTransitionDefinition,
 	HappinessTierDefinition,
 	TierEffect,
+	PassiveMetadata,
 } from '@kingdom-builder/engine/services';
 
 export const Types = {
@@ -517,6 +517,8 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	name?: string;
 	icon?: string;
+	detail?: string;
+	meta?: PassiveMetadata;
 	onGrowthPhase?: EffectDef[];
 	onUpkeepPhase?: EffectDef[];
 	onBeforeAttacked?: EffectDef[];
@@ -541,6 +543,20 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 			'icon',
 			icon,
 			'You already set icon() for this passive. Remove the duplicate icon() call.',
+		);
+	}
+	detail(detail: string) {
+		return this.set(
+			'detail',
+			detail,
+			'You already set detail() for this passive. Remove the duplicate detail() call.',
+		);
+	}
+	meta(meta: PassiveMetadata) {
+		return this.set(
+			'meta',
+			meta,
+			'You already set meta() for this passive. Remove the duplicate meta() call.',
 		);
 	}
 	onGrowthPhase(...effects: Array<EffectConfig | EffectBuilder>) {
@@ -613,133 +629,6 @@ export function tierPassiveText() {
 	return new TierPassiveTextBuilder();
 }
 
-class TierPassiveBuilder {
-	private config: TierPassivePayload;
-	private idSet = false;
-
-	constructor() {
-		this.config = { id: '' } as TierPassivePayload;
-	}
-
-	id(id: string) {
-		if (this.idSet) {
-			throw new Error(
-				'Happiness tier passive already has an id(). Remove the extra id() call.',
-			);
-		}
-		this.config.id = id;
-		this.idSet = true;
-		return this;
-	}
-
-	effect(effect: EffectConfig | EffectBuilder) {
-		this.config.effects = this.config.effects || [];
-		this.config.effects.push(resolveEffectConfig(effect));
-		return this;
-	}
-
-	onGrowthPhase(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.config.onGrowthPhase = this.config.onGrowthPhase || [];
-		this.config.onGrowthPhase.push(...effects.map(resolveEffectConfig));
-		return this;
-	}
-
-	onUpkeepPhase(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.config.onUpkeepPhase = this.config.onUpkeepPhase || [];
-		this.config.onUpkeepPhase.push(...effects.map(resolveEffectConfig));
-		return this;
-	}
-
-	onBeforeAttacked(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.config.onBeforeAttacked = this.config.onBeforeAttacked || [];
-		this.config.onBeforeAttacked.push(...effects.map(resolveEffectConfig));
-		return this;
-	}
-
-	onAttackResolved(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.config.onAttackResolved = this.config.onAttackResolved || [];
-		this.config.onAttackResolved.push(...effects.map(resolveEffectConfig));
-		return this;
-	}
-
-	onPayUpkeepStep(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.config.onPayUpkeepStep = this.config.onPayUpkeepStep || [];
-		this.config.onPayUpkeepStep.push(...effects.map(resolveEffectConfig));
-		return this;
-	}
-
-	onGainIncomeStep(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.config.onGainIncomeStep = this.config.onGainIncomeStep || [];
-		this.config.onGainIncomeStep.push(...effects.map(resolveEffectConfig));
-		return this;
-	}
-
-	onGainAPStep(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.config.onGainAPStep = this.config.onGainAPStep || [];
-		this.config.onGainAPStep.push(...effects.map(resolveEffectConfig));
-		return this;
-	}
-
-	skipPhase(phaseId: string) {
-		this.config.skip = this.config.skip || ({} as TierPassiveSkipConfig);
-		this.config.skip.phases = this.config.skip.phases || [];
-		this.config.skip.phases.push(phaseId);
-		return this;
-	}
-
-	skipPhases(...phaseIds: string[]) {
-		phaseIds.forEach((id) => this.skipPhase(id));
-		return this;
-	}
-
-	skipStep(phaseId: string, stepId: string) {
-		if (!phaseId || !stepId) {
-			throw new Error(
-				'Happiness tier passive skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
-			);
-		}
-		this.config.skip = this.config.skip || ({} as TierPassiveSkipConfig);
-		this.config.skip.steps = this.config.skip.steps || [];
-		this.config.skip.steps.push({ phaseId, stepId });
-		return this;
-	}
-
-	text(
-		value:
-			| TierPassiveTextTokens
-			| TierPassiveTextBuilder
-			| ((builder: TierPassiveTextBuilder) => TierPassiveTextBuilder),
-	) {
-		let tokens: TierPassiveTextTokens;
-		if (typeof value === 'function') {
-			tokens = value(tierPassiveText()).build();
-		} else if (value instanceof TierPassiveTextBuilder) {
-			tokens = value.build();
-		} else {
-			tokens = value;
-		}
-		this.config.text = { ...this.config.text, ...tokens };
-		return this;
-	}
-
-	build(): TierPassivePayload {
-		if (!this.idSet) {
-			throw new Error(
-				'Happiness tier passive is missing id(). Call id("your-passive-id") before build().',
-			);
-		}
-		return this.config;
-	}
-}
-
-export function tierPassive(id?: string) {
-	const builder = new TierPassiveBuilder();
-	if (id) {
-		builder.id(id);
-	}
-	return builder;
-}
-
 class TierDisplayBuilder {
 	private config: TierDisplayMetadata = {};
 
@@ -773,12 +662,13 @@ class HappinessTierBuilder {
 	};
 	private idSet = false;
 	private rangeSet = false;
-	private passiveSet = false;
+	private transition: TierTransitionDefinition;
 
 	constructor() {
 		this.config = {
 			effect: { incomeMultiplier: 1 },
 		} as Partial<HappinessTierDefinition> & { effect: TierEffect };
+		this.transition = { enter: [] };
 	}
 
 	id(id: string) {
@@ -844,27 +734,36 @@ class HappinessTierBuilder {
 		return this;
 	}
 
-	passive(
+	enter(...effects: Array<EffectConfig | EffectBuilder>) {
+		this.transition.enter.push(
+			...effects.map((item) => resolveEffectConfig(item)),
+		);
+		return this;
+	}
+
+	exit(...effects: Array<EffectConfig | EffectBuilder>) {
+		this.transition.exit = this.transition.exit || [];
+		this.transition.exit.push(
+			...effects.map((item) => resolveEffectConfig(item)),
+		);
+		return this;
+	}
+
+	text(
 		value:
-			| TierPassivePayload
-			| TierPassiveBuilder
-			| ((builder: TierPassiveBuilder) => TierPassiveBuilder),
+			| TierPassiveTextTokens
+			| TierPassiveTextBuilder
+			| ((builder: TierPassiveTextBuilder) => TierPassiveTextBuilder),
 	) {
-		if (this.passiveSet) {
-			throw new Error(
-				'Happiness tier already has passive(). Remove the extra passive() call.',
-			);
-		}
-		let passive: TierPassivePayload;
+		let tokens: TierPassiveTextTokens;
 		if (typeof value === 'function') {
-			passive = value(tierPassive()).build();
-		} else if (value instanceof TierPassiveBuilder) {
-			passive = value.build();
+			tokens = value(tierPassiveText()).build();
+		} else if (value instanceof TierPassiveTextBuilder) {
+			tokens = value.build();
 		} else {
-			passive = value;
+			tokens = value;
 		}
-		this.config.passive = passive;
-		this.passiveSet = true;
+		this.transition.text = { ...this.transition.text, ...tokens };
 		return this;
 	}
 
@@ -897,16 +796,58 @@ class HappinessTierBuilder {
 				'Happiness tier is missing range(). Call range(min, max?) before build().',
 			);
 		}
-		if (!this.passiveSet) {
+		if (this.transition.enter.length === 0) {
 			throw new Error(
-				'Happiness tier is missing passive(). Call passive(...) with tierPassive(...) before build().',
+				'Happiness tier is missing enter() effects. Call enter(...) with effect(...) before build().',
 			);
+		}
+		const transition: TierTransitionDefinition = {
+			enter: [...this.transition.enter],
+			...(this.transition.text ? { text: { ...this.transition.text } } : {}),
+		};
+		if (this.transition.exit && this.transition.exit.length > 0) {
+			transition.exit = [...this.transition.exit];
+		}
+		const passiveIds = new Set<string>();
+		for (const effectConfig of transition.enter) {
+			if (
+				effectConfig.type === Types.Passive &&
+				effectConfig.method === PassiveMethods.ADD
+			) {
+				const params = effectConfig.params as { id?: string } | undefined;
+				if (params?.id) {
+					passiveIds.add(params.id);
+				}
+			}
+		}
+		const providedRemovalIds = new Set<string>();
+		for (const effectConfig of transition.exit || []) {
+			if (
+				effectConfig.type === Types.Passive &&
+				effectConfig.method === PassiveMethods.REMOVE
+			) {
+				const params = effectConfig.params as { id?: string } | undefined;
+				if (params?.id) {
+					providedRemovalIds.add(params.id);
+				}
+			}
+		}
+		const missingRemovals = Array.from(passiveIds).filter(
+			(id) => !providedRemovalIds.has(id),
+		);
+		if (missingRemovals.length > 0) {
+			transition.exit = transition.exit || [];
+			for (const id of missingRemovals) {
+				transition.exit.push(
+					effect(Types.Passive, PassiveMethods.REMOVE).param('id', id).build(),
+				);
+			}
 		}
 		return {
 			id: this.config.id!,
 			range: this.config.range!,
 			effect: this.config.effect,
-			passive: this.config.passive!,
+			transition,
 			...(this.config.display ? { display: this.config.display } : {}),
 		};
 	}

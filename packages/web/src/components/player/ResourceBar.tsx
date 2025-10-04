@@ -4,6 +4,10 @@ import {
 	RESOURCES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
+import {
+	Types,
+	PassiveMethods,
+} from '@kingdom-builder/contents/config/builders';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
@@ -14,6 +18,10 @@ import { describeEffects } from '../../translation';
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
 type TierSummaryEntry = TierDefinition & { active: boolean };
+type TierEffect = TierDefinition['transition']['enter'][number];
+
+const isPassiveAddition = (effect: TierEffect) =>
+	effect.type === Types.Passive && effect.method === PassiveMethods.ADD;
 
 function formatTierRange(tier: TierDefinition) {
 	const { min, max } = tier.range;
@@ -36,7 +44,7 @@ function buildTierEntries(
 		active: tier.id === activeId,
 	}));
 	return entries.map((entry) => {
-		const { passive, display, active } = entry;
+		const { transition, display, active } = entry;
 		const rangeLabel = formatTierRange(entry);
 		const statusIcon = active ? '🟢' : '⚪';
 		const icon = display?.icon ?? PASSIVE_INFO.icon ?? '';
@@ -44,9 +52,9 @@ function buildTierEntries(
 			(part) => part && String(part).trim().length > 0,
 		);
 		const title = titleParts.join(' ').trim();
-		const summary = passive.text?.summary;
+		const summary = transition.text?.summary;
 		const removalText =
-			passive.text?.removal ??
+			transition.text?.removal ??
 			(display?.removalCondition
 				? `Removed when ${display.removalCondition}`
 				: undefined);
@@ -54,7 +62,12 @@ function buildTierEntries(
 		if (summary) {
 			items.push(summary);
 		}
-		const described = describeEffects(passive.effects || [], ctx);
+		const passiveEntries = transition.enter;
+		const passiveAdditions = passiveEntries.filter(isPassiveAddition);
+		const passiveEffects = passiveAdditions.flatMap(
+			(effect) => effect.effects || [],
+		);
+		const described = describeEffects(passiveEffects, ctx);
 		described.forEach((item) => items.push(item));
 		if (removalText) {
 			items.push(removalText);

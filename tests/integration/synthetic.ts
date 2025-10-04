@@ -15,7 +15,10 @@ import type { PhaseDef } from '@kingdom-builder/engine';
 import type { RuleSet } from '@kingdom-builder/engine/services';
 import {
 	happinessTier,
-	tierPassive,
+	passiveParams,
+	effect,
+	Types,
+	PassiveMethods,
 } from '@kingdom-builder/contents/config/builders';
 
 export function createSyntheticContext() {
@@ -105,7 +108,11 @@ export function createSyntheticContext() {
 			happinessTier('synthetic:happiness:baseline')
 				.range(0)
 				.incomeMultiplier(1)
-				.passive(tierPassive('synthetic:passive:baseline'))
+				.enter(
+					effect(Types.Passive, PassiveMethods.ADD)
+						.params(passiveParams().id('synthetic:passive:baseline').build())
+						.build(),
+				)
 				.build(),
 		],
 		slotsPerNewLand: 1,

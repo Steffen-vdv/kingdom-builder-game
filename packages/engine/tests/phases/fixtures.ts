@@ -195,7 +195,15 @@ export function createPhaseTestEnvironment() {
 				id: 'synthetic:tier:baseline',
 				range: { min: 0 },
 				effect: { incomeMultiplier: 1 },
-				passive: { id: 'synthetic:passive:baseline' },
+				transition: {
+					enter: [
+						{
+							type: 'passive',
+							method: 'add',
+							params: { id: 'synthetic:passive:baseline' },
+						},
+					],
+				},
 			},
 		],
 		slotsPerNewLand: 1,
