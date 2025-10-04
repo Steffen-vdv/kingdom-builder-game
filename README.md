@@ -25,6 +25,20 @@ The repository consists of three isolated domains: Web, Content and Engine. Each
 - Web: The _visual_ heart of the game. This domain is responsible for housing the game's frontend. It talks to Engine domain to receive game state updates and inform Engine of player-driven actions.
 - Content: The _practical_ heart of the game. This domain houses all of the game's configurations. The domain is configured in a way that allows extremely broad and deep updates to the game's configuration. The intent is for this domain to eventually become separated into it's own service and either passed to a content curation team or even allow players themselves to build gamemodes by giving them access, through some interface, to manipulate/override parts of 'Contents' domain at runtime.
 
+## 4) Coding Standards
+
+To keep the project readable and maintainable, every contribution must follow
+these rules:
+
+- Use braces around every conditional or loop body, even when it contains a
+  single statement.
+- Wrap lines at 80 characters to prevent horizontal scrolling in reviews.
+- Keep individual source files at or below 250 lines unless legacy code already
+  exceeds the limit.
+- Choose descriptive, human-readable identifiers instead of terse abbreviations.
+- Indent code with tab characters so formatting remains consistent across
+  editors.
+
 ## 5) Turn Structure
 
 Each turn flows through three phases:
