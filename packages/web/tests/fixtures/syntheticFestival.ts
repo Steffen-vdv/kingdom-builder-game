@@ -198,11 +198,13 @@ export const getSyntheticFestivalDetails = (
 		ctx.phases.find((phase) =>
 			phase.steps.some((step) => step.triggers?.includes('onUpkeepPhase')),
 		) ??
-		PHASES.find((phase) =>
-			phase.steps.some((step) => step.triggers?.includes('onUpkeepPhase')),
+		PHASES.find((phaseDefinition) =>
+			phaseDefinition.steps.some((step) =>
+				step.triggers?.includes('onUpkeepPhase'),
+			),
 		) ??
-		ctx.phases.find((p) => p.id === 'upkeep') ??
-		PHASES.find((p) => p.id === 'upkeep');
+		ctx.phases.find((phaseDefinition) => phaseDefinition.id === 'upkeep') ??
+		PHASES.find((phaseDefinition) => phaseDefinition.id === 'upkeep');
 	const upkeepLabel = upkeepPhase?.label || 'Upkeep';
 	const upkeepIcon = upkeepPhase?.icon;
 

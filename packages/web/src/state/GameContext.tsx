@@ -74,7 +74,7 @@ interface HoverCard {
 	bgClass?: string;
 }
 
-type PhaseStep = {
+export type PhaseStep = {
 	title: string;
 	items: { text: string; italic?: boolean; done?: boolean }[];
 	active: boolean;
@@ -207,21 +207,24 @@ export function GameProvider({
 		};
 	}, [clearTrackedTimeout]);
 
-	const actionPhaseId = useMemo(
-		() => ctx.phases.find((p) => p.action)?.id,
-		[ctx],
-	);
+	const actionPhaseId = useMemo(() => {
+		const phaseWithAction = ctx.phases.find(
+			(phaseDefinition) => phaseDefinition.action,
+		);
+		return phaseWithAction?.id;
+	}, [ctx]);
 
 	const addLog = (
 		entry: string | string[],
 		player?: EngineContext['activePlayer'],
 	) => {
-		const p = player ?? ctx.activePlayer;
+		const logPlayer = player ?? ctx.activePlayer;
 		setLog((prev) => {
-			const items = (Array.isArray(entry) ? entry : [entry]).map((text) => ({
+			const messages = Array.isArray(entry) ? entry : [entry];
+			const items = messages.map((text) => ({
 				time: new Date().toLocaleTimeString(),
-				text: `[${p.name}] ${text}`,
-				playerId: p.id,
+				text: `[${logPlayer.name}] ${text}`,
+				playerId: logPlayer.id,
 			}));
 			const combined = [...prev, ...items];
 			const next = combined.slice(-MAX_LOG_ENTRIES);
@@ -377,8 +380,12 @@ export function GameProvider({
 			ranSteps = true;
 			const before = snapshotPlayer(ctx.activePlayer, ctx);
 			const { phase, step, player, effects, skipped } = advance(ctx);
-			const phaseDef = ctx.phases.find((p) => p.id === phase)!;
-			const stepDef = phaseDef.steps.find((s) => s.id === step);
+			const phaseDef = ctx.phases.find(
+				(phaseDefinition) => phaseDefinition.id === phase,
+			)!;
+			const stepDef = phaseDef.steps.find(
+				(stepDefinition) => stepDefinition.id === step,
+			);
 			if (phase !== lastPhase) {
 				await runDelay(1500);
 				if (!mountedRef.current) {

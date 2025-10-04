@@ -56,7 +56,7 @@ describe('log resource sources', () => {
 		ctx.game.currentPlayerIndex = 0;
 
 		const growthPhase = ctx.phases.find(
-			(p) => p.id === SYNTHETIC_PHASE_IDS.growth,
+			(phase) => phase.id === SYNTHETIC_PHASE_IDS.growth,
 		);
 		const step = growthPhase?.steps.find(
 			(s) => s.id === SYNTHETIC_STEP_IDS.gainIncome,
@@ -154,7 +154,7 @@ describe('log resource sources', () => {
 			ctx,
 		);
 		const upkeepPhase = ctx.phases.find(
-			(p) => p.id === SYNTHETIC_PHASE_IDS.upkeep,
+			(phase) => phase.id === SYNTHETIC_PHASE_IDS.upkeep,
 		);
 		const step = upkeepPhase?.steps.find(
 			(s) => s.id === SYNTHETIC_STEP_IDS.payUpkeep,

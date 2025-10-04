@@ -219,7 +219,7 @@ export default function PassiveDisplay({
 				const summaryText = resolveSummaryText(passive, def);
 				const items = describeEffects(def.effects || [], ctx);
 				const upkeepLabel =
-					PHASES.find((p) => p.id === 'upkeep')?.label || 'Upkeep';
+					PHASES.find((phase) => phase.id === 'upkeep')?.label || 'Upkeep';
 				const sections = def.onUpkeepPhase
 					? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
 					: items;
