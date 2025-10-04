@@ -6,46 +6,36 @@ export function applyParamsToEffects<E extends EffectDef>(
 ): E[] {
 	const replace = (val: unknown): unknown =>
 		typeof val === 'string' && val.startsWith('$') ? params[val.slice(1)] : val;
-	const replaceDeep = (val: unknown): unknown => {
+	const replaceDeep = <T>(val: T): T => {
 		if (Array.isArray(val)) {
-			return val.map(replaceDeep);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return val.map((entry) => replaceDeep(entry)) as T;
 		}
 		if (val && typeof val === 'object') {
 			return Object.fromEntries(
-				Object.entries(val).map(([key, value]) => [key, replaceDeep(value)]),
-			);
+				Object.entries(val as Record<string, unknown>).map(([key, value]) => [
+					key,
+					replaceDeep(value),
+				]),
+			) as T;
 		}
-		return replace(val);
+		return replace(val) as T;
 	};
 	const mapEffect = (effect: E): E => ({
 		...effect,
-		params: effect.params
-			? (Object.fromEntries(
-					Object.entries(effect.params).map(([key, value]) => [
-						key,
-						replace(value),
-					]),
-				) as E['params'])
-			: undefined,
+		params: effect.params ? replaceDeep(effect.params) : undefined,
 		evaluator: effect.evaluator
 			? {
 					...effect.evaluator,
 					params: effect.evaluator.params
-						? Object.fromEntries(
-								Object.entries(effect.evaluator.params).map(([key, value]) => [
-									key,
-									replace(value),
-								]),
-							)
+						? replaceDeep(effect.evaluator.params)
 						: undefined,
 				}
 			: undefined,
 		effects: effect.effects
 			? applyParamsToEffects(effect.effects, params)
 			: undefined,
-		meta: effect.meta
-			? (replaceDeep(effect.meta) as Record<string, unknown>)
-			: undefined,
+		meta: effect.meta ? replaceDeep(effect.meta) : undefined,
 	});
 	return effects.map(mapEffect);
 }

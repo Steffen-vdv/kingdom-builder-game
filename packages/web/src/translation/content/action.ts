@@ -1,9 +1,24 @@
-import type { EngineContext } from '@kingdom-builder/engine';
 import { summarizeEffects, describeEffects, logEffects } from '../effects';
-import { applyParamsToEffects } from '@kingdom-builder/engine';
+import type {
+	EngineContext,
+	ActionParams,
+	ResolvedActionEffectChoice,
+} from '@kingdom-builder/engine';
+import { resolveActionEffects as resolveEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator } from './factory';
 import type { ContentTranslator, Summary } from './types';
 import { getActionLogHook } from './actionLogHooks';
+
+function logChoiceLines(
+	lines: string[],
+	choices: ResolvedActionEffectChoice[],
+): void {
+	for (const choice of choices) {
+		const optionLabel = choice.option.label ?? choice.optionId;
+		const groupLabel = choice.group.label ?? choice.groupId;
+		lines.push(`  Chose ${optionLabel} for ${groupLabel}`);
+	}
+}
 
 class ActionTranslator
 	implements ContentTranslator<string, Record<string, unknown>>
@@ -14,10 +29,11 @@ class ActionTranslator
 		opts?: Record<string, unknown>,
 	): Summary {
 		const def = ctx.actions.get(id);
-		const effects = opts
-			? applyParamsToEffects(def.effects, opts)
-			: def.effects;
-		const eff = summarizeEffects(effects, ctx);
+		const resolved = resolveEffects(
+			def.effects,
+			opts as ActionParams<string> | undefined,
+		);
+		const eff = summarizeEffects(resolved.effects, ctx);
 		return eff.length ? eff : [];
 	}
 	describe(
@@ -26,10 +42,11 @@ class ActionTranslator
 		opts?: Record<string, unknown>,
 	): Summary {
 		const def = ctx.actions.get(id);
-		const effects = opts
-			? applyParamsToEffects(def.effects, opts)
-			: def.effects;
-		const eff = describeEffects(effects, ctx);
+		const resolved = resolveEffects(
+			def.effects,
+			opts as ActionParams<string> | undefined,
+		);
+		const eff = describeEffects(resolved.effects, ctx);
 		return eff.length ? eff : [];
 	}
 	log(
@@ -45,11 +62,15 @@ class ActionTranslator
 		if (extra) {
 			message += extra;
 		}
-		const effects = params
-			? applyParamsToEffects(def.effects, params)
-			: def.effects;
-		const effLogs = logEffects(effects, ctx);
+		const resolved = resolveEffects(
+			def.effects,
+			params as ActionParams<string> | undefined,
+		);
+		const effLogs = logEffects(resolved.effects, ctx);
 		const lines = [message];
+		if (resolved.choices.length) {
+			logChoiceLines(lines, resolved.choices);
+		}
 		function push(entry: unknown, depth: number) {
 			if (typeof entry === 'string') {
 				lines.push(`${'  '.repeat(depth)}${entry}`);

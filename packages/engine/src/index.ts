@@ -16,6 +16,10 @@ export type {
 } from './setup/create_engine';
 export { getActionCosts, getActionRequirements } from './actions/costs';
 export { performAction, simulateAction } from './actions/action_execution';
+export {
+	resolveActionEffects,
+	getActionEffectGroups,
+} from './actions/action_effects';
 export { advance } from './phases/advance';
 export { EngineContext } from './context';
 export { Services, PassiveManager } from './services';
@@ -38,7 +42,12 @@ export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
 export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
 export { validateGameConfig } from './config/schema';
-export type { GameConfig } from './config/schema';
+export type {
+	GameConfig,
+	ActionEffect,
+	ActionEffectGroup,
+	ActionEffectGroupOption,
+} from './config/schema';
 export { resolveAttack } from './effects/attack';
 export type {
 	AttackLog,
@@ -52,7 +61,18 @@ export { applyParamsToEffects } from './utils';
 export { snapshotPlayer } from './log';
 export type { PlayerSnapshot, ActionTrace } from './log';
 export type { PlayerId } from './state';
-export type { ActionParameters as ActionParams } from './actions/action_parameters';
+export type {
+	ActionParameters as ActionParams,
+	ActionChoiceDetail,
+	ActionChoiceMap,
+	ActionChoiceValue,
+} from './actions/action_parameters';
+export type {
+	ResolvedActionEffects,
+	ResolvedActionEffectGroup,
+	ResolvedActionEffectGroupOption,
+	ResolvedActionEffectChoice,
+} from './actions/action_effects';
 export type {
 	AdvanceResult,
 	AdvanceSkip,

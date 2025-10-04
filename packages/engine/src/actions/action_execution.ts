@@ -1,5 +1,4 @@
 import { runEffects } from '../effects';
-import { applyParamsToEffects } from '../utils';
 import { withStatSourceFrames } from '../stat_sources';
 import { runRequirement } from '../requirements';
 import type { EngineContext } from '../context';
@@ -12,6 +11,7 @@ import {
 	verifyCostAffordability,
 } from './costs';
 import { cloneEngineContext } from './context_clone';
+import { resolveActionEffects } from './action_effects';
 
 function assertSystemActionUnlocked(
 	actionId: string,
@@ -82,9 +82,9 @@ function executeAction<T extends string>(
 	assertSystemActionUnlocked(actionId, engineContext);
 	evaluateRequirements(actionId, engineContext);
 	const baseCosts = { ...(actionDefinition.baseCosts || {}) };
-	const resolvedEffects = applyParamsToEffects(
+	const { effects: resolvedEffects } = resolveActionEffects(
 		actionDefinition.effects,
-		params || {},
+		params,
 	);
 	const pendingBuildingIds = collectPendingBuildingAdds(resolvedEffects);
 	assertBuildingsNotYetConstructed(pendingBuildingIds, engineContext);

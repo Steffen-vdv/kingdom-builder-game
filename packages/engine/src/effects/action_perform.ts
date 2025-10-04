@@ -1,8 +1,8 @@
 import type { EffectHandler } from '.';
-import { applyParamsToEffects } from '../utils';
 import { runEffects } from '.';
 import { snapshotPlayer } from '../log';
 import { withStatSourceFrames } from '../stat_sources';
+import { resolveActionEffects } from '../actions/action_effects';
 
 export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 	const id = effect.params?.['id'] as string;
@@ -13,7 +13,7 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 	for (let i = 0; i < Math.floor(mult); i++) {
 		const def = ctx.actions.get(id);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		const resolved = applyParamsToEffects(def.effects, params);
+		const { effects } = resolveActionEffects(def.effects, params);
 		withStatSourceFrames(
 			ctx,
 			(_effect, _ctx, statKey) => ({
@@ -24,7 +24,7 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 				longevity: 'permanent',
 			}),
 			() => {
-				runEffects(resolved, ctx);
+				runEffects(effects, ctx);
 				ctx.passives.runResultMods(def.id, ctx);
 			},
 		);
