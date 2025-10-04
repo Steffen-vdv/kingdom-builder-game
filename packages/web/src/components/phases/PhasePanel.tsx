@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import TimerCircle from '../TimerCircle';
-import { useGameEngine } from '../../state/GameContext';
+import { useGameEngine, type PhaseStep } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import Button from '../common/Button';
@@ -23,10 +23,12 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			handleEndTurn,
 		} = useGameEngine();
 
-		const actionPhaseId = useMemo(
-			() => ctx.phases.find((p) => p.action)?.id,
-			[ctx],
-		);
+		const actionPhaseId = useMemo(() => {
+			const phaseWithAction = ctx.phases.find(
+				(phaseDefinition) => phaseDefinition.action,
+			);
+			return phaseWithAction?.id;
+		}, [ctx]);
 		const isActionPhase = isActionPhaseActive(
 			ctx.game.currentPhase,
 			actionPhaseId,
@@ -46,6 +48,136 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			});
 		}, [phaseSteps]);
 
+		const phaseTabs = ctx.phases.map((phase) => {
+			const isSelected = displayPhase === phase.id;
+			const baseTabClassSegments = [
+				'relative flex items-center gap-2 rounded-full',
+				'px-4 py-2 text-sm transition-all',
+			];
+			const selectedTabSegments = [
+				'bg-gradient-to-r from-blue-500/90 to-indigo-500/90',
+				'text-white shadow-lg shadow-blue-500/30',
+			];
+			const idleTabSegments = [
+				'text-slate-600 hover:bg-white/60 hover:text-slate-800',
+				'dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-slate-100',
+			];
+			const tabSegments = isSelected ? selectedTabSegments : idleTabSegments;
+			const tabClasses = [
+				...baseTabClassSegments,
+				...tabSegments,
+				tabsEnabled ? null : 'opacity-60',
+			]
+				.filter(Boolean)
+				.join(' ');
+			const handleSelectPhase = () => {
+				if (!tabsEnabled) {
+					return;
+				}
+				setDisplayPhase(phase.id);
+				const nextSteps: PhaseStep[] = phaseHistories[phase.id] ?? [];
+				setPhaseSteps(nextSteps);
+			};
+			return (
+				<Button
+					key={phase.id}
+					type="button"
+					disabled={!tabsEnabled}
+					onClick={handleSelectPhase}
+					variant="ghost"
+					className={tabClasses}
+				>
+					<span className="text-lg leading-none">{phase.icon}</span>
+					<span className="text-xs font-semibold uppercase tracking-[0.2em]">
+						{phase.label}
+					</span>
+				</Button>
+			);
+		});
+
+		const renderedPhaseSteps = phaseSteps.map((stepEntry, stepIndex) => {
+			const stepBaseClasses = [
+				'rounded-2xl border px-4 py-3 shadow-sm transition-all',
+			];
+			const stepStateClasses = stepEntry.active
+				? [
+						'border-blue-500/50',
+						'bg-gradient-to-r from-blue-500/20 to-indigo-500/20',
+						'text-slate-800 shadow-blue-500/30',
+						'dark:border-indigo-400/40',
+						'dark:from-blue-500/30 dark:to-indigo-500/30',
+						'dark:text-slate-50',
+					]
+				: [
+						'border-white/40 bg-white/60 text-slate-600',
+						'dark:border-white/10 dark:bg-slate-900/40',
+						'dark:text-slate-200',
+					];
+			const stepClassSegments = [...stepBaseClasses, ...stepStateClasses];
+			const stepClasses = stepClassSegments.join(' ');
+			const titleClasses = [
+				'text-sm font-semibold',
+				stepEntry.active
+					? 'text-slate-900 dark:text-white'
+					: 'text-slate-700 dark:text-slate-100',
+			].join(' ');
+			const itemClassName = (item: PhaseStep['items'][number]) =>
+				[
+					item.italic ? 'italic' : '',
+					item.done
+						? 'font-semibold text-emerald-600 dark:text-emerald-400'
+						: '',
+				]
+					.filter(Boolean)
+					.join(' ');
+			const stepItems = stepEntry.items.length ? (
+				stepEntry.items.map((item, itemIndex) => (
+					<li key={itemIndex} className={itemClassName(item)}>
+						{item.text}
+						{item.done && <span className="ml-1">✔️</span>}
+					</li>
+				))
+			) : (
+				<li className="italic text-slate-400 dark:text-slate-500">...</li>
+			);
+			return (
+				<li key={stepIndex} className={stepClasses}>
+					<div className={titleClasses}>{stepEntry.title}</div>
+					<ul
+						className={[
+							'mt-2 space-y-1 pl-4 text-[0.85rem] leading-snug',
+							'list-disc list-inside',
+							stepEntry.active
+								? 'text-slate-700 dark:text-slate-100'
+								: 'text-slate-600 dark:text-slate-300',
+						].join(' ')}
+					>
+						{stepItems}
+					</ul>
+				</li>
+			);
+		});
+
+		const actionPhaseHasActiveSteps =
+			actionPhaseId &&
+			phaseHistories[actionPhaseId]?.some(
+				(stepHistoryEntry) => stepHistoryEntry.active,
+			);
+		const shouldDisableEndTurn = Boolean(actionPhaseHasActiveSteps);
+		const timerCircle = <TimerCircle progress={phaseTimer} />;
+		const handleEndTurnClick = () => {
+			void handleEndTurn();
+		};
+		const endTurnButton = (
+			<Button
+				variant="primary"
+				disabled={shouldDisableEndTurn}
+				onClick={handleEndTurnClick}
+			>
+				Next Turn
+			</Button>
+		);
+
 		const panelHeight = Math.max(320, height ?? 0);
 
 		return (
@@ -60,121 +192,21 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 					</span>
 				</div>
 				<div className="flex flex-wrap gap-2 border-b border-white/40 pb-2 dark:border-white/10">
-					{ctx.phases.map((p) => {
-						const isSelected = displayPhase === p.id;
-						const tabClasses = [
-							'relative flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all',
-							isSelected
-								? 'bg-gradient-to-r from-blue-500/90 to-indigo-500/90 text-white shadow-lg shadow-blue-500/30'
-								: 'text-slate-600 hover:bg-white/60 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-slate-100',
-							tabsEnabled ? '' : 'opacity-60',
-						]
-							.filter(Boolean)
-							.join(' ');
-						return (
-							<Button
-								key={p.id}
-								type="button"
-								disabled={!tabsEnabled}
-								onClick={() => {
-									if (!tabsEnabled) {
-										return;
-									}
-									setDisplayPhase(p.id);
-									setPhaseSteps(phaseHistories[p.id] ?? []);
-								}}
-								variant="ghost"
-								className={tabClasses}
-							>
-								<span className="text-lg leading-none">{p.icon}</span>
-								<span className="text-xs font-semibold uppercase tracking-[0.2em]">
-									{p.label}
-								</span>
-							</Button>
-						);
-					})}
+					{phaseTabs}
 				</div>
 				<ul
 					ref={phaseStepsRef}
 					className="flex-1 space-y-3 overflow-y-auto text-left text-sm custom-scrollbar"
 				>
-					{phaseSteps.map((s, i) => {
-						const stepClasses = [
-							'rounded-2xl border px-4 py-3 shadow-sm transition-all',
-							s.active
-								? 'border-blue-500/50 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-slate-800 shadow-blue-500/30 dark:border-indigo-400/40 dark:from-blue-500/30 dark:to-indigo-500/30 dark:text-slate-50'
-								: 'border-white/40 bg-white/60 text-slate-600 dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-200',
-						]
-							.filter(Boolean)
-							.join(' ');
-						const titleClasses = [
-							'text-sm font-semibold',
-							s.active
-								? 'text-slate-900 dark:text-white'
-								: 'text-slate-700 dark:text-slate-100',
-						]
-							.filter(Boolean)
-							.join(' ');
-						return (
-							<li key={i} className={stepClasses}>
-								<div className={titleClasses}>{s.title}</div>
-								<ul
-									className={[
-										'mt-2 space-y-1 pl-4 text-[0.85rem] leading-snug list-disc list-inside',
-										s.active
-											? 'text-slate-700 dark:text-slate-100'
-											: 'text-slate-600 dark:text-slate-300',
-									]
-										.filter(Boolean)
-										.join(' ')}
-								>
-									{s.items.length > 0 ? (
-										s.items.map((it, j) => (
-											<li
-												key={j}
-												className={[
-													it.italic ? 'italic' : '',
-													it.done
-														? 'font-semibold text-emerald-600 dark:text-emerald-400'
-														: '',
-												]
-													.filter(Boolean)
-													.join(' ')}
-											>
-												{it.text}
-												{it.done && <span className="ml-1">✔️</span>}
-											</li>
-										))
-									) : (
-										<li className="italic text-slate-400 dark:text-slate-500">
-											...
-										</li>
-									)}
-								</ul>
-							</li>
-						);
-					})}
+					{renderedPhaseSteps}
 				</ul>
 				{(!isActionPhase || phaseTimer > 0) && (
 					<div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-white/60 bg-white/80 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200">
-						<div className="h-9 w-9">
-							<TimerCircle progress={phaseTimer} />
-						</div>
+						<div className="h-9 w-9">{timerCircle}</div>
 					</div>
 				)}
 				{isActionPhase && (
-					<div className="mt-2 text-right">
-						<Button
-							variant="primary"
-							disabled={Boolean(
-								actionPhaseId &&
-									phaseHistories[actionPhaseId]?.some((s) => s.active),
-							)}
-							onClick={() => void handleEndTurn()}
-						>
-							Next Turn
-						</Button>
-					</div>
+					<div className="mt-2 text-right">{endTurnButton}</div>
 				)}
 			</section>
 		);

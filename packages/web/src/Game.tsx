@@ -85,11 +85,11 @@ function GameLayout() {
 			}
 		};
 	}, [ctx.game.players.length]);
-	const playerPanels = ctx.game.players.map((p, i) => {
-		const isActive = p.id === ctx.activePlayer.id;
-		const sideClass = i === 0 ? 'pr-6' : 'pl-6';
+	const playerPanels = ctx.game.players.map((player, index) => {
+		const isActive = player.id === ctx.activePlayer.id;
+		const sideClass = index === 0 ? 'pr-6' : 'pl-6';
 		const colorClass =
-			i === 0
+			index === 0
 				? isActive
 					? 'player-bg-blue-active'
 					: 'player-bg-blue'
@@ -106,8 +106,8 @@ function GameLayout() {
 			.join(' ');
 		return (
 			<PlayerPanel
-				key={p.id}
-				player={p}
+				key={player.id}
+				player={player}
 				className={`grow basis-[calc(50%-1rem)] max-w-[calc(50%-1rem)] p-4 ${bgClass}`}
 				isActive={isActive}
 			/>
