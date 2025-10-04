@@ -1,10 +1,70 @@
 import React from 'react';
-import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
+import {
+	PASSIVE_INFO,
+	RESOURCES,
+	type ResourceKey,
+} from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
+import { describeEffects } from '../../translation';
+
+type TierDefinition =
+	EngineContext['services']['rules']['tierDefinitions'][number];
+type TierSummaryEntry = TierDefinition & { active: boolean };
+
+function formatTierRange(tier: TierDefinition) {
+	const { min, max } = tier.range;
+	if (max === undefined) {
+		return `${min}+`;
+	}
+	if (min === max) {
+		return `${min}`;
+	}
+	return `${min} to ${max}`;
+}
+
+function buildTierEntries(
+	tiers: TierDefinition[],
+	activeId: string | undefined,
+	ctx: EngineContext,
+) {
+	const entries: TierSummaryEntry[] = tiers.map((tier) => ({
+		...tier,
+		active: tier.id === activeId,
+	}));
+	return entries.map((entry) => {
+		const { passive, display, active } = entry;
+		const rangeLabel = formatTierRange(entry);
+		const statusIcon = active ? '🟢' : '⚪';
+		const icon = display?.icon ?? PASSIVE_INFO.icon ?? '';
+		const titleParts = [statusIcon, icon, rangeLabel].filter(
+			(part) => part && String(part).trim().length > 0,
+		);
+		const title = titleParts.join(' ').trim();
+		const summary = passive.text?.summary;
+		const removalText =
+			passive.text?.removal ??
+			(display?.removalCondition
+				? `Removed when ${display.removalCondition}`
+				: undefined);
+		const items = [] as ReturnType<typeof describeEffects>;
+		if (summary) {
+			items.push(summary);
+		}
+		const described = describeEffects(passive.effects || [], ctx);
+		described.forEach((item) => items.push(item));
+		if (removalText) {
+			items.push(removalText);
+		}
+		if (!items.length) {
+			items.push('No additional effects');
+		}
+		return { title, items };
+	});
+}
 
 interface ResourceButtonProps {
 	resourceKey: keyof typeof RESOURCES;
@@ -68,8 +128,22 @@ interface ResourceBarProps {
 }
 
 const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
-	const { handleHoverCard, clearHoverCard } = useGameEngine();
+	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
 	const resourceKeys = Object.keys(RESOURCES) as ResourceKey[];
+	const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
+	const tiers = ctx.services.rules.tierDefinitions;
+	const showHappinessCard = (value: number) => {
+		const activeTier = ctx.services.tieredResource.definition(value);
+		const entries = buildTierEntries(tiers, activeTier?.id, ctx);
+		const info = RESOURCES[happinessKey];
+		handleHoverCard({
+			title: `${info.icon} ${info.label}`,
+			effects: entries,
+			requirements: [],
+			description: [`Current value: ${value}`],
+			bgClass: PLAYER_INFO_CARD_BG,
+		});
+	};
 	const showGeneralResourceCard = () =>
 		handleHoverCard({
 			title: `${GENERAL_RESOURCE_INFO.icon} ${GENERAL_RESOURCE_INFO.label}`,
@@ -96,7 +170,11 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 			{resourceKeys.map((k) => {
 				const info = RESOURCES[k];
 				const v = player.resources[k] ?? 0;
-				const showResourceCard = () =>
+				const showResourceCard = () => {
+					if (k === happinessKey) {
+						showHappinessCard(v);
+						return;
+					}
 					handleHoverCard({
 						title: `${info.icon} ${info.label}`,
 						effects: [],
@@ -104,6 +182,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 						description: info.description,
 						bgClass: PLAYER_INFO_CARD_BG,
 					});
+				};
 				return (
 					<ResourceButton
 						key={k}
