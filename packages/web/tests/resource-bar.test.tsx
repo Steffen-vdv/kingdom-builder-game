@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import ResourceBar from '../src/components/player/ResourceBar';
 import { createEngine } from '@kingdom-builder/engine';
 import type { EngineContext } from '@kingdom-builder/engine';
 import {
@@ -17,6 +16,8 @@ import {
 	RESOURCES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
+import ResourceBar from '../src/components/player/ResourceBar';
+import { translateTierSummary } from '../src/translation';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -35,7 +36,7 @@ vi.mock('../src/state/GameContext', () => ({
 }));
 
 describe('<ResourceBar /> happiness hover card', () => {
-	it('lists happiness tiers and highlights the active threshold', () => {
+	it('lists happiness tiers with concise summaries and highlights the active threshold', () => {
 		const ctx = createEngine({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
@@ -71,17 +72,30 @@ describe('<ResourceBar /> happiness hover card', () => {
 		expect(call).toBeTruthy();
 		expect(call?.title).toBe(`${info.icon} ${info.label}`);
 		expect(call?.description).toEqual([`Current value: ${value}`]);
-		const tiers = call?.effects ?? [];
-		expect(tiers).toHaveLength(ctx.services.rules.tierDefinitions.length);
-		const activeEntry = tiers.find(
+		const tierEntries = call?.effects ?? [];
+		expect(tierEntries).toHaveLength(ctx.services.rules.tierDefinitions.length);
+		const activeEntry = tierEntries.find(
 			(entry: unknown) =>
 				typeof entry !== 'string' &&
 				Boolean((entry as { title?: string }).title?.includes('🟢')),
 		) as { items: unknown[] } | undefined;
 		expect(activeEntry).toBeTruthy();
-		const removal = activeEntry?.items.find(
-			(item) => typeof item === 'string' && /Active as long as/i.test(item),
-		);
-		expect(removal).toBeTruthy();
+		const tiers = ctx.services.rules.tierDefinitions;
+		tiers.forEach((tier, index) => {
+			const entry = tierEntries.at(index) as { items?: unknown[] } | undefined;
+			expect(entry).toBeTruthy();
+			const items = entry?.items ?? [];
+			expect(items.length).toBeLessThanOrEqual(2);
+			items.forEach((item) => {
+				if (typeof item === 'string') {
+					expect(item).not.toMatch(/Active as long as/i);
+				}
+			});
+			const summaryToken = tier.display?.summaryToken;
+			const translatedSummary = translateTierSummary(summaryToken);
+			if (translatedSummary) {
+				expect(items).toContain(translatedSummary);
+			}
+		});
 	});
 });
