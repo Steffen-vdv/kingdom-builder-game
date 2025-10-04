@@ -349,8 +349,9 @@ describe('resolveAttack', () => {
 		expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
 		expect(defender.buildings.has(stronghold.id)).toBe(false);
 		expect(result.evaluation.target.type).toBe('building');
-		if (result.evaluation.target.type === 'building')
+		if (result.evaluation.target.type === 'building') {
 			expect(result.evaluation.target.destroyed).toBe(true);
+		}
 	});
 
 	it('delegates target application to registered handlers', () => {

@@ -55,7 +55,9 @@ describe('tax action logging with market', () => {
 			ctx,
 		);
 		ctx.activePlayer.resources[SYNTHETIC_RESOURCE_KEYS.coin] = 0;
-		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) advance(ctx);
+		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
+			advance(ctx);
+		}
 		const action = ctx.actions.get(SYNTHETIC_IDS.taxAction);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
 		const costs = getActionCosts(SYNTHETIC_IDS.taxAction, ctx);
@@ -72,7 +74,9 @@ describe('tax action logging with market', () => {
 		const costLines: string[] = [];
 		for (const key of Object.keys(costs) as SyntheticResourceKey[]) {
 			const amt = costs[key] ?? 0;
-			if (!amt) continue;
+			if (!amt) {
+				continue;
+			}
 			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
@@ -80,8 +84,9 @@ describe('tax action logging with market', () => {
 			const a = b - amt;
 			costLines.push(`    ${icon}${label} -${amt} (${b}→${a})`);
 		}
-		if (costLines.length)
+		if (costLines.length) {
 			messages.splice(1, 0, '  💲 Action cost', ...costLines);
+		}
 		const subLines: string[] = [];
 		for (const trace of traces) {
 			const subStep = ctx.actions.get(trace.id);
@@ -92,25 +97,32 @@ describe('tax action logging with market', () => {
 				ctx,
 				RESOURCE_KEYS,
 			);
-			if (!subChanges.length) continue;
+			if (!subChanges.length) {
+				continue;
+			}
 			subLines.push(...subChanges);
 			const icon = ctx.actions.get(trace.id)?.icon || '';
 			const name = ctx.actions.get(trace.id).name;
 			const line = `  ${icon} ${name}`;
 			const idx = messages.indexOf(line);
-			if (idx !== -1)
+			if (idx !== -1) {
 				messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
+			}
 		}
 		const normalize = (line: string) =>
 			(line.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
 		const subPrefixes = subLines.map(normalize);
 		const costLabels = new Set(Object.keys(costs) as SyntheticResourceKey[]);
 		const filtered = changes.filter((line) => {
-			if (subPrefixes.includes(normalize(line))) return false;
+			if (subPrefixes.includes(normalize(line))) {
+				return false;
+			}
 			for (const key of costLabels) {
 				const info = SYNTHETIC_RESOURCES[key];
 				const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
-				if (line.startsWith(prefix)) return false;
+				if (line.startsWith(prefix)) {
+					return false;
+				}
 			}
 			return true;
 		});

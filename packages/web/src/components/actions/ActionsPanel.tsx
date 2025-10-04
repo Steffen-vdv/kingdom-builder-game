@@ -520,7 +520,8 @@ function DevelopOptions({
 							([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
 						);
 					const summary = summaries.get(d.id);
-					const implemented = (summary?.length ?? 0) > 0; // TODO: implement development effects
+					const implemented = (summary?.length ?? 0) > 0;
+					// TODO: implement development effects
 					const enabled = canPay && isActionPhase && canInteract && implemented;
 					const insufficientTooltip = formatMissingResources(
 						costs,
@@ -658,7 +659,8 @@ function BuildOptions({
 						([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
 					);
 					const summary = summaries.get(b.id);
-					const implemented = (summary?.length ?? 0) > 0; // TODO: implement building effects
+					const implemented = (summary?.length ?? 0) > 0;
+					// TODO: implement building effects
 					const enabled = canPay && isActionPhase && canInteract && implemented;
 					const insufficientTooltip = formatMissingResources(
 						costs,

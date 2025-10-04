@@ -8,7 +8,9 @@ describe('Growth phase', () => {
 		const player = ctx.activePlayer;
 		const apBefore = player.resources[resources.ap];
 		const goldBefore = player.resources[resources.gold];
-		while (ctx.game.currentPhase === ids.phases.growth) advance(ctx);
+		while (ctx.game.currentPhase === ids.phases.growth) {
+			advance(ctx);
+		}
 		const councils = player.population[roles.council];
 		expect(player.resources[resources.ap]).toBe(
 			apBefore + values.councilApGain * councils,
@@ -81,7 +83,9 @@ describe('Growth phase', () => {
 		player.stats[stats.army] = 8;
 		player.stats[stats.fort] = 4;
 		const growth = player.stats[stats.growth];
-		while (ctx.game.currentPhase === ids.phases.growth) advance(ctx);
+		while (ctx.game.currentPhase === ids.phases.growth) {
+			advance(ctx);
+		}
 		const expectedArmy = Math.ceil(8 + 8 * growth);
 		const expectedFort = Math.ceil(4 + 4 * growth);
 		expect(player.stats[stats.army]).toBe(expectedArmy);
@@ -100,7 +104,9 @@ describe('Growth phase', () => {
 		player.stats[stats.army] = 10;
 		player.stats[stats.fort] = 10;
 		const growth = player.stats[stats.growth];
-		while (ctx.game.currentPhase === ids.phases.growth) advance(ctx);
+		while (ctx.game.currentPhase === ids.phases.growth) {
+			advance(ctx);
+		}
 		const expectedArmy = Math.ceil(10 + 10 * growth * 2);
 		const expectedFort = Math.ceil(10 + 10 * growth * 2);
 		expect(player.stats[stats.army]).toBe(expectedArmy);
@@ -144,7 +150,9 @@ describe('Growth phase', () => {
 			player.stats[stats.army] = baseArmy;
 			player.stats[stats.fort] = baseFort;
 			const baseGrowth = values.baseGrowth;
-			while (ctx.game.currentPhase === ids.phases.growth) advance(ctx);
+			while (ctx.game.currentPhase === ids.phases.growth) {
+				advance(ctx);
+			}
 			const expectedArmy = Math.ceil(
 				baseArmy + baseArmy * baseGrowth * legions,
 			);
@@ -166,7 +174,9 @@ describe('Growth phase', () => {
 			player.population[roles.fortifier] = 1;
 			player.stats[stats.army] = -5;
 			player.stats[stats.fort] = -5;
-			while (ctx.game.currentPhase === ids.phases.growth) advance(ctx);
+			while (ctx.game.currentPhase === ids.phases.growth) {
+				advance(ctx);
+			}
 			expect(player.stats[stats.army]).toBe(0);
 			expect(player.stats[stats.fort]).toBe(0);
 			expect(Number.isInteger(player.stats[stats.army])).toBe(true);

@@ -62,13 +62,17 @@ describe('Turn cycle integration', () => {
 			rules,
 		});
 
-		while (ctx.game.currentPhase !== phaseIds.main) advance(ctx);
+		while (ctx.game.currentPhase !== phaseIds.main) {
+			advance(ctx);
+		}
 		expect(ctx.game.currentPlayerIndex).toBe(0);
 		expect(ctx.game.currentPhase).toBe(phaseIds.main);
 
 		advance(ctx);
 
-		while (ctx.game.currentPhase !== phaseIds.main) advance(ctx);
+		while (ctx.game.currentPhase !== phaseIds.main) {
+			advance(ctx);
+		}
 		expect(ctx.game.currentPlayerIndex).toBe(1);
 		expect(ctx.game.currentPhase).toBe(phaseIds.main);
 

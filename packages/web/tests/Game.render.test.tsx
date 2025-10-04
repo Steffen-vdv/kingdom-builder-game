@@ -7,11 +7,12 @@ import Game from '../src/Game';
 // dynamic action effects (e.g. build with "$id") don't crash
 // the rendering pipeline when summarized.
 vi.mock('@kingdom-builder/engine', async () => {
-  // Re-export the actual engine source since vitest doesn't resolve the monorepo alias
-  return await import('../../engine/src');
+	// Re-export the actual engine source since vitest doesn't
+	// resolve the monorepo alias.
+	return await import('../../engine/src');
 });
 describe('<Game /> integration', () => {
-  it('renders without crashing', () => {
-    expect(() => renderToString(<Game />)).not.toThrow();
-  });
+	it('renders without crashing', () => {
+		expect(() => renderToString(<Game />)).not.toThrow();
+	});
 });

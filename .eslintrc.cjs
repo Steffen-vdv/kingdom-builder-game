@@ -44,6 +44,7 @@ module.exports = {
 				ignoreStrings: true,
 				ignoreTemplateLiterals: true,
 				ignoreRegExpLiterals: true,
+				tabWidth: 1,
 			},
 		],
 		'max-lines': [
@@ -210,7 +211,6 @@ module.exports = {
 			],
 			rules: {
 				'max-lines': 'off',
-				'max-len': 'off',
 				'id-length': 'off',
 			},
 		},

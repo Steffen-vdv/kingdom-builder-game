@@ -56,7 +56,9 @@ describe('sub-action logging', () => {
 			costs,
 		) as (keyof typeof SYNTHETIC_RESOURCES)[]) {
 			const amt = costs[key] ?? 0;
-			if (!amt) continue;
+			if (!amt) {
+				continue;
+			}
 			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
@@ -64,8 +66,9 @@ describe('sub-action logging', () => {
 			const a = b - amt;
 			costLines.push(`    ${icon}${label} -${amt} (${b}→${a})`);
 		}
-		if (costLines.length)
+		if (costLines.length) {
 			messages.splice(1, 0, '  💲 Action cost', ...costLines);
+		}
 
 		const subLines: string[] = [];
 		for (const trace of traces) {
@@ -76,26 +79,33 @@ describe('sub-action logging', () => {
 				ctx,
 				RESOURCE_KEYS,
 			);
-			if (!subChanges.length) continue;
+			if (!subChanges.length) {
+				continue;
+			}
 			subLines.push(...subChanges);
 			const action = ctx.actions.get(trace.id);
 			const icon = action?.icon || '';
 			const name = action?.name || trace.id;
 			const line = `  ${icon} ${name}`;
 			const idx = messages.indexOf(line);
-			if (idx !== -1)
+			if (idx !== -1) {
 				messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
+			}
 		}
 
 		const costLabels = new Set(
 			Object.keys(costs) as (keyof typeof SYNTHETIC_RESOURCES)[],
 		);
 		const filtered = changes.filter((line) => {
-			if (subLines.includes(line)) return false;
+			if (subLines.includes(line)) {
+				return false;
+			}
 			for (const key of costLabels) {
 				const info = SYNTHETIC_RESOURCES[key];
 				const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
-				if (line.startsWith(prefix)) return false;
+				if (line.startsWith(prefix)) {
+					return false;
+				}
 			}
 			return true;
 		});

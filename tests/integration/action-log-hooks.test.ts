@@ -62,12 +62,16 @@ describe('content-driven action log hooks', () => {
 		});
 
 		const buildings = createBuildingRegistry();
-		for (const [id, def] of BUILDINGS.entries()) buildings.add(id, def);
+		for (const [id, def] of BUILDINGS.entries()) {
+			buildings.add(id, def);
+		}
 		buildings.add(hall.id, hall);
 		buildings.add(plainHall.id, plainHall);
 
 		const developments = createDevelopmentRegistry();
-		for (const [id, def] of DEVELOPMENTS.entries()) developments.add(id, def);
+		for (const [id, def] of DEVELOPMENTS.entries()) {
+			developments.add(id, def);
+		}
 		developments.add(improvement.id, improvement);
 
 		const ctx = createEngine({

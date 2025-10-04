@@ -132,7 +132,7 @@ describe('PassiveManager', () => {
 		const content = createContentFactory();
 		const action = content.action();
 		const ctx = createTestEngine({ actions: content.actions });
-		ctx.passives.registerResultModifier('happy', (_a, innerCtx) => {
+		ctx.passives.registerResultModifier('happy', (_result, innerCtx) => {
 			innerCtx.activePlayer.happiness += 1;
 		});
 		ctx.passives.runResultMods(action.id, ctx);

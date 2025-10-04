@@ -33,7 +33,9 @@ describe('cost_mod effects', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') advance(ctx);
+		while (ctx.game.currentPhase !== 'main') {
+			advance(ctx);
+		}
 		const before = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
 		const cost = getActionCosts(addMod.id, ctx);
 		ctx.activePlayer.ap = cost[CResource.ap] ?? 0;
@@ -86,7 +88,9 @@ describe('cost_mod effects', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') advance(ctx);
+		while (ctx.game.currentPhase !== 'main') {
+			advance(ctx);
+		}
 		ctx.activePlayer.actions.add(addMods.id);
 		const before = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
 		performAction(addMods.id, ctx);
