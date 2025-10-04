@@ -1,13 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { requirement } from '@kingdom-builder/contents/config/builders';
+import {
+	requirementEvaluatorCompare,
+	Operators,
+} from '@kingdom-builder/contents/config/builders';
 import { Stat, PopulationRole } from '@kingdom-builder/contents';
 
 describe('RequirementBuilder', () => {
 	it('builds requirement configs with params', () => {
-		const req = requirement('evaluator', 'compare')
-			.param('left', { type: 'stat', params: { key: Stat.warWeariness } })
-			.param('operator', 'lt')
-			.param('right', {
+		const req = requirementEvaluatorCompare()
+			.left({ type: 'stat', params: { key: Stat.warWeariness } })
+			.operator(Operators.LessThan)
+			.right({
 				type: 'population',
 				params: { role: PopulationRole.Legion },
 			})
@@ -19,7 +22,7 @@ describe('RequirementBuilder', () => {
 			method: 'compare',
 			params: {
 				left: { type: 'stat', params: { key: Stat.warWeariness } },
-				operator: 'lt',
+				operator: Operators.LessThan,
 				right: {
 					type: 'population',
 					params: { role: PopulationRole.Legion },

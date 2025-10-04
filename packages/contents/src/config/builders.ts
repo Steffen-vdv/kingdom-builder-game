@@ -14,6 +14,7 @@ import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
 import type { TriggerKey } from '../defs';
 import type { EvaluatorDef } from '@kingdom-builder/engine/evaluators';
+import { type CompareOperator } from '@kingdom-builder/engine/evaluators/compare';
 import type { EffectDef } from '@kingdom-builder/engine/effects';
 import type { AttackTarget } from '@kingdom-builder/engine/effects/attack';
 import type {
@@ -39,6 +40,10 @@ export const Types = {
 	Action: 'action',
 	Attack: 'attack',
 	Stat: 'stat',
+} as const;
+
+export const RequirementTypes = {
+	Evaluator: 'evaluator',
 } as const;
 
 export const LandMethods = {
@@ -1267,7 +1272,7 @@ type CompareValue = number | EvaluatorDef | EvaluatorBuilder;
 class CompareEvaluatorBuilder extends EvaluatorBuilder<{
 	left?: CompareValue;
 	right?: CompareValue;
-	operator?: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne';
+	operator?: RequirementCompareOperator;
 }> {
 	constructor() {
 		super('compare');
@@ -1288,7 +1293,7 @@ class CompareEvaluatorBuilder extends EvaluatorBuilder<{
 		return this.param('right', this.normalize(value));
 	}
 
-	operator(op: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne') {
+	operator(op: RequirementCompareOperator) {
 		return this.param('operator', op);
 	}
 }
@@ -1504,6 +1509,48 @@ export function requirement(type?: string, method?: string) {
 		builder.method(method);
 	}
 	return builder;
+}
+
+export { Operators } from '@kingdom-builder/engine/evaluators/compare';
+
+type RequirementCompareOperator = CompareOperator;
+
+type RequirementCompareLeft = EvaluatorBuilder | EvaluatorDef;
+
+type RequirementCompareRight = EvaluatorBuilder | EvaluatorDef | number;
+
+class RequirementEvaluatorCompareBuilder extends RequirementBuilder {
+	constructor() {
+		super();
+		this.type(RequirementTypes.Evaluator);
+		this.method('compare');
+	}
+
+	private normalize(value: EvaluatorBuilder | EvaluatorDef) {
+		if (value instanceof EvaluatorBuilder) {
+			return value.build();
+		}
+		return value;
+	}
+
+	left(value: RequirementCompareLeft) {
+		return this.param('left', this.normalize(value));
+	}
+
+	right(value: RequirementCompareRight) {
+		if (typeof value === 'number') {
+			return this.param('right', value);
+		}
+		return this.param('right', this.normalize(value));
+	}
+
+	operator(operator: RequirementCompareOperator) {
+		return this.param('operator', operator);
+	}
+}
+
+export function requirementEvaluatorCompare() {
+	return new RequirementEvaluatorCompareBuilder();
 }
 
 class BaseBuilder<T extends { id: string; name: string }> {

@@ -1,7 +1,9 @@
+import { Operators } from '@kingdom-builder/engine/evaluators/compare';
+
 export const compareRequirement = (left: unknown, right: unknown) => ({
 	type: 'evaluator',
 	method: 'compare',
-	params: { left, operator: 'lt', right },
+	params: { left, operator: Operators.LessThan, right },
 });
 
 export const populationEvaluator = (role?: string) => ({

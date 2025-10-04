@@ -1,4 +1,5 @@
 import { createEngine } from '../../src/index.ts';
+import { Operators } from '../../src/evaluators/compare.ts';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { StartConfig } from '../../src/config/schema.ts';
 import type { RuleSet } from '../../src/services/index.ts';
@@ -134,7 +135,7 @@ export function createPhaseTestEnvironment() {
 								type: 'compare',
 								params: {
 									left: { type: 'stat', params: { key: statKeys.war } },
-									operator: 'gt',
+									operator: Operators.GreaterThan,
 									right: 0,
 								},
 							},

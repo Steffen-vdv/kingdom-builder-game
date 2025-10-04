@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluatorCompare } from '../../src/requirements/evaluator_compare';
+import { Operators } from '../../src/evaluators/compare';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '../factories/content';
 import { advance } from '../../src';
@@ -16,16 +17,16 @@ describe('evaluator:compare requirement', () => {
 			params: {
 				left: { type: 'stat', params: { key: Stat.maxPopulation } },
 				right: 1,
-				operator: 'gt',
+				operator: Operators.GreaterThan,
 			},
 		} as unknown as Parameters<typeof evaluatorCompare>[0];
 		expect(evaluatorCompare(req, ctx)).toBe(true);
-		req.params.operator = 'lte';
+		req.params.operator = Operators.LessThanOrEqual;
 		expect(evaluatorCompare(req, ctx)).toBe('Requirement failed');
-		req.params.operator = 'eq';
+		req.params.operator = Operators.Equal;
 		req.params.right = 2;
 		expect(evaluatorCompare(req, ctx)).toBe(true);
-		req.params.operator = 'ne';
+		req.params.operator = Operators.NotEqual;
 		expect(evaluatorCompare(req, ctx)).toBe('Requirement failed');
 	});
 });
