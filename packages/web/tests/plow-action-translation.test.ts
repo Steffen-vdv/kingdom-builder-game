@@ -1,105 +1,99 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
+	createSyntheticPlowContent,
+	SYNTHETIC_RESOURCES,
+	SYNTHETIC_UPKEEP_PHASE,
+	SYNTHETIC_PASSIVE_INFO,
+	SYNTHETIC_LAND_INFO,
+	SYNTHETIC_SLOT_INFO,
+} from './fixtures/syntheticPlow';
+import {
 	summarizeContent,
 	describeContent,
 	splitSummary,
 } from '../src/translation/content';
 import { createEngine, type EffectDef } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	RESOURCES,
-	Resource,
-	LAND_INFO,
-	SLOT_INFO,
-	PASSIVE_INFO,
-} from '@kingdom-builder/contents';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
 function createCtx() {
-	return createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
-	});
+	const synthetic = createSyntheticPlowContent();
+	return {
+		...synthetic,
+		ctx: createEngine({
+			actions: synthetic.factory.actions,
+			buildings: synthetic.factory.buildings,
+			developments: synthetic.factory.developments,
+			populations: synthetic.factory.populations,
+			phases: synthetic.phases,
+			start: synthetic.start,
+			rules: synthetic.rules,
+		}),
+	};
 }
 
 describe('plow action translation', () => {
 	it('summarizes plow action', () => {
-		const ctx = createCtx();
-		const summary = summarizeContent('action', 'plow', ctx);
-		const expand = ctx.actions.get('expand');
-		const till = ctx.actions.get('till');
-		const plow = ctx.actions.get('plow');
+		const { ctx, expand, till, plow } = createCtx();
+		const summary = summarizeContent('action', plow.id, ctx);
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
-		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
-		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
-		const upkeepIcon = upkeepPhase?.icon;
+		const upkeepLabel = SYNTHETIC_UPKEEP_PHASE.label;
+		const upkeepIcon = SYNTHETIC_UPKEEP_PHASE.icon;
 		const upkeepSummaryLabel = `${upkeepIcon ? `${upkeepIcon} ` : ''}${upkeepLabel}`;
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
-		const modKey = (costMod?.params as { key?: keyof typeof RESOURCES })
-			?.key as keyof typeof RESOURCES;
+		const modKey = (
+			costMod?.params as { key?: keyof typeof SYNTHETIC_RESOURCES }
+		)?.key as keyof typeof SYNTHETIC_RESOURCES;
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		const modIcon = RESOURCES[modKey].icon;
+		const modIcon = SYNTHETIC_RESOURCES[modKey]?.icon ?? '';
 		expect(summary).toEqual([
 			`${expand.icon} ${expand.name}`,
 			`${till.icon} ${till.name}`,
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
-				items: [`💲: ${modIcon}+${modAmt}`],
+				items: [`💲: ${modIcon}${modAmt >= 0 ? '+' : ''}${modAmt}`],
 			},
 		]);
 	});
 
 	it('describes plow action without perform prefix and with passive icon', () => {
-		const ctx = createCtx();
-		const desc = describeContent('action', 'plow', ctx);
+		const { ctx, plow, plowPassive } = createCtx();
+		const desc = describeContent('action', plow.id, ctx);
 		const titles = desc.map((d) => (typeof d === 'string' ? d : d.title));
 		titles.forEach((t) => expect(t).not.toMatch(/^Perform action/));
-		const passive = desc.find(
-			(d) => typeof d === 'object' && d.title.includes('Upkeep Phase'),
+		const passiveEntry = desc.find(
+			(d) =>
+				typeof d === 'object' && d.title.includes(SYNTHETIC_UPKEEP_PHASE.label),
 		) as { title: string; items?: unknown[] } | undefined;
-		expect(passive?.title.startsWith('♾️ ')).toBe(true);
+		const passiveIcon =
+			(plowPassive as { icon?: string })?.icon ?? SYNTHETIC_PASSIVE_INFO.icon;
+		expect(passiveEntry?.title.startsWith(`${passiveIcon} `)).toBe(true);
 	});
 
 	it('keeps performed system actions in effects', () => {
-		const ctx = createCtx();
-		const summary = describeContent('action', 'plow', ctx);
+		const { ctx, expand, till, plow, plowPassive } = createCtx();
+		const summary = describeContent('action', plow.id, ctx);
 		const { effects, description } = splitSummary(summary);
 		expect(description).toBeUndefined();
-		const expand = ctx.actions.get('expand');
-		const till = ctx.actions.get('till');
-		const plow = ctx.actions.get('plow');
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
-		const modKey = (costMod?.params as { key?: keyof typeof RESOURCES })
-			?.key as keyof typeof RESOURCES;
+		const modKey = (
+			costMod?.params as { key?: keyof typeof SYNTHETIC_RESOURCES }
+		)?.key as keyof typeof SYNTHETIC_RESOURCES;
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		const modIcon = RESOURCES[modKey].icon;
-		const passiveMeta = passive?.params as
-			| { name?: string; icon?: string }
-			| undefined;
-		const passiveName = passiveMeta?.name ?? PASSIVE_INFO.label;
-		const passiveIcon = passiveMeta?.icon ?? PASSIVE_INFO.icon;
-		const upkeepPhase = ctx.phases.find((p) => p.id === 'upkeep');
-		const upkeepLabel = upkeepPhase?.label || 'Upkeep';
-		const upkeepIcon = upkeepPhase?.icon;
+		const modIcon = SYNTHETIC_RESOURCES[modKey]?.icon ?? '';
+		const passiveName = ((plowPassive as { name?: string })?.name ??
+			SYNTHETIC_PASSIVE_INFO.label) as string;
+		const passiveIcon = ((plowPassive as { icon?: string })?.icon ??
+			SYNTHETIC_PASSIVE_INFO.icon) as string;
+		const upkeepLabel = SYNTHETIC_UPKEEP_PHASE.label;
+		const upkeepIcon = SYNTHETIC_UPKEEP_PHASE.icon;
 		const upkeepDescriptionLabel = `${
 			upkeepIcon ? `${upkeepIcon} ` : ''
 		}${upkeepLabel} Phase`;
@@ -108,26 +102,30 @@ describe('plow action translation', () => {
 		const expandHap = expand.effects.find(
 			(e: EffectDef) =>
 				e.type === 'resource' &&
-				(e.params as { key?: string }).key === Resource.happiness,
+				(e.params as { key?: string }).key === 'happiness',
 		);
 		const hapAmt = (expandHap?.params as { amount?: number })?.amount ?? 0;
-		const hapInfo = RESOURCES[Resource.happiness];
+		const hapInfo = SYNTHETIC_RESOURCES.happiness;
 		expect(effects).toEqual([
 			{
 				title: `${expand.icon} ${expand.name}`,
 				items: [
-					`${LAND_INFO.icon} ${landCount >= 0 ? '+' : ''}${landCount} ${LAND_INFO.label}`,
-					`${hapInfo.icon}+${hapAmt} ${hapInfo.label}`,
+					`${SYNTHETIC_LAND_INFO.icon} ${
+						landCount >= 0 ? '+' : ''
+					}${landCount} ${SYNTHETIC_LAND_INFO.label}`,
+					`${hapInfo.icon}${hapAmt >= 0 ? '+' : ''}${hapAmt} ${hapInfo.label}`,
 				],
 			},
 			{
 				title: `${till.icon} ${till.name}`,
 				items: [
-					`Till ${LAND_INFO.icon} ${LAND_INFO.label} to unlock ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
+					`Till ${SYNTHETIC_LAND_INFO.icon} ${SYNTHETIC_LAND_INFO.label} to unlock ${SYNTHETIC_SLOT_INFO.icon} ${SYNTHETIC_SLOT_INFO.label}`,
 				],
 			},
 			{
-				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${upkeepDescriptionLabel}`,
+				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${
+					upkeepDescriptionLabel
+				}`,
 				items: [
 					`💲 Cost Modifier on all actions: Increase cost by ${modIcon}${modAmt}`,
 				],
