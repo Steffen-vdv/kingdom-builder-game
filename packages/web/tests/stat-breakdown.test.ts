@@ -72,33 +72,47 @@ describe('stat breakdown summary', () => {
 			entry.title.includes('Legion'),
 		);
 		expect(ongoing).toBeTruthy();
+		expect(ongoing?.title).toMatch(/^Source: /);
 		expect(ongoing?.items).toEqual(
-			expect.arrayContaining([
-				expect.stringContaining('⚔️ +1'),
-				expect.objectContaining({
-					title: expect.stringContaining('Ongoing'),
-					items: expect.arrayContaining([
-						expect.stringContaining('While 🎖️ Legion'),
-						expect.stringContaining('Active as long as'),
-					]),
-				}),
-			]),
+			expect.arrayContaining([expect.stringContaining('⚔️ +1')]),
 		);
+		const ongoingTexts = ongoing?.items.filter(
+			(item): item is string => typeof item === 'string',
+		);
+		expect(
+			ongoingTexts?.some((item) =>
+				item.includes('Ongoing as long as 🎖️ Legion is in play'),
+			),
+		).toBe(true);
 		const permanent = objectEntries.find((entry) =>
 			entry.title.includes('Raise Strength'),
 		);
 		expect(permanent).toBeTruthy();
+		expect(permanent?.title).toMatch(/^Source: /);
 		expect(permanent?.items).toEqual(
 			expect.arrayContaining([
 				expect.stringContaining('⚔️ +1'),
 				expect.objectContaining({
 					title: expect.stringContaining('Permanent'),
-					items: expect.arrayContaining([
-						expect.stringContaining('Triggered by 🎖️ Legion'),
-						expect.stringContaining('Triggered by 📈 Growth'),
-					]),
 				}),
 			]),
 		);
+		const permanentDetails = permanent?.items.find(
+			(entry): entry is { title: string; items: unknown[] } =>
+				isSummaryObject(entry) && entry.title.includes('Permanent'),
+		);
+		expect(permanentDetails).toBeTruthy();
+		expect(permanentDetails?.items).toEqual(
+			expect.arrayContaining([
+				expect.stringContaining('Triggered by 🎖️ Legion'),
+				expect.stringContaining('Triggered by 📈 Growth'),
+			]),
+		);
+		const permanentStrings = permanentDetails?.items.filter(
+			(item): item is string => typeof item === 'string',
+		);
+		expect(
+			permanentStrings?.some((item) => item.includes('Applies immediately')),
+		).toBe(false);
 	});
 });

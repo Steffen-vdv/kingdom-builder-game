@@ -222,7 +222,7 @@ const DESCRIPTOR_REGISTRY: Record<string, DescriptorRegistryEntry> = {
 		formatDetail: defaultFormatDetail,
 	},
 	start: {
-		resolve: () => ({ icon: '', label: 'Initial setup' }),
+		resolve: () => ({ icon: '', label: 'Initial Setup' }),
 		formatDetail: defaultFormatDetail,
 	},
 };
@@ -241,6 +241,72 @@ export function getDescriptor(kind?: string): DescriptorRegistryEntry {
 	return DESCRIPTOR_REGISTRY[kind] ?? createDefaultDescriptor(kind);
 }
 
+function formatKindLabel(kind?: string, id?: string): string | undefined {
+	if (!kind) {
+		return undefined;
+	}
+	const descriptor = getDescriptor(kind);
+	const resolved = descriptor.resolve(id);
+	const parts: string[] = [];
+	if (resolved.icon) {
+		parts.push(resolved.icon);
+	}
+	if (resolved.label) {
+		parts.push(resolved.label);
+	}
+	const label = parts.join(' ').trim();
+	return label || undefined;
+}
+
+export function formatLinkLabel(link?: StatSourceLink): string | undefined {
+	if (!link) {
+		return undefined;
+	}
+	const descriptor = getDescriptor(link.type);
+	const resolved = descriptor.resolve(link.id);
+	const parts: string[] = [];
+	if (resolved.icon) {
+		parts.push(resolved.icon);
+	}
+	if (resolved.label) {
+		parts.push(resolved.label);
+	}
+	const label = parts.join(' ').trim();
+	return label || undefined;
+}
+
+function deriveResolutionSuffix(meta: StatSourceMeta): string | undefined {
+	if (meta.kind !== 'action') {
+		return undefined;
+	}
+	const detail = meta.detail?.trim().toLowerCase();
+	if (detail !== 'resolution') {
+		return undefined;
+	}
+	const candidates: (StatSourceLink | undefined)[] = [meta.removal];
+	if (meta.dependsOn) {
+		candidates.push(...meta.dependsOn);
+	}
+	const priority = ['development', 'building', 'population', 'passive', 'land'];
+	for (const type of priority) {
+		const match = candidates.find((link) => link?.type === type);
+		if (!match) {
+			continue;
+		}
+		const label = formatLinkLabel(match);
+		if (label) {
+			return label;
+		}
+	}
+	if (meta.removal) {
+		const fallback = formatLinkLabel(meta.removal);
+		if (fallback) {
+			return fallback;
+		}
+	}
+	return undefined;
+}
+
 export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 	const entry = getDescriptor(meta.kind);
 	const base = entry.resolve(meta.id);
@@ -252,8 +318,26 @@ export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 	if (suffix === undefined && meta.detail) {
 		suffix = defaultFormatDetail(meta.id, meta.detail);
 	}
+	const resolutionSuffix = deriveResolutionSuffix(meta);
+	if (resolutionSuffix) {
+		suffix = resolutionSuffix;
+	}
+	const isAction = meta.kind === 'action';
+	const noResolutionOverride = resolutionSuffix === undefined;
+	if (suffix != null && noResolutionOverride && isAction) {
+		const detail = suffix.trim().toLowerCase();
+		if (detail === 'resolution') {
+			suffix = undefined;
+		}
+	}
 	if (suffix) {
 		descriptor.suffix = suffix;
+	}
+	if (!descriptor.label) {
+		const fallbackLabel = formatKindLabel(meta.kind, meta.id);
+		if (fallbackLabel) {
+			descriptor.label = fallbackLabel;
+		}
 	}
 	return descriptor;
 }
@@ -264,18 +348,31 @@ export function formatSourceTitle(descriptor: SourceDescriptor): string {
 		titleParts.push(descriptor.icon);
 	}
 	const labelParts: string[] = [];
-	if (descriptor.label?.trim()) {
-		labelParts.push(descriptor.label.trim());
-	}
-	if (descriptor.suffix?.trim()) {
-		labelParts.push(descriptor.suffix.trim());
-	}
+	const seen = new Set<string>();
+	const pushUnique = (value?: string) => {
+		if (!value) {
+			return;
+		}
+		const trimmed = value.trim();
+		if (!trimmed) {
+			return;
+		}
+		const normalized = trimmed.toLowerCase();
+		if (seen.has(normalized)) {
+			return;
+		}
+		seen.add(normalized);
+		labelParts.push(trimmed);
+	};
+	pushUnique(descriptor.label);
+	pushUnique(descriptor.suffix);
 	if (labelParts.length) {
-		titleParts.push(
-			labelParts.length > 1
-				? `${labelParts[0]!} · ${labelParts.slice(1).join(' · ')}`
-				: labelParts[0]!,
-		);
+		let combined = labelParts[0]!;
+		if (labelParts.length > 1) {
+			const remainder = labelParts.slice(1).join(' · ');
+			combined = `${combined} · ${remainder}`;
+		}
+		titleParts.push(combined);
 	}
 	return titleParts.join(' ').trim();
 }
