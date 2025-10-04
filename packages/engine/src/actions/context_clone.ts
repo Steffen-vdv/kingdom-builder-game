@@ -50,6 +50,10 @@ function clonePlayerState(player: PlayerState): PlayerState {
 	const clonedSources = cloned.statSources;
 	for (const statKey of Object.keys(player.statSources)) {
 		const contributions = player.statSources[statKey];
+		if (!contributions) {
+			clonedSources[statKey] = {};
+			continue;
+		}
 		const next: Record<string, StatSourceContribution> = {};
 		for (const sourceKey of Object.keys(contributions)) {
 			const contribution = contributions[sourceKey]!;
