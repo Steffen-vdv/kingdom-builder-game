@@ -238,6 +238,22 @@
     position: relative;
     z-index: 1;
   }
+
+  .hover-card-transition {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+
+  .hover-card-transition[data-state='enter'] {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hover-card-transition[data-state='exit'] {
+    opacity: 0;
+    transform: translateY(6px);
+  }
   .land-tile {
     @apply relative panel-card border border-white/50 p-3 text-center hoverable cursor-help shadow-lg shadow-amber-500/10 dark:border-white/10;
   }
