@@ -605,6 +605,9 @@ params: { amount: 5 } }`.
 
 - The web client converts engine definitions into player-facing text through a
   layered translation system to keep UI strings decoupled from data.
+- **Read `docs/text-formatting.md` before adding or changing user-facing
+  wording.** It explains the translator pipeline, inventories existing
+  formatters, and lists the canonical verbs/icons that keep UI copy consistent.
 
 ### 6.1 Effect Formatters
 
