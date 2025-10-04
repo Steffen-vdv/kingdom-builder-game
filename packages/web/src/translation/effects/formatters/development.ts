@@ -22,7 +22,19 @@ registerEffectFormatter('development', 'add', {
 		}
 		const label = def?.name || id;
 		const icon = def?.icon || '';
-		return `Add ${icon}${label}`;
+		const details = describeContent('development', id, ctx);
+		const combined = [icon, label].filter(Boolean).join(' ').trim();
+		const addLabel = combined.length > 0 ? `Add ${combined}` : 'Add';
+		if (!details.length) {
+			return addLabel;
+		}
+		return [
+			addLabel,
+			{
+				title: combined || label,
+				items: details,
+			},
+		];
 	},
 });
 

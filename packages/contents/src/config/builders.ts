@@ -41,6 +41,10 @@ export const Types = {
 	Stat: 'stat',
 } as const;
 
+export const RequirementTypes = {
+	Evaluator: 'evaluator',
+} as const;
+
 export const LandMethods = {
 	ADD: 'add',
 	TILL: 'till',
@@ -1537,6 +1541,29 @@ export class RequirementBuilder<P extends Params = Params> {
 	}
 }
 
+class RequirementEvaluatorCompareBuilder extends RequirementBuilder {
+	constructor() {
+		super();
+		this.type(RequirementTypes.Evaluator);
+		this.method('compare');
+	}
+
+	left(value: unknown) {
+		this.param('left', value);
+		return this;
+	}
+
+	operator(value: string) {
+		this.param('operator', value);
+		return this;
+	}
+
+	right(value: unknown) {
+		this.param('right', value);
+		return this;
+	}
+}
+
 export function requirement(type?: string, method?: string) {
 	const builder = new RequirementBuilder();
 	if (type) {
@@ -1546,6 +1573,10 @@ export function requirement(type?: string, method?: string) {
 		builder.method(method);
 	}
 	return builder;
+}
+
+export function requirementEvaluatorCompare() {
+	return new RequirementEvaluatorCompareBuilder();
 }
 
 class BaseBuilder<T extends { id: string; name: string }> {
