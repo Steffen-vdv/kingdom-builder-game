@@ -53,7 +53,7 @@ describe('hold festival action translation', () => {
 		);
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
-		}${details.upkeepLabel} Phase`;
+		}${details.upkeepLabel}`;
 
 		expect(desc).toEqual([
 			`${details.happinessInfo.icon}${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
@@ -78,7 +78,7 @@ describe('hold festival action translation', () => {
 		);
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
-		}${details.upkeepLabel} Phase`;
+		}${details.upkeepLabel}`;
 
 		expect(log).toEqual([
 			`Played ${details.festival.icon} ${details.festival.name}`,

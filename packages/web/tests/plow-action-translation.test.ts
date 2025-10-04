@@ -96,7 +96,7 @@ describe('plow action translation', () => {
 		const upkeepIcon = SYNTHETIC_UPKEEP_PHASE.icon;
 		const upkeepDescriptionLabel = `${
 			upkeepIcon ? `${upkeepIcon} ` : ''
-		}${upkeepLabel} Phase`;
+		}${upkeepLabel}`;
 		const expandLand = expand.effects.find((e: EffectDef) => e.type === 'land');
 		const landCount = (expandLand?.params as { count?: number })?.count ?? 0;
 		const expandHap = expand.effects.find(
