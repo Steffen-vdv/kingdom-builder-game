@@ -67,6 +67,7 @@ describe('<PassiveDisplay />', () => {
 			{
 				pullEffectLog: (key) => ctx.pullEffectLog(key),
 				passives: ctx.passives,
+				context: ctx,
 			},
 		);
 		currentGame = {
@@ -101,6 +102,7 @@ describe('<PassiveDisplay />', () => {
 				[tierDefinition],
 				tierDefinition.id,
 				ctx,
+				translationContext,
 			);
 			expect(hoverCard?.effects).toEqual(entries);
 		}
@@ -132,6 +134,7 @@ describe('<PassiveDisplay />', () => {
 			{
 				pullEffectLog: (key) => ctx.pullEffectLog(key),
 				passives: ctx.passives,
+				context: ctx,
 			},
 		);
 		currentGame = {
@@ -192,6 +195,7 @@ describe('<PassiveDisplay />', () => {
 			{
 				pullEffectLog: (key) => ctx.pullEffectLog(key),
 				passives: ctx.passives,
+				context: ctx,
 			},
 		);
 		currentGame = {
@@ -239,6 +243,7 @@ describe('<PassiveDisplay />', () => {
 			{
 				pullEffectLog: (key) => ctx.pullEffectLog(key),
 				passives: ctx.passives,
+				context: ctx,
 			},
 		);
 		currentGame = {

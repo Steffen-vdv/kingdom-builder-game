@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngineSession } from '@kingdom-builder/engine';
 import {
 	PHASES,
 	POPULATIONS,
@@ -11,6 +11,7 @@ import {
 	createDevelopmentRegistry,
 } from '@kingdom-builder/contents';
 import { logContent } from '@kingdom-builder/web/translation/content';
+import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '../../packages/engine/tests/factories/content';
 
 describe('content-driven action log hooks', () => {
@@ -77,7 +78,7 @@ describe('content-driven action log hooks', () => {
 			}
 			developments.add(improvement.id, improvement);
 
-			const ctx = createEngine({
+			const session = createEngineSession({
 				actions: content.actions,
 				buildings,
 				developments,
@@ -86,29 +87,61 @@ describe('content-driven action log hooks', () => {
 				start: GAME_START,
 				rules: RULES,
 			});
+			const ctx = session.getLegacyContext();
+			const translationContext = createTranslationContext(
+				session.getSnapshot(),
+				{
+					actions: content.actions,
+					buildings,
+					developments,
+				},
+				{
+					pullEffectLog: (key) => ctx.pullEffectLog(key),
+					passives: ctx.passives,
+					context: ctx,
+				},
+			);
 
-			const buildingLog = logContent('action', construct.id, ctx, {
-				id: hall.id,
-			});
+			const buildingLog = logContent(
+				'action',
+				construct.id,
+				translationContext,
+				{
+					id: hall.id,
+				},
+			);
 			if (hall.icon) {
 				expect(buildingLog[0]).toContain(hall.icon);
 			}
 			expect(buildingLog[0]).toContain(hall.name);
 
 			const landId = ctx.activePlayer.lands[0]?.id;
-			const developmentLog = logContent('action', establish.id, ctx, {
-				id: improvement.id,
-				landId,
-			});
+			const developmentLog = logContent(
+				'action',
+				establish.id,
+				translationContext,
+				{
+					id: improvement.id,
+					landId,
+				},
+			);
 			if (improvement.icon) {
 				expect(developmentLog[0]).toContain(improvement.icon);
 			}
 			expect(developmentLog[0]).toContain(improvement.name);
 
-			const staticLog = logContent('action', constructStatic.id, ctx);
+			const staticLog = logContent(
+				'action',
+				constructStatic.id,
+				translationContext,
+			);
 			expect(staticLog[0]).toContain(plainHall.name);
 
-			const buildingLabel = logContent('building', plainHall.id, ctx)[0];
+			const buildingLabel = logContent(
+				'building',
+				plainHall.id,
+				translationContext,
+			)[0];
 			expect(buildingLabel).toBe(plainHall.name);
 		},
 	);
