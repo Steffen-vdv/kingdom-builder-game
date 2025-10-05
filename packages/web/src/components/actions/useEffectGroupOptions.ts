@@ -77,7 +77,14 @@ function buildHoverDetails(
 		mergedParams,
 	).map(formatRequirement);
 	let effects = baseEffects;
-	const developmentId = mergedParams?.id;
+	const idParam = mergedParams?.id;
+	const developmentParam = mergedParams?.developmentId;
+	const developmentId =
+		typeof idParam === 'string'
+			? idParam
+			: typeof developmentParam === 'string'
+				? developmentParam
+				: undefined;
 	if (typeof developmentId === 'string') {
 		try {
 			const developmentSummary = describeContent(
