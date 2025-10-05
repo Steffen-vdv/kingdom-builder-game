@@ -1,4 +1,8 @@
-import type { EngineContext } from '@kingdom-builder/engine';
+import type {
+	EngineContext,
+	EngineSession,
+	EngineSessionSnapshot,
+} from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import type { Action } from './actionTypes';
 import type { PhaseStep } from './phaseTypes';
@@ -8,6 +12,9 @@ import type { LogEntry } from './useGameLog';
 import type { ErrorToast } from './useErrorToasts';
 
 export interface GameEngineContextValue {
+	session: EngineSession;
+	sessionState: EngineSessionSnapshot;
+	/** @deprecated Use `session` and `sessionState` instead. */
 	ctx: EngineContext;
 	log: LogEntry[];
 	logOverflowed: boolean;

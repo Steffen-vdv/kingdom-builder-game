@@ -2,6 +2,7 @@ import {
 	createEngine,
 	type EngineCreationOptions,
 } from '../setup/create_engine';
+import type { EngineContext } from '../context';
 import { performAction as runAction } from '../actions/action_execution';
 import { advance as runAdvance } from '../phases/advance';
 import { getActionEffectGroups } from '../actions/effect_groups';
@@ -20,6 +21,13 @@ export interface EngineSession {
 	advancePhase(): EngineAdvanceResult;
 	getSnapshot(): EngineSessionSnapshot;
 	getActionOptions(actionId: string): ReturnType<typeof cloneActionOptions>;
+	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T>;
+	setDevMode(enabled: boolean): void;
+	/**
+	 * @deprecated Temporary escape hatch while the web layer migrates to
+	 * snapshots. Avoid new usage and prefer the session facade instead.
+	 */
+	getLegacyContext(): EngineContext;
 }
 
 export type {
@@ -51,6 +59,15 @@ export function createEngineSession(
 		getActionOptions(actionId) {
 			const groups = getActionEffectGroups(actionId, context);
 			return cloneActionOptions(groups);
+		},
+		enqueue(taskFactory) {
+			return context.enqueue(taskFactory);
+		},
+		setDevMode(enabled) {
+			context.game.devMode = enabled;
+		},
+		getLegacyContext() {
+			return context;
 		},
 	};
 }
