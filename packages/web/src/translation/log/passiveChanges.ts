@@ -22,6 +22,48 @@ function isBuildingPassive(
 	return false;
 }
 
+function collectDevelopmentPassiveIds(
+	lands: PlayerSnapshot['lands'],
+): Set<string> {
+	const ids = new Set<string>();
+	for (const land of lands) {
+		for (const development of land.developments) {
+			ids.add(`${development}_${land.id}`);
+		}
+	}
+	return ids;
+}
+
+function collectAddedDevelopmentPassives(
+	before: PlayerSnapshot,
+	after: PlayerSnapshot,
+): Set<string> {
+	const previous = collectDevelopmentPassiveIds(before.lands);
+	const next = collectDevelopmentPassiveIds(after.lands);
+	const additions = new Set<string>();
+	for (const id of next) {
+		if (!previous.has(id)) {
+			additions.add(id);
+		}
+	}
+	return additions;
+}
+
+function collectRemovedDevelopmentPassives(
+	before: PlayerSnapshot,
+	after: PlayerSnapshot,
+): Set<string> {
+	const previous = collectDevelopmentPassiveIds(before.lands);
+	const next = collectDevelopmentPassiveIds(after.lands);
+	const removals = new Set<string>();
+	for (const id of previous) {
+		if (!next.has(id)) {
+			removals.add(id);
+		}
+	}
+	return removals;
+}
+
 function decoratePassiveLabel(icon: string, label: string): string {
 	const fallback = label.trim() || PASSIVE_INFO.label || label;
 	const decorated = [icon, fallback]
@@ -46,11 +88,22 @@ export function appendPassiveChanges(
 	const newBuildings = new Set(
 		after.buildings.filter((id) => !previousBuildings.has(id)),
 	);
+	const addedDevelopmentPassives = collectAddedDevelopmentPassives(
+		before,
+		after,
+	);
+	const removedDevelopmentPassives = collectRemovedDevelopmentPassives(
+		before,
+		after,
+	);
 	for (const [id, passive] of next) {
 		if (previous.has(id)) {
 			continue;
 		}
 		if (isBuildingPassive(id, newBuildings)) {
+			continue;
+		}
+		if (addedDevelopmentPassives.has(id)) {
 			continue;
 		}
 		const { icon, label } = resolvePassivePresentation(passive);
@@ -59,6 +112,9 @@ export function appendPassiveChanges(
 	}
 	for (const [id, passive] of previous) {
 		if (next.has(id)) {
+			continue;
+		}
+		if (removedDevelopmentPassives.has(id)) {
 			continue;
 		}
 		const { icon, label } = resolvePassivePresentation(passive);
