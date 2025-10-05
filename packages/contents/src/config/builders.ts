@@ -1,11 +1,8 @@
 import type {
-	ActionConfig,
 	ActionEffect,
 	ActionEffectGroup,
 	ActionEffectGroupOption,
 	AttackTarget,
-	BuildingConfig,
-	DevelopmentConfig,
 	EffectConfig,
 	EffectDef,
 	EvaluatorDef,
@@ -26,8 +23,8 @@ import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
 import type { DevelopmentId } from '../developments';
-import type { TriggerKey } from '../defs';
-import type { ActionId } from '../actions';
+import type { BuildingDef, DevelopmentDef, Focus, TriggerKey } from '../defs';
+import type { ActionCategory, ActionDef, ActionId } from '../actions';
 import type {
 	PhaseId as PhaseIdentifier,
 	PhaseStepId as PhaseStepIdentifier,
@@ -1713,13 +1710,28 @@ class BaseBuilder<T extends { id: string; name: string }> {
 	}
 }
 
-type ActionBuilderConfig = ActionConfig;
+type ActionBuilderConfig = ActionDef;
 
 export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	private readonly effectGroupIds = new Set<string>();
 
 	constructor() {
 		super({ effects: [] }, 'Action');
+	}
+
+	category(category: ActionCategory) {
+		this.config.category = category;
+		return this;
+	}
+
+	order(order: number) {
+		this.config.order = order;
+		return this;
+	}
+
+	focus(focus: Focus) {
+		this.config.focus = focus;
+		return this;
 	}
 	cost(key: ResourceKey, amount: number) {
 		this.config.baseCosts = this.config.baseCosts || {};
@@ -1759,7 +1771,7 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	}
 }
 
-export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
+export class BuildingBuilder extends BaseBuilder<BuildingDef> {
 	constructor() {
 		super(
 			{ costs: {} as Record<ResourceKey, number>, onBuild: [] },
@@ -1816,9 +1828,14 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
 		this.config.onAttackResolved.push(effect);
 		return this;
 	}
+
+	focus(focus: Focus) {
+		this.config.focus = focus;
+		return this;
+	}
 }
 
-export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
+export class DevelopmentBuilder extends BaseBuilder<DevelopmentDef> {
 	constructor() {
 		super({}, 'Development');
 	}
@@ -1868,6 +1885,16 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
 	}
 	system(flag = true) {
 		this.config.system = flag;
+		return this;
+	}
+
+	order(order: number) {
+		this.config.order = order;
+		return this;
+	}
+
+	focus(focus: Focus) {
+		this.config.focus = focus;
 		return this;
 	}
 }

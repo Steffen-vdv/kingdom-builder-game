@@ -12,7 +12,14 @@ export const ON_GAIN_AP_STEP = 'onGainAPStep';
 export const BROOM_ICON = '🧹';
 export const RESOURCE_TRANSFER_ICON = '🔁';
 
-export type Focus = 'economy' | 'aggressive' | 'defense' | 'other';
+export const Focus = {
+	Economy: 'economy',
+	Aggressive: 'aggressive',
+	Defense: 'defense',
+	Other: 'other',
+} as const;
+
+export type Focus = (typeof Focus)[keyof typeof Focus];
 
 export interface Triggered {
 	onGrowthPhase?: EffectDef[] | undefined;
