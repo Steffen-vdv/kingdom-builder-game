@@ -18,7 +18,8 @@ class BuildingCore implements ContentTranslator<string> {
 	}
 	log(id: string, ctx: EngineContext): string[] {
 		const { name, icon } = resolveBuildingDisplay(id, ctx);
-		return [`${icon}${name}`];
+		const display = [icon, name].filter(Boolean).join(' ').trim();
+		return [display || name];
 	}
 }
 

@@ -3,12 +3,10 @@ import {
 	RESOURCES,
 	STATS,
 	POPULATION_ROLES,
-	LAND_INFO,
 	SLOT_INFO,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import { formatStatValue, statDisplaysAsPercent } from '../../utils/stats';
-import { logContent } from '../content';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
 import { resolvePassivePresentation } from './passives';
 import {
@@ -21,6 +19,10 @@ import {
 	type SignedDelta,
 } from './diffFormatting';
 import { type PlayerSnapshot } from './snapshots';
+export {
+	appendBuildingChanges,
+	appendLandChanges,
+} from './buildingLandChanges';
 
 function describeResourceChange(
 	key: ResourceKey,
@@ -122,44 +124,6 @@ export function appendStatChanges(
 			changes.push(`${line}${breakdown}`);
 		} else {
 			changes.push(line);
-		}
-	}
-}
-export function appendBuildingChanges(
-	changes: string[],
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-	context: EngineContext,
-) {
-	const previous = new Set(before.buildings);
-	const next = new Set(after.buildings);
-	for (const id of next) {
-		if (previous.has(id)) {
-			continue;
-		}
-		const label = logContent('building', id, context)[0] ?? id;
-		changes.push(`${label} built`);
-	}
-}
-export function appendLandChanges(
-	changes: string[],
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-	context: EngineContext,
-) {
-	for (const land of after.lands) {
-		const previous = before.lands.find((item) => item.id === land.id);
-		if (!previous) {
-			changes.push(`${LAND_INFO.icon} +1 ${LAND_INFO.label}`);
-			continue;
-		}
-		for (const development of land.developments) {
-			if (previous.developments.includes(development)) {
-				continue;
-			}
-			const info = logContent('development', development, context);
-			const label = info[0] ?? development;
-			changes.push(`${LAND_INFO.icon} +${label}`);
 		}
 	}
 }
