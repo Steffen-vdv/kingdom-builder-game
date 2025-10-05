@@ -6,6 +6,7 @@ import {
 	formatPercent,
 	iconLabel,
 } from './shared';
+import { buildAttackSummaryBullet } from './summary';
 import {
 	buildDescribeEntry,
 	buildingFortificationItems,
@@ -44,18 +45,16 @@ const buildingFormatter: AttackTargetFormatter<{
 	},
 	buildBaseEntry(context) {
 		if (context.mode === 'summarize') {
-			const power = context.stats.power;
-			const powerDisplay = power ? power.icon || power.label : 'Attack';
-			return `${powerDisplay} destroy opponent's ${context.targetLabel}`;
+			return buildAttackSummaryBullet(context);
 		}
 		return buildDescribeEntry(context, buildingFortificationItems(context));
 	},
 	buildOnDamageTitle(mode, { info, targetLabel }) {
-		const summaryTarget = info.icon || info.label;
-		const describeTarget = targetLabel;
-		return mode === 'summarize'
-			? `On opponent ${summaryTarget} destruction`
-			: `On opponent ${describeTarget} destruction`;
+		const summaryTarget = info.icon || info.label || targetLabel;
+		if (mode === 'summarize') {
+			return `${summaryTarget}💥`;
+		}
+		return `On opponent ${targetLabel} destruction`;
 	},
 	buildEvaluationEntry(log, context) {
 		const { stats, targetLabel } = context;

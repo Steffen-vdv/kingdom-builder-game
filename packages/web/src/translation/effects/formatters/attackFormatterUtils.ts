@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../content';
 import { summarizeEffects, describeEffects } from '../factory';
+import { prefixOwnerSummary } from './attack/summary';
 import {
 	type AttackTargetFormatter,
 	type Mode,
@@ -47,6 +48,8 @@ export function ownerLabel(owner: 'attacker' | 'defender'): string {
 	return owner === 'attacker' ? 'You' : 'Opponent';
 }
 
+// Attack summary strings must stay icon-based. Target formatters should call
+// buildAttackSummaryBullet for the summarize branch instead of returning prose.
 export function buildBaseEntry(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	mode: Mode,
@@ -77,6 +80,21 @@ export function buildBaseEntry(
 	};
 }
 
+function applyOwnerPresentation(
+	owner: 'attacker' | 'defender',
+	entry: SummaryEntry,
+	mode: Mode,
+	suffix: string,
+): SummaryEntry {
+	if (mode === 'summarize') {
+		return prefixOwnerSummary(owner, entry);
+	}
+	if (typeof entry === 'string') {
+		return `${entry} ${suffix}`;
+	}
+	return { ...entry, title: `${entry.title} ${suffix}` };
+}
+
 export function summarizeOnDamage(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	ctx: EngineContext,
@@ -101,8 +119,9 @@ export function summarizeOnDamage(
 	const collect = (
 		defs: EffectDef[],
 		entries: SummaryEntry[],
-		suffix: string,
+		owner: 'attacker' | 'defender',
 	) => {
+		const suffix = owner === 'defender' ? 'for opponent' : 'for you';
 		entries.forEach((entry, index) => {
 			const definition = defs[index]!;
 			const { actions, others } = categorizeDamageEffects(
@@ -110,22 +129,21 @@ export function summarizeOnDamage(
 				entry,
 				mode,
 			);
-			actionItems.push(...actions);
+			const formattedActions =
+				mode === 'summarize'
+					? actions.map((action) =>
+							applyOwnerPresentation(owner, action, mode, suffix),
+						)
+					: actions;
+			actionItems.push(...formattedActions);
 			others.forEach((other) => {
-				if (typeof other === 'string') {
-					items.push(`${other} ${suffix}`);
-				} else {
-					items.push({
-						...other,
-						title: `${other.title} ${suffix}`,
-					});
-				}
+				items.push(applyOwnerPresentation(owner, other, mode, suffix));
 			});
 		});
 	};
 
-	collect(defenderDefs, defenderEntries, 'for opponent');
-	collect(attackerDefs, attackerEntries, 'for you');
+	collect(defenderDefs, defenderEntries, 'defender');
+	collect(attackerDefs, attackerEntries, 'attacker');
 
 	const combined = items.concat(actionItems);
 	if (!combined.length) {
