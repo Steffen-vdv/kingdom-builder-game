@@ -4,6 +4,7 @@ import {
 	statParams,
 	actionParams,
 	effect,
+	landAdd,
 	requirement,
 	compareRequirement,
 	passiveParams,
@@ -13,7 +14,11 @@ import {
 	populationParams,
 } from '../src/config/builders';
 import { ActionId } from '../src/actions';
-import { Types, PassiveMethods } from '../src/config/builderShared';
+import {
+	Types,
+	LandMethods,
+	PassiveMethods,
+} from '../src/config/builderShared';
 import { RESOURCES, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
 import { describe, expect, it } from 'vitest';
@@ -87,6 +92,15 @@ describe('content builder safeguards', () => {
 		expect(() => effect().build()).toThrowError(
 			'Effect is missing type() and method(). Call effect(Types.X, Methods.Y) or add nested effect(...) calls before build().',
 		);
+	});
+
+	it('builds land:add helper payloads consistently', () => {
+		const count = 3;
+		const manual = effect(Types.Land, LandMethods.ADD)
+			.param('count', count)
+			.build();
+
+		expect(landAdd(count)).toEqual(manual);
 	});
 
 	it('guides requirement configuration mistakes', () => {

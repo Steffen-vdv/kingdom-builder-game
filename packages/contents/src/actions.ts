@@ -7,6 +7,7 @@ import { actionSchema, type ActionConfig } from '@kingdom-builder/protocol';
 import {
 	action,
 	effect,
+	landAdd,
 	compareRequirement,
 	resourceParams,
 	statParams,
@@ -100,7 +101,7 @@ export function createActionRegistry() {
 			.icon('🌱')
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 2)
-			.effect(effect(Types.Land, LandMethods.ADD).param('count', 1).build())
+			.effect(landAdd(1))
 			.effect(
 				effect(Types.Resource, ResourceMethods.ADD)
 					.params(resourceParams().key(Resource.happiness).amount(1))

@@ -31,6 +31,7 @@ import type {
 } from '../phases';
 import {
 	Types,
+	LandMethods,
 	PassiveMethods,
 	RequirementTypes,
 	ParamsBuilder,
@@ -595,6 +596,12 @@ class LandEffectParamsBuilder extends ParamsBuilder<{
 
 export function landParams() {
 	return new LandEffectParamsBuilder();
+}
+
+export function landAdd(count: number) {
+	return effect(Types.Land, LandMethods.ADD)
+		.params(landParams().count(count))
+		.build();
 }
 
 class PassiveEffectParamsBuilder extends ParamsBuilder<{
