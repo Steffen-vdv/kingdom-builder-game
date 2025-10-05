@@ -381,15 +381,16 @@ describe('army attack translation', () => {
 		);
 		const warAmt = (warRes?.params as { amount?: number })?.amount ?? 0;
 		const summary = summarizeContent('action', attack.id, ctx);
-		const targetDisplay = iconLabel(castle.icon, castle.label, castle.id);
+		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
+		const targetSummary = castle.icon || castle.label;
 		expect(summary).toEqual([
-			`${powerStat.icon ?? powerStat.label} vs opponent's ${targetDisplay}`,
+			`${powerSummary}${targetSummary}`,
 			{
-				title: `On opponent ${castle.icon} damage`,
+				title: `${targetSummary}💥`,
 				items: [
-					`${happiness.icon}${defenderAmt} for opponent`,
-					`${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt} for you`,
-					`${plunder.icon} ${plunder.name}`,
+					`🛡️${happiness.icon}${defenderAmt}`,
+					`⚔️${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt}`,
+					`⚔️${plunder.icon} ${plunder.name}`,
 				],
 			},
 			`${warWeariness.icon}${warAmt >= 0 ? '+' : ''}${warAmt}`,
@@ -497,9 +498,9 @@ describe('army attack translation', () => {
 		const targetDisplay = iconLabel(castle.icon, castle.label, castle.id);
 
 		const summary = summarizeContent('action', attack.id, ctx);
-		expect(summary).toEqual([
-			`${powerStat.icon ?? powerStat.label} vs opponent's ${targetDisplay}`,
-		]);
+		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
+		const targetSummary = castle.icon || castle.label;
+		expect(summary).toEqual([`${powerSummary}${targetSummary}`]);
 
 		const description = describeContent('action', attack.id, ctx);
 		expect(description).toEqual([
@@ -549,14 +550,7 @@ describe('army attack translation', () => {
 		const { ctx, buildingAttack, building } = createSyntheticCtx();
 		const powerStat = getStat(SYNTH_POWER_STAT_KEY)!;
 		const gold = RESOURCES[Resource.gold];
-		const buildingDisplay = iconLabel(
-			building.icon,
-			building.name,
-			building.id,
-		);
-		const summaryTitle = building.icon
-			? `On opponent ${building.icon} destruction`
-			: `On opponent ${building.name ?? building.id} destruction`;
+		const summaryTarget = building.icon || building.name || building.id;
 		const attackEffect = buildingAttack.effects.find(
 			(e: EffectDef) => e.type === 'attack',
 		);
@@ -572,11 +566,12 @@ describe('army attack translation', () => {
 			(rewardEffect?.params as { amount?: number })?.amount ?? 0;
 
 		const summary = summarizeContent('action', buildingAttack.id, ctx);
+		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		expect(summary).toEqual([
-			`${powerStat.icon ?? powerStat.label} destroy opponent's ${buildingDisplay}`,
+			`${powerSummary}${summaryTarget}`,
 			{
-				title: summaryTitle,
-				items: [`${gold.icon}+${rewardAmount} for you`],
+				title: `${summaryTarget}💥`,
+				items: [`⚔️${gold.icon}+${rewardAmount}`],
 			},
 		]);
 	});
