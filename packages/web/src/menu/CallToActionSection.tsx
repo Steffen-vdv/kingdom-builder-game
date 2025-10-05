@@ -8,29 +8,22 @@ const KNOWLEDGE_CARD_CLASS = [
 	'dark:bg-white/5 dark:text-slate-300/80',
 ].join(' ');
 
-const GHOST_BUTTON_CLASS = [
-	'w-full rounded-full border border-slate-200/60 bg-white/50 px-5',
-	'py-2 text-sm font-semibold text-slate-700',
+const CTA_BUTTON_BASE_CLASS = [
+	'w-full rounded-full px-6 py-3 text-base font-semibold',
+	'sm:w-64',
+].join(' ');
+
+const CTA_GHOST_BUTTON_CLASS = [
+	'w-full rounded-full border border-slate-200/60 bg-white/55 px-5 py-2.5 text-sm font-semibold text-slate-700',
 	'hover:border-slate-300 hover:bg-white/80',
 	'dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
 	'dark:hover:border-white/20 dark:hover:bg-white/10 sm:w-auto',
 ].join(' ');
 
-const PRIMARY_BUTTON_CLASS = [
-	'w-full rounded-full px-5 py-3 text-base font-semibold shadow-lg',
-	'shadow-blue-500/30',
-].join(' ');
-
-const DEV_BUTTON_CLASS = [
-	'w-full rounded-full px-5 py-3 text-base font-semibold shadow-lg',
-	'shadow-purple-600/30 dark:shadow-purple-900/40',
-].join(' ');
-
 const SETTINGS_BUTTON_CLASS = [
-	'w-full rounded-full border border-slate-200/60 bg-white/50 px-5',
-	'py-2.5 text-sm font-semibold text-slate-700 shadow-inner shadow-white/40',
-	'transition dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
-	'hover:border-slate-300 hover:bg-white/75',
+	'w-full rounded-full border border-slate-200/60 bg-white/55 px-5 py-2.5 text-sm font-semibold text-slate-700',
+	'transition hover:border-slate-300 hover:bg-white/75',
+	'dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
 	'dark:hover:border-white/20 dark:hover:bg-white/10 sm:w-full',
 ].join(' ');
 
@@ -83,6 +76,62 @@ export function CallToActionSection({
 	onTutorial,
 	onOpenSettings,
 }: CallToActionProps) {
+	const startGameButton = (
+		<Button
+			variant="primary"
+			className={CTA_BUTTON_BASE_CLASS}
+			onClick={onStart}
+			icon="🚀"
+		>
+			Start New Game
+		</Button>
+	);
+	const startDevButton = (
+		<Button
+			variant="dev"
+			className={CTA_BUTTON_BASE_CLASS}
+			onClick={onStartDev}
+			icon="🧪"
+		>
+			Start Dev/Debug Game
+		</Button>
+	);
+	const settingsButton = (
+		<Button
+			variant="ghost"
+			className={SETTINGS_BUTTON_CLASS}
+			onClick={onOpenSettings}
+			icon="⚙️"
+		>
+			Settings
+		</Button>
+	);
+	const tutorialButton = (
+		<Button
+			variant="ghost"
+			className={CTA_GHOST_BUTTON_CLASS}
+			onClick={onTutorial}
+			icon="📘"
+		>
+			Tutorial
+		</Button>
+	);
+	const overviewButton = (
+		<Button
+			variant="ghost"
+			className={CTA_GHOST_BUTTON_CLASS}
+			onClick={onOverview}
+			icon="🧭"
+		>
+			Game Overview
+		</Button>
+	);
+	const knowledgeActions = (
+		<div className={KNOWLEDGE_ACTIONS_CLASS}>
+			{tutorialButton}
+			{overviewButton}
+		</div>
+	);
 	return (
 		<ShowcaseCard className="flex flex-col gap-8">
 			<div className={CTA_CONTENT_LAYOUT_CLASS}>
@@ -96,33 +145,9 @@ export function CallToActionSection({
 					</p>
 				</div>
 				<div className={CTA_BUTTON_COLUMN_CLASS}>
-					<Button
-						variant="primary"
-						className={PRIMARY_BUTTON_CLASS}
-						onClick={onStart}
-					>
-						Start New Game
-					</Button>
-					<Button
-						variant="dev"
-						className={DEV_BUTTON_CLASS}
-						onClick={onStartDev}
-					>
-						Start Dev/Debug Game
-					</Button>
-					<Button
-						variant="ghost"
-						className={[
-							SETTINGS_BUTTON_CLASS,
-							'flex items-center justify-center gap-2',
-						].join(' ')}
-						onClick={onOpenSettings}
-					>
-						<span aria-hidden className="text-base">
-							⚙️
-						</span>
-						<span>Settings</span>
-					</Button>
+					{startGameButton}
+					{startDevButton}
+					{settingsButton}
 				</div>
 			</div>
 
@@ -130,24 +155,9 @@ export function CallToActionSection({
 				<div className={KNOWLEDGE_HEADER_LAYOUT_CLASS}>
 					{/* prettier-ignore */}
 					<div className={KNOWLEDGE_TITLE_CLASS}>
-						Learn The Basics
-					</div>
-					<div className={KNOWLEDGE_ACTIONS_CLASS}>
-						<Button
-							variant="ghost"
-							className={GHOST_BUTTON_CLASS}
-							onClick={onTutorial}
-						>
-							Tutorial
-						</Button>
-						<Button
-							variant="ghost"
-							className={GHOST_BUTTON_CLASS}
-							onClick={onOverview}
-						>
-							Game Overview
-						</Button>
-					</div>
+                                                Learn The Basics
+                                        </div>
+					{knowledgeActions}
 				</div>
 				<p>{KNOWLEDGE_PARAGRAPH_TEXT}</p>
 			</div>

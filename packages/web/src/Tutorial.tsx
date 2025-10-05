@@ -127,6 +127,7 @@ export default function Tutorial({ onBack }: TutorialProps) {
 					variant="ghost"
 					className={TUTORIAL_BACK_BUTTON_CLASS}
 					onClick={onBack}
+					icon="🏰"
 				>
 					Back to Start
 				</Button>

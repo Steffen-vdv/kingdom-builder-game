@@ -118,6 +118,16 @@ function GameLayout() {
 			<PhasePanel height={phasePanelHeight} />
 		</div>
 	);
+	const settingsButton = (
+		<Button onClick={() => setSettingsOpen(true)} variant="secondary" icon="⚙️">
+			Settings
+		</Button>
+	);
+	const quitButton = (
+		<Button onClick={requestQuit} variant="danger" icon="🏳️">
+			Quit Game
+		</Button>
+	);
 	return (
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
 			<SettingsDialog
@@ -155,22 +165,8 @@ function GameLayout() {
 					{onExit && (
 						<div className="ml-4 flex items-center gap-3">
 							<TimeControl />
-							<Button
-								onClick={() => setSettingsOpen(true)}
-								variant="secondary"
-								aria-label="Open settings"
-								title="Settings"
-								className="h-10 w-10 rounded-full p-0 text-lg shadow-lg shadow-slate-900/10 dark:shadow-black/30"
-							>
-								<span aria-hidden>⚙️</span>
-							</Button>
-							<Button
-								onClick={requestQuit}
-								variant="danger"
-								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
-							>
-								Quit
-							</Button>
+							{settingsButton}
+							{quitButton}
 						</div>
 					)}
 				</div>
