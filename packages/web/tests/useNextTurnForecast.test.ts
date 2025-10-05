@@ -35,6 +35,9 @@ vi.mock('@kingdom-builder/engine', async () => {
 interface MockGameEngine {
 	session: { getLegacyContext: ReturnType<typeof vi.fn> };
 	sessionState: EngineSessionSnapshot;
+	resolution: null;
+	showResolution: ReturnType<typeof vi.fn>;
+	acknowledgeResolution: ReturnType<typeof vi.fn>;
 }
 
 const [primaryResource] = Object.keys(RESOURCES) as ResourceKey[];
@@ -95,6 +98,9 @@ const contextStub = { context: true } as const;
 const engineValue: MockGameEngine = {
 	session: { getLegacyContext: vi.fn(() => contextStub) },
 	sessionState: undefined as unknown as EngineSessionSnapshot,
+	resolution: null,
+	showResolution: vi.fn().mockResolvedValue(undefined),
+	acknowledgeResolution: vi.fn(),
 };
 
 const sessionHelpers = createSessionHelpers(engineValue, {

@@ -22,6 +22,9 @@ export function createActionsPanelState(actionCostResource: string) {
 		updateMainPhaseStep: vi.fn(),
 		darkMode: false,
 		onToggleDark: vi.fn(),
+		resolution: null,
+		showResolution: vi.fn().mockResolvedValue(undefined),
+		acknowledgeResolution: vi.fn(),
 		timeScale: 1,
 		setTimeScale: vi.fn(),
 	} as const;

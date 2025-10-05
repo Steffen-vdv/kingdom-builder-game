@@ -1,0 +1,51 @@
+import { vi } from 'vitest';
+import type { EngineContext } from '@kingdom-builder/engine';
+import { createTranslationContext } from '../../src/translation/context';
+import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
+import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
+
+type MockGame = {
+	ctx: EngineContext;
+	translationContext: ReturnType<typeof createTranslationContext>;
+	handleHoverCard: ReturnType<typeof vi.fn>;
+	clearHoverCard: ReturnType<typeof vi.fn>;
+	resolution: null;
+	showResolution: ReturnType<typeof vi.fn>;
+	acknowledgeResolution: ReturnType<typeof vi.fn>;
+};
+
+type PassiveGameContext = {
+	mockGame: MockGame;
+	handleHoverCard: ReturnType<typeof vi.fn>;
+	clearHoverCard: ReturnType<typeof vi.fn>;
+};
+
+function createPassiveGame(ctx: EngineContext): PassiveGameContext {
+	const handleHoverCard = vi.fn();
+	const clearHoverCard = vi.fn();
+	const translationContext = createTranslationContext(
+		snapshotEngine(ctx),
+		{
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+		},
+		{
+			pullEffectLog: (key) => ctx.pullEffectLog(key),
+			passives: ctx.passives,
+		},
+	);
+	const mockGame: MockGame = {
+		ctx,
+		translationContext,
+		handleHoverCard,
+		clearHoverCard,
+		resolution: null,
+		showResolution: vi.fn().mockResolvedValue(undefined),
+		acknowledgeResolution: vi.fn(),
+	};
+	return { mockGame, handleHoverCard, clearHoverCard };
+}
+
+export type { MockGame, PassiveGameContext };
+export { createPassiveGame };

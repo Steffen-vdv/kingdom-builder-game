@@ -50,6 +50,7 @@ const mockGame = {
 	ctx,
 	translationContext,
 	log: [],
+	logOverflowed: false,
 	hoverCard: null,
 	handleHoverCard: vi.fn(),
 	clearHoverCard: vi.fn(),
@@ -68,6 +69,9 @@ const mockGame = {
 	updateMainPhaseStep: vi.fn(),
 	darkMode: false,
 	onToggleDark: vi.fn(),
+	resolution: null,
+	showResolution: vi.fn().mockResolvedValue(undefined),
+	acknowledgeResolution: vi.fn(),
 };
 
 const resourceForecast = Object.keys(RESOURCES).reduce<Record<string, number>>(
