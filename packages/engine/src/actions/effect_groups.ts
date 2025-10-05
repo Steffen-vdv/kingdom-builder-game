@@ -186,8 +186,12 @@ export function resolveActionEffects<T extends string>(
 			(candidate) => candidate.id === selection.optionId,
 		);
 		if (!option) {
+			const optionId = selection.optionId;
+			const effectId = effect.id;
+			const actionId = actionDefinition.id;
 			throw new Error(
-				`Unknown option "${selection.optionId}" for effect group "${effect.id}" on action ${actionDefinition.id}`,
+				`Unknown option "${optionId}" for effect group "${effectId}" ` +
+					`on action ${actionId}`,
 			);
 		}
 		const mergedParams = {
