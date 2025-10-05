@@ -114,6 +114,7 @@ export default function Overview({
 					variant="ghost"
 					className={OVERVIEW_BACK_BUTTON_CLASS}
 					onClick={onBack}
+					icon="🏰"
 				>
 					Back to Start
 				</Button>

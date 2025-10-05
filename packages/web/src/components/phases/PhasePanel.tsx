@@ -86,8 +86,8 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 					onClick={handleSelectPhase}
 					variant="ghost"
 					className={tabClasses}
+					icon={phase.icon}
 				>
-					<span className="text-lg leading-none">{phase.icon}</span>
 					<span className="text-xs font-semibold uppercase tracking-[0.2em]">
 						{phase.label}
 					</span>
@@ -182,6 +182,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 				variant="primary"
 				disabled={shouldDisableEndTurn}
 				onClick={handleEndTurnClick}
+				icon="⏭️"
 			>
 				Next Turn
 			</Button>

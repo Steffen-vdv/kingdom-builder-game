@@ -118,6 +118,16 @@ function GameLayout() {
 			<PhasePanel height={phasePanelHeight} />
 		</div>
 	);
+	const settingsButton = (
+		<Button onClick={() => setSettingsOpen(true)} variant="secondary" icon="⚙️">
+			Settings
+		</Button>
+	);
+	const quitButton = (
+		<Button onClick={requestQuit} variant="danger" icon="🏳️">
+			Quit Game
+		</Button>
+	);
 	return (
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
 			<SettingsDialog
@@ -148,34 +158,20 @@ function GameLayout() {
 			</div>
 
 			<div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-8 sm:px-8 lg:px-12">
-				<div className="mb-4 flex items-center justify-between rounded-3xl border border-white/50 bg-white/70 px-6 py-4 shadow-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/40 frosted-surface">
+				<div className="flex items-center justify-between rounded-3xl border border-white/50 bg-white/70 px-6 py-4 shadow-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/40 frosted-surface">
 					<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
 						Kingdom Builder
 					</h1>
 					{onExit && (
 						<div className="ml-4 flex items-center gap-3">
 							<TimeControl />
-							<Button
-								onClick={() => setSettingsOpen(true)}
-								variant="secondary"
-								aria-label="Open settings"
-								title="Settings"
-								className="h-10 w-10 rounded-full p-0 text-lg shadow-lg shadow-slate-900/10 dark:shadow-black/30"
-							>
-								<span aria-hidden>⚙️</span>
-							</Button>
-							<Button
-								onClick={requestQuit}
-								variant="danger"
-								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
-							>
-								Quit
-							</Button>
+							{settingsButton}
+							{quitButton}
 						</div>
 					)}
 				</div>
 
-				<div className="grid grid-cols-1 gap-y-6 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
+				<div className="grid grid-cols-1 gap-y-8 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
 					<section
 						ref={playerAreaRef}
 						className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface"

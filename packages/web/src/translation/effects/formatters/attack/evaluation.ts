@@ -34,15 +34,25 @@ export function buildDescribeEntry(
 	const { stats, ignoreAbsorption } = context;
 	const power = stats.power;
 	const absorption = stats.absorption;
+	const powerLabel = statLabel(power, 'attack power');
+	const absorptionLabel = statLabel(absorption, 'damage reduction');
 	const title = power
-		? `Attack opponent with your ${statLabel(power, 'attack power')}`
+		? ['Attack opponent with your ', powerLabel].join('')
 		: 'Attack opponent with your forces';
+	const ignoringAbsorption = [
+		'Ignoring ',
+		absorptionLabel,
+		' damage reduction',
+	].join('');
+	const appliedAbsorption = [absorptionLabel, ' damage reduction applied'].join(
+		'',
+	);
 	const absorptionItem = ignoreAbsorption
 		? absorption
-			? `Ignoring ${statLabel(absorption, 'damage reduction')} damage reduction`
+			? ignoringAbsorption
 			: 'Ignoring damage reduction'
 		: absorption
-			? `${statLabel(absorption, 'damage reduction')} damage reduction applied`
+			? appliedAbsorption
 			: 'Damage reduction applied';
 	return {
 		title,
@@ -57,14 +67,25 @@ export function defaultFortificationItems(
 	const fort = stats.fortification;
 	if (!fort) {
 		return [
-			`Damage applied to opponent's defenses`,
-			`If opponent defenses fall, overflow remaining damage on opponent ${targetLabel}`,
+			"Damage applied to opponent's defenses",
+			[
+				'If opponent defenses fall, ',
+				'overflow remaining damage ',
+				'on opponent ',
+				targetLabel,
+			].join(''),
 		];
 	}
 	const fortDisplay = statLabel(fort, 'fortification');
 	return [
 		`Damage applied to opponent's ${fortDisplay}`,
-		`If opponent ${fortDisplay} reduced to 0, overflow remaining damage on opponent ${targetLabel}`,
+		[
+			'If opponent ',
+			fortDisplay,
+			' reduced to 0, overflow remaining damage ',
+			'on opponent ',
+			targetLabel,
+		].join(''),
 	];
 }
 
@@ -76,13 +97,24 @@ export function buildingFortificationItems(
 	if (!fort) {
 		return [
 			`Damage applied to opponent's defenses`,
-			`If opponent defenses fall, overflow remaining damage attempts to destroy opponent ${targetLabel}`,
+			[
+				'If opponent defenses fall, ',
+				'overflow remaining damage ',
+				'attempts to destroy opponent ',
+				targetLabel,
+			].join(''),
 		];
 	}
 	const fortDisplay = statLabel(fort, 'fortification');
 	return [
 		`Damage applied to opponent's ${fortDisplay}`,
-		`If opponent ${fortDisplay} reduced to 0, overflow remaining damage attempts to destroy opponent ${targetLabel}`,
+		[
+			'If opponent ',
+			fortDisplay,
+			' reduced to 0, overflow remaining damage ',
+			'attempts to destroy opponent ',
+			targetLabel,
+		].join(''),
 	];
 }
 
@@ -130,24 +162,32 @@ export function buildStandardEvaluationEntry(
 		}
 		return `${info.label} ${formatted}`;
 	};
-	const title = `Damage evaluation: ${powerValue(log.power.modified)} vs. ${absorptionPart} ${fortPart} ${targetDisplay(
-		target.before,
-	)}`;
+	const title = [
+		'Damage evaluation:',
+		`${powerValue(log.power.modified)} vs.`,
+		absorptionPart,
+		fortPart,
+		targetDisplay(target.before),
+	].join(' ');
 	const items: SummaryEntry[] = [];
 
 	if (log.absorption.ignored) {
-		items.push(`${powerValue(log.power.modified)} ignores ${absorptionLabel}`);
+		items.push(
+			[powerValue(log.power.modified), 'ignores', absorptionLabel].join(' '),
+		);
 	} else {
 		items.push(
-			`${powerValue(log.power.modified)} vs. ${absorptionValue(
-				log.absorption.before,
-			)} --> ${powerValue(log.absorption.damageAfter)}`,
+			[
+				`${powerValue(log.power.modified)} vs.`,
+				absorptionValue(log.absorption.before),
+				`--> ${powerValue(log.absorption.damageAfter)}`,
+			].join(' '),
 		);
 	}
 
 	if (log.fortification.ignored) {
 		items.push(
-			`${powerValue(log.absorption.damageAfter)} bypasses ${fortLabel}`,
+			[powerValue(log.absorption.damageAfter), 'bypasses', fortLabel].join(' '),
 		);
 	} else {
 		const remaining = Math.max(
@@ -155,14 +195,21 @@ export function buildStandardEvaluationEntry(
 			log.absorption.damageAfter - log.fortification.damage,
 		);
 		items.push(
-			`${powerValue(log.absorption.damageAfter)} vs. ${fortValue(
-				log.fortification.before,
-			)} --> ${fortValue(log.fortification.after)} ${powerValue(remaining)}`,
+			[
+				`${powerValue(log.absorption.damageAfter)} vs.`,
+				fortValue(log.fortification.before),
+				`--> ${fortValue(log.fortification.after)}`,
+				powerValue(remaining),
+			].join(' '),
 		);
 	}
 
 	items.push(
-		`${powerValue(log.target.damage)} vs. ${targetDisplay(target.before)} --> ${targetDisplay(target.after)}`,
+		[
+			`${powerValue(log.target.damage)} vs.`,
+			targetDisplay(target.before),
+			`--> ${targetDisplay(target.after)}`,
+		].join(' '),
 	);
 
 	return { title, items };

@@ -88,9 +88,10 @@ function executeAction<T extends string>(
 			.map((id) => `"${id}"`)
 			.join(', ');
 		const suffix = resolved.missingSelections.length > 1 ? 'groups' : 'group';
-		throw new Error(
-			`Action ${actionDefinition.id} requires a selection for effect ${suffix} ${formatted}`,
-		);
+		const missingSelectionMessage =
+			`Action ${actionDefinition.id} requires a selection for effect ` +
+			`${suffix} ${formatted}`;
+		throw new Error(missingSelectionMessage);
 	}
 	const pendingBuildingIds = collectPendingBuildingAdds(resolved.effects);
 	assertBuildingsNotYetConstructed(pendingBuildingIds, engineContext);
