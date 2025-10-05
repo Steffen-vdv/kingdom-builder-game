@@ -70,12 +70,29 @@ function buildHoverDetails(
 		context,
 		mergedParams,
 	);
-	const { effects, description } = splitSummary(hoverSummary);
+	const { effects: baseEffects, description } = splitSummary(hoverSummary);
 	const requirements = getActionRequirements(
 		option.actionId,
 		context,
 		mergedParams,
 	).map(formatRequirement);
+	let effects = baseEffects;
+	const developmentId = mergedParams?.id;
+	if (typeof developmentId === 'string') {
+		try {
+			const developmentSummary = describeContent(
+				'development',
+				developmentId,
+				context,
+			);
+			const { effects: developmentEffects } = splitSummary(developmentSummary);
+			if (developmentEffects.length > 0) {
+				effects = developmentEffects;
+			}
+		} catch {
+			/* ignore missing development summaries */
+		}
+	}
 	return {
 		title: optionLabel.trim() || option.label,
 		effects,

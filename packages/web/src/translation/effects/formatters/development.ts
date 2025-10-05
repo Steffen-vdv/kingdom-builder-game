@@ -1,4 +1,3 @@
-import { describeContent } from '../../content';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('development', 'add', {
@@ -23,29 +22,7 @@ registerEffectFormatter('development', 'add', {
 		const label = def?.name || id;
 		const icon = def?.icon || '';
 		const decoratedLabel = [icon, label].filter(Boolean).join(' ').trim();
-		const details = describeContent('development', id, ctx);
-		if (!details.length) {
-			const addition = `Add ${decoratedLabel}`.trim();
-			return addition;
-		}
-		const title = decoratedLabel.length > 0 ? decoratedLabel : label || id;
-		const detailItems = details.slice();
-		const normalizedTitle = title.trim();
-		if (
-			normalizedTitle.length > 0 &&
-			!detailItems.some(
-				(entry) =>
-					typeof entry === 'string' && entry.trim() === normalizedTitle,
-			)
-		) {
-			detailItems.unshift(normalizedTitle);
-		}
-		return [
-			{
-				title,
-				items: detailItems,
-			},
-		];
+		return `Add ${decoratedLabel}`.trim();
 	},
 });
 
