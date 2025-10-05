@@ -120,18 +120,30 @@ function ensureLandCount(context: EngineContext, target: number): void {
 	applyEffect(context, landEffect);
 }
 
-function ensureDevelopment(
-	context: EngineContext,
-	index: number,
-	id: string,
-): void {
+function ensureDevelopment(context: EngineContext, id: string): void {
 	const player = context.activePlayer;
-	const land = player.lands[index];
-	if (!land) {
+	const developmentId = String(id);
+	const alreadyOwned = player.lands.some((land) => {
+		return land.developments.includes(developmentId);
+	});
+	if (alreadyOwned) {
 		return;
 	}
-	const developmentId = String(id);
-	if (land.developments.includes(developmentId)) {
+	let land = player.lands.find((candidate) => {
+		return candidate.slotsUsed < candidate.slotsMax;
+	});
+	if (!land) {
+		const landEffect: EffectDef<{ count: number }> = {
+			type: 'land',
+			method: 'add',
+			params: { count: 1 },
+		};
+		applyEffect(context, landEffect);
+		land = player.lands.find((candidate) => {
+			return candidate.slotsUsed < candidate.slotsMax;
+		});
+	}
+	if (!land) {
 		return;
 	}
 	const developmentEffect: EffectDef<{ id: string; landId: string }> = {
@@ -181,9 +193,12 @@ export function initializeDeveloperMode(context: EngineContext): void {
 		POPULATION_PLAN.forEach(({ role, count }) => {
 			ensurePopulation(context, role, count);
 		});
-		ensureLandCount(context, TARGET_LAND_COUNT);
-		DEVELOPMENT_PLAN.forEach((id, index) => {
-			ensureDevelopment(context, index, id);
+		ensureLandCount(
+			context,
+			Math.max(TARGET_LAND_COUNT, DEVELOPMENT_PLAN.length),
+		);
+		DEVELOPMENT_PLAN.forEach((id) => {
+			ensureDevelopment(context, id);
 		});
 		ensureMill(context);
 	});
