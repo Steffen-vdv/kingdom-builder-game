@@ -1,4 +1,9 @@
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { EngineContext as LegacyEngineContext } from '@kingdom-builder/engine';
+import type { TranslationContext } from '../context';
+
+type BuildingLookupContext =
+	| Pick<TranslationContext, 'buildings'>
+	| Pick<LegacyEngineContext, 'buildings'>;
 
 const FALLBACK_ICONS = new Map<string, string>();
 
@@ -6,13 +11,16 @@ export function registerBuildingIconFallback(id: string, icon: string): void {
 	FALLBACK_ICONS.set(id, icon);
 }
 
-export function resolveBuildingIcon(id: string, ctx: EngineContext): string {
+export function resolveBuildingIcon(
+	id: string,
+	ctx: BuildingLookupContext,
+): string {
 	return resolveBuildingDisplay(id, ctx).icon;
 }
 
 export function resolveBuildingDisplay(
 	id: string,
-	ctx: EngineContext,
+	ctx: BuildingLookupContext,
 ): { name: string; icon: string } {
 	let name = id;
 	let icon = '';

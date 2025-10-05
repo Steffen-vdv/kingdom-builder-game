@@ -1,5 +1,5 @@
-import type { EngineContext } from '@kingdom-builder/engine';
 import { registerEffectFormatter } from '../factory';
+import type { TranslationContext } from '../../context';
 
 interface DevelopmentChangeVerbs {
 	describe: string;
@@ -14,7 +14,7 @@ interface DevelopmentChangeCopy {
 
 function renderDevelopmentChange(
 	id: string | undefined,
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	verbs: DevelopmentChangeVerbs,
 ): DevelopmentChangeCopy {
 	const safeId = typeof id === 'string' && id.length ? id : 'development';

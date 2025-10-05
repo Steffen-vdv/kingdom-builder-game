@@ -2,7 +2,6 @@ import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	AttackLog,
 	AttackOnDamageLogEntry,
-	EngineContext,
 	EffectDef,
 } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../content';
@@ -22,10 +21,11 @@ import {
 	resolveAttackTargetFormatter,
 	type AttackTargetFormatter,
 } from './attack/target-formatter';
+import type { TranslationContext } from '../../context';
 
 type AttackOnDamageFormatterArgs = {
 	entry: AttackOnDamageLogEntry;
-	ctx: EngineContext;
+	ctx: TranslationContext;
 	formatter: AttackTargetFormatter;
 };
 
@@ -53,7 +53,7 @@ function resolveAttackOnDamageFormatter(
 
 function fallbackLog(
 	effectDefinition: EffectDef<Record<string, unknown>>,
-	ctx: EngineContext,
+	ctx: TranslationContext,
 ): SummaryEntry[] {
 	const baseEntry = buildBaseEntry(effectDefinition, 'describe');
 	const onDamage = summarizeOnDamage(
@@ -83,7 +83,7 @@ function buildEvaluationEntry(
 
 function buildActionLog(
 	entry: AttackOnDamageLogEntry,
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	formatter: AttackTargetFormatter,
 ): SummaryEntry {
 	const id = entry.effect.params?.['id'] as string | undefined;
@@ -125,7 +125,7 @@ function buildActionLog(
 
 export function buildOnDamageEntry(
 	logEntries: AttackLog['onDamage'],
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	effectDefinition: EffectDef<Record<string, unknown>>,
 ): SummaryEntry | null {
 	if (!logEntries.length) {

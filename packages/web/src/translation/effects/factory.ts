@@ -1,4 +1,5 @@
-import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/engine';
+import type { TranslationContext } from '../context';
 import type { SummaryEntry } from '../content';
 export {
 	formatEffectGroups,
@@ -12,15 +13,15 @@ export {
 export interface EffectFormatter {
 	summarize?: (
 		effect: EffectDef<Record<string, unknown>>,
-		context: EngineContext,
+		context: TranslationContext,
 	) => SummaryEntry | SummaryEntry[] | null;
 	describe?: (
 		effect: EffectDef<Record<string, unknown>>,
-		context: EngineContext,
+		context: TranslationContext,
 	) => SummaryEntry | SummaryEntry[] | null;
 	log?: (
 		effect: EffectDef<Record<string, unknown>>,
-		context: EngineContext,
+		context: TranslationContext,
 	) => SummaryEntry | SummaryEntry[] | null;
 }
 
@@ -39,17 +40,17 @@ export interface EvaluatorFormatter {
 	summarize?: (
 		evaluator: { type: string; params: Record<string, unknown> },
 		subEntries: SummaryEntry[],
-		context: EngineContext,
+		context: TranslationContext,
 	) => SummaryEntry[];
 	describe?: (
 		evaluator: { type: string; params: Record<string, unknown> },
 		subEntries: SummaryEntry[],
-		context: EngineContext,
+		context: TranslationContext,
 	) => SummaryEntry[];
 	log?: (
 		evaluator: { type: string; params: Record<string, unknown> },
 		subEntries: SummaryEntry[],
-		context: EngineContext,
+		context: TranslationContext,
 	) => SummaryEntry[];
 }
 
@@ -62,7 +63,7 @@ export function registerEvaluatorFormatter(
 
 function applyFormatter(
 	effect: EffectDef<Record<string, unknown>>,
-	context: EngineContext,
+	context: TranslationContext,
 	mode: 'summarize' | 'describe' | 'log',
 ): SummaryEntry[] {
 	const key = `${effect.type}:${effect.method ?? ''}`;
@@ -86,7 +87,7 @@ function applyFormatter(
 
 export function summarizeEffects(
 	effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-	context: EngineContext,
+	context: TranslationContext,
 ): SummaryEntry[] {
 	const parts: SummaryEntry[] = [];
 	for (const effectDef of effects || []) {
@@ -121,7 +122,7 @@ export function summarizeEffects(
 
 export function describeEffects(
 	effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-	context: EngineContext,
+	context: TranslationContext,
 ): SummaryEntry[] {
 	const parts: SummaryEntry[] = [];
 	for (const effectDef of effects || []) {
@@ -156,7 +157,7 @@ export function describeEffects(
 
 export function logEffects(
 	effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-	context: EngineContext,
+	context: TranslationContext,
 ): SummaryEntry[] {
 	const parts: SummaryEntry[] = [];
 	for (const effectDef of effects || []) {
