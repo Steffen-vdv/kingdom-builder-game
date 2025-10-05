@@ -1,5 +1,5 @@
 export { ACTIONS, createActionRegistry, ActionId } from './actions';
-export { BUILDINGS, createBuildingRegistry } from './buildings';
+export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
 export { PHASES, PhaseId, PhaseStepId, PhaseTrigger } from './phases';
@@ -39,7 +39,7 @@ export {
 export { PRIMARY_ICON_ID } from './startup';
 export { type ActionDef } from './actions';
 export type { ActionId as ActionIdType } from './actions';
-export type { BuildingDef } from './buildings';
+export type { BuildingDef } from './defs';
 export type { DevelopmentDef } from './developments';
 export type { PopulationDef, TriggerKey, Focus } from './defs';
 export type {

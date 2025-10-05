@@ -31,16 +31,28 @@ import {
 } from './config/builderShared';
 import { Focus } from './defs';
 import type { BuildingDef } from './defs';
-
-export type { BuildingDef } from './defs';
-
+export const BuildingId = {
+	TownCharter: 'town_charter',
+	Mill: 'mill',
+	RaidersGuild: 'raiders_guild',
+	PlowWorkshop: 'plow_workshop',
+	Market: 'market',
+	Barracks: 'barracks',
+	Citadel: 'citadel',
+	CastleWalls: 'castle_walls',
+	CastleGardens: 'castle_gardens',
+	Temple: 'temple',
+	Palace: 'palace',
+	GreatHall: 'great_hall',
+} as const;
+export type BuildingId = (typeof BuildingId)[keyof typeof BuildingId];
 export function createBuildingRegistry() {
-	const registry = new Registry<BuildingDef>(buildingSchema.passthrough());
-
+	const schema = buildingSchema.passthrough();
+	const registry = new Registry<BuildingDef>(schema);
 	registry.add(
-		'town_charter',
+		BuildingId.TownCharter,
 		building()
-			.id('town_charter')
+			.id(BuildingId.TownCharter)
 			.name('Town Charter')
 			.icon('🏘️')
 			.cost(Resource.gold, 5)
@@ -70,18 +82,15 @@ export function createBuildingRegistry() {
 			.focus(Focus.Economy)
 			.build(),
 	);
-
-	// TODO: remaining buildings from original manual config
-	const millFarmTarget = developmentTarget().id(DevelopmentId.Farm);
 	const millFarmResultParams = resultModParams()
 		.id('mill_farm_bonus')
-		.evaluation(millFarmTarget)
+		.evaluation(developmentTarget().id(DevelopmentId.Farm))
 		.amount(1);
 
 	registry.add(
-		'mill',
+		BuildingId.Mill,
 		building()
-			.id('mill')
+			.id(BuildingId.Mill)
 			.name('Mill')
 			.icon('⚙️')
 			.cost(Resource.gold, 7)
@@ -94,9 +103,9 @@ export function createBuildingRegistry() {
 			.build(),
 	);
 	registry.add(
-		'raiders_guild',
+		BuildingId.RaidersGuild,
 		building()
-			.id('raiders_guild')
+			.id(BuildingId.RaidersGuild)
 			.name("Raider's Guild")
 			.icon('🏴‍☠️')
 			.cost(Resource.gold, 8)
@@ -120,9 +129,9 @@ export function createBuildingRegistry() {
 			.build(),
 	);
 	registry.add(
-		'plow_workshop',
+		BuildingId.PlowWorkshop,
 		building()
-			.id('plow_workshop')
+			.id(BuildingId.PlowWorkshop)
 			.name('Plow Workshop')
 			.icon('🏭')
 			.cost(Resource.gold, 10)
@@ -135,9 +144,9 @@ export function createBuildingRegistry() {
 			.build(),
 	);
 	registry.add(
-		'market',
+		BuildingId.Market,
 		building()
-			.id('market')
+			.id(BuildingId.Market)
 			.name('Market')
 			.icon('🏪')
 			.cost(Resource.gold, 10)
@@ -155,29 +164,9 @@ export function createBuildingRegistry() {
 			.build(),
 	);
 	registry.add(
-		'barracks',
+		BuildingId.CastleWalls,
 		building()
-			.id('barracks')
-			.name('Barracks')
-			.icon('🪖')
-			.cost(Resource.gold, 12)
-			.focus(Focus.Aggressive)
-			.build(),
-	);
-	registry.add(
-		'citadel',
-		building()
-			.id('citadel')
-			.name('Citadel')
-			.icon('🏯')
-			.cost(Resource.gold, 12)
-			.focus(Focus.Defense)
-			.build(),
-	);
-	registry.add(
-		'castle_walls',
-		building()
-			.id('castle_walls')
+			.id(BuildingId.CastleWalls)
 			.name('Castle Walls')
 			.icon('🧱')
 			.cost(Resource.gold, 12)
@@ -199,48 +188,26 @@ export function createBuildingRegistry() {
 			.focus(Focus.Defense)
 			.build(),
 	);
-	registry.add(
-		'castle_gardens',
-		building()
-			.id('castle_gardens')
-			.name('Castle Gardens')
-			.icon('🌷')
-			.cost(Resource.gold, 15)
-			.focus(Focus.Economy)
-			.build(),
-	);
-	registry.add(
-		'temple',
-		building()
-			.id('temple')
-			.name('Temple')
-			.icon('⛪')
-			.cost(Resource.gold, 16)
-			.focus(Focus.Other)
-			.build(),
-	);
-	registry.add(
-		'palace',
-		building()
-			.id('palace')
-			.name('Palace')
-			.icon('👑')
-			.cost(Resource.gold, 20)
-			.focus(Focus.Other)
-			.build(),
-	);
-	registry.add(
-		'great_hall',
-		building()
-			.id('great_hall')
-			.name('Great Hall')
-			.icon('🏟️')
-			.cost(Resource.gold, 22)
-			.focus(Focus.Other)
-			.build(),
-	);
-
+	const simpleBuildings: Array<[BuildingId, string, string, number, Focus]> = [
+		[BuildingId.Barracks, 'Barracks', '🪖', 12, Focus.Aggressive],
+		[BuildingId.Citadel, 'Citadel', '🏯', 12, Focus.Defense],
+		[BuildingId.CastleGardens, 'Castle Gardens', '🌷', 15, Focus.Economy],
+		[BuildingId.Temple, 'Temple', '⛪', 16, Focus.Other],
+		[BuildingId.Palace, 'Palace', '👑', 20, Focus.Other],
+		[BuildingId.GreatHall, 'Great Hall', '🏟️', 22, Focus.Other],
+	];
+	simpleBuildings.forEach(([id, name, icon, cost, focus]) => {
+		registry.add(
+			id,
+			building()
+				.id(id)
+				.name(name)
+				.icon(icon)
+				.cost(Resource.gold, cost)
+				.focus(focus)
+				.build(),
+		);
+	});
 	return registry;
 }
-
 export const BUILDINGS = createBuildingRegistry();

@@ -6,6 +6,7 @@ import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import {
 	ACTIONS,
 	BUILDINGS,
+	BuildingId,
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
@@ -97,7 +98,7 @@ describe('passive log labels', () => {
 				{
 					type: 'building',
 					method: 'add',
-					params: { id: 'castle_walls' },
+					params: { id: BuildingId.CastleWalls },
 				},
 			],
 			ctx,
