@@ -4,7 +4,7 @@ import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PassiveDisplay from '../src/components/player/PassiveDisplay';
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngine, runEffects } from '@kingdom-builder/engine';
 import type { EngineContext } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
@@ -205,5 +205,52 @@ describe('<PassiveDisplay />', () => {
 		const { container } = view;
 
 		expect(container).toBeEmptyDOMElement();
+	});
+
+	it('omits building-derived passives from the panel', () => {
+		const ctx = createEngine({
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+			populations: POPULATIONS,
+			phases: PHASES,
+			start: GAME_START,
+			rules: RULES,
+		});
+		runEffects(
+			[
+				{
+					type: 'building',
+					method: 'add',
+					params: { id: 'castle_walls' },
+				},
+			],
+			ctx,
+		);
+		const handleHoverCard = vi.fn();
+		const clearHoverCard = vi.fn();
+		const translationContext = createTranslationContext(
+			snapshotEngine(ctx),
+			{
+				actions: ACTIONS,
+				buildings: BUILDINGS,
+				developments: DEVELOPMENTS,
+			},
+			{
+				pullEffectLog: (key) => ctx.pullEffectLog(key),
+				passives: ctx.passives,
+			},
+		);
+		currentGame = {
+			ctx,
+			translationContext,
+			handleHoverCard,
+			clearHoverCard,
+		} as MockGame;
+		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
+		expect(view.container.querySelector('div.hoverable')).toBeNull();
+		const text = view.container.textContent ?? '';
+		expect(text).not.toContain('Castle Walls');
+		expect(text).not.toContain('castle_walls_bonus');
 	});
 });
