@@ -21,6 +21,8 @@ function GameLayout() {
 		onToggleMusic,
 		soundEnabled,
 		onToggleSound,
+		playerName,
+		onChangePlayerName,
 	} = useGameEngine();
 	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
@@ -158,6 +160,8 @@ function GameLayout() {
 				onToggleMusic={onToggleMusic}
 				soundEnabled={soundEnabled}
 				onToggleSound={onToggleSound}
+				playerName={playerName}
+				onChangePlayerName={onChangePlayerName}
 			/>
 			<ConfirmDialog
 				open={isQuitDialogOpen}
@@ -223,6 +227,8 @@ export default function Game({
 	onToggleMusic = () => {},
 	soundEnabled = true,
 	onToggleSound = () => {},
+	playerName,
+	onChangePlayerName,
 }: {
 	onExit?: () => void;
 	darkMode?: boolean;
@@ -232,6 +238,8 @@ export default function Game({
 	onToggleMusic?: () => void;
 	soundEnabled?: boolean;
 	onToggleSound?: () => void;
+	playerName: string;
+	onChangePlayerName: (name: string) => void;
 }) {
 	return (
 		<GameProvider
@@ -243,6 +251,8 @@ export default function Game({
 			onToggleMusic={onToggleMusic}
 			soundEnabled={soundEnabled}
 			onToggleSound={onToggleSound}
+			playerName={playerName}
+			onChangePlayerName={onChangePlayerName}
 		>
 			<GameLayout />
 		</GameProvider>

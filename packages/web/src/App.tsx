@@ -4,6 +4,7 @@ import Overview from './Overview';
 import Tutorial from './Tutorial';
 import BackgroundMusic from './components/audio/BackgroundMusic';
 import { useAppNavigation } from './state/useAppNavigation';
+import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
 		toggleMusic,
 		toggleSound,
 	} = useAppNavigation();
+	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
 
 	let screen: JSX.Element;
 	switch (currentScreen) {
@@ -44,6 +46,8 @@ export default function App() {
 					onToggleMusic={toggleMusic}
 					soundEnabled={isSoundEnabled}
 					onToggleSound={toggleSound}
+					playerName={playerName}
+					onChangePlayerName={setPlayerName}
 				/>
 			);
 			break;
@@ -61,6 +65,9 @@ export default function App() {
 					onToggleMusic={toggleMusic}
 					soundEnabled={isSoundEnabled}
 					onToggleSound={toggleSound}
+					playerName={playerName}
+					onChangePlayerName={setPlayerName}
+					hasStoredName={hasStoredName}
 				/>
 			);
 			break;

@@ -58,4 +58,6 @@ export interface GameEngineContextValue {
 	errorToasts: ErrorToast[];
 	pushErrorToast: (message: string) => void;
 	dismissErrorToast: (id: number) => void;
+	playerName: string;
+	onChangePlayerName: (name: string) => void;
 }

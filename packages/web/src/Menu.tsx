@@ -7,6 +7,7 @@ import SettingsDialog from './components/settings/SettingsDialog';
 import { HeroSection } from './menu/HeroSection';
 import { CallToActionSection } from './menu/CallToActionSection';
 import { HighlightsSection } from './menu/HighlightsSection';
+import { PlayerNamePrompt } from './menu/PlayerNamePrompt';
 
 interface MenuProps {
 	onStart: () => void;
@@ -19,6 +20,9 @@ interface MenuProps {
 	onToggleMusic: () => void;
 	soundEnabled: boolean;
 	onToggleSound: () => void;
+	playerName: string;
+	onChangePlayerName: (name: string) => void;
+	hasStoredName: boolean;
 }
 
 export default function Menu({
@@ -32,14 +36,21 @@ export default function Menu({
 	onToggleMusic,
 	soundEnabled,
 	onToggleSound,
+	playerName,
+	onChangePlayerName,
+	hasStoredName,
 }: MenuProps) {
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
+	const showNamePrompt = !hasStoredName;
 
 	return (
 		<>
 			<ShowcaseBackground>
 				<ShowcaseLayout>
 					<HeroSection />
+					{showNamePrompt ? (
+						<PlayerNamePrompt onSubmitName={onChangePlayerName} />
+					) : null}
 					<CallToActionSection
 						onStart={onStart}
 						onStartDev={onStartDev}
@@ -59,6 +70,8 @@ export default function Menu({
 				onToggleMusic={onToggleMusic}
 				soundEnabled={soundEnabled}
 				onToggleSound={onToggleSound}
+				playerName={playerName}
+				onChangePlayerName={onChangePlayerName}
 			/>
 		</>
 	);
