@@ -12,6 +12,7 @@ import {
 	happinessTier,
 	Types,
 	PassiveMethods,
+	populationParams,
 } from '../src/config/builders';
 import { RESOURCES, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
@@ -192,6 +193,13 @@ describe('content builder safeguards', () => {
 			passiveParams().id('passive:test').skipStep('', 'step'),
 		).toThrowError(
 			'Passive params skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
+		);
+	});
+	it('supports placeholder strings in population params while requiring role()', () => {
+		const params = populationParams().role('$role').build();
+		expect(params).toEqual({ role: '$role' });
+		expect(() => populationParams().build()).toThrowError(
+			'Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.',
 		);
 	});
 });

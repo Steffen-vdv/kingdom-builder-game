@@ -1112,9 +1112,11 @@ export function resultModParams() {
 }
 
 class PopulationEffectParamsBuilder extends ParamsBuilder<{
-	role?: PopulationRoleId;
+	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+	role?: PopulationRoleId | string;
 }> {
-	role(role: PopulationRoleId) {
+	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+	role(role: PopulationRoleId | string) {
 		return this.set(
 			'role',
 			role,
