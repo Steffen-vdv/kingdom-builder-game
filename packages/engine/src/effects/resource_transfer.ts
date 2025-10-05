@@ -4,7 +4,10 @@ import type { ResourceGain } from '../services';
 
 export const TRANSFER_PCT_EVALUATION_TYPE = 'transfer_pct';
 export const TRANSFER_PCT_EVALUATION_ID = 'percent';
-export const TRANSFER_PCT_EVALUATION_TARGET = `${TRANSFER_PCT_EVALUATION_TYPE}:${TRANSFER_PCT_EVALUATION_ID}`;
+export const TRANSFER_PCT_EVALUATION_TARGET = [
+	TRANSFER_PCT_EVALUATION_TYPE,
+	TRANSFER_PCT_EVALUATION_ID,
+].join(':');
 
 interface TransferParams extends Record<string, unknown> {
 	key: ResourceKey;
@@ -13,18 +16,22 @@ interface TransferParams extends Record<string, unknown> {
 
 export const resourceTransfer: EffectHandler<TransferParams> = (
 	effect,
-	ctx,
-	_mult = 1,
+	context,
+	_multiplier = 1,
 ) => {
-	const { key, percent } = effect.params!;
-	const base = percent ?? 25;
-	const mods: ResourceGain[] = [{ key, amount: base }];
-	ctx.passives.runEvaluationMods(TRANSFER_PCT_EVALUATION_TARGET, ctx, mods);
-	const pct = mods[0]!.amount;
-	const defender = ctx.opponent;
-	const attacker = ctx.activePlayer;
+	const { key, percent: requestedPercent } = effect.params!;
+	const base = requestedPercent ?? 25;
+	const modifiers: ResourceGain[] = [{ key, amount: base }];
+	context.passives.runEvaluationMods(
+		TRANSFER_PCT_EVALUATION_TARGET,
+		context,
+		modifiers,
+	);
+	const percent = modifiers[0]!.amount;
+	const defender = context.opponent;
+	const attacker = context.activePlayer;
 	const available = defender.resources[key] || 0;
-	const raw = (available * pct) / 100;
+	const raw = (available * percent) / 100;
 	let amount: number;
 	if (effect.round === 'up') {
 		amount = raw >= 0 ? Math.ceil(raw) : Math.floor(raw);
