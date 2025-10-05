@@ -3,16 +3,26 @@ import { applyParamsToEffects } from '../utils';
 
 export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
 	const id = effect.params?.['id'] as string;
-	const landId = effect.params?.['landId'] as string;
-	if (!id || !landId) {
-		throw new Error('development:add requires id and landId');
+	const providedLandId = effect.params?.['landId'] as string | undefined;
+	if (!id) {
+		throw new Error('development:add requires id');
 	}
-	const land = ctx.activePlayer.lands.find(
-		(landItem) => landItem.id === landId,
-	);
+	const land =
+		(providedLandId
+			? ctx.activePlayer.lands.find(
+					(landItem) => landItem.id === providedLandId,
+				)
+			: [...ctx.activePlayer.lands]
+					.reverse()
+					.find((candidate) => candidate.slotsUsed < candidate.slotsMax)) ||
+		null;
 	if (!land) {
-		throw new Error(`Land ${landId} not found`);
+		if (providedLandId) {
+			throw new Error(`Land ${providedLandId} not found`);
+		}
+		throw new Error('No land with an open development slot');
 	}
+	const landId = land.id;
 	const iterations = Math.floor(mult);
 	for (let index = 0; index < iterations; index++) {
 		if (land.slotsUsed >= land.slotsMax) {
@@ -24,7 +34,10 @@ export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
 		if (developmentDefinition?.onBuild) {
 			const onBuildEffects = applyParamsToEffects(
 				developmentDefinition.onBuild,
-				{ landId, id },
+				{
+					landId,
+					id,
+				},
 			);
 			ctx.passives.addPassive(
 				{ id: `${id}_${landId}`, effects: onBuildEffects },
