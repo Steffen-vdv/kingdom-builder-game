@@ -66,15 +66,19 @@ function buildHoverDetails(
 	formatRequirement: (requirement: string) => string,
 	hoverBackground: string,
 ): HoverCardData {
+	const describedSummary = describeContent(
+		'action',
+		option.actionId,
+		context,
+		mergedParams,
+	);
 	const described = buildActionOptionTranslation(
 		option,
 		context,
-		describeContent('action', option.actionId, context, mergedParams),
+		describedSummary,
 		'describe',
 	);
-	const hoverSummary =
-		typeof described.entry === 'string' ? [described.entry] : [described.entry];
-	const { effects, description } = splitSummary(hoverSummary);
+	const { effects, description } = splitSummary(describedSummary);
 	const requirements = getActionRequirements(
 		option.actionId,
 		context,

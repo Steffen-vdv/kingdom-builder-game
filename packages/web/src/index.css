@@ -240,7 +240,7 @@
 		@apply rounded-full border border-rose-500 bg-rose-500 px-3 py-1 text-xs;
 		@apply font-semibold uppercase tracking-wide text-white transition;
 		@apply hover:border-rose-600 hover:bg-rose-600 dark:border-rose-400;
-		@apply dark:bg-rose-500 dark:hover:bg-rose-400;
+		@apply dark:bg-rose-500 dark:hover:bg-rose-400 cursor-pointer;
 	}
 	.player-panel .panel-card {
 		@apply border-white/40 bg-white/80 dark:border-white/10 dark:bg-slate-900/60;
