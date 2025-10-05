@@ -25,7 +25,16 @@ function ActionResolutionCard({
 	const playerName = playerLabel ?? 'Unknown player';
 	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
 	const headerTitle = title ?? 'Action resolution';
-	const actionName = resolution.action?.name?.trim();
+	const leadingLine = resolution.lines[0]?.trim() ?? '';
+
+	const fallbackActionName = leadingLine
+		.replace(/^[\s✦•-]+/u, '')
+		.replace(/^\p{Extended_Pictographic}+\s*/u, '')
+		.replace(/\p{Extended_Pictographic}/gu, '')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+	const rawActionName = (resolution.action?.name ?? '').trim();
+	const actionName = rawActionName || fallbackActionName;
 	const actionIcon = resolution.action?.icon?.trim();
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
@@ -34,7 +43,7 @@ function ActionResolutionCard({
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',
 	);
-	const headerRowClass = 'flex items-start justify-between gap-4';
+	const headerRowClass = 'flex items-start gap-4';
 	const actionBadgeClass = joinClasses(
 		'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
 		'border border-white/50 bg-white/70 text-3xl shadow-inner',
@@ -48,10 +57,12 @@ function ActionResolutionCard({
 		'dark:shadow-slate-900/40 dark:ring-white/10',
 	);
 	const timelineListClass = 'space-y-3';
-	const timelineItemClass = 'relative pl-6';
+	const timelineItemClass = 'relative pl-8';
 	const timelineMarkerClass = joinClasses(
-		'absolute left-0 top-2 flex h-3 w-3 items-center justify-center',
-		'rounded-full bg-amber-500 shadow-md shadow-amber-500/40',
+		'absolute left-0 top-1.5 flex h-5 w-5 items-center justify-center',
+		'rounded-lg border border-white/40 bg-white/80 text-xs font-semibold',
+		'text-slate-500 shadow-sm dark:border-white/10 dark:bg-slate-900/80',
+		'dark:text-slate-300',
 	);
 	const timelineTextClass = joinClasses(
 		CARD_BODY_TEXT_CLASS,
@@ -71,27 +82,42 @@ function ActionResolutionCard({
 		<div className={containerClass} data-state="enter">
 			<div className="space-y-3">
 				<div className={headerRowClass}>
-					<div className="space-y-1">
-						<div className={headerLabelClass}>Resolution</div>
-						<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
-						{resolution.player ? (
-							<div className={CARD_META_TEXT_CLASS}>
-								{`Played by ${playerName}`}
+					{actionIcon || actionName ? (
+						<div className={actionBadgeClass} aria-hidden="true">
+							{actionIcon ?? '✦'}
+						</div>
+					) : null}
+					<div className="flex flex-1 items-start justify-between gap-4">
+						<div className="space-y-1">
+							<div className={headerLabelClass}>Action resolution</div>
+							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
+							{resolution.player ? (
+								<div className={CARD_META_TEXT_CLASS}>
+									{`Played by ${playerName}`}
+								</div>
+							) : null}
+						</div>
+						{actionName ? (
+							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
+								{actionName}
 							</div>
 						) : null}
 					</div>
-					{actionIcon || actionName ? (
-						<div className="flex flex-col items-end gap-2 text-right">
-							<div className={actionBadgeClass} aria-hidden="true">
-								{actionIcon ?? '✦'}
-							</div>
-							{actionName ? (
-								<div className={CARD_META_TEXT_CLASS}>{actionName}</div>
-							) : null}
-						</div>
-					) : null}
 				</div>
-				{summaryItems.length ? (
+				<div className={resolutionContainerClass}>
+					<div className={joinClasses(CARD_LABEL_CLASS, 'text-slate-600')}>
+						Resolution steps
+					</div>
+					<ol className={timelineListClass}>
+						{resolution.visibleLines.map((line, index) => (
+							<li key={index} className={timelineItemClass}>
+								<span className={timelineMarkerClass}>{index + 1}</span>
+								<div className={timelineTextClass}>{line}</div>
+							</li>
+						))}
+					</ol>
+				</div>
+				{resolution.isComplete && summaryItems.length ? (
 					<div className={summaryContainerClass}>
 						<div className={joinClasses(CARD_LABEL_CLASS, 'text-amber-700')}>
 							Highlights
@@ -105,19 +131,6 @@ function ActionResolutionCard({
 						</ul>
 					</div>
 				) : null}
-				<div className={resolutionContainerClass}>
-					<div className={joinClasses(CARD_LABEL_CLASS, 'text-slate-600')}>
-						Resolution steps
-					</div>
-					<ol className={timelineListClass}>
-						{resolution.visibleLines.map((line, index) => (
-							<li key={index} className={timelineItemClass}>
-								<span className={timelineMarkerClass} />
-								<div className={timelineTextClass}>{line}</div>
-							</li>
-						))}
-					</ol>
-				</div>
 			</div>
 			<div className="mt-6 flex justify-end">
 				<button
