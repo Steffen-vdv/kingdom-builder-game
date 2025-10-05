@@ -27,6 +27,7 @@ import {
 	passiveParams,
 	costModParams,
 	developmentEvaluator,
+	populationParams,
 	populationEvaluator,
 	statEvaluator,
 	attackParams,
@@ -171,7 +172,7 @@ export function createActionRegistry() {
 			)
 			.effect(
 				effect(Types.Population, PopulationMethods.ADD)
-					.param('role', '$role')
+					.params(populationParams().role('$role'))
 					.build(),
 			)
 			.effect(
