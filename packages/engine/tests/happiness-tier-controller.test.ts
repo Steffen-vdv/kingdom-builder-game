@@ -8,9 +8,11 @@ import {
 	happinessTier,
 	effect,
 	passiveParams,
+} from '@kingdom-builder/contents/config/builders';
+import {
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents/config/builders';
+} from '@kingdom-builder/contents/config/builderShared';
 import { runEffects, getActionCosts } from '../src';
 import { createTestEngine } from './helpers';
 import { createContentFactory } from './factories/content';

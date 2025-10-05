@@ -9,13 +9,6 @@ import { Stat } from './stats';
 import {
 	building,
 	effect,
-	Types,
-	CostModMethods,
-	ResultModMethods,
-	ResourceMethods,
-	ActionMethods,
-	PassiveMethods,
-	StatMethods,
 	resourceParams,
 	actionParams,
 	resultModParams,
@@ -25,6 +18,15 @@ import {
 	costModParams,
 	statParams,
 } from './config/builders';
+import {
+	Types,
+	CostModMethods,
+	ResultModMethods,
+	ResourceMethods,
+	ActionMethods,
+	PassiveMethods,
+	StatMethods,
+} from './config/builderShared';
 import type { BuildingDef } from './defs';
 
 export type { BuildingDef } from './defs';

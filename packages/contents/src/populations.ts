@@ -5,14 +5,16 @@ import { Stat } from './stats';
 import {
 	population,
 	effect,
-	Types,
-	ResourceMethods,
-	PassiveMethods,
-	StatMethods,
 	resourceParams,
 	statParams,
 	populationEvaluator,
 } from './config/builders';
+import {
+	Types,
+	ResourceMethods,
+	PassiveMethods,
+	StatMethods,
+} from './config/builderShared';
 import type { PopulationDef } from './defs';
 
 export type { PopulationDef } from './defs';

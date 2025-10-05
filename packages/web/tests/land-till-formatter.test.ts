@@ -12,7 +12,7 @@ import {
 	RULES,
 	SLOT_INFO,
 } from '@kingdom-builder/contents';
-import { LandMethods } from '@kingdom-builder/contents/config/builders';
+import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
