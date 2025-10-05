@@ -132,6 +132,32 @@ describe('content builder safeguards', () => {
 		);
 	});
 
+	it('builds tiered resource metadata with helper', () => {
+		const params = passiveParams()
+			.id('passive:test')
+			.tieredResourceSource({
+				tierId: 'tier:test',
+				removalDetail: 'the sun shines',
+				summaryToken: 'tier.summary',
+				name: 'Tier Test',
+				icon: '✨',
+			})
+			.build();
+		expect(params.meta).toEqual({
+			source: {
+				type: 'tiered-resource',
+				id: 'tier:test',
+				labelToken: 'tier.summary',
+				name: 'Tier Test',
+				icon: '✨',
+			},
+			removal: {
+				token: 'the sun shines',
+				text: 'Active as long as the sun shines',
+			},
+		});
+	});
+
 	it('ensures attacks have a single target', () => {
 		expect(() => attackParams().build()).toThrowError(
 			'Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.',
