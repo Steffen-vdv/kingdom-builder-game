@@ -159,3 +159,12 @@ registerActionLogHookResolver(
 		contentType: 'development',
 	}),
 );
+
+registerActionLogHookResolver(
+	createLinkedContentResolver({
+		effectType: 'population',
+		method: 'add',
+		contentType: 'population',
+		paramKey: 'role',
+	}),
+);

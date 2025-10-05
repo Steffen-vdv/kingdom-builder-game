@@ -25,3 +25,4 @@ import './development';
 import './building';
 import './land';
 import './tier';
+import './population';

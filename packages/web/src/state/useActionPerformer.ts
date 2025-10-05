@@ -18,6 +18,7 @@ import {
 	formatActionLogLines,
 	formatDevelopActionLogLines,
 } from './actionLogFormat';
+import { buildResolutionActionMeta } from './deriveResolutionActionName';
 
 interface UseActionPerformerOptions {
 	session: EngineSession;
@@ -82,6 +83,7 @@ export function useActionPerformer({
 					resourceKeys,
 				);
 				const messages = logContent('action', action.id, context, params);
+				const logHeadline = messages[0];
 				const costLines: string[] = [];
 				for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
 					const amt = costs[key] ?? 0;
@@ -166,15 +168,16 @@ export function useActionPerformer({
 					}
 					return true;
 				});
-				const logLines =
+				const logLines = (
 					action.id === ActionId.develop
-						? formatDevelopActionLogLines(messages, filtered)
-						: formatActionLogLines(messages, filtered);
-				const actionMeta = {
-					id: action.id,
-					name: stepDef?.name ?? action.name,
-					...(stepDef?.icon ? { icon: stepDef.icon } : {}),
-				};
+						? formatDevelopActionLogLines
+						: formatActionLogLines
+				)(messages, filtered);
+				const actionMeta = buildResolutionActionMeta(
+					action,
+					stepDef,
+					logHeadline,
+				);
 				const resolutionPlayer = {
 					id: playerAfter.id,
 					name: playerAfter.name,
