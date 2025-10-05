@@ -213,7 +213,6 @@ export function createActionRegistry() {
 		.layout('compact')
 		.option(
 			actionEffectGroupOption('royal_decree_house')
-				.label('Develop')
 				.icon('🏠')
 				.action(ActionId.develop)
 				.param('developmentId', 'house')
@@ -221,7 +220,6 @@ export function createActionRegistry() {
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_farm')
-				.label('Develop')
 				.icon('🌾')
 				.action(ActionId.develop)
 				.param('developmentId', 'farm')
@@ -229,7 +227,6 @@ export function createActionRegistry() {
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_outpost')
-				.label('Develop')
 				.icon('🏹')
 				.action(ActionId.develop)
 				.param('developmentId', 'outpost')
@@ -237,7 +234,6 @@ export function createActionRegistry() {
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_watchtower')
-				.label('Develop')
 				.icon('🗼')
 				.action(ActionId.develop)
 				.param('developmentId', 'watchtower')

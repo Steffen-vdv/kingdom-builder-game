@@ -33,7 +33,7 @@ export type EffectConfig = EffectDef;
 
 const actionEffectGroupOptionSchema = z.object({
 	id: z.string(),
-	label: z.string(),
+	label: z.string().optional(),
 	icon: z.string().optional(),
 	summary: z.string().optional(),
 	description: z.string().optional(),

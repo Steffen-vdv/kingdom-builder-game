@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	createEngine,
 	getActionEffectGroups,
+	resolveActionEffects,
 	type EngineContext,
 } from '@kingdom-builder/engine';
 import {
@@ -17,6 +18,7 @@ import {
 import {
 	describeContent,
 	summarizeContent,
+	formatEffectGroups,
 	type SummaryEntry,
 } from '../src/translation';
 
@@ -181,5 +183,28 @@ describe('royal decree translation', () => {
 			expect(entry.title).toBe(expectedTitle);
 			expect(entry.items).toContain(normalizedTitle);
 		}
+	});
+
+	it('logs selected develop option using develop action log text', () => {
+		const resolved = resolveActionEffects(context.actions.get(actionId), {
+			landId: 'A-L1',
+			choices: {
+				royal_decree_develop: {
+					optionId: 'royal_decree_house',
+					params: {
+						landId: 'A-L1',
+						developmentId: 'house',
+					},
+				},
+			},
+		});
+		const entries = formatEffectGroups(
+			resolved.steps,
+			'log',
+			context as EngineContext,
+		);
+		const group = findGroupEntry(entries);
+		const [entry] = group.items;
+		expect(entry).toBe('🏗️ Develop - Developed 🏠 House');
 	});
 });

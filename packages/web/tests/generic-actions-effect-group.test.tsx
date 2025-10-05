@@ -141,7 +141,6 @@ describe('GenericActions effect group handling', () => {
 					options: [
 						{
 							id: 'royal_decree_house',
-							label: 'Develop',
 							icon: '🏠',
 							actionId: ActionId.develop,
 							params: {
@@ -177,7 +176,7 @@ describe('GenericActions effect group handling', () => {
 		fireEvent.click(actionButton);
 
 		const optionButton = await screen.findByRole('button', {
-			name: /Develop - 🏠 House/,
+			name: /🏗️ Develop - 🏠 House/,
 		});
 		fireEvent.click(optionButton);
 
