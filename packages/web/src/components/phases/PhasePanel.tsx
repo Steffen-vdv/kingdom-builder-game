@@ -4,6 +4,7 @@ import { useGameEngine, type PhaseStep } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import Button from '../common/Button';
+import { ArrowRightIcon } from '../common/icons';
 
 type PhasePanelProps = {
 	height?: number;
@@ -50,21 +51,26 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 
 		const phaseTabs = ctx.phases.map((phase) => {
 			const isSelected = displayPhase === phase.id;
-			const baseTabClassSegments = [
-				'relative flex items-center gap-2 rounded-full',
-				'px-4 py-2 text-sm transition-all',
-			];
 			const selectedTabSegments = [
-				'bg-gradient-to-r from-blue-500/90 to-indigo-500/90',
-				'text-white shadow-lg shadow-blue-500/30',
+				'border-indigo-500/80',
+				'bg-indigo-600',
+				'text-white',
+				'shadow-md',
 			];
 			const idleTabSegments = [
-				'text-slate-600 hover:bg-white/60 hover:text-slate-800',
-				'dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-slate-100',
+				'border-white/40',
+				'bg-white/50',
+				'text-slate-700',
+				'hover:bg-white/70',
+				'dark:border-white/10',
+				'dark:bg-white/10',
+				'dark:text-slate-200',
+				'dark:hover:bg-white/20',
 			];
 			const tabSegments = isSelected ? selectedTabSegments : idleTabSegments;
 			const tabClasses = [
-				...baseTabClassSegments,
+				'min-w-[9rem]',
+				'transition-colors',
 				...tabSegments,
 				tabsEnabled ? null : 'opacity-60',
 			]
@@ -86,8 +92,8 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 					onClick={handleSelectPhase}
 					variant="ghost"
 					className={tabClasses}
+					icon={<span className="text-lg leading-none">{phase.icon}</span>}
 				>
-					<span className="text-lg leading-none">{phase.icon}</span>
 					<span className="text-xs font-semibold uppercase tracking-[0.2em]">
 						{phase.label}
 					</span>
@@ -182,6 +188,8 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 				variant="primary"
 				disabled={shouldDisableEndTurn}
 				onClick={handleEndTurnClick}
+				icon={<ArrowRightIcon />}
+				className="min-w-[10rem]"
 			>
 				Next Turn
 			</Button>

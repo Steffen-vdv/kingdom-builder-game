@@ -1,5 +1,6 @@
 import React from 'react';
 import Button from './components/common/Button';
+import { ArrowLeftIcon } from './components/common/icons';
 import {
 	ShowcaseBackground,
 	ShowcaseLayout,
@@ -127,6 +128,7 @@ export default function Tutorial({ onBack }: TutorialProps) {
 					variant="ghost"
 					className={TUTORIAL_BACK_BUTTON_CLASS}
 					onClick={onBack}
+					icon={<ArrowLeftIcon />}
 				>
 					Back to Start
 				</Button>

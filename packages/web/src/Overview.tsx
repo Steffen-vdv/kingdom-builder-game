@@ -1,6 +1,7 @@
 import React from 'react';
 import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 import Button from './components/common/Button';
+import { ArrowLeftIcon } from './components/common/icons';
 import {
 	ShowcaseBackground,
 	ShowcaseLayout,
@@ -114,6 +115,7 @@ export default function Overview({
 					variant="ghost"
 					className={OVERVIEW_BACK_BUTTON_CLASS}
 					onClick={onBack}
+					icon={<ArrowLeftIcon />}
 				>
 					Back to Start
 				</Button>

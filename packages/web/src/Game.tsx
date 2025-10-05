@@ -6,6 +6,7 @@ import ActionsPanel from './components/actions/ActionsPanel';
 import PhasePanel from './components/phases/PhasePanel';
 import LogPanel from './components/LogPanel';
 import Button from './components/common/Button';
+import { ExitDoorIcon, SettingsIcon } from './components/common/icons';
 import TimeControl from './components/common/TimeControl';
 import ErrorToaster from './components/common/ErrorToaster';
 import ConfirmDialog from './components/common/ConfirmDialog';
@@ -24,6 +25,9 @@ function GameLayout() {
 	} = useGameEngine();
 	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
+	const openSettings = useCallback(() => {
+		setSettingsOpen(true);
+	}, []);
 	const requestQuit = useCallback(() => {
 		if (!onExit) {
 			return;
@@ -156,20 +160,20 @@ function GameLayout() {
 						<div className="ml-4 flex items-center gap-3">
 							<TimeControl />
 							<Button
-								onClick={() => setSettingsOpen(true)}
+								icon={<SettingsIcon />}
+								onClick={openSettings}
 								variant="secondary"
-								aria-label="Open settings"
-								title="Settings"
-								className="h-10 w-10 rounded-full p-0 text-lg shadow-lg shadow-slate-900/10 dark:shadow-black/30"
+								className="min-w-[9rem]"
 							>
-								<span aria-hidden>⚙️</span>
+								Settings
 							</Button>
 							<Button
+								icon={<ExitDoorIcon />}
 								onClick={requestQuit}
 								variant="danger"
-								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
+								className="min-w-[9rem]"
 							>
-								Quit
+								Quit Game
 							</Button>
 						</div>
 					)}

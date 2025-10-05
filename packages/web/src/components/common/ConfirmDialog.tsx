@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { useEffect } from 'react';
 import Button from './Button';
+import { ArrowLeftIcon, CheckIcon } from './icons';
 
 interface ConfirmDialogProps {
 	open: boolean;
@@ -69,10 +70,20 @@ export default function ConfirmDialog({
 					{description}
 				</p>
 				<div className="mt-8 flex flex-wrap justify-end gap-3">
-					<Button variant="ghost" onClick={onCancel} className="px-5">
+					<Button
+						variant="ghost"
+						onClick={onCancel}
+						className="px-5"
+						icon={<ArrowLeftIcon />}
+					>
 						{cancelLabel}
 					</Button>
-					<Button variant="danger" onClick={onConfirm} className="px-5">
+					<Button
+						variant="danger"
+						onClick={onConfirm}
+						className="px-5"
+						icon={<CheckIcon />}
+					>
 						{confirmLabel}
 					</Button>
 				</div>

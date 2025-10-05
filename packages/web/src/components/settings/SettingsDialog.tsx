@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { useEffect } from 'react';
 import Button from '../common/Button';
+import { CloseIcon } from '../common/icons';
 import ToggleSwitch from '../common/ToggleSwitch';
 
 const DIALOG_SURFACE_CLASS = [
@@ -149,7 +150,12 @@ export default function SettingsDialog({
 					/>
 				</div>
 				<div className="mt-8 flex justify-end">
-					<Button variant="ghost" onClick={onClose} className="px-6">
+					<Button
+						variant="ghost"
+						onClick={onClose}
+						className="px-6"
+						icon={<CloseIcon />}
+					>
 						Close
 					</Button>
 				</div>

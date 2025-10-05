@@ -1,4 +1,11 @@
 import Button from '../components/common/Button';
+import {
+	BookIcon,
+	HammerIcon,
+	MapIcon,
+	PlayIcon,
+	SettingsIcon,
+} from '../components/common/icons';
 import { ShowcaseCard } from '../components/layouts/ShowcasePage';
 
 const KNOWLEDGE_CARD_CLASS = [
@@ -8,31 +15,13 @@ const KNOWLEDGE_CARD_CLASS = [
 	'dark:bg-white/5 dark:text-slate-300/80',
 ].join(' ');
 
-const GHOST_BUTTON_CLASS = [
-	'w-full rounded-full border border-slate-200/60 bg-white/50 px-5',
-	'py-2 text-sm font-semibold text-slate-700',
-	'hover:border-slate-300 hover:bg-white/80',
-	'dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
-	'dark:hover:border-white/20 dark:hover:bg-white/10 sm:w-auto',
-].join(' ');
+const GHOST_BUTTON_CLASS = 'w-full sm:w-auto';
 
-const PRIMARY_BUTTON_CLASS = [
-	'w-full rounded-full px-5 py-3 text-base font-semibold shadow-lg',
-	'shadow-blue-500/30',
-].join(' ');
+const PRIMARY_BUTTON_CLASS = 'w-full sm:w-auto';
 
-const DEV_BUTTON_CLASS = [
-	'w-full rounded-full px-5 py-3 text-base font-semibold shadow-lg',
-	'shadow-purple-600/30 dark:shadow-purple-900/40',
-].join(' ');
+const DEV_BUTTON_CLASS = 'w-full sm:w-auto';
 
-const SETTINGS_BUTTON_CLASS = [
-	'w-full rounded-full border border-slate-200/60 bg-white/50 px-5',
-	'py-2.5 text-sm font-semibold text-slate-700 shadow-inner shadow-white/40',
-	'transition dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
-	'hover:border-slate-300 hover:bg-white/75',
-	'dark:hover:border-white/20 dark:hover:bg-white/10 sm:w-full',
-].join(' ');
+const SETTINGS_BUTTON_CLASS = 'w-full';
 
 const CTA_CONTENT_LAYOUT_CLASS = [
 	'flex flex-col gap-6',
@@ -100,6 +89,7 @@ export function CallToActionSection({
 						variant="primary"
 						className={PRIMARY_BUTTON_CLASS}
 						onClick={onStart}
+						icon={<PlayIcon />}
 					>
 						Start New Game
 					</Button>
@@ -107,21 +97,17 @@ export function CallToActionSection({
 						variant="dev"
 						className={DEV_BUTTON_CLASS}
 						onClick={onStartDev}
+						icon={<HammerIcon />}
 					>
 						Start Dev/Debug Game
 					</Button>
 					<Button
 						variant="ghost"
-						className={[
-							SETTINGS_BUTTON_CLASS,
-							'flex items-center justify-center gap-2',
-						].join(' ')}
+						className={SETTINGS_BUTTON_CLASS}
 						onClick={onOpenSettings}
+						icon={<SettingsIcon />}
 					>
-						<span aria-hidden className="text-base">
-							⚙️
-						</span>
-						<span>Settings</span>
+						Settings
 					</Button>
 				</div>
 			</div>
@@ -137,6 +123,7 @@ export function CallToActionSection({
 							variant="ghost"
 							className={GHOST_BUTTON_CLASS}
 							onClick={onTutorial}
+							icon={<BookIcon />}
 						>
 							Tutorial
 						</Button>
@@ -144,6 +131,7 @@ export function CallToActionSection({
 							variant="ghost"
 							className={GHOST_BUTTON_CLASS}
 							onClick={onOverview}
+							icon={<MapIcon />}
 						>
 							Game Overview
 						</Button>

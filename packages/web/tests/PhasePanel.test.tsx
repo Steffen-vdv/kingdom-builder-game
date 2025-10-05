@@ -76,9 +76,9 @@ describe('<PhasePanel />', () => {
 			).toBeInTheDocument();
 		}
 		const firstPhase = ctx.phases[0];
-		const phaseLabel = `${firstPhase.icon} ${firstPhase.label}`;
-		expect(
-			screen.getByRole('button', { name: phaseLabel }),
-		).toBeInTheDocument();
+		const phaseButton = screen.getByRole('button', {
+			name: firstPhase.label,
+		});
+		expect(phaseButton).toBeInTheDocument();
 	});
 });
