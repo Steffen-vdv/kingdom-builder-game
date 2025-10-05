@@ -1,12 +1,8 @@
 import type { EffectDef } from '../effects';
 import type { PhaseDef } from '../phases';
 import type { AdvanceSkip } from '../phases/advance';
-import type {
-	PlayerId,
-	PlayerStartConfig,
-	StatSourceContribution,
-	ResourceKey,
-} from '../state';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type { PlayerId, StatSourceContribution, ResourceKey } from '../state';
 import type { PassiveMetadata, PassiveSummary } from '../services';
 
 export interface LandSnapshot {

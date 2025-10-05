@@ -7,15 +7,26 @@ const packagesDir = path.resolve(__dirname, '..', 'packages');
 for (const entry of fs.readdirSync(packagesDir)) {
 	const packageDir = path.join(packagesDir, entry);
 	const distPath = path.join(packageDir, 'dist');
+	const buildInfoPath = path.join(packageDir, 'tsconfig.tsbuildinfo');
 
 	if (fs.existsSync(distPath)) {
 		fs.rmSync(distPath, { recursive: true, force: true });
+	}
+
+	if (fs.existsSync(buildInfoPath)) {
+		fs.rmSync(buildInfoPath, { force: true });
 	}
 
 	const srcPath = path.join(packageDir, 'src');
 	if (fs.existsSync(srcPath)) {
 		removeGeneratedSources(srcPath);
 	}
+}
+
+const rootBuildInfo = path.resolve(__dirname, '..', 'tsconfig.tsbuildinfo');
+
+if (fs.existsSync(rootBuildInfo)) {
+	fs.rmSync(rootBuildInfo, { force: true });
 }
 
 function removeGeneratedSources(directory) {

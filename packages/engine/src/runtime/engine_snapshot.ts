@@ -8,7 +8,8 @@ import type {
 	AdvanceSkipSource,
 } from '../phases/advance';
 import type { PhaseDef, StepDef } from '../phases';
-import type { PlayerId, PlayerStartConfig } from '../state';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type { PlayerId } from '../state';
 import type {
 	AdvanceSkipSnapshot,
 	AdvanceSkipSourceSnapshot,
@@ -84,12 +85,15 @@ function cloneSkip(
 	if (!skip) {
 		return undefined;
 	}
-	return {
+	const cloned: AdvanceSkipSnapshot = {
 		type: skip.type,
 		phaseId: skip.phaseId,
-		stepId: skip.stepId,
 		sources: skip.sources.map((source) => cloneSkipSource(source)),
 	};
+	if (skip.stepId !== undefined) {
+		cloned.stepId = skip.stepId;
+	}
+	return cloned;
 }
 
 export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
@@ -122,12 +126,13 @@ export function snapshotAdvance(
 	context: EngineContext,
 	result: AdvanceResult,
 ): EngineAdvanceResult {
+	const skipped = cloneSkip(result.skipped);
 	return {
 		phase: result.phase,
 		step: result.step,
 		effects: result.effects.map((effect: EffectDef) => ({ ...effect })),
 		player: snapshotPlayer(context, result.player),
-		skipped: cloneSkip(result.skipped),
+		...(skipped ? { skipped } : {}),
 	};
 }
 
