@@ -1,26 +1,25 @@
 import { useCallback, useEffect, useRef } from 'react';
 import {
 	getActionCosts,
-	performAction,
 	resolveActionEffects,
-	simulateAction,
 	type ActionParams,
-	type EngineContext,
+	type EngineSession,
+	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
 import type { Action } from './actionTypes';
 
 interface UseActionPerformerOptions {
-	ctx: EngineContext;
+	session: EngineSession;
 	actionCostResource: ResourceKey;
 	addLog: (
 		entry: string | string[],
-		player?: EngineContext['activePlayer'],
+		player?: Pick<PlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
 	logWithEffectDelay: (
 		lines: string[],
-		player: EngineContext['activePlayer'],
+		player: Pick<PlayerStateSnapshot, 'id' | 'name'>,
 	) => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;
 	refresh: () => void;
@@ -32,7 +31,7 @@ interface UseActionPerformerOptions {
 }
 
 export function useActionPerformer({
-	ctx,
+	session,
 	actionCostResource,
 	addLog,
 	logWithEffectDelay,
@@ -46,24 +45,37 @@ export function useActionPerformer({
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
-			const player = ctx.activePlayer;
-			const before = snapshotPlayer(player, ctx);
-			const costs = getActionCosts(action.id, ctx, params);
+			const context = session.getLegacyContext();
+			const snapshotBefore = session.getSnapshot();
+			const activePlayerId = snapshotBefore.game.activePlayerId;
+			const playerBefore = snapshotBefore.game.players.find(
+				(entry) => entry.id === activePlayerId,
+			);
+			if (!playerBefore) {
+				throw new Error('Missing active player before action');
+			}
+			const before = snapshotPlayer(playerBefore);
+			const costs = getActionCosts(action.id, context, params);
 			try {
-				simulateAction(action.id, ctx, params);
-				const traces = performAction(action.id, ctx, params);
-
-				const after = snapshotPlayer(player, ctx);
-				const stepDef = ctx.actions.get(action.id);
+				const traces = session.performAction(action.id, params);
+				const snapshotAfter = session.getSnapshot();
+				const playerAfter = snapshotAfter.game.players.find(
+					(entry) => entry.id === activePlayerId,
+				);
+				if (!playerAfter) {
+					throw new Error('Missing active player after action');
+				}
+				const after = snapshotPlayer(playerAfter);
+				const stepDef = context.actions.get(action.id);
 				const resolvedStep = resolveActionEffects(stepDef, params);
 				const changes = diffStepSnapshots(
 					before,
 					after,
 					resolvedStep,
-					ctx,
+					context,
 					resourceKeys,
 				);
-				const messages = logContent('action', action.id, ctx, params);
+				const messages = logContent('action', action.id, context, params);
 				const costLines: string[] = [];
 				for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
 					const amt = costs[key] ?? 0;
@@ -88,21 +100,21 @@ export function useActionPerformer({
 
 				const subLines: string[] = [];
 				for (const trace of traces) {
-					const subStep = ctx.actions.get(trace.id);
+					const subStep = context.actions.get(trace.id);
 					const subResolved = resolveActionEffects(subStep);
 					const subChanges = diffStepSnapshots(
-						trace.before,
-						trace.after,
+						snapshotPlayer(trace.before),
+						snapshotPlayer(trace.after),
 						subResolved,
-						ctx,
+						context,
 						resourceKeys,
 					);
 					if (!subChanges.length) {
 						continue;
 					}
 					subLines.push(...subChanges);
-					const icon = ctx.actions.get(trace.id)?.icon || '';
-					const name = ctx.actions.get(trace.id).name;
+					const icon = context.actions.get(trace.id)?.icon || '';
+					const name = context.actions.get(trace.id).name;
 					const line = `  ${icon} ${name}`;
 					const index = messages.indexOf(line);
 					if (index !== -1) {
@@ -151,35 +163,42 @@ export function useActionPerformer({
 				updateMainPhaseStep();
 				refresh();
 
-				await logWithEffectDelay(logLines, player);
+				await logWithEffectDelay(logLines, {
+					id: playerAfter.id,
+					name: playerAfter.name,
+				});
 
 				if (!mountedRef.current) {
 					return;
 				}
 				if (
-					ctx.game.devMode &&
-					(ctx.activePlayer.resources[actionCostResource] ?? 0) <= 0
+					snapshotAfter.game.devMode &&
+					(playerAfter.resources[actionCostResource] ?? 0) <= 0
 				) {
 					await endTurn();
 				}
 			} catch (error) {
-				const icon = ctx.actions.get(action.id)?.icon || '';
+				const icon = context.actions.get(action.id)?.icon || '';
 				const message = (error as Error).message || 'Action failed';
 				pushErrorToast(message);
-				addLog(`Failed to play ${icon} ${action.name}: ${message}`, player);
+				addLog(`Failed to play ${icon} ${action.name}: ${message}`, {
+					id: playerBefore.id,
+					name: playerBefore.name,
+				});
 				return;
 			}
 		},
 		[
 			addLog,
-			ctx,
 			endTurn,
 			logWithEffectDelay,
 			mountedRef,
 			pushErrorToast,
 			refresh,
 			resourceKeys,
+			session,
 			updateMainPhaseStep,
+			actionCostResource,
 		],
 	);
 

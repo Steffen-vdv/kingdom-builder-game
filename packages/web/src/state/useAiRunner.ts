@@ -1,15 +1,16 @@
 import { useEffect } from 'react';
 import {
-	advance,
 	type ActionParams,
-	type EngineContext,
+	type EngineSession,
+	type EngineSessionSnapshot,
 } from '@kingdom-builder/engine';
 import type { Dispatch, SetStateAction } from 'react';
 import type { Action } from './actionTypes';
 import type { PhaseStep } from './phaseTypes';
 
 interface UseAiRunnerOptions {
-	ctx: EngineContext;
+	session: EngineSession;
+	sessionState: EngineSessionSnapshot;
 	runUntilActionPhaseCore: () => Promise<void>;
 	setPhaseHistories: Dispatch<SetStateAction<Record<string, PhaseStep[]>>>;
 	performRef: React.MutableRefObject<
@@ -19,27 +20,29 @@ interface UseAiRunnerOptions {
 }
 
 export function useAiRunner({
-	ctx,
+	session,
+	sessionState,
 	runUntilActionPhaseCore,
 	setPhaseHistories,
 	performRef,
 	mountedRef,
 }: UseAiRunnerOptions) {
 	useEffect(() => {
-		const phaseDefinition = ctx.phases[ctx.game.phaseIndex];
+		const phaseDefinition = sessionState.phases[sessionState.game.phaseIndex];
 		if (!phaseDefinition?.action) {
 			return;
 		}
-		const aiSystem = ctx.aiSystem;
-		const activeId = ctx.activePlayer.id;
+		const context = session.getLegacyContext();
+		const aiSystem = context.aiSystem;
+		const activeId = sessionState.game.activePlayerId;
 		if (!aiSystem?.has(activeId)) {
 			return;
 		}
-		void ctx.enqueue(async () => {
-			await aiSystem.run(activeId, ctx, {
+		void session.enqueue(async () => {
+			await aiSystem.run(activeId, context, {
 				performAction: async (
 					actionId: string,
-					engineCtx: EngineContext,
+					engineCtx,
 					params?: ActionParams<string>,
 				) => {
 					const definition = engineCtx.actions.get(actionId);
@@ -55,8 +58,8 @@ export function useAiRunner({
 					}
 					await performRef.current(action, params as Record<string, unknown>);
 				},
-				advance: (engineCtx: EngineContext) => {
-					advance(engineCtx);
+				advance: () => {
+					session.advancePhase();
 				},
 			});
 			if (!mountedRef.current) {
@@ -66,13 +69,13 @@ export function useAiRunner({
 			await runUntilActionPhaseCore();
 		});
 	}, [
-		ctx.activePlayer.id,
-		ctx.aiSystem,
-		ctx.game.phaseIndex,
+		session,
+		sessionState.game.activePlayerId,
+		sessionState.game.phaseIndex,
+		sessionState.phases,
 		runUntilActionPhaseCore,
 		setPhaseHistories,
 		performRef,
-		ctx,
 		mountedRef,
 	]);
 }
