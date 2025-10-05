@@ -1,11 +1,8 @@
 import type {
-	ActionConfig,
 	ActionEffect,
 	ActionEffectGroup,
 	ActionEffectGroupOption,
 	AttackTarget,
-	BuildingConfig,
-	DevelopmentConfig,
 	EffectConfig,
 	EffectDef,
 	EvaluatorDef,
@@ -26,8 +23,12 @@ import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
 import type { DevelopmentId } from '../developments';
-import type { TriggerKey } from '../defs';
-import type { ActionId } from '../actions';
+import type { BuildingDef, DevelopmentDef, Focus, TriggerKey } from '../defs';
+import type { ActionCategory, ActionDef, ActionId } from '../actions';
+import type {
+	PhaseId as PhaseIdentifier,
+	PhaseStepId as PhaseStepIdentifier,
+} from '../phases';
 import {
 	Types,
 	PassiveMethods,
@@ -168,11 +169,6 @@ class ActionEffectGroupOptionBuilder {
 				'Action effect group option is missing id(). Call id("your-option-id") before build().',
 			);
 		}
-		if (!this.wasSet('label')) {
-			throw new Error(
-				'Action effect group option is missing label(). Call label("Readable choice") before build().',
-			);
-		}
 		if (!this.wasSet('actionId')) {
 			throw new Error(
 				'Action effect group option is missing action(). Call action("action-id") before build().',
@@ -181,9 +177,12 @@ class ActionEffectGroupOptionBuilder {
 
 		const built: ActionEffectGroupOptionDef = {
 			id: this.config.id as string,
-			label: this.config.label as string,
 			actionId: this.config.actionId as string,
 		};
+
+		if (this.wasSet('label')) {
+			built.label = this.config.label as string;
+		}
 
 		if (this.wasSet('icon')) {
 			built.icon = this.config.icon;
@@ -462,6 +461,40 @@ export function developmentParams() {
 	return new DevelopmentEffectParamsBuilder();
 }
 
+class BuildingEffectParamsBuilder extends ParamsBuilder<{
+	id?: string;
+	landId?: string;
+}> {
+	id(id: string) {
+		return this.set(
+			'id',
+			id,
+			'Building effect params already set id(). Remove the extra id() call.',
+		);
+	}
+
+	landId(landId: string) {
+		return this.set(
+			'landId',
+			landId,
+			'Building effect params already set landId(). Remove the extra landId() call.',
+		);
+	}
+
+	override build() {
+		if (!this.wasSet('id')) {
+			throw new Error(
+				'Building effect params is missing id(). Call id("your-building-id") before build().',
+			);
+		}
+		return super.build();
+	}
+}
+
+export function buildingParams() {
+	return new BuildingEffectParamsBuilder();
+}
+
 class ActionEffectParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	landId?: string;
@@ -565,17 +598,17 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 		this.params.skip = this.params.skip || ({} as PhaseSkipConfig);
 		return this.params.skip;
 	}
-	skipPhase(phaseId: string) {
+	skipPhase(phaseId: PhaseIdentifier) {
 		const skip = this.ensureSkip();
 		skip.phases = skip.phases || [];
 		skip.phases.push(phaseId);
 		return this;
 	}
-	skipPhases(...phaseIds: string[]) {
+	skipPhases(...phaseIds: PhaseIdentifier[]) {
 		phaseIds.forEach((id) => this.skipPhase(id));
 		return this;
 	}
-	skipStep(phaseId: string, stepId: string) {
+	skipStep(phaseId: PhaseIdentifier, stepId: PhaseStepIdentifier) {
 		if (!phaseId || !stepId) {
 			throw new Error(
 				'Passive params skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
@@ -1709,13 +1742,28 @@ class BaseBuilder<T extends { id: string; name: string }> {
 	}
 }
 
-type ActionBuilderConfig = ActionConfig;
+type ActionBuilderConfig = ActionDef;
 
 export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	private readonly effectGroupIds = new Set<string>();
 
 	constructor() {
 		super({ effects: [] }, 'Action');
+	}
+
+	category(category: ActionCategory) {
+		this.config.category = category;
+		return this;
+	}
+
+	order(order: number) {
+		this.config.order = order;
+		return this;
+	}
+
+	focus(focus: Focus) {
+		this.config.focus = focus;
+		return this;
 	}
 	cost(key: ResourceKey, amount: number) {
 		this.config.baseCosts = this.config.baseCosts || {};
@@ -1755,7 +1803,7 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 	}
 }
 
-export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
+export class BuildingBuilder extends BaseBuilder<BuildingDef> {
 	constructor() {
 		super(
 			{ costs: {} as Record<ResourceKey, number>, onBuild: [] },
@@ -1812,9 +1860,14 @@ export class BuildingBuilder extends BaseBuilder<BuildingConfig> {
 		this.config.onAttackResolved.push(effect);
 		return this;
 	}
+
+	focus(focus: Focus) {
+		this.config.focus = focus;
+		return this;
+	}
 }
 
-export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
+export class DevelopmentBuilder extends BaseBuilder<DevelopmentDef> {
 	constructor() {
 		super({}, 'Development');
 	}
@@ -1864,6 +1917,16 @@ export class DevelopmentBuilder extends BaseBuilder<DevelopmentConfig> {
 	}
 	system(flag = true) {
 		this.config.system = flag;
+		return this;
+	}
+
+	order(order: number) {
+		this.config.order = order;
+		return this;
+	}
+
+	focus(focus: Focus) {
+		this.config.focus = focus;
 		return this;
 	}
 }
@@ -1997,7 +2060,7 @@ class StatBuilder extends InfoBuilder<StatInfo> {
 }
 
 export interface StepDef {
-	id: string;
+	id: PhaseStepIdentifier;
 	title?: string;
 	triggers?: TriggerKey[];
 	effects?: EffectDef[];
@@ -2006,7 +2069,7 @@ export interface StepDef {
 
 class StepBuilder {
 	private config: StepDef;
-	constructor(id: string) {
+	constructor(id: PhaseStepIdentifier) {
 		this.config = { id };
 	}
 	title(title: string) {
@@ -2038,7 +2101,7 @@ class StepBuilder {
 }
 
 export interface PhaseDef {
-	id: string;
+	id: PhaseIdentifier;
 	steps: StepDef[];
 	action?: boolean;
 	label: string;
@@ -2047,7 +2110,7 @@ export interface PhaseDef {
 
 class PhaseBuilder {
 	private config: PhaseDef;
-	constructor(id: string) {
+	constructor(id: PhaseIdentifier) {
 		this.config = { id, steps: [], label: '' };
 	}
 	label(label: string) {
@@ -2421,9 +2484,9 @@ export function stat(key: StatKey) {
 export function populationRole(key: PopulationRoleId) {
 	return new PopulationRoleBuilder(key);
 }
-export function phase(id: string) {
+export function phase(id: PhaseIdentifier) {
 	return new PhaseBuilder(id);
 }
-export function step(id: string) {
+export function step(id: PhaseStepIdentifier) {
 	return new StepBuilder(id);
 }

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { performAction, advance, getActionCosts } from '../../src';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '../factories/content';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('population effects', () => {
 	it('adds and removes population', () => {
@@ -20,7 +20,7 @@ describe('population effects', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		let cost = getActionCosts(add.id, ctx);

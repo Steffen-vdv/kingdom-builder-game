@@ -46,12 +46,22 @@ registerEffectFormatter('development', 'add', {
 	summarize: (eff, ctx) => {
 		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
 			describe: 'Add',
+			log: 'Developed',
 		}).summary;
 	},
 	describe: (eff, ctx) => {
 		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
 			describe: 'Add',
+			log: 'Developed',
 		}).description;
+	},
+	log: (eff, ctx) => {
+		return (
+			renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+				describe: 'Add',
+				log: 'Developed',
+			}).log || ''
+		);
 	},
 });
 

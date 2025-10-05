@@ -6,11 +6,14 @@ import { ActionId } from '@kingdom-builder/contents';
 import GenericActions from '../src/components/actions/GenericActions';
 import type * as TranslationModule from '../src/translation';
 import type * as TranslationContentModule from '../src/translation/content';
-
+import {
+	createTranslationContextStub,
+	toTranslationPlayer,
+	wrapTranslationRegistry,
+} from './helpers/translationContextStub';
 const getActionCostsMock = vi.fn();
 const getActionRequirementsMock = vi.fn();
 const getActionEffectGroupsMock = vi.fn();
-
 vi.mock('@kingdom-builder/engine', () => ({
 	getActionCosts: (...args: unknown[]) => getActionCostsMock(...args),
 	getActionRequirements: (...args: unknown[]) =>
@@ -18,13 +21,10 @@ vi.mock('@kingdom-builder/engine', () => ({
 	getActionEffectGroups: (...args: unknown[]) =>
 		getActionEffectGroupsMock(...args),
 }));
-
 const getRequirementIconsMock = vi.fn();
-
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => getRequirementIconsMock(...args),
 }));
-
 const describeContentMock = vi.fn(() => []);
 const summarizeContentMock = vi.fn(() => []);
 const logContentMock = vi.fn(() => []);
@@ -80,6 +80,59 @@ function createMockGame() {
 		buildings: new Set<string>(),
 		actions: new Set<string>(Array.from(actionsMap.keys())),
 	};
+	const opponent = {
+		id: 'B',
+		name: 'Opponent',
+		resources: { ap: 0, gold: 0 },
+		lands: [],
+		population: {} as Record<string, number>,
+		buildings: new Set<string>(),
+		actions: new Set<string>(),
+	};
+	const translationContext = createTranslationContextStub({
+		actions: wrapTranslationRegistry({
+			get(id: string) {
+				const action = actionsMap.get(id as ActionId);
+				if (!action) {
+					throw new Error(`Unknown action ${id}`);
+				}
+				return action;
+			},
+			has(id: string) {
+				return actionsMap.has(id as ActionId);
+			},
+		}),
+		buildings: wrapTranslationRegistry({
+			get(id: string) {
+				throw new Error(`No building ${id}`);
+			},
+			has() {
+				return false;
+			},
+		}),
+		developments: wrapTranslationRegistry({
+			get(id: string) {
+				throw new Error(`No development ${id}`);
+			},
+			has() {
+				return false;
+			},
+		}),
+		phases: [{ id: 'main' }],
+		activePlayer: toTranslationPlayer({
+			id: activePlayer.id,
+			name: activePlayer.name,
+			resources: activePlayer.resources,
+			population: activePlayer.population,
+		}),
+		opponent: toTranslationPlayer({
+			id: opponent.id,
+			name: opponent.name,
+			resources: opponent.resources,
+			population: opponent.population,
+		}),
+		actionCostResource: 'ap',
+	});
 	return {
 		ctx: {
 			actions: {
@@ -95,13 +148,13 @@ function createMockGame() {
 			activePlayer,
 			actionCostResource: 'ap',
 		},
+		translationContext,
 		handlePerform: vi.fn().mockResolvedValue(undefined),
 		handleHoverCard: vi.fn(),
 		clearHoverCard: vi.fn(),
 		actionCostResource: 'ap',
 	};
 }
-
 let mockGame: ReturnType<typeof createMockGame>;
 
 vi.mock('../src/state/GameContext', () => ({
@@ -141,10 +194,12 @@ describe('GenericActions effect group handling', () => {
 					options: [
 						{
 							id: 'royal_decree_house',
-							label: 'Raise a House',
 							icon: '🏠',
 							actionId: ActionId.develop,
-							params: { landId: '$landId', id: 'house' },
+							params: {
+								landId: '$landId',
+								developmentId: 'house',
+							},
 						},
 					],
 				},
@@ -174,7 +229,7 @@ describe('GenericActions effect group handling', () => {
 		fireEvent.click(actionButton);
 
 		const optionButton = await screen.findByRole('button', {
-			name: /Develop - 🏠 House/,
+			name: /🏗️ Develop - 🏠 House/,
 		});
 		fireEvent.click(optionButton);
 

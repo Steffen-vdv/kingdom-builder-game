@@ -11,6 +11,7 @@ import {
 	resourceParams,
 	statParams,
 	developmentParams,
+	buildingParams,
 	actionParams,
 	resultModParams,
 	passiveParams,
@@ -38,7 +39,8 @@ import {
 	BuildingMethods,
 	StatMethods,
 } from './config/builderShared';
-import type { Focus } from './defs';
+import { Focus } from './defs';
+import type { Focus as FocusType } from './defs';
 
 const ACTION_ID_MAP = {
 	build: 'build',
@@ -60,17 +62,28 @@ export const ActionId = ACTION_ID_MAP;
 
 export type ActionId = (typeof ACTION_ID_MAP)[keyof typeof ACTION_ID_MAP];
 
+export const ActionCategory = {
+	Basic: 'basic',
+	Development: 'development',
+	Population: 'population',
+	Building: 'building',
+} as const;
+
+export type ActionCategory =
+	(typeof ActionCategory)[keyof typeof ActionCategory];
+
 export interface ActionDef extends ActionConfig {
-	category?: string;
+	category?: ActionCategory;
 	order?: number;
-	focus?: Focus;
+	focus?: FocusType;
 }
 
 export function createActionRegistry() {
 	const registry = new Registry<ActionDef>(actionSchema.passthrough());
 
-	registry.add(ActionId.expand, {
-		...action()
+	registry.add(
+		ActionId.expand,
+		action()
 			.id(ActionId.expand)
 			.name('Expand')
 			.icon('🌱')
@@ -82,14 +95,15 @@ export function createActionRegistry() {
 					.params(resourceParams().key(Resource.happiness).amount(1))
 					.build(),
 			)
+			.category(ActionCategory.Basic)
+			.order(1)
+			.focus(Focus.Economy)
 			.build(),
-		category: 'basic',
-		order: 1,
-		focus: 'economy',
-	});
+	);
 
-	registry.add(ActionId.overwork, {
-		...action()
+	registry.add(
+		ActionId.overwork,
+		action()
 			.id(ActionId.overwork)
 			.name('Overwork')
 			.icon('🛠️')
@@ -112,14 +126,15 @@ export function createActionRegistry() {
 					)
 					.build(),
 			)
+			.category(ActionCategory.Basic)
+			.order(2)
+			.focus(Focus.Economy)
 			.build(),
-		category: 'basic',
-		order: 2,
-		focus: 'economy',
-	});
+	);
 
-	registry.add(ActionId.develop, {
-		...action()
+	registry.add(
+		ActionId.develop,
+		action()
 			.id(ActionId.develop)
 			.name('Develop')
 			.icon('🏗️')
@@ -130,14 +145,15 @@ export function createActionRegistry() {
 					.params(developmentParams().id('$id').landId('$landId'))
 					.build(),
 			)
+			.category(ActionCategory.Development)
+			.order(1)
+			.focus(Focus.Economy)
 			.build(),
-		category: 'development',
-		order: 1,
-		focus: 'economy',
-	});
+	);
 
-	registry.add(ActionId.tax, {
-		...action()
+	registry.add(
+		ActionId.tax,
+		action()
 			.id(ActionId.tax)
 			.name('Tax')
 			.icon('💰')
@@ -159,27 +175,29 @@ export function createActionRegistry() {
 					)
 					.build(),
 			)
+			.category(ActionCategory.Basic)
+			.order(3)
+			.focus(Focus.Economy)
 			.build(),
-		category: 'basic',
-		order: 3,
-		focus: 'economy',
-	});
+	);
 
-	registry.add(ActionId.reallocate, {
-		...action()
+	registry.add(
+		ActionId.reallocate,
+		action()
 			.id(ActionId.reallocate)
 			.name('Reallocate')
 			.icon('🔄')
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
+			.category(ActionCategory.Basic)
+			.order(4)
+			.focus(Focus.Economy)
 			.build(),
-		category: 'basic',
-		order: 4,
-		focus: 'economy',
-	});
+	);
 
-	registry.add(ActionId.raise_pop, {
-		...action()
+	registry.add(
+		ActionId.raise_pop,
+		action()
 			.id(ActionId.raise_pop)
 			.name('Hire')
 			.icon('👶')
@@ -203,45 +221,52 @@ export function createActionRegistry() {
 					.params(resourceParams().key(Resource.happiness).amount(1))
 					.build(),
 			)
+			.effect(
+				effect(Types.Action, ActionMethods.PERFORM)
+					.params(actionParams().id(ActionId.reallocate))
+					.build(),
+			)
+			.category(ActionCategory.Population)
+			.order(1)
+			.focus(Focus.Economy)
 			.build(),
-		category: 'population',
-		order: 1,
-		focus: 'economy',
-	});
+	);
 
 	const royalDecreeDevelopGroup = actionEffectGroup('royal_decree_develop')
 		.layout('compact')
 		.option(
 			actionEffectGroupOption('royal_decree_house')
-				.label('Raise a House')
 				.icon('🏠')
 				.action(ActionId.develop)
-				.params(actionParams().id('house').landId('$landId')),
+				.param('developmentId', 'house')
+				.param('landId', '$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_farm')
 				.label('Establish a Farm')
 				.icon('🌾')
 				.action(ActionId.develop)
-				.params(actionParams().id('farm').landId('$landId')),
+				.param('developmentId', 'farm')
+				.param('landId', '$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_outpost')
-				.label('Fortify with an Outpost')
 				.icon('🏹')
 				.action(ActionId.develop)
-				.params(actionParams().id('outpost').landId('$landId')),
+				.param('developmentId', 'outpost')
+				.param('landId', '$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_watchtower')
-				.label('Raise a Watchtower')
 				.icon('🗼')
 				.action(ActionId.develop)
-				.params(actionParams().id('watchtower').landId('$landId')),
+				.param('developmentId', 'watchtower')
+				.param('landId', '$landId'),
 		);
 
-	registry.add(ActionId.royal_decree, {
-		...action()
+	registry.add(
+		ActionId.royal_decree,
+		action()
 			.id(ActionId.royal_decree)
 			.name('Royal Decree')
 			.icon('📜')
@@ -264,14 +289,15 @@ export function createActionRegistry() {
 					.allowShortfall()
 					.build(),
 			)
+			.category(ActionCategory.Basic)
+			.order(5)
+			.focus(Focus.Economy)
 			.build(),
-		category: 'basic',
-		order: 5,
-		focus: 'economy',
-	});
+	);
 
-	registry.add(ActionId.army_attack, {
-		...action()
+	registry.add(
+		ActionId.army_attack,
+		action()
 			.id(ActionId.army_attack)
 			.name('Army Attack')
 			.icon('🗡️')
@@ -316,14 +342,15 @@ export function createActionRegistry() {
 					.params(statParams().key(Stat.warWeariness).amount(1))
 					.build(),
 			)
+			.category(ActionCategory.Basic)
+			.order(6)
+			.focus(Focus.Aggressive)
 			.build(),
-		category: 'basic',
-		order: 6,
-		focus: 'aggressive',
-	});
+	);
 
-	registry.add(ActionId.hold_festival, {
-		...action()
+	registry.add(
+		ActionId.hold_festival,
+		action()
 			.id(ActionId.hold_festival)
 			.name('Hold Festival')
 			.icon('🎉')
@@ -379,11 +406,11 @@ export function createActionRegistry() {
 					)
 					.build(),
 			)
+			.category(ActionCategory.Basic)
+			.order(7)
+			.focus(Focus.Economy)
 			.build(),
-		category: 'basic',
-		order: 7,
-		focus: 'economy',
-	});
+	);
 
 	registry.add(
 		ActionId.plunder,
@@ -458,19 +485,22 @@ export function createActionRegistry() {
 			.build(),
 	);
 
-	registry.add(ActionId.build, {
-		...action()
+	registry.add(
+		ActionId.build,
+		action()
 			.id(ActionId.build)
 			.name('Build')
 			.icon('🏛️')
 			.effect(
-				effect(Types.Building, BuildingMethods.ADD).param('id', '$id').build(),
+				effect(Types.Building, BuildingMethods.ADD)
+					.params(buildingParams().id('$id'))
+					.build(),
 			)
+			.category(ActionCategory.Building)
+			.order(1)
+			.focus(Focus.Other)
 			.build(),
-		category: 'building',
-		order: 1,
-		focus: 'other',
-	});
+	);
 
 	return registry;
 }

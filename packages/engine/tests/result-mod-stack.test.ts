@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { performAction, advance } from '../src';
 import { createContentFactory } from './factories/content';
 import { createTestEngine } from './helpers';
@@ -59,7 +59,7 @@ describe('result modifiers', () => {
 		};
 
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 

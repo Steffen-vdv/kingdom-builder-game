@@ -46,13 +46,22 @@ export function renderCosts(
 		);
 	}
 	return (
-		<div className="flex flex-col items-end text-right text-sm leading-tight text-gray-600 dark:text-gray-300">
+		<div
+			className={[
+				'flex flex-col items-end text-right text-sm leading-tight text-gray-600',
+				'dark:text-gray-300',
+			].join(' ')}
+		>
 			{entries.length > 0 && (
 				<div className="flex flex-wrap justify-end gap-x-1 gap-y-0.5">
 					{entries.map(([resourceKey, costAmount]) => (
 						<span
 							key={resourceKey}
-							className={`whitespace-nowrap ${(resources[resourceKey] ?? 0) < (costAmount ?? 0) ? 'text-red-500' : ''}`}
+							className={`whitespace-nowrap ${
+								(resources[resourceKey] ?? 0) < (costAmount ?? 0)
+									? 'text-red-500'
+									: ''
+							}`}
 						>
 							{RESOURCES[resourceKey as ResourceKey]?.icon}
 							{costAmount ?? 0}

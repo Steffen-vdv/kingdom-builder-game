@@ -7,7 +7,7 @@ import {
 	type EffectDef,
 } from '../../src';
 import { createTestEngine } from '../helpers';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 interface EffectGroupOption {
 	id: string;
@@ -29,7 +29,7 @@ function isEffectGroup(effect: unknown): effect is EffectGroup {
 }
 
 function toMain(ctx: ReturnType<typeof createTestEngine>) {
-	while (ctx.game.currentPhase !== 'main') {
+	while (ctx.game.currentPhase !== PhaseId.Main) {
 		advance(ctx);
 	}
 }
@@ -45,7 +45,9 @@ describe('royal decree action effect group', () => {
 		const group = royalDecree.effects.find(isEffectGroup)!;
 		const chosenOption = group.options[0];
 		const optionId = chosenOption.id;
-		const developmentId = String(chosenOption.params?.['id']);
+		const developmentId = String(
+			chosenOption.params?.['developmentId'] ?? chosenOption.params?.['id'],
+		);
 		expect(developmentId).toBeTruthy();
 
 		const nextLandId = `${ctx.activePlayer.id}-L${ctx.activePlayer.lands.length + 1}`;
@@ -160,7 +162,7 @@ describe('royal decree action effect group', () => {
 			(candidate) => candidate.group.id === group.id,
 		);
 		expect(resolvedGroup?.selection?.params).toMatchObject({
-			id: developmentId,
+			developmentId,
 			landId: params.landId,
 		});
 	});

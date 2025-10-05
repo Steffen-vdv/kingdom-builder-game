@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '../factories/content';
 
@@ -29,7 +29,7 @@ describe('building:add effect', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		const before = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
@@ -54,7 +54,7 @@ describe('building:add effect', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		const cost = getActionCosts(grant.id, ctx, { id: building.id });
@@ -88,7 +88,7 @@ describe('building:add effect', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		const cost = getActionCosts(build.id, ctx, { id: building.id });
@@ -137,7 +137,7 @@ describe('building:add effect', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 

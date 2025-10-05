@@ -4,22 +4,20 @@ import { applyParamsToEffects } from '../utils';
 import { withStatSourceFrames } from '../stat_sources';
 import type { PopulationRoleId } from '../state';
 
-export const populationRemove: EffectHandler = (
-	effect,
-	engineContext,
-	mult = 1,
-) => {
+export const populationRemove: EffectHandler = (effect, context, mult = 1) => {
 	const role = effect.params?.['role'] as PopulationRoleId;
 	if (!role) {
 		throw new Error('population:remove requires role');
 	}
-	for (let i = 0; i < Math.floor(mult); i++) {
-		const player = engineContext.activePlayer;
+	const iterations = Math.floor(mult);
+	let iterationIndex = 0;
+	while (iterationIndex < iterations) {
+		const player = context.activePlayer;
 		const current = player.population[role] || 0;
 		if (current <= 0) {
 			return;
 		}
-		const roleDefinition = engineContext.populations.get(role);
+		const roleDefinition = context.populations.get(role);
 		const index = current;
 		if (roleDefinition.onUnassigned) {
 			const effects = applyParamsToEffects(roleDefinition.onUnassigned, {
@@ -46,10 +44,9 @@ export const populationRemove: EffectHandler = (
 					},
 				}),
 			];
-			withStatSourceFrames(engineContext, frames, () =>
-				runEffects(effects, engineContext),
-			);
+			withStatSourceFrames(context, frames, () => runEffects(effects, context));
 		}
 		player.population[role] = current - 1;
+		iterationIndex++;
 	}
 };

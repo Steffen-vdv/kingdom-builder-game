@@ -14,12 +14,12 @@ function collectContentStrings() {
 				walk(full);
 			} else if (entry.isFile() && entry.name.endsWith('.ts')) {
 				const text = fs.readFileSync(full, 'utf8');
-				let m;
-				while ((m = idRegex.exec(text)) !== null) {
-					strings.add(m[1]);
+				let matchResult;
+				while ((matchResult = idRegex.exec(text)) !== null) {
+					strings.add(matchResult[1]);
 				}
-				while ((m = keyValRegex.exec(text)) !== null) {
-					strings.add(m[1]);
+				while ((matchResult = keyValRegex.exec(text)) !== null) {
+					strings.add(matchResult[1]);
 				}
 			}
 		}

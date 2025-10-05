@@ -3,12 +3,12 @@ import { evaluatorCompare } from '../../src/requirements/evaluator_compare';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '../factories/content';
 import { advance } from '../../src';
-import { Stat } from '@kingdom-builder/contents';
+import { Stat, PhaseId } from '@kingdom-builder/contents';
 
 describe('evaluator:compare requirement', () => {
 	it('compares stat values', () => {
 		const ctx = createTestEngine(createContentFactory());
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		ctx.activePlayer.stats[Stat.maxPopulation] = 2;

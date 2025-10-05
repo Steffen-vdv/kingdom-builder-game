@@ -5,7 +5,12 @@ import {
 	summarizeContent,
 	registerContentTranslator,
 } from './factory';
-import type { ContentTranslator, Land, Summary, SummaryEntry } from './types';
+import type {
+	Land,
+	LegacyContentTranslator,
+	Summary,
+	SummaryEntry,
+} from './types';
 
 function translate(
 	land: Land,
@@ -34,7 +39,7 @@ function translate(
 	return items;
 }
 
-class LandTranslator implements ContentTranslator<Land> {
+class LandTranslator implements LegacyContentTranslator<Land> {
 	summarize(land: Land, ctx: EngineContext): Summary {
 		return translate(land, ctx, summarizeContent);
 	}

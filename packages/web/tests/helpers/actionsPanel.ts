@@ -1,6 +1,7 @@
 import {
 	POPULATION_INFO,
 	POPULATION_ROLES,
+	PhaseId,
 	Resource,
 	Stat,
 	type PopulationRoleId,
@@ -17,6 +18,11 @@ import type {
 	ActionsPanelGameOptions,
 	ActionsPanelTestHarness,
 } from './actionsPanel.types';
+import {
+	createTranslationContextStub,
+	toTranslationPlayer,
+	wrapTranslationRegistry,
+} from './translationContextStub';
 
 function createRegistry<T extends { id: string }>(items: T[]) {
 	const registry = new Registry<T>();
@@ -39,13 +45,10 @@ export function createActionsPanelGame({
 		basic: providedCategories?.basic ?? 'basic',
 		building: providedCategories?.building ?? 'building',
 	} as const;
-
 	const actionCostResource = resourceKeys?.actionCost ?? Resource.ap;
 	const upkeepResource = resourceKeys?.upkeep ?? Resource.gold;
 	const capacityStat = statKeys?.capacity ?? Stat.populationCap;
-
 	const factory = createContentFactory();
-
 	const defaultPopulationRoles = populationRoles?.length
 		? populationRoles
 		: Object.keys(POPULATION_ROLES)
@@ -58,18 +61,15 @@ export function createActionsPanelGame({
 					upkeep: { [upkeepResource]: 1 },
 					onAssigned: [{}],
 				}));
-
 	const registeredPopulationRoles = defaultPopulationRoles.map((def) =>
 		factory.population(def),
 	);
-
 	const passivePopulation = factory.population({
 		name: 'Passive Role',
 		icon:
 			POPULATION_ROLES[Object.keys(POPULATION_ROLES)[3] as PopulationRoleId]
 				?.icon ?? '👤',
 	});
-
 	const populationPlaceholder = '$role';
 	const buildRequirements = requirementBuilder
 		? requirementBuilder({
@@ -83,7 +83,6 @@ export function createActionsPanelGame({
 					populationEvaluator(populationPlaceholder),
 				),
 			];
-
 	const raisePopulationAction = factory.action({
 		name: 'Hire',
 		icon: '👶',
@@ -101,7 +100,6 @@ export function createActionsPanelGame({
 		order: 1,
 		focus: 'economy',
 	});
-
 	const basicAction = factory.action({
 		name: 'Survey',
 		icon: '✨',
@@ -113,7 +111,6 @@ export function createActionsPanelGame({
 		order: 2,
 		focus: 'other',
 	});
-
 	let buildingAction: ReturnType<typeof factory.action> | undefined;
 	let buildingDefinition: ReturnType<typeof factory.building> | undefined;
 	if (showBuilding) {
@@ -134,7 +131,6 @@ export function createActionsPanelGame({
 			costs: { [upkeepResource]: 5 },
 		});
 	}
-
 	const initialPopulation = [
 		...registeredPopulationRoles,
 		passivePopulation,
@@ -142,7 +138,6 @@ export function createActionsPanelGame({
 		acc[population.id] = 0;
 		return acc;
 	}, {});
-
 	const actionIds = [raisePopulationAction, basicAction, buildingAction]
 		.filter(Boolean)
 		.map((action) => action!.id);
@@ -198,6 +193,26 @@ export function createActionsPanelGame({
 	);
 	const developmentsRegistry = createRegistry<{ id: string }>([]);
 
+	const translationContext = createTranslationContextStub({
+		actions: wrapTranslationRegistry(actionsRegistry),
+		buildings: wrapTranslationRegistry(buildingsRegistry),
+		developments: wrapTranslationRegistry(developmentsRegistry),
+		phases: [{ id: PhaseId.Main }],
+		activePlayer: toTranslationPlayer({
+			id: player.id,
+			name: player.name,
+			resources: player.resources,
+			population: player.population,
+		}),
+		opponent: toTranslationPlayer({
+			id: opponent.id,
+			name: opponent.name,
+			resources: opponent.resources,
+			population: opponent.population,
+		}),
+		actionCostResource,
+	});
+
 	return {
 		ctx: {
 			actions: actionsRegistry,
@@ -206,13 +221,14 @@ export function createActionsPanelGame({
 			populations: populationRegistry,
 			game: {
 				players: [player, opponent],
-				currentPhase: 'main',
+				currentPhase: PhaseId.Main,
 				currentStep: '',
 			},
 			activePlayer: player,
 			actionCostResource,
-			phases: [{ id: 'main', action: true, steps: [] }],
+			phases: [{ id: PhaseId.Main, action: true, steps: [] }],
 		},
+		translationContext,
 		...createActionsPanelState(actionCostResource),
 		metadata: {
 			upkeepResource,

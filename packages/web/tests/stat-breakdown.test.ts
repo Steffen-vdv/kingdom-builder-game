@@ -11,6 +11,7 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
+	PhaseStepId,
 	GAME_START,
 	RULES,
 	PopulationRole,
@@ -104,7 +105,7 @@ describe('stat breakdown summary', () => {
 		);
 
 		const raiseStrengthPhase = ctx.phases.find((phase) =>
-			phase.steps.some((step) => step.id === 'raise-strength'),
+			phase.steps.some((step) => step.id === PhaseStepId.RaiseStrength),
 		);
 		expect(raiseStrengthPhase).toBeDefined();
 		let result;
@@ -112,7 +113,7 @@ describe('stat breakdown summary', () => {
 			result = advance(ctx);
 		} while (
 			result.phase !== raiseStrengthPhase!.id ||
-			result.step !== 'raise-strength'
+			result.step !== PhaseStepId.RaiseStrength
 		);
 
 		const breakdown = getStatBreakdownSummary(

@@ -4,14 +4,16 @@ import { applyParamsToEffects } from '../utils';
 import { withStatSourceFrames } from '../stat_sources';
 import type { PopulationRoleId } from '../state';
 
-export const populationAdd: EffectHandler = (effect, ctx, mult = 1) => {
+export const populationAdd: EffectHandler = (effect, context, mult = 1) => {
 	const role = effect.params?.['role'] as PopulationRoleId;
 	if (!role) {
 		throw new Error('population:add requires role');
 	}
-	for (let i = 0; i < Math.floor(mult); i++) {
-		const player = ctx.activePlayer;
-		const def = ctx.populations.get(role);
+	const iterations = Math.floor(mult);
+	let iterationIndex = 0;
+	while (iterationIndex < iterations) {
+		const player = context.activePlayer;
+		const def = context.populations.get(role);
 		player.population[role] = (player.population[role] || 0) + 1;
 		const index = player.population[role];
 		if (def.onAssigned) {
@@ -39,7 +41,8 @@ export const populationAdd: EffectHandler = (effect, ctx, mult = 1) => {
 					},
 				}),
 			];
-			withStatSourceFrames(ctx, frames, () => runEffects(effects, ctx));
+			withStatSourceFrames(context, frames, () => runEffects(effects, context));
 		}
+		iterationIndex++;
 	}
 };

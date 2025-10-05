@@ -1,7 +1,7 @@
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
 import { applyParamsToEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator } from './factory';
-import type { ContentTranslator, Summary } from './types';
+import type { LegacyContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';
 import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
@@ -49,29 +49,30 @@ function gatherEffects(
 	if (!effects) {
 		return;
 	}
-	for (const eff of effects) {
+	for (const effect of effects) {
 		if (
-			eff.evaluator?.type === 'development' &&
-			(eff.evaluator.params as Record<string, string> | undefined)?.['id'] ===
-				id
+			effect.evaluator?.type === 'development' &&
+			(effect.evaluator.params as Record<string, string> | undefined)?.[
+				'id'
+			] === id
 		) {
-			out.push(eff);
+			out.push(effect);
 		}
-		if (eff.effects) {
-			gatherEffects(eff.effects, id, out);
+		if (effect.effects) {
+			gatherEffects(effect.effects, id, out);
 		}
 	}
 }
 
 function applySelfParams(
-	def: PhasedDef,
+	definition: PhasedDef,
 	params: Record<string, unknown>,
 ): PhasedDef {
 	const mapped: PhasedDef = {};
 	const rawId = params['id'];
 	const selfId = typeof rawId === 'string' ? rawId : undefined;
-	for (const key of Object.keys(def) as (keyof PhasedDef)[]) {
-		const value = def[key];
+	for (const key of Object.keys(definition) as (keyof PhasedDef)[]) {
+		const value = definition[key];
 		if (!Array.isArray(value)) {
 			continue;
 		}
@@ -83,15 +84,17 @@ function applySelfParams(
 
 function collectPhaseEffects(
 	id: string,
-	ctx: EngineContext,
+	engineContext: EngineContext,
 	params: Record<string, unknown>,
 ): PhaseEffects {
 	const result: PhaseEffects = {};
 	const rawId = params['id'];
 	const selfId = typeof rawId === 'string' ? rawId : undefined;
-	for (const phase of ctx.phases) {
-		const key =
-			`on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhaseEffects;
+	for (const phase of engineContext.phases) {
+		const phaseHandlerKey = `on${
+			phase.id.charAt(0).toUpperCase() + phase.id.slice(1)
+		}Phase`;
+		const key = phaseHandlerKey as keyof PhaseEffects;
 		for (const step of phase.steps) {
 			const bucket: EffectDef[] = [];
 			gatherEffects(step.effects, id, bucket);
@@ -107,17 +110,17 @@ function collectPhaseEffects(
 	return result;
 }
 
-class DevelopmentCore implements ContentTranslator<string> {
+class DevelopmentCore implements LegacyContentTranslator<string> {
 	private phased = new PhasedTranslator();
-	summarize(id: string, ctx: EngineContext): Summary {
-		const def = ctx.developments.get(id);
-		if (!def) {
+	summarize(id: string, engineContext: EngineContext): Summary {
+		const definition = engineContext.developments.get(id);
+		if (!definition) {
 			return [];
 		}
 		const params = { id };
-		const base = applySelfParams(def as unknown as PhasedDef, params);
+		const base = applySelfParams(definition as unknown as PhasedDef, params);
 		const merged: PhasedDef = { ...base };
-		const phases = collectPhaseEffects(id, ctx, params);
+		const phases = collectPhaseEffects(id, engineContext, params);
 		for (const [key, effects] of Object.entries(phases)) {
 			if (!effects?.length) {
 				continue;
@@ -125,17 +128,17 @@ class DevelopmentCore implements ContentTranslator<string> {
 			const current = merged[key as keyof PhasedDef] ?? [];
 			merged[key as keyof PhasedDef] = [...current, ...effects];
 		}
-		return this.phased.summarize(merged, ctx);
+		return this.phased.summarize(merged, engineContext);
 	}
-	describe(id: string, ctx: EngineContext): Summary {
-		const def = ctx.developments.get(id);
-		if (!def) {
+	describe(id: string, engineContext: EngineContext): Summary {
+		const definition = engineContext.developments.get(id);
+		if (!definition) {
 			return [];
 		}
 		const params = { id };
-		const base = applySelfParams(def as unknown as PhasedDef, params);
+		const base = applySelfParams(definition as unknown as PhasedDef, params);
 		const merged: PhasedDef = { ...base };
-		const phases = collectPhaseEffects(id, ctx, params);
+		const phases = collectPhaseEffects(id, engineContext, params);
 		for (const [key, effects] of Object.entries(phases)) {
 			if (!effects?.length) {
 				continue;
@@ -143,12 +146,12 @@ class DevelopmentCore implements ContentTranslator<string> {
 			const current = merged[key as keyof PhasedDef] ?? [];
 			merged[key as keyof PhasedDef] = [...current, ...effects];
 		}
-		return this.phased.describe(merged, ctx);
+		return this.phased.describe(merged, engineContext);
 	}
-	log(id: string, ctx: EngineContext): string[] {
-		const def = ctx.developments.get(id);
-		const name = def?.name ?? id;
-		const icon = def?.icon ?? '';
+	log(id: string, engineContext: EngineContext): string[] {
+		const definition = engineContext.developments.get(id);
+		const name = definition?.name ?? id;
+		const icon = definition?.icon ?? '';
 		const display = [icon, name].filter(Boolean).join(' ').trim();
 		return [display || name];
 	}

@@ -6,7 +6,9 @@ export const landTill: EffectHandler = (effect, ctx, mult = 1) => {
 		const landId = effect.params?.['landId'] as string | undefined;
 		const land = landId
 			? ctx.activePlayer.lands.find((l) => l.id === landId)
-			: ctx.activePlayer.lands.find((l) => !l.tilled && l.slotsMax < max);
+			: [...ctx.activePlayer.lands]
+					.reverse()
+					.find((candidate) => !candidate.tilled && candidate.slotsMax < max);
 		if (!land) {
 			throw new Error('No tillable land available');
 		}

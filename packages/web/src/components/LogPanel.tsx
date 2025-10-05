@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import clsx from 'clsx';
 import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
 import { useLogExpandedStyle, useLogViewport } from './hooks/useLogViewport';
@@ -24,15 +25,12 @@ export default function LogPanel() {
 	});
 	const pendingScrollRef = useRef(false);
 	const previousRectRef = useRef<DOMRect | null>(null);
-
 	const handleToggleExpand = () => {
 		const node = outerRef.current;
 		if (!node) {
 			return;
 		}
-
 		previousRectRef.current = node.getBoundingClientRect();
-
 		if (!isExpanded) {
 			if (!collapsedSize || !overlayOffsets) {
 				const rect = node.getBoundingClientRect();
@@ -48,7 +46,6 @@ export default function LogPanel() {
 			setIsExpanded(true);
 			return;
 		}
-
 		setIsExpanded(false);
 		pendingScrollRef.current = true;
 	};
@@ -98,7 +95,6 @@ export default function LogPanel() {
 				fill: 'both',
 			},
 		);
-
 		const cleanup = () => {
 			node.style.transformOrigin = previousOrigin;
 		};
@@ -126,7 +122,6 @@ export default function LogPanel() {
 		}
 
 		pendingScrollRef.current = true;
-
 		if (typeof ResizeObserver === 'undefined') {
 			container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 			return;
@@ -147,7 +142,6 @@ export default function LogPanel() {
 		});
 
 		observer.observe(list);
-
 		return () => {
 			pendingScrollRef.current = false;
 			observer.disconnect();
@@ -157,9 +151,36 @@ export default function LogPanel() {
 		};
 	}, [entries, isExpanded, listRef]);
 
+	const wrapperClasses = clsx('relative', { 'z-50': isExpanded });
+	const panelClasses = clsx(
+		'relative rounded-3xl border border-white/60 shadow-2xl',
+		'shadow-amber-500/10 transition-all duration-300 ease-in-out',
+		'dark:border-white/10 dark:shadow-slate-900/50 frosted-surface',
+		isExpanded
+			? 'bg-white/90 dark:bg-slate-900/90'
+			: 'bg-white/75 dark:bg-slate-900/75',
+	);
+	const toggleButtonClasses = clsx(
+		'absolute inline-flex h-9 w-9 items-center justify-center rounded-full',
+		'border border-white/60 bg-white/85 text-lg font-semibold',
+		'text-slate-700 shadow hover:bg-white/95 hover:text-slate-900',
+		'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400',
+		'dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100',
+		'dark:hover:bg-slate-900',
+	);
+	const scrollContainerClasses = clsx(
+		'relative flex flex-col',
+		isExpanded
+			? 'h-full overflow-y-auto px-6 pb-6 pt-6 custom-scrollbar'
+			: 'max-h-80 overflow-y-auto px-4 pb-4 pt-4 no-scrollbar',
+	);
+	const listClasses = clsx(
+		'mt-3 text-slate-700 dark:text-slate-200',
+		isExpanded ? 'space-y-3 text-sm' : 'space-y-2 text-xs',
+	);
 	return (
 		<div
-			className={`relative ${isExpanded ? 'z-50' : ''}`}
+			className={wrapperClasses}
 			style={
 				collapsedSize && collapsedSize.height
 					? { minHeight: `${collapsedSize.height}px` }
@@ -168,11 +189,7 @@ export default function LogPanel() {
 		>
 			<div
 				ref={outerRef}
-				className={`relative rounded-3xl border border-white/60 shadow-2xl shadow-amber-500/10 transition-all duration-300 ease-in-out dark:border-white/10 dark:shadow-slate-900/50 frosted-surface ${
-					isExpanded
-						? 'bg-white/90 dark:bg-slate-900/90'
-						: 'bg-white/75 dark:bg-slate-900/75'
-				}`}
+				className={panelClasses}
 				style={{
 					...(expandedStyle ?? {}),
 					...(isExpanded ? {} : { width: '100%' }),
@@ -182,7 +199,7 @@ export default function LogPanel() {
 					type="button"
 					onClick={handleToggleExpand}
 					aria-label={isExpanded ? 'Collapse log panel' : 'Expand log panel'}
-					className="absolute inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-lg font-semibold text-slate-700 shadow hover:bg-white/95 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/85 dark:text-slate-100 dark:hover:bg-slate-900"
+					className={toggleButtonClasses}
 					style={{
 						zIndex: 5,
 						top: isExpanded ? '1.5rem' : '1rem',
@@ -193,15 +210,8 @@ export default function LogPanel() {
 						{isExpanded ? '⤡' : '⛶'}
 					</span>
 				</button>
-				<div
-					ref={scrollRef}
-					className={`relative flex flex-col ${
-						isExpanded
-							? 'h-full overflow-y-auto px-6 pb-6 pt-6 custom-scrollbar'
-							: 'max-h-80 overflow-y-auto px-4 pb-4 pt-4 no-scrollbar'
-					}`}
-				>
-					<div className={`flex items-start gap-2 pb-2 pr-12`}>
+				<div ref={scrollRef} className={scrollContainerClasses}>
+					<div className="flex items-start gap-2 pb-2 pr-12">
 						<h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
 							Log
 						</h2>
@@ -211,10 +221,7 @@ export default function LogPanel() {
 							Older log entries were trimmed.
 						</p>
 					) : null}
-					<ul
-						ref={listRef}
-						className={`mt-3 ${isExpanded ? 'space-y-3 text-sm' : 'space-y-2 text-xs'} text-slate-700 dark:text-slate-200`}
-					>
+					<ul ref={listRef} className={listClasses}>
 						{entries.map((entry, idx) => {
 							const aId = engineContext.game.players[0]?.id;
 							const bId = engineContext.game.players[1]?.id;
@@ -224,13 +231,13 @@ export default function LogPanel() {
 									: entry.playerId === bId
 										? 'log-entry-b'
 										: '';
+							const entryClasses = clsx(
+								isExpanded ? 'text-sm leading-relaxed' : 'text-xs',
+								'font-mono whitespace-pre-wrap',
+								colorClass,
+							);
 							return (
-								<li
-									key={idx}
-									className={`${
-										isExpanded ? 'text-sm leading-relaxed' : 'text-xs'
-									} font-mono whitespace-pre-wrap ${colorClass}`}
-								>
+								<li key={idx} className={entryClasses}>
 									[{entry.time}] {entry.text}
 								</li>
 							);

@@ -19,8 +19,14 @@ function resolveOptionTargetLabel(
 	context: EngineContext,
 ): string | undefined {
 	const params = option.params;
-	const targetId =
-		isRecord(params) && typeof params.id === 'string' ? params.id : undefined;
+	let targetId: string | undefined;
+	if (isRecord(params)) {
+		if (typeof params.id === 'string') {
+			targetId = params.id;
+		} else if (typeof params.developmentId === 'string') {
+			targetId = params.developmentId;
+		}
+	}
 	if (!targetId) {
 		return undefined;
 	}
@@ -72,6 +78,13 @@ function normalizeEntryLabel(
 	if (trimmedLabel.startsWith('Add ')) {
 		const withoutAdd = trimmedLabel.slice(4).trim();
 		if (normalizedTarget.startsWith(withoutAdd)) {
+			return normalizedTarget;
+		}
+	}
+	const firstSpace = trimmedLabel.indexOf(' ');
+	if (firstSpace > 0) {
+		const withoutVerb = trimmedLabel.slice(firstSpace + 1).trim();
+		if (withoutVerb.length > 0 && normalizedTarget.startsWith(withoutVerb)) {
 			return normalizedTarget;
 		}
 	}
@@ -157,7 +170,14 @@ export function buildActionOptionTranslation(
 	}
 	const restEntries = translated.slice(1).map(cloneSummaryEntry);
 	if (typeof first === 'string') {
-		const normalizedFirst = normalizeEntryLabel(first, targetLabel);
+		let firstEntry = first;
+		if (mode === 'log') {
+			const actionPrefix = `${actionLabel} - `;
+			if (firstEntry.startsWith(actionPrefix)) {
+				firstEntry = firstEntry.slice(actionPrefix.length);
+			}
+		}
+		const normalizedFirst = normalizeEntryLabel(firstEntry, targetLabel);
 		const title = combineLabels(actionLabel, normalizedFirst, fallback);
 		const shouldIncludeFirstDetail =
 			restEntries.length > 0

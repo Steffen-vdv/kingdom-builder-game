@@ -26,6 +26,12 @@ export function mergeOptionParams(
 		}
 		merged[key] = value;
 	}
+	if (
+		merged['id'] === undefined &&
+		typeof merged['developmentId'] === 'string'
+	) {
+		merged['id'] = merged['developmentId'];
+	}
 	return merged;
 }
 
@@ -40,26 +46,16 @@ export function buildOptionEntry(
 		selection?.params || mergeOptionParams(option, baseParams);
 
 	if (mode === 'log') {
-		const fallbackTitle = [option.icon, option.label]
-			.filter(Boolean)
-			.join(' ')
-			.trim();
-		if (selection) {
-			const logs = logEffects(selection.effects, context);
-			if (!fallbackTitle) {
-				return logs.length ? { title: option.id, items: logs } : option.id;
-			}
-			return logs.length
-				? { title: fallbackTitle, items: logs }
-				: fallbackTitle;
-		}
-		const logged = logContent('action', option.actionId, context, mergedParams);
-		if (!fallbackTitle) {
-			return logged.length ? { title: option.id, items: logged } : option.id;
-		}
-		return logged.length
-			? { title: fallbackTitle, items: logged }
-			: fallbackTitle;
+		const translated = selection
+			? logEffects(selection.effects, context)
+			: logContent('action', option.actionId, context, mergedParams);
+		const { entry } = buildActionOptionTranslation(
+			option,
+			context,
+			translated,
+			mode,
+		);
+		return entry;
 	}
 
 	const translated =
