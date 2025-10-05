@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import {
-	getActionCosts,
 	getActionRequirements,
 	type ActionEffectGroup,
 	type ActionEffectGroupOption,
@@ -13,7 +12,10 @@ import {
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
 import type { HoverCardData } from './types';
-import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
+import {
+	buildActionOptionTranslation,
+	deriveActionOptionLabel,
+} from '../../translation/effects/optionLabel';
 
 type ResolveParams = Record<string, unknown> | undefined;
 
@@ -63,32 +65,26 @@ function buildHoverDetails(
 	context: EngineContext,
 	formatRequirement: (requirement: string) => string,
 	hoverBackground: string,
-	optionLabel: string,
 ): HoverCardData {
-	const hoverTitle = optionLabel.trim() || option.label;
-	const hoverSummary = describeContent(
-		'action',
-		option.actionId,
+	const described = buildActionOptionTranslation(
+		option,
 		context,
-		mergedParams,
+		describeContent('action', option.actionId, context, mergedParams),
+		'describe',
 	);
+	const hoverSummary =
+		typeof described.entry === 'string' ? [described.entry] : [described.entry];
 	const { effects, description } = splitSummary(hoverSummary);
 	const requirements = getActionRequirements(
 		option.actionId,
 		context,
 		mergedParams,
 	).map(formatRequirement);
-	const costBag = getActionCosts(option.actionId, context, mergedParams);
-	const costs: Record<string, number> = {};
-	for (const [resourceKey, cost] of Object.entries(costBag)) {
-		costs[resourceKey] = cost ?? 0;
-	}
 	return {
-		title: hoverTitle,
+		title: described.label.trim() || option.label,
 		effects,
 		...(description && { description }),
 		requirements,
-		costs,
 		bgClass: hoverBackground,
 	};
 }
@@ -149,7 +145,6 @@ export function useEffectGroupOptions({
 					context,
 					formatRequirement,
 					hoverBackground,
-					optionLabel,
 				);
 				handleHoverCard(hoverDetails);
 			};
