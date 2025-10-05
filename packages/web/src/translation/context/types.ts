@@ -7,6 +7,7 @@ import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
+	PlayerStartConfig,
 } from '@kingdom-builder/protocol';
 
 /**
@@ -91,6 +92,11 @@ export interface TranslationContext {
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;
 	readonly opponent: TranslationPlayer;
+	readonly recentResourceGains: ReadonlyArray<{
+		key: string;
+		amount: number;
+	}>;
+	readonly compensations: Readonly<Record<PlayerId, PlayerStartConfig>>;
 	pullEffectLog<T>(key: string): T | undefined;
 	readonly actionCostResource?: string;
 	/**
