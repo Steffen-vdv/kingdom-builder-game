@@ -123,11 +123,7 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 							.id('hold_festival_penalty')
 							.name('Festival Hangover')
 							.icon('🥴')
-							.onUpkeepPhase(
-								effect(Types.Passive, PassiveMethods.REMOVE)
-									.param('id', 'hold_festival_penalty')
-									.build(),
-							),
+							.removeOnUpkeepStep(),
 					)
 					.effect(
 						effect(Types.ResultMod, ResultModMethods.ADD)
@@ -167,6 +163,10 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 			.build(),
 	);
 
+	const plowCostPenalty = passiveParams()
+		.id('plow_cost_mod')
+		.removeOnUpkeepStep();
+
 	registry.add(
 		ActionId.plow,
 		action()
@@ -188,15 +188,7 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 			)
 			.effect(
 				effect(Types.Passive, PassiveMethods.ADD)
-					.params(
-						passiveParams()
-							.id('plow_cost_mod')
-							.onUpkeepPhase(
-								effect(Types.Passive, PassiveMethods.REMOVE)
-									.param('id', 'plow_cost_mod')
-									.build(),
-							),
-					)
+					.params(plowCostPenalty)
 					.effect(
 						effect(Types.CostMod, CostModMethods.ADD)
 							.params(

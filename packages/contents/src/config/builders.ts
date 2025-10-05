@@ -599,18 +599,18 @@ export function landParams() {
 	return new LandEffectParamsBuilder();
 }
 
-class PassiveEffectParamsBuilder extends ParamsBuilder<{
-	id?: string;
-	name?: string;
-	icon?: string;
-	detail?: string;
-	meta?: PassiveMetadata;
-	skip?: PhaseSkipConfig;
-	onGrowthPhase?: EffectDef[];
-	onUpkeepPhase?: EffectDef[];
-	onBeforeAttacked?: EffectDef[];
-	onAttackResolved?: EffectDef[];
-}> {
+type PassiveEffectTriggerMap = Partial<Record<TriggerKey, EffectConfig[]>>;
+
+class PassiveEffectParamsBuilder extends ParamsBuilder<
+	{
+		id?: string;
+		name?: string;
+		icon?: string;
+		detail?: string;
+		meta?: PassiveMetadata;
+		skip?: PhaseSkipConfig;
+	} & PassiveEffectTriggerMap
+> {
 	id(id: string) {
 		return this.set(
 			'id',
@@ -685,6 +685,41 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 		this.params.skip = this.params.skip || ({} as PhaseSkipConfig);
 		return this.params.skip;
 	}
+
+	private addTriggerEffects(trigger: TriggerKey, effects: EffectConfig[]) {
+		if (!effects.length) {
+			return this;
+		}
+		const bucket = (this.params[trigger] as EffectConfig[] | undefined) || [];
+		bucket.push(...effects);
+		this.params[trigger] = bucket;
+		return this;
+	}
+
+	private requirePassiveId(context: string) {
+		const id = this.params.id;
+		if (!id) {
+			throw new Error(
+				`Passive ${context} requires id(). ` +
+					'Call id("your-passive-id") before ' +
+					`${context}.`,
+			);
+		}
+		return id;
+	}
+
+	private buildRemovalEffect(passiveId: string) {
+		return effect(Types.Passive, PassiveMethods.REMOVE)
+			.param('id', passiveId)
+			.build();
+	}
+
+	private scheduleRemoval(trigger: TriggerKey, context: string) {
+		const passiveId = this.requirePassiveId(context);
+		const removal = this.buildRemovalEffect(passiveId);
+		this.addTriggerEffects(trigger, [removal]);
+		return this;
+	}
 	skipPhase(phaseId: PhaseIdentifier) {
 		const skip = this.ensureSkip();
 		skip.phases = skip.phases || [];
@@ -707,32 +742,36 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 		return this;
 	}
 	onGrowthPhase(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.params.onGrowthPhase = this.params.onGrowthPhase || [];
-		this.params.onGrowthPhase.push(
-			...effects.map((item) => resolveEffectConfig(item)),
+		return this.addTriggerEffects(
+			'onGrowthPhase',
+			effects.map((item) => resolveEffectConfig(item)),
 		);
-		return this;
 	}
 	onUpkeepPhase(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.params.onUpkeepPhase = this.params.onUpkeepPhase || [];
-		this.params.onUpkeepPhase.push(
-			...effects.map((item) => resolveEffectConfig(item)),
+		return this.addTriggerEffects(
+			'onUpkeepPhase',
+			effects.map((item) => resolveEffectConfig(item)),
 		);
-		return this;
 	}
 	onBeforeAttacked(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.params.onBeforeAttacked = this.params.onBeforeAttacked || [];
-		this.params.onBeforeAttacked.push(
-			...effects.map((item) => resolveEffectConfig(item)),
+		return this.addTriggerEffects(
+			'onBeforeAttacked',
+			effects.map((item) => resolveEffectConfig(item)),
 		);
-		return this;
 	}
 	onAttackResolved(...effects: Array<EffectConfig | EffectBuilder>) {
-		this.params.onAttackResolved = this.params.onAttackResolved || [];
-		this.params.onAttackResolved.push(
-			...effects.map((item) => resolveEffectConfig(item)),
+		return this.addTriggerEffects(
+			'onAttackResolved',
+			effects.map((item) => resolveEffectConfig(item)),
 		);
-		return this;
+	}
+
+	removeOnUpkeepStep() {
+		return this.scheduleRemoval('onUpkeepPhase', 'removeOnUpkeepStep()');
+	}
+
+	removeOnTrigger(trigger: TriggerKey) {
+		return this.scheduleRemoval(trigger, `removeOnTrigger('${trigger}')`);
 	}
 
 	override build() {
