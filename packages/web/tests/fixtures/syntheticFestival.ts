@@ -56,7 +56,7 @@ export const createSyntheticFestivalScenario =
 					params: {
 						id: passiveId,
 						name: 'Festival Hangover',
-						icon: '🥴',
+						icon: '🤮',
 						onUpkeepPhase: [
 							{
 								type: 'passive',

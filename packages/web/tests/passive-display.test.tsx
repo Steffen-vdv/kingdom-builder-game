@@ -138,7 +138,7 @@ describe('<PassiveDisplay />', () => {
 		const happinessKey = tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 0;
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
-		
+
 		const { mockGame } = createPassiveGame(ctx);
 		currentGame = mockGame;
 
