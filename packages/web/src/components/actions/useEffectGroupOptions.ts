@@ -36,22 +36,27 @@ function resolveOptionParams(
 	option: ActionEffectGroupOption,
 	pendingParams: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
-	const base: Record<string, unknown> = {};
+	const resolved: Record<string, unknown> = {};
 	const params: ResolveParams = option.params;
 	if (!params) {
-		return base;
+		return resolved;
 	}
 	for (const [key, value] of Object.entries(params)) {
-		if (typeof value === 'string' && value.startsWith('$') && pendingParams) {
-			const placeholder = value.slice(1);
-			if (placeholder in pendingParams) {
-				base[key] = pendingParams[placeholder];
-				continue;
-			}
+		if (typeof value !== 'string') {
+			continue;
 		}
-		base[key] = value;
+		if (!value.startsWith('$')) {
+			continue;
+		}
+		if (!pendingParams) {
+			continue;
+		}
+		const placeholder = value.slice(1);
+		if (placeholder in pendingParams) {
+			resolved[key] = pendingParams[placeholder];
+		}
 	}
-	return base;
+	return resolved;
 }
 
 function buildHoverDetails(
@@ -124,9 +129,12 @@ export function useEffectGroupOptions({
 			const card: ActionCardOption = {
 				id: option.id,
 				label: optionLabel,
+				...(option.icon ? { icon: option.icon } : {}),
 				onSelect: () => {
 					clearHoverCard();
-					handleOptionSelect(currentGroup, option, resolved);
+					const selectionParams =
+						Object.keys(resolved).length > 0 ? resolved : undefined;
+					handleOptionSelect(currentGroup, option, selectionParams);
 				},
 				compact: currentGroup.layout === 'compact',
 			};
