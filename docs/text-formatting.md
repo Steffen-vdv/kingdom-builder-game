@@ -139,6 +139,11 @@ suffixes like "per 🧩 Development" (see
   output the icon-first bullets and sentence-case gain/lose copy used across
   action summaries, descriptions, and logs. Reuse them instead of hardcoding
   unlock/remove phrasing.
+- **Development slots** — `renderDevelopmentChange` in
+  [`effects/formatters/development.ts`](../packages/web/src/translation/effects/formatters/development.ts)
+  centralises icon-first summaries, full-sentence descriptions, and log copy
+  for adding or removing developments. Import it when formatting new
+  development effects to keep the verbs consistent.
 - **Result modifier clauses** — The modifier helpers in
   [`effects/formatters/modifier_helpers.ts`](../packages/web/src/translation/effects/formatters/modifier_helpers.ts)
   standardise phrases such as "Whenever it grants resources" and handle

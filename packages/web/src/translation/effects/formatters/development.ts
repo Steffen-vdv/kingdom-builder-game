@@ -1,53 +1,78 @@
+import type { EngineContext } from '@kingdom-builder/engine';
 import { registerEffectFormatter } from '../factory';
+
+interface DevelopmentChangeVerbs {
+	describe: string;
+	log?: string;
+}
+
+interface DevelopmentChangeCopy {
+	summary: string;
+	description: string;
+	log?: string;
+}
+
+function renderDevelopmentChange(
+	id: string | undefined,
+	ctx: EngineContext,
+	verbs: DevelopmentChangeVerbs,
+): DevelopmentChangeCopy {
+	const safeId = typeof id === 'string' && id.length ? id : 'development';
+	let name = safeId;
+	let icon = '';
+	try {
+		const def = ctx.developments.get(safeId);
+		if (def?.name) {
+			name = def.name;
+		}
+		if (def?.icon) {
+			icon = def.icon;
+		}
+	} catch {
+		/* ignore missing development definitions */
+	}
+	const decorated = [icon, name].filter(Boolean).join(' ').trim();
+	const label = decorated || safeId;
+	const summary = label;
+	const description = `${verbs.describe} ${label}`.trim();
+	const log = verbs.log ? `${verbs.log} ${label}`.trim() : undefined;
+	return { summary, description, log };
+}
 
 registerEffectFormatter('development', 'add', {
 	summarize: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
-		let icon = id;
-		try {
-			icon = ctx.developments.get(id).icon || id;
-		} catch {
-			/* ignore */
-		}
-		return `${icon}`;
+		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+			describe: 'Add',
+		}).summary;
 	},
 	describe: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
-		let def: { name: string; icon?: string | undefined } | undefined;
-		try {
-			def = ctx.developments.get(id);
-		} catch {
-			/* ignore */
-		}
-		const label = def?.name || id;
-		const icon = def?.icon || '';
-		const decoratedLabel = [icon, label].filter(Boolean).join(' ').trim();
-		return `Add ${decoratedLabel}`.trim();
+		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+			describe: 'Add',
+		}).description;
 	},
 });
 
 registerEffectFormatter('development', 'remove', {
 	summarize: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
-		let icon = id;
-		try {
-			icon = ctx.developments.get(id).icon || id;
-		} catch {
-			/* ignore */
-		}
-		return `Remove ${icon}`;
+		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+			describe: 'Remove',
+			log: 'Removed',
+		}).summary;
 	},
 	describe: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
-		let def: { name: string; icon?: string | undefined } | undefined;
-		try {
-			def = ctx.developments.get(id);
-		} catch {
-			/* ignore */
-		}
-		const label = def?.name || id;
-		const icon = def?.icon || '';
-		const decoratedLabel = [icon, label].filter(Boolean).join(' ').trim();
-		return `Remove ${decoratedLabel}`.trim();
+		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+			describe: 'Remove',
+			log: 'Removed',
+		}).description;
+	},
+	log: (eff, ctx) => {
+		return (
+			renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+				describe: 'Remove',
+				log: 'Removed',
+			}).log || ''
+		);
 	},
 });
+
+export { renderDevelopmentChange };
