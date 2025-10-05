@@ -12,6 +12,7 @@ import {
 	happinessTier,
 	populationParams,
 } from '../src/config/builders';
+import { ActionId } from '../src/actions';
 import { Types, PassiveMethods } from '../src/config/builderShared';
 import { RESOURCES, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
@@ -47,7 +48,7 @@ describe('content builder safeguards', () => {
 	});
 
 	it('prevents duplicate action param setters', () => {
-		const builder = actionParams().id('develop');
+		const builder = actionParams().id(ActionId.develop);
 		expect(() => builder.id('again')).toThrowError(
 			'Action effect params already set id(). Remove the extra id() call.',
 		);

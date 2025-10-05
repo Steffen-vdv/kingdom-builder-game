@@ -4,6 +4,7 @@ import {
 	TRANSFER_PCT_EVALUATION_TYPE,
 	buildingSchema,
 } from '@kingdom-builder/protocol';
+import { ActionId } from './actions';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import {
@@ -45,7 +46,7 @@ export function createBuildingRegistry() {
 					.params(
 						costModParams()
 							.id('tc_expand_cost')
-							.actionId('expand')
+							.actionId(ActionId.expand)
 							.key(Resource.gold)
 							.amount(2),
 					)
@@ -53,7 +54,9 @@ export function createBuildingRegistry() {
 			)
 			.onBuild(
 				effect(Types.ResultMod, ResultModMethods.ADD)
-					.params(resultModParams().id('tc_expand_result').actionId('expand'))
+					.params(
+						resultModParams().id('tc_expand_result').actionId(ActionId.expand),
+					)
 					.effect(
 						effect(Types.Resource, ResourceMethods.ADD)
 							.params(resourceParams().key(Resource.happiness).amount(1))
@@ -118,7 +121,7 @@ export function createBuildingRegistry() {
 			.cost(Resource.gold, 10)
 			.onBuild(
 				effect(Types.Action, ActionMethods.ADD)
-					.params(actionParams().id('plow'))
+					.params(actionParams().id(ActionId.plow))
 					.build(),
 			)
 			.build(),

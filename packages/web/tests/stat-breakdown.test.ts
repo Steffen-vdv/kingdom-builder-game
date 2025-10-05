@@ -18,6 +18,7 @@ import {
 	type StatKey,
 	STATS,
 	Resource,
+	ActionId,
 } from '@kingdom-builder/contents';
 import { getStatBreakdownSummary } from '../src/utils/stats';
 
@@ -189,7 +190,7 @@ describe('stat breakdown summary', () => {
 			ctx,
 		);
 
-		performAction('build', ctx, { id: buildingId });
+		performAction(ActionId.build, ctx, { id: buildingId });
 
 		const breakdown = getStatBreakdownSummary(stat, ctx.activePlayer, ctx);
 		const objectEntries = breakdown.filter(isSummaryObject);
