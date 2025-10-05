@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
@@ -66,16 +66,15 @@ beforeAll(() => {
 describe('<PhasePanel />', () => {
 	it('displays current turn and phases', () => {
 		render(<PhasePanel />);
-		expect(
-			screen.getByText((content) => {
-				const turnText = `Turn ${ctx.game.turn}`;
-				return (
-					typeof content === 'string' &&
-					content.includes(turnText) &&
-					content.includes(ctx.activePlayer.name)
-				);
-			}),
-		).toBeInTheDocument();
+		const turnText = `Turn ${ctx.game.turn}`;
+		const turnElement = screen.getByText(turnText);
+		const turnContainer = turnElement.closest('div');
+		expect(turnContainer).toBeTruthy();
+		if (turnContainer) {
+			expect(
+				within(turnContainer).getByText(ctx.activePlayer.name),
+			).toBeInTheDocument();
+		}
 		const firstPhase = ctx.phases[0];
 		const phaseLabel = `${firstPhase.icon} ${firstPhase.label}`;
 		expect(
