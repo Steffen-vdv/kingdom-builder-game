@@ -36,6 +36,7 @@ export default function RaisePopOptions({
 }) {
 	const {
 		ctx,
+		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
@@ -102,10 +103,20 @@ export default function RaisePopOptions({
 					: !canPay
 						? (insufficientTooltip ?? 'Cannot pay costs')
 						: undefined;
-				const summary = describeContent('action', action.id, ctx, { role });
-				const shortSummary = summarizeContent('action', action.id, ctx, {
-					role,
-				});
+				const summary = describeContent(
+					'action',
+					action.id,
+					translationContext,
+					{ role },
+				);
+				const shortSummary = summarizeContent(
+					'action',
+					action.id,
+					translationContext,
+					{
+						role,
+					},
+				);
 				return (
 					<ActionCard
 						key={role}

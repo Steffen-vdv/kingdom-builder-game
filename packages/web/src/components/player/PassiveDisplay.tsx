@@ -26,7 +26,8 @@ export default function PassiveDisplay({
 }: {
 	player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
 }) {
-	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+	const { ctx, translationContext, handleHoverCard, clearHoverCard } =
+		useGameEngine();
 	const playerId: PlayerId = player.id;
 	const summaries: PassiveSummary[] = ctx.passives.list(playerId);
 	const defs = ctx.passives.values(playerId);
@@ -90,11 +91,16 @@ export default function PassiveDisplay({
 				const summaryText = presentation.summary;
 				const tierDefinition = tierByPassiveId.get(passive.id);
 				const tierSections = tierDefinition
-					? buildTierEntries([tierDefinition], tierDefinition.id, ctx).entries
+					? buildTierEntries(
+							[tierDefinition],
+							tierDefinition.id,
+							ctx,
+							translationContext,
+						).entries
 					: undefined;
 				const items = tierSections
 					? tierSections
-					: describeEffects(def.effects || [], ctx);
+					: describeEffects(def.effects || [], translationContext);
 				const upkeepLabel =
 					PHASES.find((phase) => phase.id === PhaseId.Upkeep)?.label ||
 					'Upkeep';

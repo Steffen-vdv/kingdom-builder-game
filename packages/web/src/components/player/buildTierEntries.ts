@@ -4,7 +4,11 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
-import { describeEffects, splitSummary } from '../../translation';
+import {
+	describeEffects,
+	splitSummary,
+	type TranslationContext,
+} from '../../translation';
 import type { SummaryEntry, SummaryGroup } from '../../translation/content';
 
 export const MAX_TIER_SUMMARY_LINES = 4;
@@ -112,6 +116,7 @@ export function buildTierEntries(
 	tiers: TierDefinition[],
 	activeId: string | undefined,
 	ctx: EngineContext,
+	translationContext: TranslationContext,
 ): TierEntriesResult {
 	const getRangeStart = (tier: TierDefinition) =>
 		tier.range.min ?? Number.NEGATIVE_INFINITY;
@@ -148,7 +153,10 @@ export function buildTierEntries(
 
 		let summaryEntries: SummaryEntry[] = [];
 		if (entry.preview?.effects?.length) {
-			summaryEntries = describeEffects(entry.preview.effects, ctx);
+			summaryEntries = describeEffects(
+				entry.preview.effects,
+				translationContext,
+			);
 		}
 		if (!summaryEntries.length) {
 			summaryEntries = normalizeSummary(entry.text?.summary);

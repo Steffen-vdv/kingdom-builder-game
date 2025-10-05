@@ -35,11 +35,14 @@ function toPassivePhaseInfo(phase: PhaseDef | PassivePhaseInfo | undefined) {
 	if (!phase) {
 		return undefined;
 	}
-	return {
-		id: phase.id,
-		label: 'label' in phase ? phase.label : undefined,
-		icon: 'icon' in phase ? phase.icon : undefined,
-	} satisfies PassivePhaseInfo;
+	const info: PassivePhaseInfo = { id: phase.id };
+	if ('label' in phase && phase.label !== undefined) {
+		info.label = phase.label;
+	}
+	if ('icon' in phase && phase.icon !== undefined) {
+		info.icon = phase.icon;
+	}
+	return info;
 }
 
 function resolvePhaseMeta(
@@ -55,11 +58,14 @@ function resolvePhaseMeta(
 	}
 	const fromContext = ctx.phases.find((phase) => phase.id === id);
 	if (fromContext) {
-		return {
-			id: fromContext.id,
-			label: fromContext.label,
-			icon: fromContext.icon,
-		};
+		const info: PassivePhaseInfo = { id: fromContext.id };
+		if (fromContext.label !== undefined) {
+			info.label = fromContext.label;
+		}
+		if (fromContext.icon !== undefined) {
+			info.icon = fromContext.icon;
+		}
+		return info;
 	}
 	const fromContents = PHASES.find(
 		(phaseDefinition) => phaseDefinition.id === id,
@@ -118,7 +124,7 @@ function resolvePhaseByTrigger(
 	}
 	const fromContext = findPhaseWithTrigger(ctx.phases as unknown[]);
 	if (fromContext) {
-		return toPassivePhaseInfo(fromContext);
+		return toPassivePhaseInfo(fromContext as PassivePhaseInfo);
 	}
 	const fromContents = findPhaseWithTrigger(PHASES);
 	return toPassivePhaseInfo(fromContents);

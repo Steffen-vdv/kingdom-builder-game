@@ -32,6 +32,7 @@ function GenericActions({
 }) {
 	const {
 		ctx: context,
+		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
@@ -199,6 +200,7 @@ function GenericActions({
 					beginSelection={beginSelection}
 					handleOptionSelect={handleOptionSelect}
 					context={context}
+					translationContext={translationContext}
 					actionCostResource={actionCostResource}
 					handlePerform={handlePerform}
 					handleHoverCard={handleHoverCard}

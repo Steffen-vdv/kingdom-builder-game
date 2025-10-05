@@ -1,10 +1,10 @@
 import { formatPassiveRemoval } from '@kingdom-builder/contents';
 import type { HappinessTierDefinition } from '@kingdom-builder/engine/services';
-import type { EngineContext } from '@kingdom-builder/engine';
 import { summarizeEffects } from '../effects';
 import { translateTierSummary } from './tierSummaries';
 import { registerContentTranslator } from './factory';
-import type { LegacyContentTranslator, Summary, SummaryEntry } from './types';
+import type { ContentTranslator, Summary, SummaryEntry } from './types';
+import type { TranslationContext } from '../context';
 
 function splitLines(text: string | undefined): string[] {
 	if (!text) {
@@ -55,10 +55,9 @@ function flattenSummary(entries: Summary): string[] {
 }
 
 class TierTranslator
-	implements
-		LegacyContentTranslator<HappinessTierDefinition, Record<string, never>>
+	implements ContentTranslator<HappinessTierDefinition, Record<string, never>>
 {
-	summarize(tier: HappinessTierDefinition, ctx: EngineContext): Summary {
+	summarize(tier: HappinessTierDefinition, ctx: TranslationContext): Summary {
 		const summaryLines: string[] = [];
 		const translated = translateTierSummary(tier.display?.summaryToken);
 		appendUnique(summaryLines, splitLines(translated ?? tier.text?.summary));
@@ -89,7 +88,7 @@ class TierTranslator
 		return summary;
 	}
 
-	describe(tier: HappinessTierDefinition, ctx: EngineContext): Summary {
+	describe(tier: HappinessTierDefinition, ctx: TranslationContext): Summary {
 		return this.summarize(tier, ctx);
 	}
 }

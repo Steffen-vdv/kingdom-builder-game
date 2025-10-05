@@ -1,10 +1,12 @@
-import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/engine';
 import { applyParamsToEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator } from './factory';
-import type { LegacyContentTranslator, Summary } from './types';
+import type { ContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';
 import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
+import type { TranslationContext } from '../context';
+import { PHASES } from '@kingdom-builder/contents';
 
 interface PhaseEffects {
 	onBeforeAttacked?: EffectDef[];
@@ -84,18 +86,17 @@ function applySelfParams(
 
 function collectPhaseEffects(
 	id: string,
-	engineContext: EngineContext,
 	params: Record<string, unknown>,
 ): PhaseEffects {
 	const result: PhaseEffects = {};
 	const rawId = params['id'];
 	const selfId = typeof rawId === 'string' ? rawId : undefined;
-	for (const phase of engineContext.phases) {
+	for (const phase of PHASES) {
 		const phaseHandlerKey = `on${
 			phase.id.charAt(0).toUpperCase() + phase.id.slice(1)
 		}Phase`;
 		const key = phaseHandlerKey as keyof PhaseEffects;
-		for (const step of phase.steps) {
+		for (const step of phase.steps ?? []) {
 			const bucket: EffectDef[] = [];
 			gatherEffects(step.effects, id, bucket);
 			if (bucket.length) {
@@ -110,9 +111,9 @@ function collectPhaseEffects(
 	return result;
 }
 
-class DevelopmentCore implements LegacyContentTranslator<string> {
+class DevelopmentCore implements ContentTranslator<string> {
 	private phased = new PhasedTranslator();
-	summarize(id: string, engineContext: EngineContext): Summary {
+	summarize(id: string, engineContext: TranslationContext): Summary {
 		const definition = engineContext.developments.get(id);
 		if (!definition) {
 			return [];
@@ -120,7 +121,7 @@ class DevelopmentCore implements LegacyContentTranslator<string> {
 		const params = { id };
 		const base = applySelfParams(definition as unknown as PhasedDef, params);
 		const merged: PhasedDef = { ...base };
-		const phases = collectPhaseEffects(id, engineContext, params);
+		const phases = collectPhaseEffects(id, params);
 		for (const [key, effects] of Object.entries(phases)) {
 			if (!effects?.length) {
 				continue;
@@ -130,7 +131,7 @@ class DevelopmentCore implements LegacyContentTranslator<string> {
 		}
 		return this.phased.summarize(merged, engineContext);
 	}
-	describe(id: string, engineContext: EngineContext): Summary {
+	describe(id: string, engineContext: TranslationContext): Summary {
 		const definition = engineContext.developments.get(id);
 		if (!definition) {
 			return [];
@@ -138,7 +139,7 @@ class DevelopmentCore implements LegacyContentTranslator<string> {
 		const params = { id };
 		const base = applySelfParams(definition as unknown as PhasedDef, params);
 		const merged: PhasedDef = { ...base };
-		const phases = collectPhaseEffects(id, engineContext, params);
+		const phases = collectPhaseEffects(id, params);
 		for (const [key, effects] of Object.entries(phases)) {
 			if (!effects?.length) {
 				continue;
@@ -148,7 +149,7 @@ class DevelopmentCore implements LegacyContentTranslator<string> {
 		}
 		return this.phased.describe(merged, engineContext);
 	}
-	log(id: string, engineContext: EngineContext): string[] {
+	log(id: string, engineContext: TranslationContext): string[] {
 		const definition = engineContext.developments.get(id);
 		const name = definition?.name ?? id;
 		const icon = definition?.icon ?? '';
