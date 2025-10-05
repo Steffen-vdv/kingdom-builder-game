@@ -98,6 +98,10 @@ export const StatMethods = {
 	REMOVE: 'remove',
 } as const;
 
+export const RequirementTypes = {
+	Evaluator: 'evaluator',
+} as const;
+
 type Params = Record<string, unknown>;
 
 abstract class ParamsBuilder<P extends Params = Params> {
@@ -1546,6 +1550,41 @@ export function requirement(type?: string, method?: string) {
 		builder.method(method);
 	}
 	return builder;
+}
+
+class RequirementEvaluatorCompareBuilder extends RequirementBuilder<{
+	left?: CompareValue;
+	right?: CompareValue;
+	operator?: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne';
+}> {
+	constructor() {
+		super();
+		this.type(RequirementTypes.Evaluator);
+		this.method('compare');
+	}
+
+	private normalize(value: CompareValue) {
+		if (value instanceof EvaluatorBuilder) {
+			return value.build();
+		}
+		return value;
+	}
+
+	left(value: CompareValue) {
+		return this.param('left', this.normalize(value));
+	}
+
+	right(value: CompareValue) {
+		return this.param('right', this.normalize(value));
+	}
+
+	operator(op: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne') {
+		return this.param('operator', op);
+	}
+}
+
+export function requirementEvaluatorCompare() {
+	return new RequirementEvaluatorCompareBuilder();
 }
 
 class BaseBuilder<T extends { id: string; name: string }> {
