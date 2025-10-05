@@ -72,6 +72,7 @@ type PopulationEvaluationIdMap = typeof POPULATION_EVALUATION_ID_MAP;
 
 export type PopulationEvaluationId =
 	PopulationEvaluationIdMap[keyof PopulationEvaluationIdMap];
+
 export const ActionCategory = {
 	Basic: 'basic',
 	Development: 'development',

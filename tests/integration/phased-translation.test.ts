@@ -8,7 +8,7 @@ import {
 } from '@kingdom-builder/web/translation/content';
 // prettier-ignore
 import type {
-	PhasedDef,
+        PhasedDef,
 } from '@kingdom-builder/web/translation/content/phased';
 import {
 	TRIGGER_INFO,

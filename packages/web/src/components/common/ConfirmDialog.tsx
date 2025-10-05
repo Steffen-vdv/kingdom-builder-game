@@ -69,14 +69,19 @@ export default function ConfirmDialog({
 					{description}
 				</p>
 				<div className="mt-8 flex flex-wrap justify-end gap-3">
-					<Button variant="ghost" onClick={onCancel} className="px-5" icon="↩️">
+					<Button
+						variant="secondary"
+						onClick={onCancel}
+						className="px-5"
+						icon="↩️"
+					>
 						{cancelLabel}
 					</Button>
 					<Button
 						variant="danger"
 						onClick={onConfirm}
 						className="px-5"
-						icon="✅"
+						icon="🏳️"
 					>
 						{confirmLabel}
 					</Button>
