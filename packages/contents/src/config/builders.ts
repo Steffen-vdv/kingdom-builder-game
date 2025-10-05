@@ -19,6 +19,8 @@ import type {
 	TierPassivePreview,
 	TierPassiveTextTokens,
 	TierRange,
+	PlayerStartConfig,
+	StartConfig,
 } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
@@ -2148,6 +2150,182 @@ class PhaseBuilder {
 	build(): PhaseDef {
 		return this.config;
 	}
+}
+
+interface PlayerStartBuilderOptions {
+	requireComplete?: boolean;
+}
+
+class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
+	constructor(private readonly requireComplete: boolean) {
+		super();
+	}
+
+	resources(values: Record<string, number>) {
+		if (!values) {
+			throw new Error(
+				'Player start resources() needs a record. Use {} when nothing changes.',
+			);
+		}
+		return this.set(
+			'resources',
+			{ ...values },
+			'Player start already set resources(). Remove the extra resources() call.',
+		);
+	}
+
+	stats(values: Record<string, number>) {
+		if (!values) {
+			throw new Error(
+				'Player start stats() needs a record. Use {} when no stats change.',
+			);
+		}
+		return this.set(
+			'stats',
+			{ ...values },
+			'Player start already set stats(). Remove the extra stats() call.',
+		);
+	}
+
+	population(values: Record<string, number>) {
+		if (!values) {
+			throw new Error(
+				'Player start population() needs a record. Use {} when empty.',
+			);
+		}
+		return this.set(
+			'population',
+			{ ...values },
+			'Player start already set population(). Remove the extra population() call.',
+		);
+	}
+
+	lands(lands: NonNullable<PlayerStartConfig['lands']>) {
+		if (!lands) {
+			throw new Error(
+				'Player start lands() needs an array. Use [] when no lands are configured.',
+			);
+		}
+		const cloned = lands.map((land) => ({
+			...land,
+			developments: land.developments ? [...land.developments] : undefined,
+			onPayUpkeepStep: land.onPayUpkeepStep
+				? [...land.onPayUpkeepStep]
+				: undefined,
+			onGainIncomeStep: land.onGainIncomeStep
+				? [...land.onGainIncomeStep]
+				: undefined,
+			onGainAPStep: land.onGainAPStep ? [...land.onGainAPStep] : undefined,
+		}));
+		return this.set(
+			'lands',
+			cloned,
+			'Player start already set lands(). Remove the extra lands() call.',
+		);
+	}
+
+	build(): PlayerStartConfig {
+		if (this.requireComplete) {
+			if (!this.wasSet('resources')) {
+				throw new Error(
+					'Player start is missing resources(). Call resources(...) before build().',
+				);
+			}
+			if (!this.wasSet('stats')) {
+				throw new Error(
+					'Player start is missing stats(). Call stats(...) before build().',
+				);
+			}
+			if (!this.wasSet('population')) {
+				throw new Error(
+					'Player start is missing population(). Call population(...) before build().',
+				);
+			}
+			if (!this.wasSet('lands')) {
+				throw new Error(
+					'Player start is missing lands(). Call lands(...) before build().',
+				);
+			}
+		}
+		return super.build();
+	}
+}
+
+class StartConfigBuilder {
+	private playerConfig: PlayerStartConfig | undefined;
+	private readonly players: Record<string, PlayerStartConfig> = {};
+	private readonly assignedPlayers = new Set<string>();
+
+	private resolveBuilder(
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+		requireComplete: boolean,
+	) {
+		if (input instanceof PlayerStartBuilder) {
+			return input;
+		}
+		const configured = input(new PlayerStartBuilder(requireComplete));
+		if (!(configured instanceof PlayerStartBuilder)) {
+			throw new Error(
+				'Start config player(...) callback must return the provided builder.',
+			);
+		}
+		return configured;
+	}
+
+	player(
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		if (this.playerConfig) {
+			throw new Error(
+				'Start config already set player(...). Remove the extra player() call.',
+			);
+		}
+		const builder = this.resolveBuilder(input, true);
+		this.playerConfig = builder.build();
+		return this;
+	}
+
+	playerOverride(
+		id: string,
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		if (this.assignedPlayers.has(id)) {
+			throw new Error(
+				`Start config already set playerOverride(${id}). Remove the extra call.`,
+			);
+		}
+		const builder = this.resolveBuilder(input, false);
+		this.players[id] = builder.build();
+		this.assignedPlayers.add(id);
+		return this;
+	}
+
+	build(): StartConfig {
+		if (!this.playerConfig) {
+			throw new Error(
+				'Start config is missing player(...). Configure the base player first.',
+			);
+		}
+		const config: StartConfig = { player: this.playerConfig };
+		if (this.assignedPlayers.size > 0) {
+			config.players = { ...this.players };
+		}
+		return config;
+	}
+}
+
+export function playerStart(options?: PlayerStartBuilderOptions) {
+	return new PlayerStartBuilder(options?.requireComplete ?? true);
+}
+
+export function startConfig() {
+	return new StartConfigBuilder();
 }
 
 export function toRecord<T extends { key: string }>(items: T[]) {
