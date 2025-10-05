@@ -5,6 +5,8 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createEngine } from '@kingdom-builder/engine';
 import type { EngineContext } from '@kingdom-builder/engine';
+import { createTranslationContext } from '../src/translation/context';
+import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -24,6 +26,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 });
 type MockGame = {
 	ctx: EngineContext;
+	translationContext: ReturnType<typeof createTranslationContext>;
 	handleHoverCard: ReturnType<typeof vi.fn>;
 	clearHoverCard: ReturnType<typeof vi.fn>;
 };
@@ -97,8 +100,21 @@ describe('<ResourceBar /> happiness hover card', () => {
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
+		const translationContext = createTranslationContext(
+			snapshotEngine(ctx),
+			{
+				actions: ACTIONS,
+				buildings: BUILDINGS,
+				developments: DEVELOPMENTS,
+			},
+			{
+				pullEffectLog: (key) => ctx.pullEffectLog(key),
+				passives: ctx.passives,
+			},
+		);
 		currentGame = {
 			ctx,
+			translationContext,
 			handleHoverCard,
 			clearHoverCard,
 		} as MockGame;

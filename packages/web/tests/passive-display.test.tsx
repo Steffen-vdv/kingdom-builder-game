@@ -19,6 +19,8 @@ import {
 } from '@kingdom-builder/contents';
 import { resolvePassivePresentation } from '../src/translation/log/passives';
 import { buildTierEntries } from '../src/components/player/buildTierEntries';
+import { createTranslationContext } from '../src/translation/context';
+import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -26,6 +28,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 
 type MockGame = {
 	ctx: EngineContext;
+	translationContext: ReturnType<typeof createTranslationContext>;
 	handleHoverCard: ReturnType<typeof vi.fn>;
 	clearHoverCard: ReturnType<typeof vi.fn>;
 };
@@ -54,8 +57,21 @@ describe('<PassiveDisplay />', () => {
 
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
+		const translationContext = createTranslationContext(
+			snapshotEngine(ctx),
+			{
+				actions: ACTIONS,
+				buildings: BUILDINGS,
+				developments: DEVELOPMENTS,
+			},
+			{
+				pullEffectLog: (key) => ctx.pullEffectLog(key),
+				passives: ctx.passives,
+			},
+		);
 		currentGame = {
 			ctx,
+			translationContext,
 			handleHoverCard,
 			clearHoverCard,
 		} as MockGame;
@@ -106,8 +122,21 @@ describe('<PassiveDisplay />', () => {
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
+		const translationContext = createTranslationContext(
+			snapshotEngine(ctx),
+			{
+				actions: ACTIONS,
+				buildings: BUILDINGS,
+				developments: DEVELOPMENTS,
+			},
+			{
+				pullEffectLog: (key) => ctx.pullEffectLog(key),
+				passives: ctx.passives,
+			},
+		);
 		currentGame = {
 			ctx,
+			translationContext,
 			handleHoverCard,
 			clearHoverCard,
 		} as MockGame;
@@ -153,8 +182,21 @@ describe('<PassiveDisplay />', () => {
 
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
+		const translationContext = createTranslationContext(
+			snapshotEngine(ctx),
+			{
+				actions: ACTIONS,
+				buildings: BUILDINGS,
+				developments: DEVELOPMENTS,
+			},
+			{
+				pullEffectLog: (key) => ctx.pullEffectLog(key),
+				passives: ctx.passives,
+			},
+		);
 		currentGame = {
 			ctx,
+			translationContext,
 			handleHoverCard,
 			clearHoverCard,
 		} as MockGame;
