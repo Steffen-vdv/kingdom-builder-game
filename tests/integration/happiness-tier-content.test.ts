@@ -3,6 +3,124 @@ import { Resource } from '@kingdom-builder/contents';
 import { createTestContext } from './fixtures';
 import { translateTierSummary } from '../../packages/web/src/translation/content/tierSummaries';
 
+const passiveIds = {
+	content: 'passive:happiness:content',
+	despair: 'passive:happiness:despair',
+	ecstatic: 'passive:happiness:ecstatic',
+	elated: 'passive:happiness:elated',
+	grim: 'passive:happiness:grim',
+	joyful: 'passive:happiness:joyful',
+	misery: 'passive:happiness:misery',
+	unrest: 'passive:happiness:unrest',
+} as const;
+
+const removalTokens = {
+	content: 'happiness stays between +3 and +4',
+	despair: 'happiness is -10 or lower',
+	ecstatic: 'happiness is +10 or higher',
+	elated: 'happiness stays between +8 and +9',
+	grim: 'happiness stays between -7 and -5',
+	joyful: 'happiness stays between +5 and +7',
+	misery: 'happiness stays between -9 and -8',
+	unrest: 'happiness stays between -4 and -3',
+} as const;
+
+const summaryTokens = {
+	content: 'happiness.tier.summary.content',
+	despair: 'happiness.tier.summary.despair',
+	ecstatic: 'happiness.tier.summary.ecstatic',
+	elated: 'happiness.tier.summary.elated',
+	grim: 'happiness.tier.summary.grim',
+	joyful: 'happiness.tier.summary.joyful',
+	misery: 'happiness.tier.summary.misery',
+	unrest: 'happiness.tier.summary.unrest',
+} as const;
+
+const summaryTexts = {
+	content: 'During income step, gain 25% more 🪙 gold (rounded up).',
+	despair: [
+		'During income step, gain 50% less 🪙 gold (rounded up).',
+		'Skip Growth phase.',
+		'Skip War Recovery step during Upkeep phase.',
+	].join('\n'),
+	ecstatic: [
+		'During income step, gain 50% more 🪙 gold (rounded up).',
+		'Build action costs 20% less 🪙 gold (rounded up).',
+		'Gain +20% 📈 Growth.',
+	].join('\n'),
+	elated: [
+		'During income step, gain 50% more 🪙 gold (rounded up).',
+		'Build action costs 20% less 🪙 gold (rounded up).',
+	].join('\n'),
+	grim: [
+		'During income step, gain 25% less 🪙 gold (rounded up).',
+		'Skip Growth phase.',
+	].join('\n'),
+	joyful: [
+		'During income step, gain 25% more 🪙 gold (rounded up).',
+		'Build action costs 20% less 🪙 gold (rounded up).',
+	].join('\n'),
+	misery: [
+		'During income step, gain 50% less 🪙 gold (rounded up).',
+		'Skip Growth phase.',
+	].join('\n'),
+	unrest: 'During income step, gain 25% less 🪙 gold (rounded up).',
+} as const;
+
+const createPassive = (tier: keyof typeof passiveIds) => ({
+	id: passiveIds[tier],
+	removalToken: removalTokens[tier],
+	summary: summaryTexts[tier],
+	summaryToken: summaryTokens[tier],
+});
+
+const passivesByTier = {
+	content: [createPassive('content')],
+	despair: [createPassive('despair')],
+	ecstatic: [createPassive('ecstatic')],
+	elated: [createPassive('elated')],
+	grim: [createPassive('grim')],
+	joyful: [createPassive('joyful')],
+	misery: [createPassive('misery')],
+	steady: [],
+	unrest: [createPassive('unrest')],
+} as const;
+
+const skipPhasesByTier: Partial<
+	Record<keyof typeof passiveIds, Record<string, Record<string, boolean>>>
+> = {
+	despair: {
+		growth: {
+			[passiveIds.despair]: true,
+		},
+	},
+	grim: {
+		growth: {
+			[passiveIds.grim]: true,
+		},
+	},
+	misery: {
+		growth: {
+			[passiveIds.misery]: true,
+		},
+	},
+} as const;
+
+const skipStepsByTier: Partial<
+	Record<
+		keyof typeof passiveIds,
+		Record<string, Record<string, Record<string, boolean>>>
+	>
+> = {
+	despair: {
+		upkeep: {
+			'war-recovery': {
+				[passiveIds.despair]: true,
+			},
+		},
+	},
+} as const;
+
 describe('content happiness tiers', () => {
 	it('exposes tier passive metadata for web presentation', () => {
 		const ctx = createTestContext();
@@ -50,137 +168,61 @@ describe('content happiness tiers', () => {
 			};
 		}
 
-		expect(snapshot).toMatchInlineSnapshot(`
-{
-  "content": {
-    "happiness": 3,
-    "passives": [
-      {
-        "id": "passive:happiness:content",
-        "removalToken": "happiness stays between +3 and +4",
-        "summary": "During income step, gain 25% more 🪙 gold (rounded up).",
-        "summaryToken": "happiness.tier.summary.content",
-      },
-    ],
-    "skipPhases": {},
-    "skipSteps": {},
-  },
-  "despair": {
-    "happiness": -10,
-    "passives": [
-      {
-        "id": "passive:happiness:despair",
-        "removalToken": "happiness is -10 or lower",
-        "summary": "During income step, gain 50% less 🪙 gold (rounded up).\nSkip Growth phase.\nSkip War Recovery step during Upkeep phase.",
-        "summaryToken": "happiness.tier.summary.despair",
-      },
-    ],
-    "skipPhases": {
-      "growth": {
-        "passive:happiness:despair": true,
-      },
-    },
-    "skipSteps": {
-      "upkeep": {
-        "war-recovery": {
-          "passive:happiness:despair": true,
-        },
-      },
-    },
-  },
-  "ecstatic": {
-    "happiness": 10,
-    "passives": [
-      {
-        "id": "passive:happiness:ecstatic",
-        "removalToken": "happiness is +10 or higher",
-        "summary": "During income step, gain 50% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).\nGain +20% 📈 Growth.",
-        "summaryToken": "happiness.tier.summary.ecstatic",
-      },
-    ],
-    "skipPhases": {},
-    "skipSteps": {},
-  },
-  "elated": {
-    "happiness": 8,
-    "passives": [
-      {
-        "id": "passive:happiness:elated",
-        "removalToken": "happiness stays between +8 and +9",
-        "summary": "During income step, gain 50% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).",
-        "summaryToken": "happiness.tier.summary.elated",
-      },
-    ],
-    "skipPhases": {},
-    "skipSteps": {},
-  },
-  "grim": {
-    "happiness": -5,
-    "passives": [
-      {
-        "id": "passive:happiness:grim",
-        "removalToken": "happiness stays between -7 and -5",
-        "summary": "During income step, gain 25% less 🪙 gold (rounded up).\nSkip Growth phase.",
-        "summaryToken": "happiness.tier.summary.grim",
-      },
-    ],
-    "skipPhases": {
-      "growth": {
-        "passive:happiness:grim": true,
-      },
-    },
-    "skipSteps": {},
-  },
-  "joyful": {
-    "happiness": 5,
-    "passives": [
-      {
-        "id": "passive:happiness:joyful",
-        "removalToken": "happiness stays between +5 and +7",
-        "summary": "During income step, gain 25% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).",
-        "summaryToken": "happiness.tier.summary.joyful",
-      },
-    ],
-    "skipPhases": {},
-    "skipSteps": {},
-  },
-  "misery": {
-    "happiness": -8,
-    "passives": [
-      {
-        "id": "passive:happiness:misery",
-        "removalToken": "happiness stays between -9 and -8",
-        "summary": "During income step, gain 50% less 🪙 gold (rounded up).\nSkip Growth phase.",
-        "summaryToken": "happiness.tier.summary.misery",
-      },
-    ],
-    "skipPhases": {
-      "growth": {
-        "passive:happiness:misery": true,
-      },
-    },
-    "skipSteps": {},
-  },
-  "steady": {
-    "happiness": 0,
-    "passives": [],
-    "skipPhases": {},
-    "skipSteps": {},
-  },
-  "unrest": {
-    "happiness": -3,
-    "passives": [
-      {
-        "id": "passive:happiness:unrest",
-        "removalToken": "happiness stays between -4 and -3",
-        "summary": "During income step, gain 25% less 🪙 gold (rounded up).",
-        "summaryToken": "happiness.tier.summary.unrest",
-      },
-    ],
-    "skipPhases": {},
-    "skipSteps": {},
-  },
-}
-`);
+		expect(snapshot).toEqual({
+			content: {
+				happiness: 3,
+				passives: passivesByTier.content,
+				skipPhases: skipPhasesByTier.content ?? {},
+				skipSteps: skipStepsByTier.content ?? {},
+			},
+			despair: {
+				happiness: -10,
+				passives: passivesByTier.despair,
+				skipPhases: skipPhasesByTier.despair ?? {},
+				skipSteps: skipStepsByTier.despair ?? {},
+			},
+			ecstatic: {
+				happiness: 10,
+				passives: passivesByTier.ecstatic,
+				skipPhases: skipPhasesByTier.ecstatic ?? {},
+				skipSteps: skipStepsByTier.ecstatic ?? {},
+			},
+			elated: {
+				happiness: 8,
+				passives: passivesByTier.elated,
+				skipPhases: skipPhasesByTier.elated ?? {},
+				skipSteps: skipStepsByTier.elated ?? {},
+			},
+			grim: {
+				happiness: -5,
+				passives: passivesByTier.grim,
+				skipPhases: skipPhasesByTier.grim ?? {},
+				skipSteps: skipStepsByTier.grim ?? {},
+			},
+			joyful: {
+				happiness: 5,
+				passives: passivesByTier.joyful,
+				skipPhases: skipPhasesByTier.joyful ?? {},
+				skipSteps: skipStepsByTier.joyful ?? {},
+			},
+			misery: {
+				happiness: -8,
+				passives: passivesByTier.misery,
+				skipPhases: skipPhasesByTier.misery ?? {},
+				skipSteps: skipStepsByTier.misery ?? {},
+			},
+			steady: {
+				happiness: 0,
+				passives: passivesByTier.steady,
+				skipPhases: skipPhasesByTier.steady ?? {},
+				skipSteps: skipStepsByTier.steady ?? {},
+			},
+			unrest: {
+				happiness: -3,
+				passives: passivesByTier.unrest,
+				skipPhases: skipPhasesByTier.unrest ?? {},
+				skipSteps: skipStepsByTier.unrest ?? {},
+			},
+		});
 	});
 });
