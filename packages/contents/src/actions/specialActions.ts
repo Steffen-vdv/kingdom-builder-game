@@ -122,7 +122,7 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 						passiveParams()
 							.id('hold_festival_penalty')
 							.name('Festival Hangover')
-							.icon('🥴')
+							.icon('🤮')
 							.removeOnUpkeepStep(),
 					)
 					.effect(
