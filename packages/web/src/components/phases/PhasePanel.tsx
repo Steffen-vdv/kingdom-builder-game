@@ -95,6 +95,15 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			);
 		});
 
+		const turnIndicator = (
+			<div className="flex items-center gap-3 rounded-full border border-white/60 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200">
+				<span>Turn {ctx.game.turn}</span>
+				<span className="rounded-full bg-white/60 px-2 py-1 text-[0.65rem] font-medium tracking-[0.2em] text-slate-500 dark:bg-white/10 dark:text-slate-300">
+					{ctx.activePlayer.name}
+				</span>
+			</div>
+		);
+
 		const renderedPhaseSteps = phaseSteps.map((stepEntry, stepIndex) => {
 			const stepBaseClasses = [
 				'rounded-2xl border px-4 py-3 shadow-sm transition-all',
@@ -186,13 +195,9 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 				className="relative flex min-h-[320px] w-full flex-col gap-3 overflow-hidden rounded-3xl border border-white/60 bg-white/75 px-6 py-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface"
 				style={{ height: `${panelHeight}px` }}
 			>
-				<div className="absolute -top-6 left-4 rounded-full border border-white/60 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200 frosted-surface">
-					<span>
-						Turn {ctx.game.turn} · {ctx.activePlayer.name}
-					</span>
-				</div>
-				<div className="flex flex-wrap gap-2 border-b border-white/40 pb-2 dark:border-white/10">
-					{phaseTabs}
+				<div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/40 pb-2 dark:border-white/10">
+					{turnIndicator}
+					<div className="flex flex-wrap gap-2">{phaseTabs}</div>
 				</div>
 				<ul
 					ref={phaseStepsRef}
