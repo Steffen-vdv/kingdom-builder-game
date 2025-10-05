@@ -101,7 +101,7 @@ function buildHoverDetails(
 		}
 	}
 	return {
-		title: optionLabel.trim() || option.label,
+		title: optionLabel.trim() || option.label || option.id,
 		effects,
 		...(description && { description }),
 		requirements,

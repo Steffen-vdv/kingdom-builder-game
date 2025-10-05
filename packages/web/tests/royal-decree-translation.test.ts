@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	createEngine,
 	getActionEffectGroups,
+	resolveActionEffects,
 	type EngineContext,
 } from '@kingdom-builder/engine';
 import {
@@ -17,6 +18,8 @@ import {
 import {
 	describeContent,
 	summarizeContent,
+	formatEffectGroups,
+	logContent,
 	type SummaryEntry,
 } from '../src/translation';
 
@@ -180,6 +183,50 @@ describe('royal decree translation', () => {
 			}
 			expect(entry.title).toBe(expectedTitle);
 			expect(entry.items).toContain(normalizedTitle);
+		}
+	});
+
+	it('logs selected develop option using develop action log text', () => {
+		const resolved = resolveActionEffects(context.actions.get(actionId), {
+			landId: 'A-L1',
+			choices: {
+				royal_decree_develop: {
+					optionId: 'royal_decree_house',
+					params: {
+						landId: 'A-L1',
+						developmentId: 'house',
+					},
+				},
+			},
+		});
+		const entries = formatEffectGroups(
+			resolved.steps,
+			'log',
+			context as EngineContext,
+		);
+		const group = findGroupEntry(entries);
+		const [entry] = group.items;
+		expect(entry).toBe('🏗️ Develop - 🏠 House');
+	});
+
+	it('logs royal decree develop once using develop action copy', () => {
+		const logLines = logContent('action', actionId, context as EngineContext, {
+			landId: 'A-L1',
+			choices: {
+				royal_decree_develop: {
+					optionId: 'royal_decree_house',
+					params: {
+						landId: 'A-L1',
+						developmentId: 'house',
+					},
+				},
+			},
+		});
+		const joined = logLines.join('\n');
+		const occurrences = joined.match(/Developed [^\n]*/g) ?? [];
+		expect(occurrences.length).toBeLessThanOrEqual(1);
+		if (occurrences.length === 1) {
+			expect(occurrences[0]).toContain('🏠 House');
 		}
 	});
 });

@@ -169,11 +169,6 @@ class ActionEffectGroupOptionBuilder {
 				'Action effect group option is missing id(). Call id("your-option-id") before build().',
 			);
 		}
-		if (!this.wasSet('label')) {
-			throw new Error(
-				'Action effect group option is missing label(). Call label("Readable choice") before build().',
-			);
-		}
 		if (!this.wasSet('actionId')) {
 			throw new Error(
 				'Action effect group option is missing action(). Call action("action-id") before build().',
@@ -182,9 +177,12 @@ class ActionEffectGroupOptionBuilder {
 
 		const built: ActionEffectGroupOptionDef = {
 			id: this.config.id as string,
-			label: this.config.label as string,
 			actionId: this.config.actionId as string,
 		};
+
+		if (this.wasSet('label')) {
+			built.label = this.config.label as string;
+		}
 
 		if (this.wasSet('icon')) {
 			built.icon = this.config.icon;

@@ -126,6 +126,6 @@ describe('action effect groups integration', () => {
 			choices: { [group.id]: { optionId: 'mood_reward' } },
 		});
 		const serialized = lines.join('\n');
-		expect(serialized).toContain('Lift morale');
+		expect(serialized).toContain('Lift Morale');
 	});
 });
