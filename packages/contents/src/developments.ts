@@ -15,6 +15,7 @@ import {
 	DevelopmentMethods,
 	ResourceMethods,
 } from './config/builderShared';
+import { Focus } from './defs';
 import type { DevelopmentDef } from './defs';
 
 export type { DevelopmentDef } from './defs';
@@ -33,8 +34,9 @@ export function createDevelopmentRegistry() {
 		developmentSchema.passthrough(),
 	);
 
-	registry.add('farm', {
-		...development()
+	registry.add(
+		'farm',
+		development()
 			.id(DevelopmentId.Farm)
 			.name('Farm')
 			.icon('🌾')
@@ -48,13 +50,14 @@ export function createDevelopmentRegistry() {
 					)
 					.build(),
 			)
+			.order(2)
+			.focus(Focus.Economy)
 			.build(),
-		order: 2,
-		focus: 'economy',
-	});
+	);
 
-	registry.add('house', {
-		...development()
+	registry.add(
+		'house',
+		development()
 			.id(DevelopmentId.House)
 			.name('House')
 			.icon('🏠')
@@ -64,13 +67,14 @@ export function createDevelopmentRegistry() {
 					.params(statParams().key(Stat.maxPopulation).amount(1))
 					.build(),
 			)
+			.order(1)
+			.focus(Focus.Economy)
 			.build(),
-		order: 1,
-		focus: 'economy',
-	});
+	);
 
-	registry.add('outpost', {
-		...development()
+	registry.add(
+		'outpost',
+		development()
 			.id(DevelopmentId.Outpost)
 			.name('Outpost')
 			.icon('🏹')
@@ -84,17 +88,18 @@ export function createDevelopmentRegistry() {
 					.params(statParams().key(Stat.fortificationStrength).amount(1))
 					.build(),
 			)
+			.order(3)
+			.focus(Focus.Defense)
 			.build(),
-		order: 3,
-		focus: 'defense',
-	});
+	);
 
 	const watchtowerRemovalParams = developmentParams()
 		.id(DevelopmentId.Watchtower)
 		.landId('$landId');
 
-	registry.add('watchtower', {
-		...development()
+	registry.add(
+		'watchtower',
+		development()
 			.id(DevelopmentId.Watchtower)
 			.name('Watchtower')
 			.icon('🗼')
@@ -113,10 +118,10 @@ export function createDevelopmentRegistry() {
 					.params(watchtowerRemovalParams)
 					.build(),
 			)
+			.order(4)
+			.focus(Focus.Defense)
 			.build(),
-		order: 4,
-		focus: 'defense',
-	});
+	);
 
 	registry.add(
 		'garden',
