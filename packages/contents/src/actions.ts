@@ -22,6 +22,7 @@ import {
 	resourceParams,
 	statParams,
 	developmentParams,
+	actionParams,
 	resultModParams,
 	passiveParams,
 	costModParams,
@@ -193,13 +194,12 @@ export function createActionRegistry() {
 			.cost(Resource.gold, 12)
 			.effect(
 				effect(Types.Action, ActionMethods.PERFORM)
-					.param('id', 'expand')
+					.params(actionParams().id('expand'))
 					.build(),
 			)
 			.effect(
 				effect(Types.Action, ActionMethods.PERFORM)
-					.param('id', 'till')
-					.param('landId', '$landId')
+					.params(actionParams().id('till').landId('$landId'))
 					.build(),
 			)
 			.effectGroup(
@@ -210,32 +210,28 @@ export function createActionRegistry() {
 							.label('Raise a House')
 							.icon('🏠')
 							.action('develop')
-							.param('landId', '$landId')
-							.param('id', 'house'),
+							.params(actionParams().id('house').landId('$landId')),
 					)
 					.option(
 						actionEffectGroupOption('royal_decree_farm')
 							.label('Establish a Farm')
 							.icon('🌾')
 							.action('develop')
-							.param('landId', '$landId')
-							.param('id', 'farm'),
+							.params(actionParams().id('farm').landId('$landId')),
 					)
 					.option(
 						actionEffectGroupOption('royal_decree_outpost')
 							.label('Fortify with an Outpost')
 							.icon('🏹')
 							.action('develop')
-							.param('landId', '$landId')
-							.param('id', 'outpost'),
+							.params(actionParams().id('outpost').landId('$landId')),
 					)
 					.option(
 						actionEffectGroupOption('royal_decree_watchtower')
 							.label('Raise a Watchtower')
 							.icon('🗼')
 							.action('develop')
-							.param('landId', '$landId')
-							.param('id', 'watchtower'),
+							.params(actionParams().id('watchtower').landId('$landId')),
 					),
 			)
 			.effect(
@@ -279,7 +275,7 @@ export function createActionRegistry() {
 									.params(resourceParams().key(Resource.happiness).amount(1))
 									.build(),
 								effect(Types.Action, ActionMethods.PERFORM)
-									.param('id', 'plunder')
+									.params(actionParams().id('plunder'))
 									.build(),
 							)
 							.onDamageDefender(
@@ -393,11 +389,13 @@ export function createActionRegistry() {
 			.cost(Resource.gold, 6)
 			.effect(
 				effect(Types.Action, ActionMethods.PERFORM)
-					.param('id', 'expand')
+					.params(actionParams().id('expand'))
 					.build(),
 			)
 			.effect(
-				effect(Types.Action, ActionMethods.PERFORM).param('id', 'till').build(),
+				effect(Types.Action, ActionMethods.PERFORM)
+					.params(actionParams().id('till'))
+					.build(),
 			)
 			.effect(
 				effect(Types.Passive, PassiveMethods.ADD)

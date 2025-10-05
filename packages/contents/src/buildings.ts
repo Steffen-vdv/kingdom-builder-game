@@ -17,6 +17,7 @@ import {
 	PassiveMethods,
 	StatMethods,
 	resourceParams,
+	actionParams,
 	resultModParams,
 	evaluationTarget,
 	developmentTarget,
@@ -114,7 +115,9 @@ export function createBuildingRegistry() {
 			.icon('🏭')
 			.cost(Resource.gold, 10)
 			.onBuild(
-				effect(Types.Action, ActionMethods.ADD).param('id', 'plow').build(),
+				effect(Types.Action, ActionMethods.ADD)
+					.params(actionParams().id('plow'))
+					.build(),
 			)
 			.build(),
 		focus: 'economy',
