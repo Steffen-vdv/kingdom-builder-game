@@ -147,8 +147,10 @@ class DevelopmentCore implements ContentTranslator<string> {
 	}
 	log(id: string, ctx: EngineContext): string[] {
 		const def = ctx.developments.get(id);
-		const icon = def.icon || '';
-		return [`${icon}${def.name}`];
+		const name = def?.name ?? id;
+		const icon = def?.icon ?? '';
+		const display = [icon, name].filter(Boolean).join(' ').trim();
+		return [display || name];
 	}
 }
 
