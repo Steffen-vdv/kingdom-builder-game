@@ -1,4 +1,4 @@
-export { ACTIONS, createActionRegistry } from './actions';
+export { ACTIONS, createActionRegistry, ActionId } from './actions';
 export { BUILDINGS, createBuildingRegistry } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
@@ -32,7 +32,8 @@ export {
 	type TierSummaryGroup,
 } from './tieredResources';
 export { PRIMARY_ICON_ID } from './startup';
-export type { ActionDef } from './actions';
+export { type ActionDef } from './actions';
+export type { ActionId as ActionIdType } from './actions';
 export type { BuildingDef } from './buildings';
 export type { DevelopmentDef } from './developments';
 export type { PopulationDef, TriggerKey, Focus } from './defs';

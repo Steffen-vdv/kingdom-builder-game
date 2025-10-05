@@ -13,6 +13,7 @@ import {
 	StatMethods,
 	PassiveMethods,
 } from './config/builderShared';
+import { ActionId } from './actions';
 import type { passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { Stat } from './stats';
@@ -21,7 +22,6 @@ import { formatPassiveRemoval } from './text';
 export const GROWTH_PHASE_ID = 'growth';
 export const UPKEEP_PHASE_ID = 'upkeep';
 export const WAR_RECOVERY_STEP_ID = 'war-recovery';
-const BUILD_ACTION_ID = 'build';
 
 const DEVELOPMENT_EVALUATION = developmentTarget();
 
@@ -43,7 +43,7 @@ export const buildingDiscountModifier = (id: string) =>
 		.params(
 			costModParams()
 				.id(id)
-				.actionId(BUILD_ACTION_ID)
+				.actionId(ActionId.build)
 				.key(Resource.gold)
 				.percent(-0.2)
 				.build(),
