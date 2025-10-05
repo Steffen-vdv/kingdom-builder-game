@@ -1,8 +1,7 @@
-import { Registry } from '@kingdom-builder/engine/registry';
+import { Registry, populationSchema } from '@kingdom-builder/protocol';
 import { PopulationRole } from './populationRoles';
 import { Resource } from './resources';
 import { Stat } from './stats';
-import { populationSchema } from '@kingdom-builder/protocol';
 import {
 	population,
 	effect,

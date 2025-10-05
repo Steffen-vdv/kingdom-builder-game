@@ -1,11 +1,11 @@
-import { Registry } from '@kingdom-builder/engine/registry';
 import {
+	Registry,
 	TRANSFER_PCT_EVALUATION_ID,
 	TRANSFER_PCT_EVALUATION_TYPE,
-} from '@kingdom-builder/engine/effects/resource_transfer';
+	buildingSchema,
+} from '@kingdom-builder/protocol';
 import { Resource } from './resources';
 import { Stat } from './stats';
-import { buildingSchema } from '@kingdom-builder/protocol';
 import {
 	building,
 	effect,

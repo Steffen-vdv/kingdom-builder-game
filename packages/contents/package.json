@@ -10,7 +10,6 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@kingdom-builder/engine": "^0.1.0",
 		"@kingdom-builder/protocol": "^0.1.0"
 	},
 	"devDependencies": {

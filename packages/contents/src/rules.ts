@@ -1,7 +1,7 @@
 import type {
 	RuleSet,
 	HappinessTierDefinition,
-} from '@kingdom-builder/engine/services';
+} from '@kingdom-builder/protocol';
 import {
 	buildingDiscountModifier,
 	createTierPassiveEffect,
