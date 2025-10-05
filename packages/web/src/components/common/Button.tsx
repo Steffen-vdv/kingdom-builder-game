@@ -2,20 +2,21 @@ import React from 'react';
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 	variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'ghost' | 'dev';
+	icon: React.ReactNode;
 };
 
 const VARIANT_CLASSES: Record<string, string> = {
 	primary:
-		'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/30 hover:from-blue-500 hover:to-indigo-400 focus-visible:ring-blue-200/80',
+		'border-blue-500 bg-blue-600 text-white hover:bg-blue-500 focus-visible:ring-blue-200/70',
 	secondary:
-		'bg-slate-900/80 text-white shadow-lg shadow-slate-900/30 hover:bg-slate-900/70 dark:bg-white/15 dark:text-slate-100 dark:hover:bg-white/20 focus-visible:ring-slate-200/60',
+		'border-slate-500/70 bg-slate-800 text-slate-100 hover:bg-slate-700 focus-visible:ring-slate-200/60 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-700/90',
 	success:
-		'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 hover:from-emerald-400 hover:to-teal-400 focus-visible:ring-emerald-200/70',
+		'border-emerald-500 bg-emerald-600 text-white hover:bg-emerald-500 focus-visible:ring-emerald-200/70',
 	danger:
-		'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-lg shadow-rose-500/40 hover:from-rose-400 hover:to-red-400 focus-visible:ring-rose-200/70',
+		'border-rose-500 bg-rose-600 text-white hover:bg-rose-500 focus-visible:ring-rose-200/70',
 	ghost:
-		'bg-transparent text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10 focus-visible:ring-white/40',
-	dev: 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white shadow-lg shadow-purple-500/40 hover:from-purple-500 hover:to-fuchsia-400 focus-visible:ring-purple-200/70',
+		'border-transparent bg-transparent text-slate-700 hover:bg-slate-200/60 focus-visible:ring-slate-200/50 dark:text-slate-200 dark:hover:bg-white/10 dark:focus-visible:ring-white/30',
+	dev: 'border-fuchsia-500 bg-fuchsia-600 text-white hover:bg-fuchsia-500 focus-visible:ring-fuchsia-200/70',
 };
 
 export default function Button({
@@ -23,6 +24,8 @@ export default function Button({
 	disabled,
 	className = '',
 	type = 'button',
+	icon,
+	children,
 	...rest
 }: ButtonProps) {
 	const variantClass = VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.secondary;
@@ -30,10 +33,18 @@ export default function Button({
 		<button
 			type={type}
 			disabled={disabled}
-			className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+			className={`inline-flex items-center justify-start gap-3 rounded-xl border px-4 py-2 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
 				disabled ? '' : 'hoverable'
 			} ${variantClass} focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 ${className}`}
 			{...rest}
-		/>
+		>
+			<span
+				aria-hidden
+				className="flex h-6 w-6 items-center justify-center text-base"
+			>
+				{icon}
+			</span>
+			<span className="flex-1 text-left leading-tight">{children}</span>
+		</button>
 	);
 }

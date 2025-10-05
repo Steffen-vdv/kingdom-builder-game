@@ -100,6 +100,7 @@ export function CallToActionSection({
 						variant="primary"
 						className={PRIMARY_BUTTON_CLASS}
 						onClick={onStart}
+						icon="🎮"
 					>
 						Start New Game
 					</Button>
@@ -107,21 +108,17 @@ export function CallToActionSection({
 						variant="dev"
 						className={DEV_BUTTON_CLASS}
 						onClick={onStartDev}
+						icon="🧪"
 					>
 						Start Dev/Debug Game
 					</Button>
 					<Button
 						variant="ghost"
-						className={[
-							SETTINGS_BUTTON_CLASS,
-							'flex items-center justify-center gap-2',
-						].join(' ')}
+						className={SETTINGS_BUTTON_CLASS}
 						onClick={onOpenSettings}
+						icon="⚙️"
 					>
-						<span aria-hidden className="text-base">
-							⚙️
-						</span>
-						<span>Settings</span>
+						Settings
 					</Button>
 				</div>
 			</div>
@@ -137,6 +134,7 @@ export function CallToActionSection({
 							variant="ghost"
 							className={GHOST_BUTTON_CLASS}
 							onClick={onTutorial}
+							icon="📘"
 						>
 							Tutorial
 						</Button>
@@ -144,6 +142,7 @@ export function CallToActionSection({
 							variant="ghost"
 							className={GHOST_BUTTON_CLASS}
 							onClick={onOverview}
+							icon="📜"
 						>
 							Game Overview
 						</Button>

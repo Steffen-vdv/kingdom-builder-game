@@ -149,7 +149,7 @@ export default function SettingsDialog({
 					/>
 				</div>
 				<div className="mt-8 flex justify-end">
-					<Button variant="ghost" onClick={onClose} className="px-6">
+					<Button variant="ghost" onClick={onClose} className="px-6" icon="✅">
 						Close
 					</Button>
 				</div>

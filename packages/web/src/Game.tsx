@@ -40,6 +40,12 @@ function GameLayout() {
 		setQuitDialogOpen(false);
 		onExit();
 	}, [onExit]);
+	const openSettings = useCallback(() => {
+		setSettingsOpen(true);
+	}, []);
+	const closeSettings = useCallback(() => {
+		setSettingsOpen(false);
+	}, []);
 	const playerAreaRef = useRef<HTMLElement | null>(null);
 	const [phasePanelHeight, setPhasePanelHeight] = useState(320);
 	useEffect(() => {
@@ -122,7 +128,7 @@ function GameLayout() {
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
 			<SettingsDialog
 				open={isSettingsOpen}
-				onClose={() => setSettingsOpen(false)}
+				onClose={closeSettings}
 				darkMode={darkMode}
 				onToggleDark={onToggleDark}
 				musicEnabled={musicEnabled}
@@ -156,19 +162,15 @@ function GameLayout() {
 						<div className="ml-4 flex items-center gap-3">
 							<TimeControl />
 							<Button
-								onClick={() => setSettingsOpen(true)}
+								onClick={openSettings}
 								variant="secondary"
 								aria-label="Open settings"
 								title="Settings"
-								className="h-10 w-10 rounded-full p-0 text-lg shadow-lg shadow-slate-900/10 dark:shadow-black/30"
+								icon="⚙️"
 							>
-								<span aria-hidden>⚙️</span>
+								Settings
 							</Button>
-							<Button
-								onClick={requestQuit}
-								variant="danger"
-								className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg shadow-rose-500/30"
-							>
+							<Button onClick={requestQuit} variant="danger" icon="🏳️">
 								Quit
 							</Button>
 						</div>

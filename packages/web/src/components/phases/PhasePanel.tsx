@@ -50,22 +50,12 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 
 		const phaseTabs = ctx.phases.map((phase) => {
 			const isSelected = displayPhase === phase.id;
-			const baseTabClassSegments = [
-				'relative flex items-center gap-2 rounded-full',
-				'px-4 py-2 text-sm transition-all',
-			];
-			const selectedTabSegments = [
-				'bg-gradient-to-r from-blue-500/90 to-indigo-500/90',
-				'text-white shadow-lg shadow-blue-500/30',
-			];
-			const idleTabSegments = [
-				'text-slate-600 hover:bg-white/60 hover:text-slate-800',
-				'dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-slate-100',
-			];
-			const tabSegments = isSelected ? selectedTabSegments : idleTabSegments;
-			const tabClasses = [
-				...baseTabClassSegments,
-				...tabSegments,
+			const tabClassSegments = [
+				'rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em]',
+				'transition-all',
+				isSelected
+					? 'shadow-sm'
+					: 'border-slate-300/60 text-slate-600 hover:text-slate-900 dark:border-slate-600/60 dark:text-slate-300 dark:hover:text-slate-100',
 				tabsEnabled ? null : 'opacity-60',
 			]
 				.filter(Boolean)
@@ -84,13 +74,11 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 					type="button"
 					disabled={!tabsEnabled}
 					onClick={handleSelectPhase}
-					variant="ghost"
-					className={tabClasses}
+					variant={isSelected ? 'primary' : 'ghost'}
+					className={tabClassSegments}
+					icon={phase.icon}
 				>
-					<span className="text-lg leading-none">{phase.icon}</span>
-					<span className="text-xs font-semibold uppercase tracking-[0.2em]">
-						{phase.label}
-					</span>
+					{phase.label}
 				</Button>
 			);
 		});
@@ -182,6 +170,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 				variant="primary"
 				disabled={shouldDisableEndTurn}
 				onClick={handleEndTurnClick}
+				icon="⏭️"
 			>
 				Next Turn
 			</Button>
