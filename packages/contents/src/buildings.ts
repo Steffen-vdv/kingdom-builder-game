@@ -4,7 +4,7 @@ import {
 	TRANSFER_PCT_EVALUATION_TYPE,
 	buildingSchema,
 } from '@kingdom-builder/protocol';
-import { ActionId } from './actions';
+import { ActionId, PopulationEvaluationId } from './actions';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { DevelopmentId } from './developments';
@@ -146,7 +146,7 @@ export function createBuildingRegistry() {
 					.params(
 						resultModParams()
 							.id('market_tax_bonus')
-							.evaluation(populationTarget().id('tax'))
+							.evaluation(populationTarget().id(PopulationEvaluationId.tax))
 							.amount(1),
 					)
 					.build(),
