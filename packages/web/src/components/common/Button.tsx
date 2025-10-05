@@ -6,17 +6,69 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const VARIANT_CLASSES: Record<string, string> = {
-	primary:
-		'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-md shadow-blue-600/30 hover:from-blue-500 hover:to-indigo-400 focus-visible:ring-blue-200/80',
-	secondary:
-		'bg-slate-900/80 text-white shadow-md shadow-slate-900/30 hover:bg-slate-900/70 dark:bg-white/15 dark:text-slate-100 dark:hover:bg-white/20 focus-visible:ring-slate-200/60',
-	success:
-		'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/30 hover:from-emerald-400 hover:to-teal-400 focus-visible:ring-emerald-200/70',
-	danger:
-		'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-md shadow-rose-500/40 hover:from-rose-400 hover:to-red-400 focus-visible:ring-rose-200/70',
-	ghost:
-		'bg-transparent text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10 focus-visible:ring-white/40',
-	dev: 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white shadow-md shadow-purple-500/40 hover:from-purple-500 hover:to-fuchsia-400 focus-visible:ring-purple-200/70',
+	primary: [
+		'bg-gradient-to-r',
+		'from-blue-600',
+		'to-indigo-500',
+		'text-white',
+		'shadow-md',
+		'shadow-blue-600/30',
+		'hover:from-blue-500',
+		'hover:to-indigo-400',
+		'focus-visible:ring-blue-200/80',
+	].join(' '),
+	secondary: [
+		'bg-slate-900/80',
+		'text-white',
+		'shadow-md',
+		'shadow-slate-900/30',
+		'hover:bg-slate-900/70',
+		'dark:bg-white/15',
+		'dark:text-slate-100',
+		'dark:hover:bg-white/20',
+		'focus-visible:ring-slate-200/60',
+	].join(' '),
+	success: [
+		'bg-gradient-to-r',
+		'from-emerald-500',
+		'to-teal-500',
+		'text-white',
+		'shadow-md',
+		'shadow-emerald-500/30',
+		'hover:from-emerald-400',
+		'hover:to-teal-400',
+		'focus-visible:ring-emerald-200/70',
+	].join(' '),
+	danger: [
+		'bg-gradient-to-r',
+		'from-rose-500',
+		'to-red-500',
+		'text-white',
+		'shadow-md',
+		'shadow-rose-500/40',
+		'hover:from-rose-400',
+		'hover:to-red-400',
+		'focus-visible:ring-rose-200/70',
+	].join(' '),
+	ghost: [
+		'bg-transparent',
+		'text-slate-700',
+		'hover:bg-white/60',
+		'dark:text-slate-200',
+		'dark:hover:bg-white/10',
+		'focus-visible:ring-white/40',
+	].join(' '),
+	dev: [
+		'bg-gradient-to-r',
+		'from-purple-600',
+		'to-fuchsia-500',
+		'text-white',
+		'shadow-md',
+		'shadow-purple-500/40',
+		'hover:from-purple-500',
+		'hover:to-fuchsia-400',
+		'focus-visible:ring-purple-200/70',
+	].join(' '),
 };
 
 export default function Button({
