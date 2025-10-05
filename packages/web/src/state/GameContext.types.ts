@@ -10,7 +10,7 @@ import type { PhaseStep } from './phaseTypes';
 import type { TimeScale } from './useTimeScale';
 import type { HoverCard } from './useHoverCard';
 import type { LogEntry } from './useGameLog';
-import type { ErrorToast } from './useErrorToasts';
+import type { Toast } from './useToasts';
 import type {
 	ActionResolution,
 	ShowResolutionOptions,
@@ -55,9 +55,15 @@ export interface GameEngineContextValue {
 	onToggleSound: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
-	errorToasts: ErrorToast[];
-	pushErrorToast: (message: string) => void;
-	dismissErrorToast: (id: number) => void;
+	toasts: Toast[];
+	pushToast: (options: {
+		message: string;
+		title?: string;
+		variant: Toast['variant'];
+	}) => void;
+	pushErrorToast: (message: string, title?: string) => void;
+	pushSuccessToast: (message: string, title?: string) => void;
+	dismissToast: (id: number) => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 }

@@ -31,7 +31,7 @@ import { useActionResolution } from './useActionResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
 import { usePhaseProgress } from './usePhaseProgress';
 import { useActionPerformer } from './useActionPerformer';
-import { useErrorToasts } from './useErrorToasts';
+import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
 import type { GameEngineContextValue } from './GameContext.types';
@@ -205,9 +205,10 @@ export function GameProvider({
 		enqueue,
 	});
 
-	const { errorToasts, pushErrorToast, dismissErrorToast } = useErrorToasts({
-		setTrackedTimeout,
-	});
+	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =
+		useToasts({
+			setTrackedTimeout,
+		});
 
 	useCompensationLogger({
 		session,
@@ -279,9 +280,11 @@ export function GameProvider({
 		onToggleSound,
 		timeScale,
 		setTimeScale,
-		errorToasts,
+		toasts,
+		pushToast,
 		pushErrorToast,
-		dismissErrorToast,
+		pushSuccessToast,
+		dismissToast,
 		playerName,
 		onChangePlayerName,
 		...(onExit ? { onExit } : {}),

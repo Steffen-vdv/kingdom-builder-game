@@ -138,9 +138,11 @@ describe('<ResourceBar /> happiness hover card', () => {
 			onToggleSound: vi.fn(),
 			timeScale: 1,
 			setTimeScale: vi.fn(),
-			errorToasts: [],
+			toasts: [],
+			pushToast: vi.fn(),
 			pushErrorToast: vi.fn(),
-			dismissErrorToast: vi.fn(),
+			pushSuccessToast: vi.fn(),
+			dismissToast: vi.fn(),
 		} as MockGame;
 		render(<ResourceBar player={ctx.activePlayer} />);
 		const resourceInfo = RESOURCES[happinessKey];
