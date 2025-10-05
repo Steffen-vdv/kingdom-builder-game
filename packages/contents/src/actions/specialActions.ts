@@ -1,0 +1,242 @@
+import type { Registry } from '@kingdom-builder/protocol';
+import { Resource } from '../resources';
+import { Stat, STATS } from '../stats';
+import { PopulationRole, POPULATION_ROLES } from '../populationRoles';
+import {
+	action,
+	compareRequirement,
+	resourceParams,
+	statParams,
+	passiveParams,
+	actionParams,
+	attackParams,
+	resultModParams,
+	transferParams,
+	costModParams,
+	buildingParams,
+	statEvaluator,
+	populationEvaluator,
+	effect,
+} from '../config/builders';
+import {
+	ActionMethods,
+	AttackMethods,
+	PassiveMethods,
+	ResourceMethods,
+	Types,
+	StatMethods,
+	CostModMethods,
+	ResultModMethods,
+	BuildingMethods,
+	LandMethods,
+} from '../config/builderShared';
+import { Focus } from '../defs';
+import type { ActionDef } from '../actions';
+import { ActionCategory, ActionId } from '../actions';
+
+export function registerSpecialActions(registry: Registry<ActionDef>) {
+	registry.add(
+		ActionId.army_attack,
+		action()
+			.id(ActionId.army_attack)
+			.name('Army Attack')
+			.icon('🗡️')
+			.cost(Resource.ap, 1)
+			.requirement(
+				compareRequirement()
+					.left(statEvaluator().key(Stat.warWeariness))
+					.operator('lt')
+					.right(populationEvaluator().role(PopulationRole.Legion))
+					.message(
+						`${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Legion].icon} ${POPULATION_ROLES[PopulationRole.Legion].label}`,
+					)
+					.build(),
+			)
+			.effect(
+				effect(Types.Attack, AttackMethods.PERFORM)
+					.params(
+						attackParams()
+							.powerStat(Stat.armyStrength)
+							.absorptionStat(Stat.absorption)
+							.fortificationStat(Stat.fortificationStrength)
+							.targetResource(Resource.castleHP)
+							.onDamageAttacker(
+								effect(Types.Resource, ResourceMethods.ADD)
+									.params(resourceParams().key(Resource.happiness).amount(1))
+									.build(),
+								effect(Types.Action, ActionMethods.PERFORM)
+									.params(actionParams().id(ActionId.plunder))
+									.build(),
+							)
+							.onDamageDefender(
+								effect(Types.Resource, ResourceMethods.REMOVE)
+									.params(resourceParams().key(Resource.happiness).amount(1))
+									.allowShortfall()
+									.build(),
+							),
+					)
+					.build(),
+			)
+			.effect(
+				effect(Types.Stat, StatMethods.ADD)
+					.params(statParams().key(Stat.warWeariness).amount(1))
+					.build(),
+			)
+			.category(ActionCategory.Basic)
+			.order(6)
+			.focus(Focus.Aggressive)
+			.build(),
+	);
+
+	registry.add(
+		ActionId.hold_festival,
+		action()
+			.id(ActionId.hold_festival)
+			.name('Hold Festival')
+			.icon('🎉')
+			.cost(Resource.ap, 1)
+			.cost(Resource.gold, 3)
+			.requirement(
+				compareRequirement()
+					.left(statEvaluator().key(Stat.warWeariness))
+					.operator('eq')
+					.right(0)
+					.message(
+						`${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be 0`,
+					)
+					.build(),
+			)
+			.effect(
+				effect(Types.Resource, ResourceMethods.ADD)
+					.params(resourceParams().key(Resource.happiness).amount(3))
+					.build(),
+			)
+			.effect(
+				effect(Types.Stat, StatMethods.REMOVE)
+					.params(statParams().key(Stat.fortificationStrength).amount(3))
+					.build(),
+			)
+			.effect(
+				effect(Types.Passive, PassiveMethods.ADD)
+					.params(
+						passiveParams()
+							.id('hold_festival_penalty')
+							.name('Festival Hangover')
+							.icon('🥴')
+							.onUpkeepPhase(
+								effect(Types.Passive, PassiveMethods.REMOVE)
+									.param('id', 'hold_festival_penalty')
+									.build(),
+							),
+					)
+					.effect(
+						effect(Types.ResultMod, ResultModMethods.ADD)
+							.params(
+								resultModParams()
+									.id('hold_festival_attack_happiness_penalty')
+									.actionId(ActionId.army_attack),
+							)
+							.effect(
+								effect(Types.Resource, ResourceMethods.REMOVE)
+									.params(resourceParams().key(Resource.happiness).amount(3))
+									.allowShortfall()
+									.build(),
+							)
+							.build(),
+					)
+					.build(),
+			)
+			.category(ActionCategory.Basic)
+			.order(7)
+			.focus(Focus.Economy)
+			.build(),
+	);
+
+	registry.add(
+		ActionId.plunder,
+		action()
+			.id(ActionId.plunder)
+			.name('Plunder')
+			.icon('🏴‍☠️')
+			.system()
+			.effect(
+				effect(Types.Resource, ResourceMethods.TRANSFER)
+					.params(transferParams().key(Resource.gold).percent(25))
+					.build(),
+			)
+			.build(),
+	);
+
+	registry.add(
+		ActionId.plow,
+		action()
+			.id(ActionId.plow)
+			.name('Plow')
+			.icon('🚜')
+			.system()
+			.cost(Resource.ap, 1)
+			.cost(Resource.gold, 6)
+			.effect(
+				effect(Types.Action, ActionMethods.PERFORM)
+					.params(actionParams().id(ActionId.expand))
+					.build(),
+			)
+			.effect(
+				effect(Types.Action, ActionMethods.PERFORM)
+					.params(actionParams().id(ActionId.till))
+					.build(),
+			)
+			.effect(
+				effect(Types.Passive, PassiveMethods.ADD)
+					.params(
+						passiveParams()
+							.id('plow_cost_mod')
+							.onUpkeepPhase(
+								effect(Types.Passive, PassiveMethods.REMOVE)
+									.param('id', 'plow_cost_mod')
+									.build(),
+							),
+					)
+					.effect(
+						effect(Types.CostMod, CostModMethods.ADD)
+							.params(
+								costModParams()
+									.id('plow_cost_all')
+									.key(Resource.gold)
+									.amount(2),
+							)
+							.build(),
+					)
+					.build(),
+			)
+			.build(),
+	);
+
+	registry.add(
+		ActionId.till,
+		action()
+			.id(ActionId.till)
+			.name('Till')
+			.icon('🧑‍🌾')
+			.system()
+			.effect(effect(Types.Land, LandMethods.TILL).build())
+			.build(),
+	);
+
+	registry.add(
+		ActionId.build,
+		action()
+			.id(ActionId.build)
+			.name('Build')
+			.icon('🏛️')
+			.effect(
+				effect(Types.Building, BuildingMethods.ADD)
+					.params(buildingParams().id('$id'))
+					.build(),
+			)
+			.category(ActionCategory.Building)
+			.order(1)
+			.focus(Focus.Other)
+			.build(),
+	);
+}
