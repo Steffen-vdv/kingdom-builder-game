@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	type EngineSession,
 	type EngineSessionSnapshot,
@@ -48,6 +48,13 @@ export function usePhaseProgress({
 		Record<string, PhaseStep[]>
 	>({});
 	const [tabsEnabled, setTabsEnabled] = useState(false);
+	const displayPhaseRef = useRef(displayPhase);
+
+	useEffect(() => {
+		displayPhaseRef.current = displayPhase;
+	}, [displayPhase]);
+
+	const getDisplayPhase = useCallback(() => displayPhaseRef.current, []);
 
 	const { mainApStart, setMainApStart, updateMainPhaseStep } =
 		useMainPhaseTracker({
@@ -57,6 +64,7 @@ export function usePhaseProgress({
 			setPhaseSteps,
 			setPhaseHistories,
 			setDisplayPhase,
+			getDisplayPhase,
 		});
 
 	const { runDelay, runStepDelay } = usePhaseDelays({

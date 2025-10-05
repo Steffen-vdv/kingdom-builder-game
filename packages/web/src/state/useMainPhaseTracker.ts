@@ -12,6 +12,7 @@ interface MainPhaseTrackerOptions {
 		React.SetStateAction<Record<string, PhaseStep[]>>
 	>;
 	setDisplayPhase: (phase: string) => void;
+	getDisplayPhase: () => string;
 }
 
 export function useMainPhaseTracker({
@@ -21,6 +22,7 @@ export function useMainPhaseTracker({
 	setPhaseSteps,
 	setPhaseHistories,
 	setDisplayPhase,
+	getDisplayPhase,
 }: MainPhaseTrackerOptions) {
 	const [mainApStart, setMainApStart] = useState(0);
 
@@ -52,13 +54,21 @@ export function useMainPhaseTracker({
 					active: remaining > 0,
 				},
 			];
-			setPhaseSteps(steps);
+			const currentDisplay = getDisplayPhase();
+			const shouldShowAction = actionPhaseId
+				? currentDisplay === actionPhaseId
+				: currentDisplay === snapshot.game.currentPhase;
+			if (shouldShowAction) {
+				setPhaseSteps(steps);
+			}
 			if (actionPhaseId) {
 				setPhaseHistories((prev) => ({
 					...prev,
 					[actionPhaseId]: steps,
 				}));
-				setDisplayPhase(actionPhaseId);
+				if (shouldShowAction) {
+					setDisplayPhase(actionPhaseId);
+				}
 			} else {
 				setDisplayPhase(snapshot.game.currentPhase);
 			}
@@ -71,6 +81,7 @@ export function useMainPhaseTracker({
 			setDisplayPhase,
 			setPhaseHistories,
 			setPhaseSteps,
+			getDisplayPhase,
 		],
 	);
 
