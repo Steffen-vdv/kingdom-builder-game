@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type {
 	EngineSession,
 	EngineSessionSnapshot,
@@ -26,8 +26,20 @@ export function useCompensationLogger({
 	addLog,
 	resourceKeys,
 }: UseCompensationLoggerOptions) {
+	const loggedSessionRef = useRef<EngineSession | null>(null);
+	const loggedPlayersRef = useRef<Set<string>>(new Set());
 	useEffect(() => {
+		if (loggedSessionRef.current !== session) {
+			loggedSessionRef.current = session;
+			loggedPlayersRef.current = new Set();
+		}
+		if (sessionState.game.turn !== 1) {
+			return;
+		}
 		sessionState.game.players.forEach((player) => {
+			if (loggedPlayersRef.current.has(player.id)) {
+				return;
+			}
 			const compensation = sessionState.compensations[player.id];
 			if (
 				!compensation ||
@@ -71,6 +83,7 @@ export function useCompensationLogger({
 					['Last-player compensation:', ...lines.map((line) => `  ${line}`)],
 					player,
 				);
+				loggedPlayersRef.current.add(player.id);
 			}
 		});
 	}, [addLog, resourceKeys, session, sessionState]);

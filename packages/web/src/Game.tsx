@@ -125,7 +125,6 @@ function GameLayout() {
 			<PhasePanel height={phasePanelHeight} />
 		</div>
 	);
-
 	const logButton = (
 		<Button
 			onClick={toggleLog}
