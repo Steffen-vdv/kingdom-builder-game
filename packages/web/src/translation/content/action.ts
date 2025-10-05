@@ -1,7 +1,6 @@
 import {
 	resolveActionEffects,
 	type ActionParams,
-	type EngineContext,
 } from '@kingdom-builder/engine';
 import {
 	summarizeEffects,
@@ -10,15 +9,16 @@ import {
 	formatEffectGroups,
 } from '../effects';
 import { registerContentTranslator } from './factory';
-import type { LegacyContentTranslator, Summary } from './types';
+import type { ContentTranslator, Summary } from './types';
+import type { TranslationContext } from '../context';
 import { getActionLogHook } from './actionLogHooks';
 
 class ActionTranslator
-	implements LegacyContentTranslator<string, Record<string, unknown>>
+	implements ContentTranslator<string, Record<string, unknown>>
 {
 	summarize(
 		id: string,
-		ctx: EngineContext,
+		ctx: TranslationContext,
 		opts?: Record<string, unknown>,
 	): Summary {
 		const def = ctx.actions.get(id);
@@ -38,7 +38,7 @@ class ActionTranslator
 	}
 	describe(
 		id: string,
-		ctx: EngineContext,
+		ctx: TranslationContext,
 		opts?: Record<string, unknown>,
 	): Summary {
 		const def = ctx.actions.get(id);
@@ -58,7 +58,7 @@ class ActionTranslator
 	}
 	log(
 		id: string,
-		ctx: EngineContext,
+		ctx: TranslationContext,
 		params?: Record<string, unknown>,
 	): string[] {
 		const def = ctx.actions.get(id);

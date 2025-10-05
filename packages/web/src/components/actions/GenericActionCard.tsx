@@ -5,7 +5,12 @@ import {
 	type ActionEffectGroupOption,
 	type EngineContext,
 } from '@kingdom-builder/engine';
-import { describeContent, splitSummary, type Summary } from '../../translation';
+import {
+	describeContent,
+	splitSummary,
+	type Summary,
+	type TranslationContext,
+} from '../../translation';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
@@ -31,6 +36,7 @@ interface GenericActionCardProps {
 		params?: Record<string, unknown>,
 	) => void;
 	context: EngineContext;
+	translationContext: TranslationContext;
 	actionCostResource: ResourceKey;
 	handlePerform: (
 		action: Action,
@@ -54,6 +60,7 @@ function GenericActionCard({
 	beginSelection,
 	handleOptionSelect,
 	context,
+	translationContext,
 	actionCostResource,
 	handlePerform,
 	handleHoverCard,
@@ -104,6 +111,7 @@ function GenericActionCard({
 		currentGroup,
 		pendingParams: pending?.params,
 		context,
+		translationContext,
 		formatRequirement,
 		handleOptionSelect,
 		clearHoverCard,
@@ -124,7 +132,7 @@ function GenericActionCard({
 		actionFocus = possible.focus;
 	}
 	const hoverTitle = `${actionIcon} ${action.name}`;
-	const hoverContent = describeContent('action', action.id, context);
+	const hoverContent = describeContent('action', action.id, translationContext);
 	const { effects, description } = splitSummary(hoverContent);
 	return (
 		<ActionCard

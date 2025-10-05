@@ -1,6 +1,5 @@
 import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
-	EngineContext,
 	EffectDef,
 	AttackOnDamageLogEntry,
 } from '@kingdom-builder/engine';
@@ -15,6 +14,7 @@ import {
 	resolveAttackFormatterContext,
 	type AttackFormatterContext,
 } from './attack/statContext';
+import type { TranslationContext } from '../../context';
 
 type DamageEffectCategorizer = (
 	item: SummaryEntry,
@@ -97,7 +97,7 @@ function applyOwnerPresentation(
 
 export function summarizeOnDamage(
 	effectDefinition: EffectDef<Record<string, unknown>>,
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	mode: Mode,
 	baseEntry: BaseEntryResult,
 ): SummaryEntry | null {

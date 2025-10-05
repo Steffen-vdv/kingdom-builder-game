@@ -24,19 +24,20 @@ import {
 	summarizeEffects,
 	describeEffects,
 } from '../factory';
-import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/engine';
 import type { Summary } from '../../content/types';
+import type { TranslationContext } from '../../context';
 
 interface ModifierEvalHandler {
 	summarize: (
 		eff: EffectDef,
 		evaluation: { type: string; id: string },
-		ctx: EngineContext,
+		ctx: TranslationContext,
 	) => Summary;
 	describe: (
 		eff: EffectDef,
 		evaluation: { type: string; id: string },
-		ctx: EngineContext,
+		ctx: TranslationContext,
 	) => Summary;
 }
 
@@ -58,7 +59,7 @@ const RESULT_MODIFIER_INFO = modifierInfo.result;
 
 function formatCostEffect(
 	eff: EffectDef,
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	mode: 'summary' | 'describe',
 	method: 'add' | 'remove',
 ): string {

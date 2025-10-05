@@ -1,9 +1,10 @@
-import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/engine';
 import { RESOURCES } from '@kingdom-builder/contents';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
 import type { DevelopmentDef, ResourceKey } from '@kingdom-builder/contents';
 import { signed } from '../helpers';
 import type { SummaryEntry } from '../../content/types';
+import type { TranslationContext } from '../../context';
 
 const joinParts = (...parts: Array<string | undefined>) =>
 	parts.filter(Boolean).join(' ').trim();
@@ -174,7 +175,7 @@ export function formatDevelopment(
 	label: ResultModifierLabel,
 	eff: EffectDef,
 	evaluation: { id: string },
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	detailed: boolean,
 ) {
 	const { icon, name } = getDevelopmentInfo(ctx, evaluation.id);
@@ -229,7 +230,7 @@ export function formatDevelopment(
 	return formatGainFrom(label, source, amount, { detailed });
 }
 
-export function getDevelopmentInfo(ctx: EngineContext, id: string) {
+export function getDevelopmentInfo(ctx: TranslationContext, id: string) {
 	try {
 		const dev: DevelopmentDef = ctx.developments.get(id);
 		return { icon: dev.icon ?? '', name: dev.name ?? id };

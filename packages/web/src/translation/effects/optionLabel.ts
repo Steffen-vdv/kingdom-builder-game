@@ -1,8 +1,6 @@
-import type {
-	ActionEffectGroupOption,
-	EngineContext,
-} from '@kingdom-builder/engine';
+import type { ActionEffectGroupOption } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../content';
+import type { TranslationContext } from '../context';
 
 type ObjectSummaryEntry = Extract<SummaryEntry, Record<string, unknown>>;
 
@@ -16,7 +14,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function resolveOptionTargetLabel(
 	option: ActionEffectGroupOption,
-	context: EngineContext,
+	context: TranslationContext,
 ): string | undefined {
 	const params = option.params;
 	let targetId: string | undefined;
@@ -49,7 +47,7 @@ function resolveOptionTargetLabel(
 		/* ignore missing development definitions */
 	}
 	try {
-		const building = context.buildings?.get?.(targetId) as MaybeDefinition;
+		const building = context.buildings.get(targetId) as MaybeDefinition;
 		const label = resolveLabel(building);
 		if (label) {
 			return label;
@@ -109,7 +107,7 @@ function fallbackOptionLabel(option: ActionEffectGroupOption): string {
 
 function resolveActionLabel(
 	option: ActionEffectGroupOption,
-	context: EngineContext,
+	context: TranslationContext,
 ): string {
 	try {
 		const definition = context.actions.get(option.actionId);
@@ -154,7 +152,7 @@ type EffectGroupMode = 'summarize' | 'describe' | 'log';
 
 export function buildActionOptionTranslation(
 	option: ActionEffectGroupOption,
-	context: EngineContext,
+	context: TranslationContext,
 	translated: SummaryEntry[],
 	mode: EffectGroupMode,
 ): ActionOptionTranslationResult {
@@ -207,7 +205,7 @@ export function buildActionOptionTranslation(
 
 export function deriveActionOptionLabel(
 	option: ActionEffectGroupOption,
-	context: EngineContext,
+	context: TranslationContext,
 	translated: SummaryEntry[],
 ): string {
 	return buildActionOptionTranslation(option, context, translated, 'summarize')

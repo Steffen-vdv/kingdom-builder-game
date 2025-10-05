@@ -1,14 +1,14 @@
-import type { LegacyContentTranslator, Summary } from './types';
+import type { ContentTranslator, Summary } from './types';
 import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { TranslationContext } from '../context';
 
 export function withInstallation<T>(
-	translator: LegacyContentTranslator<T, unknown>,
-): LegacyContentTranslator<T, { installed?: boolean }> {
+	translator: ContentTranslator<T, unknown>,
+): ContentTranslator<T, { installed?: boolean }> {
 	return {
 		summarize(
 			target: T,
-			ctx: EngineContext,
+			ctx: TranslationContext,
 			opts?: { installed?: boolean },
 		): Summary {
 			const inner = translator.summarize(target, ctx, opts);
@@ -33,7 +33,7 @@ export function withInstallation<T>(
 		},
 		describe(
 			target: T,
-			ctx: EngineContext,
+			ctx: TranslationContext,
 			opts?: { installed?: boolean },
 		): Summary {
 			const inner = translator.describe(target, ctx, opts);
@@ -58,7 +58,7 @@ export function withInstallation<T>(
 		},
 		log(
 			target: T,
-			ctx: EngineContext,
+			ctx: TranslationContext,
 			opts?: { installed?: boolean },
 		): string[] {
 			return translator.log ? translator.log(target, ctx, opts) : [];

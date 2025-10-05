@@ -1,23 +1,31 @@
-import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
-import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/contents';
+import type { EffectDef } from '@kingdom-builder/engine';
+import { TRIGGER_INFO as triggerInfo, PHASES } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
+import type { TranslationContext } from '../context';
 
 function formatStepTriggerLabel(
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	triggerKey: string,
 ): string | undefined {
-	for (const phase of ctx.phases) {
+	const phaseMeta = new Map(
+		ctx.phases.map((phase) => [
+			phase.id,
+			{ icon: phase.icon, label: phase.label },
+		]),
+	);
+	for (const phase of PHASES) {
 		const steps = phase.steps ?? [];
 		for (const step of steps) {
 			const triggers = step.triggers ?? [];
-			if (!triggers.includes(triggerKey)) {
+			if (!triggers.includes(triggerKey as (typeof triggers)[number])) {
 				continue;
 			}
+			const meta = phaseMeta.get(phase.id);
 			const phaseLabelParts = [
-				phase.icon,
-				phase.label ?? formatDetailText(phase.id),
+				meta?.icon ?? phase.icon,
+				meta?.label ?? phase.label ?? formatDetailText(phase.id),
 			]
 				.filter((part) => part && String(part).trim().length > 0)
 				.join(' ')
@@ -49,20 +57,20 @@ export interface PhasedDef {
 }
 
 export class PhasedTranslator {
-	summarize(def: PhasedDef, ctx: EngineContext): Summary {
+	summarize(def: PhasedDef, ctx: TranslationContext): Summary {
 		return this.translate(def, ctx, summarizeEffects);
 	}
 
-	describe(def: PhasedDef, ctx: EngineContext): Summary {
+	describe(def: PhasedDef, ctx: TranslationContext): Summary {
 		return this.translate(def, ctx, describeEffects);
 	}
 
 	private translate(
 		def: PhasedDef,
-		ctx: EngineContext,
+		ctx: TranslationContext,
 		effectMapper: (
 			effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-			context: EngineContext,
+			context: TranslationContext,
 		) => SummaryEntry[],
 	): Summary {
 		const root: SummaryEntry[] = [];

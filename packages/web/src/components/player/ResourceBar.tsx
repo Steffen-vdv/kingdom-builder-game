@@ -96,7 +96,8 @@ interface ResourceBarProps {
 }
 
 const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
-	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+	const { ctx, translationContext, handleHoverCard, clearHoverCard } =
+		useGameEngine();
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id] ?? {
 		resources: {},
@@ -108,7 +109,12 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 	const tiers = ctx.services.rules.tierDefinitions;
 	const showHappinessCard = (value: number) => {
 		const activeTier = ctx.services.tieredResource.definition(value);
-		const { summaries } = buildTierEntries(tiers, activeTier?.id, ctx);
+		const { summaries } = buildTierEntries(
+			tiers,
+			activeTier?.id,
+			ctx,
+			translationContext,
+		);
 		const info = RESOURCES[happinessKey];
 		const activeIndex = summaries.findIndex((summary) => summary.active);
 		const higherSummary =

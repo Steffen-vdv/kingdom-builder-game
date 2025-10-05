@@ -25,7 +25,8 @@ import {
 import type { Action, Building, Development, DisplayPlayer } from './types';
 
 export default function ActionsPanel() {
-	const { ctx, tabsEnabled, actionCostResource } = useGameEngine();
+	const { ctx, translationContext, tabsEnabled, actionCostResource } =
+		useGameEngine();
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = ctx.game.players[0]!;
 	const opponent = ctx.game.players[1]!;
@@ -97,44 +98,48 @@ export default function ActionsPanel() {
 		actions.forEach((actionDefinition) =>
 			map.set(
 				actionDefinition.id,
-				summarizeContent('action', actionDefinition.id, ctx),
+				summarizeContent('action', actionDefinition.id, translationContext),
 			),
 		);
 		return map;
-	}, [actions, ctx]);
+	}, [actions, translationContext]);
 
 	const developmentSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
 		developmentOptions.forEach((developmentDefinition) =>
 			map.set(
 				developmentDefinition.id,
-				summarizeContent('development', developmentDefinition.id, ctx),
+				summarizeContent(
+					'development',
+					developmentDefinition.id,
+					translationContext,
+				),
 			),
 		);
 		return map;
-	}, [developmentOptions, ctx]);
+	}, [developmentOptions, translationContext]);
 
 	const buildingSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
 		buildingOptions.forEach((buildingDefinition) =>
 			map.set(
 				buildingDefinition.id,
-				summarizeContent('building', buildingDefinition.id, ctx),
+				summarizeContent('building', buildingDefinition.id, translationContext),
 			),
 		);
 		return map;
-	}, [buildingOptions, ctx]);
+	}, [buildingOptions, translationContext]);
 
 	const buildingDescriptions = useMemo(() => {
 		const map = new Map<string, Summary>();
 		buildingOptions.forEach((buildingDefinition) =>
 			map.set(
 				buildingDefinition.id,
-				describeContent('building', buildingDefinition.id, ctx),
+				describeContent('building', buildingDefinition.id, translationContext),
 			),
 		);
 		return map;
-	}, [buildingOptions, ctx]);
+	}, [buildingOptions, translationContext]);
 
 	const hasDevelopLand = selectedPlayer.lands.some(
 		(land) => land.slotsFree > 0,

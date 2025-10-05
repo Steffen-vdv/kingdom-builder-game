@@ -77,6 +77,7 @@ describe('<PassiveDisplay />', () => {
 				[tierDefinition],
 				tierDefinition.id,
 				ctx,
+				translationContext,
 			);
 			expect(hoverCard?.effects).toEqual(entries);
 		}
@@ -137,7 +138,7 @@ describe('<PassiveDisplay />', () => {
 		const happinessKey = tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 0;
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
-
+		
 		const { mockGame } = createPassiveGame(ctx);
 		currentGame = mockGame;
 
@@ -167,8 +168,10 @@ describe('<PassiveDisplay />', () => {
 			],
 			ctx,
 		);
+
 		const { mockGame } = createPassiveGame(ctx);
 		currentGame = mockGame;
+
 		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
 		expect(view.container.querySelector('div.hoverable')).toBeNull();
 		const text = view.container.textContent ?? '';

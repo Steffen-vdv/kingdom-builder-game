@@ -4,8 +4,9 @@ import {
 	describeEffects,
 } from '../factory';
 import { PHASES, PASSIVE_INFO } from '@kingdom-builder/contents';
-import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/engine';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
+import type { TranslationContext } from '../../context';
 
 type PassiveDurationMeta = {
 	label: string;
@@ -28,17 +29,48 @@ function createMeta(meta: PassiveDurationMeta): PassiveDurationMeta {
 	return result;
 }
 
+type PassivePhaseInfo = { id: string; label?: string; icon?: string };
+
+function toPassivePhaseInfo(phase: PhaseDef | PassivePhaseInfo | undefined) {
+	if (!phase) {
+		return undefined;
+	}
+	const info: PassivePhaseInfo = { id: phase.id };
+	if ('label' in phase && phase.label !== undefined) {
+		info.label = phase.label;
+	}
+	if ('icon' in phase && phase.icon !== undefined) {
+		info.icon = phase.icon;
+	}
+	return info;
+}
+
 function resolvePhaseMeta(
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	id: string | undefined,
-): PhaseDef | undefined {
+): PassivePhaseInfo | undefined {
 	if (!id) {
 		return undefined;
 	}
-	return (
-		ctx.phases.find((phase) => phase.id === id) ??
-		PHASES.find((phaseDefinition) => phaseDefinition.id === id)
+	const fromLegacy = ctx.legacy?.phases?.find((phase) => phase.id === id);
+	if (fromLegacy) {
+		return toPassivePhaseInfo(fromLegacy);
+	}
+	const fromContext = ctx.phases.find((phase) => phase.id === id);
+	if (fromContext) {
+		const info: PassivePhaseInfo = { id: fromContext.id };
+		if (fromContext.label !== undefined) {
+			info.label = fromContext.label;
+		}
+		if (fromContext.icon !== undefined) {
+			info.icon = fromContext.icon;
+		}
+		return info;
+	}
+	const fromContents = PHASES.find(
+		(phaseDefinition) => phaseDefinition.id === id,
 	);
+	return toPassivePhaseInfo(fromContents);
 }
 
 const PHASE_TRIGGER_KEY_PATTERN = /^on[A-Z][A-Za-z0-9]*Phase$/;
@@ -48,24 +80,54 @@ const PHASE_TRIGGER_FALLBACK_LABELS: Record<string, string> = {
 };
 
 function resolvePhaseByTrigger(
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	triggerId: string,
-): PhaseDef | undefined {
-	const fromContext = ctx.phases.find((phase) =>
-		phase.steps.some((step) => {
-			const triggers = step.triggers as readonly string[] | undefined;
-			return triggers?.includes(triggerId);
-		}),
-	);
-	if (fromContext) {
-		return fromContext;
+): PassivePhaseInfo | undefined {
+	const findPhaseWithTrigger = (
+		phases: readonly unknown[] | undefined,
+	): PhaseDef | undefined => {
+		if (!phases) {
+			return undefined;
+		}
+		for (const phase of phases) {
+			if (!phase || typeof phase !== 'object') {
+				continue;
+			}
+			const withSteps = phase as {
+				id: string;
+				steps?: readonly unknown[];
+			};
+			if (!Array.isArray(withSteps.steps)) {
+				continue;
+			}
+			const matches = withSteps.steps.some((step) => {
+				if (!step || typeof step !== 'object') {
+					return false;
+				}
+				const triggers = (
+					step as {
+						triggers?: readonly string[];
+					}
+				).triggers;
+				return triggers?.includes(triggerId) ?? false;
+			});
+			if (matches) {
+				return phase as PhaseDef;
+			}
+		}
+		return undefined;
+	};
+
+	const fromLegacy = findPhaseWithTrigger(ctx.legacy?.phases);
+	if (fromLegacy) {
+		return toPassivePhaseInfo(fromLegacy);
 	}
-	return PHASES.find((phase) =>
-		phase.steps.some((step) => {
-			const triggers = step.triggers as readonly string[] | undefined;
-			return triggers?.includes(triggerId);
-		}),
-	);
+	const fromContext = findPhaseWithTrigger(ctx.phases as unknown[]);
+	if (fromContext) {
+		return toPassivePhaseInfo(fromContext as PassivePhaseInfo);
+	}
+	const fromContents = findPhaseWithTrigger(PHASES);
+	return toPassivePhaseInfo(fromContents);
 }
 
 function collectPhaseTriggerKeys(params: Record<string, unknown>) {
@@ -79,7 +141,7 @@ function collectPhaseTriggerKeys(params: Record<string, unknown>) {
 
 function resolveDurationMeta(
 	eff: EffectDef<Record<string, unknown>>,
-	ctx: EngineContext,
+	ctx: TranslationContext,
 ): PassiveDurationMeta | null {
 	const params = eff.params ?? {};
 	const manualLabel =

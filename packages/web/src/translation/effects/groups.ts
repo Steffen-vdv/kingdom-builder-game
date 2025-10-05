@@ -1,6 +1,5 @@
 import type {
 	ActionEffectGroupOption,
-	EngineContext,
 	ResolvedActionEffectGroupOption,
 	ResolvedActionEffectStep,
 } from '@kingdom-builder/engine';
@@ -8,6 +7,7 @@ import type { SummaryEntry } from '../content';
 import { describeContent, logContent, summarizeContent } from '../content';
 import { buildActionOptionTranslation } from './optionLabel';
 import { logEffects } from './factory';
+import type { TranslationContext } from '../context';
 
 export type EffectGroupMode = 'summarize' | 'describe' | 'log';
 
@@ -38,7 +38,7 @@ export function mergeOptionParams(
 export function buildOptionEntry(
 	option: ActionEffectGroupOption,
 	mode: EffectGroupMode,
-	context: EngineContext,
+	context: TranslationContext,
 	baseParams: Record<string, unknown>,
 	selection?: ResolvedActionEffectGroupOption,
 ): SummaryEntry {
@@ -75,7 +75,7 @@ export function buildOptionEntry(
 export function buildGroupEntry(
 	step: Extract<ResolvedActionEffectStep, { type: 'group' }>,
 	mode: EffectGroupMode,
-	context: EngineContext,
+	context: TranslationContext,
 ): SummaryEntry {
 	const { group, selection, params } = step;
 	const title =
@@ -115,7 +115,7 @@ export function buildGroupEntry(
 export function formatEffectGroups(
 	steps: readonly ResolvedActionEffectStep[] | undefined,
 	mode: EffectGroupMode,
-	context: EngineContext,
+	context: TranslationContext,
 ): SummaryEntry[] {
 	if (!steps || steps.length === 0) {
 		return [];

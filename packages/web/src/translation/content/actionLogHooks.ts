@@ -1,14 +1,14 @@
 import type {
-	EngineContext,
 	EffectDef,
 	ActionEffect,
 	ActionEffectGroup,
 } from '@kingdom-builder/engine';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import { logContent } from './factory';
+import type { TranslationContext } from '../context';
 
 export type ActionLogHook = (
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	params?: Record<string, unknown>,
 ) => string;
 

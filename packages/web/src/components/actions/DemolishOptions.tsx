@@ -38,6 +38,7 @@ export default function DemolishOptions({
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
 		ctx,
+		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
@@ -105,7 +106,7 @@ export default function DemolishOptions({
 				{entries.map(({ id, building, costs, focus }) => {
 					const requirements: string[] = [];
 					const canPay = playerHasRequiredResources(player.resources, costs);
-					const summary = summarizeContent('building', id, ctx, {
+					const summary = summarizeContent('building', id, translationContext, {
 						installed: true,
 					});
 					const implemented = (summary?.length ?? 0) > 0;
@@ -146,9 +147,14 @@ export default function DemolishOptions({
 								void handlePerform(action, { id });
 							}}
 							onMouseEnter={() => {
-								const full = describeContent('building', id, ctx, {
-									installed: true,
-								});
+								const full = describeContent(
+									'building',
+									id,
+									translationContext,
+									{
+										installed: true,
+									},
+								);
 								const { effects, description } = splitSummary(full);
 								handleHoverCard({
 									title: `${ctx.actions.get(action.id)?.icon || ''} ${

@@ -9,6 +9,7 @@ import {
 	describeContent,
 	splitSummary,
 	summarizeContent,
+	type TranslationContext,
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
 import type { HoverCardData } from './types';
@@ -20,6 +21,7 @@ type BuildOptionsParams = {
 	currentGroup: ActionEffectGroup | undefined;
 	pendingParams: Record<string, unknown> | undefined;
 	context: EngineContext;
+	translationContext: TranslationContext;
 	formatRequirement: (requirement: string) => string;
 	handleOptionSelect: (
 		group: ActionEffectGroup,
@@ -60,6 +62,7 @@ function buildHoverDetails(
 	option: ActionEffectGroupOption,
 	mergedParams: Record<string, unknown>,
 	context: EngineContext,
+	translationContext: TranslationContext,
 	formatRequirement: (requirement: string) => string,
 	hoverBackground: string,
 	optionLabel: string,
@@ -67,7 +70,7 @@ function buildHoverDetails(
 	const hoverSummary = describeContent(
 		'action',
 		option.actionId,
-		context,
+		translationContext,
 		mergedParams,
 	);
 	const { effects: baseEffects, description } = splitSummary(hoverSummary);
@@ -90,7 +93,7 @@ function buildHoverDetails(
 			const developmentSummary = describeContent(
 				'development',
 				developmentId,
-				context,
+				translationContext,
 			);
 			const { effects: developmentEffects } = splitSummary(developmentSummary);
 			if (developmentEffects.length > 0) {
@@ -113,6 +116,7 @@ export function useEffectGroupOptions({
 	currentGroup,
 	pendingParams,
 	context,
+	translationContext,
 	formatRequirement,
 	handleOptionSelect,
 	clearHoverCard,
@@ -132,12 +136,12 @@ export function useEffectGroupOptions({
 			const summaryEntries = summarizeContent(
 				'action',
 				option.actionId,
-				context,
+				translationContext,
 				mergedParams,
 			);
 			const optionLabel = deriveActionOptionLabel(
 				option,
-				context,
+				translationContext,
 				summaryEntries,
 			);
 			const card: ActionCardOption = {
@@ -163,6 +167,7 @@ export function useEffectGroupOptions({
 					option,
 					mergedParams,
 					context,
+					translationContext,
 					formatRequirement,
 					hoverBackground,
 					optionLabel,
@@ -176,6 +181,7 @@ export function useEffectGroupOptions({
 		clearHoverCard,
 		context,
 		currentGroup,
+		translationContext,
 		formatRequirement,
 		handleHoverCard,
 		handleOptionSelect,

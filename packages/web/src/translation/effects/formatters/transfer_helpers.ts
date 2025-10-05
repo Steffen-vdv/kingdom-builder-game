@@ -1,6 +1,7 @@
-import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/engine';
 import { formatTargetLabel } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
+import type { TranslationContext } from '../../context';
 
 export interface TransferModifierTarget {
 	actionId?: string;
@@ -13,7 +14,7 @@ export interface TransferModifierTarget {
 export function resolveTransferModifierTarget(
 	eff: EffectDef,
 	evaluation: { type: string; id: string } | undefined,
-	ctx: EngineContext,
+	ctx: TranslationContext,
 ): TransferModifierTarget {
 	const params = eff.params ?? {};
 	const rawActionId = params['actionId'];

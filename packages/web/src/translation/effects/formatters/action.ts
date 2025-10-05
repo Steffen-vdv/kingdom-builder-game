@@ -1,9 +1,7 @@
-import {
-	resolveActionEffects,
-	type EngineContext,
-} from '@kingdom-builder/engine';
+import { resolveActionEffects } from '@kingdom-builder/engine';
 import { describeContent } from '../../content';
 import { registerEffectFormatter, logEffects } from '../factory';
+import type { TranslationContext } from '../../context';
 
 function extractActionId(
 	params: Record<string, unknown> | undefined,
@@ -40,7 +38,7 @@ function formatActionChangeSentence(
 	return `${verbs[change][mode]} the ${label} action`;
 }
 
-function getActionPresentation(id: string, ctx: EngineContext) {
+function getActionPresentation(id: string, ctx: TranslationContext) {
 	let name = id;
 	let icon = '';
 	let system = false;

@@ -16,12 +16,20 @@ interface LandDisplayProps {
 const LandTile: React.FC<{
 	land: EngineContext['activePlayer']['lands'][number];
 	ctx: ReturnType<typeof useGameEngine>['ctx'];
+	translationContext: ReturnType<typeof useGameEngine>['translationContext'];
 	handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
 	clearHoverCard: ReturnType<typeof useGameEngine>['clearHoverCard'];
 	developAction?: { icon?: string; name: string } | undefined;
-}> = ({ land, ctx, handleHoverCard, clearHoverCard, developAction }) => {
+}> = ({
+	land,
+	ctx,
+	translationContext,
+	handleHoverCard,
+	clearHoverCard,
+	developAction,
+}) => {
 	const showLandCard = () => {
-		const full = describeContent('land', land, ctx);
+		const full = describeContent('land', land, translationContext);
 		const { effects, description } = splitSummary(full);
 		handleHoverCard({
 			title: `${LAND_INFO.icon} ${LAND_INFO.label}`,
@@ -60,9 +68,14 @@ const LandTile: React.FC<{
 								aria-label={name}
 								onMouseEnter={(e) => {
 									e.stopPropagation();
-									const full = describeContent('development', devId, ctx, {
-										installed: true,
-									});
+									const full = describeContent(
+										'development',
+										devId,
+										translationContext,
+										{
+											installed: true,
+										},
+									);
 									const { effects, description } = splitSummary(full);
 									handleHoverCard({
 										title,
@@ -118,7 +131,8 @@ const LandTile: React.FC<{
 };
 
 const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
-	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+	const { ctx, translationContext, handleHoverCard, clearHoverCard } =
+		useGameEngine();
 	const developAction = useMemo(() => {
 		const entry = Array.from(
 			(
@@ -149,6 +163,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 					key={land.id}
 					land={land}
 					ctx={ctx}
+					translationContext={translationContext}
 					handleHoverCard={handleHoverCard}
 					clearHoverCard={clearHoverCard}
 					developAction={developAction}

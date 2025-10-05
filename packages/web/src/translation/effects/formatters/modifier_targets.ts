@@ -1,14 +1,15 @@
-import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/engine';
 import { POPULATION_INFO } from '@kingdom-builder/contents';
 import type { ActionDef } from '@kingdom-builder/contents';
 import { formatTargetLabel, formatGainFrom } from './modifier_helpers';
 import type { ResultModifierLabel } from './modifier_helpers';
+import type { TranslationContext } from '../../context';
 
 export function formatPopulation(
 	label: ResultModifierLabel,
 	eff: EffectDef,
 	evaluation: { id: string },
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	detailed: boolean,
 ) {
 	const { icon, name } = getActionInfo(ctx, evaluation.id);
@@ -28,7 +29,7 @@ export function formatPopulation(
 	);
 }
 
-export function getActionInfo(ctx: EngineContext, id: string) {
+export function getActionInfo(ctx: TranslationContext, id: string) {
 	try {
 		const action: ActionDef = ctx.actions.get(id);
 		return { icon: action.icon ?? id, name: action.name ?? id };
