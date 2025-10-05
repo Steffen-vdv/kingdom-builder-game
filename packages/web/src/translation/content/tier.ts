@@ -4,7 +4,7 @@ import type { EngineContext } from '@kingdom-builder/engine';
 import { summarizeEffects } from '../effects';
 import { translateTierSummary } from './tierSummaries';
 import { registerContentTranslator } from './factory';
-import type { ContentTranslator, Summary, SummaryEntry } from './types';
+import type { LegacyContentTranslator, Summary, SummaryEntry } from './types';
 
 function splitLines(text: string | undefined): string[] {
 	if (!text) {
@@ -55,7 +55,8 @@ function flattenSummary(entries: Summary): string[] {
 }
 
 class TierTranslator
-	implements ContentTranslator<HappinessTierDefinition, Record<string, never>>
+	implements
+		LegacyContentTranslator<HappinessTierDefinition, Record<string, never>>
 {
 	summarize(tier: HappinessTierDefinition, ctx: EngineContext): Summary {
 		const summaryLines: string[] = [];

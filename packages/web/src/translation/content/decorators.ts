@@ -1,10 +1,10 @@
-import type { ContentTranslator, Summary } from './types';
+import type { LegacyContentTranslator, Summary } from './types';
 import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 
 export function withInstallation<T>(
-	translator: ContentTranslator<T, unknown>,
-): ContentTranslator<T, { installed?: boolean }> {
+	translator: LegacyContentTranslator<T, unknown>,
+): LegacyContentTranslator<T, { installed?: boolean }> {
 	return {
 		summarize(
 			target: T,

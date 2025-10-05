@@ -4,6 +4,9 @@ export type {
 	SummaryEntry,
 	SummaryGroup,
 	ContentTranslator,
+	ContentTranslatorContext,
+	LegacyContentTranslator,
+	LegacyContentTranslatorContext,
 } from './types';
 export {
 	registerContentTranslator,

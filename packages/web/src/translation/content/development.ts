@@ -1,7 +1,7 @@
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
 import { applyParamsToEffects } from '@kingdom-builder/engine';
 import { registerContentTranslator } from './factory';
-import type { ContentTranslator, Summary } from './types';
+import type { LegacyContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';
 import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
@@ -107,7 +107,7 @@ function collectPhaseEffects(
 	return result;
 }
 
-class DevelopmentCore implements ContentTranslator<string> {
+class DevelopmentCore implements LegacyContentTranslator<string> {
 	private phased = new PhasedTranslator();
 	summarize(id: string, ctx: EngineContext): Summary {
 		const def = ctx.developments.get(id);

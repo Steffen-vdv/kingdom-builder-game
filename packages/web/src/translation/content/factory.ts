@@ -1,11 +1,16 @@
-import type { EngineContext } from '@kingdom-builder/engine';
-import type { ContentTranslator, Summary } from './types';
+import type { TranslationContext } from '../context';
+import type {
+	ContentTranslator,
+	LegacyContentTranslator,
+	LegacyContentTranslatorContext,
+	Summary,
+} from './types';
 
 const TRANSLATORS = new Map<string, ContentTranslator<unknown, unknown>>();
 
 export function registerContentTranslator<T, O>(
 	type: string,
-	translator: ContentTranslator<T, O>,
+	translator: ContentTranslator<T, O> | LegacyContentTranslator<T, O>,
 ): void {
 	TRANSLATORS.set(type, translator as ContentTranslator<unknown, unknown>);
 }
@@ -13,35 +18,77 @@ export function registerContentTranslator<T, O>(
 export function summarizeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: EngineContext,
+	ctx: TranslationContext,
+	opts?: O,
+): Summary;
+export function summarizeContent<T, O>(
+	type: string,
+	target: T,
+	ctx: LegacyContentTranslatorContext,
+	opts?: O,
+): Summary;
+export function summarizeContent<T, O>(
+	type: string,
+	target: T,
+	ctx: TranslationContext | LegacyContentTranslatorContext,
 	opts?: O,
 ): Summary {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator ? translator.summarize(target, ctx, opts) : [];
+	return translator
+		? translator.summarize(target, ctx as TranslationContext, opts)
+		: [];
 }
 
 export function describeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: EngineContext,
+	ctx: TranslationContext,
+	opts?: O,
+): Summary;
+export function describeContent<T, O>(
+	type: string,
+	target: T,
+	ctx: LegacyContentTranslatorContext,
+	opts?: O,
+): Summary;
+export function describeContent<T, O>(
+	type: string,
+	target: T,
+	ctx: TranslationContext | LegacyContentTranslatorContext,
 	opts?: O,
 ): Summary {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator ? translator.describe(target, ctx, opts) : [];
+	return translator
+		? translator.describe(target, ctx as TranslationContext, opts)
+		: [];
 }
 
 export function logContent<T, O>(
 	type: string,
 	target: T,
-	ctx: EngineContext,
+	ctx: TranslationContext,
+	opts?: O,
+): string[];
+export function logContent<T, O>(
+	type: string,
+	target: T,
+	ctx: LegacyContentTranslatorContext,
+	opts?: O,
+): string[];
+export function logContent<T, O>(
+	type: string,
+	target: T,
+	ctx: TranslationContext | LegacyContentTranslatorContext,
 	opts?: O,
 ): string[] {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator?.log ? translator.log(target, ctx, opts) : [];
+	return translator?.log
+		? translator.log(target, ctx as TranslationContext, opts)
+		: [];
 }
