@@ -17,7 +17,7 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import ResourceBar from '../src/components/player/ResourceBar';
-import { summarizeContent, splitSummary } from '../src/translation';
+import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -29,6 +29,8 @@ type MockGame = {
 };
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
+
+type SummaryGroupLike = { title?: string; items?: unknown[] };
 
 function flattenSummary(entries: unknown[]): string[] {
 	const lines: string[] = [];
@@ -53,6 +55,27 @@ function flattenSummary(entries: unknown[]): string[] {
 		}
 	}
 	return lines;
+}
+
+function formatTierRange(tier: TierDefinition) {
+	const { min, max } = tier.range;
+	if (max === undefined) {
+		return `${min}+`;
+	}
+	if (min === max) {
+		return `${min}`;
+	}
+	return `${min} - ${max}`;
+}
+
+function normalizeSummary(summary: string | undefined): string[] {
+	if (!summary) {
+		return [];
+	}
+	return summary
+		.split(/\r?\n/u)
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0);
 }
 let currentGame: MockGame;
 vi.mock('../src/state/GameContext', () => ({
@@ -90,34 +113,51 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const hoverCard = handleHoverCard.mock.calls.at(-1)?.[0];
 		expect(hoverCard).toBeTruthy();
 		expect(hoverCard?.title).toBe(`${resourceInfo.icon} ${resourceInfo.label}`);
-		expect(hoverCard?.description).toEqual([`Current value: ${resourceValue}`]);
+		expect(hoverCard?.description).toBeUndefined();
+		expect(hoverCard?.effectsTitle).toBe(
+			`Thresholds (Current value: ${resourceValue})`,
+		);
 		const tierEntries = hoverCard?.effects ?? [];
 		expect(tierEntries).toHaveLength(ctx.services.rules.tierDefinitions.length);
-		const activeEntry = tierEntries.find(
-			(entry: unknown) =>
-				typeof entry !== 'string' &&
-				Boolean((entry as { title?: string }).title?.includes('🟢')),
-		) as { items: unknown[] } | undefined;
-		expect(activeEntry).toBeTruthy();
+		const activeEntries = tierEntries.filter((entry: unknown) => {
+			if (typeof entry === 'string') {
+				return false;
+			}
+			const className = (entry as { className?: string }).className;
+			return className?.includes('text-emerald-600');
+		});
+		expect(activeEntries).toHaveLength(1);
 		const tiers = ctx.services.rules.tierDefinitions;
 		const getRangeStart = (tier: TierDefinition) =>
 			tier.range.min ?? Number.NEGATIVE_INFINITY;
 		const orderedTiers = [...tiers].sort(
 			(a, b) => getRangeStart(b) - getRangeStart(a),
 		);
+		const tierResourceIcon = RESOURCES[happinessKey]?.icon || '';
 		orderedTiers.forEach((tier, index) => {
-			const entry = tierEntries.at(index) as { items?: unknown[] } | undefined;
+			const entry = tierEntries.at(index) as SummaryGroupLike | undefined;
 			expect(entry).toBeTruthy();
+			const title = entry?.title ?? '';
 			const items = entry?.items ?? [];
 			expect(items.length).toBeLessThanOrEqual(MAX_TIER_SUMMARY_LINES);
-			const summary = summarizeContent('tier', tier, ctx);
-			const { effects, description } = splitSummary(summary);
-			const expectedItems = effects.slice(0, MAX_TIER_SUMMARY_LINES);
-			expect(items).toEqual(expectedItems);
+			const rangeLabel = formatTierRange(tier);
+			if (tierResourceIcon) {
+				expect(title).toContain(`(${tierResourceIcon} ${rangeLabel})`);
+			} else {
+				expect(title).toContain(`(${rangeLabel})`);
+			}
+			const summaryEntries = tier.preview?.effects?.length
+				? describeEffects(tier.preview.effects, ctx)
+				: normalizeSummary(tier.text?.summary);
+			const baseSummary = summaryEntries.length
+				? summaryEntries
+				: ['No effect'];
+			const { effects } = splitSummary(baseSummary);
+			const expectedEffects = effects.slice(0, MAX_TIER_SUMMARY_LINES);
+			expect(items).toEqual(expectedEffects);
 			const removalText = tier.text?.removal;
 			if (removalText) {
 				expect(flattenSummary(items)).not.toContain(removalText);
-				expect(flattenSummary(description ?? [])).toContain(removalText);
 			}
 		});
 	});

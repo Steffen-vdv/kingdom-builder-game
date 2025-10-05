@@ -75,13 +75,12 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 	const tiers = ctx.services.rules.tierDefinitions;
 	const showHappinessCard = (value: number) => {
 		const activeTier = ctx.services.tieredResource.definition(value);
-		const entries = buildTierEntries(tiers, activeTier?.id, ctx);
+		const { entries } = buildTierEntries(tiers, activeTier?.id, ctx);
 		const info = RESOURCES[happinessKey];
 		handleHoverCard({
 			title: `${info.icon} ${info.label}`,
 			effects: entries,
-			description: [`Current value: ${value}`],
-			effectsTitle: `Tiers (Current: ${value})`,
+			effectsTitle: `Thresholds (Current value: ${value})`,
 			requirements: [],
 			bgClass: PLAYER_INFO_CARD_BG,
 		});

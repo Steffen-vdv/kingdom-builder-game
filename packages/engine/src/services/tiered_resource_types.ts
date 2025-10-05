@@ -20,6 +20,7 @@ export type TierDisplayMetadata = {
 	removalCondition?: string;
 	icon?: string;
 	summaryToken?: string;
+	title?: string;
 };
 
 export type TierEffect = {

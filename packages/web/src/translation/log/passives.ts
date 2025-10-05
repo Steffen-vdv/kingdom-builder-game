@@ -121,23 +121,26 @@ function resolveLabel(
 	meta: PassiveSummary['meta'],
 ): string {
 	const fallbackLabel = formatFallbackLabel(passive.id);
-	const translated =
-		resolveSummaryToken(meta?.source?.labelToken) ||
-		resolveSummaryToken(definition.detail) ||
-		resolveSummaryToken(passive.detail);
+	const named =
+		normalizeLabel(passive.name) ||
+		normalizeLabel((meta?.source as { name?: string } | undefined)?.name);
+	if (named) {
+		return named;
+	}
 	const slug =
 		extractTokenSlug(meta?.source?.labelToken) ||
-		extractTokenSlug(definition.detail) ||
-		extractTokenSlug(passive.detail) ||
 		extractTokenSlug(meta?.source?.id) ||
-		extractTokenSlug(passive.id);
+		extractTokenSlug(passive.id) ||
+		extractTokenSlug(definition.detail) ||
+		extractTokenSlug(passive.detail);
+	if (slug) {
+		return slug;
+	}
 	const normalized =
-		normalizeLabel(passive.name) ||
 		normalizeLabel(passive.detail) ||
 		normalizeLabel(definition.detail) ||
 		normalizeLabel(passive.id);
-	const rawLabel =
-		translated || slug || normalized || PASSIVE_INFO.label || fallbackLabel;
+	const rawLabel = normalized || PASSIVE_INFO.label || fallbackLabel;
 	return rawLabel === passive.id ? fallbackLabel : rawLabel;
 }
 

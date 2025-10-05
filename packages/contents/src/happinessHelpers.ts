@@ -62,6 +62,8 @@ type TierPassiveEffectOptions = {
 	removalDetail: string;
 	params: ReturnType<typeof passiveParams>;
 	effects?: EffectConfig[];
+	icon?: string;
+	name?: string;
 };
 
 export function createTierPassiveEffect({
@@ -71,13 +73,23 @@ export function createTierPassiveEffect({
 	removalDetail,
 	params,
 	effects = [],
+	icon,
+	name,
 }: TierPassiveEffectOptions) {
 	params.detail(summaryToken ?? summary);
+	if (name) {
+		params.name(name);
+	}
+	if (icon) {
+		params.icon(icon);
+	}
 	params.meta({
 		source: {
 			type: 'tiered-resource',
 			id: tierId,
 			...(summaryToken ? { labelToken: summaryToken } : {}),
+			...(name ? { name } : {}),
+			...(icon ? { icon } : {}),
 		},
 		removal: {
 			token: removalDetail,

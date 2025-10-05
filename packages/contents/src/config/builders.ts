@@ -745,11 +745,18 @@ export function tierPassiveText() {
 	return new TierPassiveTextBuilder();
 }
 
+type TierDisplayBuilderConfig = TierDisplayMetadata & { title?: string };
+
 class TierDisplayBuilder {
-	private config: TierDisplayMetadata = {};
+	private config: TierDisplayBuilderConfig = {};
 
 	removalCondition(token: string) {
 		this.config.removalCondition = token;
+		return this;
+	}
+
+	title(value: string) {
+		this.config.title = value;
 		return this;
 	}
 

@@ -1,4 +1,10 @@
-export type { Land, Summary, SummaryEntry, ContentTranslator } from './types';
+export type {
+	Land,
+	Summary,
+	SummaryEntry,
+	SummaryGroup,
+	ContentTranslator,
+} from './types';
 export {
 	registerContentTranslator,
 	summarizeContent,

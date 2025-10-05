@@ -11,8 +11,8 @@ import {
 	appendBuildingChanges,
 	appendLandChanges,
 	appendSlotChanges,
-	appendPassiveChanges,
 } from './diffSections';
+import { appendPassiveChanges } from './passiveChanges';
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
