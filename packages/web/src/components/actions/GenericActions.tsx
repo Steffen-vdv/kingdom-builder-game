@@ -92,7 +92,11 @@ function GenericActions({
 	);
 
 	const handleOptionSelect = useCallback(
-		(group: ActionEffectGroup, option: ActionEffectGroupOption) => {
+		(
+			group: ActionEffectGroup,
+			option: ActionEffectGroupOption,
+			selectionParams?: Record<string, unknown>,
+		) => {
 			setPending((previous) => {
 				if (!previous) {
 					return previous;
@@ -101,19 +105,38 @@ function GenericActions({
 				if (!currentGroup || currentGroup.id !== group.id) {
 					return previous;
 				}
+				let resolvedParams: Record<string, unknown> | undefined;
+				if (selectionParams) {
+					const entries = Object.entries(selectionParams).filter(
+						([, value]) => value !== undefined,
+					);
+					if (entries.length > 0) {
+						resolvedParams = Object.fromEntries(entries) as Record<
+							string,
+							unknown
+						>;
+					}
+				}
+				const choice = resolvedParams
+					? { optionId: option.id, params: resolvedParams }
+					: { optionId: option.id };
 				const nextChoices: ActionEffectGroupChoiceMap = {
 					...previous.choices,
-					[group.id]: { optionId: option.id },
+					[group.id]: choice,
 				};
+				const mergedParams = resolvedParams
+					? { ...previous.params, ...resolvedParams }
+					: previous.params;
 				if (previous.step + 1 < previous.groups.length) {
 					return {
 						...previous,
 						step: previous.step + 1,
 						choices: nextChoices,
+						params: resolvedParams ? mergedParams : previous.params,
 					};
 				}
 				void handlePerform(previous.action, {
-					...previous.params,
+					...mergedParams,
 					choices: nextChoices,
 				});
 				return null;

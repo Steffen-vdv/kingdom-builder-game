@@ -100,8 +100,8 @@ export interface ActionCardProps {
 }
 
 function StepBadge({
-	stepIndex,
-	stepCount,
+	stepIndex: _stepIndex,
+	stepCount: _stepCount,
 	stepLabel,
 	variant,
 	multiStep,
@@ -112,10 +112,11 @@ function StepBadge({
 	variant: ActionCardVariant;
 	multiStep: boolean | undefined;
 }) {
-	if (variant === 'back' && stepCount && stepCount > 0) {
-		const current = stepIndex && stepIndex > 0 ? stepIndex : 1;
-		const label =
-			stepLabel ?? `Step ${Math.min(current, stepCount)} of ${stepCount}`;
+	if (variant === 'back') {
+		const label = stepLabel?.trim();
+		if (!label) {
+			return null;
+		}
 		return (
 			<div className="action-card__badge">
 				<span className="action-card__badge-pill">{label}</span>
@@ -160,7 +161,8 @@ function StepBadge({
 }
 
 function OptionCard({ option }: { option: ActionCardOption }) {
-	const label = [option.icon, option.label].filter(Boolean).join(' ').trim();
+	const icon = option.icon?.trim();
+	const label = option.label.trim();
 	const optionClass = [
 		'action-card__option',
 		option.compact ? 'action-card__option--compact' : '',
@@ -177,7 +179,14 @@ function OptionCard({ option }: { option: ActionCardOption }) {
 			onMouseEnter={option.onMouseEnter}
 			onMouseLeave={option.onMouseLeave}
 		>
-			<span className="action-card__option-title">{label}</span>
+			<span className="action-card__option-header">
+				{icon ? (
+					<span aria-hidden="true" className="action-card__option-icon">
+						{icon}
+					</span>
+				) : null}
+				<span className="action-card__option-title">{label}</span>
+			</span>
 			{!option.compact && option.summary && (
 				<p className="action-card__option-summary">{option.summary}</p>
 			)}
@@ -273,9 +282,7 @@ export default function ActionCard({
 							{renderCosts(costs, playerResources, actionCostResource, upkeep)}
 							{requirementBadge}
 						</div>
-						<ul className="text-sm list-disc pl-4 text-left">
-							{renderedSummary}
-						</ul>
+						<ul className="action-card__summary">{renderedSummary}</ul>
 					</div>
 				</button>
 				<div className="action-card__face action-card__face--back">

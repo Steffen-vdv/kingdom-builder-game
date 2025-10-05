@@ -25,6 +25,7 @@ type BuildOptionsParams = {
 	handleOptionSelect: (
 		group: ActionEffectGroup,
 		option: ActionEffectGroupOption,
+		params?: Record<string, unknown>,
 	) => void;
 	clearHoverCard: () => void;
 	handleHoverCard: (data: HoverCardData) => void;
@@ -35,22 +36,25 @@ function resolveOptionParams(
 	option: ActionEffectGroupOption,
 	pendingParams: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
-	const base: Record<string, unknown> = {};
+	const resolved: Record<string, unknown> = {};
 	const params: ResolveParams = option.params;
 	if (!params) {
-		return base;
+		return resolved;
 	}
 	for (const [key, value] of Object.entries(params)) {
-		if (typeof value === 'string' && value.startsWith('$') && pendingParams) {
-			const placeholder = value.slice(1);
-			if (placeholder in pendingParams) {
-				base[key] = pendingParams[placeholder];
+		if (typeof value === 'string' && value.startsWith('$')) {
+			if (!pendingParams) {
 				continue;
 			}
+			const placeholder = value.slice(1);
+			if (placeholder in pendingParams) {
+				resolved[key] = pendingParams[placeholder];
+			}
+			continue;
 		}
-		base[key] = value;
+		resolved[key] = value;
 	}
-	return base;
+	return resolved;
 }
 
 function buildHoverDetails(
@@ -123,9 +127,12 @@ export function useEffectGroupOptions({
 			const card: ActionCardOption = {
 				id: option.id,
 				label: optionLabel,
+				...(option.icon ? { icon: option.icon } : {}),
 				onSelect: () => {
 					clearHoverCard();
-					handleOptionSelect(currentGroup, option);
+					const selectionParams =
+						Object.keys(resolved).length > 0 ? resolved : undefined;
+					handleOptionSelect(currentGroup, option, selectionParams);
 				},
 				compact: currentGroup.layout === 'compact',
 			};

@@ -191,22 +191,54 @@
 		height: 0.75rem;
 	}
 	.action-card__option {
-		@apply panel-card cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;
+		@apply panel-card w-full cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition whitespace-normal break-words dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.action-card__option-header {
+		@apply flex items-start gap-2 text-left;
+	}
+	.action-card__option-icon {
+		@apply text-lg leading-none;
+	}
+	.action-card__option-title {
+		@apply text-left font-semibold;
+		flex: 1 1 auto;
+		min-width: 0;
 	}
 	.action-card__option--compact {
-		@apply flex min-h-[4.25rem] items-center justify-center gap-2 text-base font-semibold;
+		@apply min-h-[4.25rem] items-center gap-2 text-base text-center;
+	}
+	.action-card__option--compact .action-card__option-header {
+		@apply flex flex-col items-center justify-center gap-1 text-center;
 	}
 	.action-card__option--compact .action-card__option-title {
 		@apply text-base font-semibold text-center;
-	}
-	.action-card__option-title {
-		@apply text-base font-semibold;
+		width: 100%;
 	}
 	.action-card__option-summary {
-		@apply text-sm text-slate-600 dark:text-slate-300;
+		@apply text-xs text-left text-slate-600 leading-snug dark:text-slate-300;
 	}
 	.action-card__option-description {
-		@apply text-xs text-slate-500 dark:text-slate-400;
+		@apply text-xs text-left text-slate-500 leading-snug dark:text-slate-400;
+	}
+	.action-card__summary {
+		font-size: 0.875rem;
+		list-style: disc;
+		padding-left: 1rem;
+		text-align: left;
+	}
+	.action-card__summary > li {
+		margin-bottom: 0.25rem;
+	}
+	.action-card__summary > li:last-child {
+		margin-bottom: 0;
+	}
+	.action-card__summary ul {
+		list-style: none;
+		margin: 0.25rem 0 0;
+		padding-left: 1rem;
 	}
 	.action-card__cancel {
 		@apply rounded-full border border-white/50 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-white hover:text-slate-900 dark:border-white/20 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700;

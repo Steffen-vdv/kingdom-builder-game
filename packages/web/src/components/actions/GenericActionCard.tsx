@@ -29,6 +29,7 @@ interface GenericActionCardProps {
 	handleOptionSelect: (
 		group: ActionEffectGroup,
 		option: ActionEffectGroupOption,
+		params?: Record<string, unknown>,
 	) => void;
 	context: EngineContext;
 	actionCostResource: ResourceKey;
