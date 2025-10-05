@@ -219,7 +219,7 @@ export function createActionRegistry() {
 				.params(actionParams().id('house').landId('$landId')),
 		)
 		.option(
-		   actionEffectGroupOption('royal_decree_farm')
+			actionEffectGroupOption('royal_decree_farm')
 				.label('Establish a Farm')
 				.icon('🌾')
 				.action(ActionId.develop)
