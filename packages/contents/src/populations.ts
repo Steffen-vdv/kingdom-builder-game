@@ -8,6 +8,8 @@ import {
 	resourceParams,
 	statParams,
 	populationEvaluator,
+	passiveParams,
+	populationAssignmentPassiveId,
 } from './config/builders';
 import {
 	Types,
@@ -32,6 +34,14 @@ const LEGION_STRENGTH_GAIN_PARAMS = statParams()
 const FORTIFIER_STRENGTH_GAIN_PARAMS = statParams()
 	.key(Stat.fortificationStrength)
 	.amount(1)
+	.build();
+
+const LEGION_ASSIGNMENT_PASSIVE_PARAMS = passiveParams()
+	.id(populationAssignmentPassiveId(PopulationRole.Legion))
+	.build();
+
+const FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS = passiveParams()
+	.id(populationAssignmentPassiveId(PopulationRole.Fortifier))
 	.build();
 
 export function createPopulationRegistry() {
@@ -70,7 +80,7 @@ export function createPopulationRegistry() {
 			.upkeep(Resource.gold, 1)
 			.onAssigned(
 				effect(Types.Passive, PassiveMethods.ADD)
-					.param('id', 'legion_$player_$index')
+					.params(LEGION_ASSIGNMENT_PASSIVE_PARAMS)
 					.effect(
 						effect(Types.Stat, StatMethods.ADD)
 							.params(LEGION_STRENGTH_GAIN_PARAMS)
@@ -80,7 +90,7 @@ export function createPopulationRegistry() {
 			)
 			.onUnassigned(
 				effect(Types.Passive, PassiveMethods.REMOVE)
-					.param('id', 'legion_$player_$index')
+					.params(LEGION_ASSIGNMENT_PASSIVE_PARAMS)
 					.build(),
 			)
 			.build(),
@@ -95,7 +105,7 @@ export function createPopulationRegistry() {
 			.upkeep(Resource.gold, 1)
 			.onAssigned(
 				effect(Types.Passive, PassiveMethods.ADD)
-					.param('id', 'fortifier_$player_$index')
+					.params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS)
 					.effect(
 						effect(Types.Stat, StatMethods.ADD)
 							.params(FORTIFIER_STRENGTH_GAIN_PARAMS)
@@ -105,7 +115,7 @@ export function createPopulationRegistry() {
 			)
 			.onUnassigned(
 				effect(Types.Passive, PassiveMethods.REMOVE)
-					.param('id', 'fortifier_$player_$index')
+					.params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS)
 					.build(),
 			)
 			.build(),
