@@ -1,8 +1,4 @@
-import type {
-	PassiveSummary,
-	PlayerId,
-	EngineContext as LegacyEngineContext,
-} from '@kingdom-builder/engine';
+import type { PassiveSummary, PlayerId } from '@kingdom-builder/engine';
 import type {
 	ActionConfig,
 	BuildingConfig,
@@ -49,21 +45,21 @@ export interface TranslationPassives {
 	list(owner?: PlayerId): PassiveSummary[];
 	get(id: string, owner: PlayerId): TranslationPassiveDescriptor | undefined;
 	readonly evaluationMods: TranslationPassiveModifierMap;
-	/**
-	 * @deprecated Temporary escape hatch for utilities that still need access to
-	 * the underlying engine passive manager. Prefer modelling the missing data on
-	 * {@link TranslationPassives} before using this.
-	 */
-	readonly legacy?: unknown;
 }
 
 /**
  * Minimal phase metadata consumed by translation renderers.
  */
+export interface TranslationPhaseStep {
+	id: string;
+	triggers?: readonly string[];
+}
+
 export interface TranslationPhase {
 	id: string;
 	icon?: string;
 	label?: string;
+	steps?: readonly TranslationPhaseStep[];
 }
 
 /**
@@ -99,10 +95,4 @@ export interface TranslationContext {
 	readonly compensations: Readonly<Record<PlayerId, PlayerStartConfig>>;
 	pullEffectLog<T>(key: string): T | undefined;
 	readonly actionCostResource?: string;
-	/**
-	 * @deprecated Legacy escape hatch for callers that still require the
-	 * full {@link LegacyEngineContext}. Usage should be phased out in favour of
-	 * the typed accessors declared above.
-	 */
-	readonly legacy?: LegacyEngineContext;
 }

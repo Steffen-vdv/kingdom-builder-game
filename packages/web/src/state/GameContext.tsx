@@ -123,11 +123,11 @@ export function GameProvider({
 					developments: DEVELOPMENTS,
 				},
 				{
-					pullEffectLog: (key) => ctx.pullEffectLog(key),
-					passives: ctx.passives,
+					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
+					evaluationMods: session.getPassiveEvaluationMods(),
 				},
 			),
-		[sessionState, tick, ctx],
+		[sessionState, session],
 	);
 
 	const {
