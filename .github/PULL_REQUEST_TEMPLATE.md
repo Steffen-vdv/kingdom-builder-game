@@ -18,7 +18,9 @@
 4. **Code standards satisfied:** <!-- Cite linting or review evidence that code standards remain satisfied. -->
 5. **Tests updated:** <!-- Link to new or updated tests that cover the changes and include their results. -->
 6. **Documentation updated:** <!-- Point to required documentation updates or explain why none were needed. -->
+7. **`npm run check` results:** <!-- Provide a link or pastebin showing the full output. -->
+8. **`npm run test:coverage` results:** <!-- Provide a link or pastebin showing the full output. -->
 
 ## Testing
 
-<!-- List the tests you ran and their results. -->
+<!-- List the tests you ran and their results. Include both `npm run check` and `npm run test:coverage`, marking their status (pass/fail) alongside any additional commands. -->
