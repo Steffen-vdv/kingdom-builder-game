@@ -1,60 +1,9 @@
 import React from 'react';
+import type { Focus } from '@kingdom-builder/contents';
 import { type Summary } from '../../translation';
 import { renderSummary, renderCosts } from '../../translation/render';
-import type { Focus } from '@kingdom-builder/contents';
-
-const FOCUS_GRADIENTS: Record<Focus, string> & { default: string } = {
-	economy:
-		'from-emerald-200/70 to-emerald-100/40 dark:from-emerald-900/40 dark:to-emerald-800/20',
-	aggressive:
-		'from-amber-200/70 to-orange-100/40 dark:from-amber-900/40 dark:to-orange-900/20',
-	defense:
-		'from-blue-200/70 to-sky-100/40 dark:from-blue-900/40 dark:to-sky-900/20',
-	other:
-		'from-rose-200/70 to-rose-100/40 dark:from-rose-900/40 dark:to-rose-800/20',
-	default:
-		'from-rose-200/70 to-rose-100/40 dark:from-rose-900/40 dark:to-rose-800/20',
-};
-
-function stripSummary(
-	summary: Summary | undefined,
-	requirements: readonly string[],
-): Summary | undefined {
-	const first = summary?.[0];
-	const baseSummary = !first
-		? summary
-		: typeof first === 'string'
-			? summary
-			: first.items;
-	if (!baseSummary) {
-		return baseSummary;
-	}
-	if (requirements.length === 0) {
-		return baseSummary;
-	}
-	const requirementSet = new Set(
-		requirements.map((req) => req.trim()).filter((req) => req.length > 0),
-	);
-	const filterEntries = (entries: Summary): Summary => {
-		const filtered: Summary = [];
-		for (const entry of entries) {
-			if (typeof entry === 'string') {
-				if (requirementSet.has(entry.trim())) {
-					continue;
-				}
-				filtered.push(entry);
-			} else {
-				const nested = filterEntries(entry.items);
-				if (nested.length > 0) {
-					filtered.push({ ...entry, items: nested });
-				}
-			}
-		}
-		return filtered;
-	};
-	const filtered = filterEntries(baseSummary);
-	return filtered.length > 0 ? filtered : undefined;
-}
+import { FOCUS_GRADIENTS } from './focusGradients';
+import { stripSummary } from './stripSummary';
 
 export type ActionCardOption = {
 	id: string;
