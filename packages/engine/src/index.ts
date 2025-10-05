@@ -25,6 +25,13 @@ export {
 	type PlayerStateSnapshot,
 	type LandSnapshot,
 } from './runtime/session';
+export {
+	simulateUpcomingPhases,
+	type SimulateUpcomingPhasesOptions,
+	type SimulateUpcomingPhasesIds,
+	type SimulateUpcomingPhasesResult,
+	type PlayerSnapshotDeltaBucket,
+} from './runtime/simulate_upcoming_phases';
 export { getActionCosts, getActionRequirements } from './actions/costs';
 export { performAction, simulateAction } from './actions/action_execution';
 export {
