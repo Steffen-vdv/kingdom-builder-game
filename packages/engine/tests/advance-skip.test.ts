@@ -4,9 +4,11 @@ import {
 	happinessTier,
 	effect,
 	passiveParams,
+} from '@kingdom-builder/contents/config/builders';
+import {
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents/config/builders';
+} from '@kingdom-builder/contents/config/builderShared';
 import { advance } from '../src';
 import { createTestEngine } from './helpers';
 import type { RuleSet } from '../src/services';

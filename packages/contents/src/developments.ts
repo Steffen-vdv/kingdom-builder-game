@@ -4,15 +4,17 @@ import { Resource } from './resources';
 import {
 	development,
 	effect,
-	Types,
-	StatMethods,
-	DevelopmentMethods,
-	ResourceMethods,
 	resourceParams,
 	statParams,
 	developmentParams,
 	developmentEvaluator,
 } from './config/builders';
+import {
+	Types,
+	StatMethods,
+	DevelopmentMethods,
+	ResourceMethods,
+} from './config/builderShared';
 import type { DevelopmentDef } from './defs';
 
 export type { DevelopmentDef } from './defs';

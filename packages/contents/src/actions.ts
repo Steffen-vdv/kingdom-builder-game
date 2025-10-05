@@ -7,18 +7,6 @@ import {
 	action,
 	effect,
 	compareRequirement,
-	Types,
-	LandMethods,
-	ResourceMethods,
-	DevelopmentMethods,
-	PopulationMethods,
-	ActionMethods,
-	AttackMethods,
-	PassiveMethods,
-	CostModMethods,
-	ResultModMethods,
-	BuildingMethods,
-	StatMethods,
 	resourceParams,
 	statParams,
 	developmentParams,
@@ -35,6 +23,20 @@ import {
 	actionEffectGroup,
 	actionEffectGroupOption,
 } from './config/builders';
+import {
+	Types,
+	LandMethods,
+	ResourceMethods,
+	DevelopmentMethods,
+	PopulationMethods,
+	ActionMethods,
+	AttackMethods,
+	PassiveMethods,
+	CostModMethods,
+	ResultModMethods,
+	BuildingMethods,
+	StatMethods,
+} from './config/builderShared';
 import type { Focus } from './defs';
 
 export interface ActionDef extends ActionConfig {

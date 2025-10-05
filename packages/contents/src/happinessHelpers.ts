@@ -1,16 +1,18 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
 import {
-	Types,
-	CostModMethods,
-	ResultModMethods,
-	StatMethods,
 	costModParams,
 	developmentTarget,
 	resultModParams,
 	statParams,
 	effect,
-	PassiveMethods,
 } from './config/builders';
+import {
+	Types,
+	CostModMethods,
+	ResultModMethods,
+	StatMethods,
+	PassiveMethods,
+} from './config/builderShared';
 import type { passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { Stat } from './stats';

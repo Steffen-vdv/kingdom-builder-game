@@ -10,10 +10,9 @@ import {
 	attackParams,
 	transferParams,
 	happinessTier,
-	Types,
-	PassiveMethods,
 	populationParams,
 } from '../src/config/builders';
+import { Types, PassiveMethods } from '../src/config/builderShared';
 import { RESOURCES, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
 import { describe, expect, it } from 'vitest';

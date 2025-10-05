@@ -2,8 +2,6 @@ import { Stat } from './stats';
 import { PopulationRole } from './populationRoles';
 import {
 	effect,
-	Types,
-	StatMethods,
 	phase,
 	step,
 	populationEvaluator,
@@ -12,6 +10,7 @@ import {
 	statEvaluator,
 	type PhaseDef,
 } from './config/builders';
+import { Types, StatMethods } from './config/builderShared';
 import {
 	ON_GAIN_AP_STEP,
 	ON_GAIN_INCOME_STEP,

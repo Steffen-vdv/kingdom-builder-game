@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { performAction } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
 import { createContentFactory } from '../factories/content.ts';
-import { LandMethods } from '@kingdom-builder/contents/config/builders';
+import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 
 describe('land:till effect', () => {
 	it('tills the specified land and marks it as tilled', () => {

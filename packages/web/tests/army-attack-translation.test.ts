@@ -27,15 +27,17 @@ import {
 } from '../src/translation/effects/formatters/attack/shared';
 import {
 	effect,
-	Types,
-	ResourceMethods,
-	ActionMethods,
-	StatMethods,
 	attackParams,
 	resourceParams,
 	transferParams,
 	statParams,
 } from '@kingdom-builder/contents/config/builders';
+import {
+	Types,
+	ResourceMethods,
+	ActionMethods,
+	StatMethods,
+} from '@kingdom-builder/contents/config/builderShared';
 import { createContentFactory } from '../../engine/tests/factories/content';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
 import type { StartConfig } from '@kingdom-builder/protocol';
