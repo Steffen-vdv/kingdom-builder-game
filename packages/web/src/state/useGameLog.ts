@@ -1,0 +1,92 @@
+import { useCallback, useState } from 'react';
+import type { EngineContext } from '@kingdom-builder/engine';
+
+const ACTION_EFFECT_DELAY = 600;
+const MAX_LOG_ENTRIES = 250;
+
+type LogEntry = {
+	time: string;
+	text: string;
+	playerId: string;
+};
+
+interface GameLogOptions {
+	ctx: EngineContext;
+	mountedRef: React.MutableRefObject<boolean>;
+	timeScaleRef: React.MutableRefObject<number>;
+	setTrackedTimeout: (callback: () => void, delay: number) => number;
+}
+
+export function useGameLog({
+	ctx,
+	mountedRef,
+	timeScaleRef,
+	setTrackedTimeout,
+}: GameLogOptions) {
+	const [log, setLog] = useState<LogEntry[]>([]);
+	const [logOverflowed, setLogOverflowed] = useState(false);
+
+	const addLog = useCallback(
+		(entry: string | string[], player?: EngineContext['activePlayer']) => {
+			const logPlayer = player ?? ctx.activePlayer;
+			setLog((prev) => {
+				const messages = Array.isArray(entry) ? entry : [entry];
+				const items = messages.map((text) => ({
+					time: new Date().toLocaleTimeString(),
+					text: `[${logPlayer.name}] ${text}`,
+					playerId: logPlayer.id,
+				}));
+				const combined = [...prev, ...items];
+				const next = combined.slice(-MAX_LOG_ENTRIES);
+				if (next.length < combined.length) {
+					setLogOverflowed(true);
+				}
+				return next;
+			});
+		},
+		[ctx.activePlayer],
+	);
+
+	const waitWithScale = useCallback(
+		(base: number) => {
+			const scale = timeScaleRef.current || 1;
+			const duration = base / scale;
+			if (duration <= 0) {
+				return Promise.resolve();
+			}
+			return new Promise<void>((resolve) => {
+				setTrackedTimeout(() => resolve(), duration);
+			});
+		},
+		[setTrackedTimeout, timeScaleRef],
+	);
+
+	const logWithEffectDelay = useCallback(
+		async (lines: string[], player: EngineContext['activePlayer']) => {
+			if (!lines.length) {
+				return;
+			}
+			const [first, ...rest] = lines;
+			if (first === undefined) {
+				return;
+			}
+			if (!mountedRef.current) {
+				return;
+			}
+			addLog(first, player);
+			for (const line of rest) {
+				await waitWithScale(ACTION_EFFECT_DELAY);
+				if (!mountedRef.current) {
+					return;
+				}
+				addLog(line, player);
+			}
+		},
+		[addLog, mountedRef, waitWithScale],
+	);
+
+	return { log, logOverflowed, addLog, logWithEffectDelay };
+}
+
+export type { LogEntry };
+export { ACTION_EFFECT_DELAY, MAX_LOG_ENTRIES };

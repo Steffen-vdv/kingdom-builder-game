@@ -2,20 +2,10 @@ import React, {
 	createContext,
 	useContext,
 	useMemo,
-	useRef,
 	useState,
 	useEffect,
 } from 'react';
-import {
-	createEngine,
-	performAction,
-	simulateAction,
-	advance,
-	getActionCosts,
-	resolveActionEffects,
-	type EngineContext,
-	type ActionParams,
-} from '@kingdom-builder/engine';
+import { createEngine, type EngineContext } from '@kingdom-builder/engine';
 import {
 	RESOURCES,
 	ACTIONS,
@@ -26,96 +16,21 @@ import {
 	GAME_START,
 	RULES,
 	type ResourceKey,
-	type StepDef,
 } from '@kingdom-builder/contents';
-import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	logContent,
-	type Summary,
-	type PlayerSnapshot,
-} from '../translation';
-import { describeSkipEvent } from '../utils/describeSkipEvent';
-import { useTimeScale, type TimeScale } from './useTimeScale';
+import { useTimeScale } from './useTimeScale';
+import { useHoverCard } from './useHoverCard';
+import { useGameLog } from './useGameLog';
+import { usePhaseProgress } from './usePhaseProgress';
+import { useActionPerformer } from './useActionPerformer';
+import { useErrorToasts } from './useErrorToasts';
+import { useCompensationLogger } from './useCompensationLogger';
+import { useAiRunner } from './useAiRunner';
+import type { GameEngineContextValue } from './GameContext.types';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
-const ACTION_EFFECT_DELAY = 600;
-const MAX_LOG_ENTRIES = 250;
-
-interface Action {
-	id: string;
-	name: string;
-	system?: boolean;
-}
-
-type LogEntry = {
-	time: string;
-	text: string;
-	playerId: string;
-};
-
-type ErrorToast = {
-	id: number;
-	message: string;
-};
-
-interface HoverCard {
-	title: string;
-	effects: Summary;
-	requirements: string[];
-	costs?: Record<string, number>;
-	upkeep?: Record<string, number> | undefined;
-	description?: string | Summary;
-	descriptionTitle?: string;
-	descriptionClass?: string;
-	effectsTitle?: string;
-	bgClass?: string;
-}
-
-export type PhaseStep = {
-	title: string;
-	items: { text: string; italic?: boolean; done?: boolean }[];
-	active: boolean;
-};
-
-interface GameEngineContextValue {
-	ctx: EngineContext;
-	log: LogEntry[];
-	logOverflowed: boolean;
-	hoverCard: HoverCard | null;
-	handleHoverCard: (data: HoverCard) => void;
-	clearHoverCard: () => void;
-	phaseSteps: PhaseStep[];
-	setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
-	phaseTimer: number;
-	mainApStart: number;
-	displayPhase: string;
-	setDisplayPhase: (id: string) => void;
-	phaseHistories: Record<string, PhaseStep[]>;
-	tabsEnabled: boolean;
-	actionCostResource: ResourceKey;
-	handlePerform: (
-		action: Action,
-		params?: Record<string, unknown>,
-	) => Promise<void>;
-	runUntilActionPhase: () => Promise<void>;
-	handleEndTurn: () => Promise<void>;
-	updateMainPhaseStep: (apStartOverride?: number) => void;
-	onExit?: () => void;
-	darkMode: boolean;
-	onToggleDark: () => void;
-	musicEnabled: boolean;
-	onToggleMusic: () => void;
-	soundEnabled: boolean;
-	onToggleSound: () => void;
-	timeScale: TimeScale;
-	setTimeScale: (value: TimeScale) => void;
-	errorToasts: ErrorToast[];
-	pushErrorToast: (message: string) => void;
-	dismissErrorToast: (id: number) => void;
-}
+export type { PhaseStep } from './phaseTypes';
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
 
@@ -156,18 +71,6 @@ export function GameProvider({
 	const [, setTick] = useState(0);
 	const refresh = () => setTick((t) => t + 1);
 
-	const [log, setLog] = useState<LogEntry[]>([]);
-	const [logOverflowed, setLogOverflowed] = useState(false);
-	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
-	const hoverTimeout = useRef<number>();
-	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
-	const [phaseTimer, setPhaseTimer] = useState(0);
-	const [mainApStart, setMainApStart] = useState(0);
-	const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
-	const [phaseHistories, setPhaseHistories] = useState<
-		Record<string, PhaseStep[]>
-	>({});
-	const [tabsEnabled, setTabsEnabled] = useState(false);
 	const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
 
 	const {
@@ -183,30 +86,6 @@ export function GameProvider({
 
 	const actionCostResource = ctx.actionCostResource as ResourceKey;
 
-	const nextToastId = useRef(0);
-	const [errorToasts, setErrorToasts] = useState<ErrorToast[]>([]);
-	const dismissErrorToast = (id: number) => {
-		setErrorToasts((prev) => prev.filter((toast) => toast.id !== id));
-	};
-	const pushErrorToast = (message: string) => {
-		const id = nextToastId.current++;
-		const trimmed = message.trim();
-		const normalized = trimmed || 'Action failed';
-		setErrorToasts((prev) => [...prev, { id, message: normalized }]);
-		setTrackedTimeout(() => {
-			dismissErrorToast(id);
-		}, 5000);
-	};
-
-	useEffect(() => {
-		return () => {
-			if (hoverTimeout.current) {
-				clearTrackedTimeout(hoverTimeout.current);
-			}
-			hoverTimeout.current = undefined;
-		};
-	}, [clearTrackedTimeout]);
-
 	const actionPhaseId = useMemo(() => {
 		const phaseWithAction = ctx.phases.find(
 			(phaseDefinition) => phaseDefinition.action,
@@ -214,524 +93,78 @@ export function GameProvider({
 		return phaseWithAction?.id;
 	}, [ctx]);
 
-	const addLog = (
-		entry: string | string[],
-		player?: EngineContext['activePlayer'],
-	) => {
-		const logPlayer = player ?? ctx.activePlayer;
-		setLog((prev) => {
-			const messages = Array.isArray(entry) ? entry : [entry];
-			const items = messages.map((text) => ({
-				time: new Date().toLocaleTimeString(),
-				text: `[${logPlayer.name}] ${text}`,
-				playerId: logPlayer.id,
-			}));
-			const combined = [...prev, ...items];
-			const next = combined.slice(-MAX_LOG_ENTRIES);
-			if (next.length < combined.length) {
-				setLogOverflowed(true);
-			}
-			return next;
-		});
-	};
+	const { hoverCard, handleHoverCard, clearHoverCard } = useHoverCard({
+		setTrackedTimeout,
+		clearTrackedTimeout,
+	});
 
-	useEffect(() => {
-		ctx.game.players.forEach((player) => {
-			const comp = ctx.compensations[player.id];
-			if (
-				!comp ||
-				(Object.keys(comp.resources || {}).length === 0 &&
-					Object.keys(comp.stats || {}).length === 0)
-			) {
-				return;
-			}
-			const after: PlayerSnapshot = snapshotPlayer(player, ctx);
-			const before: PlayerSnapshot = {
-				...after,
-				resources: { ...after.resources },
-				stats: { ...after.stats },
-				buildings: [...after.buildings],
-				lands: after.lands.map((l) => ({
-					...l,
-					developments: [...l.developments],
-				})),
-				passives: [...after.passives],
-			};
-			for (const [resourceKey, resourceDelta] of Object.entries(
-				comp.resources || {},
-			)) {
-				before.resources[resourceKey] =
-					(before.resources[resourceKey] || 0) - (resourceDelta ?? 0);
-			}
-			for (const [statKey, statDelta] of Object.entries(comp.stats || {})) {
-				before.stats[statKey] = (before.stats[statKey] || 0) - (statDelta ?? 0);
-			}
-			const lines = diffStepSnapshots(
-				before,
-				after,
-				undefined,
-				ctx,
-				RESOURCE_KEYS,
-			);
-			if (lines.length) {
-				addLog(
-					['Last-player compensation:', ...lines.map((l: string) => `  ${l}`)],
-					player,
-				);
-			}
-		});
-	}, [ctx]);
+	const { log, logOverflowed, addLog, logWithEffectDelay } = useGameLog({
+		ctx,
+		mountedRef,
+		timeScaleRef,
+		setTrackedTimeout,
+	});
 
-	function handleHoverCard(data: HoverCard) {
-		if (hoverTimeout.current) {
-			clearTrackedTimeout(hoverTimeout.current);
-		}
-		hoverTimeout.current = setTrackedTimeout(() => {
-			hoverTimeout.current = undefined;
-			setHoverCard(data);
-		}, 300);
-	}
-	function clearHoverCard() {
-		if (hoverTimeout.current) {
-			clearTrackedTimeout(hoverTimeout.current);
-			hoverTimeout.current = undefined;
-		}
-		setHoverCard(null);
-	}
+	const {
+		phaseSteps,
+		setPhaseSteps,
+		phaseTimer,
+		mainApStart,
+		displayPhase,
+		setDisplayPhase,
+		phaseHistories,
+		tabsEnabled,
+		runUntilActionPhase,
+		runUntilActionPhaseCore,
+		handleEndTurn,
+		endTurn,
+		updateMainPhaseStep,
+		setPhaseHistories,
+	} = usePhaseProgress({
+		ctx,
+		actionPhaseId,
+		actionCostResource,
+		addLog,
+		mountedRef,
+		timeScaleRef,
+		setTrackedInterval,
+		clearTrackedInterval,
+		refresh,
+		resourceKeys: RESOURCE_KEYS,
+		enqueue,
+	});
 
-	function updateMainPhaseStep(apStartOverride?: number) {
-		const total = apStartOverride ?? mainApStart;
-		const remaining = ctx.activePlayer.resources[actionCostResource] ?? 0;
-		const spent = total - remaining;
-		const resourceInfo = RESOURCES[actionCostResource];
-		const costLabel = resourceInfo?.label ?? '';
-		const costIcon = resourceInfo?.icon ?? '';
-		const costSummary = `${costIcon} ${spent}/${total} spent`;
-		const steps = [
-			{
-				title: `Step 1 - Spend all ${costLabel}`,
-				items: [
-					{
-						text: costSummary,
-						done: remaining === 0,
-					},
-				],
-				active: remaining > 0,
-			},
-		];
-		setPhaseSteps(steps);
-		if (actionPhaseId) {
-			setPhaseHistories((prev) => ({ ...prev, [actionPhaseId]: steps }));
-			setDisplayPhase(actionPhaseId);
-		} else {
-			setDisplayPhase(ctx.game.currentPhase);
-		}
-	}
+	const { errorToasts, pushErrorToast, dismissErrorToast } = useErrorToasts({
+		setTrackedTimeout,
+	});
 
-	function runDelay(total: number) {
-		const scale = timeScaleRef.current || 1;
-		const adjustedTotal = total / scale;
-		if (adjustedTotal <= 0) {
-			if (mountedRef.current) {
-				setPhaseTimer(0);
-			}
-			return Promise.resolve();
-		}
-		const tick = Math.max(16, Math.min(100, adjustedTotal / 10));
-		if (mountedRef.current) {
-			setPhaseTimer(0);
-		}
-		return new Promise<void>((resolve) => {
-			let elapsed = 0;
-			const interval = setTrackedInterval(() => {
-				elapsed += tick;
-				if (mountedRef.current) {
-					setPhaseTimer(Math.min(1, elapsed / adjustedTotal));
-				}
-				if (elapsed >= adjustedTotal) {
-					clearTrackedInterval(interval);
-					if (mountedRef.current) {
-						setPhaseTimer(0);
-					}
-					resolve();
-				}
-			}, tick);
-		});
-	}
+	useCompensationLogger({ ctx, addLog, resourceKeys: RESOURCE_KEYS });
 
-	function runStepDelay() {
-		return runDelay(1000);
-	}
+	const { handlePerform, performRef } = useActionPerformer({
+		ctx,
+		actionCostResource,
+		addLog,
+		logWithEffectDelay,
+		updateMainPhaseStep,
+		refresh,
+		pushErrorToast,
+		mountedRef,
+		endTurn,
+		enqueue,
+		resourceKeys: RESOURCE_KEYS,
+	});
 
-	async function runUntilActionPhaseCore() {
-		if (ctx.phases[ctx.game.phaseIndex]?.action) {
-			if (!mountedRef.current) {
-				return;
-			}
-			setPhaseTimer(0);
-			setTabsEnabled(true);
-			setDisplayPhase(ctx.game.currentPhase);
-			return;
-		}
-		setTabsEnabled(false);
-		setPhaseSteps([]);
-		setDisplayPhase(ctx.game.currentPhase);
-		setPhaseHistories({});
-		let ranSteps = false;
-		let lastPhase: string | null = null;
-		while (!ctx.phases[ctx.game.phaseIndex]?.action) {
-			ranSteps = true;
-			const before = snapshotPlayer(ctx.activePlayer, ctx);
-			const { phase, step, player, effects, skipped } = advance(ctx);
-			const phaseDef = ctx.phases.find(
-				(phaseDefinition) => phaseDefinition.id === phase,
-			)!;
-			const stepDef = phaseDef.steps.find(
-				(stepDefinition) => stepDefinition.id === step,
-			);
-			if (phase !== lastPhase) {
-				await runDelay(1500);
-				if (!mountedRef.current) {
-					return;
-				}
-				setPhaseSteps([]);
-				setDisplayPhase(phase);
-				addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player);
-				lastPhase = phase;
-			}
-			const phaseId = phase;
-			let entry: {
-				title: string;
-				items: { text: string; italic?: boolean }[];
-				active: true;
-			};
-			if (skipped) {
-				const summary = describeSkipEvent(skipped, phaseDef, stepDef);
-				addLog(summary.logLines, player);
-				entry = {
-					title: summary.history.title,
-					items: summary.history.items,
-					active: true,
-				};
-			} else {
-				const after = snapshotPlayer(player, ctx);
-				const stepWithEffects: StepDef | undefined = stepDef
-					? ({ ...(stepDef as StepDef), effects } as StepDef)
-					: undefined;
-				const changes = diffStepSnapshots(
-					before,
-					after,
-					stepWithEffects,
-					ctx,
-					RESOURCE_KEYS,
-				);
-				if (changes.length) {
-					addLog(
-						changes.map((c) => `  ${c}`),
-						player,
-					);
-				}
-				entry = {
-					title: stepDef?.title || step,
-					items:
-						changes.length > 0
-							? changes.map((text) => ({ text }))
-							: [{ text: 'No effect', italic: true }],
-					active: true,
-				};
-			}
-			setPhaseSteps((prev) => [...prev, entry]);
-			setPhaseHistories((prev) => ({
-				...prev,
-				[phaseId]: [...(prev[phaseId] ?? []), entry],
-			}));
-			await runStepDelay();
-			if (!mountedRef.current) {
-				return;
-			}
-			const finalized = { ...entry, active: false };
-			setPhaseSteps((prev) => {
-				if (!prev.length) {
-					return prev;
-				}
-				const next = [...prev];
-				next[next.length - 1] = finalized;
-				return next;
-			});
-			setPhaseHistories((prev) => {
-				const history = prev[phaseId];
-				if (!history?.length) {
-					return prev;
-				}
-				const nextHistory = [...history];
-				nextHistory[nextHistory.length - 1] = finalized;
-				return { ...prev, [phaseId]: nextHistory };
-			});
-		}
-		if (ranSteps) {
-			await runDelay(1500);
-			if (!mountedRef.current) {
-				return;
-			}
-		} else {
-			if (!mountedRef.current) {
-				return;
-			}
-			setPhaseTimer(0);
-		}
-		const start = ctx.activePlayer.resources[actionCostResource] as number;
-		if (!mountedRef.current) {
-			return;
-		}
-		setMainApStart(start);
-		updateMainPhaseStep(start);
-		setDisplayPhase(ctx.game.currentPhase);
-		setTabsEnabled(true);
-		refresh();
-	}
-
-	const runUntilActionPhase = () => enqueue(runUntilActionPhaseCore);
-
-	function waitWithScale(base: number) {
-		const scale = timeScaleRef.current || 1;
-		const duration = base / scale;
-		if (duration <= 0) {
-			return Promise.resolve();
-		}
-		return new Promise<void>((resolve) => {
-			setTrackedTimeout(() => resolve(), duration);
-		});
-	}
-
-	async function logWithEffectDelay(
-		lines: string[],
-		player: EngineContext['activePlayer'],
-	) {
-		if (!lines.length) {
-			return;
-		}
-		const [first, ...rest] = lines;
-		if (first === undefined) {
-			return;
-		}
-		if (!mountedRef.current) {
-			return;
-		}
-		addLog(first, player);
-		const delay = ACTION_EFFECT_DELAY;
-		for (const line of rest) {
-			await waitWithScale(delay);
-			if (!mountedRef.current) {
-				return;
-			}
-			addLog(line, player);
-		}
-	}
-
-	async function perform(action: Action, params?: ActionParams<string>) {
-		const player = ctx.activePlayer;
-		const before = snapshotPlayer(player, ctx);
-		const costs = getActionCosts(action.id, ctx, params);
-		try {
-			simulateAction(action.id, ctx, params);
-			const traces = performAction(action.id, ctx, params);
-
-			const after = snapshotPlayer(player, ctx);
-			const stepDef = ctx.actions.get(action.id);
-			const resolvedStep = resolveActionEffects(stepDef, params);
-			const changes = diffStepSnapshots(
-				before,
-				after,
-				resolvedStep,
-				ctx,
-				RESOURCE_KEYS,
-			);
-			const messages = logContent('action', action.id, ctx, params);
-			const costLines: string[] = [];
-			for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
-				const amt = costs[key] ?? 0;
-				if (!amt) {
-					continue;
-				}
-				const info = RESOURCES[key];
-				const icon = info?.icon ? `${info.icon} ` : '';
-				const label = info?.label ?? key;
-				const b = before.resources[key] ?? 0;
-				const a = b - amt;
-				costLines.push(`    ${icon}${label} -${amt} (${b}→${a})`);
-			}
-			if (costLines.length) {
-				messages.splice(1, 0, '  💲 Action cost', ...costLines);
-			}
-
-			const normalize = (line: string) =>
-				(line.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
-
-			const subLines: string[] = [];
-			for (const trace of traces) {
-				const subStep = ctx.actions.get(trace.id);
-				const subResolved = resolveActionEffects(subStep);
-				const subChanges = diffStepSnapshots(
-					trace.before,
-					trace.after,
-					subResolved,
-					ctx,
-					RESOURCE_KEYS,
-				);
-				if (!subChanges.length) {
-					continue;
-				}
-				subLines.push(...subChanges);
-				const icon = ctx.actions.get(trace.id)?.icon || '';
-				const name = ctx.actions.get(trace.id).name;
-				const line = `  ${icon} ${name}`;
-				const idx = messages.indexOf(line);
-				if (idx !== -1) {
-					messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
-				}
-			}
-
-			const subPrefixes = subLines.map(normalize);
-
-			const messagePrefixes = new Set<string>();
-			for (const line of messages) {
-				const trimmed = line.trim();
-				if (!trimmed.startsWith('You:') && !trimmed.startsWith('Opponent:')) {
-					continue;
-				}
-				const body = trimmed.slice(trimmed.indexOf(':') + 1).trim();
-				const normalized = normalize(body);
-				if (normalized) {
-					messagePrefixes.add(normalized);
-				}
-			}
-
-			const costLabels = new Set(
-				Object.keys(costs) as (keyof typeof RESOURCES)[],
-			);
-			const filtered = changes.filter((line) => {
-				const normalizedLine = normalize(line);
-				if (messagePrefixes.has(normalizedLine)) {
-					return false;
-				}
-				if (subPrefixes.includes(normalizedLine)) {
-					return false;
-				}
-				for (const key of costLabels) {
-					const info = RESOURCES[key];
-					const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
-					if (line.startsWith(prefix)) {
-						return false;
-					}
-				}
-				return true;
-			});
-			const logLines = [...messages, ...filtered.map((c) => `  ${c}`)];
-
-			updateMainPhaseStep();
-			refresh();
-
-			await logWithEffectDelay(logLines, player);
-
-			if (!mountedRef.current) {
-				return;
-			}
-			if (
-				ctx.game.devMode &&
-				(ctx.activePlayer.resources[actionCostResource] ?? 0) <= 0
-			) {
-				await endTurn();
-			}
-		} catch (e) {
-			const icon = ctx.actions.get(action.id)?.icon || '';
-			const message = (e as Error).message || 'Action failed';
-			pushErrorToast(message);
-			addLog(`Failed to play ${icon} ${action.name}: ${message}`, player);
-			return;
-		}
-	}
-
-	const handlePerform = (action: Action, params?: ActionParams<string>) =>
-		enqueue(() => perform(action, params));
-
-	const performRef = useRef<typeof perform>(perform);
-	useEffect(() => {
-		performRef.current = perform;
-	}, [perform]);
-
-	async function endTurn() {
-		const phaseDef = ctx.phases[ctx.game.phaseIndex];
-		if (!phaseDef?.action) {
-			return;
-		}
-		if ((ctx.activePlayer.resources[actionCostResource] ?? 0) > 0) {
-			return;
-		}
-		advance(ctx);
-		setPhaseHistories({});
-		await runUntilActionPhaseCore();
-	}
-
-	const handleEndTurn = () => enqueue(endTurn);
-
-	// Update main phase steps once action phase becomes active
-	useEffect(() => {
-		if (!tabsEnabled) {
-			return;
-		}
-		if (!ctx.phases[ctx.game.phaseIndex]?.action) {
-			return;
-		}
-		const start = ctx.activePlayer.resources[actionCostResource] as number;
-		setMainApStart(start);
-		updateMainPhaseStep(start);
-	}, [ctx.game.phaseIndex, tabsEnabled]);
+	useAiRunner({
+		ctx,
+		runUntilActionPhaseCore,
+		setPhaseHistories,
+		performRef,
+		mountedRef,
+	});
 
 	useEffect(() => {
 		void runUntilActionPhase();
-	}, []);
-
-	useEffect(() => {
-		const phaseDef = ctx.phases[ctx.game.phaseIndex];
-		if (!phaseDef?.action) {
-			return;
-		}
-		const aiSystem = ctx.aiSystem;
-		const activeId = ctx.activePlayer.id;
-		if (!aiSystem?.has(activeId)) {
-			return;
-		}
-		void ctx.enqueue(async () => {
-			await aiSystem.run(activeId, ctx, {
-				performAction: async (
-					actionId: string,
-					engineCtx: EngineContext,
-					params?: ActionParams<string>,
-				) => {
-					const definition = engineCtx.actions.get(actionId);
-					if (!definition) {
-						throw new Error(`Unknown action ${String(actionId)} for AI`);
-					}
-					const action: Action = {
-						id: definition.id,
-						name: definition.name,
-					};
-					if (definition.system !== undefined) {
-						action.system = definition.system;
-					}
-					await performRef.current(action, params as Record<string, unknown>);
-				},
-				advance: (engineCtx: EngineContext) => {
-					advance(engineCtx);
-				},
-			});
-			if (!mountedRef.current) {
-				return;
-			}
-			setPhaseHistories({});
-			await runUntilActionPhaseCore();
-		});
-	}, [ctx.aiSystem, ctx.game.phaseIndex, ctx.activePlayer.id, ctx]);
+	}, [runUntilActionPhase]);
 
 	const value: GameEngineContextValue = {
 		ctx,
