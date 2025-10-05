@@ -44,9 +44,14 @@ export function diffStepSnapshots(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,
-		context,
+		diffContext,
 	);
-	appendLandChanges(changeSummaries, previousSnapshot, nextSnapshot, context);
+	appendLandChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		diffContext,
+	);
 	appendSlotChanges(changeSummaries, previousSnapshot, nextSnapshot);
 	appendPassiveChanges(changeSummaries, previousSnapshot, nextSnapshot);
 	return changeSummaries;

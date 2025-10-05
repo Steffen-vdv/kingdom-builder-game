@@ -15,6 +15,7 @@ import {
 	appendSlotChanges,
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
+import { createTranslationDiffContext } from './resourceSources/context';
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
@@ -104,13 +105,19 @@ export function diffSnapshots(
 		context,
 		undefined,
 	);
+	const diffContext = createTranslationDiffContext(context);
 	appendBuildingChanges(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,
-		context,
+		diffContext,
 	);
-	appendLandChanges(changeSummaries, previousSnapshot, nextSnapshot, context);
+	appendLandChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		diffContext,
+	);
 	appendSlotChanges(changeSummaries, previousSnapshot, nextSnapshot);
 	appendPassiveChanges(changeSummaries, previousSnapshot, nextSnapshot);
 	return changeSummaries;
