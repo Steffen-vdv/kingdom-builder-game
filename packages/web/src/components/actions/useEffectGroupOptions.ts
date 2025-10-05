@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import {
-	getActionCosts,
 	getActionRequirements,
 	type ActionEffectGroup,
 	type ActionEffectGroupOption,
@@ -65,30 +64,40 @@ function buildHoverDetails(
 	hoverBackground: string,
 	optionLabel: string,
 ): HoverCardData {
-	const hoverTitle = optionLabel.trim() || option.label;
 	const hoverSummary = describeContent(
 		'action',
 		option.actionId,
 		context,
 		mergedParams,
 	);
-	const { effects, description } = splitSummary(hoverSummary);
+	const { effects: baseEffects, description } = splitSummary(hoverSummary);
 	const requirements = getActionRequirements(
 		option.actionId,
 		context,
 		mergedParams,
 	).map(formatRequirement);
-	const costBag = getActionCosts(option.actionId, context, mergedParams);
-	const costs: Record<string, number> = {};
-	for (const [resourceKey, cost] of Object.entries(costBag)) {
-		costs[resourceKey] = cost ?? 0;
+	let effects = baseEffects;
+	const developmentId = mergedParams?.id;
+	if (typeof developmentId === 'string') {
+		try {
+			const developmentSummary = describeContent(
+				'development',
+				developmentId,
+				context,
+			);
+			const { effects: developmentEffects } = splitSummary(developmentSummary);
+			if (developmentEffects.length > 0) {
+				effects = developmentEffects;
+			}
+		} catch {
+			/* ignore missing development summaries */
+		}
 	}
 	return {
-		title: hoverTitle,
+		title: optionLabel.trim() || option.label,
 		effects,
 		...(description && { description }),
 		requirements,
-		costs,
 		bgClass: hoverBackground,
 	};
 }

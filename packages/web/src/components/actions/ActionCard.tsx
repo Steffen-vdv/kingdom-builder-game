@@ -178,6 +178,7 @@ function OptionCard({ option }: { option: ActionCardOption }) {
 			className={optionClass}
 			onClick={option.disabled ? undefined : option.onSelect}
 			disabled={option.disabled}
+			style={{ cursor: option.disabled ? 'not-allowed' : 'pointer' }}
 			onMouseEnter={option.onMouseEnter}
 			onMouseLeave={option.onMouseLeave}
 			aria-label={ariaLabel}
@@ -329,6 +330,7 @@ export default function ActionCard({
 									onClick={onCancel}
 									aria-label="Cancel selection"
 									title="Cancel selection"
+									style={{ cursor: 'pointer' }}
 								>
 									×
 								</button>
