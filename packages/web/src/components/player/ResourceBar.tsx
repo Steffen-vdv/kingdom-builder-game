@@ -8,6 +8,7 @@ import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
 import { buildTierEntries } from './buildTierEntries';
 import type { SummaryGroup } from '../../translation/content/types';
+import { getForecastDisplay } from '../../utils/forecast';
 
 interface ResourceButtonProps {
 	resourceKey: keyof typeof RESOURCES;
@@ -31,7 +32,7 @@ const formatDelta = (delta: number) => {
 const RESOURCE_FORECAST_BADGE_CLASS =
 	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
 const RESOURCE_FORECAST_BADGE_THEME_CLASS =
-	'bg-slate-800/70 text-white dark:bg-slate-100/10';
+	'bg-slate-800/70 dark:bg-slate-100/10';
 
 const ResourceButton: React.FC<ResourceButtonProps> = ({
 	resourceKey,
@@ -42,12 +43,11 @@ const ResourceButton: React.FC<ResourceButtonProps> = ({
 }) => {
 	const info = RESOURCES[resourceKey];
 	const changes = useValueChangeIndicators(value);
-	const forecastLabel =
-		typeof forecastDelta === 'number' && forecastDelta !== 0
-			? `(${formatDelta(forecastDelta)} next turn)`
-			: undefined;
-	const ariaLabel = forecastLabel
-		? `${info.label}: ${value} ${forecastLabel}`
+	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
+		formatDelta(delta),
+	);
+	const ariaLabel = forecastDisplay
+		? `${info.label}: ${value} ${forecastDisplay.label}`
 		: `${info.label}: ${value}`;
 
 	return (
@@ -63,11 +63,15 @@ const ResourceButton: React.FC<ResourceButtonProps> = ({
 		>
 			{info.icon}
 			{value}
-			{forecastLabel && (
+			{forecastDisplay && (
 				<span
-					className={`${RESOURCE_FORECAST_BADGE_CLASS} ${RESOURCE_FORECAST_BADGE_THEME_CLASS}`}
+					className={[
+						RESOURCE_FORECAST_BADGE_CLASS,
+						RESOURCE_FORECAST_BADGE_THEME_CLASS,
+						forecastDisplay.toneClass,
+					].join(' ')}
 				>
-					{forecastLabel}
+					{forecastDisplay.label}
 				</span>
 			)}
 			{changes.map((change) => (

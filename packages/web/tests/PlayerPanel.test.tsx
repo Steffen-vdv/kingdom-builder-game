@@ -135,13 +135,38 @@ describe('<PlayerPanel />', () => {
 			resourceDelta > 0 ? '+' : ''
 		}${resourceDelta}`;
 		const resourceButtons = screen.getAllByRole('button', {
-			name: `${resourceInfo.label}: ${resourceValue} (${formattedResourceDelta} next turn)`,
+			name: `${resourceInfo.label}: ${resourceValue} (${formattedResourceDelta})`,
 		});
 		expect(resourceButtons.length).toBeGreaterThan(0);
 		const [resourceButton] = resourceButtons;
-		expect(
-			within(resourceButton).getByText(`(${formattedResourceDelta} next turn)`),
-		).toBeInTheDocument();
+		const resourceForecastBadge = within(resourceButton).getByText(
+			`(${formattedResourceDelta})`,
+		);
+		expect(resourceForecastBadge).toBeInTheDocument();
+		expect(resourceForecastBadge).toHaveClass('text-emerald-300');
+		const negativeResourceKey = Object.keys(RESOURCES).find(
+			(key) => resourceForecast[key]! < 0,
+		);
+		if (negativeResourceKey) {
+			const negativeResourceInfo = RESOURCES[negativeResourceKey];
+			const negativeResourceValue =
+				ctx.activePlayer.resources[negativeResourceKey] ?? 0;
+			const negativeResourceDelta = resourceForecast[negativeResourceKey]!;
+			const formattedNegativeDelta = `${
+				negativeResourceDelta > 0 ? '+' : ''
+			}${negativeResourceDelta}`;
+			const negativeResourceButtons = screen.getAllByRole('button', {
+				name: `${negativeResourceInfo.label}: ${negativeResourceValue} (${
+					formattedNegativeDelta
+				})`,
+			});
+			expect(negativeResourceButtons.length).toBeGreaterThan(0);
+			const [negativeResourceButton] = negativeResourceButtons;
+			const negativeForecastBadge = within(negativeResourceButton).getByText(
+				`(${formattedNegativeDelta})`,
+			);
+			expect(negativeForecastBadge).toHaveClass('text-rose-300');
+		}
 		const [firstStatKey] = displayableStatKeys;
 		const statInfo = STATS[firstStatKey as keyof typeof STATS];
 		const statValue = ctx.activePlayer.stats[firstStatKey] ?? 0;
@@ -155,12 +180,14 @@ describe('<PlayerPanel />', () => {
 			Math.abs(statDelta),
 		)}`;
 		const statButtons = screen.getAllByRole('button', {
-			name: `${statInfo.label}: ${formattedStatValue} (${formattedStatDelta} next turn)`,
+			name: `${statInfo.label}: ${formattedStatValue} (${formattedStatDelta})`,
 		});
 		expect(statButtons.length).toBeGreaterThan(0);
 		const [statButton] = statButtons;
-		expect(
-			within(statButton).getByText(`(${formattedStatDelta} next turn)`),
-		).toBeInTheDocument();
+		const statForecastBadge = within(statButton).getByText(
+			`(${formattedStatDelta})`,
+		);
+		expect(statForecastBadge).toBeInTheDocument();
+		expect(statForecastBadge).toHaveClass('text-emerald-300');
 	});
 });
