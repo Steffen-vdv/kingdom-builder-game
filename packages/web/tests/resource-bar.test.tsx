@@ -17,7 +17,8 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import ResourceBar from '../src/components/player/ResourceBar';
-import { translateTierSummary } from '../src/translation';
+import { summarizeContent, splitSummary } from '../src/translation';
+import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
@@ -29,22 +30,29 @@ type MockGame = {
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
 
-const REMOVAL_PATTERN = /Active as long as/i;
-
-function expectNoRemovalLore(items: unknown[]) {
-	items.forEach((item) => {
-		if (typeof item === 'string') {
-			expect(item).not.toMatch(REMOVAL_PATTERN);
+function flattenSummary(entries: unknown[]): string[] {
+	const lines: string[] = [];
+	const queue = [...entries];
+	while (queue.length) {
+		const entry = queue.shift();
+		if (entry === undefined) {
+			continue;
 		}
-	});
-}
-
-function expectSummaryMatches(items: unknown[], summary: string) {
-	const summaryLines = summary
-		.split(/\r?\n/)
-		.map((line) => line.trim())
-		.filter((line) => line.length > 0);
-	expect(items).toEqual(expect.arrayContaining(summaryLines));
+		if (typeof entry === 'string') {
+			lines.push(entry);
+			continue;
+		}
+		if (entry && typeof entry === 'object') {
+			const group = entry as { title?: string; items?: unknown[] };
+			if (group.title) {
+				lines.push(group.title);
+			}
+			if (Array.isArray(group.items)) {
+				queue.unshift(...group.items);
+			}
+		}
+	}
+	return lines;
 }
 let currentGame: MockGame;
 vi.mock('../src/state/GameContext', () => ({
@@ -101,12 +109,15 @@ describe('<ResourceBar /> happiness hover card', () => {
 			const entry = tierEntries.at(index) as { items?: unknown[] } | undefined;
 			expect(entry).toBeTruthy();
 			const items = entry?.items ?? [];
-			expect(items.length).toBeLessThanOrEqual(4);
-			expectNoRemovalLore(items);
-			const summaryToken = tier.display?.summaryToken;
-			const translatedSummary = translateTierSummary(summaryToken);
-			if (translatedSummary) {
-				expectSummaryMatches(items, translatedSummary);
+			expect(items.length).toBeLessThanOrEqual(MAX_TIER_SUMMARY_LINES);
+			const summary = summarizeContent('tier', tier, ctx);
+			const { effects, description } = splitSummary(summary);
+			const expectedItems = effects.slice(0, MAX_TIER_SUMMARY_LINES);
+			expect(items).toEqual(expectedItems);
+			const removalText = tier.text?.removal;
+			if (removalText) {
+				expect(flattenSummary(items)).not.toContain(removalText);
+				expect(flattenSummary(description ?? [])).toContain(removalText);
 			}
 		});
 	});
