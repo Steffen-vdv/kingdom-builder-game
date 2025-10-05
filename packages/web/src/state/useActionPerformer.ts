@@ -6,9 +6,17 @@ import {
 	type EngineSession,
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
-import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
+import {
+	ActionId,
+	RESOURCES,
+	type ResourceKey,
+} from '@kingdom-builder/contents';
 import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
 import type { Action } from './actionTypes';
+import {
+	formatActionLogLines,
+	formatDevelopActionLogLines,
+} from './actionLogFormat';
 
 interface UseActionPerformerOptions {
 	session: EngineSession;
@@ -158,7 +166,10 @@ export function useActionPerformer({
 					}
 					return true;
 				});
-				const logLines = [...messages, ...filtered.map((c) => `  ${c}`)];
+				const logLines =
+					action.id === ActionId.develop
+						? formatDevelopActionLogLines(messages, filtered)
+						: formatActionLogLines(messages, filtered);
 
 				updateMainPhaseStep();
 				refresh();
