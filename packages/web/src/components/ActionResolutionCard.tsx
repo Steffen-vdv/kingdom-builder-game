@@ -24,7 +24,6 @@ function ActionResolutionCard({
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
 	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
-	const headerTitle = title ?? 'Action resolution';
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
@@ -39,6 +38,8 @@ function ActionResolutionCard({
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
+	const defaultTitle = title ?? 'Action resolution';
+	const headerTitle = actionName ? `Action - ${actionName}` : defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',
@@ -89,17 +90,12 @@ function ActionResolutionCard({
 					) : null}
 					<div className="flex flex-1 items-start justify-between gap-4">
 						<div className="space-y-1">
-							<div className={headerLabelClass}>Action resolution</div>
+							<div className={headerLabelClass}>Resolution</div>
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
-							{resolution.player ? (
-								<div className={CARD_META_TEXT_CLASS}>
-									{`Played by ${playerName}`}
-								</div>
-							) : null}
 						</div>
-						{actionName ? (
+						{resolution.player ? (
 							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{actionName}
+								{`Played by ${playerName}`}
 							</div>
 						) : null}
 					</div>
