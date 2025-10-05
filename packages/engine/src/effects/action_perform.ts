@@ -8,18 +8,38 @@ import type { ActionParameters } from '../actions/action_parameters';
 type ActionPerformParams = ActionParameters<string> & {
 	__actionId?: string;
 	actionId?: string;
+	developmentId?: string;
 };
+
+function resolveActionId(
+	params: ActionPerformParams | undefined,
+	ctx: Parameters<EffectHandler>[1],
+): string | undefined {
+	const candidates: string[] = [];
+	if (typeof params?.__actionId === 'string') {
+		candidates.push(params.__actionId);
+	}
+	if (typeof params?.actionId === 'string') {
+		candidates.push(params.actionId);
+	}
+	if (typeof params?.id === 'string') {
+		candidates.push(params.id);
+	}
+	for (const candidate of candidates) {
+		if (ctx.actions.has(candidate)) {
+			return candidate;
+		}
+	}
+	return candidates[0];
+}
 
 export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 	const rawParams = effect.params as ActionPerformParams | undefined;
-	let id: string | undefined;
-	if (typeof rawParams?.__actionId === 'string') {
-		id = rawParams.__actionId;
-	} else if (typeof rawParams?.actionId === 'string') {
-		id = rawParams.actionId;
-	} else if (typeof rawParams?.id === 'string') {
-		id = rawParams.id;
-	}
+	const developmentId =
+		typeof rawParams?.developmentId === 'string'
+			? rawParams.developmentId
+			: undefined;
+	const id = resolveActionId(rawParams, ctx);
 	if (!id) {
 		throw new Error('action:perform requires id');
 	}
@@ -28,6 +48,17 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 		const rest = { ...rawParams } as ActionParameters<string>;
 		delete (rest as { __actionId?: string }).__actionId;
 		delete (rest as { actionId?: string }).actionId;
+		if (developmentId) {
+			(rest as Record<string, unknown>)['developmentId'] = developmentId;
+			(rest as Record<string, unknown>)['id'] = developmentId;
+		} else if (
+			(rest as Record<string, unknown>)['id'] === undefined &&
+			typeof (rest as Record<string, unknown>)['developmentId'] === 'string'
+		) {
+			(rest as Record<string, unknown>)['id'] = (
+				rest as Record<string, unknown>
+			)['developmentId'];
+		}
 		forwarded = rest;
 	}
 	for (let i = 0; i < Math.floor(mult); i++) {

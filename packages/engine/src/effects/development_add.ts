@@ -2,7 +2,9 @@ import type { EffectHandler } from '.';
 import { applyParamsToEffects } from '../utils';
 
 export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
-	const id = effect.params?.['id'] as string;
+	const id =
+		(effect.params?.['id'] as string | undefined) ||
+		(effect.params?.['developmentId'] as string | undefined);
 	const providedLandId = effect.params?.['landId'] as string | undefined;
 	if (!id) {
 		throw new Error('development:add requires id');

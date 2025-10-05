@@ -138,7 +138,10 @@ describe('GenericActions effect group handling', () => {
 							label: 'Raise a House',
 							icon: '🏠',
 							actionId: 'develop',
-							params: { landId: '$landId', id: 'house' },
+							params: {
+								landId: '$landId',
+								developmentId: 'house',
+							},
 						},
 					],
 				},

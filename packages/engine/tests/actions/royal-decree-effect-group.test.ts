@@ -45,7 +45,7 @@ describe('royal decree action effect group', () => {
 		const group = royalDecree.effects.find(isEffectGroup)!;
 		const chosenOption = group.options[0];
 		const optionId = chosenOption.id;
-		const developmentId = String(chosenOption.params?.['id']);
+		const developmentId = String(chosenOption.params?.['developmentId']);
 		expect(developmentId).toBeTruthy();
 
 		const nextLandId = `${ctx.activePlayer.id}-L${ctx.activePlayer.lands.length + 1}`;
@@ -160,7 +160,7 @@ describe('royal decree action effect group', () => {
 			(candidate) => candidate.group.id === group.id,
 		);
 		expect(resolvedGroup?.selection?.params).toMatchObject({
-			id: developmentId,
+			developmentId,
 			landId: params.landId,
 		});
 	});

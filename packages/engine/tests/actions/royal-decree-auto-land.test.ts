@@ -45,6 +45,8 @@ describe('royal decree auto land targeting', () => {
 		expect(ctx.activePlayer.lands).toHaveLength(beforeLandCount + 1);
 		const newestLand = ctx.activePlayer.lands.at(-1);
 		expect(newestLand?.tilled).toBe(true);
-		expect(newestLand?.developments).toContain(option.params?.['id'] as string);
+		expect(newestLand?.developments).toContain(
+			option.params?.['developmentId'] as string,
+		);
 	});
 });

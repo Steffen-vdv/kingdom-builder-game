@@ -203,6 +203,12 @@ function mergeOptionParams(
 		}
 		merged[key] = value;
 	}
+	if (
+		merged['id'] === undefined &&
+		typeof merged['developmentId'] === 'string'
+	) {
+		merged['id'] = merged['developmentId'];
+	}
 	return merged;
 }
 

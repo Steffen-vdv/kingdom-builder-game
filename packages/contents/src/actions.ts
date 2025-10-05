@@ -212,7 +212,7 @@ export function createActionRegistry() {
 							.icon('🏠')
 							.action('develop')
 							.param('actionId', 'develop')
-							.param('id', 'house')
+							.param('developmentId', 'house')
 							.param('landId', '$landId'),
 					)
 					.option(
@@ -221,7 +221,7 @@ export function createActionRegistry() {
 							.icon('🌾')
 							.action('develop')
 							.param('actionId', 'develop')
-							.param('id', 'farm')
+							.param('developmentId', 'farm')
 							.param('landId', '$landId'),
 					)
 					.option(
@@ -230,7 +230,7 @@ export function createActionRegistry() {
 							.icon('🏹')
 							.action('develop')
 							.param('actionId', 'develop')
-							.param('id', 'outpost')
+							.param('developmentId', 'outpost')
 							.param('landId', '$landId'),
 					)
 					.option(
@@ -239,7 +239,7 @@ export function createActionRegistry() {
 							.icon('🗼')
 							.action('develop')
 							.param('actionId', 'develop')
-							.param('id', 'watchtower')
+							.param('developmentId', 'watchtower')
 							.param('landId', '$landId'),
 					),
 			)
