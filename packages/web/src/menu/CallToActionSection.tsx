@@ -155,8 +155,8 @@ export function CallToActionSection({
 				<div className={KNOWLEDGE_HEADER_LAYOUT_CLASS}>
 					{/* prettier-ignore */}
 					<div className={KNOWLEDGE_TITLE_CLASS}>
-                                                Learn The Basics
-                                        </div>
+						Learn The Basics
+					</div>
 					{knowledgeActions}
 				</div>
 				<p>{KNOWLEDGE_PARAGRAPH_TEXT}</p>
