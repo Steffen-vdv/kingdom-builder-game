@@ -81,6 +81,13 @@ function normalizeEntryLabel(
 			return normalizedTarget;
 		}
 	}
+	const firstSpace = trimmedLabel.indexOf(' ');
+	if (firstSpace > 0) {
+		const withoutVerb = trimmedLabel.slice(firstSpace + 1).trim();
+		if (withoutVerb.length > 0 && normalizedTarget.startsWith(withoutVerb)) {
+			return normalizedTarget;
+		}
+	}
 	return trimmedLabel;
 }
 
@@ -163,7 +170,14 @@ export function buildActionOptionTranslation(
 	}
 	const restEntries = translated.slice(1).map(cloneSummaryEntry);
 	if (typeof first === 'string') {
-		const normalizedFirst = normalizeEntryLabel(first, targetLabel);
+		let firstEntry = first;
+		if (mode === 'log') {
+			const actionPrefix = `${actionLabel} - `;
+			if (firstEntry.startsWith(actionPrefix)) {
+				firstEntry = firstEntry.slice(actionPrefix.length);
+			}
+		}
+		const normalizedFirst = normalizeEntryLabel(firstEntry, targetLabel);
 		const title = combineLabels(actionLabel, normalizedFirst, fallback);
 		const shouldIncludeFirstDetail =
 			restEntries.length > 0

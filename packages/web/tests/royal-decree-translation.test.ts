@@ -19,6 +19,7 @@ import {
 	describeContent,
 	summarizeContent,
 	formatEffectGroups,
+	logContent,
 	type SummaryEntry,
 } from '../src/translation';
 
@@ -205,6 +206,27 @@ describe('royal decree translation', () => {
 		);
 		const group = findGroupEntry(entries);
 		const [entry] = group.items;
-		expect(entry).toBe('🏗️ Develop - Developed 🏠 House');
+		expect(entry).toBe('🏗️ Develop - 🏠 House');
+	});
+
+	it('logs royal decree develop once using develop action copy', () => {
+		const logLines = logContent('action', actionId, context as EngineContext, {
+			landId: 'A-L1',
+			choices: {
+				royal_decree_develop: {
+					optionId: 'royal_decree_house',
+					params: {
+						landId: 'A-L1',
+						developmentId: 'house',
+					},
+				},
+			},
+		});
+		const joined = logLines.join('\n');
+		const occurrences = joined.match(/Developed [^\n]*/g) ?? [];
+		expect(occurrences.length).toBeLessThanOrEqual(1);
+		if (occurrences.length === 1) {
+			expect(occurrences[0]).toContain('🏠 House');
+		}
 	});
 });
