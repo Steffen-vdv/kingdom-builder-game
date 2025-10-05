@@ -14,6 +14,17 @@ export type {
 	StatSourceContribution,
 	StatSourceLink,
 } from './setup/create_engine';
+export {
+	createEngineSession,
+	type EngineSession,
+	type EngineSessionSnapshot,
+	type EngineAdvanceResult,
+	type AdvanceSkipSnapshot,
+	type AdvanceSkipSourceSnapshot,
+	type GameSnapshot,
+	type PlayerStateSnapshot,
+	type LandSnapshot,
+} from './runtime/session';
 export { getActionCosts, getActionRequirements } from './actions/costs';
 export { performAction, simulateAction } from './actions/action_execution';
 export {
@@ -30,7 +41,13 @@ export {
 	type ResolvedActionEffectStep,
 } from './actions/effect_groups';
 export { advance } from './phases/advance';
+/**
+ * @deprecated Use createEngineSession instead.
+ */
 export { EngineContext } from './context';
+/**
+ * @deprecated Use createEngineSession instead.
+ */
 export { Services, PassiveManager } from './services';
 export type { PassiveSummary } from './services';
 /**
@@ -53,6 +70,9 @@ export type { EffectDef } from '@kingdom-builder/protocol';
 export {
 	registerCoreEvaluators,
 	EvaluatorRegistry,
+	/**
+	 * @deprecated Use createEngineSession instead.
+	 */
 	EVALUATORS,
 } from './evaluators';
 export type { EvaluatorHandler } from './evaluators';
