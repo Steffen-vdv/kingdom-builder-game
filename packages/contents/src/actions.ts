@@ -254,7 +254,6 @@ export function createActionRegistry() {
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_farm')
-				.label('Establish a Farm')
 				.icon('🌾')
 				.action(ActionId.develop)
 				.paramDevelopmentId(DevelopmentId.Farm)

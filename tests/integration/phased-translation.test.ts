@@ -8,7 +8,7 @@ import {
 } from '@kingdom-builder/web/translation/content';
 // prettier-ignore
 import type {
-        PhasedDef,
+	PhasedDef,
 } from '@kingdom-builder/web/translation/content/phased';
 import {
 	TRIGGER_INFO,
@@ -21,7 +21,7 @@ import {
 import type { ResourceKey } from '@kingdom-builder/contents';
 // prettier-ignore
 import {
-        createContentFactory,
+	createContentFactory,
 } from '../../packages/engine/tests/factories/content';
 import { formatDetailText } from '../../packages/web/src/utils/stats/format';
 
