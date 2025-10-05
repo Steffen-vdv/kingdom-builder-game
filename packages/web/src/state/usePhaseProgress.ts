@@ -57,11 +57,10 @@ export function usePhaseProgress({
 	const displayPhaseRef = useRef(displayPhaseState);
 
 	const setDisplayPhase = useCallback((next: SetStateAction<string>) => {
-		setDisplayPhaseState((prev) => {
-			const resolved = typeof next === 'function' ? next(prev) : next;
-			displayPhaseRef.current = resolved;
-			return resolved;
-		});
+		const resolved =
+			typeof next === 'function' ? next(displayPhaseRef.current) : next;
+		displayPhaseRef.current = resolved;
+		setDisplayPhaseState(resolved);
 	}, []);
 
 	const displayPhase = displayPhaseState;
