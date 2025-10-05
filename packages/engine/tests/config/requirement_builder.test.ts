@@ -11,7 +11,6 @@ describe('RequirementBuilder', () => {
 				type: 'population',
 				params: { role: PopulationRole.Legion },
 			})
-			.message('War weariness must be lower than legions')
 			.build();
 
 		expect(req).toEqual({
@@ -25,7 +24,6 @@ describe('RequirementBuilder', () => {
 					params: { role: PopulationRole.Legion },
 				},
 			},
-			message: 'War weariness must be lower than legions',
 		});
 	});
 });

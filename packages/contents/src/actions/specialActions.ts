@@ -1,7 +1,7 @@
 import type { Registry } from '@kingdom-builder/protocol';
 import { Resource } from '../resources';
-import { Stat, STATS } from '../stats';
-import { PopulationRole, POPULATION_ROLES } from '../populationRoles';
+import { Stat } from '../stats';
+import { PopulationRole } from '../populationRoles';
 import {
 	action,
 	compareRequirement,
@@ -47,9 +47,6 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					.left(statEvaluator().key(Stat.warWeariness))
 					.operator('lt')
 					.right(populationEvaluator().role(PopulationRole.Legion))
-					.message(
-						`${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Legion].icon} ${POPULATION_ROLES[PopulationRole.Legion].label}`,
-					)
 					.build(),
 			)
 			.effect(
@@ -101,9 +98,6 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					.left(statEvaluator().key(Stat.warWeariness))
 					.operator('eq')
 					.right(0)
-					.message(
-						`${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be 0`,
-					)
 					.build(),
 			)
 			.effect(
