@@ -1,6 +1,10 @@
 import { PASSIVE_INFO } from '@kingdom-builder/contents';
 import { resolvePassivePresentation } from './passives';
 import type { PlayerSnapshot } from './snapshots';
+import {
+	createPassiveVisibilityContext,
+	shouldSurfacePassive,
+} from '../../passives/visibility';
 
 function createPassiveMap(passives: PlayerSnapshot['passives']) {
 	const map = new Map<string, PlayerSnapshot['passives'][number]>();
@@ -8,60 +12,6 @@ function createPassiveMap(passives: PlayerSnapshot['passives']) {
 		map.set(passive.id, passive);
 	}
 	return map;
-}
-
-function isBuildingPassive(
-	passiveId: string,
-	newBuildings: Set<string>,
-): boolean {
-	for (const buildingId of newBuildings) {
-		if (passiveId === buildingId || passiveId.startsWith(`${buildingId}_`)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-function collectDevelopmentPassiveIds(
-	lands: PlayerSnapshot['lands'],
-): Set<string> {
-	const ids = new Set<string>();
-	for (const land of lands) {
-		for (const development of land.developments) {
-			ids.add(`${development}_${land.id}`);
-		}
-	}
-	return ids;
-}
-
-function collectAddedDevelopmentPassives(
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-): Set<string> {
-	const previous = collectDevelopmentPassiveIds(before.lands);
-	const next = collectDevelopmentPassiveIds(after.lands);
-	const additions = new Set<string>();
-	for (const id of next) {
-		if (!previous.has(id)) {
-			additions.add(id);
-		}
-	}
-	return additions;
-}
-
-function collectRemovedDevelopmentPassives(
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-): Set<string> {
-	const previous = collectDevelopmentPassiveIds(before.lands);
-	const next = collectDevelopmentPassiveIds(after.lands);
-	const removals = new Set<string>();
-	for (const id of previous) {
-		if (!next.has(id)) {
-			removals.add(id);
-		}
-	}
-	return removals;
 }
 
 function decoratePassiveLabel(icon: string, label: string): string {
@@ -84,26 +34,13 @@ export function appendPassiveChanges(
 ) {
 	const previous = createPassiveMap(before.passives);
 	const next = createPassiveMap(after.passives);
-	const previousBuildings = new Set(before.buildings);
-	const newBuildings = new Set(
-		after.buildings.filter((id) => !previousBuildings.has(id)),
-	);
-	const addedDevelopmentPassives = collectAddedDevelopmentPassives(
-		before,
-		after,
-	);
-	const removedDevelopmentPassives = collectRemovedDevelopmentPassives(
-		before,
-		after,
-	);
+	const previousContext = createPassiveVisibilityContext(before);
+	const nextContext = createPassiveVisibilityContext(after);
 	for (const [id, passive] of next) {
 		if (previous.has(id)) {
 			continue;
 		}
-		if (isBuildingPassive(id, newBuildings)) {
-			continue;
-		}
-		if (addedDevelopmentPassives.has(id)) {
+		if (!shouldSurfacePassive(passive, nextContext, 'log')) {
 			continue;
 		}
 		const { icon, label } = resolvePassivePresentation(passive);
@@ -114,7 +51,7 @@ export function appendPassiveChanges(
 		if (next.has(id)) {
 			continue;
 		}
-		if (removedDevelopmentPassives.has(id)) {
+		if (!shouldSurfacePassive(passive, previousContext, 'log')) {
 			continue;
 		}
 		const { icon, label } = resolvePassivePresentation(passive);

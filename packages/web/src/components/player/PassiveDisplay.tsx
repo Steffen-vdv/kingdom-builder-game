@@ -1,11 +1,6 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import {
-	PHASES,
-	PASSIVE_INFO,
-	POPULATIONS,
-	PhaseId,
-} from '@kingdom-builder/contents';
+import { PHASES, PASSIVE_INFO, PhaseId } from '@kingdom-builder/contents';
 import { describeEffects, splitSummary } from '../../translation';
 import type {
 	EngineContext,
@@ -21,10 +16,10 @@ import {
 	buildTierEntries,
 	type TierDefinition as HappinessTierDefinition,
 } from './buildTierEntries';
-
-const POPULATION_PASSIVE_PREFIXES = new Set(
-	POPULATIONS.keys().map((id) => `${id}_`),
-);
+import {
+	createPassiveVisibilityContext,
+	filterPassivesForSurface,
+} from '../../passives/visibility';
 
 export default function PassiveDisplay({
 	player,
@@ -37,13 +32,6 @@ export default function PassiveDisplay({
 	const defs = ctx.passives.values(playerId);
 	const defMap = new Map(defs.map((def) => [def.id, def]));
 
-	const buildingIds = Array.from(player.buildings);
-	const buildingIdSet = new Set(buildingIds);
-	const buildingPrefixes = buildingIds.map((id) => `${id}_`);
-	const developmentIds = new Set(
-		player.lands.flatMap((l) => l.developments.map((d) => `${d}_${l.id}`)),
-	);
-
 	const tierDefinitions = ctx.services.rules.tierDefinitions;
 	const tierByPassiveId = tierDefinitions.reduce<
 		Map<string, HappinessTierDefinition>
@@ -54,8 +42,14 @@ export default function PassiveDisplay({
 		}
 		return map;
 	}, new Map());
+	const visibilityContext = createPassiveVisibilityContext(player);
+	const visibleSummaries = filterPassivesForSurface(
+		summaries,
+		visibilityContext,
+		'player-panel',
+	);
 
-	const entries = summaries
+	const entries = visibleSummaries
 		.map((summary) => ({ summary, def: defMap.get(summary.id) }))
 		.filter(
 			(
@@ -63,27 +57,7 @@ export default function PassiveDisplay({
 			): entry is {
 				summary: PassiveSummary;
 				def: ReturnType<EngineContext['passives']['values']>[number];
-			} => {
-				const { summary, def } = entry;
-				if (!def) {
-					return false;
-				}
-				if (buildingIdSet.has(summary.id)) {
-					return false;
-				}
-				if (developmentIds.has(summary.id)) {
-					return false;
-				}
-				if (buildingPrefixes.some((prefix) => summary.id.startsWith(prefix))) {
-					return false;
-				}
-				for (const prefix of POPULATION_PASSIVE_PREFIXES) {
-					if (summary.id.startsWith(prefix)) {
-						return false;
-					}
-				}
-				return true;
-			},
+			} => entry.def !== undefined,
 		);
 	if (entries.length === 0) {
 		return null;
