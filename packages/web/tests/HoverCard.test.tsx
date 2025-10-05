@@ -183,7 +183,10 @@ describe('<HoverCard />', () => {
 			name: 'Continue',
 		});
 		expect(continueButton).toBeDisabled();
-		expect(screen.getByText('First reveal')).toBeInTheDocument();
+		const resolutionSteps =
+			screen.getByText('Resolution steps').nextElementSibling;
+		expect(resolutionSteps).not.toBeNull();
+		expect(resolutionSteps?.textContent ?? '').toContain('First reveal');
 		expect(screen.queryByText('Second reveal')).not.toBeInTheDocument();
 		act(() => {
 			vi.advanceTimersByTime(ACTION_EFFECT_DELAY - 1);

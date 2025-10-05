@@ -50,6 +50,7 @@ describe('<PassiveDisplay />', () => {
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
 
 		const { mockGame, handleHoverCard } = createPassiveGame(ctx);
+		const { translationContext } = mockGame;
 		currentGame = mockGame;
 
 		render(<PassiveDisplay player={ctx.activePlayer} />);
