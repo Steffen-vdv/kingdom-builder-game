@@ -26,7 +26,8 @@
 		"test:ci": "npm run test:coverage",
 		"format": "prettier . --write",
 		"prepare": "husky install",
-		"lint:deps": "dependency-cruiser packages/engine packages/contents packages/web --config scripts/dependency-cruiser.cjs --output-type text"
+		"lint:deps": "dependency-cruiser packages/engine packages/contents packages/web --config scripts/dependency-cruiser.cjs --output-type text",
+		"verify": "node scripts/run-verification.mjs"
 	},
 	"dependencies": {
 		"react": "^18.3.1",

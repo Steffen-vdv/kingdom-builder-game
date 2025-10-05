@@ -7,3 +7,4 @@ coverage
 .vscode
 tsconfig.tsbuildinfo
 .idea
+artifacts/
