@@ -2,42 +2,44 @@ import type { EffectHandler } from '.';
 import type { StatKey } from '../state';
 import { recordEffectStatDelta } from '../stat_sources';
 
-export const statAddPct: EffectHandler = (effect, ctx, mult = 1) => {
+export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
 	const key = effect.params!['key'] as StatKey;
-	let pct = effect.params!['percent'] as number | undefined;
-	if (pct === undefined) {
+	let percent = effect.params!['percent'] as number | undefined;
+	if (percent === undefined) {
 		const statKey = effect.params!['percentStat'] as StatKey;
-		const statVal = ctx.activePlayer.stats[statKey] || 0;
-		pct = statVal;
+		const statValue = context.activePlayer.stats[statKey] || 0;
+		percent = statValue;
 	}
 
 	// Use a cache keyed by turn/phase/step so multiple evaluations in the
 	// same step (e.g. multiple legions) scale additively from the
 	// original stat value rather than compounding.
-	const cacheKey = `${ctx.game.turn}:${ctx.game.currentPhase}:${ctx.game.currentStep}:${key}`;
-	if (!(cacheKey in ctx.statAddPctBases)) {
-		ctx.statAddPctBases[cacheKey] = ctx.activePlayer.stats[key] || 0;
-		ctx.statAddPctAccums[cacheKey] = 0;
+	const cacheKey =
+		`${context.game.turn}:${context.game.currentPhase}:` +
+		`${context.game.currentStep}:${key}`;
+	if (!(cacheKey in context.statAddPctBases)) {
+		context.statAddPctBases[cacheKey] = context.activePlayer.stats[key] || 0;
+		context.statAddPctAccums[cacheKey] = 0;
 	}
 
-	const base = ctx.statAddPctBases[cacheKey]!;
-	const before = ctx.activePlayer.stats[key] || 0;
-	ctx.statAddPctAccums[cacheKey]! += base * pct * mult;
-	let newVal = base + ctx.statAddPctAccums[cacheKey]!;
+	const base = context.statAddPctBases[cacheKey]!;
+	const before = context.activePlayer.stats[key] || 0;
+	context.statAddPctAccums[cacheKey]! += base * percent * multiplier;
+	let newValue = base + context.statAddPctAccums[cacheKey]!;
 	if (effect.round === 'up') {
-		newVal = newVal >= 0 ? Math.ceil(newVal) : Math.floor(newVal);
+		newValue = newValue >= 0 ? Math.ceil(newValue) : Math.floor(newValue);
 	} else if (effect.round === 'down') {
-		newVal = newVal >= 0 ? Math.floor(newVal) : Math.ceil(newVal);
+		newValue = newValue >= 0 ? Math.floor(newValue) : Math.ceil(newValue);
 	}
-	if (newVal < 0) {
-		newVal = 0;
+	if (newValue < 0) {
+		newValue = 0;
 	}
-	ctx.activePlayer.stats[key] = newVal;
-	if (newVal !== 0) {
-		ctx.activePlayer.statsHistory[key] = true;
+	context.activePlayer.stats[key] = newValue;
+	if (newValue !== 0) {
+		context.activePlayer.statsHistory[key] = true;
 	}
-	const delta = newVal - before;
+	const delta = newValue - before;
 	if (delta !== 0) {
-		recordEffectStatDelta(effect, ctx, key, delta);
+		recordEffectStatDelta(effect, context, key, delta);
 	}
 };
