@@ -24,6 +24,7 @@ function GameLayout() {
 	} = useGameEngine();
 	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
+	const [isLogOpen, setLogOpen] = useState(false);
 	const requestQuit = useCallback(() => {
 		if (!onExit) {
 			return;
@@ -32,6 +33,12 @@ function GameLayout() {
 	}, [onExit]);
 	const closeDialog = useCallback(() => {
 		setQuitDialogOpen(false);
+	}, []);
+	const toggleLog = useCallback(() => {
+		setLogOpen((prev) => !prev);
+	}, []);
+	const closeLog = useCallback(() => {
+		setLogOpen(false);
 	}, []);
 	const confirmExit = useCallback(() => {
 		if (!onExit) {
@@ -118,6 +125,19 @@ function GameLayout() {
 			<PhasePanel height={phasePanelHeight} />
 		</div>
 	);
+
+	const logButton = (
+		<Button
+			onClick={toggleLog}
+			variant="secondary"
+			icon="📜"
+			aria-pressed={isLogOpen}
+			aria-expanded={isLogOpen}
+			aria-controls="game-log-panel"
+		>
+			Log
+		</Button>
+	);
 	const settingsButton = (
 		<Button onClick={() => setSettingsOpen(true)} variant="secondary" icon="⚙️">
 			Settings
@@ -164,6 +184,7 @@ function GameLayout() {
 					</h1>
 					{onExit && (
 						<div className="ml-4 flex items-center gap-3">
+							{logButton}
 							<TimeControl />
 							{settingsButton}
 							{quitButton}
@@ -184,11 +205,11 @@ function GameLayout() {
 					<div className="lg:col-start-1 lg:row-start-2">
 						<ActionsPanel />
 					</div>
-					<div className="flex w-full flex-col gap-6 lg:col-start-2 lg:row-start-2">
-						<LogPanel />
+					<div className="lg:col-start-2 lg:row-start-2">
 						<HoverCard />
 					</div>
 				</div>
+				<LogPanel isOpen={isLogOpen} onClose={closeLog} />
 			</div>
 		</div>
 	);
