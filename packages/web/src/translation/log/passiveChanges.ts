@@ -3,7 +3,11 @@ import { resolvePassivePresentation } from './passives';
 import type { PlayerSnapshot } from './snapshots';
 
 function createPassiveMap(passives: PlayerSnapshot['passives']) {
-	return new Map(passives.map((passive) => [passive.id, passive]));
+	const map = new Map<string, PlayerSnapshot['passives'][number]>();
+	for (const passive of passives) {
+		map.set(passive.id, passive);
+	}
+	return map;
 }
 
 function isBuildingPassive(
