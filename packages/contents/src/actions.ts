@@ -1,4 +1,4 @@
-import { Registry } from '@kingdom-builder/engine/registry';
+import { Registry } from '@kingdom-builder/protocol';
 import { Resource } from './resources';
 import { Stat, STATS } from './stats';
 import { PopulationRole, POPULATION_ROLES } from './populationRoles';

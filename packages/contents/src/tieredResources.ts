@@ -1,4 +1,4 @@
-import type { RuleSet } from '@kingdom-builder/engine/services';
+import type { RuleSet } from '@kingdom-builder/protocol';
 import type { ResourceKey } from './resources';
 import { RULES } from './rules';
 
