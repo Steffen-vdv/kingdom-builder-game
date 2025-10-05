@@ -40,6 +40,10 @@ type DevelopmentIdParam =
 	| DevelopmentId
 	| (string & { __developmentIdParam?: never });
 
+export function populationAssignmentPassiveId(role: PopulationRoleId) {
+	return `${role}_$player_$index`;
+}
+
 function resolveEffectConfig(effect: EffectConfig | EffectBuilder) {
 	return effect instanceof EffectBuilder ? effect.build() : effect;
 }
