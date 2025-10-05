@@ -90,15 +90,20 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const hoverCard = handleHoverCard.mock.calls.at(-1)?.[0];
 		expect(hoverCard).toBeTruthy();
 		expect(hoverCard?.title).toBe(`${resourceInfo.icon} ${resourceInfo.label}`);
-		expect(hoverCard?.description).toEqual([`Current value: ${resourceValue}`]);
+		expect(hoverCard?.description).toBeUndefined();
+		expect(hoverCard?.effectsTitle).toBe(
+			`Thresholds (Current value: ${resourceValue})`,
+		);
 		const tierEntries = hoverCard?.effects ?? [];
 		expect(tierEntries).toHaveLength(ctx.services.rules.tierDefinitions.length);
-		const activeEntry = tierEntries.find(
-			(entry: unknown) =>
-				typeof entry !== 'string' &&
-				Boolean((entry as { title?: string }).title?.includes('🟢')),
-		) as { items: unknown[] } | undefined;
-		expect(activeEntry).toBeTruthy();
+		const activeEntries = tierEntries.filter((entry: unknown) => {
+			if (typeof entry === 'string') {
+				return false;
+			}
+			const className = (entry as { className?: string }).className;
+			return className?.includes('text-emerald-600');
+		});
+		expect(activeEntries).toHaveLength(1);
 		const tiers = ctx.services.rules.tierDefinitions;
 		const getRangeStart = (tier: TierDefinition) =>
 			tier.range.min ?? Number.NEGATIVE_INFINITY;

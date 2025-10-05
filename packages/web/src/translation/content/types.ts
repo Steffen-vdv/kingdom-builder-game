@@ -13,6 +13,7 @@ export interface SummaryGroup {
 	items: SummaryEntry[];
 	_desc?: true;
 	_hoist?: true;
+	className?: string;
 	[key: string]: unknown;
 }
 

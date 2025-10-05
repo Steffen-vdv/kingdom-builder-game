@@ -15,6 +15,28 @@ import { happinessTier, passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { formatPassiveRemoval } from './text';
 
+const HAPPINESS_TIER_ICONS = {
+	despair: '😡',
+	misery: '😠',
+	grim: '😟',
+	unrest: '🙁',
+	steady: '😐',
+	content: '🙂',
+	joyful: '😊',
+	elated: '😄',
+	ecstatic: '🤩',
+} as const;
+
+type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
+
+function formatTierName(slug: HappinessTierSlug) {
+	return slug
+		.split(/[-_]/g)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(' ');
+}
+
 const happinessSummaryToken = (slug: string) =>
 	`happiness.tier.summary.${slug}`;
 
@@ -24,6 +46,7 @@ const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:despair',
 		passiveId: 'passive:happiness:despair',
+		slug: 'despair',
 		range: { min: -10 },
 		incomeMultiplier: 0.5,
 		disableGrowth: true,
@@ -41,6 +64,7 @@ const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:misery',
 		passiveId: 'passive:happiness:misery',
+		slug: 'misery',
 		range: { min: -9, max: -8 },
 		incomeMultiplier: 0.5,
 		disableGrowth: true,
@@ -56,6 +80,7 @@ const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:grim',
 		passiveId: 'passive:happiness:grim',
+		slug: 'grim',
 		range: { min: -7, max: -5 },
 		incomeMultiplier: 0.75,
 		disableGrowth: true,
@@ -71,6 +96,7 @@ const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:unrest',
 		passiveId: 'passive:happiness:unrest',
+		slug: 'unrest',
 		range: { min: -4, max: -3 },
 		incomeMultiplier: 0.75,
 		summaryToken: happinessSummaryToken('unrest'),
@@ -80,6 +106,7 @@ const TIER_CONFIGS = [
 	},
 	{
 		id: 'happiness:tier:steady',
+		slug: 'steady',
 		range: { min: -2, max: 2 },
 		incomeMultiplier: 1,
 		summaryToken: happinessSummaryToken('steady'),
@@ -89,6 +116,7 @@ const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:content',
 		passiveId: 'passive:happiness:content',
+		slug: 'content',
 		range: { min: 3, max: 4 },
 		incomeMultiplier: 1.25,
 		summaryToken: happinessSummaryToken('content'),
@@ -99,6 +127,7 @@ const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:joyful',
 		passiveId: 'passive:happiness:joyful',
+		slug: 'joyful',
 		range: { min: 5, max: 7 },
 		incomeMultiplier: 1.25,
 		buildingDiscountPct: 0.2,
@@ -116,6 +145,7 @@ const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:elated',
 		passiveId: 'passive:happiness:elated',
+		slug: 'elated',
 		range: { min: 8, max: 9 },
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
@@ -133,6 +163,7 @@ const TIER_CONFIGS = [
 	{
 		id: 'happiness:tier:ecstatic',
 		passiveId: 'passive:happiness:ecstatic',
+		slug: 'ecstatic',
 		range: { min: 10 },
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
@@ -156,6 +187,8 @@ type TierConfig = (typeof TIER_CONFIGS)[number] & {
 };
 
 function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
+	const icon = HAPPINESS_TIER_ICONS[config.slug as HappinessTierSlug];
+	const name = formatTierName(config.slug as HappinessTierSlug);
 	const builder = happinessTier(config.id)
 		.range(config.range.min, config.range.max)
 		.incomeMultiplier(config.incomeMultiplier)
@@ -167,7 +200,8 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 		.display((display) =>
 			display
 				.summaryToken(config.summaryToken)
-				.removalCondition(config.removal),
+				.removalCondition(config.removal)
+				.icon(icon),
 		);
 	if (config.passiveId) {
 		const params = passiveParams().id(config.passiveId);
@@ -182,6 +216,8 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 			removalDetail: config.removal,
 			params,
 			...(config.effects ? { effects: config.effects } : {}),
+			icon,
+			name,
 		});
 		builder.passive(passive);
 	}

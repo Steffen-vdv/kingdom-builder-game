@@ -19,9 +19,9 @@ export function renderSummary(summary: Summary | undefined): React.ReactNode {
 			);
 		}
 		return (
-			<li key={i}>
+			<li key={i} className={e.className}>
 				<span className="font-semibold">{e.title}</span>
-				<ul className="pl-4 space-y-1">{renderSummary(e.items)}</ul>
+				<ul className="pl-4 space-y-1 list-disc">{renderSummary(e.items)}</ul>
 			</li>
 		);
 	});

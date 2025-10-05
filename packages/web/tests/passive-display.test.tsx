@@ -18,6 +18,7 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import { resolvePassivePresentation } from '../src/translation/log/passives';
+import { buildTierEntries } from '../src/components/player/buildTierEntries';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -73,15 +74,20 @@ describe('<PassiveDisplay />', () => {
 		expect(document.body).not.toHaveTextContent(presentation.removal ?? '');
 		fireEvent.mouseEnter(hoverTarget!);
 		expect(handleHoverCard).toHaveBeenCalled();
-		const [{ description }] = handleHoverCard.mock.calls.at(-1) ?? [{}];
-		const descriptionEntries = Array.isArray(description)
-			? (description as string[])
-			: [];
-		expect(descriptionEntries.length).toBeGreaterThan(0);
-		if (presentation.summary) {
-			expect(descriptionEntries).toContain(presentation.summary);
+		const [hoverCard] = handleHoverCard.mock.calls.at(-1) ?? [{}];
+		expect(hoverCard?.description).toBeUndefined();
+		const tierDefinition = ctx.services.rules.tierDefinitions.find(
+			(tier) => tier.preview?.id === summary?.id,
+		);
+		expect(tierDefinition).toBeDefined();
+		if (tierDefinition) {
+			const { entries } = buildTierEntries(
+				[tierDefinition],
+				tierDefinition.id,
+				ctx,
+			);
+			expect(hoverCard?.effects).toEqual(entries);
 		}
-		expect(descriptionEntries).toContain(presentation.removal!);
 	});
 
 	it('uses shared passive removal formatter for UI and logs', () => {
@@ -120,10 +126,7 @@ describe('<PassiveDisplay />', () => {
 		expect(handleHoverCard).toHaveBeenCalled();
 		const lastCall = handleHoverCard.mock.calls.at(-1);
 		expect(lastCall).toBeDefined();
-		const descriptionEntries = Array.isArray(lastCall?.[0]?.description)
-			? (lastCall?.[0]?.description as string[])
-			: [];
-		expect(descriptionEntries).toContain(presentation.removal!);
+		expect(lastCall?.[0]?.description).toBeUndefined();
 		const removalToken = summary?.meta?.removal?.token;
 		if (removalToken) {
 			expect(presentation.removal).toBe(formatPassiveRemoval(removalToken));

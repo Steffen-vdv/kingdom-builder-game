@@ -12,6 +12,10 @@ import {
 	resolvePassivePresentation,
 	type PassiveDefinitionLike,
 } from '../../translation/log/passives';
+import {
+	buildTierEntries,
+	type TierDefinition as HappinessTierDefinition,
+} from './buildTierEntries';
 
 const POPULATION_PASSIVE_PREFIXES = new Set(
 	POPULATIONS.keys().map((id) => `${id}_`),
@@ -34,6 +38,17 @@ export default function PassiveDisplay({
 	const developmentIds = new Set(
 		player.lands.flatMap((l) => l.developments.map((d) => `${d}_${l.id}`)),
 	);
+
+	const tierDefinitions = ctx.services.rules.tierDefinitions;
+	const tierByPassiveId = tierDefinitions.reduce<
+		Map<string, HappinessTierDefinition>
+	>((map, tier) => {
+		const passiveId = tier.preview?.id;
+		if (passiveId) {
+			map.set(passiveId, tier);
+		}
+		return map;
+	}, new Map());
 
 	const entries = summaries
 		.map((summary) => ({ summary, def: defMap.get(summary.id) }))
@@ -93,7 +108,13 @@ export default function PassiveDisplay({
 				const label = presentation.label;
 				const removalText = presentation.removal;
 				const summaryText = presentation.summary;
-				const items = describeEffects(def.effects || [], ctx);
+				const tierDefinition = tierByPassiveId.get(passive.id);
+				const tierSections = tierDefinition
+					? buildTierEntries([tierDefinition], tierDefinition.id, ctx).entries
+					: undefined;
+				const items = tierSections
+					? tierSections
+					: describeEffects(def.effects || [], ctx);
 				const upkeepLabel =
 					PHASES.find((phase) => phase.id === 'upkeep')?.label || 'Upkeep';
 				const sections = def.onUpkeepPhase
@@ -106,13 +127,15 @@ export default function PassiveDisplay({
 						className="hoverable cursor-help rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm transition hover:border-blue-400/70 hover:bg-white/80 dark:border-white/10 dark:bg-slate-900/50 dark:hover:border-blue-300/60 dark:hover:bg-slate-900/70"
 						onMouseEnter={() => {
 							const { effects, description } = splitSummary(sections);
-							const descriptionEntries = [...(description ?? [])] as ReturnType<
-								typeof splitSummary
-							>['effects'];
-							if (summaryText) {
+							const descriptionEntries = tierDefinition
+								? []
+								: ([...(description ?? [])] as ReturnType<
+										typeof splitSummary
+									>['effects']);
+							if (!tierDefinition && summaryText) {
 								descriptionEntries.unshift(summaryText);
 							}
-							if (removalText) {
+							if (!tierDefinition && removalText) {
 								descriptionEntries.push(removalText);
 							}
 							handleHoverCard({
