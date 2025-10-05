@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '../factories/content';
 
@@ -27,7 +27,7 @@ describe('development:add effect', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		const land = ctx.activePlayer.lands.find((l) => l.slotsUsed < l.slotsMax)!;
@@ -60,7 +60,7 @@ describe('development:add effect', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		expect(() => performAction(action.id, ctx)).toThrow(
@@ -81,7 +81,7 @@ describe('development:add effect', () => {
 			],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		const land = ctx.activePlayer.lands[0];

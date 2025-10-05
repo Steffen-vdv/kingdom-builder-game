@@ -7,10 +7,14 @@ import {
 	RESOURCES,
 	STATS,
 	PHASES,
+	PhaseId,
+	PhaseTrigger,
 	Resource,
 	Stat,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '../../../engine/tests/factories/content';
+
+const ON_UPKEEP_PHASE = PhaseTrigger.OnUpkeepPhase;
 
 export interface SyntheticFestivalScenario {
 	ctx: ReturnType<typeof createEngine>;
@@ -107,7 +111,7 @@ export const createSyntheticFestivalScenario =
 					{
 						id: 'step:synthetic:rest',
 						title: 'Recover',
-						triggers: ['onUpkeepPhase'],
+						triggers: [ON_UPKEEP_PHASE],
 					},
 				],
 			},
@@ -196,15 +200,17 @@ export const getSyntheticFestivalDetails = (
 	const armyAttack = ctx.actions.get(attackActionId)!;
 	const upkeepPhase =
 		ctx.phases.find((phase) =>
-			phase.steps.some((step) => step.triggers?.includes('onUpkeepPhase')),
+			phase.steps.some((step) => step.triggers?.includes(ON_UPKEEP_PHASE)),
 		) ??
 		PHASES.find((phaseDefinition) =>
 			phaseDefinition.steps.some((step) =>
-				step.triggers?.includes('onUpkeepPhase'),
+				step.triggers?.includes(ON_UPKEEP_PHASE),
 			),
 		) ??
-		ctx.phases.find((phaseDefinition) => phaseDefinition.id === 'upkeep') ??
-		PHASES.find((phaseDefinition) => phaseDefinition.id === 'upkeep');
+		ctx.phases.find(
+			(phaseDefinition) => phaseDefinition.id === PhaseId.Upkeep,
+		) ??
+		PHASES.find((phaseDefinition) => phaseDefinition.id === PhaseId.Upkeep);
 	const upkeepLabel = upkeepPhase?.label || 'Upkeep';
 	const upkeepIcon = upkeepPhase?.icon;
 

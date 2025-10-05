@@ -28,6 +28,10 @@ import type { PopulationRoleId } from '../populationRoles';
 import type { DevelopmentId } from '../developments';
 import type { TriggerKey } from '../defs';
 import type { ActionId } from '../actions';
+import type {
+	PhaseId as PhaseIdentifier,
+	PhaseStepId as PhaseStepIdentifier,
+} from '../phases';
 import {
 	Types,
 	PassiveMethods,
@@ -565,17 +569,17 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 		this.params.skip = this.params.skip || ({} as PhaseSkipConfig);
 		return this.params.skip;
 	}
-	skipPhase(phaseId: string) {
+	skipPhase(phaseId: PhaseIdentifier) {
 		const skip = this.ensureSkip();
 		skip.phases = skip.phases || [];
 		skip.phases.push(phaseId);
 		return this;
 	}
-	skipPhases(...phaseIds: string[]) {
+	skipPhases(...phaseIds: PhaseIdentifier[]) {
 		phaseIds.forEach((id) => this.skipPhase(id));
 		return this;
 	}
-	skipStep(phaseId: string, stepId: string) {
+	skipStep(phaseId: PhaseIdentifier, stepId: PhaseStepIdentifier) {
 		if (!phaseId || !stepId) {
 			throw new Error(
 				'Passive params skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
@@ -1997,7 +2001,7 @@ class StatBuilder extends InfoBuilder<StatInfo> {
 }
 
 export interface StepDef {
-	id: string;
+	id: PhaseStepIdentifier;
 	title?: string;
 	triggers?: TriggerKey[];
 	effects?: EffectDef[];
@@ -2006,7 +2010,7 @@ export interface StepDef {
 
 class StepBuilder {
 	private config: StepDef;
-	constructor(id: string) {
+	constructor(id: PhaseStepIdentifier) {
 		this.config = { id };
 	}
 	title(title: string) {
@@ -2038,7 +2042,7 @@ class StepBuilder {
 }
 
 export interface PhaseDef {
-	id: string;
+	id: PhaseIdentifier;
 	steps: StepDef[];
 	action?: boolean;
 	label: string;
@@ -2047,7 +2051,7 @@ export interface PhaseDef {
 
 class PhaseBuilder {
 	private config: PhaseDef;
-	constructor(id: string) {
+	constructor(id: PhaseIdentifier) {
 		this.config = { id, steps: [], label: '' };
 	}
 	label(label: string) {
@@ -2421,9 +2425,9 @@ export function stat(key: StatKey) {
 export function populationRole(key: PopulationRoleId) {
 	return new PopulationRoleBuilder(key);
 }
-export function phase(id: string) {
+export function phase(id: PhaseIdentifier) {
 	return new PhaseBuilder(id);
 }
-export function step(id: string) {
+export function step(id: PhaseStepIdentifier) {
 	return new StepBuilder(id);
 }

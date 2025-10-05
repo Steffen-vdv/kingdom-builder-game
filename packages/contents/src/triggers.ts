@@ -1,4 +1,4 @@
-import { PHASES } from './phases';
+import { PHASES, PhaseId } from './phases';
 
 const phaseTriggers = Object.fromEntries(
 	PHASES.map((phaseDefinition) => {
@@ -49,12 +49,12 @@ export const TRIGGER_INFO = {
 	},
 	mainPhase: {
 		icon:
-			PHASES.find((phaseDefinition) => phaseDefinition.id === 'main')?.icon ||
-			'🎯',
+			PHASES.find((phaseDefinition) => phaseDefinition.id === PhaseId.Main)
+				?.icon || '🎯',
 		future: '',
 		past: `${
-			PHASES.find((phaseDefinition) => phaseDefinition.id === 'main')?.label ||
-			'Main'
+			PHASES.find((phaseDefinition) => phaseDefinition.id === PhaseId.Main)
+				?.label || 'Main'
 		} phase`,
 	},
 	...phaseTriggers,

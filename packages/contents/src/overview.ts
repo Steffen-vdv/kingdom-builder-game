@@ -1,4 +1,5 @@
 import { ActionId } from './actions';
+import { PhaseId } from './phases';
 
 export type OverviewTokenCategoryName =
 	| 'actions'
@@ -74,9 +75,9 @@ const DEFAULT_TOKENS: OverviewTokenCandidates = {
 		[ActionId.army_attack]: [ActionId.army_attack],
 	},
 	phases: {
-		growth: ['growth'],
-		upkeep: ['upkeep'],
-		main: ['main'],
+		[PhaseId.Growth]: [PhaseId.Growth],
+		[PhaseId.Upkeep]: [PhaseId.Upkeep],
+		[PhaseId.Main]: [PhaseId.Main],
 	},
 	resources: {
 		gold: ['gold'],
@@ -117,12 +118,12 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 	{
 		kind: 'list',
 		id: 'turn-flow',
-		icon: 'growth',
+		icon: PhaseId.Growth,
 		title: 'Turn Flow',
 		span: true,
 		items: [
 			{
-				icon: 'growth',
+				icon: PhaseId.Growth,
 				label: 'Growth',
 				body: [
 					'Kickstarts your engine with income and {armyStrength} Army strength.',
@@ -130,14 +131,14 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 				],
 			},
 			{
-				icon: 'upkeep',
+				icon: PhaseId.Upkeep,
 				label: 'Upkeep',
 				body: [
 					'Settles wages, ongoing effects, and any debts your realm has racked up.',
 				],
 			},
 			{
-				icon: 'main',
+				icon: PhaseId.Main,
 				label: 'Main Phase',
 				body: [
 					'Both players secretly queue actions.',

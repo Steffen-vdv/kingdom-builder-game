@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '../factories/content';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('action:remove effect', () => {
 	it('removes an action', () => {
@@ -12,7 +12,7 @@ describe('action:remove effect', () => {
 			effects: [{ type: 'action', method: 'remove', params: { id: extra.id } }],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		ctx.activePlayer.actions.add(extra.id);
