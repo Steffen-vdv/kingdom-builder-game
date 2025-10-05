@@ -118,9 +118,9 @@ export function useAppNavigation(): AppNavigationState {
 		const historyState = history.state as HistoryState | null;
 		// prettier-ignore
 		const nextState = applyHistoryState(
-                historyState,
-                initialScreenFromPath,
-        );
+			historyState,
+			initialScreenFromPath,
+		);
 		const targetPath = SCREEN_PATHS[nextState.screen];
 		replaceHistoryState(nextState, targetPath);
 	}, [applyHistoryState, replaceHistoryState]);
