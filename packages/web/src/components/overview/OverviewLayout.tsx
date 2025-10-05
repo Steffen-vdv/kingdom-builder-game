@@ -170,8 +170,8 @@ export function ListSection({ icon, title, items, span }: ListSectionProps) {
 							{item.icon ? <span>{item.icon}</span> : null}
 							{/* prettier-ignore */}
 							<span className={SECTION_EMPHASIS_CLASS}>
-                                                                {item.label}
-                                                        </span>
+								{item.label}
+							</span>
 						</div>
 						{item.body.map((content, bodyIndex) => (
 							<p key={bodyIndex} className={LIST_TEXT_CLASS}>
