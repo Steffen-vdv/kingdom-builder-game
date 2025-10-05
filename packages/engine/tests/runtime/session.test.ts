@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createEngineSession, type EngineSession } from '../../src/index.ts';
 import {
 	ACTIONS,
+	ActionId,
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
@@ -190,5 +191,66 @@ describe('EngineSession', () => {
 		clonedInner.set('mod:other', () => ({ percent: 0 }));
 		expect(originalInner.has('mod:other')).toBe(false);
 		expect(originalInner.get('mod:test')).toBe(modifier);
+	});
+
+	it('runs AI controllers through the session facade', async () => {
+		const session = createTestSession();
+		const context = session.getLegacyContext();
+		const mainIndex = BASE.phases.findIndex(
+			(phase) => phase.id === PhaseId.Main,
+		);
+		if (mainIndex === -1) {
+			throw new Error('Missing main phase definition');
+		}
+		const playerB = context.game.players[1]!;
+		const apKey = context.actionCostResource;
+		playerB.actions.add(ActionId.tax);
+		playerB.resources[apKey] = 3;
+		context.game.currentPlayerIndex = 1;
+		context.game.phaseIndex = mainIndex;
+		context.game.currentPhase = BASE.phases[mainIndex]!.id;
+		context.game.stepIndex = 0;
+		context.game.currentStep = BASE.phases[mainIndex]!.steps[0]?.id ?? '';
+		const ran = await session.runAiTurn(playerB.id);
+		expect(ran).toBe(true);
+		expect(playerB.resources[apKey]).toBe(0);
+		const noController = await session.runAiTurn('A');
+		expect(noController).toBe(false);
+	});
+
+	it('simulates upcoming phases with cloned results', () => {
+		const session = createTestSession();
+		const simulation = session.simulateUpcomingPhases('A');
+		expect(simulation.steps.length).toBeGreaterThan(0);
+		const firstStep = simulation.steps[0];
+		if (firstStep) {
+			firstStep.phase = 'mutated-phase';
+		}
+		simulation.delta.resources['__test'] = 999;
+		simulation.before.resources['__test-before'] = 1;
+		const refreshed = session.simulateUpcomingPhases('A');
+		if (refreshed.steps[0]) {
+			expect(refreshed.steps[0]!.phase).not.toBe('mutated-phase');
+		}
+		expect(refreshed.delta.resources.__test).toBeUndefined();
+		expect(refreshed.before.resources['__test-before']).toBeUndefined();
+	});
+
+	it('returns cloned rule snapshots', () => {
+		const session = createTestSession();
+		const snapshot = session.getRuleSnapshot();
+		const next = session.getRuleSnapshot();
+		expect(next.tierDefinitions).not.toBe(snapshot.tierDefinitions);
+		const [firstTier] = snapshot.tierDefinitions;
+		if (firstTier) {
+			const originalMin = firstTier.range.min;
+			firstTier.range.min = 999;
+			const refreshed = session.getRuleSnapshot();
+			expect(refreshed.tierDefinitions[0]!.range.min).toBe(originalMin);
+		}
+		const context = session.getLegacyContext();
+		expect(snapshot.tieredResourceKey).toBe(
+			context.services.rules.tieredResourceKey,
+		);
 	});
 });
