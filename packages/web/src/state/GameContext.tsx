@@ -34,6 +34,7 @@ import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
+import { initializeDeveloperMode } from './developerModeSetup';
 import type { GameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 
@@ -87,6 +88,9 @@ export function GameProvider({
 		});
 		created.setDevMode(devMode);
 		const legacyContext = created.getLegacyContext();
+		if (devMode) {
+			initializeDeveloperMode(legacyContext);
+		}
 		const [primary] = legacyContext.game.players;
 		if (primary) {
 			primary.name = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
