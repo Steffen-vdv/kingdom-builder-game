@@ -145,6 +145,17 @@ describe('<HoverCard />', () => {
 		expect(screen.getByText(requirements[0]!)).toBeInTheDocument();
 	});
 
+	it('omits the Free label when hover data has no costs', () => {
+		mockGame.hoverCard = {
+			title: 'Population',
+			effects: [],
+			requirements: [],
+			description: 'Details about population.',
+		};
+		render(<HoverCard />);
+		expect(screen.queryByText('Free')).not.toBeInTheDocument();
+	});
+
 	it('disables acknowledgement until the final resolution step', async () => {
 		vi.useFakeTimers();
 		const ResolutionHarness = () => {
