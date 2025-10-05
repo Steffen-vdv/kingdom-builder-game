@@ -22,6 +22,7 @@ import type {
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
 import { createContentFactory } from '../factories/content.ts';
+import type { EvaluationModifier } from '../../src/services/passive_types.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -152,5 +153,42 @@ describe('EngineSession', () => {
 		}
 		const refreshed = session.getActionOptions(actionId);
 		expect(refreshed[0]?.options[0]?.id).toBe(originalOptionId);
+	});
+
+	it('clones effect log entries when pulled from the session', () => {
+		const session = createTestSession();
+		const context = session.getLegacyContext();
+		const entry = { detail: { amount: 7 } };
+		context.pushEffectLog('test:log', entry);
+		const pulled = session.pullEffectLog<typeof entry>('test:log');
+		expect(pulled).not.toBe(entry);
+		expect(pulled).toEqual(entry);
+		if (pulled) {
+			pulled.detail.amount = 99;
+		}
+		expect(entry.detail.amount).toBe(7);
+	});
+
+	it('returns cloned passive evaluation modifier maps', () => {
+		const session = createTestSession();
+		const context = session.getLegacyContext();
+		const modifier: EvaluationModifier = () => ({ percent: 0.5 });
+		context.passives.registerEvaluationModifier(
+			'mod:test',
+			'test:target',
+			modifier,
+		);
+		const mods = session.getPassiveEvaluationMods();
+		const original = context.passives.evaluationMods;
+		expect(mods).not.toBe(original);
+		const clonedInner = mods.get('test:target');
+		const originalInner = original.get('test:target');
+		expect(clonedInner).not.toBe(originalInner);
+		if (!clonedInner || !originalInner) {
+			throw new Error('Missing modifier buckets');
+		}
+		clonedInner.set('mod:other', () => ({ percent: 0 }));
+		expect(originalInner.has('mod:other')).toBe(false);
+		expect(originalInner.get('mod:test')).toBe(modifier);
 	});
 });

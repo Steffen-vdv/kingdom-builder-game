@@ -24,6 +24,8 @@ export {
 	type GameSnapshot,
 	type PlayerStateSnapshot,
 	type LandSnapshot,
+	cloneEffectLogEntry,
+	clonePassiveEvaluationMods,
 } from './runtime/session';
 export {
 	simulateUpcomingPhases,

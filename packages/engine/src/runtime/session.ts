@@ -12,6 +12,24 @@ import { cloneActionOptions } from './action_options';
 import { cloneActionTraces } from './player_snapshot';
 import { snapshotAdvance, snapshotEngine } from './engine_snapshot';
 import type { EngineAdvanceResult, EngineSessionSnapshot } from './types';
+import type { EvaluationModifier } from '../services/passive_types';
+
+function cloneEffectLogEntry<T>(entry: T): T {
+	if (typeof entry !== 'object' || entry === null) {
+		return entry;
+	}
+	return structuredClone(entry);
+}
+
+function clonePassiveEvaluationMods(
+	source: ReadonlyMap<string, Map<string, EvaluationModifier>>,
+): Map<string, Map<string, EvaluationModifier>> {
+	const entries: Array<[string, Map<string, EvaluationModifier>]> = [];
+	for (const [target, modifiers] of source.entries()) {
+		entries.push([target, new Map(modifiers)]);
+	}
+	return new Map(entries);
+}
 
 export interface EngineSession {
 	performAction<T extends string>(
@@ -21,6 +39,8 @@ export interface EngineSession {
 	advancePhase(): EngineAdvanceResult;
 	getSnapshot(): EngineSessionSnapshot;
 	getActionOptions(actionId: string): ReturnType<typeof cloneActionOptions>;
+	pullEffectLog<T>(key: string): T | undefined;
+	getPassiveEvaluationMods(): Map<string, Map<string, EvaluationModifier>>;
 	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T>;
 	setDevMode(enabled: boolean): void;
 	/**
@@ -60,6 +80,16 @@ export function createEngineSession(
 			const groups = getActionEffectGroups(actionId, context);
 			return cloneActionOptions(groups);
 		},
+		pullEffectLog<T>(key: string) {
+			const entry = context.pullEffectLog<T>(key);
+			if (entry === undefined) {
+				return undefined;
+			}
+			return cloneEffectLogEntry(entry);
+		},
+		getPassiveEvaluationMods() {
+			return clonePassiveEvaluationMods(context.passives.evaluationMods);
+		},
 		enqueue(taskFactory) {
 			return context.enqueue(taskFactory);
 		},
@@ -71,3 +101,5 @@ export function createEngineSession(
 		},
 	};
 }
+
+export { cloneEffectLogEntry, clonePassiveEvaluationMods };
