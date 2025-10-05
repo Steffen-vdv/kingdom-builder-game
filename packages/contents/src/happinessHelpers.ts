@@ -17,7 +17,6 @@ import { ActionId } from './actions';
 import type { passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { Stat } from './stats';
-import { formatPassiveRemoval } from './text';
 
 export type HappinessTierSlug =
 	| 'despair'
@@ -105,19 +104,26 @@ export function createTierPassiveEffect({
 	if (icon) {
 		params.icon(icon);
 	}
-	params.meta({
-		source: {
-			type: 'tiered-resource',
-			id: tierId,
-			...(summaryToken ? { labelToken: summaryToken } : {}),
-			...(name ? { name } : {}),
-			...(icon ? { icon } : {}),
-		},
-		removal: {
-			token: removalDetail,
-			text: formatPassiveRemoval(removalDetail),
-		},
-	});
+	const tieredSource: {
+		tierId: string;
+		removalDetail: string;
+		summaryToken?: string;
+		name?: string;
+		icon?: string;
+	} = {
+		tierId,
+		removalDetail,
+	};
+	if (summaryToken) {
+		tieredSource.summaryToken = summaryToken;
+	}
+	if (name) {
+		tieredSource.name = name;
+	}
+	if (icon) {
+		tieredSource.icon = icon;
+	}
+	params.tieredResourceSource(tieredSource);
 	const builder = effect()
 		.type(Types.Passive)
 		.method(PassiveMethods.ADD)

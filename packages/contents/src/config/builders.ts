@@ -25,6 +25,7 @@ import type { PopulationRoleId } from '../populationRoles';
 import type { DevelopmentId } from '../developments';
 import type { BuildingDef, DevelopmentDef, Focus, TriggerKey } from '../defs';
 import type { ActionCategory, ActionDef, ActionId } from '../actions';
+import { formatPassiveRemoval } from '../text';
 import type {
 	PhaseId as PhaseIdentifier,
 	PhaseStepId as PhaseStepIdentifier,
@@ -643,6 +644,41 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 			meta,
 			'You already set meta() for this passive. Remove the duplicate meta() call.',
 		);
+	}
+
+	tieredResourceSource({
+		tierId,
+		removalDetail,
+		summaryToken,
+		name,
+		icon,
+	}: {
+		tierId: string;
+		removalDetail: string;
+		summaryToken?: string;
+		name?: string;
+		icon?: string;
+	}) {
+		const source: PassiveMetadata['source'] & { name?: string } = {
+			type: 'tiered-resource',
+			id: tierId,
+		};
+		if (summaryToken) {
+			source.labelToken = summaryToken;
+		}
+		if (icon) {
+			source.icon = icon;
+		}
+		if (name) {
+			source.name = name;
+		}
+		return this.meta({
+			source,
+			removal: {
+				token: removalDetail,
+				text: formatPassiveRemoval(removalDetail),
+			},
+		});
 	}
 	private ensureSkip() {
 		this.params.skip = this.params.skip || ({} as PhaseSkipConfig);
