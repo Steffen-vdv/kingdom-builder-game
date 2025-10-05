@@ -35,7 +35,7 @@ export function createDevelopmentRegistry() {
 	);
 
 	registry.add(
-		'farm',
+		DevelopmentId.Farm,
 		development()
 			.id(DevelopmentId.Farm)
 			.name('Farm')
@@ -56,7 +56,7 @@ export function createDevelopmentRegistry() {
 	);
 
 	registry.add(
-		'house',
+		DevelopmentId.House,
 		development()
 			.id(DevelopmentId.House)
 			.name('House')
@@ -73,7 +73,7 @@ export function createDevelopmentRegistry() {
 	);
 
 	registry.add(
-		'outpost',
+		DevelopmentId.Outpost,
 		development()
 			.id(DevelopmentId.Outpost)
 			.name('Outpost')
@@ -98,7 +98,7 @@ export function createDevelopmentRegistry() {
 		.landId('$landId');
 
 	registry.add(
-		'watchtower',
+		DevelopmentId.Watchtower,
 		development()
 			.id(DevelopmentId.Watchtower)
 			.name('Watchtower')
@@ -124,7 +124,7 @@ export function createDevelopmentRegistry() {
 	);
 
 	registry.add(
-		'garden',
+		DevelopmentId.Garden,
 		development()
 			.id(DevelopmentId.Garden)
 			.name('Garden')
