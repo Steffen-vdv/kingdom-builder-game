@@ -8,13 +8,34 @@ export const SHOWCASE_BACKGROUND_CLASS = [
 
 const BACKDROP_LAYER = [
 	'pointer-events-none absolute inset-0',
-	'bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.6),_rgba(255,255,255,0)_55%)]',
-	'dark:bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.55),_rgba(15,23,42,0)_60%)]',
+	[
+		'bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.6),',
+		'_rgba(255,255,255,0)_55%)]',
+	].join(''),
+	[
+		'dark:bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.55),',
+		'_rgba(15,23,42,0)_60%)]',
+	].join(''),
+].join(' ');
+
+const TOP_GLOW_CLASS = [
+	'absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full',
+	'bg-amber-300/30 blur-3xl dark:bg-amber-500/20',
+].join(' ');
+
+const BOTTOM_LEFT_GLOW_CLASS = [
+	'absolute -bottom-20 -left-10 h-72 w-72 rounded-full',
+	'bg-sky-300/30 blur-3xl dark:bg-sky-500/20',
+].join(' ');
+
+const RIGHT_GLOW_CLASS = [
+	'absolute top-1/3 right-10 h-64 w-64 rounded-full',
+	'bg-rose-300/30 blur-3xl dark:bg-rose-500/20',
 ].join(' ');
 
 export const SHOWCASE_LAYOUT_CLASS = [
-	'relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center',
-	'gap-16 px-6 py-16',
+	'relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col',
+	'items-center gap-16 px-6 py-16',
 ].join(' ');
 
 export const SHOWCASE_BADGE_CLASS = [
@@ -49,9 +70,9 @@ export function ShowcaseBackground({
 	return (
 		<div className={`${SHOWCASE_BACKGROUND_CLASS} ${className}`}>
 			<div className="pointer-events-none absolute inset-0">
-				<div className="absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
-				<div className="absolute -bottom-20 -left-10 h-72 w-72 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-500/20" />
-				<div className="absolute top-1/3 right-10 h-64 w-64 rounded-full bg-rose-300/30 blur-3xl dark:bg-rose-500/20" />
+				<div className={TOP_GLOW_CLASS} />
+				<div className={BOTTOM_LEFT_GLOW_CLASS} />
+				<div className={RIGHT_GLOW_CLASS} />
 				<div className={BACKDROP_LAYER} />
 			</div>
 			{children}
