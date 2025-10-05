@@ -109,7 +109,7 @@ export function GameProvider({
 	});
 
 	const { log, logOverflowed, addLog, logWithEffectDelay } = useGameLog({
-		ctx,
+		sessionState,
 		mountedRef,
 		timeScaleRef,
 		setTrackedTimeout,
@@ -131,7 +131,8 @@ export function GameProvider({
 		updateMainPhaseStep,
 		setPhaseHistories,
 	} = usePhaseProgress({
-		ctx,
+		session,
+		sessionState,
 		actionPhaseId,
 		actionCostResource,
 		addLog,
@@ -148,10 +149,15 @@ export function GameProvider({
 		setTrackedTimeout,
 	});
 
-	useCompensationLogger({ ctx, addLog, resourceKeys: RESOURCE_KEYS });
+	useCompensationLogger({
+		session,
+		sessionState,
+		addLog,
+		resourceKeys: RESOURCE_KEYS,
+	});
 
 	const { handlePerform, performRef } = useActionPerformer({
-		ctx,
+		session,
 		actionCostResource,
 		addLog,
 		logWithEffectDelay,
@@ -165,7 +171,8 @@ export function GameProvider({
 	});
 
 	useAiRunner({
-		ctx,
+		session,
+		sessionState,
 		runUntilActionPhaseCore,
 		setPhaseHistories,
 		performRef,

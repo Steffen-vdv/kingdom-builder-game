@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type {
+	EngineSessionSnapshot,
+	PlayerStateSnapshot,
+} from '@kingdom-builder/engine';
 
 const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
@@ -11,14 +14,14 @@ type LogEntry = {
 };
 
 interface GameLogOptions {
-	ctx: EngineContext;
+	sessionState: EngineSessionSnapshot;
 	mountedRef: React.MutableRefObject<boolean>;
 	timeScaleRef: React.MutableRefObject<number>;
 	setTrackedTimeout: (callback: () => void, delay: number) => number;
 }
 
 export function useGameLog({
-	ctx,
+	sessionState,
 	mountedRef,
 	timeScaleRef,
 	setTrackedTimeout,
@@ -27,8 +30,18 @@ export function useGameLog({
 	const [logOverflowed, setLogOverflowed] = useState(false);
 
 	const addLog = useCallback(
-		(entry: string | string[], player?: EngineContext['activePlayer']) => {
-			const logPlayer = player ?? ctx.activePlayer;
+		(
+			entry: string | string[],
+			player?: Pick<PlayerStateSnapshot, 'id' | 'name'>,
+		) => {
+			const fallbackPlayerId = sessionState.game.activePlayerId;
+			const fallbackPlayer = sessionState.game.players.find(
+				(candidate) => candidate.id === fallbackPlayerId,
+			);
+			const logPlayer = player ?? fallbackPlayer;
+			if (!logPlayer) {
+				return;
+			}
 			setLog((prev) => {
 				const messages = Array.isArray(entry) ? entry : [entry];
 				const items = messages.map((text) => ({
@@ -44,7 +57,7 @@ export function useGameLog({
 				return next;
 			});
 		},
-		[ctx.activePlayer],
+		[sessionState.game.activePlayerId, sessionState.game.players],
 	);
 
 	const waitWithScale = useCallback(
@@ -62,7 +75,10 @@ export function useGameLog({
 	);
 
 	const logWithEffectDelay = useCallback(
-		async (lines: string[], player: EngineContext['activePlayer']) => {
+		async (
+			lines: string[],
+			player: Pick<PlayerStateSnapshot, 'id' | 'name'>,
+		) => {
 			if (!lines.length) {
 				return;
 			}

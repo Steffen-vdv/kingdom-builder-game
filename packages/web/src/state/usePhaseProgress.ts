@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
-import { advance, type EngineContext } from '@kingdom-builder/engine';
-import { type ResourceKey, type StepDef } from '@kingdom-builder/contents';
-import { diffStepSnapshots, snapshotPlayer } from '../translation';
-import { describeSkipEvent } from '../utils/describeSkipEvent';
+import {
+	type EngineSession,
+	type EngineSessionSnapshot,
+	type PlayerStateSnapshot,
+} from '@kingdom-builder/engine';
+import { type ResourceKey } from '@kingdom-builder/contents';
 import type { PhaseStep } from './phaseTypes';
 import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
+import { advanceToActionPhase } from './usePhaseProgress.helpers';
 
 interface PhaseProgressOptions {
-	ctx: EngineContext;
+	session: EngineSession;
+	sessionState: EngineSessionSnapshot;
 	actionPhaseId: string | undefined;
 	actionCostResource: ResourceKey;
-	addLog: (
-		entry: string | string[],
-		player?: EngineContext['activePlayer'],
-	) => void;
+	addLog: (entry: string | string[], player?: PlayerStateSnapshot) => void;
 	mountedRef: React.MutableRefObject<boolean>;
 	timeScaleRef: React.MutableRefObject<number>;
 	setTrackedInterval: (callback: () => void, delay: number) => number;
@@ -25,7 +26,8 @@ interface PhaseProgressOptions {
 }
 
 export function usePhaseProgress({
-	ctx,
+	session,
+	sessionState,
 	actionPhaseId,
 	actionCostResource,
 	addLog,
@@ -39,7 +41,9 @@ export function usePhaseProgress({
 }: PhaseProgressOptions) {
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
-	const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
+	const [displayPhase, setDisplayPhase] = useState(
+		sessionState.game.currentPhase,
+	);
 	const [phaseHistories, setPhaseHistories] = useState<
 		Record<string, PhaseStep[]>
 	>({});
@@ -47,7 +51,7 @@ export function usePhaseProgress({
 
 	const { mainApStart, setMainApStart, updateMainPhaseStep } =
 		useMainPhaseTracker({
-			ctx,
+			session,
 			actionCostResource,
 			actionPhaseId,
 			setPhaseSteps,
@@ -63,139 +67,43 @@ export function usePhaseProgress({
 		setPhaseTimer,
 	});
 
-	const runUntilActionPhaseCore = useCallback(async () => {
-		if (ctx.phases[ctx.game.phaseIndex]?.action) {
-			if (!mountedRef.current) {
-				return;
-			}
-			setPhaseTimer(0);
-			setTabsEnabled(true);
-			setDisplayPhase(ctx.game.currentPhase);
-			return;
-		}
-		setTabsEnabled(false);
-		setPhaseSteps([]);
-		setDisplayPhase(ctx.game.currentPhase);
-		setPhaseHistories({});
-		let ranSteps = false;
-		let lastPhase: string | null = null;
-		while (!ctx.phases[ctx.game.phaseIndex]?.action) {
-			ranSteps = true;
-			const before = snapshotPlayer(ctx.activePlayer, ctx);
-			const { phase, step, player, effects, skipped } = advance(ctx);
-			const phaseDef = ctx.phases.find(
-				(phaseDefinition) => phaseDefinition.id === phase,
-			)!;
-			const stepDef = phaseDef.steps.find(
-				(stepDefinition) => stepDefinition.id === step,
-			);
-			if (phase !== lastPhase) {
-				await runDelay(1500);
-				if (!mountedRef.current) {
-					return;
-				}
-				setPhaseSteps([]);
-				setDisplayPhase(phase);
-				addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player);
-				lastPhase = phase;
-			}
-			const phaseId = phase;
-			let entry: PhaseStep;
-			if (skipped) {
-				const summary = describeSkipEvent(skipped, phaseDef, stepDef);
-				addLog(summary.logLines, player);
-				entry = {
-					title: summary.history.title,
-					items: summary.history.items,
-					active: true,
-				};
-			} else {
-				const after = snapshotPlayer(player, ctx);
-				const stepWithEffects: StepDef | undefined = stepDef
-					? ({ ...(stepDef as StepDef), effects } as StepDef)
-					: undefined;
-				const changes = diffStepSnapshots(
-					before,
-					after,
-					stepWithEffects,
-					ctx,
-					resourceKeys,
-				);
-				if (changes.length) {
-					addLog(
-						changes.map((change) => `  ${change}`),
-						player,
-					);
-				}
-				entry = {
-					title: stepDef?.title || step,
-					items:
-						changes.length > 0
-							? changes.map((text) => ({ text }))
-							: [{ text: 'No effect', italic: true }],
-					active: true,
-				};
-			}
-			setPhaseSteps((prev) => [...prev, entry]);
-			setPhaseHistories((prev) => ({
-				...prev,
-				[phaseId]: [...(prev[phaseId] ?? []), entry],
-			}));
-			await runStepDelay();
-			if (!mountedRef.current) {
-				return;
-			}
-			const finalized = { ...entry, active: false };
-			setPhaseSteps((prev) => {
-				if (!prev.length) {
-					return prev;
-				}
-				const next = [...prev];
-				next[next.length - 1] = finalized;
-				return next;
-			});
-			setPhaseHistories((prev) => {
-				const history = prev[phaseId];
-				if (!history?.length) {
-					return prev;
-				}
-				const nextHistory = [...history];
-				nextHistory[nextHistory.length - 1] = finalized;
-				return { ...prev, [phaseId]: nextHistory };
-			});
-		}
-		if (ranSteps) {
-			await runDelay(1500);
-			if (!mountedRef.current) {
-				return;
-			}
-		} else {
-			if (!mountedRef.current) {
-				return;
-			}
-			setPhaseTimer(0);
-		}
-		const start = ctx.activePlayer.resources[actionCostResource] as number;
-		if (!mountedRef.current) {
-			return;
-		}
-		setMainApStart(start);
-		updateMainPhaseStep(start);
-		setDisplayPhase(ctx.game.currentPhase);
-		setTabsEnabled(true);
-		refresh();
-	}, [
-		actionCostResource,
-		actionPhaseId,
-		addLog,
-		ctx,
-		mountedRef,
-		refresh,
-		resourceKeys,
-		runDelay,
-		runStepDelay,
-		updateMainPhaseStep,
-	]);
+	const runUntilActionPhaseCore = useCallback(
+		() =>
+			advanceToActionPhase({
+				session,
+				actionCostResource,
+				resourceKeys,
+				runDelay,
+				runStepDelay,
+				mountedRef,
+				setPhaseSteps,
+				setPhaseHistories,
+				setPhaseTimer,
+				setDisplayPhase,
+				setTabsEnabled,
+				setMainApStart,
+				updateMainPhaseStep,
+				addLog,
+				refresh,
+			}),
+		[
+			actionCostResource,
+			addLog,
+			mountedRef,
+			refresh,
+			resourceKeys,
+			runDelay,
+			runStepDelay,
+			session,
+			setDisplayPhase,
+			setMainApStart,
+			setPhaseHistories,
+			setPhaseSteps,
+			setPhaseTimer,
+			setTabsEnabled,
+			updateMainPhaseStep,
+		],
+	);
 
 	const runUntilActionPhase = useCallback(
 		() => enqueue(runUntilActionPhaseCore),
@@ -203,17 +111,24 @@ export function usePhaseProgress({
 	);
 
 	const endTurn = useCallback(async () => {
-		const phaseDef = ctx.phases[ctx.game.phaseIndex];
+		const snapshot = session.getSnapshot();
+		const phaseDef = snapshot.phases[snapshot.game.phaseIndex];
 		if (!phaseDef?.action) {
 			return;
 		}
-		if ((ctx.activePlayer.resources[actionCostResource] ?? 0) > 0) {
+		const activePlayer = snapshot.game.players.find(
+			(player) => player.id === snapshot.game.activePlayerId,
+		);
+		if (!activePlayer) {
 			return;
 		}
-		advance(ctx);
+		if ((activePlayer.resources[actionCostResource] ?? 0) > 0) {
+			return;
+		}
+		session.advancePhase();
 		setPhaseHistories({});
 		await runUntilActionPhaseCore();
-	}, [actionCostResource, ctx, runUntilActionPhaseCore]);
+	}, [actionCostResource, runUntilActionPhaseCore, session]);
 
 	const handleEndTurn = useCallback(() => enqueue(endTurn), [enqueue, endTurn]);
 
@@ -221,13 +136,20 @@ export function usePhaseProgress({
 		if (!tabsEnabled) {
 			return;
 		}
-		if (!ctx.phases[ctx.game.phaseIndex]?.action) {
+		const snapshot = session.getSnapshot();
+		if (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
 			return;
 		}
-		const start = ctx.activePlayer.resources[actionCostResource] as number;
+		const activePlayer = snapshot.game.players.find(
+			(player) => player.id === snapshot.game.activePlayerId,
+		);
+		if (!activePlayer) {
+			return;
+		}
+		const start = activePlayer.resources[actionCostResource] ?? 0;
 		setMainApStart(start);
 		updateMainPhaseStep(start);
-	}, [actionCostResource, ctx, tabsEnabled, updateMainPhaseStep]);
+	}, [actionCostResource, session, tabsEnabled, updateMainPhaseStep]);
 
 	return {
 		phaseSteps,

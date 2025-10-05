@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type {
+	EngineSession,
+	EngineSessionSnapshot,
+} from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import {
 	diffStepSnapshots,
@@ -8,22 +11,24 @@ import {
 } from '../translation';
 
 interface UseCompensationLoggerOptions {
-	ctx: EngineContext;
+	session: EngineSession;
+	sessionState: EngineSessionSnapshot;
 	addLog: (
 		entry: string | string[],
-		player?: EngineContext['activePlayer'],
+		player?: EngineSessionSnapshot['game']['players'][number],
 	) => void;
 	resourceKeys: ResourceKey[];
 }
 
 export function useCompensationLogger({
-	ctx,
+	session,
+	sessionState,
 	addLog,
 	resourceKeys,
 }: UseCompensationLoggerOptions) {
 	useEffect(() => {
-		ctx.game.players.forEach((player) => {
-			const compensation = ctx.compensations[player.id];
+		sessionState.game.players.forEach((player) => {
+			const compensation = sessionState.compensations[player.id];
 			if (
 				!compensation ||
 				(Object.keys(compensation.resources || {}).length === 0 &&
@@ -31,7 +36,7 @@ export function useCompensationLogger({
 			) {
 				return;
 			}
-			const after: PlayerSnapshot = snapshotPlayer(player, ctx);
+			const after: PlayerSnapshot = snapshotPlayer(player);
 			const before: PlayerSnapshot = {
 				...after,
 				resources: { ...after.resources },
@@ -58,7 +63,7 @@ export function useCompensationLogger({
 				before,
 				after,
 				undefined,
-				ctx,
+				session.getLegacyContext(),
 				resourceKeys,
 			);
 			if (lines.length) {
@@ -68,5 +73,5 @@ export function useCompensationLogger({
 				);
 			}
 		});
-	}, [addLog, ctx, resourceKeys]);
+	}, [addLog, resourceKeys, session, sessionState]);
 }

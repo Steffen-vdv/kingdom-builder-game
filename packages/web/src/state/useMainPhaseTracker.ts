@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { EngineSession } from '@kingdom-builder/engine';
 import type { PhaseStep } from './phaseTypes';
 
 interface MainPhaseTrackerOptions {
-	ctx: EngineContext;
+	session: EngineSession;
 	actionCostResource: ResourceKey;
 	actionPhaseId: string | undefined;
 	setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
@@ -15,7 +15,7 @@ interface MainPhaseTrackerOptions {
 }
 
 export function useMainPhaseTracker({
-	ctx,
+	session,
 	actionCostResource,
 	actionPhaseId,
 	setPhaseSteps,
@@ -26,8 +26,15 @@ export function useMainPhaseTracker({
 
 	const updateMainPhaseStep = useCallback(
 		(apStartOverride?: number) => {
+			const snapshot = session.getSnapshot();
+			const activePlayer = snapshot.game.players.find(
+				(player) => player.id === snapshot.game.activePlayerId,
+			);
+			if (!activePlayer) {
+				return;
+			}
 			const total = apStartOverride ?? mainApStart;
-			const remaining = ctx.activePlayer.resources[actionCostResource] ?? 0;
+			const remaining = activePlayer.resources[actionCostResource] ?? 0;
 			const spent = total - remaining;
 			const resourceInfo = RESOURCES[actionCostResource];
 			const costLabel = resourceInfo?.label ?? '';
@@ -53,13 +60,13 @@ export function useMainPhaseTracker({
 				}));
 				setDisplayPhase(actionPhaseId);
 			} else {
-				setDisplayPhase(ctx.game.currentPhase);
+				setDisplayPhase(snapshot.game.currentPhase);
 			}
 		},
 		[
 			actionCostResource,
 			actionPhaseId,
-			ctx,
+			session,
 			mainApStart,
 			setDisplayPhase,
 			setPhaseHistories,
