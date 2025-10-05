@@ -40,7 +40,7 @@ these rules:
   single statement.
 - Wrap lines at 80 characters to prevent horizontal scrolling in reviews.
 - Keep individual source files at or below 250 lines unless legacy code already
-  exceeds the limit.
+  exceeds the limit; `*.test.ts` files are exempt from this rule.
 - Choose descriptive, human-readable identifiers instead of terse abbreviations.
 - Indent code with tab characters so formatting remains consistent across
   editors.
