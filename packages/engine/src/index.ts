@@ -24,6 +24,8 @@ export {
 	type GameSnapshot,
 	type PlayerStateSnapshot,
 	type LandSnapshot,
+	type EngineSessionGetActionCosts,
+	type EngineSessionGetActionRequirements,
 	cloneEffectLogEntry,
 	clonePassiveEvaluationMods,
 } from './runtime/session';
