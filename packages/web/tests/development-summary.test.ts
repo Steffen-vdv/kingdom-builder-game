@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { summarizeContent } from '../src/translation/content';
 import type { Summary } from '../src/translation/content';
+import {
+	logEffects,
+	describeEffects,
+	summarizeEffects,
+} from '../src/translation/effects';
 import { createEngine } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
@@ -59,5 +64,49 @@ describe('development translation', () => {
 				}
 			)?.amount ?? 0;
 		expect(flat.some((l) => l.includes(`${goldIcon}+${amt}`))).toBe(true);
+	});
+
+	it('uses shared helper for add and remove effects', () => {
+		const ctx = createEngine({
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+			populations: POPULATIONS,
+			phases: PHASES,
+			start: GAME_START,
+			rules: RULES,
+		});
+		const devId = DEVELOPMENTS.keys()[0] as string;
+		const development = ctx.developments.get(devId);
+		const display =
+			[development?.icon ?? '', development?.name ?? devId]
+				.filter(Boolean)
+				.join(' ')
+				.trim() || devId;
+		const addSummary = summarizeEffects(
+			[{ type: 'development', method: 'add', params: { id: devId } }],
+			ctx,
+		);
+		expect(flatten(addSummary)).toContain(display);
+		const addDescription = describeEffects(
+			[{ type: 'development', method: 'add', params: { id: devId } }],
+			ctx,
+		);
+		expect(flatten(addDescription)).toContain(`Add ${display}`);
+		const removeSummary = summarizeEffects(
+			[{ type: 'development', method: 'remove', params: { id: devId } }],
+			ctx,
+		);
+		expect(flatten(removeSummary)).toContain(display);
+		const removeDescription = describeEffects(
+			[{ type: 'development', method: 'remove', params: { id: devId } }],
+			ctx,
+		);
+		expect(flatten(removeDescription)).toContain(`Remove ${display}`);
+		const removeLog = logEffects(
+			[{ type: 'development', method: 'remove', params: { id: devId } }],
+			ctx,
+		);
+		expect(removeLog).toContain(`Removed ${display}`);
 	});
 });
