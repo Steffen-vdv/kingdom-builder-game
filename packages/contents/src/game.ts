@@ -27,9 +27,11 @@ export const GAME_START: StartConfig = startConfig()
 				[PopulationRole.Fortifier]: 0,
 				[PopulationRole.Citizen]: 0,
 			})
-			.lands([{ developments: ['farm'] }, {}]),
+			.lands((lands) => {
+				return lands.land((land) => land.development('farm')).land();
+			}),
 	)
-	.playerOverride('B', (player) =>
+	.lastPlayerCompensation((player) =>
 		player.resources({
 			[Resource.ap]: 1,
 		}),

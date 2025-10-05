@@ -61,7 +61,30 @@ describe('start config builder safeguards', () => {
 		);
 	});
 
-	it('blocks duplicate player overrides in start configs', () => {
+	it('supports configuring lands through builder helpers', () => {
+		const config = playerStart()
+			.resources({ [firstResourceKey]: 1 })
+			.stats({ [firstStatKey]: 2 })
+			.population({ demo: 3 })
+			.lands((lands) =>
+				lands
+					.land((land) =>
+						land.development('demo-development').slotsMax(2).slotsUsed(1),
+					)
+					.land(),
+			)
+			.build();
+		expect(config.lands).toEqual([
+			{
+				developments: ['demo-development'],
+				slotsMax: 2,
+				slotsUsed: 1,
+			},
+			{},
+		]);
+	});
+
+	it('blocks duplicate last player compensations in start configs', () => {
 		expect(() =>
 			startConfig()
 				.player(
@@ -73,18 +96,18 @@ describe('start config builder safeguards', () => {
 						.population({ demo: 1 })
 						.lands([]),
 				)
-				.playerOverride('B', (player) =>
+				.lastPlayerCompensation((player) =>
 					player.resources({
 						[firstResourceKey]: 0,
 					}),
 				)
-				.playerOverride('B', (player) =>
+				.lastPlayerCompensation((player) =>
 					player.resources({
 						[firstResourceKey]: 0,
 					}),
 				),
 		).toThrowError(
-			'Start config already set playerOverride(B). Remove the extra call.',
+			'Start config already set lastPlayerCompensation(). Remove the extra call.',
 		);
 	});
 });
