@@ -24,7 +24,7 @@
 		"pretest:coverage": "node scripts/ensure-dev-dependencies.cjs",
 		"test:coverage": "vitest run --coverage",
 		"test:ci": "npm run test:coverage",
-		"format": "prettier .",
+		"format": "prettier . --write",
 		"prepare": "husky install",
 		"lint:deps": "dependency-cruiser packages/engine packages/contents packages/web --config scripts/dependency-cruiser.cjs --output-type text"
 	},
