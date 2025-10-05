@@ -1,4 +1,10 @@
-import { useCallback, useState } from 'react';
+import {
+	useCallback,
+	useState,
+	type Dispatch,
+	type MutableRefObject,
+	type SetStateAction,
+} from 'react';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import type { EngineSession } from '@kingdom-builder/engine';
 import type { PhaseStep } from './phaseTypes';
@@ -7,11 +13,10 @@ interface MainPhaseTrackerOptions {
 	session: EngineSession;
 	actionCostResource: ResourceKey;
 	actionPhaseId: string | undefined;
-	setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
-	setPhaseHistories: React.Dispatch<
-		React.SetStateAction<Record<string, PhaseStep[]>>
-	>;
+	setPhaseSteps: Dispatch<SetStateAction<PhaseStep[]>>;
+	setPhaseHistories: Dispatch<SetStateAction<Record<string, PhaseStep[]>>>;
 	setDisplayPhase: (phase: string) => void;
+	displayPhaseRef: MutableRefObject<string>;
 }
 
 export function useMainPhaseTracker({
@@ -21,6 +26,7 @@ export function useMainPhaseTracker({
 	setPhaseSteps,
 	setPhaseHistories,
 	setDisplayPhase,
+	displayPhaseRef,
 }: MainPhaseTrackerOptions) {
 	const [mainApStart, setMainApStart] = useState(0);
 
@@ -53,14 +59,17 @@ export function useMainPhaseTracker({
 				},
 			];
 			setPhaseSteps(steps);
+			const currentPhaseId = snapshot.game.currentPhase;
 			if (actionPhaseId) {
 				setPhaseHistories((prev) => ({
 					...prev,
 					[actionPhaseId]: steps,
 				}));
-				setDisplayPhase(actionPhaseId);
-			} else {
-				setDisplayPhase(snapshot.game.currentPhase);
+				if (displayPhaseRef.current === actionPhaseId) {
+					setDisplayPhase(actionPhaseId);
+				}
+			} else if (displayPhaseRef.current === currentPhaseId) {
+				setDisplayPhase(currentPhaseId);
 			}
 		},
 		[
@@ -69,6 +78,7 @@ export function useMainPhaseTracker({
 			session,
 			mainApStart,
 			setDisplayPhase,
+			displayPhaseRef,
 			setPhaseHistories,
 			setPhaseSteps,
 		],

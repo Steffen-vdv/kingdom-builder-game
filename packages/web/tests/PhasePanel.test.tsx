@@ -1,9 +1,10 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
+import type { PhaseStep } from '../src/state/phaseTypes';
 import { createEngine } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
@@ -43,32 +44,67 @@ const translationContext = createTranslationContext(
 		passives: ctx.passives,
 	},
 );
-const mockGame = {
-	ctx,
-	translationContext,
-	log: [],
-	hoverCard: null,
-	handleHoverCard: vi.fn(),
-	clearHoverCard: vi.fn(),
-	phaseSteps: [],
-	setPhaseSteps: vi.fn(),
-	phaseTimer: 0,
-	mainApStart: 0,
-	displayPhase: ctx.game.currentPhase,
-	setDisplayPhase: vi.fn(),
-	phaseHistories: {},
-	tabsEnabled: true,
-	actionCostResource,
-	handlePerform: vi.fn().mockResolvedValue(undefined),
-	runUntilActionPhase: vi.fn(),
-	handleEndTurn: vi.fn().mockResolvedValue(undefined),
-	updateMainPhaseStep: vi.fn(),
-	darkMode: false,
-	onToggleDark: vi.fn(),
-};
+const handleHoverCard = vi.fn();
+const clearHoverCard = vi.fn();
+const handlePerform = vi.fn().mockResolvedValue(undefined);
+const runUntilActionPhase = vi.fn();
+const handleEndTurn = vi.fn().mockResolvedValue(undefined);
+const updateMainPhaseStep = vi.fn();
+const onToggleDark = vi.fn();
+const onToggleMusic = vi.fn();
+const onToggleSound = vi.fn();
+
+function createPhaseHistories(): Record<string, PhaseStep[]> {
+	return Object.fromEntries(
+		ctx.phases.map((phase) => [
+			phase.id,
+			[
+				{
+					title: `${phase.label} Step`,
+					items: [{ text: `${phase.icon} ${phase.label}` }],
+					active: false,
+				},
+			],
+		]),
+	) as Record<string, PhaseStep[]>;
+}
 
 vi.mock('../src/state/GameContext', () => ({
-	useGameEngine: () => mockGame,
+	useGameEngine: () => {
+		const [displayPhase, setDisplayPhase] = React.useState(
+			ctx.game.currentPhase,
+		);
+		const [phaseSteps, setPhaseSteps] = React.useState<PhaseStep[]>([]);
+		const [phaseHistories] =
+			React.useState<Record<string, PhaseStep[]>>(createPhaseHistories);
+		return {
+			ctx,
+			translationContext,
+			log: [],
+			hoverCard: null,
+			handleHoverCard,
+			clearHoverCard,
+			phaseSteps,
+			setPhaseSteps,
+			phaseTimer: 0,
+			mainApStart: 0,
+			displayPhase,
+			setDisplayPhase,
+			phaseHistories,
+			tabsEnabled: true,
+			actionCostResource,
+			handlePerform,
+			runUntilActionPhase,
+			handleEndTurn,
+			updateMainPhaseStep,
+			darkMode: false,
+			onToggleDark,
+			musicEnabled: true,
+			onToggleMusic,
+			soundEnabled: true,
+			onToggleSound,
+		};
+	},
 }));
 
 beforeAll(() => {
@@ -98,5 +134,23 @@ describe('<PhasePanel />', () => {
 		expect(
 			within(firstPhaseButton).getByText(firstPhase.icon),
 		).toBeInTheDocument();
+	});
+
+	it('highlights a phase when manually selected', () => {
+		render(<PhasePanel />);
+		const targetPhase = ctx.phases[1];
+		const candidates = screen.getAllByRole('button', {
+			name: targetPhase.label,
+		});
+		const targetButton = candidates.find((button) =>
+			within(button).queryByText(targetPhase.icon),
+		);
+		expect(targetButton).toBeDefined();
+		if (!targetButton) {
+			return;
+		}
+		fireEvent.click(targetButton);
+		expect(targetButton).toHaveClass('bg-gradient-to-r');
+		expect(targetButton).toHaveClass('text-white');
 	});
 });
