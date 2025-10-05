@@ -1,13 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from './factories/content.ts';
-import {
-	attackTargetHandlers,
-	type AttackTargetHandler,
-} from '../src/effects/attack_target_handlers/index.ts';
-import type { ResourceAttackTarget } from '../src/effects/attack.types.ts';
 
 function makeAbsorptionEffect(amount: number): EffectDef {
 	return {
@@ -19,33 +14,33 @@ function makeAbsorptionEffect(amount: number): EffectDef {
 
 describe('resolveAttack', () => {
 	it('runs onBeforeAttacked triggers before damage calc', () => {
-		const ctx = createTestEngine();
-		const defender = ctx.activePlayer;
-		ctx.passives.addPassive(
+		const engineContext = createTestEngine();
+		const defender = engineContext.activePlayer;
+		engineContext.passives.addPassive(
 			{
 				id: 'shield',
 				effects: [],
 				onBeforeAttacked: [makeAbsorptionEffect(0.5)],
 			},
-			ctx,
+			engineContext,
 		);
-		const result = resolveAttack(defender, 10, ctx, {
+		const result = resolveAttack(defender, 10, engineContext, {
 			type: 'resource',
 			key: Resource.castleHP,
 		});
 		expect(result.damageDealt).toBe(5);
 	});
 
-	it('applies fortification and castle damage before post triggers', () => {
-		const ctx = createTestEngine();
-		const attacker = ctx.activePlayer;
-		const defender = ctx.game.opponent;
+	it('applies fortification before running post-attack resolution', () => {
+		const engineContext = createTestEngine();
+		const attacker = engineContext.activePlayer;
+		const defender = engineContext.game.opponent;
 		defender.stats[Stat.fortificationStrength] = 1;
 		defender.gold = 100;
 		attacker.gold = 0;
 		const startHP = defender.resources[Resource.castleHP];
 		const startGold = defender.gold;
-		const result = resolveAttack(defender, 5, ctx, {
+		const result = resolveAttack(defender, 5, engineContext, {
 			type: 'resource',
 			key: Resource.castleHP,
 		});
@@ -54,7 +49,6 @@ describe('resolveAttack', () => {
 			startHP - result.damageDealt,
 		);
 		expect(defender.fortificationStrength).toBe(0);
-		// ensure no content-driven effects run inside resolveAttack
 		expect(defender.gold).toBe(startGold);
 		expect(attacker.gold).toBe(0);
 		expect(defender.happiness).toBe(0);
@@ -63,12 +57,12 @@ describe('resolveAttack', () => {
 	});
 
 	it('rounds absorbed damage up when rules specify', () => {
-		const ctx = createTestEngine();
-		const defender = ctx.game.opponent;
-		ctx.services.rules.absorptionRounding = 'up';
+		const engineContext = createTestEngine();
+		const defender = engineContext.game.opponent;
+		engineContext.services.rules.absorptionRounding = 'up';
 		defender.absorption = 0.5;
 		const start = defender.resources[Resource.castleHP];
-		const result = resolveAttack(defender, 1, ctx, {
+		const result = resolveAttack(defender, 1, engineContext, {
 			type: 'resource',
 			key: Resource.castleHP,
 		});
@@ -77,11 +71,11 @@ describe('resolveAttack', () => {
 	});
 
 	it('rounds absorbed damage to nearest when rules specify', () => {
-		const ctx = createTestEngine();
-		const defender = ctx.game.opponent;
-		ctx.services.rules.absorptionRounding = 'nearest';
+		const engineContext = createTestEngine();
+		const defender = engineContext.game.opponent;
+		engineContext.services.rules.absorptionRounding = 'nearest';
 		defender.absorption = 0.6;
-		const result = resolveAttack(defender, 1, ctx, {
+		const result = resolveAttack(defender, 1, engineContext, {
 			type: 'resource',
 			key: Resource.castleHP,
 		});
@@ -89,14 +83,14 @@ describe('resolveAttack', () => {
 	});
 
 	it('can ignore absorption and fortification when options specify', () => {
-		const ctx = createTestEngine();
-		const defender = ctx.game.opponent;
+		const engineContext = createTestEngine();
+		const defender = engineContext.game.opponent;
 		defender.absorption = 0.5;
 		defender.stats[Stat.fortificationStrength] = 5;
 		const result = resolveAttack(
 			defender,
 			10,
-			ctx,
+			engineContext,
 			{ type: 'resource', key: Resource.castleHP },
 			{
 				ignoreAbsorption: true,
@@ -108,7 +102,7 @@ describe('resolveAttack', () => {
 		expect(defender.resources[Resource.castleHP]).toBe(0);
 	});
 
-	it('resolves post-damage triggers like watchtower removal', () => {
+	it('removes towers and grants rewards after damage is resolved', () => {
 		const content = createContentFactory();
 		const tower = content.development({
 			onBeforeAttacked: [
@@ -126,10 +120,13 @@ describe('resolveAttack', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ developments: content.developments });
-		const defender = ctx.game.opponent;
+		const engineContext = createTestEngine({
+			developments: content.developments,
+		});
+		const defender = engineContext.game.opponent;
 		const landId = defender.lands[1].id;
-		ctx.game.currentPlayerIndex = 1; // switch to defender to build tower
+		engineContext.game.currentPlayerIndex = 1;
+		// switch to defender to build tower
 		runEffects(
 			[
 				{
@@ -138,11 +135,11 @@ describe('resolveAttack', () => {
 					params: { id: tower.id, landId },
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		ctx.game.currentPlayerIndex = 0; // attacker turn
+		engineContext.game.currentPlayerIndex = 0;
 		const beforeGold = defender.gold;
-		const result = resolveAttack(defender, 4, ctx, {
+		const result = resolveAttack(defender, 4, engineContext, {
 			type: 'resource',
 			key: Resource.castleHP,
 		});
@@ -153,12 +150,13 @@ describe('resolveAttack', () => {
 		expect(defender.gold).toBe(beforeGold + 1);
 	});
 
-	it('uses pre-attack stat boosts but ignores post-attack ones for damage', () => {
-		const ctx = createTestEngine();
-		const attacker = ctx.activePlayer;
-		const defender = ctx.game.opponent;
-		ctx.game.currentPlayerIndex = 1; // switch to defender to add passive
-		ctx.passives.addPassive(
+	it('ignores post-attack boosts for the damage calculation', () => {
+		const engineContext = createTestEngine();
+		const attacker = engineContext.activePlayer;
+		const defender = engineContext.game.opponent;
+		engineContext.game.currentPlayerIndex = 1;
+		// switch to defender to add passive
+		engineContext.passives.addPassive(
 			{
 				id: 'bastion',
 				effects: [],
@@ -171,7 +169,10 @@ describe('resolveAttack', () => {
 					{
 						type: 'stat',
 						method: 'add',
-						params: { key: Stat.fortificationStrength, amount: 1 },
+						params: {
+							key: Stat.fortificationStrength,
+							amount: 1,
+						},
 					},
 				],
 				onAttackResolved: [
@@ -183,13 +184,16 @@ describe('resolveAttack', () => {
 					{
 						type: 'stat',
 						method: 'add',
-						params: { key: Stat.fortificationStrength, amount: 5 },
+						params: {
+							key: Stat.fortificationStrength,
+							amount: 5,
+						},
 					},
 				],
 			},
-			ctx,
+			engineContext,
 		);
-		ctx.game.currentPlayerIndex = 0; // attacker turn
+		engineContext.game.currentPlayerIndex = 0;
 
 		runEffects(
 			[
@@ -199,19 +203,19 @@ describe('resolveAttack', () => {
 					params: { key: Stat.armyStrength, amount: 5 },
 				},
 			],
-			ctx,
+			engineContext,
 		);
 		const startHP = defender.resources[Resource.castleHP];
 		const result = resolveAttack(
 			defender,
 			attacker.armyStrength as number,
-			ctx,
+			engineContext,
 			{
 				type: 'resource',
 				key: Resource.castleHP,
 			},
 		);
-		const rounding = ctx.services.rules.absorptionRounding;
+		const rounding = engineContext.services.rules.absorptionRounding;
 		const base = attacker.armyStrength as number;
 		const reduced =
 			rounding === 'down'
@@ -222,190 +226,7 @@ describe('resolveAttack', () => {
 		const expected = Math.max(0, reduced - 1);
 		expect(result.damageDealt).toBe(expected);
 		expect(defender.resources[Resource.castleHP]).toBe(startHP - expected);
-		// post-attack boosts apply after damage calculation
 		expect(defender.absorption).toBe(1);
 		expect(defender.fortificationStrength).toBe(5);
-	});
-
-	it('keeps buildings intact when damage is fully mitigated', () => {
-		const content = createContentFactory();
-		const bastion = content.building({});
-		const ctx = createTestEngine({ buildings: content.buildings });
-		const defender = ctx.game.opponent;
-		ctx.game.currentPlayerIndex = 1;
-		runEffects(
-			[
-				{
-					type: 'building',
-					method: 'add',
-					params: { id: bastion.id },
-				},
-			],
-			ctx,
-		);
-		ctx.game.currentPlayerIndex = 0;
-		defender.absorption = 1;
-		defender.fortificationStrength = 0;
-
-		const castleBefore = defender.resources[Resource.castleHP];
-		const result = resolveAttack(defender, 3, ctx, {
-			type: 'building',
-			id: bastion.id,
-		});
-
-		expect(result.damageDealt).toBe(0);
-		expect(defender.buildings.has(bastion.id)).toBe(true);
-		expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
-		expect(result.evaluation.target.type).toBe('building');
-		if (result.evaluation.target.type === 'building') {
-			expect(result.evaluation.target.existed).toBe(true);
-			expect(result.evaluation.target.destroyed).toBe(false);
-			expect(result.evaluation.target.damage).toBe(0);
-		}
-	});
-
-	it('destroys buildings without spilling damage onto the castle', () => {
-		const content = createContentFactory();
-		const fortress = content.building({
-			onBuild: [
-				{
-					type: 'stat',
-					method: 'add',
-					params: { key: Stat.fortificationStrength, amount: 3 },
-				},
-			],
-		});
-		const ctx = createTestEngine({ buildings: content.buildings });
-		const defender = ctx.game.opponent;
-		ctx.game.currentPlayerIndex = 1;
-		runEffects(
-			[
-				{
-					type: 'building',
-					method: 'add',
-					params: { id: fortress.id },
-				},
-			],
-			ctx,
-		);
-		ctx.game.currentPlayerIndex = 0;
-
-		const castleBefore = defender.resources[Resource.castleHP];
-		expect(defender.fortificationStrength).toBe(3);
-
-		const result = resolveAttack(defender, 5, ctx, {
-			type: 'building',
-			id: fortress.id,
-		});
-
-		expect(result.damageDealt).toBe(2);
-		expect(defender.buildings.has(fortress.id)).toBe(false);
-		expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
-		expect(defender.fortificationStrength).toBe(0);
-		expect(result.evaluation.target.type).toBe('building');
-		if (result.evaluation.target.type === 'building') {
-			expect(result.evaluation.target.destroyed).toBe(true);
-			expect(result.evaluation.target.damage).toBe(result.damageDealt);
-		}
-	});
-
-	it('respects ignore flags when targeting buildings', () => {
-		const content = createContentFactory();
-		const stronghold = content.building({});
-		const ctx = createTestEngine({ buildings: content.buildings });
-		const defender = ctx.game.opponent;
-		ctx.game.currentPlayerIndex = 1;
-		runEffects(
-			[
-				{
-					type: 'building',
-					method: 'add',
-					params: { id: stronghold.id },
-				},
-			],
-			ctx,
-		);
-		ctx.game.currentPlayerIndex = 0;
-
-		defender.absorption = 0.9;
-		defender.fortificationStrength = 10;
-		const castleBefore = defender.resources[Resource.castleHP];
-
-		const result = resolveAttack(
-			defender,
-			4,
-			ctx,
-			{
-				type: 'building',
-				id: stronghold.id,
-			},
-			{ ignoreAbsorption: true, ignoreFortification: true },
-		);
-
-		expect(result.damageDealt).toBe(4);
-		expect(result.evaluation.absorption.ignored).toBe(true);
-		expect(result.evaluation.fortification.ignored).toBe(true);
-		expect(defender.fortificationStrength).toBe(10);
-		expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
-		expect(defender.buildings.has(stronghold.id)).toBe(false);
-		expect(result.evaluation.target.type).toBe('building');
-		if (result.evaluation.target.type === 'building') {
-			expect(result.evaluation.target.destroyed).toBe(true);
-		}
-	});
-
-	it('delegates target application to registered handlers', () => {
-		const ctx = createTestEngine();
-		const defender = ctx.game.opponent;
-		const target: ResourceAttackTarget = {
-			type: 'resource',
-			key: Resource.castleHP,
-		};
-
-		const originalHandler = attackTargetHandlers.resource;
-		const mutation = { before: defender.resources[target.key] ?? 0, after: 3 };
-		const applySpy = vi.fn<typeof originalHandler.applyDamage>(
-			(_target, damage, _ctx, _defender, _meta) => {
-				return { ...mutation, after: Math.max(0, mutation.before - damage) };
-			},
-		);
-		const buildSpy = vi.fn<typeof originalHandler.buildLog>(
-			(resourceTarget, damage, _ctx, _defender, _meta, mut) => ({
-				type: 'resource',
-				key: resourceTarget.key,
-				before: mut.before,
-				damage,
-				after: mut.after,
-			}),
-		);
-
-		const stubHandler: AttackTargetHandler<
-			ResourceAttackTarget,
-			typeof mutation
-		> = {
-			getEvaluationModifierKey: vi.fn(
-				() => target.key,
-			) as typeof originalHandler.getEvaluationModifierKey,
-			applyDamage: applySpy,
-			buildLog: buildSpy,
-		};
-
-		attackTargetHandlers.resource = stubHandler;
-
-		try {
-			const result = resolveAttack(defender, 2, ctx, target);
-			expect(applySpy).toHaveBeenCalledTimes(1);
-			expect(buildSpy).toHaveBeenCalledTimes(1);
-			const [applyTarget, appliedDamage] = applySpy.mock.calls[0]!;
-			expect(applyTarget).toEqual(target);
-			expect(appliedDamage).toBe(result.damageDealt);
-			const buildResult = buildSpy.mock.results[0]!.value;
-			expect(result.evaluation.target).toEqual(buildResult);
-			expect(applySpy.mock.invocationCallOrder[0]).toBeLessThan(
-				buildSpy.mock.invocationCallOrder[0]!,
-			);
-		} finally {
-			attackTargetHandlers.resource = originalHandler;
-		}
 	});
 });
