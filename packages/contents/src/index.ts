@@ -54,3 +54,10 @@ export {
 	RESOURCE_TRANSFER_ICON,
 } from './defs';
 export { formatPassiveRemoval } from './text';
+export {
+	happinessModifierId,
+	happinessPassiveId,
+	happinessTierId,
+	type HappinessModifierKind,
+	type HappinessTierSlug,
+} from './happinessHelpers';

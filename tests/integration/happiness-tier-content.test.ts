@@ -1,18 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { Resource } from '@kingdom-builder/contents';
+import {
+	Resource,
+	happinessPassiveId,
+	type HappinessTierSlug,
+} from '@kingdom-builder/contents';
 import { createTestContext } from './fixtures';
 import { translateTierSummary } from '../../packages/web/src/translation/content/tierSummaries';
 
-const passiveIds = {
-	content: 'passive:happiness:content',
-	despair: 'passive:happiness:despair',
-	ecstatic: 'passive:happiness:ecstatic',
-	elated: 'passive:happiness:elated',
-	grim: 'passive:happiness:grim',
-	joyful: 'passive:happiness:joyful',
-	misery: 'passive:happiness:misery',
-	unrest: 'passive:happiness:unrest',
-} as const;
+type PassiveTier = Exclude<HappinessTierSlug, 'steady'>;
+
+const passiveIds: Record<PassiveTier, string> = {
+	content: happinessPassiveId('content'),
+	despair: happinessPassiveId('despair'),
+	ecstatic: happinessPassiveId('ecstatic'),
+	elated: happinessPassiveId('elated'),
+	grim: happinessPassiveId('grim'),
+	joyful: happinessPassiveId('joyful'),
+	misery: happinessPassiveId('misery'),
+	unrest: happinessPassiveId('unrest'),
+};
 
 const removalTokens = {
 	content: 'happiness stays between +3 and +4',
