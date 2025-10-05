@@ -22,6 +22,7 @@ import {
 	RULES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
+import { createTranslationContext } from '../translation/context';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
 import { useGameLog } from './useGameLog';
@@ -36,6 +37,7 @@ const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
 export type { PhaseStep } from './phaseTypes';
+export type { TranslationContext } from '../translation/context';
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
 
@@ -82,6 +84,23 @@ export function GameProvider({
 	const enqueue = <T,>(task: () => Promise<T> | T) => session.enqueue(task);
 
 	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
+
+	const translationContext = useMemo(
+		() =>
+			createTranslationContext(
+				sessionState,
+				{
+					actions: ACTIONS,
+					buildings: BUILDINGS,
+					developments: DEVELOPMENTS,
+				},
+				{
+					pullEffectLog: (key) => ctx.pullEffectLog(key),
+					passives: ctx.passives,
+				},
+			),
+		[sessionState, tick, ctx],
+	);
 
 	const {
 		timeScale,
@@ -189,6 +208,7 @@ export function GameProvider({
 		// TODO(engine-web#session): Remove legacy ctx usages once all
 		// consumers are migrated to the session facade.
 		ctx,
+		translationContext,
 		log,
 		logOverflowed,
 		hoverCard,

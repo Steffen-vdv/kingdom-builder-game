@@ -19,6 +19,8 @@ import {
 	GAME_START,
 	RULES,
 } from '@kingdom-builder/contents';
+import { createTranslationContext } from '../src/translation/context';
+import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -34,6 +36,18 @@ const ctx = createEngine({
 	rules: RULES,
 });
 const actionCostResource = ctx.actionCostResource;
+const translationContext = createTranslationContext(
+	snapshotEngine(ctx),
+	{
+		actions: ACTIONS,
+		buildings: BUILDINGS,
+		developments: DEVELOPMENTS,
+	},
+	{
+		pullEffectLog: (key) => ctx.pullEffectLog(key),
+		passives: ctx.passives,
+	},
+);
 
 const findActionWithReq = () => {
 	for (const [id] of (ACTIONS as unknown as { map: Map<string, unknown> })
@@ -52,6 +66,7 @@ const findActionWithReq = () => {
 const actionData = findActionWithReq();
 const mockGame = {
 	ctx,
+	translationContext,
 	log: [],
 	hoverCard: null as unknown as {
 		title: string;

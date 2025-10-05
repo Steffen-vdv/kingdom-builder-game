@@ -4,6 +4,7 @@ import type {
 	EngineSessionSnapshot,
 } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../translation/context';
 import type { Action } from './actionTypes';
 import type { PhaseStep } from './phaseTypes';
 import type { TimeScale } from './useTimeScale';
@@ -16,6 +17,7 @@ export interface GameEngineContextValue {
 	sessionState: EngineSessionSnapshot;
 	/** @deprecated Use `session` and `sessionState` instead. */
 	ctx: EngineContext;
+	translationContext: TranslationContext;
 	log: LogEntry[];
 	logOverflowed: boolean;
 	hoverCard: HoverCard | null;
