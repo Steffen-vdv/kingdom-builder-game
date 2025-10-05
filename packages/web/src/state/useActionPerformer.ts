@@ -95,8 +95,15 @@ export function useActionPerformer({
 					messages.splice(1, 0, '  💲 Action cost', ...costLines);
 				}
 
-				const normalize = (line: string) =>
-					(line.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
+				const normalize = (line: string) => {
+					const trimmed = line.trim();
+					if (!trimmed) {
+						return '';
+					}
+					return (trimmed.split(' (')[0] ?? '')
+						.replace(/\s[+-]?\d+$/, '')
+						.trim();
+				};
 
 				const subLines: string[] = [];
 				for (const trace of traces) {
@@ -125,12 +132,7 @@ export function useActionPerformer({
 				const subPrefixes = subLines.map(normalize);
 				const messagePrefixes = new Set<string>();
 				for (const line of messages) {
-					const trimmed = line.trim();
-					if (!trimmed.startsWith('You:') && !trimmed.startsWith('Opponent:')) {
-						continue;
-					}
-					const body = trimmed.slice(trimmed.indexOf(':') + 1).trim();
-					const normalized = normalize(body);
+					const normalized = normalize(line);
 					if (normalized) {
 						messagePrefixes.add(normalized);
 					}
