@@ -16,7 +16,13 @@ function createRng(seed: number) {
 
 describe('random action flow', () => {
 	it('advances phases, pays costs and applies effects across turns', () => {
-		const { ctx, actions, phases, costKey, gainKey } = createSyntheticContext();
+		const {
+			ctx: engineContext,
+			actions,
+			phases,
+			costKey,
+			gainKey,
+		} = createSyntheticContext();
 		const actionIds = actions.map((a) => a.id);
 		const mainPhase = phases[0].id;
 		const endPhase = phases[1].id;
@@ -29,47 +35,54 @@ describe('random action flow', () => {
 		);
 		const regenAmount = (regenEffect?.params as { amount: number }).amount;
 		const rng = createRng(42);
-		const initialTurn = ctx.game.turn;
+		const initialTurn = engineContext.game.turn;
 		const turns = 3;
+		const actionRegistry = engineContext.actions;
 
-		for (let t = 0; t < turns; t++) {
+		for (let turnIndex = 0; turnIndex < turns; turnIndex++) {
 			for (
 				let playerIndex = 0;
-				playerIndex < ctx.game.players.length;
+				playerIndex < engineContext.game.players.length;
 				playerIndex++
 			) {
-				expect(ctx.game.currentPhase).toBe(mainPhase);
-				while ((ctx.activePlayer.resources[costKey] ?? 0) > 0) {
-					const actionId = actionIds[Math.floor(rng() * actionIds.length)];
-					const costs = getActionCosts(actionId, ctx);
-					const beforeCost = ctx.activePlayer.resources[costKey];
-					const beforeGain = ctx.activePlayer.resources[gainKey];
-					const action = ctx.actions.get(actionId)!;
+				expect(engineContext.game.currentPhase).toBe(mainPhase);
+				const hasAvailableCost = () => {
+					const { resources } = engineContext.activePlayer;
+					return (resources[costKey] ?? 0) > 0;
+				};
+				while (hasAvailableCost()) {
+					const playerResources = engineContext.activePlayer.resources;
+					const randomIndex = Math.floor(rng() * actionIds.length);
+					const actionId = actionIds[randomIndex];
+					const costs = getActionCosts(actionId, engineContext);
+					const beforeCost = playerResources[costKey];
+					const beforeGain = playerResources[gainKey];
+					const action = actionRegistry.get(actionId)!;
 					const gain = (
 						action.effects.find(
 							(e) => e.type === 'resource' && e.method === 'add',
 						)!.params as { amount: number }
 					).amount;
-					performAction(actionId, ctx);
-					expect(ctx.activePlayer.resources[costKey]).toBe(
+					performAction(actionId, engineContext);
+					expect(playerResources[costKey]).toBe(
 						beforeCost - (costs[costKey] ?? 0),
 					);
-					expect(ctx.activePlayer.resources[gainKey]).toBe(beforeGain + gain);
+					expect(playerResources[gainKey]).toBe(beforeGain + gain);
 				}
-				const currentIndex = ctx.game.currentPlayerIndex;
-				advance(ctx);
-				expect(ctx.game.currentPhase).toBe(endPhase);
-				expect(ctx.game.currentPlayerIndex).toBe(currentIndex);
-				const player = ctx.activePlayer;
+				const currentIndex = engineContext.game.currentPlayerIndex;
+				advance(engineContext);
+				expect(engineContext.game.currentPhase).toBe(endPhase);
+				expect(engineContext.game.currentPlayerIndex).toBe(currentIndex);
+				const player = engineContext.activePlayer;
 				const beforeRegen = player.resources[costKey];
-				advance(ctx);
+				advance(engineContext);
 				expect(player.resources[costKey]).toBe(beforeRegen + regenAmount);
-				expect(ctx.game.currentPhase).toBe(mainPhase);
-				expect(ctx.game.currentPlayerIndex).toBe(
-					(currentIndex + 1) % ctx.game.players.length,
+				expect(engineContext.game.currentPhase).toBe(mainPhase);
+				expect(engineContext.game.currentPlayerIndex).toBe(
+					(currentIndex + 1) % engineContext.game.players.length,
 				);
 			}
 		}
-		expect(ctx.game.turn).toBe(initialTurn + turns);
+		expect(engineContext.game.turn).toBe(initialTurn + turns);
 	});
 });
