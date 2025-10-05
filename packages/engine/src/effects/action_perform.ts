@@ -13,7 +13,7 @@ type ActionPerformParams = ActionParameters<string> & {
 
 function resolveActionId(
 	params: ActionPerformParams | undefined,
-	ctx: Parameters<EffectHandler>[1],
+	context: Parameters<EffectHandler>[1],
 ): string | undefined {
 	const candidates: string[] = [];
 	if (typeof params?.__actionId === 'string') {
@@ -26,20 +26,20 @@ function resolveActionId(
 		candidates.push(params.id);
 	}
 	for (const candidate of candidates) {
-		if (ctx.actions.has(candidate)) {
+		if (context.actions.has(candidate)) {
 			return candidate;
 		}
 	}
 	return candidates[0];
 }
 
-export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
+export const actionPerform: EffectHandler = (effect, context, mult = 1) => {
 	const rawParams = effect.params as ActionPerformParams | undefined;
 	const developmentId =
 		typeof rawParams?.developmentId === 'string'
 			? rawParams.developmentId
 			: undefined;
-	const id = resolveActionId(rawParams, ctx);
+	const id = resolveActionId(rawParams, context);
 	if (!id) {
 		throw new Error('action:perform requires id');
 	}
@@ -61,9 +61,11 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 		}
 		forwarded = rest;
 	}
-	for (let i = 0; i < Math.floor(mult); i++) {
-		const def = ctx.actions.get(id);
-		const before = snapshotPlayer(ctx.activePlayer, ctx);
+	const iterations = Math.floor(mult);
+	let iterationIndex = 0;
+	while (iterationIndex < iterations) {
+		const def = context.actions.get(id);
+		const before = snapshotPlayer(context.activePlayer, context);
 		const resolved = resolveActionEffects(def, forwarded);
 		if (resolved.missingSelections.length > 0) {
 			const formatted = resolved.missingSelections
@@ -75,8 +77,8 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 			);
 		}
 		withStatSourceFrames(
-			ctx,
-			(_effect, _ctx, statKey) => ({
+			context,
+			(_effect, _context, statKey) => ({
 				key: `action:${def.id}:${statKey}`,
 				kind: 'action',
 				id: def.id,
@@ -84,11 +86,12 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 				longevity: 'permanent',
 			}),
 			() => {
-				runEffects(resolved.effects, ctx);
-				ctx.passives.runResultMods(def.id, ctx);
+				runEffects(resolved.effects, context);
+				context.passives.runResultMods(def.id, context);
 			},
 		);
-		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		ctx.actionTraces.push({ id: def.id, before, after });
+		const after = snapshotPlayer(context.activePlayer, context);
+		context.actionTraces.push({ id: def.id, before, after });
+		iterationIndex++;
 	}
 };
