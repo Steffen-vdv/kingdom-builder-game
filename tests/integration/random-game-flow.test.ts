@@ -33,7 +33,11 @@ describe('random action flow', () => {
 		const turns = 3;
 
 		for (let t = 0; t < turns; t++) {
-			for (let p = 0; p < ctx.game.players.length; p++) {
+			for (
+				let playerIndex = 0;
+				playerIndex < ctx.game.players.length;
+				playerIndex++
+			) {
 				expect(ctx.game.currentPhase).toBe(mainPhase);
 				while ((ctx.activePlayer.resources[costKey] ?? 0) > 0) {
 					const actionId = actionIds[Math.floor(rng() * actionIds.length)];

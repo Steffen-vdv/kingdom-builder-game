@@ -122,8 +122,8 @@ export class PlayerState {
 			this.resources[key] = 0;
 			Object.defineProperty(this, key, {
 				get: () => this.resources[key],
-				set: (v: number) => {
-					this.resources[key] = v;
+				set: (value: number) => {
+					this.resources[key] = value;
 				},
 				enumerable: false,
 				configurable: true,
@@ -141,9 +141,9 @@ export class PlayerState {
 			this.statSources[key] = {};
 			Object.defineProperty(this, key, {
 				get: () => this.stats[key],
-				set: (v: number) => {
-					this.stats[key] = v;
-					if (v !== 0) {
+				set: (value: number) => {
+					this.stats[key] = value;
+					if (value !== 0) {
 						this.statsHistory[key] = true;
 					}
 				},
