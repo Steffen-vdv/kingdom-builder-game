@@ -253,6 +253,7 @@ describe('EngineSession', () => {
 		expect(snapshot.tieredResourceKey).toBe(
 			context.services.rules.tieredResourceKey,
 		);
+	});
 
 	it('clones action cost lookups from the session', () => {
 		const content = createContentFactory();
