@@ -95,8 +95,9 @@ export default function HoverCard() {
 		[],
 	);
 
-	if (actionResolution) {
-		const resolutionTitle = renderedData?.title ?? 'Action resolution';
+	const resolutionTitle =
+		data?.title ?? renderedData?.title ?? 'Action resolution';
+	if (actionResolution && !data) {
 		return (
 			<ActionResolutionCard
 				title={resolutionTitle}
