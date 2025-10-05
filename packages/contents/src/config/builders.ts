@@ -662,6 +662,11 @@ class TierDisplayBuilder {
 		return this;
 	}
 
+	title(value: string) {
+		this.config.title = value;
+		return this;
+	}
+
 	icon(icon: string) {
 		this.config.icon = icon;
 		return this;

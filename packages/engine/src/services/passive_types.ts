@@ -26,6 +26,7 @@ export type PassiveSourceMetadata = {
 	id: string;
 	icon?: string;
 	labelToken?: string;
+	name?: string;
 };
 
 export type PassiveRemovalMetadata = {

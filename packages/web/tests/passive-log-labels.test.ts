@@ -51,6 +51,7 @@ describe('passive log labels', () => {
 		);
 		expect(activationLog).toBeTruthy();
 		expect(activationLog).not.toContain('happiness.tier.summary');
+		expect(activationLog).toContain('Joyful activated');
 
 		const beforeExpiration = snapshotPlayer(ctx.activePlayer, ctx);
 		setHappiness(0);
@@ -67,6 +68,7 @@ describe('passive log labels', () => {
 		);
 		expect(expirationLog).toBeTruthy();
 		expect(expirationLog).not.toContain('happiness.tier.summary');
+		expect(expirationLog).toContain('Joyful deactivated');
 	});
 
 	it('formats building passives and skips bonus activations', () => {

@@ -120,7 +120,6 @@ export default function PassiveDisplay({
 				const sections = def.onUpkeepPhase
 					? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
 					: items;
-				const passiveName = passive.name ?? PASSIVE_INFO.label;
 				return (
 					<div
 						key={passive.id}
@@ -139,7 +138,9 @@ export default function PassiveDisplay({
 								descriptionEntries.push(removalText);
 							}
 							handleHoverCard({
-								title: `${icon} ${passiveName || PASSIVE_INFO.label}`,
+								title: icon
+									? `${icon} ${label || PASSIVE_INFO.label}`
+									: label || PASSIVE_INFO.label,
 								effects,
 								requirements: [],
 								...(descriptionEntries.length

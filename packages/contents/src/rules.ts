@@ -201,6 +201,7 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 			display
 				.summaryToken(config.summaryToken)
 				.removalCondition(config.removal)
+				.title(name)
 				.icon(icon),
 		);
 	if (config.passiveId) {

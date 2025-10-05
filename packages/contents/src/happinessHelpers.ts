@@ -88,6 +88,7 @@ export function createTierPassiveEffect({
 			type: 'tiered-resource',
 			id: tierId,
 			...(summaryToken ? { labelToken: summaryToken } : {}),
+			...(name ? { name } : {}),
 			...(icon ? { icon } : {}),
 		},
 		removal: {

@@ -1,7 +1,7 @@
 import { PASSIVE_INFO } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
-import { summarizeContent, splitSummary } from '../../translation';
-import type { SummaryGroup } from '../../translation/content';
+import { describeEffects, splitSummary } from '../../translation';
+import type { SummaryEntry, SummaryGroup } from '../../translation/content';
 
 export const MAX_TIER_SUMMARY_LINES = 4;
 
@@ -55,16 +55,43 @@ function extractTierSlug(value: string | undefined) {
 	return trimmed;
 }
 
-function formatTierName(value: string | undefined) {
-	const slug = extractTierSlug(value);
-	if (!slug) {
-		return 'Tier';
-	}
-	return slug
+function formatSlug(value: string) {
+	return value
 		.split(/[-_]/g)
 		.filter(Boolean)
 		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
 		.join(' ');
+}
+
+function tryFormatTierName(value: string | undefined) {
+	const slug = extractTierSlug(value);
+	if (!slug) {
+		return undefined;
+	}
+	return formatSlug(slug);
+}
+
+function resolveTierName(tier: TierDefinition) {
+	const displayTitle = tier.display?.title?.trim();
+	if (displayTitle) {
+		return displayTitle;
+	}
+	return (
+		tryFormatTierName(tier.display?.summaryToken) ??
+		tryFormatTierName(tier.preview?.id) ??
+		tryFormatTierName(tier.id) ??
+		'Tier'
+	);
+}
+
+function normalizeSummary(summary: string | undefined): SummaryEntry[] {
+	if (!summary) {
+		return [];
+	}
+	return summary
+		.split(/\r?\n/u)
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0);
 }
 
 export function buildTierEntries(
@@ -85,17 +112,34 @@ export function buildTierEntries(
 		const { display, active } = entry;
 		const rangeLabel = formatTierRange(entry);
 		const icon = display?.icon ?? PASSIVE_INFO.icon ?? '';
-		const labelToken = display?.summaryToken ?? entry.text?.summary;
-		const name = formatTierName(labelToken ?? entry.id);
-		const formattedRange = rangeLabel.length ? `(${rangeLabel})` : undefined;
-		const titleParts = [icon, name, formattedRange].filter(
+		const name = resolveTierName(entry);
+		const titleParts = [icon, name].filter(
 			(part) => part && String(part).trim().length > 0,
 		);
 		const title = titleParts.join(' ').trim();
 
-		const summary = summarizeContent('tier', entry, ctx);
-		const { effects } = splitSummary(summary);
-		const items = effects.slice(0, MAX_TIER_SUMMARY_LINES);
+		let summaryEntries: SummaryEntry[] = [];
+		if (entry.preview?.effects?.length) {
+			summaryEntries = describeEffects(entry.preview.effects, ctx);
+		}
+		if (!summaryEntries.length) {
+			summaryEntries = normalizeSummary(entry.text?.summary);
+		}
+		if (!summaryEntries.length) {
+			summaryEntries = ['No effect'];
+		}
+		const { effects } = splitSummary(summaryEntries);
+		const items: SummaryEntry[] = [];
+		if (rangeLabel.length) {
+			items.push(`Range: ${rangeLabel}`);
+		}
+		const remaining = Math.max(0, MAX_TIER_SUMMARY_LINES - items.length);
+		if (remaining > 0) {
+			items.push(...effects.slice(0, remaining));
+		}
+		if (items.length === 0) {
+			items.push('No effect');
+		}
 		const group: TierSummaryGroup = { title, items };
 		if (active) {
 			group.className = 'text-emerald-600 dark:text-emerald-300';
