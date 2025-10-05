@@ -112,15 +112,25 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Prefer high-level integration tests for complex behaviours and unit tests for
   individual handlers. Use registries to swap implementations in tests instead
   of importing concrete handlers directly.
-- Execute the canonical quick suite with:
+- Execute the canonical quick suite during iterative development only:
 
   ```sh
   npm run test:quick >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log
   ```
 
   The command logs Vitest output to `/tmp/unit.log` and prints the tail for a
-  quick status check. **Run no additional manual test or build commands unless
-  explicitly instructed.**
+  fast sanity check while you are actively coding. It is **not** a replacement
+  for the required pre-submission workflow.
+
+- Before submitting or requesting review, run the full validation sequence in
+  order:
+
+  ```sh
+  npm run check && npm run test:coverage
+  ```
+
+  This combined snippet lints, type-checks, runs unit and integration tests,
+  and then verifies coverage to match the repository's expectations.
 
 - The Husky pre-commit hook runs `lint-staged` followed by `npm run test:quick`.
   GitHub Actions executes `npm run test:ci` (coverage) and `npm run build` for
