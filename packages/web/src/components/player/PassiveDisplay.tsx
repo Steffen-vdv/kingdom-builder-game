@@ -151,13 +151,13 @@ export default function PassiveDisplay({
 						}}
 						onMouseLeave={clearHoverCard}
 					>
-						<div className="flex items-start gap-3">
-							<span className="text-2xl leading-none">{icon}</span>
-							<div className="flex flex-col gap-1 text-sm leading-snug">
-								<span className="font-semibold text-slate-700 dark:text-slate-100">
-									{label}
-								</span>
-							</div>
+						<div className="flex items-center gap-2 text-sm leading-snug">
+							{icon ? (
+								<span className="text-2xl leading-none">{icon}</span>
+							) : null}
+							<span className="font-semibold text-slate-700 dark:text-slate-100">
+								{icon ? `- ${label}` : label}
+							</span>
 						</div>
 					</div>
 				);

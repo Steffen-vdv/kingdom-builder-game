@@ -223,7 +223,7 @@ function isBuildingPassive(
 }
 
 function decoratePassiveLabel(icon: string, label: string): string {
-	return icon ? `${icon}${label}` : label;
+	return icon ? `${icon} - ${label}` : label;
 }
 
 export function appendPassiveChanges(
@@ -241,10 +241,9 @@ export function appendPassiveChanges(
 		if (isBuildingPassive(id, newBuildings)) {
 			continue;
 		}
-		const { icon, label, removal } = resolvePassivePresentation(passive);
+		const { icon, label } = resolvePassivePresentation(passive);
 		const decoratedLabel = decoratePassiveLabel(icon, label);
-		const suffix = removal ? ` (${removal})` : '';
-		changes.push(`${decoratedLabel} activated${suffix}`);
+		changes.push(`${decoratedLabel} activated`);
 	}
 	for (const [id, passive] of previous) {
 		if (next.has(id)) {
@@ -252,6 +251,6 @@ export function appendPassiveChanges(
 		}
 		const { icon, label } = resolvePassivePresentation(passive);
 		const decoratedLabel = decoratePassiveLabel(icon, label);
-		changes.push(`${decoratedLabel} expired`);
+		changes.push(`${decoratedLabel} deactivated`);
 	}
 }

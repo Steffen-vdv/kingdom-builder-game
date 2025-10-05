@@ -63,7 +63,7 @@ describe('passive log labels', () => {
 			ctx,
 		);
 		const expirationLog = expirationLines.find((line) =>
-			line.includes('expired'),
+			line.includes('deactivated'),
 		);
 		expect(expirationLog).toBeTruthy();
 		expect(expirationLog).not.toContain('happiness.tier.summary');
