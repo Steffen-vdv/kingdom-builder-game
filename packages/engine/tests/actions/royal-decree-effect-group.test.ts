@@ -147,6 +147,12 @@ describe('royal decree action effect group', () => {
 					nestedActionId,
 			),
 		).toBe(true);
+		const optionEffect = performEffects.find((effect) => {
+			const meta = effect.meta as Record<string, unknown> | undefined;
+			return meta?.['optionId'] === optionId;
+		});
+		expect(optionEffect?.meta?.['groupId']).toBe(group.id);
+		expect(optionEffect?.meta?.['sourceActionId']).toBe(actionId);
 		expect(
 			performEffects.some(
 				(effect) =>
@@ -195,9 +201,13 @@ describe('royal decree action effect group', () => {
 				delete paramsRecord['actionId'];
 				delete paramsRecord['__actionId'];
 			}
+			const metaRecord = effect.meta as Record<string, unknown> | undefined;
+			if (metaRecord && metaRecord['actionId'] === option.actionId) {
+				delete metaRecord['actionId'];
+				delete metaRecord['__actionId'];
+			}
 			return originalHandler(effect, engineCtx, mult);
 		});
-
 		expect(() => performAction(actionId, ctx, params)).not.toThrow();
 		EFFECTS.add('action:perform', originalHandler);
 

@@ -2,7 +2,10 @@ import type { EffectHandler } from '.';
 import { runEffects } from '.';
 import { snapshotPlayer } from '../log';
 import { withStatSourceFrames } from '../stat_sources';
-import { resolveActionEffects } from '../actions/effect_groups';
+import {
+	resolveActionEffects,
+	isActionEffectGroup,
+} from '../actions/effect_groups';
 import type { ActionParameters } from '../actions/action_parameters';
 
 type ActionPerformParams = ActionParameters<string> & {
@@ -15,10 +18,21 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 	const meta = effect.meta;
 	const metaActionIdValue = meta?.['actionId'];
 	const metaHiddenIdValue = meta?.['__actionId'];
+	const metaOptionIdValue = meta?.['optionId'];
+	const metaGroupIdValue = meta?.['groupId'];
+	const metaSourceActionIdValue = meta?.['sourceActionId'];
 	const metaActionId =
 		typeof metaActionIdValue === 'string' ? metaActionIdValue : undefined;
 	const metaHiddenId =
 		typeof metaHiddenIdValue === 'string' ? metaHiddenIdValue : undefined;
+	const metaOptionId =
+		typeof metaOptionIdValue === 'string' ? metaOptionIdValue : undefined;
+	const metaGroupId =
+		typeof metaGroupIdValue === 'string' ? metaGroupIdValue : undefined;
+	const metaSourceActionId =
+		typeof metaSourceActionIdValue === 'string'
+			? metaSourceActionIdValue
+			: undefined;
 	let id: string | undefined;
 	if (typeof rawParams?.__actionId === 'string') {
 		id = rawParams.__actionId;
@@ -33,7 +47,23 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 		ctx.actions.has(rawParams.id)
 	) {
 		id = rawParams.id;
+	} else if (metaSourceActionId && metaOptionId) {
+		const source = ctx.actions.get(metaSourceActionId);
+		const candidates = source.effects.filter(isActionEffectGroup);
+		const groups = metaGroupId
+			? candidates.filter((group) => group.id === metaGroupId)
+			: candidates;
+		for (const group of groups) {
+			const option = group.options.find(
+				(candidate) => candidate.id === metaOptionId,
+			);
+			if (option) {
+				id = option.actionId;
+				break;
+			}
+		}
 	}
+
 	if (!id) {
 		const received =
 			typeof rawParams?.id === 'string'

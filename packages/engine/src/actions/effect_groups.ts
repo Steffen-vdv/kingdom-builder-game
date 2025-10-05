@@ -18,7 +18,7 @@ export type ActionEffectGroupChoiceMap = Record<
 	ActionEffectGroupChoice
 >;
 
-function isActionEffectGroup(
+export function isActionEffectGroup(
 	effect: ActionEffect,
 ): effect is ActionEffectGroup {
 	return Boolean(effect && typeof effect === 'object' && 'options' in effect);
@@ -57,6 +57,8 @@ function mergeOptionParams(
 function buildOptionEffects(
 	option: ActionEffectGroupOption,
 	optionParams: Record<string, unknown>,
+	sourceActionId: string,
+	groupId: string,
 ): EffectDef[] {
 	const effect: EffectDef = {
 		type: 'action',
@@ -70,6 +72,8 @@ function buildOptionEffects(
 			actionId: option.actionId,
 			__actionId: option.actionId,
 			optionId: option.id,
+			groupId,
+			sourceActionId,
 		},
 	};
 	return applyParamsToEffects([effect], optionParams);
@@ -200,7 +204,12 @@ export function resolveActionEffects<T extends string>(
 			...(selection.params || {}),
 		};
 		const optionParams = mergeOptionParams(option, mergedParams);
-		const optionEffects = buildOptionEffects(option, optionParams);
+		const optionEffects = buildOptionEffects(
+			option,
+			optionParams,
+			actionDefinition.id,
+			effect.id,
+		);
 		const resolvedOption: ResolvedActionEffectGroupOption = {
 			option,
 			effects: optionEffects,
