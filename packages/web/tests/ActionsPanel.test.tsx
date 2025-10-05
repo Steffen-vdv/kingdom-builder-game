@@ -66,41 +66,45 @@ beforeEach(() => {
 });
 
 describe('<ActionsPanel />', () => {
-	it('renders hire options for generated population roles with derived requirement icons', () => {
-		render(<ActionsPanel />);
-		const raiseAction = metadata.actions.raise;
-		expect(requirementIconsMock).toHaveBeenCalledWith(
-			raiseAction.id,
-			expect.anything(),
-		);
-		const baseIcons = metadata.requirementIcons.get(raiseAction.id) ?? [];
-		const hireButtons = screen.getAllByRole('button', {
-			name: /Hire\s*:/,
-		});
-		const requirementTexts = hireButtons.map(
-			(button) => within(button).getByText(/^Req/).textContent ?? '',
-		);
-		for (const role of metadata.populationRoles) {
-			expect(
-				requirementTexts.some((text) => {
-					if (!text.includes('Req')) {
-						return false;
-					}
-					if (baseIcons.some((icon) => !text.includes(icon))) {
-						return false;
-					}
-					if (
-						metadata.populationInfoIcon &&
-						!text.includes(metadata.populationInfoIcon)
-					) {
-						return false;
-					}
-					return role.icon ? text.includes(role.icon) : true;
-				}),
-			).toBe(true);
-		}
-		expect(hireButtons).toHaveLength(metadata.populationRoles.length);
-	});
+	it(
+		'renders hire options for generated population roles ' +
+			'with derived requirement icons',
+		() => {
+			render(<ActionsPanel />);
+			const raiseAction = metadata.actions.raise;
+			expect(requirementIconsMock).toHaveBeenCalledWith(
+				raiseAction.id,
+				expect.anything(),
+			);
+			const baseIcons = metadata.requirementIcons.get(raiseAction.id) ?? [];
+			const hireButtons = screen.getAllByRole('button', {
+				name: /Hire\s*:/,
+			});
+			const requirementTexts = hireButtons.map(
+				(button) => within(button).getByText(/^Req/).textContent ?? '',
+			);
+			for (const role of metadata.populationRoles) {
+				expect(
+					requirementTexts.some((text) => {
+						if (!text.includes('Req')) {
+							return false;
+						}
+						if (baseIcons.some((icon) => !text.includes(icon))) {
+							return false;
+						}
+						if (
+							metadata.populationInfoIcon &&
+							!text.includes(metadata.populationInfoIcon)
+						) {
+							return false;
+						}
+						return role.icon ? text.includes(role.icon) : true;
+					}),
+				).toBe(true);
+			}
+			expect(hireButtons).toHaveLength(metadata.populationRoles.length);
+		},
+	);
 
 	it('falls back to requirement helper icons for building cards', () => {
 		setScenario({ showBuilding: true });
@@ -123,17 +127,26 @@ describe('<ActionsPanel />', () => {
 		});
 		const requirementText =
 			within(buildingButton).getByText(/^Req/).textContent ?? '';
-		expect(icons.every((icon) => requirementText.includes(icon))).toBe(true);
+		const allIconsPresent = icons.every((icon) => {
+			return requirementText.includes(icon);
+		});
+		expect(allIconsPresent).toBe(true);
 	});
 
-	it('omits the hire section when the helper supplies a non-population action category', () => {
-		setScenario({ actionCategories: { population: 'custom-population' } });
-		expect(metadata.actions.raise.category).toBe('custom-population');
-		render(<ActionsPanel />);
-		expect(screen.queryAllByRole('button', { name: /Hire\s*:/ })).toHaveLength(
-			0,
-		);
-	});
+	it(
+		'omits the hire section when the helper supplies a non-population ' +
+			'action category',
+		() => {
+			setScenario({
+				actionCategories: { population: 'custom-population' },
+			});
+			expect(metadata.actions.raise.category).toBe('custom-population');
+			render(<ActionsPanel />);
+			expect(
+				screen.queryAllByRole('button', { name: /Hire\s*:/ }),
+			).toHaveLength(0);
+		},
+	);
 
 	it('renders requirement icons for custom generated population roles', () => {
 		setScenario({
