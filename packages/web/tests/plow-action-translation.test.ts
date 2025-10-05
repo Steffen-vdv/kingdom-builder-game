@@ -127,7 +127,7 @@ describe('plow action translation', () => {
 					upkeepDescriptionLabel
 				}`,
 				items: [
-					`💲 Cost Modifier on all actions: Increase cost by ${modIcon}${modAmt}`,
+					`💲 Cost Adjustment on all actions: Increase cost by ${modIcon}${modAmt}`,
 				],
 			},
 		]);
