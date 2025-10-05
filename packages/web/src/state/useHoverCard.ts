@@ -1,0 +1,60 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Summary } from '../translation';
+
+export interface HoverCard {
+	title: string;
+	effects: Summary;
+	requirements: string[];
+	costs?: Record<string, number>;
+	upkeep?: Record<string, number> | undefined;
+	description?: string | Summary;
+	descriptionTitle?: string;
+	descriptionClass?: string;
+	effectsTitle?: string;
+	bgClass?: string;
+}
+
+interface HoverCardOptions {
+	setTrackedTimeout: (callback: () => void, delay: number) => number;
+	clearTrackedTimeout: (id: number) => void;
+}
+
+export function useHoverCard({
+	setTrackedTimeout,
+	clearTrackedTimeout,
+}: HoverCardOptions) {
+	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
+	const hoverTimeout = useRef<number>();
+
+	useEffect(() => {
+		return () => {
+			if (hoverTimeout.current) {
+				clearTrackedTimeout(hoverTimeout.current);
+			}
+			hoverTimeout.current = undefined;
+		};
+	}, [clearTrackedTimeout]);
+
+	const handleHoverCard = useCallback(
+		(data: HoverCard) => {
+			if (hoverTimeout.current) {
+				clearTrackedTimeout(hoverTimeout.current);
+			}
+			hoverTimeout.current = setTrackedTimeout(() => {
+				hoverTimeout.current = undefined;
+				setHoverCard(data);
+			}, 300);
+		},
+		[clearTrackedTimeout, setTrackedTimeout],
+	);
+
+	const clearHoverCard = useCallback(() => {
+		if (hoverTimeout.current) {
+			clearTrackedTimeout(hoverTimeout.current);
+			hoverTimeout.current = undefined;
+		}
+		setHoverCard(null);
+	}, [clearTrackedTimeout]);
+
+	return { hoverCard, handleHoverCard, clearHoverCard };
+}
