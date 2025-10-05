@@ -106,6 +106,7 @@ export default function PassiveDisplay({
 				});
 				const icon = presentation.icon || PASSIVE_INFO.icon || '';
 				const label = presentation.label;
+				const displayLabel = label || PASSIVE_INFO.label || '';
 				const removalText = presentation.removal;
 				const summaryText = presentation.summary;
 				const tierDefinition = tierByPassiveId.get(passive.id);
@@ -138,9 +139,7 @@ export default function PassiveDisplay({
 								descriptionEntries.push(removalText);
 							}
 							handleHoverCard({
-								title: icon
-									? `${icon} ${label || PASSIVE_INFO.label}`
-									: label || PASSIVE_INFO.label,
+								title: icon ? `${icon} ${displayLabel}` : displayLabel,
 								effects,
 								requirements: [],
 								...(descriptionEntries.length
@@ -157,7 +156,7 @@ export default function PassiveDisplay({
 								<span className="text-2xl leading-none">{icon}</span>
 							) : null}
 							<span className="font-semibold text-slate-700 dark:text-slate-100">
-								{icon ? `- ${label}` : label}
+								{displayLabel}
 							</span>
 						</div>
 					</div>

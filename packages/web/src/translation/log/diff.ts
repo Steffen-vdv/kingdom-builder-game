@@ -7,8 +7,8 @@ import {
 	appendBuildingChanges,
 	appendLandChanges,
 	appendSlotChanges,
-	appendPassiveChanges,
 } from './diffSections';
+import { appendPassiveChanges } from './passiveChanges';
 import { collectResourceKeys, type PlayerSnapshot } from './snapshots';
 import { type StepEffects } from './statBreakdown';
 

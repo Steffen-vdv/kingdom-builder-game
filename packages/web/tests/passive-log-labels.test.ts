@@ -9,6 +9,7 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	PASSIVE_INFO,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 
@@ -51,6 +52,9 @@ describe('passive log labels', () => {
 		);
 		expect(activationLog).toBeTruthy();
 		expect(activationLog).not.toContain('happiness.tier.summary');
+		if (PASSIVE_INFO.icon) {
+			expect(activationLog?.startsWith(`${PASSIVE_INFO.icon} `)).toBe(true);
+		}
 		expect(activationLog).toContain('Joyful activated');
 
 		const beforeExpiration = snapshotPlayer(ctx.activePlayer, ctx);
@@ -68,6 +72,9 @@ describe('passive log labels', () => {
 		);
 		expect(expirationLog).toBeTruthy();
 		expect(expirationLog).not.toContain('happiness.tier.summary');
+		if (PASSIVE_INFO.icon) {
+			expect(expirationLog?.startsWith(`${PASSIVE_INFO.icon} `)).toBe(true);
+		}
 		expect(expirationLog).toContain('Joyful deactivated');
 	});
 

@@ -1,4 +1,8 @@
-import { PASSIVE_INFO } from '@kingdom-builder/contents';
+import {
+	PASSIVE_INFO,
+	RESOURCES,
+	type ResourceKey,
+} from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { describeEffects, splitSummary } from '../../translation';
 import type { SummaryEntry, SummaryGroup } from '../../translation/content';
@@ -25,15 +29,12 @@ export interface TierEntriesResult {
 function formatTierRange(tier: TierDefinition) {
 	const { min, max } = tier.range;
 	if (max === undefined) {
-		if (min >= 0) {
-			return `${min}+`;
-		}
-		return `≤ ${min}`;
+		return `${min}+`;
 	}
 	if (min === max) {
 		return `${min}`;
 	}
-	return `${min} to ${max}`;
+	return `${min} - ${max}`;
 }
 
 function extractTierSlug(value: string | undefined) {
@@ -104,19 +105,31 @@ export function buildTierEntries(
 	const orderedTiers = [...tiers].sort(
 		(a, b) => getRangeStart(b) - getRangeStart(a),
 	);
+	const tierResourceKey = ctx.services.tieredResource?.resourceKey as
+		| ResourceKey
+		| undefined;
+	const tierResourceIcon = tierResourceKey
+		? RESOURCES[tierResourceKey]?.icon || ''
+		: '';
 	const entries: TierSummaryEntry[] = orderedTiers.map((tier) => ({
 		...tier,
 		active: tier.id === activeId,
 	}));
 	const summaries = entries.map((entry) => {
 		const { display, active } = entry;
-		const rangeLabel = formatTierRange(entry);
 		const icon = display?.icon ?? PASSIVE_INFO.icon ?? '';
 		const name = resolveTierName(entry);
 		const titleParts = [icon, name].filter(
 			(part) => part && String(part).trim().length > 0,
 		);
-		const title = titleParts.join(' ').trim();
+		const baseTitle = titleParts.join(' ').trim();
+		const rangeLabel = formatTierRange(entry);
+		const rangeDisplay = rangeLabel.length
+			? [tierResourceIcon, rangeLabel]
+					.filter((part) => part && String(part).trim().length > 0)
+					.join(' ')
+			: '';
+		const title = rangeDisplay ? `${baseTitle} (${rangeDisplay})` : baseTitle;
 
 		let summaryEntries: SummaryEntry[] = [];
 		if (entry.preview?.effects?.length) {
@@ -129,14 +142,7 @@ export function buildTierEntries(
 			summaryEntries = ['No effect'];
 		}
 		const { effects } = splitSummary(summaryEntries);
-		const items: SummaryEntry[] = [];
-		if (rangeLabel.length) {
-			items.push(`Range: ${rangeLabel}`);
-		}
-		const remaining = Math.max(0, MAX_TIER_SUMMARY_LINES - items.length);
-		if (remaining > 0) {
-			items.push(...effects.slice(0, remaining));
-		}
+		const items = effects.slice(0, MAX_TIER_SUMMARY_LINES);
 		if (items.length === 0) {
 			items.push('No effect');
 		}

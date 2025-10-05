@@ -30,6 +30,8 @@ type MockGame = {
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
 
+type SummaryGroupLike = { title?: string; items?: unknown[] };
+
 function flattenSummary(entries: unknown[]): string[] {
 	const lines: string[] = [];
 	const queue = [...entries];
@@ -58,15 +60,12 @@ function flattenSummary(entries: unknown[]): string[] {
 function formatTierRange(tier: TierDefinition) {
 	const { min, max } = tier.range;
 	if (max === undefined) {
-		if (min >= 0) {
-			return `${min}+`;
-		}
-		return `≤ ${min}`;
+		return `${min}+`;
 	}
 	if (min === max) {
 		return `${min}`;
 	}
-	return `${min} to ${max}`;
+	return `${min} - ${max}`;
 }
 
 function normalizeSummary(summary: string | undefined): string[] {
@@ -134,14 +133,19 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const orderedTiers = [...tiers].sort(
 			(a, b) => getRangeStart(b) - getRangeStart(a),
 		);
+		const tierResourceIcon = RESOURCES[happinessKey]?.icon || '';
 		orderedTiers.forEach((tier, index) => {
-			const entry = tierEntries.at(index) as { items?: unknown[] } | undefined;
+			const entry = tierEntries.at(index) as SummaryGroupLike | undefined;
 			expect(entry).toBeTruthy();
+			const title = entry?.title ?? '';
 			const items = entry?.items ?? [];
 			expect(items.length).toBeLessThanOrEqual(MAX_TIER_SUMMARY_LINES);
 			const rangeLabel = formatTierRange(tier);
-			expect(items.at(0)).toBe(`Range: ${rangeLabel}`);
-			const rangeOffset = 1;
+			if (tierResourceIcon) {
+				expect(title).toContain(`(${tierResourceIcon} ${rangeLabel})`);
+			} else {
+				expect(title).toContain(`(${rangeLabel})`);
+			}
 			const summaryEntries = tier.preview?.effects?.length
 				? describeEffects(tier.preview.effects, ctx)
 				: normalizeSummary(tier.text?.summary);
@@ -149,12 +153,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 				? summaryEntries
 				: ['No effect'];
 			const { effects } = splitSummary(baseSummary);
-			const expectedEffects = effects.slice(
-				0,
-				MAX_TIER_SUMMARY_LINES - rangeOffset,
-			);
-			const actualEffects = items.slice(rangeOffset);
-			expect(actualEffects).toEqual(expectedEffects);
+			const expectedEffects = effects.slice(0, MAX_TIER_SUMMARY_LINES);
+			expect(items).toEqual(expectedEffects);
 			const removalText = tier.text?.removal;
 			if (removalText) {
 				expect(flattenSummary(items)).not.toContain(removalText);
