@@ -147,40 +147,131 @@ export default function ActionsPanel() {
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
 		: 'Show opponent actions';
+	const sectionClasses = [
+		'relative',
+		'rounded-3xl',
+		'border',
+		'border-white/60',
+		'bg-white/75',
+		'p-6',
+		'shadow-2xl',
+		'backdrop-blur-xl',
+		'dark:border-white/10',
+		'dark:bg-slate-900/70',
+		'dark:shadow-slate-900/50',
+		'frosted-surface',
+	].join(' ');
+	const overlayClasses = [
+		'pointer-events-none',
+		'absolute',
+		'inset-0',
+		'rounded-3xl',
+		'bg-gradient-to-br',
+		'from-white/70',
+		'via-white/55',
+		'to-white/10',
+		'ring-1',
+		'ring-inset',
+		'ring-white/60',
+		'dark:from-slate-100/15',
+		'dark:via-slate-100/10',
+		'dark:to-transparent',
+		'dark:ring-white/10',
+	].join(' ');
+	const headerClasses = [
+		'mb-4',
+		'flex',
+		'flex-col',
+		'gap-3',
+		'sm:flex-row',
+		'sm:items-center',
+		'sm:justify-between',
+	].join(' ');
+	const titleClasses = [
+		'text-2xl',
+		'font-semibold',
+		'tracking-tight',
+		'text-slate-900',
+		'dark:text-slate-100',
+	].join(' ');
+	const costLabelClasses = [
+		'text-base',
+		'font-normal',
+		'text-slate-500',
+		'dark:text-slate-300',
+	].join(' ');
+	const indicatorPillClasses = [
+		'rounded-full',
+		'border',
+		'border-white/60',
+		'bg-white/70',
+		'px-3',
+		'py-1',
+		'text-xs',
+		'font-semibold',
+		'uppercase',
+		'tracking-[0.3em]',
+		'text-slate-600',
+		'shadow-sm',
+		'dark:border-white/10',
+		'dark:bg-white/10',
+		'dark:text-slate-200',
+		'frosted-surface',
+	].join(' ');
+	const toggleButtonClasses = [
+		'inline-flex',
+		'h-10',
+		'w-10',
+		'items-center',
+		'justify-center',
+		'rounded-full',
+		'border',
+		'border-white/60',
+		'bg-white/70',
+		'text-lg',
+		'font-semibold',
+		'text-slate-700',
+		'shadow-md',
+		'transition',
+		'hover:bg-white/90',
+		'hover:text-slate-900',
+		'focus:outline-none',
+		'focus-visible:ring-2',
+		'focus-visible:ring-amber-400',
+		'dark:border-white/10',
+		'dark:bg-slate-900/80',
+		'dark:text-slate-100',
+		'dark:hover:bg-slate-900',
+	].join(' ');
 
 	return (
 		<section
-			className="relative rounded-3xl border border-white/60 bg-white/75 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/50 frosted-surface"
+			className={sectionClasses}
 			aria-disabled={panelDisabled || undefined}
 		>
-			{panelDisabled && (
-				<div
-					aria-hidden
-					className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-white/70 via-white/55 to-white/10 ring-1 ring-inset ring-white/60 dark:from-slate-100/15 dark:via-slate-100/10 dark:to-transparent dark:ring-white/10"
-				/>
-			)}
-			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-				<h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+			{panelDisabled && <div aria-hidden className={overlayClasses} />}
+			<div className={headerClasses}>
+				<h2 className={titleClasses}>
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
-					<span className="text-base font-normal text-slate-500 dark:text-slate-300">
+					<span className={costLabelClasses}>
 						(1 {RESOURCES[actionCostResource].icon} each)
 					</span>
 				</h2>
 				<div className="flex flex-wrap items-center gap-2">
 					{viewingOpponent && (
-						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-200 frosted-surface">
+						<span className={indicatorPillClasses}>
 							<span>Viewing Opponent</span>
 						</span>
 					)}
 					{!isActionPhase && (
-						<span className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-200 frosted-surface">
+						<span className={indicatorPillClasses}>
 							<span>Not In Main Phase</span>
 						</span>
 					)}
 					{isLocalTurn && (
 						<button
 							type="button"
-							className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/70 text-lg font-semibold text-slate-700 shadow-md transition hover:bg-white/90 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-900"
+							className={toggleButtonClasses}
 							onClick={() => setViewingOpponent((previous) => !previous)}
 							aria-label={toggleLabel}
 						>
