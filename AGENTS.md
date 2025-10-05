@@ -85,6 +85,17 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Legacy files above 250 lines remain until refactored; new code should respect
   the limit.
 
+### 2.3 Pull Request Submission Protocol
+
+- Every time you call the `make_pr` tool, copy the full contents of
+  `.github/PULL_REQUEST_TEMPLATE.md` into the PR body and replace every
+  placeholder with the specific information for the current change set.
+- Do not trim sections from the template or leave HTML comments/placeholder
+  markers in place; fill out each required section completely.
+- Reviewers will immediately bounce any PR whose description omits a section
+  from the template or leaves placeholders unaddressed, so confirm compliance
+  before invoking `make_pr`.
+
 #### Coding Standards Checklist
 
 - [ ] Wrap every conditional or loop body in braces, even for single statements.
@@ -93,7 +104,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - [ ] Use descriptive, human-readable identifiers instead of abbreviations.
 - [ ] Indent code with tabs to preserve consistent formatting.
 
-### 2.3 Code Standards & Naming
+### 2.4 Code Standards & Naming
 
 - Prefer descriptive names; avoid one-letter identifiers except for familiar
   generic parameters.
@@ -105,7 +116,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Documentation (`*.md`) and non-runtime tooling (e.g., `overview.tsx`) may
   adopt context-specific formatting.
 
-### 2.4 Testing Workflow
+### 2.5 Testing Workflow
 
 - Tests reside in `packages/engine/tests` (unit) and `tests/integration`
   (integration).
