@@ -44,10 +44,9 @@ export function buildDescribeEntry(
 		absorptionLabel,
 		' damage reduction',
 	].join('');
-	const appliedAbsorption = [
-		absorptionLabel,
-		' damage reduction applied',
-	].join('');
+	const appliedAbsorption = [absorptionLabel, ' damage reduction applied'].join(
+		'',
+	);
 	const absorptionItem = ignoreAbsorption
 		? absorption
 			? ignoringAbsorption
@@ -174,11 +173,7 @@ export function buildStandardEvaluationEntry(
 
 	if (log.absorption.ignored) {
 		items.push(
-			[
-				powerValue(log.power.modified),
-				'ignores',
-				absorptionLabel,
-			].join(' '),
+			[powerValue(log.power.modified), 'ignores', absorptionLabel].join(' '),
 		);
 	} else {
 		items.push(
@@ -192,11 +187,7 @@ export function buildStandardEvaluationEntry(
 
 	if (log.fortification.ignored) {
 		items.push(
-			[
-				powerValue(log.absorption.damageAfter),
-				'bypasses',
-				fortLabel,
-			].join(' '),
+			[powerValue(log.absorption.damageAfter), 'bypasses', fortLabel].join(' '),
 		);
 	} else {
 		const remaining = Math.max(

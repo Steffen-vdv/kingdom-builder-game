@@ -60,8 +60,11 @@ function toPassiveDescriptor(
 	if (summary.icon !== undefined) {
 		descriptor.icon = summary.icon;
 	}
-	if (summary.meta?.source !== undefined) {
-		descriptor.meta = { source: { icon: summary.meta.source.icon } };
+	const sourceIcon = summary.meta?.source?.icon;
+	if (sourceIcon !== undefined) {
+		descriptor.meta = Object.freeze({
+			source: Object.freeze({ icon: sourceIcon }),
+		});
 	}
 	return Object.freeze(descriptor);
 }
@@ -78,12 +81,13 @@ function clonePlayer(
 	});
 }
 
-function wrapRegistry<TDefinition>(
-	registry: typeof ACTIONS | typeof BUILDINGS | typeof DEVELOPMENTS,
-): TranslationRegistry<TDefinition> {
+function wrapRegistry<TDefinition>(registry: {
+	get(id: string): TDefinition;
+	has(id: string): boolean;
+}): TranslationRegistry<TDefinition> {
 	return Object.freeze({
 		get(id: string) {
-			return registry.get(id) as TDefinition;
+			return registry.get(id);
 		},
 		has(id: string) {
 			return registry.has(id);
@@ -212,13 +216,18 @@ export function createTranslationContext(
 		developments: wrapRegistry(registries.developments),
 		passives: translationPassives,
 		phases: Object.freeze(
-			session.phases.map((phase) =>
-				Object.freeze({
+			session.phases.map((phase) => {
+				const entry: { id: string; icon?: string; label?: string } = {
 					id: phase.id,
-					icon: phase.icon,
-					label: phase.label,
-				}),
-			),
+				};
+				if (phase.icon !== undefined) {
+					entry.icon = phase.icon;
+				}
+				if (phase.label !== undefined) {
+					entry.label = phase.label;
+				}
+				return Object.freeze(entry);
+			}),
 		),
 		activePlayer,
 		opponent,
@@ -232,10 +241,5 @@ export function createTranslationContext(
 		actionCostResource: session.actionCostResource,
 		recentResourceGains: cloneRecentResourceGains(session.recentResourceGains),
 		compensations: cloneCompensations(session.compensations),
-		/**
-		 * @deprecated Legacy escape hatch required while some formatters still
-		 * depend on the mutable engine context. Prefer the typed accessors above.
-		 */
-		legacy: undefined,
 	});
 }
