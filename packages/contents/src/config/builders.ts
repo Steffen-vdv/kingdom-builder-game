@@ -35,6 +35,7 @@ import {
 	PassiveMethods,
 	RequirementTypes,
 	ParamsBuilder,
+	StatMethods,
 } from './builderShared';
 import type { Params } from './builderShared';
 
@@ -1595,6 +1596,12 @@ export function effect(type?: string, method?: string) {
 		builder.method(method);
 	}
 	return builder;
+}
+
+export function statAddEffect(stat: StatKey, amount: number) {
+	return effect(Types.Stat, StatMethods.ADD)
+		.params(statParams().key(stat).amount(amount).build())
+		.build();
 }
 
 export class RequirementBuilder<P extends Params = Params> {

@@ -3,14 +3,13 @@ import {
 	costModParams,
 	developmentTarget,
 	resultModParams,
-	statParams,
+	statAddEffect,
 	effect,
 } from './config/builders';
 import {
 	Types,
 	CostModMethods,
 	ResultModMethods,
-	StatMethods,
 	PassiveMethods,
 } from './config/builderShared';
 import { ActionId } from './actions';
@@ -70,11 +69,7 @@ export const buildingDiscountModifier = (id: string) =>
 		.build();
 
 export const growthBonusEffect = (amount: number) =>
-	({
-		type: Types.Stat,
-		method: StatMethods.ADD,
-		params: statParams().key(Stat.growth).amount(amount).build(),
-	}) as const;
+	statAddEffect(Stat.growth, amount);
 
 type TierPassiveEffectOptions = {
 	tierId: string;
