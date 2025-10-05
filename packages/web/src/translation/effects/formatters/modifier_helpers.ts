@@ -91,11 +91,27 @@ interface ResultModifierSource {
 const resolveIcon = (icon?: string) =>
 	icon && icon.trim() ? icon : GENERAL_RESOURCE_ICON;
 
-const formatPercentText = (percent: number) => {
+export const formatPercentText = (percent: number) => {
 	const scaled = Number((percent * 100).toFixed(2));
 	const normalized = Object.is(scaled, -0) ? 0 : scaled;
 	const sign = percent >= 0 ? '+' : '';
 	return `${sign}${normalized}%`;
+};
+
+export const formatPercentMagnitude = (percent: number) => {
+	const scaled = Number((Math.abs(percent) * 100).toFixed(2));
+	return Object.is(scaled, -0) ? 0 : scaled;
+};
+
+export const parseNumericParam = (value: unknown) => {
+	if (typeof value === 'number') {
+		return Number.isNaN(value) ? undefined : value;
+	}
+	if (typeof value === 'string' && value.trim().length > 0) {
+		const parsed = Number(value);
+		return Number.isNaN(parsed) ? undefined : parsed;
+	}
+	return undefined;
 };
 
 export function formatGainFrom(

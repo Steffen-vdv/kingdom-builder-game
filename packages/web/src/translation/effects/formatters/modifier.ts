@@ -9,10 +9,13 @@ import {
 	RESULT_EVENT_RESOLVE,
 	RESULT_EVENT_TRANSFER,
 	formatDevelopment,
+	formatPercentMagnitude,
+	formatPercentText,
 	formatPopulation,
 	formatResultModifierClause,
 	formatTargetLabel,
 	getActionInfo,
+	parseNumericParam,
 	wrapResultModifierEntries,
 } from './modifier_helpers';
 import { resolveTransferModifierTarget } from './transfer_helpers';
@@ -53,6 +56,53 @@ const costModifier = modifierInfo.cost;
 const RESULT_MODIFIER_LABEL = `${resultModifier.icon} ${resultModifier.label}`;
 const COST_MODIFIER_LABEL = `${costModifier.icon} ${costModifier.label}`;
 const RESULT_MODIFIER_INFO = modifierInfo.result;
+
+function formatCostEffect(
+	eff: EffectDef,
+	ctx: EngineContext,
+	mode: 'summary' | 'describe',
+	method: 'add' | 'remove',
+): string {
+	const key = eff.params?.['key'] as string;
+	const resourceIcon = RESOURCES[key as ResourceKey]?.icon || key;
+	const actionId = eff.params?.['actionId'] as string | undefined;
+	const actionInfo = actionId
+		? getActionInfo(ctx, actionId)
+		: { icon: '', name: 'all actions' };
+	const prefixIcon = actionId ? `${actionInfo.icon}: ` : ': ';
+	const summaryPrefix = `${modifierInfo.cost.icon}${prefixIcon}${resourceIcon}`;
+	const target = actionId
+		? `${actionInfo.icon} ${actionInfo.name}`
+		: actionInfo.name;
+	const label = `${COST_MODIFIER_LABEL} on ${target}:`;
+	const percent = parseNumericParam(eff.params?.['percent']);
+	if (typeof percent === 'number') {
+		const resolvedPercent = method === 'remove' ? -percent : percent;
+		if (mode === 'summary') {
+			const percentText = formatPercentText(resolvedPercent);
+			return `${summaryPrefix}${percentText}`;
+		}
+		const suffix = resourceIcon ? ` ${resourceIcon}` : '';
+		const direction = increaseOrDecrease(resolvedPercent);
+		const magnitude = formatPercentMagnitude(resolvedPercent);
+		const base = `${label} ${direction} cost by`;
+		return `${base} ${magnitude}%${suffix}`;
+	}
+	const rawAmount = parseNumericParam(eff.params?.['amount']) ?? 0;
+	const amount = method === 'remove' ? -rawAmount : rawAmount;
+	if (mode === 'summary') {
+		const absolute = Math.abs(amount);
+		if (method === 'add') {
+			return `${summaryPrefix}${signed(amount)}${absolute}`;
+		}
+		const sign = amount >= 0 ? '+' : '-';
+		return `${summaryPrefix}${sign}${absolute}`;
+	}
+	const direction = increaseOrDecrease(amount);
+	const absolute = Math.abs(amount);
+	const base = `${label} ${direction} cost by`;
+	return `${base} ${resourceIcon}${absolute}`;
+}
 
 registerModifierEvalHandler('development', {
 	summarize: (eff, evaluation, ctx) => {
@@ -137,57 +187,13 @@ registerModifierEvalHandler('transfer_pct', {
 });
 
 registerEffectFormatter('cost_mod', 'add', {
-	summarize: (eff, ctx) => {
-		const key = eff.params?.['key'] as string;
-		const icon = RESOURCES[key as ResourceKey]?.icon || key;
-		const amount = Number(eff.params?.['amount']);
-		const actionId = eff.params?.['actionId'] as string | undefined;
-		const actionIcon = actionId ? getActionInfo(ctx, actionId).icon : '';
-		const prefix = actionId ? `${actionIcon}: ` : ': ';
-		return `${modifierInfo.cost.icon}${prefix}${icon}${signed(
-			amount,
-		)}${Math.abs(amount)}`;
-	},
-	describe: (eff, ctx) => {
-		const key = eff.params?.['key'] as string;
-		const icon = RESOURCES[key as ResourceKey]?.icon || key;
-		const amount = Number(eff.params?.['amount']);
-		const actionId = eff.params?.['actionId'] as string | undefined;
-		const { icon: actionIcon, name: actionName } = actionId
-			? getActionInfo(ctx, actionId)
-			: { icon: '', name: 'all actions' };
-		const target = actionId ? `${actionIcon} ${actionName}` : actionName;
-		return `${COST_MODIFIER_LABEL} on ${target}: ${increaseOrDecrease(
-			amount,
-		)} cost by ${icon}${Math.abs(amount)}`;
-	},
+	summarize: (eff, ctx) => formatCostEffect(eff, ctx, 'summary', 'add'),
+	describe: (eff, ctx) => formatCostEffect(eff, ctx, 'describe', 'add'),
 });
 
 registerEffectFormatter('cost_mod', 'remove', {
-	summarize: (eff, ctx) => {
-		const key = eff.params?.['key'] as string;
-		const icon = RESOURCES[key as ResourceKey]?.icon || key;
-		const amount = Number(eff.params?.['amount']);
-		const actionId = eff.params?.['actionId'] as string | undefined;
-		const actionIcon = actionId ? getActionInfo(ctx, actionId).icon : '';
-		const prefix = actionId ? `${actionIcon}: ` : ': ';
-		const delta = -amount;
-		const sign = delta >= 0 ? '+' : '-';
-		return `${modifierInfo.cost.icon}${prefix}${icon}${sign}${Math.abs(delta)}`;
-	},
-	describe: (eff, ctx) => {
-		const key = eff.params?.['key'] as string;
-		const icon = RESOURCES[key as ResourceKey]?.icon || key;
-		const amount = Number(eff.params?.['amount']);
-		const actionId = eff.params?.['actionId'] as string | undefined;
-		const { icon: actionIcon, name: actionName } = actionId
-			? getActionInfo(ctx, actionId)
-			: { icon: '', name: 'all actions' };
-		const target = actionId ? `${actionIcon} ${actionName}` : actionName;
-		return `${COST_MODIFIER_LABEL} on ${target}: ${increaseOrDecrease(
-			-amount,
-		)} cost by ${icon}${Math.abs(amount)}`;
-	},
+	summarize: (eff, ctx) => formatCostEffect(eff, ctx, 'summary', 'remove'),
+	describe: (eff, ctx) => formatCostEffect(eff, ctx, 'describe', 'remove'),
 });
 
 registerEffectFormatter('result_mod', 'add', {
