@@ -14,12 +14,13 @@ import {
 import type { passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { Stat } from './stats';
+import { ACTION_ID, type ActionId } from './actions';
 import { formatPassiveRemoval } from './text';
 
 export const GROWTH_PHASE_ID = 'growth';
 export const UPKEEP_PHASE_ID = 'upkeep';
 export const WAR_RECOVERY_STEP_ID = 'war-recovery';
-const BUILD_ACTION_ID = 'build';
+const BUILD_ACTION_ID: ActionId = ACTION_ID.build;
 
 const DEVELOPMENT_EVALUATION = developmentTarget();
 

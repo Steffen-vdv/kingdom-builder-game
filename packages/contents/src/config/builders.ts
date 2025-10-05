@@ -26,6 +26,7 @@ import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
 import type { TriggerKey } from '../defs';
+import type { ActionId } from '../actions';
 
 export const Types = {
 	Land: 'land',
@@ -211,7 +212,7 @@ class ActionEffectGroupOptionBuilder {
 		);
 	}
 
-	action(actionId: string) {
+	action(actionId: ActionId) {
 		return this.set(
 			'actionId',
 			actionId,
@@ -557,6 +558,8 @@ class ActionEffectParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	landId?: string;
 }> {
+	id(id: ActionId): this;
+	id(id: string): this;
 	id(id: string) {
 		return this.set(
 			'id',
@@ -1027,7 +1030,7 @@ class CostModParamsBuilder extends ParamsBuilder<{
 	id(id: string) {
 		return this.set('id', id);
 	}
-	actionId(actionId: string) {
+	actionId(actionId: ActionId) {
 		return this.set('actionId', actionId);
 	}
 	key(key: ResourceKey) {
@@ -1092,7 +1095,7 @@ class ResultModParamsBuilder extends ParamsBuilder<{
 	id(id: string) {
 		return this.set('id', id);
 	}
-	actionId(actionId: string) {
+	actionId(actionId: ActionId) {
 		return this.set('actionId', actionId);
 	}
 	evaluation(
@@ -1803,6 +1806,10 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 
 	constructor() {
 		super({ effects: [] }, 'Action');
+	}
+	override id(id: ActionId) {
+		super.id(id);
+		return this;
 	}
 	cost(key: ResourceKey, amount: number) {
 		this.config.baseCosts = this.config.baseCosts || {};

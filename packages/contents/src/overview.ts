@@ -1,3 +1,5 @@
+import { ACTION_ID } from './actions';
+
 export type OverviewTokenCategoryName =
 	| 'actions'
 	| 'phases'
@@ -65,11 +67,11 @@ const HERO_PARAGRAPH_TEXT = [
 
 const DEFAULT_TOKENS: OverviewTokenCandidates = {
 	actions: {
-		expand: ['expand'],
-		build: ['build'],
-		develop: ['develop'],
-		raise_pop: ['raise_pop'],
-		army_attack: ['army_attack'],
+		expand: [ACTION_ID.expand],
+		build: [ACTION_ID.build],
+		develop: [ACTION_ID.develop],
+		raise_pop: [ACTION_ID.raisePop],
+		army_attack: [ACTION_ID.armyAttack],
 	},
 	phases: {
 		growth: ['growth'],

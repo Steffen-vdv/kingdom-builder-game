@@ -37,6 +37,24 @@ import {
 } from './config/builders';
 import type { Focus } from './defs';
 
+export const ACTION_ID = {
+	build: 'build',
+	armyAttack: 'army_attack',
+	develop: 'develop',
+	expand: 'expand',
+	holdFestival: 'hold_festival',
+	overwork: 'overwork',
+	plow: 'plow',
+	plunder: 'plunder',
+	raisePop: 'raise_pop',
+	reallocate: 'reallocate',
+	royalDecree: 'royal_decree',
+	tax: 'tax',
+	till: 'till',
+} as const;
+
+export type ActionId = (typeof ACTION_ID)[keyof typeof ACTION_ID];
+
 export interface ActionDef extends ActionConfig {
 	category?: string;
 	order?: number;
@@ -46,9 +64,9 @@ export interface ActionDef extends ActionConfig {
 export function createActionRegistry() {
 	const registry = new Registry<ActionDef>(actionSchema.passthrough());
 
-	registry.add('expand', {
+	registry.add(ACTION_ID.expand, {
 		...action()
-			.id('expand')
+			.id(ACTION_ID.expand)
 			.name('Expand')
 			.icon('🌱')
 			.cost(Resource.ap, 1)
@@ -65,9 +83,9 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
-	registry.add('overwork', {
+	registry.add(ACTION_ID.overwork, {
 		...action()
-			.id('overwork')
+			.id(ACTION_ID.overwork)
 			.name('Overwork')
 			.icon('🛠️')
 			.cost(Resource.ap, 1)
@@ -95,9 +113,9 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
-	registry.add('develop', {
+	registry.add(ACTION_ID.develop, {
 		...action()
-			.id('develop')
+			.id(ACTION_ID.develop)
 			.name('Develop')
 			.icon('🏗️')
 			.cost(Resource.ap, 1)
@@ -113,9 +131,9 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
-	registry.add('tax', {
+	registry.add(ACTION_ID.tax, {
 		...action()
-			.id('tax')
+			.id(ACTION_ID.tax)
 			.name('Tax')
 			.icon('💰')
 			.cost(Resource.ap, 1)
@@ -142,9 +160,9 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
-	registry.add('reallocate', {
+	registry.add(ACTION_ID.reallocate, {
 		...action()
-			.id('reallocate')
+			.id(ACTION_ID.reallocate)
 			.name('Reallocate')
 			.icon('🔄')
 			.cost(Resource.ap, 1)
@@ -155,9 +173,9 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
-	registry.add('raise_pop', {
+	registry.add(ACTION_ID.raisePop, {
 		...action()
-			.id('raise_pop')
+			.id(ACTION_ID.raisePop)
 			.name('Hire')
 			.icon('👶')
 			.cost(Resource.ap, 1)
@@ -186,21 +204,21 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
-	registry.add('royal_decree', {
+	registry.add(ACTION_ID.royalDecree, {
 		...action()
-			.id('royal_decree')
+			.id(ACTION_ID.royalDecree)
 			.name('Royal Decree')
 			.icon('📜')
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 12)
 			.effect(
 				effect(Types.Action, ActionMethods.PERFORM)
-					.params(actionParams().id('expand'))
+					.params(actionParams().id(ACTION_ID.expand))
 					.build(),
 			)
 			.effect(
 				effect(Types.Action, ActionMethods.PERFORM)
-					.params(actionParams().id('till').landId('$landId'))
+					.params(actionParams().id(ACTION_ID.till).landId('$landId'))
 					.build(),
 			)
 			.effectGroup(
@@ -210,28 +228,28 @@ export function createActionRegistry() {
 						actionEffectGroupOption('royal_decree_house')
 							.label('Raise a House')
 							.icon('🏠')
-							.action('develop')
+							.action(ACTION_ID.develop)
 							.params(actionParams().id('house').landId('$landId')),
 					)
 					.option(
 						actionEffectGroupOption('royal_decree_farm')
 							.label('Establish a Farm')
 							.icon('🌾')
-							.action('develop')
+							.action(ACTION_ID.develop)
 							.params(actionParams().id('farm').landId('$landId')),
 					)
 					.option(
 						actionEffectGroupOption('royal_decree_outpost')
 							.label('Fortify with an Outpost')
 							.icon('🏹')
-							.action('develop')
+							.action(ACTION_ID.develop)
 							.params(actionParams().id('outpost').landId('$landId')),
 					)
 					.option(
 						actionEffectGroupOption('royal_decree_watchtower')
 							.label('Raise a Watchtower')
 							.icon('🗼')
-							.action('develop')
+							.action(ACTION_ID.develop)
 							.params(actionParams().id('watchtower').landId('$landId')),
 					),
 			)
@@ -247,9 +265,9 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
-	registry.add('army_attack', {
+	registry.add(ACTION_ID.armyAttack, {
 		...action()
-			.id('army_attack')
+			.id(ACTION_ID.armyAttack)
 			.name('Army Attack')
 			.icon('🗡️')
 			.cost(Resource.ap, 1)
@@ -276,7 +294,7 @@ export function createActionRegistry() {
 									.params(resourceParams().key(Resource.happiness).amount(1))
 									.build(),
 								effect(Types.Action, ActionMethods.PERFORM)
-									.params(actionParams().id('plunder'))
+									.params(actionParams().id(ACTION_ID.plunder))
 									.build(),
 							)
 							.onDamageDefender(
@@ -299,9 +317,9 @@ export function createActionRegistry() {
 		focus: 'aggressive',
 	});
 
-	registry.add('hold_festival', {
+	registry.add(ACTION_ID.holdFestival, {
 		...action()
-			.id('hold_festival')
+			.id(ACTION_ID.holdFestival)
 			.name('Hold Festival')
 			.icon('🎉')
 			.cost(Resource.ap, 1)
@@ -344,7 +362,7 @@ export function createActionRegistry() {
 							.params(
 								resultModParams()
 									.id('hold_festival_attack_happiness_penalty')
-									.actionId('army_attack'),
+									.actionId(ACTION_ID.armyAttack),
 							)
 							.effect(
 								effect(Types.Resource, ResourceMethods.REMOVE)
@@ -363,9 +381,9 @@ export function createActionRegistry() {
 	});
 
 	registry.add(
-		'plunder',
+		ACTION_ID.plunder,
 		action()
-			.id('plunder')
+			.id(ACTION_ID.plunder)
 			.name('Plunder')
 			.icon('🏴\u200d☠️')
 			.system()
@@ -380,9 +398,9 @@ export function createActionRegistry() {
 	);
 
 	registry.add(
-		'plow',
+		ACTION_ID.plow,
 		action()
-			.id('plow')
+			.id(ACTION_ID.plow)
 			.name('Plow')
 			.icon('🚜')
 			.system()
@@ -390,12 +408,12 @@ export function createActionRegistry() {
 			.cost(Resource.gold, 6)
 			.effect(
 				effect(Types.Action, ActionMethods.PERFORM)
-					.params(actionParams().id('expand'))
+					.params(actionParams().id(ACTION_ID.expand))
 					.build(),
 			)
 			.effect(
 				effect(Types.Action, ActionMethods.PERFORM)
-					.params(actionParams().id('till'))
+					.params(actionParams().id(ACTION_ID.till))
 					.build(),
 			)
 			.effect(
@@ -425,9 +443,9 @@ export function createActionRegistry() {
 	);
 
 	registry.add(
-		'till',
+		ACTION_ID.till,
 		action()
-			.id('till')
+			.id(ACTION_ID.till)
 			.name('Till')
 			.icon('🧑‍🌾')
 			.system()
@@ -435,9 +453,9 @@ export function createActionRegistry() {
 			.build(),
 	);
 
-	registry.add('build', {
+	registry.add(ACTION_ID.build, {
 		...action()
-			.id('build')
+			.id(ACTION_ID.build)
 			.name('Build')
 			.icon('🏛️')
 			.effect(
