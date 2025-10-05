@@ -11,7 +11,8 @@ interface MainPhaseTrackerOptions {
 	setPhaseHistories: React.Dispatch<
 		React.SetStateAction<Record<string, PhaseStep[]>>
 	>;
-	setDisplayPhase: (phase: string) => void;
+	setDisplayPhase: (phase: string, options?: { manual?: boolean }) => void;
+	isManualPhasePinned: (phase: string) => boolean;
 }
 
 export function useMainPhaseTracker({
@@ -21,6 +22,7 @@ export function useMainPhaseTracker({
 	setPhaseSteps,
 	setPhaseHistories,
 	setDisplayPhase,
+	isManualPhasePinned,
 }: MainPhaseTrackerOptions) {
 	const [mainApStart, setMainApStart] = useState(0);
 
@@ -45,15 +47,22 @@ export function useMainPhaseTracker({
 					active: remaining > 0,
 				},
 			];
-			setPhaseSteps(steps);
 			if (actionPhaseId) {
 				setPhaseHistories((prev) => ({
 					...prev,
 					[actionPhaseId]: steps,
 				}));
-				setDisplayPhase(actionPhaseId);
-			} else {
-				setDisplayPhase(ctx.game.currentPhase);
+			}
+			const shouldDeferUpdate = Boolean(
+				actionPhaseId && isManualPhasePinned(actionPhaseId),
+			);
+			if (!shouldDeferUpdate) {
+				setPhaseSteps(steps);
+				if (actionPhaseId) {
+					setDisplayPhase(actionPhaseId);
+				} else {
+					setDisplayPhase(ctx.game.currentPhase);
+				}
 			}
 		},
 		[
@@ -62,6 +71,7 @@ export function useMainPhaseTracker({
 			ctx,
 			mainApStart,
 			setDisplayPhase,
+			isManualPhasePinned,
 			setPhaseHistories,
 			setPhaseSteps,
 		],

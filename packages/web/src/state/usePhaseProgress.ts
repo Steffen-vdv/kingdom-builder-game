@@ -6,7 +6,7 @@ import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
 import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
-
+import { usePhaseDisplay } from './usePhaseDisplay';
 interface PhaseProgressOptions {
 	ctx: EngineContext;
 	actionPhaseId: string | undefined;
@@ -23,7 +23,6 @@ interface PhaseProgressOptions {
 	resourceKeys: ResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 }
-
 export function usePhaseProgress({
 	ctx,
 	actionPhaseId,
@@ -39,12 +38,16 @@ export function usePhaseProgress({
 }: PhaseProgressOptions) {
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
-	const [displayPhase, setDisplayPhase] = useState(ctx.game.currentPhase);
 	const [phaseHistories, setPhaseHistories] = useState<
 		Record<string, PhaseStep[]>
 	>({});
-	const [tabsEnabled, setTabsEnabled] = useState(false);
-
+	const {
+		displayPhase,
+		setDisplayPhase,
+		tabsEnabled,
+		setTabsEnabled,
+		isManualPhasePinned,
+	} = usePhaseDisplay(ctx.game.currentPhase);
 	const { mainApStart, setMainApStart, updateMainPhaseStep } =
 		useMainPhaseTracker({
 			ctx,
@@ -53,8 +56,8 @@ export function usePhaseProgress({
 			setPhaseSteps,
 			setPhaseHistories,
 			setDisplayPhase,
+			isManualPhasePinned,
 		});
-
 	const { runDelay, runStepDelay } = usePhaseDelays({
 		mountedRef,
 		timeScaleRef,
@@ -62,7 +65,6 @@ export function usePhaseProgress({
 		clearTrackedInterval,
 		setPhaseTimer,
 	});
-
 	const runUntilActionPhaseCore = useCallback(async () => {
 		if (ctx.phases[ctx.game.phaseIndex]?.action) {
 			if (!mountedRef.current) {
@@ -196,7 +198,6 @@ export function usePhaseProgress({
 		runStepDelay,
 		updateMainPhaseStep,
 	]);
-
 	const runUntilActionPhase = useCallback(
 		() => enqueue(runUntilActionPhaseCore),
 		[enqueue, runUntilActionPhaseCore],

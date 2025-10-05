@@ -26,7 +26,7 @@ export interface GameEngineContextValue {
 	phaseTimer: number;
 	mainApStart: number;
 	displayPhase: string;
-	setDisplayPhase: (id: string) => void;
+	setDisplayPhase: (id: string, options?: { manual?: boolean }) => void;
 	phaseHistories: Record<string, PhaseStep[]>;
 	tabsEnabled: boolean;
 	actionCostResource: ResourceKey;

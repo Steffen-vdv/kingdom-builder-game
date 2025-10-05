@@ -74,7 +74,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 				if (!tabsEnabled) {
 					return;
 				}
-				setDisplayPhase(phase.id);
+				setDisplayPhase(phase.id, { manual: true });
 				const nextSteps: PhaseStep[] = phaseHistories[phase.id] ?? [];
 				setPhaseSteps(nextSteps);
 			};
