@@ -12,6 +12,7 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	ActionId,
 } from '@kingdom-builder/contents';
 import {
 	describeContent,
@@ -86,8 +87,8 @@ function findGroupEntry(
 }
 
 describe('royal decree translation', () => {
-	const actionId = 'royal_decree';
-	const developAction = context.actions.get('develop');
+	const actionId = ActionId.royal_decree;
+	const developAction = context.actions.get(ActionId.develop);
 	const developLabel = combineLabels(
 		`${developAction.icon ?? ''} ${developAction.name ?? ''}`,
 		'',
@@ -148,7 +149,7 @@ describe('royal decree translation', () => {
 			);
 			const described = describeContent(
 				'action',
-				'develop',
+				ActionId.develop,
 				context as EngineContext,
 				{ id },
 			);

@@ -15,6 +15,7 @@ import {
 	RESOURCES,
 	type ResourceKey,
 	RESOURCE_TRANSFER_ICON,
+	Resource,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '../../engine/tests/factories/content';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
@@ -155,6 +156,29 @@ describe('modifier evaluation handlers', () => {
 		const description = describeEffects([eff], ctx);
 		expect(description[0]).toContain('Income');
 		expect(description[0]).toContain('20%');
+	});
+
+	it('formats cost modifiers with percent adjustments', () => {
+		const ctx = createCtx();
+		const eff: EffectDef = {
+			type: 'cost_mod',
+			method: 'add',
+			params: {
+				id: 'synthetic:discount',
+				key: Resource.gold,
+				actionId: 'build',
+				percent: -0.2,
+			},
+		};
+		const summary = summarizeEffects([eff], ctx);
+		const goldIcon = RESOURCES[Resource.gold].icon;
+		const expectedSummary = `${MODIFIER_INFO.cost.icon}🏛️: ${goldIcon}-20%`;
+		expect(summary).toEqual([expectedSummary]);
+		const description = describeEffects([eff], ctx);
+		const expectedDescription =
+			`${MODIFIER_INFO.cost.icon} ${MODIFIER_INFO.cost.label}` +
+			` on 🏛️ Build: Decrease cost by 20% ${goldIcon}`;
+		expect(description).toEqual([expectedDescription]);
 	});
 
 	it('formats transfer percent evaluation modifiers for arbitrary actions', () => {

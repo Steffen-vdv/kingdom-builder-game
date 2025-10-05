@@ -27,6 +27,7 @@ import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
 import type { DevelopmentId } from '../developments';
 import type { TriggerKey } from '../defs';
+import type { ActionId } from '../actions';
 import {
 	Types,
 	PassiveMethods,
@@ -115,7 +116,7 @@ class ActionEffectGroupOptionBuilder {
 		);
 	}
 
-	action(actionId: string) {
+	action(actionId: ActionId) {
 		return this.set(
 			'actionId',
 			actionId,
@@ -461,6 +462,8 @@ class ActionEffectParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	landId?: string;
 }> {
+	id(id: ActionId): this;
+	id(id: string): this;
 	id(id: string) {
 		return this.set(
 			'id',
@@ -923,7 +926,7 @@ export function happinessTier(id?: string) {
 
 class CostModParamsBuilder extends ParamsBuilder<{
 	id?: string;
-	actionId?: string;
+	actionId?: ActionId;
 	key?: ResourceKey;
 	amount?: number;
 	percent?: number;
@@ -931,7 +934,7 @@ class CostModParamsBuilder extends ParamsBuilder<{
 	id(id: string) {
 		return this.set('id', id);
 	}
-	actionId(actionId: string) {
+	actionId(actionId: ActionId) {
 		return this.set('actionId', actionId);
 	}
 	key(key: ResourceKey) {
@@ -987,7 +990,7 @@ export function populationTarget() {
 
 class ResultModParamsBuilder extends ParamsBuilder<{
 	id?: string;
-	actionId?: string;
+	actionId?: ActionId;
 	evaluation?: { type: EvaluationTargetType; id?: string };
 	amount?: number;
 	adjust?: number;
@@ -996,7 +999,7 @@ class ResultModParamsBuilder extends ParamsBuilder<{
 	id(id: string) {
 		return this.set('id', id);
 	}
-	actionId(actionId: string) {
+	actionId(actionId: ActionId) {
 		return this.set('actionId', actionId);
 	}
 	evaluation(

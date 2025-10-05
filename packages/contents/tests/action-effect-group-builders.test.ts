@@ -7,6 +7,7 @@ import {
 	building,
 } from '../src/config/builders';
 import type { ActionEffectGroupDef } from '../src/config/builders';
+import { ActionId } from '../src/actions';
 import { describe, expect, it } from 'vitest';
 
 describe('action effect group builder safeguards', () => {
@@ -20,11 +21,13 @@ describe('action effect group builder safeguards', () => {
 	it('prevents duplicate option ids within an effect group', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
-			.option(actionEffectGroupOption('farm').label('Farm').action('develop'));
+			.option(
+				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+			);
 
 		expect(() =>
 			group.option(
-				actionEffectGroupOption('farm').label('House').action('develop'),
+				actionEffectGroupOption('farm').label('House').action(ActionId.develop),
 			),
 		).toThrowError(
 			'Action effect group option id "farm" already exists. Use unique option ids within a group.',
@@ -37,7 +40,9 @@ describe('action effect group builder safeguards', () => {
 			actionEffectGroup('choose')
 				.title('Pick a project')
 				.option(
-					actionEffectGroupOption('farm').label('Farm').action('develop'),
+					actionEffectGroupOption('farm')
+						.label('Farm')
+						.action(ActionId.develop),
 				),
 		);
 
@@ -46,7 +51,9 @@ describe('action effect group builder safeguards', () => {
 				actionEffectGroup('choose')
 					.title('Pick again')
 					.option(
-						actionEffectGroupOption('house').label('House').action('develop'),
+						actionEffectGroupOption('house')
+							.label('House')
+							.action(ActionId.develop),
 					),
 			),
 		).toThrowError(
@@ -58,7 +65,9 @@ describe('action effect group builder safeguards', () => {
 		const buildingBuilder = building();
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
-			.option(actionEffectGroupOption('farm').label('Farm').action('develop'));
+			.option(
+				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+			);
 
 		expect(() =>
 			(
@@ -83,7 +92,7 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('farm')
 							.label('Farm')
-							.action('develop')
+							.action(ActionId.develop)
 							.params(actionParams().id('farm').landId('$landId')),
 					),
 			)
@@ -100,7 +109,7 @@ describe('action effect group builder safeguards', () => {
 				{
 					id: 'farm',
 					label: 'Farm',
-					actionId: 'develop',
+					actionId: ActionId.develop,
 					params: { id: 'farm', landId: '$landId' },
 				},
 			],

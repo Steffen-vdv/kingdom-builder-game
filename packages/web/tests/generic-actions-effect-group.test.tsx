@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { ActionId } from '@kingdom-builder/contents';
 import GenericActions from '../src/components/actions/GenericActions';
 import type * as TranslationModule from '../src/translation';
 import type * as TranslationContentModule from '../src/translation/content';
@@ -57,11 +58,16 @@ vi.mock('../src/translation/content', async () => {
 
 const actionsMap = new Map([
 	[
-		'royal_decree',
-		{ id: 'royal_decree', name: 'Royal Decree', icon: '📜', focus: 'economy' },
+		ActionId.royal_decree,
+		{
+			id: ActionId.royal_decree,
+			name: 'Royal Decree',
+			icon: '📜',
+			focus: 'economy' as const,
+		},
 	],
-	['develop', { id: 'develop', name: 'Develop', icon: '🏗️' }],
-	['till', { id: 'till', name: 'Till', icon: '🧑\u200d🌾' }],
+	[ActionId.develop, { id: ActionId.develop, name: 'Develop', icon: '🏗️' }],
+	[ActionId.till, { id: ActionId.till, name: 'Till', icon: '🧑\u200d🌾' }],
 ] as const);
 
 function createMockGame() {
@@ -118,13 +124,13 @@ describe('GenericActions effect group handling', () => {
 		getActionRequirementsMock.mockImplementation(() => []);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
-			if (type === 'action' && id === 'develop') {
+			if (type === 'action' && id === ActionId.develop) {
 				return ['🏠 House'];
 			}
 			return [];
 		});
 		getActionEffectGroupsMock.mockImplementation((actionId: string) => {
-			if (actionId !== 'royal_decree') {
+			if (actionId !== ActionId.royal_decree) {
 				return [];
 			}
 			return [
@@ -137,7 +143,7 @@ describe('GenericActions effect group handling', () => {
 							id: 'royal_decree_house',
 							label: 'Raise a House',
 							icon: '🏠',
-							actionId: 'develop',
+							actionId: ActionId.develop,
 							params: { landId: '$landId', id: 'house' },
 						},
 					],
@@ -148,7 +154,7 @@ describe('GenericActions effect group handling', () => {
 
 	it('collects choices and parameters before performing royal decree', async () => {
 		const action = {
-			id: 'royal_decree',
+			id: ActionId.royal_decree,
 			name: 'Royal Decree',
 			icon: '📜',
 			category: 'basic',
