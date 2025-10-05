@@ -6,7 +6,7 @@ import { actionSchema, type ActionConfig } from '@kingdom-builder/protocol';
 import {
 	action,
 	effect,
-	requirementEvaluatorCompare,
+	compareRequirement,
 	Types,
 	LandMethods,
 	ResourceMethods,
@@ -161,7 +161,7 @@ export function createActionRegistry() {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(
-				requirementEvaluatorCompare()
+				compareRequirement()
 					.left(populationEvaluator())
 					.operator('lt')
 					.right(statEvaluator().key(Stat.maxPopulation))
@@ -257,7 +257,7 @@ export function createActionRegistry() {
 			.icon('🗡️')
 			.cost(Resource.ap, 1)
 			.requirement(
-				requirementEvaluatorCompare()
+				compareRequirement()
 					.left(statEvaluator().key(Stat.warWeariness))
 					.operator('lt')
 					.right(populationEvaluator().role(PopulationRole.Legion))
@@ -310,7 +310,7 @@ export function createActionRegistry() {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
 			.requirement(
-				requirementEvaluatorCompare()
+				compareRequirement()
 					.left(statEvaluator().key(Stat.warWeariness))
 					.operator('eq')
 					.right(0)
