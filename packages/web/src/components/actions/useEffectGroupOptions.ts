@@ -78,7 +78,10 @@ function buildHoverDetails(
 		describedSummary,
 		'describe',
 	);
-	const { effects, description } = splitSummary(describedSummary);
+	const translatedSummary = Array.isArray(described.entry)
+		? described.entry
+		: [described.entry];
+	const { effects, description } = splitSummary(translatedSummary);
 	const requirements = getActionRequirements(
 		option.actionId,
 		context,

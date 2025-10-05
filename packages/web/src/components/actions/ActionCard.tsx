@@ -330,6 +330,7 @@ export default function ActionCard({
 									onClick={onCancel}
 									aria-label="Cancel selection"
 									title="Cancel selection"
+									style={{ cursor: 'pointer' }}
 								>
 									×
 								</button>
