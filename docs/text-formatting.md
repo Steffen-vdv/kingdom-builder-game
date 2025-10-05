@@ -134,6 +134,11 @@ suffixes like "per 🧩 Development" (see
   [`effects/helpers.ts`](../packages/web/src/translation/effects/helpers.ts)
   produce the preferred wording for deltas. Always pipe numeric changes through
   these helpers before concatenating strings.
+- **Action labels** — `formatActionLabel` and `formatActionChangeSentence` in
+  [`effects/formatters/action.ts`](../packages/web/src/translation/effects/formatters/action.ts)
+  output the icon-first bullets and sentence-case gain/lose copy used across
+  action summaries, descriptions, and logs. Reuse them instead of hardcoding
+  unlock/remove phrasing.
 - **Result modifier clauses** — The modifier helpers in
   [`effects/formatters/modifier_helpers.ts`](../packages/web/src/translation/effects/formatters/modifier_helpers.ts)
   standardise phrases such as "Whenever it grants resources" and handle

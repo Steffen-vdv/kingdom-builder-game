@@ -28,7 +28,7 @@ describe('plow workshop translation', () => {
 		expect(effects).toHaveLength(1);
 		const build = effects[0] as { title: string; items?: unknown[] };
 		expect(build.items?.[0]).toBe(
-			`Gain action ${synthetic.plow.icon} ${synthetic.plow.name}`,
+			`${synthetic.plow.icon} ${synthetic.plow.name}`,
 		);
 		expect(description).toBeDefined();
 		const actionCard = (description as Summary)[0] as { title: string };
