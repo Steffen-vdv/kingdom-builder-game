@@ -10,6 +10,7 @@ const tasks = [
 
 const artifactsDirectory = path.resolve(process.cwd(), 'artifacts');
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+const npmExecutable = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 await mkdir(artifactsDirectory, { recursive: true });
 
@@ -19,7 +20,22 @@ async function runTask(task) {
 	const writeStream = createWriteStream(artifactPath, { flags: 'w' });
 
 	return new Promise((resolve) => {
-		const child = spawn('npm', ['run', task.script], { shell: false });
+		const child = spawn(npmExecutable, ['run', task.script], { shell: false });
+		let hasSettled = false;
+
+		const finalize = (code) => {
+			if (hasSettled) {
+				return;
+			}
+
+			hasSettled = true;
+			writeStream.end();
+			resolve({
+				label: task.label,
+				code: code ?? 1,
+				artifactPath,
+			});
+		};
 
 		const handleChunk = (chunk) => {
 			process.stdout.write(chunk);
@@ -33,15 +49,11 @@ async function runTask(task) {
 			const formatted = `${error.message}\n`;
 			process.stderr.write(formatted);
 			writeStream.write(formatted);
+			finalize(1);
 		});
 
 		child.on('close', (code) => {
-			writeStream.end();
-			resolve({
-				label: task.label,
-				code: code ?? 1,
-				artifactPath,
-			});
+			finalize(code);
 		});
 	});
 }
