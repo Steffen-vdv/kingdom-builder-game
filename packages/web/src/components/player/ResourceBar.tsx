@@ -2,6 +2,7 @@ import React from 'react';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
+import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
@@ -11,6 +12,7 @@ import type { SummaryGroup } from '../../translation/content/types';
 interface ResourceButtonProps {
 	resourceKey: keyof typeof RESOURCES;
 	value: number;
+	forecastDelta?: number;
 	onShow: () => void;
 	onHide: () => void;
 }
@@ -26,14 +28,27 @@ const formatDelta = (delta: number) => {
 	return `${delta > 0 ? '+' : '-'}${formatted}`;
 };
 
+const RESOURCE_FORECAST_BADGE_CLASS =
+	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
+const RESOURCE_FORECAST_BADGE_THEME_CLASS =
+	'bg-slate-800/70 text-white dark:bg-slate-100/10';
+
 const ResourceButton: React.FC<ResourceButtonProps> = ({
 	resourceKey,
 	value,
+	forecastDelta,
 	onShow,
 	onHide,
 }) => {
 	const info = RESOURCES[resourceKey];
 	const changes = useValueChangeIndicators(value);
+	const forecastLabel =
+		typeof forecastDelta === 'number' && forecastDelta !== 0
+			? `(${formatDelta(forecastDelta)} next turn)`
+			: undefined;
+	const ariaLabel = forecastLabel
+		? `${info.label}: ${value} ${forecastLabel}`
+		: `${info.label}: ${value}`;
 
 	return (
 		<button
@@ -44,10 +59,17 @@ const ResourceButton: React.FC<ResourceButtonProps> = ({
 			onFocus={onShow}
 			onBlur={onHide}
 			onClick={onShow}
-			aria-label={`${info.label}: ${value}`}
+			aria-label={ariaLabel}
 		>
 			{info.icon}
 			{value}
+			{forecastLabel && (
+				<span
+					className={`${RESOURCE_FORECAST_BADGE_CLASS} ${RESOURCE_FORECAST_BADGE_THEME_CLASS}`}
+				>
+					{forecastLabel}
+				</span>
+			)}
 			{changes.map((change) => (
 				<span
 					key={change.id}
@@ -71,6 +93,12 @@ interface ResourceBarProps {
 
 const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 	const { ctx, handleHoverCard, clearHoverCard } = useGameEngine();
+	const forecast = useNextTurnForecast();
+	const playerForecast = forecast[player.id] ?? {
+		resources: {},
+		stats: {},
+		population: {},
+	};
 	const resourceKeys = Object.keys(RESOURCES) as ResourceKey[];
 	const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
 	const tiers = ctx.services.rules.tierDefinitions;
@@ -189,15 +217,17 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 						bgClass: PLAYER_INFO_CARD_BG,
 					});
 				};
-				return (
-					<ResourceButton
-						key={resourceKey}
-						resourceKey={resourceKey}
-						value={resourceValue}
-						onShow={showResourceCard}
-						onHide={clearHoverCard}
-					/>
-				);
+				const nextTurnDelta = playerForecast.resources[resourceKey];
+				const buttonProps: ResourceButtonProps = {
+					resourceKey,
+					value: resourceValue,
+					onShow: showResourceCard,
+					onHide: clearHoverCard,
+				};
+				if (typeof nextTurnDelta === 'number') {
+					buttonProps.forecastDelta = nextTurnDelta;
+				}
+				return <ResourceButton key={resourceKey} {...buttonProps} />;
 			})}
 		</div>
 	);

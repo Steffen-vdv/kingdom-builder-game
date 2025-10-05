@@ -8,12 +8,14 @@ import {
 import { formatStatValue, getStatBreakdownSummary } from '../../utils/stats';
 import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
+import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_STAT_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
 
 interface StatButtonProps {
 	statKey: keyof typeof STATS;
 	value: number;
+	forecastDelta?: number;
 	onShow: () => void;
 	onHide: () => void;
 }
@@ -23,14 +25,28 @@ const formatStatDelta = (statKey: keyof typeof STATS, delta: number) => {
 	return `${delta > 0 ? '+' : '-'}${formatted}`;
 };
 
+const STAT_FORECAST_BADGE_CLASS =
+	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
+const STAT_FORECAST_BADGE_THEME_CLASS =
+	'bg-slate-800/70 text-white dark:bg-slate-100/10';
+
 const StatButton: React.FC<StatButtonProps> = ({
 	statKey,
 	value,
+	forecastDelta,
 	onShow,
 	onHide,
 }) => {
 	const info = STATS[statKey];
 	const changes = useValueChangeIndicators(value);
+	const formattedValue = formatStatValue(statKey, value);
+	const forecastLabel =
+		typeof forecastDelta === 'number' && forecastDelta !== 0
+			? `(${formatStatDelta(statKey, forecastDelta)} next turn)`
+			: undefined;
+	const ariaLabel = forecastLabel
+		? `${info.label}: ${formattedValue} ${forecastLabel}`
+		: `${info.label}: ${formattedValue}`;
 
 	return (
 		<button
@@ -41,9 +57,17 @@ const StatButton: React.FC<StatButtonProps> = ({
 			onFocus={onShow}
 			onBlur={onHide}
 			onClick={onShow}
+			aria-label={ariaLabel}
 		>
 			{info.icon}
-			{formatStatValue(statKey, value)}
+			{formattedValue}
+			{forecastLabel && (
+				<span
+					className={`${STAT_FORECAST_BADGE_CLASS} ${STAT_FORECAST_BADGE_THEME_CLASS}`}
+				>
+					{forecastLabel}
+				</span>
+			)}
 			{changes.map((change) => (
 				<span
 					key={change.id}
@@ -67,6 +91,12 @@ interface PopulationInfoProps {
 
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const { handleHoverCard, clearHoverCard, ctx } = useGameEngine();
+	const forecast = useNextTurnForecast();
+	const playerForecast = forecast[player.id] ?? {
+		resources: {},
+		stats: {},
+		population: {},
+	};
 	const popEntries = Object.entries(player.population).filter(
 		([, populationCount]) => populationCount > 0,
 	);
@@ -216,15 +246,19 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 						(statValue !== 0 || player.statsHistory?.[statKey])
 					);
 				})
-				.map(([statKey, statValue]) => (
-					<StatButton
-						key={statKey}
-						statKey={statKey as keyof typeof STATS}
-						value={statValue}
-						onShow={() => showStatCard(statKey)}
-						onHide={clearHoverCard}
-					/>
-				))}
+				.map(([statKey, statValue]) => {
+					const props: StatButtonProps = {
+						statKey: statKey as keyof typeof STATS,
+						value: statValue,
+						onShow: () => showStatCard(statKey),
+						onHide: clearHoverCard,
+					};
+					const nextTurnStat = playerForecast.stats[statKey];
+					if (typeof nextTurnStat === 'number') {
+						props.forecastDelta = nextTurnStat;
+					}
+					return <StatButton key={statKey} {...props} />;
+				})}
 		</div>
 	);
 };
