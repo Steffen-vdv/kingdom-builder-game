@@ -221,6 +221,47 @@ function determineRaisePopRoles(
 	return result;
 }
 
+function playerHasRequiredResources(
+	player: DisplayPlayer,
+	costs: Record<string, number>,
+): boolean {
+	return Object.entries(costs).every(([resourceKey, requiredAmount]) => {
+		const playerResourceAmount = player.resources[resourceKey] || 0;
+		const neededAmount = requiredAmount ?? 0;
+		return playerResourceAmount >= neededAmount;
+	});
+}
+
+function sumNonActionCosts(
+	costs: Record<string, number>,
+	actionCostResource: string,
+): number {
+	return Object.entries(costs).reduce((sum, [resourceKey, requiredAmount]) => {
+		if (resourceKey === actionCostResource) {
+			return sum;
+		}
+		const neededAmount = requiredAmount ?? 0;
+		return sum + neededAmount;
+	}, 0);
+}
+
+function formatLandRequirement(prefix: string): string {
+	return [
+		`${prefix} ${LAND_INFO.icon} ${LAND_INFO.label}`,
+		`with free ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
+	].join(' ');
+}
+
+function getOptionalProperty<T>(
+	value: unknown,
+	property: string,
+): T | undefined {
+	if (typeof value === 'object' && value !== null && property in value) {
+		return (value as Record<string, unknown>)[property] as T;
+	}
+	return undefined;
+}
+
 function buildRequirementIconsForRole(
 	actionDefinition: Action | undefined,
 	roleId: PopulationRoleId,
@@ -298,9 +339,10 @@ function RaisePopOptions({
 		<>
 			{roleOptions.map((role) => {
 				const costsBag = getActionCosts(action.id, ctx);
+				const costEntries = Object.entries(costsBag);
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) {
-					costs[k] = v ?? 0;
+				for (const [costKey, costAmount] of costEntries) {
+					costs[costKey] = costAmount ?? 0;
 				}
 				let upkeep: Record<string, number> | undefined;
 				try {
@@ -308,12 +350,9 @@ function RaisePopOptions({
 				} catch {
 					upkeep = undefined;
 				}
-				const requirements = getActionRequirements(action.id, ctx).map(
-					formatRequirement,
-				);
-				const canPay = Object.entries(costs).every(
-					([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
-				);
+				const rawRequirements = getActionRequirements(action.id, ctx);
+				const requirements = rawRequirements.map(formatRequirement);
+				const canPay = playerHasRequiredResources(player, costs);
 				const meetsReq = requirements.length === 0;
 				const enabled = canPay && meetsReq && canInteract;
 				const requirementIcons = getRequirementIconsForRole(role);
@@ -326,7 +365,9 @@ function RaisePopOptions({
 					: !canPay
 						? (insufficientTooltip ?? 'Cannot pay costs')
 						: undefined;
-				const summary = describeContent('action', action.id, ctx, { role });
+				const summary = describeContent('action', action.id, ctx, {
+					role,
+				});
 				const shortSummary = summarizeContent('action', action.id, ctx, {
 					role,
 				});
@@ -482,17 +523,15 @@ function DevelopOptions({
 					id: d.id,
 					landId: landIdForCost,
 				});
+				const costEntries = Object.entries(costsBag);
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) {
-					costs[k] = v ?? 0;
+				for (const [costKey, costAmount] of costEntries) {
+					costs[costKey] = costAmount ?? 0;
 				}
-				const total = Object.entries(costs).reduce(
-					(sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
-					0,
-				);
+				const total = sumNonActionCosts(costs, actionCostResource);
 				return { d, costs, total };
 			})
-			.sort((a, b) => a.total - b.total);
+			.sort((firstEntry, secondEntry) => firstEntry.total - secondEntry.total);
 	}, [developments, ctx, action.id, landIdForCost, actionCostResource]);
 	return (
 		<div>
@@ -500,7 +539,9 @@ function DevelopOptions({
 				{ctx.actions.get(action.id)?.icon || ''}{' '}
 				{ctx.actions.get(action.id)?.name}{' '}
 				<span className="italic text-sm font-normal">
-					(Effects take place on build and last until development is removed)
+					{'('}
+					Effects take place on build and last until development is removed
+					{')'}
 				</span>
 			</h3>
 			<div
@@ -508,29 +549,32 @@ function DevelopOptions({
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
 				{entries.map(({ d, costs }) => {
-					const upkeep = ctx.developments.get(d.id)?.upkeep;
-					const requirements = hasDevelopLand
-						? []
-						: [
-								`Requires ${LAND_INFO.icon} ${LAND_INFO.label} with free ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
-							];
+					const rawDevelopment = ctx.developments.get(d.id);
+					const upkeep = getOptionalProperty<Record<string, number>>(
+						rawDevelopment,
+						'upkeep',
+					);
+					const developLandRequirement = formatLandRequirement('Requires');
+					const requirements = hasDevelopLand ? [] : [developLandRequirement];
 					const canPay =
-						hasDevelopLand &&
-						Object.entries(costs).every(
-							([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
-						);
+						hasDevelopLand && playerHasRequiredResources(player, costs);
 					const summary = summaries.get(d.id);
 					const implemented = (summary?.length ?? 0) > 0;
 					// TODO: implement development effects
 					const enabled = canPay && isActionPhase && canInteract && implemented;
+					const developmentFocus = getOptionalProperty<Focus>(
+						rawDevelopment,
+						'focus',
+					);
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
 					);
+					const missingLandTooltip = formatLandRequirement('No');
 					const title = !implemented
 						? 'Not implemented yet'
 						: !hasDevelopLand
-							? `No ${LAND_INFO.icon} ${LAND_INFO.label} with free ${SLOT_INFO.icon} ${SLOT_INFO.label}`
+							? missingLandTooltip
 							: !canPay
 								? (insufficientTooltip ?? 'Cannot pay costs')
 								: undefined;
@@ -552,14 +596,14 @@ function DevelopOptions({
 							implemented={implemented}
 							enabled={enabled}
 							tooltip={title}
-							focus={
-								(ctx.developments.get(d.id) as Development | undefined)?.focus
-							}
+							focus={developmentFocus}
 							onClick={() => {
 								if (!canInteract) {
 									return;
 								}
-								const landId = player.lands.find((l) => l.slotsFree > 0)?.id;
+								const landId = player.lands.find(
+									(land) => land.slotsFree > 0,
+								)?.id;
 								void handlePerform(action, { id: d.id, landId });
 							}}
 							onMouseEnter={() => {
@@ -625,18 +669,18 @@ function BuildOptions({
 		return buildings
 			.filter((b) => !owned.has(b.id))
 			.map((b) => {
-				const costsBag = getActionCosts(action.id, ctx, { id: b.id });
+				const costsBag = getActionCosts(action.id, ctx, {
+					id: b.id,
+				});
+				const costEntries = Object.entries(costsBag);
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) {
-					costs[k] = v ?? 0;
+				for (const [costKey, costAmount] of costEntries) {
+					costs[costKey] = costAmount ?? 0;
 				}
-				const total = Object.entries(costs).reduce(
-					(sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
-					0,
-				);
+				const total = sumNonActionCosts(costs, actionCostResource);
 				return { b, costs, total };
 			})
-			.sort((a, b) => a.total - b.total);
+			.sort((firstEntry, secondEntry) => firstEntry.total - secondEntry.total);
 	}, [buildings, ctx, action.id, actionCostResource, player.buildings.size]);
 	return (
 		<div>
@@ -644,7 +688,9 @@ function BuildOptions({
 				{ctx.actions.get(action.id)?.icon || ''}{' '}
 				{ctx.actions.get(action.id)?.name}{' '}
 				<span className="italic text-sm font-normal">
-					(Effects take place on build and last until building is removed)
+					{'('}
+					Effects take place on build and last until building is removed
+					{')'}
 				</span>
 			</h3>
 			<div
@@ -652,12 +698,18 @@ function BuildOptions({
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
 				{entries.map(({ b, costs }) => {
-					const requirements = getActionRequirements(action.id, ctx).map(
-						(req) => req,
+					const rawBuilding = ctx.buildings.get(b.id);
+					const buildingUpkeep = getOptionalProperty<Record<string, number>>(
+						rawBuilding,
+						'upkeep',
 					);
-					const canPay = Object.entries(costs).every(
-						([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
+					const buildingIcon = getOptionalProperty<string>(rawBuilding, 'icon');
+					const buildingFocus = getOptionalProperty<Focus>(
+						rawBuilding,
+						'focus',
 					);
+					const requirements = getActionRequirements(action.id, ctx);
+					const canPay = playerHasRequiredResources(player, costs);
 					const summary = summaries.get(b.id);
 					const implemented = (summary?.length ?? 0) > 0;
 					// TODO: implement building effects
@@ -671,13 +723,13 @@ function BuildOptions({
 						: !canPay
 							? (insufficientTooltip ?? 'Cannot pay costs')
 							: undefined;
-					const upkeep = ctx.buildings.get(b.id)?.upkeep;
+					const upkeep = buildingUpkeep;
 					return (
 						<ActionCard
 							key={b.id}
 							title={
 								<>
-									{ctx.buildings.get(b.id)?.icon || ''} {b.name}
+									{buildingIcon || ''} {b.name}
 								</>
 							}
 							costs={costs}
@@ -690,7 +742,7 @@ function BuildOptions({
 							implemented={implemented}
 							enabled={enabled}
 							tooltip={title}
-							focus={(ctx.buildings.get(b.id) as Building | undefined)?.focus}
+							focus={buildingFocus}
 							onClick={() => {
 								if (!canInteract) {
 									return;
@@ -748,19 +800,24 @@ function DemolishOptions({
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)
 			.map((id) => {
-				const building = ctx.buildings.get(id) as Building | undefined;
-				if (!building) {
+				const rawBuilding = ctx.buildings.get(id);
+				if (
+					typeof rawBuilding !== 'object' ||
+					rawBuilding === null ||
+					!('name' in rawBuilding)
+				) {
 					return null;
 				}
-				const costsBag = getActionCosts(action.id, ctx, { id });
+				const building = rawBuilding as Building;
+				const costsBag = getActionCosts(action.id, ctx, {
+					id,
+				});
 				const costs: Record<string, number> = {};
-				for (const [k, v] of Object.entries(costsBag)) {
-					costs[k] = v ?? 0;
+				const costEntries = Object.entries(costsBag);
+				for (const [costKey, costAmount] of costEntries) {
+					costs[costKey] = costAmount ?? 0;
 				}
-				const total = Object.entries(costs).reduce(
-					(sum, [k, v]) => (k === actionCostResource ? sum : sum + (v ?? 0)),
-					0,
-				);
+				const total = sumNonActionCosts(costs, actionCostResource);
 				return { id, building, costs, total };
 			})
 			.filter(
@@ -773,11 +830,13 @@ function DemolishOptions({
 					total: number;
 				} => entry !== null,
 			)
-			.sort((a, b) => {
-				if (a.total !== b.total) {
-					return a.total - b.total;
+			.sort((firstEntry, secondEntry) => {
+				if (firstEntry.total !== secondEntry.total) {
+					return firstEntry.total - secondEntry.total;
 				}
-				return a.building.name.localeCompare(b.building.name);
+				return firstEntry.building.name.localeCompare(
+					secondEntry.building.name,
+				);
 			});
 	}, [ctx, action.id, actionCostResource, player.buildings.size]);
 
@@ -791,7 +850,9 @@ function DemolishOptions({
 				{ctx.actions.get(action.id)?.icon || ''}{' '}
 				{ctx.actions.get(action.id)?.name}{' '}
 				<span className="italic text-sm font-normal">
-					(Removes a structure and its ongoing benefits)
+					{'('}
+					Removes a structure and its ongoing benefits
+					{')'}
 				</span>
 			</h3>
 			<div
@@ -800,14 +861,13 @@ function DemolishOptions({
 			>
 				{entries.map(({ id, building, costs }) => {
 					const requirements: string[] = [];
-					const canPay = Object.entries(costs).every(
-						([k, v]) => (player.resources[k] || 0) >= (v ?? 0),
-					);
+					const canPay = playerHasRequiredResources(player, costs);
 					const summary = summarizeContent('building', id, ctx, {
 						installed: true,
 					});
 					const implemented = (summary?.length ?? 0) > 0;
 					const enabled = canPay && isActionPhase && canInteract && implemented;
+					const buildingFocus = building.focus;
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
@@ -836,7 +896,7 @@ function DemolishOptions({
 							implemented={implemented}
 							enabled={enabled}
 							tooltip={title}
-							focus={(ctx.buildings.get(id) as Building | undefined)?.focus}
+							focus={buildingFocus}
 							onClick={() => {
 								if (!canInteract) {
 									return;
@@ -882,7 +942,7 @@ export default function ActionsPanel() {
 	const [viewingOpponent, setViewingOpponent] = useState(false);
 
 	const actionPhaseId = useMemo(
-		() => ctx.phases.find((p) => p.action)?.id,
+		() => ctx.phases.find((phaseDefinition) => phaseDefinition.action)?.id,
 		[ctx],
 	);
 	const isActionPhase = isActionPhaseActive(
@@ -907,8 +967,15 @@ export default function ActionsPanel() {
 			Array.from(
 				(ctx.actions as unknown as { map: Map<string, Action> }).map.values(),
 			)
-				.filter((a) => !a.system || selectedPlayer.actions.has(a.id))
-				.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+				.filter(
+					(actionDefinition) =>
+						!actionDefinition.system ||
+						selectedPlayer.actions.has(actionDefinition.id),
+				)
+				.sort(
+					(firstAction, secondAction) =>
+						(firstAction.order ?? 0) - (secondAction.order ?? 0),
+				),
 		[ctx, selectedPlayer.actions.size, selectedPlayer.id],
 	);
 	const developmentOptions = useMemo<Development[]>(
@@ -918,8 +985,11 @@ export default function ActionsPanel() {
 					ctx.developments as unknown as { map: Map<string, Development> }
 				).map.values(),
 			)
-				.filter((d) => !d.system)
-				.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+				.filter((developmentDefinition) => !developmentDefinition.system)
+				.sort(
+					(firstDevelopment, secondDevelopment) =>
+						(firstDevelopment.order ?? 0) - (secondDevelopment.order ?? 0),
+				),
 		[ctx],
 	);
 	const buildingOptions = useMemo<Building[]>(
@@ -934,29 +1004,41 @@ export default function ActionsPanel() {
 
 	const actionSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
-		actions.forEach((a) =>
-			map.set(a.id, summarizeContent('action', a.id, ctx)),
+		actions.forEach((actionDefinition) =>
+			map.set(
+				actionDefinition.id,
+				summarizeContent('action', actionDefinition.id, ctx),
+			),
 		);
 		return map;
 	}, [actions, ctx]);
 	const developmentSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
-		developmentOptions.forEach((d) =>
-			map.set(d.id, summarizeContent('development', d.id, ctx)),
+		developmentOptions.forEach((developmentDefinition) =>
+			map.set(
+				developmentDefinition.id,
+				summarizeContent('development', developmentDefinition.id, ctx),
+			),
 		);
 		return map;
 	}, [developmentOptions, ctx]);
 	const buildingSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
-		buildingOptions.forEach((b) =>
-			map.set(b.id, summarizeContent('building', b.id, ctx)),
+		buildingOptions.forEach((buildingDefinition) =>
+			map.set(
+				buildingDefinition.id,
+				summarizeContent('building', buildingDefinition.id, ctx),
+			),
 		);
 		return map;
 	}, [buildingOptions, ctx]);
 	const buildingDescriptions = useMemo(() => {
 		const map = new Map<string, Summary>();
-		buildingOptions.forEach((b) =>
-			map.set(b.id, describeContent('building', b.id, ctx)),
+		buildingOptions.forEach((buildingDefinition) =>
+			map.set(
+				buildingDefinition.id,
+				describeContent('building', buildingDefinition.id, ctx),
+			),
 		);
 		return map;
 	}, [buildingOptions, ctx]);
