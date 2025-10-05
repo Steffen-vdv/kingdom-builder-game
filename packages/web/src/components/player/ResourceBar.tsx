@@ -6,6 +6,7 @@ import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
 import { buildTierEntries } from './buildTierEntries';
+import type { SummaryGroup } from '../../translation/content/types';
 
 interface ResourceButtonProps {
 	resourceKey: keyof typeof RESOURCES;
@@ -75,12 +76,47 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 	const tiers = ctx.services.rules.tierDefinitions;
 	const showHappinessCard = (value: number) => {
 		const activeTier = ctx.services.tieredResource.definition(value);
-		const { entries } = buildTierEntries(tiers, activeTier?.id, ctx);
+		const { summaries, activeEntry } = buildTierEntries(
+			tiers,
+			activeTier?.id,
+			ctx,
+		);
 		const info = RESOURCES[happinessKey];
+		const activeIndex = summaries.findIndex((summary) => summary.active);
+		const higherSummary =
+			activeIndex > 0 ? summaries[activeIndex - 1] : undefined;
+		const lowerSummary =
+			activeIndex >= 0 && activeIndex + 1 < summaries.length
+				? summaries[activeIndex + 1]
+				: undefined;
+		const groupedEntries: SummaryGroup[] = [];
+		if (activeEntry) {
+			groupedEntries.push({
+				title: 'Current tier',
+				items: [activeEntry.entry],
+			});
+		} else {
+			groupedEntries.push({
+				title: 'Current tier',
+				items: ['No active tier'],
+			});
+		}
+		if (higherSummary) {
+			groupedEntries.push({
+				title: 'If happiness rises',
+				items: [higherSummary.entry],
+			});
+		}
+		if (lowerSummary) {
+			groupedEntries.push({
+				title: 'If happiness falls',
+				items: [lowerSummary.entry],
+			});
+		}
 		handleHoverCard({
 			title: `${info.icon} ${info.label}`,
-			effects: entries,
-			effectsTitle: `Thresholds (Current value: ${value})`,
+			effects: groupedEntries,
+			effectsTitle: `Happiness thresholds (current: ${value})`,
 			requirements: [],
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
