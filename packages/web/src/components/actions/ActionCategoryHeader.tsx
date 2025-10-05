@@ -1,11 +1,11 @@
 import React from 'react';
 
 const HEADING_CLASS = [
-	'flex items-center gap-2 text-base font-medium',
+	'flex flex-wrap items-center gap-2 text-base font-medium',
 	'text-slate-900 dark:text-slate-100',
 ].join(' ');
 const SUBTITLE_CLASS = [
-	'pl-9 text-sm italic text-slate-600',
+	'italic text-sm font-normal text-slate-600',
 	'dark:text-slate-300',
 ].join(' ');
 const ICON_CLASS = 'text-lg leading-none';
@@ -22,14 +22,14 @@ export default function ActionCategoryHeader({
 	subtitle,
 }: ActionCategoryHeaderProps) {
 	return (
-		<header className="space-y-1">
+		<header>
 			<h3 className={HEADING_CLASS}>
 				<span aria-hidden className={ICON_CLASS}>
 					{icon}
 				</span>
 				<span>{title}</span>
+				<span className={SUBTITLE_CLASS}>{subtitle}</span>
 			</h3>
-			<p className={SUBTITLE_CLASS}>{subtitle}</p>
 		</header>
 	);
 }
