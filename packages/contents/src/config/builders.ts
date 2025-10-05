@@ -1550,11 +1550,15 @@ export function requirement(type?: string, method?: string) {
 	return builder;
 }
 
-class RequirementEvaluatorCompareBuilder extends RequirementBuilder<{
+class CompareRequirementBuilder extends RequirementBuilder<{
 	left?: CompareValue;
 	right?: CompareValue;
 	operator?: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne';
 }> {
+	private leftSet = false;
+	private rightSet = false;
+	private operatorSet = false;
+
 	constructor() {
 		super();
 		this.type(RequirementTypes.Evaluator);
@@ -1569,20 +1573,64 @@ class RequirementEvaluatorCompareBuilder extends RequirementBuilder<{
 	}
 
 	left(value: CompareValue) {
-		return this.param('left', this.normalize(value));
+		if (this.leftSet) {
+			throw new Error(
+				'Compare requirement already set left(). Remove the extra left() call.',
+			);
+		}
+		super.param('left', this.normalize(value));
+		this.leftSet = true;
+		return this;
 	}
 
 	right(value: CompareValue) {
-		return this.param('right', this.normalize(value));
+		if (this.rightSet) {
+			throw new Error(
+				'Compare requirement already set right(). Remove the extra right() call.',
+			);
+		}
+		super.param('right', this.normalize(value));
+		this.rightSet = true;
+		return this;
 	}
 
 	operator(op: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne') {
-		return this.param('operator', op);
+		if (this.operatorSet) {
+			throw new Error(
+				'Compare requirement already set operator(). Remove the extra operator() call.',
+			);
+		}
+		super.param('operator', op);
+		this.operatorSet = true;
+		return this;
+	}
+
+	override build(): RequirementConfig {
+		if (!this.leftSet) {
+			throw new Error(
+				'Compare requirement is missing left(). Call left(...) before build().',
+			);
+		}
+		if (!this.rightSet) {
+			throw new Error(
+				'Compare requirement is missing right(). Call right(...) before build().',
+			);
+		}
+		if (!this.operatorSet) {
+			throw new Error(
+				'Compare requirement is missing operator(). Call operator(...) before build().',
+			);
+		}
+		return super.build();
 	}
 }
 
+export function compareRequirement() {
+	return new CompareRequirementBuilder();
+}
+
 export function requirementEvaluatorCompare() {
-	return new RequirementEvaluatorCompareBuilder();
+	return compareRequirement();
 }
 
 class BaseBuilder<T extends { id: string; name: string }> {
