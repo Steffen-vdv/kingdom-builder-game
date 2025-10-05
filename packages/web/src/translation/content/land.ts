@@ -14,11 +14,11 @@ import type {
 
 function translate(
 	land: Land,
-	ctx: EngineContext,
-	fn: (
+	engineContext: EngineContext,
+	translateSummary: (
 		type: string,
 		target: unknown,
-		ctx: EngineContext,
+		engineContext: EngineContext,
 		opts?: Record<string, unknown>,
 	) => Summary,
 ): Summary {
@@ -26,11 +26,12 @@ function translate(
 	for (let i = 0; i < land.slotsMax; i++) {
 		const devId = land.developments[i];
 		if (devId) {
+			const development = engineContext.developments.get(devId);
 			items.push({
-				title: `${ctx.developments.get(devId)?.icon || ''} ${
-					ctx.developments.get(devId)?.name || devId
-				}`,
-				items: fn('development', devId, ctx, { installed: true }),
+				title: `${development?.icon || ''} ${development?.name || devId}`,
+				items: translateSummary('development', devId, engineContext, {
+					installed: true,
+				}),
 			});
 		} else {
 			items.push(`${SLOT_INFO.icon} Empty ${SLOT_INFO.label}`);
@@ -40,11 +41,11 @@ function translate(
 }
 
 class LandTranslator implements LegacyContentTranslator<Land> {
-	summarize(land: Land, ctx: EngineContext): Summary {
-		return translate(land, ctx, summarizeContent);
+	summarize(land: Land, engineContext: EngineContext): Summary {
+		return translate(land, engineContext, summarizeContent);
 	}
-	describe(land: Land, ctx: EngineContext): Summary {
-		return translate(land, ctx, describeContent);
+	describe(land: Land, engineContext: EngineContext): Summary {
+		return translate(land, engineContext, describeContent);
 	}
 }
 
