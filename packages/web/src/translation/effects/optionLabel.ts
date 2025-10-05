@@ -159,10 +159,14 @@ export function buildActionOptionTranslation(
 	if (typeof first === 'string') {
 		const normalizedFirst = normalizeEntryLabel(first, targetLabel);
 		const title = combineLabels(actionLabel, normalizedFirst, fallback);
+		const shouldIncludeFirstDetail =
+			restEntries.length > 0
+				? true
+				: mode === 'describe' && normalizedFirst !== targetLabel;
 		const detailEntries =
 			restEntries.length > 0
 				? restEntries
-				: mode === 'describe'
+				: shouldIncludeFirstDetail
 					? [normalizedFirst]
 					: [];
 		if (detailEntries.length === 0) {

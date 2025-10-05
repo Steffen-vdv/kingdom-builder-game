@@ -75,6 +75,12 @@ function GenericActions({
 			if (placeholders.has('playerId')) {
 				params.playerId = context.activePlayer.id;
 			}
+			for (const placeholder of placeholders) {
+				if (placeholder in params) {
+					continue;
+				}
+				params[placeholder] = undefined;
+			}
 			clearHoverCard();
 			setPending({
 				action: targetAction,
@@ -124,15 +130,23 @@ function GenericActions({
 					...previous.choices,
 					[group.id]: choice,
 				};
-				const mergedParams = resolvedParams
-					? { ...previous.params, ...resolvedParams }
+				const forwardedEntries = resolvedParams
+					? Object.entries(resolvedParams).filter(([key]) =>
+							Object.prototype.hasOwnProperty.call(previous.params, key),
+						)
+					: [];
+				const mergedParams = forwardedEntries.length
+					? {
+							...previous.params,
+							...Object.fromEntries(forwardedEntries),
+						}
 					: previous.params;
 				if (previous.step + 1 < previous.groups.length) {
 					return {
 						...previous,
 						step: previous.step + 1,
 						choices: nextChoices,
-						params: resolvedParams ? mergedParams : previous.params,
+						params: mergedParams,
 					};
 				}
 				void handlePerform(previous.action, {

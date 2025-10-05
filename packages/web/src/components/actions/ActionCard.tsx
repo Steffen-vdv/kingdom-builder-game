@@ -163,6 +163,7 @@ function StepBadge({
 function OptionCard({ option }: { option: ActionCardOption }) {
 	const icon = option.icon?.trim();
 	const label = option.label.trim();
+	const ariaLabel = label.length > 0 ? label : option.id;
 	const optionClass = [
 		'action-card__option',
 		option.compact ? 'action-card__option--compact' : '',
@@ -170,6 +171,7 @@ function OptionCard({ option }: { option: ActionCardOption }) {
 	]
 		.filter(Boolean)
 		.join(' ');
+	const compactVisual = icon || (label.length > 0 ? label[0] : '–');
 	return (
 		<button
 			type="button"
@@ -178,25 +180,42 @@ function OptionCard({ option }: { option: ActionCardOption }) {
 			disabled={option.disabled}
 			onMouseEnter={option.onMouseEnter}
 			onMouseLeave={option.onMouseLeave}
+			aria-label={ariaLabel}
+			title={option.compact ? ariaLabel : undefined}
 		>
-			<span className="action-card__option-header">
-				{icon ? (
-					<span aria-hidden="true" className="action-card__option-icon">
-						{icon}
+			{option.compact ? (
+				<>
+					<span
+						aria-hidden="true"
+						className="action-card__option-compact-visual"
+					>
+						{compactVisual}
 					</span>
-				) : null}
-				<span className="action-card__option-title">{label}</span>
-			</span>
-			{!option.compact && option.summary && (
-				<p className="action-card__option-summary">{option.summary}</p>
-			)}
-			{!option.compact && option.description && (
-				<p className="action-card__option-description">{option.description}</p>
+					<span className="sr-only">{ariaLabel}</span>
+				</>
+			) : (
+				<>
+					<span className="action-card__option-header">
+						{icon ? (
+							<span aria-hidden="true" className="action-card__option-icon">
+								{icon}
+							</span>
+						) : null}
+						<span className="action-card__option-title">{label}</span>
+					</span>
+					{option.summary ? (
+						<p className="action-card__option-summary">{option.summary}</p>
+					) : null}
+					{option.description ? (
+						<p className="action-card__option-description">
+							{option.description}
+						</p>
+					) : null}
+				</>
 			)}
 		</button>
 	);
 }
-
 export default function ActionCard({
 	title,
 	costs,
