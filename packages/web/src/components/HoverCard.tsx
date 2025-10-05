@@ -1,6 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
+import {
+	CARD_ALERT_TEXT_CLASS,
+	CARD_BASE_CLASS,
+	CARD_BODY_TEXT_CLASS,
+	CARD_LABEL_CLASS,
+	CARD_LIST_CLASS,
+	CARD_META_TEXT_CLASS,
+	CARD_REQUIREMENT_LIST_CLASS,
+	CARD_TITLE_TEXT_CLASS,
+	joinClasses,
+} from './common/cardStyles';
+import { ActionResolutionCard } from './ActionResolutionCard';
 
 const FADE_DURATION_MS = 200;
 
@@ -10,6 +22,8 @@ export default function HoverCard() {
 		clearHoverCard,
 		ctx,
 		actionCostResource,
+		resolution: actionResolution,
+		acknowledgeResolution,
 	} = useGameEngine();
 	const [renderedData, setRenderedData] = useState(data);
 	const [transitionState, setTransitionState] = useState<'enter' | 'exit'>(
@@ -81,23 +95,54 @@ export default function HoverCard() {
 		[],
 	);
 
+	if (actionResolution) {
+		const resolutionTitle = renderedData?.title ?? 'Action resolution';
+		return (
+			<ActionResolutionCard
+				title={resolutionTitle}
+				resolution={actionResolution}
+				onContinue={acknowledgeResolution}
+			/>
+		);
+	}
+
 	if (!renderedData) {
 		return null;
 	}
 
+	const cardContainerClass = joinClasses(
+		CARD_BASE_CLASS,
+		'pointer-events-none',
+		renderedData.bgClass,
+	);
+	const headerRowClass = 'mb-3 flex items-start justify-between gap-4';
+	const costTextClass = joinClasses('text-right', CARD_META_TEXT_CLASS);
+	const effectsTitle = renderedData.effectsTitle ?? 'Effects';
+	const effectSummary = renderSummary(renderedData.effects);
+	const descriptionTitle = renderedData.descriptionTitle ?? 'Description';
+	const descriptionLabelClass = joinClasses(
+		CARD_LABEL_CLASS,
+		renderedData.descriptionClass,
+	);
+	const descriptionTextClass = joinClasses(
+		'mt-1',
+		CARD_BODY_TEXT_CLASS,
+		renderedData.descriptionClass,
+	);
+	const descriptionListClass = joinClasses(
+		CARD_LIST_CLASS,
+		renderedData.descriptionClass,
+	);
+
 	return (
 		<div
 			data-state={transitionState}
-			className={`hover-card-transition pointer-events-none w-full rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl shadow-amber-500/10 dark:border-white/10 dark:bg-slate-900/80 dark:shadow-slate-900/60 frosted-surface ${
-				renderedData.bgClass ?? ''
-			}`}
+			className={cardContainerClass}
 			onMouseLeave={clearHoverCard}
 		>
-			<div className="mb-3 flex items-start justify-between gap-4">
-				<div className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-					{renderedData.title}
-				</div>
-				<div className="text-right text-sm text-slate-600 dark:text-slate-300">
+			<div className={headerRowClass}>
+				<div className={CARD_TITLE_TEXT_CLASS}>{renderedData.title}</div>
+				<div className={costTextClass}>
 					{renderCosts(
 						renderedData.costs,
 						ctx.activePlayer.resources,
@@ -108,12 +153,8 @@ export default function HoverCard() {
 			</div>
 			{renderedData.effects.length > 0 && (
 				<div className="mb-2">
-					<div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
-						{renderedData.effectsTitle ?? 'Effects'}
-					</div>
-					<ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-200">
-						{renderSummary(renderedData.effects)}
-					</ul>
+					<div className={CARD_LABEL_CLASS}>{effectsTitle}</div>
+					<ul className={CARD_LIST_CLASS}>{effectSummary}</ul>
 				</div>
 			)}
 			{(() => {
@@ -127,37 +168,21 @@ export default function HoverCard() {
 				}
 				return (
 					<div className="mt-2">
-						<div
-							className={`text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300 ${
-								renderedData.descriptionClass ?? ''
-							}`}
-						>
-							{renderedData.descriptionTitle ?? 'Description'}
-						</div>
+						<div className={descriptionLabelClass}>{descriptionTitle}</div>
 						{typeof desc === 'string' ? (
-							<div
-								className={`mt-1 text-sm text-slate-700 dark:text-slate-200 ${
-									renderedData.descriptionClass ?? ''
-								}`}
-							>
-								{desc}
-							</div>
+							<div className={descriptionTextClass}>{desc}</div>
 						) : (
-							<ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-200">
-								{renderSummary(desc)}
-							</ul>
+							<ul className={descriptionListClass}>{renderSummary(desc)}</ul>
 						)}
 					</div>
 				);
 			})()}
 			{renderedData.requirements.length > 0 && (
-				<div className="mt-2 text-sm text-rose-600 dark:text-rose-300">
-					<div className="text-xs font-semibold uppercase tracking-[0.3em]">
-						Requirements
-					</div>
-					<ul className="mt-1 list-disc space-y-1 pl-5">
-						{renderedData.requirements.map((r, i) => (
-							<li key={i}>{r}</li>
+				<div className={CARD_ALERT_TEXT_CLASS}>
+					<div className={CARD_LABEL_CLASS}>Requirements</div>
+					<ul className={CARD_REQUIREMENT_LIST_CLASS}>
+						{renderedData.requirements.map((requirement, index) => (
+							<li key={index}>{requirement}</li>
 						))}
 					</ul>
 				</div>
