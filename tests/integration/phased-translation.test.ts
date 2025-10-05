@@ -5,7 +5,10 @@ import {
 	summarizeContent,
 	describeContent,
 } from '@kingdom-builder/web/translation/content';
-import type { PhasedDef } from '@kingdom-builder/web/translation/content/phased';
+// prettier-ignore
+import type {
+	PhasedDef,
+} from '@kingdom-builder/web/translation/content/phased';
 import {
 	TRIGGER_INFO,
 	RESOURCES,
@@ -15,7 +18,10 @@ import {
 	RULES,
 } from '@kingdom-builder/contents';
 import type { ResourceKey } from '@kingdom-builder/contents';
-import { createContentFactory } from '../../packages/engine/tests/factories/content';
+// prettier-ignore
+import {
+	createContentFactory,
+} from '../../packages/engine/tests/factories/content';
 
 type Entry = string | { title: string; items: Entry[] };
 
