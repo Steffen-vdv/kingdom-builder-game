@@ -238,36 +238,36 @@ export function createActionRegistry() {
 				.label('Raise a House')
 				.icon('🏠')
 				.action(ActionId.develop)
-				.param('actionId', ActionId.develop)
-				.param('developmentId', 'house')
-				.param('landId', '$landId'),
+				.paramActionId(ActionId.develop)
+				.paramDevelopmentId(DevelopmentId.House)
+				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_farm')
 				.label('Establish a Farm')
 				.icon('🌾')
 				.action(ActionId.develop)
-				.param('actionId', ActionId.develop)
-				.param('developmentId', 'farm')
-				.param('landId', '$landId'),
+				.paramActionId(ActionId.develop)
+				.paramDevelopmentId(DevelopmentId.Farm)
+				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_outpost')
 				.label('Fortify with an Outpost')
 				.icon('🏹')
 				.action(ActionId.develop)
-				.param('actionId', ActionId.develop)
-				.param('developmentId', 'outpost')
-				.param('landId', '$landId'),
+				.paramActionId(ActionId.develop)
+				.paramDevelopmentId(DevelopmentId.Outpost)
+				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_watchtower')
 				.label('Raise a Watchtower')
 				.icon('🗼')
 				.action(ActionId.develop)
-				.param('actionId', ActionId.develop)
-				.param('developmentId', 'watchtower')
-				.param('landId', '$landId'),
+				.paramActionId(ActionId.develop)
+				.paramDevelopmentId(DevelopmentId.Watchtower)
+				.paramLandId('$landId'),
 		);
 
 	registry.add(

@@ -146,6 +146,18 @@ class ActionEffectGroupOptionBuilder {
 		return this;
 	}
 
+	paramActionId(actionId: ActionId) {
+		return this.param('actionId', actionId);
+	}
+
+	paramDevelopmentId(developmentId: DevelopmentIdParam) {
+		return this.param('developmentId', developmentId);
+	}
+
+	paramLandId(landId: string) {
+		return this.param('landId', landId);
+	}
+
 	params(params: Params | ParamsBuilder) {
 		if (this.paramsSet) {
 			throw new Error(
@@ -205,6 +217,28 @@ class ActionEffectGroupOptionBuilder {
 
 export function actionEffectGroupOption(id?: string) {
 	return new ActionEffectGroupOptionBuilder(id);
+}
+
+class ActionEffectGroupOptionParamsBuilder extends ParamsBuilder<{
+	actionId?: ActionId;
+	developmentId?: DevelopmentIdParam;
+	landId?: string;
+}> {
+	actionId(actionId: ActionId) {
+		return this.set('actionId', actionId);
+	}
+
+	developmentId(developmentId: DevelopmentIdParam) {
+		return this.set('developmentId', developmentId);
+	}
+
+	landId(landId: string) {
+		return this.set('landId', landId);
+	}
+}
+
+export function actionEffectGroupOptionParams() {
+	return new ActionEffectGroupOptionParamsBuilder();
 }
 
 export type ActionEffectGroupDef = ActionEffectGroup;
