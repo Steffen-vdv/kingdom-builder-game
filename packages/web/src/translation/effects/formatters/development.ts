@@ -35,8 +35,11 @@ function renderDevelopmentChange(
 	const label = decorated || safeId;
 	const summary = label;
 	const description = `${verbs.describe} ${label}`.trim();
-	const log = verbs.log ? `${verbs.log} ${label}`.trim() : undefined;
-	return { summary, description, log };
+	const copy: DevelopmentChangeCopy = { summary, description };
+	if (verbs.log) {
+		copy.log = `${verbs.log} ${label}`.trim();
+	}
+	return copy;
 }
 
 registerEffectFormatter('development', 'add', {
