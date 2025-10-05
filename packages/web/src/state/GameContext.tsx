@@ -4,6 +4,7 @@ import React, {
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import {
@@ -30,10 +31,11 @@ import { useActionResolution } from './useActionResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
 import { usePhaseProgress } from './usePhaseProgress';
 import { useActionPerformer } from './useActionPerformer';
-import { useErrorToasts } from './useErrorToasts';
+import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
 import type { GameEngineContextValue } from './GameContext.types';
+import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
@@ -53,6 +55,8 @@ export function GameProvider({
 	onToggleMusic = () => {},
 	soundEnabled = true,
 	onToggleSound = () => {},
+	playerName = DEFAULT_PLAYER_NAME,
+	onChangePlayerName = () => {},
 }: {
 	children: React.ReactNode;
 	onExit?: () => void;
@@ -63,7 +67,11 @@ export function GameProvider({
 	onToggleMusic?: () => void;
 	soundEnabled?: boolean;
 	onToggleSound?: () => void;
+	playerName?: string;
+	onChangePlayerName?: (name: string) => void;
 }) {
+	const playerNameRef = useRef(playerName);
+	playerNameRef.current = playerName;
 	const { session, ctx } = useMemo<{
 		session: EngineSession;
 		ctx: EngineContext;
@@ -78,7 +86,12 @@ export function GameProvider({
 			rules: RULES,
 		});
 		created.setDevMode(devMode);
-		return { session: created, ctx: created.getLegacyContext() };
+		const legacyContext = created.getLegacyContext();
+		const [primary] = legacyContext.game.players;
+		if (primary) {
+			primary.name = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
+		}
+		return { session: created, ctx: legacyContext };
 	}, [devMode]);
 	const [tick, setTick] = useState(0);
 	const refresh = useCallback(() => setTick((t) => t + 1), []);
@@ -86,6 +99,19 @@ export function GameProvider({
 	const enqueue = <T,>(task: () => Promise<T> | T) => session.enqueue(task);
 
 	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
+
+	useEffect(() => {
+		const [primary] = ctx.game.players;
+		if (!primary) {
+			return;
+		}
+		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
+		if (primary.name === desiredName) {
+			return;
+		}
+		primary.name = desiredName;
+		refresh();
+	}, [ctx, refresh, playerName]);
 
 	const translationContext = useMemo(
 		() =>
@@ -179,9 +205,10 @@ export function GameProvider({
 		enqueue,
 	});
 
-	const { errorToasts, pushErrorToast, dismissErrorToast } = useErrorToasts({
-		setTrackedTimeout,
-	});
+	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =
+		useToasts({
+			setTrackedTimeout,
+		});
 
 	useCompensationLogger({
 		session,
@@ -253,9 +280,13 @@ export function GameProvider({
 		onToggleSound,
 		timeScale,
 		setTimeScale,
-		errorToasts,
+		toasts,
+		pushToast,
 		pushErrorToast,
-		dismissErrorToast,
+		pushSuccessToast,
+		dismissToast,
+		playerName,
+		onChangePlayerName,
 		...(onExit ? { onExit } : {}),
 	};
 

@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import { useEffect } from 'react';
 import Button from '../common/Button';
 import ToggleSwitch from '../common/ToggleSwitch';
+import { PlayerNameSetting } from './PlayerNameSetting';
 
 const DIALOG_SURFACE_CLASS = [
 	'relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border border-white/20',
@@ -43,6 +44,8 @@ interface SettingsDialogProps {
 	onToggleMusic: () => void;
 	soundEnabled: boolean;
 	onToggleSound: () => void;
+	playerName: string;
+	onChangePlayerName: (name: string) => void;
 }
 
 interface SettingRowProps {
@@ -86,6 +89,8 @@ export default function SettingsDialog({
 	onToggleMusic,
 	soundEnabled,
 	onToggleSound,
+	playerName,
+	onChangePlayerName,
 }: SettingsDialogProps) {
 	useEffect(() => {
 		if (!open || typeof window === 'undefined') {
@@ -126,6 +131,11 @@ export default function SettingsDialog({
 					</p>
 				</header>
 				<div className="flex flex-col gap-4">
+					<PlayerNameSetting
+						open={open}
+						playerName={playerName}
+						onSave={onChangePlayerName}
+					/>
 					<SettingRow
 						id="settings-music"
 						title="Background music"

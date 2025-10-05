@@ -29,7 +29,7 @@ interface UseActionPerformerOptions {
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;
 	refresh: () => void;
-	pushErrorToast: (message: string) => void;
+	pushErrorToast: (message: string, title?: string) => void;
 	mountedRef: React.MutableRefObject<boolean>;
 	endTurn: () => Promise<void>;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;

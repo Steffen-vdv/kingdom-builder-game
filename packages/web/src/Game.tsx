@@ -7,7 +7,7 @@ import PhasePanel from './components/phases/PhasePanel';
 import LogPanel from './components/LogPanel';
 import Button from './components/common/Button';
 import TimeControl from './components/common/TimeControl';
-import ErrorToaster from './components/common/ErrorToaster';
+import Toaster from './components/common/Toaster';
 import ConfirmDialog from './components/common/ConfirmDialog';
 import SettingsDialog from './components/settings/SettingsDialog';
 
@@ -21,6 +21,8 @@ function GameLayout() {
 		onToggleMusic,
 		soundEnabled,
 		onToggleSound,
+		playerName,
+		onChangePlayerName,
 	} = useGameEngine();
 	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
@@ -158,6 +160,8 @@ function GameLayout() {
 				onToggleMusic={onToggleMusic}
 				soundEnabled={soundEnabled}
 				onToggleSound={onToggleSound}
+				playerName={playerName}
+				onChangePlayerName={onChangePlayerName}
 			/>
 			<ConfirmDialog
 				open={isQuitDialogOpen}
@@ -168,7 +172,7 @@ function GameLayout() {
 				onCancel={closeDialog}
 				onConfirm={confirmExit}
 			/>
-			<ErrorToaster />
+			<Toaster />
 			<div className="pointer-events-none absolute inset-0">
 				<div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
 				<div className="absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-500/20" />
@@ -223,6 +227,8 @@ export default function Game({
 	onToggleMusic = () => {},
 	soundEnabled = true,
 	onToggleSound = () => {},
+	playerName,
+	onChangePlayerName,
 }: {
 	onExit?: () => void;
 	darkMode?: boolean;
@@ -232,6 +238,8 @@ export default function Game({
 	onToggleMusic?: () => void;
 	soundEnabled?: boolean;
 	onToggleSound?: () => void;
+	playerName: string;
+	onChangePlayerName: (name: string) => void;
 }) {
 	return (
 		<GameProvider
@@ -243,6 +251,8 @@ export default function Game({
 			onToggleMusic={onToggleMusic}
 			soundEnabled={soundEnabled}
 			onToggleSound={onToggleSound}
+			playerName={playerName}
+			onChangePlayerName={onChangePlayerName}
 		>
 			<GameLayout />
 		</GameProvider>
