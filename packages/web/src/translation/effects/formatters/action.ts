@@ -54,6 +54,7 @@ registerEffectFormatter('action', 'add', {
 		const { label, system } = getActionPresentation(id, ctx);
 		const card = describeContent('action', id, ctx);
 		return [
+			label,
 			formatActionChangeSentence('gain', label, 'describe'),
 			{
 				title: label,
@@ -88,7 +89,7 @@ registerEffectFormatter('action', 'remove', {
 			return null;
 		}
 		const { label } = getActionPresentation(id, ctx);
-		return formatActionChangeSentence('lose', label, 'describe');
+		return [label, formatActionChangeSentence('lose', label, 'describe')];
 	},
 	log: (eff, ctx) => {
 		const id = eff.params?.['id'] as string;
