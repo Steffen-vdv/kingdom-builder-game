@@ -37,16 +37,10 @@ export function buildDescribeEntry(
 	const powerLabel = statLabel(power, 'attack power');
 	const absorptionLabel = statLabel(absorption, 'damage reduction');
 	const title = power
-		? ['Attack opponent with your ', powerLabel].join('')
+		? `Attack opponent with your ${powerLabel}`
 		: 'Attack opponent with your forces';
-	const ignoringAbsorption = [
-		'Ignoring ',
-		absorptionLabel,
-		' damage reduction',
-	].join('');
-	const appliedAbsorption = [absorptionLabel, ' damage reduction applied'].join(
-		'',
-	);
+	const ignoringAbsorption = `Ignoring ${absorptionLabel} damage reduction`;
+	const appliedAbsorption = `${absorptionLabel} damage reduction applied`;
 	const absorptionItem = ignoreAbsorption
 		? absorption
 			? ignoringAbsorption
@@ -68,24 +62,13 @@ export function defaultFortificationItems(
 	if (!fort) {
 		return [
 			"Damage applied to opponent's defenses",
-			[
-				'If opponent defenses fall, ',
-				'overflow remaining damage ',
-				'on opponent ',
-				targetLabel,
-			].join(''),
+			`If opponent defenses fall, overflow remaining damage on opponent ${targetLabel}`,
 		];
 	}
 	const fortDisplay = statLabel(fort, 'fortification');
 	return [
 		`Damage applied to opponent's ${fortDisplay}`,
-		[
-			'If opponent ',
-			fortDisplay,
-			' reduced to 0, overflow remaining damage ',
-			'on opponent ',
-			targetLabel,
-		].join(''),
+		`If opponent ${fortDisplay} reduced to 0, overflow remaining damage on opponent ${targetLabel}`,
 	];
 }
 
@@ -96,25 +79,14 @@ export function buildingFortificationItems(
 	const fort = stats.fortification;
 	if (!fort) {
 		return [
-			`Damage applied to opponent's defenses`,
-			[
-				'If opponent defenses fall, ',
-				'overflow remaining damage ',
-				'attempts to destroy opponent ',
-				targetLabel,
-			].join(''),
+			"Damage applied to opponent's defenses",
+			`If opponent defenses fall, overflow remaining damage attempts to destroy opponent ${targetLabel}`,
 		];
 	}
 	const fortDisplay = statLabel(fort, 'fortification');
 	return [
 		`Damage applied to opponent's ${fortDisplay}`,
-		[
-			'If opponent ',
-			fortDisplay,
-			' reduced to 0, overflow remaining damage ',
-			'attempts to destroy opponent ',
-			targetLabel,
-		].join(''),
+		`If opponent ${fortDisplay} reduced to 0, overflow remaining damage attempts to destroy opponent ${targetLabel}`,
 	];
 }
 
