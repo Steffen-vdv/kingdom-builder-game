@@ -55,6 +55,12 @@ function resolveOptionParams(
 		}
 		resolved[key] = value;
 	}
+	if (
+		resolved['id'] === undefined &&
+		typeof resolved['developmentId'] === 'string'
+	) {
+		resolved['id'] = resolved['developmentId'];
+	}
 	return resolved;
 }
 
