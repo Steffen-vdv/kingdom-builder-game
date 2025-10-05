@@ -2,14 +2,16 @@ import Button from '../components/common/Button';
 import { ShowcaseCard } from '../components/layouts/ShowcasePage';
 
 const KNOWLEDGE_CARD_CLASS = [
-	'mt-8 flex flex-col gap-4 rounded-2xl border border-white/60 bg-white/60 p-4',
-	'text-sm text-slate-600 shadow-inner dark:border-white/10 dark:bg-white/5',
-	'dark:text-slate-300/80',
+	'mt-8 flex flex-col gap-4 rounded-2xl border border-white/60',
+	'bg-white/60 p-4',
+	'text-sm text-slate-600 shadow-inner dark:border-white/10',
+	'dark:bg-white/5 dark:text-slate-300/80',
 ].join(' ');
 
 const GHOST_BUTTON_CLASS = [
-	'w-full rounded-full border border-slate-200/60 bg-white/50 px-5 py-2',
-	'text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-white/80',
+	'w-full rounded-full border border-slate-200/60 bg-white/50 px-5',
+	'py-2 text-sm font-semibold text-slate-700',
+	'hover:border-slate-300 hover:bg-white/80',
 	'dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
 	'dark:hover:border-white/20 dark:hover:bg-white/10 sm:w-auto',
 ].join(' ');
@@ -25,10 +27,11 @@ const DEV_BUTTON_CLASS = [
 ].join(' ');
 
 const SETTINGS_BUTTON_CLASS = [
-	'w-full rounded-full border border-slate-200/60 bg-white/50 px-5 py-2.5 text-sm font-semibold',
-	'text-slate-700 shadow-inner shadow-white/40 transition dark:border-white/10 dark:bg-white/5',
-	'dark:text-slate-200 hover:border-slate-300 hover:bg-white/75 dark:hover:border-white/20 dark:hover:bg-white/10',
-	'sm:w-full',
+	'w-full rounded-full border border-slate-200/60 bg-white/50 px-5',
+	'py-2.5 text-sm font-semibold text-slate-700 shadow-inner shadow-white/40',
+	'transition dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
+	'hover:border-slate-300 hover:bg-white/75',
+	'dark:hover:border-white/20 dark:hover:bg-white/10 sm:w-full',
 ].join(' ');
 
 const CTA_CONTENT_LAYOUT_CLASS = [
@@ -89,8 +92,8 @@ export function CallToActionSection({
 					</h2>
 					{/* prettier-ignore */}
 					<p className={CTA_DESCRIPTION_CLASS}>
-                                                {CTA_DESCRIPTION_TEXT}
-                                        </p>
+						{CTA_DESCRIPTION_TEXT}
+					</p>
 				</div>
 				<div className={CTA_BUTTON_COLUMN_CLASS}>
 					<Button
@@ -127,8 +130,8 @@ export function CallToActionSection({
 				<div className={KNOWLEDGE_HEADER_LAYOUT_CLASS}>
 					{/* prettier-ignore */}
 					<div className={KNOWLEDGE_TITLE_CLASS}>
-                                                Learn The Basics
-                                        </div>
+						Learn The Basics
+					</div>
 					<div className={KNOWLEDGE_ACTIONS_CLASS}>
 						<Button
 							variant="ghost"
