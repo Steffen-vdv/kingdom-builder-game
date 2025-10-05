@@ -90,6 +90,7 @@ module.exports = {
 					'd',
 					'e',
 					'f',
+					'fs',
 					'l',
 					's',
 					't',
@@ -152,7 +153,8 @@ module.exports = {
 		{
 			files: ['scripts/**/*.js', 'scripts/**/*.cjs'],
 			parserOptions: {
-				project: null,
+				project: ['./tsconfig.eslint.json'],
+				tsconfigRootDir: __dirname,
 			},
 			rules: {
 				'@typescript-eslint/await-thenable': 'off',
