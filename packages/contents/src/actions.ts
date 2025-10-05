@@ -24,6 +24,7 @@ import {
 	transferParams,
 	actionEffectGroup,
 	actionEffectGroupOption,
+	removePassive,
 } from './config/builders';
 import {
 	Types,
@@ -393,11 +394,7 @@ export function createActionRegistry() {
 							.id('hold_festival_penalty')
 							.name('Festival Hangover')
 							.icon('🥴')
-							.onUpkeepPhase(
-								effect(Types.Passive, PassiveMethods.REMOVE)
-									.param('id', 'hold_festival_penalty')
-									.build(),
-							),
+							.onUpkeepPhase(removePassive('hold_festival_penalty').build()),
 					)
 					.effect(
 						effect(Types.ResultMod, ResultModMethods.ADD)
@@ -463,11 +460,7 @@ export function createActionRegistry() {
 					.params(
 						passiveParams()
 							.id('plow_cost_mod')
-							.onUpkeepPhase(
-								effect(Types.Passive, PassiveMethods.REMOVE)
-									.param('id', 'plow_cost_mod')
-									.build(),
-							),
+							.onUpkeepPhase(removePassive('plow_cost_mod').build()),
 					)
 					.effect(
 						effect(Types.CostMod, CostModMethods.ADD)

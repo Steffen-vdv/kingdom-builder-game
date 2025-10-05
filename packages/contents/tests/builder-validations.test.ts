@@ -7,6 +7,7 @@ import {
 	requirement,
 	compareRequirement,
 	passiveParams,
+	removePassive,
 	attackParams,
 	transferParams,
 	happinessTier,
@@ -130,6 +131,28 @@ describe('content builder safeguards', () => {
 		expect(() => passiveParams().build()).toThrowError(
 			'Passive effect is missing id(). Call id("your-passive-id") so it can be referenced later.',
 		);
+	});
+
+	it('wraps passive removals by id via removePassive helper', () => {
+		const removal = removePassive('passive:test').build();
+		expect(removal).toEqual({
+			type: Types.Passive,
+			method: PassiveMethods.REMOVE,
+			params: { id: 'passive:test' },
+		});
+	});
+
+	it('supports passing a passiveParams builder to removePassive', () => {
+		const paramsBuilder = passiveParams()
+			.id('passive:builder')
+			.name('Builder Passive')
+			.icon('✨');
+		const removal = removePassive(paramsBuilder).build();
+		expect(removal).toEqual({
+			type: Types.Passive,
+			method: PassiveMethods.REMOVE,
+			params: paramsBuilder.build(),
+		});
 	});
 
 	it('ensures attacks have a single target', () => {

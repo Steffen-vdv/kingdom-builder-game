@@ -9,6 +9,7 @@ import {
 	statParams,
 	populationEvaluator,
 	passiveParams,
+	removePassive,
 	populationAssignmentPassiveId,
 } from './config/builders';
 import {
@@ -36,13 +37,13 @@ const FORTIFIER_STRENGTH_GAIN_PARAMS = statParams()
 	.amount(1)
 	.build();
 
-const LEGION_ASSIGNMENT_PASSIVE_PARAMS = passiveParams()
-	.id(populationAssignmentPassiveId(PopulationRole.Legion))
-	.build();
+const LEGION_ASSIGNMENT_PASSIVE_PARAMS = passiveParams().id(
+	populationAssignmentPassiveId(PopulationRole.Legion),
+);
 
-const FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS = passiveParams()
-	.id(populationAssignmentPassiveId(PopulationRole.Fortifier))
-	.build();
+const FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS = passiveParams().id(
+	populationAssignmentPassiveId(PopulationRole.Fortifier),
+);
 
 export function createPopulationRegistry() {
 	const registry = new Registry<PopulationDef>(populationSchema);
@@ -80,7 +81,7 @@ export function createPopulationRegistry() {
 			.upkeep(Resource.gold, 1)
 			.onAssigned(
 				effect(Types.Passive, PassiveMethods.ADD)
-					.params(LEGION_ASSIGNMENT_PASSIVE_PARAMS)
+					.params(LEGION_ASSIGNMENT_PASSIVE_PARAMS.build())
 					.effect(
 						effect(Types.Stat, StatMethods.ADD)
 							.params(LEGION_STRENGTH_GAIN_PARAMS)
@@ -88,11 +89,7 @@ export function createPopulationRegistry() {
 					)
 					.build(),
 			)
-			.onUnassigned(
-				effect(Types.Passive, PassiveMethods.REMOVE)
-					.params(LEGION_ASSIGNMENT_PASSIVE_PARAMS)
-					.build(),
-			)
+			.onUnassigned(removePassive(LEGION_ASSIGNMENT_PASSIVE_PARAMS).build())
 			.build(),
 	);
 
@@ -105,7 +102,7 @@ export function createPopulationRegistry() {
 			.upkeep(Resource.gold, 1)
 			.onAssigned(
 				effect(Types.Passive, PassiveMethods.ADD)
-					.params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS)
+					.params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS.build())
 					.effect(
 						effect(Types.Stat, StatMethods.ADD)
 							.params(FORTIFIER_STRENGTH_GAIN_PARAMS)
@@ -113,11 +110,7 @@ export function createPopulationRegistry() {
 					)
 					.build(),
 			)
-			.onUnassigned(
-				effect(Types.Passive, PassiveMethods.REMOVE)
-					.params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS)
-					.build(),
-			)
+			.onUnassigned(removePassive(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS).build())
 			.build(),
 	);
 

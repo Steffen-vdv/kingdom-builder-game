@@ -712,6 +712,14 @@ export function passiveParams() {
 	return new PassiveEffectParamsBuilder();
 }
 
+export function removePassive(passive: string | PassiveEffectParamsBuilder) {
+	const builder = effect(Types.Passive, PassiveMethods.REMOVE);
+	if (typeof passive === 'string') {
+		return builder.param('id', passive);
+	}
+	return builder.params(passive.build());
+}
+
 class TierPassiveTextBuilder {
 	private tokens: TierPassiveTextTokens = {};
 
