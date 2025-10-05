@@ -146,6 +146,20 @@ class ActionEffectGroupOptionBuilder {
 		return this;
 	}
 
+	paramActionId(actionId: ActionId): this;
+	paramActionId(actionId: string): this;
+	paramActionId(actionId: string) {
+		return this.param('actionId', actionId);
+	}
+
+	paramDevelopmentId(developmentId: DevelopmentIdParam) {
+		return this.param('developmentId', developmentId);
+	}
+
+	paramLandId(landId: string) {
+		return this.param('landId', landId);
+	}
+
 	params(params: Params | ParamsBuilder) {
 		if (this.paramsSet) {
 			throw new Error(
@@ -203,6 +217,42 @@ class ActionEffectGroupOptionBuilder {
 
 export function actionEffectGroupOption(id?: string) {
 	return new ActionEffectGroupOptionBuilder(id);
+}
+
+class ActionEffectGroupOptionParamsBuilder extends ParamsBuilder<{
+	actionId?: string;
+	developmentId?: DevelopmentIdParam;
+	landId?: string;
+}> {
+	actionId(actionId: ActionId): this;
+	actionId(actionId: string): this;
+	actionId(actionId: string) {
+		return this.set(
+			'actionId',
+			actionId,
+			'Action effect group option params already set actionId(). Remove the extra actionId() call.',
+		);
+	}
+
+	developmentId(developmentId: DevelopmentIdParam) {
+		return this.set(
+			'developmentId',
+			developmentId,
+			'Action effect group option params already set developmentId(). Remove the extra developmentId() call.',
+		);
+	}
+
+	landId(landId: string) {
+		return this.set(
+			'landId',
+			landId,
+			'Action effect group option params already set landId(). Remove the extra landId() call.',
+		);
+	}
+}
+
+export function actionEffectGroupOptionParams() {
+	return new ActionEffectGroupOptionParamsBuilder();
 }
 
 export type ActionEffectGroupDef = ActionEffectGroup;
