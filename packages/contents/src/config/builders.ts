@@ -25,6 +25,7 @@ import type {
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
+import type { DevelopmentId } from '../developments';
 import type { TriggerKey } from '../defs';
 import type { ActionId } from '../actions';
 import {
@@ -34,6 +35,10 @@ import {
 	ParamsBuilder,
 } from './builderShared';
 import type { Params } from './builderShared';
+
+type DevelopmentIdParam =
+	| DevelopmentId
+	| (string & { __developmentIdParam?: never });
 
 export function populationAssignmentPassiveId(role: PopulationRoleId) {
 	return `${role}_$player_$index`;
@@ -425,10 +430,10 @@ export function statParams() {
 }
 
 class DevelopmentEffectParamsBuilder extends ParamsBuilder<{
-	id?: string;
+	id?: DevelopmentIdParam;
 	landId?: string;
 }> {
-	id(id: string) {
+	id(id: DevelopmentIdParam) {
 		return this.set(
 			'id',
 			id,
@@ -1287,11 +1292,13 @@ export function statEvaluator() {
 	return new StatEvaluatorBuilder();
 }
 
-class DevelopmentEvaluatorBuilder extends EvaluatorBuilder<{ id?: string }> {
+class DevelopmentEvaluatorBuilder extends EvaluatorBuilder<{
+	id?: DevelopmentIdParam;
+}> {
 	constructor() {
 		super('development');
 	}
-	id(id: string) {
+	id(id: DevelopmentIdParam) {
 		return this.param('id', id);
 	}
 }

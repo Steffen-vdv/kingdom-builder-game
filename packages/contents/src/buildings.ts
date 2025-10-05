@@ -7,6 +7,7 @@ import {
 import { ActionId } from './actions';
 import { Resource } from './resources';
 import { Stat } from './stats';
+import { DevelopmentId } from './developments';
 import {
 	building,
 	effect,
@@ -69,6 +70,12 @@ export function createBuildingRegistry() {
 	});
 
 	// TODO: remaining buildings from original manual config
+	const millFarmTarget = developmentTarget().id(DevelopmentId.Farm);
+	const millFarmResultParams = resultModParams()
+		.id('mill_farm_bonus')
+		.evaluation(millFarmTarget)
+		.amount(1);
+
 	registry.add('mill', {
 		...building()
 			.id('mill')
@@ -77,12 +84,7 @@ export function createBuildingRegistry() {
 			.cost(Resource.gold, 7)
 			.onBuild(
 				effect(Types.ResultMod, ResultModMethods.ADD)
-					.params(
-						resultModParams()
-							.id('mill_farm_bonus')
-							.evaluation(developmentTarget().id('farm'))
-							.amount(1),
-					)
+					.params(millFarmResultParams)
 					.build(),
 			)
 			.build(),
