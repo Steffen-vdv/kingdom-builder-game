@@ -26,14 +26,19 @@ function compare(a: number, b: number, op: CompareParams['operator']) {
 	}
 }
 
+const getValue = (
+	value: EvaluatorDef | number,
+	ctx: Parameters<RequirementHandler>[1],
+) =>
+	typeof value === 'number'
+		? value
+		: (EVALUATORS.get(value.type)(value, ctx) as number);
+
 export const evaluatorCompare: RequirementHandler = (req, ctx) => {
 	const params = req.params as unknown as CompareParams;
 	const leftHandler = EVALUATORS.get(params.left.type);
 	const leftVal = leftHandler(params.left, ctx) as number;
-	const rightVal =
-		typeof params.right === 'number'
-			? params.right
-			: (EVALUATORS.get(params.right.type)(params.right, ctx) as number);
+	const rightVal = getValue(params.right, ctx);
 	return compare(leftVal, rightVal, params.operator)
 		? true
 		: req.message || 'Requirement failed';

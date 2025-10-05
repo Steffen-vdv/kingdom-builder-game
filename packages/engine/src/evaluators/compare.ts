@@ -25,18 +25,20 @@ function compare(a: number, b: number, op: CompareParams['operator']) {
 	}
 }
 
+const getValue = (
+	value: EvaluatorDef | number,
+	ctx: Parameters<EvaluatorHandler<number, CompareParams>>[1],
+) =>
+	typeof value === 'number'
+		? value
+		: Number(EVALUATORS.get(value.type)(value, ctx));
+
 export const compareEvaluator: EvaluatorHandler<number, CompareParams> = (
 	definition,
 	ctx,
 ) => {
 	const params = definition.params as CompareParams;
-	const leftVal =
-		typeof params.left === 'number'
-			? params.left
-			: Number(EVALUATORS.get(params.left.type)(params.left, ctx));
-	const rightVal =
-		typeof params.right === 'number'
-			? params.right
-			: Number(EVALUATORS.get(params.right.type)(params.right, ctx));
+	const leftVal = getValue(params.left, ctx);
+	const rightVal = getValue(params.right, ctx);
 	return compare(leftVal, rightVal, params.operator) ? 1 : 0;
 };
