@@ -129,11 +129,8 @@ export function GameProvider({
 		clearTrackedTimeout,
 	});
 
-	const { log, logOverflowed, addLog, logWithEffectDelay } = useGameLog({
+	const { log, logOverflowed, addLog } = useGameLog({
 		sessionState,
-		mountedRef,
-		timeScaleRef,
-		setTrackedTimeout,
 	});
 
 	const { resolution, showResolution, acknowledgeResolution } =
@@ -147,7 +144,7 @@ export function GameProvider({
 	const handleShowResolution = useCallback(
 		(options: ShowResolutionOptions) => {
 			clearHoverCard();
-			showResolution(options);
+			return showResolution(options);
 		},
 		[clearHoverCard, showResolution],
 	);
@@ -197,7 +194,7 @@ export function GameProvider({
 		session,
 		actionCostResource,
 		addLog,
-		logWithEffectDelay,
+		showResolution: handleShowResolution,
 		updateMainPhaseStep,
 		refresh,
 		pushErrorToast,

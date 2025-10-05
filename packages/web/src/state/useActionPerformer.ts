@@ -13,6 +13,7 @@ import {
 } from '@kingdom-builder/contents';
 import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
 import type { Action } from './actionTypes';
+import type { ShowResolutionOptions } from './useActionResolution';
 import {
 	formatActionLogLines,
 	formatDevelopActionLogLines,
@@ -25,10 +26,7 @@ interface UseActionPerformerOptions {
 		entry: string | string[],
 		player?: Pick<PlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
-	logWithEffectDelay: (
-		lines: string[],
-		player: Pick<PlayerStateSnapshot, 'id' | 'name'>,
-	) => Promise<void>;
+	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;
 	refresh: () => void;
 	pushErrorToast: (message: string) => void;
@@ -42,7 +40,7 @@ export function useActionPerformer({
 	session,
 	actionCostResource,
 	addLog,
-	logWithEffectDelay,
+	showResolution,
 	updateMainPhaseStep,
 	refresh,
 	pushErrorToast,
@@ -172,14 +170,29 @@ export function useActionPerformer({
 					action.id === ActionId.develop
 						? formatDevelopActionLogLines(messages, filtered)
 						: formatActionLogLines(messages, filtered);
+				const actionMeta = {
+					id: action.id,
+					name: stepDef?.name ?? action.name,
+					...(stepDef?.icon ? { icon: stepDef.icon } : {}),
+				};
+				const resolutionPlayer = {
+					id: playerAfter.id,
+					name: playerAfter.name,
+				};
 
 				updateMainPhaseStep();
 				refresh();
 
-				await logWithEffectDelay(logLines, {
-					id: playerAfter.id,
-					name: playerAfter.name,
-				});
+				try {
+					await showResolution({
+						action: actionMeta,
+						lines: logLines,
+						player: resolutionPlayer,
+						summaries: filtered,
+					});
+				} catch (_error) {
+					addLog(logLines, resolutionPlayer);
+				}
 
 				if (!mountedRef.current) {
 					return;
@@ -204,12 +217,12 @@ export function useActionPerformer({
 		[
 			addLog,
 			endTurn,
-			logWithEffectDelay,
 			mountedRef,
 			pushErrorToast,
 			refresh,
 			resourceKeys,
 			session,
+			showResolution,
 			updateMainPhaseStep,
 			actionCostResource,
 		],

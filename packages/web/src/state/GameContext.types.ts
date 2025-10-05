@@ -25,7 +25,7 @@ export interface GameEngineContextValue {
 	log: LogEntry[];
 	logOverflowed: boolean;
 	resolution: ActionResolution | null;
-	showResolution: (options: ShowResolutionOptions) => void;
+	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	acknowledgeResolution: () => void;
 	hoverCard: HoverCard | null;
 	handleHoverCard: (data: HoverCard) => void;
