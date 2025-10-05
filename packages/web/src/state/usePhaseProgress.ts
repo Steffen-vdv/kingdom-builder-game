@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	type SetStateAction,
+} from 'react';
 import {
 	type EngineSession,
 	type EngineSessionSnapshot,
@@ -41,18 +47,24 @@ export function usePhaseProgress({
 }: PhaseProgressOptions) {
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
-	const [displayPhase, setDisplayPhase] = useState(
+	const [displayPhaseState, setDisplayPhaseState] = useState(
 		sessionState.game.currentPhase,
 	);
 	const [phaseHistories, setPhaseHistories] = useState<
 		Record<string, PhaseStep[]>
 	>({});
 	const [tabsEnabled, setTabsEnabled] = useState(false);
-	const displayPhaseRef = useRef(displayPhase);
+	const displayPhaseRef = useRef(displayPhaseState);
 
-	useEffect(() => {
-		displayPhaseRef.current = displayPhase;
-	}, [displayPhase]);
+	const setDisplayPhase = useCallback((next: SetStateAction<string>) => {
+		setDisplayPhaseState((prev) => {
+			const resolved = typeof next === 'function' ? next(prev) : next;
+			displayPhaseRef.current = resolved;
+			return resolved;
+		});
+	}, []);
+
+	const displayPhase = displayPhaseState;
 
 	const getDisplayPhase = useCallback(() => displayPhaseRef.current, []);
 
