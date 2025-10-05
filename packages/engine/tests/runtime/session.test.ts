@@ -194,7 +194,6 @@ describe('EngineSession', () => {
 		expect(originalInner.get('mod:test')).toBe(modifier);
 	});
 
-
 	it('runs AI controllers through the session facade', async () => {
 		const session = createTestSession();
 		const context = session.getLegacyContext();
