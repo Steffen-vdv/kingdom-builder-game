@@ -1419,6 +1419,30 @@ class CompareEvaluatorBuilder extends EvaluatorBuilder<{
 	operator(op: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne') {
 		return this.param('operator', op);
 	}
+
+	lessThan() {
+		return this.operator('lt');
+	}
+
+	lessThanOrEqual() {
+		return this.operator('lte');
+	}
+
+	greaterThan() {
+		return this.operator('gt');
+	}
+
+	greaterThanOrEqual() {
+		return this.operator('gte');
+	}
+
+	equalTo() {
+		return this.operator('eq');
+	}
+
+	notEqualTo() {
+		return this.operator('ne');
+	}
 }
 
 export function compareEvaluator() {
@@ -1701,6 +1725,30 @@ class CompareRequirementBuilder extends RequirementBuilder<{
 		super.param('operator', op);
 		this.operatorSet = true;
 		return this;
+	}
+
+	lessThan() {
+		return this.operator('lt');
+	}
+
+	lessThanOrEqual() {
+		return this.operator('lte');
+	}
+
+	greaterThan() {
+		return this.operator('gt');
+	}
+
+	greaterThanOrEqual() {
+		return this.operator('gte');
+	}
+
+	equalTo() {
+		return this.operator('eq');
+	}
+
+	notEqualTo() {
+		return this.operator('ne');
 	}
 
 	override build(): RequirementConfig {

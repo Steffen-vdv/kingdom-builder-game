@@ -217,7 +217,7 @@ export function createActionRegistry() {
 			.requirement(
 				compareRequirement()
 					.left(populationEvaluator())
-					.operator('lt')
+					.lessThan()
 					.right(statEvaluator().key(Stat.maxPopulation))
 					.message('Free space for 👥')
 					.build(),
@@ -315,7 +315,7 @@ export function createActionRegistry() {
 			.requirement(
 				compareRequirement()
 					.left(statEvaluator().key(Stat.warWeariness))
-					.operator('lt')
+					.lessThan()
 					.right(populationEvaluator().role(PopulationRole.Legion))
 					.message(
 						`${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be lower than ${POPULATION_ROLES[PopulationRole.Legion].icon} ${POPULATION_ROLES[PopulationRole.Legion].label}`,
@@ -369,7 +369,7 @@ export function createActionRegistry() {
 			.requirement(
 				compareRequirement()
 					.left(statEvaluator().key(Stat.warWeariness))
-					.operator('eq')
+					.equalTo()
 					.right(0)
 					.message(
 						`${STATS[Stat.warWeariness].icon} ${STATS[Stat.warWeariness].label} must be 0`,

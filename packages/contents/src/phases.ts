@@ -121,7 +121,7 @@ export const PHASES: PhaseDef[] = [
 						.evaluator(
 							compareEvaluator()
 								.left(statEvaluator().key(Stat.warWeariness))
-								.operator('gt')
+								.greaterThan()
 								.right(0),
 						)
 						.effect(
