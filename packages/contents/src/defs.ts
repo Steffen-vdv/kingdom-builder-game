@@ -2,7 +2,7 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
-} from '@kingdom-builder/engine/config/schema';
+} from '@kingdom-builder/protocol';
 import type { EffectDef } from '@kingdom-builder/engine/effects';
 
 export const ON_PAY_UPKEEP_STEP = 'onPayUpkeepStep';

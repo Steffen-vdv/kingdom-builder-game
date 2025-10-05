@@ -1,6 +1,5 @@
 import type { PlayerState } from '../state';
-import type { DevelopmentConfig } from '../config/schema';
-import type { Registry } from '../registry';
+import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
 import type { RuleSet } from './services_types';
 
 export class PopCapService {

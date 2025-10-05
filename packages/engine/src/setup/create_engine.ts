@@ -24,7 +24,7 @@ import { EngineContext } from '../context';
 import { registerCoreEffects } from '../effects';
 import { registerCoreEvaluators } from '../evaluators';
 import { registerCoreRequirements } from '../requirements';
-import { Registry } from '../registry';
+import { Registry } from '@kingdom-builder/protocol';
 import { createAISystem, createTaxCollectorController } from '../ai';
 import { performAction } from '../actions/action_execution';
 import { advance } from '../phases/advance';
@@ -41,7 +41,7 @@ import {
 	type DevelopmentConfig as DevelopmentDef,
 	type PopulationConfig as PopulationDef,
 	type StartConfig,
-} from '../config/schema';
+} from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../phases';
 import {
 	applyPlayerStartConfiguration,

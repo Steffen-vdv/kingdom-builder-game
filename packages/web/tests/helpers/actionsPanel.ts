@@ -5,7 +5,7 @@ import {
 	Stat,
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
-import type { PopulationConfig } from '@kingdom-builder/engine/config/schema';
+import type { PopulationConfig } from '@kingdom-builder/protocol';
 import { createContentFactory } from '../../../engine/tests/factories/content';
 import { Registry } from '@kingdom-builder/engine/registry';
 import { createActionsPanelState } from './createActionsPanelState';

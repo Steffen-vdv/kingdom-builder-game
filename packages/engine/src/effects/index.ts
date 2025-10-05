@@ -1,7 +1,7 @@
-import { Registry } from '../registry';
+import { Registry } from '@kingdom-builder/protocol';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 import { EVALUATORS } from '../evaluators';
-import type { EvaluatorDef } from '../evaluators';
 import type { CostBag } from '../services';
 import {
 	collectEvaluatorDependencies,
@@ -29,18 +29,6 @@ import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
 import { attackPerform } from './attack';
-
-export interface EffectDef<
-	P extends Record<string, unknown> = Record<string, unknown>,
-> {
-	type?: string | undefined;
-	method?: string | undefined;
-	params?: P | undefined;
-	effects?: EffectDef[] | undefined;
-	evaluator?: EvaluatorDef | undefined;
-	round?: 'up' | 'down' | undefined;
-	meta?: Record<string, unknown> | undefined;
-}
 
 export interface EffectHandler<
 	P extends Record<string, unknown> = Record<string, unknown>,
@@ -144,3 +132,4 @@ export {
 	actionRemove,
 	actionPerform,
 };
+export type { EffectDef } from '@kingdom-builder/protocol';

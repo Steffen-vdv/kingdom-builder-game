@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import type { RuleSet } from '@kingdom-builder/engine/services';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
-import type { StartConfig } from '@kingdom-builder/engine/config/schema';
+import type { StartConfig } from '@kingdom-builder/protocol';
 
 type SyntheticContent = {
 	resourceKeys: {

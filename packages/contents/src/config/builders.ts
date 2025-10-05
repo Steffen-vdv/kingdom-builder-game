@@ -8,7 +8,7 @@ import type {
 	PopulationConfig,
 	RequirementConfig,
 	EffectConfig,
-} from '@kingdom-builder/engine/config/schema';
+} from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';

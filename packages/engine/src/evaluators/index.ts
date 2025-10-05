@@ -1,16 +1,11 @@
-import { Registry } from '../registry';
+import { Registry } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 
 import { developmentEvaluator } from './development';
 import { populationEvaluator } from './population';
 import { statEvaluator } from './stat';
 import { compareEvaluator } from './compare';
-export interface EvaluatorDef<
-	P extends Record<string, unknown> = Record<string, unknown>,
-> {
-	type: string;
-	params?: P | undefined;
-}
+import type { EvaluatorDef } from '@kingdom-builder/protocol';
 
 export interface EvaluatorHandler<
 	R = unknown,
@@ -36,3 +31,4 @@ export { developmentEvaluator } from './development';
 export { populationEvaluator } from './population';
 export { statEvaluator } from './stat';
 export { compareEvaluator } from './compare';
+export type { EvaluatorDef } from '@kingdom-builder/protocol';

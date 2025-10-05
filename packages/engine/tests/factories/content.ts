@@ -9,8 +9,8 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
-} from '../../src/config/schema';
-import type { Registry } from '../../src/registry';
+	Registry,
+} from '@kingdom-builder/protocol';
 
 let seq = 0;
 function nextId(prefix: string) {

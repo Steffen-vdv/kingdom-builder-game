@@ -75,7 +75,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -209,7 +209,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -342,7 +342,7 @@
 			"dependencies": [
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -13131,7 +13131,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -13255,7 +13255,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -13345,7 +13345,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -13994,7 +13994,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -14084,7 +14084,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -22196,7 +22196,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -26623,7 +26623,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -27149,7 +27149,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -27313,7 +27313,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -27384,7 +27384,7 @@
 			"dependencies": [
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -28000,7 +28000,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [
@@ -28315,7 +28315,7 @@
 				},
 				{
 					"dynamic": false,
-					"module": "@kingdom-builder/engine/config/schema",
+					"module": "@kingdom-builder/protocol",
 					"moduleSystem": "es6",
 					"exoticallyRequired": false,
 					"dependencyTypes": [

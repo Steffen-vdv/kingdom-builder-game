@@ -2,10 +2,7 @@ import { Registry } from '@kingdom-builder/engine/registry';
 import { Resource } from './resources';
 import { Stat, STATS } from './stats';
 import { PopulationRole, POPULATION_ROLES } from './populationRoles';
-import {
-	actionSchema,
-	type ActionConfig,
-} from '@kingdom-builder/engine/config/schema';
+import { actionSchema, type ActionConfig } from '@kingdom-builder/protocol';
 import {
 	action,
 	effect,

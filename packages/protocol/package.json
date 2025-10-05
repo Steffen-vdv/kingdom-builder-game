@@ -1,5 +1,5 @@
 {
-	"name": "@kingdom-builder/engine",
+	"name": "@kingdom-builder/protocol",
 	"version": "0.1.0",
 	"private": false,
 	"type": "module",
@@ -10,12 +10,10 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@kingdom-builder/protocol": "^0.1.0",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"typescript": "^5.5.4",
-		"vitest": "^3.2.4",
-		"@kingdom-builder/contents": "^0.1.0"
+		"vitest": "^3.2.4"
 	}
 }
