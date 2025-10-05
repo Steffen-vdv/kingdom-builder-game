@@ -41,14 +41,14 @@ export function usePhaseProgress({
 }: PhaseProgressOptions) {
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
-	const [displayPhase, setDisplayPhase] = useState(
+	const [displayPhase, setDisplayPhaseState] = useState(
 		sessionState.game.currentPhase,
 	);
 	const displayPhaseRef = useRef(displayPhase);
-
-	useEffect(() => {
-		displayPhaseRef.current = displayPhase;
-	}, [displayPhase]);
+	const setDisplayPhase = useCallback((phase: string) => {
+		displayPhaseRef.current = phase;
+		setDisplayPhaseState(phase);
+	}, []);
 	const getDisplayPhase = useCallback(() => displayPhaseRef.current, []);
 	const [phaseHistories, setPhaseHistories] = useState<
 		Record<string, PhaseStep[]>
