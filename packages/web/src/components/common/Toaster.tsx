@@ -1,9 +1,10 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useGameEngine } from '../../state/GameContext';
 import type { ToastVariant } from '../../state/useToasts';
 
 const TOASTER_POSITION_CLASS = [
-	'pointer-events-none fixed top-4 right-4 z-50 flex flex-col gap-3',
+	'pointer-events-none fixed top-4 right-4 z-[70] flex flex-col gap-3',
 ].join(' ');
 
 const CARD_BASE_CLASS = [
@@ -61,8 +62,11 @@ export default function Toaster() {
 	if (toasts.length === 0) {
 		return null;
 	}
+	if (typeof document === 'undefined') {
+		return null;
+	}
 
-	return (
+	return createPortal(
 		<div className={TOASTER_POSITION_CLASS}>
 			{toasts.map((toast) => {
 				const variant = VARIANT_META[toast.variant];
@@ -93,6 +97,7 @@ export default function Toaster() {
 					</div>
 				);
 			})}
-		</div>
+		</div>,
+		document.body,
 	);
 }
