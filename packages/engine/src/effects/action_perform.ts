@@ -62,6 +62,20 @@ export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 				break;
 			}
 		}
+	} else if (metaOptionId) {
+		outer: for (const [, candidate] of ctx.actions.entries()) {
+			const groups = candidate.effects.filter(isActionEffectGroup);
+			for (const group of groups) {
+				if (metaGroupId && group.id !== metaGroupId) {
+					continue;
+				}
+				const option = group.options.find((entry) => entry.id === metaOptionId);
+				if (option) {
+					id = option.actionId;
+					break outer;
+				}
+			}
+		}
 	}
 
 	if (!id) {

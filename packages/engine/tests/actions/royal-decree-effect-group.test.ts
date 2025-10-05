@@ -3,6 +3,7 @@ import {
 	advance,
 	getActionCosts,
 	performAction,
+	simulateAction,
 	resolveActionEffects,
 	EFFECTS,
 	type EffectDef,
@@ -53,7 +54,10 @@ describe('royal decree action effect group', () => {
 		const params = {
 			landId: nextLandId,
 			choices: {
-				[group.id]: { optionId },
+				[group.id]: {
+					optionId,
+					params: { id: chosenOption.params?.['id'], landId: nextLandId },
+				},
 			},
 		} as const;
 
@@ -187,7 +191,10 @@ describe('royal decree action effect group', () => {
 		const params = {
 			landId: nextLandId,
 			choices: {
-				[group.id]: { optionId },
+				[group.id]: {
+					optionId,
+					params: { id: option.params?.['id'], landId: nextLandId },
+				},
 			},
 		} as const;
 		const costs = getActionCosts(actionId, ctx, params);
@@ -205,11 +212,48 @@ describe('royal decree action effect group', () => {
 			if (metaRecord && metaRecord['actionId'] === option.actionId) {
 				delete metaRecord['actionId'];
 				delete metaRecord['__actionId'];
+				delete metaRecord['sourceActionId'];
+				delete metaRecord['groupId'];
 			}
 			return originalHandler(effect, engineCtx, mult);
 		});
 		expect(() => performAction(actionId, ctx, params)).not.toThrow();
 		EFFECTS.add('action:perform', originalHandler);
+
+		const developedLand = ctx.activePlayer.lands.find(
+			(land) => land.id === nextLandId,
+		);
+		expect(developedLand?.developments).toContain(option.params?.['id']);
+	});
+
+	it('still develops after simulating the decree outcome first', () => {
+		const ctx = createTestEngine();
+		toMain(ctx);
+
+		const [actionId, royalDecree] = ctx.actions
+			.entries()
+			.find(([, def]) => def.effects.some(isEffectGroup))!;
+		const group = royalDecree.effects.find(isEffectGroup)!;
+		const option = group.options[0];
+		const optionId = option.id;
+		const nextLandId = `${ctx.activePlayer.id}-L${
+			ctx.activePlayer.lands.length + 1
+		}`;
+		const params = {
+			landId: nextLandId,
+			choices: {
+				[group.id]: {
+					optionId,
+					params: { id: option.params?.['id'], landId: nextLandId },
+				},
+			},
+		} as const;
+		const costs = getActionCosts(actionId, ctx, params);
+		ctx.activePlayer.ap = costs[CResource.ap] ?? 0;
+		ctx.activePlayer.gold = costs[CResource.gold] ?? 0;
+
+		expect(() => simulateAction(actionId, ctx, params)).not.toThrow();
+		expect(() => performAction(actionId, ctx, params)).not.toThrow();
 
 		const developedLand = ctx.activePlayer.lands.find(
 			(land) => land.id === nextLandId,
