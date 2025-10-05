@@ -204,6 +204,8 @@
 	}
 	.action-card__option-title {
 		@apply text-left font-semibold;
+		flex: 1 1 auto;
+		min-width: 0;
 	}
 	.action-card__option--compact {
 		@apply min-h-[4.25rem] items-center gap-2 text-base text-center;
@@ -213,6 +215,7 @@
 	}
 	.action-card__option--compact .action-card__option-title {
 		@apply text-base font-semibold text-center;
+		width: 100%;
 	}
 	.action-card__option-summary {
 		@apply text-xs text-left text-slate-600 leading-snug dark:text-slate-300;
@@ -221,13 +224,21 @@
 		@apply text-xs text-left text-slate-500 leading-snug dark:text-slate-400;
 	}
 	.action-card__summary {
-		@apply text-sm list-disc pl-4 text-left space-y-1;
+		font-size: 0.875rem;
+		list-style: disc;
+		padding-left: 1rem;
+		text-align: left;
 	}
-	.action-card__summary .list-disc {
-		@apply list-none pl-4 space-y-1;
+	.action-card__summary > li {
+		margin-bottom: 0.25rem;
 	}
-	.action-card__summary .list-disc > li {
-		@apply pl-0;
+	.action-card__summary > li:last-child {
+		margin-bottom: 0;
+	}
+	.action-card__summary ul {
+		list-style: none;
+		margin: 0.25rem 0 0;
+		padding-left: 1rem;
 	}
 	.action-card__cancel {
 		@apply rounded-full border border-white/50 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-white hover:text-slate-900 dark:border-white/20 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700;

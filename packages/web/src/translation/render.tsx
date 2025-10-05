@@ -12,7 +12,7 @@ export function renderSummary(summary: Summary | undefined): React.ReactNode {
 		) : (
 			<li key={i}>
 				<span className="font-semibold">{e.title}</span>
-				<ul className="list-disc pl-4">{renderSummary(e.items)}</ul>
+				<ul className="pl-4 space-y-1">{renderSummary(e.items)}</ul>
 			</li>
 		),
 	);

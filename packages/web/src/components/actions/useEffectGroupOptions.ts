@@ -42,19 +42,17 @@ function resolveOptionParams(
 		return resolved;
 	}
 	for (const [key, value] of Object.entries(params)) {
-		if (typeof value !== 'string') {
+		if (typeof value === 'string' && value.startsWith('$')) {
+			if (!pendingParams) {
+				continue;
+			}
+			const placeholder = value.slice(1);
+			if (placeholder in pendingParams) {
+				resolved[key] = pendingParams[placeholder];
+			}
 			continue;
 		}
-		if (!value.startsWith('$')) {
-			continue;
-		}
-		if (!pendingParams) {
-			continue;
-		}
-		const placeholder = value.slice(1);
-		if (placeholder in pendingParams) {
-			resolved[key] = pendingParams[placeholder];
-		}
+		resolved[key] = value;
 	}
 	return resolved;
 }
