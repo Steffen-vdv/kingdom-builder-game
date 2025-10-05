@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PlayerPanel from '../src/components/player/PlayerPanel';
@@ -14,9 +14,11 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	STATS,
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import { formatStatValue } from '../src/utils/stats';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -68,8 +70,48 @@ const mockGame = {
 	onToggleDark: vi.fn(),
 };
 
+const resourceForecast = Object.keys(RESOURCES).reduce<Record<string, number>>(
+	(acc, key, index) => {
+		const offset = index + 1;
+		acc[key] = index % 2 === 0 ? offset : -offset;
+		return acc;
+	},
+	{},
+);
+
+const displayableStatKeys = Object.entries(ctx.activePlayer.stats)
+	.filter(([statKey, statValue]) => {
+		const info = STATS[statKey as keyof typeof STATS];
+		return (
+			!info.capacity &&
+			(statValue !== 0 || ctx.activePlayer.statsHistory?.[statKey])
+		);
+	})
+	.map(([statKey]) => statKey);
+
+const statForecast = displayableStatKeys.reduce<Record<string, number>>(
+	(acc, key, index) => {
+		const offset = index + 2;
+		acc[key] = index % 2 === 0 ? offset : -offset;
+		return acc;
+	},
+	{},
+);
+
+const forecastByPlayerId = {
+	[mockGame.ctx.activePlayer.id]: {
+		resources: resourceForecast,
+		stats: statForecast,
+		population: {},
+	},
+};
+
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
+}));
+
+vi.mock('../src/state/useNextTurnForecast', () => ({
+	useNextTurnForecast: () => forecastByPlayerId,
 }));
 
 describe('<PlayerPanel />', () => {
@@ -80,5 +122,45 @@ describe('<PlayerPanel />', () => {
 			const amount = ctx.activePlayer.resources[key] ?? 0;
 			expect(screen.getByText(`${info.icon}${amount}`)).toBeInTheDocument();
 		}
+	});
+
+	it('renders next-turn forecasts with accessible labels', () => {
+		expect(displayableStatKeys.length).toBeGreaterThan(0);
+		render(<PlayerPanel player={ctx.activePlayer} />);
+		const [firstResourceKey] = Object.keys(RESOURCES);
+		const resourceInfo = RESOURCES[firstResourceKey];
+		const resourceValue = ctx.activePlayer.resources[firstResourceKey] ?? 0;
+		const resourceDelta = resourceForecast[firstResourceKey]!;
+		const formattedResourceDelta = `${
+			resourceDelta > 0 ? '+' : ''
+		}${resourceDelta}`;
+		const resourceButtons = screen.getAllByRole('button', {
+			name: `${resourceInfo.label}: ${resourceValue} (${formattedResourceDelta} next turn)`,
+		});
+		expect(resourceButtons.length).toBeGreaterThan(0);
+		const [resourceButton] = resourceButtons;
+		expect(
+			within(resourceButton).getByText(`(${formattedResourceDelta} next turn)`),
+		).toBeInTheDocument();
+		const [firstStatKey] = displayableStatKeys;
+		const statInfo = STATS[firstStatKey as keyof typeof STATS];
+		const statValue = ctx.activePlayer.stats[firstStatKey] ?? 0;
+		const formattedStatValue = formatStatValue(
+			firstStatKey as keyof typeof STATS,
+			statValue,
+		);
+		const statDelta = statForecast[firstStatKey]!;
+		const formattedStatDelta = `${statDelta > 0 ? '+' : '-'}${formatStatValue(
+			firstStatKey as keyof typeof STATS,
+			Math.abs(statDelta),
+		)}`;
+		const statButtons = screen.getAllByRole('button', {
+			name: `${statInfo.label}: ${formattedStatValue} (${formattedStatDelta} next turn)`,
+		});
+		expect(statButtons.length).toBeGreaterThan(0);
+		const [statButton] = statButtons;
+		expect(
+			within(statButton).getByText(`(${formattedStatDelta} next turn)`),
+		).toBeInTheDocument();
 	});
 });
