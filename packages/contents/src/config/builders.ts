@@ -25,8 +25,8 @@ import type {
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
-import type { TriggerKey } from '../defs';
 import type { ActionId } from '../actions';
+import type { PhaseId, PhaseStepId, PhaseTrigger } from '../phases';
 import {
 	Types,
 	PassiveMethods,
@@ -556,17 +556,17 @@ class PassiveEffectParamsBuilder extends ParamsBuilder<{
 		this.params.skip = this.params.skip || ({} as PhaseSkipConfig);
 		return this.params.skip;
 	}
-	skipPhase(phaseId: string) {
+	skipPhase(phaseId: PhaseId) {
 		const skip = this.ensureSkip();
 		skip.phases = skip.phases || [];
 		skip.phases.push(phaseId);
 		return this;
 	}
-	skipPhases(...phaseIds: string[]) {
+	skipPhases(...phaseIds: PhaseId[]) {
 		phaseIds.forEach((id) => this.skipPhase(id));
 		return this;
 	}
-	skipStep(phaseId: string, stepId: string) {
+	skipStep(phaseId: PhaseId, stepId: PhaseStepId) {
 		if (!phaseId || !stepId) {
 			throw new Error(
 				'Passive params skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
@@ -1986,16 +1986,16 @@ class StatBuilder extends InfoBuilder<StatInfo> {
 }
 
 export interface StepDef {
-	id: string;
+	id: PhaseStepId;
 	title?: string;
-	triggers?: TriggerKey[];
+	triggers?: PhaseTrigger[];
 	effects?: EffectDef[];
 	icon?: string;
 }
 
 class StepBuilder {
 	private config: StepDef;
-	constructor(id: string) {
+	constructor(id: PhaseStepId) {
 		this.config = { id };
 	}
 	title(title: string) {
@@ -2006,12 +2006,12 @@ class StepBuilder {
 		this.config.icon = icon;
 		return this;
 	}
-	trigger(trigger: TriggerKey) {
+	trigger(trigger: PhaseTrigger) {
 		this.config.triggers = this.config.triggers || [];
 		this.config.triggers.push(trigger);
 		return this;
 	}
-	triggers(...triggers: TriggerKey[]) {
+	triggers(...triggers: PhaseTrigger[]) {
 		this.config.triggers = this.config.triggers || [];
 		this.config.triggers.push(...triggers);
 		return this;
@@ -2027,7 +2027,7 @@ class StepBuilder {
 }
 
 export interface PhaseDef {
-	id: string;
+	id: PhaseId;
 	steps: StepDef[];
 	action?: boolean;
 	label: string;
@@ -2036,7 +2036,7 @@ export interface PhaseDef {
 
 class PhaseBuilder {
 	private config: PhaseDef;
-	constructor(id: string) {
+	constructor(id: PhaseId) {
 		this.config = { id, steps: [], label: '' };
 	}
 	label(label: string) {
@@ -2410,9 +2410,9 @@ export function stat(key: StatKey) {
 export function populationRole(key: PopulationRoleId) {
 	return new PopulationRoleBuilder(key);
 }
-export function phase(id: string) {
+export function phase(id: PhaseId) {
 	return new PhaseBuilder(id);
 }
-export function step(id: string) {
+export function step(id: PhaseStepId) {
 	return new StepBuilder(id);
 }

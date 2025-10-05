@@ -1,3 +1,4 @@
+import { PhaseId, PhaseStepId, PhaseTrigger } from '@kingdom-builder/contents';
 import {
 	createContentFactory,
 	type ContentFactory,
@@ -115,30 +116,30 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 	});
 	const phases: PhaseDef[] = [
 		{
-			id: SYNTHETIC_PHASE_IDS.growth,
+			id: SYNTHETIC_PHASE_IDS[PhaseId.Growth],
 			label: 'Synthetic Growth',
 			steps: [
 				{
-					id: SYNTHETIC_STEP_IDS.gainIncome,
+					id: SYNTHETIC_STEP_IDS[PhaseStepId.GainIncome],
 					title: 'Gain Synthetic Income',
-					triggers: ['onGainIncomeStep'],
+					triggers: [PhaseTrigger.OnGainIncomeStep],
 				},
 			],
 		},
 		{
-			id: SYNTHETIC_PHASE_IDS.main,
+			id: SYNTHETIC_PHASE_IDS[PhaseId.Main],
 			label: 'Synthetic Main',
 			action: true,
 			steps: [],
 		},
 		{
-			id: SYNTHETIC_PHASE_IDS.upkeep,
+			id: SYNTHETIC_PHASE_IDS[PhaseId.Upkeep],
 			label: 'Synthetic Upkeep',
 			steps: [
 				{
-					id: SYNTHETIC_STEP_IDS.payUpkeep,
+					id: SYNTHETIC_STEP_IDS[PhaseStepId.PayUpkeep],
 					title: 'Synthetic Upkeep',
-					triggers: ['onPayUpkeepStep'],
+					triggers: [PhaseTrigger.OnPayUpkeepStep],
 				},
 			],
 		},

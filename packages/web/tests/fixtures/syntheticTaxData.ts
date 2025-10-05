@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { PhaseId, PhaseStepId } from '@kingdom-builder/contents';
 import type { RuleSet } from '@kingdom-builder/engine/services';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
 import type { StartConfig } from '@kingdom-builder/protocol';
@@ -23,7 +24,7 @@ type SyntheticContent = {
 		| 'homeLand',
 		string
 	>;
-	phaseIds: Record<'growth' | 'main' | 'upkeep', string>;
+	phaseIds: Record<PhaseId, string>;
 	stepIds: Record<'gainIncome' | 'payUpkeep', string>;
 };
 
@@ -72,8 +73,19 @@ export const SYNTHETIC_POPULATION_ROLES = syntheticData.populationRoles;
 export const SYNTHETIC_LAND_INFO = syntheticData.landInfo;
 export const SYNTHETIC_SLOT_INFO = syntheticData.slotInfo;
 export const SYNTHETIC_IDS = syntheticData.ids;
-export const SYNTHETIC_PHASE_IDS = syntheticData.phaseIds;
-export const SYNTHETIC_STEP_IDS = syntheticData.stepIds;
+export const SYNTHETIC_PHASE_IDS: Record<PhaseId, string> = {
+	[PhaseId.Growth]: syntheticData.phaseIds.growth,
+	[PhaseId.Main]: syntheticData.phaseIds.main,
+	[PhaseId.Upkeep]: syntheticData.phaseIds.upkeep,
+};
+type SyntheticStepKey =
+	| typeof PhaseStepId.GainIncome
+	| typeof PhaseStepId.PayUpkeep;
+
+export const SYNTHETIC_STEP_IDS: Record<SyntheticStepKey, string> = {
+	[PhaseStepId.GainIncome]: syntheticData.stepIds.gainIncome,
+	[PhaseStepId.PayUpkeep]: syntheticData.stepIds.payUpkeep,
+};
 
 export const SYNTHETIC_RULES: RuleSet = {
 	defaultActionAPCost: 1,

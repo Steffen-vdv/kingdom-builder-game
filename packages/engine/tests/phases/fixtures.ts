@@ -3,6 +3,7 @@ import type { PhaseDef } from '../../src/phases.ts';
 import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '../../src/services/index.ts';
 import { createContentFactory } from '../factories/content.ts';
+import { PhaseTrigger } from '@kingdom-builder/contents';
 
 const resourceKeys = {
 	ap: 'synthetic:resource:ap',
@@ -116,16 +117,31 @@ export function createPhaseTestEnvironment() {
 		{
 			id: phaseIds.growth,
 			steps: [
-				{ id: stepIds.growthTriggers, triggers: ['onGrowthPhase'] },
-				{ id: stepIds.gainIncome, triggers: ['onGainIncomeStep'] },
-				{ id: stepIds.gainAp, triggers: ['onGainAPStep'] },
+				{
+					id: stepIds.growthTriggers,
+					triggers: [PhaseTrigger.OnGrowthPhase],
+				},
+				{
+					id: stepIds.gainIncome,
+					triggers: [PhaseTrigger.OnGainIncomeStep],
+				},
+				{
+					id: stepIds.gainAp,
+					triggers: [PhaseTrigger.OnGainActionPointsStep],
+				},
 			],
 		},
 		{
 			id: phaseIds.upkeep,
 			steps: [
-				{ id: stepIds.upkeepTriggers, triggers: ['onUpkeepPhase'] },
-				{ id: stepIds.payUpkeep, triggers: ['onPayUpkeepStep'] },
+				{
+					id: stepIds.upkeepTriggers,
+					triggers: [PhaseTrigger.OnUpkeepPhase],
+				},
+				{
+					id: stepIds.payUpkeep,
+					triggers: [PhaseTrigger.OnPayUpkeepStep],
+				},
 				{
 					id: stepIds.warRecovery,
 					effects: [

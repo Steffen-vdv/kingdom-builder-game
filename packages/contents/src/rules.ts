@@ -5,15 +5,14 @@ import type {
 import {
 	buildingDiscountModifier,
 	createTierPassiveEffect,
-	GROWTH_PHASE_ID,
 	growthBonusEffect,
 	incomeModifier,
-	UPKEEP_PHASE_ID,
-	WAR_RECOVERY_STEP_ID,
 } from './happinessHelpers';
 import { happinessTier, passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { formatPassiveRemoval } from './text';
+import { PhaseId, PhaseStepId } from './phases';
+import type { TierConfig } from './rules.types';
 
 const HAPPINESS_TIER_ICONS = {
 	despair: '😡',
@@ -42,7 +41,7 @@ const happinessSummaryToken = (slug: string) =>
 
 const joinSummary = (...lines: string[]) => lines.join('\n');
 
-const TIER_CONFIGS = [
+const TIER_CONFIGS: TierConfig[] = [
 	{
 		id: 'happiness:tier:despair',
 		passiveId: 'passive:happiness:despair',
@@ -50,9 +49,13 @@ const TIER_CONFIGS = [
 		range: { min: -10 },
 		incomeMultiplier: 0.5,
 		disableGrowth: true,
-		skipPhases: [GROWTH_PHASE_ID],
-		skipSteps: [{ phase: UPKEEP_PHASE_ID, step: WAR_RECOVERY_STEP_ID }],
-		summaryToken: happinessSummaryToken('despair'),
+		skipPhases: [PhaseId.Growth],
+		skipSteps: [
+			{
+				phase: PhaseId.Upkeep,
+				step: PhaseStepId.WarRecovery,
+			},
+		],
 		summary: joinSummary(
 			'During income step, gain 50% less 🪙 gold (rounded up).',
 			'Skip Growth phase.',
@@ -68,8 +71,7 @@ const TIER_CONFIGS = [
 		range: { min: -9, max: -8 },
 		incomeMultiplier: 0.5,
 		disableGrowth: true,
-		skipPhases: [GROWTH_PHASE_ID],
-		summaryToken: happinessSummaryToken('misery'),
+		skipPhases: [PhaseId.Growth],
 		summary: joinSummary(
 			'During income step, gain 50% less 🪙 gold (rounded up).',
 			'Skip Growth phase.',
@@ -84,8 +86,7 @@ const TIER_CONFIGS = [
 		range: { min: -7, max: -5 },
 		incomeMultiplier: 0.75,
 		disableGrowth: true,
-		skipPhases: [GROWTH_PHASE_ID],
-		summaryToken: happinessSummaryToken('grim'),
+		skipPhases: [PhaseId.Growth],
 		summary: joinSummary(
 			'During income step, gain 25% less 🪙 gold (rounded up).',
 			'Skip Growth phase.',
@@ -99,7 +100,6 @@ const TIER_CONFIGS = [
 		slug: 'unrest',
 		range: { min: -4, max: -3 },
 		incomeMultiplier: 0.75,
-		summaryToken: happinessSummaryToken('unrest'),
 		summary: 'During income step, gain 25% less 🪙 gold (rounded up).',
 		removal: 'happiness stays between -4 and -3',
 		effects: [incomeModifier('happiness:unrest:income', -0.25)],
@@ -109,7 +109,6 @@ const TIER_CONFIGS = [
 		slug: 'steady',
 		range: { min: -2, max: 2 },
 		incomeMultiplier: 1,
-		summaryToken: happinessSummaryToken('steady'),
 		summary: 'No effect',
 		removal: 'happiness stays between -2 and +2',
 	},
@@ -119,7 +118,6 @@ const TIER_CONFIGS = [
 		slug: 'content',
 		range: { min: 3, max: 4 },
 		incomeMultiplier: 1.25,
-		summaryToken: happinessSummaryToken('content'),
 		summary: 'During income step, gain 25% more 🪙 gold (rounded up).',
 		removal: 'happiness stays between +3 and +4',
 		effects: [incomeModifier('happiness:content:income', 0.25)],
@@ -131,7 +129,6 @@ const TIER_CONFIGS = [
 		range: { min: 5, max: 7 },
 		incomeMultiplier: 1.25,
 		buildingDiscountPct: 0.2,
-		summaryToken: happinessSummaryToken('joyful'),
 		summary: joinSummary(
 			'During income step, gain 25% more 🪙 gold (rounded up).',
 			'Build action costs 20% less 🪙 gold (rounded up).',
@@ -149,7 +146,6 @@ const TIER_CONFIGS = [
 		range: { min: 8, max: 9 },
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
-		summaryToken: happinessSummaryToken('elated'),
 		summary: joinSummary(
 			'During income step, gain 50% more 🪙 gold (rounded up).',
 			'Build action costs 20% less 🪙 gold (rounded up).',
@@ -167,7 +163,6 @@ const TIER_CONFIGS = [
 		range: { min: 10 },
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
-		summaryToken: happinessSummaryToken('ecstatic'),
 		summary: joinSummary(
 			'During income step, gain 50% more 🪙 gold (rounded up).',
 			'Build action costs 20% less 🪙 gold (rounded up).',
@@ -182,13 +177,10 @@ const TIER_CONFIGS = [
 	},
 ];
 
-type TierConfig = (typeof TIER_CONFIGS)[number] & {
-	growthBonusPct?: number;
-};
-
 function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 	const icon = HAPPINESS_TIER_ICONS[config.slug as HappinessTierSlug];
 	const name = formatTierName(config.slug as HappinessTierSlug);
+	const summaryToken = happinessSummaryToken(config.slug);
 	const builder = happinessTier(config.id)
 		.range(config.range.min, config.range.max)
 		.incomeMultiplier(config.incomeMultiplier)
@@ -199,7 +191,7 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 		)
 		.display((display) =>
 			display
-				.summaryToken(config.summaryToken)
+				.summaryToken(summaryToken)
 				.removalCondition(config.removal)
 				.title(name)
 				.icon(icon),
@@ -213,7 +205,7 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 		const passive = createTierPassiveEffect({
 			tierId: config.id,
 			summary: config.summary,
-			summaryToken: config.summaryToken,
+			summaryToken,
 			removalDetail: config.removal,
 			params,
 			...(config.effects ? { effects: config.effects } : {}),

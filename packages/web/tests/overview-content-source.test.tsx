@@ -32,7 +32,7 @@ describe('Overview content integration', () => {
 					{
 						kind: 'paragraph',
 						id: 'scouting',
-						icon: 'growth',
+						icon: actual.PhaseId.Growth,
 						title: 'Scouting Notes',
 						paragraphs: [
 							'Secure {land} footholds and guard your {castleHP} borders.',

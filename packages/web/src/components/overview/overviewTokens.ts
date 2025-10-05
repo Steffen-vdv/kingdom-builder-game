@@ -56,7 +56,9 @@ const CATEGORY_CONFIG = [
 		name: 'phases',
 		keys: () => PHASES.map((phase) => phase.id),
 		resolve: (candidates: string[]) =>
-			resolveByCandidates(candidates, (id) => PHASE_ICON_LOOKUP.get(id)),
+			resolveByCandidates(candidates, (id) =>
+				PHASE_ICON_LOOKUP.get(id as (typeof PHASES)[number]['id']),
+			),
 	},
 	{
 		name: 'resources',
@@ -189,9 +191,9 @@ function mergeTokenConfig(
 	};
 }
 
-function resolveByCandidates<T>(
-	candidates: string[],
-	resolver: (candidate: string) => T | undefined,
+function resolveByCandidates<T, Candidate extends string>(
+	candidates: Candidate[],
+	resolver: (candidate: Candidate) => T | undefined,
 ): T | undefined {
 	for (const candidate of candidates) {
 		const resolved = resolver(candidate);

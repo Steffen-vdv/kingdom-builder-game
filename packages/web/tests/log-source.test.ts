@@ -6,6 +6,7 @@ import {
 	advance,
 	collectTriggerEffects,
 } from '@kingdom-builder/engine';
+import { PhaseId, PhaseStepId, PhaseTrigger } from '@kingdom-builder/contents';
 import {
 	createSyntheticTaxScenario,
 	SYNTHETIC_IDS,
@@ -56,13 +57,13 @@ describe('log resource sources', () => {
 		ctx.game.currentPlayerIndex = 0;
 
 		const growthPhase = ctx.phases.find(
-			(phase) => phase.id === SYNTHETIC_PHASE_IDS.growth,
+			(phase) => phase.id === SYNTHETIC_PHASE_IDS[PhaseId.Growth],
 		);
 		const step = growthPhase?.steps.find(
-			(s) => s.id === SYNTHETIC_STEP_IDS.gainIncome,
+			(s) => s.id === SYNTHETIC_STEP_IDS[PhaseStepId.GainIncome],
 		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		const bundles = collectTriggerEffects('onGainIncomeStep', ctx);
+		const bundles = collectTriggerEffects(PhaseTrigger.OnGainIncomeStep, ctx);
 		for (const bundle of bundles) {
 			runEffects(bundle.effects, ctx);
 		}
@@ -107,7 +108,7 @@ describe('log resource sources', () => {
 			],
 			ctx,
 		);
-		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
+		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS[PhaseId.Main]) {
 			advance(ctx);
 		}
 		const step = {
@@ -154,13 +155,13 @@ describe('log resource sources', () => {
 			ctx,
 		);
 		const upkeepPhase = ctx.phases.find(
-			(phase) => phase.id === SYNTHETIC_PHASE_IDS.upkeep,
+			(phase) => phase.id === SYNTHETIC_PHASE_IDS[PhaseId.Upkeep],
 		);
 		const step = upkeepPhase?.steps.find(
-			(s) => s.id === SYNTHETIC_STEP_IDS.payUpkeep,
+			(s) => s.id === SYNTHETIC_STEP_IDS[PhaseStepId.PayUpkeep],
 		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		const bundles = collectTriggerEffects('onPayUpkeepStep', ctx);
+		const bundles = collectTriggerEffects(PhaseTrigger.OnPayUpkeepStep, ctx);
 		for (const bundle of bundles) {
 			runEffects(bundle.effects, ctx);
 		}

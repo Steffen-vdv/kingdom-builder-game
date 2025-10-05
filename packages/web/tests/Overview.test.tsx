@@ -11,6 +11,7 @@ import {
 	RESOURCES,
 	POPULATION_ROLES,
 	STATS,
+	PhaseId,
 } from '@kingdom-builder/contents';
 
 describe('<Overview />', () => {
@@ -44,12 +45,14 @@ describe('<Overview />', () => {
 		const [fallbackPopulationKey, fallbackPopulationDef] =
 			populationEntries[0]!;
 
+		const growthToken = `{${PhaseId.Growth}}`;
+
 		const tokenConfig: OverviewTokenConfig = {
 			actions: {
 				expand: ['missing-action', fallbackActionId],
 			},
 			phases: {
-				growth: ['missing-phase', fallbackPhase.id],
+				[PhaseId.Growth]: ['missing-phase', fallbackPhase.id],
 			},
 			resources: {
 				gold: ['missing-gold', fallbackGoldKey],
@@ -78,14 +81,14 @@ describe('<Overview />', () => {
 			{
 				kind: 'list',
 				id: 'custom-flow',
-				icon: 'growth',
+				icon: PhaseId.Growth,
 				title: 'Custom Flow',
 				items: [
 					{
 						icon: 'expand',
 						label: 'Advance',
 						body: [
-							'Execute {expand} during the {growth} sequence.',
+							`Execute {expand} during the ${growthToken} sequence.`,
 							'Strengthen {army} before moving out.',
 						],
 					},
@@ -128,7 +131,7 @@ describe('<Overview />', () => {
 			return;
 		}
 		expect(flowSection.textContent).not.toContain('{expand}');
-		expect(flowSection.textContent).not.toContain('{growth}');
+		expect(flowSection.textContent).not.toContain(growthToken);
 		expect(flowSection.textContent).not.toContain('{army}');
 
 		if (typeof fallbackActionDef.icon === 'string') {

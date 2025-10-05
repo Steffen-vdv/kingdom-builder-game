@@ -17,24 +17,58 @@ import {
 	ON_PAY_UPKEEP_STEP,
 } from './defs';
 
+export const PhaseId = {
+	Growth: 'growth',
+	Upkeep: 'upkeep',
+	Main: 'main',
+} as const;
+
+export type PhaseId = (typeof PhaseId)[keyof typeof PhaseId];
+
+export const PhaseStepId = {
+	ResolveDynamicTriggers: 'resolve-dynamic-triggers',
+	GainIncome: 'gain-income',
+	GainActionPoints: 'gain-ap',
+	RaiseStrength: 'raise-strength',
+	PayUpkeep: 'pay-upkeep',
+	WarRecovery: 'war-recovery',
+	MainPhase: 'main',
+} as const;
+
+export type PhaseStepId = (typeof PhaseStepId)[keyof typeof PhaseStepId];
+
+export const PhaseTrigger = {
+	OnGrowthPhase: 'onGrowthPhase',
+	OnUpkeepPhase: 'onUpkeepPhase',
+	OnGainIncomeStep: ON_GAIN_INCOME_STEP,
+	OnGainActionPointsStep: ON_GAIN_AP_STEP,
+	OnPayUpkeepStep: ON_PAY_UPKEEP_STEP,
+} as const;
+
+export type PhaseTrigger = (typeof PhaseTrigger)[keyof typeof PhaseTrigger];
+
 export const PHASES: PhaseDef[] = [
-	phase('growth')
+	phase(PhaseId.Growth)
 		.label('Growth')
 		.icon('🏗️')
 		.step(
-			step('resolve-dynamic-triggers')
+			step(PhaseStepId.ResolveDynamicTriggers)
 				.title('Resolve dynamic triggers')
-				.triggers('onGrowthPhase'),
+				.triggers(PhaseTrigger.OnGrowthPhase),
 		)
 		.step(
-			step('gain-income')
+			step(PhaseStepId.GainIncome)
 				.title('Gain Income')
 				.icon('💰')
 				.triggers(ON_GAIN_INCOME_STEP),
 		)
-		.step(step('gain-ap').title('Gain Action Points').triggers(ON_GAIN_AP_STEP))
 		.step(
-			step('raise-strength')
+			step(PhaseStepId.GainActionPoints)
+				.title('Gain Action Points')
+				.triggers(ON_GAIN_AP_STEP),
+		)
+		.step(
+			step(PhaseStepId.RaiseStrength)
 				.title('Raise Strength')
 				.effect(
 					effect()
@@ -68,17 +102,21 @@ export const PHASES: PhaseDef[] = [
 				),
 		)
 		.build(),
-	phase('upkeep')
+	phase(PhaseId.Upkeep)
 		.label('Upkeep')
 		.icon('🧹')
 		.step(
-			step('resolve-dynamic-triggers')
+			step(PhaseStepId.ResolveDynamicTriggers)
 				.title('Resolve dynamic triggers')
-				.triggers('onUpkeepPhase'),
+				.triggers(PhaseTrigger.OnUpkeepPhase),
 		)
-		.step(step('pay-upkeep').title('Pay Upkeep').triggers(ON_PAY_UPKEEP_STEP))
 		.step(
-			step('war-recovery')
+			step(PhaseStepId.PayUpkeep)
+				.title('Pay Upkeep')
+				.triggers(ON_PAY_UPKEEP_STEP),
+		)
+		.step(
+			step(PhaseStepId.WarRecovery)
 				.title('War recovery')
 				.effect(
 					effect()
@@ -97,10 +135,10 @@ export const PHASES: PhaseDef[] = [
 				),
 		)
 		.build(),
-	phase('main')
+	phase(PhaseId.Main)
 		.label('Main')
 		.icon('🎯')
 		.action()
-		.step(step('main').title('Main Phase'))
+		.step(step(PhaseStepId.MainPhase).title('Main Phase'))
 		.build(),
 ];

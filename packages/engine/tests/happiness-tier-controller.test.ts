@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
 	RULES,
-	PHASES,
 	Resource as CResource,
+	PhaseId,
+	PhaseStepId,
 } from '@kingdom-builder/contents';
 import {
 	happinessTier,
@@ -20,11 +21,9 @@ import type { RuleSet } from '../src/services';
 
 describe('happiness tier controller', () => {
 	it('swaps tier passives and updates skip markers when thresholds change', () => {
-		const [firstPhase, secondPhase] = PHASES;
-		const growthPhaseId = firstPhase?.id ?? '';
-		const upkeepPhaseId = secondPhase?.id ?? growthPhaseId;
-		const payUpkeepStepId =
-			secondPhase?.steps?.[0]?.id ?? firstPhase?.steps?.[0]?.id ?? '';
+		const growthPhaseId = PhaseId.Growth;
+		const upkeepPhaseId = PhaseId.Upkeep;
+		const payUpkeepStepId = PhaseStepId.PayUpkeep;
 
 		const lowRemovalToken = 'test.removal.low';
 		const highRemovalToken = 'test.removal.high';

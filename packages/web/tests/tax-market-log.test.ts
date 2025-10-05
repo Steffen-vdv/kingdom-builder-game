@@ -7,6 +7,7 @@ import {
 	runEffects,
 	type ActionTrace,
 } from '@kingdom-builder/engine';
+import { PhaseId } from '@kingdom-builder/contents';
 import {
 	createSyntheticTaxScenario,
 	SYNTHETIC_IDS,
@@ -55,7 +56,7 @@ describe('tax action logging with market', () => {
 			ctx,
 		);
 		ctx.activePlayer.resources[SYNTHETIC_RESOURCE_KEYS.coin] = 0;
-		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
+		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS[PhaseId.Main]) {
 			advance(ctx);
 		}
 		const action = ctx.actions.get(SYNTHETIC_IDS.taxAction);

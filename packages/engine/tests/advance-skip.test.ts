@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { RULES, PHASES } from '@kingdom-builder/contents';
+import { RULES, PHASES, PhaseId, PhaseStepId } from '@kingdom-builder/contents';
 import {
 	happinessTier,
 	effect,
@@ -13,17 +13,14 @@ import { advance } from '../src';
 import { createTestEngine } from './helpers';
 import type { RuleSet } from '../src/services';
 
-const growthPhaseId = PHASES[0]?.id ?? '';
+const growthPhaseId = PhaseId.Growth;
 const upkeepPhase =
-	PHASES.find((phase) => phase.id !== growthPhaseId) ?? PHASES[0];
-const upkeepPhaseId = upkeepPhase?.id ?? '';
+	PHASES.find((phase) => phase.id === PhaseId.Upkeep) ?? PHASES[0];
+const upkeepPhaseId = upkeepPhase?.id ?? PhaseId.Upkeep;
 const warRecoveryStepId =
-	upkeepPhase?.steps.find((step) => step.id.includes('war-recovery'))?.id ?? '';
-const mainPhase =
-	PHASES[
-		(PHASES.findIndex((phase) => phase.id === upkeepPhaseId) + 1) %
-			PHASES.length
-	];
+	upkeepPhase?.steps.find((step) => step.id === PhaseStepId.WarRecovery)?.id ??
+	PhaseStepId.WarRecovery;
+const mainPhase = PHASES.find((phase) => phase.id === PhaseId.Main);
 
 const phaseSummary = 'test.summary.phase';
 const stepSummary = 'test.summary.step';
@@ -72,7 +69,8 @@ describe('advance skip handling', () => {
 
 		expect(ctx.game.currentPhase).toBe(upkeepPhaseId);
 		const firstUpkeepStep =
-			PHASES.find((phase) => phase.id === upkeepPhaseId)?.steps[0]?.id ?? '';
+			PHASES.find((phase) => phase.id === upkeepPhaseId)?.steps[0]?.id ??
+			PhaseStepId.ResolveDynamicTriggers;
 		expect(ctx.game.currentStep).toBe(firstUpkeepStep);
 	});
 
@@ -127,7 +125,7 @@ describe('advance skip handling', () => {
 		expect(result.skipped?.sources[0]?.detail).toBe(stepSummary);
 
 		expect(ctx.game.currentPhase).toBe(mainPhase?.id ?? '');
-		const expectedStep = mainPhase?.steps[0]?.id ?? '';
+		const expectedStep = mainPhase?.steps[0]?.id ?? PhaseStepId.MainPhase;
 		expect(ctx.game.currentStep).toBe(expectedStep);
 	});
 
