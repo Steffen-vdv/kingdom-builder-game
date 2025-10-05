@@ -3,6 +3,7 @@ import {
 	type PassiveSummary,
 	type PlayerId,
 	type PlayerStateSnapshot,
+	type PlayerSnapshot as EnginePlayerSnapshot,
 } from '@kingdom-builder/engine';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { type Land } from '../content';
@@ -37,8 +38,13 @@ interface LegacyPlayerSnapshot {
 	passives?: PassiveSummary[];
 }
 
+type SnapshotInput =
+	| PlayerStateSnapshot
+	| LegacyPlayerSnapshot
+	| EnginePlayerSnapshot;
+
 export function snapshotPlayer(
-	playerState: PlayerStateSnapshot | LegacyPlayerSnapshot,
+	playerState: SnapshotInput,
 	context?: EngineContext,
 ): PlayerSnapshot {
 	const buildingList = Array.isArray(playerState.buildings)
@@ -50,9 +56,10 @@ export function snapshotPlayer(
 		slotsUsed: land.slotsUsed,
 		developments: [...land.developments],
 	}));
-	const passives = playerState.passives
-		? [...playerState.passives]
-		: context
+	const hasPassives = 'passives' in playerState && playerState.passives;
+	const passives = hasPassives
+		? [...playerState.passives!]
+		: context && 'id' in playerState
 			? context.passives.list(playerState.id as PlayerId)
 			: [];
 	return {
