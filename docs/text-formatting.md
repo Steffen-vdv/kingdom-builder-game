@@ -4,6 +4,30 @@ This guide documents the web translation pipeline and the utilities that keep
 player-facing text consistent across Kingdom Builder. Refer to it before adding
 any new strings in the web client, engine-derived logs, or supporting tests.
 
+## 0. Before Writing Text
+
+Follow this workflow before authoring new copy or extending translators:
+
+1. Locate an existing translator or formatter that already matches your
+   mechanic. Use the inventories in [Section 2](#2-content-translator-inventory)
+   and [Section 3](#3-effect-formatter-inventory) before introducing new files.
+   If a handler exists, extend it instead of forking the phrasing.
+2. Reuse canonical keywords, icons, and helpers from
+   [Section 4](#4-canonical-keywords-icons--helper-utilities). Do not invent new
+   emoji or verbs when the tables already provide an approved option.
+3. Match the required voice for each output mode:
+   - **Summary** — terse, present-tense fragments that read as bullet points.
+   - **Description** — complete sentences in present tense that explain cause
+     and effect.
+   - **Log** — past-tense statements that recount what just happened; keep them
+     chronological and free of UI jargon.
+
+> **Quick reference — paste into your PR description**
+>
+> - [ ] Reused an existing translator/formatter where possible.
+> - [ ] Linked helper tables and icons from Section 4 instead of ad-hoc text.
+> - [ ] Verified summary/description/log copy uses the required voice.
+
 ## 1. Translation Pipeline Overview
 
 The translation layer lives in `packages/web/src/translation` and is composed of

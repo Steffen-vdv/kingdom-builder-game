@@ -5,6 +5,10 @@ procedure, and lore note for the Kingdom Builder project. No information has
 been removed—content was reorganized to avoid duplication while improving
 cohesion.
 
+> **Reminder**: Before adding any player-facing strings, review
+> `docs/text-formatting.md` Section 0 "Before Writing Text" and apply the PR
+> checklist snippet.
+
 ---
 
 ## 1. Core Agent Principles
