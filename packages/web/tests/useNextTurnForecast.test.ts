@@ -9,11 +9,13 @@ import {
 	type StatKey,
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
-import type {
-	PlayerSnapshotDeltaBucket,
-	PlayerStateSnapshot,
+import {
+	type EngineSessionSnapshot,
+	type PlayerSnapshotDeltaBucket,
+	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { useNextTurnForecast } from '../src/state/useNextTurnForecast';
+import { createSessionHelpers } from './utils/sessionStateHelpers';
 
 const simulateUpcomingPhasesMock = vi.hoisted(() => vi.fn());
 
@@ -32,39 +34,22 @@ vi.mock('@kingdom-builder/engine', async () => {
 
 interface MockGameEngine {
 	session: { getLegacyContext: ReturnType<typeof vi.fn> };
-	sessionState: { game: { players: PlayerStateSnapshot[] } };
+	sessionState: EngineSessionSnapshot;
 }
 
-const contextStub = { context: true } as const;
-const engineValue: MockGameEngine = {
-	session: { getLegacyContext: vi.fn(() => contextStub) },
-	sessionState: { game: { players: [] } },
-};
-
-vi.mock('../src/state/GameContext', () => ({
-	useGameEngine: (): MockGameEngine => engineValue,
-}));
-
-const resourceKeys = Object.keys(RESOURCES) as ResourceKey[];
-const statKeys = Object.keys(STATS) as StatKey[];
-const populationKeys = Object.keys(POPULATIONS) as PopulationRoleId[];
-const primaryResource = resourceKeys[0]!;
-const primaryStat = statKeys[0]!;
-const primaryPopulation = populationKeys[0]!;
+const [primaryResource] = Object.keys(RESOURCES) as ResourceKey[];
+const [primaryStat] = Object.keys(STATS) as StatKey[];
+const [primaryPopulation] = Object.keys(POPULATIONS) as PopulationRoleId[];
+const defaultPhases: EngineSessionSnapshot['phases'] = [
+	{ id: 'growth', steps: [] },
+	{ id: 'upkeep', steps: [] },
+	{ id: 'main', steps: [] },
+];
 
 function createPlayer(
 	index: number,
 	overrides: Partial<PlayerStateSnapshot> = {},
 ): PlayerStateSnapshot {
-	const baseResources: Record<string, number> = {
-		[primaryResource]: index,
-	};
-	const baseStats: Record<string, number> = {
-		[primaryStat]: index * 2,
-	};
-	const basePopulation: Record<string, number> = {
-		[primaryPopulation]: index,
-	};
 	const {
 		resources: overrideResources,
 		stats: overrideStats,
@@ -74,10 +59,16 @@ function createPlayer(
 	return {
 		id: `player-${index}`,
 		name: `Player ${index}`,
-		resources: { ...baseResources, ...(overrideResources ?? {}) },
-		stats: { ...baseStats, ...(overrideStats ?? {}) },
+		resources: {
+			[primaryResource]: index,
+			...(overrideResources ?? {}),
+		},
+		stats: {
+			[primaryStat]: index * 2,
+			...(overrideStats ?? {}),
+		},
 		population: {
-			...basePopulation,
+			[primaryPopulation]: index,
 			...(overridePopulation ?? {}),
 		},
 		statsHistory: {},
@@ -92,10 +83,6 @@ function createPlayer(
 	};
 }
 
-function setPlayers(players: PlayerStateSnapshot[]) {
-	engineValue.sessionState = { game: { players } };
-}
-
 function createDelta(amount: number): PlayerSnapshotDeltaBucket {
 	return {
 		resources: { [primaryResource]: amount },
@@ -104,6 +91,30 @@ function createDelta(amount: number): PlayerSnapshotDeltaBucket {
 	};
 }
 
+const contextStub = { context: true } as const;
+const engineValue: MockGameEngine = {
+	session: { getLegacyContext: vi.fn(() => contextStub) },
+	sessionState: undefined as unknown as EngineSessionSnapshot,
+};
+
+const sessionHelpers = createSessionHelpers(engineValue, {
+	primaryResource,
+	defaultPhases,
+});
+
+const resetSessionState = (players: PlayerStateSnapshot[]) =>
+	sessionHelpers.reset(players);
+const setPlayers = (players: PlayerStateSnapshot[]) =>
+	sessionHelpers.setPlayers(players);
+const setGameState = (overrides: Partial<EngineSessionSnapshot['game']>) =>
+	sessionHelpers.setGameState(overrides);
+
+engineValue.sessionState = sessionHelpers.createSessionState([]);
+
+vi.mock('../src/state/GameContext', () => ({
+	useGameEngine: (): MockGameEngine => engineValue,
+}));
+
 describe('useNextTurnForecast', () => {
 	const firstPlayerId = createPlayer(1).id;
 	const secondPlayerId = createPlayer(2).id;
@@ -111,17 +122,20 @@ describe('useNextTurnForecast', () => {
 	beforeEach(() => {
 		simulateUpcomingPhasesMock.mockReset();
 		engineValue.session.getLegacyContext.mockClear();
-		setPlayers([createPlayer(1), createPlayer(2)]);
+		resetSessionState([createPlayer(1), createPlayer(2)]);
 	});
 
-	it('returns per-player forecast data and memoizes stable hashes', () => {
-		simulateUpcomingPhasesMock.mockImplementation((_, playerId: string) => ({
-			playerId,
-			before: {} as PlayerStateSnapshot,
-			after: {} as PlayerStateSnapshot,
-			delta: createDelta(playerId === firstPlayerId ? 3 : 5),
-			steps: [],
-		}));
+	it('memoizes per-player forecasts for stable snapshots', () => {
+		simulateUpcomingPhasesMock.mockImplementation((_, playerId: string) => {
+			const deltaAmount = playerId === firstPlayerId ? 3 : 5;
+			return {
+				playerId,
+				before: {} as PlayerStateSnapshot,
+				after: {} as PlayerStateSnapshot,
+				delta: createDelta(deltaAmount),
+				steps: [],
+			};
+		});
 		const { result, rerender } = renderHook(() => useNextTurnForecast());
 		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
 		expect(result.current[firstPlayerId]).toEqual(createDelta(3));
@@ -141,7 +155,7 @@ describe('useNextTurnForecast', () => {
 		expect(result.current[secondPlayerId]).toEqual(createDelta(5));
 	});
 
-	it('returns empty buckets on simulation failure and recomputes on hash change', () => {
+	it('recomputes after updates when a simulation fails', () => {
 		simulateUpcomingPhasesMock.mockImplementation((_, playerId: string) => {
 			if (playerId === firstPlayerId) {
 				throw new Error('fail');
@@ -172,5 +186,29 @@ describe('useNextTurnForecast', () => {
 		]);
 		rerender();
 		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('recomputes when game state changes without player deltas', () => {
+		simulateUpcomingPhasesMock.mockImplementation((_, playerId: string) => {
+			const deltaAmount = playerId === firstPlayerId ? 4 : 6;
+			return {
+				playerId,
+				before: {} as PlayerStateSnapshot,
+				after: {} as PlayerStateSnapshot,
+				delta: createDelta(deltaAmount),
+				steps: [],
+			};
+		});
+		const { result, rerender } = renderHook(() => useNextTurnForecast());
+		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(result.current[firstPlayerId]).toEqual(createDelta(4));
+		expect(result.current[secondPlayerId]).toEqual(createDelta(6));
+
+		simulateUpcomingPhasesMock.mockClear();
+		setGameState({ turn: engineValue.sessionState.game.turn + 1 });
+		rerender();
+		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(result.current[firstPlayerId]).toEqual(createDelta(4));
+		expect(result.current[secondPlayerId]).toEqual(createDelta(6));
 	});
 });

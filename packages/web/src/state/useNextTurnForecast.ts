@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import {
 	simulateUpcomingPhases,
+	type EngineSessionSnapshot,
 	type PlayerSnapshotDeltaBucket,
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
@@ -41,14 +42,45 @@ function hashPlayer(player: PlayerStateSnapshot): string {
 	].join('|');
 }
 
+function hashGameState(
+	game: EngineSessionSnapshot['game'],
+	phases: EngineSessionSnapshot['phases'],
+): string {
+	const phaseIds = phases.map((phase) => phase.id).join(',');
+	return [
+		game.turn,
+		game.currentPlayerIndex,
+		game.currentPhase,
+		game.currentStep,
+		game.phaseIndex,
+		game.stepIndex,
+		game.activePlayerId,
+		game.opponentId,
+		phaseIds,
+	].join('|');
+}
+
 export function useNextTurnForecast(): NextTurnForecast {
 	const { session, sessionState } = useGameEngine();
-	const players = sessionState.game.players;
+	const { game, phases } = sessionState;
+	const players = game.players;
 	const hashKey = useMemo(() => {
 		const hashes = players.map((player) => hashPlayer(player));
 		hashes.sort();
-		return hashes.join(',');
-	}, [players]);
+		const gameHash = hashGameState(game, phases);
+		return [gameHash, hashes.join(',')].join('#');
+	}, [
+		game.activePlayerId,
+		game.currentPhase,
+		game.currentPlayerIndex,
+		game.currentStep,
+		game.opponentId,
+		game.phaseIndex,
+		game.stepIndex,
+		game.turn,
+		phases,
+		players,
+	]);
 	const cacheRef = useRef<{ key: string; value: NextTurnForecast }>();
 	return useMemo(() => {
 		if (cacheRef.current?.key === hashKey) {
@@ -66,5 +98,5 @@ export function useNextTurnForecast(): NextTurnForecast {
 		}
 		cacheRef.current = { key: hashKey, value: forecast };
 		return forecast;
-	}, [session, hashKey]);
+	}, [session, hashKey, players]);
 }
