@@ -5,17 +5,36 @@ import {
 import { describeContent } from '../../content';
 import { registerEffectFormatter, logEffects } from '../factory';
 
-function getActionLabel(id: string, ctx: EngineContext) {
+function formatActionLabel(icon: string, name: string) {
+	return [icon, name].filter(Boolean).join(' ').trim();
+}
+
+function formatActionChangeSentence(
+	change: 'gain' | 'lose',
+	label: string,
+	mode: 'describe' | 'log',
+) {
+	const verbs = {
+		gain: { describe: 'Gain', log: 'Unlocked' },
+		lose: { describe: 'Lose', log: 'Lost' },
+	} as const;
+	return `${verbs[change][mode]} the ${label} action`;
+}
+
+function getActionPresentation(id: string, ctx: EngineContext) {
 	let name = id;
 	let icon = '';
+	let system = false;
 	try {
 		const def = ctx.actions.get(id);
 		name = def.name;
 		icon = def.icon || '';
+		system = !!def.system;
 	} catch {
 		// ignore missing action
 	}
-	return { icon, name };
+	const label = formatActionLabel(icon, name) || id;
+	return { icon, name, system, label };
 }
 
 registerEffectFormatter('action', 'add', {
@@ -24,29 +43,24 @@ registerEffectFormatter('action', 'add', {
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
-		return `Gain action ${icon} ${name}`;
+		const { label } = getActionPresentation(id, ctx);
+		return label;
 	},
 	describe: (eff, ctx) => {
 		const id = eff.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
+		const { label, system } = getActionPresentation(id, ctx);
 		const card = describeContent('action', id, ctx);
-		let isSystem = false;
-		try {
-			isSystem = !!ctx.actions.get(id).system;
-		} catch {
-			// ignore missing action
-		}
 		return [
-			`Gain action ${icon} ${name}`,
+			label,
+			formatActionChangeSentence('gain', label, 'describe'),
 			{
-				title: `${icon} ${name}`,
+				title: label,
 				items: card,
 				_hoist: true,
-				...(isSystem && { _desc: true }),
+				...(system && { _desc: true }),
 			},
 		];
 	},
@@ -55,8 +69,8 @@ registerEffectFormatter('action', 'add', {
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
-		return `Unlocked ${icon} ${name}`;
+		const { label } = getActionPresentation(id, ctx);
+		return formatActionChangeSentence('gain', label, 'log');
 	},
 });
 
@@ -66,24 +80,24 @@ registerEffectFormatter('action', 'remove', {
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
-		return `Lose ${icon} ${name}`;
+		const { label } = getActionPresentation(id, ctx);
+		return label;
 	},
 	describe: (eff, ctx) => {
 		const id = eff.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
-		return `Lose action ${icon} ${name}`;
+		const { label } = getActionPresentation(id, ctx);
+		return [label, formatActionChangeSentence('lose', label, 'describe')];
 	},
 	log: (eff, ctx) => {
 		const id = eff.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
-		return `Lost ${icon} ${name}`;
+		const { label } = getActionPresentation(id, ctx);
+		return formatActionChangeSentence('lose', label, 'log');
 	},
 });
 
@@ -93,19 +107,19 @@ registerEffectFormatter('action', 'perform', {
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
-		return `${icon} ${name}`;
+		const { label } = getActionPresentation(id, ctx);
+		return label;
 	},
 	describe: (eff, ctx) => {
 		const id = eff.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
+		const { label } = getActionPresentation(id, ctx);
 		const summary = describeContent('action', id, ctx);
 		return [
 			{
-				title: `${icon} ${name}`,
+				title: label,
 				items: summary,
 			},
 		];
@@ -115,10 +129,10 @@ registerEffectFormatter('action', 'perform', {
 		if (!id) {
 			return null;
 		}
-		const { icon, name } = getActionLabel(id, ctx);
+		const { label } = getActionPresentation(id, ctx);
 		const def = ctx.actions.get(id);
 		const resolved = resolveActionEffects(def);
 		const sub = logEffects(resolved.effects, ctx);
-		return [{ title: `${icon} ${name}`, items: sub }];
+		return [{ title: label, items: sub }];
 	},
 });
