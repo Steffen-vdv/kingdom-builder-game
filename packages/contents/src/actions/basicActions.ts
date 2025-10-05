@@ -5,7 +5,6 @@ import { DevelopmentId } from '../developments';
 import {
 	action,
 	compareRequirement,
-	developmentEvaluator,
 	effect,
 	populationEvaluator,
 	resourceParams,
@@ -45,37 +44,6 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			)
 			.category(ActionCategory.Basic)
 			.order(1)
-			.focus(Focus.Economy)
-			.build(),
-	);
-
-	registry.add(
-		ActionId.overwork,
-		action()
-			.id(ActionId.overwork)
-			.name('Overwork')
-			.icon('🛠️')
-			.cost(Resource.ap, 1)
-			.effect(
-				effect()
-					.evaluator(developmentEvaluator().id(DevelopmentId.Farm))
-					.effect(
-						effect(Types.Resource, ResourceMethods.ADD)
-							.round('down')
-							.params(resourceParams().key(Resource.gold).amount(2))
-							.build(),
-					)
-					.effect(
-						effect(Types.Resource, ResourceMethods.REMOVE)
-							.round('up')
-							.params(resourceParams().key(Resource.happiness).amount(0.5))
-							.allowShortfall()
-							.build(),
-					)
-					.build(),
-			)
-			.category(ActionCategory.Basic)
-			.order(2)
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -130,20 +98,6 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 	);
 
 	registry.add(
-		ActionId.reallocate,
-		action()
-			.id(ActionId.reallocate)
-			.name('Reallocate')
-			.icon('🔄')
-			.cost(Resource.ap, 1)
-			.cost(Resource.gold, 5)
-			.category(ActionCategory.Basic)
-			.order(4)
-			.focus(Focus.Economy)
-			.build(),
-	);
-
-	registry.add(
 		ActionId.raise_pop,
 		action()
 			.id(ActionId.raise_pop)
@@ -167,11 +121,6 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.effect(
 				effect(Types.Resource, ResourceMethods.ADD)
 					.params(resourceParams().key(Resource.happiness).amount(1))
-					.build(),
-			)
-			.effect(
-				effect(Types.Action, ActionMethods.PERFORM)
-					.params(actionParams().id(ActionId.reallocate))
 					.build(),
 			)
 			.category(ActionCategory.Population)
