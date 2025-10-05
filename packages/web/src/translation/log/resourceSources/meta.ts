@@ -3,8 +3,8 @@ import {
 	POPULATION_INFO,
 	LAND_INFO,
 } from '@kingdom-builder/contents';
-import { type EngineContext } from '@kingdom-builder/engine';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
+import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
 
 export type ResourceSourceMeta = Record<string, unknown> & {
@@ -16,7 +16,7 @@ export type ResourceSourceMeta = Record<string, unknown> & {
 
 type MetaIconRenderer = (
 	meta: ResourceSourceMeta,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ) => string;
 
 function isResourceSourceMeta(value: unknown): value is ResourceSourceMeta {
@@ -33,7 +33,7 @@ function normalizeMetaCount(rawCount: number): number {
 
 function renderPopulationMetaIcons(
 	meta: ResourceSourceMeta,
-	_context: EngineContext,
+	_context: TranslationDiffContext,
 ): string {
 	const role = meta.id as keyof typeof POPULATION_ROLES | undefined;
 	const icon = role
@@ -58,7 +58,7 @@ function renderPopulationMetaIcons(
 
 function renderDevelopmentMetaIcons(
 	meta: ResourceSourceMeta,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ): string {
 	if (!meta.id) {
 		return '';
@@ -68,7 +68,7 @@ function renderDevelopmentMetaIcons(
 
 function renderBuildingMetaIcons(
 	meta: ResourceSourceMeta,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ): string {
 	if (!meta.id) {
 		return '';
@@ -90,7 +90,7 @@ const META_ICON_RENDERERS: Record<string, MetaIconRenderer> = {
 export function appendMetaSourceIcons(
 	entry: ResourceSourceEntry,
 	source: unknown,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ) {
 	if (!isResourceSourceMeta(source) || !source.type) {
 		return;
