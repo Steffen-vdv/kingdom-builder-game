@@ -8,6 +8,7 @@ export interface Action {
 	order?: number;
 	category?: string;
 	focus?: Focus;
+	icon?: string;
 	requirements?: unknown[];
 	effects?: unknown[];
 }
