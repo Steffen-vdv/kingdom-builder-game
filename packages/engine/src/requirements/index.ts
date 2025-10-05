@@ -1,7 +1,7 @@
-import { Registry } from '../registry';
+import { Registry } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 import { evaluatorCompare } from './evaluator_compare';
-import type { RequirementConfig } from '../config/schema';
+import type { RequirementConfig } from '@kingdom-builder/protocol';
 
 export type RequirementDef = RequirementConfig;
 

@@ -4,7 +4,7 @@ import type {
 	ActionEffect,
 	ActionEffectGroup,
 } from '@kingdom-builder/engine';
-import type { ActionConfig } from '@kingdom-builder/engine/config/schema';
+import type { ActionConfig } from '@kingdom-builder/protocol';
 import { logContent } from './factory';
 
 export type ActionLogHook = (

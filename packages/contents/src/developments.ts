@@ -1,7 +1,7 @@
 import { Registry } from '@kingdom-builder/engine/registry';
 import { Stat } from './stats';
 import { Resource } from './resources';
-import { developmentSchema } from '@kingdom-builder/engine/config/schema';
+import { developmentSchema } from '@kingdom-builder/protocol';
 import {
 	development,
 	effect,

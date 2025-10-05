@@ -33,6 +33,10 @@ export { advance } from './phases/advance';
 export { EngineContext } from './context';
 export { Services, PassiveManager } from './services';
 export type { PassiveSummary } from './services';
+/**
+ * @deprecated Use @kingdom-builder/protocol instead.
+ */
+export { Registry } from '@kingdom-builder/protocol';
 export {
 	EFFECTS,
 	EFFECT_COST_COLLECTORS,
@@ -41,21 +45,35 @@ export {
 	EffectRegistry,
 	EffectCostRegistry,
 } from './effects';
-export type { EffectHandler, EffectDef, EffectCostCollector } from './effects';
+export type { EffectHandler, EffectCostCollector } from './effects';
+/**
+ * @deprecated Use @kingdom-builder/protocol instead.
+ */
+export type { EffectDef } from '@kingdom-builder/protocol';
 export {
 	registerCoreEvaluators,
 	EvaluatorRegistry,
 	EVALUATORS,
 } from './evaluators';
-export type { EvaluatorHandler, EvaluatorDef } from './evaluators';
+export type { EvaluatorHandler } from './evaluators';
+/**
+ * @deprecated Use @kingdom-builder/protocol instead.
+ */
+export type { EvaluatorDef } from '@kingdom-builder/protocol';
 export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type { RequirementHandler, RequirementDef } from './requirements';
-export { validateGameConfig } from './config/schema';
+/**
+ * @deprecated Use @kingdom-builder/protocol instead.
+ */
+export { validateGameConfig } from '@kingdom-builder/protocol';
 export type {
-	GameConfig,
 	ActionEffect,
 	ActionEffectGroup as ActionEffectGroupConfig,
-} from './config/schema';
+} from '@kingdom-builder/protocol';
+/**
+ * @deprecated Use @kingdom-builder/protocol instead.
+ */
+export type { GameConfig } from '@kingdom-builder/protocol';
 export { resolveAttack } from './effects/attack';
 export type {
 	AttackLog,

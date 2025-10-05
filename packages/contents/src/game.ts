@@ -1,7 +1,7 @@
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { PopulationRole } from './populationRoles';
-import type { StartConfig } from '@kingdom-builder/engine/config/schema';
+import type { StartConfig } from '@kingdom-builder/protocol';
 
 export const GAME_START: StartConfig = {
 	player: {

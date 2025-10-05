@@ -8,6 +8,14 @@
 		"paths": {
 			"@kingdom-builder/engine": ["packages/engine/dist/index"],
 			"@kingdom-builder/engine/*": ["packages/engine/dist/*"],
+			"@kingdom-builder/protocol": [
+				"packages/protocol/src/index",
+				"packages/protocol/dist/index"
+			],
+			"@kingdom-builder/protocol/*": [
+				"packages/protocol/src/*",
+				"packages/protocol/dist/*"
+			],
 			"@kingdom-builder/contents": ["packages/contents/src/index"],
 			"@kingdom-builder/contents/*": ["packages/contents/src/*"],
 			"@kingdom-builder/*": ["packages/*/src"]
@@ -15,5 +23,8 @@
 	},
 	"include": ["src"],
 	"exclude": ["dist", "tests"],
-	"references": [{ "path": "../engine/tsconfig.json" }]
+	"references": [
+		{ "path": "../engine/tsconfig.json" },
+		{ "path": "../protocol/tsconfig.json" }
+	]
 }

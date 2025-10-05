@@ -18,7 +18,7 @@ import {
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '../../engine/tests/factories/content';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
-import type { StartConfig } from '@kingdom-builder/engine/config/schema';
+import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '@kingdom-builder/engine/services';
 
 vi.mock('@kingdom-builder/engine', async () => {

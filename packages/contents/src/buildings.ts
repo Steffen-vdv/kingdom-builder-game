@@ -5,7 +5,7 @@ import {
 } from '@kingdom-builder/engine/effects/resource_transfer';
 import { Resource } from './resources';
 import { Stat } from './stats';
-import { buildingSchema } from '@kingdom-builder/engine/config/schema';
+import { buildingSchema } from '@kingdom-builder/protocol';
 import {
 	building,
 	effect,

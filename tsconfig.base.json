@@ -21,6 +21,8 @@
 		"baseUrl": ".",
 		"paths": {
 			"@kingdom-builder/engine/*": ["packages/engine/src/*"],
+			"@kingdom-builder/protocol": ["packages/protocol/src/index"],
+			"@kingdom-builder/protocol/*": ["packages/protocol/src/*"],
 			"@kingdom-builder/contents/*": ["packages/contents/src/*"],
 			"@kingdom-builder/*": ["packages/*/src"]
 		}

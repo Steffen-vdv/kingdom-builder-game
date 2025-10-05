@@ -1,7 +1,6 @@
-/**
- * @deprecated Moved to @kingdom-builder/protocol.
- * Import from that package instead.
- */
+export { Registry } from './registry';
+export type { EffectDef } from './effects';
+export type { EvaluatorDef } from './evaluators';
 export {
 	requirementSchema,
 	effectSchema,
@@ -14,13 +13,13 @@ export {
 	startConfigSchema,
 	gameConfigSchema,
 	validateGameConfig,
-} from '@kingdom-builder/protocol';
+} from './config/schema';
 export type {
 	RequirementConfig,
 	EffectConfig,
-	ActionEffect,
 	ActionEffectGroup,
 	ActionEffectGroupOption,
+	ActionEffect,
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
@@ -28,4 +27,4 @@ export type {
 	PlayerStartConfig,
 	StartConfig,
 	GameConfig,
-} from '@kingdom-builder/protocol';
+} from './config/schema';
