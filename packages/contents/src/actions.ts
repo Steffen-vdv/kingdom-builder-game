@@ -58,9 +58,20 @@ const ACTION_ID_MAP = {
 	till: 'till',
 } as const;
 
+const POPULATION_EVALUATION_ID_MAP = {
+	tax: 'tax',
+} as const;
+
 export const ActionId = ACTION_ID_MAP;
 
 export type ActionId = (typeof ACTION_ID_MAP)[keyof typeof ACTION_ID_MAP];
+
+export const PopulationEvaluationId = POPULATION_EVALUATION_ID_MAP;
+
+type PopulationEvaluationIdMap = typeof POPULATION_EVALUATION_ID_MAP;
+
+export type PopulationEvaluationId =
+	PopulationEvaluationIdMap[keyof PopulationEvaluationIdMap];
 
 export const ActionCategory = {
 	Basic: 'basic',
@@ -160,7 +171,7 @@ export function createActionRegistry() {
 			.cost(Resource.ap, 1)
 			.effect(
 				effect()
-					.evaluator(populationEvaluator().id('tax'))
+					.evaluator(populationEvaluator().id(PopulationEvaluationId.tax))
 					.effect(
 						effect(Types.Resource, ResourceMethods.ADD)
 							.params(resourceParams().key(Resource.gold).amount(4))
