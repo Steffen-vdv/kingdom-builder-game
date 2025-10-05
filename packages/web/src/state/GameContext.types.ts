@@ -11,6 +11,10 @@ import type { TimeScale } from './useTimeScale';
 import type { HoverCard } from './useHoverCard';
 import type { LogEntry } from './useGameLog';
 import type { ErrorToast } from './useErrorToasts';
+import type {
+	ActionResolution,
+	ShowResolutionOptions,
+} from './useActionResolution';
 
 export interface GameEngineContextValue {
 	session: EngineSession;
@@ -20,6 +24,9 @@ export interface GameEngineContextValue {
 	translationContext: TranslationContext;
 	log: LogEntry[];
 	logOverflowed: boolean;
+	resolution: ActionResolution | null;
+	showResolution: (options: ShowResolutionOptions) => void;
+	acknowledgeResolution: () => void;
 	hoverCard: HoverCard | null;
 	handleHoverCard: (data: HoverCard) => void;
 	clearHoverCard: () => void;

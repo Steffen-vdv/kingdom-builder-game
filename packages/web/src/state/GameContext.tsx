@@ -26,6 +26,8 @@ import { createTranslationContext } from '../translation/context';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
 import { useGameLog } from './useGameLog';
+import { useActionResolution } from './useActionResolution';
+import type { ShowResolutionOptions } from './useActionResolution';
 import { usePhaseProgress } from './usePhaseProgress';
 import { useActionPerformer } from './useActionPerformer';
 import { useErrorToasts } from './useErrorToasts';
@@ -134,6 +136,22 @@ export function GameProvider({
 		setTrackedTimeout,
 	});
 
+	const { resolution, showResolution, acknowledgeResolution } =
+		useActionResolution({
+			addLog,
+			setTrackedTimeout,
+			timeScaleRef,
+			mountedRef,
+		});
+
+	const handleShowResolution = useCallback(
+		(options: ShowResolutionOptions) => {
+			clearHoverCard();
+			showResolution(options);
+		},
+		[clearHoverCard, showResolution],
+	);
+
 	const {
 		phaseSteps,
 		setPhaseSteps,
@@ -211,6 +229,9 @@ export function GameProvider({
 		translationContext,
 		log,
 		logOverflowed,
+		resolution,
+		showResolution: handleShowResolution,
+		acknowledgeResolution,
 		hoverCard,
 		handleHoverCard,
 		clearHoverCard,
