@@ -104,8 +104,10 @@ describe('royal decree translation', () => {
 		throw new Error('Expected royal decree develop group');
 	}
 	const developmentOptions = developGroup.options.map((option) => {
-		const params = option.params as { id?: string } | undefined;
-		return params?.id ?? '';
+		const params = option.params as
+			| { id?: string; developmentId?: string }
+			| undefined;
+		return params?.developmentId ?? params?.id ?? '';
 	});
 
 	it('summarizes options using develop action label', () => {

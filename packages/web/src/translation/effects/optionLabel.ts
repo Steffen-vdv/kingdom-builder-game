@@ -19,8 +19,14 @@ function resolveOptionTargetLabel(
 	context: EngineContext,
 ): string | undefined {
 	const params = option.params;
-	const targetId =
-		isRecord(params) && typeof params.id === 'string' ? params.id : undefined;
+	let targetId: string | undefined;
+	if (isRecord(params)) {
+		if (typeof params.id === 'string') {
+			targetId = params.id;
+		} else if (typeof params.developmentId === 'string') {
+			targetId = params.developmentId;
+		}
+	}
 	if (!targetId) {
 		return undefined;
 	}
