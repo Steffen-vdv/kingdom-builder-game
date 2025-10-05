@@ -12,7 +12,7 @@ type PassiveDurationMeta = {
 	label: string;
 	icon?: string;
 	phaseId?: string;
-	source: 'manual' | 'phase' | 'fallback';
+	source: 'manual' | 'phase';
 };
 
 function createMeta(meta: PassiveDurationMeta): PassiveDurationMeta {
@@ -31,22 +31,38 @@ function createMeta(meta: PassiveDurationMeta): PassiveDurationMeta {
 
 type PassivePhaseInfo = { id: string; label?: string; icon?: string };
 type PhaseStepMetadata = { triggers?: readonly string[] };
-type PhaseWithStepMetadata =
-	| PhaseDef
-	| (PassivePhaseInfo & { steps?: readonly PhaseStepMetadata[] });
+type PassivePhaseWithSteps = PassivePhaseInfo & {
+	steps?: readonly PhaseStepMetadata[];
+};
+type PhaseWithStepMetadata = PhaseDef | PassivePhaseWithSteps;
 
-function toPassivePhaseInfo(phase: PhaseDef | PassivePhaseInfo | undefined) {
-	if (!phase) {
-		return undefined;
+function mergePhaseInfo(
+	id: string,
+	...sources: (PhaseDef | PassivePhaseInfo | undefined)[]
+): PassivePhaseInfo | undefined {
+	let found = false;
+	const info: PassivePhaseInfo = { id };
+	for (const source of sources) {
+		if (!source) {
+			continue;
+		}
+		found = true;
+		if (
+			'label' in source &&
+			source.label !== undefined &&
+			info.label === undefined
+		) {
+			info.label = source.label;
+		}
+		if (
+			'icon' in source &&
+			source.icon !== undefined &&
+			info.icon === undefined
+		) {
+			info.icon = source.icon;
+		}
 	}
-	const info: PassivePhaseInfo = { id: phase.id };
-	if ('label' in phase && phase.label !== undefined) {
-		info.label = phase.label;
-	}
-	if ('icon' in phase && phase.icon !== undefined) {
-		info.icon = phase.icon;
-	}
-	return info;
+	return found ? info : undefined;
 }
 
 function resolvePhaseMeta(
@@ -57,24 +73,13 @@ function resolvePhaseMeta(
 		return undefined;
 	}
 	const fromContext = ctx.phases.find((phase) => phase.id === id);
-	if (fromContext) {
-		return {
-			id: fromContext.id,
-			...(fromContext.label !== undefined ? { label: fromContext.label } : {}),
-			...(fromContext.icon !== undefined ? { icon: fromContext.icon } : {}),
-		};
-	}
 	const fromContents = PHASES.find(
 		(phaseDefinition) => phaseDefinition.id === id,
 	);
-	return toPassivePhaseInfo(fromContents);
+	return mergePhaseInfo(id, fromContext, fromContents);
 }
 
 const PHASE_TRIGGER_KEY_PATTERN = /^on[A-Z][A-Za-z0-9]*Phase$/;
-const PHASE_TRIGGER_FALLBACK_LABELS: Record<string, string> = {
-	onGrowthPhase: 'Growth',
-	onUpkeepPhase: 'Upkeep',
-};
 
 function resolvePhaseByTrigger(
 	ctx: TranslationContext,
@@ -110,10 +115,15 @@ function resolvePhaseByTrigger(
 
 	const fromContext = findPhaseWithTrigger(ctx.phases);
 	if (fromContext) {
-		return toPassivePhaseInfo(fromContext as PassivePhaseInfo);
+		const fromContents = PHASES.find(
+			(phaseDefinition) => phaseDefinition.id === fromContext.id,
+		);
+		return mergePhaseInfo(fromContext.id, fromContext, fromContents);
 	}
 	const fromContents = findPhaseWithTrigger(PHASES);
-	return toPassivePhaseInfo(fromContents);
+	return fromContents
+		? mergePhaseInfo(fromContents.id, fromContents)
+		: undefined;
 }
 
 function collectPhaseTriggerKeys(params: Record<string, unknown>) {
@@ -176,17 +186,6 @@ function resolveDurationMeta(
 		icon = resolvedPhase.icon;
 	}
 
-	if (!label && !resolvedPhase) {
-		for (const triggerId of triggerKeys) {
-			const fallbackLabel = PHASE_TRIGGER_FALLBACK_LABELS[triggerId];
-			if (fallbackLabel) {
-				label = fallbackLabel;
-				source = 'fallback';
-				break;
-			}
-		}
-	}
-
 	if (!label) {
 		return null;
 	}
@@ -203,13 +202,9 @@ function resolveDurationMeta(
 	});
 }
 
-function formatDuration(
-	meta: PassiveDurationMeta,
-	{ includePhase }: { includePhase: boolean },
-) {
+function formatDuration(meta: PassiveDurationMeta) {
 	const icon = meta.icon ? `${meta.icon} ` : '';
-	const suffix = includePhase && meta.source === 'fallback' ? ' Phase' : '';
-	return `${icon}${meta.label}${suffix}`;
+	return `${icon}${meta.label}`;
 }
 
 registerEffectFormatter('passive', 'add', {
@@ -221,9 +216,7 @@ registerEffectFormatter('passive', 'add', {
 		}
 		return [
 			{
-				title: `⏳ Until next ${formatDuration(duration, {
-					includePhase: false,
-				})}`,
+				title: `⏳ Until next ${formatDuration(duration)}`,
 				items: inner,
 			},
 		];
@@ -241,9 +234,7 @@ registerEffectFormatter('passive', 'add', {
 		}
 		return [
 			{
-				title: `${prefix}${name} – Until your next ${formatDuration(duration, {
-					includePhase: true,
-				})}`,
+				title: `${prefix}${name} – Until your next ${formatDuration(duration)}`,
 				items: inner,
 			},
 		];
@@ -259,10 +250,7 @@ registerEffectFormatter('passive', 'add', {
 		const duration = resolveDurationMeta(eff, ctx);
 		if (duration) {
 			items.push(
-				`${prefix}${name} duration: Until player's next ${formatDuration(
-					duration,
-					{ includePhase: true },
-				)}`,
+				`${prefix}${name} duration: Until player's next ${formatDuration(duration)}`,
 			);
 		}
 		return { title: `${prefix}${name} added`, items };
