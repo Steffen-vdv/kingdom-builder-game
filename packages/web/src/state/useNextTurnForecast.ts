@@ -17,47 +17,80 @@ function cloneEmptyDelta(): PlayerSnapshotDeltaBucket {
 	};
 }
 
-function serializeRecord(source: Record<string, unknown>): string {
-	const entries = Object.entries(source).sort(([a], [b]) => {
-		if (a < b) {
-			return -1;
-		}
-		if (a > b) {
-			return 1;
-		}
-		return 0;
-	});
-	return JSON.stringify(entries);
+function stableSerialize(value: unknown): string {
+	if (typeof value === 'undefined') {
+		return 'null';
+	}
+	const seen = new WeakSet<object>();
+	const json = JSON.stringify(
+		value,
+		function replacer(_key: string, rawValue: unknown): unknown {
+			if (typeof rawValue === 'undefined') {
+				return null;
+			}
+			if (Array.isArray(rawValue)) {
+				if (seen.has(rawValue)) {
+					return '[Circular]';
+				}
+				seen.add(rawValue);
+				return rawValue.map<unknown>((item) =>
+					typeof item === 'undefined' ? null : item,
+				);
+			}
+			if (rawValue && typeof rawValue === 'object') {
+				if (seen.has(rawValue)) {
+					return '[Circular]';
+				}
+				seen.add(rawValue);
+				const entries = Object.entries(rawValue as Record<string, unknown>)
+					.filter(([, entryValue]) => typeof entryValue !== 'undefined')
+					.sort(([a], [b]) => {
+						if (a < b) {
+							return -1;
+						}
+						if (a > b) {
+							return 1;
+						}
+						return 0;
+					});
+				const sorted: Record<string, unknown> = {};
+				for (const [entryKey, entryValue] of entries) {
+					sorted[entryKey] = entryValue;
+				}
+				return sorted;
+			}
+			if (typeof rawValue === 'function') {
+				return '[Function]';
+			}
+			if (typeof rawValue === 'bigint') {
+				return rawValue.toString();
+			}
+			return rawValue;
+		},
+	);
+	return json ?? 'null';
 }
 
 function hashPlayer(player: PlayerStateSnapshot): string {
-	return [
-		player.id,
-		serializeRecord(player.resources),
-		serializeRecord(player.stats),
-		serializeRecord(player.population),
-		player.lands.length,
-		serializeRecord(player.skipPhases),
-		serializeRecord(player.skipSteps),
-	].join('|');
+	return stableSerialize(player);
 }
 
 function hashGameState(
 	game: EngineSessionSnapshot['game'],
 	phases: EngineSessionSnapshot['phases'],
 ): string {
-	const phaseIds = phases.map((phase) => phase.id).join(',');
-	return [
-		game.turn,
-		game.currentPlayerIndex,
-		game.currentPhase,
-		game.currentStep,
-		game.phaseIndex,
-		game.stepIndex,
-		game.activePlayerId,
-		game.opponentId,
-		phaseIds,
-	].join('|');
+	return stableSerialize({
+		turn: game.turn,
+		currentPlayerIndex: game.currentPlayerIndex,
+		currentPhase: game.currentPhase,
+		currentStep: game.currentStep,
+		phaseIndex: game.phaseIndex,
+		stepIndex: game.stepIndex,
+		activePlayerId: game.activePlayerId,
+		opponentId: game.opponentId,
+		devMode: game.devMode,
+		phases,
+	});
 }
 
 export function useNextTurnForecast(): NextTurnForecast {
@@ -65,15 +98,15 @@ export function useNextTurnForecast(): NextTurnForecast {
 	const { game, phases } = sessionState;
 	const players = game.players;
 	const hashKey = useMemo(() => {
-		const hashes = players.map((player) => hashPlayer(player));
-		hashes.sort();
 		const gameHash = hashGameState(game, phases);
-		return [gameHash, hashes.join(',')].join('#');
+		const playerHashes = players.map((player) => hashPlayer(player));
+		return [gameHash, playerHashes.join(',')].join('#');
 	}, [
 		game.activePlayerId,
 		game.currentPhase,
 		game.currentPlayerIndex,
 		game.currentStep,
+		game.devMode,
 		game.opponentId,
 		game.phaseIndex,
 		game.stepIndex,

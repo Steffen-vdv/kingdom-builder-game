@@ -211,4 +211,49 @@ describe('useNextTurnForecast', () => {
 		expect(result.current[firstPlayerId]).toEqual(createDelta(4));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(6));
 	});
+
+	it('recomputes when land details change without affecting counts', () => {
+		const baseLand: PlayerStateSnapshot['lands'][number] = {
+			id: 'land-1',
+			slotsMax: 2,
+			slotsUsed: 1,
+			tilled: true,
+			developments: ['structure-a'],
+		};
+		resetSessionState([
+			createPlayer(1, { lands: [baseLand] }),
+			createPlayer(2),
+		]);
+		simulateUpcomingPhasesMock.mockImplementation((_, playerId: string) => {
+			const deltaAmount = playerId === firstPlayerId ? 2 : 3;
+			return {
+				playerId,
+				before: {} as PlayerStateSnapshot,
+				after: {} as PlayerStateSnapshot,
+				delta: createDelta(deltaAmount),
+				steps: [],
+			};
+		});
+		const { result, rerender } = renderHook(() => useNextTurnForecast());
+		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(result.current[firstPlayerId]).toEqual(createDelta(2));
+		expect(result.current[secondPlayerId]).toEqual(createDelta(3));
+
+		simulateUpcomingPhasesMock.mockClear();
+		setPlayers([
+			createPlayer(1, {
+				lands: [
+					{
+						...baseLand,
+						developments: ['structure-b'],
+					},
+				],
+			}),
+			createPlayer(2),
+		]);
+		rerender();
+		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(result.current[firstPlayerId]).toEqual(createDelta(2));
+		expect(result.current[secondPlayerId]).toEqual(createDelta(3));
+	});
 });
