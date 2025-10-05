@@ -11,6 +11,7 @@ import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_STAT_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
+import { getForecastDisplay } from '../../utils/forecast';
 
 interface StatButtonProps {
 	statKey: keyof typeof STATS;
@@ -27,8 +28,7 @@ const formatStatDelta = (statKey: keyof typeof STATS, delta: number) => {
 
 const STAT_FORECAST_BADGE_CLASS =
 	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
-const STAT_FORECAST_BADGE_THEME_CLASS =
-	'bg-slate-800/70 text-white dark:bg-slate-100/10';
+const STAT_FORECAST_BADGE_THEME_CLASS = 'bg-slate-800/70 dark:bg-slate-100/10';
 
 const StatButton: React.FC<StatButtonProps> = ({
 	statKey,
@@ -40,12 +40,11 @@ const StatButton: React.FC<StatButtonProps> = ({
 	const info = STATS[statKey];
 	const changes = useValueChangeIndicators(value);
 	const formattedValue = formatStatValue(statKey, value);
-	const forecastLabel =
-		typeof forecastDelta === 'number' && forecastDelta !== 0
-			? `(${formatStatDelta(statKey, forecastDelta)} next turn)`
-			: undefined;
-	const ariaLabel = forecastLabel
-		? `${info.label}: ${formattedValue} ${forecastLabel}`
+	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
+		formatStatDelta(statKey, delta),
+	);
+	const ariaLabel = forecastDisplay
+		? `${info.label}: ${formattedValue} ${forecastDisplay.label}`
 		: `${info.label}: ${formattedValue}`;
 
 	return (
@@ -61,11 +60,15 @@ const StatButton: React.FC<StatButtonProps> = ({
 		>
 			{info.icon}
 			{formattedValue}
-			{forecastLabel && (
+			{forecastDisplay && (
 				<span
-					className={`${STAT_FORECAST_BADGE_CLASS} ${STAT_FORECAST_BADGE_THEME_CLASS}`}
+					className={[
+						STAT_FORECAST_BADGE_CLASS,
+						STAT_FORECAST_BADGE_THEME_CLASS,
+						forecastDisplay.toneClass,
+					].join(' ')}
 				>
-					{forecastLabel}
+					{forecastDisplay.label}
 				</span>
 			)}
 			{changes.map((change) => (
