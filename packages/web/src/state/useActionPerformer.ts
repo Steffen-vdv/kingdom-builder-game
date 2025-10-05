@@ -88,7 +88,12 @@ export function useActionPerformer({
 
 				const subLines: string[] = [];
 				for (const trace of traces) {
-					const subStep = ctx.actions.get(trace.id);
+					let subStep;
+					try {
+						subStep = ctx.actions.get(trace.id);
+					} catch {
+						continue;
+					}
 					const subResolved = resolveActionEffects(subStep);
 					const subChanges = diffStepSnapshots(
 						trace.before,
@@ -101,8 +106,8 @@ export function useActionPerformer({
 						continue;
 					}
 					subLines.push(...subChanges);
-					const icon = ctx.actions.get(trace.id)?.icon || '';
-					const name = ctx.actions.get(trace.id).name;
+					const icon = typeof subStep.icon === 'string' ? subStep.icon : '';
+					const name = subStep.name;
 					const line = `  ${icon} ${name}`;
 					const index = messages.indexOf(line);
 					if (index !== -1) {
