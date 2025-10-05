@@ -1,13 +1,27 @@
 # AGENTS.md – Repository Operations & Game Reference
 
+## Quick Start Summary
+
+- Start with [`docs/agent-quick-start.md`](docs/agent-quick-start.md) for the
+  mandatory workflow, coding rules, and PR process.
+- For player-facing copy, complete Section 0 ("Before Writing Text") in
+  [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text) and
+  paste its quick-reference checklist into your PR body.
+- Always load game data from content packages or registries and create synthetic
+  fixtures through `createContentFactory()` in tests.
+- Run `npm run lint`, `npm run format`, and `npm run check` before submitting a
+  PR, and copy `.github/PULL_REQUEST_TEMPLATE.md` verbatim into the PR body
+  before calling `make_pr`.
+
+▶ **Extended guidance, architecture lore, and gameplay reference begin in
+Section&nbsp;1 below.**
+
+---
+
 This single document consolidates every prior `AGENTS.md` directive, development
 procedure, and lore note for the Kingdom Builder project. No information has
 been removed—content was reorganized to avoid duplication while improving
 cohesion.
-
-> **Reminder**: Before adding any player-facing strings, review
-> `docs/text-formatting.md` Section 0 "Before Writing Text", work through the
-> Implementation checklist, and apply the PR checklist snippet.
 
 ---
 

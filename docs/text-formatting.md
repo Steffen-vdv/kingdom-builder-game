@@ -2,7 +2,10 @@
 
 This guide documents the web translation pipeline and the utilities that keep
 player-facing text consistent across Kingdom Builder. Refer to it before adding
-any new strings in the web client, engine-derived logs, or supporting tests.
+any new strings in the web client, engine-derived logs, or supporting tests. For
+the mandatory workflow summary, start with
+[`docs/agent-quick-start.md`](agent-quick-start.md) and return here for the full
+inventories once the checklist in Section 0 is complete.
 
 ## 0. Before Writing Text
 
