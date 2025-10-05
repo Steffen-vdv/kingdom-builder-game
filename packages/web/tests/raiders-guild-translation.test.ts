@@ -11,7 +11,7 @@ import {
 	RESOURCE_TRANSFER_ICON,
 	RESOURCES,
 } from '@kingdom-builder/contents';
-import { GENERAL_RESOURCE_ICON } from '../src/icons';
+import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../src/icons';
 import { increaseOrDecrease, signed } from '../src/translation/effects/helpers';
 import { formatTargetLabel } from '../src/translation/effects/formatters/modifier_helpers';
 import {
@@ -26,6 +26,8 @@ import {
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+
+const RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
 function expectHoistedActionCard(
 	ctx: RaidersGuildSyntheticContext['ctx'],
 	description: Summary | undefined,
@@ -61,7 +63,7 @@ describe('raiders guild translation', () => {
 		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${formatTargetLabel(
 			raid.icon ?? '',
 			raid.name,
-		)}: Whenever it transfers resources, ${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
+		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
 			adjust,
 		)} transfer by ${Math.abs(adjust)}%`;
 		expect(collectText(effects)).toContain(clause);
@@ -107,7 +109,7 @@ describe('raiders guild translation', () => {
 			ledger.icon ?? '',
 			ledger.name,
 		)}`;
-		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${target}: Whenever it grants resources, gain ${GENERAL_RESOURCE_ICON}${signed(
+		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${target}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${GENERAL_RESOURCE_ICON}${signed(
 			amount,
 		)}${Math.abs(amount)} more of that resource`;
 		expect(collectText(summary)).toContain(clause);
@@ -125,7 +127,7 @@ describe('raiders guild translation', () => {
 		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${formatTargetLabel(
 			development.icon ?? '',
 			development.name,
-		)}: Whenever it grants resources, gain ${icon}${signed(amount)}${Math.abs(
+		)}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${icon}${signed(amount)}${Math.abs(
 			amount,
 		)} more of that resource`;
 		expect(collectText(summary)).toContain(clause);

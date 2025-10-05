@@ -1,7 +1,45 @@
 import type { EngineContext, EffectDef } from '@kingdom-builder/engine';
 import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/contents';
+import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
+
+function formatStepTriggerLabel(
+	ctx: EngineContext,
+	triggerKey: string,
+): string | undefined {
+	for (const phase of ctx.phases) {
+		const steps = phase.steps ?? [];
+		for (const step of steps) {
+			const triggers = step.triggers ?? [];
+			if (!triggers.includes(triggerKey)) {
+				continue;
+			}
+			const phaseLabelParts = [
+				phase.icon,
+				phase.label ?? formatDetailText(phase.id),
+			]
+				.filter((part) => part && String(part).trim().length > 0)
+				.join(' ')
+				.trim();
+			const stepLabelParts = (step.title ?? formatDetailText(step.id))
+				?.trim()
+				.replace(/\s+/gu, ' ');
+			const sections: string[] = [];
+			if (phaseLabelParts.length) {
+				sections.push(`${phaseLabelParts} Phase`);
+			}
+			if (stepLabelParts && stepLabelParts.length) {
+				sections.push(`${stepLabelParts} step`);
+			}
+			if (!sections.length) {
+				return undefined;
+			}
+			return sections.join(' — ');
+		}
+	}
+	return undefined;
+}
 
 export interface PhasedDef {
 	onBuild?: EffectDef<Record<string, unknown>>[] | undefined;
@@ -48,7 +86,13 @@ export class PhasedTranslator {
 				return;
 			}
 			const info = triggerMeta[key as string];
+			const stepLabel = formatStepTriggerLabel(ctx, identifier);
 			const title = (() => {
+				if (stepLabel) {
+					const prefix =
+						info?.icon && info.icon.trim().length ? `${info.icon} ` : '';
+					return `${prefix}During ${stepLabel}`;
+				}
 				if (info) {
 					const label = [info.icon, info.future]
 						.filter(Boolean)

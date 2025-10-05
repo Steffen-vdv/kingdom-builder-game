@@ -18,6 +18,7 @@ import {
 	Resource,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '../../engine/tests/factories/content';
+import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../src/icons';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
 import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '@kingdom-builder/engine/services';
@@ -37,6 +38,8 @@ function createCtx() {
 		rules: RULES,
 	});
 }
+
+const RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
 
 describe('modifier evaluation handlers', () => {
 	it('allows registering custom evaluation formatters', () => {
@@ -126,7 +129,7 @@ describe('modifier evaluation handlers', () => {
 			const description = describeEffects([eff], ctx);
 			const expectedSummary = `${MODIFIER_INFO.result.icon}${development.icon}: ${syntheticResource.icon}-2`;
 			expect(summary).toEqual([expectedSummary]);
-			const expectedDescription = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${development.icon} ${development.name}: Whenever it grants resources, gain ${syntheticResource.icon}-2 more of that resource`;
+			const expectedDescription = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${development.icon} ${development.name}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${syntheticResource.icon}-2 more of that resource`;
 			expect(description).toEqual([expectedDescription]);
 		} finally {
 			if (previousResource) {
@@ -238,7 +241,7 @@ describe('modifier evaluation handlers', () => {
 		]);
 		const targetLabel = raid.icon ? `${raid.icon} ${raid.name}` : raid.name;
 		expect(description[0]).toBe(
-			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${targetLabel}: Whenever it transfers resources, ${RESOURCE_TRANSFER_ICON} Increase transfer by 10%`,
+			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${targetLabel}: Whenever it transfers ${RESOURCES_KEYWORD}, ${RESOURCE_TRANSFER_ICON} Increase transfer by 10%`,
 		);
 		const card = description[1];
 		expect(card).toMatchObject({

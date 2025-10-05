@@ -1,6 +1,6 @@
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
 import { POPULATION_INFO, RESOURCES } from '@kingdom-builder/contents';
-import { GENERAL_RESOURCE_ICON } from '../../../icons';
+import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
 import type {
 	ActionDef,
 	DevelopmentDef,
@@ -12,9 +12,11 @@ import type { SummaryEntry } from '../../content/types';
 const joinParts = (...parts: Array<string | undefined>) =>
 	parts.filter(Boolean).join(' ').trim();
 
-export const RESULT_EVENT_GRANT_RESOURCES = 'Whenever it grants resources';
+const GENERAL_RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
+
+export const RESULT_EVENT_GRANT_RESOURCES = `Whenever it grants ${GENERAL_RESOURCES_KEYWORD}`;
 export const RESULT_EVENT_RESOLVE = 'Whenever it resolves';
-export const RESULT_EVENT_TRANSFER = 'Whenever it transfers resources';
+export const RESULT_EVENT_TRANSFER = `Whenever it transfers ${GENERAL_RESOURCES_KEYWORD}`;
 
 export const formatTargetLabel = (icon: string, name: string) =>
 	joinParts(icon, name || '');

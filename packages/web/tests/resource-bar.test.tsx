@@ -61,17 +61,6 @@ function flattenSummary(entries: unknown[]): string[] {
 	return lines;
 }
 
-function formatTierRange(tier: TierDefinition) {
-	const { min, max } = tier.range;
-	if (max === undefined) {
-		return `${min}+`;
-	}
-	if (min === max) {
-		return `${min}`;
-	}
-	return `${min} - ${max}`;
-}
-
 function normalizeSummary(summary: string | undefined): string[] {
 	if (!summary) {
 		return [];
@@ -121,42 +110,17 @@ describe('<ResourceBar /> happiness hover card', () => {
 		expect(hoverCard?.effectsTitle).toBe(
 			`Happiness thresholds (current: ${resourceValue})`,
 		);
-		const tierSections = (hoverCard?.effects ?? []).filter(
-			(section): section is SummaryGroupLike => typeof section !== 'string',
+		const tierEntries = (hoverCard?.effects ?? []).filter(
+			(section): section is SummaryGroupLike =>
+				Boolean(section) && typeof section === 'object',
 		);
-		expect(tierSections).toHaveLength(3);
-		const groupedByTitle = Object.fromEntries(
-			tierSections.map((section) => [section.title ?? '', section]),
-		);
-		const currentSection = groupedByTitle['Current tier'];
-		expect(currentSection).toBeTruthy();
-		const risingSection = groupedByTitle['If happiness rises'];
-		expect(risingSection).toBeTruthy();
-		const fallingSection = groupedByTitle['If happiness falls'];
-		expect(fallingSection).toBeTruthy();
-		const extractNestedEntry = (
-			section: SummaryGroupLike | undefined,
-		): SummaryGroupLike | undefined => {
-			if (!section) {
-				return undefined;
-			}
-			return (section.items ?? []).find(
-				(item): item is SummaryGroupLike =>
-					Boolean(item) && typeof item === 'object',
-			);
-		};
-		const currentEntry = extractNestedEntry(currentSection);
+		expect(tierEntries).toHaveLength(3);
+		const [higherEntry, currentEntry, lowerEntry] = tierEntries;
+		expect(higherEntry).toBeTruthy();
 		expect(currentEntry).toBeTruthy();
+		expect(lowerEntry).toBeTruthy();
 		const currentClassName = currentEntry?.className ?? '';
 		expect(currentClassName.includes('text-emerald-600')).toBe(true);
-		const risingEntry = extractNestedEntry(risingSection);
-		const fallingEntry = extractNestedEntry(fallingSection);
-		expect(risingEntry).toBeTruthy();
-		expect(fallingEntry).toBeTruthy();
-		const nestedTierEntries = [risingEntry, currentEntry, fallingEntry].filter(
-			(entry): entry is SummaryGroupLike => Boolean(entry),
-		);
-		expect(nestedTierEntries).toHaveLength(3);
 		const tiers = ctx.services.rules.tierDefinitions;
 		const getRangeStart = (tier: TierDefinition) =>
 			tier.range.min ?? Number.NEGATIVE_INFINITY;
@@ -179,20 +143,32 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const expectTierEntryMatches = (
 			tier: TierDefinition | undefined,
 			entry: SummaryGroupLike | undefined,
+			orientation: 'higher' | 'current' | 'lower',
 		) => {
 			if (!tier) {
 				expect(entry).toBeUndefined();
 				return;
 			}
 			expect(entry).toBeTruthy();
-			const expectedTitlePart = (() => {
-				const rangeLabel = formatTierRange(tier);
-				if (!tierResourceIcon) {
-					return `(${rangeLabel})`;
+			const title = entry?.title ?? '';
+			if (orientation === 'current') {
+				expect(title.includes('(')).toBe(false);
+			} else {
+				const threshold =
+					orientation === 'higher'
+						? tier.range.min
+						: (tier.range.max ?? tier.range.min);
+				if (threshold !== undefined) {
+					const thresholdSuffix = `${threshold}${
+						orientation === 'higher' ? '+' : '-'
+					}`;
+					const expectedLabel = tierResourceIcon
+						? `${tierResourceIcon} ${thresholdSuffix}`
+						: thresholdSuffix;
+					expect(title.includes(expectedLabel)).toBe(true);
+					expect(title.includes('(')).toBe(true);
 				}
-				return `(${tierResourceIcon} ${rangeLabel})`;
-			})();
-			expect((entry?.title ?? '').includes(expectedTitlePart)).toBe(true);
+			}
 			const items = entry?.items ?? [];
 			expect(items.length).toBeLessThanOrEqual(MAX_TIER_SUMMARY_LINES);
 			const summaryEntries = tier.preview?.effects?.length
@@ -209,9 +185,9 @@ describe('<ResourceBar /> happiness hover card', () => {
 				expect(flattenSummary(items)).not.toContain(removalText);
 			}
 		};
-		expectTierEntryMatches(higherTier, risingEntry);
-		expectTierEntryMatches(activeTier, currentEntry);
-		expectTierEntryMatches(lowerTier, fallingEntry);
+		expectTierEntryMatches(higherTier, higherEntry, 'higher');
+		expectTierEntryMatches(activeTier, currentEntry, 'current');
+		expectTierEntryMatches(lowerTier, lowerEntry, 'lower');
 	});
 });
 
