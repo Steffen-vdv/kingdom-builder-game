@@ -5,6 +5,7 @@ import type {
 import {
 	buildingDiscountModifier,
 	createTierPassiveEffect,
+	GAIN_INCOME_STEP_PREFIX,
 	GROWTH_PHASE_ID,
 	growthBonusEffect,
 	incomeModifier,
@@ -54,7 +55,7 @@ const TIER_CONFIGS = [
 		skipSteps: [{ phase: UPKEEP_PHASE_ID, step: WAR_RECOVERY_STEP_ID }],
 		summaryToken: happinessSummaryToken('despair'),
 		summary: joinSummary(
-			'During income step, gain 50% less 🪙 gold (rounded up).',
+			`${GAIN_INCOME_STEP_PREFIX}, gain 50% less 🪙 gold (rounded up).`,
 			'Skip Growth phase.',
 			'Skip War Recovery step during Upkeep phase.',
 		),
@@ -71,7 +72,7 @@ const TIER_CONFIGS = [
 		skipPhases: [GROWTH_PHASE_ID],
 		summaryToken: happinessSummaryToken('misery'),
 		summary: joinSummary(
-			'During income step, gain 50% less 🪙 gold (rounded up).',
+			`${GAIN_INCOME_STEP_PREFIX}, gain 50% less 🪙 gold (rounded up).`,
 			'Skip Growth phase.',
 		),
 		removal: 'happiness stays between -9 and -8',
@@ -87,7 +88,7 @@ const TIER_CONFIGS = [
 		skipPhases: [GROWTH_PHASE_ID],
 		summaryToken: happinessSummaryToken('grim'),
 		summary: joinSummary(
-			'During income step, gain 25% less 🪙 gold (rounded up).',
+			`${GAIN_INCOME_STEP_PREFIX}, gain 25% less 🪙 gold (rounded up).`,
 			'Skip Growth phase.',
 		),
 		removal: 'happiness stays between -7 and -5',
@@ -100,7 +101,7 @@ const TIER_CONFIGS = [
 		range: { min: -4, max: -3 },
 		incomeMultiplier: 0.75,
 		summaryToken: happinessSummaryToken('unrest'),
-		summary: 'During income step, gain 25% less 🪙 gold (rounded up).',
+		summary: `${GAIN_INCOME_STEP_PREFIX}, gain 25% less 🪙 gold (rounded up).`,
 		removal: 'happiness stays between -4 and -3',
 		effects: [incomeModifier('happiness:unrest:income', -0.25)],
 	},
@@ -120,7 +121,7 @@ const TIER_CONFIGS = [
 		range: { min: 3, max: 4 },
 		incomeMultiplier: 1.25,
 		summaryToken: happinessSummaryToken('content'),
-		summary: 'During income step, gain 25% more 🪙 gold (rounded up).',
+		summary: `${GAIN_INCOME_STEP_PREFIX}, gain 25% more 🪙 gold (rounded up).`,
 		removal: 'happiness stays between +3 and +4',
 		effects: [incomeModifier('happiness:content:income', 0.25)],
 	},
@@ -133,7 +134,7 @@ const TIER_CONFIGS = [
 		buildingDiscountPct: 0.2,
 		summaryToken: happinessSummaryToken('joyful'),
 		summary: joinSummary(
-			'During income step, gain 25% more 🪙 gold (rounded up).',
+			`${GAIN_INCOME_STEP_PREFIX}, gain 25% more 🪙 gold (rounded up).`,
 			'Build action costs 20% less 🪙 gold (rounded up).',
 		),
 		removal: 'happiness stays between +5 and +7',
@@ -151,7 +152,7 @@ const TIER_CONFIGS = [
 		buildingDiscountPct: 0.2,
 		summaryToken: happinessSummaryToken('elated'),
 		summary: joinSummary(
-			'During income step, gain 50% more 🪙 gold (rounded up).',
+			`${GAIN_INCOME_STEP_PREFIX}, gain 50% more 🪙 gold (rounded up).`,
 			'Build action costs 20% less 🪙 gold (rounded up).',
 		),
 		removal: 'happiness stays between +8 and +9',
@@ -169,7 +170,7 @@ const TIER_CONFIGS = [
 		buildingDiscountPct: 0.2,
 		summaryToken: happinessSummaryToken('ecstatic'),
 		summary: joinSummary(
-			'During income step, gain 50% more 🪙 gold (rounded up).',
+			`${GAIN_INCOME_STEP_PREFIX}, gain 50% more 🪙 gold (rounded up).`,
 			'Build action costs 20% less 🪙 gold (rounded up).',
 			'Gain +20% 📈 Growth.',
 		),

@@ -1,11 +1,7 @@
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
-import { POPULATION_INFO, RESOURCES } from '@kingdom-builder/contents';
+import { RESOURCES } from '@kingdom-builder/contents';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
-import type {
-	ActionDef,
-	DevelopmentDef,
-	ResourceKey,
-} from '@kingdom-builder/contents';
+import type { DevelopmentDef, ResourceKey } from '@kingdom-builder/contents';
 import { signed } from '../helpers';
 import type { SummaryEntry } from '../../content/types';
 
@@ -14,9 +10,9 @@ const joinParts = (...parts: Array<string | undefined>) =>
 
 const GENERAL_RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
 
-export const RESULT_EVENT_GRANT_RESOURCES = `Whenever it grants ${GENERAL_RESOURCES_KEYWORD}`;
-export const RESULT_EVENT_RESOLVE = 'Whenever it resolves';
-export const RESULT_EVENT_TRANSFER = `Whenever it transfers ${GENERAL_RESOURCES_KEYWORD}`;
+export const RESULT_EVENT_GRANT_RESOURCES = `Whenever it grants ${GENERAL_RESOURCES_KEYWORD}`,
+	RESULT_EVENT_RESOLVE = 'Whenever it resolves',
+	RESULT_EVENT_TRANSFER = `Whenever it transfers ${GENERAL_RESOURCES_KEYWORD}`;
 
 export const formatTargetLabel = (icon: string, name: string) =>
 	joinParts(icon, name || '');
@@ -79,7 +75,7 @@ export function wrapResultModifierEntries(
 	);
 }
 
-interface ResultModifierLabel {
+export interface ResultModifierLabel {
 	icon: string;
 	label: string;
 }
@@ -120,9 +116,14 @@ export function formatGainFrom(
 	label: ResultModifierLabel,
 	source: ResultModifierSource,
 	amount: number,
-	options: { key?: string; detailed?: boolean; percent?: number } = {},
+	options: {
+		key?: string;
+		detailed?: boolean;
+		percent?: number;
+		round?: 'up' | 'down';
+	} = {},
 ) {
-	const { key, detailed, percent } = options;
+	const { key, detailed, percent, round } = options;
 	const resourceInfo = key ? RESOURCES[key as ResourceKey] : undefined;
 	const resIcon = resourceInfo?.icon || key;
 	const usePercent = typeof percent === 'number' && !Number.isNaN(percent);
@@ -131,25 +132,41 @@ export function formatGainFrom(
 	const amountText = usePercent
 		? formatPercentText(normalizedValue)
 		: `${signed(normalizedValue)}${normalizedValue}`;
+	const roundingDetail =
+		usePercent && round ? ` (rounded ${round === 'down' ? 'down' : 'up'})` : '';
 
 	if (!detailed) {
 		const context = source.summaryContextIcon
 			? `(${source.summaryContextIcon})`
 			: '';
 		const prefix = `${label.icon}${source.summaryTargetIcon}${context}:`;
-		const icon = usePercent ? '' : resolveIcon(resIcon);
+		if (usePercent) {
+			const magnitude = formatPercentMagnitude(normalizedValue);
+			const adjective = normalizedValue >= 0 ? 'more' : 'less';
+			const percentSummary = joinParts('gain', `${magnitude}%`, adjective);
+			const decoratedPercentSummary = `${percentSummary}${roundingDetail}`;
+			return `${prefix} ${decoratedPercentSummary}`;
+		}
+		const icon = resolveIcon(resIcon);
 		const valueText = icon ? `${icon}${amountText}` : amountText;
 		return `${prefix} ${valueText}`;
 	}
 
-	const moreIcon = usePercent ? '' : resolveIcon(resIcon);
-	const moreValue = moreIcon ? `${moreIcon}${amountText}` : amountText;
-	const more = `${moreValue} more${detailed ? ' of that resource' : ''}`;
+	const more = (() => {
+		if (!usePercent) {
+			const moreIcon = resolveIcon(resIcon);
+			const moreValue = moreIcon ? `${moreIcon}${amountText}` : amountText;
+			return `${moreValue} more${detailed ? ' of that resource' : ''}`;
+		}
+		const magnitude = formatPercentMagnitude(normalizedValue);
+		const adjective = normalizedValue >= 0 ? 'more' : 'less';
+		return `${magnitude}% ${adjective}${detailed ? ' of that resource' : ''}`;
+	})();
 	return formatResultModifierClause(
 		`${label.icon} ${label.label}`,
 		source.description,
 		RESULT_EVENT_GRANT_RESOURCES,
-		`gain ${more}`,
+		`gain ${more}${usePercent ? roundingDetail : ''}`,
 	);
 }
 
@@ -200,43 +217,16 @@ export function formatDevelopment(
 	const percentParam = eff.params?.['percent'];
 	if (percentParam !== undefined) {
 		const percent = Number(percentParam);
-		return formatGainFrom(label, source, percent, { detailed, percent });
+		const round =
+			eff.round === 'down' || eff.round === 'up' ? eff.round : undefined;
+		return formatGainFrom(label, source, percent, {
+			detailed,
+			percent,
+			...(round ? { round } : {}),
+		});
 	}
 	const amount = Number(eff.params?.['amount'] ?? 0);
 	return formatGainFrom(label, source, amount, { detailed });
-}
-
-export function formatPopulation(
-	label: ResultModifierLabel,
-	eff: EffectDef,
-	evaluation: { id: string },
-	ctx: EngineContext,
-	detailed: boolean,
-) {
-	const { icon, name } = getActionInfo(ctx, evaluation.id);
-	const amount = Number(eff.params?.['amount'] ?? 0);
-	return formatGainFrom(
-		label,
-		{
-			summaryTargetIcon: POPULATION_INFO.icon,
-			summaryContextIcon: icon,
-			description: `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${formatTargetLabel(
-				icon,
-				name,
-			)}`,
-		},
-		amount,
-		{ detailed },
-	);
-}
-
-export function getActionInfo(ctx: EngineContext, id: string) {
-	try {
-		const action: ActionDef = ctx.actions.get(id);
-		return { icon: action.icon ?? id, name: action.name ?? id };
-	} catch {
-		return { icon: id, name: id };
-	}
 }
 
 export function getDevelopmentInfo(ctx: EngineContext, id: string) {

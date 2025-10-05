@@ -18,12 +18,42 @@ import type { passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { formatPassiveRemoval } from './text';
+import { PHASES } from './phases';
+import { ON_GAIN_INCOME_STEP } from './defs';
 
 export const GROWTH_PHASE_ID = 'growth';
 export const UPKEEP_PHASE_ID = 'upkeep';
 export const WAR_RECOVERY_STEP_ID = 'war-recovery';
 
 const DEVELOPMENT_EVALUATION = developmentTarget();
+
+function formatGainIncomeStepPrefix() {
+	const phase = PHASES.find((entry) => entry.id === GROWTH_PHASE_ID);
+	const phaseLabel = phase?.label?.trim();
+	const phaseSection = phaseLabel ? `the ${phaseLabel} phase` : undefined;
+	const step = phase?.steps?.find((definition) =>
+		(definition.triggers ?? []).includes(ON_GAIN_INCOME_STEP),
+	);
+	const stepLabel = step?.title?.trim() || step?.id?.trim();
+	const formattedStepLabel = stepLabel?.length
+		? stepLabel.charAt(0).toUpperCase() + stepLabel.slice(1)
+		: undefined;
+	const stepSection = formattedStepLabel
+		? `${formattedStepLabel} step`
+		: undefined;
+	if (phaseSection && stepSection) {
+		return `During ${phaseSection} — ${stepSection}`;
+	}
+	if (phaseSection) {
+		return `During ${phaseSection}`;
+	}
+	if (stepSection) {
+		return `During ${stepSection}`;
+	}
+	return 'During the income step';
+}
+
+export const GAIN_INCOME_STEP_PREFIX = formatGainIncomeStepPrefix();
 
 export const incomeModifier = (id: string, percent: number) =>
 	effect(Types.ResultMod, ResultModMethods.ADD)
