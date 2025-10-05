@@ -13,7 +13,9 @@ export const developmentEvaluator: EvaluatorHandler<
 	return ctx.activePlayer.lands.reduce(
 		(total, land) =>
 			total +
-			land.developments.filter((development) => development === id).length,
+			land.developments.filter(
+				(development) => development === id,
+			).length,
 		0,
 	);
 };
