@@ -42,7 +42,7 @@ const findActionWithReq = () => {
 		const costs = getActionCosts(id, ctx);
 		if (
 			requirements.length &&
-			Object.keys(costs).some((k) => k !== actionCostResource)
+			Object.keys(costs).some((costKey) => costKey !== actionCostResource)
 		) {
 			return { id, requirements, costs } as const;
 		}
@@ -96,7 +96,7 @@ describe('<HoverCard />', () => {
 		render(<HoverCard />);
 		expect(screen.getByText(title)).toBeInTheDocument();
 		const costResource = Object.keys(costs).find(
-			(k) => k !== actionCostResource,
+			(costKey) => costKey !== actionCostResource,
 		)!;
 		const costIcon = RESOURCES[costResource].icon;
 		expect(

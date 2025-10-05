@@ -37,7 +37,7 @@ function resolvePhaseMeta(
 	}
 	return (
 		ctx.phases.find((phase) => phase.id === id) ??
-		PHASES.find((p) => p.id === id)
+		PHASES.find((phaseDefinition) => phaseDefinition.id === id)
 	);
 }
 

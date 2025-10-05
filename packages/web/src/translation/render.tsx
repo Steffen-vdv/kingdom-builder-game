@@ -34,7 +34,8 @@ export function renderCosts(
 	upkeep?: Record<string, number | undefined> | undefined,
 ) {
 	const entries = Object.entries(costs || {}).filter(
-		([k]) => !actionCostResource || k !== actionCostResource,
+		([resourceKey]) =>
+			!actionCostResource || resourceKey !== actionCostResource,
 	);
 	const upkeepEntries = Object.entries(upkeep || {});
 	if (entries.length === 0 && upkeepEntries.length === 0) {
@@ -48,13 +49,13 @@ export function renderCosts(
 		<div className="flex flex-col items-end text-right text-sm leading-tight text-gray-600 dark:text-gray-300">
 			{entries.length > 0 && (
 				<div className="flex flex-wrap justify-end gap-x-1 gap-y-0.5">
-					{entries.map(([k, v]) => (
+					{entries.map(([resourceKey, costAmount]) => (
 						<span
-							key={k}
-							className={`whitespace-nowrap ${(resources[k] ?? 0) < (v ?? 0) ? 'text-red-500' : ''}`}
+							key={resourceKey}
+							className={`whitespace-nowrap ${(resources[resourceKey] ?? 0) < (costAmount ?? 0) ? 'text-red-500' : ''}`}
 						>
-							{RESOURCES[k as ResourceKey]?.icon}
-							{v ?? 0}
+							{RESOURCES[resourceKey as ResourceKey]?.icon}
+							{costAmount ?? 0}
 						</span>
 					))}
 				</div>
@@ -62,10 +63,10 @@ export function renderCosts(
 			{upkeepEntries.length > 0 && (
 				<div className="flex flex-wrap justify-end gap-x-1 gap-y-0.5">
 					<span className="whitespace-nowrap">{BROOM_ICON}</span>
-					{upkeepEntries.map(([k, v]) => (
-						<span key={k} className="whitespace-nowrap">
-							{RESOURCES[k as ResourceKey]?.icon}
-							{v ?? 0}
+					{upkeepEntries.map(([resourceKey, upkeepAmount]) => (
+						<span key={resourceKey} className="whitespace-nowrap">
+							{RESOURCES[resourceKey as ResourceKey]?.icon}
+							{upkeepAmount ?? 0}
 						</span>
 					))}
 				</div>
