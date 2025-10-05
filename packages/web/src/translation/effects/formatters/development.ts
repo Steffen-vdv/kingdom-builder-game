@@ -13,11 +13,21 @@ interface DevelopmentChangeCopy {
 }
 
 function renderDevelopmentChange(
-	id: string | undefined,
+	params: Record<string, unknown> | undefined,
 	ctx: TranslationContext,
 	verbs: DevelopmentChangeVerbs,
 ): DevelopmentChangeCopy {
-	const safeId = typeof id === 'string' && id.length ? id : 'development';
+	const rawParamId = params?.['id'];
+	const rawDevelopmentId = params?.['developmentId'];
+	const paramId =
+		typeof rawParamId === 'string' && rawParamId.length > 0
+			? rawParamId
+			: undefined;
+	const developmentId =
+		typeof rawDevelopmentId === 'string' && rawDevelopmentId.length > 0
+			? rawDevelopmentId
+			: undefined;
+	const safeId = paramId ?? developmentId ?? 'development';
 	let name = safeId;
 	let icon = '';
 	try {
@@ -44,20 +54,20 @@ function renderDevelopmentChange(
 
 registerEffectFormatter('development', 'add', {
 	summarize: (eff, ctx) => {
-		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+		return renderDevelopmentChange(eff.params, ctx, {
 			describe: 'Add',
 			log: 'Developed',
 		}).summary;
 	},
 	describe: (eff, ctx) => {
-		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+		return renderDevelopmentChange(eff.params, ctx, {
 			describe: 'Add',
 			log: 'Developed',
 		}).description;
 	},
 	log: (eff, ctx) => {
 		return (
-			renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+			renderDevelopmentChange(eff.params, ctx, {
 				describe: 'Add',
 				log: 'Developed',
 			}).log || ''
@@ -67,20 +77,20 @@ registerEffectFormatter('development', 'add', {
 
 registerEffectFormatter('development', 'remove', {
 	summarize: (eff, ctx) => {
-		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+		return renderDevelopmentChange(eff.params, ctx, {
 			describe: 'Remove',
 			log: 'Removed',
 		}).summary;
 	},
 	describe: (eff, ctx) => {
-		return renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+		return renderDevelopmentChange(eff.params, ctx, {
 			describe: 'Remove',
 			log: 'Removed',
 		}).description;
 	},
 	log: (eff, ctx) => {
 		return (
-			renderDevelopmentChange(eff.params?.['id'] as string, ctx, {
+			renderDevelopmentChange(eff.params, ctx, {
 				describe: 'Remove',
 				log: 'Removed',
 			}).log || ''
