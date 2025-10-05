@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import {
-	getActionCosts,
 	resolveActionEffects,
 	type ActionParams,
 	type EngineSession,
@@ -62,7 +61,7 @@ export function useActionPerformer({
 				throw new Error('Missing active player before action');
 			}
 			const before = snapshotPlayer(playerBefore);
-			const costs = getActionCosts(action.id, context, params);
+			const costs = session.getActionCosts(action.id, params);
 			try {
 				const traces = session.performAction(action.id, params);
 				const snapshotAfter = session.getSnapshot();

@@ -6,6 +6,10 @@ import type { EngineContext } from '../context';
 import { performAction as runAction } from '../actions/action_execution';
 import { advance as runAdvance } from '../phases/advance';
 import { getActionEffectGroups } from '../actions/effect_groups';
+import {
+	getActionCosts as resolveActionCosts,
+	getActionRequirements as resolveActionRequirements,
+} from '../actions/costs';
 import type { ActionParameters } from '../actions/action_parameters';
 import type { ActionTrace } from '../log';
 import { cloneActionOptions } from './action_options';
@@ -47,6 +51,14 @@ export interface EngineSession {
 	advancePhase(): EngineAdvanceResult;
 	getSnapshot(): EngineSessionSnapshot;
 	getActionOptions(actionId: string): ReturnType<typeof cloneActionOptions>;
+	getActionCosts<T extends string>(
+		actionId: T,
+		params?: ActionParameters<T>,
+	): ReturnType<typeof resolveActionCosts>;
+	getActionRequirements<T extends string>(
+		actionId: T,
+		params?: ActionParameters<T>,
+	): string[];
 	pullEffectLog<T>(key: string): T | undefined;
 	getPassiveEvaluationMods(): Map<string, Map<string, EvaluationModifier>>;
 	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T>;
@@ -102,6 +114,14 @@ export function createEngineSession(
 			const groups = getActionEffectGroups(actionId, context);
 			return cloneActionOptions(groups);
 		},
+		getActionCosts(actionId, params) {
+			const costs = resolveActionCosts(actionId, context, params);
+			return { ...costs };
+		},
+		getActionRequirements(actionId, params) {
+			const requirements = resolveActionRequirements(actionId, context, params);
+			return [...requirements];
+		},
 		pullEffectLog<T>(key: string) {
 			const entry = context.pullEffectLog<T>(key);
 			if (entry === undefined) {
@@ -143,3 +163,6 @@ export function createEngineSession(
 }
 
 export { cloneEffectLogEntry, clonePassiveEvaluationMods };
+export type EngineSessionGetActionCosts = EngineSession['getActionCosts'];
+export type EngineSessionGetActionRequirements =
+	EngineSession['getActionRequirements'];
