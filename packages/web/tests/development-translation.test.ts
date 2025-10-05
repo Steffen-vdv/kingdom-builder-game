@@ -97,7 +97,7 @@ describe('development translation', () => {
 		const icon = def.icon || '';
 
 		const hasIncomeLine = strings.some((line) => {
-			return /During income step/.test(line);
+			return /Gain Income step/.test(line);
 		});
 		expect(hasIncomeLine).toBe(true);
 

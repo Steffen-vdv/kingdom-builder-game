@@ -6,6 +6,7 @@ import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
 import { buildTierEntries } from './buildTierEntries';
+import type { SummaryGroup } from '../../translation/content/types';
 
 interface ResourceButtonProps {
 	resourceKey: keyof typeof RESOURCES;
@@ -75,12 +76,76 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 	const tiers = ctx.services.rules.tierDefinitions;
 	const showHappinessCard = (value: number) => {
 		const activeTier = ctx.services.tieredResource.definition(value);
-		const { entries } = buildTierEntries(tiers, activeTier?.id, ctx);
+		const { summaries } = buildTierEntries(tiers, activeTier?.id, ctx);
 		const info = RESOURCES[happinessKey];
+		const activeIndex = summaries.findIndex((summary) => summary.active);
+		const higherSummary =
+			activeIndex > 0 ? summaries[activeIndex - 1] : undefined;
+		const lowerSummary =
+			activeIndex >= 0 && activeIndex + 1 < summaries.length
+				? summaries[activeIndex + 1]
+				: undefined;
+		const formatTierTitle = (
+			summary: (typeof summaries)[number],
+			orientation: 'higher' | 'current' | 'lower',
+		) => {
+			const parts = [summary.icon, summary.name]
+				.filter((part) => part && String(part).trim().length > 0)
+				.join(' ')
+				.trim();
+			const baseTitle = parts.length
+				? parts
+				: (summary.entry.title?.trim() ?? '');
+			if (orientation === 'current') {
+				return baseTitle;
+			}
+			const thresholdValue =
+				orientation === 'higher'
+					? summary.rangeMin
+					: (summary.rangeMax ?? summary.rangeMin);
+			if (thresholdValue === undefined) {
+				return baseTitle;
+			}
+			const suffix = `${thresholdValue}${orientation === 'higher' ? '+' : '-'}`;
+			const rangeParts = [info.icon, suffix]
+				.filter((part) => part && String(part).trim().length > 0)
+				.join(' ')
+				.trim();
+			if (!rangeParts.length) {
+				return baseTitle;
+			}
+			return `${baseTitle} (${rangeParts})`;
+		};
+		const tierEntries: SummaryGroup[] = [];
+		if (higherSummary) {
+			tierEntries.push({
+				...higherSummary.entry,
+				title: formatTierTitle(higherSummary, 'higher'),
+			});
+		}
+		if (activeIndex >= 0) {
+			const currentSummary = summaries[activeIndex];
+			if (currentSummary) {
+				tierEntries.push({
+					...currentSummary.entry,
+					title: formatTierTitle(currentSummary, 'current'),
+				});
+			} else {
+				tierEntries.push({ title: 'No active tier', items: [] });
+			}
+		} else {
+			tierEntries.push({ title: 'No active tier', items: [] });
+		}
+		if (lowerSummary) {
+			tierEntries.push({
+				...lowerSummary.entry,
+				title: formatTierTitle(lowerSummary, 'lower'),
+			});
+		}
 		handleHoverCard({
 			title: `${info.icon} ${info.label}`,
-			effects: entries,
-			effectsTitle: `Thresholds (Current value: ${value})`,
+			effects: tierEntries,
+			effectsTitle: `Happiness thresholds (current: ${value})`,
 			requirements: [],
 			bgClass: PLAYER_INFO_CARD_BG,
 		});

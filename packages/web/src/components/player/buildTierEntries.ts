@@ -12,17 +12,30 @@ export const MAX_TIER_SUMMARY_LINES = 4;
 export type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
 
+export interface TierSummary {
+	entry: TierSummaryGroup;
+	active: boolean;
+	icon: string;
+	name: string;
+	rangeLabel: string;
+	rangeMin?: number;
+	rangeMax?: number;
+}
+
 type TierSummaryEntry = TierDefinition & { active: boolean };
 
 type TierSummaryGroup = SummaryGroup & { className?: string };
 
 export interface TierEntriesResult {
 	entries: TierSummaryGroup[];
+	summaries: TierSummary[];
 	activeEntry?: {
 		entry: TierSummaryGroup;
 		icon: string;
 		name: string;
 		rangeLabel: string;
+		rangeMin?: number;
+		rangeMax?: number;
 	};
 }
 
@@ -124,6 +137,8 @@ export function buildTierEntries(
 		);
 		const baseTitle = titleParts.join(' ').trim();
 		const rangeLabel = formatTierRange(entry);
+		const rangeMin = entry.range?.min;
+		const rangeMax = entry.range?.max;
 		const rangeDisplay = rangeLabel.length
 			? [tierResourceIcon, rangeLabel]
 					.filter((part) => part && String(part).trim().length > 0)
@@ -150,17 +165,21 @@ export function buildTierEntries(
 		if (active) {
 			group.className = 'text-emerald-600 dark:text-emerald-300';
 		}
-		return {
+		const summary: TierSummary = {
 			entry: group,
 			active,
 			icon,
 			name,
 			rangeLabel,
+			...(rangeMin !== undefined ? { rangeMin } : {}),
+			...(rangeMax !== undefined ? { rangeMax } : {}),
 		};
+		return summary;
 	});
 	const activeEntry = summaries.find((entry) => entry.active);
 	const result: TierEntriesResult = {
 		entries: summaries.map((entry) => entry.entry),
+		summaries,
 	};
 	if (activeEntry) {
 		result.activeEntry = {
@@ -168,6 +187,12 @@ export function buildTierEntries(
 			icon: activeEntry.icon,
 			name: activeEntry.name,
 			rangeLabel: activeEntry.rangeLabel,
+			...(activeEntry.rangeMin !== undefined
+				? { rangeMin: activeEntry.rangeMin }
+				: {}),
+			...(activeEntry.rangeMax !== undefined
+				? { rangeMax: activeEntry.rangeMax }
+				: {}),
 		};
 	}
 	return result;

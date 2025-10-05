@@ -1,5 +1,6 @@
 import type { EffectDef, EngineContext } from '@kingdom-builder/engine';
-import { formatTargetLabel, getActionInfo } from './modifier_helpers';
+import { formatTargetLabel } from './modifier_helpers';
+import { getActionInfo } from './modifier_targets';
 
 export interface TransferModifierTarget {
 	actionId?: string;

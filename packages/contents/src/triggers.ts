@@ -39,8 +39,8 @@ export const TRIGGER_INFO = {
 	},
 	onGainIncomeStep: {
 		icon: '💰',
-		future: 'During income step',
-		past: 'Income step',
+		future: 'During Growth Phase — Gain Income step',
+		past: 'Growth Phase — Gain Income step',
 	},
 	onGainAPStep: {
 		icon: '⚡',

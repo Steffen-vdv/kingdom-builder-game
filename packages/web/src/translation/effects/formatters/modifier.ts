@@ -11,13 +11,12 @@ import {
 	formatDevelopment,
 	formatPercentMagnitude,
 	formatPercentText,
-	formatPopulation,
 	formatResultModifierClause,
 	formatTargetLabel,
-	getActionInfo,
 	parseNumericParam,
 	wrapResultModifierEntries,
 } from './modifier_helpers';
+import { formatPopulation, getActionInfo } from './modifier_targets';
 import { resolveTransferModifierTarget } from './transfer_helpers';
 import { describeContent } from '../../content';
 import {

@@ -33,7 +33,11 @@ type MockGame = {
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
 
-type SummaryGroupLike = { title?: string; items?: unknown[] };
+type SummaryGroupLike = {
+	title?: string;
+	items?: unknown[];
+	className?: string;
+};
 
 function flattenSummary(entries: unknown[]): string[] {
 	const lines: string[] = [];
@@ -58,17 +62,6 @@ function flattenSummary(entries: unknown[]): string[] {
 		}
 	}
 	return lines;
-}
-
-function formatTierRange(tier: TierDefinition) {
-	const { min, max } = tier.range;
-	if (max === undefined) {
-		return `${min}+`;
-	}
-	if (min === max) {
-		return `${min}`;
-	}
-	return `${min} - ${max}`;
 }
 
 function normalizeSummary(summary: string | undefined): string[] {
@@ -131,18 +124,19 @@ describe('<ResourceBar /> happiness hover card', () => {
 		expect(hoverCard?.title).toBe(`${resourceInfo.icon} ${resourceInfo.label}`);
 		expect(hoverCard?.description).toBeUndefined();
 		expect(hoverCard?.effectsTitle).toBe(
-			`Thresholds (Current value: ${resourceValue})`,
+			`Happiness thresholds (current: ${resourceValue})`,
 		);
-		const tierEntries = hoverCard?.effects ?? [];
-		expect(tierEntries).toHaveLength(ctx.services.rules.tierDefinitions.length);
-		const activeEntries = tierEntries.filter((entry: unknown) => {
-			if (typeof entry === 'string') {
-				return false;
-			}
-			const className = (entry as { className?: string }).className;
-			return className?.includes('text-emerald-600');
-		});
-		expect(activeEntries).toHaveLength(1);
+		const tierEntries = (hoverCard?.effects ?? []).filter(
+			(section): section is SummaryGroupLike =>
+				Boolean(section) && typeof section === 'object',
+		);
+		expect(tierEntries).toHaveLength(3);
+		const [higherEntry, currentEntry, lowerEntry] = tierEntries;
+		expect(higherEntry).toBeTruthy();
+		expect(currentEntry).toBeTruthy();
+		expect(lowerEntry).toBeTruthy();
+		const currentClassName = currentEntry?.className ?? '';
+		expect(currentClassName.includes('text-emerald-600')).toBe(true);
 		const tiers = ctx.services.rules.tierDefinitions;
 		const getRangeStart = (tier: TierDefinition) =>
 			tier.range.min ?? Number.NEGATIVE_INFINITY;
@@ -150,18 +144,49 @@ describe('<ResourceBar /> happiness hover card', () => {
 			(a, b) => getRangeStart(b) - getRangeStart(a),
 		);
 		const tierResourceIcon = RESOURCES[happinessKey]?.icon || '';
-		orderedTiers.forEach((tier, index) => {
-			const entry = tierEntries.at(index) as SummaryGroupLike | undefined;
+		const activeTierIndex = orderedTiers.findIndex((tier) => {
+			const { min, max } = tier.range;
+			return valueInRange(resourceValue, min, max);
+		});
+		expect(activeTierIndex).toBeGreaterThanOrEqual(0);
+		const activeTier = orderedTiers.at(activeTierIndex);
+		const higherTier =
+			activeTierIndex > 0 ? orderedTiers[activeTierIndex - 1] : undefined;
+		const lowerTier =
+			activeTierIndex + 1 < orderedTiers.length
+				? orderedTiers[activeTierIndex + 1]
+				: undefined;
+		const expectTierEntryMatches = (
+			tier: TierDefinition | undefined,
+			entry: SummaryGroupLike | undefined,
+			orientation: 'higher' | 'current' | 'lower',
+		) => {
+			if (!tier) {
+				expect(entry).toBeUndefined();
+				return;
+			}
 			expect(entry).toBeTruthy();
 			const title = entry?.title ?? '';
+			if (orientation === 'current') {
+				expect(title.includes('(')).toBe(false);
+			} else {
+				const threshold =
+					orientation === 'higher'
+						? tier.range.min
+						: (tier.range.max ?? tier.range.min);
+				if (threshold !== undefined) {
+					const thresholdSuffix = `${threshold}${
+						orientation === 'higher' ? '+' : '-'
+					}`;
+					const expectedLabel = tierResourceIcon
+						? `${tierResourceIcon} ${thresholdSuffix}`
+						: thresholdSuffix;
+					expect(title.includes(expectedLabel)).toBe(true);
+					expect(title.includes('(')).toBe(true);
+				}
+			}
 			const items = entry?.items ?? [];
 			expect(items.length).toBeLessThanOrEqual(MAX_TIER_SUMMARY_LINES);
-			const rangeLabel = formatTierRange(tier);
-			if (tierResourceIcon) {
-				expect(title).toContain(`(${tierResourceIcon} ${rangeLabel})`);
-			} else {
-				expect(title).toContain(`(${rangeLabel})`);
-			}
 			const summaryEntries = tier.preview?.effects?.length
 				? describeEffects(tier.preview.effects, ctx)
 				: normalizeSummary(tier.text?.summary);
@@ -175,6 +200,19 @@ describe('<ResourceBar /> happiness hover card', () => {
 			if (removalText) {
 				expect(flattenSummary(items)).not.toContain(removalText);
 			}
-		});
+		};
+		expectTierEntryMatches(higherTier, higherEntry, 'higher');
+		expectTierEntryMatches(activeTier, currentEntry, 'current');
+		expectTierEntryMatches(lowerTier, lowerEntry, 'lower');
 	});
 });
+
+function valueInRange(value: number, min?: number, max?: number) {
+	if (min !== undefined && value < min) {
+		return false;
+	}
+	if (max !== undefined && value > max) {
+		return false;
+	}
+	return true;
+}
