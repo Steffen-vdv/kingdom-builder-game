@@ -5,7 +5,6 @@ import {
 	Stat,
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
-import type { PopulationConfig } from '@kingdom-builder/protocol';
 import { createContentFactory } from '../../../engine/tests/factories/content';
 import { Registry } from '@kingdom-builder/engine/registry';
 import { createActionsPanelState } from './createActionsPanelState';
@@ -14,29 +13,10 @@ import {
 	populationEvaluator,
 	statEvaluator,
 } from './evaluators';
-
-export interface ActionsPanelGameOptions {
-	populationRoles?: Array<Partial<PopulationConfig>>;
-	showBuilding?: boolean;
-	actionCategories?: {
-		population?: string;
-		basic?: string;
-		building?: string;
-	};
-	requirementBuilder?: (context: {
-		capacityStat: string;
-		populationPlaceholder: string;
-	}) => unknown[];
-	resourceKeys?: {
-		actionCost?: string;
-		upkeep?: string;
-	};
-	statKeys?: {
-		capacity?: string;
-	};
-}
-
-export type ActionsPanelTestHarness = ReturnType<typeof createActionsPanelGame>;
+import type {
+	ActionsPanelGameOptions,
+	ActionsPanelTestHarness,
+} from './actionsPanel.types';
 
 function createRegistry<T extends { id: string }>(items: T[]) {
 	const registry = new Registry<T>();
@@ -53,7 +33,7 @@ export function createActionsPanelGame({
 	requirementBuilder,
 	resourceKeys,
 	statKeys,
-}: ActionsPanelGameOptions = {}) {
+}: ActionsPanelGameOptions = {}): ActionsPanelTestHarness {
 	const categories = {
 		population: providedCategories?.population ?? 'population',
 		basic: providedCategories?.basic ?? 'basic',

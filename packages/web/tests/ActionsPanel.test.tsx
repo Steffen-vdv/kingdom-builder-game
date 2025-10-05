@@ -4,10 +4,8 @@ import { render, screen, within, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
-import {
-	createActionsPanelGame,
-	type ActionsPanelGameOptions,
-} from './helpers/actionsPanel';
+import { createActionsPanelGame } from './helpers/actionsPanel';
+import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
 
 const actionCostsMock = vi.fn();
 const actionRequirementsMock = vi.fn();
