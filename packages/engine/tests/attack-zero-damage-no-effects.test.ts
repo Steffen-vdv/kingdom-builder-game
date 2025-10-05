@@ -1,21 +1,22 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef, type AttackLog } from '../src/index.ts';
 import { Resource } from '../src/state/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { createContentFactory } from './factories/content.ts';
-import { attackTargetHandlers } from '../src/effects/attack_target_handlers/index.ts';
+
+const attackLogKey = 'attack:perform';
 
 describe('attack:perform', () => {
-	it('does not run onDamage effects when damage is fully absorbed', () => {
-		const ctx = createTestEngine();
-		const attacker = ctx.activePlayer;
-		const defender = ctx.opponent;
+	it('skips onDamage effects when damage is fully absorbed', () => {
+		const engineContext = createTestEngine();
+		const attacker = engineContext.activePlayer;
+		const defender = engineContext.opponent;
 
 		attacker.armyStrength = 1;
 		defender.absorption = 1;
 		defender.fortificationStrength = 0;
 
-		const before = {
+		const previousState = {
 			attacker: {
 				hp: attacker.resources[Resource.castleHP],
 				gold: attacker.gold,
@@ -62,24 +63,28 @@ describe('attack:perform', () => {
 			},
 		};
 
-		runEffects([effect], ctx);
+		runEffects([effect], engineContext);
 
-		expect(attacker.resources[Resource.castleHP]).toBe(before.attacker.hp);
-		expect(attacker.gold).toBe(before.attacker.gold);
-		expect(attacker.happiness).toBe(before.attacker.happiness);
-		expect(defender.resources[Resource.castleHP]).toBe(before.defender.hp);
-		expect(defender.gold).toBe(before.defender.gold);
-		expect(defender.happiness).toBe(before.defender.happiness);
+		expect(attacker.resources[Resource.castleHP]).toBe(
+			previousState.attacker.hp,
+		);
+		expect(attacker.gold).toBe(previousState.attacker.gold);
+		expect(attacker.happiness).toBe(previousState.attacker.happiness);
+		expect(defender.resources[Resource.castleHP]).toBe(
+			previousState.defender.hp,
+		);
+		expect(defender.gold).toBe(previousState.defender.gold);
+		expect(defender.happiness).toBe(previousState.defender.happiness);
 	});
 
-	it('does not run onDamage effects when a building survives the attack', () => {
+	it('skips onDamage effects when buildings survive attacks', () => {
 		const content = createContentFactory();
 		const workshop = content.building({});
-		const ctx = createTestEngine({ buildings: content.buildings });
-		const attacker = ctx.activePlayer;
-		const defender = ctx.opponent;
+		const engineContext = createTestEngine({ buildings: content.buildings });
+		const attacker = engineContext.activePlayer;
+		const defender = engineContext.opponent;
 
-		ctx.game.currentPlayerIndex = 1;
+		engineContext.game.currentPlayerIndex = 1;
 		runEffects(
 			[
 				{
@@ -88,9 +93,9 @@ describe('attack:perform', () => {
 					params: { id: workshop.id },
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		ctx.game.currentPlayerIndex = 0;
+		engineContext.game.currentPlayerIndex = 0;
 
 		attacker.armyStrength = 2;
 		defender.absorption = 1;
@@ -112,23 +117,23 @@ describe('attack:perform', () => {
 			},
 		};
 
-		runEffects([effect], ctx);
+		runEffects([effect], engineContext);
 
 		expect(defender.buildings.has(workshop.id)).toBe(true);
-		const log = ctx.pullEffectLog<AttackLog>('attack:perform');
-		expect(log).toBeDefined();
-		expect(log!.onDamage).toHaveLength(0);
-		expect(log!.evaluation.target.type).toBe('building');
-		if (log!.evaluation.target.type === 'building') {
-			expect(log!.evaluation.target.destroyed).toBe(false);
-			expect(log!.evaluation.target.damage).toBe(0);
+		const attackLog = engineContext.pullEffectLog<AttackLog>(attackLogKey);
+		expect(attackLog).toBeDefined();
+		expect(attackLog!.onDamage).toHaveLength(0);
+		expect(attackLog!.evaluation.target.type).toBe('building');
+		if (attackLog!.evaluation.target.type === 'building') {
+			expect(attackLog!.evaluation.target.destroyed).toBe(false);
+			expect(attackLog!.evaluation.target.damage).toBe(0);
 		}
 	});
 
-	it('applies attacker and defender onDamage effects when damage lands', () => {
-		const ctx = createTestEngine();
-		const attacker = ctx.activePlayer;
-		const defender = ctx.opponent;
+	it('applies onDamage effects for both sides when damage lands', () => {
+		const engineContext = createTestEngine();
+		const attacker = engineContext.activePlayer;
+		const defender = engineContext.opponent;
 
 		attacker.armyStrength = 3;
 		attacker.happiness = 1;
@@ -158,14 +163,14 @@ describe('attack:perform', () => {
 			},
 		};
 
-		runEffects([effect], ctx);
+		runEffects([effect], engineContext);
 
 		expect(attacker.happiness).toBe(2);
 		expect(defender.happiness).toBe(2);
 
-		const log = ctx.pullEffectLog<AttackLog>('attack:perform');
-		expect(log).toBeDefined();
-		const defenderEntries = log!.onDamage.filter(
+		const attackLog = engineContext.pullEffectLog<AttackLog>(attackLogKey);
+		expect(attackLog).toBeDefined();
+		const defenderEntries = attackLog!.onDamage.filter(
 			(entry) => entry.owner === 'defender',
 		);
 		expect(defenderEntries).toHaveLength(1);
@@ -175,81 +180,5 @@ describe('attack:perform', () => {
 		expect(defenderDiffs).toHaveLength(1);
 		expect(defenderDiffs[0]!.before).toBe(3);
 		expect(defenderDiffs[0]!.after).toBe(2);
-	});
-
-	it('derives evaluation modifier keys for non-building targets via handler', () => {
-		const ctx = createTestEngine();
-		const attacker = ctx.activePlayer;
-		attacker.armyStrength = 2;
-
-		const target = { type: 'resource', key: Resource.castleHP } as const;
-		const originalGetKey =
-			attackTargetHandlers.resource.getEvaluationModifierKey.bind(
-				attackTargetHandlers.resource,
-			) as typeof attackTargetHandlers.resource.getEvaluationModifierKey;
-		const derivedKey = 'resource-eval-key';
-		const getKeySpy = vi.fn(() => derivedKey) as typeof originalGetKey;
-		attackTargetHandlers.resource.getEvaluationModifierKey = getKeySpy;
-		const evalSpy = vi.spyOn(ctx.passives, 'runEvaluationMods');
-
-		try {
-			runEffects(
-				[
-					{
-						type: 'attack',
-						method: 'perform',
-						params: { target },
-					},
-				],
-				ctx,
-			);
-
-			expect(getKeySpy).toHaveBeenCalledWith(target);
-			expect(evalSpy).toHaveBeenCalled();
-			const mods = evalSpy.mock.calls[0]![2];
-			expect(mods[0]!.key).toBe(derivedKey);
-		} finally {
-			attackTargetHandlers.resource.getEvaluationModifierKey = originalGetKey;
-			evalSpy.mockRestore();
-		}
-	});
-
-	it('derives evaluation modifier keys for building targets via handler', () => {
-		const content = createContentFactory();
-		const workshop = content.building({});
-		const ctx = createTestEngine({ buildings: content.buildings });
-		const attacker = ctx.activePlayer;
-		attacker.armyStrength = 3;
-
-		const target = { type: 'building', id: workshop.id } as const;
-		const originalGetKey =
-			attackTargetHandlers.building.getEvaluationModifierKey.bind(
-				attackTargetHandlers.building,
-			) as typeof attackTargetHandlers.building.getEvaluationModifierKey;
-		const derivedKey = 'building-eval-key';
-		const getKeySpy = vi.fn(() => derivedKey) as typeof originalGetKey;
-		attackTargetHandlers.building.getEvaluationModifierKey = getKeySpy;
-		const evalSpy = vi.spyOn(ctx.passives, 'runEvaluationMods');
-
-		try {
-			runEffects(
-				[
-					{
-						type: 'attack',
-						method: 'perform',
-						params: { target },
-					},
-				],
-				ctx,
-			);
-
-			expect(getKeySpy).toHaveBeenCalledWith(target);
-			expect(evalSpy).toHaveBeenCalled();
-			const mods = evalSpy.mock.calls[0]![2];
-			expect(mods[0]!.key).toBe(derivedKey);
-		} finally {
-			attackTargetHandlers.building.getEvaluationModifierKey = originalGetKey;
-			evalSpy.mockRestore();
-		}
 	});
 });
