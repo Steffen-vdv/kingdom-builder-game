@@ -2,6 +2,7 @@ import {
 	action,
 	resourceParams,
 	statParams,
+	actionParams,
 	effect,
 	requirement,
 	compareRequirement,
@@ -36,6 +37,22 @@ describe('content builder safeguards', () => {
 	it('blocks duplicate action ids', () => {
 		expect(() => action().id('demo').id('again')).toThrowError(
 			'Action already has an id(). Remove the extra id() call.',
+		);
+	});
+
+	it('requires action params to declare an id', () => {
+		expect(() => actionParams().build()).toThrowError(
+			'Action effect params is missing id(). Call id("your-action-id") before build().',
+		);
+	});
+
+	it('prevents duplicate action param setters', () => {
+		const builder = actionParams().id('develop');
+		expect(() => builder.id('again')).toThrowError(
+			'Action effect params already set id(). Remove the extra id() call.',
+		);
+		expect(() => actionParams().landId('$land').landId('$land')).toThrowError(
+			'Action effect params already set landId(). Remove the extra landId() call.',
 		);
 	});
 

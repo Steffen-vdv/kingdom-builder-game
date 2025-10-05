@@ -139,20 +139,34 @@ function resolveEffectConfig(effect: EffectConfig | EffectBuilder) {
 
 export type ActionEffectGroupOptionDef = ActionEffectGroupOption;
 
-class ActionEffectGroupOptionBuilder extends ParamsBuilder<{
-	id?: string;
-	label?: string;
-	icon?: string | undefined;
-	summary?: string | undefined;
-	description?: string | undefined;
-	actionId?: string;
-	params?: Record<string, unknown> | undefined;
-}> {
+class ActionEffectGroupOptionBuilder {
+	private readonly config: Partial<ActionEffectGroupOptionDef> = {};
+	private readonly assigned = new Set<keyof ActionEffectGroupOptionDef>();
+	private paramsConfig: Params | undefined;
+	private paramsSet = false;
+	private readonly paramKeys = new Set<string>();
+
 	constructor(id?: string) {
-		super();
 		if (id) {
 			this.id(id);
 		}
+	}
+
+	private set<K extends keyof ActionEffectGroupOptionDef>(
+		key: K,
+		value: ActionEffectGroupOptionDef[K],
+		message: string,
+	) {
+		if (this.assigned.has(key)) {
+			throw new Error(message);
+		}
+		this.config[key] = value;
+		this.assigned.add(key);
+		return this;
+	}
+
+	private wasSet(key: keyof ActionEffectGroupOptionDef) {
+		return this.assigned.has(key);
 	}
 
 	id(id: string) {
@@ -204,17 +218,40 @@ class ActionEffectGroupOptionBuilder extends ParamsBuilder<{
 	}
 
 	param(key: string, value: unknown) {
-		this.params.params = this.params.params || {};
-		if (Object.prototype.hasOwnProperty.call(this.params.params, key)) {
+		if (this.paramsSet) {
+			throw new Error(
+				'Action effect group option already set params(...). Remove params(...) before calling param().',
+			);
+		}
+		if (this.paramKeys.has(key)) {
 			throw new Error(
 				`Action effect group option already set param "${key}". Remove the duplicate param() call.`,
 			);
 		}
-		this.params.params[key] = value;
+		this.paramsConfig = this.paramsConfig || {};
+		this.paramsConfig[key] = value;
+		this.paramKeys.add(key);
 		return this;
 	}
 
-	override build(): ActionEffectGroupOptionDef {
+	params(params: Params | ParamsBuilder) {
+		if (this.paramsSet) {
+			throw new Error(
+				'Action effect group option already set params(...). Remove the duplicate params() call.',
+			);
+		}
+		if (this.paramKeys.size) {
+			throw new Error(
+				'Action effect group option already set individual param() values. Remove them before calling params(...).',
+			);
+		}
+		this.paramsConfig =
+			params instanceof ParamsBuilder ? params.build() : params;
+		this.paramsSet = true;
+		return this;
+	}
+
+	build(): ActionEffectGroupOptionDef {
 		if (!this.wasSet('id')) {
 			throw new Error(
 				'Action effect group option is missing id(). Call id("your-option-id") before build().',
@@ -230,7 +267,27 @@ class ActionEffectGroupOptionBuilder extends ParamsBuilder<{
 				'Action effect group option is missing action(). Call action("action-id") before build().',
 			);
 		}
-		return super.build() as ActionEffectGroupOptionDef;
+
+		const built: ActionEffectGroupOptionDef = {
+			id: this.config.id as string,
+			label: this.config.label as string,
+			actionId: this.config.actionId as string,
+		};
+
+		if (this.wasSet('icon')) {
+			built.icon = this.config.icon;
+		}
+		if (this.wasSet('summary')) {
+			built.summary = this.config.summary;
+		}
+		if (this.wasSet('description')) {
+			built.description = this.config.description;
+		}
+		if (this.paramsConfig) {
+			built.params = this.paramsConfig;
+		}
+
+		return built;
 	}
 }
 
@@ -492,6 +549,40 @@ class DevelopmentEffectParamsBuilder extends ParamsBuilder<{
 
 export function developmentParams() {
 	return new DevelopmentEffectParamsBuilder();
+}
+
+class ActionEffectParamsBuilder extends ParamsBuilder<{
+	id?: string;
+	landId?: string;
+}> {
+	id(id: string) {
+		return this.set(
+			'id',
+			id,
+			'Action effect params already set id(). Remove the extra id() call.',
+		);
+	}
+
+	landId(landId: string) {
+		return this.set(
+			'landId',
+			landId,
+			'Action effect params already set landId(). Remove the extra landId() call.',
+		);
+	}
+
+	override build() {
+		if (!this.wasSet('id')) {
+			throw new Error(
+				'Action effect params is missing id(). Call id("your-action-id") before build().',
+			);
+		}
+		return super.build();
+	}
+}
+
+export function actionParams() {
+	return new ActionEffectParamsBuilder();
 }
 
 class LandEffectParamsBuilder extends ParamsBuilder<{

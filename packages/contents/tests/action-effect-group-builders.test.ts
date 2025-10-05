@@ -3,6 +3,7 @@ import {
 	action,
 	actionEffectGroup,
 	actionEffectGroupOption,
+	actionParams,
 	building,
 } from '../src/config/builders';
 import type { ActionEffectGroupDef } from '../src/config/builders';
@@ -83,8 +84,7 @@ describe('action effect group builder safeguards', () => {
 						actionEffectGroupOption('farm')
 							.label('Farm')
 							.action('develop')
-							.param('id', 'farm')
-							.param('landId', '$landId'),
+							.params(actionParams().id('farm').landId('$landId')),
 					),
 			)
 			.build();
