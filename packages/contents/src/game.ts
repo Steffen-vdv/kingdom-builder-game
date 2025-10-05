@@ -2,6 +2,7 @@ import { startConfig, playerStart } from './config/builders';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { PopulationRole } from './populationRoles';
+import { DevelopmentId } from './developments';
 import type { StartConfig } from '@kingdom-builder/protocol';
 
 export const GAME_START: StartConfig = startConfig()
@@ -28,7 +29,10 @@ export const GAME_START: StartConfig = startConfig()
 				[PopulationRole.Citizen]: 0,
 			})
 			.lands((lands) => {
-				return lands.land((land) => land.development('farm')).land();
+				const developedLand = lands.land((land) => {
+					return land.development(DevelopmentId.Farm);
+				});
+				return developedLand.land();
 			}),
 	)
 	.lastPlayerCompensation((player) =>

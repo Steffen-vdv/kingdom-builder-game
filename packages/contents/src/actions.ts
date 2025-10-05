@@ -2,6 +2,7 @@ import { Registry } from '@kingdom-builder/protocol';
 import { Resource } from './resources';
 import { Stat, STATS } from './stats';
 import { PopulationRole, POPULATION_ROLES } from './populationRoles';
+import { DevelopmentId } from './developments';
 import { actionSchema, type ActionConfig } from '@kingdom-builder/protocol';
 import {
 	action,
@@ -75,7 +76,7 @@ export function createActionRegistry() {
 			.cost(Resource.ap, 1)
 			.effect(
 				effect()
-					.evaluator(developmentEvaluator().id('farm'))
+					.evaluator(developmentEvaluator().id(DevelopmentId.Farm))
 					.effect(
 						effect(Types.Resource, ResourceMethods.ADD)
 							.round('down')
@@ -188,6 +189,37 @@ export function createActionRegistry() {
 		focus: 'economy',
 	});
 
+	const royalDecreeDevelopGroup = actionEffectGroup('royal_decree_develop')
+		.layout('compact')
+		.option(
+			actionEffectGroupOption('royal_decree_house')
+				.label('Raise a House')
+				.icon('🏠')
+				.action('develop')
+				.params(actionParams().id(DevelopmentId.House).landId('$landId')),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_farm')
+				.label('Establish a Farm')
+				.icon('🌾')
+				.action('develop')
+				.params(actionParams().id(DevelopmentId.Farm).landId('$landId')),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_outpost')
+				.label('Fortify with an Outpost')
+				.icon('🏹')
+				.action('develop')
+				.params(actionParams().id(DevelopmentId.Outpost).landId('$landId')),
+		)
+		.option(
+			actionEffectGroupOption('royal_decree_watchtower')
+				.label('Raise a Watchtower')
+				.icon('🗼')
+				.action('develop')
+				.params(actionParams().id(DevelopmentId.Watchtower).landId('$landId')),
+		);
+
 	registry.add('royal_decree', {
 		...action()
 			.id('royal_decree')
@@ -205,38 +237,7 @@ export function createActionRegistry() {
 					.params(actionParams().id('till').landId('$landId'))
 					.build(),
 			)
-			.effectGroup(
-				actionEffectGroup('royal_decree_develop')
-					.layout('compact')
-					.option(
-						actionEffectGroupOption('royal_decree_house')
-							.label('Raise a House')
-							.icon('🏠')
-							.action('develop')
-							.params(actionParams().id('house').landId('$landId')),
-					)
-					.option(
-						actionEffectGroupOption('royal_decree_farm')
-							.label('Establish a Farm')
-							.icon('🌾')
-							.action('develop')
-							.params(actionParams().id('farm').landId('$landId')),
-					)
-					.option(
-						actionEffectGroupOption('royal_decree_outpost')
-							.label('Fortify with an Outpost')
-							.icon('🏹')
-							.action('develop')
-							.params(actionParams().id('outpost').landId('$landId')),
-					)
-					.option(
-						actionEffectGroupOption('royal_decree_watchtower')
-							.label('Raise a Watchtower')
-							.icon('🗼')
-							.action('develop')
-							.params(actionParams().id('watchtower').landId('$landId')),
-					),
-			)
+			.effectGroup(royalDecreeDevelopGroup)
 			.effect(
 				effect(Types.Resource, ResourceMethods.REMOVE)
 					.params(resourceParams().key(Resource.happiness).amount(3))

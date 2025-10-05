@@ -19,6 +19,15 @@ import type { DevelopmentDef } from './defs';
 
 export type { DevelopmentDef } from './defs';
 
+export const DevelopmentId = {
+	Farm: 'farm',
+	House: 'house',
+	Outpost: 'outpost',
+	Watchtower: 'watchtower',
+	Garden: 'garden',
+} as const;
+export type DevelopmentId = (typeof DevelopmentId)[keyof typeof DevelopmentId];
+
 export function createDevelopmentRegistry() {
 	const registry = new Registry<DevelopmentDef>(
 		developmentSchema.passthrough(),
@@ -26,7 +35,7 @@ export function createDevelopmentRegistry() {
 
 	registry.add('farm', {
 		...development()
-			.id('farm')
+			.id(DevelopmentId.Farm)
 			.name('Farm')
 			.icon('🌾')
 			.onGainIncomeStep(
@@ -46,7 +55,7 @@ export function createDevelopmentRegistry() {
 
 	registry.add('house', {
 		...development()
-			.id('house')
+			.id(DevelopmentId.House)
 			.name('House')
 			.icon('🏠')
 			.populationCap(1)
@@ -62,7 +71,7 @@ export function createDevelopmentRegistry() {
 
 	registry.add('outpost', {
 		...development()
-			.id('outpost')
+			.id(DevelopmentId.Outpost)
 			.name('Outpost')
 			.icon('🏹')
 			.onBuild(
@@ -80,9 +89,13 @@ export function createDevelopmentRegistry() {
 		focus: 'defense',
 	});
 
+	const watchtowerRemovalParams = developmentParams()
+		.id(DevelopmentId.Watchtower)
+		.landId('$landId');
+
 	registry.add('watchtower', {
 		...development()
-			.id('watchtower')
+			.id(DevelopmentId.Watchtower)
 			.name('Watchtower')
 			.icon('🗼')
 			.onBuild(
@@ -97,7 +110,7 @@ export function createDevelopmentRegistry() {
 			)
 			.onAttackResolved(
 				effect(Types.Development, DevelopmentMethods.REMOVE)
-					.params(developmentParams().id('watchtower').landId('$landId'))
+					.params(watchtowerRemovalParams)
 					.build(),
 			)
 			.build(),
@@ -107,7 +120,12 @@ export function createDevelopmentRegistry() {
 
 	registry.add(
 		'garden',
-		development().id('garden').name('Garden').icon('🌿').system().build(),
+		development()
+			.id(DevelopmentId.Garden)
+			.name('Garden')
+			.icon('🌿')
+			.system()
+			.build(),
 	);
 
 	return registry;
