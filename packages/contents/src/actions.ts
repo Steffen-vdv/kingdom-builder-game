@@ -238,29 +238,29 @@ export function createActionRegistry() {
 			actionEffectGroupOption('royal_decree_house')
 				.icon('🏠')
 				.action(ActionId.develop)
-				.param('developmentId', 'house')
-				.param('landId', '$landId'),
+				.paramDevelopmentId(DevelopmentId.House)
+				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_farm')
 				.icon('🌾')
 				.action(ActionId.develop)
-				.param('developmentId', 'farm')
-				.param('landId', '$landId'),
+				.paramDevelopmentId(DevelopmentId.Farm)
+				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_outpost')
 				.icon('🏹')
 				.action(ActionId.develop)
-				.param('developmentId', 'outpost')
-				.param('landId', '$landId'),
+				.paramDevelopmentId(DevelopmentId.Outpost)
+				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_watchtower')
 				.icon('🗼')
 				.action(ActionId.develop)
-				.param('developmentId', 'watchtower')
-				.param('landId', '$landId'),
+				.paramDevelopmentId(DevelopmentId.Watchtower)
+				.paramLandId('$landId'),
 		);
 
 	registry.add(
