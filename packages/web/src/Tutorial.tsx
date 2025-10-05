@@ -67,12 +67,18 @@ const TUTORIAL_BACK_BUTTON_CLASS = [
 
 const HERO_INTRO_TEXT = [
 	'Get a lightning-fast primer before the full walkthrough lands.',
-	'Experiment freely and come back soon for narrated turns and guided challenges.',
+	[
+		'Experiment freely and come back soon for narrated turns',
+		'and guided challenges.',
+	].join(' '),
 ].join(' ');
 
 const TUTORIAL_PARAGRAPH_TEXT = [
 	'Learn the rhythm of {game} with quick hits.',
-	'Each tip spotlights a core system so you can improvise while we polish the tour.',
+	[
+		'Each tip spotlights a core system so you can improvise while we polish',
+		'the tour.',
+	].join(' '),
 ].join(' ');
 
 const TUTORIAL_CALLOUT_LINES = [
