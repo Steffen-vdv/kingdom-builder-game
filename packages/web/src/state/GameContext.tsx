@@ -1,11 +1,16 @@
 import React, {
 	createContext,
+	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
 	useState,
-	useEffect,
 } from 'react';
-import { createEngine, type EngineContext } from '@kingdom-builder/engine';
+import {
+	createEngineSession,
+	type EngineContext,
+	type EngineSession,
+} from '@kingdom-builder/engine';
 import {
 	RESOURCES,
 	ACTIONS,
@@ -55,8 +60,11 @@ export function GameProvider({
 	soundEnabled?: boolean;
 	onToggleSound?: () => void;
 }) {
-	const ctx = useMemo<EngineContext>(() => {
-		const engine = createEngine({
+	const { session, ctx } = useMemo<{
+		session: EngineSession;
+		ctx: EngineContext;
+	}>(() => {
+		const created = createEngineSession({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
@@ -65,13 +73,15 @@ export function GameProvider({
 			start: GAME_START,
 			rules: RULES,
 		});
-		engine.game.devMode = devMode;
-		return engine;
+		created.setDevMode(devMode);
+		return { session: created, ctx: created.getLegacyContext() };
 	}, [devMode]);
-	const [, setTick] = useState(0);
-	const refresh = () => setTick((t) => t + 1);
+	const [tick, setTick] = useState(0);
+	const refresh = useCallback(() => setTick((t) => t + 1), []);
 
-	const enqueue = <T,>(task: () => Promise<T> | T) => ctx.enqueue(task);
+	const enqueue = <T,>(task: () => Promise<T> | T) => session.enqueue(task);
+
+	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
 
 	const {
 		timeScale,
@@ -84,14 +94,14 @@ export function GameProvider({
 		timeScaleRef,
 	} = useTimeScale({ devMode });
 
-	const actionCostResource = ctx.actionCostResource as ResourceKey;
+	const actionCostResource = sessionState.actionCostResource as ResourceKey;
 
 	const actionPhaseId = useMemo(() => {
-		const phaseWithAction = ctx.phases.find(
+		const phaseWithAction = sessionState.phases.find(
 			(phaseDefinition) => phaseDefinition.action,
 		);
 		return phaseWithAction?.id;
-	}, [ctx]);
+	}, [sessionState.phases]);
 
 	const { hoverCard, handleHoverCard, clearHoverCard } = useHoverCard({
 		setTrackedTimeout,
@@ -167,6 +177,10 @@ export function GameProvider({
 	}, [runUntilActionPhase]);
 
 	const value: GameEngineContextValue = {
+		session,
+		sessionState,
+		// TODO(engine-web#session): Remove legacy ctx usages once all
+		// consumers are migrated to the session facade.
 		ctx,
 		log,
 		logOverflowed,
