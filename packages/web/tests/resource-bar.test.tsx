@@ -3,10 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import { createEngine } from '@kingdom-builder/engine';
-import type { EngineContext } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../src/translation/context';
-import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import {
+	createEngineSession,
+	type EngineContext,
+} from '@kingdom-builder/engine';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -21,15 +22,11 @@ import {
 import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
+import type { GameEngineContextValue } from '../src/state/GameContext.types';
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
-type MockGame = {
-	ctx: EngineContext;
-	translationContext: ReturnType<typeof createTranslationContext>;
-	handleHoverCard: ReturnType<typeof vi.fn>;
-	clearHoverCard: ReturnType<typeof vi.fn>;
-};
+type MockGame = GameEngineContextValue;
 type TierDefinition =
 	EngineContext['services']['rules']['tierDefinitions'][number];
 
@@ -79,7 +76,7 @@ vi.mock('../src/state/GameContext', () => ({
 }));
 describe('<ResourceBar /> happiness hover card', () => {
 	it('lists happiness tiers with concise summaries and highlights the active threshold', () => {
-		const ctx = createEngine({
+		const session = createEngineSession({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
@@ -88,13 +85,15 @@ describe('<ResourceBar /> happiness hover card', () => {
 			start: GAME_START,
 			rules: RULES,
 		});
+		const ctx = session.getLegacyContext();
 		const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 6;
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
+		const sessionState = session.getSnapshot();
 		const translationContext = createTranslationContext(
-			snapshotEngine(ctx),
+			sessionState,
 			{
 				actions: ACTIONS,
 				buildings: BUILDINGS,
@@ -106,10 +105,42 @@ describe('<ResourceBar /> happiness hover card', () => {
 			},
 		);
 		currentGame = {
+			session,
+			sessionState,
 			ctx,
 			translationContext,
 			handleHoverCard,
 			clearHoverCard,
+			log: [],
+			logOverflowed: false,
+			hoverCard: null,
+			phaseSteps: [],
+			setPhaseSteps: vi.fn(),
+			phaseTimer: 0,
+			mainApStart: 0,
+			displayPhase: '',
+			setDisplayPhase: vi.fn(),
+			phaseHistories: {},
+			tabsEnabled: true,
+			actionCostResource: sessionState.actionCostResource as ResourceKey,
+			handlePerform: vi.fn().mockResolvedValue(undefined),
+			runUntilActionPhase: vi.fn().mockResolvedValue(undefined),
+			handleEndTurn: vi.fn().mockResolvedValue(undefined),
+			updateMainPhaseStep: vi.fn(),
+			darkMode: true,
+			onToggleDark: vi.fn(),
+			resolution: null,
+			showResolution: vi.fn().mockResolvedValue(undefined),
+			acknowledgeResolution: vi.fn(),
+			musicEnabled: true,
+			onToggleMusic: vi.fn(),
+			soundEnabled: true,
+			onToggleSound: vi.fn(),
+			timeScale: 1,
+			setTimeScale: vi.fn(),
+			errorToasts: [],
+			pushErrorToast: vi.fn(),
+			dismissErrorToast: vi.fn(),
 		} as MockGame;
 		render(<ResourceBar player={ctx.activePlayer} />);
 		const resourceInfo = RESOURCES[happinessKey];

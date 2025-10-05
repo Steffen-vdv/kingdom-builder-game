@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -21,6 +21,11 @@ import {
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import {
+	useActionResolution,
+	type ActionResolution,
+} from '../src/state/useActionResolution';
+import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -68,6 +73,7 @@ const mockGame = {
 	ctx,
 	translationContext,
 	log: [],
+	logOverflowed: false,
 	hoverCard: null as unknown as {
 		title: string;
 		effects: unknown[];
@@ -91,11 +97,30 @@ const mockGame = {
 	updateMainPhaseStep: vi.fn(),
 	darkMode: false,
 	onToggleDark: vi.fn(),
+	resolution: null as ActionResolution | null,
+	showResolution: vi.fn().mockResolvedValue(undefined),
+	acknowledgeResolution: vi.fn(),
 };
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
 }));
+
+function resetResolutionState() {
+	mockGame.hoverCard = null;
+	mockGame.resolution = null;
+	mockGame.showResolution = vi.fn().mockResolvedValue(undefined);
+	mockGame.acknowledgeResolution = vi.fn();
+}
+
+beforeEach(() => {
+	resetResolutionState();
+});
+
+afterEach(() => {
+	resetResolutionState();
+	vi.useRealTimers();
+});
 
 describe('<HoverCard />', () => {
 	it('renders hover card details from context', () => {
@@ -118,5 +143,62 @@ describe('<HoverCard />', () => {
 			screen.getByText(`${costIcon}${costs[costResource]}`),
 		).toBeInTheDocument();
 		expect(screen.getByText(requirements[0]!)).toBeInTheDocument();
+	});
+
+	it('disables acknowledgement until the final resolution step', async () => {
+		vi.useFakeTimers();
+		const ResolutionHarness = () => {
+			const timeScaleRef = React.useRef(1);
+			const mountedRef = React.useRef(true);
+			React.useEffect(() => {
+				return () => {
+					mountedRef.current = false;
+				};
+			}, []);
+			const { resolution, showResolution, acknowledgeResolution } =
+				useActionResolution({
+					addLog: vi.fn(),
+					setTrackedTimeout: (callback, delay) =>
+						window.setTimeout(callback, delay),
+					timeScaleRef,
+					mountedRef,
+				});
+			mockGame.resolution = resolution;
+			mockGame.showResolution = showResolution;
+			mockGame.acknowledgeResolution = acknowledgeResolution;
+			return <HoverCard />;
+		};
+		render(<ResolutionHarness />);
+		let resolutionPromise: Promise<void> = Promise.resolve();
+		act(() => {
+			resolutionPromise = mockGame.showResolution({
+				lines: ['First reveal', 'Second reveal'],
+				player: {
+					id: mockGame.ctx.activePlayer.id,
+					name: mockGame.ctx.activePlayer.name,
+				},
+			});
+		});
+		const continueButton = screen.getByRole('button', {
+			name: 'Continue',
+		});
+		expect(continueButton).toBeDisabled();
+		expect(screen.getByText('First reveal')).toBeInTheDocument();
+		expect(screen.queryByText('Second reveal')).not.toBeInTheDocument();
+		act(() => {
+			vi.advanceTimersByTime(ACTION_EFFECT_DELAY - 1);
+		});
+		expect(continueButton).toBeDisabled();
+		expect(screen.queryByText('Second reveal')).not.toBeInTheDocument();
+		act(() => {
+			vi.advanceTimersByTime(1);
+		});
+		expect(screen.getByText('Second reveal')).toBeInTheDocument();
+		expect(continueButton).not.toBeDisabled();
+		act(() => {
+			mockGame.acknowledgeResolution();
+		});
+		await expect(resolutionPromise).resolves.toBeUndefined();
+		expect(mockGame.resolution).toBeNull();
 	});
 });

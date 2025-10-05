@@ -4,7 +4,7 @@ import { ACTION_EFFECT_DELAY } from './useGameLog';
 
 interface UseActionResolutionOptions {
 	addLog: (
-		entry: string,
+		entry: string | string[],
 		player?: Pick<PlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
 	setTrackedTimeout: (callback: () => void, delay: number) => number;
@@ -12,9 +12,17 @@ interface UseActionResolutionOptions {
 	mountedRef: React.MutableRefObject<boolean>;
 }
 
+interface ResolutionActionMeta {
+	id: string;
+	name: string;
+	icon?: string;
+}
+
 interface ShowResolutionOptions {
 	lines: string | string[];
 	player?: Pick<PlayerStateSnapshot, 'id' | 'name'>;
+	action?: ResolutionActionMeta;
+	summaries?: string[];
 }
 
 interface ActionResolution {
@@ -22,6 +30,8 @@ interface ActionResolution {
 	visibleLines: string[];
 	isComplete: boolean;
 	player?: Pick<PlayerStateSnapshot, 'id' | 'name'>;
+	action?: ResolutionActionMeta;
+	summaries: string[];
 }
 
 function useActionResolution({
@@ -32,80 +42,100 @@ function useActionResolution({
 }: UseActionResolutionOptions) {
 	const [resolution, setResolution] = useState<ActionResolution | null>(null);
 	const sequenceRef = useRef(0);
+	const resolverRef = useRef<(() => void) | null>(null);
 
 	const acknowledgeResolution = useCallback(() => {
 		sequenceRef.current += 1;
 		setResolution(null);
+		if (resolverRef.current) {
+			resolverRef.current();
+			resolverRef.current = null;
+		}
 	}, []);
 
 	const showResolution = useCallback(
-		({ lines, player }: ShowResolutionOptions) => {
+		({ lines, player, action, summaries = [] }: ShowResolutionOptions) => {
 			const entries = (Array.isArray(lines) ? lines : [lines]).filter(
 				(line): line is string => Boolean(line?.trim()),
 			);
-			sequenceRef.current += 1;
-			const sequence = sequenceRef.current;
 			if (!entries.length) {
 				setResolution(null);
-				return;
+				return Promise.resolve();
 			}
-			setResolution({
-				lines: entries,
-				visibleLines: [],
-				isComplete: false,
-				...(player ? { player } : {}),
-			});
-
-			const revealLine = (index: number) => {
-				const line = entries[index];
-				if (line === undefined) {
-					return;
+			if (!mountedRef.current) {
+				addLog(entries, player);
+				return Promise.resolve();
+			}
+			sequenceRef.current += 1;
+			const sequence = sequenceRef.current;
+			return new Promise<void>((resolve) => {
+				if (resolverRef.current) {
+					resolverRef.current();
 				}
-				setResolution((previous) => {
-					if (!previous) {
-						return previous;
-					}
-					if (sequenceRef.current !== sequence) {
-						return previous;
-					}
-					if (previous.visibleLines.length > index) {
-						return previous;
-					}
-					const nextVisible = [...previous.visibleLines, line];
-					return {
-						...previous,
-						visibleLines: nextVisible,
-						isComplete: nextVisible.length === previous.lines.length,
-					};
+				resolverRef.current = () => {
+					resolverRef.current = null;
+					resolve();
+				};
+				setResolution({
+					lines: entries,
+					visibleLines: [],
+					isComplete: false,
+					summaries,
+					...(player ? { player } : {}),
+					...(action ? { action } : {}),
 				});
-				addLog(line, player);
-			};
 
-			const scheduleReveal = (index: number) => {
-				if (index >= entries.length) {
-					return;
-				}
-				const scale = timeScaleRef.current || 1;
-				const duration = ACTION_EFFECT_DELAY / scale;
-				if (duration <= 0) {
-					if (!mountedRef.current || sequenceRef.current !== sequence) {
+				const revealLine = (index: number) => {
+					const line = entries[index];
+					if (line === undefined) {
 						return;
 					}
-					revealLine(index);
-					scheduleReveal(index + 1);
-					return;
-				}
-				setTrackedTimeout(() => {
-					if (!mountedRef.current || sequenceRef.current !== sequence) {
+					setResolution((previous) => {
+						if (!previous) {
+							return previous;
+						}
+						if (sequenceRef.current !== sequence) {
+							return previous;
+						}
+						if (previous.visibleLines.length > index) {
+							return previous;
+						}
+						const nextVisible = [...previous.visibleLines, line];
+						return {
+							...previous,
+							visibleLines: nextVisible,
+							isComplete: nextVisible.length === previous.lines.length,
+						};
+					});
+					addLog(line, player);
+				};
+
+				const scheduleReveal = (index: number) => {
+					if (index >= entries.length) {
 						return;
 					}
-					revealLine(index);
-					scheduleReveal(index + 1);
-				}, duration);
-			};
+					const scale = timeScaleRef.current || 1;
+					const duration = ACTION_EFFECT_DELAY / scale;
+					if (duration <= 0) {
+						if (!mountedRef.current || sequenceRef.current !== sequence) {
+							return;
+						}
+						revealLine(index);
+						scheduleReveal(index + 1);
+						return;
+					}
+					setTrackedTimeout(() => {
+						if (!mountedRef.current || sequenceRef.current !== sequence) {
+							return;
+						}
+						revealLine(index);
+						scheduleReveal(index + 1);
+					}, duration);
+				};
 
-			revealLine(0);
-			scheduleReveal(1);
+				revealLine(0);
+				scheduleReveal(1);
+			});
 		},
 		[addLog, mountedRef, setTrackedTimeout, timeScaleRef],
 	);
@@ -113,5 +143,5 @@ function useActionResolution({
 	return { resolution, showResolution, acknowledgeResolution };
 }
 
-export type { ActionResolution, ShowResolutionOptions };
+export type { ActionResolution, ResolutionActionMeta, ShowResolutionOptions };
 export { useActionResolution };

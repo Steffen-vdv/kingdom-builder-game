@@ -15,17 +15,9 @@ type LogEntry = {
 
 interface GameLogOptions {
 	sessionState: EngineSessionSnapshot;
-	mountedRef: React.MutableRefObject<boolean>;
-	timeScaleRef: React.MutableRefObject<number>;
-	setTrackedTimeout: (callback: () => void, delay: number) => number;
 }
 
-export function useGameLog({
-	sessionState,
-	mountedRef,
-	timeScaleRef,
-	setTrackedTimeout,
-}: GameLogOptions) {
+export function useGameLog({ sessionState }: GameLogOptions) {
 	const [log, setLog] = useState<LogEntry[]>([]);
 	const [logOverflowed, setLogOverflowed] = useState(false);
 
@@ -60,48 +52,7 @@ export function useGameLog({
 		[sessionState.game.activePlayerId, sessionState.game.players],
 	);
 
-	const waitWithScale = useCallback(
-		(base: number) => {
-			const scale = timeScaleRef.current || 1;
-			const duration = base / scale;
-			if (duration <= 0) {
-				return Promise.resolve();
-			}
-			return new Promise<void>((resolve) => {
-				setTrackedTimeout(() => resolve(), duration);
-			});
-		},
-		[setTrackedTimeout, timeScaleRef],
-	);
-
-	const logWithEffectDelay = useCallback(
-		async (
-			lines: string[],
-			player: Pick<PlayerStateSnapshot, 'id' | 'name'>,
-		) => {
-			if (!lines.length) {
-				return;
-			}
-			const [first, ...rest] = lines;
-			if (first === undefined) {
-				return;
-			}
-			if (!mountedRef.current) {
-				return;
-			}
-			addLog(first, player);
-			for (const line of rest) {
-				await waitWithScale(ACTION_EFFECT_DELAY);
-				if (!mountedRef.current) {
-					return;
-				}
-				addLog(line, player);
-			}
-		},
-		[addLog, mountedRef, waitWithScale],
-	);
-
-	return { log, logOverflowed, addLog, logWithEffectDelay };
+	return { log, logOverflowed, addLog };
 }
 
 export type { LogEntry };

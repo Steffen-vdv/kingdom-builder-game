@@ -5,7 +5,6 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PassiveDisplay from '../src/components/player/PassiveDisplay';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
-import type { EngineContext } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -19,19 +18,14 @@ import {
 } from '@kingdom-builder/contents';
 import { resolvePassivePresentation } from '../src/translation/log/passives';
 import { buildTierEntries } from '../src/components/player/buildTierEntries';
-import { createTranslationContext } from '../src/translation/context';
-import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import {
+	createPassiveGame,
+	type MockGame,
+} from './helpers/createPassiveDisplayGame';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
-
-type MockGame = {
-	ctx: EngineContext;
-	translationContext: ReturnType<typeof createTranslationContext>;
-	handleHoverCard: ReturnType<typeof vi.fn>;
-	clearHoverCard: ReturnType<typeof vi.fn>;
-};
 
 let currentGame: MockGame;
 
@@ -55,27 +49,8 @@ describe('<PassiveDisplay />', () => {
 		ctx.activePlayer.resources[happinessKey] = 6;
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
 
-		const handleHoverCard = vi.fn();
-		const clearHoverCard = vi.fn();
-		const translationContext = createTranslationContext(
-			snapshotEngine(ctx),
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
-			{
-				pullEffectLog: (key) => ctx.pullEffectLog(key),
-				passives: ctx.passives,
-				context: ctx,
-			},
-		);
-		currentGame = {
-			ctx,
-			translationContext,
-			handleHoverCard,
-			clearHoverCard,
-		} as MockGame;
+		const { mockGame, handleHoverCard } = createPassiveGame(ctx);
+		currentGame = mockGame;
 
 		render(<PassiveDisplay player={ctx.activePlayer} />);
 		const [summary] = ctx.passives.list(ctx.activePlayer.id);
@@ -122,27 +97,8 @@ describe('<PassiveDisplay />', () => {
 		const happinessKey = tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 6;
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
-		const handleHoverCard = vi.fn();
-		const clearHoverCard = vi.fn();
-		const translationContext = createTranslationContext(
-			snapshotEngine(ctx),
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
-			{
-				pullEffectLog: (key) => ctx.pullEffectLog(key),
-				passives: ctx.passives,
-				context: ctx,
-			},
-		);
-		currentGame = {
-			ctx,
-			translationContext,
-			handleHoverCard,
-			clearHoverCard,
-		} as MockGame;
+		const { mockGame, handleHoverCard } = createPassiveGame(ctx);
+		currentGame = mockGame;
 		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
 		const { container } = view;
 		const [summary] = ctx.passives.list(ctx.activePlayer.id);
@@ -182,28 +138,9 @@ describe('<PassiveDisplay />', () => {
 		const happinessKey = tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 0;
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);
-
-		const handleHoverCard = vi.fn();
-		const clearHoverCard = vi.fn();
-		const translationContext = createTranslationContext(
-			snapshotEngine(ctx),
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
-			{
-				pullEffectLog: (key) => ctx.pullEffectLog(key),
-				passives: ctx.passives,
-				context: ctx,
-			},
-		);
-		currentGame = {
-			ctx,
-			translationContext,
-			handleHoverCard,
-			clearHoverCard,
-		} as MockGame;
+		
+		const { mockGame } = createPassiveGame(ctx);
+		currentGame = mockGame;
 
 		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
 		const { container } = view;
@@ -231,27 +168,10 @@ describe('<PassiveDisplay />', () => {
 			],
 			ctx,
 		);
-		const handleHoverCard = vi.fn();
-		const clearHoverCard = vi.fn();
-		const translationContext = createTranslationContext(
-			snapshotEngine(ctx),
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
-			{
-				pullEffectLog: (key) => ctx.pullEffectLog(key),
-				passives: ctx.passives,
-				context: ctx,
-			},
-		);
-		currentGame = {
-			ctx,
-			translationContext,
-			handleHoverCard,
-			clearHoverCard,
-		} as MockGame;
+
+		const { mockGame } = createPassiveGame(ctx);
+		currentGame = mockGame;
+
 		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
 		expect(view.container.querySelector('div.hoverable')).toBeNull();
 		const text = view.container.textContent ?? '';

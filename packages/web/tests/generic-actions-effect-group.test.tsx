@@ -149,10 +149,15 @@ function createMockGame() {
 			actionCostResource: 'ap',
 		},
 		translationContext,
+		log: [],
+		logOverflowed: false,
 		handlePerform: vi.fn().mockResolvedValue(undefined),
 		handleHoverCard: vi.fn(),
 		clearHoverCard: vi.fn(),
 		actionCostResource: 'ap',
+		resolution: null,
+		showResolution: vi.fn().mockResolvedValue(undefined),
+		acknowledgeResolution: vi.fn(),
 	};
 }
 let mockGame: ReturnType<typeof createMockGame>;
