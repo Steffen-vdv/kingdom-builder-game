@@ -19,6 +19,30 @@ import { Resource } from './resources';
 import { Stat } from './stats';
 import { formatPassiveRemoval } from './text';
 
+export type HappinessTierSlug =
+	| 'despair'
+	| 'misery'
+	| 'grim'
+	| 'unrest'
+	| 'steady'
+	| 'content'
+	| 'joyful'
+	| 'elated'
+	| 'ecstatic';
+
+export type HappinessModifierKind = string;
+
+export const happinessTierId = (slug: HappinessTierSlug) =>
+	`happiness:tier:${slug}`;
+
+export const happinessPassiveId = (slug: HappinessTierSlug) =>
+	`passive:happiness:${slug}`;
+
+export const happinessModifierId = (
+	slug: HappinessTierSlug,
+	kind: HappinessModifierKind,
+) => `happiness:${slug}:${kind}`;
+
 const DEVELOPMENT_EVALUATION = developmentTarget();
 
 export const incomeModifier = (id: string, percent: number) =>
