@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers';
 import { createContentFactory } from './factories/content';
 import { advance, performAction, getActionCosts, snapshotPlayer } from '../src';
 
 function toMain(ctx: ReturnType<typeof createTestEngine>) {
-	while (ctx.game.currentPhase !== 'main') {
+	while (ctx.game.currentPhase !== PhaseId.Main) {
 		advance(ctx);
 	}
 }

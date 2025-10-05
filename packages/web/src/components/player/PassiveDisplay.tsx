@@ -1,6 +1,11 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import { PHASES, PASSIVE_INFO, POPULATIONS } from '@kingdom-builder/contents';
+import {
+	PHASES,
+	PASSIVE_INFO,
+	POPULATIONS,
+	PhaseId,
+} from '@kingdom-builder/contents';
 import { describeEffects, splitSummary } from '../../translation';
 import type {
 	EngineContext,
@@ -117,7 +122,8 @@ export default function PassiveDisplay({
 					? tierSections
 					: describeEffects(def.effects || [], ctx);
 				const upkeepLabel =
-					PHASES.find((phase) => phase.id === 'upkeep')?.label || 'Upkeep';
+					PHASES.find((phase) => phase.id === PhaseId.Upkeep)?.label ||
+					'Upkeep';
 				const sections = def.onUpkeepPhase
 					? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
 					: items;

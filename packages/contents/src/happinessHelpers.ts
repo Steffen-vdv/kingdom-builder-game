@@ -19,10 +19,6 @@ import { Resource } from './resources';
 import { Stat } from './stats';
 import { formatPassiveRemoval } from './text';
 
-export const GROWTH_PHASE_ID = 'growth';
-export const UPKEEP_PHASE_ID = 'upkeep';
-export const WAR_RECOVERY_STEP_ID = 'war-recovery';
-
 const DEVELOPMENT_EVALUATION = developmentTarget();
 
 export const incomeModifier = (id: string, percent: number) =>

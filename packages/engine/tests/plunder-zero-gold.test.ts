@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, advance } from '../src';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createContentFactory } from './factories/content';
 import { createTestEngine } from './helpers';
 
 function toMain(ctx: ReturnType<typeof createTestEngine>) {
-	while (ctx.game.currentPhase !== 'main') {
+	while (ctx.game.currentPhase !== PhaseId.Main) {
 		advance(ctx);
 	}
 }

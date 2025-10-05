@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import type { RuleSet } from '@kingdom-builder/engine/services';
 import type { PhaseDef } from '@kingdom-builder/engine/phases';
+import type { PhaseIdValue } from '@kingdom-builder/contents';
 import type { StartConfig } from '@kingdom-builder/protocol';
 
 type SyntheticContent = {
@@ -23,7 +24,7 @@ type SyntheticContent = {
 		| 'homeLand',
 		string
 	>;
-	phaseIds: Record<'growth' | 'main' | 'upkeep', string>;
+	phaseIds: Record<PhaseIdValue, string>;
 	stepIds: Record<'gainIncome' | 'payUpkeep', string>;
 };
 

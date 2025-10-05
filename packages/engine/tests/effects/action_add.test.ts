@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '../factories/content';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('action:add effect', () => {
 	it('grants a new action', () => {
@@ -12,7 +12,7 @@ describe('action:add effect', () => {
 			effects: [{ type: 'action', method: 'add', params: { id: extra.id } }],
 		});
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		const cost = getActionCosts(grant.id, ctx);

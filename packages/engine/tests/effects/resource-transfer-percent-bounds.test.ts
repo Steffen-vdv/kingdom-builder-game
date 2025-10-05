@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, advance, Resource } from '../../src/index.ts';
+import { PhaseId } from '@kingdom-builder/contents';
 import {
 	TRANSFER_PCT_EVALUATION_ID,
 	TRANSFER_PCT_EVALUATION_TYPE,
@@ -10,7 +11,7 @@ import type { EffectDef } from '../../src/effects/index.ts';
 describe('resource:transfer percent bounds', () => {
 	it('adjusts transfer percentage within bounds', () => {
 		const ctx = createTestEngine();
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		ctx.game.currentPlayerIndex = 0;
@@ -77,7 +78,7 @@ describe('resource:transfer percent bounds', () => {
 
 	it('respects rounding configuration', () => {
 		const ctx = createTestEngine();
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		ctx.game.currentPlayerIndex = 0;

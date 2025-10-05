@@ -3,7 +3,7 @@ import { getActionCosts, advance } from '../../src';
 import { runEffects } from '../../src/effects/index.ts';
 import { createTestEngine } from '../helpers.ts';
 import { createContentFactory } from '../factories/content.ts';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('cost_mod owner scope', () => {
 	it('applies only to the player who added the modifier', () => {
@@ -11,7 +11,7 @@ describe('cost_mod owner scope', () => {
 		const actA = content.action({ baseCosts: { [CResource.gold]: 1 } });
 		const actB = content.action({ baseCosts: { [CResource.gold]: 1 } });
 		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== 'main') {
+		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
 		ctx.game.currentPlayerIndex = 0;

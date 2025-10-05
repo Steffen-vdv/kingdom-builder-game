@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import type { AdvanceSkip } from '@kingdom-builder/engine';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
+import { PhaseId, PhaseStepId } from '@kingdom-builder/contents';
 
 describe('describeSkipEvent', () => {
 	it('formats phase skip entries with source summaries', () => {
 		const skip: AdvanceSkip = {
 			type: 'phase',
-			phaseId: 'growth',
+			phaseId: PhaseId.Growth,
 			sources: [
 				{
 					id: 'passive:golden-age',
@@ -15,7 +16,7 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: 'growth', label: 'Growth', icon: '🌱' };
+		const phase = { id: PhaseId.Growth, label: 'Growth', icon: '🌱' };
 
 		const result = describeSkipEvent(skip, phase);
 
@@ -29,8 +30,8 @@ describe('describeSkipEvent', () => {
 	it('formats step skip entries with fallback labels', () => {
 		const skip: AdvanceSkip = {
 			type: 'step',
-			phaseId: 'upkeep',
-			stepId: 'war-recovery',
+			phaseId: PhaseId.Upkeep,
+			stepId: PhaseStepId.WarRecovery,
 			sources: [
 				{
 					id: 'passive:morale-crash',
@@ -38,8 +39,12 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: 'upkeep', label: 'Upkeep', icon: '🧹' };
-		const step = { id: 'war-recovery', title: 'War recovery', icon: '🛡️' };
+		const phase = { id: PhaseId.Upkeep, label: 'Upkeep', icon: '🧹' };
+		const step = {
+			id: PhaseStepId.WarRecovery,
+			title: 'War recovery',
+			icon: '🛡️',
+		};
 
 		const result = describeSkipEvent(skip, phase, step);
 

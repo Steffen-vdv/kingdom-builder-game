@@ -6,6 +6,7 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
+	PhaseId,
 	GAME_START,
 	RULES,
 	Resource as CResource,
@@ -57,7 +58,7 @@ function advanceToMain(session: EngineSession) {
 	const limit = BASE.phases.length * 10;
 	for (let step = 0; step < limit; step += 1) {
 		const snapshot = session.getSnapshot();
-		if (snapshot.game.currentPhase === 'main') {
+		if (snapshot.game.currentPhase === PhaseId.Main) {
 			return;
 		}
 		session.advancePhase();

@@ -8,6 +8,7 @@ import {
 	POPULATION_ROLES,
 	STATS,
 	type OverviewTokenCategoryName,
+	type PhaseId,
 } from '@kingdom-builder/contents';
 import type { OverviewIconSet } from './sectionsData';
 
@@ -56,7 +57,9 @@ const CATEGORY_CONFIG = [
 		name: 'phases',
 		keys: () => PHASES.map((phase) => phase.id),
 		resolve: (candidates: string[]) =>
-			resolveByCandidates(candidates, (id) => PHASE_ICON_LOOKUP.get(id)),
+			resolveByCandidates(candidates, (id) =>
+				PHASE_ICON_LOOKUP.get(id as PhaseId),
+			),
 	},
 	{
 		name: 'resources',

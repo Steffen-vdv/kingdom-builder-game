@@ -1,6 +1,7 @@
 import {
 	POPULATION_INFO,
 	POPULATION_ROLES,
+	PhaseId,
 	Resource,
 	Stat,
 	type PopulationRoleId,
@@ -206,12 +207,12 @@ export function createActionsPanelGame({
 			populations: populationRegistry,
 			game: {
 				players: [player, opponent],
-				currentPhase: 'main',
+				currentPhase: PhaseId.Main,
 				currentStep: '',
 			},
 			activePlayer: player,
 			actionCostResource,
-			phases: [{ id: 'main', action: true, steps: [] }],
+			phases: [{ id: PhaseId.Main, action: true, steps: [] }],
 		},
 		...createActionsPanelState(actionCostResource),
 		metadata: {

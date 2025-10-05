@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { advance, runEffects } from '../src/index.ts';
-import { PopulationRole, Stat } from '@kingdom-builder/contents';
+import { PopulationRole, Stat, PhaseStepId } from '@kingdom-builder/contents';
+import type { PhaseStepIdValue } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 
 function findPhaseStep(
 	ctx: ReturnType<typeof createTestEngine>,
-	stepId: string,
+	stepId: PhaseStepIdValue,
 ) {
 	return ctx.phases.find((phase) =>
 		phase.steps.some((step) => step.id === stepId),
@@ -59,21 +60,21 @@ describe('stat sources longevity', () => {
 			detail: 'unassigned',
 		});
 
-		const raiseStrengthPhase = findPhaseStep(ctx, 'raise-strength');
+		const raiseStrengthPhase = findPhaseStep(ctx, PhaseStepId.RaiseStrength);
 		expect(raiseStrengthPhase).toBeDefined();
 		let result;
 		do {
 			result = advance(ctx);
 		} while (
 			result.phase !== raiseStrengthPhase!.id ||
-			result.step !== 'raise-strength'
+			result.step !== PhaseStepId.RaiseStrength
 		);
 
 		const phaseEntry = Object.values(
 			player.statSources[Stat.armyStrength] ?? {},
 		).find((entry) => entry.meta.kind === 'phase');
 		expect(phaseEntry?.amount).toBe(1);
-		expect(phaseEntry?.meta.detail).toBe('raise-strength');
+		expect(phaseEntry?.meta.detail).toBe(PhaseStepId.RaiseStrength);
 		expect(phaseEntry?.meta.longevity).toBe('permanent');
 		expect(phaseEntry?.meta.dependsOn).toEqual(
 			expect.arrayContaining([

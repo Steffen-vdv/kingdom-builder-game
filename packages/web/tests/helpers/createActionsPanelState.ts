@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { PhaseId } from '@kingdom-builder/contents';
 
 export function createActionsPanelState(actionCostResource: string) {
 	return {
@@ -10,7 +11,7 @@ export function createActionsPanelState(actionCostResource: string) {
 		setPhaseSteps: vi.fn(),
 		phaseTimer: 0,
 		mainApStart: 0,
-		displayPhase: 'main',
+		displayPhase: PhaseId.Main,
 		setDisplayPhase: vi.fn(),
 		phaseHistories: {},
 		tabsEnabled: true,

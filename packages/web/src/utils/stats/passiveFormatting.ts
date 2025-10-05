@@ -1,4 +1,8 @@
-import { PASSIVE_INFO, formatPassiveRemoval } from '@kingdom-builder/contents';
+import {
+	PASSIVE_INFO,
+	PhaseStepId,
+	formatPassiveRemoval,
+} from '@kingdom-builder/contents';
 import type { StatSourceLink, StatSourceMeta } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../translation/content/types';
 import { formatLinkLabel } from './dependencyFormatters';
@@ -41,7 +45,7 @@ export function buildLongevityEntries(
 function shouldDisplayPermanentDependencies(meta: StatSourceMeta): boolean {
 	if (meta.kind === 'phase') {
 		const detail = meta.detail?.trim().toLowerCase();
-		if (detail === 'raise-strength') {
+		if (detail === PhaseStepId.RaiseStrength) {
 			return false;
 		}
 	}

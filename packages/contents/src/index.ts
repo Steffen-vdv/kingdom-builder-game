@@ -2,8 +2,13 @@ export { ACTIONS, createActionRegistry, ActionId } from './actions';
 export { BUILDINGS, createBuildingRegistry } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
-export { PHASES } from './phases';
+export { PHASES, PhaseId, PhaseStepId, PhaseTrigger } from './phases';
 export type { PhaseDef, StepDef } from './config/builders';
+export type {
+	PhaseId as PhaseIdValue,
+	PhaseStepId as PhaseStepIdValue,
+	PhaseTrigger as PhaseTriggerKey,
+} from './phases';
 export {
 	POPULATION_ROLES,
 	PopulationRole,
