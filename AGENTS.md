@@ -6,8 +6,8 @@ been removed—content was reorganized to avoid duplication while improving
 cohesion.
 
 > **Reminder**: Before adding any player-facing strings, review
-> `docs/text-formatting.md` Section 0 "Before Writing Text" and apply the PR
-> checklist snippet.
+> `docs/text-formatting.md` Section 0 "Before Writing Text", work through the
+> Implementation checklist, and apply the PR checklist snippet.
 
 ---
 
@@ -53,6 +53,8 @@ cohesion.
   data-driven rules above.
 - Violations (e.g., hardcoding resource names or relying on fixed numeric
   values) must be refactored before merge.
+- Reviewers must bounce any PR where the text-formatting checklist answers in
+  the template are left blank or incomplete.
 
 ---
 

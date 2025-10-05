@@ -22,11 +22,24 @@ Follow this workflow before authoring new copy or extending translators:
    - **Log** — past-tense statements that recount what just happened; keep them
      chronological and free of UI jargon.
 
+### Implementation checklist
+
+Use these prompts while developing and when filling out the PR template:
+
+1. Link the translator(s) or formatter(s) you extended from the inventories in
+   [Section 2](#2-content-translator-inventory) and
+   [Section 3](#3-effect-formatter-inventory) so reviewers can audit reuse.
+2. Enumerate every canonical keyword, icon, or helper you touched from
+   [Section 4](#4-canonical-keywords-icons--helper-utilities) to prove you
+   pulled from the approved tables.
+3. Confirm that you reviewed the Summary, Description, and Log voices for each
+   affected surface and adjusted copy to match the definitions above.
+
 > **Quick reference — paste into your PR description**
 >
-> - [ ] Reused an existing translator/formatter where possible.
-> - [ ] Linked helper tables and icons from Section 4 instead of ad-hoc text.
-> - [ ] Verified summary/description/log copy uses the required voice.
+> - [ ] Linked the translator(s)/formatter(s) reused, referencing Sections 2–3.
+> - [ ] Listed every canonical keyword/icon/helper touched from Section 4.
+> - [ ] Confirmed Summary/Description/Log voices were audited for affected UI.
 
 ## 1. Translation Pipeline Overview
 
