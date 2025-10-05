@@ -141,12 +141,11 @@ describe('GenericActions effect group handling', () => {
 					options: [
 						{
 							id: 'royal_decree_house',
-							label: 'Raise a House',
+							label: 'Develop',
 							icon: '🏠',
 							actionId: ActionId.develop,
 							params: {
 								landId: '$landId',
-								actionId: ActionId.develop,
 								developmentId: 'house',
 							},
 						},

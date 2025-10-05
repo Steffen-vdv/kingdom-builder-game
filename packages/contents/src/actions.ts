@@ -213,37 +213,33 @@ export function createActionRegistry() {
 		.layout('compact')
 		.option(
 			actionEffectGroupOption('royal_decree_house')
-				.label('Raise a House')
+				.label('Develop')
 				.icon('🏠')
 				.action(ActionId.develop)
-				.param('actionId', ActionId.develop)
 				.param('developmentId', 'house')
 				.param('landId', '$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_farm')
-				.label('Establish a Farm')
+				.label('Develop')
 				.icon('🌾')
 				.action(ActionId.develop)
-				.param('actionId', ActionId.develop)
 				.param('developmentId', 'farm')
 				.param('landId', '$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_outpost')
-				.label('Fortify with an Outpost')
+				.label('Develop')
 				.icon('🏹')
 				.action(ActionId.develop)
-				.param('actionId', ActionId.develop)
 				.param('developmentId', 'outpost')
 				.param('landId', '$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_watchtower')
-				.label('Raise a Watchtower')
+				.label('Develop')
 				.icon('🗼')
 				.action(ActionId.develop)
-				.param('actionId', ActionId.develop)
 				.param('developmentId', 'watchtower')
 				.param('landId', '$landId'),
 		);
