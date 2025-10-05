@@ -1,25 +1,24 @@
-import { EVALUATORS, type EngineContext } from '@kingdom-builder/engine';
 import { POPULATION_ROLES, POPULATION_INFO } from '@kingdom-builder/contents';
+import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
 
 export type EvaluatorIconRenderer = (
 	evaluatorDefinition: { type: string; params?: Record<string, unknown> },
 	entry: ResourceSourceEntry,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ) => void;
 
 function evaluateCount(
 	evaluatorDefinition: { type: string; params?: Record<string, unknown> },
-	context: EngineContext,
+	context: TranslationDiffContext,
 ): number {
-	const handler = EVALUATORS.get(evaluatorDefinition.type);
-	return Number(handler(evaluatorDefinition, context));
+	return context.evaluate(evaluatorDefinition);
 }
 
 function renderDevelopmentIcons(
 	evaluatorDefinition: { type: string; params?: Record<string, unknown> },
 	entry: ResourceSourceEntry,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ): void {
 	const count = evaluateCount(evaluatorDefinition, context);
 	const params = evaluatorDefinition.params as
@@ -33,7 +32,7 @@ function renderDevelopmentIcons(
 function renderPopulationIcons(
 	evaluatorDefinition: { type: string; params?: Record<string, unknown> },
 	entry: ResourceSourceEntry,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ): void {
 	const count = evaluateCount(evaluatorDefinition, context);
 	const params = evaluatorDefinition.params as
