@@ -104,13 +104,26 @@ export function createTierPassiveEffect({
 	if (icon) {
 		params.icon(icon);
 	}
-	params.tieredResourceSource({
+	const tieredSource: {
+		tierId: string;
+		removalDetail: string;
+		summaryToken?: string;
+		name?: string;
+		icon?: string;
+	} = {
 		tierId,
 		removalDetail,
-		summaryToken,
-		name,
-		icon,
-	});
+	};
+	if (summaryToken) {
+		tieredSource.summaryToken = summaryToken;
+	}
+	if (name) {
+		tieredSource.name = name;
+	}
+	if (icon) {
+		tieredSource.icon = icon;
+	}
+	params.tieredResourceSource(tieredSource);
 	const builder = effect()
 		.type(Types.Passive)
 		.method(PassiveMethods.ADD)
