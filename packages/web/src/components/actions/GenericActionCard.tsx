@@ -10,10 +10,9 @@ import { type ResourceKey } from '@kingdom-builder/contents';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import { formatMissingResources } from './utils';
-import type { Action, DisplayPlayer } from './ActionsPanel';
 import type { PendingActionState } from './GenericActions';
 import { useEffectGroupOptions } from './useEffectGroupOptions';
-import type { HoverCardData } from './types';
+import type { Action, DisplayPlayer, HoverCardData } from './types';
 
 interface GenericActionCardProps {
 	action: Action;

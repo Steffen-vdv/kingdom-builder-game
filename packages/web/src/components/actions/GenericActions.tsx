@@ -9,7 +9,7 @@ import {
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import GenericActionCard from './GenericActionCard';
-import type { Action, DisplayPlayer } from './ActionsPanel';
+import type { Action, DisplayPlayer } from './types';
 
 export interface PendingActionState {
 	action: Action;
