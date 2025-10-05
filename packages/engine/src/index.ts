@@ -24,6 +24,7 @@ export {
 	type GameSnapshot,
 	type PlayerStateSnapshot,
 	type LandSnapshot,
+	type RuleSnapshot,
 	type EngineSessionGetActionCosts,
 	type EngineSessionGetActionRequirements,
 	cloneEffectLogEntry,

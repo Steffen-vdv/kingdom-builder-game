@@ -17,6 +17,14 @@ import { cloneActionTraces } from './player_snapshot';
 import { snapshotAdvance, snapshotEngine } from './engine_snapshot';
 import type { EngineAdvanceResult, EngineSessionSnapshot } from './types';
 import type { EvaluationModifier } from '../services/passive_types';
+import {
+	simulateUpcomingPhases as runSimulation,
+	type SimulateUpcomingPhasesOptions,
+	type SimulateUpcomingPhasesResult,
+} from './simulate_upcoming_phases';
+import type { PlayerId, ResourceKey } from '../state';
+import type { AIDependencies } from '../ai';
+import type { HappinessTierDefinition } from '../services/tiered_resource_types';
 
 function cloneEffectLogEntry<T>(entry: T): T {
 	if (typeof entry !== 'object' || entry === null) {
@@ -55,11 +63,25 @@ export interface EngineSession {
 	getPassiveEvaluationMods(): Map<string, Map<string, EvaluationModifier>>;
 	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T>;
 	setDevMode(enabled: boolean): void;
+	runAiTurn(
+		playerId: PlayerId,
+		overrides?: Partial<AIDependencies>,
+	): Promise<boolean>;
+	simulateUpcomingPhases(
+		playerId: PlayerId,
+		options?: SimulateUpcomingPhasesOptions,
+	): SimulateUpcomingPhasesResult;
+	getRuleSnapshot(): RuleSnapshot;
 	/**
 	 * @deprecated Temporary escape hatch while the web layer migrates to
 	 * snapshots. Avoid new usage and prefer the session facade instead.
 	 */
 	getLegacyContext(): EngineContext;
+}
+
+export interface RuleSnapshot {
+	tieredResourceKey: ResourceKey;
+	tierDefinitions: HappinessTierDefinition[];
 }
 
 export type {
@@ -115,6 +137,24 @@ export function createEngineSession(
 		},
 		setDevMode(enabled) {
 			context.game.devMode = enabled;
+		},
+		async runAiTurn(playerId, overrides) {
+			if (!context.aiSystem) {
+				return false;
+			}
+			return context.aiSystem.run(playerId, context, overrides);
+		},
+		simulateUpcomingPhases(playerId, options) {
+			const result = runSimulation(context, playerId, options);
+			return structuredClone(result);
+		},
+		getRuleSnapshot() {
+			const { tieredResourceKey, tierDefinitions } = context.services.rules;
+			const clonedDefinitions = structuredClone(tierDefinitions);
+			return {
+				tieredResourceKey,
+				tierDefinitions: clonedDefinitions,
+			} satisfies RuleSnapshot;
 		},
 		getLegacyContext() {
 			return context;
