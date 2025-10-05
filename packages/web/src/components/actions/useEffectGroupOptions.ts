@@ -12,10 +12,7 @@ import {
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
 import type { HoverCardData } from './types';
-import {
-	buildActionOptionTranslation,
-	deriveActionOptionLabel,
-} from '../../translation/effects/optionLabel';
+import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
 
 type ResolveParams = Record<string, unknown> | undefined;
 
@@ -65,30 +62,22 @@ function buildHoverDetails(
 	context: EngineContext,
 	formatRequirement: (requirement: string) => string,
 	hoverBackground: string,
+	optionLabel: string,
 ): HoverCardData {
-	const describedSummary = describeContent(
+	const hoverSummary = describeContent(
 		'action',
 		option.actionId,
 		context,
 		mergedParams,
 	);
-	const described = buildActionOptionTranslation(
-		option,
-		context,
-		describedSummary,
-		'describe',
-	);
-	const translatedSummary = Array.isArray(described.entry)
-		? described.entry
-		: [described.entry];
-	const { effects, description } = splitSummary(translatedSummary);
+	const { effects, description } = splitSummary(hoverSummary);
 	const requirements = getActionRequirements(
 		option.actionId,
 		context,
 		mergedParams,
 	).map(formatRequirement);
 	return {
-		title: described.label.trim() || option.label,
+		title: optionLabel.trim() || option.label,
 		effects,
 		...(description && { description }),
 		requirements,
@@ -152,6 +141,7 @@ export function useEffectGroupOptions({
 					context,
 					formatRequirement,
 					hoverBackground,
+					optionLabel,
 				);
 				handleHoverCard(hoverDetails);
 			};
