@@ -10,11 +10,11 @@ import {
 	formatEffectGroups,
 } from '../effects';
 import { registerContentTranslator } from './factory';
-import type { ContentTranslator, Summary } from './types';
+import type { LegacyContentTranslator, Summary } from './types';
 import { getActionLogHook } from './actionLogHooks';
 
 class ActionTranslator
-	implements ContentTranslator<string, Record<string, unknown>>
+	implements LegacyContentTranslator<string, Record<string, unknown>>
 {
 	summarize(
 		id: string,

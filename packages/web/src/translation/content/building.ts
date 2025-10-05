@@ -1,12 +1,12 @@
 import type { EngineContext } from '@kingdom-builder/engine';
 import { registerContentTranslator } from './factory';
-import type { ContentTranslator, Summary } from './types';
+import type { LegacyContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';
 import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
 import { resolveBuildingDisplay } from './buildingIcons';
 
-class BuildingCore implements ContentTranslator<string> {
+class BuildingCore implements LegacyContentTranslator<string> {
 	private phased = new PhasedTranslator();
 	summarize(id: string, ctx: EngineContext): Summary {
 		const def = ctx.buildings.get(id);
