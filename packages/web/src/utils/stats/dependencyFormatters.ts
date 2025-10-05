@@ -7,7 +7,6 @@ import type { ResolveResult, SourceDescriptor } from './types';
 import {
 	defaultFormatDetail,
 	formatKindLabel,
-	formatLinkLabel,
 	getDescriptor,
 } from './descriptorRegistry';
 

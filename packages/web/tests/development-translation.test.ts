@@ -81,46 +81,39 @@ function findSelfReferentialDevelopment(
 }
 
 describe('development translation', () => {
-		it(
-			'replaces self-referential placeholders when describing developments',
-			() => {
-				const id = findSelfReferentialDevelopment(DEVELOPMENTS.entries());
-				const summary = summarizeContent('development', id, ctx as EngineContext);
-				const description = describeContent(
-					'development',
-					id,
-					ctx as EngineContext,
-				);
-				const strings = [...flatten(summary), ...flatten(description)];
-
-				expect(strings.some((line) => line.includes('$id'))).toBe(false);
-
-				const def = ctx.developments.get(id);
-				const icon = def.icon || '';
-
-				const hasIncomeLine = strings.some((line) => {
-					return /During income step/.test(line);
-				});
-				expect(hasIncomeLine).toBe(true);
-
-				expect(strings.some((line) => /\+2/.test(line))).toBe(true);
-				expect(strings.some((line) => /Gold/.test(line))).toBe(true);
-				const prohibited = strings.filter(
-					(line) =>
-						line.includes(`per ${icon} ${def.name}`) ||
-						line.includes(`for each ${icon} ${def.name}`),
-				);
-				expect(prohibited).toHaveLength(0);
-
-				const logEntry = logContent(
-					'development',
-					id,
-					ctx as EngineContext,
-				);
-				expect(logEntry.some((line) => line.includes(def.name))).toBe(true);
-				if (icon) {
-					expect(logEntry.some((line) => line.includes(icon))).toBe(true);
-				}
-			},
+	it('replaces self-referential placeholders when describing developments', () => {
+		const id = findSelfReferentialDevelopment(DEVELOPMENTS.entries());
+		const summary = summarizeContent('development', id, ctx as EngineContext);
+		const description = describeContent(
+			'development',
+			id,
+			ctx as EngineContext,
 		);
+		const strings = [...flatten(summary), ...flatten(description)];
+
+		expect(strings.some((line) => line.includes('$id'))).toBe(false);
+
+		const def = ctx.developments.get(id);
+		const icon = def.icon || '';
+
+		const hasIncomeLine = strings.some((line) => {
+			return /During income step/.test(line);
+		});
+		expect(hasIncomeLine).toBe(true);
+
+		expect(strings.some((line) => /\+2/.test(line))).toBe(true);
+		expect(strings.some((line) => /Gold/.test(line))).toBe(true);
+		const prohibited = strings.filter(
+			(line) =>
+				line.includes(`per ${icon} ${def.name}`) ||
+				line.includes(`for each ${icon} ${def.name}`),
+		);
+		expect(prohibited).toHaveLength(0);
+
+		const logEntry = logContent('development', id, ctx as EngineContext);
+		expect(logEntry.some((line) => line.includes(def.name))).toBe(true);
+		if (icon) {
+			expect(logEntry.some((line) => line.includes(icon))).toBe(true);
+		}
+	});
 });
