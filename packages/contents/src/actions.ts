@@ -11,6 +11,7 @@ import {
 	resourceParams,
 	statParams,
 	developmentParams,
+	buildingParams,
 	actionParams,
 	resultModParams,
 	passiveParams,
@@ -490,7 +491,9 @@ export function createActionRegistry() {
 			.name('Build')
 			.icon('🏛️')
 			.effect(
-				effect(Types.Building, BuildingMethods.ADD).param('id', '$id').build(),
+				effect(Types.Building, BuildingMethods.ADD)
+					.params(buildingParams().id('$id'))
+					.build(),
 			)
 			.category(ActionCategory.Building)
 			.order(1)

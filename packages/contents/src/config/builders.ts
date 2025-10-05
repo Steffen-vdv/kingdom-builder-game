@@ -461,6 +461,40 @@ export function developmentParams() {
 	return new DevelopmentEffectParamsBuilder();
 }
 
+class BuildingEffectParamsBuilder extends ParamsBuilder<{
+	id?: string;
+	landId?: string;
+}> {
+	id(id: string) {
+		return this.set(
+			'id',
+			id,
+			'Building effect params already set id(). Remove the extra id() call.',
+		);
+	}
+
+	landId(landId: string) {
+		return this.set(
+			'landId',
+			landId,
+			'Building effect params already set landId(). Remove the extra landId() call.',
+		);
+	}
+
+	override build() {
+		if (!this.wasSet('id')) {
+			throw new Error(
+				'Building effect params is missing id(). Call id("your-building-id") before build().',
+			);
+		}
+		return super.build();
+	}
+}
+
+export function buildingParams() {
+	return new BuildingEffectParamsBuilder();
+}
+
 class ActionEffectParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	landId?: string;
