@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { createEngineSession, type EngineSession } from '../../src/index.ts';
 import {
 	ACTIONS,
-	ActionId,
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
