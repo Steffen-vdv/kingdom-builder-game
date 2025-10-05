@@ -30,6 +30,10 @@ function createMeta(meta: PassiveDurationMeta): PassiveDurationMeta {
 }
 
 type PassivePhaseInfo = { id: string; label?: string; icon?: string };
+type PhaseStepMetadata = { triggers?: readonly string[] };
+type PhaseWithStepMetadata =
+	| PhaseDef
+	| (PassivePhaseInfo & { steps?: readonly PhaseStepMetadata[] });
 
 function toPassivePhaseInfo(phase: PhaseDef | PassivePhaseInfo | undefined) {
 	if (!phase) {
@@ -52,20 +56,13 @@ function resolvePhaseMeta(
 	if (!id) {
 		return undefined;
 	}
-	const fromLegacy = ctx.legacy?.phases?.find((phase) => phase.id === id);
-	if (fromLegacy) {
-		return toPassivePhaseInfo(fromLegacy);
-	}
 	const fromContext = ctx.phases.find((phase) => phase.id === id);
 	if (fromContext) {
-		const info: PassivePhaseInfo = { id: fromContext.id };
-		if (fromContext.label !== undefined) {
-			info.label = fromContext.label;
-		}
-		if (fromContext.icon !== undefined) {
-			info.icon = fromContext.icon;
-		}
-		return info;
+		return {
+			id: fromContext.id,
+			...(fromContext.label !== undefined ? { label: fromContext.label } : {}),
+			...(fromContext.icon !== undefined ? { icon: fromContext.icon } : {}),
+		};
 	}
 	const fromContents = PHASES.find(
 		(phaseDefinition) => phaseDefinition.id === id,
@@ -84,8 +81,8 @@ function resolvePhaseByTrigger(
 	triggerId: string,
 ): PassivePhaseInfo | undefined {
 	const findPhaseWithTrigger = (
-		phases: readonly unknown[] | undefined,
-	): PhaseDef | undefined => {
+		phases: readonly PhaseWithStepMetadata[] | undefined,
+	): PhaseDef | PassivePhaseInfo | undefined => {
 		if (!phases) {
 			return undefined;
 		}
@@ -93,36 +90,25 @@ function resolvePhaseByTrigger(
 			if (!phase || typeof phase !== 'object') {
 				continue;
 			}
-			const withSteps = phase as {
-				id: string;
-				steps?: readonly unknown[];
-			};
-			if (!Array.isArray(withSteps.steps)) {
+			const steps = phase.steps;
+			if (!steps) {
 				continue;
 			}
-			const matches = withSteps.steps.some((step) => {
+			const matches = steps.some((step) => {
 				if (!step || typeof step !== 'object') {
 					return false;
 				}
-				const triggers = (
-					step as {
-						triggers?: readonly string[];
-					}
-				).triggers;
+				const triggers = step.triggers;
 				return triggers?.includes(triggerId) ?? false;
 			});
 			if (matches) {
-				return phase as PhaseDef;
+				return phase as PhaseDef | PassivePhaseInfo;
 			}
 		}
 		return undefined;
 	};
 
-	const fromLegacy = findPhaseWithTrigger(ctx.legacy?.phases);
-	if (fromLegacy) {
-		return toPassivePhaseInfo(fromLegacy);
-	}
-	const fromContext = findPhaseWithTrigger(ctx.phases as unknown[]);
+	const fromContext = findPhaseWithTrigger(ctx.phases);
 	if (fromContext) {
 		return toPassivePhaseInfo(fromContext as PassivePhaseInfo);
 	}

@@ -1,5 +1,4 @@
 import type {
-	EngineContext,
 	EngineSessionSnapshot,
 	PassiveSummary,
 	PlayerId,
@@ -18,6 +17,11 @@ import type {
 	TranslationPassiveModifierMap,
 	TranslationRegistry,
 } from './types';
+
+type TranslationSessionHelpers = {
+	pullEffectLog?: <T>(key: string) => T | undefined;
+	evaluationMods?: ReadonlyMap<string, ReadonlyMap<string, unknown>>;
+};
 
 function cloneRecord<T>(record: Record<string, T>): Record<string, T> {
 	return Object.freeze({ ...record });
@@ -151,13 +155,13 @@ function cloneRecentResourceGains(
 }
 
 function cloneEvaluationModifiers(
-	legacy?: EngineContext['passives'],
+	evaluationMods?: ReadonlyMap<string, ReadonlyMap<string, unknown>>,
 ): TranslationPassiveModifierMap {
-	if (!legacy) {
+	if (!evaluationMods) {
 		return new Map();
 	}
 	return new Map(
-		Array.from(legacy.evaluationMods.entries()).map(([modifierId, mods]) => [
+		Array.from(evaluationMods.entries()).map(([modifierId, mods]) => [
 			modifierId,
 			new Map(mods) as ReadonlyMap<string, unknown>,
 		]),
@@ -171,10 +175,7 @@ export function createTranslationContext(
 		buildings: typeof BUILDINGS;
 		developments: typeof DEVELOPMENTS;
 	},
-	legacy?: {
-		pullEffectLog: EngineContext['pullEffectLog'];
-		passives: EngineContext['passives'];
-	},
+	helpers?: TranslationSessionHelpers,
 ): TranslationContext {
 	const players = new Map(
 		session.game.players.map((player) => [player.id, clonePlayer(player)]),
@@ -186,7 +187,7 @@ export function createTranslationContext(
 	}
 	const passives = mapPassives(session.game.players);
 	const passiveDescriptors = mapPassiveDescriptors(passives);
-	const evaluationMods = cloneEvaluationModifiers(legacy?.passives);
+	const evaluationMods = cloneEvaluationModifiers(helpers?.evaluationMods);
 	const translationPassives: TranslationPassives = Object.freeze({
 		list(owner?: PlayerId) {
 			if (owner) {
@@ -201,14 +202,6 @@ export function createTranslationContext(
 		get evaluationMods() {
 			return evaluationMods;
 		},
-		/**
-		 * @deprecated Legacy escape hatch used by translation helpers that still
-		 * rely on the engine passive manager. Pending removal once callers are
-		 * updated to consume structured passive data.
-		 */
-		get legacy() {
-			return legacy?.passives;
-		},
 	});
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
@@ -217,7 +210,15 @@ export function createTranslationContext(
 		passives: translationPassives,
 		phases: Object.freeze(
 			session.phases.map((phase) => {
-				const entry: { id: string; icon?: string; label?: string } = {
+				const entry: {
+					id: string;
+					icon?: string;
+					label?: string;
+					steps?: ReadonlyArray<{
+						id: string;
+						triggers?: readonly string[];
+					}>;
+				} = {
 					id: phase.id,
 				};
 				if (phase.icon !== undefined) {
@@ -226,17 +227,29 @@ export function createTranslationContext(
 				if (phase.label !== undefined) {
 					entry.label = phase.label;
 				}
+				if (Array.isArray(phase.steps)) {
+					entry.steps = Object.freeze(
+						phase.steps.map((step) => {
+							const stepEntry: { id: string; triggers?: readonly string[] } = {
+								id: step.id,
+							};
+							if (Array.isArray(step.triggers)) {
+								stepEntry.triggers = Object.freeze([...step.triggers]);
+							}
+							return Object.freeze(stepEntry);
+						}),
+					);
+				}
 				return Object.freeze(entry);
 			}),
 		),
 		activePlayer,
 		opponent,
 		pullEffectLog<T>(key: string) {
-			if (!legacy?.pullEffectLog) {
+			if (!helpers?.pullEffectLog) {
 				return undefined;
 			}
-			// TODO: Remove legacy effect log dependency when formatters migrate.
-			return legacy.pullEffectLog<T>(key);
+			return helpers.pullEffectLog<T>(key);
 		},
 		actionCostResource: session.actionCostResource,
 		recentResourceGains: cloneRecentResourceGains(session.recentResourceGains),

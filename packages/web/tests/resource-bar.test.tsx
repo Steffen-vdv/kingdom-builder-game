@@ -100,8 +100,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 				developments: DEVELOPMENTS,
 			},
 			{
-				pullEffectLog: (key) => ctx.pullEffectLog(key),
-				passives: ctx.passives,
+				pullEffectLog: (key) => session.pullEffectLog(key),
+				evaluationMods: session.getPassiveEvaluationMods(),
 			},
 		);
 		currentGame = {

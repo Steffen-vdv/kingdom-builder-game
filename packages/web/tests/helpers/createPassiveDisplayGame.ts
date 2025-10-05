@@ -32,7 +32,7 @@ function createPassiveGame(ctx: EngineContext): PassiveGameContext {
 		},
 		{
 			pullEffectLog: (key) => ctx.pullEffectLog(key),
-			passives: ctx.passives,
+			evaluationMods: ctx.passives.evaluationMods,
 		},
 	);
 	const mockGame: MockGame = {

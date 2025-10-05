@@ -40,7 +40,7 @@ const translationContext = createTranslationContext(
 	},
 	{
 		pullEffectLog: (key) => ctx.pullEffectLog(key),
-		passives: ctx.passives,
+		evaluationMods: ctx.passives.evaluationMods,
 	},
 );
 const mockGame = {
