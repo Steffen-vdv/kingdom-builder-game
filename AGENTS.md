@@ -77,8 +77,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   descriptive identifiers, and the ~250-line limit for new modules. Missing
   plugins such as `eslint-plugin-import` are auto-installed; if tooling fails,
   install with `npm install --no-save eslint-plugin-import`.
-- `npm run format` applies Prettier with **tab indentation** and an 80-character
-  print width across TypeScript, JSON, Markdown, etc.
+- `npm run format` runs `prettier . --write` to apply Prettier with **tab
+  indentation** and an 80-character print width across TypeScript, JSON,
+  Markdown, etc.
 - Legacy files above 250 lines remain until refactored; new code should respect
   the limit.
 
