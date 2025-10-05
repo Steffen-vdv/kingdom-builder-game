@@ -4,6 +4,7 @@ import {
 	getActionCosts,
 	performAction,
 	resolveActionEffects,
+	EFFECTS,
 	type EffectDef,
 } from '../../src';
 import { createTestEngine } from '../helpers';
@@ -163,5 +164,46 @@ describe('royal decree action effect group', () => {
 			id: developmentId,
 			landId: params.landId,
 		});
+	});
+	it('falls back to effect metadata when params drop action ids', () => {
+		const ctx = createTestEngine();
+		toMain(ctx);
+
+		const [actionId, royalDecree] = ctx.actions
+			.entries()
+			.find(([, def]) => def.effects.some(isEffectGroup))!;
+		const group = royalDecree.effects.find(isEffectGroup)!;
+		const option = group.options[0];
+		const optionId = option.id;
+		const nextLandId = `${ctx.activePlayer.id}-L${
+			ctx.activePlayer.lands.length + 1
+		}`;
+		const params = {
+			landId: nextLandId,
+			choices: {
+				[group.id]: { optionId },
+			},
+		} as const;
+		const costs = getActionCosts(actionId, ctx, params);
+		ctx.activePlayer.ap = costs[CResource.ap] ?? 0;
+		ctx.activePlayer.gold = costs[CResource.gold] ?? 0;
+
+		const originalHandler = EFFECTS.get('action:perform');
+		EFFECTS.add('action:perform', (effect, engineCtx, mult) => {
+			const paramsRecord = effect.params as Record<string, unknown> | undefined;
+			if (paramsRecord && paramsRecord['actionId'] === option.actionId) {
+				delete paramsRecord['actionId'];
+				delete paramsRecord['__actionId'];
+			}
+			return originalHandler(effect, engineCtx, mult);
+		});
+
+		expect(() => performAction(actionId, ctx, params)).not.toThrow();
+		EFFECTS.add('action:perform', originalHandler);
+
+		const developedLand = ctx.activePlayer.lands.find(
+			(land) => land.id === nextLandId,
+		);
+		expect(developedLand?.developments).toContain(option.params?.['id']);
 	});
 });

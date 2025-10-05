@@ -66,6 +66,11 @@ function buildOptionEffects(
 			actionId: option.actionId,
 			__actionId: option.actionId,
 		},
+		meta: {
+			actionId: option.actionId,
+			__actionId: option.actionId,
+			optionId: option.id,
+		},
 	};
 	return applyParamsToEffects([effect], optionParams);
 }

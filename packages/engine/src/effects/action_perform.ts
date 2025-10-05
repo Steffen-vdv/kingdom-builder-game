@@ -12,16 +12,34 @@ type ActionPerformParams = ActionParameters<string> & {
 
 export const actionPerform: EffectHandler = (effect, ctx, mult = 1) => {
 	const rawParams = effect.params as ActionPerformParams | undefined;
+	const meta = effect.meta;
+	const metaActionIdValue = meta?.['actionId'];
+	const metaHiddenIdValue = meta?.['__actionId'];
+	const metaActionId =
+		typeof metaActionIdValue === 'string' ? metaActionIdValue : undefined;
+	const metaHiddenId =
+		typeof metaHiddenIdValue === 'string' ? metaHiddenIdValue : undefined;
 	let id: string | undefined;
 	if (typeof rawParams?.__actionId === 'string') {
 		id = rawParams.__actionId;
 	} else if (typeof rawParams?.actionId === 'string') {
 		id = rawParams.actionId;
-	} else if (typeof rawParams?.id === 'string') {
+	} else if (typeof metaHiddenId === 'string') {
+		id = metaHiddenId;
+	} else if (typeof metaActionId === 'string') {
+		id = metaActionId;
+	} else if (
+		typeof rawParams?.id === 'string' &&
+		ctx.actions.has(rawParams.id)
+	) {
 		id = rawParams.id;
 	}
 	if (!id) {
-		throw new Error('action:perform requires id');
+		const received =
+			typeof rawParams?.id === 'string'
+				? ` (received id "${rawParams.id}")`
+				: '';
+		throw new Error(`action:perform requires actionId${received}`);
 	}
 	let forwarded: ActionParameters<string> | undefined;
 	if (rawParams) {
