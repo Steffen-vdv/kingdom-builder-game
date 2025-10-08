@@ -100,7 +100,11 @@ function PlayerNameDialog({
 		};
 	}, [open, onClose]);
 
-	if (!open || typeof document === 'undefined') {
+	if (typeof document === 'undefined') {
+		return null;
+	}
+
+	if (!open) {
 		return null;
 	}
 
