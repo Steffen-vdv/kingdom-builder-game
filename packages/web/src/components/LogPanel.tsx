@@ -128,13 +128,12 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	);
 	const closeButtonClasses = clsx(
 		'flex h-8 w-8 items-center justify-center rounded-full border',
-		'border-slate-300 text-slate-500 transition',
-		'hover:border-slate-400 hover:text-slate-700',
-		'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500',
+		'border-rose-500 bg-rose-500 text-base font-semibold leading-none text-white',
+		'transition hover:border-rose-600 hover:bg-rose-600',
+		'focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500',
 		'focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100',
-		'dark:border-slate-700 dark:text-slate-300',
-		'dark:hover:border-slate-500 dark:hover:text-white',
-		'dark:focus-visible:ring-offset-slate-900',
+		'dark:border-rose-400 dark:bg-rose-500 dark:hover:bg-rose-400',
+		'dark:focus-visible:ring-offset-slate-900 cursor-pointer',
 	);
 	const closeButtonProps = {
 		type: 'button' as const,
