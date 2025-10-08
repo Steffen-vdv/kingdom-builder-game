@@ -26,6 +26,11 @@ export default defineConfig({
 				'packages/web/**',
 				'packages/contents/**',
 				'packages/**/dist/**',
+				'scripts/**',
+				'**/vitest.config.ts',
+				'**/.eslintrc.cjs',
+				'**/*.config.ts',
+				'**/*.config.cjs',
 			],
 			thresholds: {
 				statements: 80,
