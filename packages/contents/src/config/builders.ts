@@ -19,19 +19,15 @@ import {
 	PopulationRoleBuilder,
 	ResourceBuilder,
 	StatBuilder,
-} from './builders/domainBuilders';
-export {
-	happinessTier,
-	tierDisplay,
-	tierPassiveText,
-} from './builders/tierBuilders';
+} from './builders/domain';
+export { happinessTier, tierDisplay, tierPassiveText } from './builders/tiers';
 
 export type {
 	InfoDef,
 	PopulationRoleInfo,
 	ResourceInfo,
 	StatInfo,
-} from './builders/domainBuilders';
+} from './builders/domain';
 
 export {
 	ActionBuilder,
