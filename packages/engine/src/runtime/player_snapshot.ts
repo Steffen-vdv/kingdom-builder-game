@@ -16,8 +16,47 @@ export function deepClone<T>(value: T): T {
 	try {
 		return structuredClone(value);
 	} catch {
+		return manualClone(value);
+	}
+}
+
+function manualClone<T>(value: T, seen = new WeakMap<object, unknown>()): T {
+	if (typeof value !== 'object' || value === null) {
 		return value;
 	}
+
+	if (Array.isArray(value)) {
+		const cached = seen.get(value);
+		if (cached) {
+			return cached as T;
+		}
+		const result: unknown[] = [];
+		seen.set(value, result);
+		for (const item of value) {
+			result.push(manualClone(item, seen));
+		}
+		return result as unknown as T;
+	}
+
+	const prototype = Reflect.getPrototypeOf(value as object);
+	if (prototype === Object.prototype || prototype === null) {
+		const cached = seen.get(value as object);
+		if (cached) {
+			return cached as T;
+		}
+		const result: Record<PropertyKey, unknown> = {};
+		seen.set(value as object, result);
+		const source = value as Record<PropertyKey, unknown>;
+		for (const key of Object.keys(source)) {
+			result[key] = manualClone(source[key], seen);
+		}
+		for (const symbol of Object.getOwnPropertySymbols(source)) {
+			result[symbol] = manualClone(source[symbol], seen);
+		}
+		return result as unknown as T;
+	}
+
+	return value;
 }
 
 function clonePassives(
