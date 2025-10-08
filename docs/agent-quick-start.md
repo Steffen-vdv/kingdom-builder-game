@@ -8,6 +8,8 @@ guide for rationale, lore, and extended background.
 
 1. **Set up tooling**
    - Install Node.js 18+ and run `npm install` from the repository root.
+   - Only the root `package-lock.json` is tracked; do not add per-package
+     lockfiles.
    - Restore your PATH in minimal shells:
      `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 2. **Run core commands**
