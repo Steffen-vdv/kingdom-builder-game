@@ -96,6 +96,7 @@ export default function BuildOptions({
 					const requirements = requirementFailures.map((failure) =>
 						translateRequirementFailure(failure, ctx),
 					);
+					const meetsRequirements = requirements.length === 0;
 					const canPay = playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(building.id);
 					const implemented = (summary?.length ?? 0) > 0;
@@ -103,12 +104,20 @@ export default function BuildOptions({
 						costs,
 						player.resources,
 					);
+					const requirementText = requirements.join(', ');
 					const title = !implemented
 						? 'Not implemented yet'
-						: !canPay
-							? (insufficientTooltip ?? 'Cannot pay costs')
-							: undefined;
-					const enabled = canPay && isActionPhase && canInteract && implemented;
+						: !meetsRequirements
+							? requirementText
+							: !canPay
+								? (insufficientTooltip ?? 'Cannot pay costs')
+								: undefined;
+					const enabled =
+						canPay &&
+						meetsRequirements &&
+						isActionPhase &&
+						canInteract &&
+						implemented;
 					return (
 						<ActionCard
 							key={building.id}

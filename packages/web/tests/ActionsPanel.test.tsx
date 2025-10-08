@@ -4,6 +4,7 @@ import { render, screen, within, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
+import { translateRequirementFailure } from '../src/translation';
 import { createActionsPanelGame } from './helpers/actionsPanel';
 import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
 
@@ -34,6 +35,8 @@ vi.mock('../src/translation', () => ({
 	),
 }));
 
+const translateRequirementFailureMock = vi.mocked(translateRequirementFailure);
+
 let mockGame = createActionsPanelGame();
 let metadata = mockGame.metadata;
 
@@ -63,6 +66,7 @@ beforeEach(() => {
 	actionCostsMock.mockReset();
 	actionRequirementsMock.mockReset();
 	requirementIconsMock.mockReset();
+	translateRequirementFailureMock.mockClear();
 	setScenario();
 });
 
@@ -132,6 +136,23 @@ describe('<ActionsPanel />', () => {
 			return requirementText.includes(icon);
 		});
 		expect(allIconsPresent).toBe(true);
+	});
+
+	it('disables building cards when requirements fail and surfaces translations', () => {
+		setScenario({ showBuilding: true });
+		render(<ActionsPanel />);
+		const buildingDefinition = metadata.building;
+		if (!buildingDefinition) {
+			throw new Error('Expected building definition to exist');
+		}
+		const buildingButton = screen.getByRole('button', {
+			name: new RegExp(buildingDefinition.name),
+		});
+		expect(buildingButton).toBeDisabled();
+		expect(translateRequirementFailureMock).toHaveBeenCalledWith(
+			expect.objectContaining({ message: 'Requires assigned worker' }),
+			expect.anything(),
+		);
 	});
 
 	it(
