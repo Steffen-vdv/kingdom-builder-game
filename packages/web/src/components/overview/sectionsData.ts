@@ -10,6 +10,7 @@ import {
 	type OverviewTokenConfig,
 	type TokenCandidateInput,
 } from './overviewTokens';
+import { normalizeCandidates } from './overviewTokenUtils';
 
 export type OverviewIconSet = Record<string, ReactNode | undefined>;
 
@@ -17,22 +18,6 @@ export type OverviewContentSection = OverviewSectionTemplate;
 
 function spanProps(span?: boolean) {
 	return span === undefined ? {} : { span };
-}
-
-function isStringArray(
-	input: TokenCandidateInput | undefined,
-): input is ReadonlyArray<string> {
-	return Array.isArray(input);
-}
-
-function normalizeCandidates(input?: TokenCandidateInput): string[] {
-	if (!input) {
-		return [];
-	}
-	if (isStringArray(input)) {
-		return [...input];
-	}
-	return [input];
 }
 
 function mergeTokenSources(
