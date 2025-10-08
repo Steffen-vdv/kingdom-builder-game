@@ -5,6 +5,7 @@ import {
 	PHASES,
 	POPULATIONS,
 	RESOURCES,
+	RULES,
 	STATS,
 } from '@kingdom-builder/contents';
 import { PassiveManager } from '@kingdom-builder/engine';
@@ -62,6 +63,7 @@ describe('createTranslationContext', () => {
 			population: number;
 			buildings?: string[];
 			passives?: EngineSessionSnapshot['game']['players'][number]['passives'];
+			passiveRecords?: EngineSessionSnapshot['game']['players'][number]['passiveRecords'];
 		}): EngineSessionSnapshot['game']['players'][number] => ({
 			id: config.id,
 			name: config.name,
@@ -76,6 +78,7 @@ describe('createTranslationContext', () => {
 			skipPhases: {},
 			skipSteps: {},
 			passives: config.passives ?? [],
+			passiveRecords: config.passiveRecords ?? [],
 		});
 		const players: EngineSessionSnapshot['game']['players'] = [
 			makePlayer({
@@ -92,6 +95,13 @@ describe('createTranslationContext', () => {
 						meta: {
 							source: { icon: BUILDINGS.get(buildingId).icon },
 						},
+					},
+				],
+				passiveRecords: [
+					{
+						id: passiveId,
+						owner: 'A' as PlayerId,
+						effects: [],
 					},
 				],
 			}),
@@ -123,7 +133,11 @@ describe('createTranslationContext', () => {
 				A: compensation(2),
 				B: compensation(1),
 			},
+			rules: RULES,
 		};
+		const passiveRecords = new Map(
+			players.map((player) => [player.id, player.passiveRecords]),
+		);
 		const context = createTranslationContext(
 			session,
 			{
@@ -134,6 +148,10 @@ describe('createTranslationContext', () => {
 			{
 				pullEffectLog,
 				evaluationMods: passiveManager.evaluationMods,
+			},
+			{
+				rules: RULES,
+				passiveRecords,
 			},
 		);
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
@@ -168,6 +186,14 @@ describe('createTranslationContext', () => {
 				owned: context.passives.list(activeId).map(({ id }) => id),
 				descriptor: context.passives.get(passiveId, activeId),
 				evaluationMods: evaluationSnapshot,
+				records: context.passives
+					.records(activeId)
+					.map(({ id, owner }) => ({ id, owner })),
+				definitionOwner: context.passives.getRecord(passiveId, activeId)?.owner,
+			},
+			rules: {
+				tieredResourceKey: context.rules.tieredResourceKey,
+				tierCount: context.rules.tierDefinitions.length,
 			},
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
@@ -186,6 +212,7 @@ describe('createTranslationContext', () => {
 			    },
 			  },
 			  "passives": {
+			    "definitionOwner": "A",
 			    "descriptor": {
 			      "icon": "🌱",
 			      "meta": {
@@ -207,6 +234,12 @@ describe('createTranslationContext', () => {
 			    ],
 			    "owned": [
 			      "passive-a",
+			    ],
+			    "records": [
+			      {
+			        "id": "passive-a",
+			        "owner": "A",
+			      },
 			    ],
 			  },
 			  "phases": [
@@ -237,6 +270,10 @@ describe('createTranslationContext', () => {
 			      "has": true,
 			      "id": "farm",
 			    },
+			  },
+			  "rules": {
+			    "tierCount": 9,
+			    "tieredResourceKey": "happiness",
 			  },
 			}
 		`);

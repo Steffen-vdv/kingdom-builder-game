@@ -108,6 +108,16 @@ export function GameProvider({
 
 	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
 	const ruleSnapshot = useMemo(() => session.getRuleSnapshot(), [session]);
+	const passiveRecords = useMemo(
+		() =>
+			new Map(
+				sessionState.game.players.map((player) => [
+					player.id,
+					player.passiveRecords,
+				]),
+			),
+		[sessionState],
+	);
 
 	useEffect(() => {
 		const [primary] = ctx.game.players;
@@ -135,8 +145,12 @@ export function GameProvider({
 					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
 					evaluationMods: session.getPassiveEvaluationMods(),
 				},
+				{
+					rules: ruleSnapshot,
+					passiveRecords,
+				},
 			),
-		[sessionState, session],
+		[sessionState, session, ruleSnapshot, passiveRecords],
 	);
 
 	const {

@@ -203,6 +203,10 @@ export function getLegacySessionContext(
 	session: EngineSession,
 	snapshot: EngineSessionSnapshot,
 ): LegacySessionContextData {
+	const passiveRecords = new Map(
+		snapshot.game.players.map((player) => [player.id, player.passiveRecords]),
+	);
+	const ruleSnapshot = session.getRuleSnapshot();
 	const translationContext = createTranslationContext(
 		snapshot,
 		{
@@ -213,6 +217,10 @@ export function getLegacySessionContext(
 		{
 			pullEffectLog: <T>(key: string) => session.pullEffectLog<T>(key),
 			evaluationMods: session.getPassiveEvaluationMods(),
+		},
+		{
+			rules: ruleSnapshot,
+			passiveRecords,
 		},
 	);
 	const diffContext = createDiffContext(snapshot, translationContext);

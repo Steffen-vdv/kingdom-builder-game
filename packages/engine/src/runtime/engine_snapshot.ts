@@ -15,6 +15,7 @@ import type {
 	AdvanceSkipSourceSnapshot,
 	EngineAdvanceResult,
 	EngineSessionSnapshot,
+	RuleSnapshot,
 } from './types';
 import {
 	cloneActionTraces,
@@ -119,6 +120,15 @@ export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 			amount: gain.amount,
 		})),
 		compensations: cloneCompensations(context.compensations),
+		rules: cloneRules(context),
+	};
+}
+
+function cloneRules(context: EngineContext): RuleSnapshot {
+	const { tieredResourceKey, tierDefinitions } = context.services.rules;
+	return {
+		tieredResourceKey,
+		tierDefinitions: deepClone(tierDefinitions),
 	};
 }
 

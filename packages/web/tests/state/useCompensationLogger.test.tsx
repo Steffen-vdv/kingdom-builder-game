@@ -5,6 +5,7 @@ import {
 	type EngineSession,
 	type EngineSessionSnapshot,
 	type PlayerId,
+	type RuleSnapshot,
 } from '@kingdom-builder/engine';
 import { type PlayerStartConfig } from '@kingdom-builder/protocol';
 import { type ResourceKey } from '@kingdom-builder/contents';
@@ -26,6 +27,13 @@ const diffStepSnapshotsMock = vi.mocked(TranslationModule.diffStepSnapshots);
 
 const RESOURCE_KEYS: ResourceKey[] = ['gold' as ResourceKey];
 
+function createRuleSnapshot(): RuleSnapshot {
+	return {
+		tieredResourceKey: RESOURCE_KEYS[0]!,
+		tierDefinitions: [],
+	};
+}
+
 function createSession(): EngineSession {
 	return {
 		hasAiController: () => false,
@@ -34,6 +42,7 @@ function createSession(): EngineSession {
 		advancePhase: vi.fn(),
 		pullEffectLog: vi.fn(),
 		getPassiveEvaluationMods: vi.fn(() => new Map()),
+		getRuleSnapshot: vi.fn(() => createRuleSnapshot()),
 		getLegacyContext() {
 			return {
 				activePlayer: {
@@ -83,6 +92,7 @@ function createPlayer(
 		skipPhases: {},
 		skipSteps: {},
 		passives: [],
+		passiveRecords: [],
 	};
 }
 
@@ -111,6 +121,7 @@ function createSessionState(turn: number): EngineSessionSnapshot {
 				resources: { gold: 1 },
 			},
 		} as Record<PlayerId, PlayerStartConfig>,
+		rules: createRuleSnapshot(),
 	};
 }
 

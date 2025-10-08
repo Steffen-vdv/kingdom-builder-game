@@ -4,7 +4,12 @@ import type { EngineContext } from '../context';
 import type { ActionTrace, PlayerSnapshot } from '../log';
 import type { Land, PlayerId, PlayerState } from '../state';
 import type { PassiveSummary } from '../services';
-import type { LandSnapshot, PlayerStateSnapshot } from './types';
+import { clonePassiveRecord } from '../services/passive_helpers';
+import type {
+	LandSnapshot,
+	PassiveRecordSnapshot,
+	PlayerStateSnapshot,
+} from './types';
 
 type StatSnapshotBucket = PlayerStateSnapshot['statSources'][string];
 
@@ -25,6 +30,16 @@ function clonePassives(
 	playerId: PlayerId,
 ): PassiveSummary[] {
 	return context.passives.list(playerId).map((passive) => ({ ...passive }));
+}
+
+function clonePassiveRecords(
+	context: EngineContext,
+	playerId: PlayerId,
+): PassiveRecordSnapshot[] {
+	return context.passives.values(playerId).map((record) => {
+		const { frames: _frames, ...snapshot } = clonePassiveRecord(record);
+		return snapshot;
+	});
 }
 
 function cloneStatSources(
@@ -110,6 +125,7 @@ export function snapshotPlayer(
 		skipPhases: cloneSkipPhases(player.skipPhases),
 		skipSteps: cloneSkipSteps(player.skipSteps),
 		passives: clonePassives(context, player.id),
+		passiveRecords: clonePassiveRecords(context, player.id),
 	};
 }
 
