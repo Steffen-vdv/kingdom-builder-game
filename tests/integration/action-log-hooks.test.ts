@@ -87,8 +87,9 @@ describe('content-driven action log hooks', () => {
 				start: GAME_START,
 				rules: RULES,
 			});
+			const snapshot = session.getSnapshot();
 			const translationContext = createTranslationContext(
-				session.getSnapshot(),
+				snapshot,
 				{
 					actions: content.actions,
 					buildings,
@@ -97,6 +98,10 @@ describe('content-driven action log hooks', () => {
 				{
 					pullEffectLog: (key) => session.pullEffectLog(key),
 					evaluationMods: session.getPassiveEvaluationMods(),
+				},
+				{
+					ruleSnapshot: session.getRuleSnapshot(),
+					passiveRecords: snapshot.passiveRecords,
 				},
 			);
 

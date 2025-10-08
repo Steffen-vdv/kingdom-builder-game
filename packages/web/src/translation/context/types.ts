@@ -1,4 +1,9 @@
-import type { PassiveSummary, PlayerId } from '@kingdom-builder/engine';
+import type {
+	PassiveRecordSnapshot,
+	PassiveSummary,
+	PlayerId,
+	RuleSnapshot,
+} from '@kingdom-builder/engine';
 import type {
 	ActionConfig,
 	BuildingConfig,
@@ -26,6 +31,8 @@ export type TranslationPassiveDescriptor = {
 	meta?: { source?: { icon?: string } };
 };
 
+export type TranslationPassiveDefinition = PassiveRecordSnapshot;
+
 /**
  * Map of evaluator modifier identifiers to the owning modifier instances. The
  * values remain intentionally untyped because translation formatters only
@@ -44,6 +51,11 @@ export type TranslationPassiveModifierMap = ReadonlyMap<
 export interface TranslationPassives {
 	list(owner?: PlayerId): PassiveSummary[];
 	get(id: string, owner: PlayerId): TranslationPassiveDescriptor | undefined;
+	getDefinition(
+		id: string,
+		owner: PlayerId,
+	): TranslationPassiveDefinition | undefined;
+	definitions(owner: PlayerId): ReadonlyArray<TranslationPassiveDefinition>;
 	readonly evaluationMods: TranslationPassiveModifierMap;
 }
 
@@ -88,6 +100,7 @@ export interface TranslationContext {
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;
 	readonly opponent: TranslationPlayer;
+	readonly rules: RuleSnapshot;
 	readonly recentResourceGains: ReadonlyArray<{
 		key: string;
 		amount: number;

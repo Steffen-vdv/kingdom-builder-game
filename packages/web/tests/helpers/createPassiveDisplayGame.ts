@@ -24,8 +24,9 @@ type PassiveGameContext = {
 function createPassiveGame(ctx: EngineContext): PassiveGameContext {
 	const handleHoverCard = vi.fn();
 	const clearHoverCard = vi.fn();
+	const engineSnapshot = snapshotEngine(ctx);
 	const translationContext = createTranslationContext(
-		snapshotEngine(ctx),
+		engineSnapshot,
 		{
 			actions: ACTIONS,
 			buildings: BUILDINGS,
@@ -35,14 +36,15 @@ function createPassiveGame(ctx: EngineContext): PassiveGameContext {
 			pullEffectLog: (key) => ctx.pullEffectLog(key),
 			evaluationMods: ctx.passives.evaluationMods,
 		},
+		{
+			ruleSnapshot: engineSnapshot.rules,
+			passiveRecords: engineSnapshot.passiveRecords,
+		},
 	);
 	const mockGame: MockGame = {
 		ctx,
 		translationContext,
-		ruleSnapshot: {
-			tieredResourceKey: ctx.services.rules.tieredResourceKey,
-			tierDefinitions: ctx.services.rules.tierDefinitions,
-		},
+		ruleSnapshot: engineSnapshot.rules,
 		handleHoverCard,
 		clearHoverCard,
 		resolution: null,
