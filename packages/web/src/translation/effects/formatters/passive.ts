@@ -239,5 +239,32 @@ registerEffectFormatter('passive', 'add', {
 			},
 		];
 	},
-	log: () => [],
+	log: (eff, ctx) => {
+		const icon =
+			(eff.params?.['icon'] as string | undefined) ?? PASSIVE_INFO.icon;
+		const name =
+			(eff.params?.['name'] as string | undefined) ?? PASSIVE_INFO.label;
+		const prefix = icon ? `${icon} ` : '';
+		const label = `${prefix}${name}`.trim();
+		const inner = describeEffects(eff.effects || [], ctx);
+		const duration = resolveDurationMeta(eff, ctx);
+		const items = [...inner];
+		if (duration) {
+			items.push(
+				`${prefix}${name} duration: Until player's next ${formatDuration(duration)}`,
+			);
+		}
+		if (!label) {
+			return items;
+		}
+		if (items.length === 0) {
+			return `${label} added`;
+		}
+		return [
+			{
+				title: `${label} added`,
+				items,
+			},
+		];
+	},
 });

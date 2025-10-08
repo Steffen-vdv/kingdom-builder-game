@@ -76,6 +76,9 @@ describe('hold festival action translation', () => {
 			festivalActionId,
 			attackActionId,
 		);
+		const upkeepDescriptionLabel = `${
+			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
+		}${details.upkeepLabel}`;
 		expect(log).toEqual([
 			`${details.festival.icon} ${details.festival.name}`,
 			`  ${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
