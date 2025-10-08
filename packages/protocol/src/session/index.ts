@@ -179,3 +179,17 @@ export interface SessionRequirementFailure {
 }
 
 export type SessionActionRequirementList = SessionRequirementFailure[];
+
+export type {
+	SessionIdentifier,
+	SessionPlayerNameMap,
+	SessionCreateRequest,
+	SessionCreateResponse,
+	SessionStateResponse,
+	SessionAdvanceRequest,
+	SessionAdvanceResponse,
+	SessionSetDevModeRequest,
+	SessionSetDevModeResponse,
+} from './contracts';
+
+export * as contracts from './contracts';
