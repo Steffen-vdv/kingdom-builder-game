@@ -5,6 +5,7 @@ import { Resource, Stat, performAction } from '@kingdom-builder/engine';
 import {
 	formatNumber,
 	formatPercent,
+	formatSignedValue,
 } from '../src/translation/effects/formatters/attack/shared';
 import {
 	createSyntheticCtx,
@@ -78,25 +79,32 @@ describe('army attack translation log', () => {
 
 		const log = logContent('action', attack.id, ctx);
 		const powerValue = (value: number) =>
-			statToken(powerStat, 'Attack', formatNumber(value));
+			statToken(powerStat, 'Attack', formatSignedValue(value, formatNumber));
 		const absorptionValue = (value: number) =>
-			statToken(absorptionStat, 'Absorption', formatPercent(value));
+			statToken(
+				absorptionStat,
+				'Absorption',
+				formatSignedValue(value, formatPercent),
+			);
 		const fortValue = (value: number) =>
-			statToken(fortStat, 'Fortification', formatNumber(value));
-		const castleValue = `${castle.icon}${castleBefore}`;
-		const castleAfterValue = `${castle.icon}${castleAfter}`;
+			statToken(
+				fortStat,
+				'Fortification',
+				formatSignedValue(value, formatNumber),
+			);
+		const castleAfterValue = `${castle.icon} ${castle.label} ${castleAfter}`;
 		expect(log).toEqual([
 			`Played ${attack.icon} ${attack.name}`,
-			`  Damage evaluation: ${powerValue(armyStrength)} vs. ${absorptionValue(0)} ${fortValue(fortBefore)} ${castleValue}`,
-			`    ${powerValue(armyStrength)} vs. ${absorptionValue(0)} --> ${powerValue(remainingAfterAbsorption)}`,
-			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,
-			`    ${powerValue(remainingAfterFort)} vs. ${castleValue} --> ${castleAfterValue}`,
+			`  Evaluate damage: Compare ${powerValue(armyStrength)} against ${absorptionValue(0)}; Compare remaining damage against ${fortValue(fortBefore)}; Apply damage to ${castle.icon} ${castle.label} ${castleBefore}`,
+			`    Compare ${powerValue(armyStrength)} against ${absorptionValue(0)} → ${powerValue(remainingAfterAbsorption)}`,
+			`    Compare ${powerValue(remainingAfterAbsorption)} against ${fortValue(fortBefore)} → ${fortValue(0)} and carry forward ${powerValue(remainingAfterFort)}`,
+			`    Apply ${powerValue(remainingAfterFort)} to ${castle.icon} ${castle.label} ${castleBefore} → ${castleAfterValue}`,
 			`  ${castle.icon} ${castle.label} damage trigger evaluation`,
 			`    ${defenderName}: ${happiness.icon} ${happiness.label} ${opponentHappinessDelta} (${opponentHappinessBefore}→${opponentHappinessAfter})`,
 			`    ${attackerName}: ${happiness.icon} ${happiness.label} ${
 				attackerHappinessDelta >= 0 ? '+' : ''
 			}${attackerHappinessDelta} (${attackerHappinessBefore}→${attackerHappinessAfter})`,
-			`    Triggered ${plunder.icon} ${plunder.name}`,
+			`    Trigger ${plunder.icon} ${plunder.name}`,
 			`      ${defenderName}: ${gold.icon} ${gold.label} -${PLUNDER_PERCENT}% (${opponentGoldBefore}→${opponentGoldAfter}) (${opponentGoldDelta})`,
 			`      ${attackerName}: ${gold.icon} ${gold.label} ${
 				playerGoldDelta >= 0 ? '+' : ''
@@ -136,17 +144,25 @@ describe('army attack translation log', () => {
 		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
 		const log = logContent('action', buildingAttack.id, ctx);
 		const powerValue = (value: number) =>
-			statToken(powerStat, 'Attack', formatNumber(value));
+			statToken(powerStat, 'Attack', formatSignedValue(value, formatNumber));
 		const absorptionValue = (value: number) =>
-			statToken(absorptionStat, 'Absorption', formatPercent(value));
+			statToken(
+				absorptionStat,
+				'Absorption',
+				formatSignedValue(value, formatPercent),
+			);
 		const fortValue = (value: number) =>
-			statToken(fortStat, 'Fortification', formatNumber(value));
+			statToken(
+				fortStat,
+				'Fortification',
+				formatSignedValue(value, formatNumber),
+			);
 		expect(log).toEqual([
 			`Played ${buildingAttack.icon} ${buildingAttack.name}`,
-			`  Damage evaluation: ${powerValue(armyStrength)} vs. ${absorptionValue(0)} ${fortValue(fortBefore)} ${buildingDisplay}`,
-			`    ${powerValue(armyStrength)} vs. ${absorptionValue(0)} --> ${powerValue(remainingAfterAbsorption)}`,
-			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,
-			`    ${powerValue(remainingAfterFort)} destroys ${buildingDisplay}`,
+			`  Evaluate damage: Compare ${powerValue(armyStrength)} against ${absorptionValue(0)}; Compare remaining damage against ${fortValue(fortBefore)}; Destroy ${buildingDisplay} with ${powerValue(remainingAfterFort)}`,
+			`    Compare ${powerValue(armyStrength)} against ${absorptionValue(0)} → ${powerValue(remainingAfterAbsorption)}`,
+			`    Compare ${powerValue(remainingAfterAbsorption)} against ${fortValue(fortBefore)} → ${fortValue(0)} and carry forward ${powerValue(remainingAfterFort)}`,
+			`    Destroy ${buildingDisplay} with ${powerValue(remainingAfterFort)}`,
 			`  ${buildingDisplay} destruction trigger evaluation`,
 			`    ${attackerName}: ${gold.icon} ${gold.label} ${
 				playerGoldDelta >= 0 ? '+' : ''

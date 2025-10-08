@@ -137,8 +137,8 @@ describe('army attack translation summary', () => {
 				)}`,
 				items: [
 					'Damage reduction applied',
-					`Damage applied to opponent's defenses`,
-					`If opponent defenses fall, overflow remaining damage on opponent ${targetDisplay}`,
+					'Apply damage to opponent defenses',
+					`If opponent defenses fall, overflow remaining damage onto opponent ${targetDisplay}`,
 				],
 			},
 		]);
