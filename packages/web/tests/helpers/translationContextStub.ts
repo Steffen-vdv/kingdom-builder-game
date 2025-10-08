@@ -70,6 +70,7 @@ export function createTranslationContextStub(
 		({
 			tieredResourceKey: 'happiness',
 			tierDefinitions: [],
+			winConditions: [],
 		} as RuleSnapshot);
 	return {
 		actions: options.actions,

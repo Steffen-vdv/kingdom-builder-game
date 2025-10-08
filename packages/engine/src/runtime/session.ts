@@ -28,7 +28,6 @@ import {
 } from './simulate_upcoming_phases';
 import type { PlayerId } from '../state';
 import type { AIDependencies } from '../ai';
-import type { HappinessTierDefinition } from '../services/tiered_resource_types';
 import type { WinConditionDefinition } from '../services/win_condition_types';
 
 export interface ActionDefinitionSummary {
@@ -96,12 +95,6 @@ export interface EngineSession {
 	 * snapshots. Avoid new usage and prefer the session facade instead.
 	 */
 	getLegacyContext(): EngineContext;
-}
-
-export interface RuleSnapshot {
-	tieredResourceKey: ResourceKey;
-	tierDefinitions: HappinessTierDefinition[];
-	winConditions: WinConditionDefinition[];
 }
 
 export type {

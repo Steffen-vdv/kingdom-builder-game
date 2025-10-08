@@ -126,6 +126,7 @@ describe('createTranslationContext', () => {
 			rules: {
 				tieredResourceKey: resourceKey,
 				tierDefinitions: [],
+				winConditions: [],
 			},
 			passiveRecords: {
 				A: [
@@ -280,6 +281,7 @@ describe('createTranslationContext', () => {
                           "rules": {
                             "tierDefinitions": [],
                             "tieredResourceKey": "gold",
+                            "winConditions": [],
                           },
                         }
                 `);

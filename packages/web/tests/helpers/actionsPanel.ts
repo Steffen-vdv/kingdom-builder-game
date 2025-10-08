@@ -231,6 +231,7 @@ export function createActionsPanelGame({
 		ruleSnapshot: {
 			tieredResourceKey: Resource.happiness,
 			tierDefinitions: [],
+			winConditions: [],
 		},
 		...createActionsPanelState(actionCostResource),
 		metadata: {

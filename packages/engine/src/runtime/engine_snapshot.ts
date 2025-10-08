@@ -142,10 +142,15 @@ export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 }
 
 function cloneRuleSnapshot(context: EngineContext): RuleSnapshot {
-	const { tieredResourceKey, tierDefinitions } = context.services.rules;
+	const {
+		tieredResourceKey,
+		tierDefinitions,
+		winConditions = [],
+	} = context.services.rules;
 	return {
 		tieredResourceKey,
 		tierDefinitions: structuredClone(tierDefinitions),
+		winConditions: structuredClone(winConditions),
 	} satisfies RuleSnapshot;
 }
 
