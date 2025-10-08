@@ -15,6 +15,10 @@ export type {
 	TransportErrorCode,
 	TransportRequest,
 } from './transport/SessionTransport.js';
+export {
+	createFastifySessionTransport,
+	type FastifySessionTransportOptions,
+} from './transport/FastifySessionTransport.js';
 export type { AuthContext, AuthRole } from './auth/AuthContext.js';
 export { AuthError } from './auth/AuthError.js';
 export {
