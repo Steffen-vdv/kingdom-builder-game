@@ -23,7 +23,6 @@ import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
 import { createContentFactory } from '../factories/content.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
-import type { EvaluationModifier } from '../../src/services/passive_types.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -158,9 +157,8 @@ describe('EngineSession', () => {
 
 	it('clones effect log entries when pulled from the session', () => {
 		const session = createTestSession();
-		const context = session.getLegacyContext();
 		const entry = { detail: { amount: 7 } };
-		context.pushEffectLog('test:log', entry);
+		session.pushEffectLog('test:log', entry);
 		const pulled = session.pullEffectLog<typeof entry>('test:log');
 		expect(pulled).not.toBe(entry);
 		expect(pulled).toEqual(entry);
@@ -172,25 +170,12 @@ describe('EngineSession', () => {
 
 	it('returns cloned passive evaluation modifier maps', () => {
 		const session = createTestSession();
-		const context = session.getLegacyContext();
-		const modifier: EvaluationModifier = () => ({ percent: 0.5 });
-		context.passives.registerEvaluationModifier(
-			'mod:test',
-			'test:target',
-			modifier,
-		);
 		const mods = session.getPassiveEvaluationMods();
-		const original = context.passives.evaluationMods;
-		expect(mods).not.toBe(original);
-		const clonedInner = mods.get('test:target');
-		const originalInner = original.get('test:target');
-		expect(clonedInner).not.toBe(originalInner);
-		if (!clonedInner || !originalInner) {
-			throw new Error('Missing modifier buckets');
-		}
-		clonedInner.set('mod:other', () => ({ percent: 0 }));
-		expect(originalInner.has('mod:other')).toBe(false);
-		expect(originalInner.get('mod:test')).toBe(modifier);
+		expect(mods.size).toBe(0);
+		mods.set('test:target', new Map());
+		const refreshed = session.getPassiveEvaluationMods();
+		expect(refreshed).not.toBe(mods);
+		expect(refreshed.has('test:target')).toBe(false);
 	});
 
 	it('clones action cost lookups from the session', () => {

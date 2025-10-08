@@ -39,34 +39,9 @@ function createSession(): EngineSession {
 			tierDefinitions: [],
 			winConditions: [],
 		})),
-		getLegacyContext() {
-			return {
-				activePlayer: {
-					id: 'A',
-					lands: [],
-					buildings: [],
-					resources: {},
-					stats: {},
-				},
-				buildings: {
-					get() {
-						return { icon: '', name: '' };
-					},
-				},
-				developments: {
-					get() {
-						return { icon: '', name: '' };
-					},
-				},
-				passives: {
-					list() {
-						return [];
-					},
-				},
-			} as unknown as EngineSession['getLegacyContext'] extends () => infer R
-				? R
-				: never;
-		},
+		pushEffectLog: vi.fn(),
+		applyDeveloperPreset: vi.fn(),
+		updatePlayerName: vi.fn(),
 	} as unknown as EngineSession;
 }
 

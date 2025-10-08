@@ -8,6 +8,8 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	Resource,
+	type ResourceKey,
 } from '@kingdom-builder/contents';
 
 interface EffectGroup {
@@ -34,13 +36,18 @@ describe('royal decree via session', () => {
 			start: GAME_START,
 			rules: RULES,
 		});
-		const ctx = session.getLegacyContext();
-		while (ctx.game.currentPhase !== 'main') {
+		let snapshot = session.getSnapshot();
+		while (snapshot.game.currentPhase !== 'main') {
 			session.advancePhase();
+			snapshot = session.getSnapshot();
 		}
-		const [royalActionId, royalDecree] = ctx.actions
-			.entries()
-			.find(([, def]) => def.effects.some(isEffectGroup))!;
+		const withGroup = ACTIONS.entries().find(([, def]) =>
+			def.effects.some(isEffectGroup),
+		);
+		if (!withGroup) {
+			throw new Error('Expected an action with effect groups');
+		}
+		const [royalActionId, royalDecree] = withGroup;
 		const developGroup = royalDecree.effects.find(isEffectGroup);
 		expect(developGroup).toBeDefined();
 		const options = developGroup?.options ?? [];
@@ -48,17 +55,33 @@ describe('royal decree via session', () => {
 		for (const option of options) {
 			expect(option.params?.['developmentId']).toBeDefined();
 		}
+		const playerId = snapshot.game.players[0]!.id;
 		for (const option of options) {
-			ctx.activePlayer.gold = 12;
-			ctx.activePlayer.ap = 1;
-			const beforeLands = ctx.activePlayer.lands.length;
-			const newestBefore = ctx.activePlayer.lands.at(-1);
+			session.applyDeveloperPreset({
+				playerId,
+				resources: [
+					{
+						key: Resource.gold as ResourceKey,
+						target: 12,
+					},
+					{
+						key: Resource.ap as ResourceKey,
+						target: 1,
+					},
+				],
+			});
+			const before = session.getSnapshot();
+			const beforePlayer = before.game.players[0]!;
+			const beforeLands = beforePlayer.lands.length;
+			const newestBefore = beforePlayer.lands.at(-1);
 			const optionId = option.id;
 			session.performAction(royalActionId, {
 				choices: { [developGroup!.id]: { optionId } },
 			});
-			expect(ctx.activePlayer.lands.length).toBe(beforeLands + 1);
-			const newest = ctx.activePlayer.lands.at(-1);
+			const after = session.getSnapshot();
+			const afterPlayer = after.game.players[0]!;
+			expect(afterPlayer.lands.length).toBe(beforeLands + 1);
+			const newest = afterPlayer.lands.at(-1);
 			expect(newest).not.toBe(newestBefore);
 			expect(newest?.developments).toContain(option.params?.['developmentId']);
 		}
