@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import type { Focus } from '@kingdom-builder/contents';
-import { getActionCosts } from '@kingdom-builder/engine';
 import {
 	describeContent,
 	splitSummary,
@@ -11,11 +10,15 @@ import { useAnimate } from '../../utils/useAutoAnimate';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
-	getOptionalProperty,
 	playerHasRequiredResources,
 	sumNonActionCosts,
 } from './utils';
-import type { Action, Building, DisplayPlayer } from './types';
+import {
+	toPerformableAction,
+	type Action,
+	type Building,
+	type DisplayPlayer,
+} from './types';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -37,26 +40,23 @@ export default function DemolishOptions({
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		ctx,
+		session,
+		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)
 			.map((buildingId) => {
-				const rawBuilding = ctx.buildings.get(buildingId);
-				if (
-					typeof rawBuilding !== 'object' ||
-					rawBuilding === null ||
-					!('name' in rawBuilding)
-				) {
+				const building = sessionView.buildings.get(buildingId);
+				if (!building) {
 					return null;
 				}
-				const building = rawBuilding as Building;
-				const costsBag = getActionCosts(action.id, ctx, {
+				const costsBag = session.getActionCosts(action.id, {
 					id: buildingId,
 				});
 				const costs: Record<string, number> = {};
@@ -64,7 +64,7 @@ export default function DemolishOptions({
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
-				const focus = getOptionalProperty<Focus>(rawBuilding, 'focus');
+				const focus = building.focus as Focus | undefined;
 				return { id: buildingId, building, costs, total, focus };
 			})
 			.filter(
@@ -84,17 +84,23 @@ export default function DemolishOptions({
 				}
 				return first.building.name.localeCompare(second.building.name);
 			});
-	}, [ctx, action.id, actionCostResource, player.buildings.size]);
+	}, [
+		session,
+		sessionView.buildings,
+		action.id,
+		actionCostResource,
+		player.buildings.size,
+	]);
 
 	if (entries.length === 0) {
 		return null;
 	}
 
+	const actionInfo = sessionView.actions.get(action.id);
 	return (
 		<div>
 			<h3 className="font-medium">
-				{ctx.actions.get(action.id)?.icon || ''}{' '}
-				{ctx.actions.get(action.id)?.name}{' '}
+				{actionInfo?.icon || ''} {actionInfo?.name || action.name}{' '}
 				<span className="italic text-sm font-normal">
 					(Removes a structure and its ongoing benefits)
 				</span>
@@ -120,13 +126,13 @@ export default function DemolishOptions({
 							? (insufficientTooltip ?? 'Cannot pay costs')
 							: undefined;
 					const enabled = canPay && isActionPhase && canInteract && implemented;
-					const upkeep = ctx.buildings.get(id)?.upkeep;
+					const upkeep = building.upkeep;
 					return (
 						<ActionCard
 							key={id}
 							title={
 								<>
-									{ctx.buildings.get(id)?.icon || ''} {building.name}
+									{building.icon || ''} {building.name}
 								</>
 							}
 							costs={costs}
@@ -144,7 +150,7 @@ export default function DemolishOptions({
 								if (!canInteract) {
 									return;
 								}
-								void handlePerform(action, { id });
+								void handlePerform(toPerformableAction(action), { id });
 							}}
 							onMouseEnter={() => {
 								const full = describeContent(
@@ -157,9 +163,9 @@ export default function DemolishOptions({
 								);
 								const { effects, description } = splitSummary(full);
 								handleHoverCard({
-									title: `${ctx.actions.get(action.id)?.icon || ''} ${
-										ctx.actions.get(action.id)?.name
-									} - ${ctx.buildings.get(id)?.icon || ''} ${building.name}`,
+									title: `${actionInfo?.icon || ''} ${
+										actionInfo?.name ?? action.name
+									} - ${building.icon || ''} ${building.name}`,
 									effects,
 									requirements,
 									costs,

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { RESOURCES } from '@kingdom-builder/contents';
+import { RESOURCES, type Focus } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	summarizeContent,
@@ -25,23 +25,34 @@ import {
 import type { Action, Building, Development, DisplayPlayer } from './types';
 
 export default function ActionsPanel() {
-	const { ctx, translationContext, tabsEnabled, actionCostResource } =
-		useGameEngine();
+	const {
+		sessionState,
+		sessionView,
+		translationContext,
+		tabsEnabled,
+		actionCostResource,
+	} = useGameEngine();
 	const sectionRef = useAnimate<HTMLDivElement>();
-	const player = ctx.game.players[0]!;
-	const opponent = ctx.game.players[1]!;
+	const player = sessionView.active;
+	if (!player) {
+		return null;
+	}
+	const opponentView = sessionView.opponent;
+	const hasOpponent = Boolean(opponentView);
+	const opponent = opponentView ?? player;
 	const [viewingOpponent, setViewingOpponent] = useState(false);
 
 	const actionPhaseId = useMemo(
-		() => ctx.phases.find((phaseDefinition) => phaseDefinition.action)?.id,
-		[ctx],
+		() =>
+			sessionState.phases.find((phaseDefinition) => phaseDefinition.action)?.id,
+		[sessionState.phases],
 	);
 	const isActionPhase = isActionPhaseActive(
-		ctx.game.currentPhase,
+		sessionState.game.currentPhase,
 		actionPhaseId,
 		tabsEnabled,
 	);
-	const isLocalTurn = ctx.activePlayer.id === player.id;
+	const isLocalTurn = sessionState.game.activePlayerId === player.id;
 
 	useEffect(() => {
 		if (!isLocalTurn && viewingOpponent) {
@@ -49,48 +60,53 @@ export default function ActionsPanel() {
 		}
 	}, [isLocalTurn, viewingOpponent]);
 
+	useEffect(() => {
+		if (!hasOpponent && viewingOpponent) {
+			setViewingOpponent(false);
+		}
+	}, [hasOpponent, viewingOpponent]);
+
 	const selectedPlayer: DisplayPlayer = viewingOpponent ? opponent : player;
 	const canInteract = isLocalTurn && isActionPhase && !viewingOpponent;
 	const panelDisabled = !canInteract;
 
-	const actions = useMemo<Action[]>(
-		() =>
-			Array.from(
-				(ctx.actions as unknown as { map: Map<string, Action> }).map.values(),
+	const actions = useMemo<Action[]>(() => {
+		const list = sessionView.actionsByPlayer.get(selectedPlayer.id) ?? [];
+		return list
+			.filter(
+				(actionDefinition) =>
+					!actionDefinition.system ||
+					selectedPlayer.actions.has(actionDefinition.id),
 			)
-				.filter(
-					(actionDefinition) =>
-						!actionDefinition.system ||
-						selectedPlayer.actions.has(actionDefinition.id),
-				)
-				.sort(
-					(firstAction, secondAction) =>
-						(firstAction.order ?? 0) - (secondAction.order ?? 0),
-				),
-		[ctx, selectedPlayer.actions.size, selectedPlayer.id],
-	);
+			.map((actionDefinition) => {
+				const { focus, ...rest } = actionDefinition;
+				if (typeof focus === 'string') {
+					return { ...rest, focus: focus as Focus } as Action;
+				}
+				return rest as Action;
+			});
+	}, [sessionView.actionsByPlayer, selectedPlayer]);
 	const developmentOptions = useMemo<Development[]>(
 		() =>
-			Array.from(
-				(
-					ctx.developments as unknown as { map: Map<string, Development> }
-				).map.values(),
-			)
-				.filter((developmentDefinition) => !developmentDefinition.system)
-				.sort(
-					(firstDevelopment, secondDevelopment) =>
-						(firstDevelopment.order ?? 0) - (secondDevelopment.order ?? 0),
-				),
-		[ctx],
+			sessionView.developmentList.map((developmentDefinition) => {
+				const { focus, ...rest } = developmentDefinition;
+				if (typeof focus === 'string') {
+					return { ...rest, focus: focus as Focus } as Development;
+				}
+				return rest as Development;
+			}),
+		[sessionView.developmentList],
 	);
 	const buildingOptions = useMemo<Building[]>(
 		() =>
-			Array.from(
-				(
-					ctx.buildings as unknown as { map: Map<string, Building> }
-				).map.values(),
-			),
-		[ctx],
+			sessionView.buildingList.map((buildingDefinition) => {
+				const { focus, ...rest } = buildingDefinition;
+				if (typeof focus === 'string') {
+					return { ...rest, focus: focus as Focus } as Building;
+				}
+				return rest as Building;
+			}),
+		[sessionView.buildingList],
 	);
 
 	const actionSummaries = useMemo(() => {
@@ -185,7 +201,7 @@ export default function ActionsPanel() {
 							<span>Not In Main Phase</span>
 						</span>
 					)}
-					{isLocalTurn && (
+					{isLocalTurn && hasOpponent && (
 						<button
 							type="button"
 							className={TOGGLE_BUTTON_CLASSES}

@@ -1,9 +1,7 @@
 import React, { type Dispatch, type SetStateAction } from 'react';
-import {
-	getActionRequirements,
-	type ActionEffectGroup,
-	type ActionEffectGroupOption,
-	type EngineContext,
+import type {
+	ActionEffectGroup,
+	ActionEffectGroupOption,
 } from '@kingdom-builder/engine';
 import {
 	describeContent,
@@ -18,7 +16,13 @@ import ActionCard from './ActionCard';
 import { formatMissingResources } from './utils';
 import type { PendingActionState } from './GenericActions';
 import { useEffectGroupOptions } from './useEffectGroupOptions';
-import type { Action, DisplayPlayer, HoverCardData } from './types';
+import {
+	toPerformableAction,
+	type Action,
+	type DisplayPlayer,
+	type GameEngineApi,
+	type HoverCardData,
+} from './types';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -36,7 +40,7 @@ interface GenericActionCardProps {
 		option: ActionEffectGroupOption,
 		params?: Record<string, unknown>,
 	) => void;
-	context: EngineContext;
+	session: GameEngineApi['session'];
 	translationContext: TranslationContext;
 	actionCostResource: ResourceKey;
 	handlePerform: (
@@ -60,7 +64,7 @@ function GenericActionCard({
 	cancelPending,
 	beginSelection,
 	handleOptionSelect,
-	context,
+	session,
 	translationContext,
 	actionCostResource,
 	handlePerform,
@@ -68,9 +72,9 @@ function GenericActionCard({
 	clearHoverCard,
 	formatRequirement,
 }: GenericActionCardProps) {
-	const requirementFailures = getActionRequirements(action.id, context);
+	const requirementFailures = session.getActionRequirements(action.id);
 	const requirements = requirementFailures.map((failure) =>
-		formatRequirement(translateRequirementFailure(failure, context)),
+		formatRequirement(translateRequirementFailure(failure, translationContext)),
 	);
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
 	const canPay = Object.entries(costs).every(
@@ -112,7 +116,7 @@ function GenericActionCard({
 	const optionCards = useEffectGroupOptions({
 		currentGroup,
 		pendingParams: pending?.params,
-		context,
+		session,
 		translationContext,
 		formatRequirement,
 		handleOptionSelect,
@@ -172,7 +176,7 @@ function GenericActionCard({
 					return;
 				}
 				setPending(null);
-				void handlePerform(action);
+				void handlePerform(toPerformableAction(action));
 			}}
 			onMouseEnter={
 				isPending
