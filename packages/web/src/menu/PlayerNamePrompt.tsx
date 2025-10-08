@@ -55,8 +55,8 @@ export function PlayerNamePrompt({ onSubmitName }: PlayerNamePromptProps) {
 				</h2>
 				{/* prettier-ignore */}
 				<p className="text-sm text-slate-600 dark:text-slate-300/80">
-                                        {DESCRIPTION_TEXT}
-                                </p>
+					{DESCRIPTION_TEXT}
+				</p>
 			</div>
 			<form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
 				<label htmlFor={inputId} className={NAME_LABEL_CLASS}>
