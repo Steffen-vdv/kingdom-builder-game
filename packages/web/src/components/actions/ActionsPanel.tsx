@@ -71,7 +71,11 @@ export default function ActionsPanel() {
 	const panelDisabled = !canInteract;
 
 	const actions = useMemo<Action[]>(() => {
-		const list = sessionView.actionsByPlayer.get(selectedPlayer.id) ?? [];
+		const list =
+			sessionView.actionsByPlayer.get(selectedPlayer.id) ??
+			sessionView.actionList.filter((actionDefinition) =>
+				selectedPlayer.actions.has(actionDefinition.id),
+			);
 		return list
 			.filter(
 				(actionDefinition) =>
@@ -85,7 +89,7 @@ export default function ActionsPanel() {
 				}
 				return rest as Action;
 			});
-	}, [sessionView.actionsByPlayer, selectedPlayer]);
+	}, [sessionView.actionList, sessionView.actionsByPlayer, selectedPlayer]);
 	const developmentOptions = useMemo<Development[]>(
 		() =>
 			sessionView.developmentList.map((developmentDefinition) => {
