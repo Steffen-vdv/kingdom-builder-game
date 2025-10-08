@@ -6,10 +6,26 @@ import {
 } from '@kingdom-builder/contents';
 import type { AttackPlayerDiff } from '@kingdom-builder/engine';
 import { formatStatValue } from '../../../../utils/stats';
-import type { DiffFormatOptions } from './types';
+import type { AttackStatDescriptor, DiffFormatOptions } from './types';
 
 export function iconLabel(icon: string | undefined, label: string): string {
 	return icon ? `${icon} ${label}` : label;
+}
+
+export function attackStatLabel(
+	stat: AttackStatDescriptor | undefined,
+	fallback: string,
+): string {
+	return stat ? iconLabel(stat.icon, stat.label) : fallback;
+}
+
+export function attackStatValue(
+	stat: AttackStatDescriptor | undefined,
+	fallback: string,
+	value: string,
+): string {
+	const label = attackStatLabel(stat, fallback);
+	return `${label} ${value}`;
 }
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
@@ -26,6 +42,15 @@ export function formatNumber(value: number): string {
 
 export function formatPercent(value: number): string {
 	return `${formatNumber(value * 100)}%`;
+}
+
+export function formatSignedValue(
+	value: number,
+	formatter: (value: number) => string,
+): string {
+	const magnitude = formatter(Math.abs(value));
+	const prefix = value >= 0 ? '+' : '-';
+	return `${prefix}${magnitude}`;
 }
 
 function formatSigned(value: number): string {

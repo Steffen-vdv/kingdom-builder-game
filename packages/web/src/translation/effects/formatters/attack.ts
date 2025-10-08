@@ -120,7 +120,7 @@ function buildActionLog(
 	entry.attacker.forEach((diff) => {
 		items.push(formatter.formatDiff(ownerLabel(ctx, 'attacker'), diff));
 	});
-	return { title: `Triggered ${icon} ${name}`.trim(), items };
+	return { title: `Trigger ${icon} ${name}`.trim(), items };
 }
 
 export function buildOnDamageEntry(
