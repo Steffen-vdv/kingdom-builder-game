@@ -58,7 +58,7 @@ export interface EngineSession {
 	getActionRequirements<T extends string>(
 		actionId: T,
 		params?: ActionParameters<T>,
-	): string[];
+	): ReturnType<typeof resolveActionRequirements>;
 	pullEffectLog<T>(key: string): T | undefined;
 	getPassiveEvaluationMods(): Map<string, Map<string, EvaluationModifier>>;
 	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T>;

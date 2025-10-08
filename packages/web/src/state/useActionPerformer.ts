@@ -13,7 +13,7 @@ import {
 } from '@kingdom-builder/contents';
 import {
 	createTranslationDiffContext,
-  diffStepSnapshots,
+	diffStepSnapshots,
 	logContent,
 	snapshotPlayer,
 	translateRequirementFailure,
