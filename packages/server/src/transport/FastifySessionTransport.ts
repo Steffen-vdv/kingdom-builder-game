@@ -149,20 +149,27 @@ async function handleGetSessionSnapshot(
 }
 
 async function handleAdvanceSession(
-	request: FastifySessionRequest,
-	sessionManager: SessionManager,
-	authMiddleware: AuthMiddleware | undefined,
+        request: FastifySessionRequest,
+        sessionManager: SessionManager,
+        authMiddleware: AuthMiddleware | undefined,
 ): Promise<SessionAdvanceResponse> {
-	const sessionId = parseSessionId(request.params.sessionId);
-	const parsed = sessionAdvanceRequestSchema.safeParse({ sessionId });
-	if (!parsed.success) {
-		throw new TransportError('INVALID_REQUEST', 'Invalid session identifier.', {
-			issues: parsed.error.issues,
-		});
-	}
+        const sessionId = parseSessionId(request.params.sessionId);
+        const parsed = sessionAdvanceRequestSchema.safeParse({ sessionId });
+        if (!parsed.success) {
+                throw new TransportError('INVALID_REQUEST', 'Invalid session identifier.', {
+                        issues: parsed.error.issues,
+                });
+        }
 	if (authMiddleware) {
 		try {
-			authMiddleware(createTransportRequest(request, parsed.data));
+			const context = authMiddleware(createTransportRequest(request, parsed.data));
+			const { roles } = context;
+			if (!roles.includes('session:advance') && !roles.includes('admin')) {
+				throw new AuthError(
+					'FORBIDDEN',
+					'Missing required role "session:advance".',
+				);
+			}
 		} catch (error) {
 			if (error instanceof AuthError) {
 				throw new TransportError(error.code, error.message, { cause: error });
@@ -170,16 +177,16 @@ async function handleAdvanceSession(
 			throw error;
 		}
 	}
-	const session = sessionManager.getSession(sessionId);
-	if (!session) {
-		throw new TransportError('NOT_FOUND', `Session "${sessionId}" not found.`);
-	}
-	const advance = await session.enqueue(() => session.advancePhase());
-	const snapshot = sessionManager.getSnapshot(sessionId);
-	const response: SessionAdvanceResponse = {
-		sessionId,
-		advance,
-		snapshot,
+        const session = sessionManager.getSession(sessionId);
+        if (!session) {
+                throw new TransportError('NOT_FOUND', `Session "${sessionId}" not found.`);
+        }
+        const advance = await session.enqueue(() => session.advancePhase());
+        const snapshot = sessionManager.getSnapshot(sessionId);
+        const response: SessionAdvanceResponse = {
+                sessionId,
+                advance,
+                snapshot,
 	};
 	return sessionAdvanceResponseSchema.parse(response);
 }
