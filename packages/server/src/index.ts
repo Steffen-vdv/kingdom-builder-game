@@ -1,6 +1,12 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+export { SessionManager } from './session/SessionManager.js';
+export type {
+	SessionManagerOptions,
+	CreateSessionOptions,
+} from './session/SessionManager.js';
+
 export function startServer(): void {
 	console.log('Starting Kingdom Builder server...');
 }
