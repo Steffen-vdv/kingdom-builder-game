@@ -12,6 +12,7 @@ export const useValueChangeIndicators = (value: number) => {
 	const previousRef = useRef<number | undefined>();
 	const idRef = useRef(0);
 	const [changes, setChanges] = useState<ValueChangeIndicator[]>([]);
+	const timersRef = useRef<Map<number, number>>(new Map());
 
 	useEffect(() => {
 		const previous = previousRef.current;
@@ -30,26 +31,49 @@ export const useValueChangeIndicators = (value: number) => {
 	}, [value]);
 
 	useEffect(() => {
-		if (changes.length === 0) {
-			return undefined;
+		if (typeof window === 'undefined') {
+			return;
 		}
 
+		const scheduledTimers = timersRef.current;
+		const activeIds = new Set(changes.map((change) => change.id));
+
+		for (const [id, timeoutId] of Array.from(scheduledTimers.entries())) {
+			if (!activeIds.has(id)) {
+				window.clearTimeout(timeoutId);
+				scheduledTimers.delete(id);
+			}
+		}
+
+		changes.forEach((change) => {
+			if (scheduledTimers.has(change.id)) {
+				return;
+			}
+
+			const timeoutId = window.setTimeout(() => {
+				scheduledTimers.delete(change.id);
+				setChanges((existing) =>
+					existing.filter((item) => item.id !== change.id),
+				);
+			}, INDICATOR_DURATION);
+
+			scheduledTimers.set(change.id, timeoutId);
+		});
+	}, [changes]);
+
+	useEffect(() => {
 		if (typeof window === 'undefined') {
 			return undefined;
 		}
 
-		const timers = changes.map((change) =>
-			window.setTimeout(() => {
-				setChanges((existing) =>
-					existing.filter((item) => item.id !== change.id),
-				);
-			}, INDICATOR_DURATION),
-		);
-
 		return () => {
-			timers.forEach((timer) => window.clearTimeout(timer));
+			const scheduledTimers = timersRef.current;
+			scheduledTimers.forEach((timeoutId) => {
+				window.clearTimeout(timeoutId);
+			});
+			scheduledTimers.clear();
 		};
-	}, [changes]);
+	}, []);
 
 	return changes;
 };
