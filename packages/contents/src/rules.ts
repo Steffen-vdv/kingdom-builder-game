@@ -3,7 +3,7 @@ import type {
 	HappinessTierDefinition,
 } from '@kingdom-builder/protocol';
 import { createTierPassiveEffect } from './happinessHelpers';
-import { happinessTier, passiveParams } from './config/builders';
+import { happinessTier, passiveParams, winCondition } from './config/builders';
 import { Resource } from './resources';
 import { formatPassiveRemoval } from './text';
 import {
@@ -74,6 +74,20 @@ const tierDefinitions: HappinessTierDefinition[] = TIER_CONFIGS.map((config) =>
 	buildTierDefinition(config),
 );
 
+const WIN_CONDITIONS = [
+	winCondition('castle-destroyed')
+		.resourceAtMost(Resource.castleHP, 0)
+		.subjectDefeat()
+		.opponentVictory()
+		.display((display) =>
+			display
+				.icon('castleHP')
+				.victory('The enemy stronghold collapses—your banners fly victorious!')
+				.defeat('Your castle lies in ruins. The siege is lost.'),
+		)
+		.build(),
+];
+
 export const RULES: RuleSet = {
 	defaultActionAPCost: 1,
 	absorptionCapPct: 1,
@@ -83,4 +97,5 @@ export const RULES: RuleSet = {
 	slotsPerNewLand: 1,
 	maxSlotsPerLand: 2,
 	basePopulationCap: 1,
+	winConditions: WIN_CONDITIONS,
 };

@@ -25,6 +25,7 @@ import {
 import type { PlayerId, ResourceKey } from '../state';
 import type { AIDependencies } from '../ai';
 import type { HappinessTierDefinition } from '../services/tiered_resource_types';
+import type { WinConditionDefinition } from '../services/win_condition_types';
 
 export interface ActionDefinitionSummary {
 	id: string;
@@ -47,6 +48,12 @@ function clonePassiveEvaluationMods(
 		entries.push([target, new Map(modifiers)]);
 	}
 	return new Map(entries);
+}
+
+function cloneWinConditions(
+	definitions: WinConditionDefinition[],
+): WinConditionDefinition[] {
+	return structuredClone(definitions);
 }
 
 export interface EngineSession {
@@ -90,6 +97,7 @@ export interface EngineSession {
 export interface RuleSnapshot {
 	tieredResourceKey: ResourceKey;
 	tierDefinitions: HappinessTierDefinition[];
+	winConditions: WinConditionDefinition[];
 }
 
 export type {
@@ -98,6 +106,7 @@ export type {
 	AdvanceSkipSnapshot,
 	AdvanceSkipSourceSnapshot,
 	GameSnapshot,
+	GameConclusionSnapshot,
 	PlayerStateSnapshot,
 	LandSnapshot,
 } from './types';
@@ -177,11 +186,17 @@ export function createEngineSession(
 			return structuredClone(result);
 		},
 		getRuleSnapshot() {
-			const { tieredResourceKey, tierDefinitions } = context.services.rules;
+			const {
+				tieredResourceKey,
+				tierDefinitions,
+				winConditions = [],
+			} = context.services.rules;
 			const clonedDefinitions = structuredClone(tierDefinitions);
+			const clonedWinConditions = cloneWinConditions(winConditions);
 			return {
 				tieredResourceKey,
 				tierDefinitions: clonedDefinitions,
+				winConditions: clonedWinConditions,
 			} satisfies RuleSnapshot;
 		},
 		getLegacyContext() {

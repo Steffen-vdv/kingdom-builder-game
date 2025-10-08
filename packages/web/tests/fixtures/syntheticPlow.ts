@@ -179,6 +179,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		slotsPerNewLand: 1,
 		maxSlotsPerLand: 2,
 		basePopulationCap: 1,
+		winConditions: [],
 	};
 	return {
 		factory,

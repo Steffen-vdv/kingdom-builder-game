@@ -51,5 +51,10 @@ export type {
 	TierDisplayMetadata,
 	TierEffect,
 	HappinessTierDefinition,
+	WinConditionOutcome,
+	WinConditionDefinition,
+	WinConditionDisplay,
+	WinConditionTrigger,
+	WinConditionResult,
 	RuleSet,
 } from './services';

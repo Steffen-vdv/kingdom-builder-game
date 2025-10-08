@@ -42,6 +42,13 @@ export interface PlayerStateSnapshot {
 	passives: PassiveSummary[];
 }
 
+export interface GameConclusionSnapshot {
+	conditionId: string;
+	winnerId: PlayerId;
+	loserId: PlayerId;
+	triggeredBy: PlayerId;
+}
+
 export interface GameSnapshot {
 	turn: number;
 	currentPlayerIndex: number;
@@ -53,6 +60,7 @@ export interface GameSnapshot {
 	players: PlayerStateSnapshot[];
 	activePlayerId: PlayerId;
 	opponentId: PlayerId;
+	conclusion?: GameConclusionSnapshot;
 }
 
 export interface AdvanceSkipSourceSnapshot {

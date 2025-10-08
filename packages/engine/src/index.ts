@@ -22,6 +22,7 @@ export {
 	type AdvanceSkipSnapshot,
 	type AdvanceSkipSourceSnapshot,
 	type GameSnapshot,
+	type GameConclusionSnapshot,
 	type PlayerStateSnapshot,
 	type LandSnapshot,
 	type RuleSnapshot,

@@ -140,6 +140,7 @@ export const createSyntheticFestivalScenario =
 			slotsPerNewLand: 1,
 			maxSlotsPerLand: 1,
 			basePopulationCap: 1,
+			winConditions: [],
 		};
 
 		const ctx = createEngine({

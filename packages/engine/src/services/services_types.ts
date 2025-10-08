@@ -1,5 +1,6 @@
 import type { ResourceKey } from '../state';
 import type { HappinessTierDefinition } from './tiered_resource_types';
+import type { WinConditionDefinition } from './win_condition_types';
 
 export type RuleSet = {
 	defaultActionAPCost: number;
@@ -10,4 +11,5 @@ export type RuleSet = {
 	slotsPerNewLand: number;
 	maxSlotsPerLand: number;
 	basePopulationCap: number;
+	winConditions: WinConditionDefinition[];
 };

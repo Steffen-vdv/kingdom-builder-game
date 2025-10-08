@@ -100,6 +100,7 @@ describe('modifier evaluation handlers', () => {
 			slotsPerNewLand: 1,
 			maxSlotsPerLand: 1,
 			basePopulationCap: 1,
+			winConditions: [],
 		};
 		try {
 			const ctx = createEngine({
@@ -192,6 +193,7 @@ describe('modifier evaluation handlers', () => {
 			slotsPerNewLand: 1,
 			maxSlotsPerLand: 1,
 			basePopulationCap: 1,
+			winConditions: [],
 		};
 		const ctx = createEngine({
 			actions: content.actions,

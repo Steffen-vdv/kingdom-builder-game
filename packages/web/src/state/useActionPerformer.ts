@@ -63,6 +63,10 @@ export function useActionPerformer({
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
 			const snapshotBefore = session.getSnapshot();
+			if (snapshotBefore.game.conclusion) {
+				pushErrorToast('The battle is already decided.');
+				return;
+			}
 			let { translationContext: context } = getLegacySessionContext(
 				session,
 				snapshotBefore,
@@ -163,6 +167,9 @@ export function useActionPerformer({
 				}
 
 				if (!mountedRef.current) {
+					return;
+				}
+				if (snapshotAfter.game.conclusion) {
 					return;
 				}
 				if (

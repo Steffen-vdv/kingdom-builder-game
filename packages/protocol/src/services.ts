@@ -58,6 +58,36 @@ export type TierEffect = {
 	disableGrowth?: boolean;
 };
 
+export type WinConditionOutcome = 'victory' | 'defeat' | 'none';
+
+export type WinConditionResult = {
+	subject: WinConditionOutcome;
+	opponent?: WinConditionOutcome;
+};
+
+export type WinConditionDisplay = {
+	icon?: string;
+	victory?: string;
+	defeat?: string;
+};
+
+export type WinConditionResourceTrigger = {
+	type: 'resource';
+	key: string;
+	comparison: 'lt' | 'lte' | 'gt' | 'gte';
+	value: number;
+	target: 'self' | 'opponent';
+};
+
+export type WinConditionTrigger = WinConditionResourceTrigger;
+
+export type WinConditionDefinition = {
+	id: string;
+	trigger: WinConditionTrigger;
+	result: WinConditionResult;
+	display?: WinConditionDisplay;
+};
+
 export type HappinessTierDefinition = {
 	id: string;
 	range: TierRange;
@@ -78,4 +108,5 @@ export type RuleSet = {
 	slotsPerNewLand: number;
 	maxSlotsPerLand: number;
 	basePopulationCap: number;
+	winConditions: WinConditionDefinition[];
 };

@@ -89,7 +89,11 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const ctx = session.getLegacyContext();
 		const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 6;
-		ctx.services.handleTieredResourceChange(ctx, happinessKey);
+		ctx.services.handleTieredResourceChange(
+			ctx,
+			ctx.activePlayer,
+			happinessKey,
+		);
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
 		const sessionState = session.getSnapshot();

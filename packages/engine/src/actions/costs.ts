@@ -102,10 +102,16 @@ export function verifyCostAffordability(
 export function deductCostsFromPlayer(
 	costs: CostBag,
 	playerState: PlayerState,
+	engineContext: EngineContext,
 ): void {
 	for (const resourceKey of Object.keys(costs)) {
 		const amount = costs[resourceKey] ?? 0;
 		playerState.resources[resourceKey] =
 			(playerState.resources[resourceKey] || 0) - amount;
+		engineContext.services.handleResourceChange(
+			engineContext,
+			playerState,
+			resourceKey,
+		);
 	}
 }
