@@ -317,6 +317,7 @@ export function createActionsPanelGame({
 	} as const;
 
 	return {
+		sessionId: 'test-session',
 		session,
 		sessionState,
 		sessionView,

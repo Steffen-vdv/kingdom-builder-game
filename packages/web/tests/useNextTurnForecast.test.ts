@@ -24,6 +24,7 @@ vi.stubGlobal('document', jsdom.window.document);
 vi.stubGlobal('navigator', jsdom.window.navigator);
 
 interface MockGameEngine {
+	sessionId: string;
 	session: {
 		simulateUpcomingPhases: ReturnType<typeof vi.fn>;
 		hasAiController: () => boolean;
@@ -93,6 +94,7 @@ function createDelta(amount: number): PlayerSnapshotDeltaBucket {
 }
 
 const engineValue: MockGameEngine = {
+	sessionId: 'test-session',
 	session: {
 		simulateUpcomingPhases: vi.fn(),
 		hasAiController: () => false,

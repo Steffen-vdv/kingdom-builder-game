@@ -19,6 +19,7 @@ import type {
 
 export interface GameEngineContextValue {
 	session: EngineSession;
+	sessionId: string;
 	sessionState: EngineSessionSnapshot;
 	sessionView: SessionView;
 	translationContext: TranslationContext;

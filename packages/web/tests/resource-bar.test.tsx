@@ -130,6 +130,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		};
 		const sessionView = selectSessionView(sessionState, sessionRegistries);
 		currentGame = {
+			sessionId: 'test-session',
 			session: {} as EngineSession,
 			sessionState,
 			sessionView,

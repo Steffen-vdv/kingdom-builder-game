@@ -7,22 +7,6 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import {
-	createEngineSession,
-	type EngineSession,
-} from '@kingdom-builder/engine';
-import {
-	RESOURCES,
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	BuildingId,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import { createTranslationContext } from '../translation/context';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
@@ -34,18 +18,17 @@ import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
-import { initializeDeveloperMode } from './developerModeSetup';
 import type { GameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
-import type { SessionRegistries } from './sessionSelectors.types';
-
-const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
-const SESSION_REGISTRIES: SessionRegistries = {
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-};
+import {
+	RESOURCE_KEYS,
+	SESSION_REGISTRIES,
+	TRANSLATION_REGISTRIES,
+	type SessionResourceKey,
+} from './sessionResources';
+import { createSession, fetchSnapshot, releaseSession } from './gameSessionSdk';
+import type { CreateSessionResult } from './gameSessionSdk';
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
 export type { PhaseStep } from './phaseTypes';
@@ -84,40 +67,90 @@ export function GameProvider({
 }) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
-	const session = useMemo<EngineSession>(() => {
-		const created = createEngineSession({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
+	const [sessionBundle, setSessionBundle] = useState<CreateSessionResult>(() =>
+		createSession({
 			devMode,
-		});
-		created.setDevMode(devMode);
-		const snapshot = created.getSnapshot();
-		const primaryPlayer = snapshot.game.players[0];
-		const primaryPlayerId = primaryPlayer?.id;
-		const hasMill = primaryPlayer?.buildings.includes(BuildingId.Mill) ?? false;
-		if (devMode && primaryPlayerId && snapshot.game.turn === 1 && !hasMill) {
-			initializeDeveloperMode(created, primaryPlayerId);
+			playerName: playerNameRef.current ?? DEFAULT_PLAYER_NAME,
+		}),
+	);
+	const session = sessionBundle.session;
+	const sessionId = sessionBundle.sessionId;
+	const sessionState = sessionBundle.snapshot;
+	const ruleSnapshot = sessionBundle.ruleSnapshot;
+	const sessionIdRef = useRef(sessionId);
+	sessionIdRef.current = sessionId;
+
+	useEffect(() => {
+		let cancelled = false;
+		const syncSnapshot = async () => {
+			const { snapshot, ruleSnapshot: rules } = await fetchSnapshot(session);
+			if (cancelled) {
+				return;
+			}
+			setSessionBundle((current) => {
+				if (current.sessionId !== sessionId) {
+					return current;
+				}
+				if (current.snapshot === snapshot && current.ruleSnapshot === rules) {
+					return current;
+				}
+				return {
+					...current,
+					snapshot,
+					ruleSnapshot: rules,
+				};
+			});
+		};
+		void syncSnapshot();
+		return () => {
+			cancelled = true;
+		};
+	}, [session, sessionId]);
+
+	useEffect(
+		() => () => {
+			void releaseSession(sessionIdRef.current);
+		},
+		[],
+	);
+
+	const devModeRef = useRef(devMode);
+	useEffect(() => {
+		if (devModeRef.current === devMode) {
+			return;
 		}
+		devModeRef.current = devMode;
 		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
-		if (primaryPlayerId) {
-			created.updatePlayerName(primaryPlayerId, desiredName);
-		}
-		return created;
+		const next = createSession({
+			devMode,
+			playerName: desiredName,
+		});
+		setSessionBundle((previous) => {
+			void releaseSession(previous.sessionId);
+			return next;
+		});
 	}, [devMode]);
-	const [tick, setTick] = useState(0);
-	const refresh = useCallback(() => setTick((t) => t + 1), []);
 
-	const enqueue = <T,>(task: () => Promise<T> | T) => session.enqueue(task);
+	const refresh = useCallback(async () => {
+		const { snapshot, ruleSnapshot: rules } = await fetchSnapshot(session);
+		setSessionBundle((current) => {
+			if (current.sessionId !== sessionId) {
+				return current;
+			}
+			if (current.snapshot === snapshot && current.ruleSnapshot === rules) {
+				return current;
+			}
+			return {
+				...current,
+				snapshot,
+				ruleSnapshot: rules,
+			};
+		});
+	}, [session, sessionId]);
 
-	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
-	const ruleSnapshot = useMemo(
-		() => session.getRuleSnapshot(),
-		[session, tick],
+	const enqueue = useCallback(
+		<T,>(task: () => Promise<T> | T) => session.enqueue(task),
+		[session],
 	);
 
 	const primaryPlayerSnapshot = sessionState.game.players[0];
@@ -137,7 +170,7 @@ export function GameProvider({
 				session.updatePlayerName(primaryPlayerId, desiredName);
 			})
 			.finally(() => {
-				refresh();
+				void refresh();
 			});
 	}, [session, primaryPlayerId, primaryPlayerName, refresh, playerName]);
 
@@ -145,11 +178,7 @@ export function GameProvider({
 		() =>
 			createTranslationContext(
 				sessionState,
-				{
-					actions: ACTIONS,
-					buildings: BUILDINGS,
-					developments: DEVELOPMENTS,
-				},
+				TRANSLATION_REGISTRIES,
 				{
 					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
 					evaluationMods: session.getPassiveEvaluationMods(),
@@ -173,7 +202,8 @@ export function GameProvider({
 		timeScaleRef,
 	} = useTimeScale({ devMode });
 
-	const actionCostResource = sessionState.actionCostResource as ResourceKey;
+	const actionCostResource =
+		sessionState.actionCostResource as SessionResourceKey;
 
 	const sessionView = useMemo(
 		() => selectSessionView(sessionState, SESSION_REGISTRIES),
@@ -281,8 +311,16 @@ export function GameProvider({
 		void runUntilActionPhase();
 	}, [runUntilActionPhase]);
 
+	const exitHandler = useCallback(() => {
+		void releaseSession(sessionId);
+		if (onExit) {
+			onExit();
+		}
+	}, [onExit, sessionId]);
+
 	const value: GameEngineContextValue = {
 		session,
+		sessionId,
 		sessionState,
 		sessionView,
 		translationContext,
@@ -325,7 +363,7 @@ export function GameProvider({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		...(onExit ? { onExit } : {}),
+		...(onExit ? { onExit: exitHandler } : {}),
 	};
 
 	return (

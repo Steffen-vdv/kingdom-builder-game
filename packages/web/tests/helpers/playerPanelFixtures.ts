@@ -97,6 +97,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	};
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: GameEngineContextValue = {
+		sessionId: 'test-session',
 		session: {} as EngineSession,
 		sessionState,
 		sessionView,

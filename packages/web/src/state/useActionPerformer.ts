@@ -57,7 +57,7 @@ interface UseActionPerformerOptions {
 	) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;
-	refresh: () => void;
+	refresh: () => Promise<void>;
 	pushErrorToast: (message: string, title?: string) => void;
 	mountedRef: React.MutableRefObject<boolean>;
 	endTurn: () => Promise<void>;
@@ -163,7 +163,7 @@ export function useActionPerformer({
 					name: playerAfter.name,
 				};
 				updateMainPhaseStep();
-				refresh();
+				await refresh();
 				try {
 					await showResolution({
 						action: actionMeta,

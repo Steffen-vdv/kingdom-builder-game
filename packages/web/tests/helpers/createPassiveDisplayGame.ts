@@ -47,6 +47,7 @@ export function createPassiveGame(
 	};
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: MockGame = {
+		sessionId: 'test-session',
 		session: {} as EngineSession,
 		sessionState,
 		sessionView,

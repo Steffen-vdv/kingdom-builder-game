@@ -87,6 +87,7 @@ const findActionWithReq = () => {
 };
 const actionData = findActionWithReq();
 const mockGame = {
+	sessionId: 'test-session',
 	session: {
 		getActionCosts: vi.fn(),
 		getActionRequirements: vi.fn(),

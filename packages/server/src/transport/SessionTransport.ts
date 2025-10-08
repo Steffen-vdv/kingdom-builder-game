@@ -81,8 +81,9 @@ export class SessionTransport {
 				this.applyPlayerNames(session, data.playerNames);
 			}
 		} catch (error) {
+			const cause = error instanceof Error ? error : new Error('Unknown error');
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
-				cause: error,
+				cause,
 			});
 		}
 		const response = {
@@ -183,12 +184,13 @@ export class SessionTransport {
 		session: EngineSession,
 		names: Record<string, string>,
 	): void {
-		const context = session.getLegacyContext();
-		for (const player of context.game.players) {
+		const snapshot = session.getSnapshot();
+		for (const player of snapshot.game.players) {
 			const name = names[player.id];
-			if (name) {
-				player.name = name;
+			if (!name) {
+				continue;
 			}
+			session.updatePlayerName(player.id, name);
 		}
 	}
 }

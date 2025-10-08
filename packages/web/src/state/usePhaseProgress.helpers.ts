@@ -26,7 +26,7 @@ interface AdvanceToActionPhaseOptions {
 	setMainApStart: (value: number) => void;
 	updateMainPhaseStep: (value: number) => void;
 	addLog: (entry: string | string[], player?: PlayerStateSnapshot) => void;
-	refresh: () => void;
+	refresh: () => Promise<void>;
 }
 
 export async function advanceToActionPhase({
@@ -53,7 +53,7 @@ export async function advanceToActionPhase({
 		setPhaseHistories({});
 		setDisplayPhase(snapshot.game.currentPhase);
 		setPhaseTimer(0);
-		refresh();
+		await refresh();
 		return;
 	}
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
@@ -87,7 +87,7 @@ export async function advanceToActionPhase({
 			setTabsEnabled(false);
 			setPhaseTimer(0);
 			setDisplayPhase(snapshotAfter.game.currentPhase);
-			refresh();
+			await refresh();
 			return;
 		}
 		const phaseDef = snapshotAfter.phases.find(
@@ -198,5 +198,5 @@ export async function advanceToActionPhase({
 	updateMainPhaseStep(start);
 	setDisplayPhase(refreshed.game.currentPhase);
 	setTabsEnabled(true);
-	refresh();
+	await refresh();
 }
