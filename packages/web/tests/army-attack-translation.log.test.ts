@@ -94,7 +94,7 @@ describe('army attack translation log', () => {
 			);
 		const castleAfterValue = `${castle.icon} ${castle.label} ${castleAfter}`;
 		expect(log).toEqual([
-			`Played ${attack.icon} ${attack.name}`,
+			`${attack.icon} ${attack.name}`,
 			`  Evaluate damage: Compare ${powerValue(armyStrength)} against ${absorptionValue(0)}; Compare remaining damage against ${fortValue(fortBefore)}; Apply damage to ${castle.icon} ${castle.label} ${castleBefore}`,
 			`    Compare ${powerValue(armyStrength)} against ${absorptionValue(0)} → ${powerValue(remainingAfterAbsorption)}`,
 			`    Compare ${powerValue(remainingAfterAbsorption)} against ${fortValue(fortBefore)} → ${fortValue(0)} and carry forward ${powerValue(remainingAfterFort)}`,
@@ -158,7 +158,7 @@ describe('army attack translation log', () => {
 				formatSignedValue(value, formatNumber),
 			);
 		expect(log).toEqual([
-			`Played ${buildingAttack.icon} ${buildingAttack.name}`,
+			`${buildingAttack.icon} ${buildingAttack.name}`,
 			`  Evaluate damage: Compare ${powerValue(armyStrength)} against ${absorptionValue(0)}; Compare remaining damage against ${fortValue(fortBefore)}; Destroy ${buildingDisplay} with ${powerValue(remainingAfterFort)}`,
 			`    Compare ${powerValue(armyStrength)} against ${absorptionValue(0)} → ${powerValue(remainingAfterAbsorption)}`,
 			`    Compare ${powerValue(remainingAfterAbsorption)} against ${fortValue(fortBefore)} → ${fortValue(0)} and carry forward ${powerValue(remainingAfterFort)}`,

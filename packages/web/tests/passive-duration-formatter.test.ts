@@ -132,7 +132,12 @@ describe('passive formatter duration metadata', () => {
 				items: [],
 			},
 		]);
-		expect(log).toEqual([]);
+		expect(log).toEqual([
+			{
+				title: '✨ Festival Spirit added',
+				items: ["✨ Festival Spirit duration: Until player's next 🎉 Festival"],
+			},
+		]);
 	});
 
 	it('fills missing context metadata from static phase definitions', () => {

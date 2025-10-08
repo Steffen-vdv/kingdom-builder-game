@@ -7,7 +7,7 @@ import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 
 describe('action log line formatting', () => {
 	it('nests development changes under the development headline', () => {
-		const messages = ['Played 🏗️ Develop', '  💲 Action cost'];
+		const messages = ['🏗️ Develop', '  💲 Action cost'];
 		const changes = [
 			`${LOG_KEYWORDS.developed} 🗼 Watchtower`,
 			'🛡️ Fortification Strength +2 (0→2)',
@@ -22,15 +22,15 @@ describe('action log line formatting', () => {
 	});
 
 	it('falls back to default formatting without a development headline', () => {
-		const messages = ['Played 💰 Tax'];
+		const messages = ['💰 Tax'];
 		const changes = ['Gold +3', 'Happiness -1'];
 		expect(formatDevelopActionLogLines(messages, changes)).toEqual([
-			'Played 💰 Tax',
+			'💰 Tax',
 			'  Gold +3',
 			'  Happiness -1',
 		]);
 		expect(formatActionLogLines(messages, changes)).toEqual([
-			'Played 💰 Tax',
+			'💰 Tax',
 			'  Gold +3',
 			'  Happiness -1',
 		]);
