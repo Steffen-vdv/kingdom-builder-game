@@ -201,6 +201,7 @@ export function GameProvider({
 	} = usePhaseProgress({
 		session,
 		sessionState,
+		translationContext,
 		actionPhaseId,
 		actionCostResource,
 		addLog,
@@ -223,6 +224,7 @@ export function GameProvider({
 		sessionState,
 		addLog,
 		resourceKeys: RESOURCE_KEYS,
+		translationContext,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
@@ -237,6 +239,7 @@ export function GameProvider({
 		endTurn,
 		enqueue,
 		resourceKeys: RESOURCE_KEYS,
+		translationContext,
 	});
 
 	useAiRunner({

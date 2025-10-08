@@ -5,12 +5,14 @@ import type {
 } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import {
-	createTranslationDiffContext,
+	createSnapshotDiffPlayer,
+	createSnapshotTranslationDiffContext,
 	diffStepSnapshots,
 	snapshotPlayer,
 	type PlayerSnapshot,
 	type TranslationDiffContext,
 } from '../translation';
+import type { TranslationContext } from '../translation/context';
 
 interface UseCompensationLoggerOptions {
 	session: EngineSession;
@@ -20,6 +22,7 @@ interface UseCompensationLoggerOptions {
 		player?: EngineSessionSnapshot['game']['players'][number],
 	) => void;
 	resourceKeys: ResourceKey[];
+	translationContext: TranslationContext;
 }
 
 export function useCompensationLogger({
@@ -27,6 +30,7 @@ export function useCompensationLogger({
 	sessionState,
 	addLog,
 	resourceKeys,
+	translationContext,
 }: UseCompensationLoggerOptions) {
 	const loggedSessionRef = useRef<EngineSession | null>(null);
 	const loggedPlayersRef = useRef<Set<string>>(new Set());
@@ -38,9 +42,6 @@ export function useCompensationLogger({
 		if (sessionState.game.turn !== 1) {
 			return;
 		}
-		const baseDiffContext = createTranslationDiffContext(
-			session.getLegacyContext(),
-		);
 		sessionState.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {
 				return;
@@ -77,13 +78,24 @@ export function useCompensationLogger({
 			)) {
 				before.stats[statKey] = (before.stats[statKey] || 0) - (statDelta ?? 0);
 			}
-			const diffContext: TranslationDiffContext = {
-				...baseDiffContext,
-				activePlayer: {
-					...baseDiffContext.activePlayer,
-					id: player.id,
-				},
-			};
+			const diffPlayer = createSnapshotDiffPlayer({
+				id: player.id,
+				lands: after.lands,
+				population: after.population,
+				passives: after.passives,
+			});
+			const diffContext: TranslationDiffContext =
+				createSnapshotTranslationDiffContext({
+					player: diffPlayer,
+					translation: {
+						buildings: translationContext.buildings,
+						developments: translationContext.developments,
+						passives: {
+							evaluationMods: translationContext.passives.evaluationMods,
+						},
+					},
+					evaluationMods: session.getPassiveEvaluationMods(),
+				});
 			const lines = diffStepSnapshots(
 				before,
 				after,
@@ -99,5 +111,5 @@ export function useCompensationLogger({
 				loggedPlayersRef.current.add(player.id);
 			}
 		});
-	}, [addLog, resourceKeys, session, sessionState]);
+	}, [addLog, resourceKeys, session, sessionState, translationContext]);
 }

@@ -5,15 +5,18 @@ import {
 } from '@kingdom-builder/engine';
 import { type ResourceKey, type StepDef } from '@kingdom-builder/contents';
 import {
-	createTranslationDiffContext,
+	createSnapshotDiffPlayer,
+	createSnapshotTranslationDiffContext,
 	diffStepSnapshots,
 	snapshotPlayer,
 } from '../translation';
+import type { TranslationContext } from '../translation/context';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
 
 interface AdvanceToActionPhaseOptions {
 	session: EngineSession;
+	translationContext: TranslationContext;
 	actionCostResource: ResourceKey;
 	resourceKeys: ResourceKey[];
 	runDelay: (total: number) => Promise<void>;
@@ -34,6 +37,7 @@ interface AdvanceToActionPhaseOptions {
 
 export async function advanceToActionPhase({
 	session,
+	translationContext,
 	actionCostResource,
 	resourceKeys,
 	runDelay,
@@ -50,7 +54,6 @@ export async function advanceToActionPhase({
 	refresh,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
-	const context = session.getLegacyContext();
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
 		if (!mountedRef.current) {
 			return;
@@ -111,7 +114,23 @@ export async function advanceToActionPhase({
 			const stepWithEffects: StepDef | undefined = stepDef
 				? ({ ...(stepDef as StepDef), effects } as StepDef)
 				: undefined;
-			const diffContext = createTranslationDiffContext(context);
+			const diffPlayer = createSnapshotDiffPlayer({
+				id: player.id,
+				lands: after.lands,
+				population: after.population,
+				passives: after.passives,
+			});
+			const diffContext = createSnapshotTranslationDiffContext({
+				player: diffPlayer,
+				translation: {
+					buildings: translationContext.buildings,
+					developments: translationContext.developments,
+					passives: {
+						evaluationMods: translationContext.passives.evaluationMods,
+					},
+				},
+				evaluationMods: session.getPassiveEvaluationMods(),
+			});
 			const changes = diffStepSnapshots(
 				before,
 				after,

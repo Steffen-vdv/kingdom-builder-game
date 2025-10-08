@@ -113,7 +113,7 @@ describe('content-driven action log hooks', () => {
 			}
 			expect(buildingLog[0]).toContain(hall.name);
 
-			const landId = session.getLegacyContext().activePlayer.lands[0]?.id;
+			const landId = session.getSnapshot().game.players[0]?.lands[0]?.id;
 			const developmentLog = logContent(
 				'action',
 				establish.id,

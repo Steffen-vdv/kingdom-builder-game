@@ -3,6 +3,8 @@ export { diffSnapshots } from './log/snapshots';
 export { diffStepSnapshots } from './log/diff';
 export {
 	createTranslationDiffContext,
+	createSnapshotTranslationDiffContext,
+	createSnapshotDiffPlayer,
 	type TranslationDiffContext,
 } from './log/resourceSources/context';
 export {

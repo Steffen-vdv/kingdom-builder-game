@@ -5,17 +5,9 @@ import {
 	type EngineSession,
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
-import {
-	ActionId,
-	RESOURCES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
-import {
-	createTranslationDiffContext,
-	diffStepSnapshots,
-	logContent,
-	snapshotPlayer,
-} from '../translation';
+import { ActionId, type ResourceKey } from '@kingdom-builder/contents';
+import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
+import type { TranslationContext } from '../translation/context';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
 import {
@@ -23,6 +15,13 @@ import {
 	formatDevelopActionLogLines,
 } from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import {
+	buildActionDiffContext,
+	buildCostLines,
+	collectSubActionChanges,
+	filterActionChanges,
+	resolveActionDefinition,
+} from './useActionPerformer.helpers';
 
 interface UseActionPerformerOptions {
 	session: EngineSession;
@@ -39,6 +38,7 @@ interface UseActionPerformerOptions {
 	endTurn: () => Promise<void>;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	resourceKeys: ResourceKey[];
+	translationContext: TranslationContext;
 }
 
 export function useActionPerformer({
@@ -53,10 +53,12 @@ export function useActionPerformer({
 	endTurn,
 	enqueue,
 	resourceKeys,
+	translationContext,
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
-			const context = session.getLegacyContext();
+			const resolveDefinition = (id: string) =>
+				resolveActionDefinition(translationContext, id);
 			const snapshotBefore = session.getSnapshot();
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
@@ -77,9 +79,17 @@ export function useActionPerformer({
 					throw new Error('Missing active player after action');
 				}
 				const after = snapshotPlayer(playerAfter);
-				const stepDef = context.actions.get(action.id);
+				const diffPlayer = { ...after, id: playerAfter.id };
+				const stepDef = resolveDefinition(action.id);
+				if (!stepDef) {
+					throw new Error(`Missing definition for action ${action.id}`);
+				}
 				const resolvedStep = resolveActionEffects(stepDef, params);
-				const diffContext = createTranslationDiffContext(context);
+				const diffContext = buildActionDiffContext(
+					translationContext,
+					session,
+					diffPlayer,
+				);
 				const changes = diffStepSnapshots(
 					before,
 					after,
@@ -87,91 +97,30 @@ export function useActionPerformer({
 					diffContext,
 					resourceKeys,
 				);
-				const messages = logContent('action', action.id, context, params);
+				const messages = logContent(
+					'action',
+					action.id,
+					translationContext,
+					params,
+				);
 				const logHeadline = messages[0];
-				const costLines: string[] = [];
-				for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
-					const amt = costs[key] ?? 0;
-					if (!amt) {
-						continue;
-					}
-					const info = RESOURCES[key];
-					const icon = info?.icon ? `${info.icon} ` : '';
-					const label = info?.label ?? key;
-					const beforeAmount = before.resources[key] ?? 0;
-					const afterAmount = beforeAmount - amt;
-					costLines.push(
-						`    ${icon}${label} -${amt} (${beforeAmount}→${afterAmount})`,
-					);
-				}
+				const costLines = buildCostLines(costs, before);
 				if (costLines.length) {
 					messages.splice(1, 0, '  💲 Action cost', ...costLines);
 				}
 
-				const normalize = (line: string) => {
-					const trimmed = line.trim();
-					if (!trimmed) {
-						return '';
-					}
-					return (trimmed.split(' (')[0] ?? '')
-						.replace(/\s[+-]?\d+$/, '')
-						.trim();
-				};
-
-				const subLines: string[] = [];
-				for (const trace of traces) {
-					const subStep = context.actions.get(trace.id);
-					const subResolved = resolveActionEffects(subStep);
-					const subChanges = diffStepSnapshots(
-						snapshotPlayer(trace.before),
-						snapshotPlayer(trace.after),
-						subResolved,
-						diffContext,
-						resourceKeys,
-					);
-					if (!subChanges.length) {
-						continue;
-					}
-					subLines.push(...subChanges);
-					const icon = context.actions.get(trace.id)?.icon || '';
-					const name = context.actions.get(trace.id).name;
-					const line = `  ${icon} ${name}`;
-					const index = messages.indexOf(line);
-					if (index !== -1) {
-						messages.splice(index + 1, 0, ...subChanges.map((c) => `    ${c}`));
-					}
-				}
-
-				const subPrefixes = subLines.map(normalize);
-				const messagePrefixes = new Set<string>();
-				for (const line of messages) {
-					const normalized = normalize(line);
-					if (normalized) {
-						messagePrefixes.add(normalized);
-					}
-				}
-
-				const costLabels = new Set(
-					Object.keys(costs) as (keyof typeof RESOURCES)[],
-				);
-				const filtered = changes.filter((line) => {
-					const normalizedLine = normalize(line);
-					if (messagePrefixes.has(normalizedLine)) {
-						return false;
-					}
-					if (subPrefixes.includes(normalizedLine)) {
-						return false;
-					}
-					for (const key of costLabels) {
-						const info = RESOURCES[key];
-						const prefix = info?.icon
-							? `${info.icon} ${info.label}`
-							: info.label;
-						if (line.startsWith(prefix)) {
-							return false;
-						}
-					}
-					return true;
+				const subLines = collectSubActionChanges({
+					traces,
+					diffContext,
+					resourceKeys,
+					messages,
+					resolveDefinition,
+				});
+				const filtered = filterActionChanges({
+					changes,
+					messages,
+					subLines,
+					costs,
 				});
 				const logLines = (
 					action.id === ActionId.develop
@@ -212,10 +161,10 @@ export function useActionPerformer({
 					await endTurn();
 				}
 			} catch (error) {
-				const icon = context.actions.get(action.id)?.icon || '';
+				const actionIcon = resolveDefinition(action.id)?.icon || '';
 				const message = (error as Error).message || 'Action failed';
 				pushErrorToast(message);
-				addLog(`Failed to play ${icon} ${action.name}: ${message}`, {
+				addLog(`Failed to play ${actionIcon} ${action.name}: ${message}`, {
 					id: playerBefore.id,
 					name: playerBefore.name,
 				});
@@ -233,6 +182,7 @@ export function useActionPerformer({
 			showResolution,
 			updateMainPhaseStep,
 			actionCostResource,
+			translationContext,
 		],
 	);
 

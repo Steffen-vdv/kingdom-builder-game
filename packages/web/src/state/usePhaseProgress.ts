@@ -5,6 +5,7 @@ import {
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { type ResourceKey } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../translation/context';
 import type { PhaseStep } from './phaseTypes';
 import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
@@ -13,6 +14,7 @@ import { advanceToActionPhase } from './usePhaseProgress.helpers';
 interface PhaseProgressOptions {
 	session: EngineSession;
 	sessionState: EngineSessionSnapshot;
+	translationContext: TranslationContext;
 	actionPhaseId: string | undefined;
 	actionCostResource: ResourceKey;
 	addLog: (entry: string | string[], player?: PlayerStateSnapshot) => void;
@@ -28,6 +30,7 @@ interface PhaseProgressOptions {
 export function usePhaseProgress({
 	session,
 	sessionState,
+	translationContext,
 	actionPhaseId,
 	actionCostResource,
 	addLog,
@@ -71,6 +74,7 @@ export function usePhaseProgress({
 		() =>
 			advanceToActionPhase({
 				session,
+				translationContext,
 				actionCostResource,
 				resourceKeys,
 				runDelay,
@@ -91,6 +95,7 @@ export function usePhaseProgress({
 			addLog,
 			mountedRef,
 			refresh,
+			translationContext,
 			resourceKeys,
 			runDelay,
 			runStepDelay,

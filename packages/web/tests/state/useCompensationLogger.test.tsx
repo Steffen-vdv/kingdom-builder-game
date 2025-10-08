@@ -11,6 +11,7 @@ import { type ResourceKey } from '@kingdom-builder/contents';
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
+import type { TranslationContext } from '../../src/translation/context';
 
 vi.mock('../../src/translation', async () => {
 	const actual = await vi.importActual<TranslationTypes>(
@@ -26,40 +27,32 @@ const diffStepSnapshotsMock = vi.mocked(TranslationModule.diffStepSnapshots);
 
 const RESOURCE_KEYS: ResourceKey[] = ['gold' as ResourceKey];
 
+const translationContextStub = {
+	buildings: {
+		get: vi.fn(() => ({ icon: '', name: '' })),
+		has: vi.fn(() => true),
+	},
+	developments: {
+		get: vi.fn(() => ({ icon: '', name: '' })),
+		has: vi.fn(() => true),
+	},
+	passives: {
+		evaluationMods: new Map(),
+		list: vi.fn(() => []),
+		get: vi.fn(() => undefined),
+	},
+} as unknown as TranslationContext;
+
 function createSession(): EngineSession {
 	return {
 		hasAiController: () => false,
 		getActionDefinition: () => undefined,
 		runAiTurn: vi.fn().mockResolvedValue(false),
 		advancePhase: vi.fn(),
-		getLegacyContext() {
-			return {
-				activePlayer: {
-					id: 'A',
-					lands: [],
-					buildings: [],
-					resources: {},
-					stats: {},
-				},
-				buildings: {
-					get() {
-						return { icon: '', name: '' };
-					},
-				},
-				developments: {
-					get() {
-						return { icon: '', name: '' };
-					},
-				},
-				passives: {
-					list() {
-						return [];
-					},
-				},
-			} as unknown as EngineSession['getLegacyContext'] extends () => infer R
-				? R
-				: never;
-		},
+		getSnapshot: vi.fn(),
+		performAction: vi.fn(),
+		getActionCosts: vi.fn(() => ({})),
+		getPassiveEvaluationMods: vi.fn(() => new Map()),
 	} as unknown as EngineSession;
 }
 
@@ -124,6 +117,7 @@ function Harness({ session, state, addLog }: HarnessProps) {
 		sessionState: state,
 		addLog,
 		resourceKeys: RESOURCE_KEYS,
+		translationContext: translationContextStub,
 	});
 	return null;
 }
