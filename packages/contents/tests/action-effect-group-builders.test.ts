@@ -1,12 +1,14 @@
 import {
 	ActionBuilder,
 	action,
-	actionEffectGroup,
-	actionEffectGroupOption,
 	actionParams,
 	building,
 } from '../src/config/builders';
-import type { ActionEffectGroupDef } from '../src/config/builders';
+import {
+	actionEffectGroup,
+	actionEffectGroupOption,
+} from '../src/config/builders/actionEffectGroups';
+import type { ActionEffectGroupDef } from '../src/config/builders/actionEffectGroups';
 import { ActionId } from '../src/actions';
 import { describe, expect, it } from 'vitest';
 

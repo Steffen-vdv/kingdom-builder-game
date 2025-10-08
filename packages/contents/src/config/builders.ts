@@ -1,7 +1,5 @@
 import type {
 	ActionEffect,
-	ActionEffectGroup,
-	ActionEffectGroupOption,
 	AttackTarget,
 	EffectConfig,
 	EffectDef,
@@ -28,7 +26,6 @@ import type {
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
-import type { DevelopmentId } from '../developments';
 import type { BuildingDef, DevelopmentDef, Focus, TriggerKey } from '../defs';
 import type { ActionCategory, ActionDef, ActionId } from '../actions';
 import { formatPassiveRemoval } from '../text';
@@ -44,10 +41,26 @@ import {
 	StatMethods,
 } from './builderShared';
 import type { Params } from './builderShared';
+import { ActionEffectGroupBuilder } from './builders/actionEffectGroups';
+import type {
+	ActionEffectGroupDef,
+	DevelopmentIdParam,
+} from './builders/actionEffectGroups';
 
-type DevelopmentIdParam =
-	| DevelopmentId
-	| (string & { __developmentIdParam?: never });
+export {
+	ActionEffectGroupBuilder,
+	ActionEffectGroupOptionBuilder,
+	ActionEffectGroupOptionParamsBuilder,
+	actionEffectGroup,
+	actionEffectGroupOption,
+	actionEffectGroupOptionParams,
+} from './builders/actionEffectGroups';
+
+export type {
+	ActionEffectGroupDef,
+	ActionEffectGroupOptionDef,
+	DevelopmentIdParam,
+} from './builders/actionEffectGroups';
 
 export function populationAssignmentPassiveId(role: PopulationRoleId) {
 	return `${role}_$player_$index`;
@@ -55,306 +68,6 @@ export function populationAssignmentPassiveId(role: PopulationRoleId) {
 
 function resolveEffectConfig(effect: EffectConfig | EffectBuilder) {
 	return effect instanceof EffectBuilder ? effect.build() : effect;
-}
-
-export type ActionEffectGroupOptionDef = ActionEffectGroupOption;
-
-class ActionEffectGroupOptionBuilder {
-	private readonly config: Partial<ActionEffectGroupOptionDef> = {};
-	private readonly assigned = new Set<keyof ActionEffectGroupOptionDef>();
-	private paramsConfig: Params | undefined;
-	private paramsSet = false;
-	private readonly paramKeys = new Set<string>();
-
-	constructor(id?: string) {
-		if (id) {
-			this.id(id);
-		}
-	}
-
-	private set<K extends keyof ActionEffectGroupOptionDef>(
-		key: K,
-		value: ActionEffectGroupOptionDef[K],
-		message: string,
-	) {
-		if (this.assigned.has(key)) {
-			throw new Error(message);
-		}
-		this.config[key] = value;
-		this.assigned.add(key);
-		return this;
-	}
-
-	private wasSet(key: keyof ActionEffectGroupOptionDef) {
-		return this.assigned.has(key);
-	}
-
-	id(id: string) {
-		return this.set(
-			'id',
-			id,
-			'Action effect group option already has an id(). Remove the extra id() call.',
-		);
-	}
-
-	label(label: string) {
-		return this.set(
-			'label',
-			label,
-			'Action effect group option already set label(). Remove the duplicate label() call.',
-		);
-	}
-
-	icon(icon: string) {
-		return this.set(
-			'icon',
-			icon,
-			'Action effect group option already set icon(). Remove the duplicate icon() call.',
-		);
-	}
-
-	summary(summary: string) {
-		return this.set(
-			'summary',
-			summary,
-			'Action effect group option already set summary(). Remove the duplicate summary() call.',
-		);
-	}
-
-	description(description: string) {
-		return this.set(
-			'description',
-			description,
-			'Action effect group option already set description(). Remove the duplicate description() call.',
-		);
-	}
-
-	action(actionId: ActionId) {
-		return this.set(
-			'actionId',
-			actionId,
-			'Action effect group option already set action(). Remove the duplicate action() call.',
-		);
-	}
-
-	param(key: string, value: unknown) {
-		if (this.paramsSet) {
-			throw new Error(
-				'Action effect group option already set params(...). Remove params(...) before calling param().',
-			);
-		}
-		if (this.paramKeys.has(key)) {
-			throw new Error(
-				`Action effect group option already set param "${key}". Remove the duplicate param() call.`,
-			);
-		}
-		this.paramsConfig = this.paramsConfig || {};
-		this.paramsConfig[key] = value;
-		this.paramKeys.add(key);
-		return this;
-	}
-
-	paramActionId(actionId: ActionId): this;
-	paramActionId(actionId: string): this;
-	paramActionId(actionId: string) {
-		return this.param('actionId', actionId);
-	}
-
-	paramDevelopmentId(developmentId: DevelopmentIdParam) {
-		return this.param('developmentId', developmentId);
-	}
-
-	paramLandId(landId: string) {
-		return this.param('landId', landId);
-	}
-
-	params(params: Params | ParamsBuilder) {
-		if (this.paramsSet) {
-			throw new Error(
-				'Action effect group option already set params(...). Remove the duplicate params() call.',
-			);
-		}
-		if (this.paramKeys.size) {
-			throw new Error(
-				'Action effect group option already set individual param() values. Remove them before calling params(...).',
-			);
-		}
-		this.paramsConfig =
-			params instanceof ParamsBuilder ? params.build() : params;
-		this.paramsSet = true;
-		return this;
-	}
-
-	build(): ActionEffectGroupOptionDef {
-		if (!this.wasSet('id')) {
-			throw new Error(
-				'Action effect group option is missing id(). Call id("your-option-id") before build().',
-			);
-		}
-		if (!this.wasSet('actionId')) {
-			throw new Error(
-				'Action effect group option is missing action(). Call action("action-id") before build().',
-			);
-		}
-
-		const built: ActionEffectGroupOptionDef = {
-			id: this.config.id as string,
-			actionId: this.config.actionId as string,
-		};
-
-		if (this.wasSet('label')) {
-			built.label = this.config.label as string;
-		}
-
-		if (this.wasSet('icon')) {
-			built.icon = this.config.icon;
-		}
-		if (this.wasSet('summary')) {
-			built.summary = this.config.summary;
-		}
-		if (this.wasSet('description')) {
-			built.description = this.config.description;
-		}
-		if (this.paramsConfig) {
-			built.params = this.paramsConfig;
-		}
-
-		return built;
-	}
-}
-
-export function actionEffectGroupOption(id?: string) {
-	return new ActionEffectGroupOptionBuilder(id);
-}
-
-class ActionEffectGroupOptionParamsBuilder extends ParamsBuilder<{
-	actionId?: string;
-	developmentId?: DevelopmentIdParam;
-	landId?: string;
-}> {
-	actionId(actionId: ActionId): this;
-	actionId(actionId: string): this;
-	actionId(actionId: string) {
-		return this.set(
-			'actionId',
-			actionId,
-			'Action effect group option params already set actionId(). Remove the extra actionId() call.',
-		);
-	}
-
-	developmentId(developmentId: DevelopmentIdParam) {
-		return this.set(
-			'developmentId',
-			developmentId,
-			'Action effect group option params already set developmentId(). Remove the extra developmentId() call.',
-		);
-	}
-
-	landId(landId: string) {
-		return this.set(
-			'landId',
-			landId,
-			'Action effect group option params already set landId(). Remove the extra landId() call.',
-		);
-	}
-}
-
-export function actionEffectGroupOptionParams() {
-	return new ActionEffectGroupOptionParamsBuilder();
-}
-
-export type ActionEffectGroupDef = ActionEffectGroup;
-
-class ActionEffectGroupBuilder {
-	private config: Partial<ActionEffectGroupDef> & {
-		options: ActionEffectGroupOptionDef[];
-	};
-	private readonly optionIds = new Set<string>();
-	private idSet = false;
-	private titleSet = false;
-
-	constructor(id?: string) {
-		this.config = { options: [], title: 'Choose one:' };
-		if (id) {
-			this.id(id);
-		}
-	}
-
-	id(id: string) {
-		if (this.idSet) {
-			throw new Error(
-				'Action effect group already has an id(). Remove the extra id() call.',
-			);
-		}
-		this.config.id = id;
-		this.idSet = true;
-		return this;
-	}
-
-	title(title: string) {
-		if (this.titleSet) {
-			throw new Error(
-				'Action effect group already has a title(). Remove the extra title() call.',
-			);
-		}
-		this.config.title = title;
-		this.titleSet = true;
-		return this;
-	}
-
-	icon(icon: string) {
-		this.config.icon = icon;
-		return this;
-	}
-
-	summary(summary: string) {
-		this.config.summary = summary;
-		return this;
-	}
-
-	description(description: string) {
-		this.config.description = description;
-		return this;
-	}
-
-	layout(layout: 'default' | 'compact') {
-		this.config.layout = layout;
-		return this;
-	}
-
-	option(option: ActionEffectGroupOptionBuilder | ActionEffectGroupOptionDef) {
-		const built =
-			option instanceof ActionEffectGroupOptionBuilder
-				? option.build()
-				: option;
-		if (this.optionIds.has(built.id)) {
-			throw new Error(
-				`Action effect group option id "${built.id}" already exists. Use unique option ids within a group.`,
-			);
-		}
-		this.optionIds.add(built.id);
-		this.config.options.push(built);
-		return this;
-	}
-
-	build(): ActionEffectGroupDef {
-		if (!this.idSet) {
-			throw new Error(
-				"Action effect group is missing id(). Call id('your-group-id') before build().",
-			);
-		}
-		this.config.title = this.config.title || 'Choose one:';
-		if (this.config.options.length === 0) {
-			throw new Error(
-				'Action effect group needs at least one option(). Add option(...) before build().',
-			);
-		}
-		return this.config as ActionEffectGroupDef;
-	}
-}
-
-export function actionEffectGroup(id?: string) {
-	return new ActionEffectGroupBuilder(id);
 }
 
 class ResourceEffectParamsBuilder extends ParamsBuilder<{
