@@ -23,7 +23,7 @@ import { createTranslationContext } from '../src/translation/context';
 import { translateRequirementFailure } from '../src/translation';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionSelectors.types';
+import type { SessionRegistries } from '../src/state/sessionContent';
 import {
 	useActionResolution,
 	type ActionResolution,

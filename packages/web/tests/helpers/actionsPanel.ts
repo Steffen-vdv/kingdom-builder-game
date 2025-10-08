@@ -31,7 +31,7 @@ import {
 	wrapTranslationRegistry,
 } from './translationContextStub';
 import { selectSessionView } from '../../src/state/sessionSelectors';
-import type { SessionRegistries } from '../../src/state/sessionSelectors.types';
+import type { SessionRegistries } from '../../src/state/sessionContent';
 
 export function createActionsPanelGame({
 	populationRoles,

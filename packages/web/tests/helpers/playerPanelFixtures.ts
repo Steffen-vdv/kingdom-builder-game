@@ -18,7 +18,7 @@ import { createTranslationContext } from '../../src/translation/context';
 import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
-import type { SessionRegistries } from '../../src/state/sessionSelectors.types';
+import type { SessionRegistries } from '../../src/state/sessionContent';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;

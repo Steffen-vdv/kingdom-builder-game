@@ -27,7 +27,7 @@ import {
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionSelectors.types';
+import type { SessionRegistries } from '../src/state/sessionContent';
 type MockGame = GameEngineContextValue;
 type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 

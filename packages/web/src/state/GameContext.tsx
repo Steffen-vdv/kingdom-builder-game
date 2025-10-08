@@ -7,22 +7,6 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import {
-	createEngineSession,
-	type EngineSession,
-} from '@kingdom-builder/engine';
-import {
-	RESOURCES,
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	BuildingId,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import { createTranslationContext } from '../translation/context';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
@@ -34,18 +18,21 @@ import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
-import { initializeDeveloperMode } from './developerModeSetup';
 import type { GameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
-import type { SessionRegistries } from './sessionSelectors.types';
+import {
+	SESSION_REGISTRIES,
+	RESOURCE_KEYS,
+	type ResourceKey,
+} from './sessionContent';
+import {
+	createSession,
+	fetchSnapshot,
+	releaseSession,
+	type CreateSessionResult,
+} from './sessionSdk';
 
-const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
-const SESSION_REGISTRIES: SessionRegistries = {
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-};
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
 export type { PhaseStep } from './phaseTypes';
@@ -53,21 +40,11 @@ export type { TranslationContext } from '../translation/context';
 
 const GameEngineContext = createContext<GameEngineContextValue | null>(null);
 
-export function GameProvider({
-	children,
-	onExit,
-	darkMode = true,
-	onToggleDark = () => {},
-	devMode = false,
-	musicEnabled = true,
-	onToggleMusic = () => {},
-	soundEnabled = true,
-	onToggleSound = () => {},
-	backgroundAudioMuted = true,
-	onToggleBackgroundAudioMute = () => {},
-	playerName = DEFAULT_PLAYER_NAME,
-	onChangePlayerName = () => {},
-}: {
+type Session = CreateSessionResult['session'];
+type SessionSnapshot = CreateSessionResult['snapshot'];
+type SessionRuleSnapshot = CreateSessionResult['ruleSnapshot'];
+
+type ProviderProps = {
 	children: React.ReactNode;
 	onExit?: () => void;
 	darkMode?: boolean;
@@ -81,43 +58,66 @@ export function GameProvider({
 	onToggleBackgroundAudioMute?: () => void;
 	playerName?: string;
 	onChangePlayerName?: (name: string) => void;
-}) {
+};
+
+interface SessionContainer {
+	session: Session;
+	sessionId: string;
+	snapshot: SessionSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
+}
+
+interface GameProviderInnerProps {
+	children: React.ReactNode;
+	onExit?: () => void;
+	darkMode: boolean;
+	onToggleDark: () => void;
+	devMode: boolean;
+	musicEnabled: boolean;
+	onToggleMusic: () => void;
+	soundEnabled: boolean;
+	onToggleSound: () => void;
+	backgroundAudioMuted: boolean;
+	onToggleBackgroundAudioMute: () => void;
+	playerName: string;
+	onChangePlayerName: (name: string) => void;
+	session: Session;
+	sessionState: SessionSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
+	refreshSession: () => Promise<void>;
+	onReleaseSession: () => void;
+}
+
+function GameProviderInner({
+	children,
+	onExit,
+	darkMode,
+	onToggleDark,
+	devMode,
+	musicEnabled,
+	onToggleMusic,
+	soundEnabled,
+	onToggleSound,
+	backgroundAudioMuted,
+	onToggleBackgroundAudioMute,
+	playerName = DEFAULT_PLAYER_NAME,
+	onChangePlayerName = () => {},
+	session,
+	sessionState,
+	ruleSnapshot,
+	refreshSession,
+	onReleaseSession,
+}: GameProviderInnerProps) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
-	const session = useMemo<EngineSession>(() => {
-		const created = createEngineSession({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-			devMode,
-		});
-		created.setDevMode(devMode);
-		const snapshot = created.getSnapshot();
-		const primaryPlayer = snapshot.game.players[0];
-		const primaryPlayerId = primaryPlayer?.id;
-		const hasMill = primaryPlayer?.buildings.includes(BuildingId.Mill) ?? false;
-		if (devMode && primaryPlayerId && snapshot.game.turn === 1 && !hasMill) {
-			initializeDeveloperMode(created, primaryPlayerId);
-		}
-		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
-		if (primaryPlayerId) {
-			created.updatePlayerName(primaryPlayerId, desiredName);
-		}
-		return created;
-	}, [devMode]);
-	const [tick, setTick] = useState(0);
-	const refresh = useCallback(() => setTick((t) => t + 1), []);
 
-	const enqueue = <T,>(task: () => Promise<T> | T) => session.enqueue(task);
+	const refresh = useCallback(() => {
+		void refreshSession();
+	}, [refreshSession]);
 
-	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
-	const ruleSnapshot = useMemo(
-		() => session.getRuleSnapshot(),
-		[session, tick],
+	const enqueue = useCallback(
+		<T,>(task: () => Promise<T> | T) => session.enqueue(task),
+		[session],
 	);
 
 	const primaryPlayerSnapshot = sessionState.game.players[0];
@@ -146,9 +146,9 @@ export function GameProvider({
 			createTranslationContext(
 				sessionState,
 				{
-					actions: ACTIONS,
-					buildings: BUILDINGS,
-					developments: DEVELOPMENTS,
+					actions: SESSION_REGISTRIES.actions,
+					buildings: SESSION_REGISTRIES.buildings,
+					developments: SESSION_REGISTRIES.developments,
 				},
 				{
 					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
@@ -281,6 +281,13 @@ export function GameProvider({
 		void runUntilActionPhase();
 	}, [runUntilActionPhase]);
 
+	const handleExit = useCallback(() => {
+		onReleaseSession();
+		if (onExit) {
+			onExit();
+		}
+	}, [onReleaseSession, onExit]);
+
 	const value: GameEngineContextValue = {
 		session,
 		sessionState,
@@ -308,14 +315,14 @@ export function GameProvider({
 		runUntilActionPhase,
 		handleEndTurn,
 		updateMainPhaseStep,
-		darkMode,
-		onToggleDark,
-		musicEnabled,
-		onToggleMusic,
-		soundEnabled,
-		onToggleSound,
-		backgroundAudioMuted,
-		onToggleBackgroundAudioMute,
+		darkMode: darkMode ?? true,
+		onToggleDark: onToggleDark ?? (() => {}),
+		musicEnabled: musicEnabled ?? true,
+		onToggleMusic: onToggleMusic ?? (() => {}),
+		soundEnabled: soundEnabled ?? true,
+		onToggleSound: onToggleSound ?? (() => {}),
+		backgroundAudioMuted: backgroundAudioMuted ?? true,
+		onToggleBackgroundAudioMute: onToggleBackgroundAudioMute ?? (() => {}),
 		timeScale,
 		setTimeScale,
 		toasts,
@@ -325,7 +332,7 @@ export function GameProvider({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		...(onExit ? { onExit } : {}),
+		...(onExit ? { onExit: handleExit } : {}),
 	};
 
 	return (
@@ -333,6 +340,136 @@ export function GameProvider({
 			{children}
 		</GameEngineContext.Provider>
 	);
+}
+
+export function GameProvider(props: ProviderProps) {
+	const {
+		children,
+		onExit,
+		darkMode = true,
+		onToggleDark = () => {},
+		devMode = false,
+		musicEnabled = true,
+		onToggleMusic = () => {},
+		soundEnabled = true,
+		onToggleSound = () => {},
+		backgroundAudioMuted = true,
+		onToggleBackgroundAudioMute = () => {},
+		playerName = DEFAULT_PLAYER_NAME,
+		onChangePlayerName = () => {},
+	} = props;
+
+	const mountedRef = useRef(true);
+	const sessionRef = useRef<Session | null>(null);
+	const sessionIdRef = useRef<string | null>(null);
+	const [sessionData, setSessionData] = useState<SessionContainer | null>(null);
+	const playerNameRef = useRef(playerName);
+	playerNameRef.current = playerName;
+
+	const teardownSession = useCallback(() => {
+		const currentId = sessionIdRef.current;
+		if (currentId) {
+			releaseSession(currentId);
+		}
+		sessionIdRef.current = null;
+		sessionRef.current = null;
+		if (mountedRef.current) {
+			setSessionData(null);
+		}
+	}, [mountedRef]);
+
+	useEffect(
+		() => () => {
+			mountedRef.current = false;
+			teardownSession();
+		},
+		[teardownSession],
+	);
+
+	useEffect(() => {
+		let disposed = false;
+		const create = async () => {
+			const previousId = sessionIdRef.current;
+			if (previousId) {
+				releaseSession(previousId);
+			}
+			sessionIdRef.current = null;
+			sessionRef.current = null;
+			setSessionData(null);
+			const created = await createSession({
+				devMode,
+				playerName: playerNameRef.current,
+			});
+			if (disposed || !mountedRef.current) {
+				releaseSession(created.sessionId);
+				return;
+			}
+			sessionRef.current = created.session;
+			sessionIdRef.current = created.sessionId;
+			setSessionData({
+				session: created.session,
+				sessionId: created.sessionId,
+				snapshot: created.snapshot,
+				ruleSnapshot: created.ruleSnapshot,
+			});
+		};
+		void create();
+		return () => {
+			disposed = true;
+		};
+	}, [devMode]);
+
+	const refreshSession = useCallback(async () => {
+		const sessionId = sessionIdRef.current;
+		if (!sessionId) {
+			return;
+		}
+		const result = await fetchSnapshot(sessionId);
+		if (!mountedRef.current || sessionIdRef.current !== sessionId) {
+			return;
+		}
+		sessionRef.current = result.session;
+		setSessionData({
+			session: result.session,
+			sessionId,
+			snapshot: result.snapshot,
+			ruleSnapshot: result.ruleSnapshot,
+		});
+	}, []);
+
+	if (!sessionData || !sessionRef.current) {
+		return null;
+	}
+
+	const handleRelease = useCallback(() => {
+		teardownSession();
+	}, [teardownSession]);
+
+	const innerProps: GameProviderInnerProps = {
+		children,
+		darkMode,
+		onToggleDark,
+		devMode,
+		musicEnabled,
+		onToggleMusic,
+		soundEnabled,
+		onToggleSound,
+		backgroundAudioMuted,
+		onToggleBackgroundAudioMute,
+		playerName,
+		onChangePlayerName,
+		session: sessionRef.current,
+		sessionState: sessionData.snapshot,
+		ruleSnapshot: sessionData.ruleSnapshot,
+		refreshSession,
+		onReleaseSession: handleRelease,
+	};
+
+	if (onExit) {
+		innerProps.onExit = onExit;
+	}
+
+	return <GameProviderInner {...innerProps} />;
 }
 
 export const useGameEngine = (): GameEngineContextValue => {
