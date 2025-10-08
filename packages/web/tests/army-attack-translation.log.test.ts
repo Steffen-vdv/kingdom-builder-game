@@ -32,6 +32,8 @@ afterAll(() => {
 describe('army attack translation log', () => {
 	it('logs army attack action with concrete evaluation', () => {
 		const { ctx, attack, plunder } = createSyntheticCtx();
+		const attackerName = ctx.activePlayer.name ?? 'Player';
+		const defenderName = ctx.opponent.name ?? 'Opponent';
 		const castle = RESOURCES[Resource.castleHP];
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
@@ -90,13 +92,13 @@ describe('army attack translation log', () => {
 			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,
 			`    ${powerValue(remainingAfterFort)} vs. ${castleValue} --> ${castleAfterValue}`,
 			`  ${castle.icon} ${castle.label} damage trigger evaluation`,
-			`    Opponent: ${happiness.icon} ${happiness.label} ${opponentHappinessDelta} (${opponentHappinessBefore}→${opponentHappinessAfter})`,
-			`    You: ${happiness.icon} ${happiness.label} ${
+			`    ${defenderName}: ${happiness.icon} ${happiness.label} ${opponentHappinessDelta} (${opponentHappinessBefore}→${opponentHappinessAfter})`,
+			`    ${attackerName}: ${happiness.icon} ${happiness.label} ${
 				attackerHappinessDelta >= 0 ? '+' : ''
 			}${attackerHappinessDelta} (${attackerHappinessBefore}→${attackerHappinessAfter})`,
 			`    Triggered ${plunder.icon} ${plunder.name}`,
-			`      Opponent: ${gold.icon} ${gold.label} -${PLUNDER_PERCENT}% (${opponentGoldBefore}→${opponentGoldAfter}) (${opponentGoldDelta})`,
-			`      You: ${gold.icon} ${gold.label} ${
+			`      ${defenderName}: ${gold.icon} ${gold.label} -${PLUNDER_PERCENT}% (${opponentGoldBefore}→${opponentGoldAfter}) (${opponentGoldDelta})`,
+			`      ${attackerName}: ${gold.icon} ${gold.label} ${
 				playerGoldDelta >= 0 ? '+' : ''
 			}${playerGoldDelta} (${playerGoldBefore}→${playerGoldAfter})`,
 		]);
@@ -104,6 +106,7 @@ describe('army attack translation log', () => {
 
 	it('logs building attack action with destruction evaluation', () => {
 		const { ctx, buildingAttack, building } = createSyntheticCtx();
+		const attackerName = ctx.activePlayer.name ?? 'Player';
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
 		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
@@ -145,7 +148,7 @@ describe('army attack translation log', () => {
 			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,
 			`    ${powerValue(remainingAfterFort)} destroys ${buildingDisplay}`,
 			`  ${buildingDisplay} destruction trigger evaluation`,
-			`    You: ${gold.icon} ${gold.label} ${
+			`    ${attackerName}: ${gold.icon} ${gold.label} ${
 				playerGoldDelta >= 0 ? '+' : ''
 			}${playerGoldDelta} (${playerGoldBefore}→${playerGoldAfter})`,
 		]);
