@@ -8,6 +8,7 @@ import {
 	describeContent,
 	splitSummary,
 	summarizeContent,
+	translateRequirementFailure,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
@@ -85,7 +86,9 @@ export default function RaisePopOptions({
 					upkeep = undefined;
 				}
 				const rawRequirements = getActionRequirements(action.id, ctx);
-				const requirements = rawRequirements.map((item) => `${item}`);
+				const requirements = rawRequirements.map((failure) =>
+					translateRequirementFailure(failure, ctx),
+				);
 				const canPay = playerHasRequiredResources(player.resources, costs);
 				const meetsReq = requirements.length === 0;
 				const enabled = canPay && meetsReq && canInteract;

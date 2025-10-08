@@ -1,7 +1,11 @@
 import React, { useMemo } from 'react';
 import type { Focus } from '@kingdom-builder/contents';
 import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
-import { splitSummary, type Summary } from '../../translation';
+import {
+	splitSummary,
+	translateRequirementFailure,
+	type Summary,
+} from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
@@ -89,7 +93,11 @@ export default function BuildOptions({
 					);
 					const focus = getOptionalProperty<Focus>(rawBuilding, 'focus');
 					const icon = getOptionalProperty<string>(rawBuilding, 'icon');
-					const requirements = getActionRequirements(action.id, ctx);
+					const requirementFailures = getActionRequirements(action.id, ctx);
+					const requirements = requirementFailures.map((failure) =>
+						translateRequirementFailure(failure, ctx),
+					);
+					const meetsRequirements = requirements.length === 0;
 					const canPay = playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(building.id);
 					const implemented = (summary?.length ?? 0) > 0;
@@ -97,12 +105,20 @@ export default function BuildOptions({
 						costs,
 						player.resources,
 					);
+					const requirementText = requirements.join(', ');
 					const title = !implemented
 						? 'Not implemented yet'
-						: !canPay
-							? (insufficientTooltip ?? 'Cannot pay costs')
-							: undefined;
-					const enabled = canPay && isActionPhase && canInteract && implemented;
+						: !meetsRequirements
+							? requirementText
+							: !canPay
+								? (insufficientTooltip ?? 'Cannot pay costs')
+								: undefined;
+					const enabled =
+						canPay &&
+						meetsRequirements &&
+						isActionPhase &&
+						canInteract &&
+						implemented;
 					return (
 						<ActionCard
 							key={building.id}

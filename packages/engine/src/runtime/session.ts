@@ -64,7 +64,7 @@ export interface EngineSession {
 	getActionRequirements<T extends string>(
 		actionId: T,
 		params?: ActionParameters<T>,
-	): string[];
+	): ReturnType<typeof resolveActionRequirements>;
 	getActionDefinition(actionId: string): ActionDefinitionSummary | undefined;
 	pullEffectLog<T>(key: string): T | undefined;
 	getPassiveEvaluationMods(): Map<string, Map<string, EvaluationModifier>>;

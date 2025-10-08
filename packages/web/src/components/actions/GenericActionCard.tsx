@@ -8,6 +8,7 @@ import {
 import {
 	describeContent,
 	splitSummary,
+	translateRequirementFailure,
 	type Summary,
 	type TranslationContext,
 } from '../../translation';
@@ -67,8 +68,9 @@ function GenericActionCard({
 	clearHoverCard,
 	formatRequirement,
 }: GenericActionCardProps) {
-	const requirements = getActionRequirements(action.id, context).map(
-		formatRequirement,
+	const requirementFailures = getActionRequirements(action.id, context);
+	const requirements = requirementFailures.map((failure) =>
+		formatRequirement(translateRequirementFailure(failure, context)),
 	);
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
 	const canPay = Object.entries(costs).every(

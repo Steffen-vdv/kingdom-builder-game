@@ -218,7 +218,10 @@ describe('EngineSession', () => {
 		const requirementId = 'vitest:fail';
 		const requirementMessage = 'Requirement failed for test';
 		if (!REQUIREMENTS.has(requirementId)) {
-			REQUIREMENTS.add(requirementId, () => requirementMessage);
+			REQUIREMENTS.add(requirementId, (requirement) => ({
+				requirement,
+				message: requirementMessage,
+			}));
 		}
 		const content = createContentFactory();
 		const action = content.action({
@@ -238,10 +241,28 @@ describe('EngineSession', () => {
 		});
 		advanceToMain(session);
 		const requirements = session.getActionRequirements(action.id);
-		expect(requirements).toEqual([requirementMessage]);
-		requirements.push('mutated');
+		expect(requirements).toEqual([
+			{
+				requirement: expect.objectContaining({
+					type: 'vitest',
+					method: 'fail',
+					message: requirementMessage,
+				}),
+				message: requirementMessage,
+			},
+		]);
+		requirements.push(requirements[0]!);
 		const refreshed = session.getActionRequirements(action.id);
 		expect(refreshed).not.toBe(requirements);
-		expect(refreshed).toEqual([requirementMessage]);
+		expect(refreshed).toEqual([
+			{
+				requirement: expect.objectContaining({
+					type: 'vitest',
+					method: 'fail',
+					message: requirementMessage,
+				}),
+				message: requirementMessage,
+			},
+		]);
 	});
 });

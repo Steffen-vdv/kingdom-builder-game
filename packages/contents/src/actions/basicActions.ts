@@ -110,7 +110,6 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.left(populationEvaluator())
 					.operator('lt')
 					.right(statEvaluator().key(Stat.maxPopulation))
-					.message('Free space for 👥')
 					.build(),
 			)
 			.effect(

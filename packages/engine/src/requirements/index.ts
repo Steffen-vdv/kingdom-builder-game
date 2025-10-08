@@ -5,10 +5,16 @@ import type { RequirementConfig } from '@kingdom-builder/protocol';
 
 export type RequirementDef = RequirementConfig;
 
+export interface RequirementFailure {
+	requirement: RequirementDef;
+	details?: Record<string, unknown>;
+	message?: string;
+}
+
 export type RequirementHandler = (
 	req: RequirementDef,
 	ctx: EngineContext,
-) => true | string;
+) => true | RequirementFailure;
 
 export class RequirementRegistry extends Registry<RequirementHandler> {}
 
@@ -17,7 +23,7 @@ export const REQUIREMENTS = new RequirementRegistry();
 export function runRequirement(
 	req: RequirementDef,
 	ctx: EngineContext,
-): true | string {
+): true | RequirementFailure {
 	const handler = REQUIREMENTS.get(`${req.type}:${req.method}`);
 	return handler(req, ctx);
 }

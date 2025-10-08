@@ -94,7 +94,11 @@ export type { EvaluatorHandler } from './evaluators';
  */
 export type { EvaluatorDef } from '@kingdom-builder/protocol';
 export { registerCoreRequirements, RequirementRegistry } from './requirements';
-export type { RequirementHandler, RequirementDef } from './requirements';
+export type {
+	RequirementHandler,
+	RequirementDef,
+	RequirementFailure,
+} from './requirements';
 /**
  * @deprecated Use @kingdom-builder/protocol instead.
  */

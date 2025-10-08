@@ -7,8 +7,9 @@ import {
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '../../../engine/tests/factories/content';
-import { Registry } from '@kingdom-builder/engine/registry';
+import type { RequirementFailure } from '@kingdom-builder/engine';
 import { createActionsPanelState } from './createActionsPanelState';
+import { createRegistry } from './createRegistry';
 import {
 	compareRequirement,
 	populationEvaluator,
@@ -23,14 +24,6 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from './translationContextStub';
-
-function createRegistry<T extends { id: string }>(items: T[]) {
-	const registry = new Registry<T>();
-	for (const item of items) {
-		registry.add(item.id, item);
-	}
-	return registry;
-}
 
 export function createActionsPanelGame({
 	populationRoles,
@@ -131,45 +124,51 @@ export function createActionsPanelGame({
 			costs: { [upkeepResource]: 5 },
 		});
 	}
-	const initialPopulation = [
-		...registeredPopulationRoles,
-		passivePopulation,
-	].reduce<Record<string, number>>((acc, population) => {
-		acc[population.id] = 0;
-		return acc;
-	}, {});
+	const initialPopulation = Object.fromEntries(
+		[...registeredPopulationRoles, passivePopulation].map((population) => [
+			population.id,
+			0,
+		]),
+	) as Record<string, number>;
 	const actionIds = [raisePopulationAction, basicAction, buildingAction]
 		.filter(Boolean)
 		.map((action) => action!.id);
-	const baseResources = { [actionCostResource]: 3, [upkeepResource]: 10 };
-	const createParticipant = (
-		id: string,
-		name: string,
-		actionList: string[],
-	) => ({
-		id,
-		name,
-		resources: { ...baseResources },
-		population: { ...initialPopulation },
-		lands: [] as { id: string; slotsFree: number }[],
-		buildings: new Set<string>(),
-		actions: new Set(actionList),
-	});
-	const player = createParticipant('A', 'Player', actionIds);
-	const opponent = createParticipant('B', 'Opponent', []);
+	const baseResources = { [actionCostResource]: 3, [upkeepResource]: 10 },
+		createParticipant = (id: string, name: string, actionList: string[]) => ({
+			id,
+			name,
+			resources: { ...baseResources },
+			population: { ...initialPopulation },
+			lands: [] as { id: string; slotsFree: number }[],
+			buildings: new Set<string>(),
+			actions: new Set(actionList),
+		});
+	const [player, opponent] = [
+		createParticipant('A', 'Player', actionIds),
+		createParticipant('B', 'Opponent', []),
+	];
 
-	const costMap = new Map<string, Record<string, number>>(
-		actionIds.map((id) => [id, { [actionCostResource]: 1 }]),
+	const requirementFailures = new Map<string, RequirementFailure[]>();
+	requirementFailures.set(
+		raisePopulationAction.id,
+		buildRequirements.map((requirement, index) => ({
+			requirement,
+			details: {
+				left: index === 0 ? 3 : 1,
+				right: index === 0 ? 3 : 0,
+			},
+		})),
 	);
-
-	const requirementMessages = new Map<string, string[]>([
-		[
-			raisePopulationAction.id,
-			['Requires available housing', 'Requires open role slot'],
-		],
-	]);
 	if (buildingAction) {
-		requirementMessages.set(buildingAction.id, ['Requires assigned worker']);
+		requirementFailures.set(buildingAction.id, [
+			{
+				requirement: buildRequirements[0]!,
+				details: {
+					left: 3,
+					right: 3,
+				},
+			},
+		]);
 	}
 
 	const requirementIcons = new Map<string, string[]>([
@@ -239,8 +238,10 @@ export function createActionsPanelGame({
 				building: buildingAction,
 			},
 			populationRoles: registeredPopulationRoles,
-			costMap,
-			requirementMessages,
+			costMap: new Map(
+				actionIds.map((id) => [id, { [actionCostResource]: 1 }]),
+			) as Map<string, Record<string, number>>,
+			requirementFailures,
 			requirementIcons,
 			populationInfoIcon: POPULATION_INFO.icon,
 			building: buildingDefinition,

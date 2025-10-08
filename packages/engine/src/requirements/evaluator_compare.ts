@@ -1,5 +1,5 @@
 import { EVALUATORS, type EvaluatorDef } from '../evaluators';
-import type { RequirementHandler } from './index';
+import type { RequirementFailure, RequirementHandler } from './index';
 
 interface CompareParams {
 	left: EvaluatorDef;
@@ -39,7 +39,15 @@ export const evaluatorCompare: RequirementHandler = (req, ctx) => {
 	const leftHandler = EVALUATORS.get(params.left.type);
 	const leftVal = leftHandler(params.left, ctx) as number;
 	const rightVal = getValue(params.right, ctx);
-	return compare(leftVal, rightVal, params.operator)
-		? true
-		: req.message || 'Requirement failed';
+	if (compare(leftVal, rightVal, params.operator)) {
+		return true;
+	}
+	const failure: RequirementFailure = {
+		requirement: req,
+		details: {
+			left: leftVal,
+			right: rightVal,
+		},
+	};
+	return failure;
 };
