@@ -14,6 +14,7 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
+	createTranslationDiffContext,
 } from '../src/translation';
 
 const RESOURCE_KEYS = Object.keys(
@@ -43,11 +44,12 @@ describe('sub-action logging', () => {
 		const costs = getActionCosts(synthetic.plow.id, ctx);
 		const traces = performAction(synthetic.plow.id, ctx);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
+		const diffContext = createTranslationDiffContext(ctx);
 		const changes = diffStepSnapshots(
 			before,
 			after,
 			ctx.actions.get(synthetic.plow.id),
-			ctx,
+			diffContext,
 			RESOURCE_KEYS,
 		);
 		const messages = logContent('action', synthetic.plow.id, ctx);
@@ -76,7 +78,7 @@ describe('sub-action logging', () => {
 				trace.before,
 				trace.after,
 				ctx.actions.get(trace.id),
-				ctx,
+				diffContext,
 				RESOURCE_KEYS,
 			);
 			if (!subChanges.length) {
@@ -118,7 +120,7 @@ describe('sub-action logging', () => {
 			expandTrace.before,
 			expandTrace.after,
 			ctx.actions.get(synthetic.expand.id),
-			ctx,
+			diffContext,
 			RESOURCE_KEYS,
 		);
 		expandDiff.forEach((line) => {
@@ -132,7 +134,7 @@ describe('sub-action logging', () => {
 			tillTrace.before,
 			tillTrace.after,
 			ctx.actions.get(synthetic.till.id),
-			ctx,
+			diffContext,
 			RESOURCE_KEYS,
 		);
 		expect(tillDiff.length).toBeGreaterThan(0);

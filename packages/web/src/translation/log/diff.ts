@@ -1,7 +1,6 @@
-import { type EngineContext } from '@kingdom-builder/engine';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { collectResourceSources } from './resourceSources';
-import { createTranslationDiffContext } from './resourceSources/context';
+import { type TranslationDiffContext } from './resourceSources/context';
 import {
 	appendResourceChanges,
 	appendStatChanges,
@@ -17,14 +16,13 @@ export function diffStepSnapshots(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
 	stepEffects: StepEffects,
-	context: EngineContext,
+	diffContext: TranslationDiffContext,
 	resourceKeys: ResourceKey[] = collectResourceKeys(
 		previousSnapshot,
 		nextSnapshot,
 	),
 ): string[] {
 	const changeSummaries: string[] = [];
-	const diffContext = createTranslationDiffContext(context);
 	const sources = collectResourceSources(stepEffects, diffContext);
 	appendResourceChanges(
 		changeSummaries,
