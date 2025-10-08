@@ -149,7 +149,11 @@ export function createEngine({
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
-	const services = new Services(rules, developments);
+	const services = new Services(
+		rules,
+		developments,
+		startConfig.winConditions ?? [],
+	);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
 	const actionCostResource = determineCommonActionCostResource(actions);

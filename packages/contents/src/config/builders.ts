@@ -18,6 +18,8 @@ import type {
 	TierRange,
 	PlayerStartConfig,
 	StartConfig,
+	WinConditionConfig,
+	ResourceThresholdWinConditionConfig as ResourceThresholdWinConfig,
 } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
@@ -2517,9 +2519,117 @@ class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 	}
 }
 
+type WinConditionBuilderFactory = (
+	builder: ResourceWinBuilder,
+) => ResourceWinBuilder;
+
+type WinConditionBuilderInput = ResourceWinBuilder | WinConditionBuilderFactory;
+
+class ResourceWinBuilder extends ParamsBuilder<ResourceThresholdWinConfig> {
+	constructor() {
+		super({
+			type: 'resource-threshold',
+		} as ResourceThresholdWinConfig);
+	}
+
+	id(value: string) {
+		if (!value) {
+			throw new Error('Win condition id() requires a non-empty string.');
+		}
+		return this.set(
+			'id',
+			value,
+			'Win condition already set id(). Remove the extra id() call.',
+		);
+	}
+
+	resource(key: ResourceKey) {
+		return this.set(
+			'resource',
+			key,
+			'Win condition already set resource(). Remove the extra resource() call.',
+		);
+	}
+
+	comparison(value: ResourceThresholdWinConfig['comparison']) {
+		return this.set(
+			'comparison',
+			value,
+			'Win condition already set comparison(). Remove the extra comparison() call.',
+		);
+	}
+
+	value(amount: number) {
+		return this.set(
+			'value',
+			amount,
+			'Win condition already set value(). Remove the extra value() call.',
+		);
+	}
+
+	result(outcome: ResourceThresholdWinConfig['result']) {
+		return this.set(
+			'result',
+			outcome,
+			'Win condition already set result(). Remove the extra result() call.',
+		);
+	}
+
+	victory() {
+		return this.result('win');
+	}
+
+	defeat() {
+		return this.result('loss');
+	}
+
+	override build(): ResourceThresholdWinConfig {
+		if (!this.wasSet('id')) {
+			throw new Error(
+				'Win condition is missing id(). Call id("your-condition-id") before build().',
+			);
+		}
+		if (!this.wasSet('resource')) {
+			throw new Error(
+				'Win condition is missing resource(). Call resource("resourceKey") before build().',
+			);
+		}
+		if (!this.wasSet('comparison')) {
+			throw new Error(
+				'Win condition is missing comparison(). Call comparison("lte"/"lt"/"gte"/"gt"/"eq") before build().',
+			);
+		}
+		if (!this.wasSet('value')) {
+			throw new Error(
+				'Win condition is missing value(). Call value(number) before build().',
+			);
+		}
+		if (!this.wasSet('result')) {
+			throw new Error(
+				'Win condition is missing result(). Call result("win" | "loss") before build().',
+			);
+		}
+		return super.build();
+	}
+}
+
 class StartConfigBuilder {
 	private playerConfig: PlayerStartConfig | undefined;
 	private lastPlayerCompensationConfig: PlayerStartConfig | undefined;
+	private winConditionConfigs: WinConditionConfig[] = [];
+
+	private resolveWinConditionBuilder(input: WinConditionBuilderInput) {
+		if (input instanceof ResourceWinBuilder) {
+			return input;
+		}
+		const configured = input(new ResourceWinBuilder());
+		if (!(configured instanceof ResourceWinBuilder)) {
+			throw new Error(
+				'Start config winCondition(...) callback must return the provided builder.',
+			);
+		}
+		return configured;
+	}
 
 	private resolveBuilder(
 		input:
@@ -2554,6 +2664,13 @@ class StartConfigBuilder {
 		return this;
 	}
 
+	winCondition(input: WinConditionBuilderInput) {
+		const builder = this.resolveWinConditionBuilder(input);
+		const config = builder.build();
+		this.winConditionConfigs.push({ ...config });
+		return this;
+	}
+
 	lastPlayerCompensation(
 		input:
 			| PlayerStartBuilder
@@ -2576,6 +2693,11 @@ class StartConfigBuilder {
 			);
 		}
 		const config: StartConfig = { player: this.playerConfig };
+		if (this.winConditionConfigs.length > 0) {
+			config.winConditions = this.winConditionConfigs.map((condition) => ({
+				...condition,
+			}));
+		}
 		if (this.lastPlayerCompensationConfig) {
 			config.players = { B: this.lastPlayerCompensationConfig };
 		}
@@ -2589,6 +2711,10 @@ export function playerStart(options?: PlayerStartBuilderOptions) {
 
 export function startConfig() {
 	return new StartConfigBuilder();
+}
+
+export function winCondition() {
+	return new ResourceWinBuilder();
 }
 
 export function toRecord<T extends { key: string }>(items: T[]) {

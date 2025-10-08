@@ -42,6 +42,7 @@ export default function ActionsPanel() {
 		tabsEnabled,
 	);
 	const isLocalTurn = ctx.activePlayer.id === player.id;
+	const isGameOver = ctx.game.outcome.status === 'finished';
 
 	useEffect(() => {
 		if (!isLocalTurn && viewingOpponent) {
@@ -50,7 +51,8 @@ export default function ActionsPanel() {
 	}, [isLocalTurn, viewingOpponent]);
 
 	const selectedPlayer: DisplayPlayer = viewingOpponent ? opponent : player;
-	const canInteract = isLocalTurn && isActionPhase && !viewingOpponent;
+	const canInteract =
+		isLocalTurn && isActionPhase && !viewingOpponent && !isGameOver;
 	const panelDisabled = !canInteract;
 
 	const actions = useMemo<Action[]>(

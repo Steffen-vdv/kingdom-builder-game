@@ -97,6 +97,11 @@ function cloneSkip(
 }
 
 export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
+	const outcome = context.game.outcome;
+	const clonedOutcome =
+		outcome.status === 'finished'
+			? { ...outcome }
+			: { status: 'ongoing' as const };
 	return {
 		game: {
 			turn: context.game.turn,
@@ -111,6 +116,7 @@ export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 			),
 			activePlayerId: context.game.active.id,
 			opponentId: context.game.opponent.id,
+			outcome: clonedOutcome,
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,

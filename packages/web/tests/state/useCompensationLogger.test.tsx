@@ -73,6 +73,7 @@ function createSessionState(turn: number): EngineSessionSnapshot {
 			players: [playerA, playerB],
 			activePlayerId: 'A',
 			opponentId: 'B',
+			outcome: { status: 'ongoing' },
 		},
 		phases: [],
 		actionCostResource: RESOURCE_KEYS[0]!,

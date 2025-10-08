@@ -47,6 +47,12 @@ export async function advanceToActionPhase({
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
 	const context = session.getLegacyContext();
+	if (snapshot.game.outcome.status === 'finished') {
+		setPhaseSteps([]);
+		setTabsEnabled(false);
+		setDisplayPhase(snapshot.game.currentPhase);
+		return;
+	}
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
 		if (!mountedRef.current) {
 			return;
@@ -63,6 +69,9 @@ export async function advanceToActionPhase({
 	let ranSteps = false;
 	let lastPhase: string | null = null;
 	while (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
+		if (snapshot.game.outcome.status !== 'ongoing') {
+			break;
+		}
 		ranSteps = true;
 		const activePlayerBefore = snapshot.game.players.find(
 			(player) => player.id === snapshot.game.activePlayerId,
@@ -157,6 +166,15 @@ export async function advanceToActionPhase({
 			return { ...prev, [phaseId]: nextHistory };
 		});
 		snapshot = session.getSnapshot();
+		if (snapshot.game.outcome.status === 'finished') {
+			break;
+		}
+	}
+	if (snapshot.game.outcome.status === 'finished') {
+		setTabsEnabled(false);
+		setDisplayPhase(snapshot.game.currentPhase);
+		setPhaseSteps([]);
+		return;
 	}
 	if (ranSteps) {
 		await runDelay(1500);

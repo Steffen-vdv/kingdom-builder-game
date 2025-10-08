@@ -115,6 +115,7 @@ describe('createTranslationContext', () => {
 				players,
 				activePlayerId: 'A',
 				opponentId: 'B',
+				outcome: { status: 'ongoing' },
 			},
 			phases: PHASES,
 			actionCostResource: resourceKey,

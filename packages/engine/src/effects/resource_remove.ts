@@ -20,5 +20,5 @@ export const resourceRemove: EffectHandler = (effect, ctx, mult = 1) => {
 		throw new Error(`Insufficient ${key}: need ${removed}, have ${have}`);
 	}
 	ctx.activePlayer.resources[key] = have - removed;
-	ctx.services.handleTieredResourceChange(ctx, key);
+	ctx.services.notifyResourceChange(ctx, ctx.activePlayer, key);
 };

@@ -223,6 +223,7 @@ export function createActionsPanelGame({
 				players: [player, opponent],
 				currentPhase: PhaseId.Main,
 				currentStep: '',
+				outcome: { status: 'ongoing' },
 			},
 			activePlayer: player,
 			actionCostResource,

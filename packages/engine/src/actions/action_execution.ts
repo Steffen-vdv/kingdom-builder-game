@@ -77,6 +77,9 @@ function executeAction<T extends string>(
 	engineContext: EngineContext,
 	params?: ActionParameters<T>,
 ) {
+	if (engineContext.game.outcome.status === 'finished') {
+		throw new Error('Cannot perform actions after the game has ended.');
+	}
 	engineContext.actionTraces = [];
 	const actionDefinition = engineContext.actions.get(actionId);
 	assertSystemActionUnlocked(actionId, engineContext);

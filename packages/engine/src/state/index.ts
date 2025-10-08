@@ -74,6 +74,19 @@ export interface StatSourceContribution {
 
 export type PlayerId = 'A' | 'B';
 
+export type WinConditionResult = 'win' | 'loss';
+
+interface FinishedGameOutcome {
+	status: 'finished';
+	winnerId: PlayerId;
+	loserId: PlayerId;
+	conditionId: string;
+	triggeredPlayerId: PlayerId;
+	triggeredResult: WinConditionResult;
+}
+
+export type GameOutcome = { status: 'ongoing' } | FinishedGameOutcome;
+
 export class Land {
 	id: string;
 	slotsMax: number;
@@ -169,8 +182,10 @@ export class GameState {
 	stepIndex = 0;
 	devMode = false;
 	players: PlayerState[];
+	outcome: GameOutcome;
 	constructor(aName = 'Player', bName = 'Opponent') {
 		this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];
+		this.outcome = { status: 'ongoing' };
 	}
 	get active(): PlayerState {
 		return this.players[this.currentPlayerIndex]!;

@@ -16,5 +16,5 @@ export const resourceAdd: EffectHandler = (effect, context, multiplier = 1) => {
 	if (total > 0) {
 		context.recentResourceGains.push({ key, amount: total });
 	}
-	context.services.handleTieredResourceChange(context, key);
+	context.services.notifyResourceChange(context, context.activePlayer, key);
 };

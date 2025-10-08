@@ -35,6 +35,14 @@ export const GAME_START: StartConfig = startConfig()
 				return developedLand.land();
 			}),
 	)
+	.winCondition((condition) =>
+		condition
+			.id('castle-destroyed')
+			.resource(Resource.castleHP)
+			.comparison('lte')
+			.value(0)
+			.defeat(),
+	)
 	.lastPlayerCompensation((player) =>
 		player.resources({
 			[Resource.ap]: 1,

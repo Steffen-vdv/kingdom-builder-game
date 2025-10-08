@@ -29,5 +29,6 @@ export type {
 } from './tiered_resource_types';
 export type { PhaseSkipConfig, PhaseSkipStep } from './passive_types';
 export { PopCapService } from './pop_cap_service';
+export { WinConditionService } from './win_condition_service';
 export { Services } from './services';
 export type { RuleSet } from './services_types';

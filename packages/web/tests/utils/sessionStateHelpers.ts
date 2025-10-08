@@ -60,6 +60,7 @@ export function createSessionHelpers(
 				players,
 				activePlayerId: activeId,
 				opponentId,
+				outcome: gameOverrides.outcome ?? { status: 'ongoing' },
 			},
 			phases,
 			actionCostResource: primaryResource,

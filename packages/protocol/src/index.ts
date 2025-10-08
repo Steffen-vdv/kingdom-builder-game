@@ -37,6 +37,8 @@ export type {
 	PopulationConfig,
 	PlayerStartConfig,
 	StartConfig,
+	WinConditionConfig,
+	ResourceThresholdWinConditionConfig,
 	GameConfig,
 } from './config/schema';
 export type {
