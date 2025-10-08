@@ -204,7 +204,6 @@ export class SessionTransport {
 			if (playerName) {
 				session.updatePlayerName(playerId as PlayerId, playerName);
 			}
-			session.updatePlayerName(player.id, name);
 		}
 	}
 
