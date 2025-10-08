@@ -134,6 +134,8 @@ export default function HoverCard() {
 		CARD_LIST_CLASS,
 		renderedData.descriptionClass,
 	);
+	const shouldShowFreeLabel = renderedData.costs !== undefined;
+	const renderCostOptions = { showFreeLabel: shouldShowFreeLabel };
 
 	return (
 		<div
@@ -149,6 +151,7 @@ export default function HoverCard() {
 						ctx.activePlayer.resources,
 						actionCostResource,
 						renderedData.upkeep,
+						renderCostOptions,
 					)}
 				</div>
 			</div>

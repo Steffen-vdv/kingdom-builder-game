@@ -51,7 +51,7 @@ const translationContext = createTranslationContext(
 	},
 	{
 		pullEffectLog: (key) => ctx.pullEffectLog(key),
-		passives: ctx.passives,
+		evaluationMods: ctx.passives.evaluationMods,
 	},
 );
 
@@ -147,6 +147,17 @@ describe('<HoverCard />', () => {
 			screen.getByText(`${costIcon}${costs[costResource]}`),
 		).toBeInTheDocument();
 		expect(screen.getByText(requirements[0]!)).toBeInTheDocument();
+	});
+
+	it('omits the Free label when hover data has no costs', () => {
+		mockGame.hoverCard = {
+			title: 'Population',
+			effects: [],
+			requirements: [],
+			description: 'Details about population.',
+		};
+		render(<HoverCard />);
+		expect(screen.queryByText('Free')).not.toBeInTheDocument();
 	});
 
 	it('disables acknowledgement until the final resolution step', async () => {

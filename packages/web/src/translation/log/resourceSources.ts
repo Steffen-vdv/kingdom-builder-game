@@ -1,4 +1,4 @@
-import { type EngineContext, type EffectDef } from '@kingdom-builder/engine';
+import { type EffectDef } from '@kingdom-builder/engine';
 import { type StepEffects } from './statBreakdown';
 import { appendMetaSourceIcons } from './resourceSources/meta';
 import { appendEvaluatorModifiers } from './resourceSources/modifiers';
@@ -7,6 +7,7 @@ import {
 	EVALUATOR_ICON_RENDERERS,
 	type EvaluatorIconRenderer,
 } from './resourceSources/evaluators';
+import { type TranslationDiffContext } from './resourceSources/context';
 
 function ensureEntry(
 	map: Record<string, ResourceSourceEntry>,
@@ -36,7 +37,7 @@ function readResourceKey(effect: EffectDef): string | undefined {
 function appendEvaluatorIcons(
 	entry: ResourceSourceEntry,
 	evaluator: { type: string; params?: Record<string, unknown> },
-	context: EngineContext,
+	context: TranslationDiffContext,
 	ownerSuffix: string,
 ) {
 	try {
@@ -50,7 +51,7 @@ function appendEvaluatorIcons(
 function handleEvaluatorEffect(
 	effect: EffectDef,
 	map: Record<string, ResourceSourceEntry>,
-	context: EngineContext,
+	context: TranslationDiffContext,
 	ownerSuffix: string,
 ) {
 	const nestedResource = findNestedResource(effect);
@@ -72,7 +73,7 @@ function handleEvaluatorEffect(
 function handleDirectResourceEffect(
 	effect: EffectDef,
 	map: Record<string, ResourceSourceEntry>,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ) {
 	const key = readResourceKey(effect);
 	if (!key) {
@@ -99,7 +100,7 @@ function buildResourceSummary(
 
 export function collectResourceSources(
 	step: StepEffects,
-	context: EngineContext,
+	context: TranslationDiffContext,
 ): Record<string, string> {
 	const map: Record<string, ResourceSourceEntry> = {};
 	const ownerSuffix = `_${context.activePlayer.id}`;

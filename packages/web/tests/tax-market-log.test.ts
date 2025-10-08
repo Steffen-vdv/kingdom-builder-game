@@ -22,6 +22,7 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
+	createTranslationDiffContext,
 } from '../src/translation';
 
 const RESOURCE_KEYS = Object.keys(
@@ -63,11 +64,12 @@ describe('tax action logging with market', () => {
 		const costs = getActionCosts(SYNTHETIC_IDS.taxAction, ctx);
 		const traces: ActionTrace[] = performAction(SYNTHETIC_IDS.taxAction, ctx);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
+		const diffContext = createTranslationDiffContext(ctx);
 		const changes = diffStepSnapshots(
 			before,
 			after,
 			action,
-			ctx,
+			diffContext,
 			RESOURCE_KEYS,
 		);
 		const messages = logContent('action', SYNTHETIC_IDS.taxAction, ctx);
@@ -94,7 +96,7 @@ describe('tax action logging with market', () => {
 				trace.before,
 				trace.after,
 				subStep,
-				ctx,
+				diffContext,
 				RESOURCE_KEYS,
 			);
 			if (!subChanges.length) {

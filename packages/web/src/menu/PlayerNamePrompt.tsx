@@ -23,7 +23,7 @@ const ERROR_TEXT_CLASS = [
 
 const DESCRIPTION_TEXT = [
 	'Before we begin, tell us the name that will echo through your chronicles.',
-	'You can change it later from the Settings menu.',
+	'This title can change later from the Settings menu.',
 ].join(' ');
 
 export interface PlayerNamePromptProps {

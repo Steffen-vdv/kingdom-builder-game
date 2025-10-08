@@ -14,10 +14,58 @@ vi.mock('../src/translation/effects/factory', () => ({
 }));
 import type {
 	AttackOnDamageLogEntry,
-	EngineContext,
 	EffectDef,
 } from '@kingdom-builder/engine';
 import { Resource, RESOURCES } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../src/translation/context';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+
+function createTranslationCtx(): TranslationContext {
+	const emptyModifiers = new Map<string, ReadonlyMap<string, unknown>>();
+	return {
+		actions: {
+			get: vi.fn(),
+			has: vi.fn(),
+		},
+		buildings: {
+			get: vi.fn(),
+			has: vi.fn(),
+		},
+		developments: {
+			get: vi.fn(),
+			has: vi.fn(),
+		},
+		passives: {
+			list: vi.fn(() => []),
+			get: vi.fn(() => undefined),
+			get evaluationMods() {
+				return emptyModifiers;
+			},
+		},
+		phases: [],
+		activePlayer: {
+			id: 'A',
+			name: 'Player',
+			resources: {},
+			stats: {},
+			population: {},
+		},
+		opponent: {
+			id: 'B',
+			name: 'Opponent',
+			resources: {},
+			stats: {},
+			population: {},
+		},
+		pullEffectLog: vi.fn(),
+		actionCostResource: undefined,
+		recentResourceGains: [],
+		compensations: {
+			A: {} as PlayerStartConfig,
+			B: {} as PlayerStartConfig,
+		},
+	};
+}
 
 describe('attack on-damage formatter registry', () => {
 	const attackEffect = {
@@ -25,7 +73,7 @@ describe('attack on-damage formatter registry', () => {
 		method: 'perform',
 		params: {},
 	} as EffectDef<Record<string, unknown>>;
-	const ctx = {} as EngineContext;
+	const ctx = createTranslationCtx();
 
 	it('delegates to registered handler for matching entries', () => {
 		const logEntry: AttackOnDamageLogEntry = {
@@ -84,7 +132,7 @@ describe('attack on-damage formatter registry', () => {
 		const label = gold.icon ? `${gold.icon} ${gold.label}` : gold.label;
 		expect(result?.items).toEqual([
 			`Opponent: ${label} -2 (5→3)`,
-			`You: ${label} +3 (1→4)`,
+			`${ctx.activePlayer.name}: ${label} +3 (1→4)`,
 		]);
 	});
 
@@ -121,7 +169,7 @@ describe('attack on-damage formatter registry', () => {
 		const label = gold.icon ? `${gold.icon} ${gold.label}` : gold.label;
 		expect(result?.items).toEqual([
 			`Opponent: ${label} -0.5% (10→5) (-5)`,
-			`You: ${label} +5 (2→7)`,
+			`${ctx.activePlayer.name}: ${label} +5 (2→7)`,
 		]);
 	});
 });

@@ -1,6 +1,6 @@
-import { type EngineContext } from '@kingdom-builder/engine';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { collectResourceSources } from './resourceSources';
+import { type TranslationDiffContext } from './resourceSources/context';
 import {
 	appendResourceChanges,
 	appendStatChanges,
@@ -16,14 +16,14 @@ export function diffStepSnapshots(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
 	stepEffects: StepEffects,
-	context: EngineContext,
+	diffContext: TranslationDiffContext,
 	resourceKeys: ResourceKey[] = collectResourceKeys(
 		previousSnapshot,
 		nextSnapshot,
 	),
 ): string[] {
 	const changeSummaries: string[] = [];
-	const sources = collectResourceSources(stepEffects, context);
+	const sources = collectResourceSources(stepEffects, diffContext);
 	appendResourceChanges(
 		changeSummaries,
 		previousSnapshot,
@@ -35,16 +35,21 @@ export function diffStepSnapshots(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,
-		context,
+		nextSnapshot,
 		stepEffects,
 	);
 	appendBuildingChanges(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,
-		context,
+		diffContext,
 	);
-	appendLandChanges(changeSummaries, previousSnapshot, nextSnapshot, context);
+	appendLandChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		diffContext,
+	);
 	appendSlotChanges(changeSummaries, previousSnapshot, nextSnapshot);
 	appendPassiveChanges(changeSummaries, previousSnapshot, nextSnapshot);
 	return changeSummaries;

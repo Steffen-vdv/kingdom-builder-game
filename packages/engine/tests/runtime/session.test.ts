@@ -22,6 +22,7 @@ import type {
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
 import { createContentFactory } from '../factories/content.ts';
+import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { EvaluationModifier } from '../../src/services/passive_types.ts';
 
 const BASE: {
@@ -190,5 +191,57 @@ describe('EngineSession', () => {
 		clonedInner.set('mod:other', () => ({ percent: 0 }));
 		expect(originalInner.has('mod:other')).toBe(false);
 		expect(originalInner.get('mod:test')).toBe(modifier);
+	});
+
+	it('clones action cost lookups from the session', () => {
+		const content = createContentFactory();
+		const goldCost = 5;
+		const action = content.action({
+			baseCosts: { [CResource.gold]: goldCost },
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		advanceToMain(session);
+		const costs = session.getActionCosts(action.id);
+		expect(costs[CResource.gold]).toBe(goldCost);
+		costs[CResource.gold] = 999;
+		const refreshed = session.getActionCosts(action.id);
+		expect(refreshed).not.toBe(costs);
+		expect(refreshed[CResource.gold]).toBe(goldCost);
+	});
+
+	it('clones action requirement lookups from the session', () => {
+		const requirementId = 'vitest:fail';
+		const requirementMessage = 'Requirement failed for test';
+		if (!REQUIREMENTS.has(requirementId)) {
+			REQUIREMENTS.add(requirementId, () => requirementMessage);
+		}
+		const content = createContentFactory();
+		const action = content.action({
+			requirements: [
+				{
+					type: 'vitest',
+					method: 'fail',
+					message: requirementMessage,
+				},
+			],
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		advanceToMain(session);
+		const requirements = session.getActionRequirements(action.id);
+		expect(requirements).toEqual([requirementMessage]);
+		requirements.push('mutated');
+		const refreshed = session.getActionRequirements(action.id);
+		expect(refreshed).not.toBe(requirements);
+		expect(refreshed).toEqual([requirementMessage]);
 	});
 });

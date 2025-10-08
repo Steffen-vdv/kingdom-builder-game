@@ -9,7 +9,6 @@ import {
 } from '@kingdom-builder/contents';
 import { PassiveManager } from '@kingdom-builder/engine';
 import type {
-	EngineContext,
 	EngineSessionSnapshot,
 	PlayerId,
 	ResourceKey,
@@ -39,7 +38,7 @@ describe('createTranslationContext', () => {
 		const logEntries = new Map<string, unknown[]>([
 			['legacy', [{ note: 'legacy entry' }]],
 		]);
-		const pullEffectLog: EngineContext['pullEffectLog'] = (key) => {
+		const pullEffectLog = <T>(key: string): T | undefined => {
 			const existing = logEntries.get(key);
 			if (!existing || existing.length === 0) {
 				return undefined;
@@ -50,7 +49,7 @@ describe('createTranslationContext', () => {
 			} else {
 				logEntries.delete(key);
 			}
-			return next as unknown;
+			return next as T;
 		};
 		const compensation = (amount: number): PlayerStartConfig => ({
 			resources: { [resourceKey]: amount },
@@ -134,7 +133,7 @@ describe('createTranslationContext', () => {
 			},
 			{
 				pullEffectLog,
-				passives: passiveManager,
+				evaluationMods: passiveManager.evaluationMods,
 			},
 		);
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({

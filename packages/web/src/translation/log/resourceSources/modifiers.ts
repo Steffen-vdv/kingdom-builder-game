@@ -1,16 +1,10 @@
 import { PASSIVE_INFO } from '@kingdom-builder/contents';
-import { type EngineContext, type PlayerId } from '@kingdom-builder/engine';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
 import {
-	type PassiveDescriptor,
-	type PassiveModifierMap,
-	type ResourceSourceEntry,
-} from './types';
-
-type PassiveLookup = {
-	evaluationMods?: PassiveModifierMap;
-	get?: (id: string, owner: PlayerId) => PassiveDescriptor | undefined;
-};
+	type TranslationDiffContext,
+	type TranslationDiffPassives,
+} from './context';
+import { type ResourceSourceEntry } from './types';
 
 export function resolveEvaluatorTarget(evaluator: {
 	type: string;
@@ -25,8 +19,8 @@ export function resolveEvaluatorTarget(evaluator: {
 
 function resolveModifierIcon(
 	baseKey: string,
-	passives: PassiveLookup,
-	context: EngineContext,
+	passives: TranslationDiffPassives,
+	context: TranslationDiffContext,
 ): string {
 	const parts = baseKey.split('_');
 	for (let i = parts.length; i > 0; i -= 1) {
@@ -51,12 +45,11 @@ function resolveModifierIcon(
 export function appendEvaluatorModifiers(
 	entry: ResourceSourceEntry,
 	evaluator: { type: string; params?: Record<string, unknown> },
-	context: EngineContext,
+	context: TranslationDiffContext,
 	ownerSuffix: string,
 ) {
-	const rawPassives = context.passives as unknown;
-	const passives = rawPassives as PassiveLookup;
-	const modsMap = passives.evaluationMods?.get(
+	const passives = context.passives;
+	const modsMap = passives.evaluationMods.get(
 		resolveEvaluatorTarget(evaluator),
 	);
 	if (!modsMap) {

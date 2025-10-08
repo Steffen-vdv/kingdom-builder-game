@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import {
-	getActionCosts,
 	resolveActionEffects,
 	type ActionParams,
 	type EngineSession,
@@ -13,7 +12,8 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
-	diffStepSnapshots,
+	createTranslationDiffContext,
+  diffStepSnapshots,
 	logContent,
 	snapshotPlayer,
 	translateRequirementFailure,
@@ -24,6 +24,7 @@ import {
 	formatActionLogLines,
 	formatDevelopActionLogLines,
 } from './actionLogFormat';
+import { buildResolutionActionMeta } from './deriveResolutionActionName';
 
 interface UseActionPerformerOptions {
 	session: EngineSession;
@@ -67,7 +68,7 @@ export function useActionPerformer({
 				throw new Error('Missing active player before action');
 			}
 			const before = snapshotPlayer(playerBefore);
-			const costs = getActionCosts(action.id, context, params);
+			const costs = session.getActionCosts(action.id, params);
 			try {
 				const traces = session.performAction(action.id, params);
 				const snapshotAfter = session.getSnapshot();
@@ -80,14 +81,16 @@ export function useActionPerformer({
 				const after = snapshotPlayer(playerAfter);
 				const stepDef = context.actions.get(action.id);
 				const resolvedStep = resolveActionEffects(stepDef, params);
+				const diffContext = createTranslationDiffContext(context);
 				const changes = diffStepSnapshots(
 					before,
 					after,
 					resolvedStep,
-					context,
+					diffContext,
 					resourceKeys,
 				);
 				const messages = logContent('action', action.id, context, params);
+				const logHeadline = messages[0];
 				const costLines: string[] = [];
 				for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
 					const amt = costs[key] ?? 0;
@@ -125,7 +128,7 @@ export function useActionPerformer({
 						snapshotPlayer(trace.before),
 						snapshotPlayer(trace.after),
 						subResolved,
-						context,
+						diffContext,
 						resourceKeys,
 					);
 					if (!subChanges.length) {
@@ -172,15 +175,16 @@ export function useActionPerformer({
 					}
 					return true;
 				});
-				const logLines =
+				const logLines = (
 					action.id === ActionId.develop
-						? formatDevelopActionLogLines(messages, filtered)
-						: formatActionLogLines(messages, filtered);
-				const actionMeta = {
-					id: action.id,
-					name: stepDef?.name ?? action.name,
-					...(stepDef?.icon ? { icon: stepDef.icon } : {}),
-				};
+						? formatDevelopActionLogLines
+						: formatActionLogLines
+				)(messages, filtered);
+				const actionMeta = buildResolutionActionMeta(
+					action,
+					stepDef,
+					logHeadline,
+				);
 				const resolutionPlayer = {
 					id: playerAfter.id,
 					name: playerAfter.name,

@@ -110,6 +110,12 @@ module.exports = {
 	},
 	overrides: [
 		{
+			files: ['**/*.test.ts'],
+			rules: {
+				'max-lines': 'off',
+			},
+		},
+		{
 			files: [
 				'packages/**/tests/**/*.ts',
 				'packages/**/tests/**/*.tsx',

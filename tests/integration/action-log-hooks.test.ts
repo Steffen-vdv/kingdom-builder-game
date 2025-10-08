@@ -87,7 +87,6 @@ describe('content-driven action log hooks', () => {
 				start: GAME_START,
 				rules: RULES,
 			});
-			const ctx = session.getLegacyContext();
 			const translationContext = createTranslationContext(
 				session.getSnapshot(),
 				{
@@ -96,9 +95,8 @@ describe('content-driven action log hooks', () => {
 					developments,
 				},
 				{
-					pullEffectLog: (key) => ctx.pullEffectLog(key),
-					passives: ctx.passives,
-					context: ctx,
+					pullEffectLog: (key) => session.pullEffectLog(key),
+					evaluationMods: session.getPassiveEvaluationMods(),
 				},
 			);
 
@@ -115,7 +113,7 @@ describe('content-driven action log hooks', () => {
 			}
 			expect(buildingLog[0]).toContain(hall.name);
 
-			const landId = ctx.activePlayer.lands[0]?.id;
+			const landId = session.getLegacyContext().activePlayer.lands[0]?.id;
 			const developmentLog = logContent(
 				'action',
 				establish.id,

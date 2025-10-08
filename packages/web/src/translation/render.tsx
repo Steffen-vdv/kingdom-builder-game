@@ -32,13 +32,18 @@ export function renderCosts(
 	resources: Record<string, number>,
 	actionCostResource?: string,
 	upkeep?: Record<string, number | undefined> | undefined,
+	options?: { showFreeLabel?: boolean },
 ) {
+	const showFreeLabel = options?.showFreeLabel ?? true;
 	const entries = Object.entries(costs || {}).filter(
 		([resourceKey]) =>
 			!actionCostResource || resourceKey !== actionCostResource,
 	);
 	const upkeepEntries = Object.entries(upkeep || {});
 	if (entries.length === 0 && upkeepEntries.length === 0) {
+		if (!showFreeLabel) {
+			return null;
+		}
 		return (
 			<div className="text-sm text-right text-gray-400 dark:text-gray-500 italic">
 				Free
