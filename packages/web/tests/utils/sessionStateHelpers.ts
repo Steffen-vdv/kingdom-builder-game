@@ -1,5 +1,6 @@
 import type {
 	EngineSessionSnapshot,
+	PassiveRecordSnapshot,
 	PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
@@ -48,6 +49,16 @@ export function createSessionHelpers(
 			secondPlayer?.id ??
 			firstPlayer?.id ??
 			'player-1';
+		const passiveRecords: Record<string, PassiveRecordSnapshot[]> = {};
+		for (const player of players) {
+			passiveRecords[player.id] = [];
+		}
+		if (!(activeId in passiveRecords)) {
+			passiveRecords[activeId] = [];
+		}
+		if (!(opponentId in passiveRecords)) {
+			passiveRecords[opponentId] = [];
+		}
 		return {
 			game: {
 				turn: gameOverrides.turn ?? 1,
@@ -65,6 +76,11 @@ export function createSessionHelpers(
 			actionCostResource: primaryResource,
 			recentResourceGains: [],
 			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+			},
+			passiveRecords,
 		};
 	}
 

@@ -4,6 +4,8 @@ import type { AdvanceSkip } from '../phases/advance';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import type { PlayerId, StatSourceContribution, ResourceKey } from '../state';
 import type { PassiveMetadata, PassiveSummary } from '../services';
+import type { PassiveRecord } from '../services/passive_types';
+import type { HappinessTierDefinition } from '../services/tiered_resource_types';
 
 export interface LandSnapshot {
 	id: string;
@@ -82,4 +84,13 @@ export interface EngineSessionSnapshot {
 	actionCostResource: ResourceKey;
 	recentResourceGains: { key: ResourceKey; amount: number }[];
 	compensations: Record<PlayerId, PlayerStartConfig>;
+	rules: RuleSnapshot;
+	passiveRecords: Record<PlayerId, PassiveRecordSnapshot[]>;
 }
+
+export interface RuleSnapshot {
+	tieredResourceKey: ResourceKey;
+	tierDefinitions: HappinessTierDefinition[];
+}
+
+export type PassiveRecordSnapshot = Omit<PassiveRecord, 'frames'>;

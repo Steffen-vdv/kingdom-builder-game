@@ -31,8 +31,9 @@ const ctx = createEngine({
 	rules: RULES,
 });
 const actionCostResource = ctx.actionCostResource;
+const engineSnapshot = snapshotEngine(ctx);
 const translationContext = createTranslationContext(
-	snapshotEngine(ctx),
+	engineSnapshot,
 	{
 		actions: ACTIONS,
 		buildings: BUILDINGS,
@@ -42,14 +43,15 @@ const translationContext = createTranslationContext(
 		pullEffectLog: (key) => ctx.pullEffectLog(key),
 		evaluationMods: ctx.passives.evaluationMods,
 	},
+	{
+		ruleSnapshot: engineSnapshot.rules,
+		passiveRecords: engineSnapshot.passiveRecords,
+	},
 );
 const mockGame = {
 	ctx,
 	translationContext,
-	ruleSnapshot: {
-		tieredResourceKey: ctx.services.rules.tieredResourceKey,
-		tierDefinitions: ctx.services.rules.tierDefinitions,
-	},
+	ruleSnapshot: engineSnapshot.rules,
 	log: [],
 	logOverflowed: false,
 	hoverCard: null,
