@@ -11,7 +11,12 @@ type ActionDefinition = ActionConfig &
 type BuildingDefinition = BuildingConfig &
 	Partial<{ id: string; focus: unknown }>;
 type DevelopmentDefinition = DevelopmentConfig &
-	Partial<{ id: string; order: number; focus: unknown; system: boolean }>;
+	Partial<{
+		id: string;
+		order: number;
+		focus: unknown;
+		system: boolean | undefined;
+	}>;
 type SessionLandView = PlayerStateSnapshot['lands'][number] & {
 	slotsFree: number;
 };

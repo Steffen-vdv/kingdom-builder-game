@@ -37,8 +37,15 @@ import { useAiRunner } from './useAiRunner';
 import { initializeDeveloperMode } from './developerModeSetup';
 import type { GameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
+import { selectSessionView } from './sessionSelectors';
+import type { SessionRegistries } from './sessionSelectors.types';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
+const SESSION_REGISTRIES: SessionRegistries = {
+	actions: ACTIONS,
+	buildings: BUILDINGS,
+	developments: DEVELOPMENTS,
+};
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
 export type { PhaseStep } from './phaseTypes';
@@ -160,6 +167,11 @@ export function GameProvider({
 
 	const actionCostResource = sessionState.actionCostResource as ResourceKey;
 
+	const sessionView = useMemo(
+		() => selectSessionView(sessionState, SESSION_REGISTRIES),
+		[sessionState],
+	);
+
 	const actionPhaseId = useMemo(() => {
 		const phaseWithAction = sessionState.phases.find(
 			(phaseDefinition) => phaseDefinition.action,
@@ -267,6 +279,7 @@ export function GameProvider({
 		// TODO(engine-web#session): Remove legacy ctx usages once all
 		// consumers are migrated to the session facade.
 		ctx,
+		sessionView,
 		translationContext,
 		ruleSnapshot,
 		log,
@@ -327,3 +340,37 @@ export const useGameEngine = (): GameEngineContextValue => {
 
 export const useOptionalGameEngine = (): GameEngineContextValue | null =>
 	useContext(GameEngineContext);
+
+export const useSessionView = () => {
+	const { sessionView } = useGameEngine();
+	return sessionView;
+};
+
+export const useSessionPlayers = () => {
+	const sessionView = useSessionView();
+	return useMemo(
+		() => ({
+			list: sessionView.list,
+			byId: sessionView.byId,
+			active: sessionView.active,
+			opponent: sessionView.opponent,
+		}),
+		[sessionView],
+	);
+};
+
+export const useSessionOptions = () => {
+	const sessionView = useSessionView();
+	return useMemo(
+		() => ({
+			actions: sessionView.actions,
+			actionList: sessionView.actionList,
+			actionsByPlayer: sessionView.actionsByPlayer,
+			buildings: sessionView.buildings,
+			buildingList: sessionView.buildingList,
+			developments: sessionView.developments,
+			developmentList: sessionView.developmentList,
+		}),
+		[sessionView],
+	);
+};

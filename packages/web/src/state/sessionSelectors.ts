@@ -204,4 +204,5 @@ export type {
 	SessionRegistries,
 	SessionSelectorHelpers,
 } from './sessionSelectors.types';
-export type { SessionPlayersSelection };
+type SessionView = ReturnType<typeof selectSessionView>;
+export type { SessionPlayersSelection, SessionView };
