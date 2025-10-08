@@ -1,17 +1,17 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
 import {
-	PHASES,
 	PASSIVE_INFO,
 	PhaseId,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import { describeEffects, splitSummary } from '../../translation';
 import type {
-	EngineContext,
+	EffectDef,
 	PassiveSummary,
 	PlayerId,
+	PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
+import { describeEffects, splitSummary } from '../../translation';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import {
 	resolvePassivePresentation,
@@ -26,21 +26,29 @@ import {
 	filterPassivesForSurface,
 } from '../../passives/visibility';
 
+function normalizeEffectList(
+	value: unknown,
+): EffectDef<Record<string, unknown>>[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	return value.filter(
+		(effect): effect is EffectDef<Record<string, unknown>> =>
+			effect !== null && typeof effect === 'object' && 'type' in effect,
+	);
+}
+
 export default function PassiveDisplay({
 	player,
 }: {
-	player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
+	player: PlayerStateSnapshot;
 }) {
-	const {
-		ctx,
-		translationContext,
-		handleHoverCard,
-		clearHoverCard,
-		ruleSnapshot,
-	} = useGameEngine();
+	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
+		useGameEngine();
 	const playerId: PlayerId = player.id;
-	const summaries: PassiveSummary[] = ctx.passives.list(playerId);
-	const defs = ctx.passives.values(playerId);
+	const summaries: PassiveSummary[] =
+		translationContext.passives.list(playerId);
+	const defs = translationContext.passives.definitions(playerId);
 	const defMap = new Map(defs.map((def) => [def.id, def]));
 
 	const tierDefinitions = ruleSnapshot.tierDefinitions;
@@ -68,7 +76,7 @@ export default function PassiveDisplay({
 				entry,
 			): entry is {
 				summary: PassiveSummary;
-				def: ReturnType<EngineContext['passives']['values']>[number];
+				def: (typeof defs)[number];
 			} => entry.def !== undefined,
 		);
 	if (entries.length === 0) {
@@ -83,14 +91,15 @@ export default function PassiveDisplay({
 		>
 			{entries.map(({ summary: passive, def }) => {
 				const definition: PassiveDefinitionLike = {};
-				if (def.detail !== undefined) {
+				if (typeof def.detail === 'string') {
 					definition.detail = def.detail;
 				}
-				if (def.meta !== undefined) {
+				if (def.meta) {
 					definition.meta = def.meta;
 				}
-				if (def.effects !== undefined) {
-					definition.effects = def.effects;
+				const resolvedEffects = normalizeEffectList(def.effects);
+				if (resolvedEffects.length > 0) {
+					definition.effects = resolvedEffects;
 				}
 				const presentation = resolvePassivePresentation(passive, {
 					definition,
@@ -111,10 +120,10 @@ export default function PassiveDisplay({
 					: undefined;
 				const items = tierSections
 					? tierSections
-					: describeEffects(def.effects || [], translationContext);
+					: describeEffects(resolvedEffects, translationContext);
 				const upkeepLabel =
-					PHASES.find((phase) => phase.id === PhaseId.Upkeep)?.label ||
-					'Upkeep';
+					translationContext.phases.find((phase) => phase.id === PhaseId.Upkeep)
+						?.label || 'Upkeep';
 				const sections = def.onUpkeepPhase
 					? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
 					: items;

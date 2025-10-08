@@ -1,5 +1,6 @@
 import React from 'react';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
+import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
@@ -8,13 +9,8 @@ import { buildTierEntries, type TierDefinition } from './buildTierEntries';
 import type { SummaryGroup } from '../../translation/content/types';
 import ResourceButton, { type ResourceButtonProps } from './ResourceButton';
 
-interface ResourceBarPlayer {
-	id: string;
-	resources: Record<string, number | undefined>;
-}
-
 interface ResourceBarProps {
-	player: ResourceBarPlayer;
+	player: PlayerStateSnapshot;
 }
 
 function findTierForValue(

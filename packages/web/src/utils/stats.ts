@@ -1,10 +1,11 @@
 import { STATS } from '@kingdom-builder/contents';
 import type {
-	EngineContext,
+	PlayerStateSnapshot,
 	StatKey,
 	StatSourceContribution,
 } from '@kingdom-builder/engine';
 import type { Summary, SummaryEntry } from '../translation/content/types';
+import type { TranslationContext } from '../translation/context';
 import {
 	formatSourceTitle,
 	formatStatValue,
@@ -21,8 +22,8 @@ function isStatKey(key: string): key is StatKey {
 
 export function getStatBreakdownSummary(
 	statKey: string,
-	player: EngineContext['activePlayer'],
-	context: EngineContext,
+	player: PlayerStateSnapshot,
+	context: TranslationContext,
 ): Summary {
 	if (!isStatKey(statKey)) {
 		return [];
@@ -34,7 +35,7 @@ export function getStatBreakdownSummary(
 	}
 	const annotated = contributions.map((entry) => ({
 		entry,
-		descriptor: getSourceDescriptor(entry.meta),
+		descriptor: getSourceDescriptor(context, entry.meta),
 	}));
 	annotated.sort((left, right) => {
 		const leftOrder = left.entry.meta.longevity === 'ongoing' ? 0 : 1;
@@ -53,8 +54,8 @@ function formatContribution(
 	statKey: string,
 	contribution: StatSourceContribution,
 	descriptor: SourceDescriptor,
-	player: EngineContext['activePlayer'],
-	context: EngineContext,
+	player: PlayerStateSnapshot,
+	context: TranslationContext,
 ): SummaryEntry {
 	const { amount, meta } = contribution;
 	const statInfo = STATS[statKey as keyof typeof STATS];

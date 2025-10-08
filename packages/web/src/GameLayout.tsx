@@ -14,7 +14,6 @@ import { useGameEngine } from './state/GameContext';
 
 export default function GameLayout() {
 	const {
-		ctx,
 		sessionState,
 		ruleSnapshot,
 		onExit,
@@ -98,9 +97,9 @@ export default function GameLayout() {
 				window.cancelAnimationFrame(frame);
 			}
 		};
-	}, [ctx.game.players.length]);
-	const playerPanels = ctx.game.players.map((player, index) => {
-		const isActive = player.id === ctx.activePlayer.id;
+	}, [sessionState.game.players.length]);
+	const playerPanels = sessionState.game.players.map((player, index) => {
+		const isActive = player.id === sessionState.game.activePlayerId;
 		const sideClass = index === 0 ? 'pr-6' : 'pl-6';
 		const colorClass =
 			index === 0

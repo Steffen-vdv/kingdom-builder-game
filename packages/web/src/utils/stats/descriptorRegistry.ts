@@ -1,13 +1,13 @@
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
 	PASSIVE_INFO,
-	PHASES,
 	POPULATION_ROLES,
 	RESOURCES,
 	STATS,
 } from '@kingdom-builder/contents';
+import type {
+	TranslationContext,
+	TranslationRegistry,
+} from '../../translation/context';
 import {
 	formatDetailText,
 	formatPhaseStep,
@@ -30,23 +30,35 @@ export const defaultFormatDetail: NonNullable<
 	return formatDetailText(detail);
 };
 
-function createRegistryResolver(
-	registry: {
-		has(id: string): boolean;
-		get(id: string): { icon?: unknown; name?: unknown } | undefined;
+function createTranslationRegistryResolver<
+	TDefinition extends {
+		icon?: string | undefined;
+		name?: string | undefined;
+		label?: string | undefined;
 	},
+>(
+	registry: TranslationRegistry<TDefinition>,
 	fallback: string,
 	nameKey: 'name' | 'label' = 'name',
 ): RegistryResolver {
 	return (id) => {
 		if (id && registry.has(id)) {
-			const item = registry.get(id);
-			if (item) {
-				const record = item as Record<string, string | undefined>;
-				const label = record[nameKey];
+			const definition = registry.get(id);
+			if (definition) {
+				const record = definition as Record<string, unknown>;
+				const resolvedLabel =
+					[record[nameKey], record.name, record.label, id, fallback].find(
+						(value): value is string =>
+							typeof value === 'string' && value.trim().length > 0,
+					) ?? fallback;
+				const iconValue = record.icon;
+				const resolvedIcon =
+					typeof iconValue === 'string' && iconValue.trim().length > 0
+						? iconValue
+						: '';
 				return {
-					icon: record.icon ?? '',
-					label: label ?? id,
+					icon: resolvedIcon,
+					label: resolvedLabel,
 				} satisfies ResolveResult;
 			}
 		}
@@ -78,107 +90,120 @@ function createRecordResolver<T extends { icon?: string; label?: string }>(
 	};
 }
 
-const DESCRIPTOR_REGISTRY: Registry = {
-	population: {
-		resolve: (id) => {
-			const role = id
-				? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
-				: undefined;
-			return {
-				icon: role?.icon ?? '',
-				label: role?.label ?? id ?? 'Population',
-			} satisfies ResolveResult;
-		},
-		formatDetail: defaultFormatDetail,
-		augmentDependencyDetail: (detail, link, player, _context, options) => {
-			const includeCounts = options.includeCounts ?? true;
-			if (!includeCounts || !link.id) {
-				return detail;
-			}
-			const count = player.population?.[link.id] ?? 0;
-			if (count > 0) {
-				return detail ? `${detail} ×${count}` : `×${count}`;
-			}
-			return detail;
-		},
-	},
-	building: {
-		resolve: createRegistryResolver(BUILDINGS, 'Building'),
-		formatDetail: defaultFormatDetail,
-	},
-	development: {
-		resolve: createRegistryResolver(DEVELOPMENTS, 'Development'),
-		formatDetail: defaultFormatDetail,
-	},
-	action: {
-		resolve: createRegistryResolver(ACTIONS, 'Action'),
-		formatDetail: defaultFormatDetail,
-	},
-	phase: (() => {
-		const resolvePhase: RegistryResolver = (id) => {
-			const phase = id
-				? PHASES.find((phaseItem) => {
-						return phaseItem.id === id;
-					})
-				: undefined;
-			return {
-				icon: phase?.icon ?? '',
-				label: phase?.label ?? id ?? 'Phase',
-			} satisfies ResolveResult;
-		};
-		return {
-			resolve: resolvePhase,
-			formatDetail: (id, detail) => formatStepLabel(id, detail),
-			formatDependency: (link) => {
-				const label = formatPhaseStep(link.id, link.detail);
-				if (label) {
-					return label.trim();
-				}
-				const base = resolvePhase(link.id);
-				return base.label.trim();
+function createDescriptorRegistry(
+	translationContext: TranslationContext,
+): Registry {
+	return {
+		population: {
+			resolve: (id) => {
+				const role = id
+					? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
+					: undefined;
+				return {
+					icon: role?.icon ?? '',
+					label: role?.label ?? id ?? 'Population',
+				} satisfies ResolveResult;
 			},
-		} satisfies DescriptorRegistryEntry;
-	})(),
-	stat: {
-		resolve: createRecordResolver(STATS, 'Stat'),
-		formatDetail: defaultFormatDetail,
-		augmentDependencyDetail: (detail, link, player, context) => {
-			if (!link.id) {
+			formatDetail: defaultFormatDetail,
+			augmentDependencyDetail: (detail, link, player, _context, options) => {
+				const includeCounts = options.includeCounts ?? true;
+				if (!includeCounts || !link.id) {
+					return detail;
+				}
+				const count = player.population?.[link.id] ?? 0;
+				if (count > 0) {
+					return detail ? `${detail} ×${count}` : `×${count}`;
+				}
 				return detail;
-			}
-			const statValue =
-				player.stats?.[link.id] ?? context.activePlayer.stats?.[link.id] ?? 0;
-			const valueText = formatStatValue(link.id, statValue);
-			return detail ? `${detail} ${valueText}` : valueText;
+			},
 		},
-	},
-	resource: {
-		resolve: createRecordResolver(RESOURCES, 'Resource'),
-		formatDetail: defaultFormatDetail,
-	},
-	trigger: createTriggerDescriptorEntry(defaultFormatDetail),
-	passive: {
-		resolve: () => ({
-			icon: PASSIVE_INFO.icon ?? '',
-			label: PASSIVE_INFO.label ?? 'Passive',
-		}),
-		formatDetail: defaultFormatDetail,
-	},
-	land: {
-		resolve: (id) => ({
-			icon: '',
-			label: id ?? 'Land',
-		}),
-		formatDetail: defaultFormatDetail,
-	},
-	start: {
-		resolve: () => ({
-			icon: '',
-			label: 'Initial Setup',
-		}),
-		formatDetail: defaultFormatDetail,
-	},
-};
+		building: {
+			resolve: createTranslationRegistryResolver(
+				translationContext.buildings,
+				'Building',
+			),
+			formatDetail: defaultFormatDetail,
+		},
+		development: {
+			resolve: createTranslationRegistryResolver(
+				translationContext.developments,
+				'Development',
+			),
+			formatDetail: defaultFormatDetail,
+		},
+		action: {
+			resolve: createTranslationRegistryResolver(
+				translationContext.actions,
+				'Action',
+			),
+			formatDetail: defaultFormatDetail,
+		},
+		phase: (() => {
+			const resolvePhase: RegistryResolver = (id) => {
+				const phase = id
+					? translationContext.phases.find((phaseItem) => {
+							return phaseItem.id === id;
+						})
+					: undefined;
+				return {
+					icon: phase?.icon ?? '',
+					label: phase?.label ?? id ?? 'Phase',
+				} satisfies ResolveResult;
+			};
+			return {
+				resolve: resolvePhase,
+				formatDetail: (id, detail) => formatStepLabel(id, detail),
+				formatDependency: (link) => {
+					const label = formatPhaseStep(link.id, link.detail);
+					if (label) {
+						return label.trim();
+					}
+					const base = resolvePhase(link.id);
+					return base.label.trim();
+				},
+			} satisfies DescriptorRegistryEntry;
+		})(),
+		stat: {
+			resolve: createRecordResolver(STATS, 'Stat'),
+			formatDetail: defaultFormatDetail,
+			augmentDependencyDetail: (detail, link, player, context) => {
+				if (!link.id) {
+					return detail;
+				}
+				const statValue =
+					player.stats?.[link.id] ?? context.activePlayer.stats?.[link.id] ?? 0;
+				const valueText = formatStatValue(link.id, statValue);
+				return detail ? `${detail} ${valueText}` : valueText;
+			},
+		},
+		resource: {
+			resolve: createRecordResolver(RESOURCES, 'Resource'),
+			formatDetail: defaultFormatDetail,
+		},
+		trigger: createTriggerDescriptorEntry(defaultFormatDetail),
+		passive: {
+			resolve: () => ({
+				icon: PASSIVE_INFO.icon ?? '',
+				label: PASSIVE_INFO.label ?? 'Passive',
+			}),
+			formatDetail: defaultFormatDetail,
+		},
+		land: {
+			resolve: (id) => ({
+				icon: '',
+				label: id ?? 'Land',
+			}),
+			formatDetail: defaultFormatDetail,
+		},
+		start: {
+			resolve: () => ({
+				icon: '',
+				label: 'Initial Setup',
+			}),
+			formatDetail: defaultFormatDetail,
+		},
+	} satisfies Registry;
+}
 
 function createDefaultDescriptor(kind?: string): DescriptorRegistryEntry {
 	return {
@@ -190,21 +215,26 @@ function createDefaultDescriptor(kind?: string): DescriptorRegistryEntry {
 	} satisfies DescriptorRegistryEntry;
 }
 
-export function getDescriptor(kind?: string): DescriptorRegistryEntry {
+export function getDescriptor(
+	translationContext: TranslationContext,
+	kind?: string,
+): DescriptorRegistryEntry {
 	if (!kind) {
 		return createDefaultDescriptor();
 	}
-	return DESCRIPTOR_REGISTRY[kind] ?? createDefaultDescriptor(kind);
+	const registry = createDescriptorRegistry(translationContext);
+	return registry[kind] ?? createDefaultDescriptor(kind);
 }
 
 export function formatKindLabel(
+	translationContext: TranslationContext,
 	kind?: string,
 	id?: string,
 ): string | undefined {
 	if (!kind) {
 		return undefined;
 	}
-	const descriptor = getDescriptor(kind);
+	const descriptor = getDescriptor(translationContext, kind);
 	const resolved = descriptor.resolve(id);
 	const parts: string[] = [];
 	if (resolved.icon) {

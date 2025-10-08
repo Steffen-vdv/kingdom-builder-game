@@ -35,6 +35,12 @@ const ctx = createEngine({
 });
 const actionCostResource = ctx.actionCostResource;
 const engineSnapshot = snapshotEngine(ctx);
+const activePlayerSnapshot = engineSnapshot.game.players.find((player) => {
+	return player.id === engineSnapshot.game.activePlayerId;
+});
+if (!activePlayerSnapshot) {
+	throw new Error('Active player snapshot not found');
+}
 const translationContext = createTranslationContext(
 	engineSnapshot,
 	{
@@ -53,6 +59,7 @@ const translationContext = createTranslationContext(
 );
 const mockGame = {
 	ctx,
+	sessionState: engineSnapshot,
 	translationContext,
 	ruleSnapshot: engineSnapshot.rules,
 	log: [],
@@ -89,13 +96,16 @@ const resourceForecast = Object.keys(RESOURCES).reduce<Record<string, number>>(
 	{},
 );
 
-const displayableStatKeys = Object.entries(ctx.activePlayer.stats)
+const displayableStatKeys = Object.entries(activePlayerSnapshot.stats)
 	.filter(([statKey, statValue]) => {
 		const info = STATS[statKey as keyof typeof STATS];
-		return (
-			!info.capacity &&
-			(statValue !== 0 || ctx.activePlayer.statsHistory?.[statKey])
-		);
+		if (info.capacity) {
+			return false;
+		}
+		if (statValue !== 0) {
+			return true;
+		}
+		return Boolean(activePlayerSnapshot.statsHistory?.[statKey]);
 	})
 	.map(([statKey]) => statKey);
 
@@ -109,7 +119,7 @@ const statForecast = displayableStatKeys.reduce<Record<string, number>>(
 );
 
 const forecastByPlayerId = {
-	[mockGame.ctx.activePlayer.id]: {
+	[activePlayerSnapshot.id]: {
 		resources: resourceForecast,
 		stats: statForecast,
 		population: {},
@@ -126,26 +136,28 @@ vi.mock('../src/state/useNextTurnForecast', () => ({
 
 describe('<PlayerPanel />', () => {
 	it('renders player name and resource icons', () => {
-		render(<PlayerPanel player={ctx.activePlayer} />);
-		expect(screen.getByText(ctx.activePlayer.name)).toBeInTheDocument();
+		render(<PlayerPanel player={activePlayerSnapshot} />);
+		expect(screen.getByText(activePlayerSnapshot.name)).toBeInTheDocument();
 		for (const [key, info] of Object.entries(RESOURCES)) {
-			const amount = ctx.activePlayer.resources[key] ?? 0;
+			const amount = activePlayerSnapshot.resources[key] ?? 0;
 			expect(screen.getByText(`${info.icon}${amount}`)).toBeInTheDocument();
 		}
 	});
 
 	it('renders next-turn forecasts with accessible labels', () => {
 		expect(displayableStatKeys.length).toBeGreaterThan(0);
-		render(<PlayerPanel player={ctx.activePlayer} />);
+		render(<PlayerPanel player={activePlayerSnapshot} />);
 		const [firstResourceKey] = Object.keys(RESOURCES);
+		const playerResources = activePlayerSnapshot.resources;
 		const resourceInfo = RESOURCES[firstResourceKey];
-		const resourceValue = ctx.activePlayer.resources[firstResourceKey] ?? 0;
+		const resourceValue = playerResources[firstResourceKey] ?? 0;
 		const resourceDelta = resourceForecast[firstResourceKey]!;
 		const formattedResourceDelta = `${
 			resourceDelta > 0 ? '+' : ''
 		}${resourceDelta}`;
+		const resourceLabel = `${resourceInfo.label}: ${resourceValue} (${formattedResourceDelta})`;
 		const resourceButtons = screen.getAllByRole('button', {
-			name: `${resourceInfo.label}: ${resourceValue} (${formattedResourceDelta})`,
+			name: resourceLabel,
 		});
 		expect(resourceButtons.length).toBeGreaterThan(0);
 		const [resourceButton] = resourceButtons;
@@ -159,16 +171,14 @@ describe('<PlayerPanel />', () => {
 		);
 		if (negativeResourceKey) {
 			const negativeResourceInfo = RESOURCES[negativeResourceKey];
-			const negativeResourceValue =
-				ctx.activePlayer.resources[negativeResourceKey] ?? 0;
+			const negativeResourceValue = playerResources[negativeResourceKey] ?? 0;
 			const negativeResourceDelta = resourceForecast[negativeResourceKey]!;
 			const formattedNegativeDelta = `${
 				negativeResourceDelta > 0 ? '+' : ''
 			}${negativeResourceDelta}`;
+			const negativeResourceLabel = `${negativeResourceInfo.label}: ${negativeResourceValue} (${formattedNegativeDelta})`;
 			const negativeResourceButtons = screen.getAllByRole('button', {
-				name: `${negativeResourceInfo.label}: ${negativeResourceValue} (${
-					formattedNegativeDelta
-				})`,
+				name: negativeResourceLabel,
 			});
 			expect(negativeResourceButtons.length).toBeGreaterThan(0);
 			const [negativeResourceButton] = negativeResourceButtons;
@@ -179,7 +189,7 @@ describe('<PlayerPanel />', () => {
 		}
 		const [firstStatKey] = displayableStatKeys;
 		const statInfo = STATS[firstStatKey as keyof typeof STATS];
-		const statValue = ctx.activePlayer.stats[firstStatKey] ?? 0;
+		const statValue = activePlayerSnapshot.stats[firstStatKey] ?? 0;
 		const formattedStatValue = formatStatValue(
 			firstStatKey as keyof typeof STATS,
 			statValue,
