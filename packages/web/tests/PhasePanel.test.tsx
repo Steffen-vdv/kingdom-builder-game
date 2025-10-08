@@ -17,7 +17,7 @@ import {
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionSelectors.types';
+import type { SessionRegistries } from '../src/state/sessionContent';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');

@@ -13,9 +13,9 @@ import type {
 	SessionLandView,
 	SessionOptionSelection,
 	SessionPlayerView,
-	SessionRegistries,
 	SessionSelectorHelpers,
 } from './sessionSelectors.types';
+import type { SessionRegistries } from './sessionContent';
 
 const cloneRecord = <T>(record: Record<string, T>) => ({ ...record });
 const mapLand = (
@@ -201,8 +201,8 @@ export type {
 	SessionLandView,
 	SessionOptionSelection,
 	SessionPlayerView,
-	SessionRegistries,
 	SessionSelectorHelpers,
 } from './sessionSelectors.types';
+export type { SessionRegistries } from './sessionContent';
 type SessionView = ReturnType<typeof selectSessionView>;
 export type { SessionPlayersSelection, SessionView };

@@ -16,7 +16,7 @@ import {
 	wrapTranslationRegistry,
 } from './helpers/translationContextStub';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionSelectors.types';
+import type { SessionRegistries } from '../src/state/sessionContent';
 import { createActionsPanelState } from './helpers/createActionsPanelState';
 const getRequirementIconsMock = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({

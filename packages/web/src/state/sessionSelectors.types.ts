@@ -74,12 +74,6 @@ type SessionSelectorHelpers = {
 		b: SessionDevelopmentOption,
 	) => number;
 };
-type SessionRegistries = {
-	actions: RegistryLike<ActionDefinition>;
-	buildings: RegistryLike<BuildingDefinition>;
-	developments: RegistryLike<DevelopmentDefinition>;
-};
-
 export type {
 	ActionDefinition,
 	BuildingDefinition,
@@ -91,6 +85,5 @@ export type {
 	SessionLandView,
 	SessionOptionSelection,
 	SessionPlayerView,
-	SessionRegistries,
 	SessionSelectorHelpers,
 };

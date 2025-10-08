@@ -8,7 +8,7 @@ import { createTranslationContext } from '../../src/translation/context';
 import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
 import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';
-import type { SessionRegistries } from '../../src/state/sessionSelectors.types';
+import type { SessionRegistries } from '../../src/state/sessionContent';
 
 export type MockGame = GameEngineContextValue;
 
