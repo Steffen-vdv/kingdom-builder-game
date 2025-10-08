@@ -53,6 +53,7 @@ export function useCompensationLogger({
 				...after,
 				resources: { ...after.resources },
 				stats: { ...after.stats },
+				population: { ...after.population },
 				buildings: [...after.buildings],
 				lands: after.lands.map((land) => ({
 					...land,

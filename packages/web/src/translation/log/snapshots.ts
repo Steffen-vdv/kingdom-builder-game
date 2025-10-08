@@ -20,6 +20,7 @@ import { createTranslationDiffContext } from './resourceSources/context';
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
 	stats: Record<string, number>;
+	population: Record<string, number>;
 	buildings: string[];
 	lands: Array<{
 		id: string;
@@ -34,6 +35,7 @@ interface LegacyPlayerSnapshot {
 	id: string;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
+	population?: Record<string, number>;
 	buildings: Set<string> | string[];
 	lands: Land[];
 	passives?: PassiveSummary[];
@@ -57,6 +59,20 @@ export function snapshotPlayer(
 		slotsUsed: land.slotsUsed,
 		developments: [...land.developments],
 	}));
+	const population = (() => {
+		if ('population' in playerState && playerState.population) {
+			return { ...playerState.population };
+		}
+		if (context && 'id' in playerState) {
+			const match = context.game.players.find((entry) => {
+				return entry.id === (playerState.id as PlayerId);
+			});
+			if (match) {
+				return { ...match.population };
+			}
+		}
+		return {};
+	})();
 	const hasPassives = 'passives' in playerState && playerState.passives;
 	const passives = hasPassives
 		? [...playerState.passives!]
@@ -66,6 +82,7 @@ export function snapshotPlayer(
 	return {
 		resources: { ...playerState.resources },
 		stats: { ...playerState.stats },
+		population,
 		buildings: buildingList,
 		lands,
 		passives,
@@ -102,7 +119,7 @@ export function diffSnapshots(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,
-		context,
+		nextSnapshot,
 		undefined,
 	);
 	const diffContext = createTranslationDiffContext(context);

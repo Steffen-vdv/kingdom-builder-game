@@ -37,7 +37,7 @@ export function diffStepSnapshots(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,
-		context,
+		nextSnapshot,
 		stepEffects,
 	);
 	appendBuildingChanges(
