@@ -6,7 +6,7 @@ import {
 	useState,
 } from 'react';
 import Button from '../common/Button';
-import { useGameEngine } from '../../state/GameContext';
+import { useOptionalGameEngine } from '../../state/GameContext';
 
 const INPUT_FORM_CLASS = [
 	'flex flex-col gap-4 rounded-2xl border border-white/20 bg-white/85 px-6 py-5',
@@ -56,7 +56,8 @@ export function PlayerNameSetting({
 	playerName,
 	onSave,
 }: PlayerNameSettingProps) {
-	const { pushSuccessToast } = useGameEngine();
+	const gameEngine = useOptionalGameEngine();
+	const pushSuccessToast = gameEngine?.pushSuccessToast;
 	const inputId = useId();
 	const labelId = `${inputId}-label`;
 	const [draftName, setDraftName] = useState(playerName);
@@ -93,7 +94,7 @@ export function PlayerNameSetting({
 		onSave(trimmed);
 		setStatus('success');
 		setMessage('Name updated.');
-		pushSuccessToast('Your title now echoes across the realm.', 'Name saved');
+		pushSuccessToast?.('Your title now echoes across the realm.', 'Name saved');
 	};
 
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {

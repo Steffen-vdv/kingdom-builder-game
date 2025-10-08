@@ -7,6 +7,7 @@ export interface AppNavigationState {
 	isDevMode: boolean;
 	isMusicEnabled: boolean;
 	isSoundEnabled: boolean;
+	isBackgroundAudioMuted: boolean;
 	startStandardGame: () => void;
 	startDeveloperGame: () => void;
 	openOverview: () => void;
@@ -15,4 +16,5 @@ export interface AppNavigationState {
 	toggleDarkMode: () => void;
 	toggleMusic: () => void;
 	toggleSound: () => void;
+	toggleBackgroundAudioMute: () => void;
 }
