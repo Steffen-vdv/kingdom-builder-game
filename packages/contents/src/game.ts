@@ -48,4 +48,24 @@ export const GAME_START: StartConfig = startConfig()
 			[Resource.ap]: 1,
 		}),
 	)
+	.devMode((mode) =>
+		mode
+			.player((player) =>
+				player
+					.resources({
+						[Resource.gold]: 100,
+						[Resource.happiness]: 10,
+					})
+					.population({
+						[PopulationRole.Council]: 2,
+						[PopulationRole.Legion]: 1,
+						[PopulationRole.Fortifier]: 1,
+					}),
+			)
+			.playerOverride('B', (player) =>
+				player.resources({
+					[Resource.castleHP]: 1,
+				}),
+			),
+	)
 	.build();

@@ -1,11 +1,7 @@
 import {
 	createDevelopmentRegistry,
 	BuildingId,
-	PopulationRole,
-	Resource,
 	type DevelopmentDef,
-	type PopulationRoleId,
-	type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
 	runEffects,
@@ -13,16 +9,9 @@ import {
 	type EngineContext,
 } from '@kingdom-builder/engine';
 
-const TARGET_GOLD = 100;
-const TARGET_HAPPINESS = 10;
 const DEVELOPMENT_REGISTRY = createDevelopmentRegistry();
 const DEVELOPMENT_PLAN = toDevelopmentPlan();
 const TARGET_LAND_COUNT = 5;
-const POPULATION_PLAN: Array<{ role: PopulationRoleId; count: number }> = [
-	{ role: PopulationRole.Council, count: 2 },
-	{ role: PopulationRole.Legion, count: 1 },
-	{ role: PopulationRole.Fortifier, count: 1 },
-];
 
 function toDevelopmentPlan(): string[] {
 	const identifiers: string[] = [];
@@ -62,49 +51,6 @@ function applyEffect(
 	multiplier = 1,
 ): void {
 	runEffects([effect], context, multiplier);
-}
-
-function ensureResource(
-	context: EngineContext,
-	key: ResourceKey,
-	target: number,
-): void {
-	const player = context.activePlayer;
-	const current = player.resources[key] ?? 0;
-	if (current === target) {
-		return;
-	}
-	const amount = Math.abs(target - current);
-	if (amount === 0) {
-		return;
-	}
-	const method = target > current ? 'add' : 'remove';
-	const resourceEffect: EffectDef = {
-		type: 'resource',
-		method,
-		params: { key, amount },
-	};
-	applyEffect(context, resourceEffect);
-}
-
-function ensurePopulation(
-	context: EngineContext,
-	role: PopulationRoleId,
-	target: number,
-): void {
-	const player = context.activePlayer;
-	const current = player.population[role] ?? 0;
-	if (current === target) {
-		return;
-	}
-	const delta = target - current;
-	const method = delta > 0 ? 'add' : 'remove';
-	const populationEffect: EffectDef = {
-		type: 'population',
-		method,
-		params: { role },
-	};
-	applyEffect(context, populationEffect, Math.abs(delta));
 }
 
 function ensureLandCount(context: EngineContext, target: number): void {
@@ -188,11 +134,6 @@ export function initializeDeveloperMode(context: EngineContext): void {
 		return;
 	}
 	withPrimaryPlayer(context, () => {
-		ensureResource(context, Resource.gold, TARGET_GOLD);
-		ensureResource(context, Resource.happiness, TARGET_HAPPINESS);
-		POPULATION_PLAN.forEach(({ role, count }) => {
-			ensurePopulation(context, role, count);
-		});
 		ensureLandCount(
 			context,
 			Math.max(TARGET_LAND_COUNT, DEVELOPMENT_PLAN.length),

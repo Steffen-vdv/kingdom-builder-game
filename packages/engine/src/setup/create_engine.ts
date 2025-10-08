@@ -169,6 +169,9 @@ export function createEngine({
 		A: playerACompensation,
 		B: playerBCompensation,
 	} as Record<'A' | 'B', PlayerStartConfig>;
+	const devModeStartConfig = startConfig.devMode
+		? structuredClone(startConfig.devMode)
+		: undefined;
 	const engineContext = new EngineContext(
 		gameState,
 		services,
@@ -180,6 +183,7 @@ export function createEngine({
 		phases,
 		actionCostResource,
 		compensationMap,
+		devModeStartConfig,
 	);
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;

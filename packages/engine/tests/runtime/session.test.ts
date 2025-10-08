@@ -214,6 +214,41 @@ describe('EngineSession', () => {
 		expect(refreshed[CResource.gold]).toBe(goldCost);
 	});
 
+	it('applies dev mode start overrides when enabled', () => {
+		const devModeStart = GAME_START.devMode;
+		if (!devModeStart) {
+			throw new Error('Expected dev mode configuration in GAME_START.');
+		}
+		const session = createTestSession();
+		session.setDevMode(true);
+		const snapshot = session.getSnapshot();
+		expect(snapshot.game.devMode).toBe(true);
+		const [primary, opponent] = snapshot.game.players;
+		expect(primary).toBeDefined();
+		expect(opponent).toBeDefined();
+		if (!primary || !opponent) {
+			return;
+		}
+		const baseResourceOverrides = devModeStart.player?.resources ?? {};
+		for (const [resourceKey, expected] of Object.entries(
+			baseResourceOverrides,
+		)) {
+			expect(primary.resources[resourceKey] ?? 0).toBe(expected);
+			expect(opponent.resources[resourceKey] ?? 0).toBe(expected);
+		}
+		const specificOverrides = devModeStart.players ?? {};
+		const opponentResourceOverrides = specificOverrides['B']?.resources ?? {};
+		for (const [resourceKey, expected] of Object.entries(
+			opponentResourceOverrides,
+		)) {
+			expect(opponent.resources[resourceKey] ?? 0).toBe(expected);
+		}
+		const basePopulationOverrides = devModeStart.player?.population ?? {};
+		for (const [role, expected] of Object.entries(basePopulationOverrides)) {
+			expect(primary.population[role] ?? 0).toBe(expected);
+		}
+	});
+
 	it('clones action requirement lookups from the session', () => {
 		const requirementId = 'vitest:fail';
 		const requirementMessage = 'Requirement failed for test';

@@ -132,6 +132,9 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 	const clonedServices = source.services.clone(source.developments);
 	const clonedPassives = source.passives.clone();
 	const compensations = structuredClone(source.compensations);
+	const devModeStart = source.devModeStart
+		? structuredClone(source.devModeStart)
+		: undefined;
 	const cloned = new EngineContext(
 		clonedGame,
 		clonedServices,
@@ -143,6 +146,7 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		source.phases,
 		source.actionCostResource,
 		compensations,
+		devModeStart,
 	);
 	if (source.aiSystem) {
 		cloned.aiSystem = source.aiSystem;

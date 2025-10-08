@@ -37,6 +37,7 @@ export type {
 	PopulationConfig,
 	PlayerStartConfig,
 	StartConfig,
+	DevModeStartConfig,
 	WinConditionConfig,
 	ResourceThresholdWinConditionConfig,
 	GameConfig,

@@ -110,4 +110,23 @@ describe('start config builder safeguards', () => {
 			'Start config already set lastPlayerCompensation(). Remove the extra call.',
 		);
 	});
+
+	it('requires dev mode overrides before building', () => {
+		expect(() =>
+			startConfig()
+				.player(
+					playerStart()
+						.resources({
+							[firstResourceKey]: 1,
+						})
+						.stats({ [firstStatKey]: 1 })
+						.population({ demo: 1 })
+						.lands([]),
+				)
+				.devMode((mode) => mode)
+				.build(),
+		).toThrowError(
+			'Dev mode configuration is empty. Provide player() or playerOverride().',
+		);
+	});
 });

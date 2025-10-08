@@ -20,6 +20,7 @@ import type {
 	StartConfig,
 	WinConditionConfig,
 	ResourceThresholdWinConditionConfig as ResourceThresholdWinConfig,
+	DevModeStartConfig,
 } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
@@ -2525,6 +2526,23 @@ type WinConditionBuilderFactory = (
 
 type WinConditionBuilderInput = ResourceWinBuilder | WinConditionBuilderFactory;
 
+function clonePlayerStartEntries(config: PlayerStartConfig): PlayerStartConfig {
+	const cloned: PlayerStartConfig = {};
+	if (config.resources) {
+		cloned.resources = { ...config.resources };
+	}
+	if (config.stats) {
+		cloned.stats = { ...config.stats };
+	}
+	if (config.population) {
+		cloned.population = { ...config.population };
+	}
+	if (config.lands) {
+		cloned.lands = config.lands.map((land) => cloneLandStartConfig(land));
+	}
+	return cloned;
+}
+
 class ResourceWinBuilder extends ParamsBuilder<ResourceThresholdWinConfig> {
 	constructor() {
 		super({
@@ -2613,10 +2631,97 @@ class ResourceWinBuilder extends ParamsBuilder<ResourceThresholdWinConfig> {
 	}
 }
 
+class DevModeStartBuilder {
+	private baseConfig: PlayerStartConfig | undefined;
+	private playerConfigs: Record<string, PlayerStartConfig> = {};
+
+	private resolveBuilder(
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		if (input instanceof PlayerStartBuilder) {
+			return input;
+		}
+		const configured = input(new PlayerStartBuilder(false));
+		if (!(configured instanceof PlayerStartBuilder)) {
+			throw new Error(
+				'Dev mode configuration must return the provided player builder.',
+			);
+		}
+		return configured;
+	}
+
+	player(
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		if (this.baseConfig) {
+			throw new Error(
+				'Dev mode already set player(). Remove the extra player() call.',
+			);
+		}
+		const builder = this.resolveBuilder(input);
+		this.baseConfig = builder.build();
+		return this;
+	}
+
+	playerOverride(
+		playerId: string,
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		const targetId = playerId?.trim();
+		if (!targetId) {
+			throw new Error('Dev mode playerOverride() requires a player id.');
+		}
+		if (this.playerConfigs[targetId]) {
+			throw new Error(
+				`Dev mode already set overrides for player "${targetId}". Remove the duplicate playerOverride() call.`,
+			);
+		}
+		const builder = this.resolveBuilder(input);
+		this.playerConfigs[targetId] = builder.build();
+		return this;
+	}
+
+	opponent(
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		return this.playerOverride('B', input);
+	}
+
+	build(): DevModeStartConfig {
+		if (!this.baseConfig && Object.keys(this.playerConfigs).length === 0) {
+			throw new Error(
+				'Dev mode configuration is empty. Provide player() or playerOverride().',
+			);
+		}
+		const config: DevModeStartConfig = {};
+		if (this.baseConfig) {
+			config.player = clonePlayerStartEntries(this.baseConfig);
+		}
+		const overrideEntries = Object.entries(this.playerConfigs);
+		if (overrideEntries.length > 0) {
+			config.players = Object.fromEntries(
+				overrideEntries.map(([id, overrides]) => {
+					return [id, clonePlayerStartEntries(overrides)];
+				}),
+			);
+		}
+		return config;
+	}
+}
+
 class StartConfigBuilder {
 	private playerConfig: PlayerStartConfig | undefined;
 	private lastPlayerCompensationConfig: PlayerStartConfig | undefined;
 	private winConditionConfigs: WinConditionConfig[] = [];
+	private devModeBuilder: DevModeStartBuilder | undefined;
 
 	private resolveWinConditionBuilder(input: WinConditionBuilderInput) {
 		if (input instanceof ResourceWinBuilder) {
@@ -2671,6 +2776,37 @@ class StartConfigBuilder {
 		return this;
 	}
 
+	private resolveDevModeBuilder(
+		input:
+			| DevModeStartBuilder
+			| ((builder: DevModeStartBuilder) => DevModeStartBuilder),
+	) {
+		if (input instanceof DevModeStartBuilder) {
+			return input;
+		}
+		const configured = input(new DevModeStartBuilder());
+		if (!(configured instanceof DevModeStartBuilder)) {
+			throw new Error(
+				'Start config devMode(...) callback must return the provided builder.',
+			);
+		}
+		return configured;
+	}
+
+	devMode(
+		input:
+			| DevModeStartBuilder
+			| ((builder: DevModeStartBuilder) => DevModeStartBuilder),
+	) {
+		if (this.devModeBuilder) {
+			throw new Error(
+				'Start config already set devMode(). Remove the extra devMode() call.',
+			);
+		}
+		this.devModeBuilder = this.resolveDevModeBuilder(input);
+		return this;
+	}
+
 	lastPlayerCompensation(
 		input:
 			| PlayerStartBuilder
@@ -2700,6 +2836,21 @@ class StartConfigBuilder {
 		}
 		if (this.lastPlayerCompensationConfig) {
 			config.players = { B: this.lastPlayerCompensationConfig };
+		}
+		if (this.devModeBuilder) {
+			const devModeConfig = this.devModeBuilder.build();
+			const devMode: DevModeStartConfig = {};
+			if (devModeConfig.player) {
+				devMode.player = clonePlayerStartEntries(devModeConfig.player);
+			}
+			if (devModeConfig.players) {
+				devMode.players = Object.fromEntries(
+					Object.entries(devModeConfig.players).map(([id, overrides]) => {
+						return [id, clonePlayerStartEntries(overrides)];
+					}),
+				);
+			}
+			config.devMode = devMode;
 		}
 		return config;
 	}

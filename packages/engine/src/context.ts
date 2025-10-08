@@ -9,6 +9,7 @@ import type {
 	PopulationConfig as PopulationDef,
 	PlayerStartConfig,
 	Registry,
+	DevModeStartConfig,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
@@ -28,6 +29,7 @@ export class EngineContext {
 			A: {},
 			B: {},
 		},
+		public devModeStart: DevModeStartConfig | undefined = undefined,
 	) {}
 	aiSystem?: AISystem;
 	recentResourceGains: {

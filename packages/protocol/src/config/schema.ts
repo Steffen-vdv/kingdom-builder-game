@@ -144,6 +144,11 @@ const playerStartSchema = z.object({
 	lands: z.array(landStartSchema).optional(),
 });
 
+const devModeStartSchema = z.object({
+	player: playerStartSchema.optional(),
+	players: z.record(z.string(), playerStartSchema).optional(),
+});
+
 const winConditionResultSchema = z.enum(['win', 'loss']);
 
 const winConditionResourceThresholdSchema = z.object({
@@ -163,10 +168,12 @@ export const startConfigSchema = z.object({
 	player: playerStartSchema,
 	players: z.record(z.string(), playerStartSchema).optional(),
 	winConditions: z.array(winConditionSchema).optional(),
+	devMode: devModeStartSchema.optional(),
 });
 
 export type PlayerStartConfig = z.infer<typeof playerStartSchema>;
 export type StartConfig = z.infer<typeof startConfigSchema>;
+export type DevModeStartConfig = z.infer<typeof devModeStartSchema>;
 export type WinConditionConfig = z.infer<typeof winConditionSchema>;
 export type ResourceThresholdWinConditionConfig = z.infer<
 	typeof winConditionResourceThresholdSchema

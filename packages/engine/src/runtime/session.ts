@@ -25,6 +25,8 @@ import {
 import type { PlayerId, ResourceKey } from '../state';
 import type { AIDependencies } from '../ai';
 import type { HappinessTierDefinition } from '../services/tiered_resource_types';
+import { applyPlayerStartConfiguration } from '../setup/player_setup';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 
 function cloneEffectLogEntry<T>(entry: T): T {
 	if (typeof entry !== 'object' || entry === null) {
@@ -41,6 +43,56 @@ function clonePassiveEvaluationMods(
 		entries.push([target, new Map(modifiers)]);
 	}
 	return new Map(entries);
+}
+
+function filterPlayerStartOverrides(
+	overrides: PlayerStartConfig | undefined,
+): PlayerStartConfig | undefined {
+	if (!overrides) {
+		return undefined;
+	}
+	const filtered: PlayerStartConfig = {};
+	if (overrides.resources) {
+		filtered.resources = { ...overrides.resources };
+	}
+	if (overrides.stats) {
+		filtered.stats = { ...overrides.stats };
+	}
+	if (overrides.population) {
+		filtered.population = { ...overrides.population };
+	}
+	return Object.keys(filtered).length > 0 ? filtered : undefined;
+}
+
+function applyDevModeStartOverrides(context: EngineContext): void {
+	const overrides = context.devModeStart;
+	if (!overrides) {
+		return;
+	}
+	const baseOverrides = filterPlayerStartOverrides(overrides.player);
+	const playerOverrides = overrides.players ?? {};
+	for (const player of context.game.players) {
+		if (!player) {
+			continue;
+		}
+		if (baseOverrides) {
+			applyPlayerStartConfiguration(
+				player,
+				baseOverrides,
+				context.services.rules,
+			);
+		}
+		const specificOverrides = filterPlayerStartOverrides(
+			playerOverrides[player.id],
+		);
+		if (specificOverrides) {
+			applyPlayerStartConfiguration(
+				player,
+				specificOverrides,
+				context.services.rules,
+			);
+		}
+	}
 }
 
 export interface EngineSession {
@@ -136,7 +188,13 @@ export function createEngineSession(
 			return context.enqueue(taskFactory);
 		},
 		setDevMode(enabled) {
+			if (context.game.devMode === enabled) {
+				return;
+			}
 			context.game.devMode = enabled;
+			if (enabled) {
+				applyDevModeStartOverrides(context);
+			}
 		},
 		async runAiTurn(playerId, overrides) {
 			if (!context.aiSystem) {
