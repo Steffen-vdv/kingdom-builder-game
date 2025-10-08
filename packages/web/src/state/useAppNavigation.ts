@@ -11,11 +11,15 @@ import {
 } from './audioPreferences';
 import type { AppNavigationState } from './appNavigationState';
 import { useAudioPreferenceToggles } from './useAudioPreferenceToggles';
+import {
+	getStoredDarkModePreference,
+	useDarkModePreference,
+} from './darkModePreference';
 
 export function useAppNavigation(): AppNavigationState {
 	const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Menu);
 	const [currentGameKey, setCurrentGameKey] = useState(0);
-	const [isDarkMode, setIsDarkMode] = useState(true);
+	const [isDarkMode, setIsDarkMode] = useDarkModePreference();
 	const [isDevMode, setIsDevMode] = useState(false);
 	const {
 		isMusicEnabled,
@@ -66,10 +70,11 @@ export function useAppNavigation(): AppNavigationState {
 	const applyHistoryState = useCallback(
 		(state: HistoryState | null, fallbackScreen: Screen): HistoryState => {
 			const { music, sound, backgroundMute } = getStoredAudioPreferences();
+			const darkMode = getStoredDarkModePreference();
 			const nextState: HistoryState = {
 				screen: state?.screen ?? fallbackScreen,
 				gameKey: state?.gameKey ?? 0,
-				isDarkModeEnabled: state?.isDarkModeEnabled ?? true,
+				isDarkModeEnabled: state?.isDarkModeEnabled ?? darkMode,
 				isDevModeEnabled: state?.isDevModeEnabled ?? false,
 				isMusicEnabled: state?.isMusicEnabled ?? music,
 				isSoundEnabled: state?.isSoundEnabled ?? sound,
