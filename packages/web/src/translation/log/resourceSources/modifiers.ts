@@ -23,8 +23,8 @@ function resolveModifierIcon(
 	context: TranslationDiffContext,
 ): string {
 	const parts = baseKey.split('_');
-	for (let i = parts.length; i > 0; i -= 1) {
-		const candidate = parts.slice(0, i).join('_');
+	for (let partIndex = parts.length; partIndex > 0; partIndex -= 1) {
+		const candidate = parts.slice(0, partIndex).join('_');
 		const icon = resolveBuildingIcon(candidate, context);
 		if (icon) {
 			return icon;

@@ -23,8 +23,8 @@ function translate(
 	) => Summary,
 ): Summary {
 	const items: SummaryEntry[] = [];
-	for (let i = 0; i < land.slotsMax; i++) {
-		const devId = land.developments[i];
+	for (let slotIndex = 0; slotIndex < land.slotsMax; slotIndex += 1) {
+		const devId = land.developments[slotIndex];
 		if (devId) {
 			const development = engineContext.developments.get(devId);
 			items.push({
