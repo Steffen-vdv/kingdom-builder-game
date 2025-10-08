@@ -7,7 +7,6 @@ import {
 import type { Dispatch, SetStateAction } from 'react';
 import type { Action } from './actionTypes';
 import type { PhaseStep } from './phaseTypes';
-import { getLegacySessionContext } from './getLegacySessionContext';
 
 interface UseAiRunnerOptions {
 	session: EngineSession;
@@ -33,8 +32,6 @@ export function useAiRunner({
 		if (!phaseDefinition?.action) {
 			return;
 		}
-		const context = getLegacySessionContext(session);
-		const aiSystem = context.aiSystem;
 		const activeId = sessionState.game.activePlayerId;
 		if (!session.hasAiController(activeId)) {
 			return;
