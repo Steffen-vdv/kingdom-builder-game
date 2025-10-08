@@ -20,6 +20,7 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	BuildingId,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../translation/context';
@@ -95,13 +96,16 @@ export function GameProvider({
 			devMode,
 		});
 		created.setDevMode(devMode);
-		const legacyContext = created.getLegacyContext();
-		if (devMode) {
-			initializeDeveloperMode(legacyContext);
+		const snapshot = created.getSnapshot();
+		const primaryPlayer = snapshot.game.players[0];
+		const primaryPlayerId = primaryPlayer?.id;
+		const hasMill = primaryPlayer?.buildings.includes(BuildingId.Mill) ?? false;
+		if (devMode && primaryPlayerId && snapshot.game.turn === 1 && !hasMill) {
+			initializeDeveloperMode(created, primaryPlayerId);
 		}
-		const [primary] = legacyContext.game.players;
-		if (primary) {
-			primary.name = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
+		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
+		if (primaryPlayerId) {
+			created.updatePlayerName(primaryPlayerId, desiredName);
 		}
 		return created;
 	}, [devMode]);
@@ -116,24 +120,26 @@ export function GameProvider({
 		[session, tick],
 	);
 
-	const primaryPlayerName = sessionState.game.players[0]?.name;
+	const primaryPlayerSnapshot = sessionState.game.players[0];
+	const primaryPlayerId = primaryPlayerSnapshot?.id;
+	const primaryPlayerName = primaryPlayerSnapshot?.name;
 	useEffect(() => {
 		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
-		if (primaryPlayerName === undefined || primaryPlayerName === desiredName) {
+		if (
+			primaryPlayerId === undefined ||
+			primaryPlayerName === undefined ||
+			primaryPlayerName === desiredName
+		) {
 			return;
 		}
 		void session
 			.enqueue(() => {
-				const context = session.getLegacyContext();
-				const [player] = context.game.players;
-				if (player && player.name !== desiredName) {
-					player.name = desiredName;
-				}
+				session.updatePlayerName(primaryPlayerId, desiredName);
 			})
 			.finally(() => {
 				refresh();
 			});
-	}, [session, primaryPlayerName, refresh, playerName]);
+	}, [session, primaryPlayerId, primaryPlayerName, refresh, playerName]);
 
 	const translationContext = useMemo(
 		() =>

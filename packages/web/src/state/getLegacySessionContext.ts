@@ -1,6 +1,5 @@
 import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
 import type {
-	EngineContext,
 	EngineSession,
 	EngineSessionSnapshot,
 } from '@kingdom-builder/engine';
@@ -186,9 +185,9 @@ function createDiffContext(
 		activePlayer:
 			activePlayer as unknown as TranslationDiffContext['activePlayer'],
 		buildings:
-			translationContext.buildings as unknown as EngineContext['buildings'],
+			translationContext.buildings as unknown as TranslationDiffContext['buildings'],
 		developments:
-			translationContext.developments as unknown as EngineContext['developments'],
+			translationContext.developments as unknown as TranslationDiffContext['developments'],
 		passives,
 		evaluate,
 	};

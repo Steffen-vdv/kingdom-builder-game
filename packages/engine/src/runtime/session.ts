@@ -2,7 +2,6 @@ import {
 	createEngine,
 	type EngineCreationOptions,
 } from '../setup/create_engine';
-import type { EngineContext } from '../context';
 import { performAction as runAction } from '../actions/action_execution';
 import { advance as runAdvance } from '../phases/advance';
 import { getActionEffectGroups } from '../actions/effect_groups';
@@ -30,6 +29,10 @@ import {
 import type { PlayerId } from '../state';
 import type { AIDependencies } from '../ai';
 import type { WinConditionDefinition } from '../services/win_condition_types';
+import {
+	applyDeveloperPreset as applyDeveloperPresetInternal,
+	type DeveloperPresetOptions,
+} from './developer_preset';
 
 type ActionDefinitionSummary = SessionActionDefinitionSummary;
 
@@ -87,11 +90,9 @@ export interface EngineSession {
 		options?: SimulateUpcomingPhasesOptions,
 	): SimulateUpcomingPhasesResult;
 	getRuleSnapshot(): SessionRuleSnapshot;
-	/**
-	 * @deprecated Temporary escape hatch while the web layer migrates to
-	 * snapshots. Avoid new usage and prefer the session facade instead.
-	 */
-	getLegacyContext(): EngineContext;
+	pushEffectLog<T>(key: string, entry: T): void;
+	applyDeveloperPreset(options: DeveloperPresetOptions): void;
+	updatePlayerName(playerId: PlayerId, name: string): void;
 }
 
 export type {
@@ -196,8 +197,19 @@ export function createEngineSession(
 				winConditions: clonedWinConditions,
 			} satisfies SessionRuleSnapshot;
 		},
-		getLegacyContext() {
-			return context;
+		pushEffectLog(key, entry) {
+			context.pushEffectLog(key, cloneEffectLogEntry(entry));
+		},
+		applyDeveloperPreset(options) {
+			applyDeveloperPresetInternal(context, options);
+		},
+		updatePlayerName(playerId, name) {
+			const player = context.game.players.find(
+				(entry) => entry.id === playerId,
+			);
+			if (player) {
+				player.name = name;
+			}
 		},
 	};
 }
@@ -206,3 +218,4 @@ export { cloneEffectLogEntry, clonePassiveEvaluationMods };
 export type EngineSessionGetActionCosts = EngineSession['getActionCosts'];
 export type EngineSessionGetActionRequirements =
 	EngineSession['getActionRequirements'];
+export type { DeveloperPresetOptions } from './developer_preset';

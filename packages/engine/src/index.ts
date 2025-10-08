@@ -21,6 +21,7 @@ export {
 	type EngineSessionGetActionRequirements,
 	cloneEffectLogEntry,
 	clonePassiveEvaluationMods,
+	type DeveloperPresetOptions,
 } from './runtime/session';
 export type {
 	SessionSnapshot as EngineSessionSnapshot,
