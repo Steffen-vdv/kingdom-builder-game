@@ -61,7 +61,7 @@ describe('Growth phase', () => {
 			values.councilApGain * councilsB,
 		);
 
-		for (let i = 0; i < 3; i++) {
+		for (let iterationIndex = 0; iterationIndex < 3; iterationIndex++) {
 			ctx.game.currentPlayerIndex = 1;
 			ctx.game.phaseIndex = growthPhaseIndex;
 			ctx.game.stepIndex = gainApIdx;

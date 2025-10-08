@@ -62,7 +62,11 @@ export function collectTriggerEffects(
 		const list = getEffects(populationDefinition, trigger);
 		if (list) {
 			const clones: EffectDef[] = [];
-			for (let i = 0; i < Number(count); i++) {
+			for (
+				let populationIndex = 0;
+				populationIndex < Number(count);
+				populationIndex++
+			) {
 				clones.push(...list.map(cloneEffect));
 			}
 			if (clones.length) {
