@@ -116,7 +116,15 @@ export function getActionEffectGroups(
 	actionId: string,
 	ctx: EngineContext,
 ): ActionEffectGroup[] {
-	const definition = ctx.actions.get(actionId);
+	let definition: { effects: ActionEffect[] } | undefined;
+	try {
+		definition = ctx.actions.get(actionId);
+	} catch (error) {
+		throw new Error(`Unknown action "${actionId}"`, { cause: error });
+	}
+	if (!definition) {
+		throw new Error(`Unknown action "${actionId}"`);
+	}
 	const groups: ActionEffectGroup[] = [];
 	for (const effect of definition.effects) {
 		if (isActionEffectGroup(effect)) {
