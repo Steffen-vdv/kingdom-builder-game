@@ -111,14 +111,14 @@ function buildActionLog(
 				: undefined;
 		items.push(
 			formatter.formatDiff(
-				ownerLabel('defender'),
+				ownerLabel(ctx, 'defender'),
 				diff,
 				percent !== undefined ? { percent } : { showPercent: true as const },
 			),
 		);
 	});
 	entry.attacker.forEach((diff) => {
-		items.push(formatter.formatDiff(ownerLabel('attacker'), diff));
+		items.push(formatter.formatDiff(ownerLabel(ctx, 'attacker'), diff));
 	});
 	return { title: `Triggered ${icon} ${name}`.trim(), items };
 }
@@ -145,7 +145,7 @@ export function buildOnDamageEntry(
 		const handler = resolveAttackOnDamageFormatter(entry);
 		const formatted = handler
 			? handler({ entry, ctx, formatter })
-			: formatDiffEntries(entry, formatter);
+			: formatDiffEntries(entry, formatter, ctx);
 		items.push(...formatted);
 	}
 	if (!items.length) {
@@ -166,21 +166,21 @@ registerAttackOnDamageFormatter(
 registerAttackOnDamageFormatter(
 	'resource',
 	'transfer',
-	({ entry, formatter }) => {
+	({ entry, ctx, formatter }) => {
 		const percent = entry.effect.params
 			? (entry.effect.params['percent'] as number | undefined)
 			: undefined;
 		if (percent === undefined) {
-			return formatDiffEntries(entry, formatter);
+			return formatDiffEntries(entry, formatter, ctx);
 		}
 		const parts: SummaryEntry[] = [];
 		entry.defender.forEach((diff) => {
 			parts.push(
-				formatter.formatDiff(ownerLabel('defender'), diff, { percent }),
+				formatter.formatDiff(ownerLabel(ctx, 'defender'), diff, { percent }),
 			);
 		});
 		entry.attacker.forEach((diff) => {
-			parts.push(formatter.formatDiff(ownerLabel('attacker'), diff));
+			parts.push(formatter.formatDiff(ownerLabel(ctx, 'attacker'), diff));
 		});
 		return parts;
 	},

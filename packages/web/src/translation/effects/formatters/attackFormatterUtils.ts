@@ -44,8 +44,22 @@ export function categorizeDamageEffects(
 	return { actions: [], others: [item] };
 }
 
-export function ownerLabel(owner: 'attacker' | 'defender'): string {
-	return owner === 'attacker' ? 'You' : 'Opponent';
+function fallbackName(name: string | undefined, fallback: string): string {
+	if (!name) {
+		return fallback;
+	}
+	const trimmed = name.trim();
+	return trimmed.length > 0 ? trimmed : fallback;
+}
+
+export function ownerLabel(
+	ctx: TranslationContext,
+	owner: 'attacker' | 'defender',
+): string {
+	if (owner === 'attacker') {
+		return fallbackName(ctx.activePlayer.name, 'Player');
+	}
+	return fallbackName(ctx.opponent.name, 'Opponent');
 }
 
 // Attack summary strings must stay icon-based. Target formatters should call
@@ -116,12 +130,16 @@ export function summarizeOnDamage(
 	const items: SummaryEntry[] = [];
 	const actionItems: SummaryEntry[] = [];
 
+	const attackerName = fallbackName(ctx.activePlayer.name, 'Player');
+	const defenderName = fallbackName(ctx.opponent.name, 'Opponent');
+
 	const collect = (
 		defs: EffectDef[],
 		entries: SummaryEntry[],
 		owner: 'attacker' | 'defender',
 	) => {
-		const suffix = owner === 'defender' ? 'for opponent' : 'for you';
+		const suffix =
+			owner === 'defender' ? `for ${defenderName}` : `for ${attackerName}`;
 		entries.forEach((entry, index) => {
 			const definition = defs[index]!;
 			const { actions, others } = categorizeDamageEffects(
@@ -162,13 +180,14 @@ export function summarizeOnDamage(
 export function formatDiffEntries(
 	entry: AttackOnDamageLogEntry,
 	formatter: AttackTargetFormatter,
+	ctx: TranslationContext,
 ): SummaryEntry[] {
 	const parts: SummaryEntry[] = [];
 	entry.defender.forEach((diff) =>
-		parts.push(formatter.formatDiff(ownerLabel('defender'), diff)),
+		parts.push(formatter.formatDiff(ownerLabel(ctx, 'defender'), diff)),
 	);
 	entry.attacker.forEach((diff) =>
-		parts.push(formatter.formatDiff(ownerLabel('attacker'), diff)),
+		parts.push(formatter.formatDiff(ownerLabel(ctx, 'attacker'), diff)),
 	);
 	return parts;
 }
