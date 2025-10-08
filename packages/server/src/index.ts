@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export function startServer(): void {
@@ -7,6 +8,11 @@ export function startServer(): void {
 const entrypoint = process.argv[1];
 const currentModule = fileURLToPath(import.meta.url);
 
-if (entrypoint !== undefined && currentModule === entrypoint) {
-	startServer();
+if (entrypoint !== undefined) {
+	const normalizedEntrypoint = resolve(entrypoint);
+	const normalizedModule = resolve(currentModule);
+
+	if (normalizedEntrypoint === normalizedModule) {
+		startServer();
+	}
 }
