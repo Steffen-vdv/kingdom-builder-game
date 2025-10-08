@@ -160,19 +160,12 @@ describe('sessionSelectors', () => {
 			.map((option) => option.id);
 		expect(developmentOrder).toEqual([developmentB.id, developmentA.id]);
 		const actionsForA = options.actionsByPlayer.get('A') ?? [];
-		expect(
-			actionsForA
-				.filter((option) =>
-					[actionB.id, actionA.id, systemUnlocked.id].includes(option.id),
-				)
-				.map((option) => option.id),
-		).toEqual([actionB.id, actionA.id, systemUnlocked.id]);
+		expect(actionsForA.map((option) => option.id)).toEqual([
+			actionA.id,
+			systemUnlocked.id,
+		]);
 		const actionsForB = options.actionsByPlayer.get('B') ?? [];
-		expect(
-			actionsForB
-				.filter((option) => [actionB.id, actionA.id].includes(option.id))
-				.map((option) => option.id),
-		).toEqual([actionB.id, actionA.id]);
+		expect(actionsForB.map((option) => option.id)).toEqual([actionB.id]);
 	});
 
 	it('supports custom sort helpers', () => {

@@ -112,14 +112,14 @@ const buildActionSelections = (
 	const list = actions
 		.entries()
 		.map(([id, definition]) => createActionOption(id, definition))
-		.filter((option) => !option.system || unlocked.has(option.id))
+		.filter((option) => unlocked.has(option.id))
 		.sort(helpers.sortActions ?? defaultActionSort);
 	const map = new Map(list.map((option) => [option.id, option]));
 	const byPlayer = new Map<string, SessionActionOption[]>();
 	for (const player of players) {
 		byPlayer.set(
 			player.id,
-			list.filter((option) => !option.system || player.actions.has(option.id)),
+			list.filter((option) => player.actions.has(option.id)),
 		);
 	}
 	return { map, list, byPlayer };
