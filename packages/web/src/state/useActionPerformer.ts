@@ -135,7 +135,6 @@ export function useActionPerformer({
 					changes,
 					messages,
 					subLines,
-					costs,
 				});
 				const logLines = (
 					action.id === ActionId.develop
