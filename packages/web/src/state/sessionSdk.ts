@@ -13,7 +13,12 @@ import {
 } from '@kingdom-builder/engine';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { initializeDeveloperMode } from './developerModeSetup';
-import { SESSION_REGISTRIES } from './sessionContent';
+import {
+	RESOURCE_KEYS,
+	SESSION_REGISTRIES,
+	type ResourceKey,
+	type SessionRegistries,
+} from './sessionContent';
 
 interface SessionRecord {
 	session: EngineSession;
@@ -29,12 +34,16 @@ interface CreateSessionResult {
 	session: EngineSession;
 	snapshot: EngineSessionSnapshot;
 	ruleSnapshot: RuleSnapshot;
+	registries: SessionRegistries;
+	resourceKeys: ResourceKey[];
 }
 
 interface FetchSnapshotResult {
 	session: EngineSession;
 	snapshot: EngineSessionSnapshot;
 	ruleSnapshot: RuleSnapshot;
+	registries: SessionRegistries;
+	resourceKeys: ResourceKey[];
 }
 
 const SESSION_PREFIX = 'local-session-';
@@ -104,7 +113,14 @@ export function createSession(
 	const ruleSnapshot = session.getRuleSnapshot();
 	const sessionId = `${SESSION_PREFIX}${nextSessionId++}`;
 	sessions.set(sessionId, { session });
-	return Promise.resolve({ sessionId, session, snapshot, ruleSnapshot });
+	return Promise.resolve({
+		sessionId,
+		session,
+		snapshot,
+		ruleSnapshot,
+		registries: SESSION_REGISTRIES,
+		resourceKeys: RESOURCE_KEYS,
+	});
 }
 
 export function fetchSnapshot(sessionId: string): Promise<FetchSnapshotResult> {
@@ -113,6 +129,8 @@ export function fetchSnapshot(sessionId: string): Promise<FetchSnapshotResult> {
 		session,
 		snapshot: session.getSnapshot(),
 		ruleSnapshot: session.getRuleSnapshot(),
+		registries: SESSION_REGISTRIES,
+		resourceKeys: RESOURCE_KEYS,
 	});
 }
 
