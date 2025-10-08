@@ -152,8 +152,12 @@ export function useAppNavigation(): AppNavigationState {
 	const returnToMenu = useCallback(() => {
 		const nextState = buildHistoryState({ screen: Screen.Menu });
 		setCurrentScreen(Screen.Menu);
+		if (currentScreen === Screen.Menu) {
+			replaceHistoryState(nextState, SCREEN_PATHS[Screen.Menu]);
+			return;
+		}
 		pushHistoryState(nextState, SCREEN_PATHS[Screen.Menu]);
-	}, [buildHistoryState, pushHistoryState]);
+	}, [buildHistoryState, currentScreen, pushHistoryState, replaceHistoryState]);
 	const toggleDarkMode = useCallback(() => {
 		setIsDarkMode((previousDarkMode) => {
 			const nextDarkMode = !previousDarkMode;
