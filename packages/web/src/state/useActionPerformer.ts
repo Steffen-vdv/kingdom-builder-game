@@ -10,7 +10,12 @@ import {
 	RESOURCES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
+import {
+	createTranslationDiffContext,
+	diffStepSnapshots,
+	logContent,
+	snapshotPlayer,
+} from '../translation';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
 import {
@@ -74,11 +79,12 @@ export function useActionPerformer({
 				const after = snapshotPlayer(playerAfter);
 				const stepDef = context.actions.get(action.id);
 				const resolvedStep = resolveActionEffects(stepDef, params);
+				const diffContext = createTranslationDiffContext(context);
 				const changes = diffStepSnapshots(
 					before,
 					after,
 					resolvedStep,
-					context,
+					diffContext,
 					resourceKeys,
 				);
 				const messages = logContent('action', action.id, context, params);
@@ -120,7 +126,7 @@ export function useActionPerformer({
 						snapshotPlayer(trace.before),
 						snapshotPlayer(trace.after),
 						subResolved,
-						context,
+						diffContext,
 						resourceKeys,
 					);
 					if (!subChanges.length) {

@@ -27,12 +27,31 @@ function createSession(): EngineSession {
 	return {
 		getLegacyContext() {
 			return {
+				activePlayer: {
+					id: 'A',
+					lands: [],
+					buildings: [],
+					resources: {},
+					stats: {},
+				},
+				buildings: {
+					get() {
+						return { icon: '', name: '' };
+					},
+				},
+				developments: {
+					get() {
+						return { icon: '', name: '' };
+					},
+				},
 				passives: {
 					list() {
 						return [];
 					},
 				},
-			};
+			} as unknown as EngineSession['getLegacyContext'] extends () => infer R
+				? R
+				: never;
 		},
 	} as unknown as EngineSession;
 }

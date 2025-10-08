@@ -11,7 +11,11 @@ import {
 	LAND_INFO,
 } from '@kingdom-builder/contents';
 import { logContent } from '../src/translation/content';
-import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
+import {
+	snapshotPlayer,
+	diffStepSnapshots,
+	createTranslationDiffContext,
+} from '../src/translation/log';
 import {
 	formatIconLabel,
 	formatLogHeadline,
@@ -48,7 +52,8 @@ describe('land change log formatting', () => {
 			ctx,
 		);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const lines = diffStepSnapshots(before, after, undefined, ctx);
+		const diffContext = createTranslationDiffContext(ctx);
+		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		const landLine = lines.find((line) => {
 			return line.startsWith(LOG_KEYWORDS.gained);
 		});
@@ -106,7 +111,8 @@ describe('land change log formatting', () => {
 			ctx,
 		);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const lines = diffStepSnapshots(before, after, undefined, ctx);
+		const diffContext = createTranslationDiffContext(ctx);
+		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		const developmentLine = lines.find((line) => {
 			return line.startsWith(LOG_KEYWORDS.developed);
 		});

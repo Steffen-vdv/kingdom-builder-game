@@ -4,7 +4,11 @@ import {
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { type ResourceKey, type StepDef } from '@kingdom-builder/contents';
-import { diffStepSnapshots, snapshotPlayer } from '../translation';
+import {
+	createTranslationDiffContext,
+	diffStepSnapshots,
+	snapshotPlayer,
+} from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
 
@@ -107,11 +111,12 @@ export async function advanceToActionPhase({
 			const stepWithEffects: StepDef | undefined = stepDef
 				? ({ ...(stepDef as StepDef), effects } as StepDef)
 				: undefined;
+			const diffContext = createTranslationDiffContext(context);
 			const changes = diffStepSnapshots(
 				before,
 				after,
 				stepWithEffects,
-				context,
+				diffContext,
 				resourceKeys,
 			);
 			if (changes.length) {
