@@ -6,10 +6,7 @@ import {
 	type PopulationRoleId,
 	type StatKey,
 } from '@kingdom-builder/contents';
-import type {
-	EngineContext,
-	RequirementFailure,
-} from '@kingdom-builder/engine';
+import type { RequirementFailure } from '@kingdom-builder/engine';
 
 type EvaluatorOperand = {
 	type?: string;
@@ -164,7 +161,7 @@ function translateCompareRequirement(failure: RequirementFailure): string {
 
 export function translateRequirementFailure(
 	failure: RequirementFailure,
-	_context: EngineContext,
+	_context: unknown,
 ): string {
 	const { requirement } = failure;
 	if (requirement.type === 'evaluator' && requirement.method === 'compare') {

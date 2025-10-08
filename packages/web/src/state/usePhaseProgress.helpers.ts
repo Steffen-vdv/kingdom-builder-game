@@ -4,11 +4,7 @@ import {
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { type ResourceKey, type StepDef } from '@kingdom-builder/contents';
-import {
-	createTranslationDiffContext,
-	diffStepSnapshots,
-	snapshotPlayer,
-} from '../translation';
+import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
 import { getLegacySessionContext } from './getLegacySessionContext';
@@ -51,7 +47,6 @@ export async function advanceToActionPhase({
 	refresh,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
-	const context = getLegacySessionContext(session);
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
 		if (!mountedRef.current) {
 			return;
@@ -78,7 +73,8 @@ export async function advanceToActionPhase({
 		const before = snapshotPlayer(activePlayerBefore);
 		const { phase, step, player, effects, skipped }: EngineAdvanceResult =
 			session.advancePhase();
-		const phaseDef = snapshot.phases.find(
+		const snapshotAfter = session.getSnapshot();
+		const phaseDef = snapshotAfter.phases.find(
 			(phaseDefinition) => phaseDefinition.id === phase,
 		);
 		if (!phaseDef) {
@@ -112,7 +108,7 @@ export async function advanceToActionPhase({
 			const stepWithEffects: StepDef | undefined = stepDef
 				? ({ ...(stepDef as StepDef), effects } as StepDef)
 				: undefined;
-			const diffContext = createTranslationDiffContext(context);
+			const { diffContext } = getLegacySessionContext(session, snapshotAfter);
 			const changes = diffStepSnapshots(
 				before,
 				after,
@@ -162,7 +158,7 @@ export async function advanceToActionPhase({
 			nextHistory[nextHistory.length - 1] = finalized;
 			return { ...prev, [phaseId]: nextHistory };
 		});
-		snapshot = session.getSnapshot();
+		snapshot = snapshotAfter;
 	}
 	if (ranSteps) {
 		await runDelay(1500);

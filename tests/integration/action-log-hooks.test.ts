@@ -11,7 +11,6 @@ import {
 	createDevelopmentRegistry,
 } from '@kingdom-builder/contents';
 import { logContent } from '@kingdom-builder/web/translation/content';
-import { getLegacySessionContext } from '../../packages/web/src/state/getLegacySessionContext';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '../../packages/engine/tests/factories/content';
 
@@ -114,7 +113,7 @@ describe('content-driven action log hooks', () => {
 			}
 			expect(buildingLog[0]).toContain(hall.name);
 
-			const landId = getLegacySessionContext(session).activePlayer.lands[0]?.id;
+			const landId = session.getLegacyContext().activePlayer.lands[0]?.id;
 			const developmentLog = logContent(
 				'action',
 				establish.id,

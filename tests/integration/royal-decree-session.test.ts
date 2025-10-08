@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { createEngineSession } from '@kingdom-builder/engine';
-import { getLegacySessionContext } from '../../packages/web/src/state/getLegacySessionContext';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -35,7 +34,7 @@ describe('royal decree via session', () => {
 			start: GAME_START,
 			rules: RULES,
 		});
-		const ctx = getLegacySessionContext(session);
+		const ctx = session.getLegacyContext();
 		while (ctx.game.currentPhase !== 'main') {
 			session.advancePhase();
 		}

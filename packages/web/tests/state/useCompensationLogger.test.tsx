@@ -32,6 +32,8 @@ function createSession(): EngineSession {
 		getActionDefinition: () => undefined,
 		runAiTurn: vi.fn().mockResolvedValue(false),
 		advancePhase: vi.fn(),
+		pullEffectLog: vi.fn(),
+		getPassiveEvaluationMods: vi.fn(() => new Map()),
 		getLegacyContext() {
 			return {
 				activePlayer: {

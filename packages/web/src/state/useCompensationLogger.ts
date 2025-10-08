@@ -5,7 +5,6 @@ import type {
 } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import {
-	createTranslationDiffContext,
 	diffStepSnapshots,
 	snapshotPlayer,
 	type PlayerSnapshot,
@@ -39,8 +38,9 @@ export function useCompensationLogger({
 		if (sessionState.game.turn !== 1) {
 			return;
 		}
-		const baseDiffContext = createTranslationDiffContext(
-			getLegacySessionContext(session),
+		const { diffContext: baseDiffContext } = getLegacySessionContext(
+			session,
+			sessionState,
 		);
 		sessionState.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {
