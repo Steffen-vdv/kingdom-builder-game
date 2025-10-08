@@ -23,6 +23,7 @@ import type {
 	WinConditionOutcome,
 	PlayerStartConfig,
 	StartConfig,
+	StartModeConfig,
 } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
@@ -2522,9 +2523,87 @@ class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 	}
 }
 
+class StartModeBuilder {
+	private playerConfig: PlayerStartConfig | undefined;
+	private readonly playerOverrides: Record<string, PlayerStartConfig> = {};
+	private readonly assignedOverrides = new Set<string>();
+
+	private resolve(
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		if (input instanceof PlayerStartBuilder) {
+			return input;
+		}
+		const configured = input(new PlayerStartBuilder(false));
+		if (!(configured instanceof PlayerStartBuilder)) {
+			throw new Error(
+				'Start mode player(...) callback must return the provided builder.',
+			);
+		}
+		return configured;
+	}
+
+	player(
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		if (this.playerConfig) {
+			throw new Error(
+				'Dev mode start already set player(...). Remove the extra player() call.',
+			);
+		}
+		const builder = this.resolve(input);
+		this.playerConfig = builder.build();
+		return this;
+	}
+
+	playerOverride(
+		id: string,
+		input:
+			| PlayerStartBuilder
+			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
+	) {
+		if (!id) {
+			throw new Error(
+				'Dev mode playerOverride() requires a non-empty player id.',
+			);
+		}
+		if (this.assignedOverrides.has(id)) {
+			throw new Error(
+				`Dev mode already set override "${id}". Remove the extra playerOverride() call.`,
+			);
+		}
+		const builder = this.resolve(input);
+		this.playerOverrides[id] = builder.build();
+		this.assignedOverrides.add(id);
+		return this;
+	}
+
+	build(): StartModeConfig {
+		const config: StartModeConfig = {};
+		if (this.playerConfig) {
+			config.player = structuredClone(this.playerConfig);
+		}
+		if (this.assignedOverrides.size > 0) {
+			const overrides: Record<string, PlayerStartConfig> = {};
+			for (const [playerId, overrideConfig] of Object.entries(
+				this.playerOverrides,
+			)) {
+				overrides[playerId] = structuredClone(overrideConfig);
+			}
+			config.players = overrides;
+		}
+		return config;
+	}
+}
+
 class StartConfigBuilder {
 	private playerConfig: PlayerStartConfig | undefined;
 	private lastPlayerCompensationConfig: PlayerStartConfig | undefined;
+	private devModeConfig: StartModeConfig | undefined;
 
 	private resolveBuilder(
 		input:
@@ -2574,6 +2653,28 @@ class StartConfigBuilder {
 		return this;
 	}
 
+	devMode(
+		input: StartModeBuilder | ((builder: StartModeBuilder) => StartModeBuilder),
+	) {
+		if (this.devModeConfig) {
+			throw new Error(
+				'Start config already set devMode(...). Remove the extra call.',
+			);
+		}
+		if (input instanceof StartModeBuilder) {
+			this.devModeConfig = input.build();
+			return this;
+		}
+		const configured = input(new StartModeBuilder());
+		if (!(configured instanceof StartModeBuilder)) {
+			throw new Error(
+				'Start config devMode(...) callback must return the provided builder.',
+			);
+		}
+		this.devModeConfig = configured.build();
+		return this;
+	}
+
 	build(): StartConfig {
 		if (!this.playerConfig) {
 			throw new Error(
@@ -2583,6 +2684,9 @@ class StartConfigBuilder {
 		const config: StartConfig = { player: this.playerConfig };
 		if (this.lastPlayerCompensationConfig) {
 			config.players = { B: this.lastPlayerCompensationConfig };
+		}
+		if (this.devModeConfig) {
+			config.modes = { dev: structuredClone(this.devModeConfig) };
 		}
 		return config;
 	}

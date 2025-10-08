@@ -89,6 +89,7 @@ export function GameProvider({
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			devMode,
 		});
 		created.setDevMode(devMode);
 		const legacyContext = created.getLegacyContext();
@@ -107,7 +108,10 @@ export function GameProvider({
 	const enqueue = <T,>(task: () => Promise<T> | T) => session.enqueue(task);
 
 	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
-	const ruleSnapshot = useMemo(() => session.getRuleSnapshot(), [session]);
+	const ruleSnapshot = useMemo(
+		() => session.getRuleSnapshot(),
+		[session, tick],
+	);
 
 	useEffect(() => {
 		const [primary] = ctx.game.players;
@@ -135,8 +139,12 @@ export function GameProvider({
 					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
 					evaluationMods: session.getPassiveEvaluationMods(),
 				},
+				{
+					ruleSnapshot,
+					passiveRecords: sessionState.passiveRecords,
+				},
 			),
-		[sessionState, session],
+		[sessionState, session, ruleSnapshot, sessionState.passiveRecords],
 	);
 
 	const {

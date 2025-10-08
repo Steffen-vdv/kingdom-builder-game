@@ -214,6 +214,10 @@ export function getLegacySessionContext(
 			pullEffectLog: <T>(key: string) => session.pullEffectLog<T>(key),
 			evaluationMods: session.getPassiveEvaluationMods(),
 		},
+		{
+			ruleSnapshot: session.getRuleSnapshot(),
+			passiveRecords: snapshot.passiveRecords,
+		},
 	);
 	const diffContext = createDiffContext(snapshot, translationContext);
 	return { translationContext, diffContext };

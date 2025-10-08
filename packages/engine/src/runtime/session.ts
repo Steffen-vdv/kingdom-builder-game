@@ -15,14 +15,18 @@ import type { ActionTrace } from '../log';
 import { cloneActionOptions } from './action_options';
 import { cloneActionTraces } from './player_snapshot';
 import { snapshotAdvance, snapshotEngine } from './engine_snapshot';
-import type { EngineAdvanceResult, EngineSessionSnapshot } from './types';
+import type {
+	EngineAdvanceResult,
+	EngineSessionSnapshot,
+	RuleSnapshot,
+} from './types';
 import type { EvaluationModifier } from '../services/passive_types';
 import {
 	simulateUpcomingPhases as runSimulation,
 	type SimulateUpcomingPhasesOptions,
 	type SimulateUpcomingPhasesResult,
 } from './simulate_upcoming_phases';
-import type { PlayerId, ResourceKey } from '../state';
+import type { PlayerId } from '../state';
 import type { AIDependencies } from '../ai';
 import type { HappinessTierDefinition } from '../services/tiered_resource_types';
 import type { WinConditionDefinition } from '../services/win_condition_types';
@@ -109,6 +113,8 @@ export type {
 	GameConclusionSnapshot,
 	PlayerStateSnapshot,
 	LandSnapshot,
+	RuleSnapshot,
+	PassiveRecordSnapshot,
 } from './types';
 
 export function createEngineSession(

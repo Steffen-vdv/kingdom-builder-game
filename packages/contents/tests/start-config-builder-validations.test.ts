@@ -110,4 +110,43 @@ describe('start config builder safeguards', () => {
 			'Start config already set lastPlayerCompensation(). Remove the extra call.',
 		);
 	});
+
+	it('rejects duplicate dev mode configurations in start configs', () => {
+		expect(() =>
+			startConfig()
+				.player(
+					playerStart()
+						.resources({
+							[firstResourceKey]: 1,
+						})
+						.stats({ [firstStatKey]: 1 })
+						.population({ demo: 1 })
+						.lands([]),
+				)
+				.devMode((mode) => mode)
+				.devMode((mode) => mode),
+		).toThrowError(
+			'Start config already set devMode(...). Remove the extra call.',
+		);
+	});
+
+	it('requires dev mode callbacks to return the provided builder', () => {
+		expect(() =>
+			startConfig()
+				.player(
+					playerStart()
+						.resources({
+							[firstResourceKey]: 1,
+						})
+						.stats({ [firstStatKey]: 1 })
+						.population({ demo: 1 })
+						.lands([]),
+				)
+				.devMode(() => {
+					return {} as unknown as ReturnType<typeof startConfig>;
+				}),
+		).toThrowError(
+			'Start config devMode(...) callback must return the provided builder.',
+		);
+	});
 });

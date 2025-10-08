@@ -1,4 +1,7 @@
-import { clonePassiveMetadata } from '../services/passive_helpers';
+import {
+	clonePassiveMetadata,
+	clonePassiveRecord,
+} from '../services/passive_helpers';
 import { cloneEffectList } from '../utils';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
@@ -15,6 +18,8 @@ import type {
 	AdvanceSkipSourceSnapshot,
 	EngineAdvanceResult,
 	EngineSessionSnapshot,
+	PassiveRecordSnapshot,
+	RuleSnapshot,
 } from './types';
 import {
 	cloneActionTraces,
@@ -98,6 +103,7 @@ function cloneSkip(
 
 export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 	const conclusion = context.game.conclusion;
+	const rules = cloneRuleSnapshot(context);
 	return {
 		game: {
 			turn: context.game.turn,
@@ -130,7 +136,34 @@ export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 			amount: gain.amount,
 		})),
 		compensations: cloneCompensations(context.compensations),
+		rules,
+		passiveRecords: clonePassiveRecords(context),
 	};
+}
+
+function cloneRuleSnapshot(context: EngineContext): RuleSnapshot {
+	const { tieredResourceKey, tierDefinitions } = context.services.rules;
+	return {
+		tieredResourceKey,
+		tierDefinitions: structuredClone(tierDefinitions),
+	} satisfies RuleSnapshot;
+}
+
+function clonePassiveRecords(
+	context: EngineContext,
+): Record<PlayerId, PassiveRecordSnapshot[]> {
+	const result: Record<PlayerId, PassiveRecordSnapshot[]> = {} as Record<
+		PlayerId,
+		PassiveRecordSnapshot[]
+	>;
+	for (const player of context.game.players) {
+		const records = context.passives.values(player.id).map((record) => {
+			const { frames: _frames, ...snapshot } = clonePassiveRecord(record);
+			return snapshot as PassiveRecordSnapshot;
+		});
+		result[player.id] = records;
+	}
+	return result;
 }
 
 export function snapshotAdvance(

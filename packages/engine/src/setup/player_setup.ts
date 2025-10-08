@@ -91,19 +91,21 @@ export function diffPlayerStartConfiguration(
 		overrideConfig.resources || {},
 	)) {
 		const baseValue = baseConfig.resources?.[resourceKey] ?? 0;
-		const delta = (value ?? 0) - baseValue;
-		if (delta !== 0) {
-			diff.resources = diff.resources || {};
-			diff.resources[resourceKey] = delta;
+		const overrideValue = value ?? 0;
+		if (overrideValue === baseValue) {
+			continue;
 		}
+		diff.resources = diff.resources || {};
+		diff.resources[resourceKey] = overrideValue;
 	}
 	for (const [statKey, value] of Object.entries(overrideConfig.stats || {})) {
 		const baseValue = baseConfig.stats?.[statKey] ?? 0;
-		const delta = (value ?? 0) - baseValue;
-		if (delta !== 0) {
-			diff.stats = diff.stats || {};
-			diff.stats[statKey] = delta;
+		const overrideValue = value ?? 0;
+		if (overrideValue === baseValue) {
+			continue;
 		}
+		diff.stats = diff.stats || {};
+		diff.stats[statKey] = overrideValue;
 	}
 	return diff;
 }

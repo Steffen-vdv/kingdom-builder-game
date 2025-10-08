@@ -38,6 +38,8 @@ function createTranslationCtx(): TranslationContext {
 		passives: {
 			list: vi.fn(() => []),
 			get: vi.fn(() => undefined),
+			getDefinition: vi.fn(() => undefined),
+			definitions: vi.fn(() => []),
 			get evaluationMods() {
 				return emptyModifiers;
 			},
@@ -64,6 +66,7 @@ function createTranslationCtx(): TranslationContext {
 			A: {} as PlayerStartConfig,
 			B: {} as PlayerStartConfig,
 		},
+		rules: { tieredResourceKey: 'happiness', tierDefinitions: [] },
 	};
 }
 
