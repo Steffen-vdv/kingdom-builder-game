@@ -14,7 +14,7 @@ import type {
 	SessionSetDevModeResponse,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+import type { EngineSession, PlayerId } from '@kingdom-builder/engine';
 import type {
 	SessionManager,
 	CreateSessionOptions,
@@ -183,12 +183,11 @@ export class SessionTransport {
 		session: EngineSession,
 		names: Record<string, string>,
 	): void {
-		const context = session.getLegacyContext();
-		for (const player of context.game.players) {
-			const name = names[player.id];
-			if (name) {
-				player.name = name;
+		for (const [playerId, name] of Object.entries(names)) {
+			if (!name) {
+				continue;
 			}
+			session.updatePlayerName(playerId as PlayerId, name);
 		}
 	}
 }

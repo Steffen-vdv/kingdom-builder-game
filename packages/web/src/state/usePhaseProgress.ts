@@ -20,7 +20,7 @@ interface PhaseProgressOptions {
 	timeScaleRef: React.MutableRefObject<number>;
 	setTrackedInterval: (callback: () => void, delay: number) => number;
 	clearTrackedInterval: (id: number) => void;
-	refresh: () => void;
+	refresh: () => Promise<void>;
 	resourceKeys: ResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 }
