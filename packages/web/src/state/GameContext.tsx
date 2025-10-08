@@ -22,11 +22,6 @@ import type { GameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import {
-	SESSION_REGISTRIES,
-	RESOURCE_KEYS,
-	type ResourceKey,
-} from './sessionContent';
-import {
 	createSession,
 	fetchSnapshot,
 	releaseSession,
@@ -43,6 +38,9 @@ const GameEngineContext = createContext<GameEngineContextValue | null>(null);
 type Session = CreateSessionResult['session'];
 type SessionSnapshot = CreateSessionResult['snapshot'];
 type SessionRuleSnapshot = CreateSessionResult['ruleSnapshot'];
+type SessionRegistries = CreateSessionResult['registries'];
+type SessionResourceKeys = CreateSessionResult['resourceKeys'];
+type SessionResourceKey = SessionResourceKeys[number];
 
 type ProviderProps = {
 	children: React.ReactNode;
@@ -65,6 +63,8 @@ interface SessionContainer {
 	sessionId: string;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
+	registries: SessionRegistries;
+	resourceKeys: SessionResourceKeys;
 }
 
 interface GameProviderInnerProps {
@@ -86,6 +86,8 @@ interface GameProviderInnerProps {
 	ruleSnapshot: SessionRuleSnapshot;
 	refreshSession: () => Promise<void>;
 	onReleaseSession: () => void;
+	registries: SessionRegistries;
+	resourceKeys: SessionResourceKeys;
 }
 
 function GameProviderInner({
@@ -107,6 +109,8 @@ function GameProviderInner({
 	ruleSnapshot,
 	refreshSession,
 	onReleaseSession,
+	registries,
+	resourceKeys,
 }: GameProviderInnerProps) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
@@ -145,11 +149,7 @@ function GameProviderInner({
 		() =>
 			createTranslationContext(
 				sessionState,
-				{
-					actions: SESSION_REGISTRIES.actions,
-					buildings: SESSION_REGISTRIES.buildings,
-					developments: SESSION_REGISTRIES.developments,
-				},
+				registries,
 				{
 					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
 					evaluationMods: session.getPassiveEvaluationMods(),
@@ -159,7 +159,13 @@ function GameProviderInner({
 					passiveRecords: sessionState.passiveRecords,
 				},
 			),
-		[sessionState, session, ruleSnapshot, sessionState.passiveRecords],
+		[
+			sessionState,
+			registries,
+			session,
+			ruleSnapshot,
+			sessionState.passiveRecords,
+		],
 	);
 
 	const {
@@ -173,11 +179,12 @@ function GameProviderInner({
 		timeScaleRef,
 	} = useTimeScale({ devMode });
 
-	const actionCostResource = sessionState.actionCostResource as ResourceKey;
+	const actionCostResource =
+		sessionState.actionCostResource as SessionResourceKey;
 
 	const sessionView = useMemo(
-		() => selectSessionView(sessionState, SESSION_REGISTRIES),
-		[sessionState],
+		() => selectSessionView(sessionState, registries),
+		[sessionState, registries],
 	);
 
 	const actionPhaseId = useMemo(() => {
@@ -238,7 +245,7 @@ function GameProviderInner({
 		setTrackedInterval,
 		clearTrackedInterval,
 		refresh,
-		resourceKeys: RESOURCE_KEYS,
+		resourceKeys,
 		enqueue,
 	});
 
@@ -251,7 +258,7 @@ function GameProviderInner({
 		session,
 		sessionState,
 		addLog,
-		resourceKeys: RESOURCE_KEYS,
+		resourceKeys,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
@@ -265,7 +272,7 @@ function GameProviderInner({
 		mountedRef,
 		endTurn,
 		enqueue,
-		resourceKeys: RESOURCE_KEYS,
+		resourceKeys,
 	});
 
 	useAiRunner({
@@ -411,6 +418,8 @@ export function GameProvider(props: ProviderProps) {
 				sessionId: created.sessionId,
 				snapshot: created.snapshot,
 				ruleSnapshot: created.ruleSnapshot,
+				registries: created.registries,
+				resourceKeys: created.resourceKeys,
 			});
 		};
 		void create();
@@ -434,6 +443,8 @@ export function GameProvider(props: ProviderProps) {
 			sessionId,
 			snapshot: result.snapshot,
 			ruleSnapshot: result.ruleSnapshot,
+			registries: result.registries,
+			resourceKeys: result.resourceKeys,
 		});
 	}, []);
 
@@ -463,6 +474,8 @@ export function GameProvider(props: ProviderProps) {
 		ruleSnapshot: sessionData.ruleSnapshot,
 		refreshSession,
 		onReleaseSession: handleRelease,
+		registries: sessionData.registries,
+		resourceKeys: sessionData.resourceKeys,
 	};
 
 	if (onExit) {
