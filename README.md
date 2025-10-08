@@ -34,6 +34,9 @@ The repository consists of three isolated domains: Web, Content and Engine. Each
   that builds on top of the Engine and Content packages.
 - Web: The _visual_ heart of the game. This domain is responsible for housing the game's frontend. It talks to Engine domain to receive game state updates and inform Engine of player-driven actions.
 - Content: The _practical_ heart of the game. This domain houses all of the game's configurations. The domain is configured in a way that allows extremely broad and deep updates to the game's configuration. The intent is for this domain to eventually become separated into it's own service and either passed to a content curation team or even allow players themselves to build gamemodes by giving them access, through some interface, to manipulate/override parts of 'Contents' domain at runtime.
+- Protocol: Shared type surfaces for content schemas and the runtime session
+  contract so Engine and Web can collaborate without importing engine
+  internals.
 
 ## 4) Coding Standards
 
