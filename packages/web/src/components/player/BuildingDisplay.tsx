@@ -1,26 +1,30 @@
 import React from 'react';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 
 interface BuildingDisplayProps {
-	player: EngineContext['activePlayer'];
+	player: PlayerStateSnapshot;
 }
 
 const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
-	const { ctx, translationContext, handleHoverCard, clearHoverCard } =
+	const { translationContext, handleHoverCard, clearHoverCard } =
 		useGameEngine();
-	if (player.buildings.size === 0) {
+	if (player.buildings.length === 0) {
 		return null;
 	}
 	const animateBuildings = useAnimate<HTMLDivElement>();
 	return (
 		<div ref={animateBuildings} className="mt-3 flex w-full flex-wrap gap-3">
-			{Array.from(player.buildings).map((b) => {
-				const name = ctx.buildings.get(b)?.name || b;
-				const icon = ctx.buildings.get(b)?.icon || '';
-				const upkeep = ctx.buildings.get(b)?.upkeep;
+			{player.buildings.map((b) => {
+				const hasDefinition = translationContext.buildings.has(b);
+				const definition = hasDefinition
+					? translationContext.buildings.get(b)
+					: undefined;
+				const name = definition?.name || b;
+				const icon = definition?.icon || '';
+				const upkeep = definition?.upkeep;
 				const title = `${icon} ${name}`;
 				return (
 					<div

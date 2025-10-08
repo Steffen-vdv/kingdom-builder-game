@@ -4,9 +4,10 @@ import {
 	STATS,
 	POPULATION_INFO,
 	POPULATION_ARCHETYPE_INFO,
+	Stat,
 } from '@kingdom-builder/contents';
+import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
 import { formatStatValue, getStatBreakdownSummary } from '../../utils/stats';
-import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
@@ -89,11 +90,12 @@ const StatButton: React.FC<StatButtonProps> = ({
 };
 
 interface PopulationInfoProps {
-	player: EngineContext['activePlayer'];
+	player: PlayerStateSnapshot;
 }
 
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
-	const { handleHoverCard, clearHoverCard, ctx } = useGameEngine();
+	const { handleHoverCard, clearHoverCard, translationContext } =
+		useGameEngine();
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id] ?? {
 		resources: {},
@@ -111,6 +113,20 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		role: populationRole,
 		count: populationCount,
 	}));
+
+	const translationPlayer =
+		translationContext.activePlayer.id === player.id
+			? translationContext.activePlayer
+			: translationContext.opponent.id === player.id
+				? translationContext.opponent
+				: undefined;
+	const maxPopulation = (() => {
+		const direct = player.stats?.[Stat.maxPopulation];
+		if (typeof direct === 'number') {
+			return direct;
+		}
+		return translationPlayer?.stats?.[Stat.maxPopulation] ?? 0;
+	})();
 
 	const showGeneralStatCard = () =>
 		handleHoverCard({
@@ -138,7 +154,11 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		if (!info) {
 			return;
 		}
-		const breakdown = getStatBreakdownSummary(statKey, player, ctx);
+		const breakdown = getStatBreakdownSummary(
+			statKey,
+			player,
+			translationContext,
+		);
 		handleHoverCard({
 			title: `${info.icon} ${info.label}`,
 			effects: breakdown,
@@ -179,7 +199,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				}}
 			>
 				{POPULATION_INFO.icon}
-				{currentPop}/{player.maxPopulation}
+				{currentPop}/{maxPopulation}
 				{popDetails.length > 0 && (
 					<>
 						{' ('}

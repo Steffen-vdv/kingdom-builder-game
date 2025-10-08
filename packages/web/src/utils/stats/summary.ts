@@ -1,5 +1,9 @@
-import type { EngineContext, StatSourceMeta } from '@kingdom-builder/engine';
+import type {
+	PlayerStateSnapshot,
+	StatSourceMeta,
+} from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../translation/content/types';
+import type { TranslationContext } from '../../translation/context';
 import { formatDependency } from './dependencyFormatters';
 import { buildHistoryEntries } from './historyEntries';
 import { buildLongevityEntries } from './passiveFormatting';
@@ -14,8 +18,8 @@ function isSummaryGroup(entry: SummaryEntry): entry is SummaryGroup {
 
 export function buildDetailEntries(
 	meta: StatSourceMeta,
-	player: EngineContext['activePlayer'],
-	context: EngineContext,
+	player: PlayerStateSnapshot,
+	context: TranslationContext,
 ): SummaryEntry[] {
 	const dependencies = (meta.dependsOn ?? [])
 		.map((link) => formatDependency(link, player, context))
@@ -27,11 +31,15 @@ export function buildDetailEntries(
 			})
 		: undefined;
 	const entries: SummaryEntry[] = [];
-	buildLongevityEntries(meta, dependencies, removal, removalLink).forEach(
-		(entry) => {
-			pushSummaryEntry(entries, entry);
-		},
-	);
+	buildLongevityEntries(
+		meta,
+		dependencies,
+		context,
+		removal,
+		removalLink,
+	).forEach((entry) => {
+		pushSummaryEntry(entries, entry);
+	});
 	buildHistoryEntries(meta).forEach((entry) => {
 		pushSummaryEntry(entries, entry);
 	});

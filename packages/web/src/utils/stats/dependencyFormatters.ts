@@ -1,8 +1,9 @@
 import type {
-	EngineContext,
+	PlayerStateSnapshot,
 	StatSourceLink,
 	StatSourceMeta,
 } from '@kingdom-builder/engine';
+import type { TranslationContext } from '../../translation/context';
 import type { ResolveResult, SourceDescriptor } from './types';
 import {
 	defaultFormatDetail,
@@ -20,11 +21,14 @@ function getResolutionCandidates(
 	return candidates;
 }
 
-export function formatLinkLabel(link?: StatSourceLink): string | undefined {
+export function formatLinkLabel(
+	translationContext: TranslationContext,
+	link?: StatSourceLink,
+): string | undefined {
 	if (!link) {
 		return undefined;
 	}
-	const descriptor = getDescriptor(link.type);
+	const descriptor = getDescriptor(translationContext, link.type);
 	const resolved = descriptor.resolve(link.id);
 	const parts: string[] = [];
 	if (resolved.icon) {
@@ -38,6 +42,7 @@ export function formatLinkLabel(link?: StatSourceLink): string | undefined {
 }
 
 function resolveLinkDescriptor(
+	translationContext: TranslationContext,
 	link?: StatSourceLink,
 	options: {
 		omitAssignmentDetail?: boolean;
@@ -47,7 +52,7 @@ function resolveLinkDescriptor(
 	if (!link?.type) {
 		return undefined;
 	}
-	const descriptor = getDescriptor(link.type);
+	const descriptor = getDescriptor(translationContext, link.type);
 	const resolved = descriptor.resolve(link.id);
 	let label = resolved.label;
 	let detail = descriptor.formatDetail?.(link.id, link.detail);
@@ -78,6 +83,7 @@ function resolveLinkDescriptor(
 }
 
 function deriveResolutionSuffix(
+	translationContext: TranslationContext,
 	meta: StatSourceMeta,
 ): ResolveResult | undefined {
 	if (meta.kind !== 'action') {
@@ -95,7 +101,7 @@ function deriveResolutionSuffix(
 		if (!match) {
 			continue;
 		}
-		const resolved = resolveLinkDescriptor(match, {
+		const resolved = resolveLinkDescriptor(translationContext, match, {
 			omitAssignmentDetail: true,
 			omitRemovalDetail: true,
 		});
@@ -104,7 +110,7 @@ function deriveResolutionSuffix(
 		}
 	}
 	if (meta.removal) {
-		const fallback = resolveLinkDescriptor(meta.removal, {
+		const fallback = resolveLinkDescriptor(translationContext, meta.removal, {
 			omitAssignmentDetail: true,
 			omitRemovalDetail: true,
 		});
@@ -115,8 +121,11 @@ function deriveResolutionSuffix(
 	return undefined;
 }
 
-export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
-	const entry = getDescriptor(meta.kind);
+export function getSourceDescriptor(
+	translationContext: TranslationContext,
+	meta: StatSourceMeta,
+): SourceDescriptor {
+	const entry = getDescriptor(translationContext, meta.kind);
 	const base = entry.resolve(meta.id);
 	const descriptor: SourceDescriptor = {
 		icon: base.icon,
@@ -132,7 +141,7 @@ export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 	let suffix = suffixText
 		? ({ icon: '', label: suffixText } satisfies ResolveResult)
 		: undefined;
-	const resolutionSuffix = deriveResolutionSuffix(meta);
+	const resolutionSuffix = deriveResolutionSuffix(translationContext, meta);
 	if (resolutionSuffix) {
 		suffix = resolutionSuffix;
 	}
@@ -148,7 +157,11 @@ export function getSourceDescriptor(meta: StatSourceMeta): SourceDescriptor {
 		descriptor.suffix = suffix;
 	}
 	if (!descriptor.label) {
-		const fallbackLabel = formatKindLabel(meta.kind, meta.id);
+		const fallbackLabel = formatKindLabel(
+			translationContext,
+			meta.kind,
+			meta.id,
+		);
 		if (fallbackLabel) {
 			descriptor.label = fallbackLabel;
 		}
@@ -199,11 +212,11 @@ export function formatSourceTitle(descriptor: SourceDescriptor): string {
 
 export function formatDependency(
 	link: StatSourceLink,
-	player: EngineContext['activePlayer'],
-	context: EngineContext,
+	player: PlayerStateSnapshot,
+	context: TranslationContext,
 	options: { includeCounts?: boolean } = {},
 ): string {
-	const entry = getDescriptor(link.type);
+	const entry = getDescriptor(context, link.type);
 	if (entry.formatDependency) {
 		return entry.formatDependency(link, player, context, options);
 	}

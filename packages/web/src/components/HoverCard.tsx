@@ -20,7 +20,7 @@ export default function HoverCard() {
 	const {
 		hoverCard: data,
 		clearHoverCard,
-		ctx,
+		translationContext,
 		actionCostResource,
 		resolution: actionResolution,
 		acknowledgeResolution,
@@ -148,7 +148,7 @@ export default function HoverCard() {
 				<div className={costTextClass}>
 					{renderCosts(
 						renderedData.costs,
-						ctx.activePlayer.resources,
+						translationContext.activePlayer.resources,
 						actionCostResource,
 						renderedData.upkeep,
 						renderCostOptions,

@@ -5,6 +5,7 @@ import {
 } from '@kingdom-builder/contents';
 import type { StatSourceLink, StatSourceMeta } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../translation/content/types';
+import type { TranslationContext } from '../../translation/context';
 import { formatLinkLabel } from './dependencyFormatters';
 
 const PERMANENT_ICON = '🗿';
@@ -12,11 +13,12 @@ const PERMANENT_ICON = '🗿';
 export function buildLongevityEntries(
 	meta: StatSourceMeta,
 	dependencies: string[],
+	translationContext: TranslationContext,
 	removal?: string,
 	removalLink?: StatSourceLink,
 ): SummaryEntry[] {
 	if (meta.longevity === 'ongoing') {
-		const anchors = collectAnchorLabels(meta);
+		const anchors = collectAnchorLabels(meta, translationContext);
 		const condition = formatInPlayCondition(anchors);
 		if (condition) {
 			return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing as long as ${condition}`];
@@ -31,7 +33,7 @@ export function buildLongevityEntries(
 		});
 	}
 	const removalCondition = formatInPlayCondition(
-		collectRemovalLabels(removalLink),
+		collectRemovalLabels(removalLink, translationContext),
 	);
 	if (removalCondition) {
 		entries.push(formatPassiveRemoval(removalCondition));
@@ -52,7 +54,10 @@ function shouldDisplayPermanentDependencies(meta: StatSourceMeta): boolean {
 	return true;
 }
 
-function collectAnchorLabels(meta: StatSourceMeta): string[] {
+function collectAnchorLabels(
+	meta: StatSourceMeta,
+	translationContext: TranslationContext,
+): string[] {
 	const labels: string[] = [];
 	const seen = new Set<string>();
 	const add = (label?: string) => {
@@ -70,7 +75,7 @@ function collectAnchorLabels(meta: StatSourceMeta): string[] {
 		if (!link || link.type === 'action') {
 			return;
 		}
-		add(formatLinkLabel(link));
+		add(formatLinkLabel(translationContext, link));
 	};
 	includeLink(meta.removal);
 	if (meta.dependsOn) {
@@ -82,11 +87,14 @@ function collectAnchorLabels(meta: StatSourceMeta): string[] {
 	return labels;
 }
 
-function collectRemovalLabels(removal?: StatSourceLink): string[] {
+function collectRemovalLabels(
+	removal: StatSourceLink | undefined,
+	translationContext: TranslationContext,
+): string[] {
 	if (!removal) {
 		return [];
 	}
-	const label = formatLinkLabel(removal);
+	const label = formatLinkLabel(translationContext, removal);
 	return label ? [label] : [];
 }
 

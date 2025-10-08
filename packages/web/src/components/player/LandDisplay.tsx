@@ -4,25 +4,23 @@ import {
 	SLOT_INFO,
 	DEVELOPMENTS_INFO,
 } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 
 interface LandDisplayProps {
-	player: EngineContext['activePlayer'];
+	player: PlayerStateSnapshot;
 }
 
 const LandTile: React.FC<{
-	land: EngineContext['activePlayer']['lands'][number];
-	ctx: ReturnType<typeof useGameEngine>['ctx'];
+	land: PlayerStateSnapshot['lands'][number];
 	translationContext: ReturnType<typeof useGameEngine>['translationContext'];
 	handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
 	clearHoverCard: ReturnType<typeof useGameEngine>['clearHoverCard'];
 	developAction?: { icon?: string; name: string } | undefined;
 }> = ({
 	land,
-	ctx,
 	translationContext,
 	handleHoverCard,
 	clearHoverCard,
@@ -58,8 +56,12 @@ const LandTile: React.FC<{
 				{Array.from({ length: land.slotsMax }).map((_, i) => {
 					const devId = land.developments[i];
 					if (devId) {
-						const name = ctx.developments.get(devId)?.name || devId;
-						const title = `${ctx.developments.get(devId)?.icon || ''} ${name}`;
+						const hasDefinition = translationContext.developments.has(devId);
+						const development = hasDefinition
+							? translationContext.developments.get(devId)
+							: undefined;
+						const name = development?.name || devId;
+						const title = `${development?.icon || ''} ${name}`;
 						const handleLeave = () => showLandCard();
 						return (
 							<span
@@ -91,9 +93,7 @@ const LandTile: React.FC<{
 									handleLeave();
 								}}
 							>
-								<span aria-hidden="true">
-									{ctx.developments.get(devId)?.icon}
-								</span>
+								<span aria-hidden="true">{development?.icon}</span>
 							</span>
 						);
 					}
@@ -131,24 +131,22 @@ const LandTile: React.FC<{
 };
 
 const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
-	const { ctx, translationContext, handleHoverCard, clearHoverCard } =
+	const { translationContext, handleHoverCard, clearHoverCard } =
 		useGameEngine();
 	const developAction = useMemo(() => {
-		const entry = Array.from(
-			(
-				ctx.actions as unknown as {
-					map: Map<string, { category?: string; icon?: string; name: string }>;
-				}
-			).map.entries(),
-		).find(([, a]) => a.category === 'development');
-		if (!entry) {
-			return undefined;
+		for (const actionId of player.actions) {
+			if (!translationContext.actions.has(actionId)) {
+				continue;
+			}
+			const action = translationContext.actions.get(actionId);
+			const category = (action as { category?: string }).category;
+			if (category === 'development') {
+				const icon = (action as { icon?: string }).icon;
+				return icon ? { icon, name: action.name } : { name: action.name };
+			}
 		}
-		const [, info] = entry;
-		return info.icon
-			? { icon: info.icon, name: info.name }
-			: { name: info.name };
-	}, [ctx]);
+		return undefined;
+	}, [player.actions, translationContext]);
 	if (player.lands.length === 0) {
 		return null;
 	}
@@ -162,7 +160,6 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 				<LandTile
 					key={land.id}
 					land={land}
-					ctx={ctx}
 					translationContext={translationContext}
 					handleHoverCard={handleHoverCard}
 					clearHoverCard={clearHoverCard}
