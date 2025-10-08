@@ -239,20 +239,5 @@ registerEffectFormatter('passive', 'add', {
 			},
 		];
 	},
-	log: (eff, ctx) => {
-		const icon =
-			(eff.params?.['icon'] as string | undefined) ?? PASSIVE_INFO.icon;
-		const name =
-			(eff.params?.['name'] as string | undefined) ?? PASSIVE_INFO.label;
-		const prefix = icon ? `${icon} ` : '';
-		const inner = describeEffects(eff.effects || [], ctx);
-		const items = [...(inner.length ? inner : [])];
-		const duration = resolveDurationMeta(eff, ctx);
-		if (duration) {
-			items.push(
-				`${prefix}${name} duration: Until player's next ${formatDuration(duration)}`,
-			);
-		}
-		return { title: `${prefix}${name} added`, items };
-	},
+	log: () => [],
 });
