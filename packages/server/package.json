@@ -1,0 +1,21 @@
+{
+	"name": "@kingdom-builder/server",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@kingdom-builder/contents": "^0.1.0",
+		"@kingdom-builder/engine": "^0.1.0",
+		"@kingdom-builder/protocol": "^0.1.0"
+	},
+	"devDependencies": {
+		"tsx": "^4.19.2",
+		"typescript": "^5.5.4"
+	}
+}

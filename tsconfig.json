@@ -1,8 +1,17 @@
 {
 	"files": [],
 	"references": [
-		{ "path": "packages/protocol" },
-		{ "path": "packages/engine" },
-		{ "path": "packages/web" }
+		{
+			"path": "packages/protocol"
+		},
+		{
+			"path": "packages/engine"
+		},
+		{
+			"path": "packages/web"
+		},
+		{
+			"path": "packages/server"
+		}
 	]
 }
