@@ -117,10 +117,14 @@ const buildActionSelections = (
 	const map = new Map(list.map((option) => [option.id, option]));
 	const byPlayer = new Map<string, SessionActionOption[]>();
 	for (const player of players) {
-		byPlayer.set(
-			player.id,
-			list.filter((option) => player.actions.has(option.id)),
-		);
+		const options: SessionActionOption[] = [];
+		for (const option of list) {
+			if (!player.actions.has(option.id)) {
+				continue;
+			}
+			options.push(option);
+		}
+		byPlayer.set(player.id, options);
 	}
 	return { map, list, byPlayer };
 };
