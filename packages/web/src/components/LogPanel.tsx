@@ -176,7 +176,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 			{header}
 			{overflowNotice}
 			<ul ref={listRef} className={listClasses}>
-				{entries.map((entry, idx) => {
+				{entries.map((entry) => {
 					const [playerA, playerB] = sessionState.game.players;
 					const aId = playerA?.id;
 					const bId = playerB?.id;
@@ -192,7 +192,11 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 						colorClass,
 					);
 					return (
-						<li key={idx} className={entryClasses}>
+						<li
+							key={entry.id}
+							id={`game-log-entry-${entry.id}`}
+							className={entryClasses}
+						>
 							[{entry.time}] {entry.text}
 						</li>
 					);
