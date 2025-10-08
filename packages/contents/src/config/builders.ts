@@ -1,9 +1,6 @@
 import type {
-	ActionEffect,
 	EffectConfig,
 	EffectDef,
-	PopulationConfig,
-	RequirementConfig,
 	WinConditionDefinition,
 	WinConditionDisplay,
 	WinConditionResult,
@@ -15,8 +12,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
-import type { BuildingDef, DevelopmentDef, Focus, TriggerKey } from '../defs';
-import type { ActionCategory, ActionDef } from '../actions';
+import type { TriggerKey } from '../defs';
 import type { PopulationRoleId } from '../populationRoles';
 import type {
 	PhaseId as PhaseIdentifier,
@@ -24,17 +20,43 @@ import type {
 } from '../phases';
 import { ParamsBuilder } from './builderShared';
 import { resolveEffectConfig } from './builders/effectParams';
-import { ActionEffectGroupBuilder } from './builders/actionEffectGroups';
 import type { EffectBuilder } from './builders/evaluators';
+import { CompareRequirementBuilder } from './builders/evaluators';
 import {
-	CompareRequirementBuilder,
-	RequirementBuilder,
-} from './builders/evaluators';
+	ActionBuilder,
+	BaseBuilder,
+	BuildingBuilder,
+	DevelopmentBuilder,
+	InfoBuilder,
+	PopulationBuilder,
+	PopulationRoleBuilder,
+	ResourceBuilder,
+	StatBuilder,
+} from './builders/domainBuilders';
 export {
 	happinessTier,
 	tierDisplay,
 	tierPassiveText,
 } from './builders/tierBuilders';
+
+export type {
+	InfoDef,
+	PopulationRoleInfo,
+	ResourceInfo,
+	StatInfo,
+} from './builders/domainBuilders';
+
+export {
+	ActionBuilder,
+	BaseBuilder,
+	BuildingBuilder,
+	DevelopmentBuilder,
+	InfoBuilder,
+	PopulationBuilder,
+	PopulationRoleBuilder,
+	ResourceBuilder,
+	StatBuilder,
+};
 
 export {
 	CompareRequirementBuilder,
@@ -49,7 +71,6 @@ export {
 	statAddEffect,
 	statEvaluator,
 } from './builders/evaluators';
-import type { ActionEffectGroupDef } from './builders/actionEffectGroups';
 
 export {
 	ActionEffectGroupBuilder,
@@ -109,384 +130,6 @@ export function compareRequirement() {
 
 export function requirementEvaluatorCompare() {
 	return compareRequirement();
-}
-
-class BaseBuilder<T extends { id: string; name: string }> {
-	protected config: Omit<T, 'id' | 'name'> &
-		Partial<Pick<T, 'id' | 'name'>> & { icon?: string };
-	private readonly kind: string;
-	private idSet = false;
-	private nameSet = false;
-	private iconSet = false;
-	constructor(base: Omit<T, 'id' | 'name'>, kind: string) {
-		this.kind = kind;
-		this.config = {
-			...base,
-		} as Omit<T, 'id' | 'name'> &
-			Partial<Pick<T, 'id' | 'name'>> & {
-				icon?: string;
-			};
-	}
-	id(id: string) {
-		if (this.idSet) {
-			throw new Error(
-				`${this.kind} already has an id(). Remove the extra id() call.`,
-			);
-		}
-		this.config.id = id;
-		this.idSet = true;
-		return this;
-	}
-	name(name: string) {
-		if (this.nameSet) {
-			throw new Error(
-				`${this.kind} already has a name(). Remove the extra name() call.`,
-			);
-		}
-		this.config.name = name;
-		this.nameSet = true;
-		return this;
-	}
-	icon(icon: string) {
-		if (this.iconSet) {
-			throw new Error(
-				`${this.kind} already has an icon(). Remove the extra icon() call.`,
-			);
-		}
-		this.config.icon = icon;
-		this.iconSet = true;
-		return this;
-	}
-	build(): T {
-		if (!this.idSet) {
-			throw new Error(
-				`${this.kind} is missing id(). Call id('unique-id') before build().`,
-			);
-		}
-		if (!this.nameSet) {
-			throw new Error(
-				`${this.kind} is missing name(). Call name('Readable name') before build().`,
-			);
-		}
-		return this.config as T;
-	}
-}
-
-type ActionBuilderConfig = ActionDef;
-
-export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
-	private readonly effectGroupIds = new Set<string>();
-
-	constructor() {
-		super({ effects: [] }, 'Action');
-	}
-
-	category(category: ActionCategory) {
-		this.config.category = category;
-		return this;
-	}
-
-	order(order: number) {
-		this.config.order = order;
-		return this;
-	}
-
-	focus(focus: Focus) {
-		this.config.focus = focus;
-		return this;
-	}
-	cost(key: ResourceKey, amount: number) {
-		this.config.baseCosts = this.config.baseCosts || {};
-		this.config.baseCosts[key] = amount;
-		return this;
-	}
-	requirement(req: RequirementConfig | RequirementBuilder) {
-		const built = req instanceof RequirementBuilder ? req.build() : req;
-		this.config.requirements = this.config.requirements || [];
-		this.config.requirements.push(built);
-		return this;
-	}
-	effect(effect: EffectConfig) {
-		this.config.effects.push(effect);
-		return this;
-	}
-	effectGroup(group: ActionEffectGroupBuilder | ActionEffectGroupDef) {
-		if (!(this instanceof ActionBuilder)) {
-			throw new Error(
-				'Action effect groups can only be used on actions. Use action().effectGroup(...).',
-			);
-		}
-		const built =
-			group instanceof ActionEffectGroupBuilder ? group.build() : group;
-		if (this.effectGroupIds.has(built.id)) {
-			throw new Error(
-				`Action effect group id "${built.id}" already exists on this action. Use unique group ids.`,
-			);
-		}
-		this.effectGroupIds.add(built.id);
-		this.config.effects.push(built as ActionEffect);
-		return this;
-	}
-	system(flag = true) {
-		this.config.system = flag;
-		return this;
-	}
-}
-
-export class BuildingBuilder extends BaseBuilder<BuildingDef> {
-	constructor() {
-		super(
-			{ costs: {} as Record<ResourceKey, number>, onBuild: [] },
-			'Building',
-		);
-		(this.config.costs as Record<ResourceKey, number>)['ap' as ResourceKey] = 1;
-	}
-	cost(key: ResourceKey, amount: number) {
-		this.config.costs[key] = amount;
-		return this;
-	}
-	upkeep(key: ResourceKey, amount: number) {
-		this.config.upkeep = this.config.upkeep || {};
-		(this.config.upkeep as Record<ResourceKey, number>)[key] = amount;
-		return this;
-	}
-	onBuild(effect: EffectConfig) {
-		this.config.onBuild = this.config.onBuild || [];
-		this.config.onBuild.push(effect);
-		return this;
-	}
-	onGrowthPhase(effect: EffectConfig) {
-		this.config.onGrowthPhase = this.config.onGrowthPhase || [];
-		this.config.onGrowthPhase.push(effect);
-		return this;
-	}
-	onUpkeepPhase(effect: EffectConfig) {
-		this.config.onUpkeepPhase = this.config.onUpkeepPhase || [];
-		this.config.onUpkeepPhase.push(effect);
-		return this;
-	}
-	onPayUpkeepStep(effect: EffectConfig) {
-		this.config.onPayUpkeepStep = this.config.onPayUpkeepStep || [];
-		this.config.onPayUpkeepStep.push(effect);
-		return this;
-	}
-	onGainIncomeStep(effect: EffectConfig) {
-		this.config.onGainIncomeStep = this.config.onGainIncomeStep || [];
-		this.config.onGainIncomeStep.push(effect);
-		return this;
-	}
-	onGainAPStep(effect: EffectConfig) {
-		this.config.onGainAPStep = this.config.onGainAPStep || [];
-		this.config.onGainAPStep.push(effect);
-		return this;
-	}
-	onBeforeAttacked(effect: EffectConfig) {
-		this.config.onBeforeAttacked = this.config.onBeforeAttacked || [];
-		this.config.onBeforeAttacked.push(effect);
-		return this;
-	}
-	onAttackResolved(effect: EffectConfig) {
-		this.config.onAttackResolved = this.config.onAttackResolved || [];
-		this.config.onAttackResolved.push(effect);
-		return this;
-	}
-
-	focus(focus: Focus) {
-		this.config.focus = focus;
-		return this;
-	}
-}
-
-export class DevelopmentBuilder extends BaseBuilder<DevelopmentDef> {
-	constructor() {
-		super({}, 'Development');
-	}
-	upkeep(key: ResourceKey, amount: number) {
-		this.config.upkeep = this.config.upkeep || {};
-		(this.config.upkeep as Record<ResourceKey, number>)[key] = amount;
-		return this;
-	}
-	populationCap(amount: number) {
-		this.config.populationCap = amount;
-		return this;
-	}
-	onBuild(effect: EffectConfig) {
-		this.config.onBuild = this.config.onBuild || [];
-		this.config.onBuild.push(effect);
-		return this;
-	}
-	onGrowthPhase(effect: EffectConfig) {
-		this.config.onGrowthPhase = this.config.onGrowthPhase || [];
-		this.config.onGrowthPhase.push(effect);
-		return this;
-	}
-	onPayUpkeepStep(effect: EffectConfig) {
-		this.config.onPayUpkeepStep = this.config.onPayUpkeepStep || [];
-		this.config.onPayUpkeepStep.push(effect);
-		return this;
-	}
-	onGainIncomeStep(effect: EffectConfig) {
-		this.config.onGainIncomeStep = this.config.onGainIncomeStep || [];
-		this.config.onGainIncomeStep.push(effect);
-		return this;
-	}
-	onGainAPStep(effect: EffectConfig) {
-		this.config.onGainAPStep = this.config.onGainAPStep || [];
-		this.config.onGainAPStep.push(effect);
-		return this;
-	}
-	onBeforeAttacked(effect: EffectConfig) {
-		this.config.onBeforeAttacked = this.config.onBeforeAttacked || [];
-		this.config.onBeforeAttacked.push(effect);
-		return this;
-	}
-	onAttackResolved(effect: EffectConfig) {
-		this.config.onAttackResolved = this.config.onAttackResolved || [];
-		this.config.onAttackResolved.push(effect);
-		return this;
-	}
-	system(flag = true) {
-		this.config.system = flag;
-		return this;
-	}
-
-	order(order: number) {
-		this.config.order = order;
-		return this;
-	}
-
-	focus(focus: Focus) {
-		this.config.focus = focus;
-		return this;
-	}
-}
-
-export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
-	constructor() {
-		super({}, 'Population');
-	}
-	upkeep(key: ResourceKey, amount: number) {
-		this.config.upkeep = this.config.upkeep || {};
-		(this.config.upkeep as Record<ResourceKey, number>)[key] = amount;
-		return this;
-	}
-	onAssigned(effect: EffectConfig) {
-		this.config.onAssigned = this.config.onAssigned || [];
-		this.config.onAssigned.push(effect);
-		return this;
-	}
-	onUnassigned(effect: EffectConfig) {
-		this.config.onUnassigned = this.config.onUnassigned || [];
-		this.config.onUnassigned.push(effect);
-		return this;
-	}
-	onGrowthPhase(effect: EffectConfig) {
-		this.config.onGrowthPhase = this.config.onGrowthPhase || [];
-		this.config.onGrowthPhase.push(effect);
-		return this;
-	}
-	onUpkeepPhase(effect: EffectConfig) {
-		this.config.onUpkeepPhase = this.config.onUpkeepPhase || [];
-		this.config.onUpkeepPhase.push(effect);
-		return this;
-	}
-	onPayUpkeepStep(effect: EffectConfig) {
-		this.config.onPayUpkeepStep = this.config.onPayUpkeepStep || [];
-		this.config.onPayUpkeepStep.push(effect);
-		return this;
-	}
-	onGainIncomeStep(effect: EffectConfig) {
-		this.config.onGainIncomeStep = this.config.onGainIncomeStep || [];
-		this.config.onGainIncomeStep.push(effect);
-		return this;
-	}
-	onGainAPStep(effect: EffectConfig) {
-		this.config.onGainAPStep = this.config.onGainAPStep || [];
-		this.config.onGainAPStep.push(effect);
-		return this;
-	}
-}
-
-export interface InfoDef {
-	key: string;
-	icon: string;
-	label: string;
-	description: string;
-}
-
-class InfoBuilder<T extends InfoDef> {
-	protected config: T;
-	constructor(key: string) {
-		this.config = { key, icon: '', label: '', description: '' } as T;
-	}
-	icon(icon: string) {
-		this.config.icon = icon;
-		return this;
-	}
-	label(label: string) {
-		this.config.label = label;
-		return this;
-	}
-	description(description: string) {
-		this.config.description = description;
-		return this;
-	}
-	build(): T {
-		return this.config;
-	}
-}
-
-export interface ResourceInfo extends InfoDef {
-	/**
-	 * Arbitrary tags to mark special behaviours or rules for the resource.
-	 * These tags are interpreted by the engine or other systems at runtime.
-	 */
-	tags?: string[];
-}
-
-class ResourceBuilder extends InfoBuilder<ResourceInfo> {
-	constructor(key: ResourceKey) {
-		super(key);
-	}
-	tag(tag: string) {
-		this.config.tags = [...(this.config.tags || []), tag];
-		return this;
-	}
-}
-
-export interface PopulationRoleInfo extends InfoDef {}
-
-class PopulationRoleBuilder extends InfoBuilder<PopulationRoleInfo> {
-	constructor(key: PopulationRoleId) {
-		super(key);
-	}
-}
-
-export interface StatInfo extends InfoDef {
-	displayAsPercent?: boolean;
-	addFormat?: {
-		prefix?: string;
-		percent?: boolean;
-	};
-	capacity?: boolean;
-}
-
-class StatBuilder extends InfoBuilder<StatInfo> {
-	constructor(key: StatKey) {
-		super(key);
-	}
-	displayAsPercent(flag = true) {
-		this.config.displayAsPercent = flag;
-		return this;
-	}
-	addFormat(format: { prefix?: string; percent?: boolean }) {
-		this.config.addFormat = { ...this.config.addFormat, ...format };
-		return this;
-	}
-	capacity(flag = true) {
-		this.config.capacity = flag;
-		return this;
-	}
 }
 
 export interface StepDef {
