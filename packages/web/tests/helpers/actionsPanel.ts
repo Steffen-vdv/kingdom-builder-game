@@ -148,20 +148,25 @@ export function createActionsPanelGame({
 		createParticipant('B', 'Opponent', []),
 	];
 
-	const requirementMessages = new Map<string, RequirementFailure[]>();
-	requirementMessages.set(
+	const requirementFailures = new Map<string, RequirementFailure[]>();
+	requirementFailures.set(
 		raisePopulationAction.id,
 		buildRequirements.map((requirement, index) => ({
 			requirement,
-			message:
-				index === 0 ? 'Requires available housing' : 'Requires open role slot',
+			details: {
+				left: index === 0 ? 3 : 1,
+				right: index === 0 ? 3 : 0,
+			},
 		})),
 	);
 	if (buildingAction) {
-		requirementMessages.set(buildingAction.id, [
+		requirementFailures.set(buildingAction.id, [
 			{
 				requirement: buildRequirements[0]!,
-				message: 'Requires assigned worker',
+				details: {
+					left: 3,
+					right: 3,
+				},
 			},
 		]);
 	}
@@ -236,7 +241,7 @@ export function createActionsPanelGame({
 			costMap: new Map(
 				actionIds.map((id) => [id, { [actionCostResource]: 1 }]),
 			) as Map<string, Record<string, number>>,
-			requirementMessages,
+			requirementFailures,
 			requirementIcons,
 			populationInfoIcon: POPULATION_INFO.icon,
 			building: buildingDefinition,

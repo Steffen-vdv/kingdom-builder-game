@@ -31,7 +31,8 @@ vi.mock('../src/translation', () => ({
 		description: undefined,
 	})),
 	translateRequirementFailure: vi.fn(
-		(failure: { message?: string }) => failure.message ?? 'Requirement not met',
+		(failure: { requirement: { method?: string } }) =>
+			`translated:${failure.requirement.method ?? 'unknown'}`,
 	),
 }));
 
@@ -47,7 +48,7 @@ function setScenario(options?: ActionsPanelGameOptions) {
 		return metadata.costMap.get(actionId) ?? {};
 	});
 	actionRequirementsMock.mockImplementation((actionId: string) => {
-		return metadata.requirementMessages.get(actionId) ?? [];
+		return metadata.requirementFailures.get(actionId) ?? [];
 	});
 	requirementIconsMock.mockImplementation((actionId: string) => {
 		return metadata.requirementIcons.get(actionId) ?? [];
@@ -150,7 +151,12 @@ describe('<ActionsPanel />', () => {
 		});
 		expect(buildingButton).toBeDisabled();
 		expect(translateRequirementFailureMock).toHaveBeenCalledWith(
-			expect.objectContaining({ message: 'Requires assigned worker' }),
+			expect.objectContaining({
+				requirement: expect.objectContaining({
+					type: 'evaluator',
+					method: 'compare',
+				}),
+			}),
 			expect.anything(),
 		);
 	});

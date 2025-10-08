@@ -49,8 +49,5 @@ export const evaluatorCompare: RequirementHandler = (req, ctx) => {
 			right: rightVal,
 		},
 	};
-	if (req.message) {
-		failure.message = req.message;
-	}
 	return failure;
 };
