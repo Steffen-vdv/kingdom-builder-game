@@ -51,8 +51,8 @@ export default function RaisePopOptions({
 		[ctx.actions, action.id],
 	);
 	const baseRequirementIcons = useMemo(
-		() => getRequirementIcons(action.id, ctx),
-		[action.id, ctx],
+		() => getRequirementIcons(action.id, translationContext),
+		[action.id, translationContext],
 	);
 	const roleOptions = useMemo(
 		() => determineRaisePopRoles(actionDefinition, populationRegistry),

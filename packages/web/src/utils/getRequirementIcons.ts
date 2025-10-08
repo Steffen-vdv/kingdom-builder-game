@@ -1,10 +1,10 @@
-import type { EngineContext } from '@kingdom-builder/engine';
 import {
 	STATS,
 	POPULATION_ROLES,
 	type StatKey,
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../translation';
 
 interface EvalConfig {
 	type: string;
@@ -41,7 +41,7 @@ interface RequirementConfig {
 
 export type RequirementIconGetter = (
 	requirement: RequirementConfig,
-	engineContext: EngineContext,
+	translationContext: TranslationContext,
 ) => string[];
 
 /**
@@ -91,9 +91,9 @@ registerRequirementIconGetter('evaluator', 'compare', (requirement) => {
 
 export function getRequirementIcons(
 	actionId: string,
-	engineContext: EngineContext,
+	translationContext: TranslationContext,
 ): string[] {
-	const actionDefinition = engineContext.actions.get(actionId);
+	const actionDefinition = translationContext.actions.get(actionId);
 	if (!actionDefinition?.requirements) {
 		return [];
 	}
@@ -105,7 +105,7 @@ export function getRequirementIcons(
 		if (!getter) {
 			continue;
 		}
-		icons.push(...getter(requirement, engineContext));
+		icons.push(...getter(requirement, translationContext));
 	}
 	return icons.filter(Boolean);
 }
