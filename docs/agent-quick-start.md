@@ -14,6 +14,7 @@ guide for rationale, lore, and extended background.
      `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 2. **Run core commands**
    - `npm run lint` and `npm run format` keep eslint and Prettier happy.
+   - `npm run lint` also runs dependency-cruiser to enforce package boundaries.
    - `npm run check` runs linting, type checks, and tests together.
    - Use `npm run build` only when you must validate a production bundle.
 3. **Work content-first**
@@ -21,6 +22,9 @@ guide for rationale, lore, and extended background.
      `@kingdom-builder/contents` or registries.
    - Tests should create data through `createContentFactory()` or other
      registries so ids and numbers stay dynamic.
+   - Respect dependency boundaries: the web app imports engine code only from
+     `@kingdom-builder/engine`, and the engine runtime never reaches into web or
+     content internals beyond registry surfaces.
 4. **Honor the PR template**
    - Copy `.github/PULL_REQUEST_TEMPLATE.md` into every PR body and replace all
      placeholders with specific details before calling `make_pr`.
