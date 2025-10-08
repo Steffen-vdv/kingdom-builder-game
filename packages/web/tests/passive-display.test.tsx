@@ -4,28 +4,15 @@ import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PassiveDisplay from '../src/components/player/PassiveDisplay';
-import { createEngine, runEffects } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	formatPassiveRemoval,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
+import { formatPassiveRemoval } from '@kingdom-builder/contents';
 import { resolvePassivePresentation } from '../src/translation/log/passives';
 import { buildTierEntries } from '../src/components/player/buildTierEntries';
+import type { MockGame } from './helpers/createPassiveDisplayGame';
 import {
-	createPassiveGame,
-	type MockGame,
-} from './helpers/createPassiveDisplayGame';
-
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
+	createBuildingScenario,
+	createNeutralScenario,
+	createTierPassiveScenario,
+} from './helpers/passiveDisplayFixtures';
 
 let currentGame: MockGame;
 
@@ -35,32 +22,16 @@ vi.mock('../src/state/GameContext', () => ({
 
 describe('<PassiveDisplay />', () => {
 	it('shows passive labels and removal text from metadata', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		const tieredResource = ctx.services.tieredResource;
-		const happinessKey = tieredResource.resourceKey as ResourceKey;
-		ctx.activePlayer.resources[happinessKey] = 6;
-		ctx.services.handleTieredResourceChange(
-			ctx,
-			ctx.activePlayer,
-			happinessKey,
-		);
-
-		const { mockGame, handleHoverCard } = createPassiveGame(ctx);
-		const { translationContext } = mockGame;
+		const scenario = createTierPassiveScenario();
+		const { mockGame, handleHoverCard, activePlayer, ruleSnapshot } = scenario;
 		currentGame = mockGame;
-
-		render(<PassiveDisplay player={ctx.activePlayer} />);
-		const [summary] = ctx.passives.list(ctx.activePlayer.id);
+		const { translationContext } = mockGame;
+		render(<PassiveDisplay player={activePlayer} />);
+		const [summary] = translationContext.passives.list(activePlayer.id);
 		expect(summary).toBeDefined();
-		const definitions = ctx.passives.values(ctx.activePlayer.id);
+		const definitions = translationContext.passives.definitions(
+			activePlayer.id,
+		);
 		const definition = definitions.find((def) => def.id === summary?.id);
 		expect(definition).toBeDefined();
 		const presentation = resolvePassivePresentation(summary!, { definition });
@@ -73,7 +44,7 @@ describe('<PassiveDisplay />', () => {
 		expect(handleHoverCard).toHaveBeenCalled();
 		const [hoverCard] = handleHoverCard.mock.calls.at(-1) ?? [{}];
 		expect(hoverCard?.description).toBeUndefined();
-		const tierDefinition = ctx.services.rules.tierDefinitions.find(
+		const tierDefinition = ruleSnapshot.tierDefinitions.find(
 			(tier) => tier.preview?.id === summary?.id,
 		);
 		expect(tierDefinition).toBeDefined();
@@ -89,30 +60,17 @@ describe('<PassiveDisplay />', () => {
 	});
 
 	it('uses shared passive removal formatter for UI and logs', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		const tieredResource = ctx.services.tieredResource;
-		const happinessKey = tieredResource.resourceKey as ResourceKey;
-		ctx.activePlayer.resources[happinessKey] = 6;
-		ctx.services.handleTieredResourceChange(
-			ctx,
-			ctx.activePlayer,
-			happinessKey,
-		);
-		const { mockGame, handleHoverCard } = createPassiveGame(ctx);
+		const scenario = createTierPassiveScenario();
+		const { mockGame, handleHoverCard, activePlayer } = scenario;
 		currentGame = mockGame;
-		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
+		const { translationContext } = mockGame;
+		const view = render(<PassiveDisplay player={activePlayer} />);
 		const { container } = view;
-		const [summary] = ctx.passives.list(ctx.activePlayer.id);
+		const [summary] = translationContext.passives.list(activePlayer.id);
 		expect(summary).toBeDefined();
-		const definitions = ctx.passives.values(ctx.activePlayer.id);
+		const definitions = translationContext.passives.definitions(
+			activePlayer.id,
+		);
 		const definition = definitions.find((def) => def.id === summary?.id);
 		expect(definition).toBeDefined();
 		const presentation = resolvePassivePresentation(summary!, { definition });
@@ -134,58 +92,19 @@ describe('<PassiveDisplay />', () => {
 	});
 
 	it('renders no passive cards when the active tier lacks passives', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		const tieredResource = ctx.services.tieredResource;
-		const happinessKey = tieredResource.resourceKey as ResourceKey;
-		ctx.activePlayer.resources[happinessKey] = 0;
-		ctx.services.handleTieredResourceChange(
-			ctx,
-			ctx.activePlayer,
-			happinessKey,
-		);
-
-		const { mockGame } = createPassiveGame(ctx);
+		const scenario = createNeutralScenario();
+		const { mockGame, activePlayer } = scenario;
 		currentGame = mockGame;
-
-		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
+		const view = render(<PassiveDisplay player={activePlayer} />);
 		const { container } = view;
-
 		expect(container).toBeEmptyDOMElement();
 	});
 
 	it('omits building-derived passives from the panel', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		runEffects(
-			[
-				{
-					type: 'building',
-					method: 'add',
-					params: { id: 'castle_walls' },
-				},
-			],
-			ctx,
-		);
-
-		const { mockGame } = createPassiveGame(ctx);
+		const scenario = createBuildingScenario();
+		const { mockGame, activePlayer } = scenario;
 		currentGame = mockGame;
-
-		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
+		const view = render(<PassiveDisplay player={activePlayer} />);
 		expect(view.container.querySelector('div.hoverable')).toBeNull();
 		const text = view.container.textContent ?? '';
 		expect(text).not.toContain('Castle Walls');

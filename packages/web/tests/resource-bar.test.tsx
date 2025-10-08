@@ -6,16 +6,10 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createTranslationContext } from '../src/translation/context';
 import {
-	createEngineSession,
-	type EngineContext,
-} from '@kingdom-builder/engine';
-import {
 	ACTIONS,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 	RESOURCES,
 	type ResourceKey,
@@ -24,12 +18,18 @@ import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
+import type {
+	EngineContext,
+	EngineSession,
+	PlayerId,
+	RuleSnapshot,
+} from '@kingdom-builder/engine';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
 type MockGame = GameEngineContextValue;
-type TierDefinition =
-	EngineContext['services']['rules']['tierDefinitions'][number];
+type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
 type SummaryGroupLike = {
 	title?: string;
@@ -77,27 +77,39 @@ vi.mock('../src/state/GameContext', () => ({
 }));
 describe('<ResourceBar /> happiness hover card', () => {
 	it('lists happiness tiers with concise summaries and highlights the active threshold', () => {
-		const session = createEngineSession({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
+		const happinessKey = RULES.tieredResourceKey as ResourceKey;
+		const activePlayerId = 'player-1' as PlayerId;
+		const opponentId = 'player-2' as PlayerId;
+		const tierDefinitions = RULES.tierDefinitions.map((tier) => ({
+			...tier,
+			display: {
+				...(tier.display ?? {}),
+				title: `Snapshot ${tier.id}`,
+			},
+		}));
+		const ruleSnapshot = {
+			...RULES,
+			tierDefinitions,
+		};
+		const activePlayer = createSnapshotPlayer({
+			id: activePlayerId,
+			name: 'Player One',
+			resources: { [happinessKey]: 6 },
 		});
-		const ctx = session.getLegacyContext();
-		const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
-		ctx.activePlayer.resources[happinessKey] = 6;
-		ctx.services.handleTieredResourceChange(
-			ctx,
-			ctx.activePlayer,
-			happinessKey,
-		);
+		const opponent = createSnapshotPlayer({
+			id: opponentId,
+			name: 'Player Two',
+		});
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId,
+			opponentId,
+			phases: PHASES,
+			actionCostResource: RULES.tieredResourceKey as ResourceKey,
+			ruleSnapshot,
+		});
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
-		const sessionState = session.getSnapshot();
-		const ruleSnapshot = session.getRuleSnapshot();
 		const translationContext = createTranslationContext(
 			sessionState,
 			{
@@ -105,31 +117,18 @@ describe('<ResourceBar /> happiness hover card', () => {
 				buildings: BUILDINGS,
 				developments: DEVELOPMENTS,
 			},
-			{
-				pullEffectLog: (key) => session.pullEffectLog(key),
-				evaluationMods: session.getPassiveEvaluationMods(),
-			},
+			undefined,
 			{
 				ruleSnapshot,
 				passiveRecords: sessionState.passiveRecords,
 			},
 		);
-		const customRuleSnapshot = {
-			...ruleSnapshot,
-			tierDefinitions: ruleSnapshot.tierDefinitions.map((tier) => ({
-				...tier,
-				display: {
-					...(tier.display ?? {}),
-					title: `Snapshot ${tier.id}`,
-				},
-			})),
-		};
 		currentGame = {
-			session,
+			session: {} as EngineSession,
 			sessionState,
-			ctx,
+			ctx: {} as EngineContext,
 			translationContext,
-			ruleSnapshot: customRuleSnapshot,
+			ruleSnapshot,
 			handleHoverCard,
 			clearHoverCard,
 			log: [],
@@ -169,9 +168,9 @@ describe('<ResourceBar /> happiness hover card', () => {
 			playerName: 'Player',
 			onChangePlayerName: vi.fn(),
 		} as MockGame;
-		render(<ResourceBar player={ctx.activePlayer} />);
+		render(<ResourceBar player={activePlayer} />);
 		const resourceInfo = RESOURCES[happinessKey];
-		const resourceValue = ctx.activePlayer.resources[happinessKey] ?? 0;
+		const resourceValue = activePlayer.resources[happinessKey] ?? 0;
 		const button = screen.getByRole('button', {
 			name: `${resourceInfo.label}: ${resourceValue}`,
 		});
@@ -198,7 +197,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		expect(lowerEntry).toBeTruthy();
 		const currentClassName = currentEntry?.className ?? '';
 		expect(currentClassName.includes('text-emerald-600')).toBe(true);
-		const tiers = ctx.services.rules.tierDefinitions;
+		const tiers = ruleSnapshot.tierDefinitions;
 		const getRangeStart = (tier: TierDefinition) =>
 			tier.range.min ?? Number.NEGATIVE_INFINITY;
 		const orderedTiers = [...tiers].sort(
@@ -249,7 +248,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 			const items = entry?.items ?? [];
 			expect(items.length).toBeLessThanOrEqual(MAX_TIER_SUMMARY_LINES);
 			const summaryEntries = tier.preview?.effects?.length
-				? describeEffects(tier.preview.effects, ctx)
+				? describeEffects(tier.preview.effects, translationContext)
 				: normalizeSummary(tier.text?.summary);
 			const baseSummary = summaryEntries.length
 				? summaryEntries
