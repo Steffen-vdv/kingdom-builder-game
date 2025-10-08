@@ -9,9 +9,18 @@ import {
 	formatEffectGroups,
 } from '../effects';
 import { registerContentTranslator } from './factory';
-import type { ContentTranslator, Summary } from './types';
+import type {
+	ContentTranslator,
+	Summary,
+	SummaryEntry,
+	SummaryGroup,
+} from './types';
 import type { TranslationContext } from '../context';
 import { getActionLogHook } from './actionLogHooks';
+import type {
+	ActionLogLineDescriptor,
+	ActionLogLineKind,
+} from '../log/timeline';
 
 class ActionTranslator
 	implements ContentTranslator<string, Record<string, unknown>>
@@ -60,7 +69,7 @@ class ActionTranslator
 		id: string,
 		ctx: TranslationContext,
 		params?: Record<string, unknown>,
-	): string[] {
+	): ActionLogLineDescriptor[] {
 		const def = ctx.actions.get(id);
 		const icon = def.icon?.trim();
 		const label = def.name.trim();
@@ -81,17 +90,48 @@ class ActionTranslator
 			}
 			effLogs.push(...formatEffectGroups([step], 'log', ctx));
 		}
-		const lines = [message];
-		function push(entry: unknown, depth: number) {
+		const lines: ActionLogLineDescriptor[] = [
+			{ text: message, depth: 0, kind: 'headline' },
+		];
+		function push(
+			entry: SummaryEntry,
+			depth: number,
+			fallbackKind: ActionLogLineKind = 'effect',
+		): void {
 			if (typeof entry === 'string') {
-				lines.push(`${'  '.repeat(depth)}${entry}`);
-			} else if (entry && typeof entry === 'object') {
-				const e = entry as { title: string; items: unknown[] };
-				lines.push(`${'  '.repeat(depth)}${e.title}`);
-				e.items.forEach((i) => push(i, depth + 1));
+				const text = entry.trim();
+				if (!text) {
+					return;
+				}
+				lines.push({ text, depth, kind: fallbackKind });
+				return;
+			}
+			const group = entry as SummaryGroup & {
+				timelineKind?: ActionLogLineKind;
+				actionId?: string;
+			};
+			const title = group.title?.trim();
+			if (title) {
+				const kind = group.timelineKind ?? 'group';
+				const refId =
+					typeof group.actionId === 'string' ? group.actionId : undefined;
+				lines.push({
+					text: title,
+					depth,
+					kind,
+					...(refId ? { refId } : {}),
+				});
+			}
+			const childItems = group.items;
+			if (Array.isArray(childItems)) {
+				for (const item of childItems) {
+					const nextKind =
+						group.timelineKind === 'subaction' ? 'effect' : fallbackKind;
+					push(item, depth + 1, nextKind);
+				}
 			}
 		}
-		effLogs.forEach((e) => push(e, 1));
+		effLogs.forEach((entry) => push(entry, 1));
 		return lines;
 	}
 }

@@ -17,10 +17,21 @@ import {
 	SYNTH_COMBAT_STATS,
 	PLUNDER_PERCENT,
 } from './helpers/armyAttackFactories';
+import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+
+function withLegacyIndent(
+	entries: readonly (string | ActionLogLineDescriptor)[],
+): string[] {
+	return entries.map((entry) =>
+		typeof entry === 'string'
+			? entry
+			: `${'  '.repeat(entry.depth)}${entry.text}`,
+	);
+}
 
 beforeAll(() => {
 	setupStatOverrides();
@@ -93,7 +104,7 @@ describe('army attack translation log', () => {
 				formatSignedValue(value, formatNumber),
 			);
 		const castleAfterValue = `${castle.icon} ${castle.label} ${castleAfter}`;
-		expect(log).toEqual([
+		expect(withLegacyIndent(log)).toEqual([
 			`${attack.icon} ${attack.name}`,
 			`  Evaluate damage: Compare ${powerValue(armyStrength)} against ${absorptionValue(0)}; Compare remaining damage against ${fortValue(fortBefore)}; Apply damage to ${castle.icon} ${castle.label} ${castleBefore}`,
 			`    Compare ${powerValue(armyStrength)} against ${absorptionValue(0)} → ${powerValue(remainingAfterAbsorption)}`,
@@ -157,7 +168,7 @@ describe('army attack translation log', () => {
 				'Fortification',
 				formatSignedValue(value, formatNumber),
 			);
-		expect(log).toEqual([
+		expect(withLegacyIndent(log)).toEqual([
 			`${buildingAttack.icon} ${buildingAttack.name}`,
 			`  Evaluate damage: Compare ${powerValue(armyStrength)} against ${absorptionValue(0)}; Compare remaining damage against ${fortValue(fortBefore)}; Destroy ${buildingDisplay} with ${powerValue(remainingAfterFort)}`,
 			`    Compare ${powerValue(armyStrength)} against ${absorptionValue(0)} → ${powerValue(remainingAfterAbsorption)}`,

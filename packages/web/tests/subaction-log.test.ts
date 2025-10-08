@@ -16,6 +16,34 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	appendSubActionChanges,
+	filterActionDiffChanges,
+} from '../src/state/useActionPerformer.helpers';
+import { formatActionLogLines } from '../src/state/actionLogFormat';
+import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+
+function asTimelineLines(
+	entries: readonly (string | ActionLogLineDescriptor)[],
+): ActionLogLineDescriptor[] {
+	const lines: ActionLogLineDescriptor[] = [];
+	for (const [index, entry] of entries.entries()) {
+		if (typeof entry === 'string') {
+			const text = entry.trim();
+			if (!text) {
+				continue;
+			}
+			lines.push({
+				text,
+				depth: index === 0 ? 0 : 1,
+				kind: index === 0 ? 'headline' : 'effect',
+			});
+			continue;
+		}
+		lines.push(entry);
+	}
+	return lines;
+}
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -52,8 +80,10 @@ describe('sub-action logging', () => {
 			diffContext,
 			RESOURCE_KEYS,
 		);
-		const messages = logContent('action', synthetic.plow.id, ctx);
-		const costLines: string[] = [];
+		const messages = asTimelineLines(
+			logContent('action', synthetic.plow.id, ctx),
+		);
+		const costLines: ActionLogLineDescriptor[] = [];
 		for (const key of Object.keys(
 			costs,
 		) as (keyof typeof SYNTHETIC_RESOURCES)[]) {
@@ -66,52 +96,33 @@ describe('sub-action logging', () => {
 			const label = info?.label ?? key;
 			const b = before.resources[key] ?? 0;
 			const a = b - amt;
-			costLines.push(`    ${icon}${label} -${amt} (${b}→${a})`);
+			costLines.push({
+				text: `${icon}${label} -${amt} (${b}→${a})`,
+				depth: 2,
+				kind: 'cost-detail',
+			});
 		}
 		if (costLines.length) {
-			messages.splice(1, 0, '  💲 Action cost', ...costLines);
-		}
-
-		const subLines: string[] = [];
-		for (const trace of traces) {
-			const subChanges = diffStepSnapshots(
-				trace.before,
-				trace.after,
-				ctx.actions.get(trace.id),
-				diffContext,
-				RESOURCE_KEYS,
+			messages.splice(
+				1,
+				0,
+				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				...costLines,
 			);
-			if (!subChanges.length) {
-				continue;
-			}
-			subLines.push(...subChanges);
-			const action = ctx.actions.get(trace.id);
-			const icon = action?.icon || '';
-			const name = action?.name || trace.id;
-			const line = `  ${icon} ${name}`;
-			const idx = messages.indexOf(line);
-			if (idx !== -1) {
-				messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
-			}
 		}
-
-		const costLabels = new Set(
-			Object.keys(costs) as (keyof typeof SYNTHETIC_RESOURCES)[],
-		);
-		const filtered = changes.filter((line) => {
-			if (subLines.includes(line)) {
-				return false;
-			}
-			for (const key of costLabels) {
-				const info = SYNTHETIC_RESOURCES[key];
-				const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
-				if (line.startsWith(prefix)) {
-					return false;
-				}
-			}
-			return true;
+		const subLines = appendSubActionChanges({
+			traces,
+			context: ctx,
+			diffContext,
+			resourceKeys: RESOURCE_KEYS,
+			messages,
 		});
-		const logLines = [...messages, ...filtered.map((c) => `  ${c}`)];
+		const filtered = filterActionDiffChanges({
+			changes,
+			messages,
+			subLines,
+		});
+		const logLines = formatActionLogLines(messages, filtered);
 
 		const expandTrace = traces.find(
 			(t) => t.id === synthetic.expand.id,
@@ -124,8 +135,8 @@ describe('sub-action logging', () => {
 			RESOURCE_KEYS,
 		);
 		expandDiff.forEach((line) => {
-			expect(logLines).toContain(`    ${line}`);
-			expect(logLines).not.toContain(`  ${line}`);
+			expect(logLines).toContain(`  ↳ ${line}`);
+			expect(logLines).not.toContain(`• ${line}`);
 		});
 		const tillTrace = traces.find(
 			(t) => t.id === synthetic.till.id,
@@ -146,8 +157,8 @@ describe('sub-action logging', () => {
 			),
 		).toBe(true);
 		tillDiff.forEach((line) => {
-			expect(logLines).toContain(`    ${line}`);
-			expect(logLines).not.toContain(`  ${line}`);
+			expect(logLines).toContain(`  ↳ ${line}`);
+			expect(logLines).not.toContain(`• ${line}`);
 		});
 	});
 });

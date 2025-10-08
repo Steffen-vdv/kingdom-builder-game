@@ -1,4 +1,4 @@
-import type { ContentTranslator, Summary } from './types';
+import type { ContentTranslator, Summary, TranslatorLogEntry } from './types';
 import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/contents';
 import type { TranslationContext } from '../context';
 
@@ -60,7 +60,7 @@ export function withInstallation<T>(
 			target: T,
 			ctx: TranslationContext,
 			opts?: { installed?: boolean },
-		): string[] {
+		): TranslatorLogEntry[] {
 			return translator.log ? translator.log(target, ctx, opts) : [];
 		},
 	};

@@ -1,5 +1,6 @@
 import type { EngineContext as LegacyEngineContext } from '@kingdom-builder/engine';
 import type { TranslationContext } from '../context';
+import type { ActionLogLineDescriptor } from '../log/timeline';
 
 export interface Land {
 	id: string;
@@ -34,10 +35,12 @@ export type ContentTranslatorContext = TranslationContext;
  */
 export type LegacyContentTranslatorContext = LegacyEngineContext;
 
+export type TranslatorLogEntry = string | ActionLogLineDescriptor;
+
 export interface ContentTranslator<T = unknown, O = Record<string, unknown>> {
 	summarize: BivariantCallback<[T, TranslationContext, O?], Summary>;
 	describe: BivariantCallback<[T, TranslationContext, O?], Summary>;
-	log?: BivariantCallback<[T, TranslationContext, O?], string[]>;
+	log?: BivariantCallback<[T, TranslationContext, O?], TranslatorLogEntry[]>;
 }
 
 /**
@@ -52,5 +55,5 @@ export interface LegacyContentTranslator<
 > {
 	summarize: BivariantCallback<[T, LegacyEngineContext, O?], Summary>;
 	describe: BivariantCallback<[T, LegacyEngineContext, O?], Summary>;
-	log?: BivariantCallback<[T, LegacyEngineContext, O?], string[]>;
+	log?: BivariantCallback<[T, LegacyEngineContext, O?], TranslatorLogEntry[]>;
 }

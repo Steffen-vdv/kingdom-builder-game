@@ -20,6 +20,29 @@ import {
 } from '../src/translation';
 import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
+import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+
+function asTimelineLines(
+	entries: readonly (string | ActionLogLineDescriptor)[],
+): ActionLogLineDescriptor[] {
+	const lines: ActionLogLineDescriptor[] = [];
+	for (const [index, entry] of entries.entries()) {
+		if (typeof entry === 'string') {
+			const text = entry.trim();
+			if (!text) {
+				continue;
+			}
+			lines.push({
+				text,
+				depth: index === 0 ? 0 : 1,
+				kind: index === 0 ? 'headline' : 'effect',
+			});
+			continue;
+		}
+		lines.push(entry);
+	}
+	return lines;
+}
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -77,8 +100,10 @@ describe('action cost and reward logging', () => {
 			diffContext,
 			RESOURCE_KEYS,
 		);
-		const messages = logContent('action', refundAction.id, ctx);
-		const costLines: string[] = [];
+		const messages = asTimelineLines(
+			logContent('action', refundAction.id, ctx),
+		);
+		const costLines: ActionLogLineDescriptor[] = [];
 		for (const key of Object.keys(costs) as SyntheticResourceKey[]) {
 			const amount = costs[key] ?? 0;
 			if (!amount) {
@@ -89,12 +114,19 @@ describe('action cost and reward logging', () => {
 			const label = info?.label ?? key;
 			const beforeAmount = before.resources[key] ?? 0;
 			const afterAmount = beforeAmount - amount;
-			costLines.push(
-				`    ${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
-			);
+			costLines.push({
+				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
+				depth: 2,
+				kind: 'cost-detail',
+			});
 		}
 		if (costLines.length) {
-			messages.splice(1, 0, '  💲 Action cost', ...costLines);
+			messages.splice(
+				1,
+				0,
+				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				...costLines,
+			);
 		}
 		const filtered = filterActionDiffChanges({
 			changes,
@@ -104,7 +136,7 @@ describe('action cost and reward logging', () => {
 		const logLines = formatActionLogLines(messages, filtered);
 		const coinInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const coinCost = costs[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		expect(logLines).toContain('  💲 Action cost');
+		expect(logLines).toContain('• 💲 Action cost');
 		const costEntry = logLines.find((line) =>
 			line.includes(`${coinInfo.icon} ${coinInfo.label} -${coinCost} `),
 		);

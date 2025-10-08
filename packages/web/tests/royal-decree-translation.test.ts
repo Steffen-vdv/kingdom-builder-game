@@ -206,7 +206,14 @@ describe('royal decree translation', () => {
 		);
 		const group = findGroupEntry(entries);
 		const [entry] = group.items;
-		expect(entry).toBe('🏗️ Develop - 🏠 House');
+		if (typeof entry === 'string') {
+			expect(entry).toBe('🏗️ Develop - 🏠 House');
+			return;
+		}
+		expect(entry.title).toBe('🏗️ Develop');
+		expect(entry.timelineKind).toBe('subaction');
+		expect(entry.actionId).toBe(ActionId.develop);
+		expect(entry.items).toContain('🏗️ Develop - Developed 🏠 House');
 	});
 
 	it('logs royal decree develop once using develop action copy', () => {
@@ -222,7 +229,9 @@ describe('royal decree translation', () => {
 				},
 			},
 		});
-		const joined = logLines.join('\n');
+		const joined = logLines
+			.map((line) => (typeof line === 'string' ? line : line.text))
+			.join('\n');
 		const occurrences = joined.match(/Developed [^\n]*/g) ?? [];
 		expect(occurrences.length).toBeLessThanOrEqual(1);
 		if (occurrences.length === 1) {

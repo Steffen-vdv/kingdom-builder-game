@@ -24,6 +24,12 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	appendSubActionChanges,
+	filterActionDiffChanges,
+} from '../src/state/useActionPerformer.helpers';
+import { formatActionLogLines } from '../src/state/actionLogFormat';
+import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -32,6 +38,28 @@ const RESOURCE_KEYS = Object.keys(
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+
+function asTimelineLines(
+	entries: readonly (string | ActionLogLineDescriptor)[],
+): ActionLogLineDescriptor[] {
+	const lines: ActionLogLineDescriptor[] = [];
+	for (const [index, entry] of entries.entries()) {
+		if (typeof entry === 'string') {
+			const text = entry.trim();
+			if (!text) {
+				continue;
+			}
+			lines.push({
+				text,
+				depth: index === 0 ? 0 : 1,
+				kind: index === 0 ? 'headline' : 'effect',
+			});
+			continue;
+		}
+		lines.push(entry);
+	}
+	return lines;
+}
 
 describe('tax action logging with market', () => {
 	it('shows population and market sources in gold gain', () => {
@@ -72,79 +100,65 @@ describe('tax action logging with market', () => {
 			diffContext,
 			RESOURCE_KEYS,
 		);
-		const messages = logContent('action', SYNTHETIC_IDS.taxAction, ctx);
-		const costLines: string[] = [];
+		const messages = asTimelineLines(
+			logContent('action', SYNTHETIC_IDS.taxAction, ctx),
+		);
+		const costDescriptors: ActionLogLineDescriptor[] = [];
 		for (const key of Object.keys(costs) as SyntheticResourceKey[]) {
-			const amt = costs[key] ?? 0;
-			if (!amt) {
+			const amount = costs[key] ?? 0;
+			if (!amount) {
 				continue;
 			}
 			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
-			const b = before.resources[key] ?? 0;
-			const a = b - amt;
-			costLines.push(`    ${icon}${label} -${amt} (${b}→${a})`);
+			const beforeAmount = before.resources[key] ?? 0;
+			const afterAmount = beforeAmount - amount;
+			costDescriptors.push({
+				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
+				depth: 2,
+				kind: 'cost-detail',
+			});
 		}
-		if (costLines.length) {
-			messages.splice(1, 0, '  💲 Action cost', ...costLines);
-		}
-		const subLines: string[] = [];
-		for (const trace of traces) {
-			const subStep = ctx.actions.get(trace.id);
-			const subChanges = diffStepSnapshots(
-				trace.before,
-				trace.after,
-				subStep,
-				diffContext,
-				RESOURCE_KEYS,
+		if (costDescriptors.length) {
+			messages.splice(
+				1,
+				0,
+				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				...costDescriptors,
 			);
-			if (!subChanges.length) {
-				continue;
-			}
-			subLines.push(...subChanges);
-			const icon = ctx.actions.get(trace.id)?.icon || '';
-			const name = ctx.actions.get(trace.id).name;
-			const line = `  ${icon} ${name}`;
-			const idx = messages.indexOf(line);
-			if (idx !== -1) {
-				messages.splice(idx + 1, 0, ...subChanges.map((c) => `    ${c}`));
-			}
 		}
-		const normalize = (line: string) =>
-			(line.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
-		const subPrefixes = subLines.map(normalize);
-		const costLabels = new Set(Object.keys(costs) as SyntheticResourceKey[]);
-		const filtered = changes.filter((line) => {
-			if (subPrefixes.includes(normalize(line))) {
-				return false;
-			}
-			for (const key of costLabels) {
-				const info = SYNTHETIC_RESOURCES[key];
-				const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
-				if (line.startsWith(prefix)) {
-					return false;
-				}
-			}
-			return true;
+		const subLines = appendSubActionChanges({
+			traces,
+			context: ctx,
+			diffContext,
+			resourceKeys: RESOURCE_KEYS,
+			messages,
 		});
-		const logLines = [...messages, ...filtered.map((c) => `  ${c}`)];
+		const filtered = filterActionDiffChanges({
+			changes,
+			messages,
+			subLines,
+		});
+		const logLines = formatActionLogLines(messages, filtered);
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const populationIcon =
 			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon ||
 			SYNTHETIC_POPULATION_INFO.icon;
 		const marketIcon =
 			ctx.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
-		const b = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const a = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const delta = a - b;
-		const goldLine = logLines.find((l) =>
-			l.trimStart().startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const delta = afterCoins - beforeCoins;
+		const goldLine = logLines.find((line) =>
+			line
+				.replace(/^•\s|^\s*↳\s/u, '')
+				.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
 		expect(goldLine).toBe(
-			`  ${goldInfo.icon} ${goldInfo.label} ${
+			`• ${goldInfo.icon} ${goldInfo.label} ${
 				delta >= 0 ? '+' : ''
-			}${delta} (${b}→${a}) (${goldInfo.icon}${
+			}${delta} (${beforeCoins}→${afterCoins}) (${goldInfo.icon}${
 				delta >= 0 ? '+' : ''
 			}${delta} from ${populationIcon}${marketIcon})`,
 		);

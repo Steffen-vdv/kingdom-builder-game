@@ -171,8 +171,11 @@ describe('passive log labels', () => {
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
 
+		const rawLabel = logContent('development', 'watchtower', ctx)[0];
 		const label =
-			logContent('development', 'watchtower', ctx)[0] ?? 'Watchtower';
+			rawLabel && typeof rawLabel === 'object'
+				? rawLabel.text
+				: (rawLabel ?? 'Watchtower');
 		const expectedHeadline = `${LOG_KEYWORDS.developed} ${label}`;
 		expect(lines).toContain(expectedHeadline);
 		expect(
