@@ -64,6 +64,19 @@ function filterPlayerStartOverrides(
 	return Object.keys(filtered).length > 0 ? filtered : undefined;
 }
 
+function collectResourceOverrideKeys(
+	overrides: PlayerStartConfig | undefined,
+	target: Set<ResourceKey>,
+): void {
+	const resources = overrides?.resources;
+	if (!resources) {
+		return;
+	}
+	for (const key of Object.keys(resources)) {
+		target.add(key);
+	}
+}
+
 function applyDevModeStartOverrides(context: EngineContext): void {
 	const overrides = context.devModeStart;
 	if (!overrides) {
@@ -75,7 +88,9 @@ function applyDevModeStartOverrides(context: EngineContext): void {
 		if (!player) {
 			continue;
 		}
+		const resourceKeysToNotify = new Set<ResourceKey>();
 		if (baseOverrides) {
+			collectResourceOverrideKeys(baseOverrides, resourceKeysToNotify);
 			applyPlayerStartConfiguration(
 				player,
 				baseOverrides,
@@ -86,11 +101,15 @@ function applyDevModeStartOverrides(context: EngineContext): void {
 			playerOverrides[player.id],
 		);
 		if (specificOverrides) {
+			collectResourceOverrideKeys(specificOverrides, resourceKeysToNotify);
 			applyPlayerStartConfiguration(
 				player,
 				specificOverrides,
 				context.services.rules,
 			);
+		}
+		for (const resourceKey of resourceKeysToNotify) {
+			context.services.notifyResourceChange(context, player, resourceKey);
 		}
 	}
 }
