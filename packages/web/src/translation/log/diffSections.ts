@@ -1,4 +1,3 @@
-import { type EngineContext } from '@kingdom-builder/engine';
 import {
 	RESOURCES,
 	STATS,
@@ -51,10 +50,7 @@ function describeResourceChange(
 function describeStatBreakdown(
 	key: string,
 	change: SignedDelta,
-	player: {
-		population: Record<string, number>;
-		stats: Record<string, number>;
-	},
+	player: Pick<PlayerSnapshot, 'population' | 'stats'>,
 	step: StepEffects,
 ): string | undefined {
 	const breakdown = findStatPctBreakdown(step, key);
@@ -98,10 +94,9 @@ export function appendStatChanges(
 	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
-	context: EngineContext,
+	player: Pick<PlayerSnapshot, 'population' | 'stats'>,
 	step: StepEffects,
 ) {
-	const player = context.activePlayer;
 	for (const key of Object.keys(after.stats)) {
 		const change = buildSignedDelta(
 			before.stats[key] ?? 0,
