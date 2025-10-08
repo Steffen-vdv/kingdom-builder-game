@@ -19,11 +19,8 @@ import {
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_LAND_INFO,
 } from './fixtures/syntheticTaxLog';
-import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
+import { createDiffContextFromEngine } from './helpers/createDiffContext';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -72,7 +69,7 @@ describe('log resource sources', () => {
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createDiffContextFromEngine(ctx);
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -122,7 +119,7 @@ describe('log resource sources', () => {
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
 		performAction(SYNTHETIC_IDS.taxAction, ctx);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createDiffContextFromEngine(ctx);
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -178,7 +175,7 @@ describe('log resource sources', () => {
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createDiffContextFromEngine(ctx);
 		const lines = diffStepSnapshots(
 			before,
 			after,

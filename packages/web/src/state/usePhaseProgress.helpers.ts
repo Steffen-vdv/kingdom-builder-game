@@ -1,16 +1,30 @@
 import {
 	type EngineAdvanceResult,
 	type EngineSession,
+	type EngineSessionSnapshot,
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
-import { type ResourceKey, type StepDef } from '@kingdom-builder/contents';
 import {
+	ACTIONS,
+	BUILDINGS,
+	DEVELOPMENTS,
+	type ResourceKey,
+	type StepDef,
+} from '@kingdom-builder/contents';
+import {
+	createTranslationContext,
 	createTranslationDiffContext,
 	diffStepSnapshots,
 	snapshotPlayer,
 } from '../translation';
-import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
+import { describeSkipEvent } from '../utils/describeSkipEvent';
+
+const TRANSLATION_REGISTRIES = {
+	actions: ACTIONS,
+	buildings: BUILDINGS,
+	developments: DEVELOPMENTS,
+} as const;
 
 interface AdvanceToActionPhaseOptions {
 	session: EngineSession;
@@ -50,7 +64,12 @@ export async function advanceToActionPhase({
 	refresh,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
-	const context = session.getLegacyContext();
+	const buildTranslationContext = (state: EngineSessionSnapshot) =>
+		createTranslationContext(state, TRANSLATION_REGISTRIES, {
+			pullEffectLog: <T>(key: string) => session.pullEffectLog<T>(key),
+			evaluationMods: session.getPassiveEvaluationMods(),
+		});
+	let translation = buildTranslationContext(snapshot);
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
 		if (!mountedRef.current) {
 			return;
@@ -86,6 +105,12 @@ export async function advanceToActionPhase({
 		const stepDef = phaseDef.steps.find(
 			(stepDefinition) => stepDefinition.id === step,
 		);
+		const updatedSnapshot = session.getSnapshot();
+		translation = buildTranslationContext(updatedSnapshot);
+		const diffPlayers = updatedSnapshot.game.players.map((playerState) => ({
+			id: playerState.id,
+			passives: snapshotPlayer(playerState).passives,
+		}));
 		if (phase !== lastPhase) {
 			await runDelay(1500);
 			if (!mountedRef.current) {
@@ -111,7 +136,12 @@ export async function advanceToActionPhase({
 			const stepWithEffects: StepDef | undefined = stepDef
 				? ({ ...(stepDef as StepDef), effects } as StepDef)
 				: undefined;
-			const diffContext = createTranslationDiffContext(context);
+			const diffContext = createTranslationDiffContext(
+				translation,
+				player.id,
+				after,
+				diffPlayers,
+			);
 			const changes = diffStepSnapshots(
 				before,
 				after,
@@ -161,7 +191,7 @@ export async function advanceToActionPhase({
 			nextHistory[nextHistory.length - 1] = finalized;
 			return { ...prev, [phaseId]: nextHistory };
 		});
-		snapshot = session.getSnapshot();
+		snapshot = updatedSnapshot;
 	}
 	if (ranSteps) {
 		await runDelay(1500);

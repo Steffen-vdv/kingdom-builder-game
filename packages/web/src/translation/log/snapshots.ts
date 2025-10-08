@@ -6,6 +6,7 @@ import {
 	type PlayerSnapshot as EnginePlayerSnapshot,
 } from '@kingdom-builder/engine';
 import { type ResourceKey } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../context';
 import { type Land } from '../content';
 import {
 	appendResourceChanges,
@@ -102,11 +103,19 @@ export function collectResourceKeys(
 export function diffSnapshots(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
-	context: EngineContext,
+	translation: Pick<
+		TranslationContext,
+		'buildings' | 'developments' | 'passives'
+	>,
+	activePlayerId: PlayerId,
 	resourceKeys: ResourceKey[] = collectResourceKeys(
 		previousSnapshot,
 		nextSnapshot,
 	),
+	players: ReadonlyArray<{
+		id: PlayerId;
+		passives: PlayerSnapshot['passives'];
+	}> = [{ id: activePlayerId, passives: nextSnapshot.passives }],
 ): string[] {
 	const changeSummaries: string[] = [];
 	appendResourceChanges(
@@ -122,7 +131,12 @@ export function diffSnapshots(
 		nextSnapshot,
 		undefined,
 	);
-	const diffContext = createTranslationDiffContext(context);
+	const diffContext = createTranslationDiffContext(
+		translation,
+		activePlayerId,
+		nextSnapshot,
+		players,
+	);
 	appendBuildingChanges(
 		changeSummaries,
 		previousSnapshot,

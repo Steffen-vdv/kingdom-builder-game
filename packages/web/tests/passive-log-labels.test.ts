@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
-import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
+import { createDiffContextFromEngine } from './helpers/createDiffContext';
 import { logContent } from '../src/translation/content';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import {
@@ -48,7 +45,7 @@ describe('passive log labels', () => {
 		setHappiness(6);
 		const afterActivation = snapshotPlayer(ctx.activePlayer, ctx);
 
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createDiffContextFromEngine(ctx);
 		const activationLines = diffStepSnapshots(
 			beforeActivation,
 			afterActivation,
@@ -110,7 +107,7 @@ describe('passive log labels', () => {
 		);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
 
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createDiffContextFromEngine(ctx);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('Castle Walls activated'))).toBe(
 			false,
@@ -163,7 +160,7 @@ describe('passive log labels', () => {
 		);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
 
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createDiffContextFromEngine(ctx);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
 

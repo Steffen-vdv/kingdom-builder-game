@@ -3,8 +3,14 @@ import type {
 	EngineSession,
 	EngineSessionSnapshot,
 } from '@kingdom-builder/engine';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import {
+	ACTIONS,
+	BUILDINGS,
+	DEVELOPMENTS,
+	type ResourceKey,
+} from '@kingdom-builder/contents';
+import {
+	createTranslationContext,
 	createTranslationDiffContext,
 	diffStepSnapshots,
 	snapshotPlayer,
@@ -37,9 +43,22 @@ export function useCompensationLogger({
 		if (sessionState.game.turn !== 1) {
 			return;
 		}
-		const diffContext = createTranslationDiffContext(
-			session.getLegacyContext(),
+		const translation = createTranslationContext(
+			sessionState,
+			{
+				actions: ACTIONS,
+				buildings: BUILDINGS,
+				developments: DEVELOPMENTS,
+			},
+			{
+				pullEffectLog: <T>(key: string) => session.pullEffectLog<T>(key),
+				evaluationMods: session.getPassiveEvaluationMods(),
+			},
 		);
+		const diffPlayers = sessionState.game.players.map((playerState) => ({
+			id: playerState.id,
+			passives: snapshotPlayer(playerState).passives,
+		}));
 		sessionState.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {
 				return;
@@ -53,6 +72,12 @@ export function useCompensationLogger({
 				return;
 			}
 			const after: PlayerSnapshot = snapshotPlayer(player);
+			const diffContext = createTranslationDiffContext(
+				translation,
+				player.id,
+				after,
+				diffPlayers,
+			);
 			const before: PlayerSnapshot = {
 				...after,
 				resources: { ...after.resources },

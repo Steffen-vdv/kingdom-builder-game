@@ -22,8 +22,8 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
-	createTranslationDiffContext,
 } from '../src/translation';
+import { createDiffContextFromEngine } from './helpers/createDiffContext';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -64,7 +64,7 @@ describe('tax action logging with market', () => {
 		const costs = getActionCosts(SYNTHETIC_IDS.taxAction, ctx);
 		const traces: ActionTrace[] = performAction(SYNTHETIC_IDS.taxAction, ctx);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createDiffContextFromEngine(ctx);
 		const changes = diffStepSnapshots(
 			before,
 			after,

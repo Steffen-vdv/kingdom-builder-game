@@ -14,8 +14,8 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
-	createTranslationDiffContext,
 } from '../src/translation';
+import { createDiffContextFromEngine } from './helpers/createDiffContext';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -44,7 +44,7 @@ describe('sub-action logging', () => {
 		const costs = getActionCosts(synthetic.plow.id, ctx);
 		const traces = performAction(synthetic.plow.id, ctx);
 		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createDiffContextFromEngine(ctx);
 		const changes = diffStepSnapshots(
 			before,
 			after,

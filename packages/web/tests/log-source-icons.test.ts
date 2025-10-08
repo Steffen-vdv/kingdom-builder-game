@@ -13,11 +13,8 @@ import {
 	LAND_INFO,
 	POPULATION_INFO,
 } from '@kingdom-builder/contents';
-import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
+import { createDiffContextFromEngine } from './helpers/createDiffContext';
 
 const RESOURCE_KEYS = [Resource.gold] as const;
 
@@ -107,7 +104,7 @@ describe('log resource source icon registry', () => {
 			const before = snapshotPlayer(ctx.activePlayer, ctx);
 			runEffects([effect], ctx);
 			const after = snapshotPlayer(ctx.activePlayer, ctx);
-			const diffContext = createTranslationDiffContext(ctx);
+			const diffContext = createDiffContextFromEngine(ctx);
 			const lines = diffStepSnapshots(
 				before,
 				after,
