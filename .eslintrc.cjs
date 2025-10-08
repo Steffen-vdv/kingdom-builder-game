@@ -55,6 +55,7 @@ module.exports = {
 				skipComments: true,
 			},
 		],
+		'no-max-lines-override': 'error',
 		'id-length': [
 			'error',
 			{
@@ -110,7 +111,7 @@ module.exports = {
 	},
 	overrides: [
 		{
-			files: ['**/*.test.ts'],
+			files: ['**/*.test.ts', '**/*.test.tsx'],
 			rules: {
 				'max-lines': 'off',
 			},
