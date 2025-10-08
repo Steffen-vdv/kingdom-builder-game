@@ -86,7 +86,7 @@ describe('army attack translation log', () => {
 		const castleValue = `${castle.icon}${castleBefore}`;
 		const castleAfterValue = `${castle.icon}${castleAfter}`;
 		expect(log).toEqual([
-			`Played ${attack.icon} ${attack.name}`,
+			`${attack.icon} ${attack.name}`,
 			`  Damage evaluation: ${powerValue(armyStrength)} vs. ${absorptionValue(0)} ${fortValue(fortBefore)} ${castleValue}`,
 			`    ${powerValue(armyStrength)} vs. ${absorptionValue(0)} --> ${powerValue(remainingAfterAbsorption)}`,
 			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,
@@ -142,7 +142,7 @@ describe('army attack translation log', () => {
 		const fortValue = (value: number) =>
 			statToken(fortStat, 'Fortification', formatNumber(value));
 		expect(log).toEqual([
-			`Played ${buildingAttack.icon} ${buildingAttack.name}`,
+			`${buildingAttack.icon} ${buildingAttack.name}`,
 			`  Damage evaluation: ${powerValue(armyStrength)} vs. ${absorptionValue(0)} ${fortValue(fortBefore)} ${buildingDisplay}`,
 			`    ${powerValue(armyStrength)} vs. ${absorptionValue(0)} --> ${powerValue(remainingAfterAbsorption)}`,
 			`    ${powerValue(remainingAfterAbsorption)} vs. ${fortValue(fortBefore)} --> ${fortValue(0)} ${powerValue(remainingAfterFort)}`,

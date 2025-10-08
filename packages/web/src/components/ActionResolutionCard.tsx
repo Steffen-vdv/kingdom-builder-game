@@ -27,9 +27,9 @@ function ActionResolutionCard({
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
-		.replace(/^[\s✦•-]+/u, '')
-		.replace(/^\p{Extended_Pictographic}+\s*/u, '')
-		.replace(/\p{Extended_Pictographic}/gu, '')
+		.replace(/^[\s\p{Extended_Pictographic}\uFE0F\p{Pd}\p{Po}\p{So}]+/u, '')
+		.replace(/^Played\s+/u, '')
+		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
 	const rawActionName = (resolution.action?.name ?? '').trim();

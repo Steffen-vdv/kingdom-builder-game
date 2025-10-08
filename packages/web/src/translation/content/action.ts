@@ -62,9 +62,9 @@ class ActionTranslator
 		params?: Record<string, unknown>,
 	): string[] {
 		const def = ctx.actions.get(id);
-		const icon = def.icon || '';
-		const label = def.name;
-		let message = `Played ${icon} ${label}`;
+		const icon = def.icon?.trim();
+		const label = def.name.trim();
+		let message = icon ? `${icon} ${label}` : label;
 		const extra = getActionLogHook(def)?.(ctx, params);
 		if (extra) {
 			message += extra;

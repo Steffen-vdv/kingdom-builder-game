@@ -5,9 +5,12 @@ function deriveResolutionActionName(
 	fallback: string,
 	icon?: string,
 ): string {
-	const normalizedHeadline = headline?.replace(/^Played\s+/u, '').trim() ?? '';
+	let normalizedHeadline = headline?.trim() ?? '';
 	if (!normalizedHeadline) {
 		return fallback;
+	}
+	if (normalizedHeadline.startsWith('Played ')) {
+		normalizedHeadline = normalizedHeadline.slice(7).trim();
 	}
 	const trimmedIcon = icon?.trim();
 	if (trimmedIcon) {
