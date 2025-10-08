@@ -11,6 +11,7 @@ import {
 } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
+import { getLegacySessionContext } from './getLegacySessionContext';
 
 interface AdvanceToActionPhaseOptions {
 	session: EngineSession;
@@ -50,7 +51,7 @@ export async function advanceToActionPhase({
 	refresh,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
-	const context = session.getLegacyContext();
+	const context = getLegacySessionContext(session);
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
 		if (!mountedRef.current) {
 			return;

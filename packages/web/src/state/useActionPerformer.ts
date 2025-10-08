@@ -23,6 +23,7 @@ import {
 	formatDevelopActionLogLines,
 } from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import { getLegacySessionContext } from './getLegacySessionContext';
 
 interface UseActionPerformerOptions {
 	session: EngineSession;
@@ -56,7 +57,7 @@ export function useActionPerformer({
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
-			const context = session.getLegacyContext();
+			const context = getLegacySessionContext(session);
 			const snapshotBefore = session.getSnapshot();
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
