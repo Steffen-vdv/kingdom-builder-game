@@ -15,9 +15,11 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 ## 1) Setup
 
 1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
-2. Install dependencies: `npm install` (uses npm workspaces to link local packages)
-3. Navigate to `/packages/web/` and start the development server: `npm run dev`
-4. Build for production: `npm run build`
+2. Install dependencies: `npm install` (uses npm workspaces to link local packages).
+3. Start the web client from the repository root: `npm run dev`.
+4. Start the Node server (Node.js 18+): `npm run server:dev`.
+5. Build the web client for production: `npm run build`.
+6. Build the server bundle: `npm run server:build`.
 
 ## 2) Game Overview
 
@@ -28,6 +30,8 @@ Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, man
 The repository consists of three isolated domains: Web, Content and Engine. Each is represented as a directory inside `/packages`
 
 - Engine: The _technical_ heart of the game. Engine is responsible for driving the core game loop, execute actions, maintaining game state and evaluating effects. It can be considered 'the backend'.
+- Server: The orchestration layer for running a Node-based backend
+  that builds on top of the Engine and Content packages.
 - Web: The _visual_ heart of the game. This domain is responsible for housing the game's frontend. It talks to Engine domain to receive game state updates and inform Engine of player-driven actions.
 - Content: The _practical_ heart of the game. This domain houses all of the game's configurations. The domain is configured in a way that allows extremely broad and deep updates to the game's configuration. The intent is for this domain to eventually become separated into it's own service and either passed to a content curation team or even allow players themselves to build gamemodes by giving them access, through some interface, to manipulate/override parts of 'Contents' domain at runtime.
 

@@ -27,7 +27,9 @@
 		"format": "prettier . --write",
 		"prepare": "husky install",
 		"lint:deps": "dependency-cruiser packages/engine packages/contents packages/web --config scripts/dependency-cruiser.cjs --output-type text",
-		"verify": "node scripts/run-verification.mjs"
+		"verify": "node scripts/run-verification.mjs",
+		"server:dev": "npm run dev --workspace @kingdom-builder/server",
+		"server:build": "npm run build --workspace @kingdom-builder/server"
 	},
 	"dependencies": {
 		"react": "^18.3.1",
