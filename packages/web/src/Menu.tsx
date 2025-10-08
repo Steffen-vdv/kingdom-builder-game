@@ -20,6 +20,8 @@ interface MenuProps {
 	onToggleMusic: () => void;
 	soundEnabled: boolean;
 	onToggleSound: () => void;
+	backgroundAudioMuted: boolean;
+	onToggleBackgroundAudioMute: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	hasStoredName: boolean;
@@ -36,6 +38,8 @@ export default function Menu({
 	onToggleMusic,
 	soundEnabled,
 	onToggleSound,
+	backgroundAudioMuted,
+	onToggleBackgroundAudioMute,
 	playerName,
 	onChangePlayerName,
 	hasStoredName,
@@ -70,6 +74,8 @@ export default function Menu({
 				onToggleMusic={onToggleMusic}
 				soundEnabled={soundEnabled}
 				onToggleSound={onToggleSound}
+				backgroundAudioMuted={backgroundAudioMuted}
+				onToggleBackgroundAudioMute={onToggleBackgroundAudioMute}
 				playerName={playerName}
 				onChangePlayerName={onChangePlayerName}
 			/>

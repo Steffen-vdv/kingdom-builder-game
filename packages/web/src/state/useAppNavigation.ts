@@ -10,6 +10,7 @@ import {
 	useAudioPreferences,
 } from './audioPreferences';
 import type { AppNavigationState } from './appNavigationState';
+import { useAudioPreferenceToggles } from './useAudioPreferenceToggles';
 
 export function useAppNavigation(): AppNavigationState {
 	const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Menu);
@@ -21,6 +22,8 @@ export function useAppNavigation(): AppNavigationState {
 		setIsMusicEnabled,
 		isSoundEnabled,
 		setIsSoundEnabled,
+		isBackgroundAudioMuted,
+		setIsBackgroundAudioMuted,
 	} = useAudioPreferences();
 	const buildHistoryState = useCallback(
 		(overrides?: Partial<HistoryState>): HistoryState => {
@@ -31,11 +34,14 @@ export function useAppNavigation(): AppNavigationState {
 				isDevModeEnabled: overrideDev,
 				isMusicEnabled: overrideMusic,
 				isSoundEnabled: overrideSound,
+				isBackgroundAudioMuted: overrideBackgroundMute,
 			} = overrides ?? {};
 			const nextDarkMode = overrideDark ?? isDarkMode;
 			const nextDevMode = overrideDev ?? isDevMode;
 			const nextMusic = overrideMusic ?? isMusicEnabled;
 			const nextSound = overrideSound ?? isSoundEnabled;
+			const nextBackgroundMute =
+				overrideBackgroundMute ?? isBackgroundAudioMuted;
 
 			return {
 				screen: nextScreen,
@@ -44,6 +50,7 @@ export function useAppNavigation(): AppNavigationState {
 				isDevModeEnabled: nextDevMode,
 				isMusicEnabled: nextMusic,
 				isSoundEnabled: nextSound,
+				isBackgroundAudioMuted: nextBackgroundMute,
 			};
 		},
 		[
@@ -53,11 +60,12 @@ export function useAppNavigation(): AppNavigationState {
 			isDevMode,
 			isMusicEnabled,
 			isSoundEnabled,
+			isBackgroundAudioMuted,
 		],
 	);
 	const applyHistoryState = useCallback(
 		(state: HistoryState | null, fallbackScreen: Screen): HistoryState => {
-			const { music, sound } = getStoredAudioPreferences();
+			const { music, sound, backgroundMute } = getStoredAudioPreferences();
 			const nextState: HistoryState = {
 				screen: state?.screen ?? fallbackScreen,
 				gameKey: state?.gameKey ?? 0,
@@ -65,6 +73,7 @@ export function useAppNavigation(): AppNavigationState {
 				isDevModeEnabled: state?.isDevModeEnabled ?? false,
 				isMusicEnabled: state?.isMusicEnabled ?? music,
 				isSoundEnabled: state?.isSoundEnabled ?? sound,
+				isBackgroundAudioMuted: state?.isBackgroundAudioMuted ?? backgroundMute,
 			};
 
 			setCurrentScreen(nextState.screen);
@@ -73,6 +82,7 @@ export function useAppNavigation(): AppNavigationState {
 			setIsDevMode(nextState.isDevModeEnabled);
 			setIsMusicEnabled(nextState.isMusicEnabled);
 			setIsSoundEnabled(nextState.isSoundEnabled);
+			setIsBackgroundAudioMuted(nextState.isBackgroundAudioMuted);
 
 			return nextState;
 		},
@@ -83,6 +93,7 @@ export function useAppNavigation(): AppNavigationState {
 			setIsDevMode,
 			setIsMusicEnabled,
 			setIsSoundEnabled,
+			setIsBackgroundAudioMuted,
 		],
 	);
 	const pushHistoryState = useCallback(
@@ -201,29 +212,12 @@ export function useAppNavigation(): AppNavigationState {
 		pushHistoryState(tutorialState, SCREEN_PATHS[Screen.Tutorial]);
 	}, [buildHistoryState, pushHistoryState]);
 
-	const toggleMusic = useCallback(() => {
-		setIsMusicEnabled((previousValue) => {
-			const nextValue = !previousValue;
-			replaceHistoryState(
-				buildHistoryState({
-					isMusicEnabled: nextValue,
-				}),
-			);
-			return nextValue;
+	const { toggleMusic, toggleSound, toggleBackgroundAudioMute } =
+		useAudioPreferenceToggles(buildHistoryState, replaceHistoryState, {
+			setIsMusicEnabled,
+			setIsSoundEnabled,
+			setIsBackgroundAudioMuted,
 		});
-	}, [buildHistoryState, replaceHistoryState, setIsMusicEnabled]);
-
-	const toggleSound = useCallback(() => {
-		setIsSoundEnabled((previousValue) => {
-			const nextValue = !previousValue;
-			replaceHistoryState(
-				buildHistoryState({
-					isSoundEnabled: nextValue,
-				}),
-			);
-			return nextValue;
-		});
-	}, [buildHistoryState, replaceHistoryState, setIsSoundEnabled]);
 
 	return {
 		currentScreen,
@@ -232,6 +226,7 @@ export function useAppNavigation(): AppNavigationState {
 		isDevMode,
 		isMusicEnabled,
 		isSoundEnabled,
+		isBackgroundAudioMuted,
 		startStandardGame,
 		startDeveloperGame,
 		openOverview,
@@ -240,5 +235,6 @@ export function useAppNavigation(): AppNavigationState {
 		toggleDarkMode,
 		toggleMusic,
 		toggleSound,
+		toggleBackgroundAudioMute,
 	};
 }

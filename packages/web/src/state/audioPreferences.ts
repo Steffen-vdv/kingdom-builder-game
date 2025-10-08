@@ -4,6 +4,8 @@ export const MUSIC_PREFERENCE_STORAGE_KEY =
 	'kingdom-builder.preferences.musicEnabled';
 export const SOUND_PREFERENCE_STORAGE_KEY =
 	'kingdom-builder.preferences.soundEnabled';
+export const BACKGROUND_AUDIO_MUTE_STORAGE_KEY =
+	'kingdom-builder.preferences.backgroundAudioMuted';
 
 type PreferenceUpdater = boolean | ((previousValue: boolean) => boolean);
 
@@ -67,10 +69,15 @@ function useStoredBooleanPreference(
 export function getStoredAudioPreferences(): {
 	music: boolean;
 	sound: boolean;
+	backgroundMute: boolean;
 } {
 	return {
 		music: readBooleanPreference(MUSIC_PREFERENCE_STORAGE_KEY, true),
 		sound: readBooleanPreference(SOUND_PREFERENCE_STORAGE_KEY, true),
+		backgroundMute: readBooleanPreference(
+			BACKGROUND_AUDIO_MUTE_STORAGE_KEY,
+			true,
+		),
 	};
 }
 
@@ -83,11 +90,15 @@ export function useAudioPreferences() {
 		SOUND_PREFERENCE_STORAGE_KEY,
 		true,
 	);
+	const [isBackgroundAudioMuted, setIsBackgroundAudioMuted] =
+		useStoredBooleanPreference(BACKGROUND_AUDIO_MUTE_STORAGE_KEY, true);
 
 	return {
 		isMusicEnabled,
 		setIsMusicEnabled,
 		isSoundEnabled,
 		setIsSoundEnabled,
+		isBackgroundAudioMuted,
+		setIsBackgroundAudioMuted,
 	} as const;
 }

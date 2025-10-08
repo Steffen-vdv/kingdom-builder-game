@@ -15,6 +15,7 @@ export default function App() {
 		isDevMode,
 		isMusicEnabled,
 		isSoundEnabled,
+		isBackgroundAudioMuted,
 		startStandardGame,
 		startDeveloperGame,
 		openOverview,
@@ -23,6 +24,7 @@ export default function App() {
 		toggleDarkMode,
 		toggleMusic,
 		toggleSound,
+		toggleBackgroundAudioMute,
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
 
@@ -46,6 +48,8 @@ export default function App() {
 					onToggleMusic={toggleMusic}
 					soundEnabled={isSoundEnabled}
 					onToggleSound={toggleSound}
+					backgroundAudioMuted={isBackgroundAudioMuted}
+					onToggleBackgroundAudioMute={toggleBackgroundAudioMute}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 				/>
@@ -65,6 +69,8 @@ export default function App() {
 					onToggleMusic={toggleMusic}
 					soundEnabled={isSoundEnabled}
 					onToggleSound={toggleSound}
+					backgroundAudioMuted={isBackgroundAudioMuted}
+					onToggleBackgroundAudioMute={toggleBackgroundAudioMute}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 					hasStoredName={hasStoredName}
@@ -75,7 +81,10 @@ export default function App() {
 
 	return (
 		<>
-			<BackgroundMusic enabled={isMusicEnabled} />
+			<BackgroundMusic
+				enabled={isMusicEnabled}
+				muteWhenBackground={isBackgroundAudioMuted}
+			/>
 			{screen}
 		</>
 	);

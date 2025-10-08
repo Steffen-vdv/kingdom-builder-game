@@ -30,4 +30,5 @@ export interface HistoryState {
 	isDevModeEnabled: boolean;
 	isMusicEnabled: boolean;
 	isSoundEnabled: boolean;
+	isBackgroundAudioMuted: boolean;
 }
