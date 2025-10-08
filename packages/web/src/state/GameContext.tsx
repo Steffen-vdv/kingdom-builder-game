@@ -56,6 +56,8 @@ export function GameProvider({
 	onToggleMusic = () => {},
 	soundEnabled = true,
 	onToggleSound = () => {},
+	backgroundAudioMuted = true,
+	onToggleBackgroundAudioMute = () => {},
 	playerName = DEFAULT_PLAYER_NAME,
 	onChangePlayerName = () => {},
 }: {
@@ -68,6 +70,8 @@ export function GameProvider({
 	onToggleMusic?: () => void;
 	soundEnabled?: boolean;
 	onToggleSound?: () => void;
+	backgroundAudioMuted?: boolean;
+	onToggleBackgroundAudioMute?: () => void;
 	playerName?: string;
 	onChangePlayerName?: (name: string) => void;
 }) {
@@ -282,6 +286,8 @@ export function GameProvider({
 		onToggleMusic,
 		soundEnabled,
 		onToggleSound,
+		backgroundAudioMuted,
+		onToggleBackgroundAudioMute,
 		timeScale,
 		setTimeScale,
 		toasts,
@@ -308,3 +314,6 @@ export const useGameEngine = (): GameEngineContextValue => {
 	}
 	return value;
 };
+
+export const useOptionalGameEngine = (): GameEngineContextValue | null =>
+	useContext(GameEngineContext);

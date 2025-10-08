@@ -1,20 +1,53 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const MUSIC_SOURCE = '/audio/peaceful-theme.mp3';
 const BASE_VOLUME = 0.25;
 
 type Cleanup = () => void;
 
-export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
+export default function BackgroundMusic({
+	enabled,
+	muteWhenBackground,
+}: {
+	enabled: boolean;
+	muteWhenBackground: boolean;
+}) {
 	const audioRef = useRef<HTMLAudioElement | null>(null);
 	const resumeCleanupRef = useRef<Cleanup | null>(null);
 	const fadeFrameRef = useRef<number | null>(null);
 	const playbackRequestRef = useRef(0);
-	const enabledRef = useRef(enabled);
+	const [isForeground, setIsForeground] = useState(() => {
+		if (typeof document === 'undefined') {
+			return true;
+		}
+		return !document.hidden;
+	});
+	const shouldPlay = enabled && (!muteWhenBackground || isForeground);
+	const enabledRef = useRef(shouldPlay);
 
 	useEffect(() => {
-		enabledRef.current = enabled;
-	}, [enabled]);
+		enabledRef.current = shouldPlay;
+	}, [shouldPlay]);
+
+	useEffect(() => {
+		if (!muteWhenBackground) {
+			setIsForeground(true);
+			return;
+		}
+		if (typeof document === 'undefined') {
+			return;
+		}
+
+		const updateVisibility = () => {
+			setIsForeground(!document.hidden);
+		};
+
+		updateVisibility();
+		document.addEventListener('visibilitychange', updateVisibility);
+		return () => {
+			document.removeEventListener('visibilitychange', updateVisibility);
+		};
+	}, [muteWhenBackground]);
 
 	useEffect(() => {
 		return () => {
@@ -169,7 +202,7 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 			}
 		};
 
-		if (enabled) {
+		if (shouldPlay) {
 			void startPlayback();
 		} else {
 			stopPlayback();
@@ -178,7 +211,7 @@ export default function BackgroundMusic({ enabled }: { enabled: boolean }) {
 		return () => {
 			clearPendingFade();
 		};
-	}, [enabled]);
+	}, [shouldPlay]);
 
 	return null;
 }

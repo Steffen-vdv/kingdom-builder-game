@@ -9,10 +9,11 @@ import {
 import { type PlayerStartConfig } from '@kingdom-builder/protocol';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
-import type * as TranslationModule from '../../src/translation';
+import * as TranslationModule from '../../src/translation';
+import type * as TranslationTypes from '../../src/translation';
 
 vi.mock('../../src/translation', async () => {
-	const actual = await vi.importActual<TranslationModule>(
+	const actual = await vi.importActual<TranslationTypes>(
 		'../../src/translation',
 	);
 	return {
@@ -21,10 +22,16 @@ vi.mock('../../src/translation', async () => {
 	};
 });
 
+const diffStepSnapshotsMock = vi.mocked(TranslationModule.diffStepSnapshots);
+
 const RESOURCE_KEYS: ResourceKey[] = ['gold' as ResourceKey];
 
 function createSession(): EngineSession {
 	return {
+		hasAiController: () => false,
+		getActionDefinition: () => undefined,
+		runAiTurn: vi.fn().mockResolvedValue(false),
+		advancePhase: vi.fn(),
 		getLegacyContext() {
 			return {
 				activePlayer: {
@@ -123,6 +130,7 @@ function Harness({ session, state, addLog }: HarnessProps) {
 
 describe('useCompensationLogger', () => {
 	it('logs compensation once for a session', () => {
+		diffStepSnapshotsMock.mockClear();
 		const addLog = vi.fn();
 		const session = createSession();
 		const state = createSessionState(1);
@@ -130,12 +138,17 @@ describe('useCompensationLogger', () => {
 			<Harness session={session} state={state} addLog={addLog} />,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
+		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
+		const diffContext = diffStepSnapshotsMock.mock.calls[0]?.[3];
+		expect(diffContext?.activePlayer.id).toBe('B');
 		const nextState = createSessionState(1);
 		rerender(<Harness session={session} state={nextState} addLog={addLog} />);
 		expect(addLog).toHaveBeenCalledTimes(1);
+		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 	});
 
 	it('logs again when a new session starts', () => {
+		diffStepSnapshotsMock.mockClear();
 		const addLog = vi.fn();
 		const session = createSession();
 		const state = createSessionState(1);
@@ -143,9 +156,15 @@ describe('useCompensationLogger', () => {
 			<Harness session={session} state={state} addLog={addLog} />,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
+		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 		const newSession = createSession();
 		const newState = createSessionState(1);
 		rerender(<Harness session={newSession} state={newState} addLog={addLog} />);
 		expect(addLog).toHaveBeenCalledTimes(2);
+		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(2);
+		const firstContext = diffStepSnapshotsMock.mock.calls[0]?.[3];
+		const secondContext = diffStepSnapshotsMock.mock.calls[1]?.[3];
+		expect(firstContext?.activePlayer.id).toBe('B');
+		expect(secondContext?.activePlayer.id).toBe('B');
 	});
 });

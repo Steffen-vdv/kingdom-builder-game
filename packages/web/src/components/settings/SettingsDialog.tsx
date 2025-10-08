@@ -44,6 +44,8 @@ interface SettingsDialogProps {
 	onToggleMusic: () => void;
 	soundEnabled: boolean;
 	onToggleSound: () => void;
+	backgroundAudioMuted: boolean;
+	onToggleBackgroundAudioMute: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 }
@@ -89,6 +91,8 @@ export default function SettingsDialog({
 	onToggleMusic,
 	soundEnabled,
 	onToggleSound,
+	backgroundAudioMuted,
+	onToggleBackgroundAudioMute,
 	playerName,
 	onChangePlayerName,
 }: SettingsDialogProps) {
@@ -146,9 +150,16 @@ export default function SettingsDialog({
 					<SettingRow
 						id="settings-sound"
 						title="Game sounds"
-						description={'Toggle sound effects. (Coming soon)'}
+						description="Toggle sound effects."
 						checked={soundEnabled}
 						onToggle={onToggleSound}
+					/>
+					<SettingRow
+						id="settings-background-mute"
+						title="Mute in background"
+						description="Pause audio when you switch tabs or windows."
+						checked={backgroundAudioMuted}
+						onToggle={onToggleBackgroundAudioMute}
 					/>
 					<SettingRow
 						id="settings-theme"

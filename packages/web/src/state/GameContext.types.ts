@@ -53,6 +53,8 @@ export interface GameEngineContextValue {
 	onToggleMusic: () => void;
 	soundEnabled: boolean;
 	onToggleSound: () => void;
+	backgroundAudioMuted: boolean;
+	onToggleBackgroundAudioMute: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
 	toasts: Toast[];

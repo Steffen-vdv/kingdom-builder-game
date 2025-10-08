@@ -9,6 +9,7 @@ import {
 	diffStepSnapshots,
 	snapshotPlayer,
 	type PlayerSnapshot,
+	type TranslationDiffContext,
 } from '../translation';
 
 interface UseCompensationLoggerOptions {
@@ -37,7 +38,7 @@ export function useCompensationLogger({
 		if (sessionState.game.turn !== 1) {
 			return;
 		}
-		const diffContext = createTranslationDiffContext(
+		const baseDiffContext = createTranslationDiffContext(
 			session.getLegacyContext(),
 		);
 		sessionState.game.players.forEach((player) => {
@@ -76,6 +77,13 @@ export function useCompensationLogger({
 			)) {
 				before.stats[statKey] = (before.stats[statKey] || 0) - (statDelta ?? 0);
 			}
+			const diffContext: TranslationDiffContext = {
+				...baseDiffContext,
+				activePlayer: {
+					...baseDiffContext.activePlayer,
+					id: player.id,
+				},
+			};
 			const lines = diffStepSnapshots(
 				before,
 				after,
