@@ -2,7 +2,7 @@ import {
 	resolveActionEffects,
 	type ActionTrace,
 } from '@kingdom-builder/engine';
-import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
+import { type ResourceKey } from '@kingdom-builder/contents';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { TranslationDiffContext } from '../translation';
@@ -54,7 +54,6 @@ interface FilterActionDiffChangesOptions {
 	changes: string[];
 	messages: string[];
 	subLines: string[];
-	costs: Record<string, number | undefined>;
 }
 
 function normalizeLine(line: string): string {
@@ -62,14 +61,13 @@ function normalizeLine(line: string): string {
 	if (!trimmed) {
 		return '';
 	}
-	return (trimmed.split(' (')[0] ?? '').replace(/\s[+-]?\d+$/, '').trim();
+	return trimmed.replace(/\s*\([^)]*\)\s*$/, '');
 }
 
 export function filterActionDiffChanges({
 	changes,
 	messages,
 	subLines,
-	costs,
 }: FilterActionDiffChangesOptions): string[] {
 	const subPrefixes = subLines.map(normalizeLine);
 	const messagePrefixes = new Set<string>();
@@ -79,7 +77,6 @@ export function filterActionDiffChanges({
 			messagePrefixes.add(normalized);
 		}
 	}
-	const costLabels = new Set(Object.keys(costs) as (keyof typeof RESOURCES)[]);
 	return changes.filter((line) => {
 		const normalizedLine = normalizeLine(line);
 		if (messagePrefixes.has(normalizedLine)) {
@@ -87,13 +84,6 @@ export function filterActionDiffChanges({
 		}
 		if (subPrefixes.includes(normalizedLine)) {
 			return false;
-		}
-		for (const key of costLabels) {
-			const info = RESOURCES[key];
-			const prefix = info?.icon ? `${info.icon} ${info.label}` : info.label;
-			if (prefix && line.startsWith(prefix)) {
-				return false;
-			}
 		}
 		return true;
 	});
