@@ -183,11 +183,11 @@ export class SessionTransport {
 		session: EngineSession,
 		names: Record<string, string>,
 	): void {
-		const context = session.getLegacyContext();
-		for (const player of context.game.players) {
+		const snapshot = session.getSnapshot();
+		for (const player of snapshot.game.players) {
 			const name = names[player.id];
 			if (name) {
-				player.name = name;
+				session.updatePlayerName(player.id, name);
 			}
 		}
 	}
