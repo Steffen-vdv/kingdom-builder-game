@@ -3,6 +3,7 @@ import type {
 	AdvanceSkipSnapshot,
 	AdvanceSkipSourceSnapshot,
 	ActionDefinitionSummary,
+	EngineSession,
 	EngineAdvanceResult,
 	EngineSessionGetActionCosts,
 	EngineSessionGetActionRequirements,
@@ -75,5 +76,20 @@ describe('protocol session contracts', () => {
                         ActionDefinitionSummary,
                         SessionActionDefinitionSummary
                 >();
+	});
+
+	it('uses protocol return types on session methods', () => {
+		expectMatchBoth<
+			ReturnType<EngineSession['getSnapshot']>,
+			SessionSnapshot
+		>();
+		expectMatchBoth<
+			ReturnType<EngineSession['advancePhase']>,
+			SessionAdvanceResult
+		>();
+		expectMatchBoth<
+			ReturnType<EngineSession['getRuleSnapshot']>,
+			SessionRuleSnapshot
+		>();
 	});
 });

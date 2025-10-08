@@ -11,24 +11,27 @@ import type {
 	AdvanceSkipSource,
 } from '../phases/advance';
 import type { PhaseDef, StepDef } from '../phases';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import type { PlayerId } from '../state';
 import type {
-	AdvanceSkipSnapshot,
-	AdvanceSkipSourceSnapshot,
-	EngineAdvanceResult,
-	EngineSessionSnapshot,
-	PassiveRecordSnapshot,
-	RuleSnapshot,
-} from './types';
+	PlayerStartConfig,
+	SessionAdvanceResult,
+	SessionAdvanceSkipSnapshot,
+	SessionAdvanceSkipSourceSnapshot,
+	SessionPassiveRecordSnapshot,
+	SessionPhaseDefinition,
+	SessionPhaseStepDefinition,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol';
+import type { PassiveRecordSnapshot } from './types';
 import {
 	cloneActionTraces,
 	deepClone,
 	snapshotPlayer,
 } from './player_snapshot';
 
-function clonePhaseStep(step: StepDef): StepDef {
-	const cloned: StepDef = { id: step.id };
+function clonePhaseStep(step: StepDef): SessionPhaseStepDefinition {
+	const cloned: SessionPhaseStepDefinition = { id: step.id };
 	if (step.title !== undefined) {
 		cloned.title = step.title;
 	}
@@ -42,9 +45,9 @@ function clonePhaseStep(step: StepDef): StepDef {
 	return cloned;
 }
 
-function clonePhases(phases: PhaseDef[]): PhaseDef[] {
+function clonePhases(phases: PhaseDef[]): SessionPhaseDefinition[] {
 	return phases.map((phase) => {
-		const cloned: PhaseDef = {
+		const cloned: SessionPhaseDefinition = {
 			id: phase.id,
 			steps: phase.steps.map((step) => clonePhaseStep(step)),
 		};
@@ -72,8 +75,10 @@ function cloneCompensations(
 	) as Record<PlayerId, PlayerStartConfig>;
 }
 
-function cloneSkipSource(source: AdvanceSkipSource): AdvanceSkipSourceSnapshot {
-	const cloned: AdvanceSkipSourceSnapshot = { id: source.id };
+function cloneSkipSource(
+	source: AdvanceSkipSource,
+): SessionAdvanceSkipSourceSnapshot {
+	const cloned: SessionAdvanceSkipSourceSnapshot = { id: source.id };
 	if (source.detail !== undefined) {
 		cloned.detail = source.detail;
 	}
@@ -86,11 +91,11 @@ function cloneSkipSource(source: AdvanceSkipSource): AdvanceSkipSourceSnapshot {
 
 function cloneSkip(
 	skip: AdvanceSkip | undefined,
-): AdvanceSkipSnapshot | undefined {
+): SessionAdvanceSkipSnapshot | undefined {
 	if (!skip) {
 		return undefined;
 	}
-	const cloned: AdvanceSkipSnapshot = {
+	const cloned: SessionAdvanceSkipSnapshot = {
 		type: skip.type,
 		phaseId: skip.phaseId,
 		sources: skip.sources.map((source) => cloneSkipSource(source)),
@@ -101,7 +106,7 @@ function cloneSkip(
 	return cloned;
 }
 
-export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
+export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const conclusion = context.game.conclusion;
 	const rules = cloneRuleSnapshot(context);
 	return {
@@ -141,7 +146,7 @@ export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 	};
 }
 
-function cloneRuleSnapshot(context: EngineContext): RuleSnapshot {
+function cloneRuleSnapshot(context: EngineContext): SessionRuleSnapshot {
 	const {
 		tieredResourceKey,
 		tierDefinitions,
@@ -151,15 +156,15 @@ function cloneRuleSnapshot(context: EngineContext): RuleSnapshot {
 		tieredResourceKey,
 		tierDefinitions: structuredClone(tierDefinitions),
 		winConditions: structuredClone(winConditions),
-	} satisfies RuleSnapshot;
+	} satisfies SessionRuleSnapshot;
 }
 
 function clonePassiveRecords(
 	context: EngineContext,
-): Record<PlayerId, PassiveRecordSnapshot[]> {
-	const result: Record<PlayerId, PassiveRecordSnapshot[]> = {} as Record<
+): Record<PlayerId, SessionPassiveRecordSnapshot[]> {
+	const result: Record<PlayerId, SessionPassiveRecordSnapshot[]> = {} as Record<
 		PlayerId,
-		PassiveRecordSnapshot[]
+		SessionPassiveRecordSnapshot[]
 	>;
 	for (const player of context.game.players) {
 		const records = context.passives.values(player.id).map((record) => {
@@ -174,7 +179,7 @@ function clonePassiveRecords(
 export function snapshotAdvance(
 	context: EngineContext,
 	result: AdvanceResult,
-): EngineAdvanceResult {
+): SessionAdvanceResult {
 	const skipped = cloneSkip(result.skipped);
 	return {
 		phase: result.phase,

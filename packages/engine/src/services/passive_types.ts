@@ -15,10 +15,10 @@ export type PhaseSkipConfig = {
 
 export interface PassiveSummary {
 	id: string;
-	name?: string | undefined;
-	icon?: string | undefined;
-	detail?: string | undefined;
-	meta?: PassiveMetadata | undefined;
+	name?: string;
+	icon?: string;
+	detail?: string;
+	meta?: PassiveMetadata;
 }
 
 export type PassiveSourceMetadata = {
