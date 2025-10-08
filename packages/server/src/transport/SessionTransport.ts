@@ -14,15 +14,26 @@ import type {
 	SessionSetDevModeResponse,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol';
-import type { EngineSession } from '@kingdom-builder/engine';
+import type { EngineSession, PlayerId } from '@kingdom-builder/engine';
 import type {
 	SessionManager,
 	CreateSessionOptions,
 } from '../session/SessionManager.js';
+import type { AuthContext, AuthRole } from '../auth/AuthContext.js';
+import { AuthError } from '../auth/AuthError.js';
+import type {
+	AuthenticatedRequest,
+	AuthMiddleware,
+} from '../auth/tokenAuthMiddleware.js';
 
 type TransportIdFactory = () => string;
 
-export type TransportErrorCode = 'INVALID_REQUEST' | 'NOT_FOUND' | 'CONFLICT';
+export type TransportErrorCode =
+	| 'INVALID_REQUEST'
+	| 'NOT_FOUND'
+	| 'CONFLICT'
+	| 'UNAUTHORIZED'
+	| 'FORBIDDEN';
 
 export class TransportError extends Error {
 	public readonly code: TransportErrorCode;
@@ -46,6 +57,7 @@ export class TransportError extends Error {
 export interface SessionTransportOptions {
 	sessionManager: SessionManager;
 	idFactory?: TransportIdFactory;
+	authMiddleware?: AuthMiddleware;
 }
 
 export class SessionTransport {
@@ -53,13 +65,17 @@ export class SessionTransport {
 
 	private readonly idFactory: TransportIdFactory;
 
+	private readonly authMiddleware: AuthMiddleware | undefined;
+
 	public constructor(options: SessionTransportOptions) {
 		this.sessionManager = options.sessionManager;
 		this.idFactory = options.idFactory ?? randomUUID;
+		this.authMiddleware = options.authMiddleware;
 	}
 
-	public createSession(request: unknown): SessionCreateResponse {
-		const parsed = sessionCreateRequestSchema.safeParse(request);
+	public createSession(request: TransportRequest): SessionCreateResponse {
+		this.requireAuthorization(request, 'session:create');
+		const parsed = sessionCreateRequestSchema.safeParse(request.body);
 		if (!parsed.success) {
 			throw new TransportError(
 				'INVALID_REQUEST',
@@ -92,16 +108,16 @@ export class SessionTransport {
 		return sessionCreateResponseSchema.parse(response);
 	}
 
-	public getSessionState(request: unknown): SessionStateResponse {
-		const sessionId = this.parseSessionIdentifier(request);
+	public getSessionState(request: TransportRequest): SessionStateResponse {
+		const sessionId = this.parseSessionIdentifier(request.body);
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
 		const response = { sessionId, snapshot } satisfies SessionStateResponse;
 		return sessionCreateResponseSchema.parse(response);
 	}
 
-	public advanceSession(request: unknown): SessionAdvanceResponse {
-		const parsed = sessionAdvanceRequestSchema.safeParse(request);
+	public advanceSession(request: TransportRequest): SessionAdvanceResponse {
+		const parsed = sessionAdvanceRequestSchema.safeParse(request.body);
 		if (!parsed.success) {
 			throw new TransportError(
 				'INVALID_REQUEST',
@@ -110,6 +126,7 @@ export class SessionTransport {
 			);
 		}
 		const { sessionId } = parsed.data;
+		this.requireAuthorization(request, 'session:advance');
 		const session = this.requireSession(sessionId);
 		const advance = session.advancePhase();
 		const response = {
@@ -120,8 +137,8 @@ export class SessionTransport {
 		return sessionAdvanceResponseSchema.parse(response);
 	}
 
-	public setDevMode(request: unknown): SessionSetDevModeResponse {
-		const parsed = sessionSetDevModeRequestSchema.safeParse(request);
+	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
+		const parsed = sessionSetDevModeRequestSchema.safeParse(request.body);
 		if (!parsed.success) {
 			throw new TransportError(
 				'INVALID_REQUEST',
@@ -139,9 +156,9 @@ export class SessionTransport {
 		return sessionSetDevModeResponseSchema.parse(response);
 	}
 
-	private parseSessionIdentifier(request: unknown): string {
+	private parseSessionIdentifier(body: unknown): string {
 		const parsed = sessionIdSchema.safeParse(
-			(request as { sessionId?: unknown })?.sessionId,
+			(body as { sessionId?: unknown })?.sessionId,
 		);
 		if (!parsed.success) {
 			throw new TransportError(
@@ -183,13 +200,48 @@ export class SessionTransport {
 		session: EngineSession,
 		names: Record<string, string>,
 	): void {
-		const snapshot = session.getSnapshot();
-		for (const player of snapshot.game.players) {
-			const name = names[player.id];
-			if (!name) {
-				continue;
+		for (const [playerId, playerName] of Object.entries(names)) {
+			if (playerName) {
+				session.updatePlayerName(playerId as PlayerId, playerName);
 			}
 			session.updatePlayerName(player.id, name);
 		}
 	}
+
+	private requireAuthorization(
+		request: TransportRequest,
+		role: AuthRole,
+	): AuthContext {
+		if (!this.authMiddleware) {
+			throw new TransportError(
+				'UNAUTHORIZED',
+				'Authorization middleware is not configured.',
+			);
+		}
+		try {
+			const context = this.authMiddleware(request);
+			if (!this.hasRole(context, role)) {
+				throw new AuthError('FORBIDDEN', `Missing required role "${role}".`);
+			}
+			return context;
+		} catch (error) {
+			if (error instanceof AuthError) {
+				throw new TransportError(error.code, error.message, {
+					cause: error,
+				});
+			}
+			throw error;
+		}
+	}
+
+	private hasRole(context: AuthContext, role: AuthRole): boolean {
+		if (context.roles.includes(role)) {
+			return true;
+		}
+		return context.roles.includes('admin');
+	}
+}
+
+export interface TransportRequest<T = unknown> extends AuthenticatedRequest<T> {
+	body: T;
 }

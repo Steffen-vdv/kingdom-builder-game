@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+/* eslint-disable no-max-lines-override */
 /* eslint-disable max-lines */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';

@@ -95,13 +95,13 @@ export const CATEGORY_CONFIG = [
 export const hasOwn = (target: object | undefined, key: PropertyKey) =>
 	target !== undefined && Object.prototype.hasOwnProperty.call(target, key);
 
-function isStringArray(
+export function isStringArray(
 	value: TokenCandidateInput,
 ): value is ReadonlyArray<string> {
 	return Array.isArray(value);
 }
 
-function normalizeCandidates(input?: TokenCandidateInput): string[] {
+export function normalizeCandidates(input?: TokenCandidateInput): string[] {
 	if (!input) {
 		return [];
 	}
