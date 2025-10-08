@@ -48,6 +48,7 @@ import {
 	diffPlayerStartConfiguration,
 	determineCommonActionCostResource,
 } from './player_setup';
+import { resolveStartConfigForMode } from './start_config_resolver';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
@@ -58,6 +59,7 @@ export interface EngineCreationOptions {
 	start: StartConfig;
 	rules: RuleSet;
 	config?: GameConfig;
+	devMode?: boolean;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -125,6 +127,7 @@ export function createEngine({
 	start,
 	rules,
 	config,
+	devMode = false,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
@@ -145,6 +148,7 @@ export function createEngine({
 			startConfig = validatedConfig.start;
 		}
 	}
+	startConfig = resolveStartConfigForMode(startConfig, devMode);
 	setResourceKeys(Object.keys(startConfig.player.resources || {}));
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
@@ -189,6 +193,7 @@ export function createEngine({
 	engineContext.game.currentPlayerIndex = 0;
 	engineContext.game.currentPhase = phases[0]?.id || '';
 	engineContext.game.currentStep = phases[0]?.steps[0]?.id || '';
+	engineContext.game.devMode = devMode;
 	services.initializeTierPassives(engineContext);
 	return engineContext;
 }

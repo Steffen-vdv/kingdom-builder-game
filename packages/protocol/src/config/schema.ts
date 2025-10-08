@@ -144,13 +144,27 @@ const playerStartSchema = z.object({
 	lands: z.array(landStartSchema).optional(),
 });
 
+const startModeConfigSchema = z.object({
+	player: playerStartSchema.optional(),
+	players: z.record(z.string(), playerStartSchema).optional(),
+});
+
+const startModesSchema = z
+	.object({
+		dev: startModeConfigSchema.optional(),
+	})
+	.partial();
+
 export const startConfigSchema = z.object({
 	player: playerStartSchema,
 	players: z.record(z.string(), playerStartSchema).optional(),
+	modes: startModesSchema.optional(),
 });
 
 export type PlayerStartConfig = z.infer<typeof playerStartSchema>;
 export type StartConfig = z.infer<typeof startConfigSchema>;
+export type StartModeConfig = z.infer<typeof startModeConfigSchema>;
+export type StartModesConfig = z.infer<typeof startModesSchema>;
 
 export const gameConfigSchema = z.object({
 	start: startConfigSchema.optional(),

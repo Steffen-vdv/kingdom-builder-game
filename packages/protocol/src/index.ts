@@ -37,6 +37,8 @@ export type {
 	PopulationConfig,
 	PlayerStartConfig,
 	StartConfig,
+	StartModeConfig,
+	StartModesConfig,
 	GameConfig,
 } from './config/schema';
 export type {
