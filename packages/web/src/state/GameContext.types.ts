@@ -16,10 +16,14 @@ import type {
 	ActionResolution,
 	ShowResolutionOptions,
 } from './useActionResolution';
+import type { SessionRegistries } from './sessionSelectors.types';
+import type { selectSessionView } from './sessionSelectors';
 
 export interface GameEngineContextValue {
 	session: EngineSession;
 	sessionState: EngineSessionSnapshot;
+	sessionRegistries: SessionRegistries;
+	sessionView: ReturnType<typeof selectSessionView>;
 	/** @deprecated Use `session` and `sessionState` instead. */
 	ctx: EngineContext;
 	translationContext: TranslationContext;

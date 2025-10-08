@@ -1,8 +1,14 @@
 import { vi } from 'vitest';
 import { PhaseId } from '@kingdom-builder/contents';
+import {
+	createEmptySessionRegistries,
+	createEmptySessionView,
+} from './sessionSelectorsStub';
 
 export function createActionsPanelState(actionCostResource: string) {
 	return {
+		sessionRegistries: createEmptySessionRegistries(),
+		sessionView: createEmptySessionView(),
 		log: [],
 		hoverCard: null,
 		handleHoverCard: vi.fn(),

@@ -24,6 +24,7 @@ import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
+import { selectSessionView } from '../src/state/sessionSelectors';
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
@@ -114,6 +115,12 @@ describe('<ResourceBar /> happiness hover card', () => {
 				passiveRecords: sessionState.passiveRecords,
 			},
 		);
+		const sessionRegistries = {
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+		} as const;
+		const sessionView = selectSessionView(sessionState, sessionRegistries);
 		const customRuleSnapshot = {
 			...ruleSnapshot,
 			tierDefinitions: ruleSnapshot.tierDefinitions.map((tier) => ({
@@ -127,6 +134,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 		currentGame = {
 			session,
 			sessionState,
+			sessionRegistries,
+			sessionView,
 			ctx,
 			translationContext,
 			ruleSnapshot: customRuleSnapshot,

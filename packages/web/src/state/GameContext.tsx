@@ -37,6 +37,8 @@ import { useAiRunner } from './useAiRunner';
 import { initializeDeveloperMode } from './developerModeSetup';
 import type { GameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
+import { selectSessionView } from './sessionSelectors';
+import type { SessionRegistries } from './sessionSelectors.types';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
@@ -112,6 +114,10 @@ export function GameProvider({
 		() => session.getRuleSnapshot(),
 		[session, tick],
 	);
+	const evaluationMods = useMemo(
+		() => session.getPassiveEvaluationMods(),
+		[session, tick],
+	);
 
 	useEffect(() => {
 		const [primary] = ctx.game.players;
@@ -126,25 +132,38 @@ export function GameProvider({
 		refresh();
 	}, [ctx, refresh, playerName]);
 
+	const sessionRegistries = useMemo(
+		() => ({
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+		}),
+		[],
+	);
+	const selectorRegistries = sessionRegistries as SessionRegistries;
+
 	const translationContext = useMemo(
 		() =>
 			createTranslationContext(
 				sessionState,
-				{
-					actions: ACTIONS,
-					buildings: BUILDINGS,
-					developments: DEVELOPMENTS,
-				},
+				sessionRegistries,
 				{
 					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
-					evaluationMods: session.getPassiveEvaluationMods(),
+					evaluationMods,
 				},
 				{
 					ruleSnapshot,
 					passiveRecords: sessionState.passiveRecords,
 				},
 			),
-		[sessionState, session, ruleSnapshot, sessionState.passiveRecords],
+		[
+			sessionState,
+			session,
+			ruleSnapshot,
+			evaluationMods,
+			sessionState.passiveRecords,
+			sessionRegistries,
+		],
 	);
 
 	const {
@@ -166,6 +185,11 @@ export function GameProvider({
 		);
 		return phaseWithAction?.id;
 	}, [sessionState.phases]);
+
+	const sessionView = useMemo(
+		() => selectSessionView(sessionState, selectorRegistries),
+		[sessionState, selectorRegistries],
+	);
 
 	const { hoverCard, handleHoverCard, clearHoverCard } = useHoverCard({
 		setTrackedTimeout,
@@ -264,6 +288,8 @@ export function GameProvider({
 	const value: GameEngineContextValue = {
 		session,
 		sessionState,
+		sessionRegistries: selectorRegistries,
+		sessionView,
 		// TODO(engine-web#session): Remove legacy ctx usages once all
 		// consumers are migrated to the session facade.
 		ctx,

@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+/* eslint-disable max-lines */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -11,6 +12,10 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from './helpers/translationContextStub';
+import {
+	createEmptySessionRegistries,
+	createEmptySessionView,
+} from './helpers/sessionSelectorsStub';
 const getActionCostsMock = vi.fn();
 const getActionRequirementsMock = vi.fn();
 const getActionEffectGroupsMock = vi.fn();
@@ -153,6 +158,8 @@ function createMockGame() {
 			tieredResourceKey: Resource.happiness,
 			tierDefinitions: [],
 		},
+		sessionRegistries: createEmptySessionRegistries(),
+		sessionView: createEmptySessionView(),
 		log: [],
 		logOverflowed: false,
 		handlePerform: vi.fn().mockResolvedValue(undefined),

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import {
 	POPULATION_INFO,
 	POPULATION_ROLES,
@@ -24,6 +25,10 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from './translationContextStub';
+import {
+	createEmptySessionRegistries,
+	createEmptySessionView,
+} from './sessionSelectorsStub';
 
 export function createActionsPanelGame({
 	populationRoles,
@@ -211,7 +216,6 @@ export function createActionsPanelGame({
 		}),
 		actionCostResource,
 	});
-
 	return {
 		ctx: {
 			actions: actionsRegistry,
@@ -233,6 +237,8 @@ export function createActionsPanelGame({
 			tierDefinitions: [],
 			winConditions: [],
 		},
+		sessionRegistries: createEmptySessionRegistries(),
+		sessionView: createEmptySessionView(),
 		...createActionsPanelState(actionCostResource),
 		metadata: {
 			upkeepResource,

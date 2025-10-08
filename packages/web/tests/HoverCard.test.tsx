@@ -27,6 +27,7 @@ import {
 	type ActionResolution,
 } from '../src/state/useActionResolution';
 import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
+import { selectSessionView } from '../src/state/sessionSelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -59,6 +60,12 @@ const translationContext = createTranslationContext(
 		passiveRecords: engineSnapshot.passiveRecords,
 	},
 );
+const sessionRegistries = {
+	actions: ACTIONS,
+	buildings: BUILDINGS,
+	developments: DEVELOPMENTS,
+} as const;
+const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 
 const findActionWithReq = () => {
 	for (const [id] of (ACTIONS as unknown as { map: Map<string, unknown> })
@@ -79,7 +86,10 @@ const findActionWithReq = () => {
 };
 const actionData = findActionWithReq();
 const mockGame = {
+	session: ctx,
 	ctx,
+	sessionRegistries,
+	sessionView,
 	translationContext,
 	ruleSnapshot: engineSnapshot.rules,
 	log: [],

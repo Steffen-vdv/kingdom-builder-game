@@ -19,6 +19,7 @@ import {
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { formatStatValue } from '../src/utils/stats';
+import { selectSessionView } from '../src/state/sessionSelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -57,9 +58,18 @@ const translationContext = createTranslationContext(
 		passiveRecords: engineSnapshot.passiveRecords,
 	},
 );
+const sessionRegistries = {
+	actions: ACTIONS,
+	buildings: BUILDINGS,
+	developments: DEVELOPMENTS,
+} as const;
+const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 const mockGame = {
+	session: ctx,
 	ctx,
 	sessionState: engineSnapshot,
+	sessionRegistries,
+	sessionView,
 	translationContext,
 	ruleSnapshot: engineSnapshot.rules,
 	log: [],
