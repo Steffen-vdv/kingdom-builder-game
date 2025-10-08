@@ -2,8 +2,8 @@ import React from 'react';
 import { useGameEngine, TIME_SCALE_OPTIONS } from '../../state/GameContext';
 
 export default function TimeControl() {
-	const { ctx, timeScale, setTimeScale } = useGameEngine();
-	const devMode = ctx.game.devMode;
+	const { sessionState, timeScale, setTimeScale } = useGameEngine();
+	const devMode = sessionState.game.devMode;
 
 	return (
 		<div

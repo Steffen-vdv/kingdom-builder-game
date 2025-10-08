@@ -19,7 +19,6 @@ import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type {
-	EngineContext,
 	EngineSession,
 	PlayerId,
 	RuleSnapshot,
@@ -28,6 +27,8 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
+import { selectSessionView } from '../src/state/sessionSelectors';
+import type { SessionRegistries } from '../src/state/sessionSelectors.types';
 type MockGame = GameEngineContextValue;
 type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
@@ -123,10 +124,16 @@ describe('<ResourceBar /> happiness hover card', () => {
 				passiveRecords: sessionState.passiveRecords,
 			},
 		);
+		const sessionRegistries: SessionRegistries = {
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+		};
+		const sessionView = selectSessionView(sessionState, sessionRegistries);
 		currentGame = {
 			session: {} as EngineSession,
 			sessionState,
-			ctx: {} as EngineContext,
+			sessionView,
 			translationContext,
 			ruleSnapshot,
 			handleHoverCard,

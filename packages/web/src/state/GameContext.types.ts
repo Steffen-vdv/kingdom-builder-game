@@ -1,5 +1,4 @@
 import type {
-	EngineContext,
 	EngineSession,
 	EngineSessionSnapshot,
 	RuleSnapshot,
@@ -21,8 +20,6 @@ import type {
 export interface GameEngineContextValue {
 	session: EngineSession;
 	sessionState: EngineSessionSnapshot;
-	/** @deprecated Use `session` and `sessionState` instead. */
-	ctx: EngineContext;
 	sessionView: SessionView;
 	translationContext: TranslationContext;
 	ruleSnapshot: RuleSnapshot;

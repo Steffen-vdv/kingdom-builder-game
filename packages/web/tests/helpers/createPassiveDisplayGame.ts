@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import type {
-	EngineContext,
 	EngineSession,
 	EngineSessionSnapshot,
 	RuleSnapshot,
@@ -8,6 +7,8 @@ import type {
 import { createTranslationContext } from '../../src/translation/context';
 import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
 import type { GameEngineContextValue } from '../../src/state/GameContext.types';
+import { selectSessionView } from '../../src/state/sessionSelectors';
+import type { SessionRegistries } from '../../src/state/sessionSelectors.types';
 
 export type MockGame = GameEngineContextValue;
 
@@ -39,10 +40,16 @@ export function createPassiveGame(
 			passiveRecords: sessionState.passiveRecords,
 		},
 	);
+	const sessionRegistries: SessionRegistries = {
+		actions: ACTIONS,
+		buildings: BUILDINGS,
+		developments: DEVELOPMENTS,
+	};
+	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: MockGame = {
 		session: {} as EngineSession,
 		sessionState,
-		ctx: {} as EngineContext,
+		sessionView,
 		translationContext,
 		ruleSnapshot,
 		log: [],
