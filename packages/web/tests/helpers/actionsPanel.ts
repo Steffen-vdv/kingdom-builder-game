@@ -228,6 +228,10 @@ export function createActionsPanelGame({
 			phases: [{ id: PhaseId.Main, action: true, steps: [] }],
 		},
 		translationContext,
+		ruleSnapshot: {
+			tieredResourceKey: Resource.happiness,
+			tierDefinitions: [],
+		},
 		...createActionsPanelState(actionCostResource),
 		metadata: {
 			upkeepResource,

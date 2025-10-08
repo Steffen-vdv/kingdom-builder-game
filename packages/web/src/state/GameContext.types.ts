@@ -2,6 +2,7 @@ import type {
 	EngineContext,
 	EngineSession,
 	EngineSessionSnapshot,
+	RuleSnapshot,
 } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import type { TranslationContext } from '../translation/context';
@@ -22,6 +23,7 @@ export interface GameEngineContextValue {
 	/** @deprecated Use `session` and `sessionState` instead. */
 	ctx: EngineContext;
 	translationContext: TranslationContext;
+	ruleSnapshot: RuleSnapshot;
 	log: LogEntry[];
 	logOverflowed: boolean;
 	resolution: ActionResolution | null;

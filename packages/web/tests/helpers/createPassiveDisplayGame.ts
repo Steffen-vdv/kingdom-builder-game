@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { EngineContext, RuleSnapshot } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../../src/translation/context';
 import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
 import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
@@ -7,6 +7,7 @@ import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
 type MockGame = {
 	ctx: EngineContext;
 	translationContext: ReturnType<typeof createTranslationContext>;
+	ruleSnapshot: RuleSnapshot;
 	handleHoverCard: ReturnType<typeof vi.fn>;
 	clearHoverCard: ReturnType<typeof vi.fn>;
 	resolution: null;
@@ -38,6 +39,10 @@ function createPassiveGame(ctx: EngineContext): PassiveGameContext {
 	const mockGame: MockGame = {
 		ctx,
 		translationContext,
+		ruleSnapshot: {
+			tieredResourceKey: ctx.services.rules.tieredResourceKey,
+			tierDefinitions: ctx.services.rules.tierDefinitions,
+		},
 		handleHoverCard,
 		clearHoverCard,
 		resolution: null,

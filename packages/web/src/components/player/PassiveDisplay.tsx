@@ -1,6 +1,11 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import { PHASES, PASSIVE_INFO, PhaseId } from '@kingdom-builder/contents';
+import {
+	PHASES,
+	PASSIVE_INFO,
+	PhaseId,
+	type ResourceKey,
+} from '@kingdom-builder/contents';
 import { describeEffects, splitSummary } from '../../translation';
 import type {
 	EngineContext,
@@ -26,14 +31,20 @@ export default function PassiveDisplay({
 }: {
 	player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
 }) {
-	const { ctx, translationContext, handleHoverCard, clearHoverCard } =
-		useGameEngine();
+	const {
+		ctx,
+		translationContext,
+		handleHoverCard,
+		clearHoverCard,
+		ruleSnapshot,
+	} = useGameEngine();
 	const playerId: PlayerId = player.id;
 	const summaries: PassiveSummary[] = ctx.passives.list(playerId);
 	const defs = ctx.passives.values(playerId);
 	const defMap = new Map(defs.map((def) => [def.id, def]));
 
-	const tierDefinitions = ctx.services.rules.tierDefinitions;
+	const tierDefinitions = ruleSnapshot.tierDefinitions;
+	const happinessKey = ruleSnapshot.tieredResourceKey as ResourceKey;
 	const tierByPassiveId = tierDefinitions.reduce<
 		Map<string, HappinessTierDefinition>
 	>((map, tier) => {
@@ -94,7 +105,7 @@ export default function PassiveDisplay({
 					? buildTierEntries(
 							[tierDefinition],
 							tierDefinition.id,
-							ctx,
+							happinessKey,
 							translationContext,
 						).entries
 					: undefined;

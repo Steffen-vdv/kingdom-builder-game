@@ -13,6 +13,7 @@ import {
 	type EngineSessionSnapshot,
 	type PlayerSnapshotDeltaBucket,
 	type PlayerStateSnapshot,
+	type RuleSnapshot,
 } from '@kingdom-builder/engine';
 import { useNextTurnForecast } from '../src/state/useNextTurnForecast';
 import { createSessionHelpers } from './utils/sessionStateHelpers';
@@ -41,6 +42,7 @@ interface MockGameEngine {
 		advancePhase: ReturnType<typeof vi.fn>;
 	};
 	sessionState: EngineSessionSnapshot;
+	ruleSnapshot: RuleSnapshot;
 	resolution: null;
 	showResolution: ReturnType<typeof vi.fn>;
 	acknowledgeResolution: ReturnType<typeof vi.fn>;
@@ -110,6 +112,7 @@ const engineValue: MockGameEngine = {
 		advancePhase: vi.fn(),
 	},
 	sessionState: undefined as unknown as EngineSessionSnapshot,
+	ruleSnapshot: { tieredResourceKey: primaryResource, tierDefinitions: [] },
 	resolution: null,
 	showResolution: vi.fn().mockResolvedValue(undefined),
 	acknowledgeResolution: vi.fn(),
