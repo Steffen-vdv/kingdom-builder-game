@@ -41,7 +41,7 @@ guide for rationale, lore, and extended background.
 | ----------- | ----------------------------------------------------------------- |
 | Braces      | Wrap every conditional and loop body in braces.                   |
 | Line length | Keep lines ≤ 80 characters.                                       |
-| File length | Keep new runtime files ≤ 250 lines (legacy exceptions ok;         |
+| File length | Keep new runtime files ≤ 350 lines (legacy exceptions ok;         |
 |             | `*.test.ts` files are exempt).                                    |
 | Naming      | Descriptive identifiers (`camelCase` values, `PascalCase` types). |
 | Formatting  | Use tabs and run Prettier via `npm run format`.                   |

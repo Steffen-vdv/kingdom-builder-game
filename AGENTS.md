@@ -90,14 +90,14 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 ### 2.2 Formatting & Linting
 
 - Run `npm run lint` to enforce mandatory braces, 80-character lines,
-  descriptive identifiers, and the ~250-line limit for new modules (excluding
+  descriptive identifiers, and the ~350-line limit for new modules (excluding
   `*.test.ts` files). Missing
   plugins such as `eslint-plugin-import` are auto-installed; if tooling fails,
   install with `npm install --no-save eslint-plugin-import`.
 - `npm run format` runs `prettier . --write` to apply Prettier with **tab
   indentation** and an 80-character print width across TypeScript, JSON,
   Markdown, etc.
-- Legacy files above 250 lines remain until refactored; new code should respect
+- Legacy files above 350 lines remain until refactored; new code should respect
   the limit, but `*.test.ts` files are exempt.
 
 ### 2.3 Pull Request Submission Protocol
@@ -115,7 +115,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 
 - [ ] Wrap every conditional or loop body in braces, even for single statements.
 - [ ] Keep lines at or below 80 characters.
-- [ ] Ensure files stay at or under 250 lines unless grandfathered or the file
+- [ ] Ensure files stay at or under 350 lines unless grandfathered or the file
       ends with `.test.ts`.
 - [ ] Use descriptive, human-readable identifiers instead of abbreviations.
 - [ ] Indent code with tabs to preserve consistent formatting.
@@ -127,7 +127,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Expand abbreviations (e.g., `populationDefinition`, not `def`).
 - Variables/functions use `camelCase`; classes/types use `PascalCase`.
 - Every conditional or loop uses braces, even with single-statement bodies.
-- Keep runtime-focused files (engine, shared packages, web, tests) under 250
+- Keep runtime-focused files (engine, shared packages, web, tests) under 350
   lines by extracting helpers where logical; `*.test.ts` files may exceed the
   limit when needed.
 - Documentation (`*.md`) and non-runtime tooling (e.g., `overview.tsx`) may
