@@ -6,11 +6,7 @@ import {
 	type PlayerStateSnapshot,
 	type RequirementFailure,
 } from '@kingdom-builder/engine';
-import {
-	ActionId,
-	RESOURCES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
+import { ActionId, type ResourceKey } from '@kingdom-builder/contents';
 import {
 	diffStepSnapshots,
 	logContent,
@@ -19,6 +15,7 @@ import {
 } from '../translation';
 import {
 	appendSubActionChanges,
+	buildActionCostLines,
 	filterActionDiffChanges,
 } from './useActionPerformer.helpers';
 import type { Action } from './actionTypes';
@@ -30,7 +27,6 @@ import {
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
-
 function ensureTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
 ): ActionLogLineDescriptor[] {
@@ -52,7 +48,6 @@ function ensureTimelineLines(
 	}
 	return lines;
 }
-
 interface UseActionPerformerOptions {
 	session: EngineSession;
 	actionCostResource: ResourceKey;
@@ -69,7 +64,6 @@ interface UseActionPerformerOptions {
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	resourceKeys: ResourceKey[];
 }
-
 export function useActionPerformer({
 	session,
 	actionCostResource,
@@ -130,23 +124,10 @@ export function useActionPerformer({
 				const rawMessages = logContent('action', action.id, context, params);
 				const messages = ensureTimelineLines(rawMessages);
 				const logHeadline = messages[0]?.text;
-				const costLines: ActionLogLineDescriptor[] = [];
-				for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
-					const amt = costs[key] ?? 0;
-					if (!amt) {
-						continue;
-					}
-					const info = RESOURCES[key];
-					const icon = info?.icon ? `${info.icon} ` : '';
-					const label = info?.label ?? key;
-					const beforeAmount = before.resources[key] ?? 0;
-					const afterAmount = beforeAmount - amt;
-					costLines.push({
-						text: `${icon}${label} -${amt} (${beforeAmount}→${afterAmount})`,
-						depth: 2,
-						kind: 'cost-detail',
-					});
-				}
+				const costLines = buildActionCostLines({
+					costs,
+					beforeResources: before.resources,
+				});
 				if (costLines.length) {
 					const header: ActionLogLineDescriptor = {
 						text: '💲 Action cost',
@@ -181,10 +162,8 @@ export function useActionPerformer({
 					id: playerAfter.id,
 					name: playerAfter.name,
 				};
-
 				updateMainPhaseStep();
 				refresh();
-
 				try {
 					await showResolution({
 						action: actionMeta,
@@ -195,7 +174,6 @@ export function useActionPerformer({
 				} catch (_error) {
 					addLog(logLines, resolutionPlayer);
 				}
-
 				if (!mountedRef.current) {
 					return;
 				}
@@ -240,17 +218,14 @@ export function useActionPerformer({
 			actionCostResource,
 		],
 	);
-
 	const handlePerform = useCallback(
 		(action: Action, params?: ActionParams<string>) =>
 			enqueue(() => perform(action, params)),
 		[enqueue, perform],
 	);
-
 	const performRef = useRef<typeof perform>(perform);
 	useEffect(() => {
 		performRef.current = perform;
 	}, [perform]);
-
 	return { handlePerform, performRef };
 }
