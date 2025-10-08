@@ -4,119 +4,17 @@ import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PlayerPanel from '../src/components/player/PlayerPanel';
-import { createEngine } from '@kingdom-builder/engine';
-import {
-	RESOURCES,
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	STATS,
-} from '@kingdom-builder/contents';
-import { createTranslationContext } from '../src/translation/context';
-import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import { RESOURCES, STATS } from '@kingdom-builder/contents';
 import { formatStatValue } from '../src/utils/stats';
+import { createPlayerPanelFixtures } from './helpers/playerPanelFixtures';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
-
-const ctx = createEngine({
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
-	phases: PHASES,
-	start: GAME_START,
-	rules: RULES,
-});
-const actionCostResource = ctx.actionCostResource;
-const engineSnapshot = snapshotEngine(ctx);
-const activePlayerSnapshot = engineSnapshot.game.players.find((player) => {
-	return player.id === engineSnapshot.game.activePlayerId;
-});
-if (!activePlayerSnapshot) {
-	throw new Error('Active player snapshot not found');
-}
-const translationContext = createTranslationContext(
-	engineSnapshot,
-	{
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-	},
-	{
-		pullEffectLog: (key) => ctx.pullEffectLog(key),
-		evaluationMods: ctx.passives.evaluationMods,
-	},
-	{
-		ruleSnapshot: engineSnapshot.rules,
-		passiveRecords: engineSnapshot.passiveRecords,
-	},
-);
-const mockGame = {
-	ctx,
-	sessionState: engineSnapshot,
-	translationContext,
-	ruleSnapshot: engineSnapshot.rules,
-	log: [],
-	logOverflowed: false,
-	hoverCard: null,
-	handleHoverCard: vi.fn(),
-	clearHoverCard: vi.fn(),
-	phaseSteps: [],
-	setPhaseSteps: vi.fn(),
-	phaseTimer: 0,
-	mainApStart: 0,
-	displayPhase: ctx.game.currentPhase,
-	setDisplayPhase: vi.fn(),
-	phaseHistories: {},
-	tabsEnabled: true,
-	actionCostResource,
-	handlePerform: vi.fn().mockResolvedValue(undefined),
-	runUntilActionPhase: vi.fn(),
-	handleEndTurn: vi.fn().mockResolvedValue(undefined),
-	updateMainPhaseStep: vi.fn(),
-	darkMode: false,
-	onToggleDark: vi.fn(),
-	resolution: null,
-	showResolution: vi.fn().mockResolvedValue(undefined),
-	acknowledgeResolution: vi.fn(),
-};
-
-const resourceForecast = Object.keys(RESOURCES).reduce<Record<string, number>>(
-	(acc, key, index) => {
-		const offset = index + 1;
-		acc[key] = index % 2 === 0 ? offset : -offset;
-		return acc;
-	},
-	{},
-);
-
-const displayableStatKeys = Object.entries(activePlayerSnapshot.stats)
-	.filter(([statKey, statValue]) => {
-		const info = STATS[statKey as keyof typeof STATS];
-		if (info.capacity) {
-			return false;
-		}
-		if (statValue !== 0) {
-			return true;
-		}
-		return Boolean(activePlayerSnapshot.statsHistory?.[statKey]);
-	})
-	.map(([statKey]) => statKey);
-
-const statForecast = displayableStatKeys.reduce<Record<string, number>>(
-	(acc, key, index) => {
-		const offset = index + 2;
-		acc[key] = index % 2 === 0 ? offset : -offset;
-		return acc;
-	},
-	{},
-);
+const {
+	activePlayer: activePlayerSnapshot,
+	mockGame,
+	resourceForecast,
+	displayableStatKeys,
+	statForecast,
+} = createPlayerPanelFixtures();
 
 const forecastByPlayerId = {
 	[activePlayerSnapshot.id]: {
@@ -152,9 +50,7 @@ describe('<PlayerPanel />', () => {
 		const resourceInfo = RESOURCES[firstResourceKey];
 		const resourceValue = playerResources[firstResourceKey] ?? 0;
 		const resourceDelta = resourceForecast[firstResourceKey]!;
-		const formattedResourceDelta = `${
-			resourceDelta > 0 ? '+' : ''
-		}${resourceDelta}`;
+		const formattedResourceDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
 		const resourceLabel = `${resourceInfo.label}: ${resourceValue} (${formattedResourceDelta})`;
 		const resourceButtons = screen.getAllByRole('button', {
 			name: resourceLabel,

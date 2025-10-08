@@ -1,58 +1,88 @@
 import { vi } from 'vitest';
-import type { EngineContext, RuleSnapshot } from '@kingdom-builder/engine';
+import type {
+	EngineContext,
+	EngineSession,
+	EngineSessionSnapshot,
+	RuleSnapshot,
+} from '@kingdom-builder/engine';
 import { createTranslationContext } from '../../src/translation/context';
-import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
 import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
+import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 
-type MockGame = {
-	ctx: EngineContext;
-	translationContext: ReturnType<typeof createTranslationContext>;
-	ruleSnapshot: RuleSnapshot;
-	handleHoverCard: ReturnType<typeof vi.fn>;
-	clearHoverCard: ReturnType<typeof vi.fn>;
-	resolution: null;
-	showResolution: ReturnType<typeof vi.fn>;
-	acknowledgeResolution: ReturnType<typeof vi.fn>;
-};
+export type MockGame = GameEngineContextValue;
 
-type PassiveGameContext = {
+export type PassiveGameContext = {
 	mockGame: MockGame;
 	handleHoverCard: ReturnType<typeof vi.fn>;
 	clearHoverCard: ReturnType<typeof vi.fn>;
 };
 
-function createPassiveGame(ctx: EngineContext): PassiveGameContext {
+export function createPassiveGame(
+	sessionState: EngineSessionSnapshot,
+	options: {
+		ruleSnapshot?: RuleSnapshot;
+	} = {},
+): PassiveGameContext {
 	const handleHoverCard = vi.fn();
 	const clearHoverCard = vi.fn();
-	const engineSnapshot = snapshotEngine(ctx);
+	const ruleSnapshot = options.ruleSnapshot ?? sessionState.rules;
 	const translationContext = createTranslationContext(
-		engineSnapshot,
+		sessionState,
 		{
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 		},
+		undefined,
 		{
-			pullEffectLog: (key) => ctx.pullEffectLog(key),
-			evaluationMods: ctx.passives.evaluationMods,
-		},
-		{
-			ruleSnapshot: engineSnapshot.rules,
-			passiveRecords: engineSnapshot.passiveRecords,
+			ruleSnapshot,
+			passiveRecords: sessionState.passiveRecords,
 		},
 	);
 	const mockGame: MockGame = {
-		ctx,
+		session: {} as EngineSession,
+		sessionState,
+		ctx: {} as EngineContext,
 		translationContext,
-		ruleSnapshot: engineSnapshot.rules,
+		ruleSnapshot,
+		log: [],
+		logOverflowed: false,
+		hoverCard: null,
 		handleHoverCard,
 		clearHoverCard,
+		phaseSteps: [],
+		setPhaseSteps: vi.fn(),
+		phaseTimer: 0,
+		mainApStart: 0,
+		displayPhase: sessionState.game.currentPhase,
+		setDisplayPhase: vi.fn(),
+		phaseHistories: {},
+		tabsEnabled: true,
+		actionCostResource: sessionState.actionCostResource,
+		handlePerform: vi.fn().mockResolvedValue(undefined),
+		runUntilActionPhase: vi.fn().mockResolvedValue(undefined),
+		handleEndTurn: vi.fn().mockResolvedValue(undefined),
+		updateMainPhaseStep: vi.fn(),
+		darkMode: false,
+		onToggleDark: vi.fn(),
 		resolution: null,
 		showResolution: vi.fn().mockResolvedValue(undefined),
 		acknowledgeResolution: vi.fn(),
+		musicEnabled: true,
+		onToggleMusic: vi.fn(),
+		soundEnabled: true,
+		onToggleSound: vi.fn(),
+		backgroundAudioMuted: false,
+		onToggleBackgroundAudioMute: vi.fn(),
+		timeScale: 1,
+		setTimeScale: vi.fn(),
+		toasts: [],
+		pushToast: vi.fn(),
+		pushErrorToast: vi.fn(),
+		pushSuccessToast: vi.fn(),
+		dismissToast: vi.fn(),
+		playerName: 'Player',
+		onChangePlayerName: vi.fn(),
 	};
 	return { mockGame, handleHoverCard, clearHoverCard };
 }
-
-export type { MockGame, PassiveGameContext };
-export { createPassiveGame };
