@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import type {
-	EngineContext,
 	EngineSession,
 	PlayerId,
 	RuleSnapshot,
@@ -18,6 +17,8 @@ import {
 import { createTranslationContext } from '../../src/translation/context';
 import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
+import { selectSessionView } from '../../src/state/sessionSelectors';
+import type { SessionRegistries } from '../../src/state/sessionSelectors.types';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
@@ -89,10 +90,16 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			passiveRecords: sessionState.passiveRecords,
 		},
 	);
+	const sessionRegistries: SessionRegistries = {
+		actions: ACTIONS,
+		buildings: BUILDINGS,
+		developments: DEVELOPMENTS,
+	};
+	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: GameEngineContextValue = {
 		session: {} as EngineSession,
 		sessionState,
-		ctx: {} as EngineContext,
+		sessionView,
 		translationContext,
 		ruleSnapshot,
 		log: [],

@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import {
 	createEngineSession,
-	type EngineContext,
 	type EngineSession,
 } from '@kingdom-builder/engine';
 import {
@@ -84,10 +83,7 @@ export function GameProvider({
 }) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
-	const { session, ctx } = useMemo<{
-		session: EngineSession;
-		ctx: EngineContext;
-	}>(() => {
+	const session = useMemo<EngineSession>(() => {
 		const created = createEngineSession({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
@@ -107,7 +103,7 @@ export function GameProvider({
 		if (primary) {
 			primary.name = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
 		}
-		return { session: created, ctx: legacyContext };
+		return created;
 	}, [devMode]);
 	const [tick, setTick] = useState(0);
 	const refresh = useCallback(() => setTick((t) => t + 1), []);
@@ -120,18 +116,24 @@ export function GameProvider({
 		[session, tick],
 	);
 
+	const primaryPlayerName = sessionState.game.players[0]?.name;
 	useEffect(() => {
-		const [primary] = ctx.game.players;
-		if (!primary) {
-			return;
-		}
 		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
-		if (primary.name === desiredName) {
+		if (primaryPlayerName === undefined || primaryPlayerName === desiredName) {
 			return;
 		}
-		primary.name = desiredName;
-		refresh();
-	}, [ctx, refresh, playerName]);
+		void session
+			.enqueue(() => {
+				const context = session.getLegacyContext();
+				const [player] = context.game.players;
+				if (player && player.name !== desiredName) {
+					player.name = desiredName;
+				}
+			})
+			.finally(() => {
+				refresh();
+			});
+	}, [session, primaryPlayerName, refresh, playerName]);
 
 	const translationContext = useMemo(
 		() =>
@@ -276,9 +278,6 @@ export function GameProvider({
 	const value: GameEngineContextValue = {
 		session,
 		sessionState,
-		// TODO(engine-web#session): Remove legacy ctx usages once all
-		// consumers are migrated to the session facade.
-		ctx,
 		sessionView,
 		translationContext,
 		ruleSnapshot,
