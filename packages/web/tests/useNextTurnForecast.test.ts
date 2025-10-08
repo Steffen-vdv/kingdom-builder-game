@@ -33,7 +33,13 @@ vi.mock('@kingdom-builder/engine', async () => {
 });
 
 interface MockGameEngine {
-	session: { getLegacyContext: ReturnType<typeof vi.fn> };
+	session: {
+		getLegacyContext: ReturnType<typeof vi.fn>;
+		hasAiController: () => boolean;
+		getActionDefinition: () => undefined;
+		runAiTurn: ReturnType<typeof vi.fn>;
+		advancePhase: ReturnType<typeof vi.fn>;
+	};
 	sessionState: EngineSessionSnapshot;
 	resolution: null;
 	showResolution: ReturnType<typeof vi.fn>;
@@ -96,7 +102,13 @@ function createDelta(amount: number): PlayerSnapshotDeltaBucket {
 
 const contextStub = { context: true } as const;
 const engineValue: MockGameEngine = {
-	session: { getLegacyContext: vi.fn(() => contextStub) },
+	session: {
+		getLegacyContext: vi.fn(() => contextStub),
+		hasAiController: () => false,
+		getActionDefinition: () => undefined,
+		runAiTurn: vi.fn().mockResolvedValue(false),
+		advancePhase: vi.fn(),
+	},
 	sessionState: undefined as unknown as EngineSessionSnapshot,
 	resolution: null,
 	showResolution: vi.fn().mockResolvedValue(undefined),
