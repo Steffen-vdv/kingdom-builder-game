@@ -56,7 +56,7 @@ type PassiveEffectParams = {
 } & PassiveEffectTriggerMap;
 // prettier-ignore
 export class PassiveEffectParamsBuilder extends ParamsBuilder<
-        PassiveEffectParams
+	PassiveEffectParams
 > {
 	declare protected params: PassiveEffectParams;
 	private triggerBuckets = new Map<TriggerKey, EffectConfig[]>();
