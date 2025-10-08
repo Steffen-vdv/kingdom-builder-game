@@ -13,7 +13,15 @@ export {
 export type {
 	SessionTransportOptions,
 	TransportErrorCode,
+	TransportRequest,
 } from './transport/SessionTransport.js';
+export type { AuthContext, AuthRole } from './auth/AuthContext.js';
+export { AuthError } from './auth/AuthError.js';
+export {
+	createTokenAuthMiddleware,
+	type AuthenticatedRequest,
+	type AuthMiddleware,
+} from './auth/tokenAuthMiddleware.js';
 
 export function startServer(): void {
 	console.log('Starting Kingdom Builder server...');
