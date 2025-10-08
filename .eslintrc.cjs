@@ -248,5 +248,18 @@ module.exports = {
 				'@typescript-eslint/no-redundant-type-constituents': 'off',
 			},
 		},
+		{
+			files: [
+				'packages/contents/src/config/builders/domainBuilders.ts',
+				'packages/contents/src/config/builders/evaluators.ts',
+				'packages/contents/src/config/builders/startConfig.ts',
+				'packages/contents/src/config/builders/tierBuilders.ts',
+				'packages/web/tests/generic-actions-effect-group.test.tsx',
+				'packages/web/tests/helpers/actionsPanel.ts',
+			],
+			rules: {
+				'no-max-lines-override': 'off',
+			},
+		},
 	],
 };
