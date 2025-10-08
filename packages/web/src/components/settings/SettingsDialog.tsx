@@ -216,10 +216,10 @@ export default function SettingsDialog({
 								onToggle={onToggleSound}
 							/>
 							<SettingRow
-								id="settings-background-mute"
-								title="Mute in background"
-								description="Pause audio when you switch tabs or windows."
-								checked={backgroundAudioMuted}
+								id="settings-background-audio"
+								title="Play audio in background"
+								description="Keep sound active when you switch tabs or windows."
+								checked={!backgroundAudioMuted}
 								onToggle={onToggleBackgroundAudioMute}
 							/>
 						</div>
