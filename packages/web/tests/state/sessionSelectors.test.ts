@@ -198,7 +198,18 @@ describe('sessionSelectors', () => {
 
 	it('combines player and option selections', () => {
 		const view = selectSessionView(sessionState, registries);
-		expect(view.list[0]!.id).toBe('A');
-		expect(view.actions.get(actionB.id)?.id).toBe(actionB.id);
+		expect(view.list.map((player) => player.id)).toEqual(['A', 'B']);
+		expect(view.active?.id).toBe(sessionState.game.activePlayerId);
+		expect(view.opponent?.id).toBe(sessionState.game.opponentId);
+		expect(view.actions.get(actionB.id)?.name).toBe(actionB.name);
+		expect(view.buildings.get(buildingA.id)?.name).toBe(buildingA.name);
+		expect(view.developments.get(developmentSystem.id)).toBeUndefined();
+		const activeOptions = view.actionsByPlayer.get('A') ?? [];
+		expect(activeOptions.map((option) => option.id)).toEqual([
+			actionA.id,
+			systemUnlocked.id,
+		]);
+		const opponentOptions = view.actionsByPlayer.get('B') ?? [];
+		expect(opponentOptions.map((option) => option.id)).toEqual([actionB.id]);
 	});
 });

@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import type { TranslationContext } from '../translation/context';
+import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
 import type { PhaseStep } from './phaseTypes';
 import type { TimeScale } from './useTimeScale';
@@ -22,6 +23,7 @@ export interface GameEngineContextValue {
 	sessionState: EngineSessionSnapshot;
 	/** @deprecated Use `session` and `sessionState` instead. */
 	ctx: EngineContext;
+	sessionView: SessionView;
 	translationContext: TranslationContext;
 	ruleSnapshot: RuleSnapshot;
 	log: LogEntry[];
