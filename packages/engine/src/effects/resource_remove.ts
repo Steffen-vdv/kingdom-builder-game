@@ -19,6 +19,7 @@ export const resourceRemove: EffectHandler = (effect, ctx, mult = 1) => {
 	if (!allowShortfall && have < removed) {
 		throw new Error(`Insufficient ${key}: need ${removed}, have ${have}`);
 	}
-	ctx.activePlayer.resources[key] = have - removed;
-	ctx.services.handleTieredResourceChange(ctx, key);
+	const player = ctx.activePlayer;
+	player.resources[key] = have - removed;
+	ctx.services.handleResourceChange(ctx, player, key);
 };

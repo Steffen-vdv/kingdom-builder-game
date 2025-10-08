@@ -37,6 +37,10 @@ export type {
 	PopulationConfig,
 	PlayerStartConfig,
 	StartConfig,
+	WinConditionOutcomeConfig,
+	WinConditionDisplayConfig,
+	WinConditionRuleConfig,
+	WinConditionConfig,
 	GameConfig,
 } from './config/schema';
 export type {

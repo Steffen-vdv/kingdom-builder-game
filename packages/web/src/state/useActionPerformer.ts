@@ -63,6 +63,9 @@ export function useActionPerformer({
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
 			const snapshotBefore = session.getSnapshot();
+			if (snapshotBefore.game.outcome) {
+				return;
+			}
 			let { translationContext: context } = getLegacySessionContext(
 				session,
 				snapshotBefore,

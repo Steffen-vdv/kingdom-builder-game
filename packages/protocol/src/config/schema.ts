@@ -17,6 +17,43 @@ const evaluatorSchema = z.object({
 	params: z.record(z.unknown()).optional(),
 });
 
+const winConditionOutcomeSchema = z.object({
+	title: z.string(),
+	description: z.string(),
+});
+
+export type WinConditionOutcomeConfig = z.infer<
+	typeof winConditionOutcomeSchema
+>;
+
+const winConditionDisplaySchema = z.object({
+	icon: z.string().optional(),
+	winner: winConditionOutcomeSchema,
+	loser: winConditionOutcomeSchema,
+});
+
+export type WinConditionDisplayConfig = z.infer<
+	typeof winConditionDisplaySchema
+>;
+
+const winConditionRuleSchema = z.object({
+	type: z.string(),
+	method: z.string(),
+	params: z.record(z.unknown()).optional(),
+	awardsTo: z.enum(['self', 'opponents', 'none']).optional(),
+});
+
+export type WinConditionRuleConfig = z.infer<typeof winConditionRuleSchema>;
+
+export const winConditionSchema = z.object({
+	id: z.string(),
+	rule: winConditionRuleSchema,
+	priority: z.number().optional(),
+	display: winConditionDisplaySchema.optional(),
+});
+
+export type WinConditionConfig = z.infer<typeof winConditionSchema>;
+
 export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
 	z.object({
 		type: z.string().optional(),
@@ -158,6 +195,7 @@ export const gameConfigSchema = z.object({
 	buildings: z.array(buildingSchema).optional(),
 	developments: z.array(developmentSchema).optional(),
 	populations: z.array(populationSchema).optional(),
+	winConditions: z.array(winConditionSchema).optional(),
 });
 
 export type GameConfig = z.infer<typeof gameConfigSchema>;

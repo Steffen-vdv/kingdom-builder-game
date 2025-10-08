@@ -112,6 +112,9 @@ export function usePhaseProgress({
 
 	const endTurn = useCallback(async () => {
 		const snapshot = session.getSnapshot();
+		if (snapshot.game.outcome) {
+			return;
+		}
 		const phaseDef = snapshot.phases[snapshot.game.phaseIndex];
 		if (!phaseDef?.action) {
 			return;

@@ -23,6 +23,7 @@ export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';
 export { GAME_START } from './game';
 export { RULES } from './rules';
+export { WIN_CONDITIONS } from './winConditions';
 export {
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,

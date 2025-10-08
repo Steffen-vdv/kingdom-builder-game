@@ -85,6 +85,7 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			const remaining = ctx.activePlayer.resources[apKey];
 			if (typeof remaining === 'number' && remaining > 0) {
 				ctx.activePlayer.resources[apKey] = 0;
+				ctx.services.handleResourceChange(ctx, ctx.activePlayer, apKey);
 			}
 			await deps.advance(ctx);
 		};

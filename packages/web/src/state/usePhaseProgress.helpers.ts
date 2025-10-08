@@ -47,6 +47,14 @@ export async function advanceToActionPhase({
 	refresh,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
+	if (snapshot.game.outcome) {
+		setTabsEnabled(false);
+		setPhaseSteps([]);
+		setPhaseHistories({});
+		setDisplayPhase(snapshot.game.currentPhase);
+		setPhaseTimer(0);
+		return;
+	}
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
 		if (!mountedRef.current) {
 			return;

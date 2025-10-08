@@ -97,6 +97,13 @@ function cloneSkip(
 }
 
 export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
+	const outcome = context.game.outcome
+		? {
+				conditionId: context.game.outcome.conditionId,
+				winners: [...context.game.outcome.winners],
+				losers: [...context.game.outcome.losers],
+			}
+		: undefined;
 	return {
 		game: {
 			turn: context.game.turn,
@@ -111,6 +118,7 @@ export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 			),
 			activePlayerId: context.game.active.id,
 			opponentId: context.game.opponent.id,
+			...(outcome ? { outcome } : {}),
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,

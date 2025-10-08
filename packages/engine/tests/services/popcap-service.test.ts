@@ -8,7 +8,7 @@ describe('PopcapService', () => {
 	it('calculates population cap from houses on land', () => {
 		const content = createContentFactory();
 		const house = content.development({ populationCap: 1 });
-		const services = new Services(RULES, content.developments);
+		const services = new Services(RULES, content.developments, []);
 		const player = new PlayerState('A', 'Test');
 		const land1 = new Land('l1', 1);
 		land1.developments.push(house.id);

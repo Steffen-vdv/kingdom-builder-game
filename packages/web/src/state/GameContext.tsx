@@ -21,6 +21,7 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	WIN_CONDITIONS,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../translation/context';
@@ -89,6 +90,7 @@ export function GameProvider({
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			winConditions: WIN_CONDITIONS,
 		});
 		created.setDevMode(devMode);
 		const legacyContext = created.getLegacyContext();

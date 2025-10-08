@@ -41,6 +41,7 @@ import {
 	type DevelopmentConfig as DevelopmentDef,
 	type PopulationConfig as PopulationDef,
 	type StartConfig,
+	type WinConditionConfig,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../phases';
 import {
@@ -58,6 +59,7 @@ export interface EngineCreationOptions {
 	start: StartConfig;
 	rules: RuleSet;
 	config?: GameConfig;
+	winConditions?: WinConditionConfig[];
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -125,11 +127,13 @@ export function createEngine({
 	start,
 	rules,
 	config,
+	winConditions = [],
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();
 	let startConfig = start;
+	let winConditionDefs = winConditions;
 	if (config) {
 		const validatedConfig = validateGameConfig(config);
 		({ actions, buildings, developments, populations } = overrideRegistries(
@@ -144,12 +148,15 @@ export function createEngine({
 		if (validatedConfig.start) {
 			startConfig = validatedConfig.start;
 		}
+		if (validatedConfig.winConditions) {
+			winConditionDefs = validatedConfig.winConditions;
+		}
 	}
 	setResourceKeys(Object.keys(startConfig.player.resources || {}));
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
-	const services = new Services(rules, developments);
+	const services = new Services(rules, developments, winConditionDefs);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
 	const actionCostResource = determineCommonActionCostResource(actions);
@@ -190,6 +197,7 @@ export function createEngine({
 	engineContext.game.currentPhase = phases[0]?.id || '';
 	engineContext.game.currentStep = phases[0]?.steps[0]?.id || '';
 	services.initializeTierPassives(engineContext);
+	services.win.evaluate(engineContext);
 	return engineContext;
 }
 

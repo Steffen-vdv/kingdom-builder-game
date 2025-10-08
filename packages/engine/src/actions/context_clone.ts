@@ -123,6 +123,13 @@ function cloneGameState(game: GameState): GameState {
 	cloned.phaseIndex = game.phaseIndex;
 	cloned.stepIndex = game.stepIndex;
 	cloned.devMode = game.devMode;
+	if (game.outcome) {
+		cloned.outcome = {
+			conditionId: game.outcome.conditionId,
+			winners: [...game.outcome.winners],
+			losers: [...game.outcome.losers],
+		};
+	}
 	cloned.players = game.players.map((player) => clonePlayerState(player));
 	return cloned;
 }

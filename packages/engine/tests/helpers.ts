@@ -7,6 +7,7 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	WIN_CONDITIONS,
 } from '@kingdom-builder/contents';
 import type {
 	ActionConfig as ActionDef,
@@ -15,6 +16,7 @@ import type {
 	PopulationConfig as PopulationDef,
 	Registry,
 	StartConfig,
+	WinConditionConfig,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../src/phases.ts';
 import type { RuleSet } from '../src/services';
@@ -26,6 +28,7 @@ const BASE: {
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
 	start: StartConfig;
+	winConditions: WinConditionConfig[];
 } = {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
@@ -33,6 +36,7 @@ const BASE: {
 	populations: POPULATIONS,
 	phases: PHASES,
 	start: GAME_START,
+	winConditions: WIN_CONDITIONS,
 };
 
 type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };

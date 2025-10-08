@@ -108,10 +108,21 @@ export function createEngineSession(
 	const context = createEngine(options);
 	return {
 		performAction(actionId, params) {
+			if (context.game.outcome) {
+				return [];
+			}
 			const traces = runAction(actionId, context, params);
 			return cloneActionTraces(traces);
 		},
 		advancePhase() {
+			if (context.game.outcome) {
+				return snapshotAdvance(context, {
+					phase: context.game.currentPhase,
+					step: context.game.currentStep,
+					effects: [],
+					player: context.game.active,
+				});
+			}
 			const result = runAdvance(context);
 			return snapshotAdvance(context, result);
 		},

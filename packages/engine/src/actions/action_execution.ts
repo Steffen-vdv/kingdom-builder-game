@@ -116,7 +116,7 @@ function executeAction<T extends string>(
 	if (affordability !== true) {
 		throw new Error(affordability);
 	}
-	deductCostsFromPlayer(finalCosts, engineContext.activePlayer);
+	deductCostsFromPlayer(finalCosts, engineContext.activePlayer, engineContext);
 	const passiveManager = engineContext.passives;
 	withStatSourceFrames(
 		engineContext,

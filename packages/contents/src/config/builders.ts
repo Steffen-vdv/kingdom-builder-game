@@ -18,6 +18,10 @@ import type {
 	TierRange,
 	PlayerStartConfig,
 	StartConfig,
+	WinConditionConfig,
+	WinConditionDisplayConfig,
+	WinConditionOutcomeConfig,
+	WinConditionRuleConfig,
 } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
@@ -52,6 +56,10 @@ function resolveEffectConfig(effect: EffectConfig | EffectBuilder) {
 }
 
 export type ActionEffectGroupOptionDef = ActionEffectGroupOption;
+export type WinConditionDef = WinConditionConfig;
+type WinConditionDisplayDef = WinConditionDisplayConfig;
+type WinConditionOutcomeDef = WinConditionOutcomeConfig;
+type WinConditionRuleDef = WinConditionRuleConfig;
 
 class ActionEffectGroupOptionBuilder {
 	private readonly config: Partial<ActionEffectGroupOptionDef> = {};
@@ -2583,6 +2591,205 @@ class StartConfigBuilder {
 	}
 }
 
+class WinConditionDisplayBuilder {
+	private iconValue: string | undefined;
+	private winnerValue: WinConditionOutcomeDef | undefined;
+	private loserValue: WinConditionOutcomeDef | undefined;
+
+	icon(icon: string) {
+		if (this.iconValue !== undefined) {
+			throw new Error(
+				'Win condition display already set icon(). Remove the duplicate icon() call.',
+			);
+		}
+		this.iconValue = icon;
+		return this;
+	}
+
+	winner(title: string, description: string) {
+		if (this.winnerValue) {
+			throw new Error(
+				'Win condition display already set winner(). Remove the extra winner() call.',
+			);
+		}
+		this.winnerValue = { title, description };
+		return this;
+	}
+
+	loser(title: string, description: string) {
+		if (this.loserValue) {
+			throw new Error(
+				'Win condition display already set loser(). Remove the extra loser() call.',
+			);
+		}
+		this.loserValue = { title, description };
+		return this;
+	}
+
+	build(): WinConditionDisplayDef {
+		if (!this.winnerValue) {
+			throw new Error(
+				'Win condition display is missing winner(). Call winner(...) before build().',
+			);
+		}
+		if (!this.loserValue) {
+			throw new Error(
+				'Win condition display is missing loser(). Call loser(...) before build().',
+			);
+		}
+		const built: WinConditionDisplayDef = {
+			winner: { ...this.winnerValue },
+			loser: { ...this.loserValue },
+		};
+		if (this.iconValue !== undefined) {
+			built.icon = this.iconValue;
+		}
+		return built;
+	}
+}
+
+type ThresholdComparison = 'lt' | 'lte' | 'gt' | 'gte';
+
+interface ResourceThresholdOptions {
+	resource: ResourceKey;
+	comparison?: ThresholdComparison;
+	value: number;
+	awardTo?: 'self' | 'opponents' | 'none';
+}
+
+class WinConditionBuilder {
+	private idValue: string | undefined;
+	private priorityValue: number | undefined;
+	private ruleValue: WinConditionRuleDef | undefined;
+	private displayValue: WinConditionDisplayDef | undefined;
+	private idSet = false;
+	private prioritySet = false;
+
+	id(id: string) {
+		if (this.idSet) {
+			throw new Error(
+				'Win condition already set id(). Remove the duplicate id() call.',
+			);
+		}
+		this.idValue = id;
+		this.idSet = true;
+		return this;
+	}
+
+	priority(priority: number) {
+		if (this.prioritySet) {
+			throw new Error(
+				'Win condition already set priority(). Remove the extra priority() call.',
+			);
+		}
+		this.priorityValue = priority;
+		this.prioritySet = true;
+		return this;
+	}
+
+	private cloneRule(rule: WinConditionRuleDef) {
+		const cloned: WinConditionRuleDef = {
+			type: rule.type,
+			method: rule.method,
+		};
+		if (rule.params) {
+			cloned.params = { ...rule.params };
+		}
+		if (rule.awardsTo) {
+			cloned.awardsTo = rule.awardsTo;
+		}
+		return cloned;
+	}
+
+	rule(rule: WinConditionRuleDef) {
+		if (this.ruleValue) {
+			throw new Error(
+				'Win condition already set rule(). Remove the extra rule() call.',
+			);
+		}
+		this.ruleValue = this.cloneRule(rule);
+		return this;
+	}
+
+	resourceThreshold(options: ResourceThresholdOptions) {
+		const {
+			resource,
+			comparison = 'lte',
+			value,
+			awardTo = 'opponents',
+		} = options;
+		return this.rule({
+			type: 'resource',
+			method: 'threshold',
+			params: { resource, comparison, value },
+			awardsTo: awardTo,
+		});
+	}
+
+	private resolveDisplayBuilder(
+		input:
+			| WinConditionDisplayBuilder
+			| ((builder: WinConditionDisplayBuilder) => WinConditionDisplayBuilder),
+	) {
+		if (input instanceof WinConditionDisplayBuilder) {
+			return input;
+		}
+		const configured = input(new WinConditionDisplayBuilder());
+		if (!(configured instanceof WinConditionDisplayBuilder)) {
+			throw new Error(
+				'Win condition display(...) callback must return the provided builder.',
+			);
+		}
+		return configured;
+	}
+
+	display(
+		input:
+			| WinConditionDisplayBuilder
+			| ((builder: WinConditionDisplayBuilder) => WinConditionDisplayBuilder),
+	) {
+		if (this.displayValue) {
+			throw new Error(
+				'Win condition already set display(). Remove the extra display() call.',
+			);
+		}
+		const builder = this.resolveDisplayBuilder(input);
+		this.displayValue = builder.build();
+		return this;
+	}
+
+	build(): WinConditionDef {
+		if (!this.idValue) {
+			throw new Error(
+				'Win condition is missing id(). Call id("win-condition-id") before build().',
+			);
+		}
+		if (!this.ruleValue) {
+			throw new Error(
+				'Win condition is missing rule(). Configure rule(...) before build().',
+			);
+		}
+		const built: WinConditionDef = {
+			id: this.idValue,
+			rule: this.cloneRule(this.ruleValue),
+		};
+		if (this.priorityValue !== undefined) {
+			built.priority = this.priorityValue;
+		}
+		if (this.displayValue) {
+			const { winner, loser, icon } = this.displayValue;
+			built.display = {
+				winner: { ...winner },
+				loser: { ...loser },
+			};
+			if (icon !== undefined) {
+				built.display.icon = icon;
+			}
+		}
+		return built;
+	}
+}
+
 export function playerStart(options?: PlayerStartBuilderOptions) {
 	return new PlayerStartBuilder(options?.requireComplete ?? true);
 }
@@ -2606,6 +2813,9 @@ export function development() {
 }
 export function population() {
 	return new PopulationBuilder();
+}
+export function winCondition() {
+	return new WinConditionBuilder();
 }
 export function resource(key: ResourceKey) {
 	return new ResourceBuilder(key);

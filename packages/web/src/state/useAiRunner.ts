@@ -28,6 +28,9 @@ export function useAiRunner({
 	mountedRef,
 }: UseAiRunnerOptions) {
 	useEffect(() => {
+		if (sessionState.game.outcome) {
+			return;
+		}
 		const phaseDefinition = sessionState.phases[sessionState.game.phaseIndex];
 		if (!phaseDefinition?.action) {
 			return;

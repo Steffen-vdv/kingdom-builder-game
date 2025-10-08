@@ -14,7 +14,11 @@ import { createContentFactory } from '../factories/content';
 
 describe('Services', () => {
 	it('evaluates resource tiers correctly', () => {
-		const services = new Services(RULES, createContentFactory().developments);
+		const services = new Services(
+			RULES,
+			createContentFactory().developments,
+			[],
+		);
 		const getTierEffect = (value: number) =>
 			RULES.tierDefinitions
 				.filter(
@@ -66,6 +70,7 @@ describe('Services', () => {
 				],
 			},
 			content.developments,
+			[],
 		);
 		expect(services.tieredResource.tier(5)?.incomeMultiplier).toBe(1);
 		expect(services.tieredResource.tier(6)?.incomeMultiplier).toBe(2);

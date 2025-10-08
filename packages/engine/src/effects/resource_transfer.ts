@@ -48,4 +48,6 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 	}
 	defender.resources[key] = available - amount;
 	attacker.resources[key] = (attacker.resources[key] || 0) + amount;
+	context.services.handleResourceChange(context, defender, key);
+	context.services.handleResourceChange(context, attacker, key);
 };

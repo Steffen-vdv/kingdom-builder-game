@@ -74,6 +74,12 @@ export interface StatSourceContribution {
 
 export type PlayerId = 'A' | 'B';
 
+export interface GameOutcome {
+	conditionId: string;
+	winners: PlayerId[];
+	losers: PlayerId[];
+}
+
 export class Land {
 	id: string;
 	slotsMax: number;
@@ -168,6 +174,7 @@ export class GameState {
 	phaseIndex = 0;
 	stepIndex = 0;
 	devMode = false;
+	outcome: GameOutcome | undefined;
 	players: PlayerState[];
 	constructor(aName = 'Player', bName = 'Opponent') {
 		this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];

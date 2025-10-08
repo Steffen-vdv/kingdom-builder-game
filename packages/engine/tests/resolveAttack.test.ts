@@ -3,6 +3,7 @@ import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from './factories/content.ts';
+import { WIN_CONDITIONS } from '@kingdom-builder/contents';
 
 function makeAbsorptionEffect(amount: number): EffectDef {
 	return {
@@ -228,5 +229,23 @@ describe('resolveAttack', () => {
 		expect(defender.resources[Resource.castleHP]).toBe(startHP - expected);
 		expect(defender.absorption).toBe(1);
 		expect(defender.fortificationStrength).toBe(5);
+	});
+
+	it('declares a winner when a castle is destroyed', () => {
+		const engineContext = createTestEngine();
+		const attacker = engineContext.activePlayer;
+		const defender = engineContext.game.opponent;
+		resolveAttack(defender, 50, engineContext, {
+			type: 'resource',
+			key: Resource.castleHP,
+		});
+		const outcome = engineContext.game.outcome;
+		const castleCondition = WIN_CONDITIONS.find(
+			(entry) => entry.rule.params?.['resource'] === Resource.castleHP,
+		);
+		expect(outcome).toBeDefined();
+		expect(outcome?.conditionId).toBe(castleCondition?.id);
+		expect(outcome?.losers).toContain(defender.id);
+		expect(outcome?.winners).toContain(attacker.id);
 	});
 });

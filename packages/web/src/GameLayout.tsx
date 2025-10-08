@@ -10,6 +10,7 @@ import PhasePanel from './components/phases/PhasePanel';
 import PlayerPanel from './components/player/PlayerPanel';
 import SettingsDialog from './components/settings/SettingsDialog';
 import { useGameEngine } from './state/GameContext';
+import GameOutcomeScreen from './components/GameOutcomeScreen';
 
 export default function GameLayout() {
 	const {
@@ -177,6 +178,7 @@ export default function GameLayout() {
 				onConfirm={confirmExit}
 			/>
 			<Toaster />
+			<GameOutcomeScreen />
 			<div className="pointer-events-none absolute inset-0">
 				<div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/30 blur-3xl dark:bg-amber-500/20" />
 				<div className="absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-500/20" />
