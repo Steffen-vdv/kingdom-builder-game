@@ -12,13 +12,26 @@ function cloneCostBag(costBag: CostBag): CostBag {
 	return { ...costBag };
 }
 
+function getActionDefinitionOrThrow(
+	actionId: string,
+	engineContext: EngineContext,
+) {
+	const actionDefinition = engineContext.actions.get(actionId);
+	if (!actionDefinition) {
+		throw new Error(
+			`Action ${actionId} is not registered in the engine context`,
+		);
+	}
+	return actionDefinition;
+}
+
 export function applyCostsWithPassives(
 	actionId: string,
 	baseCosts: CostBag,
 	engineContext: EngineContext,
 ): CostBag {
 	const defaultedCosts = cloneCostBag(baseCosts);
-	const actionDefinition = engineContext.actions.get(actionId);
+	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
 	const primaryCostKey = engineContext.actionCostResource;
 	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
 		defaultedCosts[primaryCostKey] = actionDefinition.system
@@ -55,7 +68,7 @@ export function getActionCosts<T extends string>(
 	engineContext: EngineContext,
 	params?: ActionParameters<T>,
 ): CostBag {
-	const actionDefinition = engineContext.actions.get(actionId);
+	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
 	const baseCosts = cloneCostBag(actionDefinition.baseCosts || {});
 	const resolved = resolveActionEffects(actionDefinition, params);
 	applyEffectCostCollectors(resolved.effects, baseCosts, engineContext);
@@ -72,7 +85,7 @@ export function getActionRequirements<T extends string>(
 	engineContext: EngineContext,
 	_params?: ActionParameters<T>,
 ): RequirementFailure[] {
-	const actionDefinition = engineContext.actions.get(actionId);
+	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
 	const failures: RequirementFailure[] = [];
 	for (const requirement of actionDefinition.requirements || []) {
 		const requirementResult = runRequirement(requirement, engineContext);
