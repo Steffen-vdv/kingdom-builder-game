@@ -193,3 +193,4 @@ export type {
 } from './contracts';
 
 export * as contracts from './contracts';
+export type { SessionGateway } from './gateway';

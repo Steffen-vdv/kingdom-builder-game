@@ -98,6 +98,7 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 } from './session/contracts';
+export type { SessionGateway } from './session/gateway';
 export type {
 	ActionEffectChoice,
 	ActionChoiceMap,
