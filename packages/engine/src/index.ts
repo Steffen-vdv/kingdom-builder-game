@@ -25,6 +25,7 @@ export {
 	type PlayerStateSnapshot,
 	type LandSnapshot,
 	type RuleSnapshot,
+	type PassiveRecordSnapshot,
 	type ActionDefinitionSummary,
 	type EngineSessionGetActionCosts,
 	type EngineSessionGetActionRequirements,

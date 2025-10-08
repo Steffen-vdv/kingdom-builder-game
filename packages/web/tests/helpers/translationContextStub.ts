@@ -4,6 +4,7 @@ import type {
 	TranslationPlayer,
 	TranslationRegistry,
 } from '../../src/translation/context';
+import type { RuleSnapshot } from '@kingdom-builder/engine';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
 
@@ -13,6 +14,12 @@ const EMPTY_PASSIVES: TranslationPassives = {
 	},
 	get() {
 		return undefined;
+	},
+	getDefinition() {
+		return undefined;
+	},
+	definitions() {
+		return [];
 	},
 	get evaluationMods() {
 		return EMPTY_MODIFIERS;
@@ -55,8 +62,15 @@ export function createTranslationContextStub(
 		developments: TranslationRegistry<unknown>;
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
+		rules?: RuleSnapshot;
 	},
 ): TranslationContext {
+	const rules: RuleSnapshot =
+		options.rules ??
+		({
+			tieredResourceKey: 'happiness',
+			tierDefinitions: [],
+		} as RuleSnapshot);
 	return {
 		actions: options.actions,
 		buildings: options.buildings,
@@ -65,6 +79,7 @@ export function createTranslationContextStub(
 		phases: options.phases,
 		activePlayer: options.activePlayer,
 		opponent: options.opponent,
+		rules,
 		pullEffectLog() {
 			return undefined;
 		},

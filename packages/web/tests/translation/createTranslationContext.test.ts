@@ -123,6 +123,25 @@ describe('createTranslationContext', () => {
 				A: compensation(2),
 				B: compensation(1),
 			},
+			rules: {
+				tieredResourceKey: resourceKey,
+				tierDefinitions: [],
+			},
+			passiveRecords: {
+				A: [
+					{
+						id: passiveId,
+						owner: 'A',
+						icon: ACTIONS.get(actionId).icon,
+						meta: {
+							source: {
+								icon: BUILDINGS.get(buildingId).icon,
+							},
+						},
+					},
+				],
+				B: [],
+			},
 		};
 		const context = createTranslationContext(
 			session,
@@ -134,6 +153,10 @@ describe('createTranslationContext', () => {
 			{
 				pullEffectLog,
 				evaluationMods: passiveManager.evaluationMods,
+			},
+			{
+				ruleSnapshot: session.rules,
+				passiveRecords: session.passiveRecords,
 			},
 		);
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
@@ -163,82 +186,102 @@ describe('createTranslationContext', () => {
 					has: context.developments.has(developmentId),
 				},
 			},
+			rules: context.rules,
 			passives: {
 				list: context.passives.list().map(({ id }) => id),
 				owned: context.passives.list(activeId).map(({ id }) => id),
 				descriptor: context.passives.get(passiveId, activeId),
+				definition: context.passives.getDefinition(passiveId, activeId),
+				definitions: context.passives.definitions(activeId).map(({ id }) => id),
 				evaluationMods: evaluationSnapshot,
 			},
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
-			{
-			  "actionCostResource": "gold",
-			  "compensations": {
-			    "A": {
-			      "resources": {
-			        "gold": 2,
-			      },
-			    },
-			    "B": {
-			      "resources": {
-			        "gold": 1,
-			      },
-			    },
-			  },
-			  "passives": {
-			    "descriptor": {
-			      "icon": "🌱",
-			      "meta": {
-			        "source": {
-			          "icon": "🏘️",
-			        },
-			      },
-			    },
-			    "evaluationMods": [
-			      [
-			        "gold",
-			        [
-			          "modifier",
-			        ],
-			      ],
-			    ],
-			    "list": [
-			      "passive-a",
-			    ],
-			    "owned": [
-			      "passive-a",
-			    ],
-			  },
-			  "phases": [
-			    "growth",
-			    "upkeep",
-			    "main",
-			  ],
-			  "players": {
-			    "active": "A",
-			    "opponent": "B",
-			  },
-			  "recentResourceGains": [
-			    {
-			      "amount": 3,
-			      "key": "gold",
-			    },
-			  ],
-			  "registries": {
-			    "action": {
-			      "has": true,
-			      "id": "expand",
-			    },
-			    "building": {
-			      "has": true,
-			      "id": "town_charter",
-			    },
-			    "development": {
-			      "has": true,
-			      "id": "farm",
-			    },
-			  },
-			}
-		`);
+                        {
+                          "actionCostResource": "gold",
+                          "compensations": {
+                            "A": {
+                              "resources": {
+                                "gold": 2,
+                              },
+                            },
+                            "B": {
+                              "resources": {
+                                "gold": 1,
+                              },
+                            },
+                          },
+                          "passives": {
+                            "definition": {
+                              "icon": "🌱",
+                              "id": "passive-a",
+                              "meta": {
+                                "source": {
+                                  "icon": "🏘️",
+                                },
+                              },
+                              "owner": "A",
+                            },
+                            "definitions": [
+                              "passive-a",
+                            ],
+                            "descriptor": {
+                              "icon": "🌱",
+                              "meta": {
+                                "source": {
+                                  "icon": "🏘️",
+                                },
+                              },
+                            },
+                            "evaluationMods": [
+                              [
+                                "gold",
+                                [
+                                  "modifier",
+                                ],
+                              ],
+                            ],
+                            "list": [
+                              "passive-a",
+                            ],
+                            "owned": [
+                              "passive-a",
+                            ],
+                          },
+                          "phases": [
+                            "growth",
+                            "upkeep",
+                            "main",
+                          ],
+                          "players": {
+                            "active": "A",
+                            "opponent": "B",
+                          },
+                          "recentResourceGains": [
+                            {
+                              "amount": 3,
+                              "key": "gold",
+                            },
+                          ],
+                          "registries": {
+                            "action": {
+                              "has": true,
+                              "id": "expand",
+                            },
+                            "building": {
+                              "has": true,
+                              "id": "town_charter",
+                            },
+                            "development": {
+                              "has": true,
+                              "id": "farm",
+                            },
+                          },
+                          "rules": {
+                            "tierDefinitions": [],
+                            "tieredResourceKey": "gold",
+                          },
+                        }
+                `);
 	});
 });
