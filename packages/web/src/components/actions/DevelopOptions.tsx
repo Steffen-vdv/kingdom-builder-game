@@ -15,6 +15,7 @@ import {
 	type Development,
 	type DisplayPlayer,
 } from './types';
+import { formatIconTitle, renderIconLabel } from './iconHelpers';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -75,10 +76,14 @@ export default function DevelopOptions({
 			})
 			.sort((first, second) => first.total - second.total);
 	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	const actionHoverTitle = formatIconTitle(
+		actionInfo?.icon,
+		actionInfo?.name ?? action.name,
+	);
 	return (
 		<div>
-			<h3 className="font-medium">
-				{actionInfo?.icon || ''} {actionInfo?.name || action.name}{' '}
+			<h3 className="font-medium flex flex-wrap items-center gap-2">
+				{renderIconLabel(actionInfo?.icon, actionInfo?.name ?? action.name)}
 				<span className="italic text-sm font-normal">
 					(Effects take place on build and last until development is removed)
 				</span>
@@ -110,14 +115,16 @@ export default function DevelopOptions({
 								? (insufficientTooltip ?? 'Cannot pay costs')
 								: undefined;
 					const enabled = canPay && isActionPhase && canInteract && implemented;
+					const hoverTitle = [
+						actionHoverTitle,
+						formatIconTitle(development.icon, development.name),
+					]
+						.filter(Boolean)
+						.join(' - ');
 					return (
 						<ActionCard
 							key={development.id}
-							title={
-								<>
-									{development.icon || ''} {development.name}
-								</>
-							}
+							title={renderIconLabel(development.icon, development.name)}
 							costs={costs}
 							upkeep={upkeep}
 							playerResources={player.resources}
@@ -149,9 +156,7 @@ export default function DevelopOptions({
 								);
 								const { effects, description } = splitSummary(full);
 								handleHoverCard({
-									title: `${actionInfo?.icon || ''} ${
-										actionInfo?.name ?? action.name
-									} - ${development.icon || ''} ${development.name}`,
+									title: hoverTitle,
 									effects,
 									requirements,
 									costs,

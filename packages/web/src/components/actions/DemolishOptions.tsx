@@ -19,6 +19,7 @@ import {
 	type Building,
 	type DisplayPlayer,
 } from './types';
+import { formatIconTitle, renderIconLabel } from './iconHelpers';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -97,10 +98,14 @@ export default function DemolishOptions({
 	}
 
 	const actionInfo = sessionView.actions.get(action.id);
+	const actionHoverTitle = formatIconTitle(
+		actionInfo?.icon,
+		actionInfo?.name ?? action.name,
+	);
 	return (
 		<div>
-			<h3 className="font-medium">
-				{actionInfo?.icon || ''} {actionInfo?.name || action.name}{' '}
+			<h3 className="font-medium flex flex-wrap items-center gap-2">
+				{renderIconLabel(actionInfo?.icon, actionInfo?.name ?? action.name)}
 				<span className="italic text-sm font-normal">
 					(Removes a structure and its ongoing benefits)
 				</span>
@@ -127,14 +132,16 @@ export default function DemolishOptions({
 							: undefined;
 					const enabled = canPay && isActionPhase && canInteract && implemented;
 					const upkeep = building.upkeep;
+					const hoverTitle = [
+						actionHoverTitle,
+						formatIconTitle(building.icon, building.name),
+					]
+						.filter(Boolean)
+						.join(' - ');
 					return (
 						<ActionCard
 							key={id}
-							title={
-								<>
-									{building.icon || ''} {building.name}
-								</>
-							}
+							title={renderIconLabel(building.icon, building.name)}
 							costs={costs}
 							upkeep={upkeep}
 							playerResources={player.resources}
@@ -163,9 +170,7 @@ export default function DemolishOptions({
 								);
 								const { effects, description } = splitSummary(full);
 								handleHoverCard({
-									title: `${actionInfo?.icon || ''} ${
-										actionInfo?.name ?? action.name
-									} - ${building.icon || ''} ${building.name}`,
+									title: hoverTitle,
 									effects,
 									requirements,
 									costs,

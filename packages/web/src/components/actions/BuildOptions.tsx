@@ -13,6 +13,7 @@ import {
 	playerHasRequiredResources,
 	sumNonActionCosts,
 } from './utils';
+import { formatIconTitle, renderIconLabel } from './iconHelpers';
 import {
 	toPerformableAction,
 	type Action,
@@ -87,10 +88,14 @@ export default function BuildOptions({
 		actionCostResource,
 		player.buildings.size,
 	]);
+	const actionHoverTitle = formatIconTitle(
+		actionInfo?.icon,
+		actionInfo?.name ?? action.name,
+	);
 	return (
 		<div>
-			<h3 className="font-medium">
-				{actionInfo?.icon || ''} {actionInfo?.name || action.name}{' '}
+			<h3 className="font-medium flex flex-wrap items-center gap-2">
+				{renderIconLabel(actionInfo?.icon, actionInfo?.name ?? action.name)}
 				<span className="italic text-sm font-normal">
 					(Effects take place on build and last until building is removed)
 				</span>
@@ -124,14 +129,16 @@ export default function BuildOptions({
 						isActionPhase &&
 						canInteract &&
 						implemented;
+					const hoverTitle = [
+						actionHoverTitle,
+						formatIconTitle(icon, building.name),
+					]
+						.filter(Boolean)
+						.join(' - ');
 					return (
 						<ActionCard
 							key={building.id}
-							title={
-								<>
-									{icon || ''} {building.name}
-								</>
-							}
+							title={renderIconLabel(icon, building.name)}
 							costs={costs}
 							upkeep={upkeep}
 							playerResources={player.resources}
@@ -155,9 +162,7 @@ export default function BuildOptions({
 								const full = descriptions.get(building.id) ?? [];
 								const { effects, description } = splitSummary(full);
 								handleHoverCard({
-									title: `${actionInfo?.icon || ''} ${
-										actionInfo?.name ?? action.name
-									} - ${icon || ''} ${building.name}`,
+									title: hoverTitle,
 									effects,
 									requirements,
 									costs,

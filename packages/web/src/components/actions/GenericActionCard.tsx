@@ -16,6 +16,7 @@ import ActionCard from './ActionCard';
 import { formatMissingResources } from './utils';
 import type { PendingActionState } from './GenericActions';
 import { useEffectGroupOptions } from './useEffectGroupOptions';
+import { formatIconTitle, renderIconLabel } from './iconHelpers';
 import {
 	toPerformableAction,
 	type Action,
@@ -125,7 +126,7 @@ function GenericActionCard({
 		hoverBackground,
 	});
 	const rawAction = translationContext.actions.get(action.id);
-	let actionIcon = '';
+	let actionIcon: string | undefined;
 	let actionFocus: Action['focus'] | undefined;
 	if (rawAction && typeof rawAction === 'object') {
 		const possible = rawAction as {
@@ -137,17 +138,13 @@ function GenericActionCard({
 		}
 		actionFocus = possible.focus;
 	}
-	const hoverTitle = `${actionIcon} ${action.name}`;
+	const hoverTitle = formatIconTitle(actionIcon, action.name);
 	const hoverContent = describeContent('action', action.id, translationContext);
 	const { effects, description } = splitSummary(hoverContent);
 	return (
 		<ActionCard
 			key={action.id}
-			title={
-				<>
-					{actionIcon} {action.name}
-				</>
-			}
+			title={renderIconLabel(actionIcon, action.name)}
 			costs={costs}
 			playerResources={player.resources}
 			actionCostResource={actionCostResource}
