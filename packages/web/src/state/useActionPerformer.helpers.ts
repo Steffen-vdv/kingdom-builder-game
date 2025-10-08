@@ -2,7 +2,7 @@ import {
 	resolveActionEffects,
 	type ActionTrace,
 } from '@kingdom-builder/engine';
-import { type ResourceKey } from '@kingdom-builder/contents';
+import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { TranslationDiffContext } from '../translation';
@@ -65,6 +65,37 @@ export function appendSubActionChanges({
 		messages.splice(index + 1, 0, ...nested);
 	}
 	return subLines;
+}
+
+interface BuildActionCostLinesOptions {
+	costs: Partial<Record<ResourceKey, number | undefined>>;
+	beforeResources: Partial<Record<ResourceKey, number | undefined>>;
+}
+
+export function buildActionCostLines({
+	costs,
+	beforeResources,
+}: BuildActionCostLinesOptions): ActionLogLineDescriptor[] {
+	const costLines: ActionLogLineDescriptor[] = [];
+	const costKeys = Object.keys(costs) as ResourceKey[];
+	for (const key of costKeys) {
+		const costAmount = costs[key] ?? 0;
+		if (!costAmount) {
+			continue;
+		}
+		const info = RESOURCES[key];
+		const icon = info?.icon ? `${info.icon} ` : '';
+		const label = info?.label ?? key;
+		const beforeAmount = beforeResources[key] ?? 0;
+		const afterAmount = beforeAmount - costAmount;
+		const costDelta = `${beforeAmount}→${afterAmount}`;
+		costLines.push({
+			text: `${icon}${label} -${costAmount} (${costDelta})`,
+			depth: 2,
+			kind: 'cost-detail',
+		});
+	}
+	return costLines;
 }
 
 interface FilterActionDiffChangesOptions {
