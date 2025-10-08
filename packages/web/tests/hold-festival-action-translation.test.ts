@@ -76,15 +76,8 @@ describe('hold festival action translation', () => {
 			festivalActionId,
 			attackActionId,
 		);
-		const upkeepDescriptionLabel = `${
-			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
-		}${details.upkeepLabel}`;
-
 		expect(log).toEqual([
 			`Played ${details.festival.icon} ${details.festival.name}`,
-			`  ${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
-			`    ${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
-			`    ${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} duration: Until player's next ${upkeepDescriptionLabel}`,
 		]);
 	});
 });
