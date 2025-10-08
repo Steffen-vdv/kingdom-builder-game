@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '../common/Button';
 import ToggleSwitch from '../common/ToggleSwitch';
 import { PlayerNameSetting } from './PlayerNameSetting';
@@ -33,6 +33,22 @@ const SETTING_DESCRIPTION_CLASS = [
 const DIALOG_DESCRIPTION = [
 	'Tune the ambience and visuals of your kingdom.',
 	'These selections stay with you as you explore different screens.',
+].join(' ');
+
+const TAB_BUTTON_CLASS = [
+	'flex-1 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold',
+	'tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300',
+	'dark:focus-visible:ring-emerald-500/60',
+].join(' ');
+
+const TAB_BUTTON_ACTIVE_CLASS = [
+	'bg-emerald-100 text-emerald-900 shadow-sm shadow-emerald-500/20',
+	'dark:bg-emerald-500/20 dark:text-emerald-100 dark:shadow-black/40',
+].join(' ');
+
+const TAB_BUTTON_INACTIVE_CLASS = [
+	'bg-white/60 text-slate-600 hover:bg-white/80',
+	'dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-900/50',
 ].join(' ');
 
 interface SettingsDialogProps {
@@ -96,6 +112,15 @@ export default function SettingsDialog({
 	playerName,
 	onChangePlayerName,
 }: SettingsDialogProps) {
+	const [activeTab, setActiveTab] = useState<'general' | 'audio'>('general');
+
+	useEffect(() => {
+		if (!open) {
+			return;
+		}
+		setActiveTab('general');
+	}, [open]);
+
 	useEffect(() => {
 		if (!open || typeof window === 'undefined') {
 			return;
@@ -134,40 +159,71 @@ export default function SettingsDialog({
 						{DIALOG_DESCRIPTION}
 					</p>
 				</header>
-				<div className="flex flex-col gap-4">
-					<PlayerNameSetting
-						open={open}
-						playerName={playerName}
-						onSave={onChangePlayerName}
-					/>
-					<SettingRow
-						id="settings-music"
-						title="Background music"
-						description="Play a gentle score to accompany your strategy."
-						checked={musicEnabled}
-						onToggle={onToggleMusic}
-					/>
-					<SettingRow
-						id="settings-sound"
-						title="Game sounds"
-						description="Toggle sound effects."
-						checked={soundEnabled}
-						onToggle={onToggleSound}
-					/>
-					<SettingRow
-						id="settings-background-mute"
-						title="Mute in background"
-						description="Pause audio when you switch tabs or windows."
-						checked={backgroundAudioMuted}
-						onToggle={onToggleBackgroundAudioMute}
-					/>
-					<SettingRow
-						id="settings-theme"
-						title="Dark mode"
-						description="Switch between bright parchment tones and moonlit hues."
-						checked={darkMode}
-						onToggle={onToggleDark}
-					/>
+				<div className="flex flex-col gap-5">
+					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70">
+						<button
+							type="button"
+							className={`${TAB_BUTTON_CLASS} ${
+								activeTab === 'general'
+									? TAB_BUTTON_ACTIVE_CLASS
+									: TAB_BUTTON_INACTIVE_CLASS
+							}`}
+							onClick={() => setActiveTab('general')}
+						>
+							General
+						</button>
+						<button
+							type="button"
+							className={`${TAB_BUTTON_CLASS} ${
+								activeTab === 'audio'
+									? TAB_BUTTON_ACTIVE_CLASS
+									: TAB_BUTTON_INACTIVE_CLASS
+							}`}
+							onClick={() => setActiveTab('audio')}
+						>
+							Audio
+						</button>
+					</div>
+					{activeTab === 'general' ? (
+						<div className="flex flex-col gap-4">
+							<PlayerNameSetting
+								open={open}
+								playerName={playerName}
+								onSave={onChangePlayerName}
+							/>
+							<SettingRow
+								id="settings-theme"
+								title="Dark mode"
+								description="Switch between bright parchment tones and moonlit hues."
+								checked={darkMode}
+								onToggle={onToggleDark}
+							/>
+						</div>
+					) : (
+						<div className="flex flex-col gap-4">
+							<SettingRow
+								id="settings-music"
+								title="Background music"
+								description="Play a gentle score to accompany your strategy."
+								checked={musicEnabled}
+								onToggle={onToggleMusic}
+							/>
+							<SettingRow
+								id="settings-sound"
+								title="Game sounds"
+								description="Toggle sound effects."
+								checked={soundEnabled}
+								onToggle={onToggleSound}
+							/>
+							<SettingRow
+								id="settings-background-mute"
+								title="Mute in background"
+								description="Pause audio when you switch tabs or windows."
+								checked={backgroundAudioMuted}
+								onToggle={onToggleBackgroundAudioMute}
+							/>
+						</div>
+					)}
 				</div>
 				<div className="mt-8 flex justify-end">
 					<Button variant="ghost" onClick={onClose} className="px-6" icon="✖️">

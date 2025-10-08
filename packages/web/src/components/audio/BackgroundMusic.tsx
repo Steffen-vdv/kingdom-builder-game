@@ -23,6 +23,7 @@ export default function BackgroundMusic({
 		return !document.hidden;
 	});
 	const shouldPlay = enabled && (!muteWhenBackground || isForeground);
+	const shouldStopImmediately = enabled && muteWhenBackground && !isForeground;
 	const enabledRef = useRef(shouldPlay);
 
 	useEffect(() => {
@@ -170,10 +171,16 @@ export default function BackgroundMusic({
 			fadeFrameRef.current = requestAnimationFrame(step);
 		};
 
-		const stopPlayback = () => {
+		const stopPlayback = (options?: { immediate?: boolean }) => {
 			playbackRequestRef.current += 1;
 			resumeCleanupRef.current?.();
 			resumeCleanupRef.current = null;
+			if (options?.immediate) {
+				clearPendingFade();
+				audio.volume = 0;
+				audio.pause();
+				return;
+			}
 			fadeTo(0, () => {
 				audio.pause();
 				audio.volume = BASE_VOLUME;
@@ -205,13 +212,13 @@ export default function BackgroundMusic({
 		if (shouldPlay) {
 			void startPlayback();
 		} else {
-			stopPlayback();
+			stopPlayback({ immediate: shouldStopImmediately });
 		}
 
 		return () => {
 			clearPendingFade();
 		};
-	}, [shouldPlay]);
+	}, [shouldPlay, shouldStopImmediately]);
 
 	return null;
 }

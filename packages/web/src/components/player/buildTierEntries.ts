@@ -115,17 +115,18 @@ export function buildTierEntries(
 	tiers: ReadonlyArray<TierDefinition>,
 	activeId: string | undefined,
 	translationContext: TranslationContext,
+	tieredResourceKey?: ResourceKey | undefined,
 ): TierEntriesResult {
 	const getRangeStart = (tier: TierDefinition) =>
 		tier.range.min ?? Number.NEGATIVE_INFINITY;
 	const orderedTiers = [...tiers].sort(
 		(a, b) => getRangeStart(b) - getRangeStart(a),
 	);
-	const tierResourceKey = translationContext.rules?.tieredResourceKey as
-		| ResourceKey
-		| undefined;
-	const tierResourceIcon = tierResourceKey
-		? RESOURCES[tierResourceKey]?.icon || ''
+	const resolvedTieredResourceKey =
+		tieredResourceKey ??
+		(translationContext.rules?.tieredResourceKey as ResourceKey | undefined);
+	const tierResourceIcon = resolvedTieredResourceKey
+		? RESOURCES[resolvedTieredResourceKey]?.icon || ''
 		: '';
 	const entries: TierSummaryEntry[] = orderedTiers.map((tier) => ({
 		...tier,

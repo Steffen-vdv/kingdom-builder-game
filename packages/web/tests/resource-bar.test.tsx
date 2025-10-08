@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+/* eslint-disable max-lines */
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
@@ -105,11 +106,23 @@ describe('<ResourceBar /> happiness hover card', () => {
 				evaluationMods: session.getPassiveEvaluationMods(),
 			},
 		);
+		const ruleSnapshot = session.getRuleSnapshot();
+		const customRuleSnapshot = {
+			...ruleSnapshot,
+			tierDefinitions: ruleSnapshot.tierDefinitions.map((tier) => ({
+				...tier,
+				display: {
+					...(tier.display ?? {}),
+					title: `Snapshot ${tier.id}`,
+				},
+			})),
+		};
 		currentGame = {
 			session,
 			sessionState,
 			ctx,
 			translationContext,
+			ruleSnapshot: customRuleSnapshot,
 			handleHoverCard,
 			clearHoverCard,
 			log: [],
@@ -137,6 +150,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 			onToggleMusic: vi.fn(),
 			soundEnabled: true,
 			onToggleSound: vi.fn(),
+			backgroundAudioMuted: true,
+			onToggleBackgroundAudioMute: vi.fn(),
 			timeScale: 1,
 			setTimeScale: vi.fn(),
 			toasts: [],
@@ -144,6 +159,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 			pushErrorToast: vi.fn(),
 			pushSuccessToast: vi.fn(),
 			dismissToast: vi.fn(),
+			playerName: 'Player',
+			onChangePlayerName: vi.fn(),
 		} as MockGame;
 		render(<ResourceBar player={ctx.activePlayer} />);
 		const resourceInfo = RESOURCES[happinessKey];
@@ -165,6 +182,9 @@ describe('<ResourceBar /> happiness hover card', () => {
 				Boolean(section) && typeof section === 'object',
 		);
 		expect(tierEntries).toHaveLength(3);
+		expect(
+			tierEntries.some((entry) => (entry?.title ?? '').includes('Snapshot')),
+		).toBe(true);
 		const [higherEntry, currentEntry, lowerEntry] = tierEntries;
 		expect(higherEntry).toBeTruthy();
 		expect(currentEntry).toBeTruthy();

@@ -1,6 +1,11 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import { PHASES, PASSIVE_INFO, PhaseId } from '@kingdom-builder/contents';
+import {
+	PHASES,
+	PASSIVE_INFO,
+	PhaseId,
+	type ResourceKey,
+} from '@kingdom-builder/contents';
 import {
 	describeEffects,
 	splitSummary,
@@ -26,7 +31,7 @@ export default function PassiveDisplay({
 }: {
 	player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
 }) {
-	const { translationContext, handleHoverCard, clearHoverCard } =
+	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
 		useGameEngine();
 	const playerId: PlayerId = player.id;
 	const summaries: PassiveSummary[] =
@@ -34,7 +39,10 @@ export default function PassiveDisplay({
 	const defs = translationContext.passives.listDefinitions(playerId);
 	const defMap = new Map(defs.map((def) => [def.id, def]));
 
-	const tierDefinitions = translationContext.rules?.tierDefinitions ?? [];
+	const tierDefinitions =
+		translationContext.rules?.tierDefinitions ?? ruleSnapshot.tierDefinitions;
+	const happinessKey = (translationContext.rules?.tieredResourceKey ??
+		ruleSnapshot.tieredResourceKey) as ResourceKey | undefined;
 	const tierByPassiveId = tierDefinitions.reduce<
 		Map<string, HappinessTierDefinition>
 	>((map, tier) => {
@@ -96,6 +104,7 @@ export default function PassiveDisplay({
 							[tierDefinition],
 							tierDefinition.id,
 							translationContext,
+							happinessKey,
 						).entries
 					: undefined;
 				const effectList = def.effects ? [...def.effects] : [];

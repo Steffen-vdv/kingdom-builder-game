@@ -1,102 +1,43 @@
 import React from 'react';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
-import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
 import { GENERAL_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
-import { buildTierEntries } from './buildTierEntries';
+import { buildTierEntries, type TierDefinition } from './buildTierEntries';
 import type { SummaryGroup } from '../../translation/content/types';
-import { getForecastDisplay } from '../../utils/forecast';
+import ResourceButton, { type ResourceButtonProps } from './ResourceButton';
 
-interface ResourceButtonProps {
-	resourceKey: keyof typeof RESOURCES;
-	value: number;
-	forecastDelta?: number;
-	onShow: () => void;
-	onHide: () => void;
+interface ResourceBarPlayer {
+	id: string;
+	resources: Record<string, number | undefined>;
 }
 
-const formatDelta = (delta: number) => {
-	const absolute = Math.abs(delta);
-	const formatted = Number.isInteger(absolute)
-		? absolute.toString()
-		: absolute.toLocaleString(undefined, {
-				maximumFractionDigits: 2,
-				minimumFractionDigits: 0,
-			});
-	return `${delta > 0 ? '+' : '-'}${formatted}`;
-};
-
-const RESOURCE_FORECAST_BADGE_CLASS =
-	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
-const RESOURCE_FORECAST_BADGE_THEME_CLASS =
-	'bg-slate-800/70 dark:bg-slate-100/10';
-
-const ResourceButton: React.FC<ResourceButtonProps> = ({
-	resourceKey,
-	value,
-	forecastDelta,
-	onShow,
-	onHide,
-}) => {
-	const info = RESOURCES[resourceKey];
-	const changes = useValueChangeIndicators(value);
-	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
-		formatDelta(delta),
-	);
-	const ariaLabel = forecastDisplay
-		? `${info.label}: ${value} ${forecastDisplay.label}`
-		: `${info.label}: ${value}`;
-
-	return (
-		<button
-			type="button"
-			className="bar-item hoverable cursor-help relative overflow-visible"
-			onMouseEnter={onShow}
-			onMouseLeave={onHide}
-			onFocus={onShow}
-			onBlur={onHide}
-			onClick={onShow}
-			aria-label={ariaLabel}
-		>
-			{info.icon}
-			{value}
-			{forecastDisplay && (
-				<span
-					className={[
-						RESOURCE_FORECAST_BADGE_CLASS,
-						RESOURCE_FORECAST_BADGE_THEME_CLASS,
-						forecastDisplay.toneClass,
-					].join(' ')}
-				>
-					{forecastDisplay.label}
-				</span>
-			)}
-			{changes.map((change) => (
-				<span
-					key={change.id}
-					className={`value-change-indicator ${
-						change.direction === 'gain'
-							? 'value-change-indicator--gain text-emerald-300'
-							: 'value-change-indicator--loss text-rose-300'
-					}`}
-					aria-hidden="true"
-				>
-					{formatDelta(change.delta)}
-				</span>
-			))}
-		</button>
-	);
-};
-
 interface ResourceBarProps {
-	player: EngineContext['activePlayer'];
+	player: ResourceBarPlayer;
+}
+
+function findTierForValue(
+	tiers: ReadonlyArray<TierDefinition>,
+	value: number,
+): TierDefinition | undefined {
+	let match: TierDefinition | undefined;
+	for (const tier of tiers) {
+		const min = tier.range.min ?? Number.NEGATIVE_INFINITY;
+		if (value < min) {
+			break;
+		}
+		const max = tier.range.max;
+		if (max !== undefined && value > max) {
+			continue;
+		}
+		match = tier;
+	}
+	return match;
 }
 
 const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
-	const { ctx, translationContext, handleHoverCard, clearHoverCard } =
+	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
 		useGameEngine();
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id] ?? {
@@ -105,18 +46,17 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 		population: {},
 	};
 	const resourceKeys = Object.keys(RESOURCES) as ResourceKey[];
-	const happinessKey =
-		(translationContext.rules?.tieredResourceKey as ResourceKey) ??
-		(ctx.services.tieredResource.resourceKey as ResourceKey);
 	const tiers =
-		translationContext.rules?.tierDefinitions ??
-		ctx.services.rules.tierDefinitions;
+		translationContext.rules?.tierDefinitions ?? ruleSnapshot.tierDefinitions;
+	const happinessKey = (translationContext.rules?.tieredResourceKey ??
+		ruleSnapshot.tieredResourceKey) as ResourceKey;
 	const showHappinessCard = (value: number) => {
-		const activeTier = ctx.services.tieredResource.definition(value);
+		const activeTier = findTierForValue(tiers, value);
 		const { summaries } = buildTierEntries(
 			tiers,
 			activeTier?.id,
 			translationContext,
+			happinessKey,
 		);
 		const info = RESOURCES[happinessKey];
 		const activeIndex = summaries.findIndex((summary) => summary.active);
