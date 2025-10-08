@@ -89,6 +89,7 @@ export function GameProvider({
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			devMode,
 		});
 		created.setDevMode(devMode);
 		const legacyContext = created.getLegacyContext();
