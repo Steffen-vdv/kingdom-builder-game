@@ -29,6 +29,29 @@ import {
 } from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
+import type { ActionLogLineDescriptor } from '../translation/log/timeline';
+
+function ensureTimelineLines(
+	entries: readonly (string | ActionLogLineDescriptor)[],
+): ActionLogLineDescriptor[] {
+	const lines: ActionLogLineDescriptor[] = [];
+	for (const [index, entry] of entries.entries()) {
+		if (typeof entry === 'string') {
+			const text = entry.trim();
+			if (!text) {
+				continue;
+			}
+			lines.push({
+				text,
+				depth: index === 0 ? 0 : 1,
+				kind: index === 0 ? 'headline' : 'effect',
+			});
+			continue;
+		}
+		lines.push(entry);
+	}
+	return lines;
+}
 
 interface UseActionPerformerOptions {
 	session: EngineSession;
@@ -104,9 +127,10 @@ export function useActionPerformer({
 					diffContext,
 					resourceKeys,
 				);
-				const messages = logContent('action', action.id, context, params);
-				const logHeadline = messages[0];
-				const costLines: string[] = [];
+				const rawMessages = logContent('action', action.id, context, params);
+				const messages = ensureTimelineLines(rawMessages);
+				const logHeadline = messages[0]?.text;
+				const costLines: ActionLogLineDescriptor[] = [];
 				for (const key of Object.keys(costs) as (keyof typeof RESOURCES)[]) {
 					const amt = costs[key] ?? 0;
 					if (!amt) {
@@ -117,12 +141,19 @@ export function useActionPerformer({
 					const label = info?.label ?? key;
 					const beforeAmount = before.resources[key] ?? 0;
 					const afterAmount = beforeAmount - amt;
-					costLines.push(
-						`    ${icon}${label} -${amt} (${beforeAmount}→${afterAmount})`,
-					);
+					costLines.push({
+						text: `${icon}${label} -${amt} (${beforeAmount}→${afterAmount})`,
+						depth: 2,
+						kind: 'cost-detail',
+					});
 				}
 				if (costLines.length) {
-					messages.splice(1, 0, '  💲 Action cost', ...costLines);
+					const header: ActionLogLineDescriptor = {
+						text: '💲 Action cost',
+						depth: 1,
+						kind: 'cost',
+					};
+					messages.splice(1, 0, header, ...costLines);
 				}
 				const subLines = appendSubActionChanges({
 					traces,

@@ -154,16 +154,30 @@ registerEffectFormatter('action', 'perform', {
 		);
 		const sub = logEffects(resolved.effects, ctx);
 		if (sub.length === 0) {
-			return label;
+			return [
+				{ title: label, items: [], timelineKind: 'subaction', actionId: id },
+			];
 		}
 		const [first, ...rest] = sub;
 		if (typeof first === 'string') {
 			const combined = `${label} - ${first}`;
-			if (rest.length === 0) {
-				return combined;
-			}
-			return [combined, ...rest];
+			const items = rest.length > 0 ? [combined, ...rest] : [combined];
+			return [
+				{
+					title: label,
+					items,
+					timelineKind: 'subaction',
+					actionId: id,
+				},
+			];
 		}
-		return [{ title: label, items: sub }];
+		return [
+			{
+				title: label,
+				items: sub,
+				timelineKind: 'subaction',
+				actionId: id,
+			},
+		];
 	},
 });

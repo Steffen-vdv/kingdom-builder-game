@@ -4,6 +4,7 @@ import type {
 	LegacyContentTranslator,
 	LegacyContentTranslatorContext,
 	Summary,
+	TranslatorLogEntry,
 } from './types';
 
 const TRANSLATORS = new Map<string, ContentTranslator<unknown, unknown>>();
@@ -72,19 +73,19 @@ export function logContent<T, O>(
 	target: T,
 	ctx: TranslationContext,
 	opts?: O,
-): string[];
+): TranslatorLogEntry[];
 export function logContent<T, O>(
 	type: string,
 	target: T,
 	ctx: LegacyContentTranslatorContext,
 	opts?: O,
-): string[];
+): TranslatorLogEntry[];
 export function logContent<T, O>(
 	type: string,
 	target: T,
 	ctx: TranslationContext | LegacyContentTranslatorContext,
 	opts?: O,
-): string[] {
+): TranslatorLogEntry[] {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;

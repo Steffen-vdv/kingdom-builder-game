@@ -119,7 +119,9 @@ function createLinkedContentResolver({
 			if (!targetId) {
 				return '';
 			}
-			const target = logContent(contentType, targetId, ctx)[0];
+			const rawTarget = logContent(contentType, targetId, ctx)[0];
+			const target =
+				rawTarget && typeof rawTarget === 'object' ? rawTarget.text : rawTarget;
 			return target ? ` - ${target}` : '';
 		};
 	};

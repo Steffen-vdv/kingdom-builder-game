@@ -6,13 +6,14 @@ import { type ResourceKey } from '@kingdom-builder/contents';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { TranslationDiffContext } from '../translation';
+import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 
 interface AppendSubActionChangesOptions {
 	traces: ActionTrace[];
 	context: TranslationContext;
 	diffContext: TranslationDiffContext;
 	resourceKeys: ResourceKey[];
-	messages: string[];
+	messages: ActionLogLineDescriptor[];
 }
 
 export function appendSubActionChanges({
@@ -40,19 +41,35 @@ export function appendSubActionChanges({
 		const actionDefinition = context.actions.get(trace.id);
 		const icon = actionDefinition?.icon ?? '';
 		const name = actionDefinition?.name ?? trace.id;
-		const line = `  ${icon} ${name}`;
-		const index = messages.indexOf(line);
-		if (index !== -1) {
-			const indented = subChanges.map((change) => `    ${change}`);
-			messages.splice(index + 1, 0, ...indented);
+		const trimmed = `${[icon, name].filter(Boolean).join(' ').trim()}`;
+		const index = messages.findIndex((entry) => {
+			if (entry.kind === 'subaction') {
+				if (entry.refId === trace.id) {
+					return true;
+				}
+				if (entry.text === trimmed) {
+					return true;
+				}
+			}
+			return false;
+		});
+		if (index === -1) {
+			continue;
 		}
+		const parentDepth = messages[index]?.depth ?? 1;
+		const nested = subChanges.map<ActionLogLineDescriptor>((change) => ({
+			text: change,
+			depth: parentDepth + 1,
+			kind: 'effect',
+		}));
+		messages.splice(index + 1, 0, ...nested);
 	}
 	return subLines;
 }
 
 interface FilterActionDiffChangesOptions {
 	changes: string[];
-	messages: string[];
+	messages: ActionLogLineDescriptor[];
 	subLines: string[];
 }
 
@@ -72,7 +89,7 @@ export function filterActionDiffChanges({
 	const subPrefixes = subLines.map(normalizeLine);
 	const messagePrefixes = new Set<string>();
 	for (const line of messages) {
-		const normalized = normalizeLine(line);
+		const normalized = normalizeLine(line.text);
 		if (normalized) {
 			messagePrefixes.add(normalized);
 		}

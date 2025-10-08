@@ -14,6 +14,15 @@ import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '../../packages/engine/tests/factories/content';
 
+type TimelineEntry = string | { text: string };
+
+function extractLineText(entry: TimelineEntry | undefined): string {
+	if (!entry) {
+		return '';
+	}
+	return typeof entry === 'string' ? entry : entry.text;
+}
+
 describe('content-driven action log hooks', () => {
 	it(
 		'render linked targets for actions without relying on build/' +
@@ -113,10 +122,11 @@ describe('content-driven action log hooks', () => {
 					id: hall.id,
 				},
 			);
+			const buildingHeadline = extractLineText(buildingLog[0]);
 			if (hall.icon) {
-				expect(buildingLog[0]).toContain(hall.icon);
+				expect(buildingHeadline).toContain(hall.icon);
 			}
-			expect(buildingLog[0]).toContain(hall.name);
+			expect(buildingHeadline).toContain(hall.name);
 
 			const landId = session.getLegacyContext().activePlayer.lands[0]?.id;
 			const developmentLog = logContent(
@@ -128,17 +138,18 @@ describe('content-driven action log hooks', () => {
 					landId,
 				},
 			);
+			const developmentHeadline = extractLineText(developmentLog[0]);
 			if (improvement.icon) {
-				expect(developmentLog[0]).toContain(improvement.icon);
+				expect(developmentHeadline).toContain(improvement.icon);
 			}
-			expect(developmentLog[0]).toContain(improvement.name);
+			expect(developmentHeadline).toContain(improvement.name);
 
 			const staticLog = logContent(
 				'action',
 				constructStatic.id,
 				translationContext,
 			);
-			expect(staticLog[0]).toContain(plainHall.name);
+			expect(extractLineText(staticLog[0])).toContain(plainHall.name);
 
 			const buildingLabel = logContent(
 				'building',

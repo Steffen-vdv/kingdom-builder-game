@@ -48,7 +48,9 @@ export function buildOptionEntry(
 	if (mode === 'log') {
 		const translated = selection
 			? logEffects(selection.effects, context)
-			: logContent('action', option.actionId, context, mergedParams);
+			: logContent('action', option.actionId, context, mergedParams).map(
+					(entry) => (typeof entry === 'string' ? entry : entry.text),
+				);
 		const { entry } = buildActionOptionTranslation(
 			option,
 			context,

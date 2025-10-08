@@ -80,10 +80,26 @@ describe('hold festival action translation', () => {
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
 		expect(log).toEqual([
-			`${details.festival.icon} ${details.festival.name}`,
-			`  ${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
-			`    ${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
-			`    ${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} duration: Until player's next ${upkeepDescriptionLabel}`,
+			{
+				text: `${details.festival.icon} ${details.festival.name}`,
+				depth: 0,
+				kind: 'headline',
+			},
+			{
+				text: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
+				depth: 1,
+				kind: 'group',
+			},
+			{
+				text: `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+				depth: 2,
+				kind: 'effect',
+			},
+			{
+				text: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} duration: Until player's next ${upkeepDescriptionLabel}`,
+				depth: 2,
+				kind: 'effect',
+			},
 		]);
 	});
 });
