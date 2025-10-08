@@ -201,9 +201,11 @@ export class SessionTransport {
 		names: Record<string, string>,
 	): void {
 		for (const [playerId, playerName] of Object.entries(names)) {
-			if (playerName) {
-				session.updatePlayerName(playerId as PlayerId, playerName);
+			const typedId = playerId as PlayerId;
+			if (!playerName?.trim()) {
+				continue;
 			}
+			session.updatePlayerName(typedId, playerName);
 		}
 	}
 
