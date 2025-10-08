@@ -1,17 +1,20 @@
 import React, { useMemo } from 'react';
-import { getActionCosts } from '@kingdom-builder/engine';
-import { SLOT_INFO, type Focus } from '@kingdom-builder/contents';
+import { SLOT_INFO } from '@kingdom-builder/contents';
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
-	getOptionalProperty,
 	playerHasRequiredResources,
 	sumNonActionCosts,
 } from './utils';
-import type { Action, Development, DisplayPlayer } from './types';
+import {
+	toPerformableAction,
+	type Action,
+	type Development,
+	type DisplayPlayer,
+} from './types';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -46,17 +49,20 @@ export default function DevelopOptions({
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		ctx,
+		session,
+		sessionView,
+		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
 	const landIdForCost = player.lands[0]?.id as string;
+	const actionInfo = sessionView.actions.get(action.id);
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
-				const costsBag = getActionCosts(action.id, ctx, {
+				const costsBag = session.getActionCosts(action.id, {
 					id: development.id,
 					landId: landIdForCost,
 				});
@@ -68,12 +74,11 @@ export default function DevelopOptions({
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, ctx, action.id, landIdForCost, actionCostResource]);
+	}, [developments, session, action.id, landIdForCost, actionCostResource]);
 	return (
 		<div>
 			<h3 className="font-medium">
-				{ctx.actions.get(action.id)?.icon || ''}{' '}
-				{ctx.actions.get(action.id)?.name}{' '}
+				{actionInfo?.icon || ''} {actionInfo?.name || action.name}{' '}
 				<span className="italic text-sm font-normal">
 					(Effects take place on build and last until development is removed)
 				</span>
@@ -83,12 +88,8 @@ export default function DevelopOptions({
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
 				{entries.map(({ development, costs }) => {
-					const rawDevelopment = ctx.developments.get(development.id);
-					const upkeep = getOptionalProperty<Record<string, number>>(
-						rawDevelopment,
-						'upkeep',
-					);
-					const focus = getOptionalProperty<Focus>(rawDevelopment, 'focus');
+					const upkeep = development.upkeep;
+					const focus = development.focus;
 					const developLandRequirement = formatLandRequirement('Requires');
 					const requirements = hasDevelopLand ? [] : [developLandRequirement];
 					const canPay =
@@ -114,8 +115,7 @@ export default function DevelopOptions({
 							key={development.id}
 							title={
 								<>
-									{ctx.developments.get(development.id)?.icon || ''}{' '}
-									{development.name}
+									{development.icon || ''} {development.name}
 								</>
 							}
 							costs={costs}
@@ -136,7 +136,7 @@ export default function DevelopOptions({
 								const landId = player.lands.find(
 									(land) => land.slotsFree > 0,
 								)?.id;
-								void handlePerform(action, {
+								void handlePerform(toPerformableAction(action), {
 									id: development.id,
 									landId,
 								});
@@ -145,15 +145,13 @@ export default function DevelopOptions({
 								const full = describeContent(
 									'development',
 									development.id,
-									ctx,
+									translationContext,
 								);
 								const { effects, description } = splitSummary(full);
 								handleHoverCard({
-									title: `${ctx.actions.get(action.id)?.icon || ''} ${
-										ctx.actions.get(action.id)?.name
-									} - ${ctx.developments.get(development.id)?.icon || ''} ${
-										development.name
-									}`,
+									title: `${actionInfo?.icon || ''} ${
+										actionInfo?.name ?? action.name
+									} - ${development.icon || ''} ${development.name}`,
 									effects,
 									requirements,
 									costs,

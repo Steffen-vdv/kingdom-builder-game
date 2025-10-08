@@ -22,6 +22,8 @@ import {
 import { createTranslationContext } from '../src/translation/context';
 import { translateRequirementFailure } from '../src/translation';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import { selectSessionView } from '../src/state/sessionSelectors';
+import type { SessionRegistries } from '../src/state/sessionSelectors.types';
 import {
 	useActionResolution,
 	type ActionResolution,
@@ -41,8 +43,14 @@ const ctx = createEngine({
 	start: GAME_START,
 	rules: RULES,
 });
-const actionCostResource = ctx.actionCostResource;
 const engineSnapshot = snapshotEngine(ctx);
+const actionCostResource = engineSnapshot.actionCostResource;
+const sessionRegistries: SessionRegistries = {
+	actions: ACTIONS,
+	buildings: BUILDINGS,
+	developments: DEVELOPMENTS,
+};
+const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 const translationContext = createTranslationContext(
 	engineSnapshot,
 	{
@@ -79,7 +87,13 @@ const findActionWithReq = () => {
 };
 const actionData = findActionWithReq();
 const mockGame = {
-	ctx,
+	session: {
+		getActionCosts: vi.fn(),
+		getActionRequirements: vi.fn(),
+		getActionOptions: vi.fn(),
+	},
+	sessionState: engineSnapshot,
+	sessionView,
 	translationContext,
 	ruleSnapshot: engineSnapshot.rules,
 	log: [],
@@ -96,7 +110,7 @@ const mockGame = {
 	setPhaseSteps: vi.fn(),
 	phaseTimer: 0,
 	mainApStart: 0,
-	displayPhase: ctx.game.currentPhase,
+	displayPhase: engineSnapshot.game.currentPhase,
 	setDisplayPhase: vi.fn(),
 	phaseHistories: {},
 	tabsEnabled: true,
@@ -135,7 +149,7 @@ afterEach(() => {
 describe('<HoverCard />', () => {
 	it('renders hover card details from context', () => {
 		const { id, requirements, costs } = actionData;
-		const def = ctx.actions.get(id);
+		const def = ACTIONS.get(id);
 		const title = `${def.icon} ${def.name}`;
 		mockGame.hoverCard = {
 			title,
@@ -191,12 +205,16 @@ describe('<HoverCard />', () => {
 		};
 		render(<ResolutionHarness />);
 		let resolutionPromise: Promise<void> = Promise.resolve();
+		const activePlayerView = mockGame.sessionView.active;
+		if (!activePlayerView) {
+			throw new Error('Expected active player in session view');
+		}
 		act(() => {
 			resolutionPromise = mockGame.showResolution({
 				lines: ['First reveal', 'Second reveal'],
 				player: {
-					id: mockGame.ctx.activePlayer.id,
-					name: mockGame.ctx.activePlayer.name,
+					id: activePlayerView.id,
+					name: activePlayerView.name,
 				},
 			});
 		});

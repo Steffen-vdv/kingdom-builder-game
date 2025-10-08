@@ -1,15 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-	getActionCosts,
-	getActionEffectGroups,
-	type ActionEffectGroup,
-	type ActionEffectGroupChoiceMap,
-	type ActionEffectGroupOption,
+import type {
+	ActionEffectGroup,
+	ActionEffectGroupChoiceMap,
+	ActionEffectGroupOption,
 } from '@kingdom-builder/engine';
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import GenericActionCard from './GenericActionCard';
-import type { Action, DisplayPlayer } from './types';
+import { toPerformableAction, type Action, type DisplayPlayer } from './types';
 
 export interface PendingActionState {
 	action: Action;
@@ -31,7 +29,8 @@ function GenericActions({
 	canInteract: boolean;
 }) {
 	const {
-		ctx: context,
+		session,
+		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
@@ -39,6 +38,11 @@ function GenericActions({
 		actionCostResource,
 	} = useGameEngine();
 	const formatRequirement = (requirement: string) => requirement;
+	const performAction = useCallback(
+		(action: Action, params?: Record<string, unknown>) =>
+			handlePerform(toPerformableAction(action), params),
+		[handlePerform],
+	);
 	const [pending, setPending] = useState<PendingActionState | null>(null);
 
 	useEffect(() => {
@@ -69,12 +73,13 @@ function GenericActions({
 				}
 			}
 			const params: Record<string, unknown> = {};
-			if (placeholders.has('landId')) {
-				const landCount = context.activePlayer.lands.length + 1;
-				params.landId = `${context.activePlayer.id}-L${landCount}`;
+			const activePlayer = sessionView.active;
+			if (placeholders.has('landId') && activePlayer) {
+				const landCount = activePlayer.lands.length + 1;
+				params.landId = `${activePlayer.id}-L${landCount}`;
 			}
-			if (placeholders.has('playerId')) {
-				params.playerId = context.activePlayer.id;
+			if (placeholders.has('playerId') && activePlayer) {
+				params.playerId = activePlayer.id;
 			}
 			for (const placeholder of placeholders) {
 				if (placeholder in params) {
@@ -91,11 +96,7 @@ function GenericActions({
 				choices: {},
 			});
 		},
-		[
-			clearHoverCard,
-			context.activePlayer.id,
-			context.activePlayer.lands.length,
-		],
+		[clearHoverCard, sessionView.active?.id, sessionView.active?.lands.length],
 	);
 
 	const handleOptionSelect = useCallback(
@@ -150,7 +151,7 @@ function GenericActions({
 						params: mergedParams,
 					};
 				}
-				void handlePerform(previous.action, {
+				void performAction(previous.action, {
 					...mergedParams,
 					choices: nextChoices,
 				});
@@ -163,7 +164,7 @@ function GenericActions({
 	const entries = useMemo(() => {
 		return actions
 			.map((action) => {
-				const costBag = getActionCosts(action.id, context);
+				const costBag = session.getActionCosts(action.id);
 				const costs: Record<string, number> = {};
 				for (const [resourceKey, cost] of Object.entries(costBag)) {
 					costs[resourceKey] = cost ?? 0;
@@ -177,11 +178,11 @@ function GenericActions({
 					},
 					0,
 				);
-				const groups = getActionEffectGroups(action.id, context);
+				const groups = session.getActionOptions(action.id);
 				return { action, costs, total, groups };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [actions, context, actionCostResource]);
+	}, [actions, session, actionCostResource]);
 
 	return (
 		<>
@@ -199,10 +200,10 @@ function GenericActions({
 					cancelPending={cancelPending}
 					beginSelection={beginSelection}
 					handleOptionSelect={handleOptionSelect}
-					context={context}
+					session={session}
 					translationContext={translationContext}
 					actionCostResource={actionCostResource}
-					handlePerform={handlePerform}
+					handlePerform={performAction}
 					handleHoverCard={handleHoverCard}
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}

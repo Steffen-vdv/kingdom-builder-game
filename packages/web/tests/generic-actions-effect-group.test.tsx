@@ -1,8 +1,11 @@
 /** @vitest-environment jsdom */
+/* eslint-disable max-lines */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { ActionId, Resource } from '@kingdom-builder/contents';
+import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import GenericActions from '../src/components/actions/GenericActions';
 import type * as TranslationModule from '../src/translation';
 import type * as TranslationContentModule from '../src/translation/content';
@@ -11,16 +14,9 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from './helpers/translationContextStub';
-const getActionCostsMock = vi.fn();
-const getActionRequirementsMock = vi.fn();
-const getActionEffectGroupsMock = vi.fn();
-vi.mock('@kingdom-builder/engine', () => ({
-	getActionCosts: (...args: unknown[]) => getActionCostsMock(...args),
-	getActionRequirements: (...args: unknown[]) =>
-		getActionRequirementsMock(...args),
-	getActionEffectGroups: (...args: unknown[]) =>
-		getActionEffectGroupsMock(...args),
-}));
+import { selectSessionView } from '../src/state/sessionSelectors';
+import type { SessionRegistries } from '../src/state/sessionSelectors.types';
+import { createActionsPanelState } from './helpers/createActionsPanelState';
 const getRequirementIconsMock = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => getRequirementIconsMock(...args),
@@ -71,6 +67,7 @@ const actionsMap = new Map([
 ] as const);
 
 function createMockGame() {
+	const actionCostResource = 'ap';
 	const activePlayer = {
 		id: 'A',
 		name: 'Player',
@@ -131,37 +128,117 @@ function createMockGame() {
 			resources: opponent.resources,
 			population: opponent.population,
 		}),
-		actionCostResource: 'ap',
+		actionCostResource,
 	});
-	return {
-		ctx: {
-			actions: {
-				get(id: string) {
-					const action = actionsMap.get(id);
-					if (!action) {
-						throw new Error(`Unknown action ${id}`);
-					}
-					return action;
-				},
-				map: actionsMap,
-			},
-			activePlayer,
-			actionCostResource: 'ap',
+
+	const toSnapshot = (participant: typeof activePlayer) => ({
+		id: participant.id,
+		name: participant.name,
+		resources: { ...participant.resources },
+		stats: {},
+		statsHistory: {},
+		population: { ...participant.population },
+		lands: participant.lands.map((land) => ({
+			id: land.id,
+			slotsMax: land.slotsFree,
+			slotsUsed: 0,
+			tilled: false,
+			developments: [],
+		})),
+		buildings: Array.from(participant.buildings),
+		actions: Array.from(participant.actions),
+		statSources: {},
+		skipPhases: {},
+		skipSteps: {},
+		passives: [],
+	});
+
+	const sessionState: EngineSessionSnapshot = {
+		game: {
+			turn: 1,
+			currentPlayerIndex: 0,
+			currentPhase: 'main',
+			currentStep: '',
+			phaseIndex: 0,
+			stepIndex: 0,
+			devMode: false,
+			players: [toSnapshot(activePlayer), toSnapshot(opponent)],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
 		},
-		translationContext,
-		ruleSnapshot: {
+		phases: [
+			{
+				id: 'main',
+				name: 'Main',
+				action: true,
+				steps: [],
+			},
+		],
+		actionCostResource,
+		recentResourceGains: [],
+		compensations: {} as Record<string, PlayerStartConfig>,
+		rules: {
 			tieredResourceKey: Resource.happiness,
 			tierDefinitions: [],
+			winConditions: [],
 		},
-		log: [],
+		passiveRecords: {
+			[activePlayer.id]: [],
+			[opponent.id]: [],
+		},
+	};
+
+	const emptyRegistry = new Map<string, never>();
+	const sessionRegistries: SessionRegistries = {
+		actions: {
+			entries: () => Array.from(actionsMap.entries()),
+			get(id: string) {
+				const action = actionsMap.get(id as ActionId);
+				if (!action) {
+					throw new Error(`Unknown action ${id}`);
+				}
+				return action;
+			},
+			has(id: string) {
+				return actionsMap.has(id as ActionId);
+			},
+		},
+		buildings: {
+			entries: () => Array.from(emptyRegistry.entries()),
+			get(id: string) {
+				throw new Error(`No building ${id}`);
+			},
+			has() {
+				return false;
+			},
+		},
+		developments: {
+			entries: () => Array.from(emptyRegistry.entries()),
+			get(id: string) {
+				throw new Error(`No development ${id}`);
+			},
+			has() {
+				return false;
+			},
+		},
+	};
+
+	const sessionView = selectSessionView(sessionState, sessionRegistries);
+
+	const session = {
+		getActionCosts: vi.fn(),
+		getActionRequirements: vi.fn(),
+		getActionOptions: vi.fn(),
+	} as const;
+
+	return {
+		...createActionsPanelState(actionCostResource),
 		logOverflowed: false,
-		handlePerform: vi.fn().mockResolvedValue(undefined),
-		handleHoverCard: vi.fn(),
-		clearHoverCard: vi.fn(),
-		actionCostResource: 'ap',
-		resolution: null,
-		showResolution: vi.fn().mockResolvedValue(undefined),
-		acknowledgeResolution: vi.fn(),
+		session,
+		sessionState,
+		sessionView,
+		translationContext,
+		ruleSnapshot: sessionState.rules,
 	};
 }
 let mockGame: ReturnType<typeof createMockGame>;
@@ -173,17 +250,20 @@ vi.mock('../src/state/GameContext', () => ({
 describe('GenericActions effect group handling', () => {
 	beforeEach(() => {
 		mockGame = createMockGame();
-		getActionCostsMock.mockReset();
-		getActionRequirementsMock.mockReset();
-		getActionEffectGroupsMock.mockReset();
+		mockGame.session.getActionCosts.mockReset();
+		mockGame.session.getActionRequirements.mockReset();
+		mockGame.session.getActionOptions.mockReset();
 		getRequirementIconsMock.mockReset();
 		describeContentMock.mockReset();
 		summarizeContentMock.mockReset();
 		logContentMock.mockReset();
 		splitSummaryMock.mockReset();
 
-		getActionCostsMock.mockImplementation(() => ({ ap: 1, gold: 12 }));
-		getActionRequirementsMock.mockImplementation(() => []);
+		mockGame.session.getActionCosts.mockImplementation(() => ({
+			ap: 1,
+			gold: 12,
+		}));
+		mockGame.session.getActionRequirements.mockImplementation(() => []);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
 			if (type === 'action' && id === ActionId.develop) {
@@ -191,7 +271,7 @@ describe('GenericActions effect group handling', () => {
 			}
 			return [];
 		});
-		getActionEffectGroupsMock.mockImplementation((actionId: string) => {
+		mockGame.session.getActionOptions.mockImplementation((actionId: string) => {
 			if (actionId !== ActionId.royal_decree) {
 				return [];
 			}
@@ -225,11 +305,15 @@ describe('GenericActions effect group handling', () => {
 			order: 5,
 			focus: 'economy' as const,
 		};
+		const activePlayer = mockGame.sessionView.active;
+		if (!activePlayer) {
+			throw new Error('Expected active player for generic actions test');
+		}
 		render(
 			<GenericActions
 				actions={[action]}
 				summaries={new Map([[action.id, ['Expand swiftly']]])}
-				player={mockGame.ctx.activePlayer as never}
+				player={activePlayer}
 				canInteract={true}
 			/>,
 		);

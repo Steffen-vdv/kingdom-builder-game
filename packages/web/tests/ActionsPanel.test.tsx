@@ -1,23 +1,24 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+	describe,
+	it,
+	expect,
+	beforeEach,
+	afterEach,
+	afterAll,
+	vi,
+} from 'vitest';
 import { render, screen, within, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
+import { POPULATIONS } from '@kingdom-builder/contents';
+import type { PopulationDef } from '@kingdom-builder/contents';
 import { translateRequirementFailure } from '../src/translation';
 import { createActionsPanelGame } from './helpers/actionsPanel';
 import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
 
-const actionCostsMock = vi.fn();
-const actionRequirementsMock = vi.fn();
 const requirementIconsMock = vi.fn();
-
-vi.mock('@kingdom-builder/engine', () => ({
-	getActionCosts: (...args: unknown[]) => actionCostsMock(...args),
-	getActionRequirements: (...args: unknown[]) =>
-		actionRequirementsMock(...args),
-	getActionEffectGroups: () => [],
-}));
 
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => requirementIconsMock(...args),
@@ -40,18 +41,25 @@ const translateRequirementFailureMock = vi.mocked(translateRequirementFailure);
 
 let mockGame = createActionsPanelGame();
 let metadata = mockGame.metadata;
+const originalPopulationGet = POPULATIONS.get.bind(POPULATIONS);
+const populationEntriesSpy = vi.spyOn(POPULATIONS, 'entries');
+const populationGetSpy = vi.spyOn(POPULATIONS, 'get');
 
 function setScenario(options?: ActionsPanelGameOptions) {
 	mockGame = createActionsPanelGame(options);
 	metadata = mockGame.metadata;
-	actionCostsMock.mockImplementation((actionId: string) => {
-		return metadata.costMap.get(actionId) ?? {};
-	});
-	actionRequirementsMock.mockImplementation((actionId: string) => {
-		return metadata.requirementFailures.get(actionId) ?? [];
-	});
 	requirementIconsMock.mockImplementation((actionId: string) => {
 		return metadata.requirementIcons.get(actionId) ?? [];
+	});
+	populationEntriesSpy.mockImplementation(() =>
+		metadata.populationRoles.map((role) => [role.id, role]),
+	);
+	populationGetSpy.mockImplementation((id: string) => {
+		const match = metadata.populationRoles.find((role) => role.id === id);
+		if (match) {
+			return match as PopulationDef;
+		}
+		return originalPopulationGet(id);
 	});
 }
 
@@ -63,11 +71,16 @@ afterEach(() => {
 	cleanup();
 });
 
+afterAll(() => {
+	populationEntriesSpy.mockRestore();
+	populationGetSpy.mockRestore();
+});
+
 beforeEach(() => {
-	actionCostsMock.mockReset();
-	actionRequirementsMock.mockReset();
 	requirementIconsMock.mockReset();
 	translateRequirementFailureMock.mockClear();
+	populationEntriesSpy.mockReset();
+	populationGetSpy.mockReset();
 	setScenario();
 });
 
@@ -80,7 +93,7 @@ describe('<ActionsPanel />', () => {
 			const raiseAction = metadata.actions.raise;
 			expect(requirementIconsMock).toHaveBeenCalledWith(
 				raiseAction.id,
-				expect.anything(),
+				mockGame.translationContext,
 			);
 			const baseIcons = metadata.requirementIcons.get(raiseAction.id) ?? [];
 			const hireButtons = screen.getAllByRole('button', {
@@ -121,7 +134,7 @@ describe('<ActionsPanel />', () => {
 		}
 		expect(requirementIconsMock).toHaveBeenCalledWith(
 			buildingAction.id,
-			expect.anything(),
+			mockGame.translationContext,
 		);
 		const icons = metadata.requirementIcons.get(buildingAction.id) ?? [];
 		const buildingDefinition = metadata.building;

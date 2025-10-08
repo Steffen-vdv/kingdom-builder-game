@@ -1,6 +1,4 @@
 import React, { useMemo } from 'react';
-import type { Focus } from '@kingdom-builder/contents';
-import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
 import {
 	splitSummary,
 	translateRequirementFailure,
@@ -12,11 +10,15 @@ import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
-	getOptionalProperty,
 	playerHasRequiredResources,
 	sumNonActionCosts,
 } from './utils';
-import type { Action, Building, DisplayPlayer } from './types';
+import {
+	toPerformableAction,
+	type Action,
+	type Building,
+	type DisplayPlayer,
+} from './types';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -44,7 +46,8 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		ctx,
+		session,
+		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
@@ -55,12 +58,25 @@ export default function BuildOptions({
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
+	const actionInfo = sessionView.actions.get(action.id);
+	const requirementFailures = useMemo(
+		() => session.getActionRequirements(action.id),
+		[session, action.id],
+	);
+	const requirements = useMemo(
+		() =>
+			requirementFailures.map((failure) =>
+				translateRequirementFailure(failure, translationContext),
+			),
+		[requirementFailures, translationContext],
+	);
+	const meetsRequirements = requirements.length === 0;
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = getActionCosts(action.id, ctx, {
+				const costsBag = session.getActionCosts(action.id, {
 					id: building.id,
 				});
 				const costs: Record<string, number> = {};
@@ -71,12 +87,17 @@ export default function BuildOptions({
 				return { building, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [buildings, ctx, action.id, actionCostResource, player.buildings.size]);
+	}, [
+		buildings,
+		session,
+		action.id,
+		actionCostResource,
+		player.buildings.size,
+	]);
 	return (
 		<div>
 			<h3 className="font-medium">
-				{ctx.actions.get(action.id)?.icon || ''}{' '}
-				{ctx.actions.get(action.id)?.name}{' '}
+				{actionInfo?.icon || ''} {actionInfo?.name || action.name}{' '}
 				<span className="italic text-sm font-normal">
 					(Effects take place on build and last until building is removed)
 				</span>
@@ -86,18 +107,9 @@ export default function BuildOptions({
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
 				{entries.map(({ building, costs }) => {
-					const rawBuilding = ctx.buildings.get(building.id);
-					const upkeep = getOptionalProperty<Record<string, number>>(
-						rawBuilding,
-						'upkeep',
-					);
-					const focus = getOptionalProperty<Focus>(rawBuilding, 'focus');
-					const icon = getOptionalProperty<string>(rawBuilding, 'icon');
-					const requirementFailures = getActionRequirements(action.id, ctx);
-					const requirements = requirementFailures.map((failure) =>
-						translateRequirementFailure(failure, ctx),
-					);
-					const meetsRequirements = requirements.length === 0;
+					const upkeep = building.upkeep;
+					const focus = building.focus;
+					const icon = building.icon;
 					const canPay = playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(building.id);
 					const implemented = (summary?.length ?? 0) > 0;
@@ -142,17 +154,17 @@ export default function BuildOptions({
 								if (!canInteract) {
 									return;
 								}
-								void handlePerform(action, { id: building.id });
+								void handlePerform(toPerformableAction(action), {
+									id: building.id,
+								});
 							}}
 							onMouseEnter={() => {
 								const full = descriptions.get(building.id) ?? [];
 								const { effects, description } = splitSummary(full);
 								handleHoverCard({
-									title: `${ctx.actions.get(action.id)?.icon || ''} ${
-										ctx.actions.get(action.id)?.name
-									} - ${ctx.buildings.get(building.id)?.icon || ''} ${
-										building.name
-									}`,
+									title: `${actionInfo?.icon || ''} ${
+										actionInfo?.name ?? action.name
+									} - ${icon || ''} ${building.name}`,
 									effects,
 									requirements,
 									costs,

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import {
 	POPULATION_INFO,
 	POPULATION_ROLES,
@@ -6,8 +7,13 @@ import {
 	Stat,
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
+import { type PlayerStartConfig } from '@kingdom-builder/protocol';
+import { vi } from 'vitest';
 import { createContentFactory } from '../../../engine/tests/factories/content';
-import type { RequirementFailure } from '@kingdom-builder/engine';
+import type {
+	EngineSessionSnapshot,
+	RequirementFailure,
+} from '@kingdom-builder/engine';
 import { createActionsPanelState } from './createActionsPanelState';
 import { createRegistry } from './createRegistry';
 import {
@@ -24,6 +30,8 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from './translationContextStub';
+import { selectSessionView } from '../../src/state/sessionSelectors';
+import type { SessionRegistries } from '../../src/state/sessionSelectors.types';
 
 export function createActionsPanelGame({
 	populationRoles,
@@ -183,10 +191,6 @@ export function createActionsPanelGame({
 			Boolean,
 		) as ReturnType<typeof factory.action>[],
 	);
-	const populationRegistry = createRegistry([
-		...registeredPopulationRoles,
-		passivePopulation,
-	]);
 	const buildingsRegistry = createRegistry(
 		buildingDefinition ? [buildingDefinition] : [],
 	);
@@ -212,44 +216,113 @@ export function createActionsPanelGame({
 		actionCostResource,
 	});
 
+	const ruleSnapshot = {
+		tieredResourceKey: Resource.happiness,
+		tierDefinitions: [],
+		winConditions: [],
+	} as const;
+
+	const phaseDefinition = {
+		id: PhaseId.Main,
+		name: 'Main Phase',
+		action: true,
+		steps: [],
+	} as const;
+
+	const toPlayerSnapshot = (
+		participant: ReturnType<typeof createParticipant>,
+	) => ({
+		id: participant.id,
+		name: participant.name,
+		resources: { ...participant.resources },
+		stats: { [capacityStat]: 3 },
+		statsHistory: {},
+		population: { ...participant.population },
+		lands: participant.lands.map((land) => ({
+			...land,
+			slotsMax: land.slotsFree,
+			slotsUsed: 0,
+			tilled: false,
+			developments: [],
+		})),
+		buildings: Array.from(participant.buildings),
+		actions: Array.from(participant.actions),
+		statSources: {},
+		skipPhases: {},
+		skipSteps: {},
+		passives: [],
+	});
+
+	const playerSnapshot = toPlayerSnapshot(player);
+	const opponentSnapshot = toPlayerSnapshot(opponent);
+
+	const sessionState: EngineSessionSnapshot = {
+		game: {
+			turn: 1,
+			currentPlayerIndex: 0,
+			currentPhase: PhaseId.Main,
+			currentStep: '',
+			phaseIndex: 0,
+			stepIndex: 0,
+			devMode: false,
+			players: [playerSnapshot, opponentSnapshot],
+			activePlayerId: player.id,
+			opponentId: opponent.id,
+		},
+		phases: [phaseDefinition],
+		actionCostResource,
+		recentResourceGains: [],
+		compensations: {} as Record<string, PlayerStartConfig>,
+		rules: ruleSnapshot,
+		passiveRecords: {
+			[player.id]: [],
+			[opponent.id]: [],
+		},
+	};
+
+	const sessionRegistries: SessionRegistries = {
+		actions: actionsRegistry,
+		buildings: buildingsRegistry,
+		developments: developmentsRegistry,
+	};
+
+	const sessionView = selectSessionView(sessionState, sessionRegistries);
+
+	const metadata = {
+		upkeepResource,
+		capacityStat,
+		actions: {
+			raise: raisePopulationAction,
+			basic: basicAction,
+			building: buildingAction,
+		},
+		populationRoles: registeredPopulationRoles,
+		costMap: new Map(
+			actionIds.map((id) => [id, { [actionCostResource]: 1 }]),
+		) as Map<string, Record<string, number>>,
+		requirementFailures,
+		requirementIcons,
+		populationInfoIcon: POPULATION_INFO.icon,
+		building: buildingDefinition,
+	} as const;
+
+	const session = {
+		getActionCosts: vi.fn((actionId: string) => {
+			return metadata.costMap.get(actionId) ?? {};
+		}),
+		getActionRequirements: vi.fn((actionId: string) => {
+			return metadata.requirementFailures.get(actionId) ?? [];
+		}),
+		getActionOptions: vi.fn(() => []),
+	} as const;
+
 	return {
-		ctx: {
-			actions: actionsRegistry,
-			buildings: buildingsRegistry,
-			developments: developmentsRegistry,
-			populations: populationRegistry,
-			game: {
-				players: [player, opponent],
-				currentPhase: PhaseId.Main,
-				currentStep: '',
-			},
-			activePlayer: player,
-			actionCostResource,
-			phases: [{ id: PhaseId.Main, action: true, steps: [] }],
-		},
+		session,
+		sessionState,
+		sessionView,
 		translationContext,
-		ruleSnapshot: {
-			tieredResourceKey: Resource.happiness,
-			tierDefinitions: [],
-			winConditions: [],
-		},
+		ruleSnapshot,
 		...createActionsPanelState(actionCostResource),
-		metadata: {
-			upkeepResource,
-			capacityStat,
-			actions: {
-				raise: raisePopulationAction,
-				basic: basicAction,
-				building: buildingAction,
-			},
-			populationRoles: registeredPopulationRoles,
-			costMap: new Map(
-				actionIds.map((id) => [id, { [actionCostResource]: 1 }]),
-			) as Map<string, Record<string, number>>,
-			requirementFailures,
-			requirementIcons,
-			populationInfoIcon: POPULATION_INFO.icon,
-			building: buildingDefinition,
-		},
+		metadata,
 	};
 }

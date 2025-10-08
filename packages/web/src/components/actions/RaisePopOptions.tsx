@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
-import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
 import {
 	POPULATION_ROLES,
+	POPULATIONS,
 	type PopulationRoleId,
 } from '@kingdom-builder/contents';
 import {
@@ -19,7 +19,7 @@ import {
 	determineRaisePopRoles,
 	type PopulationRegistryLike,
 } from './populationHelpers';
-import type { Action, DisplayPlayer } from './types';
+import { toPerformableAction, type Action, type DisplayPlayer } from './types';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -36,7 +36,8 @@ export default function RaisePopOptions({
 	canInteract: boolean;
 }) {
 	const {
-		ctx,
+		session,
+		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
@@ -44,12 +45,20 @@ export default function RaisePopOptions({
 		actionCostResource,
 	} = useGameEngine();
 	const populationRegistry = useMemo(
-		() => ctx.populations as unknown as PopulationRegistryLike,
-		[ctx.populations],
+		() =>
+			({
+				get(id: string) {
+					return POPULATIONS.get(id);
+				},
+				entries() {
+					return POPULATIONS.entries();
+				},
+			}) as PopulationRegistryLike,
+		[],
 	);
 	const actionDefinition = useMemo(
-		() => ctx.actions.get(action.id) as Action | undefined,
-		[ctx.actions, action.id],
+		() => translationContext.actions.get(action.id) as Action | undefined,
+		[translationContext.actions, action.id],
 	);
 	const baseRequirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
@@ -69,11 +78,11 @@ export default function RaisePopOptions({
 			),
 		[actionDefinition, baseRequirementIcons, populationRegistry],
 	);
-	const actionInfo = ctx.actions.get(action.id);
+	const actionInfo = sessionView.actions.get(action.id);
 	return (
 		<>
 			{roleOptions.map((role) => {
-				const costsBag = getActionCosts(action.id, ctx);
+				const costsBag = session.getActionCosts(action.id);
 				const costEntries = Object.entries(costsBag);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of costEntries) {
@@ -85,9 +94,9 @@ export default function RaisePopOptions({
 				} catch {
 					upkeep = undefined;
 				}
-				const rawRequirements = getActionRequirements(action.id, ctx);
+				const rawRequirements = session.getActionRequirements(action.id);
 				const requirements = rawRequirements.map((failure) =>
-					translateRequirementFailure(failure, ctx),
+					translateRequirementFailure(failure, translationContext),
 				);
 				const canPay = playerHasRequiredResources(player.resources, costs);
 				const meetsReq = requirements.length === 0;
@@ -143,7 +152,7 @@ export default function RaisePopOptions({
 							if (!canInteract) {
 								return;
 							}
-							void handlePerform(action, { role });
+							void handlePerform(toPerformableAction(action), { role });
 						}}
 						onMouseEnter={() => {
 							const { effects, description } = splitSummary(summary);

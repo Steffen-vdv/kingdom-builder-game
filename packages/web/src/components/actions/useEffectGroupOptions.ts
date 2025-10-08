@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
-import {
-	getActionRequirements,
-	type ActionEffectGroup,
-	type ActionEffectGroupOption,
-	type EngineContext,
+import type {
+	ActionEffectGroup,
+	ActionEffectGroupOption,
 } from '@kingdom-builder/engine';
 import {
 	describeContent,
@@ -13,7 +11,7 @@ import {
 	type TranslationContext,
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
-import type { HoverCardData } from './types';
+import type { HoverCardData, GameEngineApi } from './types';
 import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
 
 type ResolveParams = Record<string, unknown> | undefined;
@@ -21,7 +19,7 @@ type ResolveParams = Record<string, unknown> | undefined;
 type BuildOptionsParams = {
 	currentGroup: ActionEffectGroup | undefined;
 	pendingParams: Record<string, unknown> | undefined;
-	context: EngineContext;
+	session: GameEngineApi['session'];
 	translationContext: TranslationContext;
 	formatRequirement: (requirement: string) => string;
 	handleOptionSelect: (
@@ -68,7 +66,7 @@ function resolveOptionParams(
 function buildHoverDetails(
 	option: ActionEffectGroupOption,
 	mergedParams: Record<string, unknown>,
-	context: EngineContext,
+	session: GameEngineApi['session'],
 	translationContext: TranslationContext,
 	formatRequirement: (requirement: string) => string,
 	hoverBackground: string,
@@ -81,13 +79,12 @@ function buildHoverDetails(
 		mergedParams,
 	);
 	const { effects: baseEffects, description } = splitSummary(hoverSummary);
-	const requirementFailures = getActionRequirements(
+	const requirementFailures = session.getActionRequirements(
 		option.actionId,
-		context,
 		mergedParams,
 	);
 	const requirements = requirementFailures.map((failure) =>
-		formatRequirement(translateRequirementFailure(failure, context)),
+		formatRequirement(translateRequirementFailure(failure, translationContext)),
 	);
 	let effects = baseEffects;
 	const idParam = mergedParams?.id;
@@ -125,7 +122,7 @@ function buildHoverDetails(
 export function useEffectGroupOptions({
 	currentGroup,
 	pendingParams,
-	context,
+	session,
 	translationContext,
 	formatRequirement,
 	handleOptionSelect,
@@ -176,7 +173,7 @@ export function useEffectGroupOptions({
 				const hoverDetails = buildHoverDetails(
 					option,
 					mergedParams,
-					context,
+					session,
 					translationContext,
 					formatRequirement,
 					hoverBackground,
@@ -189,8 +186,8 @@ export function useEffectGroupOptions({
 		});
 	}, [
 		clearHoverCard,
-		context,
 		currentGroup,
+		session,
 		translationContext,
 		formatRequirement,
 		handleHoverCard,
