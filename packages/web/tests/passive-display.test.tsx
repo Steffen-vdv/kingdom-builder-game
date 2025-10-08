@@ -77,7 +77,7 @@ describe('<PassiveDisplay />', () => {
 			const { entries } = buildTierEntries(
 				[tierDefinition],
 				tierDefinition.id,
-				ctx,
+				mockGame.ruleSnapshot.tieredResourceKey,
 				translationContext,
 			);
 			expect(hoverCard?.effects).toEqual(entries);

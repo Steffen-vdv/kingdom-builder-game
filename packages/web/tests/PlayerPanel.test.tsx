@@ -49,6 +49,10 @@ const translationContext = createTranslationContext(
 const mockGame = {
 	ctx,
 	translationContext,
+	ruleSnapshot: {
+		tieredResourceKey: ctx.services.rules.tieredResourceKey,
+		tierDefinitions: ctx.services.rules.tierDefinitions,
+	},
 	log: [],
 	logOverflowed: false,
 	hoverCard: null,

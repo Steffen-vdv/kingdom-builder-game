@@ -3,7 +3,7 @@ import {
 	RESOURCES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { RuleSnapshot } from '@kingdom-builder/engine';
 import {
 	describeEffects,
 	splitSummary,
@@ -13,8 +13,7 @@ import type { SummaryEntry, SummaryGroup } from '../../translation/content';
 
 export const MAX_TIER_SUMMARY_LINES = 4;
 
-export type TierDefinition =
-	EngineContext['services']['rules']['tierDefinitions'][number];
+export type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
 export interface TierSummary {
 	entry: TierSummaryGroup;
@@ -115,7 +114,7 @@ function normalizeSummary(summary: string | undefined): SummaryEntry[] {
 export function buildTierEntries(
 	tiers: TierDefinition[],
 	activeId: string | undefined,
-	ctx: EngineContext,
+	tieredResourceKey: ResourceKey | undefined,
 	translationContext: TranslationContext,
 ): TierEntriesResult {
 	const getRangeStart = (tier: TierDefinition) =>
@@ -123,11 +122,8 @@ export function buildTierEntries(
 	const orderedTiers = [...tiers].sort(
 		(a, b) => getRangeStart(b) - getRangeStart(a),
 	);
-	const tierResourceKey = ctx.services.tieredResource?.resourceKey as
-		| ResourceKey
-		| undefined;
-	const tierResourceIcon = tierResourceKey
-		? RESOURCES[tierResourceKey]?.icon || ''
+	const tierResourceIcon = tieredResourceKey
+		? RESOURCES[tieredResourceKey]?.icon || ''
 		: '';
 	const entries: TierSummaryEntry[] = orderedTiers.map((tier) => ({
 		...tier,

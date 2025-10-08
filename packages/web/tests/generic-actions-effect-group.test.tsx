@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { ActionId } from '@kingdom-builder/contents';
+import { ActionId, Resource } from '@kingdom-builder/contents';
 import GenericActions from '../src/components/actions/GenericActions';
 import type * as TranslationModule from '../src/translation';
 import type * as TranslationContentModule from '../src/translation/content';
@@ -149,6 +149,10 @@ function createMockGame() {
 			actionCostResource: 'ap',
 		},
 		translationContext,
+		ruleSnapshot: {
+			tieredResourceKey: Resource.happiness,
+			tierDefinitions: [],
+		},
 		log: [],
 		logOverflowed: false,
 		handlePerform: vi.fn().mockResolvedValue(undefined),

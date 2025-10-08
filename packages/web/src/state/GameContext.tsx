@@ -108,6 +108,7 @@ export function GameProvider({
 	const enqueue = <T,>(task: () => Promise<T> | T) => session.enqueue(task);
 
 	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
+	const ruleSnapshot = useMemo(() => session.getRuleSnapshot(), [session]);
 
 	useEffect(() => {
 		const [primary] = ctx.game.players;
@@ -260,6 +261,7 @@ export function GameProvider({
 		// consumers are migrated to the session facade.
 		ctx,
 		translationContext,
+		ruleSnapshot,
 		log,
 		logOverflowed,
 		resolution,
