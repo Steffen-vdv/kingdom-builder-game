@@ -40,22 +40,13 @@ describe('protocol session contracts', () => {
 	it('matches engine snapshot shapes', () => {
 		expectMatchBoth<EngineSessionSnapshot, SessionSnapshot>();
 		expectMatchBoth<GameSnapshot, SessionGameSnapshot>();
-		// prettier-ignore
-		expectMatchBoth<
-                        GameConclusionSnapshot,
-                        SessionGameConclusionSnapshot
-                >();
-		// prettier-ignore
-		expectMatchBoth<
-                        PlayerStateSnapshot,
-                        SessionPlayerStateSnapshot
-                >();
+		expectMatchBoth<GameConclusionSnapshot, SessionGameConclusionSnapshot>();
+		expectMatchBoth<PlayerStateSnapshot, SessionPlayerStateSnapshot>();
 		expectMatchBoth<LandSnapshot, SessionLandSnapshot>();
-		// prettier-ignore
 		expectMatchBoth<
-                        AdvanceSkipSourceSnapshot,
-                        SessionAdvanceSkipSourceSnapshot
-                >();
+			AdvanceSkipSourceSnapshot,
+			SessionAdvanceSkipSourceSnapshot
+		>();
 		expectMatchBoth<AdvanceSkipSnapshot, SessionAdvanceSkipSnapshot>();
 		expectMatchBoth<EngineAdvanceResult, SessionAdvanceResult>();
 		expectMatchBoth<RuleSnapshot, SessionRuleSnapshot>();
@@ -71,11 +62,7 @@ describe('protocol session contracts', () => {
 			ReturnType<EngineSessionGetActionRequirements>,
 			SessionActionRequirementList
 		>();
-		// prettier-ignore
-		expectMatchBoth<
-                        ActionDefinitionSummary,
-                        SessionActionDefinitionSummary
-                >();
+		expectMatchBoth<ActionDefinitionSummary, SessionActionDefinitionSummary>();
 	});
 
 	it('uses protocol return types on session methods', () => {

@@ -41,7 +41,7 @@ export function mapPassiveDefinitionLookup(
 	>();
 	for (const [owner, definitions] of lists.entries()) {
 		const entries = definitions.map<[string, TranslationPassiveDefinition]>(
-			(definition) => [definition.id as string, definition],
+			(definition) => [definition.id, definition],
 		);
 		lookup.set(owner, new Map<string, TranslationPassiveDefinition>(entries));
 	}
