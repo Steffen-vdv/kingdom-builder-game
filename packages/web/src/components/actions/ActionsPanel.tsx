@@ -71,11 +71,14 @@ export default function ActionsPanel() {
 	const panelDisabled = !canInteract;
 
 	const actions = useMemo<Action[]>(() => {
+		const playerActions =
+			sessionView.actionsByPlayer.get(selectedPlayer.id) ?? [];
 		const list =
-			sessionView.actionsByPlayer.get(selectedPlayer.id) ??
-			sessionView.actionList.filter((actionDefinition) =>
-				selectedPlayer.actions.has(actionDefinition.id),
-			);
+			playerActions.length > 0
+				? playerActions
+				: sessionView.actionList.filter((actionDefinition) =>
+						selectedPlayer.actions.has(actionDefinition.id),
+					);
 		return list
 			.filter(
 				(actionDefinition) =>
