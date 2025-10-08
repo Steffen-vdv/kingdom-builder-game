@@ -126,15 +126,85 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	const listClasses = clsx(
 		'mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200',
 	);
+	const closeButtonClasses = clsx(
+		'flex h-8 w-8 items-center justify-center rounded-full border',
+		'border-slate-300 text-slate-500 transition',
+		'hover:border-slate-400 hover:text-slate-700',
+		'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500',
+		'focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100',
+		'dark:border-slate-700 dark:text-slate-300',
+		'dark:hover:border-slate-500 dark:hover:text-white',
+		'dark:focus-visible:ring-offset-slate-900',
+	);
+	const closeButtonProps = {
+		type: 'button' as const,
+		className: closeButtonClasses,
+		title: 'Close log',
+		'aria-label': 'Close log',
+	};
+	const overlayClasses = clsx(
+		'absolute inset-0 flex items-start justify-center px-4 py-12',
+		'sm:px-8 sm:py-16 lg:justify-end pointer-events-none',
+	);
+	const titleClasses = clsx(
+		'text-xl font-semibold tracking-tight',
+		'text-slate-900 dark:text-slate-100',
+	);
+	const overflowMessageClasses = clsx(
+		'mt-2 text-xs italic text-amber-700',
+		'dark:text-amber-300',
+	);
+	const headerClasses = clsx('flex items-start justify-between gap-6');
+	const header = (
+		<div className={headerClasses}>
+			<h2 id="game-log-title" className={titleClasses}>
+				Log
+			</h2>
+			<button {...closeButtonProps} onClick={onClose}>
+				<span aria-hidden="true">×</span>
+			</button>
+		</div>
+	);
+	const overflowNotice = logOverflowed ? (
+		<p className={overflowMessageClasses}>Older log entries were trimmed.</p>
+	) : null;
+	const backdropClasses = clsx(
+		'absolute inset-0 pointer-events-auto',
+		'bg-slate-900/20 backdrop-blur-sm',
+	);
+	const logContent = (
+		<>
+			{header}
+			{overflowNotice}
+			<ul ref={listRef} className={listClasses}>
+				{entries.map((entry, idx) => {
+					const aId = engineContext.game.players[0]?.id;
+					const bId = engineContext.game.players[1]?.id;
+					const colorClass =
+						entry.playerId === aId
+							? 'log-entry-a'
+							: entry.playerId === bId
+								? 'log-entry-b'
+								: '';
+					const entryClasses = clsx(
+						'text-sm font-mono leading-relaxed',
+						'whitespace-pre-wrap',
+						colorClass,
+					);
+					return (
+						<li key={idx} className={entryClasses}>
+							[{entry.time}] {entry.text}
+						</li>
+					);
+				})}
+			</ul>
+		</>
+	);
 
 	return (
 		<div className="fixed inset-0 z-40">
-			<div
-				className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm pointer-events-auto"
-				role="presentation"
-				onClick={onClose}
-			/>
-			<div className="absolute inset-0 flex items-start justify-end px-4 py-16 sm:px-8 pointer-events-none">
+			<div className={backdropClasses} role="presentation" onClick={onClose} />
+			<div className={overlayClasses}>
 				<div
 					ref={containerRef}
 					tabIndex={-1}
@@ -145,41 +215,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 					className={panelClasses}
 				>
 					<div ref={scrollRef} className={scrollContainerClasses}>
-						<div className="flex items-start gap-2">
-							<h2
-								id="game-log-title"
-								className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100"
-							>
-								Log
-							</h2>
-						</div>
-						{logOverflowed ? (
-							<p className="mt-2 text-xs italic text-amber-700 dark:text-amber-300">
-								Older log entries were trimmed.
-							</p>
-						) : null}
-						<ul ref={listRef} className={listClasses}>
-							{entries.map((entry, idx) => {
-								const aId = engineContext.game.players[0]?.id;
-								const bId = engineContext.game.players[1]?.id;
-								const colorClass =
-									entry.playerId === aId
-										? 'log-entry-a'
-										: entry.playerId === bId
-											? 'log-entry-b'
-											: '';
-								const entryClasses = clsx(
-									'text-sm font-mono leading-relaxed',
-									'whitespace-pre-wrap',
-									colorClass,
-								);
-								return (
-									<li key={idx} className={entryClasses}>
-										[{entry.time}] {entry.text}
-									</li>
-								);
-							})}
-						</ul>
+						{logContent}
 					</div>
 				</div>
 			</div>
