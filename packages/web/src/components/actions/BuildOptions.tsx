@@ -41,14 +41,15 @@ export default function BuildOptions({
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
 		ctx,
+		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
 	const requirementIcons = useMemo(
-		() => getRequirementIcons(action.id, ctx),
-		[action.id, ctx],
+		() => getRequirementIcons(action.id, translationContext),
+		[action.id, translationContext],
 	);
 	const entries = useMemo(() => {
 		const owned = player.buildings;

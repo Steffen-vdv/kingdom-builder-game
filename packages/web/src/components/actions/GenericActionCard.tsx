@@ -70,7 +70,7 @@ function GenericActionCard({
 	const requirements = getActionRequirements(action.id, context).map(
 		formatRequirement,
 	);
-	const requirementIcons = getRequirementIcons(action.id, context);
+	const requirementIcons = getRequirementIcons(action.id, translationContext);
 	const canPay = Object.entries(costs).every(
 		([resourceKey, cost]) =>
 			(player.resources[resourceKey] || 0) >= (cost ?? 0),
@@ -118,7 +118,7 @@ function GenericActionCard({
 		handleHoverCard,
 		hoverBackground,
 	});
-	const rawAction = context.actions.get(action.id);
+	const rawAction = translationContext.actions.get(action.id);
 	let actionIcon = '';
 	let actionFocus: Action['focus'] | undefined;
 	if (rawAction && typeof rawAction === 'object') {
