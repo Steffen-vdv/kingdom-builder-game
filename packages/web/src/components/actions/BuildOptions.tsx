@@ -59,16 +59,9 @@ export default function BuildOptions({
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = useMemo(
-		() => session.getActionRequirements(action.id),
-		[session, action.id],
-	);
-	const requirements = useMemo(
-		() =>
-			requirementFailures.map((failure) =>
-				translateRequirementFailure(failure, translationContext),
-			),
-		[requirementFailures, translationContext],
+	const requirementFailures = session.getActionRequirements(action.id);
+	const requirements = requirementFailures.map((failure) =>
+		translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
 	const entries = useMemo(() => {
