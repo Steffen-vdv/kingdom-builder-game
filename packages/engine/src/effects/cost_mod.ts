@@ -11,7 +11,7 @@ interface CostModParams {
 	[key: string]: unknown;
 }
 
-export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
+export const costMod: EffectHandler<CostModParams> = (effect, context) => {
 	const params = effect.params || ({} as CostModParams);
 	const { id, actionId, key } = params;
 	const rawAmount = params['amount'];
@@ -23,14 +23,14 @@ export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
 			'cost_mod requires id, key, and at least amount or percent',
 		);
 	}
-	const ownerId = ctx.activePlayer.id;
+	const ownerId = context.activePlayer.id;
 	const modId = `${id}_${ownerId}`;
 	if (effect.method === 'add') {
-		ctx.passives.registerCostModifier(
+		context.passives.registerCostModifier(
 			modId,
-			(targetActionId, costs, innerCtx) => {
+			(targetActionId, costs, innerContext) => {
 				if (
-					innerCtx.activePlayer.id !== ownerId ||
+					innerContext.activePlayer.id !== ownerId ||
 					(actionId && targetActionId !== actionId)
 				) {
 					return;
@@ -60,6 +60,6 @@ export const costMod: EffectHandler<CostModParams> = (effect, ctx) => {
 			},
 		);
 	} else if (effect.method === 'remove') {
-		ctx.passives.unregisterCostModifier(modId);
+		context.passives.unregisterCostModifier(modId);
 	}
 };
