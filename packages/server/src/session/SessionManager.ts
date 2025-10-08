@@ -33,6 +33,7 @@ export interface SessionManagerOptions {
 
 export interface CreateSessionOptions {
 	devMode?: EngineSessionOptions['devMode'];
+	config?: EngineSessionOptions['config'];
 }
 
 const DEFAULT_MAX_IDLE_DURATION_MS = 15 * 60 * 1000;
@@ -84,10 +85,15 @@ export class SessionManager {
 			throw new Error('Maximum session count reached.');
 		}
 		const devMode = options.devMode ?? false;
-		const session = createEngineSession({
+		const { config } = options;
+		const sessionOptions: EngineSessionOptions = {
 			...this.baseOptions,
 			devMode,
-		});
+		};
+		if (config !== undefined) {
+			sessionOptions.config = config;
+		}
+		const session = createEngineSession(sessionOptions);
 		session.setDevMode(devMode);
 		const timestamp = this.now();
 		this.sessions.set(sessionId, {

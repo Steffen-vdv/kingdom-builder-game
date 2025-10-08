@@ -6,6 +6,14 @@ export type {
 	SessionManagerOptions,
 	CreateSessionOptions,
 } from './session/SessionManager.js';
+export {
+	SessionTransport,
+	TransportError,
+} from './transport/SessionTransport.js';
+export type {
+	SessionTransportOptions,
+	TransportErrorCode,
+} from './transport/SessionTransport.js';
 
 export function startServer(): void {
 	console.log('Starting Kingdom Builder server...');
