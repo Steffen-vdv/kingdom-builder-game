@@ -12,12 +12,15 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
-	createTranslationDiffContext,
 	diffStepSnapshots,
 	logContent,
 	snapshotPlayer,
 	translateRequirementFailure,
 } from '../translation';
+import {
+	appendSubActionChanges,
+	filterActionDiffChanges,
+} from './useActionPerformer.helpers';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
 import {
@@ -59,8 +62,11 @@ export function useActionPerformer({
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
-			const context = getLegacySessionContext(session);
 			const snapshotBefore = session.getSnapshot();
+			let { translationContext: context } = getLegacySessionContext(
+				session,
+				snapshotBefore,
+			);
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
 				(entry) => entry.id === activePlayerId,
@@ -73,6 +79,11 @@ export function useActionPerformer({
 			try {
 				const traces = session.performAction(action.id, params);
 				const snapshotAfter = session.getSnapshot();
+				const { translationContext, diffContext } = getLegacySessionContext(
+					session,
+					snapshotAfter,
+				);
+				context = translationContext;
 				const playerAfter = snapshotAfter.game.players.find(
 					(entry) => entry.id === activePlayerId,
 				);
@@ -82,7 +93,6 @@ export function useActionPerformer({
 				const after = snapshotPlayer(playerAfter);
 				const stepDef = context.actions.get(action.id);
 				const resolvedStep = resolveActionEffects(stepDef, params);
-				const diffContext = createTranslationDiffContext(context);
 				const changes = diffStepSnapshots(
 					before,
 					after,
@@ -110,71 +120,18 @@ export function useActionPerformer({
 				if (costLines.length) {
 					messages.splice(1, 0, '  💲 Action cost', ...costLines);
 				}
-
-				const normalize = (line: string) => {
-					const trimmed = line.trim();
-					if (!trimmed) {
-						return '';
-					}
-					return (trimmed.split(' (')[0] ?? '')
-						.replace(/\s[+-]?\d+$/, '')
-						.trim();
-				};
-
-				const subLines: string[] = [];
-				for (const trace of traces) {
-					const subStep = context.actions.get(trace.id);
-					const subResolved = resolveActionEffects(subStep);
-					const subChanges = diffStepSnapshots(
-						snapshotPlayer(trace.before),
-						snapshotPlayer(trace.after),
-						subResolved,
-						diffContext,
-						resourceKeys,
-					);
-					if (!subChanges.length) {
-						continue;
-					}
-					subLines.push(...subChanges);
-					const icon = context.actions.get(trace.id)?.icon || '';
-					const name = context.actions.get(trace.id).name;
-					const line = `  ${icon} ${name}`;
-					const index = messages.indexOf(line);
-					if (index !== -1) {
-						messages.splice(index + 1, 0, ...subChanges.map((c) => `    ${c}`));
-					}
-				}
-
-				const subPrefixes = subLines.map(normalize);
-				const messagePrefixes = new Set<string>();
-				for (const line of messages) {
-					const normalized = normalize(line);
-					if (normalized) {
-						messagePrefixes.add(normalized);
-					}
-				}
-
-				const costLabels = new Set(
-					Object.keys(costs) as (keyof typeof RESOURCES)[],
-				);
-				const filtered = changes.filter((line) => {
-					const normalizedLine = normalize(line);
-					if (messagePrefixes.has(normalizedLine)) {
-						return false;
-					}
-					if (subPrefixes.includes(normalizedLine)) {
-						return false;
-					}
-					for (const key of costLabels) {
-						const info = RESOURCES[key];
-						const prefix = info?.icon
-							? `${info.icon} ${info.label}`
-							: info.label;
-						if (line.startsWith(prefix)) {
-							return false;
-						}
-					}
-					return true;
+				const subLines = appendSubActionChanges({
+					traces,
+					context,
+					diffContext,
+					resourceKeys,
+					messages,
+				});
+				const filtered = filterActionDiffChanges({
+					changes,
+					messages,
+					subLines,
+					costs,
 				});
 				const logLines = (
 					action.id === ActionId.develop

@@ -1,12 +1,10 @@
 import { useMemo, useRef } from 'react';
 import {
-	simulateUpcomingPhases,
 	type EngineSessionSnapshot,
 	type PlayerSnapshotDeltaBucket,
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { useGameEngine } from './GameContext';
-import { getLegacySessionContext } from './getLegacySessionContext';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
 
@@ -120,11 +118,10 @@ export function useNextTurnForecast(): NextTurnForecast {
 		if (cacheRef.current?.key === hashKey) {
 			return cacheRef.current.value;
 		}
-		const context = getLegacySessionContext(session);
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
 			try {
-				const { delta } = simulateUpcomingPhases(context, player.id);
+				const { delta } = session.simulateUpcomingPhases(player.id);
 				forecast[player.id] = delta;
 			} catch (error) {
 				forecast[player.id] = cloneEmptyDelta();
