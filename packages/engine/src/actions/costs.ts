@@ -1,5 +1,6 @@
 import { EFFECT_COST_COLLECTORS } from '../effects';
 import { runRequirement } from '../requirements';
+import type { RequirementFailure } from '../requirements';
 import type { EffectDef } from '../effects';
 import type { EngineContext } from '../context';
 import type { CostBag } from '../services';
@@ -70,15 +71,15 @@ export function getActionRequirements<T extends string>(
 	actionId: T,
 	engineContext: EngineContext,
 	_params?: ActionParameters<T>,
-): string[] {
+): RequirementFailure[] {
 	const actionDefinition = engineContext.actions.get(actionId);
-	const failures: string[] = [];
+	const failures: RequirementFailure[] = [];
 	for (const requirement of actionDefinition.requirements || []) {
 		const requirementResult = runRequirement(requirement, engineContext);
 		if (requirementResult === true) {
 			continue;
 		}
-		failures.push(String(requirementResult));
+		failures.push(requirementResult);
 	}
 	return failures;
 }

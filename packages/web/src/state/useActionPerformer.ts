@@ -5,13 +5,19 @@ import {
 	type ActionParams,
 	type EngineSession,
 	type PlayerStateSnapshot,
+	type RequirementFailure,
 } from '@kingdom-builder/engine';
 import {
 	ActionId,
 	RESOURCES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
+import {
+	diffStepSnapshots,
+	logContent,
+	snapshotPlayer,
+	translateRequirementFailure,
+} from '../translation';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
 import {
@@ -205,7 +211,15 @@ export function useActionPerformer({
 				}
 			} catch (error) {
 				const icon = context.actions.get(action.id)?.icon || '';
-				const message = (error as Error).message || 'Action failed';
+				let message = (error as Error).message || 'Action failed';
+				const requirementFailure = (
+					error as Error & {
+						requirementFailure?: RequirementFailure;
+					}
+				).requirementFailure;
+				if (requirementFailure) {
+					message = translateRequirementFailure(requirementFailure, context);
+				}
 				pushErrorToast(message);
 				addLog(`Failed to play ${icon} ${action.name}: ${message}`, {
 					id: playerBefore.id,

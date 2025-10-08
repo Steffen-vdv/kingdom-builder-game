@@ -20,6 +20,7 @@ import {
 	RULES,
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../src/translation/context';
+import { translateRequirementFailure } from '../src/translation';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import {
 	useActionResolution,
@@ -57,7 +58,10 @@ const translationContext = createTranslationContext(
 const findActionWithReq = () => {
 	for (const [id] of (ACTIONS as unknown as { map: Map<string, unknown> })
 		.map) {
-		const requirements = getActionRequirements(id, ctx);
+		const failures = getActionRequirements(id, ctx);
+		const requirements = failures.map((failure) =>
+			translateRequirementFailure(failure, ctx),
+		);
 		const costs = getActionCosts(id, ctx);
 		if (
 			requirements.length &&

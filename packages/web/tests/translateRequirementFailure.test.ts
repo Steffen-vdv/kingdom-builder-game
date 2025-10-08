@@ -56,6 +56,15 @@ describe('translateRequirementFailure', () => {
 		expect(message).toBe('Requirement not met');
 	});
 
+	it('falls back to the failure message when translation is unavailable', () => {
+		const failure: RequirementFailure = {
+			requirement: { type: 'custom', method: 'fallback' },
+			message: 'Custom fallback text',
+		};
+		const message = translateRequirementFailure(failure, ctx);
+		expect(message).toBe('Custom fallback text');
+	});
+
 	it('ignores legacy requirement message fields to keep messaging in web', () => {
 		const failure: RequirementFailure = {
 			requirement: {

@@ -29,6 +29,9 @@ vi.mock('../src/translation', () => ({
 		effects: Array.isArray(summary) ? summary : [],
 		description: undefined,
 	})),
+	translateRequirementFailure: vi.fn(
+		(failure: { message?: string }) => failure.message ?? 'Requirement not met',
+	),
 }));
 
 let mockGame = createActionsPanelGame();

@@ -1,6 +1,7 @@
 import { runEffects } from '../effects';
 import { withStatSourceFrames } from '../stat_sources';
 import { runRequirement } from '../requirements';
+import type { RequirementFailure } from '../requirements';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
 import type { ActionParameters } from './action_parameters';
@@ -28,6 +29,10 @@ function assertSystemActionUnlocked(
 	throw new Error(`Action ${actionId} is locked`);
 }
 
+interface RequirementError extends Error {
+	requirementFailure?: RequirementFailure;
+}
+
 function evaluateRequirements(
 	actionId: string,
 	engineContext: EngineContext,
@@ -38,7 +43,10 @@ function evaluateRequirements(
 		if (requirementResult === true) {
 			continue;
 		}
-		throw new Error(String(requirementResult));
+		const message = requirementResult.message ?? 'Requirement not met';
+		const error = new Error(message) as RequirementError;
+		error.requirementFailure = requirementResult;
+		throw error;
 	}
 }
 

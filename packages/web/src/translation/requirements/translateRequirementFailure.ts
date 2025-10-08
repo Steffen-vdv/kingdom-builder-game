@@ -6,16 +6,10 @@ import {
 	type PopulationRoleId,
 	type StatKey,
 } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
-
-type RequirementFailure = {
-	requirement: {
-		type?: string;
-		method?: string;
-		params?: Record<string, unknown>;
-	};
-	details?: Record<string, unknown>;
-};
+import type {
+	EngineContext,
+	RequirementFailure,
+} from '@kingdom-builder/engine';
 
 type EvaluatorOperand = {
 	type?: string;
@@ -176,5 +170,5 @@ export function translateRequirementFailure(
 	if (requirement.type === 'evaluator' && requirement.method === 'compare') {
 		return translateCompareRequirement(failure);
 	}
-	return 'Requirement not met';
+	return failure.message ?? 'Requirement not met';
 }

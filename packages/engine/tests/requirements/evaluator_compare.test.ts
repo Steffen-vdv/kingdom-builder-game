@@ -21,11 +21,17 @@ describe('evaluator:compare requirement', () => {
 		} as unknown as Parameters<typeof evaluatorCompare>[0];
 		expect(evaluatorCompare(req, ctx)).toBe(true);
 		req.params.operator = 'lte';
-		expect(evaluatorCompare(req, ctx)).toBe('Requirement failed');
+		expect(evaluatorCompare(req, ctx)).toEqual({
+			requirement: req,
+			details: { left: 2, right: 1 },
+		});
 		req.params.operator = 'eq';
 		req.params.right = 2;
 		expect(evaluatorCompare(req, ctx)).toBe(true);
 		req.params.operator = 'ne';
-		expect(evaluatorCompare(req, ctx)).toBe('Requirement failed');
+		expect(evaluatorCompare(req, ctx)).toEqual({
+			requirement: req,
+			details: { left: 2, right: 2 },
+		});
 	});
 });

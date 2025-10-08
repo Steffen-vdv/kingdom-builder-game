@@ -9,6 +9,7 @@ import {
 	describeContent,
 	splitSummary,
 	summarizeContent,
+	translateRequirementFailure,
 	type TranslationContext,
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
@@ -74,11 +75,14 @@ function buildHoverDetails(
 		mergedParams,
 	);
 	const { effects: baseEffects, description } = splitSummary(hoverSummary);
-	const requirements = getActionRequirements(
+	const requirementFailures = getActionRequirements(
 		option.actionId,
 		context,
 		mergedParams,
-	).map(formatRequirement);
+	);
+	const requirements = requirementFailures.map((failure) =>
+		formatRequirement(translateRequirementFailure(failure, context)),
+	);
 	let effects = baseEffects;
 	const idParam = mergedParams?.id;
 	const developmentParam = mergedParams?.developmentId;

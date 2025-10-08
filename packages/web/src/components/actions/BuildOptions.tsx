@@ -1,7 +1,11 @@
 import React, { useMemo } from 'react';
 import type { Focus } from '@kingdom-builder/contents';
 import { getActionCosts, getActionRequirements } from '@kingdom-builder/engine';
-import { splitSummary, type Summary } from '../../translation';
+import {
+	splitSummary,
+	translateRequirementFailure,
+	type Summary,
+} from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
@@ -88,7 +92,10 @@ export default function BuildOptions({
 					);
 					const focus = getOptionalProperty<Focus>(rawBuilding, 'focus');
 					const icon = getOptionalProperty<string>(rawBuilding, 'icon');
-					const requirements = getActionRequirements(action.id, ctx);
+					const requirementFailures = getActionRequirements(action.id, ctx);
+					const requirements = requirementFailures.map((failure) =>
+						translateRequirementFailure(failure, ctx),
+					);
 					const canPay = playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(building.id);
 					const implemented = (summary?.length ?? 0) > 0;
