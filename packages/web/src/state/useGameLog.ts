@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
@@ -8,6 +8,7 @@ const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
 
 type LogEntry = {
+	id: number;
 	time: string;
 	text: string;
 	playerId: string;
@@ -20,6 +21,7 @@ interface GameLogOptions {
 export function useGameLog({ sessionState }: GameLogOptions) {
 	const [log, setLog] = useState<LogEntry[]>([]);
 	const [logOverflowed, setLogOverflowed] = useState(false);
+	const nextLogIdRef = useRef(0);
 
 	const addLog = useCallback(
 		(
@@ -37,6 +39,7 @@ export function useGameLog({ sessionState }: GameLogOptions) {
 			setLog((prev) => {
 				const messages = Array.isArray(entry) ? entry : [entry];
 				const items = messages.map((text) => ({
+					id: nextLogIdRef.current++,
 					time: new Date().toLocaleTimeString(),
 					text: `[${logPlayer.name}] ${text}`,
 					playerId: logPlayer.id,
