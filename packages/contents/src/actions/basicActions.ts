@@ -11,10 +11,12 @@ import {
 	statEvaluator,
 	developmentParams,
 	actionParams,
-	actionEffectGroup,
-	actionEffectGroupOption,
 	populationParams,
 } from '../config/builders';
+import {
+	actionEffectGroup,
+	actionEffectGroupOption,
+} from '../config/builders/actionEffectGroups';
 import {
 	ActionMethods,
 	DevelopmentMethods,
