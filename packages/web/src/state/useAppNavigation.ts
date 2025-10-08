@@ -117,6 +117,9 @@ export function useAppNavigation(): AppNavigationState {
 		[],
 	);
 	useEffect(() => {
+		if (typeof document === 'undefined') {
+			return;
+		}
 		document.documentElement.classList.toggle('dark', isDarkMode);
 	}, [isDarkMode]);
 
