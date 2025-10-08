@@ -14,6 +14,7 @@ export type {
 	SessionTransportOptions,
 	TransportErrorCode,
 } from './transport/SessionTransport.js';
+export * from './auth/index.js';
 
 export function startServer(): void {
 	console.log('Starting Kingdom Builder server...');

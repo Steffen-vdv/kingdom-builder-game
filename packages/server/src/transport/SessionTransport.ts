@@ -19,10 +19,16 @@ import type {
 	SessionManager,
 	CreateSessionOptions,
 } from '../session/SessionManager.js';
+import type { RequestContext } from '../auth/index.js';
 
 type TransportIdFactory = () => string;
 
-export type TransportErrorCode = 'INVALID_REQUEST' | 'NOT_FOUND' | 'CONFLICT';
+export type TransportErrorCode =
+	| 'INVALID_REQUEST'
+	| 'NOT_FOUND'
+	| 'CONFLICT'
+	| 'UNAUTHORIZED'
+	| 'FORBIDDEN';
 
 export class TransportError extends Error {
 	public readonly code: TransportErrorCode;
@@ -58,7 +64,11 @@ export class SessionTransport {
 		this.idFactory = options.idFactory ?? randomUUID;
 	}
 
-	public createSession(request: unknown): SessionCreateResponse {
+	public createSession(
+		request: unknown,
+		context?: RequestContext,
+	): SessionCreateResponse {
+		this.requireAuthorization(context, SESSION_CREATE_ROLE);
 		const parsed = sessionCreateRequestSchema.safeParse(request);
 		if (!parsed.success) {
 			throw new TransportError(
@@ -100,7 +110,11 @@ export class SessionTransport {
 		return sessionCreateResponseSchema.parse(response);
 	}
 
-	public advanceSession(request: unknown): SessionAdvanceResponse {
+	public advanceSession(
+		request: unknown,
+		context?: RequestContext,
+	): SessionAdvanceResponse {
+		this.requireAuthorization(context, SESSION_ADVANCE_ROLE);
 		const parsed = sessionAdvanceRequestSchema.safeParse(request);
 		if (!parsed.success) {
 			throw new TransportError(
@@ -120,7 +134,11 @@ export class SessionTransport {
 		return sessionAdvanceResponseSchema.parse(response);
 	}
 
-	public setDevMode(request: unknown): SessionSetDevModeResponse {
+	public setDevMode(
+		request: unknown,
+		context?: RequestContext,
+	): SessionSetDevModeResponse {
+		this.requireAuthorization(context, SESSION_SET_DEVMODE_ROLE);
 		const parsed = sessionSetDevModeRequestSchema.safeParse(request);
 		if (!parsed.success) {
 			throw new TransportError(
@@ -183,12 +201,37 @@ export class SessionTransport {
 		session: EngineSession,
 		names: Record<string, string>,
 	): void {
-		const context = session.getLegacyContext();
-		for (const player of context.game.players) {
-			const name = names[player.id];
-			if (name) {
-				player.name = name;
+		const snapshot = session.getSnapshot();
+		for (const player of snapshot.game.players) {
+			const playerId = player.id;
+			const name = names[playerId];
+			if (typeof name !== 'string' || name.length === 0) {
+				continue;
 			}
+			session.updatePlayerName(playerId, name);
+		}
+	}
+
+	private requireAuthorization(
+		context: RequestContext | undefined,
+		requiredRole: string,
+	): void {
+		const auth = context?.auth;
+		if (!auth) {
+			throw new TransportError(
+				'UNAUTHORIZED',
+				'Authentication is required for this operation.',
+			);
+		}
+		if (!auth.roles.includes(requiredRole)) {
+			throw new TransportError(
+				'FORBIDDEN',
+				'You do not have permission to perform this operation.',
+			);
 		}
 	}
 }
+
+const SESSION_CREATE_ROLE = 'session:create';
+const SESSION_ADVANCE_ROLE = 'session:advance';
+const SESSION_SET_DEVMODE_ROLE = 'session:devmode';
