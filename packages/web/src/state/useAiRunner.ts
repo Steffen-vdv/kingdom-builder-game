@@ -32,20 +32,18 @@ export function useAiRunner({
 		if (!phaseDefinition?.action) {
 			return;
 		}
-		const context = session.getLegacyContext();
-		const aiSystem = context.aiSystem;
 		const activeId = sessionState.game.activePlayerId;
-		if (!aiSystem?.has(activeId)) {
+		if (!session.hasAiController(activeId)) {
 			return;
 		}
 		void session.enqueue(async () => {
-			await aiSystem.run(activeId, context, {
+			const ranTurn = await session.runAiTurn(activeId, {
 				performAction: async (
 					actionId: string,
-					engineCtx,
+					_ignored: unknown,
 					params?: ActionParams<string>,
 				) => {
-					const definition = engineCtx.actions.get(actionId);
+					const definition = session.getActionDefinition(actionId);
 					if (!definition) {
 						throw new Error(`Unknown action ${String(actionId)} for AI`);
 					}
@@ -62,7 +60,7 @@ export function useAiRunner({
 					session.advancePhase();
 				},
 			});
-			if (!mountedRef.current) {
+			if (!ranTurn || !mountedRef.current) {
 				return;
 			}
 			setPhaseHistories({});

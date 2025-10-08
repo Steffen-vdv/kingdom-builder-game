@@ -25,6 +25,10 @@ const RESOURCE_KEYS: ResourceKey[] = ['gold' as ResourceKey];
 
 function createSession(): EngineSession {
 	return {
+		hasAiController: () => false,
+		getActionDefinition: () => undefined,
+		runAiTurn: vi.fn().mockResolvedValue(false),
+		advancePhase: vi.fn(),
 		getLegacyContext() {
 			return {
 				activePlayer: {

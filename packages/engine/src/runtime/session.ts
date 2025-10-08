@@ -26,6 +26,12 @@ import type { PlayerId, ResourceKey } from '../state';
 import type { AIDependencies } from '../ai';
 import type { HappinessTierDefinition } from '../services/tiered_resource_types';
 
+export interface ActionDefinitionSummary {
+	id: string;
+	name: string;
+	system?: boolean;
+}
+
 function cloneEffectLogEntry<T>(entry: T): T {
 	if (typeof entry !== 'object' || entry === null) {
 		return entry;
@@ -59,6 +65,7 @@ export interface EngineSession {
 		actionId: T,
 		params?: ActionParameters<T>,
 	): string[];
+	getActionDefinition(actionId: string): ActionDefinitionSummary | undefined;
 	pullEffectLog<T>(key: string): T | undefined;
 	getPassiveEvaluationMods(): Map<string, Map<string, EvaluationModifier>>;
 	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T>;
@@ -67,6 +74,7 @@ export interface EngineSession {
 		playerId: PlayerId,
 		overrides?: Partial<AIDependencies>,
 	): Promise<boolean>;
+	hasAiController(playerId: PlayerId): boolean;
 	simulateUpcomingPhases(
 		playerId: PlayerId,
 		options?: SimulateUpcomingPhasesOptions,
@@ -122,6 +130,20 @@ export function createEngineSession(
 			const requirements = resolveActionRequirements(actionId, context, params);
 			return [...requirements];
 		},
+		getActionDefinition(actionId) {
+			const definition = context.actions.get(actionId);
+			if (!definition) {
+				return undefined;
+			}
+			const summary: ActionDefinitionSummary = {
+				id: definition.id,
+				name: definition.name,
+			};
+			if (definition.system !== undefined) {
+				summary.system = definition.system;
+			}
+			return summary;
+		},
 		pullEffectLog<T>(key: string) {
 			const entry = context.pullEffectLog<T>(key);
 			if (entry === undefined) {
@@ -143,6 +165,12 @@ export function createEngineSession(
 				return false;
 			}
 			return context.aiSystem.run(playerId, context, overrides);
+		},
+		hasAiController(playerId) {
+			if (!context.aiSystem) {
+				return false;
+			}
+			return context.aiSystem.has(playerId);
 		},
 		simulateUpcomingPhases(playerId, options) {
 			const result = runSimulation(context, playerId, options);
