@@ -135,13 +135,8 @@ export function statToken(
 	fallback: string,
 	value: string,
 ) {
-	if (stat?.icon) {
-		return `${stat.icon}${value}`;
-	}
-	if (stat?.label) {
-		return `${stat.label} ${value}`;
-	}
-	return `${fallback} ${value}`;
+	const label = iconLabel(stat?.icon, stat?.label, fallback);
+	return `${label} ${value}`;
 }
 
 export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { key: string }> = {

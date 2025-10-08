@@ -175,6 +175,9 @@ function moveToNext(engineContext: EngineContext, skipPhase: boolean): void {
 }
 
 export function advance(engineContext: EngineContext): AdvanceResult {
+	if (engineContext.game.conclusion) {
+		throw new Error('Game already concluded');
+	}
 	const phaseIndex = engineContext.game.phaseIndex;
 	const stepIndex = engineContext.game.stepIndex;
 	const currentPhaseDefinition = engineContext.phases[phaseIndex]!;

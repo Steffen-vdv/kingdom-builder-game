@@ -1,9 +1,12 @@
 import { BUILDINGS } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/engine';
 import {
+	attackStatLabel,
+	attackStatValue,
 	formatDiffCommon,
 	formatNumber,
 	formatPercent,
+	formatSignedValue,
 	iconLabel,
 } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -62,83 +65,88 @@ const buildingFormatter: AttackTargetFormatter<{
 		const absorption = stats.absorption;
 		const fort = stats.fortification;
 		const powerValue = (value: number) =>
-			power?.icon
-				? `${power.icon}${formatNumber(value)}`
-				: power
-					? `${power.label} ${formatNumber(value)}`
-					: `Attack ${formatNumber(value)}`;
+			attackStatValue(power, 'Attack', formatSignedValue(value, formatNumber));
 		const absorptionValue = (value: number) =>
-			absorption?.icon
-				? `${absorption.icon}${formatPercent(value)}`
-				: absorption
-					? `${absorption.label} ${formatPercent(value)}`
-					: `Absorption ${formatPercent(value)}`;
+			attackStatValue(
+				absorption,
+				'Absorption',
+				formatSignedValue(value, formatPercent),
+			);
 		const fortValue = (value: number) =>
-			fort?.icon
-				? `${fort.icon}${formatNumber(value)}`
-				: fort
-					? `${fort.label} ${formatNumber(value)}`
-					: `Fortification ${formatNumber(value)}`;
-		const absorptionLabel = absorption
-			? iconLabel(absorption.icon, absorption.label)
-			: 'damage reduction';
-		const fortLabel = fort ? iconLabel(fort.icon, fort.label) : 'fortification';
+			attackStatValue(
+				fort,
+				'Fortification',
+				formatSignedValue(value, formatNumber),
+			);
+		const absorptionLabel = attackStatLabel(absorption, 'damage reduction');
+		const fortLabel = attackStatLabel(fort, 'fortification');
 		const target = log.target as Extract<
 			AttackLog['evaluation']['target'],
 			{ type: 'building' }
 		>;
-		const absorptionPart = log.absorption.ignored
-			? absorption?.icon
-				? `${absorption.icon} ignored`
-				: `${absorptionLabel} ignored`
-			: absorptionValue(log.absorption.before);
-		const fortPart = log.fortification.ignored
-			? fort?.icon
-				? `${fort.icon} ignored`
-				: `${fortLabel} ignored`
-			: fortValue(log.fortification.before);
-
-		const title = `Damage evaluation: ${powerValue(
-			log.power.modified,
-		)} vs. ${absorptionPart} ${fortPart} ${targetLabel}`;
-		const items: SummaryEntry[] = [];
+		const powerModified = powerValue(log.power.modified);
+		const absorptionBefore = absorptionValue(log.absorption.before);
+		const powerAfterAbsorption = powerValue(log.absorption.damageAfter);
+		const fortBefore = fortValue(log.fortification.before);
+		const fortAfter = fortValue(log.fortification.after);
+		const remainingAfterFort = Math.max(
+			0,
+			log.absorption.damageAfter - log.fortification.damage,
+		);
+		const remainingPower = powerValue(remainingAfterFort);
+		const damageText = powerValue(target.damage);
+		const titleSegments: string[] = [];
 
 		if (log.absorption.ignored) {
-			items.push(
-				`${powerValue(log.power.modified)} ignores ${absorptionLabel}`,
-			);
+			titleSegments.push(`Ignore ${absorptionLabel} with ${powerModified}`);
 		} else {
-			items.push(
-				`${powerValue(log.power.modified)} vs. ${absorptionValue(
-					log.absorption.before,
-				)} --> ${powerValue(log.absorption.damageAfter)}`,
+			titleSegments.push(
+				`Compare ${powerModified} against ${absorptionBefore}`,
 			);
 		}
 
 		if (log.fortification.ignored) {
-			items.push(
-				`${powerValue(log.absorption.damageAfter)} bypasses ${fortLabel}`,
-			);
+			titleSegments.push(`Bypass ${fortLabel} with ${powerAfterAbsorption}`);
 		} else {
-			const remaining = Math.max(
-				0,
-				log.absorption.damageAfter - log.fortification.damage,
+			titleSegments.push(`Compare remaining damage against ${fortBefore}`);
+		}
+
+		if (!target.existed) {
+			titleSegments.push(`Confirm no ${targetLabel} to destroy`);
+		} else if (target.destroyed) {
+			titleSegments.push(`Destroy ${targetLabel} with ${damageText}`);
+		} else {
+			titleSegments.push(
+				`Damage ${targetLabel} with ${damageText} and leave it standing`,
 			);
+		}
+
+		const title = `Evaluate damage: ${titleSegments.join('; ')}`;
+		const items: SummaryEntry[] = [];
+
+		if (log.absorption.ignored) {
+			items.push(`Ignore ${absorptionLabel} with ${powerModified}`);
+		} else {
 			items.push(
-				`${powerValue(log.absorption.damageAfter)} vs. ${fortValue(
-					log.fortification.before,
-				)} --> ${fortValue(log.fortification.after)} ${powerValue(remaining)}`,
+				`Compare ${powerModified} against ${absorptionBefore} → ${powerAfterAbsorption}`,
+			);
+		}
+
+		if (log.fortification.ignored) {
+			items.push(`Bypass ${fortLabel} with ${powerAfterAbsorption}`);
+		} else {
+			items.push(
+				`Compare ${powerAfterAbsorption} against ${fortBefore} → ${fortAfter} and carry forward ${remainingPower}`,
 			);
 		}
 
 		if (!target.existed) {
-			items.push(`No ${targetLabel} to destroy`);
+			items.push(`Confirm no ${targetLabel} to destroy`);
+		} else if (target.destroyed) {
+			items.push(`Destroy ${targetLabel} with ${damageText}`);
 		} else {
-			const damageText = powerValue(target.damage);
 			items.push(
-				target.destroyed
-					? `${damageText} destroys ${targetLabel}`
-					: `${damageText} fails to destroy ${targetLabel}`,
+				`Apply ${damageText} to ${targetLabel} and fail to destroy it`,
 			);
 		}
 

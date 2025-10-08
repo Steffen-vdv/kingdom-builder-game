@@ -85,6 +85,9 @@ function executeAction<T extends string>(
 	engineContext: EngineContext,
 	params?: ActionParameters<T>,
 ) {
+	if (engineContext.game.conclusion) {
+		throw new Error('Game already concluded');
+	}
 	engineContext.actionTraces = [];
 	const actionDefinition = engineContext.actions.get(actionId);
 	assertSystemActionUnlocked(actionId, engineContext);
@@ -116,7 +119,7 @@ function executeAction<T extends string>(
 	if (affordability !== true) {
 		throw new Error(affordability);
 	}
-	deductCostsFromPlayer(finalCosts, engineContext.activePlayer);
+	deductCostsFromPlayer(finalCosts, engineContext.activePlayer, engineContext);
 	const passiveManager = engineContext.passives;
 	withStatSourceFrames(
 		engineContext,

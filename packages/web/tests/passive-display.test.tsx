@@ -47,7 +47,11 @@ describe('<PassiveDisplay />', () => {
 		const tieredResource = ctx.services.tieredResource;
 		const happinessKey = tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 6;
-		ctx.services.handleTieredResourceChange(ctx, happinessKey);
+		ctx.services.handleTieredResourceChange(
+			ctx,
+			ctx.activePlayer,
+			happinessKey,
+		);
 
 		const { mockGame, handleHoverCard } = createPassiveGame(ctx);
 		const { translationContext } = mockGame;
@@ -97,7 +101,11 @@ describe('<PassiveDisplay />', () => {
 		const tieredResource = ctx.services.tieredResource;
 		const happinessKey = tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 6;
-		ctx.services.handleTieredResourceChange(ctx, happinessKey);
+		ctx.services.handleTieredResourceChange(
+			ctx,
+			ctx.activePlayer,
+			happinessKey,
+		);
 		const { mockGame, handleHoverCard } = createPassiveGame(ctx);
 		currentGame = mockGame;
 		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
@@ -138,7 +146,11 @@ describe('<PassiveDisplay />', () => {
 		const tieredResource = ctx.services.tieredResource;
 		const happinessKey = tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 0;
-		ctx.services.handleTieredResourceChange(ctx, happinessKey);
+		ctx.services.handleTieredResourceChange(
+			ctx,
+			ctx.activePlayer,
+			happinessKey,
+		);
 
 		const { mockGame } = createPassiveGame(ctx);
 		currentGame = mockGame;

@@ -27,6 +27,12 @@ export type {
 	HappinessTierDefinition,
 	TierPassivePreview,
 } from './tiered_resource_types';
+export type {
+	WinConditionDefinition,
+	WinConditionDisplay,
+	WinConditionTrigger,
+	WinConditionResult,
+} from './win_condition_types';
 export type { PhaseSkipConfig, PhaseSkipStep } from './passive_types';
 export { PopCapService } from './pop_cap_service';
 export { Services } from './services';

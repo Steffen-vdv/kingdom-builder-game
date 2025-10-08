@@ -45,7 +45,10 @@ export function appendPassiveChanges(
 		}
 		const { icon, label } = resolvePassivePresentation(passive);
 		const decoratedLabel = decoratePassiveLabel(icon, label);
-		changes.push(`${decoratedLabel} activated`);
+		const entry = `${decoratedLabel} activated`;
+		if (!changes.includes(entry)) {
+			changes.push(entry);
+		}
 	}
 	for (const [id, passive] of previous) {
 		if (next.has(id)) {
@@ -56,6 +59,9 @@ export function appendPassiveChanges(
 		}
 		const { icon, label } = resolvePassivePresentation(passive);
 		const decoratedLabel = decoratePassiveLabel(icon, label);
-		changes.push(`${decoratedLabel} deactivated`);
+		const entry = `${decoratedLabel} deactivated`;
+		if (!changes.includes(entry)) {
+			changes.push(entry);
+		}
 	}
 }

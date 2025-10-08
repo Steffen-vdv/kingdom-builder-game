@@ -13,12 +13,13 @@ export const resourceRemove: EffectHandler = (effect, ctx, mult = 1) => {
 	if (total < 0) {
 		total = 0;
 	}
-	const have = ctx.activePlayer.resources[key] || 0;
+	const player = ctx.activePlayer;
+	const have = player.resources[key] || 0;
 	const allowShortfall = Boolean(effect.meta?.['allowShortfall']);
 	const removed = total;
 	if (!allowShortfall && have < removed) {
 		throw new Error(`Insufficient ${key}: need ${removed}, have ${have}`);
 	}
-	ctx.activePlayer.resources[key] = have - removed;
-	ctx.services.handleTieredResourceChange(ctx, key);
+	player.resources[key] = have - removed;
+	ctx.services.handleResourceChange(ctx, player, key);
 };

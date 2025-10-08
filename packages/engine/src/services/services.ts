@@ -1,9 +1,10 @@
-import type { ResourceKey, PlayerId } from '../state';
+import type { ResourceKey, PlayerId, PlayerState } from '../state';
 import type { EngineContext } from '../context';
 import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
 import { runEffects } from '../effects';
 import { TieredResourceService } from './tiered_resource_service';
 import { PopCapService } from './pop_cap_service';
+import { WinConditionService } from './win_condition_service';
 import type { HappinessTierDefinition } from './tiered_resource_types';
 import type { RuleSet } from './services_types';
 
@@ -13,6 +14,7 @@ type TierResource = ResourceKey;
 export class Services {
 	tieredResource: TieredResourceService;
 	popcap: PopCapService;
+	winCondition: WinConditionService;
 	private activeTiers: Map<PlayerId, HappinessTierDefinition> = new Map();
 
 	constructor(
@@ -21,55 +23,79 @@ export class Services {
 	) {
 		this.tieredResource = new TieredResourceService(rules);
 		this.popcap = new PopCapService(rules, developments);
+		this.winCondition = new WinConditionService(rules.winConditions ?? []);
 	}
 
-	handleTieredResourceChange(context: Context, tierKey: TierResource) {
+	handleResourceChange(
+		context: Context,
+		player: PlayerState,
+		key: TierResource,
+	) {
+		this.handleTieredResourceChange(context, player, key);
+		this.winCondition.evaluateResourceChange(context, player, key);
+	}
+
+	handleTieredResourceChange(
+		context: Context,
+		player: PlayerState,
+		tierKey: TierResource,
+	) {
 		if (tierKey !== this.tieredResource.resourceKey) {
 			return;
 		}
-		const player = context.activePlayer;
 		const value = player.resources[tierKey] ?? 0;
 		const nextTier = this.tieredResource.definition(value);
 		const currentTier = this.activeTiers.get(player.id);
 		if (currentTier?.id === nextTier?.id) {
 			return;
 		}
-		if (currentTier) {
-			const exitEffects = currentTier.exitEffects ?? [];
-			if (exitEffects.length) {
-				runEffects(exitEffects, context);
-			}
-			this.activeTiers.delete(player.id);
+		const originalIndex = context.game.currentPlayerIndex;
+		const playerIndex = context.game.players.indexOf(player);
+		if (playerIndex >= 0 && playerIndex !== originalIndex) {
+			context.game.currentPlayerIndex = playerIndex;
 		}
-		if (nextTier) {
-			const enterEffects = nextTier.enterEffects ?? [];
-			if (enterEffects.length) {
-				runEffects(enterEffects, context);
-			}
-			const passiveId = nextTier.preview?.id;
-			const summaryToken =
-				nextTier.display?.summaryToken ?? nextTier.text?.summary;
-			if (passiveId && summaryToken) {
-				const passive = context.passives.get(passiveId, player.id);
-				if (passive) {
-					passive.detail = summaryToken;
-					const existingMeta = passive.meta ?? {};
-					const baseSource = existingMeta.source ?? {
-						type: 'tiered-resource',
-						id: nextTier.id,
-					};
-					passive.meta = {
-						...existingMeta,
-						source: {
-							...baseSource,
-							labelToken: summaryToken,
-						},
-					};
+		try {
+			if (currentTier) {
+				const exitEffects = currentTier.exitEffects ?? [];
+				if (exitEffects.length) {
+					runEffects(exitEffects, context);
 				}
+				this.activeTiers.delete(player.id);
 			}
-			this.activeTiers.set(player.id, nextTier);
-		} else {
-			this.activeTiers.delete(player.id);
+			if (nextTier) {
+				const enterEffects = nextTier.enterEffects ?? [];
+				if (enterEffects.length) {
+					runEffects(enterEffects, context);
+				}
+				const passiveId = nextTier.preview?.id;
+				const summaryToken =
+					nextTier.display?.summaryToken ?? nextTier.text?.summary;
+				if (passiveId && summaryToken) {
+					const passive = context.passives.get(passiveId, player.id);
+					if (passive) {
+						passive.detail = summaryToken;
+						const existingMeta = passive.meta ?? {};
+						const baseSource = existingMeta.source ?? {
+							type: 'tiered-resource',
+							id: nextTier.id,
+						};
+						passive.meta = {
+							...existingMeta,
+							source: {
+								...baseSource,
+								labelToken: summaryToken,
+							},
+						};
+					}
+				}
+				this.activeTiers.set(player.id, nextTier);
+			} else {
+				this.activeTiers.delete(player.id);
+			}
+		} finally {
+			if (playerIndex >= 0 && playerIndex !== originalIndex) {
+				context.game.currentPlayerIndex = originalIndex;
+			}
 		}
 	}
 
@@ -78,7 +104,8 @@ export class Services {
 		const previousIndex = context.game.currentPlayerIndex;
 		context.game.players.forEach((_player, index) => {
 			context.game.currentPlayerIndex = index;
-			this.handleTieredResourceChange(context, resourceKey);
+			const player = context.game.players[index]!;
+			this.handleTieredResourceChange(context, player, resourceKey);
 		});
 		context.game.currentPlayerIndex = previousIndex;
 	}
@@ -86,6 +113,7 @@ export class Services {
 	clone(developments: Registry<DevelopmentConfig>): Services {
 		const cloned = new Services(this.rules, developments);
 		cloned.activeTiers = new Map(this.activeTiers);
+		cloned.winCondition = this.winCondition.clone();
 		return cloned;
 	}
 }

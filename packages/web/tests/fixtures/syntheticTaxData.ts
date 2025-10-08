@@ -85,6 +85,7 @@ export const SYNTHETIC_RULES: RuleSet = {
 	slotsPerNewLand: 1,
 	maxSlotsPerLand: 2,
 	basePopulationCap: 2,
+	winConditions: [],
 };
 
 vi.mock('@kingdom-builder/contents', async () => {

@@ -39,7 +39,11 @@ describe('passive log labels', () => {
 
 		const setHappiness = (value: number) => {
 			ctx.activePlayer.resources[happinessKey] = value;
-			ctx.services.handleTieredResourceChange(ctx, happinessKey);
+			ctx.services.handleTieredResourceChange(
+				ctx,
+				ctx.activePlayer,
+				happinessKey,
+			);
 		};
 
 		setHappiness(0);

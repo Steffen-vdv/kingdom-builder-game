@@ -57,6 +57,7 @@ const rules: RuleSet = {
 	slotsPerNewLand: 1,
 	maxSlotsPerLand: 1,
 	basePopulationCap: 1,
+	winConditions: [],
 };
 
 export function createRaidersGuildContext(): RaidersGuildSyntheticContext {

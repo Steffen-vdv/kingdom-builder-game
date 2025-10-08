@@ -150,7 +150,7 @@ describe('content happiness tiers', () => {
 
 		for (const sample of samples) {
 			player.resources[Resource.happiness] = sample.value;
-			ctx.services.handleTieredResourceChange(ctx, Resource.happiness);
+			ctx.services.handleTieredResourceChange(ctx, player, Resource.happiness);
 
 			const passives = ctx.passives.values(player.id).map((passive) => {
 				const sourceId = passive.meta?.source?.id;

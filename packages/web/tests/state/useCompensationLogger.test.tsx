@@ -37,6 +37,7 @@ function createSession(): EngineSession {
 		getRuleSnapshot: vi.fn(() => ({
 			tieredResourceKey: RESOURCE_KEYS[0]!,
 			tierDefinitions: [],
+			winConditions: [],
 		})),
 		getLegacyContext() {
 			return {
@@ -118,6 +119,7 @@ function createSessionState(turn: number): EngineSessionSnapshot {
 		rules: {
 			tieredResourceKey: RESOURCE_KEYS[0]!,
 			tierDefinitions: [],
+			winConditions: [],
 		},
 		passiveRecords: {
 			A: [],

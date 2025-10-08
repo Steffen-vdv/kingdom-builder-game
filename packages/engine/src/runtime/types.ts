@@ -6,6 +6,7 @@ import type { PlayerId, StatSourceContribution, ResourceKey } from '../state';
 import type { PassiveMetadata, PassiveSummary } from '../services';
 import type { PassiveRecord } from '../services/passive_types';
 import type { HappinessTierDefinition } from '../services/tiered_resource_types';
+import type { WinConditionDefinition } from '../services/win_condition_types';
 
 export interface LandSnapshot {
 	id: string;
@@ -44,6 +45,13 @@ export interface PlayerStateSnapshot {
 	passives: PassiveSummary[];
 }
 
+export interface GameConclusionSnapshot {
+	conditionId: string;
+	winnerId: PlayerId;
+	loserId: PlayerId;
+	triggeredBy: PlayerId;
+}
+
 export interface GameSnapshot {
 	turn: number;
 	currentPlayerIndex: number;
@@ -55,6 +63,7 @@ export interface GameSnapshot {
 	players: PlayerStateSnapshot[];
 	activePlayerId: PlayerId;
 	opponentId: PlayerId;
+	conclusion?: GameConclusionSnapshot;
 }
 
 export interface AdvanceSkipSourceSnapshot {
@@ -91,6 +100,7 @@ export interface EngineSessionSnapshot {
 export interface RuleSnapshot {
 	tieredResourceKey: ResourceKey;
 	tierDefinitions: HappinessTierDefinition[];
+	winConditions: WinConditionDefinition[];
 }
 
 export type PassiveRecordSnapshot = Omit<PassiveRecord, 'frames'>;

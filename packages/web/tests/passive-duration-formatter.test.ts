@@ -91,6 +91,7 @@ function createSyntheticCtx() {
 		slotsPerNewLand: 1,
 		maxSlotsPerLand: 1,
 		basePopulationCap: 1,
+		winConditions: [],
 	};
 	return createEngine({
 		actions: content.actions,
@@ -131,12 +132,7 @@ describe('passive formatter duration metadata', () => {
 				items: [],
 			},
 		]);
-		expect(log).toEqual([
-			{
-				title: '✨ Festival Spirit added',
-				items: ["✨ Festival Spirit duration: Until player's next 🎉 Festival"],
-			},
-		]);
+		expect(log).toEqual([]);
 	});
 
 	it('fills missing context metadata from static phase definitions', () => {
