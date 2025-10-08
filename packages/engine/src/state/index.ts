@@ -61,8 +61,8 @@ export interface StatSourceMeta {
 	dependsOn?: StatSourceLink[];
 	removal?: StatSourceLink;
 	effect?: {
-		type?: string | undefined;
-		method?: string | undefined;
+		type?: string;
+		method?: string;
 	};
 	extra?: Record<string, unknown>;
 }

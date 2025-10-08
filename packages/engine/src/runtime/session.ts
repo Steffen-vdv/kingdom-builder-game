@@ -16,10 +16,11 @@ import { cloneActionOptions } from './action_options';
 import { cloneActionTraces } from './player_snapshot';
 import { snapshotAdvance, snapshotEngine } from './engine_snapshot';
 import type {
-	EngineAdvanceResult,
-	EngineSessionSnapshot,
-	RuleSnapshot,
-} from './types';
+	SessionActionDefinitionSummary,
+	SessionAdvanceResult,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol';
 import type { EvaluationModifier } from '../services/passive_types';
 import {
 	simulateUpcomingPhases as runSimulation,
@@ -30,11 +31,7 @@ import type { PlayerId } from '../state';
 import type { AIDependencies } from '../ai';
 import type { WinConditionDefinition } from '../services/win_condition_types';
 
-export interface ActionDefinitionSummary {
-	id: string;
-	name: string;
-	system?: boolean;
-}
+type ActionDefinitionSummary = SessionActionDefinitionSummary;
 
 function cloneEffectLogEntry<T>(entry: T): T {
 	if (typeof entry !== 'object' || entry === null) {
@@ -64,8 +61,8 @@ export interface EngineSession {
 		actionId: T,
 		params?: ActionParameters<T>,
 	): ActionTrace[];
-	advancePhase(): EngineAdvanceResult;
-	getSnapshot(): EngineSessionSnapshot;
+	advancePhase(): SessionAdvanceResult;
+	getSnapshot(): SessionSnapshot;
 	getActionOptions(actionId: string): ReturnType<typeof cloneActionOptions>;
 	getActionCosts<T extends string>(
 		actionId: T,
@@ -89,7 +86,7 @@ export interface EngineSession {
 		playerId: PlayerId,
 		options?: SimulateUpcomingPhasesOptions,
 	): SimulateUpcomingPhasesResult;
-	getRuleSnapshot(): RuleSnapshot;
+	getRuleSnapshot(): SessionRuleSnapshot;
 	/**
 	 * @deprecated Temporary escape hatch while the web layer migrates to
 	 * snapshots. Avoid new usage and prefer the session facade instead.
@@ -108,6 +105,7 @@ export type {
 	LandSnapshot,
 	RuleSnapshot,
 	PassiveRecordSnapshot,
+	ActionDefinitionSummary,
 } from './types';
 
 export function createEngineSession(
@@ -196,7 +194,7 @@ export function createEngineSession(
 				tieredResourceKey,
 				tierDefinitions: clonedDefinitions,
 				winConditions: clonedWinConditions,
-			} satisfies RuleSnapshot;
+			} satisfies SessionRuleSnapshot;
 		},
 		getLegacyContext() {
 			return context;

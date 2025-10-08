@@ -1,14 +1,26 @@
 import type { EffectDef } from '../effects';
-import type { PhaseDef } from '../phases';
 import type { AdvanceSkip } from '../phases/advance';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
-import type { PlayerId, StatSourceContribution, ResourceKey } from '../state';
-import type { PassiveMetadata, PassiveSummary } from '../services';
+import type { PassiveSummary } from '../services';
 import type { PassiveRecord } from '../services/passive_types';
-import type { HappinessTierDefinition } from '../services/tiered_resource_types';
-import type { WinConditionDefinition } from '../services/win_condition_types';
+import type { PlayerId, ResourceKey, StatSourceContribution } from '../state';
+import type {
+	PlayerStartConfig,
+	SessionActionDefinitionSummary,
+	SessionAdvanceResult,
+	SessionAdvanceSkipSnapshot,
+	SessionAdvanceSkipSourceSnapshot,
+	SessionGameConclusionSnapshot,
+	SessionGameSnapshot,
+	SessionLandSnapshot,
+	SessionPassiveRecordSnapshot,
+	SessionPassiveSummary,
+	SessionPlayerStateSnapshot,
+	SessionRecentResourceGain,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol';
 
-export interface LandSnapshot {
+type LegacyLandSnapshot = {
 	id: string;
 	slotsMax: number;
 	slotsUsed: number;
@@ -18,16 +30,18 @@ export interface LandSnapshot {
 	onPayUpkeepStep?: EffectDef[];
 	onGainIncomeStep?: EffectDef[];
 	onGainAPStep?: EffectDef[];
-}
+};
 
-export interface PlayerStateSnapshot {
+type LegacyPassiveSummary = PassiveSummary;
+
+type LegacyPlayerStateSnapshot = {
 	id: PlayerId;
 	name: string;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	statsHistory: Record<string, boolean>;
 	population: Record<string, number>;
-	lands: LandSnapshot[];
+	lands: LegacyLandSnapshot[];
 	buildings: string[];
 	actions: string[];
 	statSources: Record<
@@ -42,17 +56,17 @@ export interface PlayerStateSnapshot {
 	>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
-	passives: PassiveSummary[];
-}
+	passives: LegacyPassiveSummary[];
+};
 
-export interface GameConclusionSnapshot {
+type LegacyGameConclusionSnapshot = {
 	conditionId: string;
 	winnerId: PlayerId;
 	loserId: PlayerId;
 	triggeredBy: PlayerId;
-}
+};
 
-export interface GameSnapshot {
+type LegacyGameSnapshot = {
 	turn: number;
 	currentPlayerIndex: number;
 	currentPhase: string;
@@ -60,47 +74,130 @@ export interface GameSnapshot {
 	phaseIndex: number;
 	stepIndex: number;
 	devMode: boolean;
-	players: PlayerStateSnapshot[];
+	players: LegacyPlayerStateSnapshot[];
 	activePlayerId: PlayerId;
 	opponentId: PlayerId;
-	conclusion?: GameConclusionSnapshot;
-}
+	conclusion?: LegacyGameConclusionSnapshot;
+};
 
-export interface AdvanceSkipSourceSnapshot {
+type LegacyAdvanceSkipSourceSnapshot = {
 	id: string;
 	detail?: string;
-	meta?: PassiveMetadata;
-}
+	meta?: LegacyPassiveSummary['meta'];
+};
 
-export interface AdvanceSkipSnapshot {
+type LegacyAdvanceSkipSnapshot = {
 	type: AdvanceSkip['type'];
 	phaseId: string;
 	stepId?: string;
-	sources: AdvanceSkipSourceSnapshot[];
-}
+	sources: LegacyAdvanceSkipSourceSnapshot[];
+};
 
-export interface EngineAdvanceResult {
+type LegacyEngineAdvanceResult = {
 	phase: string;
 	step: string;
 	effects: EffectDef[];
-	player: PlayerStateSnapshot;
-	skipped?: AdvanceSkipSnapshot;
-}
+	player: LegacyPlayerStateSnapshot;
+	skipped?: LegacyAdvanceSkipSnapshot;
+};
 
-export interface EngineSessionSnapshot {
-	game: GameSnapshot;
-	phases: PhaseDef[];
-	actionCostResource: ResourceKey;
-	recentResourceGains: { key: ResourceKey; amount: number }[];
-	compensations: Record<PlayerId, PlayerStartConfig>;
-	rules: RuleSnapshot;
-	passiveRecords: Record<PlayerId, PassiveRecordSnapshot[]>;
-}
+type LegacyRecentResourceGain = {
+	key: ResourceKey;
+	amount: number;
+};
 
-export interface RuleSnapshot {
+type LegacyPassiveRecordSnapshot = Omit<PassiveRecord, 'frames'>;
+
+type LegacyRuleSnapshot = {
 	tieredResourceKey: ResourceKey;
-	tierDefinitions: HappinessTierDefinition[];
-	winConditions: WinConditionDefinition[];
-}
+	tierDefinitions: SessionRuleSnapshot['tierDefinitions'];
+	winConditions: SessionRuleSnapshot['winConditions'];
+};
 
-export type PassiveRecordSnapshot = Omit<PassiveRecord, 'frames'>;
+type LegacyActionDefinitionSummary = {
+	id: string;
+	name: string;
+	system?: boolean;
+};
+
+type LegacyEngineSessionSnapshot = {
+	game: LegacyGameSnapshot;
+	phases: SessionSnapshot['phases'];
+	actionCostResource: ResourceKey;
+	recentResourceGains: LegacyRecentResourceGain[];
+	compensations: Record<PlayerId, PlayerStartConfig>;
+	rules: LegacyRuleSnapshot;
+	passiveRecords: Record<PlayerId, LegacyPassiveRecordSnapshot[]>;
+};
+
+type AssertExtends<Left, Right> = Left extends Right ? true : never;
+type AssertBothWays<Left, Right> = [
+	AssertExtends<Left, Right>,
+	AssertExtends<Right, Left>,
+];
+
+type _LandSnapshotContract = AssertBothWays<
+	LegacyLandSnapshot,
+	SessionLandSnapshot
+>;
+type _PassiveSummaryContract = AssertBothWays<
+	LegacyPassiveSummary,
+	SessionPassiveSummary
+>;
+type _PlayerSnapshotContract = AssertBothWays<
+	LegacyPlayerStateSnapshot,
+	SessionPlayerStateSnapshot
+>;
+type _GameConclusionContract = AssertBothWays<
+	LegacyGameConclusionSnapshot,
+	SessionGameConclusionSnapshot
+>;
+type _GameSnapshotContract = AssertBothWays<
+	LegacyGameSnapshot,
+	SessionGameSnapshot
+>;
+type _AdvanceSkipSourceContract = AssertBothWays<
+	LegacyAdvanceSkipSourceSnapshot,
+	SessionAdvanceSkipSourceSnapshot
+>;
+type _AdvanceSkipContract = AssertBothWays<
+	LegacyAdvanceSkipSnapshot,
+	SessionAdvanceSkipSnapshot
+>;
+type _AdvanceResultContract = AssertBothWays<
+	LegacyEngineAdvanceResult,
+	SessionAdvanceResult
+>;
+type _RecentResourceGainContract = AssertBothWays<
+	LegacyRecentResourceGain,
+	SessionRecentResourceGain
+>;
+type _PassiveRecordContract = AssertBothWays<
+	LegacyPassiveRecordSnapshot,
+	SessionPassiveRecordSnapshot
+>;
+type _RuleSnapshotContract = AssertBothWays<
+	LegacyRuleSnapshot,
+	SessionRuleSnapshot
+>;
+type _ActionDefinitionSummaryContract = AssertBothWays<
+	LegacyActionDefinitionSummary,
+	SessionActionDefinitionSummary
+>;
+type _SessionSnapshotContract = AssertBothWays<
+	LegacyEngineSessionSnapshot,
+	SessionSnapshot
+>;
+
+export type LandSnapshot = SessionLandSnapshot;
+export type PlayerStateSnapshot = SessionPlayerStateSnapshot;
+export type GameConclusionSnapshot = SessionGameConclusionSnapshot;
+export type GameSnapshot = SessionGameSnapshot;
+export type AdvanceSkipSourceSnapshot = SessionAdvanceSkipSourceSnapshot;
+export type AdvanceSkipSnapshot = SessionAdvanceSkipSnapshot;
+export type EngineAdvanceResult = SessionAdvanceResult;
+export type EngineSessionSnapshot = SessionSnapshot;
+export type RuleSnapshot = SessionRuleSnapshot;
+export type PassiveRecordSnapshot = SessionPassiveRecordSnapshot;
+export type RecentResourceGain = SessionRecentResourceGain;
+export type ActionDefinitionSummary = SessionActionDefinitionSummary;
