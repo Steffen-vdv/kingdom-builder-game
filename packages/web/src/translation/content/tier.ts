@@ -1,5 +1,5 @@
 import { formatPassiveRemoval } from '@kingdom-builder/contents';
-import type { HappinessTierDefinition } from '@kingdom-builder/engine/services';
+import type { HappinessTierDefinition } from '@kingdom-builder/engine';
 import { summarizeEffects } from '../effects';
 import { translateTierSummary } from './tierSummaries';
 import { registerContentTranslator } from './factory';

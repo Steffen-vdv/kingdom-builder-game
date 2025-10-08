@@ -12,7 +12,7 @@
 		"build": "tsc -b && vite build packages/web",
 		"preview": "vite preview",
 		"prelint": "node scripts/ensure-dev-dependencies.cjs",
-		"lint": "eslint . --ext .ts,.tsx --rulesdir scripts",
+		"lint": "npm run lint:deps && eslint . --ext .ts,.tsx --rulesdir scripts",
 		"typecheck": "tsc -b --pretty false",
 		"posttypecheck": "node scripts/clean-dists.cjs",
 		"fix": "eslint . --ext .ts,.tsx --fix --rulesdir scripts",
