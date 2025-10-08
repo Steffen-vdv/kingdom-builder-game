@@ -1,5 +1,3 @@
-/* eslint max-lines: ["error", 400] */
-
 import type {
 	EffectConfig,
 	HappinessTierDefinition,
@@ -9,84 +7,23 @@ import type {
 	TierPassiveTextTokens,
 	TierRange,
 } from '@kingdom-builder/protocol';
-import { PassiveMethods, Types } from '../builderShared';
-import { effect } from '../builders';
-import type { EffectBuilder } from '../builders';
-import { resolveEffectConfig } from './effectParams';
+import { PassiveMethods, Types } from '../../builderShared';
+import { TierDisplayBuilder, tierDisplay } from './tierDisplayBuilder';
+import {
+	TierPassiveTextBuilder,
+	tierPassiveText,
+} from './tierPassiveTextBuilder';
+import {
+	resolveTierEffectConfig,
+	type TierEffectInput,
+} from './tierEffectConfig';
 
-type TierDisplayBuilderConfig = TierDisplayMetadata & { title?: string };
+type TierPassiveTextInput =
+	| TierPassiveTextTokens
+	| TierPassiveTextBuilder
+	| ((builder: TierPassiveTextBuilder) => TierPassiveTextBuilder);
 
-class TierPassiveTextBuilder {
-	private tokens: TierPassiveTextTokens = {};
-
-	summary(token: string) {
-		this.tokens.summary = token;
-		return this;
-	}
-
-	description(token: string) {
-		this.tokens.description = token;
-		return this;
-	}
-
-	removal(token: string) {
-		this.tokens.removal = token;
-		return this;
-	}
-
-	build(): TierPassiveTextTokens {
-		return this.tokens;
-	}
-}
-
-export function tierPassiveText() {
-	return new TierPassiveTextBuilder();
-}
-
-class TierDisplayBuilder {
-	private config: TierDisplayBuilderConfig = {};
-
-	removalCondition(token: string) {
-		this.config.removalCondition = token;
-		return this;
-	}
-
-	title(value: string) {
-		this.config.title = value;
-		return this;
-	}
-
-	icon(icon: string) {
-		this.config.icon = icon;
-		return this;
-	}
-
-	summaryToken(token: string) {
-		this.config.summaryToken = token;
-		return this;
-	}
-
-	build(): TierDisplayMetadata {
-		return this.config;
-	}
-}
-
-export function tierDisplay() {
-	return new TierDisplayBuilder();
-}
-
-type TierEffectInput =
-	| EffectConfig
-	| EffectBuilder
-	| ((builder: EffectBuilder) => EffectBuilder);
-
-function resolveTierEffectConfig(value: TierEffectInput) {
-	if (typeof value === 'function') {
-		return value(effect()).build();
-	}
-	return resolveEffectConfig(value);
-}
-
+type PassiveParams = { id?: string };
 class HappinessTierBuilder {
 	private config: Partial<HappinessTierDefinition> & {
 		effect: TierEffect;
@@ -204,10 +141,12 @@ class HappinessTierBuilder {
 			effectConfig.method !== PassiveMethods.ADD
 		) {
 			throw new Error(
-				'Happiness tier passive(...) requires a passive:add effect. Configure it with effect().type(Types.Passive).method(PassiveMethods.ADD).',
+				'Happiness tier passive(...) requires a passive:add effect. ' +
+					'Configure it with effect().type(Types.Passive).' +
+					'method(PassiveMethods.ADD).',
 			);
 		}
-		const params = effectConfig.params as { id?: string } | undefined;
+		const params = effectConfig.params as PassiveParams | undefined;
 		const passiveId = params?.id;
 		if (!passiveId) {
 			throw new Error(
@@ -252,12 +191,7 @@ class HappinessTierBuilder {
 		return this;
 	}
 
-	text(
-		value:
-			| TierPassiveTextTokens
-			| TierPassiveTextBuilder
-			| ((builder: TierPassiveTextBuilder) => TierPassiveTextBuilder),
-	) {
+	text(value: TierPassiveTextInput) {
 		let tokens: TierPassiveTextTokens;
 		if (typeof value === 'function') {
 			tokens = value(tierPassiveText()).build();
@@ -312,3 +246,5 @@ export function happinessTier(id?: string) {
 	}
 	return builder;
 }
+
+export { HappinessTierBuilder };

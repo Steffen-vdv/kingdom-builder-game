@@ -1,3 +1,4 @@
+/* eslint-disable no-max-lines-override */
 /* eslint-disable max-lines */
 import {
 	POPULATION_INFO,
