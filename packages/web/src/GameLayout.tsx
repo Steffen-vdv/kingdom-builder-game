@@ -6,6 +6,7 @@ import Toaster from './components/common/Toaster';
 import ActionsPanel from './components/actions/ActionsPanel';
 import HoverCard from './components/HoverCard';
 import LogPanel from './components/LogPanel';
+import GameConclusionOverlay from './components/game/GameConclusionOverlay';
 import PhasePanel from './components/phases/PhasePanel';
 import PlayerPanel from './components/player/PlayerPanel';
 import SettingsDialog from './components/settings/SettingsDialog';
@@ -14,6 +15,8 @@ import { useGameEngine } from './state/GameContext';
 export default function GameLayout() {
 	const {
 		ctx,
+		sessionState,
+		ruleSnapshot,
 		onExit,
 		darkMode,
 		onToggleDark,
@@ -124,6 +127,7 @@ export default function GameLayout() {
 			/>
 		);
 	});
+	const conclusion = sessionState.game.conclusion;
 	const phasePanelElement = (
 		<div className="w-full lg:col-start-2">
 			<PhasePanel height={phasePanelHeight} />
@@ -153,6 +157,14 @@ export default function GameLayout() {
 	);
 	return (
 		<div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-amber-100 via-rose-100 to-sky-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
+			{conclusion && (
+				<GameConclusionOverlay
+					conclusion={conclusion}
+					ruleSnapshot={ruleSnapshot}
+					sessionState={sessionState}
+					onExit={onExit}
+				/>
+			)}
 			<SettingsDialog
 				open={isSettingsOpen}
 				onClose={() => setSettingsOpen(false)}

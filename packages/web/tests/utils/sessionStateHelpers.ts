@@ -79,6 +79,7 @@ export function createSessionHelpers(
 			rules: {
 				tieredResourceKey: primaryResource,
 				tierDefinitions: [],
+				winConditions: [],
 			},
 			passiveRecords,
 		};

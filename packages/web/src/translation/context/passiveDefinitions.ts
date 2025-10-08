@@ -52,5 +52,6 @@ export function cloneRuleSnapshot(ruleSnapshot: RuleSnapshot): RuleSnapshot {
 	return Object.freeze({
 		tieredResourceKey: ruleSnapshot.tieredResourceKey,
 		tierDefinitions: structuredClone(ruleSnapshot.tierDefinitions),
+		winConditions: structuredClone(ruleSnapshot.winConditions),
 	});
 }

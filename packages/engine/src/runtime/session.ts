@@ -28,6 +28,7 @@ import {
 } from './simulate_upcoming_phases';
 import type { PlayerId } from '../state';
 import type { AIDependencies } from '../ai';
+import type { WinConditionDefinition } from '../services/win_condition_types';
 
 export interface ActionDefinitionSummary {
 	id: string;
@@ -50,6 +51,12 @@ function clonePassiveEvaluationMods(
 		entries.push([target, new Map(modifiers)]);
 	}
 	return new Map(entries);
+}
+
+function cloneWinConditions(
+	definitions: WinConditionDefinition[],
+): WinConditionDefinition[] {
+	return structuredClone(definitions);
 }
 
 export interface EngineSession {
@@ -96,6 +103,7 @@ export type {
 	AdvanceSkipSnapshot,
 	AdvanceSkipSourceSnapshot,
 	GameSnapshot,
+	GameConclusionSnapshot,
 	PlayerStateSnapshot,
 	LandSnapshot,
 	RuleSnapshot,
@@ -177,11 +185,17 @@ export function createEngineSession(
 			return structuredClone(result);
 		},
 		getRuleSnapshot() {
-			const { tieredResourceKey, tierDefinitions } = context.services.rules;
+			const {
+				tieredResourceKey,
+				tierDefinitions,
+				winConditions = [],
+			} = context.services.rules;
 			const clonedDefinitions = structuredClone(tierDefinitions);
+			const clonedWinConditions = cloneWinConditions(winConditions);
 			return {
 				tieredResourceKey,
 				tierDefinitions: clonedDefinitions,
+				winConditions: clonedWinConditions,
 			} satisfies RuleSnapshot;
 		},
 		getLegacyContext() {

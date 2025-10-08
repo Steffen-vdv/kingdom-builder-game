@@ -47,6 +47,15 @@ export async function advanceToActionPhase({
 	refresh,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
+	if (snapshot.game.conclusion) {
+		setTabsEnabled(false);
+		setPhaseSteps([]);
+		setPhaseHistories({});
+		setDisplayPhase(snapshot.game.currentPhase);
+		setPhaseTimer(0);
+		refresh();
+		return;
+	}
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
 		if (!mountedRef.current) {
 			return;
@@ -74,6 +83,13 @@ export async function advanceToActionPhase({
 		const { phase, step, player, effects, skipped }: EngineAdvanceResult =
 			session.advancePhase();
 		const snapshotAfter = session.getSnapshot();
+		if (snapshotAfter.game.conclusion) {
+			setTabsEnabled(false);
+			setPhaseTimer(0);
+			setDisplayPhase(snapshotAfter.game.currentPhase);
+			refresh();
+			return;
+		}
 		const phaseDef = snapshotAfter.phases.find(
 			(phaseDefinition) => phaseDefinition.id === phase,
 		);

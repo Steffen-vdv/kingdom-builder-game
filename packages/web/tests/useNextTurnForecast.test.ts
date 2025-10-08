@@ -101,7 +101,11 @@ const engineValue: MockGameEngine = {
 		advancePhase: vi.fn(),
 	},
 	sessionState: undefined as unknown as EngineSessionSnapshot,
-	ruleSnapshot: { tieredResourceKey: primaryResource, tierDefinitions: [] },
+	ruleSnapshot: {
+		tieredResourceKey: primaryResource,
+		tierDefinitions: [],
+		winConditions: [],
+	},
 	resolution: null,
 	showResolution: vi.fn().mockResolvedValue(undefined),
 	acknowledgeResolution: vi.fn(),

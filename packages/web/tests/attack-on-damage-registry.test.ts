@@ -66,7 +66,11 @@ function createTranslationCtx(): TranslationContext {
 			A: {} as PlayerStartConfig,
 			B: {} as PlayerStartConfig,
 		},
-		rules: { tieredResourceKey: 'happiness', tierDefinitions: [] },
+		rules: {
+			tieredResourceKey: 'happiness',
+			tierDefinitions: [],
+			winConditions: [],
+		},
 	};
 }
 

@@ -32,6 +32,9 @@ export function useAiRunner({
 		if (!phaseDefinition?.action) {
 			return;
 		}
+		if (sessionState.game.conclusion) {
+			return;
+		}
 		const activeId = sessionState.game.activePlayerId;
 		if (!session.hasAiController(activeId)) {
 			return;
@@ -57,6 +60,10 @@ export function useAiRunner({
 					await performRef.current(action, params as Record<string, unknown>);
 				},
 				advance: () => {
+					const snapshot = session.getSnapshot();
+					if (snapshot.game.conclusion) {
+						return;
+					}
 					session.advancePhase();
 				},
 			});

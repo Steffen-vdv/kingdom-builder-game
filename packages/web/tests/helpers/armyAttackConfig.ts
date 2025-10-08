@@ -117,6 +117,7 @@ export const RULES: RuleSet = {
 	slotsPerNewLand: 1,
 	maxSlotsPerLand: 1,
 	basePopulationCap: 1,
+	winConditions: [],
 };
 
 export type { SyntheticAction, CombatStatKey, CombatStatConfig };

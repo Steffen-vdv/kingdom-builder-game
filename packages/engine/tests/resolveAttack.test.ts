@@ -229,4 +229,21 @@ describe('resolveAttack', () => {
 		expect(defender.absorption).toBe(1);
 		expect(defender.fortificationStrength).toBe(5);
 	});
+
+	it('records a victory when the defender castle falls', () => {
+		const engineContext = createTestEngine();
+		const defender = engineContext.game.opponent;
+		const startHp = defender.resources[Resource.castleHP];
+		expect(engineContext.game.conclusion).toBeUndefined();
+		resolveAttack(defender, startHp, engineContext, {
+			type: 'resource',
+			key: Resource.castleHP,
+		});
+		expect(engineContext.game.conclusion?.conditionId).toBe('castle-destroyed');
+		expect(engineContext.game.conclusion?.winnerId).toBe(
+			engineContext.game.active.id,
+		);
+		expect(engineContext.game.conclusion?.loserId).toBe(defender.id);
+		expect(engineContext.game.conclusion?.triggeredBy).toBe(defender.id);
+	});
 });
