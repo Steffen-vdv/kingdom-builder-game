@@ -11,6 +11,7 @@ import {
 	type PlayerSnapshot,
 	type TranslationDiffContext,
 } from '../translation';
+import { getLegacySessionContext } from './getLegacySessionContext';
 
 interface UseCompensationLoggerOptions {
 	session: EngineSession;
@@ -39,7 +40,7 @@ export function useCompensationLogger({
 			return;
 		}
 		const baseDiffContext = createTranslationDiffContext(
-			session.getLegacyContext(),
+			getLegacySessionContext(session),
 		);
 		sessionState.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {

@@ -23,6 +23,7 @@ import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
+import { getLegacySessionContext } from '../src/state/getLegacySessionContext';
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
@@ -85,7 +86,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 			start: GAME_START,
 			rules: RULES,
 		});
-		const ctx = session.getLegacyContext();
+		const ctx = getLegacySessionContext(session);
 		const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
 		ctx.activePlayer.resources[happinessKey] = 6;
 		ctx.services.handleTieredResourceChange(ctx, happinessKey);

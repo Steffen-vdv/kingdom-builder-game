@@ -6,6 +6,7 @@ import {
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { useGameEngine } from './GameContext';
+import { getLegacySessionContext } from './getLegacySessionContext';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
 
@@ -119,7 +120,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 		if (cacheRef.current?.key === hashKey) {
 			return cacheRef.current.value;
 		}
-		const context = session.getLegacyContext();
+		const context = getLegacySessionContext(session);
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
 			try {

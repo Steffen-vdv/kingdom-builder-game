@@ -37,6 +37,7 @@ import { useAiRunner } from './useAiRunner';
 import { initializeDeveloperMode } from './developerModeSetup';
 import type { GameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
+import { getLegacySessionContext } from './getLegacySessionContext';
 
 const RESOURCE_KEYS = Object.keys(RESOURCES) as ResourceKey[];
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
@@ -91,7 +92,7 @@ export function GameProvider({
 			rules: RULES,
 		});
 		created.setDevMode(devMode);
-		const legacyContext = created.getLegacyContext();
+		const legacyContext = getLegacySessionContext(created);
 		if (devMode) {
 			initializeDeveloperMode(legacyContext);
 		}

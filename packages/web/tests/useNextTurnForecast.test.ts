@@ -17,6 +17,10 @@ import {
 import { useNextTurnForecast } from '../src/state/useNextTurnForecast';
 import { createSessionHelpers } from './utils/sessionStateHelpers';
 
+const contextStub = { context: true } as const;
+
+const getLegacySessionContextMock = vi.hoisted(() => vi.fn(() => contextStub));
+
 const simulateUpcomingPhasesMock = vi.hoisted(() => vi.fn());
 
 const jsdom = new JSDOM('<!doctype html><html><body></body></html>');
@@ -31,6 +35,10 @@ vi.mock('@kingdom-builder/engine', async () => {
 		simulateUpcomingPhases: simulateUpcomingPhasesMock,
 	};
 });
+
+vi.mock('../src/state/getLegacySessionContext', () => ({
+	getLegacySessionContext: getLegacySessionContextMock,
+}));
 
 interface MockGameEngine {
 	session: {
@@ -100,7 +108,6 @@ function createDelta(amount: number): PlayerSnapshotDeltaBucket {
 	};
 }
 
-const contextStub = { context: true } as const;
 const engineValue: MockGameEngine = {
 	session: {
 		getLegacyContext: vi.fn(() => contextStub),
@@ -140,6 +147,7 @@ describe('useNextTurnForecast', () => {
 	beforeEach(() => {
 		simulateUpcomingPhasesMock.mockReset();
 		engineValue.session.getLegacyContext.mockClear();
+		getLegacySessionContextMock.mockClear();
 		resetSessionState([createPlayer(1), createPlayer(2)]);
 	});
 
@@ -156,12 +164,14 @@ describe('useNextTurnForecast', () => {
 		});
 		const { result, rerender } = renderHook(() => useNextTurnForecast());
 		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(getLegacySessionContextMock).toHaveBeenCalledTimes(1);
 		expect(result.current[firstPlayerId]).toEqual(createDelta(3));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(5));
 
 		simulateUpcomingPhasesMock.mockClear();
 		rerender();
 		expect(simulateUpcomingPhasesMock).not.toHaveBeenCalled();
+		expect(getLegacySessionContextMock).toHaveBeenCalledTimes(1);
 		expect(result.current[firstPlayerId]).toEqual(createDelta(3));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(5));
 
@@ -169,6 +179,7 @@ describe('useNextTurnForecast', () => {
 		setPlayers([createPlayer(1), createPlayer(2)]);
 		rerender();
 		expect(simulateUpcomingPhasesMock).not.toHaveBeenCalled();
+		expect(getLegacySessionContextMock).toHaveBeenCalledTimes(1);
 		expect(result.current[firstPlayerId]).toEqual(createDelta(3));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(5));
 	});
@@ -188,6 +199,7 @@ describe('useNextTurnForecast', () => {
 		});
 		const { result, rerender } = renderHook(() => useNextTurnForecast());
 		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(getLegacySessionContextMock).toHaveBeenCalledTimes(1);
 		expect(result.current[firstPlayerId]).toEqual({
 			resources: {},
 			stats: {},
@@ -204,6 +216,7 @@ describe('useNextTurnForecast', () => {
 		]);
 		rerender();
 		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(getLegacySessionContextMock).toHaveBeenCalledTimes(2);
 	});
 
 	it('recomputes when game state changes without player deltas', () => {
@@ -226,6 +239,7 @@ describe('useNextTurnForecast', () => {
 		setGameState({ turn: engineValue.sessionState.game.turn + 1 });
 		rerender();
 		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(getLegacySessionContextMock).toHaveBeenCalledTimes(2);
 		expect(result.current[firstPlayerId]).toEqual(createDelta(4));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(6));
 	});
@@ -271,6 +285,7 @@ describe('useNextTurnForecast', () => {
 		]);
 		rerender();
 		expect(simulateUpcomingPhasesMock).toHaveBeenCalledTimes(2);
+		expect(getLegacySessionContextMock).toHaveBeenCalledTimes(2);
 		expect(result.current[firstPlayerId]).toEqual(createDelta(2));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(3));
 	});
