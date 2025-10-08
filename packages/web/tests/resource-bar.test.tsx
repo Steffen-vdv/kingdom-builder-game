@@ -93,6 +93,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
 		const sessionState = session.getSnapshot();
+		const ruleSnapshot = session.getRuleSnapshot();
 		const translationContext = createTranslationContext(
 			sessionState,
 			{
@@ -101,11 +102,14 @@ describe('<ResourceBar /> happiness hover card', () => {
 				developments: DEVELOPMENTS,
 			},
 			{
-				pullEffectLog: (key) => session.pullEffectLog(key),
-				evaluationMods: session.getPassiveEvaluationMods(),
+				helpers: {
+					pullEffectLog: (key) => session.pullEffectLog(key),
+					evaluationMods: session.getPassiveEvaluationMods(),
+				},
+				ruleSnapshot,
+				passiveRecords: session.getPassiveRecords(),
 			},
 		);
-		const ruleSnapshot = session.getRuleSnapshot();
 		const customRuleSnapshot = {
 			...ruleSnapshot,
 			tierDefinitions: ruleSnapshot.tierDefinitions.map((tier) => ({

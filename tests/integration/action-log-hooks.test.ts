@@ -95,8 +95,12 @@ describe('content-driven action log hooks', () => {
 					developments,
 				},
 				{
-					pullEffectLog: (key) => session.pullEffectLog(key),
-					evaluationMods: session.getPassiveEvaluationMods(),
+					helpers: {
+						pullEffectLog: (key) => session.pullEffectLog(key),
+						evaluationMods: session.getPassiveEvaluationMods(),
+					},
+					ruleSnapshot: session.getRuleSnapshot(),
+					passiveRecords: session.getPassiveRecords(),
 				},
 			);
 

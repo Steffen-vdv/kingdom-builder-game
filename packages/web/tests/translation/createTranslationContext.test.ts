@@ -9,9 +9,12 @@ import {
 } from '@kingdom-builder/contents';
 import { PassiveManager } from '@kingdom-builder/engine';
 import type {
+	EffectDef,
 	EngineSessionSnapshot,
+	PassiveRecord,
 	PlayerId,
 	ResourceKey,
+	RuleSnapshot,
 } from '@kingdom-builder/engine';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import { describe, expect, it } from 'vitest';
@@ -103,6 +106,26 @@ describe('createTranslationContext', () => {
 				population: 1,
 			}),
 		];
+		const activeId = players[0]?.id ?? ('A' as PlayerId);
+		const passiveDefinition: PassiveRecord = {
+			id: passiveId,
+			owner: activeId,
+			frames: [] as PassiveRecord['frames'],
+			effects: [
+				{
+					type: 'resource',
+					method: 'add',
+					params: { key: resourceKey, amount: 1 },
+				} as EffectDef,
+			],
+		};
+		const passiveRecords = new Map<PlayerId, PassiveRecord[]>([
+			[activeId, [passiveDefinition]],
+		]);
+		const ruleSnapshot: RuleSnapshot = {
+			tieredResourceKey: resourceKey,
+			tierDefinitions: [] as RuleSnapshot['tierDefinitions'],
+		};
 		const session: EngineSessionSnapshot = {
 			game: {
 				turn: 4,
@@ -132,8 +155,12 @@ describe('createTranslationContext', () => {
 				developments: DEVELOPMENTS,
 			},
 			{
-				pullEffectLog,
-				evaluationMods: passiveManager.evaluationMods,
+				helpers: {
+					pullEffectLog,
+					evaluationMods: passiveManager.evaluationMods,
+				},
+				passiveRecords,
+				ruleSnapshot,
 			},
 		);
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
@@ -145,7 +172,6 @@ describe('createTranslationContext', () => {
 			modifierId,
 			Array.from(modifiers.keys()),
 		]);
-		const activeId = players[0]?.id ?? 'A';
 		const contextSnapshot = {
 			actionCostResource: context.actionCostResource,
 			phases: context.phases.map((phase) => phase.id),
@@ -155,6 +181,7 @@ describe('createTranslationContext', () => {
 			},
 			recentResourceGains: context.recentResourceGains,
 			compensations: context.compensations,
+			ruleSnapshot: context.ruleSnapshot,
 			registries: {
 				action: { id: actionId, has: context.actions.has(actionId) },
 				building: { id: buildingId, has: context.buildings.has(buildingId) },
@@ -167,6 +194,11 @@ describe('createTranslationContext', () => {
 				list: context.passives.list().map(({ id }) => id),
 				owned: context.passives.list(activeId).map(({ id }) => id),
 				descriptor: context.passives.get(passiveId, activeId),
+				values: context.passives.values(activeId).map((definition) => ({
+					id: definition.id,
+					owner: definition.owner,
+					effects: definition.effects,
+				})),
 				evaluationMods: evaluationSnapshot,
 			},
 		};
@@ -208,6 +240,22 @@ describe('createTranslationContext', () => {
 			    "owned": [
 			      "passive-a",
 			    ],
+			    "values": [
+			      {
+			        "effects": [
+			          {
+			            "method": "add",
+			            "params": {
+			              "amount": 1,
+			              "key": "gold",
+			            },
+			            "type": "resource",
+			          },
+			        ],
+			        "id": "passive-a",
+			        "owner": "A",
+			      },
+			    ],
 			  },
 			  "phases": [
 			    "growth",
@@ -237,6 +285,10 @@ describe('createTranslationContext', () => {
 			      "has": true,
 			      "id": "farm",
 			    },
+			  },
+			  "ruleSnapshot": {
+			    "tierDefinitions": [],
+			    "tieredResourceKey": "gold",
 			  },
 			}
 		`);

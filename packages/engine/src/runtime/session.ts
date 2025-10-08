@@ -16,7 +16,11 @@ import { cloneActionOptions } from './action_options';
 import { cloneActionTraces } from './player_snapshot';
 import { snapshotAdvance, snapshotEngine } from './engine_snapshot';
 import type { EngineAdvanceResult, EngineSessionSnapshot } from './types';
-import type { EvaluationModifier } from '../services/passive_types';
+import { clonePassiveRecord } from '../services/passive_helpers';
+import type {
+	EvaluationModifier,
+	PassiveRecord,
+} from '../services/passive_types';
 import {
 	simulateUpcomingPhases as runSimulation,
 	type SimulateUpcomingPhasesOptions,
@@ -49,6 +53,19 @@ function clonePassiveEvaluationMods(
 	return new Map(entries);
 }
 
+function clonePassiveRecords(
+	context: EngineContext,
+): ReadonlyMap<PlayerId, PassiveRecord[]> {
+	return new Map(
+		context.game.players.map((player) => [
+			player.id,
+			context.passives
+				.values(player.id)
+				.map((record) => clonePassiveRecord(record)),
+		]),
+	);
+}
+
 export interface EngineSession {
 	performAction<T extends string>(
 		actionId: T,
@@ -68,6 +85,7 @@ export interface EngineSession {
 	getActionDefinition(actionId: string): ActionDefinitionSummary | undefined;
 	pullEffectLog<T>(key: string): T | undefined;
 	getPassiveEvaluationMods(): Map<string, Map<string, EvaluationModifier>>;
+	getPassiveRecords(): ReadonlyMap<PlayerId, PassiveRecord[]>;
 	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T>;
 	setDevMode(enabled: boolean): void;
 	runAiTurn(
@@ -153,6 +171,9 @@ export function createEngineSession(
 		},
 		getPassiveEvaluationMods() {
 			return clonePassiveEvaluationMods(context.passives.evaluationMods);
+		},
+		getPassiveRecords() {
+			return clonePassiveRecords(context);
 		},
 		enqueue(taskFactory) {
 			return context.enqueue(taskFactory);

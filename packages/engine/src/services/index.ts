@@ -2,6 +2,7 @@ export { PassiveManager } from './passive_manager';
 export type {
 	PassiveSummary,
 	PassiveMetadata,
+	PassiveRecord,
 	PassiveSourceMetadata,
 	PassiveRemovalMetadata,
 	CostBag,

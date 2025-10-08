@@ -211,8 +211,12 @@ export function getLegacySessionContext(
 			developments: DEVELOPMENTS,
 		},
 		{
-			pullEffectLog: <T>(key: string) => session.pullEffectLog<T>(key),
-			evaluationMods: session.getPassiveEvaluationMods(),
+			helpers: {
+				pullEffectLog: <T>(key: string) => session.pullEffectLog<T>(key),
+				evaluationMods: session.getPassiveEvaluationMods(),
+			},
+			ruleSnapshot: session.getRuleSnapshot(),
+			passiveRecords: session.getPassiveRecords(),
 		},
 	);
 	const diffContext = createDiffContext(snapshot, translationContext);

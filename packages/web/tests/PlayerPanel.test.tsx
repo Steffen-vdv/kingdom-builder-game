@@ -34,6 +34,10 @@ const ctx = createEngine({
 	rules: RULES,
 });
 const actionCostResource = ctx.actionCostResource;
+const ruleSnapshot = {
+	tieredResourceKey: ctx.services.rules.tieredResourceKey,
+	tierDefinitions: ctx.services.rules.tierDefinitions,
+};
 const translationContext = createTranslationContext(
 	snapshotEngine(ctx),
 	{
@@ -42,17 +46,23 @@ const translationContext = createTranslationContext(
 		developments: DEVELOPMENTS,
 	},
 	{
-		pullEffectLog: (key) => ctx.pullEffectLog(key),
-		passives: ctx.passives,
+		helpers: {
+			pullEffectLog: (key) => ctx.pullEffectLog(key),
+			evaluationMods: ctx.passives.evaluationMods,
+		},
+		ruleSnapshot,
+		passiveRecords: new Map(
+			ctx.game.players.map((player) => [
+				player.id,
+				ctx.passives.values(player.id),
+			]),
+		),
 	},
 );
 const mockGame = {
 	ctx,
 	translationContext,
-	ruleSnapshot: {
-		tieredResourceKey: ctx.services.rules.tieredResourceKey,
-		tierDefinitions: ctx.services.rules.tierDefinitions,
-	},
+	ruleSnapshot,
 	log: [],
 	logOverflowed: false,
 	hoverCard: null,

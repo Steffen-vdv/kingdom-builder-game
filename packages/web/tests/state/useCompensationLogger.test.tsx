@@ -34,6 +34,11 @@ function createSession(): EngineSession {
 		advancePhase: vi.fn(),
 		pullEffectLog: vi.fn(),
 		getPassiveEvaluationMods: vi.fn(() => new Map()),
+		getPassiveRecords: vi.fn(() => new Map()),
+		getRuleSnapshot: vi.fn(() => ({
+			tieredResourceKey: RESOURCE_KEYS[0]!,
+			tierDefinitions: [],
+		})),
 		getLegacyContext() {
 			return {
 				activePlayer: {

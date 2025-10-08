@@ -62,7 +62,7 @@ export { EngineContext } from './context';
  * @deprecated Use createEngineSession instead.
  */
 export { Services, PassiveManager } from './services';
-export type { PassiveSummary } from './services';
+export type { PassiveSummary, PassiveRecord } from './services';
 /**
  * @deprecated Use @kingdom-builder/protocol instead.
  */

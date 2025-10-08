@@ -1,4 +1,9 @@
-import type { PassiveSummary, PlayerId } from '@kingdom-builder/engine';
+import type {
+	PassiveRecord,
+	PassiveSummary,
+	PlayerId,
+	RuleSnapshot,
+} from '@kingdom-builder/engine';
 import type {
 	ActionConfig,
 	BuildingConfig,
@@ -44,6 +49,7 @@ export type TranslationPassiveModifierMap = ReadonlyMap<
 export interface TranslationPassives {
 	list(owner?: PlayerId): PassiveSummary[];
 	get(id: string, owner: PlayerId): TranslationPassiveDescriptor | undefined;
+	values(owner?: PlayerId): readonly PassiveRecord[];
 	readonly evaluationMods: TranslationPassiveModifierMap;
 }
 
@@ -93,6 +99,7 @@ export interface TranslationContext {
 		amount: number;
 	}>;
 	readonly compensations: Readonly<Record<PlayerId, PlayerStartConfig>>;
+	readonly ruleSnapshot: RuleSnapshot;
 	pullEffectLog<T>(key: string): T | undefined;
 	readonly actionCostResource?: string;
 }

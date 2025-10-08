@@ -107,6 +107,10 @@ export function GameProvider({
 	const enqueue = <T,>(task: () => Promise<T> | T) => session.enqueue(task);
 
 	const sessionState = useMemo(() => session.getSnapshot(), [session, tick]);
+	const passiveRecords = useMemo(
+		() => session.getPassiveRecords(),
+		[session, tick],
+	);
 	const ruleSnapshot = useMemo(() => session.getRuleSnapshot(), [session]);
 
 	useEffect(() => {
@@ -132,11 +136,15 @@ export function GameProvider({
 					developments: DEVELOPMENTS,
 				},
 				{
-					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
-					evaluationMods: session.getPassiveEvaluationMods(),
+					helpers: {
+						pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
+						evaluationMods: session.getPassiveEvaluationMods(),
+					},
+					ruleSnapshot,
+					passiveRecords,
 				},
 			),
-		[sessionState, session],
+		[sessionState, session, ruleSnapshot, passiveRecords],
 	);
 
 	const {
