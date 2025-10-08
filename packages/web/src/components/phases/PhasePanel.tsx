@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import TimerCircle from '../TimerCircle';
 import { useGameEngine, type PhaseStep } from '../../state/GameContext';
+import { DEFAULT_PLAYER_NAME } from '../../state/playerIdentity';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import Button from '../common/Button';
@@ -12,7 +13,8 @@ type PhasePanelProps = {
 const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 	({ height }, ref) => {
 		const {
-			ctx,
+			sessionState,
+			sessionView,
 			phaseSteps,
 			setPhaseSteps,
 			phaseTimer,
@@ -22,15 +24,16 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			tabsEnabled,
 			handleEndTurn,
 		} = useGameEngine();
+		const { phases, game } = sessionState;
 
 		const actionPhaseId = useMemo(() => {
-			const phaseWithAction = ctx.phases.find(
+			const phaseWithAction = phases.find(
 				(phaseDefinition) => phaseDefinition.action,
 			);
 			return phaseWithAction?.id;
-		}, [ctx]);
+		}, [phases]);
 		const isActionPhase = isActionPhaseActive(
-			ctx.game.currentPhase,
+			game.currentPhase,
 			actionPhaseId,
 			tabsEnabled,
 		);
@@ -48,7 +51,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			});
 		}, [phaseSteps]);
 
-		const phaseTabs = ctx.phases.map((phase) => {
+		const phaseTabs = phases.map((phase) => {
 			const isSelected = displayPhase === phase.id;
 			const baseTabClassSegments = [
 				'relative flex items-center gap-2 rounded-full',
@@ -95,11 +98,12 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			);
 		});
 
+		const activePlayerName = sessionView.active?.name ?? DEFAULT_PLAYER_NAME;
 		const turnIndicator = (
 			<div className="flex items-center gap-3 rounded-full border border-white/60 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200">
-				<span>Turn {ctx.game.turn}</span>
+				<span>Turn {game.turn}</span>
 				<span className="rounded-full bg-white/60 px-2 py-1 text-[0.65rem] font-medium tracking-[0.2em] text-slate-500 dark:bg-white/10 dark:text-slate-300">
-					{ctx.activePlayer.name}
+					{activePlayerName}
 				</span>
 			</div>
 		);

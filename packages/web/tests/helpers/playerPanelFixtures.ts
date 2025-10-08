@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import type {
-	EngineContext,
 	EngineSession,
 	PlayerId,
 	RuleSnapshot,
@@ -17,6 +16,8 @@ import {
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../../src/translation/context';
 import type { GameEngineContextValue } from '../../src/state/GameContext.types';
+import { selectSessionView } from '../../src/state/sessionSelectors';
+import type { SessionRegistries } from '../../src/state/sessionSelectors.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 
 export interface PlayerPanelFixtures {
@@ -76,6 +77,12 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		actionCostResource: RULES.tieredResourceKey as ResourceKey,
 		ruleSnapshot,
 	});
+	const registries: SessionRegistries = {
+		actions: ACTIONS,
+		buildings: BUILDINGS,
+		developments: DEVELOPMENTS,
+	};
+	const sessionView = selectSessionView(sessionState, registries);
 	const translationContext = createTranslationContext(
 		sessionState,
 		{
@@ -92,7 +99,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	const mockGame: GameEngineContextValue = {
 		session: {} as EngineSession,
 		sessionState,
-		ctx: {} as EngineContext,
+		sessionView,
 		translationContext,
 		ruleSnapshot,
 		log: [],

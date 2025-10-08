@@ -84,9 +84,9 @@ export function GameProvider({
 }) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
-	const { session, ctx } = useMemo<{
+	const { session, legacyContext } = useMemo<{
 		session: EngineSession;
-		ctx: EngineContext;
+		legacyContext: EngineContext;
 	}>(() => {
 		const created = createEngineSession({
 			actions: ACTIONS,
@@ -107,7 +107,10 @@ export function GameProvider({
 		if (primary) {
 			primary.name = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
 		}
-		return { session: created, ctx: legacyContext };
+		return {
+			session: created,
+			legacyContext,
+		};
 	}, [devMode]);
 	const [tick, setTick] = useState(0);
 	const refresh = useCallback(() => setTick((t) => t + 1), []);
@@ -121,7 +124,7 @@ export function GameProvider({
 	);
 
 	useEffect(() => {
-		const [primary] = ctx.game.players;
+		const [primary] = legacyContext.game.players;
 		if (!primary) {
 			return;
 		}
@@ -131,7 +134,7 @@ export function GameProvider({
 		}
 		primary.name = desiredName;
 		refresh();
-	}, [ctx, refresh, playerName]);
+	}, [legacyContext, refresh, playerName]);
 
 	const translationContext = useMemo(
 		() =>
@@ -276,9 +279,6 @@ export function GameProvider({
 	const value: GameEngineContextValue = {
 		session,
 		sessionState,
-		// TODO(engine-web#session): Remove legacy ctx usages once all
-		// consumers are migrated to the session facade.
-		ctx,
 		sessionView,
 		translationContext,
 		ruleSnapshot,

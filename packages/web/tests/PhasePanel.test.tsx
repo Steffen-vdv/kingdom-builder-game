@@ -4,7 +4,7 @@ import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngineSession } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -15,13 +15,14 @@ import {
 	RULES,
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../src/translation/context';
-import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import { selectSessionView } from '../src/state/sessionSelectors';
+import type { SessionRegistries } from '../src/state/sessionSelectors.types';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-const ctx = createEngine({
+const session = createEngineSession({
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
@@ -30,28 +31,32 @@ const ctx = createEngine({
 	start: GAME_START,
 	rules: RULES,
 });
-const actionCostResource = ctx.actionCostResource;
-const engineSnapshot = snapshotEngine(ctx);
+const sessionState = session.getSnapshot();
+const ruleSnapshot = session.getRuleSnapshot();
+const registries: SessionRegistries = {
+	actions: ACTIONS,
+	buildings: BUILDINGS,
+	developments: DEVELOPMENTS,
+};
+const sessionView = selectSessionView(sessionState, registries);
 const translationContext = createTranslationContext(
-	engineSnapshot,
+	sessionState,
+	registries,
 	{
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
+		pullEffectLog: (key) => session.pullEffectLog(key),
+		evaluationMods: session.getPassiveEvaluationMods(),
 	},
 	{
-		pullEffectLog: (key) => ctx.pullEffectLog(key),
-		evaluationMods: ctx.passives.evaluationMods,
-	},
-	{
-		ruleSnapshot: engineSnapshot.rules,
-		passiveRecords: engineSnapshot.passiveRecords,
+		ruleSnapshot,
+		passiveRecords: sessionState.passiveRecords,
 	},
 );
 const mockGame = {
-	ctx,
+	session,
+	sessionState,
+	sessionView,
 	translationContext,
-	ruleSnapshot: engineSnapshot.rules,
+	ruleSnapshot,
 	log: [],
 	logOverflowed: false,
 	hoverCard: null,
@@ -61,11 +66,11 @@ const mockGame = {
 	setPhaseSteps: vi.fn(),
 	phaseTimer: 0,
 	mainApStart: 0,
-	displayPhase: ctx.game.currentPhase,
+	displayPhase: sessionState.game.currentPhase,
 	setDisplayPhase: vi.fn(),
 	phaseHistories: {},
 	tabsEnabled: true,
-	actionCostResource,
+	actionCostResource: sessionState.actionCostResource,
 	handlePerform: vi.fn().mockResolvedValue(undefined),
 	runUntilActionPhase: vi.fn(),
 	handleEndTurn: vi.fn().mockResolvedValue(undefined),
@@ -75,6 +80,21 @@ const mockGame = {
 	resolution: null,
 	showResolution: vi.fn().mockResolvedValue(undefined),
 	acknowledgeResolution: vi.fn(),
+	musicEnabled: true,
+	onToggleMusic: vi.fn(),
+	soundEnabled: true,
+	onToggleSound: vi.fn(),
+	backgroundAudioMuted: false,
+	onToggleBackgroundAudioMute: vi.fn(),
+	timeScale: 1,
+	setTimeScale: vi.fn(),
+	toasts: [],
+	pushToast: vi.fn(),
+	pushErrorToast: vi.fn(),
+	pushSuccessToast: vi.fn(),
+	dismissToast: vi.fn(),
+	playerName: sessionState.game.players[0]?.name ?? 'Player',
+	onChangePlayerName: vi.fn(),
 };
 
 vi.mock('../src/state/GameContext', () => ({
@@ -91,16 +111,20 @@ beforeAll(() => {
 describe('<PhasePanel />', () => {
 	it('displays current turn and phases', () => {
 		render(<PhasePanel />);
-		const turnText = `Turn ${ctx.game.turn}`;
+		const turnText = `Turn ${sessionState.game.turn}`;
 		const turnElement = screen.getByText(turnText);
 		const turnContainer = turnElement.closest('div');
 		expect(turnContainer).toBeTruthy();
 		if (turnContainer) {
 			expect(
-				within(turnContainer).getByText(ctx.activePlayer.name),
+				within(turnContainer).getByText(
+					sessionView.active?.name ??
+						sessionState.game.players[0]?.name ??
+						'Player',
+				),
 			).toBeInTheDocument();
 		}
-		const firstPhase = ctx.phases[0];
+		const firstPhase = sessionState.phases[0]!;
 		const firstPhaseButton = screen.getByRole('button', {
 			name: firstPhase.label,
 		});

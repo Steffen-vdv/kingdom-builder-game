@@ -19,11 +19,12 @@ import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type {
-	EngineContext,
 	EngineSession,
 	PlayerId,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
+import { selectSessionView } from '../src/state/sessionSelectors';
+import type { SessionRegistries } from '../src/state/sessionSelectors.types';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -108,15 +109,17 @@ describe('<ResourceBar /> happiness hover card', () => {
 			actionCostResource: RULES.tieredResourceKey as ResourceKey,
 			ruleSnapshot,
 		});
+		const registries: SessionRegistries = {
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+		};
+		const sessionView = selectSessionView(sessionState, registries);
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
 		const translationContext = createTranslationContext(
 			sessionState,
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
+			registries,
 			undefined,
 			{
 				ruleSnapshot,
@@ -126,7 +129,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		currentGame = {
 			session: {} as EngineSession,
 			sessionState,
-			ctx: {} as EngineContext,
+			sessionView,
 			translationContext,
 			ruleSnapshot,
 			handleHoverCard,
