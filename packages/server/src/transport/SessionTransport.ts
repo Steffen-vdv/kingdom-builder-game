@@ -1,16 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import {
+	actionExecuteRequestSchema,
+	actionExecuteSuccessResponseSchema,
+	actionExecuteErrorResponseSchema,
 	sessionCreateRequestSchema,
 	sessionCreateResponseSchema,
 	sessionAdvanceRequestSchema,
 	sessionAdvanceResponseSchema,
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
+	sessionStateResponseSchema,
 	sessionIdSchema,
 } from '@kingdom-builder/protocol';
 import type {
+	ActionExecuteResponse,
+	ActionExecuteErrorResponse,
 	SessionAdvanceResponse,
 	SessionCreateResponse,
+	SessionRequirementFailure,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol';
@@ -97,10 +104,12 @@ export class SessionTransport {
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
 		const response = { sessionId, snapshot } satisfies SessionStateResponse;
-		return sessionCreateResponseSchema.parse(response);
+		return sessionStateResponseSchema.parse(response);
 	}
 
-	public advanceSession(request: unknown): SessionAdvanceResponse {
+	public async advanceSession(
+		request: unknown,
+	): Promise<SessionAdvanceResponse> {
 		const parsed = sessionAdvanceRequestSchema.safeParse(request);
 		if (!parsed.success) {
 			throw new TransportError(
@@ -111,13 +120,95 @@ export class SessionTransport {
 		}
 		const { sessionId } = parsed.data;
 		const session = this.requireSession(sessionId);
-		const advance = session.advancePhase();
-		const response = {
-			sessionId,
-			snapshot: this.sessionManager.getSnapshot(sessionId),
-			advance,
-		} satisfies SessionAdvanceResponse;
-		return sessionAdvanceResponseSchema.parse(response);
+		return session.enqueue(() => {
+			const advance = session.advancePhase();
+			const response = {
+				sessionId,
+				snapshot: this.sessionManager.getSnapshot(sessionId),
+				advance,
+			} satisfies SessionAdvanceResponse;
+			return sessionAdvanceResponseSchema.parse(response);
+		});
+	}
+
+	public async performAction(request: unknown): Promise<ActionExecuteResponse> {
+		const parsed = actionExecuteRequestSchema.safeParse(request);
+		if (!parsed.success) {
+			throw new TransportError(
+				'INVALID_REQUEST',
+				'Invalid action execute request.',
+				{ issues: parsed.error.issues },
+			);
+		}
+		const { sessionId, actionId, params } = parsed.data;
+		const session = this.requireSession(sessionId);
+		return session.enqueue(() => {
+			try {
+				const traces = session.performAction(
+					actionId,
+					params as Parameters<EngineSession['performAction']>[1],
+				);
+				const response: Record<string, unknown> = {
+					status: 'success',
+					snapshot: this.sessionManager.getSnapshot(sessionId),
+					traces,
+				};
+				return actionExecuteSuccessResponseSchema.parse(
+					response,
+				) as ActionExecuteResponse;
+			} catch (error) {
+				return this.createActionErrorResponse(error) as ActionExecuteResponse;
+			}
+		});
+	}
+
+	private createActionErrorResponse(
+		error: unknown,
+	): ActionExecuteErrorResponse {
+		const message =
+			error instanceof Error && error.message
+				? error.message
+				: 'Action failed.';
+		const failure = this.extractRequirementFailure(error);
+		const failures = this.extractRequirementFailures(error);
+		const response: Record<string, unknown> = {
+			status: 'error',
+			error: message,
+		};
+		if (failure) {
+			response.requirementFailure = failure;
+		}
+		if (failures) {
+			response.requirementFailures = failures;
+		}
+		return actionExecuteErrorResponseSchema.parse(
+			response,
+		) as ActionExecuteErrorResponse;
+	}
+
+	private extractRequirementFailure(
+		error: unknown,
+	): SessionRequirementFailure | undefined {
+		const candidate = (error as { requirementFailure?: unknown })
+			?.requirementFailure;
+		if (!candidate) {
+			return undefined;
+		}
+		return candidate as SessionRequirementFailure;
+	}
+
+	private extractRequirementFailures(
+		error: unknown,
+	): SessionRequirementFailure[] | undefined {
+		const candidate = (error as { requirementFailures?: unknown })
+			?.requirementFailures;
+		if (!candidate) {
+			return undefined;
+		}
+		if (!Array.isArray(candidate)) {
+			return undefined;
+		}
+		return candidate as SessionRequirementFailure[];
 	}
 
 	public setDevMode(request: unknown): SessionSetDevModeResponse {
@@ -183,11 +274,12 @@ export class SessionTransport {
 		session: EngineSession,
 		names: Record<string, string>,
 	): void {
-		const context = session.getLegacyContext();
-		for (const player of context.game.players) {
-			const name = names[player.id];
+		for (const [playerId, name] of Object.entries(names)) {
 			if (name) {
-				player.name = name;
+				session.updatePlayerName(
+					playerId as Parameters<EngineSession['updatePlayerName']>[0],
+					name,
+				);
 			}
 		}
 	}

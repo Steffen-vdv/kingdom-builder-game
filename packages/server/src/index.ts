@@ -14,6 +14,12 @@ export type {
 	SessionTransportOptions,
 	TransportErrorCode,
 } from './transport/SessionTransport.js';
+export { FastifySessionTransport } from './transport/FastifySessionTransport.js';
+export type {
+	FastifySessionTransportOptions,
+	FastifySessionTransportStartOptions,
+	TransportErrorPayload,
+} from './transport/FastifySessionTransport.js';
 
 export function startServer(): void {
 	console.log('Starting Kingdom Builder server...');

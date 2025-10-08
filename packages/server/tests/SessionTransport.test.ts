@@ -36,18 +36,48 @@ describe('SessionTransport', () => {
 		expect(state.snapshot.game.players).toHaveLength(2);
 	});
 
-	it('advances sessions and reports results', () => {
+	it('advances sessions and reports results', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('advance-session'),
 		});
 		const { sessionId } = transport.createSession({});
-		const advance = transport.advanceSession({ sessionId });
+		const advance = await transport.advanceSession({ sessionId });
 		expect(advance.sessionId).toBe(sessionId);
 		expect(advance.snapshot.game.currentPhase).toBe('end');
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
 	});
+
+        it('executes actions through the session queue', async () => {
+                const { manager, actionId, gainKey } = createSyntheticSessionManager();
+                const transport = new SessionTransport({
+                        sessionManager: manager,
+                        idFactory: vi.fn().mockReturnValue('action-session'),
+                });
+                const { sessionId } = transport.createSession({});
+                const response = await transport.performAction({
+                        sessionId,
+                        actionId,
+                });
+                expect(response.status).toBe('success');
+                expect(Array.isArray(response.traces)).toBe(true);
+                const [player] = response.snapshot.game.players;
+                expect(player?.resources[gainKey]).toBe(1);
+        });
+
+        it('returns protocol error payloads for failed actions', async () => {
+                const { manager, actionId } = createSyntheticSessionManager();
+                const transport = new SessionTransport({
+                        sessionManager: manager,
+                        idFactory: vi.fn().mockReturnValue('action-error-session'),
+                });
+                const { sessionId } = transport.createSession({});
+                await transport.performAction({ sessionId, actionId });
+                const second = await transport.performAction({ sessionId, actionId });
+                expect(second.status).toBe('error');
+                expect(second.error).toBeTruthy();
+        });
 
 	it('toggles developer mode on demand', () => {
 		const { manager } = createSyntheticSessionManager();
@@ -83,21 +113,19 @@ describe('SessionTransport', () => {
 		}
 	});
 
-	it('validates incoming requests', () => {
+	it('validates incoming requests', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('validation-session'),
 		});
-		expect(() => transport.advanceSession({ sessionId: '' })).toThrow(
-			TransportError,
-		);
-		try {
-			transport.advanceSession({ sessionId: '' });
-		} catch (error) {
+		await expect(
+			transport.advanceSession({ sessionId: '' }),
+		).rejects.toBeInstanceOf(TransportError);
+		await transport.advanceSession({ sessionId: '' }).catch((error) => {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('INVALID_REQUEST');
 			}
-		}
+		});
 	});
 });
