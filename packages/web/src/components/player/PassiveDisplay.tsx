@@ -1,12 +1,12 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
 import { PHASES, PASSIVE_INFO, PhaseId } from '@kingdom-builder/contents';
-import { describeEffects, splitSummary } from '../../translation';
-import type {
-	EngineContext,
-	PassiveSummary,
-	PlayerId,
-} from '@kingdom-builder/engine';
+import {
+	describeEffects,
+	splitSummary,
+	type TranslationPassiveDefinition,
+} from '../../translation';
+import type { PassiveSummary, PlayerId } from '@kingdom-builder/engine';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import {
 	resolvePassivePresentation,
@@ -26,14 +26,15 @@ export default function PassiveDisplay({
 }: {
 	player: ReturnType<typeof useGameEngine>['ctx']['activePlayer'];
 }) {
-	const { ctx, translationContext, handleHoverCard, clearHoverCard } =
+	const { translationContext, handleHoverCard, clearHoverCard } =
 		useGameEngine();
 	const playerId: PlayerId = player.id;
-	const summaries: PassiveSummary[] = ctx.passives.list(playerId);
-	const defs = ctx.passives.values(playerId);
+	const summaries: PassiveSummary[] =
+		translationContext.passives.list(playerId);
+	const defs = translationContext.passives.listDefinitions(playerId);
 	const defMap = new Map(defs.map((def) => [def.id, def]));
 
-	const tierDefinitions = ctx.services.rules.tierDefinitions;
+	const tierDefinitions = translationContext.rules?.tierDefinitions ?? [];
 	const tierByPassiveId = tierDefinitions.reduce<
 		Map<string, HappinessTierDefinition>
 	>((map, tier) => {
@@ -57,7 +58,7 @@ export default function PassiveDisplay({
 				entry,
 			): entry is {
 				summary: PassiveSummary;
-				def: ReturnType<EngineContext['passives']['values']>[number];
+				def: TranslationPassiveDefinition;
 			} => entry.def !== undefined,
 		);
 	if (entries.length === 0) {
@@ -79,7 +80,7 @@ export default function PassiveDisplay({
 					definition.meta = def.meta;
 				}
 				if (def.effects !== undefined) {
-					definition.effects = def.effects;
+					definition.effects = [...def.effects];
 				}
 				const presentation = resolvePassivePresentation(passive, {
 					definition,
@@ -94,13 +95,13 @@ export default function PassiveDisplay({
 					? buildTierEntries(
 							[tierDefinition],
 							tierDefinition.id,
-							ctx,
 							translationContext,
 						).entries
 					: undefined;
+				const effectList = def.effects ? [...def.effects] : [];
 				const items = tierSections
 					? tierSections
-					: describeEffects(def.effects || [], translationContext);
+					: describeEffects(effectList, translationContext);
 				const upkeepLabel =
 					PHASES.find((phase) => phase.id === PhaseId.Upkeep)?.label ||
 					'Upkeep';

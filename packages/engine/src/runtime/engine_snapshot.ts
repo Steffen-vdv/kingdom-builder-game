@@ -1,4 +1,7 @@
-import { clonePassiveMetadata } from '../services/passive_helpers';
+import {
+	clonePassiveMetadata,
+	clonePassiveRecord,
+} from '../services/passive_helpers';
 import { cloneEffectList } from '../utils';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
@@ -10,11 +13,14 @@ import type {
 import type { PhaseDef, StepDef } from '../phases';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import type { PlayerId } from '../state';
+import type { PassiveRecord } from '../services/passive_types';
 import type {
 	AdvanceSkipSnapshot,
 	AdvanceSkipSourceSnapshot,
 	EngineAdvanceResult,
 	EngineSessionSnapshot,
+	PassiveRecordSnapshot,
+	RuleSnapshot,
 } from './types';
 import {
 	cloneActionTraces,
@@ -96,6 +102,35 @@ function cloneSkip(
 	return cloned;
 }
 
+function cloneRuleSnapshot(context: EngineContext): RuleSnapshot {
+	const { tieredResourceKey, tierDefinitions } = context.services.rules;
+	return {
+		tieredResourceKey,
+		tierDefinitions: structuredClone(tierDefinitions),
+	} satisfies RuleSnapshot;
+}
+
+function snapshotPassiveRecord(record: PassiveRecord): PassiveRecordSnapshot {
+	const cloned = clonePassiveRecord(record);
+	if ('frames' in cloned) {
+		delete (cloned as Partial<PassiveRecord>).frames;
+	}
+	return cloned as PassiveRecordSnapshot;
+}
+
+function snapshotPassiveRecords(
+	context: EngineContext,
+): Record<PlayerId, PassiveRecordSnapshot[]> {
+	return Object.fromEntries(
+		context.game.players.map((player) => [
+			player.id,
+			context.passives
+				.values(player.id)
+				.map((record) => snapshotPassiveRecord(record)),
+		]),
+	) as Record<PlayerId, PassiveRecordSnapshot[]>;
+}
+
 export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 	return {
 		game: {
@@ -119,6 +154,8 @@ export function snapshotEngine(context: EngineContext): EngineSessionSnapshot {
 			amount: gain.amount,
 		})),
 		compensations: cloneCompensations(context.compensations),
+		rules: cloneRuleSnapshot(context),
+		passiveRecords: snapshotPassiveRecords(context),
 	};
 }
 

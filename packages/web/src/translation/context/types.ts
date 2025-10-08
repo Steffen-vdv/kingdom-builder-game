@@ -1,8 +1,13 @@
-import type { PassiveSummary, PlayerId } from '@kingdom-builder/engine';
+import type {
+	PassiveSummary,
+	PlayerId,
+	RuleSnapshot,
+} from '@kingdom-builder/engine';
 import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
+	EffectDef,
 	PlayerStartConfig,
 } from '@kingdom-builder/protocol';
 
@@ -27,6 +32,25 @@ export type TranslationPassiveDescriptor = {
 };
 
 /**
+ * Full passive definition payload exposed to translation helpers. This mirrors
+ * the readonly subset of {@link PassiveRecordSnapshot} fields currently used by
+ * hover cards and tier summaries.
+ */
+export type TranslationPassiveDefinition = {
+	id: string;
+	name?: string;
+	icon?: string;
+	detail?: string;
+	meta?: PassiveSummary['meta'];
+	effects?: ReadonlyArray<EffectDef>;
+	onGrowthPhase?: ReadonlyArray<EffectDef>;
+	onUpkeepPhase?: ReadonlyArray<EffectDef>;
+	onBeforeAttacked?: ReadonlyArray<EffectDef>;
+	onAttackResolved?: ReadonlyArray<EffectDef>;
+	[key: string]: unknown;
+};
+
+/**
  * Map of evaluator modifier identifiers to the owning modifier instances. The
  * values remain intentionally untyped because translation formatters only
  * inspect presence and icon metadata.
@@ -44,6 +68,11 @@ export type TranslationPassiveModifierMap = ReadonlyMap<
 export interface TranslationPassives {
 	list(owner?: PlayerId): PassiveSummary[];
 	get(id: string, owner: PlayerId): TranslationPassiveDescriptor | undefined;
+	listDefinitions(owner: PlayerId): readonly TranslationPassiveDefinition[];
+	getDefinition(
+		id: string,
+		owner: PlayerId,
+	): TranslationPassiveDefinition | undefined;
 	readonly evaluationMods: TranslationPassiveModifierMap;
 }
 
@@ -75,6 +104,11 @@ export interface TranslationPlayer {
 	population: Record<string, number>;
 }
 
+export interface TranslationRuleSnapshot {
+	tieredResourceKey: RuleSnapshot['tieredResourceKey'];
+	tierDefinitions: ReadonlyArray<RuleSnapshot['tierDefinitions'][number]>;
+}
+
 /**
  * Translation-focused view over the engine context. Implementations are free to
  * wrap the full {@link LegacyEngineContext} as long as the read-only surface
@@ -88,6 +122,7 @@ export interface TranslationContext {
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;
 	readonly opponent: TranslationPlayer;
+	readonly rules?: TranslationRuleSnapshot;
 	readonly recentResourceGains: ReadonlyArray<{
 		key: string;
 		amount: number;

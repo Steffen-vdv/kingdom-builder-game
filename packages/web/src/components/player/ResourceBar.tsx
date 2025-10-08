@@ -105,14 +105,17 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 		population: {},
 	};
 	const resourceKeys = Object.keys(RESOURCES) as ResourceKey[];
-	const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
-	const tiers = ctx.services.rules.tierDefinitions;
+	const happinessKey =
+		(translationContext.rules?.tieredResourceKey as ResourceKey) ??
+		(ctx.services.tieredResource.resourceKey as ResourceKey);
+	const tiers =
+		translationContext.rules?.tierDefinitions ??
+		ctx.services.rules.tierDefinitions;
 	const showHappinessCard = (value: number) => {
 		const activeTier = ctx.services.tieredResource.definition(value);
 		const { summaries } = buildTierEntries(
 			tiers,
 			activeTier?.id,
-			ctx,
 			translationContext,
 		);
 		const info = RESOURCES[happinessKey];

@@ -3,7 +3,12 @@ import type { PhaseDef } from '../phases';
 import type { AdvanceSkip } from '../phases/advance';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import type { PlayerId, StatSourceContribution, ResourceKey } from '../state';
-import type { PassiveMetadata, PassiveSummary } from '../services';
+import type {
+	HappinessTierDefinition,
+	PassiveMetadata,
+	PassiveSummary,
+	PhaseSkipConfig,
+} from '../services';
 
 export interface LandSnapshot {
 	id: string;
@@ -76,10 +81,29 @@ export interface EngineAdvanceResult {
 	skipped?: AdvanceSkipSnapshot;
 }
 
+export interface RuleSnapshot {
+	tieredResourceKey: ResourceKey;
+	tierDefinitions: HappinessTierDefinition[];
+}
+
+export type PassiveRecordSnapshot = PassiveSummary & {
+	owner: PlayerId;
+	detail?: string;
+	effects?: EffectDef[];
+	onGrowthPhase?: EffectDef[];
+	onUpkeepPhase?: EffectDef[];
+	onBeforeAttacked?: EffectDef[];
+	onAttackResolved?: EffectDef[];
+	skip?: PhaseSkipConfig;
+	[key: string]: unknown;
+};
+
 export interface EngineSessionSnapshot {
 	game: GameSnapshot;
 	phases: PhaseDef[];
 	actionCostResource: ResourceKey;
 	recentResourceGains: { key: ResourceKey; amount: number }[];
 	compensations: Record<PlayerId, PlayerStartConfig>;
+	rules: RuleSnapshot;
+	passiveRecords: Record<PlayerId, PassiveRecordSnapshot[]>;
 }

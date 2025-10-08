@@ -3,18 +3,17 @@ import {
 	RESOURCES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
 import {
 	describeEffects,
 	splitSummary,
 	type TranslationContext,
+	type TranslationRuleSnapshot,
 } from '../../translation';
 import type { SummaryEntry, SummaryGroup } from '../../translation/content';
 
 export const MAX_TIER_SUMMARY_LINES = 4;
 
-export type TierDefinition =
-	EngineContext['services']['rules']['tierDefinitions'][number];
+export type TierDefinition = TranslationRuleSnapshot['tierDefinitions'][number];
 
 export interface TierSummary {
 	entry: TierSummaryGroup;
@@ -113,9 +112,8 @@ function normalizeSummary(summary: string | undefined): SummaryEntry[] {
 }
 
 export function buildTierEntries(
-	tiers: TierDefinition[],
+	tiers: ReadonlyArray<TierDefinition>,
 	activeId: string | undefined,
-	ctx: EngineContext,
 	translationContext: TranslationContext,
 ): TierEntriesResult {
 	const getRangeStart = (tier: TierDefinition) =>
@@ -123,7 +121,7 @@ export function buildTierEntries(
 	const orderedTiers = [...tiers].sort(
 		(a, b) => getRangeStart(b) - getRangeStart(a),
 	);
-	const tierResourceKey = ctx.services.tieredResource?.resourceKey as
+	const tierResourceKey = translationContext.rules?.tieredResourceKey as
 		| ResourceKey
 		| undefined;
 	const tierResourceIcon = tierResourceKey

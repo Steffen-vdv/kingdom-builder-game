@@ -122,6 +122,11 @@ export function GameProvider({
 		refresh();
 	}, [ctx, refresh, playerName]);
 
+	const ruleSnapshot = useMemo(
+		() => session.getRuleSnapshot(),
+		[session, tick],
+	);
+
 	const translationContext = useMemo(
 		() =>
 			createTranslationContext(
@@ -135,8 +140,12 @@ export function GameProvider({
 					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
 					evaluationMods: session.getPassiveEvaluationMods(),
 				},
+				{
+					rules: ruleSnapshot,
+					passiveRecords: sessionState.passiveRecords,
+				},
 			),
-		[sessionState, session],
+		[sessionState, session, ruleSnapshot],
 	);
 
 	const {

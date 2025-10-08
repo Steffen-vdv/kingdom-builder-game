@@ -16,7 +16,10 @@ import {
 	formatPassiveRemoval,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import { resolvePassivePresentation } from '../src/translation/log/passives';
+import {
+	resolvePassivePresentation,
+	type PassiveDefinitionLike,
+} from '../src/translation/log/passives';
 import { buildTierEntries } from '../src/components/player/buildTierEntries';
 import {
 	createPassiveGame,
@@ -54,12 +57,23 @@ describe('<PassiveDisplay />', () => {
 		currentGame = mockGame;
 
 		render(<PassiveDisplay player={ctx.activePlayer} />);
-		const [summary] = ctx.passives.list(ctx.activePlayer.id);
+		const playerId = ctx.activePlayer.id;
+		const [summary] = translationContext.passives.list(playerId);
 		expect(summary).toBeDefined();
-		const definitions = ctx.passives.values(ctx.activePlayer.id);
-		const definition = definitions.find((def) => def.id === summary?.id);
+		const definition = summary
+			? translationContext.passives.getDefinition(summary.id, playerId)
+			: undefined;
 		expect(definition).toBeDefined();
-		const presentation = resolvePassivePresentation(summary!, { definition });
+		const passiveDefinition: PassiveDefinitionLike | undefined = definition
+			? {
+					detail: definition.detail,
+					meta: definition.meta,
+					...(definition.effects ? { effects: [...definition.effects] } : {}),
+				}
+			: undefined;
+		const presentation = resolvePassivePresentation(summary!, {
+			definition: passiveDefinition,
+		});
 		expect(presentation.removal).toBeDefined();
 		const hoverTarget = document.querySelector('div.hoverable');
 		expect(hoverTarget).not.toBeNull();
@@ -69,7 +83,7 @@ describe('<PassiveDisplay />', () => {
 		expect(handleHoverCard).toHaveBeenCalled();
 		const [hoverCard] = handleHoverCard.mock.calls.at(-1) ?? [{}];
 		expect(hoverCard?.description).toBeUndefined();
-		const tierDefinition = ctx.services.rules.tierDefinitions.find(
+		const tierDefinition = translationContext.rules?.tierDefinitions.find(
 			(tier) => tier.preview?.id === summary?.id,
 		);
 		expect(tierDefinition).toBeDefined();
@@ -77,7 +91,6 @@ describe('<PassiveDisplay />', () => {
 			const { entries } = buildTierEntries(
 				[tierDefinition],
 				tierDefinition.id,
-				ctx,
 				translationContext,
 			);
 			expect(hoverCard?.effects).toEqual(entries);
@@ -102,12 +115,23 @@ describe('<PassiveDisplay />', () => {
 		currentGame = mockGame;
 		const view = render(<PassiveDisplay player={ctx.activePlayer} />);
 		const { container } = view;
-		const [summary] = ctx.passives.list(ctx.activePlayer.id);
+		const playerId = ctx.activePlayer.id;
+		const [summary] = mockGame.translationContext.passives.list(playerId);
 		expect(summary).toBeDefined();
-		const definitions = ctx.passives.values(ctx.activePlayer.id);
-		const definition = definitions.find((def) => def.id === summary?.id);
+		const definition = summary
+			? mockGame.translationContext.passives.getDefinition(summary.id, playerId)
+			: undefined;
 		expect(definition).toBeDefined();
-		const presentation = resolvePassivePresentation(summary!, { definition });
+		const passiveDefinition: PassiveDefinitionLike | undefined = definition
+			? {
+					detail: definition.detail,
+					meta: definition.meta,
+					...(definition.effects ? { effects: [...definition.effects] } : {}),
+				}
+			: undefined;
+		const presentation = resolvePassivePresentation(summary!, {
+			definition: passiveDefinition,
+		});
 		expect(presentation.removal).toBeDefined();
 		const hoverTarget = container.querySelector('div.hoverable');
 		expect(hoverTarget).not.toBeNull();
