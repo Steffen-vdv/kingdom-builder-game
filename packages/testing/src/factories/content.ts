@@ -23,10 +23,10 @@ export interface ContentFactory {
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
-	action(def?: Partial<ActionConfig>): ActionConfig;
-	building(def?: Partial<BuildingConfig>): BuildingConfig;
-	development(def?: Partial<DevelopmentConfig>): DevelopmentConfig;
-	population(def?: Partial<PopulationConfig>): PopulationConfig;
+	action(definition?: Partial<ActionConfig>): ActionConfig;
+	building(definition?: Partial<BuildingConfig>): BuildingConfig;
+	development(definition?: Partial<DevelopmentConfig>): DevelopmentConfig;
+	population(definition?: Partial<PopulationConfig>): PopulationConfig;
 }
 
 export function createContentFactory(): ContentFactory {
@@ -35,75 +35,77 @@ export function createContentFactory(): ContentFactory {
 	const developments = createDevelopmentRegistry();
 	const populations = createPopulationRegistry();
 
-	function action(def: Partial<ActionConfig> = {}): ActionConfig {
-		const id = def.id ?? nextId('action');
+	function action(definition: Partial<ActionConfig> = {}): ActionConfig {
+		const id = definition.id ?? nextId('action');
 		const built: ActionConfig = {
 			id,
-			name: def.name ?? id,
-			icon: def.icon,
-			baseCosts: def.baseCosts ?? {},
-			requirements: def.requirements ?? [],
-			effects: def.effects ?? [],
-			system: def.system,
+			name: definition.name ?? id,
+			icon: definition.icon,
+			baseCosts: definition.baseCosts ?? {},
+			requirements: definition.requirements ?? [],
+			effects: definition.effects ?? [],
+			system: definition.system,
 		};
 		actions.add(id, built);
 		return built;
 	}
 
-	function building(def: Partial<BuildingConfig> = {}): BuildingConfig {
-		const id = def.id ?? nextId('building');
+	function building(definition: Partial<BuildingConfig> = {}): BuildingConfig {
+		const id = definition.id ?? nextId('building');
 		const built: BuildingConfig = {
 			id,
-			name: def.name ?? id,
-			icon: def.icon,
-			costs: def.costs ?? {},
-			onBuild: def.onBuild ?? [],
-			onGrowthPhase: def.onGrowthPhase ?? [],
-			onUpkeepPhase: def.onUpkeepPhase ?? [],
-			onBeforeAttacked: def.onBeforeAttacked ?? [],
-			onAttackResolved: def.onAttackResolved ?? [],
+			name: definition.name ?? id,
+			icon: definition.icon,
+			costs: definition.costs ?? {},
+			onBuild: definition.onBuild ?? [],
+			onGrowthPhase: definition.onGrowthPhase ?? [],
+			onUpkeepPhase: definition.onUpkeepPhase ?? [],
+			onBeforeAttacked: definition.onBeforeAttacked ?? [],
+			onAttackResolved: definition.onAttackResolved ?? [],
 		};
 		buildings.add(id, built);
 		return built;
 	}
 
 	function development(
-		def: Partial<DevelopmentConfig> = {},
+		definition: Partial<DevelopmentConfig> = {},
 	): DevelopmentConfig {
-		const id = def.id ?? nextId('development');
+		const id = definition.id ?? nextId('development');
 		const built: DevelopmentConfig = {
 			id,
-			name: def.name ?? id,
-			icon: def.icon,
-			onBuild: def.onBuild ?? [],
-			onGrowthPhase: def.onGrowthPhase ?? [],
-			onBeforeAttacked: def.onBeforeAttacked ?? [],
-			onAttackResolved: def.onAttackResolved ?? [],
-			onPayUpkeepStep: def.onPayUpkeepStep ?? [],
-			onGainIncomeStep: def.onGainIncomeStep ?? [],
-			onGainAPStep: def.onGainAPStep ?? [],
-			system: def.system,
-			populationCap: def.populationCap,
-			upkeep: def.upkeep,
+			name: definition.name ?? id,
+			icon: definition.icon,
+			onBuild: definition.onBuild ?? [],
+			onGrowthPhase: definition.onGrowthPhase ?? [],
+			onBeforeAttacked: definition.onBeforeAttacked ?? [],
+			onAttackResolved: definition.onAttackResolved ?? [],
+			onPayUpkeepStep: definition.onPayUpkeepStep ?? [],
+			onGainIncomeStep: definition.onGainIncomeStep ?? [],
+			onGainAPStep: definition.onGainAPStep ?? [],
+			system: definition.system,
+			populationCap: definition.populationCap,
+			upkeep: definition.upkeep,
 		};
 		developments.add(id, built);
 		return built;
 	}
 
-	function population(def: Partial<PopulationConfig> = {}): PopulationConfig {
-		const id = def.id ?? nextId('population');
+	function population(
+		definition: Partial<PopulationConfig> = {},
+	): PopulationConfig {
+		const id = definition.id ?? nextId('population');
 		const built: PopulationConfig = {
 			id,
-			name: def.name ?? id,
-			icon: def.icon,
-			onAssigned: def.onAssigned ?? [],
-			onUnassigned: def.onUnassigned ?? [],
-			onGrowthPhase: def.onGrowthPhase ?? [],
-			onUpkeepPhase: def.onUpkeepPhase ?? [],
-			onPayUpkeepStep: def.onPayUpkeepStep ?? [],
-			onGainIncomeStep: def.onGainIncomeStep ?? [],
-			onGainAPStep: def.onGainAPStep ?? [],
-			upkeep: def.upkeep,
+			name: definition.name ?? id,
+			icon: definition.icon,
+			onAssigned: definition.onAssigned ?? [],
+			onUnassigned: definition.onUnassigned ?? [],
+			onGrowthPhase: definition.onGrowthPhase ?? [],
+			onUpkeepPhase: definition.onUpkeepPhase ?? [],
+			onPayUpkeepStep: definition.onPayUpkeepStep ?? [],
+			onGainIncomeStep: definition.onGainIncomeStep ?? [],
+			onGainAPStep: definition.onGainAPStep ?? [],
+			upkeep: definition.upkeep,
 		};
 		populations.add(id, built);
 		return built;
