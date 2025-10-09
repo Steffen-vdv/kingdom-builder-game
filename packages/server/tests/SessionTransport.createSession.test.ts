@@ -93,4 +93,34 @@ describe('SessionTransport createSession', () => {
 		}
 		expect(idFactory).toHaveBeenCalledTimes(10);
 	});
+
+	it('includes base registries in session responses', () => {
+		const { manager, factory, costKey, gainKey, actionId } =
+			createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('registry-session'),
+			authMiddleware: middleware,
+		});
+		const response = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const { registries } = response;
+		expect(new Set(Object.keys(registries.actions))).toEqual(
+			new Set(factory.actions.keys()),
+		);
+		expect(new Set(Object.keys(registries.buildings))).toEqual(
+			new Set(factory.buildings.keys()),
+		);
+		expect(new Set(Object.keys(registries.developments))).toEqual(
+			new Set(factory.developments.keys()),
+		);
+		expect(new Set(Object.keys(registries.populations))).toEqual(
+			new Set(factory.populations.keys()),
+		);
+		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
+		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
+		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+	});
 });

@@ -203,6 +203,9 @@ export type {
 	SessionAdvanceResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
+	SessionRegistriesPayload,
+	SessionResourceDefinition,
+	SerializedRegistry,
 } from './contracts';
 
 export * as contracts from './contracts';

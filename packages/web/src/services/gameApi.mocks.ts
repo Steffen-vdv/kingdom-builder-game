@@ -29,6 +29,7 @@ const toStateResponse = (
 ): SessionStateResponse => ({
 	sessionId: response.sessionId,
 	snapshot: clone(response.snapshot),
+	registries: clone(response.registries),
 });
 
 export type GameApiMockHandlers = {
@@ -137,13 +138,21 @@ export class GameApiFake implements GameApi {
 		const response = this.#consumeAction();
 
 		if (this.#isSuccess(response)) {
-			this.#sessions.set(
-				request.sessionId,
-				toStateResponse({
-					sessionId: request.sessionId,
-					snapshot: response.snapshot,
-				}),
-			);
+			const current = this.#sessions.get(request.sessionId);
+			const registries = current
+				? clone(current.registries)
+				: clone({
+						actions: {},
+						buildings: {},
+						developments: {},
+						populations: {},
+						resources: {},
+					});
+			this.#sessions.set(request.sessionId, {
+				sessionId: request.sessionId,
+				snapshot: clone(response.snapshot),
+				registries,
+			});
 		}
 
 		return Promise.resolve(clone(response));
@@ -154,13 +163,11 @@ export class GameApiFake implements GameApi {
 	): Promise<SessionAdvanceResponse> {
 		const response = this.#consumeAdvance();
 
-		this.#sessions.set(
-			request.sessionId,
-			toStateResponse({
-				sessionId: response.sessionId,
-				snapshot: response.snapshot,
-			}),
-		);
+		this.#sessions.set(request.sessionId, {
+			sessionId: response.sessionId,
+			snapshot: clone(response.snapshot),
+			registries: clone(response.registries),
+		});
 
 		return Promise.resolve(clone(response));
 	}

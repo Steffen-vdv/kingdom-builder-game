@@ -19,7 +19,7 @@ const authorizedHeaders = {
 
 describe('SessionTransport dev mode', () => {
 	it('toggles developer mode on demand', () => {
-		const { manager } = createSyntheticSessionManager();
+		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: expect.getState().currentTestName
@@ -36,6 +36,7 @@ describe('SessionTransport dev mode', () => {
 			headers: authorizedHeaders,
 		});
 		expect(updated.snapshot.game.devMode).toBe(true);
+		expect(updated.registries.actions[actionId]).toBeDefined();
 	});
 
 	it('validates dev mode toggles before applying them', () => {

@@ -22,6 +22,7 @@ import type {
 	SessionRequirementFailure,
 	SessionPlayerId,
 	SessionPlayerNameMap,
+	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
@@ -86,10 +87,11 @@ export class SessionTransport {
 				cause: error,
 			});
 		}
-		const response = {
+		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		const response = this.buildStateResponse(
 			sessionId,
-			snapshot: this.sessionManager.getSnapshot(sessionId),
-		} satisfies SessionCreateResponse;
+			snapshot,
+		) satisfies SessionCreateResponse;
 		return sessionCreateResponseSchema.parse(response);
 	}
 
@@ -97,10 +99,7 @@ export class SessionTransport {
 		const sessionId = this.parseSessionIdentifier(request.body);
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = {
-			sessionId,
-			snapshot,
-		} satisfies SessionStateResponse;
+		const response = this.buildStateResponse(sessionId, snapshot);
 		return sessionStateResponseSchema.parse(response);
 	}
 
@@ -124,9 +123,9 @@ export class SessionTransport {
 				const snapshot = session.getSnapshot();
 				return { advance, snapshot };
 			});
+			const base = this.buildStateResponse(sessionId, result.snapshot);
 			const response = {
-				sessionId,
-				snapshot: result.snapshot,
+				...base,
 				advance: result.advance,
 			} satisfies SessionAdvanceResponse;
 			return sessionAdvanceResponseSchema.parse(response);
@@ -212,10 +211,11 @@ export class SessionTransport {
 		const { sessionId, enabled } = parsed.data;
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
-		const response = {
+		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		const response = this.buildStateResponse(
 			sessionId,
-			snapshot: this.sessionManager.getSnapshot(sessionId),
-		} satisfies SessionSetDevModeResponse;
+			snapshot,
+		) satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
 	}
 
@@ -330,5 +330,16 @@ export class SessionTransport {
 			return true;
 		}
 		return context.roles.includes('admin');
+	}
+
+	private buildStateResponse(
+		sessionId: string,
+		snapshot: SessionSnapshot,
+	): SessionStateResponse {
+		return {
+			sessionId,
+			snapshot,
+			registries: this.sessionManager.getRegistries(),
+		};
 	}
 }

@@ -19,7 +19,7 @@ const authorizedHeaders = {
 
 describe('SessionTransport advanceSession', () => {
 	it('advances sessions and reports results', async () => {
-		const { manager } = createSyntheticSessionManager();
+		const { manager, actionId } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('advance-session'),
@@ -36,6 +36,7 @@ describe('SessionTransport advanceSession', () => {
 		expect(advance.sessionId).toBe(sessionId);
 		expect(advance.snapshot.game.currentPhase).toBe('end');
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
+		expect(advance.registries.actions[actionId]).toBeDefined();
 	});
 
 	it('reports conflicts when advancing sessions fail', async () => {

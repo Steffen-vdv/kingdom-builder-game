@@ -9,6 +9,7 @@ import type {
 	SessionSetDevModeResponse,
 	SessionRequirementFailure,
 	SessionActionRequirementList,
+	SessionRegistriesPayload,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
@@ -20,6 +21,7 @@ import type { ActionParameters } from '../actions/action_parameters';
 
 interface LocalSessionGatewayOptions {
 	readonly sessionId?: string;
+	readonly registries?: SessionRegistriesPayload;
 }
 
 interface RequirementError extends Error {
@@ -104,6 +106,25 @@ export function createLocalSessionGateway(
 	options: LocalSessionGatewayOptions = {},
 ): SessionGateway {
 	const sessionId = options.sessionId ?? 'local-session';
+	const baseRegistries: SessionRegistriesPayload = options.registries ?? {
+		actions: {},
+		buildings: {},
+		developments: {},
+		populations: {},
+		resources: {},
+	};
+	const getRegistries = (): SessionRegistriesPayload => {
+		if (typeof structuredClone === 'function') {
+			return structuredClone(baseRegistries);
+		}
+		return {
+			actions: { ...baseRegistries.actions },
+			buildings: { ...baseRegistries.buildings },
+			developments: { ...baseRegistries.developments },
+			populations: { ...baseRegistries.populations },
+			resources: { ...baseRegistries.resources },
+		};
+	};
 	return {
 		createSession(
 			request?: SessionCreateRequest,
@@ -114,6 +135,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: getRegistries(),
 			});
 		},
 		fetchSnapshot(
@@ -123,6 +145,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: getRegistries(),
 			});
 		},
 		performAction(
@@ -156,6 +179,7 @@ export function createLocalSessionGateway(
 				sessionId,
 				snapshot: session.getSnapshot(),
 				advance,
+				registries: getRegistries(),
 			});
 		},
 		setDevMode(
@@ -166,6 +190,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: getRegistries(),
 			});
 		},
 	};

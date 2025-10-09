@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { SessionGateway } from '@kingdom-builder/protocol';
+import type {
+	SessionGateway,
+	SessionRegistriesPayload,
+} from '@kingdom-builder/protocol';
 import {
 	HttpSessionGateway,
 	type HttpSessionGatewayOptions,
@@ -26,6 +29,16 @@ describe('HttpSessionGateway', () => {
 		});
 	}
 
+	function createRegistries(): SessionRegistriesPayload {
+		return {
+			actions: {},
+			buildings: {},
+			developments: {},
+			populations: {},
+			resources: {},
+		};
+	}
+
 	it('creates sessions through the REST transport', async () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -40,6 +53,7 @@ describe('HttpSessionGateway', () => {
 					{
 						sessionId: 'rest-session',
 						snapshot: { game: { devMode: true } },
+						registries: createRegistries(),
 					},
 					{ status: 201 },
 				);
@@ -88,6 +102,7 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { players: [] } },
+					registries: createRegistries(),
 				}),
 			);
 		});
@@ -108,6 +123,7 @@ describe('HttpSessionGateway', () => {
 					sessionId: 'test',
 					snapshot: { game: { currentPhase: 'growth' } },
 					advance: { effects: [] },
+					registries: createRegistries(),
 				}),
 			);
 		});
@@ -179,6 +195,7 @@ describe('HttpSessionGateway', () => {
 				return jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { devMode: true } },
+					registries: createRegistries(),
 				});
 			},
 		);
@@ -196,7 +213,11 @@ describe('HttpSessionGateway', () => {
 				input instanceof Request ? input : new Request(input, init);
 			expect(request.headers.get('x-test-header')).toBe('dynamic');
 			return Promise.resolve(
-				jsonResponse({ sessionId: 'dynamic', snapshot: { game: {} } }),
+				jsonResponse({
+					sessionId: 'dynamic',
+					snapshot: { game: {} },
+					registries: createRegistries(),
+				}),
 			);
 		});
 		const gateway = new HttpSessionGateway({
@@ -217,6 +238,7 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'basic',
 					snapshot: { game: { players: [] } },
+					registries: createRegistries(),
 				}),
 			);
 		});
