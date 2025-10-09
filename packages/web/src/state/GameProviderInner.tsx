@@ -127,8 +127,6 @@ export function GameProviderInner({
 		setTimeScale,
 		clearTrackedTimeout,
 		setTrackedTimeout,
-		clearTrackedInterval,
-		setTrackedInterval,
 		isMountedRef: mountedRef,
 		timeScaleRef,
 	} = useTimeScale({ devMode });
@@ -197,14 +195,11 @@ export function GameProviderInner({
 		sessionId,
 		actionPhaseId,
 		actionCostResource,
-		addLog,
 		mountedRef,
-		timeScaleRef,
-		setTrackedInterval,
-		clearTrackedInterval,
 		refresh,
 		resourceKeys,
 		enqueue,
+		showResolution: handleShowResolution,
 	});
 
 	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =

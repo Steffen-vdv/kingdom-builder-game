@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { type ResourceKey } from '@kingdom-builder/contents';
-import type {
-	SessionPlayerStateSnapshot,
-	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { PhaseStep } from './phaseTypes';
-import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
 import type { LegacySession } from './sessionTypes';
+import { formatPhaseResolution } from './formatPhaseResolution';
+import type { ShowResolutionOptions } from './useActionResolution';
 
 interface PhaseProgressOptions {
 	session: LegacySession;
@@ -17,17 +15,11 @@ interface PhaseProgressOptions {
 	sessionId: string;
 	actionPhaseId: string | undefined;
 	actionCostResource: ResourceKey;
-	addLog: (
-		entry: string | string[],
-		player?: SessionPlayerStateSnapshot,
-	) => void;
 	mountedRef: React.MutableRefObject<boolean>;
-	timeScaleRef: React.MutableRefObject<number>;
-	setTrackedInterval: (callback: () => void, delay: number) => number;
-	clearTrackedInterval: (id: number) => void;
 	refresh: () => void;
 	resourceKeys: ResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
+	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 }
 
 export function usePhaseProgress({
@@ -36,17 +28,14 @@ export function usePhaseProgress({
 	sessionId,
 	actionPhaseId,
 	actionCostResource,
-	addLog,
 	mountedRef,
-	timeScaleRef,
-	setTrackedInterval,
-	clearTrackedInterval,
 	refresh,
 	resourceKeys,
 	enqueue,
+	showResolution,
 }: PhaseProgressOptions) {
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
-	const [phaseTimer, setPhaseTimer] = useState(0);
+	const [phaseTimer] = useState(0);
 	const [displayPhase, setDisplayPhase] = useState(
 		sessionState.game.currentPhase,
 	);
@@ -65,14 +54,6 @@ export function usePhaseProgress({
 			setDisplayPhase,
 		});
 
-	const { runDelay, runStepDelay } = usePhaseDelays({
-		mountedRef,
-		timeScaleRef,
-		setTrackedInterval,
-		clearTrackedInterval,
-		setPhaseTimer,
-	});
-
 	const runUntilActionPhaseCore = useCallback(
 		() =>
 			advanceToActionPhase({
@@ -80,36 +61,31 @@ export function usePhaseProgress({
 				sessionId,
 				actionCostResource,
 				resourceKeys,
-				runDelay,
-				runStepDelay,
 				mountedRef,
 				setPhaseSteps,
 				setPhaseHistories,
-				setPhaseTimer,
 				setDisplayPhase,
 				setTabsEnabled,
 				setMainApStart,
 				updateMainPhaseStep,
-				addLog,
 				refresh,
+				formatPhaseResolution,
+				showResolution,
 			}),
 		[
 			actionCostResource,
-			addLog,
 			mountedRef,
 			refresh,
 			resourceKeys,
-			runDelay,
-			runStepDelay,
 			session,
 			sessionId,
 			setDisplayPhase,
 			setMainApStart,
 			setPhaseHistories,
 			setPhaseSteps,
-			setPhaseTimer,
 			setTabsEnabled,
 			updateMainPhaseStep,
+			showResolution,
 		],
 	);
 
