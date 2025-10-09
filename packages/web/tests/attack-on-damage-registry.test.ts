@@ -20,9 +20,9 @@ import { Resource, RESOURCES } from '@kingdom-builder/contents';
 import type { TranslationContext } from '../src/translation/context';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 
-function createTranslationCtx(): TranslationContext {
+function createTranslationContext(): TranslationContext {
 	const emptyModifiers = new Map<string, ReadonlyMap<string, unknown>>();
-	return {
+	const translationContext: TranslationContext = {
 		actions: {
 			get: vi.fn(),
 			has: vi.fn(),
@@ -72,6 +72,7 @@ function createTranslationCtx(): TranslationContext {
 			winConditions: [],
 		},
 	};
+	return translationContext;
 }
 
 describe('attack on-damage formatter registry', () => {
@@ -80,7 +81,7 @@ describe('attack on-damage formatter registry', () => {
 		method: 'perform',
 		params: {},
 	} as EffectDef<Record<string, unknown>>;
-	const translationContext = createTranslationCtx();
+	const translationContext = createTranslationContext();
 
 	it('delegates to registered handler for matching entries', () => {
 		const logEntry: AttackOnDamageLogEntry = {
