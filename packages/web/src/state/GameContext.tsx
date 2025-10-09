@@ -10,12 +10,15 @@ import {
 	GameEngineContext,
 	GameProviderInner,
 	type GameProviderInnerProps,
+} from './GameProviderInner';
+import {
+	type SessionQueueHelpers,
 	type Session,
 	type SessionRegistries,
 	type SessionResourceKeys,
 	type SessionRuleSnapshot,
 	type SessionSnapshot,
-} from './GameProviderInner';
+} from './sessionTypes';
 import type { LegacyGameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
@@ -68,23 +71,45 @@ export function GameProvider(props: ProviderProps) {
 	} = props;
 
 	const mountedRef = useRef(true);
-	const sessionRef = useRef<Session | null>(null);
-	const sessionIdRef = useRef<string | null>(null);
+	const queueRef = useRef<Promise<void>>(Promise.resolve());
+	const sessionStateRef = useRef<SessionContainer | null>(null);
+	const latestSnapshotRef = useRef<SessionSnapshot | null>(null);
 	const [sessionData, setSessionData] = useState<SessionContainer | null>(null);
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const teardownSession = useCallback(() => {
-		const currentId = sessionIdRef.current;
-		if (currentId) {
-			releaseSession(currentId);
-		}
-		sessionIdRef.current = null;
-		sessionRef.current = null;
+	const updateSessionData = useCallback((next: SessionContainer | null) => {
+		sessionStateRef.current = next;
+		latestSnapshotRef.current = next?.snapshot ?? null;
 		if (mountedRef.current) {
-			setSessionData(null);
+			setSessionData(next);
 		}
-	}, [mountedRef]);
+	}, []);
+
+	const runExclusive = useCallback(
+		<T,>(task: () => Promise<T> | T): Promise<T> => {
+			const chain = queueRef.current;
+			const next = chain.then(() => Promise.resolve().then(task));
+			queueRef.current = next.catch(() => {}).then(() => undefined);
+			return next;
+		},
+		[],
+	);
+
+	const releaseCurrentSession = useCallback(() => {
+		const current = sessionStateRef.current;
+		if (!current) {
+			return;
+		}
+		releaseSession(current.sessionId);
+		updateSessionData(null);
+	}, [updateSessionData]);
+
+	const teardownSession = useCallback(() => {
+		void runExclusive(() => {
+			releaseCurrentSession();
+		});
+	}, [releaseCurrentSession, runExclusive]);
 
 	useEffect(
 		() => () => {
@@ -96,64 +121,79 @@ export function GameProvider(props: ProviderProps) {
 
 	useEffect(() => {
 		let disposed = false;
-		const create = async () => {
-			const previousId = sessionIdRef.current;
-			if (previousId) {
-				releaseSession(previousId);
-			}
-			sessionIdRef.current = null;
-			sessionRef.current = null;
-			setSessionData(null);
-			const created = await createSession({
-				devMode,
-				playerName: playerNameRef.current,
+		const create = () =>
+			runExclusive(async () => {
+				releaseCurrentSession();
+				const created = await createSession({
+					devMode,
+					playerName: playerNameRef.current,
+				});
+				if (disposed || !mountedRef.current) {
+					releaseSession(created.sessionId);
+					return;
+				}
+				updateSessionData({
+					session: created.session,
+					sessionId: created.sessionId,
+					snapshot: created.snapshot,
+					ruleSnapshot: created.ruleSnapshot,
+					registries: created.registries,
+					resourceKeys: created.resourceKeys,
+				});
 			});
-			if (disposed || !mountedRef.current) {
-				releaseSession(created.sessionId);
-				return;
-			}
-			sessionRef.current = created.session;
-			sessionIdRef.current = created.sessionId;
-			setSessionData({
-				session: created.session,
-				sessionId: created.sessionId,
-				snapshot: created.snapshot,
-				ruleSnapshot: created.ruleSnapshot,
-				registries: created.registries,
-				resourceKeys: created.resourceKeys,
-			});
-		};
 		void create();
 		return () => {
 			disposed = true;
 		};
-	}, [devMode]);
+	}, [devMode, releaseCurrentSession, runExclusive, updateSessionData]);
 
-	const refreshSession = useCallback(async () => {
-		const sessionId = sessionIdRef.current;
-		if (!sessionId) {
-			return;
-		}
-		const result = await fetchSnapshot(sessionId);
-		if (!mountedRef.current || sessionIdRef.current !== sessionId) {
-			return;
-		}
-		sessionRef.current = result.session;
-		setSessionData({
-			session: result.session,
-			sessionId,
-			snapshot: result.snapshot,
-			ruleSnapshot: result.ruleSnapshot,
-			registries: result.registries,
-			resourceKeys: result.resourceKeys,
-		});
-	}, []);
+	const refreshSession = useCallback(
+		() =>
+			runExclusive(async () => {
+				const current = sessionStateRef.current;
+				const sessionId = current?.sessionId;
+				if (!sessionId) {
+					return;
+				}
+				const result = await fetchSnapshot(sessionId);
+				if (
+					!mountedRef.current ||
+					sessionStateRef.current?.sessionId !== sessionId
+				) {
+					return;
+				}
+				updateSessionData({
+					session: result.session,
+					sessionId,
+					snapshot: result.snapshot,
+					ruleSnapshot: result.ruleSnapshot,
+					registries: result.registries,
+					resourceKeys: result.resourceKeys,
+				});
+			}),
+		[runExclusive, updateSessionData],
+	);
 
 	const handleRelease = useCallback(() => {
 		teardownSession();
 	}, [teardownSession]);
 
-	if (!sessionData || !sessionRef.current) {
+	const queueHelpers = useMemo<SessionQueueHelpers>(
+		() => ({
+			enqueue: <T,>(task: () => Promise<T> | T) => runExclusive(task),
+			getCurrentSession: () => {
+				const current = sessionStateRef.current;
+				if (!current) {
+					throw new Error('Session not ready');
+				}
+				return current.session;
+			},
+			getLatestSnapshot: () => latestSnapshotRef.current,
+		}),
+		[runExclusive],
+	);
+
+	if (!sessionData) {
 		return null;
 	}
 
@@ -170,7 +210,7 @@ export function GameProvider(props: ProviderProps) {
 		onToggleBackgroundAudioMute,
 		playerName,
 		onChangePlayerName,
-		session: sessionRef.current,
+		queue: queueHelpers,
 		sessionId: sessionData.sessionId,
 		sessionState: sessionData.snapshot,
 		ruleSnapshot: sessionData.ruleSnapshot,
