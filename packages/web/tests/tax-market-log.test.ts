@@ -64,7 +64,7 @@ function asTimelineLines(
 describe('tax action logging with market', () => {
 	it('shows population and market sources in gold gain', () => {
 		const scenario = createSyntheticTaxScenario();
-		const ctx = createEngine({
+		const engineContext = createEngine({
 			actions: scenario.factory.actions,
 			buildings: scenario.factory.buildings,
 			developments: scenario.factory.developments,
@@ -81,27 +81,30 @@ describe('tax action logging with market', () => {
 					params: { id: SYNTHETIC_IDS.marketBuilding },
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		ctx.activePlayer.resources[SYNTHETIC_RESOURCE_KEYS.coin] = 0;
-		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
-			advance(ctx);
+		engineContext.activePlayer.resources[SYNTHETIC_RESOURCE_KEYS.coin] = 0;
+		while (engineContext.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
+			advance(engineContext);
 		}
-		const action = ctx.actions.get(SYNTHETIC_IDS.taxAction);
-		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		const costs = getActionCosts(SYNTHETIC_IDS.taxAction, ctx);
-		const traces: ActionTrace[] = performAction(SYNTHETIC_IDS.taxAction, ctx);
-		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
+		const action = engineContext.actions.get(SYNTHETIC_IDS.taxAction);
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const costs = getActionCosts(SYNTHETIC_IDS.taxAction, engineContext);
+		const traces: ActionTrace[] = performAction(
+			SYNTHETIC_IDS.taxAction,
+			engineContext,
+		);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const changes = diffStepSnapshots(
 			before,
 			after,
 			action,
-			diffContext,
+			translationDiffContext,
 			RESOURCE_KEYS,
 		);
 		const messages = asTimelineLines(
-			logContent('action', SYNTHETIC_IDS.taxAction, ctx),
+			logContent('action', SYNTHETIC_IDS.taxAction, engineContext),
 		);
 		const costDescriptors: ActionLogLineDescriptor[] = [];
 		for (const key of Object.keys(costs) as SyntheticResourceKey[]) {
@@ -130,8 +133,8 @@ describe('tax action logging with market', () => {
 		}
 		const subLines = appendSubActionChanges({
 			traces,
-			context: ctx,
-			diffContext,
+			context: engineContext,
+			diffContext: translationDiffContext,
 			resourceKeys: RESOURCE_KEYS,
 			messages,
 		});
@@ -146,7 +149,7 @@ describe('tax action logging with market', () => {
 			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon ||
 			SYNTHETIC_POPULATION_INFO.icon;
 		const marketIcon =
-			ctx.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
+			engineContext.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
 		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = afterCoins - beforeCoins;
