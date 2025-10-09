@@ -1,4 +1,4 @@
-import './index.css';
+import './styles/index.css';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { PRIMARY_ICON_ID, RESOURCES } from '@kingdom-builder/contents';
