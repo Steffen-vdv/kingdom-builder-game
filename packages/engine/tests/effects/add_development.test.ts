@@ -30,7 +30,9 @@ describe('development:add effect', () => {
 		while (ctx.game.currentPhase !== PhaseId.Main) {
 			advance(ctx);
 		}
-		const land = ctx.activePlayer.lands.find((l) => l.slotsUsed < l.slotsMax)!;
+		const land = ctx.activePlayer.lands.find(
+			(land) => land.slotsUsed < land.slotsMax,
+		)!;
 		const cost = getActionCosts(action.id, ctx, {
 			id: development.id,
 			landId: land.id,
