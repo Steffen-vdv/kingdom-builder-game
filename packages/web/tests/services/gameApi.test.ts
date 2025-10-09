@@ -129,8 +129,17 @@ describe('createGameApi', () => {
 		expect(init?.body).toBe(JSON.stringify(request));
 		const headers = init?.headers as Headers;
 		expect(headers.get('Authorization')).toBe('Bearer token-123');
-		expect(headers.get('Connection')).toBe('keep-alive');
 		expect(headers.get('Content-Type')).toBe('application/json');
+		expect(headers.has('Connection')).toBe(false);
+		const safeHeaders = Array.from(headers.entries());
+		expect(safeHeaders).toHaveLength(3);
+		expect(safeHeaders).toEqual(
+			expect.arrayContaining([
+				['accept', 'application/json'],
+				['content-type', 'application/json'],
+				['authorization', 'Bearer token-123'],
+			]),
+		);
 	});
 
 	it('throws GameApiError on non-success responses', async () => {
