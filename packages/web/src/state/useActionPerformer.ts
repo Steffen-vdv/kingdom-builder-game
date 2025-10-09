@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import {
-	type ActionParams,
-	type EngineSession,
+	type EngineSessionSnapshot,
 	type PlayerStateSnapshot,
 	type RequirementFailure,
 } from '@kingdom-builder/engine';
@@ -35,7 +34,6 @@ import { performSessionAction } from './sessionSdk';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
-type ActionParameterPayload = ActionParametersPayload | undefined;
 type ActionExecutionError = Error & {
 	requirementFailure?: RequirementFailure;
 	requirementFailures?: ActionRequirementFailures;
@@ -74,8 +72,12 @@ function ensureTimelineLines(
 	}
 	return lines;
 }
+interface ActionPerformerSession {
+	getSnapshot: () => EngineSessionSnapshot;
+}
+
 interface UseActionPerformerOptions {
-	session: EngineSession;
+	session: ActionPerformerSession;
 	sessionId: string;
 	actionCostResource: ResourceKey;
 	addLog: (
@@ -106,7 +108,7 @@ export function useActionPerformer({
 	resourceKeys,
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
-		async (action: Action, params?: ActionParams<string>) => {
+		async (action: Action, params?: ActionParametersPayload) => {
 			const snapshotBefore = session.getSnapshot();
 			if (snapshotBefore.game.conclusion) {
 				pushErrorToast('The battle is already decided.');
@@ -125,17 +127,16 @@ export function useActionPerformer({
 				throw new Error('Missing active player before action');
 			}
 			const before = snapshotPlayer(playerBefore);
-			const costs = session.getActionCosts(action.id, params);
 			try {
-				const payloadParams = params as ActionParameterPayload;
 				const response = await performSessionAction({
 					sessionId,
 					actionId: action.id,
-					...(payloadParams ? { params: payloadParams } : {}),
+					...(params ? { params } : {}),
 				});
 				if (response.status === 'error') {
 					throw createActionExecutionError(response);
 				}
+				const costs = response.costs ?? {};
 				const traces = response.traces;
 				const snapshotAfter = response.snapshot;
 				const legacyContext = getLegacySessionContext({
@@ -258,7 +259,7 @@ export function useActionPerformer({
 		],
 	);
 	const handlePerform = useCallback(
-		(action: Action, params?: ActionParams<string>) =>
+		(action: Action, params?: ActionParametersPayload) =>
 			enqueue(() => perform(action, params)),
 		[enqueue, perform],
 	);
