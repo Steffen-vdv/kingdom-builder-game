@@ -27,6 +27,7 @@ export interface SyntheticSessionManagerResult {
 	factory: ContentFactory;
 	costKey: string;
 	gainKey: string;
+	actionId: string;
 	phases: PhaseDef[];
 	start: StartConfig;
 	rules: RuleSet;
@@ -38,7 +39,7 @@ export function createSyntheticSessionManager(
 	const factory = createContentFactory();
 	const costKey = 'synthetic:cost';
 	const gainKey = 'synthetic:gain';
-	factory.action({
+	const action = factory.action({
 		baseCosts: { [costKey]: 1 },
 		effects: [
 			{
@@ -118,5 +119,14 @@ export function createSyntheticSessionManager(
 		...rest,
 		engineOptions,
 	});
-	return { manager, factory, costKey, gainKey, phases, start, rules };
+	return {
+		manager,
+		factory,
+		costKey,
+		gainKey,
+		actionId: action.id,
+		phases,
+		start,
+		rules,
+	};
 }

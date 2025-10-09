@@ -61,7 +61,7 @@ describe('SessionTransport', () => {
 		expect(state.snapshot.game.players).toHaveLength(2);
 	});
 
-	it('advances sessions and reports results', () => {
+	it('advances sessions and reports results', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -72,13 +72,68 @@ describe('SessionTransport', () => {
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const advance = transport.advanceSession({
+		const advance = await transport.advanceSession({
 			body: { sessionId },
 			headers: authorizedHeaders,
 		});
 		expect(advance.sessionId).toBe(sessionId);
 		expect(advance.snapshot.game.currentPhase).toBe('end');
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
+	});
+
+	it('executes actions and returns updated snapshots', async () => {
+		const { manager, gainKey, actionId } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const result = await transport.executeAction({
+			body: { sessionId, actionId },
+			headers: authorizedHeaders,
+		});
+		expect(result.status).toBe('success');
+		const [player] = result.snapshot.game.players;
+		expect(player?.resources[gainKey]).toBe(1);
+		expect(Array.isArray(result.traces)).toBe(true);
+		expect(result.httpStatus).toBe(200);
+	});
+
+	it('returns protocol errors for invalid action payloads', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const result = await transport.executeAction({
+			body: { sessionId },
+			headers: authorizedHeaders,
+		});
+		expect(result.status).toBe('error');
+		expect(result.error).toBe('Invalid action request.');
+		expect(result.httpStatus).toBe(400);
+	});
+
+	it('reports missing sessions when executing actions', async () => {
+		const { manager, actionId } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const result = await transport.executeAction({
+			body: { sessionId: 'unknown', actionId },
+			headers: authorizedHeaders,
+		});
+		expect(result.status).toBe('error');
+		expect(result.error).toContain('was not found');
+		expect(result.httpStatus).toBe(404);
 	});
 
 	it('toggles developer mode on demand', () => {
@@ -121,21 +176,21 @@ describe('SessionTransport', () => {
 		}
 	});
 
-	it('validates incoming requests', () => {
+	it('validates incoming requests', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: vi.fn().mockReturnValue('validation-session'),
 			authMiddleware: middleware,
 		});
-		expect(() =>
+		await expect(
 			transport.advanceSession({
 				body: { sessionId: '' },
 				headers: authorizedHeaders,
 			}),
-		).toThrow(TransportError);
+		).rejects.toBeInstanceOf(TransportError);
 		try {
-			transport.advanceSession({
+			await transport.advanceSession({
 				body: { sessionId: '' },
 				headers: authorizedHeaders,
 			});
@@ -166,7 +221,7 @@ describe('SessionTransport', () => {
 		}
 	});
 
-	it('rejects tokens that are not authorized for actions', () => {
+	it('rejects tokens that are not authorized for actions', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const limited = createTokenAuthMiddleware({
 			tokens: {
@@ -184,14 +239,17 @@ describe('SessionTransport', () => {
 			body: {},
 			headers: { authorization: 'Bearer creator-only' },
 		});
-		const attempt = () =>
+		await expect(
 			transport.advanceSession({
 				body: { sessionId },
 				headers: { authorization: 'Bearer creator-only' },
-			});
-		expect(attempt).toThrow(TransportError);
+			}),
+		).rejects.toBeInstanceOf(TransportError);
 		try {
-			attempt();
+			await transport.advanceSession({
+				body: { sessionId },
+				headers: { authorization: 'Bearer creator-only' },
+			});
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('FORBIDDEN');
