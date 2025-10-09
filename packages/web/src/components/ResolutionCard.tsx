@@ -10,36 +10,54 @@ import {
 	joinClasses,
 } from './common/cardStyles';
 
-interface ActionResolutionCardProps {
+function formatSourceLabel(value: string | null | undefined) {
+	if (!value) {
+		return 'Resolution';
+	}
+	const first = value[0]?.toUpperCase() ?? '';
+	const rest = value.slice(1).toLowerCase();
+	return `${first}${rest}`;
+}
+
+interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
 	onContinue: () => void;
 }
 
-function ActionResolutionCard({
+function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
-}: ActionResolutionCardProps) {
+}: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
 	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
-	const fallbackActionName = leadingLine
+	const fallbackActorName = leadingLine
 		.replace(/^[\s\p{Extended_Pictographic}\uFE0F\p{Pd}\p{Po}\p{So}]+/u, '')
 		.replace(/^Played\s+/u, '')
 		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
 	const rawActionName = (resolution.action?.name ?? '').trim();
-	const actionName = rawActionName || fallbackActionName;
+	const resolvedActorLabel = [
+		resolution.actorLabel,
+		rawActionName,
+		fallbackActorName,
+	]
+		.map((label) => label?.trim())
+		.find((label): label is string => Boolean(label));
 	const actionIcon = resolution.action?.icon?.trim();
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
-	const defaultTitle = title ?? 'Action resolution';
-	const headerTitle = actionName ? `Action - ${actionName}` : defaultTitle;
+	const sourceLabel = formatSourceLabel(resolution.source);
+	const defaultTitle = title ?? `${sourceLabel} resolution`;
+	const headerTitle = resolvedActorLabel
+		? `${sourceLabel} - ${resolvedActorLabel}`
+		: defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',
@@ -79,11 +97,23 @@ function ActionResolutionCard({
 		'whitespace-pre-line text-amber-900 dark:text-amber-100',
 	);
 
+	const metadataEntries: Array<{ key: string; text: string }> = [];
+	if (resolution.source) {
+		metadataEntries.push({ key: 'source', text: `Source: ${sourceLabel}` });
+	}
+	if (playerLabel) {
+		metadataEntries.push({ key: 'player', text: `Player: ${playerName}` });
+	}
+	const metadataClass = joinClasses(
+		'text-right space-y-1',
+		CARD_META_TEXT_CLASS,
+	);
+
 	return (
 		<div className={containerClass} data-state="enter">
 			<div className="space-y-3">
 				<div className={headerRowClass}>
-					{actionIcon || actionName ? (
+					{actionIcon || resolvedActorLabel ? (
 						<div className={actionBadgeClass} aria-hidden="true">
 							{actionIcon ?? '✦'}
 						</div>
@@ -93,9 +123,11 @@ function ActionResolutionCard({
 							<div className={headerLabelClass}>Resolution</div>
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
 						</div>
-						{resolution.player ? (
-							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`Played by ${playerName}`}
+						{metadataEntries.length ? (
+							<div className={metadataClass}>
+								{metadataEntries.map((entry) => (
+									<div key={entry.key}>{entry.text}</div>
+								))}
 							</div>
 						) : null}
 					</div>
@@ -142,5 +174,5 @@ function ActionResolutionCard({
 	);
 }
 
-export type { ActionResolutionCardProps };
-export { ActionResolutionCard };
+export type { ResolutionCardProps };
+export { ResolutionCard };
