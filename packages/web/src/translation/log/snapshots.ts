@@ -1,10 +1,9 @@
-import {
-	type EngineContext,
-	type PassiveSummary,
-	type PlayerId,
-	type PlayerStateSnapshot,
-	type PlayerSnapshot as EnginePlayerSnapshot,
-} from '@kingdom-builder/engine';
+import type {
+	SessionPassiveSummary,
+	SessionPlayerId,
+	SessionPlayerStateSnapshot,
+} from '@kingdom-builder/protocol';
+import type { ActionPlayerSnapshot } from '@kingdom-builder/protocol/actions';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { type Land } from '../content';
 import {
@@ -15,7 +14,10 @@ import {
 	appendSlotChanges,
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
-import { createTranslationDiffContext } from './resourceSources/context';
+import {
+	createTranslationDiffContext,
+	type TranslationDiffContextSource,
+} from './resourceSources/context';
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
@@ -28,7 +30,7 @@ export interface PlayerSnapshot {
 		slotsUsed: number;
 		developments: string[];
 	}>;
-	passives: PassiveSummary[];
+	passives: SessionPassiveSummary[];
 }
 
 interface LegacyPlayerSnapshot {
@@ -38,17 +40,29 @@ interface LegacyPlayerSnapshot {
 	population?: Record<string, number>;
 	buildings: Set<string> | string[];
 	lands: Land[];
-	passives?: PassiveSummary[];
+	passives?: SessionPassiveSummary[];
 }
 
 type SnapshotInput =
-	| PlayerStateSnapshot
+	| SessionPlayerStateSnapshot
 	| LegacyPlayerSnapshot
-	| EnginePlayerSnapshot;
+	| ActionPlayerSnapshot;
+
+interface SnapshotContext {
+	game?: {
+		players: Array<{
+			id: SessionPlayerId;
+			population: Record<string, number>;
+		}>;
+	};
+	passives?: {
+		list(owner?: SessionPlayerId): SessionPassiveSummary[];
+	};
+}
 
 export function snapshotPlayer(
 	playerState: SnapshotInput,
-	context?: EngineContext,
+	context?: SnapshotContext,
 ): PlayerSnapshot {
 	const buildingList = Array.isArray(playerState.buildings)
 		? [...playerState.buildings]
@@ -64,8 +78,9 @@ export function snapshotPlayer(
 			return { ...playerState.population };
 		}
 		if (context && 'id' in playerState) {
-			const match = context.game.players.find((entry) => {
-				return entry.id === (playerState.id as PlayerId);
+			const players = context.game?.players ?? [];
+			const match = players.find((entry) => {
+				return entry.id === (playerState.id as SessionPlayerId);
 			});
 			if (match) {
 				return { ...match.population };
@@ -76,8 +91,8 @@ export function snapshotPlayer(
 	const hasPassives = 'passives' in playerState && playerState.passives;
 	const passives = hasPassives
 		? [...playerState.passives!]
-		: context && 'id' in playerState
-			? context.passives.list(playerState.id as PlayerId)
+		: context && 'id' in playerState && context.passives
+			? context.passives.list(playerState.id as SessionPlayerId)
 			: [];
 	return {
 		resources: { ...playerState.resources },
@@ -102,7 +117,7 @@ export function collectResourceKeys(
 export function diffSnapshots(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
-	context: EngineContext,
+	context: TranslationDiffContextSource,
 	resourceKeys: ResourceKey[] = collectResourceKeys(
 		previousSnapshot,
 		nextSnapshot,

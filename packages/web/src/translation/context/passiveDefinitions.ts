@@ -1,9 +1,9 @@
 import type {
-	EngineSessionSnapshot,
-	PassiveRecordSnapshot,
-	PlayerId,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
+	SessionSnapshot,
+	SessionPassiveRecordSnapshot,
+	SessionPlayerId,
+	SessionRuleSnapshot,
+} from '@kingdom-builder/protocol';
 import type { TranslationPassiveDefinition } from './types';
 
 export const EMPTY_PASSIVE_DEFINITIONS = Object.freeze(
@@ -11,20 +11,20 @@ export const EMPTY_PASSIVE_DEFINITIONS = Object.freeze(
 );
 
 export function clonePassiveDefinition(
-	definition: PassiveRecordSnapshot,
+	definition: SessionPassiveRecordSnapshot,
 ): TranslationPassiveDefinition {
 	const cloned = structuredClone<TranslationPassiveDefinition>(definition);
 	return Object.freeze(cloned);
 }
 
 export function mapPassiveDefinitionLists(
-	records: EngineSessionSnapshot['passiveRecords'],
-): ReadonlyMap<PlayerId, ReadonlyArray<TranslationPassiveDefinition>> {
+	records: SessionSnapshot['passiveRecords'],
+): ReadonlyMap<SessionPlayerId, ReadonlyArray<TranslationPassiveDefinition>> {
 	const lists = new Map<
-		PlayerId,
+		SessionPlayerId,
 		ReadonlyArray<TranslationPassiveDefinition>
 	>();
-	for (const ownerId of Object.keys(records) as PlayerId[]) {
+	for (const ownerId of Object.keys(records) as SessionPlayerId[]) {
 		const entries = records[ownerId] ?? [];
 		const clones = entries.map(clonePassiveDefinition);
 		lists.set(ownerId, Object.freeze(clones));
@@ -33,10 +33,16 @@ export function mapPassiveDefinitionLists(
 }
 
 export function mapPassiveDefinitionLookup(
-	lists: ReadonlyMap<PlayerId, ReadonlyArray<TranslationPassiveDefinition>>,
-): ReadonlyMap<PlayerId, ReadonlyMap<string, TranslationPassiveDefinition>> {
+	lists: ReadonlyMap<
+		SessionPlayerId,
+		ReadonlyArray<TranslationPassiveDefinition>
+	>,
+): ReadonlyMap<
+	SessionPlayerId,
+	ReadonlyMap<string, TranslationPassiveDefinition>
+> {
 	const lookup = new Map<
-		PlayerId,
+		SessionPlayerId,
 		ReadonlyMap<string, TranslationPassiveDefinition>
 	>();
 	for (const [owner, definitions] of lists.entries()) {
@@ -48,7 +54,9 @@ export function mapPassiveDefinitionLookup(
 	return lookup;
 }
 
-export function cloneRuleSnapshot(ruleSnapshot: RuleSnapshot): RuleSnapshot {
+export function cloneRuleSnapshot(
+	ruleSnapshot: SessionRuleSnapshot,
+): SessionRuleSnapshot {
 	return Object.freeze({
 		tieredResourceKey: ruleSnapshot.tieredResourceKey,
 		tierDefinitions: structuredClone(ruleSnapshot.tierDefinitions),

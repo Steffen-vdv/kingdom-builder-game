@@ -1,5 +1,7 @@
-import type { EffectDef } from '@kingdom-builder/engine';
-import { applyParamsToEffects } from '@kingdom-builder/engine';
+import {
+	applyParamsToEffects,
+	type EffectDef,
+} from '@kingdom-builder/protocol';
 import { registerContentTranslator } from './factory';
 import type { ContentTranslator, Summary } from './types';
 import { PhasedTranslator } from './phased';

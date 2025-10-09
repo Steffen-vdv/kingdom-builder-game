@@ -1,5 +1,5 @@
 import { BUILDINGS } from '@kingdom-builder/contents';
-import type { AttackLog } from '@kingdom-builder/engine';
+import type { AttackLog } from '@kingdom-builder/protocol';
 import {
 	attackStatLabel,
 	attackStatValue,

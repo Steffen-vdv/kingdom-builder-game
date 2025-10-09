@@ -63,7 +63,10 @@ function renderDevelopmentMetaIcons(
 	if (!meta.id) {
 		return '';
 	}
-	return context.developments.get(meta.id)?.icon || '';
+	const development = context.developments.get(meta.id) as
+		| { icon?: string }
+		| undefined;
+	return development?.icon ?? '';
 }
 
 function renderBuildingMetaIcons(

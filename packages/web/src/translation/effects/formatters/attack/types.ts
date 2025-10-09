@@ -2,7 +2,7 @@ import {
 	type AttackLog,
 	type AttackPlayerDiff,
 	type EffectDef,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/protocol';
 import type { ResourceKey, StatKey } from '@kingdom-builder/contents';
 import type { SummaryEntry } from '../../../content';
 

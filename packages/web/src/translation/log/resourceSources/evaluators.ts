@@ -25,7 +25,10 @@ function renderDevelopmentIcons(
 		| Record<string, string>
 		| undefined;
 	const id = params?.['id'];
-	const icon = id ? context.developments.get(id)?.icon || '' : '';
+	const development = id
+		? (context.developments.get(id) as { icon?: string } | undefined)
+		: undefined;
+	const icon = development?.icon ?? '';
 	entry.icons += icon.repeat(count);
 }
 

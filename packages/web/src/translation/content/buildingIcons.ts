@@ -1,9 +1,14 @@
-import type { EngineContext as LegacyEngineContext } from '@kingdom-builder/engine';
 import type { TranslationContext } from '../context';
+
+type BuildingRegistryLookup = {
+	buildings: {
+		get(id: string): unknown;
+	};
+};
 
 type BuildingLookupContext =
 	| Pick<TranslationContext, 'buildings'>
-	| Pick<LegacyEngineContext, 'buildings'>;
+	| BuildingRegistryLookup;
 
 const FALLBACK_ICONS = new Map<string, string>();
 
@@ -25,7 +30,9 @@ export function resolveBuildingDisplay(
 	let name = id;
 	let icon = '';
 	try {
-		const def = ctx.buildings.get(id);
+		const def = ctx.buildings.get(id) as
+			| { name?: string; icon?: string }
+			| undefined;
 		if (def?.name) {
 			name = def.name;
 		}

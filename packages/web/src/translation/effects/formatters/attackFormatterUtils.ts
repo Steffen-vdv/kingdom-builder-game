@@ -2,7 +2,7 @@ import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	EffectDef,
 	AttackOnDamageLogEntry,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../content';
 import { summarizeEffects, describeEffects } from '../factory';
 import { prefixOwnerSummary } from './attack/summary';
