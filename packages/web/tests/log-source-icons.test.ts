@@ -22,7 +22,7 @@ import {
 const RESOURCE_KEYS = [Resource.gold] as const;
 
 describe('log resource source icon registry', () => {
-	const createCtx = () =>
+	const createEngineContext = () =>
 		createEngine({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
@@ -36,11 +36,11 @@ describe('log resource source icon registry', () => {
 	const scenarios = [
 		{
 			name: 'population',
-			getMeta: (ctx: ReturnType<typeof createCtx>) => {
-				const [roleId] = ctx.populations.keys();
+			getMeta: (engineContext: ReturnType<typeof createEngineContext>) => {
+				const [roleId] = engineContext.populations.keys();
 				expect(roleId).toBeTruthy();
 				const icon = roleId
-					? ctx.populations.get(roleId)?.icon || roleId
+					? engineContext.populations.get(roleId)?.icon || roleId
 					: POPULATION_INFO.icon || '';
 				expect(icon).toBeTruthy();
 				return {
@@ -51,12 +51,18 @@ describe('log resource source icon registry', () => {
 		},
 		{
 			name: 'development',
-			getMeta: (ctx: ReturnType<typeof createCtx>) => {
-				const devId = ctx.developments
+			getMeta: (engineContext: ReturnType<typeof createEngineContext>) => {
+				const devId = engineContext.developments
 					.keys()
-					.find((id) => Boolean(ctx.developments.get(id)?.icon));
+					.find((id) =>
+						Boolean(
+							engineContext.developments.get(id)?.icon,
+						),
+					);
 				expect(devId).toBeTruthy();
-				const icon = devId ? ctx.developments.get(devId)?.icon || '' : '';
+				const icon = devId
+					? engineContext.developments.get(devId)?.icon || ''
+					: '';
 				expect(icon).toBeTruthy();
 				return {
 					meta: { type: 'development', id: devId },
@@ -66,13 +72,17 @@ describe('log resource source icon registry', () => {
 		},
 		{
 			name: 'building',
-			getMeta: (ctx: ReturnType<typeof createCtx>) => {
-				const buildingId = ctx.buildings
+			getMeta: (engineContext: ReturnType<typeof createEngineContext>) => {
+				const buildingId = engineContext.buildings
 					.keys()
-					.find((id) => Boolean(ctx.buildings.get(id)?.icon));
+					.find((id) =>
+						Boolean(
+							engineContext.buildings.get(id)?.icon,
+						),
+					);
 				expect(buildingId).toBeTruthy();
 				const icon = buildingId
-					? ctx.buildings.get(buildingId)?.icon || ''
+					? engineContext.buildings.get(buildingId)?.icon || ''
 					: '';
 				expect(icon).toBeTruthy();
 				return {
@@ -95,8 +105,8 @@ describe('log resource source icon registry', () => {
 
 	for (const { name, getMeta } of scenarios) {
 		it(`renders icons for ${name} meta sources`, () => {
-			const ctx = createCtx();
-			const { meta, expected } = getMeta(ctx);
+			const engineContext = createEngineContext();
+			const { meta, expected } = getMeta(engineContext);
 			const effect = {
 				type: 'resource' as const,
 				method: 'add' as const,
@@ -104,10 +114,10 @@ describe('log resource source icon registry', () => {
 				meta: { source: meta },
 			};
 			const step = { id: `meta-icons-${name}`, effects: [effect] };
-			const before = snapshotPlayer(ctx.activePlayer, ctx);
-			runEffects([effect], ctx);
-			const after = snapshotPlayer(ctx.activePlayer, ctx);
-			const diffContext = createTranslationDiffContext(ctx);
+			const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+			runEffects([effect], engineContext);
+			const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+			const diffContext = createTranslationDiffContext(engineContext);
 			const lines = diffStepSnapshots(
 				before,
 				after,
