@@ -2,37 +2,131 @@ import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	SessionAdvanceResponse,
 	SessionAdvanceResult,
-	SessionPlayerStateSnapshot,
+	SessionPhaseDefinition,
+	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
-import { diffStepSnapshots, snapshotPlayer } from '../translation';
-import { describeSkipEvent } from '../utils/describeSkipEvent';
+import { snapshotPlayer } from '../translation';
 import type { PhaseStep } from './phaseTypes';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import { advanceSessionPhase } from './sessionSdk';
 import type { LegacySession } from './sessionTypes';
+import type {
+	FormatPhaseResolutionOptions,
+	PhaseResolutionFormatResult,
+} from './formatPhaseResolution';
+import type { ShowResolutionOptions } from './useActionResolution';
+import type { EngineAdvanceResult } from '@kingdom-builder/engine';
+
+type FormatPhaseResolution = (
+	options: FormatPhaseResolutionOptions,
+) => PhaseResolutionFormatResult;
+
+interface PhaseStepEntryConfig {
+	title: string;
+	summaries: string[];
+	italic: boolean;
+	active: boolean;
+	done: boolean;
+}
+
+function createPhaseStepEntry({
+	title,
+	summaries,
+	italic,
+	active,
+	done,
+}: PhaseStepEntryConfig): PhaseStep {
+	return {
+		title,
+		active,
+		items: summaries.map((summary) => ({
+			text: summary,
+			...(italic ? { italic: true } : {}),
+			...(done ? { done: true } : {}),
+		})),
+	};
+}
+
+function activatePhaseSteps(
+	previous: PhaseStep[],
+	title: string,
+	summaries: string[],
+	italic: boolean,
+): PhaseStep[] {
+	const nextEntry = createPhaseStepEntry({
+		title,
+		summaries,
+		italic,
+		active: true,
+		done: false,
+	});
+	return [...previous.map((entry) => ({ ...entry, active: false })), nextEntry];
+}
+
+function completeLatestPhaseStep(
+	previous: PhaseStep[],
+	title: string,
+	summaries: string[],
+	italic: boolean,
+): PhaseStep[] {
+	if (!previous.length) {
+		return previous;
+	}
+	const next = [...previous];
+	next[next.length - 1] = createPhaseStepEntry({
+		title,
+		summaries,
+		italic,
+		active: false,
+		done: !italic,
+	});
+	return next;
+}
+
+function resolveHistoryTitle(
+	formatted: PhaseResolutionFormatResult,
+	phaseDefinition: SessionPhaseDefinition | undefined,
+	stepDefinition: SessionPhaseStepDefinition | undefined,
+	phaseId: string,
+): string {
+	const trimmedStep = stepDefinition?.title?.trim();
+	if (trimmedStep) {
+		return trimmedStep;
+	}
+	if (
+		typeof formatted.source !== 'string' &&
+		formatted.source.kind === 'phase'
+	) {
+		const candidate =
+			formatted.source.name?.trim() ?? formatted.source.label?.trim();
+		if (candidate) {
+			return candidate;
+		}
+	}
+	const fallbackPhase = phaseDefinition?.label?.trim();
+	if (fallbackPhase) {
+		return `${fallbackPhase} Phase`;
+	}
+	return `${phaseId} Phase`;
+}
 
 interface AdvanceToActionPhaseOptions {
 	session: LegacySession;
 	sessionId: string;
 	actionCostResource: ResourceKey;
 	resourceKeys: ResourceKey[];
-	runDelay: (total: number) => Promise<void>;
-	runStepDelay: () => Promise<void>;
 	mountedRef: React.MutableRefObject<boolean>;
 	setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
 	setPhaseHistories: React.Dispatch<
 		React.SetStateAction<Record<string, PhaseStep[]>>
 	>;
-	setPhaseTimer: (value: number) => void;
 	setDisplayPhase: (phase: string) => void;
 	setTabsEnabled: (value: boolean) => void;
 	setMainApStart: (value: number) => void;
 	updateMainPhaseStep: (value: number) => void;
-	addLog: (
-		entry: string | string[],
-		player?: SessionPlayerStateSnapshot,
-	) => void;
 	refresh: () => void;
+	formatPhaseResolution: FormatPhaseResolution;
+	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 }
 
 export async function advanceToActionPhase({
@@ -40,18 +134,16 @@ export async function advanceToActionPhase({
 	sessionId,
 	actionCostResource,
 	resourceKeys,
-	runDelay,
-	runStepDelay,
 	mountedRef,
 	setPhaseSteps,
 	setPhaseHistories,
-	setPhaseTimer,
 	setDisplayPhase,
 	setTabsEnabled,
 	setMainApStart,
 	updateMainPhaseStep,
-	addLog,
 	refresh,
+	formatPhaseResolution,
+	showResolution,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
 	if (snapshot.game.conclusion) {
@@ -59,7 +151,6 @@ export async function advanceToActionPhase({
 		setPhaseSteps([]);
 		setPhaseHistories({});
 		setDisplayPhase(snapshot.game.currentPhase);
-		setPhaseTimer(0);
 		refresh();
 		return;
 	}
@@ -67,7 +158,6 @@ export async function advanceToActionPhase({
 		if (!mountedRef.current) {
 			return;
 		}
-		setPhaseTimer(0);
 		setTabsEnabled(true);
 		setDisplayPhase(snapshot.game.currentPhase);
 		return;
@@ -76,10 +166,8 @@ export async function advanceToActionPhase({
 	setPhaseSteps([]);
 	setDisplayPhase(snapshot.game.currentPhase);
 	setPhaseHistories({});
-	let ranSteps = false;
 	let lastPhase: string | null = null;
 	while (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
-		ranSteps = true;
 		const activePlayerBefore = snapshot.game.players.find(
 			(player) => player.id === snapshot.game.activePlayerId,
 		);
@@ -96,7 +184,6 @@ export async function advanceToActionPhase({
 		const snapshotAfter = advanceResponse.snapshot;
 		if (snapshotAfter.game.conclusion) {
 			setTabsEnabled(false);
-			setPhaseTimer(0);
 			setDisplayPhase(snapshotAfter.game.currentPhase);
 			refresh();
 			return;
@@ -111,97 +198,91 @@ export async function advanceToActionPhase({
 			(stepDefinition) => stepDefinition.id === step,
 		);
 		if (phase !== lastPhase) {
-			await runDelay(1500);
 			if (!mountedRef.current) {
 				return;
 			}
 			setPhaseSteps([]);
 			setDisplayPhase(phase);
-			addLog(`${phaseDef.icon} ${phaseDef.label} Phase`, player);
 			lastPhase = phase;
 		}
-		const phaseId = phase;
-		let entry: PhaseStep;
-		if (skipped) {
-			const summary = describeSkipEvent(skipped, phaseDef, stepDef);
-			addLog(summary.logLines, player);
-			entry = {
-				title: summary.history.title,
-				items: summary.history.items,
-				active: true,
+		const { diffContext } = getLegacySessionContext({
+			snapshot: snapshotAfter,
+			ruleSnapshot: snapshotAfter.rules,
+			passiveRecords: snapshotAfter.passiveRecords,
+		});
+		const formatted = formatPhaseResolution({
+			advance: {
+				phase,
+				step,
+				effects,
+				player,
+				...(skipped ? { skipped } : {}),
+			} as EngineAdvanceResult,
+			before,
+			after: snapshotPlayer(player),
+			...(phaseDef ? { phaseDefinition: phaseDef } : {}),
+			...(stepDef ? { stepDefinition: stepDef } : {}),
+			diffContext,
+			resourceKeys,
+		});
+		const resolutionOptions: ShowResolutionOptions = {
+			lines: formatted.lines,
+			summaries: formatted.summaries,
+			source: formatted.source,
+			player,
+			...(formatted.actorLabel ? { actorLabel: formatted.actorLabel } : {}),
+		};
+		const historyTitle = resolveHistoryTitle(
+			formatted,
+			phaseDef,
+			stepDef,
+			phase,
+		);
+		const summaries = formatted.summaries.length
+			? formatted.summaries
+			: ['No effect'];
+		const italic = Boolean(skipped);
+		setPhaseSteps((previous) =>
+			activatePhaseSteps(previous, historyTitle, summaries, italic),
+		);
+		setPhaseHistories((previous) => {
+			const phaseHistory = previous[phase] ?? [];
+			return {
+				...previous,
+				[phase]: activatePhaseSteps(
+					phaseHistory,
+					historyTitle,
+					summaries,
+					italic,
+				),
 			};
-		} else {
-			const after = snapshotPlayer(player);
-			const stepEffects = effects.length
-				? { effects }
-				: stepDef?.effects?.length
-					? { effects: stepDef.effects }
-					: undefined;
-			const { diffContext } = getLegacySessionContext({
-				snapshot: snapshotAfter,
-				ruleSnapshot: snapshotAfter.rules,
-				passiveRecords: snapshotAfter.passiveRecords,
-			});
-			const changes = diffStepSnapshots(
-				before,
-				after,
-				stepEffects,
-				diffContext,
-				resourceKeys,
-			);
-			if (changes.length) {
-				addLog(
-					changes.map((change) => `  ${change}`),
-					player,
-				);
-			}
-			entry = {
-				title: stepDef?.title || step,
-				items:
-					changes.length > 0
-						? changes.map((text) => ({ text }))
-						: [{ text: 'No effect', italic: true }],
-				active: true,
-			};
-		}
-		setPhaseSteps((prev) => [...prev, entry]);
-		setPhaseHistories((prev) => ({
-			...prev,
-			[phaseId]: [...(prev[phaseId] ?? []), entry],
-		}));
-		await runStepDelay();
+		});
+		await showResolution(resolutionOptions);
 		if (!mountedRef.current) {
 			return;
 		}
-		const finalized = { ...entry, active: false };
-		setPhaseSteps((prev) => {
-			if (!prev.length) {
-				return prev;
+		setPhaseSteps((previous) =>
+			completeLatestPhaseStep(previous, historyTitle, summaries, italic),
+		);
+		setPhaseHistories((previous) => {
+			const phaseHistory = previous[phase];
+			if (!phaseHistory) {
+				return previous;
 			}
-			const next = [...prev];
-			next[next.length - 1] = finalized;
-			return next;
-		});
-		setPhaseHistories((prev) => {
-			const history = prev[phaseId];
-			if (!history?.length) {
-				return prev;
-			}
-			const nextHistory = [...history];
-			nextHistory[nextHistory.length - 1] = finalized;
-			return { ...prev, [phaseId]: nextHistory };
+			return {
+				...previous,
+				[phase]: completeLatestPhaseStep(
+					phaseHistory,
+					historyTitle,
+					summaries,
+					italic,
+				),
+			};
 		});
 		snapshot = snapshotAfter;
 	}
-	if (ranSteps) {
-		await runDelay(1500);
-		if (!mountedRef.current) {
-			return;
-		}
-	} else if (!mountedRef.current) {
+	if (!mountedRef.current) {
 		return;
-	} else {
-		setPhaseTimer(0);
 	}
 	const refreshed = session.getSnapshot();
 	const activeAtAction = refreshed.game.players.find(
