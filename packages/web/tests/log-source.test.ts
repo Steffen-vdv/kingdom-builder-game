@@ -62,8 +62,8 @@ describe('log resource sources', () => {
 		const growthPhase = ctx.phases.find(
 			(phase) => phase.id === SYNTHETIC_PHASE_IDS.growth,
 		);
-		const step = growthPhase?.steps.find(
-			(s) => s.id === SYNTHETIC_STEP_IDS.gainIncome,
+		const gainIncomeStep = growthPhase?.steps.find(
+			(stepDefinition) => stepDefinition.id === SYNTHETIC_STEP_IDS.gainIncome,
 		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
 		const bundles = collectTriggerEffects('onGainIncomeStep', ctx);
@@ -76,19 +76,21 @@ describe('log resource sources', () => {
 		const lines = diffStepSnapshots(
 			before,
 			after,
-			{ ...step, effects } as typeof step,
+			{ ...gainIncomeStep, effects } as typeof gainIncomeStep,
 			diffContext,
 			RESOURCE_KEYS,
 		);
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const farmIcon =
 			ctx.developments.get(SYNTHETIC_IDS.farmDevelopment)?.icon || '';
-		const b = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const a = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const delta = a - b;
-		expect(lines[0]).toBe(
-			`${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}${delta} (${b}→${a}) (${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${farmIcon})`,
-		);
+		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const delta = afterCoins - beforeCoins;
+		const expectedFarmIncomeLine =
+			`${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}` +
+			`${delta} (${beforeCoins}→${afterCoins}) (` +
+			`${goldInfo.icon}${delta >= 0 ? '+' : ''}${delta} from ${farmIcon})`;
+		expect(lines[0]).toBe(expectedFarmIncomeLine);
 	});
 
 	it('logs market bonus when taxing population', () => {
@@ -115,7 +117,7 @@ describe('log resource sources', () => {
 		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
 			advance(ctx);
 		}
-		const step = {
+		const taxStep = {
 			id: SYNTHETIC_IDS.taxAction,
 			effects: ctx.actions.get(SYNTHETIC_IDS.taxAction).effects,
 		};
@@ -126,7 +128,7 @@ describe('log resource sources', () => {
 		const lines = diffStepSnapshots(
 			before,
 			after,
-			step,
+			taxStep,
 			diffContext,
 			RESOURCE_KEYS,
 		);
@@ -136,8 +138,8 @@ describe('log resource sources', () => {
 		expect(populationRoleIcon).toBeTruthy();
 		const marketIcon =
 			ctx.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
-		const goldLine = lines.find((l) =>
-			l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+		const goldLine = lines.find((line) =>
+			line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
 		expect(goldLine).toMatch(
 			new RegExp(`from ${populationRoleIcon}${marketIcon}\\)$`),
@@ -168,8 +170,8 @@ describe('log resource sources', () => {
 		const upkeepPhase = ctx.phases.find(
 			(phase) => phase.id === SYNTHETIC_PHASE_IDS.upkeep,
 		);
-		const step = upkeepPhase?.steps.find(
-			(s) => s.id === SYNTHETIC_STEP_IDS.payUpkeep,
+		const payUpkeepStep = upkeepPhase?.steps.find(
+			(stepDefinition) => stepDefinition.id === SYNTHETIC_STEP_IDS.payUpkeep,
 		);
 		const before = snapshotPlayer(ctx.activePlayer, ctx);
 		const bundles = collectTriggerEffects('onPayUpkeepStep', ctx);
@@ -182,18 +184,18 @@ describe('log resource sources', () => {
 		const lines = diffStepSnapshots(
 			before,
 			after,
-			{ ...step, effects } as typeof step,
+			{ ...payUpkeepStep, effects } as typeof payUpkeepStep,
 			diffContext,
 			RESOURCE_KEYS,
 		);
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
-		const goldLine = lines.find((l) =>
-			l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+		const goldLine = lines.find((line) =>
+			line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
 		expect(goldLine).toBeTruthy();
-		const b = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const a = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const delta = a - b;
+		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const delta = afterCoins - beforeCoins;
 		const icons = effects
 			.filter((eff) => eff.params?.['key'] === SYNTHETIC_RESOURCE_KEYS.coin)
 			.map((eff) => {
