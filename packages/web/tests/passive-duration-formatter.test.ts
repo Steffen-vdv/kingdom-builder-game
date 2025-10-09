@@ -106,7 +106,7 @@ function createSyntheticCtx() {
 
 describe('passive formatter duration metadata', () => {
 	it('uses custom phase metadata when provided', () => {
-		const ctx = createSyntheticCtx();
+		const engineContext = createSyntheticCtx();
 		const passive: EffectDef = {
 			type: 'passive',
 			method: 'add',
@@ -119,9 +119,9 @@ describe('passive formatter duration metadata', () => {
 			effects: [],
 		};
 
-		const summary = summarizeEffects([passive], ctx);
-		const description = describeEffects([passive], ctx);
-		const log = logEffects([passive], ctx);
+		const summary = summarizeEffects([passive], engineContext);
+		const description = describeEffects([passive], engineContext);
+		const log = logEffects([passive], engineContext);
 
 		expect(summary).toEqual([
 			{ title: '⏳ Until next 🎉 Festival', items: [] },
