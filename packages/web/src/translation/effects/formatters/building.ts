@@ -2,14 +2,14 @@ import { registerEffectFormatter } from '../factory';
 import { resolveBuildingDisplay } from '../../content/buildingIcons';
 
 registerEffectFormatter('building', 'add', {
-	summarize: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
-		const { name, icon } = resolveBuildingDisplay(id, ctx);
+	summarize: (effect, context) => {
+		const id = effect.params?.['id'] as string;
+		const { name, icon } = resolveBuildingDisplay(id, context);
 		return `${icon}${name}`;
 	},
-	describe: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
-		const { name, icon } = resolveBuildingDisplay(id, ctx);
+	describe: (effect, context) => {
+		const id = effect.params?.['id'] as string;
+		const { name, icon } = resolveBuildingDisplay(id, context);
 		return `Construct ${icon}${name}`;
 	},
 });
