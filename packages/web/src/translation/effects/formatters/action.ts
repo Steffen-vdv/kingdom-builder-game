@@ -38,15 +38,15 @@ function formatActionChangeSentence(
 	return `${verbs[change][mode]} the ${label} action`;
 }
 
-function getActionPresentation(id: string, ctx: TranslationContext) {
+function getActionPresentation(id: string, context: TranslationContext) {
 	let name = id;
 	let icon = '';
 	let system = false;
 	try {
-		const def = ctx.actions.get(id);
-		name = def.name;
-		icon = def.icon || '';
-		system = !!def.system;
+		const actionDefinition = context.actions.get(id);
+		name = actionDefinition.name;
+		icon = actionDefinition.icon || '';
+		system = !!actionDefinition.system;
 	} catch {
 		// ignore missing action
 	}
@@ -55,21 +55,21 @@ function getActionPresentation(id: string, ctx: TranslationContext) {
 }
 
 registerEffectFormatter('action', 'add', {
-	summarize: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
+	summarize: (effect, context) => {
+		const id = effect.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { label } = getActionPresentation(id, ctx);
+		const { label } = getActionPresentation(id, context);
 		return label;
 	},
-	describe: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
+	describe: (effect, context) => {
+		const id = effect.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { label, system } = getActionPresentation(id, ctx);
-		const card = describeContent('action', id, ctx);
+		const { label, system } = getActionPresentation(id, context);
+		const card = describeContent('action', id, context);
 		return [
 			label,
 			formatActionChangeSentence('gain', label, 'describe'),
@@ -81,59 +81,59 @@ registerEffectFormatter('action', 'add', {
 			},
 		];
 	},
-	log: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
+	log: (effect, context) => {
+		const id = effect.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { label } = getActionPresentation(id, ctx);
+		const { label } = getActionPresentation(id, context);
 		return formatActionChangeSentence('gain', label, 'log');
 	},
 });
 
 registerEffectFormatter('action', 'remove', {
-	summarize: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
+	summarize: (effect, context) => {
+		const id = effect.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { label } = getActionPresentation(id, ctx);
+		const { label } = getActionPresentation(id, context);
 		return label;
 	},
-	describe: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
+	describe: (effect, context) => {
+		const id = effect.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { label } = getActionPresentation(id, ctx);
+		const { label } = getActionPresentation(id, context);
 		return [label, formatActionChangeSentence('lose', label, 'describe')];
 	},
-	log: (eff, ctx) => {
-		const id = eff.params?.['id'] as string;
+	log: (effect, context) => {
+		const id = effect.params?.['id'] as string;
 		if (!id) {
 			return null;
 		}
-		const { label } = getActionPresentation(id, ctx);
+		const { label } = getActionPresentation(id, context);
 		return formatActionChangeSentence('lose', label, 'log');
 	},
 });
 
 registerEffectFormatter('action', 'perform', {
-	summarize: (eff, ctx) => {
-		const id = extractActionId(eff.params);
+	summarize: (effect, context) => {
+		const id = extractActionId(effect.params);
 		if (!id) {
 			return null;
 		}
-		const { label } = getActionPresentation(id, ctx);
+		const { label } = getActionPresentation(id, context);
 		return label;
 	},
-	describe: (eff, ctx) => {
-		const id = extractActionId(eff.params);
+	describe: (effect, context) => {
+		const id = extractActionId(effect.params);
 		if (!id) {
 			return null;
 		}
-		const { label } = getActionPresentation(id, ctx);
-		const summary = describeContent('action', id, ctx);
+		const { label } = getActionPresentation(id, context);
+		const summary = describeContent('action', id, context);
 		return [
 			{
 				title: label,
@@ -141,27 +141,30 @@ registerEffectFormatter('action', 'perform', {
 			},
 		];
 	},
-	log: (eff, ctx) => {
-		const id = extractActionId(eff.params);
+	log: (effect, context) => {
+		const id = extractActionId(effect.params);
 		if (!id) {
 			return null;
 		}
-		const { label } = getActionPresentation(id, ctx);
-		const def = ctx.actions.get(id);
+		const { label } = getActionPresentation(id, context);
+		const actionDefinition = context.actions.get(id);
 		const resolved = resolveActionEffects(
-			def,
-			eff.params as Record<string, unknown>,
+			actionDefinition,
+			effect.params as Record<string, unknown>,
 		);
-		const sub = logEffects(resolved.effects, ctx);
-		if (sub.length === 0) {
+		const subLogs = logEffects(resolved.effects, context);
+		if (subLogs.length === 0) {
 			return [
 				{ title: label, items: [], timelineKind: 'subaction', actionId: id },
 			];
 		}
-		const [first, ...rest] = sub;
-		if (typeof first === 'string') {
-			const combined = `${label} - ${first}`;
-			const items = rest.length > 0 ? [combined, ...rest] : [combined];
+		const [firstSubLog, ...remainingSubLogs] = subLogs;
+		if (typeof firstSubLog === 'string') {
+			const combined = `${label} - ${firstSubLog}`;
+			const items =
+				remainingSubLogs.length > 0
+					? [combined, ...remainingSubLogs]
+					: [combined];
 			return [
 				{
 					title: label,
@@ -174,7 +177,7 @@ registerEffectFormatter('action', 'perform', {
 		return [
 			{
 				title: label,
-				items: sub,
+				items: subLogs,
 				timelineKind: 'subaction',
 				actionId: id,
 			},
