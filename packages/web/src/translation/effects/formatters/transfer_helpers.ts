@@ -12,11 +12,11 @@ export interface TransferModifierTarget {
 }
 
 export function resolveTransferModifierTarget(
-	eff: EffectDef,
+	effectDefinition: EffectDef,
 	evaluation: { type: string; id: string } | undefined,
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 ): TransferModifierTarget {
-	const params = eff.params ?? {};
+	const params = effectDefinition.params ?? {};
 	const rawActionId = params['actionId'];
 	const paramActionId =
 		typeof rawActionId === 'string' ? rawActionId : undefined;
@@ -26,10 +26,10 @@ export function resolveTransferModifierTarget(
 	);
 
 	for (const candidate of candidates) {
-		if (!ctx.actions.has(candidate)) {
+		if (!translationContext.actions.has(candidate)) {
 			continue;
 		}
-		const info = getActionInfo(ctx, candidate);
+		const info = getActionInfo(translationContext, candidate);
 		const hasIcon = info.icon && info.icon.trim().length > 0;
 		const summaryLabel = hasIcon ? info.icon : info.name;
 		return {

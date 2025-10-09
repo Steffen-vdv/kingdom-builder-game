@@ -30,14 +30,14 @@ import type { TranslationContext } from '../../context';
 
 interface ModifierEvalHandler {
 	summarize: (
-		eff: EffectDef,
+		effectDefinition: EffectDef,
 		evaluation: { type: string; id: string },
-		ctx: TranslationContext,
+		translationContext: TranslationContext,
 	) => Summary;
 	describe: (
-		eff: EffectDef,
+		effectDefinition: EffectDef,
 		evaluation: { type: string; id: string },
-		ctx: TranslationContext,
+		translationContext: TranslationContext,
 	) => Summary;
 }
 
@@ -151,9 +151,13 @@ registerModifierEvalHandler('population', {
 });
 
 registerModifierEvalHandler('transfer_pct', {
-	summarize: (eff, evaluation, ctx) => {
-		const target = resolveTransferModifierTarget(eff, evaluation, ctx);
-		const amount = Number(eff.params?.['adjust'] ?? 0);
+	summarize: (effectDefinition, evaluation, translationContext) => {
+		const target = resolveTransferModifierTarget(
+			effectDefinition,
+			evaluation,
+			translationContext,
+		);
+		const amount = Number(effectDefinition.params?.['adjust'] ?? 0);
 		const sign = amount >= 0 ? '+' : '';
 		return [
 			`${RESULT_MODIFIER_INFO.icon}${target.summaryLabel}: ${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(
@@ -161,9 +165,13 @@ registerModifierEvalHandler('transfer_pct', {
 			)}%`,
 		];
 	},
-	describe: (eff, evaluation, ctx) => {
-		const target = resolveTransferModifierTarget(eff, evaluation, ctx);
-		const amount = Number(eff.params?.['adjust'] ?? 0);
+	describe: (effectDefinition, evaluation, translationContext) => {
+		const target = resolveTransferModifierTarget(
+			effectDefinition,
+			evaluation,
+			translationContext,
+		);
+		const amount = Number(effectDefinition.params?.['adjust'] ?? 0);
 		const modifierDescription = formatResultModifierClause(
 			RESULT_MODIFIER_LABEL,
 			target.clauseTarget,
@@ -174,7 +182,11 @@ registerModifierEvalHandler('transfer_pct', {
 		);
 		const entries: Summary = [modifierDescription];
 		if (target.actionId) {
-			const card = describeContent('action', target.actionId, ctx);
+			const card = describeContent(
+				'action',
+				target.actionId,
+				translationContext,
+			);
 			entries.push({
 				title: formatTargetLabel(target.icon, target.name),
 				items: card,
