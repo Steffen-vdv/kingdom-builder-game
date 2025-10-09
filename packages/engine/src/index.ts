@@ -23,6 +23,7 @@ export {
 	clonePassiveEvaluationMods,
 	type DeveloperPresetOptions,
 } from './runtime/session';
+export { createLocalSessionGateway } from './runtime/session_gateway';
 export type {
 	SessionSnapshot as EngineSessionSnapshot,
 	SessionAdvanceResult as EngineAdvanceResult,
