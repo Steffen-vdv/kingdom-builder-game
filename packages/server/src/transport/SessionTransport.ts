@@ -28,42 +28,13 @@ import type {
 } from '../session/SessionManager.js';
 import type { AuthContext, AuthRole } from '../auth/AuthContext.js';
 import { AuthError } from '../auth/AuthError.js';
+import type { AuthMiddleware } from '../auth/tokenAuthMiddleware.js';
+import { TransportError } from './TransportTypes.js';
 import type {
-	AuthenticatedRequest,
-	AuthMiddleware,
-} from '../auth/tokenAuthMiddleware.js';
-
-type TransportIdFactory = () => string;
-
-type HttpStatusCarrier = { httpStatus?: number };
-
-export type TransportHttpResponse<T> = T & HttpStatusCarrier;
-
-export type TransportErrorCode =
-	| 'INVALID_REQUEST'
-	| 'NOT_FOUND'
-	| 'CONFLICT'
-	| 'UNAUTHORIZED'
-	| 'FORBIDDEN';
-
-export class TransportError extends Error {
-	public readonly code: TransportErrorCode;
-
-	public readonly issues?: unknown;
-
-	public constructor(
-		code: TransportErrorCode,
-		message: string,
-		options: { cause?: unknown; issues?: unknown } = {},
-	) {
-		super(message);
-		this.code = code;
-		this.issues = options.issues;
-		if (options.cause) {
-			this.cause = options.cause;
-		}
-	}
-}
+	TransportHttpResponse,
+	TransportIdFactory,
+	TransportRequest,
+} from './TransportTypes.js';
 
 export interface SessionTransportOptions {
 	sessionManager: SessionManager;
@@ -345,8 +316,4 @@ export class SessionTransport {
 		}
 		return context.roles.includes('admin');
 	}
-}
-
-export interface TransportRequest<T = unknown> extends AuthenticatedRequest<T> {
-	body: T;
 }

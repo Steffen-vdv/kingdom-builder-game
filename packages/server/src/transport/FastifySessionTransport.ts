@@ -3,12 +3,10 @@ import type {
 	FastifyReply,
 	FastifyRequest,
 } from 'fastify';
-import {
-	SessionTransport,
-	TransportError,
-	type SessionTransportOptions,
-	type TransportErrorCode,
-} from './SessionTransport.js';
+import { SessionTransport } from './SessionTransport.js';
+import type { SessionTransportOptions } from './SessionTransport.js';
+import { TransportError } from './TransportTypes.js';
+import type { TransportErrorCode } from './TransportTypes.js';
 
 export interface FastifySessionTransportOptions
 	extends SessionTransportOptions {}
