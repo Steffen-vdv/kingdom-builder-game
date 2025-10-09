@@ -14,11 +14,15 @@ guide for rationale, lore, and extended background.
      `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 2. **Run core commands**
    - `npm run lint` and `npm run format` keep eslint and Prettier happy.
-   - `npm run lint` also runs dependency-cruiser to enforce package boundaries.
+   - `npm run lint` also runs dependency-cruiser to enforce package
+     boundaries.
    - `npm run check` runs linting, type checks, and tests together.
+   - Skip `npm run test:e2e` locally; the Playwright smoke tests run in CI
+     during pull requests to avoid slowing agent workflows.
    - Expect `npm run check` to take about two minutes; the Vitest progress
      reporter prints live suite counts so the run is not stuck.
    - Use `npm run build` only when you must validate a production bundle.
+
 3. **Work content-first**
    - Never hardcode game data in engine, web, or tests—load from
      `@kingdom-builder/contents` or registries.
