@@ -39,6 +39,18 @@ import type {
 	TransportRequest,
 } from './TransportTypes.js';
 
+function normalizeCostBag(
+	costs: Record<string, number | undefined>,
+): Record<string, number> {
+	const normalized: Record<string, number> = {};
+	for (const [resourceKey, value] of Object.entries(costs)) {
+		if (typeof value === 'number') {
+			normalized[resourceKey] = value;
+		}
+	}
+	return normalized;
+}
+
 export interface SessionTransportOptions {
 	sessionManager: SessionManager;
 	idFactory?: TransportIdFactory;
@@ -161,6 +173,8 @@ export class SessionTransport {
 			}) as ActionExecuteErrorResponse;
 			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
+		const costBag = session.getActionCosts(actionId, params as never);
+		const costs = normalizeCostBag(costBag);
 		try {
 			const result = await session.enqueue(() => {
 				const traces = session.performAction(actionId, params as never);
@@ -171,6 +185,7 @@ export class SessionTransport {
 				status: 'success',
 				snapshot: result.snapshot,
 				traces: normalizeActionTraces(result.traces),
+				costs,
 			}) as ActionExecuteSuccessResponse;
 			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {

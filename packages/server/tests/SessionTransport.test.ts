@@ -109,8 +109,9 @@ describe('SessionTransport', () => {
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
 	});
 
-	it('executes actions and returns updated snapshots', async () => {
-		const { manager, gainKey, actionId } = createSyntheticSessionManager();
+	it('executes actions and returns updated snapshots with costs', async () => {
+		const { manager, gainKey, actionId, costKey } =
+			createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
@@ -127,6 +128,7 @@ describe('SessionTransport', () => {
 		const [player] = result.snapshot.game.players;
 		expect(player?.resources[gainKey]).toBe(1);
 		expect(Array.isArray(result.traces)).toBe(true);
+		expect(result.costs[costKey]).toBe(1);
 		expect(result.httpStatus).toBe(200);
 	});
 

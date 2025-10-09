@@ -61,6 +61,18 @@ function toActionParameters(
 	return params as ActionParameters<string>;
 }
 
+function normalizeCostBag(
+	costs: ReturnType<EngineSession['getActionCosts']>,
+): Record<string, number> {
+	const normalized: Record<string, number> = {};
+	for (const [resourceKey, value] of Object.entries(costs)) {
+		if (typeof value === 'number') {
+			normalized[resourceKey] = value;
+		}
+	}
+	return normalized;
+}
+
 function toErrorMessage(error: unknown): string {
 	if (typeof error === 'string') {
 		return error;
@@ -89,11 +101,13 @@ function toActionErrorResponse(error: unknown): ActionExecuteErrorResponse {
 function toActionSuccessResponse(
 	session: EngineSession,
 	traces: ReturnType<EngineSession['performAction']>,
+	costs: Record<string, number>,
 ): ActionExecuteSuccessResponse {
 	return {
 		status: 'success',
 		traces,
 		snapshot: session.getSnapshot(),
+		costs,
 	};
 }
 
@@ -128,11 +142,11 @@ export function createLocalSessionGateway(
 		): Promise<ActionExecuteResponse> {
 			assertSessionId(request, sessionId);
 			try {
-				const traces = session.performAction(
-					request.actionId,
-					toActionParameters(request.params),
-				);
-				return Promise.resolve(toActionSuccessResponse(session, traces));
+				const params = toActionParameters(request.params);
+				const rawCosts = session.getActionCosts(request.actionId, params);
+				const costs = normalizeCostBag(rawCosts);
+				const traces = session.performAction(request.actionId, params);
+				return Promise.resolve(toActionSuccessResponse(session, traces, costs));
 			} catch (error) {
 				return Promise.resolve(toActionErrorResponse(error));
 			}
