@@ -206,6 +206,17 @@ describe('<HoverCard />', () => {
 		if (!activePlayerView) {
 			throw new Error('Expected active player in session view');
 		}
+		const actionDefinition = ACTIONS.get(actionData.id);
+		if (!actionDefinition) {
+			throw new Error('Expected action definition for resolution test');
+		}
+		const resolutionSource = {
+			kind: 'action' as const,
+			label: 'Action',
+			id: actionDefinition.id,
+			name: actionDefinition.name,
+			icon: actionDefinition.icon,
+		};
 		act(() => {
 			resolutionPromise = mockGame.showResolution({
 				lines: ['First reveal', 'Second reveal'],
@@ -213,6 +224,13 @@ describe('<HoverCard />', () => {
 					id: activePlayerView.id,
 					name: activePlayerView.name,
 				},
+				action: {
+					id: actionDefinition.id,
+					name: actionDefinition.name,
+					icon: actionDefinition.icon,
+				},
+				source: resolutionSource,
+				actorLabel: 'Played by',
 			});
 		});
 		const continueButton = screen.getByRole('button', {
@@ -233,6 +251,8 @@ describe('<HoverCard />', () => {
 			vi.advanceTimersByTime(1);
 		});
 		expect(screen.getByText('Second reveal')).toBeInTheDocument();
+		expect(mockGame.resolution?.source).toEqual(resolutionSource);
+		expect(mockGame.resolution?.actorLabel).toBe('Played by');
 		expect(continueButton).not.toBeDisabled();
 		act(() => {
 			mockGame.acknowledgeResolution();
