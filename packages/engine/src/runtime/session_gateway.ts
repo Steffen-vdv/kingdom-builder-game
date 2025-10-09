@@ -13,6 +13,7 @@ import type {
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
 	ActionExecuteErrorResponse,
+	SessionRegistries,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from './session';
 import type { PlayerId } from '../state';
@@ -20,6 +21,7 @@ import type { ActionParameters } from '../actions/action_parameters';
 
 interface LocalSessionGatewayOptions {
 	readonly sessionId?: string;
+	readonly registries?: SessionRegistries;
 }
 
 interface RequirementError extends Error {
@@ -104,6 +106,14 @@ export function createLocalSessionGateway(
 	options: LocalSessionGatewayOptions = {},
 ): SessionGateway {
 	const sessionId = options.sessionId ?? 'local-session';
+	const baseRegistries: SessionRegistries = options.registries ?? {
+		actions: [],
+		buildings: [],
+		developments: [],
+		populations: [],
+		resources: [],
+	};
+	const cloneRegistries = () => structuredClone(baseRegistries);
 	return {
 		createSession(
 			request?: SessionCreateRequest,
@@ -114,6 +124,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(),
 			});
 		},
 		fetchSnapshot(
@@ -123,6 +134,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(),
 			});
 		},
 		performAction(
@@ -156,6 +168,7 @@ export function createLocalSessionGateway(
 				sessionId,
 				snapshot: session.getSnapshot(),
 				advance,
+				registries: cloneRegistries(),
 			});
 		},
 		setDevMode(
@@ -166,6 +179,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(),
 			});
 		},
 	};

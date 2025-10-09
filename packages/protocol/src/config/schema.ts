@@ -10,6 +10,16 @@ export const requirementSchema = z.object({
 
 export type RequirementConfig = z.infer<typeof requirementSchema>;
 
+export const resourceDefinitionSchema = z.object({
+	key: z.string(),
+	icon: z.string(),
+	label: z.string(),
+	description: z.string(),
+	tags: z.array(z.string()).optional(),
+});
+
+export type ResourceDefinition = z.infer<typeof resourceDefinitionSchema>;
+
 const costBagSchema = z.record(z.string(), z.number());
 
 const evaluatorSchema = z.object({

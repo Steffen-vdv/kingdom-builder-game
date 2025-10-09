@@ -7,16 +7,30 @@ import {
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
+	RESOURCES,
 	PHASES,
 	GAME_START,
 	RULES,
 } from '@kingdom-builder/contents';
+import type { ResourceDefinition } from '@kingdom-builder/protocol';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
 	EngineSessionOptions,
 	'devMode' | 'config'
 >;
+
+type SessionManagerEngineOptions = Partial<EngineSessionBaseOptions> & {
+	resources?: Record<string, ResourceDefinition>;
+};
+
+type SessionBaseRegistries = {
+	actions: EngineSessionBaseOptions['actions'];
+	buildings: EngineSessionBaseOptions['buildings'];
+	developments: EngineSessionBaseOptions['developments'];
+	populations: EngineSessionBaseOptions['populations'];
+	resources: Record<string, ResourceDefinition>;
+};
 
 type SessionRecord = {
 	session: EngineSession;
@@ -28,7 +42,7 @@ export interface SessionManagerOptions {
 	maxIdleDurationMs?: number;
 	maxSessions?: number;
 	now?: () => number;
-	engineOptions?: Partial<EngineSessionBaseOptions>;
+	engineOptions?: SessionManagerEngineOptions;
 }
 
 export interface CreateSessionOptions {
@@ -49,6 +63,8 @@ export class SessionManager {
 
 	private readonly baseOptions: EngineSessionBaseOptions;
 
+	private readonly resourceDefinitions: Record<string, ResourceDefinition>;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -59,15 +75,26 @@ export class SessionManager {
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
+		const actions = engineOptions.actions ?? ACTIONS;
+		const buildings = engineOptions.buildings ?? BUILDINGS;
+		const developments = engineOptions.developments ?? DEVELOPMENTS;
+		const populations = engineOptions.populations ?? POPULATIONS;
 		this.baseOptions = {
-			actions: engineOptions.actions ?? ACTIONS,
-			buildings: engineOptions.buildings ?? BUILDINGS,
-			developments: engineOptions.developments ?? DEVELOPMENTS,
-			populations: engineOptions.populations ?? POPULATIONS,
+			actions,
+			buildings,
+			developments,
+			populations,
 			phases: engineOptions.phases ?? PHASES,
 			start: engineOptions.start ?? GAME_START,
 			rules: engineOptions.rules ?? RULES,
 		};
+		if (engineOptions.resources) {
+			this.resourceDefinitions = this.cloneResourceDefinitions(
+				engineOptions.resources,
+			);
+		} else {
+			this.resourceDefinitions = this.cloneResourceDefinitions(RESOURCES);
+		}
 	}
 
 	public createSession(
@@ -137,12 +164,32 @@ export class SessionManager {
 		return this.sessions.size;
 	}
 
+	public getBaseRegistries(): SessionBaseRegistries {
+		return {
+			actions: this.baseOptions.actions,
+			buildings: this.baseOptions.buildings,
+			developments: this.baseOptions.developments,
+			populations: this.baseOptions.populations,
+			resources: this.cloneResourceDefinitions(this.resourceDefinitions),
+		};
+	}
+
 	private requireSession(sessionId: string): EngineSession {
 		const session = this.getSession(sessionId);
 		if (!session) {
 			throw new Error(`Session "${sessionId}" was not found.`);
 		}
 		return session;
+	}
+
+	private cloneResourceDefinitions<Definition extends ResourceDefinition>(
+		definitions: Record<string, Definition>,
+	): Record<string, ResourceDefinition> {
+		const cloned: Record<string, ResourceDefinition> = {};
+		for (const [key, definition] of Object.entries(definitions)) {
+			cloned[key] = structuredClone(definition);
+		}
+		return cloned;
 	}
 
 	private purgeExpiredSessions(): void {

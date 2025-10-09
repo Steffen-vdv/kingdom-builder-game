@@ -12,6 +12,7 @@ import {
 } from '@kingdom-builder/contents/config/builderShared';
 import type {
 	PhaseConfig,
+	ResourceDefinition,
 	RuleSet,
 	StartConfig,
 } from '@kingdom-builder/protocol';
@@ -33,6 +34,7 @@ export interface SyntheticSessionManagerResult {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
+	resources: Record<string, ResourceDefinition>;
 }
 
 export function createSyntheticSessionManager(
@@ -108,6 +110,20 @@ export function createSyntheticSessionManager(
 		winConditions: [],
 	};
 	const { engineOptions: engineOverrides = {}, ...rest } = options;
+	const resources: Record<string, ResourceDefinition> = {
+		[costKey]: {
+			key: costKey,
+			icon: '🧪',
+			label: 'Synthetic Cost',
+			description: 'A synthetic cost resource.',
+		},
+		[gainKey]: {
+			key: gainKey,
+			icon: '🎁',
+			label: 'Synthetic Gain',
+			description: 'A synthetic gain resource.',
+		},
+	};
 	const engineOptions: NonNullable<SessionManagerOptions['engineOptions']> = {
 		actions: engineOverrides.actions ?? factory.actions,
 		buildings: engineOverrides.buildings ?? factory.buildings,
@@ -116,6 +132,7 @@ export function createSyntheticSessionManager(
 		phases: engineOverrides.phases ?? phases,
 		start: engineOverrides.start ?? start,
 		rules: engineOverrides.rules ?? rules,
+		resources: engineOverrides.resources ?? resources,
 	};
 	const manager = new SessionManager({
 		...rest,
@@ -130,5 +147,6 @@ export function createSyntheticSessionManager(
 		phases,
 		start,
 		rules,
+		resources,
 	};
 }

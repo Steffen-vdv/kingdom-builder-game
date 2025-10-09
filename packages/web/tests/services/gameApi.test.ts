@@ -11,6 +11,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 	SessionStateResponse,
+	SessionRegistries,
 } from '@kingdom-builder/protocol/session';
 import {
 	GameApiError,
@@ -97,12 +98,21 @@ const createSnapshot = (
 	};
 };
 
+const createRegistries = (): SessionRegistries => ({
+	actions: [],
+	buildings: [],
+	developments: [],
+	populations: [],
+	resources: [],
+});
+
 const createStateResponse = (
 	sessionId: string,
 	snapshotOverrides: Partial<SessionSnapshot> = {},
 ): SessionStateResponse => ({
 	sessionId,
 	snapshot: createSnapshot(snapshotOverrides),
+	registries: createRegistries(),
 });
 
 describe('createGameApi', () => {
@@ -209,6 +219,7 @@ describe('GameApiFake', () => {
 			effects: [],
 			player: createPlayerSnapshot('A'),
 		},
+		registries: createRegistries(),
 	});
 
 	it('returns primed responses', async () => {

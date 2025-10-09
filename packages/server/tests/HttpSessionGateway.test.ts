@@ -26,6 +26,16 @@ describe('HttpSessionGateway', () => {
 		});
 	}
 
+	function emptyRegistries() {
+		return {
+			actions: [],
+			buildings: [],
+			developments: [],
+			populations: [],
+			resources: [],
+		};
+	}
+
 	it('creates sessions through the REST transport', async () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -40,6 +50,7 @@ describe('HttpSessionGateway', () => {
 					{
 						sessionId: 'rest-session',
 						snapshot: { game: { devMode: true } },
+						registries: emptyRegistries(),
 					},
 					{ status: 201 },
 				);
@@ -88,6 +99,7 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { players: [] } },
+					registries: emptyRegistries(),
 				}),
 			);
 		});
@@ -108,6 +120,7 @@ describe('HttpSessionGateway', () => {
 					sessionId: 'test',
 					snapshot: { game: { currentPhase: 'growth' } },
 					advance: { effects: [] },
+					registries: emptyRegistries(),
 				}),
 			);
 		});
@@ -179,6 +192,7 @@ describe('HttpSessionGateway', () => {
 				return jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { devMode: true } },
+					registries: emptyRegistries(),
 				});
 			},
 		);
@@ -196,7 +210,11 @@ describe('HttpSessionGateway', () => {
 				input instanceof Request ? input : new Request(input, init);
 			expect(request.headers.get('x-test-header')).toBe('dynamic');
 			return Promise.resolve(
-				jsonResponse({ sessionId: 'dynamic', snapshot: { game: {} } }),
+				jsonResponse({
+					sessionId: 'dynamic',
+					snapshot: { game: {} },
+					registries: emptyRegistries(),
+				}),
 			);
 		});
 		const gateway = new HttpSessionGateway({
@@ -217,6 +235,7 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'basic',
 					snapshot: { game: { players: [] } },
+					registries: emptyRegistries(),
 				}),
 			);
 		});

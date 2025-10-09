@@ -9,6 +9,7 @@ import type {
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionStateResponse,
+	SessionRegistries,
 } from '@kingdom-builder/protocol/session';
 import type { GameApi } from './gameApi';
 import { GameApiError } from './gameApi';
@@ -29,7 +30,16 @@ const toStateResponse = (
 ): SessionStateResponse => ({
 	sessionId: response.sessionId,
 	snapshot: clone(response.snapshot),
+	registries: clone(response.registries),
 });
+
+const EMPTY_REGISTRIES: SessionRegistries = {
+	actions: [],
+	buildings: [],
+	developments: [],
+	populations: [],
+	resources: [],
+};
 
 export type GameApiMockHandlers = {
 	createSession?: (
@@ -137,11 +147,13 @@ export class GameApiFake implements GameApi {
 		const response = this.#consumeAction();
 
 		if (this.#isSuccess(response)) {
+			const existing = this.#sessions.get(request.sessionId);
 			this.#sessions.set(
 				request.sessionId,
 				toStateResponse({
 					sessionId: request.sessionId,
 					snapshot: response.snapshot,
+					registries: existing?.registries ?? EMPTY_REGISTRIES,
 				}),
 			);
 		}
@@ -159,6 +171,7 @@ export class GameApiFake implements GameApi {
 			toStateResponse({
 				sessionId: response.sessionId,
 				snapshot: response.snapshot,
+				registries: response.registries,
 			}),
 		);
 

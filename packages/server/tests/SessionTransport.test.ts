@@ -41,6 +41,47 @@ describe('SessionTransport', () => {
 		expect(playerB?.name).toBe('Beta');
 	});
 
+	it('includes serialized registries in session responses', () => {
+		const { manager, actionId, costKey, gainKey, resources } =
+			createSyntheticSessionManager();
+		const idFactory = vi.fn().mockReturnValue('registry-session');
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory,
+			authMiddleware: middleware,
+		});
+		const createResponse = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		expect(createResponse.registries.actions).toEqual(
+			expect.arrayContaining([expect.objectContaining({ id: actionId })]),
+		);
+		expect(createResponse.registries.resources).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					id: costKey,
+					definition: expect.objectContaining({
+						key: costKey,
+						label: resources[costKey].label,
+					}),
+				}),
+				expect.objectContaining({
+					id: gainKey,
+					definition: expect.objectContaining({
+						key: gainKey,
+						icon: resources[gainKey].icon,
+					}),
+				}),
+			]),
+		);
+		const stateResponse = transport.getSessionState({
+			body: { sessionId: createResponse.sessionId },
+			headers: authorizedHeaders,
+		});
+		expect(stateResponse.registries).toEqual(createResponse.registries);
+	});
+
 	it('skips blank player name entries when applying preferences', () => {
 		const { manager } = createSyntheticSessionManager();
 		const originalCreate = manager.createSession.bind(manager);

@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import type { ActionExecuteSuccessResponse } from '@kingdom-builder/protocol/actions';
+import type { SessionRegistries } from '@kingdom-builder/protocol/session';
 import { ActionId } from '@kingdom-builder/contents';
 import {
 	createSession,
@@ -29,6 +30,13 @@ describe('sessionSdk', () => {
 			steps: [{ id: 'phase-main:start', name: 'Start' }],
 		},
 	];
+	const registries: SessionRegistries = {
+		actions: [],
+		buildings: [],
+		developments: [],
+		populations: [],
+		resources: [],
+	};
 	const ruleSnapshot = {
 		tieredResourceKey: resourceKey,
 		tierDefinitions: [],
@@ -62,6 +70,7 @@ describe('sessionSdk', () => {
 		api.setNextCreateResponse({
 			sessionId: 'session-1',
 			snapshot: initialSnapshot,
+			registries,
 		});
 	});
 	afterEach(() => {
@@ -184,6 +193,7 @@ describe('sessionSdk', () => {
 				effects: [],
 				player: playerA,
 			},
+			registries,
 		});
 		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(response.snapshot).toEqual(updatedSnapshot);

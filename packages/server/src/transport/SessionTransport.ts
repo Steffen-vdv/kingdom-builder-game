@@ -22,6 +22,10 @@ import type {
 	SessionRequirementFailure,
 	SessionPlayerId,
 	SessionPlayerNameMap,
+	SessionRegistries,
+	SessionRegistryEntry,
+	ResourceDefinition,
+	Registry,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
@@ -89,6 +93,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
+			registries: this.serializeRegistries(),
 		} satisfies SessionCreateResponse;
 		return sessionCreateResponseSchema.parse(response);
 	}
@@ -100,6 +105,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot,
+			registries: this.serializeRegistries(),
 		} satisfies SessionStateResponse;
 		return sessionStateResponseSchema.parse(response);
 	}
@@ -128,6 +134,7 @@ export class SessionTransport {
 				sessionId,
 				snapshot: result.snapshot,
 				advance: result.advance,
+				registries: this.serializeRegistries(),
 			} satisfies SessionAdvanceResponse;
 			return sessionAdvanceResponseSchema.parse(response);
 		} catch (error) {
@@ -215,8 +222,38 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
+			registries: this.serializeRegistries(),
 		} satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
+	}
+
+	private serializeRegistries(): SessionRegistries {
+		const base = this.sessionManager.getBaseRegistries();
+		return {
+			actions: this.serializeRegistry(base.actions),
+			buildings: this.serializeRegistry(base.buildings),
+			developments: this.serializeRegistry(base.developments),
+			populations: this.serializeRegistry(base.populations),
+			resources: this.serializeResourceRegistry(base.resources),
+		} satisfies SessionRegistries;
+	}
+
+	private serializeRegistry<Definition>(
+		registry: Registry<Definition>,
+	): SessionRegistryEntry<Definition>[] {
+		return registry.entries().map(([id, definition]) => ({
+			id,
+			definition: structuredClone(definition),
+		}));
+	}
+
+	private serializeResourceRegistry(
+		resources: Record<string, ResourceDefinition>,
+	): SessionRegistryEntry<ResourceDefinition>[] {
+		return Object.entries(resources).map(([id, definition]) => ({
+			id,
+			definition: structuredClone(definition),
+		}));
 	}
 
 	private extractRequirementFailure(

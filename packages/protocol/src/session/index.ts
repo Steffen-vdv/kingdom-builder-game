@@ -196,6 +196,8 @@ export type SessionActionRequirementList = SessionRequirementFailure[];
 export type {
 	SessionIdentifier,
 	SessionPlayerNameMap,
+	SessionRegistries,
+	SessionRegistryEntry,
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionStateResponse,
