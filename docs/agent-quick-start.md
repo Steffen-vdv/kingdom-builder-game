@@ -19,6 +19,8 @@ guide for rationale, lore, and extended background.
    - Expect `npm run check` to take about two minutes; the Vitest progress
      reporter prints live suite counts so the run is not stuck.
    - Use `npm run build` only when you must validate a production bundle.
+   - Skip `npm run test:e2e`; the Playwright smoke suite runs in CI right after
+     `npm run test:ci` to avoid long local executions.
 3. **Work content-first**
    - Never hardcode game data in engine, web, or tests—load from
      `@kingdom-builder/contents` or registries.
