@@ -28,7 +28,6 @@ vi.mock('../../src/translation', () => ({
 	translateRequirementFailure: translateRequirementFailureMock,
 }));
 
-const performSessionActionMock = vi.hoisted(() => vi.fn());
 const getLegacySessionContextMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/getLegacySessionContext', () => ({
