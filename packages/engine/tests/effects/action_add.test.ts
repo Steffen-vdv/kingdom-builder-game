@@ -6,18 +6,29 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('action:add effect', () => {
 	it('grants a new action', () => {
-		const content = createContentFactory();
-		const extra = content.action();
-		const grant = content.action({
-			effects: [{ type: 'action', method: 'add', params: { id: extra.id } }],
+		const contentFactory = createContentFactory();
+		const extraActionDefinition = contentFactory.action();
+		const grantingActionDefinition = contentFactory.action({
+			effects: [
+				{
+					type: 'action',
+					method: 'add',
+					params: { id: extraActionDefinition.id },
+				},
+			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(contentFactory);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		const cost = getActionCosts(grant.id, ctx);
-		ctx.activePlayer.ap = cost[CResource.ap] ?? 0;
-		performAction(grant.id, ctx);
-		expect(ctx.activePlayer.actions.has(extra.id)).toBe(true);
+		const grantActionCosts = getActionCosts(
+			grantingActionDefinition.id,
+			engineContext,
+		);
+		engineContext.activePlayer.ap = grantActionCosts[CResource.ap] ?? 0;
+		performAction(grantingActionDefinition.id, engineContext);
+		expect(
+			engineContext.activePlayer.actions.has(extraActionDefinition.id),
+		).toBe(true);
 	});
 });
