@@ -30,7 +30,7 @@ import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type { LegacySession, SessionRegistries } from './sessionTypes';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
@@ -76,6 +76,7 @@ interface UseActionPerformerOptions {
 	session: LegacySession;
 	sessionId: string;
 	actionCostResource: ResourceKey;
+	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
 	addLog: (
 		entry: string | string[],
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
@@ -93,6 +94,7 @@ export function useActionPerformer({
 	session,
 	sessionId,
 	actionCostResource,
+	registries,
 	addLog,
 	showResolution,
 	updateMainPhaseStep,
@@ -114,6 +116,7 @@ export function useActionPerformer({
 				snapshot: snapshotBefore,
 				ruleSnapshot: snapshotBefore.rules,
 				passiveRecords: snapshotBefore.passiveRecords,
+				registries,
 			});
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
@@ -139,6 +142,7 @@ export function useActionPerformer({
 					snapshot: snapshotAfter,
 					ruleSnapshot: snapshotAfter.rules,
 					passiveRecords: snapshotAfter.passiveRecords,
+					registries,
 				});
 				const { translationContext, diffContext } = legacyContext;
 				context = translationContext;

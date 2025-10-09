@@ -1,4 +1,3 @@
-import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
 import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
@@ -8,6 +7,7 @@ import {
 	type TranslationContext,
 } from '../translation/context';
 import { type TranslationDiffContext } from '../translation';
+import type { SessionRegistries } from './sessionTypes';
 
 type PlayerSnapshot = SessionSnapshot['game']['players'][number];
 
@@ -162,6 +162,7 @@ interface LegacySessionContextInput {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	passiveRecords: SessionSnapshot['passiveRecords'];
+	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
 }
 
 function createDiffContext(
@@ -208,14 +209,11 @@ export function getLegacySessionContext({
 	snapshot,
 	ruleSnapshot,
 	passiveRecords,
+	registries,
 }: LegacySessionContextInput): LegacySessionContextData {
 	const translationContext = createTranslationContext(
 		snapshot,
-		{
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-		},
+		registries,
 		snapshot.metadata ?? { passiveEvaluationModifiers: {} },
 		{
 			ruleSnapshot,

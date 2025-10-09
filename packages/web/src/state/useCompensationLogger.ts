@@ -8,7 +8,7 @@ import {
 	type TranslationDiffContext,
 } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
-import type { LegacySession } from './sessionTypes';
+import type { LegacySession, SessionRegistries } from './sessionTypes';
 
 interface UseCompensationLoggerOptions {
 	session: LegacySession;
@@ -18,6 +18,7 @@ interface UseCompensationLoggerOptions {
 		player?: SessionSnapshot['game']['players'][number],
 	) => void;
 	resourceKeys: ResourceKey[];
+	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
 }
 
 export function useCompensationLogger({
@@ -25,6 +26,7 @@ export function useCompensationLogger({
 	sessionState,
 	addLog,
 	resourceKeys,
+	registries,
 }: UseCompensationLoggerOptions) {
 	const loggedSessionRef = useRef<LegacySession | null>(null);
 	const loggedPlayersRef = useRef<Set<string>>(new Set());
@@ -40,6 +42,7 @@ export function useCompensationLogger({
 			snapshot: sessionState,
 			ruleSnapshot: sessionState.rules,
 			passiveRecords: sessionState.passiveRecords,
+			registries,
 		});
 		sessionState.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {
@@ -99,5 +102,5 @@ export function useCompensationLogger({
 				loggedPlayersRef.current.add(player.id);
 			}
 		});
-	}, [addLog, resourceKeys, session, sessionState]);
+	}, [addLog, registries, resourceKeys, session, sessionState]);
 }

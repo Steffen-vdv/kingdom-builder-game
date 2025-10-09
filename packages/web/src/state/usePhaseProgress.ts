@@ -9,7 +9,7 @@ import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type { LegacySession, SessionRegistries } from './sessionTypes';
 
 interface PhaseProgressOptions {
 	session: LegacySession;
@@ -28,6 +28,7 @@ interface PhaseProgressOptions {
 	refresh: () => void;
 	resourceKeys: ResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
+	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
 }
 
 export function usePhaseProgress({
@@ -44,6 +45,7 @@ export function usePhaseProgress({
 	refresh,
 	resourceKeys,
 	enqueue,
+	registries,
 }: PhaseProgressOptions) {
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
@@ -92,6 +94,7 @@ export function usePhaseProgress({
 				updateMainPhaseStep,
 				addLog,
 				refresh,
+				registries,
 			}),
 		[
 			actionCostResource,
@@ -99,6 +102,7 @@ export function usePhaseProgress({
 			mountedRef,
 			refresh,
 			resourceKeys,
+			registries,
 			runDelay,
 			runStepDelay,
 			session,

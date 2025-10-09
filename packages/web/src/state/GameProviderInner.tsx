@@ -205,6 +205,7 @@ export function GameProviderInner({
 		refresh,
 		resourceKeys,
 		enqueue,
+		registries,
 	});
 
 	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =
@@ -217,12 +218,14 @@ export function GameProviderInner({
 		sessionState,
 		addLog,
 		resourceKeys,
+		registries,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
 		session: legacySession,
 		sessionId,
 		actionCostResource,
+		registries,
 		addLog,
 		showResolution: handleShowResolution,
 		updateMainPhaseStep,
