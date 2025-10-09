@@ -5,6 +5,7 @@ import type {
 	SessionResourceKeys,
 	SessionRuleSnapshot,
 	SessionSnapshot,
+	SessionMetadata,
 } from './sessionTypes';
 
 export interface GameProviderInnerProps {
@@ -29,4 +30,5 @@ export interface GameProviderInnerProps {
 	onReleaseSession: () => void;
 	registries: SessionRegistries;
 	resourceKeys: SessionResourceKeys;
+	sessionMetadata: SessionMetadata;
 }

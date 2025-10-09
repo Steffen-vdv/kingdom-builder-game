@@ -100,6 +100,7 @@ function createSessionState(turn: number): EngineSessionSnapshot {
 			A: [],
 			B: [],
 		},
+		metadata: { passiveEvaluationModifiers: {} },
 	};
 }
 

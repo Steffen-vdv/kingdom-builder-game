@@ -261,6 +261,7 @@ describe('GameProvider', () => {
 			ruleSnapshot: initialSnapshot.rules,
 			registries,
 			resourceKeys,
+			metadata: initialSnapshot.metadata,
 		});
 		fetchSnapshotMock.mockResolvedValue({
 			session,
@@ -268,6 +269,7 @@ describe('GameProvider', () => {
 			ruleSnapshot: refreshedSnapshot.rules,
 			registries,
 			resourceKeys,
+			metadata: refreshedSnapshot.metadata,
 		});
 	});
 

@@ -167,6 +167,7 @@ interface SessionSnapshotOptions {
 	phaseIndex?: number;
 	stepIndex?: number;
 	devMode?: boolean;
+	metadata?: EngineSessionSnapshot['metadata'];
 }
 
 export function createSessionSnapshot({
@@ -185,6 +186,7 @@ export function createSessionSnapshot({
 	phaseIndex = 0,
 	stepIndex = 0,
 	devMode = false,
+	metadata: metadataOverride,
 }: SessionSnapshotOptions): EngineSessionSnapshot {
 	const phase = phases[phaseIndex] ?? phases[0];
 	const resolvedCurrentPhase =
@@ -207,6 +209,9 @@ export function createSessionSnapshot({
 			(record) => ({ ...record }),
 		);
 	}
+	const metadata = metadataOverride
+		? structuredClone(metadataOverride)
+		: { passiveEvaluationModifiers: {} };
 	return {
 		game: {
 			turn,
@@ -223,9 +228,12 @@ export function createSessionSnapshot({
 		},
 		phases,
 		actionCostResource,
-		recentResourceGains: recentResourceGains.map((gain) => ({ ...gain })),
+		recentResourceGains: recentResourceGains.map((gain) => ({
+			...gain,
+		})),
 		compensations: normalizedCompensations,
 		rules: ruleSnapshot,
 		passiveRecords: normalizedPassiveRecords,
+		metadata,
 	};
 }

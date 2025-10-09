@@ -104,10 +104,7 @@ describe('content-driven action log hooks', () => {
 					buildings,
 					developments,
 				},
-				{
-					pullEffectLog: (key) => session.pullEffectLog(key),
-					evaluationMods: session.getPassiveEvaluationMods(),
-				},
+				snapshot.metadata,
 				{
 					ruleSnapshot: session.getRuleSnapshot(),
 					passiveRecords: snapshot.passiveRecords,

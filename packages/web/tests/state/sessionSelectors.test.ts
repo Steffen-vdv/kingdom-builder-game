@@ -127,6 +127,16 @@ describe('sessionSelectors', () => {
 		actionCostResource: primaryResource,
 		recentResourceGains: [],
 		compensations: {},
+		rules: {
+			tieredResourceKey: primaryResource,
+			tierDefinitions: [],
+			winConditions: [],
+		},
+		passiveRecords: {
+			A: [],
+			B: [],
+		},
+		metadata: { passiveEvaluationModifiers: {} },
 	};
 	const registries = {
 		actions: factory.actions,

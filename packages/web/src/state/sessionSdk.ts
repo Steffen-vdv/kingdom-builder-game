@@ -48,6 +48,7 @@ interface CreateSessionResult {
 	ruleSnapshot: RuleSnapshot;
 	registries: SessionRegistries;
 	resourceKeys: ResourceKey[];
+	metadata: EngineSessionSnapshot['metadata'];
 }
 
 type ActionRequirementFailure =
@@ -65,6 +66,7 @@ interface FetchSnapshotResult {
 	ruleSnapshot: RuleSnapshot;
 	registries: SessionRegistries;
 	resourceKeys: ResourceKey[];
+	metadata: EngineSessionSnapshot['metadata'];
 }
 
 const SESSION_PREFIX = 'local-session-';
@@ -159,6 +161,7 @@ export async function createSession(
 		ruleSnapshot: response.snapshot.rules,
 		registries: SESSION_REGISTRIES,
 		resourceKeys: RESOURCE_KEYS,
+		metadata: response.snapshot.metadata,
 	};
 }
 
@@ -174,6 +177,7 @@ export async function fetchSnapshot(
 		ruleSnapshot: response.snapshot.rules,
 		registries: SESSION_REGISTRIES,
 		resourceKeys: RESOURCE_KEYS,
+		metadata: response.snapshot.metadata,
 	};
 }
 

@@ -209,10 +209,7 @@ export function getLegacySessionContext(
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 		},
-		{
-			pullEffectLog: <T>(key: string) => session.pullEffectLog<T>(key),
-			evaluationMods: session.getPassiveEvaluationMods(),
-		},
+		snapshot.metadata ?? { passiveEvaluationModifiers: {} },
 		{
 			ruleSnapshot: session.getRuleSnapshot(),
 			passiveRecords: snapshot.passiveRecords,

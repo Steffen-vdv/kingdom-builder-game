@@ -34,7 +34,7 @@ export function createPassiveGame(
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 		},
-		undefined,
+		sessionState.metadata,
 		{
 			ruleSnapshot,
 			passiveRecords: sessionState.passiveRecords,

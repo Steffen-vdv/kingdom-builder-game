@@ -7,7 +7,6 @@ import {
 	RESOURCES,
 	STATS,
 } from '@kingdom-builder/contents';
-import { PassiveManager } from '@kingdom-builder/engine';
 import type {
 	EngineSessionSnapshot,
 	PlayerId,
@@ -29,27 +28,11 @@ describe('createTranslationContext', () => {
 		const [firstPhase] = PHASES;
 		const firstStep = firstPhase?.steps[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
-		const passiveManager = new PassiveManager();
-		passiveManager.registerEvaluationModifier(
-			'modifier',
-			resourceKey,
-			() => ({}),
-		);
-		const logEntries = new Map<string, unknown[]>([
-			['legacy', [{ note: 'legacy entry' }]],
-		]);
-		const pullEffectLog = <T>(key: string): T | undefined => {
-			const existing = logEntries.get(key);
-			if (!existing || existing.length === 0) {
-				return undefined;
-			}
-			const [next, ...remaining] = existing;
-			if (remaining.length) {
-				logEntries.set(key, remaining);
-			} else {
-				logEntries.delete(key);
-			}
-			return next as T;
+		const metadata = {
+			effectLogs: { legacy: [{ note: 'legacy entry' }] },
+			passiveEvaluationModifiers: {
+				[resourceKey]: ['modifier'],
+			},
 		};
 		const compensation = (amount: number): PlayerStartConfig => ({
 			resources: { [resourceKey]: amount },
@@ -143,6 +126,7 @@ describe('createTranslationContext', () => {
 				],
 				B: [],
 			},
+			metadata,
 		};
 		const context = createTranslationContext(
 			session,
@@ -151,10 +135,7 @@ describe('createTranslationContext', () => {
 				buildings: BUILDINGS,
 				developments: DEVELOPMENTS,
 			},
-			{
-				pullEffectLog,
-				evaluationMods: passiveManager.evaluationMods,
-			},
+			metadata,
 			{
 				ruleSnapshot: session.rules,
 				passiveRecords: session.passiveRecords,

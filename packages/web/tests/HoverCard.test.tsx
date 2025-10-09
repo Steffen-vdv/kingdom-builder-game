@@ -58,10 +58,7 @@ const translationContext = createTranslationContext(
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
 	},
-	{
-		pullEffectLog: (key) => ctx.pullEffectLog(key),
-		evaluationMods: ctx.passives.evaluationMods,
-	},
+	engineSnapshot.metadata,
 	{
 		ruleSnapshot: engineSnapshot.rules,
 		passiveRecords: engineSnapshot.passiveRecords,
