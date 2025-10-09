@@ -16,7 +16,9 @@ const manualHooks = new Map<string, ActionLogHook>();
 const derivedCache = new Map<string, ActionLogHook | null>();
 const resolvers: ActionLogHookResolver[] = [];
 
-type ActionLogHookResolver = (def: ActionConfig) => ActionLogHook | undefined;
+type ActionLogHookResolver = (
+	actionDefinition: ActionConfig,
+) => ActionLogHook | undefined;
 
 export function registerActionLogHook(id: string, hook: ActionLogHook): void {
 	manualHooks.set(id, hook);
@@ -96,15 +98,19 @@ function createLinkedContentResolver({
 	contentType: string;
 	paramKey?: string;
 }): ActionLogHookResolver {
-	return (def) => {
-		const effect = findEffect(def.effects, (candidate) => {
-			return candidate.type === effectType && candidate.method === method;
-		});
+	return (actionDefinition) => {
+		const matchesTarget = (candidate: EffectDef): boolean => {
+			const matchesType = candidate.type === effectType;
+			const matchesMethod = candidate.method === method;
+			return matchesType && matchesMethod;
+		};
+		const effect = findEffect(actionDefinition.effects, matchesTarget);
 		if (!effect) {
 			return undefined;
 		}
-		const templateParam = extractTemplateParam(effect.params, paramKey);
-		const staticValue = extractStaticParam(effect.params, paramKey);
+		const effectParams = effect.params;
+		const templateParam = extractTemplateParam(effectParams, paramKey);
+		const staticValue = extractStaticParam(effectParams, paramKey);
 		return (context, params) => {
 			let targetId: string | undefined;
 			if (templateParam) {
@@ -119,7 +125,7 @@ function createLinkedContentResolver({
 			if (!targetId) {
 				return '';
 			}
-			const rawTarget = logContent(contentType, targetId, context)[0];
+			const [rawTarget] = logContent(contentType, targetId, context);
 			const target =
 				rawTarget && typeof rawTarget === 'object' ? rawTarget.text : rawTarget;
 			return target ? ` - ${target}` : '';
@@ -127,22 +133,24 @@ function createLinkedContentResolver({
 	};
 }
 
-export function getActionLogHook(def: ActionConfig): ActionLogHook | undefined {
-	const manual = manualHooks.get(def.id);
+export function getActionLogHook(
+	actionDefinition: ActionConfig,
+): ActionLogHook | undefined {
+	const manual = manualHooks.get(actionDefinition.id);
 	if (manual) {
 		return manual;
 	}
-	if (derivedCache.has(def.id)) {
-		return derivedCache.get(def.id) ?? undefined;
+	if (derivedCache.has(actionDefinition.id)) {
+		return derivedCache.get(actionDefinition.id) ?? undefined;
 	}
 	for (const resolver of resolvers) {
-		const hook = resolver(def);
+		const hook = resolver(actionDefinition);
 		if (hook) {
-			derivedCache.set(def.id, hook);
+			derivedCache.set(actionDefinition.id, hook);
 			return hook;
 		}
 	}
-	derivedCache.set(def.id, null);
+	derivedCache.set(actionDefinition.id, null);
 	return undefined;
 }
 
