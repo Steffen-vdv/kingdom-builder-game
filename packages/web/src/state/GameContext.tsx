@@ -16,7 +16,7 @@ import {
 	type SessionRuleSnapshot,
 	type SessionSnapshot,
 } from './GameProviderInner';
-import type { GameEngineContextValue } from './GameContext.types';
+import type { LegacyGameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
 
@@ -187,7 +187,7 @@ export function GameProvider(props: ProviderProps) {
 	return <GameProviderInner {...innerProps} />;
 }
 
-export const useGameEngine = (): GameEngineContextValue => {
+export const useGameEngine = (): LegacyGameEngineContextValue => {
 	const value = useContext(GameEngineContext);
 	if (!value) {
 		throw new Error('useGameEngine must be used within GameProvider');
@@ -195,7 +195,7 @@ export const useGameEngine = (): GameEngineContextValue => {
 	return value;
 };
 
-export const useOptionalGameEngine = (): GameEngineContextValue | null =>
+export const useOptionalGameEngine = (): LegacyGameEngineContextValue | null =>
 	useContext(GameEngineContext);
 
 export const useSessionView = () => {

@@ -15,14 +15,14 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../../src/translation/context';
-import type { GameEngineContextValue } from '../../src/state/GameContext.types';
+import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import type { SessionRegistries } from '../../src/state/sessionContent';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
-	mockGame: GameEngineContextValue;
+	mockGame: LegacyGameEngineContextValue;
 	resourceForecast: Record<string, number>;
 	displayableStatKeys: string[];
 	statForecast: Record<string, number>;
@@ -96,14 +96,18 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		developments: DEVELOPMENTS,
 	};
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
-	const mockGame: GameEngineContextValue = {
-		session: {} as EngineSession,
-		sessionState,
-		sessionView,
+	const mockGame: LegacyGameEngineContextValue = {
+		sessionId: 'test-session',
+		sessionSnapshot: sessionState,
+		cachedSessionSnapshot: sessionState,
+		selectors: { sessionView },
 		translationContext,
 		ruleSnapshot,
 		log: [],
 		logOverflowed: false,
+		resolution: null,
+		showResolution: vi.fn().mockResolvedValue(undefined),
+		acknowledgeResolution: vi.fn(),
 		hoverCard: null,
 		handleHoverCard: vi.fn(),
 		clearHoverCard: vi.fn(),
@@ -116,15 +120,20 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		phaseHistories: {},
 		tabsEnabled: true,
 		actionCostResource: sessionState.actionCostResource,
-		handlePerform: vi.fn().mockResolvedValue(undefined),
+		requests: {
+			performAction: vi.fn().mockResolvedValue(undefined),
+			advancePhase: vi.fn().mockResolvedValue(undefined),
+			refreshSession: vi.fn().mockResolvedValue(undefined),
+		},
+		metadata: {
+			getRuleSnapshot: () => ruleSnapshot,
+			getSessionView: () => sessionView,
+			getTranslationContext: () => translationContext,
+		},
 		runUntilActionPhase: vi.fn(),
-		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 		updateMainPhaseStep: vi.fn(),
 		darkMode: false,
 		onToggleDark: vi.fn(),
-		resolution: null,
-		showResolution: vi.fn().mockResolvedValue(undefined),
-		acknowledgeResolution: vi.fn(),
 		musicEnabled: true,
 		onToggleMusic: vi.fn(),
 		soundEnabled: true,
@@ -140,6 +149,11 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
+		session: {} as EngineSession,
+		sessionState,
+		sessionView,
+		handlePerform: vi.fn().mockResolvedValue(undefined),
+		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 	};
 	const resourceForecast = Object.keys(RESOURCES).reduce<
 		Record<string, number>

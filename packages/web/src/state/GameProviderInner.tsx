@@ -16,7 +16,12 @@ import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
-import type { GameEngineContextValue } from './GameContext.types';
+import type {
+	LegacyGameEngineContextValue,
+	PerformActionHandler,
+	SessionDerivedSelectors,
+	SessionMetadataFetchers,
+} from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import { type CreateSessionResult } from './sessionSdk';
@@ -52,9 +57,8 @@ export interface GameProviderInnerProps {
 	resourceKeys: SessionResourceKeys;
 }
 
-export const GameEngineContext = createContext<GameEngineContextValue | null>(
-	null,
-);
+export const GameEngineContext =
+	createContext<LegacyGameEngineContextValue | null>(null);
 
 export function GameProviderInner({
 	children,
@@ -152,6 +156,14 @@ export function GameProviderInner({
 	const sessionView = useMemo(
 		() => selectSessionView(sessionState, registries),
 		[sessionState, registries],
+	);
+	const selectors = useMemo<SessionDerivedSelectors>(
+		() => ({ sessionView }),
+		[sessionView],
+	);
+	const cachedSessionSnapshot = useMemo(
+		() => session.getSnapshot(),
+		[session, sessionState],
 	);
 
 	const actionPhaseId = useMemo(() => {
@@ -257,6 +269,31 @@ export function GameProviderInner({
 		void runUntilActionPhase();
 	}, [runUntilActionPhase]);
 
+	const metadata = useMemo<SessionMetadataFetchers>(
+		() => ({
+			getRuleSnapshot: () => ruleSnapshot,
+			getSessionView: () => sessionView,
+			getTranslationContext: () => translationContext,
+		}),
+		[ruleSnapshot, sessionView, translationContext],
+	);
+
+	const performActionRequest = useCallback<PerformActionHandler>(
+		async ({ action, params }) => {
+			await handlePerform(action, params);
+		},
+		[handlePerform],
+	);
+
+	const requestHelpers = useMemo(
+		() => ({
+			performAction: performActionRequest,
+			advancePhase: handleEndTurn,
+			refreshSession,
+		}),
+		[performActionRequest, handleEndTurn, refreshSession],
+	);
+
 	const handleExit = useCallback(() => {
 		onReleaseSession();
 		if (onExit) {
@@ -264,10 +301,11 @@ export function GameProviderInner({
 		}
 	}, [onReleaseSession, onExit]);
 
-	const value: GameEngineContextValue = {
-		session,
-		sessionState,
-		sessionView,
+	const value: LegacyGameEngineContextValue = {
+		sessionId,
+		sessionSnapshot: sessionState,
+		cachedSessionSnapshot,
+		selectors,
 		translationContext,
 		ruleSnapshot,
 		log,
@@ -287,9 +325,9 @@ export function GameProviderInner({
 		phaseHistories,
 		tabsEnabled,
 		actionCostResource,
-		handlePerform,
+		requests: requestHelpers,
+		metadata,
 		runUntilActionPhase,
-		handleEndTurn,
 		updateMainPhaseStep,
 		darkMode: darkMode ?? true,
 		onToggleDark: onToggleDark ?? (() => {}),
@@ -308,6 +346,11 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
+		session,
+		sessionState,
+		sessionView,
+		handlePerform,
+		handleEndTurn,
 		...(onExit ? { onExit: handleExit } : {}),
 	};
 
