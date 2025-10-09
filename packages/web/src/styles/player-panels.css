@@ -1,0 +1,158 @@
+@layer components {
+	.player-panel .panel-card {
+		@apply border-white/40 bg-white/80 dark:border-white/10 dark:bg-slate-900/60;
+	}
+
+	.value-change-indicator {
+		@apply pointer-events-none font-black tracking-wide text-sm sm:text-base;
+		left: 50%;
+		position: absolute;
+		text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+		white-space: nowrap;
+		z-index: 20;
+		letter-spacing: 0.04em;
+		will-change: transform, opacity;
+	}
+
+	.value-change-indicator--gain {
+		animation: value-change-up 1.2s ease-out forwards;
+		top: 0;
+		filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4));
+	}
+
+	.value-change-indicator--loss {
+		animation: value-change-down 1.2s ease-out forwards;
+		bottom: 0;
+		filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.4));
+	}
+
+	.player-bg {
+		@apply relative overflow-hidden rounded-3xl border border-white/60 text-slate-900 shadow-xl shadow-slate-900/10 dark:border-white/10 dark:text-slate-100 dark:shadow-black/40;
+		--stripe-color: rgba(255, 255, 255, 0.45);
+		background-color: var(--player-color);
+	}
+
+	.dark .player-bg {
+		--stripe-color: rgba(15, 23, 42, 0.45);
+	}
+
+	.player-bg::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		background-image: linear-gradient(
+			45deg,
+			var(--stripe-color) 25%,
+			transparent 25%,
+			transparent 50%,
+			var(--stripe-color) 50%,
+			var(--stripe-color) 75%,
+			transparent 75%,
+			transparent
+		);
+		background-size: 32px 32px;
+		background-position: 0 0;
+		background-repeat: repeat;
+		opacity: 0.65;
+		will-change: background-position;
+		transition: opacity 150ms ease-in-out;
+	}
+
+	.player-bg > * {
+		position: relative;
+		z-index: 1;
+	}
+
+	.player-bg::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background:
+			radial-gradient(
+				circle at 25% -10%,
+				rgba(255, 255, 255, 0.35),
+				transparent 55%
+			),
+			radial-gradient(
+				circle at 75% 120%,
+				rgba(255, 255, 255, 0.25),
+				transparent 65%
+			);
+		opacity: 0.7;
+		pointer-events: none;
+		z-index: 0;
+	}
+
+	.dark .player-bg::after {
+		background:
+			radial-gradient(
+				circle at 25% -10%,
+				rgba(148, 163, 184, 0.15),
+				transparent 60%
+			),
+			radial-gradient(
+				circle at 75% 120%,
+				rgba(148, 163, 184, 0.12),
+				transparent 70%
+			);
+		opacity: 0.8;
+	}
+
+	.player-bg-animated {
+		animation: none;
+	}
+
+	.player-bg-animated::before {
+		opacity: 1;
+		animation: player-bg-slide 2s linear infinite;
+	}
+
+	.player-bg-blue {
+		--player-color: rgba(191, 219, 254, 0.75);
+	}
+
+	.player-bg-blue-active {
+		--player-color: rgba(147, 197, 253, 0.85);
+	}
+
+	.player-bg-red {
+		--player-color: rgba(254, 205, 211, 0.75);
+	}
+
+	.player-bg-red-active {
+		--player-color: rgba(251, 182, 206, 0.85);
+	}
+
+	.dark .player-bg-blue {
+		--player-color: rgba(37, 99, 235, 0.35);
+	}
+
+	.dark .player-bg-blue-active {
+		--player-color: rgba(96, 165, 250, 0.5);
+	}
+
+	.dark .player-bg-red {
+		--player-color: rgba(190, 18, 60, 0.35);
+	}
+
+	.dark .player-bg-red-active {
+		--player-color: rgba(244, 63, 94, 0.5);
+	}
+
+	.log-entry-a {
+		color: rgb(37, 99, 235);
+	}
+
+	.log-entry-b {
+		color: rgb(190, 18, 60);
+	}
+
+	.dark .log-entry-a {
+		color: rgb(191, 219, 254);
+	}
+
+	.dark .log-entry-b {
+		color: rgb(251, 207, 232);
+	}
+}

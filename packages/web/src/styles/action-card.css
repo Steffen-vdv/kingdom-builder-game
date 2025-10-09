@@ -1,0 +1,140 @@
+@layer components {
+	.action-card {
+		display: flex;
+		flex-direction: column;
+		perspective: 1200px;
+		cursor: inherit;
+	}
+
+	.action-card__inner {
+		position: relative;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		align-items: stretch;
+		flex: 1;
+		height: 100%;
+		transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+		transform-style: preserve-3d;
+	}
+
+	.action-card[data-face='back'] .action-card__inner {
+		transform: rotateY(180deg);
+	}
+
+	.action-card__face {
+		display: flex;
+		flex-direction: column;
+		backface-visibility: hidden;
+		border-radius: inherit;
+		background: transparent;
+		grid-area: 1 / 1;
+		width: 100%;
+		height: 100%;
+	}
+
+	.action-card__face--front {
+		transform: rotateY(0deg);
+		cursor: inherit;
+	}
+
+	.action-card__face--back {
+		transform: rotateY(180deg);
+	}
+
+	.action-card[data-face='front'] .action-card__face--back,
+	.action-card[data-face='back'] .action-card__face--front {
+		pointer-events: none;
+	}
+
+	.action-card__face--front > * {
+		width: 100%;
+		height: 100%;
+		border-radius: inherit;
+		background: transparent;
+	}
+
+	.action-card__badge {
+		position: absolute;
+		top: 0.35rem;
+		left: 0.4rem;
+		z-index: 2;
+	}
+
+	.action-card__badge-pill {
+		@apply rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-600 shadow-sm shadow-amber-400/30 dark:bg-slate-800/70 dark:text-amber-300;
+	}
+
+	.action-card__multi-step {
+		@apply flex items-center justify-center rounded-md border border-white/20 bg-white/55 p-0.5 text-emerald-700/90 shadow-sm shadow-emerald-200/10 dark:border-white/10 dark:bg-slate-900/70 dark:text-emerald-200/90;
+	}
+
+	.action-card__multi-step-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+	}
+
+	.action-card__option {
+		@apply panel-card w-full cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition whitespace-normal break-words dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.action-card__option-header {
+		@apply flex items-start gap-2 text-left;
+	}
+
+	.action-card__option-icon {
+		@apply text-lg leading-none;
+	}
+
+	.action-card__option-title {
+		@apply text-left font-semibold;
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.action-card__option--compact {
+		@apply min-h-[4.25rem] items-center justify-center gap-0 text-base text-center;
+	}
+
+	.action-card__option-compact-visual {
+		@apply flex h-12 w-12 items-center justify-center text-3xl leading-none;
+	}
+
+	.action-card__option-summary {
+		@apply text-xs text-left text-slate-600 leading-snug dark:text-slate-300;
+	}
+
+	.action-card__option-description {
+		@apply text-xs text-left text-slate-500 leading-snug dark:text-slate-400;
+	}
+
+	.action-card__summary {
+		font-size: 0.875rem;
+		list-style: disc;
+		padding-left: 1rem;
+		text-align: left;
+	}
+
+	.action-card__summary > li {
+		margin-bottom: 0.25rem;
+	}
+
+	.action-card__summary > li:last-child {
+		margin-bottom: 0;
+	}
+
+	.action-card__summary ul {
+		list-style: none;
+		margin: 0.25rem 0 0;
+		padding-left: 1rem;
+	}
+
+	.action-card__cancel {
+		@apply rounded-full border border-rose-500 bg-rose-500 px-3 py-1 text-xs;
+		@apply font-semibold uppercase tracking-wide text-white transition;
+		@apply hover:border-rose-600 hover:bg-rose-600 dark:border-rose-400;
+		@apply dark:bg-rose-500 dark:hover:bg-rose-400 cursor-pointer;
+	}
+}

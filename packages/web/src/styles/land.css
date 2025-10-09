@@ -1,0 +1,9 @@
+@layer components {
+	.land-tile {
+		@apply relative panel-card border border-white/50 p-3 text-center hoverable cursor-help shadow-lg shadow-amber-500/10 dark:border-white/10;
+	}
+
+	.land-slot {
+		@apply panel-card border border-white/40 p-1.5 text-lg leading-none hoverable cursor-help flex items-center justify-center gap-1 shrink-0 min-w-8 min-h-8 dark:border-white/10;
+	}
+}

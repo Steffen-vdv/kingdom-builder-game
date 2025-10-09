@@ -1,4 +1,9 @@
-import './index.css';
+import './styles/base.css';
+import './styles/layout.css';
+import './styles/action-card.css';
+import './styles/player-panels.css';
+import './styles/land.css';
+import './styles/scrollbars.css';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { PRIMARY_ICON_ID, RESOURCES } from '@kingdom-builder/contents';
