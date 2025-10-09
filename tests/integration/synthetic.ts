@@ -1,6 +1,6 @@
 import { createEngine } from '@kingdom-builder/engine';
-import { Registry } from '@kingdom-builder/engine/registry';
 import {
+	Registry,
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
@@ -10,9 +10,9 @@ import {
 	type DevelopmentConfig,
 	type PopulationConfig,
 	type StartConfig,
+	type PhaseDef,
+	type RuleSet,
 } from '@kingdom-builder/protocol';
-import type { PhaseDef } from '@kingdom-builder/engine';
-import type { RuleSet } from '@kingdom-builder/engine/services';
 import {
 	happinessTier,
 	effect,

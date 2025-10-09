@@ -8,13 +8,15 @@ import {
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { Resource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../../packages/engine/tests/helpers';
-import { Registry } from '@kingdom-builder/engine/registry';
-import type { ActionConfig } from '@kingdom-builder/protocol';
+import {
+	Registry,
+	type ActionConfig,
+	type ActionEffectGroup,
+} from '@kingdom-builder/protocol';
 import {
 	actionEffectGroup,
 	actionEffectGroupOption,
 } from '../../packages/contents/src/config/builders';
-import type { ActionEffectGroup } from '@kingdom-builder/engine';
 
 describe('action effect groups integration', () => {
 	function setup() {

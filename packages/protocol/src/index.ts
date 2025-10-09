@@ -2,6 +2,7 @@ export * as session from './session';
 export * as actions from './actions';
 
 export { Registry } from './registry';
+export type { StepDef, PhaseDef } from './phases';
 export type { EffectDef } from './effects';
 export type { EvaluatorDef } from './evaluators';
 export type {
