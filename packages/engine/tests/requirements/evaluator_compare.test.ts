@@ -7,30 +7,30 @@ import { Stat, PhaseId } from '@kingdom-builder/contents';
 
 describe('evaluator:compare requirement', () => {
 	it('compares stat values', () => {
-		const ctx = createTestEngine(createContentFactory());
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(createContentFactory());
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		ctx.activePlayer.stats[Stat.maxPopulation] = 2;
-		const req = {
+		engineContext.activePlayer.stats[Stat.maxPopulation] = 2;
+		const requirement = {
 			params: {
 				left: { type: 'stat', params: { key: Stat.maxPopulation } },
 				right: 1,
 				operator: 'gt',
 			},
 		} as unknown as Parameters<typeof evaluatorCompare>[0];
-		expect(evaluatorCompare(req, ctx)).toBe(true);
-		req.params.operator = 'lte';
-		expect(evaluatorCompare(req, ctx)).toEqual({
-			requirement: req,
+		expect(evaluatorCompare(requirement, engineContext)).toBe(true);
+		requirement.params.operator = 'lte';
+		expect(evaluatorCompare(requirement, engineContext)).toEqual({
+			requirement,
 			details: { left: 2, right: 1 },
 		});
-		req.params.operator = 'eq';
-		req.params.right = 2;
-		expect(evaluatorCompare(req, ctx)).toBe(true);
-		req.params.operator = 'ne';
-		expect(evaluatorCompare(req, ctx)).toEqual({
-			requirement: req,
+		requirement.params.operator = 'eq';
+		requirement.params.right = 2;
+		expect(evaluatorCompare(requirement, engineContext)).toBe(true);
+		requirement.params.operator = 'ne';
+		expect(evaluatorCompare(requirement, engineContext)).toEqual({
+			requirement,
 			details: { left: 2, right: 2 },
 		});
 	});

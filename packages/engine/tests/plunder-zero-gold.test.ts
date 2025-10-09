@@ -4,9 +4,9 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createContentFactory } from './factories/content';
 import { createTestEngine } from './helpers';
 
-function toMain(ctx: ReturnType<typeof createTestEngine>) {
-	while (ctx.game.currentPhase !== PhaseId.Main) {
-		advance(ctx);
+function toMain(context: ReturnType<typeof createTestEngine>) {
+	while (context.game.currentPhase !== PhaseId.Main) {
+		advance(context);
 	}
 }
 
@@ -23,13 +23,13 @@ describe('plunder action with zero opponent resource', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine(content);
-		toMain(ctx);
-		ctx.opponent.resources[CResource.gold] = 0;
-		const beforeAttacker = ctx.activePlayer.resources[CResource.gold] ?? 0;
-		const beforeDefender = ctx.opponent.resources[CResource.gold] ?? 0;
-		expect(() => performAction(action.id, ctx)).not.toThrow();
-		expect(ctx.activePlayer.resources[CResource.gold]).toBe(beforeAttacker);
-		expect(ctx.opponent.resources[CResource.gold]).toBe(beforeDefender);
+		const context = createTestEngine(content);
+		toMain(context);
+		context.opponent.resources[CResource.gold] = 0;
+		const beforeAttacker = context.activePlayer.resources[CResource.gold] ?? 0;
+		const beforeDefender = context.opponent.resources[CResource.gold] ?? 0;
+		expect(() => performAction(action.id, context)).not.toThrow();
+		expect(context.activePlayer.resources[CResource.gold]).toBe(beforeAttacker);
+		expect(context.opponent.resources[CResource.gold]).toBe(beforeDefender);
 	});
 });
