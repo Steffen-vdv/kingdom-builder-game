@@ -18,11 +18,14 @@ const sign = (n: number) => (n >= 0 ? '+' : '');
 
 describe('hold festival action translation', () => {
 	it('summarizes hold festival action', () => {
-		const { ctx, festivalActionId, attackActionId } =
-			createSyntheticFestivalScenario();
-		const summary = summarizeContent('action', festivalActionId, ctx);
+		const {
+			ctx: context,
+			festivalActionId,
+			attackActionId,
+		} = createSyntheticFestivalScenario();
+		const summary = summarizeContent('action', festivalActionId, context);
 		const details = getSyntheticFestivalDetails(
-			ctx,
+			context,
 			festivalActionId,
 			attackActionId,
 		);
@@ -43,11 +46,14 @@ describe('hold festival action translation', () => {
 	});
 
 	it('describes hold festival action', () => {
-		const { ctx, festivalActionId, attackActionId } =
-			createSyntheticFestivalScenario();
-		const desc = describeContent('action', festivalActionId, ctx);
+		const {
+			ctx: context,
+			festivalActionId,
+			attackActionId,
+		} = createSyntheticFestivalScenario();
+		const description = describeContent('action', festivalActionId, context);
 		const details = getSyntheticFestivalDetails(
-			ctx,
+			context,
 			festivalActionId,
 			attackActionId,
 		);
@@ -55,7 +61,7 @@ describe('hold festival action translation', () => {
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
 
-		expect(desc).toEqual([
+		expect(description).toEqual([
 			`${details.happinessInfo.icon}${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
 			`${details.fortAmt >= 0 ? 'Gain' : 'Lose'} ${Math.abs(details.fortAmt)} ${details.fortInfo.icon} ${details.fortInfo.label}`,
 			{
@@ -68,11 +74,14 @@ describe('hold festival action translation', () => {
 	});
 
 	it('logs hold festival action', () => {
-		const { ctx, festivalActionId, attackActionId } =
-			createSyntheticFestivalScenario();
-		const log = logContent('action', festivalActionId, ctx);
+		const {
+			ctx: context,
+			festivalActionId,
+			attackActionId,
+		} = createSyntheticFestivalScenario();
+		const log = logContent('action', festivalActionId, context);
 		const details = getSyntheticFestivalDetails(
-			ctx,
+			context,
 			festivalActionId,
 			attackActionId,
 		);
