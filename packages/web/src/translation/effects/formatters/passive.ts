@@ -14,16 +14,16 @@ type PassiveDurationMeta = {
 	source: 'manual' | 'phase';
 };
 
-function createMeta(meta: PassiveDurationMeta): PassiveDurationMeta {
+function createMeta(metadata: PassiveDurationMeta): PassiveDurationMeta {
 	const result: PassiveDurationMeta = {
-		label: meta.label,
-		source: meta.source,
+		label: metadata.label,
+		source: metadata.source,
 	};
-	if (meta.icon !== undefined) {
-		result.icon = meta.icon;
+	if (metadata.icon !== undefined) {
+		result.icon = metadata.icon;
 	}
-	if (meta.phaseId !== undefined) {
-		result.phaseId = meta.phaseId;
+	if (metadata.phaseId !== undefined) {
+		result.phaseId = metadata.phaseId;
 	}
 	return result;
 }
@@ -65,13 +65,13 @@ function mergePhaseInfo(
 }
 
 function resolvePhaseMeta(
-	ctx: TranslationContext,
+	context: TranslationContext,
 	id: string | undefined,
 ): PassivePhaseInfo | undefined {
 	if (!id) {
 		return undefined;
 	}
-	const fromContext = ctx.phases.find((phase) => phase.id === id);
+	const fromContext = context.phases.find((phase) => phase.id === id);
 	const fromContents = PHASES.find(
 		(phaseDefinition) => phaseDefinition.id === id,
 	);
@@ -81,7 +81,7 @@ function resolvePhaseMeta(
 const PHASE_TRIGGER_KEY_PATTERN = /^on[A-Z][A-Za-z0-9]*Phase$/;
 
 function resolvePhaseByTrigger(
-	ctx: TranslationContext,
+	context: TranslationContext,
 	triggerId: string,
 ): PassivePhaseInfo | undefined {
 	const findPhaseWithTrigger = (
@@ -112,11 +112,11 @@ function resolvePhaseByTrigger(
 		return undefined;
 	};
 
-	const fromContext = findPhaseWithTrigger(ctx.phases);
+	const fromContext = findPhaseWithTrigger(context.phases);
 	if (fromContext) {
-		const fromContents = PHASES.find(
-			(phaseDefinition) => phaseDefinition.id === fromContext.id,
-		);
+		const fromContents = PHASES.find((phaseDefinition) => {
+			return phaseDefinition.id === fromContext.id;
+		});
 		return mergePhaseInfo(fromContext.id, fromContext, fromContents);
 	}
 	const fromContents = findPhaseWithTrigger(PHASES);
@@ -135,10 +135,10 @@ function collectPhaseTriggerKeys(params: Record<string, unknown>) {
 }
 
 function resolveDurationMeta(
-	eff: EffectDef<Record<string, unknown>>,
-	ctx: TranslationContext,
+	effect: EffectDef<Record<string, unknown>>,
+	context: TranslationContext,
 ): PassiveDurationMeta | null {
-	const params = eff.params ?? {};
+	const params = effect.params ?? {};
 	const manualLabel =
 		typeof params['durationLabel'] === 'string'
 			? params['durationLabel']
@@ -159,12 +159,12 @@ function resolveDurationMeta(
 		: undefined;
 	let phaseId: string | undefined = durationPhaseId;
 
-	let resolvedPhase = resolvePhaseMeta(ctx, durationPhaseId);
+	let resolvedPhase = resolvePhaseMeta(context, durationPhaseId);
 
 	const triggerKeys = collectPhaseTriggerKeys(params);
 	if (!resolvedPhase) {
 		for (const triggerId of triggerKeys) {
-			const phase = resolvePhaseByTrigger(ctx, triggerId);
+			const phase = resolvePhaseByTrigger(context, triggerId);
 			if (phase) {
 				resolvedPhase = phase;
 				break;
@@ -201,15 +201,15 @@ function resolveDurationMeta(
 	});
 }
 
-function formatDuration(meta: PassiveDurationMeta) {
-	const icon = meta.icon ? `${meta.icon} ` : '';
-	return `${icon}${meta.label}`;
+function formatDuration(metadata: PassiveDurationMeta) {
+	const icon = metadata.icon ? `${metadata.icon} ` : '';
+	return `${icon}${metadata.label}`;
 }
 
 registerEffectFormatter('passive', 'add', {
-	summarize: (eff, ctx) => {
-		const inner = summarizeEffects(eff.effects || [], ctx);
-		const duration = resolveDurationMeta(eff, ctx);
+	summarize: (effect, context) => {
+		const inner = summarizeEffects(effect.effects || [], context);
+		const duration = resolveDurationMeta(effect, context);
 		if (!duration) {
 			return inner;
 		}
@@ -220,38 +220,40 @@ registerEffectFormatter('passive', 'add', {
 			},
 		];
 	},
-	describe: (eff, ctx) => {
+	describe: (effect, context) => {
 		const icon =
-			(eff.params?.['icon'] as string | undefined) ?? PASSIVE_INFO.icon;
+			(effect.params?.['icon'] as string | undefined) ?? PASSIVE_INFO.icon;
 		const name =
-			(eff.params?.['name'] as string | undefined) ?? PASSIVE_INFO.label;
+			(effect.params?.['name'] as string | undefined) ?? PASSIVE_INFO.label;
 		const prefix = icon ? `${icon} ` : '';
-		const inner = describeEffects(eff.effects || [], ctx);
-		const duration = resolveDurationMeta(eff, ctx);
+		const inner = describeEffects(effect.effects || [], context);
+		const duration = resolveDurationMeta(effect, context);
 		if (!duration) {
 			return inner;
 		}
+		const durationLabel = formatDuration(duration);
+		const durationTitle = `${prefix}${name} – Until your next ${durationLabel}`;
 		return [
 			{
-				title: `${prefix}${name} – Until your next ${formatDuration(duration)}`,
+				title: durationTitle,
 				items: inner,
 			},
 		];
 	},
-	log: (eff, ctx) => {
+	log: (effect, context) => {
 		const icon =
-			(eff.params?.['icon'] as string | undefined) ?? PASSIVE_INFO.icon;
+			(effect.params?.['icon'] as string | undefined) ?? PASSIVE_INFO.icon;
 		const name =
-			(eff.params?.['name'] as string | undefined) ?? PASSIVE_INFO.label;
+			(effect.params?.['name'] as string | undefined) ?? PASSIVE_INFO.label;
 		const prefix = icon ? `${icon} ` : '';
 		const label = `${prefix}${name}`.trim();
-		const inner = describeEffects(eff.effects || [], ctx);
-		const duration = resolveDurationMeta(eff, ctx);
+		const inner = describeEffects(effect.effects || [], context);
+		const duration = resolveDurationMeta(effect, context);
 		const items = [...inner];
 		if (duration) {
-			items.push(
-				`${prefix}${name} duration: Until player's next ${formatDuration(duration)}`,
-			);
+			const durationLabel = formatDuration(duration);
+			const durationDescription = `${prefix}${name} duration: Until player's next ${durationLabel}`;
+			items.push(durationDescription);
 		}
 		if (!label) {
 			return items;
