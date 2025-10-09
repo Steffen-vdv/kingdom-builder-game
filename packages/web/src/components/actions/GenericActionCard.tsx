@@ -21,9 +21,9 @@ import {
 	toPerformableAction,
 	type Action,
 	type DisplayPlayer,
-	type GameEngineApi,
 	type HoverCardData,
 } from './types';
+import type { GameEngineContextValue } from '../../state/GameContext.types';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -41,7 +41,7 @@ interface GenericActionCardProps {
 		option: ActionEffectGroupOption,
 		params?: Record<string, unknown>,
 	) => void;
-	session: GameEngineApi['session'];
+	getActionRequirements: GameEngineContextValue['getActionRequirements'];
 	translationContext: TranslationContext;
 	actionCostResource: ResourceKey;
 	handlePerform: (
@@ -65,7 +65,7 @@ function GenericActionCard({
 	cancelPending,
 	beginSelection,
 	handleOptionSelect,
-	session,
+	getActionRequirements,
 	translationContext,
 	actionCostResource,
 	handlePerform,
@@ -73,7 +73,7 @@ function GenericActionCard({
 	clearHoverCard,
 	formatRequirement,
 }: GenericActionCardProps) {
-	const requirementFailures = session.getActionRequirements(action.id);
+	const requirementFailures = getActionRequirements(action.id);
 	const requirements = requirementFailures.map((failure) =>
 		formatRequirement(translateRequirementFailure(failure, translationContext)),
 	);
@@ -117,7 +117,7 @@ function GenericActionCard({
 	const optionCards = useEffectGroupOptions({
 		currentGroup,
 		pendingParams: pending?.params,
-		session,
+		getActionRequirements,
 		translationContext,
 		formatRequirement,
 		handleOptionSelect,

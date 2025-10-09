@@ -93,7 +93,7 @@ function hashGameState(
 }
 
 export function useNextTurnForecast(): NextTurnForecast {
-	const { session, sessionState } = useGameEngine();
+	const { simulateUpcomingPhases, sessionState } = useGameEngine();
 	const { game, phases } = sessionState;
 	const players = game.players;
 	const hashKey = useMemo(() => {
@@ -121,7 +121,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
 			try {
-				const { delta } = session.simulateUpcomingPhases(player.id);
+				const { delta } = simulateUpcomingPhases(player.id);
 				forecast[player.id] = delta;
 			} catch (error) {
 				forecast[player.id] = cloneEmptyDelta();
@@ -129,5 +129,5 @@ export function useNextTurnForecast(): NextTurnForecast {
 		}
 		cacheRef.current = { key: hashKey, value: forecast };
 		return forecast;
-	}, [session, hashKey, players]);
+	}, [simulateUpcomingPhases, hashKey, players]);
 }

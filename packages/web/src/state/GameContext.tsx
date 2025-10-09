@@ -7,6 +7,10 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
+import type {
+	EngineSessionGetActionCosts,
+	EngineSessionGetActionRequirements,
+} from '@kingdom-builder/engine';
 import { createTranslationContext } from '../translation/context';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
@@ -81,10 +85,11 @@ interface GameProviderInnerProps {
 	onToggleBackgroundAudioMute: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
+	sessionId: string;
 	session: Session;
 	sessionState: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
-	refreshSession: () => Promise<void>;
+	refreshSession: (snapshot?: SessionSnapshot) => Promise<void>;
 	onReleaseSession: () => void;
 	registries: SessionRegistries;
 	resourceKeys: SessionResourceKeys;
@@ -104,6 +109,7 @@ function GameProviderInner({
 	onToggleBackgroundAudioMute,
 	playerName = DEFAULT_PLAYER_NAME,
 	onChangePlayerName = () => {},
+	sessionId,
 	session,
 	sessionState,
 	ruleSnapshot,
@@ -115,12 +121,35 @@ function GameProviderInner({
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const refresh = useCallback(() => {
-		void refreshSession();
-	}, [refreshSession]);
+	const refresh = useCallback(
+		(snapshot?: SessionSnapshot) => {
+			void refreshSession(snapshot);
+		},
+		[refreshSession],
+	);
 
 	const enqueue = useCallback(
 		<T,>(task: () => Promise<T> | T) => session.enqueue(task),
+		[session],
+	);
+
+	const getActionCosts = useCallback<EngineSessionGetActionCosts>(
+		(actionId, params) => session.getActionCosts(actionId, params),
+		[session],
+	);
+
+	const getActionRequirements = useCallback<EngineSessionGetActionRequirements>(
+		(actionId, params) => session.getActionRequirements(actionId, params),
+		[session],
+	);
+
+	const getActionOptions = useCallback<Session['getActionOptions']>(
+		(actionId) => session.getActionOptions(actionId),
+		[session],
+	);
+
+	const simulateUpcomingPhases = useCallback<Session['simulateUpcomingPhases']>(
+		(playerId, options) => session.simulateUpcomingPhases(playerId, options),
 		[session],
 	);
 
@@ -141,7 +170,7 @@ function GameProviderInner({
 				session.updatePlayerName(primaryPlayerId, desiredName);
 			})
 			.finally(() => {
-				refresh();
+				refresh(session.getSnapshot());
 			});
 	}, [session, primaryPlayerId, primaryPlayerName, refresh, playerName]);
 
@@ -235,6 +264,7 @@ function GameProviderInner({
 		updateMainPhaseStep,
 		setPhaseHistories,
 	} = usePhaseProgress({
+		sessionId,
 		session,
 		sessionState,
 		actionPhaseId,
@@ -262,6 +292,7 @@ function GameProviderInner({
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
+		sessionId,
 		session,
 		actionCostResource,
 		addLog,
@@ -271,7 +302,6 @@ function GameProviderInner({
 		pushErrorToast,
 		mountedRef,
 		endTurn,
-		enqueue,
 		resourceKeys,
 	});
 
@@ -296,11 +326,15 @@ function GameProviderInner({
 	}, [onReleaseSession, onExit]);
 
 	const value: GameEngineContextValue = {
-		session,
+		sessionId,
 		sessionState,
 		sessionView,
 		translationContext,
 		ruleSnapshot,
+		getActionCosts,
+		getActionRequirements,
+		getActionOptions,
+		simulateUpcomingPhases,
 		log,
 		logOverflowed,
 		resolution,
@@ -428,25 +462,45 @@ export function GameProvider(props: ProviderProps) {
 		};
 	}, [devMode]);
 
-	const refreshSession = useCallback(async () => {
-		const sessionId = sessionIdRef.current;
-		if (!sessionId) {
-			return;
-		}
-		const result = await fetchSnapshot(sessionId);
-		if (!mountedRef.current || sessionIdRef.current !== sessionId) {
-			return;
-		}
-		sessionRef.current = result.session;
-		setSessionData({
-			session: result.session,
-			sessionId,
-			snapshot: result.snapshot,
-			ruleSnapshot: result.ruleSnapshot,
-			registries: result.registries,
-			resourceKeys: result.resourceKeys,
-		});
-	}, []);
+	const refreshSession = useCallback(
+		async (snapshotOverride?: SessionSnapshot) => {
+			const sessionId = sessionIdRef.current;
+			if (!sessionId) {
+				return;
+			}
+			if (snapshotOverride) {
+				const session = sessionRef.current;
+				if (!session) {
+					return;
+				}
+				setSessionData((previous) => {
+					if (!previous) {
+						return previous;
+					}
+					return {
+						...previous,
+						snapshot: snapshotOverride,
+						ruleSnapshot: session.getRuleSnapshot(),
+					};
+				});
+				return;
+			}
+			const result = await fetchSnapshot(sessionId);
+			if (!mountedRef.current || sessionIdRef.current !== sessionId) {
+				return;
+			}
+			sessionRef.current = result.session;
+			setSessionData({
+				session: result.session,
+				sessionId,
+				snapshot: result.snapshot,
+				ruleSnapshot: result.ruleSnapshot,
+				registries: result.registries,
+				resourceKeys: result.resourceKeys,
+			});
+		},
+		[],
+	);
 
 	if (!sessionData || !sessionRef.current) {
 		return null;
@@ -469,6 +523,7 @@ export function GameProvider(props: ProviderProps) {
 		onToggleBackgroundAudioMute,
 		playerName,
 		onChangePlayerName,
+		sessionId: sessionData.sessionId,
 		session: sessionRef.current,
 		sessionState: sessionData.snapshot,
 		ruleSnapshot: sessionData.ruleSnapshot,

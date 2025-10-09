@@ -6,7 +6,7 @@ import type {
 	SessionDevelopmentOption,
 	SessionPlayerView,
 } from '../../state/sessionSelectors.types';
-import type { useGameEngine } from '../../state/GameContext';
+import type { GameEngineContextValue } from '../../state/GameContext.types';
 import type { Action as PerformableAction } from '../../state/actionTypes';
 
 export interface Action
@@ -25,9 +25,10 @@ export interface Building extends SessionBuildingOption {
 	focus?: Focus;
 }
 
-export type GameEngineApi = ReturnType<typeof useGameEngine>;
 export type DisplayPlayer = SessionPlayerView;
-export type HoverCardData = Parameters<GameEngineApi['handleHoverCard']>[0];
+export type HoverCardData = Parameters<
+	GameEngineContextValue['handleHoverCard']
+>[0];
 
 export const toPerformableAction = (action: Action): PerformableAction => ({
 	id: action.id,

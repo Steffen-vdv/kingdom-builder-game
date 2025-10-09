@@ -306,23 +306,23 @@ export function createActionsPanelGame({
 		building: buildingDefinition,
 	} as const;
 
-	const session = {
-		getActionCosts: vi.fn((actionId: string) => {
-			return metadata.costMap.get(actionId) ?? {};
-		}),
-		getActionRequirements: vi.fn((actionId: string) => {
-			return metadata.requirementFailures.get(actionId) ?? [];
-		}),
-		getActionOptions: vi.fn(() => []),
-	} as const;
+	const getActionCosts = vi.fn((actionId: string) => {
+		return metadata.costMap.get(actionId) ?? {};
+	});
+	const getActionRequirements = vi.fn((actionId: string) => {
+		return metadata.requirementFailures.get(actionId) ?? [];
+	});
+	const getActionOptions = vi.fn(() => []);
 
 	return {
-		session,
 		sessionState,
 		sessionView,
 		translationContext,
 		ruleSnapshot,
 		...createActionsPanelState(actionCostResource),
+		getActionCosts,
+		getActionRequirements,
+		getActionOptions,
 		metadata,
 	};
 }

@@ -1,6 +1,6 @@
 import {
-	type EngineAdvanceResult,
 	type EngineSession,
+	type EngineSessionSnapshot,
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { type ResourceKey, type StepDef } from '@kingdom-builder/contents';
@@ -8,8 +8,10 @@ import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
 import { getLegacySessionContext } from './getLegacySessionContext';
+import { advanceSessionPhase } from './sessionSdk';
 
 interface AdvanceToActionPhaseOptions {
+	sessionId: string;
 	session: EngineSession;
 	actionCostResource: ResourceKey;
 	resourceKeys: ResourceKey[];
@@ -26,10 +28,11 @@ interface AdvanceToActionPhaseOptions {
 	setMainApStart: (value: number) => void;
 	updateMainPhaseStep: (value: number) => void;
 	addLog: (entry: string | string[], player?: PlayerStateSnapshot) => void;
-	refresh: () => void;
+	refresh: (snapshot?: EngineSessionSnapshot) => void;
 }
 
 export async function advanceToActionPhase({
+	sessionId,
 	session,
 	actionCostResource,
 	resourceKeys,
@@ -53,7 +56,7 @@ export async function advanceToActionPhase({
 		setPhaseHistories({});
 		setDisplayPhase(snapshot.game.currentPhase);
 		setPhaseTimer(0);
-		refresh();
+		refresh(snapshot);
 		return;
 	}
 	if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
@@ -80,14 +83,15 @@ export async function advanceToActionPhase({
 			break;
 		}
 		const before = snapshotPlayer(activePlayerBefore);
-		const { phase, step, player, effects, skipped }: EngineAdvanceResult =
-			session.advancePhase();
-		const snapshotAfter = session.getSnapshot();
+		const response = await advanceSessionPhase({ sessionId });
+		const advance = response.advance;
+		const { phase, step, player, effects, skipped } = advance;
+		const snapshotAfter = response.snapshot;
 		if (snapshotAfter.game.conclusion) {
 			setTabsEnabled(false);
 			setPhaseTimer(0);
 			setDisplayPhase(snapshotAfter.game.currentPhase);
-			refresh();
+			refresh(snapshotAfter);
 			return;
 		}
 		const phaseDef = snapshotAfter.phases.find(
@@ -198,5 +202,5 @@ export async function advanceToActionPhase({
 	updateMainPhaseStep(start);
 	setDisplayPhase(refreshed.game.currentPhase);
 	setTabsEnabled(true);
-	refresh();
+	refresh(refreshed);
 }

@@ -9,8 +9,10 @@ import type { PhaseStep } from './phaseTypes';
 import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
+import { advanceSessionPhase } from './sessionSdk';
 
 interface PhaseProgressOptions {
+	sessionId: string;
 	session: EngineSession;
 	sessionState: EngineSessionSnapshot;
 	actionPhaseId: string | undefined;
@@ -20,12 +22,13 @@ interface PhaseProgressOptions {
 	timeScaleRef: React.MutableRefObject<number>;
 	setTrackedInterval: (callback: () => void, delay: number) => number;
 	clearTrackedInterval: (id: number) => void;
-	refresh: () => void;
+	refresh: (snapshot?: EngineSessionSnapshot) => void;
 	resourceKeys: ResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 }
 
 export function usePhaseProgress({
+	sessionId,
 	session,
 	sessionState,
 	actionPhaseId,
@@ -70,6 +73,7 @@ export function usePhaseProgress({
 	const runUntilActionPhaseCore = useCallback(
 		() =>
 			advanceToActionPhase({
+				sessionId,
 				session,
 				actionCostResource,
 				resourceKeys,
@@ -87,6 +91,7 @@ export function usePhaseProgress({
 				refresh,
 			}),
 		[
+			sessionId,
 			actionCostResource,
 			addLog,
 			mountedRef,
@@ -128,10 +133,17 @@ export function usePhaseProgress({
 		if ((activePlayer.resources[actionCostResource] ?? 0) > 0) {
 			return;
 		}
-		session.advancePhase();
+		const response = await advanceSessionPhase({ sessionId });
 		setPhaseHistories({});
+		refresh(response.snapshot);
 		await runUntilActionPhaseCore();
-	}, [actionCostResource, runUntilActionPhaseCore, session]);
+	}, [
+		actionCostResource,
+		refresh,
+		runUntilActionPhaseCore,
+		session,
+		sessionId,
+	]);
 
 	const handleEndTurn = useCallback(() => enqueue(endTurn), [enqueue, endTurn]);
 

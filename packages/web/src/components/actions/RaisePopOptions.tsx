@@ -36,13 +36,14 @@ export default function RaisePopOptions({
 	canInteract: boolean;
 }) {
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		getActionCosts,
+		getActionRequirements,
 	} = useGameEngine();
 	const populationRegistry = useMemo(
 		() =>
@@ -82,7 +83,7 @@ export default function RaisePopOptions({
 	return (
 		<>
 			{roleOptions.map((role) => {
-				const costsBag = session.getActionCosts(action.id);
+				const costsBag = getActionCosts(action.id);
 				const costEntries = Object.entries(costsBag);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of costEntries) {
@@ -94,7 +95,7 @@ export default function RaisePopOptions({
 				} catch {
 					upkeep = undefined;
 				}
-				const rawRequirements = session.getActionRequirements(action.id);
+				const rawRequirements = getActionRequirements(action.id);
 				const requirements = rawRequirements.map((failure) =>
 					translateRequirementFailure(failure, translationContext),
 				);

@@ -11,7 +11,8 @@ import {
 	type TranslationContext,
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
-import type { HoverCardData, GameEngineApi } from './types';
+import type { HoverCardData } from './types';
+import type { GameEngineContextValue } from '../../state/GameContext.types';
 import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
 
 type ResolveParams = Record<string, unknown> | undefined;
@@ -19,7 +20,7 @@ type ResolveParams = Record<string, unknown> | undefined;
 type BuildOptionsParams = {
 	currentGroup: ActionEffectGroup | undefined;
 	pendingParams: Record<string, unknown> | undefined;
-	session: GameEngineApi['session'];
+	getActionRequirements: GameEngineContextValue['getActionRequirements'];
 	translationContext: TranslationContext;
 	formatRequirement: (requirement: string) => string;
 	handleOptionSelect: (
@@ -66,7 +67,7 @@ function resolveOptionParams(
 function buildHoverDetails(
 	option: ActionEffectGroupOption,
 	mergedParams: Record<string, unknown>,
-	session: GameEngineApi['session'],
+	getActionRequirements: GameEngineContextValue['getActionRequirements'],
 	translationContext: TranslationContext,
 	formatRequirement: (requirement: string) => string,
 	hoverBackground: string,
@@ -79,7 +80,7 @@ function buildHoverDetails(
 		mergedParams,
 	);
 	const { effects: baseEffects, description } = splitSummary(hoverSummary);
-	const requirementFailures = session.getActionRequirements(
+	const requirementFailures = getActionRequirements(
 		option.actionId,
 		mergedParams,
 	);
@@ -122,7 +123,7 @@ function buildHoverDetails(
 export function useEffectGroupOptions({
 	currentGroup,
 	pendingParams,
-	session,
+	getActionRequirements,
 	translationContext,
 	formatRequirement,
 	handleOptionSelect,
@@ -173,7 +174,7 @@ export function useEffectGroupOptions({
 				const hoverDetails = buildHoverDetails(
 					option,
 					mergedParams,
-					session,
+					getActionRequirements,
 					translationContext,
 					formatRequirement,
 					hoverBackground,
@@ -187,7 +188,7 @@ export function useEffectGroupOptions({
 	}, [
 		clearHoverCard,
 		currentGroup,
-		session,
+		getActionRequirements,
 		translationContext,
 		formatRequirement,
 		handleHoverCard,

@@ -1,7 +1,9 @@
 import type {
-	EngineSession,
 	EngineSessionSnapshot,
+	EngineSessionGetActionCosts,
+	EngineSessionGetActionRequirements,
 	RuleSnapshot,
+	EngineSession,
 } from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import type { TranslationContext } from '../translation/context';
@@ -18,11 +20,15 @@ import type {
 } from './useActionResolution';
 
 export interface GameEngineContextValue {
-	session: EngineSession;
+	sessionId: string;
 	sessionState: EngineSessionSnapshot;
 	sessionView: SessionView;
 	translationContext: TranslationContext;
 	ruleSnapshot: RuleSnapshot;
+	getActionCosts: EngineSessionGetActionCosts;
+	getActionRequirements: EngineSessionGetActionRequirements;
+	getActionOptions: EngineSession['getActionOptions'];
+	simulateUpcomingPhases: EngineSession['simulateUpcomingPhases'];
 	log: LogEntry[];
 	logOverflowed: boolean;
 	resolution: ActionResolution | null;

@@ -1,7 +1,5 @@
-import {
-	resolveActionEffects,
-	type ActionTrace,
-} from '@kingdom-builder/engine';
+import { resolveActionEffects } from '@kingdom-builder/engine';
+import type { ActionTrace } from '@kingdom-builder/protocol';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';

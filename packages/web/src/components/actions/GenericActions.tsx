@@ -29,13 +29,15 @@ function GenericActions({
 	canInteract: boolean;
 }) {
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		getActionCosts,
+		getActionRequirements,
+		getActionOptions,
 	} = useGameEngine();
 	const formatRequirement = (requirement: string) => requirement;
 	const performAction = useCallback(
@@ -164,7 +166,7 @@ function GenericActions({
 	const entries = useMemo(() => {
 		return actions
 			.map((action) => {
-				const costBag = session.getActionCosts(action.id);
+				const costBag = getActionCosts(action.id);
 				const costs: Record<string, number> = {};
 				for (const [resourceKey, cost] of Object.entries(costBag)) {
 					costs[resourceKey] = cost ?? 0;
@@ -178,11 +180,11 @@ function GenericActions({
 					},
 					0,
 				);
-				const groups = session.getActionOptions(action.id);
+				const groups = getActionOptions(action.id);
 				return { action, costs, total, groups };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [actions, session, actionCostResource]);
+	}, [actions, getActionCosts, getActionOptions, actionCostResource]);
 
 	return (
 		<>
@@ -200,7 +202,7 @@ function GenericActions({
 					cancelPending={cancelPending}
 					beginSelection={beginSelection}
 					handleOptionSelect={handleOptionSelect}
-					session={session}
+					getActionRequirements={getActionRequirements}
 					translationContext={translationContext}
 					actionCostResource={actionCostResource}
 					handlePerform={performAction}

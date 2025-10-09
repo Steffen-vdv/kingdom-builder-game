@@ -50,20 +50,20 @@ export default function DevelopOptions({
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		getActionCosts,
 	} = useGameEngine();
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = getActionCosts(action.id, {
 					id: development.id,
 					landId: landIdForCost,
 				});
@@ -75,7 +75,13 @@ export default function DevelopOptions({
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	}, [
+		developments,
+		getActionCosts,
+		action.id,
+		landIdForCost,
+		actionCostResource,
+	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

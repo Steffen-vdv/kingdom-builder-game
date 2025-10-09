@@ -47,22 +47,26 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		getActionRequirements,
+		getActionCosts,
 	} = useGameEngine();
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		translateRequirementFailure(failure, translationContext),
+	const requirements = useMemo(
+		() =>
+			getActionRequirements(action.id).map((failure) =>
+				translateRequirementFailure(failure, translationContext),
+			),
+		[action.id, getActionRequirements, translationContext],
 	);
 	const meetsRequirements = requirements.length === 0;
 	const entries = useMemo(() => {
@@ -70,7 +74,7 @@ export default function BuildOptions({
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = getActionCosts(action.id, {
 					id: building.id,
 				});
 				const costs: Record<string, number> = {};
@@ -83,7 +87,7 @@ export default function BuildOptions({
 			.sort((first, second) => first.total - second.total);
 	}, [
 		buildings,
-		session,
+		getActionCosts,
 		action.id,
 		actionCostResource,
 		player.buildings.size,

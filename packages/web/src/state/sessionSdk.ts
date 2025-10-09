@@ -11,6 +11,16 @@ import {
 	type EngineSessionSnapshot,
 	type RuleSnapshot,
 } from '@kingdom-builder/engine';
+import type {
+	ActionExecuteErrorResponse,
+	ActionExecuteRequest,
+	ActionExecuteResponse,
+	ActionExecuteSuccessResponse,
+	SessionActionRequirementList,
+	SessionAdvanceRequest,
+	SessionAdvanceResponse,
+	SessionRequirementFailure,
+} from '@kingdom-builder/protocol';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { initializeDeveloperMode } from './developerModeSetup';
 import {
@@ -44,6 +54,25 @@ interface FetchSnapshotResult {
 	ruleSnapshot: RuleSnapshot;
 	registries: SessionRegistries;
 	resourceKeys: ResourceKey[];
+}
+
+interface PerformActionOptions extends ActionExecuteRequest {}
+
+interface AdvancePhaseOptions extends SessionAdvanceRequest {}
+
+function isSessionRequirementFailure(
+	value: unknown,
+): value is SessionRequirementFailure {
+	return Boolean(value && typeof value === 'object');
+}
+
+function isSessionRequirementFailureList(
+	value: unknown,
+): value is SessionActionRequirementList {
+	if (!Array.isArray(value)) {
+		return false;
+	}
+	return value.every(isSessionRequirementFailure);
 }
 
 const SESSION_PREFIX = 'local-session-';
@@ -132,6 +161,68 @@ export function fetchSnapshot(sessionId: string): Promise<FetchSnapshotResult> {
 		registries: SESSION_REGISTRIES,
 		resourceKeys: RESOURCE_KEYS,
 	});
+}
+
+export async function performSessionAction(
+	options: PerformActionOptions,
+): Promise<ActionExecuteResponse> {
+	const session = ensureSession(options.sessionId);
+	try {
+		const { snapshot, traces } = await session.enqueue(() => {
+			const runTraces = session.performAction(options.actionId, options.params);
+			return {
+				traces: runTraces,
+				snapshot: session.getSnapshot(),
+			};
+		});
+		const response: ActionExecuteSuccessResponse = {
+			status: 'success',
+			snapshot,
+			traces,
+		};
+		return response;
+	} catch (error) {
+		const requirementFailure = (
+			error as {
+				requirementFailure?: unknown;
+			}
+		).requirementFailure;
+		const requirementFailures = (
+			error as {
+				requirementFailures?: unknown;
+			}
+		).requirementFailures;
+		const message = (error as Error).message || 'Action failed.';
+		const errorResponse: ActionExecuteErrorResponse = {
+			status: 'error',
+			error: message,
+		};
+		if (isSessionRequirementFailure(requirementFailure)) {
+			errorResponse.requirementFailure = requirementFailure;
+		}
+		if (isSessionRequirementFailureList(requirementFailures)) {
+			errorResponse.requirementFailures = requirementFailures;
+		}
+		return errorResponse;
+	}
+}
+
+export async function advanceSessionPhase(
+	options: AdvancePhaseOptions,
+): Promise<SessionAdvanceResponse> {
+	const session = ensureSession(options.sessionId);
+	const { advance, snapshot } = await session.enqueue(() => {
+		const result = session.advancePhase();
+		return {
+			advance: result,
+			snapshot: session.getSnapshot(),
+		};
+	});
+	return {
+		sessionId: options.sessionId,
+		snapshot,
+		advance,
+	};
 }
 
 export function releaseSession(sessionId: string): void {

@@ -225,16 +225,16 @@ function createMockGame() {
 
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 
-	const session = {
-		getActionCosts: vi.fn(),
-		getActionRequirements: vi.fn(),
-		getActionOptions: vi.fn(),
-	} as const;
+	const getActionCosts = vi.fn();
+	const getActionRequirements = vi.fn();
+	const getActionOptions = vi.fn();
 
 	return {
 		...createActionsPanelState(actionCostResource),
 		logOverflowed: false,
-		session,
+		getActionCosts,
+		getActionRequirements,
+		getActionOptions,
 		sessionState,
 		sessionView,
 		translationContext,
@@ -250,20 +250,20 @@ vi.mock('../src/state/GameContext', () => ({
 describe('GenericActions effect group handling', () => {
 	beforeEach(() => {
 		mockGame = createMockGame();
-		mockGame.session.getActionCosts.mockReset();
-		mockGame.session.getActionRequirements.mockReset();
-		mockGame.session.getActionOptions.mockReset();
+		mockGame.getActionCosts.mockReset();
+		mockGame.getActionRequirements.mockReset();
+		mockGame.getActionOptions.mockReset();
 		getRequirementIconsMock.mockReset();
 		describeContentMock.mockReset();
 		summarizeContentMock.mockReset();
 		logContentMock.mockReset();
 		splitSummaryMock.mockReset();
 
-		mockGame.session.getActionCosts.mockImplementation(() => ({
+		mockGame.getActionCosts.mockImplementation(() => ({
 			ap: 1,
 			gold: 12,
 		}));
-		mockGame.session.getActionRequirements.mockImplementation(() => []);
+		mockGame.getActionRequirements.mockImplementation(() => []);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
 			if (type === 'action' && id === ActionId.develop) {
@@ -271,7 +271,7 @@ describe('GenericActions effect group handling', () => {
 			}
 			return [];
 		});
-		mockGame.session.getActionOptions.mockImplementation((actionId: string) => {
+		mockGame.getActionOptions.mockImplementation((actionId: string) => {
 			if (actionId !== ActionId.royal_decree) {
 				return [];
 			}

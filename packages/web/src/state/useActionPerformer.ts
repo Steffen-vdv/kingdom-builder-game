@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 import {
 	resolveActionEffects,
 	type ActionParams,
 	type EngineSession,
+	type EngineSessionSnapshot,
 	type PlayerStateSnapshot,
 	type RequirementFailure,
 } from '@kingdom-builder/engine';
@@ -27,6 +28,7 @@ import {
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
+import { performSessionAction } from './sessionSdk';
 function ensureTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
 ): ActionLogLineDescriptor[] {
@@ -49,6 +51,7 @@ function ensureTimelineLines(
 	return lines;
 }
 interface UseActionPerformerOptions {
+	sessionId: string;
 	session: EngineSession;
 	actionCostResource: ResourceKey;
 	addLog: (
@@ -57,14 +60,23 @@ interface UseActionPerformerOptions {
 	) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;
-	refresh: () => void;
+	refresh: (snapshot?: EngineSessionSnapshot) => void;
 	pushErrorToast: (message: string, title?: string) => void;
 	mountedRef: React.MutableRefObject<boolean>;
 	endTurn: () => Promise<void>;
-	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	resourceKeys: ResourceKey[];
 }
+type PerformHandler = (
+	action: Action,
+	params?: ActionParams<string>,
+) => Promise<void>;
+
+interface UseActionPerformerResult {
+	handlePerform: PerformHandler;
+	performRef: MutableRefObject<PerformHandler>;
+}
 export function useActionPerformer({
+	sessionId,
 	session,
 	actionCostResource,
 	addLog,
@@ -74,9 +86,8 @@ export function useActionPerformer({
 	pushErrorToast,
 	mountedRef,
 	endTurn,
-	enqueue,
 	resourceKeys,
-}: UseActionPerformerOptions) {
+}: UseActionPerformerOptions): UseActionPerformerResult {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
 			const snapshotBefore = session.getSnapshot();
@@ -98,8 +109,28 @@ export function useActionPerformer({
 			const before = snapshotPlayer(playerBefore);
 			const costs = session.getActionCosts(action.id, params);
 			try {
-				const traces = session.performAction(action.id, params);
-				const snapshotAfter = session.getSnapshot();
+				const response = await performSessionAction({
+					sessionId,
+					actionId: action.id,
+					...(params ? { params } : {}),
+				});
+				if (response.status === 'error') {
+					const failure =
+						response.requirementFailure ?? response.requirementFailures?.[0];
+					let message = response.error;
+					if (failure) {
+						message = translateRequirementFailure(failure, context);
+					}
+					const icon = context.actions.get(action.id)?.icon || '';
+					pushErrorToast(message);
+					addLog(`Failed to play ${icon} ${action.name}: ${message}`, {
+						id: playerBefore.id,
+						name: playerBefore.name,
+					});
+					return;
+				}
+				const snapshotAfter = response.snapshot;
+				const traces = response.traces;
 				const { translationContext, diffContext } = getLegacySessionContext(
 					session,
 					snapshotAfter,
@@ -163,7 +194,7 @@ export function useActionPerformer({
 					name: playerAfter.name,
 				};
 				updateMainPhaseStep();
-				refresh();
+				refresh(snapshotAfter);
 				try {
 					await showResolution({
 						action: actionMeta,
@@ -186,14 +217,18 @@ export function useActionPerformer({
 				) {
 					await endTurn();
 				}
-			} catch (error) {
+			} catch (rawError) {
 				const icon = context.actions.get(action.id)?.icon || '';
-				let message = (error as Error).message || 'Action failed';
-				const requirementFailure = (
-					error as Error & {
-						requirementFailure?: RequirementFailure;
-					}
-				).requirementFailure;
+				let message = 'Action failed';
+				let requirementFailure: RequirementFailure | undefined;
+				if (rawError instanceof Error) {
+					message = rawError.message || message;
+					requirementFailure = (
+						rawError as {
+							requirementFailure?: RequirementFailure;
+						}
+					).requirementFailure;
+				}
 				if (requirementFailure) {
 					message = translateRequirementFailure(requirementFailure, context);
 				}
@@ -207,23 +242,25 @@ export function useActionPerformer({
 		},
 		[
 			addLog,
+			actionCostResource,
 			endTurn,
 			mountedRef,
 			pushErrorToast,
 			refresh,
 			resourceKeys,
 			session,
+			sessionId,
 			showResolution,
 			updateMainPhaseStep,
-			actionCostResource,
 		],
 	);
+
 	const handlePerform = useCallback(
-		(action: Action, params?: ActionParams<string>) =>
-			enqueue(() => perform(action, params)),
-		[enqueue, perform],
+		(action: Action, params?: ActionParams<string>) => perform(action, params),
+		[perform],
 	);
-	const performRef = useRef<typeof perform>(perform);
+
+	const performRef = useRef<PerformHandler>(perform);
 	useEffect(() => {
 		performRef.current = perform;
 	}, [perform]);
