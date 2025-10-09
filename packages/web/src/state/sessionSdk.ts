@@ -216,10 +216,10 @@ export async function performSessionAction(
 		const response = await api.performAction(request);
 		if (response.status === 'success') {
 			try {
-                                record.handle.performAction(
-                                        request.actionId,
-                                        request.params as ActionParams<string> | undefined,
-                                );
+				record.handle.performAction(
+					request.actionId,
+					request.params as ActionParams<string> | undefined,
+				);
 			} catch (localError) {
 				console.error(
 					'Local session failed to mirror remote action.',
@@ -251,7 +251,7 @@ export async function advanceSessionPhase(
 	const record = ensureSessionRecord(request.sessionId);
 	const response = await api.advancePhase(request);
 	try {
-                record.handle.advancePhase();
+		record.handle.advancePhase();
 	} catch (localError) {
 		console.error('Local session failed to mirror remote advance.', localError);
 	}

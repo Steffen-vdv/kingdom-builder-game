@@ -85,6 +85,9 @@ export function GameProviderInner({
 		) {
 			return;
 		}
+		if (!activeSession) {
+			return;
+		}
 		void enqueue(() => {
 			activeSession.updatePlayerName(primaryPlayerId, desiredName);
 		}).finally(() => {
