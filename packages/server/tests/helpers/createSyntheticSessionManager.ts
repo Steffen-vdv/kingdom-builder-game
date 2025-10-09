@@ -116,6 +116,10 @@ export function createSyntheticSessionManager(
 		phases: engineOverrides.phases ?? phases,
 		start: engineOverrides.start ?? start,
 		rules: engineOverrides.rules ?? rules,
+		resourceRegistry: engineOverrides.resourceRegistry ?? {
+			[costKey]: { key: costKey },
+			[gainKey]: { key: gainKey },
+		},
 	};
 	const manager = new SessionManager({
 		...rest,

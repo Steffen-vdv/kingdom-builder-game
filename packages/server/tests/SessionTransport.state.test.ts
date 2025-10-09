@@ -19,7 +19,8 @@ const authorizedHeaders = {
 
 describe('SessionTransport session state', () => {
 	it('returns session state snapshots', () => {
-		const { manager } = createSyntheticSessionManager();
+		const { manager, actionId, costKey, gainKey } =
+			createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			idFactory: expect.getState().currentTestName
@@ -37,6 +38,9 @@ describe('SessionTransport session state', () => {
 		});
 		expect(state.sessionId).toBe(sessionId);
 		expect(state.snapshot.game.players).toHaveLength(2);
+		expect(state.registries.actions[actionId]).toBeDefined();
+		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
+		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
 	});
 
 	it('throws when a session cannot be located', () => {

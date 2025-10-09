@@ -10,13 +10,27 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	RESOURCES,
 } from '@kingdom-builder/contents';
+import type {
+	PlayerStartConfig,
+	Registry,
+	SerializedRegistry,
+	SessionRegistriesPayload,
+	SessionResourceDefinition,
+} from '@kingdom-builder/protocol';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
 	EngineSessionOptions,
 	'devMode' | 'config'
 >;
+
+type SessionResourceRegistry = SerializedRegistry<SessionResourceDefinition>;
+
+type EngineSessionOverrideOptions = Partial<EngineSessionBaseOptions> & {
+	resourceRegistry?: SessionResourceRegistry;
+};
 
 type SessionRecord = {
 	session: EngineSession;
@@ -28,7 +42,7 @@ export interface SessionManagerOptions {
 	maxIdleDurationMs?: number;
 	maxSessions?: number;
 	now?: () => number;
-	engineOptions?: Partial<EngineSessionBaseOptions>;
+	engineOptions?: EngineSessionOverrideOptions;
 }
 
 export interface CreateSessionOptions {
@@ -49,6 +63,8 @@ export class SessionManager {
 
 	private readonly baseOptions: EngineSessionBaseOptions;
 
+	private readonly registries: SessionRegistriesPayload;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -56,17 +72,25 @@ export class SessionManager {
 			now = Date.now,
 			engineOptions = {},
 		} = options;
+		const { resourceRegistry, ...engineOverrides } = engineOptions;
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
 		this.baseOptions = {
-			actions: engineOptions.actions ?? ACTIONS,
-			buildings: engineOptions.buildings ?? BUILDINGS,
-			developments: engineOptions.developments ?? DEVELOPMENTS,
-			populations: engineOptions.populations ?? POPULATIONS,
-			phases: engineOptions.phases ?? PHASES,
-			start: engineOptions.start ?? GAME_START,
-			rules: engineOptions.rules ?? RULES,
+			actions: engineOverrides.actions ?? ACTIONS,
+			buildings: engineOverrides.buildings ?? BUILDINGS,
+			developments: engineOverrides.developments ?? DEVELOPMENTS,
+			populations: engineOverrides.populations ?? POPULATIONS,
+			phases: engineOverrides.phases ?? PHASES,
+			start: engineOverrides.start ?? GAME_START,
+			rules: engineOverrides.rules ?? RULES,
+		};
+		this.registries = {
+			actions: this.cloneRegistry(this.baseOptions.actions),
+			buildings: this.cloneRegistry(this.baseOptions.buildings),
+			developments: this.cloneRegistry(this.baseOptions.developments),
+			populations: this.cloneRegistry(this.baseOptions.populations),
+			resources: this.buildResourceRegistry(resourceRegistry),
 		};
 	}
 
@@ -137,12 +161,93 @@ export class SessionManager {
 		return this.sessions.size;
 	}
 
+	public getRegistries(): SessionRegistriesPayload {
+		return structuredClone(this.registries);
+	}
+
 	private requireSession(sessionId: string): EngineSession {
 		const session = this.getSession(sessionId);
 		if (!session) {
 			throw new Error(`Session "${sessionId}" was not found.`);
 		}
 		return session;
+	}
+
+	private cloneRegistry<DefinitionType>(
+		registry: Registry<DefinitionType>,
+	): SerializedRegistry<DefinitionType> {
+		const entries = registry.entries();
+		const result: SerializedRegistry<DefinitionType> = {};
+		for (const [id, definition] of entries) {
+			result[id] = structuredClone(definition);
+		}
+		return result;
+	}
+
+	private buildResourceRegistry(
+		overrides?: SessionResourceRegistry,
+	): SessionResourceRegistry {
+		const registry = new Map<string, SessionResourceDefinition>();
+		const applyOverride = (
+			source: SessionResourceRegistry | undefined,
+		): void => {
+			if (!source) {
+				return;
+			}
+			for (const [key, definition] of Object.entries(source)) {
+				registry.set(key, structuredClone(definition));
+			}
+		};
+		applyOverride(overrides);
+		const addKey = (key: string): void => {
+			if (registry.has(key)) {
+				return;
+			}
+			const info = RESOURCES[key as keyof typeof RESOURCES];
+			if (info) {
+				const definition: SessionResourceDefinition = {
+					key: info.key,
+					icon: info.icon,
+					label: info.label,
+					description: info.description,
+				};
+				if (info.tags && info.tags.length > 0) {
+					definition.tags = [...info.tags];
+				}
+				registry.set(key, definition);
+				return;
+			}
+			registry.set(key, { key });
+		};
+		const addFromStart = (config: PlayerStartConfig | undefined): void => {
+			if (!config?.resources) {
+				return;
+			}
+			for (const key of Object.keys(config.resources)) {
+				addKey(key);
+			}
+		};
+		const { start } = this.baseOptions;
+		addFromStart(start.player);
+		if (start.players) {
+			for (const playerConfig of Object.values(start.players)) {
+				addFromStart(playerConfig);
+			}
+		}
+		if (start.modes) {
+			for (const mode of Object.values(start.modes)) {
+				if (!mode) {
+					continue;
+				}
+				addFromStart(mode.player);
+				if (mode.players) {
+					for (const modePlayer of Object.values(mode.players)) {
+						addFromStart(modePlayer);
+					}
+				}
+			}
+		}
+		return Object.fromEntries(registry.entries());
 	}
 
 	private purgeExpiredSessions(): void {
