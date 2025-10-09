@@ -1,58 +1,78 @@
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	PHASES,
-	POPULATIONS,
-	RESOURCES,
-	STATS,
-} from '@kingdom-builder/contents';
 import type {
-	EngineSessionSnapshot,
-	PlayerId,
-	ResourceKey,
-} from '@kingdom-builder/engine';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+	SessionPlayerId,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol/config/schema';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
+import { deserializeSessionRegistries } from '../../src/state/sessionRegistries';
+import { TRANSLATION_REGISTRIES_PAYLOAD } from '../fixtures/translationRegistriesPayload';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
-		const [resourceKey] = Object.keys(RESOURCES) as ResourceKey[];
-		const [statKey] = Object.keys(STATS) as string[];
-		const [populationId] = POPULATIONS.keys();
-		const [actionId] = ACTIONS.keys();
-		const [buildingId] = BUILDINGS.keys();
-		const [developmentId] = DEVELOPMENTS.keys();
-		const [firstPhase] = PHASES;
-		const firstStep = firstPhase?.steps[0]?.id ?? firstPhase?.id ?? 'phase';
+		const registries = deserializeSessionRegistries(
+			TRANSLATION_REGISTRIES_PAYLOAD,
+		);
+		const [resourceKey] = Object.keys(
+			TRANSLATION_REGISTRIES_PAYLOAD.resources,
+		);
+		const [populationId] = registries.populations.keys();
+		const [actionId] = registries.actions.keys();
+		const [buildingId] = registries.buildings.keys();
+		const [developmentId] = registries.developments.keys();
+		const phases = [
+			{
+				id: 'growth',
+				label: 'Growth',
+				steps: [
+					{ id: 'growth:income', triggers: ['growth'] },
+					{ id: 'growth:upkeep' },
+				],
+			},
+			{
+				id: 'upkeep',
+				label: 'Upkeep',
+				steps: [{ id: 'upkeep:costs' }],
+			},
+			{
+				id: 'main',
+				action: true,
+				label: 'Main',
+				steps: [{ id: 'main:action' }],
+			},
+		];
+		const action = registries.actions.get(actionId);
+		const building = registries.buildings.get(buildingId);
 		const passiveId = 'passive-a';
-		const metadata = {
-			effectLogs: { legacy: [{ note: 'legacy entry' }] },
+		const metadata: SessionSnapshotMetadata = {
 			passiveEvaluationModifiers: {
 				[resourceKey]: ['modifier'],
 			},
+			effectLogs: { legacy: [{ note: 'legacy entry' }] },
 		};
 		const compensation = (amount: number): PlayerStartConfig => ({
 			resources: { [resourceKey]: amount },
 		});
 		const makePlayer = (config: {
-			id: PlayerId;
+			id: SessionPlayerId;
 			name: string;
 			resource: number;
 			stat: number;
 			population: number;
 			buildings?: string[];
-			passives?: EngineSessionSnapshot['game']['players'][number]['passives'];
-		}): EngineSessionSnapshot['game']['players'][number] => ({
+			passives?: SessionSnapshot['game']['players'][number]['passives'];
+		}): SessionSnapshot['game']['players'][number] => ({
 			id: config.id,
 			name: config.name,
 			resources: { [resourceKey]: config.resource },
-			stats: { [statKey]: config.stat },
+			stats: { armyStrength: config.stat },
 			statsHistory: {},
 			population: { [populationId]: config.population },
-			lands: [],
+			lands: [
+				{ id: 'land-a', slotsMax: 1, slotsUsed: 0, tilled: false, developments: [] },
+			],
 			buildings: config.buildings ?? [],
 			actions: [actionId],
 			statSources: {},
@@ -60,9 +80,9 @@ describe('createTranslationContext', () => {
 			skipSteps: {},
 			passives: config.passives ?? [],
 		});
-		const players: EngineSessionSnapshot['game']['players'] = [
+		const players: SessionSnapshot['game']['players'] = [
 			makePlayer({
-				id: 'A' as PlayerId,
+				id: 'A',
 				name: 'Player A',
 				resource: 7,
 				stat: 3,
@@ -71,27 +91,25 @@ describe('createTranslationContext', () => {
 				passives: [
 					{
 						id: passiveId,
-						icon: ACTIONS.get(actionId).icon,
-						meta: {
-							source: { icon: BUILDINGS.get(buildingId).icon },
-						},
+						icon: action.icon,
+						meta: { source: { icon: building.icon } },
 					},
 				],
 			}),
 			makePlayer({
-				id: 'B' as PlayerId,
+				id: 'B',
 				name: 'Player B',
 				resource: 5,
 				stat: 1,
 				population: 1,
 			}),
 		];
-		const session: EngineSessionSnapshot = {
+		const session: SessionSnapshot = {
 			game: {
 				turn: 4,
 				currentPlayerIndex: 0,
-				currentPhase: firstPhase?.id ?? 'phase',
-				currentStep: firstStep,
+				currentPhase: phases[0]?.id ?? 'growth',
+				currentStep: phases[0]?.steps?.[0]?.id ?? 'growth:income',
 				phaseIndex: 0,
 				stepIndex: 0,
 				devMode: false,
@@ -99,7 +117,7 @@ describe('createTranslationContext', () => {
 				activePlayerId: 'A',
 				opponentId: 'B',
 			},
-			phases: PHASES,
+			phases,
 			actionCostResource: resourceKey,
 			recentResourceGains: [{ key: resourceKey, amount: 3 }],
 			compensations: {
@@ -114,33 +132,18 @@ describe('createTranslationContext', () => {
 			passiveRecords: {
 				A: [
 					{
-						id: passiveId,
+						...players[0]?.passives?.[0],
 						owner: 'A',
-						icon: ACTIONS.get(actionId).icon,
-						meta: {
-							source: {
-								icon: BUILDINGS.get(buildingId).icon,
-							},
-						},
 					},
 				],
 				B: [],
 			},
 			metadata,
 		};
-		const context = createTranslationContext(
-			session,
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
-			metadata,
-			{
-				ruleSnapshot: session.rules,
-				passiveRecords: session.passiveRecords,
-			},
-		);
+		const context = createTranslationContext(session, registries, metadata, {
+			ruleSnapshot: session.rules,
+			passiveRecords: session.passiveRecords,
+		});
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
 			note: 'legacy entry',
 		});
@@ -174,97 +177,99 @@ describe('createTranslationContext', () => {
 				owned: context.passives.list(activeId).map(({ id }) => id),
 				descriptor: context.passives.get(passiveId, activeId),
 				definition: context.passives.getDefinition(passiveId, activeId),
-				definitions: context.passives.definitions(activeId).map(({ id }) => id),
+				definitions: context.passives
+					.definitions(activeId)
+					.map(({ id }) => id),
 				evaluationMods: evaluationSnapshot,
 			},
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
-                        {
-                          "actionCostResource": "gold",
-                          "compensations": {
-                            "A": {
-                              "resources": {
-                                "gold": 2,
-                              },
-                            },
-                            "B": {
-                              "resources": {
-                                "gold": 1,
-                              },
-                            },
-                          },
-                          "passives": {
-                            "definition": {
-                              "icon": "🌱",
-                              "id": "passive-a",
-                              "meta": {
-                                "source": {
-                                  "icon": "🏘️",
-                                },
-                              },
-                              "owner": "A",
-                            },
-                            "definitions": [
-                              "passive-a",
-                            ],
-                            "descriptor": {
-                              "icon": "🌱",
-                              "meta": {
-                                "source": {
-                                  "icon": "🏘️",
-                                },
-                              },
-                            },
-                            "evaluationMods": [
-                              [
-                                "gold",
-                                [
-                                  "modifier",
-                                ],
-                              ],
-                            ],
-                            "list": [
-                              "passive-a",
-                            ],
-                            "owned": [
-                              "passive-a",
-                            ],
-                          },
-                          "phases": [
-                            "growth",
-                            "upkeep",
-                            "main",
-                          ],
-                          "players": {
-                            "active": "A",
-                            "opponent": "B",
-                          },
-                          "recentResourceGains": [
-                            {
-                              "amount": 3,
-                              "key": "gold",
-                            },
-                          ],
-                          "registries": {
-                            "action": {
-                              "has": true,
-                              "id": "expand",
-                            },
-                            "building": {
-                              "has": true,
-                              "id": "town_charter",
-                            },
-                            "development": {
-                              "has": true,
-                              "id": "farm",
-                            },
-                          },
-                          "rules": {
-                            "tierDefinitions": [],
-                            "tieredResourceKey": "gold",
-                            "winConditions": [],
-                          },
-                        }
-                `);
+			{
+			  "actionCostResource": "gold",
+			  "compensations": {
+			    "A": {
+			      "resources": {
+			        "gold": 2,
+			      },
+			    },
+			    "B": {
+			      "resources": {
+			        "gold": 1,
+			      },
+			    },
+			  },
+			  "passives": {
+			    "definition": {
+			      "icon": "🌱",
+			      "id": "passive-a",
+			      "meta": {
+			        "source": {
+			          "icon": "🏛️",
+			        },
+			      },
+			      "owner": "A",
+			    },
+			    "definitions": [
+			      "passive-a",
+			    ],
+			    "descriptor": {
+			      "icon": "🌱",
+			      "meta": {
+			        "source": {
+			          "icon": "🏛️",
+			        },
+			      },
+			    },
+			    "evaluationMods": [
+			      [
+			        "gold",
+			        [
+			          "modifier",
+			        ],
+			      ],
+			    ],
+			    "list": [
+			      "passive-a",
+			    ],
+			    "owned": [
+			      "passive-a",
+			    ],
+			  },
+			  "phases": [
+			    "growth",
+			    "upkeep",
+			    "main",
+			  ],
+			  "players": {
+			    "active": "A",
+			    "opponent": "B",
+			  },
+			  "recentResourceGains": [
+			    {
+			      "amount": 3,
+			      "key": "gold",
+			    },
+			  ],
+			  "registries": {
+			    "action": {
+			      "has": true,
+			      "id": "expand",
+			    },
+			    "building": {
+			      "has": true,
+			      "id": "town_hall",
+			    },
+			    "development": {
+			      "has": true,
+			      "id": "farm",
+			    },
+			  },
+			  "rules": {
+			    "tierDefinitions": [],
+			    "tieredResourceKey": "gold",
+			    "winConditions": [],
+			  },
+			}
+		`);
 	});
 });

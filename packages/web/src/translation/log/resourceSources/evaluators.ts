@@ -1,4 +1,3 @@
-import { POPULATION_ROLES, POPULATION_INFO } from '@kingdom-builder/contents';
 import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
 
@@ -30,19 +29,20 @@ function renderDevelopmentIcons(
 }
 
 function renderPopulationIcons(
-	evaluatorDefinition: { type: string; params?: Record<string, unknown> },
-	entry: ResourceSourceEntry,
-	context: TranslationDiffContext,
+        evaluatorDefinition: { type: string; params?: Record<string, unknown> },
+        entry: ResourceSourceEntry,
+        context: TranslationDiffContext,
 ): void {
-	const count = evaluateCount(evaluatorDefinition, context);
-	const params = evaluatorDefinition.params as
-		| Record<string, string>
-		| undefined;
-	const role = params?.['role'] as keyof typeof POPULATION_ROLES | undefined;
-	const icon = role
-		? POPULATION_ROLES[role]?.icon || role
-		: POPULATION_INFO.icon;
-	entry.icons += icon.repeat(count);
+        const count = evaluateCount(evaluatorDefinition, context);
+        const params = evaluatorDefinition.params as
+                | Record<string, string>
+                | undefined;
+        const role = params?.['role'] as string | undefined;
+        const populationDefinition = role && context.populations.has(role)
+                ? context.populations.get(role)
+                : undefined;
+        const icon = populationDefinition?.icon || context.info.population.icon || role || '';
+        entry.icons += icon.repeat(count);
 }
 
 export const EVALUATOR_ICON_RENDERERS: Record<string, EvaluatorIconRenderer> = {

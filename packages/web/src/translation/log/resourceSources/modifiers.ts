@@ -1,8 +1,7 @@
-import { PASSIVE_INFO } from '@kingdom-builder/contents';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
 import {
-	type TranslationDiffContext,
-	type TranslationDiffPassives,
+        type TranslationDiffContext,
+        type TranslationDiffPassives,
 } from './context';
 import { type ResourceSourceEntry } from './types';
 
@@ -30,16 +29,16 @@ function resolveModifierIcon(
 			return icon;
 		}
 	}
-	if (passives.get) {
-		const passive = passives.get(baseKey, context.activePlayer.id);
-		if (passive?.icon) {
-			return passive.icon;
-		}
-		if (passive?.meta?.source?.icon) {
-			return passive.meta.source.icon ?? '';
-		}
-	}
-	return PASSIVE_INFO.icon || '';
+        if (passives.get) {
+                const passive = passives.get(baseKey, context.activePlayer.id);
+                if (passive?.icon) {
+                        return passive.icon;
+                }
+                if (passive?.meta?.source?.icon) {
+                        return passive.meta.source.icon ?? '';
+                }
+        }
+        return context.info.passive.icon || '';
 }
 
 export function appendEvaluatorModifiers(

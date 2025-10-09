@@ -1,3 +1,4 @@
+import type { SessionPlayerId } from '@kingdom-builder/protocol';
 import { describe, it, expect, vi } from 'vitest';
 import { collectResourceSources } from '../../src/translation/log/resourceSources';
 import { type StepEffects } from '../../src/translation/log/statBreakdown';
@@ -20,38 +21,71 @@ describe('translation diff resource source context', () => {
 			method: 'add' as const,
 			params: { key: resourceKey },
 		};
-		const context: TranslationDiffContext = {
-			activePlayer: {
-				id: ownerId,
-			} as TranslationDiffContext['activePlayer'],
-			buildings: {
-				get(id: string) {
-					if (id === 'syntheticBuilding') {
-						return { icon: '🏛️' } as { icon?: string };
+                const context: TranslationDiffContext = {
+                        activePlayer: {
+                                id: ownerId as SessionPlayerId,
+                                population: {},
+                                lands: [],
+                        },
+                        buildings: {
+                                get(id: string) {
+                                        if (id === 'syntheticBuilding') {
+                                                return { icon: '🏛️' } as { icon?: string };
+                                        }
+                                        return undefined;
+                                },
+                                has(id: string) {
+                                        return id === 'syntheticBuilding';
+                                },
+                        } as TranslationDiffContext['buildings'],
+                        developments: {
+                                get(id: string) {
+                                        if (id === 'synthetic') {
+                                                return { icon: '🌾' } as { icon?: string };
 					}
 					return undefined;
-				},
-				has(id: string) {
-					return id === 'syntheticBuilding';
-				},
-			} as TranslationDiffContext['buildings'],
-			developments: {
-				get(id: string) {
-					if (id === 'synthetic') {
-						return { icon: '🌾' } as { icon?: string };
-					}
-					return undefined;
-				},
-				has(id: string) {
-					return id === 'synthetic';
-				},
-			} as TranslationDiffContext['developments'],
-			passives: {
-				evaluationMods,
-				get: vi.fn(() => ({ icon: '✨' })),
-			},
-			evaluate: evaluateMock,
-		};
+                                },
+                                has(id: string) {
+                                        return id === 'synthetic';
+                                },
+                        } as TranslationDiffContext['developments'],
+                        populations: {
+                                get(id: string) {
+                                        if (id === 'syntheticRole') {
+                                                return { icon: '👥' } as { icon?: string };
+                                        }
+                                        throw new Error(`Unknown population ${id}`);
+                                },
+                                has(id: string) {
+                                        return id === 'syntheticRole';
+                                },
+                        } as TranslationDiffContext['populations'],
+                        resources: Object.freeze({
+                                [resourceKey]: {
+                                        key: resourceKey,
+                                        icon: '💰',
+                                        label: 'Synthetic Resource',
+                                },
+                        }),
+                        stats: Object.freeze({
+                                armyStrength: { icon: '⚔️', label: 'Army Strength' },
+                        }),
+                        info: {
+                                population: { icon: '👥', label: 'Population' },
+                                passive: { icon: '♾️', label: 'Passive' },
+                                land: { icon: '🗺️', label: 'Land' },
+                                slot: { icon: '🧩', label: 'Development Slot' },
+                                modifier: {
+                                        cost: { icon: '💲', label: 'Cost Adjustment' },
+                                        result: { icon: '✨', label: 'Outcome Adjustment' },
+                                },
+                        },
+                        passives: {
+                                evaluationMods,
+                                get: vi.fn(() => ({ icon: '✨' })) as TranslationDiffContext['passives']['get'],
+                        },
+                        evaluate: evaluateMock,
+                };
 		const step: StepEffects = {
 			effects: [
 				{

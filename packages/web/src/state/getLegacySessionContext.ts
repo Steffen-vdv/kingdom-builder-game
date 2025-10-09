@@ -159,10 +159,13 @@ function evaluateDefinition(
 }
 
 interface LegacySessionContextInput {
-	snapshot: SessionSnapshot;
-	ruleSnapshot: SessionRuleSnapshot;
-	passiveRecords: SessionSnapshot['passiveRecords'];
-	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
+        snapshot: SessionSnapshot;
+        ruleSnapshot: SessionRuleSnapshot;
+        passiveRecords: SessionSnapshot['passiveRecords'];
+        registries: Pick<
+                SessionRegistries,
+                'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+        >;
 }
 
 function createDiffContext(
@@ -188,16 +191,21 @@ function createDiffContext(
 			translationContext.passives,
 		);
 	}
-	return {
-		activePlayer:
-			activePlayer as unknown as TranslationDiffContext['activePlayer'],
-		buildings:
-			translationContext.buildings as unknown as TranslationDiffContext['buildings'],
-		developments:
-			translationContext.developments as unknown as TranslationDiffContext['developments'],
-		passives,
-		evaluate,
-	};
+        return {
+                activePlayer:
+                        activePlayer as unknown as TranslationDiffContext['activePlayer'],
+                buildings:
+                        translationContext.buildings as unknown as TranslationDiffContext['buildings'],
+                developments:
+                        translationContext.developments as unknown as TranslationDiffContext['developments'],
+                populations:
+                        translationContext.populations as unknown as TranslationDiffContext['populations'],
+                resources: translationContext.resources,
+                stats: translationContext.stats,
+                info: translationContext.info,
+                passives,
+                evaluate,
+        };
 }
 
 export interface LegacySessionContextData {

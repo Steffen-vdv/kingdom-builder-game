@@ -1,9 +1,8 @@
-import { LAND_INFO } from '@kingdom-builder/contents';
 import { type TranslationDiffContext } from './resourceSources/context';
 import {
-	formatIconLabel,
-	formatLogHeadline,
-	LOG_KEYWORDS,
+        formatIconLabel,
+        formatLogHeadline,
+        LOG_KEYWORDS,
 } from './logMessages';
 import { type PlayerSnapshot } from './snapshots';
 
@@ -48,25 +47,26 @@ export function appendBuildingChanges(
 }
 
 export function appendLandChanges(
-	changes: string[],
-	before: PlayerSnapshot,
-	after: PlayerSnapshot,
-	context: Pick<TranslationDiffContext, 'developments'>,
+        changes: string[],
+        before: PlayerSnapshot,
+        after: PlayerSnapshot,
+        context: Pick<TranslationDiffContext, 'developments' | 'info'>,
 ): void {
-	for (const land of after.lands) {
-		const previous = before.lands.find((item) => {
-			return item.id === land.id;
-		});
-		if (!previous) {
-			const landLabel =
-				formatIconLabel(LAND_INFO.icon, LAND_INFO.label) ||
-				LAND_INFO.label ||
-				'Land';
-			changes.push(formatLogHeadline(LOG_KEYWORDS.gained, landLabel));
-			continue;
-		}
-		for (const development of land.developments) {
-			if (previous.developments.includes(development)) {
+        for (const land of after.lands) {
+                const previous = before.lands.find((item) => {
+                        return item.id === land.id;
+                });
+                if (!previous) {
+                        const landInfo = context.info.land;
+                        const landLabel =
+                                formatIconLabel(landInfo.icon, landInfo.label) ||
+                                landInfo.label ||
+                                'Land';
+                        changes.push(formatLogHeadline(LOG_KEYWORDS.gained, landLabel));
+                        continue;
+                }
+                for (const development of land.developments) {
+                        if (previous.developments.includes(development)) {
 				continue;
 			}
 			const label = describeContent(context.developments, development);

@@ -6,17 +6,18 @@ import type {
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 } from '@kingdom-builder/protocol';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import { type Land } from '../content';
 import {
-	appendResourceChanges,
-	appendStatChanges,
-	appendBuildingChanges,
-	appendLandChanges,
-	appendSlotChanges,
+        appendResourceChanges,
+        appendStatChanges,
+        appendBuildingChanges,
+        appendLandChanges,
+        appendSlotChanges,
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
 import { createTranslationDiffContext } from './resourceSources/context';
+
+type ResourceKey = string;
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
@@ -131,42 +132,49 @@ interface DiffContext extends SnapshotContext {
 }
 
 export function diffSnapshots(
-	previousSnapshot: PlayerSnapshot,
-	nextSnapshot: PlayerSnapshot,
-	context: DiffContext,
-	resourceKeys: ResourceKey[] = collectResourceKeys(
-		previousSnapshot,
-		nextSnapshot,
-	),
+        previousSnapshot: PlayerSnapshot,
+        nextSnapshot: PlayerSnapshot,
+        context: DiffContext,
+        resourceKeys: ResourceKey[] = collectResourceKeys(
+                previousSnapshot,
+                nextSnapshot,
+        ),
 ): string[] {
-	const changeSummaries: string[] = [];
-	appendResourceChanges(
-		changeSummaries,
-		previousSnapshot,
-		nextSnapshot,
-		resourceKeys,
+        const changeSummaries: string[] = [];
+        const diffContext = createTranslationDiffContext(context);
+        appendResourceChanges(
+                changeSummaries,
+                previousSnapshot,
+                nextSnapshot,
+                diffContext,
+                resourceKeys,
+        );
+        appendStatChanges(
+                changeSummaries,
+                previousSnapshot,
+                nextSnapshot,
+                nextSnapshot,
+                undefined,
+                diffContext,
+        );
+        appendBuildingChanges(
+                changeSummaries,
+                previousSnapshot,
+                nextSnapshot,
+                diffContext,
 	);
-	appendStatChanges(
-		changeSummaries,
-		previousSnapshot,
-		nextSnapshot,
-		nextSnapshot,
-		undefined,
-	);
-	const diffContext = createTranslationDiffContext(context);
-	appendBuildingChanges(
-		changeSummaries,
-		previousSnapshot,
-		nextSnapshot,
-		diffContext,
-	);
-	appendLandChanges(
-		changeSummaries,
-		previousSnapshot,
-		nextSnapshot,
-		diffContext,
-	);
-	appendSlotChanges(changeSummaries, previousSnapshot, nextSnapshot);
-	appendPassiveChanges(changeSummaries, previousSnapshot, nextSnapshot);
-	return changeSummaries;
+        appendLandChanges(
+                changeSummaries,
+                previousSnapshot,
+                nextSnapshot,
+                diffContext,
+        );
+        appendSlotChanges(changeSummaries, previousSnapshot, nextSnapshot, diffContext);
+        appendPassiveChanges(
+                changeSummaries,
+                previousSnapshot,
+                nextSnapshot,
+                diffContext.info,
+        );
+        return changeSummaries;
 }

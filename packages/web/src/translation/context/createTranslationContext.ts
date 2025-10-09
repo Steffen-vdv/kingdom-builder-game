@@ -5,7 +5,13 @@ import type {
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
 import type { SessionRegistries } from '../../state/sessionRegistries';
-import type { TranslationContext, TranslationPassives } from './types';
+import type {
+        TranslationContext,
+        TranslationInfo,
+        TranslationPassives,
+        TranslationResourceDefinition,
+        TranslationResourceRegistry,
+} from './types';
 import {
 	cloneCompensations,
 	cloneEvaluationModifiers,
@@ -18,22 +24,78 @@ import {
 	wrapRegistry,
 } from './contextHelpers';
 import {
-	EMPTY_PASSIVE_DEFINITIONS,
-	cloneRuleSnapshot,
-	mapPassiveDefinitionLists,
-	mapPassiveDefinitionLookup,
+        EMPTY_PASSIVE_DEFINITIONS,
+        cloneRuleSnapshot,
+        mapPassiveDefinitionLists,
+        mapPassiveDefinitionLookup,
 } from './passiveDefinitions';
+import {
+        DEFAULT_LAND_INFO,
+        DEFAULT_MODIFIER_INFO,
+        DEFAULT_PASSIVE_INFO,
+        DEFAULT_POPULATION_INFO,
+        DEFAULT_SLOT_INFO,
+        DEFAULT_STATS,
+} from './defaultInfo';
 
 type TranslationContextOptions = {
-	ruleSnapshot: SessionRuleSnapshot;
-	passiveRecords: SessionSnapshot['passiveRecords'];
+        ruleSnapshot: SessionRuleSnapshot;
+        passiveRecords: SessionSnapshot['passiveRecords'];
 };
 
+function cloneResourceDefinition(
+        definition: TranslationResourceDefinition,
+): TranslationResourceDefinition {
+        const cloned: TranslationResourceDefinition = { key: definition.key };
+        if (definition.icon !== undefined) {
+                cloned.icon = definition.icon;
+        }
+        if (definition.label !== undefined) {
+                cloned.label = definition.label;
+        }
+        if (definition.description !== undefined) {
+                cloned.description = definition.description;
+        }
+        if (definition.tags !== undefined) {
+                cloned.tags = [...definition.tags];
+        }
+        return Object.freeze(cloned);
+}
+
+function cloneResourceRegistry(
+        resources: SessionRegistries['resources'],
+): TranslationResourceRegistry {
+        return Object.freeze(
+                Object.fromEntries(
+                        Object.entries(resources).map(([key, definition]) => [
+                                key,
+                                cloneResourceDefinition(definition),
+                        ]),
+                ),
+        );
+}
+
+function createTranslationInfo(): TranslationInfo {
+        return Object.freeze({
+                population: DEFAULT_POPULATION_INFO,
+                passive: DEFAULT_PASSIVE_INFO,
+                land: DEFAULT_LAND_INFO,
+                slot: DEFAULT_SLOT_INFO,
+                modifier: Object.freeze({
+                        cost: DEFAULT_MODIFIER_INFO.cost,
+                        result: DEFAULT_MODIFIER_INFO.result,
+                }),
+        });
+}
+
 export function createTranslationContext(
-	session: SessionSnapshot,
-	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>,
-	metadata: SessionSnapshotMetadata,
-	options: TranslationContextOptions,
+        session: SessionSnapshot,
+        registries: Pick<
+                SessionRegistries,
+                'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+        >,
+        metadata: SessionSnapshotMetadata,
+        options: TranslationContextOptions,
 ): TranslationContext {
 	const players = new Map(
 		session.game.players.map((player) => [player.id, clonePlayer(player)]),
@@ -62,11 +124,11 @@ export function createTranslationContext(
 			effectLogs.set(key, [...logEntries]);
 		}
 	}
-	const translationPassives: TranslationPassives = Object.freeze({
-		list(owner?: SessionPlayerId) {
-			if (owner) {
-				return passives.get(owner)?.map(clonePassiveSummary) ?? [];
-			}
+        const translationPassives: TranslationPassives = Object.freeze({
+                list(owner?: SessionPlayerId) {
+                        if (owner) {
+                                return passives.get(owner)?.map(clonePassiveSummary) ?? [];
+                        }
 			return flattenPassives(passives);
 		},
 		get(id: string, owner: SessionPlayerId) {
@@ -82,17 +144,22 @@ export function createTranslationContext(
 		},
 		get evaluationMods() {
 			return evaluationMods;
-		},
-	});
-	return Object.freeze({
-		actions: wrapRegistry(registries.actions),
-		buildings: wrapRegistry(registries.buildings),
-		developments: wrapRegistry(registries.developments),
-		passives: translationPassives,
-		phases: Object.freeze(
-			session.phases.map((phase) => {
-				const entry: {
-					id: string;
+                },
+        });
+        const info = createTranslationInfo();
+        return Object.freeze({
+                actions: wrapRegistry(registries.actions),
+                buildings: wrapRegistry(registries.buildings),
+                developments: wrapRegistry(registries.developments),
+                populations: wrapRegistry(registries.populations),
+                resources: cloneResourceRegistry(registries.resources),
+                stats: DEFAULT_STATS,
+                info,
+                passives: translationPassives,
+                phases: Object.freeze(
+                        session.phases.map((phase) => {
+                                const entry: {
+                                        id: string;
 					icon?: string;
 					label?: string;
 					steps?: ReadonlyArray<{

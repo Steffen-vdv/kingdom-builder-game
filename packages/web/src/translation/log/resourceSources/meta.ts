@@ -1,8 +1,3 @@
-import {
-	POPULATION_ROLES,
-	POPULATION_INFO,
-	LAND_INFO,
-} from '@kingdom-builder/contents';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
 import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
@@ -32,18 +27,19 @@ function normalizeMetaCount(rawCount: number): number {
 }
 
 function renderPopulationMetaIcons(
-	meta: ResourceSourceMeta,
-	_context: TranslationDiffContext,
+        meta: ResourceSourceMeta,
+        context: TranslationDiffContext,
 ): string {
-	const role = meta.id as keyof typeof POPULATION_ROLES | undefined;
-	const icon = role
-		? POPULATION_ROLES[role]?.icon || role
-		: POPULATION_INFO.icon;
-	if (!icon) {
-		return '';
-	}
-	if (meta.count === undefined) {
-		return icon;
+        const role = meta.id as string | undefined;
+        const definition = role && context.populations.has(role)
+                ? context.populations.get(role)
+                : undefined;
+        const icon = definition?.icon || context.info.population.icon || role;
+        if (!icon) {
+                return '';
+        }
+        if (meta.count === undefined) {
+                return icon;
 	}
 	const rawCount = Number(meta.count);
 	if (!Number.isFinite(rawCount)) {
@@ -76,15 +72,18 @@ function renderBuildingMetaIcons(
 	return resolveBuildingIcon(meta.id, context);
 }
 
-function renderLandMetaIcons(): string {
-	return LAND_INFO.icon || '';
+function renderLandMetaIcons(
+        _meta: ResourceSourceMeta,
+        context: TranslationDiffContext,
+): string {
+        return context.info.land.icon || '';
 }
 
 const META_ICON_RENDERERS: Record<string, MetaIconRenderer> = {
-	population: renderPopulationMetaIcons,
-	development: renderDevelopmentMetaIcons,
-	building: renderBuildingMetaIcons,
-	land: renderLandMetaIcons,
+        population: renderPopulationMetaIcons,
+        development: renderDevelopmentMetaIcons,
+        building: renderBuildingMetaIcons,
+        land: renderLandMetaIcons,
 };
 
 export function appendMetaSourceIcons(

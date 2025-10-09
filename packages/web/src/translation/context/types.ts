@@ -3,11 +3,18 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PlayerStartConfig,
+	PopulationConfig,
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerId,
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import type {
+	TranslationIconLabel,
+	TranslationModifierInfo,
+	TranslationStatDefinition,
+} from './defaultInfo';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that
@@ -15,12 +22,30 @@ import type {
  * coupling with the protocol registry implementation.
  */
 export interface TranslationRegistry<TDefinition> {
-	get(id: string): TDefinition;
-	has(id: string): boolean;
+        get(id: string): TDefinition;
+        has(id: string): boolean;
+}
+
+export type TranslationResourceDefinition = SessionResourceDefinition;
+
+export type TranslationResourceRegistry = Readonly<
+	Record<string, TranslationResourceDefinition>
+>;
+
+export type TranslationStatRegistry = Readonly<
+	Record<string, TranslationStatDefinition>
+>;
+
+export interface TranslationInfo {
+	readonly population: TranslationIconLabel;
+	readonly passive: TranslationIconLabel;
+	readonly land: TranslationIconLabel;
+	readonly slot: TranslationIconLabel;
+	readonly modifier: TranslationModifierInfo;
 }
 
 /**
- * Minimal passive descriptor pulled through the translation layer. This mirrors
+* Minimal passive descriptor pulled through the translation layer. This mirrors
  * the subset of {@link PassiveRecord} properties that log formatters and
  * resource source helpers inspect today.
  */
@@ -32,7 +57,7 @@ export type TranslationPassiveDescriptor = {
 export type TranslationPassiveDefinition = SessionPassiveRecordSnapshot;
 
 /**
- * Map of evaluator modifier identifiers to the owning modifier instances. The
+* Map of evaluator modifier identifiers to the owning modifier instances. The
  * values remain intentionally untyped because translation formatters only
  * inspect presence and icon metadata.
  */
@@ -42,7 +67,7 @@ export type TranslationPassiveModifierMap = ReadonlyMap<
 >;
 
 /**
- * Read-only view over the passive manager for translators. The surface area is
+* Read-only view over the passive manager for translators. The surface area is
  * intentionally tiny; imperative mutators are omitted while the existing log
  * helpers continue to rely on evaluation metadata.
  */
@@ -63,7 +88,7 @@ export interface TranslationPassives {
 }
 
 /**
- * Minimal phase metadata consumed by translation renderers.
+* Minimal phase metadata consumed by translation renderers.
  */
 export interface TranslationPhaseStep {
 	id: string;
@@ -78,7 +103,7 @@ export interface TranslationPhase {
 }
 
 /**
- * Snapshot of active/opposing players required by translation helpers. The
+* Snapshot of active/opposing players required by translation helpers. The
  * fields mirror the read access patterns used when formatting stat breakdowns
  * and passive ownership.
  */
@@ -91,14 +116,19 @@ export interface TranslationPlayer {
 }
 
 /**
- * Translation-focused view over the engine context. Implementations are free to
+* Translation-focused view over the engine context. Implementations are free to
  * wrap the full legacy engine context as long as the read-only surface
  * documented here remains stable.
  */
+
 export interface TranslationContext {
 	readonly actions: TranslationRegistry<ActionConfig>;
 	readonly buildings: TranslationRegistry<BuildingConfig>;
 	readonly developments: TranslationRegistry<DevelopmentConfig>;
+	readonly populations: TranslationRegistry<PopulationConfig>;
+	readonly resources: TranslationResourceRegistry;
+	readonly stats: TranslationStatRegistry;
+	readonly info: TranslationInfo;
 	readonly passives: TranslationPassives;
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;
