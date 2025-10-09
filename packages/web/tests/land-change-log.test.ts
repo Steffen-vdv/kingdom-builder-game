@@ -93,8 +93,8 @@ describe('land change log formatting', () => {
 			return;
 		}
 		const developmentEntries = engineContext.developments.entries();
-		const developmentEntry = developmentEntries.find(([, def]) => {
-			return Boolean(def?.icon) && Boolean(def?.name);
+		const developmentEntry = developmentEntries.find(([, definition]) => {
+			return Boolean(definition?.icon) && Boolean(definition?.name);
 		});
 		const fallbackDevelopment = developmentEntries[0];
 		const [developmentId] = developmentEntry ?? fallbackDevelopment ?? [];
