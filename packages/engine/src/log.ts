@@ -23,11 +23,11 @@ export function snapshotPlayer(
 		resources: { ...player.resources },
 		stats: { ...player.stats },
 		buildings: Array.from(player.buildings),
-		lands: player.lands.map((l) => ({
-			id: l.id,
-			slotsMax: l.slotsMax,
-			slotsUsed: l.slotsUsed,
-			developments: [...l.developments],
+		lands: player.lands.map((land) => ({
+			id: land.id,
+			slotsMax: land.slotsMax,
+			slotsUsed: land.slotsUsed,
+			developments: [...land.developments],
 		})),
 		passives: ctx.passives.list(player.id),
 	};
