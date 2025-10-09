@@ -33,7 +33,7 @@ function flatten(summary: Summary): string[] {
 }
 
 describe('population effect translation', () => {
-	const ctx = createEngine({
+	const engineContext = createEngine({
 		actions: ACTIONS,
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
@@ -56,7 +56,7 @@ describe('population effect translation', () => {
 					e.type === 'population' && e.method === 'add',
 			),
 		)?.[0] as string;
-		const summary = summarizeContent('action', raiseId, ctx, {
+		const summary = summarizeContent('action', raiseId, engineContext, {
 			role: PopulationRole.Council,
 		});
 		const flat = flatten(summary);
@@ -68,7 +68,7 @@ describe('population effect translation', () => {
 					params: { role: PopulationRole.Council },
 				},
 			],
-			ctx,
+			engineContext,
 		)[0];
 		expect(flat).toContain(expected);
 	});
@@ -82,7 +82,7 @@ describe('population effect translation', () => {
 					params: { role: PopulationRole.Council },
 				},
 			],
-			ctx,
+			engineContext,
 		);
 		const desc = describeEffects(
 			[
@@ -92,7 +92,7 @@ describe('population effect translation', () => {
 					params: { role: PopulationRole.Council },
 				},
 			],
-			ctx,
+			engineContext,
 		);
 		const expectedSummary = summarizeEffects(
 			[
@@ -102,7 +102,7 @@ describe('population effect translation', () => {
 					params: { role: PopulationRole.Council },
 				},
 			],
-			ctx,
+			engineContext,
 		)[0];
 		const expectedDesc = describeEffects(
 			[
@@ -112,7 +112,7 @@ describe('population effect translation', () => {
 					params: { role: PopulationRole.Council },
 				},
 			],
-			ctx,
+			engineContext,
 		)[0];
 		expect(summary).toContain(expectedSummary);
 		expect(desc).toContain(expectedDesc);
