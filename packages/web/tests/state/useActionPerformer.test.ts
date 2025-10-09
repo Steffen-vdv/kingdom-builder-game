@@ -1,10 +1,7 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-	EngineSession,
-	RequirementFailure,
-} from '@kingdom-builder/engine';
+import type { RequirementFailure } from '@kingdom-builder/engine';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
 import {
@@ -39,14 +36,13 @@ vi.mock('../../src/state/sessionSdk', () => ({
 }));
 
 describe('useActionPerformer', () => {
-	let session: EngineSession;
+	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
 	let enqueueMock: ReturnType<
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
-	let getActionCostsMock: ReturnType<typeof vi.fn>;
 	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let resourceKeys: ResourceKey[];
 	let actionCostResource: ResourceKey;
@@ -95,16 +91,12 @@ describe('useActionPerformer', () => {
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
 		resourceKeys = [actionCostResource];
-		getActionCostsMock = vi.fn(() => ({}));
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
 		session = {
 			getSnapshot: vi.fn(() => sessionSnapshot),
-			getActionCosts: getActionCostsMock,
-			enqueue: enqueueMock,
-			advancePhase: vi.fn(),
-		} as unknown as EngineSession;
+		};
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
