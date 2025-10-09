@@ -11,10 +11,10 @@ registerEvaluatorFormatter('development', {
 		}
 		const icon = def?.icon || devId;
 		const label = def?.name || devId;
-		return sub.map((s) =>
-			typeof s === 'string'
-				? `${s} per ${icon} ${label}`.trim()
-				: { ...s, title: `${s.title} per ${icon} ${label}`.trim() },
+		return sub.map((entry) =>
+			typeof entry === 'string'
+				? `${entry} per ${icon} ${label}`.trim()
+				: { ...entry, title: `${entry.title} per ${icon} ${label}`.trim() },
 		);
 	},
 	describe: (evaluator, sub, ctx) => {
@@ -27,12 +27,12 @@ registerEvaluatorFormatter('development', {
 		}
 		const icon = def?.icon || '';
 		const label = def?.name || devId;
-		return sub.map((s) =>
-			typeof s === 'string'
-				? `${s} for each ${icon} ${label}`.trim()
+		return sub.map((entry) =>
+			typeof entry === 'string'
+				? `${entry} for each ${icon} ${label}`.trim()
 				: {
-						...s,
-						title: `${s.title} for each ${icon} ${label}`.trim(),
+						...entry,
+						title: `${entry.title} for each ${icon} ${label}`.trim(),
 					},
 		);
 	},
