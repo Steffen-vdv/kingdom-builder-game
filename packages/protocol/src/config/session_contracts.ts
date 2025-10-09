@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { gameConfigSchema } from './schema';
+import {
+	actionSchema,
+	buildingSchema,
+	developmentSchema,
+	gameConfigSchema,
+	populationSchema,
+} from './schema';
 import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
@@ -7,6 +13,8 @@ import type {
 	SessionCreateResponse,
 	SessionIdentifier,
 	SessionPlayerNameMap,
+	SessionRegistryPayload,
+	SessionResourceDefinition,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
@@ -25,9 +33,26 @@ export const sessionCreateRequestSchema = z.object({
 	playerNames: sessionPlayerNameMapSchema.optional(),
 });
 
+export const sessionResourceDefinitionSchema = z.object({
+	key: z.string(),
+	icon: z.string(),
+	label: z.string(),
+	description: z.string(),
+	tags: z.array(z.string()).optional(),
+});
+
+export const sessionRegistryPayloadSchema = z.object({
+	actions: z.record(z.string(), actionSchema),
+	buildings: z.record(z.string(), buildingSchema),
+	developments: z.record(z.string(), developmentSchema),
+	populations: z.record(z.string(), populationSchema),
+	resources: z.record(z.string(), sessionResourceDefinitionSchema),
+});
+
 export const sessionCreateResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(),
+	registries: sessionRegistryPayloadSchema,
 });
 
 export const sessionStateResponseSchema = sessionCreateResponseSchema;
@@ -39,6 +64,7 @@ export const sessionAdvanceRequestSchema = z.object({
 export const sessionAdvanceResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(),
+	registries: sessionRegistryPayloadSchema,
 	advance: z.custom<SessionAdvanceResult>(),
 });
 
@@ -66,6 +92,15 @@ type _SessionCreateRequestMatches = Expect<
 >;
 type _SessionCreateResponseMatches = Expect<
 	Equal<z.infer<typeof sessionCreateResponseSchema>, SessionCreateResponse>
+>;
+type _SessionResourceDefinitionMatches = Expect<
+	Equal<
+		z.infer<typeof sessionResourceDefinitionSchema>,
+		SessionResourceDefinition
+	>
+>;
+type _SessionRegistryPayloadMatches = Expect<
+	Equal<z.infer<typeof sessionRegistryPayloadSchema>, SessionRegistryPayload>
 >;
 type _SessionStateResponseMatches = Expect<
 	Equal<z.infer<typeof sessionStateResponseSchema>, SessionStateResponse>

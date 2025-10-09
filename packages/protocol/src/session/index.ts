@@ -203,6 +203,8 @@ export type {
 	SessionAdvanceResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
+	SessionRegistryPayload,
+	SessionResourceDefinition,
 } from './contracts';
 
 export * as contracts from './contracts';

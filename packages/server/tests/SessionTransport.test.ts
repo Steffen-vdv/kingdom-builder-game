@@ -4,6 +4,7 @@ import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
+import { sessionRegistryPayloadSchema } from '@kingdom-builder/protocol/config/session_contracts';
 
 describe('SessionTransport', () => {
 	const middleware = createTokenAuthMiddleware({
@@ -39,6 +40,51 @@ describe('SessionTransport', () => {
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
+	});
+
+	it('includes base registries in session responses', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const expectedRegistries = sessionRegistryPayloadSchema.parse(
+			manager.getBaseRegistries(),
+		);
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('registry-session'),
+			authMiddleware: middleware,
+		});
+		const created = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const sessionId = created.sessionId;
+		expect(created.registries).toEqual(expectedRegistries);
+		const actionEntries = Object.values(created.registries.actions);
+		expect(actionEntries.length).toBeGreaterThan(0);
+		expect(actionEntries[0]).toHaveProperty('id');
+		expect(actionEntries[0]).toHaveProperty('name');
+		const resourceEntries = Object.values(created.registries.resources);
+		expect(resourceEntries.length).toBeGreaterThan(0);
+		expect(resourceEntries[0]).toMatchObject({
+			key: expect.any(String),
+			icon: expect.any(String),
+			label: expect.any(String),
+			description: expect.any(String),
+		});
+		const snapshot = transport.getSessionState({
+			body: { sessionId },
+			headers: authorizedHeaders,
+		});
+		expect(snapshot.registries).toEqual(expectedRegistries);
+		const advanced = await transport.advanceSession({
+			body: { sessionId },
+			headers: authorizedHeaders,
+		});
+		expect(advanced.registries).toEqual(expectedRegistries);
+		const toggled = transport.setDevMode({
+			body: { sessionId, enabled: true },
+			headers: authorizedHeaders,
+		});
+		expect(toggled.registries).toEqual(expectedRegistries);
 	});
 
 	it('skips blank player name entries when applying preferences', () => {

@@ -4,7 +4,12 @@ import {
 	createLocalSessionGateway,
 } from '../../src/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type { StartConfig, RuleSet } from '@kingdom-builder/protocol';
+import { RESOURCES } from '@kingdom-builder/contents';
+import type {
+	StartConfig,
+	RuleSet,
+	SessionRegistryPayload,
+} from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 
@@ -92,8 +97,20 @@ function createGateway() {
 		start: START,
 		rules: RULES,
 	});
+	const registries: SessionRegistryPayload = {
+		actions: Object.fromEntries(content.actions.entries()),
+		buildings: Object.fromEntries(content.buildings.entries()),
+		developments: Object.fromEntries(content.developments.entries()),
+		populations: Object.fromEntries(content.populations.entries()),
+		resources: Object.fromEntries(
+			Object.entries(RESOURCES).map(([key, definition]) => [
+				key,
+				{ ...definition },
+			]),
+		),
+	};
 	return {
-		gateway: createLocalSessionGateway(session),
+		gateway: createLocalSessionGateway(session, { registries }),
 		actionIds: {
 			gainGold: gainGold.id,
 			failing: failingAction.id,

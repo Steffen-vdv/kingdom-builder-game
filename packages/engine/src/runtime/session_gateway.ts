@@ -13,6 +13,7 @@ import type {
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
 	ActionExecuteErrorResponse,
+	SessionRegistryPayload,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from './session';
 import type { PlayerId } from '../state';
@@ -20,6 +21,7 @@ import type { ActionParameters } from '../actions/action_parameters';
 
 interface LocalSessionGatewayOptions {
 	readonly sessionId?: string;
+	readonly registries?: SessionRegistryPayload;
 }
 
 interface RequirementError extends Error {
@@ -104,6 +106,10 @@ export function createLocalSessionGateway(
 	options: LocalSessionGatewayOptions = {},
 ): SessionGateway {
 	const sessionId = options.sessionId ?? 'local-session';
+	const registries = options.registries;
+	if (!registries) {
+		throw new Error('Local session gateway requires registries.');
+	}
 	return {
 		createSession(
 			request?: SessionCreateRequest,
@@ -114,6 +120,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(registries),
 			});
 		},
 		fetchSnapshot(
@@ -123,6 +130,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(registries),
 			});
 		},
 		performAction(
@@ -156,6 +164,7 @@ export function createLocalSessionGateway(
 				sessionId,
 				snapshot: session.getSnapshot(),
 				advance,
+				registries: cloneRegistries(registries),
 			});
 		},
 		setDevMode(
@@ -166,7 +175,20 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(registries),
 			});
 		},
+	};
+}
+
+function cloneRegistries(
+	registries: SessionRegistryPayload,
+): SessionRegistryPayload {
+	return {
+		actions: { ...registries.actions },
+		buildings: { ...registries.buildings },
+		developments: { ...registries.developments },
+		populations: { ...registries.populations },
+		resources: { ...registries.resources },
 	};
 }

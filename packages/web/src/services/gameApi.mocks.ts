@@ -25,10 +25,14 @@ const clone: CloneFn = (value) => {
 };
 
 const toStateResponse = (
-	response: SessionCreateResponse,
+	response: Pick<
+		SessionCreateResponse,
+		'sessionId' | 'snapshot' | 'registries'
+	>,
 ): SessionStateResponse => ({
 	sessionId: response.sessionId,
 	snapshot: clone(response.snapshot),
+	registries: clone(response.registries),
 });
 
 export type GameApiMockHandlers = {
@@ -137,11 +141,16 @@ export class GameApiFake implements GameApi {
 		const response = this.#consumeAction();
 
 		if (this.#isSuccess(response)) {
+			const existing = this.#sessions.get(request.sessionId);
+			if (!existing) {
+				throw new Error('No session state primed for action response.');
+			}
 			this.#sessions.set(
 				request.sessionId,
 				toStateResponse({
 					sessionId: request.sessionId,
 					snapshot: response.snapshot,
+					registries: existing.registries,
 				}),
 			);
 		}
@@ -159,6 +168,7 @@ export class GameApiFake implements GameApi {
 			toStateResponse({
 				sessionId: response.sessionId,
 				snapshot: response.snapshot,
+				registries: response.registries,
 			}),
 		);
 

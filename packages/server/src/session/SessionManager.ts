@@ -10,7 +10,13 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	RESOURCES,
 } from '@kingdom-builder/contents';
+import type {
+	SessionRegistryPayload,
+	SessionResourceDefinition,
+	Registry,
+} from '@kingdom-builder/protocol';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -49,6 +55,8 @@ export class SessionManager {
 
 	private readonly baseOptions: EngineSessionBaseOptions;
 
+	private readonly baseRegistries: SessionRegistryPayload;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -59,14 +67,25 @@ export class SessionManager {
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
+		const actions = engineOptions.actions ?? ACTIONS;
+		const buildings = engineOptions.buildings ?? BUILDINGS;
+		const developments = engineOptions.developments ?? DEVELOPMENTS;
+		const populations = engineOptions.populations ?? POPULATIONS;
 		this.baseOptions = {
-			actions: engineOptions.actions ?? ACTIONS,
-			buildings: engineOptions.buildings ?? BUILDINGS,
-			developments: engineOptions.developments ?? DEVELOPMENTS,
-			populations: engineOptions.populations ?? POPULATIONS,
+			actions,
+			buildings,
+			developments,
+			populations,
 			phases: engineOptions.phases ?? PHASES,
 			start: engineOptions.start ?? GAME_START,
 			rules: engineOptions.rules ?? RULES,
+		};
+		this.baseRegistries = {
+			actions: serializeRegistry(actions),
+			buildings: serializeRegistry(buildings),
+			developments: serializeRegistry(developments),
+			populations: serializeRegistry(populations),
+			resources: serializeResourceDefinitions(RESOURCES),
 		};
 	}
 
@@ -137,6 +156,10 @@ export class SessionManager {
 		return this.sessions.size;
 	}
 
+	public getBaseRegistries(): SessionRegistryPayload {
+		return this.baseRegistries;
+	}
+
 	private requireSession(sessionId: string): EngineSession {
 		const session = this.getSession(sessionId);
 		if (!session) {
@@ -153,4 +176,16 @@ export class SessionManager {
 			}
 		}
 	}
+}
+
+function serializeRegistry<Definition>(
+	registry: Registry<Definition>,
+): Record<string, Definition> {
+	return Object.fromEntries(registry.entries());
+}
+
+function serializeResourceDefinitions(
+	resources: Record<string, SessionResourceDefinition>,
+): Record<string, SessionResourceDefinition> {
+	return { ...resources };
 }

@@ -122,6 +122,8 @@ export type {
 	SessionActionCostMap,
 	SessionRequirementFailure,
 	SessionActionRequirementList,
+	SessionRegistryPayload,
+	SessionResourceDefinition,
 } from './session';
 export type {
 	SessionIdentifier,

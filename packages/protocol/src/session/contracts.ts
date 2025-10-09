@@ -1,4 +1,10 @@
-import type { GameConfig } from '../config/schema';
+import type {
+	ActionConfig,
+	BuildingConfig,
+	DevelopmentConfig,
+	GameConfig,
+	PopulationConfig,
+} from '../config/schema';
 import type {
 	SessionAdvanceResult,
 	SessionPlayerId,
@@ -20,6 +26,7 @@ export interface SessionCreateRequest {
 export interface SessionCreateResponse {
 	sessionId: string;
 	snapshot: SessionSnapshot;
+	registries: SessionRegistryPayload;
 }
 
 export type SessionStateResponse = SessionCreateResponse;
@@ -35,3 +42,21 @@ export interface SessionSetDevModeRequest extends SessionIdentifier {
 }
 
 export type SessionSetDevModeResponse = SessionStateResponse;
+
+export interface SessionResourceDefinition {
+	key: string;
+	icon: string;
+	label: string;
+	description: string;
+	tags?: string[] | undefined;
+}
+
+export type SessionRegistryRecord<Definition> = Record<string, Definition>;
+
+export interface SessionRegistryPayload {
+	actions: SessionRegistryRecord<ActionConfig>;
+	buildings: SessionRegistryRecord<BuildingConfig>;
+	developments: SessionRegistryRecord<DevelopmentConfig>;
+	populations: SessionRegistryRecord<PopulationConfig>;
+	resources: SessionRegistryRecord<SessionResourceDefinition>;
+}

@@ -86,10 +86,12 @@ export class SessionTransport {
 				cause: error,
 			});
 		}
-		const response = {
+		const registries = this.sessionManager.getBaseRegistries();
+		const response: SessionCreateResponse = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
-		} satisfies SessionCreateResponse;
+			registries,
+		};
 		return sessionCreateResponseSchema.parse(response);
 	}
 
@@ -97,10 +99,12 @@ export class SessionTransport {
 		const sessionId = this.parseSessionIdentifier(request.body);
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = {
+		const registries = this.sessionManager.getBaseRegistries();
+		const response: SessionStateResponse = {
 			sessionId,
 			snapshot,
-		} satisfies SessionStateResponse;
+			registries,
+		};
 		return sessionStateResponseSchema.parse(response);
 	}
 
@@ -124,11 +128,13 @@ export class SessionTransport {
 				const snapshot = session.getSnapshot();
 				return { advance, snapshot };
 			});
-			const response = {
+			const registries = this.sessionManager.getBaseRegistries();
+			const response: SessionAdvanceResponse = {
 				sessionId,
 				snapshot: result.snapshot,
 				advance: result.advance,
-			} satisfies SessionAdvanceResponse;
+				registries,
+			};
 			return sessionAdvanceResponseSchema.parse(response);
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to advance session.', {
@@ -212,10 +218,12 @@ export class SessionTransport {
 		const { sessionId, enabled } = parsed.data;
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
-		const response = {
+		const registries = this.sessionManager.getBaseRegistries();
+		const response: SessionSetDevModeResponse = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
-		} satisfies SessionSetDevModeResponse;
+			registries,
+		};
 		return sessionSetDevModeResponseSchema.parse(response);
 	}
 
