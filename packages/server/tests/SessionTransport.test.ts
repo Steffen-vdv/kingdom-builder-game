@@ -161,7 +161,8 @@ describe('SessionTransport', () => {
 			body: { sessionId, actionId },
 			headers: authorizedHeaders,
 		});
-		expect(order[0]).toBe('costs');
+		expect(order[0]).toBe('enqueue');
+		expect(order[1]).toBe('costs');
 		expect(result.costs[costKey]).toBe(1);
 	});
 
