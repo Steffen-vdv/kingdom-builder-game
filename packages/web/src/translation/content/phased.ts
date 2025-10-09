@@ -56,22 +56,30 @@ export interface PhasedDef {
 	[key: string]: EffectDef<Record<string, unknown>>[] | undefined;
 }
 
+type PhaseEffectList =
+	| readonly EffectDef<Record<string, unknown>>[]
+	| undefined;
+
+type PhaseEffectMapper = (
+	effects: PhaseEffectList,
+	context: TranslationContext,
+) => SummaryEntry[];
+
 export class PhasedTranslator {
-	summarize(def: PhasedDef, context: TranslationContext): Summary {
-		return this.translate(def, context, summarizeEffects);
+	summarize(phasedDefinition: PhasedDef, context: TranslationContext): Summary {
+		const mapper = summarizeEffects;
+		return this.translate(phasedDefinition, context, mapper);
 	}
 
-	describe(def: PhasedDef, context: TranslationContext): Summary {
-		return this.translate(def, context, describeEffects);
+	describe(phasedDefinition: PhasedDef, context: TranslationContext): Summary {
+		const mapper = describeEffects;
+		return this.translate(phasedDefinition, context, mapper);
 	}
 
 	private translate(
-		def: PhasedDef,
+		phasedDefinition: PhasedDef,
 		context: TranslationContext,
-		effectMapper: (
-			effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
-			context: TranslationContext,
-		) => SummaryEntry[],
+		effectMapper: PhaseEffectMapper,
 	): Summary {
 		const root: SummaryEntry[] = [];
 		const handled = new Set<string>();
@@ -89,7 +97,8 @@ export class PhasedTranslator {
 				return;
 			}
 			handled.add(identifier);
-			const effects = effectMapper(def[key], context);
+			const definitionEffects = phasedDefinition[key];
+			const effects = effectMapper(definitionEffects, context);
 			if (!effects.length) {
 				return;
 			}
@@ -97,8 +106,9 @@ export class PhasedTranslator {
 			const stepLabel = formatStepTriggerLabel(context, identifier);
 			const title = (() => {
 				if (stepLabel) {
-					const prefix =
-						info?.icon && info.icon.trim().length ? `${info.icon} ` : '';
+					const icon = info?.icon ?? '';
+					const trimmedIcon = icon.trim();
+					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
 					return `${prefix}During ${stepLabel}`;
 				}
 				if (info) {
@@ -119,16 +129,18 @@ export class PhasedTranslator {
 			root.push(...effects);
 		};
 
-		const build = effectMapper(def.onBuild, context);
+		const build = effectMapper(phasedDefinition.onBuild, context);
 		if (build.length) {
 			root.push(...build);
 		}
 		handled.add('onBuild');
 
 		for (const phase of context.phases) {
-			const key =
-				`on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhasedDef;
-			applyTrigger(key, `${phase.icon} On each ${phase.label} Phase`);
+			const capitalizedPhaseId =
+				phase.id.charAt(0).toUpperCase() + phase.id.slice(1);
+			const phaseKey = `on${capitalizedPhaseId}Phase` as keyof PhasedDef;
+			const phaseTitle = `${phase.icon} On each ${phase.label} Phase`;
+			applyTrigger(phaseKey, phaseTitle);
 		}
 
 		const stepKeysFromInfo = Object.keys(triggerInfo).filter((key) =>
@@ -141,7 +153,7 @@ export class PhasedTranslator {
 		applyTrigger('onBeforeAttacked');
 		applyTrigger('onAttackResolved');
 
-		for (const key of Object.keys(def)) {
+		for (const key of Object.keys(phasedDefinition)) {
 			if (key === 'onBuild' || handled.has(key)) {
 				continue;
 			}
