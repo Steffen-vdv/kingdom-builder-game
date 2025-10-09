@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type {
-	EngineSession,
-	EngineSessionSnapshot,
-} from '@kingdom-builder/engine';
+import type { EngineSession } from '@kingdom-builder/engine';
+import type { SessionSnapshot } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import {
 	diffStepSnapshots,
@@ -14,10 +12,10 @@ import { getLegacySessionContext } from './getLegacySessionContext';
 
 interface UseCompensationLoggerOptions {
 	session: EngineSession;
-	sessionState: EngineSessionSnapshot;
+	sessionState: SessionSnapshot;
 	addLog: (
 		entry: string | string[],
-		player?: EngineSessionSnapshot['game']['players'][number],
+		player?: SessionSnapshot['game']['players'][number],
 	) => void;
 	resourceKeys: ResourceKey[];
 }
@@ -38,10 +36,11 @@ export function useCompensationLogger({
 		if (sessionState.game.turn !== 1) {
 			return;
 		}
-		const { diffContext: baseDiffContext } = getLegacySessionContext(
-			session,
-			sessionState,
-		);
+		const { diffContext: baseDiffContext } = getLegacySessionContext({
+			snapshot: sessionState,
+			ruleSnapshot: sessionState.rules,
+			passiveRecords: sessionState.passiveRecords,
+		});
 		sessionState.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {
 				return;
