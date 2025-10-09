@@ -83,7 +83,7 @@ function findBuildingStatSource(): { id: string; stat: StatKey } {
 
 describe('stat breakdown summary', () => {
 	it('includes ongoing and permanent army strength sources', () => {
-		const ctx = createEngine({
+		const engineContext = createEngine({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
@@ -101,16 +101,16 @@ describe('stat breakdown summary', () => {
 					params: { role: PopulationRole.Legion },
 				},
 			],
-			ctx,
+			engineContext,
 		);
 
-		const raiseStrengthPhase = ctx.phases.find((phase) =>
+		const raiseStrengthPhase = engineContext.phases.find((phase) =>
 			phase.steps.some((step) => step.id === PhaseStepId.RaiseStrength),
 		);
 		expect(raiseStrengthPhase).toBeDefined();
 		let result;
 		do {
-			result = advance(ctx);
+			result = advance(engineContext);
 		} while (
 			result.phase !== raiseStrengthPhase!.id ||
 			result.step !== PhaseStepId.RaiseStrength
@@ -118,8 +118,8 @@ describe('stat breakdown summary', () => {
 
 		const breakdown = getStatBreakdownSummary(
 			Stat.armyStrength,
-			ctx.activePlayer,
-			ctx,
+			engineContext.activePlayer,
+			engineContext,
 		);
 		expect(breakdown.length).toBeGreaterThanOrEqual(2);
 		const objectEntries = breakdown.filter(isSummaryObject);
@@ -165,7 +165,7 @@ describe('stat breakdown summary', () => {
 
 	it('omits removal suffix from build sources', () => {
 		const { id: buildingId, stat } = findBuildingStatSource();
-		const ctx = createEngine({
+		const engineContext = createEngine({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
@@ -188,12 +188,16 @@ describe('stat breakdown summary', () => {
 					params: { key: Resource.ap, amount: 5 },
 				},
 			],
-			ctx,
+			engineContext,
 		);
 
-		performAction(ActionId.build, ctx, { id: buildingId });
+		performAction(ActionId.build, engineContext, { id: buildingId });
 
-		const breakdown = getStatBreakdownSummary(stat, ctx.activePlayer, ctx);
+		const breakdown = getStatBreakdownSummary(
+			stat,
+			engineContext.activePlayer,
+			engineContext,
+		);
 		const objectEntries = breakdown.filter(isSummaryObject);
 		const buildSource = objectEntries.find((entry) =>
 			entry.title.includes('Build'),
