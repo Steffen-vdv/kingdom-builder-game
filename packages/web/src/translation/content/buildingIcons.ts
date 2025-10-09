@@ -17,24 +17,24 @@ export function registerBuildingIconFallback(id: string, icon: string): void {
 
 export function resolveBuildingIcon(
 	id: string,
-	ctx: BuildingLookupContext,
+	context: BuildingLookupContext,
 ): string {
-	return resolveBuildingDisplay(id, ctx).icon;
+	return resolveBuildingDisplay(id, context).icon;
 }
 
 export function resolveBuildingDisplay(
 	id: string,
-	ctx: BuildingLookupContext,
+	context: BuildingLookupContext,
 ): { name: string; icon: string } {
 	let name = id;
 	let icon = '';
 	try {
-		const def = ctx.buildings.get(id);
-		if (def?.name) {
-			name = def.name;
+		const buildingDefinition = context.buildings.get(id);
+		if (buildingDefinition?.name) {
+			name = buildingDefinition.name;
 		}
-		if (def?.icon) {
-			icon = def.icon;
+		if (buildingDefinition?.icon) {
+			icon = buildingDefinition.icon;
 		}
 	} catch {
 		// ignore missing building definitions
