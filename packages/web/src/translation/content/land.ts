@@ -14,7 +14,7 @@ function translate(
 		type: string,
 		target: unknown,
 		translationContext: TranslationContext,
-		opts?: Record<string, unknown>,
+		options?: Record<string, unknown>,
 	) => Summary,
 ): Summary {
 	const items: SummaryEntry[] = [];

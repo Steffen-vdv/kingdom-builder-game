@@ -19,71 +19,71 @@ export function registerContentTranslator<T, O>(
 export function summarizeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext,
-	opts?: O,
+	context: TranslationContext,
+	options?: O,
 ): Summary;
 export function summarizeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: LegacyContentTranslatorContext,
-	opts?: O,
+	context: LegacyContentTranslatorContext,
+	options?: O,
 ): Summary;
 export function summarizeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext,
-	opts?: O,
+	context: TranslationContext,
+	options?: O,
 ): Summary {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator ? translator.summarize(target, ctx, opts) : [];
+	return translator ? translator.summarize(target, context, options) : [];
 }
 
 export function describeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext,
-	opts?: O,
+	context: TranslationContext,
+	options?: O,
 ): Summary;
 export function describeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: LegacyContentTranslatorContext,
-	opts?: O,
+	context: LegacyContentTranslatorContext,
+	options?: O,
 ): Summary;
 export function describeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext,
-	opts?: O,
+	context: TranslationContext,
+	options?: O,
 ): Summary {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator ? translator.describe(target, ctx, opts) : [];
+	return translator ? translator.describe(target, context, options) : [];
 }
 
 export function logContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext,
-	opts?: O,
+	context: TranslationContext,
+	options?: O,
 ): TranslatorLogEntry[];
 export function logContent<T, O>(
 	type: string,
 	target: T,
-	ctx: LegacyContentTranslatorContext,
-	opts?: O,
+	context: LegacyContentTranslatorContext,
+	options?: O,
 ): TranslatorLogEntry[];
 export function logContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext,
-	opts?: O,
+	context: TranslationContext,
+	options?: O,
 ): TranslatorLogEntry[] {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator?.log ? translator.log(target, ctx, opts) : [];
+	return translator?.log ? translator.log(target, context, options) : [];
 }
