@@ -24,38 +24,11 @@ import type {
 } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
-import { type CreateSessionResult } from './sessionSdk';
+import type { SessionResourceKey } from './sessionTypes';
+import type { GameProviderInnerProps } from './GameProviderInner.types';
+import { useSessionQueue } from './useSessionQueue';
 
-export type Session = CreateSessionResult['session'];
-export type SessionSnapshot = CreateSessionResult['snapshot'];
-export type SessionRuleSnapshot = CreateSessionResult['ruleSnapshot'];
-export type SessionRegistries = CreateSessionResult['registries'];
-export type SessionResourceKeys = CreateSessionResult['resourceKeys'];
-export type SessionResourceKey = SessionResourceKeys[number];
-
-export interface GameProviderInnerProps {
-	children: React.ReactNode;
-	onExit?: () => void;
-	darkMode: boolean;
-	onToggleDark: () => void;
-	devMode: boolean;
-	musicEnabled: boolean;
-	onToggleMusic: () => void;
-	soundEnabled: boolean;
-	onToggleSound: () => void;
-	backgroundAudioMuted: boolean;
-	onToggleBackgroundAudioMute: () => void;
-	playerName: string;
-	onChangePlayerName: (name: string) => void;
-	session: Session;
-	sessionId: string;
-	sessionState: SessionSnapshot;
-	ruleSnapshot: SessionRuleSnapshot;
-	refreshSession: () => Promise<void>;
-	onReleaseSession: () => void;
-	registries: SessionRegistries;
-	resourceKeys: SessionResourceKeys;
-}
+export type { GameProviderInnerProps } from './GameProviderInner.types';
 
 export const GameEngineContext =
 	createContext<LegacyGameEngineContextValue | null>(null);
@@ -74,7 +47,7 @@ export function GameProviderInner({
 	onToggleBackgroundAudioMute,
 	playerName = DEFAULT_PLAYER_NAME,
 	onChangePlayerName = () => {},
-	session,
+	queue,
 	sessionId,
 	sessionState,
 	ruleSnapshot,
@@ -86,14 +59,14 @@ export function GameProviderInner({
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
+	const { session, enqueue, cachedSessionSnapshot } = useSessionQueue(
+		queue,
+		sessionState,
+	);
+
 	const refresh = useCallback(() => {
 		void refreshSession();
 	}, [refreshSession]);
-
-	const enqueue = useCallback(
-		<T,>(task: () => Promise<T> | T) => session.enqueue(task),
-		[session],
-	);
 
 	const primaryPlayerSnapshot = sessionState.game.players[0];
 	const primaryPlayerId = primaryPlayerSnapshot?.id;
@@ -107,14 +80,19 @@ export function GameProviderInner({
 		) {
 			return;
 		}
-		void session
-			.enqueue(() => {
-				session.updatePlayerName(primaryPlayerId, desiredName);
-			})
-			.finally(() => {
-				refresh();
-			});
-	}, [session, primaryPlayerId, primaryPlayerName, refresh, playerName]);
+		void enqueue(() => {
+			session.updatePlayerName(primaryPlayerId, desiredName);
+		}).finally(() => {
+			refresh();
+		});
+	}, [
+		enqueue,
+		session,
+		primaryPlayerId,
+		primaryPlayerName,
+		refresh,
+		playerName,
+	]);
 
 	const translationContext = useMemo(
 		() =>
@@ -161,11 +139,6 @@ export function GameProviderInner({
 		() => ({ sessionView }),
 		[sessionView],
 	);
-	const cachedSessionSnapshot = useMemo(
-		() => session.getSnapshot(),
-		[session, sessionState],
-	);
-
 	const actionPhaseId = useMemo(() => {
 		const phaseWithAction = sessionState.phases.find(
 			(phaseDefinition) => phaseDefinition.action,
