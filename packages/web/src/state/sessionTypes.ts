@@ -1,6 +1,7 @@
 import { type CreateSessionResult } from './sessionSdk';
 
 export type Session = CreateSessionResult['session'];
+export type LegacySession = CreateSessionResult['legacySession'];
 export type SessionSnapshot = CreateSessionResult['snapshot'];
 export type SessionRuleSnapshot = CreateSessionResult['ruleSnapshot'];
 export type SessionRegistries = CreateSessionResult['registries'];
@@ -11,5 +12,6 @@ export type SessionMetadata = CreateSessionResult['metadata'];
 export interface SessionQueueHelpers {
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
 	getCurrentSession: () => Session;
+	getLegacySession: () => LegacySession;
 	getLatestSnapshot: () => SessionSnapshot | null;
 }

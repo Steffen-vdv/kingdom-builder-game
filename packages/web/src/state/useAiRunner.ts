@@ -1,16 +1,13 @@
 import { useEffect } from 'react';
-import {
-	type ActionParams,
-	type EngineSession,
-	type EngineSessionSnapshot,
-} from '@kingdom-builder/engine';
+import { type ActionParams, type EngineSession } from '@kingdom-builder/engine';
 import type { Dispatch, SetStateAction } from 'react';
 import type { Action } from './actionTypes';
 import type { PhaseStep } from './phaseTypes';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 
 interface UseAiRunnerOptions {
 	session: EngineSession;
-	sessionState: EngineSessionSnapshot;
+	sessionState: SessionSnapshot;
 	runUntilActionPhaseCore: () => Promise<void>;
 	setPhaseHistories: Dispatch<SetStateAction<Record<string, PhaseStep[]>>>;
 	performRef: React.MutableRefObject<

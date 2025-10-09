@@ -51,6 +51,7 @@ export function GameProviderInner({
 	sessionId,
 	sessionState,
 	ruleSnapshot,
+	legacySession,
 	refreshSession,
 	onReleaseSession,
 	registries,
@@ -60,10 +61,13 @@ export function GameProviderInner({
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const { session, enqueue, cachedSessionSnapshot } = useSessionQueue(
-		queue,
-		sessionState,
-	);
+	const {
+		legacySession: queuedLegacySession,
+		enqueue,
+		cachedSessionSnapshot,
+	} = useSessionQueue(queue, sessionState);
+
+	const activeSession = legacySession ?? queuedLegacySession;
 
 	const refresh = useCallback(() => {
 		void refreshSession();
@@ -82,13 +86,13 @@ export function GameProviderInner({
 			return;
 		}
 		void enqueue(() => {
-			session.updatePlayerName(primaryPlayerId, desiredName);
+			activeSession.updatePlayerName(primaryPlayerId, desiredName);
 		}).finally(() => {
 			refresh();
 		});
 	}, [
 		enqueue,
-		session,
+		activeSession,
 		primaryPlayerId,
 		primaryPlayerName,
 		refresh,
@@ -192,7 +196,7 @@ export function GameProviderInner({
 		updateMainPhaseStep,
 		setPhaseHistories,
 	} = usePhaseProgress({
-		session,
+		session: activeSession,
 		sessionState,
 		sessionId,
 		actionPhaseId,
@@ -213,14 +217,14 @@ export function GameProviderInner({
 		});
 
 	useCompensationLogger({
-		session,
+		session: activeSession,
 		sessionState,
 		addLog,
 		resourceKeys,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
-		session,
+		session: activeSession,
 		sessionId,
 		actionCostResource,
 		addLog,
@@ -235,7 +239,7 @@ export function GameProviderInner({
 	});
 
 	useAiRunner({
-		session,
+		session: activeSession,
 		sessionState,
 		runUntilActionPhaseCore,
 		setPhaseHistories,
@@ -324,7 +328,7 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session,
+		session: activeSession,
 		sessionState,
 		sessionView,
 		handlePerform,

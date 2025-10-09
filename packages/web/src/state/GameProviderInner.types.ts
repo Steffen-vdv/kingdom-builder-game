@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { EngineSession } from '@kingdom-builder/engine';
 import type {
 	SessionQueueHelpers,
 	SessionRegistries,
@@ -26,6 +27,7 @@ export interface GameProviderInnerProps {
 	sessionId: string;
 	sessionState: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
+	legacySession: EngineSession;
 	refreshSession: () => Promise<void>;
 	onReleaseSession: () => void;
 	registries: SessionRegistries;

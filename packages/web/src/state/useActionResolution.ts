@@ -1,11 +1,11 @@
 import { useCallback, useRef, useState } from 'react';
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol/session';
 import { ACTION_EFFECT_DELAY } from './useGameLog';
 
 interface UseActionResolutionOptions {
 	addLog: (
 		entry: string | string[],
-		player?: Pick<PlayerStateSnapshot, 'id' | 'name'>,
+		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
 	setTrackedTimeout: (callback: () => void, delay: number) => number;
 	timeScaleRef: React.MutableRefObject<number>;
@@ -20,7 +20,7 @@ interface ResolutionActionMeta {
 
 interface ShowResolutionOptions {
 	lines: string | string[];
-	player?: Pick<PlayerStateSnapshot, 'id' | 'name'>;
+	player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
 	action?: ResolutionActionMeta;
 	summaries?: string[];
 }
@@ -29,7 +29,7 @@ interface ActionResolution {
 	lines: string[];
 	visibleLines: string[];
 	isComplete: boolean;
-	player?: Pick<PlayerStateSnapshot, 'id' | 'name'>;
+	player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
 	action?: ResolutionActionMeta;
 	summaries: string[];
 }

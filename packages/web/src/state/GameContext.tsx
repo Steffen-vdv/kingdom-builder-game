@@ -14,6 +14,7 @@ import {
 import {
 	type SessionQueueHelpers,
 	type Session,
+	type LegacySession,
 	type SessionRegistries,
 	type SessionResourceKeys,
 	type SessionRuleSnapshot,
@@ -47,6 +48,7 @@ type ProviderProps = {
 
 interface SessionContainer {
 	session: Session;
+	legacySession: LegacySession;
 	sessionId: string;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
@@ -136,6 +138,7 @@ export function GameProvider(props: ProviderProps) {
 				}
 				updateSessionData({
 					session: created.session,
+					legacySession: created.legacySession,
 					sessionId: created.sessionId,
 					snapshot: created.snapshot,
 					ruleSnapshot: created.ruleSnapshot,
@@ -167,6 +170,7 @@ export function GameProvider(props: ProviderProps) {
 				}
 				updateSessionData({
 					session: result.session,
+					legacySession: result.legacySession,
 					sessionId,
 					snapshot: result.snapshot,
 					ruleSnapshot: result.ruleSnapshot,
@@ -199,6 +203,13 @@ export function GameProvider(props: ProviderProps) {
 				}
 				return current.session;
 			},
+			getLegacySession: () => {
+				const current = sessionStateRef.current;
+				if (!current) {
+					throw new Error('Session not ready');
+				}
+				return current.legacySession;
+			},
 			getLatestSnapshot: () => latestSnapshotRef.current,
 		}),
 		[runExclusive],
@@ -225,6 +236,7 @@ export function GameProvider(props: ProviderProps) {
 		sessionId: sessionData.sessionId,
 		sessionState: sessionData.snapshot,
 		ruleSnapshot: sessionData.ruleSnapshot,
+		legacySession: sessionData.legacySession,
 		refreshSession,
 		onReleaseSession: handleRelease,
 		registries: sessionData.registries,
