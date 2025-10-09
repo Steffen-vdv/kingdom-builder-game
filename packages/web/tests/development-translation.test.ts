@@ -25,7 +25,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-const ctx = createEngine({
+const context = createEngine({
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
@@ -69,8 +69,8 @@ function hasSelfEvaluator(effects: EffectDef[] | undefined): boolean {
 function findSelfReferentialDevelopment(
 	registry: Iterable<[string, DevelopmentDef]>,
 ): string {
-	for (const [id, def] of registry) {
-		const values = def as unknown as Record<string, unknown>;
+	for (const [id, definition] of registry) {
+		const values = definition as unknown as Record<string, unknown>;
 		for (const value of Object.values(values)) {
 			if (Array.isArray(value) && hasSelfEvaluator(value as EffectDef[])) {
 				return id;
@@ -83,18 +83,23 @@ function findSelfReferentialDevelopment(
 describe('development translation', () => {
 	it('replaces self-referential placeholders when describing developments', () => {
 		const id = findSelfReferentialDevelopment(DEVELOPMENTS.entries());
-		const summary = summarizeContent('development', id, ctx as EngineContext);
+		const summary = summarizeContent(
+			'development',
+			id,
+			context as EngineContext,
+		);
 		const description = describeContent(
 			'development',
 			id,
-			ctx as EngineContext,
+			context as EngineContext,
 		);
 		const strings = [...flatten(summary), ...flatten(description)];
 
 		expect(strings.some((line) => line.includes('$id'))).toBe(false);
 
-		const def = ctx.developments.get(id);
-		const icon = def.icon || '';
+		const definition = context.developments.get(id);
+		expect(definition).toBeDefined();
+		const icon = definition?.icon || '';
 
 		const hasIncomeLine = strings.some((line) => {
 			return /Gain Income step/.test(line);
@@ -105,13 +110,15 @@ describe('development translation', () => {
 		expect(strings.some((line) => /Gold/.test(line))).toBe(true);
 		const prohibited = strings.filter(
 			(line) =>
-				line.includes(`per ${icon} ${def.name}`) ||
-				line.includes(`for each ${icon} ${def.name}`),
+				line.includes(`per ${icon} ${definition?.name ?? ''}`) ||
+				line.includes(`for each ${icon} ${definition?.name ?? ''}`),
 		);
 		expect(prohibited).toHaveLength(0);
 
-		const logEntry = logContent('development', id, ctx as EngineContext);
-		expect(logEntry.some((line) => line.includes(def.name))).toBe(true);
+		const logEntry = logContent('development', id, context as EngineContext);
+		expect(logEntry.some((line) => line.includes(definition?.name ?? ''))).toBe(
+			true,
+		);
 		if (icon) {
 			expect(logEntry.some((line) => line.includes(icon))).toBe(true);
 		}
