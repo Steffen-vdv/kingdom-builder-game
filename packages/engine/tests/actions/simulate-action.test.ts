@@ -11,18 +11,24 @@ describe('simulateAction', () => {
 			system: true,
 			effects: [{ type: 'land', method: LandMethods.TILL }],
 		});
-		const ctx = createTestEngine({ actions: content.actions });
-		ctx.activePlayer.actions.add(till.id);
+		const engineContext = createTestEngine({ actions: content.actions });
+		engineContext.activePlayer.actions.add(till.id);
 
-		expect(ctx.activePlayer.lands.some((land) => land.tilled)).toBe(false);
+		expect(engineContext.activePlayer.lands.some((land) => land.tilled)).toBe(
+			false,
+		);
 
-		simulateAction(till.id, ctx);
+		simulateAction(till.id, engineContext);
 
-		expect(ctx.activePlayer.lands.some((land) => land.tilled)).toBe(false);
+		expect(engineContext.activePlayer.lands.some((land) => land.tilled)).toBe(
+			false,
+		);
 
-		performAction(till.id, ctx);
+		performAction(till.id, engineContext);
 
-		expect(ctx.activePlayer.lands.some((land) => land.tilled)).toBe(true);
+		expect(engineContext.activePlayer.lands.some((land) => land.tilled)).toBe(
+			true,
+		);
 	});
 
 	it('throws when the simulated action would fail', () => {
@@ -34,10 +40,10 @@ describe('simulateAction', () => {
 				method: LandMethods.TILL,
 			})),
 		});
-		const ctx = createTestEngine({ actions: content.actions });
-		ctx.activePlayer.actions.add(tripleTill.id);
+		const engineContext = createTestEngine({ actions: content.actions });
+		engineContext.activePlayer.actions.add(tripleTill.id);
 
-		expect(() => simulateAction(tripleTill.id, ctx)).toThrow(
+		expect(() => simulateAction(tripleTill.id, engineContext)).toThrow(
 			/No tillable land available/,
 		);
 	});

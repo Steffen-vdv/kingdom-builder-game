@@ -4,7 +4,7 @@ import type { EngineContext } from '../../src/context';
 
 describe('getActionEffectGroups', () => {
 	it('throws when the action is missing from the registry', () => {
-		const ctx = {
+		const engineContext = {
 			actions: {
 				get: () => undefined,
 			},
@@ -12,7 +12,7 @@ describe('getActionEffectGroups', () => {
 		const missingActionId = 'missing-action';
 
 		expect(() =>
-			getActionEffectGroups(missingActionId, ctx as EngineContext),
+			getActionEffectGroups(missingActionId, engineContext as EngineContext),
 		).toThrow(`Unknown action "${missingActionId}"`);
 	});
 });
