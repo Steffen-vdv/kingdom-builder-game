@@ -1,12 +1,16 @@
 import type { EffectHandler } from '.';
 
-export const developmentRemove: EffectHandler = (effect, ctx, mult = 1) => {
+export const developmentRemove: EffectHandler = (
+	effect,
+	engineContext,
+	mult = 1,
+) => {
 	const id = effect.params?.['id'] as string;
 	const landId = effect.params?.['landId'] as string;
 	if (!id || !landId) {
 		throw new Error('development:remove requires id and landId');
 	}
-	const land = ctx.activePlayer.lands.find(
+	const land = engineContext.activePlayer.lands.find(
 		(landState) => landState.id === landId,
 	);
 	if (!land) {
@@ -20,6 +24,6 @@ export const developmentRemove: EffectHandler = (effect, ctx, mult = 1) => {
 		}
 		land.developments.splice(developmentIndex, 1);
 		land.slotsUsed = Math.max(0, land.slotsUsed - 1);
-		ctx.passives.removePassive(`${id}_${landId}`, ctx);
+		engineContext.passives.removePassive(`${id}_${landId}`, engineContext);
 	}
 };
