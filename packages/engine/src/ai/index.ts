@@ -9,14 +9,14 @@ type PerformActionResult = ActionTrace[] | void;
 
 export type PerformActionFn = <T extends string>(
 	actionId: T,
-	ctx: EngineContext,
+	engineContext: EngineContext,
 	params?: ActionParams<T>,
 ) => PerformActionResult | Promise<PerformActionResult>;
 
 type AdvanceResultValue = AdvanceResult | void;
 
 export type AdvanceFn = (
-	ctx: EngineContext,
+	engineContext: EngineContext,
 ) => AdvanceResultValue | Promise<AdvanceResultValue>;
 
 export interface AIDependencies {
@@ -25,7 +25,7 @@ export interface AIDependencies {
 }
 
 export type AIController = (
-	ctx: EngineContext,
+	engineContext: EngineContext,
 	deps: AIDependencies,
 ) => Promise<void> | void;
 
@@ -44,7 +44,7 @@ export class AISystem {
 
 	async run(
 		playerId: PlayerId,
-		ctx: EngineContext,
+		engineContext: EngineContext,
 		overrides?: Partial<AIDependencies>,
 	) {
 		const controller = this.controllers.get(playerId);
@@ -52,7 +52,7 @@ export class AISystem {
 			return false;
 		}
 		const deps = { ...this.deps, ...(overrides || {}) } as AIDependencies;
-		await controller(ctx, deps);
+		await controller(engineContext, deps);
 		return true;
 	}
 }
@@ -62,50 +62,53 @@ export function createAISystem(deps: AIDependencies) {
 }
 
 export function createTaxCollectorController(playerId: PlayerId): AIController {
-	return async (ctx, deps) => {
-		if (ctx.activePlayer.id !== playerId) {
+	return async (engineContext, deps) => {
+		if (engineContext.activePlayer.id !== playerId) {
 			return;
 		}
-		const phase = ctx.phases[ctx.game.phaseIndex];
+		const phase = engineContext.phases[engineContext.game.phaseIndex];
 		if (!phase?.action) {
 			return;
 		}
-		const apKey = ctx.actionCostResource;
+		const apKey = engineContext.actionCostResource;
 		if (!apKey) {
 			return;
 		}
 
 		const finishActionPhase = async () => {
-			if (ctx.activePlayer.id !== playerId) {
+			if (engineContext.activePlayer.id !== playerId) {
 				return;
 			}
-			if (!ctx.phases[ctx.game.phaseIndex]?.action) {
+			if (!engineContext.phases[engineContext.game.phaseIndex]?.action) {
 				return;
 			}
-			const remaining = ctx.activePlayer.resources[apKey];
+			const remaining = engineContext.activePlayer.resources[apKey];
 			if (typeof remaining === 'number' && remaining > 0) {
-				ctx.activePlayer.resources[apKey] = 0;
+				engineContext.activePlayer.resources[apKey] = 0;
 			}
-			await deps.advance(ctx);
+			await deps.advance(engineContext);
 		};
 
-		const definition = ctx.actions.get(TAX_ACTION_ID);
+		const definition = engineContext.actions.get(TAX_ACTION_ID);
 		if (!definition) {
 			await finishActionPhase();
 			return;
 		}
-		if (definition.system && !ctx.activePlayer.actions.has(TAX_ACTION_ID)) {
+		if (
+			definition.system &&
+			!engineContext.activePlayer.actions.has(TAX_ACTION_ID)
+		) {
 			await finishActionPhase();
 			return;
 		}
 
 		while (
-			ctx.activePlayer.id === playerId &&
-			ctx.phases[ctx.game.phaseIndex]?.action &&
-			(ctx.activePlayer.resources[apKey] ?? 0) > 0
+			engineContext.activePlayer.id === playerId &&
+			engineContext.phases[engineContext.game.phaseIndex]?.action &&
+			(engineContext.activePlayer.resources[apKey] ?? 0) > 0
 		) {
 			try {
-				await deps.performAction(TAX_ACTION_ID, ctx);
+				await deps.performAction(TAX_ACTION_ID, engineContext);
 			} catch (err) {
 				await finishActionPhase();
 				return;
@@ -113,9 +116,9 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		}
 
 		if (
-			ctx.activePlayer.id === playerId &&
-			ctx.phases[ctx.game.phaseIndex]?.action &&
-			(ctx.activePlayer.resources[apKey] ?? 0) === 0
+			engineContext.activePlayer.id === playerId &&
+			engineContext.phases[engineContext.game.phaseIndex]?.action &&
+			(engineContext.activePlayer.resources[apKey] ?? 0) === 0
 		) {
 			await finishActionPhase();
 		}
