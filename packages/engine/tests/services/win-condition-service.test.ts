@@ -1,0 +1,138 @@
+import { describe, it, expect } from 'vitest';
+import { randomUUID } from 'node:crypto';
+import { Resource as CResource, RULES } from '@kingdom-builder/contents';
+import type { WinConditionDefinition } from '@kingdom-builder/protocol';
+import { createTestEngine } from '../helpers';
+
+function createRulesWithWinConditions(winConditions: WinConditionDefinition[]) {
+	return {
+		...RULES,
+		winConditions,
+	} as typeof RULES;
+}
+
+describe('WinConditionService', () => {
+	it('awards a subject victory when self thresholds are met and ignores misses', () => {
+		const resourceKey = Object.values(CResource)[0]!;
+		const winCondition: WinConditionDefinition = {
+			id: randomUUID(),
+			trigger: {
+				type: 'resource',
+				key: resourceKey,
+				comparison: 'gte',
+				value: 5,
+				target: 'self',
+			},
+			result: { subject: 'victory', opponent: 'defeat' },
+		};
+		const ctx = createTestEngine({
+			rules: createRulesWithWinConditions([winCondition]),
+		});
+		const subject = ctx.game.players[0]!;
+		const opponent = ctx.game.players[1]!;
+		subject.resources[resourceKey] = 4;
+		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
+		expect(ctx.game.conclusion).toBeUndefined();
+		subject.resources[resourceKey] = 5;
+		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
+		expect(ctx.game.conclusion).toEqual({
+			conditionId: winCondition.id,
+			winnerId: subject.id,
+			loserId: opponent.id,
+			triggeredBy: subject.id,
+		});
+	});
+
+	it('grants opponent victories when their thresholds pass and skips failures', () => {
+		const resourceKey = Object.values(CResource)[0]!;
+		const winCondition: WinConditionDefinition = {
+			id: randomUUID(),
+			trigger: {
+				type: 'resource',
+				key: resourceKey,
+				comparison: 'lte',
+				value: 2,
+				target: 'opponent',
+			},
+			result: { subject: 'defeat', opponent: 'victory' },
+		};
+		const ctx = createTestEngine({
+			rules: createRulesWithWinConditions([winCondition]),
+		});
+		const subject = ctx.game.players[0]!;
+		const opponent = ctx.game.players[1]!;
+		opponent.resources[resourceKey] = 5;
+		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
+		expect(ctx.game.conclusion).toBeUndefined();
+		opponent.resources[resourceKey] = 1;
+		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
+		expect(ctx.game.conclusion).toEqual({
+			conditionId: winCondition.id,
+			winnerId: opponent.id,
+			loserId: subject.id,
+			triggeredBy: subject.id,
+		});
+	});
+
+	it('preserves existing conclusions without reapplying win conditions', () => {
+		const resourceKey = Object.values(CResource)[0]!;
+		const winCondition: WinConditionDefinition = {
+			id: randomUUID(),
+			trigger: {
+				type: 'resource',
+				key: resourceKey,
+				comparison: 'gte',
+				value: 1,
+				target: 'self',
+			},
+			result: { subject: 'victory', opponent: 'defeat' },
+		};
+		const ctx = createTestEngine({
+			rules: createRulesWithWinConditions([winCondition]),
+		});
+		const subject = ctx.game.players[0]!;
+		const opponent = ctx.game.players[1]!;
+		const existingConclusion = {
+			conditionId: randomUUID(),
+			winnerId: opponent.id,
+			loserId: subject.id,
+			triggeredBy: opponent.id,
+		};
+		ctx.game.conclusion = { ...existingConclusion };
+		subject.resources[resourceKey] = 10;
+		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
+		expect(ctx.game.conclusion).toEqual(existingConclusion);
+	});
+
+	it('clones win conditions without sharing definition references', () => {
+		const resourceKey = Object.values(CResource)[0]!;
+		const winCondition: WinConditionDefinition = {
+			id: randomUUID(),
+			trigger: {
+				type: 'resource',
+				key: resourceKey,
+				comparison: 'gte',
+				value: 3,
+				target: 'self',
+			},
+			result: { subject: 'victory', opponent: 'defeat' },
+		};
+		const ctx = createTestEngine({
+			rules: createRulesWithWinConditions([winCondition]),
+		});
+		const subject = ctx.game.players[0]!;
+		const opponent = ctx.game.players[1]!;
+		const clone = ctx.services.winCondition.clone();
+		(
+			clone as unknown as { definitions: WinConditionDefinition[] }
+		).definitions[0]!.trigger.value = 100;
+		subject.resources[resourceKey] = winCondition.trigger.value;
+		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
+		expect(ctx.game.conclusion).toEqual({
+			conditionId: winCondition.id,
+			winnerId: subject.id,
+			loserId: opponent.id,
+			triggeredBy: subject.id,
+		});
+	});
+});
