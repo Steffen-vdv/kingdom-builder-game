@@ -27,7 +27,7 @@ import {
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionContent';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 type MockGame = LegacyGameEngineContextValue;
 type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
@@ -123,11 +123,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 				passiveRecords: sessionState.passiveRecords,
 			},
 		);
-		const sessionRegistries: SessionRegistries = {
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-		};
+		const sessionRegistries = createSessionRegistries();
 		const sessionView = selectSessionView(sessionState, sessionRegistries);
 		currentGame = {
 			sessionId: 'test-session',

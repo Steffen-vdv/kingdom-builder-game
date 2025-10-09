@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
@@ -9,14 +8,18 @@ import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 
 interface PhaseProgressOptions {
 	session: LegacySession;
 	sessionState: SessionSnapshot;
 	sessionId: string;
 	actionPhaseId: string | undefined;
-	actionCostResource: ResourceKey;
+	actionCostResource: SessionResourceKey;
 	addLog: (
 		entry: string | string[],
 		player?: SessionPlayerStateSnapshot,
@@ -26,8 +29,12 @@ interface PhaseProgressOptions {
 	setTrackedInterval: (callback: () => void, delay: number) => number;
 	clearTrackedInterval: (id: number) => void;
 	refresh: () => void;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'resources'
+	>;
 }
 
 export function usePhaseProgress({
@@ -44,6 +51,7 @@ export function usePhaseProgress({
 	refresh,
 	resourceKeys,
 	enqueue,
+	registries,
 }: PhaseProgressOptions) {
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
@@ -63,6 +71,7 @@ export function usePhaseProgress({
 			setPhaseSteps,
 			setPhaseHistories,
 			setDisplayPhase,
+			resources: registries.resources,
 		});
 
 	const { runDelay, runStepDelay } = usePhaseDelays({
@@ -92,6 +101,7 @@ export function usePhaseProgress({
 				updateMainPhaseStep,
 				addLog,
 				refresh,
+				registries,
 			}),
 		[
 			actionCostResource,
@@ -99,6 +109,7 @@ export function usePhaseProgress({
 			mountedRef,
 			refresh,
 			resourceKeys,
+			registries,
 			runDelay,
 			runStepDelay,
 			session,

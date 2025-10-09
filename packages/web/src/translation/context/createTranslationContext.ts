@@ -4,11 +4,7 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
-import type {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-} from '@kingdom-builder/contents';
+import type { SessionRegistries } from '../../state/sessionRegistries';
 import type { TranslationContext, TranslationPassives } from './types';
 import {
 	cloneCompensations,
@@ -35,11 +31,7 @@ type TranslationContextOptions = {
 
 export function createTranslationContext(
 	session: SessionSnapshot,
-	registries: {
-		actions: typeof ACTIONS;
-		buildings: typeof BUILDINGS;
-		developments: typeof DEVELOPMENTS;
-	},
+	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>,
 	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,
 ): TranslationContext {

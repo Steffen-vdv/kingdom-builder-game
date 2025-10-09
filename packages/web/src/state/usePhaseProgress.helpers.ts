@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	SessionAdvanceResponse,
 	SessionAdvanceResult,
@@ -9,13 +8,17 @@ import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import { advanceSessionPhase } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 
 interface AdvanceToActionPhaseOptions {
 	session: LegacySession;
 	sessionId: string;
-	actionCostResource: ResourceKey;
-	resourceKeys: ResourceKey[];
+	actionCostResource: SessionResourceKey;
+	resourceKeys: SessionResourceKey[];
 	runDelay: (total: number) => Promise<void>;
 	runStepDelay: () => Promise<void>;
 	mountedRef: React.MutableRefObject<boolean>;
@@ -33,6 +36,7 @@ interface AdvanceToActionPhaseOptions {
 		player?: SessionPlayerStateSnapshot,
 	) => void;
 	refresh: () => void;
+	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
 }
 
 export async function advanceToActionPhase({
@@ -52,6 +56,7 @@ export async function advanceToActionPhase({
 	updateMainPhaseStep,
 	addLog,
 	refresh,
+	registries,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
 	if (snapshot.game.conclusion) {
@@ -141,6 +146,7 @@ export async function advanceToActionPhase({
 				snapshot: snapshotAfter,
 				ruleSnapshot: snapshotAfter.rules,
 				passiveRecords: snapshotAfter.passiveRecords,
+				registries,
 			});
 			const changes = diffStepSnapshots(
 				before,
