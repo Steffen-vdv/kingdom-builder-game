@@ -87,17 +87,17 @@ describe('sub-action logging', () => {
 		for (const key of Object.keys(
 			costs,
 		) as (keyof typeof SYNTHETIC_RESOURCES)[]) {
-			const amt = costs[key] ?? 0;
-			if (!amt) {
+			const amount = costs[key] ?? 0;
+			if (!amount) {
 				continue;
 			}
 			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
-			const b = before.resources[key] ?? 0;
-			const a = b - amt;
+			const beforeResource = before.resources[key] ?? 0;
+			const afterResource = beforeResource - amount;
 			costLines.push({
-				text: `${icon}${label} -${amt} (${b}→${a})`,
+				text: `${icon}${label} -${amount} (${beforeResource}→${afterResource})`,
 				depth: 2,
 				kind: 'cost-detail',
 			});
@@ -125,7 +125,7 @@ describe('sub-action logging', () => {
 		const logLines = formatActionLogLines(messages, filtered);
 
 		const expandTrace = traces.find(
-			(t) => t.id === synthetic.expand.id,
+			(traceEntry) => traceEntry.id === synthetic.expand.id,
 		) as ActionTrace;
 		const expandDiff = diffStepSnapshots(
 			expandTrace.before,
@@ -139,7 +139,7 @@ describe('sub-action logging', () => {
 			expect(logLines).not.toContain(`• ${line}`);
 		});
 		const tillTrace = traces.find(
-			(t) => t.id === synthetic.till.id,
+			(traceEntry) => traceEntry.id === synthetic.till.id,
 		) as ActionTrace;
 		const tillDiff = diffStepSnapshots(
 			tillTrace.before,
