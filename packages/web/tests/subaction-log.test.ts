@@ -110,19 +110,19 @@ describe('sub-action logging', () => {
 				...costLines,
 			);
 		}
-		const subLines = appendSubActionChanges({
+		const subActionChangeSummaries = appendSubActionChanges({
 			traces,
 			context: ctx,
-			diffContext,
+			differenceContext: diffContext,
 			resourceKeys: RESOURCE_KEYS,
 			messages,
 		});
-		const filtered = filterActionDiffChanges({
+		const filteredChangeSummaries = filterActionDiffChanges({
 			changes,
 			messages,
-			subLines,
+			subActionChangeSummaries,
 		});
-		const logLines = formatActionLogLines(messages, filtered);
+		const logLines = formatActionLogLines(messages, filteredChangeSummaries);
 
 		const expandTrace = traces.find(
 			(traceEntry) => traceEntry.id === synthetic.expand.id,

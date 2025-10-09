@@ -131,19 +131,19 @@ describe('tax action logging with market', () => {
 				...costDescriptors,
 			);
 		}
-		const subLines = appendSubActionChanges({
+		const subActionChangeSummaries = appendSubActionChanges({
 			traces,
 			context: engineContext,
-			diffContext: translationDiffContext,
+			differenceContext: translationDiffContext,
 			resourceKeys: RESOURCE_KEYS,
 			messages,
 		});
-		const filtered = filterActionDiffChanges({
+		const filteredChangeSummaries = filterActionDiffChanges({
 			changes,
 			messages,
-			subLines,
+			subActionChangeSummaries,
 		});
-		const logLines = formatActionLogLines(messages, filtered);
+		const logLines = formatActionLogLines(messages, filteredChangeSummaries);
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const populationIcon =
 			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon ||

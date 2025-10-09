@@ -122,7 +122,7 @@ export function useActionPerformer({
 			if (!playerBefore) {
 				throw new Error('Missing active player before action');
 			}
-			const before = snapshotPlayer(playerBefore);
+			const playerStateBeforeAction = snapshotPlayer(playerBefore);
 			try {
 				const response = await performSessionAction({
 					sessionId,
@@ -140,7 +140,8 @@ export function useActionPerformer({
 					ruleSnapshot: snapshotAfter.rules,
 					passiveRecords: snapshotAfter.passiveRecords,
 				});
-				const { translationContext, diffContext } = legacyContext;
+				const { translationContext, diffContext: differenceContext } =
+					legacyContext;
 				context = translationContext;
 				const playerAfter = snapshotAfter.game.players.find(
 					(entry) => entry.id === activePlayerId,
@@ -148,14 +149,14 @@ export function useActionPerformer({
 				if (!playerAfter) {
 					throw new Error('Missing active player after action');
 				}
-				const after = snapshotPlayer(playerAfter);
-				const stepDef = context.actions.get(action.id);
-				const resolvedStep = resolveActionEffects(stepDef, params);
+				const playerStateAfterAction = snapshotPlayer(playerAfter);
+				const actionDefinition = context.actions.get(action.id);
+				const resolvedStep = resolveActionEffects(actionDefinition, params);
 				const changes = diffStepSnapshots(
-					before,
-					after,
+					playerStateBeforeAction,
+					playerStateAfterAction,
 					resolvedStep,
-					diffContext,
+					differenceContext,
 					resourceKeys,
 				);
 				const rawMessages = logContent('action', action.id, context, params);
@@ -163,7 +164,7 @@ export function useActionPerformer({
 				const logHeadline = messages[0]?.text;
 				const costLines = buildActionCostLines({
 					costs,
-					beforeResources: before.resources,
+					beforeResources: playerStateBeforeAction.resources,
 				});
 				if (costLines.length) {
 					const header: ActionLogLineDescriptor = {
@@ -173,26 +174,26 @@ export function useActionPerformer({
 					};
 					messages.splice(1, 0, header, ...costLines);
 				}
-				const subLines = appendSubActionChanges({
+				const subActionChangeSummaries = appendSubActionChanges({
 					traces,
 					context,
-					diffContext,
+					differenceContext,
 					resourceKeys,
 					messages,
 				});
-				const filtered = filterActionDiffChanges({
+				const filteredChangeSummaries = filterActionDiffChanges({
 					changes,
 					messages,
-					subLines,
+					subActionChangeSummaries,
 				});
 				const logLines = (
 					action.id === ActionId.develop
 						? formatDevelopActionLogLines
 						: formatActionLogLines
-				)(messages, filtered);
+				)(messages, filteredChangeSummaries);
 				const actionMeta = buildResolutionActionMeta(
 					action,
-					stepDef,
+					actionDefinition,
 					logHeadline,
 				);
 				const resolutionPlayer = {
@@ -206,7 +207,7 @@ export function useActionPerformer({
 						action: actionMeta,
 						lines: logLines,
 						player: resolutionPlayer,
-						summaries: filtered,
+						summaries: filteredChangeSummaries,
 					});
 				} catch (_error) {
 					addLog(logLines, resolutionPlayer);
@@ -219,7 +220,7 @@ export function useActionPerformer({
 				}
 				if (
 					snapshotAfter.game.devMode &&
-					(playerAfter.resources[actionCostResource] ?? 0) <= 0
+					(playerStateAfterAction.resources[actionCostResource] ?? 0) <= 0
 				) {
 					await endTurn();
 				}

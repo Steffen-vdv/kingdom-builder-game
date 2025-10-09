@@ -128,12 +128,12 @@ describe('action cost and reward logging', () => {
 				...costLines,
 			);
 		}
-		const filtered = filterActionDiffChanges({
+		const filteredChangeSummaries = filterActionDiffChanges({
 			changes,
 			messages,
-			subLines: [],
+			subActionChangeSummaries: [],
 		});
-		const logLines = formatActionLogLines(messages, filtered);
+		const logLines = formatActionLogLines(messages, filteredChangeSummaries);
 		const coinInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const coinCost = costs[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		expect(logLines).toContain('• 💲 Action cost');
@@ -143,7 +143,7 @@ describe('action cost and reward logging', () => {
 		expect(costEntry).toBeDefined();
 		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const rewardLine = filtered.find(
+		const rewardLine = filteredChangeSummaries.find(
 			(line) =>
 				line.startsWith(`${coinInfo.icon} ${coinInfo.label}`) &&
 				line.includes('+') &&

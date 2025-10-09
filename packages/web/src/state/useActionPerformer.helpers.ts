@@ -9,7 +9,7 @@ import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 interface AppendSubActionChangesOptions {
 	traces: ActionTrace[];
 	context: TranslationContext;
-	diffContext: TranslationDiffContext;
+	differenceContext: TranslationDiffContext;
 	resourceKeys: ResourceKey[];
 	messages: ActionLogLineDescriptor[];
 }
@@ -17,11 +17,11 @@ interface AppendSubActionChangesOptions {
 export function appendSubActionChanges({
 	traces,
 	context,
-	diffContext,
+	differenceContext,
 	resourceKeys,
 	messages,
 }: AppendSubActionChangesOptions): string[] {
-	const subLines: string[] = [];
+	const subActionChangeSummaries: string[] = [];
 	for (const trace of traces) {
 		const subStep = context.actions.get(trace.id);
 		const subResolved = resolveActionEffects(subStep);
@@ -29,13 +29,13 @@ export function appendSubActionChanges({
 			snapshotPlayer(trace.before),
 			snapshotPlayer(trace.after),
 			subResolved,
-			diffContext,
+			differenceContext,
 			resourceKeys,
 		);
 		if (!subChanges.length) {
 			continue;
 		}
-		subLines.push(...subChanges);
+		subActionChangeSummaries.push(...subChanges);
 		const actionDefinition = context.actions.get(trace.id);
 		const icon = actionDefinition?.icon ?? '';
 		const name = actionDefinition?.name ?? trace.id;
@@ -62,7 +62,7 @@ export function appendSubActionChanges({
 		}));
 		messages.splice(index + 1, 0, ...nested);
 	}
-	return subLines;
+	return subActionChangeSummaries;
 }
 
 interface BuildActionCostLinesOptions {
@@ -99,7 +99,7 @@ export function buildActionCostLines({
 interface FilterActionDiffChangesOptions {
 	changes: string[];
 	messages: ActionLogLineDescriptor[];
-	subLines: string[];
+	subActionChangeSummaries: string[];
 }
 
 function normalizeLine(line: string): string {
@@ -113,9 +113,9 @@ function normalizeLine(line: string): string {
 export function filterActionDiffChanges({
 	changes,
 	messages,
-	subLines,
+	subActionChangeSummaries,
 }: FilterActionDiffChangesOptions): string[] {
-	const subPrefixes = subLines.map(normalizeLine);
+	const subPrefixes = subActionChangeSummaries.map(normalizeLine);
 	const messagePrefixes = new Set<string>();
 	for (const line of messages) {
 		const normalized = normalizeLine(line.text);
