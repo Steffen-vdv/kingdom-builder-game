@@ -57,12 +57,15 @@ function flattenSummary(entries: Summary): string[] {
 class TierTranslator
 	implements ContentTranslator<HappinessTierDefinition, Record<string, never>>
 {
-	summarize(tier: HappinessTierDefinition, ctx: TranslationContext): Summary {
+	summarize(
+		tier: HappinessTierDefinition,
+		context: TranslationContext,
+	): Summary {
 		const summaryLines: string[] = [];
 		const translated = translateTierSummary(tier.display?.summaryToken);
 		appendUnique(summaryLines, splitLines(translated ?? tier.text?.summary));
 		if (!summaryLines.length && tier.preview?.effects?.length) {
-			const effectSummaries = summarizeEffects(tier.preview.effects, ctx);
+			const effectSummaries = summarizeEffects(tier.preview.effects, context);
 			appendUnique(summaryLines, flattenSummary(effectSummaries));
 		}
 		if (!summaryLines.length) {
@@ -88,8 +91,11 @@ class TierTranslator
 		return summary;
 	}
 
-	describe(tier: HappinessTierDefinition, ctx: TranslationContext): Summary {
-		return this.summarize(tier, ctx);
+	describe(
+		tier: HappinessTierDefinition,
+		context: TranslationContext,
+	): Summary {
+		return this.summarize(tier, context);
 	}
 }
 
