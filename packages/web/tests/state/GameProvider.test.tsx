@@ -3,7 +3,7 @@ import React from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import type { EngineSession } from '@kingdom-builder/engine';
+import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
 import {
 	createSessionSnapshot,
@@ -158,7 +158,7 @@ function SessionInspector() {
 }
 
 describe('GameProvider', () => {
-	let session: EngineSession;
+	let session: LegacySession;
 	let registries: SessionRegistries;
 	let resourceKeys: ResourceKey[];
 	beforeEach(() => {
@@ -253,10 +253,11 @@ describe('GameProvider', () => {
 			getActionCosts: vi.fn(() => ({})),
 			performAction: vi.fn(),
 			setDevMode: vi.fn(),
-		} as unknown as EngineSession;
+		} as unknown as LegacySession;
 		createSessionMock.mockResolvedValue({
 			sessionId: 'session-1',
 			session,
+			legacySession: session,
 			snapshot: initialSnapshot,
 			ruleSnapshot: initialSnapshot.rules,
 			registries,
@@ -265,6 +266,7 @@ describe('GameProvider', () => {
 		});
 		fetchSnapshotMock.mockResolvedValue({
 			session,
+			legacySession: session,
 			snapshot: refreshedSnapshot,
 			ruleSnapshot: refreshedSnapshot.rules,
 			registries,
