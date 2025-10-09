@@ -215,6 +215,10 @@ describe('<HoverCard />', () => {
 				},
 			});
 		});
+		expect(mockGame.resolution?.source).toEqual({
+			kind: 'phase',
+			label: 'Phase',
+		});
 		const continueButton = screen.getByRole('button', {
 			name: 'Continue',
 		});

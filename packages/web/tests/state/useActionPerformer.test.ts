@@ -2,6 +2,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequirementFailure } from '@kingdom-builder/engine';
+import type * as ProtocolModule from '@kingdom-builder/protocol';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
 import {
@@ -17,9 +18,23 @@ const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
 const logContentMock = vi.hoisted(() => vi.fn(() => []));
 const performSessionActionMock = vi.hoisted(() => vi.fn());
+const diffStepSnapshotsMock = vi.hoisted(() => vi.fn(() => []));
+const resolveActionEffectsMock = vi.hoisted(() =>
+	vi.fn(() => ({ effects: [] })),
+);
+
+vi.mock('@kingdom-builder/protocol', async () => {
+	const actual = await vi.importActual<typeof ProtocolModule>(
+		'@kingdom-builder/protocol',
+	);
+	return {
+		...actual,
+		resolveActionEffects: resolveActionEffectsMock,
+	};
+});
 
 vi.mock('../../src/translation', () => ({
-	diffStepSnapshots: vi.fn(),
+	diffStepSnapshots: diffStepSnapshotsMock,
 	logContent: logContentMock,
 	snapshotPlayer: snapshotPlayerMock,
 	translateRequirementFailure: translateRequirementFailureMock,
@@ -51,6 +66,12 @@ describe('useActionPerformer', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		performSessionActionMock.mockReset();
+		diffStepSnapshotsMock.mockReset();
+		diffStepSnapshotsMock.mockReturnValue([]);
+		resolveActionEffectsMock.mockReset();
+		resolveActionEffectsMock.mockReturnValue({ effects: [] });
+		logContentMock.mockReset();
+		logContentMock.mockReturnValue([]);
 		const [firstResourceKey] = RESOURCE_KEYS;
 		if (!firstResourceKey) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -102,9 +123,59 @@ describe('useActionPerformer', () => {
 		addLog = vi.fn();
 		getLegacySessionContextMock.mockReturnValue({
 			translationContext: {
-				actions: new Map([[action.id, { icon: '⚔️' }]]),
+				actions: new Map([[action.id, { icon: '⚔️', name: 'Attack' }]]),
 			},
 			diffContext: {},
+		});
+	});
+
+	it('passes enriched resolution metadata when action succeeds', async () => {
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const updateMainPhaseStep = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn();
+		const traces: unknown[] = [];
+		const costs = {};
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'ok',
+			snapshot: sessionSnapshot,
+			traces,
+			costs,
+		});
+		diffStepSnapshotsMock.mockReturnValueOnce([]);
+		logContentMock.mockReturnValueOnce(['⚔️ Attack']);
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				addLog,
+				showResolution,
+				updateMainPhaseStep,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(showResolution).toHaveBeenCalledTimes(1);
+		const options = showResolution.mock.calls[0]?.[0];
+		expect(options).toMatchObject({
+			actorLabel: 'Played by',
+			source: {
+				kind: 'action',
+				label: 'Action',
+				id: action.id,
+				name: 'Attack',
+				icon: '⚔️',
+			},
 		});
 	});
 

@@ -55,7 +55,12 @@ describe('useActionResolution', () => {
 				name: 'Player A',
 			});
 			expect(result.current.resolution?.visibleLines).toEqual(['First reveal']);
-			expect(result.current.resolution?.source).toBe('action');
+			expect(result.current.resolution?.source).toEqual({
+				kind: 'action',
+				label: 'Action',
+				id: actionMeta.id,
+				name: actionMeta.name,
+			});
 			expect(result.current.resolution?.actorLabel).toBe('Test Action');
 			expect(result.current.resolution?.isComplete).toBe(false);
 			expect(setTrackedTimeout).toHaveBeenLastCalledWith(
@@ -132,7 +137,12 @@ describe('useActionResolution', () => {
 					},
 				});
 			});
-			expect(result.current.resolution?.source).toBe('action');
+			expect(result.current.resolution?.source).toEqual({
+				kind: 'action',
+				label: 'Action',
+				id: 'action-id',
+				name: 'Action Name',
+			});
 			expect(result.current.resolution?.actorLabel).toBe('Action Name');
 			act(() => {
 				result.current.acknowledgeResolution();
@@ -142,11 +152,15 @@ describe('useActionResolution', () => {
 			act(() => {
 				void result.current.showResolution({
 					lines: ['Phase line'],
-					source: 'phase',
+					source: { kind: 'phase', label: 'Phase', name: 'Growth Phase' },
 					actorLabel: 'Growth Phase',
 				});
 			});
-			expect(result.current.resolution?.source).toBe('phase');
+			expect(result.current.resolution?.source).toEqual({
+				kind: 'phase',
+				label: 'Phase',
+				name: 'Growth Phase',
+			});
 			expect(result.current.resolution?.actorLabel).toBe('Growth Phase');
 		} finally {
 			vi.useRealTimers();

@@ -18,7 +18,7 @@ interface ResolutionLabels {
 	player: string;
 }
 
-const SOURCE_LABELS: Record<ResolutionSource, ResolutionLabels> = {
+const SOURCE_LABELS: Record<ResolutionSource['kind'], ResolutionLabels> = {
 	action: {
 		title: 'Action',
 		player: 'Played by',
@@ -36,7 +36,13 @@ interface ResolutionCardProps {
 }
 
 function resolveSourceLabels(source: ResolutionSource | undefined) {
-	return SOURCE_LABELS[source ?? 'action'] ?? SOURCE_LABELS.action;
+	const kind = source?.kind ?? 'action';
+	const defaults = SOURCE_LABELS[kind] ?? SOURCE_LABELS.action;
+	const customTitle = source?.label?.trim();
+	return {
+		title: customTitle || defaults.title,
+		player: defaults.player,
+	};
 }
 
 function ResolutionCard({
@@ -56,10 +62,12 @@ function ResolutionCard({
 		.replace(/\s{2,}/g, ' ')
 		.trim();
 	const rawActionName = (resolution.action?.name ?? '').trim();
-	const actionName = rawActionName || fallbackActionName;
+	const sourceName = resolution.source?.name?.trim() ?? '';
+	const actionName = rawActionName || sourceName || fallbackActionName;
 	const resolvedLabels = resolveSourceLabels(resolution.source);
 	const actorLabel = (resolution.actorLabel ?? '').trim() || actionName;
-	const actionIcon = resolution.action?.icon?.trim();
+	const actionIcon =
+		resolution.action?.icon?.trim() || resolution.source?.icon?.trim();
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);

@@ -14,7 +14,7 @@ function createResolution(
 		visibleLines: ['First line'],
 		isComplete: true,
 		summaries: [],
-		source: 'action',
+		source: { kind: 'action', label: 'Action' },
 		...overrides,
 	} as ActionResolution;
 }
@@ -46,7 +46,7 @@ describe('<ResolutionCard />', () => {
 
 	it('renders custom source metadata when provided', () => {
 		const resolution = createResolution({
-			source: 'phase',
+			source: { kind: 'phase', label: 'Phase', name: 'Growth Phase' },
 			actorLabel: 'Growth Phase',
 			player: {
 				id: 'player-2',
