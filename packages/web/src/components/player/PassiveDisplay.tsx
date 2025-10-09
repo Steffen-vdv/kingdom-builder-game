@@ -48,8 +48,10 @@ export default function PassiveDisplay({
 	const playerId: PlayerId = player.id;
 	const summaries: PassiveSummary[] =
 		translationContext.passives.list(playerId);
-	const defs = translationContext.passives.definitions(playerId);
-	const defMap = new Map(defs.map((def) => [def.id, def]));
+	const definitions = translationContext.passives.definitions(playerId);
+	const definitionMap = new Map(
+		definitions.map((definition) => [definition.id, definition]),
+	);
 
 	const tierDefinitions = ruleSnapshot.tierDefinitions;
 	const happinessKey = ruleSnapshot.tieredResourceKey as ResourceKey;
@@ -70,14 +72,17 @@ export default function PassiveDisplay({
 	);
 
 	const entries = visibleSummaries
-		.map((summary) => ({ summary, def: defMap.get(summary.id) }))
+		.map((summary) => ({
+			summary,
+			definition: definitionMap.get(summary.id),
+		}))
 		.filter(
 			(
 				entry,
 			): entry is {
 				summary: PassiveSummary;
-				def: (typeof defs)[number];
-			} => entry.def !== undefined,
+				definition: (typeof definitions)[number];
+			} => entry.definition !== undefined,
 		);
 	if (entries.length === 0) {
 		return null;
@@ -87,22 +92,25 @@ export default function PassiveDisplay({
 	return (
 		<div
 			ref={animatePassives}
-			className="panel-card flex w-fit flex-col gap-3 px-4 py-3 text-left text-base"
+			className={
+				'panel-card flex w-fit flex-col gap-3 px-4 py-3 ' +
+				'text-left text-base'
+			}
 		>
-			{entries.map(({ summary: passive, def }) => {
-				const definition: PassiveDefinitionLike = {};
-				if (typeof def.detail === 'string') {
-					definition.detail = def.detail;
+			{entries.map(({ summary: passive, definition }) => {
+				const passiveDefinition: PassiveDefinitionLike = {};
+				if (typeof definition.detail === 'string') {
+					passiveDefinition.detail = definition.detail;
 				}
-				if (def.meta) {
-					definition.meta = def.meta;
+				if (definition.meta) {
+					passiveDefinition.meta = definition.meta;
 				}
-				const resolvedEffects = normalizeEffectList(def.effects);
+				const resolvedEffects = normalizeEffectList(definition.effects);
 				if (resolvedEffects.length > 0) {
-					definition.effects = resolvedEffects;
+					passiveDefinition.effects = resolvedEffects;
 				}
 				const presentation = resolvePassivePresentation(passive, {
-					definition,
+					definition: passiveDefinition,
 				});
 				const icon = presentation.icon || PASSIVE_INFO.icon || '';
 				const label = presentation.label;
@@ -124,13 +132,18 @@ export default function PassiveDisplay({
 				const upkeepLabel =
 					translationContext.phases.find((phase) => phase.id === PhaseId.Upkeep)
 						?.label || 'Upkeep';
-				const sections = def.onUpkeepPhase
+				const sections = definition.onUpkeepPhase
 					? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
 					: items;
 				return (
 					<div
 						key={passive.id}
-						className="hoverable cursor-help rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm transition hover:border-blue-400/70 hover:bg-white/80 dark:border-white/10 dark:bg-slate-900/50 dark:hover:border-blue-300/60 dark:hover:bg-slate-900/70"
+						className={
+							'hoverable cursor-help rounded-xl border border-white/50 ' +
+							'bg-white/60 p-3 shadow-sm transition hover:border-blue-400/70 ' +
+							'hover:bg-white/80 dark:border-white/10 dark:bg-slate-900/50 ' +
+							'dark:hover:border-blue-300/60 dark:hover:bg-slate-900/70'
+						}
 						onMouseEnter={() => {
 							const { effects, description } = splitSummary(sections);
 							const descriptionEntries = tierDefinition
