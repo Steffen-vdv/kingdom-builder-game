@@ -63,12 +63,19 @@ describe('plow action translation', () => {
 	it('describes plow action without perform prefix and with passive icon', () => {
 		const { ctx, plow, plowPassive } = createCtx();
 		const desc = describeContent('action', plow.id, ctx);
-		const titles = desc.map((d) => (typeof d === 'string' ? d : d.title));
-		titles.forEach((t) => expect(t).not.toMatch(/^Perform action/));
-		const passiveEntry = desc.find(
-			(d) =>
-				typeof d === 'object' && d.title.includes(SYNTHETIC_UPKEEP_PHASE.label),
-		) as { title: string; items?: unknown[] } | undefined;
+		const titles = desc.map((entry) => {
+			return typeof entry === 'string' ? entry : entry.title;
+		});
+		titles.forEach((title) => {
+			expect(title).not.toMatch(/^Perform action/);
+		});
+		const passiveEntry = desc.find((entry) => {
+			if (typeof entry !== 'object') {
+				return false;
+			}
+
+			return entry.title.includes(SYNTHETIC_UPKEEP_PHASE.label);
+		}) as { title: string; items?: unknown[] } | undefined;
 		const passiveIcon =
 			(plowPassive as { icon?: string })?.icon ?? SYNTHETIC_PASSIVE_INFO.icon;
 		expect(passiveEntry?.title.startsWith(`${passiveIcon} `)).toBe(true);
