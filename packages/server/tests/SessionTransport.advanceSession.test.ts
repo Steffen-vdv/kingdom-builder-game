@@ -36,6 +36,7 @@ describe('SessionTransport advanceSession', () => {
 		expect(advance.sessionId).toBe(sessionId);
 		expect(advance.snapshot.game.currentPhase).toBe('end');
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
+		expect(Object.keys(advance.registries.resources)).not.toHaveLength(0);
 	});
 
 	it('reports conflicts when advancing sessions fail', async () => {

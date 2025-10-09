@@ -13,6 +13,7 @@ import type {
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
 	ActionExecuteErrorResponse,
+	SessionRegistries,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from './session';
 import type { PlayerId } from '../state';
@@ -20,6 +21,7 @@ import type { ActionParameters } from '../actions/action_parameters';
 
 interface LocalSessionGatewayOptions {
 	readonly sessionId?: string;
+	readonly registries?: SessionRegistries;
 }
 
 interface RequirementError extends Error {
@@ -99,11 +101,36 @@ function toActionSuccessResponse(
 	};
 }
 
+function cloneRegistries(registries: SessionRegistries): SessionRegistries {
+	return {
+		actions: cloneRecord(registries.actions),
+		buildings: cloneRecord(registries.buildings),
+		developments: cloneRecord(registries.developments),
+		populations: cloneRecord(registries.populations),
+		resources: cloneRecord(registries.resources),
+	} satisfies SessionRegistries;
+}
+
+function cloneRecord<T>(source: Record<string, T>): Record<string, T> {
+	const clone: Record<string, T> = {};
+	for (const [key, value] of Object.entries(source)) {
+		clone[key] = structuredClone(value);
+	}
+	return clone;
+}
+
 export function createLocalSessionGateway(
 	session: EngineSession,
 	options: LocalSessionGatewayOptions = {},
 ): SessionGateway {
 	const sessionId = options.sessionId ?? 'local-session';
+	const registries = options.registries ?? {
+		actions: {},
+		buildings: {},
+		developments: {},
+		populations: {},
+		resources: {},
+	};
 	return {
 		createSession(
 			request?: SessionCreateRequest,
@@ -114,6 +141,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(registries),
 			});
 		},
 		fetchSnapshot(
@@ -123,6 +151,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(registries),
 			});
 		},
 		performAction(
@@ -156,6 +185,7 @@ export function createLocalSessionGateway(
 				sessionId,
 				snapshot: session.getSnapshot(),
 				advance,
+				registries: cloneRegistries(registries),
 			});
 		},
 		setDevMode(
@@ -166,6 +196,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(registries),
 			});
 		},
 	};

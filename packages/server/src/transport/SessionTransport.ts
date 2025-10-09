@@ -22,6 +22,7 @@ import type {
 	SessionRequirementFailure,
 	SessionPlayerId,
 	SessionPlayerNameMap,
+	SessionRegistries,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
@@ -89,6 +90,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
+			registries: this.buildSessionRegistries(),
 		} satisfies SessionCreateResponse;
 		return sessionCreateResponseSchema.parse(response);
 	}
@@ -100,6 +102,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot,
+			registries: this.buildSessionRegistries(),
 		} satisfies SessionStateResponse;
 		return sessionStateResponseSchema.parse(response);
 	}
@@ -128,6 +131,7 @@ export class SessionTransport {
 				sessionId,
 				snapshot: result.snapshot,
 				advance: result.advance,
+				registries: this.buildSessionRegistries(),
 			} satisfies SessionAdvanceResponse;
 			return sessionAdvanceResponseSchema.parse(response);
 		} catch (error) {
@@ -215,8 +219,21 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
+			registries: this.buildSessionRegistries(),
 		} satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
+	}
+
+	private buildSessionRegistries(): SessionRegistries {
+		const base = this.sessionManager.getBaseOptions();
+		const resources = this.sessionManager.getResourceDefinitions();
+		return {
+			actions: serializeRegistry(base.actions),
+			buildings: serializeRegistry(base.buildings),
+			developments: serializeRegistry(base.developments),
+			populations: serializeRegistry(base.populations),
+			resources: cloneRecord(resources),
+		} satisfies SessionRegistries;
 	}
 
 	private extractRequirementFailure(
@@ -331,4 +348,22 @@ export class SessionTransport {
 		}
 		return context.roles.includes('admin');
 	}
+}
+
+function serializeRegistry<T>(registry: {
+	entries(): [string, T][];
+}): Record<string, T> {
+	const serialized: Record<string, T> = {};
+	for (const [id, definition] of registry.entries()) {
+		serialized[id] = structuredClone(definition);
+	}
+	return serialized;
+}
+
+function cloneRecord<T>(source: Record<string, T>): Record<string, T> {
+	const clone: Record<string, T> = {};
+	for (const [key, value] of Object.entries(source)) {
+		clone[key] = structuredClone(value);
+	}
+	return clone;
 }

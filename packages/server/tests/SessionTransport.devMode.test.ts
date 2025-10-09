@@ -36,6 +36,7 @@ describe('SessionTransport dev mode', () => {
 			headers: authorizedHeaders,
 		});
 		expect(updated.snapshot.game.devMode).toBe(true);
+		expect(Object.keys(updated.registries.developments)).not.toHaveLength(0);
 	});
 
 	it('validates dev mode toggles before applying them', () => {

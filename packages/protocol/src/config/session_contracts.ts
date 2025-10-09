@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { gameConfigSchema } from './schema';
+import {
+	actionSchema,
+	buildingSchema,
+	developmentSchema,
+	gameConfigSchema,
+	populationSchema,
+	resourceDefinitionSchema,
+} from './schema';
 import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
@@ -7,6 +14,7 @@ import type {
 	SessionCreateResponse,
 	SessionIdentifier,
 	SessionPlayerNameMap,
+	SessionRegistries,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
@@ -25,9 +33,21 @@ export const sessionCreateRequestSchema = z.object({
 	playerNames: sessionPlayerNameMapSchema.optional(),
 });
 
+const registrySchema = <T extends z.ZodTypeAny>(schema: T) =>
+	z.record(z.string(), schema);
+
+export const sessionRegistriesSchema = z.object({
+	actions: registrySchema(actionSchema),
+	buildings: registrySchema(buildingSchema),
+	developments: registrySchema(developmentSchema),
+	populations: registrySchema(populationSchema),
+	resources: registrySchema(resourceDefinitionSchema),
+});
+
 export const sessionCreateResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(),
+	registries: sessionRegistriesSchema,
 });
 
 export const sessionStateResponseSchema = sessionCreateResponseSchema;
@@ -40,6 +60,7 @@ export const sessionAdvanceResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(),
 	advance: z.custom<SessionAdvanceResult>(),
+	registries: sessionRegistriesSchema,
 });
 
 export const sessionSetDevModeRequestSchema = z.object({
@@ -66,6 +87,9 @@ type _SessionCreateRequestMatches = Expect<
 >;
 type _SessionCreateResponseMatches = Expect<
 	Equal<z.infer<typeof sessionCreateResponseSchema>, SessionCreateResponse>
+>;
+type _SessionRegistriesMatches = Expect<
+	Equal<z.infer<typeof sessionRegistriesSchema>, SessionRegistries>
 >;
 type _SessionStateResponseMatches = Expect<
 	Equal<z.infer<typeof sessionStateResponseSchema>, SessionStateResponse>

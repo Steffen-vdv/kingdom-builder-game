@@ -19,7 +19,7 @@ const authorizedHeaders = {
 
 describe('SessionTransport createSession', () => {
 	it('creates sessions and applies player preferences', () => {
-		const { manager } = createSyntheticSessionManager();
+		const { manager, actionId } = createSyntheticSessionManager();
 		const idFactory = vi.fn().mockReturnValue('transport-session');
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -35,6 +35,9 @@ describe('SessionTransport createSession', () => {
 		});
 		expect(response.sessionId).toBe('transport-session');
 		expect(response.snapshot.game.devMode).toBe(true);
+		expect(response.registries.actions[actionId]?.id).toBe(actionId);
+		const [firstResourceKey] = Object.keys(response.registries.resources);
+		expect(firstResourceKey).toBeDefined();
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
@@ -67,6 +70,27 @@ describe('SessionTransport createSession', () => {
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).not.toBe('   ');
 		expect(playerB?.name).toBe('Bravo');
+	});
+
+	it('serializes registry definitions from the session manager base options', () => {
+		const { manager, factory } = createSyntheticSessionManager();
+		const building = factory.building();
+		const population = factory.population();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('registry-session'),
+			authMiddleware: middleware,
+		});
+		const response = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		expect(response.registries.buildings[building.id]).toEqual(
+			expect.objectContaining({ id: building.id }),
+		);
+		expect(response.registries.populations[population.id]).toEqual(
+			expect.objectContaining({ id: population.id }),
+		);
 	});
 
 	it('fails when unique session identifiers cannot be generated', () => {

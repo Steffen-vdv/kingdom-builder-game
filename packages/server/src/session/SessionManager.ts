@@ -10,7 +10,9 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	RESOURCES,
 } from '@kingdom-builder/contents';
+import type { ResourceDefinition } from '@kingdom-builder/protocol';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -29,6 +31,7 @@ export interface SessionManagerOptions {
 	maxSessions?: number;
 	now?: () => number;
 	engineOptions?: Partial<EngineSessionBaseOptions>;
+	resourceDefinitions?: Record<string, ResourceDefinition>;
 }
 
 export interface CreateSessionOptions {
@@ -49,12 +52,15 @@ export class SessionManager {
 
 	private readonly baseOptions: EngineSessionBaseOptions;
 
+	private readonly resourceDefinitions: Record<string, ResourceDefinition>;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
 			maxSessions,
 			now = Date.now,
 			engineOptions = {},
+			resourceDefinitions,
 		} = options;
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
@@ -68,6 +74,9 @@ export class SessionManager {
 			start: engineOptions.start ?? GAME_START,
 			rules: engineOptions.rules ?? RULES,
 		};
+		this.resourceDefinitions = cloneResourceDefinitions(
+			resourceDefinitions ?? (RESOURCES as Record<string, ResourceDefinition>),
+		);
 	}
 
 	public createSession(
@@ -137,6 +146,14 @@ export class SessionManager {
 		return this.sessions.size;
 	}
 
+	public getBaseOptions(): EngineSessionBaseOptions {
+		return this.baseOptions;
+	}
+
+	public getResourceDefinitions(): Record<string, ResourceDefinition> {
+		return cloneResourceDefinitions(this.resourceDefinitions);
+	}
+
 	private requireSession(sessionId: string): EngineSession {
 		const session = this.getSession(sessionId);
 		if (!session) {
@@ -153,4 +170,14 @@ export class SessionManager {
 			}
 		}
 	}
+}
+
+function cloneResourceDefinitions(
+	source: Record<string, ResourceDefinition>,
+): Record<string, ResourceDefinition> {
+	const clone: Record<string, ResourceDefinition> = {};
+	for (const [key, definition] of Object.entries(source)) {
+		clone[key] = structuredClone(definition);
+	}
+	return clone;
 }

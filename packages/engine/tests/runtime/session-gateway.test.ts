@@ -4,7 +4,11 @@ import {
 	createLocalSessionGateway,
 } from '../../src/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type { StartConfig, RuleSet } from '@kingdom-builder/protocol';
+import type {
+	StartConfig,
+	RuleSet,
+	SessionRegistries,
+} from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 
@@ -61,6 +65,16 @@ const RULES: RuleSet = {
 	winConditions: [],
 };
 
+function registryToRecord<T>(registry: {
+	entries(): [string, T][];
+}): Record<string, T> {
+	const record: Record<string, T> = {};
+	for (const [id, value] of registry.entries()) {
+		record[id] = structuredClone(value);
+	}
+	return record;
+}
+
 function createGateway() {
 	const content = createContentFactory();
 	const gainGold = content.action({
@@ -92,8 +106,28 @@ function createGateway() {
 		start: START,
 		rules: RULES,
 	});
+	const registries: SessionRegistries = {
+		actions: registryToRecord(content.actions),
+		buildings: registryToRecord(content.buildings),
+		developments: registryToRecord(content.developments),
+		populations: registryToRecord(content.populations),
+		resources: {
+			[RESOURCE_AP]: {
+				key: RESOURCE_AP,
+				icon: '⚡',
+				label: 'Action Points',
+				description: 'Local session AP resource.',
+			},
+			[RESOURCE_GOLD]: {
+				key: RESOURCE_GOLD,
+				icon: '🪙',
+				label: 'Gold',
+				description: 'Local session gold resource.',
+			},
+		},
+	};
 	return {
-		gateway: createLocalSessionGateway(session),
+		gateway: createLocalSessionGateway(session, { registries }),
 		actionIds: {
 			gainGold: gainGold.id,
 			failing: failingAction.id,

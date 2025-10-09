@@ -26,6 +26,37 @@ describe('HttpSessionGateway', () => {
 		});
 	}
 
+	const baseRegistries = {
+		actions: {
+			'test:action': { id: 'test:action', name: 'Test Action', effects: [] },
+		},
+		buildings: {
+			'test:building': {
+				id: 'test:building',
+				name: 'Test Building',
+				costs: {},
+			},
+		},
+		developments: {
+			'test:development': { id: 'test:development', name: 'Test Development' },
+		},
+		populations: {
+			'test:population': { id: 'test:population', name: 'Test Population' },
+		},
+		resources: {
+			'test:resource': {
+				key: 'test:resource',
+				icon: 'Ⓡ',
+				label: 'Test Resource',
+				description: 'Test resource description.',
+			},
+		},
+	} as const;
+
+	function buildRegistries() {
+		return structuredClone(baseRegistries);
+	}
+
 	it('creates sessions through the REST transport', async () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -40,6 +71,7 @@ describe('HttpSessionGateway', () => {
 					{
 						sessionId: 'rest-session',
 						snapshot: { game: { devMode: true } },
+						registries: buildRegistries(),
 					},
 					{ status: 201 },
 				);
@@ -48,6 +80,9 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.createSession({ devMode: true });
 		expect(response.sessionId).toBe('rest-session');
+		expect(response.registries.actions['test:action']).toEqual(
+			expect.objectContaining({ id: 'test:action' }),
+		);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
@@ -88,12 +123,16 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { players: [] } },
+					registries: buildRegistries(),
 				}),
 			);
 		});
 		const gateway = createGateway({ fetch });
 		const response = await gateway.fetchSnapshot({ sessionId: 'test' });
 		expect(response.sessionId).toBe('test');
+		expect(response.registries.resources['test:resource'].label).toBe(
+			'Test Resource',
+		);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
@@ -108,12 +147,16 @@ describe('HttpSessionGateway', () => {
 					sessionId: 'test',
 					snapshot: { game: { currentPhase: 'growth' } },
 					advance: { effects: [] },
+					registries: buildRegistries(),
 				}),
 			);
 		});
 		const gateway = createGateway({ fetch });
 		const response = await gateway.advancePhase({ sessionId: 'test' });
 		expect(response.advance.effects).toEqual([]);
+		expect(response.registries.populations['test:population']).toEqual(
+			expect.objectContaining({ id: 'test:population' }),
+		);
 	});
 
 	it('performs actions and returns success payloads', async () => {
@@ -179,6 +222,7 @@ describe('HttpSessionGateway', () => {
 				return jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { devMode: true } },
+					registries: buildRegistries(),
 				});
 			},
 		);
@@ -196,7 +240,11 @@ describe('HttpSessionGateway', () => {
 				input instanceof Request ? input : new Request(input, init);
 			expect(request.headers.get('x-test-header')).toBe('dynamic');
 			return Promise.resolve(
-				jsonResponse({ sessionId: 'dynamic', snapshot: { game: {} } }),
+				jsonResponse({
+					sessionId: 'dynamic',
+					snapshot: { game: {} },
+					registries: buildRegistries(),
+				}),
 			);
 		});
 		const gateway = new HttpSessionGateway({
@@ -217,6 +265,7 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'basic',
 					snapshot: { game: { players: [] } },
+					registries: buildRegistries(),
 				}),
 			);
 		});

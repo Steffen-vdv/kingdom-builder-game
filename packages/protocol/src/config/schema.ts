@@ -12,6 +12,21 @@ export type RequirementConfig = z.infer<typeof requirementSchema>;
 
 const costBagSchema = z.record(z.string(), z.number());
 
+const infoDefinitionSchema = z.object({
+	key: z.string(),
+	icon: z.string(),
+	label: z.string(),
+	description: z.string(),
+});
+
+export type InfoDefinition = z.infer<typeof infoDefinitionSchema>;
+
+export const resourceDefinitionSchema = infoDefinitionSchema.extend({
+	tags: z.array(z.string()).optional(),
+});
+
+export type ResourceDefinition = z.infer<typeof resourceDefinitionSchema>;
+
 const evaluatorSchema = z.object({
 	type: z.string(),
 	params: z.record(z.unknown()).optional(),

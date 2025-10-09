@@ -37,6 +37,7 @@ describe('SessionTransport session state', () => {
 		});
 		expect(state.sessionId).toBe(sessionId);
 		expect(state.snapshot.game.players).toHaveLength(2);
+		expect(Object.keys(state.registries.actions)).not.toHaveLength(0);
 	});
 
 	it('throws when a session cannot be located', () => {

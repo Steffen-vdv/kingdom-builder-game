@@ -21,6 +21,18 @@ describe('sessionSdk', () => {
 	if (!resourceKey) {
 		throw new Error('RESOURCE_KEYS is empty');
 	}
+	const createRegistries = () => ({
+		actions: {},
+		buildings: {},
+		developments: {},
+		populations: {},
+		resources: Object.fromEntries(
+			RESOURCE_KEYS.map((key) => [
+				key,
+				{ key, icon: key, label: key, description: key },
+			]),
+		),
+	});
 	const phases = [
 		{
 			id: 'phase-main',
@@ -62,6 +74,7 @@ describe('sessionSdk', () => {
 		api.setNextCreateResponse({
 			sessionId: 'session-1',
 			snapshot: initialSnapshot,
+			registries: createRegistries(),
 		});
 	});
 	afterEach(() => {
@@ -184,6 +197,7 @@ describe('sessionSdk', () => {
 				effects: [],
 				player: playerA,
 			},
+			registries: createRegistries(),
 		});
 		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(response.snapshot).toEqual(updatedSnapshot);

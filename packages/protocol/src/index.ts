@@ -58,6 +58,7 @@ export {
 	validateGameConfig,
 	phaseStepSchema,
 	phaseSchema,
+	resourceDefinitionSchema,
 } from './config/schema';
 export type {
 	RequirementConfig,
@@ -76,6 +77,8 @@ export type {
 	GameConfig,
 	PhaseStepConfig,
 	PhaseConfig,
+	ResourceDefinition,
+	InfoDefinition,
 } from './config/schema';
 export type {
 	PhaseSkipConfig,
@@ -122,6 +125,8 @@ export type {
 	SessionActionCostMap,
 	SessionRequirementFailure,
 	SessionActionRequirementList,
+	SessionRegistries,
+	SerializedRegistry,
 } from './session';
 export type {
 	SessionIdentifier,
@@ -157,6 +162,7 @@ export {
 	sessionAdvanceResponseSchema,
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
+	sessionRegistriesSchema,
 } from './config/session_contracts';
 export {
 	actionEffectChoiceSchema,
