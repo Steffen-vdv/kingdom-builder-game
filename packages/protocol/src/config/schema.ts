@@ -166,12 +166,33 @@ export type StartConfig = z.infer<typeof startConfigSchema>;
 export type StartModeConfig = z.infer<typeof startModeConfigSchema>;
 export type StartModesConfig = z.infer<typeof startModesSchema>;
 
+export const phaseStepSchema = z.object({
+	id: z.string(),
+	title: z.string().optional(),
+	triggers: z.array(z.string()).optional(),
+	effects: z.array(effectSchema).optional(),
+	icon: z.string().optional(),
+});
+
+export type PhaseStepConfig = z.infer<typeof phaseStepSchema>;
+
+export const phaseSchema = z.object({
+	id: z.string(),
+	steps: z.array(phaseStepSchema).min(1),
+	action: z.boolean().optional(),
+	label: z.string().optional(),
+	icon: z.string().optional(),
+});
+
+export type PhaseConfig = z.infer<typeof phaseSchema>;
+
 export const gameConfigSchema = z.object({
 	start: startConfigSchema.optional(),
 	actions: z.array(actionSchema).optional(),
 	buildings: z.array(buildingSchema).optional(),
 	developments: z.array(developmentSchema).optional(),
 	populations: z.array(populationSchema).optional(),
+	phases: z.array(phaseSchema).optional(),
 });
 
 export type GameConfig = z.infer<typeof gameConfigSchema>;

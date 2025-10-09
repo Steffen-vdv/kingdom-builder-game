@@ -10,7 +10,7 @@ import {
 	type DevelopmentConfig,
 	type PopulationConfig,
 	type StartConfig,
-	type PhaseDef,
+	type PhaseConfig,
 	type RuleSet,
 } from '@kingdom-builder/protocol';
 import {
@@ -73,7 +73,7 @@ export function createSyntheticContext() {
 	const developments = new Registry<DevelopmentConfig>(developmentSchema);
 	const populations = new Registry<PopulationConfig>(populationSchema);
 
-	const phases: PhaseDef[] = [
+	const phases: PhaseConfig[] = [
 		{ id: 'main', action: true, steps: [{ id: 'main' }] },
 		{
 			id: 'end',

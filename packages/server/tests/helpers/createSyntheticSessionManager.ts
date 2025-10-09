@@ -10,7 +10,11 @@ import {
 	Types,
 	PassiveMethods,
 } from '@kingdom-builder/contents/config/builderShared';
-import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
+import type {
+	PhaseConfig,
+	RuleSet,
+	StartConfig,
+} from '@kingdom-builder/protocol';
 import type { ContentFactory } from '../../../engine/tests/factories/content';
 
 export type SyntheticSessionManagerOptions = Omit<
@@ -26,7 +30,7 @@ export interface SyntheticSessionManagerResult {
 	costKey: string;
 	gainKey: string;
 	actionId: string;
-	phases: PhaseDef[];
+	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
 }
@@ -47,7 +51,7 @@ export function createSyntheticSessionManager(
 			},
 		],
 	});
-	const phases: PhaseDef[] = [
+	const phases: PhaseConfig[] = [
 		{ id: 'main', action: true, steps: [{ id: 'main' }] },
 		{
 			id: 'end',

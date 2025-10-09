@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, advance } from '@kingdom-builder/engine';
-import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
+import type {
+	PhaseConfig,
+	RuleSet,
+	StartConfig,
+} from '@kingdom-builder/protocol';
 import { createContentFactory } from '../../packages/engine/tests/factories/content';
 
 const resources = {
@@ -14,7 +18,7 @@ const phaseIds = {
 	main: 'turn:phase:main',
 } as const;
 
-const phases: PhaseDef[] = [
+const phases: PhaseConfig[] = [
 	{ id: phaseIds.growth, steps: [{ id: 'turn:step:growth' }] },
 	{ id: phaseIds.upkeep, steps: [{ id: 'turn:step:upkeep' }] },
 	{ id: phaseIds.main, action: true, steps: [{ id: 'turn:step:main' }] },

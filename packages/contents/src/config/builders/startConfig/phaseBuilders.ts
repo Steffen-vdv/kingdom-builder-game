@@ -1,20 +1,16 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type {
+	EffectDef,
+	PhaseConfig,
+	PhaseStepConfig,
+} from '@kingdom-builder/protocol';
 import type { TriggerKey } from '../../../defs';
 import type {
 	PhaseId as PhaseIdentifier,
 	PhaseStepId as PhaseStepIdentifier,
 } from '../../../phases';
 
-export interface StepDef {
-	id: PhaseStepIdentifier;
-	title?: string;
-	triggers?: TriggerKey[];
-	effects?: EffectDef[];
-	icon?: string;
-}
-
 class StepBuilder {
-	private config: StepDef;
+	private config: PhaseStepConfig;
 
 	constructor(id: PhaseStepIdentifier) {
 		this.config = { id };
@@ -48,21 +44,13 @@ class StepBuilder {
 		return this;
 	}
 
-	build(): StepDef {
+	build(): PhaseStepConfig {
 		return this.config;
 	}
 }
 
-export interface PhaseDef {
-	id: PhaseIdentifier;
-	steps: StepDef[];
-	action?: boolean;
-	label: string;
-	icon?: string;
-}
-
 class PhaseBuilder {
-	private config: PhaseDef;
+	private config: PhaseConfig;
 
 	constructor(id: PhaseIdentifier) {
 		this.config = { id, steps: [], label: '' };
@@ -83,13 +71,13 @@ class PhaseBuilder {
 		return this;
 	}
 
-	step(step: StepDef | StepBuilder) {
+	step(step: PhaseStepConfig | StepBuilder) {
 		const built = step instanceof StepBuilder ? step.build() : step;
 		this.config.steps.push(built);
 		return this;
 	}
 
-	build(): PhaseDef {
+	build(): PhaseConfig {
 		return this.config;
 	}
 }
@@ -103,3 +91,6 @@ export function step(id: PhaseStepIdentifier) {
 }
 
 export { PhaseBuilder, StepBuilder };
+export type { PhaseConfig, PhaseStepConfig };
+export type PhaseDef = PhaseConfig;
+export type StepDef = PhaseStepConfig;
