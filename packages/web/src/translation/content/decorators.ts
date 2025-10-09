@@ -8,10 +8,10 @@ export function withInstallation<T>(
 	return {
 		summarize(
 			target: T,
-			ctx: TranslationContext,
-			opts?: { installed?: boolean },
+			context: TranslationContext,
+			options?: { installed?: boolean },
 		): Summary {
-			const inner = translator.summarize(target, ctx, opts);
+			const inner = translator.summarize(target, context, options);
 			if (!inner.length) {
 				return [];
 			}
@@ -25,7 +25,7 @@ export function withInstallation<T>(
 					main.push(entry);
 				}
 			}
-			const title = opts?.installed
+			const title = options?.installed
 				? `${triggerInfo.onBuild.icon} ${triggerInfo.onBuild.future}`
 				: `${triggerInfo.onBuild.icon} On build, ${triggerInfo.onBuild.future.toLowerCase()}`;
 			const wrapped = main.length ? [{ title, items: main }] : [];
@@ -33,10 +33,10 @@ export function withInstallation<T>(
 		},
 		describe(
 			target: T,
-			ctx: TranslationContext,
-			opts?: { installed?: boolean },
+			context: TranslationContext,
+			options?: { installed?: boolean },
 		): Summary {
-			const inner = translator.describe(target, ctx, opts);
+			const inner = translator.describe(target, context, options);
 			if (!inner.length) {
 				return [];
 			}
@@ -50,7 +50,7 @@ export function withInstallation<T>(
 					main.push(entry);
 				}
 			}
-			const title = opts?.installed
+			const title = options?.installed
 				? `${triggerInfo.onBuild.icon} ${triggerInfo.onBuild.future}`
 				: `${triggerInfo.onBuild.icon} On build, ${triggerInfo.onBuild.future.toLowerCase()}`;
 			const wrapped = main.length ? [{ title, items: main }] : [];
@@ -58,10 +58,10 @@ export function withInstallation<T>(
 		},
 		log(
 			target: T,
-			ctx: TranslationContext,
-			opts?: { installed?: boolean },
+			context: TranslationContext,
+			options?: { installed?: boolean },
 		): TranslatorLogEntry[] {
-			return translator.log ? translator.log(target, ctx, opts) : [];
+			return translator.log ? translator.log(target, context, options) : [];
 		},
 	};
 }
