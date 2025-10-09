@@ -1,8 +1,5 @@
-import {
-	createEngine,
-	getActionCosts,
-	resolveActionEffects,
-} from '@kingdom-builder/engine';
+import { createEngine, getActionCosts } from '@kingdom-builder/engine';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
 import {
 	ACTIONS,
 	BUILDINGS,

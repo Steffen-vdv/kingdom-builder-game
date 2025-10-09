@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyParamsToEffects } from '../../src/utils.ts';
+import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import { Resource } from '../../src/state/index.ts';
 
 describe('applyParamsToEffects', () => {

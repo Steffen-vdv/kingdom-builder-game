@@ -3,8 +3,8 @@ import {
 	advance,
 	getActionCosts,
 	performAction,
-	resolveActionEffects,
 } from '@kingdom-builder/engine';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { Resource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../../packages/engine/tests/helpers';

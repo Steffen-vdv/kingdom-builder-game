@@ -1,8 +1,8 @@
+import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import type { EngineContext } from './context';
-import type { PlayerState } from './state';
 import type { EffectDef } from './effects';
+import type { PlayerState } from './state';
 import type { StatSourceFrame } from './stat_sources';
-import { applyParamsToEffects } from './utils';
 
 export interface TriggerEffectBundle {
 	effects: EffectDef[];

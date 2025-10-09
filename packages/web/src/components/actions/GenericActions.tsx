@@ -3,7 +3,7 @@ import type {
 	ActionEffectGroup,
 	ActionEffectGroupChoiceMap,
 	ActionEffectGroupOption,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/protocol';
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import GenericActionCard from './GenericActionCard';

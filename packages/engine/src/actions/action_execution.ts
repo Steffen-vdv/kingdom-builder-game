@@ -1,9 +1,10 @@
 import { runEffects } from '../effects';
 import { withStatSourceFrames } from '../stat_sources';
 import { runRequirement } from '../requirements';
-import type { RequirementFailure } from '../requirements';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
+import type { RequirementFailure } from '../requirements';
 import type { ActionParameters } from './action_parameters';
 import {
 	applyCostsWithPassives,
@@ -12,7 +13,6 @@ import {
 	verifyCostAffordability,
 } from './costs';
 import { cloneEngineContext } from './context_clone';
-import { resolveActionEffects } from './effect_groups';
 
 function assertSystemActionUnlocked(
 	actionId: string,

@@ -1,5 +1,5 @@
+import type { ActionEffectGroupChoiceMap } from '@kingdom-builder/protocol';
 import type { PopulationRoleId } from '../state';
-import type { ActionEffectGroupChoiceMap } from './effect_groups';
 
 type ActionParameterMap = {
 	develop: { id: string; landId: string };

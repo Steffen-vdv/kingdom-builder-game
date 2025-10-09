@@ -121,7 +121,7 @@ export type {
  */
 export type { GameConfig } from '@kingdom-builder/protocol';
 export { collectTriggerEffects } from './triggers';
-export { applyParamsToEffects } from './utils';
+export { applyParamsToEffects } from '@kingdom-builder/protocol';
 export { snapshotPlayer } from './log';
 export type { PlayerSnapshot, ActionTrace } from './log';
 export type { PlayerId } from './state';

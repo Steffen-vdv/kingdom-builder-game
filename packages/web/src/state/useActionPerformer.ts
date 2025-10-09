@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
 import {
-	resolveActionEffects,
 	type ActionParams,
 	type EngineSession,
 	type PlayerStateSnapshot,
 	type RequirementFailure,
 } from '@kingdom-builder/engine';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
 import { ActionId, type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,

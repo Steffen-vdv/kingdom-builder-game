@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	createEngine,
 	getActionEffectGroups,
-	resolveActionEffects,
 	type EngineContext,
 } from '@kingdom-builder/engine';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
 import {
 	ACTIONS,
 	BUILDINGS,
