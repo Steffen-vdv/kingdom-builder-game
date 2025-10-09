@@ -9,10 +9,12 @@ import type { PhaseStep } from './phaseTypes';
 import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
+import { advanceSessionPhase } from './sessionSdk';
 
 interface PhaseProgressOptions {
 	session: EngineSession;
 	sessionState: EngineSessionSnapshot;
+	sessionId: string;
 	actionPhaseId: string | undefined;
 	actionCostResource: ResourceKey;
 	addLog: (entry: string | string[], player?: PlayerStateSnapshot) => void;
@@ -28,6 +30,7 @@ interface PhaseProgressOptions {
 export function usePhaseProgress({
 	session,
 	sessionState,
+	sessionId,
 	actionPhaseId,
 	actionCostResource,
 	addLog,
@@ -71,6 +74,7 @@ export function usePhaseProgress({
 		() =>
 			advanceToActionPhase({
 				session,
+				sessionId,
 				actionCostResource,
 				resourceKeys,
 				runDelay,
@@ -95,6 +99,7 @@ export function usePhaseProgress({
 			runDelay,
 			runStepDelay,
 			session,
+			sessionId,
 			setDisplayPhase,
 			setMainApStart,
 			setPhaseHistories,
@@ -128,10 +133,10 @@ export function usePhaseProgress({
 		if ((activePlayer.resources[actionCostResource] ?? 0) > 0) {
 			return;
 		}
-		session.advancePhase();
+		await advanceSessionPhase({ sessionId });
 		setPhaseHistories({});
 		await runUntilActionPhaseCore();
-	}, [actionCostResource, runUntilActionPhaseCore, session]);
+	}, [actionCostResource, runUntilActionPhaseCore, session, sessionId]);
 
 	const handleEndTurn = useCallback(() => enqueue(endTurn), [enqueue, endTurn]);
 

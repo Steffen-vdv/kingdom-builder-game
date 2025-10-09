@@ -82,6 +82,7 @@ interface GameProviderInnerProps {
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	session: Session;
+	sessionId: string;
 	sessionState: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	refreshSession: () => Promise<void>;
@@ -105,6 +106,7 @@ function GameProviderInner({
 	playerName = DEFAULT_PLAYER_NAME,
 	onChangePlayerName = () => {},
 	session,
+	sessionId,
 	sessionState,
 	ruleSnapshot,
 	refreshSession,
@@ -237,6 +239,7 @@ function GameProviderInner({
 	} = usePhaseProgress({
 		session,
 		sessionState,
+		sessionId,
 		actionPhaseId,
 		actionCostResource,
 		addLog,
@@ -263,6 +266,7 @@ function GameProviderInner({
 
 	const { handlePerform, performRef } = useActionPerformer({
 		session,
+		sessionId,
 		actionCostResource,
 		addLog,
 		showResolution: handleShowResolution,
@@ -470,6 +474,7 @@ export function GameProvider(props: ProviderProps) {
 		playerName,
 		onChangePlayerName,
 		session: sessionRef.current,
+		sessionId: sessionData.sessionId,
 		sessionState: sessionData.snapshot,
 		ruleSnapshot: sessionData.ruleSnapshot,
 		refreshSession,

@@ -4,13 +4,16 @@ import {
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { type ResourceKey, type StepDef } from '@kingdom-builder/contents';
+import type { SessionAdvanceResponse } from '@kingdom-builder/protocol/session';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
 import { getLegacySessionContext } from './getLegacySessionContext';
+import { advanceSessionPhase } from './sessionSdk';
 
 interface AdvanceToActionPhaseOptions {
 	session: EngineSession;
+	sessionId: string;
 	actionCostResource: ResourceKey;
 	resourceKeys: ResourceKey[];
 	runDelay: (total: number) => Promise<void>;
@@ -31,6 +34,7 @@ interface AdvanceToActionPhaseOptions {
 
 export async function advanceToActionPhase({
 	session,
+	sessionId,
 	actionCostResource,
 	resourceKeys,
 	runDelay,
@@ -80,9 +84,13 @@ export async function advanceToActionPhase({
 			break;
 		}
 		const before = snapshotPlayer(activePlayerBefore);
+		const advanceResponse: SessionAdvanceResponse = await advanceSessionPhase({
+			sessionId,
+		});
+		const { advance } = advanceResponse;
 		const { phase, step, player, effects, skipped }: EngineAdvanceResult =
-			session.advancePhase();
-		const snapshotAfter = session.getSnapshot();
+			advance;
+		const snapshotAfter = advanceResponse.snapshot;
 		if (snapshotAfter.game.conclusion) {
 			setTabsEnabled(false);
 			setPhaseTimer(0);

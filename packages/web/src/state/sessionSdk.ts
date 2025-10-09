@@ -7,10 +7,21 @@ import {
 } from '@kingdom-builder/contents';
 import {
 	createEngineSession,
+	type ActionParams,
 	type EngineSession,
 	type EngineSessionSnapshot,
 	type RuleSnapshot,
 } from '@kingdom-builder/engine';
+import type {
+	ActionExecuteErrorResponse,
+	ActionExecuteRequest,
+	ActionExecuteResponse,
+	ActionExecuteSuccessResponse,
+} from '@kingdom-builder/protocol/actions';
+import type {
+	SessionAdvanceRequest,
+	SessionAdvanceResponse,
+} from '@kingdom-builder/protocol/session';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { initializeDeveloperMode } from './developerModeSetup';
 import {
@@ -37,6 +48,15 @@ interface CreateSessionResult {
 	registries: SessionRegistries;
 	resourceKeys: ResourceKey[];
 }
+
+type ActionRequirementFailure =
+	ActionExecuteErrorResponse['requirementFailure'];
+type ActionRequirementFailures =
+	ActionExecuteErrorResponse['requirementFailures'];
+type ActionExecutionFailure = Error & {
+	requirementFailure?: ActionRequirementFailure;
+	requirementFailures?: ActionRequirementFailures;
+};
 
 interface FetchSnapshotResult {
 	session: EngineSession;
@@ -132,6 +152,49 @@ export function fetchSnapshot(sessionId: string): Promise<FetchSnapshotResult> {
 		registries: SESSION_REGISTRIES,
 		resourceKeys: RESOURCE_KEYS,
 	});
+}
+
+export function performSessionAction(
+	request: ActionExecuteRequest,
+): Promise<ActionExecuteResponse> {
+	const session = ensureSession(request.sessionId);
+	try {
+		const traces = session.performAction(
+			request.actionId,
+			request.params as ActionParams<string> | undefined,
+		);
+		const response: ActionExecuteSuccessResponse = {
+			status: 'success',
+			snapshot: session.getSnapshot(),
+			traces,
+		};
+		return Promise.resolve(response);
+	} catch (error) {
+		const failure = error as ActionExecutionFailure;
+		const response: ActionExecuteErrorResponse = {
+			status: 'error',
+			error: failure?.message ?? 'Action failed.',
+		};
+		if (failure?.requirementFailure) {
+			response.requirementFailure = failure.requirementFailure;
+		}
+		if (failure?.requirementFailures) {
+			response.requirementFailures = failure.requirementFailures;
+		}
+		return Promise.resolve(response);
+	}
+}
+
+export function advanceSessionPhase(
+	request: SessionAdvanceRequest,
+): Promise<SessionAdvanceResponse> {
+	const session = ensureSession(request.sessionId);
+	const advance = session.advancePhase();
+	return Promise.resolve({
+		sessionId: request.sessionId,
+		snapshot: session.getSnapshot(),
+		advance,
+	} satisfies SessionAdvanceResponse);
 }
 
 export function releaseSession(sessionId: string): void {
