@@ -20,7 +20,7 @@ interface PassiveParams {
 
 export const passiveAdd: EffectHandler<PassiveParams> = (
 	effect,
-	ctx,
+	engineContext,
 	mult = 1,
 ) => {
 	const params = effect.params || ({} as PassiveParams);
@@ -83,6 +83,6 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		passive.onAttackResolved = onAttackResolved;
 	}
 	for (let index = 0; index < Math.floor(mult); index++) {
-		ctx.passives.addPassive(passive, ctx);
+		engineContext.passives.addPassive(passive, engineContext);
 	}
 };

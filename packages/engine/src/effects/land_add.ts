@@ -8,15 +8,15 @@ interface LandAddParams {
 
 export const landAdd: EffectHandler<LandAddParams> = (
 	effect,
-	ctx,
+	engineContext,
 	mult = 1,
 ) => {
 	const count = Math.floor(Number(effect.params?.count ?? 1) * mult);
 	for (let index = 0; index < count; index++) {
 		const land = new Land(
-			`${ctx.activePlayer.id}-L${ctx.activePlayer.lands.length + 1}`,
-			ctx.services.rules.slotsPerNewLand,
+			`${engineContext.activePlayer.id}-L${engineContext.activePlayer.lands.length + 1}`,
+			engineContext.services.rules.slotsPerNewLand,
 		);
-		ctx.activePlayer.lands.push(land);
+		engineContext.activePlayer.lands.push(land);
 	}
 };
