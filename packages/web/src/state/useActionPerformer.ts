@@ -202,11 +202,28 @@ export function useActionPerformer({
 				updateMainPhaseStep();
 				refresh();
 				try {
+					const resolutionSource: {
+						kind: 'action';
+						label: string;
+						id: string;
+						name: string;
+						icon?: string;
+					} = {
+						kind: 'action',
+						label: 'Action',
+						id: actionMeta.id,
+						name: actionMeta.name,
+					};
+					if (actionMeta.icon) {
+						resolutionSource.icon = actionMeta.icon;
+					}
 					await showResolution({
 						action: actionMeta,
 						lines: logLines,
 						player: resolutionPlayer,
 						summaries: filtered,
+						source: resolutionSource,
+						actorLabel: 'Played by',
 					});
 				} catch (_error) {
 					addLog(logLines, resolutionPlayer);

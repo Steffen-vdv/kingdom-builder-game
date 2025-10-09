@@ -18,7 +18,9 @@ interface ResolutionLabels {
 	player: string;
 }
 
-const SOURCE_LABELS: Record<ResolutionSource, ResolutionLabels> = {
+type ResolutionSourceKind = Extract<ResolutionSource, 'action' | 'phase'>;
+
+const DEFAULT_SOURCE_LABELS: Record<ResolutionSourceKind, ResolutionLabels> = {
 	action: {
 		title: 'Action',
 		player: 'Played by',
@@ -35,8 +37,36 @@ interface ResolutionCardProps {
 	onContinue: () => void;
 }
 
+type ResolutionSourceDetail = Extract<ResolutionSource, { kind: string }>;
+
+function isResolutionSourceDetail(
+	source: ResolutionSource | undefined,
+): source is ResolutionSourceDetail {
+	return Boolean(source) && typeof source === 'object' && 'kind' in source;
+}
+
+function resolveSourceKind(
+	source: ResolutionSource | undefined,
+): ResolutionSourceKind {
+	if (!source) {
+		return 'action';
+	}
+	if (typeof source === 'string') {
+		return source;
+	}
+	return source.kind as ResolutionSourceKind;
+}
+
 function resolveSourceLabels(source: ResolutionSource | undefined) {
-	return SOURCE_LABELS[source ?? 'action'] ?? SOURCE_LABELS.action;
+	const kind = resolveSourceKind(source);
+	const defaults = DEFAULT_SOURCE_LABELS[kind] ?? DEFAULT_SOURCE_LABELS.action;
+	if (isResolutionSourceDetail(source)) {
+		const title = source.label?.trim();
+		if (title) {
+			return { title, player: defaults.player };
+		}
+	}
+	return defaults;
 }
 
 function ResolutionCard({
@@ -55,17 +85,34 @@ function ResolutionCard({
 		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	const rawActionName = (resolution.action?.name ?? '').trim();
+	const sourceDetail = isResolutionSourceDetail(resolution.source)
+		? resolution.source
+		: null;
+	const rawActionName = (
+		sourceDetail?.name ??
+		resolution.action?.name ??
+		''
+	).trim();
 	const actionName = rawActionName || fallbackActionName;
+	const sourceKind = resolveSourceKind(resolution.source);
 	const resolvedLabels = resolveSourceLabels(resolution.source);
-	const actorLabel = (resolution.actorLabel ?? '').trim() || actionName;
-	const actionIcon = resolution.action?.icon?.trim();
+	const actorLabelRaw = (resolution.actorLabel ?? '').trim();
+	const headerSubject =
+		sourceKind === 'phase' && actorLabelRaw
+			? actorLabelRaw
+			: actionName || actorLabelRaw;
+	const playerLabelPrefix =
+		sourceKind === 'action'
+			? actorLabelRaw || resolvedLabels.player
+			: resolvedLabels.player;
+	const actionIcon =
+		resolution.action?.icon?.trim() ?? sourceDetail?.icon?.trim();
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
-	const headerTitle = actorLabel
-		? `${resolvedLabels.title} - ${actorLabel}`
+	const headerTitle = headerSubject
+		? `${resolvedLabels.title} - ${headerSubject}`
 		: defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
@@ -122,7 +169,7 @@ function ResolutionCard({
 						</div>
 						{resolution.player ? (
 							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`${resolvedLabels.player} ${playerName}`}
+								{`${playerLabelPrefix} ${playerName}`}
 							</div>
 						) : null}
 					</div>

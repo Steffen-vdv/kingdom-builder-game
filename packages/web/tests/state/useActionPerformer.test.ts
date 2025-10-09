@@ -16,10 +16,11 @@ import {
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
 const logContentMock = vi.hoisted(() => vi.fn(() => []));
+const diffStepSnapshotsMock = vi.hoisted(() => vi.fn(() => []));
 const performSessionActionMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/translation', () => ({
-	diffStepSnapshots: vi.fn(),
+	diffStepSnapshots: diffStepSnapshotsMock,
 	logContent: logContentMock,
 	snapshotPlayer: snapshotPlayerMock,
 	translateRequirementFailure: translateRequirementFailureMock,
@@ -100,12 +101,93 @@ describe('useActionPerformer', () => {
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
+		logContentMock.mockReset();
+		logContentMock.mockReturnValue(['Played Attack']);
+		diffStepSnapshotsMock.mockReset();
+		diffStepSnapshotsMock.mockReturnValue([]);
 		getLegacySessionContextMock.mockReturnValue({
 			translationContext: {
-				actions: new Map([[action.id, { icon: '⚔️' }]]),
+				actions: new Map([
+					[
+						action.id,
+						{ id: action.id, icon: '⚔️', name: 'Attack', effects: [] },
+					],
+				]),
 			},
 			diffContext: {},
 		});
+	});
+
+	it('passes enriched resolution metadata to showResolution', async () => {
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const updateMainPhaseStep = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn().mockResolvedValue(undefined);
+		const playerBefore = sessionSnapshot.game.players[0];
+		const opponentBefore = sessionSnapshot.game.players[1];
+		if (!playerBefore || !opponentBefore) {
+			throw new Error('Expected players in snapshot');
+		}
+		const beforeCost = playerBefore.resources[actionCostResource] ?? 0;
+		const updatedPlayer = createSnapshotPlayer({
+			id: playerBefore.id,
+			name: playerBefore.name,
+			resources: {
+				...playerBefore.resources,
+				[actionCostResource]: beforeCost - 1,
+			},
+		});
+		const snapshotAfter = createSessionSnapshot({
+			players: [updatedPlayer, opponentBefore],
+			activePlayerId: updatedPlayer.id,
+			opponentId: opponentBefore.id,
+			phases: sessionSnapshot.phases,
+			actionCostResource,
+			ruleSnapshot: sessionSnapshot.rules,
+			turn: sessionSnapshot.game.turn,
+			currentPhase: sessionSnapshot.game.currentPhase,
+			currentStep: sessionSnapshot.game.currentStep,
+		});
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'success',
+			costs: {},
+			traces: [],
+			snapshot: snapshotAfter,
+		});
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				addLog,
+				showResolution,
+				updateMainPhaseStep,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(showResolution).toHaveBeenCalledTimes(1);
+		expect(showResolution).toHaveBeenCalledWith(
+			expect.objectContaining({
+				actorLabel: 'Played by',
+				source: expect.objectContaining({
+					kind: 'action',
+					label: 'Action',
+					id: action.id,
+					name: 'Attack',
+					icon: '⚔️',
+				}),
+			}),
+		);
 	});
 
 	it('shows error toast when action fails due to network issue', async () => {

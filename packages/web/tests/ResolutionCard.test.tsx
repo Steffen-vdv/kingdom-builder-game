@@ -14,7 +14,18 @@ function createResolution(
 		visibleLines: ['First line'],
 		isComplete: true,
 		summaries: [],
-		source: 'action',
+		source: {
+			kind: 'action',
+			label: 'Action',
+			id: 'action-id',
+			name: 'Test Action',
+			icon: '⚔️',
+		},
+		action: {
+			id: 'action-id',
+			name: 'Test Action',
+			icon: '⚔️',
+		},
 		...overrides,
 	} as ActionResolution;
 }
@@ -22,10 +33,6 @@ function createResolution(
 describe('<ResolutionCard />', () => {
 	it('shows labels for action-based resolutions', () => {
 		const resolution = createResolution({
-			action: {
-				id: 'action-id',
-				name: 'Test Action',
-			},
 			player: {
 				id: 'player-1',
 				name: 'Player One',
@@ -47,6 +54,7 @@ describe('<ResolutionCard />', () => {
 	it('renders custom source metadata when provided', () => {
 		const resolution = createResolution({
 			source: 'phase',
+			action: undefined,
 			actorLabel: 'Growth Phase',
 			player: {
 				id: 'player-2',
