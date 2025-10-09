@@ -5,7 +5,7 @@ import { createTestEngine } from '../helpers.ts';
 describe('land:add effect', () => {
 	it('appends new lands to the end', () => {
 		const ctx = createTestEngine();
-		const beforeIds = ctx.activePlayer.lands.map((l) => l.id);
+		const beforeIds = ctx.activePlayer.lands.map((land) => land.id);
 		const beforeCount = beforeIds.length;
 
 		runEffects(
@@ -21,7 +21,9 @@ describe('land:add effect', () => {
 
 		const lands = ctx.activePlayer.lands;
 		expect(lands.length).toBe(beforeCount + 2);
-		expect(lands.slice(0, beforeCount).map((l) => l.id)).toEqual(beforeIds);
+		expect(lands.slice(0, beforeCount).map((land) => land.id)).toEqual(
+			beforeIds,
+		);
 		expect(lands[beforeCount]?.id).toBe(
 			`${ctx.activePlayer.id}-L${beforeCount + 1}`,
 		);
