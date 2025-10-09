@@ -1,14 +1,13 @@
 import type {
-	PassiveRecordSnapshot,
-	PassiveSummary,
-	PlayerId,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
-import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
 	PlayerStartConfig,
+	SessionPassiveRecordSnapshot,
+	SessionPassiveSummary,
+	SessionPlayerId,
+	SessionRecentResourceGain,
+	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
 
 /**
@@ -31,7 +30,7 @@ export type TranslationPassiveDescriptor = {
 	meta?: { source?: { icon?: string } };
 };
 
-export type TranslationPassiveDefinition = PassiveRecordSnapshot;
+export type TranslationPassiveDefinition = SessionPassiveRecordSnapshot;
 
 /**
  * Map of evaluator modifier identifiers to the owning modifier instances. The
@@ -49,13 +48,18 @@ export type TranslationPassiveModifierMap = ReadonlyMap<
  * helpers continue to rely on evaluation metadata.
  */
 export interface TranslationPassives {
-	list(owner?: PlayerId): PassiveSummary[];
-	get(id: string, owner: PlayerId): TranslationPassiveDescriptor | undefined;
+	list(owner?: SessionPlayerId): SessionPassiveSummary[];
+	get(
+		id: string,
+		owner: SessionPlayerId,
+	): TranslationPassiveDescriptor | undefined;
 	getDefinition(
 		id: string,
-		owner: PlayerId,
+		owner: SessionPlayerId,
 	): TranslationPassiveDefinition | undefined;
-	definitions(owner: PlayerId): ReadonlyArray<TranslationPassiveDefinition>;
+	definitions(
+		owner: SessionPlayerId,
+	): ReadonlyArray<TranslationPassiveDefinition>;
 	readonly evaluationMods: TranslationPassiveModifierMap;
 }
 
@@ -80,7 +84,7 @@ export interface TranslationPhase {
  * and passive ownership.
  */
 export interface TranslationPlayer {
-	id: PlayerId;
+	id: SessionPlayerId;
 	name?: string;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
@@ -100,12 +104,9 @@ export interface TranslationContext {
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;
 	readonly opponent: TranslationPlayer;
-	readonly rules: RuleSnapshot;
-	readonly recentResourceGains: ReadonlyArray<{
-		key: string;
-		amount: number;
-	}>;
-	readonly compensations: Readonly<Record<PlayerId, PlayerStartConfig>>;
+	readonly rules: SessionRuleSnapshot;
+	readonly recentResourceGains: ReadonlyArray<SessionRecentResourceGain>;
+	readonly compensations: Readonly<Record<SessionPlayerId, PlayerStartConfig>>;
 	pullEffectLog<T>(key: string): T | undefined;
 	readonly actionCostResource?: string;
 }

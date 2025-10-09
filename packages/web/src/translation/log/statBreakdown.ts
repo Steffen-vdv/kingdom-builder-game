@@ -1,4 +1,4 @@
-import { type EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 
 type StringRecord = Record<string, string>;
 

@@ -1,4 +1,3 @@
-import type { EngineContext as LegacyEngineContext } from '@kingdom-builder/engine';
 import type { TranslationContext } from '../context';
 import type { ActionLogLineDescriptor } from '../log/timeline';
 
@@ -33,6 +32,8 @@ export type ContentTranslatorContext = TranslationContext;
  * so translators that still reference the full engine context continue to
  * type-check during the transition.
  */
+type LegacyEngineContext = TranslationContext & Record<string, unknown>;
+
 export type LegacyContentTranslatorContext = LegacyEngineContext;
 
 export type TranslatorLogEntry = string | ActionLogLineDescriptor;

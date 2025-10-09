@@ -1,24 +1,40 @@
-import {
-	EVALUATORS,
-	type EngineContext,
-	type PlayerId,
-} from '@kingdom-builder/engine';
+import { EVALUATORS } from '@kingdom-builder/engine';
+import type {
+	BuildingConfig,
+	DevelopmentConfig,
+	SessionPassiveSummary,
+	SessionPlayerId,
+} from '@kingdom-builder/protocol';
 import { type PassiveDescriptor, type PassiveModifierMap } from './types';
 
 interface PassiveLookup {
 	evaluationMods?: PassiveModifierMap;
-	get?: (id: string, owner: PlayerId) => PassiveDescriptor | undefined;
+	get?: (id: string, owner: SessionPlayerId) => PassiveDescriptor | undefined;
 }
 
 export interface TranslationDiffPassives {
 	evaluationMods: PassiveModifierMap;
-	get?: (id: string, owner: PlayerId) => PassiveDescriptor | undefined;
+	get?: (id: string, owner: SessionPlayerId) => PassiveDescriptor | undefined;
 }
 
+type RegistryLike<T> = {
+	get(id: string): T | undefined;
+	has(id: string): boolean;
+};
+
+export type LegacyEngineContext = {
+	activePlayer: { id: SessionPlayerId };
+	buildings: RegistryLike<BuildingConfig>;
+	developments: RegistryLike<DevelopmentConfig>;
+	passives: PassiveLookup & {
+		list(owner?: SessionPlayerId): SessionPassiveSummary[];
+	};
+};
+
 export interface TranslationDiffContext {
-	readonly activePlayer: EngineContext['activePlayer'];
-	readonly buildings: EngineContext['buildings'];
-	readonly developments: EngineContext['developments'];
+	readonly activePlayer: LegacyEngineContext['activePlayer'];
+	readonly buildings: LegacyEngineContext['buildings'];
+	readonly developments: LegacyEngineContext['developments'];
 	readonly passives: TranslationDiffPassives;
 	evaluate(evaluator: {
 		type: string;
@@ -27,7 +43,7 @@ export interface TranslationDiffContext {
 }
 
 export function createTranslationDiffContext(
-	context: EngineContext,
+	context: LegacyEngineContext,
 ): TranslationDiffContext {
 	const rawPassives = context.passives as unknown;
 	const passiveLookup = rawPassives as PassiveLookup | undefined;
@@ -50,7 +66,7 @@ export function createTranslationDiffContext(
 			if (!handler) {
 				throw new Error(`Unknown evaluator handler for ${evaluator.type}`);
 			}
-			return Number(handler(evaluator, context));
+			return Number(handler(evaluator, context as never));
 		},
 	};
 }

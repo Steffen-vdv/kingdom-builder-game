@@ -1,4 +1,4 @@
-import { type EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { type StepEffects } from './statBreakdown';
 import { appendMetaSourceIcons } from './resourceSources/meta';
 import { appendEvaluatorModifiers } from './resourceSources/modifiers';

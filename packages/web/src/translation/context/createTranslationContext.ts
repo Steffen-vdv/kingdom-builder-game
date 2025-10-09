@@ -1,9 +1,9 @@
 import type {
-	EngineSessionSnapshot,
-	PlayerId,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol';
+	SessionPlayerId,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol';
 import type {
 	ACTIONS,
 	BUILDINGS,
@@ -29,12 +29,12 @@ import {
 } from './passiveDefinitions';
 
 type TranslationContextOptions = {
-	ruleSnapshot: RuleSnapshot;
-	passiveRecords: EngineSessionSnapshot['passiveRecords'];
+	ruleSnapshot: SessionRuleSnapshot;
+	passiveRecords: SessionSnapshot['passiveRecords'];
 };
 
 export function createTranslationContext(
-	session: EngineSessionSnapshot,
+	session: SessionSnapshot,
 	registries: {
 		actions: typeof ACTIONS;
 		buildings: typeof BUILDINGS;
@@ -71,21 +71,21 @@ export function createTranslationContext(
 		}
 	}
 	const translationPassives: TranslationPassives = Object.freeze({
-		list(owner?: PlayerId) {
+		list(owner?: SessionPlayerId) {
 			if (owner) {
 				return passives.get(owner)?.map(clonePassiveSummary) ?? [];
 			}
 			return flattenPassives(passives);
 		},
-		get(id: string, owner: PlayerId) {
+		get(id: string, owner: SessionPlayerId) {
 			const ownerDescriptors = passiveDescriptors.get(owner);
 			return ownerDescriptors?.get(id);
 		},
-		getDefinition(id: string, owner: PlayerId) {
+		getDefinition(id: string, owner: SessionPlayerId) {
 			const definitions = passiveDefinitionLookup.get(owner);
 			return definitions?.get(id);
 		},
-		definitions(owner: PlayerId) {
+		definitions(owner: SessionPlayerId) {
 			return passiveDefinitionLists.get(owner) ?? EMPTY_PASSIVE_DEFINITIONS;
 		},
 		get evaluationMods() {

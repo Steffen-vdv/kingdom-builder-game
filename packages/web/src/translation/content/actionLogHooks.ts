@@ -1,9 +1,9 @@
 import type {
-	EffectDef,
+	ActionConfig,
 	ActionEffect,
 	ActionEffectGroup,
-} from '@kingdom-builder/engine';
-import type { ActionConfig } from '@kingdom-builder/protocol';
+	EffectDef,
+} from '@kingdom-builder/protocol';
 import { logContent } from './factory';
 import type { TranslationContext } from '../context';
 
