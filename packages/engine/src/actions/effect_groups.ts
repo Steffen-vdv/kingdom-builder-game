@@ -114,11 +114,11 @@ export type {
 
 export function getActionEffectGroups(
 	actionId: string,
-	ctx: EngineContext,
+	engineContext: EngineContext,
 ): ActionEffectGroup[] {
 	let definition: { effects: ActionEffect[] } | undefined;
 	try {
-		definition = ctx.actions.get(actionId);
+		definition = engineContext.actions.get(actionId);
 	} catch (error) {
 		throw new Error(`Unknown action "${actionId}"`, { cause: error });
 	}
