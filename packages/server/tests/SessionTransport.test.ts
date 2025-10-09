@@ -110,7 +110,8 @@ describe('SessionTransport', () => {
 	});
 
 	it('executes actions and returns updated snapshots', async () => {
-		const { manager, gainKey, actionId } = createSyntheticSessionManager();
+		const { manager, gainKey, costKey, actionId } =
+			createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
@@ -124,10 +125,44 @@ describe('SessionTransport', () => {
 			headers: authorizedHeaders,
 		});
 		expect(result.status).toBe('success');
+		expect(result.costs[costKey]).toBe(1);
 		const [player] = result.snapshot.game.players;
 		expect(player?.resources[gainKey]).toBe(1);
 		expect(Array.isArray(result.traces)).toBe(true);
 		expect(result.httpStatus).toBe(200);
+	});
+
+	it('evaluates action costs before enqueuing execution', async () => {
+		const { manager, actionId, costKey } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		const order: string[] = [];
+		if (!session) {
+			throw new Error('Expected session to be created.');
+		}
+		const originalGetCosts = session.getActionCosts.bind(session);
+		vi.spyOn(session, 'getActionCosts').mockImplementation(((id, params) => {
+			order.push('costs');
+			return originalGetCosts(id, params);
+		}) as typeof session.getActionCosts);
+		const originalEnqueue = session.enqueue.bind(session);
+		vi.spyOn(session, 'enqueue').mockImplementation(async (taskFactory) => {
+			order.push('enqueue');
+			return originalEnqueue(taskFactory);
+		});
+		const result = await transport.executeAction({
+			body: { sessionId, actionId },
+			headers: authorizedHeaders,
+		});
+		expect(order[0]).toBe('costs');
+		expect(result.costs[costKey]).toBe(1);
 	});
 
 	it('reports conflicts when advancing sessions fail', async () => {

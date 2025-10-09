@@ -14,10 +14,15 @@ import type {
 	ActionTraceLandSnapshot,
 } from '../actions/contracts';
 import type {
+	SessionActionCostMap,
 	SessionPassiveSummary,
 	SessionRequirementFailure,
 	SessionSnapshot,
 } from '../session';
+
+const sessionActionCostMapSchema = z
+	.record(z.number())
+	.transform((value) => value as SessionActionCostMap);
 
 const passiveSourceMetadataSchema = z.object({
 	type: z.string(),
@@ -97,6 +102,7 @@ export const actionExecuteSuccessResponseSchema = z.object({
 	status: z.literal('success'),
 	snapshot: z.custom<SessionSnapshot>(),
 	traces: z.array(actionTraceSchema),
+	costs: sessionActionCostMapSchema,
 });
 
 export const actionExecuteErrorResponseSchema = z.object({
@@ -137,6 +143,9 @@ type _ActionPlayerSnapshotMatches = Expect<
 >;
 type _ActionTraceMatches = Expect<
 	Equal<z.infer<typeof actionTraceSchema>, ActionTrace>
+>;
+type _SessionActionCostMapMatches = Expect<
+	Equal<z.infer<typeof sessionActionCostMapSchema>, SessionActionCostMap>
 >;
 type _ActionRequirementFailureMatches = Expect<
 	Equal<

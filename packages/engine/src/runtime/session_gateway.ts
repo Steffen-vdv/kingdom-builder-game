@@ -89,11 +89,13 @@ function toActionErrorResponse(error: unknown): ActionExecuteErrorResponse {
 function toActionSuccessResponse(
 	session: EngineSession,
 	traces: ReturnType<EngineSession['performAction']>,
+	costs: ReturnType<EngineSession['getActionCosts']>,
 ): ActionExecuteSuccessResponse {
 	return {
 		status: 'success',
 		traces,
 		snapshot: session.getSnapshot(),
+		costs,
 	};
 }
 
@@ -128,11 +130,10 @@ export function createLocalSessionGateway(
 		): Promise<ActionExecuteResponse> {
 			assertSessionId(request, sessionId);
 			try {
-				const traces = session.performAction(
-					request.actionId,
-					toActionParameters(request.params),
-				);
-				return Promise.resolve(toActionSuccessResponse(session, traces));
+				const params = toActionParameters(request.params);
+				const costs = session.getActionCosts(request.actionId, params);
+				const traces = session.performAction(request.actionId, params);
+				return Promise.resolve(toActionSuccessResponse(session, traces, costs));
 			} catch (error) {
 				return Promise.resolve(toActionErrorResponse(error));
 			}

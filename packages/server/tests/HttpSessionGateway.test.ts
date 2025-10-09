@@ -131,6 +131,7 @@ describe('HttpSessionGateway', () => {
 					status: 'success',
 					snapshot: { game: { players: [] } },
 					traces: [],
+					costs: { 'test:cost': 1 },
 				});
 			},
 		);
@@ -140,6 +141,7 @@ describe('HttpSessionGateway', () => {
 			actionId: 'gain',
 		});
 		expect(result.status).toBe('success');
+		expect(result.costs).toEqual({ 'test:cost': 1 });
 	});
 
 	it('returns protocol errors for failed actions', async () => {

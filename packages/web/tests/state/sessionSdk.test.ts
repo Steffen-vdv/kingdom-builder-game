@@ -112,6 +112,7 @@ describe('sessionSdk', () => {
 			status: 'success',
 			snapshot: updatedSnapshot,
 			traces: [],
+			costs: {},
 		};
 		api.setNextActionResponse(successResponse);
 		const response = await performSessionAction({

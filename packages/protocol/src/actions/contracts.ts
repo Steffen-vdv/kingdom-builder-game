@@ -1,4 +1,5 @@
 import type {
+	SessionActionCostMap,
 	SessionActionRequirementList,
 	SessionRequirementFailure,
 	SessionSnapshot,
@@ -47,6 +48,7 @@ export interface ActionExecuteSuccessResponse {
 	status: 'success';
 	snapshot: SessionSnapshot;
 	traces: ActionTrace[];
+	costs: SessionActionCostMap;
 }
 
 export interface ActionExecuteErrorResponse {

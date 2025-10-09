@@ -20,7 +20,8 @@ describe('FastifySessionTransport', () => {
 	} satisfies Record<string, string>;
 
 	async function createServer(tokens = defaultTokens) {
-		const { manager, actionId, gainKey } = createSyntheticSessionManager();
+		const { manager, actionId, gainKey, costKey } =
+			createSyntheticSessionManager();
 		const app = fastify();
 		const options: FastifySessionTransportOptions = {
 			sessionManager: manager,
@@ -28,7 +29,7 @@ describe('FastifySessionTransport', () => {
 		};
 		await app.register(createSessionTransportPlugin, options);
 		await app.ready();
-		return { app, actionId, gainKey };
+		return { app, actionId, gainKey, costKey };
 	}
 
 	it('creates sessions over HTTP', async () => {
@@ -93,7 +94,7 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('executes actions and returns success payloads', async () => {
-		const { app, actionId, gainKey } = await createServer();
+		const { app, actionId, gainKey, costKey } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -113,8 +114,10 @@ describe('FastifySessionTransport', () => {
 			snapshot: {
 				game: { players: Array<{ resources: Record<string, number> }> };
 			};
+			costs: Record<string, number>;
 		};
 		expect(actionBody.status).toBe('success');
+		expect(actionBody.costs[costKey]).toBe(1);
 		const [player] = actionBody.snapshot.game.players;
 		expect(player?.resources[gainKey]).toBe(1);
 		await app.close();
