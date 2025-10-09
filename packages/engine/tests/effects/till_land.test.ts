@@ -46,7 +46,9 @@ describe('land:till effect', () => {
 		const ctx = createTestEngine({ actions: content.actions });
 		ctx.activePlayer.actions.add(till.id);
 		performAction(till.id, ctx);
-		const tilledCount = ctx.activePlayer.lands.filter((l) => l.tilled).length;
+		const tilledCount = ctx.activePlayer.lands.filter(
+			(land) => land.tilled,
+		).length;
 		expect(tilledCount).toBe(1);
 	});
 });
