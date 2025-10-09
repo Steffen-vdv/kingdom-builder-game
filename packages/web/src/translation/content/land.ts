@@ -19,12 +19,12 @@ function translate(
 ): Summary {
 	const items: SummaryEntry[] = [];
 	for (let slotIndex = 0; slotIndex < land.slotsMax; slotIndex += 1) {
-		const devId = land.developments[slotIndex];
-		if (devId) {
-			const development = context.developments.get(devId);
+		const developmentId = land.developments[slotIndex];
+		if (developmentId) {
+			const development = context.developments.get(developmentId);
 			items.push({
-				title: `${development?.icon || ''} ${development?.name || devId}`,
-				items: translateSummary('development', devId, context, {
+				title: `${development?.icon || ''} ${development?.name || developmentId}`,
+				items: translateSummary('development', developmentId, context, {
 					installed: true,
 				}),
 			});
