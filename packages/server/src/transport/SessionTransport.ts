@@ -162,6 +162,7 @@ export class SessionTransport {
 			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
 		try {
+			const costs = session.getActionCosts(actionId, params as never);
 			const result = await session.enqueue(() => {
 				const traces = session.performAction(actionId, params as never);
 				const snapshot = session.getSnapshot();
@@ -171,6 +172,7 @@ export class SessionTransport {
 				status: 'success',
 				snapshot: result.snapshot,
 				traces: normalizeActionTraces(result.traces),
+				costs,
 			}) as ActionExecuteSuccessResponse;
 			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {

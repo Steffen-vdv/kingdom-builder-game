@@ -97,6 +97,7 @@ export const actionExecuteSuccessResponseSchema = z.object({
 	status: z.literal('success'),
 	snapshot: z.custom<SessionSnapshot>(),
 	traces: z.array(actionTraceSchema),
+	costs: z.record(z.number()),
 });
 
 export const actionExecuteErrorResponseSchema = z.object({
