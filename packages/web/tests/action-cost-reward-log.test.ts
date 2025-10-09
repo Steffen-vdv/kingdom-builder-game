@@ -71,7 +71,7 @@ describe('action cost and reward logging', () => {
 				},
 			],
 		});
-		const ctx = createEngine({
+		const engineContext = createEngine({
 			actions: scenario.factory.actions,
 			buildings: scenario.factory.buildings,
 			developments: scenario.factory.developments,
@@ -80,28 +80,28 @@ describe('action cost and reward logging', () => {
 			start: scenario.start,
 			rules: scenario.rules,
 		});
-		ctx.activePlayer.actions.add(refundAction.id);
-		while (ctx.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
-			advance(ctx);
+		engineContext.activePlayer.actions.add(refundAction.id);
+		while (engineContext.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
+			advance(engineContext);
 		}
-		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		const costs = getActionCosts(refundAction.id, ctx);
-		performAction(refundAction.id, ctx);
-		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
-		const actionDef = ctx.actions.get(refundAction.id);
-		if (!actionDef) {
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const costs = getActionCosts(refundAction.id, engineContext);
+		performAction(refundAction.id, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const diffContext = createTranslationDiffContext(engineContext);
+		const actionDefinition = engineContext.actions.get(refundAction.id);
+		if (!actionDefinition) {
 			throw new Error('Missing refund action definition');
 		}
 		const changes = diffStepSnapshots(
 			before,
 			after,
-			actionDef,
+			actionDefinition,
 			diffContext,
 			RESOURCE_KEYS,
 		);
 		const messages = asTimelineLines(
-			logContent('action', refundAction.id, ctx),
+			logContent('action', refundAction.id, engineContext),
 		);
 		const costLines: ActionLogLineDescriptor[] = [];
 		for (const key of Object.keys(costs) as SyntheticResourceKey[]) {
