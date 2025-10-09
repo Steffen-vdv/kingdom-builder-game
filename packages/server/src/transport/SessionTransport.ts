@@ -173,19 +173,22 @@ export class SessionTransport {
 			}) as ActionExecuteErrorResponse;
 			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
-		const costBag = session.getActionCosts(actionId, params as never);
-		const costs = normalizeCostBag(costBag);
 		try {
 			const result = await session.enqueue(() => {
+				const costBag = session.getActionCosts(actionId, params as never);
 				const traces = session.performAction(actionId, params as never);
 				const snapshot = session.getSnapshot();
-				return { traces, snapshot };
+				return {
+					costs: normalizeCostBag(costBag),
+					traces,
+					snapshot,
+				};
 			});
 			const response = actionExecuteResponseSchema.parse({
 				status: 'success',
 				snapshot: result.snapshot,
 				traces: normalizeActionTraces(result.traces),
-				costs,
+				costs: result.costs,
 			}) as ActionExecuteSuccessResponse;
 			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {
