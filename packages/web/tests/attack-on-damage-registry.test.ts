@@ -80,7 +80,7 @@ describe('attack on-damage formatter registry', () => {
 		method: 'perform',
 		params: {},
 	} as EffectDef<Record<string, unknown>>;
-	const ctx = createTranslationCtx();
+	const translationContext = createTranslationCtx();
 
 	it('delegates to registered handler for matching entries', () => {
 		const logEntry: AttackOnDamageLogEntry = {
@@ -97,11 +97,17 @@ describe('attack on-damage formatter registry', () => {
 		const handler = vi.fn(() => handlerResult);
 		registerAttackOnDamageFormatter('__test__', 'custom', handler);
 
-		const result = buildOnDamageEntry([logEntry], ctx, attackEffect);
+		const result = buildOnDamageEntry(
+			[logEntry],
+			translationContext,
+			attackEffect,
+		);
 
 		expect(handler).toHaveBeenCalledTimes(1);
 		expect(handler.mock.calls[0][0].entry).toBe(logEntry);
-		expect(handler.mock.calls[0][0].ctx).toBe(ctx);
+		expect(handler.mock.calls[0][0].translationContext).toBe(
+			translationContext,
+		);
 		expect(result).not.toBeNull();
 		expect(result?.items).toEqual(handlerResult);
 	});
@@ -132,14 +138,18 @@ describe('attack on-damage formatter registry', () => {
 			],
 		};
 
-		const result = buildOnDamageEntry([logEntry], ctx, attackEffect);
+		const result = buildOnDamageEntry(
+			[logEntry],
+			translationContext,
+			attackEffect,
+		);
 
 		expect(result).not.toBeNull();
 		const gold = RESOURCES[Resource.gold];
 		const label = gold.icon ? `${gold.icon} ${gold.label}` : gold.label;
 		expect(result?.items).toEqual([
 			`Opponent: ${label} -2 (5→3)`,
-			`${ctx.activePlayer.name}: ${label} +3 (1→4)`,
+			`${translationContext.activePlayer.name}: ${label} +3 (1→4)`,
 		]);
 	});
 
@@ -169,14 +179,18 @@ describe('attack on-damage formatter registry', () => {
 			],
 		};
 
-		const result = buildOnDamageEntry([logEntry], ctx, attackEffect);
+		const result = buildOnDamageEntry(
+			[logEntry],
+			translationContext,
+			attackEffect,
+		);
 
 		expect(result).not.toBeNull();
 		const gold = RESOURCES[Resource.gold];
 		const label = gold.icon ? `${gold.icon} ${gold.label}` : gold.label;
 		expect(result?.items).toEqual([
 			`Opponent: ${label} -0.5% (10→5) (-5)`,
-			`${ctx.activePlayer.name}: ${label} +5 (2→7)`,
+			`${translationContext.activePlayer.name}: ${label} +5 (2→7)`,
 		]);
 	});
 });
