@@ -35,9 +35,12 @@ function cloneEffect(effect: EffectDef): EffectDef {
 	return cloned;
 }
 
-function getEffects(def: unknown, trigger: string): EffectDef[] | undefined {
-	const val = (def as Record<string, unknown>)[trigger];
-	return Array.isArray(val) ? (val as EffectDef[]) : undefined;
+function getEffects(
+	definition: unknown,
+	trigger: string,
+): EffectDef[] | undefined {
+	const value = (definition as Record<string, unknown>)[trigger];
+	return Array.isArray(value) ? (value as EffectDef[]) : undefined;
 }
 
 export function collectTriggerEffects(
