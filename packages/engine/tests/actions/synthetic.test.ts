@@ -30,7 +30,7 @@ describe('actions with synthetic content', () => {
 		ctx.activePlayer.gold = costs[CResource.gold] ?? 0;
 		const before = ctx.activePlayer.gold;
 		const gain = actionDef.effects.find(
-			(e) => e.type === 'resource' && e.method === 'add',
+			(effect) => effect.type === 'resource' && effect.method === 'add',
 		)?.params?.['amount'] as number;
 		performAction(actionDef.id, ctx);
 		expect(ctx.activePlayer.gold).toBe(
@@ -63,7 +63,7 @@ describe('actions with synthetic content', () => {
 		ctx.activePlayer.gold = cost[CResource.gold] ?? 0;
 		const before = ctx.activePlayer.gold;
 		const gain = building.onBuild?.find(
-			(e) => e.type === 'resource' && e.method === 'add',
+			(effect) => effect.type === 'resource' && effect.method === 'add',
 		)?.params?.['amount'] as number;
 		performAction(buildAction.id, ctx, { id: building.id });
 		expect(ctx.activePlayer.buildings.has(building.id)).toBe(true);
@@ -95,7 +95,9 @@ describe('actions with synthetic content', () => {
 		});
 		const ctx = createTestEngine(content);
 		toMain(ctx);
-		const land = ctx.activePlayer.lands.find((l) => l.slotsUsed < l.slotsMax)!;
+		const land = ctx.activePlayer.lands.find(
+			(land) => land.slotsUsed < land.slotsMax,
+		)!;
 		const cost = getActionCosts(developAction.id, ctx, {
 			id: development.id,
 			landId: land.id,
@@ -105,7 +107,7 @@ describe('actions with synthetic content', () => {
 		const beforeGold = ctx.activePlayer.gold;
 		const beforeSlots = land.slotsUsed;
 		const gain = development.onBuild?.find(
-			(e) => e.type === 'resource' && e.method === 'add',
+			(effect) => effect.type === 'resource' && effect.method === 'add',
 		)?.params?.['amount'] as number;
 		performAction(developAction.id, ctx, {
 			id: development.id,
