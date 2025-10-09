@@ -248,6 +248,7 @@ export function useActionPerformer({
 			addLog,
 			endTurn,
 			mountedRef,
+			registries,
 			sessionId,
 			pushErrorToast,
 			refresh,
