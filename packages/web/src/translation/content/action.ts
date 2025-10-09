@@ -1,7 +1,5 @@
-import {
-	resolveActionEffects,
-	type ActionParams,
-} from '@kingdom-builder/engine';
+import { type ActionParams } from '@kingdom-builder/engine';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
 import {
 	summarizeEffects,
 	describeEffects,

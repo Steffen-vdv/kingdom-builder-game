@@ -1,5 +1,5 @@
+import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import type { EffectHandler } from '.';
-import { applyParamsToEffects } from '../utils';
 
 export const developmentAdd: EffectHandler = (
 	effect,

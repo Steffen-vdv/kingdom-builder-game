@@ -1,6 +1,6 @@
 import type { EffectHandler } from '.';
 import { runEffects } from '.';
-import { applyParamsToEffects } from '../utils';
+import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import { withStatSourceFrames } from '../stat_sources';
 import type { PopulationRoleId } from '../state';
 

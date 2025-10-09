@@ -4,6 +4,20 @@ export * as actions from './actions';
 export { Registry } from './registry';
 export type { StepDef, PhaseDef } from './phases';
 export type { EffectDef } from './effects';
+export {
+	applyParamsToEffects,
+	coerceActionEffectGroupChoices,
+	resolveActionEffects,
+} from './effects/resolve';
+export type {
+	ActionEffectGroupChoice,
+	ActionEffectGroupChoiceMap,
+	ResolvedActionEffectGroup,
+	ResolvedActionEffectGroupOption,
+	ResolvedActionEffectGroupStep,
+	ResolvedActionEffectStep,
+	ResolvedActionEffects,
+} from './effects/resolve';
 export type { EvaluatorDef } from './evaluators';
 export type {
 	AttackTarget,

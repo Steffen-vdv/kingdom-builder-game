@@ -2,7 +2,7 @@ import type { EffectHandler } from '.';
 import { runEffects } from '.';
 import { snapshotPlayer } from '../log';
 import { withStatSourceFrames } from '../stat_sources';
-import { resolveActionEffects } from '../actions/effect_groups';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionParameters } from '../actions/action_parameters';
 
 type ActionPerformParams = ActionParameters<string> & {

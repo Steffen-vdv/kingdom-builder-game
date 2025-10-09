@@ -1,12 +1,12 @@
 import { EFFECT_COST_COLLECTORS } from '../effects';
 import { runRequirement } from '../requirements';
-import type { RequirementFailure } from '../requirements';
-import type { EffectDef } from '../effects';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
+import type { EffectDef } from '../effects';
+import type { RequirementFailure } from '../requirements';
 import type { CostBag } from '../services';
 import type { PlayerState } from '../state';
 import type { ActionParameters } from './action_parameters';
-import { resolveActionEffects } from './effect_groups';
 
 function cloneCostBag(costBag: CostBag): CostBag {
 	return { ...costBag };
