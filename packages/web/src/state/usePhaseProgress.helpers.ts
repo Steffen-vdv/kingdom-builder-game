@@ -3,7 +3,7 @@ import {
 	type EngineSession,
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
-import { type ResourceKey, type StepDef } from '@kingdom-builder/contents';
+import { type ResourceKey } from '@kingdom-builder/contents';
 import type { SessionAdvanceResponse } from '@kingdom-builder/protocol/session';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
@@ -129,14 +129,16 @@ export async function advanceToActionPhase({
 			};
 		} else {
 			const after = snapshotPlayer(player);
-			const stepWithEffects: StepDef | undefined = stepDef
-				? ({ ...(stepDef as StepDef), effects } as StepDef)
-				: undefined;
+			const stepEffects = effects.length
+				? { effects }
+				: stepDef?.effects?.length
+					? { effects: stepDef.effects }
+					: undefined;
 			const { diffContext } = getLegacySessionContext(session, snapshotAfter);
 			const changes = diffStepSnapshots(
 				before,
 				after,
-				stepWithEffects,
+				stepEffects,
 				diffContext,
 				resourceKeys,
 			);

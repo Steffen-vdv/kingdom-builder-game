@@ -28,6 +28,8 @@ export {
 	startConfigSchema,
 	gameConfigSchema,
 	validateGameConfig,
+	phaseStepSchema,
+	phaseSchema,
 } from './config/schema';
 export type {
 	RequirementConfig,
@@ -44,6 +46,8 @@ export type {
 	StartModeConfig,
 	StartModesConfig,
 	GameConfig,
+	PhaseStepConfig,
+	PhaseConfig,
 } from './config/schema';
 export type {
 	PhaseSkipConfig,

@@ -19,7 +19,7 @@ function formatStepTriggerLabel(
 		const steps = phase.steps ?? [];
 		for (const step of steps) {
 			const triggers = step.triggers ?? [];
-			if (!triggers.includes(triggerKey as (typeof triggers)[number])) {
+			if (!triggers.includes(triggerKey)) {
 				continue;
 			}
 			const meta = phaseMeta.get(phase.id);

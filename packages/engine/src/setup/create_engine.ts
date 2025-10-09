@@ -41,8 +41,8 @@ import {
 	type DevelopmentConfig as DevelopmentDef,
 	type PopulationConfig as PopulationDef,
 	type StartConfig,
+	type PhaseConfig,
 } from '@kingdom-builder/protocol';
-import type { PhaseDef } from '../phases';
 import {
 	applyPlayerStartConfiguration,
 	diffPlayerStartConfiguration,
@@ -55,7 +55,7 @@ export interface EngineCreationOptions {
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
 	populations: Registry<PopulationDef>;
-	phases: PhaseDef[];
+	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
 	config?: GameConfig;
