@@ -187,4 +187,101 @@ describe('HttpSessionGateway', () => {
 		});
 		expect(response.snapshot.game.devMode).toBe(true);
 	});
+
+	it('supports asynchronous header factories', async () => {
+		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+			const request =
+				input instanceof Request ? input : new Request(input, init);
+			expect(request.headers.get('x-test-header')).toBe('dynamic');
+			return Promise.resolve(
+				jsonResponse({ sessionId: 'dynamic', snapshot: { game: {} } }),
+			);
+		});
+		const gateway = new HttpSessionGateway({
+			baseUrl,
+			fetch,
+			headers: () => Promise.resolve({ 'X-Test-Header': 'dynamic' }),
+		});
+		const response = await gateway.createSession();
+		expect(response.sessionId).toBe('dynamic');
+	});
+
+	it('provides empty header objects when none are configured', async () => {
+		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+			const request =
+				input instanceof Request ? input : new Request(input, init);
+			expect(request.headers.get('authorization')).toBeNull();
+			return Promise.resolve(
+				jsonResponse({
+					sessionId: 'basic',
+					snapshot: { game: { players: [] } },
+				}),
+			);
+		});
+		const gateway = new HttpSessionGateway({ baseUrl, fetch });
+		const response = await gateway.fetchSnapshot({ sessionId: 'basic' });
+		expect(response.sessionId).toBe('basic');
+	});
+
+	it('uses status codes when payload code is invalid', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse({ code: 'UNKNOWN', message: 'nope' }, { status: 403 }),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(gateway.createSession()).rejects.toBeInstanceOf(
+			TransportError,
+		);
+		try {
+			await gateway.createSession();
+		} catch (error) {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('FORBIDDEN');
+			}
+		}
+	});
+
+	it('uses generic conflict errors when payloads lack details', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(new Response('', { status: 502 })),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.performAction({ sessionId: 'x', actionId: 'y' }),
+		).rejects.toBeInstanceOf(TransportError);
+		try {
+			await gateway.performAction({ sessionId: 'x', actionId: 'y' });
+		} catch (error) {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('CONFLICT');
+				expect(error.message).toContain('502');
+			}
+		}
+	});
+
+	it('raises descriptive errors for malformed JSON responses', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(new Response('not-json', { status: 200 })),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchSnapshot({ sessionId: 'broken' }),
+		).rejects.toThrow(/Failed to parse response/);
+	});
+
+	it('throws when the Fetch API is unavailable', () => {
+		const original = globalThis.fetch;
+		// @ts-expect-error: simulating environments without fetch support
+		delete (globalThis as { fetch?: typeof globalThis.fetch }).fetch;
+		try {
+			expect(() => new HttpSessionGateway({ baseUrl })).toThrow(
+				/Fetch API is not available/,
+			);
+		} finally {
+			if (original) {
+				globalThis.fetch = original;
+			}
+		}
+	});
 });
