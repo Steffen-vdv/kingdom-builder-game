@@ -16,11 +16,11 @@ import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
-	ActionExecuteSuccessResponse,
 } from '@kingdom-builder/protocol/actions';
 import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
+	SessionCreateRequest,
 } from '@kingdom-builder/protocol/session';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { initializeDeveloperMode } from './developerModeSetup';
@@ -30,6 +30,7 @@ import {
 	type ResourceKey,
 	type SessionRegistries,
 } from './sessionContent';
+import { createGameApi, type GameApi } from '../services/gameApi';
 
 interface SessionRecord {
 	session: EngineSession;
@@ -69,6 +70,19 @@ interface FetchSnapshotResult {
 const SESSION_PREFIX = 'local-session-';
 
 const sessions = new Map<string, SessionRecord>();
+
+let gameApi: GameApi | null = null;
+
+function ensureGameApi(): GameApi {
+	if (!gameApi) {
+		gameApi = createGameApi();
+	}
+	return gameApi;
+}
+
+export function setGameApi(instance: GameApi | null): void {
+	gameApi = instance;
+}
 
 let nextSessionId = 1;
 
@@ -111,10 +125,17 @@ function applyPlayerName(
 	session.updatePlayerName(primaryPlayerId, desiredName);
 }
 
-export function createSession(
+export async function createSession(
 	options: CreateSessionOptions = {},
 ): Promise<CreateSessionResult> {
 	const devMode = options.devMode ?? false;
+	const playerName = options.playerName ?? DEFAULT_PLAYER_NAME;
+	const sessionRequest: SessionCreateRequest = {
+		devMode,
+		playerNames: { A: playerName },
+	};
+	const api = ensureGameApi();
+	const response = await api.createSession(sessionRequest);
 	const session = createEngineSession({
 		actions: SESSION_REGISTRIES.actions,
 		buildings: SESSION_REGISTRIES.buildings,
@@ -128,47 +149,55 @@ export function createSession(
 	session.setDevMode(devMode);
 	const initialSnapshot = session.getSnapshot();
 	applyDeveloperPreset(session, initialSnapshot, devMode);
-	applyPlayerName(session, initialSnapshot, options.playerName);
-	const snapshot = session.getSnapshot();
-	const ruleSnapshot = session.getRuleSnapshot();
-	const sessionId = `${SESSION_PREFIX}${nextSessionId++}`;
+	applyPlayerName(session, initialSnapshot, playerName);
+	const sessionId = response.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
 	sessions.set(sessionId, { session });
-	return Promise.resolve({
+	return {
 		sessionId,
 		session,
-		snapshot,
-		ruleSnapshot,
+		snapshot: response.snapshot,
+		ruleSnapshot: response.snapshot.rules,
 		registries: SESSION_REGISTRIES,
 		resourceKeys: RESOURCE_KEYS,
-	});
+	};
 }
 
-export function fetchSnapshot(sessionId: string): Promise<FetchSnapshotResult> {
+export async function fetchSnapshot(
+	sessionId: string,
+): Promise<FetchSnapshotResult> {
+	const api = ensureGameApi();
 	const session = ensureSession(sessionId);
-	return Promise.resolve({
+	const response = await api.fetchSnapshot(sessionId);
+	return {
 		session,
-		snapshot: session.getSnapshot(),
-		ruleSnapshot: session.getRuleSnapshot(),
+		snapshot: response.snapshot,
+		ruleSnapshot: response.snapshot.rules,
 		registries: SESSION_REGISTRIES,
 		resourceKeys: RESOURCE_KEYS,
-	});
+	};
 }
 
-export function performSessionAction(
+export async function performSessionAction(
 	request: ActionExecuteRequest,
 ): Promise<ActionExecuteResponse> {
+	const api = ensureGameApi();
 	const session = ensureSession(request.sessionId);
 	try {
-		const traces = session.performAction(
-			request.actionId,
-			request.params as ActionParams<string> | undefined,
-		);
-		const response: ActionExecuteSuccessResponse = {
-			status: 'success',
-			snapshot: session.getSnapshot(),
-			traces,
-		};
-		return Promise.resolve(response);
+		const response = await api.performAction(request);
+		if (response.status === 'success') {
+			try {
+				session.performAction(
+					request.actionId,
+					request.params as ActionParams<string> | undefined,
+				);
+			} catch (localError) {
+				console.error(
+					'Local session failed to mirror remote action.',
+					localError,
+				);
+			}
+		}
+		return response;
 	} catch (error) {
 		const failure = error as ActionExecutionFailure;
 		const response: ActionExecuteErrorResponse = {
@@ -181,20 +210,22 @@ export function performSessionAction(
 		if (failure?.requirementFailures) {
 			response.requirementFailures = failure.requirementFailures;
 		}
-		return Promise.resolve(response);
+		return response;
 	}
 }
 
-export function advanceSessionPhase(
+export async function advanceSessionPhase(
 	request: SessionAdvanceRequest,
 ): Promise<SessionAdvanceResponse> {
+	const api = ensureGameApi();
 	const session = ensureSession(request.sessionId);
-	const advance = session.advancePhase();
-	return Promise.resolve({
-		sessionId: request.sessionId,
-		snapshot: session.getSnapshot(),
-		advance,
-	} satisfies SessionAdvanceResponse);
+	const response = await api.advancePhase(request);
+	try {
+		session.advancePhase();
+	} catch (localError) {
+		console.error('Local session failed to mirror remote advance.', localError);
+	}
+	return response;
 }
 
 export function releaseSession(sessionId: string): void {
