@@ -1,14 +1,17 @@
+import type {
+	AttackCalcOptions,
+	AttackEvaluationLog,
+	AttackTarget,
+} from '@kingdom-builder/protocol';
 import { runEffects } from '..';
 import type { EngineContext } from '../../context';
 import { withStatSourceFrames } from '../../stat_sources';
 import { collectTriggerEffects } from '../../triggers';
 import type { PlayerState } from '../../state';
-import type { AttackTarget } from '../attack.types';
 import {
 	attackTargetHandlers,
 	type AttackTargetHandlerMeta,
 } from '../attack_target_handlers';
-import type { AttackCalcOptions, AttackEvaluationLog } from './log.types';
 
 interface AttackResolution {
 	damageDealt: number;

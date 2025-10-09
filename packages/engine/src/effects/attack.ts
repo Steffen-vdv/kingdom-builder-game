@@ -1,31 +1,28 @@
-import type { EffectDef, EffectHandler } from '.';
-import type { ResourceGain } from '../services';
-import { runEffects } from '.';
-import { snapshotPlayer } from '../log';
-import type { AttackTarget } from './attack.types';
-import { attackTargetHandlers } from './attack_target_handlers';
-import { diffPlayerSnapshots } from './attack/snapshot_diff';
 import type {
 	AttackCalcOptions,
 	AttackLogOwner,
 	AttackOnDamageLogEntry,
-} from './attack/log.types';
+	AttackTarget,
+} from '@kingdom-builder/protocol';
+import type { EffectDef, EffectHandler } from '.';
+import type { ResourceGain } from '../services';
+import { runEffects } from '.';
+import { snapshotPlayer } from '../log';
+import { attackTargetHandlers } from './attack_target_handlers';
+import { diffPlayerSnapshots } from './attack/snapshot_diff';
 import { resolveAttack } from './attack/resolve';
 
-export type { AttackPlayerDiff } from './attack/snapshot_diff';
 export type {
 	AttackCalcOptions,
 	AttackEvaluationLog,
 	AttackLog,
 	AttackLogOwner,
 	AttackOnDamageLogEntry,
+	AttackPlayerDiff,
 	AttackPowerLog,
-} from './attack/log.types';
-
-export {
-	type AttackTarget,
-	type AttackEvaluationTargetLog,
-} from './attack.types';
+	AttackTarget,
+	AttackEvaluationTargetLog,
+} from '@kingdom-builder/protocol';
 export { resolveAttack } from './attack/resolve';
 export const attackPerform: EffectHandler = (effectDefinition, context) => {
 	const attacker = context.activePlayer;

@@ -1,5 +1,5 @@
+import type { ResourceAttackTarget } from '@kingdom-builder/protocol';
 import type { AttackTargetHandler, AttackTargetMutationResult } from './index';
-import type { ResourceAttackTarget } from '../attack.types';
 
 const resourceHandler: AttackTargetHandler<
 	ResourceAttackTarget,

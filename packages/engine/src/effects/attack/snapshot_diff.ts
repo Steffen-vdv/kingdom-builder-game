@@ -1,21 +1,10 @@
+import type {
+	AttackPlayerDiff,
+	AttackResourceDiff,
+	AttackStatDiff,
+} from '@kingdom-builder/protocol';
 import type { PlayerSnapshot } from '../../log';
 import type { ResourceKey, StatKey } from '../../state';
-
-export interface AttackResourceDiff {
-	type: 'resource';
-	key: ResourceKey;
-	before: number;
-	after: number;
-}
-
-export interface AttackStatDiff {
-	type: 'stat';
-	key: StatKey;
-	before: number;
-	after: number;
-}
-
-export type AttackPlayerDiff = AttackResourceDiff | AttackStatDiff;
 
 export function diffPlayerSnapshots(
 	before: PlayerSnapshot,
@@ -33,12 +22,13 @@ export function diffPlayerSnapshots(
 		const beforeValue = before.resources[typedKey] ?? 0;
 		const afterValue = after.resources[typedKey] ?? 0;
 		if (beforeValue !== afterValue) {
-			diffs.push({
+			const diff: AttackResourceDiff = {
 				type: 'resource',
 				key: typedKey,
 				before: beforeValue,
 				after: afterValue,
-			});
+			};
+			diffs.push(diff);
 		}
 	}
 
@@ -53,12 +43,13 @@ export function diffPlayerSnapshots(
 		const beforeValue = before.stats[typedKey] ?? 0;
 		const afterValue = after.stats[typedKey] ?? 0;
 		if (beforeValue !== afterValue) {
-			diffs.push({
+			const diff: AttackStatDiff = {
 				type: 'stat',
 				key: typedKey,
 				before: beforeValue,
 				after: afterValue,
-			});
+			};
+			diffs.push(diff);
 		}
 	}
 
