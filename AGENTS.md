@@ -18,13 +18,6 @@ Section&nbsp;1 below.**
 
 ---
 
-This single document consolidates every prior `AGENTS.md` directive, development
-procedure, and lore note for the Kingdom Builder project. No information has
-been removed—content was reorganized to avoid duplication while improving
-cohesion.
-
----
-
 ## 1. Core Agent Principles
 
 - We are incrementally delivering a fully functional, robust, elegant, and
