@@ -40,8 +40,8 @@ function createTestContext() {
 
 describe('land change log formatting', () => {
 	it('logs gained land entries with icon and label', () => {
-		const ctx = createTestContext();
-		const before = snapshotPlayer(ctx.activePlayer, ctx);
+		const engineContext = createTestContext();
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 		runEffects(
 			[
 				{
@@ -49,11 +49,16 @@ describe('land change log formatting', () => {
 					method: 'add',
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
-		const lines = diffStepSnapshots(before, after, undefined, diffContext);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const lines = diffStepSnapshots(
+			before,
+			after,
+			undefined,
+			translationDiffContext,
+		);
 		const landLine = lines.find((line) => {
 			return line.startsWith(LOG_KEYWORDS.gained);
 		});
@@ -70,7 +75,7 @@ describe('land change log formatting', () => {
 	});
 
 	it('logs developed entries for new land improvements', () => {
-		const ctx = createTestContext();
+		const engineContext = createTestContext();
 		runEffects(
 			[
 				{
@@ -78,15 +83,16 @@ describe('land change log formatting', () => {
 					method: 'add',
 				},
 			],
-			ctx,
+			engineContext,
 		);
 		const targetLand =
-			ctx.activePlayer.lands.at(-1) ?? ctx.activePlayer.lands[0];
+			engineContext.activePlayer.lands.at(-1) ??
+			engineContext.activePlayer.lands[0];
 		expect(targetLand).toBeTruthy();
 		if (!targetLand) {
 			return;
 		}
-		const developmentEntries = ctx.developments.entries();
+		const developmentEntries = engineContext.developments.entries();
 		const developmentEntry = developmentEntries.find(([, def]) => {
 			return Boolean(def?.icon) && Boolean(def?.name);
 		});
@@ -96,7 +102,7 @@ describe('land change log formatting', () => {
 		if (!developmentId) {
 			return;
 		}
-		const before = snapshotPlayer(ctx.activePlayer, ctx);
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 		runEffects(
 			[
 				{
@@ -108,11 +114,16 @@ describe('land change log formatting', () => {
 					},
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
-		const lines = diffStepSnapshots(before, after, undefined, diffContext);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const lines = diffStepSnapshots(
+			before,
+			after,
+			undefined,
+			translationDiffContext,
+		);
 		const developmentLine = lines.find((line) => {
 			return line.startsWith(LOG_KEYWORDS.developed);
 		});
@@ -120,7 +131,11 @@ describe('land change log formatting', () => {
 		if (!developmentLine) {
 			return;
 		}
-		const developmentContent = logContent('development', developmentId, ctx);
+		const developmentContent = logContent(
+			'development',
+			developmentId,
+			engineContext,
+		);
 		const developmentLabel = developmentContent[0] ?? developmentId;
 		const expectedLine = formatLogHeadline(
 			LOG_KEYWORDS.developed,
