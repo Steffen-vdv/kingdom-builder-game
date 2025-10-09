@@ -9,13 +9,13 @@ const buildingHandler: AttackTargetHandler<
 	getEvaluationModifierKey(target) {
 		return target.id;
 	},
-	applyDamage(target, damage, ctx, defender, meta) {
+	applyDamage(target, damage, engineContext, defender, meta) {
 		const existed = defender.buildings.has(target.id);
 		let destroyed = false;
 
 		if (damage > 0 && existed) {
 			const { defenderIndex, originalIndex } = meta;
-			ctx.game.currentPlayerIndex = defenderIndex;
+			engineContext.game.currentPlayerIndex = defenderIndex;
 			try {
 				runEffects(
 					[
@@ -25,17 +25,17 @@ const buildingHandler: AttackTargetHandler<
 							params: { id: target.id },
 						},
 					],
-					ctx,
+					engineContext,
 				);
 			} finally {
-				ctx.game.currentPlayerIndex = originalIndex;
+				engineContext.game.currentPlayerIndex = originalIndex;
 			}
 			destroyed = !defender.buildings.has(target.id);
 		}
 
 		return { existed, destroyed };
 	},
-	buildLog(target, damage, _ctx, _defender, _meta, mutation) {
+	buildLog(target, damage, _engineContext, _defender, _meta, mutation) {
 		return {
 			type: 'building',
 			id: target.id,
