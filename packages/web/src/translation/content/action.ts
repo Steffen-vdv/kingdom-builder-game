@@ -27,68 +27,68 @@ class ActionTranslator
 {
 	summarize(
 		id: string,
-		ctx: TranslationContext,
-		opts?: Record<string, unknown>,
+		context: TranslationContext,
+		options?: Record<string, unknown>,
 	): Summary {
-		const def = ctx.actions.get(id);
+		const definition = context.actions.get(id);
 		const resolved = resolveActionEffects(
-			def,
-			opts as ActionParams<string> | undefined,
+			definition,
+			options as ActionParams<string> | undefined,
 		);
 		const combined: Summary = [];
 		for (const step of resolved.steps) {
 			if (step.type === 'effects') {
-				combined.push(...summarizeEffects(step.effects, ctx));
+				combined.push(...summarizeEffects(step.effects, context));
 				continue;
 			}
-			combined.push(...formatEffectGroups([step], 'summarize', ctx));
+			combined.push(...formatEffectGroups([step], 'summarize', context));
 		}
 		return combined.length ? combined : [];
 	}
 	describe(
 		id: string,
-		ctx: TranslationContext,
-		opts?: Record<string, unknown>,
+		context: TranslationContext,
+		options?: Record<string, unknown>,
 	): Summary {
-		const def = ctx.actions.get(id);
+		const definition = context.actions.get(id);
 		const resolved = resolveActionEffects(
-			def,
-			opts as ActionParams<string> | undefined,
+			definition,
+			options as ActionParams<string> | undefined,
 		);
 		const combined: Summary = [];
 		for (const step of resolved.steps) {
 			if (step.type === 'effects') {
-				combined.push(...describeEffects(step.effects, ctx));
+				combined.push(...describeEffects(step.effects, context));
 				continue;
 			}
-			combined.push(...formatEffectGroups([step], 'describe', ctx));
+			combined.push(...formatEffectGroups([step], 'describe', context));
 		}
 		return combined.length ? combined : [];
 	}
 	log(
 		id: string,
-		ctx: TranslationContext,
+		context: TranslationContext,
 		params?: Record<string, unknown>,
 	): ActionLogLineDescriptor[] {
-		const def = ctx.actions.get(id);
-		const icon = def.icon?.trim();
-		const label = def.name.trim();
+		const definition = context.actions.get(id);
+		const icon = definition.icon?.trim();
+		const label = definition.name.trim();
 		let message = icon ? `${icon} ${label}` : label;
-		const extra = getActionLogHook(def)?.(ctx, params);
+		const extra = getActionLogHook(definition)?.(context, params);
 		if (extra) {
 			message += extra;
 		}
 		const resolved = resolveActionEffects(
-			def,
+			definition,
 			params as ActionParams<string> | undefined,
 		);
-		const effLogs: Summary = [];
+		const effectLogs: Summary = [];
 		for (const step of resolved.steps) {
 			if (step.type === 'effects') {
-				effLogs.push(...logEffects(step.effects, ctx));
+				effectLogs.push(...logEffects(step.effects, context));
 				continue;
 			}
-			effLogs.push(...formatEffectGroups([step], 'log', ctx));
+			effectLogs.push(...formatEffectGroups([step], 'log', context));
 		}
 		const lines: ActionLogLineDescriptor[] = [
 			{ text: message, depth: 0, kind: 'headline' },
@@ -131,7 +131,7 @@ class ActionTranslator
 				}
 			}
 		}
-		effLogs.forEach((entry) => push(entry, 1));
+		effectLogs.forEach((entry) => push(entry, 1));
 		return lines;
 	}
 }
