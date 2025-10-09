@@ -13,11 +13,11 @@ export const populationAdd: EffectHandler = (effect, context, mult = 1) => {
 	let iterationIndex = 0;
 	while (iterationIndex < iterations) {
 		const player = context.activePlayer;
-		const def = context.populations.get(role);
+		const populationDefinition = context.populations.get(role);
 		player.population[role] = (player.population[role] || 0) + 1;
 		const index = player.population[role];
-		if (def.onAssigned) {
-			const effects = applyParamsToEffects(def.onAssigned, {
+		if (populationDefinition.onAssigned) {
+			const effects = applyParamsToEffects(populationDefinition.onAssigned, {
 				index,
 				player: player.id,
 				role,
