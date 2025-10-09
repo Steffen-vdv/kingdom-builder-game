@@ -119,6 +119,15 @@ describe('SessionTransport', () => {
 			body: {},
 			headers: authorizedHeaders,
 		});
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		const expectedRawCosts = session?.getActionCosts(actionId) ?? {};
+		const expectedCosts: Record<string, number> = {};
+		for (const [resourceKey, amount] of Object.entries(expectedRawCosts)) {
+			if (typeof amount === 'number') {
+				expectedCosts[resourceKey] = amount;
+			}
+		}
 		const result = await transport.executeAction({
 			body: { sessionId, actionId },
 			headers: authorizedHeaders,
@@ -127,6 +136,7 @@ describe('SessionTransport', () => {
 		const [player] = result.snapshot.game.players;
 		expect(player?.resources[gainKey]).toBe(1);
 		expect(Array.isArray(result.traces)).toBe(true);
+		expect(result.costs).toEqual(expectedCosts);
 		expect(result.httpStatus).toBe(200);
 	});
 

@@ -46,6 +46,7 @@ export interface ActionTrace {
 export interface ActionExecuteSuccessResponse {
 	status: 'success';
 	snapshot: SessionSnapshot;
+	costs: Record<string, number>;
 	traces: ActionTrace[];
 }
 
