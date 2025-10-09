@@ -51,12 +51,9 @@ export class GameApiError extends Error {
 	}
 }
 
-const CONNECTION_HEADER_VALUE = 'keep-alive';
-
 const DEFAULT_HEADERS: ReadonlyArray<readonly [string, string]> = [
 	['Accept', 'application/json'],
 	['Content-Type', 'application/json'],
-	['Connection', CONNECTION_HEADER_VALUE],
 ];
 
 const ensureHeaders = (headers?: HeadersInit) => {
