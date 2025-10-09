@@ -126,6 +126,9 @@ export type {
 export type {
 	SessionIdentifier,
 	SessionPlayerNameMap,
+	SessionRegistryMap,
+	SessionRegistryPayload,
+	SessionResourceDefinition,
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionStateResponse,

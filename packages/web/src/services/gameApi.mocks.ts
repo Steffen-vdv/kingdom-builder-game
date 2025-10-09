@@ -8,6 +8,7 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 	SessionCreateResponse,
+	SessionRegistryPayload,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol/session';
 import type { GameApi } from './gameApi';
@@ -24,11 +25,20 @@ const clone: CloneFn = (value) => {
 	return value;
 };
 
+const EMPTY_REGISTRIES: SessionRegistryPayload = {
+	actions: {},
+	buildings: {},
+	developments: {},
+	populations: {},
+	resources: {},
+};
+
 const toStateResponse = (
 	response: SessionCreateResponse,
 ): SessionStateResponse => ({
 	sessionId: response.sessionId,
 	snapshot: clone(response.snapshot),
+	registries: clone(response.registries),
 });
 
 export type GameApiMockHandlers = {
@@ -137,13 +147,13 @@ export class GameApiFake implements GameApi {
 		const response = this.#consumeAction();
 
 		if (this.#isSuccess(response)) {
-			this.#sessions.set(
-				request.sessionId,
-				toStateResponse({
-					sessionId: request.sessionId,
-					snapshot: response.snapshot,
-				}),
-			);
+			const current = this.#sessions.get(request.sessionId);
+			const registries = current?.registries ?? EMPTY_REGISTRIES;
+			this.#sessions.set(request.sessionId, {
+				sessionId: request.sessionId,
+				snapshot: clone(response.snapshot),
+				registries: clone(registries),
+			});
 		}
 
 		return Promise.resolve(clone(response));
@@ -154,13 +164,7 @@ export class GameApiFake implements GameApi {
 	): Promise<SessionAdvanceResponse> {
 		const response = this.#consumeAdvance();
 
-		this.#sessions.set(
-			request.sessionId,
-			toStateResponse({
-				sessionId: response.sessionId,
-				snapshot: response.snapshot,
-			}),
-		);
+		this.#sessions.set(request.sessionId, toStateResponse(response));
 
 		return Promise.resolve(clone(response));
 	}

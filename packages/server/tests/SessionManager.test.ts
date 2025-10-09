@@ -70,4 +70,17 @@ describe('SessionManager', () => {
 			'Session "missing" was not found.',
 		);
 	});
+
+	it('exposes immutable registry snapshots', () => {
+		const { manager, factory, actionId } = createSyntheticSessionManager();
+		const registries = manager.getRegistries();
+		const expectedAction = factory.actions.get(actionId);
+		expect(registries.actions[actionId]).toEqual(expectedAction);
+		expect(Object.values(registries.resources)).not.toHaveLength(0);
+		if (registries.actions[actionId]) {
+			registries.actions[actionId]!.name = 'mutated';
+		}
+		const freshSnapshot = manager.getRegistries();
+		expect(freshSnapshot.actions[actionId]).toEqual(expectedAction);
+	});
 });

@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { SessionGateway } from '@kingdom-builder/protocol';
+import type {
+	SessionGateway,
+	SessionRegistryPayload,
+} from '@kingdom-builder/protocol';
+import { RESOURCES } from '@kingdom-builder/contents';
+import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	HttpSessionGateway,
 	type HttpSessionGatewayOptions,
@@ -8,6 +13,33 @@ import { TransportError } from '../src/transport/TransportTypes.js';
 
 describe('HttpSessionGateway', () => {
 	const baseUrl = 'https://gateway.test/api';
+
+	function createRegistries(): SessionRegistryPayload {
+		const factory = createContentFactory();
+		const action = factory.action();
+		const building = factory.building({ costs: {} });
+		const development = factory.development();
+		const population = factory.population();
+		const resources = Object.fromEntries(
+			Object.entries(RESOURCES).map(([key, resource]) => [
+				key,
+				{
+					key,
+					icon: resource.icon,
+					label: resource.label,
+					description: resource.description,
+					tags: resource.tags,
+				},
+			]),
+		);
+		return {
+			actions: { [action.id]: action },
+			buildings: { [building.id]: building },
+			developments: { [development.id]: development },
+			populations: { [population.id]: population },
+			resources,
+		};
+	}
 
 	function createGateway(
 		options: Partial<HttpSessionGatewayOptions> = {},
@@ -27,6 +59,7 @@ describe('HttpSessionGateway', () => {
 	}
 
 	it('creates sessions through the REST transport', async () => {
+		const registries = createRegistries();
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
@@ -40,6 +73,7 @@ describe('HttpSessionGateway', () => {
 					{
 						sessionId: 'rest-session',
 						snapshot: { game: { devMode: true } },
+						registries,
 					},
 					{ status: 201 },
 				);
@@ -48,6 +82,7 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.createSession({ devMode: true });
 		expect(response.sessionId).toBe('rest-session');
+		expect(response.registries).toEqual(registries);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
@@ -78,6 +113,7 @@ describe('HttpSessionGateway', () => {
 	});
 
 	it('fetches session snapshots', async () => {
+		const registries = createRegistries();
 		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
 			const request =
 				input instanceof Request ? input : new Request(input, init);
@@ -88,16 +124,19 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { players: [] } },
+					registries,
 				}),
 			);
 		});
 		const gateway = createGateway({ fetch });
 		const response = await gateway.fetchSnapshot({ sessionId: 'test' });
 		expect(response.sessionId).toBe('test');
+		expect(response.registries).toEqual(registries);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
 	it('advances sessions and validates responses', async () => {
+		const registries = createRegistries();
 		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
 			const request =
 				input instanceof Request ? input : new Request(input, init);
@@ -108,12 +147,14 @@ describe('HttpSessionGateway', () => {
 					sessionId: 'test',
 					snapshot: { game: { currentPhase: 'growth' } },
 					advance: { effects: [] },
+					registries,
 				}),
 			);
 		});
 		const gateway = createGateway({ fetch });
 		const response = await gateway.advancePhase({ sessionId: 'test' });
 		expect(response.advance.effects).toEqual([]);
+		expect(response.registries).toEqual(registries);
 	});
 
 	it('performs actions and returns success payloads', async () => {
@@ -166,6 +207,7 @@ describe('HttpSessionGateway', () => {
 	});
 
 	it('updates developer mode using the REST endpoint', async () => {
+		const registries = createRegistries();
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
@@ -179,6 +221,7 @@ describe('HttpSessionGateway', () => {
 				return jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { devMode: true } },
+					registries,
 				});
 			},
 		);
@@ -188,15 +231,21 @@ describe('HttpSessionGateway', () => {
 			enabled: true,
 		});
 		expect(response.snapshot.game.devMode).toBe(true);
+		expect(response.registries).toEqual(registries);
 	});
 
 	it('supports asynchronous header factories', async () => {
+		const registries = createRegistries();
 		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
 			const request =
 				input instanceof Request ? input : new Request(input, init);
 			expect(request.headers.get('x-test-header')).toBe('dynamic');
 			return Promise.resolve(
-				jsonResponse({ sessionId: 'dynamic', snapshot: { game: {} } }),
+				jsonResponse({
+					sessionId: 'dynamic',
+					snapshot: { game: {} },
+					registries,
+				}),
 			);
 		});
 		const gateway = new HttpSessionGateway({
@@ -206,9 +255,11 @@ describe('HttpSessionGateway', () => {
 		});
 		const response = await gateway.createSession();
 		expect(response.sessionId).toBe('dynamic');
+		expect(response.registries).toEqual(registries);
 	});
 
 	it('provides empty header objects when none are configured', async () => {
+		const registries = createRegistries();
 		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
 			const request =
 				input instanceof Request ? input : new Request(input, init);
@@ -217,12 +268,14 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'basic',
 					snapshot: { game: { players: [] } },
+					registries,
 				}),
 			);
 		});
 		const gateway = new HttpSessionGateway({ baseUrl, fetch });
 		const response = await gateway.fetchSnapshot({ sessionId: 'basic' });
 		expect(response.sessionId).toBe('basic');
+		expect(response.registries).toEqual(registries);
 	});
 
 	it('uses status codes when payload code is invalid', async () => {

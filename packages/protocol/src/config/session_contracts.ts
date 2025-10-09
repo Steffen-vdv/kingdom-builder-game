@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { gameConfigSchema } from './schema';
+import {
+	actionSchema,
+	buildingSchema,
+	developmentSchema,
+	gameConfigSchema,
+	populationSchema,
+} from './schema';
 import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
@@ -25,9 +31,26 @@ export const sessionCreateRequestSchema = z.object({
 	playerNames: sessionPlayerNameMapSchema.optional(),
 });
 
+const sessionResourceDefinitionSchema = z.object({
+	key: z.string(),
+	icon: z.string(),
+	label: z.string(),
+	description: z.string(),
+	tags: z.array(z.string()).optional(),
+});
+
+export const sessionRegistrySchema = z.object({
+	actions: z.record(z.string(), actionSchema),
+	buildings: z.record(z.string(), buildingSchema),
+	developments: z.record(z.string(), developmentSchema),
+	populations: z.record(z.string(), populationSchema),
+	resources: z.record(z.string(), sessionResourceDefinitionSchema),
+});
+
 export const sessionCreateResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(),
+	registries: sessionRegistrySchema,
 });
 
 export const sessionStateResponseSchema = sessionCreateResponseSchema;
@@ -36,9 +59,7 @@ export const sessionAdvanceRequestSchema = z.object({
 	sessionId: sessionIdSchema,
 });
 
-export const sessionAdvanceResponseSchema = z.object({
-	sessionId: sessionIdSchema,
-	snapshot: z.custom<SessionSnapshot>(),
+export const sessionAdvanceResponseSchema = sessionStateResponseSchema.extend({
 	advance: z.custom<SessionAdvanceResult>(),
 });
 

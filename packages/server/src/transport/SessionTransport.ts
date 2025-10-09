@@ -89,6 +89,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
+			registries: this.sessionManager.getRegistries(),
 		} satisfies SessionCreateResponse;
 		return sessionCreateResponseSchema.parse(response);
 	}
@@ -100,6 +101,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot,
+			registries: this.sessionManager.getRegistries(),
 		} satisfies SessionStateResponse;
 		return sessionStateResponseSchema.parse(response);
 	}
@@ -128,6 +130,7 @@ export class SessionTransport {
 				sessionId,
 				snapshot: result.snapshot,
 				advance: result.advance,
+				registries: this.sessionManager.getRegistries(),
 			} satisfies SessionAdvanceResponse;
 			return sessionAdvanceResponseSchema.parse(response);
 		} catch (error) {
@@ -215,6 +218,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
+			registries: this.sessionManager.getRegistries(),
 		} satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
 	}

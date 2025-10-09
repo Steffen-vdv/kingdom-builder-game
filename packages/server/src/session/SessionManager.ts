@@ -9,8 +9,10 @@ import {
 	POPULATIONS,
 	PHASES,
 	GAME_START,
+	RESOURCES,
 	RULES,
 } from '@kingdom-builder/contents';
+import type { SessionRegistryPayload } from '@kingdom-builder/protocol';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -23,6 +25,42 @@ type SessionRecord = {
 	createdAt: number;
 	lastAccessedAt: number;
 };
+
+const globalClone = (
+	globalThis as {
+		structuredClone?: <T>(value: T) => T;
+	}
+).structuredClone;
+
+function jsonClone<T>(value: T): T {
+	return JSON.parse(JSON.stringify(value)) as T;
+}
+
+const cloneStructured: <T>(value: T) => T = globalClone
+	? (value) => globalClone(value)
+	: jsonClone;
+
+function cloneValue<T>(value: T): T {
+	return cloneStructured(value);
+}
+
+function cloneRegistry<Definition>(registry: {
+	entries(): Array<[string, Definition]>;
+}): Record<string, Definition> {
+	const entries = registry
+		.entries()
+		.map(([id, definition]) => [id, cloneValue(definition)] as const);
+	return Object.fromEntries(entries) as Record<string, Definition>;
+}
+
+function cloneRecord<Definition>(
+	record: Record<string, Definition>,
+): Record<string, Definition> {
+	const entries = Object.entries(record).map(
+		([key, value]) => [key, cloneValue(value)] as const,
+	);
+	return Object.fromEntries(entries) as Record<string, Definition>;
+}
 
 export interface SessionManagerOptions {
 	maxIdleDurationMs?: number;
@@ -49,6 +87,8 @@ export class SessionManager {
 
 	private readonly baseOptions: EngineSessionBaseOptions;
 
+	private readonly registrySnapshot: SessionRegistryPayload;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -67,6 +107,17 @@ export class SessionManager {
 			phases: engineOptions.phases ?? PHASES,
 			start: engineOptions.start ?? GAME_START,
 			rules: engineOptions.rules ?? RULES,
+		};
+		const resourceRecord = RESOURCES as Record<
+			string,
+			SessionRegistryPayload['resources'][string]
+		>;
+		this.registrySnapshot = {
+			actions: cloneRegistry(this.baseOptions.actions),
+			buildings: cloneRegistry(this.baseOptions.buildings),
+			developments: cloneRegistry(this.baseOptions.developments),
+			populations: cloneRegistry(this.baseOptions.populations),
+			resources: cloneRecord(resourceRecord),
 		};
 	}
 
@@ -135,6 +186,10 @@ export class SessionManager {
 	public getSessionCount(): number {
 		this.purgeExpiredSessions();
 		return this.sessions.size;
+	}
+
+	public getRegistries(): SessionRegistryPayload {
+		return cloneValue(this.registrySnapshot);
 	}
 
 	private requireSession(sessionId: string): EngineSession {

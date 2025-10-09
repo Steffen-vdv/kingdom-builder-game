@@ -20,7 +20,7 @@ describe('SessionTransport', () => {
 	} satisfies Record<string, string>;
 
 	it('creates sessions and applies player preferences', () => {
-		const { manager } = createSyntheticSessionManager();
+		const { manager, factory, actionId } = createSyntheticSessionManager();
 		const idFactory = vi.fn().mockReturnValue('transport-session');
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -39,6 +39,23 @@ describe('SessionTransport', () => {
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
+		const { registries } = response;
+		expect(registries.actions[actionId]).toEqual(factory.actions.get(actionId));
+		expect(Object.keys(registries.buildings).sort()).toEqual(
+			factory.buildings.keys().slice().sort(),
+		);
+		expect(Object.keys(registries.developments).sort()).toEqual(
+			factory.developments.keys().slice().sort(),
+		);
+		expect(Object.keys(registries.populations).sort()).toEqual(
+			factory.populations.keys().slice().sort(),
+		);
+		for (const resource of Object.values(registries.resources)) {
+			expect(typeof resource.key).toBe('string');
+			expect(typeof resource.icon).toBe('string');
+			expect(typeof resource.label).toBe('string');
+			expect(typeof resource.description).toBe('string');
+		}
 	});
 
 	it('skips blank player name entries when applying preferences', () => {
@@ -87,6 +104,7 @@ describe('SessionTransport', () => {
 		});
 		expect(state.sessionId).toBe(sessionId);
 		expect(state.snapshot.game.players).toHaveLength(2);
+		expect(Object.keys(state.registries.actions)).not.toHaveLength(0);
 	});
 
 	it('advances sessions and reports results', async () => {
@@ -107,6 +125,7 @@ describe('SessionTransport', () => {
 		expect(advance.sessionId).toBe(sessionId);
 		expect(advance.snapshot.game.currentPhase).toBe('end');
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
+		expect(Object.keys(advance.registries.resources)).not.toHaveLength(0);
 	});
 
 	it('executes actions and returns updated snapshots', async () => {
