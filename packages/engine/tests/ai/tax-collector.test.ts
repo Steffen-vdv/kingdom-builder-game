@@ -5,7 +5,7 @@ import {
 	createTaxCollectorController,
 	TAX_ACTION_ID,
 } from '../../src/ai/index';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers';
 
 describe('tax collector AI controller', () => {

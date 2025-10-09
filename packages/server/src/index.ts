@@ -8,6 +8,8 @@ export type {
 } from './session/SessionManager.js';
 export { SessionTransport } from './transport/SessionTransport.js';
 export type { SessionTransportOptions } from './transport/SessionTransport.js';
+export { HttpSessionGateway } from './client/HttpSessionGateway.js';
+export type { HttpSessionGatewayOptions } from './client/HttpSessionGateway.js';
 export { TransportError } from './transport/TransportTypes.js';
 export type {
 	TransportErrorCode,

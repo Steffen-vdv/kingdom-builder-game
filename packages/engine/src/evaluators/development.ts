@@ -8,9 +8,9 @@ export interface DevelopmentEvaluatorParams extends Record<string, unknown> {
 export const developmentEvaluator: EvaluatorHandler<
 	number,
 	DevelopmentEvaluatorParams
-> = (definition, ctx: EngineContext) => {
+> = (definition, engineContext: EngineContext) => {
 	const { id } = definition.params!;
-	return ctx.activePlayer.lands.reduce(
+	return engineContext.activePlayer.lands.reduce(
 		(total, land) =>
 			total +
 			land.developments.filter((development) => development === id).length,

@@ -14,10 +14,10 @@ import type {
 	DevelopmentConfig as DevelopmentDef,
 	PopulationConfig as PopulationDef,
 	Registry,
+	RuleSet,
 	StartConfig,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../src/phases.ts';
-import type { RuleSet } from '../src/services';
 
 const BASE: {
 	actions: Registry<ActionDef>;

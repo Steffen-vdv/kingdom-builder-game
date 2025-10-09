@@ -7,7 +7,7 @@ import {
 	splitSummary,
 	type Summary,
 } from '../../src/translation/content';
-import { createContentFactory } from '../../../engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 interface SyntheticIds {
 	transferBuilding: string;

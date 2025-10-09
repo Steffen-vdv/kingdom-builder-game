@@ -17,7 +17,7 @@ export interface PlayerSnapshot {
 
 export function snapshotPlayer(
 	player: PlayerState,
-	ctx: EngineContext,
+	engineContext: EngineContext,
 ): PlayerSnapshot {
 	return {
 		resources: { ...player.resources },
@@ -29,7 +29,7 @@ export function snapshotPlayer(
 			slotsUsed: land.slotsUsed,
 			developments: [...land.developments],
 		})),
-		passives: ctx.passives.list(player.id),
+		passives: engineContext.passives.list(player.id),
 	};
 }
 

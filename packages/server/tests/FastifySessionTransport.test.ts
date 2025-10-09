@@ -8,25 +8,23 @@ import {
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 
 describe('FastifySessionTransport', () => {
-	const middleware = createTokenAuthMiddleware({
-		tokens: {
-			'session-manager': {
-				userId: 'manager',
-				roles: ['session:create', 'session:advance', 'admin'],
-			},
+	const defaultTokens = {
+		'session-manager': {
+			userId: 'manager',
+			roles: ['session:create', 'session:advance', 'admin'],
 		},
-	});
+	};
 
 	const authorizedHeaders = {
 		authorization: 'Bearer session-manager',
-	};
+	} satisfies Record<string, string>;
 
-	async function createServer() {
+	async function createServer(tokens = defaultTokens) {
 		const { manager, actionId, gainKey } = createSyntheticSessionManager();
 		const app = fastify();
 		const options: FastifySessionTransportOptions = {
 			sessionManager: manager,
-			authMiddleware: middleware,
+			authMiddleware: createTokenAuthMiddleware({ tokens }),
 		};
 		await app.register(createSessionTransportPlugin, options);
 		await app.ready();
@@ -159,6 +157,57 @@ describe('FastifySessionTransport', () => {
 		const body = response.json() as { status: string; error: string };
 		expect(body.status).toBe('error');
 		expect(body.error).toContain('was not found');
+		await app.close();
+	});
+
+	it('returns 401 when authorization headers are missing', async () => {
+		const { app } = await createServer();
+		const response = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			payload: {},
+		});
+		expect(response.statusCode).toBe(401);
+		const body = response.json() as { code: string };
+		expect(body.code).toBe('UNAUTHORIZED');
+		await app.close();
+	});
+
+	it('returns 403 when token lacks required roles', async () => {
+		const tokens = {
+			'creator-only': { userId: 'creator', roles: ['session:create'] },
+		};
+		const { app } = await createServer(tokens);
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: { authorization: 'Bearer creator-only' },
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const advanceResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/advance`,
+			headers: { authorization: 'Bearer creator-only' },
+			payload: {},
+		});
+		expect(advanceResponse.statusCode).toBe(403);
+		const body = advanceResponse.json() as { code: string };
+		expect(body.code).toBe('FORBIDDEN');
+		await app.close();
+	});
+
+	it('prefers the last authorization header value when multiple values are provided', async () => {
+		const { app } = await createServer();
+		const response = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: {
+				authorization: ['Bearer session-manager', 'Bearer invalid-token'],
+			},
+			payload: {},
+		});
+		expect(response.statusCode).toBe(403);
 		await app.close();
 	});
 });

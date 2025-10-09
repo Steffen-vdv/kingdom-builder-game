@@ -9,7 +9,7 @@ import {
 } from '@kingdom-builder/contents';
 import { type PlayerStartConfig } from '@kingdom-builder/protocol';
 import { vi } from 'vitest';
-import { createContentFactory } from '../../../engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import type {
 	EngineSessionSnapshot,
 	RequirementFailure,

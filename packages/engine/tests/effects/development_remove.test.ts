@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { developmentRemove, type EffectDef } from '../../src/effects';
 import { createTestEngine } from '../helpers';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 function createRemovalEffect(params: Record<string, unknown>): EffectDef {
 	return {

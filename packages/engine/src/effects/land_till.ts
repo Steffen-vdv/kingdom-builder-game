@@ -1,12 +1,12 @@
 import type { EffectHandler } from '.';
 
-export const landTill: EffectHandler = (effect, ctx, mult = 1) => {
-	const max = ctx.services.rules.maxSlotsPerLand;
+export const landTill: EffectHandler = (effect, engineContext, mult = 1) => {
+	const max = engineContext.services.rules.maxSlotsPerLand;
 	for (let index = 0; index < Math.floor(mult); index++) {
 		const landId = effect.params?.['landId'] as string | undefined;
 		const land = landId
-			? ctx.activePlayer.lands.find((l) => l.id === landId)
-			: [...ctx.activePlayer.lands]
+			? engineContext.activePlayer.lands.find((l) => l.id === landId)
+			: [...engineContext.activePlayer.lands]
 					.reverse()
 					.find((candidate) => !candidate.tilled && candidate.slotsMax < max);
 		if (!land) {

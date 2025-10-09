@@ -9,7 +9,7 @@ import {
 	type EffectDef,
 	type PlayerId,
 } from '@kingdom-builder/engine';
-import { createContentFactory } from '../../engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 import { PhaseId } from '@kingdom-builder/contents';
 import {

@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import {
 	createContentFactory,
 	type ContentFactory,
-} from '../../../engine/tests/factories/content';
+} from '@kingdom-builder/testing';
 import type {
 	PhaseDef,
 	RuleSet,

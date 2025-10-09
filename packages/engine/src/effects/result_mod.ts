@@ -12,18 +12,21 @@ interface ResultModParams {
 	[key: string]: unknown;
 }
 
-export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
+export const resultMod: EffectHandler<ResultModParams> = (
+	effect,
+	engineContext,
+) => {
 	const params = effect.params || ({} as ResultModParams);
 	const { id, actionId, evaluation } = params;
 	if (!id || (!actionId && !evaluation)) {
 		throw new Error('result_mod requires id and actionId or evaluation');
 	}
-	const ownerId = ctx.activePlayer.id;
+	const ownerId = engineContext.activePlayer.id;
 	const modId = `${id}_${ownerId}`;
 	if (effect.method === 'add') {
 		const effects = effect.effects || [];
 		if (actionId) {
-			ctx.passives.registerResultModifier(
+			engineContext.passives.registerResultModifier(
 				modId,
 				(executedActionId, innerContext) => {
 					if (
@@ -42,7 +45,7 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 			const adjust = typeof rawAdjust === 'number' ? rawAdjust : undefined;
 			const rawPercent = params['percent'];
 			const percent = typeof rawPercent === 'number' ? rawPercent : undefined;
-			ctx.passives.registerEvaluationModifier(
+			engineContext.passives.registerEvaluationModifier(
 				modId,
 				target,
 				(innerContext, gains) => {
@@ -87,9 +90,9 @@ export const resultMod: EffectHandler<ResultModParams> = (effect, ctx) => {
 		}
 	} else if (effect.method === 'remove') {
 		if (actionId) {
-			ctx.passives.unregisterResultModifier(modId);
+			engineContext.passives.unregisterResultModifier(modId);
 		} else if (evaluation) {
-			ctx.passives.unregisterEvaluationModifier(modId);
+			engineContext.passives.unregisterEvaluationModifier(modId);
 		}
 	}
 };

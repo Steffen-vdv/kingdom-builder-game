@@ -24,6 +24,8 @@
 			"@kingdom-builder/protocol": ["packages/protocol/src/index"],
 			"@kingdom-builder/protocol/*": ["packages/protocol/src/*"],
 			"@kingdom-builder/contents/*": ["packages/contents/src/*"],
+			"@kingdom-builder/testing": ["packages/testing/src/index"],
+			"@kingdom-builder/testing/*": ["packages/testing/src/*"],
 			"@kingdom-builder/*": ["packages/*/src"],
 			"@kingdom-builder/server/*": ["packages/server/src/*"]
 		}

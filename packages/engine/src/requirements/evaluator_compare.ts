@@ -28,17 +28,17 @@ function compare(a: number, b: number, op: CompareParams['operator']) {
 
 const getValue = (
 	value: EvaluatorDef | number,
-	ctx: Parameters<RequirementHandler>[1],
+	engineContext: Parameters<RequirementHandler>[1],
 ) =>
 	typeof value === 'number'
 		? value
-		: (EVALUATORS.get(value.type)(value, ctx) as number);
+		: (EVALUATORS.get(value.type)(value, engineContext) as number);
 
-export const evaluatorCompare: RequirementHandler = (req, ctx) => {
+export const evaluatorCompare: RequirementHandler = (req, engineContext) => {
 	const params = req.params as unknown as CompareParams;
 	const leftHandler = EVALUATORS.get(params.left.type);
-	const leftVal = leftHandler(params.left, ctx) as number;
-	const rightVal = getValue(params.right, ctx);
+	const leftVal = leftHandler(params.left, engineContext) as number;
+	const rightVal = getValue(params.right, engineContext);
 	if (compare(leftVal, rightVal, params.operator)) {
 		return true;
 	}

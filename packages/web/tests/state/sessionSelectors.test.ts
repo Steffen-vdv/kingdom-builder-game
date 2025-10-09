@@ -4,7 +4,7 @@ import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
-import { createContentFactory } from '../../../engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	selectSessionOptions,
 	selectSessionPlayers,

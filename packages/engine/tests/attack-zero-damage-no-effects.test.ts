@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef, type AttackLog } from '../src/index.ts';
 import { Resource } from '../src/state/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { createContentFactory } from './factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 const attackLogKey = 'attack:perform';
 

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers';
-import { createContentFactory } from './factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { advance, performAction, getActionCosts, snapshotPlayer } from '../src';
 
 function toMain(ctx: ReturnType<typeof createTestEngine>) {

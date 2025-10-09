@@ -8,16 +8,20 @@ const resourceHandler: AttackTargetHandler<
 	getEvaluationModifierKey(target) {
 		return target.key;
 	},
-	applyDamage(target, damage, ctx, defender) {
+	applyDamage(target, damage, engineContext, defender) {
 		const before = defender.resources[target.key] || 0;
 		const after = Math.max(0, before - damage);
 		if (damage > 0) {
 			defender.resources[target.key] = after;
-			ctx.services.handleResourceChange(ctx, defender, target.key);
+			engineContext.services.handleResourceChange(
+				engineContext,
+				defender,
+				target.key,
+			);
 		}
 		return { before, after };
 	},
-	buildLog(target, damage, _ctx, _defender, _meta, mutation) {
+	buildLog(target, damage, _engineContext, _defender, _meta, mutation) {
 		return {
 			type: 'resource',
 			key: target.key,

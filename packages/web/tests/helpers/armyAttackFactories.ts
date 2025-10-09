@@ -1,6 +1,6 @@
 import { STATS, BUILDINGS } from '@kingdom-builder/contents';
 import { createEngine, type EffectDef } from '@kingdom-builder/engine';
-import { createContentFactory } from '../../../engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	SYNTH_ATTACK,
 	SYNTH_PLUNDER,
