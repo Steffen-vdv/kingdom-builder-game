@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { EngineSession } from '@kingdom-builder/engine';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
+import type { SessionManager } from '../src/session/SessionManager.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 
@@ -38,6 +40,34 @@ describe('SessionTransport', () => {
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
+	});
+
+	it('skips blank player name assignments when creating sessions', () => {
+		const { manager } = createSyntheticSessionManager();
+		const originalCreate = manager.createSession.bind(manager);
+		const updates: Array<[string, string]> = [];
+		vi.spyOn(manager, 'createSession').mockImplementation(
+			(sessionId, options) => {
+				const session = originalCreate(sessionId, options);
+				vi.spyOn(session, 'updatePlayerName').mockImplementation(
+					(playerId, playerName) => {
+						updates.push([playerId, playerName]);
+					},
+				);
+				return session;
+			},
+		);
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		transport.createSession({
+			body: {
+				playerNames: { A: '   ', B: 'Bravo' },
+			},
+			headers: authorizedHeaders,
+		});
+		expect(updates).toEqual([['B', 'Bravo']]);
 	});
 
 	it('returns session state snapshots', () => {
@@ -251,6 +281,202 @@ describe('SessionTransport', () => {
 		} catch (error) {
 			if (error instanceof TransportError) {
 				expect(error.code).toBe('FORBIDDEN');
+			}
+		}
+	});
+
+	it('allows admin tokens to satisfy role checks', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const adminOnly = createTokenAuthMiddleware({
+			tokens: {
+				'admin-only': {
+					userId: 'administrator',
+					roles: ['admin'],
+				},
+			},
+		});
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: adminOnly,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: { authorization: 'Bearer admin-only' },
+		});
+		const response = await transport.advanceSession({
+			body: { sessionId },
+			headers: { authorization: 'Bearer admin-only' },
+		});
+		expect(response.sessionId).toBe(sessionId);
+	});
+
+	it('adds requirement failures to error responses when actions fail', async () => {
+		const failure = {
+			requirement: {
+				type: 'requirement',
+				method: 'verify',
+				params: { key: 'resource', amount: 3 },
+			},
+			details: { missing: 3 },
+			message: 'Need more resources.',
+		};
+		const session = {
+			enqueue: vi.fn((factory: () => unknown) => Promise.resolve(factory())),
+			performAction: vi.fn(() => {
+				const error = new Error('Action failed');
+				(error as { requirementFailure?: typeof failure }).requirementFailure =
+					failure;
+				throw error;
+			}),
+			getSnapshot: vi.fn(),
+			advancePhase: vi.fn(),
+			setDevMode: vi.fn(),
+			updatePlayerName: vi.fn(),
+		} as unknown as EngineSession;
+		const manager = {
+			createSession: vi.fn(),
+			getSession: vi.fn().mockReturnValue(session),
+			getSnapshot: vi.fn(),
+		} as unknown as SessionManager;
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const result = await transport.executeAction({
+			body: { sessionId: 'stub-session', actionId: 'test-action' },
+			headers: authorizedHeaders,
+		});
+		expect(result.status).toBe('error');
+		expect(result.httpStatus).toBe(409);
+		expect(result.requirementFailure).toEqual(failure);
+		expect(result.requirementFailure).not.toBe(failure);
+		expect(result.requirementFailures).toEqual([failure]);
+		expect(result.requirementFailures?.[0]).not.toBe(failure);
+		failure.details.missing = 4;
+		expect(result.requirementFailure?.details?.missing).toBe(3);
+	});
+
+	it('returns generic errors when action failures omit requirement details', async () => {
+		const session = {
+			enqueue: vi.fn(() => Promise.reject('failure')),
+			performAction: vi.fn(),
+			getSnapshot: vi.fn(),
+			advancePhase: vi.fn(),
+			setDevMode: vi.fn(),
+			updatePlayerName: vi.fn(),
+		} as unknown as EngineSession;
+		const manager = {
+			createSession: vi.fn(),
+			getSession: vi.fn().mockReturnValue(session),
+			getSnapshot: vi.fn(),
+		} as unknown as SessionManager;
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const result = await transport.executeAction({
+			body: { sessionId: 'generic-session', actionId: 'act' },
+			headers: authorizedHeaders,
+		});
+		expect(result.status).toBe('error');
+		expect(result.error).toBe('Action execution failed.');
+		expect(result.requirementFailure).toBeUndefined();
+		expect(result.requirementFailures).toBeUndefined();
+		expect(result.httpStatus).toBe(409);
+	});
+
+	it('wraps session advancement failures in conflict errors', async () => {
+		const session = {
+			enqueue: vi.fn(() => Promise.reject(new Error('advance failed'))),
+			advancePhase: vi.fn(),
+			getSnapshot: vi.fn(),
+			setDevMode: vi.fn(),
+			updatePlayerName: vi.fn(),
+		} as unknown as EngineSession;
+		const manager = {
+			createSession: vi.fn(),
+			getSession: vi.fn().mockReturnValue(session),
+			getSnapshot: vi.fn(),
+		} as unknown as SessionManager;
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		await expect(
+			transport.advanceSession({
+				body: { sessionId: 'advance-stub' },
+				headers: authorizedHeaders,
+			}),
+		).rejects.toMatchObject({ code: 'CONFLICT' });
+	});
+
+	it('rethrows unexpected authorization middleware errors', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: () => {
+				throw new Error('middleware exploded');
+			},
+		});
+		expect(() =>
+			transport.createSession({
+				body: {},
+				headers: {},
+			}),
+		).toThrowError(new Error('middleware exploded'));
+	});
+
+	it('throws when a unique session identifier cannot be generated', () => {
+		const createSessionSpy = vi.fn();
+		const manager = {
+			createSession: createSessionSpy,
+			getSession: vi.fn().mockReturnValue({}),
+			getSnapshot: vi.fn(),
+		} as unknown as SessionManager;
+		const idFactory = vi.fn().mockReturnValue('duplicate-session');
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory,
+			authMiddleware: middleware,
+		});
+		expect(() =>
+			transport.createSession({
+				body: {},
+				headers: authorizedHeaders,
+			}),
+		).toThrow(TransportError);
+		try {
+			transport.createSession({
+				body: {},
+				headers: authorizedHeaders,
+			});
+		} catch (error) {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('CONFLICT');
+			}
+		}
+		expect(createSessionSpy).not.toHaveBeenCalled();
+	});
+
+	it('requires configured authorization middleware', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+		});
+		expect(() =>
+			transport.createSession({
+				body: {},
+				headers: {},
+			}),
+		).toThrow(TransportError);
+		try {
+			transport.createSession({
+				body: {},
+				headers: {},
+			});
+		} catch (error) {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('UNAUTHORIZED');
 			}
 		}
 	});
