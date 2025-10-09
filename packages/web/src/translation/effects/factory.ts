@@ -1,4 +1,4 @@
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../context';
 import type { SummaryEntry } from '../content';
 export {

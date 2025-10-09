@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { translateRequirementFailure } from '../src/translation';
-import type { EngineContext } from '@kingdom-builder/engine';
 
 type RequirementFailure = Parameters<typeof translateRequirementFailure>[0];
 import { PopulationRole, Stat } from '@kingdom-builder/contents';
 
 describe('translateRequirementFailure', () => {
-	const ctx = {} as EngineContext;
+	const ctx = undefined;
 
 	it('describes population capacity failures with current and max values', () => {
 		const failure: RequirementFailure = {

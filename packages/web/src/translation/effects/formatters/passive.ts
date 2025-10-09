@@ -4,7 +4,7 @@ import {
 	describeEffects,
 } from '../factory';
 import { PHASES, PASSIVE_INFO } from '@kingdom-builder/contents';
-import type { EffectDef, PhaseDef } from '@kingdom-builder/engine';
+import type { EffectDef, PhaseDef } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../context';
 
 type PassiveDurationMeta = {

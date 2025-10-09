@@ -1,5 +1,4 @@
-import type { EngineContext as LegacyEngineContext } from '@kingdom-builder/engine';
-import type { TranslationContext } from '../context';
+import type { LegacyEngineContext, TranslationContext } from '../context';
 import type { ActionLogLineDescriptor } from '../log/timeline';
 
 export interface Land {

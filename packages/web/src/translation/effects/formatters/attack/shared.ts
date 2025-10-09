@@ -4,7 +4,7 @@ import {
 	type ResourceKey,
 	type StatKey,
 } from '@kingdom-builder/contents';
-import type { AttackPlayerDiff } from '@kingdom-builder/engine';
+import type { AttackPlayerDiff } from '@kingdom-builder/protocol';
 import { formatStatValue } from '../../../../utils/stats';
 import type { AttackStatDescriptor, DiffFormatOptions } from './types';
 

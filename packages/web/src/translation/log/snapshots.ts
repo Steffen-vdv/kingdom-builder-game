@@ -1,10 +1,9 @@
-import {
-	type EngineContext,
-	type PassiveSummary,
-	type PlayerId,
-	type PlayerStateSnapshot,
-	type PlayerSnapshot as EnginePlayerSnapshot,
-} from '@kingdom-builder/engine';
+import type {
+	ActionPlayerSnapshot,
+	SessionPassiveSummary,
+	SessionPlayerId,
+	SessionPlayerStateSnapshot,
+} from '@kingdom-builder/protocol';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { type Land } from '../content';
 import {
@@ -16,6 +15,7 @@ import {
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
 import { createTranslationDiffContext } from './resourceSources/context';
+import type { LegacyEngineContext } from '../context';
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
@@ -28,7 +28,7 @@ export interface PlayerSnapshot {
 		slotsUsed: number;
 		developments: string[];
 	}>;
-	passives: PassiveSummary[];
+	passives: SessionPassiveSummary[];
 }
 
 interface LegacyPlayerSnapshot {
@@ -38,17 +38,18 @@ interface LegacyPlayerSnapshot {
 	population?: Record<string, number>;
 	buildings: Set<string> | string[];
 	lands: Land[];
-	passives?: PassiveSummary[];
+	passives?: SessionPassiveSummary[];
 }
 
 type SnapshotInput =
-	| PlayerStateSnapshot
+	| SessionPlayerStateSnapshot
 	| LegacyPlayerSnapshot
-	| EnginePlayerSnapshot;
+	| PlayerSnapshot
+	| ActionPlayerSnapshot;
 
 export function snapshotPlayer(
 	playerState: SnapshotInput,
-	context?: EngineContext,
+	context?: LegacyEngineContext,
 ): PlayerSnapshot {
 	const buildingList = Array.isArray(playerState.buildings)
 		? [...playerState.buildings]
@@ -65,7 +66,7 @@ export function snapshotPlayer(
 		}
 		if (context && 'id' in playerState) {
 			const match = context.game.players.find((entry) => {
-				return entry.id === (playerState.id as PlayerId);
+				return entry.id === (playerState.id as SessionPlayerId);
 			});
 			if (match) {
 				return { ...match.population };
@@ -77,7 +78,7 @@ export function snapshotPlayer(
 	const passives = hasPassives
 		? [...playerState.passives!]
 		: context && 'id' in playerState
-			? context.passives.list(playerState.id as PlayerId)
+			? context.passives.list(playerState.id as SessionPlayerId)
 			: [];
 	return {
 		resources: { ...playerState.resources },
@@ -102,7 +103,7 @@ export function collectResourceKeys(
 export function diffSnapshots(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
-	context: EngineContext,
+	context: LegacyEngineContext,
 	resourceKeys: ResourceKey[] = collectResourceKeys(
 		previousSnapshot,
 		nextSnapshot,

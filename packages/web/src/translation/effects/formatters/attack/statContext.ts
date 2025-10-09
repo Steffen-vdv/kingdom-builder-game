@@ -1,5 +1,5 @@
 import { STATS, Stat, type StatKey } from '@kingdom-builder/contents';
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import {
 	resolveAttackTargetFormatter,
 	type AttackTargetFormatter,

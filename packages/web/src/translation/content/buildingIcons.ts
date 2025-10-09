@@ -1,5 +1,6 @@
-import type { EngineContext as LegacyEngineContext } from '@kingdom-builder/engine';
-import type { TranslationContext } from '../context';
+import type { LegacyEngineContext, TranslationContext } from '../context';
+
+type BuildingDefinition = { icon?: string; name?: string } | undefined;
 
 type BuildingLookupContext =
 	| Pick<TranslationContext, 'buildings'>
@@ -25,7 +26,7 @@ export function resolveBuildingDisplay(
 	let name = id;
 	let icon = '';
 	try {
-		const def = ctx.buildings.get(id);
+		const def = ctx.buildings.get(id) as BuildingDefinition;
 		if (def?.name) {
 			name = def.name;
 		}

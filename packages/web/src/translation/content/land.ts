@@ -1,4 +1,3 @@
-import type { EngineContext } from '@kingdom-builder/engine';
 import { SLOT_INFO } from '@kingdom-builder/contents';
 import {
 	describeContent,
@@ -11,14 +10,15 @@ import type {
 	Summary,
 	SummaryEntry,
 } from './types';
+import type { LegacyEngineContext } from '../context';
 
 function translate(
 	land: Land,
-	engineContext: EngineContext,
+	engineContext: LegacyEngineContext,
 	translateSummary: (
 		type: string,
 		target: unknown,
-		engineContext: EngineContext,
+		engineContext: LegacyEngineContext,
 		opts?: Record<string, unknown>,
 	) => Summary,
 ): Summary {
@@ -41,10 +41,10 @@ function translate(
 }
 
 class LandTranslator implements LegacyContentTranslator<Land> {
-	summarize(land: Land, engineContext: EngineContext): Summary {
+	summarize(land: Land, engineContext: LegacyEngineContext): Summary {
 		return translate(land, engineContext, summarizeContent);
 	}
-	describe(land: Land, engineContext: EngineContext): Summary {
+	describe(land: Land, engineContext: LegacyEngineContext): Summary {
 		return translate(land, engineContext, describeContent);
 	}
 }

@@ -1,4 +1,4 @@
-import type { EffectDef, AttackLog } from '@kingdom-builder/engine';
+import type { AttackLog, EffectDef } from '@kingdom-builder/protocol';
 import resourceFormatter from './resource';
 import statFormatter from './stat';
 import buildingFormatter from './building';

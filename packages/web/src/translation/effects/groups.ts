@@ -2,7 +2,7 @@ import type {
 	ActionEffectGroupOption,
 	ResolvedActionEffectGroupOption,
 	ResolvedActionEffectStep,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../content';
 import { describeContent, logContent, summarizeContent } from '../content';
 import { buildActionOptionTranslation } from './optionLabel';
