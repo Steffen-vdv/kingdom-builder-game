@@ -93,14 +93,14 @@ export function formatResourceDiff(
 	const before = formatNumber(diff.before);
 	const after = formatNumber(diff.after);
 	if (options?.percent !== undefined) {
-		const magnitude = Math.abs(options.percent);
+		const percentMagnitude = Math.abs(options.percent);
 		return `${prefix}: ${displayLabel} ${
 			delta >= 0 ? '+' : '-'
-		}${formatNumber(magnitude)}% (${before}→${after}) (${formatSigned(delta)})`;
+		}${formatNumber(percentMagnitude)}% (${before}→${after}) (${formatSigned(delta)})`;
 	}
 	if (options?.showPercent && diff.before !== 0 && delta !== 0) {
-		const pct = (delta / diff.before) * 100;
-		return `${prefix}: ${displayLabel} ${formatSigned(pct)}% (${before}→${after}) (${formatSigned(delta)})`;
+		const percentChange = (delta / diff.before) * 100;
+		return `${prefix}: ${displayLabel} ${formatSigned(percentChange)}% (${before}→${after}) (${formatSigned(delta)})`;
 	}
 	return `${prefix}: ${displayLabel} ${formatSigned(delta)} (${before}→${after})`;
 }
