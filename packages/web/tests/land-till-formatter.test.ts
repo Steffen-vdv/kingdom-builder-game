@@ -48,15 +48,15 @@ describe('land till formatter', () => {
 					map: Map<string, { effects: { type: string; method?: string }[] }>;
 				}
 			).map.entries(),
-		).find(([, a]) =>
-			a.effects.some(
+		).find(([, actionEntry]) =>
+			actionEntry.effects.some(
 				(e: { type: string; method?: string }) =>
 					e.type === 'land' && e.method === LandMethods.TILL,
 			),
 		)?.[0] as string;
 		const summary = summarizeContent('action', tillId, ctx);
 		const hasIcon = summary.some(
-			(i) => typeof i === 'string' && i.includes(SLOT_INFO.icon),
+			(item) => typeof item === 'string' && item.includes(SLOT_INFO.icon),
 		);
 		expect(hasIcon).toBe(true);
 	});
