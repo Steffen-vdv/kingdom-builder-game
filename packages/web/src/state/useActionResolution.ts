@@ -18,11 +18,15 @@ interface ResolutionActionMeta {
 	icon?: string;
 }
 
+type ResolutionSource = 'action' | 'phase';
+
 interface ShowResolutionOptions {
 	lines: string | string[];
 	player?: Pick<PlayerStateSnapshot, 'id' | 'name'>;
 	action?: ResolutionActionMeta;
 	summaries?: string[];
+	source?: ResolutionSource;
+	actorLabel?: string;
 }
 
 interface ActionResolution {
@@ -32,6 +36,8 @@ interface ActionResolution {
 	player?: Pick<PlayerStateSnapshot, 'id' | 'name'>;
 	action?: ResolutionActionMeta;
 	summaries: string[];
+	source: ResolutionSource;
+	actorLabel?: string;
 }
 
 function useActionResolution({
@@ -54,7 +60,14 @@ function useActionResolution({
 	}, []);
 
 	const showResolution = useCallback(
-		({ lines, player, action, summaries = [] }: ShowResolutionOptions) => {
+		({
+			lines,
+			player,
+			action,
+			summaries = [],
+			source,
+			actorLabel,
+		}: ShowResolutionOptions) => {
 			const entries = (Array.isArray(lines) ? lines : [lines]).filter(
 				(line): line is string => Boolean(line?.trim()),
 			);
@@ -76,11 +89,18 @@ function useActionResolution({
 					resolverRef.current = null;
 					resolve();
 				};
+				const resolvedSource: ResolutionSource =
+					source ?? (action ? 'action' : 'phase');
+				const resolvedActorLabel =
+					actorLabel ??
+					(resolvedSource === 'action' ? action?.name : undefined);
 				setResolution({
 					lines: entries,
 					visibleLines: [],
 					isComplete: false,
 					summaries,
+					source: resolvedSource,
+					...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
 					...(player ? { player } : {}),
 					...(action ? { action } : {}),
 				});
@@ -143,5 +163,10 @@ function useActionResolution({
 	return { resolution, showResolution, acknowledgeResolution };
 }
 
-export type { ActionResolution, ResolutionActionMeta, ShowResolutionOptions };
+export type {
+	ActionResolution,
+	ResolutionActionMeta,
+	ResolutionSource,
+	ShowResolutionOptions,
+};
 export { useActionResolution };
