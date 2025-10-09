@@ -64,34 +64,43 @@ export const actionPerform: EffectHandler = (effect, context, mult = 1) => {
 	const iterations = Math.floor(mult);
 	let iterationIndex = 0;
 	while (iterationIndex < iterations) {
-		const def = context.actions.get(id);
+		const actionDefinition = context.actions.get(id);
 		const before = snapshotPlayer(context.activePlayer, context);
-		const resolved = resolveActionEffects(def, forwarded);
+		const resolved = resolveActionEffects(actionDefinition, forwarded);
 		if (resolved.missingSelections.length > 0) {
 			const formatted = resolved.missingSelections
 				.map((selection) => `"${selection}"`)
 				.join(', ');
 			const suffix = resolved.missingSelections.length > 1 ? 'groups' : 'group';
-			throw new Error(
-				`Action ${def.id} requires a selection for effect ${suffix} ${formatted}`,
-			);
+			const message = [
+				'Action',
+				actionDefinition.id,
+				'requires a selection for effect',
+				suffix,
+				formatted,
+			].join(' ');
+			throw new Error(message);
 		}
 		withStatSourceFrames(
 			context,
 			(_effect, _context, statKey) => ({
-				key: `action:${def.id}:${statKey}`,
+				key: `action:${actionDefinition.id}:${statKey}`,
 				kind: 'action',
-				id: def.id,
+				id: actionDefinition.id,
 				detail: 'Resolution',
 				longevity: 'permanent',
 			}),
 			() => {
 				runEffects(resolved.effects, context);
-				context.passives.runResultMods(def.id, context);
+				context.passives.runResultMods(actionDefinition.id, context);
 			},
 		);
 		const after = snapshotPlayer(context.activePlayer, context);
-		context.actionTraces.push({ id: def.id, before, after });
+		context.actionTraces.push({
+			id: actionDefinition.id,
+			before,
+			after,
+		});
 		iterationIndex++;
 	}
 };
