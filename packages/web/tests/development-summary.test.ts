@@ -57,13 +57,14 @@ describe('development translation', () => {
 		const flat = flatten(summary);
 		const goldIcon = RESOURCES[Resource.gold].icon;
 		const dev = DEVELOPMENTS.get(devId);
-		const amt =
+		const amount =
 			(
 				dev.onGainIncomeStep?.[0]?.effects?.[0]?.params as {
 					amount?: number;
 				}
 			)?.amount ?? 0;
-		expect(flat.some((l) => l.includes(`${goldIcon}+${amt}`))).toBe(true);
+		const expectedGoldGain = `${goldIcon}+${amount}`;
+		expect(flat.some((line) => line.includes(expectedGoldGain))).toBe(true);
 	});
 
 	it('uses shared helper for add and remove effects', () => {
