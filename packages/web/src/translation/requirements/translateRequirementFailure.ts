@@ -6,7 +6,7 @@ import {
 	type PopulationRoleId,
 	type StatKey,
 } from '@kingdom-builder/contents';
-import type { RequirementFailure } from '@kingdom-builder/engine';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 
 type EvaluatorOperand = {
 	type?: string;
@@ -133,7 +133,9 @@ function operatorPhrase(operator: CompareParams['operator']): string {
 	}
 }
 
-function translateCompareRequirement(failure: RequirementFailure): string {
+function translateCompareRequirement(
+	failure: SessionRequirementFailure,
+): string {
 	const params = (failure.requirement.params ?? {}) as CompareParams;
 	const leftOperand = params.left;
 	const rightOperand = params.right;
@@ -160,7 +162,7 @@ function translateCompareRequirement(failure: RequirementFailure): string {
 }
 
 export function translateRequirementFailure(
-	failure: RequirementFailure,
+	failure: SessionRequirementFailure,
 	_context: unknown,
 ): string {
 	const { requirement } = failure;

@@ -1,4 +1,4 @@
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { RESOURCES } from '@kingdom-builder/contents';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
 import type { DevelopmentDef, ResourceKey } from '@kingdom-builder/contents';

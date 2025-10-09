@@ -3,7 +3,10 @@ import {
 	MODIFIER_INFO,
 	formatPassiveRemoval,
 } from '@kingdom-builder/contents';
-import { type PassiveSummary, type EffectDef } from '@kingdom-builder/engine';
+import {
+	type EffectDef,
+	type SessionPassiveSummary,
+} from '@kingdom-builder/protocol';
 import {
 	hasTierSummaryTranslation,
 	translateTierSummary,
@@ -22,7 +25,7 @@ function hasModifierIconKey(value: string): value is ModifierIconKey {
 
 export interface PassiveDefinitionLike {
 	detail?: string;
-	meta?: PassiveSummary['meta'];
+	meta?: SessionPassiveSummary['meta'];
 	effects?: EffectDef[];
 }
 
@@ -60,7 +63,9 @@ function resolveSummaryToken(value: string | undefined): string | undefined {
 	return translateTierSummary(token) ?? token;
 }
 
-function describeRemoval(meta: PassiveSummary['meta']): string | undefined {
+function describeRemoval(
+	meta: SessionPassiveSummary['meta'],
+): string | undefined {
 	const removalText = meta?.removal?.text;
 	if (removalText && removalText.trim().length > 0) {
 		return removalText;
@@ -97,9 +102,9 @@ function extractTokenSlug(value: string | undefined): string | undefined {
 }
 
 function deriveIcon(
-	passive: PassiveSummary,
+	passive: SessionPassiveSummary,
 	effects: EffectDef[] | undefined,
-	meta: PassiveSummary['meta'] | undefined,
+	meta: SessionPassiveSummary['meta'] | undefined,
 ): string {
 	if (meta?.source?.icon) {
 		return meta.source.icon;
@@ -116,9 +121,9 @@ function deriveIcon(
 }
 
 function resolveLabel(
-	passive: PassiveSummary,
+	passive: SessionPassiveSummary,
 	definition: PassiveDefinitionLike,
-	meta: PassiveSummary['meta'],
+	meta: SessionPassiveSummary['meta'],
 ): string {
 	const fallbackLabel = formatFallbackLabel(passive.id);
 	const named =
@@ -146,8 +151,8 @@ function resolveLabel(
 
 function resolveSummary(
 	definition: PassiveDefinitionLike,
-	meta: PassiveSummary['meta'],
-	passive: PassiveSummary,
+	meta: SessionPassiveSummary['meta'],
+	passive: SessionPassiveSummary,
 ): string | undefined {
 	const candidates = [
 		meta?.source?.labelToken,
@@ -170,7 +175,7 @@ function resolveSummary(
 }
 
 export function resolvePassivePresentation(
-	passive: PassiveSummary,
+	passive: SessionPassiveSummary,
 	options: { definition?: PassiveDefinitionLike } = {},
 ): PassivePresentation {
 	const definition = options.definition ?? {};

@@ -1,4 +1,4 @@
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { POPULATION_INFO } from '@kingdom-builder/contents';
 import type { ActionDef } from '@kingdom-builder/contents';
 import { formatTargetLabel, formatGainFrom } from './modifier_helpers';

@@ -1,5 +1,5 @@
 import { STATS, type StatKey } from '@kingdom-builder/contents';
-import type { AttackLog } from '@kingdom-builder/engine';
+import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
 import {

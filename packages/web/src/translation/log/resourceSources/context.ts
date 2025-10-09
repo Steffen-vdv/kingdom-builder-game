@@ -1,24 +1,36 @@
-import {
-	EVALUATORS,
-	type EngineContext,
-	type PlayerId,
-} from '@kingdom-builder/engine';
+import type {
+	BuildingConfig,
+	DevelopmentConfig,
+	SessionPlayerId,
+} from '@kingdom-builder/protocol';
 import { type PassiveDescriptor, type PassiveModifierMap } from './types';
 
 interface PassiveLookup {
 	evaluationMods?: PassiveModifierMap;
-	get?: (id: string, owner: PlayerId) => PassiveDescriptor | undefined;
+	get?: (id: string, owner: SessionPlayerId) => PassiveDescriptor | undefined;
 }
 
 export interface TranslationDiffPassives {
 	evaluationMods: PassiveModifierMap;
-	get?: (id: string, owner: PlayerId) => PassiveDescriptor | undefined;
+	get?: (id: string, owner: SessionPlayerId) => PassiveDescriptor | undefined;
 }
 
 export interface TranslationDiffContext {
-	readonly activePlayer: EngineContext['activePlayer'];
-	readonly buildings: EngineContext['buildings'];
-	readonly developments: EngineContext['developments'];
+	readonly activePlayer: {
+		id: SessionPlayerId;
+		population: Record<string, number>;
+		lands: ReadonlyArray<{
+			developments: ReadonlyArray<string>;
+		}>;
+	};
+	readonly buildings: {
+		get(id: string): BuildingConfig;
+		has(id: string): boolean;
+	};
+	readonly developments: {
+		get(id: string): DevelopmentConfig;
+		has(id: string): boolean;
+	};
 	readonly passives: TranslationDiffPassives;
 	evaluate(evaluator: {
 		type: string;
@@ -26,15 +38,69 @@ export interface TranslationDiffContext {
 	}): number;
 }
 
-export function createTranslationDiffContext(
-	context: EngineContext,
-): TranslationDiffContext {
-	const rawPassives = context.passives as unknown;
-	const passiveLookup = rawPassives as PassiveLookup | undefined;
-	const evaluationMods = (passiveLookup?.evaluationMods ??
+function evaluateDevelopment(
+	definition: { params?: Record<string, unknown> },
+	context: TranslationDiffContext,
+): number {
+	const id = definition.params?.['id'];
+	if (typeof id !== 'string') {
+		return 0;
+	}
+	return context.activePlayer.lands.reduce((total, land) => {
+		return (
+			total +
+			land.developments.filter((development) => development === id).length
+		);
+	}, 0);
+}
+
+function evaluatePopulation(
+	definition: { params?: Record<string, unknown> },
+	context: TranslationDiffContext,
+): number {
+	const role = definition.params?.['role'];
+	if (typeof role === 'string') {
+		return Number(context.activePlayer.population[role] ?? 0);
+	}
+	return Object.values(context.activePlayer.population).reduce(
+		(total, count) => {
+			return total + Number(count ?? 0);
+		},
+		0,
+	);
+}
+
+function evaluateDefinition(
+	definition: { type: string; params?: Record<string, unknown> },
+	context: TranslationDiffContext,
+): number {
+	switch (definition.type) {
+		case 'development':
+			return evaluateDevelopment(definition, context);
+		case 'population':
+			return evaluatePopulation(definition, context);
+		default:
+			throw new Error(`Unknown evaluator handler for ${definition.type}`);
+	}
+}
+
+export function createTranslationDiffContext(context: {
+	activePlayer: TranslationDiffContext['activePlayer'];
+	buildings: {
+		get(id: string): BuildingConfig;
+		has?(id: string): boolean;
+	};
+	developments: {
+		get(id: string): DevelopmentConfig;
+		has?(id: string): boolean;
+	};
+	passives: unknown;
+}): TranslationDiffContext {
+	const rawPassives = context.passives as PassiveLookup | undefined;
+	const evaluationMods = (rawPassives?.evaluationMods ??
 		new Map()) as PassiveModifierMap;
-	const getPassive = passiveLookup?.get
-		? passiveLookup.get.bind(passiveLookup)
+	const getPassive = rawPassives?.get
+		? rawPassives.get.bind(rawPassives)
 		: undefined;
 	const passives: TranslationDiffPassives = { evaluationMods };
 	if (getPassive) {
@@ -42,15 +108,21 @@ export function createTranslationDiffContext(
 	}
 	return {
 		activePlayer: context.activePlayer,
-		buildings: context.buildings,
-		developments: context.developments,
+		buildings: {
+			get: context.buildings.get.bind(context.buildings),
+			has: context.buildings.has
+				? context.buildings.has.bind(context.buildings)
+				: (id: string) => context.buildings.get(id) !== undefined,
+		},
+		developments: {
+			get: context.developments.get.bind(context.developments),
+			has: context.developments.has
+				? context.developments.has.bind(context.developments)
+				: (id: string) => context.developments.get(id) !== undefined,
+		},
 		passives,
 		evaluate(evaluator) {
-			const handler = EVALUATORS.get(evaluator.type);
-			if (!handler) {
-				throw new Error(`Unknown evaluator handler for ${evaluator.type}`);
-			}
-			return Number(handler(evaluator, context));
+			return Number(evaluateDefinition(evaluator, this));
 		},
 	};
 }
