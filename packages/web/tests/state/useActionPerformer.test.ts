@@ -19,6 +19,7 @@ import {
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
 const logContentMock = vi.hoisted(() => vi.fn(() => []));
+const performSessionActionMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/translation', () => ({
 	diffStepSnapshots: vi.fn(),
@@ -31,6 +32,10 @@ const getLegacySessionContextMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/getLegacySessionContext', () => ({
 	getLegacySessionContext: getLegacySessionContextMock,
+}));
+
+vi.mock('../../src/state/sessionSdk', () => ({
+	performSessionAction: performSessionActionMock,
 }));
 
 describe('useActionPerformer', () => {
@@ -49,6 +54,7 @@ describe('useActionPerformer', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		performSessionActionMock.mockReset();
 		const [firstResourceKey] = RESOURCE_KEYS;
 		if (!firstResourceKey) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -114,9 +120,7 @@ describe('useActionPerformer', () => {
 
 	it('shows error toast when action fails due to network issue', async () => {
 		const error = new Error('Network offline');
-		performActionMock.mockImplementation(() => {
-			throw error;
-		});
+		performSessionActionMock.mockRejectedValue(error);
 		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const updateMainPhaseStep = vi.fn();
 		const refresh = vi.fn();
@@ -124,6 +128,7 @@ describe('useActionPerformer', () => {
 		const { result } = renderHook(() =>
 			useActionPerformer({
 				session,
+				sessionId: 'local-session-test',
 				actionCostResource,
 				addLog,
 				showResolution,
@@ -156,18 +161,17 @@ describe('useActionPerformer', () => {
 	it('translates requirement failures for authentication errors', async () => {
 		const error = new Error('Forbidden');
 		const failure = { reason: 'auth' } as RequirementFailure;
-		const failureCarrier = error as Error & {
-			requirementFailure?: RequirementFailure;
-		};
-		failureCarrier.requirementFailure = failure;
 		const authMessage = 'Authentication required';
 		translateRequirementFailureMock.mockReturnValue(authMessage);
-		performActionMock.mockImplementation(() => {
-			throw error;
+		performSessionActionMock.mockResolvedValue({
+			status: 'error',
+			error: error.message,
+			requirementFailure: failure,
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
 				session,
+				sessionId: 'local-session-test',
 				actionCostResource,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),

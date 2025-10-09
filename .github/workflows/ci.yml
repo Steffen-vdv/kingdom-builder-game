@@ -16,9 +16,7 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci || npm i
-      - run: npm run format:check
-      - run: npm run typecheck
-      - run: npm run lint
+      - run: npm run check
       - run: npm run test:coverage
       - uses: actions/upload-artifact@v4
         with:
@@ -33,7 +31,5 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci || npm i
-      - run: npm run format:check
-      - run: npm run typecheck
-      - run: npm run lint
+      - run: npm run check
       - run: npm run build
