@@ -42,12 +42,12 @@ function getEffects(def: unknown, trigger: string): EffectDef[] | undefined {
 
 export function collectTriggerEffects(
 	trigger: string,
-	ctx: EngineContext,
-	player: PlayerState = ctx.activePlayer,
+	engineContext: EngineContext,
+	player: PlayerState = engineContext.activePlayer,
 ): TriggerEffectBundle[] {
 	const bundles: TriggerEffectBundle[] = [];
 	for (const [role, count] of Object.entries(player.population)) {
-		const populationDefinition = ctx.populations.get(role);
+		const populationDefinition = engineContext.populations.get(role);
 		if (trigger === 'onPayUpkeepStep' && populationDefinition?.upkeep) {
 			const qty = Number(count);
 			for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
@@ -97,7 +97,7 @@ export function collectTriggerEffects(
 			}
 		}
 		for (const id of land.developments) {
-			const developmentDefinition = ctx.developments.get(id);
+			const developmentDefinition = engineContext.developments.get(id);
 			if (trigger === 'onPayUpkeepStep' && developmentDefinition?.upkeep) {
 				for (const [key, amount] of Object.entries(
 					developmentDefinition.upkeep,
@@ -130,7 +130,7 @@ export function collectTriggerEffects(
 		}
 	}
 	for (const id of player.buildings) {
-		const buildingDefinition = ctx.buildings.get(id);
+		const buildingDefinition = engineContext.buildings.get(id);
 		if (trigger === 'onPayUpkeepStep' && buildingDefinition?.upkeep) {
 			for (const [key, amount] of Object.entries(buildingDefinition.upkeep)) {
 				pushUpkeepEffect(bundles, { type: 'building', id }, key, amount);
@@ -151,7 +151,7 @@ export function collectTriggerEffects(
 			}
 		}
 	}
-	for (const passive of ctx.passives.values(player.id)) {
+	for (const passive of engineContext.passives.values(player.id)) {
 		const list = getEffects(passive, trigger);
 		if (list) {
 			const clones = list.map(cloneEffect);
