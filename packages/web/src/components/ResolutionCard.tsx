@@ -1,5 +1,8 @@
 import React from 'react';
-import type { ActionResolution } from '../state/useActionResolution';
+import type {
+	ActionResolution,
+	ResolutionSource,
+} from '../state/useActionResolution';
 import {
 	CARD_BASE_CLASS,
 	CARD_BODY_TEXT_CLASS,
@@ -10,17 +13,37 @@ import {
 	joinClasses,
 } from './common/cardStyles';
 
-interface ActionResolutionCardProps {
+interface ResolutionLabels {
+	title: string;
+	player: string;
+}
+
+const SOURCE_LABELS: Record<ResolutionSource, ResolutionLabels> = {
+	action: {
+		title: 'Action',
+		player: 'Played by',
+	},
+	phase: {
+		title: 'Phase',
+		player: 'Phase owner',
+	},
+};
+
+interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
 	onContinue: () => void;
 }
 
-function ActionResolutionCard({
+function resolveSourceLabels(source: ResolutionSource | undefined) {
+	return SOURCE_LABELS[source ?? 'action'] ?? SOURCE_LABELS.action;
+}
+
+function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
-}: ActionResolutionCardProps) {
+}: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
 	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
@@ -34,12 +57,16 @@ function ActionResolutionCard({
 		.trim();
 	const rawActionName = (resolution.action?.name ?? '').trim();
 	const actionName = rawActionName || fallbackActionName;
+	const resolvedLabels = resolveSourceLabels(resolution.source);
+	const actorLabel = (resolution.actorLabel ?? '').trim() || actionName;
 	const actionIcon = resolution.action?.icon?.trim();
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
-	const defaultTitle = title ?? 'Action resolution';
-	const headerTitle = actionName ? `Action - ${actionName}` : defaultTitle;
+	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
+	const headerTitle = actorLabel
+		? `${resolvedLabels.title} - ${actorLabel}`
+		: defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',
@@ -95,7 +122,7 @@ function ActionResolutionCard({
 						</div>
 						{resolution.player ? (
 							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`Played by ${playerName}`}
+								{`${resolvedLabels.player} ${playerName}`}
 							</div>
 						) : null}
 					</div>
@@ -142,5 +169,5 @@ function ActionResolutionCard({
 	);
 }
 
-export type { ActionResolutionCardProps };
-export { ActionResolutionCard };
+export type { ResolutionCardProps };
+export { ResolutionCard };
