@@ -10,7 +10,10 @@ import {
 	type PlayerSnapshot,
 	type TranslationDiffContext,
 } from '../translation';
-import { getLegacySessionContext } from './getLegacySessionContext';
+import {
+	getLegacySessionContext,
+	type LegacySessionContextOptions,
+} from './getLegacySessionContext';
 
 interface UseCompensationLoggerOptions {
 	session: EngineSession;
@@ -20,6 +23,8 @@ interface UseCompensationLoggerOptions {
 		player?: EngineSessionSnapshot['game']['players'][number],
 	) => void;
 	resourceKeys: ResourceKey[];
+	registries: NonNullable<LegacySessionContextOptions['registries']>;
+	translationHelpers: NonNullable<LegacySessionContextOptions['helpers']>;
 }
 
 export function useCompensationLogger({
@@ -27,6 +32,8 @@ export function useCompensationLogger({
 	sessionState,
 	addLog,
 	resourceKeys,
+	registries,
+	translationHelpers,
 }: UseCompensationLoggerOptions) {
 	const loggedSessionRef = useRef<EngineSession | null>(null);
 	const loggedPlayersRef = useRef<Set<string>>(new Set());
@@ -38,10 +45,11 @@ export function useCompensationLogger({
 		if (sessionState.game.turn !== 1) {
 			return;
 		}
-		const { diffContext: baseDiffContext } = getLegacySessionContext(
-			session,
-			sessionState,
-		);
+		const { diffContext: baseDiffContext } = getLegacySessionContext({
+			snapshot: sessionState,
+			registries,
+			helpers: translationHelpers,
+		});
 		sessionState.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {
 				return;
@@ -100,5 +108,12 @@ export function useCompensationLogger({
 				loggedPlayersRef.current.add(player.id);
 			}
 		});
-	}, [addLog, resourceKeys, session, sessionState]);
+	}, [
+		addLog,
+		registries,
+		resourceKeys,
+		session,
+		sessionState,
+		translationHelpers,
+	]);
 }

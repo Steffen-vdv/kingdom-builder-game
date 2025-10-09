@@ -1,6 +1,6 @@
 import {
 	type EngineAdvanceResult,
-	type EngineSession,
+	type EngineSessionSnapshot,
 	type PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { type ResourceKey } from '@kingdom-builder/contents';
@@ -8,11 +8,15 @@ import type { SessionAdvanceResponse } from '@kingdom-builder/protocol/session';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
-import { getLegacySessionContext } from './getLegacySessionContext';
+import {
+	getLegacySessionContext,
+	type LegacySessionContextOptions,
+} from './getLegacySessionContext';
 import { advanceSessionPhase } from './sessionSdk';
 
 interface AdvanceToActionPhaseOptions {
-	session: EngineSession;
+	getLatestSnapshot: () => EngineSessionSnapshot;
+	setLatestSnapshot: (snapshot: EngineSessionSnapshot) => void;
 	sessionId: string;
 	actionCostResource: ResourceKey;
 	resourceKeys: ResourceKey[];
@@ -30,10 +34,13 @@ interface AdvanceToActionPhaseOptions {
 	updateMainPhaseStep: (value: number) => void;
 	addLog: (entry: string | string[], player?: PlayerStateSnapshot) => void;
 	refresh: () => void;
+	registries: NonNullable<LegacySessionContextOptions['registries']>;
+	translationHelpers: NonNullable<LegacySessionContextOptions['helpers']>;
 }
 
 export async function advanceToActionPhase({
-	session,
+	getLatestSnapshot,
+	setLatestSnapshot,
 	sessionId,
 	actionCostResource,
 	resourceKeys,
@@ -49,8 +56,10 @@ export async function advanceToActionPhase({
 	updateMainPhaseStep,
 	addLog,
 	refresh,
+	registries,
+	translationHelpers,
 }: AdvanceToActionPhaseOptions) {
-	let snapshot = session.getSnapshot();
+	let snapshot = getLatestSnapshot();
 	if (snapshot.game.conclusion) {
 		setTabsEnabled(false);
 		setPhaseSteps([]);
@@ -91,6 +100,7 @@ export async function advanceToActionPhase({
 		const { phase, step, player, effects, skipped }: EngineAdvanceResult =
 			advance;
 		const snapshotAfter = advanceResponse.snapshot;
+		setLatestSnapshot(snapshotAfter);
 		if (snapshotAfter.game.conclusion) {
 			setTabsEnabled(false);
 			setPhaseTimer(0);
@@ -134,7 +144,11 @@ export async function advanceToActionPhase({
 				: stepDef?.effects?.length
 					? { effects: stepDef.effects }
 					: undefined;
-			const { diffContext } = getLegacySessionContext(session, snapshotAfter);
+			const { diffContext } = getLegacySessionContext({
+				snapshot: snapshotAfter,
+				registries,
+				helpers: translationHelpers,
+			});
 			const changes = diffStepSnapshots(
 				before,
 				after,
@@ -196,7 +210,7 @@ export async function advanceToActionPhase({
 	} else {
 		setPhaseTimer(0);
 	}
-	const refreshed = session.getSnapshot();
+	const refreshed = snapshot;
 	const activeAtAction = refreshed.game.players.find(
 		(player) => player.id === refreshed.game.activePlayerId,
 	);

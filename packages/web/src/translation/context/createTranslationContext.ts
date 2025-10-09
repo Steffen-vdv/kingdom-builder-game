@@ -27,7 +27,7 @@ import {
 	mapPassiveDefinitionLookup,
 } from './passiveDefinitions';
 
-type TranslationSessionHelpers = {
+export type TranslationSessionHelpers = {
 	pullEffectLog?: <T>(key: string) => T | undefined;
 	evaluationMods?: ReadonlyMap<string, ReadonlyMap<string, unknown>>;
 };

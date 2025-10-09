@@ -59,10 +59,13 @@ export function GameProviderInner({
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const { session, enqueue, cachedSessionSnapshot } = useSessionQueue(
-		queue,
-		sessionState,
-	);
+	const {
+		session,
+		enqueue,
+		cachedSessionSnapshot,
+		getLatestSnapshot,
+		setLatestSnapshot,
+	} = useSessionQueue(queue, sessionState);
 
 	const refresh = useCallback(() => {
 		void refreshSession();
@@ -94,24 +97,23 @@ export function GameProviderInner({
 		playerName,
 	]);
 
+	const translationHelpers = useMemo(
+		() => ({
+			pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
+			evaluationMods: session.getPassiveEvaluationMods(),
+		}),
+		[session],
+	);
 	const translationContext = useMemo(
 		() =>
-			createTranslationContext(
-				sessionState,
-				registries,
-				{
-					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
-					evaluationMods: session.getPassiveEvaluationMods(),
-				},
-				{
-					ruleSnapshot,
-					passiveRecords: sessionState.passiveRecords,
-				},
-			),
+			createTranslationContext(sessionState, registries, translationHelpers, {
+				ruleSnapshot,
+				passiveRecords: sessionState.passiveRecords,
+			}),
 		[
 			sessionState,
 			registries,
-			session,
+			translationHelpers,
 			ruleSnapshot,
 			sessionState.passiveRecords,
 		],
@@ -200,6 +202,10 @@ export function GameProviderInner({
 		refresh,
 		resourceKeys,
 		enqueue,
+		getLatestSnapshot,
+		setLatestSnapshot,
+		registries,
+		translationHelpers,
 	});
 
 	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =
@@ -212,6 +218,8 @@ export function GameProviderInner({
 		sessionState,
 		addLog,
 		resourceKeys,
+		registries,
+		translationHelpers,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
@@ -227,6 +235,10 @@ export function GameProviderInner({
 		endTurn,
 		enqueue,
 		resourceKeys,
+		getLatestSnapshot,
+		setLatestSnapshot,
+		registries,
+		translationHelpers,
 	});
 
 	useAiRunner({
@@ -236,6 +248,8 @@ export function GameProviderInner({
 		setPhaseHistories,
 		performRef,
 		mountedRef,
+		getLatestSnapshot,
+		advancePhase: handleEndTurn,
 	});
 
 	useEffect(() => {

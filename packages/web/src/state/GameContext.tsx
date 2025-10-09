@@ -196,6 +196,9 @@ export function GameProvider(props: ProviderProps) {
 				return current.session;
 			},
 			getLatestSnapshot: () => latestSnapshotRef.current,
+			setLatestSnapshot: (snapshot: SessionSnapshot) => {
+				latestSnapshotRef.current = snapshot;
+			},
 		}),
 		[runExclusive],
 	);

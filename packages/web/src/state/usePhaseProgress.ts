@@ -9,6 +9,7 @@ import type { PhaseStep } from './phaseTypes';
 import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
+import type { LegacySessionContextOptions } from './getLegacySessionContext';
 import { advanceSessionPhase } from './sessionSdk';
 
 interface PhaseProgressOptions {
@@ -25,6 +26,10 @@ interface PhaseProgressOptions {
 	refresh: () => void;
 	resourceKeys: ResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
+	getLatestSnapshot: () => EngineSessionSnapshot;
+	setLatestSnapshot: (snapshot: EngineSessionSnapshot) => void;
+	registries: NonNullable<LegacySessionContextOptions['registries']>;
+	translationHelpers: NonNullable<LegacySessionContextOptions['helpers']>;
 }
 
 export function usePhaseProgress({
@@ -41,6 +46,10 @@ export function usePhaseProgress({
 	refresh,
 	resourceKeys,
 	enqueue,
+	getLatestSnapshot,
+	setLatestSnapshot,
+	registries,
+	translationHelpers,
 }: PhaseProgressOptions) {
 	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
 	const [phaseTimer, setPhaseTimer] = useState(0);
@@ -73,7 +82,8 @@ export function usePhaseProgress({
 	const runUntilActionPhaseCore = useCallback(
 		() =>
 			advanceToActionPhase({
-				session,
+				getLatestSnapshot,
+				setLatestSnapshot,
 				sessionId,
 				actionCostResource,
 				resourceKeys,
@@ -89,23 +99,28 @@ export function usePhaseProgress({
 				updateMainPhaseStep,
 				addLog,
 				refresh,
+				registries,
+				translationHelpers,
 			}),
 		[
 			actionCostResource,
 			addLog,
+			getLatestSnapshot,
 			mountedRef,
 			refresh,
+			registries,
 			resourceKeys,
 			runDelay,
 			runStepDelay,
-			session,
 			sessionId,
 			setDisplayPhase,
 			setMainApStart,
 			setPhaseHistories,
 			setPhaseSteps,
 			setPhaseTimer,
+			setLatestSnapshot,
 			setTabsEnabled,
+			translationHelpers,
 			updateMainPhaseStep,
 		],
 	);
@@ -116,7 +131,7 @@ export function usePhaseProgress({
 	);
 
 	const endTurn = useCallback(async () => {
-		const snapshot = session.getSnapshot();
+		const snapshot = getLatestSnapshot();
 		if (snapshot.game.conclusion) {
 			return;
 		}
@@ -133,10 +148,17 @@ export function usePhaseProgress({
 		if ((activePlayer.resources[actionCostResource] ?? 0) > 0) {
 			return;
 		}
-		await advanceSessionPhase({ sessionId });
+		const response = await advanceSessionPhase({ sessionId });
+		setLatestSnapshot(response.snapshot);
 		setPhaseHistories({});
 		await runUntilActionPhaseCore();
-	}, [actionCostResource, runUntilActionPhaseCore, session, sessionId]);
+	}, [
+		actionCostResource,
+		getLatestSnapshot,
+		runUntilActionPhaseCore,
+		sessionId,
+		setLatestSnapshot,
+	]);
 
 	const handleEndTurn = useCallback(() => enqueue(endTurn), [enqueue, endTurn]);
 
@@ -144,7 +166,7 @@ export function usePhaseProgress({
 		if (!tabsEnabled) {
 			return;
 		}
-		const snapshot = session.getSnapshot();
+		const snapshot = getLatestSnapshot();
 		if (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
 			return;
 		}
@@ -157,7 +179,7 @@ export function usePhaseProgress({
 		const start = activePlayer.resources[actionCostResource] ?? 0;
 		setMainApStart(start);
 		updateMainPhaseStep(start);
-	}, [actionCostResource, session, tabsEnabled, updateMainPhaseStep]);
+	}, [actionCostResource, getLatestSnapshot, tabsEnabled, updateMainPhaseStep]);
 
 	return {
 		phaseSteps,

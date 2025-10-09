@@ -3,6 +3,7 @@ import {
 	resolveActionEffects,
 	type ActionParams,
 	type EngineSession,
+	type EngineSessionSnapshot,
 	type PlayerStateSnapshot,
 	type RequirementFailure,
 } from '@kingdom-builder/engine';
@@ -29,7 +30,10 @@ import {
 	formatDevelopActionLogLines,
 } from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
-import { getLegacySessionContext } from './getLegacySessionContext';
+import {
+	getLegacySessionContext,
+	type LegacySessionContextOptions,
+} from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
 
@@ -90,6 +94,10 @@ interface UseActionPerformerOptions {
 	endTurn: () => Promise<void>;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	resourceKeys: ResourceKey[];
+	getLatestSnapshot: () => EngineSessionSnapshot;
+	setLatestSnapshot: (snapshot: EngineSessionSnapshot) => void;
+	registries: NonNullable<LegacySessionContextOptions['registries']>;
+	translationHelpers: NonNullable<LegacySessionContextOptions['helpers']>;
 }
 export function useActionPerformer({
 	session,
@@ -104,18 +112,23 @@ export function useActionPerformer({
 	endTurn,
 	enqueue,
 	resourceKeys,
+	getLatestSnapshot,
+	setLatestSnapshot,
+	registries,
+	translationHelpers,
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
-			const snapshotBefore = session.getSnapshot();
+			const snapshotBefore = getLatestSnapshot();
 			if (snapshotBefore.game.conclusion) {
 				pushErrorToast('The battle is already decided.');
 				return;
 			}
-			let { translationContext: context } = getLegacySessionContext(
-				session,
-				snapshotBefore,
-			);
+			let { translationContext: context } = getLegacySessionContext({
+				snapshot: snapshotBefore,
+				registries,
+				helpers: translationHelpers,
+			});
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
 				(entry) => entry.id === activePlayerId,
@@ -137,7 +150,12 @@ export function useActionPerformer({
 				}
 				const traces = response.traces;
 				const snapshotAfter = response.snapshot;
-				const legacyContext = getLegacySessionContext(session, snapshotAfter);
+				setLatestSnapshot(snapshotAfter);
+				const legacyContext = getLegacySessionContext({
+					snapshot: snapshotAfter,
+					registries,
+					helpers: translationHelpers,
+				});
 				const { translationContext, diffContext } = legacyContext;
 				context = translationContext;
 				const playerAfter = snapshotAfter.game.players.find(
@@ -241,13 +259,17 @@ export function useActionPerformer({
 		[
 			addLog,
 			endTurn,
+			getLatestSnapshot,
 			mountedRef,
 			sessionId,
 			pushErrorToast,
 			refresh,
+			registries,
 			resourceKeys,
 			session,
+			setLatestSnapshot,
 			showResolution,
+			translationHelpers,
 			updateMainPhaseStep,
 			actionCostResource,
 		],

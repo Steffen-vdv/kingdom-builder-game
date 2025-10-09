@@ -11,6 +11,7 @@ import { type ResourceKey } from '@kingdom-builder/contents';
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
+import type { LegacySessionContextOptions } from '../../src/state/getLegacySessionContext';
 
 vi.mock('../../src/translation', async () => {
 	const actual = await vi.importActual<TranslationTypes>(
@@ -104,17 +105,27 @@ function createSessionState(turn: number): EngineSessionSnapshot {
 }
 
 interface HarnessProps {
-	session: EngineSession;
-	state: EngineSessionSnapshot;
-	addLog: (entry: string | string[]) => void;
+        session: EngineSession;
+        state: EngineSessionSnapshot;
+        addLog: (entry: string | string[]) => void;
+        registries: NonNullable<LegacySessionContextOptions['registries']>;
+        translationHelpers: NonNullable<LegacySessionContextOptions['helpers']>;
 }
 
-function Harness({ session, state, addLog }: HarnessProps) {
+function Harness({
+	session,
+	state,
+	addLog,
+	registries,
+	translationHelpers,
+}: HarnessProps) {
 	useCompensationLogger({
 		session,
 		sessionState: state,
 		addLog,
 		resourceKeys: RESOURCE_KEYS,
+		registries,
+		translationHelpers,
 	});
 	return null;
 }
@@ -125,15 +136,40 @@ describe('useCompensationLogger', () => {
 		const addLog = vi.fn();
 		const session = createSession();
 		const state = createSessionState(1);
+		const registries: NonNullable<LegacySessionContextOptions['registries']> = {
+			actions: {} as never,
+			buildings: {} as never,
+			developments: {} as never,
+		};
+		const translationHelpers: NonNullable<
+			LegacySessionContextOptions['helpers']
+		> = {
+			pullEffectLog: session.pullEffectLog.bind(session),
+			evaluationMods: new Map(),
+		};
 		const { rerender } = render(
-			<Harness session={session} state={state} addLog={addLog} />,
+			<Harness
+				session={session}
+				state={state}
+				addLog={addLog}
+				registries={registries}
+				translationHelpers={translationHelpers}
+			/>,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 		const diffContext = diffStepSnapshotsMock.mock.calls[0]?.[3];
 		expect(diffContext?.activePlayer.id).toBe('B');
 		const nextState = createSessionState(1);
-		rerender(<Harness session={session} state={nextState} addLog={addLog} />);
+		rerender(
+			<Harness
+				session={session}
+				state={nextState}
+				addLog={addLog}
+				registries={registries}
+				translationHelpers={translationHelpers}
+			/>,
+		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 	});
@@ -143,14 +179,43 @@ describe('useCompensationLogger', () => {
 		const addLog = vi.fn();
 		const session = createSession();
 		const state = createSessionState(1);
+		const registries: NonNullable<LegacySessionContextOptions['registries']> = {
+			actions: {} as never,
+			buildings: {} as never,
+			developments: {} as never,
+		};
+		const translationHelpers: NonNullable<
+			LegacySessionContextOptions['helpers']
+		> = {
+			pullEffectLog: session.pullEffectLog.bind(session),
+			evaluationMods: new Map(),
+		};
 		const { rerender } = render(
-			<Harness session={session} state={state} addLog={addLog} />,
+			<Harness
+				session={session}
+				state={state}
+				addLog={addLog}
+				registries={registries}
+				translationHelpers={translationHelpers}
+			/>,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 		const newSession = createSession();
 		const newState = createSessionState(1);
-		rerender(<Harness session={newSession} state={newState} addLog={addLog} />);
+		const newHelpers: NonNullable<LegacySessionContextOptions['helpers']> = {
+			pullEffectLog: newSession.pullEffectLog.bind(newSession),
+			evaluationMods: new Map(),
+		};
+		rerender(
+			<Harness
+				session={newSession}
+				state={newState}
+				addLog={addLog}
+				registries={registries}
+				translationHelpers={newHelpers}
+			/>,
+		);
 		expect(addLog).toHaveBeenCalledTimes(2);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(2);
 		const firstContext = diffStepSnapshotsMock.mock.calls[0]?.[3];

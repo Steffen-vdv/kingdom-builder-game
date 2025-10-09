@@ -9,6 +9,8 @@ interface UseSessionQueueResult {
 	session: Session;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	cachedSessionSnapshot: SessionSnapshot;
+	getLatestSnapshot: () => SessionSnapshot;
+	setLatestSnapshot: (snapshot: SessionSnapshot) => void;
 }
 
 export function useSessionQueue(
@@ -23,12 +25,28 @@ export function useSessionQueue(
 		<T>(task: () => Promise<T> | T) => queue.enqueue(task),
 		[queue],
 	);
-	const cachedSessionSnapshot = useMemo(() => {
+	const getLatestSnapshot = useCallback(() => {
 		const latest = queue.getLatestSnapshot();
 		if (latest) {
 			return latest;
 		}
-		return session.getSnapshot();
-	}, [queue, session, sessionState]);
-	return { session, enqueue, cachedSessionSnapshot };
+		return sessionState;
+	}, [queue, sessionState]);
+	const setLatestSnapshot = useCallback(
+		(snapshot: SessionSnapshot) => {
+			queue.setLatestSnapshot(snapshot);
+		},
+		[queue],
+	);
+	const cachedSessionSnapshot = useMemo(
+		() => getLatestSnapshot(),
+		[getLatestSnapshot],
+	);
+	return {
+		session,
+		enqueue,
+		cachedSessionSnapshot,
+		getLatestSnapshot,
+		setLatestSnapshot,
+	};
 }

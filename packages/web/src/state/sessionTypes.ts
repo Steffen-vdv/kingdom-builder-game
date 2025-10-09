@@ -11,4 +11,5 @@ export interface SessionQueueHelpers {
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
 	getCurrentSession: () => Session;
 	getLatestSnapshot: () => SessionSnapshot | null;
+	setLatestSnapshot: (snapshot: SessionSnapshot) => void;
 }

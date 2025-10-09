@@ -15,6 +15,7 @@ import {
 	RESOURCE_KEYS,
 	type ResourceKey,
 } from '../../src/state/sessionContent';
+import type { LegacySessionContextOptions } from '../../src/state/getLegacySessionContext';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -51,6 +52,10 @@ describe('useActionPerformer', () => {
 	let resourceKeys: ResourceKey[];
 	let actionCostResource: ResourceKey;
 	const sessionId = 'test-session';
+	let getLatestSnapshotMock: ReturnType<typeof vi.fn>;
+	let setLatestSnapshotMock: ReturnType<typeof vi.fn>;
+	let registries: NonNullable<LegacySessionContextOptions['registries']>;
+	let translationHelpers: NonNullable<LegacySessionContextOptions['helpers']>;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -105,6 +110,17 @@ describe('useActionPerformer', () => {
 			enqueue: enqueueMock,
 			advancePhase: vi.fn(),
 		} as unknown as EngineSession;
+		getLatestSnapshotMock = vi.fn(() => sessionSnapshot);
+		setLatestSnapshotMock = vi.fn();
+		registries = {
+			actions: {} as never,
+			buildings: {} as never,
+			developments: {} as never,
+		};
+		translationHelpers = {
+			pullEffectLog: vi.fn(),
+			evaluationMods: new Map(),
+		};
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
@@ -137,6 +153,10 @@ describe('useActionPerformer', () => {
 				endTurn,
 				enqueue: enqueueMock,
 				resourceKeys,
+				getLatestSnapshot: getLatestSnapshotMock,
+				setLatestSnapshot: setLatestSnapshotMock,
+				registries,
+				translationHelpers,
 			}),
 		);
 
@@ -180,6 +200,10 @@ describe('useActionPerformer', () => {
 				endTurn: vi.fn(),
 				enqueue: enqueueMock,
 				resourceKeys,
+				getLatestSnapshot: getLatestSnapshotMock,
+				setLatestSnapshot: setLatestSnapshotMock,
+				registries,
+				translationHelpers,
 			}),
 		);
 

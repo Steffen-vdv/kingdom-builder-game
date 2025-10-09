@@ -17,6 +17,8 @@ interface UseAiRunnerOptions {
 		(action: Action, params?: ActionParams<string>) => Promise<void>
 	>;
 	mountedRef: React.MutableRefObject<boolean>;
+	getLatestSnapshot: () => EngineSessionSnapshot;
+	advancePhase: () => Promise<void>;
 }
 
 export function useAiRunner({
@@ -26,6 +28,8 @@ export function useAiRunner({
 	setPhaseHistories,
 	performRef,
 	mountedRef,
+	getLatestSnapshot,
+	advancePhase,
 }: UseAiRunnerOptions) {
 	useEffect(() => {
 		const phaseDefinition = sessionState.phases[sessionState.game.phaseIndex];
@@ -59,12 +63,12 @@ export function useAiRunner({
 					}
 					await performRef.current(action, params as Record<string, unknown>);
 				},
-				advance: () => {
-					const snapshot = session.getSnapshot();
+				advance: async () => {
+					const snapshot = getLatestSnapshot();
 					if (snapshot.game.conclusion) {
 						return;
 					}
-					session.advancePhase();
+					await advancePhase();
 				},
 			});
 			if (!ranTurn || !mountedRef.current) {
@@ -82,5 +86,7 @@ export function useAiRunner({
 		setPhaseHistories,
 		performRef,
 		mountedRef,
+		getLatestSnapshot,
+		advancePhase,
 	]);
 }

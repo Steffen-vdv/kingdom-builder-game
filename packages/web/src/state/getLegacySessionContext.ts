@@ -1,13 +1,14 @@
 import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
 import type {
-	EngineSession,
 	EngineSessionSnapshot,
+	RuleSnapshot,
 } from '@kingdom-builder/engine';
 import {
 	createTranslationContext,
 	type TranslationContext,
 } from '../translation/context';
 import { type TranslationDiffContext } from '../translation';
+import type { TranslationSessionHelpers } from '../translation/context/createTranslationContext';
 
 type PlayerSnapshot = EngineSessionSnapshot['game']['players'][number];
 
@@ -198,23 +199,33 @@ export interface LegacySessionContextData {
 	diffContext: TranslationDiffContext;
 }
 
-export function getLegacySessionContext(
-	session: EngineSession,
-	snapshot: EngineSessionSnapshot,
-): LegacySessionContextData {
+export interface LegacySessionContextOptions {
+	snapshot: EngineSessionSnapshot;
+	ruleSnapshot?: RuleSnapshot;
+	registries?: {
+		actions: typeof ACTIONS;
+		buildings: typeof BUILDINGS;
+		developments: typeof DEVELOPMENTS;
+	};
+	helpers?: TranslationSessionHelpers;
+}
+
+export function getLegacySessionContext({
+	snapshot,
+	ruleSnapshot,
+	registries = {
+		actions: ACTIONS,
+		buildings: BUILDINGS,
+		developments: DEVELOPMENTS,
+	},
+	helpers,
+}: LegacySessionContextOptions): LegacySessionContextData {
 	const translationContext = createTranslationContext(
 		snapshot,
+		registries,
+		helpers,
 		{
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-		},
-		{
-			pullEffectLog: <T>(key: string) => session.pullEffectLog<T>(key),
-			evaluationMods: session.getPassiveEvaluationMods(),
-		},
-		{
-			ruleSnapshot: session.getRuleSnapshot(),
+			ruleSnapshot: ruleSnapshot ?? snapshot.rules,
 			passiveRecords: snapshot.passiveRecords,
 		},
 	);
