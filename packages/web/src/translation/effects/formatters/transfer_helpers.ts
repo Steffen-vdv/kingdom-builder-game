@@ -1,4 +1,4 @@
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { formatTargetLabel } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
 import type { TranslationContext } from '../../context';

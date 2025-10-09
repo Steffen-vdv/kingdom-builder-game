@@ -1,9 +1,13 @@
-import type { EngineContext as LegacyEngineContext } from '@kingdom-builder/engine';
-import type { TranslationContext } from '../context';
+import type { BuildingConfig } from '@kingdom-builder/protocol';
 
-type BuildingLookupContext =
-	| Pick<TranslationContext, 'buildings'>
-	| Pick<LegacyEngineContext, 'buildings'>;
+type BuildingLookupContext = {
+	buildings: {
+		get(
+			id: string,
+		): { icon?: string; name?: string } | BuildingConfig | undefined;
+		has?(id: string): boolean;
+	};
+};
 
 const FALLBACK_ICONS = new Map<string, string>();
 

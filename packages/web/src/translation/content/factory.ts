@@ -31,15 +31,13 @@ export function summarizeContent<T, O>(
 export function summarizeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext | LegacyContentTranslatorContext,
+	ctx: TranslationContext,
 	opts?: O,
 ): Summary {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator
-		? translator.summarize(target, ctx as TranslationContext, opts)
-		: [];
+	return translator ? translator.summarize(target, ctx, opts) : [];
 }
 
 export function describeContent<T, O>(
@@ -57,15 +55,13 @@ export function describeContent<T, O>(
 export function describeContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext | LegacyContentTranslatorContext,
+	ctx: TranslationContext,
 	opts?: O,
 ): Summary {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator
-		? translator.describe(target, ctx as TranslationContext, opts)
-		: [];
+	return translator ? translator.describe(target, ctx, opts) : [];
 }
 
 export function logContent<T, O>(
@@ -83,13 +79,11 @@ export function logContent<T, O>(
 export function logContent<T, O>(
 	type: string,
 	target: T,
-	ctx: TranslationContext | LegacyContentTranslatorContext,
+	ctx: TranslationContext,
 	opts?: O,
 ): TranslatorLogEntry[] {
 	const translator = TRANSLATORS.get(type) as
 		| ContentTranslator<T, O>
 		| undefined;
-	return translator?.log
-		? translator.log(target, ctx as TranslationContext, opts)
-		: [];
+	return translator?.log ? translator.log(target, ctx, opts) : [];
 }

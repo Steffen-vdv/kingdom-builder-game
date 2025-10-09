@@ -31,6 +31,9 @@ describe('translation diff resource source context', () => {
 					}
 					return undefined;
 				},
+				has(id: string) {
+					return id === 'syntheticBuilding';
+				},
 			} as TranslationDiffContext['buildings'],
 			developments: {
 				get(id: string) {
@@ -38,6 +41,9 @@ describe('translation diff resource source context', () => {
 						return { icon: '🌾' } as { icon?: string };
 					}
 					return undefined;
+				},
+				has(id: string) {
+					return id === 'synthetic';
 				},
 			} as TranslationDiffContext['developments'],
 			passives: {

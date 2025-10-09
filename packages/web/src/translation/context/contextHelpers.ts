@@ -1,11 +1,9 @@
 import type {
-	EngineSessionSnapshot,
-	PassiveSummary,
-	PlayerId,
-} from '@kingdom-builder/engine';
-import type {
-	SessionPassiveEvaluationModifierMap,
 	PlayerStartConfig,
+	SessionPassiveEvaluationModifierMap,
+	SessionPassiveSummary,
+	SessionPlayerId,
+	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import type {
 	TranslationPassiveDescriptor,
@@ -19,9 +17,9 @@ export function cloneRecord<T>(record: Record<string, T>): Record<string, T> {
 }
 
 export function clonePassiveMeta(
-	meta: NonNullable<PassiveSummary['meta']>,
-): NonNullable<PassiveSummary['meta']> {
-	const cloned: NonNullable<PassiveSummary['meta']> = {};
+	meta: NonNullable<SessionPassiveSummary['meta']>,
+): NonNullable<SessionPassiveSummary['meta']> {
+	const cloned: NonNullable<SessionPassiveSummary['meta']> = {};
 	if (meta.source !== undefined) {
 		cloned.source = { ...meta.source };
 	}
@@ -31,8 +29,10 @@ export function clonePassiveMeta(
 	return Object.freeze(cloned);
 }
 
-export function clonePassiveSummary(summary: PassiveSummary): PassiveSummary {
-	const cloned: PassiveSummary = { id: summary.id };
+export function clonePassiveSummary(
+	summary: SessionPassiveSummary,
+): SessionPassiveSummary {
+	const cloned: SessionPassiveSummary = { id: summary.id };
 	if (summary.name !== undefined) {
 		cloned.name = summary.name;
 	}
@@ -49,7 +49,7 @@ export function clonePassiveSummary(summary: PassiveSummary): PassiveSummary {
 }
 
 export function toPassiveDescriptor(
-	summary: PassiveSummary,
+	summary: SessionPassiveSummary,
 ): TranslationPassiveDescriptor {
 	const descriptor: TranslationPassiveDescriptor = {};
 	if (summary.icon !== undefined) {
@@ -65,7 +65,7 @@ export function toPassiveDescriptor(
 }
 
 export function clonePlayer(
-	player: EngineSessionSnapshot['game']['players'][number],
+	player: SessionSnapshot['game']['players'][number],
 ): TranslationPlayer {
 	return Object.freeze({
 		id: player.id,
@@ -95,8 +95,8 @@ function clonePlayerStartConfig(config: PlayerStartConfig): PlayerStartConfig {
 }
 
 export function cloneCompensations(
-	compensations: EngineSessionSnapshot['compensations'],
-): Record<PlayerId, PlayerStartConfig> {
+	compensations: SessionSnapshot['compensations'],
+): Record<SessionPlayerId, PlayerStartConfig> {
 	return Object.freeze(
 		Object.fromEntries(
 			Object.entries(compensations).map(([playerId, config]) => [
@@ -104,12 +104,12 @@ export function cloneCompensations(
 				clonePlayerStartConfig(config),
 			]),
 		),
-	) as Record<PlayerId, PlayerStartConfig>;
+	) as Record<SessionPlayerId, PlayerStartConfig>;
 }
 
 export function mapPassives(
-	players: EngineSessionSnapshot['game']['players'],
-): ReadonlyMap<PlayerId, PassiveSummary[]> {
+	players: SessionSnapshot['game']['players'],
+): ReadonlyMap<SessionPlayerId, SessionPassiveSummary[]> {
 	return new Map(
 		players.map((player) => [
 			player.id,
@@ -119,16 +119,16 @@ export function mapPassives(
 }
 
 export function flattenPassives(
-	passives: ReadonlyMap<PlayerId, PassiveSummary[]>,
-): PassiveSummary[] {
+	passives: ReadonlyMap<SessionPlayerId, SessionPassiveSummary[]>,
+): SessionPassiveSummary[] {
 	return Array.from(passives.values()).flatMap((entries) =>
 		entries.map(clonePassiveSummary),
 	);
 }
 
 export function mapPassiveDescriptors(
-	passives: ReadonlyMap<PlayerId, PassiveSummary[]>,
-): ReadonlyMap<PlayerId, Map<string, TranslationPassiveDescriptor>> {
+	passives: ReadonlyMap<SessionPlayerId, SessionPassiveSummary[]>,
+): ReadonlyMap<SessionPlayerId, Map<string, TranslationPassiveDescriptor>> {
 	return new Map(
 		Array.from(passives.entries()).map(([owner, list]) => [
 			owner,
@@ -140,7 +140,7 @@ export function mapPassiveDescriptors(
 }
 
 export function cloneRecentResourceGains(
-	recent: EngineSessionSnapshot['recentResourceGains'],
+	recent: SessionSnapshot['recentResourceGains'],
 ): ReadonlyArray<{ key: string; amount: number }> {
 	return Object.freeze(recent.map((entry) => ({ ...entry })));
 }

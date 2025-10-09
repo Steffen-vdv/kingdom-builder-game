@@ -1,5 +1,5 @@
-import { type ActionParams } from '@kingdom-builder/engine';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol';
 import {
 	summarizeEffects,
 	describeEffects,
@@ -31,7 +31,7 @@ class ActionTranslator
 		const definition = context.actions.get(id);
 		const resolved = resolveActionEffects(
 			definition,
-			options as ActionParams<string> | undefined,
+			options as ActionParametersPayload | undefined,
 		);
 		const combined: Summary = [];
 		for (const step of resolved.steps) {
@@ -51,7 +51,7 @@ class ActionTranslator
 		const definition = context.actions.get(id);
 		const resolved = resolveActionEffects(
 			definition,
-			options as ActionParams<string> | undefined,
+			options as ActionParametersPayload | undefined,
 		);
 		const combined: Summary = [];
 		for (const step of resolved.steps) {
@@ -78,7 +78,7 @@ class ActionTranslator
 		}
 		const resolved = resolveActionEffects(
 			definition,
-			params as ActionParams<string> | undefined,
+			params as ActionParametersPayload | undefined,
 		);
 		const effectLogs: Summary = [];
 		for (const step of resolved.steps) {

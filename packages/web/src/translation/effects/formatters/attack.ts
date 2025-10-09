@@ -3,7 +3,7 @@ import type {
 	AttackLog,
 	AttackOnDamageLogEntry,
 	EffectDef,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../content';
 import { registerEffectFormatter } from '../factory';
 import {
