@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { getActionCosts, advance } from '../../src';
 import { runEffects } from '../../src/effects/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import { createContentFactory } from '../factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('cost_mod owner scope', () => {

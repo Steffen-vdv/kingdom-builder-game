@@ -12,7 +12,7 @@ import {
 } from '@kingdom-builder/contents';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
-import { createContentFactory } from '../../packages/engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 type TimelineEntry = string | { text: string };
 

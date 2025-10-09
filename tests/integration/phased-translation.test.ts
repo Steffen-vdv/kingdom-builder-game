@@ -22,7 +22,7 @@ import type { ResourceKey } from '@kingdom-builder/contents';
 // prettier-ignore
 import {
 	createContentFactory,
-} from '../../packages/engine/tests/factories/content';
+} from '@kingdom-builder/testing';
 import { formatDetailText } from '../../packages/web/src/utils/stats/format';
 
 type Entry = string | { title: string; items: Entry[] };

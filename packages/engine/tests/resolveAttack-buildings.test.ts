@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { resolveAttack, runEffects } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
-import { createContentFactory } from './factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('resolveAttack buildings', () => {
 	it('keeps buildings intact when damage is fully mitigated', () => {

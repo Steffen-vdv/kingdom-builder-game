@@ -3,7 +3,7 @@ import { runEffects } from '../src/index.ts';
 import { attackTargetHandlers } from '../src/effects/attack_handlers.ts';
 import { Resource } from '../src/state/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { createContentFactory } from './factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('attack:perform evaluation handlers', () => {
 	it('delegates modifier keys for resource targets to handler', () => {

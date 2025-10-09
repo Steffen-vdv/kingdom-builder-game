@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, advance, getActionCosts } from '../../src';
 import { createTestEngine } from '../helpers';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 
 describe('population effects', () => {

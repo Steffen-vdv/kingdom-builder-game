@@ -8,7 +8,7 @@ import {
 	RULES,
 	Resource,
 } from '@kingdom-builder/contents';
-import { createContentFactory } from '../../packages/engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('Action translation with population scaling', () => {
 	it('mentions population scaling', () => {

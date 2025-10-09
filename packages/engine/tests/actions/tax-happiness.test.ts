@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, advance, getActionCosts } from '../../src/index.ts';
 import { Resource, PopulationRole } from '@kingdom-builder/contents';
-import { createContentFactory } from '../factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers.ts';
 
 describe('resource removal penalties', () => {

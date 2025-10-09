@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { evaluatorCompare } from '../../src/requirements/evaluator_compare';
 import { createTestEngine } from '../helpers';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { advance } from '../../src';
 import { Stat, PhaseId } from '@kingdom-builder/contents';
 

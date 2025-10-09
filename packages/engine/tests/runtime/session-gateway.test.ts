@@ -3,7 +3,7 @@ import {
 	createEngineSession,
 	createLocalSessionGateway,
 } from '../../src/index.ts';
-import { createContentFactory } from '../factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import type { StartConfig, RuleSet } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';

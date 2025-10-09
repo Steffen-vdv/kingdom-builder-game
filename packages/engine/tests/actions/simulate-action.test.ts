@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { simulateAction, performAction } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import { createContentFactory } from '../factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 
 describe('simulateAction', () => {

@@ -9,6 +9,10 @@ export default defineConfig({
 				__dirname,
 				'packages/contents/src',
 			),
+			'@kingdom-builder/testing': path.resolve(
+				__dirname,
+				'packages/testing/src',
+			),
 			'@kingdom-builder/protocol': path.resolve(
 				__dirname,
 				'packages/protocol/src',

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('building:add effect', () => {
 	it('adds building and applies its passives', () => {

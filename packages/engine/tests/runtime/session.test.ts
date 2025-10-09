@@ -21,7 +21,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
-import { createContentFactory } from '../factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 
 const BASE: {
