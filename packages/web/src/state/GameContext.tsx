@@ -448,13 +448,13 @@ export function GameProvider(props: ProviderProps) {
 		});
 	}, []);
 
-	if (!sessionData || !sessionRef.current) {
-		return null;
-	}
-
 	const handleRelease = useCallback(() => {
 		teardownSession();
 	}, [teardownSession]);
+
+	if (!sessionData || !sessionRef.current) {
+		return null;
+	}
 
 	const innerProps: GameProviderInnerProps = {
 		children,
