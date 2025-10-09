@@ -151,6 +151,7 @@ describe('createGameApi', () => {
 		const successResponse: ActionExecuteSuccessResponse = {
 			status: 'success',
 			snapshot: createSnapshot(),
+			costs: {},
 			traces: [],
 		};
 		const fetchMock = vi
@@ -245,6 +246,7 @@ describe('GameApiFake', () => {
 					turn: 2,
 				} as Mutable<SessionSnapshot['game']>,
 			}),
+			costs: {},
 			traces: [],
 		};
 		fake.setNextActionResponse(updated);
