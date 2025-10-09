@@ -18,7 +18,7 @@ interface ResolutionLabels {
 	player: string;
 }
 
-const SOURCE_LABELS: Record<ResolutionSource, ResolutionLabels> = {
+const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
 	action: {
 		title: 'Action',
 		player: 'Played by',
@@ -29,6 +29,12 @@ const SOURCE_LABELS: Record<ResolutionSource, ResolutionLabels> = {
 	},
 };
 
+function isSourceDetail(
+	source: ResolutionSource | undefined,
+): source is Exclude<ResolutionSource, 'action' | 'phase'> {
+	return typeof source === 'object' && source !== null && 'kind' in source;
+}
+
 interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
@@ -36,7 +42,18 @@ interface ResolutionCardProps {
 }
 
 function resolveSourceLabels(source: ResolutionSource | undefined) {
-	return SOURCE_LABELS[source ?? 'action'] ?? SOURCE_LABELS.action;
+	if (!source) {
+		return SOURCE_LABELS.action;
+	}
+	if (typeof source === 'string') {
+		return SOURCE_LABELS[source] ?? SOURCE_LABELS.action;
+	}
+	const fallback = SOURCE_LABELS[source.kind] ?? SOURCE_LABELS.action;
+	const title = source.label?.trim() || fallback.title;
+	return {
+		title,
+		player: fallback.player,
+	};
 }
 
 function ResolutionCard({
@@ -55,11 +72,18 @@ function ResolutionCard({
 		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	const rawActionName = (resolution.action?.name ?? '').trim();
+	const sourceName = isSourceDetail(resolution.source)
+		? (resolution.source.name?.trim() ?? '')
+		: '';
+	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
 	const actionName = rawActionName || fallbackActionName;
 	const resolvedLabels = resolveSourceLabels(resolution.source);
 	const actorLabel = (resolution.actorLabel ?? '').trim() || actionName;
-	const actionIcon = resolution.action?.icon?.trim();
+	const actionIcon =
+		resolution.action?.icon?.trim() ||
+		(isSourceDetail(resolution.source)
+			? (resolution.source.icon?.trim() ?? undefined)
+			: undefined);
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
