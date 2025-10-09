@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import type { GameConfig } from '@kingdom-builder/protocol';
 
 describe('SessionManager', () => {
 	it('creates and retrieves sessions using synthetic content', () => {
@@ -49,5 +50,41 @@ describe('SessionManager', () => {
 		expect(() => manager.getSnapshot('missing')).toThrow(
 			'Session "missing" was not found.',
 		);
+	});
+
+	it('enforces the configured session capacity', () => {
+		const { manager } = createSyntheticSessionManager({
+			maxSessions: 1,
+		});
+		manager.createSession('primary');
+		expect(() => manager.createSession('secondary')).toThrow(
+			'Maximum session count reached.',
+		);
+	});
+
+	it('purges sessions that exceed the idle timeout', () => {
+		let current = 0;
+		const { manager } = createSyntheticSessionManager({
+			maxIdleDurationMs: 5,
+			now: () => current,
+		});
+		manager.createSession('idle');
+		current = 6;
+		expect(manager.getSession('idle')).toBeUndefined();
+	});
+
+	it('applies custom configuration overrides when provided', () => {
+		const { manager, costKey, gainKey, start } =
+			createSyntheticSessionManager();
+		const sessionId = 'configurable';
+		const customStart = structuredClone(start);
+		customStart.player.resources[costKey] = 5;
+		customStart.player.resources[gainKey] = 2;
+		const config: GameConfig = { start: customStart };
+		manager.createSession(sessionId, { config });
+		const snapshot = manager.getSnapshot(sessionId);
+		const [player] = snapshot.game.players;
+		expect(player?.resources[costKey]).toBe(5);
+		expect(player?.resources[gainKey]).toBe(2);
 	});
 });

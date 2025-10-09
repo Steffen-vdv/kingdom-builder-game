@@ -1,8 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { EngineSession } from '@kingdom-builder/engine';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+
+type SyntheticManager = ReturnType<
+	typeof createSyntheticSessionManager
+>['manager'];
 
 describe('SessionTransport', () => {
 	const middleware = createTokenAuthMiddleware({
@@ -253,5 +259,172 @@ describe('SessionTransport', () => {
 				expect(error.code).toBe('FORBIDDEN');
 			}
 		}
+	});
+
+	it('allows admin users to satisfy role checks', () => {
+		const { manager } = createSyntheticSessionManager();
+		const adminOnly = createTokenAuthMiddleware({
+			tokens: {
+				admin: {
+					userId: 'admin',
+					roles: ['admin'],
+				},
+			},
+		});
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: adminOnly,
+		});
+		const response = transport.createSession({
+			body: {},
+			headers: { authorization: 'Bearer admin' },
+		});
+		expect(response.sessionId).toBeDefined();
+	});
+
+	it('throws when authorization middleware is missing', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+		});
+		expect(() =>
+			transport.createSession({
+				body: {},
+			}),
+		).toThrow(TransportError);
+		try {
+			transport.createSession({ body: {} });
+		} catch (error) {
+			expect(error).toBeInstanceOf(TransportError);
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('UNAUTHORIZED');
+			}
+		}
+	});
+
+	it('wraps authorization failures as transport errors', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: () => ({ userId: 'user', roles: [] }),
+		});
+		expect(() =>
+			transport.createSession({
+				body: {},
+				headers: {},
+			}),
+		).toThrow(TransportError);
+		try {
+			transport.createSession({ body: {}, headers: {} });
+		} catch (error) {
+			expect(error).toBeInstanceOf(TransportError);
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('FORBIDDEN');
+			}
+		}
+	});
+
+	it('extracts requirement failures from errors', async () => {
+		const failure: SessionRequirementFailure = {
+			requirement: {
+				type: 'resource',
+				method: 'min',
+				params: { key: 'gold', amount: 1 },
+			},
+			message: 'no gold',
+		};
+		const session = {
+			enqueue: vi.fn().mockRejectedValue({
+				message: 'blocked',
+				requirementFailure: failure,
+			}),
+		} as unknown as EngineSession;
+		const transport = new SessionTransport({
+			sessionManager: {
+				getSession: vi.fn().mockReturnValue(session),
+			} as unknown as SyntheticManager,
+			authMiddleware: () => ({
+				userId: 'user',
+				roles: ['session:advance'],
+			}),
+		});
+		const result = await transport.executeAction({
+			body: { sessionId: 'missing', actionId: 'action' },
+			headers: { authorization: 'Bearer token' },
+		});
+		expect(result.status).toBe('error');
+		expect(result.httpStatus).toBe(409);
+		expect(result.requirementFailure).toEqual(failure);
+		expect(result.requirementFailure).not.toBe(failure);
+	});
+
+	it('attaches http status without making it enumerable', () => {
+		const transport = new SessionTransport({
+			sessionManager: {
+				getSession: vi.fn().mockReturnValue(undefined),
+			} as unknown as SyntheticManager,
+		});
+		const { attachHttpStatus } = transport as unknown as {
+			attachHttpStatus: <T extends object>(
+				payload: T,
+				status: number,
+			) => T & {
+				httpStatus: number;
+			};
+		};
+		const result = attachHttpStatus({ status: 'ok' }, 201);
+		expect(result.httpStatus).toBe(201);
+		expect(Object.keys(result)).not.toContain('httpStatus');
+	});
+
+	it('ignores blank player names when applying preferences', () => {
+		const transport = new SessionTransport({
+			sessionManager: {
+				getSession: vi.fn().mockReturnValue(undefined),
+			} as unknown as SyntheticManager,
+		});
+		const { applyPlayerNames } = transport as unknown as {
+			applyPlayerNames: (
+				session: EngineSession,
+				names: Record<string, string | undefined>,
+			) => void;
+		};
+		const updatePlayerName = vi.fn();
+		const session = {
+			updatePlayerName,
+		} as unknown as EngineSession;
+		applyPlayerNames(session, {
+			A: 'Alice',
+			B: '   ',
+			C: undefined,
+			D: '',
+		});
+		expect(updatePlayerName).toHaveBeenCalledTimes(1);
+		expect(updatePlayerName).toHaveBeenCalledWith('A', 'Alice');
+	});
+
+	it('fails when generated session ids are not unique', () => {
+		const getSession = vi.fn().mockReturnValue({});
+		const manager = {
+			getSession,
+		} as unknown as SyntheticManager;
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: () => 'duplicate',
+		});
+		const helper = transport as unknown as {
+			generateSessionId: () => string;
+		};
+		let caught: unknown;
+		try {
+			helper.generateSessionId();
+		} catch (error) {
+			caught = error;
+		}
+		expect(caught).toBeInstanceOf(TransportError);
+		if (caught instanceof TransportError) {
+			expect(caught.code).toBe('CONFLICT');
+		}
+		expect(getSession).toHaveBeenCalledTimes(10);
 	});
 });
