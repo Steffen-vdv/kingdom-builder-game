@@ -8,7 +8,7 @@ import { logContent } from './factory';
 import type { TranslationContext } from '../context';
 
 export type ActionLogHook = (
-	ctx: TranslationContext,
+	context: TranslationContext,
 	params?: Record<string, unknown>,
 ) => string;
 
@@ -105,7 +105,7 @@ function createLinkedContentResolver({
 		}
 		const templateParam = extractTemplateParam(effect.params, paramKey);
 		const staticValue = extractStaticParam(effect.params, paramKey);
-		return (ctx, params) => {
+		return (context, params) => {
 			let targetId: string | undefined;
 			if (templateParam) {
 				targetId = extractString(params?.[templateParam]);
@@ -119,7 +119,7 @@ function createLinkedContentResolver({
 			if (!targetId) {
 				return '';
 			}
-			const rawTarget = logContent(contentType, targetId, ctx)[0];
+			const rawTarget = logContent(contentType, targetId, context)[0];
 			const target =
 				rawTarget && typeof rawTarget === 'object' ? rawTarget.text : rawTarget;
 			return target ? ` - ${target}` : '';

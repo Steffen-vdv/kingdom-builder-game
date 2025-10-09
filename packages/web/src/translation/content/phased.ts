@@ -6,11 +6,11 @@ import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 
 function formatStepTriggerLabel(
-	ctx: TranslationContext,
+	context: TranslationContext,
 	triggerKey: string,
 ): string | undefined {
 	const phaseMeta = new Map(
-		ctx.phases.map((phase) => [
+		context.phases.map((phase) => [
 			phase.id,
 			{ icon: phase.icon, label: phase.label },
 		]),
@@ -57,17 +57,17 @@ export interface PhasedDef {
 }
 
 export class PhasedTranslator {
-	summarize(def: PhasedDef, ctx: TranslationContext): Summary {
-		return this.translate(def, ctx, summarizeEffects);
+	summarize(def: PhasedDef, context: TranslationContext): Summary {
+		return this.translate(def, context, summarizeEffects);
 	}
 
-	describe(def: PhasedDef, ctx: TranslationContext): Summary {
-		return this.translate(def, ctx, describeEffects);
+	describe(def: PhasedDef, context: TranslationContext): Summary {
+		return this.translate(def, context, describeEffects);
 	}
 
 	private translate(
 		def: PhasedDef,
-		ctx: TranslationContext,
+		context: TranslationContext,
 		effectMapper: (
 			effects: readonly EffectDef<Record<string, unknown>>[] | undefined,
 			context: TranslationContext,
@@ -89,12 +89,12 @@ export class PhasedTranslator {
 				return;
 			}
 			handled.add(identifier);
-			const effects = effectMapper(def[key], ctx);
+			const effects = effectMapper(def[key], context);
 			if (!effects.length) {
 				return;
 			}
 			const info = triggerMeta[key as string];
-			const stepLabel = formatStepTriggerLabel(ctx, identifier);
+			const stepLabel = formatStepTriggerLabel(context, identifier);
 			const title = (() => {
 				if (stepLabel) {
 					const prefix =
@@ -119,13 +119,13 @@ export class PhasedTranslator {
 			root.push(...effects);
 		};
 
-		const build = effectMapper(def.onBuild, ctx);
+		const build = effectMapper(def.onBuild, context);
 		if (build.length) {
 			root.push(...build);
 		}
 		handled.add('onBuild');
 
-		for (const phase of ctx.phases) {
+		for (const phase of context.phases) {
 			const key =
 				`on${phase.id.charAt(0).toUpperCase() + phase.id.slice(1)}Phase` as keyof PhasedDef;
 			applyTrigger(key, `${phase.icon} On each ${phase.label} Phase`);
