@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
-import {
-	type EngineSessionSnapshot,
-	type PlayerStateSnapshot,
-	type RequirementFailure,
-} from '@kingdom-builder/engine';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import { ActionId, type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
 } from '@kingdom-builder/protocol/actions';
+import type {
+	SessionPlayerStateSnapshot,
+	SessionRequirementFailure,
+} from '@kingdom-builder/protocol/session';
 import {
 	diffStepSnapshots,
 	logContent,
@@ -31,11 +30,12 @@ import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
+import type { LegacySession } from './sessionTypes';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
 type ActionExecutionError = Error & {
-	requirementFailure?: RequirementFailure;
+	requirementFailure?: SessionRequirementFailure;
 	requirementFailures?: ActionRequirementFailures;
 };
 
@@ -72,17 +72,13 @@ function ensureTimelineLines(
 	}
 	return lines;
 }
-interface ActionPerformerSession {
-	getSnapshot: () => EngineSessionSnapshot;
-}
-
 interface UseActionPerformerOptions {
-	session: ActionPerformerSession;
+	session: LegacySession;
 	sessionId: string;
 	actionCostResource: ResourceKey;
 	addLog: (
 		entry: string | string[],
-		player?: Pick<PlayerStateSnapshot, 'id' | 'name'>,
+		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;

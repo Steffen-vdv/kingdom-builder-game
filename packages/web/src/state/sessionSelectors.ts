@@ -1,7 +1,7 @@
 import type {
-	EngineSessionSnapshot,
-	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import type {
 	ActionDefinition,
 	BuildingDefinition,
@@ -19,12 +19,12 @@ import type { SessionRegistries } from './sessionContent';
 
 const cloneRecord = <T>(record: Record<string, T>) => ({ ...record });
 const mapLand = (
-	land: PlayerStateSnapshot['lands'][number],
+	land: SessionPlayerStateSnapshot['lands'][number],
 ): SessionLandView => ({
 	...land,
 	slotsFree: Math.max(0, land.slotsMax - land.slotsUsed),
 });
-const mapPlayer = (player: PlayerStateSnapshot): SessionPlayerView => ({
+const mapPlayer = (player: SessionPlayerStateSnapshot): SessionPlayerView => ({
 	...player,
 	resources: cloneRecord(player.resources),
 	stats: cloneRecord(player.stats),
@@ -85,7 +85,7 @@ const defaultDevelopmentSort = (
 ) =>
 	(left.order ?? 0) - (right.order ?? 0) || left.name.localeCompare(right.name);
 
-export const selectSessionPlayers = (sessionState: EngineSessionSnapshot) => {
+export const selectSessionPlayers = (sessionState: SessionSnapshot) => {
 	const list = sessionState.game.players.map(mapPlayer);
 	const byId = new Map(list.map((player) => [player.id, player]));
 	return {
@@ -172,7 +172,7 @@ const buildSessionOptionsFromPlayers = (
 };
 
 export const selectSessionOptions = (
-	sessionState: EngineSessionSnapshot,
+	sessionState: SessionSnapshot,
 	registries: SessionRegistries,
 	helpers: SessionSelectorHelpers = {},
 ): SessionOptionSelection =>
@@ -183,7 +183,7 @@ export const selectSessionOptions = (
 	);
 
 export const selectSessionView = (
-	sessionState: EngineSessionSnapshot,
+	sessionState: SessionSnapshot,
 	registries: SessionRegistries,
 	helpers: SessionSelectorHelpers = {},
 ) => {

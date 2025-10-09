@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
-import type { EngineSession } from '@kingdom-builder/engine';
+import type { LegacySession } from './sessionTypes';
 import type { PhaseStep } from './phaseTypes';
 
 interface MainPhaseTrackerOptions {
-	session: EngineSession;
+	session: LegacySession;
 	actionCostResource: ResourceKey;
 	actionPhaseId: string | undefined;
 	setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;

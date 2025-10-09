@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import type { EngineSession } from '@kingdom-builder/engine';
 import type { SessionSnapshot } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '@kingdom-builder/contents';
 import {
@@ -9,9 +8,10 @@ import {
 	type TranslationDiffContext,
 } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
+import type { LegacySession } from './sessionTypes';
 
 interface UseCompensationLoggerOptions {
-	session: EngineSession;
+	session: LegacySession;
 	sessionState: SessionSnapshot;
 	addLog: (
 		entry: string | string[],
@@ -26,7 +26,7 @@ export function useCompensationLogger({
 	addLog,
 	resourceKeys,
 }: UseCompensationLoggerOptions) {
-	const loggedSessionRef = useRef<EngineSession | null>(null);
+	const loggedSessionRef = useRef<LegacySession | null>(null);
 	const loggedPlayersRef = useRef<Set<string>>(new Set());
 	useEffect(() => {
 		if (loggedSessionRef.current !== session) {

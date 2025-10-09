@@ -1,16 +1,16 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import {
-	type EngineSession,
-	type EngineSessionSnapshot,
-	type PlayerId,
-} from '@kingdom-builder/engine';
-import { type PlayerStartConfig } from '@kingdom-builder/protocol';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type {
+	SessionPlayerId,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
+import type { LegacySession } from '../../src/state/sessionTypes';
 
 vi.mock('../../src/translation', async () => {
 	const actual = await vi.importActual<TranslationTypes>(
@@ -26,7 +26,7 @@ const diffStepSnapshotsMock = vi.mocked(TranslationModule.diffStepSnapshots);
 
 const RESOURCE_KEYS: ResourceKey[] = ['gold' as ResourceKey];
 
-function createSession(): EngineSession {
+function createSession(): LegacySession {
 	return {
 		hasAiController: () => false,
 		getActionDefinition: () => undefined,
@@ -42,13 +42,13 @@ function createSession(): EngineSession {
 		pushEffectLog: vi.fn(),
 		applyDeveloperPreset: vi.fn(),
 		updatePlayerName: vi.fn(),
-	} as unknown as EngineSession;
+	} as unknown as LegacySession;
 }
 
 function createPlayer(
-	id: PlayerId,
+	id: SessionPlayerId,
 	name: string,
-): EngineSessionSnapshot['game']['players'][number] {
+): SessionSnapshot['game']['players'][number] {
 	return {
 		id,
 		name,
@@ -66,7 +66,7 @@ function createPlayer(
 	};
 }
 
-function createSessionState(turn: number): EngineSessionSnapshot {
+function createSessionState(turn: number): SessionSnapshot {
 	const playerA = createPlayer('A', 'Player A');
 	const playerB = createPlayer('B', 'Player B');
 	return {
@@ -90,7 +90,7 @@ function createSessionState(turn: number): EngineSessionSnapshot {
 			B: {
 				resources: { gold: 1 },
 			},
-		} as Record<PlayerId, PlayerStartConfig>,
+		} as Record<SessionPlayerId, PlayerStartConfig>,
 		rules: {
 			tieredResourceKey: RESOURCE_KEYS[0]!,
 			tierDefinitions: [],
@@ -105,8 +105,8 @@ function createSessionState(turn: number): EngineSessionSnapshot {
 }
 
 interface HarnessProps {
-	session: EngineSession;
-	state: EngineSessionSnapshot;
+	session: LegacySession;
+	state: SessionSnapshot;
 	addLog: (entry: string | string[]) => void;
 }
 

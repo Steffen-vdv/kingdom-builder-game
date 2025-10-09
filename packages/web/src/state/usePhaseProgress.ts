@@ -1,23 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-	type EngineSession,
-	type EngineSessionSnapshot,
-	type PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
 import { type ResourceKey } from '@kingdom-builder/contents';
+import type {
+	SessionPlayerStateSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import type { PhaseStep } from './phaseTypes';
 import { usePhaseDelays } from './usePhaseDelays';
 import { useMainPhaseTracker } from './useMainPhaseTracker';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
+import type { LegacySession } from './sessionTypes';
 
 interface PhaseProgressOptions {
-	session: EngineSession;
-	sessionState: EngineSessionSnapshot;
+	session: LegacySession;
+	sessionState: SessionSnapshot;
 	sessionId: string;
 	actionPhaseId: string | undefined;
 	actionCostResource: ResourceKey;
-	addLog: (entry: string | string[], player?: PlayerStateSnapshot) => void;
+	addLog: (
+		entry: string | string[],
+		player?: SessionPlayerStateSnapshot,
+	) => void;
 	mountedRef: React.MutableRefObject<boolean>;
 	timeScaleRef: React.MutableRefObject<number>;
 	setTrackedInterval: (callback: () => void, delay: number) => number;

@@ -1,9 +1,8 @@
-import type {
-	EngineSession,
-	EngineSessionSnapshot,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
 import type { ResourceKey } from '@kingdom-builder/contents';
+import type {
+	SessionRuleSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
@@ -16,6 +15,7 @@ import type {
 	ActionResolution,
 	ShowResolutionOptions,
 } from './useActionResolution';
+import type { LegacySession } from './sessionTypes';
 
 export interface PerformActionRequest {
 	action: Action;
@@ -31,7 +31,7 @@ export type AdvancePhaseHandler = () => Promise<void>;
 export type RefreshSessionHandler = () => Promise<void>;
 
 export interface SessionMetadataFetchers {
-	getRuleSnapshot: () => RuleSnapshot;
+	getRuleSnapshot: () => SessionRuleSnapshot;
 	getSessionView: () => SessionView;
 	getTranslationContext: () => TranslationContext;
 }
@@ -42,11 +42,11 @@ export interface SessionDerivedSelectors {
 
 export interface GameEngineContextValue {
 	sessionId: string;
-	sessionSnapshot: EngineSessionSnapshot;
-	cachedSessionSnapshot: EngineSessionSnapshot;
+	sessionSnapshot: SessionSnapshot;
+	cachedSessionSnapshot: SessionSnapshot;
 	selectors: SessionDerivedSelectors;
 	translationContext: TranslationContext;
-	ruleSnapshot: RuleSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
 	log: LogEntry[];
 	logOverflowed: boolean;
 	resolution: ActionResolution | null;
@@ -98,15 +98,15 @@ export interface GameEngineContextValue {
 
 export interface LegacyGameEngineContextBridge {
 	/**
-	 * TODO(#session-migration): Remove direct EngineSession exposure once all
-	 * consumers rely on request helpers.
+	 * TODO(#session-migration): Remove direct EngineSession exposure once
+	 * all consumers rely on request helpers.
 	 */
-	session: EngineSession;
+	session: LegacySession;
 	/**
 	 * TODO(#session-migration): Replace with `sessionSnapshot` in consuming
 	 * modules after the serialization audit completes.
 	 */
-	sessionState: EngineSessionSnapshot;
+	sessionState: SessionSnapshot;
 	/**
 	 * TODO(#session-migration): Read from `selectors.sessionView` instead.
 	 */
