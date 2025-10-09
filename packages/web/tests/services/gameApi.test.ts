@@ -18,6 +18,7 @@ import {
 	createGameApi,
 	createGameApiMock,
 } from '../../src/services/gameApi';
+import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
 
 type Mutable<T> = { -readonly [K in keyof T]: Mutable<T[K]> };
 
@@ -103,6 +104,7 @@ const createStateResponse = (
 ): SessionStateResponse => ({
 	sessionId,
 	snapshot: createSnapshot(snapshotOverrides),
+	registries: createSessionRegistriesPayload(),
 });
 
 describe('createGameApi', () => {

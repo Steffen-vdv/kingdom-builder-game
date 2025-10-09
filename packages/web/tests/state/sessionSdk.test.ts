@@ -14,10 +14,14 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import { RESOURCE_KEYS } from '../../src/state/sessionContent';
+import {
+	createResourceKeys,
+	createSessionRegistriesPayload,
+} from '../helpers/sessionRegistries';
 
 describe('sessionSdk', () => {
-	const [resourceKey] = RESOURCE_KEYS;
+	const resourceKeys = createResourceKeys();
+	const [resourceKey] = resourceKeys;
 	if (!resourceKey) {
 		throw new Error('RESOURCE_KEYS is empty');
 	}
@@ -62,6 +66,7 @@ describe('sessionSdk', () => {
 		api.setNextCreateResponse({
 			sessionId: 'session-1',
 			snapshot: initialSnapshot,
+			registries: createSessionRegistriesPayload(),
 		});
 	});
 	afterEach(() => {
@@ -75,7 +80,7 @@ describe('sessionSdk', () => {
 		expect(created.sessionId).toBe('session-1');
 		expect(created.snapshot).toEqual(initialSnapshot);
 		expect(created.ruleSnapshot).toEqual(initialSnapshot.rules);
-		expect(created.resourceKeys).toEqual(RESOURCE_KEYS);
+		expect(created.resourceKeys).toEqual(resourceKeys);
 		expect(created.registries).toHaveProperty('actions');
 		expect(created.metadata).toEqual(initialSnapshot.metadata);
 	});
@@ -184,6 +189,7 @@ describe('sessionSdk', () => {
 				effects: [],
 				player: playerA,
 			},
+			registries: createSessionRegistriesPayload(),
 		});
 		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(response.snapshot).toEqual(updatedSnapshot);

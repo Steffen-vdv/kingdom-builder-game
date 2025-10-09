@@ -18,7 +18,7 @@ import { createTranslationContext } from '../../src/translation/context';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
-import type { SessionRegistries } from '../../src/state/sessionContent';
+import { createSessionRegistries } from './sessionRegistries';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
@@ -90,11 +90,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			passiveRecords: sessionState.passiveRecords,
 		},
 	);
-	const sessionRegistries: SessionRegistries = {
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-	};
+	const sessionRegistries = createSessionRegistries();
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: LegacyGameEngineContextValue = {
 		sessionId: 'test-session',

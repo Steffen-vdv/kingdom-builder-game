@@ -8,10 +8,8 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import {
-	RESOURCE_KEYS,
-	type ResourceKey,
-} from '../../src/state/sessionContent';
+import type { ResourceKey } from '@kingdom-builder/contents';
+import { createResourceKeys } from '../helpers/sessionRegistries';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -51,7 +49,7 @@ describe('useActionPerformer', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		performSessionActionMock.mockReset();
-		const [firstResourceKey] = RESOURCE_KEYS;
+		const [firstResourceKey] = createResourceKeys();
 		if (!firstResourceKey) {
 			throw new Error('RESOURCE_KEYS is empty');
 		}

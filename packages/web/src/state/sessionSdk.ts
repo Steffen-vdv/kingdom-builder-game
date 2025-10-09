@@ -2,8 +2,8 @@ import {
 	BuildingId,
 	GAME_START,
 	PHASES,
-	POPULATIONS,
 	RULES,
+	type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
 	createEngineSession,
@@ -26,11 +26,10 @@ import type {
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { initializeDeveloperMode } from './developerModeSetup';
 import {
-	RESOURCE_KEYS,
-	SESSION_REGISTRIES,
-	type ResourceKey,
+	deserializeSessionRegistries,
+	extractResourceKeys,
 	type SessionRegistries,
-} from './sessionContent';
+} from './sessionRegistries';
 import { createGameApi, type GameApi } from '../services/gameApi';
 
 export interface SessionHandle {
@@ -42,6 +41,8 @@ export interface SessionHandle {
 interface SessionRecord {
 	handle: SessionHandle;
 	legacySession: EngineSession;
+	registries: SessionRegistries;
+	resourceKeys: ResourceKey[];
 }
 
 interface CreateSessionOptions {
@@ -156,11 +157,13 @@ export async function createSession(
 	};
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest);
+	const registries = deserializeSessionRegistries(response.registries);
+	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
 	const legacySession = createEngineSession({
-		actions: SESSION_REGISTRIES.actions,
-		buildings: SESSION_REGISTRIES.buildings,
-		developments: SESSION_REGISTRIES.developments,
-		populations: POPULATIONS,
+		actions: registries.actions,
+		buildings: registries.buildings,
+		developments: registries.developments,
+		populations: registries.populations,
 		phases: PHASES,
 		start: GAME_START,
 		rules: RULES,
@@ -172,15 +175,15 @@ export async function createSession(
 	applyPlayerName(legacySession, initialSnapshot, playerName);
 	const sessionId = response.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
 	const handle = createSessionHandle(legacySession);
-	sessions.set(sessionId, { handle, legacySession });
+	sessions.set(sessionId, { handle, legacySession, registries, resourceKeys });
 	return {
 		sessionId,
 		session: handle,
 		legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
-		registries: SESSION_REGISTRIES,
-		resourceKeys: RESOURCE_KEYS,
+		registries,
+		resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
 }
@@ -189,15 +192,19 @@ export async function fetchSnapshot(
 	sessionId: string,
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const { handle, legacySession } = ensureSessionRecord(sessionId);
+	const record = ensureSessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId);
+	const registries = deserializeSessionRegistries(response.registries);
+	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	record.registries = registries;
+	record.resourceKeys = resourceKeys;
 	return {
-		session: handle,
-		legacySession,
+		session: record.handle,
+		legacySession: record.legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
-		registries: SESSION_REGISTRIES,
-		resourceKeys: RESOURCE_KEYS,
+		registries,
+		resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
 }

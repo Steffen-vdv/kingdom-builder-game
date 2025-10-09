@@ -23,7 +23,7 @@ import { createTranslationContext } from '../src/translation/context';
 import { translateRequirementFailure } from '../src/translation';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionContent';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	useActionResolution,
 	type ActionResolution,
@@ -45,11 +45,7 @@ const ctx = createEngine({
 });
 const engineSnapshot = snapshotEngine(ctx);
 const actionCostResource = engineSnapshot.actionCostResource;
-const sessionRegistries: SessionRegistries = {
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-};
+const sessionRegistries = createSessionRegistries();
 const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 const translationContext = createTranslationContext(
 	engineSnapshot,

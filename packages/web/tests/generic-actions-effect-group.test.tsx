@@ -15,7 +15,7 @@ import {
 	wrapTranslationRegistry,
 } from './helpers/translationContextStub';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionContent';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createActionsPanelState } from './helpers/createActionsPanelState';
 const getRequirementIconsMock = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({
@@ -190,7 +190,8 @@ function createMockGame() {
 	};
 
 	const emptyRegistry = new Map<string, never>();
-	const sessionRegistries: SessionRegistries = {
+	const baseRegistries = createSessionRegistries();
+	const sessionRegistries = {
 		actions: {
 			entries: () => Array.from(actionsMap.entries()),
 			get(id: string) {
@@ -222,7 +223,9 @@ function createMockGame() {
 				return false;
 			},
 		},
-	};
+		populations: baseRegistries.populations,
+		resources: baseRegistries.resources,
+	} satisfies ReturnType<typeof createSessionRegistries>;
 
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 
