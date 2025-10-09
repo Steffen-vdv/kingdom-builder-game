@@ -44,6 +44,26 @@ describe('SessionManager', () => {
 		expect(ruleSnapshot.tieredResourceKey).toBe(gainKey);
 	});
 
+	it('enforces maximum session limits', () => {
+		const { manager } = createSyntheticSessionManager({ maxSessions: 1 });
+		manager.createSession('limit-1');
+		expect(() => manager.createSession('limit-2')).toThrow(
+			'Maximum session count reached.',
+		);
+	});
+
+	it('purges sessions that exceed the idle timeout', () => {
+		let now = 0;
+		const { manager } = createSyntheticSessionManager({
+			maxIdleDurationMs: 1,
+			now: () => now,
+		});
+		manager.createSession('expire-me');
+		now = 2;
+		expect(manager.getSession('expire-me')).toBeUndefined();
+		expect(manager.getSessionCount()).toBe(0);
+	});
+
 	it('throws when retrieving snapshots for unknown sessions', () => {
 		const { manager } = createSyntheticSessionManager();
 		expect(() => manager.getSnapshot('missing')).toThrow(
