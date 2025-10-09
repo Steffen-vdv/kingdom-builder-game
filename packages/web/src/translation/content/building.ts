@@ -8,16 +8,22 @@ import type { TranslationContext } from '../context';
 
 class BuildingCore implements ContentTranslator<string> {
 	private phased = new PhasedTranslator();
-	summarize(id: string, ctx: TranslationContext): Summary {
-		const def = ctx.buildings.get(id);
-		return this.phased.summarize(def as unknown as PhasedDef, ctx);
+	summarize(id: string, context: TranslationContext): Summary {
+		const buildingDefinition = context.buildings.get(id);
+		return this.phased.summarize(
+			buildingDefinition as unknown as PhasedDef,
+			context,
+		);
 	}
-	describe(id: string, ctx: TranslationContext): Summary {
-		const def = ctx.buildings.get(id);
-		return this.phased.describe(def as unknown as PhasedDef, ctx);
+	describe(id: string, context: TranslationContext): Summary {
+		const buildingDefinition = context.buildings.get(id);
+		return this.phased.describe(
+			buildingDefinition as unknown as PhasedDef,
+			context,
+		);
 	}
-	log(id: string, ctx: TranslationContext): string[] {
-		const { name, icon } = resolveBuildingDisplay(id, ctx);
+	log(id: string, context: TranslationContext): string[] {
+		const { name, icon } = resolveBuildingDisplay(id, context);
 		const display = [icon, name].filter(Boolean).join(' ').trim();
 		return [display || name];
 	}
