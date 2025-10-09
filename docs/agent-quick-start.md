@@ -18,6 +18,8 @@ guide for rationale, lore, and extended background.
    - `npm run check` runs linting, type checks, and tests together.
    - Expect `npm run check` to take about two minutes; the Vitest progress
      reporter prints live suite counts so the run is not stuck.
+   - Skip `npm run test:e2e` locally; the Playwright suite runs immediately
+     after `npm run test:ci` in pull-request CI to avoid agent slowdowns.
    - Use `npm run build` only when you must validate a production bundle.
 3. **Work content-first**
    - Never hardcode game data in engine, web, or tests—load from
