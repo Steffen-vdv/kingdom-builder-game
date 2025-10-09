@@ -22,6 +22,7 @@ import type {
 	SessionRequirementFailure,
 	SessionPlayerId,
 	SessionPlayerNameMap,
+	Registry,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
@@ -89,6 +90,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
+			registries: this.buildRegistryPayload(),
 		} satisfies SessionCreateResponse;
 		return sessionCreateResponseSchema.parse(response);
 	}
@@ -100,6 +102,7 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot,
+			registries: this.buildRegistryPayload(),
 		} satisfies SessionStateResponse;
 		return sessionStateResponseSchema.parse(response);
 	}
@@ -127,6 +130,7 @@ export class SessionTransport {
 			const response = {
 				sessionId,
 				snapshot: result.snapshot,
+				registries: this.buildRegistryPayload(),
 				advance: result.advance,
 			} satisfies SessionAdvanceResponse;
 			return sessionAdvanceResponseSchema.parse(response);
@@ -215,8 +219,32 @@ export class SessionTransport {
 		const response = {
 			sessionId,
 			snapshot: this.sessionManager.getSnapshot(sessionId),
+			registries: this.buildRegistryPayload(),
 		} satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
+	}
+
+	private buildRegistryPayload(): SessionCreateResponse['registries'] {
+		const registries = this.sessionManager.getBaseRegistries();
+		return {
+			actions: this.serializeRegistry(registries.actions),
+			buildings: this.serializeRegistry(registries.buildings),
+			developments: this.serializeRegistry(registries.developments),
+			populations: this.serializeRegistry(registries.populations),
+			resources: this.cloneResources(registries.resources),
+		};
+	}
+
+	private serializeRegistry<T>(
+		registry: Pick<Registry<T>, 'entries'>,
+	): Record<string, T> {
+		return Object.fromEntries(registry.entries());
+	}
+
+	private cloneResources(
+		resources: Record<string, unknown>,
+	): Record<string, unknown> {
+		return Object.fromEntries(Object.entries(resources));
 	}
 
 	private extractRequirementFailure(

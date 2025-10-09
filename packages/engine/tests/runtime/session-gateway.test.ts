@@ -92,18 +92,29 @@ function createGateway() {
 		start: START,
 		rules: RULES,
 	});
+	const registries = {
+		actions: Object.fromEntries(content.actions.entries()),
+		buildings: Object.fromEntries(content.buildings.entries()),
+		developments: Object.fromEntries(content.developments.entries()),
+		populations: Object.fromEntries(content.populations.entries()),
+		resources: {
+			[RESOURCE_AP]: { id: RESOURCE_AP },
+			[RESOURCE_GOLD]: { id: RESOURCE_GOLD },
+		},
+	};
 	return {
-		gateway: createLocalSessionGateway(session),
+		gateway: createLocalSessionGateway(session, { registries }),
 		actionIds: {
 			gainGold: gainGold.id,
 			failing: failingAction.id,
 		},
+		registries,
 	};
 }
 
 describe('createLocalSessionGateway', () => {
 	it('creates sessions without leaking snapshots', async () => {
-		const { gateway } = createGateway();
+		const { gateway, registries } = createGateway();
 		const created = await gateway.createSession({
 			devMode: true,
 			playerNames: { A: 'Hero' },
@@ -111,6 +122,7 @@ describe('createLocalSessionGateway', () => {
 		expect(created.sessionId).toBe('local-session');
 		expect(created.snapshot.game.devMode).toBe(true);
 		expect(created.snapshot.game.players[0]?.name).toBe('Hero');
+		expect(created.registries).toEqual(registries);
 		created.snapshot.game.players[0]!.name = 'Mutated';
 		created.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 99;
 		const fetched = await gateway.fetchSnapshot({
@@ -118,6 +130,7 @@ describe('createLocalSessionGateway', () => {
 		});
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
 		expect(fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(0);
+		expect(fetched.registries).toEqual(registries);
 	});
 
 	it('performs actions and clones response payloads', async () => {

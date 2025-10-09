@@ -133,6 +133,8 @@ export type {
 	SessionAdvanceResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
+	SessionRegistriesPayload,
+	SerializedRegistryPayload,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {

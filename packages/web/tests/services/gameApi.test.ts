@@ -97,12 +97,21 @@ const createSnapshot = (
 	};
 };
 
+const createRegistriesPayload = () => ({
+	actions: {},
+	buildings: {},
+	developments: {},
+	populations: {},
+	resources: {},
+});
+
 const createStateResponse = (
 	sessionId: string,
 	snapshotOverrides: Partial<SessionSnapshot> = {},
 ): SessionStateResponse => ({
 	sessionId,
 	snapshot: createSnapshot(snapshotOverrides),
+	registries: createRegistriesPayload(),
 });
 
 describe('createGameApi', () => {
@@ -203,6 +212,7 @@ describe('GameApiFake', () => {
 	): SessionAdvanceResponse => ({
 		sessionId,
 		snapshot: createSnapshot(),
+		registries: createRegistriesPayload(),
 		advance: {
 			phase: 'phase-0',
 			step: 'step-0',

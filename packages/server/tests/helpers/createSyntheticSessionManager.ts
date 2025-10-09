@@ -33,6 +33,7 @@ export interface SyntheticSessionManagerResult {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
+	resources: Record<string, unknown>;
 }
 
 export function createSyntheticSessionManager(
@@ -108,14 +109,21 @@ export function createSyntheticSessionManager(
 		winConditions: [],
 	};
 	const { engineOptions: engineOverrides = {}, ...rest } = options;
+	const { resources: overrideResources, ...registryOverrides } =
+		engineOverrides;
+	const resources = overrideResources ?? {
+		[costKey]: { id: costKey, label: 'Synthetic Cost' },
+		[gainKey]: { id: gainKey, label: 'Synthetic Gain' },
+	};
 	const engineOptions: NonNullable<SessionManagerOptions['engineOptions']> = {
-		actions: engineOverrides.actions ?? factory.actions,
-		buildings: engineOverrides.buildings ?? factory.buildings,
-		developments: engineOverrides.developments ?? factory.developments,
-		populations: engineOverrides.populations ?? factory.populations,
-		phases: engineOverrides.phases ?? phases,
-		start: engineOverrides.start ?? start,
-		rules: engineOverrides.rules ?? rules,
+		actions: registryOverrides.actions ?? factory.actions,
+		buildings: registryOverrides.buildings ?? factory.buildings,
+		developments: registryOverrides.developments ?? factory.developments,
+		populations: registryOverrides.populations ?? factory.populations,
+		phases: registryOverrides.phases ?? phases,
+		start: registryOverrides.start ?? start,
+		rules: registryOverrides.rules ?? rules,
+		resources,
 	};
 	const manager = new SessionManager({
 		...rest,
@@ -130,5 +138,6 @@ export function createSyntheticSessionManager(
 		phases,
 		start,
 		rules,
+		resources,
 	};
 }

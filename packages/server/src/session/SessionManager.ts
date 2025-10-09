@@ -10,13 +10,27 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	RESOURCES,
 } from '@kingdom-builder/contents';
+import type { Registry } from '@kingdom-builder/protocol';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
 	EngineSessionOptions,
 	'devMode' | 'config'
 >;
+
+type EngineSessionOverrideOptions = Partial<EngineSessionBaseOptions> & {
+	resources?: Record<string, unknown>;
+};
+
+export interface SessionRegistriesSource {
+	actions: Registry<unknown>;
+	buildings: Registry<unknown>;
+	developments: Registry<unknown>;
+	populations: Registry<unknown>;
+	resources: Record<string, unknown>;
+}
 
 type SessionRecord = {
 	session: EngineSession;
@@ -28,7 +42,7 @@ export interface SessionManagerOptions {
 	maxIdleDurationMs?: number;
 	maxSessions?: number;
 	now?: () => number;
-	engineOptions?: Partial<EngineSessionBaseOptions>;
+	engineOptions?: EngineSessionOverrideOptions;
 }
 
 export interface CreateSessionOptions {
@@ -49,6 +63,8 @@ export class SessionManager {
 
 	private readonly baseOptions: EngineSessionBaseOptions;
 
+	private readonly baseResources: Record<string, unknown>;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -59,14 +75,16 @@ export class SessionManager {
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
+		const { resources = RESOURCES, ...baseOverrides } = engineOptions;
+		this.baseResources = { ...resources };
 		this.baseOptions = {
-			actions: engineOptions.actions ?? ACTIONS,
-			buildings: engineOptions.buildings ?? BUILDINGS,
-			developments: engineOptions.developments ?? DEVELOPMENTS,
-			populations: engineOptions.populations ?? POPULATIONS,
-			phases: engineOptions.phases ?? PHASES,
-			start: engineOptions.start ?? GAME_START,
-			rules: engineOptions.rules ?? RULES,
+			actions: baseOverrides.actions ?? ACTIONS,
+			buildings: baseOverrides.buildings ?? BUILDINGS,
+			developments: baseOverrides.developments ?? DEVELOPMENTS,
+			populations: baseOverrides.populations ?? POPULATIONS,
+			phases: baseOverrides.phases ?? PHASES,
+			start: baseOverrides.start ?? GAME_START,
+			rules: baseOverrides.rules ?? RULES,
 		};
 	}
 
@@ -135,6 +153,16 @@ export class SessionManager {
 	public getSessionCount(): number {
 		this.purgeExpiredSessions();
 		return this.sessions.size;
+	}
+
+	public getBaseRegistries(): SessionRegistriesSource {
+		return {
+			actions: this.baseOptions.actions,
+			buildings: this.baseOptions.buildings,
+			developments: this.baseOptions.developments,
+			populations: this.baseOptions.populations,
+			resources: { ...this.baseResources },
+		};
 	}
 
 	private requireSession(sessionId: string): EngineSession {

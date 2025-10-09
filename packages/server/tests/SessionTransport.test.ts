@@ -5,6 +5,12 @@ import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 
+function registryToObject<T>(registry: {
+	entries(): [string, T][];
+}): Record<string, T> {
+	return Object.fromEntries(registry.entries());
+}
+
 describe('SessionTransport', () => {
 	const middleware = createTokenAuthMiddleware({
 		tokens: {
@@ -39,6 +45,42 @@ describe('SessionTransport', () => {
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
+	});
+
+	it('attaches base registries to session responses', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const create = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const base = manager.getBaseRegistries();
+		const expected = {
+			actions: registryToObject(base.actions),
+			buildings: registryToObject(base.buildings),
+			developments: registryToObject(base.developments),
+			populations: registryToObject(base.populations),
+			resources: Object.fromEntries(Object.entries(base.resources)),
+		};
+		expect(create.registries).toEqual(expected);
+		const state = transport.getSessionState({
+			body: { sessionId: create.sessionId },
+			headers: authorizedHeaders,
+		});
+		expect(state.registries).toEqual(expected);
+		const advance = await transport.advanceSession({
+			body: { sessionId: create.sessionId },
+			headers: authorizedHeaders,
+		});
+		expect(advance.registries).toEqual(expected);
+		const devMode = transport.setDevMode({
+			body: { sessionId: create.sessionId, enabled: true },
+			headers: authorizedHeaders,
+		});
+		expect(devMode.registries).toEqual(expected);
 	});
 
 	it('skips blank player name entries when applying preferences', () => {

@@ -62,6 +62,13 @@ describe('sessionSdk', () => {
 		api.setNextCreateResponse({
 			sessionId: 'session-1',
 			snapshot: initialSnapshot,
+			registries: {
+				actions: {},
+				buildings: {},
+				developments: {},
+				populations: {},
+				resources: {},
+			},
 		});
 	});
 	afterEach(() => {

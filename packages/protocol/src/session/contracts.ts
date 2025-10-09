@@ -5,6 +5,16 @@ import type {
 	SessionSnapshot,
 } from './index';
 
+export type SerializedRegistryPayload<T = unknown> = Record<string, T>;
+
+export interface SessionRegistriesPayload {
+	actions: SerializedRegistryPayload;
+	buildings: SerializedRegistryPayload;
+	developments: SerializedRegistryPayload;
+	populations: SerializedRegistryPayload;
+	resources: SerializedRegistryPayload;
+}
+
 export interface SessionIdentifier {
 	sessionId: string;
 }
@@ -20,6 +30,7 @@ export interface SessionCreateRequest {
 export interface SessionCreateResponse {
 	sessionId: string;
 	snapshot: SessionSnapshot;
+	registries: SessionRegistriesPayload;
 }
 
 export type SessionStateResponse = SessionCreateResponse;

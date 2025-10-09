@@ -20,6 +20,7 @@ import type { ActionParameters } from '../actions/action_parameters';
 
 interface LocalSessionGatewayOptions {
 	readonly sessionId?: string;
+	readonly registries?: SessionCreateResponse['registries'];
 }
 
 interface RequirementError extends Error {
@@ -71,6 +72,18 @@ function toErrorMessage(error: unknown): string {
 	return 'Unknown error';
 }
 
+function cloneRegistries(
+	registries: SessionCreateResponse['registries'],
+): SessionCreateResponse['registries'] {
+	return {
+		actions: { ...registries.actions },
+		buildings: { ...registries.buildings },
+		developments: { ...registries.developments },
+		populations: { ...registries.populations },
+		resources: { ...registries.resources },
+	};
+}
+
 function toActionErrorResponse(error: unknown): ActionExecuteErrorResponse {
 	const requirementError = error as RequirementError;
 	const response: ActionExecuteErrorResponse = {
@@ -104,6 +117,13 @@ export function createLocalSessionGateway(
 	options: LocalSessionGatewayOptions = {},
 ): SessionGateway {
 	const sessionId = options.sessionId ?? 'local-session';
+	const baseRegistries = options.registries ?? {
+		actions: {},
+		buildings: {},
+		developments: {},
+		populations: {},
+		resources: {},
+	};
 	return {
 		createSession(
 			request?: SessionCreateRequest,
@@ -114,6 +134,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(baseRegistries),
 			});
 		},
 		fetchSnapshot(
@@ -123,6 +144,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(baseRegistries),
 			});
 		},
 		performAction(
@@ -155,6 +177,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(baseRegistries),
 				advance,
 			});
 		},
@@ -166,6 +189,7 @@ export function createLocalSessionGateway(
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),
+				registries: cloneRegistries(baseRegistries),
 			});
 		},
 	};

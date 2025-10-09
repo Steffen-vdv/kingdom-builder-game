@@ -7,6 +7,7 @@ import type {
 	SessionCreateResponse,
 	SessionIdentifier,
 	SessionPlayerNameMap,
+	SessionRegistriesPayload,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
@@ -25,9 +26,22 @@ export const sessionCreateRequestSchema = z.object({
 	playerNames: sessionPlayerNameMapSchema.optional(),
 });
 
+const serializedRegistrySchema = z.record(z.string(), z.unknown());
+
+export const sessionRegistriesSchema = z
+	.object({
+		actions: serializedRegistrySchema,
+		buildings: serializedRegistrySchema,
+		developments: serializedRegistrySchema,
+		populations: serializedRegistrySchema,
+		resources: serializedRegistrySchema,
+	})
+	.transform((value) => value as SessionRegistriesPayload);
+
 export const sessionCreateResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(),
+	registries: sessionRegistriesSchema,
 });
 
 export const sessionStateResponseSchema = sessionCreateResponseSchema;
@@ -39,6 +53,7 @@ export const sessionAdvanceRequestSchema = z.object({
 export const sessionAdvanceResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	snapshot: z.custom<SessionSnapshot>(),
+	registries: sessionRegistriesSchema,
 	advance: z.custom<SessionAdvanceResult>(),
 });
 

@@ -9,6 +9,16 @@ import { TransportError } from '../src/transport/TransportTypes.js';
 describe('HttpSessionGateway', () => {
 	const baseUrl = 'https://gateway.test/api';
 
+	function createRegistriesPayload() {
+		return {
+			actions: {},
+			buildings: {},
+			developments: {},
+			populations: {},
+			resources: {},
+		};
+	}
+
 	function createGateway(
 		options: Partial<HttpSessionGatewayOptions> = {},
 	): SessionGateway {
@@ -40,6 +50,7 @@ describe('HttpSessionGateway', () => {
 					{
 						sessionId: 'rest-session',
 						snapshot: { game: { devMode: true } },
+						registries: createRegistriesPayload(),
 					},
 					{ status: 201 },
 				);
@@ -88,6 +99,7 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { players: [] } },
+					registries: createRegistriesPayload(),
 				}),
 			);
 		});
@@ -107,6 +119,7 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { currentPhase: 'growth' } },
+					registries: createRegistriesPayload(),
 					advance: { effects: [] },
 				}),
 			);
@@ -179,6 +192,7 @@ describe('HttpSessionGateway', () => {
 				return jsonResponse({
 					sessionId: 'test',
 					snapshot: { game: { devMode: true } },
+					registries: createRegistriesPayload(),
 				});
 			},
 		);
@@ -196,7 +210,11 @@ describe('HttpSessionGateway', () => {
 				input instanceof Request ? input : new Request(input, init);
 			expect(request.headers.get('x-test-header')).toBe('dynamic');
 			return Promise.resolve(
-				jsonResponse({ sessionId: 'dynamic', snapshot: { game: {} } }),
+				jsonResponse({
+					sessionId: 'dynamic',
+					snapshot: { game: {} },
+					registries: createRegistriesPayload(),
+				}),
 			);
 		});
 		const gateway = new HttpSessionGateway({
@@ -217,6 +235,7 @@ describe('HttpSessionGateway', () => {
 				jsonResponse({
 					sessionId: 'basic',
 					snapshot: { game: { players: [] } },
+					registries: createRegistriesPayload(),
 				}),
 			);
 		});
