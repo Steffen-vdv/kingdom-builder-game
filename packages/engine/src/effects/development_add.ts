@@ -1,7 +1,11 @@
 import type { EffectHandler } from '.';
 import { applyParamsToEffects } from '../utils';
 
-export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
+export const developmentAdd: EffectHandler = (
+	effect,
+	engineContext,
+	mult = 1,
+) => {
 	const id =
 		(effect.params?.['id'] as string | undefined) ||
 		(effect.params?.['developmentId'] as string | undefined);
@@ -11,10 +15,10 @@ export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
 	}
 	const land =
 		(providedLandId
-			? ctx.activePlayer.lands.find(
+			? engineContext.activePlayer.lands.find(
 					(landItem) => landItem.id === providedLandId,
 				)
-			: [...ctx.activePlayer.lands]
+			: [...engineContext.activePlayer.lands]
 					.reverse()
 					.find((candidate) => candidate.slotsUsed < candidate.slotsMax)) ||
 		null;
@@ -32,15 +36,15 @@ export const developmentAdd: EffectHandler = (effect, ctx, mult = 1) => {
 		}
 		land.developments.push(id);
 		land.slotsUsed += 1;
-		const developmentDefinition = ctx.developments.get(id);
+		const developmentDefinition = engineContext.developments.get(id);
 		if (developmentDefinition?.onBuild) {
 			const onBuildEffects = applyParamsToEffects(
 				developmentDefinition.onBuild,
 				{ landId, id },
 			);
-			ctx.passives.addPassive(
+			engineContext.passives.addPassive(
 				{ id: `${id}_${landId}`, effects: onBuildEffects },
-				ctx,
+				engineContext,
 				{
 					frames: () => ({
 						kind: 'development',
