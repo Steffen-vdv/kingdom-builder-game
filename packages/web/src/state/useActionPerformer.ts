@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import { ActionId, type ResourceKey } from '@kingdom-builder/contents';
+import { ActionId } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
@@ -30,7 +30,11 @@ import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
-import type { LegacySession, SessionRegistries } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
@@ -75,8 +79,11 @@ function ensureTimelineLines(
 interface UseActionPerformerOptions {
 	session: LegacySession;
 	sessionId: string;
-	actionCostResource: ResourceKey;
-	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
+	actionCostResource: SessionResourceKey;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'resources'
+	>;
 	addLog: (
 		entry: string | string[],
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
@@ -88,7 +95,7 @@ interface UseActionPerformerOptions {
 	mountedRef: React.MutableRefObject<boolean>;
 	endTurn: () => Promise<void>;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 }
 export function useActionPerformer({
 	session,
@@ -168,6 +175,7 @@ export function useActionPerformer({
 				const costLines = buildActionCostLines({
 					costs,
 					beforeResources: before.resources,
+					resources: registries.resources,
 				});
 				if (costLines.length) {
 					const header: ActionLogLineDescriptor = {

@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	SessionAdvanceResponse,
 	SessionAdvanceResult,
@@ -9,13 +8,17 @@ import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import { advanceSessionPhase } from './sessionSdk';
-import type { LegacySession, SessionRegistries } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 
 interface AdvanceToActionPhaseOptions {
 	session: LegacySession;
 	sessionId: string;
-	actionCostResource: ResourceKey;
-	resourceKeys: ResourceKey[];
+	actionCostResource: SessionResourceKey;
+	resourceKeys: SessionResourceKey[];
 	runDelay: (total: number) => Promise<void>;
 	runStepDelay: () => Promise<void>;
 	mountedRef: React.MutableRefObject<boolean>;

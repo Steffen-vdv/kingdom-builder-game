@@ -1,4 +1,3 @@
-import type { ResourceKey } from '@kingdom-builder/contents';
 import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
@@ -15,7 +14,7 @@ import type {
 	ActionResolution,
 	ShowResolutionOptions,
 } from './useActionResolution';
-import type { LegacySession } from './sessionTypes';
+import type { LegacySession, SessionResourceKey } from './sessionTypes';
 
 export interface PerformActionRequest {
 	action: Action;
@@ -63,7 +62,7 @@ export interface GameEngineContextValue {
 	setDisplayPhase: (id: string) => void;
 	phaseHistories: Record<string, PhaseStep[]>;
 	tabsEnabled: boolean;
-	actionCostResource: ResourceKey;
+	actionCostResource: SessionResourceKey;
 	requests: {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;

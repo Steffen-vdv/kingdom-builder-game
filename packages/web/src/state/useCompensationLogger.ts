@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import {
 	diffStepSnapshots,
 	snapshotPlayer,
@@ -8,7 +7,11 @@ import {
 	type TranslationDiffContext,
 } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
-import type { LegacySession, SessionRegistries } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 
 interface UseCompensationLoggerOptions {
 	session: LegacySession;
@@ -17,7 +20,7 @@ interface UseCompensationLoggerOptions {
 		entry: string | string[],
 		player?: SessionSnapshot['game']['players'][number],
 	) => void;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
 }
 
