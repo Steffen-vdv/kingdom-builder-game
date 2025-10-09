@@ -248,8 +248,17 @@ export async function advanceSessionPhase(
 	request: SessionAdvanceRequest,
 ): Promise<SessionAdvanceResponse> {
 	const api = ensureGameApi();
-	const { handle } = ensureSessionRecord(request.sessionId);
+	const record = ensureSessionRecord(request.sessionId);
+	const {
+		handle,
+		registries: cachedRegistries,
+		resourceKeys: cachedResourceKeys,
+	} = record;
 	const response = await api.advancePhase(request);
+	const registries = deserializeSessionRegistries(response.registries);
+	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	Object.assign(cachedRegistries, registries);
+	cachedResourceKeys.splice(0, cachedResourceKeys.length, ...resourceKeys);
 	try {
 		handle.advancePhase();
 	} catch (localError) {

@@ -195,6 +195,49 @@ describe('sessionSdk', () => {
 		expect(response.snapshot).toEqual(updatedSnapshot);
 		expect(advanceSpy).toHaveBeenCalled();
 	});
+	it('updates cached registries and resource keys when the phase advances', async () => {
+		const created = await createSession();
+		const { session, registries, resourceKeys } = created;
+		const advanceSpy = vi.spyOn(session, 'advancePhase').mockReturnValue({
+			phase: 'phase-main',
+			step: 'phase-main:start',
+			effects: [],
+			player: playerA,
+		});
+		const updatedSnapshot = createSessionSnapshot({
+			players: [playerA, playerB],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			turn: 2,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+		});
+		const mutatedRegistries = createSessionRegistriesPayload();
+		mutatedRegistries.actions[ActionId.tax] = {
+			...mutatedRegistries.actions[ActionId.tax],
+			name: 'Tax (Advanced)',
+		};
+		delete mutatedRegistries.resources[resourceKey];
+		api.setNextAdvanceResponse({
+			sessionId: 'session-1',
+			snapshot: updatedSnapshot,
+			advance: {
+				phase: 'phase-main',
+				step: 'phase-main:start',
+				effects: [],
+				player: playerA,
+			},
+			registries: mutatedRegistries,
+		});
+		await advanceSessionPhase({ sessionId: 'session-1' });
+		expect(advanceSpy).toHaveBeenCalled();
+		expect(registries.actions.get(ActionId.tax)?.name).toBe('Tax (Advanced)');
+		expect(registries.resources[resourceKey]).toBeUndefined();
+		expect(resourceKeys).not.toContain(resourceKey);
+	});
 	it('releases session state from the local cache', async () => {
 		await createSession();
 		releaseSession('session-1');
