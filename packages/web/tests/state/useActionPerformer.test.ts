@@ -27,10 +27,15 @@ vi.mock('../../src/translation', () => ({
 	translateRequirementFailure: translateRequirementFailureMock,
 }));
 
+const performSessionActionMock = vi.hoisted(() => vi.fn());
 const getLegacySessionContextMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/getLegacySessionContext', () => ({
 	getLegacySessionContext: getLegacySessionContextMock,
+}));
+
+vi.mock('../../src/state/sessionSdk', () => ({
+	performSessionAction: performSessionActionMock,
 }));
 
 describe('useActionPerformer', () => {
@@ -38,7 +43,6 @@ describe('useActionPerformer', () => {
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
-	let performActionMock: ReturnType<typeof vi.fn>;
 	let enqueueMock: ReturnType<
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
@@ -46,9 +50,11 @@ describe('useActionPerformer', () => {
 	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let resourceKeys: ResourceKey[];
 	let actionCostResource: ResourceKey;
+	const sessionId = 'test-session';
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		performSessionActionMock.mockReset();
 		const [firstResourceKey] = RESOURCE_KEYS;
 		if (!firstResourceKey) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -89,7 +95,6 @@ describe('useActionPerformer', () => {
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
 		resourceKeys = [actionCostResource];
-		performActionMock = vi.fn();
 		getActionCostsMock = vi.fn(() => ({}));
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
@@ -97,7 +102,6 @@ describe('useActionPerformer', () => {
 		session = {
 			getSnapshot: vi.fn(() => sessionSnapshot),
 			getActionCosts: getActionCostsMock,
-			performAction: performActionMock,
 			enqueue: enqueueMock,
 			advancePhase: vi.fn(),
 		} as unknown as EngineSession;
@@ -114,9 +118,7 @@ describe('useActionPerformer', () => {
 
 	it('shows error toast when action fails due to network issue', async () => {
 		const error = new Error('Network offline');
-		performActionMock.mockImplementation(() => {
-			throw error;
-		});
+		performSessionActionMock.mockRejectedValueOnce(error);
 		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const updateMainPhaseStep = vi.fn();
 		const refresh = vi.fn();
@@ -124,6 +126,7 @@ describe('useActionPerformer', () => {
 		const { result } = renderHook(() =>
 			useActionPerformer({
 				session,
+				sessionId,
 				actionCostResource,
 				addLog,
 				showResolution,
@@ -162,12 +165,11 @@ describe('useActionPerformer', () => {
 		failureCarrier.requirementFailure = failure;
 		const authMessage = 'Authentication required';
 		translateRequirementFailureMock.mockReturnValue(authMessage);
-		performActionMock.mockImplementation(() => {
-			throw error;
-		});
+		performSessionActionMock.mockRejectedValueOnce(failureCarrier);
 		const { result } = renderHook(() =>
 			useActionPerformer({
 				session,
+				sessionId,
 				actionCostResource,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
