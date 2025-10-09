@@ -31,6 +31,26 @@ const STAT_FORECAST_BADGE_CLASS =
 	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
 const STAT_FORECAST_BADGE_THEME_CLASS = 'bg-slate-800/70 dark:bg-slate-100/10';
 
+type PopulationRoleInfo =
+	(typeof POPULATION_ROLES)[keyof typeof POPULATION_ROLES];
+
+const ROLE_BUTTON_CLASSES = [
+	'cursor-help',
+	'rounded-full',
+	'border',
+	'border-white/40',
+	'bg-white/40',
+	'px-2',
+	'py-1',
+	'text-xs',
+	'font-semibold',
+	'text-slate-700',
+	'hoverable',
+	'dark:border-white/10',
+	'dark:bg-slate-900/60',
+	'dark:text-slate-100',
+].join(' ');
+
 const StatButton: React.FC<StatButtonProps> = ({
 	statKey,
 	value,
@@ -141,13 +161,59 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		handleHoverCard({
 			title: `${POPULATION_INFO.icon} ${POPULATION_INFO.label}`,
 			effects: Object.values(POPULATION_ROLES).map(
-				(r) => `${r.icon} ${r.label} - ${r.description}`,
+				(roleInfo) =>
+					`${roleInfo.icon} ${roleInfo.label} - ${roleInfo.description}`,
 			),
 			effectsTitle: POPULATION_ARCHETYPE_INFO.label,
 			requirements: [],
 			description: POPULATION_INFO.description,
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
+
+	const createRoleHoverHandlers = (roleInfo: PopulationRoleInfo) => {
+		const showRoleCard = () =>
+			handleHoverCard({
+				title: `${roleInfo.icon} ${roleInfo.label}`,
+				effects: [],
+				requirements: [],
+				description: roleInfo.description,
+				bgClass: PLAYER_INFO_CARD_BG,
+			});
+		const handleRoleFocus = (event: React.SyntheticEvent) => {
+			event.stopPropagation();
+			showRoleCard();
+		};
+		const handleRoleLeave = (event: React.SyntheticEvent) => {
+			event.stopPropagation();
+			showPopulationCard();
+		};
+
+		return { handleRoleFocus, handleRoleLeave };
+	};
+
+	const populationRoleButtons = popDetails.map(({ role, count }, index) => {
+		const info = POPULATION_ROLES[role as keyof typeof POPULATION_ROLES];
+		const { handleRoleFocus: onRoleFocus, handleRoleLeave: onRoleLeave } =
+			createRoleHoverHandlers(info);
+
+		return (
+			<React.Fragment key={role}>
+				{index > 0 && ','}
+				<button
+					type="button"
+					className={ROLE_BUTTON_CLASSES}
+					onMouseEnter={onRoleFocus}
+					onMouseLeave={onRoleLeave}
+					onFocus={onRoleFocus}
+					onBlur={onRoleLeave}
+					onClick={onRoleFocus}
+				>
+					{info.icon}
+					{count}
+				</button>
+			</React.Fragment>
+		);
+	});
 
 	const showStatCard = (statKey: string) => {
 		const info = STATS[statKey as keyof typeof STATS];
@@ -191,9 +257,9 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				onMouseLeave={clearHoverCard}
 				onFocus={showPopulationCard}
 				onBlur={clearHoverCard}
-				onKeyDown={(e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
+				onKeyDown={(event) => {
+					if (event.key === 'Enter' || event.key === ' ') {
+						event.preventDefault();
 						showPopulationCard();
 					}
 				}}
@@ -203,60 +269,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				{popDetails.length > 0 && (
 					<>
 						{' ('}
-						{popDetails.map(({ role, count }, i) => {
-							const info =
-								POPULATION_ROLES[role as keyof typeof POPULATION_ROLES];
-							return (
-								<React.Fragment key={role}>
-									{i > 0 && ','}
-									<button
-										type="button"
-										className="cursor-help rounded-full border border-white/40 bg-white/40 px-2 py-1 text-xs font-semibold text-slate-700 hoverable dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100"
-										onMouseEnter={(e) => {
-											e.stopPropagation();
-											handleHoverCard({
-												title: `${info.icon} ${info.label}`,
-												effects: [],
-												requirements: [],
-												description: info.description,
-												bgClass: PLAYER_INFO_CARD_BG,
-											});
-										}}
-										onMouseLeave={(e) => {
-											e.stopPropagation();
-											showPopulationCard();
-										}}
-										onFocus={(e) => {
-											e.stopPropagation();
-											handleHoverCard({
-												title: `${info.icon} ${info.label}`,
-												effects: [],
-												requirements: [],
-												description: info.description,
-												bgClass: PLAYER_INFO_CARD_BG,
-											});
-										}}
-										onBlur={(e) => {
-											e.stopPropagation();
-											showPopulationCard();
-										}}
-										onClick={(e) => {
-											e.stopPropagation();
-											handleHoverCard({
-												title: `${info.icon} ${info.label}`,
-												effects: [],
-												requirements: [],
-												description: info.description,
-												bgClass: PLAYER_INFO_CARD_BG,
-											});
-										}}
-									>
-										{info.icon}
-										{count}
-									</button>
-								</React.Fragment>
-							);
-						})}
+						{populationRoleButtons}
 						{')'}
 					</>
 				)}
