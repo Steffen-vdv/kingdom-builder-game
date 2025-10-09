@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import {
+	actionExecuteRequestSchema,
+	actionExecuteResponseSchema,
+	actionExecuteErrorResponseSchema,
 	sessionCreateRequestSchema,
 	sessionCreateResponseSchema,
 	sessionAdvanceRequestSchema,
@@ -9,12 +12,16 @@ import {
 	sessionIdSchema,
 } from '@kingdom-builder/protocol';
 import type {
+	ActionExecuteErrorResponse,
+	ActionExecuteSuccessResponse,
 	SessionAdvanceResponse,
 	SessionCreateResponse,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
+	SessionRequirementFailure,
 } from '@kingdom-builder/protocol';
 import type { EngineSession, PlayerId } from '@kingdom-builder/engine';
+import { normalizeActionTraces } from './engineTraceNormalizer.js';
 import type {
 	SessionManager,
 	CreateSessionOptions,
@@ -27,6 +34,10 @@ import type {
 } from '../auth/tokenAuthMiddleware.js';
 
 type TransportIdFactory = () => string;
+
+type HttpStatusCarrier = { httpStatus?: number };
+
+export type TransportHttpResponse<T> = T & HttpStatusCarrier;
 
 export type TransportErrorCode =
 	| 'INVALID_REQUEST'
@@ -116,7 +127,9 @@ export class SessionTransport {
 		return sessionCreateResponseSchema.parse(response);
 	}
 
-	public advanceSession(request: TransportRequest): SessionAdvanceResponse {
+	public async advanceSession(
+		request: TransportRequest,
+	): Promise<SessionAdvanceResponse> {
 		const parsed = sessionAdvanceRequestSchema.safeParse(request.body);
 		if (!parsed.success) {
 			throw new TransportError(
@@ -128,13 +141,78 @@ export class SessionTransport {
 		const { sessionId } = parsed.data;
 		this.requireAuthorization(request, 'session:advance');
 		const session = this.requireSession(sessionId);
-		const advance = session.advancePhase();
-		const response = {
-			sessionId,
-			snapshot: this.sessionManager.getSnapshot(sessionId),
-			advance,
-		} satisfies SessionAdvanceResponse;
-		return sessionAdvanceResponseSchema.parse(response);
+		try {
+			const result = await session.enqueue(() => {
+				const advance = session.advancePhase();
+				const snapshot = session.getSnapshot();
+				return { advance, snapshot };
+			});
+			const response = {
+				sessionId,
+				snapshot: result.snapshot,
+				advance: result.advance,
+			} satisfies SessionAdvanceResponse;
+			return sessionAdvanceResponseSchema.parse(response);
+		} catch (error) {
+			throw new TransportError('CONFLICT', 'Failed to advance session.', {
+				cause: error,
+			});
+		}
+	}
+
+	public async executeAction(
+		request: TransportRequest,
+	): Promise<
+		| TransportHttpResponse<ActionExecuteSuccessResponse>
+		| TransportHttpResponse<ActionExecuteErrorResponse>
+	> {
+		const parsed = actionExecuteRequestSchema.safeParse(request.body);
+		if (!parsed.success) {
+			const response = actionExecuteErrorResponseSchema.parse({
+				status: 'error',
+				error: 'Invalid action request.',
+			}) as ActionExecuteErrorResponse;
+			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
+		}
+		this.requireAuthorization(request, 'session:advance');
+		const { sessionId, actionId, params } = parsed.data;
+		const session = this.sessionManager.getSession(sessionId);
+		if (!session) {
+			const response = actionExecuteErrorResponseSchema.parse({
+				status: 'error',
+				error: `Session "${sessionId}" was not found.`,
+			}) as ActionExecuteErrorResponse;
+			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
+		}
+		try {
+			const result = await session.enqueue(() => {
+				const traces = session.performAction(actionId, params as never);
+				const snapshot = session.getSnapshot();
+				return { traces, snapshot };
+			});
+			const response = actionExecuteResponseSchema.parse({
+				status: 'success',
+				snapshot: result.snapshot,
+				traces: normalizeActionTraces(result.traces),
+			}) as ActionExecuteSuccessResponse;
+			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
+		} catch (error) {
+			const failure = this.extractRequirementFailure(error);
+			const message =
+				error instanceof Error ? error.message : 'Action execution failed.';
+			const base: ActionExecuteErrorResponse = {
+				status: 'error',
+				error: message,
+			};
+			if (failure) {
+				base.requirementFailure = failure;
+				base.requirementFailures = [failure];
+			}
+			const response = actionExecuteErrorResponseSchema.parse(
+				base,
+			) as ActionExecuteErrorResponse;
+			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
+		}
 	}
 
 	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
@@ -154,6 +232,32 @@ export class SessionTransport {
 			snapshot: this.sessionManager.getSnapshot(sessionId),
 		} satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
+	}
+
+	private extractRequirementFailure(
+		error: unknown,
+	): SessionRequirementFailure | undefined {
+		if (!error || typeof error !== 'object') {
+			return undefined;
+		}
+		const failure = (
+			error as { requirementFailure?: SessionRequirementFailure }
+		).requirementFailure;
+		if (!failure) {
+			return undefined;
+		}
+		return structuredClone(failure);
+	}
+
+	private attachHttpStatus<T extends object>(
+		payload: T,
+		status: number,
+	): TransportHttpResponse<T> {
+		Object.defineProperty(payload, 'httpStatus', {
+			value: status,
+			enumerable: false,
+		});
+		return payload as TransportHttpResponse<T>;
 	}
 
 	private parseSessionIdentifier(body: unknown): string {
