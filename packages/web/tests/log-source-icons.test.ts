@@ -116,8 +116,8 @@ describe('log resource source icon registry', () => {
 				RESOURCE_KEYS,
 			);
 			const goldInfo = RESOURCES[Resource.gold];
-			const goldLine = lines.find((l) =>
-				l.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+			const goldLine = lines.find((line) =>
+				line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 			);
 			expect(goldLine).toBeTruthy();
 			const match = goldLine?.match(/ from (.+)\)$/);
