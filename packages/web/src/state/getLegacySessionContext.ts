@@ -1,15 +1,15 @@
 import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
 import type {
-	EngineSession,
-	EngineSessionSnapshot,
-} from '@kingdom-builder/engine';
+	SessionRuleSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol';
 import {
 	createTranslationContext,
 	type TranslationContext,
 } from '../translation/context';
 import { type TranslationDiffContext } from '../translation';
 
-type PlayerSnapshot = EngineSessionSnapshot['game']['players'][number];
+type PlayerSnapshot = SessionSnapshot['game']['players'][number];
 
 interface DiffPlayer {
 	id: PlayerSnapshot['id'];
@@ -158,8 +158,14 @@ function evaluateDefinition(
 	}
 }
 
+interface LegacySessionContextInput {
+	snapshot: SessionSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
+	passiveRecords: SessionSnapshot['passiveRecords'];
+}
+
 function createDiffContext(
-	snapshot: EngineSessionSnapshot,
+	snapshot: SessionSnapshot,
 	translationContext: TranslationContext,
 ): TranslationDiffContext {
 	const players = new Map<PlayerSnapshot['id'], DiffPlayer>();
@@ -198,10 +204,11 @@ export interface LegacySessionContextData {
 	diffContext: TranslationDiffContext;
 }
 
-export function getLegacySessionContext(
-	session: EngineSession,
-	snapshot: EngineSessionSnapshot,
-): LegacySessionContextData {
+export function getLegacySessionContext({
+	snapshot,
+	ruleSnapshot,
+	passiveRecords,
+}: LegacySessionContextInput): LegacySessionContextData {
 	const translationContext = createTranslationContext(
 		snapshot,
 		{
@@ -211,8 +218,8 @@ export function getLegacySessionContext(
 		},
 		snapshot.metadata ?? { passiveEvaluationModifiers: {} },
 		{
-			ruleSnapshot: session.getRuleSnapshot(),
-			passiveRecords: snapshot.passiveRecords,
+			ruleSnapshot,
+			passiveRecords,
 		},
 	);
 	const diffContext = createDiffContext(snapshot, translationContext);

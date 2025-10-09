@@ -134,7 +134,11 @@ export async function advanceToActionPhase({
 				: stepDef?.effects?.length
 					? { effects: stepDef.effects }
 					: undefined;
-			const { diffContext } = getLegacySessionContext(session, snapshotAfter);
+			const { diffContext } = getLegacySessionContext({
+				snapshot: snapshotAfter,
+				ruleSnapshot: snapshotAfter.rules,
+				passiveRecords: snapshotAfter.passiveRecords,
+			});
 			const changes = diffStepSnapshots(
 				before,
 				after,

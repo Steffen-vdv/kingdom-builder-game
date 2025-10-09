@@ -112,10 +112,11 @@ export function useActionPerformer({
 				pushErrorToast('The battle is already decided.');
 				return;
 			}
-			let { translationContext: context } = getLegacySessionContext(
-				session,
-				snapshotBefore,
-			);
+			let { translationContext: context } = getLegacySessionContext({
+				snapshot: snapshotBefore,
+				ruleSnapshot: snapshotBefore.rules,
+				passiveRecords: snapshotBefore.passiveRecords,
+			});
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
 				(entry) => entry.id === activePlayerId,
@@ -137,7 +138,11 @@ export function useActionPerformer({
 				}
 				const traces = response.traces;
 				const snapshotAfter = response.snapshot;
-				const legacyContext = getLegacySessionContext(session, snapshotAfter);
+				const legacyContext = getLegacySessionContext({
+					snapshot: snapshotAfter,
+					ruleSnapshot: snapshotAfter.rules,
+					passiveRecords: snapshotAfter.passiveRecords,
+				});
 				const { translationContext, diffContext } = legacyContext;
 				context = translationContext;
 				const playerAfter = snapshotAfter.game.players.find(
