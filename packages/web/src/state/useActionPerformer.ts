@@ -7,6 +7,10 @@ import {
 	type RequirementFailure,
 } from '@kingdom-builder/engine';
 import { ActionId, type ResourceKey } from '@kingdom-builder/contents';
+import type {
+	ActionExecuteErrorResponse,
+	ActionParametersPayload,
+} from '@kingdom-builder/protocol/actions';
 import {
 	diffStepSnapshots,
 	logContent,
@@ -27,6 +31,28 @@ import {
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
+import { performSessionAction } from './sessionSdk';
+
+type ActionRequirementFailures =
+	ActionExecuteErrorResponse['requirementFailures'];
+type ActionParameterPayload = ActionParametersPayload | undefined;
+type ActionExecutionError = Error & {
+	requirementFailure?: RequirementFailure;
+	requirementFailures?: ActionRequirementFailures;
+};
+
+function createActionExecutionError(
+	response: ActionExecuteErrorResponse,
+): ActionExecutionError {
+	const failure = new Error(response.error) as ActionExecutionError;
+	if (response.requirementFailure) {
+		failure.requirementFailure = response.requirementFailure;
+	}
+	if (response.requirementFailures) {
+		failure.requirementFailures = response.requirementFailures;
+	}
+	return failure;
+}
 function ensureTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
 ): ActionLogLineDescriptor[] {
@@ -50,6 +76,7 @@ function ensureTimelineLines(
 }
 interface UseActionPerformerOptions {
 	session: EngineSession;
+	sessionId: string;
 	actionCostResource: ResourceKey;
 	addLog: (
 		entry: string | string[],
@@ -66,6 +93,7 @@ interface UseActionPerformerOptions {
 }
 export function useActionPerformer({
 	session,
+	sessionId,
 	actionCostResource,
 	addLog,
 	showResolution,
@@ -98,12 +126,19 @@ export function useActionPerformer({
 			const before = snapshotPlayer(playerBefore);
 			const costs = session.getActionCosts(action.id, params);
 			try {
-				const traces = session.performAction(action.id, params);
-				const snapshotAfter = session.getSnapshot();
-				const { translationContext, diffContext } = getLegacySessionContext(
-					session,
-					snapshotAfter,
-				);
+				const payloadParams = params as ActionParameterPayload;
+				const response = await performSessionAction({
+					sessionId,
+					actionId: action.id,
+					...(payloadParams ? { params: payloadParams } : {}),
+				});
+				if (response.status === 'error') {
+					throw createActionExecutionError(response);
+				}
+				const traces = response.traces;
+				const snapshotAfter = response.snapshot;
+				const legacyContext = getLegacySessionContext(session, snapshotAfter);
+				const { translationContext, diffContext } = legacyContext;
 				context = translationContext;
 				const playerAfter = snapshotAfter.game.players.find(
 					(entry) => entry.id === activePlayerId,
@@ -189,16 +224,14 @@ export function useActionPerformer({
 			} catch (error) {
 				const icon = context.actions.get(action.id)?.icon || '';
 				let message = (error as Error).message || 'Action failed';
-				const requirementFailure = (
-					error as Error & {
-						requirementFailure?: RequirementFailure;
-					}
-				).requirementFailure;
+				const requirementFailure = (error as ActionExecutionError)
+					?.requirementFailure;
 				if (requirementFailure) {
 					message = translateRequirementFailure(requirementFailure, context);
 				}
 				pushErrorToast(message);
-				addLog(`Failed to play ${icon} ${action.name}: ${message}`, {
+				const failureLog = `Failed to play ${icon} ${action.name}: ${message}`;
+				addLog(failureLog, {
 					id: playerBefore.id,
 					name: playerBefore.name,
 				});
@@ -209,6 +242,7 @@ export function useActionPerformer({
 			addLog,
 			endTurn,
 			mountedRef,
+			sessionId,
 			pushErrorToast,
 			refresh,
 			resourceKeys,
