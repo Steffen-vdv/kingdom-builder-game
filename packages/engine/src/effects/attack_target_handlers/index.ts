@@ -1,6 +1,9 @@
+import type {
+	AttackEvaluationTargetLog,
+	AttackTarget,
+} from '@kingdom-builder/protocol';
 import type { EngineContext } from '../../context';
 import type { PlayerState } from '../../state';
-import type { AttackEvaluationTargetLog, AttackTarget } from '../attack.types';
 
 import buildingHandler from './building';
 import resourceHandler from './resource';

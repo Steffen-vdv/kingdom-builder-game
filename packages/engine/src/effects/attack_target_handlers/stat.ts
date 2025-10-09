@@ -1,5 +1,5 @@
+import type { StatAttackTarget } from '@kingdom-builder/protocol';
 import type { AttackTargetHandler, AttackTargetMutationResult } from './index';
-import type { StatAttackTarget } from '../attack.types';
 
 const statHandler: AttackTargetHandler<
 	StatAttackTarget,

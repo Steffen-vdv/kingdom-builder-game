@@ -1,6 +1,6 @@
+import type { BuildingAttackTarget } from '@kingdom-builder/protocol';
 import { runEffects } from '..';
 import type { AttackTargetHandler, AttackTargetMutationResult } from './index';
-import type { BuildingAttackTarget } from '../attack.types';
 
 const buildingHandler: AttackTargetHandler<
 	BuildingAttackTarget,

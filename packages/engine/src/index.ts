@@ -115,7 +115,7 @@ export type {
 	AttackOnDamageLogEntry,
 	AttackPlayerDiff,
 	AttackPowerLog,
-} from './effects/attack';
+} from '@kingdom-builder/protocol';
 /**
  * @deprecated Use @kingdom-builder/protocol instead.
  */
