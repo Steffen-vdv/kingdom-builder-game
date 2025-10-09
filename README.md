@@ -23,6 +23,7 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
    - Server only: `npm run server:dev`
 5. Build production bundles for both server and web: `npm run build`.
 6. Build just the Node server bundle: `npm run server:build`.
+7. Review the docs directory for additional deep dives into systems and lore.
 
 ## 2) Game Overview
 
