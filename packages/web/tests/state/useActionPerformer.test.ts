@@ -19,6 +19,7 @@ import {
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
 const logContentMock = vi.hoisted(() => vi.fn(() => []));
+const performSessionActionMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/translation', () => ({
 	diffStepSnapshots: vi.fn(),
@@ -27,7 +28,6 @@ vi.mock('../../src/translation', () => ({
 	translateRequirementFailure: translateRequirementFailureMock,
 }));
 
-const performSessionActionMock = vi.hoisted(() => vi.fn());
 const getLegacySessionContextMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/getLegacySessionContext', () => ({
@@ -159,13 +159,13 @@ describe('useActionPerformer', () => {
 	it('translates requirement failures for authentication errors', async () => {
 		const error = new Error('Forbidden');
 		const failure = { reason: 'auth' } as RequirementFailure;
-		const failureCarrier = error as Error & {
-			requirementFailure?: RequirementFailure;
-		};
-		failureCarrier.requirementFailure = failure;
 		const authMessage = 'Authentication required';
 		translateRequirementFailureMock.mockReturnValue(authMessage);
-		performSessionActionMock.mockRejectedValueOnce(failureCarrier);
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'error',
+			error: error.message,
+			requirementFailure: failure,
+		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
 				session,

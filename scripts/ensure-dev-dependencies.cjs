@@ -15,6 +15,10 @@ const dependencies = [
 		),
 	},
 	{
+		name: 'npm-run-all',
+		path: resolve(rootDir, 'node_modules', 'npm-run-all', 'package.json'),
+	},
+	{
 		name: '@vitest/coverage-v8',
 		path: resolve(
 			rootDir,

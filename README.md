@@ -16,10 +16,13 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 
 1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
 2. Install dependencies: `npm install` (uses npm workspaces to link local packages).
-3. Start the web client from the repository root: `npm run dev`.
-4. Start the Node server (Node.js 18+): `npm run server:dev`.
-5. Build the web client for production: `npm run build`.
-6. Build the server bundle: `npm run server:build`.
+3. Start the combined dev environment (Fastify server + Vite web client):
+   `npm run dev`.
+4. Run a single target when needed:
+   - Web client only: `npm run dev:web`
+   - Server only: `npm run server:dev`
+5. Build production bundles for both server and web: `npm run build`.
+6. Build just the Node server bundle: `npm run server:build`.
 
 ## 2) Game Overview
 
