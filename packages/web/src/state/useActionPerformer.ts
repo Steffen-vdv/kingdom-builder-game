@@ -195,6 +195,13 @@ export function useActionPerformer({
 					stepDef,
 					logHeadline,
 				);
+				const resolutionSource = {
+					kind: 'action' as const,
+					label: 'Action',
+					id: actionMeta.id,
+					name: actionMeta.name,
+					...(actionMeta.icon ? { icon: actionMeta.icon } : {}),
+				};
 				const resolutionPlayer = {
 					id: playerAfter.id,
 					name: playerAfter.name,
@@ -207,6 +214,8 @@ export function useActionPerformer({
 						lines: logLines,
 						player: resolutionPlayer,
 						summaries: filtered,
+						source: resolutionSource,
+						actorLabel: 'Played by',
 					});
 				} catch (_error) {
 					addLog(logLines, resolutionPlayer);

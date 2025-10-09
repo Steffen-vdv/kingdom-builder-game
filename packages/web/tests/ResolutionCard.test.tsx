@@ -25,7 +25,16 @@ describe('<ResolutionCard />', () => {
 			action: {
 				id: 'action-id',
 				name: 'Test Action',
+				icon: '⚔️',
 			},
+			source: {
+				kind: 'action',
+				label: 'Action',
+				id: 'action-id',
+				name: 'Test Action',
+				icon: '⚔️',
+			},
+			actorLabel: 'Played by',
 			player: {
 				id: 'player-1',
 				name: 'Player One',
@@ -40,13 +49,17 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Action - Test Action')).toBeInTheDocument();
+		expect(screen.getByText('Action - Played by')).toBeInTheDocument();
 		expect(screen.getByText('Played by Player One')).toBeInTheDocument();
 	});
 
 	it('renders custom source metadata when provided', () => {
 		const resolution = createResolution({
-			source: 'phase',
+			source: {
+				kind: 'phase',
+				label: 'Phase',
+				name: 'Growth Phase',
+			},
 			actorLabel: 'Growth Phase',
 			player: {
 				id: 'player-2',

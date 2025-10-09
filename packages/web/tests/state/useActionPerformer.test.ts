@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RequirementFailure } from '@kingdom-builder/engine';
+import type { RequirementFailure, RuleSnapshot } from '@kingdom-builder/engine';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
 import {
@@ -16,10 +16,11 @@ import {
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
 const logContentMock = vi.hoisted(() => vi.fn(() => []));
+const diffStepSnapshotsMock = vi.hoisted(() => vi.fn(() => []));
 const performSessionActionMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/translation', () => ({
-	diffStepSnapshots: vi.fn(),
+	diffStepSnapshots: diffStepSnapshotsMock,
 	logContent: logContentMock,
 	snapshotPlayer: snapshotPlayerMock,
 	translateRequirementFailure: translateRequirementFailureMock,
@@ -46,11 +47,18 @@ describe('useActionPerformer', () => {
 	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let resourceKeys: ResourceKey[];
 	let actionCostResource: ResourceKey;
+	let ruleSnapshot: RuleSnapshot;
 	const sessionId = 'test-session';
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		performSessionActionMock.mockReset();
+		diffStepSnapshotsMock.mockReset();
+		diffStepSnapshotsMock.mockReturnValue([]);
+		logContentMock.mockReset();
+		logContentMock.mockReturnValue([]);
+		snapshotPlayerMock.mockReset();
+		snapshotPlayerMock.mockImplementation((player) => player);
 		const [firstResourceKey] = RESOURCE_KEYS;
 		if (!firstResourceKey) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -64,7 +72,7 @@ describe('useActionPerformer', () => {
 				steps: [],
 			},
 		];
-		const ruleSnapshot = {
+		ruleSnapshot = {
 			tieredResourceKey: actionCostResource,
 			tierDefinitions: [],
 			winConditions: [],
@@ -102,7 +110,9 @@ describe('useActionPerformer', () => {
 		addLog = vi.fn();
 		getLegacySessionContextMock.mockReturnValue({
 			translationContext: {
-				actions: new Map([[action.id, { icon: '⚔️' }]]),
+				actions: new Map([
+					[action.id, { icon: '⚔️', name: action.name, effects: [] }],
+				]),
 			},
 			diffContext: {},
 		});
@@ -190,6 +200,84 @@ describe('useActionPerformer', () => {
 				id: sessionSnapshot.game.activePlayerId,
 				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
 			},
+		);
+	});
+
+	it('passes enriched resolution metadata when an action succeeds', async () => {
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const updateMainPhaseStep = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn();
+		const [activeBefore, opponentBefore] = sessionSnapshot.game.players;
+		if (!activeBefore || !opponentBefore) {
+			throw new Error('Expected players in snapshot');
+		}
+		const updatedPlayer = createSnapshotPlayer({
+			id: activeBefore.id,
+			name: activeBefore.name,
+			resources: {
+				...activeBefore.resources,
+				[actionCostResource]:
+					(activeBefore.resources[actionCostResource] ?? 0) - 1,
+			},
+		});
+		const updatedOpponent = createSnapshotPlayer({
+			id: opponentBefore.id,
+			name: opponentBefore.name,
+			resources: { ...opponentBefore.resources },
+		});
+		const snapshotAfter = createSessionSnapshot({
+			players: [updatedPlayer, updatedOpponent],
+			activePlayerId: updatedPlayer.id,
+			opponentId: updatedOpponent.id,
+			phases: sessionSnapshot.phases,
+			actionCostResource,
+			ruleSnapshot,
+			turn: sessionSnapshot.game.turn,
+			currentPhase: sessionSnapshot.game.currentPhase,
+			currentStep: sessionSnapshot.game.currentStep,
+		});
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'success',
+			costs: { [actionCostResource]: 1 },
+			traces: [],
+			snapshot: snapshotAfter,
+		});
+		logContentMock.mockReturnValue(['⚔️ Attack']);
+
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				addLog,
+				showResolution,
+				updateMainPhaseStep,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(showResolution).toHaveBeenCalledTimes(1);
+		expect(showResolution).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				source: {
+					kind: 'action',
+					label: 'Action',
+					id: action.id,
+					name: action.name,
+					icon: '⚔️',
+				},
+				actorLabel: 'Played by',
+			}),
 		);
 	});
 });
