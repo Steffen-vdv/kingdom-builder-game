@@ -200,7 +200,7 @@ export function useActionPerformer({
 					label: 'Action',
 					id: actionMeta.id,
 					name: actionMeta.name,
-					...(actionMeta.icon ? { icon: actionMeta.icon } : {}),
+					icon: actionMeta.icon ?? '',
 				};
 				const resolutionPlayer = {
 					id: playerAfter.id,
