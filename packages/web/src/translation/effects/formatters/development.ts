@@ -43,21 +43,21 @@ function renderDevelopmentChange(
 }
 
 registerEffectFormatter('development', 'add', {
-	summarize: (eff, context) => {
-		return renderDevelopmentChange(eff.params?.['id'] as string, context, {
+	summarize: (effect, context) => {
+		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
 			describe: 'Add',
 			log: 'Developed',
 		}).summary;
 	},
-	describe: (eff, context) => {
-		return renderDevelopmentChange(eff.params?.['id'] as string, context, {
+	describe: (effect, context) => {
+		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
 			describe: 'Add',
 			log: 'Developed',
 		}).description;
 	},
-	log: (eff, context) => {
+	log: (effect, context) => {
 		return (
-			renderDevelopmentChange(eff.params?.['id'] as string, context, {
+			renderDevelopmentChange(effect.params?.['id'] as string, context, {
 				describe: 'Add',
 				log: 'Developed',
 			}).log || ''
@@ -66,21 +66,21 @@ registerEffectFormatter('development', 'add', {
 });
 
 registerEffectFormatter('development', 'remove', {
-	summarize: (eff, context) => {
-		return renderDevelopmentChange(eff.params?.['id'] as string, context, {
+	summarize: (effect, context) => {
+		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
 			describe: 'Remove',
 			log: 'Removed',
 		}).summary;
 	},
-	describe: (eff, context) => {
-		return renderDevelopmentChange(eff.params?.['id'] as string, context, {
+	describe: (effect, context) => {
+		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
 			describe: 'Remove',
 			log: 'Removed',
 		}).description;
 	},
-	log: (eff, context) => {
+	log: (effect, context) => {
 		return (
-			renderDevelopmentChange(eff.params?.['id'] as string, context, {
+			renderDevelopmentChange(effect.params?.['id'] as string, context, {
 				describe: 'Remove',
 				log: 'Removed',
 			}).log || ''

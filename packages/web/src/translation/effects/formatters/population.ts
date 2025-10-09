@@ -3,8 +3,8 @@ import { registerEffectFormatter } from '../factory';
 import { resolvePopulationDisplay } from '../helpers';
 
 registerEffectFormatter('population', 'add', {
-	summarize: (eff) => {
-		const role = eff.params?.['role'] as
+	summarize: (effect) => {
+		const role = effect.params?.['role'] as
 			| keyof typeof POPULATION_ROLES
 			| undefined;
 		const icon = role
@@ -12,15 +12,15 @@ registerEffectFormatter('population', 'add', {
 			: POPULATION_INFO.icon;
 		return `${POPULATION_INFO.icon}(${icon}) +1`;
 	},
-	describe: (eff) => {
-		const role = eff.params?.['role'] as
+	describe: (effect) => {
+		const role = effect.params?.['role'] as
 			| keyof typeof POPULATION_ROLES
 			| undefined;
 		const { icon, label } = resolvePopulationDisplay(role);
 		return `Add ${icon} ${label}`;
 	},
-	log: (eff) => {
-		const role = eff.params?.['role'] as
+	log: (effect) => {
+		const role = effect.params?.['role'] as
 			| keyof typeof POPULATION_ROLES
 			| undefined;
 		const { icon, label } = resolvePopulationDisplay(role);
@@ -29,8 +29,8 @@ registerEffectFormatter('population', 'add', {
 });
 
 registerEffectFormatter('population', 'remove', {
-	summarize: (eff) => {
-		const role = eff.params?.['role'] as
+	summarize: (effect) => {
+		const role = effect.params?.['role'] as
 			| keyof typeof POPULATION_ROLES
 			| undefined;
 		const icon = role
@@ -38,15 +38,15 @@ registerEffectFormatter('population', 'remove', {
 			: POPULATION_INFO.icon;
 		return `${POPULATION_INFO.icon}(${icon}) -1`;
 	},
-	describe: (eff) => {
-		const role = eff.params?.['role'] as
+	describe: (effect) => {
+		const role = effect.params?.['role'] as
 			| keyof typeof POPULATION_ROLES
 			| undefined;
 		const { icon, label } = resolvePopulationDisplay(role);
 		return `Remove ${icon} ${label}`;
 	},
-	log: (eff) => {
-		const role = eff.params?.['role'] as
+	log: (effect) => {
+		const role = effect.params?.['role'] as
 			| keyof typeof POPULATION_ROLES
 			| undefined;
 		const { icon, label } = resolvePopulationDisplay(role);

@@ -3,12 +3,12 @@ import { signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('land', 'add', {
-	summarize: (eff) => {
-		const count = Number(eff.params?.['count'] ?? 1);
+	summarize: (effect) => {
+		const count = Number(effect.params?.['count'] ?? 1);
 		return `${LAND_INFO.icon}${signed(count)}${count}`;
 	},
-	describe: (eff) => {
-		const count = Number(eff.params?.['count'] ?? 1);
+	describe: (effect) => {
+		const count = Number(effect.params?.['count'] ?? 1);
 		return `${LAND_INFO.icon} ${signed(count)}${count} ${LAND_INFO.label}`;
 	},
 });
