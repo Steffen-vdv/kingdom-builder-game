@@ -180,7 +180,14 @@ export function GameProvider(props: ProviderProps) {
 
 	const queueHelpers = useMemo<SessionQueueHelpers>(
 		() => ({
-			enqueue: <T,>(task: () => Promise<T> | T) => runExclusive(task),
+			enqueue: <T,>(task: () => Promise<T> | T) =>
+				runExclusive(() => {
+					const current = sessionStateRef.current;
+					if (!current) {
+						throw new Error('Session not ready');
+					}
+					return current.session.enqueue(task);
+				}),
 			getCurrentSession: () => {
 				const current = sessionStateRef.current;
 				if (!current) {
