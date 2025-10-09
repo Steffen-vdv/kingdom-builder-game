@@ -13,6 +13,10 @@ interface LandDisplayProps {
 	player: PlayerStateSnapshot;
 }
 
+const HOVER_CARD_BACKGROUND =
+	'bg-gradient-to-br from-white/80 to-white/60 ' +
+	'dark:from-slate-900/80 dark:to-slate-900/60';
+
 const LandTile: React.FC<{
 	land: PlayerStateSnapshot['lands'][number];
 	translationContext: ReturnType<typeof useGameEngine>['translationContext'];
@@ -35,11 +39,14 @@ const LandTile: React.FC<{
 			requirements: [],
 			effectsTitle: DEVELOPMENTS_INFO.label,
 			...(description && { description }),
-			bgClass:
-				'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
+			bgClass: HOVER_CARD_BACKGROUND,
 		});
 	};
 	const animateSlots = useAnimate<HTMLDivElement>();
+	const slotIndices = useMemo(
+		() => Array.from({ length: land.slotsMax }, (_, index) => index),
+		[land.slotsMax],
+	);
 	return (
 		<div
 			className="land-tile"
@@ -53,8 +60,8 @@ const LandTile: React.FC<{
 				ref={animateSlots}
 				className="mt-1 flex flex-wrap justify-center gap-1"
 			>
-				{Array.from({ length: land.slotsMax }).map((_, i) => {
-					const devId = land.developments[i];
+				{slotIndices.map((slotIndex) => {
+					const devId = land.developments[slotIndex];
 					if (devId) {
 						const hasDefinition = translationContext.developments.has(devId);
 						const development = hasDefinition
@@ -63,63 +70,73 @@ const LandTile: React.FC<{
 						const name = development?.name || devId;
 						const title = `${development?.icon || ''} ${name}`;
 						const handleLeave = () => showLandCard();
+						const handleMouseEnter = (
+							event: React.MouseEvent<HTMLSpanElement>,
+						) => {
+							event.stopPropagation();
+							const full = describeContent(
+								'development',
+								devId,
+								translationContext,
+								{
+									installed: true,
+								},
+							);
+							const { effects, description } = splitSummary(full);
+							handleHoverCard({
+								title,
+								effects,
+								requirements: [],
+								...(description && { description }),
+								bgClass: HOVER_CARD_BACKGROUND,
+							});
+						};
+						const handleMouseLeave = (
+							event: React.MouseEvent<HTMLSpanElement>,
+						) => {
+							event.stopPropagation();
+							handleLeave();
+						};
 						return (
 							<span
-								key={i}
+								key={slotIndex}
 								className="land-slot"
 								aria-label={name}
-								onMouseEnter={(e) => {
-									e.stopPropagation();
-									const full = describeContent(
-										'development',
-										devId,
-										translationContext,
-										{
-											installed: true,
-										},
-									);
-									const { effects, description } = splitSummary(full);
-									handleHoverCard({
-										title,
-										effects,
-										requirements: [],
-										...(description && { description }),
-										bgClass:
-											'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
-									});
-								}}
-								onMouseLeave={(e) => {
-									e.stopPropagation();
-									handleLeave();
-								}}
+								onMouseEnter={handleMouseEnter}
+								onMouseLeave={handleMouseLeave}
 							>
 								<span aria-hidden="true">{development?.icon}</span>
 							</span>
 						);
 					}
 					const handleLeave = () => showLandCard();
+					const handleMouseEnter = (
+						event: React.MouseEvent<HTMLSpanElement>,
+					) => {
+						event.stopPropagation();
+						handleHoverCard({
+							title: `${SLOT_INFO.icon} ${SLOT_INFO.label} (empty)`,
+							effects: [],
+							...(developAction && {
+								description: `Use ${developAction.icon || ''} ${developAction.name} to build here`,
+							}),
+							requirements: [],
+							bgClass: HOVER_CARD_BACKGROUND,
+						});
+					};
+					const handleMouseLeave = (
+						event: React.MouseEvent<HTMLSpanElement>,
+					) => {
+						event.stopPropagation();
+						handleLeave();
+					};
 					return (
 						<span
-							key={i}
+							key={slotIndex}
 							className="land-slot italic"
 							aria-label={`${SLOT_INFO.label} (empty)`}
-							onMouseEnter={(e) => {
-								e.stopPropagation();
-								handleHoverCard({
-									title: `${SLOT_INFO.icon} ${SLOT_INFO.label} (empty)`,
-									effects: [],
-									...(developAction && {
-										description: `Use ${developAction.icon || ''} ${developAction.name} to build here`,
-									}),
-									requirements: [],
-									bgClass:
-										'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-900/80 dark:to-slate-900/60',
-								});
-							}}
-							onMouseLeave={(e) => {
-								e.stopPropagation();
-								handleLeave();
-							}}
+							onMouseEnter={handleMouseEnter}
+							onMouseLeave={handleMouseLeave}
 						>
 							<span aria-hidden="true">{SLOT_INFO.icon}</span>
 						</span>
