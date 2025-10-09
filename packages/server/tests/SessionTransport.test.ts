@@ -484,4 +484,19 @@ describe('SessionTransport', () => {
 			}
 		}
 	});
+	it('propagates unexpected authorization errors', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: () => {
+				throw new Error('middleware exploded');
+			},
+		});
+		expect(() =>
+			transport.createSession({
+				body: {},
+				headers: { authorization: 'Bearer failing' },
+			}),
+		).toThrowError(/middleware exploded/);
+	});
 });
