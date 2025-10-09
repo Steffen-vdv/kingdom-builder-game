@@ -10,6 +10,7 @@ import {
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
 	sessionIdSchema,
+	sessionStateResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
 	ActionExecuteErrorResponse,
@@ -19,8 +20,10 @@ import type {
 	SessionSetDevModeResponse,
 	SessionStateResponse,
 	SessionRequirementFailure,
+	SessionPlayerId,
+	SessionPlayerNameMap,
 } from '@kingdom-builder/protocol';
-import type { EngineSession, PlayerId } from '@kingdom-builder/engine';
+import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
 import type {
 	SessionManager,
@@ -94,8 +97,11 @@ export class SessionTransport {
 		const sessionId = this.parseSessionIdentifier(request.body);
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = { sessionId, snapshot } satisfies SessionStateResponse;
-		return sessionCreateResponseSchema.parse(response);
+		const response = {
+			sessionId,
+			snapshot,
+		} satisfies SessionStateResponse;
+		return sessionStateResponseSchema.parse(response);
 	}
 
 	public async advanceSession(
@@ -273,14 +279,15 @@ export class SessionTransport {
 
 	private applyPlayerNames(
 		session: EngineSession,
-		names: Record<string, string>,
+		names: SessionPlayerNameMap,
 	): void {
-		for (const [playerId, playerName] of Object.entries(names)) {
-			const typedId = playerId as PlayerId;
+		const playerIds = Object.keys(names) as SessionPlayerId[];
+		for (const playerId of playerIds) {
+			const playerName = names[playerId];
 			if (!playerName?.trim()) {
 				continue;
 			}
-			session.updatePlayerName(typedId, playerName);
+			session.updatePlayerName(playerId, playerName);
 		}
 	}
 
