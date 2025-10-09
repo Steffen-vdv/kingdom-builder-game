@@ -18,7 +18,26 @@ interface ResolutionActionMeta {
 	icon?: string;
 }
 
-type ResolutionSource = 'action' | 'phase';
+interface ResolutionSourceBase {
+	kind: 'action' | 'phase';
+	label: string;
+}
+
+interface ResolutionActionSource extends ResolutionSourceBase {
+	kind: 'action';
+	id: string;
+	name: string;
+	icon?: string;
+}
+
+interface ResolutionPhaseSource extends ResolutionSourceBase {
+	kind: 'phase';
+	id?: string;
+	name?: string;
+	icon?: string;
+}
+
+type ResolutionSource = ResolutionActionSource | ResolutionPhaseSource;
 
 interface ShowResolutionOptions {
 	lines: string | string[];
@@ -90,10 +109,19 @@ function useActionResolution({
 					resolve();
 				};
 				const resolvedSource: ResolutionSource =
-					source ?? (action ? 'action' : 'phase');
+					source ??
+					(action
+						? {
+								kind: 'action',
+								label: 'Action',
+								id: action.id,
+								name: action.name,
+								...(action.icon ? { icon: action.icon } : {}),
+							}
+						: { kind: 'phase', label: 'Phase' });
 				const resolvedActorLabel =
 					actorLabel ??
-					(resolvedSource === 'action' ? action?.name : undefined);
+					(resolvedSource.kind === 'action' ? resolvedSource.name : undefined);
 				setResolution({
 					lines: entries,
 					visibleLines: [],

@@ -25,21 +25,32 @@ function ActionResolutionCard({
 	const playerName = playerLabel ?? 'Unknown player';
 	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
-
 	const fallbackActionName = leadingLine
 		.replace(/^[\s\p{Extended_Pictographic}\uFE0F\p{Pd}\p{Po}\p{So}]+/u, '')
 		.replace(/^Played\s+/u, '')
 		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	const rawActionName = (resolution.action?.name ?? '').trim();
+	const sourceName =
+		resolution.source.kind === 'action'
+			? resolution.source.name
+			: (resolution.source.name ?? '');
+	const rawActionName = (sourceName || resolution.action?.name || '').trim();
 	const actionName = rawActionName || fallbackActionName;
-	const actionIcon = resolution.action?.icon?.trim();
+	const actionIcon = (
+		resolution.source.icon ||
+		resolution.action?.icon ||
+		''
+	).trim();
+	const actorLabel = resolution.actorLabel ?? 'Played by';
+	const sourceLabel = resolution.source.label || 'Action';
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
 	const defaultTitle = title ?? 'Action resolution';
-	const headerTitle = actionName ? `Action - ${actionName}` : defaultTitle;
+	const headerTitle = actionName
+		? `${sourceLabel} - ${actionName}`
+		: defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',
@@ -85,7 +96,7 @@ function ActionResolutionCard({
 				<div className={headerRowClass}>
 					{actionIcon || actionName ? (
 						<div className={actionBadgeClass} aria-hidden="true">
-							{actionIcon ?? '✦'}
+							{actionIcon || '✦'}
 						</div>
 					) : null}
 					<div className="flex flex-1 items-start justify-between gap-4">
@@ -95,7 +106,7 @@ function ActionResolutionCard({
 						</div>
 						{resolution.player ? (
 							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`Played by ${playerName}`}
+								{`${actorLabel} ${playerName}`}
 							</div>
 						) : null}
 					</div>

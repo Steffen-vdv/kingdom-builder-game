@@ -207,6 +207,14 @@ export function useActionPerformer({
 						lines: logLines,
 						player: resolutionPlayer,
 						summaries: filtered,
+						source: {
+							kind: 'action',
+							label: 'Action',
+							id: actionMeta.id,
+							name: actionMeta.name,
+							...(actionMeta.icon ? { icon: actionMeta.icon } : {}),
+						},
+						actorLabel: 'Played by',
 					});
 				} catch (_error) {
 					addLog(logLines, resolutionPlayer);
