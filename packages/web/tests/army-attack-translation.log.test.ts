@@ -43,9 +43,9 @@ afterAll(() => {
 
 describe('army attack translation log', () => {
 	it('logs army attack action with concrete evaluation', () => {
-		const { ctx, attack, plunder } = createSyntheticCtx();
-		const attackerName = ctx.activePlayer.name ?? 'Player';
-		const defenderName = ctx.opponent.name ?? 'Opponent';
+		const { ctx: engineContext, attack, plunder } = createSyntheticCtx();
+		const attackerName = engineContext.activePlayer.name ?? 'Player';
+		const defenderName = engineContext.opponent.name ?? 'Opponent';
 		const castle = RESOURCES[Resource.castleHP];
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
@@ -53,34 +53,37 @@ describe('army attack translation log', () => {
 		const happiness = RESOURCES[Resource.happiness];
 		const gold = RESOURCES[Resource.gold];
 
-		ctx.activePlayer.resources[Resource.ap] = 1;
-		ctx.activePlayer.stats[Stat.armyStrength] = 2;
-		ctx.activePlayer.resources[Resource.happiness] = 2;
-		ctx.activePlayer.resources[Resource.gold] = 7;
-		ctx.opponent.stats[Stat.fortificationStrength] = 1;
-		ctx.opponent.resources[Resource.happiness] = 5;
-		ctx.opponent.resources[Resource.gold] = 25;
-		const castleBefore = ctx.opponent.resources[Resource.castleHP];
-		const fortBefore = ctx.opponent.stats[Stat.fortificationStrength];
-		const armyStrength = ctx.activePlayer.stats[Stat.armyStrength];
-		const opponentHappinessBefore = ctx.opponent.resources[Resource.happiness];
+		engineContext.activePlayer.resources[Resource.ap] = 1;
+		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
+		engineContext.activePlayer.resources[Resource.happiness] = 2;
+		engineContext.activePlayer.resources[Resource.gold] = 7;
+		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
+		engineContext.opponent.resources[Resource.happiness] = 5;
+		engineContext.opponent.resources[Resource.gold] = 25;
+		const castleBefore = engineContext.opponent.resources[Resource.castleHP];
+		const fortBefore = engineContext.opponent.stats[Stat.fortificationStrength];
+		const armyStrength = engineContext.activePlayer.stats[Stat.armyStrength];
+		const opponentHappinessBefore =
+			engineContext.opponent.resources[Resource.happiness];
 		const attackerHappinessBefore =
-			ctx.activePlayer.resources[Resource.happiness];
-		const opponentGoldBefore = ctx.opponent.resources[Resource.gold];
-		const playerGoldBefore = ctx.activePlayer.resources[Resource.gold];
+			engineContext.activePlayer.resources[Resource.happiness];
+		const opponentGoldBefore = engineContext.opponent.resources[Resource.gold];
+		const playerGoldBefore =
+			engineContext.activePlayer.resources[Resource.gold];
 		const remainingAfterAbsorption = armyStrength;
 		const remainingAfterFort = Math.max(
 			remainingAfterAbsorption - fortBefore,
 			0,
 		);
 
-		performAction(attack.id, ctx);
-		const castleAfter = ctx.opponent.resources[Resource.castleHP];
-		const opponentHappinessAfter = ctx.opponent.resources[Resource.happiness];
+		performAction(attack.id, engineContext);
+		const castleAfter = engineContext.opponent.resources[Resource.castleHP];
+		const opponentHappinessAfter =
+			engineContext.opponent.resources[Resource.happiness];
 		const attackerHappinessAfter =
-			ctx.activePlayer.resources[Resource.happiness];
-		const opponentGoldAfter = ctx.opponent.resources[Resource.gold];
-		const playerGoldAfter = ctx.activePlayer.resources[Resource.gold];
+			engineContext.activePlayer.resources[Resource.happiness];
+		const opponentGoldAfter = engineContext.opponent.resources[Resource.gold];
+		const playerGoldAfter = engineContext.activePlayer.resources[Resource.gold];
 		const opponentHappinessDelta =
 			opponentHappinessAfter - opponentHappinessBefore;
 		const attackerHappinessDelta =
@@ -88,7 +91,7 @@ describe('army attack translation log', () => {
 		const opponentGoldDelta = opponentGoldAfter - opponentGoldBefore;
 		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
 
-		const log = logContent('action', attack.id, ctx);
+		const log = logContent('action', attack.id, engineContext);
 		const powerValue = (value: number) =>
 			statToken(powerStat, 'Attack', formatSignedValue(value, formatNumber));
 		const absorptionValue = (value: number) =>
@@ -124,8 +127,12 @@ describe('army attack translation log', () => {
 	});
 
 	it('logs building attack action with destruction evaluation', () => {
-		const { ctx, buildingAttack, building } = createSyntheticCtx();
-		const attackerName = ctx.activePlayer.name ?? 'Player';
+		const {
+			ctx: engineContext,
+			buildingAttack,
+			building,
+		} = createSyntheticCtx();
+		const attackerName = engineContext.activePlayer.name ?? 'Player';
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
 		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
@@ -136,24 +143,25 @@ describe('army attack translation log', () => {
 			building.id,
 		);
 
-		ctx.activePlayer.resources[Resource.ap] = 1;
-		ctx.activePlayer.stats[Stat.armyStrength] = 3;
-		ctx.activePlayer.resources[Resource.gold] = 0;
-		ctx.opponent.stats[Stat.fortificationStrength] = 1;
-		ctx.opponent.buildings.add(building.id);
-		const armyStrength = ctx.activePlayer.stats[Stat.armyStrength];
-		const fortBefore = ctx.opponent.stats[Stat.fortificationStrength];
+		engineContext.activePlayer.resources[Resource.ap] = 1;
+		engineContext.activePlayer.stats[Stat.armyStrength] = 3;
+		engineContext.activePlayer.resources[Resource.gold] = 0;
+		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
+		engineContext.opponent.buildings.add(building.id);
+		const armyStrength = engineContext.activePlayer.stats[Stat.armyStrength];
+		const fortBefore = engineContext.opponent.stats[Stat.fortificationStrength];
 		const remainingAfterAbsorption = armyStrength;
 		const remainingAfterFort = Math.max(
 			remainingAfterAbsorption - fortBefore,
 			0,
 		);
-		const playerGoldBefore = ctx.activePlayer.resources[Resource.gold];
+		const playerGoldBefore =
+			engineContext.activePlayer.resources[Resource.gold];
 
-		performAction(buildingAttack.id, ctx);
-		const playerGoldAfter = ctx.activePlayer.resources[Resource.gold];
+		performAction(buildingAttack.id, engineContext);
+		const playerGoldAfter = engineContext.activePlayer.resources[Resource.gold];
 		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
-		const log = logContent('action', buildingAttack.id, ctx);
+		const log = logContent('action', buildingAttack.id, engineContext);
 		const powerValue = (value: number) =>
 			statToken(powerStat, 'Attack', formatSignedValue(value, formatNumber));
 		const absorptionValue = (value: number) =>
