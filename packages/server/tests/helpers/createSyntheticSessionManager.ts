@@ -1,6 +1,6 @@
 import { SessionManager } from '../../src/session/SessionManager.js';
 import type { SessionManagerOptions } from '../../src/session/SessionManager.js';
-import { createContentFactory } from '../../../engine/tests/factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	happinessTier,
 	effect,
@@ -15,7 +15,7 @@ import type {
 	RuleSet,
 	StartConfig,
 } from '@kingdom-builder/protocol';
-import type { ContentFactory } from '../../../engine/tests/factories/content';
+import type { ContentFactory } from '@kingdom-builder/testing';
 
 export type SyntheticSessionManagerOptions = Omit<
 	SessionManagerOptions,

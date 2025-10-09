@@ -1,7 +1,7 @@
 import {
 	createContentFactory,
 	type ContentFactory,
-} from '../../../engine/tests/factories/content';
+} from '@kingdom-builder/testing';
 import type { PhaseDef, StartConfig } from './syntheticTaxData';
 import {
 	SYNTHETIC_RESOURCE_KEYS,

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { performAction, advance } from '../src';
-import { createContentFactory } from './factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from './helpers';
 
 describe('result modifiers', () => {

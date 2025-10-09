@@ -12,7 +12,7 @@ import {
 	Resource,
 	Stat,
 } from '@kingdom-builder/contents';
-import { createContentFactory } from '../../../engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 const ON_UPKEEP_PHASE = PhaseTrigger.OnUpkeepPhase;
 

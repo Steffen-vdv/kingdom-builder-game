@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Resource as CResource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { getActionCosts } from '../../src';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('PassiveManager', () => {
 	it('applies and unregisters cost modifiers', () => {

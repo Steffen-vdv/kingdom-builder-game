@@ -3,7 +3,7 @@ import type { PhaseDef } from '../../src/phases.ts';
 import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '../../src/services/index.ts';
 import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
-import { createContentFactory } from '../factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 const resourceKeys = {
 	ap: 'synthetic:resource:ap',

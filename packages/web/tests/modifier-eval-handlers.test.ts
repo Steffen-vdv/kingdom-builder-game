@@ -17,7 +17,7 @@ import {
 	RESOURCE_TRANSFER_ICON,
 	Resource,
 } from '@kingdom-builder/contents';
-import { createContentFactory } from '../../engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../src/icons';
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 

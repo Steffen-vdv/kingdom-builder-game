@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { advance } from '../../src/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
 import { Resource } from '@kingdom-builder/contents';
-import { createContentFactory } from '../factories/content.ts';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers.ts';
 
 describe('resource removal penalties', () => {

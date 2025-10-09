@@ -11,6 +11,9 @@
 			"path": "packages/engine"
 		},
 		{
+			"path": "packages/testing"
+		},
+		{
 			"path": "packages/web"
 		},
 		{

@@ -10,7 +10,7 @@ import {
 	Types,
 	PassiveMethods,
 } from '@kingdom-builder/contents/config/builderShared';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('Services', () => {
 	it('evaluates resource tiers correctly', () => {

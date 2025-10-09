@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Services } from '../../src/services';
 import { PlayerState, Land } from '../../src/state';
 import { RULES } from '@kingdom-builder/contents';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('PopcapService', () => {
 	it('calculates population cap from houses on land', () => {

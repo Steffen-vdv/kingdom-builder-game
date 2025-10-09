@@ -9,7 +9,7 @@ import {
 	MODIFIER_INFO,
 	POPULATION_INFO,
 } from '@kingdom-builder/contents';
-import { createContentFactory } from '../../packages/engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('Building translation with population bonus', () => {
 	it('mentions population and related action', () => {

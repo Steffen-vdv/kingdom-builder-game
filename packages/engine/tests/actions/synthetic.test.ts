@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { performAction, advance, getActionCosts } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
-import { createContentFactory } from '../factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 function toMain(ctx: ReturnType<typeof createTestEngine>) {
 	while (ctx.game.currentPhase !== PhaseId.Main) {

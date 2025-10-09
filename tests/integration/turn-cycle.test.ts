@@ -5,7 +5,7 @@ import type {
 	RuleSet,
 	StartConfig,
 } from '@kingdom-builder/protocol';
-import { createContentFactory } from '../../packages/engine/tests/factories/content';
+import { createContentFactory } from '@kingdom-builder/testing';
 
 const resources = {
 	ap: 'turn:resource:ap',
