@@ -6,11 +6,11 @@ import type {
 } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../../src/translation/context';
 import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
-import type { GameEngineContextValue } from '../../src/state/GameContext.types';
+import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import type { SessionRegistries } from '../../src/state/sessionContent';
 
-export type MockGame = GameEngineContextValue;
+export type MockGame = LegacyGameEngineContextValue;
 
 export type PassiveGameContext = {
 	mockGame: MockGame;
@@ -47,13 +47,17 @@ export function createPassiveGame(
 	};
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: MockGame = {
-		session: {} as EngineSession,
-		sessionState,
-		sessionView,
+		sessionId: 'test-session',
+		sessionSnapshot: sessionState,
+		cachedSessionSnapshot: sessionState,
+		selectors: { sessionView },
 		translationContext,
 		ruleSnapshot,
 		log: [],
 		logOverflowed: false,
+		resolution: null,
+		showResolution: vi.fn().mockResolvedValue(undefined),
+		acknowledgeResolution: vi.fn(),
 		hoverCard: null,
 		handleHoverCard,
 		clearHoverCard,
@@ -66,15 +70,20 @@ export function createPassiveGame(
 		phaseHistories: {},
 		tabsEnabled: true,
 		actionCostResource: sessionState.actionCostResource,
-		handlePerform: vi.fn().mockResolvedValue(undefined),
+		requests: {
+			performAction: vi.fn().mockResolvedValue(undefined),
+			advancePhase: vi.fn().mockResolvedValue(undefined),
+			refreshSession: vi.fn().mockResolvedValue(undefined),
+		},
+		metadata: {
+			getRuleSnapshot: () => ruleSnapshot,
+			getSessionView: () => sessionView,
+			getTranslationContext: () => translationContext,
+		},
 		runUntilActionPhase: vi.fn().mockResolvedValue(undefined),
-		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 		updateMainPhaseStep: vi.fn(),
 		darkMode: false,
 		onToggleDark: vi.fn(),
-		resolution: null,
-		showResolution: vi.fn().mockResolvedValue(undefined),
-		acknowledgeResolution: vi.fn(),
 		musicEnabled: true,
 		onToggleMusic: vi.fn(),
 		soundEnabled: true,
@@ -90,6 +99,11 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
+		session: {} as EngineSession,
+		sessionState,
+		sessionView,
+		handlePerform: vi.fn().mockResolvedValue(undefined),
+		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 	};
 	return { mockGame, handleHoverCard, clearHoverCard };
 }

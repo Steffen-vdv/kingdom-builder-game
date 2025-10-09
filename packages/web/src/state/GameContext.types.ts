@@ -17,10 +17,34 @@ import type {
 	ShowResolutionOptions,
 } from './useActionResolution';
 
-export interface GameEngineContextValue {
-	session: EngineSession;
-	sessionState: EngineSessionSnapshot;
+export interface PerformActionRequest {
+	action: Action;
+	params?: Record<string, unknown>;
+}
+
+export type PerformActionHandler = (
+	request: PerformActionRequest,
+) => Promise<void>;
+
+export type AdvancePhaseHandler = () => Promise<void>;
+
+export type RefreshSessionHandler = () => Promise<void>;
+
+export interface SessionMetadataFetchers {
+	getRuleSnapshot: () => RuleSnapshot;
+	getSessionView: () => SessionView;
+	getTranslationContext: () => TranslationContext;
+}
+
+export interface SessionDerivedSelectors {
 	sessionView: SessionView;
+}
+
+export interface GameEngineContextValue {
+	sessionId: string;
+	sessionSnapshot: EngineSessionSnapshot;
+	cachedSessionSnapshot: EngineSessionSnapshot;
+	selectors: SessionDerivedSelectors;
 	translationContext: TranslationContext;
 	ruleSnapshot: RuleSnapshot;
 	log: LogEntry[];
@@ -40,12 +64,13 @@ export interface GameEngineContextValue {
 	phaseHistories: Record<string, PhaseStep[]>;
 	tabsEnabled: boolean;
 	actionCostResource: ResourceKey;
-	handlePerform: (
-		action: Action,
-		params?: Record<string, unknown>,
-	) => Promise<void>;
+	requests: {
+		performAction: PerformActionHandler;
+		advancePhase: AdvancePhaseHandler;
+		refreshSession: RefreshSessionHandler;
+	};
+	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;
-	handleEndTurn: () => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;
 	onExit?: () => void;
 	darkMode: boolean;
@@ -70,3 +95,34 @@ export interface GameEngineContextValue {
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 }
+
+export interface LegacyGameEngineContextBridge {
+	/**
+	 * TODO(#session-migration): Remove direct EngineSession exposure once all
+	 * consumers rely on request helpers.
+	 */
+	session: EngineSession;
+	/**
+	 * TODO(#session-migration): Replace with `sessionSnapshot` in consuming
+	 * modules after the serialization audit completes.
+	 */
+	sessionState: EngineSessionSnapshot;
+	/**
+	 * TODO(#session-migration): Read from `selectors.sessionView` instead.
+	 */
+	sessionView: SessionView;
+	/**
+	 * TODO(#session-migration): Use `requests.performAction`.
+	 */
+	handlePerform: (
+		action: Action,
+		params?: Record<string, unknown>,
+	) => Promise<void>;
+	/**
+	 * TODO(#session-migration): Use `requests.advancePhase`.
+	 */
+	handleEndTurn: () => Promise<void>;
+}
+
+export type LegacyGameEngineContextValue = GameEngineContextValue &
+	LegacyGameEngineContextBridge;

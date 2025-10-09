@@ -16,7 +16,7 @@ import {
 import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
-import type { GameEngineContextValue } from '../src/state/GameContext.types';
+import type { LegacyGameEngineContextValue } from '../src/state/GameContext.types';
 import type {
 	EngineSession,
 	PlayerId,
@@ -28,7 +28,7 @@ import {
 } from './helpers/sessionFixtures';
 import { selectSessionView } from '../src/state/sessionSelectors';
 import type { SessionRegistries } from '../src/state/sessionContent';
-type MockGame = GameEngineContextValue;
+type MockGame = LegacyGameEngineContextValue;
 type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
 type SummaryGroupLike = {
@@ -130,16 +130,20 @@ describe('<ResourceBar /> happiness hover card', () => {
 		};
 		const sessionView = selectSessionView(sessionState, sessionRegistries);
 		currentGame = {
-			session: {} as EngineSession,
-			sessionState,
-			sessionView,
+			sessionId: 'test-session',
+			sessionSnapshot: sessionState,
+			cachedSessionSnapshot: sessionState,
+			selectors: { sessionView },
 			translationContext,
 			ruleSnapshot,
-			handleHoverCard,
-			clearHoverCard,
 			log: [],
 			logOverflowed: false,
+			resolution: null,
+			showResolution: vi.fn().mockResolvedValue(undefined),
+			acknowledgeResolution: vi.fn(),
 			hoverCard: null,
+			handleHoverCard,
+			clearHoverCard,
 			phaseSteps: [],
 			setPhaseSteps: vi.fn(),
 			phaseTimer: 0,
@@ -149,15 +153,20 @@ describe('<ResourceBar /> happiness hover card', () => {
 			phaseHistories: {},
 			tabsEnabled: true,
 			actionCostResource: sessionState.actionCostResource as ResourceKey,
-			handlePerform: vi.fn().mockResolvedValue(undefined),
+			requests: {
+				performAction: vi.fn().mockResolvedValue(undefined),
+				advancePhase: vi.fn().mockResolvedValue(undefined),
+				refreshSession: vi.fn().mockResolvedValue(undefined),
+			},
+			metadata: {
+				getRuleSnapshot: () => ruleSnapshot,
+				getSessionView: () => sessionView,
+				getTranslationContext: () => translationContext,
+			},
 			runUntilActionPhase: vi.fn().mockResolvedValue(undefined),
-			handleEndTurn: vi.fn().mockResolvedValue(undefined),
 			updateMainPhaseStep: vi.fn(),
 			darkMode: true,
 			onToggleDark: vi.fn(),
-			resolution: null,
-			showResolution: vi.fn().mockResolvedValue(undefined),
-			acknowledgeResolution: vi.fn(),
 			musicEnabled: true,
 			onToggleMusic: vi.fn(),
 			soundEnabled: true,
@@ -173,6 +182,11 @@ describe('<ResourceBar /> happiness hover card', () => {
 			dismissToast: vi.fn(),
 			playerName: 'Player',
 			onChangePlayerName: vi.fn(),
+			session: {} as EngineSession,
+			sessionState,
+			sessionView,
+			handlePerform: vi.fn().mockResolvedValue(undefined),
+			handleEndTurn: vi.fn().mockResolvedValue(undefined),
 		} as MockGame;
 		render(<ResourceBar player={activePlayer} />);
 		const resourceInfo = RESOURCES[happinessKey];
