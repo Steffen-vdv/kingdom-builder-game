@@ -1,0 +1,14 @@
+{
+	"extends": "../../tsconfig.eslint.json",
+	"compilerOptions": {
+		"noEmit": true
+	},
+	"include": [
+		"src",
+		"tests",
+		"vite.config.ts",
+		"tailwind.config.cjs",
+		"postcss.config.cjs"
+	],
+	"exclude": ["dist"]
+}

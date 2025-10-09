@@ -1,9 +1,6 @@
 import { useMemo, useRef } from 'react';
-import {
-	type EngineSessionSnapshot,
-	type PlayerSnapshotDeltaBucket,
-	type PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+import { type PlayerSnapshotDeltaBucket } from '@kingdom-builder/engine';
+import type { SessionSnapshot } from '@kingdom-builder/protocol';
 import { useGameEngine } from './GameContext';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
@@ -70,13 +67,15 @@ function stableSerialize(value: unknown): string {
 	return json ?? 'null';
 }
 
-function hashPlayer(player: PlayerStateSnapshot): string {
+type SessionPlayerSnapshot = SessionSnapshot['game']['players'][number];
+
+function hashPlayer(player: SessionPlayerSnapshot): string {
 	return stableSerialize(player);
 }
 
 function hashGameState(
-	game: EngineSessionSnapshot['game'],
-	phases: EngineSessionSnapshot['phases'],
+	game: SessionSnapshot['game'],
+	phases: SessionSnapshot['phases'],
 ): string {
 	return stableSerialize({
 		turn: game.turn,

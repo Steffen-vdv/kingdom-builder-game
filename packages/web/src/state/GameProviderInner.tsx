@@ -60,7 +60,7 @@ export function GameProviderInner({
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const { session, enqueue, cachedSessionSnapshot } = useSessionQueue(
+	const { legacySession, enqueue, cachedSessionSnapshot } = useSessionQueue(
 		queue,
 		sessionState,
 	);
@@ -82,13 +82,13 @@ export function GameProviderInner({
 			return;
 		}
 		void enqueue(() => {
-			session.updatePlayerName(primaryPlayerId, desiredName);
+			legacySession.updatePlayerName(primaryPlayerId, desiredName);
 		}).finally(() => {
 			refresh();
 		});
 	}, [
 		enqueue,
-		session,
+		legacySession,
 		primaryPlayerId,
 		primaryPlayerName,
 		refresh,
@@ -192,7 +192,7 @@ export function GameProviderInner({
 		updateMainPhaseStep,
 		setPhaseHistories,
 	} = usePhaseProgress({
-		session,
+		session: legacySession,
 		sessionState,
 		sessionId,
 		actionPhaseId,
@@ -213,14 +213,14 @@ export function GameProviderInner({
 		});
 
 	useCompensationLogger({
-		session,
+		session: legacySession,
 		sessionState,
 		addLog,
 		resourceKeys,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
-		session,
+		session: legacySession,
 		sessionId,
 		actionCostResource,
 		addLog,
@@ -235,7 +235,7 @@ export function GameProviderInner({
 	});
 
 	useAiRunner({
-		session,
+		session: legacySession,
 		sessionState,
 		runUntilActionPhaseCore,
 		setPhaseHistories,
@@ -324,7 +324,7 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session,
+		session: legacySession,
 		sessionState,
 		sessionView,
 		handlePerform,

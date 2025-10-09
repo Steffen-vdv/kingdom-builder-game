@@ -1,8 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type {
-	EngineSessionSnapshot,
-	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+import type { SessionSnapshot } from '@kingdom-builder/protocol';
 
 const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
@@ -14,8 +11,10 @@ type LogEntry = {
 	playerId: string;
 };
 
+type SessionPlayerSnapshot = SessionSnapshot['game']['players'][number];
+
 interface GameLogOptions {
-	sessionState: EngineSessionSnapshot;
+	sessionState: SessionSnapshot;
 }
 
 export function useGameLog({ sessionState }: GameLogOptions) {
@@ -26,7 +25,7 @@ export function useGameLog({ sessionState }: GameLogOptions) {
 	const addLog = useCallback(
 		(
 			entry: string | string[],
-			player?: Pick<PlayerStateSnapshot, 'id' | 'name'>,
+			player?: Pick<SessionPlayerSnapshot, 'id' | 'name'>,
 		) => {
 			const fallbackPlayerId = sessionState.game.activePlayerId;
 			const fallbackPlayer = sessionState.game.players.find(

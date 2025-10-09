@@ -13,6 +13,7 @@ export default defineConfig({
 			'@kingdom-builder/contents': path.resolve(rootDir, '../contents/src'),
 			'@kingdom-builder/engine': path.resolve(rootDir, '../engine/src'),
 			'@kingdom-builder/protocol': path.resolve(rootDir, '../protocol/src'),
+			'@kingdom-builder/testing': path.resolve(rootDir, '../testing/src'),
 		},
 	},
 	build: {

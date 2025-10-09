@@ -1,16 +1,16 @@
 import React from 'react';
 import type {
-	EngineSessionSnapshot,
-	GameConclusionSnapshot,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
+	SessionSnapshot,
+	SessionGameConclusionSnapshot,
+	SessionRuleSnapshot,
+} from '@kingdom-builder/protocol';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import Button from '../common/Button';
 
 interface GameConclusionOverlayProps {
-	conclusion: GameConclusionSnapshot;
-	ruleSnapshot: RuleSnapshot;
-	sessionState: EngineSessionSnapshot;
+	conclusion: SessionGameConclusionSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
+	sessionState: SessionSnapshot;
 	onExit?: (() => void) | undefined;
 }
 
