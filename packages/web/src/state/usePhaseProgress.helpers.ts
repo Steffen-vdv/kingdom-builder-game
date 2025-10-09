@@ -2,6 +2,8 @@ import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	SessionAdvanceResponse,
 	SessionAdvanceResult,
+	SessionPhaseDefinition,
+	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
 import { snapshotPlayer } from '../translation';
 import type { PhaseStep } from './phaseTypes';
@@ -18,6 +20,95 @@ import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 type FormatPhaseResolution = (
 	options: FormatPhaseResolutionOptions,
 ) => PhaseResolutionFormatResult;
+
+interface PhaseStepEntryConfig {
+	title: string;
+	summaries: string[];
+	italic: boolean;
+	active: boolean;
+	done: boolean;
+}
+
+function createPhaseStepEntry({
+	title,
+	summaries,
+	italic,
+	active,
+	done,
+}: PhaseStepEntryConfig): PhaseStep {
+	return {
+		title,
+		active,
+		items: summaries.map((summary) => ({
+			text: summary,
+			...(italic ? { italic: true } : {}),
+			...(done ? { done: true } : {}),
+		})),
+	};
+}
+
+function activatePhaseSteps(
+	previous: PhaseStep[],
+	title: string,
+	summaries: string[],
+	italic: boolean,
+): PhaseStep[] {
+	const nextEntry = createPhaseStepEntry({
+		title,
+		summaries,
+		italic,
+		active: true,
+		done: false,
+	});
+	return [...previous.map((entry) => ({ ...entry, active: false })), nextEntry];
+}
+
+function completeLatestPhaseStep(
+	previous: PhaseStep[],
+	title: string,
+	summaries: string[],
+	italic: boolean,
+): PhaseStep[] {
+	if (!previous.length) {
+		return previous;
+	}
+	const next = [...previous];
+	next[next.length - 1] = createPhaseStepEntry({
+		title,
+		summaries,
+		italic,
+		active: false,
+		done: !italic,
+	});
+	return next;
+}
+
+function resolveHistoryTitle(
+	formatted: PhaseResolutionFormatResult,
+	phaseDefinition: SessionPhaseDefinition | undefined,
+	stepDefinition: SessionPhaseStepDefinition | undefined,
+	phaseId: string,
+): string {
+	const trimmedStep = stepDefinition?.title?.trim();
+	if (trimmedStep) {
+		return trimmedStep;
+	}
+	if (
+		typeof formatted.source !== 'string' &&
+		formatted.source.kind === 'phase'
+	) {
+		const candidate =
+			formatted.source.name?.trim() ?? formatted.source.label?.trim();
+		if (candidate) {
+			return candidate;
+		}
+	}
+	const fallbackPhase = phaseDefinition?.label?.trim();
+	if (fallbackPhase) {
+		return `${fallbackPhase} Phase`;
+	}
+	return `${phaseId} Phase`;
+}
 
 interface AdvanceToActionPhaseOptions {
 	session: LegacySession;
@@ -141,10 +232,53 @@ export async function advanceToActionPhase({
 			player,
 			...(formatted.actorLabel ? { actorLabel: formatted.actorLabel } : {}),
 		};
+		const historyTitle = resolveHistoryTitle(
+			formatted,
+			phaseDef,
+			stepDef,
+			phase,
+		);
+		const summaries = formatted.summaries.length
+			? formatted.summaries
+			: ['No effect'];
+		const italic = Boolean(skipped);
+		setPhaseSteps((previous) =>
+			activatePhaseSteps(previous, historyTitle, summaries, italic),
+		);
+		setPhaseHistories((previous) => {
+			const phaseHistory = previous[phase] ?? [];
+			return {
+				...previous,
+				[phase]: activatePhaseSteps(
+					phaseHistory,
+					historyTitle,
+					summaries,
+					italic,
+				),
+			};
+		});
 		await showResolution(resolutionOptions);
 		if (!mountedRef.current) {
 			return;
 		}
+		setPhaseSteps((previous) =>
+			completeLatestPhaseStep(previous, historyTitle, summaries, italic),
+		);
+		setPhaseHistories((previous) => {
+			const phaseHistory = previous[phase];
+			if (!phaseHistory) {
+				return previous;
+			}
+			return {
+				...previous,
+				[phase]: completeLatestPhaseStep(
+					phaseHistory,
+					historyTitle,
+					summaries,
+					italic,
+				),
+			};
+		});
 		snapshot = snapshotAfter;
 	}
 	if (!mountedRef.current) {
