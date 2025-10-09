@@ -30,14 +30,14 @@ import type { TranslationContext } from '../../context';
 
 interface ModifierEvalHandler {
 	summarize: (
-		eff: EffectDef,
+		effectDefinition: EffectDef,
 		evaluation: { type: string; id: string },
-		ctx: TranslationContext,
+		translationContext: TranslationContext,
 	) => Summary;
 	describe: (
-		eff: EffectDef,
+		effectDefinition: EffectDef,
 		evaluation: { type: string; id: string },
-		ctx: TranslationContext,
+		translationContext: TranslationContext,
 	) => Summary;
 }
 
@@ -58,16 +58,16 @@ const COST_MODIFIER_LABEL = `${costModifier.icon} ${costModifier.label}`;
 const RESULT_MODIFIER_INFO = modifierInfo.result;
 
 function formatCostEffect(
-	eff: EffectDef,
-	ctx: TranslationContext,
+	effectDefinition: EffectDef,
+	translationContext: TranslationContext,
 	mode: 'summary' | 'describe',
 	method: 'add' | 'remove',
 ): string {
-	const key = eff.params?.['key'] as string;
+	const key = effectDefinition.params?.['key'] as string;
 	const resourceIcon = RESOURCES[key as ResourceKey]?.icon || key;
-	const actionId = eff.params?.['actionId'] as string | undefined;
+	const actionId = effectDefinition.params?.['actionId'] as string | undefined;
 	const actionInfo = actionId
-		? getActionInfo(ctx, actionId)
+		? getActionInfo(translationContext, actionId)
 		: { icon: '', name: 'all actions' };
 	const prefixIcon = actionId ? `${actionInfo.icon}: ` : ': ';
 	const summaryPrefix = `${modifierInfo.cost.icon}${prefixIcon}${resourceIcon}`;
@@ -75,7 +75,7 @@ function formatCostEffect(
 		? `${actionInfo.icon} ${actionInfo.name}`
 		: actionInfo.name;
 	const label = `${COST_MODIFIER_LABEL} on ${target}:`;
-	const percent = parseNumericParam(eff.params?.['percent']);
+	const percent = parseNumericParam(effectDefinition.params?.['percent']);
 	if (typeof percent === 'number') {
 		const resolvedPercent = method === 'remove' ? -percent : percent;
 		if (mode === 'summary') {
@@ -88,7 +88,7 @@ function formatCostEffect(
 		const base = `${label} ${direction} cost by`;
 		return `${base} ${magnitude}%${suffix}`;
 	}
-	const rawAmount = parseNumericParam(eff.params?.['amount']) ?? 0;
+	const rawAmount = parseNumericParam(effectDefinition.params?.['amount']) ?? 0;
 	const amount = method === 'remove' ? -rawAmount : rawAmount;
 	if (mode === 'summary') {
 		const absolute = Math.abs(amount);
@@ -105,22 +105,22 @@ function formatCostEffect(
 }
 
 registerModifierEvalHandler('development', {
-	summarize: (eff, evaluation, ctx) => {
+	summarize: (effectDefinition, evaluation, translationContext) => {
 		const summary = formatDevelopment(
 			RESULT_MODIFIER_INFO,
-			eff,
+			effectDefinition,
 			evaluation,
-			ctx,
+			translationContext,
 			false,
 		);
 		return toArray(summary);
 	},
-	describe: (eff, evaluation, ctx) => {
+	describe: (effectDefinition, evaluation, translationContext) => {
 		const description = formatDevelopment(
 			RESULT_MODIFIER_INFO,
-			eff,
+			effectDefinition,
 			evaluation,
-			ctx,
+			translationContext,
 			true,
 		);
 		return toArray(description);
@@ -128,22 +128,22 @@ registerModifierEvalHandler('development', {
 });
 
 registerModifierEvalHandler('population', {
-	summarize: (eff, evaluation, ctx) => {
+	summarize: (effectDefinition, evaluation, translationContext) => {
 		const summary = formatPopulation(
 			RESULT_MODIFIER_INFO,
-			eff,
+			effectDefinition,
 			evaluation,
-			ctx,
+			translationContext,
 			false,
 		);
 		return toArray(summary);
 	},
-	describe: (eff, evaluation, ctx) => {
+	describe: (effectDefinition, evaluation, translationContext) => {
 		const description = formatPopulation(
 			RESULT_MODIFIER_INFO,
-			eff,
+			effectDefinition,
 			evaluation,
-			ctx,
+			translationContext,
 			true,
 		);
 		return toArray(description);
@@ -151,9 +151,13 @@ registerModifierEvalHandler('population', {
 });
 
 registerModifierEvalHandler('transfer_pct', {
-	summarize: (eff, evaluation, ctx) => {
-		const target = resolveTransferModifierTarget(eff, evaluation, ctx);
-		const amount = Number(eff.params?.['adjust'] ?? 0);
+	summarize: (effectDefinition, evaluation, translationContext) => {
+		const target = resolveTransferModifierTarget(
+			effectDefinition,
+			evaluation,
+			translationContext,
+		);
+		const amount = Number(effectDefinition.params?.['adjust'] ?? 0);
 		const sign = amount >= 0 ? '+' : '';
 		return [
 			`${RESULT_MODIFIER_INFO.icon}${target.summaryLabel}: ${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(
@@ -161,9 +165,13 @@ registerModifierEvalHandler('transfer_pct', {
 			)}%`,
 		];
 	},
-	describe: (eff, evaluation, ctx) => {
-		const target = resolveTransferModifierTarget(eff, evaluation, ctx);
-		const amount = Number(eff.params?.['adjust'] ?? 0);
+	describe: (effectDefinition, evaluation, translationContext) => {
+		const target = resolveTransferModifierTarget(
+			effectDefinition,
+			evaluation,
+			translationContext,
+		);
+		const amount = Number(effectDefinition.params?.['adjust'] ?? 0);
 		const modifierDescription = formatResultModifierClause(
 			RESULT_MODIFIER_LABEL,
 			target.clauseTarget,
@@ -174,7 +182,11 @@ registerModifierEvalHandler('transfer_pct', {
 		);
 		const entries: Summary = [modifierDescription];
 		if (target.actionId) {
-			const card = describeContent('action', target.actionId, ctx);
+			const card = describeContent(
+				'action',
+				target.actionId,
+				translationContext,
+			);
 			entries.push({
 				title: formatTargetLabel(target.icon, target.name),
 				items: card,
@@ -187,53 +199,76 @@ registerModifierEvalHandler('transfer_pct', {
 });
 
 registerEffectFormatter('cost_mod', 'add', {
-	summarize: (eff, ctx) => formatCostEffect(eff, ctx, 'summary', 'add'),
-	describe: (eff, ctx) => formatCostEffect(eff, ctx, 'describe', 'add'),
+	summarize: (effectDefinition, translationContext) =>
+		formatCostEffect(effectDefinition, translationContext, 'summary', 'add'),
+	describe: (effectDefinition, translationContext) =>
+		formatCostEffect(effectDefinition, translationContext, 'describe', 'add'),
 });
 
 registerEffectFormatter('cost_mod', 'remove', {
-	summarize: (eff, ctx) => formatCostEffect(eff, ctx, 'summary', 'remove'),
-	describe: (eff, ctx) => formatCostEffect(eff, ctx, 'describe', 'remove'),
+	summarize: (effectDefinition, translationContext) =>
+		formatCostEffect(effectDefinition, translationContext, 'summary', 'remove'),
+	describe: (effectDefinition, translationContext) =>
+		formatCostEffect(
+			effectDefinition,
+			translationContext,
+			'describe',
+			'remove',
+		),
 });
 
 registerEffectFormatter('result_mod', 'add', {
-	summarize: (eff, ctx) => {
-		const sub = summarizeEffects(eff.effects || [], ctx);
-		const evaluation = eff.params?.['evaluation'] as
+	summarize: (effectDefinition, translationContext) => {
+		const subEffectSummaries = summarizeEffects(
+			effectDefinition.effects || [],
+			translationContext,
+		);
+		const evaluation = effectDefinition.params?.['evaluation'] as
 			| { type: string; id: string }
 			| undefined;
 		if (evaluation) {
 			const handler = MODIFIER_EVAL_HANDLERS[evaluation.type];
-			return handler ? handler.summarize(eff, evaluation, ctx) : [];
+			return handler
+				? handler.summarize(effectDefinition, evaluation, translationContext)
+				: [];
 		}
-		const actionId = eff.params?.['actionId'] as string | undefined;
+		const actionId = effectDefinition.params?.['actionId'] as
+			| string
+			| undefined;
 		const { icon: actionIcon, name: actionName } = actionId
-			? getActionInfo(ctx, actionId)
+			? getActionInfo(translationContext, actionId)
 			: { icon: '', name: 'all actions' };
 		return wrapResultModifierEntries(
 			RESULT_MODIFIER_INFO,
-			sub,
+			subEffectSummaries,
 			{ icon: actionIcon, name: actionName },
 			RESULT_EVENT_RESOLVE,
 			{ mode: 'summary' },
 		);
 	},
-	describe: (eff, ctx) => {
-		const sub = describeEffects(eff.effects || [], ctx);
-		const evaluation = eff.params?.['evaluation'] as
+	describe: (effectDefinition, translationContext) => {
+		const subEffectSummaries = describeEffects(
+			effectDefinition.effects || [],
+			translationContext,
+		);
+		const evaluation = effectDefinition.params?.['evaluation'] as
 			| { type: string; id: string }
 			| undefined;
 		if (evaluation) {
 			const handler = MODIFIER_EVAL_HANDLERS[evaluation.type];
-			return handler ? handler.describe(eff, evaluation, ctx) : [];
+			return handler
+				? handler.describe(effectDefinition, evaluation, translationContext)
+				: [];
 		}
-		const actionId = eff.params?.['actionId'] as string | undefined;
+		const actionId = effectDefinition.params?.['actionId'] as
+			| string
+			| undefined;
 		const actionInfo = actionId
-			? getActionInfo(ctx, actionId)
+			? getActionInfo(translationContext, actionId)
 			: { icon: '', name: 'all actions' };
 		return wrapResultModifierEntries(
 			RESULT_MODIFIER_INFO,
-			sub,
+			subEffectSummaries,
 			actionInfo,
 			RESULT_EVENT_RESOLVE,
 			{ mode: 'describe' },
