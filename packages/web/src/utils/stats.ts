@@ -1,9 +1,8 @@
 import { STATS } from '@kingdom-builder/contents';
 import type {
-	PlayerStateSnapshot,
-	StatKey,
-	StatSourceContribution,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot,
+	SessionStatSourceContribution,
+} from '@kingdom-builder/protocol';
 import type { Summary, SummaryEntry } from '../translation/content/types';
 import type { TranslationContext } from '../translation/context';
 import {
@@ -16,13 +15,15 @@ import { buildDetailEntries, pushSummaryEntry } from './stats/summary';
 
 export { statDisplaysAsPercent, formatStatValue } from './stats/descriptors';
 
-function isStatKey(key: string): key is StatKey {
+type SessionStatKey = keyof typeof STATS;
+
+function isStatKey(key: string): key is SessionStatKey {
 	return key in STATS;
 }
 
 export function getStatBreakdownSummary(
 	statKey: string,
-	player: PlayerStateSnapshot,
+	player: SessionPlayerStateSnapshot,
 	context: TranslationContext,
 ): Summary {
 	if (!isStatKey(statKey)) {
@@ -52,9 +53,9 @@ export function getStatBreakdownSummary(
 
 function formatContribution(
 	statKey: string,
-	contribution: StatSourceContribution,
+	contribution: SessionStatSourceContribution,
 	descriptor: SourceDescriptor,
-	player: PlayerStateSnapshot,
+	player: SessionPlayerStateSnapshot,
 	context: TranslationContext,
 ): SummaryEntry {
 	const { amount, meta } = contribution;

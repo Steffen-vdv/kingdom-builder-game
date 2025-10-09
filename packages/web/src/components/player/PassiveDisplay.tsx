@@ -7,10 +7,10 @@ import {
 } from '@kingdom-builder/contents';
 import type {
 	EffectDef,
-	PassiveSummary,
-	PlayerId,
-	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+	SessionPassiveSummary,
+	SessionPlayerId,
+	SessionPlayerStateSnapshot,
+} from '@kingdom-builder/protocol';
 import { describeEffects, splitSummary } from '../../translation';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import {
@@ -41,12 +41,12 @@ function normalizeEffectList(
 export default function PassiveDisplay({
 	player,
 }: {
-	player: PlayerStateSnapshot;
+	player: SessionPlayerStateSnapshot;
 }) {
 	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
 		useGameEngine();
-	const playerId: PlayerId = player.id;
-	const summaries: PassiveSummary[] =
+	const playerId: SessionPlayerId = player.id;
+	const summaries: SessionPassiveSummary[] =
 		translationContext.passives.list(playerId);
 	const definitions = translationContext.passives.definitions(playerId);
 	const definitionMap = new Map(
@@ -80,7 +80,7 @@ export default function PassiveDisplay({
 			(
 				entry,
 			): entry is {
-				summary: PassiveSummary;
+				summary: SessionPassiveSummary;
 				definition: (typeof definitions)[number];
 			} => entry.definition !== undefined,
 		);

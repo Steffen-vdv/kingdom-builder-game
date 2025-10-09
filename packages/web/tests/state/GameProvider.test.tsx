@@ -257,6 +257,7 @@ describe('GameProvider', () => {
 		createSessionMock.mockResolvedValue({
 			sessionId: 'session-1',
 			session,
+			legacySession: session,
 			snapshot: initialSnapshot,
 			ruleSnapshot: initialSnapshot.rules,
 			registries,
@@ -265,6 +266,7 @@ describe('GameProvider', () => {
 		});
 		fetchSnapshotMock.mockResolvedValue({
 			session,
+			legacySession: session,
 			snapshot: refreshedSnapshot,
 			ruleSnapshot: refreshedSnapshot.rules,
 			registries,

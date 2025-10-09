@@ -1,10 +1,10 @@
-import {
-	type EngineAdvanceResult,
-	type EngineSession,
-	type PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+import { type EngineSession } from '@kingdom-builder/engine';
 import { type ResourceKey } from '@kingdom-builder/contents';
 import type { SessionAdvanceResponse } from '@kingdom-builder/protocol/session';
+import type {
+	SessionAdvanceResult,
+	SessionPlayerStateSnapshot,
+} from '@kingdom-builder/protocol';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { PhaseStep } from './phaseTypes';
@@ -28,7 +28,10 @@ interface AdvanceToActionPhaseOptions {
 	setTabsEnabled: (value: boolean) => void;
 	setMainApStart: (value: number) => void;
 	updateMainPhaseStep: (value: number) => void;
-	addLog: (entry: string | string[], player?: PlayerStateSnapshot) => void;
+	addLog: (
+		entry: string | string[],
+		player?: SessionPlayerStateSnapshot,
+	) => void;
 	refresh: () => void;
 }
 
@@ -88,7 +91,7 @@ export async function advanceToActionPhase({
 			sessionId,
 		});
 		const { advance } = advanceResponse;
-		const { phase, step, player, effects, skipped }: EngineAdvanceResult =
+		const { phase, step, player, effects, skipped }: SessionAdvanceResult =
 			advance;
 		const snapshotAfter = advanceResponse.snapshot;
 		if (snapshotAfter.game.conclusion) {

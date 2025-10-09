@@ -1,8 +1,8 @@
 import type {
-	PlayerStateSnapshot,
-	StatSourceLink,
-	StatSourceMeta,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot,
+	SessionStatSourceLink,
+	SessionStatSourceMeta,
+} from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../translation/context';
 import type { ResolveResult, SourceDescriptor } from './types';
 import {
@@ -12,9 +12,9 @@ import {
 } from './descriptorRegistry';
 
 function getResolutionCandidates(
-	meta: StatSourceMeta,
-): (StatSourceLink | undefined)[] {
-	const candidates: (StatSourceLink | undefined)[] = [meta.removal];
+	meta: SessionStatSourceMeta,
+): (SessionStatSourceLink | undefined)[] {
+	const candidates: (SessionStatSourceLink | undefined)[] = [meta.removal];
 	if (meta.dependsOn) {
 		candidates.push(...meta.dependsOn);
 	}
@@ -23,7 +23,7 @@ function getResolutionCandidates(
 
 export function formatLinkLabel(
 	translationContext: TranslationContext,
-	link?: StatSourceLink,
+	link?: SessionStatSourceLink,
 ): string | undefined {
 	if (!link) {
 		return undefined;
@@ -43,7 +43,7 @@ export function formatLinkLabel(
 
 function resolveLinkDescriptor(
 	translationContext: TranslationContext,
-	link?: StatSourceLink,
+	link?: SessionStatSourceLink,
 	options: {
 		omitAssignmentDetail?: boolean;
 		omitRemovalDetail?: boolean;
@@ -84,7 +84,7 @@ function resolveLinkDescriptor(
 
 function deriveResolutionSuffix(
 	translationContext: TranslationContext,
-	meta: StatSourceMeta,
+	meta: SessionStatSourceMeta,
 ): ResolveResult | undefined {
 	if (meta.kind !== 'action') {
 		return undefined;
@@ -123,7 +123,7 @@ function deriveResolutionSuffix(
 
 export function getSourceDescriptor(
 	translationContext: TranslationContext,
-	meta: StatSourceMeta,
+	meta: SessionStatSourceMeta,
 ): SourceDescriptor {
 	const entry = getDescriptor(translationContext, meta.kind);
 	const base = entry.resolve(meta.id);
@@ -211,8 +211,8 @@ export function formatSourceTitle(descriptor: SourceDescriptor): string {
 }
 
 export function formatDependency(
-	link: StatSourceLink,
-	player: PlayerStateSnapshot,
+	link: SessionStatSourceLink,
+	player: SessionPlayerStateSnapshot,
 	context: TranslationContext,
 	options: { includeCounts?: boolean } = {},
 ): string {

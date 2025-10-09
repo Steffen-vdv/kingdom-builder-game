@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef } from 'react';
-import {
-	type ActionParams,
-	type EngineSession,
-	type PlayerStateSnapshot,
-	type RequirementFailure,
-} from '@kingdom-builder/engine';
+import { type ActionParams, type EngineSession } from '@kingdom-builder/engine';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import { ActionId, type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
 } from '@kingdom-builder/protocol/actions';
+import type {
+	SessionPlayerStateSnapshot,
+	SessionRequirementFailure,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol';
 import {
 	diffStepSnapshots,
 	logContent,
@@ -37,7 +37,7 @@ type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
 type ActionParameterPayload = ActionParametersPayload | undefined;
 type ActionExecutionError = Error & {
-	requirementFailure?: RequirementFailure;
+	requirementFailure?: SessionRequirementFailure;
 	requirementFailures?: ActionRequirementFailures;
 };
 
@@ -80,7 +80,7 @@ interface UseActionPerformerOptions {
 	actionCostResource: ResourceKey;
 	addLog: (
 		entry: string | string[],
-		player?: Pick<PlayerStateSnapshot, 'id' | 'name'>,
+		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	updateMainPhaseStep: (apStartOverride?: number) => void;
@@ -107,7 +107,7 @@ export function useActionPerformer({
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParams<string>) => {
-			const snapshotBefore = session.getSnapshot();
+			const snapshotBefore: SessionSnapshot = session.getSnapshot();
 			if (snapshotBefore.game.conclusion) {
 				pushErrorToast('The battle is already decided.');
 				return;

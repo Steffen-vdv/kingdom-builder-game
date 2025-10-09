@@ -1,7 +1,7 @@
 import type {
-	PlayerStateSnapshot,
-	StatSourceLink,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot,
+	SessionStatSourceLink,
+} from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../translation/context';
 
 export type ResolveResult = { icon: string; label: string };
@@ -19,14 +19,14 @@ export type DescriptorRegistryEntry = {
 	) => string | undefined;
 	augmentDependencyDetail?: (
 		detail: string | undefined,
-		link: StatSourceLink,
-		player: PlayerStateSnapshot,
+		link: SessionStatSourceLink,
+		player: SessionPlayerStateSnapshot,
 		context: TranslationContext,
 		options: { includeCounts?: boolean },
 	) => string | undefined;
 	formatDependency?: (
-		link: StatSourceLink,
-		player: PlayerStateSnapshot,
+		link: SessionStatSourceLink,
+		player: SessionPlayerStateSnapshot,
 		context: TranslationContext,
 		options: { includeCounts?: boolean },
 	) => string;

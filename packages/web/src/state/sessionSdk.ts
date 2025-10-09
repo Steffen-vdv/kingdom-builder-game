@@ -9,8 +9,6 @@ import {
 	createEngineSession,
 	type ActionParams,
 	type EngineSession,
-	type EngineSessionSnapshot,
-	type RuleSnapshot,
 } from '@kingdom-builder/engine';
 import type {
 	ActionExecuteErrorResponse,
@@ -22,6 +20,11 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 } from '@kingdom-builder/protocol/session';
+import type {
+	SessionRuleSnapshot,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { initializeDeveloperMode } from './developerModeSetup';
 import {
@@ -32,8 +35,14 @@ import {
 } from './sessionContent';
 import { createGameApi, type GameApi } from '../services/gameApi';
 
+type SessionHandle = Pick<
+	EngineSession,
+	'enqueue' | 'advancePhase' | 'performAction'
+>;
+
 interface SessionRecord {
 	session: EngineSession;
+	handle: SessionHandle;
 }
 
 interface CreateSessionOptions {
@@ -43,12 +52,13 @@ interface CreateSessionOptions {
 
 interface CreateSessionResult {
 	sessionId: string;
-	session: EngineSession;
-	snapshot: EngineSessionSnapshot;
-	ruleSnapshot: RuleSnapshot;
+	session: SessionHandle;
+	legacySession: EngineSession;
+	snapshot: SessionSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
 	resourceKeys: ResourceKey[];
-	metadata: EngineSessionSnapshot['metadata'];
+	metadata: SessionSnapshotMetadata;
 }
 
 type ActionRequirementFailure =
@@ -61,12 +71,13 @@ type ActionExecutionFailure = Error & {
 };
 
 interface FetchSnapshotResult {
-	session: EngineSession;
-	snapshot: EngineSessionSnapshot;
-	ruleSnapshot: RuleSnapshot;
+	session: SessionHandle;
+	legacySession: EngineSession;
+	snapshot: SessionSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
 	resourceKeys: ResourceKey[];
-	metadata: EngineSessionSnapshot['metadata'];
+	metadata: SessionSnapshotMetadata;
 }
 
 const SESSION_PREFIX = 'local-session-';
@@ -88,17 +99,17 @@ export function setGameApi(instance: GameApi | null): void {
 
 let nextSessionId = 1;
 
-function ensureSession(sessionId: string): EngineSession {
+function ensureSessionRecord(sessionId: string): SessionRecord {
 	const record = sessions.get(sessionId);
 	if (!record) {
 		throw new Error(`Session not found: ${sessionId}`);
 	}
-	return record.session;
+	return record;
 }
 
 function applyDeveloperPreset(
 	session: EngineSession,
-	snapshot: EngineSessionSnapshot,
+	snapshot: SessionSnapshot,
 	devMode: boolean,
 ): void {
 	if (!devMode) {
@@ -115,7 +126,7 @@ function applyDeveloperPreset(
 
 function applyPlayerName(
 	session: EngineSession,
-	snapshot: EngineSessionSnapshot,
+	snapshot: SessionSnapshot,
 	name?: string,
 ): void {
 	const desiredName = name ?? DEFAULT_PLAYER_NAME;
@@ -149,14 +160,22 @@ export async function createSession(
 		devMode,
 	});
 	session.setDevMode(devMode);
-	const initialSnapshot = session.getSnapshot();
+	const initialSnapshot = response.snapshot;
 	applyDeveloperPreset(session, initialSnapshot, devMode);
 	applyPlayerName(session, initialSnapshot, playerName);
 	const sessionId = response.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
-	sessions.set(sessionId, { session });
+	const handle: SessionHandle = {
+		enqueue: <T>(taskFactory: () => Promise<T> | T) =>
+			session.enqueue(taskFactory),
+		advancePhase: () => session.advancePhase(),
+		performAction: (actionId, params) =>
+			session.performAction(actionId, params),
+	};
+	sessions.set(sessionId, { session, handle });
 	return {
 		sessionId,
-		session,
+		session: handle,
+		legacySession: session,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries: SESSION_REGISTRIES,
@@ -169,10 +188,11 @@ export async function fetchSnapshot(
 	sessionId: string,
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const session = ensureSession(sessionId);
+	const { session, handle } = ensureSessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId);
 	return {
-		session,
+		session: handle,
+		legacySession: session,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries: SESSION_REGISTRIES,
@@ -185,12 +205,12 @@ export async function performSessionAction(
 	request: ActionExecuteRequest,
 ): Promise<ActionExecuteResponse> {
 	const api = ensureGameApi();
-	const session = ensureSession(request.sessionId);
+	const { handle } = ensureSessionRecord(request.sessionId);
 	try {
 		const response = await api.performAction(request);
 		if (response.status === 'success') {
 			try {
-				session.performAction(
+				handle.performAction(
 					request.actionId,
 					request.params as ActionParams<string> | undefined,
 				);
@@ -222,10 +242,10 @@ export async function advanceSessionPhase(
 	request: SessionAdvanceRequest,
 ): Promise<SessionAdvanceResponse> {
 	const api = ensureGameApi();
-	const session = ensureSession(request.sessionId);
+	const { handle } = ensureSessionRecord(request.sessionId);
 	const response = await api.advancePhase(request);
 	try {
-		session.advancePhase();
+		handle.advancePhase();
 	} catch (localError) {
 		console.error('Local session failed to mirror remote advance.', localError);
 	}
@@ -239,4 +259,4 @@ export function releaseSession(sessionId: string): void {
 	sessions.delete(sessionId);
 }
 
-export type { CreateSessionResult, FetchSnapshotResult };
+export type { CreateSessionResult, FetchSnapshotResult, SessionHandle };

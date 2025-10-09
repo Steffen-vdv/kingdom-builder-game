@@ -6,7 +6,7 @@ import {
 	POPULATION_ARCHETYPE_INFO,
 	Stat,
 } from '@kingdom-builder/contents';
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { formatStatValue, getStatBreakdownSummary } from '../../utils/stats';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
@@ -110,7 +110,7 @@ const StatButton: React.FC<StatButtonProps> = ({
 };
 
 interface PopulationInfoProps {
-	player: PlayerStateSnapshot;
+	player: SessionPlayerStateSnapshot;
 }
 
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {

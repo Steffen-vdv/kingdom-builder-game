@@ -1,7 +1,7 @@
 import type {
-	PlayerStateSnapshot,
-	StatSourceMeta,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot,
+	SessionStatSourceMeta,
+} from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';
 import { formatDependency } from './dependencyFormatters';
@@ -17,8 +17,8 @@ function isSummaryGroup(entry: SummaryEntry): entry is SummaryGroup {
 }
 
 export function buildDetailEntries(
-	meta: StatSourceMeta,
-	player: PlayerStateSnapshot,
+	meta: SessionStatSourceMeta,
+	player: SessionPlayerStateSnapshot,
 	context: TranslationContext,
 ): SummaryEntry[] {
 	const dependencies = (meta.dependsOn ?? [])

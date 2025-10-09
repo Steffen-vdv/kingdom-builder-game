@@ -3,7 +3,7 @@ import {
 	RESOURCES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import type { RuleSnapshot } from '@kingdom-builder/engine';
+import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
 import {
 	describeEffects,
 	splitSummary,
@@ -13,7 +13,7 @@ import type { SummaryEntry, SummaryGroup } from '../../translation/content';
 
 export const MAX_TIER_SUMMARY_LINES = 4;
 
-export type TierDefinition = RuleSnapshot['tierDefinitions'][number];
+export type TierDefinition = SessionRuleSnapshot['tierDefinitions'][number];
 
 export interface TierSummary {
 	entry: TierSummaryGroup;
