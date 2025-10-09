@@ -9,12 +9,12 @@ export interface PopulationEvaluatorParams extends Record<string, unknown> {
 export const populationEvaluator: EvaluatorHandler<
 	number,
 	PopulationEvaluatorParams
-> = (definition, ctx: EngineContext) => {
+> = (definition, engineContext: EngineContext) => {
 	const role = definition.params?.role;
 	if (role) {
-		return ctx.activePlayer.population[role] || 0;
+		return engineContext.activePlayer.population[role] || 0;
 	}
-	return Object.values(ctx.activePlayer.population).reduce(
+	return Object.values(engineContext.activePlayer.population).reduce(
 		(total, count) => total + Number(count || 0),
 		0,
 	);

@@ -11,7 +11,7 @@ export interface EvaluatorHandler<
 	R = unknown,
 	P extends Record<string, unknown> = Record<string, unknown>,
 > {
-	(definition: EvaluatorDef<P>, ctx: EngineContext): R;
+	(definition: EvaluatorDef<P>, engineContext: EngineContext): R;
 }
 
 export class EvaluatorRegistry extends Registry<EvaluatorHandler> {}

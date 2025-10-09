@@ -13,7 +13,7 @@ export interface RequirementFailure {
 
 export type RequirementHandler = (
 	req: RequirementDef,
-	ctx: EngineContext,
+	engineContext: EngineContext,
 ) => true | RequirementFailure;
 
 export class RequirementRegistry extends Registry<RequirementHandler> {}
@@ -22,10 +22,10 @@ export const REQUIREMENTS = new RequirementRegistry();
 
 export function runRequirement(
 	req: RequirementDef,
-	ctx: EngineContext,
+	engineContext: EngineContext,
 ): true | RequirementFailure {
 	const handler = REQUIREMENTS.get(`${req.type}:${req.method}`);
-	return handler(req, ctx);
+	return handler(req, engineContext);
 }
 
 export function registerCoreRequirements(
