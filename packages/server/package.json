@@ -7,7 +7,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
-		"build": "tsc -p tsconfig.json",
+		"build": "tsc -b tsconfig.json",
 		"test": "vitest --run --config vitest.config.ts"
 	},
 	"dependencies": {
