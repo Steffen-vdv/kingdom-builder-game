@@ -1,8 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import {
-	SessionTransport,
-	TransportError,
-} from '../src/transport/SessionTransport.js';
+import { SessionTransport } from '../src/transport/SessionTransport.js';
+import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 

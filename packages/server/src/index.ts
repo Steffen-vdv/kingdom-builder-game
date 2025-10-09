@@ -6,15 +6,13 @@ export type {
 	SessionManagerOptions,
 	CreateSessionOptions,
 } from './session/SessionManager.js';
-export {
-	SessionTransport,
-	TransportError,
-} from './transport/SessionTransport.js';
+export { SessionTransport } from './transport/SessionTransport.js';
+export type { SessionTransportOptions } from './transport/SessionTransport.js';
+export { TransportError } from './transport/TransportTypes.js';
 export type {
-	SessionTransportOptions,
 	TransportErrorCode,
 	TransportRequest,
-} from './transport/SessionTransport.js';
+} from './transport/TransportTypes.js';
 export { createSessionTransportPlugin } from './transport/FastifySessionTransport.js';
 export type { FastifySessionTransportOptions } from './transport/FastifySessionTransport.js';
 export type { AuthContext, AuthRole } from './auth/AuthContext.js';
