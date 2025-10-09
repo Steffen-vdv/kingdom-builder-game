@@ -33,14 +33,14 @@ import { attackPerform } from './attack';
 export interface EffectHandler<
 	P extends Record<string, unknown> = Record<string, unknown>,
 > {
-	(effect: EffectDef<P>, ctx: EngineContext, mult: number): void;
+	(effect: EffectDef<P>, engineContext: EngineContext, mult: number): void;
 }
 
 export class EffectRegistry extends Registry<EffectHandler> {}
 export const EFFECTS = new EffectRegistry();
 
 export interface EffectCostCollector {
-	(effect: EffectDef, base: CostBag, ctx: EngineContext): void;
+	(effect: EffectDef, base: CostBag, engineContext: EngineContext): void;
 }
 
 export class EffectCostRegistry extends Registry<EffectCostCollector> {}
@@ -78,11 +78,15 @@ export function registerCoreEffects(
 	costRegistry.add('building:add', collectBuildingAddCosts);
 }
 
-export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
+export function runEffects(
+	effects: EffectDef[],
+	engineContext: EngineContext,
+	mult = 1,
+) {
 	for (const effect of effects) {
 		if (effect.evaluator) {
 			const evaluatorHandler = EVALUATORS.get(effect.evaluator.type);
-			const count = evaluatorHandler(effect.evaluator, ctx);
+			const count = evaluatorHandler(effect.evaluator, engineContext);
 			const params = effect.evaluator.params as Record<string, unknown>;
 			const target =
 				params && 'id' in params
@@ -96,15 +100,15 @@ export function runEffects(effects: EffectDef[], ctx: EngineContext, mult = 1) {
 			if (total === 0) {
 				continue;
 			}
-			ctx.recentResourceGains = [];
-			withStatSourceFrames(ctx, frame, () => {
-				runEffects(effect.effects || [], ctx, total);
+			engineContext.recentResourceGains = [];
+			withStatSourceFrames(engineContext, frame, () => {
+				runEffects(effect.effects || [], engineContext, total);
 			});
-			const gains = [...ctx.recentResourceGains];
-			ctx.passives.runEvaluationMods(target, ctx, gains);
+			const gains = [...engineContext.recentResourceGains];
+			engineContext.passives.runEvaluationMods(target, engineContext, gains);
 		} else if (effect.type && effect.method) {
 			const handler = EFFECTS.get(`${effect.type}:${effect.method}`);
-			handler(effect, ctx, mult);
+			handler(effect, engineContext, mult);
 		}
 	}
 }

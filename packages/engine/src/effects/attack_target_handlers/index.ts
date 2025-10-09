@@ -34,14 +34,14 @@ export interface AttackTargetHandler<
 	applyDamage(
 		target: T,
 		damage: number,
-		ctx: EngineContext,
+		engineContext: EngineContext,
 		defender: PlayerState,
 		meta: AttackTargetHandlerMeta,
 	): Mutation;
 	buildLog(
 		target: T,
 		damage: number,
-		ctx: EngineContext,
+		engineContext: EngineContext,
 		defender: PlayerState,
 		meta: AttackTargetHandlerMeta,
 		mutation: Mutation,
