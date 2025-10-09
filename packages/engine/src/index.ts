@@ -6,7 +6,6 @@ export {
 	createEngine,
 } from './setup/create_engine';
 export type {
-	RuleSet,
 	ResourceKey,
 	StatKey,
 	PopulationRoleId,
