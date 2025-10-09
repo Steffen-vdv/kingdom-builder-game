@@ -8,8 +8,8 @@ export interface StatEvaluatorParams extends Record<string, unknown> {
 
 export const statEvaluator: EvaluatorHandler<number, StatEvaluatorParams> = (
 	definition,
-	ctx: EngineContext,
+	engineContext: EngineContext,
 ) => {
 	const key = definition.params?.key as StatKey;
-	return ctx.activePlayer.stats[key] || 0;
+	return engineContext.activePlayer.stats[key] || 0;
 };
