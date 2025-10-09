@@ -128,6 +128,7 @@ type LegacyEngineSessionSnapshot = {
 	compensations: Record<PlayerId, PlayerStartConfig>;
 	rules: LegacyRuleSnapshot;
 	passiveRecords: Record<PlayerId, LegacyPassiveRecordSnapshot[]>;
+	metadata: SessionSnapshot['metadata'];
 };
 
 type AssertExtends<Left, Right> = Left extends Right ? true : never;

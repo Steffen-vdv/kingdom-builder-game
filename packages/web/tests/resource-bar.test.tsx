@@ -117,7 +117,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 				buildings: BUILDINGS,
 				developments: DEVELOPMENTS,
 			},
-			undefined,
+			sessionState.metadata,
 			{
 				ruleSnapshot,
 				passiveRecords: sessionState.passiveRecords,

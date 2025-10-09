@@ -18,6 +18,7 @@ import {
 	type SessionResourceKeys,
 	type SessionRuleSnapshot,
 	type SessionSnapshot,
+	type SessionMetadata,
 } from './sessionTypes';
 import type { LegacyGameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
@@ -51,6 +52,7 @@ interface SessionContainer {
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
 	resourceKeys: SessionResourceKeys;
+	metadata: SessionMetadata;
 }
 
 export function GameProvider(props: ProviderProps) {
@@ -139,6 +141,7 @@ export function GameProvider(props: ProviderProps) {
 					ruleSnapshot: created.ruleSnapshot,
 					registries: created.registries,
 					resourceKeys: created.resourceKeys,
+					metadata: created.metadata,
 				});
 			});
 		void create();
@@ -169,6 +172,7 @@ export function GameProvider(props: ProviderProps) {
 					ruleSnapshot: result.ruleSnapshot,
 					registries: result.registries,
 					resourceKeys: result.resourceKeys,
+					metadata: result.metadata,
 				});
 			}),
 		[runExclusive, updateSessionData],
@@ -225,6 +229,7 @@ export function GameProvider(props: ProviderProps) {
 		onReleaseSession: handleRelease,
 		registries: sessionData.registries,
 		resourceKeys: sessionData.resourceKeys,
+		sessionMetadata: sessionData.metadata,
 	};
 
 	if (onExit) {

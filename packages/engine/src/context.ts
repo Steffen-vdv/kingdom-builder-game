@@ -71,6 +71,20 @@ export class EngineContext {
 		}
 		return nextEntry;
 	}
+	drainEffectLogs(): Map<string, unknown[]> {
+		const entries: Array<[string, unknown[]]> = [];
+		for (const [key, logs] of this._effectLogs.entries()) {
+			const cloned = logs.map((entry) => {
+				if (typeof entry !== 'object' || entry === null) {
+					return entry;
+				}
+				return structuredClone(entry);
+			});
+			entries.push([key, cloned]);
+		}
+		this._effectLogs.clear();
+		return new Map(entries);
+	}
 	get activePlayer() {
 		return this.game.active;
 	}

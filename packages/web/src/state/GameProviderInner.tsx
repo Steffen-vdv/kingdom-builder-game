@@ -55,6 +55,7 @@ export function GameProviderInner({
 	onReleaseSession,
 	registries,
 	resourceKeys,
+	sessionMetadata,
 }: GameProviderInnerProps) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
@@ -94,28 +95,32 @@ export function GameProviderInner({
 		playerName,
 	]);
 
-	const translationContext = useMemo(
-		() =>
-			createTranslationContext(
-				sessionState,
-				registries,
-				{
-					pullEffectLog: <T,>(key: string) => session.pullEffectLog<T>(key),
-					evaluationMods: session.getPassiveEvaluationMods(),
-				},
-				{
-					ruleSnapshot,
-					passiveRecords: sessionState.passiveRecords,
-				},
-			),
-		[
-			sessionState,
-			registries,
-			session,
+	const translationContext = useMemo(() => {
+		const fallbackMetadata = cachedSessionSnapshot.metadata;
+		const fallbackModifiers =
+			fallbackMetadata?.passiveEvaluationModifiers ?? {};
+		const passiveEvaluationModifiers =
+			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
+		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
+		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
+		const metadataPayload = effectLogs
+			? {
+					passiveEvaluationModifiers,
+					effectLogs,
+				}
+			: { passiveEvaluationModifiers };
+		return createTranslationContext(sessionState, registries, metadataPayload, {
 			ruleSnapshot,
-			sessionState.passiveRecords,
-		],
-	);
+			passiveRecords: sessionState.passiveRecords,
+		});
+	}, [
+		sessionState,
+		registries,
+		ruleSnapshot,
+		sessionState.passiveRecords,
+		sessionMetadata,
+		cachedSessionSnapshot,
+	]);
 
 	const {
 		timeScale,

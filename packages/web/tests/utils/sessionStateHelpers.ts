@@ -59,6 +59,10 @@ export function createSessionHelpers(
 		if (!(opponentId in passiveRecords)) {
 			passiveRecords[opponentId] = [];
 		}
+		const overridesMetadata = overrides?.metadata;
+		const metadata = overridesMetadata
+			? structuredClone(overridesMetadata)
+			: { passiveEvaluationModifiers: {} };
 		return {
 			game: {
 				turn: gameOverrides.turn ?? 1,
@@ -82,6 +86,7 @@ export function createSessionHelpers(
 				winConditions: [],
 			},
 			passiveRecords,
+			metadata,
 		};
 	}
 

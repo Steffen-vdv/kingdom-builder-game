@@ -57,6 +57,16 @@ describe('useGameLog', () => {
 			actionCostResource: primaryResource,
 			recentResourceGains: [],
 			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			passiveRecords: {
+				[players[0]!.id]: [],
+				[players[1]!.id]: [],
+			},
+			metadata: { passiveEvaluationModifiers: {} },
 		};
 		const { result } = renderHook(() => useGameLog({ sessionState }));
 

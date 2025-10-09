@@ -77,12 +77,14 @@ describe('sessionSdk', () => {
 		expect(created.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(created.resourceKeys).toEqual(RESOURCE_KEYS);
 		expect(created.registries).toHaveProperty('actions');
+		expect(created.metadata).toEqual(initialSnapshot.metadata);
 	});
 	it('fetches snapshots via the API client', async () => {
 		await createSession();
 		const fetched = await fetchSnapshot('session-1');
 		expect(fetched.snapshot).toEqual(initialSnapshot);
 		expect(fetched.ruleSnapshot).toEqual(initialSnapshot.rules);
+		expect(fetched.metadata).toEqual(initialSnapshot.metadata);
 	});
 	it('performs session actions via the API and mirrors locally', async () => {
 		const created = await createSession();

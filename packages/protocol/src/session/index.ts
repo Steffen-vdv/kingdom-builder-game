@@ -154,6 +154,18 @@ export interface SessionRecentResourceGain {
 	amount: number;
 }
 
+export type SessionEffectLogMap = Record<string, ReadonlyArray<unknown>>;
+
+export type SessionPassiveEvaluationModifierMap = Record<
+	string,
+	ReadonlyArray<string>
+>;
+
+export interface SessionSnapshotMetadata {
+	effectLogs?: SessionEffectLogMap;
+	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
+}
+
 export interface SessionSnapshot {
 	game: SessionGameSnapshot;
 	phases: SessionPhaseDefinition[];
@@ -162,6 +174,7 @@ export interface SessionSnapshot {
 	compensations: Record<SessionPlayerId, PlayerStartConfig>;
 	rules: SessionRuleSnapshot;
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
+	metadata: SessionSnapshotMetadata;
 }
 
 export interface SessionActionDefinitionSummary {

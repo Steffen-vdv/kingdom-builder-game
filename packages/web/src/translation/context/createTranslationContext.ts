@@ -3,6 +3,7 @@ import type {
 	PlayerId,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
+import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol';
 import type {
 	ACTIONS,
 	BUILDINGS,
@@ -27,11 +28,6 @@ import {
 	mapPassiveDefinitionLookup,
 } from './passiveDefinitions';
 
-type TranslationSessionHelpers = {
-	pullEffectLog?: <T>(key: string) => T | undefined;
-	evaluationMods?: ReadonlyMap<string, ReadonlyMap<string, unknown>>;
-};
-
 type TranslationContextOptions = {
 	ruleSnapshot: RuleSnapshot;
 	passiveRecords: EngineSessionSnapshot['passiveRecords'];
@@ -44,7 +40,7 @@ export function createTranslationContext(
 		buildings: typeof BUILDINGS;
 		developments: typeof DEVELOPMENTS;
 	},
-	helpers: TranslationSessionHelpers | undefined,
+	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,
 ): TranslationContext {
 	const players = new Map(
@@ -57,7 +53,9 @@ export function createTranslationContext(
 	}
 	const passives = mapPassives(session.game.players);
 	const passiveDescriptors = mapPassiveDescriptors(passives);
-	const evaluationMods = cloneEvaluationModifiers(helpers?.evaluationMods);
+	const evaluationMods = cloneEvaluationModifiers(
+		metadata.passiveEvaluationModifiers,
+	);
 	const ruleSnapshot = cloneRuleSnapshot(options.ruleSnapshot);
 	const passiveDefinitionLists = mapPassiveDefinitionLists(
 		options.passiveRecords,
@@ -65,6 +63,13 @@ export function createTranslationContext(
 	const passiveDefinitionLookup = mapPassiveDefinitionLookup(
 		passiveDefinitionLists,
 	);
+	const effectLogs = new Map<string, unknown[]>();
+	if (metadata.effectLogs) {
+		const entries = Object.entries(metadata.effectLogs);
+		for (const [key, logEntries] of entries) {
+			effectLogs.set(key, [...logEntries]);
+		}
+	}
 	const translationPassives: TranslationPassives = Object.freeze({
 		list(owner?: PlayerId) {
 			if (owner) {
@@ -130,10 +135,21 @@ export function createTranslationContext(
 		activePlayer,
 		opponent,
 		pullEffectLog<T>(key: string) {
-			if (!helpers?.pullEffectLog) {
+			const queue = effectLogs.get(key);
+			if (!queue || queue.length === 0) {
 				return undefined;
 			}
-			return helpers.pullEffectLog<T>(key);
+			const next = queue.shift();
+			if (queue.length === 0) {
+				effectLogs.delete(key);
+			}
+			if (next === undefined) {
+				return undefined;
+			}
+			if (typeof next === 'object' && next !== null) {
+				return structuredClone(next) as T;
+			}
+			return next as T;
 		},
 		actionCostResource: session.actionCostResource,
 		recentResourceGains: cloneRecentResourceGains(session.recentResourceGains),

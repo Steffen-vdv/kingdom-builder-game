@@ -88,6 +88,7 @@ const createSnapshot = (
 			A: [],
 			B: [],
 		},
+		metadata: overrides.metadata ?? { passiveEvaluationModifiers: {} },
 	};
 
 	return {

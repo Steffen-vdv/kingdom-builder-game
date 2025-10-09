@@ -3,7 +3,10 @@ import type {
 	PassiveSummary,
 	PlayerId,
 } from '@kingdom-builder/engine';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type {
+	SessionPassiveEvaluationModifierMap,
+	PlayerStartConfig,
+} from '@kingdom-builder/protocol';
 import type {
 	TranslationPassiveDescriptor,
 	TranslationPassiveModifierMap,
@@ -143,15 +146,36 @@ export function cloneRecentResourceGains(
 }
 
 export function cloneEvaluationModifiers(
-	evaluationMods?: ReadonlyMap<string, ReadonlyMap<string, unknown>>,
+	evaluationMods?:
+		| ReadonlyMap<string, ReadonlyMap<string, unknown>>
+		| SessionPassiveEvaluationModifierMap,
 ): TranslationPassiveModifierMap {
 	if (!evaluationMods) {
 		return new Map();
 	}
+	if (evaluationMods instanceof Map) {
+		const clones = new Map<string, ReadonlyMap<string, unknown>>();
+		const typedEntries = evaluationMods.entries() as Iterable<
+			readonly [string, ReadonlyMap<string, unknown>]
+		>;
+		for (const [modifierId, mods] of typedEntries) {
+			const modEntries = Array.from(mods.entries()) as Array<
+				readonly [string, unknown]
+			>;
+			clones.set(
+				modifierId,
+				new Map(modEntries) as ReadonlyMap<string, unknown>,
+			);
+		}
+		return clones;
+	}
+	const entries = Object.entries(evaluationMods) as Array<
+		[string, ReadonlyArray<string>]
+	>;
 	return new Map(
-		Array.from(evaluationMods.entries()).map(([modifierId, mods]) => [
+		entries.map(([modifierId, keys]) => [
 			modifierId,
-			new Map(mods) as ReadonlyMap<string, unknown>,
+			new Map(keys.map((key) => [key, true])) as ReadonlyMap<string, unknown>,
 		]),
 	);
 }

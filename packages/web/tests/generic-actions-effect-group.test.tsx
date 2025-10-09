@@ -186,6 +186,7 @@ function createMockGame() {
 			[activePlayer.id]: [],
 			[opponent.id]: [],
 		},
+		metadata: { passiveEvaluationModifiers: {} },
 	};
 
 	const emptyRegistry = new Map<string, never>();

@@ -84,7 +84,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
 		},
-		undefined,
+		sessionState.metadata,
 		{
 			ruleSnapshot,
 			passiveRecords: sessionState.passiveRecords,

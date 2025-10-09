@@ -278,6 +278,7 @@ export function createActionsPanelGame({
 			[player.id]: [],
 			[opponent.id]: [],
 		},
+		metadata: { passiveEvaluationModifiers: {} },
 	};
 
 	const sessionRegistries: SessionRegistries = {

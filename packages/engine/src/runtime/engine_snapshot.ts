@@ -17,11 +17,14 @@ import type {
 	SessionAdvanceResult,
 	SessionAdvanceSkipSnapshot,
 	SessionAdvanceSkipSourceSnapshot,
+	SessionPassiveEvaluationModifierMap,
 	SessionPassiveRecordSnapshot,
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
 	SessionRuleSnapshot,
 	SessionSnapshot,
+	SessionSnapshotMetadata,
+	SessionEffectLogMap,
 } from '@kingdom-builder/protocol';
 import type { PassiveRecordSnapshot } from './types';
 import {
@@ -106,9 +109,39 @@ function cloneSkip(
 	return cloned;
 }
 
+function cloneEffectLogs(
+	context: EngineContext,
+): SessionEffectLogMap | undefined {
+	const drained = context.drainEffectLogs();
+	if (drained.size === 0) {
+		return undefined;
+	}
+	const result: SessionEffectLogMap = {};
+	for (const [key, entries] of drained.entries()) {
+		result[key] = [...entries];
+	}
+	return result;
+}
+
+function snapshotEvaluationModifiers(
+	context: EngineContext,
+): SessionPassiveEvaluationModifierMap {
+	const result: SessionPassiveEvaluationModifierMap = {};
+	const evaluationModEntries = context.passives.evaluationMods.entries();
+	for (const [target, modifiers] of evaluationModEntries) {
+		result[target] = [...modifiers.keys()];
+	}
+	return result;
+}
+
 export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const conclusion = context.game.conclusion;
 	const rules = cloneRuleSnapshot(context);
+	const effectLogs = cloneEffectLogs(context);
+	const passiveEvaluationModifiers = snapshotEvaluationModifiers(context);
+	const metadata: SessionSnapshotMetadata = effectLogs
+		? { passiveEvaluationModifiers, effectLogs }
+		: { passiveEvaluationModifiers };
 	return {
 		game: {
 			turn: context.game.turn,
@@ -143,6 +176,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 		compensations: cloneCompensations(context.compensations),
 		rules,
 		passiveRecords: clonePassiveRecords(context),
+		metadata,
 	};
 }
 
