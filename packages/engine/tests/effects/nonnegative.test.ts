@@ -31,9 +31,10 @@ describe('resource and stat bounds', () => {
 		advance(ctx);
 		ctx.game.currentPlayerIndex = 0;
 		const actionDef = actions.get('lower_fort');
-		const amt = actionDef.effects.find((e) => e.type === 'stat')?.params
-			?.amount as number;
-		ctx.activePlayer.stats[CStat.fortificationStrength] = amt - 1;
+		const effectAmount = actionDef.effects.find(
+			(effect) => effect.type === 'stat',
+		)?.params?.amount as number;
+		ctx.activePlayer.stats[CStat.fortificationStrength] = effectAmount - 1;
 		const cost = getActionCosts('lower_fort', ctx)[Resource.ap] ?? 0;
 		ctx.activePlayer.ap = cost;
 		performAction('lower_fort', ctx);
@@ -58,13 +59,14 @@ describe('resource and stat bounds', () => {
 		advance(ctx);
 		ctx.game.currentPlayerIndex = 0;
 		const actionDef = actions.get('lose_gold');
-		const amt = actionDef.effects.find((e) => e.type === 'resource')?.params
-			?.amount as number;
+		const effectAmount = actionDef.effects.find(
+			(effect) => effect.type === 'resource',
+		)?.params?.amount as number;
 		ctx.activePlayer.gold = 1;
 		const cost = getActionCosts('lose_gold', ctx)[Resource.ap] ?? 0;
 		ctx.activePlayer.ap = cost;
 		performAction('lose_gold', ctx);
-		expect(ctx.activePlayer.gold).toBe(Math.max(1 + amt, 0));
+		expect(ctx.activePlayer.gold).toBe(Math.max(1 + effectAmount, 0));
 	});
 
 	it('clamps negative stat additions to zero', () => {
@@ -85,12 +87,15 @@ describe('resource and stat bounds', () => {
 		advance(ctx);
 		ctx.game.currentPlayerIndex = 0;
 		const actionDef = actions.get('bad_add');
-		const amt = actionDef.effects.find((e) => e.type === 'stat')?.params
-			?.amount as number;
+		const effectAmount = actionDef.effects.find(
+			(effect) => effect.type === 'stat',
+		)?.params?.amount as number;
 		const before = ctx.activePlayer.armyStrength;
 		const cost = getActionCosts('bad_add', ctx)[Resource.ap] ?? 0;
 		ctx.activePlayer.ap = cost;
 		performAction('bad_add', ctx);
-		expect(ctx.activePlayer.armyStrength).toBe(Math.max(before + amt, 0));
+		expect(ctx.activePlayer.armyStrength).toBe(
+			Math.max(before + effectAmount, 0),
+		);
 	});
 });
