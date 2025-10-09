@@ -17,23 +17,28 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {
 	const animateBuildings = useAnimate<HTMLDivElement>();
 	return (
 		<div ref={animateBuildings} className="mt-3 flex w-full flex-wrap gap-3">
-			{player.buildings.map((b) => {
-				const hasDefinition = translationContext.buildings.has(b);
+			{player.buildings.map((buildingId) => {
+				const hasDefinition = translationContext.buildings.has(buildingId);
 				const definition = hasDefinition
-					? translationContext.buildings.get(b)
+					? translationContext.buildings.get(buildingId)
 					: undefined;
-				const name = definition?.name || b;
+				const name = definition?.name || buildingId;
 				const icon = definition?.icon || '';
 				const upkeep = definition?.upkeep;
 				const title = `${icon} ${name}`;
 				return (
 					<div
-						key={b}
+						key={buildingId}
 						className="panel-card flex min-w-[9rem] flex-col items-center gap-1 px-4 py-3 text-center text-sm font-semibold text-slate-700 hoverable cursor-help dark:text-slate-100"
 						onMouseEnter={() => {
-							const full = describeContent('building', b, translationContext, {
-								installed: true,
-							});
+							const full = describeContent(
+								'building',
+								buildingId,
+								translationContext,
+								{
+									installed: true,
+								},
+							);
 							const { effects, description } = splitSummary(full);
 							handleHoverCard({
 								title,
