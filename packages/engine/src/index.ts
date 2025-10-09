@@ -69,10 +69,6 @@ export { EngineContext } from './context';
  */
 export { Services, PassiveManager } from './services';
 export type { PassiveSummary } from './services';
-/**
- * @deprecated Use @kingdom-builder/protocol instead.
- */
-export { Registry } from '@kingdom-builder/protocol';
 export {
 	EFFECTS,
 	EFFECT_COST_COLLECTORS,
@@ -95,10 +91,6 @@ export {
 	EVALUATORS,
 } from './evaluators';
 export type { EvaluatorHandler } from './evaluators';
-/**
- * @deprecated Use @kingdom-builder/protocol instead.
- */
-export type { EvaluatorDef } from '@kingdom-builder/protocol';
 export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type {
 	RequirementHandler,
@@ -116,7 +108,7 @@ export type {
 /**
  * @deprecated Use @kingdom-builder/protocol instead.
  */
-export type { GameConfig } from '@kingdom-builder/protocol';
+export type { EvaluatorDef } from '@kingdom-builder/protocol';
 export { resolveAttack } from './effects/attack';
 export type {
 	AttackLog,
@@ -125,6 +117,10 @@ export type {
 	AttackPlayerDiff,
 	AttackPowerLog,
 } from './effects/attack';
+/**
+ * @deprecated Use @kingdom-builder/protocol instead.
+ */
+export type { GameConfig } from '@kingdom-builder/protocol';
 export { collectTriggerEffects } from './triggers';
 export { applyParamsToEffects } from './utils';
 export { snapshotPlayer } from './log';

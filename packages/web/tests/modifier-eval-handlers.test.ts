@@ -19,9 +19,7 @@ import {
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '../../engine/tests/factories/content';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../src/icons';
-import type { PhaseDef } from '@kingdom-builder/engine/phases';
-import type { StartConfig } from '@kingdom-builder/protocol';
-import type { RuleSet } from '@kingdom-builder/engine/services';
+import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');

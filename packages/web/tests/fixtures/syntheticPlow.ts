@@ -3,13 +3,13 @@ import {
 	createContentFactory,
 	type ContentFactory,
 } from '../../../engine/tests/factories/content';
-import type { PhaseDef } from '@kingdom-builder/engine/phases';
 import type {
+	PhaseDef,
+	RuleSet,
 	StartConfig,
 	ActionConfig,
 	BuildingConfig,
 } from '@kingdom-builder/protocol';
-import type { RuleSet } from '@kingdom-builder/engine/services';
 import type { EffectDef } from '@kingdom-builder/engine';
 
 type SyntheticResourceKey = 'gold' | 'ap' | 'happiness';

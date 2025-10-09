@@ -2,9 +2,7 @@ import {
 	Resource as ContentResource,
 	Stat as ContentStat,
 } from '@kingdom-builder/contents';
-import type { PhaseDef } from '@kingdom-builder/engine/phases';
-import type { StartConfig } from '@kingdom-builder/protocol';
-import type { RuleSet } from '@kingdom-builder/engine/services';
+import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 import { Stat } from '@kingdom-builder/engine';
 
 type SyntheticAction = {

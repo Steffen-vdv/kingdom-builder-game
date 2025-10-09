@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, advance } from '@kingdom-builder/engine';
-import type { PhaseDef } from '@kingdom-builder/engine';
-import type { StartConfig } from '@kingdom-builder/protocol';
-import type { RuleSet } from '@kingdom-builder/engine/services';
+import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 import { createContentFactory } from '../../packages/engine/tests/factories/content';
 
 const resources = {

@@ -10,9 +10,7 @@ import {
 	Types,
 	PassiveMethods,
 } from '@kingdom-builder/contents/config/builderShared';
-import type { PhaseDef } from '@kingdom-builder/engine';
-import type { RuleSet } from '@kingdom-builder/engine/services';
-import type { StartConfig } from '@kingdom-builder/protocol';
+import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 import type { ContentFactory } from '../../../engine/tests/factories/content';
 
 export type SyntheticSessionManagerOptions = Omit<
