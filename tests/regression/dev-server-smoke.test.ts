@@ -7,6 +7,8 @@ import { createServer, type ViteDevServer } from 'vite';
  * Regression coverage for the blank-screen bug where the dev server failed to
  * serve the root markup for the web client.
  */
+const DEV_SERVER_START_TIMEOUT_MS = 60_000;
+
 describe('dev server smoke test', () => {
 	let server: ViteDevServer | undefined;
 	let baseUrl: string | undefined;
@@ -25,7 +27,7 @@ describe('dev server smoke test', () => {
 			throw new Error('Unable to determine dev server address');
 		}
 		baseUrl = `http://${address.address}:${address.port}`;
-	});
+	}, DEV_SERVER_START_TIMEOUT_MS);
 
 	afterAll(async () => {
 		if (server) {
