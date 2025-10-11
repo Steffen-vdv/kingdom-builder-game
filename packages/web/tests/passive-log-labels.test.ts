@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+	createEngineTranslationDiffContext,
+	createSessionResourceDefinitions,
+} from './helpers/createDiffContext';
 import { logContent } from '../src/translation/content';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import {
@@ -17,8 +17,11 @@ import {
 	GAME_START,
 	RULES,
 	PASSIVE_INFO,
+	RESOURCES,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
+
+const RESOURCE_DEFINITIONS = createSessionResourceDefinitions(RESOURCES);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -59,7 +62,10 @@ describe('passive log labels', () => {
 			engineContext,
 		);
 
-		const diffContext = createTranslationDiffContext(engineContext);
+		const diffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const activationLines = diffStepSnapshots(
 			beforeActivation,
 			afterActivation,
@@ -127,7 +133,10 @@ describe('passive log labels', () => {
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
 
-		const diffContext = createTranslationDiffContext(engineContext);
+		const diffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('Castle Walls activated'))).toBe(
 			false,
@@ -180,7 +189,10 @@ describe('passive log labels', () => {
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
 
-		const diffContext = createTranslationDiffContext(engineContext);
+		const diffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
 

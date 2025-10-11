@@ -13,13 +13,14 @@ import {
 	LAND_INFO,
 	POPULATION_INFO,
 } from '@kingdom-builder/contents';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+	createEngineTranslationDiffContext,
+	createSessionResourceDefinitions,
+} from './helpers/createDiffContext';
 
 const RESOURCE_KEYS = [Resource.gold] as const;
+const RESOURCE_DEFINITIONS = createSessionResourceDefinitions(RESOURCES);
 
 describe('log resource source icon registry', () => {
 	const createEngineContext = () =>
@@ -54,11 +55,7 @@ describe('log resource source icon registry', () => {
 			getMeta: (engineContext: ReturnType<typeof createEngineContext>) => {
 				const devId = engineContext.developments
 					.keys()
-					.find((id) =>
-						Boolean(
-							engineContext.developments.get(id)?.icon,
-						),
-					);
+					.find((id) => Boolean(engineContext.developments.get(id)?.icon));
 				expect(devId).toBeTruthy();
 				const icon = devId
 					? engineContext.developments.get(devId)?.icon || ''
@@ -75,11 +72,7 @@ describe('log resource source icon registry', () => {
 			getMeta: (engineContext: ReturnType<typeof createEngineContext>) => {
 				const buildingId = engineContext.buildings
 					.keys()
-					.find((id) =>
-						Boolean(
-							engineContext.buildings.get(id)?.icon,
-						),
-					);
+					.find((id) => Boolean(engineContext.buildings.get(id)?.icon));
 				expect(buildingId).toBeTruthy();
 				const icon = buildingId
 					? engineContext.buildings.get(buildingId)?.icon || ''
@@ -117,7 +110,10 @@ describe('log resource source icon registry', () => {
 			const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 			runEffects([effect], engineContext);
 			const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-			const diffContext = createTranslationDiffContext(engineContext);
+			const diffContext = createEngineTranslationDiffContext(
+				engineContext,
+				RESOURCE_DEFINITIONS,
+			);
 			const lines = diffStepSnapshots(
 				before,
 				after,

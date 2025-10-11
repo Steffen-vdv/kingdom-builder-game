@@ -7,12 +7,15 @@ import {
 	RULES,
 	BUILDINGS,
 	DEVELOPMENTS,
+	RESOURCES,
+	type ResourceKey,
 	createBuildingRegistry,
 	createDevelopmentRegistry,
 } from '@kingdom-builder/contents';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '@kingdom-builder/testing';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 
 type TimelineEntry = string | { text: string };
 
@@ -22,6 +25,27 @@ function extractLineText(entry: TimelineEntry | undefined): string {
 	}
 	return typeof entry === 'string' ? entry : entry.text;
 }
+
+const RESOURCE_DEFINITIONS: Record<string, SessionResourceDefinition> =
+	Object.fromEntries(
+		Object.keys(RESOURCES).map((key) => {
+			const info = RESOURCES[key as ResourceKey];
+			const definition: SessionResourceDefinition = { key };
+			if (info?.icon !== undefined) {
+				definition.icon = info.icon;
+			}
+			if (info?.label !== undefined) {
+				definition.label = info.label;
+			}
+			if (info?.description !== undefined) {
+				definition.description = info.description;
+			}
+			if (info?.tags?.length) {
+				definition.tags = [...info.tags];
+			}
+			return [key, definition];
+		}),
+	);
 
 describe('content-driven action log hooks', () => {
 	it(
@@ -103,6 +127,8 @@ describe('content-driven action log hooks', () => {
 					actions: content.actions,
 					buildings,
 					developments,
+					populations: POPULATIONS,
+					resources: RESOURCE_DEFINITIONS,
 				},
 				snapshot.metadata,
 				{

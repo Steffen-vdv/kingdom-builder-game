@@ -1,8 +1,10 @@
 import type {
 	BuildingConfig,
 	DevelopmentConfig,
+	PopulationConfig,
 	SessionPlayerId,
 } from '@kingdom-builder/protocol';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import { type PassiveDescriptor, type PassiveModifierMap } from './types';
 
 interface PassiveLookup {
@@ -31,6 +33,11 @@ export interface TranslationDiffContext {
 		get(id: string): DevelopmentConfig;
 		has(id: string): boolean;
 	};
+	readonly populations: {
+		get(id: string): PopulationConfig;
+		has(id: string): boolean;
+	};
+	readonly resources: Readonly<Record<string, SessionResourceDefinition>>;
 	readonly passives: TranslationDiffPassives;
 	evaluate(evaluator: {
 		type: string;
@@ -94,6 +101,11 @@ export function createTranslationDiffContext(context: {
 		get(id: string): DevelopmentConfig;
 		has?(id: string): boolean;
 	};
+	populations: {
+		get(id: string): PopulationConfig;
+		has?(id: string): boolean;
+	};
+	resources: Readonly<Record<string, SessionResourceDefinition>>;
 	passives: unknown;
 }): TranslationDiffContext {
 	const rawPassives = context.passives as PassiveLookup | undefined;
@@ -120,6 +132,13 @@ export function createTranslationDiffContext(context: {
 				? context.developments.has.bind(context.developments)
 				: (id: string) => context.developments.get(id) !== undefined,
 		},
+		populations: {
+			get: context.populations.get.bind(context.populations),
+			has: context.populations.has
+				? context.populations.has.bind(context.populations)
+				: (id: string) => context.populations.get(id) !== undefined,
+		},
+		resources: Object.freeze({ ...context.resources }),
 		passives,
 		evaluate(evaluator) {
 			return Number(evaluateDefinition(evaluator, this));

@@ -22,8 +22,11 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
-	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	createEngineTranslationDiffContext,
+	createSessionResourceDefinitions,
+} from './helpers/createDiffContext';
 import {
 	appendSubActionChanges,
 	filterActionDiffChanges,
@@ -34,6 +37,8 @@ import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
 ) as SyntheticResourceKey[];
+const RESOURCE_DEFINITIONS =
+	createSessionResourceDefinitions(SYNTHETIC_RESOURCES);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -95,7 +100,10 @@ describe('tax action logging with market', () => {
 			engineContext,
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const changes = diffStepSnapshots(
 			before,
 			after,

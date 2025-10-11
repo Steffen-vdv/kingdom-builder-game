@@ -6,9 +6,6 @@ import type {
 } from '@kingdom-builder/engine';
 import {
 	RESOURCES,
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
 	PHASES,
 	RULES,
 	STATS,
@@ -77,12 +74,15 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		actionCostResource: RULES.tieredResourceKey as ResourceKey,
 		ruleSnapshot,
 	});
+	const sessionRegistries = createSessionRegistries();
 	const translationContext = createTranslationContext(
 		sessionState,
 		{
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
+			actions: sessionRegistries.actions,
+			buildings: sessionRegistries.buildings,
+			developments: sessionRegistries.developments,
+			populations: sessionRegistries.populations,
+			resources: sessionRegistries.resources,
 		},
 		sessionState.metadata,
 		{
@@ -90,7 +90,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			passiveRecords: sessionState.passiveRecords,
 		},
 	);
-	const sessionRegistries = createSessionRegistries();
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: LegacyGameEngineContextValue = {
 		sessionId: 'test-session',

@@ -1,4 +1,3 @@
-import { LAND_INFO } from '@kingdom-builder/contents';
 import { type TranslationDiffContext } from './resourceSources/context';
 import {
 	formatIconLabel,
@@ -6,6 +5,9 @@ import {
 	LOG_KEYWORDS,
 } from './logMessages';
 import { type PlayerSnapshot } from './snapshots';
+
+const DEFAULT_LAND_ICON = '🗺️';
+const DEFAULT_LAND_LABEL = 'Land';
 
 function describeContent(
 	registry: { get(id: string): unknown },
@@ -59,9 +61,8 @@ export function appendLandChanges(
 		});
 		if (!previous) {
 			const landLabel =
-				formatIconLabel(LAND_INFO.icon, LAND_INFO.label) ||
-				LAND_INFO.label ||
-				'Land';
+				formatIconLabel(DEFAULT_LAND_ICON, DEFAULT_LAND_LABEL) ||
+				DEFAULT_LAND_LABEL;
 			changes.push(formatLogHeadline(LOG_KEYWORDS.gained, landLabel));
 			continue;
 		}

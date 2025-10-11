@@ -82,7 +82,7 @@ interface UseActionPerformerOptions {
 	actionCostResource: SessionResourceKey;
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'resources'
+		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
 	addLog: (
 		entry: string | string[],

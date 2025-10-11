@@ -1,8 +1,4 @@
-import {
-	PASSIVE_INFO,
-	MODIFIER_INFO,
-	formatPassiveRemoval,
-} from '@kingdom-builder/contents';
+import { formatPassiveRemoval } from '@kingdom-builder/contents';
 import {
 	type EffectDef,
 	type SessionPassiveSummary,
@@ -12,9 +8,12 @@ import {
 	translateTierSummary,
 } from '../content/tierSummaries';
 
+const DEFAULT_PASSIVE_ICON = '♾️';
+const DEFAULT_PASSIVE_LABEL = 'Passive';
+
 const MODIFIER_ICON_MAP = {
-	cost_mod: MODIFIER_INFO.cost.icon,
-	result_mod: MODIFIER_INFO.result.icon,
+	cost_mod: '💲',
+	result_mod: '✨',
 } as const;
 
 type ModifierIconKey = keyof typeof MODIFIER_ICON_MAP;
@@ -117,7 +116,7 @@ function deriveIcon(
 	if (modifierType && hasModifierIconKey(modifierType)) {
 		return MODIFIER_ICON_MAP[modifierType];
 	}
-	return PASSIVE_INFO.icon ?? '';
+	return DEFAULT_PASSIVE_ICON;
 }
 
 function resolveLabel(
@@ -145,7 +144,7 @@ function resolveLabel(
 		normalizeLabel(passive.detail) ||
 		normalizeLabel(definition.detail) ||
 		normalizeLabel(passive.id);
-	const rawLabel = normalized || PASSIVE_INFO.label || fallbackLabel;
+	const rawLabel = normalized || DEFAULT_PASSIVE_LABEL || fallbackLabel;
 	return rawLabel === passive.id ? fallbackLabel : rawLabel;
 }
 

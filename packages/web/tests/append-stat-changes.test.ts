@@ -8,6 +8,7 @@ import {
 import { appendStatChanges } from '../src/translation/log/diffSections';
 import { type PlayerSnapshot } from '../src/translation/log';
 import { type StepEffects } from '../src/translation/log/statBreakdown';
+import { type TranslationDiffContext } from '../src/translation/log/resourceSources/context';
 import { formatPercentBreakdown } from '../src/translation/log/diffFormatting';
 import { formatStatValue } from '../src/utils/stats';
 
@@ -69,7 +70,30 @@ describe('appendStatChanges', () => {
 			],
 		};
 		const changes: string[] = [];
-		appendStatChanges(changes, before, after, player, raiseStrengthEffects);
+		const diffContext: Pick<
+			TranslationDiffContext,
+			'populations' | 'resources'
+		> = {
+			populations: {
+				get(id: string) {
+					return POPULATION_ROLES[id as PopulationRole];
+				},
+				has(id: string) {
+					return id in POPULATION_ROLES;
+				},
+			},
+			resources: {
+				population: { key: 'population', icon: '👥' },
+			},
+		};
+		appendStatChanges(
+			changes,
+			before,
+			after,
+			player,
+			raiseStrengthEffects,
+			diffContext,
+		);
 		const label = STATS[Stat.armyStrength]?.label ?? Stat.armyStrength;
 		const line = changes.find((entry) => entry.includes(label));
 		expect(line).toBeDefined();

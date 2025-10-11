@@ -1,10 +1,11 @@
-import { PASSIVE_INFO } from '@kingdom-builder/contents';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
 import {
 	type TranslationDiffContext,
 	type TranslationDiffPassives,
 } from './context';
 import { type ResourceSourceEntry } from './types';
+
+const DEFAULT_PASSIVE_ICON = '♾️';
 
 export function resolveEvaluatorTarget(evaluator: {
 	type: string;
@@ -39,7 +40,7 @@ function resolveModifierIcon(
 			return passive.meta.source.icon ?? '';
 		}
 	}
-	return PASSIVE_INFO.icon || '';
+	return DEFAULT_PASSIVE_ICON;
 }
 
 export function appendEvaluatorModifiers(

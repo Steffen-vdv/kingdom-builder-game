@@ -1,6 +1,7 @@
-import { POPULATION_ROLES, POPULATION_INFO } from '@kingdom-builder/contents';
 import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
+
+const DEFAULT_POPULATION_ICON = '👥';
 
 export type EvaluatorIconRenderer = (
 	evaluatorDefinition: { type: string; params?: Record<string, unknown> },
@@ -38,10 +39,8 @@ function renderPopulationIcons(
 	const params = evaluatorDefinition.params as
 		| Record<string, string>
 		| undefined;
-	const role = params?.['role'] as keyof typeof POPULATION_ROLES | undefined;
-	const icon = role
-		? POPULATION_ROLES[role]?.icon || role
-		: POPULATION_INFO.icon;
+	const role = params?.['role'];
+	const icon = resolvePopulationIcon(role, context);
 	entry.icons += icon.repeat(count);
 }
 
@@ -49,3 +48,22 @@ export const EVALUATOR_ICON_RENDERERS: Record<string, EvaluatorIconRenderer> = {
 	development: renderDevelopmentIcons,
 	population: renderPopulationIcons,
 };
+
+function resolvePopulationIcon(
+	role: string | undefined,
+	context: TranslationDiffContext,
+): string {
+	if (role) {
+		try {
+			if (context.populations.has(role)) {
+				const definition = context.populations.get(role);
+				if (definition?.icon) {
+					return definition.icon;
+				}
+			}
+		} catch {
+			// ignore missing definitions
+		}
+	}
+	return context.resources['population']?.icon ?? DEFAULT_POPULATION_ICON;
+}

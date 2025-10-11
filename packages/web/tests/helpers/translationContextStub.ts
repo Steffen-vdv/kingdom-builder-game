@@ -60,6 +60,8 @@ export function createTranslationContextStub(
 		actions: TranslationRegistry<unknown>;
 		buildings: TranslationRegistry<unknown>;
 		developments: TranslationRegistry<unknown>;
+		populations?: TranslationRegistry<unknown>;
+		resources?: TranslationContext['resources'];
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: RuleSnapshot;
@@ -76,6 +78,17 @@ export function createTranslationContextStub(
 		actions: options.actions,
 		buildings: options.buildings,
 		developments: options.developments,
+		populations:
+			options.populations ??
+			wrapTranslationRegistry({
+				get() {
+					throw new Error('populations registry not provided');
+				},
+				has() {
+					return false;
+				},
+			}),
+		resources: options.resources ?? {},
 		passives: EMPTY_PASSIVES,
 		phases: options.phases,
 		activePlayer: options.activePlayer,

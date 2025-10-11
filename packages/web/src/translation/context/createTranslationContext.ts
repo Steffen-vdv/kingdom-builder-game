@@ -5,6 +5,7 @@ import type {
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
 import type { SessionRegistries } from '../../state/sessionRegistries';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import type { TranslationContext, TranslationPassives } from './types';
 import {
 	cloneCompensations,
@@ -31,7 +32,10 @@ type TranslationContextOptions = {
 
 export function createTranslationContext(
 	session: SessionSnapshot,
-	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>,
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+	>,
 	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,
 ): TranslationContext {
@@ -84,10 +88,20 @@ export function createTranslationContext(
 			return evaluationMods;
 		},
 	});
+	const clonedResources = Object.freeze(
+		Object.fromEntries(
+			Object.entries(registries.resources).map(([key, definition]) => [
+				key,
+				cloneResourceDefinition(definition),
+			]),
+		),
+	);
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
 		buildings: wrapRegistry(registries.buildings),
 		developments: wrapRegistry(registries.developments),
+		populations: wrapRegistry(registries.populations),
+		resources: clonedResources,
 		passives: translationPassives,
 		phases: Object.freeze(
 			session.phases.map((phase) => {
@@ -148,4 +162,23 @@ export function createTranslationContext(
 		compensations: cloneCompensations(session.compensations),
 		rules: ruleSnapshot,
 	});
+}
+
+function cloneResourceDefinition(
+	definition: SessionResourceDefinition,
+): SessionResourceDefinition {
+	const clone: SessionResourceDefinition = { key: definition.key };
+	if (definition.icon !== undefined) {
+		clone.icon = definition.icon;
+	}
+	if (definition.label !== undefined) {
+		clone.label = definition.label;
+	}
+	if (definition.description !== undefined) {
+		clone.description = definition.description;
+	}
+	if (definition.tags) {
+		clone.tags = [...definition.tags];
+	}
+	return Object.freeze(clone);
 }

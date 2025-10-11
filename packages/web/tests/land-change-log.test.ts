@@ -9,18 +9,21 @@ import {
 	GAME_START,
 	RULES,
 	LAND_INFO,
+	RESOURCES,
 } from '@kingdom-builder/contents';
 import { logContent } from '../src/translation/content';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+	createEngineTranslationDiffContext,
+	createSessionResourceDefinitions,
+} from './helpers/createDiffContext';
 import {
 	formatIconLabel,
 	formatLogHeadline,
 	LOG_KEYWORDS,
 } from '../src/translation/log/logMessages';
+
+const RESOURCE_DEFINITIONS = createSessionResourceDefinitions(RESOURCES);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -52,7 +55,10 @@ describe('land change log formatting', () => {
 			engineContext,
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -117,7 +123,10 @@ describe('land change log formatting', () => {
 			engineContext,
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const lines = diffStepSnapshots(
 			before,
 			after,

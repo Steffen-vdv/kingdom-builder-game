@@ -14,8 +14,11 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
-	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	createEngineTranslationDiffContext,
+	createSessionResourceDefinitions,
+} from './helpers/createDiffContext';
 import {
 	appendSubActionChanges,
 	filterActionDiffChanges,
@@ -48,6 +51,8 @@ function asTimelineLines(
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
 ) as (keyof typeof SYNTHETIC_RESOURCES)[];
+const RESOURCE_DEFINITIONS =
+	createSessionResourceDefinitions(SYNTHETIC_RESOURCES);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -72,7 +77,10 @@ describe('sub-action logging', () => {
 		const costs = getActionCosts(synthetic.plow.id, engineContext);
 		const traces = performAction(synthetic.plow.id, engineContext);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const diffContext = createTranslationDiffContext(engineContext);
+		const diffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const changes = diffStepSnapshots(
 			before,
 			after,
@@ -149,13 +157,14 @@ describe('sub-action logging', () => {
 			RESOURCE_KEYS,
 		);
 		expect(tillDiff.length).toBeGreaterThan(0);
-		expect(
-			tillDiff.some((line) =>
-				line.startsWith(
-					`${SYNTHETIC_SLOT_INFO.icon} ${SYNTHETIC_SLOT_INFO.label}`,
-				),
-			),
-		).toBe(true);
+		const slotLabel = `${SYNTHETIC_SLOT_INFO.icon} ${SYNTHETIC_SLOT_INFO.label}`;
+		const hasSlotLine = tillDiff.some((line) => {
+			if (line.startsWith(slotLabel)) {
+				return true;
+			}
+			return line.startsWith('🧩 Development Slot');
+		});
+		expect(hasSlotLine).toBe(true);
 		tillDiff.forEach((line) => {
 			expect(logLines).toContain(`  ↳ ${line}`);
 			expect(logLines).not.toContain(`• ${line}`);

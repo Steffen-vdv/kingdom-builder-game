@@ -1,11 +1,9 @@
-import {
-	POPULATION_ROLES,
-	POPULATION_INFO,
-	LAND_INFO,
-} from '@kingdom-builder/contents';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
 import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
+
+const DEFAULT_POPULATION_ICON = '👥';
+const DEFAULT_LAND_ICON = '🗺️';
 
 export type ResourceSourceMeta = Record<string, unknown> & {
 	type?: string;
@@ -33,12 +31,10 @@ function normalizeMetaCount(rawCount: number): number {
 
 function renderPopulationMetaIcons(
 	meta: ResourceSourceMeta,
-	_context: TranslationDiffContext,
+	context: TranslationDiffContext,
 ): string {
-	const role = meta.id as keyof typeof POPULATION_ROLES | undefined;
-	const icon = role
-		? POPULATION_ROLES[role]?.icon || role
-		: POPULATION_INFO.icon;
+	const role = typeof meta.id === 'string' ? meta.id : undefined;
+	const icon = resolvePopulationIcon(role, context);
 	if (!icon) {
 		return '';
 	}
@@ -77,7 +73,7 @@ function renderBuildingMetaIcons(
 }
 
 function renderLandMetaIcons(): string {
-	return LAND_INFO.icon || '';
+	return DEFAULT_LAND_ICON;
 }
 
 const META_ICON_RENDERERS: Record<string, MetaIconRenderer> = {
@@ -103,4 +99,23 @@ export function appendMetaSourceIcons(
 	if (icons) {
 		entry.icons += icons;
 	}
+}
+
+function resolvePopulationIcon(
+	role: string | undefined,
+	context: TranslationDiffContext,
+): string {
+	if (role) {
+		try {
+			if (context.populations.has(role)) {
+				const definition = context.populations.get(role);
+				if (definition?.icon) {
+					return definition.icon;
+				}
+			}
+		} catch {
+			// ignore missing definitions
+		}
+	}
+	return context.resources['population']?.icon ?? DEFAULT_POPULATION_ICON;
 }

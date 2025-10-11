@@ -3,11 +3,13 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PlayerStartConfig,
+	PopulationConfig,
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerId,
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that
@@ -99,6 +101,8 @@ export interface TranslationContext {
 	readonly actions: TranslationRegistry<ActionConfig>;
 	readonly buildings: TranslationRegistry<BuildingConfig>;
 	readonly developments: TranslationRegistry<DevelopmentConfig>;
+	readonly populations: TranslationRegistry<PopulationConfig>;
+	readonly resources: Readonly<Record<string, SessionResourceDefinition>>;
 	readonly passives: TranslationPassives;
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;

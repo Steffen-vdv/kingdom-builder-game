@@ -19,15 +19,18 @@ import {
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_LAND_INFO,
 } from './fixtures/syntheticTaxLog';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+	createEngineTranslationDiffContext,
+	createSessionResourceDefinitions,
+} from './helpers/createDiffContext';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
 ) as SyntheticResourceKey[];
+const RESOURCE_DEFINITIONS: Record<string, SessionResourceDefinition> =
+	createSessionResourceDefinitions(SYNTHETIC_RESOURCES);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -72,7 +75,10 @@ describe('log resource sources', () => {
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -124,7 +130,10 @@ describe('log resource sources', () => {
 		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 		performAction(SYNTHETIC_IDS.taxAction, engineContext);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -180,7 +189,10 @@ describe('log resource sources', () => {
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const lines = diffStepSnapshots(
 			before,
 			after,

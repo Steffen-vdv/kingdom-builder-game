@@ -1,32 +1,48 @@
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	PHASES,
-	POPULATIONS,
-	RESOURCES,
-	STATS,
-} from '@kingdom-builder/contents';
-import type {
-	EngineSessionSnapshot,
-	PlayerId,
-	ResourceKey,
-} from '@kingdom-builder/engine';
+import type { EngineSessionSnapshot, PlayerId } from '@kingdom-builder/engine';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
+import { deserializeSessionRegistries } from '../../src/state/sessionRegistries';
+import { sessionApiRegistriesPayload } from '../fixtures/sessionApiPayload';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
-		const [resourceKey] = Object.keys(RESOURCES) as ResourceKey[];
-		const [statKey] = Object.keys(STATS) as string[];
-		const [populationId] = POPULATIONS.keys();
-		const [actionId] = ACTIONS.keys();
-		const [buildingId] = BUILDINGS.keys();
-		const [developmentId] = DEVELOPMENTS.keys();
-		const [firstPhase] = PHASES;
-		const firstStep = firstPhase?.steps[0]?.id ?? firstPhase?.id ?? 'phase';
+		const registries = deserializeSessionRegistries(
+			sessionApiRegistriesPayload,
+		);
+		const [resourceKey] = Object.keys(registries.resources);
+		if (!resourceKey) {
+			throw new Error('fixtures missing resource definitions');
+		}
+		const [actionId] = registries.actions.keys();
+		const [buildingId] = registries.buildings.keys();
+		const [developmentId] = registries.developments.keys();
+		const [populationId] = registries.populations.keys();
+		if (!actionId || !buildingId || !developmentId || !populationId) {
+			throw new Error('fixtures missing registry entries');
+		}
+		const statKey = 'stat.army';
+		const phases: EngineSessionSnapshot['phases'] = [
+			{
+				id: 'phase-growth',
+				label: 'Growth',
+				icon: '🌱',
+				steps: [
+					{
+						id: 'phase-growth:start',
+						triggers: ['growth:start'],
+					},
+				],
+			},
+			{
+				id: 'phase-main',
+				label: 'Main',
+				icon: '🎯',
+				action: true,
+				steps: [{ id: 'phase-main:start' }],
+			},
+		];
 		const passiveId = 'passive-a';
 		const metadata = {
 			effectLogs: { legacy: [{ note: 'legacy entry' }] },
@@ -60,6 +76,8 @@ describe('createTranslationContext', () => {
 			skipSteps: {},
 			passives: config.passives ?? [],
 		});
+		const actionIcon = registries.actions.get(actionId).icon;
+		const buildingIcon = registries.buildings.get(buildingId).icon;
 		const players: EngineSessionSnapshot['game']['players'] = [
 			makePlayer({
 				id: 'A' as PlayerId,
@@ -71,9 +89,9 @@ describe('createTranslationContext', () => {
 				passives: [
 					{
 						id: passiveId,
-						icon: ACTIONS.get(actionId).icon,
+						icon: actionIcon,
 						meta: {
-							source: { icon: BUILDINGS.get(buildingId).icon },
+							source: { icon: buildingIcon },
 						},
 					},
 				],
@@ -90,8 +108,8 @@ describe('createTranslationContext', () => {
 			game: {
 				turn: 4,
 				currentPlayerIndex: 0,
-				currentPhase: firstPhase?.id ?? 'phase',
-				currentStep: firstStep,
+				currentPhase: phases[0]?.id ?? 'phase-growth',
+				currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-growth:start',
 				phaseIndex: 0,
 				stepIndex: 0,
 				devMode: false,
@@ -99,7 +117,7 @@ describe('createTranslationContext', () => {
 				activePlayerId: 'A',
 				opponentId: 'B',
 			},
-			phases: PHASES,
+			phases,
 			actionCostResource: resourceKey,
 			recentResourceGains: [{ key: resourceKey, amount: 3 }],
 			compensations: {
@@ -116,11 +134,9 @@ describe('createTranslationContext', () => {
 					{
 						id: passiveId,
 						owner: 'A',
-						icon: ACTIONS.get(actionId).icon,
+						icon: actionIcon,
 						meta: {
-							source: {
-								icon: BUILDINGS.get(buildingId).icon,
-							},
+							source: { icon: buildingIcon },
 						},
 					},
 				],
@@ -128,19 +144,10 @@ describe('createTranslationContext', () => {
 			},
 			metadata,
 		};
-		const context = createTranslationContext(
-			session,
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
-			metadata,
-			{
-				ruleSnapshot: session.rules,
-				passiveRecords: session.passiveRecords,
-			},
-		);
+		const context = createTranslationContext(session, registries, metadata, {
+			ruleSnapshot: session.rules,
+			passiveRecords: session.passiveRecords,
+		});
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
 			note: 'legacy entry',
 		});
@@ -153,7 +160,11 @@ describe('createTranslationContext', () => {
 		const activeId = players[0]?.id ?? 'A';
 		const contextSnapshot = {
 			actionCostResource: context.actionCostResource,
-			phases: context.phases.map((phase) => phase.id),
+			phases: context.phases.map((phase) => ({
+				id: phase.id,
+				icon: phase.icon,
+				label: phase.label,
+			})),
 			players: {
 				active: context.activePlayer.id,
 				opponent: context.opponent.id,
@@ -166,6 +177,15 @@ describe('createTranslationContext', () => {
 				development: {
 					id: developmentId,
 					has: context.developments.has(developmentId),
+				},
+				population: {
+					id: populationId,
+					has: context.populations.has(populationId),
+				},
+				resource: {
+					key: resourceKey,
+					label: context.resources[resourceKey]?.label,
+					icon: context.resources[resourceKey]?.icon,
 				},
 			},
 			rules: context.rules,
@@ -180,26 +200,26 @@ describe('createTranslationContext', () => {
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
                         {
-                          "actionCostResource": "gold",
+                          "actionCostResource": "resource.gold",
                           "compensations": {
                             "A": {
                               "resources": {
-                                "gold": 2,
+                                "resource.gold": 2,
                               },
                             },
                             "B": {
                               "resources": {
-                                "gold": 1,
+                                "resource.gold": 1,
                               },
                             },
                           },
                           "passives": {
                             "definition": {
-                              "icon": "🌱",
+                              "icon": "🌾",
                               "id": "passive-a",
                               "meta": {
                                 "source": {
-                                  "icon": "🏘️",
+                                  "icon": "🏭",
                                 },
                               },
                               "owner": "A",
@@ -208,16 +228,16 @@ describe('createTranslationContext', () => {
                               "passive-a",
                             ],
                             "descriptor": {
-                              "icon": "🌱",
+                              "icon": "🌾",
                               "meta": {
                                 "source": {
-                                  "icon": "🏘️",
+                                  "icon": "🏭",
                                 },
                               },
                             },
                             "evaluationMods": [
                               [
-                                "gold",
+                                "resource.gold",
                                 [
                                   "modifier",
                                 ],
@@ -231,9 +251,16 @@ describe('createTranslationContext', () => {
                             ],
                           },
                           "phases": [
-                            "growth",
-                            "upkeep",
-                            "main",
+                            {
+                              "icon": "🌱",
+                              "id": "phase-growth",
+                              "label": "Growth",
+                            },
+                            {
+                              "icon": "🎯",
+                              "id": "phase-main",
+                              "label": "Main",
+                            },
                           ],
                           "players": {
                             "active": "A",
@@ -242,26 +269,35 @@ describe('createTranslationContext', () => {
                           "recentResourceGains": [
                             {
                               "amount": 3,
-                              "key": "gold",
+                              "key": "resource.gold",
                             },
                           ],
                           "registries": {
                             "action": {
                               "has": true,
-                              "id": "expand",
+                              "id": "action.harvest",
                             },
                             "building": {
                               "has": true,
-                              "id": "town_charter",
+                              "id": "building.mill",
                             },
                             "development": {
                               "has": true,
-                              "id": "farm",
+                              "id": "development.farm",
+                            },
+                            "population": {
+                              "has": true,
+                              "id": "population.citizen",
+                            },
+                            "resource": {
+                              "icon": "🪙",
+                              "key": "resource.gold",
+                              "label": "Gold",
                             },
                           },
                           "rules": {
                             "tierDefinitions": [],
-                            "tieredResourceKey": "gold",
+                            "tieredResourceKey": "resource.gold",
                             "winConditions": [],
                           },
                         }

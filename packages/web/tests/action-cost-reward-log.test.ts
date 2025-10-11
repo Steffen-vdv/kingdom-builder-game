@@ -16,8 +16,11 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
-	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	createEngineTranslationDiffContext,
+	createSessionResourceDefinitions,
+} from './helpers/createDiffContext';
 import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
@@ -47,6 +50,8 @@ function asTimelineLines(
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
 ) as SyntheticResourceKey[];
+const RESOURCE_DEFINITIONS =
+	createSessionResourceDefinitions(SYNTHETIC_RESOURCES);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -88,7 +93,10 @@ describe('action cost and reward logging', () => {
 		const costs = getActionCosts(refundAction.id, engineContext);
 		performAction(refundAction.id, engineContext);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const diffContext = createTranslationDiffContext(engineContext);
+		const diffContext = createEngineTranslationDiffContext(
+			engineContext,
+			RESOURCE_DEFINITIONS,
+		);
 		const actionDefinition = engineContext.actions.get(refundAction.id);
 		if (!actionDefinition) {
 			throw new Error('Missing refund action definition');

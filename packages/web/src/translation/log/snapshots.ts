@@ -6,7 +6,6 @@ import type {
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 } from '@kingdom-builder/protocol';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import { type Land } from '../content';
 import {
 	appendResourceChanges,
@@ -16,7 +15,10 @@ import {
 	appendSlotChanges,
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
-import { createTranslationDiffContext } from './resourceSources/context';
+import {
+	createTranslationDiffContext,
+	type TranslationDiffContext,
+} from './resourceSources/context';
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
@@ -107,11 +109,11 @@ export function snapshotPlayer(
 export function collectResourceKeys(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
-): ResourceKey[] {
+): string[] {
 	return Object.keys({
 		...previousSnapshot.resources,
 		...nextSnapshot.resources,
-	}) as ResourceKey[];
+	});
 }
 
 interface DiffContext extends SnapshotContext {
@@ -128,22 +130,25 @@ interface DiffContext extends SnapshotContext {
 		get(id: string): DevelopmentConfig;
 		has?(id: string): boolean;
 	};
+	populations: TranslationDiffContext['populations'];
+	resources: TranslationDiffContext['resources'];
 }
 
 export function diffSnapshots(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
 	context: DiffContext,
-	resourceKeys: ResourceKey[] = collectResourceKeys(
-		previousSnapshot,
-		nextSnapshot,
-	),
+	resourceKeys: string[] = collectResourceKeys(previousSnapshot, nextSnapshot),
 ): string[] {
 	const changeSummaries: string[] = [];
+	const diffContext = createTranslationDiffContext(context);
+	const resources = diffContext.resources;
+	const populations = diffContext.populations;
 	appendResourceChanges(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,
+		resources,
 		resourceKeys,
 	);
 	appendStatChanges(
@@ -152,8 +157,8 @@ export function diffSnapshots(
 		nextSnapshot,
 		nextSnapshot,
 		undefined,
+		{ populations, resources },
 	);
-	const diffContext = createTranslationDiffContext(context);
 	appendBuildingChanges(
 		changeSummaries,
 		previousSnapshot,

@@ -1,10 +1,12 @@
-import { PASSIVE_INFO } from '@kingdom-builder/contents';
 import { resolvePassivePresentation } from './passives';
 import type { PlayerSnapshot } from './snapshots';
 import {
 	createPassiveVisibilityContext,
 	shouldSurfacePassive,
 } from '../../passives/visibility';
+
+const DEFAULT_PASSIVE_ICON = '♾️';
+const DEFAULT_PASSIVE_LABEL = 'Passive';
 
 function createPassiveMap(passives: PlayerSnapshot['passives']) {
 	const map = new Map<string, PlayerSnapshot['passives'][number]>();
@@ -15,12 +17,12 @@ function createPassiveMap(passives: PlayerSnapshot['passives']) {
 }
 
 function decoratePassiveLabel(icon: string, label: string): string {
-	const fallback = label.trim() || PASSIVE_INFO.label || label;
+	const fallback = label.trim() || DEFAULT_PASSIVE_LABEL || label;
 	const decorated = [icon, fallback]
 		.filter((part) => part && String(part).trim().length > 0)
 		.join(' ')
 		.trim();
-	const prefix = PASSIVE_INFO.icon?.trim();
+	const prefix = DEFAULT_PASSIVE_ICON.trim();
 	if (!prefix) {
 		return decorated;
 	}
