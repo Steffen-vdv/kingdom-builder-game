@@ -17,8 +17,8 @@ describe('CostModifierService', () => {
 				[resourceB]: 9,
 			},
 		});
-		const ctx = createTestEngine({ actions: content.actions });
-		const baseCosts = getActionCosts(action.id, ctx);
+		const engineContext = createTestEngine({ actions: content.actions });
+		const baseCosts = getActionCosts(action.id, engineContext);
 		const base = {
 			[resourceA]: baseCosts[resourceA] ?? 0,
 			[resourceB]: baseCosts[resourceB] ?? 0,
@@ -54,7 +54,7 @@ describe('CostModifierService', () => {
 				round: { [resourceB]: 'down' },
 			};
 		});
-		const result = service.apply(action.id, base, ctx);
+		const result = service.apply(action.id, base, engineContext);
 		const baseA = base[resourceA] ?? 0;
 		const baseB = base[resourceB] ?? 0;
 		const afterFlatA = baseA + 3;
@@ -80,8 +80,8 @@ describe('CostModifierService', () => {
 				[resourceB]: 4,
 			},
 		});
-		const ctx = createTestEngine({ actions: content.actions });
-		const baseCosts = getActionCosts(action.id, ctx);
+		const engineContext = createTestEngine({ actions: content.actions });
+		const baseCosts = getActionCosts(action.id, engineContext);
 		const base = {
 			[resourceA]: baseCosts[resourceA] ?? 0,
 			[resourceB]: baseCosts[resourceB] ?? 0,
@@ -100,7 +100,7 @@ describe('CostModifierService', () => {
 			return { percent: { [resourceB]: 0.5 } };
 		});
 		service.unregister('percent');
-		const afterUnregister = service.apply(action.id, base, ctx);
+		const afterUnregister = service.apply(action.id, base, engineContext);
 		const baseA = base[resourceA] ?? 0;
 		const baseB = base[resourceB] ?? 0;
 		expect(afterUnregister[resourceA]).toBe(baseA + 4);
@@ -116,8 +116,8 @@ describe('CostModifierService', () => {
 				round: { [resourceB]: 'up' },
 			};
 		});
-		const cloneResult = clone.apply(action.id, base, ctx);
-		const originalResult = service.apply(action.id, base, ctx);
+		const cloneResult = clone.apply(action.id, base, engineContext);
+		const originalResult = service.apply(action.id, base, engineContext);
 		expect(originalResult[resourceA]).toBe(baseA + 4);
 		expect(originalResult[resourceB]).toBe(baseB);
 		const clonePercent = baseB * 0.25;
