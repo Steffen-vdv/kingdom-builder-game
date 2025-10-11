@@ -1,5 +1,4 @@
 import type { EngineAdvanceResult } from '@kingdom-builder/engine';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
@@ -13,6 +12,7 @@ import {
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { ResolutionSource } from './useActionResolution';
 import { formatDetailText } from '../utils/stats/format';
+import type { SessionResourceKey } from './sessionTypes';
 
 interface FormatPhaseResolutionOptions {
 	advance: EngineAdvanceResult;
@@ -21,7 +21,7 @@ interface FormatPhaseResolutionOptions {
 	phaseDefinition?: SessionPhaseDefinition;
 	stepDefinition?: SessionPhaseStepDefinition;
 	diffContext: TranslationDiffContext;
-	resourceKeys?: ResourceKey[];
+	resourceKeys?: SessionResourceKey[];
 }
 
 interface PhaseResolutionFormatResult {

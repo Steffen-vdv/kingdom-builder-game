@@ -36,7 +36,7 @@ export interface PhaseProgressState {
 
 function computePhaseState(
 	snapshot: SessionSnapshot,
-	actionCostResource: ResourceKey,
+	actionCostResource: SessionResourceKey,
 	overrides: Partial<PhaseProgressState> = {},
 ): PhaseProgressState {
 	const currentPhaseId = snapshot.game.currentPhase;
@@ -106,6 +106,7 @@ export function usePhaseProgress({
 			advanceToActionPhase({
 				session,
 				sessionId,
+				actionCostResource,
 				resourceKeys,
 				mountedRef,
 				applyPhaseSnapshot,

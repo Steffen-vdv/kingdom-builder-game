@@ -12,6 +12,9 @@ import type {
 	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
 import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
+import { createDefaultTranslationAssets } from '../helpers/translationAssets';
+
+const translationAssets = createDefaultTranslationAssets();
 
 function createPlayerSnapshot(
 	resources: Record<string, number> = {},
@@ -97,6 +100,7 @@ describe('formatPhaseResolution integration', () => {
 			buildings: factory.buildings,
 			developments: factory.developments,
 			passives: { evaluationMods: new Map(), get: () => undefined },
+			assets: translationAssets,
 		});
 
 		const result: PhaseResolutionFormatResult = formatPhaseResolution({
@@ -150,6 +154,7 @@ describe('formatPhaseResolution integration', () => {
 			buildings: factory.buildings,
 			developments: factory.developments,
 			passives: { evaluationMods: new Map(), get: () => undefined },
+			assets: translationAssets,
 		});
 
 		const result = formatPhaseResolution({
