@@ -171,6 +171,19 @@ describe('createGameApi', () => {
 		expect(init?.method).toBe('GET');
 	});
 
+	it('omits JSON content type when no request body is present', async () => {
+		const response = createStateResponse('session-headers');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		await api.fetchSnapshot('session-headers');
+
+		const [, init] = fetchMock.mock.calls[0];
+		const headers = init?.headers as Headers;
+		expect(headers.has('Content-Type')).toBe(false);
+		expect(headers.get('Accept')).toBe('application/json');
+	});
+
 	it('performs actions with typed responses', async () => {
 		const successResponse: ActionExecuteSuccessResponse = {
 			status: 'success',

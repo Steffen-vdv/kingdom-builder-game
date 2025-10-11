@@ -53,7 +53,6 @@ export class GameApiError extends Error {
 
 const DEFAULT_HEADERS: ReadonlyArray<readonly [string, string]> = [
 	['Accept', 'application/json'],
-	['Content-Type', 'application/json'],
 ];
 
 const ensureHeaders = (headers?: HeadersInit) => {
@@ -164,6 +163,11 @@ class HttpGameApi implements GameApi {
 		};
 
 		if (init.body !== undefined) {
+			// Apply the JSON content type only when a request payload is present.
+			if (!headers.has('Content-Type')) {
+				headers.set('Content-Type', 'application/json');
+			}
+
 			requestInit.body = JSON.stringify(init.body);
 		}
 
