@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import type { SummaryEntry } from '../src/translation/content';
 import { summarizeContent, describeContent } from '../src/translation/content';
 import {
-	RESOURCES,
-	STATS,
 	Resource as ContentResource,
 	Stat as ContentStat,
 } from '@kingdom-builder/contents';
@@ -20,6 +18,11 @@ import {
 	SYNTH_ATTACK,
 	SYNTH_COMBAT_STATS,
 } from './helpers/armyAttackFactories';
+import {
+	selectAttackBuildingDescriptor,
+	selectAttackResourceDescriptor,
+	selectAttackStatDescriptor,
+} from '../src/translation/effects/formatters/attack/registrySelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -36,10 +39,10 @@ afterAll(() => {
 describe('army attack translation summary', () => {
 	it('summarizes attack action with on-damage effects', () => {
 		const { ctx: engineContext, attack, plunder } = createSyntheticCtx();
-		const castle = RESOURCES[Resource.castleHP];
+		const castle = selectAttackResourceDescriptor(Resource.castleHP);
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const happiness = RESOURCES[Resource.happiness];
-		const warWeariness = STATS[Stat.warWeariness];
+		const happiness = selectAttackResourceDescriptor(Resource.happiness);
+		const warWeariness = selectAttackStatDescriptor(Stat.warWeariness);
 		const attackEffect = attack.effects.find(
 			(effectDef: EffectDef) => effectDef.type === 'attack',
 		);
@@ -122,9 +125,13 @@ describe('army attack translation summary', () => {
 
 	it('falls back to generic labels when combat stat descriptors are omitted', () => {
 		const { ctx: engineContext, attack } = createPartialStatCtx();
-		const castle = RESOURCES[Resource.castleHP];
+		const castle = selectAttackResourceDescriptor(Resource.castleHP);
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const targetDisplay = iconLabel(castle.icon, castle.label, castle.id);
+		const targetDisplay = iconLabel(
+			castle.icon,
+			castle.label,
+			Resource.castleHP,
+		);
 
 		const summary = summarizeContent('action', attack.id, engineContext);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
@@ -155,8 +162,10 @@ describe('army attack translation summary', () => {
 			building,
 		} = createSyntheticCtx();
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const gold = RESOURCES[Resource.gold];
-		const summaryTarget = building.icon || building.name || building.id;
+		const gold = selectAttackResourceDescriptor(Resource.gold);
+		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
+		const summaryTarget =
+			buildingDescriptor.icon || buildingDescriptor.label || building.id;
 		const attackEffect = buildingAttack.effects.find(
 			(effectDef: EffectDef) => effectDef.type === 'attack',
 		);

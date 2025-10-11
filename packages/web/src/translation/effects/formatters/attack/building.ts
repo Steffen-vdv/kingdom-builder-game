@@ -1,4 +1,3 @@
-import { BUILDINGS } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import {
 	attackStatLabel,
@@ -10,13 +9,13 @@ import {
 	iconLabel,
 } from './shared';
 import { buildAttackSummaryBullet } from './summary';
-import {
-	buildDescribeEntry,
-	buildingFortificationItems,
-	getBuildingDisplay,
-} from './evaluation';
+import { buildDescribeEntry, buildingFortificationItems } from './evaluation';
 import type { AttackTargetFormatter } from './types';
 import type { SummaryEntry } from '../../../content';
+import {
+	selectAttackBuildingDescriptor,
+	selectAttackDefaultBuildingId,
+} from './registrySelectors';
 
 const buildingFormatter: AttackTargetFormatter<{
 	type: 'building';
@@ -30,8 +29,8 @@ const buildingFormatter: AttackTargetFormatter<{
 		if (targetParam?.type === 'building') {
 			return targetParam;
 		}
-		const [id] = BUILDINGS.keys();
-		return { type: 'building', id: id ?? 'unknown_building' };
+		const fallbackId = selectAttackDefaultBuildingId() ?? 'unknown_building';
+		return { type: 'building', id: fallbackId };
 	},
 	normalizeLogTarget(target) {
 		const buildingTarget = target as Extract<
@@ -41,7 +40,7 @@ const buildingFormatter: AttackTargetFormatter<{
 		return { type: 'building', id: buildingTarget.id };
 	},
 	getInfo(target) {
-		return getBuildingDisplay(target.id);
+		return selectAttackBuildingDescriptor(target.id);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
