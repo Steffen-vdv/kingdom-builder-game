@@ -226,6 +226,7 @@ export function GameProviderInner({
 		syncPhaseState: applyPhaseSnapshot,
 		performRef,
 		mountedRef,
+		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
 	useEffect(() => {
