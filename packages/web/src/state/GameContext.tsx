@@ -23,6 +23,7 @@ import {
 } from './sessionTypes';
 import type { LegacyGameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
+import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
@@ -247,7 +248,11 @@ export function GameProvider(props: ProviderProps) {
 		innerProps.onExit = onExit;
 	}
 
-	return <GameProviderInner {...innerProps} />;
+	return (
+		<RegistryMetadataProvider registries={sessionData.registries}>
+			<GameProviderInner {...innerProps} />
+		</RegistryMetadataProvider>
+	);
 }
 
 export const useGameEngine = (): LegacyGameEngineContextValue => {
