@@ -337,7 +337,10 @@ export function GameProviderInner({
 	};
 
 	return (
-		<RegistryMetadataProvider registries={registries}>
+		<RegistryMetadataProvider
+			registries={registries}
+			metadata={cachedSessionSnapshot.metadata}
+		>
 			<GameEngineContext.Provider value={value}>
 				{children}
 			</GameEngineContext.Provider>

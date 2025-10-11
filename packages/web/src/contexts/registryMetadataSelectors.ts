@@ -1,8 +1,9 @@
-import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import type {
 	AssetMetadata,
 	MetadataLookup,
+	RegistryMetadataDescriptorRecord,
+	RegistryMetadataSnapshot,
+	SessionMetadataDescriptor,
 } from './registryMetadataDescriptors';
 
 export interface MetadataSelector<TDescriptor extends { id: string }> {
@@ -55,7 +56,7 @@ export const createAssetMetadataSelector = (
 	});
 
 const readMetadataEntry = (
-	snapshot: SessionSnapshotMetadata,
+	snapshot: RegistryMetadataSnapshot,
 	key: string,
 ): unknown => {
 	if (typeof snapshot !== 'object' || snapshot === null) {
@@ -64,7 +65,7 @@ const readMetadataEntry = (
 	if (!Object.prototype.hasOwnProperty.call(snapshot, key)) {
 		return undefined;
 	}
-	const record = snapshot as Record<string, unknown>;
+	const record = snapshot as unknown as Record<string, unknown>;
 	return record[key];
 };
 
@@ -84,7 +85,7 @@ const isMetadataDescriptor = (
 
 const toMetadataDescriptorRecord = (
 	value: unknown,
-): Record<string, SessionMetadataDescriptor> | undefined => {
+): RegistryMetadataDescriptorRecord | undefined => {
 	const record = toUnknownRecord(value);
 	if (!record) {
 		return undefined;
@@ -94,31 +95,31 @@ const toMetadataDescriptorRecord = (
 			return undefined;
 		}
 	}
-	return record as Record<string, SessionMetadataDescriptor>;
+	return record as RegistryMetadataDescriptorRecord;
 };
 
 export const extractDescriptorRecord = (
-	snapshot: SessionSnapshotMetadata,
+	snapshot: RegistryMetadataSnapshot,
 	key: string,
-): Record<string, SessionMetadataDescriptor> | undefined =>
+): RegistryMetadataDescriptorRecord | undefined =>
 	toMetadataDescriptorRecord(readMetadataEntry(snapshot, key));
 
 export const extractPhaseRecord = (
-	snapshot: SessionSnapshotMetadata,
-): SessionSnapshotMetadata['phases'] => {
+	snapshot: RegistryMetadataSnapshot,
+): RegistryMetadataSnapshot['phases'] => {
 	const record = toUnknownRecord(readMetadataEntry(snapshot, 'phases'));
 	if (!record) {
-		return undefined as SessionSnapshotMetadata['phases'];
+		return undefined as RegistryMetadataSnapshot['phases'];
 	}
-	return record as SessionSnapshotMetadata['phases'];
+	return record as RegistryMetadataSnapshot['phases'];
 };
 
 export const extractTriggerRecord = (
-	snapshot: SessionSnapshotMetadata,
-): SessionSnapshotMetadata['triggers'] => {
+	snapshot: RegistryMetadataSnapshot,
+): RegistryMetadataSnapshot['triggers'] => {
 	const record = toUnknownRecord(readMetadataEntry(snapshot, 'triggers'));
 	if (!record) {
-		return undefined as SessionSnapshotMetadata['triggers'];
+		return undefined as RegistryMetadataSnapshot['triggers'];
 	}
-	return record as SessionSnapshotMetadata['triggers'];
+	return record as RegistryMetadataSnapshot['triggers'];
 };

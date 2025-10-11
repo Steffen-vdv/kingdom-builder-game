@@ -1,10 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type {
-	SessionResourceDefinition,
-	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
 	RegistryMetadataProvider,
@@ -25,6 +22,7 @@ import {
 	type TriggerMetadata,
 	type MetadataSelector,
 	type AssetMetadataSelector,
+	type RegistryMetadataSnapshot,
 } from '../../src/contexts/RegistryMetadataContext';
 import { describe, expect, it } from 'vitest';
 
@@ -35,7 +33,7 @@ interface TestSetup {
 	populationId: string;
 	resourceKey: string;
 	resource: SessionResourceDefinition;
-	metadata: SessionSnapshotMetadata;
+	metadata: RegistryMetadataSnapshot;
 	statId: string;
 	phaseId: string;
 	phaseStepId: string;
@@ -73,7 +71,7 @@ function createTestSetup(): TestSetup {
 	const phaseId = nextKey('phase');
 	const phaseStepId = nextKey('step');
 	const triggerId = nextKey('trigger');
-	const metadata: SessionSnapshotMetadata = {
+	const metadata: RegistryMetadataSnapshot = {
 		passiveEvaluationModifiers: {},
 		resources: {
 			[resourceKey]: {

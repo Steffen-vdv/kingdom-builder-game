@@ -4,10 +4,7 @@ import type {
 	DevelopmentConfig,
 	PopulationConfig,
 } from '@kingdom-builder/protocol';
-import type {
-	SessionResourceDefinition,
-	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -23,6 +20,7 @@ import {
 	buildResourceMetadata,
 	buildStatMetadata,
 	buildTriggerMetadata,
+	type RegistryMetadataSnapshot,
 	resolveAssetDescriptor,
 	type MetadataLookup,
 	type PhaseMetadata,
@@ -68,7 +66,7 @@ interface RegistryMetadataProviderProps {
 		SessionRegistries,
 		'resources' | 'buildings' | 'developments' | 'populations'
 	>;
-	metadata: SessionSnapshotMetadata;
+	metadata: RegistryMetadataSnapshot;
 	children: React.ReactNode;
 }
 
@@ -317,6 +315,11 @@ export type {
 	TriggerMetadata,
 	PhaseMetadata,
 	MetadataLookup,
+	RegistryMetadataSnapshot,
 } from './registryMetadataDescriptors';
 export type { DefinitionLookup } from './registryMetadataLookups';
 export type { AssetMetadata } from './registryMetadataDescriptors';
+export type {
+	MetadataSelector,
+	AssetMetadataSelector,
+} from './registryMetadataSelectors';
