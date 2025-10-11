@@ -25,11 +25,27 @@ export interface GameApiClientOptions {
 	getAuthToken?: AuthTokenProvider;
 }
 
+export interface GameApiRequestOptions {
+	signal?: AbortSignal;
+}
+
 export interface GameApi {
-	createSession(request?: SessionCreateRequest): Promise<SessionCreateResponse>;
-	fetchSnapshot(sessionId: string): Promise<SessionStateResponse>;
-	performAction(request: ActionExecuteRequest): Promise<ActionExecuteResponse>;
-	advancePhase(request: SessionAdvanceRequest): Promise<SessionAdvanceResponse>;
+	createSession(
+		request?: SessionCreateRequest,
+		options?: GameApiRequestOptions,
+	): Promise<SessionCreateResponse>;
+	fetchSnapshot(
+		sessionId: string,
+		options?: GameApiRequestOptions,
+	): Promise<SessionStateResponse>;
+	performAction(
+		request: ActionExecuteRequest,
+		options?: GameApiRequestOptions,
+	): Promise<ActionExecuteResponse>;
+	advancePhase(
+		request: SessionAdvanceRequest,
+		options?: GameApiRequestOptions,
+	): Promise<SessionAdvanceResponse>;
 }
 
 export class GameApiError extends Error {
@@ -53,7 +69,6 @@ export class GameApiError extends Error {
 
 const DEFAULT_HEADERS: ReadonlyArray<readonly [string, string]> = [
 	['Accept', 'application/json'],
-	['Content-Type', 'application/json'],
 ];
 
 const ensureHeaders = (headers?: HeadersInit) => {
@@ -109,44 +124,67 @@ class HttpGameApi implements GameApi {
 
 	async createSession(
 		request: SessionCreateRequest = {},
+		options: GameApiRequestOptions = {},
 	): Promise<SessionCreateResponse> {
-		return this.#send('/sessions', {
-			method: 'POST',
-			body: request,
-		});
+		return this.#send(
+			'/sessions',
+			{
+				method: 'POST',
+				body: request,
+			},
+			options,
+		);
 	}
 
-	async fetchSnapshot(sessionId: string): Promise<SessionStateResponse> {
-		return this.#send(`/sessions/${encodeURIComponent(sessionId)}/snapshot`, {
-			method: 'GET',
-		});
+	async fetchSnapshot(
+		sessionId: string,
+		options: GameApiRequestOptions = {},
+	): Promise<SessionStateResponse> {
+		return this.#send(
+			`/sessions/${encodeURIComponent(sessionId)}/snapshot`,
+			{
+				method: 'GET',
+			},
+			options,
+		);
 	}
 
 	async performAction(
 		request: ActionExecuteRequest,
+		options: GameApiRequestOptions = {},
 	): Promise<ActionExecuteResponse> {
 		const { sessionId } = request;
 
-		return this.#send(`/sessions/${encodeURIComponent(sessionId)}/actions`, {
-			method: 'POST',
-			body: request,
-		});
+		return this.#send(
+			`/sessions/${encodeURIComponent(sessionId)}/actions`,
+			{
+				method: 'POST',
+				body: request,
+			},
+			options,
+		);
 	}
 
 	async advancePhase(
 		request: SessionAdvanceRequest,
+		options: GameApiRequestOptions = {},
 	): Promise<SessionAdvanceResponse> {
 		const { sessionId } = request;
 
-		return this.#send(`/sessions/${encodeURIComponent(sessionId)}/advance`, {
-			method: 'POST',
-			body: request,
-		});
+		return this.#send(
+			`/sessions/${encodeURIComponent(sessionId)}/advance`,
+			{
+				method: 'POST',
+				body: request,
+			},
+			options,
+		);
 	}
 
 	async #send<TResponse>(
 		path: string,
 		init: { method: string; body?: unknown },
+		options: GameApiRequestOptions = {},
 	): Promise<TResponse> {
 		const headers = ensureHeaders(this.#headers);
 
@@ -163,7 +201,16 @@ class HttpGameApi implements GameApi {
 			headers,
 		};
 
+		if (options.signal) {
+			requestInit.signal = options.signal;
+		}
+
 		if (init.body !== undefined) {
+			// Apply the JSON content type only when a request payload is present.
+			if (!headers.has('Content-Type')) {
+				headers.set('Content-Type', 'application/json');
+			}
+
 			requestInit.body = JSON.stringify(init.body);
 		}
 

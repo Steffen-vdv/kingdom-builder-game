@@ -35,6 +35,7 @@ const dismissToastMock = vi.hoisted(() => vi.fn());
 const showResolutionMock = vi.hoisted(() => vi.fn());
 const acknowledgeResolutionMock = vi.hoisted(() => vi.fn());
 const handlePerformMock = vi.hoisted(() => vi.fn());
+const createTranslationContextMock = vi.hoisted(() => vi.fn(() => ({})));
 let capturedPhaseOptions:
 	| (Record<string, unknown> & { refresh?: () => void })
 	| undefined;
@@ -129,7 +130,7 @@ vi.mock('../../src/state/useAiRunner', () => ({
 }));
 
 vi.mock('../../src/translation/context', () => ({
-	createTranslationContext: vi.fn(() => ({})),
+	createTranslationContext: createTranslationContextMock,
 }));
 
 vi.mock('../../src/state/sessionSelectors', () => ({
@@ -172,6 +173,8 @@ describe('GameProvider', () => {
 		showResolutionMock.mockReset();
 		acknowledgeResolutionMock.mockReset();
 		handlePerformMock.mockReset();
+		createTranslationContextMock.mockReset();
+		createTranslationContextMock.mockImplementation(() => ({}));
 		capturedPhaseOptions = undefined;
 		runUntilActionPhaseMock.mockResolvedValue(undefined);
 
@@ -290,10 +293,15 @@ describe('GameProvider', () => {
 		);
 
 		await waitFor(() =>
-			expect(createSessionMock).toHaveBeenCalledWith({
-				devMode: true,
-				playerName: 'Commander',
-			}),
+			expect(createSessionMock).toHaveBeenCalledWith(
+				{
+					devMode: true,
+					playerName: 'Commander',
+				},
+				expect.objectContaining({
+					signal: expect.any(AbortSignal),
+				}),
+			),
 		);
 
 		await waitFor(() =>
@@ -317,7 +325,12 @@ describe('GameProvider', () => {
 		await act(() => {
 			capturedPhaseOptions?.refresh?.();
 			return waitFor(() =>
-				expect(fetchSnapshotMock).toHaveBeenCalledWith('session-1'),
+				expect(fetchSnapshotMock).toHaveBeenCalledWith(
+					'session-1',
+					expect.objectContaining({
+						signal: expect.any(AbortSignal),
+					}),
+				),
 			);
 		});
 
@@ -347,6 +360,33 @@ describe('GameProvider', () => {
 	it('shows the fatal error screen when action phase sync fails', async () => {
 		const fatalError = new Error('session exploded');
 		runUntilActionPhaseMock.mockRejectedValueOnce(fatalError);
+
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
+
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+
+		expect(
+			screen.getByText('An unexpected error prevented the game from loading.'),
+		).toBeInTheDocument();
+	});
+
+	it('shows the fatal error screen when the translation context fails to initialize', async () => {
+		const fatalError = new Error('translation context failed');
+		createTranslationContextMock.mockImplementationOnce(() => {
+			throw fatalError;
+		});
 
 		render(
 			<GameProvider playerName="Commander">

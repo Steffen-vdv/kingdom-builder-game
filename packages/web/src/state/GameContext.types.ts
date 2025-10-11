@@ -14,7 +14,42 @@ import type {
 	ActionResolution,
 	ShowResolutionOptions,
 } from './useActionResolution';
-import type { LegacySession, SessionResourceKey } from './sessionTypes';
+import type { ReactNode } from 'react';
+import type {
+	LegacySession,
+	Session,
+	SessionMetadata,
+	SessionRegistries,
+	SessionResourceKey,
+	SessionResourceKeys,
+} from './sessionTypes';
+
+export interface SessionContainer {
+	session: Session;
+	legacySession: LegacySession;
+	sessionId: string;
+	snapshot: SessionSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
+	registries: SessionRegistries;
+	resourceKeys: SessionResourceKeys;
+	metadata: SessionMetadata;
+}
+
+export interface GameProviderProps {
+	children: ReactNode;
+	onExit?: () => void;
+	darkMode?: boolean;
+	onToggleDark?: () => void;
+	devMode?: boolean;
+	musicEnabled?: boolean;
+	onToggleMusic?: () => void;
+	soundEnabled?: boolean;
+	onToggleSound?: () => void;
+	backgroundAudioMuted?: boolean;
+	onToggleBackgroundAudioMute?: () => void;
+	playerName?: string;
+	onChangePlayerName?: (name: string) => void;
+}
 
 export interface PerformActionRequest {
 	action: Action;
