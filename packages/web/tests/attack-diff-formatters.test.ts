@@ -1,20 +1,25 @@
-import { RESOURCES, STATS } from '@kingdom-builder/contents';
 import type { AttackPlayerDiff } from '@kingdom-builder/engine';
 import { describe, expect, it } from 'vitest';
 
 import { formatDiffCommon } from '../src/translation/effects/formatters/attack/shared';
+import {
+	listAttackResourceKeys,
+	listAttackStatKeys,
+	selectAttackResourceDescriptor,
+	selectAttackStatDescriptor,
+} from '../src/translation/effects/formatters/attack/registrySelectors';
 
-const getFirstEntry = <K extends string, V>(record: Record<K, V>): [K, V] => {
-	const entries = Object.entries(record) as [K, V][];
-	if (!entries.length) {
-		throw new Error('Expected at least one record entry for test setup');
+const getFirst = <T>(values: readonly T[]): T => {
+	if (!values.length) {
+		throw new Error('Expected at least one registry entry for test setup');
 	}
-	return entries[0];
+	return values[0] as T;
 };
 
 describe('attack diff formatters registry', () => {
 	it('formats resource diffs using the registered formatter', () => {
-		const [resourceKey, resourceInfo] = getFirstEntry(RESOURCES);
+		const resourceKey = getFirst(listAttackResourceKeys());
+		const resourceInfo = selectAttackResourceDescriptor(resourceKey);
 		const diff: Extract<AttackPlayerDiff, { type: 'resource' }> = {
 			type: 'resource',
 			key: resourceKey,
@@ -30,7 +35,8 @@ describe('attack diff formatters registry', () => {
 	});
 
 	it('formats stat diffs using the registered formatter', () => {
-		const [statKey, statInfo] = getFirstEntry(STATS);
+		const statKey = getFirst(listAttackStatKeys());
+		const statInfo = selectAttackStatDescriptor(statKey);
 		const diff: Extract<AttackPlayerDiff, { type: 'stat' }> = {
 			type: 'stat',
 			key: statKey,

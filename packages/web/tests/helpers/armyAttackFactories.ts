@@ -25,6 +25,10 @@ import {
 	ACTION_DEFS,
 	type ActionDefinition,
 } from './armyAttackEffects';
+import {
+	selectAttackStatDescriptor,
+	type AttackRegistryDescriptor,
+} from '../../src/translation/effects/formatters/attack/registrySelectors';
 
 type StatInfo = (typeof STATS)[keyof typeof STATS];
 
@@ -117,8 +121,8 @@ export function createPartialStatCtx() {
 	return { ctx, attack } as const;
 }
 
-export function getStat(key: string): StatInfo | undefined {
-	return (STATS as Record<string, StatInfo | undefined>)[key];
+export function getStat(key: string): AttackRegistryDescriptor {
+	return selectAttackStatDescriptor(key);
 }
 
 export function iconLabel(
@@ -131,11 +135,11 @@ export function iconLabel(
 }
 
 export function statToken(
-	stat: StatInfo | undefined,
+	stat: AttackRegistryDescriptor,
 	fallback: string,
 	value: string,
-) {
-	const label = iconLabel(stat?.icon, stat?.label, fallback);
+): string {
+	const label = iconLabel(stat.icon, stat.label, fallback);
 	return `${label} ${value}`;
 }
 

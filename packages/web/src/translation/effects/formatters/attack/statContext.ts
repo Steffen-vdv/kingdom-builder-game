@@ -1,4 +1,4 @@
-import { STATS, Stat, type StatKey } from '@kingdom-builder/contents';
+import { Stat, type StatKey } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import {
 	resolveAttackTargetFormatter,
@@ -12,6 +12,7 @@ import {
 	type AttackStatRole,
 	DEFAULT_ATTACK_STAT_LABELS,
 } from '../attack/types';
+import { selectAttackStatDescriptor } from './registrySelectors';
 
 const ATTACK_STAT_ROLES: AttackStatRole[] = [
 	'power',
@@ -52,14 +53,13 @@ function buildStatDescriptor(
 	key: StatKey | undefined,
 	overrides: AttackStatOverrides,
 ): AttackStatDescriptor {
-	const definition = key ? STATS[key] : undefined;
-	const labelOverride = overrides.label ?? definition?.label;
-	const iconOverride = overrides.icon ?? definition?.icon;
-	const descriptor: AttackStatDescriptor = {
-		role,
-		label: labelOverride ?? DEFAULT_ATTACK_STAT_LABELS[role],
-		icon: iconOverride ?? '',
-	};
+	const baseDescriptor = key ? selectAttackStatDescriptor(key) : undefined;
+	const label =
+		overrides.label ??
+		baseDescriptor?.label ??
+		DEFAULT_ATTACK_STAT_LABELS[role];
+	const icon = overrides.icon ?? baseDescriptor?.icon ?? '';
+	const descriptor: AttackStatDescriptor = { role, label, icon };
 	if (key !== undefined) {
 		descriptor.key = key;
 	}

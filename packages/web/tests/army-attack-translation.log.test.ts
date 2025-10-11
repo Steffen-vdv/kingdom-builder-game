@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { logContent } from '../src/translation/content';
-import { RESOURCES } from '@kingdom-builder/contents';
 import { Resource, Stat, performAction } from '@kingdom-builder/engine';
 import {
 	formatNumber,
@@ -18,6 +17,10 @@ import {
 	PLUNDER_PERCENT,
 } from './helpers/armyAttackFactories';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import {
+	selectAttackBuildingDescriptor,
+	selectAttackResourceDescriptor,
+} from '../src/translation/effects/formatters/attack/registrySelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -46,12 +49,12 @@ describe('army attack translation log', () => {
 		const { ctx: engineContext, attack, plunder } = createSyntheticCtx();
 		const attackerName = engineContext.activePlayer.name ?? 'Player';
 		const defenderName = engineContext.opponent.name ?? 'Opponent';
-		const castle = RESOURCES[Resource.castleHP];
+		const castle = selectAttackResourceDescriptor(Resource.castleHP);
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
 		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const happiness = RESOURCES[Resource.happiness];
-		const gold = RESOURCES[Resource.gold];
+		const happiness = selectAttackResourceDescriptor(Resource.happiness);
+		const gold = selectAttackResourceDescriptor(Resource.gold);
 
 		engineContext.activePlayer.resources[Resource.ap] = 1;
 		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
@@ -136,10 +139,11 @@ describe('army attack translation log', () => {
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
 		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const gold = RESOURCES[Resource.gold];
+		const gold = selectAttackResourceDescriptor(Resource.gold);
+		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
 		const buildingDisplay = iconLabel(
-			building.icon,
-			building.name,
+			buildingDescriptor.icon,
+			buildingDescriptor.label,
 			building.id,
 		);
 

@@ -1,8 +1,4 @@
-import {
-	RESOURCES,
-	Resource,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
+import { Resource, type ResourceKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -12,6 +8,7 @@ import {
 	defaultFortificationItems,
 } from './evaluation';
 import type { AttackTargetFormatter } from './types';
+import { selectAttackResourceDescriptor } from './registrySelectors';
 
 const resourceFormatter: AttackTargetFormatter<{
 	type: 'resource';
@@ -35,7 +32,7 @@ const resourceFormatter: AttackTargetFormatter<{
 		return { type: 'resource', key: resourceTarget.key as ResourceKey };
 	},
 	getInfo(target) {
-		return RESOURCES[target.key];
+		return selectAttackResourceDescriptor(target.key);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
