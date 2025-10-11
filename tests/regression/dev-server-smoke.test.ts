@@ -45,5 +45,11 @@ describe('dev server smoke test', () => {
 		expect(contentType).toContain('text/html');
 		const body = await response.text();
 		expect(body).toContain('<div id="root"></div>');
+		const cssResponse = await fetch(`${baseUrl}/src/styles/index.css`);
+		expect(cssResponse.ok).toBe(true);
+		const cssText = await cssResponse.text();
+		expect(cssText.length).toBeGreaterThan(100);
+		expect(cssText).not.toContain('@tailwind');
+		expect(cssText).toMatch(/(--tw-|\.bg-slate-100\b)/);
 	});
 });
