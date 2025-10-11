@@ -5,7 +5,6 @@ import React, {
 	useMemo,
 	useRef,
 } from 'react';
-import { createTranslationContext } from '../translation/context';
 import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
@@ -27,6 +26,7 @@ import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
+import { useSessionTranslationContext } from './useSessionTranslationContext';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -96,32 +96,15 @@ export function GameProviderInner({
 		playerName,
 	]);
 
-	const translationContext = useMemo(() => {
-		const fallbackMetadata = cachedSessionSnapshot.metadata;
-		const fallbackModifiers =
-			fallbackMetadata?.passiveEvaluationModifiers ?? {};
-		const passiveEvaluationModifiers =
-			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
-		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
-		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
-				}
-			: { passiveEvaluationModifiers };
-		return createTranslationContext(sessionState, registries, metadataPayload, {
+	const { translationContext, isReady: translationContextReady } =
+		useSessionTranslationContext({
+			sessionState,
+			registries,
 			ruleSnapshot,
-			passiveRecords: sessionState.passiveRecords,
+			sessionMetadata,
+			cachedSessionSnapshot,
+			onFatalSessionError,
 		});
-	}, [
-		sessionState,
-		registries,
-		ruleSnapshot,
-		sessionState.passiveRecords,
-		sessionMetadata,
-		cachedSessionSnapshot,
-	]);
 
 	const {
 		timeScale,
@@ -257,7 +240,12 @@ export function GameProviderInner({
 		() => ({
 			getRuleSnapshot: () => ruleSnapshot,
 			getSessionView: () => sessionView,
-			getTranslationContext: () => translationContext,
+			getTranslationContext: () => {
+				if (!translationContext) {
+					throw new Error('Translation context unavailable');
+				}
+				return translationContext;
+			},
 		}),
 		[ruleSnapshot, sessionView, translationContext],
 	);
@@ -284,6 +272,10 @@ export function GameProviderInner({
 			onExit();
 		}
 	}, [onReleaseSession, onExit]);
+
+	if (!translationContextReady || !translationContext) {
+		return null;
+	}
 
 	const value: LegacyGameEngineContextValue = {
 		sessionId,
