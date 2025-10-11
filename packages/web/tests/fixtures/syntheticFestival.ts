@@ -13,11 +13,14 @@ import {
 	Stat,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
+import type { TranslationContext } from '../../src/translation/context/types';
 
 const ON_UPKEEP_PHASE = PhaseTrigger.OnUpkeepPhase;
 
 export interface SyntheticFestivalScenario {
 	ctx: ReturnType<typeof createEngine>;
+	translation: TranslationContext;
 	festivalActionId: string;
 	attackActionId: string;
 }
@@ -153,8 +156,24 @@ export const createSyntheticFestivalScenario =
 			rules,
 		});
 
+		const translation = createTranslationContextForEngine(ctx, (registries) => {
+			const raid = ctx.actions.get(attackAction.id);
+			const festivalDef = ctx.actions.get(festivalAction.id);
+			if (raid) {
+				registries.actions.add(raid.id, {
+					...raid,
+				});
+			}
+			if (festivalDef) {
+				registries.actions.add(festivalDef.id, {
+					...festivalDef,
+				});
+			}
+		});
+
 		return {
 			ctx,
+			translation,
 			festivalActionId: festivalAction.id,
 			attackActionId: attackAction.id,
 		};

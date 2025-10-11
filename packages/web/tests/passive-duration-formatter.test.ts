@@ -155,7 +155,7 @@ describe('passive formatter duration metadata', () => {
 
 		const summary = summarizeEffects([passive], ctx);
 
-		expect(summary).toEqual([{ title: '⏳ Until next 🏗️ Growth', items: [] }]);
+		expect(summary).toEqual([{ title: '⏳ Until next Growth', items: [] }]);
 	});
 
 	it('prefers contextual metadata over static phase definitions', () => {

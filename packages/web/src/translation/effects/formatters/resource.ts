@@ -1,58 +1,54 @@
-import { RESOURCES } from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import { signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';
+import { selectResourceDescriptor } from '../registrySelectors';
 
 registerEffectFormatter('resource', 'add', {
-	summarize: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const icon = resource ? resource.icon : key;
+	summarize: (effect, context) => {
+		const key = effect.params?.['key'];
+		const resourceKey = typeof key === 'string' ? key : '';
+		const descriptor = selectResourceDescriptor(context, resourceKey);
 		const amount = Number(effect.params?.['amount']);
-		return `${icon}${signed(amount)}${amount}`;
+		return `${descriptor.icon}${signed(amount)}${amount}`;
 	},
-	describe: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const label = resource?.label || key;
-		const icon = resource?.icon || key;
+	describe: (effect, context) => {
+		const key = effect.params?.['key'];
+		const resourceKey = typeof key === 'string' ? key : '';
+		const descriptor = selectResourceDescriptor(context, resourceKey);
 		const amount = Number(effect.params?.['amount']);
-		return `${icon}${signed(amount)}${amount} ${label}`;
+		return `${descriptor.icon}${signed(amount)}${amount} ${descriptor.label}`;
 	},
 });
 
 registerEffectFormatter('resource', 'remove', {
-	summarize: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const icon = resource ? resource.icon : key;
+	summarize: (effect, context) => {
+		const key = effect.params?.['key'];
+		const resourceKey = typeof key === 'string' ? key : '';
+		const descriptor = selectResourceDescriptor(context, resourceKey);
 		const amount = Number(effect.params?.['amount']);
-		return `${icon}${signed(-amount)}${-amount}`;
+		return `${descriptor.icon}${signed(-amount)}${-amount}`;
 	},
-	describe: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const label = resource?.label || key;
-		const icon = resource?.icon || key;
+	describe: (effect, context) => {
+		const key = effect.params?.['key'];
+		const resourceKey = typeof key === 'string' ? key : '';
+		const descriptor = selectResourceDescriptor(context, resourceKey);
 		const amount = Number(effect.params?.['amount']);
-		return `${icon}${signed(-amount)}${-amount} ${label}`;
+		return `${descriptor.icon}${signed(-amount)}${-amount} ${descriptor.label}`;
 	},
 });
 
 registerEffectFormatter('resource', 'transfer', {
-	summarize: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const icon = resource?.icon || key;
+	summarize: (effect, context) => {
+		const key = effect.params?.['key'];
+		const resourceKey = typeof key === 'string' ? key : '';
+		const descriptor = selectResourceDescriptor(context, resourceKey);
 		const percent = Number(effect.params?.['percent']);
-		return `Transfer ${percent}% ${icon}`;
+		return `Transfer ${percent}% ${descriptor.icon}`;
 	},
-	describe: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const label = resource?.label || key;
-		const icon = resource?.icon || key;
+	describe: (effect, context) => {
+		const key = effect.params?.['key'];
+		const resourceKey = typeof key === 'string' ? key : '';
+		const descriptor = selectResourceDescriptor(context, resourceKey);
 		const percent = Number(effect.params?.['percent']);
-		return `Transfer ${percent}% of opponent's ${icon}${label} to you`;
+		return `Transfer ${percent}% of opponent's ${descriptor.icon}${descriptor.label} to you`;
 	},
 });

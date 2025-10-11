@@ -1,55 +1,52 @@
-import { POPULATION_ROLES, POPULATION_INFO } from '@kingdom-builder/contents';
+import type { PopulationRoleId } from '@kingdom-builder/contents';
 import { registerEffectFormatter } from '../factory';
 import { resolvePopulationDisplay } from '../helpers';
+import { selectPopulationDescriptor } from '../registrySelectors';
+
+function coercePopulationRole(value: unknown): PopulationRoleId | undefined {
+	return typeof value === 'string' ? (value as PopulationRoleId) : undefined;
+}
 
 registerEffectFormatter('population', 'add', {
-	summarize: (effect) => {
-		const role = effect.params?.['role'] as
-			| keyof typeof POPULATION_ROLES
-			| undefined;
-		const icon = role
-			? POPULATION_ROLES[role]?.icon || role
-			: POPULATION_INFO.icon;
-		return `${POPULATION_INFO.icon}(${icon}) +1`;
+	summarize: (effect, context) => {
+		const role = coercePopulationRole(effect.params?.['role']);
+		const base = selectPopulationDescriptor(context, undefined);
+		const roleDescriptor = role
+			? selectPopulationDescriptor(context, role)
+			: base;
+		const roleIcon = roleDescriptor.icon || role || base.icon;
+		return `${base.icon}(${roleIcon}) +1`;
 	},
-	describe: (effect) => {
-		const role = effect.params?.['role'] as
-			| keyof typeof POPULATION_ROLES
-			| undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
+	describe: (effect, context) => {
+		const role = coercePopulationRole(effect.params?.['role']);
+		const { icon, label } = resolvePopulationDisplay(context, role);
 		return `Add ${icon} ${label}`;
 	},
-	log: (effect) => {
-		const role = effect.params?.['role'] as
-			| keyof typeof POPULATION_ROLES
-			| undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
+	log: (effect, context) => {
+		const role = coercePopulationRole(effect.params?.['role']);
+		const { icon, label } = resolvePopulationDisplay(context, role);
 		return `Added ${icon} ${label}`;
 	},
 });
 
 registerEffectFormatter('population', 'remove', {
-	summarize: (effect) => {
-		const role = effect.params?.['role'] as
-			| keyof typeof POPULATION_ROLES
-			| undefined;
-		const icon = role
-			? POPULATION_ROLES[role]?.icon || role
-			: POPULATION_INFO.icon;
-		return `${POPULATION_INFO.icon}(${icon}) -1`;
+	summarize: (effect, context) => {
+		const role = coercePopulationRole(effect.params?.['role']);
+		const base = selectPopulationDescriptor(context, undefined);
+		const roleDescriptor = role
+			? selectPopulationDescriptor(context, role)
+			: base;
+		const roleIcon = roleDescriptor.icon || role || base.icon;
+		return `${base.icon}(${roleIcon}) -1`;
 	},
-	describe: (effect) => {
-		const role = effect.params?.['role'] as
-			| keyof typeof POPULATION_ROLES
-			| undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
+	describe: (effect, context) => {
+		const role = coercePopulationRole(effect.params?.['role']);
+		const { icon, label } = resolvePopulationDisplay(context, role);
 		return `Remove ${icon} ${label}`;
 	},
-	log: (effect) => {
-		const role = effect.params?.['role'] as
-			| keyof typeof POPULATION_ROLES
-			| undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
+	log: (effect, context) => {
+		const role = coercePopulationRole(effect.params?.['role']);
+		const { icon, label } = resolvePopulationDisplay(context, role);
 		return `Removed ${icon} ${label}`;
 	},
 });

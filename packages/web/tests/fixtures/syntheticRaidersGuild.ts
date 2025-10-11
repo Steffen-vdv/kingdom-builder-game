@@ -8,6 +8,8 @@ import {
 	type Summary,
 } from '../../src/translation/content';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
+import type { TranslationContext } from '../../src/translation/context/types';
 
 interface SyntheticIds {
 	transferBuilding: string;
@@ -20,6 +22,7 @@ interface SyntheticIds {
 
 export interface RaidersGuildSyntheticContext {
 	ctx: ReturnType<typeof createEngine>;
+	translation: TranslationContext;
 	ids: SyntheticIds;
 }
 
@@ -159,8 +162,40 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		rules,
 	});
 
+	const translation = createTranslationContextForEngine(ctx, (registries) => {
+		const raid = ctx.actions.get(raidAction.id);
+		const ledger = ctx.actions.get(ledgerAction.id);
+		const transfer = ctx.buildings.get(transferBuilding.id);
+		const population = ctx.buildings.get(populationBuilding.id);
+		const development = ctx.buildings.get(developmentBuilding.id);
+		const harvest = ctx.developments.get(harvestDevelopment.id);
+		const ledgerRole = ctx.populations.get('population:ledger');
+		if (raid) {
+			registries.actions.add(raid.id, { ...raid });
+		}
+		if (ledger) {
+			registries.actions.add(ledger.id, { ...ledger });
+		}
+		if (transfer) {
+			registries.buildings.add(transfer.id, { ...transfer });
+		}
+		if (population) {
+			registries.buildings.add(population.id, { ...population });
+		}
+		if (development) {
+			registries.buildings.add(development.id, { ...development });
+		}
+		if (harvest) {
+			registries.developments.add(harvest.id, { ...harvest });
+		}
+		if (ledgerRole) {
+			registries.populations.add(ledgerRole.id, { ...ledgerRole });
+		}
+	});
+
 	return {
 		ctx,
+		translation,
 		ids: {
 			transferBuilding: transferBuilding.id,
 			populationBuilding: populationBuilding.id,
@@ -184,10 +219,12 @@ export function getResourceEffect(modifier: EffectDef): EffectDef {
 }
 
 export function getActionSummaryItems(
-	ctx: ReturnType<typeof createEngine>,
+	translation: TranslationContext,
 	actionId: string,
 ): Summary {
-	const actionSplit = splitSummary(describeContent('action', actionId, ctx));
+	const actionSplit = splitSummary(
+		describeContent('action', actionId, translation),
+	);
 	return [
 		...actionSplit.effects,
 		...(actionSplit.description

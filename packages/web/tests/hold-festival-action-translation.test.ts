@@ -18,14 +18,11 @@ const sign = (n: number) => (n >= 0 ? '+' : '');
 
 describe('hold festival action translation', () => {
 	it('summarizes hold festival action', () => {
-		const {
-			ctx: context,
-			festivalActionId,
-			attackActionId,
-		} = createSyntheticFestivalScenario();
-		const summary = summarizeContent('action', festivalActionId, context);
+		const { ctx, translation, festivalActionId, attackActionId } =
+			createSyntheticFestivalScenario();
+		const summary = summarizeContent('action', festivalActionId, translation);
 		const details = getSyntheticFestivalDetails(
-			context,
+			ctx,
 			festivalActionId,
 			attackActionId,
 		);
@@ -46,14 +43,15 @@ describe('hold festival action translation', () => {
 	});
 
 	it('describes hold festival action', () => {
-		const {
-			ctx: context,
+		const { ctx, translation, festivalActionId, attackActionId } =
+			createSyntheticFestivalScenario();
+		const description = describeContent(
+			'action',
 			festivalActionId,
-			attackActionId,
-		} = createSyntheticFestivalScenario();
-		const description = describeContent('action', festivalActionId, context);
+			translation,
+		);
 		const details = getSyntheticFestivalDetails(
-			context,
+			ctx,
 			festivalActionId,
 			attackActionId,
 		);
@@ -74,14 +72,11 @@ describe('hold festival action translation', () => {
 	});
 
 	it('logs hold festival action', () => {
-		const {
-			ctx: context,
-			festivalActionId,
-			attackActionId,
-		} = createSyntheticFestivalScenario();
-		const log = logContent('action', festivalActionId, context);
+		const { ctx, translation, festivalActionId, attackActionId } =
+			createSyntheticFestivalScenario();
+		const log = logContent('action', festivalActionId, translation);
 		const details = getSyntheticFestivalDetails(
-			context,
+			ctx,
 			festivalActionId,
 			attackActionId,
 		);

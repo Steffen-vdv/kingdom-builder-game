@@ -1,34 +1,46 @@
 import type { PopulationRoleId } from '@kingdom-builder/contents';
+import type { SummaryEntry } from '../../content';
+import type { TranslationContext } from '../../context';
 import { registerEvaluatorFormatter } from '../factory';
 import { resolvePopulationDisplay } from '../helpers';
 
+type PopulationEvaluator = {
+	params?: Record<string, unknown>;
+};
+
+function formatSubEntries(
+	subEntries: readonly SummaryEntry[],
+	context: TranslationContext,
+	role: PopulationRoleId | undefined,
+	mode: 'summarize' | 'describe',
+): SummaryEntry[] {
+	const { icon, label } = resolvePopulationDisplay(context, role);
+	const suffix = mode === 'summarize' ? 'per' : 'for each';
+	return subEntries.map((entry) =>
+		typeof entry === 'string'
+			? `${entry} ${suffix} ${icon} ${label}`.trim()
+			: {
+					...entry,
+					title: `${entry.title} ${suffix} ${icon} ${label}`.trim(),
+				},
+	);
+}
+
 registerEvaluatorFormatter('population', {
-	summarize: (evaluator, sub) => {
-		const role = (evaluator.params as Record<string, string>)?.['role'] as
-			| PopulationRoleId
-			| undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
-		return sub.map((summaryEntry) =>
-			typeof summaryEntry === 'string'
-				? `${summaryEntry} per ${icon} ${label}`.trim()
-				: {
-						...summaryEntry,
-						title: `${summaryEntry.title} per ${icon} ${label}`.trim(),
-					},
-		);
+	summarize: (
+		evaluator: PopulationEvaluator,
+		subEntries: SummaryEntry[],
+		context: TranslationContext,
+	) => {
+		const role = evaluator.params?.['role'] as PopulationRoleId | undefined;
+		return formatSubEntries(subEntries, context, role, 'summarize');
 	},
-	describe: (evaluator, sub) => {
-		const role = (evaluator.params as Record<string, string>)?.['role'] as
-			| PopulationRoleId
-			| undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
-		return sub.map((summaryEntry) =>
-			typeof summaryEntry === 'string'
-				? `${summaryEntry} for each ${icon} ${label}`.trim()
-				: {
-						...summaryEntry,
-						title: `${summaryEntry.title} for each ${icon} ${label}`.trim(),
-					},
-		);
+	describe: (
+		evaluator: PopulationEvaluator,
+		subEntries: SummaryEntry[],
+		context: TranslationContext,
+	) => {
+		const role = evaluator.params?.['role'] as PopulationRoleId | undefined;
+		return formatSubEntries(subEntries, context, role, 'describe');
 	},
 });

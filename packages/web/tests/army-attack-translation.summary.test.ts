@@ -38,7 +38,7 @@ afterAll(() => {
 
 describe('army attack translation summary', () => {
 	it('summarizes attack action with on-damage effects', () => {
-		const { ctx: engineContext, attack, plunder } = createSyntheticCtx();
+		const { translation, attack, plunder } = createSyntheticCtx();
 		const castle = selectAttackResourceDescriptor(Resource.castleHP);
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const happiness = selectAttackResourceDescriptor(Resource.happiness);
@@ -80,7 +80,7 @@ describe('army attack translation summary', () => {
 				(effectDef.params as { key?: string }).key === ContentStat.warWeariness,
 		);
 		const warAmt = (warEffect?.params as { amount?: number })?.amount ?? 0;
-		const summary = summarizeContent('action', attack.id, engineContext);
+		const summary = summarizeContent('action', attack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
 		expect(summary).toEqual([
@@ -124,7 +124,7 @@ describe('army attack translation summary', () => {
 	});
 
 	it('falls back to generic labels when combat stat descriptors are omitted', () => {
-		const { ctx: engineContext, attack } = createPartialStatCtx();
+		const { translation, attack } = createPartialStatCtx();
 		const castle = selectAttackResourceDescriptor(Resource.castleHP);
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const targetDisplay = iconLabel(
@@ -133,12 +133,12 @@ describe('army attack translation summary', () => {
 			Resource.castleHP,
 		);
 
-		const summary = summarizeContent('action', attack.id, engineContext);
+		const summary = summarizeContent('action', attack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
 		expect(summary).toEqual([`${powerSummary}${targetSummary}`]);
 
-		const description = describeContent('action', attack.id, engineContext);
+		const description = describeContent('action', attack.id, translation);
 		expect(description).toEqual([
 			{
 				title: `Attack opponent with your ${iconLabel(
@@ -156,11 +156,7 @@ describe('army attack translation summary', () => {
 	});
 
 	it('summarizes building attack as destruction', () => {
-		const {
-			ctx: engineContext,
-			buildingAttack,
-			building,
-		} = createSyntheticCtx();
+		const { translation, buildingAttack, building } = createSyntheticCtx();
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const gold = selectAttackResourceDescriptor(Resource.gold);
 		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
@@ -180,11 +176,7 @@ describe('army attack translation summary', () => {
 		const rewardAmount =
 			(rewardEffect?.params as { amount?: number })?.amount ?? 0;
 
-		const summary = summarizeContent(
-			'action',
-			buildingAttack.id,
-			engineContext,
-		);
+		const summary = summarizeContent('action', buildingAttack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		expect(summary).toEqual([
 			`${powerSummary}${summaryTarget}`,

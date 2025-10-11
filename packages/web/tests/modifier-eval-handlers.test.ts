@@ -11,22 +11,20 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
-	MODIFIER_INFO,
-	RESOURCES,
-	type ResourceKey,
 	RESOURCE_TRANSFER_ICON,
 	Resource,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../src/icons';
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
 function createCtx() {
-	return createEngine({
+	const engine = createEngine({
 		actions: ACTIONS,
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
@@ -35,6 +33,7 @@ function createCtx() {
 		start: GAME_START,
 		rules: RULES,
 	});
+	return createTranslationContextForEngine(engine);
 }
 
 const RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
@@ -64,30 +63,18 @@ describe('modifier evaluation handlers', () => {
 			name: 'Synthetic Development',
 			icon: '🧬',
 		});
-		const resourceKey = 'resource:synthetic' as unknown as ResourceKey;
+		const resourceKey = 'resource:synthetic';
 		const syntheticResource = {
-			key: resourceKey,
 			icon: '💠',
 			label: 'Synthetic Resource',
-			description: 'A synthetic resource for formatting assertions.',
 		};
-		const resources = RESOURCES as unknown as Record<
-			string,
-			typeof syntheticResource | undefined
-		>;
-		const previousResource = resources[resourceKey];
-		resources[resourceKey] = syntheticResource;
-
-		const playerStart = {
-			resources: {} as Record<ResourceKey, number>,
-			stats: {},
-			population: {},
-			lands: [],
-		};
-		playerStart.resources[resourceKey] = 0;
-
 		const start: StartConfig = {
-			player: playerStart,
+			player: {
+				resources: { [resourceKey]: 0 },
+				stats: {},
+				population: {},
+				lands: [],
+			},
 		};
 		const rules: RuleSet = {
 			defaultActionAPCost: 1,
@@ -100,43 +87,55 @@ describe('modifier evaluation handlers', () => {
 			basePopulationCap: 1,
 			winConditions: [],
 		};
-		try {
-			const ctx = createEngine({
-				actions: content.actions,
-				buildings: content.buildings,
-				developments: content.developments,
-				populations: content.populations,
-				phases: [],
-				start,
-				rules,
-			});
-			const eff: EffectDef = {
-				type: 'result_mod',
-				method: 'add',
-				params: {
-					evaluation: { type: 'development', id: development.id },
-				},
-				effects: [
-					{
-						type: 'resource',
-						method: 'remove',
-						params: { key: resourceKey, amount: 2 },
-					},
-				],
-			};
-			const summary = summarizeEffects([eff], ctx);
-			const description = describeEffects([eff], ctx);
-			const expectedSummary = `${MODIFIER_INFO.result.icon}${development.icon}: ${syntheticResource.icon}-2`;
-			expect(summary).toEqual([expectedSummary]);
-			const expectedDescription = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${development.icon} ${development.name}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${syntheticResource.icon}-2 more of that resource`;
-			expect(description).toEqual([expectedDescription]);
-		} finally {
-			if (previousResource) {
-				resources[resourceKey] = previousResource;
-			} else {
-				delete resources[resourceKey];
+		const engine = createEngine({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+			phases: [],
+			start,
+			rules,
+		});
+		const ctx = createTranslationContextForEngine(engine, (registries) => {
+			const developmentDef = engine.developments.get(development.id);
+			if (developmentDef) {
+				registries.developments.add(developmentDef.id, { ...developmentDef });
 			}
-		}
+			registries.resources[resourceKey] = {
+				key: resourceKey,
+				icon: syntheticResource.icon,
+				label: syntheticResource.label,
+			};
+		});
+		const eff: EffectDef = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				evaluation: { type: 'development', id: development.id },
+			},
+			effects: [
+				{
+					type: 'resource',
+					method: 'remove',
+					params: { key: resourceKey, amount: 2 },
+				},
+			],
+		};
+		const summary = summarizeEffects([eff], ctx);
+		const description = describeEffects([eff], ctx);
+		const resultDescriptor = ctx.assets.modifiers.result;
+		const resultIcon = resultDescriptor?.icon ?? '';
+		const expectedSummary = `${resultIcon}${development.icon}: ${syntheticResource.icon}-2`;
+		expect(summary).toEqual([expectedSummary]);
+		const resultLabelText = [
+			resultDescriptor?.icon ?? '',
+			resultDescriptor?.label ?? 'Outcome Adjustment',
+		]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+		const expectedDescription = `${resultLabelText} on ${development.icon} ${development.name}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${syntheticResource.icon}-2 more of that resource`;
+		expect(description).toEqual([expectedDescription]);
 	});
 
 	it('formats cost modifiers with percent adjustments', () => {
@@ -152,13 +151,20 @@ describe('modifier evaluation handlers', () => {
 			},
 		};
 		const summary = summarizeEffects([eff], ctx);
-		const goldIcon = RESOURCES[Resource.gold].icon;
-		const expectedSummary = `${MODIFIER_INFO.cost.icon}🏛️: ${goldIcon}-20%`;
+		const goldIcon = ctx.assets.resources[Resource.gold]?.icon ?? Resource.gold;
+		const costDescriptor = ctx.assets.modifiers.cost;
+		const costIcon = costDescriptor?.icon ?? '';
+		const costLabelText = [
+			costDescriptor?.icon ?? '',
+			costDescriptor?.label ?? 'Cost Adjustment',
+		]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+		const expectedSummary = `${costIcon}🏛️: ${goldIcon}-20%`;
 		expect(summary).toEqual([expectedSummary]);
 		const description = describeEffects([eff], ctx);
-		const expectedDescription =
-			`${MODIFIER_INFO.cost.icon} ${MODIFIER_INFO.cost.label}` +
-			` on 🏛️ Build: Decrease cost by 20% ${goldIcon}`;
+		const expectedDescription = `${costLabelText} on 🏛️ Build: Decrease cost by 20% ${goldIcon}`;
 		expect(description).toEqual([expectedDescription]);
 	});
 
@@ -193,7 +199,7 @@ describe('modifier evaluation handlers', () => {
 			basePopulationCap: 1,
 			winConditions: [],
 		};
-		const ctx = createEngine({
+		const engineContext = createEngine({
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
@@ -202,6 +208,15 @@ describe('modifier evaluation handlers', () => {
 			start,
 			rules,
 		});
+		const ctx = createTranslationContextForEngine(
+			engineContext,
+			(registries) => {
+				const raidDef = engineContext.actions.get(raid.id);
+				if (raidDef) {
+					registries.actions.add(raidDef.id, { ...raidDef });
+				}
+			},
+		);
 		const eff: EffectDef = {
 			type: 'result_mod',
 			method: 'add',
@@ -215,12 +230,21 @@ describe('modifier evaluation handlers', () => {
 		const summary = summarizeEffects([eff], ctx);
 		const description = describeEffects([eff], ctx);
 		const targetIcon = raid.icon?.trim() ? raid.icon : raid.name;
+		const resultDescriptor = ctx.assets.modifiers.result;
+		const resultIcon = resultDescriptor?.icon ?? '';
 		expect(summary).toEqual([
-			`${MODIFIER_INFO.result.icon}${targetIcon}: ${RESOURCE_TRANSFER_ICON}+10%`,
+			`${resultIcon}${targetIcon}: ${RESOURCE_TRANSFER_ICON}+10%`,
 		]);
 		const targetLabel = raid.icon ? `${raid.icon} ${raid.name}` : raid.name;
+		const resultLabelText = [
+			resultDescriptor?.icon ?? '',
+			resultDescriptor?.label ?? 'Outcome Adjustment',
+		]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
 		expect(description[0]).toBe(
-			`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${targetLabel}: Whenever it transfers ${RESOURCES_KEYWORD}, ${RESOURCE_TRANSFER_ICON} Increase transfer by 10%`,
+			`${resultLabelText} on ${targetLabel}: Whenever it transfers ${RESOURCES_KEYWORD}, ${RESOURCE_TRANSFER_ICON} Increase transfer by 10%`,
 		);
 		const card = description[1];
 		expect(card).toMatchObject({
