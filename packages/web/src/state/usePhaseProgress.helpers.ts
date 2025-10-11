@@ -13,7 +13,7 @@ import type {
 } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
 import type { EngineAdvanceResult } from '@kingdom-builder/engine';
-import type { PhaseProgressState } from './phaseTypes';
+import type { PhaseProgressState } from './usePhaseProgress';
 import type { ResourceKey } from '@kingdom-builder/contents';
 
 type FormatPhaseResolution = (

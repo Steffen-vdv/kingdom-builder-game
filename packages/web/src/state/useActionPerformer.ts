@@ -32,7 +32,7 @@ import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
 import type { LegacySession } from './sessionTypes';
-import type { PhaseProgressState } from './phaseTypes';
+import type { PhaseProgressState } from './usePhaseProgress';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
