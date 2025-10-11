@@ -5,6 +5,7 @@ import type {
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
 import type { SessionRegistries } from '../../state/sessionRegistries';
+import { createTranslationAssets } from './assets';
 import type { TranslationContext, TranslationPassives } from './types';
 import {
 	cloneCompensations,
@@ -31,7 +32,10 @@ type TranslationContextOptions = {
 
 export function createTranslationContext(
 	session: SessionSnapshot,
-	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>,
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+	>,
 	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,
 ): TranslationContext {
@@ -84,10 +88,12 @@ export function createTranslationContext(
 			return evaluationMods;
 		},
 	});
+	const assets = createTranslationAssets(registries);
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
 		buildings: wrapRegistry(registries.buildings),
 		developments: wrapRegistry(registries.developments),
+		populations: wrapRegistry(registries.populations),
 		passives: translationPassives,
 		phases: Object.freeze(
 			session.phases.map((phase) => {
@@ -147,5 +153,6 @@ export function createTranslationContext(
 		recentResourceGains: cloneRecentResourceGains(session.recentResourceGains),
 		compensations: cloneCompensations(session.compensations),
 		rules: ruleSnapshot,
+		assets,
 	});
 }

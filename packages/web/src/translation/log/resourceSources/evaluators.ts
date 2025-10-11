@@ -1,4 +1,3 @@
-import { POPULATION_ROLES, POPULATION_INFO } from '@kingdom-builder/contents';
 import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
 
@@ -38,10 +37,10 @@ function renderPopulationIcons(
 	const params = evaluatorDefinition.params as
 		| Record<string, string>
 		| undefined;
-	const role = params?.['role'] as keyof typeof POPULATION_ROLES | undefined;
+	const role = params?.['role'];
 	const icon = role
-		? POPULATION_ROLES[role]?.icon || role
-		: POPULATION_INFO.icon;
+		? (context.assets.populations[role]?.icon ?? role)
+		: (context.assets.population.icon ?? '');
 	entry.icons += icon.repeat(count);
 }
 

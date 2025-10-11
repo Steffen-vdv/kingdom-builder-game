@@ -8,17 +8,13 @@ import {
 import { logContent } from '../src/translation/content';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import {
-	ACTIONS,
-	BUILDINGS,
-	BuildingId,
-	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	GAME_START,
 	RULES,
-	PASSIVE_INFO,
-	type ResourceKey,
+	BuildingId,
 } from '@kingdom-builder/contents';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -26,17 +22,19 @@ vi.mock('@kingdom-builder/engine', async () => {
 
 describe('passive log labels', () => {
 	it('uses tier summary tokens without exposing raw ids', () => {
+		const registries = createSessionRegistries();
 		const engineContext = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
 		});
+		engineContext.assets = createDefaultTranslationAssets();
 		const happinessKey = engineContext.services.tieredResource
-			.resourceKey as ResourceKey;
+			.resourceKey as string;
 
 		const setHappiness = (value: number) => {
 			engineContext.activePlayer.resources[happinessKey] = value;
@@ -71,8 +69,9 @@ describe('passive log labels', () => {
 		);
 		expect(activationLog).toBeTruthy();
 		expect(activationLog).not.toContain('happiness.tier.summary');
-		if (PASSIVE_INFO.icon) {
-			expect(activationLog?.startsWith(`${PASSIVE_INFO.icon} `)).toBe(true);
+		const passiveIcon = engineContext.assets.passive.icon;
+		if (passiveIcon) {
+			expect(activationLog?.startsWith(`${passiveIcon} `)).toBe(true);
 		}
 		expect(activationLog).toContain('Joyful activated');
 
@@ -97,22 +96,24 @@ describe('passive log labels', () => {
 		);
 		expect(expirationLog).toBeTruthy();
 		expect(expirationLog).not.toContain('happiness.tier.summary');
-		if (PASSIVE_INFO.icon) {
-			expect(expirationLog?.startsWith(`${PASSIVE_INFO.icon} `)).toBe(true);
+		if (passiveIcon) {
+			expect(expirationLog?.startsWith(`${passiveIcon} `)).toBe(true);
 		}
 		expect(expirationLog).toContain('Joyful deactivated');
 	});
 
 	it('formats building passives and skips bonus activations', () => {
+		const registries = createSessionRegistries();
 		const engineContext = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
 		});
+		engineContext.assets = createDefaultTranslationAssets();
 
 		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 		runEffects(
@@ -138,15 +139,17 @@ describe('passive log labels', () => {
 	});
 
 	it('omits development passives and keeps stat changes grouped', () => {
+		const registries = createSessionRegistries();
 		const engineContext = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
 		});
+		engineContext.assets = createDefaultTranslationAssets();
 
 		runEffects(
 			[

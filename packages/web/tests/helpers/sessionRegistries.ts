@@ -1,11 +1,3 @@
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	RESOURCES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
@@ -14,45 +6,60 @@ import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
 } from '../../src/state/sessionRegistries';
+import registriesPayload from '../fixtures/sessionRegistriesPayload.json';
 
-function cloneResourceDefinition(key: string): SessionResourceDefinition {
-	const info = RESOURCES[key as ResourceKey];
-	const definition: SessionResourceDefinition = { key };
-	if (info?.icon !== undefined) {
-		definition.icon = info.icon;
+const BASE_PAYLOAD = registriesPayload as SessionRegistriesPayload;
+type ResourceKey = SessionResourceDefinition['key'];
+
+function cloneResourceDefinition(
+	definition: SessionResourceDefinition,
+): SessionResourceDefinition {
+	const clone: SessionResourceDefinition = { key: definition.key };
+	if (definition.icon !== undefined) {
+		clone.icon = definition.icon;
 	}
-	if (info?.label !== undefined) {
-		definition.label = info.label;
+	if (definition.label !== undefined) {
+		clone.label = definition.label;
 	}
-	if (info?.description !== undefined) {
-		definition.description = info.description;
+	if (definition.description !== undefined) {
+		clone.description = definition.description;
 	}
-	if (info?.tags && info.tags.length > 0) {
-		definition.tags = [...info.tags];
+	if (definition.tags && definition.tags.length > 0) {
+		clone.tags = [...definition.tags];
 	}
-	return definition;
+	return clone;
 }
 
-const toSerialized = <DefinitionType>(registry: {
-	entries(): [string, DefinitionType][];
-}) => {
-	return Object.fromEntries(
-		registry
-			.entries()
-			.map(([id, definition]) => [id, structuredClone(definition)]),
-	);
-};
-
-export function createSessionRegistriesPayload(): SessionRegistriesPayload {
+function cloneRegistriesPayload(
+	payload: SessionRegistriesPayload,
+): SessionRegistriesPayload {
+	const cloneEntries = <T>(entries: Record<string, T> | undefined) => {
+		if (!entries) {
+			return {};
+		}
+		return Object.fromEntries(
+			Object.entries(entries).map(([id, definition]) => [
+				id,
+				structuredClone(definition),
+			]),
+		);
+	};
 	return {
-		actions: toSerialized(ACTIONS),
-		buildings: toSerialized(BUILDINGS),
-		developments: toSerialized(DEVELOPMENTS),
-		populations: toSerialized(POPULATIONS),
+		actions: cloneEntries(payload.actions),
+		buildings: cloneEntries(payload.buildings),
+		developments: cloneEntries(payload.developments),
+		populations: cloneEntries(payload.populations),
 		resources: Object.fromEntries(
-			Object.keys(RESOURCES).map((key) => [key, cloneResourceDefinition(key)]),
+			Object.entries(payload.resources ?? {}).map(([key, definition]) => [
+				key,
+				cloneResourceDefinition(definition),
+			]),
 		),
 	};
+}
+
+export function createSessionRegistriesPayload(): SessionRegistriesPayload {
+	return cloneRegistriesPayload(BASE_PAYLOAD);
 }
 
 export function createSessionRegistries(): SessionRegistries {
@@ -60,5 +67,5 @@ export function createSessionRegistries(): SessionRegistries {
 }
 
 export function createResourceKeys(): ResourceKey[] {
-	return Object.keys(RESOURCES) as ResourceKey[];
+	return Object.keys(BASE_PAYLOAD.resources ?? {}) as ResourceKey[];
 }

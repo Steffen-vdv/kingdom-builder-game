@@ -1,8 +1,3 @@
-import {
-	POPULATION_ROLES,
-	POPULATION_INFO,
-	LAND_INFO,
-} from '@kingdom-builder/contents';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
 import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
@@ -35,10 +30,10 @@ function renderPopulationMetaIcons(
 	meta: ResourceSourceMeta,
 	_context: TranslationDiffContext,
 ): string {
-	const role = meta.id as keyof typeof POPULATION_ROLES | undefined;
+	const role = meta.id;
 	const icon = role
-		? POPULATION_ROLES[role]?.icon || role
-		: POPULATION_INFO.icon;
+		? _context.assets.populations[role]?.icon || role
+		: _context.assets.population.icon;
 	if (!icon) {
 		return '';
 	}
@@ -76,8 +71,11 @@ function renderBuildingMetaIcons(
 	return resolveBuildingIcon(meta.id, context);
 }
 
-function renderLandMetaIcons(): string {
-	return LAND_INFO.icon || '';
+function renderLandMetaIcons(
+	_meta: ResourceSourceMeta,
+	context: TranslationDiffContext,
+): string {
+	return context.assets.land.icon || '';
 }
 
 const META_ICON_RENDERERS: Record<string, MetaIconRenderer> = {

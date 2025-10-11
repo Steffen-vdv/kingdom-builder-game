@@ -1,15 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	LAND_INFO,
-} from '@kingdom-builder/contents';
+import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
 import { logContent } from '../src/translation/content';
 import {
 	snapshotPlayer,
@@ -21,21 +12,29 @@ import {
 	formatLogHeadline,
 	LOG_KEYWORDS,
 } from '../src/translation/log/logMessages';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import { createTranslationAssets } from '../src/translation/context/assets';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
 function createTestContext() {
-	return createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
+	const registries = createSessionRegistries();
+	const engineContext = createEngine({
+		actions: registries.actions,
+		buildings: registries.buildings,
+		developments: registries.developments,
+		populations: registries.populations,
 		phases: PHASES,
 		start: GAME_START,
 		rules: RULES,
 	});
+	engineContext.assets = createTranslationAssets({
+		populations: registries.populations,
+		resources: registries.resources,
+	});
+	return engineContext;
 }
 
 describe('land change log formatting', () => {
@@ -66,9 +65,10 @@ describe('land change log formatting', () => {
 		if (!landLine) {
 			return;
 		}
+		const landInfo = engineContext.assets.land;
 		const landLabel =
-			formatIconLabel(LAND_INFO.icon, LAND_INFO.label) ||
-			LAND_INFO.label ||
+			formatIconLabel(landInfo.icon, landInfo.label) ||
+			landInfo.label ||
 			'Land';
 		const expectedLine = formatLogHeadline(LOG_KEYWORDS.gained, landLabel);
 		expect(landLine).toBe(expectedLine);

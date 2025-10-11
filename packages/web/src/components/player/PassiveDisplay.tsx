@@ -1,10 +1,6 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import {
-	PASSIVE_INFO,
-	PhaseId,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
+import { PhaseId, type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	EffectDef,
 	PassiveSummary,
@@ -111,10 +107,13 @@ export default function PassiveDisplay({
 				}
 				const presentation = resolvePassivePresentation(passive, {
 					definition: passiveDefinition,
+					assets: translationContext.assets,
 				});
-				const icon = presentation.icon || PASSIVE_INFO.icon || '';
+				const icon =
+					presentation.icon || translationContext.assets.passive.icon || '';
 				const label = presentation.label;
-				const displayLabel = label || PASSIVE_INFO.label || '';
+				const displayLabel =
+					label || translationContext.assets.passive.label || '';
 				const removalText = presentation.removal;
 				const summaryText = presentation.summary;
 				const tierDefinition = tierByPassiveId.get(passive.id);

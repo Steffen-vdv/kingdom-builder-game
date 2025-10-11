@@ -9,6 +9,8 @@ import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
 	SYNTHETIC_SLOT_INFO,
+	SYNTHETIC_LAND_INFO,
+	SYNTHETIC_PASSIVE_INFO,
 } from './fixtures/syntheticPlow';
 import {
 	snapshotPlayer,
@@ -22,6 +24,7 @@ import {
 } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
 function asTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
@@ -65,6 +68,17 @@ describe('sub-action logging', () => {
 			start: synthetic.start,
 			rules: synthetic.rules,
 		});
+		const baseAssets = createDefaultTranslationAssets();
+		engineContext.assets = {
+			...baseAssets,
+			resources: {
+				...baseAssets.resources,
+				...SYNTHETIC_RESOURCES,
+			},
+			land: SYNTHETIC_LAND_INFO,
+			slot: SYNTHETIC_SLOT_INFO,
+			passive: SYNTHETIC_PASSIVE_INFO,
+		};
 		engineContext.activePlayer.actions.add(synthetic.plow.id);
 		engineContext.activePlayer.resources.gold = 10;
 		engineContext.activePlayer.resources.ap = 1;

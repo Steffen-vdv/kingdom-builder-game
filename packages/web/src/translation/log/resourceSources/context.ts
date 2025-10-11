@@ -3,6 +3,7 @@ import type {
 	DevelopmentConfig,
 	SessionPlayerId,
 } from '@kingdom-builder/protocol';
+import type { TranslationAssets } from '../../context';
 import { type PassiveDescriptor, type PassiveModifierMap } from './types';
 
 interface PassiveLookup {
@@ -32,6 +33,7 @@ export interface TranslationDiffContext {
 		has(id: string): boolean;
 	};
 	readonly passives: TranslationDiffPassives;
+	readonly assets: TranslationAssets;
 	evaluate(evaluator: {
 		type: string;
 		params?: Record<string, unknown>;
@@ -95,6 +97,7 @@ export function createTranslationDiffContext(context: {
 		has?(id: string): boolean;
 	};
 	passives: unknown;
+	assets: TranslationAssets;
 }): TranslationDiffContext {
 	const rawPassives = context.passives as PassiveLookup | undefined;
 	const evaluationMods = (rawPassives?.evaluationMods ??
@@ -121,6 +124,7 @@ export function createTranslationDiffContext(context: {
 				: (id: string) => context.developments.get(id) !== undefined,
 		},
 		passives,
+		assets: context.assets,
 		evaluate(evaluator) {
 			return Number(evaluateDefinition(evaluator, this));
 		},

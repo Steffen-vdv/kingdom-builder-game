@@ -8,6 +8,7 @@ import {
 } from '@kingdom-builder/engine';
 import {
 	createSyntheticTaxScenario,
+	SYNTHETIC_ASSETS,
 	SYNTHETIC_IDS,
 	SYNTHETIC_RESOURCES,
 	SYNTHETIC_RESOURCE_KEYS,
@@ -45,6 +46,7 @@ describe('log resource sources', () => {
 			start: scenario.start,
 			rules: scenario.rules,
 		});
+		engineContext.assets = SYNTHETIC_ASSETS;
 		// Give opponent a mill
 		engineContext.game.currentPlayerIndex = 1;
 		runEffects(
@@ -104,6 +106,7 @@ describe('log resource sources', () => {
 			start: scenario.start,
 			rules: scenario.rules,
 		});
+		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(
 			[
 				{
@@ -157,6 +160,7 @@ describe('log resource sources', () => {
 			start: scenario.start,
 			rules: scenario.rules,
 		});
+		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(
 			[
 				{
