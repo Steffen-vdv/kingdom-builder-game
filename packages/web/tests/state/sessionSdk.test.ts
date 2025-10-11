@@ -9,7 +9,11 @@ import {
 	releaseSession,
 	setGameApi,
 } from '../../src/state/sessionSdk';
-import { GameApiFake, createGameApiMock } from '../../src/services/gameApi';
+import {
+	GameApiFake,
+	createGameApi,
+	createGameApiMock,
+} from '../../src/services/gameApi';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -18,6 +22,7 @@ import {
 	createResourceKeys,
 	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
+import * as sessionRegistriesModule from '../../src/state/sessionRegistries';
 
 describe('sessionSdk', () => {
 	const resourceKeys = createResourceKeys();
@@ -90,6 +95,39 @@ describe('sessionSdk', () => {
 		expect(fetched.snapshot).toEqual(initialSnapshot);
 		expect(fetched.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(fetched.metadata).toEqual(initialSnapshot.metadata);
+	});
+
+	it('propagates abort signals without touching cached registries', async () => {
+		const created = await createSession();
+		const deserializeSpy = vi.spyOn(
+			sessionRegistriesModule,
+			'deserializeSessionRegistries',
+		);
+		const fetchMock = vi.fn(
+			(_input: RequestInfo, init?: RequestInit) =>
+				new Promise<Response>((_resolve, reject) => {
+					const signal = init?.signal;
+					if (!signal) {
+						reject(new Error('Missing abort signal.'));
+						return;
+					}
+					signal.addEventListener(
+						'abort',
+						() => reject(new DOMException('Aborted', 'AbortError')),
+						{ once: true },
+					);
+				}),
+		);
+		setGameApi(createGameApi({ fetchFn: fetchMock }));
+		const controller = new AbortController();
+		const promise = fetchSnapshot(created.sessionId, {
+			signal: controller.signal,
+		});
+		controller.abort();
+		await expect(promise).rejects.toBeInstanceOf(DOMException);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(deserializeSpy).not.toHaveBeenCalled();
+		deserializeSpy.mockRestore();
 	});
 	it('performs session actions via the API and mirrors locally', async () => {
 		const created = await createSession();

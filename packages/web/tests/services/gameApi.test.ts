@@ -158,6 +158,20 @@ describe('createGameApi', () => {
 		});
 	});
 
+	it('passes abort signals through request init', async () => {
+		const response = createStateResponse('session-2');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+		const controller = new AbortController();
+
+		await api.fetchSnapshot('session-2', {
+			signal: controller.signal,
+		});
+
+		const [, init] = fetchMock.mock.calls[0] ?? [];
+		expect(init?.signal).toBe(controller.signal);
+	});
+
 	it('requests session snapshots from the snapshot endpoint', async () => {
 		const response = createStateResponse('session/special');
 		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));

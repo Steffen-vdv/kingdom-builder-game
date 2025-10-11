@@ -11,17 +11,12 @@ import {
 	GameProviderInner,
 	type GameProviderInnerProps,
 } from './GameProviderInner';
-import {
-	type SessionQueueHelpers,
-	type Session,
-	type LegacySession,
-	type SessionRegistries,
-	type SessionResourceKeys,
-	type SessionRuleSnapshot,
-	type SessionSnapshot,
-	type SessionMetadata,
-} from './sessionTypes';
-import type { LegacyGameEngineContextValue } from './GameContext.types';
+import { type SessionQueueHelpers, type SessionSnapshot } from './sessionTypes';
+import type {
+	GameProviderProps,
+	LegacyGameEngineContextValue,
+	SessionContainer,
+} from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import GameBootstrapScreen from '../components/game/GameBootstrapScreen';
 import {
@@ -35,34 +30,7 @@ export type { TimeScale } from './useTimeScale';
 export type { PhaseProgressState } from './usePhaseProgress';
 export type { TranslationContext } from '../translation/context';
 
-type ProviderProps = {
-	children: React.ReactNode;
-	onExit?: () => void;
-	darkMode?: boolean;
-	onToggleDark?: () => void;
-	devMode?: boolean;
-	musicEnabled?: boolean;
-	onToggleMusic?: () => void;
-	soundEnabled?: boolean;
-	onToggleSound?: () => void;
-	backgroundAudioMuted?: boolean;
-	onToggleBackgroundAudioMute?: () => void;
-	playerName?: string;
-	onChangePlayerName?: (name: string) => void;
-};
-
-interface SessionContainer {
-	session: Session;
-	legacySession: LegacySession;
-	sessionId: string;
-	snapshot: SessionSnapshot;
-	ruleSnapshot: SessionRuleSnapshot;
-	registries: SessionRegistries;
-	resourceKeys: SessionResourceKeys;
-	metadata: SessionMetadata;
-}
-
-export function GameProvider(props: ProviderProps) {
+export function GameProvider(props: GameProviderProps) {
 	const {
 		children,
 		onExit,
@@ -154,15 +122,19 @@ export function GameProvider(props: ProviderProps) {
 
 	useEffect(() => {
 		let disposed = false;
+		const controller = new AbortController();
 		setSessionError(null);
 		const create = () =>
 			runExclusive(async () => {
 				releaseCurrentSession();
 				try {
-					const created = await createSession({
-						devMode,
-						playerName: playerNameRef.current,
-					});
+					const created = await createSession(
+						{
+							devMode,
+							playerName: playerNameRef.current,
+						},
+						{ signal: controller.signal },
+					);
 					if (disposed || !mountedRef.current) {
 						releaseSession(created.sessionId);
 						return;
@@ -187,6 +159,7 @@ export function GameProvider(props: ProviderProps) {
 		void create();
 		return () => {
 			disposed = true;
+			controller.abort();
 		};
 	}, [
 		devMode,
@@ -205,7 +178,9 @@ export function GameProvider(props: ProviderProps) {
 					return;
 				}
 				try {
-					const result = await fetchSnapshot(sessionId);
+					const result = await fetchSnapshot(sessionId, {
+						signal: new AbortController().signal,
+					});
 					if (
 						!mountedRef.current ||
 						sessionStateRef.current?.sessionId !== sessionId
