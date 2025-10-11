@@ -595,6 +595,12 @@ its definition, typical usage, and contrast with related systems.
 
 ## 5. Engine Implementation Notes
 
+- Need module breadcrumbs for combat, passive stacking, or session lifecycle?
+  Jump to [`docs/architecture/navigation-cheatsheet.md`](docs/architecture/navigation-cheatsheet.md)
+  for a quick index of the go-to engine and server files.
+- Keep that cheatsheet updated when new selectors or registries are added so it
+  remains trustworthy for future agents.
+
 ### 5.1 Effect Registry
 
 - Effect handlers live in the `EFFECTS` registry and are keyed by

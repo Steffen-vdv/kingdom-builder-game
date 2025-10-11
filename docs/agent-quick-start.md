@@ -68,6 +68,9 @@ guide for rationale, lore, and extended background.
 
 - The full rationale, architectural lore, and gameplay reference begin in
   [`AGENTS.md`](../AGENTS.md#1-core-agent-principles).
+- Combat, passive, and session deep dives live in the
+  [`architecture/navigation cheatsheet`](architecture/navigation-cheatsheet.md)
+  so you can jump straight to the right engine/service modules.
 - Translation inventories and helper tables live in
   [`docs/text-formatting.md`](text-formatting.md#1-translation-pipeline-overview).
   Consult them after completing the mandatory checklist above.
