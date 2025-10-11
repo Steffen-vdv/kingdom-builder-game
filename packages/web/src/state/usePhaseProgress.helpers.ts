@@ -5,7 +5,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
-import type { PhaseStep } from './GameContext.types';
+import type { PhaseStep } from './phaseTypes';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import { advanceSessionPhase } from './sessionSdk';
 import type {
@@ -30,7 +30,7 @@ interface AdvanceToActionPhaseOptions {
 	setDisplayPhase: (phase: string) => void;
 	setTabsEnabled: (value: boolean) => void;
 	setMainApStart: (value: number) => void;
-	updateMainPhaseStep: (value?: number) => void;
+	updateMainPhaseStep: (value: number) => void;
 	addLog: (
 		entry: string | string[],
 		player?: SessionPlayerStateSnapshot,
