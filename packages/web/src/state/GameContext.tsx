@@ -23,6 +23,11 @@ import {
 } from './sessionTypes';
 import type { LegacyGameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
+import GameBootstrapScreen from '../components/game/GameBootstrapScreen';
+import {
+	formatFailureDetails,
+	type SessionFailureDetails,
+} from './sessionFailures';
 import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
@@ -78,6 +83,9 @@ export function GameProvider(props: ProviderProps) {
 	const queueRef = useRef<Promise<void>>(Promise.resolve());
 	const sessionStateRef = useRef<SessionContainer | null>(null);
 	const latestSnapshotRef = useRef<SessionSnapshot | null>(null);
+	const [sessionError, setSessionError] =
+		useState<SessionFailureDetails | null>(null);
+	const [bootAttempt, setBootAttempt] = useState(0);
 	const [sessionData, setSessionData] = useState<SessionContainer | null>(null);
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
@@ -88,6 +96,14 @@ export function GameProvider(props: ProviderProps) {
 		if (mountedRef.current) {
 			setSessionData(next);
 		}
+		if (next) {
+			setSessionError(null);
+		}
+	}, []);
+
+	const handleRetry = useCallback(() => {
+		setSessionError(null);
+		setBootAttempt((value) => value + 1);
 	}, []);
 
 	const runExclusive = useCallback(
@@ -125,33 +141,47 @@ export function GameProvider(props: ProviderProps) {
 
 	useEffect(() => {
 		let disposed = false;
+		setSessionError(null);
 		const create = () =>
 			runExclusive(async () => {
 				releaseCurrentSession();
-				const created = await createSession({
-					devMode,
-					playerName: playerNameRef.current,
-				});
-				if (disposed || !mountedRef.current) {
-					releaseSession(created.sessionId);
-					return;
+				try {
+					const created = await createSession({
+						devMode,
+						playerName: playerNameRef.current,
+					});
+					if (disposed || !mountedRef.current) {
+						releaseSession(created.sessionId);
+						return;
+					}
+					updateSessionData({
+						session: created.session,
+						legacySession: created.legacySession,
+						sessionId: created.sessionId,
+						snapshot: created.snapshot,
+						ruleSnapshot: created.ruleSnapshot,
+						registries: created.registries,
+						resourceKeys: created.resourceKeys,
+						metadata: created.metadata,
+					});
+				} catch (error) {
+					if (disposed || !mountedRef.current) {
+						return;
+					}
+					setSessionError(formatFailureDetails(error));
 				}
-				updateSessionData({
-					session: created.session,
-					legacySession: created.legacySession,
-					sessionId: created.sessionId,
-					snapshot: created.snapshot,
-					ruleSnapshot: created.ruleSnapshot,
-					registries: created.registries,
-					resourceKeys: created.resourceKeys,
-					metadata: created.metadata,
-				});
 			});
 		void create();
 		return () => {
 			disposed = true;
 		};
-	}, [devMode, releaseCurrentSession, runExclusive, updateSessionData]);
+	}, [
+		devMode,
+		releaseCurrentSession,
+		runExclusive,
+		updateSessionData,
+		bootAttempt,
+	]);
 
 	const refreshSession = useCallback(
 		() =>
@@ -161,25 +191,33 @@ export function GameProvider(props: ProviderProps) {
 				if (!sessionId) {
 					return;
 				}
-				const result = await fetchSnapshot(sessionId);
-				if (
-					!mountedRef.current ||
-					sessionStateRef.current?.sessionId !== sessionId
-				) {
-					return;
+				try {
+					const result = await fetchSnapshot(sessionId);
+					if (
+						!mountedRef.current ||
+						sessionStateRef.current?.sessionId !== sessionId
+					) {
+						return;
+					}
+					updateSessionData({
+						session: result.session,
+						legacySession: result.legacySession,
+						sessionId,
+						snapshot: result.snapshot,
+						ruleSnapshot: result.ruleSnapshot,
+						registries: result.registries,
+						resourceKeys: result.resourceKeys,
+						metadata: result.metadata,
+					});
+				} catch (error) {
+					if (!mountedRef.current) {
+						return;
+					}
+					releaseCurrentSession();
+					setSessionError(formatFailureDetails(error));
 				}
-				updateSessionData({
-					session: result.session,
-					legacySession: result.legacySession,
-					sessionId,
-					snapshot: result.snapshot,
-					ruleSnapshot: result.ruleSnapshot,
-					registries: result.registries,
-					resourceKeys: result.resourceKeys,
-					metadata: result.metadata,
-				});
 			}),
-		[runExclusive, updateSessionData],
+		[runExclusive, updateSessionData, releaseCurrentSession],
 	);
 
 	const handleRelease = useCallback(() => {
@@ -216,7 +254,16 @@ export function GameProvider(props: ProviderProps) {
 	);
 
 	if (!sessionData) {
-		return null;
+		const bootstrapProps = {
+			error: sessionError,
+			onRetry: handleRetry,
+		};
+		return (
+			<GameBootstrapScreen
+				{...bootstrapProps}
+				{...(onExit ? { onExit } : {})}
+			/>
+		);
 	}
 
 	const innerProps: GameProviderInnerProps = {
