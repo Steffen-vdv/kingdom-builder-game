@@ -188,6 +188,7 @@ export function GameProviderInner({
 		enqueue,
 		showResolution: handleShowResolution,
 		registries,
+		onFatalSessionError,
 	});
 
 	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =
