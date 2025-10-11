@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
@@ -107,40 +107,53 @@ vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
 }));
 
-beforeAll(() => {
-	Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
-		value: vi.fn(),
-		writable: true,
-	});
+const activePlayerName =
+	sessionView.active?.name ?? engineSnapshot.game.players[0]?.name ?? 'Player';
+const currentPhaseDefinition =
+	engineSnapshot.phases[engineSnapshot.game.phaseIndex];
+
+beforeEach(() => {
+	mockGame.phase.canEndTurn = true;
+	mockGame.phase.isAdvancing = false;
+	mockGame.handleEndTurn.mockClear();
+});
+
+afterEach(() => {
+	cleanup();
 });
 
 describe('<PhasePanel />', () => {
-	it('displays current turn and phases', () => {
+	it('renders turn, active player, and current phase', () => {
 		render(<PhasePanel />);
-		const turnText = `Turn ${engineSnapshot.game.turn}`;
-		const turnElement = screen.getByText(turnText);
-		const turnContainer = turnElement.closest('div');
-		expect(turnContainer).toBeTruthy();
-		if (turnContainer) {
-			expect(
-				within(turnContainer).getByText(
-					sessionView.active?.name ??
-						engineSnapshot.game.players[0]?.name ??
-						'Player',
-				),
-			).toBeInTheDocument();
-		}
-		const phaseItems = screen.getAllByRole('listitem');
-		expect(phaseItems.length).toBeGreaterThan(0);
-		const firstPhase = engineSnapshot.phases[0];
-		const firstPhaseEntry = phaseItems.find((item) =>
-			within(item).queryByText(firstPhase.label),
+		const turnIndicator = screen.getByText(`Turn ${engineSnapshot.game.turn}`);
+		expect(turnIndicator).toBeInTheDocument();
+		expect(screen.getByLabelText('Active player')).toHaveTextContent(
+			activePlayerName,
 		);
-		expect(firstPhaseEntry).toBeTruthy();
-		if (firstPhaseEntry) {
-			expect(
-				within(firstPhaseEntry).getByText(firstPhase.icon),
-			).toBeInTheDocument();
-		}
+		expect(screen.getByText(currentPhaseDefinition.label)).toBeInTheDocument();
+		const button = screen.getByRole('button', { name: 'Next Turn' });
+		expect(button).toBeEnabled();
+	});
+
+	it('disables Next Turn when the turn cannot end yet', () => {
+		mockGame.phase.canEndTurn = false;
+		render(<PhasePanel />);
+		expect(screen.getByRole('button', { name: 'Next Turn' })).toBeDisabled();
+	});
+
+	it('disables Next Turn while phases are advancing', () => {
+		mockGame.phase.isAdvancing = true;
+		render(<PhasePanel />);
+		const button = screen.getByRole('button', { name: 'Next Turn' });
+		expect(button).toBeDisabled();
+		const panel = screen.getByLabelText('Phase overview');
+		expect(panel).toHaveAttribute('aria-busy', 'true');
+	});
+
+	it('invokes the turn handler when clicking Next Turn', () => {
+		render(<PhasePanel />);
+		const button = screen.getByRole('button', { name: 'Next Turn' });
+		fireEvent.click(button);
+		expect(mockGame.handleEndTurn).toHaveBeenCalledTimes(1);
 	});
 });
