@@ -3,6 +3,7 @@ import resourceFormatter from './resource';
 import statFormatter from './stat';
 import buildingFormatter from './building';
 import type { AttackTarget, AttackTargetFormatter, TargetInfo } from './types';
+import type { TranslationContext } from '../../context';
 export type {
 	Mode,
 	AttackTarget,
@@ -34,7 +35,11 @@ function isAttackTargetFormatterType(
 
 function resolveTargetWithFormatter(
 	type: string | undefined,
-	parseTarget: (formatter: AttackTargetFormatterMapEntry) => AttackTarget,
+	translationContext: TranslationContext,
+	parseTarget: (
+		formatter: AttackTargetFormatterMapEntry,
+		context: TranslationContext,
+	) => AttackTarget,
 ): {
 	formatter: AttackTargetFormatter;
 	target: AttackTarget;
@@ -46,7 +51,7 @@ function resolveTargetWithFormatter(
 	const formatter = ATTACK_TARGET_FORMATTERS[
 		resolvedType
 	] as AttackTargetFormatterMapEntry;
-	const target = parseTarget(formatter);
+	const target = parseTarget(formatter, translationContext);
 	if (target.type !== formatter.type) {
 		const expectedType = formatter.type;
 		const receivedType = target.type;
@@ -55,18 +60,23 @@ function resolveTargetWithFormatter(
 			`Formatter mismatch: expected type "${expectedType}" but received "${receivedType}"`,
 		);
 	}
-	const info = formatter.getInfo(target);
+	const info = formatter.getInfo(target, translationContext);
 
 	return {
 		formatter: formatter as AttackTargetFormatter,
 		target,
 		info,
-		targetLabel: formatter.getTargetLabel(info, target),
+		targetLabel: formatter.getTargetLabel(
+			info,
+			target,
+			translationContext,
+		),
 	};
 }
 
 export function resolveAttackTargetFormatter(
 	effect: EffectDef<Record<string, unknown>>,
+	translationContext: TranslationContext,
 ): {
 	formatter: AttackTargetFormatter;
 	target: AttackTarget;
@@ -78,20 +88,21 @@ export function resolveAttackTargetFormatter(
 		| undefined;
 	const type = targetParam?.type;
 
-	return resolveTargetWithFormatter(type, (formatter) =>
-		formatter.parseEffectTarget(effect),
+	return resolveTargetWithFormatter(type, translationContext, (formatter, context) =>
+		formatter.parseEffectTarget(effect, context),
 	);
 }
 
 export function resolveAttackTargetFormatterFromLogTarget(
 	target: AttackLog['evaluation']['target'],
+	translationContext: TranslationContext,
 ): {
 	formatter: AttackTargetFormatter;
 	target: AttackTarget;
 	info: TargetInfo;
 	targetLabel: string;
 } {
-	return resolveTargetWithFormatter(target.type, (formatter) =>
-		formatter.normalizeLogTarget(target),
+	return resolveTargetWithFormatter(target.type, translationContext, (formatter, context) =>
+		formatter.normalizeLogTarget(target, context),
 	);
 }

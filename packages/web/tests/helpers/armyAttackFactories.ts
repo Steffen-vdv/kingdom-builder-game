@@ -1,4 +1,3 @@
-import { STATS, BUILDINGS } from '@kingdom-builder/contents';
 import { createEngine, type EffectDef } from '@kingdom-builder/engine';
 import { createContentFactory } from '@kingdom-builder/testing';
 import {
@@ -16,55 +15,15 @@ import {
 	WAR_WEARINESS_GAIN,
 	BUILDING_REWARD_GOLD,
 	PLUNDER_PERCENT,
-	TIER_RESOURCE_KEY,
-	type CombatStatKey,
+        TIER_RESOURCE_KEY,
+        type CombatStatKey,
 } from './armyAttackConfig';
 import {
-	buildEffects,
-	buildAttackEffect,
-	ACTION_DEFS,
-	type ActionDefinition,
+        buildEffects,
+        buildAttackEffect,
+        ACTION_DEFS,
+        type ActionDefinition,
 } from './armyAttackEffects';
-
-type StatInfo = (typeof STATS)[keyof typeof STATS];
-
-const originalStatEntries = new Map<string, StatInfo | undefined>();
-
-function overrideStat(key: CombatStatKey) {
-	const config = COMBAT_STAT_CONFIG[key];
-	originalStatEntries.set(
-		config.key,
-		(STATS as Record<string, StatInfo | undefined>)[config.key],
-	);
-	(STATS as Record<string, StatInfo>)[config.key] = {
-		...STATS[config.base],
-		icon: config.icon,
-		label: config.label,
-	};
-}
-
-function restoreStat(key: CombatStatKey) {
-	const config = COMBAT_STAT_CONFIG[key];
-	const original = originalStatEntries.get(config.key);
-	if (original) {
-		(STATS as Record<string, StatInfo | undefined>)[config.key] = original;
-	} else {
-		delete (STATS as Record<string, StatInfo | undefined>)[config.key];
-	}
-}
-
-export function setupStatOverrides() {
-	for (const key of Object.keys(COMBAT_STAT_CONFIG) as CombatStatKey[]) {
-		overrideStat(key);
-	}
-}
-
-export function teardownStatOverrides() {
-	for (const key of Object.keys(COMBAT_STAT_CONFIG) as CombatStatKey[]) {
-		restoreStat(key);
-	}
-	originalStatEntries.clear();
-}
 
 function createBaseEngine() {
 	const factory = createContentFactory();
@@ -102,41 +61,18 @@ function buildAction(
 }
 
 export function createSyntheticCtx() {
-	const { factory, ctx } = createBaseEngine();
-	const building = factory.building({ ...SYNTH_BUILDING });
-	BUILDINGS.add(building.id, building);
-	const plunder = buildAction(factory, ACTION_DEFS.plunder);
-	const attack = buildAction(factory, ACTION_DEFS.attack);
-	const buildingAttack = buildAction(factory, ACTION_DEFS.buildingAttack);
-	return { ctx, attack, plunder, building, buildingAttack } as const;
+        const { factory, ctx } = createBaseEngine();
+        const building = factory.building({ ...SYNTH_BUILDING });
+        const plunder = buildAction(factory, ACTION_DEFS.plunder);
+        const attack = buildAction(factory, ACTION_DEFS.attack);
+        const buildingAttack = buildAction(factory, ACTION_DEFS.buildingAttack);
+        return { ctx, attack, plunder, building, buildingAttack } as const;
 }
 
 export function createPartialStatCtx() {
-	const { factory, ctx } = createBaseEngine();
-	const attack = buildAction(factory, ACTION_DEFS.partial);
-	return { ctx, attack } as const;
-}
-
-export function getStat(key: string): StatInfo | undefined {
-	return (STATS as Record<string, StatInfo | undefined>)[key];
-}
-
-export function iconLabel(
-	icon: string | undefined,
-	label: string | undefined,
-	fallback: string,
-) {
-	const resolved = label ?? fallback;
-	return icon ? `${icon} ${resolved}` : resolved;
-}
-
-export function statToken(
-	stat: StatInfo | undefined,
-	fallback: string,
-	value: string,
-) {
-	const label = iconLabel(stat?.icon, stat?.label, fallback);
-	return `${label} ${value}`;
+        const { factory, ctx } = createBaseEngine();
+        const attack = buildAction(factory, ACTION_DEFS.partial);
+        return { ctx, attack } as const;
 }
 
 export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { key: string }> = {

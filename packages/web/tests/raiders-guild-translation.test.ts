@@ -6,22 +6,22 @@ import {
 	type Summary,
 } from '../src/translation/content';
 import {
-	MODIFIER_INFO,
-	POPULATION_INFO,
-	RESOURCE_TRANSFER_ICON,
-	RESOURCES,
+        MODIFIER_INFO,
+        POPULATION_INFO,
+        RESOURCE_TRANSFER_ICON,
 } from '@kingdom-builder/contents';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../src/icons';
 import { increaseOrDecrease, signed } from '../src/translation/effects/helpers';
 import { formatTargetLabel } from '../src/translation/effects/formatters/modifier_helpers';
 import {
-	collectText,
-	createRaidersGuildContext,
-	getActionSummaryItems,
-	getModifier,
-	getResourceEffect,
-	type RaidersGuildSyntheticContext,
+        collectText,
+        createRaidersGuildContext,
+        getActionSummaryItems,
+        getModifier,
+        getResourceEffect,
+        type RaidersGuildSyntheticContext,
 } from './fixtures/syntheticRaidersGuild';
+import { selectResourceInfo } from '../src/translation/effects/formatters/attack/descriptorSelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -92,7 +92,8 @@ describe('raiders guild translation', () => {
 		const resourceEffect = getResourceEffect(modifier);
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
-		const resourceIcon = RESOURCES[key as keyof typeof RESOURCES]?.icon || key;
+                const resourceDescriptor = selectResourceInfo(ctx, key);
+                const resourceIcon = resourceDescriptor.icon || key;
 		const expected = `${MODIFIER_INFO.result.icon}${development.icon}: ${resourceIcon}${signed(
 			amount,
 		)}${Math.abs(amount)}`;
@@ -123,7 +124,7 @@ describe('raiders guild translation', () => {
 		const resourceEffect = getResourceEffect(modifier);
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
-		const icon = RESOURCES[key as keyof typeof RESOURCES]?.icon || key;
+                const icon = selectResourceInfo(ctx, key).icon || key;
 		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${formatTargetLabel(
 			development.icon ?? '',
 			development.name,

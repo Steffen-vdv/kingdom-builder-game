@@ -1,7 +1,6 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
-	AttackOnDamageLogEntry,
-	EffectDef,
+        AttackOnDamageLogEntry,
+        EffectDef,
 } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../content';
 import { summarizeEffects, describeEffects } from '../factory';
@@ -65,10 +64,14 @@ export function ownerLabel(
 // Attack summary strings must stay icon-based. Target formatters should call
 // buildAttackSummaryBullet for the summarize branch instead of returning prose.
 export function buildBaseEntry(
-	effectDefinition: EffectDef<Record<string, unknown>>,
-	mode: Mode,
+        effectDefinition: EffectDef<Record<string, unknown>>,
+        translationContext: TranslationContext,
+        mode: Mode,
 ): BaseEntryResult {
-	const context = resolveAttackFormatterContext(effectDefinition);
+        const context = resolveAttackFormatterContext(
+                effectDefinition,
+                translationContext,
+        );
 	const ignoreAbsorption = Boolean(
 		effectDefinition.params?.['ignoreAbsorption'],
 	);
@@ -184,46 +187,48 @@ export function summarizeOnDamage(
 }
 
 export function formatDiffEntries(
-	entry: AttackOnDamageLogEntry,
-	formatter: AttackTargetFormatter,
-	translationContext: TranslationContext,
+        entry: AttackOnDamageLogEntry,
+        formatter: AttackTargetFormatter,
+        translationContext: TranslationContext,
 ): SummaryEntry[] {
-	const formattedEntries: SummaryEntry[] = [];
-	entry.defender.forEach((diffEntry) =>
-		formattedEntries.push(
-			formatter.formatDiff(
-				ownerLabel(translationContext, 'defender'),
-				diffEntry,
-			),
-		),
-	);
-	entry.attacker.forEach((diffEntry) =>
-		formattedEntries.push(
-			formatter.formatDiff(
-				ownerLabel(translationContext, 'attacker'),
-				diffEntry,
-			),
-		),
-	);
-	return formattedEntries;
+        const formattedEntries: SummaryEntry[] = [];
+        entry.defender.forEach((diffEntry) =>
+                formattedEntries.push(
+                        formatter.formatDiff(
+                                ownerLabel(translationContext, 'defender'),
+                                diffEntry,
+                                translationContext,
+                        ),
+                ),
+        );
+        entry.attacker.forEach((diffEntry) =>
+                formattedEntries.push(
+                        formatter.formatDiff(
+                                ownerLabel(translationContext, 'attacker'),
+                                diffEntry,
+                                translationContext,
+                        ),
+                ),
+        );
+        return formattedEntries;
 }
 
 export function collectTransferPercents(
-	effects: EffectDef[] | undefined,
-	transferPercents: Map<ResourceKey, number>,
+        effects: EffectDef[] | undefined,
+        transferPercents: Map<string, number>,
 ): void {
-	if (!effects) {
-		return;
-	}
-	for (const effectDefinition of effects) {
+        if (!effects) {
+                return;
+        }
+        for (const effectDefinition of effects) {
 		if (
 			effectDefinition.type === 'resource' &&
-			effectDefinition.method === 'transfer' &&
-			effectDefinition.params
-		) {
-			const key =
-				(effectDefinition.params['key'] as ResourceKey | undefined) ??
-				undefined;
+                        effectDefinition.method === 'transfer' &&
+                        effectDefinition.params
+                ) {
+                        const key =
+                                (effectDefinition.params['key'] as string | undefined) ??
+                                undefined;
 			const percent = effectDefinition.params['percent'] as number | undefined;
 			if (key && percent !== undefined && !transferPercents.has(key)) {
 				transferPercents.set(key, percent);

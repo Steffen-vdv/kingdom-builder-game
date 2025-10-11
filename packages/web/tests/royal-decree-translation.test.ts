@@ -22,12 +22,16 @@ import {
 	logContent,
 	type SummaryEntry,
 } from '../src/translation';
+// prettier-ignore
+import {
+	createTranslationContextForEngine,
+} from './helpers/createTranslationContextForEngine';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-const context = createEngine({
+const engineContext = createEngine({
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
@@ -35,7 +39,8 @@ const context = createEngine({
 	phases: PHASES,
 	start: GAME_START,
 	rules: RULES,
-});
+}) as EngineContext;
+const translationContext = createTranslationContextForEngine(engineContext);
 
 function combineLabels(left: string, right: string): string {
 	const base = left.trim();
@@ -91,20 +96,21 @@ function findGroupEntry(
 
 describe('royal decree translation', () => {
 	const actionId = ActionId.royal_decree;
-	const developAction = context.actions.get(ActionId.develop);
+	const developAction = translationContext.actions.get(ActionId.develop);
 	const developLabel = combineLabels(
 		`${developAction.icon ?? ''} ${developAction.name ?? ''}`,
 		'',
 	);
-	const effectGroups = getActionEffectGroups(
-		actionId,
-		context as EngineContext,
-	);
+	const effectGroups = getActionEffectGroups(actionId, engineContext);
 	const developGroup = effectGroups.find(
 		(group) => group.id === 'royal_decree_develop',
 	);
 	if (!developGroup) {
 		throw new Error('Expected royal decree develop group');
+	}
+	const [defaultDevelopOption] = developGroup.options;
+	if (!defaultDevelopOption) {
+		throw new Error('Expected at least one develop option');
 	}
 	const developmentOptions = developGroup.options.map((option) => {
 		const params = option.params as
@@ -112,21 +118,30 @@ describe('royal decree translation', () => {
 			| undefined;
 		return params?.developmentId ?? params?.id ?? '';
 	});
+	const defaultParams = (defaultDevelopOption.params ?? {}) as {
+		developmentId?: string;
+		id?: string;
+	};
+	const resolvedDevelopmentId =
+		defaultParams.developmentId ?? defaultParams.id ?? developmentOptions[0];
+	if (!resolvedDevelopmentId) {
+		throw new Error('Expected develop option to reference a development id');
+	}
+
+	const buildDevelopmentLabel = (developmentId: string): string => {
+		const development = translationContext.developments.get(developmentId);
+		const decorated = [development.icon, development.name ?? developmentId]
+			.filter(Boolean)
+			.join(' ');
+		return combineLabels(decorated, '');
+	};
 
 	it('summarizes options using develop action label', () => {
-		const summary = summarizeContent(
-			'action',
-			actionId,
-			context as EngineContext,
-		);
+		const summary = summarizeContent('action', actionId, translationContext);
 		const group = findGroupEntry(summary);
 		expect(group.items).toHaveLength(developmentOptions.length);
 		for (const id of developmentOptions) {
-			const development = context.developments.get(id);
-			const developmentLabel = combineLabels(
-				`${development.icon ?? ''} ${development.name ?? ''}`,
-				'',
-			);
+			const developmentLabel = buildDevelopmentLabel(id);
 			const expectedTitle = combineLabels(developLabel, developmentLabel);
 			const entry = group.items.find((item) =>
 				typeof item === 'string'
@@ -139,23 +154,15 @@ describe('royal decree translation', () => {
 	});
 
 	it('describes options with nested develop effects', () => {
-		const description = describeContent(
-			'action',
-			actionId,
-			context as EngineContext,
-		);
+		const description = describeContent('action', actionId, translationContext);
 		const group = findGroupEntry(description);
 		expect(group.items).toHaveLength(developmentOptions.length);
 		for (const id of developmentOptions) {
-			const development = context.developments.get(id);
-			const developmentLabel = combineLabels(
-				`${development.icon ?? ''} ${development.name ?? ''}`,
-				'',
-			);
+			const developmentLabel = buildDevelopmentLabel(id);
 			const described = describeContent(
 				'action',
 				ActionId.develop,
-				context as EngineContext,
+				translationContext,
 				{ id },
 			);
 			const describedLabel = described[0];
@@ -187,14 +194,14 @@ describe('royal decree translation', () => {
 	});
 
 	it('logs selected develop option using develop action log text', () => {
-		const resolved = resolveActionEffects(context.actions.get(actionId), {
+		const resolved = resolveActionEffects(engineContext.actions.get(actionId), {
 			landId: 'A-L1',
 			choices: {
 				royal_decree_develop: {
-					optionId: 'royal_decree_house',
+					optionId: defaultDevelopOption.id,
 					params: {
 						landId: 'A-L1',
-						developmentId: 'house',
+						developmentId: resolvedDevelopmentId,
 					},
 				},
 			},
@@ -202,40 +209,50 @@ describe('royal decree translation', () => {
 		const entries = formatEffectGroups(
 			resolved.steps,
 			'log',
-			context as EngineContext,
+			translationContext,
 		);
 		const group = findGroupEntry(entries);
 		const [entry] = group.items;
+		const developmentLabel = buildDevelopmentLabel(resolvedDevelopmentId);
+		const expectedLabel = combineLabels(developLabel, developmentLabel);
+		const developedLabel = `Developed ${developmentLabel}`;
+		const expectedLogEntry = combineLabels(developLabel, developedLabel);
 		if (typeof entry === 'string') {
-			expect(entry).toBe('🏗️ Develop - 🏠 House');
+			expect(entry).toBe(expectedLabel);
 			return;
 		}
-		expect(entry.title).toBe('🏗️ Develop');
+		expect(entry.title).toBe(developLabel);
 		expect(entry.timelineKind).toBe('subaction');
 		expect(entry.actionId).toBe(ActionId.develop);
-		expect(entry.items).toContain('🏗️ Develop - Developed 🏠 House');
+		expect(entry.items).toContain(expectedLogEntry);
 	});
 
 	it('logs royal decree develop once using develop action copy', () => {
-		const logLines = logContent('action', actionId, context as EngineContext, {
+		const logLines = logContent('action', actionId, translationContext, {
 			landId: 'A-L1',
 			choices: {
 				royal_decree_develop: {
-					optionId: 'royal_decree_house',
+					optionId: defaultDevelopOption.id,
 					params: {
 						landId: 'A-L1',
-						developmentId: 'house',
+						developmentId: resolvedDevelopmentId,
 					},
 				},
 			},
 		});
+		const developmentLabel = buildDevelopmentLabel(resolvedDevelopmentId);
 		const joined = logLines
 			.map((line) => (typeof line === 'string' ? line : line.text))
 			.join('\n');
-		const occurrences = joined.match(/Developed [^\n]*/g) ?? [];
+		const escapedDevelopmentLabel = developmentLabel.replace(
+			/[.*+?^${}()|[\]\\]/g,
+			'\\$&',
+		);
+		const pattern = new RegExp(`Developed ${escapedDevelopmentLabel}`, 'g');
+		const occurrences = joined.match(pattern) ?? [];
 		expect(occurrences.length).toBeLessThanOrEqual(1);
 		if (occurrences.length === 1) {
-			expect(occurrences[0]).toContain('🏠 House');
+			expect(occurrences[0]).toContain(developmentLabel);
 		}
 	});
 });
