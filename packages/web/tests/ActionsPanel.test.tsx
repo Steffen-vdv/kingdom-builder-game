@@ -1,22 +1,13 @@
 /** @vitest-environment jsdom */
-import {
-	describe,
-	it,
-	expect,
-	beforeEach,
-	afterEach,
-	afterAll,
-	vi,
-} from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, within, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
-import { POPULATIONS } from '@kingdom-builder/contents';
-import type { PopulationDef } from '@kingdom-builder/contents';
 import { translateRequirementFailure } from '../src/translation';
 import { createActionsPanelGame } from './helpers/actionsPanel';
 import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
+import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 
 const requirementIconsMock = vi.fn();
 
@@ -41,26 +32,23 @@ const translateRequirementFailureMock = vi.mocked(translateRequirementFailure);
 
 let mockGame = createActionsPanelGame();
 let metadata = mockGame.metadata;
-const originalPopulationGet = POPULATIONS.get.bind(POPULATIONS);
-const populationEntriesSpy = vi.spyOn(POPULATIONS, 'entries');
-const populationGetSpy = vi.spyOn(POPULATIONS, 'get');
-
 function setScenario(options?: ActionsPanelGameOptions) {
 	mockGame = createActionsPanelGame(options);
 	metadata = mockGame.metadata;
 	requirementIconsMock.mockImplementation((actionId: string) => {
 		return metadata.requirementIcons.get(actionId) ?? [];
 	});
-	populationEntriesSpy.mockImplementation(() =>
-		metadata.populationRoles.map((role) => [role.id, role]),
+}
+
+function renderActionsPanel() {
+	return render(
+		<RegistryMetadataProvider
+			registries={mockGame.sessionRegistries}
+			metadata={mockGame.sessionState.metadata}
+		>
+			<ActionsPanel />
+		</RegistryMetadataProvider>,
 	);
-	populationGetSpy.mockImplementation((id: string) => {
-		const match = metadata.populationRoles.find((role) => role.id === id);
-		if (match) {
-			return match as PopulationDef;
-		}
-		return originalPopulationGet(id);
-	});
 }
 
 vi.mock('../src/state/GameContext', () => ({
@@ -71,16 +59,9 @@ afterEach(() => {
 	cleanup();
 });
 
-afterAll(() => {
-	populationEntriesSpy.mockRestore();
-	populationGetSpy.mockRestore();
-});
-
 beforeEach(() => {
 	requirementIconsMock.mockReset();
 	translateRequirementFailureMock.mockClear();
-	populationEntriesSpy.mockReset();
-	populationGetSpy.mockReset();
 	setScenario();
 });
 
@@ -89,7 +70,7 @@ describe('<ActionsPanel />', () => {
 		'renders hire options for generated population roles ' +
 			'with derived requirement icons',
 		() => {
-			render(<ActionsPanel />);
+			renderActionsPanel();
 			const raiseAction = metadata.actions.raise;
 			expect(requirementIconsMock).toHaveBeenCalledWith(
 				raiseAction.id,
@@ -112,8 +93,8 @@ describe('<ActionsPanel />', () => {
 							return false;
 						}
 						if (
-							metadata.populationInfoIcon &&
-							!text.includes(metadata.populationInfoIcon)
+							metadata.defaultPopulationIcon &&
+							!text.includes(metadata.defaultPopulationIcon)
 						) {
 							return false;
 						}
@@ -127,7 +108,7 @@ describe('<ActionsPanel />', () => {
 
 	it('falls back to requirement helper icons for building cards', () => {
 		setScenario({ showBuilding: true });
-		render(<ActionsPanel />);
+		renderActionsPanel();
 		const buildingAction = metadata.actions.building;
 		if (!buildingAction) {
 			throw new Error('Expected building action to be defined');
@@ -154,7 +135,7 @@ describe('<ActionsPanel />', () => {
 
 	it('disables building cards when requirements fail and surfaces translations', () => {
 		setScenario({ showBuilding: true });
-		render(<ActionsPanel />);
+		renderActionsPanel();
 		const buildingDefinition = metadata.building;
 		if (!buildingDefinition) {
 			throw new Error('Expected building definition to exist');
@@ -182,7 +163,7 @@ describe('<ActionsPanel />', () => {
 				actionCategories: { population: 'custom-population' },
 			});
 			expect(metadata.actions.raise.category).toBe('custom-population');
-			render(<ActionsPanel />);
+			renderActionsPanel();
 			expect(
 				screen.queryAllByRole('button', { name: /Hire\s*:/ }),
 			).toHaveLength(0);
@@ -201,7 +182,7 @@ describe('<ActionsPanel />', () => {
 			],
 			statKeys: { capacity: `${metadata.capacityStat}-alt` },
 		});
-		render(<ActionsPanel />);
+		renderActionsPanel();
 		const hireButtons = screen.getAllByRole('button', {
 			name: /Hire\s*:/,
 		});
@@ -212,8 +193,8 @@ describe('<ActionsPanel />', () => {
 		expect(
 			requirementTexts.some((text) => {
 				if (
-					metadata.populationInfoIcon &&
-					!text.includes(metadata.populationInfoIcon)
+					metadata.defaultPopulationIcon &&
+					!text.includes(metadata.defaultPopulationIcon)
 				) {
 					return false;
 				}

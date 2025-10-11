@@ -1,13 +1,14 @@
 import React, { useMemo } from 'react';
-import { SLOT_INFO } from '@kingdom-builder/contents';
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import { useSlotMetadata } from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	type ResourceDescriptorSelector,
 } from './utils';
 import {
 	toPerformableAction,
@@ -22,11 +23,17 @@ const HOVER_CARD_BG = [
 	'dark:from-slate-900/80 dark:to-slate-900/60',
 ].join(' ');
 
-function formatLandRequirement(prefix: string): string {
-	return [
-		`${prefix} ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
-		'on available land',
-	].join(' ');
+function formatLandRequirement(
+	prefix: string,
+	slotLabel: string,
+	slotIcon?: string,
+): string {
+	const parts = [prefix];
+	if (slotIcon) {
+		parts.push(slotIcon);
+	}
+	parts.push(slotLabel, 'on available land');
+	return parts.join(' ');
 }
 
 interface DevelopOptionsProps {
@@ -37,6 +44,7 @@ interface DevelopOptionsProps {
 	hasDevelopLand: boolean;
 	player: DisplayPlayer;
 	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
 }
 
 export default function DevelopOptions({
@@ -47,6 +55,7 @@ export default function DevelopOptions({
 	hasDevelopLand,
 	player,
 	canInteract,
+	selectResourceDescriptor,
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
@@ -58,6 +67,8 @@ export default function DevelopOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const slotMetadata = useSlotMetadata();
+	const slotDescriptor = slotMetadata.select();
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
 	const entries = useMemo(() => {
@@ -95,7 +106,11 @@ export default function DevelopOptions({
 				{entries.map(({ development, costs }) => {
 					const upkeep = development.upkeep;
 					const focus = development.focus;
-					const developLandRequirement = formatLandRequirement('Requires');
+					const developLandRequirement = formatLandRequirement(
+						'Requires',
+						slotDescriptor.label,
+						slotDescriptor.icon,
+					);
 					const requirements = hasDevelopLand ? [] : [developLandRequirement];
 					const canPay =
 						hasDevelopLand &&
@@ -105,8 +120,13 @@ export default function DevelopOptions({
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
+						selectResourceDescriptor,
 					);
-					const missingLandTooltip = formatLandRequirement('No');
+					const missingLandTooltip = formatLandRequirement(
+						'No',
+						slotDescriptor.label,
+						slotDescriptor.icon,
+					);
 					const title = !implemented
 						? 'Not implemented yet'
 						: !hasDevelopLand
@@ -130,7 +150,9 @@ export default function DevelopOptions({
 							playerResources={player.resources}
 							actionCostResource={actionCostResource}
 							requirements={requirements}
-							requirementIcons={[SLOT_INFO.icon]}
+							requirementIcons={
+								slotDescriptor.icon ? [slotDescriptor.icon] : []
+							}
 							summary={summary}
 							implemented={implemented}
 							enabled={enabled}

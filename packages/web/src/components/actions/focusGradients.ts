@@ -1,6 +1,6 @@
-import type { Focus } from '@kingdom-builder/contents';
+import type { ActionFocus } from './types';
 
-type GradientMap = Record<Focus, string> & { default: string };
+type GradientMap = Record<ActionFocus | string, string> & { default: string };
 
 function joinGradient(parts: readonly string[]): string {
 	return parts.join(' ');

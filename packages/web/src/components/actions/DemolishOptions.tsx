@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import type { Focus } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	splitSummary,
@@ -12,10 +11,13 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	type ResourceDescriptorSelector,
 } from './utils';
 import {
 	toPerformableAction,
+	normalizeActionFocus,
 	type Action,
+	type ActionFocus,
 	type Building,
 	type DisplayPlayer,
 } from './types';
@@ -31,6 +33,7 @@ interface DemolishOptionsProps {
 	isActionPhase: boolean;
 	player: DisplayPlayer;
 	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
 }
 
 export default function DemolishOptions({
@@ -38,6 +41,7 @@ export default function DemolishOptions({
 	isActionPhase,
 	player,
 	canInteract,
+	selectResourceDescriptor,
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
@@ -65,7 +69,7 @@ export default function DemolishOptions({
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
-				const focus = building.focus as Focus | undefined;
+				const focus = normalizeActionFocus(building.focus);
 				return { id: buildingId, building, costs, total, focus };
 			})
 			.filter(
@@ -76,7 +80,7 @@ export default function DemolishOptions({
 					building: Building;
 					costs: Record<string, number>;
 					total: number;
-					focus: Focus | undefined;
+					focus: ActionFocus | undefined;
 				} => entry !== null,
 			)
 			.sort((first, second) => {
@@ -124,6 +128,7 @@ export default function DemolishOptions({
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
+						selectResourceDescriptor,
 					);
 					const title = !implemented
 						? 'Not implemented yet'

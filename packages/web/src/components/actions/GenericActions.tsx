@@ -8,6 +8,7 @@ import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import GenericActionCard from './GenericActionCard';
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';
+import type { ResourceDescriptorSelector } from './utils';
 
 export interface PendingActionState {
 	action: Action;
@@ -22,11 +23,13 @@ function GenericActions({
 	summaries,
 	player,
 	canInteract,
+	selectResourceDescriptor,
 }: {
 	actions: Action[];
 	summaries: Map<string, Summary>;
 	player: DisplayPlayer;
 	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
 	const {
 		session,
@@ -207,6 +210,7 @@ function GenericActions({
 					handleHoverCard={handleHoverCard}
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}
+					selectResourceDescriptor={selectResourceDescriptor}
 				/>
 			))}
 		</>
