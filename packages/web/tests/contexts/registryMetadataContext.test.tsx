@@ -30,6 +30,7 @@ import { describe, expect, it } from 'vitest';
 
 interface TestSetup {
 	registries: SessionRegistries;
+	actionId: string;
 	buildingId: string;
 	developmentId: string;
 	populationId: string;
@@ -50,6 +51,10 @@ const nextKey = (prefix: string) => {
 
 function createTestSetup(): TestSetup {
 	const factory = createContentFactory();
+	const action = factory.action({
+		name: 'Sky Assault',
+		icon: '🛩️',
+	});
 	const building = factory.building({
 		name: 'Sky Bastion',
 		icon: '🏯',
@@ -131,6 +136,7 @@ function createTestSetup(): TestSetup {
 	};
 	return {
 		registries,
+		actionId: action.id,
 		buildingId: building.id,
 		developmentId: development.id,
 		populationId: population.id,
@@ -210,7 +216,9 @@ describe('RegistryMetadataProvider', () => {
 			slot,
 			passive,
 		} = captured;
-		const { buildingId, developmentId, populationId, resourceKey } = setup;
+		const { actionId, buildingId, developmentId, populationId, resourceKey } =
+			setup;
+		expect(context.actions.getOrThrow(actionId).id).toBe(actionId);
 		expect(context.buildings.getOrThrow(buildingId).id).toBe(buildingId);
 		expect(context.developments.getOrThrow(developmentId).id).toBe(
 			developmentId,
@@ -276,5 +284,6 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
+		expect(context.overviewContent.hero.title).toBe('Game Overview');
 	});
 });
