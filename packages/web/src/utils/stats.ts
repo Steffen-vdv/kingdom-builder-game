@@ -59,7 +59,7 @@ function formatContribution(
 ): SummaryEntry {
 	const { amount, meta } = contribution;
 	const statInfo = STATS[statKey as keyof typeof STATS];
-	const valueText = formatStatValue(statKey, amount);
+	const valueText = formatStatValue(statKey, amount, context.assets);
 	const sign = amount >= 0 ? '+' : '';
 	const amountParts: string[] = [];
 	if (statInfo?.icon) {

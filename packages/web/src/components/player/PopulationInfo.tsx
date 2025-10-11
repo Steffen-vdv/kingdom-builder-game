@@ -11,6 +11,7 @@ import {
 	usePopulationMetadata,
 	useStatMetadata,
 } from '../../contexts/RegistryMetadataContext';
+import type { TranslationAssets } from '../../translation/context';
 import {
 	formatDescriptorSummary,
 	formatIconLabel,
@@ -26,10 +27,15 @@ interface StatButtonProps {
 	descriptor: DescriptorDisplay;
 	onShow: () => void;
 	onHide: () => void;
+	assets: TranslationAssets;
 }
 
-const formatStatDelta = (statKey: string, delta: number) => {
-	const formatted = formatStatValue(statKey, Math.abs(delta));
+const formatStatDelta = (
+	statKey: string,
+	delta: number,
+	assets: TranslationAssets,
+) => {
+	const formatted = formatStatValue(statKey, Math.abs(delta), assets);
 	return `${delta > 0 ? '+' : '-'}${formatted}`;
 };
 
@@ -63,11 +69,12 @@ const StatButton: React.FC<StatButtonProps> = ({
 	descriptor,
 	onShow,
 	onHide,
+	assets,
 }) => {
 	const changes = useValueChangeIndicators(value);
-	const formattedValue = formatStatValue(statKey, value);
+	const formattedValue = formatStatValue(statKey, value, assets);
 	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
-		formatStatDelta(statKey, delta),
+		formatStatDelta(statKey, delta, assets),
 	);
 	const ariaLabel = forecastDisplay
 		? `${descriptor.label}: ${formattedValue} ${forecastDisplay.label}`
@@ -107,7 +114,7 @@ const StatButton: React.FC<StatButtonProps> = ({
 					}`}
 					aria-hidden="true"
 				>
-					{formatStatDelta(statKey, change.delta)}
+					{formatStatDelta(statKey, change.delta, assets)}
 				</span>
 			))}
 		</button>
@@ -121,6 +128,7 @@ interface PopulationInfoProps {
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const { handleHoverCard, clearHoverCard, translationContext } =
 		useGameEngine();
+	const assets = translationContext.assets;
 	const populationMetadata = usePopulationMetadata();
 	const statMetadata = useStatMetadata();
 	const forecast = useNextTurnForecast();
@@ -155,10 +163,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		return translationPlayer?.stats?.[Stat.maxPopulation] ?? 0;
 	})();
 
-	const populationInfo = toAssetDisplay(
-		translationContext.assets.population,
-		'population',
-	);
+	const populationInfo = toAssetDisplay(assets.population, 'population');
 
 	const showGeneralStatCard = () =>
 		handleHoverCard({
@@ -309,6 +314,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 						descriptor,
 						onShow: () => showStatCard(statKey),
 						onHide: clearHoverCard,
+						assets,
 					};
 					const nextTurnStat = playerForecast.stats[statKey];
 					if (typeof nextTurnStat === 'number') {

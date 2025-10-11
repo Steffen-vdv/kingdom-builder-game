@@ -21,7 +21,9 @@ import {
 	Resource,
 	ActionId,
 } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../src/translation/context';
 import { getStatBreakdownSummary } from '../src/utils/stats';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 const isSummaryObject = (
 	entry: unknown,
@@ -116,10 +118,11 @@ describe('stat breakdown summary', () => {
 			result.step !== PhaseStepId.RaiseStrength
 		);
 
+		const translationContext = createTranslationContextForEngine(engineContext);
 		const breakdown = getStatBreakdownSummary(
 			Stat.armyStrength,
 			engineContext.activePlayer,
-			engineContext,
+			translationContext,
 		);
 		expect(breakdown.length).toBeGreaterThanOrEqual(2);
 		const objectEntries = breakdown.filter(isSummaryObject);
@@ -136,11 +139,11 @@ describe('stat breakdown summary', () => {
 		);
 		expect(
 			ongoingTexts?.some((item) =>
-				item.includes('Ongoing as long as 🎖️ Legion is in play'),
+				item.includes('♾️ Ongoing as long as 🎖️ Legion is in play'),
 			),
 		).toBe(true);
 		const permanent = objectEntries.find((entry) =>
-			entry.title.includes('Raise Strength'),
+			entry.title.toLowerCase().includes('raise strength'),
 		);
 		expect(permanent).toBeTruthy();
 		expect(permanent?.title).toMatch(/^Source: /);
@@ -193,10 +196,11 @@ describe('stat breakdown summary', () => {
 
 		performAction(ActionId.build, engineContext, { id: buildingId });
 
+		const translationContext = createTranslationContextForEngine(engineContext);
 		const breakdown = getStatBreakdownSummary(
 			stat,
 			engineContext.activePlayer,
-			engineContext,
+			translationContext,
 		);
 		const objectEntries = breakdown.filter(isSummaryObject);
 		const buildSource = objectEntries.find((entry) =>
@@ -205,5 +209,50 @@ describe('stat breakdown summary', () => {
 		expect(buildSource).toBeTruthy();
 		expect(buildSource?.title).toMatch(/^Source: /);
 		expect(buildSource?.title).not.toContain('Removed');
+	});
+
+	it('falls back gracefully when stat metadata is missing', () => {
+		const engineContext = createEngine({
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+			populations: POPULATIONS,
+			phases: PHASES,
+			start: GAME_START,
+			rules: RULES,
+		});
+		const statKey = Object.keys(STATS)[0]! as StatKey;
+		engineContext.activePlayer.statSources[statKey] = {
+			descriptor: {
+				amount: 2,
+				meta: {
+					key: statKey,
+					longevity: 'ongoing',
+					kind: 'action',
+					id: ACTIONS.keys()[0]!,
+				},
+			},
+		};
+		const translationContext = createTranslationContextForEngine(engineContext);
+		const mutatedContext: TranslationContext = {
+			...translationContext,
+			assets: {
+				...translationContext.assets,
+				stats: {},
+			},
+		};
+
+		const summary = getStatBreakdownSummary(
+			statKey,
+			engineContext.activePlayer,
+			mutatedContext,
+		);
+		expect(summary).not.toHaveLength(0);
+		const amountLine = summary
+			.flatMap((entry) =>
+				typeof entry === 'string' ? [entry] : (entry.items ?? []),
+			)
+			.find((line) => typeof line === 'string' && line.includes('+2'));
+		expect(amountLine).toBeDefined();
 	});
 });

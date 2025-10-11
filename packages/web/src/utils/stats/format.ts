@@ -1,12 +1,76 @@
-import { PHASES, STATS } from '@kingdom-builder/contents';
+import { STATS } from '@kingdom-builder/contents';
+import type {
+	TranslationAssets,
+	TranslationPhase,
+	TranslationPhaseStep,
+} from '../../translation/context';
 
-export function statDisplaysAsPercent(key: string): boolean {
-	const info = STATS[key as keyof typeof STATS];
-	return Boolean(info?.displayAsPercent ?? info?.addFormat?.percent);
+interface FormattablePhaseStep extends TranslationPhaseStep {
+	icon?: string;
+	title?: string;
 }
 
-export function formatStatValue(key: string, value: number): string {
-	return statDisplaysAsPercent(key) ? `${value * 100}%` : String(value);
+type PercentMetadata = { displayAsPercent?: boolean };
+
+function resolvePhaseArguments(
+	phasesOrPhaseId: readonly TranslationPhase[] | string | undefined,
+	maybePhaseId?: string,
+	maybeStepId?: string,
+): {
+	phases: readonly TranslationPhase[] | undefined;
+	phaseId: string | undefined;
+	stepId: string | undefined;
+} {
+	if (Array.isArray(phasesOrPhaseId)) {
+		return {
+			phases: phasesOrPhaseId,
+			phaseId: maybePhaseId,
+			stepId: maybeStepId,
+		};
+	}
+	if (typeof phasesOrPhaseId === 'string') {
+		return {
+			phases: undefined,
+			phaseId: phasesOrPhaseId,
+			stepId: maybePhaseId,
+		};
+	}
+	return {
+		phases: undefined,
+		phaseId: undefined,
+		stepId: maybePhaseId,
+	};
+}
+
+function isPercentMetadata(value: unknown): value is PercentMetadata {
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+	const record = value as { displayAsPercent?: unknown };
+	return typeof record.displayAsPercent === 'boolean';
+}
+
+export function statDisplaysAsPercent(
+	key: string,
+	assets?: TranslationAssets,
+): boolean {
+	const stat = assets?.stats?.[key];
+	if (isPercentMetadata(stat)) {
+		return Boolean(stat.displayAsPercent);
+	}
+	const definition = STATS[key as keyof typeof STATS];
+	if (definition && typeof definition.displayAsPercent === 'boolean') {
+		return definition.displayAsPercent;
+	}
+	return false;
+}
+
+export function formatStatValue(
+	key: string,
+	value: number,
+	assets?: TranslationAssets,
+): string {
+	return statDisplaysAsPercent(key, assets) ? `${value * 100}%` : String(value);
 }
 
 export function formatDetailText(detail: string): string {
@@ -30,54 +94,130 @@ export function formatDetailText(detail: string): string {
 }
 
 export function formatStepLabel(
-	phaseId?: string,
-	stepId?: string,
+	phases: readonly TranslationPhase[],
+	phaseId: string | undefined,
+	stepId: string | undefined,
+): string | undefined;
+export function formatStepLabel(
+	phaseId: string | undefined,
+	stepId: string | undefined,
+): string | undefined;
+export function formatStepLabel(
+	phasesOrPhaseId: readonly TranslationPhase[] | string | undefined,
+	maybePhaseId?: string,
+	maybeStepId?: string,
 ): string | undefined {
+	const { phases, phaseId, stepId } = resolvePhaseArguments(
+		phasesOrPhaseId,
+		maybePhaseId,
+		maybeStepId,
+	);
+
 	if (!stepId) {
 		return undefined;
 	}
-	const phase = phaseId
-		? PHASES.find((phaseItem) => phaseItem.id === phaseId)
-		: undefined;
-	const step = phase?.steps.find((stepItem) => stepItem.id === stepId);
+	const phase =
+		phaseId && phases
+			? phases.find((phaseItem) => phaseItem.id === phaseId)
+			: undefined;
+	const step = findPhaseStep(phase?.steps, stepId);
 	if (!step) {
 		return formatDetailText(stepId);
 	}
 	const parts: string[] = [];
-	if (step.icon) {
+	if (typeof step.icon === 'string' && step.icon.length > 0) {
 		parts.push(step.icon);
 	}
-	const label = step.title ?? step.id;
-	if (label) {
-		parts.push(label);
+	const stepTitle = step.title;
+	const hasTitle = typeof stepTitle === 'string' && stepTitle.length > 0;
+	const stepLabelSource = hasTitle ? stepTitle : step.id;
+	if (stepLabelSource) {
+		parts.push(formatDetailText(stepLabelSource));
 	}
 	return parts.join(' ').trim();
 }
 
 export function formatPhaseStep(
-	phaseId?: string,
-	stepId?: string,
+	phases: readonly TranslationPhase[],
+	phaseId: string | undefined,
+	stepId: string | undefined,
+): string | undefined;
+export function formatPhaseStep(
+	phaseId: string | undefined,
+	stepId: string | undefined,
+): string | undefined;
+export function formatPhaseStep(
+	phasesOrPhaseId: readonly TranslationPhase[] | string | undefined,
+	maybePhaseId?: string,
+	maybeStepId?: string,
 ): string | undefined {
+	const { phases, phaseId, stepId } = resolvePhaseArguments(
+		phasesOrPhaseId,
+		maybePhaseId,
+		maybeStepId,
+	);
+
 	if (!stepId) {
 		return undefined;
 	}
-	const phase = phaseId
-		? PHASES.find((phaseItem) => phaseItem.id === phaseId)
-		: undefined;
-	const step = phase?.steps.find((stepItem) => stepItem.id === stepId);
+	const phase =
+		phaseId && phases
+			? phases.find((phaseItem) => phaseItem.id === phaseId)
+			: undefined;
+	const step = findPhaseStep(phase?.steps, stepId);
 	if (!step) {
-		return formatDetailText(stepId);
+		const phaseLabel = phaseId ? formatDetailText(phaseId) : undefined;
+		const stepLabel = formatDetailText(stepId);
+		return phaseLabel && phaseLabel !== stepLabel
+			? `${phaseLabel} · ${stepLabel}`
+			: stepLabel;
 	}
 	const parts: string[] = [];
-	if (phase?.icon) {
+	if (typeof phase?.icon === 'string' && phase.icon.length > 0) {
 		parts.push(phase.icon);
 	}
-	if (phase?.label) {
+	if (typeof phase?.label === 'string' && phase.label.length > 0) {
 		parts.push(phase.label);
 	}
-	const stepText = formatStepLabel(phaseId, stepId);
+	const resolvedPhases = phases ?? [];
+	const stepText = formatStepLabel(resolvedPhases, phaseId, stepId);
 	if (parts.length && stepText) {
 		return `${parts.join(' ').trim()} · ${stepText}`;
 	}
-	return stepText;
+	return stepText ?? parts.join(' ').trim();
+}
+
+function findPhaseStep(
+	steps: readonly unknown[] | undefined,
+	stepId: string,
+): FormattablePhaseStep | undefined {
+	if (!steps) {
+		return undefined;
+	}
+	for (const candidate of steps) {
+		if (!candidate || typeof candidate !== 'object') {
+			continue;
+		}
+		const record = candidate as {
+			id?: unknown;
+			icon?: unknown;
+			title?: unknown;
+			triggers?: unknown;
+		};
+		if (record.id !== stepId) {
+			continue;
+		}
+		const result: FormattablePhaseStep = { id: stepId };
+		if (Array.isArray(record.triggers)) {
+			result.triggers = record.triggers as readonly string[];
+		}
+		if (typeof record.icon === 'string') {
+			result.icon = record.icon;
+		}
+		if (typeof record.title === 'string') {
+			result.title = record.title;
+		}
+		return result;
+	}
+	return undefined;
 }

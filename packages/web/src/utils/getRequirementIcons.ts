@@ -12,25 +12,47 @@ interface EvalConfig {
 }
 
 export type EvaluatorIconGetter = (
-	params?: Record<string, unknown>,
+	params: Record<string, unknown> | undefined,
+	translationContext: TranslationContext,
 ) => string[];
 
 export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
-	stat: (params) => {
+	stat: (params, translationContext) => {
 		const key = params?.['key'] as StatKey | undefined;
-		return key ? [STATS[key]?.icon || ''] : [];
+		if (!key) {
+			return [];
+		}
+		const icon =
+			STATS[key]?.icon || translationContext.assets.stats?.[key]?.icon || '';
+		return icon ? [icon] : [];
 	},
-	population: (params) => {
+	population: (params, translationContext) => {
 		const role = params?.['role'] as PopulationRoleId | undefined;
-		return role ? [POPULATION_ROLES[role]?.icon || ''] : [];
+		if (!role) {
+			return [];
+		}
+		const icon =
+			POPULATION_ROLES[role]?.icon ||
+			translationContext.assets.populations?.[role]?.icon ||
+			translationContext.assets.population?.icon ||
+			'';
+		return icon ? [icon] : [];
 	},
 };
 
-function collectEvaluatorIcons(evaluator?: EvalConfig): string[] {
+function collectEvaluatorIcons(
+	evaluator: EvalConfig | undefined,
+	translationContext: TranslationContext,
+): string[] {
 	if (!evaluator) {
 		return [];
 	}
-	return EVALUATOR_ICON_MAP[evaluator.type]?.(evaluator.params) ?? [];
+	return (
+		EVALUATOR_ICON_MAP[evaluator.type]?.(
+			evaluator.params,
+			translationContext,
+		) ?? []
+	);
 }
 
 interface RequirementConfig {
@@ -81,13 +103,23 @@ export function registerRequirementIconGetter(
 	};
 }
 
-registerRequirementIconGetter('evaluator', 'compare', (requirement) => {
-	const params = requirement.params ?? {};
-	return [
-		...collectEvaluatorIcons(params['left'] as EvalConfig | undefined),
-		...collectEvaluatorIcons(params['right'] as EvalConfig | undefined),
-	];
-});
+registerRequirementIconGetter(
+	'evaluator',
+	'compare',
+	(requirement, translationContext) => {
+		const params = requirement.params ?? {};
+		return [
+			...collectEvaluatorIcons(
+				params['left'] as EvalConfig | undefined,
+				translationContext,
+			),
+			...collectEvaluatorIcons(
+				params['right'] as EvalConfig | undefined,
+				translationContext,
+			),
+		];
+	},
+);
 
 export function getRequirementIcons(
 	actionId: string,
