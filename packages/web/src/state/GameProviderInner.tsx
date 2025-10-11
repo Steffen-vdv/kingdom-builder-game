@@ -54,6 +54,7 @@ export function GameProviderInner({
 	ruleSnapshot,
 	refreshSession,
 	onReleaseSession,
+	onFatalSessionError,
 	registries,
 	resourceKeys,
 	sessionMetadata,
@@ -228,8 +229,24 @@ export function GameProviderInner({
 	});
 
 	useEffect(() => {
-		void runUntilActionPhase();
-	}, [runUntilActionPhase]);
+		let disposed = false;
+		const run = async () => {
+			try {
+				await runUntilActionPhase();
+			} catch (error) {
+				if (disposed) {
+					return;
+				}
+				if (onFatalSessionError) {
+					onFatalSessionError(error);
+				}
+			}
+		};
+		void run();
+		return () => {
+			disposed = true;
+		};
+	}, [runUntilActionPhase, onFatalSessionError]);
 
 	const metadataSnapshot = useMemo(
 		() => sessionMetadata ?? cachedSessionSnapshot.metadata,
