@@ -152,11 +152,15 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   `artifacts/` directory. Share those artifacts with reviewers when failures
   need triage.
 
+- The Husky pre-push hook invokes `npm run verify` automatically so every push
+  captures fresh artifacts. Allow the hook to finish and include the generated
+  logs when collaborating on reviews.
+
 - If the verification script is unavailable in your environment, fall back to
   running `npm run check && npm run test:coverage` manually. Coverage runs may
   be skipped only when a change is strictly documentation-only or a pure
-  content typo fix—call out the exception explicitly in the PR body so
-  reviewers know it was intentional.
+  content typo fix—call out both the fallback and any coverage exceptions in the
+  PR body so reviewers know it was intentional.
 
 - The Husky pre-commit hook runs `lint-staged` followed by `npm run test:quick`.
   GitHub Actions executes `npm run test:ci` (coverage) and `npm run build` for

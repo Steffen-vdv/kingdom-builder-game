@@ -1,6 +1,28 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-npm run check
-npm run test:coverage
+main() {
+	local tmp_output
+	tmp_output="$(mktemp)"
+	trap 'rm -f "${tmp_output}"' EXIT
+
+	if npm run verify 2>&1 | tee "${tmp_output}"; then
+		exit 0
+	fi
+
+	local verify_status
+	verify_status=${PIPESTATUS[0]}
+
+	if grep -Eq 'ENOENT|MODULE_NOT_FOUND|ERR_MODULE_NOT_FOUND|Missing script: "verify"' "${tmp_output}"; then
+		echo "Verification script unavailable; falling back to manual check and coverage runs." >&2
+		echo "Document the fallback reason in the PR body before requesting review." >&2
+		npm run check
+		npm run test:coverage
+		exit 0
+	fi
+
+	exit "${verify_status}"
+}
+
+main "$@"

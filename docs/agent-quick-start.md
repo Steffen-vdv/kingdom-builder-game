@@ -18,8 +18,14 @@ guide for rationale, lore, and extended background.
    - [`npm run verify`](../scripts/run-verification.mjs) is the preferred
      combined validation for code changes; it streams output to the console and
      writes timestamped logs in `artifacts/` for sharing with reviewers.
+   - The Git pre-push hook runs `npm run verify` automatically so every push
+     includes fresh artifacts; do not skip the hook when code or tests change.
+   - If the verification script is unavailable in your environment (e.g.,
+     `ENOENT`, missing Node/npm), fall back to
+     `npm run check && npm run test:coverage`, and document the reason for the
+     fallback explicitly in the PR body before requesting review.
    - `npm run check` still runs linting, type checks, and tests together if you
-     need a direct invocation or the verification script is unavailable.
+     need a direct invocation for quick spot checks outside the hook.
    - Documentation-only updates or pure content typo fixes may skip coverage
      runs entirely—note the exception in your PR body so reviewers know it was
      intentional.
