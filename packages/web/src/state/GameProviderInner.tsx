@@ -6,6 +6,7 @@ import React, {
 	useRef,
 } from 'react';
 import { createTranslationContext } from '../translation/context';
+import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
 import { useGameLog } from './useGameLog';
@@ -336,8 +337,10 @@ export function GameProviderInner({
 	};
 
 	return (
-		<GameEngineContext.Provider value={value}>
-			{children}
-		</GameEngineContext.Provider>
+		<RegistryMetadataProvider registries={registries}>
+			<GameEngineContext.Provider value={value}>
+				{children}
+			</GameEngineContext.Provider>
+		</RegistryMetadataProvider>
 	);
 }
