@@ -64,7 +64,7 @@ const readMetadataEntry = (
 	if (!Object.prototype.hasOwnProperty.call(snapshot, key)) {
 		return undefined;
 	}
-	const record = snapshot as Record<string, unknown>;
+	const record = snapshot as unknown as Record<string, unknown>;
 	return record[key];
 };
 
