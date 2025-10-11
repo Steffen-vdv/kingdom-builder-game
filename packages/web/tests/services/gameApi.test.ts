@@ -171,6 +171,21 @@ describe('createGameApi', () => {
 		expect(init?.method).toBe('GET');
 	});
 
+	it('passes abort signals through to fetch init', async () => {
+		const response = createStateResponse('session-9');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+		const controller = new AbortController();
+
+		await api.fetchSnapshot('session-9', {
+			signal: controller.signal,
+		});
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const init = fetchMock.mock.calls[0]?.[1];
+		expect(init?.signal).toBe(controller.signal);
+	});
+
 	it('performs actions with typed responses', async () => {
 		const successResponse: ActionExecuteSuccessResponse = {
 			status: 'success',

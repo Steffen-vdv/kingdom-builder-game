@@ -50,6 +50,18 @@ interface CreateSessionOptions {
 	playerName?: string;
 }
 
+interface SessionRequestOptions {
+	/**
+	 * Aborts the underlying network request when triggered.
+	 * Aborted requests reject with a DOMException and leave cached session
+	 * state untouched.
+	 */
+	signal?: AbortSignal;
+}
+
+const isAbortError = (error: unknown): error is DOMException =>
+	error instanceof DOMException && error.name === 'AbortError';
+
 interface CreateSessionResult {
 	sessionId: string;
 	session: SessionHandle;
@@ -147,16 +159,20 @@ function applyPlayerName(
 }
 
 export async function createSession(
-	options: CreateSessionOptions = {},
+	options: CreateSessionOptions & SessionRequestOptions = {},
 ): Promise<CreateSessionResult> {
-	const devMode = options.devMode ?? false;
-	const playerName = options.playerName ?? DEFAULT_PLAYER_NAME;
+	const { signal, ...rest } = options;
+	const devMode = rest.devMode ?? false;
+	const playerName = rest.playerName ?? DEFAULT_PLAYER_NAME;
 	const sessionRequest: SessionCreateRequest = {
 		devMode,
 		playerNames: { A: playerName },
 	};
 	const api = ensureGameApi();
-	const response = await api.createSession(sessionRequest);
+	const response = await api.createSession(
+		sessionRequest,
+		signal ? { signal } : undefined,
+	);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
 	const legacySession = createEngineSession({
@@ -190,10 +206,14 @@ export async function createSession(
 
 export async function fetchSnapshot(
 	sessionId: string,
+	options: SessionRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
 	const record = ensureSessionRecord(sessionId);
-	const response = await api.fetchSnapshot(sessionId);
+	const response = await api.fetchSnapshot(
+		sessionId,
+		options.signal ? { signal: options.signal } : undefined,
+	);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
 	record.registries = registries;
@@ -211,11 +231,15 @@ export async function fetchSnapshot(
 
 export async function performSessionAction(
 	request: ActionExecuteRequest,
+	options: SessionRequestOptions = {},
 ): Promise<ActionExecuteResponse> {
 	const api = ensureGameApi();
 	const { handle } = ensureSessionRecord(request.sessionId);
 	try {
-		const response = await api.performAction(request);
+		const response = await api.performAction(
+			request,
+			options.signal ? { signal: options.signal } : undefined,
+		);
 		if (response.status === 'success') {
 			try {
 				const params = request.params as ActionParams<string> | undefined;
@@ -229,6 +253,9 @@ export async function performSessionAction(
 		}
 		return response;
 	} catch (error) {
+		if (isAbortError(error)) {
+			throw error;
+		}
 		const failure = error as ActionExecutionFailure;
 		const response: ActionExecuteErrorResponse = {
 			status: 'error',
@@ -246,6 +273,7 @@ export async function performSessionAction(
 
 export async function advanceSessionPhase(
 	request: SessionAdvanceRequest,
+	options: SessionRequestOptions = {},
 ): Promise<SessionAdvanceResponse> {
 	const api = ensureGameApi();
 	const record = ensureSessionRecord(request.sessionId);
@@ -254,7 +282,10 @@ export async function advanceSessionPhase(
 		registries: cachedRegistries,
 		resourceKeys: cachedResourceKeys,
 	} = record;
-	const response = await api.advancePhase(request);
+	const response = await api.advancePhase(
+		request,
+		options.signal ? { signal: options.signal } : undefined,
+	);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
 	Object.assign(cachedRegistries, registries);

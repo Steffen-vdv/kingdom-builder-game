@@ -291,10 +291,13 @@ describe('GameProvider', () => {
 		);
 
 		await waitFor(() =>
-			expect(createSessionMock).toHaveBeenCalledWith({
-				devMode: true,
-				playerName: 'Commander',
-			}),
+			expect(createSessionMock).toHaveBeenCalledWith(
+				expect.objectContaining({
+					devMode: true,
+					playerName: 'Commander',
+					signal: expect.any(Object),
+				}),
+			),
 		);
 
 		await waitFor(() =>
@@ -318,7 +321,10 @@ describe('GameProvider', () => {
 		await act(() => {
 			capturedPhaseOptions?.refresh?.();
 			return waitFor(() =>
-				expect(fetchSnapshotMock).toHaveBeenCalledWith('session-1'),
+				expect(fetchSnapshotMock).toHaveBeenCalledWith(
+					'session-1',
+					expect.objectContaining({ signal: expect.any(Object) }),
+				),
 			);
 		});
 

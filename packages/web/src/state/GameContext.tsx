@@ -5,22 +5,14 @@ import React, {
 	useMemo,
 	useRef,
 	useState,
+	type MutableRefObject,
 } from 'react';
 import {
 	GameEngineContext,
 	GameProviderInner,
 	type GameProviderInnerProps,
 } from './GameProviderInner';
-import {
-	type SessionQueueHelpers,
-	type Session,
-	type LegacySession,
-	type SessionRegistries,
-	type SessionResourceKeys,
-	type SessionRuleSnapshot,
-	type SessionSnapshot,
-	type SessionMetadata,
-} from './sessionTypes';
+import { type SessionQueueHelpers, type SessionSnapshot } from './sessionTypes';
 import type { LegacyGameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import GameBootstrapScreen from '../components/game/GameBootstrapScreen';
@@ -28,7 +20,8 @@ import {
 	formatFailureDetails,
 	type SessionFailureDetails,
 } from './sessionFailures';
-import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
+import { releaseSession, type CreateSessionResult } from './sessionSdk';
+import { useSessionCreation, useSessionRefresh } from './useSessionRequests';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
@@ -51,16 +44,7 @@ type ProviderProps = {
 	onChangePlayerName?: (name: string) => void;
 };
 
-interface SessionContainer {
-	session: Session;
-	legacySession: LegacySession;
-	sessionId: string;
-	snapshot: SessionSnapshot;
-	ruleSnapshot: SessionRuleSnapshot;
-	registries: SessionRegistries;
-	resourceKeys: SessionResourceKeys;
-	metadata: SessionMetadata;
-}
+type SessionContainer = CreateSessionResult;
 
 export function GameProvider(props: ProviderProps) {
 	const {
@@ -125,11 +109,16 @@ export function GameProvider(props: ProviderProps) {
 		updateSessionData(null);
 	}, [updateSessionData]);
 
-	const teardownSession = useCallback(() => {
-		void runExclusive(() => {
-			releaseCurrentSession();
-		});
-	}, [releaseCurrentSession, runExclusive]);
+	const { refreshSession, teardownSession } = useSessionRefresh({
+		runExclusive,
+		sessionStateRef: sessionStateRef as MutableRefObject<{
+			sessionId: string;
+		} | null>,
+		mountedRef,
+		updateSessionData,
+		releaseCurrentSession,
+		setSessionError,
+	});
 
 	const handleFatalSessionError = useCallback(
 		(error: unknown) => {
@@ -152,86 +141,16 @@ export function GameProvider(props: ProviderProps) {
 		[teardownSession],
 	);
 
-	useEffect(() => {
-		let disposed = false;
-		setSessionError(null);
-		const create = () =>
-			runExclusive(async () => {
-				releaseCurrentSession();
-				try {
-					const created = await createSession({
-						devMode,
-						playerName: playerNameRef.current,
-					});
-					if (disposed || !mountedRef.current) {
-						releaseSession(created.sessionId);
-						return;
-					}
-					updateSessionData({
-						session: created.session,
-						legacySession: created.legacySession,
-						sessionId: created.sessionId,
-						snapshot: created.snapshot,
-						ruleSnapshot: created.ruleSnapshot,
-						registries: created.registries,
-						resourceKeys: created.resourceKeys,
-						metadata: created.metadata,
-					});
-				} catch (error) {
-					if (disposed || !mountedRef.current) {
-						return;
-					}
-					setSessionError(formatFailureDetails(error));
-				}
-			});
-		void create();
-		return () => {
-			disposed = true;
-		};
-	}, [
+	useSessionCreation({
 		devMode,
-		releaseCurrentSession,
+		playerNameRef,
 		runExclusive,
+		releaseCurrentSession,
 		updateSessionData,
+		setSessionError,
 		bootAttempt,
-	]);
-
-	const refreshSession = useCallback(
-		() =>
-			runExclusive(async () => {
-				const current = sessionStateRef.current;
-				const sessionId = current?.sessionId;
-				if (!sessionId) {
-					return;
-				}
-				try {
-					const result = await fetchSnapshot(sessionId);
-					if (
-						!mountedRef.current ||
-						sessionStateRef.current?.sessionId !== sessionId
-					) {
-						return;
-					}
-					updateSessionData({
-						session: result.session,
-						legacySession: result.legacySession,
-						sessionId,
-						snapshot: result.snapshot,
-						ruleSnapshot: result.ruleSnapshot,
-						registries: result.registries,
-						resourceKeys: result.resourceKeys,
-						metadata: result.metadata,
-					});
-				} catch (error) {
-					if (!mountedRef.current) {
-						return;
-					}
-					releaseCurrentSession();
-					setSessionError(formatFailureDetails(error));
-				}
-			}),
-		[runExclusive, updateSessionData, releaseCurrentSession],
-	);
+		mountedRef,
+	});
 
 	const handleRelease = useCallback(() => {
 		teardownSession();

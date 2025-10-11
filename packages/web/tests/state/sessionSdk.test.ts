@@ -9,7 +9,11 @@ import {
 	releaseSession,
 	setGameApi,
 } from '../../src/state/sessionSdk';
-import { GameApiFake, createGameApiMock } from '../../src/services/gameApi';
+import {
+	GameApiFake,
+	createGameApi,
+	createGameApiMock,
+} from '../../src/services/gameApi';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -237,6 +241,74 @@ describe('sessionSdk', () => {
 		expect(registries.actions.get(ActionId.tax)?.name).toBe('Tax (Advanced)');
 		expect(registries.resources[resourceKey]).toBeUndefined();
 		expect(resourceKeys).not.toContain(resourceKey);
+	});
+	it('rejects aborted action requests without mutating local state', async () => {
+		const created = await createSession();
+		const { session, sessionId } = created;
+		const performSpy = vi.spyOn(session, 'performAction');
+		const controller = new AbortController();
+		const fetchMock = vi.fn(
+			(_, init?: RequestInit) =>
+				new Promise<Response>((_resolve, reject) => {
+					init?.signal?.addEventListener('abort', () => {
+						reject(new DOMException('Aborted', 'AbortError'));
+					});
+				}),
+		);
+		setGameApi(
+			createGameApi({
+				fetchFn: fetchMock,
+			}),
+		);
+		const actionPromise = performSessionAction(
+			{ sessionId, actionId: ActionId.tax },
+			{ signal: controller.signal },
+		);
+		controller.abort();
+		await expect(actionPromise).rejects.toBeInstanceOf(DOMException);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const init = fetchMock.mock.calls[0]?.[1];
+		expect(init?.signal).toBe(controller.signal);
+		expect(performSpy).not.toHaveBeenCalled();
+	});
+	it('preserves cached registries when a phase advance request is aborted', async () => {
+		const created = await createSession();
+		const { sessionId, registries, resourceKeys } = created;
+		const actionsRegistry = registries.actions;
+		const buildingsRegistry = registries.buildings;
+		const developmentsRegistry = registries.developments;
+		const populationsRegistry = registries.populations;
+		const resourcesRegistry = registries.resources;
+		const resourceKeysSnapshot = [...resourceKeys];
+		const controller = new AbortController();
+		const fetchMock = vi.fn(
+			(_, init?: RequestInit) =>
+				new Promise<Response>((_resolve, reject) => {
+					init?.signal?.addEventListener('abort', () => {
+						reject(new DOMException('Aborted', 'AbortError'));
+					});
+				}),
+		);
+		setGameApi(
+			createGameApi({
+				fetchFn: fetchMock,
+			}),
+		);
+		const advancePromise = advanceSessionPhase(
+			{ sessionId },
+			{ signal: controller.signal },
+		);
+		controller.abort();
+		await expect(advancePromise).rejects.toBeInstanceOf(DOMException);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const init = fetchMock.mock.calls[0]?.[1];
+		expect(init?.signal).toBe(controller.signal);
+		expect(registries.actions).toBe(actionsRegistry);
+		expect(registries.buildings).toBe(buildingsRegistry);
+		expect(registries.developments).toBe(developmentsRegistry);
+		expect(registries.populations).toBe(populationsRegistry);
+		expect(registries.resources).toBe(resourcesRegistry);
+		expect(resourceKeys).toEqual(resourceKeysSnapshot);
 	});
 	it('releases session state from the local cache', async () => {
 		await createSession();
