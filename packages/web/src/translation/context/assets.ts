@@ -168,6 +168,30 @@ const DEFAULT_TRIGGER_ASSETS = Object.freeze(
 	),
 );
 
+function mergeTriggerAsset(
+	base: TranslationTriggerAsset | undefined,
+	descriptor: SessionTriggerMetadata | undefined,
+): TranslationTriggerAsset {
+	const entry: TranslationTriggerAsset = {};
+	const icon = descriptor?.icon ?? base?.icon;
+	if (icon !== undefined) {
+		entry.icon = icon;
+	}
+	const future = descriptor?.future ?? base?.future;
+	if (future !== undefined) {
+		entry.future = future;
+	}
+	const past = descriptor?.past ?? base?.past;
+	if (past !== undefined) {
+		entry.past = past;
+	}
+	const label = descriptor?.label ?? base?.label ?? past;
+	if (label !== undefined) {
+		entry.label = label;
+	}
+	return Object.freeze(entry);
+}
+
 function buildTriggerMap(
 	triggers?: Record<string, SessionTriggerMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
@@ -178,20 +202,7 @@ function buildTriggerMap(
 		return Object.freeze(entries);
 	}
 	for (const [id, descriptor] of Object.entries(triggers)) {
-		const entry: TranslationTriggerAsset = {};
-		if (descriptor.icon !== undefined) {
-			entry.icon = descriptor.icon;
-		}
-		if (descriptor.future !== undefined) {
-			entry.future = descriptor.future;
-		}
-		if (descriptor.past !== undefined) {
-			entry.past = descriptor.past;
-		}
-		if (descriptor.label !== undefined) {
-			entry.label = descriptor.label;
-		}
-		entries[id] = Object.freeze(entry);
+		entries[id] = mergeTriggerAsset(entries[id], descriptor);
 	}
 	return Object.freeze(entries);
 }
