@@ -3,63 +3,72 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
+import { createContentFactory } from '@kingdom-builder/testing';
 import Overview, { type OverviewTokenConfig } from '../src/Overview';
 import type { OverviewContentSection } from '../src/components/overview/sectionsData';
-import {
-	ACTIONS,
-	PHASES,
-	RESOURCES,
-	POPULATION_ROLES,
-	STATS,
-} from '@kingdom-builder/contents';
+import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
+import type { SessionRegistries } from '../src/state/sessionRegistries';
+import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+
+const factory = createContentFactory();
+factory.action({ id: 'expand', icon: '🚀', name: 'Expand' });
+factory.population({ id: 'council', icon: '👑', name: 'Council' });
+
+const registries: SessionRegistries = {
+	actions: factory.actions,
+	buildings: factory.buildings,
+	developments: factory.developments,
+	populations: factory.populations,
+	resources: {
+		gold: { key: 'gold', icon: '💰', label: 'Gold' },
+		ap: { key: 'ap', icon: '⚡', label: 'Action Points' },
+		castle: { key: 'castle', icon: '🏰', label: 'Castle' },
+	},
+};
+
+const metadata: SessionSnapshotMetadata = {
+	passiveEvaluationModifiers: {},
+	actions: {
+		expand: { label: 'Expand', icon: '🚀' },
+	},
+	resources: {
+		gold: { label: 'Gold', icon: '💰' },
+		ap: { label: 'Action Points', icon: '⚡' },
+		castle: { label: 'Castle', icon: '🏰' },
+	},
+	populations: {
+		council: { label: 'Council', icon: '👑' },
+	},
+	stats: {
+		army: { label: 'Army', icon: '🛡️' },
+	},
+	phases: {
+		growth: { label: 'Growth', icon: '🌱', action: true, steps: [] },
+	},
+	assets: {
+		land: { label: 'Land', icon: '🗺️' },
+		slot: { label: 'Slot', icon: '📦' },
+	},
+};
 
 describe('<Overview />', () => {
 	it('renders supplied overview content using dynamic token fallbacks', () => {
-		const actionEntries = Array.from(
-			(
-				ACTIONS as unknown as {
-					map: Map<string, { icon?: React.ReactNode }>;
-				}
-			).map.entries(),
-		);
-		const [fallbackActionId, fallbackActionDef] = actionEntries[0]!;
-
-		const [fallbackPhase] = PHASES;
-
-		const resourceEntries = Object.entries(RESOURCES) as Array<
-			[string, { icon?: React.ReactNode }]
-		>;
-		const [fallbackGoldKey, fallbackGoldDef] = resourceEntries[0]!;
-		const [fallbackApKey, fallbackApDef] =
-			resourceEntries[1] ?? resourceEntries[0]!;
-
-		const statEntries = Object.entries(STATS) as Array<
-			[string, { icon?: React.ReactNode }]
-		>;
-		const [fallbackStatKey, fallbackStatDef] = statEntries[0]!;
-
-		const populationEntries = Object.entries(POPULATION_ROLES) as Array<
-			[string, { icon?: React.ReactNode }]
-		>;
-		const [fallbackPopulationKey, fallbackPopulationDef] =
-			populationEntries[0]!;
-
 		const tokenConfig: OverviewTokenConfig = {
 			actions: {
-				expand: ['missing-action', fallbackActionId],
+				expand: ['missing-action', 'expand'],
 			},
 			phases: {
-				growth: ['missing-phase', fallbackPhase.id],
+				growth: ['missing-phase', 'growth'],
 			},
 			resources: {
-				gold: ['missing-gold', fallbackGoldKey],
-				ap: ['missing-ap', fallbackApKey],
+				gold: ['missing-gold', 'gold'],
+				ap: ['missing-ap', 'ap'],
 			},
 			stats: {
-				army: ['missing-army', fallbackStatKey],
+				army: ['missing-army', 'army'],
 			},
 			population: {
-				council: ['missing-council', fallbackPopulationKey],
+				council: ['missing-council', 'council'],
 			},
 		};
 
@@ -94,11 +103,13 @@ describe('<Overview />', () => {
 		];
 
 		render(
-			<Overview
-				onBack={vi.fn()}
-				tokenConfig={tokenConfig}
-				content={customContent}
-			/>,
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<Overview
+					onBack={vi.fn()}
+					tokenConfig={tokenConfig}
+					content={customContent}
+				/>
+			</RegistryMetadataProvider>,
 		);
 
 		expect(screen.queryByText('Your Objective')).not.toBeInTheDocument();
@@ -111,16 +122,9 @@ describe('<Overview />', () => {
 		expect(storySection.textContent).not.toContain('{gold}');
 		expect(storySection.textContent).not.toContain('{council}');
 		expect(storySection.textContent).not.toContain('{ap}');
-
-		if (typeof fallbackGoldDef.icon === 'string') {
-			expect(storySection).toHaveTextContent(fallbackGoldDef.icon);
-		}
-		if (typeof fallbackPopulationDef.icon === 'string') {
-			expect(storySection).toHaveTextContent(fallbackPopulationDef.icon);
-		}
-		if (typeof fallbackApDef.icon === 'string') {
-			expect(storySection).toHaveTextContent(fallbackApDef.icon);
-		}
+		expect(storySection).toHaveTextContent('💰');
+		expect(storySection).toHaveTextContent('👑');
+		expect(storySection).toHaveTextContent('⚡');
 
 		const flowSection = screen.getByText('Custom Flow').closest('section');
 		expect(flowSection).not.toBeNull();
@@ -130,16 +134,9 @@ describe('<Overview />', () => {
 		expect(flowSection.textContent).not.toContain('{expand}');
 		expect(flowSection.textContent).not.toContain('{growth}');
 		expect(flowSection.textContent).not.toContain('{army}');
-
-		if (typeof fallbackActionDef.icon === 'string') {
-			expect(flowSection).toHaveTextContent(fallbackActionDef.icon);
-		}
-		if (typeof fallbackPhase?.icon === 'string') {
-			expect(flowSection).toHaveTextContent(fallbackPhase.icon);
-		}
-		if (typeof fallbackStatDef.icon === 'string') {
-			expect(flowSection).toHaveTextContent(fallbackStatDef.icon);
-		}
+		expect(flowSection).toHaveTextContent('🚀');
+		expect(flowSection).toHaveTextContent('🌱');
+		expect(flowSection).toHaveTextContent('🛡️');
 
 		expect(screen.getByText('Advance')).toBeInTheDocument();
 	});

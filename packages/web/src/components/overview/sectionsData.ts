@@ -1,39 +1,43 @@
 import type { ReactNode } from 'react';
-import {
-	type OverviewSectionTemplate,
-	type OverviewTokenCandidates,
-	type OverviewTokenCategoryName,
-} from '@kingdom-builder/contents';
+import type {
+	OverviewTokenCandidatesSource,
+	OverviewContentSection,
+} from './defaultContent';
+export type { OverviewContentSection } from './defaultContent';
 import type { OverviewSectionDef } from './OverviewLayout';
 import {
 	buildOverviewIconSet,
 	type OverviewTokenConfig,
 	type TokenCandidateInput,
 } from './overviewTokens';
-import { normalizeCandidates } from './overviewTokenUtils';
+import {
+	normalizeCandidates,
+	type OverviewTokenCategoryName,
+	type OverviewTokenCategoryResolver,
+} from './overviewTokenUtils';
 
 export type OverviewIconSet = Record<string, ReactNode | undefined>;
-
-export type OverviewContentSection = OverviewSectionTemplate;
 
 function spanProps(span?: boolean) {
 	return span === undefined ? {} : { span };
 }
 
 function mergeTokenSources(
-	base: OverviewTokenCandidates,
+	base: OverviewTokenCandidatesSource,
 	overrides?: OverviewTokenConfig,
 ): OverviewTokenConfig {
 	const merged: OverviewTokenConfig = {};
+	const baseCategories = Object.keys(base) as OverviewTokenCategoryName[];
+	const overrideCategories = overrides
+		? (Object.keys(overrides) as OverviewTokenCategoryName[])
+		: [];
 	const categories = new Set<OverviewTokenCategoryName>([
-		...(Object.keys(base ?? {}) as OverviewTokenCategoryName[]),
-		...(overrides
-			? (Object.keys(overrides) as OverviewTokenCategoryName[])
-			: []),
+		...baseCategories,
+		...overrideCategories,
 	]);
 
 	for (const category of categories) {
-		const baseEntries = base?.[category] ?? {};
+		const baseEntries: Record<string, string[]> = base[category] ?? {};
 		const overrideEntries = overrides?.[category];
 		const categoryResult: Record<string, TokenCandidateInput> = {};
 		const tokens = new Set<string>([
@@ -74,12 +78,13 @@ function mergeTokenSources(
 }
 
 export function createOverviewSections(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: OverviewTokenCandidatesSource,
 	overrides: OverviewTokenConfig | undefined,
 	content: OverviewContentSection[],
+	categories: ReadonlyArray<OverviewTokenCategoryResolver>,
 ): { sections: OverviewSectionDef[]; tokens: OverviewIconSet } {
 	const mergedTokenConfig = mergeTokenSources(tokenCandidates, overrides);
-	const icons = buildOverviewIconSet(mergedTokenConfig);
+	const icons = buildOverviewIconSet(mergedTokenConfig, categories);
 
 	const sections = content.map((section) => {
 		if (section.kind === 'paragraph') {

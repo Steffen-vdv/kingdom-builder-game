@@ -1,9 +1,9 @@
 import type { OverviewIconSet } from './sectionsData';
 import {
-	CATEGORY_CONFIG,
 	hasOwn,
 	mergeTokenConfig,
 	type OverviewTokenConfig,
+	type OverviewTokenCategoryResolver,
 } from './overviewTokenUtils';
 
 export type {
@@ -12,12 +12,13 @@ export type {
 } from './overviewTokenUtils';
 
 export function buildOverviewIconSet(
-	overrides?: OverviewTokenConfig,
+	overrides: OverviewTokenConfig | undefined,
+	categories: ReadonlyArray<OverviewTokenCategoryResolver>,
 ): OverviewIconSet {
-	const config = mergeTokenConfig(overrides);
+	const config = mergeTokenConfig(overrides, categories);
 	const icons: OverviewIconSet = {};
 
-	for (const { name, resolve } of CATEGORY_CONFIG) {
+	for (const { name, resolve } of categories) {
 		const overrideSource = overrides?.[name];
 
 		for (const [tokenKey, candidates] of Object.entries(config[name])) {

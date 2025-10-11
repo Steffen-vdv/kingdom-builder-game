@@ -1,15 +1,13 @@
 import type { ReactNode } from 'react';
-import {
-	ACTIONS as actionInfo,
-	LAND_INFO,
-	SLOT_INFO,
-	RESOURCES,
-	PHASES,
-	POPULATION_ROLES,
-	STATS,
-	type OverviewTokenCategoryName,
-	type PhaseId,
-} from '@kingdom-builder/contents';
+import type { RegistryMetadataContextValue } from '../../contexts/RegistryMetadataContext';
+
+export type OverviewTokenCategoryName =
+	| 'actions'
+	| 'phases'
+	| 'resources'
+	| 'stats'
+	| 'population'
+	| 'static';
 
 export type TokenCandidateInput = string | ReadonlyArray<string>;
 
@@ -20,77 +18,85 @@ type OverviewTokenConfigResolved = Record<
 	OverviewTokenCategoryConfig
 >;
 
-type ActionRegistry = {
-	keys(): string[];
-	has(id: string): boolean;
-	get(id: string): { icon?: ReactNode };
-};
+export interface OverviewTokenCategoryResolver {
+	readonly name: OverviewTokenCategoryName;
+	readonly keys: () => ReadonlyArray<string>;
+	readonly resolve: (candidates: string[]) => ReactNode | undefined;
+}
 
-const actionRegistry = actionInfo as unknown as ActionRegistry;
+const STATIC_TOKEN_KEYS: ReadonlyArray<string> = ['land', 'slot'];
 
-const STATIC_ICON_INFO: Record<string, { icon?: ReactNode }> = {
-	land: LAND_INFO,
-	slot: SLOT_INFO,
-};
+const iconFromDescriptor = (descriptor: { icon?: ReactNode } | undefined) =>
+	descriptor?.icon;
 
-const PHASE_ICON_LOOKUP = new Map(
-	PHASES.map((phase) => [phase.id, phase.icon] as const),
-);
+const createDescriptorIconResolver =
+	(selector: { select(id: string): { icon?: ReactNode } }) => (id: string) =>
+		iconFromDescriptor(selector.select(id));
 
-const resolveResourceIcon = (candidates: string[]) =>
-	resolveFromRecord(RESOURCES, candidates);
-const resolveStatIcon = (candidates: string[]) =>
-	resolveFromRecord(STATS, candidates);
-const resolvePopulationIcon = (candidates: string[]) =>
-	resolveFromRecord(POPULATION_ROLES, candidates);
-const resolveStaticIcon = (candidates: string[]) =>
-	resolveFromRecord(STATIC_ICON_INFO, candidates);
+const createStaticIconMap = (
+	metadata: RegistryMetadataContextValue,
+): Readonly<Record<string, ReactNode | undefined>> =>
+	Object.freeze({
+		land: metadata.landMetadata.select().icon,
+		slot: metadata.slotMetadata.select().icon,
+	});
 
-export const CATEGORY_CONFIG = [
-	{
-		name: 'actions',
-		keys: () => actionRegistry.keys(),
-		resolve: (candidates: string[]) =>
-			resolveByCandidates(candidates, (id) => {
-				if (!actionRegistry.has(id)) {
-					return undefined;
-				}
-				return actionRegistry.get(id)?.icon;
-			}),
-	},
-	{
-		name: 'phases',
-		keys: () => PHASES.map((phase) => phase.id),
-		resolve: (candidates: string[]) =>
-			resolveByCandidates(candidates, (id) =>
-				PHASE_ICON_LOOKUP.get(id as PhaseId),
-			),
-	},
-	{
-		name: 'resources',
-		keys: () => Object.keys(RESOURCES),
-		resolve: resolveResourceIcon,
-	},
-	{
-		name: 'stats',
-		keys: () => Object.keys(STATS),
-		resolve: resolveStatIcon,
-	},
-	{
-		name: 'population',
-		keys: () => Object.keys(POPULATION_ROLES),
-		resolve: resolvePopulationIcon,
-	},
-	{
-		name: 'static',
-		keys: () => Object.keys(STATIC_ICON_INFO),
-		resolve: resolveStaticIcon,
-	},
-] satisfies ReadonlyArray<{
-	name: OverviewTokenCategoryName;
-	keys: () => string[];
-	resolve: (candidates: string[]) => ReactNode | undefined;
-}>;
+export function createOverviewTokenCategories(
+	metadata: RegistryMetadataContextValue,
+): ReadonlyArray<OverviewTokenCategoryResolver> {
+	const actionIcon = createDescriptorIconResolver(metadata.actionMetadata);
+	const resourceIcon = createDescriptorIconResolver(metadata.resourceMetadata);
+	const statIcon = createDescriptorIconResolver(metadata.statMetadata);
+	const populationIcon = createDescriptorIconResolver(
+		metadata.populationMetadata,
+	);
+	const phaseIcon = (id: string) => metadata.phaseMetadata.select(id).icon;
+	const staticIconMap = createStaticIconMap(metadata);
+
+	return [
+		{
+			name: 'actions',
+			keys: () => metadata.actions.keys(),
+			resolve: (candidates) =>
+				resolveByCandidates(candidates, (candidate) => actionIcon(candidate)),
+		},
+		{
+			name: 'phases',
+			keys: () => metadata.phaseMetadata.list.map(({ id }) => id),
+			resolve: (candidates) =>
+				resolveByCandidates(candidates, (candidate) => phaseIcon(candidate)),
+		},
+		{
+			name: 'resources',
+			keys: () => metadata.resourceMetadata.list.map(({ id }) => id),
+			resolve: (candidates) =>
+				resolveByCandidates(candidates, (candidate) => resourceIcon(candidate)),
+		},
+		{
+			name: 'stats',
+			keys: () => metadata.statMetadata.list.map(({ id }) => id),
+			resolve: (candidates) =>
+				resolveByCandidates(candidates, (candidate) => statIcon(candidate)),
+		},
+		{
+			name: 'population',
+			keys: () => metadata.populationMetadata.list.map(({ id }) => id),
+			resolve: (candidates) =>
+				resolveByCandidates(candidates, (candidate) =>
+					populationIcon(candidate),
+				),
+		},
+		{
+			name: 'static',
+			keys: () => STATIC_TOKEN_KEYS,
+			resolve: (candidates) =>
+				resolveByCandidates(
+					candidates,
+					(candidate) => staticIconMap[candidate],
+				),
+		},
+	];
+}
 
 export const hasOwn = (target: object | undefined, key: PropertyKey) =>
 	target !== undefined && Object.prototype.hasOwnProperty.call(target, key);
@@ -148,9 +154,10 @@ export type OverviewTokenConfig = Partial<
 	Record<OverviewTokenCategoryName, OverviewTokenCategoryOverrides>
 >;
 
-export function createDefaultTokenConfig(): OverviewTokenConfigResolved {
+export function createDefaultTokenConfig(
+	categories: ReadonlyArray<OverviewTokenCategoryResolver>,
+): OverviewTokenConfigResolved {
 	const result = {} as OverviewTokenConfigResolved;
-
 	const addDefaultCandidate = (
 		acc: OverviewTokenCategoryConfig,
 		key: string,
@@ -159,7 +166,7 @@ export function createDefaultTokenConfig(): OverviewTokenConfigResolved {
 		return acc;
 	};
 
-	for (const { name, keys } of CATEGORY_CONFIG) {
+	for (const { name, keys } of categories) {
 		const entries = keys();
 		result[name] = entries.reduce<OverviewTokenCategoryConfig>(
 			addDefaultCandidate,
@@ -171,30 +178,17 @@ export function createDefaultTokenConfig(): OverviewTokenConfigResolved {
 }
 
 export function mergeTokenConfig(
-	overrides?: OverviewTokenConfig,
+	overrides: OverviewTokenConfig | undefined,
+	categories: ReadonlyArray<OverviewTokenCategoryResolver>,
 ): OverviewTokenConfigResolved {
-	const defaults = createDefaultTokenConfig();
-	const actions = mergeTokenCategory(defaults.actions, overrides?.actions);
-	const phases = mergeTokenCategory(defaults.phases, overrides?.phases);
-	const resources = mergeTokenCategory(
-		defaults.resources,
-		overrides?.resources,
-	);
-	const stats = mergeTokenCategory(defaults.stats, overrides?.stats);
-	const population = mergeTokenCategory(
-		defaults.population,
-		overrides?.population,
-	);
-	const staticIcons = mergeTokenCategory(defaults.static, overrides?.static);
+	const defaults = createDefaultTokenConfig(categories);
+	const resolved = {} as OverviewTokenConfigResolved;
 
-	return {
-		actions,
-		phases,
-		resources,
-		stats,
-		population,
-		static: staticIcons,
-	};
+	for (const { name } of categories) {
+		resolved[name] = mergeTokenCategory(defaults[name], overrides?.[name]);
+	}
+
+	return resolved;
 }
 
 export function resolveByCandidates<T>(
@@ -208,16 +202,4 @@ export function resolveByCandidates<T>(
 		}
 	}
 	return undefined;
-}
-
-export function resolveFromRecord<
-	T extends Record<string, { icon?: ReactNode }>,
->(record: T, candidates: string[]) {
-	return resolveByCandidates(candidates, (id) => {
-		if (Object.prototype.hasOwnProperty.call(record, id)) {
-			const key = id as keyof T;
-			return record[key]?.icon;
-		}
-		return undefined;
-	});
 }

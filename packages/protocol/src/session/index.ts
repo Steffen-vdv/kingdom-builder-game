@@ -196,6 +196,7 @@ export interface SessionSnapshotMetadata {
 	populations?: Record<string, SessionMetadataDescriptor>;
 	buildings?: Record<string, SessionMetadataDescriptor>;
 	developments?: Record<string, SessionMetadataDescriptor>;
+	actions?: Record<string, SessionMetadataDescriptor>;
 	stats?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
