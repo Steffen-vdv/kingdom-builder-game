@@ -1,12 +1,5 @@
-import {
-	POPULATION_INFO,
-	POPULATION_ROLES,
-	STATS,
-	Stat,
-	type PopulationRoleId,
-	type StatKey,
-} from '@kingdom-builder/contents';
 import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
+import type { TranslationContext } from '../context';
 
 type EvaluatorOperand = {
 	type?: string;
@@ -26,16 +19,19 @@ type OperandDescription = {
 	label: string;
 };
 
+const MAX_POPULATION_KEY = 'maxPopulation';
+
 function describeStatOperand(
-	params?: Record<string, unknown>,
+	params: Record<string, unknown> | undefined,
+	context: TranslationContext,
 ): OperandDescription {
 	const key = params?.['key'];
 	if (typeof key === 'string') {
-		const stat = STATS[key as StatKey];
-		if (stat) {
+		const descriptor = context.assets.stats[key];
+		if (descriptor) {
 			return {
-				icon: stat.icon,
-				label: stat.label ?? key,
+				icon: descriptor.icon,
+				label: descriptor.label ?? key,
 			};
 		}
 	}
@@ -43,35 +39,37 @@ function describeStatOperand(
 }
 
 function describePopulationOperand(
-	params?: Record<string, unknown>,
+	params: Record<string, unknown> | undefined,
+	context: TranslationContext,
 ): OperandDescription {
 	const role = params?.['role'];
 	if (typeof role === 'string') {
-		const roleInfo = POPULATION_ROLES[role as PopulationRoleId];
-		if (roleInfo) {
+		const descriptor = context.assets.populations[role];
+		if (descriptor) {
 			return {
-				icon: roleInfo.icon,
-				label: roleInfo.label ?? role,
+				icon: descriptor.icon,
+				label: descriptor.label ?? role,
 			};
 		}
 	}
 	return {
-		icon: POPULATION_INFO.icon,
-		label: POPULATION_INFO.label,
+		icon: context.assets.population.icon,
+		label: context.assets.population.label ?? 'Population',
 	};
 }
 
 function describeEvaluatorOperand(
 	operand: CompareOperand | undefined,
+	context: TranslationContext,
 ): OperandDescription {
 	if (!operand || typeof operand === 'number') {
 		return { label: 'Value' };
 	}
 	switch (operand.type) {
 		case 'stat':
-			return describeStatOperand(operand.params);
+			return describeStatOperand(operand.params, context);
 		case 'population':
-			return describePopulationOperand(operand.params);
+			return describePopulationOperand(operand.params, context);
 		default:
 			return { label: operand.type ?? 'Value' };
 	}
@@ -80,11 +78,12 @@ function describeEvaluatorOperand(
 function formatOperand(
 	operand: CompareOperand | undefined,
 	actual: unknown,
+	context: TranslationContext,
 ): string {
 	if (typeof operand === 'number') {
 		return `${operand}`;
 	}
-	const { icon, label } = describeEvaluatorOperand(operand);
+	const { icon, label } = describeEvaluatorOperand(operand, context);
 	const base = [icon, label].filter(Boolean).join(' ').trim() || 'Value';
 	if (typeof actual === 'number') {
 		return `${base} (${actual})`;
@@ -111,7 +110,7 @@ function isMaxPopulationStat(operand: CompareOperand | undefined): boolean {
 		return false;
 	}
 	const key = operand.params?.['key'];
-	return key === Stat.maxPopulation;
+	return key === MAX_POPULATION_KEY;
 }
 
 function operatorPhrase(operator: CompareParams['operator']): string {
@@ -135,6 +134,7 @@ function operatorPhrase(operator: CompareParams['operator']): string {
 
 function translateCompareRequirement(
 	failure: SessionRequirementFailure,
+	context: TranslationContext,
 ): string {
 	const params = (failure.requirement.params ?? {}) as CompareParams;
 	const leftOperand = params.left;
@@ -148,26 +148,30 @@ function translateCompareRequirement(
 		const rightValue = failure.details?.['right'];
 		const current = typeof leftValue === 'number' ? leftValue : undefined;
 		const capacity = typeof rightValue === 'number' ? rightValue : undefined;
-		const stat = STATS[Stat.maxPopulation];
-		const prefix = stat?.icon ? `${stat.icon} ` : '';
+		const descriptor = context.assets.stats[MAX_POPULATION_KEY];
+		const prefix = descriptor?.icon ? `${descriptor.icon} ` : '';
 		if (typeof current === 'number' && typeof capacity === 'number') {
 			return `${prefix}Population is at capacity (${current}/${capacity})`;
 		}
 		return `${prefix}Population is at capacity`;
 	}
-	const left = formatOperand(leftOperand, failure.details?.['left']);
-	const right = formatOperand(rightOperand, failure.details?.['right']);
+	const left = formatOperand(leftOperand, failure.details?.['left'], context);
+	const right = formatOperand(
+		rightOperand,
+		failure.details?.['right'],
+		context,
+	);
 	const phrase = operatorPhrase(params.operator);
 	return `${left} ${phrase} ${right}`.trim();
 }
 
 export function translateRequirementFailure(
 	failure: SessionRequirementFailure,
-	_context: unknown,
+	context: TranslationContext,
 ): string {
 	const { requirement } = failure;
 	if (requirement.type === 'evaluator' && requirement.method === 'compare') {
-		return translateCompareRequirement(failure);
+		return translateCompareRequirement(failure, context);
 	}
 	return failure.message ?? 'Requirement not met';
 }

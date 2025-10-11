@@ -15,10 +15,10 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
-	RESOURCES,
 	Resource,
 } from '@kingdom-builder/contents';
 import type { DevelopmentDef } from '@kingdom-builder/contents';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -47,16 +47,18 @@ describe('development translation', () => {
 			start: GAME_START,
 			rules: RULES,
 		});
+		const translationContext = createTranslationContextForEngine(ctx);
 		const devEntry = Array.from(
 			(
 				DEVELOPMENTS as unknown as { map: Map<string, DevelopmentDef> }
 			).map.values(),
 		).find((d) => d.onGainIncomeStep);
 		const devId = (devEntry as { id: string }).id;
-		const summary = summarizeContent('development', devId, ctx);
+		const summary = summarizeContent('development', devId, translationContext);
 		const flat = flatten(summary);
-		const goldIcon = RESOURCES[Resource.gold].icon;
-		const dev = DEVELOPMENTS.get(devId);
+		const goldIcon =
+			translationContext.assets.resources[Resource.gold]?.icon ?? '';
+		const dev = translationContext.developments.get(devId);
 		const amount =
 			(
 				dev.onGainIncomeStep?.[0]?.effects?.[0]?.params as {
@@ -77,8 +79,9 @@ describe('development translation', () => {
 			start: GAME_START,
 			rules: RULES,
 		});
+		const translationContext = createTranslationContextForEngine(ctx);
 		const devId = DEVELOPMENTS.keys()[0] as string;
-		const development = ctx.developments.get(devId);
+		const development = translationContext.developments.get(devId);
 		const display =
 			[development?.icon ?? '', development?.name ?? devId]
 				.filter(Boolean)
@@ -86,27 +89,27 @@ describe('development translation', () => {
 				.trim() || devId;
 		const addSummary = summarizeEffects(
 			[{ type: 'development', method: 'add', params: { id: devId } }],
-			ctx,
+			translationContext,
 		);
 		expect(flatten(addSummary)).toContain(display);
 		const addDescription = describeEffects(
 			[{ type: 'development', method: 'add', params: { id: devId } }],
-			ctx,
+			translationContext,
 		);
 		expect(flatten(addDescription)).toContain(`Add ${display}`);
 		const removeSummary = summarizeEffects(
 			[{ type: 'development', method: 'remove', params: { id: devId } }],
-			ctx,
+			translationContext,
 		);
 		expect(flatten(removeSummary)).toContain(display);
 		const removeDescription = describeEffects(
 			[{ type: 'development', method: 'remove', params: { id: devId } }],
-			ctx,
+			translationContext,
 		);
 		expect(flatten(removeDescription)).toContain(`Remove ${display}`);
 		const removeLog = logEffects(
 			[{ type: 'development', method: 'remove', params: { id: devId } }],
-			ctx,
+			translationContext,
 		);
 		expect(removeLog).toContain(`Removed ${display}`);
 	});

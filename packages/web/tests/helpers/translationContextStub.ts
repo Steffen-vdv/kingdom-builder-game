@@ -5,22 +5,25 @@ import type {
 	TranslationPlayer,
 	TranslationRegistry,
 } from '../../src/translation/context';
-import type { RuleSnapshot } from '@kingdom-builder/engine';
+import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
 
-const EMPTY_ASSETS: TranslationAssets = {
-	resources: {},
-	stats: {},
-	populations: {},
-	population: {},
-	land: {},
-	slot: {},
-	passive: {},
-	modifiers: {},
+const EMPTY_ASSETS: TranslationAssets = Object.freeze({
+	resources: Object.freeze({}),
+	stats: Object.freeze({}),
+	populations: Object.freeze({}),
+	population: Object.freeze({}),
+	land: Object.freeze({}),
+	slot: Object.freeze({}),
+	passive: Object.freeze({}),
+	modifiers: Object.freeze({}),
+	triggers: Object.freeze({}),
+	misc: Object.freeze({}),
+	tierSummaries: Object.freeze(new Map()),
 	formatPassiveRemoval: (description: string) =>
 		`Active as long as ${description}`,
-};
+}) as TranslationAssets;
 
 const EMPTY_PASSIVES: TranslationPassives = {
 	list() {
@@ -71,27 +74,36 @@ export function toTranslationPlayer(
 
 export function createTranslationContextStub(
 	options: Pick<TranslationContext, 'phases' | 'actionCostResource'> & {
-		actions: TranslationRegistry<unknown>;
-		buildings: TranslationRegistry<unknown>;
-		developments: TranslationRegistry<unknown>;
+		actions?: TranslationRegistry<unknown>;
+		buildings?: TranslationRegistry<unknown>;
+		developments?: TranslationRegistry<unknown>;
 		populations?: TranslationRegistry<unknown>;
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
-		rules?: RuleSnapshot;
+		rules?: SessionRuleSnapshot;
+		assets?: TranslationAssets;
 	},
 ): TranslationContext {
-	const rules: RuleSnapshot =
+	const emptyRegistry: TranslationRegistry<unknown> = {
+		get(id: string) {
+			throw new Error(`Missing translation registry entry for ${id}`);
+		},
+		has() {
+			return false;
+		},
+	};
+	const rules: SessionRuleSnapshot =
 		options.rules ??
 		({
 			tieredResourceKey: 'happiness',
 			tierDefinitions: [],
 			winConditions: [],
-		} as RuleSnapshot);
+		} as SessionRuleSnapshot);
 	return {
-		actions: options.actions,
-		buildings: options.buildings,
-		developments: options.developments,
-		populations: options.populations ?? options.actions,
+		actions: options.actions ?? emptyRegistry,
+		buildings: options.buildings ?? emptyRegistry,
+		developments: options.developments ?? emptyRegistry,
+		populations: options.populations ?? options.actions ?? emptyRegistry,
 		passives: EMPTY_PASSIVES,
 		phases: options.phases,
 		activePlayer: options.activePlayer,
@@ -102,7 +114,7 @@ export function createTranslationContextStub(
 		},
 		actionCostResource: options.actionCostResource,
 		recentResourceGains: [],
-		compensations: { A: {}, B: {} },
-		assets: EMPTY_ASSETS,
+		compensations: {} as TranslationContext['compensations'],
+		assets: options.assets ?? EMPTY_ASSETS,
 	};
 }

@@ -6,7 +6,6 @@ import { PhasedTranslator } from './phased';
 import type { PhasedDef } from './phased';
 import { withInstallation } from './decorators';
 import type { TranslationContext } from '../context';
-import { PHASES } from '@kingdom-builder/contents';
 
 interface PhaseEffects {
 	onBeforeAttacked?: EffectDef[];
@@ -87,18 +86,19 @@ function applySelfParams(
 function collectPhaseEffects(
 	id: string,
 	params: Record<string, unknown>,
+	context: TranslationContext,
 ): PhaseEffects {
 	const result: PhaseEffects = {};
 	const rawId = params['id'];
 	const selfId = typeof rawId === 'string' ? rawId : undefined;
-	for (const phase of PHASES) {
+	for (const phase of context.phases) {
 		const phaseHandlerKey = `on${
 			phase.id.charAt(0).toUpperCase() + phase.id.slice(1)
 		}Phase`;
 		const key = phaseHandlerKey as keyof PhaseEffects;
 		for (const step of phase.steps ?? []) {
 			const bucket: EffectDef[] = [];
-			gatherEffects(step.effects, id, bucket);
+			gatherEffects(step.effects as EffectDef[] | undefined, id, bucket);
 			if (bucket.length) {
 				const applied = applyParamsToEffects(bucket, params);
 				const additions = stripSelfEvaluators(applied, selfId) ?? applied;
@@ -121,7 +121,7 @@ class DevelopmentCore implements ContentTranslator<string> {
 		const params = { id };
 		const base = applySelfParams(definition as unknown as PhasedDef, params);
 		const merged: PhasedDef = { ...base };
-		const phases = collectPhaseEffects(id, params);
+		const phases = collectPhaseEffects(id, params, engineContext);
 		for (const [key, effects] of Object.entries(phases)) {
 			if (!effects?.length) {
 				continue;
@@ -139,7 +139,7 @@ class DevelopmentCore implements ContentTranslator<string> {
 		const params = { id };
 		const base = applySelfParams(definition as unknown as PhasedDef, params);
 		const merged: PhasedDef = { ...base };
-		const phases = collectPhaseEffects(id, params);
+		const phases = collectPhaseEffects(id, params, engineContext);
 		for (const [key, effects] of Object.entries(phases)) {
 			if (!effects?.length) {
 				continue;

@@ -1,27 +1,33 @@
-import { TIER_SUMMARY_STORE } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../context';
 
-function findTierSummary(token: string): string | undefined {
-	for (const summaries of TIER_SUMMARY_STORE.values()) {
-		const summary = summaries.get(token);
-		if (summary !== undefined) {
-			return summary;
-		}
+function findTierSummary(
+	context: TranslationContext,
+	token: string,
+): string | undefined {
+	const fromRules = context.assets.tierSummaries.get(token);
+	if (fromRules) {
+		return fromRules;
 	}
-	return undefined;
+	const asset = context.assets.misc[token];
+	return asset?.label ?? asset?.description;
 }
 
 export function translateTierSummary(
+	context: TranslationContext,
 	token: string | undefined,
 ): string | undefined {
 	if (!token) {
 		return undefined;
 	}
-	return findTierSummary(token);
+	return findTierSummary(context, token);
 }
 
-export function hasTierSummaryTranslation(token: string | undefined): boolean {
+export function hasTierSummaryTranslation(
+	context: TranslationContext,
+	token: string | undefined,
+): boolean {
 	if (!token) {
 		return false;
 	}
-	return findTierSummary(token) !== undefined;
+	return findTierSummary(context, token) !== undefined;
 }

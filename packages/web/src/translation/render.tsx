@@ -1,7 +1,35 @@
 import React from 'react';
-import { RESOURCES, BROOM_ICON } from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/contents';
+import type { TranslationAssets, TranslationIconLabel } from './context';
 import type { Summary } from './content';
+import { formatDetailText } from '../utils/stats/format';
+
+export type ResourceDisplaySelector = (
+	key: string,
+) => TranslationIconLabel | undefined;
+
+const DEFAULT_UPKEEP_ICON = '🧹';
+
+export function createResourceDisplaySelector(
+	assets: TranslationAssets,
+): ResourceDisplaySelector {
+	return (key) => {
+		const display = assets.resources[key];
+		if (display) {
+			return display;
+		}
+		const label = formatDetailText(key);
+		return { label };
+	};
+}
+
+export function selectUpkeepIcon(assets: TranslationAssets): string {
+	return (
+		assets.misc.upkeep?.icon ||
+		assets.triggers.onPayUpkeepStep?.icon ||
+		assets.misc.maintenance?.icon ||
+		DEFAULT_UPKEEP_ICON
+	);
+}
 
 export function renderSummary(summary: Summary | undefined): React.ReactNode {
 	return summary?.map((e, i) => {
@@ -32,9 +60,14 @@ export function renderCosts(
 	resources: Record<string, number>,
 	actionCostResource?: string,
 	upkeep?: Record<string, number | undefined> | undefined,
-	options?: { showFreeLabel?: boolean },
+	options?: {
+		showFreeLabel?: boolean;
+		selectResourceDisplay?: ResourceDisplaySelector;
+		upkeepIcon?: string;
+	},
 ) {
 	const showFreeLabel = options?.showFreeLabel ?? true;
+	const selectResourceDisplay = options?.selectResourceDisplay;
 	const entries = Object.entries(costs || {}).filter(
 		([resourceKey]) =>
 			!actionCostResource || resourceKey !== actionCostResource,
@@ -59,30 +92,45 @@ export function renderCosts(
 		>
 			{entries.length > 0 && (
 				<div className="flex flex-wrap justify-end gap-x-1 gap-y-0.5">
-					{entries.map(([resourceKey, costAmount]) => (
-						<span
-							key={resourceKey}
-							className={`whitespace-nowrap ${
-								(resources[resourceKey] ?? 0) < (costAmount ?? 0)
-									? 'text-red-500'
-									: ''
-							}`}
-						>
-							{RESOURCES[resourceKey as ResourceKey]?.icon}
-							{costAmount ?? 0}
-						</span>
-					))}
+					{entries.map(([resourceKey, costAmount]) => {
+						const display = selectResourceDisplay?.(resourceKey);
+						const current = resources[resourceKey] ?? 0;
+						const required = costAmount ?? 0;
+						const insufficient = current < required;
+						const prefix =
+							display?.icon ?? display?.label ?? formatDetailText(resourceKey);
+						return (
+							<span
+								key={resourceKey}
+								className={`whitespace-nowrap ${
+									insufficient ? 'text-red-500' : ''
+								}`}
+							>
+								{prefix}
+								{prefix ? ' ' : ''}
+								{required}
+							</span>
+						);
+					})}
 				</div>
 			)}
 			{upkeepEntries.length > 0 && (
 				<div className="flex flex-wrap justify-end gap-x-1 gap-y-0.5">
-					<span className="whitespace-nowrap">{BROOM_ICON}</span>
-					{upkeepEntries.map(([resourceKey, upkeepAmount]) => (
-						<span key={resourceKey} className="whitespace-nowrap">
-							{RESOURCES[resourceKey as ResourceKey]?.icon}
-							{upkeepAmount ?? 0}
-						</span>
-					))}
+					<span className="whitespace-nowrap">
+						{options?.upkeepIcon ?? DEFAULT_UPKEEP_ICON}
+					</span>
+					{upkeepEntries.map(([resourceKey, upkeepAmount]) => {
+						const display = selectResourceDisplay?.(resourceKey);
+						const prefix =
+							display?.icon ?? display?.label ?? formatDetailText(resourceKey);
+						return (
+							<span key={resourceKey} className="whitespace-nowrap">
+								{prefix}
+								{prefix ? ' ' : ''}
+								{upkeepAmount ?? 0}
+							</span>
+						);
+					})}
 				</div>
 			)}
 		</div>

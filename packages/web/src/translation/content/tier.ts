@@ -1,4 +1,3 @@
-import { formatPassiveRemoval } from '@kingdom-builder/contents';
 import type { HappinessTierDefinition } from '@kingdom-builder/protocol';
 import { summarizeEffects } from '../effects';
 import { translateTierSummary } from './tierSummaries';
@@ -62,7 +61,10 @@ class TierTranslator
 		context: TranslationContext,
 	): Summary {
 		const summaryLines: string[] = [];
-		const translated = translateTierSummary(tier.display?.summaryToken);
+		const translated = translateTierSummary(
+			context,
+			tier.display?.summaryToken,
+		);
 		appendUnique(summaryLines, splitLines(translated ?? tier.text?.summary));
 		if (!summaryLines.length && tier.preview?.effects?.length) {
 			const effectSummaries = summarizeEffects(tier.preview.effects, context);
@@ -78,7 +80,7 @@ class TierTranslator
 		const removal =
 			tier.text?.removal ??
 			(tier.display?.removalCondition
-				? formatPassiveRemoval(tier.display.removalCondition)
+				? context.assets.formatPassiveRemoval(tier.display.removalCondition)
 				: undefined);
 		appendUnique(descriptionLines, splitLines(removal));
 		if (descriptionLines.length) {

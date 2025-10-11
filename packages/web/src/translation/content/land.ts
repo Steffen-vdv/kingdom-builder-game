@@ -1,4 +1,3 @@
-import { SLOT_INFO } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	summarizeContent,
@@ -22,14 +21,20 @@ function translate(
 		const developmentId = land.developments[slotIndex];
 		if (developmentId) {
 			const development = context.developments.get(developmentId);
+			const icon = (development?.icon ?? '').trim();
+			const label = (development?.name ?? developmentId).trim();
+			const prefix = icon.length ? `${icon} ` : '';
+			const title = `${prefix}${label}`.trim();
 			items.push({
-				title: `${development?.icon || ''} ${development?.name || developmentId}`,
+				title,
 				items: translateSummary('development', developmentId, context, {
 					installed: true,
 				}),
 			});
 		} else {
-			items.push(`${SLOT_INFO.icon} Empty ${SLOT_INFO.label}`);
+			const slotIcon = context.assets.slot.icon ?? '🧩';
+			const slotLabel = context.assets.slot.label ?? 'Development Slot';
+			items.push(`${slotIcon} Empty ${slotLabel}`);
 		}
 	}
 	return items;

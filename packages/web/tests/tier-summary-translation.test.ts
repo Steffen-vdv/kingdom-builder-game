@@ -1,63 +1,83 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Resource, TIER_SUMMARY_STORE } from '@kingdom-builder/contents';
+import { describe, it, expect } from 'vitest';
 import {
 	translateTierSummary,
 	hasTierSummaryTranslation,
 } from '../src/translation';
+import type { TranslationContext } from '../src/translation/context';
+import {
+	createTranslationContextStub,
+	toTranslationPlayer,
+} from './helpers/translationContextStub';
+
+function createContextWithSummaries(
+	summaries: Map<string, string>,
+): TranslationContext {
+	return createTranslationContextStub({
+		phases: [],
+		actionCostResource: undefined,
+		activePlayer: toTranslationPlayer({
+			id: 'A',
+			name: 'Active',
+			resources: {},
+			population: {},
+		}),
+		opponent: toTranslationPlayer({
+			id: 'B',
+			name: 'Opponent',
+			resources: {},
+			population: {},
+		}),
+		assets: {
+			resources: Object.freeze({}),
+			stats: Object.freeze({}),
+			populations: Object.freeze({}),
+			population: Object.freeze({}),
+			land: Object.freeze({}),
+			slot: Object.freeze({}),
+			passive: Object.freeze({}),
+			modifiers: Object.freeze({}),
+			triggers: Object.freeze({}),
+			misc: Object.freeze({}),
+			tierSummaries: summaries,
+			formatPassiveRemoval: (description: string) =>
+				`Active as long as ${description}`,
+		} as TranslationContext['assets'],
+	});
+}
 
 describe('tier summary translation', () => {
 	it('returns summaries defined in content', () => {
-		const happinessSummaries = TIER_SUMMARY_STORE.get(Resource.happiness);
-		if (!happinessSummaries || happinessSummaries.size === 0) {
-			throw new Error('expected happiness tier summaries to be defined');
-		}
-		const iterator = happinessSummaries.entries().next();
-		if (iterator.done) {
-			throw new Error('expected at least one happiness tier summary entry');
-		}
-		const [token, summary] = iterator.value;
+		const token = 'tier.summary.happiness.one';
+		const summary = 'Gain 5 happiness.';
+		const summaries = new Map<string, string>([[token, summary]]);
+		const context = createContextWithSummaries(summaries);
 
-		expect(translateTierSummary(token)).toBe(summary);
-		expect(hasTierSummaryTranslation(token)).toBe(true);
+		expect(translateTierSummary(context, token)).toBe(summary);
+		expect(hasTierSummaryTranslation(context, token)).toBe(true);
 	});
 
 	it('handles missing tokens gracefully', () => {
 		const missingToken = 'tier.summary.missing';
+		const context = createContextWithSummaries(new Map());
 
-		expect(translateTierSummary(missingToken)).toBeUndefined();
-		expect(translateTierSummary(undefined)).toBeUndefined();
-		expect(hasTierSummaryTranslation(missingToken)).toBe(false);
-		expect(hasTierSummaryTranslation(undefined)).toBe(false);
+		expect(translateTierSummary(context, missingToken)).toBeUndefined();
+		expect(translateTierSummary(context, undefined)).toBeUndefined();
+		expect(hasTierSummaryTranslation(context, missingToken)).toBe(false);
+		expect(hasTierSummaryTranslation(context, undefined)).toBe(false);
 	});
 
-	describe('with multiple tiered resources', () => {
-		const syntheticToken = 'tier.summary.synthetic';
+	it('reflects updates within the tier summary map', () => {
+		const token = 'tier.summary.synthetic';
 		const firstSummary = 'Initial synthetic summary';
 		const updatedSummary = 'Updated synthetic summary';
-		let originalGroup: Map<string, string> | undefined;
+		const summaries = new Map<string, string>();
+		const context = createContextWithSummaries(summaries);
 
-		beforeEach(() => {
-			originalGroup = TIER_SUMMARY_STORE.get(Resource.gold);
-		});
+		summaries.set(token, firstSummary);
+		expect(translateTierSummary(context, token)).toBe(firstSummary);
+		expect(hasTierSummaryTranslation(context, token)).toBe(true);
 
-		afterEach(() => {
-			if (originalGroup) {
-				TIER_SUMMARY_STORE.set(Resource.gold, originalGroup);
-			} else {
-				TIER_SUMMARY_STORE.delete(Resource.gold);
-			}
-		});
-
-		it('reflects changes across tier groups', () => {
-			const syntheticGroup = new Map<string, string>();
-			TIER_SUMMARY_STORE.set(Resource.gold, syntheticGroup);
-
-			syntheticGroup.set(syntheticToken, firstSummary);
-			expect(translateTierSummary(syntheticToken)).toBe(firstSummary);
-			expect(hasTierSummaryTranslation(syntheticToken)).toBe(true);
-
-			syntheticGroup.set(syntheticToken, updatedSummary);
-			expect(translateTierSummary(syntheticToken)).toBe(updatedSummary);
-		});
+		summaries.set(token, updatedSummary);
+		expect(translateTierSummary(context, token)).toBe(updatedSummary);
 	});
 });

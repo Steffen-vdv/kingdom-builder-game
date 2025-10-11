@@ -1,12 +1,56 @@
 import { describe, expect, it } from 'vitest';
 import { translateRequirementFailure } from '../src/translation';
-import type { EngineContext } from '@kingdom-builder/engine';
+import type { TranslationContext } from '../src/translation/context';
+import {
+	createTranslationContextStub,
+	toTranslationPlayer,
+} from './helpers/translationContextStub';
 
 type RequirementFailure = Parameters<typeof translateRequirementFailure>[0];
-import { PopulationRole, Stat } from '@kingdom-builder/contents';
+
+const translationAssets: TranslationContext['assets'] = Object.freeze({
+	resources: Object.freeze({}),
+	stats: Object.freeze({
+		maxPopulation: Object.freeze({ icon: '👥', label: 'Max Population' }),
+		warWeariness: Object.freeze({ icon: '💤', label: 'War Weariness' }),
+	}),
+	populations: Object.freeze({
+		legion: Object.freeze({ icon: '🎖️', label: 'Legion' }),
+	}),
+	population: Object.freeze({ icon: '👥', label: 'Population' }),
+	land: Object.freeze({}),
+	slot: Object.freeze({}),
+	passive: Object.freeze({}),
+	modifiers: Object.freeze({}),
+	triggers: Object.freeze({}),
+	misc: Object.freeze({}),
+	tierSummaries: Object.freeze(new Map<string, string>()),
+	formatPassiveRemoval: (description: string) =>
+		`Active as long as ${description}`,
+});
+
+function createContext(): TranslationContext {
+	return createTranslationContextStub({
+		phases: [],
+		actionCostResource: undefined,
+		activePlayer: toTranslationPlayer({
+			id: 'A',
+			name: 'Active',
+			resources: {},
+			population: {},
+		}),
+		opponent: toTranslationPlayer({
+			id: 'B',
+			name: 'Opponent',
+			resources: {},
+			population: {},
+		}),
+		assets: translationAssets,
+	});
+}
 
 describe('translateRequirementFailure', () => {
-	const ctx = {} as EngineContext;
+	const ctx = createContext();
 
 	it('describes population capacity failures with current and max values', () => {
 		const failure: RequirementFailure = {
@@ -15,7 +59,7 @@ describe('translateRequirementFailure', () => {
 				method: 'compare',
 				params: {
 					left: { type: 'population' },
-					right: { type: 'stat', params: { key: Stat.maxPopulation } },
+					right: { type: 'stat', params: { key: 'maxPopulation' } },
 					operator: 'lt',
 				},
 			},
@@ -31,10 +75,10 @@ describe('translateRequirementFailure', () => {
 				type: 'evaluator',
 				method: 'compare',
 				params: {
-					left: { type: 'stat', params: { key: Stat.warWeariness } },
+					left: { type: 'stat', params: { key: 'warWeariness' } },
 					right: {
 						type: 'population',
-						params: { role: PopulationRole.Legion },
+						params: { role: 'legion' },
 					},
 					operator: 'lt',
 				},

@@ -1,44 +1,68 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { TRIGGER_INFO as triggerInfo, PHASES } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 
+const DEFAULT_TRIGGER_INFO: Record<
+	string,
+	{ icon?: string; future?: string; past?: string }
+> = {
+	onBuild: { icon: '⚒️', future: 'Until removed', past: 'Build' },
+	onBeforeAttacked: {
+		icon: '🛡️',
+		future: 'Before being attacked',
+		past: 'Before attack',
+	},
+	onAttackResolved: {
+		icon: '⚔️',
+		future: 'After attack resolves',
+		past: 'After attack',
+	},
+	onPayUpkeepStep: {
+		icon: '🧹',
+		future: 'During upkeep step',
+		past: 'Upkeep step',
+	},
+	onGainIncomeStep: {
+		icon: '💰',
+		future: 'During Growth Phase — Gain Income step',
+		past: 'Growth Phase — Gain Income step',
+	},
+	onGainAPStep: { icon: '⚡', future: 'During AP step', past: 'AP step' },
+};
+
+function selectTriggerInfo(
+	context: TranslationContext,
+	key: string,
+): { icon?: string; future?: string; past?: string } {
+	return context.assets.triggers[key] ?? DEFAULT_TRIGGER_INFO[key] ?? {};
+}
+
 function formatStepTriggerLabel(
 	context: TranslationContext,
 	triggerKey: string,
 ): string | undefined {
-	const phaseMeta = new Map(
-		context.phases.map((phase) => [
-			phase.id,
-			{ icon: phase.icon, label: phase.label },
-		]),
-	);
-	for (const phase of PHASES) {
+	for (const phase of context.phases) {
 		const steps = phase.steps ?? [];
 		for (const step of steps) {
 			const triggers = step.triggers ?? [];
 			if (!triggers.includes(triggerKey)) {
 				continue;
 			}
-			const meta = phaseMeta.get(phase.id);
-			const phaseLabelParts = [
-				meta?.icon ?? phase.icon,
-				meta?.label ?? phase.label ?? formatDetailText(phase.id),
-			]
+			const phaseLabel = [phase.icon, phase.label ?? formatDetailText(phase.id)]
 				.filter((part) => part && String(part).trim().length > 0)
 				.join(' ')
 				.trim();
-			const stepLabelParts = (step.title ?? formatDetailText(step.id))
+			const stepLabel = (step.title ?? formatDetailText(step.id))
 				?.trim()
 				.replace(/\s+/gu, ' ');
 			const sections: string[] = [];
-			if (phaseLabelParts.length) {
-				sections.push(`${phaseLabelParts} Phase`);
+			if (phaseLabel.length) {
+				sections.push(`${phaseLabel} Phase`);
 			}
-			if (stepLabelParts && stepLabelParts.length) {
-				sections.push(`${stepLabelParts} step`);
+			if (stepLabel && stepLabel.length) {
+				sections.push(`${stepLabel} step`);
 			}
 			if (!sections.length) {
 				return undefined;
@@ -83,10 +107,6 @@ export class PhasedTranslator {
 	): Summary {
 		const root: SummaryEntry[] = [];
 		const handled = new Set<string>();
-		const triggerMeta = triggerInfo as Record<
-			string,
-			{ icon: string; future: string } | undefined
-		>;
 
 		const applyTrigger = (
 			key: keyof PhasedDef,
@@ -102,12 +122,11 @@ export class PhasedTranslator {
 			if (!effects.length) {
 				return;
 			}
-			const info = triggerMeta[key as string];
+			const info = selectTriggerInfo(context, identifier);
 			const stepLabel = formatStepTriggerLabel(context, identifier);
 			const title = (() => {
 				if (stepLabel) {
-					const icon = info?.icon ?? '';
-					const trimmedIcon = icon.trim();
+					const trimmedIcon = (info.icon ?? '').trim();
 					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
 					return `${prefix}During ${stepLabel}`;
 				}
@@ -139,11 +158,25 @@ export class PhasedTranslator {
 			const capitalizedPhaseId =
 				phase.id.charAt(0).toUpperCase() + phase.id.slice(1);
 			const phaseKey = `on${capitalizedPhaseId}Phase` as keyof PhasedDef;
-			const phaseTitle = `${phase.icon} On each ${phase.label} Phase`;
+			const phaseIcon = (phase.icon ?? '').trim();
+			const rawPhaseLabel = phase.label ?? formatDetailText(phase.id);
+			const normalizedPhaseLabel = rawPhaseLabel
+				? rawPhaseLabel.trim().replace(/\s+/gu, ' ')
+				: formatDetailText(phase.id);
+			const phaseLabel =
+				normalizedPhaseLabel.length > 0
+					? normalizedPhaseLabel
+					: formatDetailText(phase.id);
+			const iconPrefix = phaseIcon.length ? `${phaseIcon} ` : '';
+			const phaseTitle = `${iconPrefix}On each ${phaseLabel} Phase`.trim();
 			applyTrigger(phaseKey, phaseTitle);
 		}
 
-		const stepKeysFromInfo = Object.keys(triggerInfo).filter((key) =>
+		const triggerKeys = new Set<string>([
+			...Object.keys(DEFAULT_TRIGGER_INFO),
+			...Object.keys(context.assets.triggers),
+		]);
+		const stepKeysFromInfo = Array.from(triggerKeys).filter((key) =>
 			key.endsWith('Step'),
 		);
 		for (const key of stepKeysFromInfo) {

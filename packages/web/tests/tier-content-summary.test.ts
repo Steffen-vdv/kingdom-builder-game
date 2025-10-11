@@ -14,6 +14,7 @@ import {
 	splitSummary,
 	translateTierSummary,
 } from '../src/translation';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 function splitLines(text: string | undefined): string[] {
 	if (!text) {
@@ -64,12 +65,16 @@ describe('tier content summaries', () => {
 			start: GAME_START,
 			rules: RULES,
 		});
+		const translationContext = createTranslationContextForEngine(ctx);
 		ctx.services.rules.tierDefinitions.forEach((tier) => {
-			const summary = summarizeContent('tier', tier, ctx);
+			const summary = summarizeContent('tier', tier, translationContext);
 			const { effects, description } = splitSummary(summary);
 			const effectLines = flattenSummary(effects);
 			const descriptionLines = flattenSummary(description);
-			const translated = translateTierSummary(tier.display?.summaryToken);
+			const translated = translateTierSummary(
+				translationContext,
+				tier.display?.summaryToken,
+			);
 			const expectedLines = splitLines(translated ?? tier.text?.summary);
 			if (expectedLines.length) {
 				expectedLines.forEach((line) => {
