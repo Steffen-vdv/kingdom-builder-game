@@ -10,7 +10,7 @@ import type {
 	SessionCreateResponse,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol/session';
-import type { GameApi } from './gameApi';
+import type { GameApi, GameApiRequestOptions } from './gameApi';
 import { GameApiError } from './gameApi';
 
 type CloneFn = <T>(value: T) => T;
@@ -107,48 +107,61 @@ const toStateResponse = (
 export type GameApiMockHandlers = {
 	createSession?: (
 		request: SessionCreateRequest,
+		options?: GameApiRequestOptions,
 	) => Promise<SessionCreateResponse> | SessionCreateResponse;
 	fetchSnapshot?: (
 		sessionId: string,
+		options?: GameApiRequestOptions,
 	) => Promise<SessionStateResponse> | SessionStateResponse;
 	performAction?: (
 		request: ActionExecuteRequest,
+		options?: GameApiRequestOptions,
 	) => Promise<ActionExecuteResponse> | ActionExecuteResponse;
 	advancePhase?: (
 		request: SessionAdvanceRequest,
+		options?: GameApiRequestOptions,
 	) => Promise<SessionAdvanceResponse> | SessionAdvanceResponse;
 };
 
 export const createGameApiMock = (
 	handlers: GameApiMockHandlers = {},
 ): GameApi => ({
-	createSession: (request: SessionCreateRequest = {}) => {
+	createSession: (
+		request: SessionCreateRequest = {},
+		options: GameApiRequestOptions = {},
+	) => {
 		if (!handlers.createSession) {
 			throw new Error('createSession handler not provided.');
 		}
 
-		return Promise.resolve(handlers.createSession(request));
+		return Promise.resolve(handlers.createSession(request, options));
 	},
-	fetchSnapshot: (sessionId: string) => {
+	fetchSnapshot: (sessionId: string, options: GameApiRequestOptions = {}) => {
 		if (!handlers.fetchSnapshot) {
 			return Promise.reject(new Error('fetchSnapshot handler not provided.'));
 		}
 
-		return Promise.resolve(handlers.fetchSnapshot(sessionId));
+		return Promise.resolve(handlers.fetchSnapshot(sessionId, options));
 	},
-	performAction: (request: ActionExecuteRequest) => {
+	performAction: (
+		request: ActionExecuteRequest,
+		options: GameApiRequestOptions = {},
+	) => {
 		if (!handlers.performAction) {
 			return Promise.reject(new Error('performAction handler not provided.'));
 		}
 
-		return Promise.resolve(handlers.performAction(request));
+		return Promise.resolve(handlers.performAction(request, options));
 	},
-	advancePhase: (request: SessionAdvanceRequest) => {
+	advancePhase: (
+		request: SessionAdvanceRequest,
+		options: GameApiRequestOptions = {},
+	) => {
 		if (!handlers.advancePhase) {
 			return Promise.reject(new Error('advancePhase handler not provided.'));
 		}
 
-		return Promise.resolve(handlers.advancePhase(request));
+		return Promise.resolve(handlers.advancePhase(request, options));
 	},
 });
 
@@ -184,6 +197,7 @@ export class GameApiFake implements GameApi {
 
 	createSession(
 		_request: SessionCreateRequest = {},
+		_options: GameApiRequestOptions = {},
 	): Promise<SessionCreateResponse> {
 		const response = this.#consumeCreate();
 
@@ -192,7 +206,10 @@ export class GameApiFake implements GameApi {
 		return Promise.resolve(clone(response));
 	}
 
-	fetchSnapshot(sessionId: string): Promise<SessionStateResponse> {
+	fetchSnapshot(
+		sessionId: string,
+		_options: GameApiRequestOptions = {},
+	): Promise<SessionStateResponse> {
 		const session = this.#sessions.get(sessionId);
 
 		if (!session) {
@@ -206,7 +223,10 @@ export class GameApiFake implements GameApi {
 		return Promise.resolve(clone(session));
 	}
 
-	performAction(request: ActionExecuteRequest): Promise<ActionExecuteResponse> {
+	performAction(
+		request: ActionExecuteRequest,
+		_options: GameApiRequestOptions = {},
+	): Promise<ActionExecuteResponse> {
 		const response = this.#consumeAction();
 
 		if (this.#isSuccess(response)) {
@@ -232,6 +252,7 @@ export class GameApiFake implements GameApi {
 
 	advancePhase(
 		request: SessionAdvanceRequest,
+		_options: GameApiRequestOptions = {},
 	): Promise<SessionAdvanceResponse> {
 		const response = this.#consumeAdvance();
 
