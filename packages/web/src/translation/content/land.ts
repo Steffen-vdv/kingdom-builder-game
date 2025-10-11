@@ -1,4 +1,3 @@
-import { SLOT_INFO } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	summarizeContent,
@@ -6,6 +5,7 @@ import {
 } from './factory';
 import type { Land, Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
+import { selectSlotDisplay } from '../context/assetSelectors';
 
 function translate(
 	land: Land,
@@ -29,7 +29,10 @@ function translate(
 				}),
 			});
 		} else {
-			items.push(`${SLOT_INFO.icon} Empty ${SLOT_INFO.label}`);
+			const slot = selectSlotDisplay(context.assets);
+			const label = slot.label ?? 'Development Slot';
+			const prefix = slot.icon ? `${slot.icon} ` : '';
+			items.push(`${prefix}Empty ${label}`.trim());
 		}
 	}
 	return items;

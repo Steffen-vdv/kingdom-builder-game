@@ -1,46 +1,37 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { TRIGGER_INFO as triggerInfo, PHASES } from '@kingdom-builder/contents';
+import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
+import { selectTriggerDisplay } from '../context/assetSelectors';
 
 function formatStepTriggerLabel(
 	context: TranslationContext,
 	triggerKey: string,
 ): string | undefined {
-	const phaseMeta = new Map(
-		context.phases.map((phase) => [
-			phase.id,
-			{ icon: phase.icon, label: phase.label },
-		]),
-	);
-	for (const phase of PHASES) {
+	for (const phase of context.phases) {
 		const steps = phase.steps ?? [];
 		for (const step of steps) {
 			const triggers = step.triggers ?? [];
 			if (!triggers.includes(triggerKey)) {
 				continue;
 			}
-			const meta = phaseMeta.get(phase.id);
-			const phaseLabelParts = [
-				meta?.icon ?? phase.icon,
-				meta?.label ?? phase.label ?? formatDetailText(phase.id),
-			]
-				.filter((part) => part && String(part).trim().length > 0)
-				.join(' ')
-				.trim();
-			const stepLabelParts = (step.title ?? formatDetailText(step.id))
+			const phaseParts = [phase.icon, phase.label ?? formatDetailText(phase.id)]
+				.filter((value) => typeof value === 'string' && value.trim().length > 0)
+				.map((value) => value!.trim());
+			const phaseLabel = phaseParts.join(' ');
+			const stepLabel = (step.title ?? formatDetailText(step.id))
 				?.trim()
 				.replace(/\s+/gu, ' ');
 			const sections: string[] = [];
-			if (phaseLabelParts.length) {
-				sections.push(`${phaseLabelParts} Phase`);
+			if (phaseLabel.length) {
+				sections.push(`${phaseLabel} Phase`);
 			}
-			if (stepLabelParts && stepLabelParts.length) {
-				sections.push(`${stepLabelParts} step`);
+			if (stepLabel && stepLabel.length) {
+				sections.push(`${stepLabel} step`);
 			}
-			if (!sections.length) {
+			if (sections.length === 0) {
 				return undefined;
 			}
 			return sections.join(' — ');
@@ -83,11 +74,6 @@ export class PhasedTranslator {
 	): Summary {
 		const root: SummaryEntry[] = [];
 		const handled = new Set<string>();
-		const triggerMeta = triggerInfo as Record<
-			string,
-			{ icon: string; future: string } | undefined
-		>;
-
 		const applyTrigger = (
 			key: keyof PhasedDef,
 			fallbackTitle?: string,
@@ -102,22 +88,21 @@ export class PhasedTranslator {
 			if (!effects.length) {
 				return;
 			}
-			const info = triggerMeta[key as string];
+			const info = selectTriggerDisplay(context.assets, key as string);
 			const stepLabel = formatStepTriggerLabel(context, identifier);
 			const title = (() => {
 				if (stepLabel) {
-					const icon = info?.icon ?? '';
+					const icon = info.icon ?? '';
 					const trimmedIcon = icon.trim();
 					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
 					return `${prefix}During ${stepLabel}`;
 				}
-				if (info) {
-					const label = [info.icon, info.future]
-						.filter(Boolean)
-						.join(' ')
-						.trim();
-					if (label.length) {
-						return label;
+				const future = info.future ?? info.label;
+				const icon = info.icon ?? '';
+				if (future && future.trim().length) {
+					const parts = [icon, future].filter(Boolean).join(' ').trim();
+					if (parts.length) {
+						return parts;
 					}
 				}
 				return fallbackTitle;
@@ -139,11 +124,14 @@ export class PhasedTranslator {
 			const capitalizedPhaseId =
 				phase.id.charAt(0).toUpperCase() + phase.id.slice(1);
 			const phaseKey = `on${capitalizedPhaseId}Phase` as keyof PhasedDef;
-			const phaseTitle = `${phase.icon} On each ${phase.label} Phase`;
+			const icon = phase.icon ? `${phase.icon} ` : '';
+			const label = phase.label ?? formatDetailText(phase.id);
+			const phaseTitle = `${icon}On each ${label} Phase`.trim();
 			applyTrigger(phaseKey, phaseTitle);
 		}
 
-		const stepKeysFromInfo = Object.keys(triggerInfo).filter((key) =>
+		const triggerLookup = context.assets?.triggers ?? TRIGGER_INFO;
+		const stepKeysFromInfo = Object.keys(triggerLookup).filter((key) =>
 			key.endsWith('Step'),
 		);
 		for (const key of stepKeysFromInfo) {

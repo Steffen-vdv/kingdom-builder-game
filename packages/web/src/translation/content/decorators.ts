@@ -1,6 +1,6 @@
 import type { ContentTranslator, Summary, TranslatorLogEntry } from './types';
-import { TRIGGER_INFO as triggerInfo } from '@kingdom-builder/contents';
 import type { TranslationContext } from '../context';
+import { selectTriggerDisplay } from '../context/assetSelectors';
 
 export function withInstallation<T>(
 	translator: ContentTranslator<T, unknown>,
@@ -25,9 +25,13 @@ export function withInstallation<T>(
 					main.push(entry);
 				}
 			}
-			const title = options?.installed
-				? `${triggerInfo.onBuild.icon} ${triggerInfo.onBuild.future}`
-				: `${triggerInfo.onBuild.icon} On build, ${triggerInfo.onBuild.future.toLowerCase()}`;
+			const trigger = selectTriggerDisplay(context.assets, 'onBuild');
+			const icon = trigger.icon ? `${trigger.icon} ` : '';
+			const futureLabel = trigger.future ?? 'Until removed';
+			const installedTitle = `${icon}${futureLabel}`.trim();
+			const uninstalledTitle =
+				`${icon}On build, ${futureLabel.toLowerCase()}`.trim();
+			const title = options?.installed ? installedTitle : uninstalledTitle;
 			const wrapped = main.length ? [{ title, items: main }] : [];
 			return [...wrapped, ...hoisted];
 		},
@@ -50,9 +54,13 @@ export function withInstallation<T>(
 					main.push(entry);
 				}
 			}
-			const title = options?.installed
-				? `${triggerInfo.onBuild.icon} ${triggerInfo.onBuild.future}`
-				: `${triggerInfo.onBuild.icon} On build, ${triggerInfo.onBuild.future.toLowerCase()}`;
+			const trigger = selectTriggerDisplay(context.assets, 'onBuild');
+			const icon = trigger.icon ? `${trigger.icon} ` : '';
+			const futureLabel = trigger.future ?? 'Until removed';
+			const installedTitle = `${icon}${futureLabel}`.trim();
+			const uninstalledTitle =
+				`${icon}On build, ${futureLabel.toLowerCase()}`.trim();
+			const title = options?.installed ? installedTitle : uninstalledTitle;
 			const wrapped = main.length ? [{ title, items: main }] : [];
 			return [...wrapped, ...hoisted];
 		},

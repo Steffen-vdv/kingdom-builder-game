@@ -155,6 +155,7 @@ export default function BuildOptions({
 							enabled={enabled}
 							tooltip={title}
 							focus={focus}
+							assets={translationContext.assets}
 							onClick={() => {
 								if (!canInteract) {
 									return;

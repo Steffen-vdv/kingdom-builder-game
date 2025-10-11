@@ -6,6 +6,7 @@ import {
 } from '@kingdom-builder/contents';
 import { createTestContext } from './fixtures';
 import { translateTierSummary } from '../../packages/web/src/translation/content/tierSummaries';
+import { createTranslationContextForEngine } from '../../packages/web/tests/helpers/createTranslationContextForEngine';
 
 type PassiveTier = Exclude<HappinessTierSlug, 'steady'>;
 
@@ -152,11 +153,15 @@ describe('content happiness tiers', () => {
 			player.resources[Resource.happiness] = sample.value;
 			ctx.services.handleTieredResourceChange(ctx, player, Resource.happiness);
 
+			const translationContext = createTranslationContextForEngine(ctx);
 			const passives = ctx.passives.values(player.id).map((passive) => {
 				const sourceId = passive.meta?.source?.id;
 				const tier = sourceId ? tiersById.get(sourceId) : undefined;
 				const summaryToken = tier?.display?.summaryToken;
-				const summary = translateTierSummary(summaryToken);
+				const summary = translateTierSummary(
+					summaryToken,
+					translationContext.assets,
+				);
 				const removalToken = passive.meta?.removal?.token;
 				return {
 					id: passive.id,

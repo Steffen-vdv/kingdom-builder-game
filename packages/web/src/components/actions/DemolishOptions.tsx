@@ -154,6 +154,7 @@ export default function DemolishOptions({
 							requirements={requirements}
 							requirementIcons={[]}
 							summary={summary}
+							assets={translationContext.assets}
 							implemented={implemented}
 							enabled={enabled}
 							tooltip={title}

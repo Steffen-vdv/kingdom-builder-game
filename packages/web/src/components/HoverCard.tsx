@@ -135,7 +135,10 @@ export default function HoverCard() {
 		renderedData.descriptionClass,
 	);
 	const shouldShowFreeLabel = renderedData.costs !== undefined;
-	const renderCostOptions = { showFreeLabel: shouldShowFreeLabel };
+	const renderCostOptions = {
+		showFreeLabel: shouldShowFreeLabel,
+		assets: translationContext.assets,
+	};
 
 	return (
 		<div

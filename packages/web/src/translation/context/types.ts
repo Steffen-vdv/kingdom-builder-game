@@ -2,6 +2,7 @@ import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
+	EffectDef,
 	PlayerStartConfig,
 	PopulationConfig,
 	SessionPassiveRecordSnapshot,
@@ -31,6 +32,13 @@ export interface TranslationModifierInfo {
 	label?: string;
 }
 
+export interface TranslationTriggerAsset {
+	icon?: string;
+	future?: string;
+	past?: string;
+	label?: string;
+}
+
 export interface TranslationAssets {
 	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
 	readonly stats: Readonly<Record<string, TranslationIconLabel>>;
@@ -39,7 +47,10 @@ export interface TranslationAssets {
 	readonly land: Readonly<TranslationIconLabel>;
 	readonly slot: Readonly<TranslationIconLabel>;
 	readonly passive: Readonly<TranslationIconLabel>;
+	readonly upkeep: Readonly<TranslationIconLabel>;
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
+	readonly triggers: Readonly<Record<string, TranslationTriggerAsset>>;
+	readonly tierSummaries: Readonly<Record<string, string>>;
 	formatPassiveRemoval(description: string): string;
 }
 
@@ -91,7 +102,10 @@ export interface TranslationPassives {
  */
 export interface TranslationPhaseStep {
 	id: string;
+	title?: string;
+	icon?: string;
 	triggers?: readonly string[];
+	effects?: readonly EffectDef[];
 }
 
 export interface TranslationPhase {
