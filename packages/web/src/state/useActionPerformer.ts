@@ -31,6 +31,7 @@ import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
+import { GameApiError } from '../services/gameApi';
 import type {
 	LegacySession,
 	SessionRegistries,
@@ -101,6 +102,7 @@ interface UseActionPerformerOptions {
 	endTurn: () => Promise<void>;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	resourceKeys: SessionResourceKey[];
+	onFatalSessionError?: (error: unknown) => void;
 }
 export function useActionPerformer({
 	session,
@@ -116,6 +118,7 @@ export function useActionPerformer({
 	endTurn,
 	enqueue,
 	resourceKeys,
+	onFatalSessionError,
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParametersPayload) => {
@@ -124,12 +127,24 @@ export function useActionPerformer({
 				pushErrorToast('The battle is already decided.');
 				return;
 			}
-			let { translationContext: context } = getLegacySessionContext({
-				snapshot: snapshotBefore,
-				ruleSnapshot: snapshotBefore.rules,
-				passiveRecords: snapshotBefore.passiveRecords,
-				registries,
-			});
+			const notifyFatal = (fatalError: unknown) => {
+				if (onFatalSessionError) {
+					onFatalSessionError(fatalError);
+				}
+			};
+			let legacyContextBefore;
+			try {
+				legacyContextBefore = getLegacySessionContext({
+					snapshot: snapshotBefore,
+					ruleSnapshot: snapshotBefore.rules,
+					passiveRecords: snapshotBefore.passiveRecords,
+					registries,
+				});
+			} catch (contextError) {
+				notifyFatal(contextError);
+				return;
+			}
+			let { translationContext: context } = legacyContextBefore;
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
 				(entry) => entry.id === activePlayerId,
@@ -150,13 +165,19 @@ export function useActionPerformer({
 				const costs = response.costs ?? {};
 				const traces = response.traces;
 				const snapshotAfter = response.snapshot;
-				const legacyContext = getLegacySessionContext({
-					snapshot: snapshotAfter,
-					ruleSnapshot: snapshotAfter.rules,
-					passiveRecords: snapshotAfter.passiveRecords,
-					registries,
-				});
-				const { translationContext, diffContext } = legacyContext;
+				let legacyContextAfter;
+				try {
+					legacyContextAfter = getLegacySessionContext({
+						snapshot: snapshotAfter,
+						ruleSnapshot: snapshotAfter.rules,
+						passiveRecords: snapshotAfter.passiveRecords,
+						registries,
+					});
+				} catch (contextError) {
+					notifyFatal(contextError);
+					return;
+				}
+				const { translationContext, diffContext } = legacyContextAfter;
 				context = translationContext;
 				const playerAfter = snapshotAfter.game.players.find(
 					(entry) => entry.id === activePlayerId,
@@ -251,9 +272,22 @@ export function useActionPerformer({
 				}
 			} catch (error) {
 				const icon = context.actions.get(action.id)?.icon || '';
-				let message = (error as Error).message || 'Action failed';
+				const baseMessage = (error as Error).message || 'Action failed';
 				const requirementFailure = (error as ActionExecutionError)
 					?.requirementFailure;
+				const requirementFailures = (error as ActionExecutionError)
+					?.requirementFailures;
+				const hasRequirementFailures =
+					Boolean(requirementFailure) ||
+					(Array.isArray(requirementFailures) &&
+						requirementFailures.length > 0);
+				const isGameApiFailure = error instanceof GameApiError;
+				const isSessionMissing = baseMessage.startsWith('Session not found');
+				if (!hasRequirementFailures || isGameApiFailure || isSessionMissing) {
+					notifyFatal(error);
+					return;
+				}
+				let message = baseMessage;
 				if (requirementFailure) {
 					message = translateRequirementFailure(requirementFailure, context);
 				}

@@ -121,13 +121,14 @@ describe('useActionPerformer', () => {
 		});
 	});
 
-	it('shows error toast when action fails due to network issue', async () => {
+	it('invokes the fatal handler when a network failure occurs', async () => {
 		const error = new Error('Network offline');
 		performSessionActionMock.mockRejectedValueOnce(error);
 		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const syncPhaseState = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn();
+		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
 				session,
@@ -143,6 +144,7 @@ describe('useActionPerformer', () => {
 				endTurn,
 				enqueue: enqueueMock,
 				resourceKeys,
+				onFatalSessionError,
 			}),
 		);
 
@@ -150,14 +152,9 @@ describe('useActionPerformer', () => {
 			await result.current.handlePerform(action);
 		});
 
-		expect(pushErrorToast).toHaveBeenCalledWith('Network offline');
-		expect(addLog).toHaveBeenCalledWith(
-			'Failed to play ⚔️ Attack: Network offline',
-			{
-				id: sessionSnapshot.game.activePlayerId,
-				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
-			},
-		);
+		expect(onFatalSessionError).toHaveBeenCalledWith(error);
+		expect(pushErrorToast).not.toHaveBeenCalled();
+		expect(addLog).not.toHaveBeenCalled();
 		expect(enqueueMock).toHaveBeenCalled();
 		expect(translateRequirementFailureMock).not.toHaveBeenCalled();
 	});
