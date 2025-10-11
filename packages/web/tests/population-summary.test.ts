@@ -5,7 +5,7 @@ import {
 	describeEffects,
 	type Summary,
 } from '../src/translation';
-import { createEngine, PopulationRole } from '@kingdom-builder/engine';
+import { createEngine } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -44,10 +44,19 @@ describe('population effect translation', () => {
 	});
 
 	it('summarizes population-raising action for specific role', () => {
-		const raiseId = Array.from(
+		const raiseEntry = Array.from(
 			(
 				ACTIONS as unknown as {
-					map: Map<string, { effects: { type: string; method?: string }[] }>;
+					map: Map<
+						string,
+						{
+							effects: {
+								type: string;
+								method?: string;
+								params?: { role?: string };
+							}[];
+						}
+					>;
 				}
 			).map.entries(),
 		).find(([, a]) =>
@@ -55,9 +64,18 @@ describe('population effect translation', () => {
 				(e: { type: string; method?: string }) =>
 					e.type === 'population' && e.method === 'add',
 			),
-		)?.[0] as string;
+		);
+		const raiseId = raiseEntry?.[0] as string;
+		const roleEffect = raiseEntry?.[1].effects.find(
+			(e: { type: string; method?: string }) =>
+				e.type === 'population' && e.method === 'add',
+		);
+		const roleId = (roleEffect?.params as { role?: string } | undefined)?.role;
+		if (!raiseId || !roleId) {
+			throw new Error('Unable to locate population-raising action.');
+		}
 		const summary = summarizeContent('action', raiseId, engineContext, {
-			role: PopulationRole.Council,
+			role: roleId,
 		});
 		const flat = flatten(summary);
 		const expected = summarizeEffects(
@@ -65,7 +83,7 @@ describe('population effect translation', () => {
 				{
 					type: 'population',
 					method: 'add',
-					params: { role: PopulationRole.Council },
+					params: { role: roleId },
 				},
 			],
 			engineContext,
@@ -74,46 +92,37 @@ describe('population effect translation', () => {
 	});
 
 	it('handles population removal effect', () => {
-		const summary = summarizeEffects(
-			[
-				{
-					type: 'population',
-					method: 'remove',
-					params: { role: PopulationRole.Council },
-				},
-			],
-			engineContext,
-		);
-		const desc = describeEffects(
-			[
-				{
-					type: 'population',
-					method: 'remove',
-					params: { role: PopulationRole.Council },
-				},
-			],
-			engineContext,
-		);
-		const expectedSummary = summarizeEffects(
-			[
-				{
-					type: 'population',
-					method: 'remove',
-					params: { role: PopulationRole.Council },
-				},
-			],
-			engineContext,
-		)[0];
-		const expectedDesc = describeEffects(
-			[
-				{
-					type: 'population',
-					method: 'remove',
-					params: { role: PopulationRole.Council },
-				},
-			],
-			engineContext,
-		)[0];
+		const removalRole = Array.from(
+			(
+				ACTIONS as unknown as {
+					map: Map<
+						string,
+						{
+							effects: {
+								type: string;
+								method?: string;
+								params?: { role?: string };
+							}[];
+						}
+					>;
+				}
+			).map.values(),
+		)
+			.flatMap((action) => action.effects)
+			.find((effect) => effect.type === 'population' && effect.params?.role)
+			?.params?.role as string | undefined;
+		if (!removalRole) {
+			throw new Error('No population role found for removal test.');
+		}
+		const removalEffect = {
+			type: 'population' as const,
+			method: 'remove' as const,
+			params: { role: removalRole },
+		};
+		const summary = summarizeEffects([removalEffect], engineContext);
+		const desc = describeEffects([removalEffect], engineContext);
+		const expectedSummary = summarizeEffects([removalEffect], engineContext)[0];
+		const expectedDesc = describeEffects([removalEffect], engineContext)[0];
 		expect(summary).toContain(expectedSummary);
 		expect(desc).toContain(expectedDesc);
 	});

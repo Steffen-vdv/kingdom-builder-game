@@ -1,13 +1,18 @@
-import React, { useMemo } from 'react';
-import {
-	LAND_INFO,
-	SLOT_INFO,
-	DEVELOPMENTS_INFO,
-} from '@kingdom-builder/contents';
+import React, { useCallback, useMemo } from 'react';
 import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import {
+	useDevelopmentMetadata,
+	useLandMetadata,
+	useSlotMetadata,
+} from '../../contexts/RegistryMetadataContext';
+import {
+	formatIconLabel,
+	toDescriptorDisplay,
+	type DescriptorDisplay,
+} from './registryDisplays';
 
 interface LandDisplayProps {
 	player: PlayerStateSnapshot;
@@ -23,22 +28,31 @@ const LandTile: React.FC<{
 	handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
 	clearHoverCard: ReturnType<typeof useGameEngine>['clearHoverCard'];
 	developAction?: { icon?: string; name: string } | undefined;
+	landDisplay: DescriptorDisplay;
+	slotDisplay: DescriptorDisplay;
+	getDevelopmentDisplay: (developmentId: string) => DescriptorDisplay;
 }> = ({
 	land,
 	translationContext,
 	handleHoverCard,
 	clearHoverCard,
 	developAction,
+	landDisplay,
+	slotDisplay,
+	getDevelopmentDisplay,
 }) => {
 	const showLandCard = () => {
 		const full = describeContent('land', land, translationContext);
 		const { effects, description } = splitSummary(full);
 		handleHoverCard({
-			title: `${LAND_INFO.icon} ${LAND_INFO.label}`,
+			title: formatIconLabel(landDisplay),
 			effects,
 			requirements: [],
-			effectsTitle: DEVELOPMENTS_INFO.label,
+			effectsTitle: DEVELOPMENTS_TITLE,
 			...(description && { description }),
+			...(landDisplay.description
+				? { description: landDisplay.description }
+				: {}),
 			bgClass: HOVER_CARD_BACKGROUND,
 		});
 	};
@@ -54,7 +68,8 @@ const LandTile: React.FC<{
 			onMouseLeave={clearHoverCard}
 		>
 			<span className="font-medium">
-				{LAND_INFO.icon} {LAND_INFO.label}
+				{landDisplay.icon && <span aria-hidden="true">{landDisplay.icon}</span>}{' '}
+				{landDisplay.label}
 			</span>
 			<div
 				ref={animateSlots}
@@ -63,12 +78,8 @@ const LandTile: React.FC<{
 				{slotIndices.map((slotIndex) => {
 					const devId = land.developments[slotIndex];
 					if (devId) {
-						const hasDefinition = translationContext.developments.has(devId);
-						const development = hasDefinition
-							? translationContext.developments.get(devId)
-							: undefined;
-						const name = development?.name || devId;
-						const title = `${development?.icon || ''} ${name}`;
+						const developmentDisplay = getDevelopmentDisplay(devId);
+						const title = formatIconLabel(developmentDisplay);
 						const handleLeave = () => showLandCard();
 						const handleMouseEnter = (
 							event: React.MouseEvent<HTMLSpanElement>,
@@ -101,11 +112,11 @@ const LandTile: React.FC<{
 							<span
 								key={slotIndex}
 								className="land-slot"
-								aria-label={name}
+								aria-label={developmentDisplay.label}
 								onMouseEnter={handleMouseEnter}
 								onMouseLeave={handleMouseLeave}
 							>
-								<span aria-hidden="true">{development?.icon}</span>
+								<span aria-hidden="true">{developmentDisplay.icon}</span>
 							</span>
 						);
 					}
@@ -115,10 +126,12 @@ const LandTile: React.FC<{
 					) => {
 						event.stopPropagation();
 						handleHoverCard({
-							title: `${SLOT_INFO.icon} ${SLOT_INFO.label} (empty)`,
+							title: `${formatIconLabel(slotDisplay)} (empty)`,
 							effects: [],
 							...(developAction && {
-								description: `Use ${developAction.icon || ''} ${developAction.name} to build here`,
+								description: `Use ${
+									developAction.icon ? `${developAction.icon} ` : ''
+								}${developAction.name} to build here`,
 							}),
 							requirements: [],
 							bgClass: HOVER_CARD_BACKGROUND,
@@ -134,11 +147,11 @@ const LandTile: React.FC<{
 						<span
 							key={slotIndex}
 							className="land-slot italic"
-							aria-label={`${SLOT_INFO.label} (empty)`}
+							aria-label={`${slotDisplay.label} (empty)`}
 							onMouseEnter={handleMouseEnter}
 							onMouseLeave={handleMouseLeave}
 						>
-							<span aria-hidden="true">{SLOT_INFO.icon}</span>
+							<span aria-hidden="true">{slotDisplay.icon}</span>
 						</span>
 					);
 				})}
@@ -150,6 +163,9 @@ const LandTile: React.FC<{
 const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 	const { translationContext, handleHoverCard, clearHoverCard } =
 		useGameEngine();
+	const landMetadata = useLandMetadata();
+	const slotMetadata = useSlotMetadata();
+	const developmentMetadata = useDevelopmentMetadata();
 	const developAction = useMemo(() => {
 		for (const actionId of player.actions) {
 			if (!translationContext.actions.has(actionId)) {
@@ -164,6 +180,36 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 		}
 		return undefined;
 	}, [player.actions, translationContext]);
+	const landDisplay = useMemo(
+		() => toDescriptorDisplay(landMetadata.select()),
+		[landMetadata],
+	);
+	const slotDisplay = useMemo(
+		() => toDescriptorDisplay(slotMetadata.select()),
+		[slotMetadata],
+	);
+	const getDevelopmentDisplay = useCallback(
+		(developmentId: string) => {
+			const descriptor = toDescriptorDisplay(
+				developmentMetadata.select(developmentId),
+			);
+			if (!translationContext.developments.has(developmentId)) {
+				return descriptor;
+			}
+			const definition = translationContext.developments.get(developmentId);
+			const label = definition?.name ?? descriptor.label;
+			const iconOverride = (definition as { icon?: string } | undefined)?.icon;
+			const entry: DescriptorDisplay = {
+				...descriptor,
+				label,
+			};
+			if (iconOverride !== undefined) {
+				entry.icon = iconOverride;
+			}
+			return entry;
+		},
+		[developmentMetadata, translationContext.developments],
+	);
 	if (player.lands.length === 0) {
 		return null;
 	}
@@ -181,10 +227,15 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 					handleHoverCard={handleHoverCard}
 					clearHoverCard={clearHoverCard}
 					developAction={developAction}
+					landDisplay={landDisplay}
+					slotDisplay={slotDisplay}
+					getDevelopmentDisplay={getDevelopmentDisplay}
 				/>
 			))}
 		</div>
 	);
 };
+
+const DEVELOPMENTS_TITLE = 'Developments';
 
 export default LandDisplay;

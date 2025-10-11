@@ -10,9 +10,9 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
-	SLOT_INFO,
 } from '@kingdom-builder/contents';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
+import { createTranslationAssets } from '../src/translation/context/assets';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -30,18 +30,29 @@ function createEngineContext() {
 	});
 }
 
+const readSlotIcon = (
+	engineContext: ReturnType<typeof createEngineContext>,
+): string | undefined =>
+	createTranslationAssets({
+		populations: engineContext.populations,
+		// No resource metadata is required for slot assets in these tests.
+		resources: {} as Record<string, never>,
+	}).slot.icon;
+
 describe('land till formatter', () => {
 	it('summarizes till effect', () => {
 		const engineContext = createEngineContext();
+		const slotIcon = readSlotIcon(engineContext);
 		const summary = summarizeEffects(
 			[{ type: 'land', method: LandMethods.TILL }],
 			engineContext,
 		);
-		expect(summary).toContain(`${SLOT_INFO.icon}+1`);
+		expect(summary).toContain(`${slotIcon}+1`);
 	});
 
 	it('summarizes till action', () => {
 		const engineContext = createEngineContext();
+		const slotIcon = readSlotIcon(engineContext);
 		const tillId = Array.from(
 			(
 				ACTIONS as unknown as {
@@ -56,7 +67,7 @@ describe('land till formatter', () => {
 		)?.[0] as string;
 		const summary = summarizeContent('action', tillId, engineContext);
 		const hasIcon = summary.some(
-			(item) => typeof item === 'string' && item.includes(SLOT_INFO.icon),
+			(item) => typeof item === 'string' && item.includes(slotIcon),
 		);
 		expect(hasIcon).toBe(true);
 	});
