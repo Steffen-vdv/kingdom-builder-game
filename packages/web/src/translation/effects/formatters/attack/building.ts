@@ -1,38 +1,39 @@
-import { BUILDINGS } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import {
-	attackStatLabel,
-	attackStatValue,
-	formatDiffCommon,
-	formatNumber,
-	formatPercent,
-	formatSignedValue,
-	iconLabel,
+        attackStatLabel,
+        attackStatValue,
+        formatDiffCommon,
+        formatNumber,
+        formatPercent,
+        formatSignedValue,
+        iconLabel,
 } from './shared';
 import { buildAttackSummaryBullet } from './summary';
 import {
-	buildDescribeEntry,
-	buildingFortificationItems,
-	getBuildingDisplay,
+        buildDescribeEntry,
+        buildingFortificationItems,
 } from './evaluation';
 import type { AttackTargetFormatter } from './types';
 import type { SummaryEntry } from '../../../content';
+import type { TranslationContext } from '../../../context';
+import { selectBuildingIconLabel } from '../../../registrySelectors';
+
+const UNKNOWN_BUILDING_ID = 'synthetic:unknown-building';
 
 const buildingFormatter: AttackTargetFormatter<{
 	type: 'building';
 	id: string;
 }> = {
 	type: 'building',
-	parseEffectTarget(effect) {
-		const targetParam = effect.params?.['target'] as
-			| { type: 'building'; id: string }
-			| undefined;
-		if (targetParam?.type === 'building') {
-			return targetParam;
-		}
-		const [id] = BUILDINGS.keys();
-		return { type: 'building', id: id ?? 'unknown_building' };
-	},
+        parseEffectTarget(effect) {
+                const targetParam = effect.params?.['target'] as
+                        | { type: 'building'; id: string }
+                        | undefined;
+                if (targetParam?.type === 'building') {
+                        return targetParam;
+                }
+                return { type: 'building', id: UNKNOWN_BUILDING_ID };
+        },
 	normalizeLogTarget(target) {
 		const buildingTarget = target as Extract<
 			AttackLog['evaluation']['target'],
@@ -40,12 +41,13 @@ const buildingFormatter: AttackTargetFormatter<{
 		>;
 		return { type: 'building', id: buildingTarget.id };
 	},
-	getInfo(target) {
-		return getBuildingDisplay(target.id);
-	},
-	getTargetLabel(info) {
-		return iconLabel(info.icon, info.label);
-	},
+getInfo(target, context: TranslationContext) {
+const descriptor = selectBuildingIconLabel(context, target.id);
+return { icon: descriptor.icon, label: descriptor.label };
+},
+        getTargetLabel(info) {
+                return iconLabel(info.icon, info.label);
+        },
 	buildBaseEntry(context) {
 		if (context.mode === 'summarize') {
 			return buildAttackSummaryBullet(context);
@@ -152,13 +154,13 @@ const buildingFormatter: AttackTargetFormatter<{
 
 		return { title, items };
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
-	},
-	onDamageLogTitle(info) {
-		const display = iconLabel(info.icon, info.label);
-		return `${display} destruction trigger evaluation`;
-	},
+formatDiff(prefix, diff, context: TranslationContext, options) {
+return formatDiffCommon(prefix, diff, context, options);
+},
+        onDamageLogTitle(info) {
+                const display = iconLabel(info.icon, info.label);
+                return `${display} destruction trigger evaluation`;
+        },
 };
 
 export default buildingFormatter;

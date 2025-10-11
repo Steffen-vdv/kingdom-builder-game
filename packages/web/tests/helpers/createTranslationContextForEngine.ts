@@ -6,11 +6,31 @@ import type { TranslationContext } from '../../src/translation/context/types';
 import { createSessionRegistries } from './sessionRegistries';
 
 export function createTranslationContextForEngine(engine: EngineContext) {
-	const registries = createSessionRegistries();
-	const snapshot = snapshotEngine(engine);
-	const baseContext = createTranslationContext(
-		snapshot,
-		registries,
+        const registries = createSessionRegistries();
+        for (const [id, definition] of engine.actions.entries()) {
+                if (!registries.actions.has(id)) {
+                        registries.actions.add(id, structuredClone(definition));
+                }
+        }
+        for (const [id, definition] of engine.buildings.entries()) {
+                if (!registries.buildings.has(id)) {
+                        registries.buildings.add(id, structuredClone(definition));
+                }
+        }
+        for (const [id, definition] of engine.developments.entries()) {
+                if (!registries.developments.has(id)) {
+                        registries.developments.add(id, structuredClone(definition));
+                }
+        }
+        for (const [id, definition] of engine.populations.entries()) {
+                if (!registries.populations.has(id)) {
+                        registries.populations.add(id, structuredClone(definition));
+                }
+        }
+        const snapshot = snapshotEngine(engine);
+        const baseContext = createTranslationContext(
+                snapshot,
+                registries,
 		snapshot.metadata,
 		{
 			ruleSnapshot: snapshot.rules,

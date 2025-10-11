@@ -120,15 +120,27 @@ export function buildEffects(descriptors: EffectDescriptor[] = []) {
 export function buildAttackEffect(descriptor: AttackEffectDescriptor) {
 	const params = attackParams();
 	const stats = descriptor.stats ?? ['power', 'absorption', 'fortification'];
-	if (stats.includes('power')) {
-		params.powerStat(statKey('power'));
-	}
-	if (stats.includes('absorption')) {
-		params.absorptionStat(statKey('absorption'));
-	}
-	if (stats.includes('fortification')) {
-		params.fortificationStat(statKey('fortification'));
-	}
+        if (stats.includes('power')) {
+                const config = COMBAT_STAT_CONFIG.power;
+                params.powerStat(statKey('power'), {
+                        label: config.label,
+                        icon: config.icon,
+                });
+        }
+        if (stats.includes('absorption')) {
+                const config = COMBAT_STAT_CONFIG.absorption;
+                params.absorptionStat(statKey('absorption'), {
+                        label: config.label,
+                        icon: config.icon,
+                });
+        }
+        if (stats.includes('fortification')) {
+                const config = COMBAT_STAT_CONFIG.fortification;
+                params.fortificationStat(statKey('fortification'), {
+                        label: config.label,
+                        icon: config.icon,
+                });
+        }
 	if (descriptor.target.resource) {
 		params.targetResource(descriptor.target.resource);
 	}

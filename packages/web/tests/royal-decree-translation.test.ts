@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-	createEngine,
-	getActionEffectGroups,
-	type EngineContext,
-} from '@kingdom-builder/engine';
+import { createEngine, getActionEffectGroups } from '@kingdom-builder/engine';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import {
 	ACTIONS,
@@ -16,26 +12,28 @@ import {
 	ActionId,
 } from '@kingdom-builder/contents';
 import {
-	describeContent,
-	summarizeContent,
-	formatEffectGroups,
-	logContent,
-	type SummaryEntry,
+        describeContent,
+        summarizeContent,
+        formatEffectGroups,
+        logContent,
+        type SummaryEntry,
 } from '../src/translation';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
 const context = createEngine({
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
-	phases: PHASES,
-	start: GAME_START,
-	rules: RULES,
+        actions: ACTIONS,
+        buildings: BUILDINGS,
+        developments: DEVELOPMENTS,
+        populations: POPULATIONS,
+        phases: PHASES,
+        start: GAME_START,
+        rules: RULES,
 });
+const translationContext = createTranslationContextForEngine(context);
 
 function combineLabels(left: string, right: string): string {
 	const base = left.trim();
@@ -91,15 +89,12 @@ function findGroupEntry(
 
 describe('royal decree translation', () => {
 	const actionId = ActionId.royal_decree;
-	const developAction = context.actions.get(ActionId.develop);
+        const developAction = translationContext.actions.get(ActionId.develop);
 	const developLabel = combineLabels(
 		`${developAction.icon ?? ''} ${developAction.name ?? ''}`,
 		'',
 	);
-	const effectGroups = getActionEffectGroups(
-		actionId,
-		context as EngineContext,
-	);
+        const effectGroups = getActionEffectGroups(actionId, context);
 	const developGroup = effectGroups.find(
 		(group) => group.id === 'royal_decree_develop',
 	);
@@ -114,15 +109,15 @@ describe('royal decree translation', () => {
 	});
 
 	it('summarizes options using develop action label', () => {
-		const summary = summarizeContent(
-			'action',
-			actionId,
-			context as EngineContext,
-		);
+                const summary = summarizeContent(
+                        'action',
+                        actionId,
+                        translationContext,
+                );
 		const group = findGroupEntry(summary);
 		expect(group.items).toHaveLength(developmentOptions.length);
 		for (const id of developmentOptions) {
-			const development = context.developments.get(id);
+                        const development = translationContext.developments.get(id);
 			const developmentLabel = combineLabels(
 				`${development.icon ?? ''} ${development.name ?? ''}`,
 				'',
@@ -139,25 +134,25 @@ describe('royal decree translation', () => {
 	});
 
 	it('describes options with nested develop effects', () => {
-		const description = describeContent(
-			'action',
-			actionId,
-			context as EngineContext,
-		);
+                const description = describeContent(
+                        'action',
+                        actionId,
+                        translationContext,
+                );
 		const group = findGroupEntry(description);
 		expect(group.items).toHaveLength(developmentOptions.length);
 		for (const id of developmentOptions) {
-			const development = context.developments.get(id);
+                        const development = translationContext.developments.get(id);
 			const developmentLabel = combineLabels(
 				`${development.icon ?? ''} ${development.name ?? ''}`,
 				'',
 			);
-			const described = describeContent(
-				'action',
-				ActionId.develop,
-				context as EngineContext,
-				{ id },
-			);
+                        const described = describeContent(
+                                'action',
+                                ActionId.develop,
+                                translationContext,
+                                { id },
+                        );
 			const describedLabel = described[0];
 			const describedTitle =
 				typeof describedLabel === 'string'
@@ -199,11 +194,11 @@ describe('royal decree translation', () => {
 				},
 			},
 		});
-		const entries = formatEffectGroups(
-			resolved.steps,
-			'log',
-			context as EngineContext,
-		);
+                const entries = formatEffectGroups(
+                        resolved.steps,
+                        'log',
+                        translationContext,
+                );
 		const group = findGroupEntry(entries);
 		const [entry] = group.items;
 		if (typeof entry === 'string') {
@@ -217,7 +212,7 @@ describe('royal decree translation', () => {
 	});
 
 	it('logs royal decree develop once using develop action copy', () => {
-		const logLines = logContent('action', actionId, context as EngineContext, {
+                const logLines = logContent('action', actionId, translationContext, {
 			landId: 'A-L1',
 			choices: {
 				royal_decree_develop: {

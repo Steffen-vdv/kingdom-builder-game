@@ -4,6 +4,7 @@ import {
 	type EffectDef,
 } from '@kingdom-builder/protocol';
 import type { ResourceKey, StatKey } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../../../context';
 import type { SummaryEntry } from '../../../content';
 
 export type Mode = 'summarize' | 'describe';
@@ -63,26 +64,27 @@ export type DiffFormatOptions = {
 };
 
 export interface AttackTargetFormatter<
-	TTarget extends AttackTarget = AttackTarget,
+        TTarget extends AttackTarget = AttackTarget,
 > {
-	readonly type: TTarget['type'];
-	parseEffectTarget(effect: EffectDef<Record<string, unknown>>): TTarget;
-	normalizeLogTarget(target: AttackLog['evaluation']['target']): TTarget;
-	getInfo(target: TTarget): TargetInfo;
-	getTargetLabel(info: TargetInfo, target: TTarget): string;
-	buildBaseEntry(context: BaseEntryContext<TTarget>): SummaryEntry;
-	buildOnDamageTitle(
-		mode: Mode,
-		context: OnDamageTitleContext<TTarget>,
-	): string;
-	buildEvaluationEntry(
-		log: AttackLog['evaluation'],
-		context: EvaluationContext<TTarget>,
-	): SummaryEntry;
-	formatDiff(
-		prefix: string,
-		diff: AttackPlayerDiff,
-		options?: DiffFormatOptions,
-	): string;
-	onDamageLogTitle(info: TargetInfo, target: TTarget): string;
+        readonly type: TTarget['type'];
+        parseEffectTarget(effect: EffectDef<Record<string, unknown>>): TTarget;
+        normalizeLogTarget(target: AttackLog['evaluation']['target']): TTarget;
+        getInfo(target: TTarget, context: TranslationContext): TargetInfo;
+        getTargetLabel(info: TargetInfo, target: TTarget): string;
+        buildBaseEntry(context: BaseEntryContext<TTarget>): SummaryEntry;
+        buildOnDamageTitle(
+                mode: Mode,
+                context: OnDamageTitleContext<TTarget>,
+        ): string;
+        buildEvaluationEntry(
+                log: AttackLog['evaluation'],
+                context: EvaluationContext<TTarget>,
+        ): SummaryEntry;
+        formatDiff(
+                prefix: string,
+                diff: AttackPlayerDiff,
+                context: TranslationContext,
+                options?: DiffFormatOptions,
+        ): string;
+        onDamageLogTitle(info: TargetInfo, target: TTarget): string;
 }

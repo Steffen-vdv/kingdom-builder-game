@@ -70,15 +70,16 @@ export function toTranslationPlayer(
 }
 
 export function createTranslationContextStub(
-	options: Pick<TranslationContext, 'phases' | 'actionCostResource'> & {
-		actions: TranslationRegistry<unknown>;
-		buildings: TranslationRegistry<unknown>;
-		developments: TranslationRegistry<unknown>;
-		populations?: TranslationRegistry<unknown>;
-		activePlayer: TranslationPlayer;
-		opponent: TranslationPlayer;
-		rules?: RuleSnapshot;
-	},
+        options: Pick<TranslationContext, 'phases' | 'actionCostResource'> & {
+                actions: TranslationRegistry<unknown>;
+                buildings: TranslationRegistry<unknown>;
+                developments: TranslationRegistry<unknown>;
+                populations?: TranslationRegistry<unknown>;
+                activePlayer: TranslationPlayer;
+                opponent: TranslationPlayer;
+                rules?: RuleSnapshot;
+                assets?: TranslationAssets;
+        },
 ): TranslationContext {
 	const rules: RuleSnapshot =
 		options.rules ??
@@ -103,6 +104,6 @@ export function createTranslationContextStub(
 		actionCostResource: options.actionCostResource,
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
-		assets: EMPTY_ASSETS,
-	};
+                assets: options.assets ?? EMPTY_ASSETS,
+        };
 }

@@ -8,6 +8,7 @@ import {
 	type Summary,
 } from '../../src/translation/content';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
 
 interface SyntheticIds {
 	transferBuilding: string;
@@ -184,12 +185,15 @@ export function getResourceEffect(modifier: EffectDef): EffectDef {
 }
 
 export function getActionSummaryItems(
-	ctx: ReturnType<typeof createEngine>,
-	actionId: string,
+        ctx: ReturnType<typeof createEngine>,
+        actionId: string,
 ): Summary {
-	const actionSplit = splitSummary(describeContent('action', actionId, ctx));
-	return [
-		...actionSplit.effects,
+        const translationContext = createTranslationContextForEngine(ctx);
+        const actionSplit = splitSummary(
+                describeContent('action', actionId, translationContext),
+        );
+        return [
+                ...actionSplit.effects,
 		...(actionSplit.description
 			? [
 					{
