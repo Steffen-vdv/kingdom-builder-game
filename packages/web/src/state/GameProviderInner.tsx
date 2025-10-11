@@ -133,8 +133,8 @@ export function GameProviderInner({
 		timeScaleRef,
 	} = useTimeScale({ devMode });
 
-	const actionCostResource =
-		sessionState.actionCostResource as SessionResourceKey;
+	const actionCostResource: SessionResourceKey =
+		sessionState.actionCostResource;
 
 	const sessionView = useMemo(
 		() => selectSessionView(sessionState, registries),

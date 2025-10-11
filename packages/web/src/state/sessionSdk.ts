@@ -1,11 +1,4 @@
 import {
-	BuildingId,
-	GAME_START,
-	PHASES,
-	RULES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
-import {
 	createEngineSession,
 	type ActionParams,
 	type EngineSession,
@@ -31,6 +24,14 @@ import {
 	type SessionRegistries,
 } from './sessionRegistries';
 import { createGameApi, type GameApi } from '../services/gameApi';
+import { loadRuntimeConfig } from '../startup/runtimeConfig';
+import {
+	buildStartConfigFromSnapshot,
+	mergeRuleSnapshot,
+	mergeStartConfigs,
+	resolvePhaseConfig,
+} from './sessionBootstrap';
+import type { SessionResourceKey } from './sessionTypes';
 
 export interface SessionHandle {
 	enqueue: EngineSession['enqueue'];
@@ -42,7 +43,7 @@ interface SessionRecord {
 	handle: SessionHandle;
 	legacySession: EngineSession;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 }
 
 interface CreateSessionOptions {
@@ -57,7 +58,7 @@ interface CreateSessionResult {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 	metadata: SessionSnapshotMetadata;
 }
 
@@ -76,7 +77,7 @@ interface FetchSnapshotResult {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 	metadata: SessionSnapshotMetadata;
 }
 
@@ -118,6 +119,7 @@ function createSessionHandle(session: EngineSession): SessionHandle {
 function applyDeveloperPreset(
 	session: EngineSession,
 	snapshot: SessionSnapshot,
+	registries: SessionRegistries,
 	devMode: boolean,
 ): void {
 	if (!devMode) {
@@ -125,11 +127,13 @@ function applyDeveloperPreset(
 	}
 	const primaryPlayer = snapshot.game.players[0];
 	const primaryPlayerId = primaryPlayer?.id;
-	const hasMill = primaryPlayer?.buildings.includes(BuildingId.Mill) ?? false;
-	if (!primaryPlayerId || snapshot.game.turn !== 1 || hasMill) {
+	if (!primaryPlayerId || snapshot.game.turn !== 1) {
 		return;
 	}
-	initializeDeveloperMode(session, primaryPlayerId);
+	initializeDeveloperMode(session, primaryPlayerId, {
+		registries,
+		rules: snapshot.rules,
+	});
 }
 
 function applyPlayerName(
@@ -157,21 +161,29 @@ export async function createSession(
 	};
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest);
+	const runtimeConfig = await loadRuntimeConfig();
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys: SessionResourceKey[] = extractResourceKeys(registries);
+	const startFromSnapshot = buildStartConfigFromSnapshot(response.snapshot);
+	const startConfig = mergeStartConfigs(runtimeConfig.start, startFromSnapshot);
+	const phases = resolvePhaseConfig(
+		response.snapshot.phases,
+		runtimeConfig.phases,
+	);
+	const rules = mergeRuleSnapshot(response.snapshot.rules, runtimeConfig.rules);
 	const legacySession = createEngineSession({
 		actions: registries.actions,
 		buildings: registries.buildings,
 		developments: registries.developments,
 		populations: registries.populations,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
+		phases,
+		start: startConfig,
+		rules,
 		devMode,
 	});
 	legacySession.setDevMode(devMode);
 	const initialSnapshot = legacySession.getSnapshot();
-	applyDeveloperPreset(legacySession, initialSnapshot, devMode);
+	applyDeveloperPreset(legacySession, initialSnapshot, registries, devMode);
 	applyPlayerName(legacySession, initialSnapshot, playerName);
 	const sessionId = response.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
 	const handle = createSessionHandle(legacySession);
@@ -195,7 +207,7 @@ export async function fetchSnapshot(
 	const record = ensureSessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys: SessionResourceKey[] = extractResourceKeys(registries);
 	record.registries = registries;
 	record.resourceKeys = resourceKeys;
 	return {
@@ -256,7 +268,7 @@ export async function advanceSessionPhase(
 	} = record;
 	const response = await api.advancePhase(request);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys: SessionResourceKey[] = extractResourceKeys(registries);
 	Object.assign(cachedRegistries, registries);
 	cachedResourceKeys.splice(0, cachedResourceKeys.length, ...resourceKeys);
 	try {

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import { ActionId } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
@@ -23,10 +22,7 @@ import {
 } from './useActionPerformer.helpers';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
-import {
-	formatActionLogLines,
-	formatDevelopActionLogLines,
-} from './actionLogFormat';
+import { formatDevelopActionLogLines } from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
@@ -202,11 +198,7 @@ export function useActionPerformer({
 					messages,
 					subLines,
 				});
-				const logLines = (
-					action.id === ActionId.develop
-						? formatDevelopActionLogLines
-						: formatActionLogLines
-				)(messages, filtered);
+				const logLines = formatDevelopActionLogLines(messages, filtered);
 				const actionMeta = buildResolutionActionMeta(
 					action,
 					stepDef,

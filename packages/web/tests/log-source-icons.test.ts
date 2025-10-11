@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { createEngine, runEffects } from '@kingdom-builder/engine';
-import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
+import {
+	createEngine,
+	runEffects,
+	type ResourceKey,
+} from '@kingdom-builder/engine';
+import type { StartConfig, PhaseConfig } from '@kingdom-builder/protocol';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -76,14 +80,39 @@ describe('log resource source icon registry', () => {
 	for (const { name, getMeta } of scenarios) {
 		it(`renders icons for ${name} meta sources`, () => {
 			const registries = createSessionRegistries();
+			const resourceKey = Object.keys(registries.resources)[0];
+			if (!resourceKey) {
+				throw new Error('Expected at least one resource definition.');
+			}
+			const phases: PhaseConfig[] = [
+				{
+					id: 'phase-main',
+					action: true,
+					steps: [{ id: 'phase-main:start' }],
+				},
+			];
+			const start: StartConfig = {
+				player: { resources: { [resourceKey]: 10 } },
+			};
+			const rules = {
+				defaultActionAPCost: 1,
+				absorptionCapPct: 1,
+				absorptionRounding: 'nearest',
+				tieredResourceKey: resourceKey as ResourceKey,
+				tierDefinitions: [],
+				slotsPerNewLand: 1,
+				maxSlotsPerLand: 1,
+				basePopulationCap: 1,
+				winConditions: [],
+			};
 			const engineContext = createEngine({
 				actions: registries.actions,
 				buildings: registries.buildings,
 				developments: registries.developments,
 				populations: registries.populations,
-				phases: PHASES,
-				start: GAME_START,
-				rules: RULES,
+				phases,
+				start,
+				rules,
 			});
 			engineContext.assets = createDefaultTranslationAssets();
 			const { meta, expected } = getMeta(engineContext);

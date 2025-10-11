@@ -1,6 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import type { ActionExecuteSuccessResponse } from '@kingdom-builder/protocol/actions';
-import { ActionId } from '@kingdom-builder/contents';
 import {
 	createSession,
 	fetchSnapshot,
@@ -120,15 +119,23 @@ describe('sessionSdk', () => {
 			traces: [],
 		};
 		api.setNextActionResponse(successResponse);
+		const [actionId] = created.registries.actions.keys();
+		if (!actionId) {
+			throw new Error('Expected at least one action to be registered.');
+		}
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId,
 		});
 		expect(response).toEqual(successResponse);
-		expect(performSpy).toHaveBeenCalledWith(ActionId.tax, undefined);
+		expect(performSpy).toHaveBeenCalledWith(actionId, undefined);
 	});
 	it('returns error payloads when the API action fails', async () => {
-		const { session } = await createSession();
+		const { session, registries } = await createSession();
+		const [actionId] = registries.actions.keys();
+		if (!actionId) {
+			throw new Error('Expected at least one action to be registered.');
+		}
 		api.setNextActionResponse({
 			status: 'error',
 			error: 'Nope.',
@@ -136,13 +143,17 @@ describe('sessionSdk', () => {
 		const performSpy = vi.spyOn(session, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId,
 		});
 		expect(response.status).toBe('error');
 		expect(performSpy).not.toHaveBeenCalled();
 	});
 	it('converts thrown API errors into error responses', async () => {
-		const { session } = await createSession();
+		const { session, registries } = await createSession();
+		const [actionId] = registries.actions.keys();
+		if (!actionId) {
+			throw new Error('Expected at least one action to be registered.');
+		}
 		setGameApi(
 			createGameApiMock({
 				performAction: () => {
@@ -153,7 +164,7 @@ describe('sessionSdk', () => {
 		const performSpy = vi.spyOn(session, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId,
 		});
 		expect(response.status).toBe('error');
 		expect(response).toHaveProperty('error', 'Boom');
@@ -216,8 +227,12 @@ describe('sessionSdk', () => {
 			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
 		});
 		const mutatedRegistries = createSessionRegistriesPayload();
-		mutatedRegistries.actions[ActionId.tax] = {
-			...mutatedRegistries.actions[ActionId.tax],
+		const [mutatedActionId] = Object.keys(mutatedRegistries.actions);
+		if (!mutatedActionId) {
+			throw new Error('Expected at least one action definition.');
+		}
+		mutatedRegistries.actions[mutatedActionId] = {
+			...mutatedRegistries.actions[mutatedActionId],
 			name: 'Tax (Advanced)',
 		};
 		delete mutatedRegistries.resources[resourceKey];
@@ -234,7 +249,9 @@ describe('sessionSdk', () => {
 		});
 		await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(advanceSpy).toHaveBeenCalled();
-		expect(registries.actions.get(ActionId.tax)?.name).toBe('Tax (Advanced)');
+		expect(registries.actions.get(mutatedActionId)?.name).toBe(
+			'Tax (Advanced)',
+		);
 		expect(registries.resources[resourceKey]).toBeUndefined();
 		expect(resourceKeys).not.toContain(resourceKey);
 	});

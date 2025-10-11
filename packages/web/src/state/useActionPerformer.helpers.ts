@@ -77,8 +77,7 @@ export function buildActionCostLines({
 	resources,
 }: BuildActionCostLinesOptions): ActionLogLineDescriptor[] {
 	const costLines: ActionLogLineDescriptor[] = [];
-	const costKeys = Object.keys(costs) as SessionResourceKey[];
-	for (const key of costKeys) {
+	for (const key of Object.keys(costs)) {
 		const costAmount = costs[key] ?? 0;
 		if (!costAmount) {
 			continue;
