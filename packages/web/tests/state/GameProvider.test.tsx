@@ -88,21 +88,18 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 	usePhaseProgress: (options: Record<string, unknown>) => {
 		capturedPhaseOptions = options;
 		return {
-			phaseSteps: [],
-			setPhaseSteps: vi.fn(),
-			phaseTimer: 0,
-			mainApStart: 0,
-			displayPhase: 'phase-main',
-			setDisplayPhase: vi.fn(),
-			phaseHistories: {},
-			tabsEnabled: false,
+			phase: {
+				currentPhaseId: 'phase-main',
+				isActionPhase: true,
+				canEndTurn: true,
+				isAdvancing: false,
+			},
 			runUntilActionPhase: runUntilActionPhaseMock,
 			runUntilActionPhaseCore: runUntilActionPhaseCoreMock,
 			handleEndTurn: handleEndTurnMock,
 			endTurn: vi.fn(),
-			updateMainPhaseStep: vi.fn(),
-			setPhaseHistories: vi.fn(),
-			setTabsEnabled: vi.fn(),
+			applyPhaseSnapshot: vi.fn(),
+			refreshPhaseState: vi.fn(),
 		};
 	},
 }));

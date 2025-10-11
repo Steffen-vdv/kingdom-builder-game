@@ -8,6 +8,7 @@ import type {
 import type {
 	SessionPlayerStateSnapshot,
 	SessionRequirementFailure,
+	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import {
 	diffStepSnapshots,
@@ -31,6 +32,7 @@ import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
 import type { LegacySession } from './sessionTypes';
+import type { PhaseProgressState } from './phaseTypes';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
@@ -81,7 +83,10 @@ interface UseActionPerformerOptions {
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
-	updateMainPhaseStep: (apStartOverride?: number) => void;
+	syncPhaseState: (
+		snapshot: SessionSnapshot,
+		overrides?: Partial<PhaseProgressState>,
+	) => void;
 	refresh: () => void;
 	pushErrorToast: (message: string, title?: string) => void;
 	mountedRef: React.MutableRefObject<boolean>;
@@ -95,7 +100,7 @@ export function useActionPerformer({
 	actionCostResource,
 	addLog,
 	showResolution,
-	updateMainPhaseStep,
+	syncPhaseState,
 	refresh,
 	pushErrorToast,
 	mountedRef,
@@ -206,7 +211,7 @@ export function useActionPerformer({
 					id: playerAfter.id,
 					name: playerAfter.name,
 				};
-				updateMainPhaseStep();
+				syncPhaseState(snapshotAfter);
 				refresh();
 				try {
 					await showResolution({
@@ -259,7 +264,7 @@ export function useActionPerformer({
 			resourceKeys,
 			session,
 			showResolution,
-			updateMainPhaseStep,
+			syncPhaseState,
 			actionCostResource,
 		],
 	);

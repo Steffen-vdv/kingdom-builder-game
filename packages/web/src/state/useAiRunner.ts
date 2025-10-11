@@ -1,16 +1,18 @@
 import { useEffect } from 'react';
 import { type ActionParams } from '@kingdom-builder/engine';
-import type { Dispatch, SetStateAction } from 'react';
 import type { Action } from './actionTypes';
-import type { PhaseStep } from './phaseTypes';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { LegacySession } from './sessionTypes';
+import type { PhaseProgressState } from './phaseTypes';
 
 interface UseAiRunnerOptions {
 	session: LegacySession;
 	sessionState: SessionSnapshot;
 	runUntilActionPhaseCore: () => Promise<void>;
-	setPhaseHistories: Dispatch<SetStateAction<Record<string, PhaseStep[]>>>;
+	syncPhaseState: (
+		snapshot: SessionSnapshot,
+		overrides?: Partial<PhaseProgressState>,
+	) => void;
 	performRef: React.MutableRefObject<
 		(action: Action, params?: ActionParams<string>) => Promise<void>
 	>;
@@ -21,7 +23,7 @@ export function useAiRunner({
 	session,
 	sessionState,
 	runUntilActionPhaseCore,
-	setPhaseHistories,
+	syncPhaseState,
 	performRef,
 	mountedRef,
 }: UseAiRunnerOptions) {
@@ -68,7 +70,10 @@ export function useAiRunner({
 			if (!ranTurn || !mountedRef.current) {
 				return;
 			}
-			setPhaseHistories({});
+			syncPhaseState(session.getSnapshot(), {
+				isAdvancing: true,
+				canEndTurn: false,
+			});
 			await runUntilActionPhaseCore();
 		});
 	}, [
@@ -77,7 +82,7 @@ export function useAiRunner({
 		sessionState.game.phaseIndex,
 		sessionState.phases,
 		runUntilActionPhaseCore,
-		setPhaseHistories,
+		syncPhaseState,
 		performRef,
 		mountedRef,
 	]);

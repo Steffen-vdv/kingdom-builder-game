@@ -142,13 +142,6 @@ export function GameProviderInner({
 		() => ({ sessionView }),
 		[sessionView],
 	);
-	const actionPhaseId = useMemo(() => {
-		const phaseWithAction = sessionState.phases.find(
-			(phaseDefinition) => phaseDefinition.action,
-		);
-		return phaseWithAction?.id;
-	}, [sessionState.phases]);
-
 	const { hoverCard, handleHoverCard, clearHoverCard } = useHoverCard({
 		setTrackedTimeout,
 		clearTrackedTimeout,
@@ -175,25 +168,17 @@ export function GameProviderInner({
 	);
 
 	const {
-		phaseSteps,
-		setPhaseSteps,
-		phaseTimer,
-		mainApStart,
-		displayPhase,
-		setDisplayPhase,
-		phaseHistories,
-		tabsEnabled,
+		phase,
 		runUntilActionPhase,
 		runUntilActionPhaseCore,
 		handleEndTurn,
 		endTurn,
-		updateMainPhaseStep,
-		setPhaseHistories,
+		applyPhaseSnapshot,
+		refreshPhaseState,
 	} = usePhaseProgress({
 		session: legacySession,
 		sessionState,
 		sessionId,
-		actionPhaseId,
 		actionCostResource,
 		mountedRef,
 		refresh,
@@ -220,7 +205,7 @@ export function GameProviderInner({
 		actionCostResource,
 		addLog,
 		showResolution: handleShowResolution,
-		updateMainPhaseStep,
+		syncPhaseState: applyPhaseSnapshot,
 		refresh,
 		pushErrorToast,
 		mountedRef,
@@ -233,7 +218,7 @@ export function GameProviderInner({
 		session: legacySession,
 		sessionState,
 		runUntilActionPhaseCore,
-		setPhaseHistories,
+		syncPhaseState: applyPhaseSnapshot,
 		performRef,
 		mountedRef,
 	});
@@ -289,19 +274,12 @@ export function GameProviderInner({
 		hoverCard,
 		handleHoverCard,
 		clearHoverCard,
-		phaseSteps,
-		setPhaseSteps,
-		phaseTimer,
-		mainApStart,
-		displayPhase,
-		setDisplayPhase,
-		phaseHistories,
-		tabsEnabled,
+		phase,
 		actionCostResource,
 		requests: requestHelpers,
 		metadata,
 		runUntilActionPhase,
-		updateMainPhaseStep,
+		refreshPhaseState,
 		darkMode: darkMode ?? true,
 		onToggleDark: onToggleDark ?? (() => {}),
 		musicEnabled: musicEnabled ?? true,
