@@ -209,6 +209,19 @@ export async function fetchSnapshot(
 	};
 }
 
+export class SessionMirroringError extends Error {
+	request: unknown;
+
+	constructor(message: string, request: unknown, cause?: unknown) {
+		super(message);
+		this.name = 'SessionMirroringError';
+		this.request = request;
+		if (cause !== undefined) {
+			(this as Error & { cause?: unknown }).cause = cause;
+		}
+	}
+}
+
 export async function performSessionAction(
 	request: ActionExecuteRequest,
 ): Promise<ActionExecuteResponse> {
@@ -221,14 +234,18 @@ export async function performSessionAction(
 				const params = request.params as ActionParams<string> | undefined;
 				handle.performAction(request.actionId, params);
 			} catch (localError) {
-				console.error(
+				throw new SessionMirroringError(
 					'Local session failed to mirror remote action.',
+					request,
 					localError,
 				);
 			}
 		}
 		return response;
 	} catch (error) {
+		if (error instanceof SessionMirroringError) {
+			throw error;
+		}
 		const failure = error as ActionExecutionFailure;
 		const response: ActionExecuteErrorResponse = {
 			status: 'error',
@@ -262,7 +279,11 @@ export async function advanceSessionPhase(
 	try {
 		handle.advancePhase();
 	} catch (localError) {
-		console.error('Local session failed to mirror remote advance.', localError);
+		throw new SessionMirroringError(
+			'Local session failed to mirror remote phase advance.',
+			request,
+			localError,
+		);
 	}
 	return response;
 }

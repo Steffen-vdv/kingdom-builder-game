@@ -8,6 +8,7 @@ import {
 	advanceSessionPhase,
 	releaseSession,
 	setGameApi,
+	SessionMirroringError,
 } from '../../src/state/sessionSdk';
 import { GameApiFake, createGameApiMock } from '../../src/services/gameApi';
 import {
@@ -127,6 +128,27 @@ describe('sessionSdk', () => {
 		expect(response).toEqual(successResponse);
 		expect(performSpy).toHaveBeenCalledWith(ActionId.tax, undefined);
 	});
+	it('throws when local action mirroring fails', async () => {
+		const created = await createSession();
+		const session = created.session;
+		const localError = new Error('mirror failed');
+		vi.spyOn(session, 'performAction').mockImplementation(() => {
+			throw localError;
+		});
+		const successResponse: ActionExecuteSuccessResponse = {
+			status: 'success',
+			snapshot: initialSnapshot,
+			costs: {},
+			traces: [],
+		};
+		api.setNextActionResponse(successResponse);
+		await expect(
+			performSessionAction({
+				sessionId: 'session-1',
+				actionId: ActionId.tax,
+			}),
+		).rejects.toThrow(SessionMirroringError);
+	});
 	it('returns error payloads when the API action fails', async () => {
 		const { session } = await createSession();
 		api.setNextActionResponse({
@@ -160,9 +182,9 @@ describe('sessionSdk', () => {
 		expect(performSpy).not.toHaveBeenCalled();
 	});
 	it('advances phases via the API and mirrors locally', async () => {
-		await createSession();
+		const created = await createSession();
 		const advanceSpy = vi
-			.spyOn((await fetchSnapshot('session-1')).session, 'advancePhase')
+			.spyOn(created.session, 'advancePhase')
 			.mockReturnValue({
 				phase: 'phase-main',
 				step: 'phase-main:start',
@@ -194,6 +216,38 @@ describe('sessionSdk', () => {
 		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(response.snapshot).toEqual(updatedSnapshot);
 		expect(advanceSpy).toHaveBeenCalled();
+	});
+	it('throws when local phase mirroring fails', async () => {
+		const created = await createSession();
+		const localError = new Error('desynced');
+		vi.spyOn(created.session, 'advancePhase').mockImplementation(() => {
+			throw localError;
+		});
+		const updatedSnapshot = createSessionSnapshot({
+			players: [playerA, playerB],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			turn: 2,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+		});
+		api.setNextAdvanceResponse({
+			sessionId: 'session-1',
+			snapshot: updatedSnapshot,
+			advance: {
+				phase: 'phase-main',
+				step: 'phase-main:start',
+				effects: [],
+				player: playerA,
+			},
+			registries: createSessionRegistriesPayload(),
+		});
+		await expect(
+			advanceSessionPhase({ sessionId: 'session-1' }),
+		).rejects.toThrow(SessionMirroringError);
 	});
 	it('updates cached registries and resource keys when the phase advances', async () => {
 		const created = await createSession();

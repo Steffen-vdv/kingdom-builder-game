@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
+import { SessionMirroringError } from '../../src/state/sessionSdk';
+import type * as SessionSdk from '../../src/state/sessionSdk';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -19,11 +21,17 @@ const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../src/state/sessionSdk', () => ({
-	createSession: createSessionMock,
-	fetchSnapshot: fetchSnapshotMock,
-	releaseSession: releaseSessionMock,
-}));
+vi.mock('../../src/state/sessionSdk', async () => {
+	const actual = await vi.importActual<SessionSdk>(
+		'../../src/state/sessionSdk',
+	);
+	return {
+		...actual,
+		createSession: createSessionMock,
+		fetchSnapshot: fetchSnapshotMock,
+		releaseSession: releaseSessionMock,
+	};
+});
 
 const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
 const runUntilActionPhaseCoreMock = vi.hoisted(() => vi.fn());
@@ -39,6 +47,7 @@ const handlePerformMock = vi.hoisted(() => vi.fn());
 let capturedPhaseOptions:
 	| (Record<string, unknown> & { refresh?: () => void })
 	| undefined;
+let capturedActionPerformerOptions: Record<string, unknown> | undefined;
 
 vi.mock('../../src/state/useTimeScale', () => ({
 	useTimeScale: () => ({
@@ -105,10 +114,13 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 }));
 
 vi.mock('../../src/state/useActionPerformer', () => ({
-	useActionPerformer: () => ({
-		handlePerform: handlePerformMock,
-		performRef: { current: handlePerformMock },
-	}),
+	useActionPerformer: (options: Record<string, unknown>) => {
+		capturedActionPerformerOptions = options;
+		return {
+			handlePerform: handlePerformMock,
+			performRef: { current: handlePerformMock },
+		};
+	},
 }));
 
 vi.mock('../../src/state/useToasts', () => ({
@@ -174,6 +186,7 @@ describe('GameProvider', () => {
 		acknowledgeResolutionMock.mockReset();
 		handlePerformMock.mockReset();
 		capturedPhaseOptions = undefined;
+		capturedActionPerformerOptions = undefined;
 		runUntilActionPhaseMock.mockResolvedValue(undefined);
 
 		const [resourceKey] = createResourceKeys();
@@ -367,6 +380,40 @@ describe('GameProvider', () => {
 
 		expect(
 			screen.getByText('An unexpected error prevented the game from loading.'),
+		).toBeInTheDocument();
+	});
+	it('releases the session after a fatal mirroring error', async () => {
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		await waitFor(() =>
+			expect(typeof capturedActionPerformerOptions?.onFatalSessionError).toBe(
+				'function',
+			),
+		);
+		const fatalHandler = capturedActionPerformerOptions?.onFatalSessionError as
+			| ((error: unknown) => void)
+			| undefined;
+		const fatalError = new SessionMirroringError('Desync', {
+			sessionId: 'session-1',
+		});
+
+		act(() => {
+			fatalHandler?.(fatalError);
+		});
+
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+		expect(
+			screen.getByText('We could not load your kingdom.'),
 		).toBeInTheDocument();
 	});
 });

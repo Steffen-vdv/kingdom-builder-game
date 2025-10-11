@@ -30,7 +30,7 @@ import {
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
-import { performSessionAction } from './sessionSdk';
+import { performSessionAction, SessionMirroringError } from './sessionSdk';
 import type {
 	LegacySession,
 	SessionRegistries,
@@ -101,6 +101,7 @@ interface UseActionPerformerOptions {
 	endTurn: () => Promise<void>;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	resourceKeys: SessionResourceKey[];
+	onFatalSessionError?: (error: unknown) => void;
 }
 export function useActionPerformer({
 	session,
@@ -116,6 +117,7 @@ export function useActionPerformer({
 	endTurn,
 	enqueue,
 	resourceKeys,
+	onFatalSessionError,
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParametersPayload) => {
@@ -250,6 +252,12 @@ export function useActionPerformer({
 					await endTurn();
 				}
 			} catch (error) {
+				if (error instanceof SessionMirroringError) {
+					if (onFatalSessionError) {
+						onFatalSessionError(error);
+					}
+					return;
+				}
 				const icon = context.actions.get(action.id)?.icon || '';
 				let message = (error as Error).message || 'Action failed';
 				const requirementFailure = (error as ActionExecutionError)
@@ -279,6 +287,7 @@ export function useActionPerformer({
 			showResolution,
 			syncPhaseState,
 			actionCostResource,
+			onFatalSessionError,
 		],
 	);
 	const handlePerform = useCallback(

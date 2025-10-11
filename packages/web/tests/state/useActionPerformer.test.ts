@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequirementFailure, RuleSnapshot } from '@kingdom-builder/engine';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
+import { SessionMirroringError } from '../../src/state/sessionSdk';
+import type * as SessionSdk from '../../src/state/sessionSdk';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -33,9 +35,15 @@ vi.mock('../../src/state/getLegacySessionContext', () => ({
 	getLegacySessionContext: getLegacySessionContextMock,
 }));
 
-vi.mock('../../src/state/sessionSdk', () => ({
-	performSessionAction: performSessionActionMock,
-}));
+vi.mock('../../src/state/sessionSdk', async () => {
+	const actual = await vi.importActual<SessionSdk>(
+		'../../src/state/sessionSdk',
+	);
+	return {
+		...actual,
+		performSessionAction: performSessionActionMock,
+	};
+});
 
 describe('useActionPerformer', () => {
 	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
@@ -160,6 +168,41 @@ describe('useActionPerformer', () => {
 		);
 		expect(enqueueMock).toHaveBeenCalled();
 		expect(translateRequirementFailureMock).not.toHaveBeenCalled();
+	});
+	it('reports fatal session errors when mirroring fails', async () => {
+		const mirroringError = new SessionMirroringError('Desync', {});
+		performSessionActionMock.mockRejectedValueOnce(mirroringError);
+		const onFatalSessionError = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const syncPhaseState = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn();
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(onFatalSessionError).toHaveBeenCalledWith(mirroringError);
+		expect(pushErrorToast).not.toHaveBeenCalled();
+		expect(addLog).not.toHaveBeenCalled();
 	});
 
 	it('translates requirement failures for authentication errors', async () => {
