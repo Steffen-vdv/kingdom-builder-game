@@ -1,6 +1,11 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import type { ActionExecuteSuccessResponse } from '@kingdom-builder/protocol/actions';
-import { ActionId } from '@kingdom-builder/contents';
+import type {
+	PhaseConfig,
+	RuleSet,
+	StartConfig,
+} from '@kingdom-builder/protocol';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import {
 	createSession,
 	fetchSnapshot,
@@ -19,18 +24,23 @@ import {
 	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
 
+const getLegacyContentConfigMock = vi.hoisted(() => vi.fn());
+
+vi.mock('../../src/startup/runtimeConfig', () => ({
+	getLegacyContentConfig: getLegacyContentConfigMock,
+}));
+
 describe('sessionSdk', () => {
 	const resourceKeys = createResourceKeys();
 	const [resourceKey] = resourceKeys;
 	if (!resourceKey) {
 		throw new Error('RESOURCE_KEYS is empty');
 	}
-	const phases = [
+	const phases: PhaseConfig[] = [
 		{
 			id: 'phase-main',
-			name: 'Main Phase',
 			action: true,
-			steps: [{ id: 'phase-main:start', name: 'Start' }],
+			steps: [{ id: 'phase-main:start' }],
 		},
 	];
 	const ruleSnapshot = {
@@ -48,6 +58,30 @@ describe('sessionSdk', () => {
 		name: 'Scout',
 		resources: { [resourceKey]: 5 },
 	});
+	const resources: Record<string, SessionResourceDefinition> =
+		Object.fromEntries(
+			resourceKeys.map((key) => [key, { key, icon: '🪙', label: key }]),
+		);
+	const startConfig: StartConfig = {
+		player: {
+			resources: { [resourceKey]: 10 },
+			stats: {},
+			population: {},
+			lands: [],
+			buildings: [],
+		},
+	};
+	const rules: RuleSet = {
+		defaultActionAPCost: 1,
+		absorptionCapPct: 1,
+		absorptionRounding: 'nearest',
+		tieredResourceKey: resourceKey,
+		tierDefinitions: [],
+		slotsPerNewLand: 1,
+		maxSlotsPerLand: 1,
+		basePopulationCap: 1,
+		winConditions: [],
+	};
 	const initialSnapshot = createSessionSnapshot({
 		players: [playerA, playerB],
 		activePlayerId: playerA.id,
@@ -61,6 +95,17 @@ describe('sessionSdk', () => {
 	});
 	let api: GameApiFake;
 	beforeEach(() => {
+		getLegacyContentConfigMock.mockResolvedValue({
+			phases,
+			start: startConfig,
+			rules,
+			resources,
+			primaryIconId: resourceKey,
+			developerPreset: {
+				resourceTargets: [{ key: resourceKey, target: 100 }],
+				landCount: 5,
+			},
+		});
 		api = new GameApiFake();
 		setGameApi(api);
 		api.setNextCreateResponse({
@@ -72,6 +117,7 @@ describe('sessionSdk', () => {
 	afterEach(() => {
 		setGameApi(null);
 	});
+	const taxActionId = 'tax';
 	it('creates a session using the API response payload', async () => {
 		const created = await createSession({
 			devMode: true,
@@ -122,10 +168,10 @@ describe('sessionSdk', () => {
 		api.setNextActionResponse(successResponse);
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId: taxActionId,
 		});
 		expect(response).toEqual(successResponse);
-		expect(performSpy).toHaveBeenCalledWith(ActionId.tax, undefined);
+		expect(performSpy).toHaveBeenCalledWith(taxActionId, undefined);
 	});
 	it('returns error payloads when the API action fails', async () => {
 		const { session } = await createSession();
@@ -136,7 +182,7 @@ describe('sessionSdk', () => {
 		const performSpy = vi.spyOn(session, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId: taxActionId,
 		});
 		expect(response.status).toBe('error');
 		expect(performSpy).not.toHaveBeenCalled();
@@ -153,7 +199,7 @@ describe('sessionSdk', () => {
 		const performSpy = vi.spyOn(session, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId: taxActionId,
 		});
 		expect(response.status).toBe('error');
 		expect(response).toHaveProperty('error', 'Boom');
@@ -216,8 +262,8 @@ describe('sessionSdk', () => {
 			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
 		});
 		const mutatedRegistries = createSessionRegistriesPayload();
-		mutatedRegistries.actions[ActionId.tax] = {
-			...mutatedRegistries.actions[ActionId.tax],
+		mutatedRegistries.actions[taxActionId] = {
+			...mutatedRegistries.actions[taxActionId],
 			name: 'Tax (Advanced)',
 		};
 		delete mutatedRegistries.resources[resourceKey];
@@ -234,7 +280,7 @@ describe('sessionSdk', () => {
 		});
 		await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(advanceSpy).toHaveBeenCalled();
-		expect(registries.actions.get(ActionId.tax)?.name).toBe('Tax (Advanced)');
+		expect(registries.actions.get(taxActionId)?.name).toBe('Tax (Advanced)');
 		expect(registries.resources[resourceKey]).toBeUndefined();
 		expect(resourceKeys).not.toContain(resourceKey);
 	});
