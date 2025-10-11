@@ -255,6 +255,7 @@ describe('useActionPerformer', () => {
 				session,
 				sessionId,
 				actionCostResource,
+				registries,
 				addLog,
 				showResolution,
 				syncPhaseState,
