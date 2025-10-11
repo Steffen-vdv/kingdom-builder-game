@@ -8,6 +8,7 @@ import type {
 import type {
 	SessionPlayerStateSnapshot,
 	SessionRequirementFailure,
+	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import {
 	diffStepSnapshots,
@@ -35,6 +36,7 @@ import type {
 	SessionRegistries,
 	SessionResourceKey,
 } from './sessionTypes';
+import type { PhaseProgressState } from './usePhaseProgress';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
@@ -89,7 +91,10 @@ interface UseActionPerformerOptions {
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
-	updateMainPhaseStep: (apStartOverride?: number) => void;
+	syncPhaseState: (
+		snapshot: SessionSnapshot,
+		overrides?: Partial<PhaseProgressState>,
+	) => void;
 	refresh: () => void;
 	pushErrorToast: (message: string, title?: string) => void;
 	mountedRef: React.MutableRefObject<boolean>;
@@ -104,7 +109,7 @@ export function useActionPerformer({
 	registries,
 	addLog,
 	showResolution,
-	updateMainPhaseStep,
+	syncPhaseState,
 	refresh,
 	pushErrorToast,
 	mountedRef,
@@ -207,11 +212,18 @@ export function useActionPerformer({
 					stepDef,
 					logHeadline,
 				);
+				const resolutionSource = {
+					kind: 'action' as const,
+					label: 'Action',
+					id: actionMeta.id,
+					name: actionMeta.name,
+					icon: actionMeta.icon ?? '',
+				};
 				const resolutionPlayer = {
 					id: playerAfter.id,
 					name: playerAfter.name,
 				};
-				updateMainPhaseStep();
+				syncPhaseState(snapshotAfter);
 				refresh();
 				try {
 					await showResolution({
@@ -219,6 +231,8 @@ export function useActionPerformer({
 						lines: logLines,
 						player: resolutionPlayer,
 						summaries: filtered,
+						source: resolutionSource,
+						actorLabel: 'Played by',
 					});
 				} catch (_error) {
 					addLog(logLines, resolutionPlayer);
@@ -263,7 +277,7 @@ export function useActionPerformer({
 			resourceKeys,
 			session,
 			showResolution,
-			updateMainPhaseStep,
+			syncPhaseState,
 			actionCostResource,
 		],
 	);

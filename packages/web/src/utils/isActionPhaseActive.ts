@@ -1,7 +1,14 @@
+import type { PhaseProgressState } from '../state/usePhaseProgress';
+
 export function isActionPhaseActive(
-	currentPhase: string,
+	phase: PhaseProgressState,
 	actionPhaseId: string | undefined,
-	tabsEnabled: boolean,
 ): boolean {
-	return tabsEnabled && currentPhase === actionPhaseId;
+	if (!phase.isActionPhase || phase.isAdvancing) {
+		return false;
+	}
+	if (!actionPhaseId) {
+		return true;
+	}
+	return phase.currentPhaseId === actionPhaseId;
 }

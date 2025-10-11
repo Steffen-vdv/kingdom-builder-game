@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type {
-	SessionPlayerStateSnapshot,
-	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
-import type { PhaseStep } from './phaseTypes';
-import { usePhaseDelays } from './usePhaseDelays';
-import { useMainPhaseTracker } from './useMainPhaseTracker';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
 import type {
@@ -13,21 +7,15 @@ import type {
 	SessionRegistries,
 	SessionResourceKey,
 } from './sessionTypes';
+import { formatPhaseResolution } from './formatPhaseResolution';
+import type { ShowResolutionOptions } from './useActionResolution';
 
 interface PhaseProgressOptions {
 	session: LegacySession;
 	sessionState: SessionSnapshot;
 	sessionId: string;
-	actionPhaseId: string | undefined;
 	actionCostResource: SessionResourceKey;
-	addLog: (
-		entry: string | string[],
-		player?: SessionPlayerStateSnapshot,
-	) => void;
 	mountedRef: React.MutableRefObject<boolean>;
-	timeScaleRef: React.MutableRefObject<number>;
-	setTrackedInterval: (callback: () => void, delay: number) => number;
-	clearTrackedInterval: (id: number) => void;
 	refresh: () => void;
 	resourceKeys: SessionResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
@@ -35,92 +23,106 @@ interface PhaseProgressOptions {
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
+	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+}
+
+export interface PhaseProgressState {
+	currentPhaseId: string;
+	isActionPhase: boolean;
+	canEndTurn: boolean;
+	isAdvancing: boolean;
+}
+
+function computePhaseState(
+	snapshot: SessionSnapshot,
+	actionCostResource: SessionResourceKey,
+	overrides: Partial<PhaseProgressState> = {},
+): PhaseProgressState {
+	const currentPhaseId = snapshot.game.currentPhase;
+	const phaseDefinition = snapshot.phases[snapshot.game.phaseIndex];
+	const isActionPhase = Boolean(phaseDefinition?.action);
+	const activePlayer = snapshot.game.players.find(
+		(player) => player.id === snapshot.game.activePlayerId,
+	);
+	const remainingActionPoints =
+		activePlayer?.resources[actionCostResource] ?? 0;
+	const canEndTurn =
+		overrides.canEndTurn ?? (isActionPhase && remainingActionPoints <= 0);
+	const isAdvancing = overrides.isAdvancing ?? false;
+	return {
+		currentPhaseId,
+		isActionPhase,
+		canEndTurn,
+		isAdvancing,
+	};
 }
 
 export function usePhaseProgress({
 	session,
 	sessionState,
 	sessionId,
-	actionPhaseId,
 	actionCostResource,
-	addLog,
 	mountedRef,
-	timeScaleRef,
-	setTrackedInterval,
-	clearTrackedInterval,
 	refresh,
 	resourceKeys,
 	enqueue,
 	registries,
+	showResolution,
 }: PhaseProgressOptions) {
-	const [phaseSteps, setPhaseSteps] = useState<PhaseStep[]>([]);
-	const [phaseTimer, setPhaseTimer] = useState(0);
-	const [displayPhase, setDisplayPhase] = useState(
-		sessionState.game.currentPhase,
+	const [phaseState, setPhaseState] = useState<PhaseProgressState>(() =>
+		computePhaseState(sessionState, actionCostResource),
 	);
-	const [phaseHistories, setPhaseHistories] = useState<
-		Record<string, PhaseStep[]>
-	>({});
-	const [tabsEnabled, setTabsEnabled] = useState(false);
 
-	const { mainApStart, setMainApStart, updateMainPhaseStep } =
-		useMainPhaseTracker({
-			session,
-			actionCostResource,
-			actionPhaseId,
-			setPhaseSteps,
-			setPhaseHistories,
-			setDisplayPhase,
-			resources: registries.resources,
+	const applyPhaseSnapshot = useCallback(
+		(
+			snapshot: SessionSnapshot,
+			overrides: Partial<PhaseProgressState> = {},
+		) => {
+			setPhaseState(computePhaseState(snapshot, actionCostResource, overrides));
+		},
+		[actionCostResource],
+	);
+
+	const refreshPhaseState = useCallback(
+		(overrides: Partial<PhaseProgressState> = {}) => {
+			const snapshot = session.getSnapshot();
+			applyPhaseSnapshot(snapshot, overrides);
+		},
+		[applyPhaseSnapshot, session],
+	);
+
+	useEffect(() => {
+		setPhaseState((previous) => {
+			if (previous.isAdvancing) {
+				return previous;
+			}
+			return computePhaseState(sessionState, actionCostResource);
 		});
-
-	const { runDelay, runStepDelay } = usePhaseDelays({
-		mountedRef,
-		timeScaleRef,
-		setTrackedInterval,
-		clearTrackedInterval,
-		setPhaseTimer,
-	});
+	}, [sessionState, actionCostResource]);
 
 	const runUntilActionPhaseCore = useCallback(
 		() =>
 			advanceToActionPhase({
 				session,
 				sessionId,
-				actionCostResource,
 				resourceKeys,
-				runDelay,
-				runStepDelay,
 				mountedRef,
-				setPhaseSteps,
-				setPhaseHistories,
-				setPhaseTimer,
-				setDisplayPhase,
-				setTabsEnabled,
-				setMainApStart,
-				updateMainPhaseStep,
-				addLog,
+				applyPhaseSnapshot,
 				refresh,
+				formatPhaseResolution,
+				showResolution,
 				registries,
 			}),
 		[
-			actionCostResource,
-			addLog,
+			applyPhaseSnapshot,
+			formatPhaseResolution,
 			mountedRef,
 			refresh,
 			resourceKeys,
 			registries,
-			runDelay,
-			runStepDelay,
 			session,
 			sessionId,
-			setDisplayPhase,
-			setMainApStart,
-			setPhaseHistories,
-			setPhaseSteps,
-			setPhaseTimer,
-			setTabsEnabled,
-			updateMainPhaseStep,
+			showResolution,
 		],
 	);
 
@@ -147,47 +149,31 @@ export function usePhaseProgress({
 		if ((activePlayer.resources[actionCostResource] ?? 0) > 0) {
 			return;
 		}
-		await advanceSessionPhase({ sessionId });
-		setPhaseHistories({});
-		await runUntilActionPhaseCore();
-	}, [actionCostResource, runUntilActionPhaseCore, session, sessionId]);
+		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
+		try {
+			await advanceSessionPhase({ sessionId });
+			await runUntilActionPhaseCore();
+		} catch (error) {
+			applyPhaseSnapshot(session.getSnapshot(), { isAdvancing: false });
+			throw error;
+		}
+	}, [
+		actionCostResource,
+		applyPhaseSnapshot,
+		runUntilActionPhaseCore,
+		session,
+		sessionId,
+	]);
 
 	const handleEndTurn = useCallback(() => enqueue(endTurn), [enqueue, endTurn]);
 
-	useEffect(() => {
-		if (!tabsEnabled) {
-			return;
-		}
-		const snapshot = session.getSnapshot();
-		if (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
-			return;
-		}
-		const activePlayer = snapshot.game.players.find(
-			(player) => player.id === snapshot.game.activePlayerId,
-		);
-		if (!activePlayer) {
-			return;
-		}
-		const start = activePlayer.resources[actionCostResource] ?? 0;
-		setMainApStart(start);
-		updateMainPhaseStep(start);
-	}, [actionCostResource, session, tabsEnabled, updateMainPhaseStep]);
-
 	return {
-		phaseSteps,
-		setPhaseSteps,
-		phaseTimer,
-		mainApStart,
-		displayPhase,
-		setDisplayPhase,
-		phaseHistories,
-		tabsEnabled,
+		phase: phaseState,
 		runUntilActionPhase,
 		runUntilActionPhaseCore,
 		handleEndTurn,
 		endTurn,
-		updateMainPhaseStep,
-		setPhaseHistories,
-		setTabsEnabled,
+		applyPhaseSnapshot,
+		refreshPhaseState,
 	};
 }

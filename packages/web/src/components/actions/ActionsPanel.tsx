@@ -29,7 +29,7 @@ export default function ActionsPanel() {
 		sessionState,
 		sessionView,
 		translationContext,
-		tabsEnabled,
+		phase,
 		actionCostResource,
 	} = useGameEngine();
 	const sectionRef = useAnimate<HTMLDivElement>();
@@ -47,11 +47,7 @@ export default function ActionsPanel() {
 			sessionState.phases.find((phaseDefinition) => phaseDefinition.action)?.id,
 		[sessionState.phases],
 	);
-	const isActionPhase = isActionPhaseActive(
-		sessionState.game.currentPhase,
-		actionPhaseId,
-		tabsEnabled,
-	);
+	const isActionPhase = isActionPhaseActive(phase, actionPhaseId);
 	const isLocalTurn = sessionState.game.activePlayerId === player.id;
 
 	useEffect(() => {

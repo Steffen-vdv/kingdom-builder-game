@@ -12,7 +12,7 @@ import {
 	CARD_TITLE_TEXT_CLASS,
 	joinClasses,
 } from './common/cardStyles';
-import { ActionResolutionCard } from './ActionResolutionCard';
+import { ResolutionCard } from './ResolutionCard';
 
 const FADE_DURATION_MS = 200;
 
@@ -99,7 +99,7 @@ export default function HoverCard() {
 		data?.title ?? renderedData?.title ?? 'Action resolution';
 	if (actionResolution && !data) {
 		return (
-			<ActionResolutionCard
+			<ResolutionCard
 				title={resolutionTitle}
 				resolution={actionResolution}
 				onContinue={acknowledgeResolution}

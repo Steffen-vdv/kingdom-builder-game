@@ -12,11 +12,25 @@ describe('isActionPhaseActive', () => {
 	const phaseA = 'phaseA';
 	const phaseB = 'phaseB';
 
+	const actionPhaseState = {
+		currentPhaseId: phaseA,
+		isActionPhase: true,
+		canEndTurn: true,
+		isAdvancing: false,
+	};
+
+	const nonActionPhaseState = {
+		currentPhaseId: phaseB,
+		isActionPhase: false,
+		canEndTurn: false,
+		isAdvancing: false,
+	};
+
 	it('returns true when game is in action phase regardless of display phase', () => {
-		expect(isActionPhaseActive(phaseA, phaseA, true)).toBe(true);
+		expect(isActionPhaseActive(actionPhaseState, phaseA)).toBe(true);
 	});
 
 	it('returns false when not in action phase', () => {
-		expect(isActionPhaseActive(phaseB, phaseA, true)).toBe(false);
+		expect(isActionPhaseActive(nonActionPhaseState, phaseA)).toBe(false);
 	});
 });

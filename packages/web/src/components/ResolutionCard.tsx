@@ -1,5 +1,8 @@
 import React from 'react';
-import type { ActionResolution } from '../state/useActionResolution';
+import type {
+	ActionResolution,
+	ResolutionSource,
+} from '../state/useActionResolution';
 import {
 	CARD_BASE_CLASS,
 	CARD_BODY_TEXT_CLASS,
@@ -10,17 +13,54 @@ import {
 	joinClasses,
 } from './common/cardStyles';
 
-interface ActionResolutionCardProps {
+interface ResolutionLabels {
+	title: string;
+	player: string;
+}
+
+const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
+	action: {
+		title: 'Action',
+		player: 'Played by',
+	},
+	phase: {
+		title: 'Phase',
+		player: 'Phase owner',
+	},
+};
+
+function isSourceDetail(
+	source: ResolutionSource | undefined,
+): source is Exclude<ResolutionSource, 'action' | 'phase'> {
+	return typeof source === 'object' && source !== null && 'kind' in source;
+}
+
+interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
 	onContinue: () => void;
 }
 
-function ActionResolutionCard({
+function resolveSourceLabels(source: ResolutionSource | undefined) {
+	if (!source) {
+		return SOURCE_LABELS.action;
+	}
+	if (typeof source === 'string') {
+		return SOURCE_LABELS[source] ?? SOURCE_LABELS.action;
+	}
+	const fallback = SOURCE_LABELS[source.kind] ?? SOURCE_LABELS.action;
+	const title = source.label?.trim() || fallback.title;
+	return {
+		title,
+		player: fallback.player,
+	};
+}
+
+function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
-}: ActionResolutionCardProps) {
+}: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
 	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
@@ -32,14 +72,25 @@ function ActionResolutionCard({
 		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	const rawActionName = (resolution.action?.name ?? '').trim();
+	const sourceName = isSourceDetail(resolution.source)
+		? (resolution.source.name?.trim() ?? '')
+		: '';
+	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
 	const actionName = rawActionName || fallbackActionName;
-	const actionIcon = resolution.action?.icon?.trim();
+	const resolvedLabels = resolveSourceLabels(resolution.source);
+	const actorLabel = (resolution.actorLabel ?? '').trim() || actionName;
+	const actionIcon =
+		resolution.action?.icon?.trim() ||
+		(isSourceDetail(resolution.source)
+			? (resolution.source.icon?.trim() ?? undefined)
+			: undefined);
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
-	const defaultTitle = title ?? 'Action resolution';
-	const headerTitle = actionName ? `Action - ${actionName}` : defaultTitle;
+	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
+	const headerTitle = actorLabel
+		? `${resolvedLabels.title} - ${actorLabel}`
+		: defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',
@@ -78,6 +129,7 @@ function ActionResolutionCard({
 		CARD_BODY_TEXT_CLASS,
 		'whitespace-pre-line text-amber-900 dark:text-amber-100',
 	);
+	const shouldShowContinue = resolution.requireAcknowledgement;
 
 	return (
 		<div className={containerClass} data-state="enter">
@@ -95,7 +147,7 @@ function ActionResolutionCard({
 						</div>
 						{resolution.player ? (
 							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`Played by ${playerName}`}
+								{`${resolvedLabels.player} ${playerName}`}
 							</div>
 						) : null}
 					</div>
@@ -128,19 +180,21 @@ function ActionResolutionCard({
 					</div>
 				) : null}
 			</div>
-			<div className="mt-6 flex justify-end">
-				<button
-					type="button"
-					onClick={onContinue}
-					disabled={!resolution.isComplete}
-					className={CONTINUE_BUTTON_CLASS}
-				>
-					Continue
-				</button>
-			</div>
+			{shouldShowContinue ? (
+				<div className="mt-6 flex justify-end">
+					<button
+						type="button"
+						onClick={onContinue}
+						disabled={!resolution.isComplete}
+						className={CONTINUE_BUTTON_CLASS}
+					>
+						Continue
+					</button>
+				</div>
+			) : null}
 		</div>
 	);
 }
 
-export type { ActionResolutionCardProps };
-export { ActionResolutionCard };
+export type { ResolutionCardProps };
+export { ResolutionCard };

@@ -18,11 +18,36 @@ interface ResolutionActionMeta {
 	icon?: string;
 }
 
+interface ResolutionSourceBase {
+	kind: 'action' | 'phase';
+	label: string;
+	icon?: string;
+}
+
+interface ResolutionActionSource extends ResolutionSourceBase {
+	kind: 'action';
+	id: string;
+	name: string;
+}
+
+interface ResolutionPhaseSource extends ResolutionSourceBase {
+	kind: 'phase';
+	id?: string;
+	name?: string;
+}
+
+type ResolutionSourceDetail = ResolutionActionSource | ResolutionPhaseSource;
+
+type ResolutionSource = 'action' | 'phase' | ResolutionSourceDetail;
+
 interface ShowResolutionOptions {
 	lines: string | string[];
 	player?: Pick<PlayerStateSnapshot, 'id' | 'name'>;
 	action?: ResolutionActionMeta;
 	summaries?: string[];
+	source?: ResolutionSource;
+	actorLabel?: string;
+	requireAcknowledgement?: boolean;
 }
 
 interface ActionResolution {
@@ -32,6 +57,30 @@ interface ActionResolution {
 	player?: Pick<PlayerStateSnapshot, 'id' | 'name'>;
 	action?: ResolutionActionMeta;
 	summaries: string[];
+	source: ResolutionSource;
+	actorLabel?: string;
+	requireAcknowledgement: boolean;
+}
+
+function resolveActorLabel(
+	label: string | undefined,
+	source: ResolutionSource,
+	action: ResolutionActionMeta | undefined,
+): string | undefined {
+	const trimmed = label?.trim();
+	if (trimmed) {
+		return trimmed;
+	}
+	if (typeof source === 'string') {
+		if (source === 'action') {
+			return action?.name?.trim() || undefined;
+		}
+		return undefined;
+	}
+	if (source.kind === 'action') {
+		return source.name?.trim() || action?.name?.trim() || undefined;
+	}
+	return undefined;
 }
 
 function useActionResolution({
@@ -54,7 +103,15 @@ function useActionResolution({
 	}, []);
 
 	const showResolution = useCallback(
-		({ lines, player, action, summaries = [] }: ShowResolutionOptions) => {
+		({
+			lines,
+			player,
+			action,
+			summaries = [],
+			source,
+			actorLabel,
+			requireAcknowledgement = true,
+		}: ShowResolutionOptions) => {
 			const entries = (Array.isArray(lines) ? lines : [lines]).filter(
 				(line): line is string => Boolean(line?.trim()),
 			);
@@ -76,11 +133,21 @@ function useActionResolution({
 					resolverRef.current = null;
 					resolve();
 				};
+				const resolvedSource: ResolutionSource =
+					source ?? (action ? 'action' : 'phase');
+				const resolvedActorLabel = resolveActorLabel(
+					actorLabel,
+					resolvedSource,
+					action,
+				);
 				setResolution({
 					lines: entries,
 					visibleLines: [],
 					isComplete: false,
 					summaries,
+					source: resolvedSource,
+					requireAcknowledgement,
+					...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
 					...(player ? { player } : {}),
 					...(action ? { action } : {}),
 				});
@@ -101,10 +168,11 @@ function useActionResolution({
 							return previous;
 						}
 						const nextVisible = [...previous.visibleLines, line];
+						const isComplete = nextVisible.length === previous.lines.length;
 						return {
 							...previous,
 							visibleLines: nextVisible,
-							isComplete: nextVisible.length === previous.lines.length,
+							isComplete,
 						};
 					});
 					addLog(line, player);
@@ -112,6 +180,21 @@ function useActionResolution({
 
 				const scheduleReveal = (index: number) => {
 					if (index >= entries.length) {
+						if (!requireAcknowledgement) {
+							const scale = timeScaleRef.current || 1;
+							const duration = ACTION_EFFECT_DELAY / scale;
+							const finalize = () => {
+								if (!mountedRef.current || sequenceRef.current !== sequence) {
+									return;
+								}
+								acknowledgeResolution();
+							};
+							if (duration <= 0) {
+								finalize();
+								return;
+							}
+							setTrackedTimeout(finalize, duration);
+						}
 						return;
 					}
 					const scale = timeScaleRef.current || 1;
@@ -143,5 +226,10 @@ function useActionResolution({
 	return { resolution, showResolution, acknowledgeResolution };
 }
 
-export type { ActionResolution, ResolutionActionMeta, ShowResolutionOptions };
+export type {
+	ActionResolution,
+	ResolutionActionMeta,
+	ResolutionSource,
+	ShowResolutionOptions,
+};
 export { useActionResolution };
