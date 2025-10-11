@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
-import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -8,8 +7,11 @@ import {
 } from '../src/translation/log';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
+import { installTestRuntimeConfig } from './helpers/runtimeConfig';
+import { getRuntimeConfig } from '../src/startup/runtimeConfig';
 
 describe('log resource source icon registry', () => {
+	installTestRuntimeConfig();
 	const scenarios = [
 		{
 			name: 'population',
@@ -76,14 +78,43 @@ describe('log resource source icon registry', () => {
 	for (const { name, getMeta } of scenarios) {
 		it(`renders icons for ${name} meta sources`, () => {
 			const registries = createSessionRegistries();
+			const runtimeConfig = getRuntimeConfig();
+			const phases = runtimeConfig.phases?.length
+				? runtimeConfig.phases
+				: [
+						{
+							id: 'phase-main',
+							action: true,
+							steps: [{ id: 'phase-main:start' }],
+						},
+					];
+			const startConfig = runtimeConfig.startConfig ?? {
+				player: {
+					resources: {},
+					stats: {},
+					population: {},
+					lands: [],
+				},
+			};
+			const ruleSet = runtimeConfig.ruleSet ?? {
+				defaultActionAPCost: 1,
+				absorptionCapPct: 1,
+				absorptionRounding: 'down' as const,
+				tieredResourceKey: 'resource',
+				tierDefinitions: [],
+				slotsPerNewLand: 1,
+				maxSlotsPerLand: 1,
+				basePopulationCap: 1,
+				winConditions: [],
+			};
 			const engineContext = createEngine({
 				actions: registries.actions,
 				buildings: registries.buildings,
 				developments: registries.developments,
 				populations: registries.populations,
-				phases: PHASES,
-				start: GAME_START,
-				rules: RULES,
+				phases,
+				start: startConfig,
+				rules: ruleSet,
 			});
 			engineContext.assets = createDefaultTranslationAssets();
 			const { meta, expected } = getMeta(engineContext);

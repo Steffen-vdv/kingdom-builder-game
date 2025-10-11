@@ -6,7 +6,6 @@ import type {
 	SessionPlayerId,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
@@ -25,7 +24,7 @@ vi.mock('../../src/translation', async () => {
 
 const diffStepSnapshotsMock = vi.mocked(TranslationModule.diffStepSnapshots);
 
-const RESOURCE_KEYS: ResourceKey[] = ['gold' as ResourceKey];
+const RESOURCE_KEYS: string[] = ['gold'];
 const REGISTRIES = createSessionRegistries();
 
 function createSession(): LegacySession {

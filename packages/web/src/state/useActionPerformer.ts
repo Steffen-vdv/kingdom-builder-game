@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import { ActionId } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
@@ -202,11 +201,13 @@ export function useActionPerformer({
 					messages,
 					subLines,
 				});
-				const logLines = (
-					action.id === ActionId.develop
+				const stepCategory = (stepDef as { category?: string } | undefined)
+					?.category;
+				const formatter =
+					stepCategory === 'development'
 						? formatDevelopActionLogLines
-						: formatActionLogLines
-				)(messages, filtered);
+						: formatActionLogLines;
+				const logLines = formatter(messages, filtered);
 				const actionMeta = buildResolutionActionMeta(
 					action,
 					stepDef,

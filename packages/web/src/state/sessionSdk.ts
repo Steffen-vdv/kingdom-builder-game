@@ -1,11 +1,4 @@
 import {
-	BuildingId,
-	GAME_START,
-	PHASES,
-	RULES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
-import {
 	createEngineSession,
 	type ActionParams,
 	type EngineSession,
@@ -31,6 +24,16 @@ import {
 	type SessionRegistries,
 } from './sessionRegistries';
 import { createGameApi, type GameApi } from '../services/gameApi';
+import {
+	getRuntimeConfig,
+	type DeveloperPresetConfig,
+} from '../startup/runtimeConfig';
+import {
+	resolveDeveloperPreset,
+	resolvePhases,
+	resolveRuleSet,
+	resolveStartConfig,
+} from './sessionRuntime';
 
 export interface SessionHandle {
 	enqueue: EngineSession['enqueue'];
@@ -42,7 +45,7 @@ interface SessionRecord {
 	handle: SessionHandle;
 	legacySession: EngineSession;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: string[];
 }
 
 interface CreateSessionOptions {
@@ -57,7 +60,7 @@ interface CreateSessionResult {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: string[];
 	metadata: SessionSnapshotMetadata;
 }
 
@@ -76,7 +79,7 @@ interface FetchSnapshotResult {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: string[];
 	metadata: SessionSnapshotMetadata;
 }
 
@@ -115,21 +118,33 @@ function createSessionHandle(session: EngineSession): SessionHandle {
 	};
 }
 
+function isActionExecutionFailure(
+	value: unknown,
+): value is ActionExecutionFailure {
+	if (typeof value !== 'object' || value === null) {
+		return false;
+	}
+	return 'requirementFailure' in value || 'requirementFailures' in value;
+}
+
 function applyDeveloperPreset(
 	session: EngineSession,
 	snapshot: SessionSnapshot,
 	devMode: boolean,
+	preset: DeveloperPresetConfig | undefined,
 ): void {
-	if (!devMode) {
+	if (!devMode || !preset) {
 		return;
 	}
 	const primaryPlayer = snapshot.game.players[0];
 	const primaryPlayerId = primaryPlayer?.id;
-	const hasMill = primaryPlayer?.buildings.includes(BuildingId.Mill) ?? false;
-	if (!primaryPlayerId || snapshot.game.turn !== 1 || hasMill) {
+	const presetBuilding = preset.buildings?.find((id) =>
+		primaryPlayer?.buildings.includes(id),
+	);
+	if (!primaryPlayerId || snapshot.game.turn !== 1 || presetBuilding) {
 		return;
 	}
-	initializeDeveloperMode(session, primaryPlayerId);
+	initializeDeveloperMode(session, primaryPlayerId, preset);
 }
 
 function applyPlayerName(
@@ -158,24 +173,42 @@ export async function createSession(
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys = extractResourceKeys(registries);
+	const runtimeConfig = getRuntimeConfig();
+	const startConfig = resolveStartConfig(response.snapshot, runtimeConfig);
+	const phases = resolvePhases(response.snapshot, runtimeConfig);
+	if (phases.length === 0) {
+		throw new Error('Unable to resolve phase configuration for session.');
+	}
+	const rules = resolveRuleSet(response.snapshot, runtimeConfig);
+	const developerPreset = resolveDeveloperPreset(runtimeConfig);
 	const legacySession = createEngineSession({
 		actions: registries.actions,
 		buildings: registries.buildings,
 		developments: registries.developments,
 		populations: registries.populations,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
+		phases,
+		start: startConfig,
+		rules,
 		devMode,
 	});
 	legacySession.setDevMode(devMode);
 	const initialSnapshot = legacySession.getSnapshot();
-	applyDeveloperPreset(legacySession, initialSnapshot, devMode);
+	applyDeveloperPreset(
+		legacySession,
+		initialSnapshot,
+		devMode,
+		developerPreset,
+	);
 	applyPlayerName(legacySession, initialSnapshot, playerName);
 	const sessionId = response.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
 	const handle = createSessionHandle(legacySession);
-	sessions.set(sessionId, { handle, legacySession, registries, resourceKeys });
+	sessions.set(sessionId, {
+		handle,
+		legacySession,
+		registries,
+		resourceKeys,
+	});
 	return {
 		sessionId,
 		session: handle,
@@ -195,7 +228,7 @@ export async function fetchSnapshot(
 	const record = ensureSessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys = extractResourceKeys(registries);
 	record.registries = registries;
 	record.resourceKeys = resourceKeys;
 	return {
@@ -229,16 +262,18 @@ export async function performSessionAction(
 		}
 		return response;
 	} catch (error) {
-		const failure = error as ActionExecutionFailure;
+		const baseError = error instanceof Error ? error : new Error(String(error));
 		const response: ActionExecuteErrorResponse = {
 			status: 'error',
-			error: failure?.message ?? 'Action failed.',
+			error: baseError.message || 'Action failed.',
 		};
-		if (failure?.requirementFailure) {
-			response.requirementFailure = failure.requirementFailure;
-		}
-		if (failure?.requirementFailures) {
-			response.requirementFailures = failure.requirementFailures;
+		if (isActionExecutionFailure(error)) {
+			if (error.requirementFailure) {
+				response.requirementFailure = error.requirementFailure;
+			}
+			if (error.requirementFailures) {
+				response.requirementFailures = error.requirementFailures;
+			}
 		}
 		return response;
 	}
@@ -256,7 +291,7 @@ export async function advanceSessionPhase(
 	} = record;
 	const response = await api.advancePhase(request);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys = extractResourceKeys(registries);
 	Object.assign(cachedRegistries, registries);
 	cachedResourceKeys.splice(0, cachedResourceKeys.length, ...resourceKeys);
 	try {

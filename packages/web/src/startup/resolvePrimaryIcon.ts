@@ -1,9 +1,5 @@
-export interface IconSource {
-	icon?: string;
-}
-
 export function resolvePrimaryIcon(
-	resources: Record<string, IconSource>,
+	resources: Record<string, { icon?: string } | undefined>,
 	primaryId?: string | null,
 ): string | undefined {
 	const entries = Object.entries(resources);
@@ -19,5 +15,9 @@ export function resolvePrimaryIcon(
 	}
 
 	const fallback = entries.find(([, info]) => typeof info?.icon === 'string');
-	return fallback?.[1].icon;
+	if (!fallback) {
+		return undefined;
+	}
+	const [, info] = fallback;
+	return info?.icon;
 }
