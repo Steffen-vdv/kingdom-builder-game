@@ -4,6 +4,7 @@ import { useAnimate } from '../../utils/useAutoAnimate';
 import ActionCategoryHeader from './ActionCategoryHeader';
 import GenericActions from './GenericActions';
 import type { Action, DisplayPlayer } from './types';
+import type { ResourceDescriptorSelector } from './utils';
 
 const BASIC_CATEGORY_ICON = '⚙️';
 const BASIC_CATEGORY_DESCRIPTION =
@@ -14,6 +15,7 @@ interface BasicOptionsProps {
 	summaries: Map<string, Summary>;
 	player: DisplayPlayer;
 	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
 }
 
 export default function BasicOptions({
@@ -21,6 +23,7 @@ export default function BasicOptions({
 	summaries,
 	player,
 	canInteract,
+	selectResourceDescriptor,
 }: BasicOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	return (
@@ -39,6 +42,7 @@ export default function BasicOptions({
 					summaries={summaries}
 					player={player}
 					canInteract={canInteract}
+					selectResourceDescriptor={selectResourceDescriptor}
 				/>
 			</div>
 		</div>

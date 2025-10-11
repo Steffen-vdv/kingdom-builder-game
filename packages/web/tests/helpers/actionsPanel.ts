@@ -1,12 +1,5 @@
 /* eslint-disable max-lines */
-import {
-	POPULATION_INFO,
-	POPULATION_ROLES,
-	PhaseId,
-	Resource,
-	Stat,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
+import { PhaseId, Resource, Stat } from '@kingdom-builder/contents';
 import { type PlayerStartConfig } from '@kingdom-builder/protocol';
 import { vi } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -52,24 +45,26 @@ export function createActionsPanelGame({
 	const factory = createContentFactory();
 	const defaultPopulationRoles = populationRoles?.length
 		? populationRoles
-		: Object.keys(POPULATION_ROLES)
-				.slice(0, 2)
-				.map((key, index) => ({
-					name: index === 0 ? 'Council Role' : 'Legion Role',
-					icon:
-						POPULATION_ROLES[key as PopulationRoleId]?.icon ??
-						(index === 0 ? '⚖️' : '🎖️'),
+		: [
+				{
+					name: 'Council Role',
+					icon: '⚖️',
 					upkeep: { [upkeepResource]: 1 },
 					onAssigned: [{}],
-				}));
+				},
+				{
+					name: 'Legion Role',
+					icon: '🎖️',
+					upkeep: { [upkeepResource]: 1 },
+					onAssigned: [{}],
+				},
+			];
 	const registeredPopulationRoles = defaultPopulationRoles.map((def) =>
 		factory.population(def),
 	);
 	const passivePopulation = factory.population({
 		name: 'Passive Role',
-		icon:
-			POPULATION_ROLES[Object.keys(POPULATION_ROLES)[3] as PopulationRoleId]
-				?.icon ?? '👤',
+		icon: '👤',
 	});
 	const populationPlaceholder = '$role';
 	const buildRequirements = requirementBuilder
@@ -195,6 +190,7 @@ export function createActionsPanelGame({
 		buildingDefinition ? [buildingDefinition] : [],
 	);
 	const developmentsRegistry = createRegistry<{ id: string }>([]);
+	const populationsRegistry = createRegistry(registeredPopulationRoles);
 
 	const translationContext = createTranslationContextStub({
 		actions: wrapTranslationRegistry(actionsRegistry),
@@ -285,9 +281,36 @@ export function createActionsPanelGame({
 	sessionRegistries.actions = actionsRegistry;
 	sessionRegistries.buildings = buildingsRegistry;
 	sessionRegistries.developments = developmentsRegistry;
+	sessionRegistries.populations = populationsRegistry;
 
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 
+	const resourceDescriptors = Object.fromEntries(
+		Object.entries(sessionRegistries.resources).map(([key, definition]) => [
+			key,
+			{
+				id: key,
+				label: definition.label ?? key,
+				icon: definition.icon,
+				description: definition.description,
+			},
+		]),
+	);
+	const populationDescriptors = Object.fromEntries(
+		registeredPopulationRoles.map((definition) => [
+			definition.id,
+			{
+				id: definition.id,
+				label: definition.name,
+				icon: definition.icon,
+			},
+		]),
+	);
+	const slotDescriptor = {
+		id: 'slot',
+		label: 'Land Slot',
+		icon: '🧱',
+	} as const;
 	const metadata = {
 		upkeepResource,
 		capacityStat,
@@ -302,7 +325,8 @@ export function createActionsPanelGame({
 		) as Map<string, Record<string, number>>,
 		requirementFailures,
 		requirementIcons,
-		populationInfoIcon: POPULATION_INFO.icon,
+		defaultPopulationIcon:
+			registeredPopulationRoles.find((entry) => entry.icon)?.icon ?? '👥',
 		building: buildingDefinition,
 	} as const;
 
@@ -316,6 +340,13 @@ export function createActionsPanelGame({
 		getActionOptions: vi.fn(() => []),
 	} as const;
 
+	sessionState.metadata = {
+		passiveEvaluationModifiers: {},
+		resources: resourceDescriptors,
+		populations: populationDescriptors,
+		assets: { slot: slotDescriptor },
+	};
+
 	return {
 		session,
 		sessionState,
@@ -324,5 +355,6 @@ export function createActionsPanelGame({
 		ruleSnapshot,
 		...createActionsPanelState(actionCostResource),
 		metadata,
+		sessionRegistries,
 	};
 }

@@ -1,5 +1,4 @@
 import React from 'react';
-import type { Focus } from '@kingdom-builder/contents';
 import { type Summary } from '../../translation';
 import { renderSummary, renderCosts } from '../../translation/render';
 import OptionList from './OptionList';
@@ -7,6 +6,7 @@ import StepBadge from './StepBadge';
 import { type ActionCardOption } from './OptionCard';
 import { FOCUS_GRADIENTS } from './focusGradients';
 import { stripSummary } from './stripSummary';
+import type { ActionFocus } from './types';
 
 export type { ActionCardOption } from './OptionCard';
 
@@ -27,7 +27,7 @@ export interface ActionCardProps {
 	onClick?: (() => void) | undefined;
 	onMouseEnter?: (() => void) | undefined;
 	onMouseLeave?: (() => void) | undefined;
-	focus?: Focus | undefined;
+	focus?: ActionFocus | undefined;
 	variant?: ActionCardVariant | undefined;
 	stepIndex?: number | undefined;
 	stepCount?: number | undefined;

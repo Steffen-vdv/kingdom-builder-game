@@ -12,6 +12,7 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	type ResourceDescriptorSelector,
 } from './utils';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
 import {
@@ -20,6 +21,7 @@ import {
 	type Building,
 	type DisplayPlayer,
 } from './types';
+import { normalizeActionFocus } from './types';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -34,6 +36,7 @@ interface BuildOptionsProps {
 	descriptions: Map<string, Summary>;
 	player: DisplayPlayer;
 	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
 }
 
 export default function BuildOptions({
@@ -44,6 +47,7 @@ export default function BuildOptions({
 	descriptions,
 	player,
 	canInteract,
+	selectResourceDescriptor,
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
@@ -106,7 +110,7 @@ export default function BuildOptions({
 			>
 				{entries.map(({ building, costs }) => {
 					const upkeep = building.upkeep;
-					const focus = building.focus;
+					const focus = normalizeActionFocus(building.focus);
 					const icon = building.icon;
 					const canPay = playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(building.id);
@@ -114,6 +118,7 @@ export default function BuildOptions({
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
+						selectResourceDescriptor,
 					);
 					const requirementText = requirements.join(', ');
 					const title = !implemented

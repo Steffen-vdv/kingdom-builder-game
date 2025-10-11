@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { RESOURCES, type Focus } from '@kingdom-builder/contents';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	describeContent,
 	summarizeContent,
@@ -8,6 +7,7 @@ import {
 import { useGameEngine } from '../../state/GameContext';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
 import BasicOptions from './BasicOptions';
 import BuildOptions from './BuildOptions';
 import DemolishOptions from './DemolishOptions';
@@ -23,6 +23,7 @@ import {
 	TOGGLE_BUTTON_CLASSES,
 } from './actionsPanelStyles';
 import type { Action, Building, Development, DisplayPlayer } from './types';
+import { normalizeActionFocus } from './types';
 
 export default function ActionsPanel() {
 	const {
@@ -32,6 +33,19 @@ export default function ActionsPanel() {
 		phase,
 		actionCostResource,
 	} = useGameEngine();
+	const resourceMetadata = useResourceMetadata();
+	const selectResourceDescriptor = useCallback(
+		(resourceKey: string) =>
+			resourceMetadata.byId[resourceKey] ??
+			resourceMetadata.select(resourceKey),
+		[resourceMetadata],
+	);
+	const actionCostDescriptor = useMemo(
+		() => selectResourceDescriptor(actionCostResource),
+		[selectResourceDescriptor, actionCostResource],
+	);
+	const actionCostIcon = actionCostDescriptor.icon;
+	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = sessionView.active;
 	if (!player) {
@@ -83,20 +97,20 @@ export default function ActionsPanel() {
 			)
 			.map((actionDefinition) => {
 				const { focus, ...rest } = actionDefinition;
-				if (typeof focus === 'string') {
-					return { ...rest, focus: focus as Focus } as Action;
-				}
-				return rest as Action;
+				const normalized = normalizeActionFocus(focus);
+				return normalized
+					? ({ ...rest, focus: normalized } as Action)
+					: (rest as Action);
 			});
 	}, [sessionView.actionList, sessionView.actionsByPlayer, selectedPlayer]);
 	const developmentOptions = useMemo<Development[]>(
 		() =>
 			sessionView.developmentList.map((developmentDefinition) => {
 				const { focus, ...rest } = developmentDefinition;
-				if (typeof focus === 'string') {
-					return { ...rest, focus: focus as Focus } as Development;
-				}
-				return rest as Development;
+				const normalized = normalizeActionFocus(focus);
+				return normalized
+					? ({ ...rest, focus: normalized } as Development)
+					: (rest as Development);
 			}),
 		[sessionView.developmentList],
 	);
@@ -104,10 +118,10 @@ export default function ActionsPanel() {
 		() =>
 			sessionView.buildingList.map((buildingDefinition) => {
 				const { focus, ...rest } = buildingDefinition;
-				if (typeof focus === 'string') {
-					return { ...rest, focus: focus as Focus } as Building;
-				}
-				return rest as Building;
+				const normalized = normalizeActionFocus(focus);
+				return normalized
+					? ({ ...rest, focus: normalized } as Building)
+					: (rest as Building);
 			}),
 		[sessionView.buildingList],
 	);
@@ -190,7 +204,9 @@ export default function ActionsPanel() {
 				<h2 className={TITLE_CLASSES}>
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
 					<span className={COST_LABEL_CLASSES}>
-						(1 {RESOURCES[actionCostResource].icon} each)
+						(1 {actionCostIcon ?? ''}
+						{actionCostIcon ? ' ' : ''}
+						{actionCostLabel} each)
 					</span>
 				</h2>
 				<div className="flex flex-wrap items-center gap-2">
@@ -224,6 +240,7 @@ export default function ActionsPanel() {
 							summaries={actionSummaries}
 							player={selectedPlayer}
 							canInteract={canInteract}
+							selectResourceDescriptor={selectResourceDescriptor}
 						/>
 					)}
 					{raisePopAction && (
@@ -231,6 +248,7 @@ export default function ActionsPanel() {
 							action={raisePopAction}
 							player={selectedPlayer}
 							canInteract={canInteract}
+							selectResourceDescriptor={selectResourceDescriptor}
 						/>
 					)}
 					{developAction && (
@@ -242,6 +260,7 @@ export default function ActionsPanel() {
 							hasDevelopLand={hasDevelopLand}
 							player={selectedPlayer}
 							canInteract={canInteract}
+							selectResourceDescriptor={selectResourceDescriptor}
 						/>
 					)}
 					{buildAction && (
@@ -253,6 +272,7 @@ export default function ActionsPanel() {
 							descriptions={buildingDescriptions}
 							player={selectedPlayer}
 							canInteract={canInteract}
+							selectResourceDescriptor={selectResourceDescriptor}
 						/>
 					)}
 					{demolishAction && (
@@ -261,6 +281,7 @@ export default function ActionsPanel() {
 							isActionPhase={isActionPhase}
 							player={selectedPlayer}
 							canInteract={canInteract}
+							selectResourceDescriptor={selectResourceDescriptor}
 						/>
 					)}
 				</div>

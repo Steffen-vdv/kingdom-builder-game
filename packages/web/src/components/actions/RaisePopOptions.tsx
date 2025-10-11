@@ -1,9 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-	POPULATION_ROLES,
-	POPULATIONS,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
+import { type PopulationRoleId } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	splitSummary,
@@ -12,14 +8,26 @@ import {
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
+import {
+	usePopulationMetadata,
+	useRegistryMetadata,
+} from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
-import { formatMissingResources, playerHasRequiredResources } from './utils';
+import {
+	formatMissingResources,
+	playerHasRequiredResources,
+	type ResourceDescriptorSelector,
+} from './utils';
 import {
 	buildRequirementIconsForRole,
 	determineRaisePopRoles,
 	type PopulationRegistryLike,
+	type PopulationDescriptorSelector,
+	type PopulationDefinition,
 } from './populationHelpers';
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';
+import { normalizeActionFocus } from './types';
+import { formatIconTitle, renderIconLabel } from './iconHelpers';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -30,10 +38,12 @@ export default function RaisePopOptions({
 	action,
 	player,
 	canInteract,
+	selectResourceDescriptor,
 }: {
 	action: Action;
 	player: DisplayPlayer;
 	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
 	const {
 		session,
@@ -44,18 +54,32 @@ export default function RaisePopOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
-	const populationRegistry = useMemo(
-		() =>
-			({
-				get(id: string) {
-					return POPULATIONS.get(id);
-				},
-				entries() {
-					return POPULATIONS.entries();
-				},
-			}) as PopulationRegistryLike,
-		[],
+	const { populations } = useRegistryMetadata();
+	const populationMetadata = usePopulationMetadata();
+	const selectPopulationDescriptor = useCallback<PopulationDescriptorSelector>(
+		(roleId) => populationMetadata.select(roleId),
+		[populationMetadata],
 	);
+	const defaultPopulationIcon = useMemo(() => {
+		return populationMetadata.list.find((entry) => entry.icon)?.icon;
+	}, [populationMetadata]);
+	const populationRegistry = useMemo<PopulationRegistryLike>(() => {
+		const entries: Array<[string, PopulationDefinition]> = populations
+			.entries()
+			.map(([id, definition]) => [id, definition]);
+		return {
+			get(id: string) {
+				const definition = populations.get(id);
+				if (!definition) {
+					throw new Error(`Unknown population: ${id}`);
+				}
+				return definition;
+			},
+			entries() {
+				return entries;
+			},
+		};
+	}, [populations]);
 	const actionDefinition = useMemo(
 		() => translationContext.actions.get(action.id) as Action | undefined,
 		[translationContext.actions, action.id],
@@ -75,10 +99,19 @@ export default function RaisePopOptions({
 				role,
 				baseRequirementIcons,
 				populationRegistry,
+				selectPopulationDescriptor,
+				defaultPopulationIcon,
 			),
-		[actionDefinition, baseRequirementIcons, populationRegistry],
+		[
+			actionDefinition,
+			baseRequirementIcons,
+			populationRegistry,
+			selectPopulationDescriptor,
+			defaultPopulationIcon,
+		],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
+	const actionFocus = normalizeActionFocus(actionInfo?.focus ?? action.focus);
 	return (
 		<>
 			{roleOptions.map((role) => {
@@ -105,11 +138,13 @@ export default function RaisePopOptions({
 				const insufficientTooltip = formatMissingResources(
 					costs,
 					player.resources,
+					selectResourceDescriptor,
 				);
-				const actionIcon = actionInfo?.icon ?? '';
-				const actionName = actionInfo?.name ?? '';
-				const roleIcon = POPULATION_ROLES[role]?.icon ?? '';
-				const roleLabel = POPULATION_ROLES[role]?.label ?? '';
+				const actionIcon = actionInfo?.icon;
+				const actionName = actionInfo?.name ?? action.name;
+				const roleDescriptor = selectPopulationDescriptor(role);
+				const roleIcon = roleDescriptor.icon ?? defaultPopulationIcon ?? '';
+				const roleLabel = roleDescriptor.label;
 				const title = !meetsReq
 					? requirements.join(', ')
 					: !canPay
@@ -129,13 +164,18 @@ export default function RaisePopOptions({
 						role,
 					},
 				);
+				const actionLabelNode = renderIconLabel(actionIcon, actionName);
+				const roleLabelNode = renderIconLabel(roleIcon, roleLabel);
+				const hoverTitle = `${formatIconTitle(
+					actionIcon,
+					actionName,
+				)}: ${formatIconTitle(roleIcon, roleLabel)}`;
 				return (
 					<ActionCard
 						key={role}
 						title={
 							<>
-								{actionIcon}
-								{roleIcon} {actionName}: {roleLabel}
+								{actionLabelNode}: {roleLabelNode}
 							</>
 						}
 						costs={costs}
@@ -147,7 +187,7 @@ export default function RaisePopOptions({
 						summary={shortSummary}
 						enabled={enabled}
 						tooltip={title}
-						focus={(actionInfo as Action | undefined)?.focus}
+						focus={actionFocus}
 						onClick={() => {
 							if (!canInteract) {
 								return;
@@ -157,7 +197,7 @@ export default function RaisePopOptions({
 						onMouseEnter={() => {
 							const { effects, description } = splitSummary(summary);
 							handleHoverCard({
-								title: `${actionIcon}${roleIcon} ${actionName}: ${roleLabel}`,
+								title: hoverTitle,
 								effects,
 								requirements,
 								costs,

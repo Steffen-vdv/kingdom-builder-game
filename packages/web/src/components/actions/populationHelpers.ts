@@ -1,23 +1,9 @@
-import {
-	POPULATION_INFO,
-	POPULATION_ROLES,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
+import type { PopulationRoleId } from '@kingdom-builder/contents';
+import type { PopulationConfig } from '@kingdom-builder/protocol';
+import type { RegistryMetadataDescriptor } from '../../contexts/RegistryMetadataContext';
 import type { Action } from './types';
 
-export interface PopulationDefinition {
-	id: string;
-	name: string;
-	icon?: string;
-	upkeep?: Record<string, number>;
-	onAssigned?: unknown[];
-	onUnassigned?: unknown[];
-	onGrowthPhase?: unknown[];
-	onUpkeepPhase?: unknown[];
-	onPayUpkeepStep?: unknown[];
-	onGainIncomeStep?: unknown[];
-	onGainAPStep?: unknown[];
-}
+export type PopulationDefinition = PopulationConfig;
 
 export type EffectConfig = {
 	type?: string;
@@ -30,6 +16,10 @@ export interface PopulationRegistryLike {
 	get(id: string): PopulationDefinition;
 	entries(): [string, PopulationDefinition][];
 }
+
+export type PopulationDescriptorSelector = (
+	roleId: string,
+) => RegistryMetadataDescriptor;
 
 type RequirementConfig = {
 	type?: string;
@@ -94,13 +84,19 @@ export function collectPopulationRolesFromEffects(
 export function getPopulationIconFromRole(
 	role: string,
 	populations: PopulationRegistryLike,
+	selectDescriptor: PopulationDescriptorSelector,
+	defaultIcon?: string,
 ): string {
 	if (!role) {
 		return '';
 	}
-	const infoIcon = POPULATION_ROLES[role as PopulationRoleId]?.icon;
-	if (infoIcon) {
-		return infoIcon;
+	try {
+		const descriptor = selectDescriptor(role);
+		if (descriptor.icon) {
+			return descriptor.icon;
+		}
+	} catch {
+		// Ignore descriptor lookup errors for unknown roles.
 	}
 	try {
 		const population = populations.get(role);
@@ -110,13 +106,15 @@ export function getPopulationIconFromRole(
 	} catch {
 		// Ignore missing population entries when deriving icons.
 	}
-	return '';
+	return defaultIcon ?? '';
 }
 
 function getIconsFromEvaluator(
 	evaluator: EvaluatorConfig | undefined,
 	roleId: PopulationRoleId,
 	populations: PopulationRegistryLike,
+	selectDescriptor: PopulationDescriptorSelector,
+	defaultIcon?: string,
 ): string[] {
 	if (!evaluator || evaluator.type !== 'population') {
 		return [];
@@ -126,20 +124,31 @@ function getIconsFromEvaluator(
 	if (typeof rawRole === 'string') {
 		if (rawRole.startsWith('$')) {
 			if (rawRole === '$role') {
-				const icon = getPopulationIconFromRole(roleId, populations);
+				const icon = getPopulationIconFromRole(
+					roleId,
+					populations,
+					selectDescriptor,
+					defaultIcon,
+				);
 				return icon ? [icon] : [];
 			}
 			const placeholderIcon = getPopulationIconFromRole(
 				rawRole.slice(1),
 				populations,
+				selectDescriptor,
+				defaultIcon,
 			);
 			return placeholderIcon ? [placeholderIcon] : [];
 		}
-		const icon = getPopulationIconFromRole(rawRole, populations);
+		const icon = getPopulationIconFromRole(
+			rawRole,
+			populations,
+			selectDescriptor,
+			defaultIcon,
+		);
 		return icon ? [icon] : [];
 	}
-	const genericIcon = POPULATION_INFO.icon;
-	return genericIcon ? [genericIcon] : [];
+	return defaultIcon ? [defaultIcon] : [];
 }
 
 export function determineRaisePopRoles(
@@ -180,6 +189,8 @@ export function buildRequirementIconsForRole(
 	roleId: PopulationRoleId,
 	baseIcons: string[],
 	populations: PopulationRegistryLike,
+	selectDescriptor: PopulationDescriptorSelector,
+	defaultIcon?: string,
 ): string[] {
 	const icons = new Set(baseIcons);
 	const requirements = actionDefinition?.requirements as
@@ -195,10 +206,22 @@ export function buildRequirementIconsForRole(
 		const params = requirement.params ?? {};
 		const left = params['left'] as EvaluatorConfig | undefined;
 		const right = params['right'] as EvaluatorConfig | undefined;
-		for (const icon of getIconsFromEvaluator(left, roleId, populations)) {
+		for (const icon of getIconsFromEvaluator(
+			left,
+			roleId,
+			populations,
+			selectDescriptor,
+			defaultIcon,
+		)) {
 			icons.add(icon);
 		}
-		for (const icon of getIconsFromEvaluator(right, roleId, populations)) {
+		for (const icon of getIconsFromEvaluator(
+			right,
+			roleId,
+			populations,
+			selectDescriptor,
+			defaultIcon,
+		)) {
 			icons.add(icon);
 		}
 	}

@@ -10,10 +10,12 @@ import {
 	type Summary,
 	type TranslationContext,
 } from '../../translation';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
-import { formatMissingResources } from './utils';
+import {
+	formatMissingResources,
+	type ResourceDescriptorSelector,
+} from './utils';
 import type { PendingActionState } from './GenericActions';
 import { useEffectGroupOptions } from './useEffectGroupOptions';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
@@ -24,6 +26,7 @@ import {
 	type GameEngineApi,
 	type HoverCardData,
 } from './types';
+import { normalizeActionFocus } from './types';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -43,7 +46,7 @@ interface GenericActionCardProps {
 	) => void;
 	session: GameEngineApi['session'];
 	translationContext: TranslationContext;
-	actionCostResource: ResourceKey;
+	actionCostResource: string;
 	handlePerform: (
 		action: Action,
 		params?: Record<string, unknown>,
@@ -51,6 +54,7 @@ interface GenericActionCardProps {
 	handleHoverCard: (data: HoverCardData) => void;
 	clearHoverCard: () => void;
 	formatRequirement: (requirement: string) => string;
+	selectResourceDescriptor: ResourceDescriptorSelector;
 }
 
 function GenericActionCard({
@@ -72,6 +76,7 @@ function GenericActionCard({
 	handleHoverCard,
 	clearHoverCard,
 	formatRequirement,
+	selectResourceDescriptor,
 }: GenericActionCardProps) {
 	const requirementFailures = session.getActionRequirements(action.id);
 	const requirements = requirementFailures.map((failure) =>
@@ -96,7 +101,11 @@ function GenericActionCard({
 	if (isPending) {
 		cardEnabled = true;
 	}
-	const insufficientTooltip = formatMissingResources(costs, player.resources);
+	const insufficientTooltip = formatMissingResources(
+		costs,
+		player.resources,
+		selectResourceDescriptor,
+	);
 	const requirementText = requirements.join(', ');
 	const title = !implemented
 		? 'Not implemented yet'
@@ -125,19 +134,8 @@ function GenericActionCard({
 		handleHoverCard,
 		hoverBackground,
 	});
-	const rawAction = translationContext.actions.get(action.id);
-	let actionIcon: string | undefined;
-	let actionFocus: Action['focus'] | undefined;
-	if (rawAction && typeof rawAction === 'object') {
-		const possible = rawAction as {
-			icon?: unknown;
-			focus?: Action['focus'];
-		};
-		if (typeof possible.icon === 'string') {
-			actionIcon = possible.icon;
-		}
-		actionFocus = possible.focus;
-	}
+	const actionIcon = typeof action.icon === 'string' ? action.icon : undefined;
+	const actionFocus = normalizeActionFocus(action.focus);
 	const hoverTitle = formatIconTitle(actionIcon, action.name);
 	const hoverContent = describeContent('action', action.id, translationContext);
 	const { effects, description } = splitSummary(hoverContent);

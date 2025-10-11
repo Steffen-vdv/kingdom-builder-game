@@ -3,6 +3,7 @@ import { useAnimate } from '../../utils/useAutoAnimate';
 import ActionCategoryHeader from './ActionCategoryHeader';
 import type { Action, DisplayPlayer } from './types';
 import RaisePopOptions from './RaisePopOptions';
+import type { ResourceDescriptorSelector } from './utils';
 
 const HIRE_CATEGORY_DESCRIPTION =
 	'(Recruit population instantly; upkeep and role effects apply while ' +
@@ -12,12 +13,14 @@ interface HireOptionsProps {
 	action: Action;
 	player: DisplayPlayer;
 	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
 }
 
 export default function HireOptions({
 	action,
 	player,
 	canInteract,
+	selectResourceDescriptor,
 }: HireOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const icon = action.icon ?? '👶';
@@ -36,6 +39,7 @@ export default function HireOptions({
 					action={action}
 					player={player}
 					canInteract={canInteract}
+					selectResourceDescriptor={selectResourceDescriptor}
 				/>
 			</div>
 		</div>

@@ -17,6 +17,7 @@ import {
 import { selectSessionView } from '../src/state/sessionSelectors';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createActionsPanelState } from './helpers/createActionsPanelState';
+import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 const getRequirementIconsMock = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => getRequirementIconsMock(...args),
@@ -229,6 +230,21 @@ function createMockGame() {
 
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 
+	const resourceDescriptors = Object.fromEntries(
+		Object.entries(sessionRegistries.resources).map(([key, definition]) => [
+			key,
+			{
+				id: key,
+				label: definition.label ?? key,
+				icon: definition.icon,
+			},
+		]),
+	);
+	sessionState.metadata = {
+		passiveEvaluationModifiers: {},
+		resources: resourceDescriptors,
+	};
+
 	const session = {
 		getActionCosts: vi.fn(),
 		getActionRequirements: vi.fn(),
@@ -243,6 +259,7 @@ function createMockGame() {
 		sessionView,
 		translationContext,
 		ruleSnapshot: sessionState.rules,
+		sessionRegistries,
 	};
 }
 let mockGame: ReturnType<typeof createMockGame>;
@@ -314,12 +331,24 @@ describe('GenericActions effect group handling', () => {
 			throw new Error('Expected active player for generic actions test');
 		}
 		render(
-			<GenericActions
-				actions={[action]}
-				summaries={new Map([[action.id, ['Expand swiftly']]])}
-				player={activePlayer}
-				canInteract={true}
-			/>,
+			<RegistryMetadataProvider
+				registries={mockGame.sessionRegistries}
+				metadata={mockGame.sessionState.metadata}
+			>
+				<GenericActions
+					actions={[action]}
+					summaries={new Map([[action.id, ['Expand swiftly']]])}
+					player={activePlayer}
+					canInteract={true}
+					selectResourceDescriptor={(resourceKey) =>
+						mockGame.sessionState.metadata.resources?.[resourceKey] ?? {
+							id: resourceKey,
+							label: resourceKey,
+							icon: mockGame.sessionRegistries.resources[resourceKey]?.icon,
+						}
+					}
+				/>
+			</RegistryMetadataProvider>,
 		);
 
 		const actionButton = screen.getByRole('button', { name: /Royal Decree/ });
