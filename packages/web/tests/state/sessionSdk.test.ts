@@ -9,7 +9,11 @@ import {
 	releaseSession,
 	setGameApi,
 } from '../../src/state/sessionSdk';
-import { GameApiFake, createGameApiMock } from '../../src/services/gameApi';
+import {
+	GameApiError,
+	GameApiFake,
+	createGameApiMock,
+} from '../../src/services/gameApi';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -141,22 +145,22 @@ describe('sessionSdk', () => {
 		expect(response.status).toBe('error');
 		expect(performSpy).not.toHaveBeenCalled();
 	});
-	it('converts thrown API errors into error responses', async () => {
+	it('rethrows API failures for action execution', async () => {
 		const { session } = await createSession();
 		setGameApi(
 			createGameApiMock({
 				performAction: () => {
-					throw new Error('Boom');
+					throw new GameApiError('Boom', 500, 'Server Error', {});
 				},
 			}),
 		);
 		const performSpy = vi.spyOn(session, 'performAction');
-		const response = await performSessionAction({
-			sessionId: 'session-1',
-			actionId: ActionId.tax,
-		});
-		expect(response.status).toBe('error');
-		expect(response).toHaveProperty('error', 'Boom');
+		await expect(
+			performSessionAction({
+				sessionId: 'session-1',
+				actionId: ActionId.tax,
+			}),
+		).rejects.toThrow('Boom');
 		expect(performSpy).not.toHaveBeenCalled();
 	});
 	it('advances phases via the API and mirrors locally', async () => {

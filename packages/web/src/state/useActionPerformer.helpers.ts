@@ -1,10 +1,56 @@
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import type { ActionTrace } from '@kingdom-builder/protocol/actions';
+import type {
+	ActionExecuteErrorResponse,
+	ActionTrace,
+} from '@kingdom-builder/protocol/actions';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { TranslationDiffContext } from '../translation';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
+
+type ActionRequirementFailures =
+	ActionExecuteErrorResponse['requirementFailures'];
+
+export type ActionExecutionError = Error & {
+	requirementFailure?: SessionRequirementFailure;
+	requirementFailures?: ActionRequirementFailures;
+};
+
+export function createActionExecutionError(
+	response: ActionExecuteErrorResponse,
+): ActionExecutionError {
+	const failure = new Error(response.error) as ActionExecutionError;
+	if (response.requirementFailure) {
+		failure.requirementFailure = response.requirementFailure;
+	}
+	if (response.requirementFailures) {
+		failure.requirementFailures = response.requirementFailures;
+	}
+	return failure;
+}
+
+export interface FatalActionExecutionError extends ActionExecutionError {
+	fatalSessionError?: boolean;
+}
+
+export function markFatalSessionError(
+	error: unknown,
+): FatalActionExecutionError {
+	if (error instanceof Error) {
+		const fatalError = error as FatalActionExecutionError;
+		fatalError.fatalSessionError = true;
+		return fatalError;
+	}
+	const fallback = new Error('Failed to resolve the session.');
+	const fatalError = fallback as FatalActionExecutionError & {
+		cause?: unknown;
+	};
+	fatalError.fatalSessionError = true;
+	fatalError.cause = error;
+	return fatalError;
+}
 
 interface AppendSubActionChangesOptions {
 	traces: ActionTrace[];

@@ -218,6 +218,7 @@ export function GameProviderInner({
 		endTurn,
 		enqueue,
 		resourceKeys,
+		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
 	useAiRunner({

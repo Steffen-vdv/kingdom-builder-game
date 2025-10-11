@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
+import { GameApiError } from '../../src/services/gameApi';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -36,9 +37,13 @@ const dismissToastMock = vi.hoisted(() => vi.fn());
 const showResolutionMock = vi.hoisted(() => vi.fn());
 const acknowledgeResolutionMock = vi.hoisted(() => vi.fn());
 const handlePerformMock = vi.hoisted(() => vi.fn());
+type CapturedActionOptions = Record<string, unknown> & {
+	onFatalSessionError?: (error: unknown) => void;
+};
 let capturedPhaseOptions:
 	| (Record<string, unknown> & { refresh?: () => void })
 	| undefined;
+let capturedActionOptions: CapturedActionOptions | undefined;
 
 vi.mock('../../src/state/useTimeScale', () => ({
 	useTimeScale: () => ({
@@ -105,10 +110,13 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 }));
 
 vi.mock('../../src/state/useActionPerformer', () => ({
-	useActionPerformer: () => ({
-		handlePerform: handlePerformMock,
-		performRef: { current: handlePerformMock },
-	}),
+	useActionPerformer: (options: Record<string, unknown>) => {
+		capturedActionOptions = options;
+		return {
+			handlePerform: handlePerformMock,
+			performRef: { current: handlePerformMock },
+		};
+	},
 }));
 
 vi.mock('../../src/state/useToasts', () => ({
@@ -174,6 +182,7 @@ describe('GameProvider', () => {
 		acknowledgeResolutionMock.mockReset();
 		handlePerformMock.mockReset();
 		capturedPhaseOptions = undefined;
+		capturedActionOptions = undefined;
 		runUntilActionPhaseMock.mockResolvedValue(undefined);
 
 		const [resourceKey] = createResourceKeys();
@@ -369,4 +378,42 @@ describe('GameProvider', () => {
 			screen.getByText('An unexpected error prevented the game from loading.'),
 		).toBeInTheDocument();
 	});
+
+	it.each([
+		['network failure', new Error('Network offline')],
+		['API error', new GameApiError('Down', 500, 'Server Error', {})],
+		['missing session', new Error('Session not found: session-1')],
+		[
+			'translation failure',
+			Object.assign(new Error('context failure'), { fatalSessionError: true }),
+		],
+	])(
+		'returns to the bootstrap screen when %s occurs during action execution',
+		async (_label, fatalError) => {
+			render(
+				<GameProvider playerName="Commander">
+					<SessionInspector />
+				</GameProvider>,
+			);
+
+			await waitFor(() =>
+				expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+			);
+
+			const fatalHandler = capturedActionOptions?.onFatalSessionError;
+			if (!fatalHandler) {
+				throw new Error('Fatal handler was not registered');
+			}
+
+			act(() => {
+				fatalHandler(fatalError);
+			});
+
+			await waitFor(() =>
+				expect(
+					screen.getByText('We could not load your kingdom.'),
+				).toBeInTheDocument(),
+			);
+		},
+	);
 });
