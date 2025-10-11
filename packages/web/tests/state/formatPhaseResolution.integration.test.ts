@@ -5,6 +5,7 @@ import {
 } from '../../src/state/formatPhaseResolution';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTranslationDiffContext } from '../../src/translation/log/resourceSources/context';
+import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { PlayerSnapshot } from '../../src/translation';
 import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
@@ -97,6 +98,10 @@ describe('formatPhaseResolution integration', () => {
 			buildings: factory.buildings,
 			developments: factory.developments,
 			passives: { evaluationMods: new Map(), get: () => undefined },
+			assets: createTranslationAssets({
+				populations: factory.populations,
+				resources: RESOURCES,
+			}),
 		});
 
 		const result: PhaseResolutionFormatResult = formatPhaseResolution({
@@ -150,6 +155,10 @@ describe('formatPhaseResolution integration', () => {
 			buildings: factory.buildings,
 			developments: factory.developments,
 			passives: { evaluationMods: new Map(), get: () => undefined },
+			assets: createTranslationAssets({
+				populations: factory.populations,
+				resources: RESOURCES,
+			}),
 		});
 
 		const result = formatPhaseResolution({

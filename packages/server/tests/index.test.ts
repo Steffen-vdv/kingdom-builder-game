@@ -27,32 +27,38 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
+const SERVER_START_TIMEOUT_MS = 15000;
+
 describe('server entrypoint', () => {
-	it('starts a Fastify server and listens for requests', async () => {
-		const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-		const module = await import('../src/index.js');
-		const result = await module.startServer({
-			host: '127.0.0.1',
-			port: 0,
-			tokens: {
-				'integration-token': {
-					userId: 'integration-tester',
-					roles: ['session:create', 'session:advance'],
+	it(
+		'starts a Fastify server and listens for requests',
+		async () => {
+			const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+			const module = await import('../src/index.js');
+			const result = await module.startServer({
+				host: '127.0.0.1',
+				port: 0,
+				tokens: {
+					'integration-token': {
+						userId: 'integration-tester',
+						roles: ['session:create', 'session:advance'],
+					},
 				},
-			},
-		});
-		expect(log).toHaveBeenCalledWith('Starting Kingdom Builder server...');
-		const response = await fetch(`${result.address}/sessions`, {
-			method: 'POST',
-			headers: {
-				authorization: 'Bearer integration-token',
-				'content-type': 'application/json',
-			},
-			body: JSON.stringify({}),
-		});
-		expect(response.status).toBe(201);
-		await result.app.close();
-	});
+			});
+			expect(log).toHaveBeenCalledWith('Starting Kingdom Builder server...');
+			const response = await fetch(`${result.address}/sessions`, {
+				method: 'POST',
+				headers: {
+					authorization: 'Bearer integration-token',
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({}),
+			});
+			expect(response.status).toBe(201);
+			await result.app.close();
+		},
+		SERVER_START_TIMEOUT_MS,
+	);
 
 	it('does not auto-start when imported as a module', async () => {
 		process.argv = ['/usr/bin/node', '/not/the/entrypoint'];
