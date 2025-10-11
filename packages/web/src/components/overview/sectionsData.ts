@@ -9,6 +9,7 @@ import {
 	buildOverviewIconSet,
 	type OverviewTokenConfig,
 	type TokenCandidateInput,
+	type OverviewTokenSources,
 } from './overviewTokens';
 import { normalizeCandidates } from './overviewTokenUtils';
 
@@ -77,9 +78,10 @@ export function createOverviewSections(
 	tokenCandidates: OverviewTokenCandidates,
 	overrides: OverviewTokenConfig | undefined,
 	content: OverviewContentSection[],
+	tokenSources: OverviewTokenSources,
 ): { sections: OverviewSectionDef[]; tokens: OverviewIconSet } {
 	const mergedTokenConfig = mergeTokenSources(tokenCandidates, overrides);
-	const icons = buildOverviewIconSet(mergedTokenConfig);
+	const icons = buildOverviewIconSet(tokenSources, mergedTokenConfig);
 
 	const sections = content.map((section) => {
 		if (section.kind === 'paragraph') {
