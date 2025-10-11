@@ -170,6 +170,22 @@ describe('createGameApi', () => {
 		expect(url).toBe('/api/sessions/session%2Fspecial/snapshot');
 		expect(init?.method).toBe('GET');
 	});
+	it('attaches abort signals to outgoing requests', async () => {
+		const controller = new AbortController();
+		const fetchMock = vi
+			.fn()
+			.mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		const promise = api.fetchSnapshot('session-1', {
+			signal: controller.signal,
+		});
+		controller.abort();
+
+		await expect(promise).rejects.toBeInstanceOf(DOMException);
+		const [, init] = fetchMock.mock.calls[0];
+		expect(init?.signal).toBe(controller.signal);
+	});
 
 	it('performs actions with typed responses', async () => {
 		const successResponse: ActionExecuteSuccessResponse = {

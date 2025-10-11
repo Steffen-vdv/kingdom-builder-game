@@ -290,12 +290,16 @@ describe('GameProvider', () => {
 			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
 		);
 
-		await waitFor(() =>
-			expect(createSessionMock).toHaveBeenCalledWith({
+		await waitFor(() => {
+			const [request, options] = createSessionMock.mock.calls[0] ?? [];
+			expect(request).toEqual({
 				devMode: true,
 				playerName: 'Commander',
-			}),
-		);
+			});
+			expect(options).toMatchObject({
+				signal: expect.any(AbortSignal),
+			});
+		});
 
 		await waitFor(() =>
 			expect(runUntilActionPhaseMock).toHaveBeenCalledTimes(1),
@@ -317,9 +321,13 @@ describe('GameProvider', () => {
 
 		await act(() => {
 			capturedPhaseOptions?.refresh?.();
-			return waitFor(() =>
-				expect(fetchSnapshotMock).toHaveBeenCalledWith('session-1'),
-			);
+			return waitFor(() => {
+				const call = fetchSnapshotMock.mock.calls[0];
+				expect(call?.[0]).toBe('session-1');
+				expect(call?.[1]).toMatchObject({
+					signal: expect.any(AbortSignal),
+				});
+			});
 		});
 
 		await waitFor(() =>

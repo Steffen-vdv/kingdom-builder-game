@@ -1,13 +1,11 @@
 import React, {
 	useCallback,
-	useContext,
 	useEffect,
 	useMemo,
 	useRef,
 	useState,
 } from 'react';
 import {
-	GameEngineContext,
 	GameProviderInner,
 	type GameProviderInnerProps,
 } from './GameProviderInner';
@@ -21,7 +19,6 @@ import {
 	type SessionSnapshot,
 	type SessionMetadata,
 } from './sessionTypes';
-import type { LegacyGameEngineContextValue } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import GameBootstrapScreen from '../components/game/GameBootstrapScreen';
 import {
@@ -29,6 +26,7 @@ import {
 	type SessionFailureDetails,
 } from './sessionFailures';
 import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
+import { abortRef, clearRef, isAbortError } from './GameContext.helpers';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
@@ -79,17 +77,18 @@ export function GameProvider(props: ProviderProps) {
 		onChangePlayerName = () => {},
 	} = props;
 
-	const mountedRef = useRef(true);
-	const queueRef = useRef<Promise<void>>(Promise.resolve());
-	const sessionStateRef = useRef<SessionContainer | null>(null);
-	const latestSnapshotRef = useRef<SessionSnapshot | null>(null);
+	const mountedRef = useRef(true),
+		queueRef = useRef<Promise<void>>(Promise.resolve()),
+		sessionStateRef = useRef<SessionContainer | null>(null),
+		latestSnapshotRef = useRef<SessionSnapshot | null>(null),
+		createAbortRef = useRef<AbortController | null>(null),
+		refreshAbortRef = useRef<AbortController | null>(null);
 	const [sessionError, setSessionError] =
-		useState<SessionFailureDetails | null>(null);
-	const [bootAttempt, setBootAttempt] = useState(0);
-	const [sessionData, setSessionData] = useState<SessionContainer | null>(null);
+			useState<SessionFailureDetails | null>(null),
+		[bootAttempt, setBootAttempt] = useState(0),
+		[sessionData, setSessionData] = useState<SessionContainer | null>(null);
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
-
 	const updateSessionData = useCallback((next: SessionContainer | null) => {
 		sessionStateRef.current = next;
 		latestSnapshotRef.current = next?.snapshot ?? null;
@@ -100,12 +99,10 @@ export function GameProvider(props: ProviderProps) {
 			setSessionError(null);
 		}
 	}, []);
-
 	const handleRetry = useCallback(() => {
 		setSessionError(null);
 		setBootAttempt((value) => value + 1);
 	}, []);
-
 	const runExclusive = useCallback(
 		<T,>(task: () => Promise<T> | T): Promise<T> => {
 			const chain = queueRef.current;
@@ -117,6 +114,7 @@ export function GameProvider(props: ProviderProps) {
 	);
 
 	const releaseCurrentSession = useCallback(() => {
+		abortRef(refreshAbortRef);
 		const current = sessionStateRef.current;
 		if (!current) {
 			return;
@@ -154,15 +152,21 @@ export function GameProvider(props: ProviderProps) {
 
 	useEffect(() => {
 		let disposed = false;
+		const controller = new AbortController();
+		abortRef(createAbortRef);
+		createAbortRef.current = controller;
 		setSessionError(null);
 		const create = () =>
 			runExclusive(async () => {
 				releaseCurrentSession();
 				try {
-					const created = await createSession({
-						devMode,
-						playerName: playerNameRef.current,
-					});
+					const created = await createSession(
+						{
+							devMode,
+							playerName: playerNameRef.current,
+						},
+						{ signal: controller.signal },
+					);
 					if (disposed || !mountedRef.current) {
 						releaseSession(created.sessionId);
 						return;
@@ -178,15 +182,22 @@ export function GameProvider(props: ProviderProps) {
 						metadata: created.metadata,
 					});
 				} catch (error) {
+					if (isAbortError(controller, error)) {
+						return;
+					}
 					if (disposed || !mountedRef.current) {
 						return;
 					}
 					setSessionError(formatFailureDetails(error));
+				} finally {
+					clearRef(createAbortRef, controller);
 				}
 			});
 		void create();
 		return () => {
 			disposed = true;
+			controller.abort();
+			clearRef(createAbortRef, controller);
 		};
 	}, [
 		devMode,
@@ -204,8 +215,13 @@ export function GameProvider(props: ProviderProps) {
 				if (!sessionId) {
 					return;
 				}
+				const controller = new AbortController();
+				abortRef(refreshAbortRef);
+				refreshAbortRef.current = controller;
 				try {
-					const result = await fetchSnapshot(sessionId);
+					const result = await fetchSnapshot(sessionId, {
+						signal: controller.signal,
+					});
 					if (
 						!mountedRef.current ||
 						sessionStateRef.current?.sessionId !== sessionId
@@ -223,11 +239,16 @@ export function GameProvider(props: ProviderProps) {
 						metadata: result.metadata,
 					});
 				} catch (error) {
+					if (isAbortError(controller, error)) {
+						return;
+					}
 					if (!mountedRef.current) {
 						return;
 					}
 					releaseCurrentSession();
 					setSessionError(formatFailureDetails(error));
+				} finally {
+					clearRef(refreshAbortRef, controller);
 				}
 			}),
 		[runExclusive, updateSessionData, releaseCurrentSession],
@@ -311,49 +332,11 @@ export function GameProvider(props: ProviderProps) {
 	return <GameProviderInner {...innerProps} />;
 }
 
-export const useGameEngine = (): LegacyGameEngineContextValue => {
-	const value = useContext(GameEngineContext);
-	if (!value) {
-		throw new Error('useGameEngine must be used within GameProvider');
-	}
-	return value;
-};
-
-export const useOptionalGameEngine = (): LegacyGameEngineContextValue | null =>
-	useContext(GameEngineContext);
-
-export const useSessionView = () => {
-	const { sessionView } = useGameEngine();
-	return sessionView;
-};
-
-export const useSessionPlayers = () => {
-	const sessionView = useSessionView();
-	return useMemo(
-		() => ({
-			list: sessionView.list,
-			byId: sessionView.byId,
-			active: sessionView.active,
-			opponent: sessionView.opponent,
-		}),
-		[sessionView],
-	);
-};
-
-export const useSessionOptions = () => {
-	const sessionView = useSessionView();
-	return useMemo(
-		() => ({
-			actions: sessionView.actions,
-			actionList: sessionView.actionList,
-			actionsByPlayer: sessionView.actionsByPlayer,
-			buildings: sessionView.buildings,
-			buildingList: sessionView.buildingList,
-			developments: sessionView.developments,
-			developmentList: sessionView.developmentList,
-		}),
-		[sessionView],
-	);
-};
-
+export {
+	useGameEngine,
+	useOptionalGameEngine,
+	useSessionView,
+	useSessionPlayers,
+	useSessionOptions,
+} from './GameContext.hooks';
 export { useRegistryMetadata } from '../contexts/RegistryMetadataContext';
