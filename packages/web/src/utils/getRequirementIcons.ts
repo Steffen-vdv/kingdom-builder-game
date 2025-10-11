@@ -6,43 +6,43 @@ interface EvalConfig {
 }
 
 export type EvaluatorIconGetter = (
-        params: Record<string, unknown> | undefined,
-        translationContext: TranslationContext,
+	params: Record<string, unknown> | undefined,
+	translationContext: TranslationContext,
 ) => string[];
 
 export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
-        stat: (params, translationContext) => {
-                const key = params?.['key'];
-                if (typeof key !== 'string') {
-                        return [];
-                }
-                const statAssets = translationContext.assets.stats[key];
-                const icon = statAssets?.icon;
-                return icon ? [icon] : [];
-        },
-        population: (params, translationContext) => {
-                const role = params?.['role'];
-                if (typeof role !== 'string') {
-                        return [];
-                }
-                const roleAsset = translationContext.assets.populations[role];
-                const icon = roleAsset?.icon ?? translationContext.assets.population.icon;
-                return icon ? [icon] : [];
-        },
+	stat: (params, translationContext) => {
+		const key = params?.['key'];
+		if (typeof key !== 'string') {
+			return [];
+		}
+		const statAssets = translationContext.assets.stats[key];
+		const icon = statAssets?.icon;
+		return icon ? [icon] : [];
+	},
+	population: (params, translationContext) => {
+		const role = params?.['role'];
+		if (typeof role !== 'string') {
+			return [];
+		}
+		const roleAsset = translationContext.assets.populations[role];
+		const icon = roleAsset?.icon ?? translationContext.assets.population.icon;
+		return icon ? [icon] : [];
+	},
 };
 
 function collectEvaluatorIcons(
-        evaluator: EvalConfig | undefined,
-        translationContext: TranslationContext,
+	evaluator: EvalConfig | undefined,
+	translationContext: TranslationContext,
 ): string[] {
-        if (!evaluator) {
-                return [];
-        }
-        const getter = EVALUATOR_ICON_MAP[evaluator.type];
-        if (!getter) {
-                return [];
-        }
-        return getter(evaluator.params, translationContext) ?? [];
+	if (!evaluator) {
+		return [];
+	}
+	const getter = EVALUATOR_ICON_MAP[evaluator.type];
+	if (!getter) {
+		return [];
+	}
+	return getter(evaluator.params, translationContext) ?? [];
 }
 
 interface RequirementConfig {
@@ -93,31 +93,35 @@ export function registerRequirementIconGetter(
 	};
 }
 
-registerRequirementIconGetter('evaluator', 'compare', (requirement, translationContext) => {
-        const params = requirement.params ?? {};
-        return [
-                ...collectEvaluatorIcons(
-                        params['left'] as EvalConfig | undefined,
-                        translationContext,
-                ),
-                ...collectEvaluatorIcons(
-                        params['right'] as EvalConfig | undefined,
-                        translationContext,
-                ),
-        ];
-});
+registerRequirementIconGetter(
+	'evaluator',
+	'compare',
+	(requirement, translationContext) => {
+		const params = requirement.params ?? {};
+		return [
+			...collectEvaluatorIcons(
+				params['left'] as EvalConfig | undefined,
+				translationContext,
+			),
+			...collectEvaluatorIcons(
+				params['right'] as EvalConfig | undefined,
+				translationContext,
+			),
+		];
+	},
+);
 
 export function getRequirementIcons(
-        actionId: string,
-        translationContext: TranslationContext,
+	actionId: string,
+	translationContext: TranslationContext,
 ): string[] {
-        if (!translationContext.actions.has(actionId)) {
-                return [];
-        }
-        const actionDefinition = translationContext.actions.get(actionId);
-        if (!actionDefinition?.requirements) {
-                return [];
-        }
+	if (!translationContext.actions.has(actionId)) {
+		return [];
+	}
+	const actionDefinition = translationContext.actions.get(actionId);
+	if (!actionDefinition?.requirements) {
+		return [];
+	}
 	const icons: string[] = [];
 	const requirements = actionDefinition.requirements as RequirementConfig[];
 	for (const requirement of requirements) {

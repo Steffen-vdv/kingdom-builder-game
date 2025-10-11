@@ -17,15 +17,14 @@ export function buildLongevityEntries(
 		const anchors = collectAnchorLabels(meta, translationContext);
 		const condition = formatInPlayCondition(anchors);
 		if (condition) {
-                        const passiveIcon =
-                                translationContext.assets.passive.icon ?? '♾️';
-                        return [`${passiveIcon} Ongoing as long as ${condition}`];
-                }
-                const passiveIcon = translationContext.assets.passive.icon ?? '♾️';
-                return [`${passiveIcon} Ongoing`];
-        }
-        const entries: SummaryEntry[] = [];
-        const items: SummaryEntry[] = [];
+			const passiveIcon = translationContext.assets.passive.icon ?? '♾️';
+			return [`${passiveIcon} Ongoing as long as ${condition}`];
+		}
+		const passiveIcon = translationContext.assets.passive.icon ?? '♾️';
+		return [`${passiveIcon} Ongoing`];
+	}
+	const entries: SummaryEntry[] = [];
+	const items: SummaryEntry[] = [];
 	if (dependencies.length && shouldDisplayPermanentDependencies(meta)) {
 		dependencies.forEach((link) => {
 			items.push(`Triggered by ${link}`);
@@ -34,23 +33,24 @@ export function buildLongevityEntries(
 	const removalCondition = formatInPlayCondition(
 		collectRemovalLabels(removalLink, translationContext),
 	);
-        const formatRemoval = translationContext.assets.formatPassiveRemoval;
-        if (removalCondition) {
-                entries.push(formatRemoval(removalCondition));
-        } else if (removal) {
-                entries.push(formatRemoval(removal));
-        }
-        entries.unshift(`${PERMANENT_ICON} Permanent`);
-        return entries.concat(items);
+	if (removalCondition) {
+		entries.push(
+			translationContext.assets.formatPassiveRemoval(removalCondition),
+		);
+	} else if (removal) {
+		entries.push(translationContext.assets.formatPassiveRemoval(removal));
+	}
+	entries.unshift(`${PERMANENT_ICON} Permanent`);
+	return entries.concat(items);
 }
 
 function shouldDisplayPermanentDependencies(meta: StatSourceMeta): boolean {
-        if (meta.kind === 'phase') {
-                const detail = meta.detail?.trim().toLowerCase();
-                if (detail === RAISE_STRENGTH_STEP_ID) {
-                        return false;
-                }
-        }
+	if (meta.kind === 'phase') {
+		const detail = meta.detail?.trim().toLowerCase();
+		if (detail === RAISE_STRENGTH_STEP_ID) {
+			return false;
+		}
+	}
 	return true;
 }
 
