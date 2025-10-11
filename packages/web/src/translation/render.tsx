@@ -1,6 +1,9 @@
 import React from 'react';
-import { RESOURCES, BROOM_ICON } from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/contents';
+import type { TranslationAssets } from './context';
+import {
+	selectResourceDisplay,
+	selectUpkeepDisplay,
+} from './context/assetSelectors';
 import type { Summary } from './content';
 
 export function renderSummary(summary: Summary | undefined): React.ReactNode {
@@ -32,9 +35,10 @@ export function renderCosts(
 	resources: Record<string, number>,
 	actionCostResource?: string,
 	upkeep?: Record<string, number | undefined> | undefined,
-	options?: { showFreeLabel?: boolean },
+	options?: { showFreeLabel?: boolean; assets?: TranslationAssets },
 ) {
 	const showFreeLabel = options?.showFreeLabel ?? true;
+	const assets = options?.assets;
 	const entries = Object.entries(costs || {}).filter(
 		([resourceKey]) =>
 			!actionCostResource || resourceKey !== actionCostResource,
@@ -68,19 +72,34 @@ export function renderCosts(
 									: ''
 							}`}
 						>
-							{RESOURCES[resourceKey as ResourceKey]?.icon}
-							{costAmount ?? 0}
+							{(() => {
+								const display = selectResourceDisplay(assets, resourceKey);
+								const prefix = display.icon
+									? `${display.icon}`
+									: `${display.label} `;
+								return `${prefix}${costAmount ?? 0}`;
+							})()}
 						</span>
 					))}
 				</div>
 			)}
 			{upkeepEntries.length > 0 && (
 				<div className="flex flex-wrap justify-end gap-x-1 gap-y-0.5">
-					<span className="whitespace-nowrap">{BROOM_ICON}</span>
+					<span className="whitespace-nowrap">
+						{(() => {
+							const upkeepDisplay = selectUpkeepDisplay(assets);
+							return upkeepDisplay.icon ?? `${upkeepDisplay.label} `;
+						})()}
+					</span>
 					{upkeepEntries.map(([resourceKey, upkeepAmount]) => (
 						<span key={resourceKey} className="whitespace-nowrap">
-							{RESOURCES[resourceKey as ResourceKey]?.icon}
-							{upkeepAmount ?? 0}
+							{(() => {
+								const display = selectResourceDisplay(assets, resourceKey);
+								const prefix = display.icon
+									? `${display.icon}`
+									: `${display.label} `;
+								return `${prefix}${upkeepAmount ?? 0}`;
+							})()}
 						</span>
 					))}
 				</div>

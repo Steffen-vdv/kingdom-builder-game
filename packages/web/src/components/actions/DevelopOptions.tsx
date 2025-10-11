@@ -158,6 +158,7 @@ export default function DevelopOptions({
 							enabled={enabled}
 							tooltip={title}
 							focus={focus}
+							assets={translationContext.assets}
 							onClick={() => {
 								if (!canInteract) {
 									return;

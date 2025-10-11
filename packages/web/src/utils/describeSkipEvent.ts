@@ -3,6 +3,7 @@ import {
 	hasTierSummaryTranslation,
 	translateTierSummary,
 } from '../translation/content';
+import type { TranslationAssets } from '../translation/context';
 
 type PhaseLike = {
 	id: string;
@@ -48,6 +49,7 @@ function resolveSourceLabel(
 	detail: string | undefined,
 	labelToken: string | undefined,
 	fallback: string,
+	assets?: TranslationAssets,
 ) {
 	const normalize = (value: string | undefined) => {
 		if (!value) {
@@ -61,10 +63,10 @@ function resolveSourceLabel(
 		if (!token) {
 			return undefined;
 		}
-		if (!hasTierSummaryTranslation(token)) {
+		if (!hasTierSummaryTranslation(token, assets)) {
 			return undefined;
 		}
-		return translateTierSummary(token) ?? token;
+		return translateTierSummary(token, assets) ?? token;
 	};
 	return (
 		translateToken(detail) ||
@@ -75,7 +77,7 @@ function resolveSourceLabel(
 	);
 }
 
-function describeSources(skip: AdvanceSkip) {
+function describeSources(skip: AdvanceSkip, assets?: TranslationAssets) {
 	if (!skip.sources.length) {
 		return { list: [] as string[], summary: 'Skipped' };
 	}
@@ -84,7 +86,7 @@ function describeSources(skip: AdvanceSkip) {
 		const detail = source.detail;
 		const labelToken = source.meta?.source?.labelToken;
 		const id = source.meta?.source?.id ?? source.id;
-		const label = resolveSourceLabel(detail, labelToken, id);
+		const label = resolveSourceLabel(detail, labelToken, id, assets);
 		if (icon) {
 			return `${icon} ${label}`;
 		}
@@ -106,6 +108,7 @@ export function describeSkipEvent(
 	skip: AdvanceSkip,
 	phase: PhaseLike,
 	step?: StepLike,
+	assets?: TranslationAssets,
 ): SkipDescription {
 	const phaseLabel = renderLabel(phase.icon, phase.label, phase.id);
 	const renderedStepLabel = renderLabel(
@@ -115,7 +118,7 @@ export function describeSkipEvent(
 	);
 	const stepLabel =
 		renderedStepLabel.trim().length > 0 ? renderedStepLabel : undefined;
-	const sources = describeSources(skip);
+	const sources = describeSources(skip, assets);
 
 	const descriptorContext: DescriptorContext = {
 		skip,

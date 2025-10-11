@@ -1,4 +1,5 @@
 import type {
+	EffectDef,
 	SessionPlayerId,
 	SessionRuleSnapshot,
 	SessionSnapshot,
@@ -88,7 +89,9 @@ export function createTranslationContext(
 			return evaluationMods;
 		},
 	});
-	const assets = createTranslationAssets(registries);
+	const assets = createTranslationAssets(registries, metadata, {
+		rules: options.ruleSnapshot,
+	});
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
 		buildings: wrapRegistry(registries.buildings),
@@ -117,11 +120,25 @@ export function createTranslationContext(
 				if (Array.isArray(phase.steps)) {
 					entry.steps = Object.freeze(
 						phase.steps.map((step) => {
-							const stepEntry: { id: string; triggers?: readonly string[] } = {
+							const stepEntry: {
+								id: string;
+								title?: string;
+								icon?: string;
+								triggers?: readonly string[];
+								effects?: readonly EffectDef[];
+							} = {
 								id: step.id,
 							};
+							if (step.title !== undefined) {
+								stepEntry.title = step.title;
+							}
 							if (Array.isArray(step.triggers)) {
 								stepEntry.triggers = Object.freeze([...step.triggers]);
+							}
+							if (Array.isArray(step.effects)) {
+								stepEntry.effects = Object.freeze(
+									step.effects.map((effect) => structuredClone(effect)),
+								);
 							}
 							return Object.freeze(stepEntry);
 						}),
