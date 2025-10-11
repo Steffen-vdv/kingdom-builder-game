@@ -161,9 +161,43 @@ export type SessionPassiveEvaluationModifierMap = Record<
 	ReadonlyArray<string>
 >;
 
+export interface SessionMetadataDescriptor {
+	label: string;
+	icon?: string;
+	description?: string;
+}
+
+export interface SessionPhaseStepMetadataDescriptor
+	extends SessionMetadataDescriptor {
+	id: string;
+	triggers?: string[];
+}
+
+export interface SessionPhaseMetadataDescriptor
+	extends SessionMetadataDescriptor {
+	action?: boolean;
+	steps?: SessionPhaseStepMetadataDescriptor[];
+}
+
+export interface SessionTriggerMetadataDescriptor
+	extends SessionMetadataDescriptor {
+	future?: string;
+	past?: string;
+}
+
+export type SessionAssetMetadataMap = Record<string, SessionMetadataDescriptor>;
+
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
+	resources?: Record<string, SessionMetadataDescriptor>;
+	populations?: Record<string, SessionMetadataDescriptor>;
+	buildings?: Record<string, SessionMetadataDescriptor>;
+	developments?: Record<string, SessionMetadataDescriptor>;
+	stats?: Record<string, SessionMetadataDescriptor>;
+	phases?: Record<string, SessionPhaseMetadataDescriptor>;
+	triggers?: Record<string, SessionTriggerMetadataDescriptor>;
+	assets?: SessionAssetMetadataMap;
 }
 
 export interface SessionSnapshot {

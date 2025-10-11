@@ -28,6 +28,7 @@ import { selectSessionView } from './sessionSelectors';
 import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
+import { mergeRegistryMetadata } from './mergeRegistryMetadata';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -122,6 +123,12 @@ export function GameProviderInner({
 		sessionMetadata,
 		cachedSessionSnapshot,
 	]);
+
+	const registryMetadata = useMemo(
+		() =>
+			mergeRegistryMetadata(sessionMetadata, cachedSessionSnapshot.metadata),
+		[cachedSessionSnapshot, sessionMetadata],
+	);
 
 	const {
 		timeScale,
@@ -337,7 +344,10 @@ export function GameProviderInner({
 	};
 
 	return (
-		<RegistryMetadataProvider registries={registries}>
+		<RegistryMetadataProvider
+			registries={registries}
+			metadata={registryMetadata}
+		>
 			<GameEngineContext.Provider value={value}>
 				{children}
 			</GameEngineContext.Provider>
