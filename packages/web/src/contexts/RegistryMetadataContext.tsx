@@ -3,29 +3,64 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
-	Registry,
 } from '@kingdom-builder/protocol';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import type {
+	SessionResourceDefinition,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
-
-type DefinitionEntries<TDefinition> = ReadonlyArray<
-	readonly [string, TDefinition]
->;
-
-type DefinitionLookup<TDefinition> = {
-	get(id: string): TDefinition | undefined;
-	getOrThrow(id: string): TDefinition;
-	has(id: string): boolean;
-	entries(): DefinitionEntries<TDefinition>;
-	keys(): ReadonlyArray<string>;
-	values(): ReadonlyArray<TDefinition>;
-};
+import {
+	createRegistryLookup,
+	createResourceLookup,
+	type DefinitionLookup,
+} from './registryMetadataLookups';
+import {
+	DEFAULT_LAND_DESCRIPTOR,
+	DEFAULT_PASSIVE_DESCRIPTOR,
+	DEFAULT_SLOT_DESCRIPTOR,
+	buildPhaseMetadata,
+	buildRegistryMetadata,
+	buildResourceMetadata,
+	buildStatMetadata,
+	buildTriggerMetadata,
+	resolveAssetDescriptor,
+	type MetadataLookup,
+	type PhaseMetadata,
+	type RegistryMetadataDescriptor,
+	type TriggerMetadata,
+} from './registryMetadataDescriptors';
+import {
+	createAssetMetadataSelector,
+	createMetadataSelector,
+	extractDescriptorRecord,
+	extractPhaseRecord,
+	extractTriggerRecord,
+	type AssetMetadataSelector,
+	type MetadataSelector,
+} from './registryMetadataSelectors';
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
 	buildings: DefinitionLookup<BuildingConfig>;
 	developments: DefinitionLookup<DevelopmentConfig>;
 	populations: DefinitionLookup<PopulationConfig>;
+	resourceMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
+	populationMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
+	buildingMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
+	developmentMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
+	statMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
+	phaseMetadataLookup: MetadataLookup<PhaseMetadata>;
+	triggerMetadataLookup: MetadataLookup<TriggerMetadata>;
+	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
+	populationMetadata: MetadataSelector<RegistryMetadataDescriptor>;
+	buildingMetadata: MetadataSelector<RegistryMetadataDescriptor>;
+	developmentMetadata: MetadataSelector<RegistryMetadataDescriptor>;
+	statMetadata: MetadataSelector<RegistryMetadataDescriptor>;
+	phaseMetadata: MetadataSelector<PhaseMetadata>;
+	triggerMetadata: MetadataSelector<TriggerMetadata>;
+	landMetadata: AssetMetadataSelector;
+	slotMetadata: AssetMetadataSelector;
+	passiveMetadata: AssetMetadataSelector;
 }
 
 interface RegistryMetadataProviderProps {
@@ -33,62 +68,16 @@ interface RegistryMetadataProviderProps {
 		SessionRegistries,
 		'resources' | 'buildings' | 'developments' | 'populations'
 	>;
+	metadata: SessionSnapshotMetadata;
 	children: React.ReactNode;
 }
 
 const RegistryMetadataContext =
 	createContext<RegistryMetadataContextValue | null>(null);
 
-function createLookupFromEntries<TDefinition>(
-	entries: DefinitionEntries<TDefinition>,
-	kind: string,
-): DefinitionLookup<TDefinition> {
-	const map = new Map<string, TDefinition>();
-	for (const [id, definition] of entries) {
-		map.set(id, definition);
-	}
-	const keys = Object.freeze(Array.from(map.keys()));
-	const values = Object.freeze(keys.map((id) => map.get(id) as TDefinition));
-	const frozenEntries = Object.freeze(
-		keys.map((id, index) => Object.freeze([id, values[index]!] as const)),
-	) as DefinitionEntries<TDefinition>;
-	return Object.freeze({
-		get: (id: string) => map.get(id),
-		getOrThrow: (id: string) => {
-			const value = map.get(id);
-			if (!value) {
-				throw new Error(`Missing ${kind} metadata for "${id}".`);
-			}
-			return value;
-		},
-		has: (id: string) => map.has(id),
-		entries: () => frozenEntries,
-		keys: () => keys,
-		values: () => values,
-	});
-}
-
-function createRegistryLookup<TDefinition>(
-	registry: Registry<TDefinition>,
-	kind: string,
-): DefinitionLookup<TDefinition> {
-	const pairs = registry
-		.entries()
-		.map(([id, definition]) => Object.freeze([id, definition] as const));
-	return createLookupFromEntries(pairs, kind);
-}
-
-function createResourceLookup(
-	resources: SessionRegistries['resources'],
-): DefinitionLookup<SessionResourceDefinition> {
-	const pairs = Object.entries(resources).map(([key, definition]) =>
-		Object.freeze([key, definition] as const),
-	);
-	return createLookupFromEntries(pairs, 'resource');
-}
-
 export function RegistryMetadataProvider({
 	registries,
+	metadata,
 	children,
 }: RegistryMetadataProviderProps) {
 	const resourceLookup = useMemo(
@@ -96,25 +85,131 @@ export function RegistryMetadataProvider({
 		[registries.resources],
 	);
 	const buildingLookup = useMemo(
-		() =>
-			createRegistryLookup<BuildingConfig>(registries.buildings, 'building'),
+		() => createRegistryLookup(registries.buildings, 'building'),
 		[registries.buildings],
 	);
 	const developmentLookup = useMemo(
-		() =>
-			createRegistryLookup<DevelopmentConfig>(
-				registries.developments,
-				'development',
-			),
+		() => createRegistryLookup(registries.developments, 'development'),
 		[registries.developments],
 	);
 	const populationLookup = useMemo(
-		() =>
-			createRegistryLookup<PopulationConfig>(
-				registries.populations,
-				'population',
-			),
+		() => createRegistryLookup(registries.populations, 'population'),
 		[registries.populations],
+	);
+	const resourceMetadataLookup = useMemo(
+		() =>
+			buildResourceMetadata(
+				registries.resources,
+				extractDescriptorRecord(metadata, 'resources'),
+			),
+		[registries.resources, metadata],
+	);
+	const populationMetadataLookup = useMemo(
+		() =>
+			buildRegistryMetadata(
+				registries.populations,
+				extractDescriptorRecord(metadata, 'populations'),
+			),
+		[registries.populations, metadata],
+	);
+	const buildingMetadataLookup = useMemo(
+		() =>
+			buildRegistryMetadata(
+				registries.buildings,
+				extractDescriptorRecord(metadata, 'buildings'),
+			),
+		[registries.buildings, metadata],
+	);
+	const developmentMetadataLookup = useMemo(
+		() =>
+			buildRegistryMetadata(
+				registries.developments,
+				extractDescriptorRecord(metadata, 'developments'),
+			),
+		[registries.developments, metadata],
+	);
+	const statMetadataLookup = useMemo(
+		() => buildStatMetadata(extractDescriptorRecord(metadata, 'stats')),
+		[metadata],
+	);
+	const phaseMetadataLookup = useMemo(
+		() => buildPhaseMetadata(extractPhaseRecord(metadata)),
+		[metadata],
+	);
+	const triggerMetadataLookup = useMemo(
+		() => buildTriggerMetadata(extractTriggerRecord(metadata)),
+		[metadata],
+	);
+	const assetDescriptors = useMemo(
+		() => extractDescriptorRecord(metadata, 'assets'),
+		[metadata],
+	);
+	const landDescriptor = useMemo(
+		() =>
+			resolveAssetDescriptor(
+				'land',
+				assetDescriptors?.land,
+				DEFAULT_LAND_DESCRIPTOR,
+			),
+		[assetDescriptors],
+	);
+	const slotDescriptor = useMemo(
+		() =>
+			resolveAssetDescriptor(
+				'slot',
+				assetDescriptors?.slot,
+				DEFAULT_SLOT_DESCRIPTOR,
+			),
+		[assetDescriptors],
+	);
+	const passiveDescriptor = useMemo(
+		() =>
+			resolveAssetDescriptor(
+				'passive',
+				assetDescriptors?.passive,
+				DEFAULT_PASSIVE_DESCRIPTOR,
+			),
+		[assetDescriptors],
+	);
+	const resourceMetadata = useMemo(
+		() => createMetadataSelector(resourceMetadataLookup),
+		[resourceMetadataLookup],
+	);
+	const populationMetadata = useMemo(
+		() => createMetadataSelector(populationMetadataLookup),
+		[populationMetadataLookup],
+	);
+	const buildingMetadata = useMemo(
+		() => createMetadataSelector(buildingMetadataLookup),
+		[buildingMetadataLookup],
+	);
+	const developmentMetadata = useMemo(
+		() => createMetadataSelector(developmentMetadataLookup),
+		[developmentMetadataLookup],
+	);
+	const statMetadata = useMemo(
+		() => createMetadataSelector(statMetadataLookup),
+		[statMetadataLookup],
+	);
+	const phaseMetadata = useMemo(
+		() => createMetadataSelector(phaseMetadataLookup),
+		[phaseMetadataLookup],
+	);
+	const triggerMetadata = useMemo(
+		() => createMetadataSelector(triggerMetadataLookup),
+		[triggerMetadataLookup],
+	);
+	const landMetadata = useMemo(
+		() => createAssetMetadataSelector(landDescriptor),
+		[landDescriptor],
+	);
+	const slotMetadata = useMemo(
+		() => createAssetMetadataSelector(slotDescriptor),
+		[slotDescriptor],
+	);
+	const passiveMetadata = useMemo(
+		() => createAssetMetadataSelector(passiveDescriptor),
+		[passiveDescriptor],
 	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
@@ -123,8 +218,47 @@ export function RegistryMetadataProvider({
 				buildings: buildingLookup,
 				developments: developmentLookup,
 				populations: populationLookup,
+				resourceMetadataLookup,
+				populationMetadataLookup,
+				buildingMetadataLookup,
+				developmentMetadataLookup,
+				statMetadataLookup,
+				phaseMetadataLookup,
+				triggerMetadataLookup,
+				resourceMetadata,
+				populationMetadata,
+				buildingMetadata,
+				developmentMetadata,
+				statMetadata,
+				phaseMetadata,
+				triggerMetadata,
+				landMetadata,
+				slotMetadata,
+				passiveMetadata,
 			}),
-		[resourceLookup, buildingLookup, developmentLookup, populationLookup],
+		[
+			resourceLookup,
+			buildingLookup,
+			developmentLookup,
+			populationLookup,
+			resourceMetadataLookup,
+			populationMetadataLookup,
+			buildingMetadataLookup,
+			developmentMetadataLookup,
+			statMetadataLookup,
+			phaseMetadataLookup,
+			triggerMetadataLookup,
+			resourceMetadata,
+			populationMetadata,
+			buildingMetadata,
+			developmentMetadata,
+			statMetadata,
+			phaseMetadata,
+			triggerMetadata,
+			landMetadata,
+			slotMetadata,
+			passiveMetadata,
+		],
 	);
 	return (
 		<RegistryMetadataContext.Provider value={value}>
@@ -142,3 +276,47 @@ export function useRegistryMetadata(): RegistryMetadataContextValue {
 	}
 	return value;
 }
+
+export const useResourceMetadata =
+	(): MetadataSelector<RegistryMetadataDescriptor> =>
+		useRegistryMetadata().resourceMetadata;
+
+export const usePopulationMetadata =
+	(): MetadataSelector<RegistryMetadataDescriptor> =>
+		useRegistryMetadata().populationMetadata;
+
+export const useBuildingMetadata =
+	(): MetadataSelector<RegistryMetadataDescriptor> =>
+		useRegistryMetadata().buildingMetadata;
+
+export const useDevelopmentMetadata =
+	(): MetadataSelector<RegistryMetadataDescriptor> =>
+		useRegistryMetadata().developmentMetadata;
+
+export const useStatMetadata =
+	(): MetadataSelector<RegistryMetadataDescriptor> =>
+		useRegistryMetadata().statMetadata;
+
+export const usePhaseMetadata = (): MetadataSelector<PhaseMetadata> =>
+	useRegistryMetadata().phaseMetadata;
+
+export const useTriggerMetadata = (): MetadataSelector<TriggerMetadata> =>
+	useRegistryMetadata().triggerMetadata;
+
+export const useLandMetadata = (): AssetMetadataSelector =>
+	useRegistryMetadata().landMetadata;
+
+export const useSlotMetadata = (): AssetMetadataSelector =>
+	useRegistryMetadata().slotMetadata;
+
+export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
+	useRegistryMetadata().passiveMetadata;
+
+export type {
+	RegistryMetadataDescriptor,
+	TriggerMetadata,
+	PhaseMetadata,
+	MetadataLookup,
+} from './registryMetadataDescriptors';
+export type { DefinitionLookup } from './registryMetadataLookups';
+export type { AssetMetadata } from './registryMetadataDescriptors';
