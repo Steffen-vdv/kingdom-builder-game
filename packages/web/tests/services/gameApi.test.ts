@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
@@ -7,6 +7,7 @@ import type {
 import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
+	SessionCreateResponse,
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
@@ -105,6 +106,17 @@ const createStateResponse = (
 	sessionId,
 	snapshot: createSnapshot(snapshotOverrides),
 	registries: createSessionRegistriesPayload(),
+});
+
+const createAdvanceResponse = (sessionId: string): SessionAdvanceResponse => ({
+	sessionId,
+	snapshot: createSnapshot(),
+	advance: {
+		phase: 'phase-0',
+		step: 'step-0',
+		effects: [],
+		player: createPlayerSnapshot('A'),
+	},
 });
 
 describe('createGameApi', () => {
@@ -222,19 +234,6 @@ describe('createGameApiMock', () => {
 });
 
 describe('GameApiFake', () => {
-	const createAdvanceResponse = (
-		sessionId: string,
-	): SessionAdvanceResponse => ({
-		sessionId,
-		snapshot: createSnapshot(),
-		advance: {
-			phase: 'phase-0',
-			step: 'step-0',
-			effects: [],
-			player: createPlayerSnapshot('A'),
-		},
-	});
-
 	it('returns primed responses', async () => {
 		const fake = new GameApiFake();
 		const createResponse = createStateResponse('session-fake');
@@ -291,5 +290,142 @@ describe('GameApiFake', () => {
 		await expect(fake.fetchSnapshot('missing')).rejects.toBeInstanceOf(
 			GameApiError,
 		);
+	});
+});
+
+describe('GameApiFake without structuredClone', () => {
+	const globalTarget = globalThis as {
+		structuredClone?: typeof structuredClone;
+	};
+	let originalStructuredClone: typeof structuredClone | undefined;
+
+	const withStructuredClone = <T>(factory: () => T): T => {
+		if (originalStructuredClone) {
+			globalTarget.structuredClone = originalStructuredClone;
+		}
+
+		try {
+			return factory();
+		} finally {
+			delete globalTarget.structuredClone;
+		}
+	};
+
+	beforeAll(() => {
+		originalStructuredClone = globalTarget.structuredClone;
+		delete globalTarget.structuredClone;
+	});
+
+	afterAll(() => {
+		if (originalStructuredClone) {
+			globalTarget.structuredClone = originalStructuredClone;
+		} else {
+			delete globalTarget.structuredClone;
+		}
+	});
+
+	it('isolates primed sessions from external mutations', async () => {
+		const fake = new GameApiFake();
+		const session = withStructuredClone(() =>
+			createStateResponse('session-primed'),
+		);
+		fake.primeSession(session);
+
+		const fetched = await fake.fetchSnapshot('session-primed');
+		const mutableFetched = fetched as Mutable<SessionStateResponse>;
+		const mutableGame = mutableFetched.snapshot.game as Mutable<
+			SessionSnapshot['game']
+		>;
+		mutableGame.turn = 99;
+
+		const refetched = await fake.fetchSnapshot('session-primed');
+		expect(refetched.snapshot.game.turn).toBe(session.snapshot.game.turn);
+		expect(refetched.snapshot.game.turn).not.toBe(99);
+	});
+
+	it('isolates createSession responses from stored state', async () => {
+		const fake = new GameApiFake();
+		const createResponse = withStructuredClone(() =>
+			createStateResponse('session-create'),
+		);
+		const mutableCreate = createResponse as Mutable<SessionStateResponse>;
+		const mutableCreateGame = mutableCreate.snapshot.game as Mutable<
+			SessionSnapshot['game']
+		>;
+		mutableCreateGame.turn = 5;
+		fake.setNextCreateResponse(createResponse);
+
+		const response = await fake.createSession();
+		const mutableResponse = response as Mutable<SessionCreateResponse>;
+		const mutableResponseGame = mutableResponse.snapshot.game as Mutable<
+			SessionSnapshot['game']
+		>;
+		mutableResponseGame.turn = 42;
+
+		const stored = await fake.fetchSnapshot('session-create');
+		expect(stored.snapshot.game.turn).toBe(5);
+		expect(stored.snapshot.game.turn).not.toBe(42);
+	});
+
+	it('isolates advancePhase responses from stored state', async () => {
+		const fake = new GameApiFake();
+		const primed = withStructuredClone(() =>
+			createStateResponse('session-advance'),
+		);
+		fake.primeSession(primed);
+		const advanceResponse = createAdvanceResponse('session-advance');
+		const mutableAdvance = advanceResponse as Mutable<SessionAdvanceResponse>;
+		const mutableAdvanceGame = mutableAdvance.snapshot.game as Mutable<
+			SessionSnapshot['game']
+		>;
+		mutableAdvanceGame.turn = 7;
+		fake.setNextAdvanceResponse(advanceResponse);
+
+		const response = await fake.advancePhase({
+			sessionId: 'session-advance',
+		});
+		const mutableResponse = response as Mutable<SessionAdvanceResponse>;
+		const mutableResponseGame = mutableResponse.snapshot.game as Mutable<
+			SessionSnapshot['game']
+		>;
+		mutableResponseGame.turn = 11;
+
+		const stored = await fake.fetchSnapshot('session-advance');
+		expect(stored.snapshot.game.turn).toBe(7);
+		expect(stored.snapshot.game.turn).not.toBe(11);
+	});
+
+	it('isolates performAction responses from stored state', async () => {
+		const fake = new GameApiFake();
+		const primed = withStructuredClone(() =>
+			createStateResponse('session-action'),
+		);
+		fake.primeSession(primed);
+		const actionResponse: ActionExecuteSuccessResponse = {
+			status: 'success',
+			snapshot: createSnapshot({
+				game: {
+					...createSnapshot().game,
+					turn: 3,
+				} as Mutable<SessionSnapshot['game']>,
+			}),
+			costs: {},
+			traces: [],
+		};
+		fake.setNextActionResponse(actionResponse);
+
+		const response = await fake.performAction({
+			sessionId: 'session-action',
+			actionId: 'action.test',
+		});
+		const mutableResponse = response as Mutable<ActionExecuteSuccessResponse>;
+		const mutableResponseGame = mutableResponse.snapshot.game as Mutable<
+			SessionSnapshot['game']
+		>;
+		mutableResponseGame.turn = 21;
+
+		const stored = await fake.fetchSnapshot('session-action');
+		expect(stored.snapshot.game.turn).toBe(3);
+		expect(stored.snapshot.game.turn).not.toBe(21);
 	});
 });
