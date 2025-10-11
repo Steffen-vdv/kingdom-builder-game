@@ -1,4 +1,21 @@
 import React from 'react';
+import {
+	createActionRegistry,
+	createBuildingRegistry,
+	createDevelopmentRegistry,
+	createPopulationRegistry,
+	LAND_INFO,
+	PASSIVE_INFO,
+	PHASES,
+	POPULATION_ROLES,
+	RESOURCES,
+	SLOT_INFO,
+	STATS,
+} from '@kingdom-builder/contents';
+import type {
+	SessionResourceDefinition,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import Button from './components/common/Button';
 import {
 	ShowcaseBackground,
@@ -20,7 +37,12 @@ import { createOverviewSections } from './components/overview/sectionsData';
 import type { OverviewContentSection } from './components/overview/sectionsData';
 import type { OverviewTokenConfig } from './components/overview/overviewTokens';
 import { createOverviewTokenSources } from './components/overview/overviewTokenUtils';
-import { useRegistryMetadata } from './contexts/RegistryMetadataContext';
+import {
+	RegistryMetadataProvider,
+	useOptionalRegistryMetadata,
+	useRegistryMetadata,
+} from './contexts/RegistryMetadataContext';
+import type { SessionRegistries } from './state/sessionRegistries';
 
 export type { OverviewTokenConfig } from './components/overview/overviewTokens';
 
@@ -30,11 +52,116 @@ export interface OverviewProps {
 	content?: OverviewContentSection[];
 }
 
-export default function Overview({
-	onBack,
-	tokenConfig,
-	content,
-}: OverviewProps) {
+const FALLBACK_RESOURCES: Readonly<Record<string, SessionResourceDefinition>> =
+	Object.freeze(
+		Object.fromEntries(
+			Object.entries(RESOURCES).map(([key, resource]) => {
+				const definition: SessionResourceDefinition = { key: resource.key };
+				if (resource.icon) {
+					definition.icon = resource.icon;
+				}
+				if (resource.label) {
+					definition.label = resource.label;
+				}
+				if (resource.description) {
+					definition.description = resource.description;
+				}
+				if (resource.tags && resource.tags.length > 0) {
+					definition.tags = [...resource.tags];
+				}
+				return [key, Object.freeze(definition)] as const;
+			}),
+		),
+	);
+
+type MetadataDescriptor = {
+	label?: string;
+	icon?: string;
+	description?: string;
+};
+
+type InfoRecord<TValue extends MetadataDescriptor> = Record<string, TValue>;
+
+const mapInfoRecord = <TValue extends MetadataDescriptor>(
+	record: InfoRecord<TValue>,
+) =>
+	Object.freeze(
+		Object.fromEntries(
+			Object.entries(record).map(([key, value]) => {
+				const descriptor: MetadataDescriptor = {};
+				if (value.label) {
+					descriptor.label = value.label;
+				}
+				if (value.icon) {
+					descriptor.icon = value.icon;
+				}
+				if (value.description) {
+					descriptor.description = value.description;
+				}
+				return [key, Object.freeze(descriptor)] as const;
+			}),
+		),
+	);
+
+const FALLBACK_PHASE_METADATA = Object.freeze(
+	Object.fromEntries(
+		PHASES.map((phase) => {
+			const steps = Object.freeze(
+				(phase.steps ?? []).map((step) => {
+					const descriptor: Record<string, unknown> = { id: step.id };
+					if (step.title) {
+						descriptor.title = step.title;
+					}
+					if (step.icon) {
+						descriptor.icon = step.icon;
+					}
+					if (step.triggers) {
+						descriptor.triggers = [...step.triggers];
+					}
+					return Object.freeze(descriptor);
+				}),
+			);
+			const entry: Record<string, unknown> = {
+				label: phase.label ?? phase.id,
+				action: Boolean(phase.action),
+				steps,
+			};
+			if (phase.icon) {
+				entry.icon = phase.icon;
+			}
+			return [phase.id, Object.freeze(entry)] as const;
+		}),
+	),
+) as NonNullable<SessionSnapshotMetadata['phases']>;
+
+const FALLBACK_METADATA: SessionSnapshotMetadata = Object.freeze({
+	passiveEvaluationModifiers: {},
+	resources: mapInfoRecord(RESOURCES),
+	populations: mapInfoRecord(POPULATION_ROLES),
+	buildings: {},
+	developments: {},
+	stats: mapInfoRecord(STATS),
+	phases: FALLBACK_PHASE_METADATA,
+	triggers: {},
+	assets: Object.freeze({
+		land: Object.freeze({ label: LAND_INFO.label, icon: LAND_INFO.icon }),
+		slot: Object.freeze({ label: SLOT_INFO.label, icon: SLOT_INFO.icon }),
+		passive: Object.freeze({
+			label: PASSIVE_INFO.label,
+			icon: PASSIVE_INFO.icon,
+		}),
+	}),
+}) as SessionSnapshotMetadata;
+
+const FALLBACK_REGISTRIES: SessionRegistries = Object.freeze({
+	actions: createActionRegistry(),
+	buildings: createBuildingRegistry(),
+	developments: createDevelopmentRegistry(),
+	populations: createPopulationRegistry(),
+	resources: FALLBACK_RESOURCES,
+});
+
+function OverviewContent({ onBack, tokenConfig, content }: OverviewProps) {
 	const {
 		overviewContent,
 		actions,
@@ -156,5 +283,21 @@ export default function Overview({
 				</Button>
 			</ShowcaseLayout>
 		</ShowcaseBackground>
+	);
+}
+
+export default function Overview(props: OverviewProps) {
+	const registryMetadata = useOptionalRegistryMetadata();
+	if (registryMetadata) {
+		return <OverviewContent {...props} />;
+	}
+
+	return (
+		<RegistryMetadataProvider
+			registries={FALLBACK_REGISTRIES}
+			metadata={FALLBACK_METADATA}
+		>
+			<OverviewContent {...props} />
+		</RegistryMetadataProvider>
 	);
 }

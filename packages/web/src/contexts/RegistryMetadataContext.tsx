@@ -293,6 +293,10 @@ export function useRegistryMetadata(): RegistryMetadataContextValue {
 	return value;
 }
 
+export const useOptionalRegistryMetadata =
+	(): RegistryMetadataContextValue | null =>
+		useContext(RegistryMetadataContext);
+
 export const useResourceMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().resourceMetadata;
