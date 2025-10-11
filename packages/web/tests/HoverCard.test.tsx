@@ -362,6 +362,7 @@ describe('<HoverCard />', () => {
 			buildings: factory.buildings,
 			developments: factory.developments,
 			passives: { evaluationMods: new Map(), get: () => undefined },
+			assets: mockGame.translationContext.assets,
 		});
 		const formatted = formatPhaseResolution({
 			advance,

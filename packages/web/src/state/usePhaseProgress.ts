@@ -35,7 +35,7 @@ export interface PhaseProgressState {
 
 function computePhaseState(
 	snapshot: SessionSnapshot,
-	actionCostResource: ResourceKey,
+	actionCostResource: SessionResourceKey,
 	overrides: Partial<PhaseProgressState> = {},
 ): PhaseProgressState {
 	const currentPhaseId = snapshot.game.currentPhase;
@@ -91,17 +91,6 @@ export function usePhaseProgress({
 		[applyPhaseSnapshot, session],
 	);
 
-	const { mainApStart, setMainApStart, updateMainPhaseStep } =
-		useMainPhaseTracker({
-			session,
-			actionCostResource,
-			actionPhaseId,
-			setPhaseSteps,
-			setPhaseHistories,
-			setDisplayPhase,
-			resources: registries.resources,
-		});
-
 	useEffect(() => {
 		setPhaseState((previous) => {
 			if (previous.isAdvancing) {
@@ -130,8 +119,6 @@ export function usePhaseProgress({
 			refresh,
 			resourceKeys,
 			registries,
-			runDelay,
-			runStepDelay,
 			session,
 			sessionId,
 			showResolution,
