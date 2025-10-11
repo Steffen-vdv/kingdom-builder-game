@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
@@ -35,7 +35,6 @@ const ctx = createEngine({
 const actionCostResource = ctx.actionCostResource;
 const engineSnapshot = snapshotEngine(ctx);
 const sessionRegistries = createSessionRegistries();
-const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 const translationContext = createTranslationContext(
 	engineSnapshot,
 	sessionRegistries,
@@ -45,14 +44,61 @@ const translationContext = createTranslationContext(
 		passiveRecords: engineSnapshot.passiveRecords,
 	},
 );
-const mockGame = {
+
+type MockGame = {
+	session: EngineSession;
+	sessionState: typeof engineSnapshot;
+	sessionView: ReturnType<typeof selectSessionView>;
+	translationContext: typeof translationContext;
+	ruleSnapshot: typeof engineSnapshot.rules;
+	log: unknown[];
+	logOverflowed: boolean;
+	hoverCard: null;
+	handleHoverCard: ReturnType<typeof vi.fn>;
+	clearHoverCard: ReturnType<typeof vi.fn>;
+	phaseSteps: unknown[];
+	setPhaseSteps: ReturnType<typeof vi.fn>;
+	phaseTimer: number;
+	mainApStart: number;
+	displayPhase: string;
+	setDisplayPhase: ReturnType<typeof vi.fn>;
+	phaseHistories: Record<string, unknown[]>;
+	tabsEnabled: boolean;
+	actionCostResource: string;
+	handlePerform: ReturnType<typeof vi.fn>;
+	runUntilActionPhase: ReturnType<typeof vi.fn>;
+	handleEndTurn: ReturnType<typeof vi.fn>;
+	updateMainPhaseStep: ReturnType<typeof vi.fn>;
+	darkMode: boolean;
+	onToggleDark: ReturnType<typeof vi.fn>;
+	resolution: null;
+	showResolution: ReturnType<typeof vi.fn>;
+	acknowledgeResolution: ReturnType<typeof vi.fn>;
+	musicEnabled: boolean;
+	onToggleMusic: ReturnType<typeof vi.fn>;
+	soundEnabled: boolean;
+	onToggleSound: ReturnType<typeof vi.fn>;
+	backgroundAudioMuted: boolean;
+	onToggleBackgroundAudioMute: ReturnType<typeof vi.fn>;
+	timeScale: number;
+	setTimeScale: ReturnType<typeof vi.fn>;
+	toasts: unknown[];
+	pushToast: ReturnType<typeof vi.fn>;
+	pushErrorToast: ReturnType<typeof vi.fn>;
+	pushSuccessToast: ReturnType<typeof vi.fn>;
+	dismissToast: ReturnType<typeof vi.fn>;
+	playerName: string;
+	onChangePlayerName: ReturnType<typeof vi.fn>;
+};
+
+const mockGame: MockGame = {
 	session: {
 		getActionCosts: vi.fn(),
 		getActionRequirements: vi.fn(),
 		getActionOptions: vi.fn(),
 	} as unknown as EngineSession,
 	sessionState: engineSnapshot,
-	sessionView,
+	sessionView: selectSessionView(engineSnapshot, sessionRegistries),
 	translationContext,
 	ruleSnapshot: engineSnapshot.rules,
 	log: [],
@@ -99,36 +145,74 @@ vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
 }));
 
-beforeAll(() => {
-	Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
-		value: vi.fn(),
-		writable: true,
-	});
+afterEach(() => {
+	cleanup();
 });
 
+function prepareSessionState({
+	actionPoints,
+	tabsEnabled,
+}: {
+	actionPoints: number;
+	tabsEnabled: boolean;
+}) {
+	const sessionState = structuredClone(engineSnapshot);
+	const actionPhase = sessionState.phases.find((phase) => phase.action);
+	if (actionPhase) {
+		sessionState.game.currentPhase = actionPhase.id;
+	}
+	const activePlayer = sessionState.game.players.find(
+		(player) => player.id === sessionState.game.activePlayerId,
+	);
+	if (activePlayer) {
+		activePlayer.resources[actionCostResource] = actionPoints;
+	}
+	delete sessionState.game.conclusion;
+	mockGame.sessionState = sessionState;
+	mockGame.sessionView = selectSessionView(sessionState, sessionRegistries);
+	mockGame.displayPhase = sessionState.game.currentPhase;
+	mockGame.tabsEnabled = tabsEnabled;
+}
+
 describe('<PhasePanel />', () => {
-	it('displays current turn and phases', () => {
+	beforeEach(() => {
+		mockGame.handleEndTurn.mockClear();
+	});
+
+	it('displays the current turn, active player, and phase badge', () => {
+		prepareSessionState({ actionPoints: 0, tabsEnabled: true });
 		render(<PhasePanel />);
-		const turnText = `Turn ${engineSnapshot.game.turn}`;
-		const turnElement = screen.getByText(turnText);
-		const turnContainer = turnElement.closest('div');
-		expect(turnContainer).toBeTruthy();
-		if (turnContainer) {
-			expect(
-				within(turnContainer).getByText(
-					sessionView.active?.name ??
-						engineSnapshot.game.players[0]?.name ??
-						'Player',
-				),
-			).toBeInTheDocument();
-		}
-		const firstPhase = engineSnapshot.phases[0];
-		const firstPhaseButton = screen.getByRole('button', {
-			name: firstPhase.label,
-		});
-		expect(firstPhaseButton).toBeInTheDocument();
+		const turnText = `Turn ${mockGame.sessionState.game.turn}`;
+		expect(screen.getByText(turnText)).toBeInTheDocument();
+		expect(screen.getByLabelText('Active player')).toHaveTextContent(
+			mockGame.sessionView.active?.name ??
+				mockGame.sessionState.game.players[0]?.name ??
+				'Player',
+		);
+		const phaseBadge = screen.getByLabelText('Current phase');
+		expect(phaseBadge).toHaveTextContent(
+			mockGame.sessionState.phases.find(
+				(phase) => phase.id === mockGame.sessionState.game.currentPhase,
+			)?.label ?? mockGame.sessionState.game.currentPhase,
+		);
+	});
+
+	it('disables the Next Turn button when actions remain', () => {
+		prepareSessionState({ actionPoints: 2, tabsEnabled: true });
+		render(<PhasePanel />);
 		expect(
-			within(firstPhaseButton).getByText(firstPhase.icon),
-		).toBeInTheDocument();
+			screen.getByRole('button', { name: 'Advance to the next turn' }),
+		).toBeDisabled();
+	});
+
+	it('enables advancing the turn once actions are spent', () => {
+		prepareSessionState({ actionPoints: 0, tabsEnabled: true });
+		render(<PhasePanel />);
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Advance to the next turn',
+		});
+		expect(nextTurnButton).toBeEnabled();
+		fireEvent.click(nextTurnButton);
+		expect(mockGame.handleEndTurn).toHaveBeenCalledTimes(1);
 	});
 });
