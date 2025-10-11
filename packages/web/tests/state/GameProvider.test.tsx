@@ -174,6 +174,7 @@ describe('GameProvider', () => {
 		acknowledgeResolutionMock.mockReset();
 		handlePerformMock.mockReset();
 		capturedPhaseOptions = undefined;
+		runUntilActionPhaseMock.mockResolvedValue(undefined);
 
 		const [resourceKey] = createResourceKeys();
 		if (!resourceKey) {
@@ -342,5 +343,30 @@ describe('GameProvider', () => {
 		await waitFor(() =>
 			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
 		);
+	});
+
+	it('shows the fatal error screen when action phase sync fails', async () => {
+		const fatalError = new Error('session exploded');
+		runUntilActionPhaseMock.mockRejectedValueOnce(fatalError);
+
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
+
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+
+		expect(
+			screen.getByText('An unexpected error prevented the game from loading.'),
+		).toBeInTheDocument();
 	});
 });

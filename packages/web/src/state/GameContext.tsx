@@ -131,6 +131,19 @@ export function GameProvider(props: ProviderProps) {
 		});
 	}, [releaseCurrentSession, runExclusive]);
 
+	const handleFatalSessionError = useCallback(
+		(error: unknown) => {
+			void runExclusive(() => {
+				releaseCurrentSession();
+				if (!mountedRef.current) {
+					return;
+				}
+				setSessionError(formatFailureDetails(error));
+			});
+		},
+		[runExclusive, releaseCurrentSession],
+	);
+
 	useEffect(
 		() => () => {
 			mountedRef.current = false;
@@ -285,6 +298,7 @@ export function GameProvider(props: ProviderProps) {
 		ruleSnapshot: sessionData.ruleSnapshot,
 		refreshSession,
 		onReleaseSession: handleRelease,
+		onFatalSessionError: handleFatalSessionError,
 		registries: sessionData.registries,
 		resourceKeys: sessionData.resourceKeys,
 		sessionMetadata: sessionData.metadata,
