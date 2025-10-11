@@ -6,6 +6,11 @@ import BackgroundMusic from './components/audio/BackgroundMusic';
 import { useAppNavigation } from './state/useAppNavigation';
 import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
+import { RegistryMetadataProvider } from './contexts/RegistryMetadataContext';
+import {
+	DEFAULT_REGISTRIES,
+	DEFAULT_REGISTRY_METADATA,
+} from './contexts/defaultRegistryMetadata';
 
 export default function App() {
 	const {
@@ -31,7 +36,14 @@ export default function App() {
 	let screen: JSX.Element;
 	switch (currentScreen) {
 		case Screen.Overview:
-			screen = <Overview onBack={returnToMenu} />;
+			screen = (
+				<RegistryMetadataProvider
+					registries={DEFAULT_REGISTRIES}
+					metadata={DEFAULT_REGISTRY_METADATA}
+				>
+					<Overview onBack={returnToMenu} />
+				</RegistryMetadataProvider>
+			);
 			break;
 		case Screen.Tutorial:
 			screen = <Tutorial onBack={returnToMenu} />;
