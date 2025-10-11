@@ -14,8 +14,8 @@ import { createTestEngine } from '../helpers.ts';
 
 describe('stat:add effect', () => {
 	it('increments a stat via action effect', () => {
-		const actions = createActionRegistry();
-		actions.add('train_army', {
+		const actionRegistry = createActionRegistry();
+		actionRegistry.add('train_army', {
 			id: 'train_army',
 			name: 'Train Army',
 			baseCosts: { [CResource.ap]: 0 },
@@ -27,20 +27,22 @@ describe('stat:add effect', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
-		const before = ctx.activePlayer.armyStrength;
-		const actionDefinition = actions.get('train_army');
-		const amount = actionDefinition.effects.find(
+		const engineContext = createTestEngine({ actions: actionRegistry });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
+		const armyStrengthBefore = engineContext.activePlayer.armyStrength;
+		const trainingActionDefinition = actionRegistry.get('train_army');
+		const armyStrengthIncrease = trainingActionDefinition.effects.find(
 			(effect) =>
 				effect.type === 'stat' &&
 				effect.method === 'add' &&
 				effect.params?.key === CStat.armyStrength,
 		)?.params?.amount as number;
-		const costs = getActionCosts('train_army', ctx);
-		ctx.activePlayer.ap = costs[Resource.ap] ?? 0;
-		performAction('train_army', ctx);
-		expect(ctx.activePlayer.armyStrength).toBe(before + amount);
+		const actionCosts = getActionCosts('train_army', engineContext);
+		engineContext.activePlayer.ap = actionCosts[Resource.ap] ?? 0;
+		performAction('train_army', engineContext);
+		expect(engineContext.activePlayer.armyStrength).toBe(
+			armyStrengthBefore + armyStrengthIncrease,
+		);
 	});
 });

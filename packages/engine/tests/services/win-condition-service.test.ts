@@ -25,17 +25,25 @@ describe('WinConditionService', () => {
 			},
 			result: { subject: 'victory', opponent: 'defeat' },
 		};
-		const ctx = createTestEngine({
+		const engineContext = createTestEngine({
 			rules: createRulesWithWinConditions([winCondition]),
 		});
-		const subject = ctx.game.players[0]!;
-		const opponent = ctx.game.players[1]!;
+		const subject = engineContext.game.players[0]!;
+		const opponent = engineContext.game.players[1]!;
 		subject.resources[resourceKey] = 4;
-		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
-		expect(ctx.game.conclusion).toBeUndefined();
+		engineContext.services.winCondition.evaluateResourceChange(
+			engineContext,
+			subject,
+			resourceKey,
+		);
+		expect(engineContext.game.conclusion).toBeUndefined();
 		subject.resources[resourceKey] = 5;
-		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
-		expect(ctx.game.conclusion).toEqual({
+		engineContext.services.winCondition.evaluateResourceChange(
+			engineContext,
+			subject,
+			resourceKey,
+		);
+		expect(engineContext.game.conclusion).toEqual({
 			conditionId: winCondition.id,
 			winnerId: subject.id,
 			loserId: opponent.id,
@@ -56,17 +64,25 @@ describe('WinConditionService', () => {
 			},
 			result: { subject: 'defeat', opponent: 'victory' },
 		};
-		const ctx = createTestEngine({
+		const engineContext = createTestEngine({
 			rules: createRulesWithWinConditions([winCondition]),
 		});
-		const subject = ctx.game.players[0]!;
-		const opponent = ctx.game.players[1]!;
+		const subject = engineContext.game.players[0]!;
+		const opponent = engineContext.game.players[1]!;
 		opponent.resources[resourceKey] = 5;
-		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
-		expect(ctx.game.conclusion).toBeUndefined();
+		engineContext.services.winCondition.evaluateResourceChange(
+			engineContext,
+			subject,
+			resourceKey,
+		);
+		expect(engineContext.game.conclusion).toBeUndefined();
 		opponent.resources[resourceKey] = 1;
-		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
-		expect(ctx.game.conclusion).toEqual({
+		engineContext.services.winCondition.evaluateResourceChange(
+			engineContext,
+			subject,
+			resourceKey,
+		);
+		expect(engineContext.game.conclusion).toEqual({
 			conditionId: winCondition.id,
 			winnerId: opponent.id,
 			loserId: subject.id,
@@ -87,21 +103,25 @@ describe('WinConditionService', () => {
 			},
 			result: { subject: 'victory', opponent: 'defeat' },
 		};
-		const ctx = createTestEngine({
+		const engineContext = createTestEngine({
 			rules: createRulesWithWinConditions([winCondition]),
 		});
-		const subject = ctx.game.players[0]!;
-		const opponent = ctx.game.players[1]!;
+		const subject = engineContext.game.players[0]!;
+		const opponent = engineContext.game.players[1]!;
 		const existingConclusion = {
 			conditionId: randomUUID(),
 			winnerId: opponent.id,
 			loserId: subject.id,
 			triggeredBy: opponent.id,
 		};
-		ctx.game.conclusion = { ...existingConclusion };
+		engineContext.game.conclusion = { ...existingConclusion };
 		subject.resources[resourceKey] = 10;
-		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
-		expect(ctx.game.conclusion).toEqual(existingConclusion);
+		engineContext.services.winCondition.evaluateResourceChange(
+			engineContext,
+			subject,
+			resourceKey,
+		);
+		expect(engineContext.game.conclusion).toEqual(existingConclusion);
 	});
 
 	it('clones win conditions without sharing definition references', () => {
@@ -117,18 +137,22 @@ describe('WinConditionService', () => {
 			},
 			result: { subject: 'victory', opponent: 'defeat' },
 		};
-		const ctx = createTestEngine({
+		const engineContext = createTestEngine({
 			rules: createRulesWithWinConditions([winCondition]),
 		});
-		const subject = ctx.game.players[0]!;
-		const opponent = ctx.game.players[1]!;
-		const clone = ctx.services.winCondition.clone();
+		const subject = engineContext.game.players[0]!;
+		const opponent = engineContext.game.players[1]!;
+		const clone = engineContext.services.winCondition.clone();
 		(
 			clone as unknown as { definitions: WinConditionDefinition[] }
 		).definitions[0]!.trigger.value = 100;
 		subject.resources[resourceKey] = winCondition.trigger.value;
-		ctx.services.winCondition.evaluateResourceChange(ctx, subject, resourceKey);
-		expect(ctx.game.conclusion).toEqual({
+		engineContext.services.winCondition.evaluateResourceChange(
+			engineContext,
+			subject,
+			resourceKey,
+		);
+		expect(engineContext.game.conclusion).toEqual({
 			conditionId: winCondition.id,
 			winnerId: subject.id,
 			loserId: opponent.id,
