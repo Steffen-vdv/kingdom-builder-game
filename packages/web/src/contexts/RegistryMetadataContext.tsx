@@ -3,11 +3,16 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
+	ActionConfig,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
+import {
+	OVERVIEW_CONTENT,
+	type OverviewContentTemplate,
+} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -41,6 +46,7 @@ import {
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
+	actions: DefinitionLookup<ActionConfig>;
 	buildings: DefinitionLookup<BuildingConfig>;
 	developments: DefinitionLookup<DevelopmentConfig>;
 	populations: DefinitionLookup<PopulationConfig>;
@@ -61,12 +67,13 @@ export interface RegistryMetadataContextValue {
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
+	overviewContent: OverviewContentTemplate;
 }
 
 interface RegistryMetadataProviderProps {
 	registries: Pick<
 		SessionRegistries,
-		'resources' | 'buildings' | 'developments' | 'populations'
+		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
 	>;
 	metadata: SessionSnapshotMetadata;
 	children: React.ReactNode;
@@ -83,6 +90,10 @@ export function RegistryMetadataProvider({
 	const resourceLookup = useMemo(
 		() => createResourceLookup(registries.resources),
 		[registries.resources],
+	);
+	const actionLookup = useMemo(
+		() => createRegistryLookup(registries.actions, 'action'),
+		[registries.actions],
 	);
 	const buildingLookup = useMemo(
 		() => createRegistryLookup(registries.buildings, 'building'),
@@ -211,10 +222,12 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
+	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
 				resources: resourceLookup,
+				actions: actionLookup,
 				buildings: buildingLookup,
 				developments: developmentLookup,
 				populations: populationLookup,
@@ -235,9 +248,11 @@ export function RegistryMetadataProvider({
 				landMetadata,
 				slotMetadata,
 				passiveMetadata,
+				overviewContent,
 			}),
 		[
 			resourceLookup,
+			actionLookup,
 			buildingLookup,
 			developmentLookup,
 			populationLookup,
@@ -258,6 +273,7 @@ export function RegistryMetadataProvider({
 			landMetadata,
 			slotMetadata,
 			passiveMetadata,
+			overviewContent,
 		],
 	);
 	return (
@@ -275,6 +291,12 @@ export function useRegistryMetadata(): RegistryMetadataContextValue {
 		);
 	}
 	return value;
+}
+
+type OptionalRegistryMetadataValue = RegistryMetadataContextValue | null;
+
+export function useOptionalRegistryMetadata(): OptionalRegistryMetadataValue {
+	return useContext(RegistryMetadataContext);
 }
 
 export const useResourceMetadata =
@@ -312,6 +334,9 @@ export const useSlotMetadata = (): AssetMetadataSelector =>
 export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().passiveMetadata;
 
+export const useOverviewContent = (): OverviewContentTemplate =>
+	useRegistryMetadata().overviewContent;
+
 export type {
 	RegistryMetadataDescriptor,
 	TriggerMetadata,
@@ -320,3 +345,7 @@ export type {
 } from './registryMetadataDescriptors';
 export type { DefinitionLookup } from './registryMetadataLookups';
 export type { AssetMetadata } from './registryMetadataDescriptors';
+export type {
+	AssetMetadataSelector,
+	MetadataSelector,
+} from './registryMetadataSelectors';
