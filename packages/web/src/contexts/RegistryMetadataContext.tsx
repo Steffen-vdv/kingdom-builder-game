@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import type {
+	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
@@ -40,10 +41,12 @@ import {
 } from './registryMetadataSelectors';
 
 export interface RegistryMetadataContextValue {
+	actions: DefinitionLookup<ActionConfig>;
 	resources: DefinitionLookup<SessionResourceDefinition>;
 	buildings: DefinitionLookup<BuildingConfig>;
 	developments: DefinitionLookup<DevelopmentConfig>;
 	populations: DefinitionLookup<PopulationConfig>;
+	actionMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	resourceMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	populationMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	buildingMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
@@ -51,6 +54,7 @@ export interface RegistryMetadataContextValue {
 	statMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	phaseMetadataLookup: MetadataLookup<PhaseMetadata>;
 	triggerMetadataLookup: MetadataLookup<TriggerMetadata>;
+	actionMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	populationMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	buildingMetadata: MetadataSelector<RegistryMetadataDescriptor>;
@@ -66,7 +70,7 @@ export interface RegistryMetadataContextValue {
 interface RegistryMetadataProviderProps {
 	registries: Pick<
 		SessionRegistries,
-		'resources' | 'buildings' | 'developments' | 'populations'
+		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
 	>;
 	metadata: SessionSnapshotMetadata;
 	children: React.ReactNode;
@@ -80,6 +84,10 @@ export function RegistryMetadataProvider({
 	metadata,
 	children,
 }: RegistryMetadataProviderProps) {
+	const actionLookup = useMemo(
+		() => createRegistryLookup(registries.actions, 'action'),
+		[registries.actions],
+	);
 	const resourceLookup = useMemo(
 		() => createResourceLookup(registries.resources),
 		[registries.resources],
@@ -95,6 +103,14 @@ export function RegistryMetadataProvider({
 	const populationLookup = useMemo(
 		() => createRegistryLookup(registries.populations, 'population'),
 		[registries.populations],
+	);
+	const actionMetadataLookup = useMemo(
+		() =>
+			buildRegistryMetadata(
+				registries.actions,
+				extractDescriptorRecord(metadata, 'actions'),
+			),
+		[registries.actions, metadata],
 	);
 	const resourceMetadataLookup = useMemo(
 		() =>
@@ -171,6 +187,10 @@ export function RegistryMetadataProvider({
 			),
 		[assetDescriptors],
 	);
+	const actionMetadata = useMemo(
+		() => createMetadataSelector(actionMetadataLookup),
+		[actionMetadataLookup],
+	);
 	const resourceMetadata = useMemo(
 		() => createMetadataSelector(resourceMetadataLookup),
 		[resourceMetadataLookup],
@@ -214,10 +234,12 @@ export function RegistryMetadataProvider({
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
+				actions: actionLookup,
 				resources: resourceLookup,
 				buildings: buildingLookup,
 				developments: developmentLookup,
 				populations: populationLookup,
+				actionMetadataLookup,
 				resourceMetadataLookup,
 				populationMetadataLookup,
 				buildingMetadataLookup,
@@ -225,6 +247,7 @@ export function RegistryMetadataProvider({
 				statMetadataLookup,
 				phaseMetadataLookup,
 				triggerMetadataLookup,
+				actionMetadata,
 				resourceMetadata,
 				populationMetadata,
 				buildingMetadata,
@@ -237,10 +260,12 @@ export function RegistryMetadataProvider({
 				passiveMetadata,
 			}),
 		[
+			actionLookup,
 			resourceLookup,
 			buildingLookup,
 			developmentLookup,
 			populationLookup,
+			actionMetadataLookup,
 			resourceMetadataLookup,
 			populationMetadataLookup,
 			buildingMetadataLookup,
@@ -248,6 +273,7 @@ export function RegistryMetadataProvider({
 			statMetadataLookup,
 			phaseMetadataLookup,
 			triggerMetadataLookup,
+			actionMetadata,
 			resourceMetadata,
 			populationMetadata,
 			buildingMetadata,
@@ -320,3 +346,4 @@ export type {
 } from './registryMetadataDescriptors';
 export type { DefinitionLookup } from './registryMetadataLookups';
 export type { AssetMetadata } from './registryMetadataDescriptors';
+export const useActionMetadata = () => useRegistryMetadata().actionMetadata;

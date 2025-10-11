@@ -1,5 +1,4 @@
 import React from 'react';
-import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 import Button from './components/common/Button';
 import {
 	ShowcaseBackground,
@@ -20,6 +19,13 @@ import type { OverviewSectionDef } from './components/overview/OverviewLayout';
 import { createOverviewSections } from './components/overview/sectionsData';
 import type { OverviewContentSection } from './components/overview/sectionsData';
 import type { OverviewTokenConfig } from './components/overview/overviewTokens';
+import {
+	DEFAULT_OVERVIEW_HERO,
+	DEFAULT_OVERVIEW_SECTIONS,
+	DEFAULT_OVERVIEW_TOKENS,
+} from './components/overview/defaultContent';
+import { useRegistryMetadata } from './contexts/RegistryMetadataContext';
+import { createOverviewTokenCategories } from './components/overview/overviewTokenUtils';
 
 export type { OverviewTokenConfig } from './components/overview/overviewTokens';
 
@@ -29,19 +35,28 @@ export interface OverviewProps {
 	content?: OverviewContentSection[];
 }
 
-const DEFAULT_SECTIONS = OVERVIEW_CONTENT.sections;
-const DEFAULT_TOKENS = OVERVIEW_CONTENT.tokens;
-const HERO_CONTENT = OVERVIEW_CONTENT.hero;
+const HERO_CONTENT = DEFAULT_OVERVIEW_HERO;
 
 export default function Overview({
 	onBack,
 	tokenConfig,
 	content,
 }: OverviewProps) {
-	const sections = content ?? DEFAULT_SECTIONS;
+	const registryMetadata = useRegistryMetadata();
+	const sections = content ?? DEFAULT_OVERVIEW_SECTIONS;
+	const tokenCategories = React.useMemo(
+		() => createOverviewTokenCategories(registryMetadata),
+		[registryMetadata],
+	);
 	const { sections: renderedSections, tokens: iconTokens } = React.useMemo(
-		() => createOverviewSections(DEFAULT_TOKENS, tokenConfig, sections),
-		[sections, tokenConfig],
+		() =>
+			createOverviewSections(
+				DEFAULT_OVERVIEW_TOKENS,
+				tokenConfig,
+				sections,
+				tokenCategories,
+			),
+		[sections, tokenConfig, tokenCategories],
 	);
 	const tokens = React.useMemo(() => ({ ...iconTokens }), [iconTokens]);
 
