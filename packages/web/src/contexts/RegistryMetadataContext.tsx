@@ -293,8 +293,12 @@ export function RegistryMetadataProvider({
 	);
 }
 
+export function useOptionalRegistryMetadata() {
+	return useContext(RegistryMetadataContext);
+}
+
 export function useRegistryMetadata(): RegistryMetadataContextValue {
-	const value = useContext(RegistryMetadataContext);
+	const value = useOptionalRegistryMetadata();
 	if (!value) {
 		throw new Error(
 			'useRegistryMetadata must be used within RegistryMetadataProvider',

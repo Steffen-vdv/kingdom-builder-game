@@ -24,7 +24,7 @@ import {
 	DEFAULT_OVERVIEW_SECTIONS,
 	DEFAULT_OVERVIEW_TOKENS,
 } from './components/overview/defaultContent';
-import { useRegistryMetadata } from './contexts/RegistryMetadataContext';
+import { useOptionalRegistryMetadata } from './contexts/RegistryMetadataContext';
 import { createOverviewTokenCategories } from './components/overview/overviewTokenUtils';
 
 export type { OverviewTokenConfig } from './components/overview/overviewTokens';
@@ -42,10 +42,11 @@ export default function Overview({
 	tokenConfig,
 	content,
 }: OverviewProps) {
-	const registryMetadata = useRegistryMetadata();
+	const registryMetadata = useOptionalRegistryMetadata();
 	const sections = content ?? DEFAULT_OVERVIEW_SECTIONS;
 	const tokenCategories = React.useMemo(
-		() => createOverviewTokenCategories(registryMetadata),
+		() =>
+			registryMetadata ? createOverviewTokenCategories(registryMetadata) : [],
 		[registryMetadata],
 	);
 	const { sections: renderedSections, tokens: iconTokens } = React.useMemo(
