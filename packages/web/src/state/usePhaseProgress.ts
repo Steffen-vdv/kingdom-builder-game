@@ -133,8 +133,13 @@ export function usePhaseProgress({
 			return;
 		}
 		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
-		await advanceSessionPhase({ sessionId });
-		await runUntilActionPhaseCore();
+		try {
+			await advanceSessionPhase({ sessionId });
+			await runUntilActionPhaseCore();
+		} catch (error) {
+			applyPhaseSnapshot(session.getSnapshot(), { isAdvancing: false });
+			throw error;
+		}
 	}, [
 		actionCostResource,
 		applyPhaseSnapshot,
