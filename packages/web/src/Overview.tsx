@@ -31,82 +31,15 @@ import {
 	OVERVIEW_CONTENT,
 	type OverviewTokenCandidates,
 } from '@kingdom-builder/contents';
-
-type OverviewTokenRecord = Record<string, React.ReactNode>;
+import {
+	createOverviewFallbackContent,
+	type OverviewTokenRecord,
+} from './components/overview/overviewFallback';
 
 const EMPTY_SECTIONS_RESULT = Object.freeze({
 	sections: Object.freeze([]) as ReadonlyArray<OverviewSectionDef>,
 	tokens: Object.freeze({}) as OverviewTokenRecord,
 });
-
-function createFallbackSections(
-	sections: OverviewContentSection[],
-): OverviewSectionDef[] {
-	return sections.map((section) => {
-		if (section.kind === 'paragraph') {
-			return {
-				kind: 'paragraph',
-				id: section.id,
-				icon: null,
-				title: section.title,
-				paragraphs: section.paragraphs,
-				span: section.span ?? false,
-			} satisfies OverviewSectionDef;
-		}
-
-		return {
-			kind: 'list',
-			id: section.id,
-			icon: null,
-			title: section.title,
-			items: section.items.map((item) => ({
-				icon: item.icon ? null : undefined,
-				label: item.label,
-				body: item.body,
-			})),
-			span: section.span ?? false,
-		} satisfies OverviewSectionDef;
-	});
-}
-
-function collectTokenKeys(
-	tokenCandidates: OverviewTokenCandidates,
-	overrides?: OverviewTokenConfig,
-): ReadonlyArray<string> {
-	const keys = new Set<string>();
-	const addKeys = (record?: Record<string, unknown>) => {
-		if (!record) {
-			return;
-		}
-		for (const key of Object.keys(record)) {
-			keys.add(key);
-		}
-	};
-
-	for (const candidate of Object.values(tokenCandidates)) {
-		addKeys(candidate);
-	}
-
-	if (overrides) {
-		for (const override of Object.values(overrides)) {
-			addKeys(override);
-		}
-	}
-
-	return Array.from(keys);
-}
-
-function createFallbackTokens(
-	tokenCandidates: OverviewTokenCandidates,
-	overrides: OverviewTokenConfig | undefined,
-): OverviewTokenRecord {
-	const keys = collectTokenKeys(tokenCandidates, overrides);
-	const tokens: OverviewTokenRecord = {};
-	for (const key of keys) {
-		tokens[key] = <strong>{key}</strong>;
-	}
-	return tokens;
-}
 
 function resolveOverviewTokenSources(
 	metadata: RegistryMetadataContextValue | null,
@@ -163,10 +96,11 @@ export default function Overview({
 			}
 
 			if (!tokenSources) {
-				return {
-					sections: createFallbackSections(sections),
-					tokens: createFallbackTokens(defaultTokens, tokenConfig),
-				};
+				return createOverviewFallbackContent(
+					sections,
+					defaultTokens,
+					tokenConfig,
+				);
 			}
 
 			return createOverviewSections(
