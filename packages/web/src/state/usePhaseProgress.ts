@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
@@ -106,7 +105,6 @@ export function usePhaseProgress({
 			advanceToActionPhase({
 				session,
 				sessionId,
-				actionCostResource,
 				resourceKeys,
 				mountedRef,
 				applyPhaseSnapshot,
