@@ -39,6 +39,9 @@ export interface TranslationAssets {
 	readonly land: Readonly<TranslationIconLabel>;
 	readonly slot: Readonly<TranslationIconLabel>;
 	readonly passive: Readonly<TranslationIconLabel>;
+	readonly triggers?: Readonly<
+		Record<string, Readonly<{ icon?: string; future?: string; past?: string }>>
+	>;
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
 	formatPassiveRemoval(description: string): string;
 }
@@ -91,6 +94,8 @@ export interface TranslationPassives {
  */
 export interface TranslationPhaseStep {
 	id: string;
+	icon?: string;
+	title?: string;
 	triggers?: readonly string[];
 }
 

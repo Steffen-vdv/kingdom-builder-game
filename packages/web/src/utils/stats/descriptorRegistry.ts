@@ -1,9 +1,3 @@
-import {
-	PASSIVE_INFO,
-	POPULATION_ROLES,
-	RESOURCES,
-	STATS,
-} from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
 	TranslationRegistry,
@@ -20,6 +14,29 @@ import type { DescriptorRegistryEntry, ResolveResult } from './types';
 type RegistryResolver = DescriptorRegistryEntry['resolve'];
 
 type Registry = Record<string, DescriptorRegistryEntry>;
+
+function resolveFromAssets(
+	assets: Readonly<Record<string, { icon?: string; label?: string }>>,
+	fallback: Readonly<{ icon?: string; label?: string }> | undefined,
+	defaultLabel: string,
+	id?: string,
+): ResolveResult {
+	const normalizedId = typeof id === 'string' ? id : undefined;
+	const entry = normalizedId ? assets[normalizedId] : undefined;
+	const icon = entry?.icon ?? fallback?.icon ?? '';
+	const label = entry?.label ?? fallback?.label ?? normalizedId ?? defaultLabel;
+	return { icon: icon ?? '', label } satisfies ResolveResult;
+}
+
+function resolveFromFallback(
+	fallback: Readonly<{ icon?: string; label?: string }> | undefined,
+	defaultLabel: string,
+	id?: string,
+): ResolveResult {
+	const icon = fallback?.icon ?? '';
+	const label = fallback?.label ?? id ?? defaultLabel;
+	return { icon, label } satisfies ResolveResult;
+}
 
 export const defaultFormatDetail: NonNullable<
 	DescriptorRegistryEntry['formatDetail']
@@ -69,40 +86,20 @@ function createTranslationRegistryResolver<
 	};
 }
 
-function createRecordResolver<T extends { icon?: string; label?: string }>(
-	record: Record<string, T>,
-	fallback: string,
-): RegistryResolver {
-	return (id) => {
-		if (id) {
-			const item = record[id];
-			if (item) {
-				return {
-					icon: item.icon ?? '',
-					label: item.label ?? id,
-				} satisfies ResolveResult;
-			}
-		}
-		return {
-			icon: '',
-			label: id ?? fallback,
-		} satisfies ResolveResult;
-	};
-}
-
 function createDescriptorRegistry(
 	translationContext: TranslationContext,
 ): Registry {
+	const phases = translationContext.phases;
+	const assets = translationContext.assets;
 	return {
 		population: {
 			resolve: (id) => {
-				const role = id
-					? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
-					: undefined;
-				return {
-					icon: role?.icon ?? '',
-					label: role?.label ?? id ?? 'Population',
-				} satisfies ResolveResult;
+				return resolveFromAssets(
+					assets.populations,
+					assets.population,
+					'Population',
+					id,
+				);
 			},
 			formatDetail: defaultFormatDetail,
 			augmentDependencyDetail: (detail, link, player, _context, options) => {
@@ -141,7 +138,7 @@ function createDescriptorRegistry(
 		phase: (() => {
 			const resolvePhase: RegistryResolver = (id) => {
 				const phase = id
-					? translationContext.phases.find((phaseItem) => {
+					? phases.find((phaseItem) => {
 							return phaseItem.id === id;
 						})
 					: undefined;
@@ -152,9 +149,9 @@ function createDescriptorRegistry(
 			};
 			return {
 				resolve: resolvePhase,
-				formatDetail: (id, detail) => formatStepLabel(id, detail),
+				formatDetail: (id, detail) => formatStepLabel(phases, id, detail),
 				formatDependency: (link) => {
-					const label = formatPhaseStep(link.id, link.detail);
+					const label = formatPhaseStep(phases, link.id, link.detail);
 					if (label) {
 						return label.trim();
 					}
@@ -164,7 +161,7 @@ function createDescriptorRegistry(
 			} satisfies DescriptorRegistryEntry;
 		})(),
 		stat: {
-			resolve: createRecordResolver(STATS, 'Stat'),
+			resolve: (id) => resolveFromAssets(assets.stats, undefined, 'Stat', id),
 			formatDetail: defaultFormatDetail,
 			augmentDependencyDetail: (detail, link, player, context) => {
 				if (!link.id) {
@@ -177,29 +174,21 @@ function createDescriptorRegistry(
 			},
 		},
 		resource: {
-			resolve: createRecordResolver(RESOURCES, 'Resource'),
+			resolve: (id) =>
+				resolveFromAssets(assets.resources, undefined, 'Resource', id),
 			formatDetail: defaultFormatDetail,
 		},
-		trigger: createTriggerDescriptorEntry(defaultFormatDetail),
+		trigger: createTriggerDescriptorEntry(assets, defaultFormatDetail),
 		passive: {
-			resolve: () => ({
-				icon: PASSIVE_INFO.icon ?? '',
-				label: PASSIVE_INFO.label ?? 'Passive',
-			}),
+			resolve: (id) => resolveFromFallback(assets.passive, 'Passive', id),
 			formatDetail: defaultFormatDetail,
 		},
 		land: {
-			resolve: (id) => ({
-				icon: '',
-				label: id ?? 'Land',
-			}),
+			resolve: (id) => resolveFromFallback(assets.land, 'Land', id),
 			formatDetail: defaultFormatDetail,
 		},
 		start: {
-			resolve: () => ({
-				icon: '',
-				label: 'Initial Setup',
-			}),
+			resolve: (id) => resolveFromFallback(undefined, 'Initial Setup', id),
 			formatDetail: defaultFormatDetail,
 		},
 	} satisfies Registry;

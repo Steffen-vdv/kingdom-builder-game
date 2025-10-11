@@ -1,14 +1,10 @@
-import {
-	PASSIVE_INFO,
-	PhaseStepId,
-	formatPassiveRemoval,
-} from '@kingdom-builder/contents';
 import type { StatSourceLink, StatSourceMeta } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';
 import { formatLinkLabel } from './dependencyFormatters';
 
 const PERMANENT_ICON = '🗿';
+const RAISE_STRENGTH_STEP_ID = 'raise-strength';
 
 export function buildLongevityEntries(
 	meta: StatSourceMeta,
@@ -21,9 +17,11 @@ export function buildLongevityEntries(
 		const anchors = collectAnchorLabels(meta, translationContext);
 		const condition = formatInPlayCondition(anchors);
 		if (condition) {
-			return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing as long as ${condition}`];
+			const passiveIcon = translationContext.assets.passive.icon ?? '♾️';
+			return [`${passiveIcon} Ongoing as long as ${condition}`];
 		}
-		return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing`];
+		const passiveIcon = translationContext.assets.passive.icon ?? '♾️';
+		return [`${passiveIcon} Ongoing`];
 	}
 	const entries: SummaryEntry[] = [];
 	const items: SummaryEntry[] = [];
@@ -36,9 +34,11 @@ export function buildLongevityEntries(
 		collectRemovalLabels(removalLink, translationContext),
 	);
 	if (removalCondition) {
-		entries.push(formatPassiveRemoval(removalCondition));
+		entries.push(
+			translationContext.assets.formatPassiveRemoval(removalCondition),
+		);
 	} else if (removal) {
-		entries.push(formatPassiveRemoval(removal));
+		entries.push(translationContext.assets.formatPassiveRemoval(removal));
 	}
 	entries.unshift(`${PERMANENT_ICON} Permanent`);
 	return entries.concat(items);
@@ -47,7 +47,7 @@ export function buildLongevityEntries(
 function shouldDisplayPermanentDependencies(meta: StatSourceMeta): boolean {
 	if (meta.kind === 'phase') {
 		const detail = meta.detail?.trim().toLowerCase();
-		if (detail === PhaseStepId.RaiseStrength) {
+		if (detail === RAISE_STRENGTH_STEP_ID) {
 			return false;
 		}
 	}

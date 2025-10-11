@@ -1,9 +1,13 @@
 import type { StatSourceMeta } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../translation/content/types';
+import type { TranslationContext } from '../../translation/context';
 import { formatPhaseStep } from './format';
 import { formatTriggerLabel } from './triggerLabels';
 
-export function buildHistoryEntries(meta: StatSourceMeta): SummaryEntry[] {
+export function buildHistoryEntries(
+	meta: StatSourceMeta,
+	context: TranslationContext,
+): SummaryEntry[] {
 	const extra = meta.extra;
 	if (!extra) {
 		return [];
@@ -24,15 +28,16 @@ export function buildHistoryEntries(meta: StatSourceMeta): SummaryEntry[] {
 	const history = extra['history'];
 	if (Array.isArray(history)) {
 		history.forEach((item) => {
-			add(formatHistoryItem(item));
+			add(formatHistoryItem(item, context));
 		});
 	}
-	const triggerLabels = extractTriggerList(extra);
+	const triggerLabels = extractTriggerList(extra, context);
 	triggerLabels.forEach((label) => {
 		add(`Triggered by ${label}`);
 	});
 	const turns = collectTurns(extra);
 	const phaseHint = formatPhaseStep(
+		context.phases,
 		typeof extra['phase'] === 'string' ? extra['phase'] : undefined,
 		typeof extra['step'] === 'string' ? extra['step'] : undefined,
 	);
@@ -63,13 +68,16 @@ function collectTurns(extra: Record<string, unknown>): number[] {
 	return Array.from(turns);
 }
 
-function extractTriggerList(extra: Record<string, unknown>): string[] {
+function extractTriggerList(
+	extra: Record<string, unknown>,
+	context: TranslationContext,
+): string[] {
 	const triggers: string[] = [];
 	const list = extra['triggers'];
 	if (Array.isArray(list)) {
 		list.forEach((value) => {
 			if (typeof value === 'string') {
-				const label = formatTriggerLabel(value);
+				const label = formatTriggerLabel(context.assets, value);
 				if (label) {
 					triggers.push(label);
 				}
@@ -77,7 +85,7 @@ function extractTriggerList(extra: Record<string, unknown>): string[] {
 		});
 	}
 	if (typeof extra['trigger'] === 'string') {
-		const label = formatTriggerLabel(extra['trigger']);
+		const label = formatTriggerLabel(context.assets, extra['trigger']);
 		if (label) {
 			triggers.push(label);
 		}
@@ -85,7 +93,10 @@ function extractTriggerList(extra: Record<string, unknown>): string[] {
 	return triggers;
 }
 
-function formatHistoryItem(entry: unknown): string | undefined {
+function formatHistoryItem(
+	entry: unknown,
+	context: TranslationContext,
+): string | undefined {
 	if (typeof entry === 'number') {
 		return `Turn ${entry}`;
 	}
@@ -110,7 +121,7 @@ function formatHistoryItem(entry: unknown): string | undefined {
 	const stepName =
 		typeof record['stepName'] === 'string' ? record['stepName'] : undefined;
 	const phaseText =
-		formatPhaseStep(phaseId, stepId) ||
+		formatPhaseStep(context.phases, phaseId, stepId) ||
 		[phaseName, stepName].filter((value) => Boolean(value)).join(' · ');
 	const description =
 		typeof record['description'] === 'string'

@@ -1,13 +1,7 @@
-import { POPULATIONS } from '@kingdom-builder/contents';
 import type { PassiveSummary } from '@kingdom-builder/engine';
 import type { PlayerSnapshot } from '../translation/log/snapshots';
 
 type PopulationPrefix = string;
-
-const POPULATION_PASSIVE_PREFIXES: PopulationPrefix[] = Array.from(
-	POPULATIONS.keys(),
-	(id) => `${id}_`,
-);
 
 export type PassiveOrigin =
 	| 'building'
@@ -23,6 +17,7 @@ export type PassiveLike = Pick<PassiveSummary, 'id' | 'meta'>;
 interface PassiveOwnerState {
 	buildings: Iterable<string>;
 	lands: ReadonlyArray<{ id: string; developments: Iterable<string> }>;
+	population?: Record<string, number>;
 }
 
 export type PassiveOwner = PlayerSnapshot | PassiveOwnerState;
@@ -32,6 +27,11 @@ interface PassiveVisibilityContext {
 	buildingIdSet: Set<string>;
 	buildingPrefixes: string[];
 	developmentPassiveIds: Set<string>;
+	populationPrefixes: PopulationPrefix[];
+}
+
+export interface PassiveVisibilityOptions {
+	populationIds?: Iterable<string>;
 }
 
 type PassiveVisibilitySource = PassiveOwner | PassiveVisibilityContext;
@@ -41,7 +41,8 @@ function isVisibilityContext(
 ): source is PassiveVisibilityContext {
 	return (
 		(source as PassiveVisibilityContext).buildingIdSet !== undefined &&
-		(source as PassiveVisibilityContext).buildingPrefixes !== undefined
+		(source as PassiveVisibilityContext).buildingPrefixes !== undefined &&
+		(source as PassiveVisibilityContext).populationPrefixes !== undefined
 	);
 }
 
@@ -49,7 +50,24 @@ function toArray(iterable: Iterable<string>): string[] {
 	return Array.from(iterable);
 }
 
-function createContextFromOwner(owner: PassiveOwner): PassiveVisibilityContext {
+function collectPopulationPrefixes(
+	owner: PassiveOwner,
+	options?: PassiveVisibilityOptions,
+): PopulationPrefix[] {
+	if (options?.populationIds) {
+		return Array.from(new Set(options.populationIds), (id) => `${id}_`);
+	}
+	const populationKeys: string[] = [];
+	if ('population' in owner && owner.population) {
+		populationKeys.push(...Object.keys(owner.population));
+	}
+	return populationKeys.map((id) => `${id}_`);
+}
+
+function createContextFromOwner(
+	owner: PassiveOwner,
+	options?: PassiveVisibilityOptions,
+): PassiveVisibilityContext {
 	const buildingIds = toArray(owner.buildings);
 	const buildingIdSet = new Set(buildingIds);
 	const buildingPrefixes = buildingIds.map((id) => `${id}_`);
@@ -65,20 +83,25 @@ function createContextFromOwner(owner: PassiveOwner): PassiveVisibilityContext {
 		buildingIdSet,
 		buildingPrefixes,
 		developmentPassiveIds,
+		populationPrefixes: collectPopulationPrefixes(owner, options),
 	};
 }
 
 function resolveContext(
 	source: PassiveVisibilitySource,
+	options?: PassiveVisibilityOptions,
 ): PassiveVisibilityContext {
 	if (isVisibilityContext(source)) {
 		return source;
 	}
-	return createContextFromOwner(source);
+	return createContextFromOwner(source, options);
 }
 
-function hasPopulationPrefix(id: string): boolean {
-	for (const prefix of POPULATION_PASSIVE_PREFIXES) {
+function hasPopulationPrefix(
+	id: string,
+	prefixes: readonly PopulationPrefix[],
+): boolean {
+	for (const prefix of prefixes) {
 		if (id.startsWith(prefix)) {
 			return true;
 		}
@@ -119,7 +142,7 @@ function deriveOriginFromContext(
 	if (context.developmentPassiveIds.has(passive.id)) {
 		return 'development';
 	}
-	if (hasPopulationPrefix(passive.id)) {
+	if (hasPopulationPrefix(passive.id, context.populationPrefixes)) {
 		return 'population-assignment';
 	}
 	return 'standalone';
@@ -128,8 +151,9 @@ function deriveOriginFromContext(
 export function derivePassiveOrigin(
 	passive: PassiveLike,
 	source: PassiveVisibilitySource,
+	options?: PassiveVisibilityOptions,
 ): PassiveOrigin {
-	const context = resolveContext(source);
+	const context = resolveContext(source, options);
 	return deriveOriginFromContext(passive, context);
 }
 
@@ -165,8 +189,9 @@ export function shouldSurfacePassive(
 	passive: PassiveLike,
 	source: PassiveVisibilitySource,
 	surface: PassiveSurface,
+	options?: PassiveVisibilityOptions,
 ): boolean {
-	const context = resolveContext(source);
+	const context = resolveContext(source, options);
 	return shouldSurfacePassiveWithContext(passive, context, surface);
 }
 
@@ -174,8 +199,9 @@ export function filterPassivesForSurface<T extends PassiveLike>(
 	passives: readonly T[],
 	source: PassiveVisibilitySource,
 	surface: PassiveSurface,
+	options?: PassiveVisibilityOptions,
 ): T[] {
-	const context = resolveContext(source);
+	const context = resolveContext(source, options);
 	return passives.filter((passive) =>
 		shouldSurfacePassiveWithContext(passive, context, surface),
 	);
@@ -183,6 +209,7 @@ export function filterPassivesForSurface<T extends PassiveLike>(
 
 export function createPassiveVisibilityContext(
 	source: PassiveOwner,
+	options?: PassiveVisibilityOptions,
 ): PassiveVisibilityContext {
-	return createContextFromOwner(source);
+	return createContextFromOwner(source, options);
 }

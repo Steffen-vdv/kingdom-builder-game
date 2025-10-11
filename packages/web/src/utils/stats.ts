@@ -1,7 +1,5 @@
-import { STATS } from '@kingdom-builder/contents';
 import type {
 	PlayerStateSnapshot,
-	StatKey,
 	StatSourceContribution,
 } from '@kingdom-builder/engine';
 import type { Summary, SummaryEntry } from '../translation/content/types';
@@ -16,19 +14,16 @@ import { buildDetailEntries, pushSummaryEntry } from './stats/summary';
 
 export { statDisplaysAsPercent, formatStatValue } from './stats/descriptors';
 
-function isStatKey(key: string): key is StatKey {
-	return key in STATS;
-}
-
 export function getStatBreakdownSummary(
 	statKey: string,
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
 ): Summary {
-	if (!isStatKey(statKey)) {
-		return [];
-	}
-	const sources = player.statSources?.[statKey] ?? {};
+	const statSources = player.statSources as
+		| Record<string, Record<string, StatSourceContribution>>
+		| undefined;
+	const sources: Record<string, StatSourceContribution> =
+		statSources?.[statKey] ?? {};
 	const contributions = Object.values(sources);
 	if (!contributions.length) {
 		return [];
@@ -58,7 +53,7 @@ function formatContribution(
 	context: TranslationContext,
 ): SummaryEntry {
 	const { amount, meta } = contribution;
-	const statInfo = STATS[statKey as keyof typeof STATS];
+	const statInfo = context.assets.stats[statKey];
 	const valueText = formatStatValue(statKey, amount);
 	const sign = amount >= 0 ? '+' : '';
 	const amountParts: string[] = [];

@@ -19,6 +19,15 @@ import {
 	PASSIVE_INFO,
 } from '@kingdom-builder/contents';
 import { getStatBreakdownSummary, formatStatValue } from '../src/utils/stats';
+import type {
+	TranslationAssets,
+	TranslationContext,
+} from '../src/translation/context';
+import {
+	createTranslationContextStub,
+	toTranslationPlayer,
+	wrapTranslationRegistry,
+} from './helpers/translationContextStub';
 
 const collectSummaryLines = (entry: unknown): string[] => {
 	if (typeof entry === 'string') {
@@ -40,6 +49,109 @@ const collectSummaryLines = (entry: unknown): string[] => {
 	return lines;
 };
 
+function buildDescriptorAssets(): TranslationAssets {
+	const stats = Object.fromEntries(
+		Object.entries(STATS).map(([key, info]) => [
+			key,
+			{
+				icon: info.icon,
+				label: info.label ?? info.name ?? key,
+				description: info.description,
+			},
+		]),
+	);
+	const populations = Object.fromEntries(
+		Object.entries(POPULATION_ROLES).map(([id, definition]) => [
+			id,
+			{
+				icon: definition.icon,
+				label: definition.label ?? definition.name ?? id,
+			},
+		]),
+	);
+	const resources = Object.fromEntries(
+		Object.entries(RESOURCES).map(([id, definition]) => [
+			id,
+			{
+				icon: definition.icon,
+				label: definition.label ?? id,
+				description: definition.description,
+			},
+		]),
+	);
+	const triggers = Object.fromEntries(
+		Object.entries(TRIGGER_INFO).map(([id, info]) => [
+			id,
+			{
+				icon: info.icon,
+				future: info.future,
+				past: info.past,
+			},
+		]),
+	);
+	return {
+		resources,
+		stats,
+		populations,
+		population: { icon: '👥', label: 'Population' },
+		land: { icon: '', label: 'Land' },
+		slot: { icon: '', label: 'Development Slot' },
+		passive: { icon: PASSIVE_INFO.icon, label: PASSIVE_INFO.label },
+		triggers,
+		modifiers: {},
+		formatPassiveRemoval: (description) => `Active as long as ${description}`,
+	} satisfies TranslationAssets;
+}
+
+function createDescriptorContext(
+	engineContext: ReturnType<typeof createEngine>,
+): TranslationContext {
+	const assets = buildDescriptorAssets();
+	const wrap = <T>(registry: {
+		get(id: string): T;
+		has(id: string): boolean;
+	}) =>
+		wrapTranslationRegistry({
+			get(id: string) {
+				return registry.get(id);
+			},
+			has(id: string) {
+				return registry.has(id);
+			},
+		});
+	const phases = engineContext.phases.map((phase) => ({
+		id: phase.id,
+		icon: phase.icon,
+		label: phase.label,
+		steps: phase.steps?.map((step) => ({
+			id: step.id,
+			icon: step.icon,
+			title: step.title,
+			triggers: step.triggers ? [...step.triggers] : undefined,
+		})),
+	}));
+	const buildPlayer = (player: typeof engineContext.activePlayer) =>
+		toTranslationPlayer({
+			id: player.id,
+			name: player.name,
+			resources: player.resources,
+			population: player.population,
+			stats: player.stats,
+		});
+	return createTranslationContextStub({
+		phases,
+		actionCostResource: engineContext.actionCostResource ?? '',
+		actions: wrap(engineContext.actions),
+		buildings: wrap(engineContext.buildings),
+		developments: wrap(engineContext.developments),
+		populations: wrap(engineContext.populations),
+		activePlayer: buildPlayer(engineContext.activePlayer),
+		opponent: buildPlayer(engineContext.opponent),
+		rules: engineContext.rules,
+		assets,
+	});
+}
+
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
@@ -59,7 +171,7 @@ describe('stat descriptor registry', () => {
 		const statKeys = Object.keys(STATS) as StatKey[];
 		expect(statKeys.length).toBeGreaterThan(0);
 		const [primaryStatKey, secondaryStatKey = statKeys[0]!] = statKeys;
-		const [populationId, populationRole] = Object.entries(POPULATION_ROLES)[0]!;
+		const [populationId] = Object.entries(POPULATION_ROLES)[0]!;
 		player.population[populationId] = 2;
 		const buildingId = BUILDINGS.keys()[0]!;
 		const building = BUILDINGS.get(buildingId);
@@ -72,9 +184,7 @@ describe('stat descriptor registry', () => {
 		const actionId = ACTIONS.keys()[0]!;
 		const action = ACTIONS.get(actionId);
 		const resourceKey = Object.keys(RESOURCES)[0]!;
-		const resource = RESOURCES[resourceKey as keyof typeof RESOURCES];
 		const triggerId = Object.keys(TRIGGER_INFO)[0]!;
-		const triggerInfo = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
 		const landId = player.lands[0]?.id;
 		expect(landId).toBeDefined();
 		const unknownId = 'mystery-source';
@@ -91,7 +201,7 @@ describe('stat descriptor registry', () => {
 			{ type: 'resource', id: resourceKey, detail: resourceDetail },
 			{ type: 'trigger', id: triggerId },
 			{ type: 'passive' },
-			{ type: 'land', id: landId },
+			{ type: 'land', id: landId, detail: landId },
 			{ type: 'start' },
 			{ type: 'mystery', id: unknownId, detail: unknownDetail },
 		];
@@ -107,7 +217,12 @@ describe('stat descriptor registry', () => {
 				},
 			},
 		};
-		const breakdown = getStatBreakdownSummary(primaryStatKey, player, ctx);
+		const translationContext = createDescriptorContext(ctx);
+		const breakdown = getStatBreakdownSummary(
+			primaryStatKey,
+			player,
+			translationContext,
+		);
 		const triggered = breakdown
 			.flatMap((entry) => collectSummaryLines(entry))
 			.filter((line) => line.startsWith('Triggered by'));
@@ -126,10 +241,11 @@ describe('stat descriptor registry', () => {
 			startLine,
 			unknownLine,
 		] = triggered;
-		if (populationRole.icon) {
-			expect(populationLine).toContain(populationRole.icon);
+		const populationAsset = translationContext.assets.populations[populationId];
+		if (populationAsset?.icon) {
+			expect(populationLine).toContain(populationAsset.icon);
 		}
-		expect(populationLine).toContain(populationRole.label ?? populationId);
+		expect(populationLine).toContain(populationAsset?.label ?? populationId);
 		expect(populationLine).toContain(`×${player.population[populationId]}`);
 		if (building.icon) {
 			expect(buildingLine).toContain(building.icon);
@@ -176,10 +292,11 @@ describe('stat descriptor registry', () => {
 		expect(statLine).toContain(
 			formatStatValue(secondaryStatKey, player.stats[secondaryStatKey]!),
 		);
-		if (resource?.icon) {
-			expect(resourceLine).toContain(resource.icon);
+		const resourceAsset = translationContext.assets.resources[resourceKey];
+		if (resourceAsset?.icon) {
+			expect(resourceLine).toContain(resourceAsset.icon);
 		}
-		expect(resourceLine).toContain(resource?.label ?? resourceKey);
+		expect(resourceLine).toContain(resourceAsset?.label ?? resourceKey);
 		const formatDetail = (detail: string) =>
 			detail
 				.split('-')
@@ -187,16 +304,17 @@ describe('stat descriptor registry', () => {
 				.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
 				.join(' ');
 		expect(resourceLine).toContain(formatDetail(resourceDetail));
-		if (triggerInfo?.icon) {
-			expect(triggerLine).toContain(triggerInfo.icon);
+		const triggerAsset = translationContext.assets.triggers?.[triggerId];
+		if (triggerAsset?.icon) {
+			expect(triggerLine).toContain(triggerAsset.icon);
 		}
 		expect(triggerLine).toContain(
-			triggerInfo?.past ?? triggerInfo?.future ?? triggerId,
+			triggerAsset?.past ?? triggerAsset?.future ?? triggerId,
 		);
-		if (PASSIVE_INFO.icon) {
-			expect(passiveLine).toContain(PASSIVE_INFO.icon);
+		if (translationContext.assets.passive.icon) {
+			expect(passiveLine).toContain(translationContext.assets.passive.icon);
 		}
-		expect(passiveLine).toContain(PASSIVE_INFO.label);
+		expect(passiveLine).toContain(translationContext.assets.passive.label);
 		expect(landLine).toContain(String(landId));
 		expect(startLine).toContain('Initial Setup');
 		expect(unknownLine).toContain(unknownId);

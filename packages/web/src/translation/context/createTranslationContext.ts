@@ -6,7 +6,11 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import { createTranslationAssets } from './assets';
-import type { TranslationContext, TranslationPassives } from './types';
+import type {
+	TranslationContext,
+	TranslationPassives,
+	TranslationPhaseStep,
+} from './types';
 import {
 	cloneCompensations,
 	cloneEvaluationModifiers,
@@ -88,7 +92,7 @@ export function createTranslationContext(
 			return evaluationMods;
 		},
 	});
-	const assets = createTranslationAssets(registries);
+	const assets = createTranslationAssets(registries, metadata);
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
 		buildings: wrapRegistry(registries.buildings),
@@ -97,31 +101,60 @@ export function createTranslationContext(
 		passives: translationPassives,
 		phases: Object.freeze(
 			session.phases.map((phase) => {
+				const phaseMetadata = metadata.phases?.[phase.id];
+				const stepMetadataLookup = new Map<
+					string,
+					{ icon?: string; label?: string; triggers?: string[] }
+				>();
+				if (Array.isArray(phaseMetadata?.steps)) {
+					for (const stepMetadata of phaseMetadata.steps) {
+						stepMetadataLookup.set(stepMetadata.id, stepMetadata);
+					}
+				}
 				const entry: {
 					id: string;
 					icon?: string;
 					label?: string;
-					steps?: ReadonlyArray<{
-						id: string;
-						triggers?: readonly string[];
-					}>;
+					steps?: ReadonlyArray<TranslationPhaseStep>;
 				} = {
 					id: phase.id,
 				};
-				if (phase.icon !== undefined) {
+				if (phaseMetadata?.icon !== undefined) {
+					entry.icon = phaseMetadata.icon;
+				} else if (phase.icon !== undefined) {
 					entry.icon = phase.icon;
 				}
-				if (phase.label !== undefined) {
+				if (phaseMetadata?.label !== undefined) {
+					entry.label = phaseMetadata.label;
+				} else if (phase.label !== undefined) {
 					entry.label = phase.label;
 				}
 				if (Array.isArray(phase.steps)) {
 					entry.steps = Object.freeze(
 						phase.steps.map((step) => {
-							const stepEntry: { id: string; triggers?: readonly string[] } = {
+							const stepEntry: TranslationPhaseStep = {
 								id: step.id,
 							};
+							const metadataEntry = stepMetadataLookup.get(step.id);
+							if (metadataEntry?.icon !== undefined) {
+								stepEntry.icon = metadataEntry.icon;
+							}
+							if (metadataEntry?.label !== undefined) {
+								stepEntry.title = metadataEntry.label;
+							} else if (step.title !== undefined) {
+								stepEntry.title = step.title;
+							}
+							let triggers: readonly string[] | string[] | undefined;
 							if (Array.isArray(step.triggers)) {
-								stepEntry.triggers = Object.freeze([...step.triggers]);
+								triggers = step.triggers;
+							} else if (
+								metadataEntry &&
+								Array.isArray(metadataEntry.triggers)
+							) {
+								triggers = metadataEntry.triggers;
+							}
+							if (triggers) {
+								stepEntry.triggers = Object.freeze([...triggers]);
 							}
 							return Object.freeze(stepEntry);
 						}),

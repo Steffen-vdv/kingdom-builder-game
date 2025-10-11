@@ -1,4 +1,5 @@
-import { PHASES, STATS } from '@kingdom-builder/contents';
+import { STATS } from '@kingdom-builder/contents';
+import type { TranslationPhase } from '../../translation/context';
 
 export function statDisplaysAsPercent(key: string): boolean {
 	const info = STATS[key as keyof typeof STATS];
@@ -13,7 +14,7 @@ export function formatDetailText(detail: string): string {
 	if (!detail) {
 		return '';
 	}
-	if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(detail)) {
+	if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(detail)) {
 		return detail
 			.split('-')
 			.filter((segment) => segment.length)
@@ -30,6 +31,7 @@ export function formatDetailText(detail: string): string {
 }
 
 export function formatStepLabel(
+	phases: readonly TranslationPhase[],
 	phaseId?: string,
 	stepId?: string,
 ): string | undefined {
@@ -37,9 +39,9 @@ export function formatStepLabel(
 		return undefined;
 	}
 	const phase = phaseId
-		? PHASES.find((phaseItem) => phaseItem.id === phaseId)
+		? phases.find((phaseItem) => phaseItem.id === phaseId)
 		: undefined;
-	const step = phase?.steps.find((stepItem) => stepItem.id === stepId);
+	const step = phase?.steps?.find((stepItem) => stepItem.id === stepId);
 	if (!step) {
 		return formatDetailText(stepId);
 	}
@@ -47,7 +49,7 @@ export function formatStepLabel(
 	if (step.icon) {
 		parts.push(step.icon);
 	}
-	const label = step.title ?? step.id;
+	const label = step.title ?? formatDetailText(step.id);
 	if (label) {
 		parts.push(label);
 	}
@@ -55,6 +57,7 @@ export function formatStepLabel(
 }
 
 export function formatPhaseStep(
+	phases: readonly TranslationPhase[],
 	phaseId?: string,
 	stepId?: string,
 ): string | undefined {
@@ -62,9 +65,9 @@ export function formatPhaseStep(
 		return undefined;
 	}
 	const phase = phaseId
-		? PHASES.find((phaseItem) => phaseItem.id === phaseId)
+		? phases.find((phaseItem) => phaseItem.id === phaseId)
 		: undefined;
-	const step = phase?.steps.find((stepItem) => stepItem.id === stepId);
+	const step = phase?.steps?.find((stepItem) => stepItem.id === stepId);
 	if (!step) {
 		return formatDetailText(stepId);
 	}
@@ -75,7 +78,7 @@ export function formatPhaseStep(
 	if (phase?.label) {
 		parts.push(phase.label);
 	}
-	const stepText = formatStepLabel(phaseId, stepId);
+	const stepText = formatStepLabel(phases, phaseId, stepId);
 	if (parts.length && stepText) {
 		return `${parts.join(' ').trim()} · ${stepText}`;
 	}

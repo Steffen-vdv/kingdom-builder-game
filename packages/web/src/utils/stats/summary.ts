@@ -40,7 +40,7 @@ export function buildDetailEntries(
 	).forEach((entry) => {
 		pushSummaryEntry(entries, entry);
 	});
-	buildHistoryEntries(meta).forEach((entry) => {
+	buildHistoryEntries(meta, context).forEach((entry) => {
 		pushSummaryEntry(entries, entry);
 	});
 	return entries;

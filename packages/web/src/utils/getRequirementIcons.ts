@@ -1,9 +1,3 @@
-import {
-	STATS,
-	POPULATION_ROLES,
-	type StatKey,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
 import type { TranslationContext } from '../translation';
 
 interface EvalConfig {
@@ -12,25 +6,43 @@ interface EvalConfig {
 }
 
 export type EvaluatorIconGetter = (
-	params?: Record<string, unknown>,
+	params: Record<string, unknown> | undefined,
+	translationContext: TranslationContext,
 ) => string[];
 
 export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
-	stat: (params) => {
-		const key = params?.['key'] as StatKey | undefined;
-		return key ? [STATS[key]?.icon || ''] : [];
+	stat: (params, translationContext) => {
+		const key = params?.['key'];
+		if (typeof key !== 'string') {
+			return [];
+		}
+		const statAssets = translationContext.assets.stats[key];
+		const icon = statAssets?.icon;
+		return icon ? [icon] : [];
 	},
-	population: (params) => {
-		const role = params?.['role'] as PopulationRoleId | undefined;
-		return role ? [POPULATION_ROLES[role]?.icon || ''] : [];
+	population: (params, translationContext) => {
+		const role = params?.['role'];
+		if (typeof role !== 'string') {
+			return [];
+		}
+		const roleAsset = translationContext.assets.populations[role];
+		const icon = roleAsset?.icon ?? translationContext.assets.population.icon;
+		return icon ? [icon] : [];
 	},
 };
 
-function collectEvaluatorIcons(evaluator?: EvalConfig): string[] {
+function collectEvaluatorIcons(
+	evaluator: EvalConfig | undefined,
+	translationContext: TranslationContext,
+): string[] {
 	if (!evaluator) {
 		return [];
 	}
-	return EVALUATOR_ICON_MAP[evaluator.type]?.(evaluator.params) ?? [];
+	const getter = EVALUATOR_ICON_MAP[evaluator.type];
+	if (!getter) {
+		return [];
+	}
+	return getter(evaluator.params, translationContext) ?? [];
 }
 
 interface RequirementConfig {
@@ -81,18 +93,31 @@ export function registerRequirementIconGetter(
 	};
 }
 
-registerRequirementIconGetter('evaluator', 'compare', (requirement) => {
-	const params = requirement.params ?? {};
-	return [
-		...collectEvaluatorIcons(params['left'] as EvalConfig | undefined),
-		...collectEvaluatorIcons(params['right'] as EvalConfig | undefined),
-	];
-});
+registerRequirementIconGetter(
+	'evaluator',
+	'compare',
+	(requirement, translationContext) => {
+		const params = requirement.params ?? {};
+		return [
+			...collectEvaluatorIcons(
+				params['left'] as EvalConfig | undefined,
+				translationContext,
+			),
+			...collectEvaluatorIcons(
+				params['right'] as EvalConfig | undefined,
+				translationContext,
+			),
+		];
+	},
+);
 
 export function getRequirementIcons(
 	actionId: string,
 	translationContext: TranslationContext,
 ): string[] {
+	if (!translationContext.actions.has(actionId)) {
+		return [];
+	}
 	const actionDefinition = translationContext.actions.get(actionId);
 	if (!actionDefinition?.requirements) {
 		return [];
