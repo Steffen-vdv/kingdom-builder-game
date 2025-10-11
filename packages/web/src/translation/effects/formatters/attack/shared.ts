@@ -1,12 +1,10 @@
-import {
-	RESOURCES,
-	STATS,
-	type ResourceKey,
-	type StatKey,
-} from '@kingdom-builder/contents';
 import type { AttackPlayerDiff } from '@kingdom-builder/protocol';
 import { formatStatValue } from '../../../../utils/stats';
 import type { AttackStatDescriptor, DiffFormatOptions } from './types';
+import {
+	selectAttackResourceInfo,
+	selectAttackStatInfo,
+} from './registrySelectors';
 
 export function iconLabel(icon: string | undefined, label: string): string {
 	return icon ? `${icon} ${label}` : label;
@@ -85,9 +83,9 @@ export function formatResourceDiff(
 	diff: ResourceDiff,
 	options?: DiffFormatOptions,
 ): string {
-	const info = RESOURCES[diff.key as ResourceKey];
-	const icon = info?.icon || '';
-	const label = info?.label || diff.key;
+	const info = selectAttackResourceInfo(String(diff.key));
+	const icon = info.icon || '';
+	const label = info.label || String(diff.key);
 	const displayLabel = iconLabel(icon, label);
 	const delta = diff.after - diff.before;
 	const before = formatNumber(diff.before);
@@ -106,9 +104,9 @@ export function formatResourceDiff(
 }
 
 export function formatStatDiff(prefix: string, diff: StatDiff): string {
-	const info = STATS[diff.key as StatKey];
-	const icon = info?.icon || '';
-	const label = info?.label || diff.key;
+	const info = selectAttackStatInfo(String(diff.key));
+	const icon = info.icon || '';
+	const label = info.label || String(diff.key);
 	const displayLabel = iconLabel(icon, label);
 	const delta = diff.after - diff.before;
 	const before = formatStatValue(String(diff.key), diff.before);

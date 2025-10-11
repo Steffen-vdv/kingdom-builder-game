@@ -1,4 +1,3 @@
-import { BUILDINGS } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import {
 	attackStatLabel,
@@ -17,6 +16,7 @@ import {
 } from './evaluation';
 import type { AttackTargetFormatter } from './types';
 import type { SummaryEntry } from '../../../content';
+import { getDefaultAttackBuildingId } from './registrySelectors';
 
 const buildingFormatter: AttackTargetFormatter<{
 	type: 'building';
@@ -30,8 +30,10 @@ const buildingFormatter: AttackTargetFormatter<{
 		if (targetParam?.type === 'building') {
 			return targetParam;
 		}
-		const [id] = BUILDINGS.keys();
-		return { type: 'building', id: id ?? 'unknown_building' };
+		return {
+			type: 'building',
+			id: getDefaultAttackBuildingId(),
+		};
 	},
 	normalizeLogTarget(target) {
 		const buildingTarget = target as Extract<

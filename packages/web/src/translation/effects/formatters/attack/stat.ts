@@ -1,4 +1,4 @@
-import { STATS, type StatKey } from '@kingdom-builder/contents';
+import type { StatKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -7,6 +7,10 @@ import {
 	buildStandardEvaluationEntry,
 	defaultFortificationItems,
 } from './evaluation';
+import {
+	getDefaultAttackStatKey,
+	selectAttackStatInfo,
+} from './registrySelectors';
 import type { AttackTargetFormatter } from './types';
 
 const statFormatter: AttackTargetFormatter<{
@@ -21,7 +25,7 @@ const statFormatter: AttackTargetFormatter<{
 		if (targetParam?.type === 'stat') {
 			return targetParam;
 		}
-		const fallbackKey = Object.keys(STATS)[0] as StatKey | undefined;
+		const fallbackKey = getDefaultAttackStatKey() as StatKey | undefined;
 		if (!fallbackKey) {
 			throw new Error('No stat definitions available');
 		}
@@ -35,7 +39,7 @@ const statFormatter: AttackTargetFormatter<{
 		return { type: 'stat', key: statTarget.key as StatKey };
 	},
 	getInfo(target) {
-		return STATS[target.key];
+		return selectAttackStatInfo(String(target.key));
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);

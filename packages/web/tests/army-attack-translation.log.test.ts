@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { logContent } from '../src/translation/content';
-import { RESOURCES } from '@kingdom-builder/contents';
 import { Resource, Stat, performAction } from '@kingdom-builder/engine';
 import {
 	formatNumber,
@@ -8,10 +7,13 @@ import {
 	formatSignedValue,
 } from '../src/translation/effects/formatters/attack/shared';
 import {
+	selectAttackBuildingInfo,
+	selectAttackResourceInfo,
+} from '../src/translation/effects/formatters/attack/registrySelectors';
+import {
 	createSyntheticCtx,
 	setupStatOverrides,
 	teardownStatOverrides,
-	getStat,
 	statToken,
 	iconLabel,
 	SYNTH_COMBAT_STATS,
@@ -46,12 +48,9 @@ describe('army attack translation log', () => {
 		const { ctx: engineContext, attack, plunder } = createSyntheticCtx();
 		const attackerName = engineContext.activePlayer.name ?? 'Player';
 		const defenderName = engineContext.opponent.name ?? 'Opponent';
-		const castle = RESOURCES[Resource.castleHP];
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
-		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const happiness = RESOURCES[Resource.happiness];
-		const gold = RESOURCES[Resource.gold];
+		const castle = selectAttackResourceInfo(Resource.castleHP);
+		const happiness = selectAttackResourceInfo(Resource.happiness);
+		const gold = selectAttackResourceInfo(Resource.gold);
 
 		engineContext.activePlayer.resources[Resource.ap] = 1;
 		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
@@ -93,16 +92,20 @@ describe('army attack translation log', () => {
 
 		const log = logContent('action', attack.id, engineContext);
 		const powerValue = (value: number) =>
-			statToken(powerStat, 'Attack', formatSignedValue(value, formatNumber));
+			statToken(
+				SYNTH_COMBAT_STATS.power.key,
+				'Attack',
+				formatSignedValue(value, formatNumber),
+			);
 		const absorptionValue = (value: number) =>
 			statToken(
-				absorptionStat,
+				SYNTH_COMBAT_STATS.absorption.key,
 				'Absorption',
 				formatSignedValue(value, formatPercent),
 			);
 		const fortValue = (value: number) =>
 			statToken(
-				fortStat,
+				SYNTH_COMBAT_STATS.fortification.key,
 				'Fortification',
 				formatSignedValue(value, formatNumber),
 			);
@@ -133,13 +136,11 @@ describe('army attack translation log', () => {
 			building,
 		} = createSyntheticCtx();
 		const attackerName = engineContext.activePlayer.name ?? 'Player';
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
-		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const gold = RESOURCES[Resource.gold];
+		const gold = selectAttackResourceInfo(Resource.gold);
+		const buildingInfo = selectAttackBuildingInfo(building.id);
 		const buildingDisplay = iconLabel(
-			building.icon,
-			building.name,
+			buildingInfo.icon,
+			buildingInfo.label,
 			building.id,
 		);
 
@@ -163,16 +164,20 @@ describe('army attack translation log', () => {
 		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
 		const log = logContent('action', buildingAttack.id, engineContext);
 		const powerValue = (value: number) =>
-			statToken(powerStat, 'Attack', formatSignedValue(value, formatNumber));
+			statToken(
+				SYNTH_COMBAT_STATS.power.key,
+				'Attack',
+				formatSignedValue(value, formatNumber),
+			);
 		const absorptionValue = (value: number) =>
 			statToken(
-				absorptionStat,
+				SYNTH_COMBAT_STATS.absorption.key,
 				'Absorption',
 				formatSignedValue(value, formatPercent),
 			);
 		const fortValue = (value: number) =>
 			statToken(
-				fortStat,
+				SYNTH_COMBAT_STATS.fortification.key,
 				'Fortification',
 				formatSignedValue(value, formatNumber),
 			);

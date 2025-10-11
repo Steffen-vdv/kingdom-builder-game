@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import { createTranslationAssets } from './assets';
+import { configureAttackRegistrySelectorsFrom } from '../effects/formatters/attack/registrySelectors';
 import type { TranslationContext, TranslationPassives } from './types';
 import {
 	cloneCompensations,
@@ -39,6 +40,10 @@ export function createTranslationContext(
 	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,
 ): TranslationContext {
+	configureAttackRegistrySelectorsFrom(
+		{ resources: registries.resources, buildings: registries.buildings },
+		metadata,
+	);
 	const players = new Map(
 		session.game.players.map((player) => [player.id, clonePlayer(player)]),
 	);

@@ -1,4 +1,3 @@
-import { BUILDINGS } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatStatValue } from '../../../../utils/stats';
 import type { SummaryEntry } from '../../../content';
@@ -16,6 +15,7 @@ import type {
 	EvaluationContext,
 	TargetInfo,
 } from './types';
+import { selectAttackBuildingInfo } from './registrySelectors';
 
 export function buildDescribeEntry(
 	context: BaseEntryContext<AttackTarget>,
@@ -187,13 +187,5 @@ export function buildStandardEvaluationEntry(
 }
 
 export function getBuildingDisplay(buildingId: string): TargetInfo {
-	try {
-		const buildingDefinition = BUILDINGS.get(buildingId);
-		return {
-			icon: buildingDefinition.icon ?? '',
-			label: buildingDefinition.name ?? buildingId,
-		};
-	} catch {
-		return { icon: '', label: buildingId };
-	}
+	return selectAttackBuildingInfo(buildingId);
 }

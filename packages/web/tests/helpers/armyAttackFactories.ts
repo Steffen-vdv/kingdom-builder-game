@@ -2,6 +2,10 @@ import { STATS, BUILDINGS } from '@kingdom-builder/contents';
 import { createEngine, type EffectDef } from '@kingdom-builder/engine';
 import { createContentFactory } from '@kingdom-builder/testing';
 import {
+	selectAttackStatDescriptor,
+	selectAttackStatInfo,
+} from '../../src/translation/effects/formatters/attack/registrySelectors';
+import {
 	SYNTH_ATTACK,
 	SYNTH_PLUNDER,
 	SYNTH_BUILDING_ATTACK,
@@ -117,8 +121,8 @@ export function createPartialStatCtx() {
 	return { ctx, attack } as const;
 }
 
-export function getStat(key: string): StatInfo | undefined {
-	return (STATS as Record<string, StatInfo | undefined>)[key];
+export function getStat(key: string) {
+	return selectAttackStatDescriptor(key);
 }
 
 export function iconLabel(
@@ -130,12 +134,9 @@ export function iconLabel(
 	return icon ? `${icon} ${resolved}` : resolved;
 }
 
-export function statToken(
-	stat: StatInfo | undefined,
-	fallback: string,
-	value: string,
-) {
-	const label = iconLabel(stat?.icon, stat?.label, fallback);
+export function statToken(statKey: string, fallback: string, value: string) {
+	const info = selectAttackStatInfo(statKey);
+	const label = iconLabel(info.icon, info.label, fallback);
 	return `${label} ${value}`;
 }
 
