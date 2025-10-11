@@ -152,4 +152,55 @@ describe('useActionResolution', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it('auto acknowledges when acknowledgement is not required', async () => {
+		vi.useFakeTimers();
+		try {
+			const addLog = vi.fn();
+			const setTrackedTimeout = vi
+				.fn<(callback: () => void, delay: number) => number>()
+				.mockImplementation((callback, delay) => {
+					return window.setTimeout(callback, delay);
+				});
+			const { result } = renderHook(() => {
+				const timeScaleRef = React.useRef(1);
+				const mountedRef = React.useRef(true);
+				React.useEffect(() => {
+					return () => {
+						mountedRef.current = false;
+					};
+				}, []);
+				return useActionResolution({
+					addLog,
+					setTrackedTimeout,
+					timeScaleRef,
+					mountedRef,
+				});
+			});
+			let resolutionPromise: Promise<void> = Promise.resolve();
+			act(() => {
+				resolutionPromise = result.current.showResolution({
+					lines: ['Auto line'],
+					requireAcknowledgement: false,
+				});
+			});
+			expect(result.current.resolution?.requireAcknowledgement).toBe(false);
+			expect(addLog).toHaveBeenCalledWith('Auto line', undefined);
+			expect(setTrackedTimeout).toHaveBeenLastCalledWith(
+				expect.any(Function),
+				ACTION_EFFECT_DELAY,
+			);
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY - 1);
+			});
+			expect(result.current.resolution).not.toBeNull();
+			act(() => {
+				vi.advanceTimersByTime(1);
+			});
+			await resolutionPromise;
+			expect(result.current.resolution).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });

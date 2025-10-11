@@ -110,6 +110,7 @@ export async function advanceToActionPhase({
 			summaries: formatted.summaries,
 			source: formatted.source,
 			player,
+			requireAcknowledgement: false,
 			...(formatted.actorLabel ? { actorLabel: formatted.actorLabel } : {}),
 		};
 		await showResolution(resolutionOptions);

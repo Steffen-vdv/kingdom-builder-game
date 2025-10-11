@@ -129,6 +129,7 @@ function ResolutionCard({
 		CARD_BODY_TEXT_CLASS,
 		'whitespace-pre-line text-amber-900 dark:text-amber-100',
 	);
+	const shouldShowContinue = resolution.requireAcknowledgement;
 
 	return (
 		<div className={containerClass} data-state="enter">
@@ -179,16 +180,18 @@ function ResolutionCard({
 					</div>
 				) : null}
 			</div>
-			<div className="mt-6 flex justify-end">
-				<button
-					type="button"
-					onClick={onContinue}
-					disabled={!resolution.isComplete}
-					className={CONTINUE_BUTTON_CLASS}
-				>
-					Continue
-				</button>
-			</div>
+			{shouldShowContinue ? (
+				<div className="mt-6 flex justify-end">
+					<button
+						type="button"
+						onClick={onContinue}
+						disabled={!resolution.isComplete}
+						className={CONTINUE_BUTTON_CLASS}
+					>
+						Continue
+					</button>
+				</div>
+			) : null}
 		</div>
 	);
 }

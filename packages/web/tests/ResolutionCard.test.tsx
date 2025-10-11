@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
@@ -15,11 +15,15 @@ function createResolution(
 		isComplete: true,
 		summaries: [],
 		source: 'action',
+		requireAcknowledgement: true,
 		...overrides,
 	} as ActionResolution;
 }
 
 describe('<ResolutionCard />', () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it('shows labels for action-based resolutions', () => {
 		const resolution = createResolution({
 			action: {
@@ -71,5 +75,18 @@ describe('<ResolutionCard />', () => {
 
 		expect(screen.getByText('Phase - Growth Phase')).toBeInTheDocument();
 		expect(screen.getByText('Phase owner Player Two')).toBeInTheDocument();
+	});
+
+	it('hides the continue button when acknowledgement is not required', () => {
+		const resolution = createResolution({
+			requireAcknowledgement: false,
+		});
+		expect(resolution.requireAcknowledgement).toBe(false);
+
+		const { queryByRole } = render(
+			<ResolutionCard resolution={resolution} onContinue={() => {}} />,
+		);
+
+		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
 	});
 });

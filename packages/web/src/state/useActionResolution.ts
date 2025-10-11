@@ -47,6 +47,7 @@ interface ShowResolutionOptions {
 	summaries?: string[];
 	source?: ResolutionSource;
 	actorLabel?: string;
+	requireAcknowledgement?: boolean;
 }
 
 interface ActionResolution {
@@ -58,6 +59,7 @@ interface ActionResolution {
 	summaries: string[];
 	source: ResolutionSource;
 	actorLabel?: string;
+	requireAcknowledgement: boolean;
 }
 
 function resolveActorLabel(
@@ -108,6 +110,7 @@ function useActionResolution({
 			summaries = [],
 			source,
 			actorLabel,
+			requireAcknowledgement = true,
 		}: ShowResolutionOptions) => {
 			const entries = (Array.isArray(lines) ? lines : [lines]).filter(
 				(line): line is string => Boolean(line?.trim()),
@@ -143,6 +146,7 @@ function useActionResolution({
 					isComplete: false,
 					summaries,
 					source: resolvedSource,
+					requireAcknowledgement,
 					...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
 					...(player ? { player } : {}),
 					...(action ? { action } : {}),
@@ -164,10 +168,11 @@ function useActionResolution({
 							return previous;
 						}
 						const nextVisible = [...previous.visibleLines, line];
+						const isComplete = nextVisible.length === previous.lines.length;
 						return {
 							...previous,
 							visibleLines: nextVisible,
-							isComplete: nextVisible.length === previous.lines.length,
+							isComplete,
 						};
 					});
 					addLog(line, player);
@@ -175,6 +180,21 @@ function useActionResolution({
 
 				const scheduleReveal = (index: number) => {
 					if (index >= entries.length) {
+						if (!requireAcknowledgement) {
+							const scale = timeScaleRef.current || 1;
+							const duration = ACTION_EFFECT_DELAY / scale;
+							const finalize = () => {
+								if (!mountedRef.current || sequenceRef.current !== sequence) {
+									return;
+								}
+								acknowledgeResolution();
+							};
+							if (duration <= 0) {
+								finalize();
+								return;
+							}
+							setTrackedTimeout(finalize, duration);
+						}
 						return;
 					}
 					const scale = timeScaleRef.current || 1;
