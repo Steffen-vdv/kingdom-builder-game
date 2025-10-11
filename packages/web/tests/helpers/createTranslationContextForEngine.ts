@@ -4,9 +4,14 @@ import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import type { TranslationContext } from '../../src/translation/context/types';
 import { createSessionRegistries } from './sessionRegistries';
+import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
-export function createTranslationContextForEngine(engine: EngineContext) {
+export function createTranslationContextForEngine(
+	engine: EngineContext,
+	configureRegistries?: (registries: SessionRegistries) => void,
+) {
 	const registries = createSessionRegistries();
+	configureRegistries?.(registries);
 	const snapshot = snapshotEngine(engine);
 	const baseContext = createTranslationContext(
 		snapshot,

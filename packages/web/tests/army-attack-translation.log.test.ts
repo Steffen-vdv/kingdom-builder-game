@@ -2,19 +2,16 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { logContent } from '../src/translation/content';
 import { Resource, Stat, performAction } from '@kingdom-builder/engine';
 import {
-	formatNumber,
-	formatPercent,
-	formatSignedValue,
-} from '../src/translation/effects/formatters/attack/shared';
-import {
 	createSyntheticCtx,
 	setupStatOverrides,
 	teardownStatOverrides,
 	getStat,
-	statToken,
 	iconLabel,
 	SYNTH_COMBAT_STATS,
 	PLUNDER_PERCENT,
+	ATTACKER_HAPPINESS_GAIN,
+	DEFENDER_HAPPINESS_LOSS,
+	BUILDING_REWARD_GOLD,
 } from './helpers/armyAttackFactories';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import {
@@ -46,9 +43,12 @@ afterAll(() => {
 
 describe('army attack translation log', () => {
 	it('logs army attack action with concrete evaluation', () => {
-		const { ctx: engineContext, attack, plunder } = createSyntheticCtx();
-		const attackerName = engineContext.activePlayer.name ?? 'Player';
-		const defenderName = engineContext.opponent.name ?? 'Opponent';
+		const {
+			ctx: engineContext,
+			translation,
+			attack,
+			plunder,
+		} = createSyntheticCtx();
 		const castle = selectAttackResourceDescriptor(Resource.castleHP);
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
@@ -63,79 +63,39 @@ describe('army attack translation log', () => {
 		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
 		engineContext.opponent.resources[Resource.happiness] = 5;
 		engineContext.opponent.resources[Resource.gold] = 25;
-		const castleBefore = engineContext.opponent.resources[Resource.castleHP];
-		const fortBefore = engineContext.opponent.stats[Stat.fortificationStrength];
-		const armyStrength = engineContext.activePlayer.stats[Stat.armyStrength];
-		const opponentHappinessBefore =
-			engineContext.opponent.resources[Resource.happiness];
-		const attackerHappinessBefore =
-			engineContext.activePlayer.resources[Resource.happiness];
-		const opponentGoldBefore = engineContext.opponent.resources[Resource.gold];
-		const playerGoldBefore =
-			engineContext.activePlayer.resources[Resource.gold];
-		const remainingAfterAbsorption = armyStrength;
-		const remainingAfterFort = Math.max(
-			remainingAfterAbsorption - fortBefore,
-			0,
-		);
 
 		performAction(attack.id, engineContext);
-		const castleAfter = engineContext.opponent.resources[Resource.castleHP];
-		const opponentHappinessAfter =
-			engineContext.opponent.resources[Resource.happiness];
-		const attackerHappinessAfter =
-			engineContext.activePlayer.resources[Resource.happiness];
-		const opponentGoldAfter = engineContext.opponent.resources[Resource.gold];
-		const playerGoldAfter = engineContext.activePlayer.resources[Resource.gold];
-		const opponentHappinessDelta =
-			opponentHappinessAfter - opponentHappinessBefore;
-		const attackerHappinessDelta =
-			attackerHappinessAfter - attackerHappinessBefore;
-		const opponentGoldDelta = opponentGoldAfter - opponentGoldBefore;
-		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
 
-		const log = logContent('action', attack.id, engineContext);
-		const powerValue = (value: number) =>
-			statToken(powerStat, 'Attack', formatSignedValue(value, formatNumber));
-		const absorptionValue = (value: number) =>
-			statToken(
-				absorptionStat,
-				'Absorption',
-				formatSignedValue(value, formatPercent),
-			);
-		const fortValue = (value: number) =>
-			statToken(
-				fortStat,
-				'Fortification',
-				formatSignedValue(value, formatNumber),
-			);
-		const castleAfterValue = `${castle.icon} ${castle.label} ${castleAfter}`;
+		const log = logContent('action', attack.id, translation);
+		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
+		const absorptionLabel = iconLabel(
+			absorptionStat.icon,
+			absorptionStat.label,
+			'Absorption',
+		);
+		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
+		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
 		expect(withLegacyIndent(log)).toEqual([
 			`${attack.icon} ${attack.name}`,
-			`  Evaluate damage: Compare ${powerValue(armyStrength)} against ${absorptionValue(0)}; Compare remaining damage against ${fortValue(fortBefore)}; Apply damage to ${castle.icon} ${castle.label} ${castleBefore}`,
-			`    Compare ${powerValue(armyStrength)} against ${absorptionValue(0)} → ${powerValue(remainingAfterAbsorption)}`,
-			`    Compare ${powerValue(remainingAfterAbsorption)} against ${fortValue(fortBefore)} → ${fortValue(0)} and carry forward ${powerValue(remainingAfterFort)}`,
-			`    Apply ${powerValue(remainingAfterFort)} to ${castle.icon} ${castle.label} ${castleBefore} → ${castleAfterValue}`,
-			`  ${castle.icon} ${castle.label} damage trigger evaluation`,
-			`    ${defenderName}: ${happiness.icon} ${happiness.label} ${opponentHappinessDelta} (${opponentHappinessBefore}→${opponentHappinessAfter})`,
-			`    ${attackerName}: ${happiness.icon} ${happiness.label} ${
-				attackerHappinessDelta >= 0 ? '+' : ''
-			}${attackerHappinessDelta} (${attackerHappinessBefore}→${attackerHappinessAfter})`,
-			`    Trigger ${plunder.icon} ${plunder.name}`,
-			`      ${defenderName}: ${gold.icon} ${gold.label} -${PLUNDER_PERCENT}% (${opponentGoldBefore}→${opponentGoldAfter}) (${opponentGoldDelta})`,
-			`      ${attackerName}: ${gold.icon} ${gold.label} ${
-				playerGoldDelta >= 0 ? '+' : ''
-			}${playerGoldDelta} (${playerGoldBefore}→${playerGoldAfter})`,
+			`  Attack opponent with your ${powerLabel}`,
+			`    ${absorptionLabel} damage reduction applied`,
+			`    Apply damage to opponent ${fortLabel}`,
+			`    If opponent ${fortLabel} falls to 0, overflow remaining damage onto opponent ${castleLabel}`,
+			`  On opponent ${castleLabel} damage`,
+			`    ${happiness.icon}-${DEFENDER_HAPPINESS_LOSS} ${happiness.label} for Opponent`,
+			`    ${happiness.icon}+${ATTACKER_HAPPINESS_GAIN} ${happiness.label} for Player`,
+			`    ${plunder.icon} ${plunder.name}`,
+			`      Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}${gold.label} to you`,
 		]);
 	});
 
 	it('logs building attack action with destruction evaluation', () => {
 		const {
 			ctx: engineContext,
+			translation,
 			buildingAttack,
 			building,
 		} = createSyntheticCtx();
-		const attackerName = engineContext.activePlayer.name ?? 'Player';
 		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
 		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
@@ -152,44 +112,24 @@ describe('army attack translation log', () => {
 		engineContext.activePlayer.resources[Resource.gold] = 0;
 		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
 		engineContext.opponent.buildings.add(building.id);
-		const armyStrength = engineContext.activePlayer.stats[Stat.armyStrength];
-		const fortBefore = engineContext.opponent.stats[Stat.fortificationStrength];
-		const remainingAfterAbsorption = armyStrength;
-		const remainingAfterFort = Math.max(
-			remainingAfterAbsorption - fortBefore,
-			0,
-		);
-		const playerGoldBefore =
-			engineContext.activePlayer.resources[Resource.gold];
 
 		performAction(buildingAttack.id, engineContext);
-		const playerGoldAfter = engineContext.activePlayer.resources[Resource.gold];
-		const playerGoldDelta = playerGoldAfter - playerGoldBefore;
-		const log = logContent('action', buildingAttack.id, engineContext);
-		const powerValue = (value: number) =>
-			statToken(powerStat, 'Attack', formatSignedValue(value, formatNumber));
-		const absorptionValue = (value: number) =>
-			statToken(
-				absorptionStat,
-				'Absorption',
-				formatSignedValue(value, formatPercent),
-			);
-		const fortValue = (value: number) =>
-			statToken(
-				fortStat,
-				'Fortification',
-				formatSignedValue(value, formatNumber),
-			);
+		const log = logContent('action', buildingAttack.id, translation);
+		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
+		const absorptionLabel = iconLabel(
+			absorptionStat.icon,
+			absorptionStat.label,
+			'Absorption',
+		);
+		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
 		expect(withLegacyIndent(log)).toEqual([
 			`${buildingAttack.icon} ${buildingAttack.name}`,
-			`  Evaluate damage: Compare ${powerValue(armyStrength)} against ${absorptionValue(0)}; Compare remaining damage against ${fortValue(fortBefore)}; Destroy ${buildingDisplay} with ${powerValue(remainingAfterFort)}`,
-			`    Compare ${powerValue(armyStrength)} against ${absorptionValue(0)} → ${powerValue(remainingAfterAbsorption)}`,
-			`    Compare ${powerValue(remainingAfterAbsorption)} against ${fortValue(fortBefore)} → ${fortValue(0)} and carry forward ${powerValue(remainingAfterFort)}`,
-			`    Destroy ${buildingDisplay} with ${powerValue(remainingAfterFort)}`,
-			`  ${buildingDisplay} destruction trigger evaluation`,
-			`    ${attackerName}: ${gold.icon} ${gold.label} ${
-				playerGoldDelta >= 0 ? '+' : ''
-			}${playerGoldDelta} (${playerGoldBefore}→${playerGoldAfter})`,
+			`  Attack opponent with your ${powerLabel}`,
+			`    ${absorptionLabel} damage reduction applied`,
+			`    Apply damage to opponent ${fortLabel}`,
+			`    If opponent ${fortLabel} falls to 0, use remaining damage to attempt to destroy opponent ${buildingDisplay}`,
+			`  On opponent ${buildingDisplay} destruction`,
+			`    ${gold.icon}+${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
 		]);
 	});
 });

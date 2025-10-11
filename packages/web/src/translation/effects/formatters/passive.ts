@@ -3,9 +3,9 @@ import {
 	summarizeEffects,
 	describeEffects,
 } from '../factory';
-import { PHASES, PASSIVE_INFO } from '@kingdom-builder/contents';
-import type { EffectDef, PhaseDef } from '@kingdom-builder/protocol';
-import type { TranslationContext } from '../../context';
+import type { EffectDef } from '@kingdom-builder/protocol';
+import type { TranslationContext, TranslationPhase } from '../../context';
+import { selectPassiveDescriptor } from '../registrySelectors';
 
 type PassiveDurationMeta = {
 	label: string;
@@ -29,39 +29,21 @@ function createMeta(metadata: PassiveDurationMeta): PassiveDurationMeta {
 }
 
 type PassivePhaseInfo = { id: string; label?: string; icon?: string };
-type PhaseStepMetadata = { triggers?: readonly string[] };
-type PassivePhaseWithSteps = PassivePhaseInfo & {
-	steps?: readonly PhaseStepMetadata[];
-};
-type PhaseWithStepMetadata = PhaseDef | PassivePhaseWithSteps;
 
-function mergePhaseInfo(
-	id: string,
-	...sources: (PhaseDef | PassivePhaseInfo | undefined)[]
+function toPhaseInfo(
+	phase: TranslationPhase | PassivePhaseInfo | undefined,
 ): PassivePhaseInfo | undefined {
-	let found = false;
-	const info: PassivePhaseInfo = { id };
-	for (const source of sources) {
-		if (!source) {
-			continue;
-		}
-		found = true;
-		if (
-			'label' in source &&
-			source.label !== undefined &&
-			info.label === undefined
-		) {
-			info.label = source.label;
-		}
-		if (
-			'icon' in source &&
-			source.icon !== undefined &&
-			info.icon === undefined
-		) {
-			info.icon = source.icon;
-		}
+	if (!phase) {
+		return undefined;
 	}
-	return found ? info : undefined;
+	const info: PassivePhaseInfo = { id: phase.id };
+	if ('label' in phase && phase.label !== undefined) {
+		info.label = phase.label;
+	}
+	if ('icon' in phase && phase.icon !== undefined) {
+		info.icon = phase.icon;
+	}
+	return info;
 }
 
 function resolvePhaseMeta(
@@ -71,58 +53,42 @@ function resolvePhaseMeta(
 	if (!id) {
 		return undefined;
 	}
-	const fromContext = context.phases.find((phase) => phase.id === id);
-	const fromContents = PHASES.find(
-		(phaseDefinition) => phaseDefinition.id === id,
-	);
-	return mergePhaseInfo(id, fromContext, fromContents);
+	const match = context.phases.find((phase) => phase.id === id);
+	return toPhaseInfo(match);
 }
 
 const PHASE_TRIGGER_KEY_PATTERN = /^on[A-Z][A-Za-z0-9]*Phase$/;
+
+function humanizePhaseId(id: string): string {
+	const slug = id.split(':').pop() ?? id;
+	return slug
+		.split(/[-_]/)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(' ');
+}
 
 function resolvePhaseByTrigger(
 	context: TranslationContext,
 	triggerId: string,
 ): PassivePhaseInfo | undefined {
-	const findPhaseWithTrigger = (
-		phases: readonly PhaseWithStepMetadata[] | undefined,
-	): PhaseDef | PassivePhaseInfo | undefined => {
-		if (!phases) {
-			return undefined;
+	for (const phase of context.phases) {
+		const steps = phase.steps;
+		if (!steps) {
+			continue;
 		}
-		for (const phase of phases) {
-			if (!phase || typeof phase !== 'object') {
-				continue;
+		const matches = steps.some((step) => {
+			if (!step || typeof step !== 'object') {
+				return false;
 			}
-			const steps = phase.steps;
-			if (!steps) {
-				continue;
-			}
-			const matches = steps.some((step) => {
-				if (!step || typeof step !== 'object') {
-					return false;
-				}
-				const triggers = step.triggers;
-				return triggers?.includes(triggerId) ?? false;
-			});
-			if (matches) {
-				return phase as PhaseDef | PassivePhaseInfo;
-			}
-		}
-		return undefined;
-	};
-
-	const fromContext = findPhaseWithTrigger(context.phases);
-	if (fromContext) {
-		const fromContents = PHASES.find((phaseDefinition) => {
-			return phaseDefinition.id === fromContext.id;
+			const triggers = step.triggers;
+			return triggers?.includes(triggerId) ?? false;
 		});
-		return mergePhaseInfo(fromContext.id, fromContext, fromContents);
+		if (matches) {
+			return toPhaseInfo(phase);
+		}
 	}
-	const fromContents = findPhaseWithTrigger(PHASES);
-	return fromContents
-		? mergePhaseInfo(fromContents.id, fromContents)
-		: undefined;
+	return undefined;
 }
 
 function collectPhaseTriggerKeys(params: Record<string, unknown>) {
@@ -186,7 +152,12 @@ function resolveDurationMeta(
 	}
 
 	if (!label) {
-		return null;
+		if (phaseId) {
+			label = humanizePhaseId(phaseId);
+			source = source ?? 'phase';
+		} else {
+			return null;
+		}
 	}
 
 	if (!source) {
@@ -221,10 +192,13 @@ registerEffectFormatter('passive', 'add', {
 		];
 	},
 	describe: (effect, context) => {
+		const descriptor = selectPassiveDescriptor(context);
 		const icon =
-			(effect.params?.['icon'] as string | undefined) ?? PASSIVE_INFO.icon;
+			(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
 		const name =
-			(effect.params?.['name'] as string | undefined) ?? PASSIVE_INFO.label;
+			(effect.params?.['name'] as string | undefined) ??
+			descriptor.label ??
+			'Passive';
 		const prefix = icon ? `${icon} ` : '';
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
@@ -241,10 +215,13 @@ registerEffectFormatter('passive', 'add', {
 		];
 	},
 	log: (effect, context) => {
+		const descriptor = selectPassiveDescriptor(context);
 		const icon =
-			(effect.params?.['icon'] as string | undefined) ?? PASSIVE_INFO.icon;
+			(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
 		const name =
-			(effect.params?.['name'] as string | undefined) ?? PASSIVE_INFO.label;
+			(effect.params?.['name'] as string | undefined) ??
+			descriptor.label ??
+			'Passive';
 		const prefix = icon ? `${icon} ` : '';
 		const label = `${prefix}${name}`.trim();
 		const inner = describeEffects(effect.effects || [], context);

@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
 	createSyntheticPlowContent,
-	SYNTHETIC_RESOURCES,
 	SYNTHETIC_UPKEEP_PHASE,
 	SYNTHETIC_PASSIVE_INFO,
 	SYNTHETIC_LAND_INFO,
@@ -13,6 +12,7 @@ import {
 	splitSummary,
 } from '../src/translation/content';
 import { createEngine, type EffectDef } from '@kingdom-builder/engine';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -20,24 +20,36 @@ vi.mock('@kingdom-builder/engine', async () => {
 
 function createCtx() {
 	const synthetic = createSyntheticPlowContent();
-	return {
-		...synthetic,
-		ctx: createEngine({
-			actions: synthetic.factory.actions,
-			buildings: synthetic.factory.buildings,
-			developments: synthetic.factory.developments,
-			populations: synthetic.factory.populations,
-			phases: synthetic.phases,
-			start: synthetic.start,
-			rules: synthetic.rules,
-		}),
-	};
+	const ctx = createEngine({
+		actions: synthetic.factory.actions,
+		buildings: synthetic.factory.buildings,
+		developments: synthetic.factory.developments,
+		populations: synthetic.factory.populations,
+		phases: synthetic.phases,
+		start: synthetic.start,
+		rules: synthetic.rules,
+	});
+	const translation = createTranslationContextForEngine(ctx, (registries) => {
+		const plowDef = ctx.actions.get(synthetic.plow.id);
+		const expandDef = ctx.actions.get(synthetic.expand.id);
+		const tillDef = ctx.actions.get(synthetic.till.id);
+		if (plowDef) {
+			registries.actions.add(plowDef.id, { ...plowDef });
+		}
+		if (expandDef) {
+			registries.actions.add(expandDef.id, { ...expandDef });
+		}
+		if (tillDef) {
+			registries.actions.add(tillDef.id, { ...tillDef });
+		}
+	});
+	return { ...synthetic, ctx, translation };
 }
 
 describe('plow action translation', () => {
 	it('summarizes plow action', () => {
-		const { ctx, expand, till, plow } = createCtx();
-		const summary = summarizeContent('action', plow.id, ctx);
+		const { translation, expand, till, plow } = createCtx();
+		const summary = summarizeContent('action', plow.id, translation);
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
 		const upkeepLabel = SYNTHETIC_UPKEEP_PHASE.label;
 		const upkeepIcon = SYNTHETIC_UPKEEP_PHASE.icon;
@@ -45,11 +57,10 @@ describe('plow action translation', () => {
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
-		const modKey = (
-			costMod?.params as { key?: keyof typeof SYNTHETIC_RESOURCES }
-		)?.key as keyof typeof SYNTHETIC_RESOURCES;
+		const modKey = (costMod?.params as { key?: string })?.key ?? '';
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		const modIcon = SYNTHETIC_RESOURCES[modKey]?.icon ?? '';
+		const resourceDescriptor = translation.assets.resources?.[modKey] ?? {};
+		const modIcon = resourceDescriptor.icon ?? '';
 		expect(summary).toEqual([
 			`${expand.icon} ${expand.name}`,
 			`${till.icon} ${till.name}`,
@@ -61,8 +72,8 @@ describe('plow action translation', () => {
 	});
 
 	it('describes plow action without perform prefix and with passive icon', () => {
-		const { ctx, plow, plowPassive } = createCtx();
-		const desc = describeContent('action', plow.id, ctx);
+		const { translation, plow, plowPassive } = createCtx();
+		const desc = describeContent('action', plow.id, translation);
 		const titles = desc.map((entry) => {
 			return typeof entry === 'string' ? entry : entry.title;
 		});
@@ -82,19 +93,18 @@ describe('plow action translation', () => {
 	});
 
 	it('keeps performed system actions in effects', () => {
-		const { ctx, expand, till, plow, plowPassive } = createCtx();
-		const summary = describeContent('action', plow.id, ctx);
+		const { translation, expand, till, plow, plowPassive } = createCtx();
+		const summary = describeContent('action', plow.id, translation);
 		const { effects, description } = splitSummary(summary);
 		expect(description).toBeUndefined();
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
-		const modKey = (
-			costMod?.params as { key?: keyof typeof SYNTHETIC_RESOURCES }
-		)?.key as keyof typeof SYNTHETIC_RESOURCES;
+		const modKey = (costMod?.params as { key?: string })?.key ?? '';
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		const modIcon = SYNTHETIC_RESOURCES[modKey]?.icon ?? '';
+		const resourceDescriptor = translation.assets.resources?.[modKey] ?? {};
+		const modIcon = resourceDescriptor.icon ?? '';
 		const passiveName = ((plowPassive as { name?: string })?.name ??
 			SYNTHETIC_PASSIVE_INFO.label) as string;
 		const passiveIcon = ((plowPassive as { icon?: string })?.icon ??
@@ -112,7 +122,14 @@ describe('plow action translation', () => {
 				(e.params as { key?: string }).key === 'happiness',
 		);
 		const hapAmt = (expandHap?.params as { amount?: number })?.amount ?? 0;
-		const hapInfo = SYNTHETIC_RESOURCES.happiness;
+		const hapDescriptor = translation.assets.resources?.happiness ?? {};
+		const hapLabel = hapDescriptor.label ?? 'happiness';
+		const hapIcon = hapDescriptor.icon ?? '';
+		const modifierInfo = translation.assets.modifiers?.cost ?? {};
+		const modifierIcon = modifierInfo.icon ?? '💲';
+		const modifierLabel = modifierInfo.label ?? 'Cost Adjustment';
+		const modifierDirection = modAmt >= 0 ? 'Increase' : 'Decrease';
+		const modMagnitude = Math.abs(modAmt);
 		expect(effects).toEqual([
 			{
 				title: `${expand.icon} ${expand.name}`,
@@ -120,7 +137,7 @@ describe('plow action translation', () => {
 					`${SYNTHETIC_LAND_INFO.icon} ${
 						landCount >= 0 ? '+' : ''
 					}${landCount} ${SYNTHETIC_LAND_INFO.label}`,
-					`${hapInfo.icon}${hapAmt >= 0 ? '+' : ''}${hapAmt} ${hapInfo.label}`,
+					`${hapIcon}${hapAmt >= 0 ? '+' : ''}${hapAmt} ${hapLabel}`,
 				],
 			},
 			{
@@ -134,7 +151,7 @@ describe('plow action translation', () => {
 					upkeepDescriptionLabel
 				}`,
 				items: [
-					`💲 Cost Adjustment on all actions: Increase cost by ${modIcon}${modAmt}`,
+					`${modifierIcon} ${modifierLabel} on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
 				],
 			},
 		]);

@@ -1,6 +1,7 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { formatTargetLabel } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
+import { humanizeIdentifier } from '../stringUtils';
 import type { TranslationContext } from '../../context';
 
 export interface TransferModifierTarget {
@@ -43,13 +44,13 @@ export function resolveTransferModifierTarget(
 
 	let fallbackName = 'affected actions';
 	if (paramActionId) {
-		fallbackName = paramActionId;
+		fallbackName = humanizeIdentifier(paramActionId) || paramActionId;
 	} else if (evaluationId) {
-		fallbackName = evaluationId;
+		fallbackName = humanizeIdentifier(evaluationId) || evaluationId;
 	} else if (evaluation?.type === 'transfer_pct') {
 		fallbackName = 'resource transfers';
 	} else if (evaluation) {
-		fallbackName = evaluation.type;
+		fallbackName = humanizeIdentifier(evaluation.type) || evaluation.type;
 	}
 	if (
 		evaluation?.type === 'transfer_pct' &&

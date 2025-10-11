@@ -1,10 +1,11 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { RESOURCES } from '@kingdom-builder/contents';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
-import type { DevelopmentDef, ResourceKey } from '@kingdom-builder/contents';
+import type { DevelopmentDef } from '@kingdom-builder/contents';
 import { signed } from '../helpers';
+import { humanizeIdentifier } from '../stringUtils';
 import type { SummaryEntry } from '../../content/types';
 import type { TranslationContext } from '../../context';
+import { selectResourceDescriptor } from '../registrySelectors';
 
 const joinParts = (...parts: Array<string | undefined>) =>
 	parts.filter(Boolean).join(' ').trim();
@@ -117,6 +118,7 @@ export function formatGainFrom(
 	label: ResultModifierLabel,
 	source: ResultModifierSource,
 	amount: number,
+	context: TranslationContext,
 	options: {
 		key?: string;
 		detailed?: boolean;
@@ -125,8 +127,8 @@ export function formatGainFrom(
 	} = {},
 ) {
 	const { key, detailed, percent, round } = options;
-	const resourceInfo = key ? RESOURCES[key as ResourceKey] : undefined;
-	const resIcon = resourceInfo?.icon || key;
+	const descriptor = key ? selectResourceDescriptor(context, key) : undefined;
+	const resIcon = descriptor?.icon || key;
 	const usePercent = typeof percent === 'number' && !Number.isNaN(percent);
 	const value = usePercent ? Number(percent) : amount;
 	const normalizedValue = Object.is(value, -0) ? 0 : value;
@@ -180,30 +182,29 @@ export function formatDevelopment(
 ) {
 	const { icon, name } = getDevelopmentInfo(translationContext, evaluation.id);
 	const fallbackLabelFromId = () => {
-		const rawId = effectDefinition.params?.['id'];
-		if (typeof rawId !== 'string' || rawId.trim().length === 0) {
-			return undefined;
+		const candidates: Array<string | undefined> = [
+			(() => {
+				const rawId = effectDefinition.params?.['id'];
+				return typeof rawId === 'string' ? rawId : undefined;
+			})(),
+			evaluation.id,
+		];
+		for (const candidate of candidates) {
+			const humanized = humanizeIdentifier(candidate);
+			if (humanized) {
+				return humanized;
+			}
 		}
-		const slug = rawId.split(':').pop();
-		if (!slug) {
-			return undefined;
-		}
-		return slug
-			.split(/[-_]/)
-			.filter(Boolean)
-			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-			.join(' ');
+		return undefined;
 	};
-	const fallback = fallbackLabelFromId() ?? 'Income';
-	const target = formatTargetLabel(icon, name) || fallback;
-	const summaryTargetIcon = icon?.trim()
-		? icon
-		: name?.trim()
-			? name
-			: fallback;
+	const fallback = fallbackLabelFromId() || 'Income';
+	const rawTarget = formatTargetLabel(icon, name);
+	const normalizedTarget =
+		rawTarget && rawTarget !== evaluation.id ? rawTarget : fallback;
+	const summaryTargetIcon = icon?.trim() ? icon : normalizedTarget;
 	const source = {
 		summaryTargetIcon,
-		description: target,
+		description: normalizedTarget,
 	};
 	const resourceEffect = effectDefinition.effects?.find(
 		(
@@ -216,7 +217,10 @@ export function formatDevelopment(
 		const key = resourceEffect.params?.['key'] as string;
 		const rawAmount = Number(resourceEffect.params?.['amount']);
 		const amount = resourceEffect.method === 'remove' ? -rawAmount : rawAmount;
-		return formatGainFrom(label, source, amount, { key, detailed });
+		return formatGainFrom(label, source, amount, translationContext, {
+			key,
+			detailed,
+		});
 	}
 	const percentParam = effectDefinition.params?.['percent'];
 	if (percentParam !== undefined) {
@@ -225,14 +229,16 @@ export function formatDevelopment(
 			effectDefinition.round === 'down' || effectDefinition.round === 'up'
 				? effectDefinition.round
 				: undefined;
-		return formatGainFrom(label, source, percent, {
+		return formatGainFrom(label, source, percent, translationContext, {
 			detailed,
 			percent,
 			...(round ? { round } : {}),
 		});
 	}
 	const amount = Number(effectDefinition.params?.['amount'] ?? 0);
-	return formatGainFrom(label, source, amount, { detailed });
+	return formatGainFrom(label, source, amount, translationContext, {
+		detailed,
+	});
 }
 
 export function getDevelopmentInfo(
@@ -247,6 +253,6 @@ export function getDevelopmentInfo(
 			name: developmentDefinition.name ?? id,
 		};
 	} catch {
-		return { icon: '', name: id };
+		return { icon: '', name: humanizeIdentifier(id) || id };
 	}
 }

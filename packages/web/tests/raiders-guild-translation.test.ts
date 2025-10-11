@@ -30,6 +30,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 const RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
 function expectHoistedActionCard(
 	ctx: RaidersGuildSyntheticContext['ctx'],
+	translation: RaidersGuildSyntheticContext['translation'],
 	description: Summary | undefined,
 	actionId: string,
 ) {
@@ -42,7 +43,7 @@ function expectHoistedActionCard(
 	const action = ctx.actions.get(actionId);
 	expect(hoisted.title).toBe(formatTargetLabel(action.icon ?? '', action.name));
 	expect(hoisted.items as Summary).toEqual(
-		getActionSummaryItems(ctx, actionId),
+		getActionSummaryItems(translation, actionId),
 	);
 }
 
@@ -54,8 +55,12 @@ describe('raiders guild translation', () => {
 	});
 
 	it('describes transfer modifier with hoisted action card', () => {
-		const { ctx, ids } = synthetic;
-		const summary = describeContent('building', ids.transferBuilding, ctx);
+		const { ctx, translation, ids } = synthetic;
+		const summary = describeContent(
+			'building',
+			ids.transferBuilding,
+			translation,
+		);
 		const { effects, description } = splitSummary(summary);
 		const modifier = getModifier(ctx, ids.transferBuilding);
 		const adjust = Number(modifier.params?.['adjust'] ?? 0);
@@ -67,12 +72,16 @@ describe('raiders guild translation', () => {
 			adjust,
 		)} transfer by ${Math.abs(adjust)}%`;
 		expect(collectText(effects)).toContain(clause);
-		expectHoistedActionCard(ctx, description, ids.raidAction);
+		expectHoistedActionCard(ctx, translation, description, ids.raidAction);
 	});
 
 	it('summarizes population modifier compactly', () => {
-		const { ctx, ids } = synthetic;
-		const summary = summarizeContent('building', ids.populationBuilding, ctx);
+		const { ctx, translation, ids } = synthetic;
+		const summary = summarizeContent(
+			'building',
+			ids.populationBuilding,
+			translation,
+		);
 		const ledger = ctx.actions.get(ids.ledgerAction);
 		const modifier = getModifier(ctx, ids.populationBuilding);
 		const amount = Number(modifier.params?.['amount'] ?? 0);
@@ -85,8 +94,12 @@ describe('raiders guild translation', () => {
 	});
 
 	it('summarizes development modifier compactly', () => {
-		const { ctx, ids } = synthetic;
-		const summary = summarizeContent('building', ids.developmentBuilding, ctx);
+		const { ctx, translation, ids } = synthetic;
+		const summary = summarizeContent(
+			'building',
+			ids.developmentBuilding,
+			translation,
+		);
 		const development = ctx.developments.get(ids.harvestDevelopment);
 		const modifier = getModifier(ctx, ids.developmentBuilding);
 		const resourceEffect = getResourceEffect(modifier);
@@ -100,8 +113,12 @@ describe('raiders guild translation', () => {
 	});
 
 	it('describes population modifier with detailed clause', () => {
-		const { ctx, ids } = synthetic;
-		const summary = describeContent('building', ids.populationBuilding, ctx);
+		const { ctx, translation, ids } = synthetic;
+		const summary = describeContent(
+			'building',
+			ids.populationBuilding,
+			translation,
+		);
 		const ledger = ctx.actions.get(ids.ledgerAction);
 		const modifier = getModifier(ctx, ids.populationBuilding);
 		const amount = Number(modifier.params?.['amount'] ?? 0);
@@ -116,8 +133,12 @@ describe('raiders guild translation', () => {
 	});
 
 	it('describes development modifier with detailed clause', () => {
-		const { ctx, ids } = synthetic;
-		const summary = describeContent('building', ids.developmentBuilding, ctx);
+		const { ctx, translation, ids } = synthetic;
+		const summary = describeContent(
+			'building',
+			ids.developmentBuilding,
+			translation,
+		);
 		const development = ctx.developments.get(ids.harvestDevelopment);
 		const modifier = getModifier(ctx, ids.developmentBuilding);
 		const resourceEffect = getResourceEffect(modifier);
