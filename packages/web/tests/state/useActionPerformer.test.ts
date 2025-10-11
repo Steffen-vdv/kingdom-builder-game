@@ -122,7 +122,7 @@ describe('useActionPerformer', () => {
 		const error = new Error('Network offline');
 		performSessionActionMock.mockRejectedValueOnce(error);
 		const showResolution = vi.fn().mockResolvedValue(undefined);
-		const updateMainPhaseStep = vi.fn();
+		const syncPhaseState = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn();
 		const { result } = renderHook(() =>
@@ -132,7 +132,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				addLog,
 				showResolution,
-				updateMainPhaseStep,
+				syncPhaseState,
 				refresh,
 				pushErrorToast,
 				mountedRef: { current: true },
@@ -175,7 +175,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
-				updateMainPhaseStep: vi.fn(),
+				syncPhaseState: vi.fn(),
 				refresh: vi.fn(),
 				pushErrorToast,
 				mountedRef: { current: true },
@@ -205,7 +205,7 @@ describe('useActionPerformer', () => {
 
 	it('passes enriched resolution metadata when an action succeeds', async () => {
 		const showResolution = vi.fn().mockResolvedValue(undefined);
-		const updateMainPhaseStep = vi.fn();
+		const syncPhaseState = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn();
 		const [activeBefore, opponentBefore] = sessionSnapshot.game.players;
@@ -252,7 +252,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				addLog,
 				showResolution,
-				updateMainPhaseStep,
+				syncPhaseState,
 				refresh,
 				pushErrorToast,
 				mountedRef: { current: true },

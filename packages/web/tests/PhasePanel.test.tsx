@@ -68,19 +68,19 @@ const mockGame = {
 	hoverCard: null,
 	handleHoverCard: vi.fn(),
 	clearHoverCard: vi.fn(),
-	phaseSteps: [],
-	setPhaseSteps: vi.fn(),
-	phaseTimer: 0,
-	mainApStart: 0,
-	displayPhase: engineSnapshot.game.currentPhase,
-	setDisplayPhase: vi.fn(),
-	phaseHistories: {},
-	tabsEnabled: true,
+	phase: {
+		currentPhaseId: engineSnapshot.game.currentPhase,
+		isActionPhase: Boolean(
+			engineSnapshot.phases[engineSnapshot.game.phaseIndex]?.action,
+		),
+		canEndTurn: true,
+		isAdvancing: false,
+	},
 	actionCostResource,
 	handlePerform: vi.fn().mockResolvedValue(undefined),
 	runUntilActionPhase: vi.fn(),
 	handleEndTurn: vi.fn().mockResolvedValue(undefined),
-	updateMainPhaseStep: vi.fn(),
+	refreshPhaseState: vi.fn(),
 	darkMode: false,
 	onToggleDark: vi.fn(),
 	resolution: null,
@@ -130,13 +130,17 @@ describe('<PhasePanel />', () => {
 				),
 			).toBeInTheDocument();
 		}
+		const phaseItems = screen.getAllByRole('listitem');
+		expect(phaseItems.length).toBeGreaterThan(0);
 		const firstPhase = engineSnapshot.phases[0];
-		const firstPhaseButton = screen.getByRole('button', {
-			name: firstPhase.label,
-		});
-		expect(firstPhaseButton).toBeInTheDocument();
-		expect(
-			within(firstPhaseButton).getByText(firstPhase.icon),
-		).toBeInTheDocument();
+		const firstPhaseEntry = phaseItems.find((item) =>
+			within(item).queryByText(firstPhase.label),
+		);
+		expect(firstPhaseEntry).toBeTruthy();
+		if (firstPhaseEntry) {
+			expect(
+				within(firstPhaseEntry).getByText(firstPhase.icon),
+			).toBeInTheDocument();
+		}
 	});
 });

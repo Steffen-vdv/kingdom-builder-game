@@ -6,7 +6,7 @@ import type {
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
-import type { PhaseStep } from './phaseTypes';
+import type { PhaseProgressState } from './phaseTypes';
 import type { TimeScale } from './useTimeScale';
 import type { HoverCard } from './useHoverCard';
 import type { LogEntry } from './useGameLog';
@@ -55,14 +55,7 @@ export interface GameEngineContextValue {
 	hoverCard: HoverCard | null;
 	handleHoverCard: (data: HoverCard) => void;
 	clearHoverCard: () => void;
-	phaseSteps: PhaseStep[];
-	setPhaseSteps: React.Dispatch<React.SetStateAction<PhaseStep[]>>;
-	phaseTimer: number;
-	mainApStart: number;
-	displayPhase: string;
-	setDisplayPhase: (id: string) => void;
-	phaseHistories: Record<string, PhaseStep[]>;
-	tabsEnabled: boolean;
+	phase: PhaseProgressState;
 	actionCostResource: ResourceKey;
 	requests: {
 		performAction: PerformActionHandler;
@@ -71,7 +64,7 @@ export interface GameEngineContextValue {
 	};
 	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;
-	updateMainPhaseStep: (apStartOverride?: number) => void;
+	refreshPhaseState: (overrides?: Partial<PhaseProgressState>) => void;
 	onExit?: () => void;
 	darkMode: boolean;
 	onToggleDark: () => void;
