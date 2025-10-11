@@ -17,6 +17,7 @@ interface UseAiRunnerOptions {
 		(action: Action, params?: ActionParams<string>) => Promise<void>
 	>;
 	mountedRef: React.MutableRefObject<boolean>;
+	onFatalSessionError?: (error: unknown) => void;
 }
 
 export function useAiRunner({
@@ -26,6 +27,7 @@ export function useAiRunner({
 	syncPhaseState,
 	performRef,
 	mountedRef,
+	onFatalSessionError,
 }: UseAiRunnerOptions) {
 	useEffect(() => {
 		const phaseDefinition = sessionState.phases[sessionState.game.phaseIndex];
@@ -40,41 +42,70 @@ export function useAiRunner({
 			return;
 		}
 		void session.enqueue(async () => {
-			const ranTurn = await session.runAiTurn(activeId, {
-				performAction: async (
-					actionId: string,
-					_ignored: unknown,
-					params?: ActionParams<string>,
-				) => {
-					const definition = session.getActionDefinition(actionId);
-					if (!definition) {
-						throw new Error(`Unknown action ${String(actionId)} for AI`);
-					}
-					const action: Action = {
-						id: definition.id,
-						name: definition.name,
-					};
-					if (definition.system !== undefined) {
-						action.system = definition.system;
-					}
-					await performRef.current(action, params as Record<string, unknown>);
-				},
-				advance: () => {
-					const snapshot = session.getSnapshot();
-					if (snapshot.game.conclusion) {
-						return;
-					}
-					session.advancePhase();
-				},
-			});
-			if (!ranTurn || !mountedRef.current) {
+			let fatalError: unknown = null;
+			const forwardFatalError = (error: unknown) => {
+				if (fatalError !== null) {
+					return;
+				}
+				fatalError = error;
+				if (onFatalSessionError) {
+					onFatalSessionError(error);
+				}
+			};
+			try {
+				const ranTurn = await session.runAiTurn(activeId, {
+					performAction: async (
+						actionId: string,
+						_ignored: unknown,
+						params?: ActionParams<string>,
+					) => {
+						const definition = session.getActionDefinition(actionId);
+						if (!definition) {
+							throw new Error(`Unknown action ${String(actionId)} for AI`);
+						}
+						const action: Action = {
+							id: definition.id,
+							name: definition.name,
+						};
+						if (definition.system !== undefined) {
+							action.system = definition.system;
+						}
+						try {
+							await performRef.current(
+								action,
+								params as Record<string, unknown>,
+							);
+						} catch (error) {
+							forwardFatalError(error);
+							throw error;
+						}
+					},
+					advance: () => {
+						const snapshot = session.getSnapshot();
+						if (snapshot.game.conclusion) {
+							return;
+						}
+						session.advancePhase();
+					},
+				});
+				if (!ranTurn || !mountedRef.current || fatalError !== null) {
+					return;
+				}
+				try {
+					syncPhaseState(session.getSnapshot(), {
+						isAdvancing: true,
+						canEndTurn: false,
+					});
+					await runUntilActionPhaseCore();
+				} catch (error) {
+					forwardFatalError(error);
+				}
+			} catch (error) {
+				forwardFatalError(error);
+			}
+			if (fatalError !== null) {
 				return;
 			}
-			syncPhaseState(session.getSnapshot(), {
-				isAdvancing: true,
-				canEndTurn: false,
-			});
-			await runUntilActionPhaseCore();
 		});
 	}, [
 		session,
@@ -85,5 +116,6 @@ export function useAiRunner({
 		syncPhaseState,
 		performRef,
 		mountedRef,
+		onFatalSessionError,
 	]);
 }
