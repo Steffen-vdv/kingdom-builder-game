@@ -50,6 +50,18 @@ describe('translation diff resource source context', () => {
 				evaluationMods,
 				get: vi.fn(() => ({ icon: '✨' })),
 			},
+			assets: {
+				resources: {},
+				stats: {},
+				populations: {},
+				population: {},
+				land: {},
+				slot: {},
+				passive: {},
+				modifiers: {},
+				formatPassiveRemoval: (description: string) =>
+					`Active as long as ${description}`,
+			},
 			evaluate: evaluateMock,
 		};
 		const step: StepEffects = {

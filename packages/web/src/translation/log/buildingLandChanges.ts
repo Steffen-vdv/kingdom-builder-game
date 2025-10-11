@@ -1,4 +1,3 @@
-import { LAND_INFO } from '@kingdom-builder/contents';
 import { type TranslationDiffContext } from './resourceSources/context';
 import {
 	formatIconLabel,
@@ -51,7 +50,7 @@ export function appendLandChanges(
 	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
-	context: Pick<TranslationDiffContext, 'developments'>,
+	context: Pick<TranslationDiffContext, 'developments' | 'assets'>,
 ): void {
 	for (const land of after.lands) {
 		const previous = before.lands.find((item) => {
@@ -59,8 +58,8 @@ export function appendLandChanges(
 		});
 		if (!previous) {
 			const landLabel =
-				formatIconLabel(LAND_INFO.icon, LAND_INFO.label) ||
-				LAND_INFO.label ||
+				formatIconLabel(context.assets.land.icon, context.assets.land.label) ||
+				context.assets.land.label ||
 				'Land';
 			changes.push(formatLogHeadline(LOG_KEYWORDS.gained, landLabel));
 			continue;

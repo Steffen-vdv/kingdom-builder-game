@@ -21,7 +21,10 @@ interface UseCompensationLoggerOptions {
 		player?: SessionSnapshot['game']['players'][number],
 	) => void;
 	resourceKeys: SessionResourceKey[];
-	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+	>;
 }
 
 export function useCompensationLogger({

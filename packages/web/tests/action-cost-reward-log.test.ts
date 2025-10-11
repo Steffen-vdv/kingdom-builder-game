@@ -11,6 +11,7 @@ import {
 	SYNTHETIC_RESOURCES,
 	type SyntheticResourceKey,
 	SYNTHETIC_PHASE_IDS,
+	SYNTHETIC_ASSETS,
 } from './fixtures/syntheticTaxLog';
 import {
 	snapshotPlayer,
@@ -80,6 +81,7 @@ describe('action cost and reward logging', () => {
 			start: scenario.start,
 			rules: scenario.rules,
 		});
+		engineContext.assets = SYNTHETIC_ASSETS;
 		engineContext.activePlayer.actions.add(refundAction.id);
 		while (engineContext.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
 			advance(engineContext);

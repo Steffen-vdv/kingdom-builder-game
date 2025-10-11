@@ -1,10 +1,3 @@
-import {
-	RESOURCES,
-	STATS,
-	POPULATION_ROLES,
-	SLOT_INFO,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import { formatStatValue, statDisplaysAsPercent } from '../../utils/stats';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
 import {
@@ -17,15 +10,17 @@ import {
 	type SignedDelta,
 } from './diffFormatting';
 import { type PlayerSnapshot } from './snapshots';
+import type { TranslationAssets } from '../context';
 export {
 	appendBuildingChanges,
 	appendLandChanges,
 } from './buildingLandChanges';
 
 function describeResourceChange(
-	key: ResourceKey,
+	key: string,
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
+	assets: TranslationAssets,
 	sources?: Record<string, string>,
 ): string | undefined {
 	const change = buildSignedDelta(
@@ -35,7 +30,7 @@ function describeResourceChange(
 	if (change.delta === 0) {
 		return undefined;
 	}
-	const info = RESOURCES[key];
+	const info = assets.resources[key];
 	const label = info?.label ?? key;
 	const base = formatResourceChange(label, info?.icon, change);
 	const resourceSourceArgs: Parameters<typeof formatResourceSource> = [
@@ -52,22 +47,24 @@ function describeStatBreakdown(
 	change: SignedDelta,
 	player: Pick<PlayerSnapshot, 'population' | 'stats'>,
 	step: StepEffects,
+	assets: TranslationAssets,
 ): string | undefined {
 	const breakdown = findStatPctBreakdown(step, key);
 	if (!breakdown || change.delta <= 0) {
 		return undefined;
 	}
-	const role = breakdown.role as keyof typeof POPULATION_ROLES;
+	const role = breakdown.role;
 	const count = player.population[role] ?? 0;
-	const popIcon = POPULATION_ROLES[role]?.icon || '';
-	const pctStat = breakdown.percentStat as keyof typeof STATS;
+	const popIcon =
+		assets.populations[role]?.icon ?? assets.population.icon ?? '';
+	const pctStat = breakdown.percentStat;
 	const growth = player.stats[pctStat] ?? 0;
-	const growthIcon = STATS[pctStat]?.icon || '';
+	const growthIcon = assets.stats[pctStat]?.icon ?? '';
 	const growthValue = formatStatValue(breakdown.percentStat, growth);
 	const baseValue = formatStatValue(key, change.before);
 	const totalValue = formatStatValue(key, change.after);
 	return formatPercentBreakdown(
-		STATS[key as keyof typeof STATS]?.icon || '',
+		assets.stats[key]?.icon ?? '',
 		baseValue,
 		popIcon,
 		count,
@@ -80,11 +77,12 @@ export function appendResourceChanges(
 	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
-	resourceKeys: ResourceKey[],
+	resourceKeys: string[],
+	assets: TranslationAssets,
 	sources?: Record<string, string>,
 ) {
 	for (const key of resourceKeys) {
-		const line = describeResourceChange(key, before, after, sources);
+		const line = describeResourceChange(key, before, after, assets, sources);
 		if (line) {
 			changes.push(line);
 		}
@@ -96,6 +94,7 @@ export function appendStatChanges(
 	after: PlayerSnapshot,
 	player: Pick<PlayerSnapshot, 'population' | 'stats'>,
 	step: StepEffects,
+	assets: TranslationAssets,
 ) {
 	for (const key of Object.keys(after.stats)) {
 		const change = buildSignedDelta(
@@ -105,7 +104,7 @@ export function appendStatChanges(
 		if (change.delta === 0) {
 			continue;
 		}
-		const info = STATS[key as keyof typeof STATS];
+		const info = assets.stats[key];
 		const label = info?.label ?? key;
 		const icon = info?.icon;
 		const line = formatStatChange(label, icon, key, change);
@@ -113,7 +112,7 @@ export function appendStatChanges(
 			changes.push(line);
 			continue;
 		}
-		const breakdown = describeStatBreakdown(key, change, player, step);
+		const breakdown = describeStatBreakdown(key, change, player, step, assets);
 		if (breakdown) {
 			changes.push(`${line}${breakdown}`);
 		} else {
@@ -141,6 +140,7 @@ export function appendSlotChanges(
 	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
+	assets: TranslationAssets,
 ) {
 	const beforeSlots = totalSlots(before.lands);
 	const afterSlots = totalSlots(after.lands);
@@ -151,7 +151,7 @@ export function appendSlotChanges(
 	}
 	const change = signedNumber(slotDelta);
 	const slotRange = `(${beforeSlots}→${beforeSlots + slotDelta})`;
-	const slotSummaryParts = [SLOT_INFO.icon, SLOT_INFO.label, change];
+	const slotSummaryParts = [assets.slot.icon, assets.slot.label, change];
 	const slotSummary = `${slotSummaryParts.join(' ')} `;
 	changes.push(`${slotSummary}${slotRange}`);
 }

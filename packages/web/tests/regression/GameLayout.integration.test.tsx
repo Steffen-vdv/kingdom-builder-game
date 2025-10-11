@@ -40,6 +40,7 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
+import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
 
 const originalScrollTo = (
 	Element.prototype as { scrollTo?: typeof window.scrollTo }
@@ -105,12 +106,11 @@ describe('<GameLayout /> integration', () => {
 		tierDefinitions: [],
 		winConditions: [],
 	} as const;
-	const registries: SessionRegistriesPayload = {
-		actions: {},
-		buildings: {},
-		developments: {},
-		populations: {},
-		resources: {},
+	const baseRegistriesPayload = createSessionRegistriesPayload();
+	const cloneRegistriesPayload = (): SessionRegistriesPayload => {
+		return JSON.parse(
+			JSON.stringify(baseRegistriesPayload),
+		) as SessionRegistriesPayload;
 	};
 	const metadata = {
 		passiveEvaluationModifiers: {},
@@ -203,12 +203,12 @@ describe('<GameLayout /> integration', () => {
 		const createResponse: SessionCreateResponse = {
 			sessionId,
 			snapshot: initialSnapshot,
-			registries,
+			registries: cloneRegistriesPayload(),
 		};
 		const advanceToAction: SessionAdvanceResponse = {
 			sessionId,
 			snapshot: actionPhaseSnapshot,
-			registries,
+			registries: cloneRegistriesPayload(),
 			advance: {
 				phase: actionPhaseSnapshot.game.currentPhase,
 				step: actionPhaseSnapshot.game.currentStep,
@@ -219,7 +219,7 @@ describe('<GameLayout /> integration', () => {
 		const stateResponse: SessionStateResponse = {
 			sessionId,
 			snapshot: initialSnapshot,
-			registries,
+			registries: cloneRegistriesPayload(),
 		};
 		api = new GameApiFake();
 		api.setNextCreateResponse(createResponse);
@@ -290,7 +290,7 @@ describe('<GameLayout /> integration', () => {
 		api.setNextAdvanceResponse({
 			sessionId,
 			snapshot: nextTurnSnapshot,
-			registries,
+			registries: cloneRegistriesPayload(),
 			advance: {
 				phase: nextTurnSnapshot.game.currentPhase,
 				step: nextTurnSnapshot.game.currentStep,

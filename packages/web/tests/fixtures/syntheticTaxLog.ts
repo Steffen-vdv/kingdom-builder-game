@@ -5,8 +5,12 @@ import {
 import type { PhaseDef, StartConfig } from './syntheticTaxData';
 import {
 	SYNTHETIC_RESOURCE_KEYS,
+	SYNTHETIC_RESOURCES,
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_POPULATION_ROLES,
+	SYNTHETIC_POPULATION_INFO,
+	SYNTHETIC_LAND_INFO,
+	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_IDS,
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_STEP_IDS,
@@ -26,6 +30,18 @@ export {
 	SYNTHETIC_STEP_IDS,
 } from './syntheticTaxData';
 export type { SyntheticResourceKey } from './syntheticTaxData';
+export const SYNTHETIC_ASSETS = {
+	resources: SYNTHETIC_RESOURCES,
+	stats: {},
+	populations: SYNTHETIC_POPULATION_ROLES,
+	population: SYNTHETIC_POPULATION_INFO,
+	land: SYNTHETIC_LAND_INFO,
+	slot: SYNTHETIC_SLOT_INFO,
+	passive: {},
+	modifiers: {},
+	formatPassiveRemoval: (description: string) =>
+		`Active as long as ${description}`,
+};
 
 export interface SyntheticTaxScenario {
 	factory: ContentFactory;

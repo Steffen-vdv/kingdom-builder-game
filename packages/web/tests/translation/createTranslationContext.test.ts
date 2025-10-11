@@ -1,12 +1,3 @@
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	PHASES,
-	POPULATIONS,
-	RESOURCES,
-	STATS,
-} from '@kingdom-builder/contents';
 import type {
 	EngineSessionSnapshot,
 	PlayerId,
@@ -16,15 +7,18 @@ import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { PHASES } from '@kingdom-builder/contents';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
-		const [resourceKey] = Object.keys(RESOURCES) as ResourceKey[];
-		const [statKey] = Object.keys(STATS) as string[];
-		const [populationId] = POPULATIONS.keys();
-		const [actionId] = ACTIONS.keys();
-		const [buildingId] = BUILDINGS.keys();
-		const [developmentId] = DEVELOPMENTS.keys();
+		const registries = createSessionRegistries();
+		const [resourceKey] = Object.keys(registries.resources) as ResourceKey[];
+		const statKey = 'maxPopulation';
+		const [populationId] = registries.populations.keys();
+		const [actionId] = registries.actions.keys();
+		const [buildingId] = registries.buildings.keys();
+		const [developmentId] = registries.developments.keys();
 		const [firstPhase] = PHASES;
 		const firstStep = firstPhase?.steps[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
@@ -71,9 +65,9 @@ describe('createTranslationContext', () => {
 				passives: [
 					{
 						id: passiveId,
-						icon: ACTIONS.get(actionId).icon,
+						icon: registries.actions.get(actionId).icon,
 						meta: {
-							source: { icon: BUILDINGS.get(buildingId).icon },
+							source: { icon: registries.buildings.get(buildingId).icon },
 						},
 					},
 				],
@@ -116,10 +110,10 @@ describe('createTranslationContext', () => {
 					{
 						id: passiveId,
 						owner: 'A',
-						icon: ACTIONS.get(actionId).icon,
+						icon: registries.actions.get(actionId).icon,
 						meta: {
 							source: {
-								icon: BUILDINGS.get(buildingId).icon,
+								icon: registries.buildings.get(buildingId).icon,
 							},
 						},
 					},
@@ -128,19 +122,10 @@ describe('createTranslationContext', () => {
 			},
 			metadata,
 		};
-		const context = createTranslationContext(
-			session,
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
-			metadata,
-			{
-				ruleSnapshot: session.rules,
-				passiveRecords: session.passiveRecords,
-			},
-		);
+		const context = createTranslationContext(session, registries, metadata, {
+			ruleSnapshot: session.rules,
+			passiveRecords: session.passiveRecords,
+		});
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
 			note: 'legacy entry',
 		});
@@ -167,6 +152,15 @@ describe('createTranslationContext', () => {
 					id: developmentId,
 					has: context.developments.has(developmentId),
 				},
+				population: {
+					id: populationId,
+					has: context.populations.has(populationId),
+				},
+			},
+			assets: {
+				passive: context.assets.passive,
+				slot: context.assets.slot,
+				resource: context.assets.resources[resourceKey],
 			},
 			rules: context.rules,
 			passives: {
@@ -181,6 +175,21 @@ describe('createTranslationContext', () => {
 		expect(contextSnapshot).toMatchInlineSnapshot(`
                         {
                           "actionCostResource": "gold",
+                          "assets": {
+                            "passive": {
+                              "icon": "♾️",
+                              "label": "Passive",
+                            },
+                            "resource": {
+                              "description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
+                              "icon": "🪙",
+                              "label": "Gold",
+                            },
+                            "slot": {
+                              "icon": "🧩",
+                              "label": "Development Slot",
+                            },
+                          },
                           "compensations": {
                             "A": {
                               "resources": {
@@ -257,6 +266,10 @@ describe('createTranslationContext', () => {
                             "development": {
                               "has": true,
                               "id": "farm",
+                            },
+                            "population": {
+                              "has": true,
+                              "id": "council",
                             },
                           },
                           "rules": {

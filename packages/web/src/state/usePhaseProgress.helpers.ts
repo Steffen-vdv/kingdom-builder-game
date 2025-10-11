@@ -36,7 +36,10 @@ interface AdvanceToActionPhaseOptions {
 		player?: SessionPlayerStateSnapshot,
 	) => void;
 	refresh: () => void;
-	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+	>;
 }
 
 export async function advanceToActionPhase({

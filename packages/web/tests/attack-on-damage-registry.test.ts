@@ -35,6 +35,10 @@ function createTranslationContext(): TranslationContext {
 			get: vi.fn(),
 			has: vi.fn(),
 		},
+		populations: {
+			get: vi.fn(),
+			has: vi.fn(),
+		},
 		passives: {
 			list: vi.fn(() => []),
 			get: vi.fn(() => undefined),
@@ -70,6 +74,24 @@ function createTranslationContext(): TranslationContext {
 			tieredResourceKey: 'happiness',
 			tierDefinitions: [],
 			winConditions: [],
+		},
+		assets: {
+			resources: {
+				[Resource.gold]: {
+					icon: RESOURCES[Resource.gold].icon,
+					label: RESOURCES[Resource.gold].label,
+					description: RESOURCES[Resource.gold].description,
+				},
+			},
+			stats: {},
+			populations: {},
+			population: {},
+			land: {},
+			slot: {},
+			passive: {},
+			modifiers: {},
+			formatPassiveRemoval: (description: string) =>
+				`Active as long as ${description}`,
 		},
 	};
 	return translationContext;

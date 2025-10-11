@@ -4,15 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createTranslationContext } from '../src/translation/context';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	PHASES,
-	RULES,
-	RESOURCES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
+import { PHASES, RULES, type ResourceKey } from '@kingdom-builder/contents';
 import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
@@ -110,20 +102,16 @@ describe('<ResourceBar /> happiness hover card', () => {
 		});
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
+		const sessionRegistries = createSessionRegistries();
 		const translationContext = createTranslationContext(
 			sessionState,
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
+			sessionRegistries,
 			sessionState.metadata,
 			{
 				ruleSnapshot,
 				passiveRecords: sessionState.passiveRecords,
 			},
 		);
-		const sessionRegistries = createSessionRegistries();
 		const sessionView = selectSessionView(sessionState, sessionRegistries);
 		currentGame = {
 			sessionId: 'test-session',
@@ -185,7 +173,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 			handleEndTurn: vi.fn().mockResolvedValue(undefined),
 		} as MockGame;
 		render(<ResourceBar player={activePlayer} />);
-		const resourceInfo = RESOURCES[happinessKey];
+		const resourceInfo = sessionRegistries.resources[happinessKey];
 		const resourceValue = activePlayer.resources[happinessKey] ?? 0;
 		const button = screen.getByRole('button', {
 			name: `${resourceInfo.label}: ${resourceValue}`,
@@ -219,7 +207,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const orderedTiers = [...tiers].sort(
 			(a, b) => getRangeStart(b) - getRangeStart(a),
 		);
-		const tierResourceIcon = RESOURCES[happinessKey]?.icon || '';
+		const tierResourceIcon =
+			sessionRegistries.resources[happinessKey]?.icon || '';
 		const activeTierIndex = orderedTiers.findIndex((tier) => {
 			const { min, max } = tier.range;
 			return valueInRange(resourceValue, min, max);

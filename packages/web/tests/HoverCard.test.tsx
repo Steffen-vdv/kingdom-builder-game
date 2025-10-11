@@ -49,11 +49,7 @@ const sessionRegistries = createSessionRegistries();
 const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 const translationContext = createTranslationContext(
 	engineSnapshot,
-	{
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-	},
+	sessionRegistries,
 	engineSnapshot.metadata,
 	{
 		ruleSnapshot: engineSnapshot.rules,

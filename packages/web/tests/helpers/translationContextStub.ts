@@ -1,4 +1,5 @@
 import type {
+	TranslationAssets,
 	TranslationContext,
 	TranslationPassives,
 	TranslationPlayer,
@@ -7,6 +8,19 @@ import type {
 import type { RuleSnapshot } from '@kingdom-builder/engine';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
+
+const EMPTY_ASSETS: TranslationAssets = {
+	resources: {},
+	stats: {},
+	populations: {},
+	population: {},
+	land: {},
+	slot: {},
+	passive: {},
+	modifiers: {},
+	formatPassiveRemoval: (description: string) =>
+		`Active as long as ${description}`,
+};
 
 const EMPTY_PASSIVES: TranslationPassives = {
 	list() {
@@ -60,6 +74,7 @@ export function createTranslationContextStub(
 		actions: TranslationRegistry<unknown>;
 		buildings: TranslationRegistry<unknown>;
 		developments: TranslationRegistry<unknown>;
+		populations?: TranslationRegistry<unknown>;
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: RuleSnapshot;
@@ -76,6 +91,7 @@ export function createTranslationContextStub(
 		actions: options.actions,
 		buildings: options.buildings,
 		developments: options.developments,
+		populations: options.populations ?? options.actions,
 		passives: EMPTY_PASSIVES,
 		phases: options.phases,
 		activePlayer: options.activePlayer,
@@ -87,5 +103,6 @@ export function createTranslationContextStub(
 		actionCostResource: options.actionCostResource,
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
+		assets: EMPTY_ASSETS,
 	};
 }
