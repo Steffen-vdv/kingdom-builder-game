@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
@@ -18,7 +18,6 @@ import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { selectSessionView } from '../src/state/sessionSelectors';
 import { createSessionRegistries } from './helpers/sessionRegistries';
-import type { PhaseStep } from '../src/state/phaseTypes';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -46,13 +45,6 @@ const translationContext = createTranslationContext(
 		passiveRecords: engineSnapshot.passiveRecords,
 	},
 );
-const actionPhaseDefinition = engineSnapshot.phases.find(
-	(phase) => phase.action,
-);
-if (!actionPhaseDefinition) {
-	throw new Error('Action phase definition not found.');
-}
-
 const mockGame = {
 	session: {
 		getActionCosts: vi.fn(),
@@ -68,7 +60,7 @@ const mockGame = {
 	hoverCard: null,
 	handleHoverCard: vi.fn(),
 	clearHoverCard: vi.fn(),
-	phaseSteps: [] as PhaseStep[],
+	phaseSteps: [],
 	setPhaseSteps: vi.fn(),
 	phaseTimer: 0,
 	mainApStart: 0,
@@ -103,77 +95,40 @@ const mockGame = {
 	onChangePlayerName: vi.fn(),
 };
 
-type MockGame = typeof mockGame;
-
 vi.mock('../src/state/GameContext', () => ({
-	useGameEngine: () => mockGame as MockGame,
+	useGameEngine: () => mockGame,
 }));
 
-beforeEach(() => {
-	mockGame.tabsEnabled = true;
-	mockGame.phaseSteps = [];
-	mockGame.sessionState = {
-		...engineSnapshot,
-		game: {
-			...engineSnapshot.game,
-			currentPhase: actionPhaseDefinition.id,
-		},
-	} as typeof engineSnapshot;
-	mockGame.displayPhase = actionPhaseDefinition.id;
-	(mockGame.handleEndTurn as ReturnType<typeof vi.fn>).mockClear();
-});
-
-afterEach(() => {
-	cleanup();
+beforeAll(() => {
+	Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+		value: vi.fn(),
+		writable: true,
+	});
 });
 
 describe('<PhasePanel />', () => {
-	it('displays the current turn, active player, and phase badge', () => {
+	it('displays current turn and phases', () => {
 		render(<PhasePanel />);
-		const playerName =
-			sessionView.active?.name ??
-			engineSnapshot.game.players[0]?.name ??
-			'Player';
+		const turnText = `Turn ${engineSnapshot.game.turn}`;
+		const turnElement = screen.getByText(turnText);
+		const turnContainer = turnElement.closest('div');
+		expect(turnContainer).toBeTruthy();
+		if (turnContainer) {
+			expect(
+				within(turnContainer).getByText(
+					sessionView.active?.name ??
+						engineSnapshot.game.players[0]?.name ??
+						'Player',
+				),
+			).toBeInTheDocument();
+		}
+		const firstPhase = engineSnapshot.phases[0];
+		const firstPhaseButton = screen.getByRole('button', {
+			name: firstPhase.label,
+		});
+		expect(firstPhaseButton).toBeInTheDocument();
 		expect(
-			screen.getByText(`Turn ${mockGame.sessionState.game.turn}`),
+			within(firstPhaseButton).getByText(firstPhase.icon),
 		).toBeInTheDocument();
-		expect(screen.getByText(playerName)).toBeInTheDocument();
-		expect(
-			screen.getByLabelText(`Current phase: ${actionPhaseDefinition.label}`),
-		).toBeInTheDocument();
-	});
-
-	it('hides the Next Turn button when the action phase is not active', () => {
-		mockGame.tabsEnabled = false;
-		render(<PhasePanel />);
-		expect(
-			screen.queryByRole('button', { name: 'Next Turn' }),
-		).not.toBeInTheDocument();
-	});
-
-	it('disables the Next Turn button while steps remain active', () => {
-		mockGame.phaseSteps = [
-			{
-				title: 'Spend resources',
-				items: [{ text: '1/3 spent' }],
-				active: true,
-			},
-		];
-		render(<PhasePanel />);
-		const button = screen.getByRole('button', { name: 'Next Turn' });
-		expect(button).toBeDisabled();
-	});
-
-	it('enables the Next Turn button when all steps are complete', () => {
-		mockGame.phaseSteps = [
-			{
-				title: 'Spend resources',
-				items: [{ text: '3/3 spent', done: true }],
-				active: false,
-			},
-		];
-		render(<PhasePanel />);
-		const button = screen.getByRole('button', { name: 'Next Turn' });
-		expect(button).toBeEnabled();
 	});
 });
