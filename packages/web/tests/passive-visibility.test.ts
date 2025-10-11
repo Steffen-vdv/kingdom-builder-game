@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { POPULATIONS } from '@kingdom-builder/contents';
 import {
 	createPassiveVisibilityContext,
 	derivePassiveOrigin,
@@ -8,6 +7,7 @@ import {
 	type PassiveLike,
 	type PassiveOwner,
 } from '../src/passives/visibility';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 
 function createOwner(overrides: Partial<PassiveOwner> = {}): PassiveOwner {
 	return {
@@ -45,18 +45,17 @@ describe('passive visibility helpers', () => {
 		expect(derivePassiveOrigin({ id: 'watchtower_land-1' }, context)).toBe(
 			'development',
 		);
-		let populationEntry: string | undefined;
-		for (const candidate of POPULATIONS.keys()) {
-			populationEntry = candidate;
-			break;
-		}
+		const registries = createSessionRegistries();
+		const populationKeys = registries.populations.keys();
+		const populationEntry = populationKeys[0];
 		expect(populationEntry).toBeTruthy();
 		if (!populationEntry) {
 			throw new Error('Expected at least one population definition.');
 		}
-		expect(
-			derivePassiveOrigin({ id: `${populationEntry}_assignment` }, context),
-		).toBe('population-assignment');
+		const populationPassiveId = `${populationEntry}_assignment`;
+		expect(derivePassiveOrigin({ id: populationPassiveId }, context)).toBe(
+			'population-assignment',
+		);
 		expect(derivePassiveOrigin({ id: 'independent' }, context)).toBe(
 			'standalone',
 		);
@@ -90,11 +89,9 @@ describe('passive visibility helpers', () => {
 			],
 		});
 		const context = createPassiveVisibilityContext(owner);
-		let populationEntry: string | undefined;
-		for (const candidate of POPULATIONS.keys()) {
-			populationEntry = candidate;
-			break;
-		}
+		const registries = createSessionRegistries();
+		const populationKeys = registries.populations.keys();
+		const populationEntry = populationKeys[0];
 		expect(populationEntry).toBeTruthy();
 		if (!populationEntry) {
 			throw new Error('Expected at least one population definition.');

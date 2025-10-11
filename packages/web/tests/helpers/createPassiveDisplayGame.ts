@@ -8,6 +8,7 @@ import { createTranslationContext } from '../../src/translation/context';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
+import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
 export type MockGame = LegacyGameEngineContextValue;
 
@@ -15,6 +16,8 @@ export type PassiveGameContext = {
 	mockGame: MockGame;
 	handleHoverCard: ReturnType<typeof vi.fn>;
 	clearHoverCard: ReturnType<typeof vi.fn>;
+	registries: SessionRegistries;
+	metadata: EngineSessionSnapshot['metadata'];
 };
 
 export function createPassiveGame(
@@ -96,5 +99,11 @@ export function createPassiveGame(
 		handlePerform: vi.fn().mockResolvedValue(undefined),
 		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 	};
-	return { mockGame, handleHoverCard, clearHoverCard };
+	return {
+		mockGame,
+		handleHoverCard,
+		clearHoverCard,
+		registries: sessionRegistries,
+		metadata: sessionState.metadata,
+	};
 }

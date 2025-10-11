@@ -20,6 +20,12 @@ import {
 } from './helpers/sessionFixtures';
 import { selectSessionView } from '../src/state/sessionSelectors';
 import { createSessionRegistries } from './helpers/sessionRegistries';
+import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
+import { createTestRegistryMetadata } from './helpers/registryMetadata';
+import {
+	formatDescriptorSummary,
+	toDescriptorDisplay,
+} from '../src/components/player/registryDisplays';
 type MockGame = LegacyGameEngineContextValue;
 type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
@@ -69,7 +75,7 @@ vi.mock('../src/state/GameContext', () => ({
 }));
 describe('<ResourceBar /> happiness hover card', () => {
 	it('lists happiness tiers with concise summaries and highlights the active threshold', () => {
-		const happinessKey = RULES.tieredResourceKey as ResourceKey;
+		const happinessKey = RULES.tieredResourceKey;
 		const activePlayerId = 'player-1' as PlayerId;
 		const opponentId = 'player-2' as PlayerId;
 		const tierDefinitions = RULES.tierDefinitions.map((tier) => ({
@@ -172,17 +178,30 @@ describe('<ResourceBar /> happiness hover card', () => {
 			handlePerform: vi.fn().mockResolvedValue(undefined),
 			handleEndTurn: vi.fn().mockResolvedValue(undefined),
 		} as MockGame;
-		render(<ResourceBar player={activePlayer} />);
-		const resourceInfo = sessionRegistries.resources[happinessKey];
+		const metadataSelectors = createTestRegistryMetadata(
+			sessionRegistries,
+			sessionState.metadata,
+		);
+		render(
+			<RegistryMetadataProvider
+				registries={sessionRegistries}
+				metadata={sessionState.metadata}
+			>
+				<ResourceBar player={activePlayer} />
+			</RegistryMetadataProvider>,
+		);
+		const resourceDescriptor = toDescriptorDisplay(
+			metadataSelectors.resourceMetadata.select(happinessKey),
+		);
 		const resourceValue = activePlayer.resources[happinessKey] ?? 0;
 		const button = screen.getByRole('button', {
-			name: `${resourceInfo.label}: ${resourceValue}`,
+			name: `${resourceDescriptor.label}: ${resourceValue}`,
 		});
 		fireEvent.mouseEnter(button);
 		expect(handleHoverCard).toHaveBeenCalled();
 		const hoverCard = handleHoverCard.mock.calls.at(-1)?.[0];
 		expect(hoverCard).toBeTruthy();
-		expect(hoverCard?.title).toBe(`${resourceInfo.icon} ${resourceInfo.label}`);
+		expect(hoverCard?.title).toBe(formatDescriptorSummary(resourceDescriptor));
 		expect(hoverCard?.description).toBeUndefined();
 		expect(hoverCard?.effectsTitle).toBe(
 			`Happiness thresholds (current: ${resourceValue})`,
@@ -207,8 +226,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const orderedTiers = [...tiers].sort(
 			(a, b) => getRangeStart(b) - getRangeStart(a),
 		);
-		const tierResourceIcon =
-			sessionRegistries.resources[happinessKey]?.icon || '';
+		const tierResourceIcon = resourceDescriptor.icon ?? '❔';
 		const activeTierIndex = orderedTiers.findIndex((tier) => {
 			const { min, max } = tier.range;
 			return valueInRange(resourceValue, min, max);

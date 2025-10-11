@@ -1,10 +1,11 @@
 import React from 'react';
-import { RESOURCES } from '@kingdom-builder/contents';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { getForecastDisplay } from '../../utils/forecast';
+import type { DescriptorDisplay } from './registryDisplays';
 
 export interface ResourceButtonProps {
-	resourceKey: keyof typeof RESOURCES;
+	resourceId: string;
+	descriptor: DescriptorDisplay;
 	value: number;
 	forecastDelta?: number;
 	onShow: () => void;
@@ -28,20 +29,22 @@ const RESOURCE_FORECAST_BADGE_THEME_CLASS =
 	'bg-slate-800/70 dark:bg-slate-100/10';
 
 const ResourceButton: React.FC<ResourceButtonProps> = ({
-	resourceKey,
+	resourceId,
+	descriptor,
 	value,
 	forecastDelta,
 	onShow,
 	onHide,
 }) => {
-	const info = RESOURCES[resourceKey];
 	const changes = useValueChangeIndicators(value);
 	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
 		formatDelta(delta),
 	);
+	const icon = descriptor.icon ?? '❔';
+	const label = descriptor.label || resourceId;
 	const ariaLabel = forecastDisplay
-		? `${info.label}: ${value} ${forecastDisplay.label}`
-		: `${info.label}: ${value}`;
+		? `${label}: ${value} ${forecastDisplay.label}`
+		: `${label}: ${value}`;
 
 	return (
 		<button
@@ -54,7 +57,7 @@ const ResourceButton: React.FC<ResourceButtonProps> = ({
 			onClick={onShow}
 			aria-label={ariaLabel}
 		>
-			{info.icon}
+			{icon}
 			{value}
 			{forecastDisplay && (
 				<span

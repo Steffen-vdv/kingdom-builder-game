@@ -12,6 +12,9 @@ import {
 	createNeutralScenario,
 	createTierPassiveScenario,
 } from './helpers/passiveDisplayFixtures';
+import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
+import { createTestRegistryMetadata } from './helpers/registryMetadata';
+import { toDescriptorDisplay } from '../src/components/player/registryDisplays';
 
 let currentGame: MockGame;
 
@@ -22,10 +25,21 @@ vi.mock('../src/state/GameContext', () => ({
 describe('<PassiveDisplay />', () => {
 	it('shows passive labels and removal text from metadata', () => {
 		const scenario = createTierPassiveScenario();
-		const { mockGame, handleHoverCard, activePlayer, ruleSnapshot } = scenario;
+		const {
+			mockGame,
+			handleHoverCard,
+			activePlayer,
+			ruleSnapshot,
+			registries,
+			metadata,
+		} = scenario;
 		currentGame = mockGame;
 		const { translationContext } = mockGame;
-		render(<PassiveDisplay player={activePlayer} />);
+		render(
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<PassiveDisplay player={activePlayer} />
+			</RegistryMetadataProvider>,
+		);
 		const [summary] = translationContext.passives.list(activePlayer.id);
 		expect(summary).toBeDefined();
 		const definitions = translationContext.passives.definitions(
@@ -51,22 +65,39 @@ describe('<PassiveDisplay />', () => {
 		);
 		expect(tierDefinition).toBeDefined();
 		if (tierDefinition) {
-			const { entries } = buildTierEntries(
-				[tierDefinition],
-				tierDefinition.id,
-				mockGame.ruleSnapshot.tieredResourceKey,
-				translationContext,
+			const metadataSelectors = createTestRegistryMetadata(
+				registries,
+				metadata,
 			);
+			const tieredResourceDescriptor = toDescriptorDisplay(
+				metadataSelectors.resourceMetadata.select(
+					mockGame.ruleSnapshot.tieredResourceKey,
+				),
+			);
+			const passiveAsset = toDescriptorDisplay(
+				metadataSelectors.passiveMetadata.select(),
+			);
+			const { entries } = buildTierEntries([tierDefinition], {
+				activeId: tierDefinition.id,
+				tieredResource: tieredResourceDescriptor,
+				passiveAsset,
+				translationContext,
+			});
 			expect(hoverCard?.effects).toEqual(entries);
 		}
 	});
 
 	it('uses shared passive removal formatter for UI and logs', () => {
 		const scenario = createTierPassiveScenario();
-		const { mockGame, handleHoverCard, activePlayer } = scenario;
+		const { mockGame, handleHoverCard, activePlayer, registries, metadata } =
+			scenario;
 		currentGame = mockGame;
 		const { translationContext } = mockGame;
-		const view = render(<PassiveDisplay player={activePlayer} />);
+		const view = render(
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<PassiveDisplay player={activePlayer} />
+			</RegistryMetadataProvider>,
+		);
 		const { container } = view;
 		const [summary] = translationContext.passives.list(activePlayer.id);
 		expect(summary).toBeDefined();
@@ -102,18 +133,26 @@ describe('<PassiveDisplay />', () => {
 
 	it('renders no passive cards when the active tier lacks passives', () => {
 		const scenario = createNeutralScenario();
-		const { mockGame, activePlayer } = scenario;
+		const { mockGame, activePlayer, registries, metadata } = scenario;
 		currentGame = mockGame;
-		const view = render(<PassiveDisplay player={activePlayer} />);
+		const view = render(
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<PassiveDisplay player={activePlayer} />
+			</RegistryMetadataProvider>,
+		);
 		const { container } = view;
 		expect(container).toBeEmptyDOMElement();
 	});
 
 	it('omits building-derived passives from the panel', () => {
 		const scenario = createBuildingScenario();
-		const { mockGame, activePlayer } = scenario;
+		const { mockGame, activePlayer, registries, metadata } = scenario;
 		currentGame = mockGame;
-		const view = render(<PassiveDisplay player={activePlayer} />);
+		const view = render(
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<PassiveDisplay player={activePlayer} />
+			</RegistryMetadataProvider>,
+		);
 		expect(view.container.querySelector('div.hoverable')).toBeNull();
 		const text = view.container.textContent ?? '';
 		expect(text).not.toContain('Castle Walls');

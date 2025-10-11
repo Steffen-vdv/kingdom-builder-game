@@ -7,6 +7,7 @@ import PlayerPanel from '../src/components/player/PlayerPanel';
 import { formatStatValue } from '../src/utils/stats';
 import { createPlayerPanelFixtures } from './helpers/playerPanelFixtures';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
+import { toDescriptorDisplay } from '../src/components/player/registryDisplays';
 
 const {
 	activePlayer: activePlayerSnapshot,
@@ -16,6 +17,7 @@ const {
 	statForecast,
 	registries,
 	metadata,
+	metadataSelectors,
 } = createPlayerPanelFixtures();
 
 const renderPanel = () =>
@@ -60,11 +62,10 @@ describe('<PlayerPanel />', () => {
 	it('renders player name and resource icons', () => {
 		renderPanel();
 		expect(screen.getByText(activePlayerSnapshot.name)).toBeInTheDocument();
-		for (const [key, info] of Object.entries(
-			mockGame.translationContext.assets.resources,
-		)) {
-			const amount = activePlayerSnapshot.resources[key] ?? 0;
-			const icon = info.icon ?? '';
+		for (const descriptor of metadataSelectors.resourceMetadata.list) {
+			const display = toDescriptorDisplay(descriptor);
+			const amount = activePlayerSnapshot.resources[display.id] ?? 0;
+			const icon = display.icon ?? '❔';
 			expect(screen.getByText(`${icon}${amount}`)).toBeInTheDocument();
 		}
 	});
@@ -72,14 +73,19 @@ describe('<PlayerPanel />', () => {
 	it('renders next-turn forecasts with accessible labels', () => {
 		expect(displayableStatKeys.length).toBeGreaterThan(0);
 		renderPanel();
-		const assets = mockGame.translationContext.assets;
-		const [firstResourceKey] = Object.keys(assets.resources);
+		const resourceDisplays = metadataSelectors.resourceMetadata.list.map(
+			(descriptor) => toDescriptorDisplay(descriptor),
+		);
+		const [firstResourceDescriptor] = resourceDisplays;
+		const firstResourceKey = firstResourceDescriptor.id;
 		const playerResources = activePlayerSnapshot.resources;
-		const resourceInfo = assets.resources[firstResourceKey];
+		const resourceInfo = firstResourceDescriptor;
 		const resourceValue = playerResources[firstResourceKey] ?? 0;
 		const resourceDelta = resourceForecast[firstResourceKey]!;
 		const formattedResourceDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
-		const resourceLabel = `${resourceInfo.label ?? firstResourceKey}: ${resourceValue} (${formattedResourceDelta})`;
+		const resourceLabel =
+			`${resourceInfo.label ?? firstResourceKey}: ${resourceValue} ` +
+			`(${formattedResourceDelta})`;
 		const resourceButtons = screen.getAllByRole('button', {
 			name: resourceLabel,
 		});
@@ -90,19 +96,20 @@ describe('<PlayerPanel />', () => {
 		);
 		expect(resourceForecastBadge).toBeInTheDocument();
 		expect(resourceForecastBadge).toHaveClass('text-emerald-300');
-		const negativeResourceKey = Object.keys(assets.resources).find(
-			(key) => resourceForecast[key]! < 0,
+		const negativeResourceDescriptor = resourceDisplays.find(
+			(display) => resourceForecast[display.id]! < 0,
 		);
-		if (negativeResourceKey) {
-			const negativeResourceInfo = assets.resources[negativeResourceKey];
-			const negativeResourceValue = playerResources[negativeResourceKey] ?? 0;
-			const negativeResourceDelta = resourceForecast[negativeResourceKey]!;
+		if (negativeResourceDescriptor) {
+			const negativeResourceValue =
+				playerResources[negativeResourceDescriptor.id] ?? 0;
+			const negativeResourceDelta =
+				resourceForecast[negativeResourceDescriptor.id]!;
 			const formattedNegativeDelta = `${
 				negativeResourceDelta > 0 ? '+' : ''
 			}${negativeResourceDelta}`;
-			const negativeResourceLabel = `${
-				negativeResourceInfo.label ?? negativeResourceKey
-			}: ${negativeResourceValue} (${formattedNegativeDelta})`;
+			const negativeResourceLabel =
+				`${negativeResourceDescriptor.label ?? negativeResourceDescriptor.id}: ` +
+				`${negativeResourceValue} (${formattedNegativeDelta})`;
 			const negativeResourceButtons = screen.getAllByRole('button', {
 				name: negativeResourceLabel,
 			});
@@ -114,9 +121,9 @@ describe('<PlayerPanel />', () => {
 			expect(negativeForecastBadge).toHaveClass('text-rose-300');
 		}
 		const [firstStatKey] = displayableStatKeys;
-		const statDescriptor = (
-			(metadata.stats ?? {}) as Record<string, { label?: string }>
-		)[firstStatKey];
+		const statDescriptor = toDescriptorDisplay(
+			metadataSelectors.statMetadata.select(firstStatKey),
+		);
 		const statLabel = resolveDescriptorLabel(firstStatKey, statDescriptor);
 		const statValue = activePlayerSnapshot.stats[firstStatKey] ?? 0;
 		const formattedStatValue = formatStatValue(firstStatKey, statValue);
