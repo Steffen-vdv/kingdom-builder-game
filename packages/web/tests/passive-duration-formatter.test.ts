@@ -1,26 +1,17 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
 	summarizeEffects,
 	describeEffects,
 	logEffects,
 } from '../src/translation/effects';
-import {
-	createEngine,
-	type EffectDef,
-	type PlayerId,
-} from '@kingdom-builder/engine';
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
-import { PhaseId } from '@kingdom-builder/contents';
+import { type EffectDef, type PlayerId } from '@kingdom-builder/engine';
+import type { PhaseDef } from '@kingdom-builder/protocol';
+import type { TranslationAssets } from '../src/translation/context';
 import {
 	createTranslationContextStub,
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from './helpers/translationContextStub';
-
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
 
 const PASSIVE_REGISTRY = wrapTranslationRegistry<unknown>({
 	get(id: string) {
@@ -30,6 +21,20 @@ const PASSIVE_REGISTRY = wrapTranslationRegistry<unknown>({
 		return true;
 	},
 });
+
+const BASE_ASSETS: TranslationAssets = {
+	resources: {},
+	stats: {},
+	populations: {},
+	population: {},
+	land: {},
+	slot: {},
+	passive: {},
+	modifiers: {},
+	resourceTransferIcon: undefined,
+	formatPassiveRemoval: (description: string) =>
+		`Active as long as ${description}`,
+};
 
 const ACTIVE_PLAYER = toTranslationPlayer({
 	id: 'A' as PlayerId,
@@ -49,6 +54,7 @@ const OPPONENT_PLAYER = toTranslationPlayer({
 
 function createStubFormatterContext(
 	phases: Parameters<typeof createTranslationContextStub>[0]['phases'],
+	assets?: Parameters<typeof createTranslationContextStub>[0]['assets'],
 ) {
 	return createTranslationContextStub({
 		phases,
@@ -58,53 +64,21 @@ function createStubFormatterContext(
 		developments: PASSIVE_REGISTRY,
 		activePlayer: ACTIVE_PLAYER,
 		opponent: OPPONENT_PLAYER,
-	});
-}
-
-function createSyntheticCtx() {
-	const content = createContentFactory();
-	const tierResourceKey = 'synthetic:resource:tier';
-	const phases: PhaseDef[] = [
-		{
-			id: 'phase:festival',
-			label: 'Festival',
-			icon: '🎉',
-			steps: [{ id: 'phase:festival:step' }],
-		},
-	];
-	const start: StartConfig = {
-		player: {
-			resources: { [tierResourceKey]: 0 },
-			stats: {},
-			population: {},
-			lands: [],
-		},
-	};
-	const rules: RuleSet = {
-		defaultActionAPCost: 1,
-		absorptionCapPct: 1,
-		absorptionRounding: 'down',
-		tieredResourceKey: tierResourceKey,
-		tierDefinitions: [],
-		slotsPerNewLand: 1,
-		maxSlotsPerLand: 1,
-		basePopulationCap: 1,
-		winConditions: [],
-	};
-	return createEngine({
-		actions: content.actions,
-		buildings: content.buildings,
-		developments: content.developments,
-		populations: content.populations,
-		phases,
-		start,
-		rules,
+		assets,
 	});
 }
 
 describe('passive formatter duration metadata', () => {
 	it('uses custom phase metadata when provided', () => {
-		const engineContext = createSyntheticCtx();
+		const phases: PhaseDef[] = [
+			{
+				id: 'phase:festival',
+				label: 'Festival',
+				icon: '🎉',
+				steps: [{ id: 'phase:festival:step' }],
+			},
+		];
+		const ctx = createStubFormatterContext(phases);
 		const passive: EffectDef = {
 			type: 'passive',
 			method: 'add',
@@ -117,9 +91,9 @@ describe('passive formatter duration metadata', () => {
 			effects: [],
 		};
 
-		const summary = summarizeEffects([passive], engineContext);
-		const description = describeEffects([passive], engineContext);
-		const log = logEffects([passive], engineContext);
+		const summary = summarizeEffects([passive], ctx);
+		const description = describeEffects([passive], ctx);
+		const log = logEffects([passive], ctx);
 
 		expect(summary).toEqual([
 			{ title: '⏳ Until next 🎉 Festival', items: [] },
@@ -138,17 +112,20 @@ describe('passive formatter duration metadata', () => {
 		]);
 	});
 
-	it('fills missing context metadata from static phase definitions', () => {
-		const ctx = createStubFormatterContext([
-			{ id: PhaseId.Growth },
-			{ id: PhaseId.Upkeep },
-		]);
+	it('fills missing phase metadata from translation assets when context lacks labels', () => {
+		const phases: PhaseDef[] = [{ id: 'phase:growth' }, { id: 'phase:upkeep' }];
+		const ctx = createStubFormatterContext(phases, {
+			...BASE_ASSETS,
+			phases: {
+				'phase:growth': { icon: '🏗️', label: 'Growth' },
+			},
+		});
 		const passive: EffectDef = {
 			type: 'passive',
 			method: 'add',
 			params: {
 				id: 'synthetic:passive:static-growth',
-				durationPhaseId: PhaseId.Growth,
+				durationPhaseId: 'phase:growth',
 			},
 			effects: [],
 		};
@@ -161,7 +138,7 @@ describe('passive formatter duration metadata', () => {
 	it('prefers contextual metadata over static phase definitions', () => {
 		const ctx = createStubFormatterContext([
 			{
-				id: PhaseId.Growth,
+				id: 'phase:growth',
 				label: 'Rapid Growth',
 				icon: '🌱',
 			},
@@ -171,7 +148,7 @@ describe('passive formatter duration metadata', () => {
 			method: 'add',
 			params: {
 				id: 'synthetic:passive:context-growth',
-				durationPhaseId: PhaseId.Growth,
+				durationPhaseId: 'phase:growth',
 			},
 			effects: [],
 		};
@@ -186,7 +163,7 @@ describe('passive formatter duration metadata', () => {
 	it('resolves phase metadata via trigger keys when duration id is missing', () => {
 		const ctx = createStubFormatterContext([
 			{
-				id: PhaseId.Upkeep,
+				id: 'phase:upkeep',
 				label: 'Rest & Recover',
 				icon: '🛏️',
 				steps: [

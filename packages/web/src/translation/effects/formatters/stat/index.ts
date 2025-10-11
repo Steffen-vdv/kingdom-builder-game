@@ -1,12 +1,17 @@
-import { STATS } from '@kingdom-builder/contents';
-import { gainOrLose, increaseOrDecrease, signed } from '../../helpers';
+import {
+	gainOrLose,
+	increaseOrDecrease,
+	resolveStatDisplay,
+	signed,
+} from '../../helpers';
 import { registerEffectFormatter } from '../../factory';
 
 registerEffectFormatter('stat', 'add', {
-	summarize: (effectDefinition) => {
-		const key = effectDefinition.params?.['key'] as string;
-		const stat = STATS[key as keyof typeof STATS];
-		const icon = stat?.icon || key;
+	summarize: (effectDefinition, context) => {
+		const rawKey = effectDefinition.params?.['key'];
+		const key = typeof rawKey === 'string' ? rawKey : '';
+		const stat = resolveStatDisplay(context, key);
+		const icon = stat.icon || key;
 		const amount = Number(effectDefinition.params?.['amount']);
 		const format = stat?.addFormat;
 		const prefix = format?.prefix || '';
@@ -16,11 +21,12 @@ registerEffectFormatter('stat', 'add', {
 		}
 		return `${prefix}${icon}${signed(amount)}${amount}`;
 	},
-	describe: (effectDefinition) => {
-		const key = effectDefinition.params?.['key'] as string;
-		const stat = STATS[key as keyof typeof STATS];
-		const label = stat?.label || key;
-		const icon = stat?.icon || '';
+	describe: (effectDefinition, context) => {
+		const rawKey = effectDefinition.params?.['key'];
+		const key = typeof rawKey === 'string' ? rawKey : '';
+		const stat = resolveStatDisplay(context, key);
+		const label = stat.label || key;
+		const icon = stat.icon || '';
 		const amount = Number(effectDefinition.params?.['amount']);
 		const format = stat?.addFormat;
 		const prefix = format?.prefix || '';
@@ -36,10 +42,11 @@ registerEffectFormatter('stat', 'add', {
 });
 
 registerEffectFormatter('stat', 'remove', {
-	summarize: (effectDefinition) => {
-		const key = effectDefinition.params?.['key'] as string;
-		const stat = STATS[key as keyof typeof STATS];
-		const icon = stat?.icon || key;
+	summarize: (effectDefinition, context) => {
+		const rawKey = effectDefinition.params?.['key'];
+		const key = typeof rawKey === 'string' ? rawKey : '';
+		const stat = resolveStatDisplay(context, key);
+		const icon = stat.icon || key;
 		const amount = -Number(effectDefinition.params?.['amount']);
 		const format = stat?.addFormat;
 		const prefix = format?.prefix || '';
@@ -49,11 +56,12 @@ registerEffectFormatter('stat', 'remove', {
 		}
 		return `${prefix}${icon}${signed(amount)}${amount}`;
 	},
-	describe: (effectDefinition) => {
-		const key = effectDefinition.params?.['key'] as string;
-		const stat = STATS[key as keyof typeof STATS];
-		const label = stat?.label || key;
-		const icon = stat?.icon || '';
+	describe: (effectDefinition, context) => {
+		const rawKey = effectDefinition.params?.['key'];
+		const key = typeof rawKey === 'string' ? rawKey : '';
+		const stat = resolveStatDisplay(context, key);
+		const label = stat.label || key;
+		const icon = stat.icon || '';
 		const amount = -Number(effectDefinition.params?.['amount']);
 		const format = stat?.addFormat;
 		const prefix = format?.prefix || '';
@@ -69,10 +77,11 @@ registerEffectFormatter('stat', 'remove', {
 });
 
 registerEffectFormatter('stat', 'add_pct', {
-	summarize: (effectDefinition) => {
-		const key = effectDefinition.params?.['key'] as string;
-		const stat = STATS[key as keyof typeof STATS];
-		const icon = stat ? stat.icon : key;
+	summarize: (effectDefinition, context) => {
+		const rawKey = effectDefinition.params?.['key'];
+		const key = typeof rawKey === 'string' ? rawKey : '';
+		const stat = resolveStatDisplay(context, key);
+		const icon = stat.icon || key;
 		const percent = effectDefinition.params?.['percent'];
 		if (percent !== undefined) {
 			const percentValue = Number(percent) * 100;
@@ -82,18 +91,18 @@ registerEffectFormatter('stat', 'add_pct', {
 			| string
 			| undefined;
 		if (percentageStatKey) {
-			const percentageStatIcon =
-				STATS[percentageStatKey as keyof typeof STATS]?.icon ||
-				percentageStatKey;
+			const percentageStat = resolveStatDisplay(context, percentageStatKey);
+			const percentageStatIcon = percentageStat.icon || percentageStatKey;
 			return `${icon}${percentageStatIcon}`;
 		}
 		return icon;
 	},
-	describe: (effectDefinition) => {
-		const key = effectDefinition.params?.['key'] as string;
-		const stat = STATS[key as keyof typeof STATS];
-		const label = stat?.label || key;
-		const icon = stat?.icon || '';
+	describe: (effectDefinition, context) => {
+		const rawKey = effectDefinition.params?.['key'];
+		const key = typeof rawKey === 'string' ? rawKey : '';
+		const stat = resolveStatDisplay(context, key);
+		const label = stat.label || key;
+		const icon = stat.icon || '';
 		const percent = effectDefinition.params?.['percent'];
 		if (percent !== undefined) {
 			const percentChange = Number(percent);
@@ -104,10 +113,9 @@ registerEffectFormatter('stat', 'add_pct', {
 			| string
 			| undefined;
 		if (percentageStatKey) {
-			const percentageStatInfo = STATS[percentageStatKey as keyof typeof STATS];
-			const percentageStatIcon = percentageStatInfo?.icon || '';
-			const percentageStatLabel =
-				percentageStatInfo?.label || percentageStatKey;
+			const percentageStatInfo = resolveStatDisplay(context, percentageStatKey);
+			const percentageStatIcon = percentageStatInfo.icon || '';
+			const percentageStatLabel = percentageStatInfo.label || percentageStatKey;
 			return `Increase ${icon}${label} by ${percentageStatIcon}${percentageStatLabel}`;
 		}
 		return `${increaseOrDecrease(0)} ${icon}${label}`;

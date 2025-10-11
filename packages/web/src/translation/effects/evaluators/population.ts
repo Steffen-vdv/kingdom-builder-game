@@ -1,13 +1,11 @@
-import type { PopulationRoleId } from '@kingdom-builder/contents';
 import { registerEvaluatorFormatter } from '../factory';
 import { resolvePopulationDisplay } from '../helpers';
 
 registerEvaluatorFormatter('population', {
-	summarize: (evaluator, sub) => {
-		const role = (evaluator.params as Record<string, string>)?.['role'] as
-			| PopulationRoleId
-			| undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
+	summarize: (evaluator, sub, context) => {
+		const rawRole = evaluator.params?.['role'];
+		const role = typeof rawRole === 'string' ? rawRole : undefined;
+		const { icon, label } = resolvePopulationDisplay(context, role);
 		return sub.map((summaryEntry) =>
 			typeof summaryEntry === 'string'
 				? `${summaryEntry} per ${icon} ${label}`.trim()
@@ -17,11 +15,10 @@ registerEvaluatorFormatter('population', {
 					},
 		);
 	},
-	describe: (evaluator, sub) => {
-		const role = (evaluator.params as Record<string, string>)?.['role'] as
-			| PopulationRoleId
-			| undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
+	describe: (evaluator, sub, context) => {
+		const rawRole = evaluator.params?.['role'];
+		const role = typeof rawRole === 'string' ? rawRole : undefined;
+		const { icon, label } = resolvePopulationDisplay(context, role);
 		return sub.map((summaryEntry) =>
 			typeof summaryEntry === 'string'
 				? `${summaryEntry} for each ${icon} ${label}`.trim()

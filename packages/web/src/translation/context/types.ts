@@ -26,20 +26,33 @@ export interface TranslationIconLabel {
 	description?: string;
 }
 
+export interface TranslationStatMetadata extends TranslationIconLabel {
+	addFormat?: {
+		prefix?: string;
+		percent?: boolean;
+	};
+}
+
 export interface TranslationModifierInfo {
 	icon?: string;
 	label?: string;
 }
 
+export interface TranslationPhaseAsset extends TranslationIconLabel {
+	triggers?: readonly string[];
+}
+
 export interface TranslationAssets {
 	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
-	readonly stats: Readonly<Record<string, TranslationIconLabel>>;
+	readonly stats: Readonly<Record<string, TranslationStatMetadata>>;
 	readonly populations: Readonly<Record<string, TranslationIconLabel>>;
 	readonly population: Readonly<TranslationIconLabel>;
 	readonly land: Readonly<TranslationIconLabel>;
 	readonly slot: Readonly<TranslationIconLabel>;
 	readonly passive: Readonly<TranslationIconLabel>;
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
+	readonly phases?: Readonly<Record<string, TranslationPhaseAsset>>;
+	readonly resourceTransferIcon?: string;
 	formatPassiveRemoval(description: string): string;
 }
 

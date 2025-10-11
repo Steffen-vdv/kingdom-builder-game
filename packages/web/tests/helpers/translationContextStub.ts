@@ -78,6 +78,7 @@ export function createTranslationContextStub(
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: RuleSnapshot;
+		assets?: TranslationAssets;
 	},
 ): TranslationContext {
 	const rules: RuleSnapshot =
@@ -103,6 +104,6 @@ export function createTranslationContextStub(
 		actionCostResource: options.actionCostResource,
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
-		assets: EMPTY_ASSETS,
+		assets: options.assets ?? EMPTY_ASSETS,
 	};
 }

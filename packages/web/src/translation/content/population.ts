@@ -13,12 +13,12 @@ class PopulationTranslator implements ContentTranslator<string> {
 		return [];
 	}
 
-	log(id: string): string[] {
+	log(id: string, ctx: TranslationContext): string[] {
 		const normalized = id?.trim();
 		const role = normalized
 			? (normalized as PopulationRoleId | undefined)
 			: undefined;
-		const { icon, label } = resolvePopulationDisplay(role);
+		const { icon, label } = resolvePopulationDisplay(ctx, role);
 		const display = [icon, label].filter(Boolean).join(' ').trim();
 		return [display || label || normalized || ''];
 	}

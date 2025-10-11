@@ -1,57 +1,61 @@
-import { RESOURCES } from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/contents';
-import { signed } from '../helpers';
+import { signed, resolveResourceDisplay } from '../helpers';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('resource', 'add', {
-	summarize: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const icon = resource ? resource.icon : key;
+	summarize: (effect, context) => {
+		const rawKey = effect.params?.['key'];
+		const resourceKey = typeof rawKey === 'string' ? rawKey : '';
+		const resource = resolveResourceDisplay(context, resourceKey);
+		const icon = resource.icon || resourceKey || resource.label;
 		const amount = Number(effect.params?.['amount']);
 		return `${icon}${signed(amount)}${amount}`;
 	},
-	describe: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const label = resource?.label || key;
-		const icon = resource?.icon || key;
+	describe: (effect, context) => {
+		const rawKey = effect.params?.['key'];
+		const resourceKey = typeof rawKey === 'string' ? rawKey : '';
+		const resource = resolveResourceDisplay(context, resourceKey);
+		const label = resource.label || resourceKey || 'Resource';
+		const icon = resource.icon || resourceKey || label;
 		const amount = Number(effect.params?.['amount']);
 		return `${icon}${signed(amount)}${amount} ${label}`;
 	},
 });
 
 registerEffectFormatter('resource', 'remove', {
-	summarize: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const icon = resource ? resource.icon : key;
+	summarize: (effect, context) => {
+		const rawKey = effect.params?.['key'];
+		const resourceKey = typeof rawKey === 'string' ? rawKey : '';
+		const resource = resolveResourceDisplay(context, resourceKey);
+		const icon = resource.icon || resourceKey || resource.label;
 		const amount = Number(effect.params?.['amount']);
 		return `${icon}${signed(-amount)}${-amount}`;
 	},
-	describe: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const label = resource?.label || key;
-		const icon = resource?.icon || key;
+	describe: (effect, context) => {
+		const rawKey = effect.params?.['key'];
+		const resourceKey = typeof rawKey === 'string' ? rawKey : '';
+		const resource = resolveResourceDisplay(context, resourceKey);
+		const label = resource.label || resourceKey || 'Resource';
+		const icon = resource.icon || resourceKey || label;
 		const amount = Number(effect.params?.['amount']);
 		return `${icon}${signed(-amount)}${-amount} ${label}`;
 	},
 });
 
 registerEffectFormatter('resource', 'transfer', {
-	summarize: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const icon = resource?.icon || key;
+	summarize: (effect, context) => {
+		const rawKey = effect.params?.['key'];
+		const resourceKey = typeof rawKey === 'string' ? rawKey : '';
+		const resource = resolveResourceDisplay(context, resourceKey);
+		const icon = resource.icon || resourceKey || resource.label;
 		const percent = Number(effect.params?.['percent']);
 		return `Transfer ${percent}% ${icon}`;
 	},
-	describe: (effect) => {
-		const key = effect.params?.['key'] as string;
-		const resource = RESOURCES[key as ResourceKey];
-		const label = resource?.label || key;
-		const icon = resource?.icon || key;
+	describe: (effect, context) => {
+		const rawKey = effect.params?.['key'];
+		const resourceKey = typeof rawKey === 'string' ? rawKey : '';
+		const resource = resolveResourceDisplay(context, resourceKey);
+		const label = resource.label || resourceKey || 'Resource';
+		const icon = resource.icon || resourceKey || label;
 		const percent = Number(effect.params?.['percent']);
 		return `Transfer ${percent}% of opponent's ${icon}${label} to you`;
 	},

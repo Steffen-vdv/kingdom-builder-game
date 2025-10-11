@@ -1,8 +1,6 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
-import { RESOURCES } from '@kingdom-builder/contents';
+import type { EffectDef, DevelopmentConfig } from '@kingdom-builder/protocol';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
-import type { DevelopmentDef, ResourceKey } from '@kingdom-builder/contents';
-import { signed } from '../helpers';
+import { signed, resolveResourceDisplay } from '../helpers';
 import type { SummaryEntry } from '../../content/types';
 import type { TranslationContext } from '../../context';
 
@@ -117,6 +115,7 @@ export function formatGainFrom(
 	label: ResultModifierLabel,
 	source: ResultModifierSource,
 	amount: number,
+	context: TranslationContext,
 	options: {
 		key?: string;
 		detailed?: boolean;
@@ -125,8 +124,8 @@ export function formatGainFrom(
 	} = {},
 ) {
 	const { key, detailed, percent, round } = options;
-	const resourceInfo = key ? RESOURCES[key as ResourceKey] : undefined;
-	const resIcon = resourceInfo?.icon || key;
+	const resourceInfo = key ? resolveResourceDisplay(context, key) : undefined;
+	const resIcon = resourceInfo?.icon || resourceInfo?.label || key;
 	const usePercent = typeof percent === 'number' && !Number.isNaN(percent);
 	const value = usePercent ? Number(percent) : amount;
 	const normalizedValue = Object.is(value, -0) ? 0 : value;
@@ -216,7 +215,10 @@ export function formatDevelopment(
 		const key = resourceEffect.params?.['key'] as string;
 		const rawAmount = Number(resourceEffect.params?.['amount']);
 		const amount = resourceEffect.method === 'remove' ? -rawAmount : rawAmount;
-		return formatGainFrom(label, source, amount, { key, detailed });
+		return formatGainFrom(label, source, amount, translationContext, {
+			key,
+			detailed,
+		});
 	}
 	const percentParam = effectDefinition.params?.['percent'];
 	if (percentParam !== undefined) {
@@ -225,14 +227,16 @@ export function formatDevelopment(
 			effectDefinition.round === 'down' || effectDefinition.round === 'up'
 				? effectDefinition.round
 				: undefined;
-		return formatGainFrom(label, source, percent, {
+		return formatGainFrom(label, source, percent, translationContext, {
 			detailed,
 			percent,
 			...(round ? { round } : {}),
 		});
 	}
 	const amount = Number(effectDefinition.params?.['amount'] ?? 0);
-	return formatGainFrom(label, source, amount, { detailed });
+	return formatGainFrom(label, source, amount, translationContext, {
+		detailed,
+	});
 }
 
 export function getDevelopmentInfo(
@@ -240,7 +244,7 @@ export function getDevelopmentInfo(
 	id: string,
 ) {
 	try {
-		const developmentDefinition: DevelopmentDef =
+		const developmentDefinition: DevelopmentConfig =
 			translationContext.developments.get(id);
 		return {
 			icon: developmentDefinition.icon ?? '',
