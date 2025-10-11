@@ -34,8 +34,6 @@
 		"test:coverage:server": "npm run test --workspace @kingdom-builder/server -- --coverage",
 		"pretest:ci": "npm run ensure:dev-deps",
 		"test:ci": "npm run test:coverage",
-		"pretest:e2e": "npm run ensure:dev-deps",
-		"test:e2e": "playwright test",
 		"format": "prettier . --write",
 		"prepare": "husky install",
 		"lint:deps": "dependency-cruiser packages/engine packages/contents packages/web packages/server --config scripts/dependency-cruiser.cjs --output-type err",
@@ -49,7 +47,6 @@
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
-		"@playwright/test": "^1.56.0",
 		"@testing-library/jest-dom": "^6.8.0",
 		"@testing-library/react": "^16.3.0",
 		"@types/node": "^20.14.10",
