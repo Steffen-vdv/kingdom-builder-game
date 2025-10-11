@@ -6,15 +6,18 @@ import type {
 import { snapshotPlayer } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import { advanceSessionPhase } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 import type {
 	FormatPhaseResolutionOptions,
 	PhaseResolutionFormatResult,
 } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
-import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type { PhaseProgressState } from './usePhaseProgress';
-import type { ResourceKey } from '@kingdom-builder/contents';
+import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 
 type FormatPhaseResolution = (
 	options: FormatPhaseResolutionOptions,
@@ -23,13 +26,17 @@ type FormatPhaseResolution = (
 interface AdvanceToActionPhaseOptions {
 	session: LegacySession;
 	sessionId: string;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 	mountedRef: React.MutableRefObject<boolean>;
 	applyPhaseSnapshot: (
 		snapshot: SessionSnapshot,
 		overrides?: Partial<PhaseProgressState>,
 	) => void;
 	refresh: () => void;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+	>;
 	formatPhaseResolution: FormatPhaseResolution;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 }
@@ -41,6 +48,7 @@ export async function advanceToActionPhase({
 	mountedRef,
 	applyPhaseSnapshot,
 	refresh,
+	registries,
 	formatPhaseResolution,
 	showResolution,
 }: AdvanceToActionPhaseOptions) {
@@ -82,7 +90,14 @@ export async function advanceToActionPhase({
 			snapshot: snapshotAfter,
 			ruleSnapshot: snapshotAfter.rules,
 			passiveRecords: snapshotAfter.passiveRecords,
+			registries,
 		});
+		const phaseDefinition = snapshotAfter.phases.find(
+			(definition) => definition.id === advance.phase,
+		);
+		const stepDefinition = phaseDefinition?.steps.find(
+			(definition) => definition.id === advance.step,
+		);
 		const formatted = formatPhaseResolution({
 			advance: {
 				phase,
@@ -93,6 +108,8 @@ export async function advanceToActionPhase({
 			} as EngineAdvanceResult,
 			before,
 			after: snapshotPlayer(player),
+			phaseDefinition,
+			stepDefinition,
 			diffContext,
 			resourceKeys,
 		});
@@ -103,7 +120,11 @@ export async function advanceToActionPhase({
 			player,
 			...(formatted.actorLabel ? { actorLabel: formatted.actorLabel } : {}),
 		};
-		await showResolution(resolutionOptions);
+		try {
+			await showResolution(resolutionOptions);
+		} catch (_error) {
+			// Falling back to no-op if the resolution modal is unavailable.
+		}
 		if (!mountedRef.current) {
 			return;
 		}

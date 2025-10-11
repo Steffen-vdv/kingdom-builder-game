@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 import { formatPhaseResolution } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
 
@@ -11,12 +14,16 @@ interface PhaseProgressOptions {
 	session: LegacySession;
 	sessionState: SessionSnapshot;
 	sessionId: string;
-	actionCostResource: ResourceKey;
+	actionCostResource: SessionResourceKey;
 	mountedRef: React.MutableRefObject<boolean>;
 	refresh: () => void;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+	>;
 }
 
 export interface PhaseProgressState {
@@ -28,7 +35,7 @@ export interface PhaseProgressState {
 
 function computePhaseState(
 	snapshot: SessionSnapshot,
-	actionCostResource: ResourceKey,
+	actionCostResource: SessionResourceKey,
 	overrides: Partial<PhaseProgressState> = {},
 ): PhaseProgressState {
 	const currentPhaseId = snapshot.game.currentPhase;
@@ -60,6 +67,7 @@ export function usePhaseProgress({
 	resourceKeys,
 	enqueue,
 	showResolution,
+	registries,
 }: PhaseProgressOptions) {
 	const [phaseState, setPhaseState] = useState<PhaseProgressState>(() =>
 		computePhaseState(sessionState, actionCostResource),
@@ -101,13 +109,16 @@ export function usePhaseProgress({
 				mountedRef,
 				applyPhaseSnapshot,
 				refresh,
+				registries,
 				formatPhaseResolution,
 				showResolution,
 			}),
 		[
 			applyPhaseSnapshot,
+			formatPhaseResolution,
 			mountedRef,
 			refresh,
+			registries,
 			resourceKeys,
 			session,
 			sessionId,

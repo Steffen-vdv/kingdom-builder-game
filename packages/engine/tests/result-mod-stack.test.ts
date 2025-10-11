@@ -58,17 +58,17 @@ describe('result modifiers', () => {
 			],
 		};
 
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
 
-		ctx.passives.addPassive(passiveA, ctx);
-		ctx.passives.addPassive(passiveB, ctx);
+		engineContext.passives.addPassive(passiveA, engineContext);
+		engineContext.passives.addPassive(passiveB, engineContext);
 
-		const before = ctx.activePlayer.resources[resourceKey] ?? 0;
-		performAction(action.id, ctx);
-		const after = ctx.activePlayer.resources[resourceKey] ?? 0;
+		const before = engineContext.activePlayer.resources[resourceKey] ?? 0;
+		performAction(action.id, engineContext);
+		const after = engineContext.activePlayer.resources[resourceKey] ?? 0;
 
 		expect(after).toBe(before + baseGain + modGainA + modGainB);
 	});

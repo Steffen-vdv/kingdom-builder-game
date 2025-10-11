@@ -9,6 +9,8 @@ import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
 	SYNTHETIC_SLOT_INFO,
+	SYNTHETIC_LAND_INFO,
+	SYNTHETIC_PASSIVE_INFO,
 } from './fixtures/syntheticPlow';
 import {
 	snapshotPlayer,
@@ -22,6 +24,7 @@ import {
 } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
 function asTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
@@ -56,7 +59,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 describe('sub-action logging', () => {
 	it('nests sub-action effects under the triggering action', () => {
 		const synthetic = createSyntheticPlowContent();
-		const ctx = createEngine({
+		const engineContext = createEngine({
 			actions: synthetic.factory.actions,
 			buildings: synthetic.factory.buildings,
 			developments: synthetic.factory.developments,
@@ -65,23 +68,34 @@ describe('sub-action logging', () => {
 			start: synthetic.start,
 			rules: synthetic.rules,
 		});
-		ctx.activePlayer.actions.add(synthetic.plow.id);
-		ctx.activePlayer.resources.gold = 10;
-		ctx.activePlayer.resources.ap = 1;
-		const before = snapshotPlayer(ctx.activePlayer, ctx);
-		const costs = getActionCosts(synthetic.plow.id, ctx);
-		const traces = performAction(synthetic.plow.id, ctx);
-		const after = snapshotPlayer(ctx.activePlayer, ctx);
-		const diffContext = createTranslationDiffContext(ctx);
+		const baseAssets = createDefaultTranslationAssets();
+		engineContext.assets = {
+			...baseAssets,
+			resources: {
+				...baseAssets.resources,
+				...SYNTHETIC_RESOURCES,
+			},
+			land: SYNTHETIC_LAND_INFO,
+			slot: SYNTHETIC_SLOT_INFO,
+			passive: SYNTHETIC_PASSIVE_INFO,
+		};
+		engineContext.activePlayer.actions.add(synthetic.plow.id);
+		engineContext.activePlayer.resources.gold = 10;
+		engineContext.activePlayer.resources.ap = 1;
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const costs = getActionCosts(synthetic.plow.id, engineContext);
+		const traces = performAction(synthetic.plow.id, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const diffContext = createTranslationDiffContext(engineContext);
 		const changes = diffStepSnapshots(
 			before,
 			after,
-			ctx.actions.get(synthetic.plow.id),
+			engineContext.actions.get(synthetic.plow.id),
 			diffContext,
 			RESOURCE_KEYS,
 		);
 		const messages = asTimelineLines(
-			logContent('action', synthetic.plow.id, ctx),
+			logContent('action', synthetic.plow.id, engineContext),
 		);
 		const costLines: ActionLogLineDescriptor[] = [];
 		for (const key of Object.keys(
@@ -112,7 +126,7 @@ describe('sub-action logging', () => {
 		}
 		const subLines = appendSubActionChanges({
 			traces,
-			context: ctx,
+			context: engineContext,
 			diffContext,
 			resourceKeys: RESOURCE_KEYS,
 			messages,
@@ -130,7 +144,7 @@ describe('sub-action logging', () => {
 		const expandDiff = diffStepSnapshots(
 			expandTrace.before,
 			expandTrace.after,
-			ctx.actions.get(synthetic.expand.id),
+			engineContext.actions.get(synthetic.expand.id),
 			diffContext,
 			RESOURCE_KEYS,
 		);
@@ -144,7 +158,7 @@ describe('sub-action logging', () => {
 		const tillDiff = diffStepSnapshots(
 			tillTrace.before,
 			tillTrace.after,
-			ctx.actions.get(synthetic.till.id),
+			engineContext.actions.get(synthetic.till.id),
 			diffContext,
 			RESOURCE_KEYS,
 		);

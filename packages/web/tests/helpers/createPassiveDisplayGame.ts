@@ -5,10 +5,9 @@ import type {
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../../src/translation/context';
-import { ACTIONS, BUILDINGS, DEVELOPMENTS } from '@kingdom-builder/contents';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';
-import type { SessionRegistries } from '../../src/state/sessionContent';
+import { createSessionRegistries } from './sessionRegistries';
 
 export type MockGame = LegacyGameEngineContextValue;
 
@@ -27,24 +26,16 @@ export function createPassiveGame(
 	const handleHoverCard = vi.fn();
 	const clearHoverCard = vi.fn();
 	const ruleSnapshot = options.ruleSnapshot ?? sessionState.rules;
+	const sessionRegistries = createSessionRegistries();
 	const translationContext = createTranslationContext(
 		sessionState,
-		{
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-		},
+		sessionRegistries,
 		sessionState.metadata,
 		{
 			ruleSnapshot,
 			passiveRecords: sessionState.passiveRecords,
 		},
 	);
-	const sessionRegistries: SessionRegistries = {
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-	};
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: MockGame = {
 		sessionId: 'test-session',

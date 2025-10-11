@@ -1,16 +1,16 @@
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionTrace } from '@kingdom-builder/protocol/actions';
-import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { TranslationDiffContext } from '../translation';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 
 interface AppendSubActionChangesOptions {
 	traces: ActionTrace[];
 	context: TranslationContext;
 	diffContext: TranslationDiffContext;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 	messages: ActionLogLineDescriptor[];
 }
 
@@ -66,22 +66,24 @@ export function appendSubActionChanges({
 }
 
 interface BuildActionCostLinesOptions {
-	costs: Partial<Record<ResourceKey, number | undefined>>;
-	beforeResources: Partial<Record<ResourceKey, number | undefined>>;
+	costs: Partial<Record<SessionResourceKey, number | undefined>>;
+	beforeResources: Partial<Record<SessionResourceKey, number | undefined>>;
+	resources: SessionRegistries['resources'];
 }
 
 export function buildActionCostLines({
 	costs,
 	beforeResources,
+	resources,
 }: BuildActionCostLinesOptions): ActionLogLineDescriptor[] {
 	const costLines: ActionLogLineDescriptor[] = [];
-	const costKeys = Object.keys(costs) as ResourceKey[];
+	const costKeys = Object.keys(costs) as SessionResourceKey[];
 	for (const key of costKeys) {
 		const costAmount = costs[key] ?? 0;
 		if (!costAmount) {
 			continue;
 		}
-		const info = RESOURCES[key];
+		const info = resources[key];
 		const icon = info?.icon ? `${info.icon} ` : '';
 		const label = info?.label ?? key;
 		const beforeAmount = beforeResources[key] ?? 0;

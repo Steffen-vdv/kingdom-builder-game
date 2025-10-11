@@ -37,6 +37,22 @@ guide for rationale, lore, and extended background.
    - Paste the quick reference from that section into the PR description when
      strings change.
 
+### Working with remote branches (for resolving code/merge conflicts)
+
+- Inspect `.git/FETCH_HEAD` to see the upstream URL recorded for reference. (at
+  time of writing it is `https://github.com/Steffen-vdv/kingdom-builder-game`)
+- When you are asked to resolve conflicts with another branch, run the
+  following commands from the `work` branch:
+  1. `git remote add origin <upstream URL from .git/FETCH_HEAD>`
+     (only once per workspace).
+  2. `git fetch origin <branch-name>` to download the target branch.
+  3. `git merge origin/<branch-name>` to merge the fetched branch into `work`
+     and surface conflicts.
+  4. Use `git status` to review conflicts, edit the listed files, then `git add`
+     the resolved changes.
+  5. Finish with `git merge --continue` (or `git merge --abort` to back out if
+     needed).
+
 ## 2. Coding Rules Snapshot
 
 | Area        | Requirement                                                       |

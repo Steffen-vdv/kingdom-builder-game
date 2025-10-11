@@ -17,7 +17,7 @@ import {
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionContent';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -34,19 +34,11 @@ const ctx = createEngine({
 });
 const actionCostResource = ctx.actionCostResource;
 const engineSnapshot = snapshotEngine(ctx);
-const sessionRegistries: SessionRegistries = {
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-};
+const sessionRegistries = createSessionRegistries();
 const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 const translationContext = createTranslationContext(
 	engineSnapshot,
-	{
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-	},
+	sessionRegistries,
 	engineSnapshot.metadata,
 	{
 		ruleSnapshot: engineSnapshot.rules,

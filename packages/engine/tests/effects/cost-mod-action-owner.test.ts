@@ -8,13 +8,17 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 describe('cost_mod owner scope', () => {
 	it('applies only to the player who added the modifier', () => {
 		const content = createContentFactory();
-		const actA = content.action({ baseCosts: { [CResource.gold]: 1 } });
-		const actB = content.action({ baseCosts: { [CResource.gold]: 1 } });
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const firstActionDefinition = content.action({
+			baseCosts: { [CResource.gold]: 1 },
+		});
+		const secondActionDefinition = content.action({
+			baseCosts: { [CResource.gold]: 1 },
+		});
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		ctx.game.currentPlayerIndex = 0;
+		engineContext.game.currentPlayerIndex = 0;
 		runEffects(
 			[
 				{
@@ -27,24 +31,36 @@ describe('cost_mod owner scope', () => {
 					method: 'add',
 					params: {
 						id: 'specific',
-						actionId: actA.id,
+						actionId: firstActionDefinition.id,
 						key: CResource.gold,
 						amount: 2,
 					},
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		const baseA = actA.baseCosts[CResource.gold] ?? 0;
-		const baseB = actB.baseCosts[CResource.gold] ?? 0;
-		const costAA = getActionCosts(actA.id, ctx)[CResource.gold] ?? 0;
-		const costBA = getActionCosts(actB.id, ctx)[CResource.gold] ?? 0;
-		expect(costAA).toBe(baseA + 3);
-		expect(costBA).toBe(baseB + 1);
-		ctx.game.currentPlayerIndex = 1;
-		const costAB = getActionCosts(actA.id, ctx)[CResource.gold] ?? 0;
-		const costBB = getActionCosts(actB.id, ctx)[CResource.gold] ?? 0;
-		expect(costAB).toBe(baseA);
-		expect(costBB).toBe(baseB);
+		const firstActionBaseCost =
+			firstActionDefinition.baseCosts[CResource.gold] ?? 0;
+		const secondActionBaseCost =
+			secondActionDefinition.baseCosts[CResource.gold] ?? 0;
+		const firstPlayerFirstActionCost =
+			getActionCosts(firstActionDefinition.id, engineContext)[CResource.gold] ??
+			0;
+		const firstPlayerSecondActionCost =
+			getActionCosts(secondActionDefinition.id, engineContext)[
+				CResource.gold
+			] ?? 0;
+		expect(firstPlayerFirstActionCost).toBe(firstActionBaseCost + 3);
+		expect(firstPlayerSecondActionCost).toBe(secondActionBaseCost + 1);
+		engineContext.game.currentPlayerIndex = 1;
+		const secondPlayerFirstActionCost =
+			getActionCosts(firstActionDefinition.id, engineContext)[CResource.gold] ??
+			0;
+		const secondPlayerSecondActionCost =
+			getActionCosts(secondActionDefinition.id, engineContext)[
+				CResource.gold
+			] ?? 0;
+		expect(secondPlayerFirstActionCost).toBe(firstActionBaseCost);
+		expect(secondPlayerSecondActionCost).toBe(secondActionBaseCost);
 	});
 });

@@ -25,7 +25,7 @@ import type { TranslationContext } from '../../context';
 
 type AttackOnDamageFormatterArgs = {
 	entry: AttackOnDamageLogEntry;
-	ctx: TranslationContext;
+	translationContext: TranslationContext;
 	formatter: AttackTargetFormatter;
 };
 
@@ -53,12 +53,12 @@ function resolveAttackOnDamageFormatter(
 
 function fallbackLog(
 	effectDefinition: EffectDef<Record<string, unknown>>,
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 ): SummaryEntry[] {
 	const baseEntry = buildBaseEntry(effectDefinition, 'describe');
 	const onDamage = summarizeOnDamage(
 		effectDefinition,
-		ctx,
+		translationContext,
 		'describe',
 		baseEntry,
 	);
@@ -83,7 +83,7 @@ function buildEvaluationEntry(
 
 function buildActionLog(
 	entry: AttackOnDamageLogEntry,
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 	formatter: AttackTargetFormatter,
 ): SummaryEntry {
 	const id = entry.effect.params?.['id'] as string | undefined;
@@ -92,7 +92,7 @@ function buildActionLog(
 	const transferPercents = new Map<ResourceKey, number>();
 	if (id) {
 		try {
-			const definition = ctx.actions.get(id);
+			const definition = translationContext.actions.get(id);
 			icon = definition.icon || '';
 			name = definition.name;
 			collectTransferPercents(
@@ -111,21 +111,23 @@ function buildActionLog(
 				: undefined;
 		items.push(
 			formatter.formatDiff(
-				ownerLabel(ctx, 'defender'),
+				ownerLabel(translationContext, 'defender'),
 				diff,
 				percent !== undefined ? { percent } : { showPercent: true as const },
 			),
 		);
 	});
 	entry.attacker.forEach((diff) => {
-		items.push(formatter.formatDiff(ownerLabel(ctx, 'attacker'), diff));
+		items.push(
+			formatter.formatDiff(ownerLabel(translationContext, 'attacker'), diff),
+		);
 	});
 	return { title: `Trigger ${icon} ${name}`.trim(), items };
 }
 
 export function buildOnDamageEntry(
 	logEntries: AttackLog['onDamage'],
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 	effectDefinition: EffectDef<Record<string, unknown>>,
 ): SummaryEntry | null {
 	if (!logEntries.length) {
@@ -144,8 +146,8 @@ export function buildOnDamageEntry(
 	for (const entry of ordered) {
 		const handler = resolveAttackOnDamageFormatter(entry);
 		const formatted = handler
-			? handler({ entry, ctx, formatter })
-			: formatDiffEntries(entry, formatter, ctx);
+			? handler({ entry, translationContext, formatter })
+			: formatDiffEntries(entry, formatter, translationContext);
 		items.push(...formatted);
 	}
 	if (!items.length) {
@@ -160,61 +162,81 @@ export function buildOnDamageEntry(
 registerAttackOnDamageFormatter(
 	'action',
 	'perform',
-	({ entry, ctx, formatter }) => [buildActionLog(entry, ctx, formatter)],
+	({ entry, translationContext, formatter }) => [
+		buildActionLog(entry, translationContext, formatter),
+	],
 );
 
 registerAttackOnDamageFormatter(
 	'resource',
 	'transfer',
-	({ entry, ctx, formatter }) => {
+	({ entry, translationContext, formatter }) => {
 		const percent = entry.effect.params
 			? (entry.effect.params['percent'] as number | undefined)
 			: undefined;
 		if (percent === undefined) {
-			return formatDiffEntries(entry, formatter, ctx);
+			return formatDiffEntries(entry, formatter, translationContext);
 		}
 		const parts: SummaryEntry[] = [];
 		entry.defender.forEach((diff) => {
 			parts.push(
-				formatter.formatDiff(ownerLabel(ctx, 'defender'), diff, { percent }),
+				formatter.formatDiff(ownerLabel(translationContext, 'defender'), diff, {
+					percent,
+				}),
 			);
 		});
 		entry.attacker.forEach((diff) => {
-			parts.push(formatter.formatDiff(ownerLabel(ctx, 'attacker'), diff));
+			parts.push(
+				formatter.formatDiff(ownerLabel(translationContext, 'attacker'), diff),
+			);
 		});
 		return parts;
 	},
 );
 
 registerEffectFormatter('attack', 'perform', {
-	summarize: (effect, ctx) => {
+	summarize: (effect, translationContext) => {
 		const baseEntry = buildBaseEntry(effect, 'summarize');
 		const parts: SummaryEntry[] = [baseEntry.entry];
-		const onDamage = summarizeOnDamage(effect, ctx, 'summarize', baseEntry);
+		const onDamage = summarizeOnDamage(
+			effect,
+			translationContext,
+			'summarize',
+			baseEntry,
+		);
 		if (onDamage) {
 			parts.push(onDamage);
 		}
 		return parts;
 	},
-	describe: (effect, ctx) => {
+	describe: (effect, translationContext) => {
 		const baseEntry = buildBaseEntry(effect, 'describe');
 		const parts: SummaryEntry[] = [baseEntry.entry];
-		const onDamage = summarizeOnDamage(effect, ctx, 'describe', baseEntry);
+		const onDamage = summarizeOnDamage(
+			effect,
+			translationContext,
+			'describe',
+			baseEntry,
+		);
 		if (onDamage) {
 			parts.push(onDamage);
 		}
 		return parts;
 	},
-	log: (effect, ctx) => {
-		const log = ctx.pullEffectLog<AttackLog>('attack:perform');
+	log: (effect, translationContext) => {
+		const log = translationContext.pullEffectLog<AttackLog>('attack:perform');
 		if (!log) {
-			return fallbackLog(effect, ctx);
+			return fallbackLog(effect, translationContext);
 		}
 		const contextDetails = resolveAttackFormatterContext(effect);
 		const entries: SummaryEntry[] = [
 			buildEvaluationEntry(log.evaluation, contextDetails),
 		];
-		const onDamage = buildOnDamageEntry(log.onDamage, ctx, effect);
+		const onDamage = buildOnDamageEntry(
+			log.onDamage,
+			translationContext,
+			effect,
+		);
 		if (onDamage) {
 			entries.push(onDamage);
 		}

@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import {
-	PopulationRole,
-	POPULATION_ROLES,
-	Stat,
-	STATS,
-} from '@kingdom-builder/contents';
+import { PopulationRole, Stat } from '@kingdom-builder/contents';
 import { appendStatChanges } from '../src/translation/log/diffSections';
 import { type PlayerSnapshot } from '../src/translation/log';
 import { type StepEffects } from '../src/translation/log/statBreakdown';
 import { formatPercentBreakdown } from '../src/translation/log/diffFormatting';
 import { formatStatValue } from '../src/utils/stats';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
 describe('appendStatChanges', () => {
 	it('uses the provided player snapshot for percent breakdowns', () => {
@@ -68,14 +64,22 @@ describe('appendStatChanges', () => {
 				},
 			],
 		};
+		const assets = createDefaultTranslationAssets();
 		const changes: string[] = [];
-		appendStatChanges(changes, before, after, player, raiseStrengthEffects);
-		const label = STATS[Stat.armyStrength]?.label ?? Stat.armyStrength;
+		appendStatChanges(
+			changes,
+			before,
+			after,
+			player,
+			raiseStrengthEffects,
+			assets,
+		);
+		const label = assets.stats[Stat.armyStrength]?.label ?? Stat.armyStrength;
 		const line = changes.find((entry) => entry.includes(label));
 		expect(line).toBeDefined();
-		const legionIcon = POPULATION_ROLES[PopulationRole.Legion]?.icon || '';
-		const growthIcon = STATS[Stat.growth]?.icon || '';
-		const armyIcon = STATS[Stat.armyStrength]?.icon || '';
+		const legionIcon = assets.populations[PopulationRole.Legion]?.icon || '';
+		const growthIcon = assets.stats[Stat.growth]?.icon || '';
+		const armyIcon = assets.stats[Stat.armyStrength]?.icon || '';
 		const breakdown = formatPercentBreakdown(
 			armyIcon || '',
 			formatStatValue(Stat.armyStrength, before.stats[Stat.armyStrength]),

@@ -5,10 +5,6 @@ import type {
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
 import {
-	RESOURCES,
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
 	PHASES,
 	RULES,
 	STATS,
@@ -18,7 +14,7 @@ import { createTranslationContext } from '../../src/translation/context';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
-import type { SessionRegistries } from '../../src/state/sessionContent';
+import { createSessionRegistries } from './sessionRegistries';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
@@ -35,13 +31,13 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		...RULES,
 		tierDefinitions: RULES.tierDefinitions.map((tier) => ({ ...tier })),
 	};
-	const resourceValues = Object.keys(RESOURCES).reduce<Record<string, number>>(
-		(acc, key, index) => {
-			acc[key] = index + 2;
-			return acc;
-		},
-		{},
-	);
+	const sessionRegistries = createSessionRegistries();
+	const resourceValues = Object.keys(sessionRegistries.resources).reduce<
+		Record<string, number>
+	>((acc, key, index) => {
+		acc[key] = index + 2;
+		return acc;
+	}, {});
 	const nonCapacityStatEntries = Object.entries(STATS).filter(
 		([, info]) => !info.capacity,
 	);
@@ -79,22 +75,13 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	});
 	const translationContext = createTranslationContext(
 		sessionState,
-		{
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-		},
+		sessionRegistries,
 		sessionState.metadata,
 		{
 			ruleSnapshot,
 			passiveRecords: sessionState.passiveRecords,
 		},
 	);
-	const sessionRegistries: SessionRegistries = {
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-	};
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: LegacyGameEngineContextValue = {
 		sessionId: 'test-session',
@@ -155,7 +142,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		handlePerform: vi.fn().mockResolvedValue(undefined),
 		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 	};
-	const resourceForecast = Object.keys(RESOURCES).reduce<
+	const resourceForecast = Object.keys(sessionRegistries.resources).reduce<
 		Record<string, number>
 	>((acc, key, index) => {
 		const offset = index + 1;

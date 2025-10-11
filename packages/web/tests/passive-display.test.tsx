@@ -4,7 +4,6 @@ import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PassiveDisplay from '../src/components/player/PassiveDisplay';
-import { formatPassiveRemoval } from '@kingdom-builder/contents';
 import { resolvePassivePresentation } from '../src/translation/log/passives';
 import { buildTierEntries } from '../src/components/player/buildTierEntries';
 import type { MockGame } from './helpers/createPassiveDisplayGame';
@@ -34,7 +33,10 @@ describe('<PassiveDisplay />', () => {
 		);
 		const definition = definitions.find((def) => def.id === summary?.id);
 		expect(definition).toBeDefined();
-		const presentation = resolvePassivePresentation(summary!, { definition });
+		const presentation = resolvePassivePresentation(summary!, {
+			definition,
+			assets: translationContext.assets,
+		});
 		expect(presentation.removal).toBeDefined();
 		const hoverTarget = document.querySelector('div.hoverable');
 		expect(hoverTarget).not.toBeNull();
@@ -73,7 +75,10 @@ describe('<PassiveDisplay />', () => {
 		);
 		const definition = definitions.find((def) => def.id === summary?.id);
 		expect(definition).toBeDefined();
-		const presentation = resolvePassivePresentation(summary!, { definition });
+		const presentation = resolvePassivePresentation(summary!, {
+			definition,
+			assets: translationContext.assets,
+		});
 		expect(presentation.removal).toBeDefined();
 		const hoverTarget = container.querySelector('div.hoverable');
 		expect(hoverTarget).not.toBeNull();
@@ -84,9 +89,13 @@ describe('<PassiveDisplay />', () => {
 		expect(lastCall?.[0]?.description).toBeUndefined();
 		const removalToken = summary?.meta?.removal?.token;
 		if (removalToken) {
-			expect(presentation.removal).toBe(formatPassiveRemoval(removalToken));
+			expect(presentation.removal).toBe(
+				translationContext.assets.formatPassiveRemoval(removalToken),
+			);
 		}
-		const logDetails = resolvePassivePresentation(summary!);
+		const logDetails = resolvePassivePresentation(summary!, {
+			assets: translationContext.assets,
+		});
 		expect(logDetails.removal).toBe(presentation.removal);
 		expect(logDetails.label).toBe(presentation.label);
 	});

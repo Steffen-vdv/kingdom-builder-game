@@ -6,6 +6,7 @@ import React, {
 	useRef,
 } from 'react';
 import { createTranslationContext } from '../translation/context';
+import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
 import { useGameLog } from './useGameLog';
@@ -185,6 +186,7 @@ export function GameProviderInner({
 		resourceKeys,
 		enqueue,
 		showResolution: handleShowResolution,
+		registries,
 	});
 
 	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =
@@ -197,12 +199,14 @@ export function GameProviderInner({
 		sessionState,
 		addLog,
 		resourceKeys,
+		registries,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
 		session: legacySession,
 		sessionId,
 		actionCostResource,
+		registries,
 		addLog,
 		showResolution: handleShowResolution,
 		syncPhaseState: applyPhaseSnapshot,
@@ -306,8 +310,10 @@ export function GameProviderInner({
 	};
 
 	return (
-		<GameEngineContext.Provider value={value}>
-			{children}
-		</GameEngineContext.Provider>
+		<RegistryMetadataProvider registries={registries}>
+			<GameEngineContext.Provider value={value}>
+				{children}
+			</GameEngineContext.Provider>
+		</RegistryMetadataProvider>
 	);
 }

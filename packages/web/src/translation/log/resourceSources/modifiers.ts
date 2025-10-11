@@ -1,4 +1,3 @@
-import { PASSIVE_INFO } from '@kingdom-builder/contents';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
 import {
 	type TranslationDiffContext,
@@ -39,7 +38,7 @@ function resolveModifierIcon(
 			return passive.meta.source.icon ?? '';
 		}
 	}
-	return PASSIVE_INFO.icon || '';
+	return context.assets.passive.icon || '';
 }
 
 export function appendEvaluatorModifiers(

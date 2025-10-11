@@ -6,7 +6,6 @@ import type {
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 } from '@kingdom-builder/protocol';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import { type Land } from '../content';
 import {
 	appendResourceChanges,
@@ -17,6 +16,7 @@ import {
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
 import { createTranslationDiffContext } from './resourceSources/context';
+import type { TranslationAssets } from '../context';
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
@@ -107,11 +107,11 @@ export function snapshotPlayer(
 export function collectResourceKeys(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
-): ResourceKey[] {
+): string[] {
 	return Object.keys({
 		...previousSnapshot.resources,
 		...nextSnapshot.resources,
-	}) as ResourceKey[];
+	});
 }
 
 interface DiffContext extends SnapshotContext {
@@ -128,16 +128,14 @@ interface DiffContext extends SnapshotContext {
 		get(id: string): DevelopmentConfig;
 		has?(id: string): boolean;
 	};
+	assets: TranslationAssets;
 }
 
 export function diffSnapshots(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
 	context: DiffContext,
-	resourceKeys: ResourceKey[] = collectResourceKeys(
-		previousSnapshot,
-		nextSnapshot,
-	),
+	resourceKeys: string[] = collectResourceKeys(previousSnapshot, nextSnapshot),
 ): string[] {
 	const changeSummaries: string[] = [];
 	appendResourceChanges(
@@ -145,6 +143,7 @@ export function diffSnapshots(
 		previousSnapshot,
 		nextSnapshot,
 		resourceKeys,
+		context.assets,
 	);
 	appendStatChanges(
 		changeSummaries,
@@ -152,6 +151,7 @@ export function diffSnapshots(
 		nextSnapshot,
 		nextSnapshot,
 		undefined,
+		context.assets,
 	);
 	const diffContext = createTranslationDiffContext(context);
 	appendBuildingChanges(
@@ -166,7 +166,17 @@ export function diffSnapshots(
 		nextSnapshot,
 		diffContext,
 	);
-	appendSlotChanges(changeSummaries, previousSnapshot, nextSnapshot);
-	appendPassiveChanges(changeSummaries, previousSnapshot, nextSnapshot);
+	appendSlotChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		context.assets,
+	);
+	appendPassiveChanges(
+		changeSummaries,
+		previousSnapshot,
+		nextSnapshot,
+		context.assets,
+	);
 	return changeSummaries;
 }
