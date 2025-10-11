@@ -1,5 +1,7 @@
-import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+import type {
+	SessionMetadataDescriptor,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import type {
 	AssetMetadata,
 	MetadataLookup,
@@ -64,7 +66,7 @@ const readMetadataEntry = (
 	if (!Object.prototype.hasOwnProperty.call(snapshot, key)) {
 		return undefined;
 	}
-	const record = snapshot as Record<string, unknown>;
+	const record = snapshot as unknown as Record<string, unknown>;
 	return record[key];
 };
 

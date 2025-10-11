@@ -133,9 +133,7 @@ const createPhaseDescriptor = (
 	id: string,
 	phase: SessionPhaseMetadata | undefined,
 ): PhaseMetadata => {
-	const steps = Array.isArray(phase?.steps)
-		? phase.steps.map(createPhaseStep)
-		: [];
+	const steps = phase?.steps?.map(createPhaseStep) ?? [];
 	const stepsRecord = freezeRecord(
 		Object.fromEntries(steps.map((step) => [step.id, step])),
 	);
