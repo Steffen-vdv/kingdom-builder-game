@@ -31,7 +31,7 @@ import {
 	wrapTranslationRegistry,
 } from './translationContextStub';
 import { selectSessionView } from '../../src/state/sessionSelectors';
-import type { SessionRegistries } from '../../src/state/sessionContent';
+import { createSessionRegistries } from './sessionRegistries';
 
 export function createActionsPanelGame({
 	populationRoles,
@@ -281,11 +281,10 @@ export function createActionsPanelGame({
 		metadata: { passiveEvaluationModifiers: {} },
 	};
 
-	const sessionRegistries: SessionRegistries = {
-		actions: actionsRegistry,
-		buildings: buildingsRegistry,
-		developments: developmentsRegistry,
-	};
+	const sessionRegistries = createSessionRegistries();
+	sessionRegistries.actions = actionsRegistry;
+	sessionRegistries.buildings = buildingsRegistry;
+	sessionRegistries.developments = developmentsRegistry;
 
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 

@@ -1,9 +1,4 @@
 import {
-	PASSIVE_INFO,
-	MODIFIER_INFO,
-	formatPassiveRemoval,
-} from '@kingdom-builder/contents';
-import {
 	type EffectDef,
 	type SessionPassiveSummary,
 } from '@kingdom-builder/protocol';
@@ -11,17 +6,7 @@ import {
 	hasTierSummaryTranslation,
 	translateTierSummary,
 } from '../content/tierSummaries';
-
-const MODIFIER_ICON_MAP = {
-	cost_mod: MODIFIER_INFO.cost.icon,
-	result_mod: MODIFIER_INFO.result.icon,
-} as const;
-
-type ModifierIconKey = keyof typeof MODIFIER_ICON_MAP;
-
-function hasModifierIconKey(value: string): value is ModifierIconKey {
-	return value in MODIFIER_ICON_MAP;
-}
+import type { TranslationAssets } from '../context';
 
 export interface PassiveDefinitionLike {
 	detail?: string;
@@ -65,6 +50,7 @@ function resolveSummaryToken(value: string | undefined): string | undefined {
 
 function describeRemoval(
 	meta: SessionPassiveSummary['meta'],
+	assets: TranslationAssets,
 ): string | undefined {
 	const removalText = meta?.removal?.text;
 	if (removalText && removalText.trim().length > 0) {
@@ -72,7 +58,7 @@ function describeRemoval(
 	}
 	const removalToken = meta?.removal?.token;
 	if (removalToken && removalToken.trim().length > 0) {
-		return formatPassiveRemoval(removalToken);
+		return assets.formatPassiveRemoval(removalToken);
 	}
 	return undefined;
 }
@@ -105,6 +91,7 @@ function deriveIcon(
 	passive: SessionPassiveSummary,
 	effects: EffectDef[] | undefined,
 	meta: SessionPassiveSummary['meta'] | undefined,
+	assets: TranslationAssets,
 ): string {
 	if (meta?.source?.icon) {
 		return meta.source.icon;
@@ -114,16 +101,20 @@ function deriveIcon(
 	}
 	const firstEffect = effects?.[0];
 	const modifierType = firstEffect?.type;
-	if (modifierType && hasModifierIconKey(modifierType)) {
-		return MODIFIER_ICON_MAP[modifierType];
+	if (modifierType) {
+		const modifier = assets.modifiers[modifierType];
+		if (modifier?.icon) {
+			return modifier.icon;
+		}
 	}
-	return PASSIVE_INFO.icon ?? '';
+	return assets.passive.icon ?? '';
 }
 
 function resolveLabel(
 	passive: SessionPassiveSummary,
 	definition: PassiveDefinitionLike,
 	meta: SessionPassiveSummary['meta'],
+	assets: TranslationAssets,
 ): string {
 	const fallbackLabel = formatFallbackLabel(passive.id);
 	const named =
@@ -145,7 +136,7 @@ function resolveLabel(
 		normalizeLabel(passive.detail) ||
 		normalizeLabel(definition.detail) ||
 		normalizeLabel(passive.id);
-	const rawLabel = normalized || PASSIVE_INFO.label || fallbackLabel;
+	const rawLabel = normalized || assets.passive.label || fallbackLabel;
 	return rawLabel === passive.id ? fallbackLabel : rawLabel;
 }
 
@@ -176,14 +167,14 @@ function resolveSummary(
 
 export function resolvePassivePresentation(
 	passive: SessionPassiveSummary,
-	options: { definition?: PassiveDefinitionLike } = {},
+	options: { definition?: PassiveDefinitionLike; assets: TranslationAssets },
 ): PassivePresentation {
 	const definition = options.definition ?? {};
 	const meta = definition.meta ?? passive.meta;
-	const icon = deriveIcon(passive, definition.effects, meta);
-	const label = resolveLabel(passive, definition, meta);
+	const icon = deriveIcon(passive, definition.effects, meta, options.assets);
+	const label = resolveLabel(passive, definition, meta, options.assets);
 	const summary = resolveSummary(definition, meta, passive);
-	const removal = meta ? describeRemoval(meta) : undefined;
+	const removal = meta ? describeRemoval(meta, options.assets) : undefined;
 	const presentation: PassivePresentation = { icon, label };
 	if (summary) {
 		presentation.summary = summary;

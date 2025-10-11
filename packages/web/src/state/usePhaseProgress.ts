@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 import { formatPhaseResolution } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
 
@@ -11,11 +14,15 @@ interface PhaseProgressOptions {
 	session: LegacySession;
 	sessionState: SessionSnapshot;
 	sessionId: string;
-	actionCostResource: ResourceKey;
+	actionCostResource: SessionResourceKey;
 	mountedRef: React.MutableRefObject<boolean>;
 	refresh: () => void;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
+	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 }
 
@@ -59,6 +66,7 @@ export function usePhaseProgress({
 	refresh,
 	resourceKeys,
 	enqueue,
+	registries,
 	showResolution,
 }: PhaseProgressOptions) {
 	const [phaseState, setPhaseState] = useState<PhaseProgressState>(() =>
@@ -83,6 +91,17 @@ export function usePhaseProgress({
 		[applyPhaseSnapshot, session],
 	);
 
+	const { mainApStart, setMainApStart, updateMainPhaseStep } =
+		useMainPhaseTracker({
+			session,
+			actionCostResource,
+			actionPhaseId,
+			setPhaseSteps,
+			setPhaseHistories,
+			setDisplayPhase,
+			resources: registries.resources,
+		});
+
 	useEffect(() => {
 		setPhaseState((previous) => {
 			if (previous.isAdvancing) {
@@ -103,12 +122,16 @@ export function usePhaseProgress({
 				refresh,
 				formatPhaseResolution,
 				showResolution,
+				registries,
 			}),
 		[
 			applyPhaseSnapshot,
 			mountedRef,
 			refresh,
 			resourceKeys,
+			registries,
+			runDelay,
+			runStepDelay,
 			session,
 			sessionId,
 			showResolution,

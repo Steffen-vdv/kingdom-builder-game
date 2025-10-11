@@ -1,5 +1,12 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import fastify from 'fastify';
+import type { FastifyInstance } from 'fastify';
+import { SessionManager } from './session/SessionManager.js';
+import { createSessionTransportPlugin } from './transport/FastifySessionTransport.js';
+import type { FastifySessionTransportOptions } from './transport/FastifySessionTransport.js';
+import { createTokenAuthMiddleware } from './auth/tokenAuthMiddleware.js';
+import type { TokenDefinition } from './auth/tokenAuthMiddleware.js';
 
 export { SessionManager } from './session/SessionManager.js';
 export type {
@@ -25,18 +32,122 @@ export {
 	type AuthMiddleware,
 } from './auth/tokenAuthMiddleware.js';
 
-export function startServer(): void {
+export interface StartServerOptions
+	extends Partial<FastifySessionTransportOptions> {
+	host?: string;
+	port?: number;
+	logger?: boolean;
+	env?: NodeJS.ProcessEnv;
+	tokens?: Record<string, TokenDefinition>;
+}
+
+export interface StartServerResult {
+	app: FastifyInstance;
+	address: string;
+	host: string;
+	port: number;
+}
+
+export async function startServer(
+	options: StartServerOptions = {},
+): Promise<StartServerResult> {
+	const env = options.env ?? process.env;
+	const host = resolveHost(options.host, env);
+	const port = resolvePort(options.port, env);
+	const sessionManager = options.sessionManager ?? new SessionManager();
+	const tokens = resolveTokens(options.tokens, env);
+	const middlewareOptions = tokens ? { env, tokens } : { env };
+	const authMiddleware = createTokenAuthMiddleware(middlewareOptions);
+	const app = fastify({ logger: options.logger ?? false });
+	const transportOptions: FastifySessionTransportOptions = {
+		sessionManager,
+		authMiddleware,
+	};
+	if (options.idFactory) {
+		transportOptions.idFactory = options.idFactory;
+	}
+	await app.register(createSessionTransportPlugin, transportOptions);
 	console.log('Starting Kingdom Builder server...');
+	try {
+		const address = await app.listen({ host, port });
+		console.log(`Kingdom Builder server listening on ${address}`);
+		const url = new URL(address);
+		return {
+			app,
+			address,
+			host: url.hostname,
+			port: Number.parseInt(url.port, 10),
+		} satisfies StartServerResult;
+	} catch (error) {
+		console.error('Failed to start Kingdom Builder server.', error);
+		await app.close();
+		throw error;
+	}
+}
+
+function resolveHost(host: string | undefined, env: NodeJS.ProcessEnv): string {
+	if (host) {
+		return host;
+	}
+	return env.KB_SERVER_HOST ?? '0.0.0.0';
+}
+
+function resolvePort(port: number | undefined, env: NodeJS.ProcessEnv): number {
+	const candidates = [
+		port,
+		readNumber(env.KB_SERVER_PORT),
+		readNumber(env.PORT),
+	];
+	for (const value of candidates) {
+		if (value && value > 0) {
+			return value;
+		}
+	}
+	return 3001;
+}
+
+function readNumber(value: string | undefined): number | undefined {
+	if (!value) {
+		return undefined;
+	}
+	const parsed = Number.parseInt(value, 10);
+	return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function resolveTokens(
+	tokens: Record<string, TokenDefinition> | undefined,
+	env: NodeJS.ProcessEnv,
+): Record<string, TokenDefinition> | undefined {
+	if (tokens && Object.keys(tokens).length > 0) {
+		return tokens;
+	}
+	if (env.KB_SERVER_AUTH_TOKENS) {
+		return undefined;
+	}
+	console.warn(
+		'KB_SERVER_AUTH_TOKENS not set; using default dev token "local-dev".',
+	);
+	return {
+		'local-dev': {
+			userId: 'local-dev',
+			roles: ['admin', 'session:create', 'session:advance'],
+		},
+	} satisfies Record<string, TokenDefinition>;
 }
 
 const entrypoint = process.argv[1];
 const currentModule = fileURLToPath(import.meta.url);
+const autostartDisabled =
+	(process.env.KB_SERVER_DISABLE_AUTOSTART ?? '').toLowerCase() === '1';
 
-if (entrypoint !== undefined) {
+if (!autostartDisabled && entrypoint !== undefined) {
 	const normalizedEntrypoint = resolve(entrypoint);
 	const normalizedModule = resolve(currentModule);
 
 	if (normalizedEntrypoint === normalizedModule) {
-		startServer();
+		startServer().catch((error) => {
+			console.error('Server failed to start.', error);
+			process.exitCode = 1;
+		});
 	}
 }

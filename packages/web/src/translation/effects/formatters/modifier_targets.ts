@@ -7,32 +7,39 @@ import type { TranslationContext } from '../../context';
 
 export function formatPopulation(
 	label: ResultModifierLabel,
-	eff: EffectDef,
+	effectDefinition: EffectDef,
 	evaluation: { id: string },
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 	detailed: boolean,
 ) {
-	const { icon, name } = getActionInfo(ctx, evaluation.id);
-	const amount = Number(eff.params?.['amount'] ?? 0);
+	const { icon, name } = getActionInfo(translationContext, evaluation.id);
+	const amount = Number(effectDefinition.params?.['amount'] ?? 0);
+	const targetDescription = `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${formatTargetLabel(
+		icon,
+		name,
+	)}`;
 	return formatGainFrom(
 		label,
 		{
 			summaryTargetIcon: POPULATION_INFO.icon,
 			summaryContextIcon: icon,
-			description: `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${formatTargetLabel(
-				icon,
-				name,
-			)}`,
+			description: targetDescription,
 		},
 		amount,
 		{ detailed },
 	);
 }
 
-export function getActionInfo(ctx: TranslationContext, id: string) {
+export function getActionInfo(
+	translationContext: TranslationContext,
+	id: string,
+) {
 	try {
-		const action: ActionDef = ctx.actions.get(id);
-		return { icon: action.icon ?? id, name: action.name ?? id };
+		const actionDefinition: ActionDef = translationContext.actions.get(id);
+		return {
+			icon: actionDefinition.icon ?? id,
+			name: actionDefinition.name ?? id,
+		};
 	} catch {
 		return { icon: id, name: id };
 	}

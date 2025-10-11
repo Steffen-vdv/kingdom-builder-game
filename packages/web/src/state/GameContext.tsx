@@ -294,3 +294,5 @@ export const useSessionOptions = () => {
 		[sessionView],
 	);
 };
+
+export { useRegistryMetadata } from '../contexts/RegistryMetadataContext';

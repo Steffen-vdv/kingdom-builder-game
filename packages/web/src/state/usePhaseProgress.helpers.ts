@@ -6,7 +6,11 @@ import type {
 import { snapshotPlayer } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import { advanceSessionPhase } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 import type {
 	FormatPhaseResolutionOptions,
 	PhaseResolutionFormatResult,
@@ -23,7 +27,10 @@ type FormatPhaseResolution = (
 interface AdvanceToActionPhaseOptions {
 	session: LegacySession;
 	sessionId: string;
-	resourceKeys: ResourceKey[];
+	actionCostResource: SessionResourceKey;
+	resourceKeys: SessionResourceKey[];
+	runDelay: (total: number) => Promise<void>;
+	runStepDelay: () => Promise<void>;
 	mountedRef: React.MutableRefObject<boolean>;
 	applyPhaseSnapshot: (
 		snapshot: SessionSnapshot,
@@ -32,6 +39,10 @@ interface AdvanceToActionPhaseOptions {
 	refresh: () => void;
 	formatPhaseResolution: FormatPhaseResolution;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+	>;
 }
 
 export async function advanceToActionPhase({
@@ -43,6 +54,7 @@ export async function advanceToActionPhase({
 	refresh,
 	formatPhaseResolution,
 	showResolution,
+	registries,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
 	if (snapshot.game.conclusion) {
@@ -82,7 +94,7 @@ export async function advanceToActionPhase({
 			snapshot: snapshotAfter,
 			ruleSnapshot: snapshotAfter.rules,
 			passiveRecords: snapshotAfter.passiveRecords,
-		});
+		registries,});
 		const formatted = formatPhaseResolution({
 			advance: {
 				phase,

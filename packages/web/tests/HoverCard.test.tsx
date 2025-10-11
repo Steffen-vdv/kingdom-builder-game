@@ -26,7 +26,7 @@ import { createTranslationContext } from '../src/translation/context';
 import { translateRequirementFailure } from '../src/translation';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { SessionRegistries } from '../src/state/sessionContent';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	useActionResolution,
 	type ActionResolution,
@@ -40,7 +40,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-const ctx = createEngine({
+const engineContext = createEngine({
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
@@ -49,21 +49,13 @@ const ctx = createEngine({
 	start: GAME_START,
 	rules: RULES,
 });
-const engineSnapshot = snapshotEngine(ctx);
+const engineSnapshot = snapshotEngine(engineContext);
 const actionCostResource = engineSnapshot.actionCostResource;
-const sessionRegistries: SessionRegistries = {
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-};
+const sessionRegistries = createSessionRegistries();
 const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 const translationContext = createTranslationContext(
 	engineSnapshot,
-	{
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-	},
+	sessionRegistries,
 	engineSnapshot.metadata,
 	{
 		ruleSnapshot: engineSnapshot.rules,
@@ -74,11 +66,11 @@ const translationContext = createTranslationContext(
 const findActionWithReq = () => {
 	for (const [id] of (ACTIONS as unknown as { map: Map<string, unknown> })
 		.map) {
-		const failures = getActionRequirements(id, ctx);
+		const failures = getActionRequirements(id, engineContext);
 		const requirements = failures.map((failure) =>
-			translateRequirementFailure(failure, ctx),
+			translateRequirementFailure(failure, engineContext),
 		);
-		const costs = getActionCosts(id, ctx);
+		const costs = getActionCosts(id, engineContext);
 		if (
 			requirements.length &&
 			Object.keys(costs).some((costKey) => costKey !== actionCostResource)
@@ -152,8 +144,8 @@ afterEach(() => {
 describe('<HoverCard />', () => {
 	it('renders hover card details from context', () => {
 		const { id, requirements, costs } = actionData;
-		const def = ACTIONS.get(id);
-		const title = `${def.icon} ${def.name}`;
+		const actionDefinition = ACTIONS.get(id);
+		const title = `${actionDefinition.icon} ${actionDefinition.name}`;
 		mockGame.hoverCard = {
 			title,
 			effects: [],
