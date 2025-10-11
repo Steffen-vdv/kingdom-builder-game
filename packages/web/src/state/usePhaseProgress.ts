@@ -3,9 +3,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
-import type { PhaseStep } from './phaseTypes';
-import { usePhaseDelays } from './usePhaseDelays';
-import { useMainPhaseTracker } from './useMainPhaseTracker';
+import type { PhaseStep } from './GameContext.types';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
 import type {
@@ -62,25 +60,101 @@ export function usePhaseProgress({
 		Record<string, PhaseStep[]>
 	>({});
 	const [tabsEnabled, setTabsEnabled] = useState(false);
+	const [mainApStart, setMainApStart] = useState(0);
+	const resources = registries.resources;
 
-	const { mainApStart, setMainApStart, updateMainPhaseStep } =
-		useMainPhaseTracker({
-			session,
+	const updateMainPhaseStep = useCallback(
+		(apStartOverride?: number) => {
+			const snapshot = session.getSnapshot();
+			const activePlayer = snapshot.game.players.find(
+				(player) => player.id === snapshot.game.activePlayerId,
+			);
+			if (!activePlayer) {
+				return;
+			}
+			const total = apStartOverride ?? mainApStart;
+			const remaining = activePlayer.resources[actionCostResource] ?? 0;
+			const spent = total - remaining;
+			const resourceInfo = resources[actionCostResource];
+			const costLabel = resourceInfo?.label ?? actionCostResource;
+			const costIcon = resourceInfo?.icon ?? '';
+			const costSummary = `${costIcon} ${spent}/${total} spent`;
+			const steps: PhaseStep[] = [
+				{
+					title: `Step 1 - Spend all ${costLabel}`,
+					items: [
+						{
+							text: costSummary,
+							done: remaining === 0,
+						},
+					],
+					active: remaining > 0,
+				},
+			];
+			setPhaseSteps(steps);
+			if (actionPhaseId) {
+				setPhaseHistories((prev) => ({
+					...prev,
+					[actionPhaseId]: steps,
+				}));
+				setDisplayPhase(actionPhaseId);
+			} else {
+				setDisplayPhase(snapshot.game.currentPhase);
+			}
+		},
+		[
 			actionCostResource,
 			actionPhaseId,
-			setPhaseSteps,
-			setPhaseHistories,
+			mainApStart,
+			resources,
+			session,
 			setDisplayPhase,
-			resources: registries.resources,
-		});
+			setPhaseHistories,
+			setPhaseSteps,
+		],
+	);
 
-	const { runDelay, runStepDelay } = usePhaseDelays({
-		mountedRef,
-		timeScaleRef,
-		setTrackedInterval,
-		clearTrackedInterval,
-		setPhaseTimer,
-	});
+	const runDelay = useCallback(
+		(total: number) => {
+			const scale = timeScaleRef.current || 1;
+			const adjustedTotal = total / scale;
+			if (adjustedTotal <= 0) {
+				if (mountedRef.current) {
+					setPhaseTimer(0);
+				}
+				return Promise.resolve();
+			}
+			const tick = Math.max(16, Math.min(100, adjustedTotal / 10));
+			if (mountedRef.current) {
+				setPhaseTimer(0);
+			}
+			return new Promise<void>((resolve) => {
+				let elapsed = 0;
+				const interval = setTrackedInterval(() => {
+					elapsed += tick;
+					if (mountedRef.current) {
+						setPhaseTimer(Math.min(1, elapsed / adjustedTotal));
+					}
+					if (elapsed >= adjustedTotal) {
+						clearTrackedInterval(interval);
+						if (mountedRef.current) {
+							setPhaseTimer(0);
+						}
+						resolve();
+					}
+				}, tick);
+			});
+		},
+		[
+			clearTrackedInterval,
+			mountedRef,
+			setTrackedInterval,
+			setPhaseTimer,
+			timeScaleRef,
+		],
+	);
+
+	const runStepDelay = useCallback(() => runDelay(1000), [runDelay]);
 
 	const runUntilActionPhaseCore = useCallback(
 		() =>
