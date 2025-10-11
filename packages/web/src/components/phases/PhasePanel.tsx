@@ -45,6 +45,8 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			'Player';
 		const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
 		const handleEndTurnClick = () => {
+			// Phase errors are surfaced via onFatalSessionError inside
+			// usePhaseProgress.
 			void handleEndTurn();
 		};
 		const panelHeight = Math.max(240, height ?? 0);

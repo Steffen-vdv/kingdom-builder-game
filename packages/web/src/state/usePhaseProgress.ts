@@ -24,6 +24,7 @@ interface PhaseProgressOptions {
 		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+	onFatalSessionError?: ((error: unknown) => void) | undefined;
 }
 
 export interface PhaseProgressState {
@@ -68,6 +69,7 @@ export function usePhaseProgress({
 	enqueue,
 	registries,
 	showResolution,
+	onFatalSessionError,
 }: PhaseProgressOptions) {
 	const [phaseState, setPhaseState] = useState<PhaseProgressState>(() =>
 		computePhaseState(sessionState, actionCostResource),
@@ -154,8 +156,14 @@ export function usePhaseProgress({
 			await advanceSessionPhase({ sessionId });
 			await runUntilActionPhaseCore();
 		} catch (error) {
-			applyPhaseSnapshot(session.getSnapshot(), { isAdvancing: false });
-			throw error;
+			applyPhaseSnapshot(session.getSnapshot(), {
+				isAdvancing: false,
+			});
+			if (onFatalSessionError) {
+				onFatalSessionError(error);
+				return;
+			}
+			console.error(error);
 		}
 	}, [
 		actionCostResource,
@@ -163,6 +171,7 @@ export function usePhaseProgress({
 		runUntilActionPhaseCore,
 		session,
 		sessionId,
+		onFatalSessionError,
 	]);
 
 	const handleEndTurn = useCallback(() => enqueue(endTurn), [enqueue, endTurn]);
