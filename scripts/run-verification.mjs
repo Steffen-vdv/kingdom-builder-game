@@ -77,7 +77,7 @@ for (const result of results) {
 
 if (!overallSuccess) {
 	console.log('\nVerification failed. Review the artifacts for details.');
-	process.exitCode = 1;
-} else {
-	console.log('\nVerification succeeded. Artifacts are ready for sharing.');
+	process.exit(1);
 }
+
+console.log('\nVerification succeeded. Artifacts are ready for sharing.');

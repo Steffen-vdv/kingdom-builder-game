@@ -2,5 +2,34 @@
 
 set -e
 
-npm run check
-npm run test:coverage
+VERIFY_OUTPUT=""
+VERIFY_STATUS=0
+
+run_verify() {
+	set +e
+	VERIFY_OUTPUT="$(npm run verify 2>&1)"
+	VERIFY_STATUS=$?
+	set -e
+	printf '%s\n' "$VERIFY_OUTPUT"
+	return "$VERIFY_STATUS"
+}
+
+run_verify && exit 0
+
+case "$VERIFY_OUTPUT" in
+	*ENOENT*|
+	*Missing\ script*|
+	*missing\ script*|
+	*not\ found*|
+	*not\ recognized\ as\ an\ internal\ or\ external\ command*|
+	*Cannot\ find\ module*|
+	*ERR_MODULE_NOT_FOUND*)
+		echo "npm run verify failed due to tooling issues; running fallback suite."
+		echo "Please document the failure reason in the PR body if you rely on this fallback."
+		npm run check
+		npm run test:coverage
+		;;
+	*)
+		exit "$VERIFY_STATUS"
+		;;
+esac

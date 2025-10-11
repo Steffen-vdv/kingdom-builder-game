@@ -17,9 +17,13 @@ guide for rationale, lore, and extended background.
    - `npm run lint` also runs dependency-cruiser to enforce package boundaries.
    - [`npm run verify`](../scripts/run-verification.mjs) is the preferred
      combined validation for code changes; it streams output to the console and
-     writes timestamped logs in `artifacts/` for sharing with reviewers.
+     writes timestamped logs in `artifacts/` for sharing with reviewers. The
+     Husky pre-push hook runs this verification automatically so every push has
+     fresh artifacts.
    - `npm run check` still runs linting, type checks, and tests together if you
-     need a direct invocation or the verification script is unavailable.
+     need a direct invocation or the verification script is unavailable. When
+     you rely on the manual fallback, explain the tooling issue in your PR body
+     so reviewers understand why the artifacts differ from the standard run.
    - Documentation-only updates or pure content typo fixes may skip coverage
      runs entirely—note the exception in your PR body so reviewers know it was
      intentional.

@@ -149,12 +149,15 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   It is a thin wrapper around [`scripts/run-verification.mjs`](scripts/run-verification.mjs)
   that sequentially runs `npm run check` and `npm run test:coverage`, streaming
   progress to the console while saving timestamped logs to the repository's
-  `artifacts/` directory. Share those artifacts with reviewers when failures
-  need triage.
+  `artifacts/` directory. The Husky pre-push hook executes this verification so
+  every push captures a fresh artifact bundle—share them with reviewers when
+  failures need triage.
 
 - If the verification script is unavailable in your environment, fall back to
-  running `npm run check && npm run test:coverage` manually. Coverage runs may
-  be skipped only when a change is strictly documentation-only or a pure
+  running `npm run check && npm run test:coverage` manually. When you take this
+  path, explain the tooling issue or `ENOENT` failure in the PR body so the
+  reviewer understands why the automated artifacts are missing. Coverage runs
+  may be skipped only when a change is strictly documentation-only or a pure
   content typo fix—call out the exception explicitly in the PR body so
   reviewers know it was intentional.
 
