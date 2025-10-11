@@ -1,27 +1,33 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
-	createEngine,
-	runEffects,
-	advance,
-	performAction,
+        createEngine,
+        runEffects,
+        advance,
+        performAction,
 } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	PhaseStepId,
-	GAME_START,
-	RULES,
-	PopulationRole,
-	Stat,
-	type StatKey,
-	STATS,
-	Resource,
-	ActionId,
+        ACTIONS,
+        BUILDINGS,
+        DEVELOPMENTS,
+        POPULATIONS,
+        PHASES,
+        PhaseStepId,
+        GAME_START,
+        RULES,
+        PopulationRole,
+        Stat,
+        type StatKey,
+        STATS,
+        Resource,
+        ActionId,
 } from '@kingdom-builder/contents';
 import { getStatBreakdownSummary } from '../src/utils/stats';
+import type { TranslationContext, TranslationAssets } from '../src/translation/context';
+import {
+        createTranslationContextStub,
+        toTranslationPlayer,
+        wrapTranslationRegistry,
+} from './helpers/translationContextStub';
 
 const isSummaryObject = (
 	entry: unknown,
@@ -33,7 +39,7 @@ const isSummaryObject = (
 	Array.isArray((entry as { items?: unknown }).items);
 
 vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
+        return await import('../../engine/src');
 });
 
 type EffectLike = {
@@ -72,13 +78,94 @@ function extractStatKey(effects?: EffectLike[]): StatKey | undefined {
 }
 
 function findBuildingStatSource(): { id: string; stat: StatKey } {
-	for (const [id, building] of BUILDINGS.entries()) {
-		const stat = extractStatKey(building.onBuild);
-		if (stat) {
-			return { id, stat };
-		}
-	}
-	throw new Error('No stat-granting building found');
+        for (const [id, building] of BUILDINGS.entries()) {
+                const stat = extractStatKey(building.onBuild);
+                if (stat) {
+                        return { id, stat };
+                }
+        }
+        throw new Error('No stat-granting building found');
+}
+
+function buildTranslationAssets(): TranslationAssets {
+        const stats = Object.fromEntries(
+                Object.entries(STATS).map(([key, info]) => [
+                        key,
+                        {
+                                icon: info.icon,
+                                label: info.label ?? info.name ?? key,
+                                description: info.description,
+                        },
+                ]),
+        );
+        const populations = Object.fromEntries(
+                POPULATIONS.entries().map(([id, definition]) => {
+                        const record = definition as { icon?: string; label?: string; name?: string };
+                        return [
+                                id,
+                                {
+                                        icon: record.icon,
+                                        label: record.label ?? record.name ?? id,
+                                },
+                        ];
+                }),
+        );
+        return {
+                resources: {},
+                stats,
+                populations: populations as TranslationAssets['populations'],
+                population: { icon: '👥', label: 'Population' },
+                land: {},
+                slot: {},
+                passive: { icon: '♾️', label: 'Passive' },
+                triggers: {},
+                modifiers: {},
+                formatPassiveRemoval: (description) => `Active as long as ${description}`,
+        } satisfies TranslationAssets;
+}
+
+function createTranslationContextFromEngine(
+        engineContext: ReturnType<typeof createEngine>,
+): TranslationContext {
+        const assets = buildTranslationAssets();
+        const wrap = <T>(registry: { get(id: string): T; has(id: string): boolean }) =>
+                wrapTranslationRegistry({
+                        get(id: string) {
+                                return registry.get(id);
+                        },
+                        has(id: string) {
+                                return registry.has(id);
+                        },
+                });
+        const mapPhases = engineContext.phases.map((phase) => ({
+                id: phase.id,
+                icon: phase.icon,
+                label: phase.label,
+                steps: phase.steps?.map((step) => ({
+                        id: step.id,
+                        triggers: step.triggers ? [...step.triggers] : undefined,
+                })),
+        }));
+        const buildPlayer = (player: typeof engineContext.activePlayer) =>
+                toTranslationPlayer({
+                        id: player.id,
+                        name: player.name,
+                        resources: player.resources,
+                        population: player.population,
+                        stats: player.stats,
+                });
+        return createTranslationContextStub({
+                phases: mapPhases,
+                actionCostResource: engineContext.actionCostResource ?? '',
+                actions: wrap(engineContext.actions),
+                buildings: wrap(engineContext.buildings),
+                developments: wrap(engineContext.developments),
+                populations: wrap(engineContext.populations),
+                activePlayer: buildPlayer(engineContext.activePlayer),
+                opponent: buildPlayer(engineContext.opponent),
+                rules: engineContext.rules,
+                assets,
+        });
 }
 
 describe('stat breakdown summary', () => {
@@ -116,11 +203,12 @@ describe('stat breakdown summary', () => {
 			result.step !== PhaseStepId.RaiseStrength
 		);
 
-		const breakdown = getStatBreakdownSummary(
-			Stat.armyStrength,
-			engineContext.activePlayer,
-			engineContext,
-		);
+                const translationContext = createTranslationContextFromEngine(engineContext);
+                const breakdown = getStatBreakdownSummary(
+                        Stat.armyStrength,
+                        engineContext.activePlayer,
+                        translationContext,
+                );
 		expect(breakdown.length).toBeGreaterThanOrEqual(2);
 		const objectEntries = breakdown.filter(isSummaryObject);
 		const ongoing = objectEntries.find((entry) =>
@@ -193,11 +281,12 @@ describe('stat breakdown summary', () => {
 
 		performAction(ActionId.build, engineContext, { id: buildingId });
 
-		const breakdown = getStatBreakdownSummary(
-			stat,
-			engineContext.activePlayer,
-			engineContext,
-		);
+                const translationContext = createTranslationContextFromEngine(engineContext);
+                const breakdown = getStatBreakdownSummary(
+                        stat,
+                        engineContext.activePlayer,
+                        translationContext,
+                );
 		const objectEntries = breakdown.filter(isSummaryObject);
 		const buildSource = objectEntries.find((entry) =>
 			entry.title.includes('Build'),

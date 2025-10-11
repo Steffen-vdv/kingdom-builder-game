@@ -1,4 +1,5 @@
-import { PHASES, STATS } from '@kingdom-builder/contents';
+import { STATS } from '@kingdom-builder/contents';
+import type { TranslationPhase } from '../../translation/context';
 
 export function statDisplaysAsPercent(key: string): boolean {
 	const info = STATS[key as keyof typeof STATS];
@@ -30,21 +31,22 @@ export function formatDetailText(detail: string): string {
 }
 
 export function formatStepLabel(
-	phaseId?: string,
-	stepId?: string,
+        phases: readonly TranslationPhase[],
+        phaseId?: string,
+        stepId?: string,
 ): string | undefined {
-	if (!stepId) {
-		return undefined;
-	}
-	const phase = phaseId
-		? PHASES.find((phaseItem) => phaseItem.id === phaseId)
-		: undefined;
-	const step = phase?.steps.find((stepItem) => stepItem.id === stepId);
-	if (!step) {
-		return formatDetailText(stepId);
-	}
-	const parts: string[] = [];
-	if (step.icon) {
+        if (!stepId) {
+                return undefined;
+        }
+        const phase = phaseId
+                ? phases.find((phaseItem) => phaseItem.id === phaseId)
+                : undefined;
+        const step = phase?.steps?.find((stepItem) => stepItem.id === stepId);
+        if (!step) {
+                return formatDetailText(stepId);
+        }
+        const parts: string[] = [];
+        if (step.icon) {
 		parts.push(step.icon);
 	}
 	const label = step.title ?? step.id;
@@ -55,29 +57,30 @@ export function formatStepLabel(
 }
 
 export function formatPhaseStep(
-	phaseId?: string,
-	stepId?: string,
+        phases: readonly TranslationPhase[],
+        phaseId?: string,
+        stepId?: string,
 ): string | undefined {
-	if (!stepId) {
-		return undefined;
-	}
-	const phase = phaseId
-		? PHASES.find((phaseItem) => phaseItem.id === phaseId)
-		: undefined;
-	const step = phase?.steps.find((stepItem) => stepItem.id === stepId);
-	if (!step) {
-		return formatDetailText(stepId);
-	}
-	const parts: string[] = [];
-	if (phase?.icon) {
-		parts.push(phase.icon);
-	}
-	if (phase?.label) {
-		parts.push(phase.label);
-	}
-	const stepText = formatStepLabel(phaseId, stepId);
-	if (parts.length && stepText) {
-		return `${parts.join(' ').trim()} · ${stepText}`;
-	}
-	return stepText;
+        if (!stepId) {
+                return undefined;
+        }
+        const phase = phaseId
+                ? phases.find((phaseItem) => phaseItem.id === phaseId)
+                : undefined;
+        const step = phase?.steps?.find((stepItem) => stepItem.id === stepId);
+        if (!step) {
+                return formatDetailText(stepId);
+        }
+        const parts: string[] = [];
+        if (phase?.icon) {
+                parts.push(phase.icon);
+        }
+        if (phase?.label) {
+                parts.push(phase.label);
+        }
+        const stepText = formatStepLabel(phases, phaseId, stepId);
+        if (parts.length && stepText) {
+                return `${parts.join(' ').trim()} · ${stepText}`;
+        }
+        return stepText;
 }

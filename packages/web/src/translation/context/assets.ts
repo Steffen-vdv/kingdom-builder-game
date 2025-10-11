@@ -1,4 +1,9 @@
-import type { PopulationConfig } from '@kingdom-builder/protocol';
+import type {
+        PopulationConfig,
+        SessionMetadataDescriptor,
+        SessionSnapshotMetadata,
+        SessionTriggerMetadata,
+} from '@kingdom-builder/protocol';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -7,8 +12,8 @@ import type {
 } from './types';
 
 const DEFAULT_POPULATION_INFO = Object.freeze({
-	icon: '👥',
-	label: 'Population',
+        icon: '👥',
+        label: 'Population',
 });
 
 const DEFAULT_LAND_INFO = Object.freeze({
@@ -22,8 +27,8 @@ const DEFAULT_SLOT_INFO = Object.freeze({
 });
 
 const DEFAULT_PASSIVE_INFO = Object.freeze({
-	icon: '♾️',
-	label: 'Passive',
+        icon: '♾️',
+        label: 'Passive',
 });
 
 const DEFAULT_MODIFIER_INFO = Object.freeze({
@@ -44,7 +49,33 @@ const DEFAULT_STAT_INFO = Object.freeze({
 }) satisfies Readonly<Record<string, TranslationIconLabel>>;
 
 const formatRemoval = (description: string) =>
-	`Active as long as ${description}`;
+        `Active as long as ${description}`;
+
+function mergeIconLabel(
+        fallback: Readonly<TranslationIconLabel>,
+        override?: SessionMetadataDescriptor,
+): Readonly<TranslationIconLabel> {
+        if (!override) {
+                return fallback;
+        }
+        const entry: TranslationIconLabel = {};
+        if (override.icon !== undefined) {
+                entry.icon = override.icon;
+        } else if (fallback.icon !== undefined) {
+                entry.icon = fallback.icon;
+        }
+        if (override.label !== undefined) {
+                entry.label = override.label;
+        } else if (fallback.label !== undefined) {
+                entry.label = fallback.label;
+        }
+        if (override.description !== undefined) {
+                entry.description = override.description;
+        } else if (fallback.description !== undefined) {
+                entry.description = fallback.description;
+        }
+        return Object.freeze(entry);
+}
 
 function toIconLabel(
 	definition: Partial<PopulationConfig> & {
@@ -71,13 +102,13 @@ function toIconLabel(
 }
 
 function buildPopulationMap(
-	registry: SessionRegistries['populations'],
+        registry: SessionRegistries['populations'],
 ): Readonly<Record<string, TranslationIconLabel>> {
-	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [id, definition] of registry.entries()) {
-		entries[id] = toIconLabel(definition, id);
-	}
-	return Object.freeze(entries);
+        const entries: Record<string, TranslationIconLabel> = {};
+        for (const [id, definition] of registry.entries()) {
+                entries[id] = toIconLabel(definition, id);
+        }
+        return Object.freeze(entries);
 }
 
 function buildResourceMap(
@@ -98,20 +129,53 @@ function buildResourceMap(
 	return Object.freeze(entries);
 }
 
+function buildTriggerMap(
+        triggers?: Record<string, SessionTriggerMetadata>,
+): Readonly<Record<string, Readonly<{ icon?: string; future?: string; past?: string }>>> {
+        if (!triggers) {
+                return Object.freeze({});
+        }
+        const entries: Record<
+                string,
+                Readonly<{ icon?: string; future?: string; past?: string }>
+        > = {};
+        for (const [id, metadata] of Object.entries(triggers)) {
+                const entry: { icon?: string; future?: string; past?: string } = {};
+                if (metadata.icon !== undefined) {
+                        entry.icon = metadata.icon;
+                }
+                if (metadata.future !== undefined) {
+                        entry.future = metadata.future;
+                }
+                if (metadata.past !== undefined) {
+                        entry.past = metadata.past;
+                }
+                entries[id] = Object.freeze(entry);
+        }
+        return Object.freeze(entries);
+}
+
 export function createTranslationAssets(
-	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
+        registries: Pick<SessionRegistries, 'populations' | 'resources'>,
+        metadata?: SessionSnapshotMetadata,
 ): TranslationAssets {
-	const populations = buildPopulationMap(registries.populations);
-	const resources = buildResourceMap(registries.resources);
-	return Object.freeze({
-		resources,
-		populations,
-		stats: DEFAULT_STAT_INFO,
-		population: DEFAULT_POPULATION_INFO,
-		land: DEFAULT_LAND_INFO,
-		slot: DEFAULT_SLOT_INFO,
-		passive: DEFAULT_PASSIVE_INFO,
-		modifiers: DEFAULT_MODIFIER_INFO,
-		formatPassiveRemoval: formatRemoval,
-	});
+        const populations = buildPopulationMap(registries.populations);
+        const resources = buildResourceMap(registries.resources);
+        const assetOverrides = metadata?.assets ?? {};
+        const triggers = buildTriggerMap(metadata?.triggers);
+        return Object.freeze({
+                resources,
+                populations,
+                stats: DEFAULT_STAT_INFO,
+                population: mergeIconLabel(
+                        DEFAULT_POPULATION_INFO,
+                        assetOverrides['population'],
+                ),
+                land: mergeIconLabel(DEFAULT_LAND_INFO, assetOverrides['land']),
+                slot: mergeIconLabel(DEFAULT_SLOT_INFO, assetOverrides['slot']),
+                passive: mergeIconLabel(DEFAULT_PASSIVE_INFO, assetOverrides['passive']),
+                triggers,
+                modifiers: DEFAULT_MODIFIER_INFO,
+                formatPassiveRemoval: formatRemoval,
+        });
 }

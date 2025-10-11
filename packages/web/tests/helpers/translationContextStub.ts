@@ -10,16 +10,17 @@ import type { RuleSnapshot } from '@kingdom-builder/engine';
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
 
 const EMPTY_ASSETS: TranslationAssets = {
-	resources: {},
-	stats: {},
-	populations: {},
-	population: {},
-	land: {},
-	slot: {},
-	passive: {},
-	modifiers: {},
-	formatPassiveRemoval: (description: string) =>
-		`Active as long as ${description}`,
+        resources: {},
+        stats: {},
+        populations: {},
+        population: {},
+        land: {},
+        slot: {},
+        passive: {},
+        triggers: {},
+        modifiers: {},
+        formatPassiveRemoval: (description: string) =>
+                `Active as long as ${description}`,
 };
 
 const EMPTY_PASSIVES: TranslationPassives = {
@@ -70,19 +71,20 @@ export function toTranslationPlayer(
 }
 
 export function createTranslationContextStub(
-	options: Pick<TranslationContext, 'phases' | 'actionCostResource'> & {
-		actions: TranslationRegistry<unknown>;
-		buildings: TranslationRegistry<unknown>;
-		developments: TranslationRegistry<unknown>;
-		populations?: TranslationRegistry<unknown>;
-		activePlayer: TranslationPlayer;
-		opponent: TranslationPlayer;
-		rules?: RuleSnapshot;
-	},
+        options: Pick<TranslationContext, 'phases' | 'actionCostResource'> & {
+                actions: TranslationRegistry<unknown>;
+                buildings: TranslationRegistry<unknown>;
+                developments: TranslationRegistry<unknown>;
+                populations?: TranslationRegistry<unknown>;
+                activePlayer: TranslationPlayer;
+                opponent: TranslationPlayer;
+                rules?: RuleSnapshot;
+                assets?: TranslationAssets;
+        },
 ): TranslationContext {
-	const rules: RuleSnapshot =
-		options.rules ??
-		({
+        const rules: RuleSnapshot =
+                options.rules ??
+                ({
 			tieredResourceKey: 'happiness',
 			tierDefinitions: [],
 			winConditions: [],
@@ -97,12 +99,12 @@ export function createTranslationContextStub(
 		activePlayer: options.activePlayer,
 		opponent: options.opponent,
 		rules,
-		pullEffectLog() {
-			return undefined;
-		},
-		actionCostResource: options.actionCostResource,
-		recentResourceGains: [],
-		compensations: { A: {}, B: {} },
-		assets: EMPTY_ASSETS,
-	};
+                pullEffectLog() {
+                        return undefined;
+                },
+                actionCostResource: options.actionCostResource,
+                recentResourceGains: [],
+                compensations: { A: {}, B: {} },
+                assets: options.assets ?? EMPTY_ASSETS,
+        };
 }

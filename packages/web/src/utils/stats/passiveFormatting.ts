@@ -1,14 +1,10 @@
-import {
-	PASSIVE_INFO,
-	PhaseStepId,
-	formatPassiveRemoval,
-} from '@kingdom-builder/contents';
 import type { StatSourceLink, StatSourceMeta } from '@kingdom-builder/engine';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';
 import { formatLinkLabel } from './dependencyFormatters';
 
 const PERMANENT_ICON = '🗿';
+const RAISE_STRENGTH_STEP_ID = 'raise-strength';
 
 export function buildLongevityEntries(
 	meta: StatSourceMeta,
@@ -21,12 +17,15 @@ export function buildLongevityEntries(
 		const anchors = collectAnchorLabels(meta, translationContext);
 		const condition = formatInPlayCondition(anchors);
 		if (condition) {
-			return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing as long as ${condition}`];
-		}
-		return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing`];
-	}
-	const entries: SummaryEntry[] = [];
-	const items: SummaryEntry[] = [];
+                        const passiveIcon =
+                                translationContext.assets.passive.icon ?? '♾️';
+                        return [`${passiveIcon} Ongoing as long as ${condition}`];
+                }
+                const passiveIcon = translationContext.assets.passive.icon ?? '♾️';
+                return [`${passiveIcon} Ongoing`];
+        }
+        const entries: SummaryEntry[] = [];
+        const items: SummaryEntry[] = [];
 	if (dependencies.length && shouldDisplayPermanentDependencies(meta)) {
 		dependencies.forEach((link) => {
 			items.push(`Triggered by ${link}`);
@@ -35,22 +34,23 @@ export function buildLongevityEntries(
 	const removalCondition = formatInPlayCondition(
 		collectRemovalLabels(removalLink, translationContext),
 	);
-	if (removalCondition) {
-		entries.push(formatPassiveRemoval(removalCondition));
-	} else if (removal) {
-		entries.push(formatPassiveRemoval(removal));
-	}
-	entries.unshift(`${PERMANENT_ICON} Permanent`);
-	return entries.concat(items);
+        const formatRemoval = translationContext.assets.formatPassiveRemoval;
+        if (removalCondition) {
+                entries.push(formatRemoval(removalCondition));
+        } else if (removal) {
+                entries.push(formatRemoval(removal));
+        }
+        entries.unshift(`${PERMANENT_ICON} Permanent`);
+        return entries.concat(items);
 }
 
 function shouldDisplayPermanentDependencies(meta: StatSourceMeta): boolean {
-	if (meta.kind === 'phase') {
-		const detail = meta.detail?.trim().toLowerCase();
-		if (detail === PhaseStepId.RaiseStrength) {
-			return false;
-		}
-	}
+        if (meta.kind === 'phase') {
+                const detail = meta.detail?.trim().toLowerCase();
+                if (detail === RAISE_STRENGTH_STEP_ID) {
+                        return false;
+                }
+        }
 	return true;
 }
 

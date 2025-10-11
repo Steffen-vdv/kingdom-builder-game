@@ -21,26 +21,32 @@ export interface TranslationRegistry<TDefinition> {
 }
 
 export interface TranslationIconLabel {
-	icon?: string;
-	label?: string;
-	description?: string;
+        icon?: string;
+        label?: string;
+        description?: string;
 }
 
 export interface TranslationModifierInfo {
-	icon?: string;
-	label?: string;
+        icon?: string;
+        label?: string;
 }
 
 export interface TranslationAssets {
-	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
-	readonly stats: Readonly<Record<string, TranslationIconLabel>>;
-	readonly populations: Readonly<Record<string, TranslationIconLabel>>;
-	readonly population: Readonly<TranslationIconLabel>;
-	readonly land: Readonly<TranslationIconLabel>;
-	readonly slot: Readonly<TranslationIconLabel>;
-	readonly passive: Readonly<TranslationIconLabel>;
-	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
-	formatPassiveRemoval(description: string): string;
+        readonly resources: Readonly<Record<string, TranslationIconLabel>>;
+        readonly stats: Readonly<Record<string, TranslationIconLabel>>;
+        readonly populations: Readonly<Record<string, TranslationIconLabel>>;
+        readonly population: Readonly<TranslationIconLabel>;
+        readonly land: Readonly<TranslationIconLabel>;
+        readonly slot: Readonly<TranslationIconLabel>;
+        readonly passive: Readonly<TranslationIconLabel>;
+        readonly triggers?: Readonly<
+                Record<
+                        string,
+                        Readonly<{ icon?: string; future?: string; past?: string }>
+                >
+        >;
+        readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
+        formatPassiveRemoval(description: string): string;
 }
 
 /**

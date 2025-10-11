@@ -88,7 +88,7 @@ export function createTranslationContext(
 			return evaluationMods;
 		},
 	});
-	const assets = createTranslationAssets(registries);
+        const assets = createTranslationAssets(registries, metadata);
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
 		buildings: wrapRegistry(registries.buildings),
