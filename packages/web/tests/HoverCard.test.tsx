@@ -8,6 +8,7 @@ import {
 	createEngine,
 	getActionCosts,
 	getActionRequirements,
+	type EngineAdvanceResult,
 } from '@kingdom-builder/engine';
 import {
 	RESOURCES,
@@ -18,7 +19,9 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	type ResourceKey,
 } from '@kingdom-builder/contents';
+import { createContentFactory } from '@kingdom-builder/testing';
 import { createTranslationContext } from '../src/translation/context';
 import { translateRequirementFailure } from '../src/translation';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
@@ -29,6 +32,9 @@ import {
 	type ActionResolution,
 } from '../src/state/useActionResolution';
 import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
+import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
+import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
+import type { PlayerSnapshot } from '../src/translation';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -253,6 +259,178 @@ describe('<HoverCard />', () => {
 		expect(screen.getByText('Second reveal')).toBeInTheDocument();
 		expect(mockGame.resolution?.source).toEqual(resolutionSource);
 		expect(mockGame.resolution?.actorLabel).toBe('Played by');
+		expect(continueButton).not.toBeDisabled();
+		act(() => {
+			mockGame.acknowledgeResolution();
+		});
+		await expect(resolutionPromise).resolves.toBeUndefined();
+		expect(mockGame.resolution).toBeNull();
+	});
+
+	it('renders formatted phase resolutions and logs phase advances', async () => {
+		vi.useFakeTimers();
+		const addLog = vi.fn();
+		const ResolutionHarness = () => {
+			const timeScaleRef = React.useRef(1);
+			const mountedRef = React.useRef(true);
+			React.useEffect(() => {
+				return () => {
+					mountedRef.current = false;
+				};
+			}, []);
+			const { resolution, showResolution, acknowledgeResolution } =
+				useActionResolution({
+					addLog,
+					setTrackedTimeout: (callback, delay) =>
+						window.setTimeout(callback, delay),
+					timeScaleRef,
+					mountedRef,
+				});
+			mockGame.resolution = resolution;
+			mockGame.showResolution = showResolution;
+			mockGame.acknowledgeResolution = acknowledgeResolution;
+			return <HoverCard />;
+		};
+		render(<ResolutionHarness />);
+
+		const activePlayerView = mockGame.sessionView.active;
+		if (!activePlayerView) {
+			throw new Error('Expected active player for phase resolution test');
+		}
+		const availableResourceKeys = Object.keys(RESOURCES) as Array<
+			keyof typeof RESOURCES
+		>;
+		const resourceKey = (availableResourceKeys.find((key) => {
+			return key !== mockGame.actionCostResource;
+		}) ?? availableResourceKeys[0]!) as ResourceKey;
+		const createPlayerSnapshot = (
+			resources: Record<string, number>,
+		): PlayerSnapshot => {
+			return {
+				resources,
+				stats: {},
+				population: {},
+				buildings: [],
+				lands: [],
+				passives: [],
+			};
+		};
+		const before = createPlayerSnapshot({ [resourceKey]: 2 });
+		const after = createPlayerSnapshot({ [resourceKey]: 5 });
+		const sessionPlayer: EngineAdvanceResult['player'] = {
+			id: activePlayerView.id,
+			name: activePlayerView.name,
+			resources: { ...after.resources },
+			stats: {},
+			statsHistory: {},
+			population: {},
+			lands: [],
+			buildings: [],
+			actions: [],
+			statSources: {},
+			skipPhases: {},
+			skipSteps: {},
+			passives: [],
+		};
+		const phaseDefinition = {
+			id: 'phase_harvest',
+			label: 'Dawn',
+			icon: '🌅',
+			steps: [
+				{
+					id: 'step_income',
+					title: 'Collect tribute',
+					effects: [],
+				},
+			],
+		};
+		const stepDefinition = phaseDefinition.steps[0]!;
+		const advance: EngineAdvanceResult = {
+			phase: phaseDefinition.id,
+			step: stepDefinition.id,
+			effects: [
+				{
+					type: 'resource',
+					method: 'add',
+					params: {
+						key: resourceKey,
+						amount: 3,
+					},
+				},
+			],
+			player: sessionPlayer,
+		};
+		const factory = createContentFactory();
+		const diffContext = createTranslationDiffContext({
+			activePlayer: {
+				id: activePlayerView.id,
+				population: {},
+				lands: [],
+			},
+			buildings: factory.buildings,
+			developments: factory.developments,
+			passives: { evaluationMods: new Map(), get: () => undefined },
+		});
+		const formatted = formatPhaseResolution({
+			advance,
+			before,
+			after,
+			phaseDefinition,
+			stepDefinition,
+			diffContext,
+			resourceKeys: [resourceKey],
+		});
+		let resolutionPromise: Promise<void> = Promise.resolve();
+		act(() => {
+			resolutionPromise = mockGame.showResolution({
+				lines: formatted.lines,
+				summaries: formatted.summaries,
+				source: formatted.source,
+				player: {
+					id: sessionPlayer.id,
+					name: sessionPlayer.name,
+				},
+				actorLabel: formatted.actorLabel,
+			});
+		});
+		const resolvedSourceLabel =
+			typeof formatted.source === 'object' && formatted.source
+				? (formatted.source.label ?? 'Phase')
+				: formatted.source === 'phase'
+					? 'Phase'
+					: 'Action';
+		const expectedHeader = formatted.actorLabel
+			? `${resolvedSourceLabel} - ${formatted.actorLabel}`
+			: `${resolvedSourceLabel} resolution`;
+		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
+		expect(
+			screen.getByText(`Phase owner ${sessionPlayer.name}`),
+		).toBeInTheDocument();
+		const continueButton = screen.getByRole('button', {
+			name: 'Continue',
+		});
+		expect(continueButton).toBeDisabled();
+		const firstLine = formatted.lines[0]!;
+		expect(screen.getByText(firstLine)).toBeInTheDocument();
+		expect(addLog).toHaveBeenCalledWith(firstLine, {
+			id: sessionPlayer.id,
+			name: sessionPlayer.name,
+		});
+		act(() => {
+			vi.advanceTimersByTime(ACTION_EFFECT_DELAY - 1);
+		});
+		expect(continueButton).toBeDisabled();
+		const secondLine = formatted.lines[1]!;
+		expect(screen.queryByText(secondLine)).not.toBeInTheDocument();
+		act(() => {
+			vi.advanceTimersByTime(1);
+		});
+		const visibleMatches = screen.getAllByText(secondLine);
+		expect(visibleMatches.length).toBeGreaterThanOrEqual(2);
+		expect(addLog).toHaveBeenCalledWith(secondLine, {
+			id: sessionPlayer.id,
+			name: sessionPlayer.name,
+		});
 		expect(continueButton).not.toBeDisabled();
 		act(() => {
 			mockGame.acknowledgeResolution();
