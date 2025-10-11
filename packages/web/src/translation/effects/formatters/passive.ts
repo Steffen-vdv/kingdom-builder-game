@@ -74,7 +74,7 @@ function resolvePhaseMeta(
 		return undefined;
 	}
 	const fromContext = context.phases.find((phase) => phase.id === id);
-	const fromAssets = context.assets.phases?.[id];
+	const fromAssets = context.assets?.phases?.[id];
 	return mergePhaseInfo(id, fromContext, fromAssets);
 }
 
@@ -114,10 +114,10 @@ function resolvePhaseByTrigger(
 
 	const fromContext = findPhaseWithTrigger(context.phases);
 	if (fromContext) {
-		const fromAssets = context.assets.phases?.[fromContext.id];
+		const fromAssets = context.assets?.phases?.[fromContext.id];
 		return mergePhaseInfo(fromContext.id, fromContext, fromAssets);
 	}
-	const fromAssets = Object.entries(context.assets.phases ?? {}).find(
+	const fromAssets = Object.entries(context.assets?.phases ?? {}).find(
 		([, phase]) =>
 			Array.isArray(phase?.triggers)
 				? phase.triggers.includes(triggerId)
