@@ -158,6 +158,19 @@ describe('createGameApi', () => {
 		});
 	});
 
+	it('requests session snapshots from the snapshot endpoint', async () => {
+		const response = createStateResponse('session/special');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		await api.fetchSnapshot('session/special');
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe('/api/sessions/session%2Fspecial/snapshot');
+		expect(init?.method).toBe('GET');
+	});
+
 	it('performs actions with typed responses', async () => {
 		const successResponse: ActionExecuteSuccessResponse = {
 			status: 'success',

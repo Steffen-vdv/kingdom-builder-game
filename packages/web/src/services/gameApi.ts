@@ -117,7 +117,7 @@ class HttpGameApi implements GameApi {
 	}
 
 	async fetchSnapshot(sessionId: string): Promise<SessionStateResponse> {
-		return this.#send(`/sessions/${encodeURIComponent(sessionId)}`, {
+		return this.#send(`/sessions/${encodeURIComponent(sessionId)}/snapshot`, {
 			method: 'GET',
 		});
 	}
