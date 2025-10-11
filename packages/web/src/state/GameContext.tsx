@@ -27,7 +27,7 @@ import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
-export type { PhaseStep } from './phaseTypes';
+export type { PhaseStep } from './GameContext.types';
 export type { TranslationContext } from '../translation/context';
 
 type ProviderProps = {

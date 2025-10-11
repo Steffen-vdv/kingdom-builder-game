@@ -5,7 +5,6 @@ import type {
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
-import type { PhaseStep } from './phaseTypes';
 import type { TimeScale } from './useTimeScale';
 import type { HoverCard } from './useHoverCard';
 import type { LogEntry } from './useGameLog';
@@ -15,6 +14,12 @@ import type {
 	ShowResolutionOptions,
 } from './useActionResolution';
 import type { LegacySession, SessionResourceKey } from './sessionTypes';
+
+export interface PhaseStep {
+	title: string;
+	items: { text: string; italic?: boolean; done?: boolean }[];
+	active: boolean;
+}
 
 export interface PerformActionRequest {
 	action: Action;

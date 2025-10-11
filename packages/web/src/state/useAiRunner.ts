@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { type ActionParams } from '@kingdom-builder/engine';
 import type { Dispatch, SetStateAction } from 'react';
 import type { Action } from './actionTypes';
-import type { PhaseStep } from './phaseTypes';
+import type { PhaseStep } from './GameContext.types';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { LegacySession } from './sessionTypes';
 
