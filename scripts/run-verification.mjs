@@ -22,6 +22,7 @@ async function runTask(task) {
 	return new Promise((resolve) => {
 		const child = spawn(npmExecutable, ['run', task.script], { shell: false });
 		let hasSettled = false;
+		let errorCode;
 
 		const finalize = (code) => {
 			if (hasSettled) {
@@ -32,8 +33,9 @@ async function runTask(task) {
 			writeStream.end();
 			resolve({
 				label: task.label,
-				code: code ?? 1,
+				code: typeof code === 'number' ? code : 1,
 				artifactPath,
+				errorCode,
 			});
 		};
 
@@ -49,11 +51,18 @@ async function runTask(task) {
 			const formatted = `${error.message}\n`;
 			process.stderr.write(formatted);
 			writeStream.write(formatted);
+			errorCode = error?.code;
 			finalize(1);
 		});
 
-		child.on('close', (code) => {
-			finalize(code);
+		child.on('close', (code, signal) => {
+			if (signal && code === null) {
+				const formatted = `Process terminated with signal ${signal}\n`;
+				process.stderr.write(formatted);
+				writeStream.write(formatted);
+			}
+
+			finalize(code ?? 1);
 		});
 	});
 }
@@ -66,18 +75,31 @@ for (const task of tasks) {
 }
 
 const overallSuccess = results.every((result) => result.code === 0);
+const encounteredEnvironmentFailure = results.some(
+	(result) =>
+		typeof result.errorCode === 'string' &&
+		(result.errorCode === 'ENOENT' || result.errorCode === 'MODULE_NOT_FOUND'),
+);
 
 console.log('\nVerification summary:');
 
 for (const result of results) {
 	const status = result.code === 0 ? 'PASS' : 'FAIL';
 	const relativePath = path.relative(process.cwd(), result.artifactPath);
-	console.log(`- ${result.label}: ${status} (${relativePath})`);
+	const errorSuffix = result.errorCode ? ` [error: ${result.errorCode}]` : '';
+	console.log(`- ${result.label}: ${status} (${relativePath})${errorSuffix}`);
 }
 
 if (!overallSuccess) {
 	console.log('\nVerification failed. Review the artifacts for details.');
-	process.exitCode = 1;
+	if (encounteredEnvironmentFailure) {
+		console.log(
+			'Detected environment tooling errors while launching npm tasks.',
+		);
+		process.exit(2);
+	}
+
+	process.exit(1);
 } else {
 	console.log('\nVerification succeeded. Artifacts are ready for sharing.');
 }

@@ -1,9 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import type { AdvanceSkip } from '@kingdom-builder/engine';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
+import type { TranslationAssets } from '../src/translation/context';
 import { PhaseId, PhaseStepId } from '@kingdom-builder/contents';
 
 describe('describeSkipEvent', () => {
+	const assets: TranslationAssets = {
+		resources: {},
+		stats: {},
+		populations: {},
+		population: { label: 'Population' },
+		land: { label: 'Land' },
+		slot: { label: 'Development Slot' },
+		passive: { label: 'Passive' },
+		upkeep: { label: 'Upkeep' },
+		modifiers: {},
+		triggers: {},
+		tierSummaries: {},
+		formatPassiveRemoval: (text) => text,
+	};
 	it('formats phase skip entries with source summaries', () => {
 		const skip: AdvanceSkip = {
 			type: 'phase',
@@ -18,7 +33,7 @@ describe('describeSkipEvent', () => {
 		};
 		const phase = { id: PhaseId.Growth, label: 'Growth', icon: '🌱' };
 
-		const result = describeSkipEvent(skip, phase);
+		const result = describeSkipEvent(skip, phase, undefined, assets);
 
 		expect(result.logLines[0]).toContain('Phase skipped');
 		expect(result.logLines[1]).toContain('Golden Age');
@@ -46,7 +61,7 @@ describe('describeSkipEvent', () => {
 			icon: '🛡️',
 		};
 
-		const result = describeSkipEvent(skip, phase, step);
+		const result = describeSkipEvent(skip, phase, step, assets);
 
 		expect(result.logLines[0]).toContain('War recovery');
 		expect(result.logLines).toHaveLength(2);
@@ -72,7 +87,7 @@ describe('describeSkipEvent', () => {
 		};
 		const phase = { id: 'twilight', label: 'Twilight', icon: '🌒' };
 
-		const result = describeSkipEvent(skip, phase);
+		const result = describeSkipEvent(skip, phase, undefined, assets);
 
 		expect(result.logLines).toHaveLength(3);
 		expect(result.logLines[0]).toContain('Phase skipped');
@@ -90,7 +105,7 @@ describe('describeSkipEvent', () => {
 		};
 		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
 
-		const result = describeSkipEvent(skip, phase);
+		const result = describeSkipEvent(skip, phase, undefined, assets);
 
 		expect(result.logLines).toEqual(['⏭️ 🌅 Dawn Phase skipped']);
 		expect(result.history).toEqual({
@@ -108,7 +123,7 @@ describe('describeSkipEvent', () => {
 		};
 		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
 
-		const result = describeSkipEvent(skip, phase);
+		const result = describeSkipEvent(skip, phase, undefined, assets);
 
 		expect(result.logLines).toEqual(['⏭️ prepare skipped']);
 		expect(result.history).toEqual({
@@ -126,7 +141,7 @@ describe('describeSkipEvent', () => {
 		} as AdvanceSkip;
 		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
 
-		const result = describeSkipEvent(skip, phase);
+		const result = describeSkipEvent(skip, phase, undefined, assets);
 
 		expect(result.logLines).toEqual(['⏭️ prepare skipped']);
 		expect(result.history).toEqual({

@@ -185,6 +185,7 @@ export default function RaisePopOptions({
 						requirements={requirements}
 						requirementIcons={requirementIcons}
 						summary={shortSummary}
+						assets={translationContext.assets}
 						enabled={enabled}
 						tooltip={title}
 						focus={actionFocus}

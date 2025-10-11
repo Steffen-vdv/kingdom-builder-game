@@ -153,6 +153,7 @@ function GenericActionCard({
 			enabled={cardEnabled}
 			tooltip={title}
 			focus={actionFocus}
+			assets={translationContext.assets}
 			variant={isPending ? 'back' : 'front'}
 			multiStep={hasGroups}
 			stepCount={stepCount}

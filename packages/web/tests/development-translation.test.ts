@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-	createEngine,
-	type EffectDef,
-	type EngineContext,
-} from '@kingdom-builder/engine';
+import { createEngine, type EffectDef } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -12,7 +8,6 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
-	type DevelopmentDef,
 } from '@kingdom-builder/contents';
 import {
 	describeContent,
@@ -20,12 +15,14 @@ import {
 	summarizeContent,
 	type SummaryEntry,
 } from '../src/translation';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-const context = createEngine({
+const engineContext = createEngine({
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
@@ -34,6 +31,7 @@ const context = createEngine({
 	start: GAME_START,
 	rules: RULES,
 });
+const translationContext = createTranslationContextForEngine(engineContext);
 
 function flatten(entries: SummaryEntry[]): string[] {
 	const result: string[] = [];
@@ -67,10 +65,10 @@ function hasSelfEvaluator(effects: EffectDef[] | undefined): boolean {
 }
 
 function findSelfReferentialDevelopment(
-	registry: Iterable<[string, DevelopmentDef]>,
+	registry: Iterable<[string, unknown]>,
 ): string {
 	for (const [id, definition] of registry) {
-		const values = definition as unknown as Record<string, unknown>;
+		const values = definition as Record<string, unknown>;
 		for (const value of Object.values(values)) {
 			if (Array.isArray(value) && hasSelfEvaluator(value as EffectDef[])) {
 				return id;
@@ -82,22 +80,17 @@ function findSelfReferentialDevelopment(
 
 describe('development translation', () => {
 	it('replaces self-referential placeholders when describing developments', () => {
-		const id = findSelfReferentialDevelopment(DEVELOPMENTS.entries());
-		const summary = summarizeContent(
-			'development',
-			id,
-			context as EngineContext,
+		const registries = createSessionRegistries();
+		const id = findSelfReferentialDevelopment(
+			registries.developments.entries(),
 		);
-		const description = describeContent(
-			'development',
-			id,
-			context as EngineContext,
-		);
+		const summary = summarizeContent('development', id, translationContext);
+		const description = describeContent('development', id, translationContext);
 		const strings = [...flatten(summary), ...flatten(description)];
 
 		expect(strings.some((line) => line.includes('$id'))).toBe(false);
 
-		const definition = context.developments.get(id);
+		const definition = translationContext.developments.get(id);
 		expect(definition).toBeDefined();
 		const icon = definition?.icon || '';
 
@@ -115,7 +108,7 @@ describe('development translation', () => {
 		);
 		expect(prohibited).toHaveLength(0);
 
-		const logEntry = logContent('development', id, context as EngineContext);
+		const logEntry = logContent('development', id, translationContext);
 		expect(logEntry.some((line) => line.includes(definition?.name ?? ''))).toBe(
 			true,
 		);

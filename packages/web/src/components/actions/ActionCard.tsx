@@ -1,5 +1,6 @@
 import React from 'react';
 import { type Summary } from '../../translation';
+import type { TranslationAssets } from '../../translation/context';
 import { renderSummary, renderCosts } from '../../translation/render';
 import OptionList from './OptionList';
 import StepBadge from './StepBadge';
@@ -38,6 +39,7 @@ export interface ActionCardProps {
 	options?: ActionCardOption[] | undefined;
 	onCancel?: (() => void) | undefined;
 	multiStep?: boolean | undefined;
+	assets: TranslationAssets;
 }
 
 export default function ActionCard({
@@ -66,6 +68,7 @@ export default function ActionCard({
 	options = [],
 	onCancel,
 	multiStep = false,
+	assets,
 }: ActionCardProps): JSX.Element {
 	const focusClass =
 		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
@@ -164,7 +167,9 @@ export default function ActionCard({
 					<div className={frontContentClass}>
 						<span className="text-base font-medium">{title}</span>
 						<div className={costBlockClass}>
-							{renderCosts(costs, playerResources, actionCostResource, upkeep)}
+							{renderCosts(costs, playerResources, actionCostResource, upkeep, {
+								assets,
+							})}
 							{requirementBadge}
 						</div>
 						<ul className="action-card__summary">{renderedSummary}</ul>

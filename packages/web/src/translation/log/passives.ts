@@ -37,15 +37,18 @@ function formatFallbackLabel(value: string): string {
 	return spaced.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function resolveSummaryToken(value: string | undefined): string | undefined {
+function resolveSummaryToken(
+	value: string | undefined,
+	assets: TranslationAssets,
+): string | undefined {
 	const token = normalizeLabel(value);
 	if (!token) {
 		return undefined;
 	}
-	if (!hasTierSummaryTranslation(token)) {
+	if (!hasTierSummaryTranslation(token, assets)) {
 		return undefined;
 	}
-	return translateTierSummary(token) ?? token;
+	return translateTierSummary(token, assets) ?? token;
 }
 
 function describeRemoval(
@@ -144,6 +147,7 @@ function resolveSummary(
 	definition: PassiveDefinitionLike,
 	meta: SessionPassiveSummary['meta'],
 	passive: SessionPassiveSummary,
+	assets: TranslationAssets,
 ): string | undefined {
 	const candidates = [
 		meta?.source?.labelToken,
@@ -151,7 +155,7 @@ function resolveSummary(
 		passive.detail,
 	];
 	for (const candidate of candidates) {
-		const summary = resolveSummaryToken(candidate);
+		const summary = resolveSummaryToken(candidate, assets);
 		if (summary) {
 			return summary;
 		}
@@ -173,7 +177,7 @@ export function resolvePassivePresentation(
 	const meta = definition.meta ?? passive.meta;
 	const icon = deriveIcon(passive, definition.effects, meta, options.assets);
 	const label = resolveLabel(passive, definition, meta, options.assets);
-	const summary = resolveSummary(definition, meta, passive);
+	const summary = resolveSummary(definition, meta, passive, options.assets);
 	const removal = meta ? describeRemoval(meta, options.assets) : undefined;
 	const presentation: PassivePresentation = { icon, label };
 	if (summary) {

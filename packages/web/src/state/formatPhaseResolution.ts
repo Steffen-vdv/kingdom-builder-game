@@ -115,6 +115,7 @@ export function formatPhaseResolution({
 			advance.skipped,
 			skipPhase,
 			skipStep,
+			diffContext.assets,
 		);
 		const lines = skipDescription.logLines.filter((line) =>
 			Boolean(line?.trim()),
