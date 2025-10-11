@@ -3,7 +3,7 @@ import { type ActionParams } from '@kingdom-builder/engine';
 import type { Action } from './actionTypes';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { LegacySession } from './sessionTypes';
-import type { PhaseProgressState } from './phaseTypes';
+import type { PhaseProgressState } from './usePhaseProgress';
 
 interface UseAiRunnerOptions {
 	session: LegacySession;
