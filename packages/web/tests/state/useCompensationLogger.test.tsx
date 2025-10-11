@@ -11,6 +11,7 @@ import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
 import type { LegacySession } from '../../src/state/sessionTypes';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
 
 vi.mock('../../src/translation', async () => {
 	const actual = await vi.importActual<TranslationTypes>(
@@ -25,6 +26,7 @@ vi.mock('../../src/translation', async () => {
 const diffStepSnapshotsMock = vi.mocked(TranslationModule.diffStepSnapshots);
 
 const RESOURCE_KEYS: ResourceKey[] = ['gold' as ResourceKey];
+const REGISTRIES = createSessionRegistries();
 
 function createSession(): LegacySession {
 	return {
@@ -116,6 +118,7 @@ function Harness({ session, state, addLog }: HarnessProps) {
 		sessionState: state,
 		addLog,
 		resourceKeys: RESOURCE_KEYS,
+		registries: REGISTRIES,
 	});
 	return null;
 }

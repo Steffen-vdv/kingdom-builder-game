@@ -9,11 +9,11 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
+import type { ResourceKey } from '@kingdom-builder/contents';
 import {
-	RESOURCE_KEYS,
-	type ResourceKey,
-	type SessionRegistries,
-} from '../../src/state/sessionContent';
+	createResourceKeys,
+	createSessionRegistries,
+} from '../helpers/sessionRegistries';
 
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
@@ -156,7 +156,7 @@ function SessionInspector() {
 
 describe('GameProvider', () => {
 	let session: LegacySession;
-	let registries: SessionRegistries;
+	let registries: ReturnType<typeof createSessionRegistries>;
 	let resourceKeys: ResourceKey[];
 	beforeEach(() => {
 		createSessionMock.mockReset();
@@ -175,7 +175,7 @@ describe('GameProvider', () => {
 		handlePerformMock.mockReset();
 		capturedPhaseOptions = undefined;
 
-		const [resourceKey] = RESOURCE_KEYS;
+		const [resourceKey] = createResourceKeys();
 		if (!resourceKey) {
 			throw new Error('RESOURCE_KEYS is empty');
 		}
@@ -235,7 +235,7 @@ describe('GameProvider', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.steps?.[0]?.id ?? phases[0]?.id ?? 'phase-main',
 		});
-		registries = {} as SessionRegistries;
+		registries = createSessionRegistries();
 		resourceKeys = [resourceKey];
 		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
 			return await task();

@@ -9,9 +9,10 @@ import {
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
 import {
-	RESOURCE_KEYS,
-	type ResourceKey,
-} from '../../src/state/sessionContent';
+	createResourceKeys,
+	createSessionRegistries,
+} from '../helpers/sessionRegistries';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -45,9 +46,10 @@ describe('useActionPerformer', () => {
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
 	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
-	let resourceKeys: ResourceKey[];
-	let actionCostResource: ResourceKey;
+	let resourceKeys: SessionResourceKey[];
+	let actionCostResource: SessionResourceKey;
 	let ruleSnapshot: RuleSnapshot;
+	let registries: ReturnType<typeof createSessionRegistries>;
 	const sessionId = 'test-session';
 
 	beforeEach(() => {
@@ -59,9 +61,9 @@ describe('useActionPerformer', () => {
 		logContentMock.mockReturnValue([]);
 		snapshotPlayerMock.mockReset();
 		snapshotPlayerMock.mockImplementation((player) => player);
-		const [firstResourceKey] = RESOURCE_KEYS;
+		const [firstResourceKey] = createResourceKeys();
 		if (!firstResourceKey) {
-			throw new Error('RESOURCE_KEYS is empty');
+			throw new Error('No resource keys available');
 		}
 		actionCostResource = firstResourceKey;
 		const phases = [
@@ -99,6 +101,7 @@ describe('useActionPerformer', () => {
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
 		resourceKeys = [actionCostResource];
+		registries = createSessionRegistries();
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
@@ -123,6 +126,7 @@ describe('useActionPerformer', () => {
 		performSessionActionMock.mockRejectedValueOnce(error);
 		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const syncPhaseState = vi.fn();
+		const updateMainPhaseStep = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn();
 		const { result } = renderHook(() =>
@@ -130,9 +134,11 @@ describe('useActionPerformer', () => {
 				session,
 				sessionId,
 				actionCostResource,
+				registries,
 				addLog,
 				showResolution,
 				syncPhaseState,
+				updateMainPhaseStep,
 				refresh,
 				pushErrorToast,
 				mountedRef: { current: true },
@@ -173,9 +179,11 @@ describe('useActionPerformer', () => {
 				session,
 				sessionId,
 				actionCostResource,
+				registries,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
+				updateMainPhaseStep: vi.fn(),
 				refresh: vi.fn(),
 				pushErrorToast,
 				mountedRef: { current: true },
@@ -206,6 +214,7 @@ describe('useActionPerformer', () => {
 	it('passes enriched resolution metadata when an action succeeds', async () => {
 		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const syncPhaseState = vi.fn();
+		const updateMainPhaseStep = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn();
 		const [activeBefore, opponentBefore] = sessionSnapshot.game.players;
@@ -250,9 +259,11 @@ describe('useActionPerformer', () => {
 				session,
 				sessionId,
 				actionCostResource,
+				registries,
 				addLog,
 				showResolution,
 				syncPhaseState,
+				updateMainPhaseStep,
 				refresh,
 				pushErrorToast,
 				mountedRef: { current: true },

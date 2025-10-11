@@ -1,47 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	RESOURCES,
-	Resource,
-	LAND_INFO,
-	POPULATION_INFO,
-} from '@kingdom-builder/contents';
+import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	createTranslationDiffContext,
 } from '../src/translation/log';
-
-const RESOURCE_KEYS = [Resource.gold] as const;
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
 describe('log resource source icon registry', () => {
-	const createCtx = () =>
-		createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-
 	const scenarios = [
 		{
 			name: 'population',
-			getMeta: (ctx: ReturnType<typeof createCtx>) => {
-				const [roleId] = ctx.populations.keys();
+			getMeta: (engineContext: ReturnType<typeof createEngine>) => {
+				const [roleId] = engineContext.populations.keys();
 				expect(roleId).toBeTruthy();
 				const icon = roleId
-					? ctx.populations.get(roleId)?.icon || roleId
-					: POPULATION_INFO.icon || '';
+					? engineContext.assets.populations[roleId]?.icon || roleId
+					: engineContext.assets.population.icon || '';
 				expect(icon).toBeTruthy();
 				return {
 					meta: { type: 'population', id: roleId, count: 2 },
@@ -51,12 +28,14 @@ describe('log resource source icon registry', () => {
 		},
 		{
 			name: 'development',
-			getMeta: (ctx: ReturnType<typeof createCtx>) => {
-				const devId = ctx.developments
+			getMeta: (engineContext: ReturnType<typeof createEngine>) => {
+				const devId = engineContext.developments
 					.keys()
-					.find((id) => Boolean(ctx.developments.get(id)?.icon));
+					.find((id) => Boolean(engineContext.developments.get(id)?.icon));
 				expect(devId).toBeTruthy();
-				const icon = devId ? ctx.developments.get(devId)?.icon || '' : '';
+				const icon = devId
+					? engineContext.developments.get(devId)?.icon || ''
+					: '';
 				expect(icon).toBeTruthy();
 				return {
 					meta: { type: 'development', id: devId },
@@ -66,13 +45,13 @@ describe('log resource source icon registry', () => {
 		},
 		{
 			name: 'building',
-			getMeta: (ctx: ReturnType<typeof createCtx>) => {
-				const buildingId = ctx.buildings
+			getMeta: (engineContext: ReturnType<typeof createEngine>) => {
+				const buildingId = engineContext.buildings
 					.keys()
-					.find((id) => Boolean(ctx.buildings.get(id)?.icon));
+					.find((id) => Boolean(engineContext.buildings.get(id)?.icon));
 				expect(buildingId).toBeTruthy();
 				const icon = buildingId
-					? ctx.buildings.get(buildingId)?.icon || ''
+					? engineContext.buildings.get(buildingId)?.icon || ''
 					: '';
 				expect(icon).toBeTruthy();
 				return {
@@ -83,11 +62,12 @@ describe('log resource source icon registry', () => {
 		},
 		{
 			name: 'land',
-			getMeta: () => {
-				expect(LAND_INFO.icon).toBeTruthy();
+			getMeta: (engineContext: ReturnType<typeof createEngine>) => {
+				const landIcon = engineContext.assets.land.icon || '';
+				expect(landIcon).toBeTruthy();
 				return {
 					meta: { type: 'land' },
-					expected: LAND_INFO.icon || '',
+					expected: landIcon,
 				} as const;
 			},
 		},
@@ -95,27 +75,45 @@ describe('log resource source icon registry', () => {
 
 	for (const { name, getMeta } of scenarios) {
 		it(`renders icons for ${name} meta sources`, () => {
-			const ctx = createCtx();
-			const { meta, expected } = getMeta(ctx);
+			const registries = createSessionRegistries();
+			const engineContext = createEngine({
+				actions: registries.actions,
+				buildings: registries.buildings,
+				developments: registries.developments,
+				populations: registries.populations,
+				phases: PHASES,
+				start: GAME_START,
+				rules: RULES,
+			});
+			engineContext.assets = createDefaultTranslationAssets();
+			const { meta, expected } = getMeta(engineContext);
+			const goldKey =
+				Object.keys(registries.resources).find((key) => {
+					return registries.resources[key]?.label === 'Gold';
+				}) ?? Object.keys(registries.resources)[0];
+			const resourceKeys = [goldKey];
 			const effect = {
 				type: 'resource' as const,
 				method: 'add' as const,
-				params: { key: Resource.gold, amount: 2 },
+				params: { key: goldKey, amount: 2 },
 				meta: { source: meta },
 			};
 			const step = { id: `meta-icons-${name}`, effects: [effect] };
-			const before = snapshotPlayer(ctx.activePlayer, ctx);
-			runEffects([effect], ctx);
-			const after = snapshotPlayer(ctx.activePlayer, ctx);
-			const diffContext = createTranslationDiffContext(ctx);
+			const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+			runEffects([effect], engineContext);
+			const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+			const diffContext = createTranslationDiffContext(engineContext);
 			const lines = diffStepSnapshots(
 				before,
 				after,
 				step,
 				diffContext,
-				RESOURCE_KEYS,
+				resourceKeys,
 			);
-			const goldInfo = RESOURCES[Resource.gold];
+			const goldInfo = engineContext.assets.resources[goldKey] ?? {
+				icon: '',
+				label: goldKey,
+			};
 			const goldLine = lines.find((line) =>
 				line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 			);

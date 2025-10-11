@@ -1,12 +1,12 @@
-import type { ResourceKey } from '@kingdom-builder/contents';
 import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import type { Dispatch, SetStateAction } from 'react';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
-import type { PhaseProgressState } from './phaseTypes';
+import type { PhaseProgressState, PhaseStep } from './phaseTypes';
 import type { TimeScale } from './useTimeScale';
 import type { HoverCard } from './useHoverCard';
 import type { LogEntry } from './useGameLog';
@@ -15,7 +15,7 @@ import type {
 	ActionResolution,
 	ShowResolutionOptions,
 } from './useActionResolution';
-import type { LegacySession } from './sessionTypes';
+import type { LegacySession, SessionResourceKey } from './sessionTypes';
 
 export interface PerformActionRequest {
 	action: Action;
@@ -56,7 +56,15 @@ export interface GameEngineContextValue {
 	handleHoverCard: (data: HoverCard) => void;
 	clearHoverCard: () => void;
 	phase: PhaseProgressState;
-	actionCostResource: ResourceKey;
+	phaseSteps: PhaseStep[];
+	setPhaseSteps: Dispatch<SetStateAction<PhaseStep[]>>;
+	phaseTimer: number;
+	mainApStart: number;
+	displayPhase: string;
+	setDisplayPhase: (id: string) => void;
+	phaseHistories: Record<string, PhaseStep[]>;
+	tabsEnabled: boolean;
+	actionCostResource: SessionResourceKey;
 	requests: {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;
@@ -65,6 +73,7 @@ export interface GameEngineContextValue {
 	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;
 	refreshPhaseState: (overrides?: Partial<PhaseProgressState>) => void;
+	updateMainPhaseStep: (apStartOverride?: number) => void;
 	onExit?: () => void;
 	darkMode: boolean;
 	onToggleDark: () => void;

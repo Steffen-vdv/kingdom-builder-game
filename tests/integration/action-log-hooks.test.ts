@@ -1,18 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { createEngineSession } from '@kingdom-builder/engine';
-import {
-	PHASES,
-	POPULATIONS,
-	GAME_START,
-	RULES,
-	BUILDINGS,
-	DEVELOPMENTS,
-	createBuildingRegistry,
-	createDevelopmentRegistry,
-} from '@kingdom-builder/contents';
+import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '@kingdom-builder/testing';
+import type { SessionRegistriesPayload } from '@kingdom-builder/protocol/session';
+import {
+	deserializeSessionRegistries,
+	type SessionRegistries,
+} from '@kingdom-builder/web/state/sessionRegistries';
+import registriesPayload from '../../packages/web/tests/fixtures/sessionRegistriesPayload.json';
 
 type TimelineEntry = string | { text: string };
 
@@ -21,6 +18,15 @@ function extractLineText(entry: TimelineEntry | undefined): string {
 		return '';
 	}
 	return typeof entry === 'string' ? entry : entry.text;
+}
+
+const BASE_REGISTRIES_PAYLOAD = registriesPayload as SessionRegistriesPayload;
+
+function createSessionRegistries(): SessionRegistries {
+	const payload = JSON.parse(
+		JSON.stringify(BASE_REGISTRIES_PAYLOAD),
+	) as SessionRegistriesPayload;
+	return deserializeSessionRegistries(payload);
 }
 
 describe('content-driven action log hooks', () => {
@@ -35,6 +41,10 @@ describe('content-driven action log hooks', () => {
 				name: 'Custom Improvement',
 				icon: '🌿',
 			});
+			const registries = createSessionRegistries();
+			registries.buildings.add(hall.id, hall);
+			registries.buildings.add(plainHall.id, plainHall);
+			registries.developments.add(improvement.id, improvement);
 			const idToken = ['$', 'id'].join('');
 			const landIdToken = ['$', 'landId'].join('');
 
@@ -73,25 +83,15 @@ describe('content-driven action log hooks', () => {
 					},
 				],
 			});
-
-			const buildings = createBuildingRegistry();
-			for (const [id, def] of BUILDINGS.entries()) {
-				buildings.add(id, def);
-			}
-			buildings.add(hall.id, hall);
-			buildings.add(plainHall.id, plainHall);
-
-			const developments = createDevelopmentRegistry();
-			for (const [id, def] of DEVELOPMENTS.entries()) {
-				developments.add(id, def);
-			}
-			developments.add(improvement.id, improvement);
+			registries.actions.add(construct.id, construct);
+			registries.actions.add(establish.id, establish);
+			registries.actions.add(constructStatic.id, constructStatic);
 
 			const session = createEngineSession({
-				actions: content.actions,
-				buildings,
-				developments,
-				populations: POPULATIONS,
+				actions: registries.actions,
+				buildings: registries.buildings,
+				developments: registries.developments,
+				populations: registries.populations,
 				phases: PHASES,
 				start: GAME_START,
 				rules: RULES,
@@ -99,11 +99,7 @@ describe('content-driven action log hooks', () => {
 			const snapshot = session.getSnapshot();
 			const translationContext = createTranslationContext(
 				snapshot,
-				{
-					actions: content.actions,
-					buildings,
-					developments,
-				},
+				registries,
 				snapshot.metadata,
 				{
 					ruleSnapshot: session.getRuleSnapshot(),

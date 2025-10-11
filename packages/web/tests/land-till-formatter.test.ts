@@ -18,7 +18,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-function createCtx() {
+function createEngineContext() {
 	return createEngine({
 		actions: ACTIONS,
 		buildings: BUILDINGS,
@@ -32,16 +32,16 @@ function createCtx() {
 
 describe('land till formatter', () => {
 	it('summarizes till effect', () => {
-		const ctx = createCtx();
+		const engineContext = createEngineContext();
 		const summary = summarizeEffects(
 			[{ type: 'land', method: LandMethods.TILL }],
-			ctx,
+			engineContext,
 		);
 		expect(summary).toContain(`${SLOT_INFO.icon}+1`);
 	});
 
 	it('summarizes till action', () => {
-		const ctx = createCtx();
+		const engineContext = createEngineContext();
 		const tillId = Array.from(
 			(
 				ACTIONS as unknown as {
@@ -54,7 +54,7 @@ describe('land till formatter', () => {
 					e.type === 'land' && e.method === LandMethods.TILL,
 			),
 		)?.[0] as string;
-		const summary = summarizeContent('action', tillId, ctx);
+		const summary = summarizeContent('action', tillId, engineContext);
 		const hasIcon = summary.some(
 			(item) => typeof item === 'string' && item.includes(SLOT_INFO.icon),
 		);

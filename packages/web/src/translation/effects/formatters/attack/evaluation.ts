@@ -48,17 +48,20 @@ export function defaultFortificationItems(
 	context: BaseEntryContext<AttackTarget>,
 ): string[] {
 	const { stats, targetLabel } = context;
-	const fort = stats.fortification;
-	if (!fort) {
+	const fortificationStat = stats.fortification;
+	if (!fortificationStat) {
 		return [
 			'Apply damage to opponent defenses',
 			`If opponent defenses fall, overflow remaining damage onto opponent ${targetLabel}`,
 		];
 	}
-	const fortDisplay = attackStatLabel(fort, 'fortification');
+	const fortificationDisplay = attackStatLabel(
+		fortificationStat,
+		'fortification',
+	);
 	return [
-		`Apply damage to opponent ${fortDisplay}`,
-		`If opponent ${fortDisplay} falls to 0, overflow remaining damage onto opponent ${targetLabel}`,
+		`Apply damage to opponent ${fortificationDisplay}`,
+		`If opponent ${fortificationDisplay} falls to 0, overflow remaining damage onto opponent ${targetLabel}`,
 	];
 }
 
@@ -66,17 +69,20 @@ export function buildingFortificationItems(
 	context: BaseEntryContext<AttackTarget>,
 ): string[] {
 	const { stats, targetLabel } = context;
-	const fort = stats.fortification;
-	if (!fort) {
+	const fortificationStat = stats.fortification;
+	if (!fortificationStat) {
 		return [
 			'Apply damage to opponent defenses',
 			`If opponent defenses fall, use remaining damage to attempt to destroy opponent ${targetLabel}`,
 		];
 	}
-	const fortDisplay = attackStatLabel(fort, 'fortification');
+	const fortificationDisplay = attackStatLabel(
+		fortificationStat,
+		'fortification',
+	);
 	return [
-		`Apply damage to opponent ${fortDisplay}`,
-		`If opponent ${fortDisplay} falls to 0, use remaining damage to attempt to destroy opponent ${targetLabel}`,
+		`Apply damage to opponent ${fortificationDisplay}`,
+		`If opponent ${fortificationDisplay} falls to 0, use remaining damage to attempt to destroy opponent ${targetLabel}`,
 	];
 }
 
@@ -88,7 +94,7 @@ export function buildStandardEvaluationEntry(
 	const { stats, info } = context;
 	const power = stats.power;
 	const absorption = stats.absorption;
-	const fort = stats.fortification;
+	const fortificationStat = stats.fortification;
 	const powerValue = (value: number) =>
 		attackStatValue(power, 'Attack', formatSignedValue(value, formatNumber));
 	const absorptionValue = (value: number) =>
@@ -97,14 +103,17 @@ export function buildStandardEvaluationEntry(
 			'Absorption',
 			formatSignedValue(value, formatPercent),
 		);
-	const fortValue = (value: number) =>
+	const fortificationValue = (value: number) =>
 		attackStatValue(
-			fort,
+			fortificationStat,
 			'Fortification',
 			formatSignedValue(value, formatNumber),
 		);
 	const absorptionLabel = attackStatLabel(absorption, 'damage reduction');
-	const fortLabel = attackStatLabel(fort, 'fortification');
+	const fortificationLabel = attackStatLabel(
+		fortificationStat,
+		'fortification',
+	);
 	const target = log.target as Extract<
 		AttackLog['evaluation']['target'],
 		{ type: 'resource' | 'stat' }
@@ -123,14 +132,14 @@ export function buildStandardEvaluationEntry(
 	const powerModified = powerValue(log.power.modified);
 	const absorptionBefore = absorptionValue(log.absorption.before);
 	const powerAfterAbsorption = powerValue(log.absorption.damageAfter);
-	const fortBefore = fortValue(log.fortification.before);
-	const fortAfter = fortValue(log.fortification.after);
+	const fortificationBefore = fortificationValue(log.fortification.before);
+	const fortificationAfter = fortificationValue(log.fortification.after);
 	const targetDamage = powerValue(log.target.damage);
-	const remainingAfterFort = Math.max(
+	const remainingAfterFortification = Math.max(
 		0,
 		log.absorption.damageAfter - log.fortification.damage,
 	);
-	const remainingPower = powerValue(remainingAfterFort);
+	const remainingPower = powerValue(remainingAfterFortification);
 	const titleSegments: string[] = [];
 
 	if (log.absorption.ignored) {
@@ -140,9 +149,13 @@ export function buildStandardEvaluationEntry(
 	}
 
 	if (log.fortification.ignored) {
-		titleSegments.push(`Bypass ${fortLabel} with ${powerAfterAbsorption}`);
+		titleSegments.push(
+			`Bypass ${fortificationLabel} with ${powerAfterAbsorption}`,
+		);
 	} else {
-		titleSegments.push(`Compare remaining damage against ${fortBefore}`);
+		titleSegments.push(
+			`Compare remaining damage against ${fortificationBefore}`,
+		);
 	}
 
 	titleSegments.push(`Apply damage to ${targetDisplay(target.before)}`);
@@ -159,10 +172,10 @@ export function buildStandardEvaluationEntry(
 	}
 
 	if (log.fortification.ignored) {
-		items.push(`Bypass ${fortLabel} with ${powerAfterAbsorption}`);
+		items.push(`Bypass ${fortificationLabel} with ${powerAfterAbsorption}`);
 	} else {
 		items.push(
-			`Compare ${powerAfterAbsorption} against ${fortBefore} → ${fortAfter} and carry forward ${remainingPower}`,
+			`Compare ${powerAfterAbsorption} against ${fortificationBefore} → ${fortificationAfter} and carry forward ${remainingPower}`,
 		);
 	}
 
@@ -173,11 +186,14 @@ export function buildStandardEvaluationEntry(
 	return { title, items };
 }
 
-export function getBuildingDisplay(id: string): TargetInfo {
+export function getBuildingDisplay(buildingId: string): TargetInfo {
 	try {
-		const def = BUILDINGS.get(id);
-		return { icon: def.icon ?? '', label: def.name ?? id };
+		const buildingDefinition = BUILDINGS.get(buildingId);
+		return {
+			icon: buildingDefinition.icon ?? '',
+			label: buildingDefinition.name ?? buildingId,
+		};
 	} catch {
-		return { icon: '', label: id };
+		return { icon: '', label: buildingId };
 	}
 }

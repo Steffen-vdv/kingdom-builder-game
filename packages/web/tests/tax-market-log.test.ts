@@ -17,6 +17,7 @@ import {
 	SYNTHETIC_POPULATION_ROLES,
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_PHASE_IDS,
+	SYNTHETIC_ASSETS,
 } from './fixtures/syntheticTaxLog';
 import {
 	snapshotPlayer,
@@ -73,6 +74,7 @@ describe('tax action logging with market', () => {
 			start: scenario.start,
 			rules: scenario.rules,
 		});
+		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(
 			[
 				{

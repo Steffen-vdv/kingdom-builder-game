@@ -173,14 +173,14 @@ export function formatGainFrom(
 
 export function formatDevelopment(
 	label: ResultModifierLabel,
-	eff: EffectDef,
+	effectDefinition: EffectDef,
 	evaluation: { id: string },
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 	detailed: boolean,
 ) {
-	const { icon, name } = getDevelopmentInfo(ctx, evaluation.id);
+	const { icon, name } = getDevelopmentInfo(translationContext, evaluation.id);
 	const fallbackLabelFromId = () => {
-		const rawId = eff.params?.['id'];
+		const rawId = effectDefinition.params?.['id'];
 		if (typeof rawId !== 'string' || rawId.trim().length === 0) {
 			return undefined;
 		}
@@ -205,35 +205,47 @@ export function formatDevelopment(
 		summaryTargetIcon,
 		description: target,
 	};
-	const resource = eff.effects?.find(
-		(e): e is EffectDef<{ key: string; amount: number }> =>
-			e.type === 'resource' && (e.method === 'add' || e.method === 'remove'),
+	const resourceEffect = effectDefinition.effects?.find(
+		(
+			nestedEffect,
+		): nestedEffect is EffectDef<{ key: string; amount: number }> =>
+			nestedEffect.type === 'resource' &&
+			(nestedEffect.method === 'add' || nestedEffect.method === 'remove'),
 	);
-	if (resource) {
-		const key = resource.params?.['key'] as string;
-		const rawAmount = Number(resource.params?.['amount']);
-		const amount = resource.method === 'remove' ? -rawAmount : rawAmount;
+	if (resourceEffect) {
+		const key = resourceEffect.params?.['key'] as string;
+		const rawAmount = Number(resourceEffect.params?.['amount']);
+		const amount = resourceEffect.method === 'remove' ? -rawAmount : rawAmount;
 		return formatGainFrom(label, source, amount, { key, detailed });
 	}
-	const percentParam = eff.params?.['percent'];
+	const percentParam = effectDefinition.params?.['percent'];
 	if (percentParam !== undefined) {
 		const percent = Number(percentParam);
 		const round =
-			eff.round === 'down' || eff.round === 'up' ? eff.round : undefined;
+			effectDefinition.round === 'down' || effectDefinition.round === 'up'
+				? effectDefinition.round
+				: undefined;
 		return formatGainFrom(label, source, percent, {
 			detailed,
 			percent,
 			...(round ? { round } : {}),
 		});
 	}
-	const amount = Number(eff.params?.['amount'] ?? 0);
+	const amount = Number(effectDefinition.params?.['amount'] ?? 0);
 	return formatGainFrom(label, source, amount, { detailed });
 }
 
-export function getDevelopmentInfo(ctx: TranslationContext, id: string) {
+export function getDevelopmentInfo(
+	translationContext: TranslationContext,
+	id: string,
+) {
 	try {
-		const dev: DevelopmentDef = ctx.developments.get(id);
-		return { icon: dev.icon ?? '', name: dev.name ?? id };
+		const developmentDefinition: DevelopmentDef =
+			translationContext.developments.get(id);
+		return {
+			icon: developmentDefinition.icon ?? '',
+			name: developmentDefinition.name ?? id,
+		};
 	} catch {
 		return { icon: '', name: id };
 	}

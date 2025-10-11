@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import { ActionId, type ResourceKey } from '@kingdom-builder/contents';
+import { ActionId } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
@@ -31,7 +31,11 @@ import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
-import type { LegacySession } from './sessionTypes';
+import type {
+	LegacySession,
+	SessionRegistries,
+	SessionResourceKey,
+} from './sessionTypes';
 import type { PhaseProgressState } from './phaseTypes';
 
 type ActionRequirementFailures =
@@ -53,6 +57,7 @@ function createActionExecutionError(
 	}
 	return failure;
 }
+
 function ensureTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
 ): ActionLogLineDescriptor[] {
@@ -74,10 +79,15 @@ function ensureTimelineLines(
 	}
 	return lines;
 }
+
 interface UseActionPerformerOptions {
 	session: LegacySession;
 	sessionId: string;
-	actionCostResource: ResourceKey;
+	actionCostResource: SessionResourceKey;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
+	>;
 	addLog: (
 		entry: string | string[],
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
@@ -87,20 +97,24 @@ interface UseActionPerformerOptions {
 		snapshot: SessionSnapshot,
 		overrides?: Partial<PhaseProgressState>,
 	) => void;
+	updateMainPhaseStep: (apStartOverride?: number) => void;
 	refresh: () => void;
 	pushErrorToast: (message: string, title?: string) => void;
-	mountedRef: React.MutableRefObject<boolean>;
+	mountedRef: MutableRefObject<boolean>;
 	endTurn: () => Promise<void>;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKey[];
 }
+
 export function useActionPerformer({
 	session,
 	sessionId,
 	actionCostResource,
+	registries,
 	addLog,
 	showResolution,
 	syncPhaseState,
+	updateMainPhaseStep,
 	refresh,
 	pushErrorToast,
 	mountedRef,
@@ -119,6 +133,7 @@ export function useActionPerformer({
 				snapshot: snapshotBefore,
 				ruleSnapshot: snapshotBefore.rules,
 				passiveRecords: snapshotBefore.passiveRecords,
+				registries,
 			});
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
@@ -144,6 +159,7 @@ export function useActionPerformer({
 					snapshot: snapshotAfter,
 					ruleSnapshot: snapshotAfter.rules,
 					passiveRecords: snapshotAfter.passiveRecords,
+					registries,
 				});
 				const { translationContext, diffContext } = legacyContext;
 				context = translationContext;
@@ -169,6 +185,7 @@ export function useActionPerformer({
 				const costLines = buildActionCostLines({
 					costs,
 					beforeResources: before.resources,
+					resources: registries.resources,
 				});
 				if (costLines.length) {
 					const header: ActionLogLineDescriptor = {
@@ -212,6 +229,7 @@ export function useActionPerformer({
 					name: playerAfter.name,
 				};
 				syncPhaseState(snapshotAfter);
+				updateMainPhaseStep();
 				refresh();
 				try {
 					await showResolution({
@@ -258,6 +276,7 @@ export function useActionPerformer({
 			addLog,
 			endTurn,
 			mountedRef,
+			registries,
 			sessionId,
 			pushErrorToast,
 			refresh,
@@ -265,6 +284,7 @@ export function useActionPerformer({
 			session,
 			showResolution,
 			syncPhaseState,
+			updateMainPhaseStep,
 			actionCostResource,
 		],
 	);

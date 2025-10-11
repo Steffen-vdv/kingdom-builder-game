@@ -8,17 +8,13 @@ import {
 import { logContent } from '../src/translation/content';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import {
-	ACTIONS,
-	BUILDINGS,
-	BuildingId,
-	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	GAME_START,
 	RULES,
-	PASSIVE_INFO,
-	type ResourceKey,
+	BuildingId,
 } from '@kingdom-builder/contents';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -26,33 +22,42 @@ vi.mock('@kingdom-builder/engine', async () => {
 
 describe('passive log labels', () => {
 	it('uses tier summary tokens without exposing raw ids', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
+		const registries = createSessionRegistries();
+		const engineContext = createEngine({
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
 		});
-		const happinessKey = ctx.services.tieredResource.resourceKey as ResourceKey;
+		engineContext.assets = createDefaultTranslationAssets();
+		const happinessKey = engineContext.services.tieredResource
+			.resourceKey as string;
 
 		const setHappiness = (value: number) => {
-			ctx.activePlayer.resources[happinessKey] = value;
-			ctx.services.handleTieredResourceChange(
-				ctx,
-				ctx.activePlayer,
+			engineContext.activePlayer.resources[happinessKey] = value;
+			engineContext.services.handleTieredResourceChange(
+				engineContext,
+				engineContext.activePlayer,
 				happinessKey,
 			);
 		};
 
 		setHappiness(0);
-		const beforeActivation = snapshotPlayer(ctx.activePlayer, ctx);
+		const beforeActivation = snapshotPlayer(
+			engineContext.activePlayer,
+			engineContext,
+		);
 
 		setHappiness(6);
-		const afterActivation = snapshotPlayer(ctx.activePlayer, ctx);
+		const afterActivation = snapshotPlayer(
+			engineContext.activePlayer,
+			engineContext,
+		);
 
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createTranslationDiffContext(engineContext);
 		const activationLines = diffStepSnapshots(
 			beforeActivation,
 			afterActivation,
@@ -64,14 +69,21 @@ describe('passive log labels', () => {
 		);
 		expect(activationLog).toBeTruthy();
 		expect(activationLog).not.toContain('happiness.tier.summary');
-		if (PASSIVE_INFO.icon) {
-			expect(activationLog?.startsWith(`${PASSIVE_INFO.icon} `)).toBe(true);
+		const passiveIcon = engineContext.assets.passive.icon;
+		if (passiveIcon) {
+			expect(activationLog?.startsWith(`${passiveIcon} `)).toBe(true);
 		}
 		expect(activationLog).toContain('Joyful activated');
 
-		const beforeExpiration = snapshotPlayer(ctx.activePlayer, ctx);
+		const beforeExpiration = snapshotPlayer(
+			engineContext.activePlayer,
+			engineContext,
+		);
 		setHappiness(0);
-		const afterExpiration = snapshotPlayer(ctx.activePlayer, ctx);
+		const afterExpiration = snapshotPlayer(
+			engineContext.activePlayer,
+			engineContext,
+		);
 
 		const expirationLines = diffStepSnapshots(
 			beforeExpiration,
@@ -84,24 +96,26 @@ describe('passive log labels', () => {
 		);
 		expect(expirationLog).toBeTruthy();
 		expect(expirationLog).not.toContain('happiness.tier.summary');
-		if (PASSIVE_INFO.icon) {
-			expect(expirationLog?.startsWith(`${PASSIVE_INFO.icon} `)).toBe(true);
+		if (passiveIcon) {
+			expect(expirationLog?.startsWith(`${passiveIcon} `)).toBe(true);
 		}
 		expect(expirationLog).toContain('Joyful deactivated');
 	});
 
 	it('formats building passives and skips bonus activations', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
+		const registries = createSessionRegistries();
+		const engineContext = createEngine({
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
 		});
+		engineContext.assets = createDefaultTranslationAssets();
 
-		const before = snapshotPlayer(ctx.activePlayer, ctx);
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 		runEffects(
 			[
 				{
@@ -110,11 +124,11 @@ describe('passive log labels', () => {
 					params: { id: BuildingId.CastleWalls },
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		const after = snapshotPlayer(ctx.activePlayer, ctx);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
 
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('Castle Walls activated'))).toBe(
 			false,
@@ -125,15 +139,17 @@ describe('passive log labels', () => {
 	});
 
 	it('omits development passives and keeps stat changes grouped', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
+		const registries = createSessionRegistries();
+		const engineContext = createEngine({
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
 		});
+		engineContext.assets = createDefaultTranslationAssets();
 
 		runEffects(
 			[
@@ -142,16 +158,16 @@ describe('passive log labels', () => {
 					method: 'add',
 				},
 			],
-			ctx,
+			engineContext,
 		);
 
-		const targetLand = ctx.activePlayer.lands.at(-1);
+		const targetLand = engineContext.activePlayer.lands.at(-1);
 		expect(targetLand).toBeTruthy();
 		if (!targetLand) {
 			return;
 		}
 
-		const before = snapshotPlayer(ctx.activePlayer, ctx);
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 		runEffects(
 			[
 				{
@@ -163,15 +179,15 @@ describe('passive log labels', () => {
 					},
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		const after = snapshotPlayer(ctx.activePlayer, ctx);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
 
-		const diffContext = createTranslationDiffContext(ctx);
+		const diffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
 
-		const rawLabel = logContent('development', 'watchtower', ctx)[0];
+		const rawLabel = logContent('development', 'watchtower', engineContext)[0];
 		const label =
 			rawLabel && typeof rawLabel === 'object'
 				? rawLabel.text

@@ -28,20 +28,21 @@ describe('building:add effect', () => {
 				{ type: 'building', method: 'add', params: { id: building.id } },
 			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		const before = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
-		const cost = getActionCosts(grant.id, ctx, { id: building.id });
-		ctx.activePlayer.gold = cost[CResource.gold] ?? 0;
-		ctx.activePlayer.ap = cost[CResource.ap] ?? 0;
-		performAction(grant.id, ctx, { id: building.id });
-		const after = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+		const before =
+			getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
+		const cost = getActionCosts(grant.id, engineContext, { id: building.id });
+		engineContext.activePlayer.gold = cost[CResource.gold] ?? 0;
+		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
+		performAction(grant.id, engineContext, { id: building.id });
+		const after = getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 		const bonus = building.onBuild?.find(
-			(e) => e.type === 'cost_mod' && e.method === 'add',
+			(effect) => effect.type === 'cost_mod' && effect.method === 'add',
 		)?.params?.['amount'] as number;
-		expect(ctx.activePlayer.buildings.has(building.id)).toBe(true);
+		expect(engineContext.activePlayer.buildings.has(building.id)).toBe(true);
 		expect(after).toBe(before + bonus);
 	});
 
@@ -53,25 +54,25 @@ describe('building:add effect', () => {
 				{ type: 'building', method: 'add', params: { id: building.id } },
 			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		const cost = getActionCosts(grant.id, ctx, { id: building.id });
+		const cost = getActionCosts(grant.id, engineContext, { id: building.id });
 		for (const [key, value] of Object.entries(cost)) {
-			ctx.activePlayer.resources[key] = (value ?? 0) * 2;
+			engineContext.activePlayer.resources[key] = (value ?? 0) * 2;
 		}
 
-		performAction(grant.id, ctx, { id: building.id });
+		performAction(grant.id, engineContext, { id: building.id });
 
-		const actionKey = ctx.actionCostResource as string;
-		ctx.activePlayer.resources[actionKey] = 5;
-		ctx.activePlayer.resources[CResource.gold] = 10;
-		expect(() => performAction(grant.id, ctx, { id: building.id })).toThrow(
-			`Building ${building.id} already built`,
-		);
-		expect(ctx.activePlayer.resources[actionKey]).toBe(5);
-		expect(ctx.activePlayer.resources[CResource.gold]).toBe(10);
+		const actionKey = engineContext.actionCostResource as string;
+		engineContext.activePlayer.resources[actionKey] = 5;
+		engineContext.activePlayer.resources[CResource.gold] = 10;
+		expect(() =>
+			performAction(grant.id, engineContext, { id: building.id }),
+		).toThrow(`Building ${building.id} already built`);
+		expect(engineContext.activePlayer.resources[actionKey]).toBe(5);
+		expect(engineContext.activePlayer.resources[CResource.gold]).toBe(10);
 	});
 
 	it('allows rebuilding after the structure is removed', () => {
@@ -87,23 +88,23 @@ describe('building:add effect', () => {
 				{ type: 'building', method: 'remove', params: { id: building.id } },
 			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		const cost = getActionCosts(build.id, ctx, { id: building.id });
-		const actionKey = ctx.actionCostResource as string;
+		const cost = getActionCosts(build.id, engineContext, { id: building.id });
+		const actionKey = engineContext.actionCostResource as string;
 		for (const [key, value] of Object.entries(cost)) {
-			ctx.activePlayer.resources[key] = (value ?? 0) * 3;
+			engineContext.activePlayer.resources[key] = (value ?? 0) * 3;
 		}
 
-		performAction(build.id, ctx, { id: building.id });
-		performAction(demolish.id, ctx, { id: building.id });
+		performAction(build.id, engineContext, { id: building.id });
+		performAction(demolish.id, engineContext, { id: building.id });
 
-		ctx.activePlayer.resources[actionKey] = 5;
-		performAction(build.id, ctx, { id: building.id });
+		engineContext.activePlayer.resources[actionKey] = 5;
+		performAction(build.id, engineContext, { id: building.id });
 
-		expect(ctx.activePlayer.buildings.has(building.id)).toBe(true);
+		expect(engineContext.activePlayer.buildings.has(building.id)).toBe(true);
 	});
 
 	it('removes building passives when demolished', () => {
@@ -136,23 +137,26 @@ describe('building:add effect', () => {
 				{ type: 'building', method: 'remove', params: { id: building.id } },
 			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
 
-		for (const key of Object.keys(ctx.activePlayer.resources)) {
-			ctx.activePlayer.resources[key] = 10;
+		for (const key of Object.keys(engineContext.activePlayer.resources)) {
+			engineContext.activePlayer.resources[key] = 10;
 		}
 
-		const baseCost = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+		const baseCost =
+			getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 
-		performAction(build.id, ctx, { id: building.id });
-		const afterBuild = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+		performAction(build.id, engineContext, { id: building.id });
+		const afterBuild =
+			getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 		expect(afterBuild - baseCost).toBe(surcharge);
 
-		performAction(demolish.id, ctx, { id: building.id });
-		const afterRemoval = getActionCosts(target.id, ctx)[CResource.gold] ?? 0;
+		performAction(demolish.id, engineContext, { id: building.id });
+		const afterRemoval =
+			getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 		expect(afterRemoval).toBe(baseCost);
 	});
 });

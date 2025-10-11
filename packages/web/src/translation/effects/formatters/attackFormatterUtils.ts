@@ -53,13 +53,13 @@ function fallbackName(name: string | undefined, fallback: string): string {
 }
 
 export function ownerLabel(
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 	owner: 'attacker' | 'defender',
 ): string {
 	if (owner === 'attacker') {
-		return fallbackName(ctx.activePlayer.name, 'Player');
+		return fallbackName(translationContext.activePlayer.name, 'Player');
 	}
-	return fallbackName(ctx.opponent.name, 'Opponent');
+	return fallbackName(translationContext.opponent.name, 'Opponent');
 }
 
 // Attack summary strings must stay icon-based. Target formatters should call
@@ -111,7 +111,7 @@ function applyOwnerPresentation(
 
 export function summarizeOnDamage(
 	effectDefinition: EffectDef<Record<string, unknown>>,
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 	mode: Mode,
 	baseEntry: BaseEntryResult,
 ): SummaryEntry | null {
@@ -123,25 +123,31 @@ export function summarizeOnDamage(
 	}
 	const { formatter, info, target, targetLabel } = baseEntry;
 	const format = mode === 'summarize' ? summarizeEffects : describeEffects;
-	const attackerDefs = onDamage.attacker ?? [];
-	const defenderDefs = onDamage.defender ?? [];
-	const attackerEntries = format(attackerDefs, ctx);
-	const defenderEntries = format(defenderDefs, ctx);
-	const items: SummaryEntry[] = [];
-	const actionItems: SummaryEntry[] = [];
+	const attackerEffectDefinitions = onDamage.attacker ?? [];
+	const defenderEffectDefinitions = onDamage.defender ?? [];
+	const attackerEntries = format(attackerEffectDefinitions, translationContext);
+	const defenderEntries = format(defenderEffectDefinitions, translationContext);
+	const formattedItems: SummaryEntry[] = [];
+	const formattedActionItems: SummaryEntry[] = [];
 
-	const attackerName = fallbackName(ctx.activePlayer.name, 'Player');
-	const defenderName = fallbackName(ctx.opponent.name, 'Opponent');
+	const attackerName = fallbackName(
+		translationContext.activePlayer.name,
+		'Player',
+	);
+	const defenderName = fallbackName(
+		translationContext.opponent.name,
+		'Opponent',
+	);
 
 	const collect = (
-		defs: EffectDef[],
-		entries: SummaryEntry[],
+		effectDefinitions: EffectDef[],
+		effectEntries: SummaryEntry[],
 		owner: 'attacker' | 'defender',
 	) => {
 		const suffix =
 			owner === 'defender' ? `for ${defenderName}` : `for ${attackerName}`;
-		entries.forEach((entry, index) => {
-			const definition = defs[index]!;
+		effectEntries.forEach((entry, index) => {
+			const definition = effectDefinitions[index]!;
 			const { actions, others } = categorizeDamageEffects(
 				definition,
 				entry,
@@ -153,17 +159,17 @@ export function summarizeOnDamage(
 							applyOwnerPresentation(owner, action, mode, suffix),
 						)
 					: actions;
-			actionItems.push(...formattedActions);
+			formattedActionItems.push(...formattedActions);
 			others.forEach((other) => {
-				items.push(applyOwnerPresentation(owner, other, mode, suffix));
+				formattedItems.push(applyOwnerPresentation(owner, other, mode, suffix));
 			});
 		});
 	};
 
-	collect(defenderDefs, defenderEntries, 'defender');
-	collect(attackerDefs, attackerEntries, 'attacker');
+	collect(defenderEffectDefinitions, defenderEntries, 'defender');
+	collect(attackerEffectDefinitions, attackerEntries, 'attacker');
 
-	const combined = items.concat(actionItems);
+	const combined = formattedItems.concat(formattedActionItems);
 	if (!combined.length) {
 		return null;
 	}
@@ -180,16 +186,26 @@ export function summarizeOnDamage(
 export function formatDiffEntries(
 	entry: AttackOnDamageLogEntry,
 	formatter: AttackTargetFormatter,
-	ctx: TranslationContext,
+	translationContext: TranslationContext,
 ): SummaryEntry[] {
-	const parts: SummaryEntry[] = [];
-	entry.defender.forEach((diff) =>
-		parts.push(formatter.formatDiff(ownerLabel(ctx, 'defender'), diff)),
+	const formattedEntries: SummaryEntry[] = [];
+	entry.defender.forEach((diffEntry) =>
+		formattedEntries.push(
+			formatter.formatDiff(
+				ownerLabel(translationContext, 'defender'),
+				diffEntry,
+			),
+		),
 	);
-	entry.attacker.forEach((diff) =>
-		parts.push(formatter.formatDiff(ownerLabel(ctx, 'attacker'), diff)),
+	entry.attacker.forEach((diffEntry) =>
+		formattedEntries.push(
+			formatter.formatDiff(
+				ownerLabel(translationContext, 'attacker'),
+				diffEntry,
+			),
+		),
 	);
-	return parts;
+	return formattedEntries;
 }
 
 export function collectTransferPercents(
