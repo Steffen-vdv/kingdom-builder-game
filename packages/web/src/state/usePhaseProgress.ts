@@ -4,7 +4,6 @@ import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
 import type { LegacySession } from './sessionTypes';
-import type { PhaseProgressState } from './phaseTypes';
 import { formatPhaseResolution } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
 
@@ -18,6 +17,13 @@ interface PhaseProgressOptions {
 	resourceKeys: ResourceKey[];
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+}
+
+export interface PhaseProgressState {
+	currentPhaseId: string;
+	isActionPhase: boolean;
+	canEndTurn: boolean;
+	isAdvancing: boolean;
 }
 
 function computePhaseState(

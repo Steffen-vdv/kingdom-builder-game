@@ -1,4 +1,4 @@
-import type { PhaseProgressState } from '../state/phaseTypes';
+import type { PhaseProgressState } from '../state/usePhaseProgress';
 
 export function isActionPhaseActive(
 	phase: PhaseProgressState,
