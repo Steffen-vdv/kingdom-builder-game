@@ -150,11 +150,12 @@ function createDescriptorRegistry(
 					label: phase?.label ?? id ?? 'Phase',
 				} satisfies ResolveResult;
 			};
+			const phases = translationContext.phases;
 			return {
 				resolve: resolvePhase,
-				formatDetail: (id, detail) => formatStepLabel(id, detail),
+				formatDetail: (id, detail) => formatStepLabel(phases, id, detail),
 				formatDependency: (link) => {
-					const label = formatPhaseStep(link.id, link.detail);
+					const label = formatPhaseStep(phases, link.id, link.detail);
 					if (label) {
 						return label.trim();
 					}
@@ -172,7 +173,7 @@ function createDescriptorRegistry(
 				}
 				const statValue =
 					player.stats?.[link.id] ?? context.activePlayer.stats?.[link.id] ?? 0;
-				const valueText = formatStatValue(link.id, statValue);
+				const valueText = formatStatValue(link.id, statValue, context.assets);
 				return detail ? `${detail} ${valueText}` : valueText;
 			},
 		},

@@ -60,9 +60,9 @@ function describeStatBreakdown(
 	const pctStat = breakdown.percentStat;
 	const growth = player.stats[pctStat] ?? 0;
 	const growthIcon = assets.stats[pctStat]?.icon ?? '';
-	const growthValue = formatStatValue(breakdown.percentStat, growth);
-	const baseValue = formatStatValue(key, change.before);
-	const totalValue = formatStatValue(key, change.after);
+	const growthValue = formatStatValue(breakdown.percentStat, growth, assets);
+	const baseValue = formatStatValue(key, change.before, assets);
+	const totalValue = formatStatValue(key, change.after, assets);
 	return formatPercentBreakdown(
 		assets.stats[key]?.icon ?? '',
 		baseValue,
@@ -107,8 +107,8 @@ export function appendStatChanges(
 		const info = assets.stats[key];
 		const label = info?.label ?? key;
 		const icon = info?.icon;
-		const line = formatStatChange(label, icon, key, change);
-		if (statDisplaysAsPercent(key)) {
+		const line = formatStatChange(label, icon, key, change, assets);
+		if (statDisplaysAsPercent(key, assets)) {
 			changes.push(line);
 			continue;
 		}

@@ -1,4 +1,5 @@
 import { formatStatValue } from '../../utils/stats';
+import type { TranslationAssets } from '../context';
 
 export interface SignedDelta {
 	before: number;
@@ -51,11 +52,12 @@ export function formatStatChange(
 	icon: string | undefined,
 	key: string,
 	change: SignedDelta,
+	assets: TranslationAssets,
 ): string {
 	const prefix = iconPrefix(icon);
-	const before = formatStatValue(key, change.before);
-	const after = formatStatValue(key, change.after);
-	const delta = formatStatValue(key, change.delta);
+	const before = formatStatValue(key, change.before, assets);
+	const after = formatStatValue(key, change.after, assets);
+	const delta = formatStatValue(key, change.delta, assets);
 	const sign = change.delta >= 0 ? '+' : '';
 	return `${prefix}${label} ${sign}${delta} (${before}→${after})`;
 }
