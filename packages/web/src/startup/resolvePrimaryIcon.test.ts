@@ -1,20 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { PRIMARY_ICON_ID, RESOURCES } from '@kingdom-builder/contents';
 import { resolvePrimaryIcon } from './resolvePrimaryIcon';
 
 describe('resolvePrimaryIcon', () => {
 	it('returns the configured resource icon when available', () => {
-		const resolved = resolvePrimaryIcon(RESOURCES, PRIMARY_ICON_ID);
-		expect(resolved).toBe(RESOURCES[PRIMARY_ICON_ID].icon);
+		const resources = {
+			gold: { icon: '🪙' },
+			happiness: { icon: '😊' },
+		};
+		const resolved = resolvePrimaryIcon({
+			resources,
+			primaryResourceKey: 'gold',
+		});
+		expect(resolved).toBe('🪙');
 	});
 
 	it('falls back to the first available resource icon when missing', () => {
-		const fallbackEntry = Object.entries(RESOURCES)[0];
-		if (!fallbackEntry) {
-			throw new Error('Expected at least one resource to be defined.');
-		}
-		const [, fallbackResource] = fallbackEntry;
-		const resolved = resolvePrimaryIcon(RESOURCES, 'non-existent');
-		expect(resolved).toBe(fallbackResource.icon);
+		const resources = {
+			happiness: { icon: '😊' },
+			gold: { icon: '🪙' },
+		};
+		const resolved = resolvePrimaryIcon({
+			resources,
+			primaryResourceKey: 'non-existent',
+		});
+		expect(resolved).toBe('😊');
+	});
+
+	it('prefers explicitly configured icon when provided', () => {
+		const resolved = resolvePrimaryIcon({
+			explicitIcon: '👑',
+		});
+		expect(resolved).toBe('👑');
 	});
 });

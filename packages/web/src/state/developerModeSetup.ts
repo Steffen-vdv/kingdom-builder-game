@@ -1,77 +1,117 @@
-import {
-	createDevelopmentRegistry,
-	BuildingId,
-	PopulationRole,
-	Resource,
-	type DevelopmentDef,
-	type PopulationRoleId,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import type { EngineSession, PlayerId } from '@kingdom-builder/engine';
+import type { DeveloperPresetConfig } from '../runtime/types';
+import type { SessionRegistries } from './sessionRegistries';
 
-const TARGET_GOLD = 100;
-const TARGET_HAPPINESS = 10;
-const DEVELOPMENT_REGISTRY = createDevelopmentRegistry();
-const DEVELOPMENT_PLAN = toDevelopmentPlan();
-const TARGET_LAND_COUNT = 5;
-const POPULATION_PLAN: Array<{ role: PopulationRoleId; count: number }> = [
-	{ role: PopulationRole.Council, count: 2 },
-	{ role: PopulationRole.Legion, count: 1 },
-	{ role: PopulationRole.Fortifier, count: 1 },
-];
+interface ResourceTarget {
+	key: string;
+	target: number;
+}
 
-function toDevelopmentPlan(): string[] {
-	const identifiers: string[] = [];
-	for (const identifier of DEVELOPMENT_REGISTRY.keys()) {
-		if (isDevelopmentId(identifier)) {
-			identifiers.push(identifier);
+interface PopulationTarget {
+	role: string;
+	count: number;
+}
+
+function readDevelopmentOrder(definition: unknown): number {
+	if (!definition || typeof definition !== 'object') {
+		return Number.MAX_SAFE_INTEGER;
+	}
+	const order = (definition as { order?: unknown }).order;
+	return typeof order === 'number' ? order : Number.MAX_SAFE_INTEGER;
+}
+
+function createDevelopmentPlan(
+	registry: SessionRegistries['developments'],
+): string[] {
+	const entries: Array<{ id: string; order: number }> = [];
+	for (const [id, definition] of registry.entries()) {
+		entries.push({ id, order: readDevelopmentOrder(definition) });
+	}
+	entries.sort((left, right) => {
+		if (left.order !== right.order) {
+			return left.order - right.order;
+		}
+		return left.id.localeCompare(right.id);
+	});
+	return entries.map((entry) => entry.id);
+}
+
+function createResourceTargets(
+	preset: DeveloperPresetConfig | undefined,
+): ResourceTarget[] {
+	if (!preset?.resourceTargets) {
+		return [];
+	}
+	const targets: ResourceTarget[] = [];
+	for (const [key, value] of Object.entries(preset.resourceTargets)) {
+		const target = Number(value);
+		if (!Number.isFinite(target) || target <= 0) {
+			continue;
+		}
+		targets.push({ key, target });
+	}
+	return targets;
+}
+
+function createPopulationPlan(
+	preset: DeveloperPresetConfig | undefined,
+): PopulationTarget[] {
+	if (!preset?.population) {
+		return [];
+	}
+	const plan: PopulationTarget[] = [];
+	for (const [role, value] of Object.entries(preset.population)) {
+		const count = Number(value);
+		if (!Number.isFinite(count) || count <= 0) {
+			continue;
+		}
+		plan.push({ role, count });
+	}
+	return plan;
+}
+
+function createBuildingPlan(
+	preset: DeveloperPresetConfig | undefined,
+): string[] {
+	if (!preset?.buildingIds || preset.buildingIds.length === 0) {
+		return [];
+	}
+	const unique = new Set<string>();
+	for (const id of preset.buildingIds) {
+		if (typeof id === 'string' && id.length > 0) {
+			unique.add(id);
 		}
 	}
-	identifiers.sort((left, right) => {
-		const leftOrder = getDevelopmentOrder(
-			DEVELOPMENT_REGISTRY.get(String(left)),
-		);
-		const rightOrder = getDevelopmentOrder(
-			DEVELOPMENT_REGISTRY.get(String(right)),
-		);
-		if (leftOrder !== rightOrder) {
-			return leftOrder - rightOrder;
-		}
-		return String(left).localeCompare(String(right));
-	});
-	return identifiers;
+	return [...unique];
 }
 
-function getDevelopmentOrder(definition: DevelopmentDef): number {
-	return typeof definition.order === 'number'
-		? definition.order
-		: Number.MAX_SAFE_INTEGER;
+function determineLandCount(
+	developmentPlanLength: number,
+	preset: DeveloperPresetConfig | undefined,
+): number {
+	const base = Number(preset?.landCount ?? 0);
+	const desired =
+		Number.isFinite(base) && base > 0 ? base : developmentPlanLength;
+	return Math.max(desired, developmentPlanLength);
 }
-
-function isDevelopmentId(id: string): boolean {
-	return DEVELOPMENT_REGISTRY.has(id);
-}
-
-const DEVELOPER_RESOURCES: Array<{ key: ResourceKey; target: number }> = [
-	{ key: Resource.gold as ResourceKey, target: TARGET_GOLD },
-	{ key: Resource.happiness as ResourceKey, target: TARGET_HAPPINESS },
-];
-const DEVELOPER_BUILDINGS: string[] = [BuildingId.Mill];
-const DEVELOPER_LAND_COUNT = Math.max(
-	TARGET_LAND_COUNT,
-	DEVELOPMENT_PLAN.length,
-);
 
 export function initializeDeveloperMode(
 	session: EngineSession,
 	playerId: PlayerId,
+	registries: Pick<SessionRegistries, 'developments'>,
+	preset: DeveloperPresetConfig | undefined,
 ): void {
+	const developmentPlan = createDevelopmentPlan(registries.developments);
+	const resources = createResourceTargets(preset);
+	const population = createPopulationPlan(preset);
+	const buildings = createBuildingPlan(preset);
+	const landCount = determineLandCount(developmentPlan.length, preset);
 	session.applyDeveloperPreset({
 		playerId,
-		resources: DEVELOPER_RESOURCES.map((entry) => ({ ...entry })),
-		population: POPULATION_PLAN.map((entry) => ({ ...entry })),
-		landCount: DEVELOPER_LAND_COUNT,
-		developments: [...DEVELOPMENT_PLAN],
-		buildings: [...DEVELOPER_BUILDINGS],
+		resources: resources.map((entry) => ({ ...entry })),
+		population: population.map((entry) => ({ ...entry })),
+		landCount,
+		developments: [...developmentPlan],
+		buildings: [...buildings],
 	});
 }

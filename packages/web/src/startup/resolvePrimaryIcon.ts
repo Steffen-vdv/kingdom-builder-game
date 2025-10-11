@@ -2,22 +2,38 @@ export interface IconSource {
 	icon?: string;
 }
 
-export function resolvePrimaryIcon(
-	resources: Record<string, IconSource>,
-	primaryId?: string | null,
+export interface ResolvePrimaryIconOptions {
+	resources?: Record<string, IconSource>;
+	primaryResourceKey?: string | null;
+	explicitIcon?: string | null;
+}
+
+function findFirstIcon(
+	resources: Record<string, IconSource> | undefined,
 ): string | undefined {
-	const entries = Object.entries(resources);
-	if (entries.length === 0) {
+	if (!resources) {
 		return undefined;
 	}
+	for (const [, info] of Object.entries(resources)) {
+		if (typeof info?.icon === 'string' && info.icon.length > 0) {
+			return info.icon;
+		}
+	}
+	return undefined;
+}
 
-	if (primaryId) {
-		const resource = resources[primaryId];
+export function resolvePrimaryIcon(
+	options: ResolvePrimaryIconOptions,
+): string | undefined {
+	if (options.explicitIcon && options.explicitIcon.length > 0) {
+		return options.explicitIcon;
+	}
+	const { resources, primaryResourceKey } = options;
+	if (primaryResourceKey && resources) {
+		const resource = resources[primaryResourceKey];
 		if (resource?.icon) {
 			return resource.icon;
 		}
 	}
-
-	const fallback = entries.find(([, info]) => typeof info?.icon === 'string');
-	return fallback?.[1].icon;
+	return findFirstIcon(resources);
 }

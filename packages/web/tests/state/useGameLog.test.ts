@@ -1,14 +1,14 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { RESOURCES } from '@kingdom-builder/contents';
+import { createResourceKeys } from '../helpers/sessionRegistries';
 import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
 
-const [primaryResource] = Object.keys(RESOURCES);
+const [primaryResource = 'gold'] = createResourceKeys();
 
 const createPlayer = (id: string): PlayerStateSnapshot => ({
 	id,

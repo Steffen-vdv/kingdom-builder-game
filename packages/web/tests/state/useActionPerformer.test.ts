@@ -8,7 +8,6 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import {
 	createResourceKeys,
 	createSessionRegistries,
@@ -46,8 +45,8 @@ describe('useActionPerformer', () => {
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
 	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
-	let resourceKeys: ResourceKey[];
-	let actionCostResource: ResourceKey;
+	let resourceKeys: string[];
+	let actionCostResource: string;
 	let ruleSnapshot: RuleSnapshot;
 	let registries: ReturnType<typeof createSessionRegistries>;
 	const sessionId = 'test-session';

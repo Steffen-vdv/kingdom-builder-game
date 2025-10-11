@@ -1,6 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import type { ActionExecuteSuccessResponse } from '@kingdom-builder/protocol/actions';
-import { ActionId } from '@kingdom-builder/contents';
 import {
 	createSession,
 	fetchSnapshot,
@@ -20,6 +19,7 @@ import {
 } from '../helpers/sessionRegistries';
 
 describe('sessionSdk', () => {
+	const TAX_ACTION_ID = 'tax';
 	const resourceKeys = createResourceKeys();
 	const [resourceKey] = resourceKeys;
 	if (!resourceKey) {
@@ -122,10 +122,10 @@ describe('sessionSdk', () => {
 		api.setNextActionResponse(successResponse);
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId: TAX_ACTION_ID,
 		});
 		expect(response).toEqual(successResponse);
-		expect(performSpy).toHaveBeenCalledWith(ActionId.tax, undefined);
+		expect(performSpy).toHaveBeenCalledWith(TAX_ACTION_ID, undefined);
 	});
 	it('returns error payloads when the API action fails', async () => {
 		const { session } = await createSession();
@@ -136,7 +136,7 @@ describe('sessionSdk', () => {
 		const performSpy = vi.spyOn(session, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId: TAX_ACTION_ID,
 		});
 		expect(response.status).toBe('error');
 		expect(performSpy).not.toHaveBeenCalled();
@@ -153,7 +153,7 @@ describe('sessionSdk', () => {
 		const performSpy = vi.spyOn(session, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
-			actionId: ActionId.tax,
+			actionId: TAX_ACTION_ID,
 		});
 		expect(response.status).toBe('error');
 		expect(response).toHaveProperty('error', 'Boom');
@@ -216,8 +216,8 @@ describe('sessionSdk', () => {
 			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
 		});
 		const mutatedRegistries = createSessionRegistriesPayload();
-		mutatedRegistries.actions[ActionId.tax] = {
-			...mutatedRegistries.actions[ActionId.tax],
+		mutatedRegistries.actions[TAX_ACTION_ID] = {
+			...mutatedRegistries.actions[TAX_ACTION_ID],
 			name: 'Tax (Advanced)',
 		};
 		delete mutatedRegistries.resources[resourceKey];
@@ -234,7 +234,7 @@ describe('sessionSdk', () => {
 		});
 		await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(advanceSpy).toHaveBeenCalled();
-		expect(registries.actions.get(ActionId.tax)?.name).toBe('Tax (Advanced)');
+		expect(registries.actions.get(TAX_ACTION_ID)?.name).toBe('Tax (Advanced)');
 		expect(registries.resources[resourceKey]).toBeUndefined();
 		expect(resourceKeys).not.toContain(resourceKey);
 	});

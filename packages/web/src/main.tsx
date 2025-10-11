@@ -1,8 +1,9 @@
 import './styles/index.css';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { PRIMARY_ICON_ID, RESOURCES } from '@kingdom-builder/contents';
 import { resolvePrimaryIcon } from './startup/resolvePrimaryIcon';
+import { loadRuntimeConfig, getRuntimeConfig } from './runtime/config';
+import { DEFAULT_REGISTRIES } from './contexts/defaultRegistryMetadata';
 
 const createFaviconSvg = (emoji: string): string =>
 	[
@@ -23,18 +24,27 @@ const ensureFaviconLink = (): HTMLLinkElement => {
 	return link;
 };
 
-const icon = resolvePrimaryIcon(RESOURCES, PRIMARY_ICON_ID);
-if (icon) {
-	const svg = createFaviconSvg(icon);
-	const link = ensureFaviconLink();
-	link.rel = 'icon';
-	link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-	if (!link.parentElement) {
-		document.head.appendChild(link);
+async function bootstrapApp() {
+	await loadRuntimeConfig();
+	const runtimeConfig = getRuntimeConfig();
+	const icon = resolvePrimaryIcon({
+		explicitIcon: runtimeConfig.primaryIcon?.icon ?? null,
+		primaryResourceKey: runtimeConfig.primaryIcon?.resourceKey ?? null,
+		resources: DEFAULT_REGISTRIES.resources,
+	});
+	if (icon) {
+		const svg = createFaviconSvg(icon);
+		const link = ensureFaviconLink();
+		link.rel = 'icon';
+		link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+		if (!link.parentElement) {
+			document.head.appendChild(link);
+		}
+	} else {
+		console.warn('Unable to resolve favicon icon from runtime configuration.');
 	}
-} else {
-	console.warn('Unable to resolve favicon icon from content.');
+	const root = createRoot(document.getElementById('root')!);
+	root.render(<App />);
 }
 
-const root = createRoot(document.getElementById('root')!);
-root.render(<App />);
+void bootstrapApp();
