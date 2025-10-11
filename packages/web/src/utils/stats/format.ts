@@ -14,7 +14,7 @@ export function formatDetailText(detail: string): string {
 	if (!detail) {
 		return '';
 	}
-	if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(detail)) {
+	if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(detail)) {
 		return detail
 			.split('-')
 			.filter((segment) => segment.length)
@@ -31,25 +31,25 @@ export function formatDetailText(detail: string): string {
 }
 
 export function formatStepLabel(
-        phases: readonly TranslationPhase[],
-        phaseId?: string,
-        stepId?: string,
+	phases: readonly TranslationPhase[],
+	phaseId?: string,
+	stepId?: string,
 ): string | undefined {
-        if (!stepId) {
-                return undefined;
-        }
-        const phase = phaseId
-                ? phases.find((phaseItem) => phaseItem.id === phaseId)
-                : undefined;
-        const step = phase?.steps?.find((stepItem) => stepItem.id === stepId);
-        if (!step) {
-                return formatDetailText(stepId);
-        }
-        const parts: string[] = [];
-        if (step.icon) {
+	if (!stepId) {
+		return undefined;
+	}
+	const phase = phaseId
+		? phases.find((phaseItem) => phaseItem.id === phaseId)
+		: undefined;
+	const step = phase?.steps?.find((stepItem) => stepItem.id === stepId);
+	if (!step) {
+		return formatDetailText(stepId);
+	}
+	const parts: string[] = [];
+	if (step.icon) {
 		parts.push(step.icon);
 	}
-	const label = step.title ?? step.id;
+	const label = step.title ?? formatDetailText(step.id);
 	if (label) {
 		parts.push(label);
 	}
@@ -57,30 +57,30 @@ export function formatStepLabel(
 }
 
 export function formatPhaseStep(
-        phases: readonly TranslationPhase[],
-        phaseId?: string,
-        stepId?: string,
+	phases: readonly TranslationPhase[],
+	phaseId?: string,
+	stepId?: string,
 ): string | undefined {
-        if (!stepId) {
-                return undefined;
-        }
-        const phase = phaseId
-                ? phases.find((phaseItem) => phaseItem.id === phaseId)
-                : undefined;
-        const step = phase?.steps?.find((stepItem) => stepItem.id === stepId);
-        if (!step) {
-                return formatDetailText(stepId);
-        }
-        const parts: string[] = [];
-        if (phase?.icon) {
-                parts.push(phase.icon);
-        }
-        if (phase?.label) {
-                parts.push(phase.label);
-        }
-        const stepText = formatStepLabel(phases, phaseId, stepId);
-        if (parts.length && stepText) {
-                return `${parts.join(' ').trim()} · ${stepText}`;
-        }
-        return stepText;
+	if (!stepId) {
+		return undefined;
+	}
+	const phase = phaseId
+		? phases.find((phaseItem) => phaseItem.id === phaseId)
+		: undefined;
+	const step = phase?.steps?.find((stepItem) => stepItem.id === stepId);
+	if (!step) {
+		return formatDetailText(stepId);
+	}
+	const parts: string[] = [];
+	if (phase?.icon) {
+		parts.push(phase.icon);
+	}
+	if (phase?.label) {
+		parts.push(phase.label);
+	}
+	const stepText = formatStepLabel(phases, phaseId, stepId);
+	if (parts.length && stepText) {
+		return `${parts.join(' ').trim()} · ${stepText}`;
+	}
+	return stepText;
 }

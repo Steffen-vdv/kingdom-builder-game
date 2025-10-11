@@ -1,7 +1,6 @@
 import type {
-        PlayerStateSnapshot,
-        StatKey,
-        StatSourceContribution,
+	PlayerStateSnapshot,
+	StatSourceContribution,
 } from '@kingdom-builder/engine';
 import type { Summary, SummaryEntry } from '../translation/content/types';
 import type { TranslationContext } from '../translation/context';
@@ -16,19 +15,19 @@ import { buildDetailEntries, pushSummaryEntry } from './stats/summary';
 export { statDisplaysAsPercent, formatStatValue } from './stats/descriptors';
 
 export function getStatBreakdownSummary(
-        statKey: string,
-        player: PlayerStateSnapshot,
-        context: TranslationContext,
+	statKey: string,
+	player: PlayerStateSnapshot,
+	context: TranslationContext,
 ): Summary {
-        const statSources = (player.statSources ?? {}) as Record<
-                StatKey | string,
-                Record<string, StatSourceContribution>
-        >;
-        const sources = statSources[statKey as StatKey] ?? {};
-        const contributions = Object.values(sources);
-        if (!contributions.length) {
-                return [];
-        }
+	const statSources = player.statSources as
+		| Record<string, Record<string, StatSourceContribution>>
+		| undefined;
+	const sources: Record<string, StatSourceContribution> =
+		statSources?.[statKey] ?? {};
+	const contributions = Object.values(sources);
+	if (!contributions.length) {
+		return [];
+	}
 	const annotated = contributions.map((entry) => ({
 		entry,
 		descriptor: getSourceDescriptor(context, entry.meta),
@@ -53,18 +52,18 @@ function formatContribution(
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
 ): SummaryEntry {
-        const { amount, meta } = contribution;
-        const statInfo = context.assets.stats[statKey];
-        const valueText = formatStatValue(statKey, amount);
-        const sign = amount >= 0 ? '+' : '';
-        const amountParts: string[] = [];
-        if (statInfo?.icon) {
-                amountParts.push(statInfo.icon);
-        }
-        amountParts.push(`${sign}${valueText}`);
-        if (statInfo?.label) {
-                amountParts.push(statInfo.label);
-        }
+	const { amount, meta } = contribution;
+	const statInfo = context.assets.stats[statKey];
+	const valueText = formatStatValue(statKey, amount);
+	const sign = amount >= 0 ? '+' : '';
+	const amountParts: string[] = [];
+	if (statInfo?.icon) {
+		amountParts.push(statInfo.icon);
+	}
+	amountParts.push(`${sign}${valueText}`);
+	if (statInfo?.label) {
+		amountParts.push(statInfo.label);
+	}
 	const amountEntry = amountParts.join(' ').trim();
 	const detailEntries = buildDetailEntries(meta, player, context);
 	const title = formatSourceTitle(descriptor);

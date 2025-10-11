@@ -15,35 +15,35 @@ export type PassiveSurface = 'player-panel' | 'log';
 export type PassiveLike = Pick<PassiveSummary, 'id' | 'meta'>;
 
 interface PassiveOwnerState {
-        buildings: Iterable<string>;
-        lands: ReadonlyArray<{ id: string; developments: Iterable<string> }>;
-        population?: Record<string, number>;
+	buildings: Iterable<string>;
+	lands: ReadonlyArray<{ id: string; developments: Iterable<string> }>;
+	population?: Record<string, number>;
 }
 
 export type PassiveOwner = PlayerSnapshot | PassiveOwnerState;
 
 interface PassiveVisibilityContext {
-        buildingIds: string[];
-        buildingIdSet: Set<string>;
-        buildingPrefixes: string[];
-        developmentPassiveIds: Set<string>;
-        populationPrefixes: PopulationPrefix[];
+	buildingIds: string[];
+	buildingIdSet: Set<string>;
+	buildingPrefixes: string[];
+	developmentPassiveIds: Set<string>;
+	populationPrefixes: PopulationPrefix[];
 }
 
 export interface PassiveVisibilityOptions {
-        populationIds?: Iterable<string>;
+	populationIds?: Iterable<string>;
 }
 
 type PassiveVisibilitySource = PassiveOwner | PassiveVisibilityContext;
 
 function isVisibilityContext(
-        source: PassiveVisibilitySource,
+	source: PassiveVisibilitySource,
 ): source is PassiveVisibilityContext {
-        return (
-                (source as PassiveVisibilityContext).buildingIdSet !== undefined &&
-                (source as PassiveVisibilityContext).buildingPrefixes !== undefined &&
-                (source as PassiveVisibilityContext).populationPrefixes !== undefined
-        );
+	return (
+		(source as PassiveVisibilityContext).buildingIdSet !== undefined &&
+		(source as PassiveVisibilityContext).buildingPrefixes !== undefined &&
+		(source as PassiveVisibilityContext).populationPrefixes !== undefined
+	);
 }
 
 function toArray(iterable: Iterable<string>): string[] {
@@ -51,67 +51,67 @@ function toArray(iterable: Iterable<string>): string[] {
 }
 
 function collectPopulationPrefixes(
-        owner: PassiveOwner,
-        options?: PassiveVisibilityOptions,
+	owner: PassiveOwner,
+	options?: PassiveVisibilityOptions,
 ): PopulationPrefix[] {
-        if (options?.populationIds) {
-                return Array.from(new Set(options.populationIds), (id) => `${id}_`);
-        }
-        const populationKeys: string[] = [];
-        if ('population' in owner && owner.population) {
-                populationKeys.push(...Object.keys(owner.population));
-        }
-        return populationKeys.map((id) => `${id}_`);
+	if (options?.populationIds) {
+		return Array.from(new Set(options.populationIds), (id) => `${id}_`);
+	}
+	const populationKeys: string[] = [];
+	if ('population' in owner && owner.population) {
+		populationKeys.push(...Object.keys(owner.population));
+	}
+	return populationKeys.map((id) => `${id}_`);
 }
 
 function createContextFromOwner(
-        owner: PassiveOwner,
-        options?: PassiveVisibilityOptions,
+	owner: PassiveOwner,
+	options?: PassiveVisibilityOptions,
 ): PassiveVisibilityContext {
-        const buildingIds = toArray(owner.buildings);
-        const buildingIdSet = new Set(buildingIds);
-        const buildingPrefixes = buildingIds.map((id) => `${id}_`);
-        const developmentPassiveIds = new Set<string>();
-        for (const land of owner.lands) {
+	const buildingIds = toArray(owner.buildings);
+	const buildingIdSet = new Set(buildingIds);
+	const buildingPrefixes = buildingIds.map((id) => `${id}_`);
+	const developmentPassiveIds = new Set<string>();
+	for (const land of owner.lands) {
 		const landId = land.id;
 		for (const development of land.developments) {
 			developmentPassiveIds.add(`${development}_${landId}`);
 		}
-        }
-        return {
-                buildingIds,
-                buildingIdSet,
-                buildingPrefixes,
-                developmentPassiveIds,
-                populationPrefixes: collectPopulationPrefixes(owner, options),
-        };
+	}
+	return {
+		buildingIds,
+		buildingIdSet,
+		buildingPrefixes,
+		developmentPassiveIds,
+		populationPrefixes: collectPopulationPrefixes(owner, options),
+	};
 }
 
 function resolveContext(
-        source: PassiveVisibilitySource,
-        options?: PassiveVisibilityOptions,
+	source: PassiveVisibilitySource,
+	options?: PassiveVisibilityOptions,
 ): PassiveVisibilityContext {
-        if (isVisibilityContext(source)) {
-                return source;
-        }
-        return createContextFromOwner(source, options);
+	if (isVisibilityContext(source)) {
+		return source;
+	}
+	return createContextFromOwner(source, options);
 }
 
 function hasPopulationPrefix(
-        id: string,
-        prefixes: readonly PopulationPrefix[],
+	id: string,
+	prefixes: readonly PopulationPrefix[],
 ): boolean {
-        for (const prefix of prefixes) {
-                if (id.startsWith(prefix)) {
-                        return true;
-                }
-        }
-        return false;
+	for (const prefix of prefixes) {
+		if (id.startsWith(prefix)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 function deriveOriginFromContext(
-        passive: PassiveLike,
-        context: PassiveVisibilityContext,
+	passive: PassiveLike,
+	context: PassiveVisibilityContext,
 ): PassiveOrigin {
 	const metaType = passive.meta?.source?.type;
 	if (metaType) {
@@ -139,22 +139,22 @@ function deriveOriginFromContext(
 	) {
 		return 'building-bonus';
 	}
-        if (context.developmentPassiveIds.has(passive.id)) {
-                return 'development';
-        }
-        if (hasPopulationPrefix(passive.id, context.populationPrefixes)) {
-                return 'population-assignment';
-        }
-        return 'standalone';
+	if (context.developmentPassiveIds.has(passive.id)) {
+		return 'development';
+	}
+	if (hasPopulationPrefix(passive.id, context.populationPrefixes)) {
+		return 'population-assignment';
+	}
+	return 'standalone';
 }
 
 export function derivePassiveOrigin(
-        passive: PassiveLike,
-        source: PassiveVisibilitySource,
-        options?: PassiveVisibilityOptions,
+	passive: PassiveLike,
+	source: PassiveVisibilitySource,
+	options?: PassiveVisibilityOptions,
 ): PassiveOrigin {
-        const context = resolveContext(source, options);
-        return deriveOriginFromContext(passive, context);
+	const context = resolveContext(source, options);
+	return deriveOriginFromContext(passive, context);
 }
 
 const HIDDEN_ORIGINS: Record<PassiveSurface, ReadonlySet<PassiveOrigin>> = {
@@ -173,9 +173,9 @@ const HIDDEN_ORIGINS: Record<PassiveSurface, ReadonlySet<PassiveOrigin>> = {
 };
 
 function shouldSurfacePassiveWithContext(
-        passive: PassiveLike,
-        context: PassiveVisibilityContext,
-        surface: PassiveSurface,
+	passive: PassiveLike,
+	context: PassiveVisibilityContext,
+	surface: PassiveSurface,
 ): boolean {
 	const origin = deriveOriginFromContext(passive, context);
 	const hidden = HIDDEN_ORIGINS[surface];
@@ -186,30 +186,30 @@ function shouldSurfacePassiveWithContext(
 }
 
 export function shouldSurfacePassive(
-        passive: PassiveLike,
-        source: PassiveVisibilitySource,
-        surface: PassiveSurface,
-        options?: PassiveVisibilityOptions,
+	passive: PassiveLike,
+	source: PassiveVisibilitySource,
+	surface: PassiveSurface,
+	options?: PassiveVisibilityOptions,
 ): boolean {
-        const context = resolveContext(source, options);
-        return shouldSurfacePassiveWithContext(passive, context, surface);
+	const context = resolveContext(source, options);
+	return shouldSurfacePassiveWithContext(passive, context, surface);
 }
 
 export function filterPassivesForSurface<T extends PassiveLike>(
-        passives: readonly T[],
-        source: PassiveVisibilitySource,
-        surface: PassiveSurface,
-        options?: PassiveVisibilityOptions,
+	passives: readonly T[],
+	source: PassiveVisibilitySource,
+	surface: PassiveSurface,
+	options?: PassiveVisibilityOptions,
 ): T[] {
-        const context = resolveContext(source, options);
-        return passives.filter((passive) =>
-                shouldSurfacePassiveWithContext(passive, context, surface),
-        );
+	const context = resolveContext(source, options);
+	return passives.filter((passive) =>
+		shouldSurfacePassiveWithContext(passive, context, surface),
+	);
 }
 
 export function createPassiveVisibilityContext(
-        source: PassiveOwner,
-        options?: PassiveVisibilityOptions,
+	source: PassiveOwner,
+	options?: PassiveVisibilityOptions,
 ): PassiveVisibilityContext {
-        return createContextFromOwner(source, options);
+	return createContextFromOwner(source, options);
 }
