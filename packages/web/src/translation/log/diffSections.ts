@@ -1,10 +1,9 @@
-import {
-	RESOURCES,
-	STATS,
-	POPULATION_ROLES,
-	SLOT_INFO,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
+import { STATS, SLOT_INFO } from '@kingdom-builder/contents';
+import type { PopulationConfig } from '@kingdom-builder/protocol';
+import type {
+	TranslationRegistry,
+	TranslationResourceRegistry,
+} from '../context';
 import { formatStatValue, statDisplaysAsPercent } from '../../utils/stats';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
 import {
@@ -23,9 +22,10 @@ export {
 } from './buildingLandChanges';
 
 function describeResourceChange(
-	key: ResourceKey,
+	key: string,
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
+	resources: TranslationResourceRegistry,
 	sources?: Record<string, string>,
 ): string | undefined {
 	const change = buildSignedDelta(
@@ -35,7 +35,7 @@ function describeResourceChange(
 	if (change.delta === 0) {
 		return undefined;
 	}
-	const info = RESOURCES[key];
+	const info = resources.get(key);
 	const label = info?.label ?? key;
 	const base = formatResourceChange(label, info?.icon, change);
 	const resourceSourceArgs: Parameters<typeof formatResourceSource> = [
@@ -47,19 +47,44 @@ function describeResourceChange(
 	const suffix = formatResourceSource(...resourceSourceArgs);
 	return suffix ? `${base}${suffix}` : base;
 }
+function resolvePopulationIcon(
+	populations: TranslationRegistry<PopulationConfig>,
+	roleId: string | undefined,
+): string {
+	if (roleId && populations.has(roleId)) {
+		try {
+			return populations.get(roleId)?.icon || '';
+		} catch {
+			return '';
+		}
+	}
+	for (const key of populations.keys()) {
+		try {
+			const icon = populations.get(key)?.icon;
+			if (icon) {
+				return icon;
+			}
+		} catch {
+			// ignore missing definitions
+		}
+	}
+	return '';
+}
+
 function describeStatBreakdown(
 	key: string,
 	change: SignedDelta,
 	player: Pick<PlayerSnapshot, 'population' | 'stats'>,
 	step: StepEffects,
+	populations: TranslationRegistry<PopulationConfig>,
 ): string | undefined {
 	const breakdown = findStatPctBreakdown(step, key);
 	if (!breakdown || change.delta <= 0) {
 		return undefined;
 	}
-	const role = breakdown.role as keyof typeof POPULATION_ROLES;
-	const count = player.population[role] ?? 0;
-	const popIcon = POPULATION_ROLES[role]?.icon || '';
+	const role = breakdown.role;
+	const count = role ? (player.population[role] ?? 0) : 0;
+	const popIcon = resolvePopulationIcon(populations, role);
 	const pctStat = breakdown.percentStat as keyof typeof STATS;
 	const growth = player.stats[pctStat] ?? 0;
 	const growthIcon = STATS[pctStat]?.icon || '';
@@ -80,11 +105,12 @@ export function appendResourceChanges(
 	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
-	resourceKeys: ResourceKey[],
+	resourceKeys: readonly string[],
+	resources: TranslationResourceRegistry,
 	sources?: Record<string, string>,
 ) {
 	for (const key of resourceKeys) {
-		const line = describeResourceChange(key, before, after, sources);
+		const line = describeResourceChange(key, before, after, resources, sources);
 		if (line) {
 			changes.push(line);
 		}
@@ -96,6 +122,7 @@ export function appendStatChanges(
 	after: PlayerSnapshot,
 	player: Pick<PlayerSnapshot, 'population' | 'stats'>,
 	step: StepEffects,
+	populations: TranslationRegistry<PopulationConfig>,
 ) {
 	for (const key of Object.keys(after.stats)) {
 		const change = buildSignedDelta(
@@ -113,7 +140,13 @@ export function appendStatChanges(
 			changes.push(line);
 			continue;
 		}
-		const breakdown = describeStatBreakdown(key, change, player, step);
+		const breakdown = describeStatBreakdown(
+			key,
+			change,
+			player,
+			step,
+			populations,
+		);
 		if (breakdown) {
 			changes.push(`${line}${breakdown}`);
 		} else {

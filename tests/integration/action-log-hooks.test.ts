@@ -13,6 +13,7 @@ import {
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { createSessionRegistries } from '../../packages/web/tests/helpers/sessionRegistries';
 
 type TimelineEntry = string | { text: string };
 
@@ -97,12 +98,19 @@ describe('content-driven action log hooks', () => {
 				rules: RULES,
 			});
 			const snapshot = session.getSnapshot();
+			const registries = createSessionRegistries();
+			registries.buildings.add(hall.id, hall);
+			registries.buildings.add(plainHall.id, plainHall);
+			registries.developments.add(improvement.id, improvement);
+
 			const translationContext = createTranslationContext(
 				snapshot,
 				{
 					actions: content.actions,
-					buildings,
-					developments,
+					buildings: registries.buildings,
+					developments: registries.developments,
+					populations: registries.populations,
+					resources: registries.resources,
 				},
 				snapshot.metadata,
 				{

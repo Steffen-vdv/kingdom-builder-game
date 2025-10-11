@@ -1,8 +1,4 @@
-import {
-	POPULATION_ROLES,
-	POPULATION_INFO,
-	LAND_INFO,
-} from '@kingdom-builder/contents';
+import { LAND_INFO } from '@kingdom-builder/contents';
 import { resolveBuildingIcon } from '../../content/buildingIcons';
 import { type TranslationDiffContext } from './context';
 import { type ResourceSourceEntry } from './types';
@@ -31,14 +27,36 @@ function normalizeMetaCount(rawCount: number): number {
 	return Math.max(1, rounded);
 }
 
+function resolvePopulationIcon(
+	context: TranslationDiffContext,
+	roleId: string | undefined,
+): string {
+	if (roleId && context.populations.has(roleId)) {
+		try {
+			return context.populations.get(roleId)?.icon || '';
+		} catch {
+			return '';
+		}
+	}
+	for (const key of context.populations.keys()) {
+		try {
+			const icon = context.populations.get(key)?.icon;
+			if (icon) {
+				return icon;
+			}
+		} catch {
+			// ignore missing definitions
+		}
+	}
+	return '';
+}
+
 function renderPopulationMetaIcons(
 	meta: ResourceSourceMeta,
-	_context: TranslationDiffContext,
+	context: TranslationDiffContext,
 ): string {
-	const role = meta.id as keyof typeof POPULATION_ROLES | undefined;
-	const icon = role
-		? POPULATION_ROLES[role]?.icon || role
-		: POPULATION_INFO.icon;
+	const role = typeof meta.id === 'string' ? meta.id : undefined;
+	const icon = resolvePopulationIcon(context, role);
 	if (!icon) {
 		return '';
 	}

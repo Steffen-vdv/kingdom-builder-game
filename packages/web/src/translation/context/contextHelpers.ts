@@ -10,7 +10,10 @@ import type {
 	TranslationPassiveModifierMap,
 	TranslationPlayer,
 	TranslationRegistry,
+	TranslationResourceDefinition,
+	TranslationResourceRegistry,
 } from './types';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 
 export function cloneRecord<T>(record: Record<string, T>): Record<string, T> {
 	return Object.freeze({ ...record });
@@ -79,6 +82,7 @@ export function clonePlayer(
 export function wrapRegistry<TDefinition>(registry: {
 	get(id: string): TDefinition;
 	has(id: string): boolean;
+	keys(): string[];
 }): TranslationRegistry<TDefinition> {
 	return Object.freeze({
 		get(id: string) {
@@ -86,6 +90,45 @@ export function wrapRegistry<TDefinition>(registry: {
 		},
 		has(id: string) {
 			return registry.has(id);
+		},
+		keys() {
+			return Object.freeze([...registry.keys()]);
+		},
+	});
+}
+
+function cloneResourceDefinition(
+	definition: SessionResourceDefinition,
+): TranslationResourceDefinition {
+	const tags =
+		definition.tags && definition.tags.length > 0
+			? Object.freeze([...definition.tags])
+			: undefined;
+	return Object.freeze({
+		key: definition.key,
+		...(definition.icon !== undefined ? { icon: definition.icon } : {}),
+		...(definition.label !== undefined ? { label: definition.label } : {}),
+		...(definition.description !== undefined
+			? { description: definition.description }
+			: {}),
+		...(tags ? { tags } : {}),
+	});
+}
+
+export function wrapResourceRegistry(
+	resources: Record<string, SessionResourceDefinition>,
+): TranslationResourceRegistry {
+	const map = new Map<string, TranslationResourceDefinition>();
+	for (const [key, definition] of Object.entries(resources)) {
+		map.set(key, cloneResourceDefinition(definition));
+	}
+	const keys = Object.freeze([...map.keys()]);
+	return Object.freeze({
+		get(key: string) {
+			return map.get(key);
+		},
+		keys() {
+			return keys;
 		},
 	});
 }

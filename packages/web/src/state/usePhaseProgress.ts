@@ -33,7 +33,7 @@ interface PhaseProgressOptions {
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'resources'
+		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
 }
 

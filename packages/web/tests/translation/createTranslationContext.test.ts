@@ -1,12 +1,4 @@
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	PHASES,
-	POPULATIONS,
-	RESOURCES,
-	STATS,
-} from '@kingdom-builder/contents';
+import { PHASES, STATS } from '@kingdom-builder/contents';
 import type {
 	EngineSessionSnapshot,
 	PlayerId,
@@ -16,15 +8,17 @@ import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
-		const [resourceKey] = Object.keys(RESOURCES) as ResourceKey[];
+		const registries = createSessionRegistries();
+		const [resourceKey] = Object.keys(registries.resources) as ResourceKey[];
 		const [statKey] = Object.keys(STATS) as string[];
-		const [populationId] = POPULATIONS.keys();
-		const [actionId] = ACTIONS.keys();
-		const [buildingId] = BUILDINGS.keys();
-		const [developmentId] = DEVELOPMENTS.keys();
+		const [populationId] = registries.populations.keys();
+		const [actionId] = registries.actions.keys();
+		const [buildingId] = registries.buildings.keys();
+		const [developmentId] = registries.developments.keys();
 		const [firstPhase] = PHASES;
 		const firstStep = firstPhase?.steps[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
@@ -71,9 +65,11 @@ describe('createTranslationContext', () => {
 				passives: [
 					{
 						id: passiveId,
-						icon: ACTIONS.get(actionId).icon,
+						icon: registries.actions.get(actionId).icon,
 						meta: {
-							source: { icon: BUILDINGS.get(buildingId).icon },
+							source: {
+								icon: registries.buildings.get(buildingId).icon,
+							},
 						},
 					},
 				],
@@ -116,10 +112,10 @@ describe('createTranslationContext', () => {
 					{
 						id: passiveId,
 						owner: 'A',
-						icon: ACTIONS.get(actionId).icon,
+						icon: registries.actions.get(actionId).icon,
 						meta: {
 							source: {
-								icon: BUILDINGS.get(buildingId).icon,
+								icon: registries.buildings.get(buildingId).icon,
 							},
 						},
 					},
@@ -128,19 +124,10 @@ describe('createTranslationContext', () => {
 			},
 			metadata,
 		};
-		const context = createTranslationContext(
-			session,
-			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
-			},
-			metadata,
-			{
-				ruleSnapshot: session.rules,
-				passiveRecords: session.passiveRecords,
-			},
-		);
+		const context = createTranslationContext(session, registries, metadata, {
+			ruleSnapshot: session.rules,
+			passiveRecords: session.passiveRecords,
+		});
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
 			note: 'legacy entry',
 		});

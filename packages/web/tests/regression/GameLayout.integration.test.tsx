@@ -40,6 +40,7 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
+import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
 
 const originalScrollTo = (
 	Element.prototype as { scrollTo?: typeof window.scrollTo }
@@ -105,13 +106,7 @@ describe('<GameLayout /> integration', () => {
 		tierDefinitions: [],
 		winConditions: [],
 	} as const;
-	const registries: SessionRegistriesPayload = {
-		actions: {},
-		buildings: {},
-		developments: {},
-		populations: {},
-		resources: {},
-	};
+	const registries: SessionRegistriesPayload = createSessionRegistriesPayload();
 	const metadata = {
 		passiveEvaluationModifiers: {},
 		effectLogs: { session: [] as unknown[] },

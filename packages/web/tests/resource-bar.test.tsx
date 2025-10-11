@@ -5,9 +5,6 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createTranslationContext } from '../src/translation/context';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
 	PHASES,
 	RULES,
 	RESOURCES,
@@ -110,12 +107,15 @@ describe('<ResourceBar /> happiness hover card', () => {
 		});
 		const handleHoverCard = vi.fn();
 		const clearHoverCard = vi.fn();
+		const sessionRegistries = createSessionRegistries();
 		const translationContext = createTranslationContext(
 			sessionState,
 			{
-				actions: ACTIONS,
-				buildings: BUILDINGS,
-				developments: DEVELOPMENTS,
+				actions: sessionRegistries.actions,
+				buildings: sessionRegistries.buildings,
+				developments: sessionRegistries.developments,
+				populations: sessionRegistries.populations,
+				resources: sessionRegistries.resources,
 			},
 			sessionState.metadata,
 			{
@@ -123,7 +123,6 @@ describe('<ResourceBar /> happiness hover card', () => {
 				passiveRecords: sessionState.passiveRecords,
 			},
 		);
-		const sessionRegistries = createSessionRegistries();
 		const sessionView = selectSessionView(sessionState, sessionRegistries);
 		currentGame = {
 			sessionId: 'test-session',

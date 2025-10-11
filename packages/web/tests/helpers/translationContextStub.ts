@@ -3,8 +3,13 @@ import type {
 	TranslationPassives,
 	TranslationPlayer,
 	TranslationRegistry,
+	TranslationResourceDefinition,
+	TranslationResourceRegistry,
 } from '../../src/translation/context';
 import type { RuleSnapshot } from '@kingdom-builder/engine';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import { createSessionRegistries } from './sessionRegistries';
+import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
 
@@ -26,8 +31,48 @@ const EMPTY_PASSIVES: TranslationPassives = {
 	},
 };
 
+function cloneResourceDefinition(
+	definition: SessionResourceDefinition,
+): TranslationResourceDefinition {
+	const tags =
+		definition.tags && definition.tags.length > 0
+			? [...definition.tags]
+			: undefined;
+	return {
+		key: definition.key,
+		...(definition.icon !== undefined ? { icon: definition.icon } : {}),
+		...(definition.label !== undefined ? { label: definition.label } : {}),
+		...(definition.description !== undefined
+			? { description: definition.description }
+			: {}),
+		...(tags ? { tags } : {}),
+	} satisfies TranslationResourceDefinition;
+}
+
+function createResourceRegistryFromSession(
+	resources: SessionRegistries['resources'],
+): TranslationResourceRegistry {
+	const map = new Map(
+		Object.entries(resources).map(([key, definition]) => [
+			key,
+			cloneResourceDefinition(definition),
+		]),
+	);
+	const keys = [...map.keys()];
+	return {
+		get(id: string) {
+			return map.get(id);
+		},
+		keys() {
+			return keys;
+		},
+	} satisfies TranslationResourceRegistry;
+}
+
 export function wrapTranslationRegistry<TDefinition>(
-	registry: Pick<TranslationRegistry<TDefinition>, 'get' | 'has'>,
+	registry: Pick<TranslationRegistry<TDefinition>, 'get' | 'has'> & {
+		keys?: () => readonly string[];
+	},
 ): TranslationRegistry<TDefinition> {
 	return {
 		get(id: string) {
@@ -35,6 +80,9 @@ export function wrapTranslationRegistry<TDefinition>(
 		},
 		has(id: string) {
 			return registry.has(id);
+		},
+		keys() {
+			return registry.keys ? registry.keys() : [];
 		},
 	};
 }
@@ -60,11 +108,18 @@ export function createTranslationContextStub(
 		actions: TranslationRegistry<unknown>;
 		buildings: TranslationRegistry<unknown>;
 		developments: TranslationRegistry<unknown>;
+		populations?: TranslationRegistry<unknown>;
+		resources?: TranslationResourceRegistry;
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: RuleSnapshot;
 	},
 ): TranslationContext {
+	const defaults = createSessionRegistries();
+	const resolvedPopulations =
+		options.populations ?? wrapTranslationRegistry(defaults.populations);
+	const resolvedResources =
+		options.resources ?? createResourceRegistryFromSession(defaults.resources);
 	const rules: RuleSnapshot =
 		options.rules ??
 		({
@@ -76,6 +131,8 @@ export function createTranslationContextStub(
 		actions: options.actions,
 		buildings: options.buildings,
 		developments: options.developments,
+		populations: resolvedPopulations,
+		resources: resolvedResources,
 		passives: EMPTY_PASSIVES,
 		phases: options.phases,
 		activePlayer: options.activePlayer,

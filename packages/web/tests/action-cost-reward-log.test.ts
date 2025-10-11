@@ -16,8 +16,11 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
-	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	createEngineDiffContext,
+	createTestResourceRegistry,
+} from './helpers/diffContext';
 import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
@@ -88,7 +91,16 @@ describe('action cost and reward logging', () => {
 		const costs = getActionCosts(refundAction.id, engineContext);
 		performAction(refundAction.id, engineContext);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const diffContext = createTranslationDiffContext(engineContext);
+		const diffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(SYNTHETIC_RESOURCES),
+		);
 		const actionDefinition = engineContext.actions.get(refundAction.id);
 		if (!actionDefinition) {
 			throw new Error('Missing refund action definition');

@@ -6,6 +6,7 @@ import {
 	STATS,
 } from '@kingdom-builder/contents';
 import { appendStatChanges } from '../src/translation/log/diffSections';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 import { type PlayerSnapshot } from '../src/translation/log';
 import { type StepEffects } from '../src/translation/log/statBreakdown';
 import { formatPercentBreakdown } from '../src/translation/log/diffFormatting';
@@ -69,7 +70,15 @@ describe('appendStatChanges', () => {
 			],
 		};
 		const changes: string[] = [];
-		appendStatChanges(changes, before, after, player, raiseStrengthEffects);
+		const registries = createSessionRegistries();
+		appendStatChanges(
+			changes,
+			before,
+			after,
+			player,
+			raiseStrengthEffects,
+			registries.populations,
+		);
 		const label = STATS[Stat.armyStrength]?.label ?? Stat.armyStrength;
 		const line = changes.find((entry) => entry.includes(label));
 		expect(line).toBeDefined();

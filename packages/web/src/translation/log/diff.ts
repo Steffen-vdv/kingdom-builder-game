@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import { collectResourceSources } from './resourceSources';
 import { type TranslationDiffContext } from './resourceSources/context';
 import {
@@ -17,7 +16,7 @@ export function diffStepSnapshots(
 	nextSnapshot: PlayerSnapshot,
 	stepEffects: StepEffects,
 	diffContext: TranslationDiffContext,
-	resourceKeys: ResourceKey[] = collectResourceKeys(
+	resourceKeys: readonly string[] = collectResourceKeys(
 		previousSnapshot,
 		nextSnapshot,
 	),
@@ -29,6 +28,7 @@ export function diffStepSnapshots(
 		previousSnapshot,
 		nextSnapshot,
 		resourceKeys,
+		diffContext.resources,
 		sources,
 	);
 	appendStatChanges(
@@ -37,6 +37,7 @@ export function diffStepSnapshots(
 		nextSnapshot,
 		nextSnapshot,
 		stepEffects,
+		diffContext.populations,
 	);
 	appendBuildingChanges(
 		changeSummaries,

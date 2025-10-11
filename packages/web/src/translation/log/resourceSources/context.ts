@@ -1,8 +1,13 @@
 import type {
 	BuildingConfig,
 	DevelopmentConfig,
+	PopulationConfig,
 	SessionPlayerId,
 } from '@kingdom-builder/protocol';
+import type {
+	TranslationRegistry,
+	TranslationResourceRegistry,
+} from '../../context';
 import { type PassiveDescriptor, type PassiveModifierMap } from './types';
 
 interface PassiveLookup {
@@ -23,14 +28,10 @@ export interface TranslationDiffContext {
 			developments: ReadonlyArray<string>;
 		}>;
 	};
-	readonly buildings: {
-		get(id: string): BuildingConfig;
-		has(id: string): boolean;
-	};
-	readonly developments: {
-		get(id: string): DevelopmentConfig;
-		has(id: string): boolean;
-	};
+	readonly buildings: TranslationRegistry<BuildingConfig>;
+	readonly developments: TranslationRegistry<DevelopmentConfig>;
+	readonly populations: TranslationRegistry<PopulationConfig>;
+	readonly resources: TranslationResourceRegistry;
 	readonly passives: TranslationDiffPassives;
 	evaluate(evaluator: {
 		type: string;
@@ -86,14 +87,10 @@ function evaluateDefinition(
 
 export function createTranslationDiffContext(context: {
 	activePlayer: TranslationDiffContext['activePlayer'];
-	buildings: {
-		get(id: string): BuildingConfig;
-		has?(id: string): boolean;
-	};
-	developments: {
-		get(id: string): DevelopmentConfig;
-		has?(id: string): boolean;
-	};
+	buildings: TranslationRegistry<BuildingConfig>;
+	developments: TranslationRegistry<DevelopmentConfig>;
+	populations: TranslationRegistry<PopulationConfig>;
+	resources: TranslationResourceRegistry;
 	passives: unknown;
 }): TranslationDiffContext {
 	const rawPassives = context.passives as PassiveLookup | undefined;
@@ -108,18 +105,10 @@ export function createTranslationDiffContext(context: {
 	}
 	return {
 		activePlayer: context.activePlayer,
-		buildings: {
-			get: context.buildings.get.bind(context.buildings),
-			has: context.buildings.has
-				? context.buildings.has.bind(context.buildings)
-				: (id: string) => context.buildings.get(id) !== undefined,
-		},
-		developments: {
-			get: context.developments.get.bind(context.developments),
-			has: context.developments.has
-				? context.developments.has.bind(context.developments)
-				: (id: string) => context.developments.get(id) !== undefined,
-		},
+		buildings: context.buildings,
+		developments: context.developments,
+		populations: context.populations,
+		resources: context.resources,
 		passives,
 		evaluate(evaluator) {
 			return Number(evaluateDefinition(evaluator, this));

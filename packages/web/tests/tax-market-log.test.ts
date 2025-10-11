@@ -22,8 +22,11 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
-	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	createEngineDiffContext,
+	createTestResourceRegistry,
+} from './helpers/diffContext';
 import {
 	appendSubActionChanges,
 	filterActionDiffChanges,
@@ -95,7 +98,16 @@ describe('tax action logging with market', () => {
 			engineContext,
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(SYNTHETIC_RESOURCES),
+		);
 		const changes = diffStepSnapshots(
 			before,
 			after,

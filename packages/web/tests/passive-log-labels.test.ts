@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
-import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import { logContent } from '../src/translation/content';
+import {
+	createEngineDiffContext,
+	createTestResourceRegistry,
+} from './helpers/diffContext';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -59,7 +60,17 @@ describe('passive log labels', () => {
 			engineContext,
 		);
 
-		const diffContext = createTranslationDiffContext(engineContext);
+		const registries = createSessionRegistries();
+		const diffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(registries.resources),
+		);
 		const activationLines = diffStepSnapshots(
 			beforeActivation,
 			afterActivation,
@@ -127,7 +138,17 @@ describe('passive log labels', () => {
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
 
-		const diffContext = createTranslationDiffContext(engineContext);
+		const registries = createSessionRegistries();
+		const diffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(registries.resources),
+		);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('Castle Walls activated'))).toBe(
 			false,
@@ -180,7 +201,17 @@ describe('passive log labels', () => {
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
 
-		const diffContext = createTranslationDiffContext(engineContext);
+		const registries = createSessionRegistries();
+		const diffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(registries.resources),
+		);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
 

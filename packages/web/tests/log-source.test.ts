@@ -19,11 +19,11 @@ import {
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_LAND_INFO,
 } from './fixtures/syntheticTaxLog';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+	createEngineDiffContext,
+	createTestResourceRegistry,
+} from './helpers/diffContext';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -72,7 +72,16 @@ describe('log resource sources', () => {
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(SYNTHETIC_RESOURCES),
+		);
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -124,7 +133,16 @@ describe('log resource sources', () => {
 		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 		performAction(SYNTHETIC_IDS.taxAction, engineContext);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(SYNTHETIC_RESOURCES),
+		);
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -180,7 +198,16 @@ describe('log resource sources', () => {
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(SYNTHETIC_RESOURCES),
+		);
 		const lines = diffStepSnapshots(
 			before,
 			after,

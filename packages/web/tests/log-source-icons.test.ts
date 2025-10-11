@@ -1,37 +1,55 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	GAME_START,
 	RULES,
-	RESOURCES,
-	Resource,
 	LAND_INFO,
-	POPULATION_INFO,
 } from '@kingdom-builder/contents';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
+import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+	createEngineDiffContext,
+	createTestResourceRegistry,
+} from './helpers/diffContext';
 
-const RESOURCE_KEYS = [Resource.gold] as const;
+const registries = createSessionRegistries();
+const resourceKeyList = Object.keys(registries.resources) as string[];
+if (resourceKeyList.length === 0) {
+	throw new Error(
+		'Session registries must include at least one resource definition.',
+	);
+}
+const [resourceKey] = resourceKeyList as [string, ...string[]];
+const RESOURCE_KEYS = [resourceKey] as const;
 
 describe('log resource source icon registry', () => {
 	const createEngineContext = () =>
 		createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
 		});
+
+	const toDiffContext = (
+		engineContext: ReturnType<typeof createEngineContext>,
+	) => {
+		const resources = createTestResourceRegistry(registries.resources);
+		return createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			resources,
+		);
+	};
 
 	const scenarios = [
 		{
@@ -41,7 +59,7 @@ describe('log resource source icon registry', () => {
 				expect(roleId).toBeTruthy();
 				const icon = roleId
 					? engineContext.populations.get(roleId)?.icon || roleId
-					: POPULATION_INFO.icon || '';
+					: '';
 				expect(icon).toBeTruthy();
 				return {
 					meta: { type: 'population', id: roleId, count: 2 },
@@ -54,11 +72,7 @@ describe('log resource source icon registry', () => {
 			getMeta: (engineContext: ReturnType<typeof createEngineContext>) => {
 				const devId = engineContext.developments
 					.keys()
-					.find((id) =>
-						Boolean(
-							engineContext.developments.get(id)?.icon,
-						),
-					);
+					.find((id) => Boolean(engineContext.developments.get(id)?.icon));
 				expect(devId).toBeTruthy();
 				const icon = devId
 					? engineContext.developments.get(devId)?.icon || ''
@@ -75,11 +89,7 @@ describe('log resource source icon registry', () => {
 			getMeta: (engineContext: ReturnType<typeof createEngineContext>) => {
 				const buildingId = engineContext.buildings
 					.keys()
-					.find((id) =>
-						Boolean(
-							engineContext.buildings.get(id)?.icon,
-						),
-					);
+					.find((id) => Boolean(engineContext.buildings.get(id)?.icon));
 				expect(buildingId).toBeTruthy();
 				const icon = buildingId
 					? engineContext.buildings.get(buildingId)?.icon || ''
@@ -110,14 +120,14 @@ describe('log resource source icon registry', () => {
 			const effect = {
 				type: 'resource' as const,
 				method: 'add' as const,
-				params: { key: Resource.gold, amount: 2 },
+				params: { key: resourceKey, amount: 2 },
 				meta: { source: meta },
 			};
 			const step = { id: `meta-icons-${name}`, effects: [effect] };
 			const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 			runEffects([effect], engineContext);
 			const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-			const diffContext = createTranslationDiffContext(engineContext);
+			const diffContext = toDiffContext(engineContext);
 			const lines = diffStepSnapshots(
 				before,
 				after,
@@ -125,9 +135,11 @@ describe('log resource source icon registry', () => {
 				diffContext,
 				RESOURCE_KEYS,
 			);
-			const goldInfo = RESOURCES[Resource.gold];
+			const resourceInfo = registries.resources[resourceKey];
 			const goldLine = lines.find((line) =>
-				line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
+				line.startsWith(
+					`${resourceInfo?.icon ?? ''} ${resourceInfo?.label ?? resourceKey}`,
+				),
 			);
 			expect(goldLine).toBeTruthy();
 			const match = goldLine?.match(/ from (.+)\)$/);

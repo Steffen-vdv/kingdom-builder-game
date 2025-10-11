@@ -14,8 +14,11 @@ import {
 	snapshotPlayer,
 	diffStepSnapshots,
 	logContent,
-	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	createEngineDiffContext,
+	createTestResourceRegistry,
+} from './helpers/diffContext';
 import {
 	appendSubActionChanges,
 	filterActionDiffChanges,
@@ -72,7 +75,16 @@ describe('sub-action logging', () => {
 		const costs = getActionCosts(synthetic.plow.id, engineContext);
 		const traces = performAction(synthetic.plow.id, engineContext);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const diffContext = createTranslationDiffContext(engineContext);
+		const diffContext = createEngineDiffContext(
+			{
+				activePlayer: engineContext.activePlayer,
+				buildings: engineContext.buildings,
+				developments: engineContext.developments,
+				populations: engineContext.populations,
+				passives: engineContext.passives,
+			},
+			createTestResourceRegistry(SYNTHETIC_RESOURCES),
+		);
 		const changes = diffStepSnapshots(
 			before,
 			after,

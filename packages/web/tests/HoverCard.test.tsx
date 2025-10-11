@@ -50,9 +50,11 @@ const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
 const translationContext = createTranslationContext(
 	engineSnapshot,
 	{
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
+		actions: sessionRegistries.actions,
+		buildings: sessionRegistries.buildings,
+		developments: sessionRegistries.developments,
+		populations: sessionRegistries.populations,
+		resources: sessionRegistries.resources,
 	},
 	engineSnapshot.metadata,
 	{

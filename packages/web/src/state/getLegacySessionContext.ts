@@ -162,7 +162,10 @@ interface LegacySessionContextInput {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	passiveRecords: SessionSnapshot['passiveRecords'];
-	registries: Pick<SessionRegistries, 'actions' | 'buildings' | 'developments'>;
+	registries: Pick<
+		SessionRegistries,
+		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+	>;
 }
 
 function createDiffContext(
@@ -195,6 +198,9 @@ function createDiffContext(
 			translationContext.buildings as unknown as TranslationDiffContext['buildings'],
 		developments:
 			translationContext.developments as unknown as TranslationDiffContext['developments'],
+		populations:
+			translationContext.populations as unknown as TranslationDiffContext['populations'],
+		resources: translationContext.resources,
 		passives,
 		evaluate,
 	};

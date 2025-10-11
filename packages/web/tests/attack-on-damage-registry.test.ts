@@ -35,6 +35,11 @@ function createTranslationContext(): TranslationContext {
 			get: vi.fn(),
 			has: vi.fn(),
 		},
+		populations: {
+			get: vi.fn(),
+			has: vi.fn(() => false),
+			keys: vi.fn(() => []),
+		},
 		passives: {
 			list: vi.fn(() => []),
 			get: vi.fn(() => undefined),
@@ -42,6 +47,28 @@ function createTranslationContext(): TranslationContext {
 			definitions: vi.fn(() => []),
 			get evaluationMods() {
 				return emptyModifiers;
+			},
+		},
+		resources: {
+			get(key: string) {
+				const info = RESOURCES[key as Resource];
+				if (!info) {
+					return undefined;
+				}
+				return {
+					key,
+					...(info.icon !== undefined ? { icon: info.icon } : {}),
+					...(info.label !== undefined ? { label: info.label } : {}),
+					...(info.description !== undefined
+						? { description: info.description }
+						: {}),
+					...(info.tags && info.tags.length > 0
+						? { tags: [...info.tags] as string[] }
+						: {}),
+				};
+			},
+			keys() {
+				return Object.keys(RESOURCES);
 			},
 		},
 		phases: [],

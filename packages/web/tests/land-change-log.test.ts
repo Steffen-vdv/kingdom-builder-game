@@ -1,46 +1,62 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	GAME_START,
 	RULES,
 	LAND_INFO,
 } from '@kingdom-builder/contents';
 import { logContent } from '../src/translation/content';
-import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
 	formatIconLabel,
 	formatLogHeadline,
 	LOG_KEYWORDS,
 } from '../src/translation/log/logMessages';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import {
+	createEngineDiffContext,
+	createTestResourceRegistry,
+} from './helpers/diffContext';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
 function createTestContext() {
-	return createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
+	const registries = createSessionRegistries();
+	const engineContext = createEngine({
+		actions: registries.actions,
+		buildings: registries.buildings,
+		developments: registries.developments,
+		populations: registries.populations,
 		phases: PHASES,
 		start: GAME_START,
 		rules: RULES,
 	});
+	return { engineContext, registries };
+}
+
+function toDiffContext(
+	engineContext: ReturnType<typeof createEngine>,
+	registries: ReturnType<typeof createSessionRegistries>,
+) {
+	const resources = createTestResourceRegistry(registries.resources);
+	return createEngineDiffContext(
+		{
+			activePlayer: engineContext.activePlayer,
+			buildings: engineContext.buildings,
+			developments: engineContext.developments,
+			populations: engineContext.populations,
+			passives: engineContext.passives,
+		},
+		resources,
+	);
 }
 
 describe('land change log formatting', () => {
 	it('logs gained land entries with icon and label', () => {
-		const engineContext = createTestContext();
+		const { engineContext, registries } = createTestContext();
 		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 		runEffects(
 			[
@@ -52,7 +68,7 @@ describe('land change log formatting', () => {
 			engineContext,
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = toDiffContext(engineContext, registries);
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -75,7 +91,7 @@ describe('land change log formatting', () => {
 	});
 
 	it('logs developed entries for new land improvements', () => {
-		const engineContext = createTestContext();
+		const { engineContext, registries } = createTestContext();
 		runEffects(
 			[
 				{
@@ -117,7 +133,7 @@ describe('land change log formatting', () => {
 			engineContext,
 		);
 		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = toDiffContext(engineContext, registries);
 		const lines = diffStepSnapshots(
 			before,
 			after,
