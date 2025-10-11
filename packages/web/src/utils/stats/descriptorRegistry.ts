@@ -152,9 +152,14 @@ function createDescriptorRegistry(
 			};
 			return {
 				resolve: resolvePhase,
-				formatDetail: (id, detail) => formatStepLabel(id, detail),
+				formatDetail: (id, detail) =>
+					formatStepLabel(translationContext.phases, id, detail),
 				formatDependency: (link) => {
-					const label = formatPhaseStep(link.id, link.detail);
+					const label = formatPhaseStep(
+						translationContext.phases,
+						link.id,
+						link.detail,
+					);
 					if (label) {
 						return label.trim();
 					}

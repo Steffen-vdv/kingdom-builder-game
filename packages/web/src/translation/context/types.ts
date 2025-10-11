@@ -24,6 +24,7 @@ export interface TranslationIconLabel {
 	icon?: string;
 	label?: string;
 	description?: string;
+	displayAsPercent?: boolean;
 }
 
 export interface TranslationModifierInfo {
@@ -40,6 +41,9 @@ export interface TranslationAssets {
 	readonly slot: Readonly<TranslationIconLabel>;
 	readonly passive: Readonly<TranslationIconLabel>;
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
+	readonly triggers?: Readonly<
+		Record<string, { icon?: string; future?: string; past?: string }>
+	>;
 	formatPassiveRemoval(description: string): string;
 }
 

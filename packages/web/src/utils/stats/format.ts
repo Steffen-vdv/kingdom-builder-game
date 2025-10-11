@@ -1,3 +1,4 @@
+import { STATS } from '@kingdom-builder/contents';
 import type {
 	TranslationAssets,
 	TranslationPhase,
@@ -11,15 +12,23 @@ interface FormattablePhaseStep extends TranslationPhaseStep {
 
 export function statDisplaysAsPercent(
 	key: string,
-	assets: TranslationAssets,
+	assets?: TranslationAssets | null,
 ): boolean {
-	return Boolean(assets.stats[key]?.displayAsPercent);
+	const asset = assets?.stats?.[key];
+	if (asset && typeof asset.displayAsPercent === 'boolean') {
+		return asset.displayAsPercent;
+	}
+	const stat = STATS[key as keyof typeof STATS];
+	if (stat && typeof stat.displayAsPercent === 'boolean') {
+		return stat.displayAsPercent;
+	}
+	return false;
 }
 
 export function formatStatValue(
 	key: string,
 	value: number,
-	assets: TranslationAssets,
+	assets?: TranslationAssets | null,
 ): string {
 	return statDisplaysAsPercent(key, assets) ? `${value * 100}%` : String(value);
 }
@@ -45,15 +54,29 @@ export function formatDetailText(detail: string): string {
 }
 
 export function formatStepLabel(
-	phases: readonly TranslationPhase[],
+	phases: readonly TranslationPhase[] | undefined,
 	phaseId?: string,
 	stepId?: string,
+): string | undefined;
+export function formatStepLabel(
+	phaseId?: string,
+	stepId?: string,
+): string | undefined;
+export function formatStepLabel(
+	phasesOrPhaseId?: readonly TranslationPhase[] | string,
+	phaseIdOrStepId?: string,
+	maybeStepId?: string,
 ): string | undefined {
+	const { phases, phaseId, stepId } = normalizePhaseArgs(
+		phasesOrPhaseId,
+		phaseIdOrStepId,
+		maybeStepId,
+	);
 	if (!stepId) {
 		return undefined;
 	}
 	const phase = phaseId
-		? phases.find((phaseItem) => phaseItem.id === phaseId)
+		? phases?.find((phaseItem) => phaseItem.id === phaseId)
 		: undefined;
 	const step = findPhaseStep(phase?.steps, stepId);
 	if (!step) {
@@ -73,15 +96,29 @@ export function formatStepLabel(
 }
 
 export function formatPhaseStep(
-	phases: readonly TranslationPhase[],
+	phases: readonly TranslationPhase[] | undefined,
 	phaseId?: string,
 	stepId?: string,
+): string | undefined;
+export function formatPhaseStep(
+	phaseId?: string,
+	stepId?: string,
+): string | undefined;
+export function formatPhaseStep(
+	phasesOrPhaseId?: readonly TranslationPhase[] | string,
+	phaseIdOrStepId?: string,
+	maybeStepId?: string,
 ): string | undefined {
+	const { phases, phaseId, stepId } = normalizePhaseArgs(
+		phasesOrPhaseId,
+		phaseIdOrStepId,
+		maybeStepId,
+	);
 	if (!stepId) {
 		return undefined;
 	}
 	const phase = phaseId
-		? phases.find((phaseItem) => phaseItem.id === phaseId)
+		? phases?.find((phaseItem) => phaseItem.id === phaseId)
 		: undefined;
 	const step = findPhaseStep(phase?.steps, stepId);
 	if (!step) {
@@ -116,18 +153,62 @@ function findPhaseStep(
 			id?: unknown;
 			icon?: unknown;
 			title?: unknown;
+			triggers?: unknown;
 		};
 		if (record.id !== stepId) {
 			continue;
 		}
-		return {
-			id: stepId,
-			triggers: Array.isArray(record.triggers)
-				? (record.triggers as readonly string[])
-				: undefined,
-			icon: typeof record.icon === 'string' ? record.icon : undefined,
-			title: typeof record.title === 'string' ? record.title : undefined,
-		} satisfies FormattablePhaseStep;
+		const step: FormattablePhaseStep = { id: stepId };
+		if (Array.isArray(record.triggers)) {
+			step.triggers = record.triggers as readonly string[];
+		}
+		if (typeof record.icon === 'string') {
+			step.icon = record.icon;
+		}
+		if (typeof record.title === 'string') {
+			step.title = record.title;
+		}
+		return step;
 	}
 	return undefined;
+}
+
+function normalizePhaseArgs(
+	phasesOrPhaseId?: readonly TranslationPhase[] | string,
+	phaseIdOrStepId?: string,
+	maybeStepId?: string,
+): {
+	phases?: readonly TranslationPhase[];
+	phaseId?: string;
+	stepId?: string;
+} {
+	const result: {
+		phases?: readonly TranslationPhase[];
+		phaseId?: string;
+		stepId?: string;
+	} = {};
+	if (Array.isArray(phasesOrPhaseId)) {
+		result.phases = phasesOrPhaseId;
+		if (phaseIdOrStepId !== undefined) {
+			result.phaseId = phaseIdOrStepId;
+		}
+		if (maybeStepId !== undefined) {
+			result.stepId = maybeStepId;
+		}
+		return result;
+	}
+	if (typeof phasesOrPhaseId === 'string') {
+		result.phaseId = phasesOrPhaseId;
+		if (phaseIdOrStepId !== undefined) {
+			result.stepId = phaseIdOrStepId;
+		}
+		return result;
+	}
+	if (phaseIdOrStepId !== undefined) {
+		result.phaseId = phaseIdOrStepId;
+	}
+	if (maybeStepId !== undefined) {
+		result.stepId = maybeStepId;
+	}
+	return result;
 }
