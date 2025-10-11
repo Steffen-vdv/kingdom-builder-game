@@ -251,6 +251,11 @@ export function GameProviderInner({
 		void runUntilActionPhase();
 	}, [runUntilActionPhase]);
 
+	const metadataSnapshot = useMemo(
+		() => sessionMetadata ?? cachedSessionSnapshot.metadata,
+		[sessionMetadata, cachedSessionSnapshot],
+	);
+
 	const metadata = useMemo<SessionMetadataFetchers>(
 		() => ({
 			getRuleSnapshot: () => ruleSnapshot,
@@ -337,7 +342,10 @@ export function GameProviderInner({
 	};
 
 	return (
-		<RegistryMetadataProvider registries={registries}>
+		<RegistryMetadataProvider
+			registries={registries}
+			metadata={metadataSnapshot}
+		>
 			<GameEngineContext.Provider value={value}>
 				{children}
 			</GameEngineContext.Provider>
