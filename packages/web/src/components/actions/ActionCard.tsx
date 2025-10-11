@@ -1,11 +1,11 @@
 import React from 'react';
-import type { Focus } from '@kingdom-builder/contents';
 import { type Summary } from '../../translation';
 import { renderSummary, renderCosts } from '../../translation/render';
 import OptionList from './OptionList';
 import StepBadge from './StepBadge';
 import { type ActionCardOption } from './OptionCard';
-import { FOCUS_GRADIENTS } from './focusGradients';
+import { resolveFocusGradient } from './focusGradients';
+import type { FocusId } from './types';
 import { stripSummary } from './stripSummary';
 
 export type { ActionCardOption } from './OptionCard';
@@ -27,7 +27,7 @@ export interface ActionCardProps {
 	onClick?: (() => void) | undefined;
 	onMouseEnter?: (() => void) | undefined;
 	onMouseLeave?: (() => void) | undefined;
-	focus?: Focus | undefined;
+	focus?: FocusId | undefined;
 	variant?: ActionCardVariant | undefined;
 	stepIndex?: number | undefined;
 	stepCount?: number | undefined;
@@ -67,8 +67,7 @@ export default function ActionCard({
 	onCancel,
 	multiStep = false,
 }: ActionCardProps): JSX.Element {
-	const focusClass =
-		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
+	const focusClass = resolveFocusGradient(focus);
 	const isBack = variant === 'back';
 	const interactive = !isBack && enabled;
 	const containerClass = [

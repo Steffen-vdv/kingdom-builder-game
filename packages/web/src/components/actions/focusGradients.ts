@@ -1,6 +1,6 @@
-import type { Focus } from '@kingdom-builder/contents';
+import type { FocusId } from './types';
 
-type GradientMap = Record<Focus, string> & { default: string };
+type GradientMap = Record<string, string> & { default: string };
 
 function joinGradient(parts: readonly string[]): string {
 	return parts.join(' ');
@@ -28,3 +28,13 @@ export const FOCUS_GRADIENTS: GradientMap = {
 		'dark:from-rose-900/40 dark:to-rose-800/20',
 	]),
 };
+
+export function resolveFocusGradient(focus: FocusId | undefined): string {
+	if (focus) {
+		const gradient = FOCUS_GRADIENTS[focus];
+		if (typeof gradient === 'string') {
+			return gradient;
+		}
+	}
+	return FOCUS_GRADIENTS.default;
+}

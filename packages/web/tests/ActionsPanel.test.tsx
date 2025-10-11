@@ -12,8 +12,6 @@ import { render, screen, within, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
-import { POPULATIONS } from '@kingdom-builder/contents';
-import type { PopulationDef } from '@kingdom-builder/contents';
 import { translateRequirementFailure } from '../src/translation';
 import { createActionsPanelGame } from './helpers/actionsPanel';
 import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
@@ -41,25 +39,12 @@ const translateRequirementFailureMock = vi.mocked(translateRequirementFailure);
 
 let mockGame = createActionsPanelGame();
 let metadata = mockGame.metadata;
-const originalPopulationGet = POPULATIONS.get.bind(POPULATIONS);
-const populationEntriesSpy = vi.spyOn(POPULATIONS, 'entries');
-const populationGetSpy = vi.spyOn(POPULATIONS, 'get');
 
 function setScenario(options?: ActionsPanelGameOptions) {
 	mockGame = createActionsPanelGame(options);
 	metadata = mockGame.metadata;
 	requirementIconsMock.mockImplementation((actionId: string) => {
 		return metadata.requirementIcons.get(actionId) ?? [];
-	});
-	populationEntriesSpy.mockImplementation(() =>
-		metadata.populationRoles.map((role) => [role.id, role]),
-	);
-	populationGetSpy.mockImplementation((id: string) => {
-		const match = metadata.populationRoles.find((role) => role.id === id);
-		if (match) {
-			return match as PopulationDef;
-		}
-		return originalPopulationGet(id);
 	});
 }
 
@@ -71,16 +56,11 @@ afterEach(() => {
 	cleanup();
 });
 
-afterAll(() => {
-	populationEntriesSpy.mockRestore();
-	populationGetSpy.mockRestore();
-});
+afterAll(() => {});
 
 beforeEach(() => {
 	requirementIconsMock.mockReset();
 	translateRequirementFailureMock.mockClear();
-	populationEntriesSpy.mockReset();
-	populationGetSpy.mockReset();
 	setScenario();
 });
 

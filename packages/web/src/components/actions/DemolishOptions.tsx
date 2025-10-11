@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import type { Focus } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	splitSummary,
@@ -20,6 +19,10 @@ import {
 	type DisplayPlayer,
 } from './types';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
+import {
+	resolveActionDisplay,
+	resolveResourceDisplay,
+} from './actionSelectors';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -42,7 +45,6 @@ export default function DemolishOptions({
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
 		session,
-		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
@@ -53,7 +55,10 @@ export default function DemolishOptions({
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)
 			.map((buildingId) => {
-				const building = sessionView.buildings.get(buildingId);
+				let building: Building | undefined;
+				if (translationContext.buildings.has(buildingId)) {
+					building = translationContext.buildings.get(buildingId) as Building;
+				}
 				if (!building) {
 					return null;
 				}
@@ -65,7 +70,10 @@ export default function DemolishOptions({
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
-				const focus = building.focus as Focus | undefined;
+				const focus =
+					typeof building.focus === 'string'
+						? (building.focus as Building['focus'])
+						: undefined;
 				return { id: buildingId, building, costs, total, focus };
 			})
 			.filter(
@@ -76,7 +84,7 @@ export default function DemolishOptions({
 					building: Building;
 					costs: Record<string, number>;
 					total: number;
-					focus: Focus | undefined;
+					focus: Building['focus'];
 				} => entry !== null,
 			)
 			.sort((first, second) => {
@@ -85,27 +93,23 @@ export default function DemolishOptions({
 				}
 				return first.building.name.localeCompare(second.building.name);
 			});
-	}, [
-		session,
-		sessionView.buildings,
-		action.id,
-		actionCostResource,
-		player.buildings.size,
-	]);
+	}, [session, action.id, actionCostResource, player.buildings.size]);
 
 	if (entries.length === 0) {
 		return null;
 	}
 
-	const actionInfo = sessionView.actions.get(action.id);
+	const actionDisplay = resolveActionDisplay(translationContext, action);
 	const actionHoverTitle = formatIconTitle(
-		actionInfo?.icon,
-		actionInfo?.name ?? action.name,
+		actionDisplay.icon,
+		actionDisplay.name ?? action.name,
 	);
+	const resolveResource = (resourceKey: string) =>
+		resolveResourceDisplay(translationContext.assets, resourceKey);
 	return (
 		<div>
 			<h3 className="font-medium flex flex-wrap items-center gap-2">
-				{renderIconLabel(actionInfo?.icon, actionInfo?.name ?? action.name)}
+				{renderIconLabel(actionDisplay.icon, actionDisplay.name ?? action.name)}
 				<span className="italic text-sm font-normal">
 					(Removes a structure and its ongoing benefits)
 				</span>
@@ -124,6 +128,7 @@ export default function DemolishOptions({
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
+						resolveResource,
 					);
 					const title = !implemented
 						? 'Not implemented yet'

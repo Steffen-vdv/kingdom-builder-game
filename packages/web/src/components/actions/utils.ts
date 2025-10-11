@@ -1,4 +1,6 @@
-import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
+import type { IconLabelDisplay } from './actionSelectors';
+
+type ResourceDisplayResolver = (resourceKey: string) => IconLabelDisplay;
 
 export function playerHasRequiredResources(
 	playerResources: Record<string, number>,
@@ -34,13 +36,10 @@ export function getOptionalProperty<T>(
 	return undefined;
 }
 
-function isResourceKey(resourceKey: string): resourceKey is ResourceKey {
-	return resourceKey in RESOURCES;
-}
-
 export function formatMissingResources(
 	costs: Record<string, number>,
 	playerResources: Record<string, number | undefined>,
+	resolveResourceDisplay: ResourceDisplayResolver,
 ): string | undefined {
 	const missing: string[] = [];
 	for (const [resourceKey, cost] of Object.entries(costs)) {
@@ -49,12 +48,9 @@ export function formatMissingResources(
 		if (shortage <= 0) {
 			continue;
 		}
-		if (isResourceKey(resourceKey)) {
-			const resourceInfo = RESOURCES[resourceKey];
-			missing.push(`${shortage} ${resourceInfo.icon} ${resourceInfo.label}`);
-		} else {
-			missing.push(`${shortage} ${resourceKey}`);
-		}
+		const display = resolveResourceDisplay(resourceKey);
+		const descriptor = [display.icon, display.label].filter(Boolean).join(' ');
+		missing.push(`${shortage} ${descriptor || resourceKey}`);
 	}
 	if (missing.length === 0) {
 		return undefined;

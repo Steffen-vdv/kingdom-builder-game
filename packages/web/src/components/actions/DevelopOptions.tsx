@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { SLOT_INFO } from '@kingdom-builder/contents';
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
@@ -16,17 +15,25 @@ import {
 	type DisplayPlayer,
 } from './types';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
+import {
+	resolveActionDisplay,
+	resolveResourceDisplay,
+	resolveSlotDisplay,
+} from './actionSelectors';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
 	'dark:from-slate-900/80 dark:to-slate-900/60',
 ].join(' ');
 
-function formatLandRequirement(prefix: string): string {
-	return [
-		`${prefix} ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
-		'on available land',
-	].join(' ');
+function formatLandRequirement(
+	prefix: string,
+	slotDisplay: { icon?: string; label?: string },
+): string {
+	const slotLabel = [slotDisplay.icon, slotDisplay.label ?? 'Development Slot']
+		.filter(Boolean)
+		.join(' ');
+	return [`${prefix} ${slotLabel}`.trim(), 'on available land'].join(' ');
 }
 
 interface DevelopOptionsProps {
@@ -51,7 +58,6 @@ export default function DevelopOptions({
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
 		session,
-		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
@@ -59,7 +65,10 @@ export default function DevelopOptions({
 		actionCostResource,
 	} = useGameEngine();
 	const landIdForCost = player.lands[0]?.id as string;
-	const actionInfo = sessionView.actions.get(action.id);
+	const actionDisplay = resolveActionDisplay(translationContext, action);
+	const slotDisplay = resolveSlotDisplay(translationContext.assets);
+	const resolveResource = (resourceKey: string) =>
+		resolveResourceDisplay(translationContext.assets, resourceKey);
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
@@ -77,13 +86,13 @@ export default function DevelopOptions({
 			.sort((first, second) => first.total - second.total);
 	}, [developments, session, action.id, landIdForCost, actionCostResource]);
 	const actionHoverTitle = formatIconTitle(
-		actionInfo?.icon,
-		actionInfo?.name ?? action.name,
+		actionDisplay.icon,
+		actionDisplay.name ?? action.name,
 	);
 	return (
 		<div>
 			<h3 className="font-medium flex flex-wrap items-center gap-2">
-				{renderIconLabel(actionInfo?.icon, actionInfo?.name ?? action.name)}
+				{renderIconLabel(actionDisplay.icon, actionDisplay.name ?? action.name)}
 				<span className="italic text-sm font-normal">
 					(Effects take place on build and last until development is removed)
 				</span>
@@ -95,7 +104,10 @@ export default function DevelopOptions({
 				{entries.map(({ development, costs }) => {
 					const upkeep = development.upkeep;
 					const focus = development.focus;
-					const developLandRequirement = formatLandRequirement('Requires');
+					const developLandRequirement = formatLandRequirement(
+						'Requires',
+						slotDisplay,
+					);
 					const requirements = hasDevelopLand ? [] : [developLandRequirement];
 					const canPay =
 						hasDevelopLand &&
@@ -105,8 +117,9 @@ export default function DevelopOptions({
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
+						resolveResource,
 					);
-					const missingLandTooltip = formatLandRequirement('No');
+					const missingLandTooltip = formatLandRequirement('No', slotDisplay);
 					const title = !implemented
 						? 'Not implemented yet'
 						: !hasDevelopLand
@@ -130,7 +143,7 @@ export default function DevelopOptions({
 							playerResources={player.resources}
 							actionCostResource={actionCostResource}
 							requirements={requirements}
-							requirementIcons={[SLOT_INFO.icon]}
+							requirementIcons={slotDisplay.icon ? [slotDisplay.icon] : []}
 							summary={summary}
 							implemented={implemented}
 							enabled={enabled}

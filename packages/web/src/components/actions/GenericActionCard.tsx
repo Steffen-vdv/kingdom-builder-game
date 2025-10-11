@@ -10,7 +10,6 @@ import {
 	type Summary,
 	type TranslationContext,
 } from '../../translation';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import { formatMissingResources } from './utils';
@@ -24,6 +23,10 @@ import {
 	type GameEngineApi,
 	type HoverCardData,
 } from './types';
+import {
+	resolveActionDisplay,
+	resolveResourceDisplay,
+} from './actionSelectors';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -43,7 +46,7 @@ interface GenericActionCardProps {
 	) => void;
 	session: GameEngineApi['session'];
 	translationContext: TranslationContext;
-	actionCostResource: ResourceKey;
+	actionCostResource: string;
 	handlePerform: (
 		action: Action,
 		params?: Record<string, unknown>,
@@ -96,7 +99,13 @@ function GenericActionCard({
 	if (isPending) {
 		cardEnabled = true;
 	}
-	const insufficientTooltip = formatMissingResources(costs, player.resources);
+	const resolveResource = (resourceKey: string) =>
+		resolveResourceDisplay(translationContext.assets, resourceKey);
+	const insufficientTooltip = formatMissingResources(
+		costs,
+		player.resources,
+		resolveResource,
+	);
 	const requirementText = requirements.join(', ');
 	const title = !implemented
 		? 'Not implemented yet'
@@ -125,26 +134,17 @@ function GenericActionCard({
 		handleHoverCard,
 		hoverBackground,
 	});
-	const rawAction = translationContext.actions.get(action.id);
-	let actionIcon: string | undefined;
-	let actionFocus: Action['focus'] | undefined;
-	if (rawAction && typeof rawAction === 'object') {
-		const possible = rawAction as {
-			icon?: unknown;
-			focus?: Action['focus'];
-		};
-		if (typeof possible.icon === 'string') {
-			actionIcon = possible.icon;
-		}
-		actionFocus = possible.focus;
-	}
-	const hoverTitle = formatIconTitle(actionIcon, action.name);
+	const actionDisplay = resolveActionDisplay(translationContext, action);
+	const actionIcon = actionDisplay.icon;
+	const actionFocus = actionDisplay.focus;
+	const actionName = actionDisplay.name ?? action.name;
+	const hoverTitle = formatIconTitle(actionIcon, actionName);
 	const hoverContent = describeContent('action', action.id, translationContext);
 	const { effects, description } = splitSummary(hoverContent);
 	return (
 		<ActionCard
 			key={action.id}
-			title={renderIconLabel(actionIcon, action.name)}
+			title={renderIconLabel(actionIcon, actionName)}
 			costs={costs}
 			playerResources={player.resources}
 			actionCostResource={actionCostResource}

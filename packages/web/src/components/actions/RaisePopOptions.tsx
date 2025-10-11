@@ -1,10 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 import {
-	POPULATION_ROLES,
-	POPULATIONS,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
-import {
 	describeContent,
 	splitSummary,
 	summarizeContent,
@@ -16,10 +11,17 @@ import ActionCard from './ActionCard';
 import { formatMissingResources, playerHasRequiredResources } from './utils';
 import {
 	buildRequirementIconsForRole,
+	createPopulationRegistry,
 	determineRaisePopRoles,
 	type PopulationRegistryLike,
+	type PopulationRoleId,
 } from './populationHelpers';
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';
+import {
+	resolveActionDisplay,
+	resolvePopulationDisplay,
+	resolveResourceDisplay,
+} from './actionSelectors';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -37,24 +39,15 @@ export default function RaisePopOptions({
 }) {
 	const {
 		session,
-		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
-	const populationRegistry = useMemo(
-		() =>
-			({
-				get(id: string) {
-					return POPULATIONS.get(id);
-				},
-				entries() {
-					return POPULATIONS.entries();
-				},
-			}) as PopulationRegistryLike,
-		[],
+	const populationRegistry = useMemo<PopulationRegistryLike>(
+		() => createPopulationRegistry(translationContext),
+		[translationContext],
 	);
 	const actionDefinition = useMemo(
 		() => translationContext.actions.get(action.id) as Action | undefined,
@@ -68,6 +61,8 @@ export default function RaisePopOptions({
 		() => determineRaisePopRoles(actionDefinition, populationRegistry),
 		[actionDefinition, populationRegistry],
 	);
+	const resolvePopulation = (role: string) =>
+		resolvePopulationDisplay(translationContext.assets, role);
 	const getRequirementIconsForRole = useCallback(
 		(role: PopulationRoleId) =>
 			buildRequirementIconsForRole(
@@ -75,10 +70,18 @@ export default function RaisePopOptions({
 				role,
 				baseRequirementIcons,
 				populationRegistry,
+				resolvePopulation,
 			),
-		[actionDefinition, baseRequirementIcons, populationRegistry],
+		[
+			actionDefinition,
+			baseRequirementIcons,
+			populationRegistry,
+			resolvePopulation,
+		],
 	);
-	const actionInfo = sessionView.actions.get(action.id);
+	const actionDisplay = resolveActionDisplay(translationContext, action);
+	const resolveResource = (resourceKey: string) =>
+		resolveResourceDisplay(translationContext.assets, resourceKey);
 	return (
 		<>
 			{roleOptions.map((role) => {
@@ -105,11 +108,13 @@ export default function RaisePopOptions({
 				const insufficientTooltip = formatMissingResources(
 					costs,
 					player.resources,
+					resolveResource,
 				);
-				const actionIcon = actionInfo?.icon ?? '';
-				const actionName = actionInfo?.name ?? '';
-				const roleIcon = POPULATION_ROLES[role]?.icon ?? '';
-				const roleLabel = POPULATION_ROLES[role]?.label ?? '';
+				const actionIcon = actionDisplay.icon ?? '';
+				const actionName = actionDisplay.name ?? action.name;
+				const roleDisplay = resolvePopulation(role);
+				const roleIcon = roleDisplay.icon ?? '';
+				const roleLabel = roleDisplay.label ?? role;
 				const title = !meetsReq
 					? requirements.join(', ')
 					: !canPay
@@ -129,6 +134,7 @@ export default function RaisePopOptions({
 						role,
 					},
 				);
+				const roleTitle = `${actionIcon}${roleIcon} ${actionName}: ${roleLabel}`;
 				return (
 					<ActionCard
 						key={role}
@@ -147,7 +153,7 @@ export default function RaisePopOptions({
 						summary={shortSummary}
 						enabled={enabled}
 						tooltip={title}
-						focus={(actionInfo as Action | undefined)?.focus}
+						focus={actionDisplay.focus}
 						onClick={() => {
 							if (!canInteract) {
 								return;
@@ -157,12 +163,14 @@ export default function RaisePopOptions({
 						onMouseEnter={() => {
 							const { effects, description } = splitSummary(summary);
 							handleHoverCard({
-								title: `${actionIcon}${roleIcon} ${actionName}: ${roleLabel}`,
+								title: roleTitle,
 								effects,
 								requirements,
 								costs,
 								upkeep,
-								...(description && { description }),
+								...(description && {
+									description,
+								}),
 								bgClass: HOVER_CARD_BG,
 							});
 						}}

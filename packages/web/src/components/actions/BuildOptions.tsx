@@ -20,6 +20,7 @@ import {
 	type Building,
 	type DisplayPlayer,
 } from './types';
+import { resolveResourceDisplay } from './actionSelectors';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -111,9 +112,12 @@ export default function BuildOptions({
 					const canPay = playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(building.id);
 					const implemented = (summary?.length ?? 0) > 0;
+					const resolveResource = (resourceKey: string) =>
+						resolveResourceDisplay(translationContext.assets, resourceKey);
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
+						resolveResource,
 					);
 					const requirementText = requirements.join(', ');
 					const title = !implemented

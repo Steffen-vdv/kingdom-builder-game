@@ -1,23 +1,11 @@
-import {
-	POPULATION_INFO,
-	POPULATION_ROLES,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
+import type { PopulationConfig } from '@kingdom-builder/protocol';
+import type { TranslationContext } from '../../translation/context';
+import type { IconLabelDisplay } from './actionSelectors';
 import type { Action } from './types';
 
-export interface PopulationDefinition {
-	id: string;
-	name: string;
-	icon?: string;
-	upkeep?: Record<string, number>;
-	onAssigned?: unknown[];
-	onUnassigned?: unknown[];
-	onGrowthPhase?: unknown[];
-	onUpkeepPhase?: unknown[];
-	onPayUpkeepStep?: unknown[];
-	onGainIncomeStep?: unknown[];
-	onGainAPStep?: unknown[];
-}
+export type PopulationRoleId = string;
+
+export type PopulationDefinition = PopulationConfig;
 
 export type EffectConfig = {
 	type?: string;
@@ -29,6 +17,29 @@ export type EffectConfig = {
 export interface PopulationRegistryLike {
 	get(id: string): PopulationDefinition;
 	entries(): [string, PopulationDefinition][];
+}
+
+export function createPopulationRegistry(
+	context: Pick<TranslationContext, 'populations' | 'assets'>,
+): PopulationRegistryLike {
+	const keys = Object.keys(context.assets.populations);
+	return {
+		get(id: string) {
+			return context.populations.get(id);
+		},
+		entries() {
+			const entries: [string, PopulationDefinition][] = [];
+			for (const key of keys) {
+				try {
+					const definition = context.populations.get(key);
+					entries.push([key, definition]);
+				} catch {
+					// Ignore missing entries in translation assets.
+				}
+			}
+			return entries;
+		},
+	};
 }
 
 type RequirementConfig = {
@@ -94,13 +105,14 @@ export function collectPopulationRolesFromEffects(
 export function getPopulationIconFromRole(
 	role: string,
 	populations: PopulationRegistryLike,
+	resolveDisplay: (roleId: string) => IconLabelDisplay,
 ): string {
 	if (!role) {
 		return '';
 	}
-	const infoIcon = POPULATION_ROLES[role as PopulationRoleId]?.icon;
-	if (infoIcon) {
-		return infoIcon;
+	const display = resolveDisplay(role);
+	if (display.icon) {
+		return display.icon;
 	}
 	try {
 		const population = populations.get(role);
@@ -110,13 +122,14 @@ export function getPopulationIconFromRole(
 	} catch {
 		// Ignore missing population entries when deriving icons.
 	}
-	return '';
+	return resolveDisplay('').icon ?? '';
 }
 
 function getIconsFromEvaluator(
 	evaluator: EvaluatorConfig | undefined,
 	roleId: PopulationRoleId,
 	populations: PopulationRegistryLike,
+	resolveDisplay: (roleId: string) => IconLabelDisplay,
 ): string[] {
 	if (!evaluator || evaluator.type !== 'population') {
 		return [];
@@ -126,19 +139,28 @@ function getIconsFromEvaluator(
 	if (typeof rawRole === 'string') {
 		if (rawRole.startsWith('$')) {
 			if (rawRole === '$role') {
-				const icon = getPopulationIconFromRole(roleId, populations);
+				const icon = getPopulationIconFromRole(
+					roleId,
+					populations,
+					resolveDisplay,
+				);
 				return icon ? [icon] : [];
 			}
 			const placeholderIcon = getPopulationIconFromRole(
 				rawRole.slice(1),
 				populations,
+				resolveDisplay,
 			);
 			return placeholderIcon ? [placeholderIcon] : [];
 		}
-		const icon = getPopulationIconFromRole(rawRole, populations);
+		const icon = getPopulationIconFromRole(
+			rawRole,
+			populations,
+			resolveDisplay,
+		);
 		return icon ? [icon] : [];
 	}
-	const genericIcon = POPULATION_INFO.icon;
+	const genericIcon = resolveDisplay('').icon;
 	return genericIcon ? [genericIcon] : [];
 }
 
@@ -167,7 +189,7 @@ export function determineRaisePopRoles(
 			if (!explicitRoles.has(roleId) && !isHirablePopulation(population)) {
 				continue;
 			}
-			result.push(roleId as PopulationRoleId);
+			result.push(roleId);
 		} catch {
 			// Ignore missing population ids when collecting options.
 		}
@@ -180,6 +202,7 @@ export function buildRequirementIconsForRole(
 	roleId: PopulationRoleId,
 	baseIcons: string[],
 	populations: PopulationRegistryLike,
+	resolveDisplay: (roleId: string) => IconLabelDisplay,
 ): string[] {
 	const icons = new Set(baseIcons);
 	const requirements = actionDefinition?.requirements as
@@ -195,10 +218,20 @@ export function buildRequirementIconsForRole(
 		const params = requirement.params ?? {};
 		const left = params['left'] as EvaluatorConfig | undefined;
 		const right = params['right'] as EvaluatorConfig | undefined;
-		for (const icon of getIconsFromEvaluator(left, roleId, populations)) {
+		for (const icon of getIconsFromEvaluator(
+			left,
+			roleId,
+			populations,
+			resolveDisplay,
+		)) {
 			icons.add(icon);
 		}
-		for (const icon of getIconsFromEvaluator(right, roleId, populations)) {
+		for (const icon of getIconsFromEvaluator(
+			right,
+			roleId,
+			populations,
+			resolveDisplay,
+		)) {
 			icons.add(icon);
 		}
 	}

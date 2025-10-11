@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { RESOURCES, type Focus } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	summarizeContent,
@@ -22,6 +21,12 @@ import {
 	TITLE_CLASSES,
 	TOGGLE_BUTTON_CLASSES,
 } from './actionsPanelStyles';
+import {
+	mapActionOption,
+	mapBuildingOption,
+	mapDevelopmentOption,
+	resolveResourceDisplay,
+} from './actionSelectors';
 import type { Action, Building, Development, DisplayPlayer } from './types';
 
 export default function ActionsPanel() {
@@ -81,34 +86,14 @@ export default function ActionsPanel() {
 					!actionDefinition.system ||
 					selectedPlayer.actions.has(actionDefinition.id),
 			)
-			.map((actionDefinition) => {
-				const { focus, ...rest } = actionDefinition;
-				if (typeof focus === 'string') {
-					return { ...rest, focus: focus as Focus } as Action;
-				}
-				return rest as Action;
-			});
+			.map(mapActionOption);
 	}, [sessionView.actionList, sessionView.actionsByPlayer, selectedPlayer]);
 	const developmentOptions = useMemo<Development[]>(
-		() =>
-			sessionView.developmentList.map((developmentDefinition) => {
-				const { focus, ...rest } = developmentDefinition;
-				if (typeof focus === 'string') {
-					return { ...rest, focus: focus as Focus } as Development;
-				}
-				return rest as Development;
-			}),
+		() => sessionView.developmentList.map(mapDevelopmentOption),
 		[sessionView.developmentList],
 	);
 	const buildingOptions = useMemo<Building[]>(
-		() =>
-			sessionView.buildingList.map((buildingDefinition) => {
-				const { focus, ...rest } = buildingDefinition;
-				if (typeof focus === 'string') {
-					return { ...rest, focus: focus as Focus } as Building;
-				}
-				return rest as Building;
-			}),
+		() => sessionView.buildingList.map(mapBuildingOption),
 		[sessionView.buildingList],
 	);
 
@@ -180,6 +165,14 @@ export default function ActionsPanel() {
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
 		: 'Show opponent actions';
+	const costResourceDisplay = resolveResourceDisplay(
+		translationContext.assets,
+		actionCostResource,
+	);
+	const costLabelParts = [costResourceDisplay.icon, costResourceDisplay.label]
+		.filter(Boolean)
+		.join(' ');
+
 	return (
 		<section
 			className={SECTION_CLASSES}
@@ -189,9 +182,7 @@ export default function ActionsPanel() {
 			<div className={HEADER_CLASSES}>
 				<h2 className={TITLE_CLASSES}>
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
-					<span className={COST_LABEL_CLASSES}>
-						(1 {RESOURCES[actionCostResource].icon} each)
-					</span>
+					<span className={COST_LABEL_CLASSES}>(1 {costLabelParts} each)</span>
 				</h2>
 				<div className="flex flex-wrap items-center gap-2">
 					{viewingOpponent && (

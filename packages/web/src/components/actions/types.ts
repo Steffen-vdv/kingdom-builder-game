@@ -1,4 +1,3 @@
-import type { Focus } from '@kingdom-builder/contents';
 import type {
 	ActionDefinition,
 	SessionActionOption,
@@ -9,20 +8,22 @@ import type {
 import type { useGameEngine } from '../../state/GameContext';
 import type { Action as PerformableAction } from '../../state/actionTypes';
 
+export type FocusId = string;
+
 export interface Action
 	extends SessionActionOption,
 		PerformableAction,
 		Partial<Pick<ActionDefinition, 'effects' | 'requirements'>> {
 	system?: boolean;
-	focus?: Focus;
+	focus?: FocusId;
 }
 
 export interface Development extends SessionDevelopmentOption {
-	focus?: Focus;
+	focus?: FocusId;
 }
 
 export interface Building extends SessionBuildingOption {
-	focus?: Focus;
+	focus?: FocusId;
 }
 
 export type GameEngineApi = ReturnType<typeof useGameEngine>;
