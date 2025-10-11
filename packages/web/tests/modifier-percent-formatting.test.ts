@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
+import { formatStatValue } from '../src/utils/stats';
 import { createEngine } from '@kingdom-builder/engine';
 import type { EffectDef } from '@kingdom-builder/engine';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -17,7 +19,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 });
 
 function createCtx() {
-	return createEngine({
+	const engine = createEngine({
 		actions: ACTIONS,
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
@@ -26,6 +28,7 @@ function createCtx() {
 		start: GAME_START,
 		rules: RULES,
 	});
+	return createTranslationContextForEngine(engine);
 }
 
 describe('modifier percent formatting', () => {
@@ -69,5 +72,14 @@ describe('modifier percent formatting', () => {
 		expect(penaltyDescription[0]).toContain(
 			'25% less of that resource (rounded down)',
 		);
+	});
+
+	it('falls back to raw numbers when percent metadata is missing', () => {
+		const ctx = createCtx();
+		const fallbackValue = formatStatValue('unknown-stat', 0.5, {
+			...ctx.assets,
+			stats: {},
+		});
+		expect(fallbackValue).toBe('0.5');
 	});
 });

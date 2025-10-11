@@ -1,12 +1,27 @@
-import { PHASES, STATS } from '@kingdom-builder/contents';
+import type {
+	TranslationAssets,
+	TranslationPhase,
+	TranslationPhaseStep,
+} from '../../translation/context';
 
-export function statDisplaysAsPercent(key: string): boolean {
-	const info = STATS[key as keyof typeof STATS];
-	return Boolean(info?.displayAsPercent ?? info?.addFormat?.percent);
+interface FormattablePhaseStep extends TranslationPhaseStep {
+	icon?: string;
+	title?: string;
 }
 
-export function formatStatValue(key: string, value: number): string {
-	return statDisplaysAsPercent(key) ? `${value * 100}%` : String(value);
+export function statDisplaysAsPercent(
+	key: string,
+	assets: TranslationAssets,
+): boolean {
+	return Boolean(assets.stats[key]?.displayAsPercent);
+}
+
+export function formatStatValue(
+	key: string,
+	value: number,
+	assets: TranslationAssets,
+): string {
+	return statDisplaysAsPercent(key, assets) ? `${value * 100}%` : String(value);
 }
 
 export function formatDetailText(detail: string): string {
@@ -30,6 +45,7 @@ export function formatDetailText(detail: string): string {
 }
 
 export function formatStepLabel(
+	phases: readonly TranslationPhase[],
 	phaseId?: string,
 	stepId?: string,
 ): string | undefined {
@@ -37,24 +53,27 @@ export function formatStepLabel(
 		return undefined;
 	}
 	const phase = phaseId
-		? PHASES.find((phaseItem) => phaseItem.id === phaseId)
+		? phases.find((phaseItem) => phaseItem.id === phaseId)
 		: undefined;
-	const step = phase?.steps.find((stepItem) => stepItem.id === stepId);
+	const step = findPhaseStep(phase?.steps, stepId);
 	if (!step) {
 		return formatDetailText(stepId);
 	}
 	const parts: string[] = [];
-	if (step.icon) {
+	if (typeof step.icon === 'string' && step.icon.length > 0) {
 		parts.push(step.icon);
 	}
-	const label = step.title ?? step.id;
-	if (label) {
-		parts.push(label);
+	const stepTitle = step.title;
+	const hasTitle = typeof stepTitle === 'string' && stepTitle.length > 0;
+	const stepLabelSource = hasTitle ? stepTitle : step.id;
+	if (stepLabelSource) {
+		parts.push(formatDetailText(stepLabelSource));
 	}
 	return parts.join(' ').trim();
 }
 
 export function formatPhaseStep(
+	phases: readonly TranslationPhase[],
 	phaseId?: string,
 	stepId?: string,
 ): string | undefined {
@@ -62,22 +81,53 @@ export function formatPhaseStep(
 		return undefined;
 	}
 	const phase = phaseId
-		? PHASES.find((phaseItem) => phaseItem.id === phaseId)
+		? phases.find((phaseItem) => phaseItem.id === phaseId)
 		: undefined;
-	const step = phase?.steps.find((stepItem) => stepItem.id === stepId);
+	const step = findPhaseStep(phase?.steps, stepId);
 	if (!step) {
 		return formatDetailText(stepId);
 	}
 	const parts: string[] = [];
-	if (phase?.icon) {
+	if (typeof phase?.icon === 'string' && phase.icon.length > 0) {
 		parts.push(phase.icon);
 	}
-	if (phase?.label) {
+	if (typeof phase?.label === 'string' && phase.label.length > 0) {
 		parts.push(phase.label);
 	}
-	const stepText = formatStepLabel(phaseId, stepId);
+	const stepText = formatStepLabel(phases, phaseId, stepId);
 	if (parts.length && stepText) {
 		return `${parts.join(' ').trim()} · ${stepText}`;
 	}
 	return stepText;
+}
+
+function findPhaseStep(
+	steps: readonly unknown[] | undefined,
+	stepId: string,
+): FormattablePhaseStep | undefined {
+	if (!steps) {
+		return undefined;
+	}
+	for (const candidate of steps) {
+		if (!candidate || typeof candidate !== 'object') {
+			continue;
+		}
+		const record = candidate as {
+			id?: unknown;
+			icon?: unknown;
+			title?: unknown;
+		};
+		if (record.id !== stepId) {
+			continue;
+		}
+		return {
+			id: stepId,
+			triggers: Array.isArray(record.triggers)
+				? (record.triggers as readonly string[])
+				: undefined,
+			icon: typeof record.icon === 'string' ? record.icon : undefined,
+			title: typeof record.title === 'string' ? record.title : undefined,
+		} satisfies FormattablePhaseStep;
+	}
+	return undefined;
 }

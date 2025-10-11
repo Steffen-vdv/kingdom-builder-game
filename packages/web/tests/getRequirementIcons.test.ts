@@ -3,11 +3,39 @@ import {
 	getRequirementIcons,
 	registerRequirementIconGetter,
 } from '../src/utils/getRequirementIcons';
-import type { EngineContext } from '@kingdom-builder/engine';
-import { POPULATION_ROLES, STATS } from '@kingdom-builder/contents';
+import type {
+	TranslationContext,
+	TranslationAssets,
+} from '../src/translation/context';
 
-const createEngineContext = (requirements: unknown[]): EngineContext =>
-	({
+const EMPTY_REGISTRY = {
+	get: (_id: string) => ({}),
+	has: () => false,
+} as TranslationContext['actions'];
+
+const DEFAULT_ASSETS: TranslationAssets = {
+	resources: {},
+	stats: {},
+	populations: {},
+	population: {},
+	land: {},
+	slot: {},
+	passive: {},
+	modifiers: {},
+	triggers: {},
+	formatPassiveRemoval: (description: string) =>
+		`Active as long as ${description}`,
+};
+
+const createTranslationContext = (
+	requirements: unknown[],
+	assets: Partial<TranslationAssets>,
+): TranslationContext => {
+	const mergedAssets: TranslationAssets = {
+		...DEFAULT_ASSETS,
+		...assets,
+	} as TranslationAssets;
+	return {
 		actions: new Map([
 			[
 				'test-action',
@@ -15,60 +43,133 @@ const createEngineContext = (requirements: unknown[]): EngineContext =>
 					requirements,
 				},
 			],
-		]),
-	}) as unknown as EngineContext;
+		]) as TranslationContext['actions'],
+		buildings: EMPTY_REGISTRY,
+		developments: EMPTY_REGISTRY,
+		populations: EMPTY_REGISTRY,
+		passives: {
+			list: () => [],
+			get: () => undefined,
+			getDefinition: () => undefined,
+			definitions: () => [],
+			get evaluationMods() {
+				return new Map();
+			},
+		},
+		phases: [],
+		activePlayer: {
+			id: 'A',
+			name: 'Player A',
+			resources: {},
+			stats: {},
+			population: {},
+		},
+		opponent: {
+			id: 'B',
+			name: 'Player B',
+			resources: {},
+			stats: {},
+			population: {},
+		},
+		rules: {
+			tierDefinitions: [],
+			tieredResourceKey: undefined,
+			winConditions: [],
+		},
+		pullEffectLog: () => undefined,
+		actionCostResource: undefined,
+		recentResourceGains: [],
+		compensations: { A: {}, B: {} },
+		assets: mergedAssets,
+	} satisfies TranslationContext;
+};
 
 describe('getRequirementIcons', () => {
 	it('includes icons derived from evaluator compare requirements', () => {
-		const statEntry = Object.entries(STATS).find(([, value]) =>
-			Boolean(value.icon),
-		);
-		const populationEntry = Object.entries(POPULATION_ROLES).find(([, value]) =>
-			Boolean(value.icon),
-		);
-		expect(statEntry).toBeDefined();
-		expect(populationEntry).toBeDefined();
+		const statKey = 'mock-stat';
+		const populationId = 'mock-role';
+		const iconAssets: Partial<TranslationAssets> = {
+			stats: {
+				[statKey]: { icon: '📊' },
+			},
+			populations: {
+				[populationId]: { icon: '👥' },
+			},
+			population: {},
+		};
 
-		const [statKey, statConfig] = statEntry!;
-		const [populationId, populationConfig] = populationEntry!;
-
-		const engineContext = createEngineContext([
-			{
-				type: 'evaluator',
-				method: 'compare',
-				params: {
-					left: {
-						type: 'stat',
-						params: { key: statKey },
-					},
-					right: {
-						type: 'population',
-						params: { role: populationId },
+		const translationContext = createTranslationContext(
+			[
+				{
+					type: 'evaluator',
+					method: 'compare',
+					params: {
+						left: {
+							type: 'stat',
+							params: { key: statKey },
+						},
+						right: {
+							type: 'population',
+							params: { role: populationId },
+						},
 					},
 				},
-			},
-		]);
+			],
+			iconAssets,
+		);
 
-		const icons = getRequirementIcons('test-action', engineContext);
-		expect(icons).toContain(statConfig.icon);
-		expect(icons).toContain(populationConfig.icon);
+		const icons = getRequirementIcons('test-action', translationContext);
+		expect(icons).toContain('📊');
+		expect(icons).toContain('👥');
 	});
 
 	it('allows registering custom requirement icon handlers', () => {
 		const unregister = registerRequirementIconGetter('mock', 'handler', () => [
 			'🧪',
 		]);
-		const engineContext = createEngineContext([
-			{
-				type: 'mock',
-				method: 'handler',
-				params: {},
-			},
-		]);
+		const translationContext = createTranslationContext(
+			[
+				{
+					type: 'mock',
+					method: 'handler',
+					params: {},
+				},
+			],
+			{},
+		);
 
-		const icons = getRequirementIcons('test-action', engineContext);
+		const icons = getRequirementIcons('test-action', translationContext);
 		expect(icons).toContain('🧪');
 
 		unregister();
+	});
+
+	it('returns default population icon when specific metadata is missing', () => {
+		const translationContext = createTranslationContext(
+			[
+				{
+					type: 'evaluator',
+					method: 'compare',
+					params: {
+						left: {
+							type: 'population',
+							params: { role: 'unknown-role' },
+						},
+					},
+				},
+			],
+			{
+				population: { icon: '👤' },
+			},
+		);
+
+		const icons = getRequirementIcons('test-action', translationContext);
+		expect(icons).toEqual(['👤']);
+	});
+
+	it('handles unknown actions without throwing', () => {
+		const translationContext = createTranslationContext([], {});
+		const icons = getRequirementIcons('missing-action', translationContext);
+		expect(icons).toEqual([]);
 	});
 });

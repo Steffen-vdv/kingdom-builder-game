@@ -9,6 +9,9 @@ import {
 } from '../src/passives/visibility';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 
+const registries = createSessionRegistries();
+const populationIds = Array.from(registries.populations.keys());
+
 function createOwner(overrides: Partial<PassiveOwner> = {}): PassiveOwner {
 	return {
 		buildings: new Set<string>(),
@@ -24,7 +27,9 @@ describe('passive visibility helpers', () => {
 			id: 'mystery-source',
 			meta: { source: { type: 'building' } },
 		};
-		expect(derivePassiveOrigin(passive, owner)).toBe('building');
+		expect(derivePassiveOrigin(passive, owner, { populationIds })).toBe(
+			'building',
+		);
 	});
 
 	it('falls back to heuristics for building, development, and population passives', () => {
@@ -37,7 +42,7 @@ describe('passive visibility helpers', () => {
 				},
 			],
 		});
-		const context = createPassiveVisibilityContext(owner);
+		const context = createPassiveVisibilityContext(owner, { populationIds });
 		expect(derivePassiveOrigin({ id: 'castle' }, context)).toBe('building');
 		expect(derivePassiveOrigin({ id: 'castle_bonus' }, context)).toBe(
 			'building-bonus',
@@ -45,9 +50,7 @@ describe('passive visibility helpers', () => {
 		expect(derivePassiveOrigin({ id: 'watchtower_land-1' }, context)).toBe(
 			'development',
 		);
-		const registries = createSessionRegistries();
-		const populationKeys = registries.populations.keys();
-		const populationEntry = populationKeys[0];
+		const populationEntry = populationIds[0];
 		expect(populationEntry).toBeTruthy();
 		if (!populationEntry) {
 			throw new Error('Expected at least one population definition.');
@@ -66,7 +69,7 @@ describe('passive visibility helpers', () => {
 			buildings: new Set<string>(['castle']),
 			lands: [],
 		});
-		const context = createPassiveVisibilityContext(owner);
+		const context = createPassiveVisibilityContext(owner, { populationIds });
 		const buildingPassive: PassiveLike = { id: 'castle' };
 		expect(shouldSurfacePassive(buildingPassive, context, 'player-panel')).toBe(
 			false,
@@ -88,10 +91,8 @@ describe('passive visibility helpers', () => {
 				},
 			],
 		});
-		const context = createPassiveVisibilityContext(owner);
-		const registries = createSessionRegistries();
-		const populationKeys = registries.populations.keys();
-		const populationEntry = populationKeys[0];
+		const context = createPassiveVisibilityContext(owner, { populationIds });
+		const populationEntry = populationIds[0];
 		expect(populationEntry).toBeTruthy();
 		if (!populationEntry) {
 			throw new Error('Expected at least one population definition.');

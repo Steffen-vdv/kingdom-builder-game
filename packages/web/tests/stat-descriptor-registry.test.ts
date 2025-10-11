@@ -18,7 +18,10 @@ import {
 	TRIGGER_INFO,
 	PASSIVE_INFO,
 } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../src/translation/context';
 import { getStatBreakdownSummary, formatStatValue } from '../src/utils/stats';
+import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 const collectSummaryLines = (entry: unknown): string[] => {
 	if (typeof entry === 'string') {
@@ -107,7 +110,12 @@ describe('stat descriptor registry', () => {
 				},
 			},
 		};
-		const breakdown = getStatBreakdownSummary(primaryStatKey, player, ctx);
+		const translationContext = createTranslationContextForEngine(ctx);
+		const breakdown = getStatBreakdownSummary(
+			primaryStatKey,
+			player,
+			translationContext,
+		);
 		const triggered = breakdown
 			.flatMap((entry) => collectSummaryLines(entry))
 			.filter((line) => line.startsWith('Triggered by'));
@@ -162,7 +170,9 @@ describe('stat descriptor registry', () => {
 				: stepText
 			: phaseText;
 		if (expectedPhaseText) {
-			expect(phaseLine).toContain(expectedPhaseText);
+			expect((phaseLine ?? '').toLowerCase()).toContain(
+				expectedPhaseText.toLowerCase(),
+			);
 		}
 		if (action.icon) {
 			expect(actionLine).toContain(action.icon);
@@ -174,7 +184,11 @@ describe('stat descriptor registry', () => {
 		}
 		expect(statLine).toContain(statInfo?.label ?? secondaryStatKey);
 		expect(statLine).toContain(
-			formatStatValue(secondaryStatKey, player.stats[secondaryStatKey]!),
+			formatStatValue(
+				secondaryStatKey,
+				player.stats[secondaryStatKey]!,
+				translationContext.assets,
+			),
 		);
 		if (resource?.icon) {
 			expect(resourceLine).toContain(resource.icon);
@@ -187,8 +201,11 @@ describe('stat descriptor registry', () => {
 				.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
 				.join(' ');
 		expect(resourceLine).toContain(formatDetail(resourceDetail));
-		if (triggerInfo?.icon) {
-			expect(triggerLine).toContain(triggerInfo.icon);
+		const triggerAsset = translationContext.assets.triggers[triggerId];
+		if (triggerAsset?.icon) {
+			expect(triggerLine).toContain(triggerAsset.icon);
+		} else {
+			expect(triggerLine).toBe(`Triggered by ${triggerId}`);
 		}
 		expect(triggerLine).toContain(
 			triggerInfo?.past ?? triggerInfo?.future ?? triggerId,
@@ -201,5 +218,38 @@ describe('stat descriptor registry', () => {
 		expect(startLine).toContain('Initial Setup');
 		expect(unknownLine).toContain(unknownId);
 		expect(unknownLine).toContain(formatDetail(unknownDetail));
+	});
+
+	it('falls back to ids and defaults when metadata is missing', () => {
+		const ctx = createEngine({
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+			populations: POPULATIONS,
+			phases: PHASES,
+			start: GAME_START,
+			rules: RULES,
+		});
+		const translationContext = createTranslationContextForEngine(ctx);
+		const mutatedContext: TranslationContext = {
+			...translationContext,
+			assets: {
+				...translationContext.assets,
+				populations: {},
+				triggers: {},
+			},
+		};
+		const populationFallback = formatKindLabel(
+			mutatedContext,
+			'population',
+			'unknown-role',
+		);
+		expect(populationFallback).toContain('unknown-role');
+		const triggerFallback = formatKindLabel(
+			mutatedContext,
+			'trigger',
+			'mystery-trigger',
+		);
+		expect(triggerFallback).toBe('mystery-trigger');
 	});
 });

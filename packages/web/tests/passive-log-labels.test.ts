@@ -206,4 +206,52 @@ describe('passive log labels', () => {
 			),
 		).toBe(true);
 	});
+
+	it('falls back when passive icon metadata is missing', () => {
+		const registries = createSessionRegistries();
+		const engineContext = createEngine({
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
+			phases: PHASES,
+			start: GAME_START,
+			rules: RULES,
+		});
+		const defaultAssets = createDefaultTranslationAssets();
+		engineContext.assets = {
+			...defaultAssets,
+			passive: { label: defaultAssets.passive.label },
+		};
+
+		const happinessKey = engineContext.services.tieredResource
+			.resourceKey as string;
+		engineContext.activePlayer.resources[happinessKey] = 0;
+		engineContext.services.handleTieredResourceChange(
+			engineContext,
+			engineContext.activePlayer,
+			happinessKey,
+		);
+		engineContext.activePlayer.resources[happinessKey] = 6;
+		engineContext.services.handleTieredResourceChange(
+			engineContext,
+			engineContext.activePlayer,
+			happinessKey,
+		);
+
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		engineContext.activePlayer.resources[happinessKey] = 0;
+		engineContext.services.handleTieredResourceChange(
+			engineContext,
+			engineContext.activePlayer,
+			happinessKey,
+		);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+
+		const diffContext = createTranslationDiffContext(engineContext);
+		const lines = diffStepSnapshots(before, after, undefined, diffContext);
+		const activationLine = lines.find((line) => line.includes('deactivated'));
+		expect(activationLine).toBeTruthy();
+		expect(activationLine?.startsWith('undefined')).toBe(false);
+	});
 });
