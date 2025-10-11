@@ -1,8 +1,3 @@
-import {
-	PASSIVE_INFO,
-	RESOURCES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import type { RuleSnapshot } from '@kingdom-builder/engine';
 import {
 	describeEffects,
@@ -10,6 +5,7 @@ import {
 	type TranslationContext,
 } from '../../translation';
 import type { SummaryEntry, SummaryGroup } from '../../translation/content';
+import type { DescriptorDisplay } from './registryDisplays';
 
 export const MAX_TIER_SUMMARY_LINES = 4;
 
@@ -111,27 +107,31 @@ function normalizeSummary(summary: string | undefined): SummaryEntry[] {
 		.filter((line) => line.length > 0);
 }
 
+export interface TierEntryDisplayConfig {
+	activeId?: string;
+	tieredResource?: DescriptorDisplay | undefined;
+	passiveAsset: DescriptorDisplay;
+	translationContext: TranslationContext;
+}
+
 export function buildTierEntries(
 	tiers: TierDefinition[],
-	activeId: string | undefined,
-	tieredResourceKey: ResourceKey | undefined,
-	translationContext: TranslationContext,
+	config: TierEntryDisplayConfig,
 ): TierEntriesResult {
+	const { activeId, tieredResource, passiveAsset, translationContext } = config;
 	const getRangeStart = (tier: TierDefinition) =>
 		tier.range.min ?? Number.NEGATIVE_INFINITY;
 	const orderedTiers = [...tiers].sort(
 		(a, b) => getRangeStart(b) - getRangeStart(a),
 	);
-	const tierResourceIcon = tieredResourceKey
-		? RESOURCES[tieredResourceKey]?.icon || ''
-		: '';
+	const tierResourceIcon = tieredResource?.icon ?? '';
 	const entries: TierSummaryEntry[] = orderedTiers.map((tier) => ({
 		...tier,
 		active: tier.id === activeId,
 	}));
 	const summaries = entries.map((entry) => {
 		const { display, active } = entry;
-		const icon = display?.icon ?? PASSIVE_INFO.icon ?? '';
+		const icon = display?.icon ?? passiveAsset.icon ?? '♾️';
 		const name = resolveTierName(entry);
 		const titleParts = [icon, name].filter(
 			(part) => part && String(part).trim().length > 0,

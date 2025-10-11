@@ -18,6 +18,7 @@ import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { createTestRegistryMetadata } from './registryMetadata';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
@@ -27,6 +28,7 @@ export interface PlayerPanelFixtures {
 	statForecast: Record<string, number>;
 	registries: SessionRegistries;
 	metadata: EngineSessionSnapshot['metadata'];
+	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 }
 
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
@@ -92,6 +94,10 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			ruleSnapshot,
 			passiveRecords: sessionState.passiveRecords,
 		},
+	);
+	const metadataSelectors = createTestRegistryMetadata(
+		sessionRegistries,
+		sessionState.metadata,
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: LegacyGameEngineContextValue = {
@@ -187,5 +193,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		statForecast,
 		registries: sessionRegistries,
 		metadata: sessionState.metadata,
+		metadataSelectors,
 	};
 }

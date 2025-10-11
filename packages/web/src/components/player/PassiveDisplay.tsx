@@ -1,6 +1,6 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import { PhaseId, type ResourceKey } from '@kingdom-builder/contents';
+import { PhaseId } from '@kingdom-builder/contents';
 import type {
 	EffectDef,
 	PassiveSummary,
@@ -21,6 +21,12 @@ import {
 	createPassiveVisibilityContext,
 	filterPassivesForSurface,
 } from '../../passives/visibility';
+import {
+	usePassiveAssetMetadata,
+	usePhaseMetadata,
+	useResourceMetadata,
+} from '../../contexts/RegistryMetadataContext';
+import { toDescriptorDisplay } from './registryDisplays';
 
 function normalizeEffectList(
 	value: unknown,
@@ -41,6 +47,9 @@ export default function PassiveDisplay({
 }) {
 	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
 		useGameEngine();
+	const passiveAsset = toDescriptorDisplay(usePassiveAssetMetadata().select());
+	const resourceMetadata = useResourceMetadata();
+	const phaseMetadata = usePhaseMetadata();
 	const playerId: PlayerId = player.id;
 	const summaries: PassiveSummary[] =
 		translationContext.passives.list(playerId);
@@ -50,7 +59,10 @@ export default function PassiveDisplay({
 	);
 
 	const tierDefinitions = ruleSnapshot.tierDefinitions;
-	const happinessKey = ruleSnapshot.tieredResourceKey as ResourceKey;
+	const happinessKey = ruleSnapshot.tieredResourceKey;
+	const tieredResourceDescriptor = happinessKey
+		? toDescriptorDisplay(resourceMetadata.select(happinessKey))
+		: undefined;
 	const tierByPassiveId = tierDefinitions.reduce<
 		Map<string, HappinessTierDefinition>
 	>((map, tier) => {
@@ -109,40 +121,41 @@ export default function PassiveDisplay({
 					definition: passiveDefinition,
 					assets: translationContext.assets,
 				});
-				const icon =
-					presentation.icon || translationContext.assets.passive.icon || '';
-				const label = presentation.label;
-				const displayLabel =
-					label || translationContext.assets.passive.label || '';
+				const icon = presentation.icon || passiveAsset.icon || '♾️';
+				const label = presentation.label || passiveAsset.label;
 				const removalText = presentation.removal;
 				const summaryText = presentation.summary;
 				const tierDefinition = tierByPassiveId.get(passive.id);
 				const tierSections = tierDefinition
-					? buildTierEntries(
-							[tierDefinition],
-							tierDefinition.id,
-							happinessKey,
+					? buildTierEntries([tierDefinition], {
+							activeId: tierDefinition.id,
+							tieredResource: tieredResourceDescriptor,
+							passiveAsset,
 							translationContext,
-						).entries
+						}).entries
 					: undefined;
 				const items = tierSections
 					? tierSections
 					: describeEffects(resolvedEffects, translationContext);
-				const upkeepLabel =
-					translationContext.phases.find((phase) => phase.id === PhaseId.Upkeep)
-						?.label || 'Upkeep';
+				const upkeepDescriptor = phaseMetadata.select(PhaseId.Upkeep);
+				const upkeepLabel = upkeepDescriptor.label || 'Upkeep';
 				const sections = definition.onUpkeepPhase
-					? [{ title: `Until your next ${upkeepLabel} Phase`, items }]
+					? [
+							{
+								title: `Until your next ${upkeepLabel} Phase`,
+								items,
+							},
+						]
 					: items;
 				return (
 					<div
 						key={passive.id}
-						className={
-							'hoverable cursor-help rounded-xl border border-white/50 ' +
-							'bg-white/60 p-3 shadow-sm transition hover:border-blue-400/70 ' +
-							'hover:bg-white/80 dark:border-white/10 dark:bg-slate-900/50 ' +
-							'dark:hover:border-blue-300/60 dark:hover:bg-slate-900/70'
-						}
+						className={[
+							'hoverable cursor-help rounded-xl border border-white/50',
+							'bg-white/60 p-3 shadow-sm transition hover:border-blue-400/70',
+							'hover:bg-white/80 dark:border-white/10 dark:bg-slate-900/50',
+							'dark:hover:border-blue-300/60 dark:hover:bg-slate-900/70',
+						].join(' ')}
 						onMouseEnter={() => {
 							const { effects, description } = splitSummary(sections);
 							const descriptionEntries = tierDefinition
@@ -157,7 +170,7 @@ export default function PassiveDisplay({
 								descriptionEntries.push(removalText);
 							}
 							handleHoverCard({
-								title: icon ? `${icon} ${displayLabel}` : displayLabel,
+								title: icon ? `${icon} ${label}` : label,
 								effects,
 								requirements: [],
 								...(descriptionEntries.length
@@ -174,7 +187,7 @@ export default function PassiveDisplay({
 								<span className="text-2xl leading-none">{icon}</span>
 							) : null}
 							<span className="font-semibold text-slate-700 dark:text-slate-100">
-								{displayLabel}
+								{label}
 							</span>
 						</div>
 					</div>
