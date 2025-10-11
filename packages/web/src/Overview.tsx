@@ -18,9 +18,121 @@ import {
 import type { OverviewSectionDef } from './components/overview/OverviewLayout';
 import { createOverviewSections } from './components/overview/sectionsData';
 import type { OverviewContentSection } from './components/overview/sectionsData';
-import type { OverviewTokenConfig } from './components/overview/overviewTokens';
+import type {
+	OverviewTokenConfig,
+	OverviewTokenSources,
+} from './components/overview/overviewTokens';
 import { createOverviewTokenSources } from './components/overview/overviewTokenUtils';
-import { useRegistryMetadata } from './contexts/RegistryMetadataContext';
+import {
+	useOptionalRegistryMetadata,
+	type RegistryMetadataContextValue,
+} from './contexts/RegistryMetadataContext';
+import {
+	OVERVIEW_CONTENT,
+	type OverviewTokenCandidates,
+} from '@kingdom-builder/contents';
+
+type OverviewTokenRecord = Record<string, React.ReactNode>;
+
+const EMPTY_SECTIONS_RESULT = Object.freeze({
+	sections: Object.freeze([]) as ReadonlyArray<OverviewSectionDef>,
+	tokens: Object.freeze({}) as OverviewTokenRecord,
+});
+
+function createFallbackSections(
+	sections: OverviewContentSection[],
+): OverviewSectionDef[] {
+	return sections.map((section) => {
+		if (section.kind === 'paragraph') {
+			return {
+				kind: 'paragraph',
+				id: section.id,
+				icon: null,
+				title: section.title,
+				paragraphs: section.paragraphs,
+				span: section.span ?? false,
+			} satisfies OverviewSectionDef;
+		}
+
+		return {
+			kind: 'list',
+			id: section.id,
+			icon: null,
+			title: section.title,
+			items: section.items.map((item) => ({
+				icon: item.icon ? null : undefined,
+				label: item.label,
+				body: item.body,
+			})),
+			span: section.span ?? false,
+		} satisfies OverviewSectionDef;
+	});
+}
+
+function collectTokenKeys(
+	tokenCandidates: OverviewTokenCandidates,
+	overrides?: OverviewTokenConfig,
+): ReadonlyArray<string> {
+	const keys = new Set<string>();
+	const addKeys = (record?: Record<string, unknown>) => {
+		if (!record) {
+			return;
+		}
+		for (const key of Object.keys(record)) {
+			keys.add(key);
+		}
+	};
+
+	for (const candidate of Object.values(tokenCandidates)) {
+		addKeys(candidate);
+	}
+
+	if (overrides) {
+		for (const override of Object.values(overrides)) {
+			addKeys(override);
+		}
+	}
+
+	return Array.from(keys);
+}
+
+function createFallbackTokens(
+	tokenCandidates: OverviewTokenCandidates,
+	overrides: OverviewTokenConfig | undefined,
+): OverviewTokenRecord {
+	const keys = collectTokenKeys(tokenCandidates, overrides);
+	const tokens: OverviewTokenRecord = {};
+	for (const key of keys) {
+		tokens[key] = <strong>{key}</strong>;
+	}
+	return tokens;
+}
+
+function resolveOverviewTokenSources(
+	metadata: RegistryMetadataContextValue | null,
+): OverviewTokenSources | null {
+	if (!metadata) {
+		return null;
+	}
+	const {
+		actions,
+		phaseMetadata,
+		resourceMetadata,
+		statMetadata,
+		populationMetadata,
+		landMetadata,
+		slotMetadata,
+	} = metadata;
+	return createOverviewTokenSources({
+		actions,
+		phaseMetadata,
+		resourceMetadata,
+		statMetadata,
+		populationMetadata,
+		landMetadata,
+		slotMetadata,
+	});
+}
 
 export type { OverviewTokenConfig } from './components/overview/overviewTokens';
 
@@ -35,50 +147,35 @@ export default function Overview({
 	tokenConfig,
 	content,
 }: OverviewProps) {
-	const {
-		overviewContent,
-		actions,
-		phaseMetadata,
-		resourceMetadata,
-		statMetadata,
-		populationMetadata,
-		landMetadata,
-		slotMetadata,
-	} = useRegistryMetadata();
+	const metadata = useOptionalRegistryMetadata();
+	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
 	const sections = content ?? overviewContent.sections;
-	const defaultTokens = overviewContent.tokens;
+	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
 	const heroContent = overviewContent.hero;
 	const tokenSources = React.useMemo(
-		() =>
-			createOverviewTokenSources({
-				actions,
-				phaseMetadata,
-				resourceMetadata,
-				statMetadata,
-				populationMetadata,
-				landMetadata,
-				slotMetadata,
-			}),
-		[
-			actions,
-			phaseMetadata,
-			resourceMetadata,
-			statMetadata,
-			populationMetadata,
-			landMetadata,
-			slotMetadata,
-		],
+		() => resolveOverviewTokenSources(metadata),
+		[metadata],
 	);
-	const { sections: renderedSections, tokens: iconTokens } = React.useMemo(
-		() =>
-			createOverviewSections(
+	const { sections: renderedSections, tokens: iconTokens } =
+		React.useMemo(() => {
+			if (sections.length === 0) {
+				return EMPTY_SECTIONS_RESULT;
+			}
+
+			if (!tokenSources) {
+				return {
+					sections: createFallbackSections(sections),
+					tokens: createFallbackTokens(defaultTokens, tokenConfig),
+				};
+			}
+
+			return createOverviewSections(
 				defaultTokens,
 				tokenConfig,
 				sections,
 				tokenSources,
-			),
-		[defaultTokens, sections, tokenConfig, tokenSources],
-	);
+			);
+		}, [defaultTokens, sections, tokenConfig, tokenSources]);
 	const tokens = React.useMemo(() => ({ ...iconTokens }), [iconTokens]);
 
 	const heroTokens: Record<string, React.ReactNode> = React.useMemo(() => {
