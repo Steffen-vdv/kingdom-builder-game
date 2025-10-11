@@ -1,20 +1,23 @@
 import { vi } from 'vitest';
 import type {
 	EngineSession,
+	EngineSessionSnapshot,
 	PlayerId,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
 import {
 	PHASES,
 	RULES,
-	STATS,
+	Stat,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import { createTranslationContext } from '../../src/translation/context';
+import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
+import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
@@ -22,6 +25,8 @@ export interface PlayerPanelFixtures {
 	resourceForecast: Record<string, number>;
 	displayableStatKeys: string[];
 	statForecast: Record<string, number>;
+	registries: SessionRegistries;
+	metadata: EngineSessionSnapshot['metadata'];
 }
 
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
@@ -32,24 +37,30 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		tierDefinitions: RULES.tierDefinitions.map((tier) => ({ ...tier })),
 	};
 	const sessionRegistries = createSessionRegistries();
+	const translationAssets = createTranslationAssets({
+		populations: sessionRegistries.populations,
+		resources: sessionRegistries.resources,
+	});
 	const resourceValues = Object.keys(sessionRegistries.resources).reduce<
 		Record<string, number>
 	>((acc, key, index) => {
 		acc[key] = index + 2;
 		return acc;
 	}, {});
-	const nonCapacityStatEntries = Object.entries(STATS).filter(
-		([, info]) => !info.capacity,
-	);
 	const stats: Record<string, number> = {};
 	const statsHistory: Record<string, boolean> = {};
-	nonCapacityStatEntries.forEach(([statKey], index) => {
-		const value = index % 2 === 0 ? index + 1 : 0;
+	let statIndex = 0;
+	for (const statKey of Object.keys(translationAssets.stats)) {
+		if (statKey === Stat.maxPopulation) {
+			continue;
+		}
+		const value = statIndex % 2 === 0 ? statIndex + 1 : 0;
 		stats[statKey] = value;
 		if (value === 0) {
 			statsHistory[statKey] = true;
 		}
-	});
+		statIndex += 1;
+	}
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
@@ -151,8 +162,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	}, {});
 	const displayableStatKeys = Object.entries(activePlayer.stats)
 		.filter(([statKey, statValue]) => {
-			const info = STATS[statKey as keyof typeof STATS];
-			if (info.capacity) {
+			if (statKey === Stat.maxPopulation) {
 				return false;
 			}
 			if (statValue !== 0) {
@@ -175,5 +185,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		resourceForecast,
 		displayableStatKeys,
 		statForecast,
+		registries: sessionRegistries,
+		metadata: sessionState.metadata,
 	};
 }
