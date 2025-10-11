@@ -139,19 +139,24 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   npm run test:quick >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log
   ```
 
-  The command logs Vitest output to `/tmp/unit.log` and prints the tail for a
-  fast sanity check while you are actively coding. It is **not** a replacement
-  for the required pre-submission workflow.
+- The command logs Vitest output to `/tmp/unit.log` and prints the tail for a
+- fast sanity check while you are actively coding. It is **not** a replacement
+- for the required pre-submission workflow. See
+- [Agent Quick Start §1.2](docs/agent-quick-start.md#run-core-commands) for a
+- condensed checklist and verification shortcuts.
 
-- Before submitting or requesting review, run the full validation sequence in
-  order:
+- Use `npm run verify` as the default pre-submission workflow for code changes.
+  It is a thin wrapper around [`scripts/run-verification.mjs`](scripts/run-verification.mjs)
+  that sequentially runs `npm run check` and `npm run test:coverage`, streaming
+  progress to the console while saving timestamped logs to the repository's
+  `artifacts/` directory. Share those artifacts with reviewers when failures
+  need triage.
 
-  ```sh
-  npm run check && npm run test:coverage
-  ```
-
-  This combined snippet lints, type-checks, runs unit and integration tests,
-  and then verifies coverage to match the repository's expectations.
+- If the verification script is unavailable in your environment, fall back to
+  running `npm run check && npm run test:coverage` manually. Coverage runs may
+  be skipped only when a change is strictly documentation-only or a pure
+  content typo fix—call out the exception explicitly in the PR body so
+  reviewers know it was intentional.
 
 - The Husky pre-commit hook runs `lint-staged` followed by `npm run test:quick`.
   GitHub Actions executes `npm run test:ci` (coverage) and `npm run build` for

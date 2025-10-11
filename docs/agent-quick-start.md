@@ -15,10 +15,19 @@ guide for rationale, lore, and extended background.
 2. **Run core commands**
    - `npm run lint` and `npm run format` keep eslint and Prettier happy.
    - `npm run lint` also runs dependency-cruiser to enforce package boundaries.
-   - `npm run check` runs linting, type checks, and tests together.
+   - [`npm run verify`](../scripts/run-verification.mjs) is the preferred
+     combined validation for code changes; it streams output to the console and
+     writes timestamped logs in `artifacts/` for sharing with reviewers.
+   - `npm run check` still runs linting, type checks, and tests together if you
+     need a direct invocation or the verification script is unavailable.
+   - Documentation-only updates or pure content typo fixes may skip coverage
+     runs entirely—note the exception in your PR body so reviewers know it was
+     intentional.
    - Expect `npm run check` to take about two minutes; the Vitest progress
      reporter prints live suite counts so the run is not stuck.
    - Use `npm run build` only when you must validate a production bundle.
+   - See [`AGENTS.md` §2.5](../AGENTS.md#25-testing-workflow) for the complete
+     testing workflow policy and quick-run commands.
 3. **Work content-first**
    - Never hardcode game data in engine, web, or tests—load from
      `@kingdom-builder/contents` or registries.
