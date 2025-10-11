@@ -152,6 +152,12 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   `artifacts/` directory. Share those artifacts with reviewers when failures
   need triage.
 
+- The Husky pre-push hook enforces that verification run so every push produces
+  fresh artifacts. When the hook reports a tooling failure (e.g., `ENOENT`,
+  missing dependencies) and executes the fallback command
+  (`npm run check && npm run test:coverage`), document the underlying issue in
+  your PR body before calling `make_pr`.
+
 - If the verification script is unavailable in your environment, fall back to
   running `npm run check && npm run test:coverage` manually. Coverage runs may
   be skipped only when a change is strictly documentation-only or a pure

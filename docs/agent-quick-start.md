@@ -18,6 +18,10 @@ guide for rationale, lore, and extended background.
    - [`npm run verify`](../scripts/run-verification.mjs) is the preferred
      combined validation for code changes; it streams output to the console and
      writes timestamped logs in `artifacts/` for sharing with reviewers.
+   - The Husky pre-push hook enforces that verification run (with a fallback to
+     `npm run check && npm run test:coverage` on tooling failures). If you must
+     execute the fallback manually, note the environment issue in your PR body
+     so reviewers know why the hook could not complete normally.
    - `npm run check` still runs linting, type checks, and tests together if you
      need a direct invocation or the verification script is unavailable.
    - Documentation-only updates or pure content typo fixes may skip coverage
