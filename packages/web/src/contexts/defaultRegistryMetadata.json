@@ -4,7 +4,7 @@
 			"expand": {
 				"id": "expand",
 				"name": "Expand",
-				"icon": "🌱",
+				"icon": "\ud83c\udf31",
 				"baseCosts": {
 					"ap": 1,
 					"gold": 2
@@ -33,7 +33,7 @@
 			"develop": {
 				"id": "develop",
 				"name": "Develop",
-				"icon": "🏗️",
+				"icon": "\ud83c\udfd7\ufe0f",
 				"baseCosts": {
 					"ap": 1,
 					"gold": 3
@@ -55,7 +55,7 @@
 			"tax": {
 				"id": "tax",
 				"name": "Tax",
-				"icon": "💰",
+				"icon": "\ud83d\udcb0",
 				"baseCosts": {
 					"ap": 1
 				},
@@ -98,7 +98,7 @@
 			"raise_pop": {
 				"id": "raise_pop",
 				"name": "Hire",
-				"icon": "👶",
+				"icon": "\ud83d\udc76",
 				"baseCosts": {
 					"ap": 1,
 					"gold": 5
@@ -145,7 +145,7 @@
 			"royal_decree": {
 				"id": "royal_decree",
 				"name": "Royal Decree",
-				"icon": "📜",
+				"icon": "\ud83d\udcdc",
 				"baseCosts": {
 					"ap": 1,
 					"gold": 12
@@ -173,7 +173,7 @@
 						"options": [
 							{
 								"id": "royal_decree_house",
-								"icon": "🏠",
+								"icon": "\ud83c\udfe0",
 								"actionId": "develop",
 								"params": {
 									"developmentId": "house",
@@ -182,7 +182,7 @@
 							},
 							{
 								"id": "royal_decree_farm",
-								"icon": "🌾",
+								"icon": "\ud83c\udf3e",
 								"actionId": "develop",
 								"params": {
 									"developmentId": "farm",
@@ -191,7 +191,7 @@
 							},
 							{
 								"id": "royal_decree_outpost",
-								"icon": "🏹",
+								"icon": "\ud83c\udff9",
 								"actionId": "develop",
 								"params": {
 									"developmentId": "outpost",
@@ -200,7 +200,7 @@
 							},
 							{
 								"id": "royal_decree_watchtower",
-								"icon": "🗼",
+								"icon": "\ud83d\uddfc",
 								"actionId": "develop",
 								"params": {
 									"developmentId": "watchtower",
@@ -228,7 +228,7 @@
 			"army_attack": {
 				"id": "army_attack",
 				"name": "Army Attack",
-				"icon": "🗡️",
+				"icon": "\ud83d\udde1\ufe0f",
 				"baseCosts": {
 					"ap": 1
 				},
@@ -326,7 +326,7 @@
 			"hold_festival": {
 				"id": "hold_festival",
 				"name": "Hold Festival",
-				"icon": "🎉",
+				"icon": "\ud83c\udf89",
 				"baseCosts": {
 					"ap": 1,
 					"gold": 3
@@ -370,7 +370,7 @@
 						"params": {
 							"id": "hold_festival_penalty",
 							"name": "Festival Hangover",
-							"icon": "🤮",
+							"icon": "\ud83e\udd2e",
 							"onUpkeepPhase": [
 								{
 									"type": "passive",
@@ -413,7 +413,7 @@
 			"plunder": {
 				"id": "plunder",
 				"name": "Plunder",
-				"icon": "🏴‍☠️",
+				"icon": "\ud83c\udff4\u200d\u2620\ufe0f",
 				"effects": [
 					{
 						"type": "resource",
@@ -429,7 +429,7 @@
 			"plow": {
 				"id": "plow",
 				"name": "Plow",
-				"icon": "🚜",
+				"icon": "\ud83d\ude9c",
 				"baseCosts": {
 					"ap": 1,
 					"gold": 6
@@ -482,7 +482,7 @@
 			"till": {
 				"id": "till",
 				"name": "Till",
-				"icon": "🧑‍🌾",
+				"icon": "\ud83e\uddd1\u200d\ud83c\udf3e",
 				"effects": [
 					{
 						"type": "land",
@@ -494,7 +494,7 @@
 			"build": {
 				"id": "build",
 				"name": "Build",
-				"icon": "🏛️",
+				"icon": "\ud83c\udfdb\ufe0f",
 				"effects": [
 					{
 						"type": "building",
@@ -513,7 +513,7 @@
 			"town_charter": {
 				"id": "town_charter",
 				"name": "Town Charter",
-				"icon": "🏘️",
+				"icon": "\ud83c\udfd8\ufe0f",
 				"costs": {
 					"ap": 1,
 					"gold": 5
@@ -553,7 +553,7 @@
 			"mill": {
 				"id": "mill",
 				"name": "Mill",
-				"icon": "⚙️",
+				"icon": "\u2699\ufe0f",
 				"costs": {
 					"ap": 1,
 					"gold": 7
@@ -577,7 +577,7 @@
 			"raiders_guild": {
 				"id": "raiders_guild",
 				"name": "Raider's Guild",
-				"icon": "🏴‍☠️",
+				"icon": "\ud83c\udff4\u200d\u2620\ufe0f",
 				"costs": {
 					"ap": 1,
 					"gold": 8
@@ -604,7 +604,7 @@
 			"plow_workshop": {
 				"id": "plow_workshop",
 				"name": "Plow Workshop",
-				"icon": "🏭",
+				"icon": "\ud83c\udfed",
 				"costs": {
 					"ap": 1,
 					"gold": 10
@@ -623,7 +623,7 @@
 			"market": {
 				"id": "market",
 				"name": "Market",
-				"icon": "🏪",
+				"icon": "\ud83c\udfea",
 				"costs": {
 					"ap": 1,
 					"gold": 10
@@ -647,7 +647,7 @@
 			"castle_walls": {
 				"id": "castle_walls",
 				"name": "Castle Walls",
-				"icon": "🧱",
+				"icon": "\ud83e\uddf1",
 				"costs": {
 					"ap": 1,
 					"gold": 12
@@ -684,7 +684,7 @@
 			"barracks": {
 				"id": "barracks",
 				"name": "Barracks",
-				"icon": "🪖",
+				"icon": "\ud83e\ude96",
 				"costs": {
 					"ap": 1,
 					"gold": 12
@@ -695,7 +695,7 @@
 			"citadel": {
 				"id": "citadel",
 				"name": "Citadel",
-				"icon": "🏯",
+				"icon": "\ud83c\udfef",
 				"costs": {
 					"ap": 1,
 					"gold": 12
@@ -706,7 +706,7 @@
 			"castle_gardens": {
 				"id": "castle_gardens",
 				"name": "Castle Gardens",
-				"icon": "🌷",
+				"icon": "\ud83c\udf37",
 				"costs": {
 					"ap": 1,
 					"gold": 15
@@ -717,7 +717,7 @@
 			"temple": {
 				"id": "temple",
 				"name": "Temple",
-				"icon": "⛪",
+				"icon": "\u26ea",
 				"costs": {
 					"ap": 1,
 					"gold": 16
@@ -728,7 +728,7 @@
 			"palace": {
 				"id": "palace",
 				"name": "Palace",
-				"icon": "👑",
+				"icon": "\ud83d\udc51",
 				"costs": {
 					"ap": 1,
 					"gold": 20
@@ -739,7 +739,7 @@
 			"great_hall": {
 				"id": "great_hall",
 				"name": "Great Hall",
-				"icon": "🏟️",
+				"icon": "\ud83c\udfdf\ufe0f",
 				"costs": {
 					"ap": 1,
 					"gold": 22
@@ -752,7 +752,7 @@
 			"farm": {
 				"id": "farm",
 				"name": "Farm",
-				"icon": "🌾",
+				"icon": "\ud83c\udf3e",
 				"onGainIncomeStep": [
 					{
 						"effects": [
@@ -779,7 +779,7 @@
 			"house": {
 				"id": "house",
 				"name": "House",
-				"icon": "🏠",
+				"icon": "\ud83c\udfe0",
 				"onBuild": [
 					{
 						"type": "stat",
@@ -797,7 +797,7 @@
 			"outpost": {
 				"id": "outpost",
 				"name": "Outpost",
-				"icon": "🏹",
+				"icon": "\ud83c\udff9",
 				"onBuild": [
 					{
 						"type": "stat",
@@ -822,7 +822,7 @@
 			"watchtower": {
 				"id": "watchtower",
 				"name": "Watchtower",
-				"icon": "🗼",
+				"icon": "\ud83d\uddfc",
 				"onBuild": [
 					{
 						"type": "stat",
@@ -857,7 +857,7 @@
 			"garden": {
 				"id": "garden",
 				"name": "Garden",
-				"icon": "🌿",
+				"icon": "\ud83c\udf3f",
 				"system": true
 			}
 		},
@@ -865,7 +865,7 @@
 			"council": {
 				"id": "council",
 				"name": "Council",
-				"icon": "⚖️",
+				"icon": "\u2696\ufe0f",
 				"upkeep": {
 					"gold": 2
 				},
@@ -894,7 +894,7 @@
 			"legion": {
 				"id": "legion",
 				"name": "Legion",
-				"icon": "🎖️",
+				"icon": "\ud83c\udf96\ufe0f",
 				"upkeep": {
 					"gold": 1
 				},
@@ -930,7 +930,7 @@
 			"fortifier": {
 				"id": "fortifier",
 				"name": "Fortifier",
-				"icon": "🔧",
+				"icon": "\ud83d\udd27",
 				"upkeep": {
 					"gold": 1
 				},
@@ -966,32 +966,32 @@
 			"citizen": {
 				"id": "citizen",
 				"name": "Citizen",
-				"icon": "👤"
+				"icon": "\ud83d\udc64"
 			}
 		},
 		"resources": {
 			"gold": {
 				"key": "gold",
-				"icon": "🪙",
+				"icon": "\ud83e\ude99",
 				"label": "Gold",
 				"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
 				"tags": ["bankruptcy-check"]
 			},
 			"ap": {
 				"key": "ap",
-				"icon": "⚡",
+				"icon": "\u26a1",
 				"label": "Action Points",
 				"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
 			},
 			"happiness": {
 				"key": "happiness",
-				"icon": "😊",
+				"icon": "\ud83d\ude0a",
 				"label": "Happiness",
 				"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
 			},
 			"castleHP": {
 				"key": "castleHP",
-				"icon": "🏰",
+				"icon": "\ud83c\udff0",
 				"label": "Castle HP",
 				"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
 				"tags": ["attack-target", "win-condition-zero"]
@@ -1003,144 +1003,144 @@
 		"resources": {
 			"gold": {
 				"label": "Gold",
-				"icon": "🪙",
+				"icon": "\ud83e\ude99",
 				"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open."
 			},
 			"ap": {
 				"label": "Action Points",
-				"icon": "⚡",
+				"icon": "\u26a1",
 				"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
 			},
 			"happiness": {
 				"label": "Happiness",
-				"icon": "😊",
+				"icon": "\ud83d\ude0a",
 				"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
 			},
 			"castleHP": {
 				"label": "Castle HP",
-				"icon": "🏰",
+				"icon": "\ud83c\udff0",
 				"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost."
 			}
 		},
 		"populations": {
 			"council": {
 				"label": "Council",
-				"icon": "⚖️"
+				"icon": "\u2696\ufe0f"
 			},
 			"legion": {
 				"label": "Legion",
-				"icon": "🎖️"
+				"icon": "\ud83c\udf96\ufe0f"
 			},
 			"fortifier": {
 				"label": "Fortifier",
-				"icon": "🔧"
+				"icon": "\ud83d\udd27"
 			},
 			"citizen": {
 				"label": "Citizen",
-				"icon": "👤"
+				"icon": "\ud83d\udc64"
 			}
 		},
 		"buildings": {
 			"town_charter": {
 				"label": "Town Charter",
-				"icon": "🏘️"
+				"icon": "\ud83c\udfd8\ufe0f"
 			},
 			"mill": {
 				"label": "Mill",
-				"icon": "⚙️"
+				"icon": "\u2699\ufe0f"
 			},
 			"raiders_guild": {
 				"label": "Raider's Guild",
-				"icon": "🏴‍☠️"
+				"icon": "\ud83c\udff4\u200d\u2620\ufe0f"
 			},
 			"plow_workshop": {
 				"label": "Plow Workshop",
-				"icon": "🏭"
+				"icon": "\ud83c\udfed"
 			},
 			"market": {
 				"label": "Market",
-				"icon": "🏪"
+				"icon": "\ud83c\udfea"
 			},
 			"castle_walls": {
 				"label": "Castle Walls",
-				"icon": "🧱"
+				"icon": "\ud83e\uddf1"
 			},
 			"barracks": {
 				"label": "Barracks",
-				"icon": "🪖"
+				"icon": "\ud83e\ude96"
 			},
 			"citadel": {
 				"label": "Citadel",
-				"icon": "🏯"
+				"icon": "\ud83c\udfef"
 			},
 			"castle_gardens": {
 				"label": "Castle Gardens",
-				"icon": "🌷"
+				"icon": "\ud83c\udf37"
 			},
 			"temple": {
 				"label": "Temple",
-				"icon": "⛪"
+				"icon": "\u26ea"
 			},
 			"palace": {
 				"label": "Palace",
-				"icon": "👑"
+				"icon": "\ud83d\udc51"
 			},
 			"great_hall": {
 				"label": "Great Hall",
-				"icon": "🏟️"
+				"icon": "\ud83c\udfdf\ufe0f"
 			}
 		},
 		"developments": {
 			"farm": {
 				"label": "Farm",
-				"icon": "🌾"
+				"icon": "\ud83c\udf3e"
 			},
 			"house": {
 				"label": "House",
-				"icon": "🏠"
+				"icon": "\ud83c\udfe0"
 			},
 			"outpost": {
 				"label": "Outpost",
-				"icon": "🏹"
+				"icon": "\ud83c\udff9"
 			},
 			"watchtower": {
 				"label": "Watchtower",
-				"icon": "🗼"
+				"icon": "\ud83d\uddfc"
 			},
 			"garden": {
 				"label": "Garden",
-				"icon": "🌿"
+				"icon": "\ud83c\udf3f"
 			}
 		},
 		"stats": {
 			"maxPopulation": {
 				"label": "Max Population",
-				"icon": "👥",
+				"icon": "\ud83d\udc65",
 				"description": "Max Population determines how many subjects your kingdom can sustain. Expand infrastructure or build houses to increase it."
 			},
 			"armyStrength": {
 				"label": "Army Strength",
-				"icon": "⚔️",
+				"icon": "\u2694\ufe0f",
 				"description": "Army Strength reflects the overall power of your military forces. A higher value makes your attacks more formidable."
 			},
 			"fortificationStrength": {
 				"label": "Fortification Strength",
-				"icon": "🛡️",
+				"icon": "\ud83d\udee1\ufe0f",
 				"description": "Fortification Strength measures the resilience of your defenses. It reduces damage taken when enemies assault your castle."
 			},
 			"absorption": {
 				"label": "Absorption",
-				"icon": "🌀",
+				"icon": "\ud83c\udf00",
 				"description": "Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows."
 			},
 			"growth": {
 				"label": "Growth",
-				"icon": "📈",
-				"description": "Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase."
+				"icon": "\ud83d\udcc8",
+				"description": "Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers\u2014if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase."
 			},
 			"warWeariness": {
 				"label": "War Weariness",
-				"icon": "💤",
+				"icon": "\ud83d\udca4",
 				"description": "War Weariness reflects the fatigue from prolonged conflict. High weariness can sap morale and hinder wartime efforts."
 			}
 		},
@@ -1148,7 +1148,7 @@
 			"growth": {
 				"id": "growth",
 				"label": "Growth",
-				"icon": "🏗️",
+				"icon": "\ud83c\udfd7\ufe0f",
 				"steps": [
 					{
 						"id": "resolve-dynamic-triggers",
@@ -1158,7 +1158,7 @@
 					{
 						"id": "gain-income",
 						"label": "Gain Income",
-						"icon": "💰",
+						"icon": "\ud83d\udcb0",
 						"triggers": ["onGainIncomeStep"]
 					},
 					{
@@ -1175,7 +1175,7 @@
 			"upkeep": {
 				"id": "upkeep",
 				"label": "Upkeep",
-				"icon": "🧹",
+				"icon": "\ud83e\uddf9",
 				"steps": [
 					{
 						"id": "resolve-dynamic-triggers",
@@ -1196,7 +1196,7 @@
 			"main": {
 				"id": "main",
 				"label": "Main",
-				"icon": "🎯",
+				"icon": "\ud83c\udfaf",
 				"action": true,
 				"steps": [
 					{
@@ -1209,61 +1209,61 @@
 		"triggers": {
 			"onBuild": {
 				"label": "Build",
-				"icon": "⚒️",
+				"icon": "\u2692\ufe0f",
 				"future": "Until removed",
 				"past": "Build"
 			},
 			"onBeforeAttacked": {
 				"label": "Before attack",
-				"icon": "🛡️",
+				"icon": "\ud83d\udee1\ufe0f",
 				"future": "Before being attacked",
 				"past": "Before attack"
 			},
 			"onAttackResolved": {
 				"label": "After attack",
-				"icon": "⚔️",
+				"icon": "\u2694\ufe0f",
 				"future": "After having been attacked",
 				"past": "After attack"
 			},
 			"onPayUpkeepStep": {
 				"label": "Upkeep step",
-				"icon": "🧹",
+				"icon": "\ud83e\uddf9",
 				"future": "During upkeep step",
 				"past": "Upkeep step"
 			},
 			"onGainIncomeStep": {
-				"label": "Growth Phase — Gain Income step",
-				"icon": "💰",
-				"future": "During Growth Phase — Gain Income step",
-				"past": "Growth Phase — Gain Income step"
+				"label": "Growth Phase \u2014 Gain Income step",
+				"icon": "\ud83d\udcb0",
+				"future": "During Growth Phase \u2014 Gain Income step",
+				"past": "Growth Phase \u2014 Gain Income step"
 			},
 			"onGainAPStep": {
 				"label": "AP step",
-				"icon": "⚡",
+				"icon": "\u26a1",
 				"future": "During AP step",
 				"past": "AP step"
 			},
 			"mainPhase": {
 				"label": "Main phase",
-				"icon": "🎯",
+				"icon": "\ud83c\udfaf",
 				"future": "",
 				"past": "Main phase"
 			},
 			"onGrowthPhase": {
 				"label": "Growth Phase",
-				"icon": "🏗️",
+				"icon": "\ud83c\udfd7\ufe0f",
 				"future": "On each Growth Phase",
 				"past": "Growth Phase"
 			},
 			"onUpkeepPhase": {
 				"label": "Upkeep Phase",
-				"icon": "🧹",
+				"icon": "\ud83e\uddf9",
 				"future": "On each Upkeep Phase",
 				"past": "Upkeep Phase"
 			},
 			"onMainPhase": {
 				"label": "Main Phase",
-				"icon": "🎯",
+				"icon": "\ud83c\udfaf",
 				"future": "On each Main Phase",
 				"past": "Main Phase"
 			}
@@ -1271,15 +1271,190 @@
 		"assets": {
 			"land": {
 				"label": "Land",
-				"icon": "🗺️"
+				"icon": "\ud83d\uddfa\ufe0f"
 			},
 			"slot": {
 				"label": "Development Slot",
-				"icon": "🧩"
+				"icon": "\ud83e\udde9"
 			},
 			"passive": {
 				"label": "Passive",
-				"icon": "♾️"
+				"icon": "\u267e\ufe0f"
+			}
+		},
+		"overviewContent": {
+			"hero": {
+				"badgeIcon": "\ud83d\udcd8",
+				"badgeLabel": "Know The Realm",
+				"title": "Game Overview",
+				"intro": "Map the rhythms of the realm before you issue your first decree. Know where every resource, phase, and population surge will carry you.",
+				"paragraph": "Welcome to {game}, a brisk duel of wits where {expand} expansion, {build} clever construction, and {army_attack} daring raids decide who steers the crown.",
+				"tokens": {
+					"game": "Kingdom Builder"
+				}
+			},
+			"sections": [
+				{
+					"kind": "paragraph",
+					"id": "objective",
+					"icon": "castleHP",
+					"title": "Your Objective",
+					"span": true,
+					"paragraphs": [
+						"Keep your {castleHP} castle standing through every assault.",
+						"Plot daring turns that unravel your rival's engine.",
+						"Victory strikes when a stronghold falls or a ruler stalls out.",
+						"The final round crowns the monarch with the healthiest realm."
+					]
+				},
+				{
+					"kind": "list",
+					"id": "turn-flow",
+					"icon": "phase.growth",
+					"title": "Turn Flow",
+					"span": true,
+					"items": [
+						{
+							"icon": "phase.growth",
+							"label": "Growth",
+							"body": [
+								"Kickstarts your engine with income and {armyStrength} Army strength.",
+								"Stacks {fortificationStrength} Fortification bonuses and triggers automatic boons."
+							]
+						},
+						{
+							"icon": "phase.upkeep",
+							"label": "Upkeep",
+							"body": [
+								"Settles wages, ongoing effects, and any debts your realm has racked up."
+							]
+						},
+						{
+							"icon": "phase.main",
+							"label": "Main Phase",
+							"body": [
+								"Both players secretly queue actions.",
+								"Reveal them in a flurry of {ap} AP-powered maneuvers."
+							]
+						}
+					]
+				},
+				{
+					"kind": "list",
+					"id": "resources",
+					"icon": "gold",
+					"title": "Resources",
+					"items": [
+						{
+							"icon": "gold",
+							"label": "Gold",
+							"body": ["Fuels {build} buildings, diplomacy, and daring plays."]
+						},
+						{
+							"icon": "ap",
+							"label": "Action Points",
+							"body": [
+								"Are the energy for every turn in the {main} Main phase."
+							]
+						},
+						{
+							"icon": "happiness",
+							"label": "Happiness",
+							"body": ["Keeps the populace cheering instead of rioting."]
+						},
+						{
+							"icon": "castleHP",
+							"label": "Castle HP",
+							"body": ["Is your lifeline\u2014lose it and the dynasty topples."]
+						}
+					]
+				},
+				{
+					"kind": "paragraph",
+					"id": "land",
+					"icon": "land",
+					"title": "Land & Developments",
+					"paragraphs": [
+						"Claim {land} land and slot in {slot} developments to unlock perks.",
+						"Farms pump {gold} gold while signature projects open slots or unleash passives."
+					]
+				},
+				{
+					"kind": "list",
+					"id": "population",
+					"icon": "council",
+					"title": "Population Roles",
+					"span": true,
+					"items": [
+						{
+							"icon": "council",
+							"label": "Council",
+							"body": ["Rallies extra {ap} Action Points each round."]
+						},
+						{
+							"icon": "legion",
+							"label": "Legion",
+							"body": [
+								"Reinforces {armyStrength} Army strength for devastating {army_attack} raids."
+							]
+						},
+						{
+							"icon": "fortifier",
+							"label": "Fortifier",
+							"body": ["Cements your defenses with persistent buffs."]
+						},
+						{
+							"icon": "citizen",
+							"label": "Citizens",
+							"body": ["Wait in the wings, ready to specialize as needed."]
+						}
+					]
+				},
+				{
+					"kind": "paragraph",
+					"id": "actions",
+					"icon": "develop",
+					"title": "Actions & Strategy",
+					"span": true,
+					"paragraphs": [
+						"Spend {ap} AP to {expand} grow territory or {develop} upgrade key lands.",
+						"Field {raise_pop} specialists or launch {army_attack} attacks to snowball momentum."
+					]
+				}
+			],
+			"tokens": {
+				"actions": {
+					"expand": ["expand"],
+					"build": ["build"],
+					"develop": ["develop"],
+					"raise_pop": ["raise_pop"],
+					"army_attack": ["army_attack"]
+				},
+				"phases": {
+					"phase.growth": ["phase.growth"],
+					"phase.upkeep": ["phase.upkeep"],
+					"phase.main": ["phase.main"]
+				},
+				"resources": {
+					"gold": ["gold"],
+					"ap": ["ap"],
+					"happiness": ["happiness"],
+					"castleHP": ["castleHP"]
+				},
+				"stats": {
+					"armyStrength": ["armyStrength"],
+					"fortificationStrength": ["fortificationStrength"]
+				},
+				"population": {
+					"council": ["council"],
+					"legion": ["legion"],
+					"fortifier": ["fortifier"],
+					"citizen": ["citizen"]
+				},
+				"static": {
+					"land": ["land"],
+					"slot": ["slot"]
+				}
 			}
 		}
 	}

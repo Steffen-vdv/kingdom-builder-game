@@ -124,7 +124,31 @@ function createTestSetup(): TestSetup {
 		},
 		assets: {
 			land: { label: 'Territory', icon: '🗺️' },
+			slot: { label: 'Orbital Slot', icon: '🧩' },
 			passive: { label: 'Aura', icon: '✨' },
+		},
+		overviewContent: {
+			hero: {
+				badgeIcon: '🛡️',
+				badgeLabel: 'Astral Guard',
+				title: 'Nebula Overview',
+				intro: 'Survey the astral currents.',
+				paragraph: 'Chart every constellation before dawn.',
+				tokens: { game: 'Nebula Clash' },
+			},
+			sections: [
+				{
+					kind: 'paragraph',
+					id: 'introduction',
+					icon: 'land',
+					title: 'Prime Directives',
+					paragraphs: ['Secure {land} domains.', 'Command {ap} reserves.'],
+				},
+			],
+			tokens: {
+				resources: { ap: ['ap'] },
+				static: { land: ['land'] },
+			},
 		},
 	};
 	const registries: SessionRegistries = {
@@ -283,7 +307,7 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.descriptor.label).toBe('Territory');
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
-		expect(slot.descriptor.label).toBe('Development Slot');
-		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(slot.descriptor.label).toBe('Orbital Slot');
+		expect(context.overviewContent?.hero.title).toBe('Nebula Overview');
 	});
 });
