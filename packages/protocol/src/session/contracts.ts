@@ -1,14 +1,20 @@
 import type {
 	ActionConfig,
+	ActionEffectGroup,
 	BuildingConfig,
 	DevelopmentConfig,
 	GameConfig,
 	PopulationConfig,
 } from '../config/schema';
+import type { ActionParametersPayload } from '../actions/contracts';
 import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
 	SessionAdvanceResult,
 	SessionPlayerId,
 	SessionSnapshot,
+	SimulateUpcomingPhasesOptions,
+	SimulateUpcomingPhasesResult,
 } from './index';
 
 export interface SessionIdentifier {
@@ -67,3 +73,46 @@ export interface SessionUpdatePlayerNameRequest extends SessionIdentifier {
 }
 
 export type SessionUpdatePlayerNameResponse = SessionStateResponse;
+
+export interface SessionActionCostRequest extends SessionIdentifier {
+	actionId: string;
+	params?: ActionParametersPayload;
+}
+
+export interface SessionActionCostResponse extends SessionIdentifier {
+	costs: SessionActionCostMap;
+}
+
+export interface SessionActionRequirementRequest extends SessionIdentifier {
+	actionId: string;
+	params?: ActionParametersPayload;
+}
+
+export interface SessionActionRequirementResponse extends SessionIdentifier {
+	requirements: SessionActionRequirementList;
+}
+
+export interface SessionActionOptionsRequest extends SessionIdentifier {
+	actionId: string;
+}
+
+export interface SessionActionOptionsResponse extends SessionIdentifier {
+	groups: ActionEffectGroup[];
+}
+
+export interface SessionRunAiRequest extends SessionIdentifier {
+	playerId: SessionPlayerId;
+}
+
+export interface SessionRunAiResponse extends SessionCreateResponse {
+	ranTurn: boolean;
+}
+
+export interface SessionSimulateRequest extends SessionIdentifier {
+	playerId: SessionPlayerId;
+	options?: SimulateUpcomingPhasesOptions;
+}
+
+export interface SessionSimulateResponse extends SessionIdentifier {
+	result: SimulateUpcomingPhasesResult;
+}

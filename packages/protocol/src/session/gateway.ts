@@ -8,6 +8,16 @@ import type {
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionIdentifier,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
@@ -18,6 +28,19 @@ export interface SessionGateway {
 	fetchSnapshot(request: SessionIdentifier): Promise<SessionStateResponse>;
 	performAction(request: ActionExecuteRequest): Promise<ActionExecuteResponse>;
 	advancePhase(request: SessionAdvanceRequest): Promise<SessionAdvanceResponse>;
+	getActionCosts(
+		request: SessionActionCostRequest,
+	): Promise<SessionActionCostResponse>;
+	getActionRequirements(
+		request: SessionActionRequirementRequest,
+	): Promise<SessionActionRequirementResponse>;
+	getActionOptions(
+		request: SessionActionOptionsRequest,
+	): Promise<SessionActionOptionsResponse>;
+	runAiTurn(request: SessionRunAiRequest): Promise<SessionRunAiResponse>;
+	simulateUpcomingPhases(
+		request: SessionSimulateRequest,
+	): Promise<SessionSimulateResponse>;
 	setDevMode(
 		request: SessionSetDevModeRequest,
 	): Promise<SessionSetDevModeResponse>;
