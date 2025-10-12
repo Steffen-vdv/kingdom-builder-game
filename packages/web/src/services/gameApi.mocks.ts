@@ -9,6 +9,8 @@ import type {
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionStateResponse,
+	SessionSetDevModeRequest,
+	SessionSetDevModeResponse,
 } from '@kingdom-builder/protocol/session';
 import type { GameApi, GameApiRequestOptions } from './gameApi';
 import { GameApiError } from './gameApi';
@@ -121,6 +123,10 @@ export type GameApiMockHandlers = {
 		request: SessionAdvanceRequest,
 		options?: GameApiRequestOptions,
 	) => Promise<SessionAdvanceResponse> | SessionAdvanceResponse;
+	setDevMode?: (
+		request: SessionSetDevModeRequest,
+		options?: GameApiRequestOptions,
+	) => Promise<SessionSetDevModeResponse> | SessionSetDevModeResponse;
 };
 
 export const createGameApiMock = (
@@ -163,6 +169,16 @@ export const createGameApiMock = (
 
 		return Promise.resolve(handlers.advancePhase(request, options));
 	},
+	setDevMode: (
+		request: SessionSetDevModeRequest,
+		options: GameApiRequestOptions = {},
+	) => {
+		if (!handlers.setDevMode) {
+			return Promise.reject(new Error('setDevMode handler not provided.'));
+		}
+
+		return Promise.resolve(handlers.setDevMode(request, options));
+	},
 });
 
 export interface GameApiFakeState {
@@ -174,6 +190,7 @@ export class GameApiFake implements GameApi {
 	#nextCreate: SessionCreateResponse | undefined;
 	#nextAdvance: SessionAdvanceResponse | undefined;
 	#nextAction: ActionExecuteResponse | undefined;
+	#nextDevMode: SessionSetDevModeResponse | undefined;
 
 	constructor(state: GameApiFakeState = {}) {
 		this.#sessions = state.sessions ?? new Map<string, SessionStateResponse>();
@@ -189,6 +206,10 @@ export class GameApiFake implements GameApi {
 
 	setNextActionResponse(response: ActionExecuteResponse) {
 		this.#nextAction = clone(response);
+	}
+
+	setNextSetDevModeResponse(response: SessionSetDevModeResponse) {
+		this.#nextDevMode = clone(response);
 	}
 
 	primeSession(response: SessionStateResponse) {
@@ -265,6 +286,17 @@ export class GameApiFake implements GameApi {
 		return Promise.resolve(clone(response));
 	}
 
+	setDevMode(
+		_request: SessionSetDevModeRequest,
+		_options: GameApiRequestOptions = {},
+	): Promise<SessionSetDevModeResponse> {
+		const response = this.#consumeSetDevMode();
+
+		this.#sessions.set(response.sessionId, clone(response));
+
+		return Promise.resolve(clone(response));
+	}
+
 	#consumeCreate(): SessionCreateResponse {
 		const response = this.#nextCreate;
 
@@ -295,6 +327,17 @@ export class GameApiFake implements GameApi {
 		}
 
 		this.#nextAction = undefined;
+		return response;
+	}
+
+	#consumeSetDevMode(): SessionSetDevModeResponse {
+		const response = this.#nextDevMode;
+
+		if (response === undefined) {
+			throw new Error('No set dev mode response primed.');
+		}
+
+		this.#nextDevMode = undefined;
 		return response;
 	}
 

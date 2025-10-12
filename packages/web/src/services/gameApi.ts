@@ -8,6 +8,8 @@ import type {
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionStateResponse,
+	SessionSetDevModeRequest,
+	SessionSetDevModeResponse,
 } from '@kingdom-builder/protocol/session';
 
 type FetchFn = (input: RequestInfo, init?: RequestInit) => Promise<Response>;
@@ -46,6 +48,10 @@ export interface GameApi {
 		request: SessionAdvanceRequest,
 		options?: GameApiRequestOptions,
 	): Promise<SessionAdvanceResponse>;
+	setDevMode(
+		request: SessionSetDevModeRequest,
+		options?: GameApiRequestOptions,
+	): Promise<SessionSetDevModeResponse>;
 }
 
 export class GameApiError extends Error {
@@ -176,6 +182,22 @@ class HttpGameApi implements GameApi {
 			{
 				method: 'POST',
 				body: request,
+			},
+			options,
+		);
+	}
+
+	async setDevMode(
+		request: SessionSetDevModeRequest,
+		options: GameApiRequestOptions = {},
+	): Promise<SessionSetDevModeResponse> {
+		const { sessionId, enabled } = request;
+
+		return this.#send(
+			`/sessions/${encodeURIComponent(sessionId)}/dev-mode`,
+			{
+				method: 'POST',
+				body: { enabled },
 			},
 			options,
 		);

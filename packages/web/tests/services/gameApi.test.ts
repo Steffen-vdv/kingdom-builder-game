@@ -12,6 +12,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 	SessionStateResponse,
+	SessionSetDevModeRequest,
 } from '@kingdom-builder/protocol/session';
 import {
 	GameApiError,
@@ -232,6 +233,41 @@ describe('createGameApi', () => {
 		const [url] = fetchMock.mock.calls[0];
 		expect(url).toBe('/api/sessions/session-5/actions');
 	});
+
+	it('toggles dev mode for sessions', async () => {
+		const response = createStateResponse('session-dev');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+		const request: SessionSetDevModeRequest = {
+			sessionId: 'session-dev',
+			enabled: true,
+		};
+
+		const result = await api.setDevMode(request);
+
+		expect(result).toEqual(response);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe('/api/sessions/session-dev/dev-mode');
+		expect(init?.method).toBe('POST');
+		expect(init?.body).toBe(JSON.stringify({ enabled: true }));
+	});
+
+	it('propagates errors when toggling dev mode fails', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(
+				createJsonResponse({ message: 'failed' }, { status: 503 }),
+			);
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		await expect(
+			api.setDevMode({ sessionId: 'session-err', enabled: false }),
+		).rejects.toMatchObject({
+			status: 503,
+			body: { message: 'failed' },
+		});
+	});
 });
 
 describe('createGameApiMock', () => {
@@ -242,13 +278,21 @@ describe('createGameApiMock', () => {
 		const mock = createGameApiMock({
 			createSession: handler,
 			fetchSnapshot: handler,
+			setDevMode: handler,
 		});
 
 		await expect(mock.createSession()).resolves.toEqual(
 			createStateResponse('mock-session'),
 		);
 		await mock.fetchSnapshot('mock-session');
-		expect(handler).toHaveBeenCalledTimes(2);
+		await mock.setDevMode({ sessionId: 'mock-session', enabled: true });
+		expect(handler).toHaveBeenCalledTimes(3);
+		const calls = handler.mock.calls;
+		expect(calls[1]?.[0]).toBe('mock-session');
+		expect(calls[2]?.[0]).toEqual({
+			sessionId: 'mock-session',
+			enabled: true,
+		});
 	});
 
 	it('throws when handler is missing', async () => {
@@ -282,6 +326,23 @@ describe('GameApiFake', () => {
 				actionId: 'action',
 			}),
 		).resolves.toEqual(actionResponse);
+	});
+
+	it('stores responses from setDevMode calls', async () => {
+		const fake = new GameApiFake();
+		const response = createStateResponse('session-dev-mode', {
+			game: { devMode: true } as Mutable<SessionSnapshot['game']>,
+		});
+		fake.setNextSetDevModeResponse(response);
+
+		const result = await fake.setDevMode({
+			sessionId: 'session-dev-mode',
+			enabled: true,
+		});
+
+		expect(result).toEqual(response);
+		const snapshot = await fake.fetchSnapshot('session-dev-mode');
+		expect(snapshot.snapshot.game.devMode).toBe(true);
 	});
 
 	it('updates stored snapshot on successful actions', async () => {
