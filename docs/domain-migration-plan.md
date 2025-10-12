@@ -85,6 +85,15 @@
 | `src/utils/stats/types.ts`                                       | `PlayerStateSnapshot`<br>`StatSourceLink`                              | —                                                                                                                                                                                                                       | —                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `src/utils/stats.ts`                                             | `PlayerStateSnapshot`<br>`StatKey`<br>`StatSourceContribution`         | `STATS`                                                                                                                                                                                                                 | `tests/PlayerPanel.test.tsx`<br>`tests/append-stat-changes.test.ts`<br>`tests/attack-on-damage-registry.test.ts`<br>`tests/modifier-percent-formatting.test.ts`<br>`tests/stat-breakdown.test.ts`<br>`tests/stat-descriptor-registry.test.ts`                                                                                                                                                                                                   |
 
+## API Gaps
+
+- **2025-10-12** – Protocol now mirrors the Engine
+  `simulateUpcomingPhases` payloads (`PlayerSnapshotDeltaBucket`,
+  `SimulateUpcomingPhasesIds`, `SimulateUpcomingPhasesOptions`, and
+  `SimulateUpcomingPhasesResult`). Web state hooks such as
+  `useNextTurnForecast` can migrate to the protocol contracts to remove their
+  direct Engine dependency once the consumer side is updated.
+
 ## Guiding Principles
 
 1. **API-First Collaboration**: All cross-domain collaboration happens through
@@ -149,3 +158,18 @@ diagrams are linked where possible. Do not merge a change affecting domain
 boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
+
+- **Date & Author**: 2025-10-12 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/protocol/src/session/index.ts` (Protocol)
+    - `packages/protocol/src/index.ts` (Protocol)
+    - `packages/protocol/tests/simulate-upcoming-phases.test.ts` (Protocol)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Expose simulate-upcoming-phases payload types through Protocol to
+    uphold API-first collaboration and unblock Web from importing Engine
+    internals.
+  - **Communication Path Update**: Protocol now mirrors the Engine
+    `simulateUpcomingPhases` result and delta bucket structures so Web can rely
+    on published session contracts.
+  - **Follow-Up Notes**: Coordinate with Web to switch
+    `useNextTurnForecast` (and related tests) to the new protocol exports.
