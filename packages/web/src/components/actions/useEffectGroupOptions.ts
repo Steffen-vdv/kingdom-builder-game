@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/protocol';
 import {
 	describeContent,
 	splitSummary,
@@ -14,11 +14,12 @@ import { type ActionCardOption } from './ActionCard';
 import type { HoverCardData, GameEngineApi } from './types';
 import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
 
-type ResolveParams = Record<string, unknown> | undefined;
+type OptionParams = ActionEffectGroupOption['params'];
+type PendingParams = Record<string, unknown> | undefined;
 
 type BuildOptionsParams = {
 	currentGroup: ActionEffectGroup | undefined;
-	pendingParams: Record<string, unknown> | undefined;
+	pendingParams: PendingParams;
 	session: GameEngineApi['session'];
 	translationContext: TranslationContext;
 	formatRequirement: (requirement: string) => string;
@@ -34,10 +35,10 @@ type BuildOptionsParams = {
 
 function resolveOptionParams(
 	option: ActionEffectGroupOption,
-	pendingParams: Record<string, unknown> | undefined,
+	pendingParams: PendingParams,
 ): Record<string, unknown> {
 	const resolved: Record<string, unknown> = {};
-	const params: ResolveParams = option.params;
+	const params: OptionParams = option.params;
 	if (!params) {
 		return resolved;
 	}

@@ -1,11 +1,11 @@
 import React from 'react';
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 
 interface BuildingDisplayProps {
-	player: PlayerStateSnapshot;
+	player: SessionPlayerStateSnapshot;
 }
 
 const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ player }) => {

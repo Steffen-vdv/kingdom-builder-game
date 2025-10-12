@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import ResourceBar from './ResourceBar';
 import PopulationInfo from './PopulationInfo';
 import LandDisplay from './LandDisplay';
@@ -8,7 +8,7 @@ import PassiveDisplay from './PassiveDisplay';
 import { useAnimate } from '../../utils/useAutoAnimate';
 
 interface PlayerPanelProps {
-	player: PlayerStateSnapshot;
+	player: SessionPlayerStateSnapshot;
 	className?: string;
 	isActive?: boolean;
 	onHeightChange?: (height: number) => void;

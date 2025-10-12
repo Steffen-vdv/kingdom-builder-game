@@ -1,7 +1,7 @@
 import type {
-	PlayerStateSnapshot,
-	StatSourceLink,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot as PlayerStateSnapshot,
+	SessionStatSourceLink as StatSourceLink,
+} from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../translation/context';
 
 export type ResolveResult = { icon: string; label: string };

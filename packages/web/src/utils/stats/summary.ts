@@ -1,7 +1,8 @@
 import type {
-	PlayerStateSnapshot,
-	StatSourceMeta,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot as PlayerStateSnapshot,
+	SessionStatSourceLink as StatSourceLink,
+	SessionStatSourceMeta as StatSourceMeta,
+} from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';
 import { formatDependency } from './dependencyFormatters';
@@ -24,7 +25,7 @@ export function buildDetailEntries(
 	const dependencies = (meta.dependsOn ?? [])
 		.map((link) => formatDependency(link, player, context))
 		.filter((text) => text.length > 0);
-	const removalLink = meta.removal;
+	const removalLink: StatSourceLink | undefined = meta.removal;
 	const removal = removalLink
 		? formatDependency(removalLink, player, context, {
 				includeCounts: false,
@@ -40,7 +41,9 @@ export function buildDetailEntries(
 	).forEach((entry) => {
 		pushSummaryEntry(entries, entry);
 	});
-	buildHistoryEntries(meta).forEach((entry) => {
+	buildHistoryEntries(meta, {
+		triggerAssets: context.assets.triggers,
+	}).forEach((entry) => {
 		pushSummaryEntry(entries, entry);
 	});
 	return entries;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Stat } from '@kingdom-builder/contents';
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { getStatBreakdownSummary } from '../../utils/stats';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
@@ -32,7 +32,7 @@ const ROLE_BUTTON_CLASSES = [
 ].join(' ');
 
 interface PopulationInfoProps {
-	player: PlayerStateSnapshot;
+	player: SessionPlayerStateSnapshot;
 }
 
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {

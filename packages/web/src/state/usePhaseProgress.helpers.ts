@@ -1,6 +1,7 @@
 import type {
 	SessionAdvanceResponse,
 	SessionAdvanceResult,
+	SessionAdvanceSkipSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { snapshotPlayer } from '../translation';
@@ -11,25 +12,24 @@ import {
 	markFatalSessionError,
 	isFatalSessionError,
 } from './sessionSdk';
-import type {
-	LegacySession,
-	SessionRegistries,
-	SessionResourceKey,
-} from './sessionTypes';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type {
 	FormatPhaseResolutionOptions,
 	PhaseResolutionFormatResult,
 } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
-import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type { PhaseProgressState } from './usePhaseProgress';
 
 type FormatPhaseResolution = (
 	options: FormatPhaseResolutionOptions,
 ) => PhaseResolutionFormatResult;
 
+interface SessionSnapshotSource {
+	getSnapshot(): SessionSnapshot;
+}
+
 interface AdvanceToActionPhaseOptions {
-	session: LegacySession;
+	session: SessionSnapshotSource;
 	sessionId: string;
 	resourceKeys: SessionResourceKey[];
 	mountedRef: React.MutableRefObject<boolean>;
@@ -87,9 +87,10 @@ export async function advanceToActionPhase({
 					sessionId,
 				},
 			);
-			const { advance } = advanceResponse;
-			const { phase, step, player, effects, skipped }: SessionAdvanceResult =
-				advance;
+			const advanceResult: SessionAdvanceResult = advanceResponse.advance;
+			const { player } = advanceResult;
+			const skipMetadata: SessionAdvanceSkipSnapshot | undefined =
+				advanceResult.skipped;
 			const snapshotAfter = advanceResponse.snapshot;
 			if (snapshotAfter.game.conclusion) {
 				applyPhaseSnapshot(snapshotAfter, { isAdvancing: false });
@@ -103,15 +104,9 @@ export async function advanceToActionPhase({
 				registries,
 			});
 			const formatted = formatPhaseResolution({
-				advance: {
-					phase,
-					step,
-					effects,
-					player,
-					...(skipped ? { skipped } : {}),
-				} as EngineAdvanceResult,
+				advance: advanceResult,
 				before,
-				after: snapshotPlayer(player),
+				...(skipMetadata ? {} : { after: snapshotPlayer(player) }),
 				diffContext,
 				resourceKeys,
 			});

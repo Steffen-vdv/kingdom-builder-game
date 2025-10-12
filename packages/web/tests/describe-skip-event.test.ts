@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { AdvanceSkip, PlayerId } from '@kingdom-builder/engine';
+import type { PlayerId } from '@kingdom-builder/engine';
+import type { SessionAdvanceSkipSnapshot } from '@kingdom-builder/protocol/session';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
@@ -59,7 +60,7 @@ describe('describeSkipEvent', () => {
 		if (!phase) {
 			return;
 		}
-		const skip: AdvanceSkip = {
+		const skip: SessionAdvanceSkipSnapshot = {
 			type: 'phase',
 			phaseId: phase.id,
 			sources: [
@@ -94,7 +95,7 @@ describe('describeSkipEvent', () => {
 			return;
 		}
 		const step = phase.steps[0];
-		const skip: AdvanceSkip = {
+		const skip: SessionAdvanceSkipSnapshot = {
 			type: 'step',
 			phaseId: phase.id,
 			stepId: step.id,
@@ -122,7 +123,7 @@ describe('describeSkipEvent', () => {
 		if (!phase) {
 			return;
 		}
-		const skip: AdvanceSkip = {
+		const skip: SessionAdvanceSkipSnapshot = {
 			type: 'phase',
 			phaseId: phase.id,
 			sources: [
@@ -156,7 +157,7 @@ describe('describeSkipEvent', () => {
 			return;
 		}
 		const phaseLabel = renderLabel(phase.icon, phase.label, phase.id);
-		const skip: AdvanceSkip = {
+		const skip: SessionAdvanceSkipSnapshot = {
 			type: 'phase',
 			phaseId: phase.id,
 			sources: [],
@@ -179,7 +180,7 @@ describe('describeSkipEvent', () => {
 			return;
 		}
 		const step = phase.steps[0];
-		const skip: AdvanceSkip = {
+		const skip: SessionAdvanceSkipSnapshot = {
 			type: 'step',
 			phaseId: phase.id,
 			stepId: step.id,
@@ -207,7 +208,7 @@ describe('describeSkipEvent', () => {
 			phaseId: phase.id,
 			stepId: phase.steps?.[0]?.id ?? 'prepare',
 			sources: [],
-		} as AdvanceSkip;
+		} as SessionAdvanceSkipSnapshot;
 
 		const result = describeSkipEvent(skip, phase, undefined, context.assets);
 

@@ -1,4 +1,3 @@
-import { STATS } from '@kingdom-builder/contents';
 import type {
 	TranslationAssets,
 	TranslationPhase,
@@ -57,10 +56,6 @@ export function statDisplaysAsPercent(
 	const stat = assets?.stats?.[key];
 	if (isPercentMetadata(stat)) {
 		return Boolean(stat.displayAsPercent);
-	}
-	const definition = STATS[key as keyof typeof STATS];
-	if (definition && typeof definition.displayAsPercent === 'boolean') {
-		return definition.displayAsPercent;
 	}
 	return false;
 }

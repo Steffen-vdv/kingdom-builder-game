@@ -1,94 +1,39 @@
-/* eslint-disable max-lines */
-import {
-	createEngineSession,
-	type ActionParams,
-	type EngineSession,
-} from '@kingdom-builder/engine';
+import type { EngineSession } from '@kingdom-builder/engine';
 import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 } from '@kingdom-builder/protocol/actions';
 import type {
-	SessionRuleSnapshot,
-	SessionSnapshot,
-	SessionSnapshotMetadata,
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
 	SessionCreateRequest,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import { DEFAULT_PLAYER_NAME } from './playerIdentity';
-import {
-	initializeDeveloperMode,
-	type DeveloperModeOptions,
-} from './developerModeSetup';
 import {
 	deserializeSessionRegistries,
 	extractResourceKeys,
 	type SessionRegistries,
 } from './sessionRegistries';
 import {
+	createLegacySessionMirror,
+	getLegacySessionRecord,
+	markFatalSessionError,
+	mergeLegacySessionCaches,
+	replaceLegacySessionCaches,
+	releaseLegacySession,
+	SessionMirroringError,
+	type ResourceKey,
+	type SessionHandle,
+} from './legacySessionMirror';
+import {
 	createGameApi,
 	type GameApi,
 	type GameApiRequestOptions,
 } from '../services/gameApi';
-import { getLegacyContentConfig } from '../startup/runtimeConfig';
-
-interface SessionMirroringErrorOptions {
-	cause: unknown;
-	details?: Record<string, unknown>;
-}
-
-const fatalSessionErrorFlag = Symbol('session:fatal-error');
-
-export class SessionMirroringError extends Error {
-	public override readonly cause: unknown;
-
-	public readonly details: Record<string, unknown>;
-
-	public constructor(
-		message: string,
-		{ cause, details = {} }: SessionMirroringErrorOptions,
-	) {
-		super(message);
-		this.name = 'SessionMirroringError';
-		this.cause = cause;
-		this.details = details;
-	}
-}
-
-export function markFatalSessionError(error: unknown): void {
-	if (error === null || typeof error !== 'object') {
-		return;
-	}
-	Reflect.set(
-		error as Record<PropertyKey, unknown>,
-		fatalSessionErrorFlag,
-		true,
-	);
-}
-
-export function isFatalSessionError(error: unknown): boolean {
-	if (error === null || typeof error !== 'object') {
-		return false;
-	}
-	return Boolean(
-		Reflect.get(error as Record<PropertyKey, unknown>, fatalSessionErrorFlag),
-	);
-}
-
-export interface SessionHandle {
-	enqueue: EngineSession['enqueue'];
-	advancePhase: EngineSession['advancePhase'];
-	performAction: EngineSession['performAction'];
-}
-
-interface SessionRecord {
-	handle: SessionHandle;
-	legacySession: EngineSession;
-	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
-}
+import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 
 interface CreateSessionOptions {
 	devMode?: boolean;
@@ -125,26 +70,7 @@ interface FetchSnapshotResult {
 	metadata: SessionSnapshotMetadata;
 }
 
-const SESSION_PREFIX = 'local-session-';
-
-const sessions = new Map<string, SessionRecord>();
-
 let gameApi: GameApi | null = null;
-
-type ResourceKey = string;
-
-let legacyContentPromise: Promise<
-	Awaited<ReturnType<typeof getLegacyContentConfig>>
-> | null = null;
-
-async function ensureLegacyContentConfig(): Promise<
-	Awaited<ReturnType<typeof getLegacyContentConfig>>
-> {
-	if (!legacyContentPromise) {
-		legacyContentPromise = getLegacyContentConfig();
-	}
-	return legacyContentPromise;
-}
 
 function ensureGameApi(): GameApi {
 	if (!gameApi) {
@@ -155,57 +81,6 @@ function ensureGameApi(): GameApi {
 
 export function setGameApi(instance: GameApi | null): void {
 	gameApi = instance;
-}
-
-let nextSessionId = 1;
-
-function ensureSessionRecord(sessionId: string): SessionRecord {
-	const record = sessions.get(sessionId);
-	if (!record) {
-		const error = new Error(`Session not found: ${sessionId}`);
-		markFatalSessionError(error);
-		throw error;
-	}
-	return record;
-}
-
-function createSessionHandle(session: EngineSession): SessionHandle {
-	return {
-		enqueue: session.enqueue.bind(session),
-		advancePhase: session.advancePhase.bind(session),
-		performAction: session.performAction.bind(session),
-	};
-}
-
-function applyDeveloperPreset(
-	session: EngineSession,
-	snapshot: SessionSnapshot,
-	devMode: boolean,
-	options: DeveloperModeOptions,
-): void {
-	if (!devMode) {
-		return;
-	}
-	const primaryPlayer = snapshot.game.players[0];
-	const primaryPlayerId = primaryPlayer?.id;
-	if (!primaryPlayerId || snapshot.game.turn !== 1) {
-		return;
-	}
-	initializeDeveloperMode(session, primaryPlayerId, options);
-}
-
-function applyPlayerName(
-	session: EngineSession,
-	snapshot: SessionSnapshot,
-	name?: string,
-): void {
-	const desiredName = name ?? DEFAULT_PLAYER_NAME;
-	const primaryPlayer = snapshot.game.players[0];
-	const primaryPlayerId = primaryPlayer?.id;
-	if (!primaryPlayerId) {
-		return;
-	}
-	session.updatePlayerName(primaryPlayerId, desiredName);
 }
 
 /**
@@ -226,43 +101,20 @@ export async function createSession(
 	};
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest, requestOptions);
-	const registries = deserializeSessionRegistries(response.registries);
-	const contentConfig = await ensureLegacyContentConfig();
-	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	const legacySession = createEngineSession({
-		actions: registries.actions,
-		buildings: registries.buildings,
-		developments: registries.developments,
-		populations: registries.populations,
-		phases: contentConfig.phases,
-		start: contentConfig.start,
-		rules: contentConfig.rules,
+	const mirror = await createLegacySessionMirror({
+		sessionId: response.sessionId,
 		devMode,
+		playerName,
+		registries: response.registries,
 	});
-	legacySession.setDevMode(devMode);
-	const initialSnapshot = legacySession.getSnapshot();
-	const developerOptions: DeveloperModeOptions = { registries };
-	if (contentConfig.developerPreset) {
-		developerOptions.preset = contentConfig.developerPreset;
-	}
-	applyDeveloperPreset(
-		legacySession,
-		initialSnapshot,
-		devMode,
-		developerOptions,
-	);
-	applyPlayerName(legacySession, initialSnapshot, playerName);
-	const sessionId = response.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
-	const handle = createSessionHandle(legacySession);
-	sessions.set(sessionId, { handle, legacySession, registries, resourceKeys });
 	return {
-		sessionId,
-		session: handle,
-		legacySession,
+		sessionId: mirror.sessionId,
+		session: mirror.session,
+		legacySession: mirror.legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
-		registries,
-		resourceKeys,
+		registries: mirror.registries,
+		resourceKeys: mirror.resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
 }
@@ -278,12 +130,11 @@ export async function fetchSnapshot(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const record = ensureSessionRecord(sessionId);
+	const record = getLegacySessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	record.registries = registries;
-	record.resourceKeys = resourceKeys;
+	replaceLegacySessionCaches(record, registries, resourceKeys);
 	return {
 		session: record.handle,
 		legacySession: record.legacySession,
@@ -301,13 +152,12 @@ export async function setSessionDevMode(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const record = ensureSessionRecord(sessionId);
+	const record = getLegacySessionRecord(sessionId);
 	const response = await api.setDevMode({ sessionId, enabled }, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	record.legacySession.setDevMode(enabled);
-	record.registries = registries;
-	record.resourceKeys = resourceKeys;
+	replaceLegacySessionCaches(record, registries, resourceKeys);
 	return {
 		session: record.handle,
 		legacySession: record.legacySession,
@@ -330,13 +180,15 @@ export async function performSessionAction(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<ActionExecuteResponse> {
 	const api = ensureGameApi();
-	const { handle } = ensureSessionRecord(request.sessionId);
+	const { handle } = getLegacySessionRecord(request.sessionId);
 	try {
 		const response = await api.performAction(request, requestOptions);
 		if (response.status === 'success') {
 			try {
-				const params = request.params as ActionParams<string> | undefined;
-				handle.performAction(request.actionId, params);
+				const params = request.params;
+				await handle.enqueue(() => {
+					handle.performAction(request.actionId, params);
+				});
 			} catch (localError) {
 				const error = new SessionMirroringError(
 					'Local session failed to mirror remote action.',
@@ -348,7 +200,6 @@ export async function performSessionAction(
 						},
 					},
 				);
-				markFatalSessionError(error);
 				throw error;
 			}
 		}
@@ -387,19 +238,15 @@ export async function advanceSessionPhase(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionAdvanceResponse> {
 	const api = ensureGameApi();
-	const record = ensureSessionRecord(request.sessionId);
-	const {
-		handle,
-		registries: cachedRegistries,
-		resourceKeys: cachedResourceKeys,
-	} = record;
+	const record = getLegacySessionRecord(request.sessionId);
 	const response = await api.advancePhase(request, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	Object.assign(cachedRegistries, registries);
-	cachedResourceKeys.splice(0, cachedResourceKeys.length, ...resourceKeys);
+	mergeLegacySessionCaches(record, registries, resourceKeys);
 	try {
-		handle.advancePhase();
+		await record.handle.enqueue(() => {
+			record.handle.advancePhase();
+		});
 	} catch (localError) {
 		const error = new SessionMirroringError(
 			'Local session failed to mirror remote phase advance.',
@@ -410,13 +257,15 @@ export async function advanceSessionPhase(
 				},
 			},
 		);
-		markFatalSessionError(error);
 		throw error;
 	}
 	return response;
 }
 
 export function releaseSession(sessionId: string): void {
-	sessions.delete(sessionId);
+	releaseLegacySession(sessionId);
 }
-export type { CreateSessionResult, FetchSnapshotResult };
+
+export type { CreateSessionResult, FetchSnapshotResult, SessionHandle };
+export { SessionMirroringError, markFatalSessionError };
+export { isFatalSessionError } from './legacySessionMirror';

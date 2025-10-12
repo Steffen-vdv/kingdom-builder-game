@@ -1,9 +1,16 @@
-import type { StatSourceMeta } from '@kingdom-builder/engine';
+import type { SessionStatSourceMeta as StatSourceMeta } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
+import type { TranslationTriggerAsset } from '../../translation/context';
 import { formatPhaseStep } from './format';
-import { formatTriggerLabel } from './triggerLabels';
 
-export function buildHistoryEntries(meta: StatSourceMeta): SummaryEntry[] {
+type HistoryFormattingOptions = {
+	triggerAssets?: Readonly<Record<string, TranslationTriggerAsset>>;
+};
+
+export function buildHistoryEntries(
+	meta: StatSourceMeta,
+	options: HistoryFormattingOptions = {},
+): SummaryEntry[] {
 	const extra = meta.extra;
 	if (!extra) {
 		return [];
@@ -27,7 +34,7 @@ export function buildHistoryEntries(meta: StatSourceMeta): SummaryEntry[] {
 			add(formatHistoryItem(item));
 		});
 	}
-	const triggerLabels = extractTriggerList(extra);
+	const triggerLabels = extractTriggerList(extra, options.triggerAssets);
 	triggerLabels.forEach((label) => {
 		add(`Triggered by ${label}`);
 	});
@@ -63,13 +70,16 @@ function collectTurns(extra: Record<string, unknown>): number[] {
 	return Array.from(turns);
 }
 
-function extractTriggerList(extra: Record<string, unknown>): string[] {
+function extractTriggerList(
+	extra: Record<string, unknown>,
+	triggerAssets?: Readonly<Record<string, TranslationTriggerAsset>>,
+): string[] {
 	const triggers: string[] = [];
 	const list = extra['triggers'];
 	if (Array.isArray(list)) {
 		list.forEach((value) => {
 			if (typeof value === 'string') {
-				const label = formatTriggerLabel(value);
+				const label = formatTriggerAssetLabel(value, triggerAssets);
 				if (label) {
 					triggers.push(label);
 				}
@@ -77,12 +87,36 @@ function extractTriggerList(extra: Record<string, unknown>): string[] {
 		});
 	}
 	if (typeof extra['trigger'] === 'string') {
-		const label = formatTriggerLabel(extra['trigger']);
+		const label = formatTriggerAssetLabel(extra['trigger'], triggerAssets);
 		if (label) {
 			triggers.push(label);
 		}
 	}
 	return triggers;
+}
+
+function formatTriggerAssetLabel(
+	id: string,
+	triggerAssets?: Readonly<Record<string, TranslationTriggerAsset>>,
+): string | undefined {
+	if (!id) {
+		return undefined;
+	}
+	const asset = triggerAssets?.[id];
+	const icon = asset?.icon ?? '';
+	const label = asset?.label ?? asset?.past ?? asset?.future ?? '';
+	const parts: string[] = [];
+	if (icon.trim()) {
+		parts.push(icon.trim());
+	}
+	if (label.trim()) {
+		parts.push(label.trim());
+	}
+	const formatted = parts.join(' ').trim();
+	if (formatted) {
+		return formatted;
+	}
+	return id.trim() || undefined;
 }
 
 function formatHistoryItem(entry: unknown): string | undefined {

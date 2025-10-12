@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { type ActionParams } from '@kingdom-builder/engine';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { Action } from './actionTypes';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { LegacySession } from './sessionTypes';
@@ -15,7 +15,7 @@ interface UseAiRunnerOptions {
 		overrides?: Partial<PhaseProgressState>,
 	) => void;
 	performRef: React.MutableRefObject<
-		(action: Action, params?: ActionParams<string>) => Promise<void>
+		(action: Action, params?: ActionParametersPayload) => Promise<void>
 	>;
 	mountedRef: React.MutableRefObject<boolean>;
 	onFatalSessionError?: (error: unknown) => void;
@@ -62,7 +62,7 @@ export function useAiRunner({
 					performAction: async (
 						actionId: string,
 						_ignored: unknown,
-						params?: ActionParams<string>,
+						params?: ActionParametersPayload,
 					) => {
 						const definition = session.getActionDefinition(actionId);
 						if (!definition) {
@@ -76,10 +76,7 @@ export function useAiRunner({
 							action.system = definition.system;
 						}
 						try {
-							await performRef.current(
-								action,
-								params as Record<string, unknown>,
-							);
+							await performRef.current(action, params);
 						} catch (error) {
 							forwardFatalError(error);
 							throw error;
