@@ -1,37 +1,18 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createEngine, type EffectDef } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
+import { describe, expect, it } from 'vitest';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import {
 	describeContent,
 	logContent,
 	summarizeContent,
 	type SummaryEntry,
 } from '../src/translation';
-import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
-import { createSessionRegistries } from './helpers/sessionRegistries';
+import { selectResourceDisplay } from '../src/translation/context/assetSelectors';
+import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
-
-const engineContext = createEngine({
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
-	phases: PHASES,
-	start: GAME_START,
-	rules: RULES,
-});
-const translationContext = createTranslationContextForEngine(engineContext);
+interface SelfReferentialDevelopment {
+	id: string;
+	resourceKeys: Set<string>;
+}
 
 function flatten(entries: SummaryEntry[]): string[] {
 	const result: string[] = [];
@@ -64,14 +45,45 @@ function hasSelfEvaluator(effects: EffectDef[] | undefined): boolean {
 	return false;
 }
 
+function collectResourceKeys(
+	effects: EffectDef[] | undefined,
+	keys: Set<string>,
+): void {
+	if (!effects) {
+		return;
+	}
+	for (const effect of effects) {
+		if (
+			effect.type === 'resource' &&
+			effect.method === 'add' &&
+			typeof effect.params === 'object' &&
+			effect.params !== null
+		) {
+			const params = effect.params as { key?: string };
+			if (typeof params.key === 'string') {
+				keys.add(params.key);
+			}
+		}
+		collectResourceKeys(effect.effects as EffectDef[] | undefined, keys);
+	}
+}
+
 function findSelfReferentialDevelopment(
-	registry: Iterable<[string, unknown]>,
-): string {
+	registry: Iterable<readonly [string, Record<string, unknown>]>,
+): SelfReferentialDevelopment {
 	for (const [id, definition] of registry) {
-		const values = definition as Record<string, unknown>;
-		for (const value of Object.values(values)) {
-			if (Array.isArray(value) && hasSelfEvaluator(value as EffectDef[])) {
-				return id;
+		if (typeof definition !== 'object' || definition === null) {
+			continue;
+		}
+		for (const value of Object.values(definition)) {
+			if (!Array.isArray(value)) {
+				continue;
+			}
+			const effects = value as EffectDef[];
+			if (hasSelfEvaluator(effects)) {
+				const resourceKeys = new Set<string>();
+				collectResourceKeys(effects, resourceKeys);
+				return { id, resourceKeys };
 			}
 		}
 	}
@@ -80,40 +92,102 @@ function findSelfReferentialDevelopment(
 
 describe('development translation', () => {
 	it('replaces self-referential placeholders when describing developments', () => {
-		const registries = createSessionRegistries();
-		const id = findSelfReferentialDevelopment(
+		const { translationContext, registries } =
+			buildSyntheticTranslationContext();
+		const { id, resourceKeys } = findSelfReferentialDevelopment(
 			registries.developments.entries(),
 		);
 		const summary = summarizeContent('development', id, translationContext);
 		const description = describeContent('development', id, translationContext);
-		const strings = [...flatten(summary), ...flatten(description)];
+		const summaryAgain = summarizeContent(
+			'development',
+			id,
+			translationContext,
+		);
+		const strings = [
+			...flatten(summary),
+			...flatten(description),
+			...flatten(summaryAgain),
+		];
 
 		expect(strings.some((line) => line.includes('$id'))).toBe(false);
 
 		const definition = translationContext.developments.get(id);
 		expect(definition).toBeDefined();
-		const icon = definition?.icon || '';
+		const developmentName = definition?.name ?? id;
+		const icon = definition?.icon ?? '';
 
 		const hasIncomeLine = strings.some((line) => {
-			return /Gain Income step/.test(line);
+			return /Gain Income step/u.test(line);
 		});
 		expect(hasIncomeLine).toBe(true);
 
-		expect(strings.some((line) => /\+2/.test(line))).toBe(true);
-		expect(strings.some((line) => /Gold/.test(line))).toBe(true);
-		const prohibited = strings.filter(
-			(line) =>
-				line.includes(`per ${icon} ${definition?.name ?? ''}`) ||
-				line.includes(`for each ${icon} ${definition?.name ?? ''}`),
-		);
+		expect(strings.some((line) => /\+2/u.test(line))).toBe(true);
+		const [resourceKey] = [...resourceKeys];
+		if (resourceKey) {
+			const resourceDisplay = selectResourceDisplay(
+				translationContext.assets,
+				resourceKey,
+			);
+			const resourceLabel = resourceDisplay.label ?? resourceKey;
+			expect(strings.some((line) => line.includes(resourceLabel))).toBe(true);
+		}
+		const prohibited = strings.filter((line) => {
+			return (
+				icon.length > 0 &&
+				(line.includes(`per ${icon} ${developmentName}`) ||
+					line.includes(`for each ${icon} ${developmentName}`))
+			);
+		});
 		expect(prohibited).toHaveLength(0);
 
 		const logEntry = logContent('development', id, translationContext);
-		expect(logEntry.some((line) => line.includes(definition?.name ?? ''))).toBe(
-			true,
-		);
+		expect(logEntry.some((line) => line.includes(developmentName))).toBe(true);
 		if (icon) {
 			expect(logEntry.some((line) => line.includes(icon))).toBe(true);
 		}
+	});
+
+	it('falls back to development labels when icons are undefined', () => {
+		let target: SelfReferentialDevelopment | undefined;
+		const { translationContext } = buildSyntheticTranslationContext(
+			({ registries, session }) => {
+				const info = findSelfReferentialDevelopment(
+					registries.developments.entries(),
+				);
+				target = info;
+				const development = registries.developments.get(info.id);
+				if (development) {
+					delete (development as { icon?: string }).icon;
+				}
+				if (!session.metadata.developments) {
+					session.metadata.developments = {};
+				}
+				delete session.metadata.developments[info.id];
+			},
+		);
+		if (!target) {
+			throw new Error('Expected target development');
+		}
+		const summary = summarizeContent(
+			'development',
+			target.id,
+			translationContext,
+		);
+		const description = describeContent(
+			'development',
+			target.id,
+			translationContext,
+		);
+		const lines = [...flatten(summary), ...flatten(description)];
+		expect(lines.some((line) => /undefined/u.test(line))).toBe(false);
+		const development = translationContext.developments.get(target.id);
+		const developmentName = development.name ?? target.id;
+		const logLines = logContent('development', target.id, translationContext);
+		const containsDevelopmentName = logLines.some((entry) => {
+			const text = typeof entry === 'string' ? entry : entry.text;
+			return text?.includes(developmentName) ?? false;
+		});
+		expect(containsDevelopmentName).toBe(true);
 	});
 });

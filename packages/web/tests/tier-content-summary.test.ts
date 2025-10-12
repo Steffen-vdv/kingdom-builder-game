@@ -1,20 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
 import {
 	summarizeContent,
 	splitSummary,
 	translateTierSummary,
 } from '../src/translation';
-import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
+import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 
 function splitLines(text: string | undefined): string[] {
 	if (!text) {
@@ -56,18 +46,14 @@ function flattenSummary(entries: unknown[] | undefined): string[] {
 
 describe('tier content summaries', () => {
 	it('summarizes tiers using canonical translators', () => {
-		const engine = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		const translationContext = createTranslationContextForEngine(engine);
-		engine.services.rules.tierDefinitions.forEach((tier) => {
+		const { translationContext } = buildSyntheticTranslationContext();
+		translationContext.rules.tierDefinitions.forEach((tier) => {
 			const summary = summarizeContent('tier', tier, translationContext);
+			const repeatedSummary = summarizeContent(
+				'tier',
+				tier,
+				translationContext,
+			);
 			const { effects, description } = splitSummary(summary);
 			const effectLines = flattenSummary(effects);
 			const descriptionLines = flattenSummary(description);
@@ -75,7 +61,8 @@ describe('tier content summaries', () => {
 				tier.display?.summaryToken,
 				translationContext.assets,
 			);
-			const expectedLines = splitLines(translated ?? tier.text?.summary);
+			const fallbackSummary = translated ?? tier.text?.summary;
+			const expectedLines = splitLines(fallbackSummary);
 			if (expectedLines.length) {
 				expectedLines.forEach((line) => {
 					expect(effectLines).toContain(line);
@@ -87,6 +74,7 @@ describe('tier content summaries', () => {
 				expect(effectLines).not.toContain(tier.text.removal);
 				expect(descriptionLines).toContain(tier.text.removal);
 			}
+			expect(flattenSummary(repeatedSummary)).toEqual(flattenSummary(summary));
 		});
 	});
 });

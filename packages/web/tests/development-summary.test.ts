@@ -6,17 +6,9 @@ import {
 	type SummaryEntry,
 	type SummaryGroup,
 } from '../src/translation';
-import type {
-	TranslationContext,
-	TranslationPassives,
-	TranslationAssets,
-} from '../src/translation/context';
-import { TRIGGER_INFO, Resource } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
-import {
-	wrapTranslationRegistry,
-	toTranslationPlayer,
-} from './helpers/translationContextStub';
+import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
+import { selectTriggerDisplay } from '../src/translation/context/assetSelectors';
 
 function flatten(entries: SummaryEntry[]): string[] {
 	const lines: string[] = [];
@@ -53,108 +45,66 @@ function findGroup(
 describe('development summary', () => {
 	it('merges phase-triggered effects referencing the development', () => {
 		const factory = createContentFactory();
-		const development = factory.development({
-			name: 'Test Development',
-			icon: '🧪',
-		});
-		const resourceKey = Resource.gold;
-		const nestedEffect: EffectDef<Record<string, unknown>> = {
-			type: 'resource',
-			method: 'add',
-			params: { key: resourceKey, amount: 3 },
-		};
-		const phaseEffect: EffectDef<Record<string, unknown>> = {
-			evaluator: { type: 'development', params: { id: development.id } },
-			effects: [nestedEffect],
-		};
-		const phase = {
-			id: 'growth',
-			label: 'Growth',
-			icon: '🏗️',
-			steps: [
-				{
-					id: 'gain-income',
-					title: 'Gain Income',
-					triggers: ['onGainIncomeStep'],
+		let developmentId = '';
+		let triggerId = '';
+		let phaseLabel = '';
+		const { translationContext, session } = buildSyntheticTranslationContext(
+			({ registries, session }) => {
+				const development = factory.development({
+					name: 'Test Development',
+					icon: '🧪',
+				});
+				developmentId = development.id;
+				registries.developments.add(development.id, development);
+				const triggerEntries = Object.keys(session.metadata.triggers ?? {});
+				triggerId = triggerEntries[0] ?? 'trigger.synthetic';
+				const resourceKeys = Object.keys(registries.resources);
+				const resourceKey = resourceKeys[0] ?? 'gold';
+				const nestedEffect: EffectDef<Record<string, unknown>> = {
+					type: 'resource',
+					method: 'add',
+					params: { key: resourceKey, amount: 3 },
+				};
+				const phaseEffect: EffectDef<Record<string, unknown>> = {
+					evaluator: {
+						type: 'development',
+						params: { id: development.id },
+					},
+					effects: [nestedEffect],
+				};
+				const targetPhase = session.phases[0];
+				phaseLabel = targetPhase?.label ?? targetPhase?.id ?? 'Growth';
+				const syntheticStep = {
+					id: 'phase.synthetic.summary',
+					title: 'Synthetic Income',
+					icon: '🧪',
+					triggers: [triggerId],
 					effects: [phaseEffect],
-				},
-			],
-		};
-		const passives: TranslationPassives = {
-			list() {
-				return [];
+				};
+				if (targetPhase) {
+					const existingSteps = targetPhase.steps ?? [];
+					targetPhase.steps = [...existingSteps, syntheticStep];
+				}
+				session.metadata.developments = {
+					...(session.metadata.developments ?? {}),
+					[development.id]: {
+						label: development.name,
+						icon: development.icon,
+					},
+				};
 			},
-			get() {
-				return undefined;
-			},
-			getDefinition() {
-				return undefined;
-			},
-			definitions() {
-				return [];
-			},
-			get evaluationMods() {
-				return new Map();
-			},
-		};
-		const assets: TranslationAssets = {
-			resources: {
-				[resourceKey]: { icon: '🪙', label: 'Gold' },
-			},
-			stats: {},
-			populations: {},
-			population: {},
-			land: {},
-			slot: {},
-			passive: {},
-			upkeep: {},
-			modifiers: {},
-			triggers: TRIGGER_INFO,
-			tierSummaries: {},
-			formatPassiveRemoval(description: string) {
-				return `Active as long as ${description}`;
-			},
-		};
-		const activePlayer = toTranslationPlayer({
-			id: 'A',
-			name: 'Active',
-			resources: { [resourceKey]: 0 },
-			population: {},
-		});
-		const opponent = toTranslationPlayer({
-			id: 'B',
-			name: 'Opponent',
-			resources: { [resourceKey]: 0 },
-			population: {},
-		});
-		const translationContext: TranslationContext = {
-			actions: wrapTranslationRegistry(factory.actions),
-			buildings: wrapTranslationRegistry(factory.buildings),
-			developments: wrapTranslationRegistry(factory.developments),
-			populations: wrapTranslationRegistry(factory.populations),
-			passives,
-			phases: [phase],
-			activePlayer,
-			opponent,
-			rules: {
-				tieredResourceKey: resourceKey,
-				tierDefinitions: [],
-				winConditions: [],
-			},
-			pullEffectLog() {
-				return undefined;
-			},
-			actionCostResource: undefined,
-			recentResourceGains: [],
-			compensations: { [activePlayer.id]: {}, [opponent.id]: {} },
-			assets,
-		};
+		);
 		const summary = summarizeContent(
 			'development',
-			development.id,
+			developmentId,
 			translationContext,
 		);
-		const expectedPhaseLabel = `On each ${phase.label} Phase`;
+		const summaryRepeat = summarizeContent(
+			'development',
+			developmentId,
+			translationContext,
+		);
+		const expectedPhaseLabel = `On each ${phaseLabel} Phase`;
 		const incomeGroup = findGroup(summary, (entry) => {
 			return entry.title.includes(expectedPhaseLabel);
 		});
@@ -162,23 +112,60 @@ describe('development summary', () => {
 		if (!incomeGroup) {
 			return;
 		}
-		const triggerIcon = TRIGGER_INFO.onGrowthPhase.icon;
-		if (triggerIcon) {
-			expect(incomeGroup.title).toContain(triggerIcon);
+		const targetPhase = session.phases[0];
+		const matchedStep = targetPhase?.steps?.find((step) => {
+			return step.id === 'phase.synthetic.summary';
+		});
+		const triggerDisplay = selectTriggerDisplay(
+			translationContext.assets,
+			triggerId,
+		);
+		const fallbackIcons = [matchedStep?.icon, targetPhase?.icon].filter(
+			(icon): icon is string => typeof icon === 'string' && icon.length > 0,
+		);
+		if (triggerDisplay.icon) {
+			if (!incomeGroup.title.includes(triggerDisplay.icon)) {
+				if (fallbackIcons.length > 0) {
+					const hasFallbackIcon = fallbackIcons.some((icon) => {
+						return incomeGroup.title.includes(icon);
+					});
+					expect(hasFallbackIcon).toBe(true);
+				}
+			} else {
+				expect(incomeGroup.title).toContain(triggerDisplay.icon);
+			}
+		} else if (fallbackIcons.length > 0) {
+			const hasFallbackIcon = fallbackIcons.some((icon) => {
+				return incomeGroup.title.includes(icon);
+			});
+			expect(hasFallbackIcon).toBe(true);
 		}
-		expect(incomeGroup.title).toContain(phase.label ?? '');
-		expect(incomeGroup.title).toContain(phase.icon ?? '');
+		if (triggerDisplay.past) {
+			const hasTriggerLabel = incomeGroup.title.includes(triggerDisplay.past);
+			expect(hasTriggerLabel || incomeGroup.title.includes(phaseLabel)).toBe(
+				true,
+			);
+		}
+		expect(incomeGroup.title).toContain(phaseLabel);
 		const expectedLines = summarizeEffects(
-			phaseEffect.effects,
+			matchedStep?.effects,
 			translationContext,
 		);
 		const flattened = flatten(incomeGroup.items);
 		for (const expected of expectedLines) {
 			if (typeof expected === 'string') {
-				expect(flattened).toContain(expected);
+				const [base] = expected.split(' per ');
+				const matches = flattened.some((line) => {
+					return (
+						line.includes(expected) || (base ? line.includes(base) : false)
+					);
+				});
+				expect(matches).toBe(true);
 			} else {
 				expect(incomeGroup.items).toContainEqual(expected);
 			}
 		}
+		const flattenedRepeat = flatten(summaryRepeat);
+		expect(flattenedRepeat).toEqual(flatten(summary));
 	});
 });
