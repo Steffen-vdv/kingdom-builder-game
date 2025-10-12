@@ -1,0 +1,39 @@
+name: Request Codex Review
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+
+jobs:
+  request-codex-review:
+    name: Request Codex reviewer
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Request Codex review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pullRequest = context.payload.pull_request;
+            if (!pullRequest) {
+              core.info('No pull request payload available; skipping.');
+              return;
+            }
+
+            if (pullRequest.draft) {
+              core.info('Pull request is a draft; skipping reviewer request.');
+              return;
+            }
+
+            await github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullRequest.number,
+              reviewers: ['codex-bot'],
+            });
+            core.info(`Requested Codex review on #${pullRequest.number}.`);

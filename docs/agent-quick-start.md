@@ -51,7 +51,13 @@ guide for rationale, lore, and extended background.
 4. **Honor the PR template**
    - Copy `.github/PULL_REQUEST_TEMPLATE.md` into every PR body and replace all
      placeholders with specific details before calling `make_pr`.
-5. **Respect text standards**
+5. **Expect Codex auto-reviews**
+   - The `codex-auto-review` workflow requests a Codex bot review whenever a PR
+     opens, reopens, syncs, or exits draft, so you do not need to ping it
+     manually.
+   - Draft pull requests are ignored until they transition to "Ready for
+     review" so you can iterate privately before triggering the automation.
+6. **Respect text standards**
    - Before touching player-facing copy, complete the "Before Writing Text"
      checklist in
      [`docs/text-formatting.md`](text-formatting.md#0-before-writing-text).
