@@ -7,8 +7,9 @@ reviews and Codex fixes for pull requests in this repository.
 
 Two workflows live under `.github/workflows/`:
 
-- `pr-review-on-push.yml` waits for 15 seconds after pushes or `pull_request`
-  synchronise events on branches backing open pull requests (excluding the
+- `pr-review-on-push.yml` waits 15 seconds after pushes and
+  `pull_request_target` synchronize events on branches backing open pull
+  requests (excluding the
   initial branch creation push) and then:
   - removes the `awaiting-fixes` label when present,
   - ensures the `under-review` label is applied,

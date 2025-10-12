@@ -58,6 +58,18 @@ jobs:
             }
 
             const pr = pulls[0];
+            const sameRepoPullRequest =
+              isPullRequestEvent &&
+              pr.head?.repo?.full_name?.toLowerCase() ===
+                `${owner}/${repo}`.toLowerCase();
+
+            if (sameRepoPullRequest) {
+              core.info(
+                'Same-repo pull_request_target event handled by push workflow.'
+              );
+              core.setOutput('should_run', 'false');
+              return;
+            }
             const initialPush =
               context.eventName === 'push' &&
               context.payload.before ===

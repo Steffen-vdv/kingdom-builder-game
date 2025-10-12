@@ -108,11 +108,6 @@ jobs:
             }
 
             const prNumber = prInfo.number;
-            const completedAt = checkRun.completed_at
-              ? new Date(checkRun.completed_at).getTime()
-              : Date.now();
-            const tenMinutes = 10 * 60 * 1000;
-
             const { data: comments } = await github.rest.issues.listComments({
               owner,
               repo,
@@ -120,24 +115,29 @@ jobs:
               per_page: 100
             });
 
-            const recentCoderabbitComment = comments
+            const completedAt = checkRun.completed_at
+              ? new Date(checkRun.completed_at).getTime()
+              : Date.now();
+            const detectionWindow = 2 * 60 * 60 * 1000;
+
+            const coderabbitComments = comments
               .filter((comment) => {
                 return comment.user?.login === 'coderabbitai[bot]';
               })
               .sort((a, b) => {
                 return new Date(b.created_at) - new Date(a.created_at);
-              })
-              .find((comment) => {
-                const createdAt = new Date(comment.created_at).getTime();
-                return Math.abs(completedAt - createdAt) <= tenMinutes;
               });
 
-            if (!recentCoderabbitComment) {
-              core.info('No recent CodeRabbit summary comment detected.');
-              return;
-            }
-
-            const commentBody = recentCoderabbitComment.body ?? '';
+            const recentCoderabbitComment = coderabbitComments.find(
+              (comment) => {
+                const createdAt = new Date(comment.created_at).getTime();
+                return Math.abs(completedAt - createdAt) <= detectionWindow;
+              }
+            );
+            const commentBody = recentCoderabbitComment?.body ?? '';
+            const recentCommentAt = recentCoderabbitComment
+              ? new Date(recentCoderabbitComment.created_at).getTime()
+              : 0;
             const { data: reviewComments } =
               await github.rest.pulls.listReviewComments({
                 owner,
@@ -152,7 +152,11 @@ jobs:
               }
 
               const createdAt = new Date(comment.created_at).getTime();
-              return Math.abs(completedAt - createdAt) <= tenMinutes;
+              if (recentCoderabbitComment) {
+                return createdAt >= recentCommentAt;
+              }
+
+              return Math.abs(completedAt - createdAt) <= detectionWindow;
             });
 
             const actionablePatterns = [
@@ -167,12 +171,19 @@ jobs:
               return pattern.test(commentBody);
             });
 
-            const summaryHint =
-              checkRun.output?.summary &&
-              /Actionable/i.test(checkRun.output.summary);
+            const summaryText = [
+              checkRun.output?.summary ?? '',
+              checkRun.output?.text ?? ''
+            ];
+
+            const hasActionableSummary = summaryText.some((section) => {
+              return actionablePatterns.some((pattern) => {
+                return pattern.test(section);
+              });
+            });
 
             const hasActionableFeedback =
-              hasRecentInline || hasPatternMatch || summaryHint;
+              hasRecentInline || hasPatternMatch || hasActionableSummary;
 
             if (!hasActionableFeedback) {
               core.info('CodeRabbit reported no actionable feedback.');
