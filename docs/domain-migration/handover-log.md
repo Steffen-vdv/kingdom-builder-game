@@ -1,5 +1,12 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P1 - T15 - Stat Source Protocol Alignment
+
+- `dependencyFormatters` and stat descriptor helpers now import
+  `SessionStatSourceLink`/`SessionStatSourceMeta` from the protocol instead of
+  the engine snapshots. Helper signatures preserve their existing names via
+  type aliases so downstream consumers continue to compile without updates.
+
 ## Domain Migration - P1 - T6 - Phase Progress Protocol Alignment
 
 - `usePhaseProgress.helpers` now reads phase advance payloads via
