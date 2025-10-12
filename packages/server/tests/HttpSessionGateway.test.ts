@@ -112,6 +112,41 @@ describe('HttpSessionGateway', () => {
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
+	it('describes actions through the REST transport', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/actions/describe',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({
+					sessionId: 'test',
+					actionId: 'gain',
+					options: {
+						params: { custom: true },
+					},
+				});
+				return jsonResponse({
+					definition: { id: 'gain', name: 'Gain Resources' },
+					costs: { gold: 1 },
+					requirements: [],
+					effectGroups: [],
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.describeAction({
+			sessionId: 'test',
+			actionId: 'gain',
+			options: { params: { custom: true } },
+		});
+		expect(response.definition.id).toBe('gain');
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
 	it('advances sessions and validates responses', async () => {
 		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
 			const request =

@@ -10,6 +10,9 @@ import type {
 	SessionRequirementFailure,
 	SessionActionRequirementList,
 	SessionRegistriesPayload,
+	SessionActionCostMap,
+	ActionDescribeRequest,
+	ActionDescribeResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
@@ -146,6 +149,38 @@ export function createLocalSessionGateway(
 				sessionId,
 				snapshot: session.getSnapshot(),
 				registries: getRegistries(),
+			});
+		},
+		describeAction(
+			request: ActionDescribeRequest,
+		): Promise<ActionDescribeResponse> {
+			assertSessionId(request, sessionId);
+			const params = toActionParameters(request.options?.params);
+			const definition = session.getActionDefinition(request.actionId);
+			if (!definition) {
+				const message = `Unknown action: ${request.actionId}`;
+				return Promise.reject(new Error(message));
+			}
+			const rawCosts = session.getActionCosts(
+				request.actionId,
+				params as never,
+			);
+			const costs: SessionActionCostMap = {};
+			for (const [resourceKey, amount] of Object.entries(rawCosts)) {
+				if (typeof amount === 'number') {
+					costs[resourceKey] = amount;
+				}
+			}
+			const requirements = session.getActionRequirements(
+				request.actionId,
+				params as never,
+			);
+			const effectGroups = session.getActionOptions(request.actionId);
+			return Promise.resolve({
+				definition,
+				costs,
+				requirements,
+				effectGroups,
 			});
 		},
 		performAction(

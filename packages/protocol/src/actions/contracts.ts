@@ -1,10 +1,13 @@
 import type {
+	SessionActionCostMap,
+	SessionActionDefinitionSummary,
 	SessionActionRequirementList,
 	SessionRequirementFailure,
 	SessionSnapshot,
 	SessionPassiveSummary,
 } from '../session';
 import type { SessionIdentifier } from '../session/contracts';
+import type { ActionEffectGroup } from '../config/schema';
 
 export interface ActionEffectChoice {
 	optionId: string;
@@ -16,6 +19,22 @@ export type ActionChoiceMap = Record<string, ActionEffectChoice>;
 export type ActionParametersPayload = Record<string, unknown> & {
 	choices?: ActionChoiceMap;
 };
+
+export interface ActionDescribeOptions {
+	params?: ActionParametersPayload;
+}
+
+export interface ActionDescribeRequest extends SessionIdentifier {
+	actionId: string;
+	options?: ActionDescribeOptions;
+}
+
+export interface ActionDescribeResponse {
+	definition: SessionActionDefinitionSummary;
+	costs: SessionActionCostMap;
+	requirements: SessionActionRequirementList;
+	effectGroups: ActionEffectGroup[];
+}
 
 export interface ActionExecuteRequest extends SessionIdentifier {
 	actionId: string;

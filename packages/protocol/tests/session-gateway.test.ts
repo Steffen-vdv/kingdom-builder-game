@@ -11,6 +11,8 @@ import type {
 	SessionStateResponse,
 } from '../src/session';
 import type {
+	ActionDescribeRequest,
+	ActionDescribeResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 } from '../src/actions/contracts';
@@ -28,6 +30,12 @@ describe('SessionGateway', () => {
 			.toEqualTypeOf<SessionIdentifier>();
 		expectTypeOf<SessionGateway['fetchSnapshot']>().returns.toEqualTypeOf<
 			Promise<SessionStateResponse>
+		>();
+		expectTypeOf<SessionGateway['describeAction']>()
+			.parameter(0)
+			.toEqualTypeOf<ActionDescribeRequest>();
+		expectTypeOf<SessionGateway['describeAction']>().returns.toEqualTypeOf<
+			Promise<ActionDescribeResponse>
 		>();
 		expectTypeOf<SessionGateway['performAction']>()
 			.parameter(0)

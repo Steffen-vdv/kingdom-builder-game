@@ -1,4 +1,6 @@
 import type {
+	ActionDescribeRequest,
+	ActionDescribeResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	SessionAdvanceRequest,
@@ -11,6 +13,8 @@ import type {
 	SessionStateResponse,
 } from '@kingdom-builder/protocol';
 import {
+	actionDescribeRequestSchema,
+	actionDescribeResponseSchema,
 	actionExecuteRequestSchema,
 	actionExecuteResponseSchema,
 	sessionAdvanceRequestSchema,
@@ -106,6 +110,24 @@ export class HttpSessionGateway implements SessionGateway {
 			throw this.toTransportError(result);
 		}
 		return sessionStateResponseSchema.parse(result.data);
+	}
+
+	public async describeAction(
+		request: ActionDescribeRequest,
+	): Promise<ActionDescribeResponse> {
+		const payload = actionDescribeRequestSchema.parse(request);
+		const result = await this.execute({
+			method: 'POST',
+			path: `sessions/${this.encodeSessionId(
+				payload.sessionId,
+			)}/actions/describe`,
+			body: payload,
+		});
+		if (!result.response.ok) {
+			throw this.toTransportError(result);
+		}
+		const response = actionDescribeResponseSchema.parse(result.data);
+		return response;
 	}
 
 	public async performAction(

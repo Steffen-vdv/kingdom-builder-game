@@ -1,9 +1,12 @@
 import { z } from 'zod';
-import { requirementSchema } from './schema';
+import { actionEffectGroupSchema, requirementSchema } from './schema';
 import { sessionIdSchema } from './session_contracts';
 import type {
 	ActionChoiceMap,
 	ActionEffectChoice,
+	ActionDescribeOptions,
+	ActionDescribeRequest,
+	ActionDescribeResponse,
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
@@ -14,8 +17,11 @@ import type {
 	ActionTraceLandSnapshot,
 } from '../actions/contracts';
 import type {
+	SessionActionCostMap,
+	SessionActionDefinitionSummary,
 	SessionPassiveSummary,
 	SessionRequirementFailure,
+	SessionActionRequirementList,
 	SessionSnapshot,
 } from '../session';
 
@@ -60,6 +66,45 @@ export const actionParametersSchema = z
 	})
 	.catchall(z.unknown());
 
+export const actionRequirementFailureSchema = z.object({
+	requirement: requirementSchema,
+	details: z.record(z.unknown()).optional(),
+	message: z.string().optional(),
+});
+
+const sessionActionDefinitionSummarySchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	system: z.boolean().optional(),
+});
+
+const sessionActionCostMapSchema = z
+	.record(z.number())
+	.transform((value) => value as SessionActionCostMap);
+
+const sessionActionRequirementListSchema = z.array(
+	actionRequirementFailureSchema,
+);
+
+export const actionDescribeOptionsSchema = z.object({
+	params: actionParametersSchema.optional(),
+});
+
+export const actionDescribeRequestSchema = z.object({
+	sessionId: sessionIdSchema,
+	actionId: z.string().min(1),
+	options: actionDescribeOptionsSchema.optional(),
+});
+
+export const actionDescribeResponseSchema = z
+	.object({
+		definition: sessionActionDefinitionSummarySchema,
+		costs: sessionActionCostMapSchema,
+		requirements: sessionActionRequirementListSchema,
+		effectGroups: z.array(actionEffectGroupSchema),
+	})
+	.transform((value) => value as ActionDescribeResponse);
+
 export const actionTraceLandSnapshotSchema = z.object({
 	id: z.string(),
 	slotsMax: z.number(),
@@ -79,12 +124,6 @@ export const actionTraceSchema = z.object({
 	id: z.string(),
 	before: actionPlayerSnapshotSchema,
 	after: actionPlayerSnapshotSchema,
-});
-
-export const actionRequirementFailureSchema = z.object({
-	requirement: requirementSchema,
-	details: z.record(z.unknown()).optional(),
-	message: z.string().optional(),
 });
 
 export const actionExecuteRequestSchema = z.object({
@@ -130,6 +169,30 @@ type _ActionChoiceMapMatches = Expect<
 >;
 type _ActionParametersMatches = Expect<
 	Equal<z.infer<typeof actionParametersSchema>, ActionParametersPayload>
+>;
+type _SessionActionDefinitionSummaryMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionDefinitionSummarySchema>,
+		SessionActionDefinitionSummary
+	>
+>;
+type _SessionActionCostMapMatches = Expect<
+	Equal<z.infer<typeof sessionActionCostMapSchema>, SessionActionCostMap>
+>;
+type _SessionActionRequirementListMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionRequirementListSchema>,
+		SessionActionRequirementList
+	>
+>;
+type _ActionDescribeOptionsMatches = Expect<
+	Equal<z.infer<typeof actionDescribeOptionsSchema>, ActionDescribeOptions>
+>;
+type _ActionDescribeRequestMatches = Expect<
+	Equal<z.infer<typeof actionDescribeRequestSchema>, ActionDescribeRequest>
+>;
+type _ActionDescribeResponseMatches = Expect<
+	Equal<z.infer<typeof actionDescribeResponseSchema>, ActionDescribeResponse>
 >;
 type _ActionTraceLandSnapshotMatches = Expect<
 	Equal<z.infer<typeof actionTraceLandSnapshotSchema>, ActionTraceLandSnapshot>
