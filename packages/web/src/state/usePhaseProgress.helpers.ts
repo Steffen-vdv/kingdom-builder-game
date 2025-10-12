@@ -21,7 +21,6 @@ import type {
 	PhaseResolutionFormatResult,
 } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
-import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type { PhaseProgressState } from './usePhaseProgress';
 
 type FormatPhaseResolution = (
@@ -109,7 +108,7 @@ export async function advanceToActionPhase({
 					effects,
 					player,
 					...(skipped ? { skipped } : {}),
-				} as EngineAdvanceResult,
+				} satisfies SessionAdvanceResult,
 				before,
 				after: snapshotPlayer(player),
 				diffContext,
