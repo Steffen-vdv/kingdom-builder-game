@@ -1,8 +1,8 @@
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
 import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
+	SessionPlayerStateSnapshot,
 } from '@kingdom-builder/protocol';
 
 type RegistryLike<T> = { entries(): [string, T][]; get(id: string): T };
@@ -17,11 +17,11 @@ type DevelopmentDefinition = DevelopmentConfig &
 		focus: unknown;
 		system: boolean | undefined;
 	}>;
-type SessionLandView = PlayerStateSnapshot['lands'][number] & {
+type SessionLandView = SessionPlayerStateSnapshot['lands'][number] & {
 	slotsFree: number;
 };
 type SessionPlayerView = Omit<
-	PlayerStateSnapshot,
+	SessionPlayerStateSnapshot,
 	'lands' | 'buildings' | 'actions'
 > & {
 	lands: SessionLandView[];

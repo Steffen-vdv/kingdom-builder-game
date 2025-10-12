@@ -1,7 +1,7 @@
 import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@kingdom-builder/protocol';
 import type {
 	ActionDefinition,
 	BuildingDefinition,
