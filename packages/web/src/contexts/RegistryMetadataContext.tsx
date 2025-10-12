@@ -6,10 +6,13 @@ import type {
 	ActionConfig,
 } from '@kingdom-builder/protocol';
 import type {
-	SessionOverviewContentPayload,
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
+import {
+	OVERVIEW_CONTENT,
+	type OverviewContentTemplate,
+} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -17,7 +20,9 @@ import {
 	type DefinitionLookup,
 } from './registryMetadataLookups';
 import {
-	buildModifierDisplayMetadata,
+	DEFAULT_LAND_DESCRIPTOR,
+	DEFAULT_PASSIVE_DESCRIPTOR,
+	DEFAULT_SLOT_DESCRIPTOR,
 	buildPhaseMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
@@ -52,7 +57,6 @@ export interface RegistryMetadataContextValue {
 	statMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	phaseMetadataLookup: MetadataLookup<PhaseMetadata>;
 	triggerMetadataLookup: MetadataLookup<TriggerMetadata>;
-	modifierDisplayMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	populationMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	buildingMetadata: MetadataSelector<RegistryMetadataDescriptor>;
@@ -60,11 +64,10 @@ export interface RegistryMetadataContextValue {
 	statMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	phaseMetadata: MetadataSelector<PhaseMetadata>;
 	triggerMetadata: MetadataSelector<TriggerMetadata>;
-	modifierDisplayMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
-	overviewContent?: SessionOverviewContentPayload | undefined;
+	overviewContent: OverviewContentTemplate;
 }
 
 interface RegistryMetadataProviderProps {
@@ -148,27 +151,35 @@ export function RegistryMetadataProvider({
 		() => buildTriggerMetadata(extractTriggerRecord(metadata)),
 		[metadata],
 	);
-	const modifierDisplayMetadataLookup = useMemo(
-		() =>
-			buildModifierDisplayMetadata(
-				extractDescriptorRecord(metadata, 'modifierDisplays'),
-			),
-		[metadata],
-	);
 	const assetDescriptors = useMemo(
 		() => extractDescriptorRecord(metadata, 'assets'),
 		[metadata],
 	);
 	const landDescriptor = useMemo(
-		() => resolveAssetDescriptor('land', assetDescriptors?.land),
+		() =>
+			resolveAssetDescriptor(
+				'land',
+				assetDescriptors?.land,
+				DEFAULT_LAND_DESCRIPTOR,
+			),
 		[assetDescriptors],
 	);
 	const slotDescriptor = useMemo(
-		() => resolveAssetDescriptor('slot', assetDescriptors?.slot),
+		() =>
+			resolveAssetDescriptor(
+				'slot',
+				assetDescriptors?.slot,
+				DEFAULT_SLOT_DESCRIPTOR,
+			),
 		[assetDescriptors],
 	);
 	const passiveDescriptor = useMemo(
-		() => resolveAssetDescriptor('passive', assetDescriptors?.passive),
+		() =>
+			resolveAssetDescriptor(
+				'passive',
+				assetDescriptors?.passive,
+				DEFAULT_PASSIVE_DESCRIPTOR,
+			),
 		[assetDescriptors],
 	);
 	const resourceMetadata = useMemo(
@@ -199,10 +210,6 @@ export function RegistryMetadataProvider({
 		() => createMetadataSelector(triggerMetadataLookup),
 		[triggerMetadataLookup],
 	);
-	const modifierDisplayMetadata = useMemo(
-		() => createMetadataSelector(modifierDisplayMetadataLookup),
-		[modifierDisplayMetadataLookup],
-	);
 	const landMetadata = useMemo(
 		() => createAssetMetadataSelector(landDescriptor),
 		[landDescriptor],
@@ -215,7 +222,7 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => metadata.overviewContent, [metadata]);
+	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
@@ -231,7 +238,6 @@ export function RegistryMetadataProvider({
 				statMetadataLookup,
 				phaseMetadataLookup,
 				triggerMetadataLookup,
-				modifierDisplayMetadataLookup,
 				resourceMetadata,
 				populationMetadata,
 				buildingMetadata,
@@ -239,7 +245,6 @@ export function RegistryMetadataProvider({
 				statMetadata,
 				phaseMetadata,
 				triggerMetadata,
-				modifierDisplayMetadata,
 				landMetadata,
 				slotMetadata,
 				passiveMetadata,
@@ -258,7 +263,6 @@ export function RegistryMetadataProvider({
 			statMetadataLookup,
 			phaseMetadataLookup,
 			triggerMetadataLookup,
-			modifierDisplayMetadataLookup,
 			resourceMetadata,
 			populationMetadata,
 			buildingMetadata,
@@ -266,7 +270,6 @@ export function RegistryMetadataProvider({
 			statMetadata,
 			phaseMetadata,
 			triggerMetadata,
-			modifierDisplayMetadata,
 			landMetadata,
 			slotMetadata,
 			passiveMetadata,
@@ -322,10 +325,6 @@ export const usePhaseMetadata = (): MetadataSelector<PhaseMetadata> =>
 export const useTriggerMetadata = (): MetadataSelector<TriggerMetadata> =>
 	useRegistryMetadata().triggerMetadata;
 
-export const useModifierDisplayMetadata =
-	(): MetadataSelector<RegistryMetadataDescriptor> =>
-		useRegistryMetadata().modifierDisplayMetadata;
-
 export const useLandMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().landMetadata;
 
@@ -335,9 +334,8 @@ export const useSlotMetadata = (): AssetMetadataSelector =>
 export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().passiveMetadata;
 
-export const useOverviewContent = ():
-	| SessionOverviewContentPayload
-	| undefined => useRegistryMetadata().overviewContent;
+export const useOverviewContent = (): OverviewContentTemplate =>
+	useRegistryMetadata().overviewContent;
 
 export type {
 	RegistryMetadataDescriptor,
