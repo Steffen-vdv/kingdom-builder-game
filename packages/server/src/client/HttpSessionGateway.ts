@@ -9,6 +9,16 @@ import type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 } from '@kingdom-builder/protocol';
 import {
 	actionExecuteRequestSchema,
@@ -160,6 +170,46 @@ export class HttpSessionGateway implements SessionGateway {
 			throw this.toTransportError(result);
 		}
 		return sessionSetDevModeResponseSchema.parse(result.data);
+	}
+
+	public getActionCosts(
+		_request: SessionActionCostRequest,
+	): Promise<SessionActionCostResponse> {
+		return Promise.reject(
+			new Error('SessionGateway#getActionCosts is not implemented.'),
+		);
+	}
+
+	public getActionRequirements(
+		_request: SessionActionRequirementRequest,
+	): Promise<SessionActionRequirementResponse> {
+		return Promise.reject(
+			new Error('SessionGateway#getActionRequirements is not implemented.'),
+		);
+	}
+
+	public getActionOptions(
+		_request: SessionActionOptionsRequest,
+	): Promise<SessionActionOptionsResponse> {
+		return Promise.reject(
+			new Error('SessionGateway#getActionOptions is not implemented.'),
+		);
+	}
+
+	public runAiTurn(
+		_request: SessionRunAiRequest,
+	): Promise<SessionRunAiResponse> {
+		return Promise.reject(
+			new Error('SessionGateway#runAiTurn is not implemented.'),
+		);
+	}
+
+	public simulateUpcomingPhases(
+		_request: SessionSimulateRequest,
+	): Promise<SessionSimulateResponse> {
+		return Promise.reject(
+			new Error('SessionGateway#simulateUpcomingPhases is not implemented.'),
+		);
 	}
 
 	private async execute(options: RequestOptions): Promise<HttpExecutionResult> {
