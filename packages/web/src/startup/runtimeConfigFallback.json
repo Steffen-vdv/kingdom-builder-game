@@ -1,0 +1,1088 @@
+{
+	"phases": [
+		{
+			"id": "growth",
+			"steps": [
+				{
+					"id": "resolve-dynamic-triggers",
+					"title": "Resolve dynamic triggers",
+					"triggers": ["onGrowthPhase"]
+				},
+				{
+					"id": "gain-income",
+					"title": "Gain Income",
+					"icon": "💰",
+					"triggers": ["onGainIncomeStep"]
+				},
+				{
+					"id": "gain-ap",
+					"title": "Gain Action Points",
+					"triggers": ["onGainAPStep"]
+				},
+				{
+					"id": "raise-strength",
+					"title": "Raise Strength",
+					"effects": [
+						{
+							"evaluator": {
+								"type": "population",
+								"params": {
+									"role": "legion"
+								}
+							},
+							"effects": [
+								{
+									"type": "stat",
+									"method": "add_pct",
+									"params": {
+										"key": "armyStrength",
+										"percentStat": "growth"
+									},
+									"round": "up"
+								}
+							]
+						},
+						{
+							"evaluator": {
+								"type": "population",
+								"params": {
+									"role": "fortifier"
+								}
+							},
+							"effects": [
+								{
+									"type": "stat",
+									"method": "add_pct",
+									"params": {
+										"key": "fortificationStrength",
+										"percentStat": "growth"
+									},
+									"round": "up"
+								}
+							]
+						}
+					]
+				}
+			],
+			"label": "Growth",
+			"icon": "🏗️"
+		},
+		{
+			"id": "upkeep",
+			"steps": [
+				{
+					"id": "resolve-dynamic-triggers",
+					"title": "Resolve dynamic triggers",
+					"triggers": ["onUpkeepPhase"]
+				},
+				{
+					"id": "pay-upkeep",
+					"title": "Pay Upkeep",
+					"triggers": ["onPayUpkeepStep"]
+				},
+				{
+					"id": "war-recovery",
+					"title": "War recovery",
+					"effects": [
+						{
+							"evaluator": {
+								"type": "compare",
+								"params": {
+									"left": {
+										"type": "stat",
+										"params": {
+											"key": "warWeariness"
+										}
+									},
+									"operator": "gt",
+									"right": 0
+								}
+							},
+							"effects": [
+								{
+									"type": "stat",
+									"method": "remove",
+									"params": {
+										"key": "warWeariness",
+										"amount": 1
+									}
+								}
+							]
+						}
+					]
+				}
+			],
+			"label": "Upkeep",
+			"icon": "🧹"
+		},
+		{
+			"id": "main",
+			"steps": [
+				{
+					"id": "main",
+					"title": "Main Phase"
+				}
+			],
+			"label": "Main",
+			"icon": "🎯",
+			"action": true
+		}
+	],
+	"start": {
+		"player": {
+			"resources": {
+				"gold": 10,
+				"ap": 0,
+				"happiness": 0,
+				"castleHP": 10
+			},
+			"stats": {
+				"maxPopulation": 1,
+				"armyStrength": 0,
+				"fortificationStrength": 0,
+				"absorption": 0,
+				"growth": 0.25,
+				"warWeariness": 0
+			},
+			"population": {
+				"council": 1,
+				"legion": 0,
+				"fortifier": 0,
+				"citizen": 0
+			},
+			"lands": [
+				{
+					"developments": ["farm"]
+				},
+				{}
+			]
+		},
+		"players": {
+			"B": {
+				"resources": {
+					"ap": 1
+				}
+			}
+		},
+		"modes": {
+			"dev": {
+				"player": {
+					"resources": {
+						"gold": 100,
+						"ap": 0,
+						"happiness": 10,
+						"castleHP": 10
+					},
+					"population": {
+						"council": 2,
+						"legion": 1,
+						"fortifier": 1,
+						"citizen": 0
+					}
+				},
+				"players": {
+					"B": {
+						"resources": {
+							"castleHP": 1
+						}
+					}
+				}
+			}
+		}
+	},
+	"rules": {
+		"defaultActionAPCost": 1,
+		"absorptionCapPct": 1,
+		"absorptionRounding": "down",
+		"tieredResourceKey": "happiness",
+		"tierDefinitions": [
+			{
+				"id": "happiness:tier:despair",
+				"range": {
+					"min": -10
+				},
+				"effect": {
+					"incomeMultiplier": 0.5,
+					"disableGrowth": true
+				},
+				"enterEffects": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "passive:happiness:despair",
+							"skip": {
+								"phases": ["growth"],
+								"steps": [
+									{
+										"phaseId": "upkeep",
+										"stepId": "war-recovery"
+									}
+								]
+							},
+							"detail": "happiness.tier.summary.despair",
+							"name": "Despair",
+							"icon": "😡",
+							"meta": {
+								"source": {
+									"type": "tiered-resource",
+									"id": "happiness:tier:despair",
+									"labelToken": "happiness.tier.summary.despair",
+									"icon": "😡",
+									"name": "Despair"
+								},
+								"removal": {
+									"token": "happiness is -10 or lower",
+									"text": "Active as long as happiness is -10 or lower"
+								}
+							}
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:despair:income",
+									"evaluation": {
+										"type": "development"
+									},
+									"percent": -0.5
+								}
+							}
+						]
+					}
+				],
+				"exitEffects": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "passive:happiness:despair"
+						}
+					}
+				],
+				"preview": {
+					"id": "passive:happiness:despair",
+					"effects": [
+						{
+							"type": "result_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:despair:income",
+								"evaluation": {
+									"type": "development"
+								},
+								"percent": -0.5
+							}
+						}
+					]
+				},
+				"text": {
+					"summary": "During income step, gain 50% less 🪙 gold (rounded up).\nSkip Growth phase.\nSkip War Recovery step during Upkeep phase.",
+					"removal": "Active as long as happiness is -10 or lower"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.despair",
+					"removalCondition": "happiness is -10 or lower",
+					"title": "Despair",
+					"icon": "😡"
+				}
+			},
+			{
+				"id": "happiness:tier:misery",
+				"range": {
+					"min": -9,
+					"max": -8
+				},
+				"effect": {
+					"incomeMultiplier": 0.5,
+					"disableGrowth": true
+				},
+				"enterEffects": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "passive:happiness:misery",
+							"skip": {
+								"phases": ["growth"]
+							},
+							"detail": "happiness.tier.summary.misery",
+							"name": "Misery",
+							"icon": "😠",
+							"meta": {
+								"source": {
+									"type": "tiered-resource",
+									"id": "happiness:tier:misery",
+									"labelToken": "happiness.tier.summary.misery",
+									"icon": "😠",
+									"name": "Misery"
+								},
+								"removal": {
+									"token": "happiness stays between -9 and -8",
+									"text": "Active as long as happiness stays between -9 and -8"
+								}
+							}
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:misery:income",
+									"evaluation": {
+										"type": "development"
+									},
+									"percent": -0.5
+								}
+							}
+						]
+					}
+				],
+				"exitEffects": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "passive:happiness:misery"
+						}
+					}
+				],
+				"preview": {
+					"id": "passive:happiness:misery",
+					"effects": [
+						{
+							"type": "result_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:misery:income",
+								"evaluation": {
+									"type": "development"
+								},
+								"percent": -0.5
+							}
+						}
+					]
+				},
+				"text": {
+					"summary": "During income step, gain 50% less 🪙 gold (rounded up).\nSkip Growth phase.",
+					"removal": "Active as long as happiness stays between -9 and -8"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.misery",
+					"removalCondition": "happiness stays between -9 and -8",
+					"title": "Misery",
+					"icon": "😠"
+				}
+			},
+			{
+				"id": "happiness:tier:grim",
+				"range": {
+					"min": -7,
+					"max": -5
+				},
+				"effect": {
+					"incomeMultiplier": 0.75,
+					"disableGrowth": true
+				},
+				"enterEffects": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "passive:happiness:grim",
+							"skip": {
+								"phases": ["growth"]
+							},
+							"detail": "happiness.tier.summary.grim",
+							"name": "Grim",
+							"icon": "😟",
+							"meta": {
+								"source": {
+									"type": "tiered-resource",
+									"id": "happiness:tier:grim",
+									"labelToken": "happiness.tier.summary.grim",
+									"icon": "😟",
+									"name": "Grim"
+								},
+								"removal": {
+									"token": "happiness stays between -7 and -5",
+									"text": "Active as long as happiness stays between -7 and -5"
+								}
+							}
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:grim:income",
+									"evaluation": {
+										"type": "development"
+									},
+									"percent": -0.25
+								}
+							}
+						]
+					}
+				],
+				"exitEffects": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "passive:happiness:grim"
+						}
+					}
+				],
+				"preview": {
+					"id": "passive:happiness:grim",
+					"effects": [
+						{
+							"type": "result_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:grim:income",
+								"evaluation": {
+									"type": "development"
+								},
+								"percent": -0.25
+							}
+						}
+					]
+				},
+				"text": {
+					"summary": "During income step, gain 25% less 🪙 gold (rounded up).\nSkip Growth phase.",
+					"removal": "Active as long as happiness stays between -7 and -5"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.grim",
+					"removalCondition": "happiness stays between -7 and -5",
+					"title": "Grim",
+					"icon": "😟"
+				}
+			},
+			{
+				"id": "happiness:tier:unrest",
+				"range": {
+					"min": -4,
+					"max": -3
+				},
+				"effect": {
+					"incomeMultiplier": 0.75
+				},
+				"enterEffects": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "passive:happiness:unrest",
+							"detail": "happiness.tier.summary.unrest",
+							"name": "Unrest",
+							"icon": "🙁",
+							"meta": {
+								"source": {
+									"type": "tiered-resource",
+									"id": "happiness:tier:unrest",
+									"labelToken": "happiness.tier.summary.unrest",
+									"icon": "🙁",
+									"name": "Unrest"
+								},
+								"removal": {
+									"token": "happiness stays between -4 and -3",
+									"text": "Active as long as happiness stays between -4 and -3"
+								}
+							}
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:unrest:income",
+									"evaluation": {
+										"type": "development"
+									},
+									"percent": -0.25
+								}
+							}
+						]
+					}
+				],
+				"exitEffects": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "passive:happiness:unrest"
+						}
+					}
+				],
+				"preview": {
+					"id": "passive:happiness:unrest",
+					"effects": [
+						{
+							"type": "result_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:unrest:income",
+								"evaluation": {
+									"type": "development"
+								},
+								"percent": -0.25
+							}
+						}
+					]
+				},
+				"text": {
+					"summary": "During income step, gain 25% less 🪙 gold (rounded up).",
+					"removal": "Active as long as happiness stays between -4 and -3"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.unrest",
+					"removalCondition": "happiness stays between -4 and -3",
+					"title": "Unrest",
+					"icon": "🙁"
+				}
+			},
+			{
+				"id": "happiness:tier:steady",
+				"range": {
+					"min": -2,
+					"max": 2
+				},
+				"effect": {
+					"incomeMultiplier": 1
+				},
+				"text": {
+					"summary": "No effect",
+					"removal": "Active as long as happiness stays between -2 and +2"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.steady",
+					"removalCondition": "happiness stays between -2 and +2",
+					"title": "Steady",
+					"icon": "😐"
+				}
+			},
+			{
+				"id": "happiness:tier:content",
+				"range": {
+					"min": 3,
+					"max": 4
+				},
+				"effect": {
+					"incomeMultiplier": 1.25
+				},
+				"enterEffects": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "passive:happiness:content",
+							"detail": "happiness.tier.summary.content",
+							"name": "Content",
+							"icon": "🙂",
+							"meta": {
+								"source": {
+									"type": "tiered-resource",
+									"id": "happiness:tier:content",
+									"labelToken": "happiness.tier.summary.content",
+									"icon": "🙂",
+									"name": "Content"
+								},
+								"removal": {
+									"token": "happiness stays between +3 and +4",
+									"text": "Active as long as happiness stays between +3 and +4"
+								}
+							}
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:content:income",
+									"evaluation": {
+										"type": "development"
+									},
+									"percent": 0.25
+								}
+							}
+						]
+					}
+				],
+				"exitEffects": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "passive:happiness:content"
+						}
+					}
+				],
+				"preview": {
+					"id": "passive:happiness:content",
+					"effects": [
+						{
+							"type": "result_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:content:income",
+								"evaluation": {
+									"type": "development"
+								},
+								"percent": 0.25
+							}
+						}
+					]
+				},
+				"text": {
+					"summary": "During income step, gain 25% more 🪙 gold (rounded up).",
+					"removal": "Active as long as happiness stays between +3 and +4"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.content",
+					"removalCondition": "happiness stays between +3 and +4",
+					"title": "Content",
+					"icon": "🙂"
+				}
+			},
+			{
+				"id": "happiness:tier:joyful",
+				"range": {
+					"min": 5,
+					"max": 7
+				},
+				"effect": {
+					"incomeMultiplier": 1.25,
+					"buildingDiscountPct": 0.2
+				},
+				"enterEffects": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "passive:happiness:joyful",
+							"detail": "happiness.tier.summary.joyful",
+							"name": "Joyful",
+							"icon": "😊",
+							"meta": {
+								"source": {
+									"type": "tiered-resource",
+									"id": "happiness:tier:joyful",
+									"labelToken": "happiness.tier.summary.joyful",
+									"icon": "😊",
+									"name": "Joyful"
+								},
+								"removal": {
+									"token": "happiness stays between +5 and +7",
+									"text": "Active as long as happiness stays between +5 and +7"
+								}
+							}
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:joyful:income",
+									"evaluation": {
+										"type": "development"
+									},
+									"percent": 0.25
+								}
+							},
+							{
+								"type": "cost_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:joyful:build-discount",
+									"actionId": "build",
+									"key": "gold",
+									"percent": -0.2
+								}
+							}
+						]
+					}
+				],
+				"exitEffects": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "passive:happiness:joyful"
+						}
+					}
+				],
+				"preview": {
+					"id": "passive:happiness:joyful",
+					"effects": [
+						{
+							"type": "result_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:joyful:income",
+								"evaluation": {
+									"type": "development"
+								},
+								"percent": 0.25
+							}
+						},
+						{
+							"type": "cost_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:joyful:build-discount",
+								"actionId": "build",
+								"key": "gold",
+								"percent": -0.2
+							}
+						}
+					]
+				},
+				"text": {
+					"summary": "During income step, gain 25% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).",
+					"removal": "Active as long as happiness stays between +5 and +7"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.joyful",
+					"removalCondition": "happiness stays between +5 and +7",
+					"title": "Joyful",
+					"icon": "😊"
+				}
+			},
+			{
+				"id": "happiness:tier:elated",
+				"range": {
+					"min": 8,
+					"max": 9
+				},
+				"effect": {
+					"incomeMultiplier": 1.5,
+					"buildingDiscountPct": 0.2
+				},
+				"enterEffects": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "passive:happiness:elated",
+							"detail": "happiness.tier.summary.elated",
+							"name": "Elated",
+							"icon": "😄",
+							"meta": {
+								"source": {
+									"type": "tiered-resource",
+									"id": "happiness:tier:elated",
+									"labelToken": "happiness.tier.summary.elated",
+									"icon": "😄",
+									"name": "Elated"
+								},
+								"removal": {
+									"token": "happiness stays between +8 and +9",
+									"text": "Active as long as happiness stays between +8 and +9"
+								}
+							}
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:elated:income",
+									"evaluation": {
+										"type": "development"
+									},
+									"percent": 0.5
+								}
+							},
+							{
+								"type": "cost_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:elated:build-discount",
+									"actionId": "build",
+									"key": "gold",
+									"percent": -0.2
+								}
+							}
+						]
+					}
+				],
+				"exitEffects": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "passive:happiness:elated"
+						}
+					}
+				],
+				"preview": {
+					"id": "passive:happiness:elated",
+					"effects": [
+						{
+							"type": "result_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:elated:income",
+								"evaluation": {
+									"type": "development"
+								},
+								"percent": 0.5
+							}
+						},
+						{
+							"type": "cost_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:elated:build-discount",
+								"actionId": "build",
+								"key": "gold",
+								"percent": -0.2
+							}
+						}
+					]
+				},
+				"text": {
+					"summary": "During income step, gain 50% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).",
+					"removal": "Active as long as happiness stays between +8 and +9"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.elated",
+					"removalCondition": "happiness stays between +8 and +9",
+					"title": "Elated",
+					"icon": "😄"
+				}
+			},
+			{
+				"id": "happiness:tier:ecstatic",
+				"range": {
+					"min": 10
+				},
+				"effect": {
+					"incomeMultiplier": 1.5,
+					"buildingDiscountPct": 0.2
+				},
+				"enterEffects": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "passive:happiness:ecstatic",
+							"detail": "happiness.tier.summary.ecstatic",
+							"name": "Ecstatic",
+							"icon": "🤩",
+							"meta": {
+								"source": {
+									"type": "tiered-resource",
+									"id": "happiness:tier:ecstatic",
+									"labelToken": "happiness.tier.summary.ecstatic",
+									"icon": "🤩",
+									"name": "Ecstatic"
+								},
+								"removal": {
+									"token": "happiness is +10 or higher",
+									"text": "Active as long as happiness is +10 or higher"
+								}
+							}
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:ecstatic:income",
+									"evaluation": {
+										"type": "development"
+									},
+									"percent": 0.5
+								}
+							},
+							{
+								"type": "cost_mod",
+								"method": "add",
+								"round": "up",
+								"params": {
+									"id": "happiness:ecstatic:build-discount",
+									"actionId": "build",
+									"key": "gold",
+									"percent": -0.2
+								}
+							},
+							{
+								"type": "stat",
+								"method": "add",
+								"params": {
+									"key": "growth",
+									"amount": 0.2
+								}
+							}
+						]
+					}
+				],
+				"exitEffects": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "passive:happiness:ecstatic"
+						}
+					}
+				],
+				"preview": {
+					"id": "passive:happiness:ecstatic",
+					"effects": [
+						{
+							"type": "result_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:ecstatic:income",
+								"evaluation": {
+									"type": "development"
+								},
+								"percent": 0.5
+							}
+						},
+						{
+							"type": "cost_mod",
+							"method": "add",
+							"round": "up",
+							"params": {
+								"id": "happiness:ecstatic:build-discount",
+								"actionId": "build",
+								"key": "gold",
+								"percent": -0.2
+							}
+						},
+						{
+							"type": "stat",
+							"method": "add",
+							"params": {
+								"key": "growth",
+								"amount": 0.2
+							}
+						}
+					]
+				},
+				"text": {
+					"summary": "During income step, gain 50% more 🪙 gold (rounded up).\nBuild action costs 20% less 🪙 gold (rounded up).\nGain +20% 📈 Growth.",
+					"removal": "Active as long as happiness is +10 or higher"
+				},
+				"display": {
+					"summaryToken": "happiness.tier.summary.ecstatic",
+					"removalCondition": "happiness is +10 or higher",
+					"title": "Ecstatic",
+					"icon": "🤩"
+				}
+			}
+		],
+		"slotsPerNewLand": 1,
+		"maxSlotsPerLand": 2,
+		"basePopulationCap": 1,
+		"winConditions": [
+			{
+				"id": "castle-destroyed",
+				"trigger": {
+					"type": "resource",
+					"key": "castleHP",
+					"comparison": "lte",
+					"value": 0,
+					"target": "self"
+				},
+				"result": {
+					"subject": "defeat",
+					"opponent": "victory"
+				},
+				"display": {
+					"icon": "castleHP",
+					"victory": "The enemy stronghold collapses—your banners fly victorious!",
+					"defeat": "Your castle lies in ruins. The siege is lost."
+				}
+			}
+		],
+		"corePhaseIds": {
+			"growth": "growth",
+			"upkeep": "upkeep"
+		}
+	},
+	"resources": {
+		"gold": {
+			"key": "gold",
+			"icon": "🪙",
+			"label": "Gold",
+			"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
+			"tags": ["bankruptcy-check"]
+		},
+		"ap": {
+			"key": "ap",
+			"icon": "⚡",
+			"label": "Action Points",
+			"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
+		},
+		"happiness": {
+			"key": "happiness",
+			"icon": "😊",
+			"label": "Happiness",
+			"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
+		},
+		"castleHP": {
+			"key": "castleHP",
+			"icon": "🏰",
+			"label": "Castle HP",
+			"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
+			"tags": ["attack-target", "win-condition-zero"]
+		}
+	},
+	"primaryIconId": "castleHP",
+	"developerPreset": {
+		"resourceTargets": [
+			{
+				"key": "gold",
+				"target": 100
+			},
+			{
+				"key": "happiness",
+				"target": 10
+			}
+		],
+		"populationPlan": [
+			{
+				"role": "council",
+				"count": 2
+			},
+			{
+				"role": "legion",
+				"count": 1
+			},
+			{
+				"role": "fortifier",
+				"count": 1
+			}
+		],
+		"landCount": 5,
+		"developments": ["house", "farm", "outpost", "watchtower"],
+		"buildings": ["mill"]
+	}
+}

@@ -113,6 +113,22 @@
    include monitoring, tests, and reference docs so future iterations can verify
    compatibility quickly.
 
+## Static runtime configuration snapshot
+
+- `packages/web/src/startup/runtimeConfigFallback.json` stores the fallback
+  configuration the web client loads when the host page does not define
+  `__KINGDOM_BUILDER_CONFIG__`.
+- After editing content metadata, refresh the snapshot by running:
+  `npx tsx scripts/generateRuntimeConfig.ts` from the repository root. The
+  script reads the current `@kingdom-builder/contents` exports and rewrites the
+  JSON file in place.
+- Once regenerated, execute:
+  `npx vitest run packages/web/tests/startup/runtimeConfig.test.ts` to confirm
+  the loader keeps cloning the snapshot and merging runtime overrides
+  correctly.
+- Commit the updated JSON alongside the content changes and mention the refresh
+  in the pull request summary so reviewers can spot snapshot drift quickly.
+
 ## Domain Responsibilities
 
 - **Web**: Render UI, manage client-side state, compose content-driven visuals,
@@ -161,6 +177,19 @@ boundaries without updating this log.
 
 - **Date & Author**: 2025-10-16 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
+    - `packages/web/src/startup/runtimeConfig.ts` (Web)
+    - `packages/web/src/startup/runtimeConfigFallback.json` (Web)
+    - `packages/web/tests/startup/runtimeConfig.test.ts` (Web)
+    - `scripts/generateRuntimeConfig.ts` (Tooling)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Replace the web runtime fallback with a committed snapshot so
+    the client no longer imports `@kingdom-builder/contents` at runtime and can
+    bootstrap from static metadata.
+  - **Communication Path Update**: Web bootstrap loads the JSON snapshot, and a
+    repository script now regenerates the artifact whenever content data changes.
+  - **Follow-Up Notes**: Migrate remaining metadata consumers to reuse the new
+    snapshot (or its future selector proxy) so developer presets and resource
+    descriptors stay aligned across domains.
     - `packages/web/src/contexts/defaultRegistryMetadata.ts` (Web)
     - `packages/web/src/contexts/defaultRegistryMetadata.json` (Web)
     - `scripts/extensionless-loader.mjs` (Tooling)
@@ -177,7 +206,6 @@ boundaries without updating this log.
     repository root after rebuilding `@kingdom-builder/contents`. Commit the
     regenerated JSON alongside any content updates so the fallback remains in
     sync.
-
 - **Date & Author**: 2025-10-15 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/passives/visibility.ts` (Web)
