@@ -2,7 +2,7 @@ import React, { type Dispatch, type SetStateAction } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
-} from '@kingdom-builder/engine';
+} from '@kingdom-builder/protocol';
 import {
 	describeContent,
 	splitSummary,
