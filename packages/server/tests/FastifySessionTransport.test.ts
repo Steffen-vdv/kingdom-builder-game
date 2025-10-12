@@ -119,6 +119,29 @@ describe('FastifySessionTransport', () => {
 		await app.close();
 	});
 
+	it('updates player names through the API', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const updateResponse = await app.inject({
+			method: 'PATCH',
+			url: `/sessions/${sessionId}/player`,
+			headers: authorizedHeaders,
+			payload: { playerId: 'A', playerName: ' Captain ' },
+		});
+		expect(updateResponse.statusCode).toBe(200);
+		const body = updateResponse.json() as {
+			snapshot: { game: { players: Array<{ name: string }> } };
+		};
+		expect(body.snapshot.game.players[0]?.name).toBe('Captain');
+		await app.close();
+	});
+
 	it('executes actions and returns success payloads', async () => {
 		const { app, actionId, gainKey } = await createServer();
 		const createResponse = await app.inject({
