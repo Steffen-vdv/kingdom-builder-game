@@ -18,3 +18,8 @@
 ## Domain Migration - P1 - T4 - Skip Event Protocol Alignment
 
 - Skip event formatting now consumes `SessionAdvanceSkipSnapshot` from `@kingdom-builder/protocol/session`, removing the dependency on engine skip exports for log/history rendering in `packages/web/src/utils/describeSkipEvent.ts` and its tests. Future skip handling tasks can safely evolve without touching engine internals.
+
+## Domain Migration - P1 - T6 - Session Advance Protocol Typing
+
+- Phase progression helpers (`packages/web/src/state/usePhaseProgress.helpers.ts`, `packages/web/src/state/formatPhaseResolution.ts`) now use protocol `SessionAdvanceResult` snapshots end-to-end, eliminating the temporary engine type alias.
+- TODO: Update remaining session lifecycle utilities (`packages/web/src/state/sessionSdk.ts`, `packages/web/src/state/useNextTurnForecast.ts`) to request protocol-native DTOs once the migration service exposes them, so the web client can remove all engine imports during phase advancement.
