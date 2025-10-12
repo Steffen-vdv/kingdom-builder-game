@@ -24,6 +24,9 @@ export function appendSubActionChanges({
 	const subLines: string[] = [];
 	for (const trace of traces) {
 		const subStep = context.actions.get(trace.id);
+		if (!subStep) {
+			continue;
+		}
 		const subResolved = resolveActionEffects(subStep);
 		const subChanges = diffStepSnapshots(
 			snapshotPlayer(trace.before),
@@ -36,9 +39,8 @@ export function appendSubActionChanges({
 			continue;
 		}
 		subLines.push(...subChanges);
-		const actionDefinition = context.actions.get(trace.id);
-		const icon = actionDefinition?.icon ?? '';
-		const name = actionDefinition?.name ?? trace.id;
+		const icon = subStep.icon ?? '';
+		const name = subStep.name ?? trace.id;
 		const trimmed = `${[icon, name].filter(Boolean).join(' ').trim()}`;
 		const index = messages.findIndex((entry) => {
 			if (entry.kind === 'subaction') {
