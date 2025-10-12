@@ -30,4 +30,24 @@ describe('createEngine validation', () => {
 				'" must define at least one step.',
 		);
 	});
+
+	it('throws when a phase includes a step without an id', () => {
+		const [firstPhase] = PHASES;
+		if (!firstPhase) {
+			throw new Error('Test requires at least one phase definition.');
+		}
+		const invalidSteps = firstPhase.steps.map((step, stepIndex) =>
+			stepIndex === 0 ? { ...step, id: ' ' } : step,
+		);
+		const invalidPhases = PHASES.map((phase) =>
+			phase.id === firstPhase.id ? { ...phase, steps: invalidSteps } : phase,
+		);
+		const createEngineWithInvalidStep = () =>
+			createTestEngine({ phases: invalidPhases });
+		expect(createEngineWithInvalidStep).toThrowError(
+			'Cannot create engine: phase "' +
+				firstPhase.id +
+				'" has a step without an id at index 0.',
+		);
+	});
 });
