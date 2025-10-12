@@ -1,0 +1,119 @@
+name: PR Review On Push
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  trigger-reviews:
+    name: Trigger PR reviews after push
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Initialize context
+        run: |
+          echo "COMMIT_SHA=${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "PUSH_BRANCH=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          echo "CONTINUE_WORKFLOW=true" >> "$GITHUB_ENV"
+
+      - name: Debounce pushes for 2 minutes
+        if: env.CONTINUE_WORKFLOW == 'true'
+        run: sleep 120
+
+      - name: Abort if a newer commit exists on the branch
+        if: env.CONTINUE_WORKFLOW == 'true'
+        run: |
+          set -euo pipefail
+          ref_path="heads/${PUSH_BRANCH}"
+          current_sha=$(gh api repos/${GITHUB_REPOSITORY}/git/refs/${ref_path} \
+            --jq '.object.sha' || echo '')
+          if [ -z "${current_sha}" ]; then
+            echo "Branch ${PUSH_BRANCH} is no longer available."
+            echo "CONTINUE_WORKFLOW=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [ "${current_sha}" != "${COMMIT_SHA}" ]; then
+            printf 'A newer commit (%s) replaced %s. Skipping.\n' \
+              "${current_sha}" "${COMMIT_SHA}"
+            echo "CONTINUE_WORKFLOW=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+      - name: Discover open pull request for branch
+        if: env.CONTINUE_WORKFLOW == 'true'
+        id: pr
+        run: |
+          set -euo pipefail
+          pr_number=$(gh pr list --state open \
+            --head "${GITHUB_REPOSITORY}:${PUSH_BRANCH}" \
+            --json number --jq '.[0].number')
+          if [ -z "${pr_number}" ]; then
+            echo "No open pull request for ${PUSH_BRANCH}."
+            echo "CONTINUE_WORKFLOW=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "number=${pr_number}" >> "$GITHUB_OUTPUT"
+
+      - name: Check max iteration guard
+        if: env.CONTINUE_WORKFLOW == 'true'
+        run: |
+          set -euo pipefail
+          pr_number=${{ steps.pr.outputs.number }}
+          has_max=$(gh issue view "${pr_number}" --json labels \
+            --jq '[.labels[].name] | index("max-iterations-reached") != null')
+          if [ "${has_max}" = "true" ]; then
+            echo "PR ${pr_number} has reached the automated iteration limit."
+            echo "CONTINUE_WORKFLOW=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Ensure workflow labels exist
+        if: env.CONTINUE_WORKFLOW == 'true'
+        run: |
+          set -euo pipefail
+          ensure_label() {
+            local name=$1
+            local color=$2
+            local description=$3
+            if ! gh api \
+              repos/${GITHUB_REPOSITORY}/labels/${name} >/dev/null 2>&1; then
+              gh api repos/${GITHUB_REPOSITORY}/labels \
+                -X POST \
+                -f name="${name}" \
+                -f color="${color}" \
+                -f description="${description}"
+            fi
+          }
+          ensure_label "under-review" "0b5cff" "Reviews are currently underway."
+          ensure_label "awaiting-fixes" "d93f0b" \
+            "Waiting on Codex fixes for CodeRabbit feedback."
+          ensure_label "max-iterations-reached" "6f42c1" \
+            "Automated review-fix cycle exhausted."
+
+      - name: Update labels for new review cycle
+        if: env.CONTINUE_WORKFLOW == 'true'
+        run: |
+          set -euo pipefail
+          pr_number=${{ steps.pr.outputs.number }}
+          gh issue edit "${pr_number}" \
+            --remove-label "awaiting-fixes" 2>/dev/null || true
+          gh issue edit "${pr_number}" --add-label "under-review"
+
+      - name: Request CodeRabbit review
+        if: env.CONTINUE_WORKFLOW == 'true'
+        run: |
+          gh pr comment ${{ steps.pr.outputs.number }} \
+            --body '@coderabbitai review'
+
+      - name: Request Codex review
+        if: env.CONTINUE_WORKFLOW == 'true'
+        run: |
+          gh pr comment ${{ steps.pr.outputs.number }} \
+            --body '@codex review'
