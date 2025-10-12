@@ -48,9 +48,13 @@ missing:
 ## Initial Setup
 
 1. Merge the workflows into `main`.
-2. Ensure the repository has `GITHUB_TOKEN` permissions for `pull_request` and
+2. Create a repository secret named `REVIEW_AUTOMATION_TOKEN` that contains the
+   personal access token for the account that should author workflow comments
+   (for example `Steffen-vdv`). The token needs `issues:write` and
+   `pull_requests:write` scopes.
+3. Ensure the repository has `GITHUB_TOKEN` permissions for `pull_request` and
    `issues` scopes (this is enabled by default for GitHub Actions).
-3. No manual label creation is required—the workflows create them if absent.
+4. No manual label creation is required—the workflows create them if absent.
 
 ## Operational Notes
 
