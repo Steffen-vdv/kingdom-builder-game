@@ -118,4 +118,71 @@ describe('server entrypoint', () => {
 		expect(register).toHaveBeenCalled();
 		expect(listen).toHaveBeenCalled();
 	});
+	it('rejects empty KB_SERVER_AUTH_TOKENS values', async () => {
+		process.env.KB_SERVER_AUTH_TOKENS = '  ';
+		const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const module = await import('../src/index.js');
+		await expect(module.startServer()).rejects.toThrow(
+			/KB_SERVER_AUTH_TOKENS is set but empty/,
+		);
+		expect(errorLog).toHaveBeenCalledWith(
+			'KB_SERVER_AUTH_TOKENS is set but empty. Provide a JSON token map.',
+		);
+	});
+
+	it('fails fast in production when tokens are not configured', async () => {
+		process.env.NODE_ENV = 'production';
+		const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const module = await import('../src/index.js');
+		await expect(module.startServer()).rejects.toThrow(
+			/Authentication tokens are required in production/,
+		);
+		expect(errorLog).toHaveBeenCalledWith(
+			'Authentication tokens are required in production. ' +
+				'Set KB_SERVER_AUTH_TOKENS or pass tokens to startServer().',
+		);
+	});
+
+	it('allows opting into the default developer token', async () => {
+		process.env.KB_SERVER_ALLOW_DEV_TOKEN = '1';
+		vi.doMock('fastify', () => ({
+			__esModule: true,
+			default: () => ({
+				register: vi.fn().mockResolvedValue(undefined),
+				listen: vi.fn().mockResolvedValue('http://127.0.0.1:3001'),
+				close: vi.fn().mockResolvedValue(undefined),
+			}),
+		}));
+		const authModule = await import('../src/auth/tokenAuthMiddleware.js');
+		const middlewareSpy = vi.spyOn(authModule, 'createTokenAuthMiddleware');
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const module = await import('../src/index.js');
+		const result = await module.startServer({ host: '127.0.0.1', port: 0 });
+		expect(warn).toHaveBeenCalledWith(
+			'KB_SERVER_AUTH_TOKENS not set; using default dev token "local-dev".',
+		);
+		const options = middlewareSpy.mock.calls.at(-1)?.[0];
+		expect(options?.tokens?.['local-dev']).toBeDefined();
+		await result.app.close();
+	});
+
+	it('warns when authentication tokens are missing in development', async () => {
+		vi.doMock('fastify', () => ({
+			__esModule: true,
+			default: () => ({
+				register: vi.fn().mockResolvedValue(undefined),
+				listen: vi.fn().mockResolvedValue('http://127.0.0.1:3001'),
+				close: vi.fn().mockResolvedValue(undefined),
+			}),
+		}));
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const module = await import('../src/index.js');
+		const result = await module.startServer({ host: '127.0.0.1', port: 0 });
+		expect(warn).toHaveBeenCalledWith(
+			'Authentication tokens are not configured. ' +
+				'Set KB_SERVER_AUTH_TOKENS or enable KB_SERVER_ALLOW_DEV_TOKEN=1 ' +
+				'to use the default dev token.',
+		);
+		await result.app.close();
+	});
 });

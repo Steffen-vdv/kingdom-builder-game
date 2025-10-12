@@ -8,7 +8,8 @@ whether the caller may create new sessions or advance existing games.
 
 Set the `KB_SERVER_AUTH_TOKENS` environment variable to a JSON object where each
 property key is a token string and the value describes the user and their roles.
-For example:
+Empty strings are treated as misconfiguration and will prevent the server from
+starting. For example:
 
 ```
 export KB_SERVER_AUTH_TOKENS='{"local-dev": {"userId": "dev", "roles": ["session:create", "session:advance"]}}'
@@ -27,11 +28,15 @@ Roles gate access to specific transport actions:
 ## Development workflow
 
 1. Define one or more tokens in `KB_SERVER_AUTH_TOKENS` before starting the
-   server or running tests.
+   server or running tests. Production environments must set this variable or
+   provide tokens programmatically.
 2. Use the token in API clients by sending an `Authorization` header or the
    `X-KB-Dev-Token` header.
 3. Tests can inject custom token tables by creating a middleware via
    `createTokenAuthMiddleware({ tokens })` and passing it to `SessionTransport`.
+4. Development servers may opt into the default `local-dev` token by setting
+   `KB_SERVER_ALLOW_DEV_TOKEN=1`. The fallback is disabled by default to prevent
+   accidental exposure in shared environments.
 
 Tokens without required roles trigger `403 Forbidden`. Missing tokens return
 `401 Unauthorized`.

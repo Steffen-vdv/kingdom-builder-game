@@ -114,6 +114,9 @@ function readNumber(value: string | undefined): number | undefined {
 	return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+const DEV_TOKEN_FLAG = 'KB_SERVER_ALLOW_DEV_TOKEN';
+const DEV_TOKEN_TRUE_VALUES = new Set(['1', 'true', 'yes', 'on']);
+
 function resolveTokens(
 	tokens: Record<string, TokenDefinition> | undefined,
 	env: NodeJS.ProcessEnv,
@@ -121,18 +124,56 @@ function resolveTokens(
 	if (tokens && Object.keys(tokens).length > 0) {
 		return tokens;
 	}
-	if (env.KB_SERVER_AUTH_TOKENS) {
+	const envTokens = env.KB_SERVER_AUTH_TOKENS;
+	if (typeof envTokens === 'string') {
+		if (envTokens.trim().length === 0) {
+			const message =
+				'KB_SERVER_AUTH_TOKENS is set but empty. Provide a JSON token map.';
+			console.error(message);
+			throw new Error(message);
+		}
 		return undefined;
 	}
+	if (isProductionEnvironment(env)) {
+		const message =
+			'Authentication tokens are required in production. ' +
+			'Set KB_SERVER_AUTH_TOKENS or pass tokens to startServer().';
+		console.error(message);
+		throw new Error(message);
+	}
+	if (isDevTokenAllowed(env)) {
+		console.warn(
+			'KB_SERVER_AUTH_TOKENS not set; using default dev token "local-dev".',
+		);
+		return {
+			'local-dev': {
+				userId: 'local-dev',
+				roles: ['admin', 'session:create', 'session:advance'],
+			},
+		} satisfies Record<string, TokenDefinition>;
+	}
 	console.warn(
-		'KB_SERVER_AUTH_TOKENS not set; using default dev token "local-dev".',
+		'Authentication tokens are not configured. ' +
+			'Set KB_SERVER_AUTH_TOKENS or enable KB_SERVER_ALLOW_DEV_TOKEN=1 ' +
+			'to use the default dev token.',
 	);
-	return {
-		'local-dev': {
-			userId: 'local-dev',
-			roles: ['admin', 'session:create', 'session:advance'],
-		},
-	} satisfies Record<string, TokenDefinition>;
+	return undefined;
+}
+
+function isDevTokenAllowed(env: NodeJS.ProcessEnv): boolean {
+	const value = env[DEV_TOKEN_FLAG];
+	if (!value) {
+		return false;
+	}
+	return DEV_TOKEN_TRUE_VALUES.has(value.trim().toLowerCase());
+}
+
+function isProductionEnvironment(env: NodeJS.ProcessEnv): boolean {
+	const value = env.NODE_ENV;
+	if (!value) {
+		return false;
+	}
+	return value.trim().toLowerCase() === 'production';
 }
 
 const entrypoint = process.argv[1];
