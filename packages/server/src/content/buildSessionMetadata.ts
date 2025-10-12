@@ -27,14 +27,25 @@ type DescriptorSource = {
 	readonly description?: string | undefined;
 };
 
-type ExtendedSessionSnapshotMetadata = SessionSnapshotMetadata & {
+type PassiveEvaluationModifierRegistry = {
+	entries(): Iterable<[string, DescriptorSource]>;
+};
+
+type ExtendedSessionSnapshotMetadata = Omit<
+	SessionSnapshotMetadata,
+	'passiveEvaluationModifiers'
+> & {
+	readonly passiveEvaluationModifiers: Record<
+		string,
+		SessionMetadataDescriptor
+	>;
 	readonly modifiers: Record<string, SessionMetadataDescriptor>;
 	readonly overview: OverviewContentTemplate;
 };
 
 export function buildSessionMetadata(): ExtendedSessionSnapshotMetadata {
 	const metadata: ExtendedSessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
+		passiveEvaluationModifiers: createPassiveEvaluationModifierMetadata(),
 		resources: createResourceMetadata(),
 		populations: createRegistryDescriptorMap(POPULATIONS.entries()),
 		buildings: createRegistryDescriptorMap(BUILDINGS.entries()),
@@ -49,6 +60,18 @@ export function buildSessionMetadata(): ExtendedSessionSnapshotMetadata {
 	return deepFreeze(metadata);
 }
 
+function createPassiveEvaluationModifierMetadata(): Record<
+	string,
+	SessionMetadataDescriptor
+> {
+	const passiveInfo = PASSIVE_INFO as unknown;
+	if (!isPassiveEvaluationModifierRegistry(passiveInfo)) {
+		return {};
+	}
+	const entries = Array.from(passiveInfo.entries());
+	return createRegistryDescriptorMap(entries);
+}
+
 function createRegistryDescriptorMap<T extends DescriptorSource>(
 	entries: ReadonlyArray<[string, T]>,
 ): Record<string, SessionMetadataDescriptor> {
@@ -61,6 +84,16 @@ function createRegistryDescriptorMap<T extends DescriptorSource>(
 				definition.description,
 			),
 		]),
+	);
+}
+
+function isPassiveEvaluationModifierRegistry(
+	value: unknown,
+): value is PassiveEvaluationModifierRegistry {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		typeof (value as PassiveEvaluationModifierRegistry).entries === 'function'
 	);
 }
 
