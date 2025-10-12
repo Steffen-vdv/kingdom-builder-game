@@ -3,22 +3,15 @@ import type {
 	EngineSession,
 	EngineSessionSnapshot,
 	PlayerId,
-	RuleSnapshot,
 } from '@kingdom-builder/engine';
-import {
-	PHASES,
-	RULES,
-	Stat,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
-import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
+import { createTestSessionScaffold } from './testSessionScaffold';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
@@ -34,26 +27,35 @@ export interface PlayerPanelFixtures {
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	const activePlayerId = 'player-1' as PlayerId;
 	const opponentId = 'player-2' as PlayerId;
-	const ruleSnapshot: RuleSnapshot = {
-		...RULES,
-		tierDefinitions: RULES.tierDefinitions.map((tier) => ({ ...tier })),
-	};
-	const sessionRegistries = createSessionRegistries();
-	const translationAssets = createTranslationAssets({
-		populations: sessionRegistries.populations,
-		resources: sessionRegistries.resources,
-	});
-	const resourceValues = Object.keys(sessionRegistries.resources).reduce<
-		Record<string, number>
-	>((acc, key, index) => {
-		acc[key] = index + 2;
-		return acc;
-	}, {});
+	const {
+		registries: sessionRegistries,
+		metadata: sessionMetadata,
+		phases,
+		ruleSnapshot,
+	} = createTestSessionScaffold();
+	const translationAssets = createTranslationAssets(
+		sessionRegistries,
+		sessionMetadata,
+		{ rules: ruleSnapshot },
+	);
+	const resourceKeys = Object.keys(sessionRegistries.resources);
+	const resourceValues = resourceKeys.reduce<Record<string, number>>(
+		(acc, key, index) => {
+			acc[key] = index + 2;
+			return acc;
+		},
+		{},
+	);
 	const stats: Record<string, number> = {};
 	const statsHistory: Record<string, boolean> = {};
 	let statIndex = 0;
-	for (const statKey of Object.keys(translationAssets.stats)) {
-		if (statKey === Stat.maxPopulation) {
+	const statEntries = Object.entries(translationAssets.stats);
+	const maxPopulationKey =
+		statEntries.find(([, entry]) =>
+			entry.label?.toLowerCase().includes('max population'),
+		)?.[0] ?? 'maxPopulation';
+	for (const [statKey] of statEntries) {
+		if (statKey === maxPopulationKey) {
 			continue;
 		}
 		const value = statIndex % 2 === 0 ? statIndex + 1 : 0;
@@ -82,9 +84,10 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		players: [activePlayer, opponent],
 		activePlayerId,
 		opponentId,
-		phases: PHASES,
-		actionCostResource: RULES.tieredResourceKey as ResourceKey,
+		phases,
+		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
+		metadata: sessionMetadata,
 	});
 	const translationContext = createTranslationContext(
 		sessionState,
@@ -159,16 +162,17 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		handlePerform: vi.fn().mockResolvedValue(undefined),
 		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 	};
-	const resourceForecast = Object.keys(sessionRegistries.resources).reduce<
-		Record<string, number>
-	>((acc, key, index) => {
-		const offset = index + 1;
-		acc[key] = index % 2 === 0 ? offset : -offset;
-		return acc;
-	}, {});
+	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
+		(acc, key, index) => {
+			const offset = index + 1;
+			acc[key] = index % 2 === 0 ? offset : -offset;
+			return acc;
+		},
+		{},
+	);
 	const displayableStatKeys = Object.entries(activePlayer.stats)
 		.filter(([statKey, statValue]) => {
-			if (statKey === Stat.maxPopulation) {
+			if (statKey === maxPopulationKey) {
 				return false;
 			}
 			if (statValue !== 0) {

@@ -143,4 +143,24 @@ describe('<PlayerPanel />', () => {
 		expect(statForecastBadge).toBeInTheDocument();
 		expect(statForecastBadge).toHaveClass('text-emerald-300');
 	});
+
+	it('memoizes registry metadata selectors', () => {
+		const descriptor = metadataSelectors.resourceMetadata.list.at(-1);
+		expect(descriptor).toBeDefined();
+		if (!descriptor) {
+			throw new Error('Expected resource metadata descriptor.');
+		}
+		const first = metadataSelectors.resourceMetadata.select(descriptor.id);
+		const second = metadataSelectors.resourceMetadata.select(descriptor.id);
+		expect(second).toBe(first);
+		const many = metadataSelectors.resourceMetadata.selectMany([
+			descriptor.id,
+			descriptor.id,
+		]);
+		expect(many[0]).toBe(first);
+		const record = metadataSelectors.resourceMetadata.selectRecord([
+			descriptor.id,
+		]);
+		expect(record[descriptor.id]).toBe(first);
+	});
 });

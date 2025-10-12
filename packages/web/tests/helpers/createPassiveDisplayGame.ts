@@ -24,16 +24,19 @@ export function createPassiveGame(
 	sessionState: EngineSessionSnapshot,
 	options: {
 		ruleSnapshot?: RuleSnapshot;
+		registries?: SessionRegistries;
+		metadata?: EngineSessionSnapshot['metadata'];
 	} = {},
 ): PassiveGameContext {
 	const handleHoverCard = vi.fn();
 	const clearHoverCard = vi.fn();
 	const ruleSnapshot = options.ruleSnapshot ?? sessionState.rules;
-	const sessionRegistries = createSessionRegistries();
+	const sessionRegistries = options.registries ?? createSessionRegistries();
+	const sessionMetadata = options.metadata ?? sessionState.metadata;
 	const translationContext = createTranslationContext(
 		sessionState,
 		sessionRegistries,
-		sessionState.metadata,
+		sessionMetadata,
 		{
 			ruleSnapshot,
 			passiveRecords: sessionState.passiveRecords,
@@ -104,6 +107,6 @@ export function createPassiveGame(
 		handleHoverCard,
 		clearHoverCard,
 		registries: sessionRegistries,
-		metadata: sessionState.metadata,
+		metadata: sessionMetadata,
 	};
 }
