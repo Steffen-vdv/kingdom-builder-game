@@ -2,6 +2,12 @@
 
 <!-- Provide a concise summary of the changes. -->
 
+## Original task description (required)
+
+<!-- Paste the original user task verbatim. If the task was delivered over
+multiple prompts, include every user prompt in chronological order without
+modification. -->
+
 ## Text formatting audit (required)
 
 1. **Translator/formatter reuse:** <!-- Link each translator or formatter you reused. See docs/text-formatting.md §§2–3. -->
