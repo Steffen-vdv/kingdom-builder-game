@@ -1,5 +1,5 @@
-import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
+	SessionAdvanceResult,
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
@@ -15,7 +15,7 @@ import { formatDetailText } from '../utils/stats/format';
 import type { SessionResourceKey } from './sessionTypes';
 
 interface FormatPhaseResolutionOptions {
-	advance: EngineAdvanceResult;
+	advance: SessionAdvanceResult;
 	before: PlayerSnapshot;
 	after?: PlayerSnapshot;
 	phaseDefinition?: SessionPhaseDefinition;

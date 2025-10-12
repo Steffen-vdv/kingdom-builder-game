@@ -17,10 +17,10 @@ import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
 import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
 import type { PlayerSnapshot } from '../src/translation';
 import type {
-	EngineAdvanceResult,
 	LegacyGameEngineContextValue,
 	PlayerId,
 } from '@kingdom-builder/engine';
+import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 interface HoverCardScenario {
@@ -295,7 +295,7 @@ describe('<HoverCard />', () => {
 		};
 		const before = createPlayerSnapshot({ [resourceKey]: 2 });
 		const after = createPlayerSnapshot({ [resourceKey]: 5 });
-		const sessionPlayer: EngineAdvanceResult['player'] = {
+		const sessionPlayer: SessionAdvanceResult['player'] = {
 			id: activePlayerView.id,
 			name: activePlayerView.name,
 			resources: { ...after.resources },
@@ -323,7 +323,7 @@ describe('<HoverCard />', () => {
 			],
 		};
 		const stepDefinition = phaseDefinition.steps[0]!;
-		const advance: EngineAdvanceResult = {
+		const advance: SessionAdvanceResult = {
 			phase: phaseDefinition.id,
 			step: stepDefinition.id,
 			effects: [

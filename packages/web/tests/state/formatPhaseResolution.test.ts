@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
+	SessionAdvanceResult,
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
@@ -57,7 +57,7 @@ describe('formatPhaseResolution', () => {
 	});
 
 	it('formats a standard phase step with change lines and summaries', () => {
-		const advance: EngineAdvanceResult = {
+		const advance: SessionAdvanceResult = {
 			phase: 'growth',
 			step: 'income',
 			effects: [
@@ -67,7 +67,7 @@ describe('formatPhaseResolution', () => {
 					params: { key: 'gold', amount: 2 },
 				},
 			],
-			player: {} as EngineAdvanceResult['player'],
+			player: {} as SessionAdvanceResult['player'],
 		};
 		const phaseDefinition: SessionPhaseDefinition = {
 			id: 'growth',
@@ -120,11 +120,11 @@ describe('formatPhaseResolution', () => {
 	});
 
 	it('falls back to definition effects when advance has none', () => {
-		const advance: EngineAdvanceResult = {
+		const advance: SessionAdvanceResult = {
 			phase: 'growth',
 			step: 'income',
 			effects: [],
-			player: {} as EngineAdvanceResult['player'],
+			player: {} as SessionAdvanceResult['player'],
 		};
 		const stepDefinition: SessionPhaseStepDefinition = {
 			id: 'income',
@@ -159,11 +159,11 @@ describe('formatPhaseResolution', () => {
 	});
 
 	it('formats skipped steps with skip messaging', () => {
-		const advance: EngineAdvanceResult = {
+		const advance: SessionAdvanceResult = {
 			phase: 'growth',
 			step: 'income',
 			effects: [],
-			player: {} as EngineAdvanceResult['player'],
+			player: {} as SessionAdvanceResult['player'],
 			skipped: {
 				type: 'step',
 				phaseId: 'growth',
@@ -194,11 +194,11 @@ describe('formatPhaseResolution', () => {
 	});
 
 	it('adds a no-effect message when nothing changes', () => {
-		const advance: EngineAdvanceResult = {
+		const advance: SessionAdvanceResult = {
 			phase: 'growth',
 			step: 'income',
 			effects: [],
-			player: {} as EngineAdvanceResult['player'],
+			player: {} as SessionAdvanceResult['player'],
 		};
 		diffStepSnapshotsMock.mockReturnValue([]);
 
