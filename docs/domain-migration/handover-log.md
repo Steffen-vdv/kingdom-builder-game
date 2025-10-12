@@ -24,3 +24,15 @@
   `useGameEngine()`; we will need protocol-facing simulation hooks before that
   dependency can be removed.
 - Skip event formatting now consumes `SessionAdvanceSkipSnapshot` from `@kingdom-builder/protocol/session`, removing the dependency on engine skip exports for log/history rendering in `packages/web/src/utils/describeSkipEvent.ts` and its tests. Future skip handling tasks can safely evolve without touching engine internals.
+
+## Domain Migration - P1 - T9 - AI Parameter Payloads
+
+- `useAiRunner` now consumes `ActionParametersPayload` from the protocol
+  contracts so AI-triggered actions share the same parameter envelope as the
+  rest of the client. `sessionSdk` mirrors remote executions with the same
+  payload to keep local engine state in sync, and the associated tests were
+  updated to accept the protocol payload shape.
+- Future work: the AI bridge still overrides the engine's `performAction`
+  dependency directly. We will need a protocol-level hook (or server-side AI
+  orchestration endpoint) that surfaces the same parameter payload contract so
+  the web client can stop injecting overrides into `runAiTurn`.
