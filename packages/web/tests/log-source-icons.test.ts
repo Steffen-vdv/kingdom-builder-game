@@ -11,7 +11,8 @@ import {
 	createTranslationDiffContext,
 } from '../src/translation/log';
 import { createSessionRegistries } from './helpers/sessionRegistries';
-import { createDefaultTranslationAssets } from './helpers/translationAssets';
+import { createTranslationEnvironmentFromEngine } from './helpers/createTranslationEnvironment';
+import { selectPopulationRoleDisplay } from '../src/translation/context/assetSelectors';
 
 const phases: PhaseConfig[] = [
 	{
@@ -128,12 +129,15 @@ describe('log resource source icon registry', () => {
 				start: startConfig,
 				rules,
 			});
-			engineContext.assets = createDefaultTranslationAssets();
+			const { translationContext } = createTranslationEnvironmentFromEngine(
+				engineContext,
+				registries,
+			);
+			engineContext.assets = translationContext.assets;
 			const { meta, expected } = getMeta(engineContext);
 			const goldKey =
-				Object.keys(registries.resources).find((key) => {
-					return registries.resources[key]?.label === 'Gold';
-				}) ?? Object.keys(registries.resources)[0];
+				Object.keys(translationContext.assets.resources)[0] ??
+				Object.keys(registries.resources)[0];
 			const resourceKeys = [goldKey];
 			const effect = {
 				type: 'resource' as const,
@@ -165,4 +169,63 @@ describe('log resource source icon registry', () => {
 			expect(match?.[1]).toBe(expected);
 		});
 	}
+
+	it('falls back to meta labels when icons are missing', () => {
+		const registries = createSessionRegistries();
+		const engineContext = createEngine({
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
+			phases,
+			start: startConfig,
+			rules,
+		});
+		const { translationContext } = createTranslationEnvironmentFromEngine(
+			engineContext,
+			registries,
+		);
+		const [populationId] = Array.from(engineContext.populations.keys());
+		if (!populationId) {
+			throw new Error('Expected population id for fallback test');
+		}
+		engineContext.assets = {
+			...translationContext.assets,
+			populations: {
+				...translationContext.assets.populations,
+				[populationId]: {},
+			},
+		} as typeof translationContext.assets;
+		const goldKey =
+			Object.keys(translationContext.assets.resources)[0] ?? 'resource:gold';
+		const effect = {
+			type: 'resource' as const,
+			method: 'add' as const,
+			params: { key: goldKey, amount: 1 },
+			meta: { source: { type: 'population', id: populationId, count: 1 } },
+		};
+		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		runEffects([effect], engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const diffContext = createTranslationDiffContext(engineContext);
+		const lines = diffStepSnapshots(
+			before,
+			after,
+			{ id: 'fallback-test', effects: [effect] },
+			diffContext,
+			[goldKey],
+		);
+		const roleDisplay = selectPopulationRoleDisplay(
+			translationContext.assets,
+			populationId,
+		);
+		const fallbackTokens = [roleDisplay.label, populationId].filter(
+			(token): token is string => Boolean(token),
+		);
+		const fallbackLine = lines.find((line) =>
+			fallbackTokens.some((token) => line.includes(token)),
+		);
+		expect(fallbackLine).toBeDefined();
+		expect(fallbackLine?.includes('undefined')).toBe(false);
+	});
 });

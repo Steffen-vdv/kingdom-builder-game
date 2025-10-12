@@ -3,21 +3,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { ActionId } from '@kingdom-builder/contents';
-import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import GenericActions from '../src/components/actions/GenericActions';
 import type * as TranslationModule from '../src/translation';
 import type * as TranslationContentModule from '../src/translation/content';
-import {
-	createTranslationContextStub,
-	toTranslationPlayer,
-	wrapTranslationRegistry,
-} from './helpers/translationContextStub';
 import { selectSessionView } from '../src/state/sessionSelectors';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createActionsPanelState } from './helpers/createActionsPanelState';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
+import { createTranslationContext } from '../src/translation/context/createTranslationContext';
+import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
+import { createTestRegistryMetadata } from './helpers/registryMetadata';
 const getRequirementIconsMock = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => getRequirementIconsMock(...args),
@@ -55,16 +54,16 @@ vi.mock('../src/translation/content', async () => {
 
 const actionsMap = new Map([
 	[
-		ActionId.royal_decree,
+		'royal_decree',
 		{
-			id: ActionId.royal_decree,
+			id: 'royal_decree',
 			name: 'Royal Decree',
 			icon: '📜',
 			focus: 'economy' as const,
 		},
 	],
-	[ActionId.develop, { id: ActionId.develop, name: 'Develop', icon: '🏗️' }],
-	[ActionId.till, { id: ActionId.till, name: 'Till', icon: '🧑\u200d🌾' }],
+	['develop', { id: 'develop', name: 'Develop', icon: '🏗️' }],
+	['till', { id: 'till', name: 'Till', icon: '🧑\u200d🌾' }],
 ] as const);
 
 function createMockGame() {
@@ -74,174 +73,59 @@ function createMockGame() {
 	const secondaryResource = resourceKeys[1] ?? actionCostResource;
 	const tieredResourceKey = resourceKeys[2] ?? secondaryResource;
 	const actionPhaseId = 'phase.action';
-	const activePlayer = {
+	const phases: PhaseConfig[] = [
+		{ id: actionPhaseId, label: 'Action', action: true, steps: [] },
+	];
+	const ruleSnapshot: RuleSet = {
+		defaultActionAPCost: 1,
+		absorptionCapPct: 1,
+		absorptionRounding: 'nearest',
+		tieredResourceKey,
+		tierDefinitions: [],
+		slotsPerNewLand: 1,
+		maxSlotsPerLand: 1,
+		basePopulationCap: 1,
+		winConditions: [],
+	};
+	const actions = Array.from(actionsMap.values()).map((action) => action.id);
+	const activePlayer = createSnapshotPlayer({
 		id: 'A',
 		name: 'Player',
 		resources: {
 			[actionCostResource]: 3,
 			[secondaryResource]: 20,
 		},
-		lands: [{ id: 'A-L1', slotsFree: 0 }],
-		population: {} as Record<string, number>,
-		buildings: new Set<string>(),
-		actions: new Set<string>(Array.from(actionsMap.keys())),
-	};
-	const opponent = {
+		lands: [
+			{
+				id: 'A-L1',
+				slotsMax: 1,
+				slotsUsed: 1,
+				tilled: false,
+				developments: [],
+				slots: [],
+			},
+		],
+		actions,
+	});
+	const opponent = createSnapshotPlayer({
 		id: 'B',
 		name: 'Opponent',
 		resources: {
 			[actionCostResource]: 0,
 			[secondaryResource]: 0,
 		},
-		lands: [],
-		population: {} as Record<string, number>,
-		buildings: new Set<string>(),
-		actions: new Set<string>(),
-	};
-	const translationContext = createTranslationContextStub({
-		actions: wrapTranslationRegistry({
-			get(id: string) {
-				const action = actionsMap.get(id as ActionId);
-				if (!action) {
-					throw new Error(`Unknown action ${id}`);
-				}
-				return action;
-			},
-			has(id: string) {
-				return actionsMap.has(id as ActionId);
-			},
-		}),
-		buildings: wrapTranslationRegistry({
-			get(id: string) {
-				throw new Error(`No building ${id}`);
-			},
-			has() {
-				return false;
-			},
-		}),
-		developments: wrapTranslationRegistry({
-			get(id: string) {
-				throw new Error(`No development ${id}`);
-			},
-			has() {
-				return false;
-			},
-		}),
-		phases: [{ id: actionPhaseId }],
-		activePlayer: toTranslationPlayer({
-			id: activePlayer.id,
-			name: activePlayer.name,
-			resources: activePlayer.resources,
-			population: activePlayer.population,
-		}),
-		opponent: toTranslationPlayer({
-			id: opponent.id,
-			name: opponent.name,
-			resources: opponent.resources,
-			population: opponent.population,
-		}),
-		actionCostResource,
+		actions: [],
 	});
-
-	const toSnapshot = (participant: typeof activePlayer) => ({
-		id: participant.id,
-		name: participant.name,
-		resources: { ...participant.resources },
-		stats: {},
-		statsHistory: {},
-		population: { ...participant.population },
-		lands: participant.lands.map((land) => ({
-			id: land.id,
-			slotsMax: land.slotsFree,
-			slotsUsed: 0,
-			tilled: false,
-			developments: [],
-		})),
-		buildings: Array.from(participant.buildings),
-		actions: Array.from(participant.actions),
-		statSources: {},
-		skipPhases: {},
-		skipSteps: {},
-		passives: [],
-	});
-
-	const sessionState: EngineSessionSnapshot = {
-		game: {
-			turn: 1,
-			currentPlayerIndex: 0,
-			currentPhase: actionPhaseId,
-			currentStep: '',
-			phaseIndex: 0,
-			stepIndex: 0,
-			devMode: false,
-			players: [toSnapshot(activePlayer), toSnapshot(opponent)],
-			activePlayerId: activePlayer.id,
-			opponentId: opponent.id,
-		},
-		phases: [
-			{
-				id: actionPhaseId,
-				name: 'Main',
-				action: true,
-				steps: [],
-			},
-		],
+	const sessionState = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases,
 		actionCostResource,
-		recentResourceGains: [],
-		compensations: {} as Record<string, PlayerStartConfig>,
-		rules: {
-			tieredResourceKey,
-			tierDefinitions: [],
-			winConditions: [],
-		},
-		passiveRecords: {
-			[activePlayer.id]: [],
-			[opponent.id]: [],
-		},
-		metadata: { passiveEvaluationModifiers: {} },
-	};
-
-	const emptyRegistry = new Map<string, never>();
-	const sessionRegistries = {
-		actions: {
-			entries: () => Array.from(actionsMap.entries()),
-			get(id: string) {
-				const action = actionsMap.get(id as ActionId);
-				if (!action) {
-					throw new Error(`Unknown action ${id}`);
-				}
-				return action;
-			},
-			has(id: string) {
-				return actionsMap.has(id as ActionId);
-			},
-		},
-		buildings: {
-			entries: () => Array.from(emptyRegistry.entries()),
-			get(id: string) {
-				throw new Error(`No building ${id}`);
-			},
-			has() {
-				return false;
-			},
-		},
-		developments: {
-			entries: () => Array.from(emptyRegistry.entries()),
-			get(id: string) {
-				throw new Error(`No development ${id}`);
-			},
-			has() {
-				return false;
-			},
-		},
-		populations: baseRegistries.populations,
-		resources: baseRegistries.resources,
-	} satisfies ReturnType<typeof createSessionRegistries>;
-
-	const sessionView = selectSessionView(sessionState, sessionRegistries);
-
+		ruleSnapshot,
+	});
 	const resourceDescriptors = Object.fromEntries(
-		Object.entries(sessionRegistries.resources).map(([key, definition]) => [
+		Object.entries(baseRegistries.resources).map(([key, definition]) => [
 			key,
 			{
 				id: key,
@@ -254,6 +138,28 @@ function createMockGame() {
 		passiveEvaluationModifiers: {},
 		resources: resourceDescriptors,
 	};
+	const translationContext = createTranslationContext(
+		sessionState,
+		baseRegistries,
+		sessionState.metadata,
+		{
+			ruleSnapshot,
+			passiveRecords: sessionState.passiveRecords,
+		},
+	);
+	const metadataSelectors = createTestRegistryMetadata(
+		{
+			resources: baseRegistries.resources,
+			populations: baseRegistries.populations,
+			buildings: baseRegistries.buildings,
+			developments: baseRegistries.developments,
+		},
+		sessionState.metadata,
+	);
+
+	const sessionRegistries = baseRegistries;
+
+	const sessionView = selectSessionView(sessionState, sessionRegistries);
 
 	const session = {
 		getActionCosts: vi.fn(),
@@ -275,6 +181,7 @@ function createMockGame() {
 		sessionRegistries,
 		actionCostResource,
 		secondaryResource,
+		metadataSelectors,
 	};
 }
 let mockGame: ReturnType<typeof createMockGame>;
@@ -302,13 +209,13 @@ describe('GenericActions effect group handling', () => {
 		mockGame.session.getActionRequirements.mockImplementation(() => []);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
-			if (type === 'action' && id === ActionId.develop) {
+			if (type === 'action' && id === 'develop') {
 				return ['🏠 House'];
 			}
 			return [];
 		});
 		mockGame.session.getActionOptions.mockImplementation((actionId: string) => {
-			if (actionId !== ActionId.royal_decree) {
+			if (actionId !== 'royal_decree') {
 				return [];
 			}
 			return [
@@ -320,7 +227,7 @@ describe('GenericActions effect group handling', () => {
 						{
 							id: 'royal_decree_house',
 							icon: '🏠',
-							actionId: ActionId.develop,
+							actionId: 'develop',
 							params: {
 								landId: '$landId',
 								developmentId: 'house',
@@ -334,7 +241,7 @@ describe('GenericActions effect group handling', () => {
 
 	it('collects choices and parameters before performing royal decree', async () => {
 		const action = {
-			id: ActionId.royal_decree,
+			id: 'royal_decree',
 			name: 'Royal Decree',
 			icon: '📜',
 			category: 'basic',
@@ -356,7 +263,7 @@ describe('GenericActions effect group handling', () => {
 					player={activePlayer}
 					canInteract={true}
 					selectResourceDescriptor={(resourceKey) =>
-						mockGame.sessionState.metadata.resources?.[resourceKey] ?? {
+						mockGame.metadataSelectors.resourceMetadata(resourceKey) ?? {
 							id: resourceKey,
 							label: resourceKey,
 							icon: mockGame.sessionRegistries.resources[resourceKey]?.icon,
