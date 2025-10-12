@@ -15,6 +15,12 @@
 - Session bootstrap requires bundled content metadata (resources, populations, triggers). Provide a protocol endpoint that delivers the normalized metadata currently assembled via `defaultRegistryMetadata` and `RegistryMetadataContext`.
 - Runtime configuration fallback (`packages/web/src/startup/runtimeConfig.ts`) still dynamically imports `@kingdom-builder/contents` to construct presets. Migration will need a protocol entry point that returns pre-normalized content snapshots so the web layer can drop the dynamic import and registry iteration.
 
-## Domain Migration - P1 - T4 - Skip Event Protocol Alignment
+## Domain Migration - P1 - T8 - Forecast Protocol Alignment
 
+- Updated `useNextTurnForecast` and supporting tests to source
+  `PlayerSnapshotDeltaBucket` and session snapshot typings from
+  `@kingdom-builder/protocol`. Forecasting still depends on the engine's
+  `session.simulateUpcomingPhases` implementation exposed through
+  `useGameEngine()`; we will need protocol-facing simulation hooks before that
+  dependency can be removed.
 - Skip event formatting now consumes `SessionAdvanceSkipSnapshot` from `@kingdom-builder/protocol/session`, removing the dependency on engine skip exports for log/history rendering in `packages/web/src/utils/describeSkipEvent.ts` and its tests. Future skip handling tasks can safely evolve without touching engine internals.
