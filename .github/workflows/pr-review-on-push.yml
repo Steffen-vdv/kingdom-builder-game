@@ -214,31 +214,51 @@ jobs:
           const automationToken = process.env.REVIEW_AUTOMATION_TOKEN;
 
           const postComment = async () => {
-            if (!automationToken) {
-              core.warning(
-                'REVIEW_AUTOMATION_TOKEN missing. Falling back to GITHUB_TOKEN.'
-              );
+            const fallback = async (reason) => {
+              if (reason) {
+                core.warning(reason);
+              }
+
               await github.rest.issues.createComment({
                 owner,
                 repo,
                 issue_number: prNumber,
                 body: '@coderabbitai review'
               });
+            };
+
+            if (!automationToken) {
+              await fallback(
+                'REVIEW_AUTOMATION_TOKEN missing. Falling back to GITHUB_TOKEN.'
+              );
               return;
             }
 
-            await github.request(
-              'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
-              {
-                owner,
-                repo,
-                issue_number: prNumber,
-                body: '@coderabbitai review',
-                headers: {
-                  authorization: `token ${automationToken}`
+            try {
+              await github.request(
+                'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
+                {
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  body: '@coderabbitai review',
+                  headers: {
+                    authorization: `token ${automationToken}`
+                  }
                 }
+              );
+            } catch (error) {
+              const status = error?.status ?? error?.response?.status;
+
+              if ([401, 403, 404].includes(status)) {
+                await fallback(
+                  `REVIEW_AUTOMATION_TOKEN could not comment (status ${status}). Falling back to GITHUB_TOKEN.`
+                );
+                return;
               }
-            );
+
+              throw error;
+            }
           };
 
           await postComment();
@@ -260,31 +280,51 @@ jobs:
           const automationToken = process.env.REVIEW_AUTOMATION_TOKEN;
 
           const postComment = async () => {
-            if (!automationToken) {
-              core.warning(
-                'REVIEW_AUTOMATION_TOKEN missing. Falling back to GITHUB_TOKEN.'
-              );
+            const fallback = async (reason) => {
+              if (reason) {
+                core.warning(reason);
+              }
+
               await github.rest.issues.createComment({
                 owner,
                 repo,
                 issue_number: prNumber,
                 body: '@codex review'
               });
+            };
+
+            if (!automationToken) {
+              await fallback(
+                'REVIEW_AUTOMATION_TOKEN missing. Falling back to GITHUB_TOKEN.'
+              );
               return;
             }
 
-            await github.request(
-              'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
-              {
-                owner,
-                repo,
-                issue_number: prNumber,
-                body: '@codex review',
-                headers: {
-                  authorization: `token ${automationToken}`
+            try {
+              await github.request(
+                'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
+                {
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  body: '@codex review',
+                  headers: {
+                    authorization: `token ${automationToken}`
+                  }
                 }
+              );
+            } catch (error) {
+              const status = error?.status ?? error?.response?.status;
+
+              if ([401, 403, 404].includes(status)) {
+                await fallback(
+                  `REVIEW_AUTOMATION_TOKEN could not comment (status ${status}). Falling back to GITHUB_TOKEN.`
+                );
+                return;
               }
-            );
+
+              throw error;
+            }
           };
 
           await postComment();

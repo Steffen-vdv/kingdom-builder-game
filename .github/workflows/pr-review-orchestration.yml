@@ -285,31 +285,51 @@ jobs:
                 return;
               }
 
-              if (!automationToken) {
-                core.warning(
-                  'REVIEW_AUTOMATION_TOKEN missing. Falling back to GITHUB_TOKEN.'
-                );
+              const fallback = async (reason) => {
+                if (reason) {
+                  core.warning(reason);
+                }
+
                 await github.rest.issues.createComment({
                   owner,
                   repo,
                   issue_number: prNumber,
                   body
                 });
+              };
+
+              if (!automationToken) {
+                await fallback(
+                  'REVIEW_AUTOMATION_TOKEN missing. Falling back to GITHUB_TOKEN.'
+                );
                 return;
               }
 
-              await github.request(
-                'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
-                {
-                  owner,
-                  repo,
-                  issue_number: prNumber,
-                  body,
-                  headers: {
-                    authorization: `token ${automationToken}`
+              try {
+                await github.request(
+                  'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
+                  {
+                    owner,
+                    repo,
+                    issue_number: prNumber,
+                    body,
+                    headers: {
+                      authorization: `token ${automationToken}`
+                    }
                   }
+                );
+              } catch (error) {
+                const status = error?.status ?? error?.response?.status;
+
+                if ([401, 403, 404].includes(status)) {
+                  await fallback(
+                    `REVIEW_AUTOMATION_TOKEN could not comment (status ${status}). Falling back to GITHUB_TOKEN.`
+                  );
+                  return;
                 }
-              );
+
+                throw error;
+              }
             };
 
             const finalizeState = async () => {
