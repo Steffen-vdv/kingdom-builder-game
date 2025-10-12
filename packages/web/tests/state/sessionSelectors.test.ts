@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { RESOURCES } from '@kingdom-builder/contents';
 import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
 import {
 	selectSessionOptions,
 	selectSessionPlayers,
@@ -13,7 +13,8 @@ import {
 
 describe('sessionSelectors', () => {
 	const factory = createContentFactory();
-	const [primaryResource] = Object.keys(RESOURCES);
+	const baseRegistries = createSessionRegistries();
+	const [primaryResource] = Object.keys(baseRegistries.resources);
 	const actionA = factory.action({ name: 'Action A' });
 	const actionB = factory.action({ name: 'Action B' });
 	const systemLocked = factory.action({ name: 'System Locked', system: true });
@@ -139,6 +140,7 @@ describe('sessionSelectors', () => {
 		metadata: { passiveEvaluationModifiers: {} },
 	};
 	const registries = {
+		...baseRegistries,
 		actions: factory.actions,
 		buildings: factory.buildings,
 		developments: factory.developments,

@@ -10,11 +10,14 @@ import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
+	SessionResourceDefinition,
 } from '@kingdom-builder/protocol/session';
-import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import { createDefaultTranslationAssets } from '../helpers/translationAssets';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
 
 const translationAssets = createDefaultTranslationAssets();
+const baseRegistries = createSessionRegistries();
+type ResourceKey = SessionResourceDefinition['key'];
 
 function createPlayerSnapshot(
 	resources: Record<string, number> = {},
@@ -131,7 +134,9 @@ describe('formatPhaseResolution integration', () => {
 		const phaseDefinition = createPhaseDefinition();
 		const stepDefinition = phaseDefinition
 			.steps[0] as SessionPhaseStepDefinition;
-		const resourceKey = (Object.keys(RESOURCES) as ResourceKey[])[0]!;
+		const resourceKey = (
+			Object.keys(baseRegistries.resources) as ResourceKey[]
+		)[0]!;
 		const before = createPlayerSnapshot({ [resourceKey]: 4 });
 		const after = createPlayerSnapshot({ [resourceKey]: 4 });
 		const player = createSessionPlayer(

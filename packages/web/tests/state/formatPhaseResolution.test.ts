@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ResourceKey } from '@kingdom-builder/contents';
-import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
+	SessionResourceDefinition,
 } from '@kingdom-builder/protocol/session';
+
+type ResourceKey = SessionResourceDefinition['key'];
+import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
 	PlayerSnapshot,
 	TranslationDiffContext,
@@ -19,7 +21,7 @@ vi.mock('../../src/translation', () => ({
 				after: PlayerSnapshot,
 				effects: unknown,
 				diffContext: TranslationDiffContext,
-				resourceKeys?: ResourceKey[],
+				resourceKeys?: SessionResourceDefinition['key'][],
 			) => string[]
 		>(),
 	snapshotPlayer: vi.fn(),
