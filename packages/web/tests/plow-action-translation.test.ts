@@ -5,6 +5,7 @@ import {
 	SYNTHETIC_PASSIVE_INFO,
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_SLOT_INFO,
+	registerSyntheticPlowResources,
 } from './fixtures/syntheticPlow';
 import {
 	summarizeContent,
@@ -33,6 +34,7 @@ function createCtx() {
 		const plowDef = ctx.actions.get(synthetic.plow.id);
 		const expandDef = ctx.actions.get(synthetic.expand.id);
 		const tillDef = ctx.actions.get(synthetic.till.id);
+		registerSyntheticPlowResources(registries.resources);
 		if (plowDef) {
 			registries.actions.add(plowDef.id, { ...plowDef });
 		}
@@ -130,20 +132,24 @@ describe('plow action translation', () => {
 		const modifierLabel = modifierInfo.label ?? 'Cost Adjustment';
 		const modifierDirection = modAmt >= 0 ? 'Increase' : 'Decrease';
 		const modMagnitude = Math.abs(modAmt);
+		const landAsset = translation.assets.land ?? {};
+		const landIcon = landAsset.icon ?? SYNTHETIC_LAND_INFO.icon;
+		const landLabel = landAsset.label ?? SYNTHETIC_LAND_INFO.label;
+		const slotAsset = translation.assets.slot ?? {};
+		const slotIcon = slotAsset.icon ?? SYNTHETIC_SLOT_INFO.icon;
+		const slotLabel = slotAsset.label ?? SYNTHETIC_SLOT_INFO.label;
 		expect(effects).toEqual([
 			{
 				title: `${expand.icon} ${expand.name}`,
 				items: [
-					`${SYNTHETIC_LAND_INFO.icon} ${
-						landCount >= 0 ? '+' : ''
-					}${landCount} ${SYNTHETIC_LAND_INFO.label}`,
+					`${landIcon} ${landCount >= 0 ? '+' : ''}${landCount} ${landLabel}`,
 					`${hapIcon}${hapAmt >= 0 ? '+' : ''}${hapAmt} ${hapLabel}`,
 				],
 			},
 			{
 				title: `${till.icon} ${till.name}`,
 				items: [
-					`Till ${SYNTHETIC_LAND_INFO.icon} ${SYNTHETIC_LAND_INFO.label} to unlock ${SYNTHETIC_SLOT_INFO.icon} ${SYNTHETIC_SLOT_INFO.label}`,
+					`Till ${landIcon} ${landLabel} to unlock ${slotIcon} ${slotLabel}`,
 				],
 			},
 			{

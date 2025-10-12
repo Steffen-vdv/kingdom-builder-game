@@ -1,7 +1,6 @@
 import { createEngine } from '@kingdom-builder/engine';
 import type { EffectDef } from '@kingdom-builder/engine';
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
-import { Resource } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	splitSummary,
@@ -27,6 +26,7 @@ export interface RaidersGuildSyntheticContext {
 }
 
 const tierResourceKey = 'synthetic:tier';
+const syntheticGoldKey = 'gold';
 
 const phases: PhaseDef[] = [
 	{
@@ -41,7 +41,7 @@ const start: StartConfig = {
 	player: {
 		resources: {
 			[tierResourceKey]: 0,
-			[Resource.gold]: 0,
+			[syntheticGoldKey]: 0,
 		},
 		stats: {},
 		population: {},
@@ -72,7 +72,7 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: Resource.gold, amount: 2 },
+				params: { key: syntheticGoldKey, amount: 2 },
 			},
 		],
 	});
@@ -145,7 +145,7 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: { key: syntheticGoldKey, amount: 1 },
 					},
 				],
 			},
@@ -170,6 +170,11 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		const development = ctx.buildings.get(developmentBuilding.id);
 		const harvest = ctx.developments.get(harvestDevelopment.id);
 		const ledgerRole = ctx.populations.get('population:ledger');
+		registries.resources[syntheticGoldKey] = {
+			key: syntheticGoldKey,
+			icon: '🪙',
+			label: 'Synthetic Gold',
+		};
 		if (raid) {
 			registries.actions.add(raid.id, { ...raid });
 		}
@@ -206,6 +211,8 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		},
 	};
 }
+
+export const SYNTHETIC_RESOURCE_TRANSFER_ICON = '🔁';
 
 export function getModifier(
 	ctx: ReturnType<typeof createEngine>,

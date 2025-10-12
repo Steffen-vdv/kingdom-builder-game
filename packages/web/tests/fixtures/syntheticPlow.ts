@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import {
 	createContentFactory,
 	type ContentFactory,
@@ -16,7 +15,7 @@ type SyntheticResourceKey = 'gold' | 'ap' | 'happiness';
 
 type SyntheticResourceInfo = { icon: string; label: string };
 
-const syntheticData = vi.hoisted(() => ({
+const syntheticData = {
 	RESOURCES: {
 		gold: { icon: '🪙', label: 'Synthetic Gold' },
 		ap: { icon: '🛠️', label: 'Synthetic Action Points' },
@@ -31,7 +30,7 @@ const syntheticData = vi.hoisted(() => ({
 		icon: '🧭',
 		steps: [{ id: 'phase:synthetic:upkeep:step' }],
 	} satisfies PhaseDef,
-}));
+} as const;
 
 export const SYNTHETIC_RESOURCES = syntheticData.RESOURCES;
 export const SYNTHETIC_LAND_INFO = syntheticData.LAND_INFO;
@@ -39,31 +38,17 @@ export const SYNTHETIC_SLOT_INFO = syntheticData.SLOT_INFO;
 export const SYNTHETIC_PASSIVE_INFO = syntheticData.PASSIVE_INFO;
 export const SYNTHETIC_UPKEEP_PHASE: PhaseDef = syntheticData.UPKEEP_PHASE;
 
-vi.mock('@kingdom-builder/contents', async () => {
-	const actual = (await vi.importActual('@kingdom-builder/contents')) as Record<
-		string,
-		unknown
-	>;
-	const module = actual as unknown as {
-		RESOURCES: Record<string, { icon?: string; label?: string }>;
-		LAND_INFO: { icon: string; label: string };
-		SLOT_INFO: { icon: string; label: string };
-		PASSIVE_INFO: { icon: string; label: string };
-		[key: string]: unknown;
-	};
-	return {
-		...module,
-		RESOURCES: {
-			...module.RESOURCES,
-			gold: syntheticData.RESOURCES.gold,
-			ap: syntheticData.RESOURCES.ap,
-			happiness: syntheticData.RESOURCES.happiness,
-		},
-		LAND_INFO: syntheticData.LAND_INFO,
-		SLOT_INFO: syntheticData.SLOT_INFO,
-		PASSIVE_INFO: syntheticData.PASSIVE_INFO,
-	};
-});
+export function registerSyntheticPlowResources(
+	target: Record<string, { key: string; icon?: string; label?: string }>,
+): void {
+	for (const [key, info] of Object.entries(SYNTHETIC_RESOURCES)) {
+		target[key] = {
+			key,
+			icon: info.icon,
+			label: info.label,
+		};
+	}
+}
 
 export interface SyntheticPlowContent {
 	factory: ContentFactory;
