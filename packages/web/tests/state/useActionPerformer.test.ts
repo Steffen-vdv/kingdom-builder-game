@@ -215,6 +215,53 @@ describe('useActionPerformer', () => {
 		);
 	});
 
+	it('uses requirement failures array when single failure field is missing', async () => {
+		const error = new Error('Requirements failed');
+		const failure = { reason: 'missing-resource' } as RequirementFailure;
+		const translated = 'You need more resources.';
+		translateRequirementFailureMock.mockReturnValue(translated);
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'error',
+			error: error.message,
+			requirementFailures: [failure],
+		});
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution: vi.fn().mockResolvedValue(undefined),
+				syncPhaseState: vi.fn(),
+				refresh: vi.fn(),
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn: vi.fn(),
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError: undefined,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(translateRequirementFailureMock).toHaveBeenCalledWith(
+			failure,
+			expect.anything(),
+		);
+		expect(pushErrorToast).toHaveBeenCalledWith(translated);
+		expect(addLog).toHaveBeenCalledWith(
+			`Failed to play ⚔️ Attack: ${translated}`,
+			{
+				id: sessionSnapshot.game.activePlayerId,
+				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
+			},
+		);
+	});
+
 	it('passes enriched resolution metadata when an action succeeds', async () => {
 		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const syncPhaseState = vi.fn();
