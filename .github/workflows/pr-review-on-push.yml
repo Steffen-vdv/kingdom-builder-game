@@ -5,6 +5,9 @@ on:
     branches-ignore:
       - main
       - master
+  pull_request_target:
+    types:
+      - synchronize
 
 permissions:
   contents: read
@@ -12,7 +15,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: pr-review-on-push-${{ github.ref }}
+  group: pr-review-on-push-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -25,7 +28,7 @@ jobs:
       github.actor != 'coderabbitai[bot]'
     steps:
       - name: Wait for debounce window
-        run: sleep 120
+        run: sleep 15
 
       - name: Locate open pull request for branch
         id: pr
@@ -33,11 +36,18 @@ jobs:
         with:
           script: |
             const [owner, repo] = [context.repo.owner, context.repo.repo];
-            const branch = context.ref.replace('refs/heads/', '');
+            const isPullRequestEvent =
+              context.eventName === 'pull_request_target';
+            const branch = isPullRequestEvent
+              ? context.payload.pull_request.head.ref
+              : context.ref.replace('refs/heads/', '');
+            const headOwner = isPullRequestEvent
+              ? context.payload.pull_request.head.repo.owner.login
+              : owner;
             const { data: pulls } = await github.rest.pulls.list({
               owner,
               repo,
-              head: `${owner}:${branch}`,
+              head: `${headOwner}:${branch}`,
               state: 'open'
             });
 
@@ -48,6 +58,26 @@ jobs:
             }
 
             const pr = pulls[0];
+            const initialPush =
+              context.eventName === 'push' &&
+              context.payload.before ===
+                '0000000000000000000000000000000000000000';
+
+            if (initialPush) {
+              core.info('Initial branch push detected. Skipping triggers.');
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            if (
+              isPullRequestEvent &&
+              context.payload.action !== 'synchronize'
+            ) {
+              core.info('Non-synchronize pull_request event. Skipping.');
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
             const body = pr.body ?? '';
             const iterationMatch = body.match(
               /<!--\s*REVIEW_ITERATION:\s*(\d+)\s*-->/i

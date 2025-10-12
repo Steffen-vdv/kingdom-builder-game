@@ -5,12 +5,13 @@ on:
     types:
       - opened
       - reopened
-  issue_comment:
+  check_run:
     types:
-      - created
+      - completed
 
 permissions:
   contents: read
+  checks: read
   pull-requests: write
   issues: write
 
@@ -87,9 +88,9 @@ jobs:
   orchestrate-fix-cycle:
     name: Advance review/fix loop
     if: |
-      github.event_name == 'issue_comment' &&
-      github.event.issue.pull_request &&
-      github.event.comment.user.login == 'coderabbitai[bot]'
+      github.event_name == 'check_run' &&
+      github.event.check_run.app.slug == 'coderabbitai' &&
+      github.event.check_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Process CodeRabbit actionable feedback
@@ -98,11 +99,83 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const prNumber = context.payload.issue.number;
-            const commentBody = context.payload.comment.body ?? '';
+            const checkRun = context.payload.check_run;
+            const prInfo = checkRun.pull_requests?.[0];
 
-            if (!/actionable comments posted/i.test(commentBody)) {
-              core.info('No actionable feedback marker found. Skipping.');
+            if (!prInfo) {
+              core.info('No pull request associated with check run.');
+              return;
+            }
+
+            const prNumber = prInfo.number;
+            const completedAt = checkRun.completed_at
+              ? new Date(checkRun.completed_at).getTime()
+              : Date.now();
+            const tenMinutes = 10 * 60 * 1000;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            const recentCoderabbitComment = comments
+              .filter((comment) => {
+                return comment.user?.login === 'coderabbitai[bot]';
+              })
+              .sort((a, b) => {
+                return new Date(b.created_at) - new Date(a.created_at);
+              })
+              .find((comment) => {
+                const createdAt = new Date(comment.created_at).getTime();
+                return Math.abs(completedAt - createdAt) <= tenMinutes;
+              });
+
+            if (!recentCoderabbitComment) {
+              core.info('No recent CodeRabbit summary comment detected.');
+              return;
+            }
+
+            const commentBody = recentCoderabbitComment.body ?? '';
+            const { data: reviewComments } =
+              await github.rest.pulls.listReviewComments({
+                owner,
+                repo,
+                pull_number: prNumber,
+                per_page: 100
+              });
+
+            const hasRecentInline = reviewComments.some((comment) => {
+              if (comment.user?.login !== 'coderabbitai[bot]') {
+                return false;
+              }
+
+              const createdAt = new Date(comment.created_at).getTime();
+              return Math.abs(completedAt - createdAt) <= tenMinutes;
+            });
+
+            const actionablePatterns = [
+              /###\s*⚠️/u,
+              /###\s*🚫/u,
+              /Actionable comments posted/i,
+              /Actionable feedback/i,
+              /issues? found/i
+            ];
+
+            const hasPatternMatch = actionablePatterns.some((pattern) => {
+              return pattern.test(commentBody);
+            });
+
+            const summaryHint =
+              checkRun.output?.summary &&
+              /Actionable/i.test(checkRun.output.summary);
+
+            const hasActionableFeedback =
+              hasRecentInline || hasPatternMatch || summaryHint;
+
+            if (!hasActionableFeedback) {
+              core.info('CodeRabbit reported no actionable feedback.');
               return;
             }
 
@@ -154,7 +227,13 @@ jobs:
             const markerPattern = /<!--\s*REVIEW_ITERATION:\s*(\d+)\s*-->/i;
             const body = pr.body ?? '';
             const match = body.match(markerPattern);
-            const currentIteration = match ? Number.parseInt(match[1], 10) : 0;
+            let currentIteration = match ? Number.parseInt(match[1], 10) : 0;
+
+            if (Number.isNaN(currentIteration)) {
+              core.warning('Iteration marker invalid. Treating as 0.');
+              currentIteration = 0;
+            }
+
             const maxIterations = 5;
 
             const { data: issue } = await github.rest.issues.get({
@@ -163,7 +242,7 @@ jobs:
               issue_number: prNumber
             });
 
-            const hasMaxIterationLabel = issue.labels.some((label) => {
+            let hasMaxIterationLabel = issue.labels.some((label) => {
               if (typeof label === 'string') {
                 return label === 'max-iterations-reached';
               }
@@ -171,16 +250,7 @@ jobs:
               return label.name === 'max-iterations-reached';
             });
 
-            let effectiveIteration = currentIteration;
-
-            if (Number.isNaN(effectiveIteration)) {
-              core.warning('Iteration marker invalid. Treating as 0.');
-              effectiveIteration = 0;
-            }
-
-            if (effectiveIteration >= maxIterations || hasMaxIterationLabel) {
-              core.info('Max iteration threshold met. Finalising state.');
-
+            const finalizeState = async () => {
               try {
                 await github.rest.issues.removeLabel({
                   owner,
@@ -229,26 +299,42 @@ jobs:
                   issue_number: prNumber,
                   body: maxIterationMessage
                 });
-              }
 
+                hasMaxIterationLabel = true;
+              }
+            };
+
+            if (currentIteration >= maxIterations || hasMaxIterationLabel) {
+              core.info('Max iteration threshold already reached.');
+              await finalizeState();
               return;
             }
 
-            const nextIteration = effectiveIteration + 1;
+            const nextIteration = currentIteration + 1;
+            const hitIterationCap = nextIteration >= maxIterations;
+            const targetIteration = hitIterationCap
+              ? maxIterations
+              : nextIteration;
             const spacing = body.trim().length === 0 ? '' : '\n\n';
+            const marker = `<!-- REVIEW_ITERATION: ${targetIteration} -->`;
             const nextBody = match
-              ? body.replace(
-                  markerPattern,
-                  `<!-- REVIEW_ITERATION: ${nextIteration} -->`
-                )
-              : `${body}${spacing}<!-- REVIEW_ITERATION: ${nextIteration} -->`;
+              ? body.replace(markerPattern, marker)
+              : `${body}${spacing}${marker}`;
 
-            await github.rest.pulls.update({
-              owner,
-              repo,
-              pull_number: prNumber,
-              body: nextBody
-            });
+            if (nextBody !== body) {
+              await github.rest.pulls.update({
+                owner,
+                repo,
+                pull_number: prNumber,
+                body: nextBody
+              });
+            }
+
+            if (hitIterationCap) {
+              core.info('Iteration cap reached on this cycle. Finalising.');
+              await finalizeState();
+              return;
+            }
 
             try {
               await github.rest.issues.removeLabel({

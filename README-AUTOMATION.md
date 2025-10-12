@@ -7,8 +7,9 @@ reviews and Codex fixes for pull requests in this repository.
 
 Two workflows live under `.github/workflows/`:
 
-- `pr-review-on-push.yml` waits for 2 minutes after every push to a branch that
-  backs an open pull request and then:
+- `pr-review-on-push.yml` waits for 15 seconds after pushes or `pull_request`
+  synchronise events on branches backing open pull requests (excluding the
+  initial branch creation push) and then:
   - removes the `awaiting-fixes` label when present,
   - ensures the `under-review` label is applied,
   - asks CodeRabbit and Codex to start a fresh review cycle.
@@ -17,9 +18,9 @@ Two workflows live under `.github/workflows/`:
   - On pull request open or reopen it guarantees the PR body contains the hidden
     marker `<!-- REVIEW_ITERATION: 0 -->` and clears automation labels on
     reopen.
-  - On new CodeRabbit comments containing "Actionable comments posted" it moves
-    the pull request into the fix phase, increments the iteration counter when
-    below five, and instructs Codex to apply fixes.
+  - On completion of CodeRabbit check runs it detects actionable findings,
+    increments the iteration counter when below five, and instructs Codex to
+    apply fixes or finalises the pull request at the iteration cap.
 
 ## Iteration Tracking
 
@@ -54,8 +55,14 @@ missing:
 
 - Workflows ignore pushes from automation accounts (`github-actions`, Codex,
   and CodeRabbit) to avoid loops.
-- Rapid pushes are debounced via a two minute sleep combined with workflow
+- Rapid pushes are debounced via a 15 second sleep combined with workflow
   concurrency so that only the most recent commit triggers review comments.
+- The push workflow also listens to `pull_request_target` `synchronize`
+  events so updates from forked pull requests receive the same automated
+  treatment.
+- CodeRabbit actionable feedback is detected through its completed check runs,
+  with inline review comments or summary metadata determining whether
+  Codex is pinged for fixes.
 - When a pull request is closed and later reopened the counter and labels reset.
 - Manual comments such as `@coderabbitai review` or `@codex fix` are always
   allowed; they do not alter the iteration counter.
@@ -68,6 +75,6 @@ missing:
 4. Save the description. The next automation event will honour the updated
    value.
 
-To clear the terminal state early, remove the `max-iterations-reached` label and
-set the iteration marker to a number below five. The next push or actionable
-CodeRabbit comment will resume the cycle.
+To clear the terminal state early, remove the `max-iterations-reached` label
+and set the iteration marker to a number below five. The next push or
+actionable CodeRabbit comment will resume the cycle.
