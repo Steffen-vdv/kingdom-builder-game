@@ -1,16 +1,3 @@
-import {
-	createActionRegistry,
-	createBuildingRegistry,
-	createDevelopmentRegistry,
-	createPopulationRegistry,
-	RESOURCES,
-	STATS,
-	PHASES,
-	TRIGGER_INFO,
-	LAND_INFO,
-	SLOT_INFO,
-	PASSIVE_INFO,
-} from '@kingdom-builder/contents';
 import type { Registry } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
@@ -19,6 +6,11 @@ import type {
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
+import { deserializeSessionRegistries } from '../state/sessionRegistries';
+import {
+	FALLBACK_METADATA_SOURCES,
+	FALLBACK_REGISTRY_DATA,
+} from './defaultRegistryMetadata.data';
 
 type PhaseStepMetadataEntry = NonNullable<
 	SessionPhaseMetadata['steps']
@@ -74,7 +66,7 @@ function createResourceDefinitions() {
 			tags?: string[] | undefined;
 		}
 	> = {};
-	for (const [key, info] of Object.entries(RESOURCES)) {
+	for (const [key, info] of Object.entries(FALLBACK_REGISTRY_DATA.resources)) {
 		const entry: {
 			key: string;
 			icon?: string | undefined;
@@ -101,7 +93,9 @@ function createResourceDefinitions() {
 
 function createResourceMetadata() {
 	const descriptors: Record<string, SessionMetadataDescriptor> = {};
-	for (const [key, info] of Object.entries(RESOURCES)) {
+	for (const [key, info] of Object.entries(
+		FALLBACK_METADATA_SOURCES.resources,
+	)) {
 		descriptors[key] = createDescriptor(
 			info.label,
 			info.icon,
@@ -113,7 +107,7 @@ function createResourceMetadata() {
 
 function createStatMetadata() {
 	const descriptors: Record<string, SessionMetadataDescriptor> = {};
-	for (const [key, info] of Object.entries(STATS)) {
+	for (const [key, info] of Object.entries(FALLBACK_METADATA_SOURCES.stats)) {
 		descriptors[key] = createDescriptor(
 			info.label,
 			info.icon,
@@ -125,7 +119,7 @@ function createStatMetadata() {
 
 function createPhaseMetadata() {
 	const phases: Record<string, SessionPhaseMetadata> = {};
-	for (const phase of PHASES) {
+	for (const phase of FALLBACK_METADATA_SOURCES.phases) {
 		const steps = phase.steps?.map((step) => {
 			const baseStep: PhaseStepMetadataEntry = {
 				id: step.id,
@@ -161,13 +155,20 @@ function createPhaseMetadata() {
 
 function createTriggerMetadata() {
 	const triggers: Record<string, SessionTriggerMetadata> = {};
-	for (const [key, info] of Object.entries(TRIGGER_INFO)) {
-		const descriptor: SessionTriggerMetadata = {
-			label: info.past,
-			icon: info.icon,
-			future: info.future,
-			past: info.past,
-		};
+	for (const [key, info] of Object.entries(
+		FALLBACK_METADATA_SOURCES.triggers,
+	)) {
+		const descriptor: SessionTriggerMetadata = {};
+		if (info.past !== undefined) {
+			descriptor.label = info.past;
+			descriptor.past = info.past;
+		}
+		if (info.future !== undefined) {
+			descriptor.future = info.future;
+		}
+		if (info.icon !== undefined) {
+			descriptor.icon = info.icon;
+		}
 		triggers[key] = Object.freeze(descriptor);
 	}
 	return Object.freeze(triggers);
@@ -175,18 +176,28 @@ function createTriggerMetadata() {
 
 function createAssetMetadata() {
 	return Object.freeze({
-		land: createDescriptor(LAND_INFO.label, LAND_INFO.icon),
-		slot: createDescriptor(SLOT_INFO.label, SLOT_INFO.icon),
-		passive: createDescriptor(PASSIVE_INFO.label, PASSIVE_INFO.icon),
+		land: createDescriptor(
+			FALLBACK_METADATA_SOURCES.assets.land.label,
+			FALLBACK_METADATA_SOURCES.assets.land.icon,
+		),
+		slot: createDescriptor(
+			FALLBACK_METADATA_SOURCES.assets.slot.label,
+			FALLBACK_METADATA_SOURCES.assets.slot.icon,
+		),
+		passive: createDescriptor(
+			FALLBACK_METADATA_SOURCES.assets.passive.label,
+			FALLBACK_METADATA_SOURCES.assets.passive.icon,
+		),
 	});
 }
 
 function createRegistries(): SessionRegistries {
+	const registries = deserializeSessionRegistries(FALLBACK_REGISTRY_DATA);
 	return Object.freeze({
-		actions: createActionRegistry(),
-		buildings: createBuildingRegistry(),
-		developments: createDevelopmentRegistry(),
-		populations: createPopulationRegistry(),
+		actions: registries.actions,
+		buildings: registries.buildings,
+		developments: registries.developments,
+		populations: registries.populations,
 		resources: createResourceDefinitions(),
 	}) as SessionRegistries;
 }
