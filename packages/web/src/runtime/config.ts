@@ -108,6 +108,23 @@ function mergeDeveloperPreset(
 	return result;
 }
 
+function mergeRuleSet(
+	base: EngineBootstrapOptions['rules'],
+	override: EngineBootstrapOptions['rules'] | undefined,
+): EngineBootstrapOptions['rules'] {
+	const result = clone(base);
+	if (!override) {
+		return result;
+	}
+	const target = result as Record<string, unknown>;
+	for (const [key, value] of Object.entries(override)) {
+		if (value !== undefined) {
+			target[key] = clone(value);
+		}
+	}
+	return result;
+}
+
 function mergeEngineBootstrap(
 	base: EngineBootstrapOptions,
 	override: Partial<EngineBootstrapOptions> | undefined,
@@ -118,7 +135,7 @@ function mergeEngineBootstrap(
 	return {
 		phases: override.phases ? [...override.phases] : [...base.phases],
 		start: override.start ? clone(override.start) : clone(base.start),
-		rules: override.rules ? { ...override.rules } : { ...base.rules },
+		rules: mergeRuleSet(base.rules, override.rules),
 	};
 }
 
