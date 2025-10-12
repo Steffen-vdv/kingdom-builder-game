@@ -18,11 +18,13 @@ import {
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
+const isSessionMirroringErrorMock = vi.hoisted(() => vi.fn(() => false));
 
 vi.mock('../../src/state/sessionSdk', () => ({
 	createSession: createSessionMock,
 	fetchSnapshot: fetchSnapshotMock,
 	releaseSession: releaseSessionMock,
+	isSessionMirroringError: isSessionMirroringErrorMock,
 }));
 
 const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
@@ -37,9 +39,13 @@ const showResolutionMock = vi.hoisted(() => vi.fn());
 const acknowledgeResolutionMock = vi.hoisted(() => vi.fn());
 const handlePerformMock = vi.hoisted(() => vi.fn());
 const createTranslationContextMock = vi.hoisted(() => vi.fn(() => ({})));
-let capturedPhaseOptions:
-	| (Record<string, unknown> & { refresh?: () => void })
-	| undefined;
+type CapturedPhaseOptions = Record<string, unknown> & { refresh?: () => void };
+type CapturedActionPerformerOptions = Record<string, unknown> & {
+	onFatalSessionError?: (error: unknown) => void;
+};
+
+let capturedPhaseOptions: CapturedPhaseOptions | undefined;
+let capturedActionPerformerOptions: CapturedActionPerformerOptions | undefined;
 
 vi.mock('../../src/state/useTimeScale', () => ({
 	useTimeScale: () => ({
@@ -106,10 +112,14 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 }));
 
 vi.mock('../../src/state/useActionPerformer', () => ({
-	useActionPerformer: () => ({
-		handlePerform: handlePerformMock,
-		performRef: { current: handlePerformMock },
-	}),
+	useActionPerformer: (options: Record<string, unknown>) => {
+		capturedActionPerformerOptions =
+			options as typeof capturedActionPerformerOptions;
+		return {
+			handlePerform: handlePerformMock,
+			performRef: { current: handlePerformMock },
+		};
+	},
 }));
 
 vi.mock('../../src/state/useToasts', () => ({
@@ -163,6 +173,8 @@ describe('GameProvider', () => {
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
+		isSessionMirroringErrorMock.mockReset();
+		isSessionMirroringErrorMock.mockReturnValue(false);
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -177,6 +189,7 @@ describe('GameProvider', () => {
 		createTranslationContextMock.mockReset();
 		createTranslationContextMock.mockImplementation(() => ({}));
 		capturedPhaseOptions = undefined;
+		capturedActionPerformerOptions = undefined;
 		runUntilActionPhaseMock.mockResolvedValue(undefined);
 
 		const [resourceKey] = createResourceKeys();
@@ -381,6 +394,38 @@ describe('GameProvider', () => {
 		expect(
 			screen.getByText('An unexpected error prevented the game from loading.'),
 		).toBeInTheDocument();
+	});
+
+	it('shows the fatal error screen when a mirroring failure occurs', async () => {
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		expect(capturedActionPerformerOptions?.onFatalSessionError).toBeTypeOf(
+			'function',
+		);
+
+		act(() => {
+			capturedActionPerformerOptions?.onFatalSessionError?.(
+				new Error('mirror failed'),
+			);
+		});
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
+
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
 	});
 
 	it('shows the fatal error screen when the translation context fails to initialize', async () => {

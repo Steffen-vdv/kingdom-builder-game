@@ -36,6 +36,45 @@ import {
 	type GameApiRequestOptions,
 } from '../services/gameApi';
 
+export type SessionMirrorOperation = 'action' | 'phaseAdvance';
+
+export class SessionMirroringError extends Error {
+	readonly sessionId: string;
+
+	readonly actionId?: string;
+
+	readonly operation: SessionMirrorOperation;
+
+	constructor(
+		message: string,
+		{
+			sessionId,
+			actionId,
+			operation,
+			cause,
+		}: {
+			sessionId: string;
+			actionId?: string;
+			operation: SessionMirrorOperation;
+			cause?: unknown;
+		},
+	) {
+		super(message, { cause });
+		this.name = 'SessionMirroringError';
+		this.sessionId = sessionId;
+		this.operation = operation;
+		if (actionId) {
+			this.actionId = actionId;
+		}
+	}
+}
+
+export function isSessionMirroringError(
+	error: unknown,
+): error is SessionMirroringError {
+	return error instanceof SessionMirroringError;
+}
+
 export interface SessionHandle {
 	enqueue: EngineSession['enqueue'];
 	advancePhase: EngineSession['advancePhase'];
@@ -246,14 +285,22 @@ export async function performSessionAction(
 				const params = request.params as ActionParams<string> | undefined;
 				handle.performAction(request.actionId, params);
 			} catch (localError) {
-				console.error(
+				throw new SessionMirroringError(
 					'Local session failed to mirror remote action.',
-					localError,
+					{
+						sessionId: request.sessionId,
+						actionId: request.actionId,
+						operation: 'action',
+						cause: localError,
+					},
 				);
 			}
 		}
 		return response;
 	} catch (error) {
+		if (isSessionMirroringError(error)) {
+			throw error;
+		}
 		const failure = error as ActionExecutionFailure;
 		const response: ActionExecuteErrorResponse = {
 			status: 'error',
@@ -294,7 +341,14 @@ export async function advanceSessionPhase(
 	try {
 		handle.advancePhase();
 	} catch (localError) {
-		console.error('Local session failed to mirror remote advance.', localError);
+		throw new SessionMirroringError(
+			'Local session failed to mirror remote phase advance.',
+			{
+				sessionId: request.sessionId,
+				operation: 'phaseAdvance',
+				cause: localError,
+			},
+		);
 	}
 	return response;
 }

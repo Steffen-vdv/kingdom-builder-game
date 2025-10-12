@@ -16,6 +16,7 @@ import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
+import { isSessionMirroringError } from './sessionSdk';
 import type {
 	LegacyGameEngineContextValue,
 	PerformActionHandler,
@@ -201,6 +202,7 @@ export function GameProviderInner({
 		endTurn,
 		enqueue,
 		resourceKeys,
+		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
 	useAiRunner({
@@ -222,9 +224,13 @@ export function GameProviderInner({
 				if (disposed) {
 					return;
 				}
-				if (onFatalSessionError) {
-					onFatalSessionError(error);
+				if (!onFatalSessionError) {
+					return;
 				}
+				if (isSessionMirroringError(error)) {
+					return;
+				}
+				onFatalSessionError(error);
 			}
 		};
 		void run();

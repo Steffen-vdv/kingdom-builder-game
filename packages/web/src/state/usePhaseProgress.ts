@@ -114,6 +114,7 @@ export function usePhaseProgress({
 				formatPhaseResolution,
 				showResolution,
 				registries,
+				...(onFatalSessionError ? { onFatalSessionError } : {}),
 			}),
 		[
 			applyPhaseSnapshot,
@@ -125,6 +126,7 @@ export function usePhaseProgress({
 			session,
 			sessionId,
 			showResolution,
+			onFatalSessionError,
 		],
 	);
 

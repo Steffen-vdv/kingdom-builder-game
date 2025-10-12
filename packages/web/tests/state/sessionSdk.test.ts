@@ -8,6 +8,7 @@ import {
 	advanceSessionPhase,
 	releaseSession,
 	setGameApi,
+	SessionMirroringError,
 } from '../../src/state/sessionSdk';
 import {
 	GameApiFake,
@@ -179,6 +180,29 @@ describe('sessionSdk', () => {
 		expect(response.status).toBe('error');
 		expect(performSpy).not.toHaveBeenCalled();
 	});
+	it('throws when local action mirroring fails', async () => {
+		const { session, legacySession } = await createSession();
+		vi.spyOn(session, 'performAction').mockImplementation(() => {
+			throw new Error('Local action failure');
+		});
+		const currentSnapshot = legacySession.getSnapshot();
+		api.setNextActionResponse({
+			status: 'success',
+			snapshot: currentSnapshot,
+			costs: {},
+			traces: [],
+		});
+		const promise = performSessionAction({
+			sessionId: 'session-1',
+			actionId: ActionId.tax,
+		});
+		await expect(promise).rejects.toBeInstanceOf(SessionMirroringError);
+		await expect(promise).rejects.toMatchObject({
+			sessionId: 'session-1',
+			actionId: ActionId.tax,
+			operation: 'action',
+		});
+	});
 	it('converts thrown API errors into error responses', async () => {
 		const { session } = await createSession();
 		setGameApi(
@@ -232,6 +256,32 @@ describe('sessionSdk', () => {
 		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(response.snapshot).toEqual(updatedSnapshot);
 		expect(advanceSpy).toHaveBeenCalled();
+	});
+	it('throws when local phase mirroring fails', async () => {
+		await createSession();
+		const { session, snapshot } = await fetchSnapshot('session-1');
+		vi.spyOn(session, 'advancePhase').mockImplementation(() => {
+			throw new Error('Local phase failure');
+		});
+		api.setNextAdvanceResponse({
+			sessionId: 'session-1',
+			snapshot,
+			advance: {
+				phase: 'phase-main',
+				step: 'phase-main:start',
+				effects: [],
+				player: playerA,
+			},
+			registries: createSessionRegistriesPayload(),
+		});
+		const promise = advanceSessionPhase({
+			sessionId: 'session-1',
+		});
+		await expect(promise).rejects.toBeInstanceOf(SessionMirroringError);
+		await expect(promise).rejects.toMatchObject({
+			sessionId: 'session-1',
+			operation: 'phaseAdvance',
+		});
 	});
 	it('updates cached registries and resource keys when the phase advances', async () => {
 		const created = await createSession();
