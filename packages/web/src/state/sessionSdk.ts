@@ -1,13 +1,13 @@
 /* eslint-disable max-lines */
 import {
 	createEngineSession,
-	type ActionParams,
 	type EngineSession,
 } from '@kingdom-builder/engine';
 import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
+	ActionParametersPayload,
 } from '@kingdom-builder/protocol/actions';
 import type {
 	SessionRuleSnapshot,
@@ -335,7 +335,7 @@ export async function performSessionAction(
 		const response = await api.performAction(request, requestOptions);
 		if (response.status === 'success') {
 			try {
-				const params = request.params as ActionParams<string> | undefined;
+				const params: ActionParametersPayload | undefined = request.params;
 				handle.performAction(request.actionId, params);
 			} catch (localError) {
 				const error = new SessionMirroringError(
