@@ -13,7 +13,6 @@ reviews:
     - '!artifacts/**'
     - '!packages/**/package-lock.json'
     - '!packages/**/src/**/*.js'
-    - '!packages/**/src/**/*.d.ts'
     - '!**/*.d.ts'
     - '!.vscode/**'
     - '!.idea/**'
