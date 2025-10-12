@@ -23,6 +23,19 @@ vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
+const MINIMAL_PHASES: PhaseDef[] = [
+	{
+		id: 'phase:synthetic',
+		label: 'Synthetic Phase',
+		steps: [
+			{
+				id: 'phase:synthetic:step',
+				title: 'Synthetic step',
+			},
+		],
+	},
+];
+
 function createCtx() {
 	const engine = createEngine({
 		actions: ACTIONS,
@@ -92,7 +105,7 @@ describe('modifier evaluation handlers', () => {
 			buildings: content.buildings,
 			developments: content.developments,
 			populations: content.populations,
-			phases: [],
+			phases: MINIMAL_PHASES,
 			start,
 			rules,
 		});
