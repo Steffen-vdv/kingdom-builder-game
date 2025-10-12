@@ -22,6 +22,7 @@ export type {
 	TransportErrorCode,
 	TransportRequest,
 } from './transport/TransportTypes.js';
+export { buildSessionMetadata } from './content/buildSessionMetadata.js';
 export { createSessionTransportPlugin } from './transport/FastifySessionTransport.js';
 export type { FastifySessionTransportOptions } from './transport/FastifySessionTransport.js';
 export type { AuthContext, AuthRole } from './auth/AuthContext.js';
