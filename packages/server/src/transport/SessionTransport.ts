@@ -200,6 +200,7 @@ export class SessionTransport {
 	}
 
 	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
+		this.requireAuthorization(request, 'session:advance');
 		const parsed = sessionSetDevModeRequestSchema.safeParse(request.body);
 		if (!parsed.success) {
 			throw new TransportError(

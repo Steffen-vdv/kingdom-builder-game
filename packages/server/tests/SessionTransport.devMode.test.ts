@@ -43,9 +43,11 @@ describe('SessionTransport dev mode', () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
+			authMiddleware: middleware,
 		});
 		const attempt = () =>
 			transport.setDevMode({
+				headers: authorizedHeaders,
 				body: { sessionId: 123 },
 			});
 		expect(attempt).toThrow(TransportError);
