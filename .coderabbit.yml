@@ -5,6 +5,8 @@ reviews:
   auto_review:
     enabled: true
     auto_incremental_review: true
+    base_branches:
+      - ".*"  # Matches all branches
   path_filters:
     - '**/*'
     - '!node_modules/**'
