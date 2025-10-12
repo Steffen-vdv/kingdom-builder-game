@@ -1,0 +1,291 @@
+name: PR Review Orchestration
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  initialize-iteration-marker:
+    name: Ensure PR metadata markers
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure iteration marker is present
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.payload.pull_request.number;
+            const action = context.payload.action;
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber
+            });
+
+            const body = pr.body ?? '';
+            const markerPattern = /<!--\s*REVIEW_ITERATION:\s*(\d+)\s*-->/i;
+            const hasMarker = markerPattern.test(body);
+            const shouldReset = action === 'reopened';
+            let nextBody = body;
+
+            if (!hasMarker) {
+              const suffix = body.trim().length === 0 ? '' : '\n\n';
+              nextBody = `${body}${suffix}<!-- REVIEW_ITERATION: 0 -->`;
+            } else if (shouldReset) {
+              nextBody = body.replace(
+                markerPattern,
+                '<!-- REVIEW_ITERATION: 0 -->'
+              );
+            }
+
+            if (nextBody !== body) {
+              await github.rest.pulls.update({
+                owner,
+                repo,
+                pull_number: prNumber,
+                body: nextBody
+              });
+              core.info('Updated PR body with review iteration marker.');
+            }
+
+            if (shouldReset) {
+              const labelsToRemove = [
+                'under-review',
+                'awaiting-fixes',
+                'max-iterations-reached'
+              ];
+
+              for (const label of labelsToRemove) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner,
+                    repo,
+                    issue_number: prNumber,
+                    name: label
+                  });
+                } catch (error) {
+                  if (error.status !== 404) {
+                    throw error;
+                  }
+                }
+              }
+            }
+
+  orchestrate-fix-cycle:
+    name: Advance review/fix loop
+    if: |
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.comment.user.login == 'coderabbitai[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Process CodeRabbit actionable feedback
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.payload.issue.number;
+            const commentBody = context.payload.comment.body ?? '';
+
+            if (!/actionable comments posted/i.test(commentBody)) {
+              core.info('No actionable feedback marker found. Skipping.');
+              return;
+            }
+
+            const labelDefinitions = [
+              {
+                name: 'under-review',
+                color: '1d76db',
+                description: 'Automated review cycle in progress'
+              },
+              {
+                name: 'awaiting-fixes',
+                color: 'fbca04',
+                description: 'Waiting for Codex fixes after CodeRabbit review'
+              },
+              {
+                name: 'max-iterations-reached',
+                color: 'd93f0b',
+                description: 'Automated review/fix cycle capped at five rounds'
+              }
+            ];
+
+            for (const label of labelDefinitions) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner,
+                  repo,
+                  name: label.name
+                });
+              } catch (error) {
+                if (error.status === 404) {
+                  core.info(`Creating missing label: ${label.name}`);
+                  await github.rest.issues.createLabel({
+                    owner,
+                    repo,
+                    ...label
+                  });
+                } else {
+                  throw error;
+                }
+              }
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber
+            });
+
+            const markerPattern = /<!--\s*REVIEW_ITERATION:\s*(\d+)\s*-->/i;
+            const body = pr.body ?? '';
+            const match = body.match(markerPattern);
+            const currentIteration = match ? Number.parseInt(match[1], 10) : 0;
+            const maxIterations = 5;
+
+            const { data: issue } = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: prNumber
+            });
+
+            const hasMaxIterationLabel = issue.labels.some((label) => {
+              if (typeof label === 'string') {
+                return label === 'max-iterations-reached';
+              }
+
+              return label.name === 'max-iterations-reached';
+            });
+
+            let effectiveIteration = currentIteration;
+
+            if (Number.isNaN(effectiveIteration)) {
+              core.warning('Iteration marker invalid. Treating as 0.');
+              effectiveIteration = 0;
+            }
+
+            if (effectiveIteration >= maxIterations || hasMaxIterationLabel) {
+              core.info('Max iteration threshold met. Finalising state.');
+
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: 'under-review'
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+              }
+
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: 'awaiting-fixes'
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+              }
+
+              if (!hasMaxIterationLabel) {
+                const maxIterationMessage = [
+                  '@Steffen-vdv The automated review-fix cycle has reached the',
+                  'maximum of 5 iterations.',
+                  'Manual intervention is required.',
+                  'The PR still has unresolved issues from CodeRabbit',
+                  'and/or Codex.'
+                ].join(' ');
+
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  labels: ['max-iterations-reached']
+                });
+
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  body: maxIterationMessage
+                });
+              }
+
+              return;
+            }
+
+            const nextIteration = effectiveIteration + 1;
+            const spacing = body.trim().length === 0 ? '' : '\n\n';
+            const nextBody = match
+              ? body.replace(
+                  markerPattern,
+                  `<!-- REVIEW_ITERATION: ${nextIteration} -->`
+                )
+              : `${body}${spacing}<!-- REVIEW_ITERATION: ${nextIteration} -->`;
+
+            await github.rest.pulls.update({
+              owner,
+              repo,
+              pull_number: prNumber,
+              body: nextBody
+            });
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: prNumber,
+                name: 'under-review'
+              });
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: prNumber,
+              labels: ['awaiting-fixes']
+            });
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: prNumber,
+                name: 'max-iterations-reached'
+              });
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body: '@codex fix'
+            });
