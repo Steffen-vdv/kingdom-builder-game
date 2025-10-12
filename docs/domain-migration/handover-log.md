@@ -1,5 +1,12 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P1 - T16 - Stat History Passive Assets
+
+- Stat history helpers now consume `SessionStatSourceMeta`/`SessionStatSourceLink`
+  from the protocol and pull passive icons/removal copy from the translation
+  assets, removing the dependency on engine snapshots and `@kingdom-builder/contents`
+  constants for stat summaries.
+
 ## Domain Migration - P1 - T15 - Stat Source Protocol Alignment
 
 - `dependencyFormatters` and stat descriptor helpers now import

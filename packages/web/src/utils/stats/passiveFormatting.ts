@@ -1,9 +1,7 @@
-import {
-	PASSIVE_INFO,
-	PhaseStepId,
-	formatPassiveRemoval,
-} from '@kingdom-builder/contents';
-import type { StatSourceLink, StatSourceMeta } from '@kingdom-builder/engine';
+import type {
+	SessionStatSourceLink as StatSourceLink,
+	SessionStatSourceMeta as StatSourceMeta,
+} from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';
 import { formatLinkLabel } from './dependencyFormatters';
@@ -21,9 +19,11 @@ export function buildLongevityEntries(
 		const anchors = collectAnchorLabels(meta, translationContext);
 		const condition = formatInPlayCondition(anchors);
 		if (condition) {
-			return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing as long as ${condition}`];
+			return [
+				`${getPassiveIcon(translationContext)} Ongoing as long as ${condition}`,
+			];
 		}
-		return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing`];
+		return [`${getPassiveIcon(translationContext)} Ongoing`];
 	}
 	const entries: SummaryEntry[] = [];
 	const items: SummaryEntry[] = [];
@@ -36,9 +36,11 @@ export function buildLongevityEntries(
 		collectRemovalLabels(removalLink, translationContext),
 	);
 	if (removalCondition) {
-		entries.push(formatPassiveRemoval(removalCondition));
+		entries.push(
+			translationContext.assets.formatPassiveRemoval(removalCondition),
+		);
 	} else if (removal) {
-		entries.push(formatPassiveRemoval(removal));
+		entries.push(translationContext.assets.formatPassiveRemoval(removal));
 	}
 	entries.unshift(`${PERMANENT_ICON} Permanent`);
 	return entries.concat(items);
@@ -47,13 +49,16 @@ export function buildLongevityEntries(
 function shouldDisplayPermanentDependencies(meta: StatSourceMeta): boolean {
 	if (meta.kind === 'phase') {
 		const detail = meta.detail?.trim().toLowerCase();
-		if (detail === PhaseStepId.RaiseStrength) {
+		if (detail === 'raise-strength') {
 			return false;
 		}
 	}
 	return true;
 }
 
+function getPassiveIcon(context: TranslationContext): string {
+	return context.assets.passive.icon ?? '♾️';
+}
 function collectAnchorLabels(
 	meta: StatSourceMeta,
 	translationContext: TranslationContext,

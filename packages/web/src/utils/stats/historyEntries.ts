@@ -1,4 +1,4 @@
-import type { StatSourceMeta } from '@kingdom-builder/engine';
+import type { SessionStatSourceMeta as StatSourceMeta } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import { formatPhaseStep } from './format';
 import { formatTriggerLabel } from './triggerLabels';
