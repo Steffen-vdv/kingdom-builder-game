@@ -62,12 +62,28 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		'/sessions/:id/actions',
 		async (request, reply) => {
 			try {
-				const payload = mergeActionPayload(request);
+				const payload = mergeSessionPayload(request);
 				const response = await transport.executeAction({
 					body: payload,
 					headers: extractHeaders(request),
 				});
 				return reply.status(response.httpStatus ?? 200).send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
+
+	fastify.post<SessionRequestParams>(
+		'/sessions/:id/dev-mode',
+		async (request, reply) => {
+			try {
+				const payload = mergeSessionPayload(request);
+				const response = transport.setDevMode({
+					body: payload,
+					headers: extractHeaders(request),
+				});
+				return reply.send(response);
 			} catch (error) {
 				return handleTransportError(reply, error);
 			}
@@ -83,14 +99,14 @@ type SessionRequestParams = {
 	};
 };
 
-type ActionRequestBody = Record<string, unknown>;
+type SessionRequestBody = Record<string, unknown>;
 
-function mergeActionPayload(
+function mergeSessionPayload(
 	request: FastifyRequest<SessionRequestParams>,
-): ActionRequestBody {
+): SessionRequestBody {
 	const body =
 		typeof request.body === 'object' && request.body !== null
-			? { ...(request.body as ActionRequestBody) }
+			? { ...(request.body as SessionRequestBody) }
 			: {};
 	body.sessionId = request.params.id;
 	return body;

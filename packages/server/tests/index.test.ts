@@ -54,6 +54,36 @@ describe('server entrypoint', () => {
 		await result.app.close();
 	});
 
+	it('allows HttpSessionGateway to toggle developer mode', async () => {
+		const module = await import('../src/index.js');
+		const result = await module.startServer({
+			host: '127.0.0.1',
+			port: 0,
+			tokens: {
+				'integration-token': {
+					userId: 'integration-tester',
+					roles: ['session:create', 'session:advance', 'admin'],
+				},
+			},
+		});
+		try {
+			const gateway = new module.HttpSessionGateway({
+				baseUrl: result.address,
+				headers: {
+					authorization: 'Bearer integration-token',
+				},
+			});
+			const created = await gateway.createSession();
+			const updated = await gateway.setDevMode({
+				sessionId: created.sessionId,
+				enabled: true,
+			});
+			expect(updated.snapshot.game.devMode).toBe(true);
+		} finally {
+			await result.app.close();
+		}
+	});
+
 	it('does not auto-start when imported as a module', async () => {
 		process.argv = ['/usr/bin/node', '/not/the/entrypoint'];
 		const log = vi.spyOn(console, 'log').mockImplementation(() => {});
