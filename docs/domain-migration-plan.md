@@ -159,6 +159,24 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-13 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/components/actions/GenericActionCard.tsx` (Web)
+    - `packages/web/src/components/actions/useEffectGroupOptions.ts` (Web)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Shift the actions UI to consume effect group contracts from the
+    protocol package instead of the Engine to reinforce the domain migration
+    boundaries.
+  - **Communication Path Update**: Action effect group components now import
+    `ActionEffectGroup` and `ActionEffectGroupOption` directly from
+    `@kingdom-builder/protocol`, keeping option parameter helpers aligned with
+    the shared schema.
+  - **Follow-Up Notes**: The actions UI still depends on
+    `useGameEngine()`/`GameEngineApi['session']` to fetch costs, requirements,
+    and option groups (`GenericActions.tsx`, `types.ts`). Follow-up tasks should
+    introduce protocol-backed session selectors so the UI can drop these Engine
+    hooks entirely.
+
 - **Date & Author**: 2025-10-12 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/protocol/src/session/index.ts` (Protocol)
