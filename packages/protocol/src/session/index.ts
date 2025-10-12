@@ -130,6 +130,30 @@ export interface SessionAdvanceResult {
 	skipped?: SessionAdvanceSkipSnapshot;
 }
 
+export interface PlayerSnapshotDeltaBucket {
+	resources: Record<string, number>;
+	stats: Record<string, number>;
+	population: Record<string, number>;
+}
+
+export interface SimulateUpcomingPhasesIds {
+	growth: string;
+	upkeep: string;
+}
+
+export interface SimulateUpcomingPhasesOptions {
+	phaseIds?: SimulateUpcomingPhasesIds;
+	maxIterations?: number;
+}
+
+export interface SimulateUpcomingPhasesResult {
+	playerId: SessionPlayerId;
+	before: SessionPlayerStateSnapshot;
+	after: SessionPlayerStateSnapshot;
+	delta: PlayerSnapshotDeltaBucket;
+	steps: SessionAdvanceResult[];
+}
+
 export interface SessionPassiveRecordSnapshot extends SessionPassiveSummary {
 	effects?: EffectDef[];
 	onGrowthPhase?: EffectDef[];
