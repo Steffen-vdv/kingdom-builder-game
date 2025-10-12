@@ -90,7 +90,7 @@ jobs:
     if: |
       github.event_name == 'check_run' &&
       github.event.check_run.app.slug == 'coderabbitai' &&
-      github.event.check_run.conclusion == 'success'
+      github.event.check_run.status == 'completed'
     runs-on: ubuntu-latest
     steps:
       - name: Process CodeRabbit actionable feedback
@@ -108,6 +108,19 @@ jobs:
             }
 
             const prNumber = prInfo.number;
+            const conclusion = checkRun.conclusion ?? '';
+            const ignoredConclusions = new Set([
+              'cancelled',
+              'failure',
+              'skipped',
+              'timed_out'
+            ]);
+
+            if (ignoredConclusions.has(conclusion)) {
+              core.info(`Check run concluded with ${conclusion}. Skipping.`);
+              return;
+            }
+
             const { data: comments } = await github.rest.issues.listComments({
               owner,
               repo,
@@ -289,8 +302,10 @@ jobs:
               }
 
               if (!hasMaxIterationLabel) {
+                const escalationTarget =
+                  pr.user?.login ? `@${pr.user.login}` : `@${owner}`;
                 const maxIterationMessage = [
-                  '@Steffen-vdv The automated review-fix cycle has reached the',
+                  `${escalationTarget} The automated review-fix cycle has reached the`,
                   'maximum of 5 iterations.',
                   'Manual intervention is required.',
                   'The PR still has unresolved issues from CodeRabbit',
