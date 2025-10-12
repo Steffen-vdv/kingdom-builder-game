@@ -89,6 +89,14 @@ function toPopulationIds(
 	if (Array.isArray(populationSource)) {
 		return populationSource.map(String);
 	}
+	if (
+		typeof (populationSource as Iterable<unknown>)[Symbol.iterator] ===
+		'function'
+	) {
+		return Array.from(populationSource as Iterable<unknown>, (value) =>
+			String(value),
+		);
+	}
 	if (typeof populationSource === 'object') {
 		return Object.keys(populationSource as Record<string, unknown>);
 	}

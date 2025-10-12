@@ -181,31 +181,27 @@ boundaries without updating this log.
     - `packages/web/src/startup/runtimeConfigFallback.json` (Web)
     - `packages/web/tests/startup/runtimeConfig.test.ts` (Web)
     - `scripts/generateRuntimeConfig.ts` (Tooling)
-    - `docs/domain-migration-plan.md` (Docs)
-  - **Intent**: Replace the web runtime fallback with a committed snapshot so
-    the client no longer imports `@kingdom-builder/contents` at runtime and can
-    bootstrap from static metadata.
-  - **Communication Path Update**: Web bootstrap loads the JSON snapshot, and a
-    repository script now regenerates the artifact whenever content data changes.
-  - **Follow-Up Notes**: Migrate remaining metadata consumers to reuse the new
-    snapshot (or its future selector proxy) so developer presets and resource
-    descriptors stay aligned across domains.
     - `packages/web/src/contexts/defaultRegistryMetadata.ts` (Web)
     - `packages/web/src/contexts/defaultRegistryMetadata.json` (Web)
     - `scripts/extensionless-loader.mjs` (Tooling)
     - `scripts/generate-default-registry-metadata.mjs` (Tooling)
-  - **Intent**: Break the web fallback dependency on the Content workspace by
-    snapshotting the current registry metadata into a static JSON asset that
-    the web client can consume without cross-domain imports.
-  - **Communication Path Update**: The web client now deserializes the bundled
-    JSON snapshot locally instead of invoking the content factories at
-    runtime, preserving immutability by deep-freezing the snapshot before it is
-    exposed through the registry metadata context.
-  - **Follow-Up Notes**: Refresh the snapshot whenever content registries
-    change by running `node --loader ./scripts/extensionless-loader.mjs scripts/generate-default-registry-metadata.mjs` from the
-    repository root after rebuilding `@kingdom-builder/contents`. Commit the
-    regenerated JSON alongside any content updates so the fallback remains in
-    sync.
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Replace dynamic runtime bootstrap logic with committed
+    snapshots so the web client no longer imports `@kingdom-builder/contents`
+    at runtime. Registry metadata and runtime config are now generated ahead of
+    time, deep-frozen, and served as static assets to keep Frontend independent
+    from Content.
+  - **Communication Path Update**: Startup now deserializes bundled JSON
+    snapshots for registry metadata and runtime config. A Node loader helper
+    resolves extensionless imports when regenerating the artifacts, ensuring
+    tooling reads the built `@kingdom-builder/contents/dist` files rather than
+    touching the package directly at runtime.
+  - **Follow-Up Notes**: After rebuilding `@kingdom-builder/contents`, run
+    `node --loader ./scripts/extensionless-loader.mjs scripts/generate-default-registry-metadata.mjs`
+    and `ts-node scripts/generateRuntimeConfig.ts` from the repository root, then
+    commit the updated JSON snapshots so Web remains in sync. Future work should
+    migrate any remaining consumers to reuse these selectors instead of reaching
+    into Content packages.
 - **Date & Author**: 2025-10-15 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/passives/visibility.ts` (Web)

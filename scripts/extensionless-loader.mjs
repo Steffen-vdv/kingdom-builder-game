@@ -4,7 +4,7 @@ const needsExtension = (specifier) =>
 
 async function tryResolve(specifier, context, defaultResolve) {
 	try {
-		return await defaultResolve(specifier, context, defaultResolve);
+		return await defaultResolve(specifier, context);
 	} catch (error) {
 		if (error.code === 'ERR_MODULE_NOT_FOUND') {
 			return null;
@@ -31,5 +31,5 @@ export async function resolve(specifier, context, defaultResolve) {
 			return index;
 		}
 	}
-	return defaultResolve(specifier, context, defaultResolve);
+	return defaultResolve(specifier, context);
 }

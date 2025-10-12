@@ -50,6 +50,9 @@ function formatContribution(
 ): SummaryEntry {
 	const { amount, meta } = contribution;
 	const statInfo = context.assets.stats?.[statKey];
+	if (!statInfo) {
+		console.warn(`Missing stat metadata for key: ${statKey}`);
+	}
 	const valueText = formatStatValue(statKey, amount, context.assets);
 	const sign = amount >= 0 ? '+' : '';
 	const amountParts: string[] = [];

@@ -61,7 +61,13 @@ function resolveUpkeepPhaseLabel(
 	for (const phase of phases) {
 		if (matchesUpkeepPhase(phase.id) || matchesUpkeepPhase(phase.label)) {
 			const descriptor = phaseMetadata.select(phase.id);
-			return descriptor.label || 'Upkeep';
+			if (descriptor?.label?.trim()) {
+				return descriptor.label;
+			}
+			if (phase.label?.trim()) {
+				return phase.label;
+			}
+			return 'Upkeep';
 		}
 	}
 	return 'Upkeep';
