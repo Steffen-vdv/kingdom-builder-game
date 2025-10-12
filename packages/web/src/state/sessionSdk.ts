@@ -3,7 +3,6 @@ import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
-	ActionParametersPayload,
 } from '@kingdom-builder/protocol/actions';
 import type {
 	SessionAdvanceRequest,
@@ -186,8 +185,10 @@ export async function performSessionAction(
 		const response = await api.performAction(request, requestOptions);
 		if (response.status === 'success') {
 			try {
-				const params: ActionParametersPayload | undefined = request.params;
-				handle.performAction(request.actionId, params);
+				const params = request.params;
+				await handle.enqueue(() => {
+					handle.performAction(request.actionId, params);
+				});
 			} catch (localError) {
 				const error = new SessionMirroringError(
 					'Local session failed to mirror remote action.',
@@ -199,7 +200,6 @@ export async function performSessionAction(
 						},
 					},
 				);
-				markFatalSessionError(error);
 				throw error;
 			}
 		}
@@ -244,7 +244,9 @@ export async function advanceSessionPhase(
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	mergeLegacySessionCaches(record, registries, resourceKeys);
 	try {
-		record.handle.advancePhase();
+		await record.handle.enqueue(() => {
+			record.handle.advancePhase();
+		});
 	} catch (localError) {
 		const error = new SessionMirroringError(
 			'Local session failed to mirror remote phase advance.',
@@ -255,7 +257,6 @@ export async function advanceSessionPhase(
 				},
 			},
 		);
-		markFatalSessionError(error);
 		throw error;
 	}
 	return response;
