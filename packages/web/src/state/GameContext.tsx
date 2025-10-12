@@ -57,6 +57,15 @@ export function GameProvider(props: GameProviderProps) {
 	const [sessionData, setSessionData] = useState<SessionContainer | null>(null);
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
+	const refreshAbortRef = useRef<AbortController | null>(null);
+
+	const abortRefresh = useCallback(() => {
+		const controller = refreshAbortRef.current;
+		if (controller) {
+			controller.abort();
+			refreshAbortRef.current = null;
+		}
+	}, []);
 
 	const updateSessionData = useCallback((next: SessionContainer | null) => {
 		sessionStateRef.current = next;
@@ -85,13 +94,14 @@ export function GameProvider(props: GameProviderProps) {
 	);
 
 	const releaseCurrentSession = useCallback(() => {
+		abortRefresh();
 		const current = sessionStateRef.current;
 		if (!current) {
 			return;
 		}
 		releaseSession(current.sessionId);
 		updateSessionData(null);
-	}, [updateSessionData]);
+	}, [abortRefresh, updateSessionData]);
 
 	const teardownSession = useCallback(() => {
 		void runExclusive(() => {
@@ -115,9 +125,10 @@ export function GameProvider(props: GameProviderProps) {
 	useEffect(
 		() => () => {
 			mountedRef.current = false;
+			abortRefresh();
 			teardownSession();
 		},
-		[teardownSession],
+		[abortRefresh, teardownSession],
 	);
 
 	useEffect(() => {
@@ -169,44 +180,59 @@ export function GameProvider(props: GameProviderProps) {
 		bootAttempt,
 	]);
 
-	const refreshSession = useCallback(
-		() =>
-			runExclusive(async () => {
-				const current = sessionStateRef.current;
-				const sessionId = current?.sessionId;
-				if (!sessionId) {
+	const refreshSession = useCallback(() => {
+		const controller = new AbortController();
+		const previous = refreshAbortRef.current;
+		refreshAbortRef.current = controller;
+		if (previous) {
+			previous.abort();
+		}
+		return runExclusive(async () => {
+			const current = sessionStateRef.current;
+			const sessionId = current?.sessionId;
+			if (!sessionId) {
+				if (refreshAbortRef.current === controller) {
+					refreshAbortRef.current = null;
+				}
+				controller.abort();
+				return;
+			}
+			try {
+				const result = await fetchSnapshot(sessionId, {
+					signal: controller.signal,
+				});
+				if (
+					!mountedRef.current ||
+					sessionStateRef.current?.sessionId !== sessionId
+				) {
 					return;
 				}
-				try {
-					const result = await fetchSnapshot(sessionId, {
-						signal: new AbortController().signal,
-					});
-					if (
-						!mountedRef.current ||
-						sessionStateRef.current?.sessionId !== sessionId
-					) {
-						return;
-					}
-					updateSessionData({
-						session: result.session,
-						legacySession: result.legacySession,
-						sessionId,
-						snapshot: result.snapshot,
-						ruleSnapshot: result.ruleSnapshot,
-						registries: result.registries,
-						resourceKeys: result.resourceKeys,
-						metadata: result.metadata,
-					});
-				} catch (error) {
-					if (!mountedRef.current) {
-						return;
-					}
-					releaseCurrentSession();
-					setSessionError(formatFailureDetails(error));
+				updateSessionData({
+					session: result.session,
+					legacySession: result.legacySession,
+					sessionId,
+					snapshot: result.snapshot,
+					ruleSnapshot: result.ruleSnapshot,
+					registries: result.registries,
+					resourceKeys: result.resourceKeys,
+					metadata: result.metadata,
+				});
+			} catch (error) {
+				if (!mountedRef.current) {
+					return;
 				}
-			}),
-		[runExclusive, updateSessionData, releaseCurrentSession],
-	);
+				if ((error as { name?: string }).name === 'AbortError') {
+					return;
+				}
+				releaseCurrentSession();
+				setSessionError(formatFailureDetails(error));
+			} finally {
+				if (refreshAbortRef.current === controller) {
+					refreshAbortRef.current = null;
+				}
+			}
+		});
+	}, [runExclusive, updateSessionData, releaseCurrentSession]);
 
 	const handleRelease = useCallback(() => {
 		teardownSession();

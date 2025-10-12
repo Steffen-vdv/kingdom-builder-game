@@ -345,6 +345,67 @@ describe('GameProvider', () => {
 		);
 	});
 
+	it('aborts in-flight snapshot refreshes before starting a new one', async () => {
+		render(
+			<GameProvider devMode={false} playerName="Scout">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		expect(capturedPhaseOptions?.refresh).toBeTypeOf('function');
+
+		let firstSignal: AbortSignal | undefined;
+		const abortError = Object.assign(new Error('Aborted'), {
+			name: 'AbortError',
+		});
+
+		fetchSnapshotMock.mockImplementationOnce((_sessionId, options) => {
+			firstSignal = options?.signal;
+			return new Promise((_resolve, reject) => {
+				const signal = options?.signal;
+				if (!signal) {
+					reject(abortError);
+					return;
+				}
+				if (signal.aborted) {
+					reject(abortError);
+					return;
+				}
+				const handleAbort = () => {
+					signal.removeEventListener('abort', handleAbort);
+					reject(abortError);
+				};
+				signal.addEventListener('abort', handleAbort);
+			});
+		});
+
+		act(() => {
+			capturedPhaseOptions?.refresh?.();
+		});
+
+		await waitFor(() => expect(firstSignal).toBeDefined());
+
+		expect(firstSignal?.aborted).toBe(false);
+
+		act(() => {
+			capturedPhaseOptions?.refresh?.();
+		});
+
+		await waitFor(() =>
+			expect(fetchSnapshotMock.mock.calls.length).toBeGreaterThanOrEqual(2),
+		);
+
+		await waitFor(() => expect(firstSignal?.aborted).toBe(true));
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:2'),
+		);
+	});
+
 	it('releases the active session on unmount', async () => {
 		const { unmount } = render(
 			<GameProvider playerName="Commander">
