@@ -78,6 +78,7 @@ export function createTranslationContextStub(
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: RuleSnapshot;
+		assets?: TranslationAssets;
 	},
 ): TranslationContext {
 	const rules: RuleSnapshot =
@@ -87,6 +88,8 @@ export function createTranslationContextStub(
 			tierDefinitions: [],
 			winConditions: [],
 		} as RuleSnapshot);
+	const assets = options.assets ?? EMPTY_ASSETS;
+
 	return {
 		actions: options.actions,
 		buildings: options.buildings,
@@ -103,6 +106,6 @@ export function createTranslationContextStub(
 		actionCostResource: options.actionCostResource,
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
-		assets: EMPTY_ASSETS,
+		assets,
 	};
 }

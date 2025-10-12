@@ -155,6 +155,22 @@ describe('<ActionsPanel />', () => {
 		);
 	});
 
+	it('falls back to the action cost resource key when labels are missing', () => {
+		setScenario();
+		const resourceDescriptor =
+			mockGame.sessionState.metadata.resources?.[mockGame.actionCostResource];
+		if (resourceDescriptor) {
+			delete resourceDescriptor.label;
+		}
+		renderActionsPanel();
+		const actionsHeading = screen.getByRole('heading', { name: /Actions/ });
+		const fallbackLabel =
+			mockGame.translationContext.assets.resources?.[
+				mockGame.actionCostResource
+			]?.label ?? mockGame.actionCostResource;
+		expect(actionsHeading).toHaveTextContent(fallbackLabel);
+	});
+
 	it(
 		'omits the hire section when the helper supplies a non-population ' +
 			'action category',
@@ -205,5 +221,17 @@ describe('<ActionsPanel />', () => {
 			}),
 		).toBe(true);
 		expect(hireButtons).toHaveLength(1);
+	});
+
+	it('uses the default population icon when roles omit custom icons', () => {
+		setScenario({
+			populationRoles: [
+				{ name: 'Mystic', onAssigned: [{}] },
+				{ name: 'Scout', onAssigned: [{}] },
+			],
+		});
+		const fallbackIcon =
+			mockGame.translationContext.assets.population.icon ?? '👥';
+		expect(metadata.defaultPopulationIcon).toBe(fallbackIcon);
 	});
 });
