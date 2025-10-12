@@ -273,8 +273,10 @@ export function useActionPerformer({
 				}
 				const icon = context.actions.get(action.id)?.icon || '';
 				let message = (error as Error).message || 'Action failed';
-				const requirementFailure = (error as ActionExecutionError)
-					?.requirementFailure;
+				const executionError = error as ActionExecutionError;
+				const requirementFailure =
+					executionError?.requirementFailure ??
+					executionError?.requirementFailures?.[0];
 				if (requirementFailure) {
 					message = translateRequirementFailure(requirementFailure, context);
 				}
