@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import type {
+	AssetMetadata,
 	AssetMetadataSelector,
 	DefinitionLookup,
 	MetadataSelector,
@@ -26,6 +27,8 @@ export interface OverviewTokenSources {
 	population: MetadataSelector<RegistryMetadataDescriptor>;
 	land: AssetMetadataSelector;
 	slot: AssetMetadataSelector;
+	landDescriptor: AssetMetadata;
+	slotDescriptor: AssetMetadata;
 }
 
 interface OverviewTokenSourceArgs {
@@ -46,15 +49,21 @@ export const createOverviewTokenSources = ({
 	populationMetadata,
 	landMetadata,
 	slotMetadata,
-}: OverviewTokenSourceArgs): OverviewTokenSources => ({
-	actions,
-	phases: phaseMetadata,
-	resources: resourceMetadata,
-	stats: statMetadata,
-	population: populationMetadata,
-	land: landMetadata,
-	slot: slotMetadata,
-});
+}: OverviewTokenSourceArgs): OverviewTokenSources => {
+	const landDescriptor = landMetadata.select();
+	const slotDescriptor = slotMetadata.select();
+	return {
+		actions,
+		phases: phaseMetadata,
+		resources: resourceMetadata,
+		stats: statMetadata,
+		population: populationMetadata,
+		land: landMetadata,
+		slot: slotMetadata,
+		landDescriptor,
+		slotDescriptor,
+	};
+};
 
 type OverviewTokenCategoryDescriptor = {
 	name: OverviewTokenCategoryName;
@@ -88,21 +97,22 @@ const resolveStaticIcon = (
 ) => resolveFromRecord(record, candidates);
 
 const createStaticIconRecord = (
-	land: AssetMetadataSelector,
-	slot: AssetMetadataSelector,
+	land: AssetMetadata,
+	slot: AssetMetadata,
 ): Record<string, { icon?: ReactNode }> => {
 	const record: Record<string, { icon?: ReactNode }> = {};
-	const landDescriptor = land.select();
-	record[landDescriptor.id] = { icon: landDescriptor.icon };
-	const slotDescriptor = slot.select();
-	record[slotDescriptor.id] = { icon: slotDescriptor.icon };
+	record[land.id] = { icon: land.icon };
+	record[slot.id] = { icon: slot.icon };
 	return record;
 };
 
 const createCategoryConfig = (
 	sources: OverviewTokenSources,
 ): ReadonlyArray<OverviewTokenCategoryDescriptor> => {
-	const staticRecord = createStaticIconRecord(sources.land, sources.slot);
+	const staticRecord = createStaticIconRecord(
+		sources.landDescriptor,
+		sources.slotDescriptor,
+	);
 	return [
 		{
 			name: 'actions',

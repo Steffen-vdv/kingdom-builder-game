@@ -1,54 +1,54 @@
 import React from 'react';
+import type { TranslationAssets } from '../../translation/context';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { getForecastDisplay } from '../../utils/forecast';
+import { formatStatValue } from '../../utils/stats';
 
-export interface ResourceButtonProps {
-	resourceId: string;
-	label: string;
-	icon?: string;
+export interface StatButtonProps {
+	statKey: string;
 	value: number;
 	forecastDelta?: number;
-	onShow: (resourceId: string) => void;
+	label: string;
+	icon?: string;
+	onShow: (statKey: string) => void;
 	onHide: () => void;
+	assets: TranslationAssets;
 }
 
-const formatDelta = (delta: number) => {
-	const absolute = Math.abs(delta);
-	const formatted = Number.isInteger(absolute)
-		? absolute.toString()
-		: absolute.toLocaleString(undefined, {
-				maximumFractionDigits: 2,
-				minimumFractionDigits: 0,
-			});
+const formatStatDelta = (
+	statKey: string,
+	delta: number,
+	assets: TranslationAssets,
+) => {
+	const formatted = formatStatValue(statKey, Math.abs(delta), assets);
 	return `${delta > 0 ? '+' : '-'}${formatted}`;
 };
 
-const RESOURCE_FORECAST_BADGE_CLASS =
+const STAT_FORECAST_BADGE_CLASS =
 	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
-const RESOURCE_FORECAST_BADGE_THEME_CLASS =
-	'bg-slate-800/70 dark:bg-slate-100/10';
+const STAT_FORECAST_BADGE_THEME_CLASS = 'bg-slate-800/70 dark:bg-slate-100/10';
 
-const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
-	resourceId,
-	label,
-	icon,
+const StatButtonComponent: React.FC<StatButtonProps> = ({
+	statKey,
 	value,
 	forecastDelta,
+	label,
+	icon,
 	onShow,
 	onHide,
+	assets,
 }) => {
 	const changes = useValueChangeIndicators(value);
+	const formattedValue = formatStatValue(statKey, value, assets);
 	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
-		formatDelta(delta),
+		formatStatDelta(statKey, delta, assets),
 	);
-	const iconLabel = icon ?? '❔';
-	const resolvedLabel = label || resourceId;
 	const ariaLabel = forecastDisplay
-		? `${resolvedLabel}: ${value} ${forecastDisplay.label}`
-		: `${resolvedLabel}: ${value}`;
+		? `${label}: ${formattedValue} ${forecastDisplay.label}`
+		: `${label}: ${formattedValue}`;
 	const handleShow = React.useCallback(() => {
-		onShow(resourceId);
-	}, [onShow, resourceId]);
+		onShow(statKey);
+	}, [onShow, statKey]);
 
 	return (
 		<button
@@ -61,13 +61,13 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 			onClick={handleShow}
 			aria-label={ariaLabel}
 		>
-			{iconLabel}
-			{value}
+			{icon && <span aria-hidden="true">{icon}</span>}
+			{formattedValue}
 			{forecastDisplay && (
 				<span
 					className={[
-						RESOURCE_FORECAST_BADGE_CLASS,
-						RESOURCE_FORECAST_BADGE_THEME_CLASS,
+						STAT_FORECAST_BADGE_CLASS,
+						STAT_FORECAST_BADGE_THEME_CLASS,
 						forecastDisplay.toneClass,
 					].join(' ')}
 				>
@@ -84,13 +84,13 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 					}`}
 					aria-hidden="true"
 				>
-					{formatDelta(change.delta)}
+					{formatStatDelta(statKey, change.delta, assets)}
 				</span>
 			))}
 		</button>
 	);
 };
 
-const ResourceButton = React.memo(ResourceButtonComponent);
+const StatButton = React.memo(StatButtonComponent);
 
-export default ResourceButton;
+export default StatButton;

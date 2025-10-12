@@ -49,106 +49,136 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 		useGameEngine();
 	const resourceMetadata = useResourceMetadata();
 	const passiveAssetMetadata = usePassiveAssetMetadata();
-	const passiveAsset = toDescriptorDisplay(passiveAssetMetadata.select());
+	const passiveAsset = React.useMemo(
+		() => toDescriptorDisplay(passiveAssetMetadata.select()),
+		[passiveAssetMetadata],
+	);
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id] ?? {
 		resources: {},
 		stats: {},
 		population: {},
 	};
-	const resourceDescriptors = resourceMetadata.list.map(toDescriptorDisplay);
+	const resourceDescriptors = React.useMemo(
+		() => resourceMetadata.list.map(toDescriptorDisplay),
+		[resourceMetadata],
+	);
+	const resourceDescriptorMap = React.useMemo(() => {
+		const pairs = resourceDescriptors.map(
+			(descriptor) => [descriptor.id, descriptor] as const,
+		);
+		return new Map(pairs);
+	}, [resourceDescriptors]);
 	const tiers = ruleSnapshot.tierDefinitions;
 	const happinessKey = ruleSnapshot.tieredResourceKey;
-	const tieredResourceDescriptor: DescriptorDisplay | undefined = happinessKey
-		? toDescriptorDisplay(resourceMetadata.select(happinessKey))
-		: undefined;
-	const showHappinessCard = (value: number) => {
-		const activeTier = findTierForValue(tiers, value);
-		const tierConfig: TierEntryDisplayConfig = {
-			tieredResource: tieredResourceDescriptor,
-			passiveAsset,
-			translationContext,
-		};
-		if (activeTier?.id) {
-			tierConfig.activeId = activeTier.id;
-		}
-		const { summaries } = buildTierEntries(tiers, tierConfig);
-		const descriptor = tieredResourceDescriptor ?? {
-			id: happinessKey ?? 'resource',
-			label: 'Happiness',
-		};
-		const activeIndex = summaries.findIndex((summary) => summary.active);
-		const higherSummary =
-			activeIndex > 0 ? summaries[activeIndex - 1] : undefined;
-		const lowerSummary =
-			activeIndex >= 0 && activeIndex + 1 < summaries.length
-				? summaries[activeIndex + 1]
-				: undefined;
-		const formatTierTitle = (
-			summary: (typeof summaries)[number],
-			orientation: 'higher' | 'current' | 'lower',
-		) => {
-			const parts = [summary.icon, summary.name]
-				.filter((part) => part && String(part).trim().length > 0)
-				.join(' ')
-				.trim();
-			const baseTitle = parts.length
-				? parts
-				: (summary.entry.title?.trim() ?? '');
-			if (orientation === 'current') {
-				return baseTitle;
+	const tieredResourceDescriptor: DescriptorDisplay | undefined =
+		React.useMemo(() => {
+			if (!happinessKey) {
+				return undefined;
 			}
-			const thresholdValue =
-				orientation === 'higher'
-					? summary.rangeMin
-					: (summary.rangeMax ?? summary.rangeMin);
-			if (thresholdValue === undefined) {
-				return baseTitle;
+			const cached = resourceDescriptorMap.get(happinessKey);
+			if (cached) {
+				return cached;
 			}
-			const suffix = `${thresholdValue}${orientation === 'higher' ? '+' : '-'}`;
-			const rangeParts = [descriptor.icon ?? '❔', suffix]
-				.filter((part) => part && String(part).trim().length > 0)
-				.join(' ')
-				.trim();
-			if (!rangeParts.length) {
-				return baseTitle;
+			return toDescriptorDisplay(resourceMetadata.select(happinessKey));
+		}, [happinessKey, resourceDescriptorMap, resourceMetadata]);
+	const showHappinessCard = React.useCallback(
+		(value: number) => {
+			const activeTier = findTierForValue(tiers, value);
+			const tierConfig: TierEntryDisplayConfig = {
+				tieredResource: tieredResourceDescriptor,
+				passiveAsset,
+				translationContext,
+			};
+			if (activeTier?.id) {
+				tierConfig.activeId = activeTier.id;
 			}
-			return `${baseTitle} (${rangeParts})`;
-		};
-		const tierEntries: SummaryGroup[] = [];
-		if (higherSummary) {
-			tierEntries.push({
-				...higherSummary.entry,
-				title: formatTierTitle(higherSummary, 'higher'),
-			});
-		}
-		if (activeIndex >= 0) {
-			const currentSummary = summaries[activeIndex];
-			if (currentSummary) {
+			const { summaries } = buildTierEntries(tiers, tierConfig);
+			const descriptor = tieredResourceDescriptor ?? {
+				id: happinessKey ?? 'resource',
+				label: 'Happiness',
+			};
+			const activeIndex = summaries.findIndex((summary) => summary.active);
+			const higherSummary =
+				activeIndex > 0 ? summaries[activeIndex - 1] : undefined;
+			const lowerSummary =
+				activeIndex >= 0 && activeIndex + 1 < summaries.length
+					? summaries[activeIndex + 1]
+					: undefined;
+			const formatTierTitle = (
+				summary: (typeof summaries)[number],
+				orientation: 'higher' | 'current' | 'lower',
+			) => {
+				const parts = [summary.icon, summary.name]
+					.filter((part) => part && String(part).trim().length > 0)
+					.join(' ')
+					.trim();
+				const baseTitle = parts.length
+					? parts
+					: (summary.entry.title?.trim() ?? '');
+				if (orientation === 'current') {
+					return baseTitle;
+				}
+				const thresholdValue =
+					orientation === 'higher'
+						? summary.rangeMin
+						: (summary.rangeMax ?? summary.rangeMin);
+				if (thresholdValue === undefined) {
+					return baseTitle;
+				}
+				const suffix = `${thresholdValue}${orientation === 'higher' ? '+' : '-'}`;
+				const rangeParts = [descriptor.icon ?? '❔', suffix]
+					.filter((part) => part && String(part).trim().length > 0)
+					.join(' ')
+					.trim();
+				if (!rangeParts.length) {
+					return baseTitle;
+				}
+				return `${baseTitle} (${rangeParts})`;
+			};
+			const tierEntries: SummaryGroup[] = [];
+			if (higherSummary) {
 				tierEntries.push({
-					...currentSummary.entry,
-					title: formatTierTitle(currentSummary, 'current'),
+					...higherSummary.entry,
+					title: formatTierTitle(higherSummary, 'higher'),
 				});
+			}
+			if (activeIndex >= 0) {
+				const currentSummary = summaries[activeIndex];
+				if (currentSummary) {
+					tierEntries.push({
+						...currentSummary.entry,
+						title: formatTierTitle(currentSummary, 'current'),
+					});
+				} else {
+					tierEntries.push({ title: 'No active tier', items: [] });
+				}
 			} else {
 				tierEntries.push({ title: 'No active tier', items: [] });
 			}
-		} else {
-			tierEntries.push({ title: 'No active tier', items: [] });
-		}
-		if (lowerSummary) {
-			tierEntries.push({
-				...lowerSummary.entry,
-				title: formatTierTitle(lowerSummary, 'lower'),
+			if (lowerSummary) {
+				tierEntries.push({
+					...lowerSummary.entry,
+					title: formatTierTitle(lowerSummary, 'lower'),
+				});
+			}
+			handleHoverCard({
+				title: formatDescriptorSummary(descriptor),
+				effects: tierEntries,
+				effectsTitle: `Happiness thresholds (current: ${value})`,
+				requirements: [],
+				bgClass: PLAYER_INFO_CARD_BG,
 			});
-		}
-		handleHoverCard({
-			title: formatDescriptorSummary(descriptor),
-			effects: tierEntries,
-			effectsTitle: `Happiness thresholds (current: ${value})`,
-			requirements: [],
-			bgClass: PLAYER_INFO_CARD_BG,
-		});
-	};
+		},
+		[
+			handleHoverCard,
+			happinessKey,
+			passiveAsset,
+			tieredResourceDescriptor,
+			tiers,
+			translationContext,
+		],
+	);
 	const showGeneralResourceCard = () =>
 		handleHoverCard({
 			title: `${GENERAL_RESOURCE_INFO.icon} ${GENERAL_RESOURCE_INFO.label}`,
@@ -159,6 +189,35 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 				: {}),
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
+	const handleShowResource = React.useCallback(
+		(resourceKey: string) => {
+			const descriptor = resourceDescriptorMap.get(resourceKey);
+			if (!descriptor) {
+				return;
+			}
+			if (happinessKey && resourceKey === happinessKey) {
+				const resourceValue = player.resources[resourceKey] ?? 0;
+				showHappinessCard(resourceValue);
+				return;
+			}
+			handleHoverCard({
+				title: formatDescriptorSummary(descriptor),
+				effects: [],
+				requirements: [],
+				...(descriptor.description
+					? { description: descriptor.description }
+					: {}),
+				bgClass: PLAYER_INFO_CARD_BG,
+			});
+		},
+		[
+			happinessKey,
+			handleHoverCard,
+			player.resources,
+			resourceDescriptorMap,
+			showHappinessCard,
+		],
+	);
 
 	return (
 		<div className="info-bar resource-bar">
@@ -177,32 +236,18 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 			{resourceDescriptors.map((descriptor) => {
 				const resourceKey = descriptor.id;
 				const resourceValue = player.resources[resourceKey] ?? 0;
-				const showResourceCard = () => {
-					if (resourceKey === happinessKey) {
-						showHappinessCard(resourceValue);
-						return;
-					}
-					handleHoverCard({
-						title: formatDescriptorSummary(descriptor),
-						effects: [],
-						requirements: [],
-						...(descriptor.description
-							? { description: descriptor.description }
-							: {}),
-						bgClass: PLAYER_INFO_CARD_BG,
-					});
-				};
 				const nextTurnDelta = playerForecast.resources[resourceKey];
 				const buttonProps: ResourceButtonProps = {
 					resourceId: resourceKey,
-					descriptor,
+					label: descriptor.label,
 					value: resourceValue,
-					onShow: showResourceCard,
+					onShow: handleShowResource,
 					onHide: clearHoverCard,
+					...(descriptor.icon !== undefined ? { icon: descriptor.icon } : {}),
+					...(typeof nextTurnDelta === 'number'
+						? { forecastDelta: nextTurnDelta }
+						: {}),
 				};
-				if (typeof nextTurnDelta === 'number') {
-					buttonProps.forecastDelta = nextTurnDelta;
-				}
 				return <ResourceButton key={resourceKey} {...buttonProps} />;
 			})}
 		</div>
