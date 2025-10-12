@@ -11,10 +11,15 @@ import type {
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
-import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import { createDefaultTranslationAssets } from '../helpers/translationAssets';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 const translationAssets = createDefaultTranslationAssets();
+const baseRegistries = createSessionRegistries();
+const primaryResource =
+	(Object.keys(baseRegistries.resources) as SessionResourceKey[])[0] ??
+	('resource-fallback' as SessionResourceKey);
 
 function createPlayerSnapshot(
 	resources: Record<string, number> = {},
@@ -131,7 +136,7 @@ describe('formatPhaseResolution integration', () => {
 		const phaseDefinition = createPhaseDefinition();
 		const stepDefinition = phaseDefinition
 			.steps[0] as SessionPhaseStepDefinition;
-		const resourceKey = (Object.keys(RESOURCES) as ResourceKey[])[0]!;
+		const resourceKey = primaryResource;
 		const before = createPlayerSnapshot({ [resourceKey]: 4 });
 		const after = createPlayerSnapshot({ [resourceKey]: 4 });
 		const player = createSessionPlayer(

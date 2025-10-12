@@ -2,14 +2,6 @@ import { describe, expect, beforeEach, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
 import {
-	RESOURCES,
-	STATS,
-	POPULATIONS,
-	type ResourceKey,
-	type StatKey,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
-import {
 	type EngineSessionSnapshot,
 	type PlayerSnapshotDeltaBucket,
 	type PlayerStateSnapshot,
@@ -17,6 +9,9 @@ import {
 } from '@kingdom-builder/engine';
 import { useNextTurnForecast } from '../src/state/useNextTurnForecast';
 import { createSessionHelpers } from './utils/sessionStateHelpers';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
+import type { SessionResourceKey } from '../src/state/sessionTypes';
 
 const jsdom = new JSDOM('<!doctype html><html><body></body></html>');
 vi.stubGlobal('window', jsdom.window as unknown as typeof globalThis);
@@ -38,9 +33,15 @@ interface MockGameEngine {
 	acknowledgeResolution: ReturnType<typeof vi.fn>;
 }
 
-const [primaryResource] = Object.keys(RESOURCES) as ResourceKey[];
-const [primaryStat] = Object.keys(STATS) as StatKey[];
-const [primaryPopulation] = Object.keys(POPULATIONS) as PopulationRoleId[];
+const registries = createSessionRegistries();
+const populationKeys = registries.populations.keys();
+const primaryPopulation = populationKeys[0] ?? 'council';
+const resourceKeys = Object.keys(registries.resources) as SessionResourceKey[];
+const primaryResource =
+	resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
+const translationAssets = createDefaultTranslationAssets();
+const statKeys = Object.keys(translationAssets.stats);
+const primaryStat = statKeys[0] ?? 'maxPopulation';
 const defaultPhases: EngineSessionSnapshot['phases'] = [
 	{ id: 'growth', steps: [] },
 	{ id: 'upkeep', steps: [] },

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
 	SessionPhaseDefinition,
@@ -12,16 +11,16 @@ import type {
 
 vi.mock('../../src/translation', () => ({
 	__esModule: true,
-	diffStepSnapshots:
-		vi.fn<
-			(
-				before: PlayerSnapshot,
-				after: PlayerSnapshot,
-				effects: unknown,
-				diffContext: TranslationDiffContext,
-				resourceKeys?: ResourceKey[],
-			) => string[]
-		>(),
+        diffStepSnapshots:
+                vi.fn<
+                        (
+                                before: PlayerSnapshot,
+                                after: PlayerSnapshot,
+                                effects: unknown,
+                                diffContext: TranslationDiffContext,
+                                resourceKeys?: SessionResourceKey[],
+                        ) => string[]
+                >(),
 	snapshotPlayer: vi.fn(),
 }));
 
@@ -33,6 +32,7 @@ vi.mock('../../src/utils/describeSkipEvent', () => ({
 import { formatPhaseResolution } from '../../src/state/formatPhaseResolution';
 import { diffStepSnapshots } from '../../src/translation';
 import { describeSkipEvent } from '../../src/utils/describeSkipEvent';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 const diffStepSnapshotsMock = vi.mocked(diffStepSnapshots);
 const describeSkipEventMock = vi.mocked(describeSkipEvent);
@@ -83,7 +83,7 @@ describe('formatPhaseResolution', () => {
 		const before = createPlayerSnapshot({ gold: 5 });
 		const after = createPlayerSnapshot({ gold: 7 });
 		const diffContext = {} as TranslationDiffContext;
-		const resourceKeys = ['gold' as ResourceKey];
+		const resourceKeys = ['gold' as SessionResourceKey];
 		diffStepSnapshotsMock.mockReturnValue(['Gold +2 (5→7)']);
 
 		const result = formatPhaseResolution({

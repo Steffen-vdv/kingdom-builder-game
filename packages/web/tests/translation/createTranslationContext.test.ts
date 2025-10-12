@@ -8,19 +8,38 @@ import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
-import { PHASES } from '@kingdom-builder/contents';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
 		const registries = createSessionRegistries();
 		const [resourceKey] = Object.keys(registries.resources) as ResourceKey[];
+		if (resourceKey) {
+			registries.resources[resourceKey] = {
+				...registries.resources[resourceKey],
+				label: undefined,
+			};
+		}
 		const statKey = 'maxPopulation';
 		const [populationId] = registries.populations.keys();
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
-		const [firstPhase] = PHASES;
-		const firstStep = firstPhase?.steps[0]?.id ?? firstPhase?.id ?? 'phase';
+		const phases: EngineSessionSnapshot['phases'] = [
+			{
+				id: 'phase.alpha',
+				label: 'Alpha',
+				icon: '🅰️',
+				steps: [
+					{
+						id: 'phase.alpha.step-0',
+						title: 'Open Alpha',
+						effects: [],
+					},
+				],
+			},
+		];
+		const [firstPhase] = phases;
+		const firstStep = firstPhase?.steps?.[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
 		const metadata = {
 			effectLogs: { legacy: [{ note: 'legacy entry' }] },
@@ -93,7 +112,7 @@ describe('createTranslationContext', () => {
 				activePlayerId: 'A',
 				opponentId: 'B',
 			},
-			phases: PHASES,
+			phases,
 			actionCostResource: resourceKey,
 			recentResourceGains: [{ key: resourceKey, amount: 3 }],
 			compensations: {
@@ -183,7 +202,7 @@ describe('createTranslationContext', () => {
                             "resource": {
                               "description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
                               "icon": "🪙",
-                              "label": "Gold",
+                              "label": "gold",
                             },
                             "slot": {
                               "icon": "🧩",
@@ -240,9 +259,7 @@ describe('createTranslationContext', () => {
                             ],
                           },
                           "phases": [
-                            "growth",
-                            "upkeep",
-                            "main",
+                            "phase.alpha",
                           ],
                           "players": {
                             "active": "A",
