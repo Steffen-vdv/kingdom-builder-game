@@ -5,7 +5,6 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -13,30 +12,19 @@ import type {
 	TranslationModifierInfo,
 	TranslationTriggerAsset,
 } from './types';
+import {
+	FALLBACK_POPULATION_INFO,
+	FALLBACK_RESOURCE_INFO,
+	FALLBACK_STAT_INFO,
+	getFallbackTriggerAssets,
+} from './fallbackAssets';
 
-const DEFAULT_POPULATION_INFO = Object.freeze({
-	icon: '👥',
-	label: 'Population',
-});
-
-const DEFAULT_LAND_INFO = Object.freeze({
-	icon: '🗺️',
-	label: 'Land',
-});
-
-const DEFAULT_SLOT_INFO = Object.freeze({
-	icon: '🧩',
-	label: 'Development Slot',
-});
-
-const DEFAULT_PASSIVE_INFO = Object.freeze({
-	icon: '♾️',
-	label: 'Passive',
-});
-
-const DEFAULT_UPKEEP_INFO = Object.freeze({
-	icon: '🧹',
-	label: 'Upkeep',
+const DEFAULT_COMMON_ASSETS = Object.freeze({
+	population: Object.freeze({ icon: '👥', label: 'Population' }),
+	land: Object.freeze({ icon: '🗺️', label: 'Land' }),
+	slot: Object.freeze({ icon: '🧩', label: 'Development Slot' }),
+	passive: Object.freeze({ icon: '♾️', label: 'Passive' }),
+	upkeep: Object.freeze({ icon: '🧹', label: 'Upkeep' }),
 });
 
 const DEFAULT_MODIFIER_INFO = Object.freeze({
@@ -44,20 +32,29 @@ const DEFAULT_MODIFIER_INFO = Object.freeze({
 	result: Object.freeze({ icon: '✨', label: 'Outcome Adjustment' }),
 }) satisfies Readonly<Record<string, TranslationModifierInfo>>;
 
-const DEFAULT_STAT_INFO = Object.freeze({
-	maxPopulation: Object.freeze({ icon: '👥', label: 'Max Population' }),
-	armyStrength: Object.freeze({ icon: '⚔️', label: 'Army Strength' }),
-	fortificationStrength: Object.freeze({
-		icon: '🛡️',
-		label: 'Fortification Strength',
-	}),
-	absorption: Object.freeze({ icon: '🌀', label: 'Absorption' }),
-	growth: Object.freeze({ icon: '📈', label: 'Growth' }),
-	warWeariness: Object.freeze({ icon: '💤', label: 'War Weariness' }),
-}) satisfies Readonly<Record<string, TranslationIconLabel>>;
-
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
+
+function combineIconLabels(
+	primary: TranslationIconLabel | undefined,
+	fallback: TranslationIconLabel | undefined,
+	fallbackLabel: string,
+): TranslationIconLabel {
+	const entry: TranslationIconLabel = {};
+	const icon = primary?.icon ?? fallback?.icon;
+	if (icon !== undefined) {
+		entry.icon = icon;
+	}
+	const label = primary?.label ?? fallback?.label ?? fallbackLabel;
+	if (label !== undefined) {
+		entry.label = label;
+	}
+	const description = primary?.description ?? fallback?.description;
+	if (description !== undefined) {
+		entry.description = description;
+	}
+	return entry;
+}
 
 function mergeIconLabel(
 	base: TranslationIconLabel | undefined,
@@ -111,7 +108,35 @@ function buildPopulationMap(
 	const entries: Record<string, TranslationIconLabel> = {};
 	for (const [id, definition] of registry.entries()) {
 		const base = toIconLabel(definition, id);
-		entries[id] = mergeIconLabel(base, descriptors?.[id], base.label ?? id);
+		const fallback = FALLBACK_POPULATION_INFO[id];
+		const fallbackLabel = base.label ?? fallback?.label ?? id;
+		const combined = combineIconLabels(base, fallback, fallbackLabel);
+		entries[id] = mergeIconLabel(combined, descriptors?.[id], fallbackLabel);
+	}
+	if (descriptors) {
+		for (const id of Object.keys(descriptors)) {
+			if (entries[id]) {
+				continue;
+			}
+			const descriptor = descriptors[id];
+			if (!descriptor) {
+				continue;
+			}
+			const fallback = FALLBACK_POPULATION_INFO[id];
+			const fallbackLabel = descriptor.label ?? fallback?.label ?? id;
+			entries[id] = mergeIconLabel(fallback, descriptor, fallbackLabel);
+		}
+	}
+	for (const id of Object.keys(FALLBACK_POPULATION_INFO)) {
+		if (entries[id]) {
+			continue;
+		}
+		const fallback = FALLBACK_POPULATION_INFO[id];
+		if (!fallback) {
+			continue;
+		}
+		const fallbackLabel = fallback.label ?? id;
+		entries[id] = mergeIconLabel(fallback, descriptors?.[id], fallbackLabel);
 	}
 	return Object.freeze(entries);
 }
@@ -130,8 +155,36 @@ function buildResourceMap(
 		if (definition.description !== undefined) {
 			entry.description = definition.description;
 		}
+		const fallback = FALLBACK_RESOURCE_INFO[key];
+		const fallbackLabel = entry.label ?? fallback?.label ?? key;
+		const combined = combineIconLabels(entry, fallback, fallbackLabel);
 		const descriptor = descriptors?.[key];
-		entries[key] = mergeIconLabel(entry, descriptor, entry.label ?? key);
+		entries[key] = mergeIconLabel(combined, descriptor, fallbackLabel);
+	}
+	if (descriptors) {
+		for (const key of Object.keys(descriptors)) {
+			if (entries[key]) {
+				continue;
+			}
+			const descriptor = descriptors[key];
+			if (!descriptor) {
+				continue;
+			}
+			const fallback = FALLBACK_RESOURCE_INFO[key];
+			const fallbackLabel = descriptor.label ?? fallback?.label ?? key;
+			entries[key] = mergeIconLabel(fallback, descriptor, fallbackLabel);
+		}
+	}
+	for (const key of Object.keys(FALLBACK_RESOURCE_INFO)) {
+		if (entries[key]) {
+			continue;
+		}
+		const fallback = FALLBACK_RESOURCE_INFO[key];
+		if (!fallback) {
+			continue;
+		}
+		const fallbackLabel = fallback.label ?? key;
+		entries[key] = mergeIconLabel(fallback, descriptors?.[key], fallbackLabel);
 	}
 	return Object.freeze(entries);
 }
@@ -140,7 +193,7 @@ function buildStatMap(
 	descriptors?: Record<string, SessionMetadataDescriptor> | undefined,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [key, base] of Object.entries(DEFAULT_STAT_INFO)) {
+	for (const [key, base] of Object.entries(FALLBACK_STAT_INFO)) {
 		entries[key] = mergeIconLabel(base, descriptors?.[key], base.label ?? key);
 	}
 	if (descriptors) {
@@ -153,20 +206,6 @@ function buildStatMap(
 	}
 	return Object.freeze(entries);
 }
-
-const DEFAULT_TRIGGER_ASSETS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => [
-			id,
-			Object.freeze({
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-				label: info.past,
-			} satisfies TranslationTriggerAsset),
-		]),
-	),
-);
 
 function mergeTriggerAsset(
 	base: TranslationTriggerAsset | undefined,
@@ -196,7 +235,7 @@ function buildTriggerMap(
 	triggers?: Record<string, SessionTriggerMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
 	const entries: Record<string, TranslationTriggerAsset> = {
-		...DEFAULT_TRIGGER_ASSETS,
+		...getFallbackTriggerAssets(),
 	};
 	if (!triggers) {
 		return Object.freeze(entries);
@@ -240,29 +279,29 @@ export function createTranslationAssets(
 	const stats = buildStatMap(metadata?.stats);
 	const assetDescriptors = metadata?.assets ?? {};
 	const populationAsset = mergeIconLabel(
-		DEFAULT_POPULATION_INFO,
+		DEFAULT_COMMON_ASSETS.population,
 		assetDescriptors.population,
-		DEFAULT_POPULATION_INFO.label,
+		DEFAULT_COMMON_ASSETS.population.label,
 	);
 	const landAsset = mergeIconLabel(
-		DEFAULT_LAND_INFO,
+		DEFAULT_COMMON_ASSETS.land,
 		assetDescriptors.land,
-		DEFAULT_LAND_INFO.label,
+		DEFAULT_COMMON_ASSETS.land.label,
 	);
 	const slotAsset = mergeIconLabel(
-		DEFAULT_SLOT_INFO,
+		DEFAULT_COMMON_ASSETS.slot,
 		assetDescriptors.slot,
-		DEFAULT_SLOT_INFO.label,
+		DEFAULT_COMMON_ASSETS.slot.label,
 	);
 	const passiveAsset = mergeIconLabel(
-		DEFAULT_PASSIVE_INFO,
+		DEFAULT_COMMON_ASSETS.passive,
 		assetDescriptors.passive,
-		DEFAULT_PASSIVE_INFO.label,
+		DEFAULT_COMMON_ASSETS.passive.label,
 	);
 	const upkeepAsset = mergeIconLabel(
-		DEFAULT_UPKEEP_INFO,
+		DEFAULT_COMMON_ASSETS.upkeep,
 		assetDescriptors.upkeep,
-		DEFAULT_UPKEEP_INFO.label,
+		DEFAULT_COMMON_ASSETS.upkeep.label,
 	);
 	const triggers = buildTriggerMap(metadata?.triggers);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
