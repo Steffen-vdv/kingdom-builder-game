@@ -86,7 +86,7 @@ export async function advanceToActionPhase({
 				},
 			);
 			const { advance } = advanceResponse;
-			const { player, skipped }: SessionAdvanceResult = advance;
+			const { player, skipped }: SessionAdvanceResponse = advance;
 			const snapshotAfter = advanceResponse.snapshot;
 			if (snapshotAfter.game.conclusion) {
 				applyPhaseSnapshot(snapshotAfter, { isAdvancing: false });
