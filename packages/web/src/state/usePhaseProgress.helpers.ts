@@ -5,7 +5,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { snapshotPlayer } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
-import { advanceSessionPhase } from './sessionSdk';
+import { advanceSessionPhase, SessionMirroringError } from './sessionSdk';
 import type {
 	LegacySession,
 	SessionRegistries,
@@ -39,6 +39,7 @@ interface AdvanceToActionPhaseOptions {
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
 	>;
+	onFatalSessionError?: ((error: unknown) => void) | undefined;
 }
 
 export async function advanceToActionPhase({
@@ -51,6 +52,7 @@ export async function advanceToActionPhase({
 	formatPhaseResolution,
 	showResolution,
 	registries,
+	onFatalSessionError,
 }: AdvanceToActionPhaseOptions) {
 	let snapshot = session.getSnapshot();
 	if (snapshot.game.conclusion) {
@@ -74,9 +76,20 @@ export async function advanceToActionPhase({
 			break;
 		}
 		const before = snapshotPlayer(activePlayerBefore);
-		const advanceResponse: SessionAdvanceResponse = await advanceSessionPhase({
-			sessionId,
-		});
+		let advanceResponse: SessionAdvanceResponse;
+		try {
+			advanceResponse = await advanceSessionPhase({
+				sessionId,
+			});
+		} catch (error) {
+			if (error instanceof SessionMirroringError) {
+				if (onFatalSessionError) {
+					onFatalSessionError(error);
+				}
+				return;
+			}
+			throw error;
+		}
 		const { advance } = advanceResponse;
 		const { phase, step, player, effects, skipped }: SessionAdvanceResult =
 			advance;

@@ -233,6 +233,13 @@ export async function fetchSnapshot(
  * @param request - Action execution payload.
  * @param requestOptions - Transport settings such as an abort signal.
  */
+export class SessionMirroringError extends Error {
+	constructor(message: string, options?: ErrorOptions) {
+		super(message, options);
+		this.name = 'SessionMirroringError';
+	}
+}
+
 export async function performSessionAction(
 	request: ActionExecuteRequest,
 	requestOptions: GameApiRequestOptions = {},
@@ -246,14 +253,18 @@ export async function performSessionAction(
 				const params = request.params as ActionParams<string> | undefined;
 				handle.performAction(request.actionId, params);
 			} catch (localError) {
-				console.error(
+				const cause = localError instanceof Error ? localError : undefined;
+				throw new SessionMirroringError(
 					'Local session failed to mirror remote action.',
-					localError,
+					cause ? { cause } : undefined,
 				);
 			}
 		}
 		return response;
 	} catch (error) {
+		if (error instanceof SessionMirroringError) {
+			throw error;
+		}
 		const failure = error as ActionExecutionFailure;
 		const response: ActionExecuteErrorResponse = {
 			status: 'error',
@@ -294,7 +305,11 @@ export async function advanceSessionPhase(
 	try {
 		handle.advancePhase();
 	} catch (localError) {
-		console.error('Local session failed to mirror remote advance.', localError);
+		const cause = localError instanceof Error ? localError : undefined;
+		throw new SessionMirroringError(
+			'Local session failed to mirror remote advance.',
+			cause ? { cause } : undefined,
+		);
 	}
 	return response;
 }

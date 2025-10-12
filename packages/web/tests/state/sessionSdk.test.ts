@@ -8,6 +8,7 @@ import {
 	advanceSessionPhase,
 	releaseSession,
 	setGameApi,
+	SessionMirroringError,
 } from '../../src/state/sessionSdk';
 import {
 	GameApiFake,
@@ -165,6 +166,45 @@ describe('sessionSdk', () => {
 		expect(response).toEqual(successResponse);
 		expect(performSpy).toHaveBeenCalledWith(ActionId.tax, undefined);
 	});
+	it('throws a mirroring error when the local session fails to apply an action', async () => {
+		const created = await createSession();
+		const session = created.session;
+		const localFailure = new Error('mirror failed');
+		vi.spyOn(session, 'performAction').mockImplementation(() => {
+			throw localFailure;
+		});
+		const updatedSnapshot = createSessionSnapshot({
+			players: [
+				createSnapshotPlayer({
+					id: playerA.id,
+					name: playerA.name,
+					resources: { [resourceKey]: 12 },
+				}),
+				playerB,
+			],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			turn: 2,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+		});
+		const successResponse: ActionExecuteSuccessResponse = {
+			status: 'success',
+			snapshot: updatedSnapshot,
+			costs: {},
+			traces: [],
+		};
+		api.setNextActionResponse(successResponse);
+		await expect(
+			performSessionAction({
+				sessionId: 'session-1',
+				actionId: ActionId.tax,
+			}),
+		).rejects.toBeInstanceOf(SessionMirroringError);
+	});
 	it('returns error payloads when the API action fails', async () => {
 		const { session } = await createSession();
 		api.setNextActionResponse({
@@ -231,6 +271,40 @@ describe('sessionSdk', () => {
 		});
 		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(response.snapshot).toEqual(updatedSnapshot);
+		expect(advanceSpy).toHaveBeenCalled();
+	});
+	it('throws a mirroring error when the local session fails to advance', async () => {
+		await createSession();
+		const advanceSpy = vi
+			.spyOn((await fetchSnapshot('session-1')).session, 'advancePhase')
+			.mockImplementation(() => {
+				throw new Error('advance exploded');
+			});
+		const updatedSnapshot = createSessionSnapshot({
+			players: [playerA, playerB],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			turn: 2,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+		});
+		api.setNextAdvanceResponse({
+			sessionId: 'session-1',
+			snapshot: updatedSnapshot,
+			advance: {
+				phase: 'phase-main',
+				step: 'phase-main:start',
+				effects: [],
+				player: playerA,
+			},
+			registries: createSessionRegistriesPayload(),
+		});
+		await expect(
+			advanceSessionPhase({ sessionId: 'session-1' }),
+		).rejects.toBeInstanceOf(SessionMirroringError);
 		expect(advanceSpy).toHaveBeenCalled();
 	});
 	it('updates cached registries and resource keys when the phase advances', async () => {

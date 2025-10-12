@@ -40,6 +40,7 @@ const createTranslationContextMock = vi.hoisted(() => vi.fn(() => ({})));
 let capturedPhaseOptions:
 	| (Record<string, unknown> & { refresh?: () => void })
 	| undefined;
+let capturedActionOptions: Record<string, unknown> | undefined;
 
 vi.mock('../../src/state/useTimeScale', () => ({
 	useTimeScale: () => ({
@@ -106,10 +107,13 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 }));
 
 vi.mock('../../src/state/useActionPerformer', () => ({
-	useActionPerformer: () => ({
-		handlePerform: handlePerformMock,
-		performRef: { current: handlePerformMock },
-	}),
+	useActionPerformer: (options: Record<string, unknown>) => {
+		capturedActionOptions = options;
+		return {
+			handlePerform: handlePerformMock,
+			performRef: { current: handlePerformMock },
+		};
+	},
 }));
 
 vi.mock('../../src/state/useToasts', () => ({
@@ -177,6 +181,7 @@ describe('GameProvider', () => {
 		createTranslationContextMock.mockReset();
 		createTranslationContextMock.mockImplementation(() => ({}));
 		capturedPhaseOptions = undefined;
+		capturedActionOptions = undefined;
 		runUntilActionPhaseMock.mockResolvedValue(undefined);
 
 		const [resourceKey] = createResourceKeys();
@@ -408,5 +413,35 @@ describe('GameProvider', () => {
 		expect(
 			screen.getByText('An unexpected error prevented the game from loading.'),
 		).toBeInTheDocument();
+	});
+
+	it('releases the session when action mirroring fails fatally', async () => {
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		const fatalError = new Error('mirror failure');
+		act(() => {
+			const handler = capturedActionOptions?.onFatalSessionError as
+				| ((error: unknown) => void)
+				| undefined;
+			handler?.(fatalError);
+		});
+
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
 	});
 });

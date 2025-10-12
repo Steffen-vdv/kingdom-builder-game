@@ -19,6 +19,15 @@ const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
 const logContentMock = vi.hoisted(() => vi.fn(() => []));
 const diffStepSnapshotsMock = vi.hoisted(() => vi.fn(() => []));
 const performSessionActionMock = vi.hoisted(() => vi.fn());
+const SessionMirroringErrorMock = vi.hoisted(
+	() =>
+		class SessionMirroringError extends Error {
+			constructor(message?: string) {
+				super(message);
+				this.name = 'SessionMirroringError';
+			}
+		},
+);
 
 vi.mock('../../src/translation', () => ({
 	diffStepSnapshots: diffStepSnapshotsMock,
@@ -35,6 +44,7 @@ vi.mock('../../src/state/getLegacySessionContext', () => ({
 
 vi.mock('../../src/state/sessionSdk', () => ({
 	performSessionAction: performSessionActionMock,
+	SessionMirroringError: SessionMirroringErrorMock,
 }));
 
 describe('useActionPerformer', () => {
@@ -285,5 +295,40 @@ describe('useActionPerformer', () => {
 				actorLabel: 'Played by',
 			}),
 		);
+	});
+	it('forwards mirroring errors to the fatal error handler', async () => {
+		const fatalError = new SessionMirroringErrorMock('Mirror desync');
+		performSessionActionMock.mockRejectedValueOnce(fatalError);
+		const onFatalSessionError = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const syncPhaseState = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn();
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
+		expect(pushErrorToast).not.toHaveBeenCalled();
+		expect(addLog).not.toHaveBeenCalled();
 	});
 });
