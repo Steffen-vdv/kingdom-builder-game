@@ -105,17 +105,24 @@ export function GameProvider(props: GameProviderProps) {
 		});
 	}, [releaseCurrentSession, runExclusive]);
 
+	const applyFatalSessionError = useCallback(
+		(error: unknown) => {
+			releaseCurrentSession();
+			if (!mountedRef.current) {
+				return;
+			}
+			setSessionError(formatFailureDetails(error));
+		},
+		[releaseCurrentSession],
+	);
+
 	const handleFatalSessionError = useCallback(
 		(error: unknown) => {
 			void runExclusive(() => {
-				releaseCurrentSession();
-				if (!mountedRef.current) {
-					return;
-				}
-				setSessionError(formatFailureDetails(error));
+				applyFatalSessionError(error);
 			});
 		},
-		[runExclusive, releaseCurrentSession],
+		[applyFatalSessionError, runExclusive],
 	);
 
 	useEffect(
@@ -159,7 +166,7 @@ export function GameProvider(props: GameProviderProps) {
 					if (disposed || !mountedRef.current) {
 						return;
 					}
-					setSessionError(formatFailureDetails(error));
+					applyFatalSessionError(error);
 				}
 			});
 		void create();
@@ -173,6 +180,7 @@ export function GameProvider(props: GameProviderProps) {
 		runExclusive,
 		updateSessionData,
 		bootAttempt,
+		applyFatalSessionError,
 	]);
 
 	const refreshSession = useCallback(() => {
@@ -222,15 +230,14 @@ export function GameProvider(props: GameProviderProps) {
 				) {
 					return;
 				}
-				releaseCurrentSession();
-				setSessionError(formatFailureDetails(error));
+				applyFatalSessionError(error);
 			} finally {
 				if (refreshAbortRef.current === controller) {
 					refreshAbortRef.current = null;
 				}
 			}
 		});
-	}, [runExclusive, updateSessionData, releaseCurrentSession]);
+	}, [runExclusive, updateSessionData, applyFatalSessionError]);
 
 	const handleRelease = useCallback(() => {
 		teardownSession();
@@ -270,6 +277,9 @@ export function GameProvider(props: GameProviderProps) {
 			error: sessionError,
 			onRetry: handleRetry,
 		};
+		// GameBootstrapScreen owns all bootstrap failure messaging, so
+		// callers must propagate fatal errors through
+		// handleFatalSessionError to surface diagnostics here.
 		return (
 			<GameBootstrapScreen
 				{...bootstrapProps}
