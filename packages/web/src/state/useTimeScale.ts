@@ -14,14 +14,18 @@ function readStoredTimeScale(): TimeScale | null {
 	if (typeof window === 'undefined') {
 		return null;
 	}
-	const raw = window.localStorage.getItem(TIME_SCALE_STORAGE_KEY);
-	if (!raw) {
+	try {
+		const raw = window.localStorage.getItem(TIME_SCALE_STORAGE_KEY);
+		if (!raw) {
+			return null;
+		}
+		const parsed = Number(raw);
+		return (TIME_SCALE_OPTIONS as readonly number[]).includes(parsed)
+			? (parsed as TimeScale)
+			: null;
+	} catch (error) {
 		return null;
 	}
-	const parsed = Number(raw);
-	return (TIME_SCALE_OPTIONS as readonly number[]).includes(parsed)
-		? (parsed as TimeScale)
-		: null;
 }
 
 interface UseTimeScaleOptions {
@@ -73,8 +77,12 @@ export function useTimeScale({
 					return prev;
 				}
 				if (typeof window !== 'undefined') {
-					const storage = window.localStorage;
-					storage.setItem(TIME_SCALE_STORAGE_KEY, String(value));
+					try {
+						const storage = window.localStorage;
+						storage.setItem(TIME_SCALE_STORAGE_KEY, String(value));
+					} catch (error) {
+						// Ignore storage exceptions (e.g., Safari private mode).
+					}
 				}
 				timeScaleRef.current = value;
 				return value;
