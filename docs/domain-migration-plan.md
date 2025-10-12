@@ -161,6 +161,18 @@ boundaries without updating this log.
 
 - **Date & Author**: 2025-10-12 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
+    - `packages/web/src/state/sessionSelectors.types.ts` (Web)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Finish migrating session selector typings off Engine by sourcing
+    their player snapshots from Protocol, reinforcing the API-first boundary.
+  - **Communication Path Update**: Web selectors now consume
+    `SessionPlayerStateSnapshot` directly from Protocol, eliminating the Engine
+    import at this boundary.
+  - **Follow-Up Notes**: Audit remaining Web player panels and utilities that
+    still import Engine snapshots to continue the decoupling effort.
+
+- **Date & Author**: 2025-10-12 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
     - `packages/protocol/src/session/index.ts` (Protocol)
     - `packages/protocol/src/index.ts` (Protocol)
     - `packages/protocol/tests/simulate-upcoming-phases.test.ts` (Protocol)
