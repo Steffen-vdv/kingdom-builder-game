@@ -20,7 +20,8 @@ describe('FastifySessionTransport', () => {
 	} satisfies Record<string, string>;
 
 	async function createServer(tokens = defaultTokens) {
-		const { manager, actionId, gainKey } = createSyntheticSessionManager();
+		const { manager, actionId, gainKey, costKey } =
+			createSyntheticSessionManager();
 		const app = fastify();
 		const options: FastifySessionTransportOptions = {
 			sessionManager: manager,
@@ -28,7 +29,7 @@ describe('FastifySessionTransport', () => {
 		};
 		await app.register(createSessionTransportPlugin, options);
 		await app.ready();
-		return { app, actionId, gainKey };
+		return { app, actionId, gainKey, costKey };
 	}
 
 	it('creates sessions over HTTP', async () => {
@@ -167,6 +168,81 @@ describe('FastifySessionTransport', () => {
 		expect(actionBody.status).toBe('success');
 		const [player] = actionBody.snapshot.game.players;
 		expect(player?.resources[gainKey]).toBe(1);
+		await app.close();
+	});
+
+	it('describes actions through the API', async () => {
+		const { app, actionId, costKey } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const describeResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/actions/describe`,
+			headers: authorizedHeaders,
+			payload: { actionId },
+		});
+		expect(describeResponse.statusCode).toBe(200);
+		const body = describeResponse.json() as {
+			sessionId: string;
+			actionId: string;
+			definition?: { id: string };
+			options: unknown[];
+			costs: Record<string, number>;
+			requirements: unknown[];
+		};
+		expect(body.sessionId).toBe(sessionId);
+		expect(body.actionId).toBe(actionId);
+		expect(body.definition?.id).toBe(actionId);
+		expect(Array.isArray(body.options)).toBe(true);
+		expect(body.costs[costKey]).toBe(1);
+		expect(Array.isArray(body.requirements)).toBe(true);
+		await app.close();
+	});
+
+	it('rejects invalid action describe payloads with protocol errors', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const invalidResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/actions/describe`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(invalidResponse.statusCode).toBe(400);
+		const body = invalidResponse.json() as { code: string; message: string };
+		expect(body.code).toBe('INVALID_REQUEST');
+		expect(body.message).toBe('Invalid action describe request.');
+		await app.close();
+	});
+
+	it('requires authorization headers when describing actions', async () => {
+		const { app, actionId } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const unauthorized = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/actions/describe`,
+			payload: { actionId },
+		});
+		expect(unauthorized.statusCode).toBe(401);
+		const body = unauthorized.json() as { code: string };
+		expect(body.code).toBe('UNAUTHORIZED');
 		await app.close();
 	});
 
