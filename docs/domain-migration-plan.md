@@ -159,6 +159,25 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-14 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/components/player/BuildingDisplay.tsx` (Web)
+    - `packages/web/src/components/player/LandDisplay.tsx` (Web)
+    - `packages/web/src/components/player/PopulationInfo.tsx` (Web)
+    - `packages/web/src/components/player/ResourceBar.tsx` (Web)
+    - `packages/web/src/components/player/PlayerPanel.tsx` (Web)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Continue the player panel migration by replacing Engine snapshot
+    dependencies with protocol session snapshots so the UI reads session state
+    exclusively through the shared contracts.
+  - **Communication Path Update**: Player overview components now import
+    `SessionPlayerStateSnapshot` from `@kingdom-builder/protocol`, aligning
+    their props and derived state with the protocol schema rather than Engine
+    aliases.
+  - **Follow-Up Notes**: `PassiveDisplay.tsx` and related tests still rely on
+    Engine `PlayerStateSnapshot` helpers. Migrate them to the protocol schema
+    to complete the player panel decoupling.
+
 - **Date & Author**: 2025-10-13 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/components/actions/GenericActionCard.tsx` (Web)

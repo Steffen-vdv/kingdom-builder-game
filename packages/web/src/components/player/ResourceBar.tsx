@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import { GENERAL_RESOURCE_ICON } from '../../icons';
@@ -22,7 +22,7 @@ import {
 } from './registryDisplays';
 
 interface ResourceBarProps {
-	player: PlayerStateSnapshot;
+	player: SessionPlayerStateSnapshot;
 }
 
 function findTierForValue(
