@@ -171,6 +171,14 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		'absolute inset-0 pointer-events-auto',
 		'bg-slate-900/20 backdrop-blur-sm',
 	);
+	const handleBackdropKeyDown = (
+		event: React.KeyboardEvent<HTMLButtonElement>,
+	) => {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			onClose();
+		}
+	};
 	const logContent = (
 		<>
 			{header}
@@ -207,7 +215,13 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 
 	return (
 		<div className="fixed inset-0 z-40">
-			<div className={backdropClasses} role="presentation" onClick={onClose} />
+			<button
+				type="button"
+				className={backdropClasses}
+				aria-label="Close log overlay"
+				onClick={onClose}
+				onKeyDown={handleBackdropKeyDown}
+			/>
 			<div className={overlayClasses}>
 				<div
 					ref={containerRef}
