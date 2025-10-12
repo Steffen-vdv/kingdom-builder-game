@@ -71,6 +71,48 @@ type EngineRegistries = {
 	populations: Registry<PopulationDef>;
 };
 
+function validatePhases(
+	phases: PhaseConfig[] | undefined,
+): asserts phases is PhaseConfig[] {
+	if (!phases || phases.length === 0) {
+		const message =
+			'Cannot create engine: expected at least one phase with ' +
+			'steps, but received none.';
+		throw new Error(message);
+	}
+	for (const phase of phases) {
+		if (!phase) {
+			throw new Error(
+				'Cannot create engine: phases array contains an undefined entry.',
+			);
+		}
+		const phaseId = phase.id ?? '<unknown phase>';
+		if (!phase.steps || phase.steps.length === 0) {
+			const message =
+				'Cannot create engine: phase "' +
+				phaseId +
+				'" must define at least one step.';
+			throw new Error(message);
+		}
+		for (const step of phase.steps) {
+			if (!step) {
+				const message =
+					'Cannot create engine: phase "' +
+					phaseId +
+					'" includes an undefined step.';
+				throw new Error(message);
+			}
+			if (!step.id || step.id.trim().length === 0) {
+				const message =
+					'Cannot create engine: phase "' +
+					phaseId +
+					'" includes a step without an id.';
+				throw new Error(message);
+			}
+		}
+	}
+}
+
 function buildRegistry<DefinitionType extends { id: string }>(
 	definitions: DefinitionType[] | undefined,
 	schema: ZodType<DefinitionType>,
@@ -148,22 +190,7 @@ export function createEngine({
 			startConfig = validatedConfig.start;
 		}
 	}
-	if (!phases || phases.length === 0) {
-		const message =
-			'Cannot create engine: expected at least one phase with ' +
-			'steps, but received none.';
-		throw new Error(message);
-	}
-	for (const phase of phases) {
-		if (!phase.steps || phase.steps.length === 0) {
-			const phaseId = phase?.id ?? '<unknown phase>';
-			const message =
-				'Cannot create engine: phase "' +
-				phaseId +
-				'" must define at least one step.';
-			throw new Error(message);
-		}
-	}
+	validatePhases(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
 	setResourceKeys(Object.keys(startConfig.player.resources || {}));
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
