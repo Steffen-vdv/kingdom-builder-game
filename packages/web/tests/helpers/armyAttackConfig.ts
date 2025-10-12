@@ -1,23 +1,102 @@
-import {
-	Resource as ContentResource,
-	Stat as ContentStat,
-} from '@kingdom-builder/contents';
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
-import { Stat } from '@kingdom-builder/engine';
 
-type SyntheticAction = {
+export type SyntheticAction = {
 	id: string;
 	name: string;
 	icon: string;
 };
 
-type CombatStatKey = 'power' | 'absorption' | 'fortification';
+export type CombatStatKey = 'power' | 'absorption' | 'fortification';
 
-type CombatStatConfig = {
+export type SyntheticDescriptor = {
 	key: string;
 	icon: string;
 	label: string;
-	base: Stat;
+};
+
+export const SYNTH_RESOURCE_IDS = {
+	ap: 'ap',
+	gold: 'gold',
+	happiness: 'happiness',
+	castleHP: 'castleHP',
+	tier: 'tierResource',
+} as const;
+
+export type SyntheticResourceKey =
+	(typeof SYNTH_RESOURCE_IDS)[keyof typeof SYNTH_RESOURCE_IDS];
+
+export const SYNTH_RESOURCE_METADATA: Record<
+	SyntheticResourceKey,
+	SyntheticDescriptor
+> = {
+	[SYNTH_RESOURCE_IDS.ap]: {
+		key: SYNTH_RESOURCE_IDS.ap,
+		icon: '⚙️',
+		label: 'Action Points',
+	},
+	[SYNTH_RESOURCE_IDS.gold]: {
+		key: SYNTH_RESOURCE_IDS.gold,
+		icon: '🪙',
+		label: 'Gold',
+	},
+	[SYNTH_RESOURCE_IDS.happiness]: {
+		key: SYNTH_RESOURCE_IDS.happiness,
+		icon: '😊',
+		label: 'Happiness',
+	},
+	[SYNTH_RESOURCE_IDS.castleHP]: {
+		key: SYNTH_RESOURCE_IDS.castleHP,
+		icon: '🏰',
+		label: 'Castle HP',
+	},
+	[SYNTH_RESOURCE_IDS.tier]: {
+		key: SYNTH_RESOURCE_IDS.tier,
+		icon: '🎖️',
+		label: 'Tier Resource',
+	},
+};
+
+export const SYNTH_STAT_IDS = {
+	armyStrength: 'armyStrength',
+	absorption: 'absorption',
+	fortificationStrength: 'fortificationStrength',
+	warWeariness: 'warWeariness',
+} as const;
+
+export type SyntheticStatKey =
+	(typeof SYNTH_STAT_IDS)[keyof typeof SYNTH_STAT_IDS];
+
+export const SYNTH_STAT_METADATA: Record<
+	SyntheticStatKey,
+	SyntheticDescriptor
+> = {
+	[SYNTH_STAT_IDS.armyStrength]: {
+		key: SYNTH_STAT_IDS.armyStrength,
+		icon: '⚔️',
+		label: 'Army Strength',
+	},
+	[SYNTH_STAT_IDS.absorption]: {
+		key: SYNTH_STAT_IDS.absorption,
+		icon: '🛡️',
+		label: 'Absorption',
+	},
+	[SYNTH_STAT_IDS.fortificationStrength]: {
+		key: SYNTH_STAT_IDS.fortificationStrength,
+		icon: '🏯',
+		label: 'Fortification',
+	},
+	[SYNTH_STAT_IDS.warWeariness]: {
+		key: SYNTH_STAT_IDS.warWeariness,
+		icon: '💤',
+		label: 'War Weariness',
+	},
+};
+
+export type CombatStatConfig = {
+	key: string;
+	icon: string;
+	label: string;
+	baseKey: SyntheticStatKey;
 };
 
 export const SYNTH_ATTACK: SyntheticAction = {
@@ -55,19 +134,19 @@ export const COMBAT_STAT_CONFIG: Record<CombatStatKey, CombatStatConfig> = {
 		key: 'synthetic:valor',
 		icon: '⚔️',
 		label: 'Valor',
-		base: Stat.armyStrength,
+		baseKey: SYNTH_STAT_IDS.armyStrength,
 	},
 	absorption: {
 		key: 'synthetic:veil',
 		icon: '🌫️',
 		label: 'Veil',
-		base: Stat.absorption,
+		baseKey: SYNTH_STAT_IDS.absorption,
 	},
 	fortification: {
 		key: 'synthetic:rampart',
 		icon: '🧱',
 		label: 'Rampart',
-		base: Stat.fortificationStrength,
+		baseKey: SYNTH_STAT_IDS.fortificationStrength,
 	},
 };
 
@@ -76,7 +155,7 @@ export const DEFENDER_HAPPINESS_LOSS = 3;
 export const WAR_WEARINESS_GAIN = 4;
 export const BUILDING_REWARD_GOLD = 6;
 export const PLUNDER_PERCENT = 40;
-export const TIER_RESOURCE_KEY = 'synthetic:tier';
+export const TIER_RESOURCE_KEY = SYNTH_RESOURCE_IDS.tier;
 
 export const PHASES: PhaseDef[] = [
 	{
@@ -90,16 +169,16 @@ export const PHASES: PhaseDef[] = [
 export const START: StartConfig = {
 	player: {
 		resources: {
-			[ContentResource.ap]: 0,
-			[ContentResource.gold]: 0,
-			[ContentResource.happiness]: 0,
-			[ContentResource.castleHP]: 12,
+			[SYNTH_RESOURCE_IDS.ap]: 0,
+			[SYNTH_RESOURCE_IDS.gold]: 0,
+			[SYNTH_RESOURCE_IDS.happiness]: 0,
+			[SYNTH_RESOURCE_IDS.castleHP]: 12,
 		},
 		stats: {
-			[ContentStat.armyStrength]: 0,
-			[ContentStat.absorption]: 0,
-			[ContentStat.fortificationStrength]: 0,
-			[ContentStat.warWeariness]: 0,
+			[SYNTH_STAT_IDS.armyStrength]: 0,
+			[SYNTH_STAT_IDS.absorption]: 0,
+			[SYNTH_STAT_IDS.fortificationStrength]: 0,
+			[SYNTH_STAT_IDS.warWeariness]: 0,
 		},
 		population: {},
 		lands: [],
@@ -117,5 +196,3 @@ export const RULES: RuleSet = {
 	basePopulationCap: 1,
 	winConditions: [],
 };
-
-export type { SyntheticAction, CombatStatKey, CombatStatConfig };
