@@ -8,6 +8,7 @@ import type {
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionGateway,
+	SessionIdentifier,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
@@ -17,6 +18,7 @@ import {
 	actionDescribeResponseSchema,
 	actionExecuteRequestSchema,
 	actionExecuteResponseSchema,
+	sessionIdentifierSchema,
 	sessionAdvanceRequestSchema,
 	sessionAdvanceResponseSchema,
 	sessionCreateRequestSchema,
@@ -99,9 +101,9 @@ export class HttpSessionGateway implements SessionGateway {
 	}
 
 	public async fetchSnapshot(
-		request: SessionAdvanceRequest,
+		request: SessionIdentifier,
 	): Promise<SessionStateResponse> {
-		const payload = sessionAdvanceRequestSchema.parse(request);
+		const payload = sessionIdentifierSchema.parse(request);
 		const result = await this.execute({
 			method: 'GET',
 			path: `sessions/${this.encodeSessionId(payload.sessionId)}/snapshot`,
