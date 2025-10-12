@@ -2,9 +2,15 @@ import React, { useId } from 'react';
 
 interface TimerCircleProps {
 	progress: number;
+	ariaLabel?: string;
+	isDecorative?: boolean;
 }
 
-const TimerCircle: React.FC<TimerCircleProps> = ({ progress }) => {
+const TimerCircle: React.FC<TimerCircleProps> = ({
+	progress,
+	ariaLabel,
+	isDecorative = false,
+}) => {
 	const id = useId();
 	const size = 36;
 	const strokeWidth = 4;
@@ -14,16 +20,20 @@ const TimerCircle: React.FC<TimerCircleProps> = ({ progress }) => {
 		? Math.max(0, Math.min(1, progress))
 		: 0;
 	const strokeDashoffset = (1 - clampedProgress) * circumference;
+	const percentLabel = Math.round(clampedProgress * 100);
+	const label = ariaLabel ?? `Timer progress ${percentLabel}%`;
 
 	return (
 		<svg
 			width={size}
 			height={size}
 			viewBox={`0 0 ${size} ${size}`}
-			role="img"
-			aria-hidden
+			role={isDecorative ? undefined : 'img'}
+			aria-hidden={isDecorative || undefined}
+			aria-label={isDecorative ? undefined : label}
 			className="text-blue-500"
 		>
+			{!isDecorative ? <title>{label}</title> : null}
 			<defs>
 				<radialGradient id={`${id}-bg`} cx="50%" cy="50%" r="65%">
 					<stop offset="0%" stopColor="rgba(255,255,255,0.9)" />
