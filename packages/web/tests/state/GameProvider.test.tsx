@@ -19,6 +19,7 @@ import {
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
+const setSessionDevModeMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/sessionSdk', async () => {
 	const actual = await vi.importActual('../../src/state/sessionSdk');
@@ -27,6 +28,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 		createSession: createSessionMock,
 		fetchSnapshot: fetchSnapshotMock,
 		releaseSession: releaseSessionMock,
+		setSessionDevMode: setSessionDevModeMock,
 	};
 });
 
@@ -170,6 +172,7 @@ describe('GameProvider', () => {
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
+		setSessionDevModeMock.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -314,6 +317,55 @@ describe('GameProvider', () => {
 
 		await waitFor(() =>
 			expect(runUntilActionPhaseMock).toHaveBeenCalledTimes(1),
+		);
+	});
+
+	it('updates the active session when the dev mode prop changes', async () => {
+		const { rerender } = render(
+			<GameProvider devMode={false} playerName="Scout">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		expect(setSessionDevModeMock).not.toHaveBeenCalled();
+
+		const devModeSnapshot = createSessionSnapshot({
+			players: initialSnapshot.game.players,
+			activePlayerId: initialSnapshot.game.activePlayerId,
+			opponentId: initialSnapshot.game.opponentId,
+			phases: initialSnapshot.phases,
+			actionCostResource: initialSnapshot.actionCostResource,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 3,
+			devMode: true,
+		});
+
+		setSessionDevModeMock.mockResolvedValueOnce({
+			session,
+			legacySession: session,
+			snapshot: devModeSnapshot,
+			ruleSnapshot: devModeSnapshot.rules,
+			registries,
+			resourceKeys,
+			metadata: devModeSnapshot.metadata,
+		});
+
+		rerender(
+			<GameProvider devMode playerName="Scout">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(setSessionDevModeMock).toHaveBeenCalledWith('session-1', true),
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:3'),
 		);
 	});
 
