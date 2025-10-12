@@ -32,6 +32,7 @@ import type {
 	SessionManager,
 	CreateSessionOptions,
 } from '../session/SessionManager.js';
+import { buildSessionMetadata } from '../session/buildSessionMetadata.js';
 import type { AuthContext, AuthRole } from '../auth/AuthContext.js';
 import { AuthError } from '../auth/AuthError.js';
 import type { AuthMiddleware } from '../auth/tokenAuthMiddleware.js';
@@ -346,20 +347,19 @@ export class SessionTransport {
 	}
 
 	private hasRole(context: AuthContext, role: AuthRole): boolean {
-		if (context.roles.includes(role)) {
-			return true;
-		}
-		return context.roles.includes('admin');
+		return context.roles.includes(role) || context.roles.includes('admin');
 	}
 
 	private buildStateResponse(
 		sessionId: string,
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
-		return {
-			sessionId,
-			snapshot,
-			registries: this.sessionManager.getRegistries(),
-		};
+		const registries = this.sessionManager.getRegistries();
+		const metadata = buildSessionMetadata({
+			metadata: snapshot.metadata,
+			registries,
+		});
+		const enrichedSnapshot: SessionSnapshot = { ...snapshot, metadata };
+		return { sessionId, snapshot: enrichedSnapshot, registries };
 	}
 }
