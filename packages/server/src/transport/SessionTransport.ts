@@ -46,6 +46,8 @@ export interface SessionTransportOptions {
 	authMiddleware?: AuthMiddleware;
 }
 
+export const PLAYER_NAME_MAX_LENGTH = 40;
+
 export class SessionTransport {
 	private readonly sessionManager: SessionManager;
 
@@ -83,6 +85,9 @@ export class SessionTransport {
 				this.applyPlayerNames(session, data.playerNames);
 			}
 		} catch (error) {
+			if (error instanceof TransportError) {
+				throw error;
+			}
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
 				cause: error,
 			});
@@ -284,7 +289,22 @@ export class SessionTransport {
 			if (!sanitizedName) {
 				continue;
 			}
-			session.updatePlayerName(playerId, sanitizedName);
+			if (sanitizedName.length > PLAYER_NAME_MAX_LENGTH) {
+				throw new TransportError(
+					'INVALID_REQUEST',
+					`Player name must be ${PLAYER_NAME_MAX_LENGTH} ` +
+						'characters or fewer.',
+					{
+						issues: {
+							playerId,
+							length: sanitizedName.length,
+							maxLength: PLAYER_NAME_MAX_LENGTH,
+						},
+					},
+				);
+			}
+			const clippedName = sanitizedName.slice(0, PLAYER_NAME_MAX_LENGTH);
+			session.updatePlayerName(playerId, clippedName);
 		}
 	}
 

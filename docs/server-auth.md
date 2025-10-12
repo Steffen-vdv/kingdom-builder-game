@@ -35,3 +35,10 @@ Roles gate access to specific transport actions:
 
 Tokens without required roles trigger `403 Forbidden`. Missing tokens return
 `401 Unauthorized`.
+
+## Session creation validation
+
+- Player names provided in `playerNames` during `/sessions` creation are
+  trimmed and limited to 40 characters.
+- Requests that include a trimmed name longer than the limit are rejected with
+  `400 Bad Request` and the transport error code `INVALID_REQUEST`.
