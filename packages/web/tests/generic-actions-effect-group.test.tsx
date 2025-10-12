@@ -3,21 +3,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { ActionId } from '@kingdom-builder/contents';
 import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import GenericActions from '../src/components/actions/GenericActions';
 import type * as TranslationModule from '../src/translation';
 import type * as TranslationContentModule from '../src/translation/content';
-import {
-	createTranslationContextStub,
-	toTranslationPlayer,
-	wrapTranslationRegistry,
-} from './helpers/translationContextStub';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createActionsPanelState } from './helpers/createActionsPanelState';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import {
+	createSnapshotPlayer,
+	createSessionSnapshot,
+} from './helpers/sessionFixtures';
+import { createTranslationContext } from '../src/translation/context';
+import { createTestRegistryMetadata } from './helpers/registryMetadata';
 const getRequirementIconsMock = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => getRequirementIconsMock(...args),
@@ -53,40 +52,76 @@ vi.mock('../src/translation/content', async () => {
 	};
 });
 
-const actionsMap = new Map([
-	[
-		ActionId.royal_decree,
-		{
-			id: ActionId.royal_decree,
-			name: 'Royal Decree',
-			icon: '📜',
-			focus: 'economy' as const,
-		},
-	],
-	[ActionId.develop, { id: ActionId.develop, name: 'Develop', icon: '🏗️' }],
-	[ActionId.till, { id: ActionId.till, name: 'Till', icon: '🧑\u200d🌾' }],
-] as const);
+function selectRoyalDecree(
+	registries: ReturnType<typeof createTestSessionScaffold>['registries'],
+) {
+	for (const [id, definition] of registries.actions.entries()) {
+		const hasOptions = definition.effects?.some((effect) => {
+			return Array.isArray((effect as { options?: unknown[] }).options);
+		});
+		if (hasOptions) {
+			return { id, definition } as const;
+		}
+	}
+	throw new Error('Expected an action with selectable effect groups.');
+}
+
+function selectActionBySubstring(
+	registries: ReturnType<typeof createTestSessionScaffold>['registries'],
+	segment: string,
+) {
+	for (const [id, definition] of registries.actions.entries()) {
+		if (
+			id.includes(segment) ||
+			definition.name?.toLowerCase().includes(segment)
+		) {
+			return { id, definition } as const;
+		}
+	}
+	throw new Error(`Unable to locate action containing segment "${segment}".`);
+}
 
 function createMockGame() {
-	const baseRegistries = createSessionRegistries();
-	const resourceKeys = Object.keys(baseRegistries.resources);
-	const actionCostResource = resourceKeys[0] ?? 'resource-action';
-	const secondaryResource = resourceKeys[1] ?? actionCostResource;
-	const tieredResourceKey = resourceKeys[2] ?? secondaryResource;
-	const actionPhaseId = 'phase.action';
-	const activePlayer = {
+	const scaffold = createTestSessionScaffold();
+	const { registries, metadata, phases, ruleSnapshot } = scaffold;
+	const resourceKeys = Object.keys(registries.resources);
+	const actionCostResource = ruleSnapshot.tieredResourceKey;
+	const secondaryResource =
+		resourceKeys.find((key) => key !== actionCostResource) ??
+		actionCostResource;
+	const { id: royalDecreeId, definition: royalDecreeDef } =
+		selectRoyalDecree(registries);
+	const developAction = selectActionBySubstring(registries, 'develop');
+	const tillAction = selectActionBySubstring(registries, 'till');
+	const activePlayer = createSnapshotPlayer({
 		id: 'A',
 		name: 'Player',
 		resources: {
 			[actionCostResource]: 3,
 			[secondaryResource]: 20,
 		},
-		lands: [{ id: 'A-L1', slotsFree: 0 }],
-		population: {} as Record<string, number>,
-		buildings: new Set<string>(),
-		actions: new Set<string>(Array.from(actionsMap.keys())),
-	};
-	const opponent = {
+		lands: [
+			{
+				id: 'A-L1',
+				slotsMax: 1,
+				slotsUsed: 0,
+				tilled: false,
+				developments: [],
+				slots: [],
+			},
+			{
+				id: 'A-L2',
+				slotsMax: 1,
+				slotsUsed: 0,
+				tilled: false,
+				developments: [],
+				slots: [],
+			},
+		],
+		buildings: [],
+		actions: [royalDecreeId, developAction.id, tillAction.id],
+	});
+	const opponent = createSnapshotPlayer({
 		id: 'B',
 		name: 'Opponent',
 		resources: {
@@ -94,187 +129,58 @@ function createMockGame() {
 			[secondaryResource]: 0,
 		},
 		lands: [],
-		population: {} as Record<string, number>,
-		buildings: new Set<string>(),
-		actions: new Set<string>(),
-	};
-	const translationContext = createTranslationContextStub({
-		actions: wrapTranslationRegistry({
-			get(id: string) {
-				const action = actionsMap.get(id as ActionId);
-				if (!action) {
-					throw new Error(`Unknown action ${id}`);
-				}
-				return action;
-			},
-			has(id: string) {
-				return actionsMap.has(id as ActionId);
-			},
-		}),
-		buildings: wrapTranslationRegistry({
-			get(id: string) {
-				throw new Error(`No building ${id}`);
-			},
-			has() {
-				return false;
-			},
-		}),
-		developments: wrapTranslationRegistry({
-			get(id: string) {
-				throw new Error(`No development ${id}`);
-			},
-			has() {
-				return false;
-			},
-		}),
-		phases: [{ id: actionPhaseId }],
-		activePlayer: toTranslationPlayer({
-			id: activePlayer.id,
-			name: activePlayer.name,
-			resources: activePlayer.resources,
-			population: activePlayer.population,
-		}),
-		opponent: toTranslationPlayer({
-			id: opponent.id,
-			name: opponent.name,
-			resources: opponent.resources,
-			population: opponent.population,
-		}),
-		actionCostResource,
+		buildings: [],
+		actions: [],
 	});
-
-	const toSnapshot = (participant: typeof activePlayer) => ({
-		id: participant.id,
-		name: participant.name,
-		resources: { ...participant.resources },
-		stats: {},
-		statsHistory: {},
-		population: { ...participant.population },
-		lands: participant.lands.map((land) => ({
-			id: land.id,
-			slotsMax: land.slotsFree,
-			slotsUsed: 0,
-			tilled: false,
-			developments: [],
-		})),
-		buildings: Array.from(participant.buildings),
-		actions: Array.from(participant.actions),
-		statSources: {},
-		skipPhases: {},
-		skipSteps: {},
-		passives: [],
-	});
-
-	const sessionState: EngineSessionSnapshot = {
-		game: {
-			turn: 1,
-			currentPlayerIndex: 0,
-			currentPhase: actionPhaseId,
-			currentStep: '',
-			phaseIndex: 0,
-			stepIndex: 0,
-			devMode: false,
-			players: [toSnapshot(activePlayer), toSnapshot(opponent)],
-			activePlayerId: activePlayer.id,
-			opponentId: opponent.id,
-		},
-		phases: [
-			{
-				id: actionPhaseId,
-				name: 'Main',
-				action: true,
-				steps: [],
-			},
-		],
+	const sessionState: EngineSessionSnapshot = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases,
 		actionCostResource,
-		recentResourceGains: [],
-		compensations: {} as Record<string, PlayerStartConfig>,
-		rules: {
-			tieredResourceKey,
-			tierDefinitions: [],
-			winConditions: [],
+		ruleSnapshot,
+		metadata,
+	});
+	const translationContext = createTranslationContext(
+		sessionState,
+		registries,
+		sessionState.metadata,
+		{
+			ruleSnapshot,
+			passiveRecords: sessionState.passiveRecords,
 		},
-		passiveRecords: {
-			[activePlayer.id]: [],
-			[opponent.id]: [],
-		},
-		metadata: { passiveEvaluationModifiers: {} },
-	};
-
-	const emptyRegistry = new Map<string, never>();
-	const sessionRegistries = {
-		actions: {
-			entries: () => Array.from(actionsMap.entries()),
-			get(id: string) {
-				const action = actionsMap.get(id as ActionId);
-				if (!action) {
-					throw new Error(`Unknown action ${id}`);
-				}
-				return action;
-			},
-			has(id: string) {
-				return actionsMap.has(id as ActionId);
-			},
-		},
-		buildings: {
-			entries: () => Array.from(emptyRegistry.entries()),
-			get(id: string) {
-				throw new Error(`No building ${id}`);
-			},
-			has() {
-				return false;
-			},
-		},
-		developments: {
-			entries: () => Array.from(emptyRegistry.entries()),
-			get(id: string) {
-				throw new Error(`No development ${id}`);
-			},
-			has() {
-				return false;
-			},
-		},
-		populations: baseRegistries.populations,
-		resources: baseRegistries.resources,
-	} satisfies ReturnType<typeof createSessionRegistries>;
-
-	const sessionView = selectSessionView(sessionState, sessionRegistries);
-
-	const resourceDescriptors = Object.fromEntries(
-		Object.entries(sessionRegistries.resources).map(([key, definition]) => [
-			key,
-			{
-				id: key,
-				label: definition.label ?? key,
-				icon: definition.icon,
-			},
-		]),
 	);
-	sessionState.metadata = {
-		passiveEvaluationModifiers: {},
-		resources: resourceDescriptors,
-	};
-
+	const metadataSelectors = createTestRegistryMetadata(
+		registries,
+		sessionState.metadata,
+	);
+	const sessionRegistries = registries;
+	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const session = {
 		getActionCosts: vi.fn(),
 		getActionRequirements: vi.fn(),
 		getActionOptions: vi.fn(),
 	} as const;
-
 	return {
 		...createActionsPanelState({
 			actionCostResource,
-			phaseId: actionPhaseId,
+			phaseId: phases[0]?.id ?? 'phase.action',
 		}),
 		logOverflowed: false,
 		session,
 		sessionState,
 		sessionView,
 		translationContext,
-		ruleSnapshot: sessionState.rules,
+		ruleSnapshot,
 		sessionRegistries,
 		actionCostResource,
 		secondaryResource,
+		metadataSelectors,
+		actionReferences: {
+			royalDecree: { id: royalDecreeId, definition: royalDecreeDef },
+			develop: developAction,
+			till: tillAction,
+		},
 	};
 }
 let mockGame: ReturnType<typeof createMockGame>;
@@ -302,29 +208,52 @@ describe('GenericActions effect group handling', () => {
 		mockGame.session.getActionRequirements.mockImplementation(() => []);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
-			if (type === 'action' && id === ActionId.develop) {
+			if (type === 'action' && id === mockGame.actionReferences.develop.id) {
 				return ['🏠 House'];
 			}
 			return [];
 		});
 		mockGame.session.getActionOptions.mockImplementation((actionId: string) => {
-			if (actionId !== ActionId.royal_decree) {
+			if (actionId !== mockGame.actionReferences.royalDecree.id) {
+				return [];
+			}
+			const groups =
+				mockGame.actionReferences.royalDecree.definition.effects?.filter(
+					(
+						effect,
+					): effect is {
+						id?: string;
+						title?: string;
+						layout?: string;
+						options?: ReadonlyArray<{
+							id: string;
+							icon?: string;
+							actionId?: string;
+							params?: Record<string, unknown>;
+						}>;
+					} => {
+						return Array.isArray((effect as { options?: unknown[] }).options);
+					},
+				);
+			const primaryGroup = groups?.find((group) => group.options?.length);
+			const primaryOption = primaryGroup?.options?.[0];
+			if (!primaryGroup || !primaryOption) {
 				return [];
 			}
 			return [
 				{
-					id: 'royal_decree_develop',
-					title: 'Choose one:',
-					layout: 'compact',
+					id: primaryGroup.id ?? 'royal_decree_develop',
+					title: primaryGroup.title ?? 'Choose one:',
+					layout: (primaryGroup.layout as 'compact' | undefined) ?? 'compact',
 					options: [
 						{
-							id: 'royal_decree_house',
-							icon: '🏠',
-							actionId: ActionId.develop,
+							...primaryOption,
 							params: {
-								landId: '$landId',
-								developmentId: 'house',
+								...(primaryOption.params ?? {}),
+								landId: 'A-L2',
 							},
+							actionId:
+								primaryOption.actionId ?? mockGame.actionReferences.develop.id,
 						},
 					],
 				},
@@ -333,13 +262,14 @@ describe('GenericActions effect group handling', () => {
 	});
 
 	it('collects choices and parameters before performing royal decree', async () => {
+		const royalDecree = mockGame.actionReferences.royalDecree.definition;
 		const action = {
-			id: ActionId.royal_decree,
-			name: 'Royal Decree',
-			icon: '📜',
-			category: 'basic',
-			order: 5,
-			focus: 'economy' as const,
+			id: mockGame.actionReferences.royalDecree.id,
+			name: royalDecree.name,
+			icon: royalDecree.icon,
+			category: royalDecree.category,
+			order: royalDecree.order,
+			focus: royalDecree.focus,
 		};
 		const activePlayer = mockGame.sessionView.active;
 		if (!activePlayer) {
@@ -355,13 +285,18 @@ describe('GenericActions effect group handling', () => {
 					summaries={new Map([[action.id, ['Expand swiftly']]])}
 					player={activePlayer}
 					canInteract={true}
-					selectResourceDescriptor={(resourceKey) =>
-						mockGame.sessionState.metadata.resources?.[resourceKey] ?? {
-							id: resourceKey,
-							label: resourceKey,
-							icon: mockGame.sessionRegistries.resources[resourceKey]?.icon,
+					selectResourceDescriptor={(resourceKey) => {
+						const descriptor =
+							mockGame.metadataSelectors.resourceMetadata.byId[resourceKey];
+						if (descriptor) {
+							return {
+								id: descriptor.id,
+								label: descriptor.label ?? descriptor.id,
+								icon: descriptor.icon,
+							};
 						}
-					}
+						return { id: resourceKey, label: resourceKey };
+					}}
 				/>
 			</RegistryMetadataProvider>,
 		);
@@ -370,7 +305,7 @@ describe('GenericActions effect group handling', () => {
 		fireEvent.click(actionButton);
 
 		const optionButton = await screen.findByRole('button', {
-			name: /🏗️ Develop - 🏠 House/,
+			name: /Develop - 🏠 House/,
 		});
 		fireEvent.click(optionButton);
 
@@ -379,9 +314,11 @@ describe('GenericActions effect group handling', () => {
 		});
 		const [, params] = mockGame.handlePerform.mock.calls[0]!;
 		expect(params).toMatchObject({
-			landId: 'A-L2',
 			choices: {
-				royal_decree_develop: { optionId: 'royal_decree_house' },
+				royal_decree_develop: {
+					optionId: 'royal_decree_house',
+					params: { landId: 'A-L2' },
+				},
 			},
 		});
 	});

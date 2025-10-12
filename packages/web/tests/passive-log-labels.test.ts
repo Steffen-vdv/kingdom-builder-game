@@ -7,150 +7,268 @@ import {
 } from '../src/translation/log';
 import { logContent } from '../src/translation/content';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import { createTranslationContext } from '../src/translation/context';
+import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import {
-	PHASES,
-	GAME_START,
-	RULES,
-	BuildingId,
-} from '@kingdom-builder/contents';
-import { createSessionRegistries } from './helpers/sessionRegistries';
-import { createDefaultTranslationAssets } from './helpers/translationAssets';
+	selectPassiveDescriptor,
+	selectResourceDescriptor,
+	selectStatDescriptor,
+} from '../src/translation/effects/registrySelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
+type ScaffoldData = ReturnType<typeof createTestSessionScaffold>;
+
+interface PassiveHarness {
+	engine: ReturnType<typeof createEngine>;
+	translationContext: ReturnType<typeof createTranslationContext>;
+	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
+	ruleSnapshot: ScaffoldData['ruleSnapshot'];
+	registries: ScaffoldData['registries'];
+	sessionMetadata: ScaffoldData['metadata'];
+}
+
+function createPassiveHarness(
+	metadataOverride?: Parameters<typeof createTranslationContext>[2],
+): PassiveHarness {
+	const scaffold = createTestSessionScaffold();
+	const resourceKeys = Object.keys(scaffold.registries.resources);
+	const startResources = Object.fromEntries(
+		resourceKeys.map((key) => [key, 0]),
+	);
+	const startConfig = {
+		player: {
+			resources: { ...startResources },
+			stats: {},
+			population: {},
+			lands: [],
+			buildings: [],
+		},
+		players: {
+			opponent: {
+				resources: { ...startResources },
+				stats: {},
+				population: {},
+				lands: [],
+				buildings: [],
+			},
+		},
+	} satisfies Parameters<typeof createEngine>[0]['start'];
+	const engine = createEngine({
+		actions: scaffold.registries.actions,
+		buildings: scaffold.registries.buildings,
+		developments: scaffold.registries.developments,
+		populations: scaffold.registries.populations,
+		phases: scaffold.phases.map((phase) => ({
+			id: phase.id,
+			action: phase.action ?? false,
+			steps: (phase.steps ?? []).map((step) => ({ id: step.id })),
+		})),
+		start: startConfig,
+		rules: scaffold.ruleSnapshot,
+	});
+	const snapshot = snapshotEngine(engine);
+	const appliedMetadata = structuredClone(
+		metadataOverride ?? scaffold.metadata,
+	);
+	snapshot.metadata = appliedMetadata;
+	const translationContext = createTranslationContext(
+		snapshot,
+		scaffold.registries,
+		snapshot.metadata,
+		{
+			ruleSnapshot: snapshot.rules,
+			passiveRecords: snapshot.passiveRecords,
+		},
+	);
+	const metadataSelectors = createTestRegistryMetadata(
+		scaffold.registries,
+		snapshot.metadata,
+	);
+	engine.assets = translationContext.assets;
+	return {
+		engine,
+		translationContext,
+		metadataSelectors,
+		ruleSnapshot: snapshot.rules,
+		registries: scaffold.registries,
+		sessionMetadata: appliedMetadata,
+	};
+}
+
+function rebuildTranslationArtifacts(harness: PassiveHarness) {
+	const snapshot = snapshotEngine(harness.engine);
+	snapshot.metadata = structuredClone(harness.sessionMetadata);
+	const translationContext = createTranslationContext(
+		snapshot,
+		harness.registries,
+		snapshot.metadata,
+		{
+			ruleSnapshot: snapshot.rules,
+			passiveRecords: snapshot.passiveRecords,
+		},
+	);
+	const diffContext = createTranslationDiffContext({
+		activePlayer: harness.engine.activePlayer,
+		buildings: harness.engine.buildings,
+		developments: harness.engine.developments,
+		passives: translationContext.passives,
+		assets: translationContext.assets,
+	});
+	return { translationContext, diffContext } as const;
+}
+
+function findBuildingId(
+	registries: PassiveHarness['registries'],
+	segment: string,
+) {
+	for (const [id] of registries.buildings.entries()) {
+		if (id.includes(segment)) {
+			return id;
+		}
+	}
+	throw new Error(`Unable to find building containing segment "${segment}".`);
+}
+
+function findDevelopmentId(
+	registries: PassiveHarness['registries'],
+	segment: string,
+) {
+	for (const [id] of registries.developments.entries()) {
+		if (id.includes(segment)) {
+			return id;
+		}
+	}
+	throw new Error(
+		`Unable to find development containing segment "${segment}".`,
+	);
+}
+
 describe('passive log labels', () => {
 	it('uses tier summary tokens without exposing raw ids', () => {
-		const registries = createSessionRegistries();
-		const engineContext = createEngine({
-			actions: registries.actions,
-			buildings: registries.buildings,
-			developments: registries.developments,
-			populations: registries.populations,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		engineContext.assets = createDefaultTranslationAssets();
-		const happinessKey = engineContext.services.tieredResource
-			.resourceKey as string;
-
+		const harness = createPassiveHarness();
+		const happinessKey = harness.ruleSnapshot.tieredResourceKey;
 		const setHappiness = (value: number) => {
-			engineContext.activePlayer.resources[happinessKey] = value;
-			engineContext.services.handleTieredResourceChange(
-				engineContext,
-				engineContext.activePlayer,
+			const { engine } = harness;
+			engine.activePlayer.resources[happinessKey] = value;
+			engine.services.handleTieredResourceChange(
+				engine,
+				engine.activePlayer,
 				happinessKey,
 			);
 		};
-
 		setHappiness(0);
 		const beforeActivation = snapshotPlayer(
-			engineContext.activePlayer,
-			engineContext,
+			harness.engine.activePlayer,
+			harness.engine,
 		);
-
 		setHappiness(6);
 		const afterActivation = snapshotPlayer(
-			engineContext.activePlayer,
-			engineContext,
+			harness.engine.activePlayer,
+			harness.engine,
 		);
-
-		const diffContext = createTranslationDiffContext(engineContext);
+		const { translationContext, diffContext } =
+			rebuildTranslationArtifacts(harness);
+		const tierDescriptor = selectResourceDescriptor(
+			translationContext,
+			happinessKey,
+		);
 		const activationLines = diffStepSnapshots(
 			beforeActivation,
 			afterActivation,
 			undefined,
 			diffContext,
 		);
-		const activationLog = activationLines.find((line) =>
-			line.includes('activated'),
+		expect(activationLines.length).toBeGreaterThan(0);
+		const tierIncreaseLine = activationLines.find((line) =>
+			line.includes(tierDescriptor.label),
 		);
-		expect(activationLog).toBeTruthy();
-		expect(activationLog).not.toContain('happiness.tier.summary');
-		const passiveIcon = engineContext.assets.passive.icon;
-		if (passiveIcon) {
-			expect(activationLog?.startsWith(`${passiveIcon} `)).toBe(true);
+		expect(tierIncreaseLine).toBeTruthy();
+		expect(tierIncreaseLine?.includes(happinessKey)).toBe(false);
+		if (tierDescriptor.icon) {
+			expect(tierIncreaseLine?.startsWith(`${tierDescriptor.icon} `)).toBe(
+				true,
+			);
+		} else {
+			expect(tierIncreaseLine?.startsWith('undefined')).toBe(false);
 		}
-		expect(activationLog).toContain('Joyful activated');
-
 		const beforeExpiration = snapshotPlayer(
-			engineContext.activePlayer,
-			engineContext,
+			harness.engine.activePlayer,
+			harness.engine,
 		);
 		setHappiness(0);
 		const afterExpiration = snapshotPlayer(
-			engineContext.activePlayer,
-			engineContext,
+			harness.engine.activePlayer,
+			harness.engine,
 		);
-
+		const {
+			translationContext: expirationContext,
+			diffContext: expirationDiff,
+		} = rebuildTranslationArtifacts(harness);
+		const expirationDescriptor = selectResourceDescriptor(
+			expirationContext,
+			happinessKey,
+		);
 		const expirationLines = diffStepSnapshots(
 			beforeExpiration,
 			afterExpiration,
 			undefined,
-			diffContext,
+			expirationDiff,
 		);
-		const expirationLog = expirationLines.find((line) =>
-			line.includes('deactivated'),
+		const tierDecreaseLine = expirationLines.find((line) =>
+			line.includes(expirationDescriptor.label),
 		);
-		expect(expirationLog).toBeTruthy();
-		expect(expirationLog).not.toContain('happiness.tier.summary');
-		if (passiveIcon) {
-			expect(expirationLog?.startsWith(`${passiveIcon} `)).toBe(true);
+		expect(tierDecreaseLine).toBeTruthy();
+		expect(tierDecreaseLine?.includes(happinessKey)).toBe(false);
+		if (expirationDescriptor.icon) {
+			expect(
+				tierDecreaseLine?.startsWith(`${expirationDescriptor.icon} `),
+			).toBe(true);
+		} else {
+			expect(tierDecreaseLine?.startsWith('undefined')).toBe(false);
 		}
-		expect(expirationLog).toContain('Joyful deactivated');
+		const passiveDescriptor = selectPassiveDescriptor(expirationContext);
+		expect(passiveDescriptor.label.length).toBeGreaterThan(0);
 	});
 
 	it('formats building passives and skips bonus activations', () => {
-		const registries = createSessionRegistries();
-		const engineContext = createEngine({
-			actions: registries.actions,
-			buildings: registries.buildings,
-			developments: registries.developments,
-			populations: registries.populations,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		engineContext.assets = createDefaultTranslationAssets();
-
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const harness = createPassiveHarness();
+		const castleWallsId = findBuildingId(harness.registries, 'castle_walls');
+		const before = snapshotPlayer(harness.engine.activePlayer, harness.engine);
 		runEffects(
 			[
 				{
 					type: 'building',
 					method: 'add',
-					params: { id: BuildingId.CastleWalls },
+					params: { id: castleWallsId },
 				},
 			],
-			engineContext,
+			harness.engine,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-
-		const diffContext = createTranslationDiffContext(engineContext);
+		const after = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const { translationContext, diffContext } =
+			rebuildTranslationArtifacts(harness);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
-		expect(lines.some((line) => line.includes('Castle Walls activated'))).toBe(
-			false,
-		);
+		expect(lines.some((line) => line.includes('activated'))).toBe(false);
+		const buildingEntry = translationContext.buildings.get(castleWallsId);
+		const buildingLabel = buildingEntry?.name ?? castleWallsId;
+		const iconPrefix = buildingEntry?.icon ? `${buildingEntry.icon} ` : '';
+		expect(
+			lines.some((line) =>
+				line.startsWith(`${LOG_KEYWORDS.built} ${iconPrefix}${buildingLabel}`),
+			),
+		).toBe(true);
 		expect(lines.some((line) => line.includes('castle_walls_bonus'))).toBe(
 			false,
 		);
 	});
 
 	it('omits development passives and keeps stat changes grouped', () => {
-		const registries = createSessionRegistries();
-		const engineContext = createEngine({
-			actions: registries.actions,
-			buildings: registries.buildings,
-			developments: registries.developments,
-			populations: registries.populations,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		engineContext.assets = createDefaultTranslationAssets();
-
+		const harness = createPassiveHarness();
 		runEffects(
 			[
 				{
@@ -158,100 +276,111 @@ describe('passive log labels', () => {
 					method: 'add',
 				},
 			],
-			engineContext,
+			harness.engine,
 		);
-
-		const targetLand = engineContext.activePlayer.lands.at(-1);
+		const targetLand = harness.engine.activePlayer.lands.at(-1);
 		expect(targetLand).toBeTruthy();
 		if (!targetLand) {
 			return;
 		}
-
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const developmentId = findDevelopmentId(harness.registries, 'watchtower');
+		const before = snapshotPlayer(harness.engine.activePlayer, harness.engine);
 		runEffects(
 			[
 				{
 					type: 'development',
 					method: 'add',
-					params: {
-						id: 'watchtower',
-						landId: targetLand.id,
-					},
+					params: { id: developmentId, landId: targetLand.id },
 				},
 			],
-			engineContext,
+			harness.engine,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-
-		const diffContext = createTranslationDiffContext(engineContext);
+		const after = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const { translationContext, diffContext } =
+			rebuildTranslationArtifacts(harness);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
-
-		const rawLabel = logContent('development', 'watchtower', engineContext)[0];
+		const rawLabel = logContent(
+			'development',
+			developmentId,
+			harness.engine,
+		)[0];
 		const label =
 			rawLabel && typeof rawLabel === 'object'
 				? rawLabel.text
-				: (rawLabel ?? 'Watchtower');
+				: (rawLabel ?? developmentId);
 		const expectedHeadline = `${LOG_KEYWORDS.developed} ${label}`;
 		expect(lines).toContain(expectedHeadline);
+		const fortificationKey =
+			harness.metadataSelectors.statMetadata.list.find((descriptor) =>
+				descriptor.id.includes('fortification'),
+			)?.id ?? 'fortificationStrength';
+		const fortification = selectStatDescriptor(
+			translationContext,
+			fortificationKey,
+		);
 		expect(
 			lines.some(
 				(line) =>
-					line.includes('Fortification Strength') && line.includes('+2'),
+					line.includes(fortification.label ?? 'Fortification') &&
+					line.includes('+2'),
 			),
 		).toBe(true);
+		const absorptionDescriptor =
+			harness.metadataSelectors.statMetadata.list.find((descriptor) =>
+				descriptor.label?.toLowerCase().includes('absorption'),
+			);
+		const absorptionLabel = absorptionDescriptor?.label ?? 'Absorption';
 		expect(
 			lines.some(
-				(line) => line.includes('Absorption') && line.includes('+50%'),
+				(line) => line.includes(absorptionLabel) && line.includes('+50%'),
 			),
 		).toBe(true);
 	});
 
 	it('falls back when passive icon metadata is missing', () => {
-		const registries = createSessionRegistries();
-		const engineContext = createEngine({
-			actions: registries.actions,
-			buildings: registries.buildings,
-			developments: registries.developments,
-			populations: registries.populations,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		const defaultAssets = createDefaultTranslationAssets();
-		engineContext.assets = {
-			...defaultAssets,
-			passive: { label: defaultAssets.passive.label },
-		};
-
-		const happinessKey = engineContext.services.tieredResource
-			.resourceKey as string;
-		engineContext.activePlayer.resources[happinessKey] = 0;
-		engineContext.services.handleTieredResourceChange(
-			engineContext,
-			engineContext.activePlayer,
+		const metadataOverride = structuredClone(
+			createTestSessionScaffold().metadata,
+		);
+		if (metadataOverride.assets?.passive) {
+			delete metadataOverride.assets.passive.icon;
+		}
+		const harness = createPassiveHarness(metadataOverride);
+		const happinessKey = harness.ruleSnapshot.tieredResourceKey;
+		harness.engine.activePlayer.resources[happinessKey] = 0;
+		harness.engine.services.handleTieredResourceChange(
+			harness.engine,
+			harness.engine.activePlayer,
 			happinessKey,
 		);
-		engineContext.activePlayer.resources[happinessKey] = 6;
-		engineContext.services.handleTieredResourceChange(
-			engineContext,
-			engineContext.activePlayer,
+		harness.engine.activePlayer.resources[happinessKey] = 6;
+		harness.engine.services.handleTieredResourceChange(
+			harness.engine,
+			harness.engine.activePlayer,
 			happinessKey,
 		);
-
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
-		engineContext.activePlayer.resources[happinessKey] = 0;
-		engineContext.services.handleTieredResourceChange(
-			engineContext,
-			engineContext.activePlayer,
+		const before = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		harness.engine.activePlayer.resources[happinessKey] = 0;
+		harness.engine.services.handleTieredResourceChange(
+			harness.engine,
+			harness.engine.activePlayer,
 			happinessKey,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
-
-		const diffContext = createTranslationDiffContext(engineContext);
+		const after = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const { translationContext, diffContext } =
+			rebuildTranslationArtifacts(harness);
+		const descriptor = selectResourceDescriptor(
+			translationContext,
+			happinessKey,
+		);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
-		const activationLine = lines.find((line) => line.includes('deactivated'));
-		expect(activationLine).toBeTruthy();
-		expect(activationLine?.startsWith('undefined')).toBe(false);
+		const tierChangeLine = lines.find(
+			(line) => line.includes(descriptor.label) && line.includes('→'),
+		);
+		expect(tierChangeLine).toBeTruthy();
+		expect(tierChangeLine?.includes(happinessKey)).toBe(false);
+		expect(tierChangeLine?.startsWith('undefined')).toBe(false);
+		const passiveDescriptor = selectPassiveDescriptor(translationContext);
+		expect(passiveDescriptor.icon).toBe('♾️');
 	});
 });
