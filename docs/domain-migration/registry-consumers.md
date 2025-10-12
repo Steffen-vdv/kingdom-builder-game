@@ -44,8 +44,8 @@
 
 ### `packages/web/src/components/player/PassiveDisplay.tsx`
 
-- Imports `PhaseId` enum to translate the upkeep phase label from `translationContext.phases`. Assumes `PhaseId.Upkeep` exists and matches a phase entry.
-- Treats `translationContext.assets.passive` as the fallback provider of passive `icon`/`label` when metadata omits them.
+- Scans phase metadata/translation context for entries whose id/label includes "upkeep" to compose duration copy, avoiding the old `PhaseId` enum dependency.
+- Still leans on `translationContext.assets.passive` for icon/label fallbacks when registry metadata lacks passive assets.
 
 ### `packages/web/src/components/player/ResourceBar.tsx`
 
@@ -58,9 +58,8 @@
 
 ### `packages/web/src/components/player/buildTierEntries.ts`
 
-- Requires `PASSIVE_INFO.icon` for permanent/ongoing markers and `RESOURCES[tieredResourceKey].icon` for range labels.
-- Calls content-driven effects through `describeEffects`; expects tier previews, when present, to mirror action/development effect structures.
-- Mixes passive metadata (`PASSIVE_INFO`) with derived tier formatting constants.
+- Consumes protocol rule snapshots and registry metadata selectors to resolve tier icons/labels.
+- Continues to format effect summaries via `describeEffects`/`splitSummary` and maintains bespoke slug→title conversion plus "No effect" fallbacks that should migrate into selector helpers.
 
 ### `packages/web/src/components/game/GameConclusionOverlay.tsx`
 

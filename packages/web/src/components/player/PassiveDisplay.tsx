@@ -1,12 +1,11 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import { PhaseId } from '@kingdom-builder/contents';
 import type {
 	EffectDef,
-	PassiveSummary,
-	PlayerId,
-	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+	SessionPassiveSummary as PassiveSummary,
+	SessionPlayerId as PlayerId,
+	SessionPlayerStateSnapshot as PlayerStateSnapshot,
+} from '@kingdom-builder/protocol';
 import { describeEffects, splitSummary } from '../../translation';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import {
@@ -40,6 +39,34 @@ function normalizeEffectList(
 	);
 }
 
+const matchesUpkeepPhase = (value: string | undefined): boolean => {
+	if (!value) {
+		return false;
+	}
+	return value.trim().toLowerCase().includes('upkeep');
+};
+
+function resolveUpkeepPhaseLabel(
+	phaseMetadata: ReturnType<typeof usePhaseMetadata>,
+	phases: ReadonlyArray<{ id: string; label?: string }>,
+): string {
+	for (const descriptor of phaseMetadata.list) {
+		if (
+			matchesUpkeepPhase(descriptor.id) ||
+			matchesUpkeepPhase(descriptor.label)
+		) {
+			return descriptor.label || 'Upkeep';
+		}
+	}
+	for (const phase of phases) {
+		if (matchesUpkeepPhase(phase.id) || matchesUpkeepPhase(phase.label)) {
+			const descriptor = phaseMetadata.select(phase.id);
+			return descriptor.label || 'Upkeep';
+		}
+	}
+	return 'Upkeep';
+}
+
 export default function PassiveDisplay({
 	player,
 }: {
@@ -54,9 +81,9 @@ export default function PassiveDisplay({
 	);
 	const resourceMetadata = useResourceMetadata();
 	const phaseMetadata = usePhaseMetadata();
-	const upkeepDescriptor = React.useMemo(
-		() => phaseMetadata.select(PhaseId.Upkeep),
-		[phaseMetadata],
+	const upkeepLabel = React.useMemo(
+		() => resolveUpkeepPhaseLabel(phaseMetadata, translationContext.phases),
+		[phaseMetadata, translationContext.phases],
 	);
 	const playerId: PlayerId = player.id;
 	const summaries: PassiveSummary[] =
@@ -158,7 +185,6 @@ export default function PassiveDisplay({
 				const items = tierSections
 					? tierSections
 					: describeEffects(resolvedEffects, translationContext);
-				const upkeepLabel = upkeepDescriptor.label || 'Upkeep';
 				const sections = definition.onUpkeepPhase
 					? [
 							{

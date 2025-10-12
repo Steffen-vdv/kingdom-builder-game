@@ -1,4 +1,4 @@
-import type { RuleSnapshot } from '@kingdom-builder/engine';
+import type { SessionRuleSnapshot as RuleSnapshot } from '@kingdom-builder/protocol';
 import {
 	describeEffects,
 	splitSummary,
