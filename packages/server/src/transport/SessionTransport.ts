@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { SafeParseReturnType } from 'zod';
 import {
 	actionExecuteRequestSchema,
 	actionExecuteResponseSchema,
@@ -53,12 +54,9 @@ export interface SessionTransportOptions {
 	idFactory?: TransportIdFactory;
 	authMiddleware?: AuthMiddleware;
 }
-
 export class SessionTransport {
 	private readonly sessionManager: SessionManager;
-
 	private readonly idFactory: TransportIdFactory;
-
 	private readonly authMiddleware: AuthMiddleware | undefined;
 
 	public constructor(options: SessionTransportOptions) {
@@ -69,21 +67,15 @@ export class SessionTransport {
 
 	public createSession(request: TransportRequest): SessionCreateResponse {
 		this.requireAuthorization(request, 'session:create');
-		const parsed = sessionCreateRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session create request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const data = parsed.data;
+		const data = this.parseRequest(
+			sessionCreateRequestSchema,
+			request.body,
+			'Invalid session create request.',
+		);
 		data.playerNames && sanitizePlayerNameEntries(data.playerNames);
 		const sessionId = this.generateSessionId();
 		try {
-			const options: CreateSessionOptions = {
-				devMode: data.devMode,
-			};
+			const options: CreateSessionOptions = { devMode: data.devMode };
 			if (data.config !== undefined) {
 				options.config = data.config;
 			}
@@ -95,33 +87,32 @@ export class SessionTransport {
 			});
 		}
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(
-			sessionId,
-			snapshot,
-		) satisfies SessionCreateResponse;
+		const response = this.buildStateResponse(sessionId, snapshot);
 		return sessionCreateResponseSchema.parse(response);
 	}
 
-	public getSessionState(request: TransportRequest): SessionStateResponse {
-		const sessionId = this.parseSessionIdentifier(request.body);
+	// prettier-ignore
+	public getSessionState(
+                request: TransportRequest,
+        ): SessionStateResponse {
+		const sessionId = this.parseRequest(
+			sessionIdSchema,
+			(request.body as { sessionId?: unknown })?.sessionId,
+			'Invalid session identifier.',
+		);
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
 		const response = this.buildStateResponse(sessionId, snapshot);
 		return sessionStateResponseSchema.parse(response);
 	}
-
 	public async advanceSession(
 		request: TransportRequest,
 	): Promise<SessionAdvanceResponse> {
-		const parsed = sessionAdvanceRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session advance request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const { sessionId } = parsed.data;
+		const { sessionId } = this.parseRequest(
+			sessionAdvanceRequestSchema,
+			request.body,
+			'Invalid session advance request.',
+		);
 		this.requireAuthorization(request, 'session:advance');
 		const session = this.requireSession(sessionId);
 		try {
@@ -210,38 +201,26 @@ export class SessionTransport {
 
 	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
 		this.requireAuthorization(request, 'session:advance');
-		const parsed = sessionSetDevModeRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session dev mode request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const { sessionId, enabled } = parsed.data;
+		const { sessionId, enabled } = this.parseRequest(
+			sessionSetDevModeRequestSchema,
+			request.body,
+			'Invalid session dev mode request.',
+		);
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(
-			sessionId,
-			snapshot,
-		) satisfies SessionSetDevModeResponse;
+		const response = this.buildStateResponse(sessionId, snapshot);
 		return sessionSetDevModeResponseSchema.parse(response);
 	}
-
 	public updatePlayerName(
 		request: TransportRequest,
 	): SessionUpdatePlayerNameResponse {
 		this.requireAuthorization(request, 'session:advance');
-		const parsed = sessionUpdatePlayerNameRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid player name update request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const { sessionId, playerId, playerName } = parsed.data;
+		const { sessionId, playerId, playerName } = this.parseRequest(
+			sessionUpdatePlayerNameRequestSchema,
+			request.body,
+			'Invalid player name update request.',
+		);
 		const sanitizedName = sanitizePlayerName(playerName);
 		if (!sanitizedName) {
 			throw new TransportError(
@@ -252,13 +231,9 @@ export class SessionTransport {
 		const session = this.requireSession(sessionId);
 		session.updatePlayerName(playerId, sanitizedName);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(
-			sessionId,
-			snapshot,
-		) satisfies SessionUpdatePlayerNameResponse;
+		const response = this.buildStateResponse(sessionId, snapshot);
 		return sessionUpdatePlayerNameResponseSchema.parse(response);
 	}
-
 	private attachHttpStatus<T extends object>(
 		payload: T,
 		status: number,
@@ -268,20 +243,6 @@ export class SessionTransport {
 			enumerable: false,
 		});
 		return payload as TransportHttpResponse<T>;
-	}
-
-	private parseSessionIdentifier(body: unknown): string {
-		const parsed = sessionIdSchema.safeParse(
-			(body as { sessionId?: unknown })?.sessionId,
-		);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session identifier.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		return parsed.data;
 	}
 
 	private generateSessionId(): string {
@@ -318,6 +279,22 @@ export class SessionTransport {
 		for (const [playerId, sanitizedName] of entries) {
 			session.updatePlayerName(playerId, sanitizedName);
 		}
+	}
+
+	private parseRequest<T>(
+		schema: {
+			safeParse: (input: unknown) => SafeParseReturnType<unknown, T>;
+		},
+		payload: unknown,
+		message: string,
+	): T {
+		const parsed = schema.safeParse(payload);
+		if (!parsed.success) {
+			throw new TransportError('INVALID_REQUEST', message, {
+				issues: parsed.error.issues,
+			});
+		}
+		return parsed.data;
 	}
 
 	private requireAuthorization(
@@ -359,7 +336,10 @@ export class SessionTransport {
 			metadata: snapshot.metadata,
 			registries,
 		});
-		const enrichedSnapshot: SessionSnapshot = { ...snapshot, metadata };
+		const enrichedSnapshot: SessionSnapshot = {
+			...snapshot,
+			metadata,
+		};
 		return { sessionId, snapshot: enrichedSnapshot, registries };
 	}
 }
