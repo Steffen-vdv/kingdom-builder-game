@@ -159,6 +159,18 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-13 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/state/usePhaseProgress.helpers.ts` (Web)
+    - `packages/web/src/state/formatPhaseResolution.ts` (Web)
+    - `packages/web/tests/HoverCard.test.tsx` (Web Tests)
+    - `packages/web/tests/state/formatPhaseResolution.integration.test.ts` (Web Tests)
+    - `packages/web/tests/state/formatPhaseResolution.test.ts` (Web Tests)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Replace Engine-specific advance result typing with Protocol contracts so Web can consume session phase progress without cross-domain imports.
+  - **Communication Path Update**: Web phase resolution helpers now accept `SessionAdvanceResult` and related protocol snapshots directly, aligning the UI workflow with the published session API. Skip metadata flows through unchanged from the protocol layer.
+  - **Follow-Up Notes**: Audit remaining Web modules for lingering Engine type imports (e.g., developer scaffolding utilities) and migrate them to protocol exposure where available; coordinate with backend to flag any contract divergences before removing the temporary Engine adapters.
+
 - **Date & Author**: 2025-10-12 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/protocol/src/session/index.ts` (Protocol)

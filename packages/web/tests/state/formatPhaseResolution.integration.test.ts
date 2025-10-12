@@ -6,8 +6,8 @@ import {
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTranslationDiffContext } from '../../src/translation/log/resourceSources/context';
 import type { PlayerSnapshot } from '../../src/translation';
-import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
+	SessionAdvanceResult,
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
@@ -38,7 +38,7 @@ function createSessionPlayer(
 	id: string,
 	name: string,
 	snapshot: PlayerSnapshot,
-): EngineAdvanceResult['player'] {
+): SessionAdvanceResult['player'] {
 	return {
 		id,
 		name,
@@ -80,7 +80,7 @@ describe('formatPhaseResolution integration', () => {
 		const before = createPlayerSnapshot();
 		const playerId = factory.action().id;
 		const player = createSessionPlayer(playerId, 'Phase Herald', before);
-		const advance: EngineAdvanceResult = {
+		const advance: SessionAdvanceResult = {
 			phase: phaseDefinition.id,
 			step: stepDefinition.id,
 			effects: [],
@@ -144,7 +144,7 @@ describe('formatPhaseResolution integration', () => {
 			'Phase Runner',
 			after,
 		);
-		const advance: EngineAdvanceResult = {
+		const advance: SessionAdvanceResult = {
 			phase: phaseDefinition.id,
 			step: stepDefinition.id,
 			effects: [],
