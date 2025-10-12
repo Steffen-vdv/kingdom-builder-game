@@ -51,13 +51,25 @@ const DEFAULT_STAT_INFO = Object.freeze({
 		icon: '🛡️',
 		label: 'Fortification Strength',
 	}),
-	absorption: Object.freeze({ icon: '🌀', label: 'Absorption' }),
-	growth: Object.freeze({ icon: '📈', label: 'Growth' }),
+	absorption: Object.freeze({
+		icon: '🌀',
+		label: 'Absorption',
+		displayAsPercent: true,
+	}),
+	growth: Object.freeze({
+		icon: '📈',
+		label: 'Growth',
+		displayAsPercent: true,
+	}),
 	warWeariness: Object.freeze({ icon: '💤', label: 'War Weariness' }),
 }) satisfies Readonly<Record<string, TranslationIconLabel>>;
 
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
+
+type PercentAwareDescriptor = SessionMetadataDescriptor & {
+	displayAsPercent?: boolean;
+};
 
 function mergeIconLabel(
 	base: TranslationIconLabel | undefined,
@@ -76,6 +88,13 @@ function mergeIconLabel(
 	const description = descriptor?.description ?? base?.description;
 	if (description !== undefined) {
 		entry.description = description;
+	}
+	const percentFlag = (descriptor as PercentAwareDescriptor | undefined)
+		?.displayAsPercent;
+	if (percentFlag !== undefined) {
+		entry.displayAsPercent = percentFlag;
+	} else if (base?.displayAsPercent !== undefined) {
+		entry.displayAsPercent = base.displayAsPercent;
 	}
 	return Object.freeze(entry);
 }
