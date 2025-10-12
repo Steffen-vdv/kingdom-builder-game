@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PhaseId, Resource, PopulationRole } from '@kingdom-builder/contents';
+import {
+	PhaseId,
+	Resource,
+	PopulationRole,
+	PHASES,
+	RULES,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { simulateUpcomingPhases } from '../../src';
 
@@ -110,6 +116,55 @@ describe('simulateUpcomingPhases', () => {
 		);
 		expect(result.after.resources[Resource.gold]).toBe(
 			10 - upkeepCost - councilUpkeep,
+		);
+	});
+
+	it('uses rule metadata to resolve growth and upkeep when phases are reordered', () => {
+		const phases = [PHASES[2]!, PHASES[0]!, PHASES[1]!];
+		const context = createTestEngine({ phases });
+		const player = sanitizePlayerState(context);
+		const land = player.lands[0]!;
+		const goldGain = 4;
+		const upkeepCost = 2;
+		land.onGainIncomeStep = [
+			{
+				type: 'resource',
+				method: 'add',
+				params: { key: Resource.gold, amount: goldGain },
+			},
+		];
+		land.upkeep = { [Resource.gold]: upkeepCost };
+		player.resources[Resource.gold] = 10;
+		const result = simulateUpcomingPhases(context, player.id);
+		const relevantPhases = result.steps
+			.filter((step) => step.player.id === player.id)
+			.map((step) => step.phase);
+		expect(relevantPhases).toContain(PhaseId.Growth);
+		expect(relevantPhases).toContain(PhaseId.Upkeep);
+		expect(result.delta.resources[Resource.gold]).toBe(goldGain - upkeepCost);
+	});
+
+	it('throws when rule metadata omits core phase ids', () => {
+		const rulesWithoutMetadata = { ...RULES, corePhaseIds: undefined };
+		const context = createTestEngine({ rules: rulesWithoutMetadata });
+		const player = sanitizePlayerState(context);
+		expect(() => simulateUpcomingPhases(context, player.id)).toThrow(
+			'simulateUpcomingPhases requires growth and upkeep phase ids in options.phaseIds or rules.corePhaseIds.',
+		);
+	});
+
+	it('throws when rule metadata references missing phases', () => {
+		const invalidRules = {
+			...RULES,
+			corePhaseIds: {
+				growth: 'missing-growth-phase',
+				upkeep: PhaseId.Upkeep,
+			},
+		};
+		const context = createTestEngine({ rules: invalidRules });
+		const player = sanitizePlayerState(context);
+		expect(() => simulateUpcomingPhases(context, player.id)).toThrow(
+			'simulateUpcomingPhases could not find growth phase "missing-growth-phase" in the engine context.',
 		);
 	});
 });

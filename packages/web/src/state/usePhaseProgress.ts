@@ -125,6 +125,7 @@ export function usePhaseProgress({
 			applyPhaseSnapshot,
 			formatPhaseResolution,
 			mountedRef,
+			onFatalSessionError,
 			refresh,
 			resourceKeys,
 			registries,

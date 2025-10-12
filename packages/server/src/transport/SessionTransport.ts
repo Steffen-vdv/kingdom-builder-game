@@ -21,11 +21,14 @@ import type {
 	SessionCreateResponse,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
+	SessionPlayerId,
+	SessionPlayerNameMap,
 	SessionSnapshot,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
+import { extractRequirementFailures } from './extractRequirementFailures.js';
 import type {
 	SessionManager,
 	CreateSessionOptions,
@@ -186,16 +189,18 @@ export class SessionTransport {
 			}) as ActionExecuteSuccessResponse;
 			return attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {
-			const failure = extractRequirementFailure(error);
+			const failures = extractRequirementFailures(error);
 			const message =
 				error instanceof Error ? error.message : 'Action execution failed.';
 			const base: ActionExecuteErrorResponse = {
 				status: 'error',
 				error: message,
 			};
-			if (failure) {
-				base.requirementFailure = failure;
-				base.requirementFailures = [failure];
+			if (failures.requirementFailure) {
+				base.requirementFailure = failures.requirementFailure;
+			}
+			if (failures.requirementFailures) {
+				base.requirementFailures = failures.requirementFailures;
 			}
 			const response = actionExecuteErrorResponseSchema.parse(
 				base,
@@ -253,6 +258,17 @@ export class SessionTransport {
 			snapshot,
 		) satisfies SessionUpdatePlayerNameResponse;
 		return sessionUpdatePlayerNameResponseSchema.parse(response);
+  }
+  
+	private attachHttpStatus<T extends object>(
+		payload: T,
+		status: number,
+	): TransportHttpResponse<T> {
+		Object.defineProperty(payload, 'httpStatus', {
+			value: status,
+			enumerable: false,
+		});
+		return payload as TransportHttpResponse<T>;
 	}
 
 	private parseSessionIdentifier(body: unknown): string {

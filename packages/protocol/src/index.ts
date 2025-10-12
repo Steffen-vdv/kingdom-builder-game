@@ -94,6 +94,7 @@ export type {
 	WinConditionDisplay,
 	WinConditionTrigger,
 	WinConditionResult,
+	CorePhaseIds,
 	RuleSet,
 } from './services';
 export type {
