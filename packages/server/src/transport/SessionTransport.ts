@@ -21,7 +21,6 @@ import type {
 	SessionCreateResponse,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
-	SessionPlayerId,
 	SessionPlayerNameMap,
 	SessionSnapshot,
 	SessionUpdatePlayerNameResponse,
@@ -42,6 +41,11 @@ import type {
 	TransportIdFactory,
 	TransportRequest,
 } from './TransportTypes.js';
+import {
+	sanitizePlayerName,
+	sanitizePlayerNameEntries,
+} from './playerNameHelpers.js';
+export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 
 export interface SessionTransportOptions {
 	sessionManager: SessionManager;
@@ -73,6 +77,7 @@ export class SessionTransport {
 			);
 		}
 		const data = parsed.data;
+		data.playerNames && sanitizePlayerNameEntries(data.playerNames);
 		const sessionId = this.generateSessionId();
 		try {
 			const options: CreateSessionOptions = {
@@ -82,9 +87,7 @@ export class SessionTransport {
 				options.config = data.config;
 			}
 			const session = this.sessionManager.createSession(sessionId, options);
-			if (data.playerNames) {
-				this.applyPlayerNames(session, data.playerNames);
-			}
+			data.playerNames && this.applyPlayerNames(session, data.playerNames);
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
 				cause: error,
@@ -238,7 +241,7 @@ export class SessionTransport {
 			);
 		}
 		const { sessionId, playerId, playerName } = parsed.data;
-		const sanitizedName = playerName.trim();
+		const sanitizedName = sanitizePlayerName(playerName);
 		if (!sanitizedName) {
 			throw new TransportError(
 				'INVALID_REQUEST',
@@ -310,13 +313,8 @@ export class SessionTransport {
 		session: EngineSession,
 		names: SessionPlayerNameMap,
 	): void {
-		const playerIds = Object.keys(names) as SessionPlayerId[];
-		for (const playerId of playerIds) {
-			const playerName = names[playerId];
-			const sanitizedName = playerName?.trim();
-			if (!sanitizedName) {
-				continue;
-			}
+		const entries = sanitizePlayerNameEntries(names);
+		for (const [playerId, sanitizedName] of entries) {
 			session.updatePlayerName(playerId, sanitizedName);
 		}
 	}
