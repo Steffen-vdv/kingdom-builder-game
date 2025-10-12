@@ -1,0 +1,74 @@
+name: PR Review Automation (Push Handler)
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+
+jobs:
+  trigger-reviews:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pr-review-on-push-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Debounce to batch rapid pushes
+        run: sleep 120
+
+      - name: Find open pull requests for branch
+        id: find_prs
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          prs=$(gh pr list --head "$BRANCH" --state open --json number \
+            --jq '.[].number')
+          if [ -z "$prs" ]; then
+            echo "pulls=" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "$prs" | tr '\n' ' ' > pr_numbers.txt
+          echo "pulls=$(cat pr_numbers.txt)" >>"$GITHUB_OUTPUT"
+
+      - name: Exit when no PRs require updates
+        if: steps.find_prs.outputs.pulls == ''
+        run: echo "No open pull requests reference this branch."
+
+      - name: Ensure workflow labels exist
+        if: steps.find_prs.outputs.pulls != ''
+        run: |
+          create_label() {
+            name="$1"
+            color="$2"
+            description="$3"
+            gh label create "$name" --color "$color" --description "$description" \
+              >/dev/null 2>&1 || true
+          }
+
+          create_label "under-review" "1d76db" \
+            "Automated reviewers are currently evaluating the pull request."
+          create_label "awaiting-fixes" "fbca04" \
+            "CodeRabbit reported actionable items awaiting Codex fixes."
+          create_label "max-iterations-reached" "b60205" \
+            "Automated review loop hit the iteration limit and needs attention."
+
+      - name: Update labels and request reviews
+        if: steps.find_prs.outputs.pulls != ''
+        env:
+          PRS: ${{ steps.find_prs.outputs.pulls }}
+        run: |
+          for pr in $PRS; do
+            echo "Updating workflow labels for PR #$pr"
+            gh api "/repos/$REPO/issues/$pr/labels/awaiting-fixes" \
+              --method DELETE >/dev/null 2>&1 || true
+            gh api --method POST \
+              "/repos/$REPO/issues/$pr/labels" \
+              -f labels[]='under-review' >/dev/null
+
+            gh pr comment "$pr" --body '@coderabbitai review'
+            gh pr comment "$pr" --body '@codex review'
+          done
