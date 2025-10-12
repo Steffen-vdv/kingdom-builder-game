@@ -4,7 +4,6 @@ import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
-import { getFallbackTriggerAssets } from '../context/fallbackAssets';
 
 function formatStepTriggerLabel(
 	context: TranslationContext,
@@ -130,8 +129,7 @@ export class PhasedTranslator {
 			applyTrigger(phaseKey, phaseTitle);
 		}
 
-		const triggerLookup =
-			context.assets?.triggers ?? getFallbackTriggerAssets();
+		const triggerLookup = context.assets?.triggers ?? {};
 		const stepKeysFromInfo = Object.keys(triggerLookup).filter((key) =>
 			key.endsWith('Step'),
 		);
