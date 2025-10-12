@@ -258,8 +258,8 @@ export class SessionTransport {
 			snapshot,
 		) satisfies SessionUpdatePlayerNameResponse;
 		return sessionUpdatePlayerNameResponseSchema.parse(response);
-  }
-  
+	}
+
 	private attachHttpStatus<T extends object>(
 		payload: T,
 		status: number,
