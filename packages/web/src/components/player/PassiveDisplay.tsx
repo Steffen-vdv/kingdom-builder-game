@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useGameEngine } from '../../state/GameContext';
 import { PhaseId } from '@kingdom-builder/contents';
 import type {
@@ -47,9 +47,25 @@ export default function PassiveDisplay({
 }) {
 	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
 		useGameEngine();
-	const passiveAsset = toDescriptorDisplay(usePassiveAssetMetadata().select());
+	const passiveAssetMetadata = usePassiveAssetMetadata();
+	const selectPassiveAsset = useCallback(
+		() => passiveAssetMetadata.select(),
+		[passiveAssetMetadata],
+	);
+	const passiveAsset = useMemo(
+		() => toDescriptorDisplay(selectPassiveAsset()),
+		[selectPassiveAsset],
+	);
 	const resourceMetadata = useResourceMetadata();
 	const phaseMetadata = usePhaseMetadata();
+	const selectResourceDescriptor = useCallback(
+		(resourceKey: string) => resourceMetadata.select(resourceKey),
+		[resourceMetadata],
+	);
+	const selectPhaseDescriptor = useCallback(
+		(phaseId: string) => phaseMetadata.select(phaseId),
+		[phaseMetadata],
+	);
 	const playerId: PlayerId = player.id;
 	const summaries: PassiveSummary[] =
 		translationContext.passives.list(playerId);
@@ -60,9 +76,13 @@ export default function PassiveDisplay({
 
 	const tierDefinitions = ruleSnapshot.tierDefinitions;
 	const happinessKey = ruleSnapshot.tieredResourceKey;
-	const tieredResourceDescriptor = happinessKey
-		? toDescriptorDisplay(resourceMetadata.select(happinessKey))
-		: undefined;
+	const tieredResourceDescriptor = useMemo(
+		() =>
+			happinessKey
+				? toDescriptorDisplay(selectResourceDescriptor(happinessKey))
+				: undefined,
+		[happinessKey, selectResourceDescriptor],
+	);
 	const tierByPassiveId = tierDefinitions.reduce<
 		Map<string, HappinessTierDefinition>
 	>((map, tier) => {
@@ -137,7 +157,7 @@ export default function PassiveDisplay({
 				const items = tierSections
 					? tierSections
 					: describeEffects(resolvedEffects, translationContext);
-				const upkeepDescriptor = phaseMetadata.select(PhaseId.Upkeep);
+				const upkeepDescriptor = selectPhaseDescriptor(PhaseId.Upkeep);
 				const upkeepLabel = upkeepDescriptor.label || 'Upkeep';
 				const sections = definition.onUpkeepPhase
 					? [

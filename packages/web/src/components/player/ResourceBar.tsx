@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
@@ -49,19 +49,38 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 		useGameEngine();
 	const resourceMetadata = useResourceMetadata();
 	const passiveAssetMetadata = usePassiveAssetMetadata();
-	const passiveAsset = toDescriptorDisplay(passiveAssetMetadata.select());
+	const selectPassiveAsset = useCallback(
+		() => passiveAssetMetadata.select(),
+		[passiveAssetMetadata],
+	);
+	const passiveAsset = useMemo(
+		() => toDescriptorDisplay(selectPassiveAsset()),
+		[selectPassiveAsset],
+	);
+	const resourceList = resourceMetadata.list;
+	const resourceDescriptors = useMemo(
+		() => resourceList.map(toDescriptorDisplay),
+		[resourceList],
+	);
+	const selectResourceDescriptor = useCallback(
+		(resourceKey: string) => resourceMetadata.select(resourceKey),
+		[resourceMetadata],
+	);
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id] ?? {
 		resources: {},
 		stats: {},
 		population: {},
 	};
-	const resourceDescriptors = resourceMetadata.list.map(toDescriptorDisplay);
 	const tiers = ruleSnapshot.tierDefinitions;
 	const happinessKey = ruleSnapshot.tieredResourceKey;
-	const tieredResourceDescriptor: DescriptorDisplay | undefined = happinessKey
-		? toDescriptorDisplay(resourceMetadata.select(happinessKey))
-		: undefined;
+	const tieredResourceDescriptor: DescriptorDisplay | undefined = useMemo(
+		() =>
+			happinessKey
+				? toDescriptorDisplay(selectResourceDescriptor(happinessKey))
+				: undefined,
+		[happinessKey, selectResourceDescriptor],
+	);
 	const showHappinessCard = (value: number) => {
 		const activeTier = findTierForValue(tiers, value);
 		const tierConfig: TierEntryDisplayConfig = {

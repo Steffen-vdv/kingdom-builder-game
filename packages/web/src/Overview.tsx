@@ -154,7 +154,15 @@ export default function Overview({
 	const heroContent = overviewContent.hero;
 	const tokenSources = React.useMemo(
 		() => resolveOverviewTokenSources(metadata),
-		[metadata],
+		[
+			metadata?.actions,
+			metadata?.phaseMetadata,
+			metadata?.resourceMetadata,
+			metadata?.statMetadata,
+			metadata?.populationMetadata,
+			metadata?.landMetadata,
+			metadata?.slotMetadata,
+		],
 	);
 	const { sections: renderedSections, tokens: iconTokens } =
 		React.useMemo(() => {

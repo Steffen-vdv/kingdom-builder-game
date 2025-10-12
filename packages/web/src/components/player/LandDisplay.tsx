@@ -166,6 +166,18 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 	const landMetadata = useLandMetadata();
 	const slotMetadata = useSlotMetadata();
 	const developmentMetadata = useDevelopmentMetadata();
+	const selectLandDescriptor = useCallback(
+		() => landMetadata.select(),
+		[landMetadata],
+	);
+	const selectSlotDescriptor = useCallback(
+		() => slotMetadata.select(),
+		[slotMetadata],
+	);
+	const selectDevelopmentDescriptor = useCallback(
+		(developmentId: string) => developmentMetadata.select(developmentId),
+		[developmentMetadata],
+	);
 	const developAction = useMemo(() => {
 		for (const actionId of player.actions) {
 			if (!translationContext.actions.has(actionId)) {
@@ -181,17 +193,17 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 		return undefined;
 	}, [player.actions, translationContext]);
 	const landDisplay = useMemo(
-		() => toDescriptorDisplay(landMetadata.select()),
-		[landMetadata],
+		() => toDescriptorDisplay(selectLandDescriptor()),
+		[selectLandDescriptor],
 	);
 	const slotDisplay = useMemo(
-		() => toDescriptorDisplay(slotMetadata.select()),
-		[slotMetadata],
+		() => toDescriptorDisplay(selectSlotDescriptor()),
+		[selectSlotDescriptor],
 	);
 	const getDevelopmentDisplay = useCallback(
 		(developmentId: string) => {
 			const descriptor = toDescriptorDisplay(
-				developmentMetadata.select(developmentId),
+				selectDevelopmentDescriptor(developmentId),
 			);
 			if (!translationContext.developments.has(developmentId)) {
 				return descriptor;
@@ -208,7 +220,7 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 			}
 			return entry;
 		},
-		[developmentMetadata, translationContext.developments],
+		[selectDevelopmentDescriptor, translationContext.developments],
 	);
 	if (player.lands.length === 0) {
 		return null;

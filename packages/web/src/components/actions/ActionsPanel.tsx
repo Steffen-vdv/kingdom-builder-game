@@ -34,11 +34,15 @@ export default function ActionsPanel() {
 		actionCostResource,
 	} = useGameEngine();
 	const resourceMetadata = useResourceMetadata();
+	const resourceDescriptorsById = resourceMetadata.byId;
+	const selectResource = useCallback(
+		(resourceKey: string) => resourceMetadata.select(resourceKey),
+		[resourceMetadata],
+	);
 	const selectResourceDescriptor = useCallback(
 		(resourceKey: string) =>
-			resourceMetadata.byId[resourceKey] ??
-			resourceMetadata.select(resourceKey),
-		[resourceMetadata],
+			resourceDescriptorsById[resourceKey] ?? selectResource(resourceKey),
+		[resourceDescriptorsById, selectResource],
 	);
 	const actionCostDescriptor = useMemo(
 		() => selectResourceDescriptor(actionCostResource),

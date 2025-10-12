@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Stat } from '@kingdom-builder/contents';
 import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
 import { formatStatValue, getStatBreakdownSummary } from '../../utils/stats';
@@ -131,6 +131,14 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const assets = translationContext.assets;
 	const populationMetadata = usePopulationMetadata();
 	const statMetadata = useStatMetadata();
+	const selectPopulationDescriptor = useCallback(
+		(role: string) => populationMetadata.select(role),
+		[populationMetadata],
+	);
+	const selectStatDescriptor = useCallback(
+		(statKey: string) => statMetadata.select(statKey),
+		[statMetadata],
+	);
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id] ?? {
 		resources: {},
@@ -174,12 +182,25 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
 
+	const populationSummaries = useMemo(
+		() =>
+			populationMetadata.list.map((descriptor) =>
+				formatDescriptorSummary(toDescriptorDisplay(descriptor)),
+			),
+		[populationMetadata],
+	);
+	const selectPopulationDisplay = useCallback(
+		(role: string) => toDescriptorDisplay(selectPopulationDescriptor(role)),
+		[selectPopulationDescriptor],
+	);
+	const selectStatDisplay = useCallback(
+		(statKey: string) => toDescriptorDisplay(selectStatDescriptor(statKey)),
+		[selectStatDescriptor],
+	);
 	const showPopulationCard = () =>
 		handleHoverCard({
 			title: formatIconLabel(populationInfo),
-			effects: populationMetadata.list.map((descriptor) =>
-				formatDescriptorSummary(toDescriptorDisplay(descriptor)),
-			),
+			effects: populationSummaries,
 			effectsTitle: POPULATION_ARCHETYPE_LABEL,
 			requirements: [],
 			...(populationInfo.description
@@ -212,7 +233,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	};
 
 	const populationRoleButtons = popDetails.map(({ role, count }, index) => {
-		const descriptor = toDescriptorDisplay(populationMetadata.select(role));
+		const descriptor = selectPopulationDisplay(role);
 		const { handleRoleFocus: onRoleFocus, handleRoleLeave: onRoleLeave } =
 			createRoleHoverHandlers(descriptor);
 
@@ -237,7 +258,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	});
 
 	const showStatCard = (statKey: string) => {
-		const descriptor = toDescriptorDisplay(statMetadata.select(statKey));
+		const descriptor = selectStatDisplay(statKey);
 		const breakdown = getStatBreakdownSummary(
 			statKey,
 			player,
@@ -307,7 +328,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 					return Boolean(player.statsHistory?.[statKey]);
 				})
 				.map(([statKey, statValue]) => {
-					const descriptor = toDescriptorDisplay(statMetadata.select(statKey));
+					const descriptor = selectStatDisplay(statKey);
 					const props: StatButtonProps = {
 						statKey,
 						value: statValue,
