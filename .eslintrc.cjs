@@ -144,6 +144,27 @@ module.exports = {
 			},
 		},
 		{
+			files: ['packages/web/tests/**/*.ts', 'packages/web/tests/**/*.tsx'],
+			// Prevents web tests from importing the contents package so
+			// fixtures/selectors stay aligned with the domain-migration
+			// guidance in docs/domain-migration/content-metadata-inventory.md.
+			rules: {
+				'no-restricted-imports': [
+					'error',
+					{
+						paths: [
+							{
+								name: '@kingdom-builder/contents',
+								message:
+									'Web tests must rely on selectors or synthetic ' +
+									'fixtures instead of importing contents directly.',
+							},
+						],
+					},
+				],
+			},
+		},
+		{
 			files: ['**/*.md'],
 			processor: 'markdown/markdown',
 		},

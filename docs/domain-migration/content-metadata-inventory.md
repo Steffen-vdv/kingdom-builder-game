@@ -61,7 +61,14 @@
 
 ## Test modules
 
-All tests below import `@kingdom-builder/contents` directly. Migration should re-route them through fixtures/selectors to keep assertions aligned with evolving metadata.
+> **Lint guard:** `.eslintrc.cjs` now blocks `packages/web/tests` from importing
+> `@kingdom-builder/contents`, keeping suites aligned with the selector-driven
+> migration guidance captured here and in
+> [`registry-consumers.md`](./registry-consumers.md).
+
+All tests below import `@kingdom-builder/contents` directly. Migration should
+re-route them through fixtures/selectors to keep assertions aligned with
+evolving metadata.
 
 - **`packages/web/src/startup/resolvePrimaryIcon.test.ts`** – Verifies favicon fallbacks by reading `RESOURCES` and `PRIMARY_ICON_ID`. Replace with selector-based lookup once the runtime entrypoint stops importing registries directly.【F:packages/web/src/startup/resolvePrimaryIcon.test.ts†L1-L17】
 - **Translation and formatter tests**: `packages/web/tests/attack-diff-formatters.test.ts`, `army-attack-translation.*.test.ts`, `land-till-formatter.test.ts`, `modifier-percent-formatting.test.ts`, `describe-skip-event.test.ts`, `passive-duration-formatter.test.ts`, `generic-actions-effect-group.test.tsx`, `raiders-guild-translation.test.ts`, `translateRequirementFailure.test.ts`, `tier-summary-translation.test.ts`, `development-summary.test.ts`, `append-stat-changes.test.ts`, `log-source-icons.test.ts`, `passive-log-labels.test.ts`, `passive-visibility.test.ts`, `PhasePanel.test.tsx`, `HoverCard.test.tsx`, and `Overview.test.tsx`. These files use `RESOURCES`, `STATS`, `PHASES`, `POPULATIONS`, `TIER_SUMMARY_STORE`, etc., to build expectations. Provide factory helpers (e.g., `createAttackDiffFixture()`, `selectPhaseList()`) that wrap registry access so assertions stay declarative.【F:packages/web/tests/attack-diff-formatters.test.ts†L1-L36】【F:packages/web/tests/passive-log-labels.test.ts†L1-L76】
