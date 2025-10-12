@@ -1,13 +1,6 @@
-import { POPULATIONS } from '@kingdom-builder/contents';
-import type { PassiveSummary } from '@kingdom-builder/engine';
 import type { PlayerSnapshot } from '../translation/log/snapshots';
 
 type PopulationPrefix = string;
-
-const POPULATION_PASSIVE_PREFIXES: PopulationPrefix[] = Array.from(
-	POPULATIONS.keys(),
-	(id) => `${id}_`,
-);
 
 export type PassiveOrigin =
 	| 'building'
@@ -18,11 +11,30 @@ export type PassiveOrigin =
 
 export type PassiveSurface = 'player-panel' | 'log';
 
-export type PassiveLike = Pick<PassiveSummary, 'id' | 'meta'>;
+interface PassiveSourceDescriptor {
+	type?: string | null;
+}
+
+interface PassiveMetaDescriptor {
+	source?: PassiveSourceDescriptor | null;
+}
+
+export interface PassiveLike {
+	id: string;
+	meta?: PassiveMetaDescriptor | null;
+}
+
+type PassivePopulationState =
+	| Record<string, unknown>
+	| Map<string, unknown>
+	| Set<string>
+	| string[]
+	| Iterable<string>;
 
 interface PassiveOwnerState {
 	buildings: Iterable<string>;
 	lands: ReadonlyArray<{ id: string; developments: Iterable<string> }>;
+	population?: PassivePopulationState;
 }
 
 export type PassiveOwner = PlayerSnapshot | PassiveOwnerState;
@@ -32,16 +44,22 @@ interface PassiveVisibilityContext {
 	buildingIdSet: Set<string>;
 	buildingPrefixes: string[];
 	developmentPassiveIds: Set<string>;
+	populationPrefixes: string[];
 }
 
 type PassiveVisibilitySource = PassiveOwner | PassiveVisibilityContext;
+
+export interface PassiveVisibilityOptions {
+	populationIds?: Iterable<string>;
+}
 
 function isVisibilityContext(
 	source: PassiveVisibilitySource,
 ): source is PassiveVisibilityContext {
 	return (
 		(source as PassiveVisibilityContext).buildingIdSet !== undefined &&
-		(source as PassiveVisibilityContext).buildingPrefixes !== undefined
+		(source as PassiveVisibilityContext).buildingPrefixes !== undefined &&
+		(source as PassiveVisibilityContext).populationPrefixes !== undefined
 	);
 }
 
@@ -49,7 +67,46 @@ function toArray(iterable: Iterable<string>): string[] {
 	return Array.from(iterable);
 }
 
-function createContextFromOwner(owner: PassiveOwner): PassiveVisibilityContext {
+function toPopulationIds(
+	owner: PassiveOwner,
+	options?: PassiveVisibilityOptions,
+): string[] {
+	const explicit = options?.populationIds;
+	if (explicit) {
+		return Array.from(explicit);
+	}
+	const populationSource = (owner as { population?: PassivePopulationState })
+		.population;
+	if (!populationSource) {
+		return [];
+	}
+	if (populationSource instanceof Map) {
+		return Array.from(populationSource.keys(), String);
+	}
+	if (populationSource instanceof Set) {
+		return Array.from(populationSource.values(), String);
+	}
+	if (Array.isArray(populationSource)) {
+		return populationSource.map(String);
+	}
+	if (typeof populationSource === 'object') {
+		return Object.keys(populationSource as Record<string, unknown>);
+	}
+	return [];
+}
+
+function createPopulationPrefixes(
+	owner: PassiveOwner,
+	options?: PassiveVisibilityOptions,
+): PopulationPrefix[] {
+	const populationIds = toPopulationIds(owner, options);
+	return populationIds.map((id) => `${id}_`);
+}
+
+function createContextFromOwner(
+	owner: PassiveOwner,
+	options?: PassiveVisibilityOptions,
+): PassiveVisibilityContext {
 	const buildingIds = toArray(owner.buildings);
 	const buildingIdSet = new Set(buildingIds);
 	const buildingPrefixes = buildingIds.map((id) => `${id}_`);
@@ -60,26 +117,32 @@ function createContextFromOwner(owner: PassiveOwner): PassiveVisibilityContext {
 			developmentPassiveIds.add(`${development}_${landId}`);
 		}
 	}
+	const populationPrefixes = createPopulationPrefixes(owner, options);
 	return {
 		buildingIds,
 		buildingIdSet,
 		buildingPrefixes,
 		developmentPassiveIds,
+		populationPrefixes,
 	};
 }
 
 function resolveContext(
 	source: PassiveVisibilitySource,
+	options?: PassiveVisibilityOptions,
 ): PassiveVisibilityContext {
 	if (isVisibilityContext(source)) {
 		return source;
 	}
-	return createContextFromOwner(source);
+	return createContextFromOwner(source, options);
 }
 
-function hasPopulationPrefix(id: string): boolean {
-	for (const prefix of POPULATION_PASSIVE_PREFIXES) {
-		if (id.startsWith(prefix)) {
+function hasPopulationPrefix(
+	passiveId: string,
+	context: PassiveVisibilityContext,
+): boolean {
+	for (const prefix of context.populationPrefixes) {
+		if (passiveId.startsWith(prefix)) {
 			return true;
 		}
 	}
@@ -119,7 +182,7 @@ function deriveOriginFromContext(
 	if (context.developmentPassiveIds.has(passive.id)) {
 		return 'development';
 	}
-	if (hasPopulationPrefix(passive.id)) {
+	if (hasPopulationPrefix(passive.id, context)) {
 		return 'population-assignment';
 	}
 	return 'standalone';
@@ -128,8 +191,9 @@ function deriveOriginFromContext(
 export function derivePassiveOrigin(
 	passive: PassiveLike,
 	source: PassiveVisibilitySource,
+	options?: PassiveVisibilityOptions,
 ): PassiveOrigin {
-	const context = resolveContext(source);
+	const context = resolveContext(source, options);
 	return deriveOriginFromContext(passive, context);
 }
 
@@ -165,8 +229,9 @@ export function shouldSurfacePassive(
 	passive: PassiveLike,
 	source: PassiveVisibilitySource,
 	surface: PassiveSurface,
+	options?: PassiveVisibilityOptions,
 ): boolean {
-	const context = resolveContext(source);
+	const context = resolveContext(source, options);
 	return shouldSurfacePassiveWithContext(passive, context, surface);
 }
 
@@ -174,8 +239,9 @@ export function filterPassivesForSurface<T extends PassiveLike>(
 	passives: readonly T[],
 	source: PassiveVisibilitySource,
 	surface: PassiveSurface,
+	options?: PassiveVisibilityOptions,
 ): T[] {
-	const context = resolveContext(source);
+	const context = resolveContext(source, options);
 	return passives.filter((passive) =>
 		shouldSurfacePassiveWithContext(passive, context, surface),
 	);
@@ -183,6 +249,7 @@ export function filterPassivesForSurface<T extends PassiveLike>(
 
 export function createPassiveVisibilityContext(
 	source: PassiveOwner,
+	options?: PassiveVisibilityOptions,
 ): PassiveVisibilityContext {
-	return createContextFromOwner(source);
+	return createContextFromOwner(source, options);
 }

@@ -11,6 +11,7 @@ import { createSessionRegistries } from './helpers/sessionRegistries';
 
 const registries = createSessionRegistries();
 const populationIds = Array.from(registries.populations.keys());
+const visibilityOptions = { populationIds } as const;
 
 function createOwner(overrides: Partial<PassiveOwner> = {}): PassiveOwner {
 	return {
@@ -27,7 +28,7 @@ describe('passive visibility helpers', () => {
 			id: 'mystery-source',
 			meta: { source: { type: 'building' } },
 		};
-		expect(derivePassiveOrigin(passive, owner, { populationIds })).toBe(
+		expect(derivePassiveOrigin(passive, owner, visibilityOptions)).toBe(
 			'building',
 		);
 	});
@@ -42,7 +43,7 @@ describe('passive visibility helpers', () => {
 				},
 			],
 		});
-		const context = createPassiveVisibilityContext(owner, { populationIds });
+		const context = createPassiveVisibilityContext(owner, visibilityOptions);
 		expect(derivePassiveOrigin({ id: 'castle' }, context)).toBe('building');
 		expect(derivePassiveOrigin({ id: 'castle_bonus' }, context)).toBe(
 			'building-bonus',
@@ -69,7 +70,7 @@ describe('passive visibility helpers', () => {
 			buildings: new Set<string>(['castle']),
 			lands: [],
 		});
-		const context = createPassiveVisibilityContext(owner, { populationIds });
+		const context = createPassiveVisibilityContext(owner, visibilityOptions);
 		const buildingPassive: PassiveLike = { id: 'castle' };
 		expect(shouldSurfacePassive(buildingPassive, context, 'player-panel')).toBe(
 			false,
@@ -91,7 +92,7 @@ describe('passive visibility helpers', () => {
 				},
 			],
 		});
-		const context = createPassiveVisibilityContext(owner, { populationIds });
+		const context = createPassiveVisibilityContext(owner, visibilityOptions);
 		const populationEntry = populationIds[0];
 		expect(populationEntry).toBeTruthy();
 		if (!populationEntry) {
