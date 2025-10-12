@@ -6,6 +6,16 @@ import type {
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionGateway,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
@@ -13,6 +23,11 @@ import type {
 import {
 	actionExecuteRequestSchema,
 	actionExecuteResponseSchema,
+	sessionActionCostRequestSchema,
+	sessionActionRequirementRequestSchema,
+	sessionActionOptionsRequestSchema,
+	sessionRunAiRequestSchema,
+	sessionSimulateRequestSchema,
 	sessionAdvanceRequestSchema,
 	sessionAdvanceResponseSchema,
 	sessionCreateRequestSchema,
@@ -133,6 +148,35 @@ export class HttpSessionGateway implements SessionGateway {
 		return parsed;
 	}
 
+	public fetchActionCosts(
+		request: SessionActionCostRequest,
+	): Promise<SessionActionCostResponse> {
+		sessionActionCostRequestSchema.parse(request);
+		return Promise.reject<SessionActionCostResponse>(
+			new Error('Action cost requests are not supported by this gateway.'),
+		);
+	}
+
+	public fetchActionRequirements(
+		request: SessionActionRequirementRequest,
+	): Promise<SessionActionRequirementResponse> {
+		sessionActionRequirementRequestSchema.parse(request);
+		return Promise.reject<SessionActionRequirementResponse>(
+			new Error(
+				'Action requirement requests are not supported by this gateway.',
+			),
+		);
+	}
+
+	public fetchActionOptions(
+		request: SessionActionOptionsRequest,
+	): Promise<SessionActionOptionsResponse> {
+		sessionActionOptionsRequestSchema.parse(request);
+		return Promise.reject<SessionActionOptionsResponse>(
+			new Error('Action option requests are not supported by this gateway.'),
+		);
+	}
+
 	public async advancePhase(
 		request: SessionAdvanceRequest,
 	): Promise<SessionAdvanceResponse> {
@@ -160,6 +204,22 @@ export class HttpSessionGateway implements SessionGateway {
 			throw this.toTransportError(result);
 		}
 		return sessionSetDevModeResponseSchema.parse(result.data);
+	}
+
+	public runAi(request: SessionRunAiRequest): Promise<SessionRunAiResponse> {
+		sessionRunAiRequestSchema.parse(request);
+		return Promise.reject<SessionRunAiResponse>(
+			new Error('AI execution is not supported by this gateway.'),
+		);
+	}
+
+	public simulateUpcomingPhases(
+		request: SessionSimulateRequest,
+	): Promise<SessionSimulateResponse> {
+		sessionSimulateRequestSchema.parse(request);
+		return Promise.reject<SessionSimulateResponse>(
+			new Error('Simulation requests are not supported by this gateway.'),
+		);
 	}
 
 	private async execute(options: RequestOptions): Promise<HttpExecutionResult> {

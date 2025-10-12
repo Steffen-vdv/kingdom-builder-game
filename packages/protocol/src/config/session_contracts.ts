@@ -1,14 +1,23 @@
 import { z } from 'zod';
 import {
+	requirementSchema,
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
 	gameConfigSchema,
 	populationSchema,
+	actionEffectGroupSchema,
 } from './schema';
+import type { ActionParametersPayload } from '../actions/contracts';
 import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionIdentifier,
@@ -19,11 +28,19 @@ import type {
 	SessionStateResponse,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 } from '../session/contracts';
 import type {
 	SessionAdvanceResult,
+	SessionActionCostMap,
+	SessionActionRequirementList,
 	SessionPlayerId,
 	SessionSnapshot,
+	SimulateUpcomingPhasesOptions,
+	SimulateUpcomingPhasesResult,
 } from '../session';
 
 const resourceDefinitionSchema = z.object({
@@ -58,6 +75,46 @@ const sessionPlayerIdSchema = z
 	.union([z.literal('A'), z.literal('B')])
 	.transform((value) => value as SessionPlayerId);
 
+const actionEffectChoiceSchema = z.object({
+	optionId: z.string(),
+	params: z.record(z.unknown()).optional(),
+});
+
+const actionChoiceMapSchema = z.record(z.string(), actionEffectChoiceSchema);
+
+const actionParametersPayloadSchema = z
+	.object({
+		choices: actionChoiceMapSchema.optional(),
+	})
+	.catchall(z.unknown())
+	.transform((value) => value as ActionParametersPayload);
+
+const sessionActionCostMapSchema = z
+	.record(z.number().optional())
+	.transform((value) => value as SessionActionCostMap);
+
+const sessionRequirementFailureSchema = z.object({
+	requirement: requirementSchema,
+	details: z.record(z.unknown()).optional(),
+	message: z.string().optional(),
+});
+
+const sessionActionRequirementListSchema = z
+	.array(sessionRequirementFailureSchema)
+	.transform((value) => value as SessionActionRequirementList);
+
+const simulateUpcomingPhasesIdsSchema = z.object({
+	growth: z.string(),
+	upkeep: z.string(),
+});
+
+const simulateUpcomingPhasesOptionsSchema = z
+	.object({
+		phaseIds: simulateUpcomingPhasesIdsSchema.optional(),
+		maxIterations: z.number().optional(),
+	})
+	.transform((value) => value as SimulateUpcomingPhasesOptions);
+
 export const sessionCreateRequestSchema = z.object({
 	devMode: z.boolean().optional(),
 	config: gameConfigSchema.optional(),
@@ -83,6 +140,39 @@ export const sessionAdvanceResponseSchema = z.object({
 	registries: sessionRegistriesSchema,
 });
 
+export const sessionActionCostRequestSchema = z.object({
+	sessionId: sessionIdSchema,
+	actionId: z.string().min(1),
+	params: actionParametersPayloadSchema.optional(),
+});
+
+export const sessionActionCostResponseSchema = z.object({
+	sessionId: sessionIdSchema,
+	costs: sessionActionCostMapSchema,
+});
+
+export const sessionActionRequirementRequestSchema = z.object({
+	sessionId: sessionIdSchema,
+	actionId: z.string().min(1),
+	params: actionParametersPayloadSchema.optional(),
+});
+
+export const sessionActionRequirementResponseSchema = z.object({
+	sessionId: sessionIdSchema,
+	requirements: sessionActionRequirementListSchema,
+});
+
+export const sessionActionOptionsRequestSchema = z.object({
+	sessionId: sessionIdSchema,
+	actionId: z.string().min(1),
+	params: actionParametersPayloadSchema.optional(),
+});
+
+export const sessionActionOptionsResponseSchema = z.object({
+	sessionId: sessionIdSchema,
+	groups: z.array(actionEffectGroupSchema),
+});
+
 export const sessionSetDevModeRequestSchema = z.object({
 	sessionId: sessionIdSchema,
 	enabled: z.boolean(),
@@ -98,6 +188,28 @@ export const sessionUpdatePlayerNameRequestSchema = z.object({
 
 export const sessionUpdatePlayerNameResponseSchema =
 	sessionCreateResponseSchema;
+
+export const sessionRunAiRequestSchema = z.object({
+	sessionId: sessionIdSchema,
+	playerId: sessionPlayerIdSchema,
+});
+
+export const sessionRunAiResponseSchema = z.object({
+	sessionId: sessionIdSchema,
+	ranTurn: z.boolean(),
+	snapshot: z.custom<SessionSnapshot>(),
+});
+
+export const sessionSimulateRequestSchema = z.object({
+	sessionId: sessionIdSchema,
+	playerId: sessionPlayerIdSchema,
+	options: simulateUpcomingPhasesOptionsSchema.optional(),
+});
+
+export const sessionSimulateResponseSchema = z.object({
+	sessionId: sessionIdSchema,
+	result: z.custom<SimulateUpcomingPhasesResult>(),
+});
 
 type Equal<X, Y> =
 	(<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
@@ -126,6 +238,54 @@ type _SessionAdvanceRequestMatches = Expect<
 type _SessionAdvanceResponseMatches = Expect<
 	Equal<z.infer<typeof sessionAdvanceResponseSchema>, SessionAdvanceResponse>
 >;
+type _ActionParametersPayloadMatches = Expect<
+	Equal<z.infer<typeof actionParametersPayloadSchema>, ActionParametersPayload>
+>;
+type _SessionActionCostMapMatches = Expect<
+	Equal<z.infer<typeof sessionActionCostMapSchema>, SessionActionCostMap>
+>;
+type _SessionActionRequirementListMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionRequirementListSchema>,
+		SessionActionRequirementList
+	>
+>;
+type _SessionActionCostRequestMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionCostRequestSchema>,
+		SessionActionCostRequest
+	>
+>;
+type _SessionActionCostResponseMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionCostResponseSchema>,
+		SessionActionCostResponse
+	>
+>;
+type _SessionActionRequirementRequestMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionRequirementRequestSchema>,
+		SessionActionRequirementRequest
+	>
+>;
+type _SessionActionRequirementResponseMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionRequirementResponseSchema>,
+		SessionActionRequirementResponse
+	>
+>;
+type _SessionActionOptionsRequestMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionOptionsRequestSchema>,
+		SessionActionOptionsRequest
+	>
+>;
+type _SessionActionOptionsResponseMatches = Expect<
+	Equal<
+		z.infer<typeof sessionActionOptionsResponseSchema>,
+		SessionActionOptionsResponse
+	>
+>;
 type _SessionSetDevModeRequestMatches = Expect<
 	Equal<
 		z.infer<typeof sessionSetDevModeRequestSchema>,
@@ -150,6 +310,24 @@ type _SessionUpdatePlayerNameResponseMatches = Expect<
 		z.infer<typeof sessionUpdatePlayerNameResponseSchema>,
 		SessionUpdatePlayerNameResponse
 	>
+>;
+type _SessionRunAiRequestMatches = Expect<
+	Equal<z.infer<typeof sessionRunAiRequestSchema>, SessionRunAiRequest>
+>;
+type _SessionRunAiResponseMatches = Expect<
+	Equal<z.infer<typeof sessionRunAiResponseSchema>, SessionRunAiResponse>
+>;
+type _SimulateUpcomingPhasesOptionsMatches = Expect<
+	Equal<
+		z.infer<typeof simulateUpcomingPhasesOptionsSchema>,
+		SimulateUpcomingPhasesOptions
+	>
+>;
+type _SessionSimulateRequestMatches = Expect<
+	Equal<z.infer<typeof sessionSimulateRequestSchema>, SessionSimulateRequest>
+>;
+type _SessionSimulateResponseMatches = Expect<
+	Equal<z.infer<typeof sessionSimulateResponseSchema>, SessionSimulateResponse>
 >;
 
 type _SessionRegistriesSchemaMatches = Expect<

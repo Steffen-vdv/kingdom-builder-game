@@ -10,6 +10,16 @@ import type {
 	SessionRequirementFailure,
 	SessionActionRequirementList,
 	SessionRegistriesPayload,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
@@ -170,6 +180,41 @@ export function createLocalSessionGateway(
 				return Promise.resolve(toActionErrorResponse(error));
 			}
 		},
+		fetchActionCosts(
+			request: SessionActionCostRequest,
+		): Promise<SessionActionCostResponse> {
+			assertSessionId(request, sessionId);
+			const params = toActionParameters(request.params);
+			const rawCosts = session.getActionCosts(
+				request.actionId,
+				params as never,
+			);
+			const costs: Record<string, number> = {};
+			for (const [resourceKey, amount] of Object.entries(rawCosts)) {
+				if (typeof amount === 'number') {
+					costs[resourceKey] = amount;
+				}
+			}
+			return Promise.resolve({ sessionId, costs });
+		},
+		fetchActionRequirements(
+			request: SessionActionRequirementRequest,
+		): Promise<SessionActionRequirementResponse> {
+			assertSessionId(request, sessionId);
+			const params = toActionParameters(request.params);
+			const requirements = session.getActionRequirements(
+				request.actionId,
+				params as never,
+			);
+			return Promise.resolve({ sessionId, requirements: [...requirements] });
+		},
+		fetchActionOptions(
+			request: SessionActionOptionsRequest,
+		): Promise<SessionActionOptionsResponse> {
+			assertSessionId(request, sessionId);
+			const groups = session.getActionOptions(request.actionId);
+			return Promise.resolve({ sessionId, groups });
+		},
 		advancePhase(
 			request: SessionAdvanceRequest,
 		): Promise<SessionAdvanceResponse> {
@@ -192,6 +237,24 @@ export function createLocalSessionGateway(
 				snapshot: session.getSnapshot(),
 				registries: getRegistries(),
 			});
+		},
+		runAi(request: SessionRunAiRequest): Promise<SessionRunAiResponse> {
+			assertSessionId(request, sessionId);
+			return session.runAiTurn(request.playerId).then((ranTurn) => ({
+				sessionId,
+				ranTurn,
+				snapshot: session.getSnapshot(),
+			}));
+		},
+		simulateUpcomingPhases(
+			request: SessionSimulateRequest,
+		): Promise<SessionSimulateResponse> {
+			assertSessionId(request, sessionId);
+			const result = session.simulateUpcomingPhases(
+				request.playerId,
+				request.options,
+			);
+			return Promise.resolve({ sessionId, result });
 		},
 	};
 }

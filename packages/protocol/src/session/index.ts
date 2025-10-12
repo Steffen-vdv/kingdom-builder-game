@@ -71,6 +71,7 @@ export interface SessionPlayerStateSnapshot {
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	passives: SessionPassiveSummary[];
+	aiControlled?: boolean;
 }
 
 export interface SessionGameConclusionSnapshot {
@@ -261,11 +262,23 @@ export type {
 	SessionStateResponse,
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 } from './contracts';
 
 export * as contracts from './contracts';

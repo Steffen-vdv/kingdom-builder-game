@@ -1,14 +1,20 @@
 import type {
 	ActionConfig,
+	ActionEffectGroup,
 	BuildingConfig,
 	DevelopmentConfig,
 	GameConfig,
 	PopulationConfig,
 } from '../config/schema';
+import type { ActionParametersPayload } from '../actions/contracts';
 import type {
 	SessionAdvanceResult,
+	SessionActionCostMap,
+	SessionActionRequirementList,
 	SessionPlayerId,
 	SessionSnapshot,
+	SimulateUpcomingPhasesOptions,
+	SimulateUpcomingPhasesResult,
 } from './index';
 
 export interface SessionIdentifier {
@@ -55,6 +61,33 @@ export interface SessionAdvanceResponse extends SessionStateResponse {
 	advance: SessionAdvanceResult;
 }
 
+export interface SessionActionCostRequest extends SessionIdentifier {
+	actionId: string;
+	params?: ActionParametersPayload;
+}
+
+export interface SessionActionCostResponse extends SessionIdentifier {
+	costs: SessionActionCostMap;
+}
+
+export interface SessionActionRequirementRequest extends SessionIdentifier {
+	actionId: string;
+	params?: ActionParametersPayload;
+}
+
+export interface SessionActionRequirementResponse extends SessionIdentifier {
+	requirements: SessionActionRequirementList;
+}
+
+export interface SessionActionOptionsRequest extends SessionIdentifier {
+	actionId: string;
+	params?: ActionParametersPayload;
+}
+
+export interface SessionActionOptionsResponse extends SessionIdentifier {
+	groups: ActionEffectGroup[];
+}
+
 export interface SessionSetDevModeRequest extends SessionIdentifier {
 	enabled: boolean;
 }
@@ -67,3 +100,21 @@ export interface SessionUpdatePlayerNameRequest extends SessionIdentifier {
 }
 
 export type SessionUpdatePlayerNameResponse = SessionStateResponse;
+
+export interface SessionRunAiRequest extends SessionIdentifier {
+	playerId: SessionPlayerId;
+}
+
+export interface SessionRunAiResponse extends SessionIdentifier {
+	ranTurn: boolean;
+	snapshot: SessionSnapshot;
+}
+
+export interface SessionSimulateRequest extends SessionIdentifier {
+	playerId: SessionPlayerId;
+	options?: SimulateUpcomingPhasesOptions;
+}
+
+export interface SessionSimulateResponse extends SessionIdentifier {
+	result: SimulateUpcomingPhasesResult;
+}
