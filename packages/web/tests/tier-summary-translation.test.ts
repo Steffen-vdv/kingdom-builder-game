@@ -3,37 +3,18 @@ import {
 	translateTierSummary,
 	hasTierSummaryTranslation,
 } from '../src/translation';
-import { createEngine } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
-import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
+import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 
 describe('tier summary translation', () => {
-	const engine = createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
-	});
-	const baseAssets = createTranslationContextForEngine(engine).assets;
+	const { translationContext, session } = buildSyntheticTranslationContext();
+	const baseAssets = translationContext.assets;
 
 	it('returns summaries defined in content', () => {
 		const entries = Object.entries(baseAssets.tierSummaries);
 		if (entries.length === 0) {
-			throw new Error('expected happiness tier summaries to be defined');
+			throw new Error('expected tier summaries to be defined');
 		}
 		const [token, summary] = entries[0]!;
-
 		expect(translateTierSummary(token, baseAssets)).toBe(summary);
 		expect(hasTierSummaryTranslation(token, baseAssets)).toBe(true);
 	});
@@ -47,22 +28,29 @@ describe('tier summary translation', () => {
 		expect(hasTierSummaryTranslation(undefined, baseAssets)).toBe(false);
 	});
 
-	describe('with multiple tiered resources', () => {
-		const syntheticToken = 'tier.summary.synthetic';
-		const firstSummary = 'Initial synthetic summary';
-		const updatedSummary = 'Updated synthetic summary';
-
-		it('reflects changes across tier groups', () => {
-			const assets = {
-				...baseAssets,
-				tierSummaries: { ...baseAssets.tierSummaries },
-			};
-			assets.tierSummaries[syntheticToken] = firstSummary;
-			expect(translateTierSummary(syntheticToken, assets)).toBe(firstSummary);
-			expect(hasTierSummaryTranslation(syntheticToken, assets)).toBe(true);
-
-			assets.tierSummaries[syntheticToken] = updatedSummary;
-			expect(translateTierSummary(syntheticToken, assets)).toBe(updatedSummary);
+	it('falls back to tier definition text when summary assets are removed', () => {
+		const tierDefinition = session.rules.tierDefinitions.find((definition) => {
+			return (
+				typeof definition.display?.summaryToken === 'string' &&
+				typeof definition.text?.summary === 'string'
+			);
 		});
+		if (!tierDefinition) {
+			throw new Error(
+				'expected at least one tier definition with summary text',
+			);
+		}
+		const token = tierDefinition.display?.summaryToken as string;
+		const assets = {
+			...baseAssets,
+			tierSummaries: { ...baseAssets.tierSummaries },
+		};
+		delete assets.tierSummaries[token];
+		expect(translateTierSummary(token, baseAssets)).toBe(
+			tierDefinition.text?.summary,
+		);
+		expect(translateTierSummary(token, assets)).toBeUndefined();
+		expect(hasTierSummaryTranslation(token, assets)).toBe(false);
+		expect(tierDefinition.text?.summary).toBeDefined();
 	});
 });

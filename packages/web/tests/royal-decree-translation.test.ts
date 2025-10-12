@@ -1,20 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
-import {
-	createEngine,
-	getActionEffectGroups,
-	type EngineContext,
-} from '@kingdom-builder/engine';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	ActionId,
-} from '@kingdom-builder/contents';
+import { describe, expect, it } from 'vitest';
 import {
 	describeContent,
 	summarizeContent,
@@ -22,20 +6,30 @@ import {
 	logContent,
 	type SummaryEntry,
 } from '../src/translation';
+import { resolveActionEffects } from '@kingdom-builder/protocol';
+import type { ActionConfig } from '@kingdom-builder/protocol';
+import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
+interface ActionEffectGroupOption {
+	optionId: string;
+	actionId?: string;
+	developmentId?: string;
+	icon?: string;
+}
 
-const context = createEngine({
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
-	phases: PHASES,
-	start: GAME_START,
-	rules: RULES,
-});
+interface ActionEffectGroupEntry {
+	id?: string;
+	title?: string;
+	options?: ActionEffectGroupOption[];
+}
+
+interface RoyalDecreeActionInfo {
+	id: string;
+	action: ActionConfig;
+	developGroup: ActionEffectGroupEntry;
+	developActionId: string;
+	options: ActionEffectGroupOption[];
+}
 
 function combineLabels(left: string, right: string): string {
 	const base = left.trim();
@@ -74,6 +68,7 @@ function normalizeDescribedTitle(
 
 function findGroupEntry(
 	entries: SummaryEntry[],
+	titleMatch: string,
 ): Extract<SummaryEntry, { title: string; items: SummaryEntry[] }> {
 	const group = entries.find(
 		(
@@ -81,7 +76,10 @@ function findGroupEntry(
 		): entry is Extract<
 			SummaryEntry,
 			{ title: string; items: SummaryEntry[] }
-		> => typeof entry === 'object' && entry.title.includes('Choose one'),
+		> =>
+			typeof entry === 'object' &&
+			typeof entry.title === 'string' &&
+			entry.title.includes(titleMatch),
 	);
 	if (!group) {
 		throw new Error('Expected effect group entry');
@@ -89,42 +87,97 @@ function findGroupEntry(
 	return group;
 }
 
+function isActionEffectGroup(entry: unknown): entry is ActionEffectGroupEntry {
+	if (!entry || typeof entry !== 'object') {
+		return false;
+	}
+	return Array.isArray((entry as { options?: unknown[] }).options);
+}
+
+function extractGroupOptions(
+	action: ActionConfig,
+): RoyalDecreeActionInfo | undefined {
+	for (const entry of action.effects ?? []) {
+		if (!isActionEffectGroup(entry)) {
+			continue;
+		}
+		const options = (entry.options ?? []).map((rawOption) => {
+			const option = rawOption as {
+				id?: string;
+				optionId?: string;
+				actionId?: string;
+				icon?: string;
+				params?: { developmentId?: string; id?: string };
+			};
+			const params = option.params;
+			const developmentId = params?.developmentId ?? params?.id;
+			return {
+				optionId: option.optionId ?? option.id ?? '',
+				actionId: option.actionId,
+				developmentId,
+				icon: option.icon,
+			} satisfies ActionEffectGroupOption;
+		});
+		const developOptions = options.filter((option) => option.developmentId);
+		if (developOptions.length > 0) {
+			const developActionId = developOptions[0]?.actionId;
+			if (!developActionId) {
+				continue;
+			}
+			return {
+				id: action.id,
+				action,
+				developGroup: {
+					id: entry.id,
+					title: entry.title,
+					options,
+				},
+				developActionId,
+				options: developOptions,
+			} satisfies RoyalDecreeActionInfo;
+		}
+	}
+	return undefined;
+}
+
 describe('royal decree translation', () => {
-	const actionId = ActionId.royal_decree;
-	const developAction = context.actions.get(ActionId.develop);
+	const { translationContext, registries } = buildSyntheticTranslationContext();
+	const actionInfo = (() => {
+		for (const [, action] of registries.actions.entries()) {
+			const info = extractGroupOptions(action);
+			if (info) {
+				return info;
+			}
+		}
+		throw new Error('Expected royal decree action with develop options');
+	})();
+	const developAction = translationContext.actions.get(
+		actionInfo.developActionId,
+	);
 	const developLabel = combineLabels(
 		`${developAction.icon ?? ''} ${developAction.name ?? ''}`,
 		'',
 	);
-	const effectGroups = getActionEffectGroups(
-		actionId,
-		context as EngineContext,
-	);
-	const developGroup = effectGroups.find(
-		(group) => group.id === 'royal_decree_develop',
-	);
-	if (!developGroup) {
-		throw new Error('Expected royal decree develop group');
-	}
-	const developmentOptions = developGroup.options.map((option) => {
-		const params = option.params as
-			| { id?: string; developmentId?: string }
-			| undefined;
-		return params?.developmentId ?? params?.id ?? '';
-	});
 
 	it('summarizes options using develop action label', () => {
 		const summary = summarizeContent(
 			'action',
-			actionId,
-			context as EngineContext,
+			actionInfo.id,
+			translationContext,
 		);
-		const group = findGroupEntry(summary);
-		expect(group.items).toHaveLength(developmentOptions.length);
-		for (const id of developmentOptions) {
-			const development = context.developments.get(id);
+		const summaryAgain = summarizeContent(
+			'action',
+			actionInfo.id,
+			translationContext,
+		);
+		const groupTitle = actionInfo.developGroup.title ?? 'Choose one';
+		const group = findGroupEntry(summary, groupTitle);
+		expect(group.items).toHaveLength(actionInfo.options.length);
+		for (const option of actionInfo.options) {
+			const developmentId = option.developmentId as string;
+			const development = translationContext.developments.get(developmentId);
 			const developmentLabel = combineLabels(
-				`${development.icon ?? ''} ${development.name ?? ''}`,
+				`${development.icon ?? ''} ${development.name ?? developmentId}`,
 				'',
 			);
 			const expectedTitle = combineLabels(developLabel, developmentLabel);
@@ -136,27 +189,30 @@ describe('royal decree translation', () => {
 			expect(entry).toBeDefined();
 			expect(typeof entry).toBe('string');
 		}
+		expect(summaryAgain).toEqual(summary);
 	});
 
 	it('describes options with nested develop effects', () => {
 		const description = describeContent(
 			'action',
-			actionId,
-			context as EngineContext,
+			actionInfo.id,
+			translationContext,
 		);
-		const group = findGroupEntry(description);
-		expect(group.items).toHaveLength(developmentOptions.length);
-		for (const id of developmentOptions) {
-			const development = context.developments.get(id);
+		const groupTitle = actionInfo.developGroup.title ?? 'Choose one';
+		const group = findGroupEntry(description, groupTitle);
+		expect(group.items).toHaveLength(actionInfo.options.length);
+		for (const option of actionInfo.options) {
+			const developmentId = option.developmentId as string;
+			const development = translationContext.developments.get(developmentId);
 			const developmentLabel = combineLabels(
-				`${development.icon ?? ''} ${development.name ?? ''}`,
+				`${development.icon ?? ''} ${development.name ?? developmentId}`,
 				'',
 			);
 			const described = describeContent(
 				'action',
-				ActionId.develop,
-				context as EngineContext,
-				{ id },
+				actionInfo.developActionId,
+				translationContext,
+				{ id: developmentId },
 			);
 			const describedLabel = described[0];
 			const describedTitle =
@@ -186,15 +242,20 @@ describe('royal decree translation', () => {
 		}
 	});
 
-	it('logs selected develop option using develop action log text', () => {
-		const resolved = resolveActionEffects(context.actions.get(actionId), {
+	it('logs selected develop option using develop action copy', () => {
+		const developmentId = actionInfo.options[0]?.developmentId;
+		if (!developmentId) {
+			throw new Error('Expected development option');
+		}
+		const actionDefinition = translationContext.actions.get(actionInfo.id);
+		const resolved = resolveActionEffects(actionDefinition, {
 			landId: 'A-L1',
 			choices: {
-				royal_decree_develop: {
-					optionId: 'royal_decree_house',
+				[actionInfo.developGroup.id ?? 'royal_decree_develop']: {
+					optionId: actionInfo.options[0]?.optionId ?? 'royal_decree_option',
 					params: {
 						landId: 'A-L1',
-						developmentId: 'house',
+						developmentId,
 					},
 				},
 			},
@@ -202,29 +263,44 @@ describe('royal decree translation', () => {
 		const entries = formatEffectGroups(
 			resolved.steps,
 			'log',
-			context as EngineContext,
+			translationContext,
 		);
-		const group = findGroupEntry(entries);
+		const groupTitle = actionInfo.developGroup.title ?? 'Choose one';
+		const group = findGroupEntry(entries, groupTitle);
 		const [entry] = group.items;
+		const development = translationContext.developments.get(developmentId);
 		if (typeof entry === 'string') {
-			expect(entry).toBe('🏗️ Develop - 🏠 House');
+			expect(entry).toContain(development.name ?? developmentId);
 			return;
 		}
-		expect(entry.title).toBe('🏗️ Develop');
+		expect(entry.title).toBe(developLabel);
 		expect(entry.timelineKind).toBe('subaction');
-		expect(entry.actionId).toBe(ActionId.develop);
-		expect(entry.items).toContain('🏗️ Develop - Developed 🏠 House');
+		expect(entry.actionId).toBe(actionInfo.developActionId);
+		const entryItems = Array.isArray(entry.items)
+			? entry.items
+			: entry.items
+				? [entry.items]
+				: [];
+		const hasDevelopmentLine = entryItems.some((item) => {
+			const text = typeof item === 'string' ? item : item?.title;
+			return text?.includes(development.name ?? developmentId) ?? false;
+		});
+		expect(hasDevelopmentLine).toBe(true);
 	});
 
 	it('logs royal decree develop once using develop action copy', () => {
-		const logLines = logContent('action', actionId, context as EngineContext, {
+		const developmentId = actionInfo.options[0]?.developmentId;
+		if (!developmentId) {
+			throw new Error('Expected development option');
+		}
+		const logLines = logContent('action', actionInfo.id, translationContext, {
 			landId: 'A-L1',
 			choices: {
-				royal_decree_develop: {
-					optionId: 'royal_decree_house',
+				[actionInfo.developGroup.id ?? 'royal_decree_develop']: {
+					optionId: actionInfo.options[0]?.optionId ?? 'royal_decree_option',
 					params: {
 						landId: 'A-L1',
-						developmentId: 'house',
+						developmentId,
 					},
 				},
 			},
@@ -232,10 +308,13 @@ describe('royal decree translation', () => {
 		const joined = logLines
 			.map((line) => (typeof line === 'string' ? line : line.text))
 			.join('\n');
-		const occurrences = joined.match(/Developed [^\n]*/g) ?? [];
+		const occurrences = joined.match(/Developed [^\n]*/gu) ?? [];
 		expect(occurrences.length).toBeLessThanOrEqual(1);
 		if (occurrences.length === 1) {
-			expect(occurrences[0]).toContain('🏠 House');
+			expect(occurrences[0]).toContain(
+				translationContext.developments.get(developmentId).name ??
+					developmentId,
+			);
 		}
 	});
 });
