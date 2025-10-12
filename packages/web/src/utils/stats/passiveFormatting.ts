@@ -1,14 +1,13 @@
-import {
-	PASSIVE_INFO,
-	PhaseStepId,
-	formatPassiveRemoval,
-} from '@kingdom-builder/contents';
-import type { StatSourceLink, StatSourceMeta } from '@kingdom-builder/engine';
+import type {
+	SessionStatSourceLink as StatSourceLink,
+	SessionStatSourceMeta as StatSourceMeta,
+} from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';
 import { formatLinkLabel } from './dependencyFormatters';
 
 const PERMANENT_ICON = '🗿';
+const DEFAULT_PASSIVE_ICON = '♾️';
 
 export function buildLongevityEntries(
 	meta: StatSourceMeta,
@@ -20,14 +19,16 @@ export function buildLongevityEntries(
 	if (meta.longevity === 'ongoing') {
 		const anchors = collectAnchorLabels(meta, translationContext);
 		const condition = formatInPlayCondition(anchors);
+		const passiveIcon =
+			translationContext.assets.passive.icon ?? DEFAULT_PASSIVE_ICON;
 		if (condition) {
-			return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing as long as ${condition}`];
+			return [`${passiveIcon} Ongoing as long as ${condition}`];
 		}
-		return [`${PASSIVE_INFO.icon ?? '♾️'} Ongoing`];
+		return [`${passiveIcon} Ongoing`];
 	}
 	const entries: SummaryEntry[] = [];
 	const items: SummaryEntry[] = [];
-	if (dependencies.length && shouldDisplayPermanentDependencies(meta)) {
+	if (dependencies.length) {
 		dependencies.forEach((link) => {
 			items.push(`Triggered by ${link}`);
 		});
@@ -36,22 +37,14 @@ export function buildLongevityEntries(
 		collectRemovalLabels(removalLink, translationContext),
 	);
 	if (removalCondition) {
-		entries.push(formatPassiveRemoval(removalCondition));
+		entries.push(
+			translationContext.assets.formatPassiveRemoval(removalCondition),
+		);
 	} else if (removal) {
-		entries.push(formatPassiveRemoval(removal));
+		entries.push(translationContext.assets.formatPassiveRemoval(removal));
 	}
 	entries.unshift(`${PERMANENT_ICON} Permanent`);
 	return entries.concat(items);
-}
-
-function shouldDisplayPermanentDependencies(meta: StatSourceMeta): boolean {
-	if (meta.kind === 'phase') {
-		const detail = meta.detail?.trim().toLowerCase();
-		if (detail === PhaseStepId.RaiseStrength) {
-			return false;
-		}
-	}
-	return true;
 }
 
 function collectAnchorLabels(
