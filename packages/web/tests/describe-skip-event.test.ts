@@ -1,28 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import type { AdvanceSkip } from '@kingdom-builder/engine';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
-import type { TranslationAssets } from '../src/translation/context';
-import { PhaseId, PhaseStepId } from '@kingdom-builder/contents';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
+import { selectTierSummary } from '../src/translation/context/assetSelectors';
 
 describe('describeSkipEvent', () => {
-	const assets: TranslationAssets = {
-		resources: {},
-		stats: {},
-		populations: {},
-		population: { label: 'Population' },
-		land: { label: 'Land' },
-		slot: { label: 'Development Slot' },
-		passive: { label: 'Passive' },
-		upkeep: { label: 'Upkeep' },
-		modifiers: {},
-		triggers: {},
-		tierSummaries: {},
-		formatPassiveRemoval: (text) => text,
-	};
+	const assets = createDefaultTranslationAssets();
 	it('formats phase skip entries with source summaries', () => {
 		const skip: AdvanceSkip = {
 			type: 'phase',
-			phaseId: PhaseId.Growth,
+			phaseId: 'growth',
 			sources: [
 				{
 					id: 'passive:golden-age',
@@ -31,7 +18,7 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: PhaseId.Growth, label: 'Growth', icon: '🌱' };
+		const phase = { id: 'growth', label: 'Growth', icon: '🌱' };
 
 		const result = describeSkipEvent(skip, phase, undefined, assets);
 
@@ -45,8 +32,8 @@ describe('describeSkipEvent', () => {
 	it('formats step skip entries with fallback labels', () => {
 		const skip: AdvanceSkip = {
 			type: 'step',
-			phaseId: PhaseId.Upkeep,
-			stepId: PhaseStepId.WarRecovery,
+			phaseId: 'upkeep',
+			stepId: 'war-recovery',
 			sources: [
 				{
 					id: 'passive:morale-crash',
@@ -54,12 +41,14 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: PhaseId.Upkeep, label: 'Upkeep', icon: '🧹' };
+		const phase = { id: 'upkeep', label: 'Upkeep', icon: '🧹' };
 		const step = {
-			id: PhaseStepId.WarRecovery,
+			id: 'war-recovery',
 			title: 'War recovery',
 			icon: '🛡️',
 		};
+		const tierSummary = selectTierSummary(assets, 'tier.grim');
+		expect(tierSummary).toBeUndefined();
 
 		const result = describeSkipEvent(skip, phase, step, assets);
 
