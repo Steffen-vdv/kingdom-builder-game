@@ -38,6 +38,83 @@ const serializedRegistrySchema = <SchemaType extends z.ZodTypeAny>(
 	schema: SchemaType,
 ) => z.record(z.string(), schema);
 
+const metadataDescriptorSchema = z.object({
+	label: z.string().optional(),
+	icon: z.string().optional(),
+	description: z.string().optional(),
+});
+
+const metadataRegistrySchema = serializedRegistrySchema(
+	metadataDescriptorSchema,
+);
+
+const phaseStepMetadataSchema = z.object({
+	id: z.string().optional(),
+	label: z.string().optional(),
+	icon: z.string().optional(),
+	triggers: z.array(z.string()).optional(),
+});
+
+const phaseMetadataSchema = z.object({
+	id: z.string().optional(),
+	label: z.string().optional(),
+	icon: z.string().optional(),
+	action: z.boolean().optional(),
+	steps: z.array(phaseStepMetadataSchema).optional(),
+});
+
+const triggerMetadataSchema = z.object({
+	label: z.string().optional(),
+	icon: z.string().optional(),
+	future: z.string().optional(),
+	past: z.string().optional(),
+});
+
+const overviewHeroMetadataSchema = z.object({
+	badgeIcon: z.string(),
+	badgeLabel: z.string(),
+	title: z.string(),
+	intro: z.string(),
+	paragraph: z.string(),
+	tokens: z.record(z.string(), z.string()),
+});
+
+const overviewSectionItemSchema = z.object({
+	icon: z.string().optional(),
+	label: z.string(),
+	body: z.array(z.string()),
+});
+
+const overviewSectionMetadataSchema = z.object({
+	kind: z.union([z.literal('paragraph'), z.literal('list')]),
+	id: z.string(),
+	icon: z.string(),
+	title: z.string(),
+	span: z.boolean().optional(),
+	paragraphs: z.array(z.string()).optional(),
+	items: z.array(overviewSectionItemSchema).optional(),
+});
+
+const overviewMetadataSchema = z.object({
+	hero: overviewHeroMetadataSchema,
+	sections: z.array(overviewSectionMetadataSchema),
+	tokens: z.record(z.string(), z.unknown()),
+});
+
+const sessionRegistriesMetadataSchema = z
+	.object({
+		resources: metadataRegistrySchema.optional(),
+		populations: metadataRegistrySchema.optional(),
+		buildings: metadataRegistrySchema.optional(),
+		developments: metadataRegistrySchema.optional(),
+		stats: metadataRegistrySchema.optional(),
+		phases: serializedRegistrySchema(phaseMetadataSchema).optional(),
+		triggers: serializedRegistrySchema(triggerMetadataSchema).optional(),
+		assets: metadataRegistrySchema.optional(),
+		overviewContent: overviewMetadataSchema.optional(),
+	})
+	.optional();
+
 const sessionRegistriesSchema = z
 	.object({
 		actions: serializedRegistrySchema(actionSchema),
@@ -45,6 +122,7 @@ const sessionRegistriesSchema = z
 		developments: serializedRegistrySchema(developmentSchema),
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(resourceDefinitionSchema),
+		metadata: sessionRegistriesMetadataSchema,
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 

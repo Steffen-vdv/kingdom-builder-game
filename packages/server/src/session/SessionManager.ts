@@ -11,6 +11,9 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	STATS,
+	TRIGGER_INFO,
+	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
 import type {
 	PlayerStartConfig,
@@ -18,6 +21,8 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionRegistriesMetadata,
+	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
@@ -91,6 +96,7 @@ export class SessionManager {
 			developments: this.cloneRegistry(this.baseOptions.developments),
 			populations: this.cloneRegistry(this.baseOptions.populations),
 			resources: this.buildResourceRegistry(resourceRegistry),
+			metadata: this.buildMetadata(),
 		};
 	}
 
@@ -182,6 +188,60 @@ export class SessionManager {
 			result[id] = structuredClone(definition);
 		}
 		return result;
+	}
+
+	private buildDescriptorMap(
+		entries: Record<
+			string,
+			{ label?: string; icon?: string; description?: string }
+		>,
+	): Record<string, SessionMetadataDescriptor> {
+		return Object.fromEntries(
+			Object.entries(entries).map(([id, descriptor]) => {
+				const metadata: SessionMetadataDescriptor = {};
+				if (descriptor.label !== undefined) {
+					metadata.label = descriptor.label;
+				}
+				if (descriptor.icon !== undefined) {
+					metadata.icon = descriptor.icon;
+				}
+				if (descriptor.description !== undefined) {
+					metadata.description = descriptor.description;
+				}
+				return [id, metadata];
+			}),
+		);
+	}
+
+	private buildTriggerMetadata(): NonNullable<
+		SessionRegistriesMetadata['triggers']
+	> {
+		const triggerEntries = Object.entries(
+			TRIGGER_INFO as Record<
+				string,
+				{ icon?: string; future?: string; past?: string }
+			>,
+		);
+		return Object.fromEntries(
+			triggerEntries.map(([id, info]) => [
+				id,
+				{
+					label: info.past ?? info.future ?? id,
+					...(info.icon !== undefined ? { icon: info.icon } : {}),
+					...(info.future !== undefined ? { future: info.future } : {}),
+					...(info.past !== undefined ? { past: info.past } : {}),
+				},
+			]),
+		) as NonNullable<SessionRegistriesMetadata['triggers']>;
+	}
+
+	private buildMetadata(): SessionRegistriesMetadata {
+		return {
+			resources: this.buildDescriptorMap(RESOURCES),
+			stats: this.buildDescriptorMap(STATS),
+			triggers: this.buildTriggerMetadata(),
+			overviewContent: structuredClone(OVERVIEW_CONTENT),
+		} satisfies SessionRegistriesMetadata;
 	}
 
 	private buildResourceRegistry(

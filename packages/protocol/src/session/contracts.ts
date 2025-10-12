@@ -7,9 +7,55 @@ import type {
 } from '../config/schema';
 import type {
 	SessionAdvanceResult,
+	SessionMetadataDescriptor,
+	SessionPhaseMetadata,
 	SessionPlayerId,
 	SessionSnapshot,
+	SessionTriggerMetadata,
 } from './index';
+
+export interface SessionOverviewHeroMetadata {
+	badgeIcon: string;
+	badgeLabel: string;
+	title: string;
+	intro: string;
+	paragraph: string;
+	tokens: Record<string, string>;
+}
+
+export interface SessionOverviewSectionItemMetadata {
+	icon?: string;
+	label: string;
+	body: string[];
+}
+
+export interface SessionOverviewSectionMetadata {
+	kind: 'paragraph' | 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs?: string[];
+	items?: SessionOverviewSectionItemMetadata[];
+}
+
+export interface SessionOverviewMetadata {
+	hero: SessionOverviewHeroMetadata;
+	sections: SessionOverviewSectionMetadata[];
+	tokens: Record<string, unknown>;
+}
+
+export interface SessionRegistriesMetadata {
+	resources?: Record<string, SessionMetadataDescriptor>;
+	populations?: Record<string, SessionMetadataDescriptor>;
+	buildings?: Record<string, SessionMetadataDescriptor>;
+	developments?: Record<string, SessionMetadataDescriptor>;
+	stats?: Record<string, SessionMetadataDescriptor>;
+	phases?: Record<string, SessionPhaseMetadata>;
+	triggers?: Record<string, SessionTriggerMetadata>;
+	assets?: Record<string, SessionMetadataDescriptor>;
+	overviewContent?: SessionOverviewMetadata;
+}
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -39,6 +85,7 @@ export interface SessionRegistriesPayload {
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
+	metadata?: SessionRegistriesMetadata;
 }
 
 export interface SessionCreateResponse {
