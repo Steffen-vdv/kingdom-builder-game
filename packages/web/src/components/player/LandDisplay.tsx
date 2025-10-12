@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
@@ -15,7 +15,7 @@ import {
 } from './registryDisplays';
 
 interface LandDisplayProps {
-	player: PlayerStateSnapshot;
+	player: SessionPlayerStateSnapshot;
 }
 
 const HOVER_CARD_BACKGROUND =
@@ -23,7 +23,7 @@ const HOVER_CARD_BACKGROUND =
 	'dark:from-slate-900/80 dark:to-slate-900/60';
 
 const LandTile: React.FC<{
-	land: PlayerStateSnapshot['lands'][number];
+	land: SessionPlayerStateSnapshot['lands'][number];
 	translationContext: ReturnType<typeof useGameEngine>['translationContext'];
 	handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
 	clearHoverCard: ReturnType<typeof useGameEngine>['clearHoverCard'];
