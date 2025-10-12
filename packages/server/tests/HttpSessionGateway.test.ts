@@ -36,6 +36,22 @@ describe('HttpSessionGateway', () => {
 			developments: {},
 			populations: {},
 			resources: {},
+			metadata: {
+				resources: {},
+				triggers: {},
+				overviewContent: {
+					hero: {
+						badgeIcon: '',
+						badgeLabel: '',
+						title: '',
+						intro: '',
+						paragraph: '',
+						tokens: {},
+					},
+					sections: [],
+					tokens: {},
+				},
+			},
 		};
 	}
 

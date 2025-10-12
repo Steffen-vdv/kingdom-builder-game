@@ -112,6 +112,22 @@ export function createLocalSessionGateway(
 		developments: {},
 		populations: {},
 		resources: {},
+		metadata: {
+			resources: {},
+			triggers: {},
+			overviewContent: {
+				hero: {
+					badgeIcon: '',
+					badgeLabel: '',
+					title: '',
+					intro: '',
+					paragraph: '',
+					tokens: {},
+				},
+				sections: [],
+				tokens: {},
+			},
+		},
 	};
 	const getRegistries = (): SessionRegistriesPayload => {
 		if (typeof structuredClone === 'function') {
@@ -123,6 +139,7 @@ export function createLocalSessionGateway(
 			developments: { ...baseRegistries.developments },
 			populations: { ...baseRegistries.populations },
 			resources: { ...baseRegistries.resources },
+			metadata: structuredClone(baseRegistries.metadata),
 		};
 	};
 	return {

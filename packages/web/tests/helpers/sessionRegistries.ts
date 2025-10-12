@@ -1,14 +1,26 @@
 import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionRegistriesMetadata,
 } from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
 } from '../../src/state/sessionRegistries';
 import registriesPayload from '../fixtures/sessionRegistriesPayload.json';
+import defaultMetadataSnapshot from '../../src/contexts/defaultRegistryMetadata.json';
 
-const BASE_PAYLOAD = registriesPayload as SessionRegistriesPayload;
+const DEFAULT_METADATA = (
+	defaultMetadataSnapshot as {
+		metadata: SessionRegistriesMetadata;
+	}
+).metadata;
+
+type RegistriesPayloadShape = Omit<SessionRegistriesPayload, 'metadata'> & {
+	metadata?: SessionRegistriesMetadata;
+};
+
+const BASE_PAYLOAD = registriesPayload as RegistriesPayloadShape;
 type ResourceKey = SessionResourceDefinition['key'];
 
 function cloneResourceDefinition(
@@ -31,7 +43,7 @@ function cloneResourceDefinition(
 }
 
 function cloneRegistriesPayload(
-	payload: SessionRegistriesPayload,
+	payload: RegistriesPayloadShape,
 ): SessionRegistriesPayload {
 	const cloneEntries = <T>(entries: Record<string, T> | undefined) => {
 		if (!entries) {
@@ -55,6 +67,7 @@ function cloneRegistriesPayload(
 				cloneResourceDefinition(definition),
 			]),
 		),
+		metadata: structuredClone(payload.metadata ?? DEFAULT_METADATA),
 	};
 }
 

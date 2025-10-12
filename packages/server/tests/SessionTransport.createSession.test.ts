@@ -6,6 +6,11 @@ import {
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	RESOURCES,
+	TRIGGER_INFO,
+	OVERVIEW_CONTENT,
+} from '@kingdom-builder/contents';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -182,5 +187,23 @@ describe('SessionTransport createSession', () => {
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
 		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		const { metadata } = registries;
+		const [resourceKey, resourceInfo] = Object.entries(RESOURCES)[0] ?? [];
+		if (resourceKey && resourceInfo) {
+			expect(metadata.resources[resourceKey]).toMatchObject({
+				label: resourceInfo.label ?? expect.any(String),
+				icon: resourceInfo.icon,
+				description: resourceInfo.description,
+			});
+		}
+		const [triggerId, triggerInfo] = Object.entries(TRIGGER_INFO)[0] ?? [];
+		if (triggerId && triggerInfo) {
+			expect(metadata.triggers[triggerId]).toMatchObject({
+				icon: triggerInfo.icon,
+				future: triggerInfo.future,
+				past: triggerInfo.past,
+			});
+		}
+		expect(metadata.overviewContent.hero).toEqual(OVERVIEW_CONTENT.hero);
 	});
 });

@@ -11,6 +11,8 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	TRIGGER_INFO,
+	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
 import type {
 	PlayerStartConfig,
@@ -18,6 +20,9 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionRegistriesMetadata,
+	SessionMetadataDescriptor,
+	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
@@ -72,7 +77,8 @@ export class SessionManager {
 			now = Date.now,
 			engineOptions = {},
 		} = options;
-		const { resourceRegistry, ...engineOverrides } = engineOptions;
+		const { resourceRegistry: resourceOverrides, ...engineOverrides } =
+			engineOptions;
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
@@ -85,12 +91,14 @@ export class SessionManager {
 			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
 		};
+		const resources = this.buildResourceRegistry(resourceOverrides);
 		this.registries = {
 			actions: this.cloneRegistry(this.baseOptions.actions),
 			buildings: this.cloneRegistry(this.baseOptions.buildings),
 			developments: this.cloneRegistry(this.baseOptions.developments),
 			populations: this.cloneRegistry(this.baseOptions.populations),
-			resources: this.buildResourceRegistry(resourceRegistry),
+			resources,
+			metadata: this.buildRegistriesMetadata(resources),
 		};
 	}
 
@@ -184,6 +192,90 @@ export class SessionManager {
 		return result;
 	}
 
+	private buildRegistriesMetadata(
+		resources: SessionResourceRegistry,
+	): SessionRegistriesMetadata {
+		const formatLabel = (value: string): string => {
+			const spaced = value.replace(/[_-]+/g, ' ').trim();
+			if (spaced.length === 0) {
+				return value;
+			}
+			return spaced.replace(/\b\w/g, (char) => char.toUpperCase());
+		};
+		const resourceDescriptors: Record<string, SessionMetadataDescriptor> = {};
+		const assignResourceDescriptor = (
+			key: string,
+			descriptor: SessionMetadataDescriptor,
+		) => {
+			resourceDescriptors[key] = descriptor;
+		};
+		for (const info of Object.values(RESOURCES)) {
+			const key = info.key;
+			const descriptor: SessionMetadataDescriptor = {
+				label: info.label ?? formatLabel(key),
+			};
+			if (info.icon !== undefined) {
+				descriptor.icon = info.icon;
+			}
+			if (info.description !== undefined) {
+				descriptor.description = info.description;
+			}
+			assignResourceDescriptor(key, descriptor);
+		}
+		for (const [key, definition] of Object.entries(resources)) {
+			const existing = resourceDescriptors[key];
+			const descriptor: SessionMetadataDescriptor = {
+				label:
+					definition.label ??
+					definition.key ??
+					existing?.label ??
+					formatLabel(key),
+			};
+			if (definition.icon !== undefined) {
+				descriptor.icon = definition.icon;
+			} else if (existing?.icon !== undefined) {
+				descriptor.icon = existing.icon;
+			}
+			if (definition.description !== undefined) {
+				descriptor.description = definition.description;
+			} else if (existing?.description !== undefined) {
+				descriptor.description = existing.description;
+			}
+			assignResourceDescriptor(key, descriptor);
+		}
+		const triggerDescriptors: Record<string, SessionTriggerMetadata> = {};
+		const triggerEntries = Object.entries(
+			TRIGGER_INFO as Record<
+				string,
+				{
+					icon?: string;
+					future?: string;
+					past?: string;
+				}
+			>,
+		);
+		for (const [triggerId, info] of triggerEntries) {
+			const descriptor: SessionTriggerMetadata = {
+				label: info.past ?? info.future ?? formatLabel(triggerId),
+			};
+			if (info.icon !== undefined) {
+				descriptor.icon = info.icon;
+			}
+			if (info.future !== undefined) {
+				descriptor.future = info.future;
+			}
+			if (info.past !== undefined) {
+				descriptor.past = info.past;
+			}
+			triggerDescriptors[triggerId] = descriptor;
+		}
+		const metadata: SessionRegistriesMetadata = {
+			resources: resourceDescriptors,
+			triggers: triggerDescriptors,
+			overviewContent: structuredClone(OVERVIEW_CONTENT),
+		};
+		return metadata;
+	}
 	private buildResourceRegistry(
 		overrides?: SessionResourceRegistry,
 	): SessionResourceRegistry {

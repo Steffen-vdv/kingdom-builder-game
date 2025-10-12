@@ -147,6 +147,14 @@ export type {
 	SerializedRegistry,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
+	SessionOverviewContent,
+	SessionOverviewHero,
+	SessionOverviewListItem,
+	SessionOverviewListSection,
+	SessionOverviewParagraphSection,
+	SessionOverviewSection,
+	SessionOverviewTokenCandidates,
+	SessionRegistriesMetadata,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {

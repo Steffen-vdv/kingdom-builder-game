@@ -11,11 +11,29 @@ import type {
 	SessionStateResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
+	SessionRegistriesPayload,
 } from '@kingdom-builder/protocol/session';
 import type { GameApi, GameApiRequestOptions } from './gameApi';
 import { GameApiError } from './gameApi';
 
 type CloneFn = <T>(value: T) => T;
+
+const EMPTY_REGISTRY_METADATA: SessionRegistriesPayload['metadata'] = {
+	resources: {},
+	triggers: {},
+	overviewContent: {
+		hero: {
+			badgeIcon: '',
+			badgeLabel: '',
+			title: '',
+			intro: '',
+			paragraph: '',
+			tokens: {},
+		},
+		sections: [],
+		tokens: {},
+	},
+};
 
 const deepClone = <T>(value: T, seen = new WeakMap<object, unknown>()): T => {
 	if (value === null || typeof value !== 'object') {
@@ -260,6 +278,7 @@ export class GameApiFake implements GameApi {
 						developments: {},
 						populations: {},
 						resources: {},
+						metadata: EMPTY_REGISTRY_METADATA,
 					});
 			this.#sessions.set(request.sessionId, {
 				sessionId: request.sessionId,

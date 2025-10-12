@@ -38,6 +38,74 @@ const serializedRegistrySchema = <SchemaType extends z.ZodTypeAny>(
 	schema: SchemaType,
 ) => z.record(z.string(), schema);
 
+const metadataDescriptorSchema = z.object({
+	label: z.string().optional(),
+	icon: z.string().optional(),
+	description: z.string().optional(),
+});
+
+const triggerMetadataSchema = z.object({
+	label: z.string().optional(),
+	icon: z.string().optional(),
+	future: z.string().optional(),
+	past: z.string().optional(),
+});
+
+const overviewListItemSchema = z.object({
+	icon: z.string().optional(),
+	label: z.string(),
+	body: z.array(z.string()),
+});
+
+const overviewParagraphSectionSchema = z.object({
+	kind: z.literal('paragraph'),
+	id: z.string(),
+	icon: z.string(),
+	title: z.string(),
+	span: z.boolean().optional(),
+	paragraphs: z.array(z.string()),
+});
+
+const overviewListSectionSchema = z.object({
+	kind: z.literal('list'),
+	id: z.string(),
+	icon: z.string(),
+	title: z.string(),
+	span: z.boolean().optional(),
+	items: z.array(overviewListItemSchema),
+});
+
+const overviewSectionSchema = z.union([
+	overviewParagraphSectionSchema,
+	overviewListSectionSchema,
+]);
+
+const overviewHeroSchema = z.object({
+	badgeIcon: z.string(),
+	badgeLabel: z.string(),
+	title: z.string(),
+	intro: z.string(),
+	paragraph: z.string(),
+	tokens: z.record(z.string(), z.string()),
+});
+
+const overviewTokenCandidatesSchema = z.record(
+	z.string(),
+	z.record(z.string(), z.array(z.string())),
+);
+
+const overviewContentSchema = z.object({
+	hero: overviewHeroSchema,
+	sections: z.array(overviewSectionSchema),
+	tokens: overviewTokenCandidatesSchema,
+});
+
+const registriesMetadataSchema = z.object({
+	resources: z.record(z.string(), metadataDescriptorSchema),
+	triggers: z.record(z.string(), triggerMetadataSchema),
+	overviewContent: overviewContentSchema,
+});
+
 const sessionRegistriesSchema = z
 	.object({
 		actions: serializedRegistrySchema(actionSchema),
@@ -45,6 +113,7 @@ const sessionRegistriesSchema = z
 		developments: serializedRegistrySchema(developmentSchema),
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(resourceDefinitionSchema),
+		metadata: registriesMetadataSchema,
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 

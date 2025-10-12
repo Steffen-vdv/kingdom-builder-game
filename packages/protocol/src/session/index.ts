@@ -266,6 +266,14 @@ export type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
+	SessionOverviewContent,
+	SessionOverviewHero,
+	SessionOverviewListItem,
+	SessionOverviewListSection,
+	SessionOverviewParagraphSection,
+	SessionOverviewSection,
+	SessionOverviewTokenCandidates,
+	SessionRegistriesMetadata,
 } from './contracts';
 
 export * as contracts from './contracts';

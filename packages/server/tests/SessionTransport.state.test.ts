@@ -3,6 +3,11 @@ import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	RESOURCES,
+	TRIGGER_INFO,
+	OVERVIEW_CONTENT,
+} from '@kingdom-builder/contents';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -41,6 +46,27 @@ describe('SessionTransport session state', () => {
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		const metadata = state.registries.metadata;
+		expect(metadata).toBeDefined();
+		const [resourceKey, resourceInfo] = Object.entries(RESOURCES)[0] ?? [];
+		if (resourceKey && resourceInfo) {
+			const resourceDescriptor = metadata.resources[resourceKey];
+			expect(resourceDescriptor).toMatchObject({
+				label: resourceInfo.label ?? expect.any(String),
+				icon: resourceInfo.icon,
+				description: resourceInfo.description,
+			});
+		}
+		const [triggerId, triggerInfo] = Object.entries(TRIGGER_INFO)[0] ?? [];
+		if (triggerId && triggerInfo) {
+			const triggerDescriptor = metadata.triggers[triggerId];
+			expect(triggerDescriptor).toMatchObject({
+				icon: triggerInfo.icon,
+				future: triggerInfo.future,
+				past: triggerInfo.past,
+			});
+		}
+		expect(metadata.overviewContent.hero).toEqual(OVERVIEW_CONTENT.hero);
 	});
 
 	it('throws when a session cannot be located', () => {

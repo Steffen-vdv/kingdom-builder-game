@@ -9,7 +9,62 @@ import type {
 	SessionAdvanceResult,
 	SessionPlayerId,
 	SessionSnapshot,
+	SessionMetadataDescriptor,
+	SessionTriggerMetadata,
 } from './index';
+
+export interface SessionOverviewListItem {
+	icon?: string;
+	label: string;
+	body: string[];
+}
+
+export interface SessionOverviewParagraphSection {
+	kind: 'paragraph';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+}
+
+export interface SessionOverviewListSection {
+	kind: 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	items: SessionOverviewListItem[];
+}
+
+export type SessionOverviewSection =
+	| SessionOverviewParagraphSection
+	| SessionOverviewListSection;
+
+export interface SessionOverviewHero {
+	badgeIcon: string;
+	badgeLabel: string;
+	title: string;
+	intro: string;
+	paragraph: string;
+	tokens: Record<string, string>;
+}
+
+export type SessionOverviewTokenCandidates = Partial<
+	Record<string, Record<string, string[]>>
+>;
+
+export interface SessionOverviewContent {
+	hero: SessionOverviewHero;
+	sections: SessionOverviewSection[];
+	tokens: SessionOverviewTokenCandidates;
+}
+
+export interface SessionRegistriesMetadata {
+	resources: Record<string, SessionMetadataDescriptor>;
+	triggers: Record<string, SessionTriggerMetadata>;
+	overviewContent: SessionOverviewContent;
+}
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -39,6 +94,7 @@ export interface SessionRegistriesPayload {
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
+	metadata: SessionRegistriesMetadata;
 }
 
 export interface SessionCreateResponse {
