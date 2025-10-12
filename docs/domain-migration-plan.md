@@ -159,6 +159,19 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-13 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/state/sessionSelectors.types.ts` (Web)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Remove the Web session selectors' dependency on Engine player
+    snapshots so the UI consumes Protocol contracts directly, advancing the
+    domain decoupling effort.
+  - **Communication Path Update**: Session selectors and their consumers now
+    rely on `@kingdom-builder/protocol` snapshot types, eliminating the
+    cross-domain import from `@kingdom-builder/engine`.
+  - **Follow-Up Notes**: Continue auditing remaining Web components listed in
+    the migration table to ensure they depend solely on Protocol exports.
+
 - **Date & Author**: 2025-10-12 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/protocol/src/session/index.ts` (Protocol)

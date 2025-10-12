@@ -1,4 +1,4 @@
-import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol/session';
 import type {
 	ActionConfig,
 	BuildingConfig,
@@ -17,11 +17,11 @@ type DevelopmentDefinition = DevelopmentConfig &
 		focus: unknown;
 		system: boolean | undefined;
 	}>;
-type SessionLandView = PlayerStateSnapshot['lands'][number] & {
+type SessionLandView = SessionPlayerStateSnapshot['lands'][number] & {
 	slotsFree: number;
 };
 type SessionPlayerView = Omit<
-	PlayerStateSnapshot,
+	SessionPlayerStateSnapshot,
 	'lands' | 'buildings' | 'actions'
 > & {
 	lands: SessionLandView[];
