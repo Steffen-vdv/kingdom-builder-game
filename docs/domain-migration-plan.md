@@ -159,6 +159,22 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-15 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/passives/visibility.ts` (Web)
+    - `packages/web/tests/passive-visibility.test.ts` (Web)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Finish decoupling passive visibility helpers from Engine and
+    Content by injecting population identifiers through caller-provided
+    options/contexts rather than importing registries across domains.
+  - **Communication Path Update**: Web components and tests now supply
+    population role ids explicitly when constructing visibility contexts,
+    allowing the helper to operate solely on snapshot data without touching
+    Engine types or Content registries.
+  - **Follow-Up Notes**: Audit any legacy call sites that may still rely on
+    implicit population lists to ensure they forward the ids from protocol
+    registries or snapshots when needed.
+
 - **Date & Author**: 2025-10-14 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/components/player/BuildingDisplay.tsx` (Web)
