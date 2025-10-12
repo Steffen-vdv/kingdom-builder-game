@@ -1,5 +1,18 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P1 - T17 - Stat Summary Metadata Decoupling
+
+- Reworked `packages/web/src/utils/stats.ts` and supporting descriptors to read
+  stat labels, icons, and percent-display metadata from translation context
+  assets built from registry metadata, removing the dependency on
+  `@kingdom-builder/contents` stat constants and Engine snapshot types.
+- Verified stat detail builders operate solely on protocol stat contribution
+  payloads and translation context assets so summary rendering stays aligned
+  with registry metadata.
+- Extended translation asset builders to surface `displayAsPercent` flags so
+  UI formatters no longer need the contents package to render percentage-based
+  stats.
+
 ## Domain Migration - P1 - T16 - Passive Stat Metadata Decoupling
 
 - Updated `packages/web/src/utils/stats/historyEntries.ts` and
