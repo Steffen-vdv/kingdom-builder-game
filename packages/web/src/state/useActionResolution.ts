@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol/session';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { ACTION_EFFECT_DELAY } from './useGameLog';
 
 interface UseActionResolutionOptions {
