@@ -71,6 +71,30 @@ type EngineRegistries = {
 	populations: Registry<PopulationDef>;
 };
 
+function validatePhaseDefinitions(phases: PhaseConfig[]) {
+	if (!Array.isArray(phases) || phases.length === 0) {
+		throw new Error(
+			'Engine configuration requires at least one phase with steps.',
+		);
+	}
+	for (const phase of phases) {
+		const phaseId =
+			phase.id && phase.id.trim().length > 0 ? phase.id : '<unknown phase>';
+		if (!phase.steps || phase.steps.length === 0) {
+			throw new Error(`Phase "${phaseId}" is missing required steps.`);
+		}
+		for (let index = 0; index < phase.steps.length; index += 1) {
+			const step = phase.steps[index];
+			if (!step || !step.id || step.id.trim().length === 0) {
+				throw new Error(
+					`Phase "${phaseId}" contains a step without ` +
+						`an id at index ${index}.`,
+				);
+			}
+		}
+	}
+}
+
 function buildRegistry<DefinitionType extends { id: string }>(
 	definitions: DefinitionType[] | undefined,
 	schema: ZodType<DefinitionType>,
@@ -129,6 +153,7 @@ export function createEngine({
 	config,
 	devMode = false,
 }: EngineCreationOptions) {
+	validatePhaseDefinitions(phases);
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();

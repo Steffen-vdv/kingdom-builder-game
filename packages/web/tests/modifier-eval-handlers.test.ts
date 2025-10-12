@@ -92,7 +92,7 @@ describe('modifier evaluation handlers', () => {
 			buildings: content.buildings,
 			developments: content.developments,
 			populations: content.populations,
-			phases: [],
+			phases: PHASES,
 			start,
 			rules,
 		});
