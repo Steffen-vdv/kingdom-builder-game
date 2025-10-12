@@ -18,6 +18,11 @@ guide for rationale, lore, and extended background.
    - [`npm run verify`](../scripts/run-verification.mjs) is the preferred
      combined validation for code changes; it streams output to the console and
      writes timestamped logs in `artifacts/` for sharing with reviewers.
+   - Successful `npm run check` + `npm run test:quick` runs are cached by the
+     Husky pre-commit hook based on the staged tree. When you retry a commit
+     without new staged changes the hook skips the redundant rerun. Remove
+     `.git/kb-pre-commit-cache.json` or run `npm run verify` to refresh the
+     cache after making new edits.
    - The Husky pre-push hook enforces that verification run (with a fallback to
      `npm run check && npm run test:coverage` on tooling failures). If you must
      execute the fallback manually, note the environment issue in your PR body
