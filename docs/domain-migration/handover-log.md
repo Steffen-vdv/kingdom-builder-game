@@ -14,3 +14,7 @@
 - No protocol equivalents exist for `ActionEffectGroup`/`ActionEffectGroupOption` typing, leaving action card components bound to engine definitions. The forthcoming protocol needs DTOs for selectable effect groups.
 - Session bootstrap requires bundled content metadata (resources, populations, triggers). Provide a protocol endpoint that delivers the normalized metadata currently assembled via `defaultRegistryMetadata` and `RegistryMetadataContext`.
 - Runtime configuration fallback (`packages/web/src/startup/runtimeConfig.ts`) still dynamically imports `@kingdom-builder/contents` to construct presets. Migration will need a protocol entry point that returns pre-normalized content snapshots so the web layer can drop the dynamic import and registry iteration.
+
+## Domain Migration - P1 - T4 - Skip Event Protocol Alignment
+
+- Skip event formatting now consumes `SessionAdvanceSkipSnapshot` from `@kingdom-builder/protocol/session`, removing the dependency on engine skip exports for log/history rendering in `packages/web/src/utils/describeSkipEvent.ts` and its tests. Future skip handling tasks can safely evolve without touching engine internals.
