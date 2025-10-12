@@ -1,11 +1,4 @@
 import {
-	BuildingId,
-	GAME_START,
-	PHASES,
-	RULES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
-import {
 	createEngineSession,
 	type ActionParams,
 	type EngineSession,
@@ -31,6 +24,7 @@ import {
 	type SessionRegistries,
 } from './sessionRegistries';
 import { createGameApi, type GameApi } from '../services/gameApi';
+import { getSessionBootstrap } from './sessionBootstrap';
 
 export interface SessionHandle {
 	enqueue: EngineSession['enqueue'];
@@ -42,7 +36,7 @@ interface SessionRecord {
 	handle: SessionHandle;
 	legacySession: EngineSession;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: string[];
 }
 
 interface CreateSessionOptions {
@@ -57,7 +51,7 @@ interface CreateSessionResult {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: string[];
 	metadata: SessionSnapshotMetadata;
 }
 
@@ -76,7 +70,7 @@ interface FetchSnapshotResult {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: string[];
 	metadata: SessionSnapshotMetadata;
 }
 
@@ -119,17 +113,28 @@ function applyDeveloperPreset(
 	session: EngineSession,
 	snapshot: SessionSnapshot,
 	devMode: boolean,
+	preset: ReturnType<typeof getSessionBootstrap>['developerPreset'],
 ): void {
 	if (!devMode) {
 		return;
 	}
 	const primaryPlayer = snapshot.game.players[0];
 	const primaryPlayerId = primaryPlayer?.id;
-	const hasMill = primaryPlayer?.buildings.includes(BuildingId.Mill) ?? false;
-	if (!primaryPlayerId || snapshot.game.turn !== 1 || hasMill) {
+	if (!primaryPlayerId || snapshot.game.turn !== 1) {
 		return;
 	}
-	initializeDeveloperMode(session, primaryPlayerId);
+	if (preset?.buildings?.length) {
+		const missingBuilding = preset.buildings.some(
+			(id) => !primaryPlayer?.buildings.includes(id),
+		);
+		if (!missingBuilding) {
+			return;
+		}
+	}
+	if (!preset) {
+		return;
+	}
+	initializeDeveloperMode(session, primaryPlayerId, preset);
 }
 
 function applyPlayerName(
@@ -158,20 +163,27 @@ export async function createSession(
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys = extractResourceKeys(registries);
+	const bootstrap = getSessionBootstrap();
+	const { phases, start, rules, developerPreset } = bootstrap;
 	const legacySession = createEngineSession({
 		actions: registries.actions,
 		buildings: registries.buildings,
 		developments: registries.developments,
 		populations: registries.populations,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
+		phases,
+		start,
+		rules,
 		devMode,
 	});
 	legacySession.setDevMode(devMode);
 	const initialSnapshot = legacySession.getSnapshot();
-	applyDeveloperPreset(legacySession, initialSnapshot, devMode);
+	applyDeveloperPreset(
+		legacySession,
+		initialSnapshot,
+		devMode,
+		developerPreset,
+	);
 	applyPlayerName(legacySession, initialSnapshot, playerName);
 	const sessionId = response.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
 	const handle = createSessionHandle(legacySession);
@@ -195,7 +207,7 @@ export async function fetchSnapshot(
 	const record = ensureSessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys = extractResourceKeys(registries);
 	record.registries = registries;
 	record.resourceKeys = resourceKeys;
 	return {
@@ -256,7 +268,7 @@ export async function advanceSessionPhase(
 	} = record;
 	const response = await api.advancePhase(request);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys = extractResourceKeys(registries);
 	Object.assign(cachedRegistries, registries);
 	cachedResourceKeys.splice(0, cachedResourceKeys.length, ...resourceKeys);
 	try {

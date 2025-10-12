@@ -9,11 +9,14 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
+import {
+	configureTestBootstrap,
+	resetTestBootstrap,
+} from '../helpers/testBootstrap';
 
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
@@ -157,8 +160,9 @@ function SessionInspector() {
 describe('GameProvider', () => {
 	let session: LegacySession;
 	let registries: ReturnType<typeof createSessionRegistries>;
-	let resourceKeys: ResourceKey[];
+	let resourceKeys: string[];
 	beforeEach(() => {
+		configureTestBootstrap();
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
@@ -197,6 +201,10 @@ describe('GameProvider', () => {
 			id: 'player-1',
 			name: 'Commander',
 			resources: { [resourceKey]: 10 },
+		});
+
+		afterEach(() => {
+			resetTestBootstrap();
 		});
 		const opponent = createSnapshotPlayer({
 			id: 'player-2',

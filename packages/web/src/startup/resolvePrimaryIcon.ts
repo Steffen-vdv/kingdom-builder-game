@@ -1,23 +1,46 @@
-export interface IconSource {
-	icon?: string;
+import type { IconSource } from './runtimeBootstrap';
+
+export interface ResolvePrimaryIconOptions {
+	primaryResourceId?: string | null;
+	metadata?: Record<string, IconSource | undefined>;
+	registry?: Record<string, IconSource | undefined>;
 }
 
-export function resolvePrimaryIcon(
-	resources: Record<string, IconSource>,
-	primaryId?: string | null,
+function findIcon(
+	pool: Record<string, IconSource | undefined> | undefined,
+	identifier: string | null | undefined,
 ): string | undefined {
-	const entries = Object.entries(resources);
-	if (entries.length === 0) {
+	if (!pool || !identifier) {
 		return undefined;
 	}
+	const entry = pool[identifier];
+	return typeof entry?.icon === 'string' ? entry.icon : undefined;
+}
 
-	if (primaryId) {
-		const resource = resources[primaryId];
-		if (resource?.icon) {
-			return resource.icon;
+function findFirstIcon(
+	pool: Record<string, IconSource | undefined> | undefined,
+): string | undefined {
+	if (!pool) {
+		return undefined;
+	}
+	for (const info of Object.values(pool)) {
+		if (typeof info?.icon === 'string') {
+			return info.icon;
 		}
 	}
+	return undefined;
+}
 
-	const fallback = entries.find(([, info]) => typeof info?.icon === 'string');
-	return fallback?.[1].icon;
+export function resolvePrimaryIcon({
+	primaryResourceId,
+	metadata,
+	registry,
+}: ResolvePrimaryIconOptions): string | undefined {
+	const directIcon =
+		findIcon(metadata, primaryResourceId) ??
+		findIcon(registry, primaryResourceId);
+	if (directIcon) {
+		return directIcon;
+	}
+	return findFirstIcon(metadata) ?? findFirstIcon(registry);
 }

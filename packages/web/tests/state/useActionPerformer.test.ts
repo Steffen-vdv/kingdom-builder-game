@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequirementFailure, RuleSnapshot } from '@kingdom-builder/engine';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
@@ -8,11 +8,14 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
+import {
+	configureTestBootstrap,
+	resetTestBootstrap,
+} from '../helpers/testBootstrap';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -46,14 +49,15 @@ describe('useActionPerformer', () => {
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
 	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
-	let resourceKeys: ResourceKey[];
-	let actionCostResource: ResourceKey;
+	let resourceKeys: string[];
+	let actionCostResource: string;
 	let ruleSnapshot: RuleSnapshot;
 	let registries: ReturnType<typeof createSessionRegistries>;
 	const sessionId = 'test-session';
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		configureTestBootstrap();
 		performSessionActionMock.mockReset();
 		diffStepSnapshotsMock.mockReset();
 		diffStepSnapshotsMock.mockReturnValue([]);
@@ -83,6 +87,10 @@ describe('useActionPerformer', () => {
 			id: 'player-1',
 			name: 'Hero',
 			resources: { [actionCostResource]: 5 },
+		});
+
+		afterEach(() => {
+			resetTestBootstrap();
 		});
 		const opponent = createSnapshotPlayer({
 			id: 'player-2',

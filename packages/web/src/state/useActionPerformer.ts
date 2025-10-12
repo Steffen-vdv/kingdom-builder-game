@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import { ActionId } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
@@ -44,6 +43,21 @@ type ActionExecutionError = Error & {
 	requirementFailure?: SessionRequirementFailure;
 	requirementFailures?: ActionRequirementFailures;
 };
+
+function isDevelopmentAction(
+	definition: { effects?: ReadonlyArray<unknown> } | undefined,
+): boolean {
+	if (!definition?.effects) {
+		return false;
+	}
+	return definition.effects.some((effect) => {
+		if (!effect || typeof effect !== 'object') {
+			return false;
+		}
+		const type = (effect as Record<string, unknown>).type;
+		return typeof type === 'string' && type === 'development';
+	});
+}
 
 function createActionExecutionError(
 	response: ActionExecuteErrorResponse,
@@ -203,7 +217,7 @@ export function useActionPerformer({
 					subLines,
 				});
 				const logLines = (
-					action.id === ActionId.develop
+					isDevelopmentAction(stepDef)
 						? formatDevelopActionLogLines
 						: formatActionLogLines
 				)(messages, filtered);

@@ -77,16 +77,17 @@ export function buildActionCostLines({
 	resources,
 }: BuildActionCostLinesOptions): ActionLogLineDescriptor[] {
 	const costLines: ActionLogLineDescriptor[] = [];
-	const costKeys = Object.keys(costs) as SessionResourceKey[];
+	const costKeys = Object.keys(costs);
 	for (const key of costKeys) {
-		const costAmount = costs[key] ?? 0;
+		const resourceKey: SessionResourceKey = key;
+		const costAmount = costs[resourceKey] ?? 0;
 		if (!costAmount) {
 			continue;
 		}
-		const info = resources[key];
+		const info = resources[resourceKey];
 		const icon = info?.icon ? `${info.icon} ` : '';
-		const label = info?.label ?? key;
-		const beforeAmount = beforeResources[key] ?? 0;
+		const label = info?.label ?? resourceKey;
+		const beforeAmount = beforeResources[resourceKey] ?? 0;
 		const afterAmount = beforeAmount - costAmount;
 		const costDelta = `${beforeAmount}→${afterAmount}`;
 		costLines.push({
