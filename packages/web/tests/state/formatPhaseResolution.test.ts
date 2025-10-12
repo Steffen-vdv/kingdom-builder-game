@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type {
 	SessionPhaseDefinition,
@@ -9,6 +8,8 @@ import type {
 	PlayerSnapshot,
 	TranslationDiffContext,
 } from '../../src/translation';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 vi.mock('../../src/translation', () => ({
 	__esModule: true,
@@ -36,6 +37,14 @@ import { describeSkipEvent } from '../../src/utils/describeSkipEvent';
 
 const diffStepSnapshotsMock = vi.mocked(diffStepSnapshots);
 const describeSkipEventMock = vi.mocked(describeSkipEvent);
+const { resources } = createSessionRegistries();
+const RESOURCE_KEYS = Object.keys(resources) as SessionResourceKey[];
+if (RESOURCE_KEYS.length === 0) {
+	throw new Error(
+		'Expected synthetic session registries to provide resources.',
+	);
+}
+const PRIMARY_RESOURCE = RESOURCE_KEYS[0]!;
 
 function createPlayerSnapshot(
 	resources: Record<string, number>,
@@ -83,7 +92,7 @@ describe('formatPhaseResolution', () => {
 		const before = createPlayerSnapshot({ gold: 5 });
 		const after = createPlayerSnapshot({ gold: 7 });
 		const diffContext = {} as TranslationDiffContext;
-		const resourceKeys = ['gold' as ResourceKey];
+		const resourceKeys: SessionResourceKey[] = [PRIMARY_RESOURCE];
 		diffStepSnapshotsMock.mockReturnValue(['Gold +2 (5→7)']);
 
 		const result = formatPhaseResolution({

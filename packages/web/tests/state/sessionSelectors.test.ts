@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { RESOURCES } from '@kingdom-builder/contents';
 import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
@@ -10,10 +9,21 @@ import {
 	selectSessionPlayers,
 	selectSessionView,
 } from '../../src/state/sessionSelectors';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 describe('sessionSelectors', () => {
 	const factory = createContentFactory();
-	const [primaryResource] = Object.keys(RESOURCES);
+	const registries = createSessionRegistries();
+	const resourceKeys = Object.keys(
+		registries.resources,
+	) as SessionResourceKey[];
+	if (resourceKeys.length === 0) {
+		throw new Error(
+			'Expected session registries to include at least one resource.',
+		);
+	}
+	const [primaryResource] = resourceKeys;
 	const actionA = factory.action({ name: 'Action A' });
 	const actionB = factory.action({ name: 'Action B' });
 	const systemLocked = factory.action({ name: 'System Locked', system: true });
@@ -21,26 +31,22 @@ describe('sessionSelectors', () => {
 		name: 'System Unlocked',
 		system: true,
 	});
-	Object.assign(actionA, { order: 2, category: 'basic', focus: 'economy' });
-	factory.actions.add(actionA.id, {
+	registries.actions.add(actionA.id, {
 		...factory.actions.get(actionA.id),
 		order: 2,
 		category: 'basic',
 		focus: 'economy',
 	});
-	Object.assign(actionB, { order: 1 });
-	factory.actions.add(actionB.id, {
+	registries.actions.add(actionB.id, {
 		...factory.actions.get(actionB.id),
 		order: 1,
 	});
-	Object.assign(systemLocked, { order: 3, category: 'basic' });
-	factory.actions.add(systemLocked.id, {
+	registries.actions.add(systemLocked.id, {
 		...factory.actions.get(systemLocked.id),
 		order: 3,
 		category: 'basic',
 	});
-	Object.assign(systemUnlocked, { order: 4, category: 'basic' });
-	factory.actions.add(systemUnlocked.id, {
+	registries.actions.add(systemUnlocked.id, {
 		...factory.actions.get(systemUnlocked.id),
 		order: 4,
 		category: 'basic',
@@ -55,11 +61,13 @@ describe('sessionSelectors', () => {
 	});
 	const developmentA = factory.development({ name: 'Development A' });
 	const developmentB = factory.development({ name: 'Development B' });
-	factory.developments.add(developmentA.id, {
+	registries.buildings.add(buildingA.id, factory.buildings.get(buildingA.id));
+	registries.buildings.add(buildingB.id, factory.buildings.get(buildingB.id));
+	registries.developments.add(developmentA.id, {
 		...factory.developments.get(developmentA.id),
 		order: 2,
 	});
-	factory.developments.add(developmentB.id, {
+	registries.developments.add(developmentB.id, {
 		...factory.developments.get(developmentB.id),
 		order: 1,
 	});
@@ -67,6 +75,28 @@ describe('sessionSelectors', () => {
 		name: 'Development System',
 		system: true,
 	});
+	registries.developments.add(
+		developmentSystem.id,
+		factory.developments.get(developmentSystem.id),
+	);
+	Object.assign(registries.actions.get(actionA.id), {
+		order: 2,
+		category: 'basic',
+		focus: 'economy',
+	});
+	Object.assign(registries.actions.get(actionB.id), {
+		order: 1,
+	});
+	Object.assign(registries.actions.get(systemLocked.id), {
+		order: 3,
+		category: 'basic',
+	});
+	Object.assign(registries.actions.get(systemUnlocked.id), {
+		order: 4,
+		category: 'basic',
+	});
+	Object.assign(registries.developments.get(developmentA.id), { order: 2 });
+	Object.assign(registries.developments.get(developmentB.id), { order: 1 });
 	const makePlayer = (
 		id: string,
 		overrides: Partial<PlayerStateSnapshot> = {},
@@ -137,11 +167,6 @@ describe('sessionSelectors', () => {
 			B: [],
 		},
 		metadata: { passiveEvaluationModifiers: {} },
-	};
-	const registries = {
-		actions: factory.actions,
-		buildings: factory.buildings,
-		developments: factory.developments,
 	};
 
 	it('builds player view models with computed properties', () => {

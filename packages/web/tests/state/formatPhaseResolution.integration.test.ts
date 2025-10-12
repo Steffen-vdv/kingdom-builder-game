@@ -11,10 +11,16 @@ import type {
 	SessionPhaseDefinition,
 	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
-import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import { createDefaultTranslationAssets } from '../helpers/translationAssets';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 const translationAssets = createDefaultTranslationAssets();
+const { resources } = createSessionRegistries();
+const RESOURCE_KEYS = Object.keys(resources) as SessionResourceKey[];
+if (RESOURCE_KEYS.length === 0) {
+	throw new Error('Expected resource metadata for phase resolution tests.');
+}
 
 function createPlayerSnapshot(
 	resources: Record<string, number> = {},
@@ -131,7 +137,7 @@ describe('formatPhaseResolution integration', () => {
 		const phaseDefinition = createPhaseDefinition();
 		const stepDefinition = phaseDefinition
 			.steps[0] as SessionPhaseStepDefinition;
-		const resourceKey = (Object.keys(RESOURCES) as ResourceKey[])[0]!;
+		const resourceKey = RESOURCE_KEYS[0]!;
 		const before = createPlayerSnapshot({ [resourceKey]: 4 });
 		const after = createPlayerSnapshot({ [resourceKey]: 4 });
 		const player = createSessionPlayer(

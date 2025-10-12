@@ -1,26 +1,47 @@
-import type {
-	EngineSessionSnapshot,
-	PlayerId,
-	ResourceKey,
-} from '@kingdom-builder/engine';
+import type { EngineSessionSnapshot, PlayerId } from '@kingdom-builder/engine';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
-import { PHASES } from '@kingdom-builder/contents';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
 		const registries = createSessionRegistries();
-		const [resourceKey] = Object.keys(registries.resources) as ResourceKey[];
+		const resourceKeys = Object.keys(
+			registries.resources,
+		) as SessionResourceKey[];
+		if (resourceKeys.length === 0) {
+			throw new Error('Expected session registries to expose resources.');
+		}
+		const [resourceKey] = resourceKeys;
 		const statKey = 'maxPopulation';
 		const [populationId] = registries.populations.keys();
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
-		const [firstPhase] = PHASES;
-		const firstStep = firstPhase?.steps[0]?.id ?? firstPhase?.id ?? 'phase';
+		registries.resources[resourceKey] = { key: resourceKey };
+		const phases: EngineSessionSnapshot['phases'] = [
+			{
+				id: 'phase.opening',
+				label: 'Opening',
+				icon: '🔰',
+				steps: [
+					{
+						id: 'step.setup',
+						title: 'Set Up',
+						triggers: ['start'],
+					},
+				],
+			},
+			{
+				id: 'phase.ending',
+				label: 'Ending',
+				steps: [],
+			},
+		];
+		const firstStep = phases[0]?.steps?.[0]?.id ?? 'step.setup';
 		const passiveId = 'passive-a';
 		const metadata = {
 			effectLogs: { legacy: [{ note: 'legacy entry' }] },
@@ -84,7 +105,7 @@ describe('createTranslationContext', () => {
 			game: {
 				turn: 4,
 				currentPlayerIndex: 0,
-				currentPhase: firstPhase?.id ?? 'phase',
+				currentPhase: phases[0]?.id ?? 'phase',
 				currentStep: firstStep,
 				phaseIndex: 0,
 				stepIndex: 0,
@@ -93,7 +114,7 @@ describe('createTranslationContext', () => {
 				activePlayerId: 'A',
 				opponentId: 'B',
 			},
-			phases: PHASES,
+			phases,
 			actionCostResource: resourceKey,
 			recentResourceGains: [{ key: resourceKey, amount: 3 }],
 			compensations: {
@@ -129,6 +150,7 @@ describe('createTranslationContext', () => {
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
 			note: 'legacy entry',
 		});
+		expect(context.pullEffectLog('legacy')).toBeUndefined();
 		const evaluationSnapshot = Array.from(
 			context.passives.evaluationMods.entries(),
 		).map(([modifierId, modifiers]) => [
@@ -136,6 +158,7 @@ describe('createTranslationContext', () => {
 			Array.from(modifiers.keys()),
 		]);
 		const activeId = players[0]?.id ?? 'A';
+		expect(context.assets.resources[resourceKey]?.label).toBe(resourceKey);
 		const contextSnapshot = {
 			actionCostResource: context.actionCostResource,
 			phases: context.phases.map((phase) => phase.id),
@@ -181,9 +204,7 @@ describe('createTranslationContext', () => {
                               "label": "Passive",
                             },
                             "resource": {
-                              "description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
-                              "icon": "🪙",
-                              "label": "Gold",
+                              "label": "gold",
                             },
                             "slot": {
                               "icon": "🧩",
@@ -240,9 +261,8 @@ describe('createTranslationContext', () => {
                             ],
                           },
                           "phases": [
-                            "growth",
-                            "upkeep",
-                            "main",
+                            "phase.opening",
+                            "phase.ending",
                           ],
                           "players": {
                             "active": "A",
