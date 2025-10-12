@@ -19,6 +19,7 @@ import {
 import {
 	appendSubActionChanges,
 	buildActionCostLines,
+	ensureTimelineLines,
 	filterActionDiffChanges,
 } from './useActionPerformer.helpers';
 import type { Action } from './actionTypes';
@@ -37,6 +38,7 @@ import type {
 	SessionResourceKey,
 } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
+import { GameApiError } from '../services/gameApi';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
@@ -44,40 +46,6 @@ type ActionExecutionError = Error & {
 	requirementFailure?: SessionRequirementFailure;
 	requirementFailures?: ActionRequirementFailures;
 };
-
-function createActionExecutionError(
-	response: ActionExecuteErrorResponse,
-): ActionExecutionError {
-	const failure = new Error(response.error) as ActionExecutionError;
-	if (response.requirementFailure) {
-		failure.requirementFailure = response.requirementFailure;
-	}
-	if (response.requirementFailures) {
-		failure.requirementFailures = response.requirementFailures;
-	}
-	return failure;
-}
-function ensureTimelineLines(
-	entries: readonly (string | ActionLogLineDescriptor)[],
-): ActionLogLineDescriptor[] {
-	const lines: ActionLogLineDescriptor[] = [];
-	for (const [index, entry] of entries.entries()) {
-		if (typeof entry === 'string') {
-			const text = entry.trim();
-			if (!text) {
-				continue;
-			}
-			lines.push({
-				text,
-				depth: index === 0 ? 0 : 1,
-				kind: index === 0 ? 'headline' : 'effect',
-			});
-			continue;
-		}
-		lines.push(entry);
-	}
-	return lines;
-}
 interface UseActionPerformerOptions {
 	session: LegacySession;
 	sessionId: string;
@@ -101,7 +69,16 @@ interface UseActionPerformerOptions {
 	endTurn: () => Promise<void>;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	resourceKeys: SessionResourceKey[];
+	onFatalSessionError?: (error: unknown) => void;
 }
+
+type LegacyTranslationContext = ReturnType<
+	typeof getLegacySessionContext
+>['translationContext'];
+
+const fatalSessionErrorMarker: unique symbol = Symbol('fatal-session-error');
+type FatalSessionErrorMarker = { [fatalSessionErrorMarker]?: boolean };
+
 export function useActionPerformer({
 	session,
 	sessionId,
@@ -116,6 +93,7 @@ export function useActionPerformer({
 	endTurn,
 	enqueue,
 	resourceKeys,
+	onFatalSessionError,
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParametersPayload) => {
@@ -124,12 +102,7 @@ export function useActionPerformer({
 				pushErrorToast('The battle is already decided.');
 				return;
 			}
-			let { translationContext: context } = getLegacySessionContext({
-				snapshot: snapshotBefore,
-				ruleSnapshot: snapshotBefore.rules,
-				passiveRecords: snapshotBefore.passiveRecords,
-				registries,
-			});
+			let context: LegacyTranslationContext | undefined;
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = snapshotBefore.game.players.find(
 				(entry) => entry.id === activePlayerId,
@@ -138,6 +111,64 @@ export function useActionPerformer({
 				throw new Error('Missing active player before action');
 			}
 			const before = snapshotPlayer(playerBefore);
+			const handleFailure = (
+				error: unknown,
+				options: {
+					translationContext?: LegacyTranslationContext;
+					reason?: 'context' | 'action';
+				} = {},
+			) => {
+				const failure = error as ActionExecutionError;
+				const activeContext = options.translationContext ?? context;
+				const icon = activeContext?.actions?.get?.(action.id)?.icon ?? '';
+				let message = failure.message || 'Action failed';
+				const { requirementFailure, requirementFailures } = failure;
+				const hasRequirementFailure = Boolean(
+					requirementFailure ||
+						(Array.isArray(requirementFailures) &&
+							requirementFailures.length > 0),
+				);
+				if (requirementFailure && activeContext) {
+					message = translateRequirementFailure(
+						requirementFailure,
+						activeContext,
+					);
+				}
+				pushErrorToast(message);
+				addLog(`Failed to play ${icon} ${action.name}: ${message}`, {
+					id: playerBefore.id,
+					name: playerBefore.name,
+				});
+				const isSessionMissing =
+					typeof failure.message === 'string' &&
+					failure.message.startsWith('Session not found:');
+				const shouldNotifyFatal =
+					options.reason === 'context' ||
+					!hasRequirementFailure ||
+					error instanceof GameApiError ||
+					isSessionMissing;
+				if (shouldNotifyFatal && onFatalSessionError) {
+					if (error && typeof error === 'object') {
+						const marker = error as FatalSessionErrorMarker;
+						if (marker[fatalSessionErrorMarker]) {
+							return;
+						}
+						marker[fatalSessionErrorMarker] = true;
+					}
+					onFatalSessionError(error);
+				}
+			};
+			try {
+				context = getLegacySessionContext({
+					snapshot: snapshotBefore,
+					ruleSnapshot: snapshotBefore.rules,
+					passiveRecords: snapshotBefore.passiveRecords,
+					registries,
+				}).translationContext;
+			} catch (error) {
+				handleFailure(error, { reason: 'context' });
+				return;
+			}
 			try {
 				const response = await performSessionAction({
 					sessionId,
@@ -145,17 +176,28 @@ export function useActionPerformer({
 					...(params ? { params } : {}),
 				});
 				if (response.status === 'error') {
-					throw createActionExecutionError(response);
+					const failure = new Error(response.error) as ActionExecutionError;
+					if (response.requirementFailure) {
+						failure.requirementFailure = response.requirementFailure;
+					}
+					if (response.requirementFailures) {
+						failure.requirementFailures = response.requirementFailures;
+					}
+					throw failure;
 				}
-				const costs = response.costs ?? {};
-				const traces = response.traces;
-				const snapshotAfter = response.snapshot;
-				const legacyContext = getLegacySessionContext({
-					snapshot: snapshotAfter,
-					ruleSnapshot: snapshotAfter.rules,
-					passiveRecords: snapshotAfter.passiveRecords,
-					registries,
-				});
+				const { costs = {}, traces, snapshot: snapshotAfter } = response;
+				let legacyContext: ReturnType<typeof getLegacySessionContext>;
+				try {
+					legacyContext = getLegacySessionContext({
+						snapshot: snapshotAfter,
+						ruleSnapshot: snapshotAfter.rules,
+						passiveRecords: snapshotAfter.passiveRecords,
+						registries,
+					});
+				} catch (contextError) {
+					handleFailure(contextError, { reason: 'context' });
+					return;
+				}
 				const { translationContext, diffContext } = legacyContext;
 				context = translationContext;
 				const playerAfter = snapshotAfter.game.players.find(
@@ -250,19 +292,7 @@ export function useActionPerformer({
 					await endTurn();
 				}
 			} catch (error) {
-				const icon = context.actions.get(action.id)?.icon || '';
-				let message = (error as Error).message || 'Action failed';
-				const requirementFailure = (error as ActionExecutionError)
-					?.requirementFailure;
-				if (requirementFailure) {
-					message = translateRequirementFailure(requirementFailure, context);
-				}
-				pushErrorToast(message);
-				const failureLog = `Failed to play ${icon} ${action.name}: ${message}`;
-				addLog(failureLog, {
-					id: playerBefore.id,
-					name: playerBefore.name,
-				});
+				handleFailure(error, { reason: 'action' });
 				return;
 			}
 		},
@@ -270,6 +300,7 @@ export function useActionPerformer({
 			addLog,
 			endTurn,
 			mountedRef,
+			onFatalSessionError,
 			registries,
 			sessionId,
 			pushErrorToast,

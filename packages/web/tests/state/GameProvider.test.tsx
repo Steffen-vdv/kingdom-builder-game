@@ -39,6 +39,13 @@ const handlePerformMock = vi.hoisted(() => vi.fn());
 let capturedPhaseOptions:
 	| (Record<string, unknown> & { refresh?: () => void })
 	| undefined;
+type FatalHandlerCapture = {
+	onFatalSessionError?: (error: unknown) => void;
+};
+let capturedActionPerformerOptions: Record<string, unknown> | undefined;
+const FATAL_SESSION_MESSAGE =
+	'An unexpected error prevented the game from loading.';
+const BOOTSTRAP_HEADING = 'We could not load your kingdom.';
 
 vi.mock('../../src/state/useTimeScale', () => ({
 	useTimeScale: () => ({
@@ -105,10 +112,15 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 }));
 
 vi.mock('../../src/state/useActionPerformer', () => ({
-	useActionPerformer: () => ({
-		handlePerform: handlePerformMock,
-		performRef: { current: handlePerformMock },
-	}),
+	useActionPerformer: (
+		options: Record<string, unknown> & FatalHandlerCapture,
+	) => {
+		capturedActionPerformerOptions = options;
+		return {
+			handlePerform: handlePerformMock,
+			performRef: { current: handlePerformMock },
+		};
+	},
 }));
 
 vi.mock('../../src/state/useToasts', () => ({
@@ -174,6 +186,7 @@ describe('GameProvider', () => {
 		acknowledgeResolutionMock.mockReset();
 		handlePerformMock.mockReset();
 		capturedPhaseOptions = undefined;
+		capturedActionPerformerOptions = undefined;
 		runUntilActionPhaseMock.mockResolvedValue(undefined);
 
 		const [resourceKey] = createResourceKeys();
@@ -277,7 +290,7 @@ describe('GameProvider', () => {
 		cleanup();
 	});
 
-	it('creates a session and renders children after loading completes', async () => {
+	it('creates a session and renders children after loading', async () => {
 		render(
 			<GameProvider devMode playerName="Commander">
 				<SessionInspector />
@@ -345,7 +358,7 @@ describe('GameProvider', () => {
 		);
 	});
 
-	it('shows the fatal error screen when action phase sync fails', async () => {
+	it('shows the fatal error screen when phase sync fails', async () => {
 		const fatalError = new Error('session exploded');
 		runUntilActionPhaseMock.mockRejectedValueOnce(fatalError);
 
@@ -365,8 +378,35 @@ describe('GameProvider', () => {
 			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
 		);
 
-		expect(
-			screen.getByText('An unexpected error prevented the game from loading.'),
-		).toBeInTheDocument();
+		expect(screen.getByText(FATAL_SESSION_MESSAGE)).toBeInTheDocument();
+	});
+
+	it('restores the bootstrap screen after fatal errors', async () => {
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		const fatalError = new Error('fatal action failure');
+		const handleFatal = (
+			capturedActionPerformerOptions as FatalHandlerCapture | undefined
+		)?.onFatalSessionError;
+		if (!handleFatal) {
+			throw new Error('Expected onFatalSessionError to be provided');
+		}
+		act(() => {
+			handleFatal(fatalError);
+		});
+
+		await waitFor(() =>
+			expect(screen.getByText(BOOTSTRAP_HEADING)).toBeInTheDocument(),
+		);
+		expect(releaseSessionMock).toHaveBeenCalledWith('session-1');
+		expect(screen.getByText(FATAL_SESSION_MESSAGE)).toBeInTheDocument();
 	});
 });

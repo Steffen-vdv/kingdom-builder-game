@@ -204,7 +204,7 @@ export function GameProviderInner({
 		registries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
+	const performerOptions = {
 		session: legacySession,
 		sessionId,
 		actionCostResource,
@@ -218,7 +218,9 @@ export function GameProviderInner({
 		endTurn,
 		enqueue,
 		resourceKeys,
-	});
+		...(onFatalSessionError ? { onFatalSessionError } : {}),
+	};
+	const { handlePerform, performRef } = useActionPerformer(performerOptions);
 
 	useAiRunner({
 		session: legacySession,

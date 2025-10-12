@@ -136,3 +136,25 @@ export function filterActionDiffChanges({
 		return true;
 	});
 }
+
+export function ensureTimelineLines(
+	entries: readonly (string | ActionLogLineDescriptor)[],
+): ActionLogLineDescriptor[] {
+	const lines: ActionLogLineDescriptor[] = [];
+	for (const [index, entry] of entries.entries()) {
+		if (typeof entry === 'string') {
+			const text = entry.trim();
+			if (!text) {
+				continue;
+			}
+			lines.push({
+				text,
+				depth: index === 0 ? 0 : 1,
+				kind: index === 0 ? 'headline' : 'effect',
+			});
+			continue;
+		}
+		lines.push(entry);
+	}
+	return lines;
+}

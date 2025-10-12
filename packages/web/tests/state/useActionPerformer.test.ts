@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequirementFailure, RuleSnapshot } from '@kingdom-builder/engine';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
+import { GameApiError } from '../../src/services/gameApi';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -61,6 +62,7 @@ describe('useActionPerformer', () => {
 		logContentMock.mockReturnValue([]);
 		snapshotPlayerMock.mockReset();
 		snapshotPlayerMock.mockImplementation((player) => player);
+		getLegacySessionContextMock.mockReset();
 		const [firstResourceKey] = createResourceKeys();
 		if (!firstResourceKey) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -114,7 +116,14 @@ describe('useActionPerformer', () => {
 		getLegacySessionContextMock.mockReturnValue({
 			translationContext: {
 				actions: new Map([
-					[action.id, { icon: '⚔️', name: action.name, effects: [] }],
+					[
+						action.id,
+						{
+							icon: '⚔️',
+							name: action.name,
+							effects: [],
+						},
+					],
 				]),
 			},
 			diffContext: {},
@@ -199,13 +208,225 @@ describe('useActionPerformer', () => {
 			expect.anything(),
 		);
 		expect(pushErrorToast).toHaveBeenCalledWith(authMessage);
+		const expectedPlayerName = sessionSnapshot.game.players[0]?.name ?? 'Hero';
 		expect(addLog).toHaveBeenCalledWith(
 			`Failed to play ⚔️ Attack: ${authMessage}`,
 			{
 				id: sessionSnapshot.game.activePlayerId,
-				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
+				name: expectedPlayerName,
 			},
 		);
+	});
+
+	it('marks non-requirement failures as fatal errors', async () => {
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'error',
+			error: 'Action exploded',
+		});
+		const onFatalSessionError = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState: vi.fn(),
+				refresh: vi.fn(),
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn: vi.fn(),
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(pushErrorToast).toHaveBeenCalledWith('Action exploded');
+		expect(onFatalSessionError).toHaveBeenCalledWith(
+			expect.objectContaining({ message: 'Action exploded' }),
+		);
+	});
+
+	it('marks GameApiError rejections as fatal errors', async () => {
+		const fatalError = new GameApiError(
+			'Network offline',
+			503,
+			'Service Unavailable',
+			{},
+		);
+		performSessionActionMock.mockRejectedValueOnce(fatalError);
+		const onFatalSessionError = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState: vi.fn(),
+				refresh: vi.fn(),
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn: vi.fn(),
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(pushErrorToast).toHaveBeenCalledWith('Network offline');
+		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
+	});
+
+	it('marks missing local sessions as fatal errors', async () => {
+		const fatalError = new Error(`Session not found: ${sessionId}`);
+		performSessionActionMock.mockRejectedValueOnce(fatalError);
+		const onFatalSessionError = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState: vi.fn(),
+				refresh: vi.fn(),
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn: vi.fn(),
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
+	});
+
+	it('marks context build failures before request as fatal', async () => {
+		const contextError = new Error('Failed to prepare context');
+		getLegacySessionContextMock.mockImplementationOnce(() => {
+			throw contextError;
+		});
+		const onFatalSessionError = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState: vi.fn(),
+				refresh: vi.fn(),
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn: vi.fn(),
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(performSessionActionMock).not.toHaveBeenCalled();
+		expect(pushErrorToast).toHaveBeenCalledWith('Failed to prepare context');
+		expect(onFatalSessionError).toHaveBeenCalledWith(contextError);
+	});
+
+	it('marks context rebuild failures post-action as fatal', async () => {
+		const contextError = new Error('Failed to rebuild context');
+		const [activeBefore] = sessionSnapshot.game.players;
+		if (!activeBefore) {
+			throw new Error('Expected an active player');
+		}
+		const snapshotAfter = createSessionSnapshot({
+			players: [activeBefore],
+			activePlayerId: activeBefore.id,
+			opponentId: activeBefore.id,
+			phases: sessionSnapshot.phases,
+			actionCostResource,
+			ruleSnapshot,
+			turn: sessionSnapshot.game.turn,
+			currentPhase: sessionSnapshot.game.currentPhase,
+			currentStep: sessionSnapshot.game.currentStep,
+		});
+		getLegacySessionContextMock.mockReset();
+		const defaultContext = {
+			translationContext: {
+				actions: new Map([
+					[
+						action.id,
+						{
+							icon: '⚔️',
+							name: action.name,
+							effects: [],
+						},
+					],
+				]),
+			},
+			diffContext: {},
+		};
+		getLegacySessionContextMock
+			.mockImplementationOnce(() => defaultContext)
+			.mockImplementationOnce(() => {
+				throw contextError;
+			});
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'success',
+			costs: {},
+			traces: [],
+			snapshot: snapshotAfter,
+		});
+		const onFatalSessionError = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState: vi.fn(),
+				refresh: vi.fn(),
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn: vi.fn(),
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(onFatalSessionError).toHaveBeenCalledWith(contextError);
 	});
 
 	it('passes enriched resolution metadata when an action succeeds', async () => {

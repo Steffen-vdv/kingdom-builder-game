@@ -30,7 +30,7 @@ import {
 	extractResourceKeys,
 	type SessionRegistries,
 } from './sessionRegistries';
-import { createGameApi, type GameApi } from '../services/gameApi';
+import { createGameApi, type GameApi, GameApiError } from '../services/gameApi';
 
 export interface SessionHandle {
 	enqueue: EngineSession['enqueue'];
@@ -229,6 +229,9 @@ export async function performSessionAction(
 		}
 		return response;
 	} catch (error) {
+		if (error instanceof GameApiError) {
+			throw error;
+		}
 		const failure = error as ActionExecutionFailure;
 		const response: ActionExecuteErrorResponse = {
 			status: 'error',
