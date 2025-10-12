@@ -186,10 +186,38 @@ export type SessionPassiveEvaluationModifierMap = Record<
 >;
 
 export interface SessionMetadataDescriptor {
+	/**
+	 * Human readable label used to describe the associated registry entry in
+	 * UI surfaces. When omitted, consumers fall back to intrinsic labels
+	 * from the originating registry definition.
+	 */
 	label?: string;
+	/** Optional emoji or icon identifier attached to the descriptor. */
 	icon?: string;
+	/** Optional longer form description rendered in tooltip or help text. */
 	description?: string;
 }
+
+export type SessionDescriptorMap<
+	TDescriptor extends SessionMetadataDescriptor = SessionMetadataDescriptor,
+> = Record<string, TDescriptor>;
+
+export interface SessionStatMetadataDescriptor
+	extends SessionMetadataDescriptor {
+	/** Flag indicating the stat should render as a percent based value. */
+	displayAsPercent?: boolean;
+}
+
+export type SessionResourceDescriptorMap = SessionDescriptorMap;
+
+export type SessionPopulationDescriptorMap = SessionDescriptorMap;
+
+export type SessionBuildingDescriptorMap = SessionDescriptorMap;
+
+export type SessionDevelopmentDescriptorMap = SessionDescriptorMap;
+
+export type SessionStatDescriptorMap =
+	SessionDescriptorMap<SessionStatMetadataDescriptor>;
 
 export interface SessionPhaseStepMetadata {
 	id: string;
@@ -198,13 +226,25 @@ export interface SessionPhaseStepMetadata {
 	triggers?: string[];
 }
 
+export type SessionPhaseStepDescriptorMap =
+	SessionDescriptorMap<SessionPhaseStepMetadata>;
+
 export interface SessionPhaseMetadata {
 	id?: string;
 	label?: string;
 	icon?: string;
 	action?: boolean;
-	steps?: SessionPhaseStepMetadata[];
+	/**
+	 * Optional lookup of phase step descriptors keyed by the step identifier
+	 * for quick metadata resolution in downstream consumers. Legacy payloads
+	 * may still provide arrays, so consumers should normalize to a map when
+	 * they require keyed lookups.
+	 */
+	steps?: SessionPhaseStepDescriptorMap | SessionPhaseStepMetadata[];
 }
+
+export type SessionPhaseDescriptorMap =
+	SessionDescriptorMap<SessionPhaseMetadata>;
 
 export interface SessionTriggerMetadata {
 	label?: string;
@@ -213,17 +253,102 @@ export interface SessionTriggerMetadata {
 	past?: string;
 }
 
+export type SessionTriggerDescriptorMap =
+	SessionDescriptorMap<SessionTriggerMetadata>;
+
+export type SessionModifierDisplayDescriptor = SessionMetadataDescriptor;
+
+/**
+ * Optional overrides for modifier display labels and icons keyed by modifier
+ * category (e.g., `cost`, `result`).
+ */
+export type SessionModifierDisplayMap =
+	SessionDescriptorMap<SessionModifierDisplayDescriptor>;
+
+/** Labels and icons for static assets rendered in snapshot driven UI. */
+export interface SessionAssetDescriptorMap {
+	population?: SessionMetadataDescriptor;
+	land?: SessionMetadataDescriptor;
+	slot?: SessionMetadataDescriptor;
+	passive?: SessionMetadataDescriptor;
+	upkeep?: SessionMetadataDescriptor;
+}
+
+export interface SessionOverviewHeroPayload {
+	badgeIcon?: string;
+	badgeLabel?: string;
+	title?: string;
+	intro?: string;
+	paragraph?: string;
+	tokens?: Record<string, string>;
+}
+
+export interface SessionOverviewListItemPayload {
+	icon?: string;
+	label: string;
+	body: string[];
+}
+
+export interface SessionOverviewParagraphPayload {
+	kind: 'paragraph';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+}
+
+export interface SessionOverviewListPayload {
+	kind: 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	items: SessionOverviewListItemPayload[];
+}
+
+export type SessionOverviewSectionPayload =
+	| SessionOverviewParagraphPayload
+	| SessionOverviewListPayload;
+
+export type SessionOverviewTokenCategoryName = string;
+
+export type SessionOverviewTokenMap = Record<string, string[]>;
+
+export type SessionOverviewTokenRegistry = Partial<
+	Record<SessionOverviewTokenCategoryName, SessionOverviewTokenMap>
+>;
+
+/**
+ * Optional overview content bundled with a snapshot so clients can render
+ * hero, token, and section copy without pulling templates from the contents
+ * package.
+ */
+export interface SessionOverviewPayload {
+	hero?: SessionOverviewHeroPayload;
+	tokens?: SessionOverviewTokenRegistry;
+	sections?: SessionOverviewSectionPayload[];
+}
+
+/**
+ * Aggregated descriptor metadata that accompanies each session snapshot. The
+ * engine guarantees these registries remain stable across snapshot deliveries
+ * so clients may render icons, tooltips, and overview content without
+ * rehydrating full content packages.
+ */
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
-	buildings?: Record<string, SessionMetadataDescriptor>;
-	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
-	phases?: Record<string, SessionPhaseMetadata>;
-	triggers?: Record<string, SessionTriggerMetadata>;
-	assets?: Record<string, SessionMetadataDescriptor>;
+	resources?: SessionResourceDescriptorMap;
+	populations?: SessionPopulationDescriptorMap;
+	buildings?: SessionBuildingDescriptorMap;
+	developments?: SessionDevelopmentDescriptorMap;
+	stats?: SessionStatDescriptorMap;
+	phases?: SessionPhaseDescriptorMap;
+	triggers?: SessionTriggerDescriptorMap;
+	modifierDisplays?: SessionModifierDisplayMap;
+	assets?: SessionAssetDescriptorMap;
+	overview?: SessionOverviewPayload;
 }
 
 export interface SessionSnapshot {
