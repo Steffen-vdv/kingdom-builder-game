@@ -140,6 +140,8 @@ export type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {
@@ -156,6 +158,7 @@ export type {
 } from './actions/contracts';
 export {
 	sessionIdSchema,
+	sessionPlayerIdSchema,
 	sessionPlayerNameMapSchema,
 	sessionCreateRequestSchema,
 	sessionCreateResponseSchema,
@@ -164,6 +167,7 @@ export {
 	sessionAdvanceResponseSchema,
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
+	sessionUpdatePlayerNameRequestSchema,
 } from './config/session_contracts';
 export {
 	actionEffectChoiceSchema,

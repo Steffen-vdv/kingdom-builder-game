@@ -60,3 +60,10 @@ export interface SessionSetDevModeRequest extends SessionIdentifier {
 }
 
 export type SessionSetDevModeResponse = SessionStateResponse;
+
+export interface SessionUpdatePlayerNameRequest extends SessionIdentifier {
+	playerId: SessionPlayerId;
+	playerName: string;
+}
+
+export type SessionUpdatePlayerNameResponse = SessionStateResponse;
