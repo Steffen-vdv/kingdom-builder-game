@@ -1,10 +1,53 @@
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import type { ActionTrace } from '@kingdom-builder/protocol/actions';
+import type {
+	ActionExecuteErrorResponse,
+	ActionTrace,
+} from '@kingdom-builder/protocol/actions';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { TranslationDiffContext } from '../translation';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
+import { getLegacySessionContext } from './getLegacySessionContext';
+
+export type ActionRequirementFailures =
+	ActionExecuteErrorResponse['requirementFailures'];
+export type ActionExecutionError = Error & {
+	requirementFailure?: SessionRequirementFailure;
+	requirementFailures?: ActionRequirementFailures;
+};
+
+export function createActionExecutionError(
+	response: ActionExecuteErrorResponse,
+): ActionExecutionError {
+	const failure = new Error(response.error) as ActionExecutionError;
+	if (response.requirementFailure) {
+		failure.requirementFailure = response.requirementFailure;
+	}
+	if (response.requirementFailures) {
+		failure.requirementFailures = response.requirementFailures;
+	}
+	return failure;
+}
+
+export type LegacyContextOptions = Parameters<
+	typeof getLegacySessionContext
+>[0];
+
+export function safeGetLegacySessionContext(
+	options: LegacyContextOptions,
+	onFatalSessionError?: (error: unknown) => void,
+): ReturnType<typeof getLegacySessionContext> | null {
+	try {
+		return getLegacySessionContext(options);
+	} catch (error) {
+		if (onFatalSessionError) {
+			onFatalSessionError(error);
+		}
+		return null;
+	}
+}
 
 interface AppendSubActionChangesOptions {
 	traces: ActionTrace[];

@@ -1,6 +1,13 @@
 /** @vitest-environment jsdom */
 import React from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { LegacySession } from '../../src/state/sessionTypes';
@@ -14,15 +21,24 @@ import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
+import type { Action } from '../../src/state/actionTypes';
+import { GameApiError } from '../../src/services/gameApi';
+import * as legacyContextModule from '../../src/state/getLegacySessionContext';
+
+type LegacyContextOptions = Parameters<
+	typeof legacyContextModule.getLegacySessionContext
+>[0];
 
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
+const performSessionActionMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/sessionSdk', () => ({
 	createSession: createSessionMock,
 	fetchSnapshot: fetchSnapshotMock,
 	releaseSession: releaseSessionMock,
+	performSessionAction: performSessionActionMock,
 }));
 
 const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
@@ -35,7 +51,15 @@ const pushSuccessToastMock = vi.hoisted(() => vi.fn());
 const dismissToastMock = vi.hoisted(() => vi.fn());
 const showResolutionMock = vi.hoisted(() => vi.fn());
 const acknowledgeResolutionMock = vi.hoisted(() => vi.fn());
-const handlePerformMock = vi.hoisted(() => vi.fn());
+const createTranslationContextMock = vi.hoisted(() =>
+	vi.fn(() => ({
+		actions: new Map(),
+		buildings: new Map(),
+		developments: new Map(),
+		assets: new Map(),
+		passives: { evaluationMods: new Map() },
+	})),
+);
 let capturedPhaseOptions:
 	| (Record<string, unknown> & { refresh?: () => void })
 	| undefined;
@@ -104,13 +128,6 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 	},
 }));
 
-vi.mock('../../src/state/useActionPerformer', () => ({
-	useActionPerformer: () => ({
-		handlePerform: handlePerformMock,
-		performRef: { current: handlePerformMock },
-	}),
-}));
-
 vi.mock('../../src/state/useToasts', () => ({
 	useToasts: () => ({
 		toasts: [],
@@ -130,7 +147,7 @@ vi.mock('../../src/state/useAiRunner', () => ({
 }));
 
 vi.mock('../../src/translation/context', () => ({
-	createTranslationContext: vi.fn(() => ({})),
+	createTranslationContext: createTranslationContextMock,
 }));
 
 vi.mock('../../src/state/sessionSelectors', () => ({
@@ -154,6 +171,18 @@ function SessionInspector() {
 	return <div data-testid="session-turn">turn:{sessionState.game.turn}</div>;
 }
 
+function PerformActionButton({ action }: { action: Action }) {
+	const { handlePerform } = useGameEngine();
+	const handleClick = () => {
+		void handlePerform(action);
+	};
+	return (
+		<button type="button" onClick={handleClick}>
+			Perform action
+		</button>
+	);
+}
+
 describe('GameProvider', () => {
 	let session: LegacySession;
 	let registries: ReturnType<typeof createSessionRegistries>;
@@ -172,7 +201,8 @@ describe('GameProvider', () => {
 		dismissToastMock.mockReset();
 		showResolutionMock.mockReset();
 		acknowledgeResolutionMock.mockReset();
-		handlePerformMock.mockReset();
+		performSessionActionMock.mockReset();
+		createTranslationContextMock.mockClear();
 		capturedPhaseOptions = undefined;
 		runUntilActionPhaseMock.mockResolvedValue(undefined);
 
@@ -368,5 +398,150 @@ describe('GameProvider', () => {
 		expect(
 			screen.getByText('An unexpected error prevented the game from loading.'),
 		).toBeInTheDocument();
+	});
+
+	it('returns to the bootstrap screen when an action fails without requirements', async () => {
+		const action: Action = { id: 'test-action', name: 'Test Action' };
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'error',
+			error: 'Network error',
+		});
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+				<PerformActionButton action={action} />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		act(() => {
+			fireEvent.click(screen.getByRole('button', { name: 'Perform action' }));
+		});
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
+
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+		expect(pushErrorToastMock).not.toHaveBeenCalled();
+	});
+
+	it('tears down the session when the game API throws an error', async () => {
+		const action: Action = { id: 'test-action', name: 'Test Action' };
+		performSessionActionMock.mockRejectedValueOnce(
+			new GameApiError('Boom', 500, 'Server Error', {}),
+		);
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+				<PerformActionButton action={action} />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		act(() => {
+			fireEvent.click(screen.getByRole('button', { name: 'Perform action' }));
+		});
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+		expect(
+			screen.getByText('The game service returned an error response.'),
+		).toBeInTheDocument();
+		expect(pushErrorToastMock).not.toHaveBeenCalled();
+	});
+
+	it('resets the UI when the session handle is missing', async () => {
+		const action: Action = { id: 'test-action', name: 'Test Action' };
+		performSessionActionMock.mockRejectedValueOnce(
+			new Error('Session not found: session-1'),
+		);
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+				<PerformActionButton action={action} />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		act(() => {
+			fireEvent.click(screen.getByRole('button', { name: 'Perform action' }));
+		});
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+		expect(pushErrorToastMock).not.toHaveBeenCalled();
+	});
+
+	it('propagates context failures from local session mirroring', async () => {
+		const action: Action = { id: 'test-action', name: 'Test Action' };
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'success',
+			snapshot: session.getSnapshot(),
+			costs: {},
+			traces: [],
+		});
+		const originalContext = legacyContextModule.getLegacySessionContext;
+		const contextSpy = vi
+			.spyOn(legacyContextModule, 'getLegacySessionContext')
+			.mockImplementationOnce((options: LegacyContextOptions) =>
+				originalContext(options),
+			)
+			.mockImplementationOnce(() => {
+				throw new Error('Context exploded');
+			});
+		try {
+			render(
+				<GameProvider playerName="Commander">
+					<SessionInspector />
+					<PerformActionButton action={action} />
+				</GameProvider>,
+			);
+
+			await waitFor(() =>
+				expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+			);
+
+			act(() => {
+				fireEvent.click(screen.getByRole('button', { name: 'Perform action' }));
+			});
+
+			await waitFor(() =>
+				expect(
+					screen.getByText('We could not load your kingdom.'),
+				).toBeInTheDocument(),
+			);
+			await waitFor(() =>
+				expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+			);
+			expect(pushErrorToastMock).not.toHaveBeenCalled();
+		} finally {
+			contextSpy.mockRestore();
+		}
 	});
 });
