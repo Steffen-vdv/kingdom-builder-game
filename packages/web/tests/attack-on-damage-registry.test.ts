@@ -3,6 +3,21 @@ import {
 	registerAttackOnDamageFormatter,
 	buildOnDamageEntry,
 } from '../src/translation/effects/formatters/attack';
+import type {
+	AttackOnDamageLogEntry,
+	EffectDef,
+} from '@kingdom-builder/engine';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
+import { createTranslationContext } from '../src/translation/context/createTranslationContext';
+import { createTestRegistryMetadata } from './helpers/registryMetadata';
+import { selectResourceDisplay } from '../src/translation/context/assetSelectors';
+import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
+import { ownerLabel } from '../src/translation/effects/formatters/attackFormatterUtils';
 
 vi.mock('../src/translation/effects/factory', () => ({
 	registerEffectFormatter: vi.fn(),
@@ -12,89 +27,113 @@ vi.mock('../src/translation/effects/factory', () => ({
 	logEffects: vi.fn(() => []),
 	formatEffectGroups: vi.fn(() => []),
 }));
-import type {
-	AttackOnDamageLogEntry,
-	EffectDef,
-} from '@kingdom-builder/engine';
-import { Resource, RESOURCES } from '@kingdom-builder/contents';
-import type { TranslationContext } from '../src/translation/context';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 
-function createTranslationContext(): TranslationContext {
-	const emptyModifiers = new Map<string, ReadonlyMap<string, unknown>>();
-	const translationContext: TranslationContext = {
-		actions: {
-			get: vi.fn(),
-			has: vi.fn(),
-		},
-		buildings: {
-			get: vi.fn(),
-			has: vi.fn(),
-		},
-		developments: {
-			get: vi.fn(),
-			has: vi.fn(),
-		},
-		populations: {
-			get: vi.fn(),
-			has: vi.fn(),
-		},
-		passives: {
-			list: vi.fn(() => []),
-			get: vi.fn(() => undefined),
-			getDefinition: vi.fn(() => undefined),
-			definitions: vi.fn(() => []),
-			get evaluationMods() {
-				return emptyModifiers;
+interface TestSetup {
+	translationContext: ReturnType<typeof createTranslationContext>;
+	resourceKey: string;
+	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
+	customResourceLabel: string;
+	canonicalResourceLabel: string;
+}
+
+const TEST_PHASES = [
+	{
+		id: 'phase:action',
+		label: 'Action Phase',
+		icon: '🎯',
+		action: true,
+		steps: [{ id: 'phase:action:resolve', label: 'Resolve' }],
+	},
+] as const;
+
+const TEST_RULES = {
+	defaultActionAPCost: 1,
+	absorptionCapPct: 1,
+	absorptionRounding: 'nearest',
+	tieredResourceKey: 'resource:test',
+	tierDefinitions: [],
+	slotsPerNewLand: 1,
+	maxSlotsPerLand: 1,
+	basePopulationCap: 1,
+	winConditions: [],
+} as const;
+
+function createTestSetup(): TestSetup {
+	const registries = createSessionRegistries();
+	const [resourceKey] = Object.keys(registries.resources);
+	if (!resourceKey) {
+		throw new Error('Expected at least one resource definition.');
+	}
+	const ruleSnapshot = {
+		...TEST_RULES,
+		tieredResourceKey: resourceKey,
+	};
+	const attacker = createSnapshotPlayer({
+		id: 'attacker',
+		name: 'Attacker',
+		resources: { [resourceKey]: 0 },
+	});
+	const defender = createSnapshotPlayer({
+		id: 'defender',
+		name: 'Defender',
+		resources: { [resourceKey]: 0 },
+	});
+	const metadata: SessionSnapshotMetadata = {
+		passiveEvaluationModifiers: {},
+		resources: {
+			[resourceKey]: {
+				label: 'Auric Coin',
+				icon: '🪙',
+				description: 'Minted test currency.',
 			},
-		},
-		phases: [],
-		activePlayer: {
-			id: 'A',
-			name: 'Player',
-			resources: {},
-			stats: {},
-			population: {},
-		},
-		opponent: {
-			id: 'B',
-			name: 'Opponent',
-			resources: {},
-			stats: {},
-			population: {},
-		},
-		pullEffectLog: vi.fn(),
-		actionCostResource: undefined,
-		recentResourceGains: [],
-		compensations: {
-			A: {} as PlayerStartConfig,
-			B: {} as PlayerStartConfig,
-		},
-		rules: {
-			tieredResourceKey: 'happiness',
-			tierDefinitions: [],
-			winConditions: [],
 		},
 		assets: {
-			resources: {
-				[Resource.gold]: {
-					icon: RESOURCES[Resource.gold].icon,
-					label: RESOURCES[Resource.gold].label,
-					description: RESOURCES[Resource.gold].description,
-				},
-			},
-			stats: {},
-			populations: {},
-			population: {},
-			land: {},
-			slot: {},
-			passive: {},
-			modifiers: {},
-			formatPassiveRemoval: (description: string) =>
-				`Active as long as ${description}`,
+			land: { label: 'Territory', icon: '🗺️' },
+			slot: { label: 'Development Slot', icon: '🧩' },
+			passive: { label: 'Passive', icon: '♾️' },
 		},
 	};
-	return translationContext;
+	const sessionSnapshot = createSessionSnapshot({
+		players: [attacker, defender],
+		activePlayerId: attacker.id,
+		opponentId: defender.id,
+		phases: TEST_PHASES.map((phase) => ({
+			...phase,
+			steps: phase.steps.map((step) => ({ ...step, triggers: [] })),
+		})),
+		actionCostResource: resourceKey,
+		ruleSnapshot,
+		metadata,
+	});
+	const translationContext = createTranslationContext(
+		sessionSnapshot,
+		registries,
+		metadata,
+		{
+			ruleSnapshot,
+			passiveRecords: sessionSnapshot.passiveRecords,
+		},
+	);
+	const metadataSelectors = createTestRegistryMetadata(registries, metadata);
+	const resourceDisplay = selectResourceDisplay(
+		translationContext.assets,
+		resourceKey,
+	);
+	const resourceDescriptor =
+		metadataSelectors.resourceMetadata.select(resourceKey);
+	const labelSource = resourceDisplay.label ?? resourceDescriptor.label;
+	const customResourceLabel = resourceDisplay.icon
+		? `${resourceDisplay.icon} ${labelSource}`
+		: labelSource;
+	const canonicalResourceLabel =
+		formatKindLabel(translationContext, 'resource', resourceKey) ?? resourceKey;
+	return {
+		translationContext,
+		resourceKey,
+		metadataSelectors,
+		customResourceLabel,
+		canonicalResourceLabel,
+	};
 }
 
 describe('attack on-damage formatter registry', () => {
@@ -103,7 +142,15 @@ describe('attack on-damage formatter registry', () => {
 		method: 'perform',
 		params: {},
 	} as EffectDef<Record<string, unknown>>;
-	const translationContext = createTranslationContext();
+	const {
+		translationContext,
+		resourceKey,
+		metadataSelectors,
+		customResourceLabel,
+		canonicalResourceLabel,
+	} = createTestSetup();
+	const defenderLabel = ownerLabel(translationContext, 'defender');
+	const attackerLabel = ownerLabel(translationContext, 'attacker');
 
 	it('delegates to registered handler for matching entries', () => {
 		const logEntry: AttackOnDamageLogEntry = {
@@ -146,7 +193,7 @@ describe('attack on-damage formatter registry', () => {
 			defender: [
 				{
 					type: 'resource',
-					key: Resource.gold,
+					key: resourceKey,
 					before: 5,
 					after: 3,
 				},
@@ -154,7 +201,7 @@ describe('attack on-damage formatter registry', () => {
 			attacker: [
 				{
 					type: 'resource',
-					key: Resource.gold,
+					key: resourceKey,
 					before: 1,
 					after: 4,
 				},
@@ -168,11 +215,9 @@ describe('attack on-damage formatter registry', () => {
 		);
 
 		expect(result).not.toBeNull();
-		const gold = RESOURCES[Resource.gold];
-		const label = gold.icon ? `${gold.icon} ${gold.label}` : gold.label;
 		expect(result?.items).toEqual([
-			`Opponent: ${label} -2 (5→3)`,
-			`${translationContext.activePlayer.name}: ${label} +3 (1→4)`,
+			`${defenderLabel}: ${canonicalResourceLabel} -2 (5→3)`,
+			`${attackerLabel}: ${canonicalResourceLabel} +3 (1→4)`,
 		]);
 	});
 
@@ -187,7 +232,7 @@ describe('attack on-damage formatter registry', () => {
 			defender: [
 				{
 					type: 'resource',
-					key: Resource.gold,
+					key: resourceKey,
 					before: 10,
 					after: 5,
 				},
@@ -195,7 +240,7 @@ describe('attack on-damage formatter registry', () => {
 			attacker: [
 				{
 					type: 'resource',
-					key: Resource.gold,
+					key: resourceKey,
 					before: 2,
 					after: 7,
 				},
@@ -209,11 +254,58 @@ describe('attack on-damage formatter registry', () => {
 		);
 
 		expect(result).not.toBeNull();
-		const gold = RESOURCES[Resource.gold];
-		const label = gold.icon ? `${gold.icon} ${gold.label}` : gold.label;
 		expect(result?.items).toEqual([
-			`Opponent: ${label} -0.5% (10→5) (-5)`,
-			`${translationContext.activePlayer.name}: ${label} +5 (2→7)`,
+			`${defenderLabel}: ${canonicalResourceLabel} -0.5% (10→5) (-5)`,
+			`${attackerLabel}: ${canonicalResourceLabel} +5 (2→7)`,
 		]);
+	});
+
+	it('falls back to canonical descriptors when resource metadata is missing', () => {
+		const logEntry: AttackOnDamageLogEntry = {
+			owner: 'defender',
+			effect: {
+				type: 'resource',
+				method: 'add',
+				params: {},
+			} as EffectDef,
+			defender: [
+				{
+					type: 'resource',
+					key: resourceKey,
+					before: 5,
+					after: 3,
+				},
+			],
+			attacker: [
+				{
+					type: 'resource',
+					key: resourceKey,
+					before: 1,
+					after: 4,
+				},
+			],
+		};
+
+		const mutatedContext = {
+			...translationContext,
+			assets: {
+				...translationContext.assets,
+				resources: {},
+			},
+		} as typeof translationContext;
+
+		const first = buildOnDamageEntry([logEntry], mutatedContext, attackEffect);
+		const second = buildOnDamageEntry([logEntry], mutatedContext, attackEffect);
+
+		expect(
+			metadataSelectors.resourceMetadata.select(resourceKey).label,
+		).toContain('Auric Coin');
+		expect(customResourceLabel).toContain('Auric Coin');
+		expect(canonicalResourceLabel).not.toContain('Auric Coin');
+		expect(first?.items).toEqual([
+			`${ownerLabel(mutatedContext, 'defender')}: ${canonicalResourceLabel} -2 (5→3)`,
+			`${ownerLabel(mutatedContext, 'attacker')}: ${canonicalResourceLabel} +3 (1→4)`,
+		]);
+		expect(second?.items).toEqual(first?.items);
 	});
 });
