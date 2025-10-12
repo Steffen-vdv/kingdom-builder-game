@@ -1,4 +1,4 @@
-import type { AdvanceSkip } from '@kingdom-builder/engine';
+import type { SessionAdvanceSkipSnapshot } from '@kingdom-builder/protocol/session';
 import {
 	hasTierSummaryTranslation,
 	translateTierSummary,
@@ -25,7 +25,7 @@ type SkipDescription = {
 };
 
 type DescriptorContext = {
-	skip: AdvanceSkip;
+	skip: SessionAdvanceSkipSnapshot;
 	phase: PhaseLike;
 	phaseLabel: string;
 	step?: StepLike;
@@ -77,7 +77,10 @@ function resolveSourceLabel(
 	);
 }
 
-function describeSources(skip: AdvanceSkip, assets?: TranslationAssets) {
+function describeSources(
+	skip: SessionAdvanceSkipSnapshot,
+	assets?: TranslationAssets,
+) {
 	if (!skip.sources.length) {
 		return { list: [] as string[], summary: 'Skipped' };
 	}
@@ -105,7 +108,7 @@ function createHistoryItems(summary: string): HistoryItem[] {
 }
 
 export function describeSkipEvent(
-	skip: AdvanceSkip,
+	skip: SessionAdvanceSkipSnapshot,
 	phase: PhaseLike,
 	step?: StepLike,
 	assets?: TranslationAssets,
@@ -130,7 +133,7 @@ export function describeSkipEvent(
 	};
 
 	const descriptorMap: Record<
-		AdvanceSkip['type'],
+		SessionAdvanceSkipSnapshot['type'],
 		(context: DescriptorContext) => SkipDescription
 	> = {
 		phase: ({ phaseLabel: label, sources: { list, summary } }) => {

@@ -23,3 +23,4 @@
   `session.simulateUpcomingPhases` implementation exposed through
   `useGameEngine()`; we will need protocol-facing simulation hooks before that
   dependency can be removed.
+- Skip event formatting now consumes `SessionAdvanceSkipSnapshot` from `@kingdom-builder/protocol/session`, removing the dependency on engine skip exports for log/history rendering in `packages/web/src/utils/describeSkipEvent.ts` and its tests. Future skip handling tasks can safely evolve without touching engine internals.
