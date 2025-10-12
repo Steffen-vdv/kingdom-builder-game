@@ -108,6 +108,37 @@ function mergeDeveloperPreset(
 	return result;
 }
 
+function mergeRuleSet(
+	ruleBase: EngineBootstrapOptions['rules'],
+	ruleOverride: Partial<EngineBootstrapOptions['rules']> | undefined,
+): EngineBootstrapOptions['rules'] {
+	if (!ruleOverride) {
+		return clone(ruleBase);
+	}
+	return {
+		defaultActionAPCost:
+			ruleOverride.defaultActionAPCost ?? ruleBase.defaultActionAPCost,
+		absorptionCapPct:
+			ruleOverride.absorptionCapPct ?? ruleBase.absorptionCapPct,
+		absorptionRounding:
+			ruleOverride.absorptionRounding ?? ruleBase.absorptionRounding,
+		tieredResourceKey:
+			ruleOverride.tieredResourceKey ?? ruleBase.tieredResourceKey,
+		tierDefinitions:
+			ruleOverride.tierDefinitions !== undefined
+				? clone(ruleOverride.tierDefinitions)
+				: clone(ruleBase.tierDefinitions),
+		slotsPerNewLand: ruleOverride.slotsPerNewLand ?? ruleBase.slotsPerNewLand,
+		maxSlotsPerLand: ruleOverride.maxSlotsPerLand ?? ruleBase.maxSlotsPerLand,
+		basePopulationCap:
+			ruleOverride.basePopulationCap ?? ruleBase.basePopulationCap,
+		winConditions:
+			ruleOverride.winConditions !== undefined
+				? clone(ruleOverride.winConditions)
+				: clone(ruleBase.winConditions),
+	};
+}
+
 function mergeEngineBootstrap(
 	base: EngineBootstrapOptions,
 	override: Partial<EngineBootstrapOptions> | undefined,
@@ -118,7 +149,7 @@ function mergeEngineBootstrap(
 	return {
 		phases: override.phases ? [...override.phases] : [...base.phases],
 		start: override.start ? clone(override.start) : clone(base.start),
-		rules: override.rules ? { ...override.rules } : { ...base.rules },
+		rules: mergeRuleSet(base.rules, override.rules),
 	};
 }
 
