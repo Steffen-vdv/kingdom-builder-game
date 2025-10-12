@@ -216,6 +216,11 @@ by previous agents. Preserve them when updating this document.
 - 2025-08-31: Run tests with `npm run test:quick >/tmp/unit.log 2>&1 && tail -n
 100 /tmp/unit.log`; avoid running extra test commands unless specifically
   asked.
+- 2025-09-01: The Husky pre-commit hook now runs `lint-staged` (including
+  Prettier, ESLint, and a global `tsc --noEmit`) followed directly by
+  `npm run test:quick`. `npm run check` was removed from the hook to avoid
+  duplicating the full repo verification; continue running `npm run check`
+  manually before submitting a PR.
 - 2025-08-31: `git commit` triggers a Husky pre-commit hook running lint-staged
   and the fast Vitest suite.
 - 2025-08-31: Use `rg` for code searches; `grep -R` and `ls -R` are discouraged

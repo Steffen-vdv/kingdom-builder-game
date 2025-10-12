@@ -3,11 +3,8 @@
 # Exit on errors
 set -e
 
-# Run lint-staged on changed files
+# Run lint-staged on changed files (runs Prettier, ESLint, and a global type check)
 npx lint-staged
-
-# Run the full typecheck + lint suite before tests so config regressions fail fast
-npm run check
 
 # Run the fast Vitest suite without redundant lint/type checks
 npm run test:quick
