@@ -1,5 +1,13 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P1 - T6 - Phase Progress Protocol Alignment
+
+- `usePhaseProgress.helpers` now reads phase advance payloads via
+  `SessionAdvanceResult`/`SessionAdvanceSkipSnapshot` from the protocol,
+  removing the direct `LegacySession` type import. The helper still depends on
+  a snapshot-capable session handle; TODO: replace the structural session
+  dependency with a protocol service once the remote lifecycle API is ready.
+
 ## Domain Migration - P1 - T2 - Current Couplings Review
 
 ### Remaining files to decouple

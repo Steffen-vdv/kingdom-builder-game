@@ -1,5 +1,7 @@
 import type {
 	SessionAdvanceResponse,
+	SessionAdvanceResult,
+	SessionAdvanceSkipSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { snapshotPlayer } from '../translation';
@@ -10,11 +12,7 @@ import {
 	markFatalSessionError,
 	isFatalSessionError,
 } from './sessionSdk';
-import type {
-	LegacySession,
-	SessionRegistries,
-	SessionResourceKey,
-} from './sessionTypes';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type {
 	FormatPhaseResolutionOptions,
 	PhaseResolutionFormatResult,
@@ -26,8 +24,12 @@ type FormatPhaseResolution = (
 	options: FormatPhaseResolutionOptions,
 ) => PhaseResolutionFormatResult;
 
+interface SessionSnapshotSource {
+	getSnapshot(): SessionSnapshot;
+}
+
 interface AdvanceToActionPhaseOptions {
-	session: LegacySession;
+	session: SessionSnapshotSource;
 	sessionId: string;
 	resourceKeys: SessionResourceKey[];
 	mountedRef: React.MutableRefObject<boolean>;
@@ -85,8 +87,10 @@ export async function advanceToActionPhase({
 					sessionId,
 				},
 			);
-			const { advance } = advanceResponse;
-			const { player } = advance;
+			const advanceResult: SessionAdvanceResult = advanceResponse.advance;
+			const { player } = advanceResult;
+			const skipMetadata: SessionAdvanceSkipSnapshot | undefined =
+				advanceResult.skipped;
 			const snapshotAfter = advanceResponse.snapshot;
 			if (snapshotAfter.game.conclusion) {
 				applyPhaseSnapshot(snapshotAfter, { isAdvancing: false });
@@ -100,9 +104,9 @@ export async function advanceToActionPhase({
 				registries,
 			});
 			const formatted = formatPhaseResolution({
-				advance,
+				advance: advanceResult,
 				before,
-				after: snapshotPlayer(player),
+				...(skipMetadata ? {} : { after: snapshotPlayer(player) }),
 				diffContext,
 				resourceKeys,
 			});
