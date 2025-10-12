@@ -1,9 +1,18 @@
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionTrace } from '@kingdom-builder/protocol/actions';
+import type {
+	SessionPlayerStateSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { TranslationDiffContext } from '../translation';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
+import { formatActionLogLines } from './actionLogFormat';
+import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import type { Action } from './actionTypes';
+import type { ShowResolutionOptions } from './useActionResolution';
+import type { PhaseProgressState } from './usePhaseProgress';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 
 interface AppendSubActionChangesOptions {
@@ -135,4 +144,98 @@ export function filterActionDiffChanges({
 		}
 		return true;
 	});
+}
+
+interface HandleMissingActionDefinitionOptions {
+	action: Action;
+	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name' | 'resources'>;
+	snapshot: SessionSnapshot;
+	actionCostResource: SessionResourceKey;
+	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+	syncPhaseState: (
+		snapshot: SessionSnapshot,
+		overrides?: Partial<PhaseProgressState>,
+	) => void;
+	refresh: () => void;
+	addLog: (
+		entry: string | string[],
+		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
+	) => void;
+	mountedRef: { current: boolean };
+	endTurn: () => Promise<void>;
+}
+
+export async function handleMissingActionDefinition({
+	action,
+	player,
+	snapshot,
+	actionCostResource,
+	showResolution,
+	syncPhaseState,
+	refresh,
+	addLog,
+	mountedRef,
+	endTurn,
+}: HandleMissingActionDefinitionOptions) {
+	console.warn(
+		`Missing action definition for ${action.id}; using fallback resolution logs.`,
+	);
+	const fallbackHeadline = `Played ${action.name}`;
+	const fallbackChange =
+		'No detailed log available because the action definition was missing.';
+	const fallbackMessages: ActionLogLineDescriptor[] = [
+		{
+			text: fallbackHeadline,
+			depth: 0,
+			kind: 'headline',
+		},
+	];
+	const logLines = formatActionLogLines(fallbackMessages, [fallbackChange]);
+	const actionMeta = buildResolutionActionMeta(
+		action,
+		undefined,
+		fallbackHeadline,
+	);
+	const resolutionSource = {
+		kind: 'action' as const,
+		label: 'Action',
+		id: actionMeta.id,
+		name: actionMeta.name,
+		icon: actionMeta.icon ?? '',
+	} satisfies ShowResolutionOptions['source'];
+	const resolutionPlayer = {
+		id: player.id,
+		name: player.name,
+	} satisfies ShowResolutionOptions['player'];
+	syncPhaseState(snapshot);
+	refresh();
+	let shouldAddLog = true;
+	try {
+		await showResolution({
+			action: actionMeta,
+			lines: logLines,
+			player: resolutionPlayer,
+			summaries: [],
+			source: resolutionSource,
+			actorLabel: 'Played by',
+		});
+	} catch (_error) {
+		addLog(logLines, resolutionPlayer);
+		shouldAddLog = false;
+	}
+	if (shouldAddLog) {
+		addLog(logLines, resolutionPlayer);
+	}
+	if (!mountedRef.current) {
+		return;
+	}
+	if (snapshot.game.conclusion) {
+		return;
+	}
+	if (
+		snapshot.game.devMode &&
+		(player.resources[actionCostResource] ?? 0) <= 0
+	) {
+		await endTurn();
+	}
 }

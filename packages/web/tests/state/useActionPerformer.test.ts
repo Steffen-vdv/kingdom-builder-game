@@ -295,6 +295,111 @@ describe('useActionPerformer', () => {
 		);
 	});
 
+	it('falls back to a generic resolution log when an action definition is missing', async () => {
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const syncPhaseState = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn();
+		const [activeBefore, opponentBefore] = sessionSnapshot.game.players;
+		if (!activeBefore || !opponentBefore) {
+			throw new Error('Expected players in snapshot');
+		}
+		const updatedPlayer = createSnapshotPlayer({
+			id: activeBefore.id,
+			name: activeBefore.name,
+			resources: {
+				...activeBefore.resources,
+				[actionCostResource]:
+					(activeBefore.resources[actionCostResource] ?? 0) - 1,
+			},
+		});
+		const updatedOpponent = createSnapshotPlayer({
+			id: opponentBefore.id,
+			name: opponentBefore.name,
+			resources: { ...opponentBefore.resources },
+		});
+		const snapshotAfter = createSessionSnapshot({
+			players: [updatedPlayer, updatedOpponent],
+			activePlayerId: updatedPlayer.id,
+			opponentId: updatedOpponent.id,
+			phases: sessionSnapshot.phases,
+			actionCostResource,
+			ruleSnapshot,
+			turn: sessionSnapshot.game.turn,
+			currentPhase: sessionSnapshot.game.currentPhase,
+			currentStep: sessionSnapshot.game.currentStep,
+		});
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'success',
+			costs: { [actionCostResource]: 1 },
+			traces: [],
+			snapshot: snapshotAfter,
+		});
+		getLegacySessionContextMock.mockReturnValueOnce({
+			translationContext: {
+				actions: new Map([[action.id, { icon: '⚔️', name: action.name }]]),
+			},
+			diffContext: {},
+		});
+		getLegacySessionContextMock.mockReturnValueOnce({
+			translationContext: { actions: new Map() },
+			diffContext: {},
+		});
+
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError: undefined,
+			}),
+		);
+
+		try {
+			await act(async () => {
+				await result.current.handlePerform(action);
+			});
+
+			expect(warnSpy).toHaveBeenCalledWith(
+				`Missing action definition for ${action.id}; using fallback resolution logs.`,
+			);
+			expect(showResolution).toHaveBeenCalledWith(
+				expect.objectContaining({
+					lines: [
+						`Played ${action.name}`,
+						'• No detailed log available because the action definition was missing.',
+					],
+					summaries: [],
+				}),
+			);
+			expect(addLog).toHaveBeenCalledWith(
+				[
+					`Played ${action.name}`,
+					'• No detailed log available because the action definition was missing.',
+				],
+				{
+					id: snapshotAfter.game.activePlayerId,
+					name: snapshotAfter.game.players[0]?.name ?? updatedPlayer.name,
+				},
+			);
+			expect(diffStepSnapshotsMock).not.toHaveBeenCalled();
+			expect(logContentMock).not.toHaveBeenCalled();
+		} finally {
+			warnSpy.mockRestore();
+		}
+	});
+
 	it('reports mirroring failures via onFatalSessionError', async () => {
 		const fatalCause = new Error('mirror failed');
 		const fatalError = new SessionMirroringError('Mirroring failed', {
