@@ -159,6 +159,25 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-16 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/contexts/defaultRegistryMetadata.ts` (Web)
+    - `packages/web/src/contexts/defaultRegistryMetadata.json` (Web)
+    - `scripts/extensionless-loader.mjs` (Tooling)
+    - `scripts/generate-default-registry-metadata.mjs` (Tooling)
+  - **Intent**: Break the web fallback dependency on the Content workspace by
+    snapshotting the current registry metadata into a static JSON asset that
+    the web client can consume without cross-domain imports.
+  - **Communication Path Update**: The web client now deserializes the bundled
+    JSON snapshot locally instead of invoking the content factories at
+    runtime, preserving immutability by deep-freezing the snapshot before it is
+    exposed through the registry metadata context.
+  - **Follow-Up Notes**: Refresh the snapshot whenever content registries
+    change by running `node --loader ./scripts/extensionless-loader.mjs scripts/generate-default-registry-metadata.mjs` from the
+    repository root after rebuilding `@kingdom-builder/contents`. Commit the
+    regenerated JSON alongside any content updates so the fallback remains in
+    sync.
+
 - **Date & Author**: 2025-10-15 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/passives/visibility.ts` (Web)
