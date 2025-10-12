@@ -30,18 +30,41 @@ export interface SimulateUpcomingPhasesResult {
 	steps: EngineAdvanceResult[];
 }
 
+function ensurePhaseExists(
+	context: EngineContext,
+	phaseId: string | undefined,
+	label: 'growth' | 'upkeep',
+	source: 'options.phaseIds' | 'rules.corePhaseIds',
+): string {
+	if (!phaseId) {
+		throw new Error(
+			`simulateUpcomingPhases could not determine ${label} phase from ${source}.`,
+		);
+	}
+	const phase = context.phases.find((definition) => definition.id === phaseId);
+	if (!phase) {
+		throw new Error(
+			`simulateUpcomingPhases could not find ${label} phase "${phaseId}" in the engine context.`,
+		);
+	}
+	return phase.id;
+}
+
 function resolvePhaseIds(
 	context: EngineContext,
 	ids: SimulateUpcomingPhasesIds | undefined,
 ): SimulateUpcomingPhasesIds {
-	if (ids) {
-		return ids;
+	const source = ids ?? context.services.rules.corePhaseIds;
+	const sourceLabel = ids ? 'options.phaseIds' : 'rules.corePhaseIds';
+	if (!source) {
+		throw new Error(
+			'simulateUpcomingPhases requires growth and upkeep phase ids in options.phaseIds or rules.corePhaseIds.',
+		);
 	}
-	const [firstPhase, secondPhase] = context.phases;
-	if (!firstPhase || !secondPhase) {
-		throw new Error('Engine context is missing growth or upkeep phases.');
-	}
-	return { growth: firstPhase.id, upkeep: secondPhase.id };
+	return {
+		growth: ensurePhaseExists(context, source.growth, 'growth', sourceLabel),
+		upkeep: ensurePhaseExists(context, source.upkeep, 'upkeep', sourceLabel),
+	};
 }
 
 function buildDelta(

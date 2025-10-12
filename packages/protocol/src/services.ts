@@ -100,6 +100,11 @@ export type HappinessTierDefinition = {
 	display?: TierDisplayMetadata;
 };
 
+export type CorePhaseIds = {
+	growth: string;
+	upkeep: string;
+};
+
 export type RuleSet = {
 	defaultActionAPCost: number;
 	absorptionCapPct: number;
@@ -110,4 +115,5 @@ export type RuleSet = {
 	maxSlotsPerLand: number;
 	basePopulationCap: number;
 	winConditions: WinConditionDefinition[];
+	corePhaseIds?: CorePhaseIds;
 };

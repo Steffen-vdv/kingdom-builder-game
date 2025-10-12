@@ -2,6 +2,7 @@ import type {
 	RuleSet,
 	HappinessTierDefinition,
 } from '@kingdom-builder/protocol';
+import { PhaseId } from './phases';
 import { createTierPassiveEffect } from './happinessHelpers';
 import { happinessTier, passiveParams, winCondition } from './config/builders';
 import { Resource } from './resources';
@@ -98,4 +99,8 @@ export const RULES: RuleSet = {
 	maxSlotsPerLand: 2,
 	basePopulationCap: 1,
 	winConditions: WIN_CONDITIONS,
+	corePhaseIds: {
+		growth: PhaseId.Growth,
+		upkeep: PhaseId.Upkeep,
+	},
 };
