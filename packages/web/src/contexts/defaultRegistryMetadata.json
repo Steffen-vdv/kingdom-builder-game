@@ -1281,6 +1281,151 @@
 				"label": "Passive",
 				"icon": "♾️"
 			}
+		},
+		"overview": {
+			"hero": {
+				"badgeIcon": "📘",
+				"badgeLabel": "Know The Realm",
+				"title": "Game Overview",
+				"intro": "Map the rhythms of the realm before you issue your first decree. Know where every resource, phase, and population surge will carry you.",
+				"paragraph": "Welcome to {game}, a brisk duel of wits where {expand} expansion, {build} clever construction, and {army_attack} daring raids decide who steers the crown.",
+				"tokens": {
+					"game": "Kingdom Builder"
+				}
+			},
+			"sections": [
+				{
+					"kind": "paragraph",
+					"id": "objective",
+					"icon": "castleHP",
+					"title": "Your Objective",
+					"span": true,
+					"paragraphs": [
+						"Keep your {castleHP} castle standing through every assault.",
+						"Plot daring turns that unravel your rival's engine.",
+						"Victory strikes when a stronghold falls or a ruler stalls out.",
+						"The final round crowns the monarch with the healthiest realm."
+					]
+				},
+				{
+					"kind": "list",
+					"id": "turn-flow",
+					"icon": "phases",
+					"title": "Turn Flow",
+					"items": [
+						{
+							"label": "Growth Phase",
+							"icon": "growth",
+							"body": [
+								"Income rolls in, {happiness} Happiness shifts, and {armyStrength} armies rally.",
+								"{council} Council grants bonus {ap} AP for the Main Phase."
+							]
+						},
+						{
+							"label": "Main Phase",
+							"icon": "main",
+							"body": [
+								"Spend {ap} AP to {expand} expand, {build} construct, or {develop} upgrade.",
+								"Launch {army_attack} assaults or {raise_pop} summon new specialists."
+							]
+						},
+						{
+							"label": "Upkeep Phase",
+							"icon": "upkeep",
+							"body": [
+								"Pay costs, resolve {passive} passives, and brace for reprisals.",
+								"Roll into your foe's Growth Phase if the castle still stands."
+							]
+						}
+					]
+				},
+				{
+					"kind": "paragraph",
+					"id": "resources",
+					"icon": "gold",
+					"title": "Resources",
+					"paragraphs": [
+						"{gold} Gold funds every gambit. Earn it from developments and raids.",
+						"{happiness} Happiness fuels empire-wide bonuses when you treat your subjects well.",
+						"{castleHP} Castle HP is your lifeline—defend it relentlessly."
+					]
+				},
+				{
+					"kind": "list",
+					"id": "population",
+					"icon": "population",
+					"title": "Population Roles",
+					"items": [
+						{
+							"icon": "council",
+							"label": "Council",
+							"body": ["Guides strategy and provides bonus {ap} AP each turn."]
+						},
+						{
+							"icon": "legion",
+							"label": "Legion",
+							"body": [
+								"Reinforces {armyStrength} Army strength for devastating {army_attack} raids."
+							]
+						},
+						{
+							"icon": "fortifier",
+							"label": "Fortifier",
+							"body": ["Cements your defenses with persistent buffs."]
+						},
+						{
+							"icon": "citizen",
+							"label": "Citizens",
+							"body": ["Wait in the wings, ready to specialize as needed."]
+						}
+					]
+				},
+				{
+					"kind": "paragraph",
+					"id": "actions",
+					"icon": "develop",
+					"title": "Actions & Strategy",
+					"span": true,
+					"paragraphs": [
+						"Spend {ap} AP to {expand} grow territory or {develop} upgrade key lands.",
+						"Field {raise_pop} specialists or launch {army_attack} attacks to snowball momentum."
+					]
+				}
+			],
+			"tokens": {
+				"actions": {
+					"expand": ["expand"],
+					"build": ["build"],
+					"develop": ["develop"],
+					"raise_pop": ["raise_pop"],
+					"army_attack": ["army_attack"]
+				},
+				"phases": {
+					"growth": ["growth"],
+					"upkeep": ["upkeep"],
+					"main": ["main"]
+				},
+				"resources": {
+					"gold": ["gold"],
+					"ap": ["ap"],
+					"happiness": ["happiness"],
+					"castleHP": ["castleHP"]
+				},
+				"stats": {
+					"armyStrength": ["armyStrength"],
+					"fortificationStrength": ["fortificationStrength"]
+				},
+				"population": {
+					"council": ["council"],
+					"legion": ["legion"],
+					"fortifier": ["fortifier"],
+					"citizen": ["citizen"]
+				},
+				"static": {
+					"land": ["land"],
+					"slot": ["slot"]
+				}
+			}
 		}
 	}
 }

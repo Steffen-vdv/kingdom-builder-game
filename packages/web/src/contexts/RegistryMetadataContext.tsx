@@ -9,10 +9,6 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -20,9 +16,6 @@ import {
 	type DefinitionLookup,
 } from './registryMetadataLookups';
 import {
-	DEFAULT_LAND_DESCRIPTOR,
-	DEFAULT_PASSIVE_DESCRIPTOR,
-	DEFAULT_SLOT_DESCRIPTOR,
 	buildPhaseMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
@@ -38,10 +31,12 @@ import {
 	createAssetMetadataSelector,
 	createMetadataSelector,
 	extractDescriptorRecord,
+	extractOverviewContent,
 	extractPhaseRecord,
 	extractTriggerRecord,
 	type AssetMetadataSelector,
 	type MetadataSelector,
+	type OverviewContentMetadata,
 } from './registryMetadataSelectors';
 
 export interface RegistryMetadataContextValue {
@@ -67,7 +62,7 @@ export interface RegistryMetadataContextValue {
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
-	overviewContent: OverviewContentTemplate;
+	overviewContent: OverviewContentMetadata;
 }
 
 interface RegistryMetadataProviderProps {
@@ -156,30 +151,15 @@ export function RegistryMetadataProvider({
 		[metadata],
 	);
 	const landDescriptor = useMemo(
-		() =>
-			resolveAssetDescriptor(
-				'land',
-				assetDescriptors?.land,
-				DEFAULT_LAND_DESCRIPTOR,
-			),
+		() => resolveAssetDescriptor('land', assetDescriptors?.land),
 		[assetDescriptors],
 	);
 	const slotDescriptor = useMemo(
-		() =>
-			resolveAssetDescriptor(
-				'slot',
-				assetDescriptors?.slot,
-				DEFAULT_SLOT_DESCRIPTOR,
-			),
+		() => resolveAssetDescriptor('slot', assetDescriptors?.slot),
 		[assetDescriptors],
 	);
 	const passiveDescriptor = useMemo(
-		() =>
-			resolveAssetDescriptor(
-				'passive',
-				assetDescriptors?.passive,
-				DEFAULT_PASSIVE_DESCRIPTOR,
-			),
+		() => resolveAssetDescriptor('passive', assetDescriptors?.passive),
 		[assetDescriptors],
 	);
 	const resourceMetadata = useMemo(
@@ -222,7 +202,10 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const overviewContent = useMemo(
+		() => extractOverviewContent(metadata),
+		[metadata],
+	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
@@ -334,7 +317,7 @@ export const useSlotMetadata = (): AssetMetadataSelector =>
 export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().passiveMetadata;
 
-export const useOverviewContent = (): OverviewContentTemplate =>
+export const useOverviewContent = (): OverviewContentMetadata =>
 	useRegistryMetadata().overviewContent;
 
 export type {
@@ -348,4 +331,6 @@ export type { AssetMetadata } from './registryMetadataDescriptors';
 export type {
 	AssetMetadataSelector,
 	MetadataSelector,
+	OverviewContentMetadata,
+	OverviewTokenCandidateMap,
 } from './registryMetadataSelectors';

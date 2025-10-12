@@ -213,6 +213,53 @@ export interface SessionTriggerMetadata {
 	past?: string;
 }
 
+export type SessionOverviewTokenCandidates = Partial<
+	Record<string, Record<string, string[]>>
+>;
+
+export interface SessionOverviewHero {
+	badgeIcon?: string;
+	badgeLabel?: string;
+	title?: string;
+	intro?: string;
+	paragraph?: string;
+	tokens?: Record<string, string>;
+}
+
+export interface SessionOverviewParagraphSection {
+	kind: 'paragraph';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+}
+
+export interface SessionOverviewListItem {
+	icon?: string;
+	label: string;
+	body: string[];
+}
+
+export interface SessionOverviewListSection {
+	kind: 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	items: SessionOverviewListItem[];
+}
+
+export type SessionOverviewSection =
+	| SessionOverviewParagraphSection
+	| SessionOverviewListSection;
+
+export interface SessionOverviewContent {
+	hero?: SessionOverviewHero;
+	sections?: SessionOverviewSection[];
+	tokens?: SessionOverviewTokenCandidates;
+}
+
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
@@ -224,6 +271,7 @@ export interface SessionSnapshotMetadata {
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
+	overview?: SessionOverviewContent;
 }
 
 export interface SessionSnapshot {

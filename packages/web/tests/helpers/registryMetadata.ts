@@ -1,9 +1,6 @@
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import {
-	DEFAULT_LAND_DESCRIPTOR,
-	DEFAULT_PASSIVE_DESCRIPTOR,
-	DEFAULT_SLOT_DESCRIPTOR,
 	buildPhaseMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
@@ -68,20 +65,11 @@ export function createTestRegistryMetadata(
 		extractTriggerRecord(metadata),
 	);
 	const assetDescriptors = extractDescriptorRecord(metadata, 'assets');
-	const landDescriptor = resolveAssetDescriptor(
-		'land',
-		assetDescriptors?.land,
-		DEFAULT_LAND_DESCRIPTOR,
-	);
-	const slotDescriptor = resolveAssetDescriptor(
-		'slot',
-		assetDescriptors?.slot,
-		DEFAULT_SLOT_DESCRIPTOR,
-	);
+	const landDescriptor = resolveAssetDescriptor('land', assetDescriptors?.land);
+	const slotDescriptor = resolveAssetDescriptor('slot', assetDescriptors?.slot);
 	const passiveDescriptor = resolveAssetDescriptor(
 		'passive',
 		assetDescriptors?.passive,
-		DEFAULT_PASSIVE_DESCRIPTOR,
 	);
 	return {
 		resourceMetadata: createMetadataSelector(resourceMetadataLookup),

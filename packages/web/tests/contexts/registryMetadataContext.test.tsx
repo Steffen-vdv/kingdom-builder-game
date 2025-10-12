@@ -124,7 +124,38 @@ function createTestSetup(): TestSetup {
 		},
 		assets: {
 			land: { label: 'Territory', icon: '🗺️' },
+			slot: { label: 'Forge Slot', icon: '⚙️' },
 			passive: { label: 'Aura', icon: '✨' },
+		},
+		overview: {
+			hero: {
+				badgeIcon: '📜',
+				badgeLabel: 'Realm Primer',
+				title: 'Starlit Chronicle',
+				intro: 'Chart {gold} flows before commanding the {council}.',
+				paragraph: 'Hold the frontier while {council} envoys channel {gold}.',
+				tokens: {
+					gold: 'Gold Reserve',
+					council: 'Astral Council',
+				},
+			},
+			sections: [
+				{
+					kind: 'paragraph',
+					id: 'mission',
+					icon: 'gold',
+					title: 'Mission Outline',
+					paragraphs: ['Guard the {gold} vaults and guide the {council}.'],
+				},
+			],
+			tokens: {
+				resources: {
+					gold: ['gold'],
+				},
+				population: {
+					council: ['council'],
+				},
+			},
 		},
 	};
 	const registries: SessionRegistries = {
@@ -283,7 +314,7 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.descriptor.label).toBe('Territory');
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
-		expect(slot.descriptor.label).toBe('Development Slot');
-		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(slot.descriptor.label).toBe('Forge Slot');
+		expect(context.overviewContent.hero.title).toBe('Starlit Chronicle');
 	});
 });

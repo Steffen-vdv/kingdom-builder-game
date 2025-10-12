@@ -27,10 +27,8 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+import type { OverviewTokenCandidates } from '@kingdom-builder/contents';
+import type { OverviewTokenCandidateMap } from './contexts/registryMetadataSelectors';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
 
@@ -70,7 +68,7 @@ function createFallbackSections(
 }
 
 function collectTokenKeys(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: OverviewTokenCandidateMap | undefined,
 	overrides?: OverviewTokenConfig,
 ): ReadonlyArray<string> {
 	const keys = new Set<string>();
@@ -83,8 +81,10 @@ function collectTokenKeys(
 		}
 	};
 
-	for (const candidate of Object.values(tokenCandidates)) {
-		addKeys(candidate);
+	if (tokenCandidates) {
+		for (const candidate of Object.values(tokenCandidates)) {
+			addKeys(candidate as Record<string, unknown>);
+		}
 	}
 
 	if (overrides) {
@@ -97,7 +97,7 @@ function collectTokenKeys(
 }
 
 function createFallbackTokens(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: OverviewTokenCandidateMap | undefined,
 	overrides: OverviewTokenConfig | undefined,
 ): OverviewTokenRecord {
 	const keys = collectTokenKeys(tokenCandidates, overrides);
@@ -106,6 +106,24 @@ function createFallbackTokens(
 		tokens[key] = <strong>{key}</strong>;
 	}
 	return tokens;
+}
+
+function cloneTokenCandidates(
+	candidates: OverviewTokenCandidateMap | undefined,
+): OverviewTokenCandidates {
+	const clone: OverviewTokenCandidates = {};
+	if (!candidates) {
+		return clone;
+	}
+	const record = clone as Record<string, Record<string, string[]>>;
+	for (const [category, entries] of Object.entries(candidates)) {
+		const normalized: Record<string, string[]> = {};
+		for (const [tokenKey, values] of Object.entries(entries)) {
+			normalized[tokenKey] = Array.from(values);
+		}
+		record[category] = normalized;
+	}
+	return clone;
 }
 
 function resolveOverviewTokenSources(
@@ -148,10 +166,23 @@ export default function Overview({
 	content,
 }: OverviewProps) {
 	const metadata = useOptionalRegistryMetadata();
-	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
-	const sections = content ?? overviewContent.sections;
-	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
-	const heroContent = overviewContent.hero;
+	const overviewContent = metadata?.overviewContent;
+	const tokenCandidates = overviewContent?.tokens;
+	const defaultTokens = React.useMemo(
+		() => cloneTokenCandidates(tokenCandidates),
+		[tokenCandidates],
+	);
+	const sections = React.useMemo<OverviewContentSection[]>(() => {
+		if (content) {
+			return content;
+		}
+		if (!overviewContent) {
+			return [];
+		}
+		const baseSections = overviewContent.sections;
+		return Array.from(baseSections) as OverviewContentSection[];
+	}, [content, overviewContent]);
+	const heroContent = overviewContent?.hero;
 	const tokenSources = React.useMemo(
 		() => resolveOverviewTokenSources(metadata),
 		[metadata],
@@ -165,7 +196,7 @@ export default function Overview({
 			if (!tokenSources) {
 				return {
 					sections: createFallbackSections(sections),
-					tokens: createFallbackTokens(defaultTokens, tokenConfig),
+					tokens: createFallbackTokens(tokenCandidates, tokenConfig),
 				};
 			}
 
@@ -178,13 +209,20 @@ export default function Overview({
 		}, [defaultTokens, sections, tokenConfig, tokenSources]);
 	const tokens = React.useMemo(() => ({ ...iconTokens }), [iconTokens]);
 
-	const heroTokens: Record<string, React.ReactNode> = React.useMemo(() => {
+	const heroTokens: OverviewTokenRecord = React.useMemo(() => {
 		const heroTokenNodes: Record<string, React.ReactNode> = {};
-		for (const [tokenKey, label] of Object.entries(heroContent.tokens)) {
+		const tokenEntries = heroContent?.tokens ?? {};
+		for (const [tokenKey, label] of Object.entries(tokenEntries)) {
 			heroTokenNodes[tokenKey] = <strong>{label}</strong>;
 		}
 		return { ...tokens, ...heroTokenNodes };
-	}, [heroContent.tokens, tokens]);
+	}, [heroContent?.tokens, tokens]);
+
+	const heroBadgeIcon = heroContent?.badgeIcon ?? '';
+	const heroBadgeLabel = heroContent?.badgeLabel ?? '';
+	const heroTitle = heroContent?.title ?? '';
+	const heroIntro = heroContent?.intro ?? '';
+	const heroParagraph = heroContent?.paragraph ?? '';
 
 	const renderSection = (section: OverviewSectionDef) => {
 		if (section.kind === 'paragraph') {
@@ -222,20 +260,20 @@ export default function Overview({
 			<ShowcaseLayout className="items-center">
 				<header className="flex flex-col items-center text-center">
 					<span className={SHOWCASE_BADGE_CLASS}>
-						<span className="text-lg">{heroContent.badgeIcon}</span>
-						<span>{heroContent.badgeLabel}</span>
+						<span className="text-lg">{heroBadgeIcon}</span>
+						<span>{heroBadgeLabel}</span>
 					</span>
 					<h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl md:text-6xl">
-						{heroContent.title}
+						{heroTitle}
 					</h1>
 					<p className={SHOWCASE_INTRO_CLASS}>
-						{renderTokens(heroContent.intro, heroTokens)}
+						{renderTokens(heroIntro, heroTokens)}
 					</p>
 				</header>
 
 				<ShowcaseCard as="article" className={OVERVIEW_CARD_CLASS}>
 					<p className="text-base leading-relaxed">
-						{renderTokens(heroContent.paragraph, heroTokens)}
+						{renderTokens(heroParagraph, heroTokens)}
 					</p>
 
 					<div className={OVERVIEW_GRID_CLASS}>
