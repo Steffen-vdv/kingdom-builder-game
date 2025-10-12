@@ -162,6 +162,7 @@ export type {
 } from './actions/contracts';
 export {
 	sessionIdSchema,
+	sessionIdentifierSchema,
 	sessionPlayerNameMapSchema,
 	sessionCreateRequestSchema,
 	sessionCreateResponseSchema,

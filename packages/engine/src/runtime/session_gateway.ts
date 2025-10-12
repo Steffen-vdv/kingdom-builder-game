@@ -5,6 +5,7 @@ import type {
 	SessionStateResponse,
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
+	SessionIdentifier,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRequirementFailure,
@@ -141,9 +142,7 @@ export function createLocalSessionGateway(
 				registries: getRegistries(),
 			});
 		},
-		fetchSnapshot(
-			request: SessionAdvanceRequest,
-		): Promise<SessionStateResponse> {
+		fetchSnapshot(request: SessionIdentifier): Promise<SessionStateResponse> {
 			assertSessionId(request, sessionId);
 			return Promise.resolve({
 				sessionId,

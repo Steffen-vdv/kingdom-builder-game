@@ -72,9 +72,11 @@ export const sessionCreateResponseSchema = z.object({
 
 export const sessionStateResponseSchema = sessionCreateResponseSchema;
 
-export const sessionAdvanceRequestSchema = z.object({
+export const sessionIdentifierSchema = z.object({
 	sessionId: sessionIdSchema,
 });
+
+export const sessionAdvanceRequestSchema = sessionIdentifierSchema;
 
 export const sessionAdvanceResponseSchema = z.object({
 	sessionId: sessionIdSchema,
@@ -107,6 +109,9 @@ type Expect<T extends true> = T;
 
 type _SessionIdMatches = Expect<
 	Equal<z.infer<typeof sessionIdSchema>, SessionIdentifier['sessionId']>
+>;
+type _SessionIdentifierMatches = Expect<
+	Equal<z.infer<typeof sessionIdentifierSchema>, SessionIdentifier>
 >;
 type _SessionPlayerNameMapMatches = Expect<
 	Equal<z.infer<typeof sessionPlayerNameMapSchema>, SessionPlayerNameMap>
