@@ -1,17 +1,14 @@
 import React from 'react';
 import { Stat } from '@kingdom-builder/contents';
 import type { PlayerStateSnapshot } from '@kingdom-builder/engine';
-import { formatStatValue, getStatBreakdownSummary } from '../../utils/stats';
+import { getStatBreakdownSummary } from '../../utils/stats';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
-import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { GENERAL_STAT_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
-import { getForecastDisplay } from '../../utils/forecast';
 import {
 	usePopulationMetadata,
 	useStatMetadata,
 } from '../../contexts/RegistryMetadataContext';
-import type { TranslationAssets } from '../../translation/context';
 import {
 	formatDescriptorSummary,
 	formatIconLabel,
@@ -19,107 +16,20 @@ import {
 	toDescriptorDisplay,
 	type DescriptorDisplay,
 } from './registryDisplays';
+import StatButton from './StatButton';
 
-interface StatButtonProps {
-	statKey: string;
-	value: number;
-	forecastDelta?: number;
-	descriptor: DescriptorDisplay;
-	onShow: () => void;
-	onHide: () => void;
-	assets: TranslationAssets;
-}
-
-const formatStatDelta = (
-	statKey: string,
-	delta: number,
-	assets: TranslationAssets,
-) => {
-	const formatted = formatStatValue(statKey, Math.abs(delta), assets);
-	return `${delta > 0 ? '+' : '-'}${formatted}`;
-};
-
-const STAT_FORECAST_BADGE_CLASS =
-	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
-const STAT_FORECAST_BADGE_THEME_CLASS = 'bg-slate-800/70 dark:bg-slate-100/10';
+const createDisplayMap = (descriptors: DescriptorDisplay[]) =>
+	new Map(
+		descriptors.map((descriptor) => [descriptor.id, descriptor] as const),
+	);
 
 const POPULATION_ARCHETYPE_LABEL = 'Archetypes';
 
 const ROLE_BUTTON_CLASSES = [
-	'cursor-help',
-	'rounded-full',
-	'border',
-	'border-white/40',
-	'bg-white/40',
-	'px-2',
-	'py-1',
-	'text-xs',
-	'font-semibold',
-	'text-slate-700',
-	'hoverable',
-	'dark:border-white/10',
-	'dark:bg-slate-900/60',
-	'dark:text-slate-100',
+	'cursor-help rounded-full border border-white/40 bg-white/40 px-2 py-1',
+	'text-xs font-semibold text-slate-700 hoverable',
+	'dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100',
 ].join(' ');
-
-const StatButton: React.FC<StatButtonProps> = ({
-	statKey,
-	value,
-	forecastDelta,
-	descriptor,
-	onShow,
-	onHide,
-	assets,
-}) => {
-	const changes = useValueChangeIndicators(value);
-	const formattedValue = formatStatValue(statKey, value, assets);
-	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
-		formatStatDelta(statKey, delta, assets),
-	);
-	const ariaLabel = forecastDisplay
-		? `${descriptor.label}: ${formattedValue} ${forecastDisplay.label}`
-		: `${descriptor.label}: ${formattedValue}`;
-
-	return (
-		<button
-			type="button"
-			className="bar-item hoverable cursor-help relative overflow-visible"
-			onMouseEnter={onShow}
-			onMouseLeave={onHide}
-			onFocus={onShow}
-			onBlur={onHide}
-			onClick={onShow}
-			aria-label={ariaLabel}
-		>
-			{descriptor.icon && <span aria-hidden="true">{descriptor.icon}</span>}
-			{formattedValue}
-			{forecastDisplay && (
-				<span
-					className={[
-						STAT_FORECAST_BADGE_CLASS,
-						STAT_FORECAST_BADGE_THEME_CLASS,
-						forecastDisplay.toneClass,
-					].join(' ')}
-				>
-					{forecastDisplay.label}
-				</span>
-			)}
-			{changes.map((change) => (
-				<span
-					key={change.id}
-					className={`value-change-indicator ${
-						change.direction === 'gain'
-							? 'value-change-indicator--gain text-emerald-300'
-							: 'value-change-indicator--loss text-rose-300'
-					}`}
-					aria-hidden="true"
-				>
-					{formatStatDelta(statKey, change.delta, assets)}
-				</span>
-			))}
-		</button>
-	);
-};
 
 interface PopulationInfoProps {
 	player: PlayerStateSnapshot;
@@ -131,6 +41,22 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const assets = translationContext.assets;
 	const populationMetadata = usePopulationMetadata();
 	const statMetadata = useStatMetadata();
+	const populationDescriptors = React.useMemo(
+		() => populationMetadata.list.map(toDescriptorDisplay),
+		[populationMetadata],
+	);
+	const populationDisplayMap = React.useMemo(
+		() => createDisplayMap(populationDescriptors),
+		[populationDescriptors],
+	);
+	const statDescriptors = React.useMemo(
+		() => statMetadata.list.map(toDescriptorDisplay),
+		[statMetadata],
+	);
+	const statDisplayMap = React.useMemo(
+		() => createDisplayMap(statDescriptors),
+		[statDescriptors],
+	);
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id] ?? {
 		resources: {},
@@ -144,10 +70,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		(sum, [, populationCount]) => sum + populationCount,
 		0,
 	);
-	const popDetails = popEntries.map(([populationRole, populationCount]) => ({
-		role: populationRole,
-		count: populationCount,
-	}));
+	const hasPopulationRoles = popEntries.length > 0;
 
 	const translationPlayer =
 		translationContext.activePlayer.id === player.id
@@ -163,7 +86,10 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		return translationPlayer?.stats?.[Stat.maxPopulation] ?? 0;
 	})();
 
-	const populationInfo = toAssetDisplay(assets.population, 'population');
+	const populationInfo = React.useMemo(
+		() => toAssetDisplay(assets.population, 'population'),
+		[assets.population],
+	);
 
 	const showGeneralStatCard = () =>
 		handleHoverCard({
@@ -177,8 +103,8 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const showPopulationCard = () =>
 		handleHoverCard({
 			title: formatIconLabel(populationInfo),
-			effects: populationMetadata.list.map((descriptor) =>
-				formatDescriptorSummary(toDescriptorDisplay(descriptor)),
+			effects: populationDescriptors.map((descriptor) =>
+				formatDescriptorSummary(descriptor),
 			),
 			effectsTitle: POPULATION_ARCHETYPE_LABEL,
 			requirements: [],
@@ -211,8 +137,10 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		return { handleRoleFocus, handleRoleLeave };
 	};
 
-	const populationRoleButtons = popDetails.map(({ role, count }, index) => {
-		const descriptor = toDescriptorDisplay(populationMetadata.select(role));
+	const populationRoleButtons = popEntries.map(([role, count], index) => {
+		const descriptor =
+			populationDisplayMap.get(role) ??
+			toDescriptorDisplay(populationMetadata.select(role));
 		const { handleRoleFocus: onRoleFocus, handleRoleLeave: onRoleLeave } =
 			createRoleHoverHandlers(descriptor);
 
@@ -236,24 +164,29 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		);
 	});
 
-	const showStatCard = (statKey: string) => {
-		const descriptor = toDescriptorDisplay(statMetadata.select(statKey));
-		const breakdown = getStatBreakdownSummary(
-			statKey,
-			player,
-			translationContext,
-		);
-		handleHoverCard({
-			title: formatIconLabel(descriptor),
-			effects: breakdown,
-			effectsTitle: 'Breakdown',
-			requirements: [],
-			...(descriptor.description
-				? { description: descriptor.description }
-				: {}),
-			bgClass: PLAYER_INFO_CARD_BG,
-		});
-	};
+	const showStatCard = React.useCallback(
+		(statKey: string) => {
+			const descriptor =
+				statDisplayMap.get(statKey) ??
+				toDescriptorDisplay(statMetadata.select(statKey));
+			const breakdown = getStatBreakdownSummary(
+				statKey,
+				player,
+				translationContext,
+			);
+			handleHoverCard({
+				title: formatIconLabel(descriptor),
+				effects: breakdown,
+				effectsTitle: 'Breakdown',
+				requirements: [],
+				...(descriptor.description
+					? { description: descriptor.description }
+					: {}),
+				bgClass: PLAYER_INFO_CARD_BG,
+			});
+		},
+		[handleHoverCard, player, statDisplayMap, statMetadata, translationContext],
+	);
 
 	return (
 		<div className="info-bar stat-bar">
@@ -288,7 +221,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 					<span aria-hidden="true">{populationInfo.icon}</span>
 				)}
 				{currentPop}/{maxPopulation}
-				{popDetails.length > 0 && (
+				{hasPopulationRoles && (
 					<>
 						{' ('}
 						{populationRoleButtons}
@@ -307,20 +240,27 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 					return Boolean(player.statsHistory?.[statKey]);
 				})
 				.map(([statKey, statValue]) => {
-					const descriptor = toDescriptorDisplay(statMetadata.select(statKey));
-					const props: StatButtonProps = {
-						statKey,
-						value: statValue,
-						descriptor,
-						onShow: () => showStatCard(statKey),
-						onHide: clearHoverCard,
-						assets,
-					};
+					const descriptor =
+						statDisplayMap.get(statKey) ??
+						toDescriptorDisplay(statMetadata.select(statKey));
 					const nextTurnStat = playerForecast.stats[statKey];
-					if (typeof nextTurnStat === 'number') {
-						props.forecastDelta = nextTurnStat;
-					}
-					return <StatButton key={statKey} {...props} />;
+					return (
+						<StatButton
+							key={statKey}
+							statKey={statKey}
+							value={statValue}
+							label={descriptor.label}
+							{...(descriptor.icon !== undefined
+								? { icon: descriptor.icon }
+								: {})}
+							{...(typeof nextTurnStat === 'number'
+								? { forecastDelta: nextTurnStat }
+								: {})}
+							onShow={showStatCard}
+							onHide={clearHoverCard}
+							assets={assets}
+						/>
+					);
 				})}
 		</div>
 	);

@@ -47,31 +47,52 @@ export default function PassiveDisplay({
 }) {
 	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
 		useGameEngine();
-	const passiveAsset = toDescriptorDisplay(usePassiveAssetMetadata().select());
+	const passiveAssetMetadata = usePassiveAssetMetadata();
+	const passiveAsset = React.useMemo(
+		() => toDescriptorDisplay(passiveAssetMetadata.select()),
+		[passiveAssetMetadata],
+	);
 	const resourceMetadata = useResourceMetadata();
 	const phaseMetadata = usePhaseMetadata();
+	const upkeepDescriptor = React.useMemo(
+		() => phaseMetadata.select(PhaseId.Upkeep),
+		[phaseMetadata],
+	);
 	const playerId: PlayerId = player.id;
 	const summaries: PassiveSummary[] =
 		translationContext.passives.list(playerId);
 	const definitions = translationContext.passives.definitions(playerId);
-	const definitionMap = new Map(
-		definitions.map((definition) => [definition.id, definition]),
+	const definitionMap = React.useMemo(
+		() =>
+			new Map(
+				definitions.map((definition) => [definition.id, definition] as const),
+			),
+		[definitions],
 	);
 
 	const tierDefinitions = ruleSnapshot.tierDefinitions;
 	const happinessKey = ruleSnapshot.tieredResourceKey;
-	const tieredResourceDescriptor = happinessKey
-		? toDescriptorDisplay(resourceMetadata.select(happinessKey))
-		: undefined;
-	const tierByPassiveId = tierDefinitions.reduce<
-		Map<string, HappinessTierDefinition>
-	>((map, tier) => {
-		const passiveId = tier.preview?.id;
-		if (passiveId) {
-			map.set(passiveId, tier);
-		}
-		return map;
-	}, new Map());
+	const tieredResourceDescriptor = React.useMemo(
+		() =>
+			happinessKey
+				? toDescriptorDisplay(resourceMetadata.select(happinessKey))
+				: undefined,
+		[happinessKey, resourceMetadata],
+	);
+	const tierByPassiveId = React.useMemo(
+		() =>
+			tierDefinitions.reduce<Map<string, HappinessTierDefinition>>(
+				(map, tier) => {
+					const passiveId = tier.preview?.id;
+					if (passiveId) {
+						map.set(passiveId, tier);
+					}
+					return map;
+				},
+				new Map(),
+			),
+		[tierDefinitions],
+	);
 	const visibilityContext = createPassiveVisibilityContext(player);
 	const visibleSummaries = filterPassivesForSurface(
 		summaries,
@@ -137,7 +158,6 @@ export default function PassiveDisplay({
 				const items = tierSections
 					? tierSections
 					: describeEffects(resolvedEffects, translationContext);
-				const upkeepDescriptor = phaseMetadata.select(PhaseId.Upkeep);
 				const upkeepLabel = upkeepDescriptor.label || 'Upkeep';
 				const sections = definition.onUpkeepPhase
 					? [

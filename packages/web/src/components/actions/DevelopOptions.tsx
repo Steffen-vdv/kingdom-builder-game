@@ -68,7 +68,7 @@ export default function DevelopOptions({
 		actionCostResource,
 	} = useGameEngine();
 	const slotMetadata = useSlotMetadata();
-	const slotDescriptor = slotMetadata.select();
+	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
 	const entries = useMemo(() => {
