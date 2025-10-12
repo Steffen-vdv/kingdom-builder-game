@@ -69,6 +69,21 @@ describe('SessionTransport createSession', () => {
 		expect(playerB?.name).toBe('Bravo');
 	});
 
+	it('stores trimmed player names in the session snapshot', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('trim-session'),
+			authMiddleware: middleware,
+		});
+		const response = transport.createSession({
+			body: { playerNames: { A: '  Charlie  ' } },
+			headers: authorizedHeaders,
+		});
+		const [playerA] = response.snapshot.game.players;
+		expect(playerA?.name).toBe('Charlie');
+	});
+
 	it('fails when unique session identifiers cannot be generated', () => {
 		const { manager } = createSyntheticSessionManager();
 		manager.createSession('collision');
