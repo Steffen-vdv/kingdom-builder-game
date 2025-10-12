@@ -31,11 +31,8 @@ type PassiveEvaluationModifierRegistry = {
 	entries(): Iterable<[string, DescriptorSource]>;
 };
 
-type ExtendedSessionSnapshotMetadata = Omit<
-	SessionSnapshotMetadata,
-	'passiveEvaluationModifiers'
-> & {
-	readonly passiveEvaluationModifiers: Record<
+type ExtendedSessionSnapshotMetadata = SessionSnapshotMetadata & {
+	readonly passiveEvaluationModifierDescriptors: Record<
 		string,
 		SessionMetadataDescriptor
 	>;
@@ -45,7 +42,9 @@ type ExtendedSessionSnapshotMetadata = Omit<
 
 export function buildSessionMetadata(): ExtendedSessionSnapshotMetadata {
 	const metadata: ExtendedSessionSnapshotMetadata = {
-		passiveEvaluationModifiers: createPassiveEvaluationModifierMetadata(),
+		passiveEvaluationModifiers: {},
+		passiveEvaluationModifierDescriptors:
+			createPassiveEvaluationModifierMetadata(),
 		resources: createResourceMetadata(),
 		populations: createRegistryDescriptorMap(POPULATIONS.entries()),
 		buildings: createRegistryDescriptorMap(BUILDINGS.entries()),
@@ -73,10 +72,11 @@ function createPassiveEvaluationModifierMetadata(): Record<
 }
 
 function createRegistryDescriptorMap<T extends DescriptorSource>(
-	entries: ReadonlyArray<[string, T]>,
+	entries: Iterable<[string, T]>,
 ): Record<string, SessionMetadataDescriptor> {
+	const entriesArray = Array.from(entries);
 	return Object.fromEntries(
-		entries.map(([id, definition]) => [
+		entriesArray.map(([id, definition]) => [
 			id,
 			createDescriptor(
 				definition.name,
