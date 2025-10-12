@@ -159,6 +159,22 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-19 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/contexts/defaultRegistryMetadata.ts` (Web)
+    - `packages/web/src/contexts/defaultRegistryMetadata.json` (Web)
+    - `scripts/generate-default-registry-metadata.ts` (Scripts)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Snapshot registry metadata into a static JSON fallback so the
+    Web domain can boot without importing metadata constants from the Content
+    package.
+  - **Communication Path Update**: Web now consumes
+    `defaultRegistryMetadata.json` for snapshot metadata while continuing to
+    create live registries via the published content factories.
+  - **Follow-Up Notes**: When content updates require new metadata, run
+    `npx --yes tsx scripts/generate-default-registry-metadata.ts` to refresh the
+    JSON snapshot and commit the result alongside any associated changes.
+
 - **Date & Author**: 2025-10-15 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/passives/visibility.ts` (Web)

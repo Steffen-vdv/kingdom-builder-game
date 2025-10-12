@@ -1,0 +1,315 @@
+{
+	"metadata": {
+		"passiveEvaluationModifiers": {},
+		"resources": {
+			"gold": {
+				"label": "Gold",
+				"icon": "🪙",
+				"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open."
+			},
+			"ap": {
+				"label": "Action Points",
+				"icon": "⚡",
+				"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
+			},
+			"happiness": {
+				"label": "Happiness",
+				"icon": "😊",
+				"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
+			},
+			"castleHP": {
+				"label": "Castle HP",
+				"icon": "🏰",
+				"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost."
+			}
+		},
+		"populations": {
+			"council": {
+				"label": "Council",
+				"icon": "⚖️"
+			},
+			"legion": {
+				"label": "Legion",
+				"icon": "🎖️"
+			},
+			"fortifier": {
+				"label": "Fortifier",
+				"icon": "🔧"
+			},
+			"citizen": {
+				"label": "Citizen",
+				"icon": "👤"
+			}
+		},
+		"buildings": {
+			"town_charter": {
+				"label": "Town Charter",
+				"icon": "🏘️"
+			},
+			"mill": {
+				"label": "Mill",
+				"icon": "⚙️"
+			},
+			"raiders_guild": {
+				"label": "Raider's Guild",
+				"icon": "🏴‍☠️"
+			},
+			"plow_workshop": {
+				"label": "Plow Workshop",
+				"icon": "🏭"
+			},
+			"market": {
+				"label": "Market",
+				"icon": "🏪"
+			},
+			"castle_walls": {
+				"label": "Castle Walls",
+				"icon": "🧱"
+			},
+			"barracks": {
+				"label": "Barracks",
+				"icon": "🪖"
+			},
+			"citadel": {
+				"label": "Citadel",
+				"icon": "🏯"
+			},
+			"castle_gardens": {
+				"label": "Castle Gardens",
+				"icon": "🌷"
+			},
+			"temple": {
+				"label": "Temple",
+				"icon": "⛪"
+			},
+			"palace": {
+				"label": "Palace",
+				"icon": "👑"
+			},
+			"great_hall": {
+				"label": "Great Hall",
+				"icon": "🏟️"
+			}
+		},
+		"developments": {
+			"farm": {
+				"label": "Farm",
+				"icon": "🌾"
+			},
+			"house": {
+				"label": "House",
+				"icon": "🏠"
+			},
+			"outpost": {
+				"label": "Outpost",
+				"icon": "🏹"
+			},
+			"watchtower": {
+				"label": "Watchtower",
+				"icon": "🗼"
+			},
+			"garden": {
+				"label": "Garden",
+				"icon": "🌿"
+			}
+		},
+		"stats": {
+			"maxPopulation": {
+				"label": "Max Population",
+				"icon": "👥",
+				"description": "Max Population determines how many subjects your kingdom can sustain. Expand infrastructure or build houses to increase it."
+			},
+			"armyStrength": {
+				"label": "Army Strength",
+				"icon": "⚔️",
+				"description": "Army Strength reflects the overall power of your military forces. A higher value makes your attacks more formidable."
+			},
+			"fortificationStrength": {
+				"label": "Fortification Strength",
+				"icon": "🛡️",
+				"description": "Fortification Strength measures the resilience of your defenses. It reduces damage taken when enemies assault your castle."
+			},
+			"absorption": {
+				"label": "Absorption",
+				"icon": "🌀",
+				"description": "Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows."
+			},
+			"growth": {
+				"label": "Growth",
+				"icon": "📈",
+				"description": "Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase."
+			},
+			"warWeariness": {
+				"label": "War Weariness",
+				"icon": "💤",
+				"description": "War Weariness reflects the fatigue from prolonged conflict. High weariness can sap morale and hinder wartime efforts."
+			}
+		},
+		"phases": {
+			"growth": {
+				"id": "growth",
+				"label": "Growth",
+				"icon": "🏗️",
+				"steps": [
+					{
+						"id": "resolve-dynamic-triggers",
+						"label": "Resolve dynamic triggers",
+						"triggers": ["onGrowthPhase"]
+					},
+					{
+						"id": "gain-income",
+						"label": "Gain Income",
+						"icon": "💰",
+						"triggers": ["onGainIncomeStep"]
+					},
+					{
+						"id": "gain-ap",
+						"label": "Gain Action Points",
+						"triggers": ["onGainAPStep"]
+					},
+					{
+						"id": "raise-strength",
+						"label": "Raise Strength"
+					}
+				]
+			},
+			"upkeep": {
+				"id": "upkeep",
+				"label": "Upkeep",
+				"icon": "🧹",
+				"steps": [
+					{
+						"id": "resolve-dynamic-triggers",
+						"label": "Resolve dynamic triggers",
+						"triggers": ["onUpkeepPhase"]
+					},
+					{
+						"id": "pay-upkeep",
+						"label": "Pay Upkeep",
+						"triggers": ["onPayUpkeepStep"]
+					},
+					{
+						"id": "war-recovery",
+						"label": "War recovery"
+					}
+				]
+			},
+			"main": {
+				"id": "main",
+				"label": "Main",
+				"icon": "🎯",
+				"action": true,
+				"steps": [
+					{
+						"id": "main",
+						"label": "Main Phase"
+					}
+				]
+			}
+		},
+		"triggers": {
+			"onBuild": {
+				"label": "Build",
+				"icon": "⚒️",
+				"future": "Until removed",
+				"past": "Build"
+			},
+			"onBeforeAttacked": {
+				"label": "Before attack",
+				"icon": "🛡️",
+				"future": "Before being attacked",
+				"past": "Before attack"
+			},
+			"onAttackResolved": {
+				"label": "After attack",
+				"icon": "⚔️",
+				"future": "After having been attacked",
+				"past": "After attack"
+			},
+			"onPayUpkeepStep": {
+				"label": "Upkeep step",
+				"icon": "🧹",
+				"future": "During upkeep step",
+				"past": "Upkeep step"
+			},
+			"onGainIncomeStep": {
+				"label": "Growth Phase — Gain Income step",
+				"icon": "💰",
+				"future": "During Growth Phase — Gain Income step",
+				"past": "Growth Phase — Gain Income step"
+			},
+			"onGainAPStep": {
+				"label": "AP step",
+				"icon": "⚡",
+				"future": "During AP step",
+				"past": "AP step"
+			},
+			"mainPhase": {
+				"label": "Main phase",
+				"icon": "🎯",
+				"future": "",
+				"past": "Main phase"
+			},
+			"onGrowthPhase": {
+				"label": "Growth Phase",
+				"icon": "🏗️",
+				"future": "On each Growth Phase",
+				"past": "Growth Phase"
+			},
+			"onUpkeepPhase": {
+				"label": "Upkeep Phase",
+				"icon": "🧹",
+				"future": "On each Upkeep Phase",
+				"past": "Upkeep Phase"
+			},
+			"onMainPhase": {
+				"label": "Main Phase",
+				"icon": "🎯",
+				"future": "On each Main Phase",
+				"past": "Main Phase"
+			}
+		},
+		"assets": {
+			"land": {
+				"label": "Land",
+				"icon": "🗺️"
+			},
+			"slot": {
+				"label": "Development Slot",
+				"icon": "🧩"
+			},
+			"passive": {
+				"label": "Passive",
+				"icon": "♾️"
+			}
+		}
+	},
+	"resources": {
+		"gold": {
+			"key": "gold",
+			"icon": "🪙",
+			"label": "Gold",
+			"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
+			"tags": ["bankruptcy-check"]
+		},
+		"ap": {
+			"key": "ap",
+			"icon": "⚡",
+			"label": "Action Points",
+			"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
+		},
+		"happiness": {
+			"key": "happiness",
+			"icon": "😊",
+			"label": "Happiness",
+			"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
+		},
+		"castleHP": {
+			"key": "castleHP",
+			"icon": "🏰",
+			"label": "Castle HP",
+			"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
+			"tags": ["attack-target", "win-condition-zero"]
+		}
+	}
+}
