@@ -292,10 +292,11 @@ export class SessionTransport {
 		const playerIds = Object.keys(names) as SessionPlayerId[];
 		for (const playerId of playerIds) {
 			const playerName = names[playerId];
-			if (!playerName?.trim()) {
+			const sanitizedName = playerName?.trim();
+			if (!sanitizedName) {
 				continue;
 			}
-			session.updatePlayerName(playerId, playerName);
+			session.updatePlayerName(playerId, sanitizedName);
 		}
 	}
 
