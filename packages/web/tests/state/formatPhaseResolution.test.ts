@@ -11,16 +11,16 @@ import type {
 
 vi.mock('../../src/translation', () => ({
 	__esModule: true,
-        diffStepSnapshots:
-                vi.fn<
-                        (
-                                before: PlayerSnapshot,
-                                after: PlayerSnapshot,
-                                effects: unknown,
-                                diffContext: TranslationDiffContext,
-                                resourceKeys?: SessionResourceKey[],
-                        ) => string[]
-                >(),
+	diffStepSnapshots:
+		vi.fn<
+			(
+				before: PlayerSnapshot,
+				after: PlayerSnapshot,
+				effects: unknown,
+				diffContext: TranslationDiffContext,
+				resourceKeys?: SessionResourceKey[],
+			) => string[]
+		>(),
 	snapshotPlayer: vi.fn(),
 }));
 
