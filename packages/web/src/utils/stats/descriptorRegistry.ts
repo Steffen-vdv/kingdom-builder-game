@@ -2,7 +2,6 @@ import {
 	PASSIVE_INFO,
 	POPULATION_ROLES,
 	RESOURCES,
-	STATS,
 } from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
@@ -70,7 +69,7 @@ function createTranslationRegistryResolver<
 }
 
 function createRecordResolver<T extends { icon?: string; label?: string }>(
-	record: Record<string, T>,
+	record: Readonly<Record<string, T>>,
 	fallback: string,
 ): RegistryResolver {
 	return (id) => {
@@ -165,7 +164,7 @@ function createDescriptorRegistry(
 			} satisfies DescriptorRegistryEntry;
 		})(),
 		stat: {
-			resolve: createRecordResolver(STATS, 'Stat'),
+			resolve: createRecordResolver(translationContext.assets.stats, 'Stat'),
 			formatDetail: defaultFormatDetail,
 			augmentDependencyDetail: (detail, link, player, context) => {
 				if (!link.id) {

@@ -1,11 +1,12 @@
-import { STATS } from '@kingdom-builder/contents';
 import type {
-	PlayerStateSnapshot,
-	StatKey,
-	StatSourceContribution,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot as PlayerStateSnapshot,
+	SessionStatSourceContribution as StatSourceContribution,
+} from '@kingdom-builder/protocol';
 import type { Summary, SummaryEntry } from '../translation/content/types';
-import type { TranslationContext } from '../translation/context';
+import type {
+	TranslationContext,
+	TranslationIconLabel,
+} from '../translation/context';
 import {
 	formatSourceTitle,
 	formatStatValue,
@@ -16,18 +17,14 @@ import { buildDetailEntries, pushSummaryEntry } from './stats/summary';
 
 export { statDisplaysAsPercent, formatStatValue } from './stats/descriptors';
 
-function isStatKey(key: string): key is StatKey {
-	return key in STATS;
-}
+type StatAssetMap = Readonly<Record<string, TranslationIconLabel>> | undefined;
 
 export function getStatBreakdownSummary(
 	statKey: string,
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
+	statAssets?: StatAssetMap,
 ): Summary {
-	if (!isStatKey(statKey)) {
-		return [];
-	}
 	const sources = player.statSources?.[statKey] ?? {};
 	const contributions = Object.values(sources);
 	if (!contributions.length) {
@@ -37,6 +34,7 @@ export function getStatBreakdownSummary(
 		entry,
 		descriptor: getSourceDescriptor(context, entry.meta),
 	}));
+	const assets = statAssets ?? context.assets.stats;
 	annotated.sort((left, right) => {
 		const leftOrder = left.entry.meta.longevity === 'ongoing' ? 0 : 1;
 		const rightOrder = right.entry.meta.longevity === 'ongoing' ? 0 : 1;
@@ -46,7 +44,7 @@ export function getStatBreakdownSummary(
 		return left.descriptor.label.localeCompare(right.descriptor.label);
 	});
 	return annotated.map(({ entry, descriptor }) =>
-		formatContribution(statKey, entry, descriptor, player, context),
+		formatContribution(statKey, entry, descriptor, player, context, assets),
 	);
 }
 
@@ -56,9 +54,10 @@ function formatContribution(
 	descriptor: SourceDescriptor,
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
+	statAssets: StatAssetMap,
 ): SummaryEntry {
 	const { amount, meta } = contribution;
-	const statInfo = STATS[statKey as keyof typeof STATS];
+	const statInfo = statAssets?.[statKey];
 	const valueText = formatStatValue(statKey, amount, context.assets);
 	const sign = amount >= 0 ? '+' : '';
 	const amountParts: string[] = [];
@@ -70,7 +69,9 @@ function formatContribution(
 		amountParts.push(statInfo.label);
 	}
 	const amountEntry = amountParts.join(' ').trim();
-	const detailEntries = buildDetailEntries(meta, player, context);
+	const detailEntries = buildDetailEntries(meta, player, context, {
+		triggerAssets: context.assets.triggers,
+	});
 	const title = formatSourceTitle(descriptor);
 	const prefixedTitle = title ? `Source: ${title}` : 'Source';
 	if (!title) {

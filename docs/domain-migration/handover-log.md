@@ -1,5 +1,17 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P1 - T17 - Stat Summary Metadata Migration
+
+- `packages/web/src/utils/stats.ts` now formats stat contribution amounts with
+  metadata supplied by translation assets instead of the legacy
+  `@kingdom-builder/contents` snapshot. Callers pass the stat asset map so the
+  helper stays decoupled from static registries.
+- `packages/web/src/utils/stats/summary.ts` accepts trigger metadata overrides
+  to avoid looking up assets implicitly, keeping detail rendering compatible
+  with the new stat asset flow.
+- Descriptor resolution and all stat breakdown tests were updated to forward
+  the translation metadata and to cover the new invocation contract.
+
 ## Domain Migration - P1 - T16 - Passive Stat Metadata Decoupling
 
 - Updated `packages/web/src/utils/stats/historyEntries.ts` and

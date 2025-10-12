@@ -247,6 +247,7 @@ describe('stat breakdown summary', () => {
 			primaryStatKey,
 			player,
 			translationContext,
+			translationContext.assets.stats,
 		);
 		expect(summary.length).toBeGreaterThanOrEqual(2);
 		const groups = summary.filter(isSummaryObject);
@@ -320,6 +321,7 @@ describe('stat breakdown summary', () => {
 			primaryStatKey,
 			player,
 			translationContext,
+			translationContext.assets.stats,
 		);
 		const groups = summary.filter(isSummaryObject);
 		const buildEntry = groups.find((entry) =>
@@ -359,11 +361,13 @@ describe('stat breakdown summary', () => {
 			primaryStatKey,
 			player,
 			mutatedContext,
+			mutatedContext.assets.stats,
 		);
 		const second = getStatBreakdownSummary(
 			primaryStatKey,
 			player,
 			mutatedContext,
+			mutatedContext.assets.stats,
 		);
 		expect(first.length).toBeGreaterThan(0);
 		expect(second.length).toBeGreaterThan(0);

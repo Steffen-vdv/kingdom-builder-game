@@ -4,7 +4,10 @@ import type {
 	SessionStatSourceMeta as StatSourceMeta,
 } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
-import type { TranslationContext } from '../../translation/context';
+import type {
+	TranslationContext,
+	TranslationTriggerAsset,
+} from '../../translation/context';
 import { formatDependency } from './dependencyFormatters';
 import { buildHistoryEntries } from './historyEntries';
 import { buildLongevityEntries } from './passiveFormatting';
@@ -17,10 +20,15 @@ function isSummaryGroup(entry: SummaryEntry): entry is SummaryGroup {
 	return typeof entry !== 'string';
 }
 
+type DetailEntryMetadata = {
+	triggerAssets?: Readonly<Record<string, TranslationTriggerAsset>>;
+};
+
 export function buildDetailEntries(
 	meta: StatSourceMeta,
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
+	metadata: DetailEntryMetadata = {},
 ): SummaryEntry[] {
 	const dependencies = (meta.dependsOn ?? [])
 		.map((link) => formatDependency(link, player, context))
@@ -41,8 +49,9 @@ export function buildDetailEntries(
 	).forEach((entry) => {
 		pushSummaryEntry(entries, entry);
 	});
+	const triggerAssets = metadata.triggerAssets ?? context.assets.triggers;
 	buildHistoryEntries(meta, {
-		triggerAssets: context.assets.triggers,
+		triggerAssets,
 	}).forEach((entry) => {
 		pushSummaryEntry(entries, entry);
 	});
