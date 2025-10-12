@@ -21,7 +21,7 @@ type SyntheticContent = {
 		string
 	>;
 	phaseIds: Record<string, string>;
-	stepIds: Record<'gainIncome' | 'payUpkeep', string>;
+	stepIds: Record<'gainIncome' | 'main' | 'payUpkeep', string>;
 };
 
 const syntheticData: SyntheticContent = {
@@ -55,6 +55,7 @@ const syntheticData: SyntheticContent = {
 	},
 	stepIds: {
 		gainIncome: 'step:synthetic:gain-income',
+		main: 'step:synthetic:perform-actions',
 		payUpkeep: 'step:synthetic:pay-upkeep',
 	},
 };

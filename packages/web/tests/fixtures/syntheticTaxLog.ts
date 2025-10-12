@@ -145,7 +145,12 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			id: SYNTHETIC_PHASE_IDS.main,
 			label: 'Synthetic Main',
 			action: true,
-			steps: [],
+			steps: [
+				{
+					id: SYNTHETIC_STEP_IDS.main,
+					title: 'Take Synthetic Actions',
+				},
+			],
 		},
 		{
 			id: SYNTHETIC_PHASE_IDS.upkeep,
