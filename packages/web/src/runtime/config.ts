@@ -1,3 +1,4 @@
+import type { RuleSet } from '@kingdom-builder/protocol';
 import type {
 	RuntimeConfig,
 	EngineBootstrapOptions,
@@ -67,6 +68,42 @@ function mergeRecord(
 	return result;
 }
 
+function mergeRuleSet(base: RuleSet, override: RuleSet | undefined): RuleSet {
+	const result = clone(base);
+	if (!override) {
+		return result;
+	}
+	const overrides = override as Partial<RuleSet>;
+	if (overrides.defaultActionAPCost !== undefined) {
+		result.defaultActionAPCost = overrides.defaultActionAPCost;
+	}
+	if (overrides.absorptionCapPct !== undefined) {
+		result.absorptionCapPct = overrides.absorptionCapPct;
+	}
+	if (overrides.absorptionRounding !== undefined) {
+		result.absorptionRounding = overrides.absorptionRounding;
+	}
+	if (overrides.tieredResourceKey !== undefined) {
+		result.tieredResourceKey = overrides.tieredResourceKey;
+	}
+	if (overrides.tierDefinitions !== undefined) {
+		result.tierDefinitions = clone(overrides.tierDefinitions);
+	}
+	if (overrides.slotsPerNewLand !== undefined) {
+		result.slotsPerNewLand = overrides.slotsPerNewLand;
+	}
+	if (overrides.maxSlotsPerLand !== undefined) {
+		result.maxSlotsPerLand = overrides.maxSlotsPerLand;
+	}
+	if (overrides.basePopulationCap !== undefined) {
+		result.basePopulationCap = overrides.basePopulationCap;
+	}
+	if (overrides.winConditions !== undefined) {
+		result.winConditions = clone(overrides.winConditions);
+	}
+	return result;
+}
+
 function mergeDeveloperPreset(
 	base: DeveloperPresetConfig | undefined,
 	override: DeveloperPresetConfig | undefined,
@@ -115,10 +152,11 @@ function mergeEngineBootstrap(
 	if (!override) {
 		return clone(base);
 	}
+	const mergedRules = mergeRuleSet(base.rules, override.rules);
 	return {
-		phases: override.phases ? [...override.phases] : [...base.phases],
+		phases: override.phases ? clone(override.phases) : clone(base.phases),
 		start: override.start ? clone(override.start) : clone(base.start),
-		rules: override.rules ? { ...override.rules } : { ...base.rules },
+		rules: mergedRules,
 	};
 }
 
