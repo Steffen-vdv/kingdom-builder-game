@@ -1,8 +1,8 @@
 import './styles/index.css';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { PRIMARY_ICON_ID, RESOURCES } from '@kingdom-builder/contents';
 import { resolvePrimaryIcon } from './startup/resolvePrimaryIcon';
+import { getLegacyContentConfig } from './startup/runtimeConfig';
 
 const createFaviconSvg = (emoji: string): string =>
 	[
@@ -23,18 +23,39 @@ const ensureFaviconLink = (): HTMLLinkElement => {
 	return link;
 };
 
-const icon = resolvePrimaryIcon(RESOURCES, PRIMARY_ICON_ID);
-if (icon) {
-	const svg = createFaviconSvg(icon);
-	const link = ensureFaviconLink();
-	link.rel = 'icon';
-	link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-	if (!link.parentElement) {
-		document.head.appendChild(link);
+async function bootstrap() {
+	const rootElement = document.getElementById('root');
+	if (!rootElement) {
+		throw new Error('Root element not found.');
 	}
-} else {
-	console.warn('Unable to resolve favicon icon from content.');
+	try {
+		const config = await getLegacyContentConfig();
+		const iconResolution = resolvePrimaryIcon(
+			config.resources,
+			config.primaryIconId,
+		);
+		if (iconResolution.icon) {
+			const svg = createFaviconSvg(iconResolution.icon);
+			const link = ensureFaviconLink();
+			link.rel = 'icon';
+			link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+			if (!link.parentElement) {
+				document.head.appendChild(link);
+			}
+		} else if (iconResolution.source !== 'none') {
+			console.warn(
+				`Unable to resolve primary icon "${config.primaryIconId ?? ''}"; using fallback source ${iconResolution.resourceKey}.`,
+			);
+		} else {
+			console.warn(
+				'Unable to resolve favicon icon from runtime configuration.',
+			);
+		}
+	} catch (error) {
+		console.warn('Failed to initialize runtime configuration.', error);
+	}
+	const root = createRoot(rootElement);
+	root.render(<App />);
 }
 
-const root = createRoot(document.getElementById('root')!);
-root.render(<App />);
+void bootstrap();

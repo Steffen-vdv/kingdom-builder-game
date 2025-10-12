@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
-import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
+import type {
+	PhaseConfig,
+	RuleSet,
+	StartConfig,
+} from '@kingdom-builder/protocol';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -8,6 +12,45 @@ import {
 } from '../src/translation/log';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
+
+const phases: PhaseConfig[] = [
+	{
+		id: 'phase-main',
+		steps: [{ id: 'phase-main:start' }],
+		action: true,
+	},
+];
+
+const startConfig: StartConfig = {
+	player: {
+		resources: {},
+		stats: {},
+		population: {},
+		lands: [],
+		buildings: [],
+	},
+	players: {
+		B: {
+			resources: {},
+			stats: {},
+			population: {},
+			lands: [],
+			buildings: [],
+		},
+	},
+};
+
+const rules: RuleSet = {
+	defaultActionAPCost: 1,
+	absorptionCapPct: 1,
+	absorptionRounding: 'nearest',
+	tieredResourceKey: 'gold',
+	tierDefinitions: [],
+	slotsPerNewLand: 1,
+	maxSlotsPerLand: 1,
+	basePopulationCap: 1,
+	winConditions: [],
+};
 
 describe('log resource source icon registry', () => {
 	const scenarios = [
@@ -81,9 +124,9 @@ describe('log resource source icon registry', () => {
 				buildings: registries.buildings,
 				developments: registries.developments,
 				populations: registries.populations,
-				phases: PHASES,
-				start: GAME_START,
-				rules: RULES,
+				phases,
+				start: startConfig,
+				rules,
 			});
 			engineContext.assets = createDefaultTranslationAssets();
 			const { meta, expected } = getMeta(engineContext);

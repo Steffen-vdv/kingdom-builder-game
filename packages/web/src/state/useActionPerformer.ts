@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import { ActionId } from '@kingdom-builder/contents';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
@@ -37,6 +36,7 @@ import type {
 	SessionResourceKey,
 } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
+import { LOG_KEYWORDS } from '../translation/log/logMessages';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
@@ -202,8 +202,11 @@ export function useActionPerformer({
 					messages,
 					subLines,
 				});
+				const useDevelopFormatter = filtered.some((line) =>
+					line.startsWith(LOG_KEYWORDS.developed),
+				);
 				const logLines = (
-					action.id === ActionId.develop
+					useDevelopFormatter
 						? formatDevelopActionLogLines
 						: formatActionLogLines
 				)(messages, filtered);

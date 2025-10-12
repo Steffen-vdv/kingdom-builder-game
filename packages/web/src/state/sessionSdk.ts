@@ -1,11 +1,4 @@
 import {
-	BuildingId,
-	GAME_START,
-	PHASES,
-	RULES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
-import {
 	createEngineSession,
 	type ActionParams,
 	type EngineSession,
@@ -24,7 +17,10 @@ import type {
 	SessionCreateRequest,
 } from '@kingdom-builder/protocol/session';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
-import { initializeDeveloperMode } from './developerModeSetup';
+import {
+	initializeDeveloperMode,
+	type DeveloperModeOptions,
+} from './developerModeSetup';
 import {
 	deserializeSessionRegistries,
 	extractResourceKeys,
@@ -35,6 +31,7 @@ import {
 	type GameApi,
 	type GameApiRequestOptions,
 } from '../services/gameApi';
+import { getLegacyContentConfig } from '../startup/runtimeConfig';
 
 export interface SessionHandle {
 	enqueue: EngineSession['enqueue'];
@@ -90,6 +87,21 @@ const sessions = new Map<string, SessionRecord>();
 
 let gameApi: GameApi | null = null;
 
+type ResourceKey = string;
+
+let legacyContentPromise: Promise<
+	Awaited<ReturnType<typeof getLegacyContentConfig>>
+> | null = null;
+
+async function ensureLegacyContentConfig(): Promise<
+	Awaited<ReturnType<typeof getLegacyContentConfig>>
+> {
+	if (!legacyContentPromise) {
+		legacyContentPromise = getLegacyContentConfig();
+	}
+	return legacyContentPromise;
+}
+
 function ensureGameApi(): GameApi {
 	if (!gameApi) {
 		gameApi = createGameApi();
@@ -123,17 +135,17 @@ function applyDeveloperPreset(
 	session: EngineSession,
 	snapshot: SessionSnapshot,
 	devMode: boolean,
+	options: DeveloperModeOptions,
 ): void {
 	if (!devMode) {
 		return;
 	}
 	const primaryPlayer = snapshot.game.players[0];
 	const primaryPlayerId = primaryPlayer?.id;
-	const hasMill = primaryPlayer?.buildings.includes(BuildingId.Mill) ?? false;
-	if (!primaryPlayerId || snapshot.game.turn !== 1 || hasMill) {
+	if (!primaryPlayerId || snapshot.game.turn !== 1) {
 		return;
 	}
-	initializeDeveloperMode(session, primaryPlayerId);
+	initializeDeveloperMode(session, primaryPlayerId, options);
 }
 
 function applyPlayerName(
@@ -169,20 +181,30 @@ export async function createSession(
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const contentConfig = await ensureLegacyContentConfig();
+	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	const legacySession = createEngineSession({
 		actions: registries.actions,
 		buildings: registries.buildings,
 		developments: registries.developments,
 		populations: registries.populations,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
+		phases: contentConfig.phases,
+		start: contentConfig.start,
+		rules: contentConfig.rules,
 		devMode,
 	});
 	legacySession.setDevMode(devMode);
 	const initialSnapshot = legacySession.getSnapshot();
-	applyDeveloperPreset(legacySession, initialSnapshot, devMode);
+	const developerOptions: DeveloperModeOptions = { registries };
+	if (contentConfig.developerPreset) {
+		developerOptions.preset = contentConfig.developerPreset;
+	}
+	applyDeveloperPreset(
+		legacySession,
+		initialSnapshot,
+		devMode,
+		developerOptions,
+	);
 	applyPlayerName(legacySession, initialSnapshot, playerName);
 	const sessionId = response.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
 	const handle = createSessionHandle(legacySession);
@@ -213,7 +235,7 @@ export async function fetchSnapshot(
 	const record = ensureSessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	record.registries = registries;
 	record.resourceKeys = resourceKeys;
 	return {
@@ -288,7 +310,7 @@ export async function advanceSessionPhase(
 	} = record;
 	const response = await api.advancePhase(request, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
+	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	Object.assign(cachedRegistries, registries);
 	cachedResourceKeys.splice(0, cachedResourceKeys.length, ...resourceKeys);
 	try {

@@ -9,7 +9,7 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { ResourceKey } from '@kingdom-builder/contents';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import {
 	createResourceKeys,
 	createSessionRegistries,
@@ -158,7 +158,7 @@ function SessionInspector() {
 describe('GameProvider', () => {
 	let session: LegacySession;
 	let registries: ReturnType<typeof createSessionRegistries>;
-	let resourceKeys: ResourceKey[];
+	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	beforeEach(() => {
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
