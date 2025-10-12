@@ -39,7 +39,8 @@
 		"lint:deps": "dependency-cruiser packages/engine packages/contents packages/web packages/server --config scripts/dependency-cruiser.cjs --output-type err",
 		"verify": "node scripts/run-verification.mjs",
 		"server:dev": "npm run dev --workspace @kingdom-builder/server",
-		"server:build": "npm run build --workspace @kingdom-builder/server"
+		"server:build": "npm run build --workspace @kingdom-builder/server",
+		"refresh:legacy-runtime-config": "node scripts/refresh-legacy-runtime-config.mjs"
 	},
 	"dependencies": {
 		"react": "^18.3.1",

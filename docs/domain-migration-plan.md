@@ -143,6 +143,21 @@ domains are prohibited.
 Future contributors must record every migration step in this section whenever
 they adjust domain boundaries or cross-domain touchpoints.
 
+### Legacy Runtime Config Snapshot Refresh
+
+The web client now ships a static snapshot of the legacy content configuration
+(`packages/web/src/startup/legacyContentFallback.json`). Regenerate that file
+whenever the contents package changes by running:
+
+```
+node scripts/refresh-legacy-runtime-config.mjs
+```
+
+The script builds the protocol and content workspaces, normalizes their ESM
+output so Node can import the generated bundles, and rewrites the fallback JSON
+using the latest registries. Commit the refreshed snapshot alongside any
+content updates that require it.
+
 Each entry must include:
 
 - **Date & Author**
