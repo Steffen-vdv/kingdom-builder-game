@@ -1,8 +1,10 @@
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import {
+	DEFAULT_LAND_DESCRIPTOR,
+	DEFAULT_PASSIVE_DESCRIPTOR,
+	DEFAULT_SLOT_DESCRIPTOR,
 	buildPhaseMetadata,
-	buildModifierDisplayMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
 	buildStatMetadata,
@@ -30,7 +32,6 @@ export interface TestRegistryMetadataSelectors {
 	statMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	phaseMetadata: MetadataSelector<PhaseMetadata>;
 	triggerMetadata: MetadataSelector<TriggerMetadata>;
-	modifierDisplayMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
@@ -66,15 +67,21 @@ export function createTestRegistryMetadata(
 	const triggerMetadataLookup = buildTriggerMetadata(
 		extractTriggerRecord(metadata),
 	);
-	const modifierDisplayLookup = buildModifierDisplayMetadata(
-		extractDescriptorRecord(metadata, 'modifierDisplays'),
-	);
 	const assetDescriptors = extractDescriptorRecord(metadata, 'assets');
-	const landDescriptor = resolveAssetDescriptor('land', assetDescriptors?.land);
-	const slotDescriptor = resolveAssetDescriptor('slot', assetDescriptors?.slot);
+	const landDescriptor = resolveAssetDescriptor(
+		'land',
+		assetDescriptors?.land,
+		DEFAULT_LAND_DESCRIPTOR,
+	);
+	const slotDescriptor = resolveAssetDescriptor(
+		'slot',
+		assetDescriptors?.slot,
+		DEFAULT_SLOT_DESCRIPTOR,
+	);
 	const passiveDescriptor = resolveAssetDescriptor(
 		'passive',
 		assetDescriptors?.passive,
+		DEFAULT_PASSIVE_DESCRIPTOR,
 	);
 	return {
 		resourceMetadata: createMetadataSelector(resourceMetadataLookup),
@@ -84,7 +91,6 @@ export function createTestRegistryMetadata(
 		statMetadata: createMetadataSelector(statMetadataLookup),
 		phaseMetadata: createMetadataSelector(phaseMetadataLookup),
 		triggerMetadata: createMetadataSelector(triggerMetadataLookup),
-		modifierDisplayMetadata: createMetadataSelector(modifierDisplayLookup),
 		landMetadata: createAssetMetadataSelector(landDescriptor),
 		slotMetadata: createAssetMetadataSelector(slotDescriptor),
 		passiveMetadata: createAssetMetadataSelector(passiveDescriptor),
