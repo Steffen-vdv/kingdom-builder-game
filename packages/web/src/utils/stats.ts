@@ -1,9 +1,7 @@
-import { STATS } from '@kingdom-builder/contents';
 import type {
-	PlayerStateSnapshot,
-	StatKey,
-	StatSourceContribution,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot,
+	SessionStatSourceContribution,
+} from '@kingdom-builder/protocol';
 import type { Summary, SummaryEntry } from '../translation/content/types';
 import type { TranslationContext } from '../translation/context';
 import {
@@ -13,21 +11,22 @@ import {
 } from './stats/descriptors';
 import type { SourceDescriptor } from './stats/descriptors';
 import { buildDetailEntries, pushSummaryEntry } from './stats/summary';
+import type { RegistryMetadataDescriptor } from '../contexts/registryMetadataDescriptors';
+import type { MetadataSelector } from '../contexts/registryMetadataSelectors';
 
 export { statDisplaysAsPercent, formatStatValue } from './stats/descriptors';
 
-function isStatKey(key: string): key is StatKey {
-	return key in STATS;
-}
+type StatMetadataSelector = Pick<
+	MetadataSelector<RegistryMetadataDescriptor>,
+	'select'
+>;
 
 export function getStatBreakdownSummary(
 	statKey: string,
-	player: PlayerStateSnapshot,
+	player: SessionPlayerStateSnapshot,
 	context: TranslationContext,
+	statMetadata: StatMetadataSelector,
 ): Summary {
-	if (!isStatKey(statKey)) {
-		return [];
-	}
 	const sources = player.statSources?.[statKey] ?? {};
 	const contributions = Object.values(sources);
 	if (!contributions.length) {
@@ -46,28 +45,39 @@ export function getStatBreakdownSummary(
 		return left.descriptor.label.localeCompare(right.descriptor.label);
 	});
 	return annotated.map(({ entry, descriptor }) =>
-		formatContribution(statKey, entry, descriptor, player, context),
+		formatContribution(
+			statKey,
+			entry,
+			descriptor,
+			player,
+			context,
+			statMetadata,
+		),
 	);
 }
 
 function formatContribution(
 	statKey: string,
-	contribution: StatSourceContribution,
+	contribution: SessionStatSourceContribution,
 	descriptor: SourceDescriptor,
-	player: PlayerStateSnapshot,
+	player: SessionPlayerStateSnapshot,
 	context: TranslationContext,
+	statMetadata: StatMetadataSelector,
 ): SummaryEntry {
 	const { amount, meta } = contribution;
-	const statInfo = STATS[statKey as keyof typeof STATS];
+	const statInfo = context.assets.stats?.[statKey];
+	const statDescriptor = statMetadata.select(statKey);
 	const valueText = formatStatValue(statKey, amount, context.assets);
 	const sign = amount >= 0 ? '+' : '';
 	const amountParts: string[] = [];
-	if (statInfo?.icon) {
-		amountParts.push(statInfo.icon);
+	const icon = statInfo?.icon ?? statDescriptor.icon;
+	if (icon) {
+		amountParts.push(icon);
 	}
 	amountParts.push(`${sign}${valueText}`);
-	if (statInfo?.label) {
-		amountParts.push(statInfo.label);
+	const label = statInfo?.label ?? statDescriptor.label;
+	if (label) {
+		amountParts.push(label);
 	}
 	const amountEntry = amountParts.join(' ').trim();
 	const detailEntries = buildDetailEntries(meta, player, context);

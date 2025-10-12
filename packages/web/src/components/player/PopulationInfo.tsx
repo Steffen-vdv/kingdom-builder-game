@@ -173,6 +173,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				statKey,
 				player,
 				translationContext,
+				statMetadata,
 			);
 			handleHoverCard({
 				title: formatIconLabel(descriptor),

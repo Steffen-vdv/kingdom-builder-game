@@ -1,5 +1,16 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P1 - T17 - Stat Breakdown Metadata Decoupling
+
+- Refactored `packages/web/src/utils/stats.ts` to source stat icons and labels
+  from translation assets and registry metadata selectors, replacing the
+  remaining `@kingdom-builder/contents` and engine type dependencies. The
+  breakdown helper now requires stat metadata to be passed explicitly.
+- Updated `packages/web/src/utils/stats/summary.ts`,
+  `packages/web/src/components/player/PopulationInfo.tsx`, and the stat
+  breakdown unit tests to forward the new metadata parameter so contribution
+  formatting continues to resolve labels and icons dynamically.
+
 ## Domain Migration - P1 - T16 - Passive Stat Metadata Decoupling
 
 - Updated `packages/web/src/utils/stats/historyEntries.ts` and

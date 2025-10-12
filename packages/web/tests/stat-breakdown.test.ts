@@ -247,6 +247,7 @@ describe('stat breakdown summary', () => {
 			primaryStatKey,
 			player,
 			translationContext,
+			metadataSelectors.statMetadata,
 		);
 		expect(summary.length).toBeGreaterThanOrEqual(2);
 		const groups = summary.filter(isSummaryObject);
@@ -304,7 +305,13 @@ describe('stat breakdown summary', () => {
 
 	it('omits removal suffix from build sources', () => {
 		const setup = createStatBreakdownSetup();
-		const { translationContext, player, primaryStatKey, actionId } = setup;
+		const {
+			translationContext,
+			player,
+			primaryStatKey,
+			actionId,
+			metadataSelectors,
+		} = setup;
 		player.statSources[primaryStatKey] = {
 			build: {
 				amount: 2,
@@ -320,6 +327,7 @@ describe('stat breakdown summary', () => {
 			primaryStatKey,
 			player,
 			translationContext,
+			metadataSelectors.statMetadata,
 		);
 		const groups = summary.filter(isSummaryObject);
 		const buildEntry = groups.find((entry) =>
@@ -336,7 +344,8 @@ describe('stat breakdown summary', () => {
 
 	it('falls back gracefully when stat metadata is missing', () => {
 		const setup = createStatBreakdownSetup();
-		const { translationContext, player, primaryStatKey } = setup;
+		const { translationContext, player, primaryStatKey, metadataSelectors } =
+			setup;
 		player.statSources[primaryStatKey] = {
 			bonus: {
 				amount: 2,
@@ -359,11 +368,13 @@ describe('stat breakdown summary', () => {
 			primaryStatKey,
 			player,
 			mutatedContext,
+			metadataSelectors.statMetadata,
 		);
 		const second = getStatBreakdownSummary(
 			primaryStatKey,
 			player,
 			mutatedContext,
+			metadataSelectors.statMetadata,
 		);
 		expect(first.length).toBeGreaterThan(0);
 		expect(second.length).toBeGreaterThan(0);

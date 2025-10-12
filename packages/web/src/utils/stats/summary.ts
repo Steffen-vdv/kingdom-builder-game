@@ -1,7 +1,7 @@
 import type {
-	SessionPlayerStateSnapshot as PlayerStateSnapshot,
-	SessionStatSourceLink as StatSourceLink,
-	SessionStatSourceMeta as StatSourceMeta,
+	SessionPlayerStateSnapshot,
+	SessionStatSourceLink,
+	SessionStatSourceMeta,
 } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';
@@ -18,14 +18,14 @@ function isSummaryGroup(entry: SummaryEntry): entry is SummaryGroup {
 }
 
 export function buildDetailEntries(
-	meta: StatSourceMeta,
-	player: PlayerStateSnapshot,
+	meta: SessionStatSourceMeta,
+	player: SessionPlayerStateSnapshot,
 	context: TranslationContext,
 ): SummaryEntry[] {
 	const dependencies = (meta.dependsOn ?? [])
 		.map((link) => formatDependency(link, player, context))
 		.filter((text) => text.length > 0);
-	const removalLink: StatSourceLink | undefined = meta.removal;
+	const removalLink: SessionStatSourceLink | undefined = meta.removal;
 	const removal = removalLink
 		? formatDependency(removalLink, player, context, {
 				includeCounts: false,

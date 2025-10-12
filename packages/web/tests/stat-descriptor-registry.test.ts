@@ -264,6 +264,7 @@ describe('stat descriptor registry', () => {
 			primaryStatKey,
 			player,
 			translationContext,
+			metadataSelectors.statMetadata,
 		);
 		const triggered = breakdown
 			.flatMap((entry) => collectSummaryLines(entry))
