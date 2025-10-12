@@ -92,6 +92,33 @@ describe('FastifySessionTransport', () => {
 		await app.close();
 	});
 
+	it('toggles developer mode through the API', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId, snapshot: createdSnapshot } = createResponse.json() as {
+			sessionId: string;
+			snapshot: { game: { devMode: boolean } };
+		};
+		expect(createdSnapshot.game.devMode).toBe(false);
+		const devModeResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/dev-mode`,
+			headers: authorizedHeaders,
+			payload: { enabled: true },
+		});
+		expect(devModeResponse.statusCode).toBe(200);
+		const devModeBody = devModeResponse.json() as {
+			snapshot: { game: { devMode: boolean } };
+		};
+		expect(devModeBody.snapshot.game.devMode).toBe(true);
+		await app.close();
+	});
+
 	it('executes actions and returns success payloads', async () => {
 		const { app, actionId, gainKey } = await createServer();
 		const createResponse = await app.inject({
