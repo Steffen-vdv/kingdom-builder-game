@@ -241,3 +241,48 @@ export async function handleMissingActionDefinition({
 		await endTurn();
 	}
 }
+
+interface PresentResolutionOptions {
+	action: ReturnType<typeof buildResolutionActionMeta>;
+	logLines: string[];
+	summaries: string[];
+	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
+	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+	addLog: (
+		entry: string | string[],
+		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
+	) => void;
+}
+
+export async function presentResolutionOrLog({
+	action,
+	logLines,
+	summaries,
+	player,
+	showResolution,
+	addLog,
+}: PresentResolutionOptions) {
+	const source = {
+		kind: 'action' as const,
+		label: 'Action',
+		id: action.id,
+		name: action.name,
+		icon: action.icon ?? '',
+	} satisfies ShowResolutionOptions['source'];
+	const playerIdentity = {
+		id: player.id,
+		name: player.name,
+	} satisfies ShowResolutionOptions['player'];
+	try {
+		await showResolution({
+			action,
+			lines: logLines,
+			player: playerIdentity,
+			summaries,
+			source,
+			actorLabel: 'Played by',
+		});
+	} catch (_error) {
+		addLog(logLines, playerIdentity);
+	}
+}

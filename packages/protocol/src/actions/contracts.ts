@@ -55,6 +55,7 @@ export interface ActionExecuteErrorResponse {
 	error: string;
 	requirementFailure?: SessionRequirementFailure;
 	requirementFailures?: SessionActionRequirementList;
+	fatal?: boolean;
 }
 
 export type ActionExecuteResponse =

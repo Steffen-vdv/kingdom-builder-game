@@ -161,7 +161,9 @@ let nextSessionId = 1;
 function ensureSessionRecord(sessionId: string): SessionRecord {
 	const record = sessions.get(sessionId);
 	if (!record) {
-		throw new Error(`Session not found: ${sessionId}`);
+		const error = new Error(`Session not found: ${sessionId}`);
+		markFatalSessionError(error);
+		throw error;
 	}
 	return record;
 }
@@ -311,7 +313,7 @@ export async function performSessionAction(
 				const params = request.params as ActionParams<string> | undefined;
 				handle.performAction(request.actionId, params);
 			} catch (localError) {
-				throw new SessionMirroringError(
+				const error = new SessionMirroringError(
 					'Local session failed to mirror remote action.',
 					{
 						cause: localError,
@@ -321,11 +323,14 @@ export async function performSessionAction(
 						},
 					},
 				);
+				markFatalSessionError(error);
+				throw error;
 			}
 		}
 		return response;
 	} catch (error) {
 		if (error instanceof SessionMirroringError) {
+			markFatalSessionError(error);
 			throw error;
 		}
 		const failure = error as ActionExecutionFailure;
@@ -338,6 +343,9 @@ export async function performSessionAction(
 		}
 		if (failure?.requirementFailures) {
 			response.requirementFailures = failure.requirementFailures;
+		}
+		if (!response.requirementFailure && !response.requirementFailures) {
+			response.fatal = true;
 		}
 		return response;
 	}
@@ -368,7 +376,7 @@ export async function advanceSessionPhase(
 	try {
 		handle.advancePhase();
 	} catch (localError) {
-		throw new SessionMirroringError(
+		const error = new SessionMirroringError(
 			'Local session failed to mirror remote phase advance.',
 			{
 				cause: localError,
@@ -377,6 +385,8 @@ export async function advanceSessionPhase(
 				},
 			},
 		);
+		markFatalSessionError(error);
+		throw error;
 	}
 	return response;
 }

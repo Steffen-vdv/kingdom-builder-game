@@ -105,6 +105,7 @@ export const actionExecuteErrorResponseSchema = z.object({
 	error: z.string(),
 	requirementFailure: actionRequirementFailureSchema.optional(),
 	requirementFailures: z.array(actionRequirementFailureSchema).optional(),
+	fatal: z.boolean().optional(),
 });
 
 export const actionExecuteResponseSchema = z.union([
