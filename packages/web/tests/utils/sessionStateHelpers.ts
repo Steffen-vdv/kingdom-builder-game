@@ -3,14 +3,14 @@ import type {
 	PassiveRecordSnapshot,
 	PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
-import type { ResourceKey } from '@kingdom-builder/contents';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 interface SessionStateHandle {
 	sessionState: EngineSessionSnapshot;
 }
 
 interface SessionStateOptions {
-	primaryResource: ResourceKey;
+	primaryResource: SessionResourceKey;
 	defaultPhases: EngineSessionSnapshot['phases'];
 }
 

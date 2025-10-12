@@ -6,11 +6,13 @@ import type {
 	SessionPlayerId,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
-import { type ResourceKey } from '@kingdom-builder/contents';
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
-import type { LegacySession } from '../../src/state/sessionTypes';
+import type {
+	LegacySession,
+	SessionResourceKey,
+} from '../../src/state/sessionTypes';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
 
 vi.mock('../../src/translation', async () => {
@@ -25,10 +27,21 @@ vi.mock('../../src/translation', async () => {
 
 const diffStepSnapshotsMock = vi.mocked(TranslationModule.diffStepSnapshots);
 
-const RESOURCE_KEYS: ResourceKey[] = ['gold' as ResourceKey];
-const REGISTRIES = createSessionRegistries();
+function createRegistriesWithFallback() {
+	const registries = createSessionRegistries();
+	const [primaryResource] = Object.keys(
+		registries.resources,
+	) as SessionResourceKey[];
+	if (primaryResource) {
+		registries.resources[primaryResource] = { key: primaryResource };
+	}
+	const resourceKeys: SessionResourceKey[] = primaryResource
+		? [primaryResource]
+		: [];
+	return { registries, resourceKeys, primaryResource } as const;
+}
 
-function createSession(): LegacySession {
+function createSession(primaryResource: SessionResourceKey): LegacySession {
 	return {
 		hasAiController: () => false,
 		getActionDefinition: () => undefined,
@@ -37,7 +50,7 @@ function createSession(): LegacySession {
 		pullEffectLog: vi.fn(),
 		getPassiveEvaluationMods: vi.fn(() => new Map()),
 		getRuleSnapshot: vi.fn(() => ({
-			tieredResourceKey: RESOURCE_KEYS[0]!,
+			tieredResourceKey: primaryResource,
 			tierDefinitions: [],
 			winConditions: [],
 		})),
@@ -50,11 +63,12 @@ function createSession(): LegacySession {
 function createPlayer(
 	id: SessionPlayerId,
 	name: string,
+	resourceKey: SessionResourceKey,
 ): SessionSnapshot['game']['players'][number] {
 	return {
 		id,
 		name,
-		resources: { gold: 3 },
+		resources: { [resourceKey]: 3 },
 		stats: {},
 		statsHistory: {},
 		population: {},
@@ -68,9 +82,12 @@ function createPlayer(
 	};
 }
 
-function createSessionState(turn: number): SessionSnapshot {
-	const playerA = createPlayer('A', 'Player A');
-	const playerB = createPlayer('B', 'Player B');
+function createSessionState(
+	turn: number,
+	resourceKey: SessionResourceKey,
+): SessionSnapshot {
+	const playerA = createPlayer('A', 'Player A', resourceKey);
+	const playerB = createPlayer('B', 'Player B', resourceKey);
 	return {
 		game: {
 			turn,
@@ -85,16 +102,16 @@ function createSessionState(turn: number): SessionSnapshot {
 			opponentId: 'B',
 		},
 		phases: [],
-		actionCostResource: RESOURCE_KEYS[0]!,
+		actionCostResource: resourceKey,
 		recentResourceGains: [],
 		compensations: {
 			A: {},
 			B: {
-				resources: { gold: 1 },
+				resources: { [resourceKey]: 1 },
 			},
 		} as Record<SessionPlayerId, PlayerStartConfig>,
 		rules: {
-			tieredResourceKey: RESOURCE_KEYS[0]!,
+			tieredResourceKey: resourceKey,
 			tierDefinitions: [],
 			winConditions: [],
 		},
@@ -110,15 +127,23 @@ interface HarnessProps {
 	session: LegacySession;
 	state: SessionSnapshot;
 	addLog: (entry: string | string[]) => void;
+	registries: ReturnType<typeof createSessionRegistries>;
+	resourceKeys: SessionResourceKey[];
 }
 
-function Harness({ session, state, addLog }: HarnessProps) {
+function Harness({
+	session,
+	state,
+	addLog,
+	registries,
+	resourceKeys,
+}: HarnessProps) {
 	useCompensationLogger({
 		session,
 		sessionState: state,
 		addLog,
-		resourceKeys: RESOURCE_KEYS,
-		registries: REGISTRIES,
+		resourceKeys,
+		registries,
 	});
 	return null;
 }
@@ -127,17 +152,39 @@ describe('useCompensationLogger', () => {
 	it('logs compensation once for a session', () => {
 		diffStepSnapshotsMock.mockClear();
 		const addLog = vi.fn();
-		const session = createSession();
-		const state = createSessionState(1);
+		const { registries, resourceKeys, primaryResource } =
+			createRegistriesWithFallback();
+		const resourceKey =
+			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
+		const session = createSession(resourceKey);
+		const state = createSessionState(1, resourceKey);
 		const { rerender } = render(
-			<Harness session={session} state={state} addLog={addLog} />,
+			<Harness
+				session={session}
+				state={state}
+				addLog={addLog}
+				registries={registries}
+				resourceKeys={resourceKeys}
+			/>,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 		const diffContext = diffStepSnapshotsMock.mock.calls[0]?.[3];
 		expect(diffContext?.activePlayer.id).toBe('B');
-		const nextState = createSessionState(1);
-		rerender(<Harness session={session} state={nextState} addLog={addLog} />);
+		if (primaryResource) {
+			const resourceDescriptor = diffContext?.assets.resources[primaryResource];
+			expect(resourceDescriptor?.label).toBe(primaryResource);
+		}
+		const nextState = createSessionState(1, resourceKey);
+		rerender(
+			<Harness
+				session={session}
+				state={nextState}
+				addLog={addLog}
+				registries={registries}
+				resourceKeys={resourceKeys}
+			/>,
+		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 	});
@@ -145,16 +192,33 @@ describe('useCompensationLogger', () => {
 	it('logs again when a new session starts', () => {
 		diffStepSnapshotsMock.mockClear();
 		const addLog = vi.fn();
-		const session = createSession();
-		const state = createSessionState(1);
+		const { registries, resourceKeys } = createRegistriesWithFallback();
+		const resourceKey =
+			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
+		const session = createSession(resourceKey);
+		const state = createSessionState(1, resourceKey);
 		const { rerender } = render(
-			<Harness session={session} state={state} addLog={addLog} />,
+			<Harness
+				session={session}
+				state={state}
+				addLog={addLog}
+				registries={registries}
+				resourceKeys={resourceKeys}
+			/>,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
-		const newSession = createSession();
-		const newState = createSessionState(1);
-		rerender(<Harness session={newSession} state={newState} addLog={addLog} />);
+		const newSession = createSession(resourceKey);
+		const newState = createSessionState(1, resourceKey);
+		rerender(
+			<Harness
+				session={newSession}
+				state={newState}
+				addLog={addLog}
+				registries={registries}
+				resourceKeys={resourceKeys}
+			/>,
+		);
 		expect(addLog).toHaveBeenCalledTimes(2);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(2);
 		const firstContext = diffStepSnapshotsMock.mock.calls[0]?.[3];

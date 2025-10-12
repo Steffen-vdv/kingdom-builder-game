@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { RESOURCES } from '@kingdom-builder/contents';
 import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
@@ -10,10 +9,12 @@ import {
 	selectSessionPlayers,
 	selectSessionView,
 } from '../../src/state/sessionSelectors';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
 
 describe('sessionSelectors', () => {
 	const factory = createContentFactory();
-	const [primaryResource] = Object.keys(RESOURCES);
+	const sessionRegistries = createSessionRegistries();
+	const [primaryResource] = Object.keys(sessionRegistries.resources);
 	const actionA = factory.action({ name: 'Action A' });
 	const actionB = factory.action({ name: 'Action B' });
 	const systemLocked = factory.action({ name: 'System Locked', system: true });
@@ -143,6 +144,32 @@ describe('sessionSelectors', () => {
 		buildings: factory.buildings,
 		developments: factory.developments,
 	};
+
+	it('falls back to registry ids when definitions omit optional metadata', () => {
+		const fallbackAction = factory.action({ name: 'Fallback Action' });
+		const actionDefinition = factory.actions.get(fallbackAction.id);
+		if (actionDefinition && 'id' in actionDefinition) {
+			delete (actionDefinition as { id?: string }).id;
+		}
+		const sessionWithFallback = structuredClone(sessionState);
+		sessionWithFallback.game = {
+			...sessionWithFallback.game,
+			players: sessionWithFallback.game.players.map((player) => {
+				if (player.id !== 'A') {
+					return player;
+				}
+				return {
+					...player,
+					actions: [...player.actions, fallbackAction.id],
+				};
+			}),
+		};
+		const options = selectSessionOptions(sessionWithFallback, registries);
+		expect(options.actions.get(fallbackAction.id)?.id).toBe(fallbackAction.id);
+		expect(options.actions.get(fallbackAction.id)?.name).toBe(
+			fallbackAction.name,
+		);
+	});
 
 	it('builds player view models with computed properties', () => {
 		const selection = selectSessionPlayers(sessionState);
