@@ -254,7 +254,7 @@ export const buildRegistryMetadata = <
 			createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
 	);
 
-export const buildStatMetadata = (
+const createDescriptorLookup = (
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
 ): MetadataLookup<RegistryMetadataDescriptor> =>
 	createLookup(
@@ -267,6 +267,16 @@ export const buildStatMetadata = (
 		(id: string) =>
 			createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
 	);
+
+export const buildStatMetadata = (
+	metadata: Record<string, SessionMetadataDescriptor> | undefined,
+): MetadataLookup<RegistryMetadataDescriptor> =>
+	createDescriptorLookup(metadata);
+
+export const buildModifierDisplayMetadata = (
+	metadata: Record<string, SessionMetadataDescriptor> | undefined,
+): MetadataLookup<RegistryMetadataDescriptor> =>
+	createDescriptorLookup(metadata);
 
 export const buildPhaseMetadata = (
 	metadata: Record<string, SessionPhaseMetadata> | undefined,
@@ -294,38 +304,19 @@ export const buildTriggerMetadata = (
 		(id) => createTriggerDescriptor(id, undefined),
 	);
 
-export const DEFAULT_LAND_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'land',
-	label: 'Land',
-	icon: '🗺️',
-});
-
-export const DEFAULT_SLOT_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'slot',
-	label: 'Development Slot',
-	icon: '🧩',
-});
-
-export const DEFAULT_PASSIVE_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'passive',
-	label: 'Passive',
-	icon: '♾️',
-});
-
 export const resolveAssetDescriptor = (
 	id: string,
 	descriptor: SessionMetadataDescriptor | undefined,
-	fallback: AssetMetadata,
 ): AssetMetadata => {
 	const entry: AssetMetadata = {
 		id,
-		label: descriptor?.label ?? fallback.label ?? formatLabel(id),
+		label: descriptor?.label ?? formatLabel(id),
 	};
-	const icon = descriptor?.icon ?? fallback.icon;
+	const icon = descriptor?.icon;
 	if (icon !== undefined) {
 		entry.icon = icon;
 	}
-	const description = descriptor?.description ?? fallback.description;
+	const description = descriptor?.description;
 	if (description !== undefined) {
 		entry.description = description;
 	}
