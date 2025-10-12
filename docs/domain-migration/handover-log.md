@@ -1,5 +1,15 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P1 - T16 - Passive Stat Metadata Decoupling
+
+- Updated `packages/web/src/utils/stats/historyEntries.ts` and
+  `packages/web/src/utils/stats/passiveFormatting.ts` to consume stat source
+  metadata from the protocol contracts and to format trigger/passive labels via
+  translation context assets instead of Engine or content constants.
+- Adjusted `packages/web/src/utils/stats/summary.ts` and
+  `packages/web/tests/stat-breakdown.test.ts` to forward the protocol metadata
+  and trigger assets required by the revised helpers.
+
 ## Domain Migration - P1 - T15 - Stat Source Protocol Alignment
 
 - `dependencyFormatters` and stat descriptor helpers now import
