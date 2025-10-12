@@ -1,66 +1,83 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { formatStatValue } from '../src/utils/stats';
-import { createEngine } from '@kingdom-builder/engine';
-import type { EffectDef } from '@kingdom-builder/engine';
-import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
+import type { EffectDef, PlayerId } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
+	createTranslationContext,
+	selectStatDisplay,
+} from '../src/translation/context';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
-
-function createCtx() {
-	const engine = createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
+function createContext() {
+	const scaffold = createTestSessionScaffold();
+	const activePlayer = createSnapshotPlayer({
+		id: 'player:active' as PlayerId,
 	});
-	return createTranslationContextForEngine(engine);
+	const opponent = createSnapshotPlayer({
+		id: 'player:opponent' as PlayerId,
+	});
+	const session = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases: scaffold.phases,
+		actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
+		ruleSnapshot: scaffold.ruleSnapshot,
+		metadata: scaffold.metadata,
+	});
+	return {
+		context: createTranslationContext(
+			session,
+			scaffold.registries,
+			session.metadata,
+			{
+				ruleSnapshot: session.rules,
+				passiveRecords: session.passiveRecords,
+			},
+		),
+		registries: scaffold.registries,
+	};
 }
 
 describe('modifier percent formatting', () => {
 	it('describes rounded percent bonuses and penalties', () => {
-		const bonusCtx = createCtx();
+		const { context: bonusCtx, registries } = createContext();
+		const [firstDevelopmentId] = registries.developments.keys();
+		const developmentId = firstDevelopmentId ?? 'farm';
 		const bonus: EffectDef = {
 			type: 'result_mod',
 			method: 'add',
 			params: {
 				id: 'synthetic:income',
-				evaluation: { type: 'development' },
+				evaluation: { type: 'development', id: developmentId },
 				percent: 0.2,
 			},
 			round: 'up',
 		};
 		const bonusSummary = summarizeEffects([bonus], bonusCtx);
-		expect(bonusSummary).toEqual([expect.stringContaining('Income')]);
+		const developmentInfo = registries.developments.get(developmentId);
+		const developmentToken =
+			developmentInfo?.icon ?? developmentInfo?.name ?? developmentId;
+		expect(bonusSummary).toEqual([expect.stringContaining(developmentToken)]);
 		expect(bonusSummary[0]).toContain('gain 20% more');
 		expect(bonusSummary[0]).toContain('rounded up');
 		const bonusDescription = describeEffects([bonus], bonusCtx);
-		expect(bonusDescription[0]).toContain('Income');
+		expect(bonusDescription[0]).toContain(developmentToken);
 		expect(bonusDescription[0]).toContain(
 			'20% more of that resource (rounded up)',
 		);
 
-		const penaltyCtx = createCtx();
+		const { context: penaltyCtx } = createContext();
 		const penalty: EffectDef = {
 			type: 'result_mod',
 			method: 'add',
 			params: {
 				id: 'synthetic:income:penalty',
-				evaluation: { type: 'development' },
+				evaluation: { type: 'development', id: developmentId },
 				percent: -0.25,
 			},
 			round: 'down',
@@ -75,11 +92,10 @@ describe('modifier percent formatting', () => {
 	});
 
 	it('falls back to raw numbers when percent metadata is missing', () => {
-		const ctx = createCtx();
-		const fallbackValue = formatStatValue('unknown-stat', 0.5, {
-			...ctx.assets,
-			stats: {},
-		});
+		const { context } = createContext();
+		const fallbackDisplay = selectStatDisplay(context.assets, 'unknown-stat');
+		expect(fallbackDisplay.label).toBe('unknown-stat');
+		const fallbackValue = formatStatValue('unknown-stat', 0.5, context.assets);
 		expect(fallbackValue).toBe('0.5');
 	});
 });

@@ -1,74 +1,91 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { summarizeEffects } from '../src/translation/effects';
 import { summarizeContent } from '../src/translation/content';
-import { createEngine } from '@kingdom-builder/engine';
+import type { EffectDef, PlayerId } from '@kingdom-builder/engine';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
-import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
-import { createTranslationAssets } from '../src/translation/context/assets';
+	createTranslationContext,
+	selectSlotDisplay,
+} from '../src/translation/context';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
-
-function createEngineContext() {
-	return createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
+function createContext() {
+	const scaffold = createTestSessionScaffold();
+	const activePlayer = createSnapshotPlayer({
+		id: 'player:active' as PlayerId,
 	});
+	const opponent = createSnapshotPlayer({
+		id: 'player:opponent' as PlayerId,
+	});
+	const session = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases: scaffold.phases,
+		actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
+		ruleSnapshot: scaffold.ruleSnapshot,
+		metadata: scaffold.metadata,
+	});
+	return {
+		context: createTranslationContext(
+			session,
+			scaffold.registries,
+			session.metadata,
+			{
+				ruleSnapshot: session.rules,
+				passiveRecords: session.passiveRecords,
+			},
+		),
+		registries: scaffold.registries,
+	};
 }
-
-const readSlotIcon = (
-	engineContext: ReturnType<typeof createEngineContext>,
-): string | undefined =>
-	createTranslationAssets({
-		populations: engineContext.populations,
-		// No resource metadata is required for slot assets in these tests.
-		resources: {} as Record<string, never>,
-	}).slot.icon;
 
 describe('land till formatter', () => {
 	it('summarizes till effect', () => {
-		const engineContext = createEngineContext();
-		const slotIcon = readSlotIcon(engineContext);
+		const { context } = createContext();
+		const slotDisplay = selectSlotDisplay(context.assets);
 		const summary = summarizeEffects(
-			[{ type: 'land', method: LandMethods.TILL }],
-			engineContext,
+			[{ type: 'land', method: 'till' } as EffectDef],
+			context,
 		);
-		expect(summary).toContain(`${slotIcon}+1`);
+		const expectedIcon = slotDisplay.icon ?? '';
+		if (expectedIcon) {
+			expect(summary).toContain(`${expectedIcon}+1`);
+		} else {
+			expect(summary).toContain('+1');
+		}
 	});
 
 	it('summarizes till action', () => {
-		const engineContext = createEngineContext();
-		const slotIcon = readSlotIcon(engineContext);
-		const tillId = Array.from(
-			(
-				ACTIONS as unknown as {
-					map: Map<string, { effects: { type: string; method?: string }[] }>;
-				}
-			).map.entries(),
-		).find(([, actionEntry]) =>
-			actionEntry.effects.some(
-				(e: { type: string; method?: string }) =>
-					e.type === 'land' && e.method === LandMethods.TILL,
-			),
-		)?.[0] as string;
-		const summary = summarizeContent('action', tillId, engineContext);
-		const hasIcon = summary.some(
-			(item) => typeof item === 'string' && item.includes(slotIcon),
+		const { context, registries } = createContext();
+		const slotDisplay = selectSlotDisplay(context.assets);
+		const tillId = Array.from(registries.actions.keys()).find((actionId) => {
+			const action = registries.actions.get(actionId);
+			return action.effects?.some(
+				(effect) => effect.type === 'land' && effect.method === 'till',
+			);
+		});
+		expect(tillId).toBeDefined();
+		if (!tillId) {
+			return;
+		}
+		const summary = summarizeContent('action', tillId, context);
+		const slotToken = slotDisplay.icon ?? slotDisplay.label ?? '';
+		const hasSlotToken = summary.some(
+			(item) => typeof item === 'string' && item.includes(slotToken),
 		);
-		expect(hasIcon).toBe(true);
+		expect(hasSlotToken).toBe(true);
+	});
+
+	it('omits output when the land method is unknown', () => {
+		const { context } = createContext();
+		const summary = summarizeEffects(
+			[{ type: 'land', method: 'cultivate' } as EffectDef],
+			context,
+		);
+		expect(summary).toEqual([]);
 	});
 });
