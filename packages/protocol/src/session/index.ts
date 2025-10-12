@@ -1,3 +1,5 @@
+export { SESSION_PLAYER_NAME_MAX_LENGTH } from './constants';
+
 import type { EffectDef } from '../effects';
 import type {
 	HappinessTierDefinition,

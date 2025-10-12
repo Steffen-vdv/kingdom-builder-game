@@ -1,0 +1,1 @@
+export const SESSION_PLAYER_NAME_MAX_LENGTH = 40;

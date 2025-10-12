@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { SESSION_PLAYER_NAME_MAX_LENGTH } from '@kingdom-builder/protocol';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
@@ -82,6 +83,48 @@ describe('SessionTransport createSession', () => {
 		});
 		const [playerA] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Charlie');
+	});
+
+	it('accepts player names at the maximum length', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('max-length'),
+			authMiddleware: middleware,
+		});
+		const maxName = 'M'.repeat(SESSION_PLAYER_NAME_MAX_LENGTH);
+		const response = transport.createSession({
+			body: { playerNames: { A: maxName } },
+			headers: authorizedHeaders,
+		});
+		const [playerA] = response.snapshot.game.players;
+		expect(playerA?.name).toBe(maxName);
+	});
+
+	it('rejects player names that exceed the maximum length', () => {
+		const { manager } = createSyntheticSessionManager();
+		const idFactory = vi.fn().mockReturnValue('overflow-session');
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory,
+			authMiddleware: middleware,
+		});
+		const longName = 'Z'.repeat(SESSION_PLAYER_NAME_MAX_LENGTH + 1);
+		let thrown: unknown;
+		try {
+			transport.createSession({
+				body: { playerNames: { A: longName } },
+				headers: authorizedHeaders,
+			});
+		} catch (error) {
+			thrown = error;
+		}
+		expect(thrown).toBeInstanceOf(TransportError);
+		if (thrown instanceof TransportError) {
+			expect(thrown.code).toBe('INVALID_REQUEST');
+			expect(thrown.message).toContain('no more than');
+		}
+		expect(manager.getSession('overflow-session')).toBeUndefined();
 	});
 
 	it('fails when unique session identifiers cannot be generated', () => {

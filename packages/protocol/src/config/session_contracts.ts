@@ -44,8 +44,10 @@ const sessionRegistriesSchema = z
 
 export const sessionIdSchema = z.string().min(1);
 
+const sessionPlayerNameSchema = z.string().min(1);
+
 export const sessionPlayerNameMapSchema = z
-	.record(z.string(), z.string().min(1))
+	.record(z.string(), sessionPlayerNameSchema)
 	.transform((value) => value as SessionPlayerNameMap);
 
 export const sessionCreateRequestSchema = z.object({

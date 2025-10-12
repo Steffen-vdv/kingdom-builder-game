@@ -19,13 +19,16 @@ import type {
 	SessionCreateResponse,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
-	SessionRequirementFailure,
-	SessionPlayerId,
 	SessionPlayerNameMap,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
+import {
+	attachHttpStatus,
+	extractRequirementFailure,
+} from './transportHelpers.js';
+import { applyPlayerNamesToSession } from './applyPlayerNames.js';
 import type {
 	SessionManager,
 	CreateSessionOptions,
@@ -71,6 +74,7 @@ export class SessionTransport {
 		}
 		const data = parsed.data;
 		const sessionId = this.generateSessionId();
+		let session: EngineSession;
 		try {
 			const options: CreateSessionOptions = {
 				devMode: data.devMode,
@@ -78,29 +82,44 @@ export class SessionTransport {
 			if (data.config !== undefined) {
 				options.config = data.config;
 			}
-			const session = this.sessionManager.createSession(sessionId, options);
-			if (data.playerNames) {
-				this.applyPlayerNames(session, data.playerNames);
-			}
+			session = this.sessionManager.createSession(sessionId, options);
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
 				cause: error,
 			});
 		}
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(
-			sessionId,
-			snapshot,
-		) satisfies SessionCreateResponse;
-		return sessionCreateResponseSchema.parse(response);
+		try {
+			if (data.playerNames) {
+				this.applyPlayerNames(session, data.playerNames);
+			}
+		} catch (error) {
+			this.sessionManager.destroySession(sessionId);
+			if (error instanceof TransportError) {
+				throw error;
+			}
+			throw new TransportError(
+				'INVALID_REQUEST',
+				'Failed to apply player names.',
+				{ cause: error },
+			);
+		}
+		return sessionCreateResponseSchema.parse(
+			this.buildStateResponse(
+				sessionId,
+				this.sessionManager.getSnapshot(sessionId),
+			),
+		);
 	}
 
 	public getSessionState(request: TransportRequest): SessionStateResponse {
 		const sessionId = this.parseSessionIdentifier(request.body);
 		this.requireSession(sessionId);
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(sessionId, snapshot);
-		return sessionStateResponseSchema.parse(response);
+		return sessionStateResponseSchema.parse(
+			this.buildStateResponse(
+				sessionId,
+				this.sessionManager.getSnapshot(sessionId),
+			),
+		);
 	}
 
 	public async advanceSession(
@@ -123,12 +142,10 @@ export class SessionTransport {
 				const snapshot = session.getSnapshot();
 				return { advance, snapshot };
 			});
-			const base = this.buildStateResponse(sessionId, result.snapshot);
-			const response = {
-				...base,
+			return sessionAdvanceResponseSchema.parse({
+				...this.buildStateResponse(sessionId, result.snapshot),
 				advance: result.advance,
-			} satisfies SessionAdvanceResponse;
-			return sessionAdvanceResponseSchema.parse(response);
+			});
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to advance session.', {
 				cause: error,
@@ -148,7 +165,7 @@ export class SessionTransport {
 				status: 'error',
 				error: 'Invalid action request.',
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
 		}
 		this.requireAuthorization(request, 'session:advance');
 		const { sessionId, actionId, params } = parsed.data;
@@ -158,7 +175,7 @@ export class SessionTransport {
 				status: 'error',
 				error: `Session "${sessionId}" was not found.`,
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
 		try {
 			const rawCosts = session.getActionCosts(actionId, params as never);
@@ -179,9 +196,9 @@ export class SessionTransport {
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
-			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
+			return attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {
-			const failure = this.extractRequirementFailure(error);
+			const failure = extractRequirementFailure(error);
 			const message =
 				error instanceof Error ? error.message : 'Action execution failed.';
 			const base: ActionExecuteErrorResponse = {
@@ -195,7 +212,7 @@ export class SessionTransport {
 			const response = actionExecuteErrorResponseSchema.parse(
 				base,
 			) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
 		}
 	}
 
@@ -212,38 +229,12 @@ export class SessionTransport {
 		const { sessionId, enabled } = parsed.data;
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(
-			sessionId,
-			snapshot,
-		) satisfies SessionSetDevModeResponse;
-		return sessionSetDevModeResponseSchema.parse(response);
-	}
-
-	private extractRequirementFailure(
-		error: unknown,
-	): SessionRequirementFailure | undefined {
-		if (!error || typeof error !== 'object') {
-			return undefined;
-		}
-		const failure = (
-			error as { requirementFailure?: SessionRequirementFailure }
-		).requirementFailure;
-		if (!failure) {
-			return undefined;
-		}
-		return structuredClone(failure);
-	}
-
-	private attachHttpStatus<T extends object>(
-		payload: T,
-		status: number,
-	): TransportHttpResponse<T> {
-		Object.defineProperty(payload, 'httpStatus', {
-			value: status,
-			enumerable: false,
-		});
-		return payload as TransportHttpResponse<T>;
+		return sessionSetDevModeResponseSchema.parse(
+			this.buildStateResponse(
+				sessionId,
+				this.sessionManager.getSnapshot(sessionId),
+			),
+		);
 	}
 
 	private parseSessionIdentifier(body: unknown): string {
@@ -290,15 +281,7 @@ export class SessionTransport {
 		session: EngineSession,
 		names: SessionPlayerNameMap,
 	): void {
-		const playerIds = Object.keys(names) as SessionPlayerId[];
-		for (const playerId of playerIds) {
-			const playerName = names[playerId];
-			const sanitizedName = playerName?.trim();
-			if (!sanitizedName) {
-				continue;
-			}
-			session.updatePlayerName(playerId, sanitizedName);
-		}
+		applyPlayerNamesToSession(session, names);
 	}
 
 	private requireAuthorization(
