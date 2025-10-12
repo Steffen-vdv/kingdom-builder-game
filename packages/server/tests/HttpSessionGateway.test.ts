@@ -207,6 +207,33 @@ describe('HttpSessionGateway', () => {
 		expect(response.snapshot.game.devMode).toBe(true);
 	});
 
+	it('updates player names using the REST endpoint', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('PATCH');
+				expect(new URL(request.url).pathname).toBe('/api/sessions/test/player');
+				const payload = await request.clone().json();
+				expect(payload).toEqual({ playerId: 'A', name: 'Zeta' });
+				return jsonResponse({
+					sessionId: 'test',
+					snapshot: {
+						game: { players: [{ name: 'Zeta' }] },
+					},
+					registries: createRegistries(),
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.updatePlayerName({
+			sessionId: 'test',
+			playerId: 'A',
+			name: 'Zeta',
+		});
+		expect(response.snapshot.game.players[0]?.name).toBe('Zeta');
+	});
+
 	it('supports asynchronous header factories', async () => {
 		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
 			const request =

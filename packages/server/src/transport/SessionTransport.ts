@@ -11,6 +11,7 @@ import {
 	sessionSetDevModeResponseSchema,
 	sessionIdSchema,
 	sessionStateResponseSchema,
+	sessionUpdatePlayerNameRequestSchema,
 } from '@kingdom-builder/protocol';
 import type {
 	ActionExecuteErrorResponse,
@@ -218,6 +219,27 @@ export class SessionTransport {
 			snapshot,
 		) satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
+	}
+
+	public updatePlayerName(request: TransportRequest): SessionStateResponse {
+		this.requireAuthorization(request, 'session:advance');
+		const parsed = sessionUpdatePlayerNameRequestSchema.safeParse(request.body);
+		if (!parsed.success) {
+			throw new TransportError(
+				'INVALID_REQUEST',
+				'Invalid player name update request.',
+				{ issues: parsed.error.issues },
+			);
+		}
+		const { sessionId, playerId, name } = parsed.data;
+		const session = this.requireSession(sessionId);
+		session.updatePlayerName(playerId, name);
+		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		const response = this.buildStateResponse(
+			sessionId,
+			snapshot,
+		) satisfies SessionStateResponse;
+		return sessionStateResponseSchema.parse(response);
 	}
 
 	private extractRequirementFailure(

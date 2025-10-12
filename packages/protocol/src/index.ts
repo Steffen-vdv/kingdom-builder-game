@@ -137,6 +137,8 @@ export type {
 	SessionAdvanceResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
@@ -164,6 +166,7 @@ export {
 	sessionAdvanceResponseSchema,
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
+	sessionUpdatePlayerNameRequestSchema,
 } from './config/session_contracts';
 export {
 	actionEffectChoiceSchema,

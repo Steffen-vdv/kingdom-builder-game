@@ -10,6 +10,8 @@ import type {
 	SessionRequirementFailure,
 	SessionActionRequirementList,
 	SessionRegistriesPayload,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
@@ -187,6 +189,18 @@ export function createLocalSessionGateway(
 		): Promise<SessionSetDevModeResponse> {
 			assertSessionId(request, sessionId);
 			session.setDevMode(request.enabled);
+			return Promise.resolve({
+				sessionId,
+				snapshot: session.getSnapshot(),
+				registries: getRegistries(),
+			});
+		},
+		updatePlayerName(
+			request: SessionUpdatePlayerNameRequest,
+		): Promise<SessionUpdatePlayerNameResponse> {
+			assertSessionId(request, sessionId);
+			const sanitizedName = request.name.trim();
+			session.updatePlayerName(request.playerId as PlayerId, sanitizedName);
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),

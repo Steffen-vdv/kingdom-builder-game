@@ -9,6 +9,8 @@ import type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import {
 	actionExecuteRequestSchema,
@@ -20,6 +22,7 @@ import {
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
 	sessionStateResponseSchema,
+	sessionUpdatePlayerNameRequestSchema,
 } from '@kingdom-builder/protocol';
 import { TransportError } from '../transport/TransportTypes.js';
 import type { TransportErrorCode } from '../transport/TransportTypes.js';
@@ -160,6 +163,21 @@ export class HttpSessionGateway implements SessionGateway {
 			throw this.toTransportError(result);
 		}
 		return sessionSetDevModeResponseSchema.parse(result.data);
+	}
+
+	public async updatePlayerName(
+		request: SessionUpdatePlayerNameRequest,
+	): Promise<SessionUpdatePlayerNameResponse> {
+		const payload = sessionUpdatePlayerNameRequestSchema.parse(request);
+		const result = await this.execute({
+			method: 'PATCH',
+			path: `sessions/${this.encodeSessionId(payload.sessionId)}/player`,
+			body: { playerId: payload.playerId, name: payload.name },
+		});
+		if (!result.response.ok) {
+			throw this.toTransportError(result);
+		}
+		return sessionStateResponseSchema.parse(result.data);
 	}
 
 	private async execute(options: RequestOptions): Promise<HttpExecutionResult> {
