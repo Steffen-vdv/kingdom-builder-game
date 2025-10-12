@@ -164,6 +164,8 @@ describe('GameProvider', () => {
 	let session: LegacySession;
 	let registries: ReturnType<typeof createSessionRegistries>;
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
+	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
 	beforeEach(() => {
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
@@ -211,7 +213,7 @@ describe('GameProvider', () => {
 			name: 'Rival',
 			resources: { [resourceKey]: 6 },
 		});
-		const initialSnapshot = createSessionSnapshot({
+		initialSnapshot = createSessionSnapshot({
 			players: [player, opponent],
 			activePlayerId: player.id,
 			opponentId: opponent.id,
@@ -222,7 +224,7 @@ describe('GameProvider', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.steps?.[0]?.id ?? phases[0]?.id ?? 'phase-main',
 		});
-		const refreshedSnapshot = createSessionSnapshot({
+		refreshedSnapshot = createSessionSnapshot({
 			players: [
 				createSnapshotPlayer({
 					id: player.id,
@@ -339,6 +341,66 @@ describe('GameProvider', () => {
 				),
 			);
 		});
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:2'),
+		);
+	});
+
+	it('aborts an in-flight refresh when another refresh begins', async () => {
+		render(
+			<GameProvider devMode playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		expect(capturedPhaseOptions?.refresh).toBeTypeOf('function');
+
+		let abortResolve: (() => void) | undefined;
+		const abortNotified = new Promise<void>((resolve) => {
+			abortResolve = resolve;
+		});
+
+		let firstSignal: AbortSignal | undefined;
+		fetchSnapshotMock.mockImplementationOnce((sessionId, options) => {
+			expect(sessionId).toBe('session-1');
+			firstSignal = options?.signal as AbortSignal | undefined;
+			return new Promise((_resolve, reject) => {
+				if (!firstSignal) {
+					reject(new Error('missing abort signal'));
+					return;
+				}
+				const handleAbort = () => {
+					const abortError = new Error('aborted');
+					abortError.name = 'AbortError';
+					abortResolve?.();
+					reject(abortError);
+				};
+				firstSignal.addEventListener('abort', handleAbort, {
+					once: true,
+				});
+			});
+		});
+
+		act(() => {
+			capturedPhaseOptions?.refresh?.();
+		});
+
+		await waitFor(() => expect(fetchSnapshotMock).toHaveBeenCalledTimes(1));
+
+		act(() => {
+			capturedPhaseOptions?.refresh?.();
+		});
+
+		await abortNotified;
+
+		expect(firstSignal?.aborted).toBe(true);
+
+		await waitFor(() => expect(fetchSnapshotMock).toHaveBeenCalledTimes(2));
 
 		await waitFor(() =>
 			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:2'),
