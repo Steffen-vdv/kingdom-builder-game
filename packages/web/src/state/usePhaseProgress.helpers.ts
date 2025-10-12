@@ -1,6 +1,5 @@
 import type {
 	SessionAdvanceResponse,
-	SessionAdvanceResult,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { snapshotPlayer } from '../translation';
