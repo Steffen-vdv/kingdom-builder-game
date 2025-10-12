@@ -8,6 +8,13 @@ guide for rationale, lore, and extended background.
 
 1. **Set up tooling**
    - Install Node.js 18+ and run `npm install` from the repository root.
+   - Install and authenticate the [CodeRabbit CLI](https://docs.coderabbit.ai/cli)
+     so the `coderabbit` binary is available on your `PATH` and respects the
+     repository's `.coderabbit.yml` filters.
+   - Keep CodeRabbit running in a separate terminal via
+     `npm run coderabbit -- --watch` (or the CLI's equivalent). Treat it as an
+     asynchronous reviewer: continue coding while it processes local changes and
+     address its feedback only when you hit a natural stopping point.
    - Only the root `package-lock.json` is tracked; do not add per-package
      lockfiles.
    - Restore your PATH in minimal shells:
@@ -15,9 +22,10 @@ guide for rationale, lore, and extended background.
 2. **Run core commands**
    - `npm run lint` and `npm run format` keep eslint and Prettier happy.
    - `npm run lint` also runs dependency-cruiser to enforce package boundaries.
-   - [`npm run verify`](../scripts/run-verification.mjs) is the preferred
-     combined validation for code changes; it streams output to the console and
-     writes timestamped logs in `artifacts/` for sharing with reviewers.
+   - [`npm run verify`](../scripts/run-verification.mjs) now runs CodeRabbit
+     before the formatting, lint, type, and coverage checks; it streams output
+     to the console and writes timestamped logs in `artifacts/` for sharing with
+     reviewers.
    - The Husky pre-push hook enforces that verification run (with a fallback to
      `npm run check && npm run test:coverage` on tooling failures). If you must
      execute the fallback manually, note the environment issue in your PR body
