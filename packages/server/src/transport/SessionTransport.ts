@@ -19,13 +19,13 @@ import type {
 	SessionCreateResponse,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
-	SessionRequirementFailure,
 	SessionPlayerId,
 	SessionPlayerNameMap,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
+import { extractRequirementFailures } from './extractRequirementFailures.js';
 import type {
 	SessionManager,
 	CreateSessionOptions,
@@ -181,16 +181,18 @@ export class SessionTransport {
 			}) as ActionExecuteSuccessResponse;
 			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {
-			const failure = this.extractRequirementFailure(error);
+			const failures = extractRequirementFailures(error);
 			const message =
 				error instanceof Error ? error.message : 'Action execution failed.';
 			const base: ActionExecuteErrorResponse = {
 				status: 'error',
 				error: message,
 			};
-			if (failure) {
-				base.requirementFailure = failure;
-				base.requirementFailures = [failure];
+			if (failures.requirementFailure) {
+				base.requirementFailure = failures.requirementFailure;
+			}
+			if (failures.requirementFailures) {
+				base.requirementFailures = failures.requirementFailures;
 			}
 			const response = actionExecuteErrorResponseSchema.parse(
 				base,
@@ -218,21 +220,6 @@ export class SessionTransport {
 			snapshot,
 		) satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
-	}
-
-	private extractRequirementFailure(
-		error: unknown,
-	): SessionRequirementFailure | undefined {
-		if (!error || typeof error !== 'object') {
-			return undefined;
-		}
-		const failure = (
-			error as { requirementFailure?: SessionRequirementFailure }
-		).requirementFailure;
-		if (!failure) {
-			return undefined;
-		}
-		return structuredClone(failure);
 	}
 
 	private attachHttpStatus<T extends object>(
