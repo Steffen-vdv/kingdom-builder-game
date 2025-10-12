@@ -191,39 +191,160 @@ export interface SessionMetadataDescriptor {
 	description?: string;
 }
 
-export interface SessionPhaseStepMetadata {
+export type SessionMetadataDescriptorMap<
+	TDescriptor extends SessionMetadataDescriptor = SessionMetadataDescriptor,
+> = Record<string, TDescriptor>;
+
+export interface SessionResourceMetadataDescriptor
+	extends SessionMetadataDescriptor {}
+
+export interface SessionPopulationMetadataDescriptor
+	extends SessionMetadataDescriptor {}
+
+export interface SessionBuildingMetadataDescriptor
+	extends SessionMetadataDescriptor {}
+
+export interface SessionDevelopmentMetadataDescriptor
+	extends SessionMetadataDescriptor {}
+
+export interface SessionStatMetadataDescriptor
+	extends SessionMetadataDescriptor {}
+
+export interface SessionModifierDisplayDescriptor
+	extends SessionMetadataDescriptor {}
+
+export interface SessionAssetMetadataDescriptor
+	extends SessionMetadataDescriptor {}
+
+export interface SessionPhaseStepMetadata extends SessionMetadataDescriptor {
 	id: string;
-	label?: string;
-	icon?: string;
 	triggers?: string[];
 }
 
-export interface SessionPhaseMetadata {
+export type SessionPhaseStepMetadataMap =
+	SessionMetadataDescriptorMap<SessionPhaseStepMetadata>;
+
+export type SessionPhaseStepMetadataCollection =
+	| SessionPhaseStepMetadata[]
+	| SessionPhaseStepMetadataMap;
+
+export interface SessionPhaseMetadata extends SessionMetadataDescriptor {
 	id?: string;
-	label?: string;
-	icon?: string;
 	action?: boolean;
-	steps?: SessionPhaseStepMetadata[];
+	steps?: SessionPhaseStepMetadataCollection;
 }
 
-export interface SessionTriggerMetadata {
-	label?: string;
-	icon?: string;
+export type SessionPhaseMetadataMap =
+	SessionMetadataDescriptorMap<SessionPhaseMetadata>;
+
+export interface SessionTriggerMetadata extends SessionMetadataDescriptor {
 	future?: string;
 	past?: string;
 }
 
+export type SessionTriggerMetadataMap =
+	SessionMetadataDescriptorMap<SessionTriggerMetadata>;
+
+export interface SessionAssetMetadataMap {
+	land?: SessionAssetMetadataDescriptor;
+	slot?: SessionAssetMetadataDescriptor;
+	passive?: SessionAssetMetadataDescriptor;
+	upkeep?: SessionAssetMetadataDescriptor;
+	[assetId: string]: SessionAssetMetadataDescriptor | undefined;
+}
+
+export type SessionModifierDisplayMap =
+	SessionMetadataDescriptorMap<SessionModifierDisplayDescriptor>;
+
+export type SessionResourceMetadataMap =
+	SessionMetadataDescriptorMap<SessionResourceMetadataDescriptor>;
+
+export type SessionPopulationMetadataMap =
+	SessionMetadataDescriptorMap<SessionPopulationMetadataDescriptor>;
+
+export type SessionBuildingMetadataMap =
+	SessionMetadataDescriptorMap<SessionBuildingMetadataDescriptor>;
+
+export type SessionDevelopmentMetadataMap =
+	SessionMetadataDescriptorMap<SessionDevelopmentMetadataDescriptor>;
+
+export type SessionStatMetadataMap =
+	SessionMetadataDescriptorMap<SessionStatMetadataDescriptor>;
+
+export type SessionOverviewTokenCategoryName =
+	| 'actions'
+	| 'phases'
+	| 'resources'
+	| 'stats'
+	| 'population'
+	| 'static';
+
+export type SessionOverviewTokenCandidates = Partial<
+	Record<SessionOverviewTokenCategoryName, Record<string, string[]>>
+>;
+
+export interface SessionOverviewHeroDescriptor {
+	badgeIcon?: string;
+	badgeLabel?: string;
+	title?: string;
+	intro?: string;
+	paragraph?: string;
+	tokens?: Record<string, string>;
+}
+
+export interface SessionOverviewListItemDescriptor {
+	icon?: string;
+	label: string;
+	body: string[];
+}
+
+export interface SessionOverviewParagraphSectionDescriptor {
+	kind: 'paragraph';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+}
+
+export interface SessionOverviewListSectionDescriptor {
+	kind: 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	items: SessionOverviewListItemDescriptor[];
+}
+
+export type SessionOverviewSectionDescriptor =
+	| SessionOverviewParagraphSectionDescriptor
+	| SessionOverviewListSectionDescriptor;
+
+export interface SessionOverviewContentPayload {
+	hero?: SessionOverviewHeroDescriptor;
+	sections?: SessionOverviewSectionDescriptor[];
+	tokens?: SessionOverviewTokenCandidates;
+}
+
 export interface SessionSnapshotMetadata {
+	/**
+	 * Snapshot metadata now guarantees descriptor coverage for the registries,
+	 * phase structure, trigger labels, modifier display strings, core asset
+	 * labels, and optional overview content overrides that downstream clients
+	 * can rely on for consistent UI rendering.
+	 */
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
-	buildings?: Record<string, SessionMetadataDescriptor>;
-	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
-	phases?: Record<string, SessionPhaseMetadata>;
-	triggers?: Record<string, SessionTriggerMetadata>;
-	assets?: Record<string, SessionMetadataDescriptor>;
+	resources?: SessionResourceMetadataMap;
+	populations?: SessionPopulationMetadataMap;
+	buildings?: SessionBuildingMetadataMap;
+	developments?: SessionDevelopmentMetadataMap;
+	stats?: SessionStatMetadataMap;
+	phases?: SessionPhaseMetadataMap;
+	triggers?: SessionTriggerMetadataMap;
+	modifierDisplays?: SessionModifierDisplayMap;
+	assets?: SessionAssetMetadataMap;
+	overviewContent?: SessionOverviewContentPayload;
 }
 
 export interface SessionSnapshot {
