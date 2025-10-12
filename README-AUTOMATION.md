@@ -51,7 +51,8 @@ missing:
 2. Create a repository secret named `REVIEW_AUTOMATION_TOKEN` that contains the
    personal access token for the account that should author workflow comments
    (for example `Steffen-vdv`). The token needs `issues:write` and
-   `pull_requests:write` scopes.
+   `pull_requests:write` scopes. If the secret is omitted the workflows still
+   run, but comment authorship falls back to `github-actions[bot]`.
 3. Ensure the repository has `GITHUB_TOKEN` permissions for `pull_request` and
    `issues` scopes (this is enabled by default for GitHub Actions).
 4. No manual label creation is required—the workflows create them if absent.

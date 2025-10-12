@@ -24,7 +24,7 @@ jobs:
       - name: Ensure iteration marker is present
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.REVIEW_AUTOMATION_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -97,7 +97,9 @@ jobs:
       - name: Process CodeRabbit actionable feedback
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.REVIEW_AUTOMATION_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          REVIEW_AUTOMATION_TOKEN: ${{ secrets.REVIEW_AUTOMATION_TOKEN }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -276,6 +278,40 @@ jobs:
               return label.name === 'max-iterations-reached';
             });
 
+            const automationToken = process.env.REVIEW_AUTOMATION_TOKEN;
+
+            const postComment = async (body) => {
+              if (!body?.trim()) {
+                return;
+              }
+
+              if (!automationToken) {
+                core.warning(
+                  'REVIEW_AUTOMATION_TOKEN missing. Falling back to GITHUB_TOKEN.'
+                );
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  body
+                });
+                return;
+              }
+
+              await github.request(
+                'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
+                {
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  body,
+                  headers: {
+                    authorization: `token ${automationToken}`
+                  }
+                }
+              );
+            };
+
             const finalizeState = async () => {
               try {
                 await github.rest.issues.removeLabel({
@@ -321,12 +357,7 @@ jobs:
                   labels: ['max-iterations-reached']
                 });
 
-                await github.rest.issues.createComment({
-                  owner,
-                  repo,
-                  issue_number: prNumber,
-                  body: maxIterationMessage
-                });
+                await postComment(maxIterationMessage);
 
                 hasMaxIterationLabel = true;
               }
@@ -397,9 +428,4 @@ jobs:
               }
             }
 
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body: '@codex fix'
-            });
+            await postComment('@codex fix');
