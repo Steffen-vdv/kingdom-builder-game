@@ -9,6 +9,8 @@ import {
 	DEFAULT_RUNTIME_CONFIG,
 } from './defaultRuntimeConfig';
 
+type RuleSetConfig = EngineBootstrapOptions['rules'];
+
 type ConfigSource =
 	| RuntimeConfig
 	| (() => RuntimeConfig | Promise<RuntimeConfig>);
@@ -115,10 +117,50 @@ function mergeEngineBootstrap(
 	if (!override) {
 		return clone(base);
 	}
+	const mergeRules = (
+		current: RuleSetConfig,
+		provided: Partial<RuleSetConfig> | undefined,
+	): RuleSetConfig => {
+		const merged = clone(current);
+		if (!provided) {
+			return merged;
+		}
+		if (provided.defaultActionAPCost !== undefined) {
+			merged.defaultActionAPCost = provided.defaultActionAPCost;
+		}
+		if (provided.absorptionCapPct !== undefined) {
+			merged.absorptionCapPct = provided.absorptionCapPct;
+		}
+		if (provided.absorptionRounding !== undefined) {
+			merged.absorptionRounding = provided.absorptionRounding;
+		}
+		if (provided.tieredResourceKey !== undefined) {
+			merged.tieredResourceKey = provided.tieredResourceKey;
+		}
+		if (provided.tierDefinitions !== undefined) {
+			merged.tierDefinitions = clone(provided.tierDefinitions);
+		}
+		if (provided.slotsPerNewLand !== undefined) {
+			merged.slotsPerNewLand = provided.slotsPerNewLand;
+		}
+		if (provided.maxSlotsPerLand !== undefined) {
+			merged.maxSlotsPerLand = provided.maxSlotsPerLand;
+		}
+		if (provided.basePopulationCap !== undefined) {
+			merged.basePopulationCap = provided.basePopulationCap;
+		}
+		if (provided.winConditions !== undefined) {
+			merged.winConditions = clone(provided.winConditions);
+		}
+		return merged;
+	};
 	return {
 		phases: override.phases ? [...override.phases] : [...base.phases],
 		start: override.start ? clone(override.start) : clone(base.start),
-		rules: override.rules ? { ...override.rules } : { ...base.rules },
+		rules: mergeRules(
+			base.rules,
+			override.rules as Partial<RuleSetConfig> | undefined,
+		),
 	};
 }
 
