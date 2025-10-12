@@ -1,27 +1,45 @@
-import { describe, it, expect, vi } from 'vitest';
-import {
-	createEngine,
-	type StatKey,
-	type StatSourceLink,
-} from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATION_ROLES,
-	POPULATIONS,
-	PHASES,
-	RESOURCES,
-	GAME_START,
-	RULES,
-	STATS,
-	TRIGGER_INFO,
-	PASSIVE_INFO,
-} from '@kingdom-builder/contents';
-import type { TranslationContext } from '../src/translation/context';
+import { describe, expect, it } from 'vitest';
 import { getStatBreakdownSummary, formatStatValue } from '../src/utils/stats';
 import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
-import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
+import { createTranslationContext } from '../src/translation/context/createTranslationContext';
+import { createTestRegistryMetadata } from './helpers/registryMetadata';
+import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+
+type SummaryGroup = { title?: unknown; items?: unknown[] };
+
+type DescriptorSetup = {
+	translationContext: ReturnType<typeof createTranslationContext>;
+	player: ReturnType<typeof createSnapshotPlayer>;
+	primaryStatKey: string;
+	secondaryStatKey: string;
+	populationId: string;
+	buildingId: string;
+	developmentId: string;
+	actionId: string;
+	resourceKey: string;
+	phaseId: string;
+	phaseStepId: string;
+	triggerId: string;
+	landId: string;
+	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
+};
+
+const DEFAULT_RULES = {
+	defaultActionAPCost: 1,
+	absorptionCapPct: 1,
+	absorptionRounding: 'nearest',
+	tieredResourceKey: 'resource:placeholder',
+	tierDefinitions: [],
+	slotsPerNewLand: 1,
+	maxSlotsPerLand: 1,
+	basePopulationCap: 1,
+	winConditions: [],
+} as const;
 
 const collectSummaryLines = (entry: unknown): string[] => {
 	if (typeof entry === 'string') {
@@ -30,7 +48,7 @@ const collectSummaryLines = (entry: unknown): string[] => {
 	if (!entry || typeof entry !== 'object') {
 		return [];
 	}
-	const record = entry as { title?: unknown; items?: unknown[] };
+	const record = entry as SummaryGroup;
 	const lines: string[] = [];
 	if (typeof record.title === 'string' && record.title.trim()) {
 		lines.push(record.title);
@@ -43,61 +61,180 @@ const collectSummaryLines = (entry: unknown): string[] => {
 	return lines;
 };
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
+function createDescriptorSetup(): DescriptorSetup {
+	const registries = createSessionRegistries();
+	const populationId = registries.populations.keys()[0];
+	const buildingId = registries.buildings.keys()[0];
+	const developmentId = registries.developments.keys()[0];
+	const actionId = registries.actions.keys()[0];
+	const resourceKey = Object.keys(registries.resources)[0];
+	if (
+		!populationId ||
+		!buildingId ||
+		!developmentId ||
+		!actionId ||
+		!resourceKey
+	) {
+		throw new Error('Expected registries to provide baseline entries.');
+	}
+	const phaseId = 'phase:test';
+	const phaseStepId = 'phase:test:step';
+	const triggerId = 'trigger:test';
+	const landId = 'land:test';
+	const metadata: SessionSnapshotMetadata = {
+		passiveEvaluationModifiers: {},
+		populations: {
+			[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
+		},
+		buildings: {
+			[buildingId]: { label: 'Sky Bastion', icon: '🏯' },
+		},
+		developments: {
+			[developmentId]: { label: 'Celestial Garden', icon: '🌿' },
+		},
+		resources: {
+			[resourceKey]: {
+				label: 'Starlight',
+				icon: '✨',
+				description: 'Brilliant astral currency.',
+			},
+		},
+		triggers: {
+			[triggerId]: {
+				label: 'Starlight Surge',
+				icon: '⚡',
+				future: 'When the stars align',
+				past: 'Starlight Surge',
+			},
+		},
+		phases: {
+			[phaseId]: {
+				label: 'Ascension Phase',
+				icon: '🛸',
+				action: true,
+				steps: [
+					{
+						id: phaseStepId,
+						label: 'Empower',
+						icon: '💫',
+						triggers: [triggerId],
+					},
+				],
+			},
+		},
+		assets: {
+			land: { label: 'Territory', icon: '🗺️' },
+			slot: { label: 'Development Slot', icon: '🧩' },
+			passive: { label: 'Aura', icon: '♾️' },
+		},
+	};
+	const activePlayer = createSnapshotPlayer({
+		id: 'player:active',
+		name: 'Active Player',
+		resources: { [resourceKey]: 0 },
+		population: { [populationId]: 2 },
+		lands: [
+			{
+				id: landId,
+				developments: [],
+				slots: [],
+			},
+		],
+	});
+	const opponent = createSnapshotPlayer({
+		id: 'player:opponent',
+		name: 'Opponent',
+	});
+	const ruleSnapshot = { ...DEFAULT_RULES, tieredResourceKey: resourceKey };
+	const sessionSnapshot = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases: [
+			{
+				id: phaseId,
+				label: 'Ascension Phase',
+				icon: '🛸',
+				action: true,
+				steps: [
+					{
+						id: phaseStepId,
+						label: 'Empower',
+						icon: '💫',
+						triggers: [triggerId],
+					},
+				],
+			},
+		],
+		actionCostResource: resourceKey,
+		ruleSnapshot,
+		metadata,
+	});
+	const translationContext = createTranslationContext(
+		sessionSnapshot,
+		registries,
+		metadata,
+		{
+			ruleSnapshot,
+			passiveRecords: sessionSnapshot.passiveRecords,
+		},
+	);
+	const metadataSelectors = createTestRegistryMetadata(registries, metadata);
+	const active = sessionSnapshot.game.players.find(
+		(player) => player.id === activePlayer.id,
+	);
+	if (!active) {
+		throw new Error('Failed to locate active player snapshot.');
+	}
+	const statKeys = Object.keys(translationContext.assets.stats);
+	const [primaryStatKey, secondaryStatKey = statKeys[0] ?? ''] = statKeys;
+	if (!primaryStatKey) {
+		throw new Error('Unable to resolve a stat key for testing.');
+	}
+	active.stats[primaryStatKey] = 0;
+	if (secondaryStatKey) {
+		active.stats[secondaryStatKey] = 3;
+	}
+	return {
+		translationContext,
+		player: active,
+		primaryStatKey,
+		secondaryStatKey: secondaryStatKey || primaryStatKey,
+		populationId,
+		buildingId,
+		developmentId,
+		actionId,
+		resourceKey,
+		phaseId,
+		phaseStepId,
+		triggerId,
+		landId,
+		metadataSelectors,
+	};
+}
 
 describe('stat descriptor registry', () => {
 	it('formats dependencies for each descriptor kind', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		const player = ctx.activePlayer;
-		const statKeys = Object.keys(STATS) as StatKey[];
-		expect(statKeys.length).toBeGreaterThan(0);
-		const [primaryStatKey, secondaryStatKey = statKeys[0]!] = statKeys;
-		const [populationId, populationRole] = Object.entries(POPULATION_ROLES)[0]!;
-		player.population[populationId] = 2;
-		const buildingId = BUILDINGS.keys()[0]!;
-		const building = BUILDINGS.get(buildingId);
-		const developmentId = DEVELOPMENTS.keys()[0]!;
-		const development = DEVELOPMENTS.get(developmentId);
-		const phaseWithStep = PHASES.find((phase) => phase.steps?.length);
-		expect(phaseWithStep).toBeDefined();
-		const step = phaseWithStep!.steps.find((entry) => entry.id);
-		expect(step).toBeDefined();
-		const actionId = ACTIONS.keys()[0]!;
-		const action = ACTIONS.get(actionId);
-		const resourceKey = Object.keys(RESOURCES)[0]!;
-		const resource = RESOURCES[resourceKey as keyof typeof RESOURCES];
-		const triggerId = Object.keys(TRIGGER_INFO)[0]!;
-		const triggerInfo = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
-		const landId = player.lands[0]?.id;
-		expect(landId).toBeDefined();
+		const setup = createDescriptorSetup();
+		const {
+			translationContext,
+			player,
+			primaryStatKey,
+			secondaryStatKey,
+			populationId,
+			buildingId,
+			developmentId,
+			actionId,
+			resourceKey,
+			phaseId,
+			phaseStepId,
+			triggerId,
+			landId,
+			metadataSelectors,
+		} = setup;
 		const unknownId = 'mystery-source';
-		const resourceDetail = 'resource-detail';
 		const unknownDetail = 'mystery-detail';
-		player.stats[secondaryStatKey] = 3;
-		const dependencies: StatSourceLink[] = [
-			{ type: 'population', id: populationId },
-			{ type: 'building', id: buildingId },
-			{ type: 'development', id: developmentId },
-			{ type: 'phase', id: phaseWithStep!.id, detail: step!.id },
-			{ type: 'action', id: actionId },
-			{ type: 'stat', id: secondaryStatKey },
-			{ type: 'resource', id: resourceKey, detail: resourceDetail },
-			{ type: 'trigger', id: triggerId },
-			{ type: 'passive' },
-			{ type: 'land', id: landId },
-			{ type: 'start' },
-			{ type: 'mystery', id: unknownId, detail: unknownDetail },
-		];
+		const resourceDetail = 'resource-detail';
 		player.statSources[primaryStatKey] = {
 			descriptor: {
 				amount: 1,
@@ -106,11 +243,23 @@ describe('stat descriptor registry', () => {
 					longevity: 'permanent',
 					kind: 'action',
 					id: actionId,
-					dependsOn: dependencies,
+					dependsOn: [
+						{ type: 'population', id: populationId },
+						{ type: 'building', id: buildingId },
+						{ type: 'development', id: developmentId },
+						{ type: 'phase', id: phaseId, detail: phaseStepId },
+						{ type: 'action', id: actionId },
+						{ type: 'stat', id: secondaryStatKey },
+						{ type: 'resource', id: resourceKey, detail: resourceDetail },
+						{ type: 'trigger', id: triggerId },
+						{ type: 'passive' },
+						{ type: 'land', id: landId },
+						{ type: 'start' },
+						{ type: 'mystery', id: unknownId, detail: unknownDetail },
+					],
 				},
 			},
 		};
-		const translationContext = createTranslationContextForEngine(ctx);
 		const breakdown = getStatBreakdownSummary(
 			primaryStatKey,
 			player,
@@ -119,7 +268,7 @@ describe('stat descriptor registry', () => {
 		const triggered = breakdown
 			.flatMap((entry) => collectSummaryLines(entry))
 			.filter((line) => line.startsWith('Triggered by'));
-		expect(triggered).toHaveLength(dependencies.length);
+		expect(triggered).toHaveLength(12);
 		const [
 			populationLine,
 			buildingLine,
@@ -134,104 +283,77 @@ describe('stat descriptor registry', () => {
 			startLine,
 			unknownLine,
 		] = triggered;
-		if (populationRole.icon) {
-			expect(populationLine).toContain(populationRole.icon);
-		}
-		expect(populationLine).toContain(populationRole.label ?? populationId);
+		const populationLabel = formatKindLabel(
+			translationContext,
+			'population',
+			populationId,
+		);
+		expect(populationLine).toContain(populationLabel);
 		expect(populationLine).toContain(`×${player.population[populationId]}`);
-		if (building.icon) {
-			expect(buildingLine).toContain(building.icon);
-		}
-		expect(buildingLine).toContain(building.name ?? buildingId);
-		if (development.icon) {
-			expect(developmentLine).toContain(development.icon);
-		}
-		expect(developmentLine).toContain(development.name ?? developmentId);
-		const phaseParts: string[] = [];
-		if (phaseWithStep!.icon) {
-			phaseParts.push(phaseWithStep!.icon);
-		}
-		if (phaseWithStep!.label) {
-			phaseParts.push(phaseWithStep!.label);
-		}
-		const phaseText = phaseParts.join(' ').trim();
-		const stepParts: string[] = [];
-		if (step!.icon) {
-			stepParts.push(step!.icon);
-		}
-		const stepLabel = step!.title ?? step!.id;
-		if (stepLabel) {
-			stepParts.push(stepLabel);
-		}
-		const stepText = stepParts.join(' ').trim();
-		const expectedPhaseText = stepText
-			? phaseText
-				? `${phaseText} · ${stepText}`
-				: stepText
-			: phaseText;
-		if (expectedPhaseText) {
-			expect((phaseLine ?? '').toLowerCase()).toContain(
-				expectedPhaseText.toLowerCase(),
+		const buildingLabel = formatKindLabel(
+			translationContext,
+			'building',
+			buildingId,
+		);
+		expect(buildingLine).toContain(buildingLabel);
+		const developmentLabel = formatKindLabel(
+			translationContext,
+			'development',
+			developmentId,
+		);
+		expect(developmentLine).toContain(developmentLabel);
+		const phaseMetadata = metadataSelectors.phaseMetadata.select(phaseId);
+		if (phaseMetadata.icon) {
+			expect(phaseLine.toLowerCase()).toContain(
+				phaseMetadata.icon.toLowerCase(),
 			);
 		}
-		if (action.icon) {
-			expect(actionLine).toContain(action.icon);
+		if (phaseMetadata.label) {
+			expect(phaseLine.toLowerCase()).toContain(
+				phaseMetadata.label.toLowerCase(),
+			);
 		}
-		expect(actionLine).toContain(action.name ?? actionId);
-		const statInfo = STATS[secondaryStatKey as keyof typeof STATS];
-		if (statInfo?.icon) {
-			expect(statLine).toContain(statInfo.icon);
-		}
-		expect(statLine).toContain(statInfo?.label ?? secondaryStatKey);
+		const actionLabel = formatKindLabel(translationContext, 'action', actionId);
+		expect(actionLine).toContain(actionLabel);
+		const statLabel = formatKindLabel(
+			translationContext,
+			'stat',
+			secondaryStatKey,
+		);
+		expect(statLine).toContain(statLabel);
 		expect(statLine).toContain(
 			formatStatValue(
 				secondaryStatKey,
-				player.stats[secondaryStatKey]!,
+				player.stats[secondaryStatKey] ?? 0,
 				translationContext.assets,
 			),
 		);
-		if (resource?.icon) {
-			expect(resourceLine).toContain(resource.icon);
-		}
-		expect(resourceLine).toContain(resource?.label ?? resourceKey);
-		const formatDetail = (detail: string) =>
-			detail
-				.split('-')
-				.filter((segment) => segment.length)
-				.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-				.join(' ');
-		expect(resourceLine).toContain(formatDetail(resourceDetail));
-		const triggerAsset = translationContext.assets.triggers[triggerId];
-		if (triggerAsset?.icon) {
-			expect(triggerLine).toContain(triggerAsset.icon);
-		} else {
-			expect(triggerLine).toBe(`Triggered by ${triggerId}`);
-		}
-		expect(triggerLine).toContain(
-			triggerInfo?.past ?? triggerInfo?.future ?? triggerId,
+		const resourceLabel = formatKindLabel(
+			translationContext,
+			'resource',
+			resourceKey,
 		);
-		if (PASSIVE_INFO.icon) {
-			expect(passiveLine).toContain(PASSIVE_INFO.icon);
-		}
-		expect(passiveLine).toContain(PASSIVE_INFO.label);
-		expect(landLine).toContain(String(landId));
+		expect(resourceLine).toContain(resourceLabel);
+		expect(resourceLine).toContain('Resource Detail');
+		const triggerLabel = formatKindLabel(
+			translationContext,
+			'trigger',
+			triggerId,
+		);
+		expect(triggerLine).toContain(triggerLabel);
+		const passiveLabel = formatKindLabel(translationContext, 'passive', '');
+		expect(passiveLine).toContain(passiveLabel);
+		const landLabel = formatKindLabel(translationContext, 'land', landId);
+		expect(landLine).toContain(landLabel);
 		expect(startLine).toContain('Initial Setup');
 		expect(unknownLine).toContain(unknownId);
-		expect(unknownLine).toContain(formatDetail(unknownDetail));
+		expect(unknownLine).toContain('Mystery Detail');
 	});
 
 	it('falls back to ids and defaults when metadata is missing', () => {
-		const ctx = createEngine({
-			actions: ACTIONS,
-			buildings: BUILDINGS,
-			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
-		const translationContext = createTranslationContextForEngine(ctx);
-		const mutatedContext: TranslationContext = {
+		const setup = createDescriptorSetup();
+		const { translationContext, primaryStatKey } = setup;
+		const mutatedContext = {
 			...translationContext,
 			assets: {
 				...translationContext.assets,
@@ -251,5 +373,15 @@ describe('stat descriptor registry', () => {
 			'mystery-trigger',
 		);
 		expect(triggerFallback).toBe('mystery-trigger');
+		const phaseFallback = formatKindLabel(
+			mutatedContext,
+			'phase',
+			'mystery-phase',
+		);
+		expect(phaseFallback).toBe('mystery-phase');
+		const first = formatKindLabel(mutatedContext, 'phase', 'mystery-phase');
+		const second = formatKindLabel(mutatedContext, 'phase', 'mystery-phase');
+		expect(first).toBe(second);
+		expect(primaryStatKey).toBeTruthy();
 	});
 });

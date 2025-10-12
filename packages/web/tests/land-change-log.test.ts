@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEngine, runEffects } from '@kingdom-builder/engine';
-import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
+import { runEffects } from '@kingdom-builder/engine';
+import type {
+	PhaseConfig,
+	RuleSet,
+	StartConfig,
+} from '@kingdom-builder/protocol';
 import { logContent } from '../src/translation/content';
 import {
 	snapshotPlayer,
@@ -12,28 +16,68 @@ import {
 	formatLogHeadline,
 	LOG_KEYWORDS,
 } from '../src/translation/log/logMessages';
-import { createSessionRegistries } from './helpers/sessionRegistries';
-import { createTranslationAssets } from '../src/translation/context/assets';
+import { createEngineTranslationContext } from './helpers/createEngineTranslationContext';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
+const TEST_PHASES: PhaseConfig[] = [
+	{
+		id: 'phase:action',
+		label: 'Action Phase',
+		icon: '🎯',
+		action: true,
+		steps: [{ id: 'phase:action:resolve', label: 'Resolve' }],
+	},
+];
+
+const TEST_START: StartConfig = {
+	player: {
+		resources: {},
+		stats: {},
+		population: {},
+		lands: [],
+		buildings: [],
+	},
+	players: {
+		opponent: {
+			resources: {},
+			stats: {},
+			population: {},
+			lands: [],
+			buildings: [],
+		},
+	},
+};
+
+const TEST_RULES: RuleSet = {
+	defaultActionAPCost: 1,
+	absorptionCapPct: 1,
+	absorptionRounding: 'nearest',
+	tieredResourceKey: 'resource:test',
+	tierDefinitions: [],
+	slotsPerNewLand: 1,
+	maxSlotsPerLand: 1,
+	basePopulationCap: 1,
+	winConditions: [],
+};
+
 function createTestContext() {
-	const registries = createSessionRegistries();
-	const engineContext = createEngine({
-		actions: registries.actions,
-		buildings: registries.buildings,
-		developments: registries.developments,
-		populations: registries.populations,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
+	const { engineContext, translationContext } = createEngineTranslationContext({
+		phases: TEST_PHASES,
+		start: TEST_START,
+		rules: TEST_RULES,
+		configureMetadata: (metadata) => ({
+			...metadata,
+			assets: {
+				...(metadata.assets ?? {}),
+				land: { label: 'Territory', icon: '🗺️' },
+				slot: { label: 'Development Slot', icon: '🧩' },
+			},
+		}),
 	});
-	engineContext.assets = createTranslationAssets({
-		populations: registries.populations,
-		resources: registries.resources,
-	});
+	engineContext.assets = translationContext.assets;
 	return engineContext;
 }
 
@@ -72,6 +116,13 @@ describe('land change log formatting', () => {
 			'Land';
 		const expectedLine = formatLogHeadline(LOG_KEYWORDS.gained, landLabel);
 		expect(landLine).toBe(expectedLine);
+		const repeatLines = diffStepSnapshots(
+			before,
+			after,
+			undefined,
+			translationDiffContext,
+		);
+		expect(repeatLines).toContain(expectedLine);
 	});
 
 	it('logs developed entries for new land improvements', () => {
@@ -142,5 +193,12 @@ describe('land change log formatting', () => {
 			developmentLabel,
 		);
 		expect(developmentLine).toBe(expectedLine);
+		const repeatLines = diffStepSnapshots(
+			before,
+			after,
+			undefined,
+			translationDiffContext,
+		);
+		expect(repeatLines).toContain(expectedLine);
 	});
 });
