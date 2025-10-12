@@ -1,9 +1,9 @@
 import { useMemo, useRef } from 'react';
-import { type PlayerSnapshotDeltaBucket } from '@kingdom-builder/engine';
 import type {
+	PlayerSnapshotDeltaBucket,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+} from '@kingdom-builder/protocol';
 import { useGameEngine } from './GameContext';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;

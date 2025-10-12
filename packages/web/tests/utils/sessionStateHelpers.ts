@@ -1,32 +1,33 @@
 import type {
-	EngineSessionSnapshot,
-	PassiveRecordSnapshot,
-	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+	SessionPassiveRecordSnapshot,
+	SessionPlayerStateSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol';
 import type { SessionResourceKey } from '../../src/state/sessionTypes';
 
 interface SessionStateHandle {
-	sessionState: EngineSessionSnapshot;
+	sessionState: SessionSnapshot;
 }
 
 interface SessionStateOptions {
 	primaryResource: SessionResourceKey;
-	defaultPhases: EngineSessionSnapshot['phases'];
+	defaultPhases: SessionSnapshot['phases'];
 }
 
 interface SessionOverrides {
-	game?: Partial<EngineSessionSnapshot['game']>;
-	phases?: EngineSessionSnapshot['phases'];
+	game?: Partial<SessionSnapshot['game']>;
+	phases?: SessionSnapshot['phases'];
+	metadata?: SessionSnapshot['metadata'];
 }
 
 export interface SessionStateHelpers {
 	createSessionState(
-		players: PlayerStateSnapshot[],
+		players: SessionPlayerStateSnapshot[],
 		overrides?: SessionOverrides,
-	): EngineSessionSnapshot;
-	reset(players: PlayerStateSnapshot[]): void;
-	setPlayers(players: PlayerStateSnapshot[]): void;
-	setGameState(overrides: Partial<EngineSessionSnapshot['game']>): void;
+	): SessionSnapshot;
+	reset(players: SessionPlayerStateSnapshot[]): void;
+	setPlayers(players: SessionPlayerStateSnapshot[]): void;
+	setGameState(overrides: Partial<SessionSnapshot['game']>): void;
 }
 
 export function createSessionHelpers(
@@ -34,9 +35,9 @@ export function createSessionHelpers(
 	{ primaryResource, defaultPhases }: SessionStateOptions,
 ): SessionStateHelpers {
 	function buildState(
-		players: PlayerStateSnapshot[],
+		players: SessionPlayerStateSnapshot[],
 		overrides: SessionOverrides = {},
-	): EngineSessionSnapshot {
+	): SessionSnapshot {
 		const { game: gameOverrides = {}, phases = defaultPhases } = overrides;
 		const phaseIndex = gameOverrides.phaseIndex ?? 0;
 		const phase = phases[phaseIndex] ?? phases[0];
@@ -49,7 +50,7 @@ export function createSessionHelpers(
 			secondPlayer?.id ??
 			firstPlayer?.id ??
 			'player-1';
-		const passiveRecords: Record<string, PassiveRecordSnapshot[]> = {};
+		const passiveRecords: Record<string, SessionPassiveRecordSnapshot[]> = {};
 		for (const player of players) {
 			passiveRecords[player.id] = [];
 		}
@@ -90,11 +91,11 @@ export function createSessionHelpers(
 		};
 	}
 
-	function resetState(players: PlayerStateSnapshot[]) {
+	function resetState(players: SessionPlayerStateSnapshot[]) {
 		handle.sessionState = buildState(players);
 	}
 
-	function applyPlayers(players: PlayerStateSnapshot[]) {
+	function applyPlayers(players: SessionPlayerStateSnapshot[]) {
 		const {
 			game: { players: _ignored, ...restGame },
 			phases,
@@ -105,7 +106,7 @@ export function createSessionHelpers(
 		});
 	}
 
-	function applyGameState(overrides: Partial<EngineSessionSnapshot['game']>) {
+	function applyGameState(overrides: Partial<SessionSnapshot['game']>) {
 		const {
 			game: { players, ...restGame },
 			phases,

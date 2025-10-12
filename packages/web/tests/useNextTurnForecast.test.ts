@@ -1,12 +1,12 @@
 import { describe, expect, beforeEach, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
-import {
-	type EngineSessionSnapshot,
-	type PlayerSnapshotDeltaBucket,
-	type PlayerStateSnapshot,
-	type RuleSnapshot,
-} from '@kingdom-builder/engine';
+import type {
+	PlayerSnapshotDeltaBucket,
+	SessionPlayerStateSnapshot,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol';
 import { useNextTurnForecast } from '../src/state/useNextTurnForecast';
 import { createSessionHelpers } from './utils/sessionStateHelpers';
 import { createSessionRegistries } from './helpers/sessionRegistries';
@@ -26,8 +26,8 @@ interface MockGameEngine {
 		runAiTurn: ReturnType<typeof vi.fn>;
 		advancePhase: ReturnType<typeof vi.fn>;
 	};
-	sessionState: EngineSessionSnapshot;
-	ruleSnapshot: RuleSnapshot;
+	sessionState: SessionSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
 	resolution: null;
 	showResolution: ReturnType<typeof vi.fn>;
 	acknowledgeResolution: ReturnType<typeof vi.fn>;
@@ -42,7 +42,7 @@ const primaryResource =
 const translationAssets = createDefaultTranslationAssets();
 const statKeys = Object.keys(translationAssets.stats);
 const primaryStat = statKeys[0] ?? 'maxPopulation';
-const defaultPhases: EngineSessionSnapshot['phases'] = [
+const defaultPhases: SessionSnapshot['phases'] = [
 	{ id: 'growth', steps: [] },
 	{ id: 'upkeep', steps: [] },
 	{ id: 'main', steps: [] },
@@ -50,8 +50,8 @@ const defaultPhases: EngineSessionSnapshot['phases'] = [
 
 function createPlayer(
 	index: number,
-	overrides: Partial<PlayerStateSnapshot> = {},
-): PlayerStateSnapshot {
+	overrides: Partial<SessionPlayerStateSnapshot> = {},
+): SessionPlayerStateSnapshot {
 	const {
 		resources: overrideResources,
 		stats: overrideStats,
@@ -101,7 +101,7 @@ const engineValue: MockGameEngine = {
 		runAiTurn: vi.fn().mockResolvedValue(false),
 		advancePhase: vi.fn(),
 	},
-	sessionState: undefined as unknown as EngineSessionSnapshot,
+	sessionState: undefined as unknown as SessionSnapshot,
 	ruleSnapshot: {
 		tieredResourceKey: primaryResource,
 		tierDefinitions: [],
@@ -117,11 +117,11 @@ const sessionHelpers = createSessionHelpers(engineValue, {
 	defaultPhases,
 });
 
-const resetSessionState = (players: PlayerStateSnapshot[]) =>
+const resetSessionState = (players: SessionPlayerStateSnapshot[]) =>
 	sessionHelpers.reset(players);
-const setPlayers = (players: PlayerStateSnapshot[]) =>
+const setPlayers = (players: SessionPlayerStateSnapshot[]) =>
 	sessionHelpers.setPlayers(players);
-const setGameState = (overrides: Partial<EngineSessionSnapshot['game']>) =>
+const setGameState = (overrides: Partial<SessionSnapshot['game']>) =>
 	sessionHelpers.setGameState(overrides);
 
 engineValue.sessionState = sessionHelpers.createSessionState([]);
@@ -145,8 +145,8 @@ describe('useNextTurnForecast', () => {
 				const deltaAmount = playerId === firstPlayerId ? 3 : 5;
 				return {
 					playerId,
-					before: {} as PlayerStateSnapshot,
-					after: {} as PlayerStateSnapshot,
+					before: {} as SessionPlayerStateSnapshot,
+					after: {} as SessionPlayerStateSnapshot,
 					delta: createDelta(deltaAmount),
 					steps: [],
 				};
@@ -179,8 +179,8 @@ describe('useNextTurnForecast', () => {
 				}
 				return {
 					playerId,
-					before: {} as PlayerStateSnapshot,
-					after: {} as PlayerStateSnapshot,
+					before: {} as SessionPlayerStateSnapshot,
+					after: {} as SessionPlayerStateSnapshot,
 					delta: createDelta(7),
 					steps: [],
 				};
@@ -212,8 +212,8 @@ describe('useNextTurnForecast', () => {
 				const deltaAmount = playerId === firstPlayerId ? 4 : 6;
 				return {
 					playerId,
-					before: {} as PlayerStateSnapshot,
-					after: {} as PlayerStateSnapshot,
+					before: {} as SessionPlayerStateSnapshot,
+					after: {} as SessionPlayerStateSnapshot,
 					delta: createDelta(deltaAmount),
 					steps: [],
 				};
@@ -233,7 +233,7 @@ describe('useNextTurnForecast', () => {
 	});
 
 	it('recomputes when land details change without affecting counts', () => {
-		const baseLand: PlayerStateSnapshot['lands'][number] = {
+		const baseLand: SessionPlayerStateSnapshot['lands'][number] = {
 			id: 'land-1',
 			slotsMax: 2,
 			slotsUsed: 1,
@@ -249,8 +249,8 @@ describe('useNextTurnForecast', () => {
 				const deltaAmount = playerId === firstPlayerId ? 2 : 3;
 				return {
 					playerId,
-					before: {} as PlayerStateSnapshot,
-					after: {} as PlayerStateSnapshot,
+					before: {} as SessionPlayerStateSnapshot,
+					after: {} as SessionPlayerStateSnapshot,
 					delta: createDelta(deltaAmount),
 					steps: [],
 				};
