@@ -6,11 +6,11 @@ import {
 	ACTIONS,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
 	GAME_START,
-	RULES,
+	PHASES,
+	POPULATIONS,
 	RESOURCES,
+	RULES,
 } from '@kingdom-builder/contents';
 import type {
 	PlayerStartConfig,
@@ -18,7 +18,13 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
+import {
+	composeSessionSnapshot,
+	createBaseSessionMetadata,
+} from './SessionMetadataBuilder.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -65,6 +71,8 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
+	private readonly baseMetadata: Readonly<SessionSnapshotMetadata>;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -92,6 +100,15 @@ export class SessionManager {
 			populations: this.cloneRegistry(this.baseOptions.populations),
 			resources: this.buildResourceRegistry(resourceRegistry),
 		};
+		this.baseMetadata = createBaseSessionMetadata(
+			{
+				buildings: this.registries.buildings,
+				developments: this.registries.developments,
+				populations: this.registries.populations,
+				resources: this.registries.resources,
+			},
+			this.baseOptions.phases,
+		);
 	}
 
 	public createSession(
@@ -142,11 +159,9 @@ export class SessionManager {
 		return this.sessions.delete(sessionId);
 	}
 
-	public getSnapshot(
-		sessionId: string,
-	): ReturnType<EngineSession['getSnapshot']> {
+	public getSnapshot(sessionId: string): SessionSnapshot {
 		const session = this.requireSession(sessionId);
-		return session.getSnapshot();
+		return this.composeSnapshot(session);
 	}
 
 	public getRuleSnapshot(
@@ -163,6 +178,14 @@ export class SessionManager {
 
 	public getRegistries(): SessionRegistriesPayload {
 		return structuredClone(this.registries);
+	}
+
+	public getBaseMetadata(): SessionSnapshotMetadata {
+		return structuredClone(this.baseMetadata);
+	}
+
+	private composeSnapshot(session: EngineSession): SessionSnapshot {
+		return composeSessionSnapshot(session, this.baseMetadata);
 	}
 
 	private requireSession(sessionId: string): EngineSession {

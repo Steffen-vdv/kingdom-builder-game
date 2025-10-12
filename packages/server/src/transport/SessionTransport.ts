@@ -124,15 +124,12 @@ export class SessionTransport {
 		this.requireAuthorization(request, 'session:advance');
 		const session = this.requireSession(sessionId);
 		try {
-			const result = await session.enqueue(() => {
-				const advance = session.advancePhase();
-				const snapshot = session.getSnapshot();
-				return { advance, snapshot };
-			});
-			const base = this.buildStateResponse(sessionId, result.snapshot);
+			const advance = await session.enqueue(() => session.advancePhase());
+			const snapshot = this.sessionManager.getSnapshot(sessionId);
+			const base = this.buildStateResponse(sessionId, snapshot);
 			const response = {
 				...base,
-				advance: result.advance,
+				advance,
 			} satisfies SessionAdvanceResponse;
 			return sessionAdvanceResponseSchema.parse(response);
 		} catch (error) {
@@ -176,12 +173,12 @@ export class SessionTransport {
 			}
 			const result = await session.enqueue(() => {
 				const traces = session.performAction(actionId, params as never);
-				const snapshot = session.getSnapshot();
-				return { traces, snapshot };
+				return { traces };
 			});
+			const snapshot = this.sessionManager.getSnapshot(sessionId);
 			const response = actionExecuteResponseSchema.parse({
 				status: 'success',
-				snapshot: result.snapshot,
+				snapshot,
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
