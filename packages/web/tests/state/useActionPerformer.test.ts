@@ -126,13 +126,17 @@ describe('useActionPerformer', () => {
 		});
 	});
 
-	it('shows error toast when action fails due to network issue', async () => {
-		const error = new Error('Network offline');
-		performSessionActionMock.mockRejectedValueOnce(error);
+	it('flags fatal transport failures instead of showing a toast', async () => {
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'error',
+			error: 'Network offline',
+			fatal: true,
+		});
 		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const syncPhaseState = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn();
+		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
 				session,
@@ -148,7 +152,7 @@ describe('useActionPerformer', () => {
 				endTurn,
 				enqueue: enqueueMock,
 				resourceKeys,
-				onFatalSessionError: undefined,
+				onFatalSessionError,
 			}),
 		);
 
@@ -156,14 +160,12 @@ describe('useActionPerformer', () => {
 			await result.current.handlePerform(action);
 		});
 
-		expect(pushErrorToast).toHaveBeenCalledWith('Network offline');
-		expect(addLog).toHaveBeenCalledWith(
-			'Failed to play ⚔️ Attack: Network offline',
-			{
-				id: sessionSnapshot.game.activePlayerId,
-				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
-			},
+		expect(onFatalSessionError).toHaveBeenCalledTimes(1);
+		expect(onFatalSessionError).toHaveBeenCalledWith(
+			expect.objectContaining({ message: 'Network offline' }),
 		);
+		expect(pushErrorToast).not.toHaveBeenCalled();
+		expect(addLog).not.toHaveBeenCalled();
 		expect(enqueueMock).toHaveBeenCalled();
 		expect(translateRequirementFailureMock).not.toHaveBeenCalled();
 	});
@@ -260,6 +262,62 @@ describe('useActionPerformer', () => {
 				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
 			},
 		);
+	});
+
+	it('treats missing active players as fatal errors', async () => {
+		const phases = sessionSnapshot.phases;
+		const opponentOnly = createSnapshotPlayer({
+			id: 'player-2',
+			name: 'Rival',
+			resources: { [actionCostResource]: 4 },
+		});
+		sessionSnapshot = createSessionSnapshot({
+			players: [opponentOnly],
+			activePlayerId: 'player-1',
+			opponentId: opponentOnly.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot,
+			turn: sessionSnapshot.game.turn,
+			currentPhase: sessionSnapshot.game.currentPhase,
+			currentStep: sessionSnapshot.game.currentStep,
+		});
+		session = {
+			getSnapshot: vi.fn(() => sessionSnapshot),
+		};
+		const onFatalSessionError = vi.fn();
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution: vi.fn().mockResolvedValue(undefined),
+				syncPhaseState: vi.fn(),
+				refresh: vi.fn(),
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn: vi.fn(),
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(onFatalSessionError).toHaveBeenCalledTimes(1);
+		expect(onFatalSessionError).toHaveBeenCalledWith(
+			expect.objectContaining({
+				message: 'Missing active player before action',
+			}),
+		);
+		expect(performSessionActionMock).not.toHaveBeenCalled();
+		expect(pushErrorToast).not.toHaveBeenCalled();
+		expect(addLog).not.toHaveBeenCalled();
 	});
 
 	it('passes enriched resolution metadata when an action succeeds', async () => {

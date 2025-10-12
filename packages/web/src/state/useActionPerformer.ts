@@ -20,6 +20,7 @@ import {
 	buildActionCostLines,
 	filterActionDiffChanges,
 	handleMissingActionDefinition,
+	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
@@ -127,6 +128,24 @@ export function useActionPerformer({
 }: UseActionPerformerOptions) {
 	const perform = useCallback(
 		async (action: Action, params?: ActionParametersPayload) => {
+			const notifyFatal = (error: unknown) => {
+				if (!isFatalSessionError(error)) {
+					markFatalSessionError(error);
+				}
+				if (onFatalSessionError) {
+					onFatalSessionError(error);
+				}
+			};
+			let fatalError: unknown = null;
+			const throwFatal = (error: unknown): never => {
+				fatalError = error;
+				notifyFatal(error);
+				throw error;
+			};
+			const ensureValue = <T>(
+				value: T | undefined,
+				createError: () => Error,
+			): T => value ?? throwFatal(createError());
 			const snapshotBefore = session.getSnapshot();
 			if (snapshotBefore.game.conclusion) {
 				pushErrorToast('The battle is already decided.');
@@ -139,12 +158,12 @@ export function useActionPerformer({
 				registries,
 			});
 			const activePlayerId = snapshotBefore.game.activePlayerId;
-			const playerBefore = snapshotBefore.game.players.find(
-				(entry) => entry.id === activePlayerId,
+			const playerBefore = ensureValue(
+				snapshotBefore.game.players.find(
+					(entry) => entry.id === activePlayerId,
+				),
+				() => new Error('Missing active player before action'),
 			);
-			if (!playerBefore) {
-				throw new Error('Missing active player before action');
-			}
 			const before = snapshotPlayer(playerBefore);
 			try {
 				const response = await performSessionAction({
@@ -153,6 +172,9 @@ export function useActionPerformer({
 					...(params ? { params } : {}),
 				});
 				if (response.status === 'error') {
+					if (response.fatal) {
+						throwFatal(createActionExecutionError(response));
+					}
 					throw createActionExecutionError(response);
 				}
 				const costs = response.costs ?? {};
@@ -166,12 +188,12 @@ export function useActionPerformer({
 				});
 				const { translationContext, diffContext } = legacyContext;
 				context = translationContext;
-				const playerAfter = snapshotAfter.game.players.find(
-					(entry) => entry.id === activePlayerId,
+				const playerAfter = ensureValue(
+					snapshotAfter.game.players.find(
+						(entry) => entry.id === activePlayerId,
+					),
+					() => new Error('Missing active player after action'),
 				);
-				if (!playerAfter) {
-					throw new Error('Missing active player after action');
-				}
 				const after = snapshotPlayer(playerAfter);
 				const stepDef = context.actions.get(action.id);
 				if (!stepDef) {
@@ -238,35 +260,21 @@ export function useActionPerformer({
 					stepDef,
 					logHeadline,
 				);
-				const resolutionSource = {
-					kind: 'action' as const,
-					label: 'Action',
-					id: actionMeta.id,
-					name: actionMeta.name,
-					icon: actionMeta.icon ?? '',
-				};
-				const resolutionPlayer = {
+				const playerIdentity = {
 					id: playerAfter.id,
 					name: playerAfter.name,
 				};
 				syncPhaseState(snapshotAfter);
 				refresh();
-				try {
-					await showResolution({
-						action: actionMeta,
-						lines: logLines,
-						player: resolutionPlayer,
-						summaries: filtered,
-						source: resolutionSource,
-						actorLabel: 'Played by',
-					});
-				} catch (_error) {
-					addLog(logLines, resolutionPlayer);
-				}
-				if (!mountedRef.current) {
-					return;
-				}
-				if (snapshotAfter.game.conclusion) {
+				await presentResolutionOrLog({
+					action: actionMeta,
+					logLines,
+					summaries: filtered,
+					player: playerIdentity,
+					showResolution,
+					addLog,
+				});
+				if (!mountedRef.current || snapshotAfter.game.conclusion) {
 					return;
 				}
 				if (
@@ -276,15 +284,16 @@ export function useActionPerformer({
 					await endTurn();
 				}
 			} catch (error) {
+				if (fatalError !== null || isFatalSessionError(error)) {
+					if (fatalError === null) {
+						fatalError = error;
+						notifyFatal(error);
+					}
+					throw error;
+				}
 				if (error instanceof SessionMirroringError) {
-					if (isFatalSessionError(error)) {
-						return;
-					}
-					if (onFatalSessionError) {
-						markFatalSessionError(error);
-						onFatalSessionError(error);
-						return;
-					}
+					fatalError = error;
+					notifyFatal(error);
 					throw error;
 				}
 				const icon = context.actions.get(action.id)?.icon || '';
@@ -323,7 +332,14 @@ export function useActionPerformer({
 	);
 	const handlePerform = useCallback(
 		(action: Action, params?: ActionParametersPayload) =>
-			enqueue(() => perform(action, params)),
+			enqueue(() =>
+				perform(action, params).catch((error) => {
+					if (isFatalSessionError(error)) {
+						return;
+					}
+					throw error;
+				}),
+			),
 		[enqueue, perform],
 	);
 	const performRef = useRef<typeof perform>(perform);
