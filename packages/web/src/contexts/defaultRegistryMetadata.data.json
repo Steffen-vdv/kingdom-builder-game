@@ -1,0 +1,1252 @@
+{
+	"registries": {
+		"actions": {
+			"expand": {
+				"id": "expand",
+				"name": "Expand",
+				"icon": "🌱",
+				"baseCosts": {
+					"ap": 1,
+					"gold": 2
+				},
+				"effects": [
+					{
+						"type": "land",
+						"method": "add",
+						"params": {
+							"count": 1
+						}
+					},
+					{
+						"type": "resource",
+						"method": "add",
+						"params": {
+							"key": "happiness",
+							"amount": 1
+						}
+					}
+				],
+				"category": "basic",
+				"order": 1,
+				"focus": "economy"
+			},
+			"develop": {
+				"id": "develop",
+				"name": "Develop",
+				"icon": "🏗️",
+				"baseCosts": {
+					"ap": 1,
+					"gold": 3
+				},
+				"effects": [
+					{
+						"type": "development",
+						"method": "add",
+						"params": {
+							"id": "$id",
+							"landId": "$landId"
+						}
+					}
+				],
+				"category": "development",
+				"order": 1,
+				"focus": "economy"
+			},
+			"tax": {
+				"id": "tax",
+				"name": "Tax",
+				"icon": "💰",
+				"baseCosts": {
+					"ap": 1
+				},
+				"effects": [
+					{
+						"effects": [
+							{
+								"type": "resource",
+								"method": "add",
+								"params": {
+									"key": "gold",
+									"amount": 4
+								}
+							},
+							{
+								"type": "resource",
+								"method": "remove",
+								"params": {
+									"key": "happiness",
+									"amount": 0.5
+								},
+								"round": "up",
+								"meta": {
+									"allowShortfall": true
+								}
+							}
+						],
+						"evaluator": {
+							"type": "population",
+							"params": {
+								"id": "tax"
+							}
+						}
+					}
+				],
+				"category": "basic",
+				"order": 3,
+				"focus": "economy"
+			},
+			"raise_pop": {
+				"id": "raise_pop",
+				"name": "Hire",
+				"icon": "👶",
+				"baseCosts": {
+					"ap": 1,
+					"gold": 5
+				},
+				"requirements": [
+					{
+						"type": "evaluator",
+						"method": "compare",
+						"params": {
+							"left": {
+								"type": "population"
+							},
+							"operator": "lt",
+							"right": {
+								"type": "stat",
+								"params": {
+									"key": "maxPopulation"
+								}
+							}
+						}
+					}
+				],
+				"effects": [
+					{
+						"type": "population",
+						"method": "add",
+						"params": {
+							"role": "$role"
+						}
+					},
+					{
+						"type": "resource",
+						"method": "add",
+						"params": {
+							"key": "happiness",
+							"amount": 1
+						}
+					}
+				],
+				"category": "population",
+				"order": 1,
+				"focus": "economy"
+			},
+			"royal_decree": {
+				"id": "royal_decree",
+				"name": "Royal Decree",
+				"icon": "📜",
+				"baseCosts": {
+					"ap": 1,
+					"gold": 12
+				},
+				"effects": [
+					{
+						"type": "action",
+						"method": "perform",
+						"params": {
+							"id": "expand"
+						}
+					},
+					{
+						"type": "action",
+						"method": "perform",
+						"params": {
+							"id": "till",
+							"landId": "$landId"
+						}
+					},
+					{
+						"id": "royal_decree_develop",
+						"title": "Choose one:",
+						"layout": "compact",
+						"options": [
+							{
+								"id": "royal_decree_house",
+								"icon": "🏠",
+								"actionId": "develop",
+								"params": {
+									"developmentId": "house",
+									"landId": "$landId"
+								}
+							},
+							{
+								"id": "royal_decree_farm",
+								"icon": "🌾",
+								"actionId": "develop",
+								"params": {
+									"developmentId": "farm",
+									"landId": "$landId"
+								}
+							},
+							{
+								"id": "royal_decree_outpost",
+								"icon": "🏹",
+								"actionId": "develop",
+								"params": {
+									"developmentId": "outpost",
+									"landId": "$landId"
+								}
+							},
+							{
+								"id": "royal_decree_watchtower",
+								"icon": "🗼",
+								"actionId": "develop",
+								"params": {
+									"developmentId": "watchtower",
+									"landId": "$landId"
+								}
+							}
+						]
+					},
+					{
+						"type": "resource",
+						"method": "remove",
+						"params": {
+							"key": "happiness",
+							"amount": 3
+						},
+						"meta": {
+							"allowShortfall": true
+						}
+					}
+				],
+				"category": "basic",
+				"order": 5,
+				"focus": "economy"
+			},
+			"army_attack": {
+				"id": "army_attack",
+				"name": "Army Attack",
+				"icon": "🗡️",
+				"baseCosts": {
+					"ap": 1
+				},
+				"requirements": [
+					{
+						"type": "evaluator",
+						"method": "compare",
+						"params": {
+							"left": {
+								"type": "stat",
+								"params": {
+									"key": "warWeariness"
+								}
+							},
+							"operator": "lt",
+							"right": {
+								"type": "population",
+								"params": {
+									"role": "legion"
+								}
+							}
+						}
+					}
+				],
+				"effects": [
+					{
+						"type": "attack",
+						"method": "perform",
+						"params": {
+							"stats": [
+								{
+									"role": "power",
+									"key": "armyStrength"
+								},
+								{
+									"role": "absorption",
+									"key": "absorption"
+								},
+								{
+									"role": "fortification",
+									"key": "fortificationStrength"
+								}
+							],
+							"target": {
+								"type": "resource",
+								"key": "castleHP"
+							},
+							"onDamage": {
+								"attacker": [
+									{
+										"type": "resource",
+										"method": "add",
+										"params": {
+											"key": "happiness",
+											"amount": 1
+										}
+									},
+									{
+										"type": "action",
+										"method": "perform",
+										"params": {
+											"id": "plunder"
+										}
+									}
+								],
+								"defender": [
+									{
+										"type": "resource",
+										"method": "remove",
+										"params": {
+											"key": "happiness",
+											"amount": 1
+										},
+										"meta": {
+											"allowShortfall": true
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"type": "stat",
+						"method": "add",
+						"params": {
+							"key": "warWeariness",
+							"amount": 1
+						}
+					}
+				],
+				"category": "basic",
+				"order": 6,
+				"focus": "aggressive"
+			},
+			"hold_festival": {
+				"id": "hold_festival",
+				"name": "Hold Festival",
+				"icon": "🎉",
+				"baseCosts": {
+					"ap": 1,
+					"gold": 3
+				},
+				"requirements": [
+					{
+						"type": "evaluator",
+						"method": "compare",
+						"params": {
+							"left": {
+								"type": "stat",
+								"params": {
+									"key": "warWeariness"
+								}
+							},
+							"operator": "eq",
+							"right": 0
+						}
+					}
+				],
+				"effects": [
+					{
+						"type": "resource",
+						"method": "add",
+						"params": {
+							"key": "happiness",
+							"amount": 3
+						}
+					},
+					{
+						"type": "stat",
+						"method": "remove",
+						"params": {
+							"key": "fortificationStrength",
+							"amount": 3
+						}
+					},
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "hold_festival_penalty",
+							"name": "Festival Hangover",
+							"icon": "🤮",
+							"onUpkeepPhase": [
+								{
+									"type": "passive",
+									"method": "remove",
+									"params": {
+										"id": "hold_festival_penalty"
+									}
+								}
+							]
+						},
+						"effects": [
+							{
+								"type": "result_mod",
+								"method": "add",
+								"params": {
+									"id": "hold_festival_attack_happiness_penalty",
+									"actionId": "army_attack"
+								},
+								"effects": [
+									{
+										"type": "resource",
+										"method": "remove",
+										"params": {
+											"key": "happiness",
+											"amount": 3
+										},
+										"meta": {
+											"allowShortfall": true
+										}
+									}
+								]
+							}
+						]
+					}
+				],
+				"category": "basic",
+				"order": 7,
+				"focus": "economy"
+			},
+			"plunder": {
+				"id": "plunder",
+				"name": "Plunder",
+				"icon": "🏴‍☠️",
+				"effects": [
+					{
+						"type": "resource",
+						"method": "transfer",
+						"params": {
+							"key": "gold",
+							"percent": 25
+						}
+					}
+				],
+				"system": true
+			},
+			"plow": {
+				"id": "plow",
+				"name": "Plow",
+				"icon": "🚜",
+				"baseCosts": {
+					"ap": 1,
+					"gold": 6
+				},
+				"effects": [
+					{
+						"type": "action",
+						"method": "perform",
+						"params": {
+							"id": "expand"
+						}
+					},
+					{
+						"type": "action",
+						"method": "perform",
+						"params": {
+							"id": "till"
+						}
+					},
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "plow_cost_mod",
+							"onUpkeepPhase": [
+								{
+									"type": "passive",
+									"method": "remove",
+									"params": {
+										"id": "plow_cost_mod"
+									}
+								}
+							]
+						},
+						"effects": [
+							{
+								"type": "cost_mod",
+								"method": "add",
+								"params": {
+									"id": "plow_cost_all",
+									"key": "gold",
+									"amount": 2
+								}
+							}
+						]
+					}
+				],
+				"system": true
+			},
+			"till": {
+				"id": "till",
+				"name": "Till",
+				"icon": "🧑‍🌾",
+				"effects": [
+					{
+						"type": "land",
+						"method": "till"
+					}
+				],
+				"system": true
+			},
+			"build": {
+				"id": "build",
+				"name": "Build",
+				"icon": "🏛️",
+				"effects": [
+					{
+						"type": "building",
+						"method": "add",
+						"params": {
+							"id": "$id"
+						}
+					}
+				],
+				"category": "building",
+				"order": 1,
+				"focus": "other"
+			}
+		},
+		"buildings": {
+			"town_charter": {
+				"id": "town_charter",
+				"name": "Town Charter",
+				"icon": "🏘️",
+				"costs": {
+					"ap": 1,
+					"gold": 5
+				},
+				"onBuild": [
+					{
+						"type": "cost_mod",
+						"method": "add",
+						"params": {
+							"id": "tc_expand_cost",
+							"actionId": "expand",
+							"key": "gold",
+							"amount": 2
+						}
+					},
+					{
+						"type": "result_mod",
+						"method": "add",
+						"params": {
+							"id": "tc_expand_result",
+							"actionId": "expand"
+						},
+						"effects": [
+							{
+								"type": "resource",
+								"method": "add",
+								"params": {
+									"key": "happiness",
+									"amount": 1
+								}
+							}
+						]
+					}
+				],
+				"focus": "economy"
+			},
+			"mill": {
+				"id": "mill",
+				"name": "Mill",
+				"icon": "⚙️",
+				"costs": {
+					"ap": 1,
+					"gold": 7
+				},
+				"onBuild": [
+					{
+						"type": "result_mod",
+						"method": "add",
+						"params": {
+							"id": "mill_farm_bonus",
+							"evaluation": {
+								"type": "development",
+								"id": "farm"
+							},
+							"amount": 1
+						}
+					}
+				],
+				"focus": "economy"
+			},
+			"raiders_guild": {
+				"id": "raiders_guild",
+				"name": "Raider's Guild",
+				"icon": "🏴‍☠️",
+				"costs": {
+					"ap": 1,
+					"gold": 8
+				},
+				"upkeep": {
+					"gold": 1
+				},
+				"onBuild": [
+					{
+						"type": "result_mod",
+						"method": "add",
+						"params": {
+							"id": "raiders_guild_plunder_bonus",
+							"evaluation": {
+								"type": "transfer_pct",
+								"id": "percent"
+							},
+							"adjust": 25
+						}
+					}
+				],
+				"focus": "aggressive"
+			},
+			"plow_workshop": {
+				"id": "plow_workshop",
+				"name": "Plow Workshop",
+				"icon": "🏭",
+				"costs": {
+					"ap": 1,
+					"gold": 10
+				},
+				"onBuild": [
+					{
+						"type": "action",
+						"method": "add",
+						"params": {
+							"id": "plow"
+						}
+					}
+				],
+				"focus": "economy"
+			},
+			"market": {
+				"id": "market",
+				"name": "Market",
+				"icon": "🏪",
+				"costs": {
+					"ap": 1,
+					"gold": 10
+				},
+				"onBuild": [
+					{
+						"type": "result_mod",
+						"method": "add",
+						"params": {
+							"id": "market_tax_bonus",
+							"evaluation": {
+								"type": "population",
+								"id": "tax"
+							},
+							"amount": 1
+						}
+					}
+				],
+				"focus": "economy"
+			},
+			"castle_walls": {
+				"id": "castle_walls",
+				"name": "Castle Walls",
+				"icon": "🧱",
+				"costs": {
+					"ap": 1,
+					"gold": 12
+				},
+				"onBuild": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "castle_walls_bonus"
+						},
+						"effects": [
+							{
+								"type": "stat",
+								"method": "add",
+								"params": {
+									"key": "fortificationStrength",
+									"amount": 5
+								}
+							},
+							{
+								"type": "stat",
+								"method": "add",
+								"params": {
+									"key": "absorption",
+									"amount": 0.2
+								}
+							}
+						]
+					}
+				],
+				"focus": "defense"
+			},
+			"barracks": {
+				"id": "barracks",
+				"name": "Barracks",
+				"icon": "🪖",
+				"costs": {
+					"ap": 1,
+					"gold": 12
+				},
+				"onBuild": [],
+				"focus": "aggressive"
+			},
+			"citadel": {
+				"id": "citadel",
+				"name": "Citadel",
+				"icon": "🏯",
+				"costs": {
+					"ap": 1,
+					"gold": 12
+				},
+				"onBuild": [],
+				"focus": "defense"
+			},
+			"castle_gardens": {
+				"id": "castle_gardens",
+				"name": "Castle Gardens",
+				"icon": "🌷",
+				"costs": {
+					"ap": 1,
+					"gold": 15
+				},
+				"onBuild": [],
+				"focus": "economy"
+			},
+			"temple": {
+				"id": "temple",
+				"name": "Temple",
+				"icon": "⛪",
+				"costs": {
+					"ap": 1,
+					"gold": 16
+				},
+				"onBuild": [],
+				"focus": "other"
+			},
+			"palace": {
+				"id": "palace",
+				"name": "Palace",
+				"icon": "👑",
+				"costs": {
+					"ap": 1,
+					"gold": 20
+				},
+				"onBuild": [],
+				"focus": "other"
+			},
+			"great_hall": {
+				"id": "great_hall",
+				"name": "Great Hall",
+				"icon": "🏟️",
+				"costs": {
+					"ap": 1,
+					"gold": 22
+				},
+				"onBuild": [],
+				"focus": "other"
+			}
+		},
+		"developments": {
+			"farm": {
+				"id": "farm",
+				"name": "Farm",
+				"icon": "🌾",
+				"onGainIncomeStep": [
+					{
+						"effects": [
+							{
+								"type": "resource",
+								"method": "add",
+								"params": {
+									"key": "gold",
+									"amount": 2
+								}
+							}
+						],
+						"evaluator": {
+							"type": "development",
+							"params": {
+								"id": "$id"
+							}
+						}
+					}
+				],
+				"order": 2,
+				"focus": "economy"
+			},
+			"house": {
+				"id": "house",
+				"name": "House",
+				"icon": "🏠",
+				"onBuild": [
+					{
+						"type": "stat",
+						"method": "add",
+						"params": {
+							"key": "maxPopulation",
+							"amount": 1
+						}
+					}
+				],
+				"populationCap": 1,
+				"order": 1,
+				"focus": "economy"
+			},
+			"outpost": {
+				"id": "outpost",
+				"name": "Outpost",
+				"icon": "🏹",
+				"onBuild": [
+					{
+						"type": "stat",
+						"method": "add",
+						"params": {
+							"key": "armyStrength",
+							"amount": 1
+						}
+					},
+					{
+						"type": "stat",
+						"method": "add",
+						"params": {
+							"key": "fortificationStrength",
+							"amount": 1
+						}
+					}
+				],
+				"order": 3,
+				"focus": "defense"
+			},
+			"watchtower": {
+				"id": "watchtower",
+				"name": "Watchtower",
+				"icon": "🗼",
+				"onBuild": [
+					{
+						"type": "stat",
+						"method": "add",
+						"params": {
+							"key": "fortificationStrength",
+							"amount": 2
+						}
+					},
+					{
+						"type": "stat",
+						"method": "add",
+						"params": {
+							"key": "absorption",
+							"amount": 0.5
+						}
+					}
+				],
+				"onAttackResolved": [
+					{
+						"type": "development",
+						"method": "remove",
+						"params": {
+							"id": "watchtower",
+							"landId": "$landId"
+						}
+					}
+				],
+				"order": 4,
+				"focus": "defense"
+			},
+			"garden": {
+				"id": "garden",
+				"name": "Garden",
+				"icon": "🌿",
+				"system": true
+			}
+		},
+		"populations": {
+			"council": {
+				"id": "council",
+				"name": "Council",
+				"icon": "⚖️",
+				"upkeep": {
+					"gold": 2
+				},
+				"onGainAPStep": [
+					{
+						"effects": [
+							{
+								"type": "resource",
+								"method": "add",
+								"params": {
+									"key": "ap",
+									"amount": 1
+								}
+							}
+						],
+						"evaluator": {
+							"type": "population",
+							"params": {
+								"id": "council",
+								"role": "council"
+							}
+						}
+					}
+				]
+			},
+			"legion": {
+				"id": "legion",
+				"name": "Legion",
+				"icon": "🎖️",
+				"upkeep": {
+					"gold": 1
+				},
+				"onAssigned": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "legion_$player_$index"
+						},
+						"effects": [
+							{
+								"type": "stat",
+								"method": "add",
+								"params": {
+									"key": "armyStrength",
+									"amount": 1
+								}
+							}
+						]
+					}
+				],
+				"onUnassigned": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "legion_$player_$index"
+						}
+					}
+				]
+			},
+			"fortifier": {
+				"id": "fortifier",
+				"name": "Fortifier",
+				"icon": "🔧",
+				"upkeep": {
+					"gold": 1
+				},
+				"onAssigned": [
+					{
+						"type": "passive",
+						"method": "add",
+						"params": {
+							"id": "fortifier_$player_$index"
+						},
+						"effects": [
+							{
+								"type": "stat",
+								"method": "add",
+								"params": {
+									"key": "fortificationStrength",
+									"amount": 1
+								}
+							}
+						]
+					}
+				],
+				"onUnassigned": [
+					{
+						"type": "passive",
+						"method": "remove",
+						"params": {
+							"id": "fortifier_$player_$index"
+						}
+					}
+				]
+			},
+			"citizen": {
+				"id": "citizen",
+				"name": "Citizen",
+				"icon": "👤"
+			}
+		},
+		"resources": {
+			"gold": {
+				"key": "gold",
+				"icon": "🪙",
+				"label": "Gold",
+				"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
+				"tags": ["bankruptcy-check"]
+			},
+			"ap": {
+				"key": "ap",
+				"icon": "⚡",
+				"label": "Action Points",
+				"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
+			},
+			"happiness": {
+				"key": "happiness",
+				"icon": "😊",
+				"label": "Happiness",
+				"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
+			},
+			"castleHP": {
+				"key": "castleHP",
+				"icon": "🏰",
+				"label": "Castle HP",
+				"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
+				"tags": ["attack-target", "win-condition-zero"]
+			}
+		}
+	},
+	"metadataSources": {
+		"resources": {
+			"gold": {
+				"label": "Gold",
+				"icon": "🪙",
+				"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open."
+			},
+			"ap": {
+				"label": "Action Points",
+				"icon": "⚡",
+				"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
+			},
+			"happiness": {
+				"label": "Happiness",
+				"icon": "😊",
+				"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
+			},
+			"castleHP": {
+				"label": "Castle HP",
+				"icon": "🏰",
+				"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost."
+			}
+		},
+		"stats": {
+			"maxPopulation": {
+				"label": "Max Population",
+				"icon": "👥",
+				"description": "Max Population determines how many subjects your kingdom can sustain. Expand infrastructure or build houses to increase it."
+			},
+			"armyStrength": {
+				"label": "Army Strength",
+				"icon": "⚔️",
+				"description": "Army Strength reflects the overall power of your military forces. A higher value makes your attacks more formidable."
+			},
+			"fortificationStrength": {
+				"label": "Fortification Strength",
+				"icon": "🛡️",
+				"description": "Fortification Strength measures the resilience of your defenses. It reduces damage taken when enemies assault your castle."
+			},
+			"absorption": {
+				"label": "Absorption",
+				"icon": "🌀",
+				"description": "Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows."
+			},
+			"growth": {
+				"label": "Growth",
+				"icon": "📈",
+				"description": "Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase."
+			},
+			"warWeariness": {
+				"label": "War Weariness",
+				"icon": "💤",
+				"description": "War Weariness reflects the fatigue from prolonged conflict. High weariness can sap morale and hinder wartime efforts."
+			}
+		},
+		"phases": [
+			{
+				"id": "growth",
+				"steps": [
+					{
+						"id": "resolve-dynamic-triggers",
+						"title": "Resolve dynamic triggers",
+						"triggers": ["onGrowthPhase"]
+					},
+					{
+						"id": "gain-income",
+						"title": "Gain Income",
+						"icon": "💰",
+						"triggers": ["onGainIncomeStep"]
+					},
+					{
+						"id": "gain-ap",
+						"title": "Gain Action Points",
+						"triggers": ["onGainAPStep"]
+					},
+					{
+						"id": "raise-strength",
+						"title": "Raise Strength",
+						"effects": [
+							{
+								"evaluator": {
+									"type": "population",
+									"params": {
+										"role": "legion"
+									}
+								},
+								"effects": [
+									{
+										"type": "stat",
+										"method": "add_pct",
+										"params": {
+											"key": "armyStrength",
+											"percentStat": "growth"
+										},
+										"round": "up"
+									}
+								]
+							},
+							{
+								"evaluator": {
+									"type": "population",
+									"params": {
+										"role": "fortifier"
+									}
+								},
+								"effects": [
+									{
+										"type": "stat",
+										"method": "add_pct",
+										"params": {
+											"key": "fortificationStrength",
+											"percentStat": "growth"
+										},
+										"round": "up"
+									}
+								]
+							}
+						]
+					}
+				],
+				"label": "Growth",
+				"icon": "🏗️"
+			},
+			{
+				"id": "upkeep",
+				"steps": [
+					{
+						"id": "resolve-dynamic-triggers",
+						"title": "Resolve dynamic triggers",
+						"triggers": ["onUpkeepPhase"]
+					},
+					{
+						"id": "pay-upkeep",
+						"title": "Pay Upkeep",
+						"triggers": ["onPayUpkeepStep"]
+					},
+					{
+						"id": "war-recovery",
+						"title": "War recovery",
+						"effects": [
+							{
+								"evaluator": {
+									"type": "compare",
+									"params": {
+										"left": {
+											"type": "stat",
+											"params": {
+												"key": "warWeariness"
+											}
+										},
+										"operator": "gt",
+										"right": 0
+									}
+								},
+								"effects": [
+									{
+										"type": "stat",
+										"method": "remove",
+										"params": {
+											"key": "warWeariness",
+											"amount": 1
+										}
+									}
+								]
+							}
+						]
+					}
+				],
+				"label": "Upkeep",
+				"icon": "🧹"
+			},
+			{
+				"id": "main",
+				"steps": [
+					{
+						"id": "main",
+						"title": "Main Phase"
+					}
+				],
+				"label": "Main",
+				"icon": "🎯",
+				"action": true
+			}
+		],
+		"triggers": {
+			"onBuild": {
+				"icon": "⚒️",
+				"future": "Until removed",
+				"past": "Build"
+			},
+			"onBeforeAttacked": {
+				"icon": "🛡️",
+				"future": "Before being attacked",
+				"past": "Before attack"
+			},
+			"onAttackResolved": {
+				"icon": "⚔️",
+				"future": "After having been attacked",
+				"past": "After attack"
+			},
+			"onPayUpkeepStep": {
+				"icon": "🧹",
+				"future": "During upkeep step",
+				"past": "Upkeep step"
+			},
+			"onGainIncomeStep": {
+				"icon": "💰",
+				"future": "During Growth Phase — Gain Income step",
+				"past": "Growth Phase — Gain Income step"
+			},
+			"onGainAPStep": {
+				"icon": "⚡",
+				"future": "During AP step",
+				"past": "AP step"
+			},
+			"mainPhase": {
+				"icon": "🎯",
+				"future": "",
+				"past": "Main phase"
+			},
+			"onGrowthPhase": {
+				"icon": "🏗️",
+				"future": "On each Growth Phase",
+				"past": "Growth Phase"
+			},
+			"onUpkeepPhase": {
+				"icon": "🧹",
+				"future": "On each Upkeep Phase",
+				"past": "Upkeep Phase"
+			},
+			"onMainPhase": {
+				"icon": "🎯",
+				"future": "On each Main Phase",
+				"past": "Main Phase"
+			}
+		},
+		"assets": {
+			"land": {
+				"label": "Land",
+				"icon": "🗺️"
+			},
+			"slot": {
+				"label": "Development Slot",
+				"icon": "🧩"
+			},
+			"passive": {
+				"label": "Passive",
+				"icon": "♾️"
+			}
+		}
+	}
+}
