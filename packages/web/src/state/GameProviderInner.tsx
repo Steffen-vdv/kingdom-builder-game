@@ -6,6 +6,7 @@ import React, {
 	useRef,
 } from 'react';
 import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
+import TranslationContextLoading from './TranslationContextLoading';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
 import { useGameLog } from './useGameLog';
@@ -283,7 +284,7 @@ export function GameProviderInner({
 	}, [onReleaseSession, onExit]);
 
 	if (!translationContextReady || !translationContext) {
-		return null;
+		return <TranslationContextLoading />;
 	}
 
 	const value: LegacyGameEngineContextValue = {
