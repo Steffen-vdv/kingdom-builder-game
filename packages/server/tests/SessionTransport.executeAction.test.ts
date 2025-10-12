@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
+import type {
+	SessionRequirementFailure,
+	SessionActionRequirementList,
+} from '@kingdom-builder/protocol';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
@@ -96,10 +99,22 @@ describe('SessionTransport executeAction', () => {
 			},
 			message: 'Denied',
 		};
+		const additionalFailure: SessionRequirementFailure = {
+			requirement: {
+				type: 'synthetic',
+				method: 'deny',
+				params: { flag: false },
+			},
+			message: 'Still denied',
+		};
+		const failures: SessionActionRequirementList = [failure, additionalFailure];
 		const rejection = new Error('Action execution failed.');
 		(
 			rejection as { requirementFailure?: SessionRequirementFailure }
 		).requirementFailure = failure;
+		(
+			rejection as { requirementFailures?: SessionActionRequirementList }
+		).requirementFailures = failures;
 		if (session) {
 			vi.spyOn(session, 'enqueue').mockImplementation(() =>
 				Promise.reject(rejection),
@@ -111,7 +126,47 @@ describe('SessionTransport executeAction', () => {
 		});
 		expect(result.status).toBe('error');
 		expect(result.requirementFailure).toEqual(failure);
-		expect(result.requirementFailures).toEqual([failure]);
+		expect(result.requirementFailures).toEqual(failures);
+		expect(result.httpStatus).toBe(409);
+	});
+
+	it('derives requirementFailure from the first entry when only an array is provided', async () => {
+		const { manager, actionId } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		const failures: SessionActionRequirementList = [
+			{
+				requirement: {
+					type: 'synthetic',
+					method: 'deny',
+					params: { reason: 'array-only' },
+				},
+				message: 'Denied from array',
+			},
+		];
+		const rejection = new Error('Action execution failed.');
+		(
+			rejection as { requirementFailures?: SessionActionRequirementList }
+		).requirementFailures = failures;
+		if (session) {
+			vi.spyOn(session, 'enqueue').mockImplementation(() =>
+				Promise.reject(rejection),
+			);
+		}
+		const result = await transport.executeAction({
+			body: { sessionId, actionId, params: {} },
+			headers: authorizedHeaders,
+		});
+		expect(result.status).toBe('error');
+		expect(result.requirementFailure).toEqual(failures[0]);
+		expect(result.requirementFailures).toEqual(failures);
 		expect(result.httpStatus).toBe(409);
 	});
 
