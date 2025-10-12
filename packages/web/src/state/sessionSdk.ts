@@ -30,7 +30,12 @@ import {
 	extractResourceKeys,
 	type SessionRegistries,
 } from './sessionRegistries';
-import { createGameApi, type GameApi, GameApiError } from '../services/gameApi';
+import {
+	createGameApi,
+	type GameApi,
+  GameApiError,
+	type GameApiRequestOptions,
+} from '../services/gameApi';
 
 export interface SessionHandle {
 	enqueue: EngineSession['enqueue'];
@@ -146,8 +151,15 @@ function applyPlayerName(
 	session.updatePlayerName(primaryPlayerId, desiredName);
 }
 
+/**
+ * Creates a new game session via the remote API.
+ *
+ * @param options - Configuration for the local session bootstrap.
+ * @param requestOptions - Transport settings such as an abort signal.
+ */
 export async function createSession(
 	options: CreateSessionOptions = {},
+	requestOptions: GameApiRequestOptions = {},
 ): Promise<CreateSessionResult> {
 	const devMode = options.devMode ?? false;
 	const playerName = options.playerName ?? DEFAULT_PLAYER_NAME;
@@ -156,7 +168,7 @@ export async function createSession(
 		playerNames: { A: playerName },
 	};
 	const api = ensureGameApi();
-	const response = await api.createSession(sessionRequest);
+	const response = await api.createSession(sessionRequest, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
 	const legacySession = createEngineSession({
@@ -188,12 +200,19 @@ export async function createSession(
 	};
 }
 
+/**
+ * Retrieves the latest snapshot for the provided session.
+ *
+ * @param sessionId - Target session identifier.
+ * @param requestOptions - Transport settings such as an abort signal.
+ */
 export async function fetchSnapshot(
 	sessionId: string,
+	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
 	const record = ensureSessionRecord(sessionId);
-	const response = await api.fetchSnapshot(sessionId);
+	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
 	record.registries = registries;
@@ -209,13 +228,20 @@ export async function fetchSnapshot(
 	};
 }
 
+/**
+ * Executes an action against the remote session and mirrors it locally.
+ *
+ * @param request - Action execution payload.
+ * @param requestOptions - Transport settings such as an abort signal.
+ */
 export async function performSessionAction(
 	request: ActionExecuteRequest,
+	requestOptions: GameApiRequestOptions = {},
 ): Promise<ActionExecuteResponse> {
 	const api = ensureGameApi();
 	const { handle } = ensureSessionRecord(request.sessionId);
 	try {
-		const response = await api.performAction(request);
+		const response = await api.performAction(request, requestOptions);
 		if (response.status === 'success') {
 			try {
 				const params = request.params as ActionParams<string> | undefined;
@@ -247,8 +273,15 @@ export async function performSessionAction(
 	}
 }
 
+/**
+ * Advances the remote session phase and updates local caches.
+ *
+ * @param request - Phase advance payload.
+ * @param requestOptions - Transport settings such as an abort signal.
+ */
 export async function advanceSessionPhase(
 	request: SessionAdvanceRequest,
+	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionAdvanceResponse> {
 	const api = ensureGameApi();
 	const record = ensureSessionRecord(request.sessionId);
@@ -257,7 +290,7 @@ export async function advanceSessionPhase(
 		registries: cachedRegistries,
 		resourceKeys: cachedResourceKeys,
 	} = record;
-	const response = await api.advancePhase(request);
+	const response = await api.advancePhase(request, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys = extractResourceKeys(registries) as ResourceKey[];
 	Object.assign(cachedRegistries, registries);

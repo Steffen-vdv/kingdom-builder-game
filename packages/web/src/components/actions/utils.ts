@@ -9,8 +9,11 @@ export function playerHasRequiredResources(
 	costs: Record<string, number>,
 ): boolean {
 	return Object.entries(costs).every(([resourceKey, requiredAmount]) => {
-		const playerAmount = playerResources[resourceKey] || 0;
-		const neededAmount = requiredAmount ?? 0;
+		const playerAmount = Number(playerResources[resourceKey] ?? 0);
+		const neededAmount = Number(requiredAmount ?? 0);
+		if (!Number.isFinite(playerAmount) || !Number.isFinite(neededAmount)) {
+			return false;
+		}
 		return playerAmount >= neededAmount;
 	});
 }
@@ -23,7 +26,10 @@ export function sumNonActionCosts(
 		if (resourceKey === actionCostResource) {
 			return sum;
 		}
-		const neededAmount = requiredAmount ?? 0;
+		const neededAmount = Number(requiredAmount ?? 0);
+		if (!Number.isFinite(neededAmount)) {
+			return sum;
+		}
 		return sum + neededAmount;
 	}, 0);
 }
@@ -45,9 +51,13 @@ export function formatMissingResources(
 ): string | undefined {
 	const missing: string[] = [];
 	for (const [resourceKey, cost] of Object.entries(costs)) {
-		const available = playerResources[resourceKey] ?? 0;
-		const shortage = cost - available;
-		if (shortage <= 0) {
+		const normalizedCost = Number(cost ?? 0);
+		const available = Number(playerResources[resourceKey] ?? 0);
+		if (!Number.isFinite(normalizedCost) || !Number.isFinite(available)) {
+			continue;
+		}
+		const shortage = normalizedCost - available;
+		if (!Number.isFinite(shortage) || shortage <= 0) {
 			continue;
 		}
 		const descriptor = selectResourceDescriptor(resourceKey);

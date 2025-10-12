@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Button from '../common/Button';
 import ToggleSwitch from '../common/ToggleSwitch';
 import { PlayerNameSetting } from './PlayerNameSetting';
@@ -50,6 +50,15 @@ const TAB_BUTTON_INACTIVE_CLASS = [
 	'bg-white/60 text-slate-600 hover:bg-white/80',
 	'dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-900/50',
 ].join(' ');
+
+const FOCUSABLE_ELEMENTS_SELECTOR = [
+	'a[href]',
+	'button:not([disabled])',
+	'input:not([disabled])',
+	'select:not([disabled])',
+	'textarea:not([disabled])',
+	'[tabindex]:not([tabindex="-1"])',
+].join(', ');
 
 interface SettingsDialogProps {
 	open: boolean;
@@ -113,6 +122,11 @@ export default function SettingsDialog({
 	onChangePlayerName,
 }: SettingsDialogProps) {
 	const [activeTab, setActiveTab] = useState<'general' | 'audio'>('general');
+	const dialogTitleId = useId();
+	const dialogDescriptionId = useId();
+	const dialogRef = useRef<HTMLDivElement | null>(null);
+	const initialFocusRef = useRef<HTMLButtonElement | null>(null);
+	const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
 
 	useEffect(() => {
 		if (!open) {
@@ -122,18 +136,84 @@ export default function SettingsDialog({
 	}, [open]);
 
 	useEffect(() => {
-		if (!open || typeof window === 'undefined') {
+		if (
+			!open ||
+			typeof window === 'undefined' ||
+			typeof document === 'undefined'
+		) {
 			return;
 		}
+		const activeElement = document.activeElement;
+		if (activeElement instanceof HTMLElement) {
+			previouslyFocusedElementRef.current = activeElement;
+		}
+		const focusTarget = initialFocusRef.current;
+		if (focusTarget) {
+			focusTarget.focus();
+		}
 		const handleKeyDown = (event: KeyboardEvent) => {
+			if (!dialogRef.current) {
+				return;
+			}
 			if (event.key === 'Escape') {
 				event.preventDefault();
 				onClose();
+				return;
+			}
+			if (event.key !== 'Tab') {
+				return;
+			}
+			const focusableElements = Array.from(
+				dialogRef.current.querySelectorAll<HTMLElement>(
+					FOCUSABLE_ELEMENTS_SELECTOR,
+				),
+			).filter((element) => {
+				if (element.hasAttribute('disabled')) {
+					return false;
+				}
+				if (element.getAttribute('aria-hidden') === 'true') {
+					return false;
+				}
+				return true;
+			});
+			if (focusableElements.length === 0) {
+				event.preventDefault();
+				return;
+			}
+			const firstElement = focusableElements[0];
+			const lastElement = focusableElements[focusableElements.length - 1];
+			if (!firstElement || !lastElement) {
+				return;
+			}
+			const currentlyFocused = document.activeElement;
+			if (
+				!(currentlyFocused instanceof HTMLElement) ||
+				!dialogRef.current.contains(currentlyFocused)
+			) {
+				event.preventDefault();
+				firstElement.focus();
+				return;
+			}
+			if (event.shiftKey) {
+				if (currentlyFocused === firstElement) {
+					event.preventDefault();
+					lastElement.focus();
+				}
+				return;
+			}
+			if (currentlyFocused === lastElement) {
+				event.preventDefault();
+				firstElement.focus();
 			}
 		};
-		window.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keydown', handleKeyDown);
 		return () => {
-			window.removeEventListener('keydown', handleKeyDown);
+			document.removeEventListener('keydown', handleKeyDown);
+			const previouslyFocused = previouslyFocusedElementRef.current;
+			if (previouslyFocused && document.contains(previouslyFocused)) {
+				previouslyFocused.focus();
+			}
+			previouslyFocusedElementRef.current = null;
 		};
 	}, [open, onClose]);
 
@@ -148,14 +228,29 @@ export default function SettingsDialog({
 				onClick={onClose}
 				aria-hidden
 			/>
-			<div className={DIALOG_SURFACE_CLASS}>
+			<div
+				ref={dialogRef}
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby={dialogTitleId}
+				aria-describedby={dialogDescriptionId}
+				className={DIALOG_SURFACE_CLASS}
+			>
 				<div className={ACCENT_GLOW_CLASS} />
 				<header className="relative mb-6">
 					<p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-300">
 						Realm Preferences
 					</p>
-					<h2 className="mt-2 text-2xl font-bold tracking-tight">Settings</h2>
-					<p className="mt-3 max-w-md text-sm text-slate-600 dark:text-slate-300/80">
+					<h2
+						id={dialogTitleId}
+						className="mt-2 text-2xl font-bold tracking-tight"
+					>
+						Settings
+					</h2>
+					<p
+						id={dialogDescriptionId}
+						className="mt-3 max-w-md text-sm text-slate-600 dark:text-slate-300/80"
+					>
 						{DIALOG_DESCRIPTION}
 					</p>
 				</header>
@@ -169,6 +264,7 @@ export default function SettingsDialog({
 									: TAB_BUTTON_INACTIVE_CLASS
 							}`}
 							onClick={() => setActiveTab('general')}
+							ref={initialFocusRef}
 						>
 							General
 						</button>
