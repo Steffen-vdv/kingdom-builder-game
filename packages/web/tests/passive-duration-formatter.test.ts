@@ -1,110 +1,89 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
 	summarizeEffects,
 	describeEffects,
 	logEffects,
 } from '../src/translation/effects';
+import type { EffectDef, PlayerId } from '@kingdom-builder/engine';
+import { createTranslationContext } from '../src/translation/context';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import {
-	createEngine,
-	type EffectDef,
-	type PlayerId,
-} from '@kingdom-builder/engine';
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
-import { PhaseId } from '@kingdom-builder/contents';
-import {
-	createTranslationContextStub,
-	toTranslationPlayer,
-	wrapTranslationRegistry,
-} from './helpers/translationContextStub';
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
-
-const PASSIVE_REGISTRY = wrapTranslationRegistry<unknown>({
-	get(id: string) {
-		return { id };
-	},
-	has() {
-		return true;
-	},
-});
-
-const ACTIVE_PLAYER = toTranslationPlayer({
-	id: 'A' as PlayerId,
-	name: 'Player A',
-	resources: {},
-	population: {},
-	stats: {},
-});
-
-const OPPONENT_PLAYER = toTranslationPlayer({
-	id: 'B' as PlayerId,
-	name: 'Player B',
-	resources: {},
-	population: {},
-	stats: {},
-});
-
-function createStubFormatterContext(
-	phases: Parameters<typeof createTranslationContextStub>[0]['phases'],
-) {
-	return createTranslationContextStub({
-		phases,
-		actionCostResource: undefined,
-		actions: PASSIVE_REGISTRY,
-		buildings: PASSIVE_REGISTRY,
-		developments: PASSIVE_REGISTRY,
-		activePlayer: ACTIVE_PLAYER,
-		opponent: OPPONENT_PLAYER,
+function createFormatterContext({
+	phases,
+	configureMetadata,
+}: {
+	phases: ReturnType<typeof createTestSessionScaffold>['phases'];
+	configureMetadata?: (
+		metadata: ReturnType<typeof createTestSessionScaffold>['metadata'],
+	) => void;
+}) {
+	const scaffold = createTestSessionScaffold();
+	const metadata = structuredClone(scaffold.metadata);
+	configureMetadata?.(metadata);
+	const activePlayer = createSnapshotPlayer({
+		id: 'player:active' as PlayerId,
 	});
-}
-
-function createSyntheticCtx() {
-	const content = createContentFactory();
-	const tierResourceKey = 'synthetic:resource:tier';
-	const phases: PhaseDef[] = [
+	const opponent = createSnapshotPlayer({
+		id: 'player:opponent' as PlayerId,
+	});
+	const session = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases,
+		actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
+		ruleSnapshot: scaffold.ruleSnapshot,
+		metadata,
+	});
+	return createTranslationContext(
+		session,
+		scaffold.registries,
+		session.metadata,
 		{
-			id: 'phase:festival',
-			label: 'Festival',
-			icon: '🎉',
-			steps: [{ id: 'phase:festival:step' }],
+			ruleSnapshot: session.rules,
+			passiveRecords: session.passiveRecords,
 		},
-	];
-	const start: StartConfig = {
-		player: {
-			resources: { [tierResourceKey]: 0 },
-			stats: {},
-			population: {},
-			lands: [],
-		},
-	};
-	const rules: RuleSet = {
-		defaultActionAPCost: 1,
-		absorptionCapPct: 1,
-		absorptionRounding: 'down',
-		tieredResourceKey: tierResourceKey,
-		tierDefinitions: [],
-		slotsPerNewLand: 1,
-		maxSlotsPerLand: 1,
-		basePopulationCap: 1,
-		winConditions: [],
-	};
-	return createEngine({
-		actions: content.actions,
-		buildings: content.buildings,
-		developments: content.developments,
-		populations: content.populations,
-		phases,
-		start,
-		rules,
-	});
+	);
 }
+
+const formatDurationLabel = (label?: string, icon?: string) => {
+	const parts: string[] = [];
+	if (icon) {
+		parts.push(icon);
+	}
+	if (label) {
+		parts.push(label);
+	}
+	return parts.join(' ').trim();
+};
 
 describe('passive formatter duration metadata', () => {
 	it('uses custom phase metadata when provided', () => {
-		const engineContext = createSyntheticCtx();
+		const festivalPhaseId = 'phase:festival';
+		const context = createFormatterContext({
+			phases: [
+				{
+					id: festivalPhaseId,
+					label: 'Festival',
+					icon: '🎉',
+					steps: [{ id: 'phase:festival:step' }],
+				},
+			],
+			configureMetadata(metadata) {
+				metadata.phases = {
+					...metadata.phases,
+					[festivalPhaseId]: {
+						id: festivalPhaseId,
+						label: 'Festival',
+						icon: '🎉',
+					},
+				};
+			},
+		});
 		const passive: EffectDef = {
 			type: 'passive',
 			method: 'add',
@@ -117,86 +96,152 @@ describe('passive formatter duration metadata', () => {
 			effects: [],
 		};
 
-		const summary = summarizeEffects([passive], engineContext);
-		const description = describeEffects([passive], engineContext);
-		const log = logEffects([passive], engineContext);
+		const summary = summarizeEffects([passive], context);
+		const description = describeEffects([passive], context);
+		const log = logEffects([passive], context);
+		const festivalPhase = context.phases.find(
+			(phase) => phase.id === festivalPhaseId,
+		);
+		const durationLabel = formatDurationLabel(
+			festivalPhase?.label,
+			festivalPhase?.icon,
+		);
 
 		expect(summary).toEqual([
-			{ title: '⏳ Until next 🎉 Festival', items: [] },
+			{ title: `⏳ Until next ${durationLabel}`, items: [] },
 		]);
 		expect(description).toEqual([
 			{
-				title: '✨ Festival Spirit – Until your next 🎉 Festival',
+				title: `✨ Festival Spirit – Until your next ${durationLabel}`,
 				items: [],
 			},
 		]);
 		expect(log).toEqual([
 			{
 				title: '✨ Festival Spirit added',
-				items: ["✨ Festival Spirit duration: Until player's next 🎉 Festival"],
+				items: [
+					`✨ Festival Spirit duration: Until player's next ${durationLabel}`,
+				],
 			},
 		]);
 	});
 
 	it('fills missing context metadata from static phase definitions', () => {
-		const ctx = createStubFormatterContext([
-			{ id: PhaseId.Growth },
-			{ id: PhaseId.Upkeep },
-		]);
+		const scaffold = createTestSessionScaffold();
+		const growthPhase = scaffold.phases.find((phase) =>
+			phase.id.includes('growth'),
+		);
+		expect(growthPhase).toBeDefined();
+		const context = createFormatterContext({
+			phases: growthPhase ? [growthPhase] : scaffold.phases,
+			configureMetadata(metadata) {
+				if (growthPhase) {
+					delete metadata.phases?.[growthPhase.id];
+				}
+			},
+		});
 		const passive: EffectDef = {
 			type: 'passive',
 			method: 'add',
 			params: {
 				id: 'synthetic:passive:static-growth',
-				durationPhaseId: PhaseId.Growth,
+				durationPhaseId: growthPhase?.id ?? 'phase.growth',
 			},
 			effects: [],
 		};
 
-		const summary = summarizeEffects([passive], ctx);
+		const summary = summarizeEffects([passive], context);
+		const resolvedPhase = context.phases.find(
+			(phase) => phase.id === (growthPhase?.id ?? 'phase.growth'),
+		);
+		const durationLabel = formatDurationLabel(
+			resolvedPhase?.label,
+			resolvedPhase?.icon,
+		);
 
-		expect(summary).toEqual([{ title: '⏳ Until next Growth', items: [] }]);
+		expect(summary).toEqual([
+			{ title: `⏳ Until next ${durationLabel}`, items: [] },
+		]);
 	});
 
 	it('prefers contextual metadata over static phase definitions', () => {
-		const ctx = createStubFormatterContext([
-			{
-				id: PhaseId.Growth,
-				label: 'Rapid Growth',
-				icon: '🌱',
+		const scaffold = createTestSessionScaffold();
+		const growthPhase = scaffold.phases.find((phase) =>
+			phase.id.includes('growth'),
+		);
+		const growthId = growthPhase?.id ?? 'phase.growth';
+		const context = createFormatterContext({
+			phases: [
+				{
+					id: growthId,
+					label: 'Rapid Growth',
+					icon: '🌱',
+				},
+			],
+			configureMetadata(metadata) {
+				metadata.phases = {
+					...metadata.phases,
+					[growthId]: { id: growthId },
+				};
 			},
-		]);
+		});
 		const passive: EffectDef = {
 			type: 'passive',
 			method: 'add',
 			params: {
 				id: 'synthetic:passive:context-growth',
-				durationPhaseId: PhaseId.Growth,
+				durationPhaseId: growthId,
 			},
 			effects: [],
 		};
 
-		const summary = summarizeEffects([passive], ctx);
+		const summary = summarizeEffects([passive], context);
+		const resolvedPhase = context.phases.find((phase) => phase.id === growthId);
+		const durationLabel = formatDurationLabel(
+			resolvedPhase?.label,
+			resolvedPhase?.icon,
+		);
 
 		expect(summary).toEqual([
-			{ title: '⏳ Until next 🌱 Rapid Growth', items: [] },
+			{ title: `⏳ Until next ${durationLabel}`, items: [] },
 		]);
 	});
 
 	it('resolves phase metadata via trigger keys when duration id is missing', () => {
-		const ctx = createStubFormatterContext([
-			{
-				id: PhaseId.Upkeep,
-				label: 'Rest & Recover',
-				icon: '🛏️',
-				steps: [
-					{
-						id: 'custom:upkeep',
-						triggers: ['onUpkeepPhase'],
+		const upkeepPhaseId = 'phase:upkeep';
+		const context = createFormatterContext({
+			phases: [
+				{
+					id: upkeepPhaseId,
+					label: 'Rest & Recover',
+					icon: '🛏️',
+					steps: [
+						{
+							id: 'custom:upkeep',
+							triggers: ['onUpkeepPhase'],
+						},
+					],
+				},
+			],
+			configureMetadata(metadata) {
+				metadata.phases = {
+					...metadata.phases,
+					[upkeepPhaseId]: {
+						id: upkeepPhaseId,
+						label: 'Rest & Recover',
+						icon: '🛏️',
 					},
-				],
+				};
+				metadata.triggers = {
+					...metadata.triggers,
+					onUpkeepPhase: {
+						past: 'Upkeep',
+						future: 'During Upkeep',
+						icon: '🛏️',
+					},
+				};
 			},
-		]);
+		});
 		const passive: EffectDef = {
 			type: 'passive',
 			method: 'add',
@@ -207,10 +252,17 @@ describe('passive formatter duration metadata', () => {
 			effects: [],
 		};
 
-		const summary = summarizeEffects([passive], ctx);
+		const summary = summarizeEffects([passive], context);
+		const resolvedPhase = context.phases.find(
+			(phase) => phase.id === upkeepPhaseId,
+		);
+		const durationLabel = formatDurationLabel(
+			resolvedPhase?.label,
+			resolvedPhase?.icon,
+		);
 
 		expect(summary).toEqual([
-			{ title: '⏳ Until next 🛏️ Rest & Recover', items: [] },
+			{ title: `⏳ Until next ${durationLabel}`, items: [] },
 		]);
 	});
 });

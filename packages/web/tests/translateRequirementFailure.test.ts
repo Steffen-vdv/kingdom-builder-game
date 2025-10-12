@@ -1,31 +1,50 @@
 import { describe, expect, it } from 'vitest';
 import { translateRequirementFailure } from '../src/translation';
-import type { TranslationContext } from '../src/translation/context';
+import type { PlayerId } from '@kingdom-builder/engine';
+import {
+	createTranslationContext,
+	selectPopulationRoleDisplay,
+	selectStatDisplay,
+} from '../src/translation/context';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
 
 type RequirementFailure = Parameters<typeof translateRequirementFailure>[0];
 
 describe('translateRequirementFailure', () => {
-	const context = {
-		assets: {
-			resources: {},
-			stats: {
-				maxPopulation: { icon: '👥', label: 'Max Population' },
-				warWeariness: { icon: '💤', label: 'War Weariness' },
-			},
-			populations: {
-				legion: { icon: '🎖️', label: 'Legion' },
-			},
-			population: { icon: '👥', label: 'Population' },
-			land: { icon: '🗺️', label: 'Land' },
-			slot: { icon: '🧩', label: 'Development Slot' },
-			passive: { icon: '♾️', label: 'Passive' },
-			upkeep: { icon: '🧹', label: 'Upkeep' },
-			modifiers: {},
-			triggers: {},
-			tierSummaries: {},
-			formatPassiveRemoval: (text: string) => text,
+	const scaffold = createTestSessionScaffold();
+	const activePlayer = createSnapshotPlayer({
+		id: 'player:active' as PlayerId,
+	});
+	const opponent = createSnapshotPlayer({
+		id: 'player:opponent' as PlayerId,
+	});
+	const session = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases: scaffold.phases,
+		actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
+		ruleSnapshot: scaffold.ruleSnapshot,
+		metadata: scaffold.metadata,
+	});
+	const context = createTranslationContext(
+		session,
+		scaffold.registries,
+		session.metadata,
+		{
+			ruleSnapshot: session.rules,
+			passiveRecords: session.passiveRecords,
 		},
-	} as unknown as TranslationContext;
+	);
+	const populationIds = scaffold.registries.populations.keys();
+	const populationId =
+		populationIds.find((id) => id.includes('legion')) ??
+		populationIds[0] ??
+		'legion';
 
 	it('describes population capacity failures with current and max values', () => {
 		const failure: RequirementFailure = {
@@ -41,7 +60,9 @@ describe('translateRequirementFailure', () => {
 			details: { left: 3, right: 3 },
 		};
 		const message = translateRequirementFailure(failure, context);
-		expect(message).toBe('👥 Population is at capacity (3/3)');
+		const maxPopulation = selectStatDisplay(context.assets, 'maxPopulation');
+		const prefix = maxPopulation.icon ? `${maxPopulation.icon} ` : '';
+		expect(message).toBe(`${prefix}Population is at capacity (3/3)`);
 	});
 
 	it('formats stat versus population comparisons with icons and values', () => {
@@ -61,8 +82,21 @@ describe('translateRequirementFailure', () => {
 			details: { left: 2, right: 1 },
 		};
 		const message = translateRequirementFailure(failure, context);
+		const statDisplay = selectStatDisplay(context.assets, 'warWeariness');
+		const populationDisplay = selectPopulationRoleDisplay(
+			context.assets,
+			populationId,
+		);
+		const statLabel = [statDisplay.icon, statDisplay.label]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+		const populationLabel = [populationDisplay.icon, populationDisplay.label]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
 		expect(message).toBe(
-			'💤 War Weariness (2) must be lower than 🎖️ Legion (1)',
+			`${statLabel} (2) must be lower than ${populationLabel} (1)`,
 		);
 	});
 
@@ -94,5 +128,33 @@ describe('translateRequirementFailure', () => {
 		};
 		const message = translateRequirementFailure(failure, context);
 		expect(message).toBe('Requirement not met');
+	});
+
+	it('falls back to the default population descriptor when role metadata is missing', () => {
+		const failure: RequirementFailure = {
+			requirement: {
+				type: 'evaluator',
+				method: 'compare',
+				params: {
+					left: {
+						type: 'population',
+						params: { role: 'unknown-role' },
+					},
+					right: 1,
+					operator: 'lt',
+				},
+			},
+			details: { right: 1 },
+		};
+		const message = translateRequirementFailure(failure, context);
+		const fallbackDisplay = selectPopulationRoleDisplay(
+			context.assets,
+			undefined,
+		);
+		const fallbackLabel = [fallbackDisplay.icon, fallbackDisplay.label]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+		expect(message).toBe(`${fallbackLabel} must be lower than 1`);
 	});
 });

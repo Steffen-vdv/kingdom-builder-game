@@ -1,28 +1,67 @@
 import { describe, it, expect } from 'vitest';
-import type { AdvanceSkip } from '@kingdom-builder/engine';
+import type { AdvanceSkip, PlayerId } from '@kingdom-builder/engine';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
-import type { TranslationAssets } from '../src/translation/context';
-import { PhaseId, PhaseStepId } from '@kingdom-builder/contents';
+import { createTranslationContext } from '../src/translation/context';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import { createTestRegistryMetadata } from './helpers/registryMetadata';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
+
+function createSkipScenario() {
+	const scaffold = createTestSessionScaffold();
+	const activePlayer = createSnapshotPlayer({
+		id: 'player:active' as PlayerId,
+	});
+	const opponent = createSnapshotPlayer({
+		id: 'player:opponent' as PlayerId,
+	});
+	const session = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases: scaffold.phases,
+		actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
+		ruleSnapshot: scaffold.ruleSnapshot,
+		metadata: scaffold.metadata,
+	});
+	const context = createTranslationContext(
+		session,
+		scaffold.registries,
+		session.metadata,
+		{
+			ruleSnapshot: session.rules,
+			passiveRecords: session.passiveRecords,
+		},
+	);
+	const metadataSelectors = createTestRegistryMetadata(
+		scaffold.registries,
+		session.metadata,
+	);
+	return { context, metadataSelectors };
+}
+
+const renderLabel = (icon?: string, label?: string, fallback?: string) => {
+	const trimmed = label?.trim();
+	const normalized = trimmed && trimmed.length > 0 ? trimmed : (fallback ?? '');
+	if (icon && icon.trim().length > 0) {
+		return `${icon} ${normalized}`.trim();
+	}
+	return normalized;
+};
 
 describe('describeSkipEvent', () => {
-	const assets: TranslationAssets = {
-		resources: {},
-		stats: {},
-		populations: {},
-		population: { label: 'Population' },
-		land: { label: 'Land' },
-		slot: { label: 'Development Slot' },
-		passive: { label: 'Passive' },
-		upkeep: { label: 'Upkeep' },
-		modifiers: {},
-		triggers: {},
-		tierSummaries: {},
-		formatPassiveRemoval: (text) => text,
-	};
 	it('formats phase skip entries with source summaries', () => {
+		const { context, metadataSelectors } = createSkipScenario();
+		const phase = context.phases[0];
+		expect(phase).toBeDefined();
+		if (!phase) {
+			return;
+		}
 		const skip: AdvanceSkip = {
 			type: 'phase',
-			phaseId: PhaseId.Growth,
+			phaseId: phase.id,
 			sources: [
 				{
 					id: 'passive:golden-age',
@@ -31,22 +70,34 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: PhaseId.Growth, label: 'Growth', icon: '🌱' };
+		const phaseDescriptor = metadataSelectors.phaseMetadata.select(phase.id);
+		const phaseLabel = renderLabel(
+			phase.icon,
+			phase.label ?? phaseDescriptor.label,
+			phase.id,
+		);
 
-		const result = describeSkipEvent(skip, phase, undefined, assets);
+		const result = describeSkipEvent(skip, phase, undefined, context.assets);
 
 		expect(result.logLines[0]).toContain('Phase skipped');
 		expect(result.logLines[1]).toContain('Golden Age');
-		expect(result.history.title).toBe('🌱 Growth Phase');
+		expect(result.history.title).toBe(`${phaseLabel} Phase`);
 		expect(result.history.items[0]?.italic).toBe(true);
 		expect(result.history.items[0]?.text).toContain('Golden Age');
 	});
 
 	it('formats step skip entries with fallback labels', () => {
+		const { context } = createSkipScenario();
+		const phase = context.phases.find((entry) => entry.steps?.length);
+		expect(phase?.steps?.[0]).toBeDefined();
+		if (!phase?.steps?.[0]) {
+			return;
+		}
+		const step = phase.steps[0];
 		const skip: AdvanceSkip = {
 			type: 'step',
-			phaseId: PhaseId.Upkeep,
-			stepId: PhaseStepId.WarRecovery,
+			phaseId: phase.id,
+			stepId: step.id,
 			sources: [
 				{
 					id: 'passive:morale-crash',
@@ -54,25 +105,26 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: PhaseId.Upkeep, label: 'Upkeep', icon: '🧹' };
-		const step = {
-			id: PhaseStepId.WarRecovery,
-			title: 'War recovery',
-			icon: '🛡️',
-		};
 
-		const result = describeSkipEvent(skip, phase, step, assets);
+		const result = describeSkipEvent(skip, phase, step, context.assets);
+		const stepLabel = renderLabel(step.icon, step.title, step.id);
 
-		expect(result.logLines[0]).toContain('War recovery');
+		expect(result.logLines[0]).toContain(stepLabel.trim() || step.id);
 		expect(result.logLines).toHaveLength(2);
-		expect(result.history.title).toBe('War recovery');
+		expect(result.history.title).toBe(step.title ?? step.id);
 		expect(result.history.items[0]?.text).toContain('tier.grim');
 	});
 
 	it('lists each skip source on separate log lines', () => {
+		const { context } = createSkipScenario();
+		const phase = context.phases[0];
+		expect(phase).toBeDefined();
+		if (!phase) {
+			return;
+		}
 		const skip: AdvanceSkip = {
 			type: 'phase',
-			phaseId: 'twilight',
+			phaseId: phase.id,
 			sources: [
 				{
 					id: 'passive:first',
@@ -85,9 +137,8 @@ describe('describeSkipEvent', () => {
 				},
 			],
 		};
-		const phase = { id: 'twilight', label: 'Twilight', icon: '🌒' };
 
-		const result = describeSkipEvent(skip, phase, undefined, assets);
+		const result = describeSkipEvent(skip, phase, undefined, context.assets);
 
 		expect(result.logLines).toHaveLength(3);
 		expect(result.logLines[0]).toContain('Phase skipped');
@@ -98,54 +149,72 @@ describe('describeSkipEvent', () => {
 	});
 
 	it('uses the phase descriptor strategy when the skip type is phase', () => {
+		const { context } = createSkipScenario();
+		const phase = context.phases[0];
+		expect(phase).toBeDefined();
+		if (!phase) {
+			return;
+		}
+		const phaseLabel = renderLabel(phase.icon, phase.label, phase.id);
 		const skip: AdvanceSkip = {
 			type: 'phase',
-			phaseId: 'dawn',
+			phaseId: phase.id,
 			sources: [],
 		};
-		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
 
-		const result = describeSkipEvent(skip, phase, undefined, assets);
+		const result = describeSkipEvent(skip, phase, undefined, context.assets);
 
-		expect(result.logLines).toEqual(['⏭️ 🌅 Dawn Phase skipped']);
+		expect(result.logLines).toEqual([`⏭️ ${phaseLabel} Phase skipped`]);
 		expect(result.history).toEqual({
-			title: '🌅 Dawn Phase',
+			title: `${phaseLabel} Phase`,
 			items: [{ text: 'Skipped', italic: true }],
 		});
 	});
 
 	it('uses the step descriptor strategy when the skip type is step', () => {
+		const { context } = createSkipScenario();
+		const phase = context.phases.find((entry) => entry.steps?.length);
+		expect(phase?.steps?.[0]).toBeDefined();
+		if (!phase?.steps?.[0]) {
+			return;
+		}
+		const step = phase.steps[0];
 		const skip: AdvanceSkip = {
 			type: 'step',
-			phaseId: 'dawn',
-			stepId: 'prepare',
+			phaseId: phase.id,
+			stepId: step.id,
 			sources: [],
 		};
-		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
 
-		const result = describeSkipEvent(skip, phase, undefined, assets);
+		const result = describeSkipEvent(skip, phase, undefined, context.assets);
 
-		expect(result.logLines).toEqual(['⏭️ prepare skipped']);
+		expect(result.logLines).toEqual([`⏭️ ${skip.stepId} skipped`]);
 		expect(result.history).toEqual({
-			title: 'prepare',
+			title: skip.stepId ?? 'Skipped Step',
 			items: [{ text: 'Skipped', italic: true }],
 		});
 	});
 
 	it('falls back to the default descriptor for unrecognised skip types', () => {
+		const { context } = createSkipScenario();
+		const phase = context.phases[0];
+		expect(phase).toBeDefined();
+		if (!phase) {
+			return;
+		}
 		const skip = {
 			type: 'unknown',
-			phaseId: 'dawn',
-			stepId: 'prepare',
+			phaseId: phase.id,
+			stepId: phase.steps?.[0]?.id ?? 'prepare',
 			sources: [],
 		} as AdvanceSkip;
-		const phase = { id: 'dawn', label: 'Dawn', icon: '🌅' };
 
-		const result = describeSkipEvent(skip, phase, undefined, assets);
+		const result = describeSkipEvent(skip, phase, undefined, context.assets);
 
-		expect(result.logLines).toEqual(['⏭️ prepare skipped']);
+		const stepLabel = skip.stepId ?? 'prepare';
+		expect(result.logLines).toEqual([`⏭️ ${stepLabel} skipped`]);
 		expect(result.history).toEqual({
-			title: 'prepare',
+			title: stepLabel,
 			items: [{ text: 'Skipped', italic: true }],
 		});
 	});
