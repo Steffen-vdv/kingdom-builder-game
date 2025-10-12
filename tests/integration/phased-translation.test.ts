@@ -11,7 +11,6 @@ import type {
 	PhasedDef,
 } from '@kingdom-builder/web/translation/content/phased';
 import {
-	TRIGGER_INFO,
 	RESOURCES,
 	PHASES,
 	POPULATIONS,
@@ -24,6 +23,11 @@ import {
 	createContentFactory,
 } from '@kingdom-builder/testing';
 import { formatDetailText } from '../../packages/web/src/utils/stats/format';
+import {
+	getFallbackTriggerAssets,
+	registerFallbackTriggerAsset,
+	unregisterFallbackTriggerAsset,
+} from '../../packages/web/src/translation/context/fallbackAssets';
 
 type Entry = string | { title: string; items: Entry[] };
 
@@ -91,12 +95,16 @@ describe('PhasedTranslator step triggers', () => {
 	} as const;
 
 	beforeAll(() => {
-		(TRIGGER_INFO as Record<string, typeof addedStep>)['onTestStep'] =
-			addedStep;
+		registerFallbackTriggerAsset('onTestStep', {
+			icon: addedStep.icon,
+			future: addedStep.future,
+			past: addedStep.past,
+			label: addedStep.past,
+		});
 	});
 
 	afterAll(() => {
-		delete (TRIGGER_INFO as Record<string, unknown>)['onTestStep'];
+		unregisterFallbackTriggerAsset('onTestStep');
 	});
 
 	it('renders dynamic step metadata from trigger info', () => {
@@ -113,7 +121,8 @@ describe('PhasedTranslator step triggers', () => {
 			params: { key: resourceKey, amount },
 		});
 
-		const stepKeys = Object.keys(TRIGGER_INFO).filter((key) =>
+		const triggerAssets = getFallbackTriggerAssets();
+		const stepKeys = Object.keys(triggerAssets).filter((key) =>
 			key.endsWith('Step'),
 		);
 
@@ -145,9 +154,9 @@ describe('PhasedTranslator step triggers', () => {
 			ctx,
 		) as unknown as Entry[];
 
-		const info = TRIGGER_INFO as Record<
+		const info = triggerAssets as Record<
 			string,
-			{ icon: string; future: string }
+			{ icon?: string; future?: string }
 		>;
 		for (const key of stepKeys) {
 			const expectedTitle = [info[key]?.icon, info[key]?.future]
