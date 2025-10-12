@@ -17,6 +17,8 @@ import type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from '../session/contracts';
 import type { SessionAdvanceResult, SessionSnapshot } from '../session';
 
@@ -48,6 +50,14 @@ export const sessionPlayerNameMapSchema = z
 	.record(z.string(), z.string().min(1))
 	.transform((value) => value as SessionPlayerNameMap);
 
+const sessionPlayerIdSchema = z.union([z.literal('A'), z.literal('B')]);
+
+export const sessionUpdatePlayerNameRequestSchema = z.object({
+	sessionId: sessionIdSchema,
+	playerId: sessionPlayerIdSchema,
+	name: z.string().min(1),
+});
+
 export const sessionCreateRequestSchema = z.object({
 	devMode: z.boolean().optional(),
 	config: gameConfigSchema.optional(),
@@ -59,6 +69,9 @@ export const sessionCreateResponseSchema = z.object({
 	snapshot: z.custom<SessionSnapshot>(),
 	registries: sessionRegistriesSchema,
 });
+
+export const sessionUpdatePlayerNameResponseSchema =
+	sessionCreateResponseSchema;
 
 export const sessionStateResponseSchema = sessionCreateResponseSchema;
 
@@ -117,6 +130,19 @@ type _SessionSetDevModeResponseMatches = Expect<
 	Equal<
 		z.infer<typeof sessionSetDevModeResponseSchema>,
 		SessionSetDevModeResponse
+	>
+>;
+
+type _SessionUpdatePlayerNameRequestMatches = Expect<
+	Equal<
+		z.infer<typeof sessionUpdatePlayerNameRequestSchema>,
+		SessionUpdatePlayerNameRequest
+	>
+>;
+type _SessionUpdatePlayerNameResponseMatches = Expect<
+	Equal<
+		z.infer<typeof sessionUpdatePlayerNameResponseSchema>,
+		SessionUpdatePlayerNameResponse
 	>
 >;
 

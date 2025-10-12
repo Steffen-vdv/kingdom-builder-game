@@ -11,6 +11,8 @@ import {
 	sessionSetDevModeResponseSchema,
 	sessionIdSchema,
 	sessionStateResponseSchema,
+	sessionUpdatePlayerNameRequestSchema,
+	sessionUpdatePlayerNameResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
 	ActionExecuteErrorResponse,
@@ -19,10 +21,8 @@ import type {
 	SessionCreateResponse,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
-	SessionRequirementFailure,
-	SessionPlayerId,
-	SessionPlayerNameMap,
 	SessionSnapshot,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
@@ -39,6 +39,11 @@ import type {
 	TransportIdFactory,
 	TransportRequest,
 } from './TransportTypes.js';
+import {
+	applyPlayerNames,
+	attachHttpStatus,
+	extractRequirementFailure,
+} from './sessionTransportHelpers.js';
 
 export interface SessionTransportOptions {
 	sessionManager: SessionManager;
@@ -80,7 +85,7 @@ export class SessionTransport {
 			}
 			const session = this.sessionManager.createSession(sessionId, options);
 			if (data.playerNames) {
-				this.applyPlayerNames(session, data.playerNames);
+				applyPlayerNames(session, data.playerNames);
 			}
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
@@ -148,7 +153,7 @@ export class SessionTransport {
 				status: 'error',
 				error: 'Invalid action request.',
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
 		}
 		this.requireAuthorization(request, 'session:advance');
 		const { sessionId, actionId, params } = parsed.data;
@@ -158,7 +163,7 @@ export class SessionTransport {
 				status: 'error',
 				error: `Session "${sessionId}" was not found.`,
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
 		try {
 			const rawCosts = session.getActionCosts(actionId, params as never);
@@ -179,9 +184,9 @@ export class SessionTransport {
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
-			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
+			return attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {
-			const failure = this.extractRequirementFailure(error);
+			const failure = extractRequirementFailure(error);
 			const message =
 				error instanceof Error ? error.message : 'Action execution failed.';
 			const base: ActionExecuteErrorResponse = {
@@ -195,7 +200,7 @@ export class SessionTransport {
 			const response = actionExecuteErrorResponseSchema.parse(
 				base,
 			) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
 		}
 	}
 
@@ -220,30 +225,34 @@ export class SessionTransport {
 		return sessionSetDevModeResponseSchema.parse(response);
 	}
 
-	private extractRequirementFailure(
-		error: unknown,
-	): SessionRequirementFailure | undefined {
-		if (!error || typeof error !== 'object') {
-			return undefined;
+	public updatePlayerName(
+		request: TransportRequest,
+	): SessionUpdatePlayerNameResponse {
+		const parsed = sessionUpdatePlayerNameRequestSchema.safeParse(request.body);
+		if (!parsed.success) {
+			throw new TransportError(
+				'INVALID_REQUEST',
+				'Invalid player name update request.',
+				{ issues: parsed.error.issues },
+			);
 		}
-		const failure = (
-			error as { requirementFailure?: SessionRequirementFailure }
-		).requirementFailure;
-		if (!failure) {
-			return undefined;
+		this.requireAuthorization(request, 'session:advance');
+		const { sessionId, playerId, name } = parsed.data;
+		const sanitizedName = name.trim();
+		if (!sanitizedName) {
+			throw new TransportError(
+				'INVALID_REQUEST',
+				'Player name cannot be blank.',
+			);
 		}
-		return structuredClone(failure);
-	}
-
-	private attachHttpStatus<T extends object>(
-		payload: T,
-		status: number,
-	): TransportHttpResponse<T> {
-		Object.defineProperty(payload, 'httpStatus', {
-			value: status,
-			enumerable: false,
-		});
-		return payload as TransportHttpResponse<T>;
+		const session = this.requireSession(sessionId);
+		session.updatePlayerName(playerId, sanitizedName);
+		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		const response = this.buildStateResponse(
+			sessionId,
+			snapshot,
+		) satisfies SessionUpdatePlayerNameResponse;
+		return sessionUpdatePlayerNameResponseSchema.parse(response);
 	}
 
 	private parseSessionIdentifier(body: unknown): string {
@@ -284,21 +293,6 @@ export class SessionTransport {
 			);
 		}
 		return session;
-	}
-
-	private applyPlayerNames(
-		session: EngineSession,
-		names: SessionPlayerNameMap,
-	): void {
-		const playerIds = Object.keys(names) as SessionPlayerId[];
-		for (const playerId of playerIds) {
-			const playerName = names[playerId];
-			const sanitizedName = playerName?.trim();
-			if (!sanitizedName) {
-				continue;
-			}
-			session.updatePlayerName(playerId, sanitizedName);
-		}
 	}
 
 	private requireAuthorization(
