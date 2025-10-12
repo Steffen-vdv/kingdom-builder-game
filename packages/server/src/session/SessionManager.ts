@@ -11,6 +11,11 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	STATS,
+	TRIGGER_INFO,
+	LAND_INFO,
+	SLOT_INFO,
+	PASSIVE_INFO,
 } from '@kingdom-builder/contents';
 import type {
 	PlayerStartConfig,
@@ -18,7 +23,14 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
+import {
+	createSessionBaseMetadata,
+	mergeSessionMetadata,
+	type MetadataSources,
+} from './sessionMetadata';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -52,6 +64,15 @@ export interface CreateSessionOptions {
 
 const DEFAULT_MAX_IDLE_DURATION_MS = 15 * 60 * 1000;
 
+const METADATA_SOURCES: MetadataSources = Object.freeze({
+	resources: RESOURCES,
+	stats: STATS,
+	triggers: TRIGGER_INFO,
+	land: LAND_INFO,
+	slot: SLOT_INFO,
+	passive: PASSIVE_INFO,
+});
+
 export class SessionManager {
 	private readonly sessions = new Map<string, SessionRecord>();
 
@@ -64,6 +85,8 @@ export class SessionManager {
 	private readonly baseOptions: EngineSessionBaseOptions;
 
 	private readonly registries: SessionRegistriesPayload;
+
+	private readonly baseMetadata: SessionSnapshotMetadata;
 
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
@@ -92,6 +115,11 @@ export class SessionManager {
 			populations: this.cloneRegistry(this.baseOptions.populations),
 			resources: this.buildResourceRegistry(resourceRegistry),
 		};
+		this.baseMetadata = createSessionBaseMetadata(
+			this.registries,
+			this.baseOptions.phases,
+			METADATA_SOURCES,
+		);
 	}
 
 	public createSession(
@@ -142,11 +170,9 @@ export class SessionManager {
 		return this.sessions.delete(sessionId);
 	}
 
-	public getSnapshot(
-		sessionId: string,
-	): ReturnType<EngineSession['getSnapshot']> {
+	public getSnapshot(sessionId: string): SessionSnapshot {
 		const session = this.requireSession(sessionId);
-		return session.getSnapshot();
+		return this.composeSnapshot(session);
 	}
 
 	public getRuleSnapshot(
@@ -165,12 +191,30 @@ export class SessionManager {
 		return structuredClone(this.registries);
 	}
 
+	public getBaseMetadata(): SessionSnapshotMetadata {
+		return structuredClone(this.baseMetadata);
+	}
+
 	private requireSession(sessionId: string): EngineSession {
 		const session = this.getSession(sessionId);
 		if (!session) {
 			throw new Error(`Session "${sessionId}" was not found.`);
 		}
 		return session;
+	}
+
+	private composeSnapshot(session: EngineSession): SessionSnapshot {
+		const snapshot = session.getSnapshot();
+		return {
+			...snapshot,
+			metadata: this.composeMetadata(snapshot.metadata),
+		};
+	}
+
+	private composeMetadata(
+		metadata: SessionSnapshotMetadata,
+	): SessionSnapshotMetadata {
+		return mergeSessionMetadata(this.baseMetadata, metadata);
 	}
 
 	private cloneRegistry<DefinitionType>(
