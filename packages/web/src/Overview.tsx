@@ -30,7 +30,7 @@ import {
 import {
 	OVERVIEW_CONTENT,
 	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+} from './overview/content';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
 
