@@ -1,12 +1,11 @@
 import React from 'react';
 import { useGameEngine } from '../../state/GameContext';
-import { PhaseId } from '@kingdom-builder/contents';
 import type {
 	EffectDef,
-	PassiveSummary,
-	PlayerId,
-	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+	SessionPassiveSummary,
+	SessionPlayerId,
+	SessionPlayerStateSnapshot,
+} from '@kingdom-builder/protocol';
 import { describeEffects, splitSummary } from '../../translation';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import {
@@ -27,6 +26,9 @@ import {
 	useResourceMetadata,
 } from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from './registryDisplays';
+import type { TranslationPassiveDefinition } from '../../translation/context';
+
+const ON_UPKEEP_PHASE_TRIGGER = 'onUpkeepPhase';
 
 function normalizeEffectList(
 	value: unknown,
@@ -43,7 +45,7 @@ function normalizeEffectList(
 export default function PassiveDisplay({
 	player,
 }: {
-	player: PlayerStateSnapshot;
+	player: SessionPlayerStateSnapshot;
 }) {
 	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
 		useGameEngine();
@@ -54,14 +56,23 @@ export default function PassiveDisplay({
 	);
 	const resourceMetadata = useResourceMetadata();
 	const phaseMetadata = usePhaseMetadata();
-	const upkeepDescriptor = React.useMemo(
-		() => phaseMetadata.select(PhaseId.Upkeep),
-		[phaseMetadata],
-	);
-	const playerId: PlayerId = player.id;
-	const summaries: PassiveSummary[] =
+	const upkeepPhase = React.useMemo(() => {
+		for (const phase of phaseMetadata.list) {
+			for (const step of phase.steps) {
+				if (step.triggers.includes(ON_UPKEEP_PHASE_TRIGGER)) {
+					return phase;
+				}
+			}
+		}
+		return undefined;
+	}, [phaseMetadata]);
+	const upkeepLabel =
+		upkeepPhase?.label ?? translationContext.assets.upkeep.label ?? 'Upkeep';
+	const playerId: SessionPlayerId = player.id;
+	const summaries: SessionPassiveSummary[] =
 		translationContext.passives.list(playerId);
-	const definitions = translationContext.passives.definitions(playerId);
+	const definitions: ReadonlyArray<TranslationPassiveDefinition> =
+		translationContext.passives.definitions(playerId);
 	const definitionMap = React.useMemo(
 		() =>
 			new Map(
@@ -109,8 +120,8 @@ export default function PassiveDisplay({
 			(
 				entry,
 			): entry is {
-				summary: PassiveSummary;
-				definition: (typeof definitions)[number];
+				summary: SessionPassiveSummary;
+				definition: TranslationPassiveDefinition;
 			} => entry.definition !== undefined,
 		);
 	if (entries.length === 0) {
@@ -158,7 +169,6 @@ export default function PassiveDisplay({
 				const items = tierSections
 					? tierSections
 					: describeEffects(resolvedEffects, translationContext);
-				const upkeepLabel = upkeepDescriptor.label || 'Upkeep';
 				const sections = definition.onUpkeepPhase
 					? [
 							{

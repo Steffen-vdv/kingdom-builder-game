@@ -1,4 +1,4 @@
-import type { RuleSnapshot } from '@kingdom-builder/engine';
+import type { HappinessTierDefinition } from '@kingdom-builder/protocol';
 import {
 	describeEffects,
 	splitSummary,
@@ -9,7 +9,7 @@ import type { DescriptorDisplay } from './registryDisplays';
 
 export const MAX_TIER_SUMMARY_LINES = 4;
 
-export type TierDefinition = RuleSnapshot['tierDefinitions'][number];
+export type TierDefinition = HappinessTierDefinition;
 
 export interface TierSummary {
 	entry: TierSummaryGroup;
