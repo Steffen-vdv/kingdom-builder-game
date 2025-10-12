@@ -183,3 +183,11 @@ export {
 	actionExecuteErrorResponseSchema,
 	actionExecuteResponseSchema,
 } from './config/action_contracts';
+export {
+	actionDescribeRequestSchema,
+	actionDescribeResponseSchema,
+} from './config/action_describe_contracts';
+export type {
+	ActionDescribeRequest,
+	ActionDescribeResponse,
+} from './config/action_describe_contracts';
