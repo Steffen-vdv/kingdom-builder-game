@@ -47,6 +47,18 @@ describe('action describe contracts', () => {
 				id: 'build-farm',
 				name: 'Build Farm',
 			},
+			options: [
+				{
+					id: 'build-slot',
+					title: 'Select Slot',
+					options: [
+						{
+							id: 'slot-1',
+							actionId: 'build-farm',
+						},
+					],
+				},
+			],
 			costs: {
 				gold: 4,
 			},
@@ -78,6 +90,18 @@ describe('action describe contracts', () => {
 		const parsed = actionDescribeResponseSchema.safeParse({
 			sessionId: 'session-123',
 			actionId: 'build-farm',
+			options: [
+				{
+					id: 'build-slot',
+					title: 'Select Slot',
+					options: [
+						{
+							id: 'slot-1',
+							actionId: 'build-farm',
+						},
+					],
+				},
+			],
 			costs: {
 				gold: '4',
 			},
@@ -90,6 +114,18 @@ describe('action describe contracts', () => {
 		const parsed = actionDescribeResponseSchema.safeParse({
 			sessionId: 'session-123',
 			actionId: 'build-farm',
+			options: [
+				{
+					id: 'build-slot',
+					title: 'Select Slot',
+					options: [
+						{
+							id: 'slot-1',
+							actionId: 'build-farm',
+						},
+					],
+				},
+			],
 			costs: {},
 			requirements: [
 				{
