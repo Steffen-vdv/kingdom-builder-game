@@ -450,6 +450,33 @@ describe('GameProvider', () => {
 		).toBeInTheDocument();
 	});
 
+	it('shows bootstrap diagnostics when session creation fails', async () => {
+		const fatalError = new Error('session creation failed');
+		createSessionMock.mockRejectedValueOnce(fatalError);
+
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
+
+		expect(
+			screen.getByText('An unexpected error prevented the game from loading.'),
+		).toBeInTheDocument();
+
+		expect(
+			screen.getByText(/"message": "session creation failed"/),
+		).toBeInTheDocument();
+
+		expect(releaseSessionMock).not.toHaveBeenCalled();
+	});
+
 	it('shows the fatal error screen when the translation context fails to initialize', async () => {
 		const fatalError = new Error('translation context failed');
 		createTranslationContextMock.mockImplementationOnce(() => {
@@ -506,5 +533,43 @@ describe('GameProvider', () => {
 				screen.getByText('We could not load your kingdom.'),
 			).toBeInTheDocument(),
 		);
+	});
+
+	it('shows bootstrap diagnostics when a refresh fails', async () => {
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		const fatalError = new Error('snapshot refresh failed');
+		fetchSnapshotMock.mockRejectedValueOnce(fatalError);
+
+		await act(async () => {
+			capturedPhaseOptions?.refresh?.();
+			await Promise.resolve();
+		});
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
+
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+
+		expect(
+			screen.getByText('An unexpected error prevented the game from loading.'),
+		).toBeInTheDocument();
+
+		expect(
+			screen.getByText(/"message": "snapshot refresh failed"/),
+		).toBeInTheDocument();
 	});
 });
