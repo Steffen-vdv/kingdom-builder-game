@@ -1,4 +1,6 @@
 import type {
+	SessionActionCostMap,
+	SessionActionDefinitionSummary,
 	SessionActionRequirementList,
 	SessionRequirementFailure,
 	SessionSnapshot,
@@ -18,6 +20,11 @@ export type ActionParametersPayload = Record<string, unknown> & {
 };
 
 export interface ActionExecuteRequest extends SessionIdentifier {
+	actionId: string;
+	params?: ActionParametersPayload;
+}
+
+export interface ActionDescribeRequest extends SessionIdentifier {
 	actionId: string;
 	params?: ActionParametersPayload;
 }
@@ -56,6 +63,13 @@ export interface ActionExecuteErrorResponse {
 	requirementFailure?: SessionRequirementFailure;
 	requirementFailures?: SessionActionRequirementList;
 	fatal?: boolean;
+}
+
+export interface ActionDescribeResponse extends SessionIdentifier {
+	actionId: string;
+	definition?: SessionActionDefinitionSummary;
+	costs: SessionActionCostMap;
+	requirements: SessionActionRequirementList;
 }
 
 export type ActionExecuteResponse =

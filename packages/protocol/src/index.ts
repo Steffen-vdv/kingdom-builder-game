@@ -150,12 +150,14 @@ export type {
 	ActionChoiceMap,
 	ActionParametersPayload,
 	ActionExecuteRequest,
+	ActionDescribeRequest,
 	ActionTraceLandSnapshot,
 	ActionPlayerSnapshot,
 	ActionTrace,
 	ActionExecuteSuccessResponse,
 	ActionExecuteErrorResponse,
 	ActionExecuteResponse,
+	ActionDescribeResponse,
 } from './actions/contracts';
 export {
 	sessionIdSchema,
@@ -183,3 +185,7 @@ export {
 	actionExecuteErrorResponseSchema,
 	actionExecuteResponseSchema,
 } from './config/action_contracts';
+export {
+	actionDescribeRequestSchema,
+	actionDescribeResponseSchema,
+} from './config/action_describe_contracts';
