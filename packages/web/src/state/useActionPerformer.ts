@@ -19,6 +19,7 @@ import {
 	appendSubActionChanges,
 	buildActionCostLines,
 	filterActionDiffChanges,
+	handleMissingActionDefinition,
 } from './useActionPerformer.helpers';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
@@ -173,6 +174,21 @@ export function useActionPerformer({
 				}
 				const after = snapshotPlayer(playerAfter);
 				const stepDef = context.actions.get(action.id);
+				if (!stepDef) {
+					await handleMissingActionDefinition({
+						action,
+						player: playerAfter,
+						snapshot: snapshotAfter,
+						actionCostResource,
+						showResolution,
+						syncPhaseState,
+						refresh,
+						addLog,
+						mountedRef,
+						endTurn,
+					});
+					return;
+				}
 				const resolvedStep = resolveActionEffects(stepDef, params);
 				const changes = diffStepSnapshots(
 					before,
