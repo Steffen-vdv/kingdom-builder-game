@@ -159,6 +159,22 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-13 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/state/usePhaseProgress.helpers.ts` (Web)
+    - `packages/web/src/state/formatPhaseResolution.ts` (Web)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Move Web phase progression helpers onto protocol contracts to
+    break the remaining Engine import chain and align with the domain
+    migration's API-first boundary.
+  - **Communication Path Update**: `formatPhaseResolution` and
+    `advanceToActionPhase` now consume `SessionAdvanceResult` and related skip
+    metadata directly from the Protocol package instead of the Engine's
+    re-exported types.
+  - **Follow-Up Notes**: Audit the remaining Web state hooks (e.g.,
+    `sessionSdk` and `developerModeSetup`) that still import Engine helpers so
+    they can migrate to protocol-backed SDK clients.
+
 - **Date & Author**: 2025-10-12 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/protocol/src/session/index.ts` (Protocol)

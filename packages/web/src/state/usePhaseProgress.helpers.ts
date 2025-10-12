@@ -21,7 +21,6 @@ import type {
 	PhaseResolutionFormatResult,
 } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
-import type { EngineAdvanceResult } from '@kingdom-builder/engine';
 import type { PhaseProgressState } from './usePhaseProgress';
 
 type FormatPhaseResolution = (
@@ -88,8 +87,7 @@ export async function advanceToActionPhase({
 				},
 			);
 			const { advance } = advanceResponse;
-			const { phase, step, player, effects, skipped }: SessionAdvanceResult =
-				advance;
+			const { player, skipped }: SessionAdvanceResult = advance;
 			const snapshotAfter = advanceResponse.snapshot;
 			if (snapshotAfter.game.conclusion) {
 				applyPhaseSnapshot(snapshotAfter, { isAdvancing: false });
@@ -102,26 +100,22 @@ export async function advanceToActionPhase({
 				passiveRecords: snapshotAfter.passiveRecords,
 				registries,
 			});
+			const afterSnapshot = skipped ? undefined : snapshotPlayer(player);
 			const formatted = formatPhaseResolution({
-				advance: {
-					phase,
-					step,
-					effects,
-					player,
-					...(skipped ? { skipped } : {}),
-				} as EngineAdvanceResult,
+				advance,
 				before,
-				after: snapshotPlayer(player),
+				...(afterSnapshot ? { after: afterSnapshot } : {}),
 				diffContext,
 				resourceKeys,
 			});
+			const actorLabel = formatted.actorLabel;
 			const resolutionOptions: ShowResolutionOptions = {
 				lines: formatted.lines,
 				summaries: formatted.summaries,
 				source: formatted.source,
 				player,
 				requireAcknowledgement: false,
-				...(formatted.actorLabel ? { actorLabel: formatted.actorLabel } : {}),
+				...(actorLabel ? { actorLabel } : {}),
 			};
 			await showResolution(resolutionOptions);
 			if (!mountedRef.current) {
