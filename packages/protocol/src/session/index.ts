@@ -213,6 +213,26 @@ export interface SessionTriggerMetadata {
 	past?: string;
 }
 
+export interface SessionOverviewHero {
+	badgeIcon?: string;
+	badgeLabel?: string;
+	title: string;
+	intro?: string;
+	paragraph?: string;
+	tokens?: Record<string, string>;
+}
+
+export type SessionOverviewTokenCategory = Record<
+	string,
+	ReadonlyArray<string>
+>;
+
+export interface SessionOverviewContent {
+	hero: SessionOverviewHero;
+	sections?: ReadonlyArray<unknown>;
+	tokens?: Record<string, SessionOverviewTokenCategory>;
+}
+
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
@@ -224,6 +244,7 @@ export interface SessionSnapshotMetadata {
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
+	overviewContent?: SessionOverviewContent;
 }
 
 export interface SessionSnapshot {

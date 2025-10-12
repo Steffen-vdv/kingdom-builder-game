@@ -18,7 +18,14 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+	SessionOverviewHero,
 } from '@kingdom-builder/protocol';
+import {
+	createRegistryMetadata,
+	type RegistryMetadata,
+} from './RegistryMetadataFactory.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -65,6 +72,8 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
+	private readonly registryMetadata: RegistryMetadata;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -92,6 +101,7 @@ export class SessionManager {
 			populations: this.cloneRegistry(this.baseOptions.populations),
 			resources: this.buildResourceRegistry(resourceRegistry),
 		};
+		this.registryMetadata = createRegistryMetadata();
 	}
 
 	public createSession(
@@ -142,11 +152,10 @@ export class SessionManager {
 		return this.sessions.delete(sessionId);
 	}
 
-	public getSnapshot(
-		sessionId: string,
-	): ReturnType<EngineSession['getSnapshot']> {
+	public getSnapshot(sessionId: string): SessionSnapshot {
 		const session = this.requireSession(sessionId);
-		return session.getSnapshot();
+		const snapshot = session.getSnapshot();
+		return this.attachRegistryMetadata(snapshot);
 	}
 
 	public getRuleSnapshot(
@@ -163,6 +172,87 @@ export class SessionManager {
 
 	public getRegistries(): SessionRegistriesPayload {
 		return structuredClone(this.registries);
+	}
+
+	private attachRegistryMetadata(snapshot: SessionSnapshot): SessionSnapshot {
+		const metadata = this.mergeSnapshotMetadata(snapshot.metadata);
+		return {
+			...snapshot,
+			metadata,
+		} satisfies SessionSnapshot;
+	}
+
+	private mergeSnapshotMetadata(
+		metadata: SessionSnapshotMetadata,
+	): SessionSnapshotMetadata {
+		const merged = structuredClone(metadata);
+		const mergeRecord = <Descriptor>(
+			baseRecord: Record<string, Descriptor> | undefined,
+			overrideRecord: Record<string, Descriptor> | undefined,
+		): Record<string, Descriptor> | undefined => {
+			if (!baseRecord) {
+				return overrideRecord ? structuredClone(overrideRecord) : undefined;
+			}
+			const result: Record<string, Descriptor> = structuredClone(baseRecord);
+			if (overrideRecord) {
+				for (const [id, descriptor] of Object.entries(overrideRecord)) {
+					result[id] = structuredClone(descriptor);
+				}
+			}
+			return result;
+		};
+
+		const mergedResources = mergeRecord(
+			this.registryMetadata.resources,
+			metadata.resources,
+		);
+		if (mergedResources) {
+			merged.resources = mergedResources;
+		}
+
+		const mergedTriggers = mergeRecord(
+			this.registryMetadata.triggers,
+			metadata.triggers,
+		);
+		if (mergedTriggers) {
+			merged.triggers = mergedTriggers;
+		}
+
+		const baseOverview = this.registryMetadata.overviewContent;
+		if (baseOverview?.hero) {
+			const baseHero = structuredClone(baseOverview.hero);
+			const overrideHero = metadata.overviewContent?.hero;
+			const hero: SessionOverviewHero = overrideHero
+				? {
+						...baseHero,
+						...structuredClone(overrideHero),
+						tokens: {
+							...(baseHero.tokens ?? {}),
+							...(overrideHero.tokens ?? {}),
+						},
+					}
+				: baseHero;
+			const overrideOverview = metadata.overviewContent
+				? structuredClone(metadata.overviewContent)
+				: undefined;
+			merged.overviewContent = {
+				...structuredClone(baseOverview),
+				...(overrideOverview ?? {}),
+				hero,
+			} satisfies NonNullable<SessionSnapshotMetadata['overviewContent']>;
+		} else if (baseOverview) {
+			const overrideOverview = metadata.overviewContent
+				? structuredClone(metadata.overviewContent)
+				: undefined;
+			merged.overviewContent = {
+				...structuredClone(baseOverview),
+				...(overrideOverview ?? {}),
+			} satisfies NonNullable<SessionSnapshotMetadata['overviewContent']>;
+		} else if (metadata.overviewContent) {
+			merged.overviewContent = structuredClone(metadata.overviewContent);
+		}
+
+		return merged;
 	}
 
 	private requireSession(sessionId: string): EngineSession {

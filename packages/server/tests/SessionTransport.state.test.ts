@@ -1,4 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import {
+        RESOURCES,
+        Resource,
+        TRIGGER_INFO,
+        OVERVIEW_CONTENT,
+} from '@kingdom-builder/contents';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
@@ -41,6 +47,32 @@ describe('SessionTransport session state', () => {
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
+
+                const metadata = state.snapshot.metadata;
+
+                const expectedResource = RESOURCES[Resource.gold];
+                expect(metadata.resources?.[Resource.gold]).toMatchObject({
+                        label: expectedResource.label,
+                        icon: expectedResource.icon,
+                        description: expectedResource.description,
+                });
+
+                const [triggerId, triggerInfo] = Object.entries(TRIGGER_INFO)[0];
+                const expectedLabel = triggerInfo.past ?? triggerInfo.future ?? triggerId;
+                expect(metadata.triggers?.[triggerId]).toMatchObject({
+                        label: expectedLabel,
+                        future: triggerInfo.future,
+                        icon: triggerInfo.icon,
+                });
+
+                const heroTemplate = OVERVIEW_CONTENT.hero;
+                expect(metadata.overviewContent?.hero).toMatchObject({
+                        title: heroTemplate.title,
+                        badgeIcon: heroTemplate.badgeIcon,
+                        badgeLabel: heroTemplate.badgeLabel,
+                        paragraph: heroTemplate.paragraph,
+                        tokens: heroTemplate.tokens,
+                });
 	});
 
 	it('throws when a session cannot be located', () => {
