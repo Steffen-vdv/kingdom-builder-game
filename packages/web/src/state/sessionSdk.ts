@@ -33,6 +33,49 @@ import {
 } from '../services/gameApi';
 import { getLegacyContentConfig } from '../startup/runtimeConfig';
 
+interface SessionMirroringErrorOptions {
+	cause: unknown;
+	details?: Record<string, unknown>;
+}
+
+const fatalSessionErrorFlag = Symbol('session:fatal-error');
+
+export class SessionMirroringError extends Error {
+	public override readonly cause: unknown;
+
+	public readonly details: Record<string, unknown>;
+
+	public constructor(
+		message: string,
+		{ cause, details = {} }: SessionMirroringErrorOptions,
+	) {
+		super(message);
+		this.name = 'SessionMirroringError';
+		this.cause = cause;
+		this.details = details;
+	}
+}
+
+export function markFatalSessionError(error: unknown): void {
+	if (error === null || typeof error !== 'object') {
+		return;
+	}
+	Reflect.set(
+		error as Record<PropertyKey, unknown>,
+		fatalSessionErrorFlag,
+		true,
+	);
+}
+
+export function isFatalSessionError(error: unknown): boolean {
+	if (error === null || typeof error !== 'object') {
+		return false;
+	}
+	return Boolean(
+		Reflect.get(error as Record<PropertyKey, unknown>, fatalSessionErrorFlag),
+	);
+}
+
 export interface SessionHandle {
 	enqueue: EngineSession['enqueue'];
 	advancePhase: EngineSession['advancePhase'];
@@ -268,14 +311,23 @@ export async function performSessionAction(
 				const params = request.params as ActionParams<string> | undefined;
 				handle.performAction(request.actionId, params);
 			} catch (localError) {
-				console.error(
+				throw new SessionMirroringError(
 					'Local session failed to mirror remote action.',
-					localError,
+					{
+						cause: localError,
+						details: {
+							sessionId: request.sessionId,
+							actionId: request.actionId,
+						},
+					},
 				);
 			}
 		}
 		return response;
 	} catch (error) {
+		if (error instanceof SessionMirroringError) {
+			throw error;
+		}
 		const failure = error as ActionExecutionFailure;
 		const response: ActionExecuteErrorResponse = {
 			status: 'error',
@@ -316,7 +368,15 @@ export async function advanceSessionPhase(
 	try {
 		handle.advancePhase();
 	} catch (localError) {
-		console.error('Local session failed to mirror remote advance.', localError);
+		throw new SessionMirroringError(
+			'Local session failed to mirror remote phase advance.',
+			{
+				cause: localError,
+				details: {
+					sessionId: request.sessionId,
+				},
+			},
+		);
 	}
 	return response;
 }

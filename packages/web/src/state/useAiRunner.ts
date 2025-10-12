@@ -4,6 +4,7 @@ import type { Action } from './actionTypes';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { LegacySession } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
+import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
 
 interface UseAiRunnerOptions {
 	session: LegacySession;
@@ -48,7 +49,11 @@ export function useAiRunner({
 					return;
 				}
 				fatalError = error;
+				if (isFatalSessionError(error)) {
+					return;
+				}
 				if (onFatalSessionError) {
+					markFatalSessionError(error);
 					onFatalSessionError(error);
 				}
 			};

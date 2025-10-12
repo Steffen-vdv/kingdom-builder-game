@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequirementFailure, RuleSnapshot } from '@kingdom-builder/engine';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
+import { SessionMirroringError } from '../../src/state/sessionSdk';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -33,9 +34,13 @@ vi.mock('../../src/state/getLegacySessionContext', () => ({
 	getLegacySessionContext: getLegacySessionContextMock,
 }));
 
-vi.mock('../../src/state/sessionSdk', () => ({
-	performSessionAction: performSessionActionMock,
-}));
+vi.mock('../../src/state/sessionSdk', async () => {
+	const actual = await vi.importActual('../../src/state/sessionSdk');
+	return {
+		...(actual as Record<string, unknown>),
+		performSessionAction: performSessionActionMock,
+	};
+});
 
 describe('useActionPerformer', () => {
 	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
@@ -143,6 +148,7 @@ describe('useActionPerformer', () => {
 				endTurn,
 				enqueue: enqueueMock,
 				resourceKeys,
+				onFatalSessionError: undefined,
 			}),
 		);
 
@@ -187,6 +193,7 @@ describe('useActionPerformer', () => {
 				endTurn: vi.fn(),
 				enqueue: enqueueMock,
 				resourceKeys,
+				onFatalSessionError: undefined,
 			}),
 		);
 
@@ -265,6 +272,7 @@ describe('useActionPerformer', () => {
 				endTurn,
 				enqueue: enqueueMock,
 				resourceKeys,
+				onFatalSessionError: undefined,
 			}),
 		);
 
@@ -285,5 +293,44 @@ describe('useActionPerformer', () => {
 				actorLabel: 'Played by',
 			}),
 		);
+	});
+
+	it('reports mirroring failures via onFatalSessionError', async () => {
+		const fatalCause = new Error('mirror failed');
+		const fatalError = new SessionMirroringError('Mirroring failed', {
+			cause: fatalCause,
+		});
+		performSessionActionMock.mockRejectedValueOnce(fatalError);
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const syncPhaseState = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn();
+		const onFatalSessionError = vi.fn();
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
+		expect(pushErrorToast).not.toHaveBeenCalled();
+		expect(addLog).not.toHaveBeenCalled();
 	});
 });

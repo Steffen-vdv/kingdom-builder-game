@@ -2,6 +2,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePhaseProgress } from '../../src/state/usePhaseProgress';
+import { SessionMirroringError } from '../../src/state/sessionSdk';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -14,9 +15,13 @@ import {
 const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
 const advanceToActionPhaseMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../src/state/sessionSdk', () => ({
-	advanceSessionPhase: advanceSessionPhaseMock,
-}));
+vi.mock('../../src/state/sessionSdk', async () => {
+	const actual = await vi.importActual('../../src/state/sessionSdk');
+	return {
+		...(actual as Record<string, unknown>),
+		advanceSessionPhase: advanceSessionPhaseMock,
+	};
+});
 
 vi.mock('../../src/state/usePhaseProgress.helpers', () => ({
 	advanceToActionPhase: advanceToActionPhaseMock,
@@ -69,7 +74,9 @@ describe('usePhaseProgress', () => {
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
-		const error = new Error('Session unavailable');
+		const error = new SessionMirroringError('Session unavailable', {
+			cause: new Error('mirror'),
+		});
 		advanceSessionPhaseMock.mockRejectedValueOnce(error);
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
