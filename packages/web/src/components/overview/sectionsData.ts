@@ -3,7 +3,7 @@ import {
 	type OverviewSectionTemplate,
 	type OverviewTokenCandidates,
 	type OverviewTokenCategoryName,
-} from '@kingdom-builder/contents';
+} from '../../overview/content';
 import type { OverviewSectionDef } from './OverviewLayout';
 import {
 	buildOverviewIconSet,

@@ -12,7 +12,7 @@ import type {
 import {
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
+} from '../overview/content';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
