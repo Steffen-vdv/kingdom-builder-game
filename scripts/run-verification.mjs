@@ -4,6 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const tasks = [
+	{ label: 'coderabbit-review', script: 'coderabbit' },
 	{ label: 'check', script: 'check' },
 	{ label: 'test-coverage', script: 'test:coverage' },
 ];

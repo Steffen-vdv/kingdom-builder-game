@@ -15,15 +15,30 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 ## 1) Setup
 
 1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
-2. Install dependencies: `npm install` (uses npm workspaces to link local packages).
-3. Start the combined dev environment (Fastify server + Vite web client):
+2. Install and authenticate the [CodeRabbit CLI](https://docs.coderabbit.ai/cli)
+   so the `coderabbit` binary is available on your `PATH`. The CLI consumes the
+   repository's `.coderabbit.yml` and must be present for `npm run verify` and
+   the Husky hooks to pass.
+3. Install dependencies: `npm install` (uses npm workspaces to link local packages).
+4. Start the combined dev environment (Fastify server + Vite web client):
    `npm run dev`.
-4. Run a single target when needed:
+5. Run a single target when needed:
    - Web client only: `npm run dev:web`
    - Server only: `npm run server:dev`
-5. Build production bundles for both server and web: `npm run build`.
-6. Build just the Node server bundle: `npm run server:build`.
-7. Review the docs directory for additional deep dives into systems and lore.
+6. Build production bundles for both server and web: `npm run build`.
+7. Build just the Node server bundle: `npm run server:build`.
+8. Review the docs directory for additional deep dives into systems and lore.
+
+### CodeRabbit usage
+
+- Run `npm run coderabbit` for a single local review or pass additional
+  arguments (for example `npm run coderabbit -- --watch`) to keep an
+  asynchronous reviewer running while you iterate. Continue coding while the
+  CLI analyzes your changes and circle back to its comments at a natural break
+  in your work.
+- `npm run verify` now launches CodeRabbit before the existing lint, test, and
+  coverage tasks so automated checks share the same review context as manual
+  CLI runs.
 
 ## 2) Game Overview
 
