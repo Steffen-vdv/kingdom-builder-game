@@ -7,6 +7,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import { deserializeSessionRegistries } from '../state/sessionRegistries';
+import type { AssetMetadata } from './registryMetadataDescriptors';
 import {
 	FALLBACK_METADATA_SOURCES,
 	FALLBACK_REGISTRY_DATA,
@@ -191,6 +192,22 @@ function createAssetMetadata() {
 	});
 }
 
+const createAssetDescriptor = (
+	id: string,
+	label?: string,
+	icon?: string,
+	description?: string,
+): AssetMetadata => {
+	const descriptor: AssetMetadata = { id, label: label ?? id };
+	if (icon !== undefined) {
+		descriptor.icon = icon;
+	}
+	if (description !== undefined) {
+		descriptor.description = description;
+	}
+	return Object.freeze(descriptor);
+};
+
 function createRegistries(): SessionRegistries {
 	const registries = deserializeSessionRegistries(FALLBACK_REGISTRY_DATA);
 	return Object.freeze({
@@ -229,3 +246,24 @@ export const DEFAULT_REGISTRIES: SessionRegistries =
 
 export const DEFAULT_REGISTRY_METADATA: SessionSnapshotMetadata =
 	createMetadata();
+
+export const DEFAULT_LAND_DESCRIPTOR: AssetMetadata = createAssetDescriptor(
+	'land',
+	FALLBACK_METADATA_SOURCES.assets.land.label,
+	FALLBACK_METADATA_SOURCES.assets.land.icon,
+	FALLBACK_METADATA_SOURCES.assets.land.description,
+);
+
+export const DEFAULT_SLOT_DESCRIPTOR: AssetMetadata = createAssetDescriptor(
+	'slot',
+	FALLBACK_METADATA_SOURCES.assets.slot.label,
+	FALLBACK_METADATA_SOURCES.assets.slot.icon,
+	FALLBACK_METADATA_SOURCES.assets.slot.description,
+);
+
+export const DEFAULT_PASSIVE_DESCRIPTOR: AssetMetadata = createAssetDescriptor(
+	'passive',
+	FALLBACK_METADATA_SOURCES.assets.passive.label,
+	FALLBACK_METADATA_SOURCES.assets.passive.icon,
+	FALLBACK_METADATA_SOURCES.assets.passive.description,
+);

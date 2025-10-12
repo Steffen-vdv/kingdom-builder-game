@@ -39,9 +39,21 @@ interface FallbackMetadataSources {
 		}
 	>;
 	assets: {
-		land: { label?: string | undefined; icon?: string | undefined };
-		slot: { label?: string | undefined; icon?: string | undefined };
-		passive: { label?: string | undefined; icon?: string | undefined };
+		land: {
+			label?: string | undefined;
+			icon?: string | undefined;
+			description?: string | undefined;
+		};
+		slot: {
+			label?: string | undefined;
+			icon?: string | undefined;
+			description?: string | undefined;
+		};
+		passive: {
+			label?: string | undefined;
+			icon?: string | undefined;
+			description?: string | undefined;
+		};
 	};
 }
 
