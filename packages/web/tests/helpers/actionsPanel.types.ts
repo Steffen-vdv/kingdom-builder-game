@@ -20,6 +20,9 @@ export interface ActionsPanelGameOptions {
 	statKeys?: {
 		capacity?: string;
 	};
+	placeholders?: {
+		population?: string;
+	};
 }
 
 export type ActionsPanelTestHarness = ReturnType<typeof createActionsPanelGame>;
