@@ -3,29 +3,25 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import { createTranslationContext } from '../src/translation/context';
-import { PHASES, RULES, type ResourceKey } from '@kingdom-builder/contents';
 import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { LegacyGameEngineContextValue } from '../src/state/GameContext.types';
-import type {
-	EngineSession,
-	PlayerId,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
+import type { PlayerId, RuleSnapshot } from '@kingdom-builder/engine';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import { createSessionRegistries } from './helpers/sessionRegistries';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import {
 	formatDescriptorSummary,
 	toDescriptorDisplay,
 } from '../src/components/player/registryDisplays';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import { createPassiveGame } from './helpers/createPassiveDisplayGame';
+
 type MockGame = LegacyGameEngineContextValue;
 type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
@@ -69,124 +65,168 @@ function normalizeSummary(summary: string | undefined): string[] {
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
 }
+
+function createResourceBarScenario() {
+	const scaffold = createTestSessionScaffold();
+	const resourceKeys = Object.keys(scaffold.registries.resources);
+	const happinessKey = scaffold.ruleSnapshot.tieredResourceKey;
+	const actionCostResource =
+		resourceKeys.find((key) => key !== happinessKey) ??
+		resourceKeys[0] ??
+		happinessKey;
+	const tierDefinitions: TierDefinition[] = [
+		{
+			id: 'tier.strained',
+			range: { max: 3 },
+			effect: { incomeMultiplier: 0 },
+			preview: {
+				id: 'tier.strained.passive',
+				effects: [
+					{
+						type: 'resource',
+						method: 'remove',
+						params: { key: happinessKey, amount: 1 },
+					},
+				],
+			},
+			text: {
+				summary: 'Lose key resources to unrest.',
+				removal: 'The populace rallies.',
+			},
+			display: {
+				title: 'Strained Spirits',
+				icon: '⚠️',
+				summaryToken: 'tier.strained.summary',
+				removalCondition: 'Restore hope to recover.',
+			},
+		},
+		{
+			id: scaffold.neutralTierId,
+			range: { min: 4, max: 6 },
+			effect: { incomeMultiplier: 1 },
+			preview: {
+				id: scaffold.tierPassiveId,
+				effects: [
+					{
+						type: 'resource',
+						method: 'add',
+						params: { key: happinessKey, amount: 1 },
+					},
+				],
+			},
+			text: {
+				summary: 'Hold steady without bonuses.',
+				removal: 'Resolve slips away.',
+			},
+			display: {
+				title: 'Steady Resolve',
+				summaryToken: 'tier.neutral.summary',
+			},
+		},
+		{
+			id: 'tier.glory',
+			range: { min: 7 },
+			effect: { incomeMultiplier: 2 },
+			preview: {
+				id: 'tier.glory.passive',
+				effects: [
+					{
+						type: 'resource',
+						method: 'add',
+						params: { key: happinessKey, amount: 2 },
+					},
+				],
+			},
+			text: {
+				summary: 'Gain celebratory gifts.',
+				removal: 'Celebrations cease.',
+			},
+			display: {
+				title: 'Glory Days',
+				icon: '🎆',
+				summaryToken: 'tier.glory.summary',
+				removalCondition: 'Keep morale blazing.',
+			},
+		},
+	];
+	const ruleSnapshot: RuleSnapshot = {
+		...scaffold.ruleSnapshot,
+		tieredResourceKey: happinessKey,
+		tierDefinitions,
+	};
+	const activePlayerId = 'player-1' as PlayerId;
+	const opponentId = 'player-2' as PlayerId;
+	const activePlayer = createSnapshotPlayer({
+		id: activePlayerId,
+		name: 'Player One',
+		resources: { [happinessKey]: 6 },
+	});
+	const opponent = createSnapshotPlayer({
+		id: opponentId,
+		name: 'Player Two',
+	});
+	const metadata = structuredClone(scaffold.metadata);
+	const sessionState = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId,
+		opponentId,
+		phases: scaffold.phases,
+		actionCostResource,
+		ruleSnapshot,
+		metadata,
+	});
+	const { mockGame, handleHoverCard, clearHoverCard, registries } =
+		createPassiveGame(sessionState, {
+			ruleSnapshot,
+			registries: scaffold.registries,
+			metadata,
+		});
+	const sessionView = selectSessionView(sessionState, scaffold.registries);
+	mockGame.selectors.sessionView = sessionView;
+	mockGame.sessionState = sessionState;
+	mockGame.sessionView = sessionView;
+	mockGame.handleHoverCard = handleHoverCard;
+	mockGame.clearHoverCard = clearHoverCard;
+	const metadataSelectors = createTestRegistryMetadata(
+		registries,
+		sessionState.metadata,
+	);
+	return {
+		mockGame: mockGame as MockGame,
+		registries,
+		metadata: sessionState.metadata,
+		ruleSnapshot,
+		happinessKey,
+		activePlayer,
+		metadataSelectors,
+		sessionState,
+		sessionView,
+		handleHoverCard,
+	};
+}
+
 let currentGame: MockGame;
+
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => currentGame,
 }));
+
 describe('<ResourceBar /> happiness hover card', () => {
 	it('lists happiness tiers with concise summaries and highlights the active threshold', () => {
-		const happinessKey = RULES.tieredResourceKey;
-		const activePlayerId = 'player-1' as PlayerId;
-		const opponentId = 'player-2' as PlayerId;
-		const tierDefinitions = RULES.tierDefinitions.map((tier) => ({
-			...tier,
-			display: {
-				...(tier.display ?? {}),
-				title: `Snapshot ${tier.id}`,
-			},
-		}));
-		const ruleSnapshot = {
-			...RULES,
-			tierDefinitions,
-		};
-		const activePlayer = createSnapshotPlayer({
-			id: activePlayerId,
-			name: 'Player One',
-			resources: { [happinessKey]: 6 },
-		});
-		const opponent = createSnapshotPlayer({
-			id: opponentId,
-			name: 'Player Two',
-		});
-		const sessionState = createSessionSnapshot({
-			players: [activePlayer, opponent],
-			activePlayerId,
-			opponentId,
-			phases: PHASES,
-			actionCostResource: RULES.tieredResourceKey as ResourceKey,
+		const scenario = createResourceBarScenario();
+		const {
+			mockGame,
+			registries,
+			metadata,
 			ruleSnapshot,
-		});
-		const handleHoverCard = vi.fn();
-		const clearHoverCard = vi.fn();
-		const sessionRegistries = createSessionRegistries();
-		const translationContext = createTranslationContext(
-			sessionState,
-			sessionRegistries,
-			sessionState.metadata,
-			{
-				ruleSnapshot,
-				passiveRecords: sessionState.passiveRecords,
-			},
-		);
-		const sessionView = selectSessionView(sessionState, sessionRegistries);
-		currentGame = {
-			sessionId: 'test-session',
-			sessionSnapshot: sessionState,
-			cachedSessionSnapshot: sessionState,
-			selectors: { sessionView },
-			translationContext,
-			ruleSnapshot,
-			log: [],
-			logOverflowed: false,
-			resolution: null,
-			showResolution: vi.fn().mockResolvedValue(undefined),
-			acknowledgeResolution: vi.fn(),
-			hoverCard: null,
+			happinessKey,
+			activePlayer,
+			metadataSelectors,
 			handleHoverCard,
-			clearHoverCard,
-			phase: {
-				currentPhaseId: sessionState.game.currentPhase,
-				isActionPhase: Boolean(
-					sessionState.phases[sessionState.game.phaseIndex]?.action,
-				),
-				canEndTurn: true,
-				isAdvancing: false,
-			},
-			actionCostResource: sessionState.actionCostResource as ResourceKey,
-			requests: {
-				performAction: vi.fn().mockResolvedValue(undefined),
-				advancePhase: vi.fn().mockResolvedValue(undefined),
-				refreshSession: vi.fn().mockResolvedValue(undefined),
-			},
-			metadata: {
-				getRuleSnapshot: () => ruleSnapshot,
-				getSessionView: () => sessionView,
-				getTranslationContext: () => translationContext,
-			},
-			runUntilActionPhase: vi.fn().mockResolvedValue(undefined),
-			refreshPhaseState: vi.fn(),
-			darkMode: true,
-			onToggleDark: vi.fn(),
-			musicEnabled: true,
-			onToggleMusic: vi.fn(),
-			soundEnabled: true,
-			onToggleSound: vi.fn(),
-			backgroundAudioMuted: true,
-			onToggleBackgroundAudioMute: vi.fn(),
-			timeScale: 1,
-			setTimeScale: vi.fn(),
-			toasts: [],
-			pushToast: vi.fn(),
-			pushErrorToast: vi.fn(),
-			pushSuccessToast: vi.fn(),
-			dismissToast: vi.fn(),
-			playerName: 'Player',
-			onChangePlayerName: vi.fn(),
-			session: {} as EngineSession,
-			sessionState,
-			sessionView,
-			handlePerform: vi.fn().mockResolvedValue(undefined),
-			handleEndTurn: vi.fn().mockResolvedValue(undefined),
-		} as MockGame;
-		const metadataSelectors = createTestRegistryMetadata(
-			sessionRegistries,
-			sessionState.metadata,
-		);
+		} = scenario;
+		currentGame = mockGame;
 		render(
-			<RegistryMetadataProvider
-				registries={sessionRegistries}
-				metadata={sessionState.metadata}
-			>
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
 				<ResourceBar player={activePlayer} />
 			</RegistryMetadataProvider>,
 		);
@@ -211,9 +251,10 @@ describe('<ResourceBar /> happiness hover card', () => {
 				Boolean(section) && typeof section === 'object',
 		);
 		expect(tierEntries).toHaveLength(3);
-		expect(
-			tierEntries.some((entry) => (entry?.title ?? '').includes('Snapshot')),
-		).toBe(true);
+		const titles = tierEntries.map((entry) => entry?.title ?? '');
+		expect(titles.join(' ')).toContain('Glory Days');
+		expect(titles.join(' ')).toContain('Steady Resolve');
+		expect(titles.join(' ')).toContain('Strained Spirits');
 		const [higherEntry, currentEntry, lowerEntry] = tierEntries;
 		expect(higherEntry).toBeTruthy();
 		expect(currentEntry).toBeTruthy();
@@ -271,7 +312,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 			const items = entry?.items ?? [];
 			expect(items.length).toBeLessThanOrEqual(MAX_TIER_SUMMARY_LINES);
 			const summaryEntries = tier.preview?.effects?.length
-				? describeEffects(tier.preview.effects, translationContext)
+				? describeEffects(tier.preview.effects, mockGame.translationContext)
 				: normalizeSummary(tier.text?.summary);
 			const baseSummary = summaryEntries.length
 				? summaryEntries

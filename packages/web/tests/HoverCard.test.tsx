@@ -5,121 +5,119 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
 import {
-	createEngine,
-	getActionCosts,
-	getActionRequirements,
-	type EngineAdvanceResult,
-} from '@kingdom-builder/engine';
-import {
-	RESOURCES,
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
-import { createContentFactory } from '@kingdom-builder/testing';
-import { createTranslationContext } from '../src/translation/context';
-import { translateRequirementFailure } from '../src/translation';
-import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import { createSessionRegistries } from './helpers/sessionRegistries';
-import {
-	useActionResolution,
-	type ActionResolution,
-} from '../src/state/useActionResolution';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import { createPassiveGame } from './helpers/createPassiveDisplayGame';
+import { useActionResolution } from '../src/state/useActionResolution';
 import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
 import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
 import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
 import type { PlayerSnapshot } from '../src/translation';
+import type {
+	EngineAdvanceResult,
+	LegacyGameEngineContextValue,
+	PlayerId,
+} from '@kingdom-builder/engine';
+import { createContentFactory } from '@kingdom-builder/testing';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
+interface HoverCardScenario {
+	mockGame: LegacyGameEngineContextValue;
+	costResource: string;
+	costIcon: string;
+	actionCostResource: string;
+	activePlayerId: PlayerId;
+	opponentId: PlayerId;
+	exampleAction: { id: string; name: string; icon?: string };
+	sessionState: ReturnType<typeof createSessionSnapshot>;
+}
 
-const engineContext = createEngine({
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
-	phases: PHASES,
-	start: GAME_START,
-	rules: RULES,
-});
-const engineSnapshot = snapshotEngine(engineContext);
-const actionCostResource = engineSnapshot.actionCostResource;
-const sessionRegistries = createSessionRegistries();
-const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
-const translationContext = createTranslationContext(
-	engineSnapshot,
-	sessionRegistries,
-	engineSnapshot.metadata,
-	{
-		ruleSnapshot: engineSnapshot.rules,
-		passiveRecords: engineSnapshot.passiveRecords,
-	},
-);
-
-const findActionWithReq = () => {
-	for (const [id] of (ACTIONS as unknown as { map: Map<string, unknown> })
-		.map) {
-		const failures = getActionRequirements(id, engineContext);
-		const requirements = failures.map((failure) =>
-			translateRequirementFailure(failure, engineContext),
-		);
-		const costs = getActionCosts(id, engineContext);
-		if (
-			requirements.length &&
-			Object.keys(costs).some((costKey) => costKey !== actionCostResource)
-		) {
-			return { id, requirements, costs } as const;
-		}
+function ensureIconDescriptor(
+	metadata: HoverCardScenario['mockGame']['translationContext']['assets']['resources'],
+	resourceKey: string,
+	fallbackIcon: string,
+): string {
+	const descriptor = metadata[resourceKey];
+	if (descriptor?.icon) {
+		return descriptor.icon;
 	}
-	return { id: '', requirements: [], costs: {} } as const;
-};
-const actionData = findActionWithReq();
-const mockGame = {
-	session: {
-		getActionCosts: vi.fn(),
-		getActionRequirements: vi.fn(),
-		getActionOptions: vi.fn(),
-	},
-	sessionState: engineSnapshot,
-	sessionView,
-	translationContext,
-	ruleSnapshot: engineSnapshot.rules,
-	log: [],
-	logOverflowed: false,
-	hoverCard: null as unknown as {
-		title: string;
-		effects: unknown[];
-		requirements: string[];
-		costs?: Record<string, number>;
-	} | null,
-	handleHoverCard: vi.fn(),
-	clearHoverCard: vi.fn(),
-	phase: {
-		currentPhaseId: engineSnapshot.game.currentPhase,
-		isActionPhase: Boolean(
-			engineSnapshot.phases[engineSnapshot.game.phaseIndex]?.action,
-		),
-		canEndTurn: true,
-		isAdvancing: false,
-	},
-	actionCostResource,
-	handlePerform: vi.fn().mockResolvedValue(undefined),
-	runUntilActionPhase: vi.fn(),
-	handleEndTurn: vi.fn().mockResolvedValue(undefined),
-	refreshPhaseState: vi.fn(),
-	darkMode: false,
-	onToggleDark: vi.fn(),
-	resolution: null as ActionResolution | null,
-	showResolution: vi.fn().mockResolvedValue(undefined),
-	acknowledgeResolution: vi.fn(),
-};
+	metadata[resourceKey] = {
+		label: descriptor?.label ?? `Resource ${resourceKey}`,
+		icon: fallbackIcon,
+	};
+	return fallbackIcon;
+}
+
+function createHoverCardScenario(): HoverCardScenario {
+	const scaffold = createTestSessionScaffold();
+	const resourceKeys = Object.keys(scaffold.registries.resources);
+	const metadata = structuredClone(scaffold.metadata);
+	const actionCostResource =
+		resourceKeys.find(
+			(key) => key !== scaffold.ruleSnapshot.tieredResourceKey,
+		) ??
+		resourceKeys[0] ??
+		scaffold.ruleSnapshot.tieredResourceKey;
+	const costResource =
+		resourceKeys.find((key) => key !== actionCostResource) ??
+		actionCostResource;
+	const activePlayerId = 'player-1' as PlayerId;
+	const opponentId = 'player-2' as PlayerId;
+	const activePlayer = createSnapshotPlayer({
+		id: activePlayerId,
+		name: 'Player One',
+		resources: { [costResource]: 5 },
+	});
+	const opponent = createSnapshotPlayer({ id: opponentId, name: 'Player Two' });
+	const sessionState = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId,
+		opponentId,
+		phases: scaffold.phases,
+		actionCostResource,
+		ruleSnapshot: scaffold.ruleSnapshot,
+		metadata,
+	});
+	const { mockGame } = createPassiveGame(sessionState, {
+		ruleSnapshot: scaffold.ruleSnapshot,
+		registries: scaffold.registries,
+		metadata,
+	});
+	const sessionView = selectSessionView(sessionState, scaffold.registries);
+	mockGame.selectors.sessionView = sessionView;
+	mockGame.sessionView = sessionView;
+	mockGame.sessionState = sessionState;
+	const translationContext = mockGame.translationContext;
+	const costIcon = ensureIconDescriptor(
+		translationContext.assets.resources,
+		costResource,
+		'🪙',
+	);
+	const actionEntries = Array.from(scaffold.registries.actions.entries());
+	const [exampleActionId, exampleActionDefinition] =
+		actionEntries.find(([, definition]) => definition.icon) ??
+		actionEntries[0]!;
+	const exampleAction = {
+		id: exampleActionId,
+		name: exampleActionDefinition?.name ?? exampleActionId,
+		icon: exampleActionDefinition?.icon,
+	};
+	return {
+		mockGame: mockGame as LegacyGameEngineContextValue,
+		costResource,
+		costIcon,
+		actionCostResource,
+		activePlayerId,
+		opponentId,
+		exampleAction,
+		sessionState,
+	};
+}
+
+let scenario = createHoverCardScenario();
+let mockGame = scenario.mockGame;
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
@@ -133,6 +131,8 @@ function resetResolutionState() {
 }
 
 beforeEach(() => {
+	scenario = createHoverCardScenario();
+	mockGame = scenario.mockGame;
 	resetResolutionState();
 });
 
@@ -143,25 +143,17 @@ afterEach(() => {
 
 describe('<HoverCard />', () => {
 	it('renders hover card details from context', () => {
-		const { id, requirements, costs } = actionData;
-		const actionDefinition = ACTIONS.get(id);
-		const title = `${actionDefinition.icon} ${actionDefinition.name}`;
+		const { costResource, costIcon } = scenario;
 		mockGame.hoverCard = {
-			title,
+			title: '🌱 Expand',
 			effects: [],
-			requirements,
-			costs,
+			requirements: ['Requires fertile land'],
+			costs: { [costResource]: 2 },
 		};
 		render(<HoverCard />);
-		expect(screen.getByText(title)).toBeInTheDocument();
-		const costResource = Object.keys(costs).find(
-			(costKey) => costKey !== actionCostResource,
-		)!;
-		const costIcon = RESOURCES[costResource].icon;
-		expect(
-			screen.getByText(`${costIcon}${costs[costResource]}`),
-		).toBeInTheDocument();
-		expect(screen.getByText(requirements[0]!)).toBeInTheDocument();
+		expect(screen.getByText('🌱 Expand')).toBeInTheDocument();
+		expect(screen.getByText(`${costIcon}2`)).toBeInTheDocument();
+		expect(screen.getByText('Requires fertile land')).toBeInTheDocument();
 	});
 
 	it('omits the Free label when hover data has no costs', () => {
@@ -177,6 +169,7 @@ describe('<HoverCard />', () => {
 
 	it('disables acknowledgement until the final resolution step', async () => {
 		vi.useFakeTimers();
+		const { exampleAction } = scenario;
 		const ResolutionHarness = () => {
 			const timeScaleRef = React.useRef(1);
 			const mountedRef = React.useRef(true);
@@ -204,16 +197,12 @@ describe('<HoverCard />', () => {
 		if (!activePlayerView) {
 			throw new Error('Expected active player in session view');
 		}
-		const actionDefinition = ACTIONS.get(actionData.id);
-		if (!actionDefinition) {
-			throw new Error('Expected action definition for resolution test');
-		}
 		const resolutionSource = {
 			kind: 'action' as const,
 			label: 'Action',
-			id: actionDefinition.id,
-			name: actionDefinition.name,
-			icon: actionDefinition.icon,
+			id: exampleAction.id,
+			name: exampleAction.name,
+			icon: exampleAction.icon,
 		};
 		act(() => {
 			resolutionPromise = mockGame.showResolution({
@@ -222,11 +211,7 @@ describe('<HoverCard />', () => {
 					id: activePlayerView.id,
 					name: activePlayerView.name,
 				},
-				action: {
-					id: actionDefinition.id,
-					name: actionDefinition.name,
-					icon: actionDefinition.icon,
-				},
+				action: resolutionSource,
 				source: resolutionSource,
 				actorLabel: 'Played by',
 			});
@@ -289,12 +274,13 @@ describe('<HoverCard />', () => {
 		if (!activePlayerView) {
 			throw new Error('Expected active player for phase resolution test');
 		}
-		const availableResourceKeys = Object.keys(RESOURCES) as Array<
-			keyof typeof RESOURCES
-		>;
-		const resourceKey = (availableResourceKeys.find((key) => {
-			return key !== mockGame.actionCostResource;
-		}) ?? availableResourceKeys[0]!) as ResourceKey;
+		const availableResourceKeys = Object.keys(
+			mockGame.translationContext.assets.resources,
+		);
+		const resourceKey =
+			availableResourceKeys.find(
+				(key) => key !== scenario.actionCostResource,
+			) ?? availableResourceKeys[0]!;
 		const createPlayerSnapshot = (
 			resources: Record<string, number>,
 		): PlayerSnapshot => {
@@ -362,7 +348,7 @@ describe('<HoverCard />', () => {
 			buildings: factory.buildings,
 			developments: factory.developments,
 			passives: { evaluationMods: new Map(), get: () => undefined },
-			assets: translationContext.assets,
+			assets: mockGame.translationContext.assets,
 		});
 		const formatted = formatPhaseResolution({
 			advance,

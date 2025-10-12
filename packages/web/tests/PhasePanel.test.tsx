@@ -4,114 +4,79 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
-import { createEngine, type EngineSession } from '@kingdom-builder/engine';
-import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
-import { createTranslationContext } from '../src/translation/context';
-import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import { createSessionRegistries } from './helpers/sessionRegistries';
+import type { EngineSession } from '@kingdom-builder/engine';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
+import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
-
-const ctx = createEngine({
-	actions: ACTIONS,
-	buildings: BUILDINGS,
-	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
-	phases: PHASES,
-	start: GAME_START,
-	rules: RULES,
-});
-const actionCostResource = ctx.actionCostResource;
-const engineSnapshot = snapshotEngine(ctx);
-const sessionRegistries = createSessionRegistries();
-const sessionView = selectSessionView(engineSnapshot, sessionRegistries);
-const translationContext = createTranslationContext(
-	engineSnapshot,
-	sessionRegistries,
-	engineSnapshot.metadata,
-	{
-		ruleSnapshot: engineSnapshot.rules,
-		passiveRecords: engineSnapshot.passiveRecords,
-	},
-);
-const currentPhaseLabel =
-	engineSnapshot.phases[engineSnapshot.game.phaseIndex]?.label ??
-	engineSnapshot.game.currentPhase;
-const mockGame = {
-	session: {
+function createPhasePanelScenario() {
+	const scaffold = createTestSessionScaffold();
+	const [activePlayer, opponent] = [
+		createSnapshotPlayer({
+			id: 'player-1',
+			name: 'Player One',
+		}),
+		createSnapshotPlayer({
+			id: 'player-2',
+			name: 'Player Two',
+		}),
+	];
+	const sessionState = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases: scaffold.phases,
+		actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
+		ruleSnapshot: scaffold.ruleSnapshot,
+		metadata: scaffold.metadata,
+		turn: 3,
+	});
+	const { mockGame } = createPassiveGame(sessionState, {
+		ruleSnapshot: scaffold.ruleSnapshot,
+		registries: scaffold.registries,
+		metadata: scaffold.metadata,
+	});
+	mockGame.session = {
 		getActionCosts: vi.fn(),
 		getActionRequirements: vi.fn(),
 		getActionOptions: vi.fn(),
-	} as unknown as EngineSession,
-	sessionState: engineSnapshot,
-	sessionView,
-	translationContext,
-	ruleSnapshot: engineSnapshot.rules,
-	log: [],
-	logOverflowed: false,
-	hoverCard: null,
-	handleHoverCard: vi.fn(),
-	clearHoverCard: vi.fn(),
-	phase: {
-		currentPhaseId: engineSnapshot.game.currentPhase,
-		isActionPhase: Boolean(
-			engineSnapshot.phases[engineSnapshot.game.phaseIndex]?.action,
-		),
-		canEndTurn: true,
-		isAdvancing: false,
-	},
-	actionCostResource,
-	handlePerform: vi.fn().mockResolvedValue(undefined),
-	runUntilActionPhase: vi.fn(),
-	handleEndTurn: vi.fn().mockResolvedValue(undefined),
-	refreshPhaseState: vi.fn(),
-	darkMode: false,
-	onToggleDark: vi.fn(),
-	resolution: null,
-	showResolution: vi.fn().mockResolvedValue(undefined),
-	acknowledgeResolution: vi.fn(),
-	musicEnabled: true,
-	onToggleMusic: vi.fn(),
-	soundEnabled: true,
-	onToggleSound: vi.fn(),
-	backgroundAudioMuted: false,
-	onToggleBackgroundAudioMute: vi.fn(),
-	timeScale: 1,
-	setTimeScale: vi.fn(),
-	toasts: [],
-	pushToast: vi.fn(),
-	pushErrorToast: vi.fn(),
-	pushSuccessToast: vi.fn(),
-	dismissToast: vi.fn(),
-	playerName: engineSnapshot.game.players[0]?.name ?? 'Player',
-	onChangePlayerName: vi.fn(),
-};
+	} as unknown as EngineSession;
+	return {
+		mockGame,
+		sessionState,
+		sessionView: selectSessionView(sessionState, scaffold.registries),
+		currentPhaseLabel:
+			sessionState.phases[sessionState.game.phaseIndex]?.label ??
+			sessionState.game.currentPhase,
+		defaultPhase: {
+			currentPhaseId: sessionState.game.currentPhase,
+			isActionPhase: Boolean(
+				sessionState.phases[sessionState.game.phaseIndex]?.action,
+			),
+			canEndTurn: true,
+			isAdvancing: false,
+		},
+	};
+}
+
+let scenario = createPhasePanelScenario();
+let mockGame = scenario.mockGame;
+let currentPhaseLabel = scenario.currentPhaseLabel;
+let defaultPhase = scenario.defaultPhase;
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
 }));
 
-const defaultPhase = {
-	currentPhaseId: engineSnapshot.game.currentPhase,
-	isActionPhase: Boolean(
-		engineSnapshot.phases[engineSnapshot.game.phaseIndex]?.action,
-	),
-	canEndTurn: true,
-	isAdvancing: false,
-};
-
 beforeEach(() => {
+	scenario = createPhasePanelScenario();
+	mockGame = scenario.mockGame;
+	currentPhaseLabel = scenario.currentPhaseLabel;
+	defaultPhase = scenario.defaultPhase;
 	mockGame.phase = { ...defaultPhase };
 	mockGame.handleEndTurn.mockClear();
 });
@@ -124,12 +89,12 @@ describe('<PhasePanel />', () => {
 	it('displays the turn indicator and current phase badge', () => {
 		render(<PhasePanel />);
 		expect(
-			screen.getByText(`Turn ${engineSnapshot.game.turn}`),
+			screen.getByText(`Turn ${mockGame.sessionState.game.turn}`),
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				sessionView.active?.name ??
-					engineSnapshot.game.players[0]?.name ??
+				scenario.sessionView.active?.name ??
+					mockGame.sessionState.game.players[0]?.name ??
 					'Player',
 			),
 		).toBeInTheDocument();
