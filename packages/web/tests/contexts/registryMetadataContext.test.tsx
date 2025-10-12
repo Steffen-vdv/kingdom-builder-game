@@ -16,6 +16,7 @@ import {
 	useStatMetadata,
 	usePhaseMetadata,
 	useTriggerMetadata,
+	useModifierDisplayMetadata,
 	useLandMetadata,
 	useSlotMetadata,
 	usePassiveAssetMetadata,
@@ -122,9 +123,19 @@ function createTestSetup(): TestSetup {
 				past: 'Ignition complete',
 			},
 		},
+		modifierDisplays: {
+			cost: { label: 'Cost Change', icon: '💸' },
+		},
 		assets: {
 			land: { label: 'Territory', icon: '🗺️' },
+			slot: { label: 'Development Slot', icon: '🧩' },
 			passive: { label: 'Aura', icon: '✨' },
+		},
+		overviewContent: {
+			hero: {
+				title: 'Session Overview',
+				intro: 'Custom overview from metadata.',
+			},
 		},
 	};
 	const registries: SessionRegistries = {
@@ -159,6 +170,7 @@ interface CapturedLookups {
 	stats: MetadataSelector<RegistryMetadataDescriptor>;
 	phases: MetadataSelector<PhaseMetadata>;
 	triggers: MetadataSelector<TriggerMetadata>;
+	modifierDisplays: MetadataSelector<RegistryMetadataDescriptor>;
 	land: AssetMetadataSelector;
 	slot: AssetMetadataSelector;
 	passive: AssetMetadataSelector;
@@ -186,6 +198,7 @@ describe('RegistryMetadataProvider', () => {
 				stats: useStatMetadata(),
 				phases: usePhaseMetadata(),
 				triggers: useTriggerMetadata(),
+				modifierDisplays: useModifierDisplayMetadata(),
 				land: useLandMetadata(),
 				slot: useSlotMetadata(),
 				passive: usePassiveAssetMetadata(),
@@ -212,6 +225,7 @@ describe('RegistryMetadataProvider', () => {
 			stats,
 			phases,
 			triggers,
+			modifierDisplays,
 			land,
 			slot,
 			passive,
@@ -277,6 +291,12 @@ describe('RegistryMetadataProvider', () => {
 		expect(triggers.select(fallbackTriggerId).label).toBe(
 			formatFallbackLabel(fallbackTriggerId),
 		);
+		const modifierDisplay = modifierDisplays.select('cost');
+		expect(modifierDisplay.icon).toBe('💸');
+		const fallbackModifierId = nextKey('modifier');
+		expect(modifierDisplays.select(fallbackModifierId).label).toBe(
+			formatFallbackLabel(fallbackModifierId),
+		);
 		const phaseRecord = phases.selectRecord([setup.phaseId, fallbackPhaseId]);
 		expect(phaseRecord[setup.phaseId]).toBe(phaseDescriptor);
 		expect(Object.isFrozen(phaseRecord)).toBe(true);
@@ -284,6 +304,9 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
-		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(context.overviewContent?.hero?.title).toBe('Session Overview');
+		expect(context.overviewContent?.hero?.intro).toBe(
+			'Custom overview from metadata.',
+		);
 	});
 });
