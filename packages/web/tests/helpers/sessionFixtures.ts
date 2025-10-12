@@ -6,7 +6,6 @@ import type {
 	PlayerStateSnapshot,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
-import type { ResourceKey } from '@kingdom-builder/contents';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 
 interface SnapshotPlayerOptions {
@@ -156,7 +155,7 @@ interface SessionSnapshotOptions {
 	activePlayerId: PlayerId;
 	opponentId: PlayerId;
 	phases: EngineSessionSnapshot['phases'];
-	actionCostResource: ResourceKey;
+	actionCostResource: EngineSessionSnapshot['actionCostResource'];
 	ruleSnapshot: RuleSnapshot;
 	passiveRecords?: Record<PlayerId, PassiveRecordSnapshot[]>;
 	compensations?: Record<PlayerId, PlayerStartConfig>;
