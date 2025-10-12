@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
-import { advanceSessionPhase } from './sessionSdk';
+import {
+	advanceSessionPhase,
+	SessionMirroringError,
+	markFatalSessionError,
+	isFatalSessionError,
+} from './sessionSdk';
 import type {
 	LegacySession,
 	SessionRegistries,
@@ -114,6 +119,7 @@ export function usePhaseProgress({
 				formatPhaseResolution,
 				showResolution,
 				registries,
+				...(onFatalSessionError ? { onFatalSessionError } : {}),
 			}),
 		[
 			applyPhaseSnapshot,
@@ -159,9 +165,16 @@ export function usePhaseProgress({
 			applyPhaseSnapshot(session.getSnapshot(), {
 				isAdvancing: false,
 			});
-			if (onFatalSessionError) {
-				onFatalSessionError(error);
-				return;
+			if (error instanceof SessionMirroringError) {
+				if (isFatalSessionError(error)) {
+					return;
+				}
+				if (onFatalSessionError) {
+					markFatalSessionError(error);
+					onFatalSessionError(error);
+					return;
+				}
+				throw error;
 			}
 			console.error(error);
 		}

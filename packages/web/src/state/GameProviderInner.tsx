@@ -28,6 +28,7 @@ import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
+import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -201,6 +202,7 @@ export function GameProviderInner({
 		endTurn,
 		enqueue,
 		resourceKeys,
+		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
 	useAiRunner({
@@ -222,9 +224,14 @@ export function GameProviderInner({
 				if (disposed) {
 					return;
 				}
-				if (onFatalSessionError) {
-					onFatalSessionError(error);
+				if (!onFatalSessionError) {
+					return;
 				}
+				if (isFatalSessionError(error)) {
+					return;
+				}
+				markFatalSessionError(error);
+				onFatalSessionError(error);
 			}
 		};
 		void run();

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
+import { SessionMirroringError } from '../../src/state/sessionSdk';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -19,11 +20,15 @@ const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../src/state/sessionSdk', () => ({
-	createSession: createSessionMock,
-	fetchSnapshot: fetchSnapshotMock,
-	releaseSession: releaseSessionMock,
-}));
+vi.mock('../../src/state/sessionSdk', async () => {
+	const actual = await vi.importActual('../../src/state/sessionSdk');
+	return {
+		...(actual as Record<string, unknown>),
+		createSession: createSessionMock,
+		fetchSnapshot: fetchSnapshotMock,
+		releaseSession: releaseSessionMock,
+	};
+});
 
 const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
 const runUntilActionPhaseCoreMock = vi.hoisted(() => vi.fn());
@@ -408,5 +413,36 @@ describe('GameProvider', () => {
 		expect(
 			screen.getByText('An unexpected error prevented the game from loading.'),
 		).toBeInTheDocument();
+	});
+
+	it('releases the session and shows bootstrap screen when mirroring fails', async () => {
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		const fatalError = new SessionMirroringError('Mirroring failed', {
+			cause: new Error('desync'),
+		});
+
+		await act(async () => {
+			capturedPhaseOptions?.onFatalSessionError?.(fatalError);
+			await Promise.resolve();
+		});
+
+		await waitFor(() =>
+			expect(releaseSessionMock).toHaveBeenCalledWith('session-1'),
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('We could not load your kingdom.'),
+			).toBeInTheDocument(),
+		);
 	});
 });
