@@ -3,7 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { ActionId, Resource } from '@kingdom-builder/contents';
+import { ActionId } from '@kingdom-builder/contents';
 import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import GenericActions from '../src/components/actions/GenericActions';
@@ -68,11 +68,19 @@ const actionsMap = new Map([
 ] as const);
 
 function createMockGame() {
-	const actionCostResource = 'ap';
+	const baseRegistries = createSessionRegistries();
+	const resourceKeys = Object.keys(baseRegistries.resources);
+	const actionCostResource = resourceKeys[0] ?? 'resource-action';
+	const secondaryResource = resourceKeys[1] ?? actionCostResource;
+	const tieredResourceKey = resourceKeys[2] ?? secondaryResource;
+	const actionPhaseId = 'phase.action';
 	const activePlayer = {
 		id: 'A',
 		name: 'Player',
-		resources: { ap: 3, gold: 20 },
+		resources: {
+			[actionCostResource]: 3,
+			[secondaryResource]: 20,
+		},
 		lands: [{ id: 'A-L1', slotsFree: 0 }],
 		population: {} as Record<string, number>,
 		buildings: new Set<string>(),
@@ -81,7 +89,10 @@ function createMockGame() {
 	const opponent = {
 		id: 'B',
 		name: 'Opponent',
-		resources: { ap: 0, gold: 0 },
+		resources: {
+			[actionCostResource]: 0,
+			[secondaryResource]: 0,
+		},
 		lands: [],
 		population: {} as Record<string, number>,
 		buildings: new Set<string>(),
@@ -116,7 +127,7 @@ function createMockGame() {
 				return false;
 			},
 		}),
-		phases: [{ id: 'main' }],
+		phases: [{ id: actionPhaseId }],
 		activePlayer: toTranslationPlayer({
 			id: activePlayer.id,
 			name: activePlayer.name,
@@ -158,7 +169,7 @@ function createMockGame() {
 		game: {
 			turn: 1,
 			currentPlayerIndex: 0,
-			currentPhase: 'main',
+			currentPhase: actionPhaseId,
 			currentStep: '',
 			phaseIndex: 0,
 			stepIndex: 0,
@@ -169,7 +180,7 @@ function createMockGame() {
 		},
 		phases: [
 			{
-				id: 'main',
+				id: actionPhaseId,
 				name: 'Main',
 				action: true,
 				steps: [],
@@ -179,7 +190,7 @@ function createMockGame() {
 		recentResourceGains: [],
 		compensations: {} as Record<string, PlayerStartConfig>,
 		rules: {
-			tieredResourceKey: Resource.happiness,
+			tieredResourceKey,
 			tierDefinitions: [],
 			winConditions: [],
 		},
@@ -191,7 +202,6 @@ function createMockGame() {
 	};
 
 	const emptyRegistry = new Map<string, never>();
-	const baseRegistries = createSessionRegistries();
 	const sessionRegistries = {
 		actions: {
 			entries: () => Array.from(actionsMap.entries()),
@@ -252,7 +262,10 @@ function createMockGame() {
 	} as const;
 
 	return {
-		...createActionsPanelState(actionCostResource),
+		...createActionsPanelState({
+			actionCostResource,
+			phaseId: actionPhaseId,
+		}),
 		logOverflowed: false,
 		session,
 		sessionState,
@@ -260,6 +273,8 @@ function createMockGame() {
 		translationContext,
 		ruleSnapshot: sessionState.rules,
 		sessionRegistries,
+		actionCostResource,
+		secondaryResource,
 	};
 }
 let mockGame: ReturnType<typeof createMockGame>;
@@ -281,8 +296,8 @@ describe('GenericActions effect group handling', () => {
 		splitSummaryMock.mockReset();
 
 		mockGame.session.getActionCosts.mockImplementation(() => ({
-			ap: 1,
-			gold: 12,
+			[mockGame.actionCostResource]: 1,
+			[mockGame.secondaryResource]: 12,
 		}));
 		mockGame.session.getActionRequirements.mockImplementation(() => []);
 		getRequirementIconsMock.mockImplementation(() => []);

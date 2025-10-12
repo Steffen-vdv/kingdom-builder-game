@@ -1,14 +1,21 @@
 import { vi } from 'vitest';
-import { PhaseId } from '@kingdom-builder/contents';
 
-export function createActionsPanelState(actionCostResource: string) {
+interface ActionsPanelStateOptions {
+	actionCostResource: string;
+	phaseId: string;
+}
+
+export function createActionsPanelState({
+	actionCostResource,
+	phaseId,
+}: ActionsPanelStateOptions) {
 	return {
 		log: [],
 		hoverCard: null,
 		handleHoverCard: vi.fn(),
 		clearHoverCard: vi.fn(),
 		phase: {
-			currentPhaseId: PhaseId.Main,
+			currentPhaseId: phaseId,
 			isActionPhase: true,
 			canEndTurn: true,
 			isAdvancing: false,

@@ -40,6 +40,14 @@ function setScenario(options?: ActionsPanelGameOptions) {
 	});
 }
 
+function toTitleCase(identifier: string) {
+	return identifier
+		.split(/[-_.\s]+/u)
+		.filter(Boolean)
+		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+		.join(' ');
+}
+
 function renderActionsPanel() {
 	return render(
 		<RegistryMetadataProvider
@@ -131,6 +139,25 @@ describe('<ActionsPanel />', () => {
 			return requirementText.includes(icon);
 		});
 		expect(allIconsPresent).toBe(true);
+	});
+
+	it('uses fallback descriptors when metadata omits resource icons and labels', () => {
+		renderActionsPanel();
+		const descriptor =
+			mockGame.sessionState.metadata.resources?.[metadata.upkeepResource];
+		expect(descriptor?.icon).toBeUndefined();
+		expect(descriptor?.label).toBe(toTitleCase(metadata.upkeepResource));
+	});
+
+	it('reuses cached requirement icon arrays for identical lookups', () => {
+		renderActionsPanel();
+		const raiseAction = metadata.actions.raise;
+		const callIndex = requirementIconsMock.mock.calls.findIndex(
+			([actionId]) => actionId === raiseAction.id,
+		);
+		expect(callIndex).toBeGreaterThanOrEqual(0);
+		const result = requirementIconsMock.mock.results[callIndex];
+		expect(result?.value).toBe(metadata.requirementIcons.get(raiseAction.id));
 	});
 
 	it('disables building cards when requirements fail and surfaces translations', () => {
