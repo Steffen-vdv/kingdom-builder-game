@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
-import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -8,6 +7,11 @@ import {
 } from '../src/translation/log';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
+import {
+	getDefaultPhases,
+	getDefaultRuleSet,
+	getDefaultStartConfig,
+} from '../src/state/sessionFallbacks';
 
 describe('log resource source icon registry', () => {
 	const scenarios = [
@@ -81,9 +85,9 @@ describe('log resource source icon registry', () => {
 				buildings: registries.buildings,
 				developments: registries.developments,
 				populations: registries.populations,
-				phases: PHASES,
-				start: GAME_START,
-				rules: RULES,
+				phases: getDefaultPhases(),
+				start: getDefaultStartConfig(),
+				rules: getDefaultRuleSet(),
 			});
 			engineContext.assets = createDefaultTranslationAssets();
 			const { meta, expected } = getMeta(engineContext);

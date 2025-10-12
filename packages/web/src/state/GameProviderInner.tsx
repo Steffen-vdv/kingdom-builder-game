@@ -24,7 +24,6 @@ import type {
 } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
-import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
@@ -116,8 +115,7 @@ export function GameProviderInner({
 		timeScaleRef,
 	} = useTimeScale({ devMode });
 
-	const actionCostResource =
-		sessionState.actionCostResource as SessionResourceKey;
+	const actionCostResource = sessionState.actionCostResource;
 
 	const sessionView = useMemo(
 		() => selectSessionView(sessionState, registries),

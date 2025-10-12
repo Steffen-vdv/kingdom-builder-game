@@ -1,8 +1,9 @@
 import './styles/index.css';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { PRIMARY_ICON_ID, RESOURCES } from '@kingdom-builder/contents';
+import { DEFAULT_REGISTRIES } from './contexts/defaultRegistryMetadata';
 import { resolvePrimaryIcon } from './startup/resolvePrimaryIcon';
+import { readRuntimeConfiguration } from './startup/runtimeConfig';
 
 const createFaviconSvg = (emoji: string): string =>
 	[
@@ -23,7 +24,13 @@ const ensureFaviconLink = (): HTMLLinkElement => {
 	return link;
 };
 
-const icon = resolvePrimaryIcon(RESOURCES, PRIMARY_ICON_ID);
+const runtimeConfig = readRuntimeConfiguration();
+const fallbackResources = DEFAULT_REGISTRIES.resources;
+const icon = resolvePrimaryIcon({
+	resources: fallbackResources,
+	preferredResourceKey: runtimeConfig.primaryResourceKey ?? null,
+	fallbackKeys: Object.keys(fallbackResources),
+});
 if (icon) {
 	const svg = createFaviconSvg(icon);
 	const link = ensureFaviconLink();

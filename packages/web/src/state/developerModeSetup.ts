@@ -1,77 +1,143 @@
-import {
-	createDevelopmentRegistry,
-	BuildingId,
-	PopulationRole,
-	Resource,
-	type DevelopmentDef,
-	type PopulationRoleId,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import type { EngineSession, PlayerId } from '@kingdom-builder/engine';
+import type {
+	SessionRuleSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
+import type { SessionRegistries } from './sessionRegistries';
 
-const TARGET_GOLD = 100;
-const TARGET_HAPPINESS = 10;
-const DEVELOPMENT_REGISTRY = createDevelopmentRegistry();
-const DEVELOPMENT_PLAN = toDevelopmentPlan();
-const TARGET_LAND_COUNT = 5;
-const POPULATION_PLAN: Array<{ role: PopulationRoleId; count: number }> = [
-	{ role: PopulationRole.Council, count: 2 },
-	{ role: PopulationRole.Legion, count: 1 },
-	{ role: PopulationRole.Fortifier, count: 1 },
-];
+const DEFAULT_RESOURCE_TARGET = 100;
+const DEFAULT_TIER_TARGET = 10;
+const DEFAULT_LAND_TARGET = 5;
 
-function toDevelopmentPlan(): string[] {
-	const identifiers: string[] = [];
-	for (const identifier of DEVELOPMENT_REGISTRY.keys()) {
-		if (isDevelopmentId(identifier)) {
-			identifiers.push(identifier);
+type DeveloperRegistries = Pick<
+	SessionRegistries,
+	'developments' | 'resources' | 'buildings'
+>;
+
+type DeveloperModeOptions = {
+	snapshot: SessionSnapshot;
+	registries: DeveloperRegistries;
+	ruleSnapshot: SessionRuleSnapshot;
+};
+
+const toStringId = (id: string | number): string => String(id);
+
+const selectCurrencyResource = (
+	resources: DeveloperRegistries['resources'],
+): string | undefined => {
+	const entries = Object.values(resources);
+	for (const definition of entries) {
+		if (definition.tags?.includes('bankruptcy-check')) {
+			return definition.key;
 		}
 	}
-	identifiers.sort((left, right) => {
-		const leftOrder = getDevelopmentOrder(
-			DEVELOPMENT_REGISTRY.get(String(left)),
-		);
-		const rightOrder = getDevelopmentOrder(
-			DEVELOPMENT_REGISTRY.get(String(right)),
-		);
-		if (leftOrder !== rightOrder) {
-			return leftOrder - rightOrder;
+	return entries[0]?.key;
+};
+
+const buildResourceTargets = (
+	player: SessionSnapshot['game']['players'][number],
+	registries: DeveloperRegistries,
+	ruleSnapshot: SessionRuleSnapshot,
+) => {
+	const targets: Array<{ key: string; target: number }> = [];
+	const currencyKey = selectCurrencyResource(registries.resources);
+	if (currencyKey) {
+		const current = player.resources[currencyKey] ?? 0;
+		targets.push({
+			key: currencyKey,
+			target: Math.max(current, DEFAULT_RESOURCE_TARGET),
+		});
+	}
+	const tierKey = ruleSnapshot.tieredResourceKey;
+	if (tierKey) {
+		const current = player.resources[tierKey] ?? 0;
+		if (targets.length > 0 && targets[0]?.key === tierKey) {
+			targets[0].target = Math.max(targets[0].target, DEFAULT_TIER_TARGET);
+		} else {
+			targets.push({
+				key: tierKey,
+				target: Math.max(current, DEFAULT_TIER_TARGET),
+			});
 		}
-		return String(left).localeCompare(String(right));
-	});
-	return identifiers;
-}
+	}
+	return targets;
+};
 
-function getDevelopmentOrder(definition: DevelopmentDef): number {
-	return typeof definition.order === 'number'
-		? definition.order
-		: Number.MAX_SAFE_INTEGER;
-}
+const buildPopulationPlan = (
+	player: SessionSnapshot['game']['players'][number],
+) => {
+	const entries = Object.entries(player.population ?? {});
+	const plan: Array<{ role: string; count: number }> = [];
+	for (const [role, count] of entries) {
+		if (typeof count !== 'number' || count <= 0) {
+			continue;
+		}
+		plan.push({ role, count: count + 1 });
+	}
+	return plan;
+};
 
-function isDevelopmentId(id: string): boolean {
-	return DEVELOPMENT_REGISTRY.has(id);
-}
+const buildDevelopmentPlan = (
+	registries: DeveloperRegistries['developments'],
+) => {
+	const identifiers: string[] = [];
+	for (const [identifier, definition] of registries.entries()) {
+		const resolvedId = toStringId(definition.id ?? identifier);
+		if (definition.system) {
+			continue;
+		}
+		identifiers.push(resolvedId);
+	}
+	return identifiers.sort((left, right) => left.localeCompare(right));
+};
 
-const DEVELOPER_RESOURCES: Array<{ key: ResourceKey; target: number }> = [
-	{ key: Resource.gold as ResourceKey, target: TARGET_GOLD },
-	{ key: Resource.happiness as ResourceKey, target: TARGET_HAPPINESS },
-];
-const DEVELOPER_BUILDINGS: string[] = [BuildingId.Mill];
-const DEVELOPER_LAND_COUNT = Math.max(
-	TARGET_LAND_COUNT,
-	DEVELOPMENT_PLAN.length,
-);
+const buildBuildingPlan = (
+	registries: DeveloperRegistries['buildings'],
+	player: SessionSnapshot['game']['players'][number],
+) => {
+	const existing = new Set(player.buildings);
+	if (existing.size > 0) {
+		return [] as string[];
+	}
+	for (const [identifier, definition] of registries.entries()) {
+		const resolvedId = toStringId(definition.id ?? identifier);
+		if (!existing.has(resolvedId)) {
+			return [resolvedId];
+		}
+	}
+	return [] as string[];
+};
 
 export function initializeDeveloperMode(
 	session: EngineSession,
 	playerId: PlayerId,
+	options: DeveloperModeOptions,
 ): void {
+	const player = options.snapshot.game.players.find(
+		(entry) => entry.id === playerId,
+	);
+	if (!player) {
+		return;
+	}
+	const resources = buildResourceTargets(
+		player,
+		options.registries,
+		options.ruleSnapshot,
+	);
+	const population = buildPopulationPlan(player);
+	const developments = buildDevelopmentPlan(options.registries.developments);
+	const buildings = buildBuildingPlan(options.registries.buildings, player);
+	const landCount = Math.max(
+		player.lands.length,
+		developments.length,
+		DEFAULT_LAND_TARGET,
+	);
 	session.applyDeveloperPreset({
 		playerId,
-		resources: DEVELOPER_RESOURCES.map((entry) => ({ ...entry })),
-		population: POPULATION_PLAN.map((entry) => ({ ...entry })),
-		landCount: DEVELOPER_LAND_COUNT,
-		developments: [...DEVELOPMENT_PLAN],
-		buildings: [...DEVELOPER_BUILDINGS],
+		...(resources.length ? { resources } : {}),
+		...(population.length ? { population } : {}),
+		...(developments.length ? { developments } : {}),
+		...(buildings.length ? { buildings } : {}),
+		landCount,
 	});
 }

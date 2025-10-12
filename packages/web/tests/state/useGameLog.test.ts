@@ -1,14 +1,17 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { RESOURCES } from '@kingdom-builder/contents';
 import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
+import { createResourceKeys } from '../helpers/sessionRegistries';
 
-const [primaryResource] = Object.keys(RESOURCES);
+const [primaryResource] = createResourceKeys();
+if (!primaryResource) {
+	throw new Error('Expected at least one resource key from registries.');
+}
 
 const createPlayer = (id: string): PlayerStateSnapshot => ({
 	id,

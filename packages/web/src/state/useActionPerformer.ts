@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import { ActionId } from '@kingdom-builder/contents';
+import type { ActionEffect } from '@kingdom-builder/protocol';
 import type {
 	ActionExecuteErrorResponse,
 	ActionParametersPayload,
@@ -43,6 +43,33 @@ type ActionRequirementFailures =
 type ActionExecutionError = Error & {
 	requirementFailure?: SessionRequirementFailure;
 	requirementFailures?: ActionRequirementFailures;
+};
+
+const effectTargetsDevelopment = (effect: ActionEffect): boolean => {
+	if (!effect) {
+		return false;
+	}
+	if ('type' in effect && effect.type === 'development') {
+		return true;
+	}
+	if ('effects' in effect && Array.isArray(effect.effects)) {
+		return effect.effects.some(effectTargetsDevelopment);
+	}
+	return false;
+};
+
+const actionTargetsDevelopment = (
+	registries: SessionRegistries['actions'],
+	actionId: string,
+): boolean => {
+	if (!registries.has(actionId)) {
+		return false;
+	}
+	const definition = registries.get(actionId);
+	if (!definition?.effects) {
+		return false;
+	}
+	return definition.effects.some(effectTargetsDevelopment);
 };
 
 function createActionExecutionError(
@@ -203,7 +230,7 @@ export function useActionPerformer({
 					subLines,
 				});
 				const logLines = (
-					action.id === ActionId.develop
+					actionTargetsDevelopment(registries.actions, action.id)
 						? formatDevelopActionLogLines
 						: formatActionLogLines
 				)(messages, filtered);
