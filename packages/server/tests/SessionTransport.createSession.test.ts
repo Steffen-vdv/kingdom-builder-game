@@ -3,6 +3,7 @@ import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import { PLAYER_NAME_MAX_LENGTH } from '../src/transport/playerNameConstraints.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -84,6 +85,47 @@ describe('SessionTransport createSession', () => {
 		expect(playerA?.name).toBe('Charlie');
 	});
 
+	it('accepts player names at the maximum length limit', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('length-session'),
+			authMiddleware: middleware,
+		});
+		const allowedName = 'X'.repeat(PLAYER_NAME_MAX_LENGTH);
+		const response = transport.createSession({
+			body: { playerNames: { A: allowedName } },
+			headers: authorizedHeaders,
+		});
+		const [playerA] = response.snapshot.game.players;
+		expect(playerA?.name).toBe(allowedName);
+	});
+
+	it('rejects player names that exceed the maximum length limit', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('too-long-session'),
+			authMiddleware: middleware,
+		});
+		const tooLong = 'Y'.repeat(PLAYER_NAME_MAX_LENGTH + 1);
+		let thrown: unknown;
+		try {
+			transport.createSession({
+				body: { playerNames: { A: tooLong } },
+				headers: authorizedHeaders,
+			});
+		} catch (error) {
+			thrown = error;
+		}
+		expect(thrown).toBeInstanceOf(TransportError);
+		if (thrown instanceof TransportError) {
+			expect(thrown.code).toBe('INVALID_REQUEST');
+			expect(thrown.message).toBe(
+				`Player names must be ${PLAYER_NAME_MAX_LENGTH} characters or fewer.`,
+			);
+		}
+	});
 	it('fails when unique session identifiers cannot be generated', () => {
 		const { manager } = createSyntheticSessionManager();
 		manager.createSession('collision');

@@ -26,6 +26,10 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
+import {
+	PLAYER_NAME_MAX_LENGTH,
+	clipPlayerName,
+} from './playerNameConstraints.js';
 import type {
 	SessionManager,
 	CreateSessionOptions,
@@ -83,6 +87,9 @@ export class SessionTransport {
 				this.applyPlayerNames(session, data.playerNames);
 			}
 		} catch (error) {
+			if (error instanceof TransportError) {
+				throw error;
+			}
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
 				cause: error,
 			});
@@ -290,14 +297,29 @@ export class SessionTransport {
 		session: EngineSession,
 		names: SessionPlayerNameMap,
 	): void {
-		const playerIds = Object.keys(names) as SessionPlayerId[];
-		for (const playerId of playerIds) {
+		for (const playerId of Object.keys(names) as SessionPlayerId[]) {
 			const playerName = names[playerId];
 			const sanitizedName = playerName?.trim();
 			if (!sanitizedName) {
 				continue;
 			}
-			session.updatePlayerName(playerId, sanitizedName);
+			if (sanitizedName.length > PLAYER_NAME_MAX_LENGTH) {
+				throw new TransportError(
+					'INVALID_REQUEST',
+					`Player names must be ${PLAYER_NAME_MAX_LENGTH} characters or fewer.`,
+					{
+						issues: [
+							{
+								code: 'too_long',
+								maximum: PLAYER_NAME_MAX_LENGTH,
+								playerId,
+								received: sanitizedName.length,
+							},
+						],
+					},
+				);
+			}
+			session.updatePlayerName(playerId, clipPlayerName(sanitizedName));
 		}
 	}
 

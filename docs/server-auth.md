@@ -35,3 +35,12 @@ Roles gate access to specific transport actions:
 
 Tokens without required roles trigger `403 Forbidden`. Missing tokens return
 `401 Unauthorized`.
+
+## Player name preferences
+
+Session creation requests may include a `playerNames` map to prefill names for
+each seat. The server trims whitespace before applying preferences and enforces
+the shared `PLAYER_NAME_MAX_LENGTH` constant (40 characters). Values that exceed
+this limit trigger a `400 Bad Request` response with the
+`INVALID_REQUEST` error code so clients can surface a friendly validation
+message.
