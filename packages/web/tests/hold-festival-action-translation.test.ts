@@ -4,7 +4,7 @@ import {
 	describeContent,
 	logContent,
 } from '../src/translation/content';
-import { MODIFIER_INFO } from '@kingdom-builder/contents';
+import { formatTargetLabel } from '../src/translation/effects/formatters/modifier_helpers';
 import {
 	createSyntheticFestivalScenario,
 	getSyntheticFestivalDetails,
@@ -18,14 +18,10 @@ const sign = (n: number) => (n >= 0 ? '+' : '');
 
 describe('hold festival action translation', () => {
 	it('summarizes hold festival action', () => {
-		const { ctx, translation, festivalActionId, attackActionId } =
-			createSyntheticFestivalScenario();
+		const scenario = createSyntheticFestivalScenario();
+		const { translation, festivalActionId } = scenario;
 		const summary = summarizeContent('action', festivalActionId, translation);
-		const details = getSyntheticFestivalDetails(
-			ctx,
-			festivalActionId,
-			attackActionId,
-		);
+		const details = getSyntheticFestivalDetails(scenario);
 		const upkeepSummaryLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
@@ -36,25 +32,21 @@ describe('hold festival action translation', () => {
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
-					`${MODIFIER_INFO.result.icon}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
+					`${details.modifierInfo.icon ?? ''}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
 				],
 			},
 		]);
 	});
 
 	it('describes hold festival action', () => {
-		const { ctx, translation, festivalActionId, attackActionId } =
-			createSyntheticFestivalScenario();
+		const scenario = createSyntheticFestivalScenario();
+		const { translation, festivalActionId } = scenario;
 		const description = describeContent(
 			'action',
 			festivalActionId,
 			translation,
 		);
-		const details = getSyntheticFestivalDetails(
-			ctx,
-			festivalActionId,
-			attackActionId,
-		);
+		const details = getSyntheticFestivalDetails(scenario);
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
@@ -65,24 +57,33 @@ describe('hold festival action translation', () => {
 			{
 				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
-					`${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+					`${details.modifierInfo.icon ?? ''} ${details.modifierInfo.label ?? 'Outcome Adjustment'} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 		]);
 	});
 
 	it('logs hold festival action', () => {
-		const { ctx, translation, festivalActionId, attackActionId } =
-			createSyntheticFestivalScenario();
+		const scenario = createSyntheticFestivalScenario();
+		const { translation, festivalActionId } = scenario;
 		const log = logContent('action', festivalActionId, translation);
-		const details = getSyntheticFestivalDetails(
-			ctx,
-			festivalActionId,
-			attackActionId,
-		);
+		const details = getSyntheticFestivalDetails(scenario);
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
+		const modifierIcon = details.modifierInfo.icon
+			? `${details.modifierInfo.icon} `
+			: '';
+		const modifierLabel = details.modifierInfo.label ?? 'Outcome Adjustment';
+		const raidLabel = formatTargetLabel(
+			details.armyAttack.icon ?? '',
+			details.armyAttack.name,
+		);
+		const happinessLabel =
+			`${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`.replace(
+				/\s{2,}/gu,
+				' ',
+			);
 		expect(log).toEqual([
 			{
 				text: `${details.festival.icon} ${details.festival.name}`,
@@ -95,7 +96,7 @@ describe('hold festival action translation', () => {
 				kind: 'group',
 			},
 			{
-				text: `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+				text: `${modifierIcon}${modifierLabel} on ${raidLabel}: Whenever it resolves, ${happinessLabel}`,
 				depth: 2,
 				kind: 'effect',
 			},

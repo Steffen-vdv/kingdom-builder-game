@@ -1,5 +1,3 @@
-import { vi } from 'vitest';
-import type { PhaseIdValue } from '@kingdom-builder/contents';
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 
 type SyntheticContent = {
@@ -22,11 +20,11 @@ type SyntheticContent = {
 		| 'homeLand',
 		string
 	>;
-	phaseIds: Record<PhaseIdValue, string>;
+	phaseIds: Record<string, string>;
 	stepIds: Record<'gainIncome' | 'payUpkeep', string>;
 };
 
-const syntheticData = vi.hoisted<SyntheticContent>(() => ({
+const syntheticData: SyntheticContent = {
 	resourceKeys: {
 		coin: 'resource:synthetic:coin',
 		actionPoints: 'resource:synthetic:ap',
@@ -59,7 +57,7 @@ const syntheticData = vi.hoisted<SyntheticContent>(() => ({
 		gainIncome: 'step:synthetic:gain-income',
 		payUpkeep: 'step:synthetic:pay-upkeep',
 	},
-}));
+};
 
 export const SYNTHETIC_RESOURCE_KEYS = syntheticData.resourceKeys;
 export type SyntheticResourceKey =
@@ -85,33 +83,5 @@ export const SYNTHETIC_RULES: RuleSet = {
 	basePopulationCap: 2,
 	winConditions: [],
 };
-
-vi.mock('@kingdom-builder/contents', async () => {
-	const actual = (await vi.importActual('@kingdom-builder/contents')) as Record<
-		string,
-		unknown
-	> & {
-		RESOURCES?: Record<string, { icon?: string; label?: string }>;
-		POPULATION_INFO?: { icon?: string; label?: string };
-		POPULATION_ROLES?: Record<string, { icon?: string; label?: string }>;
-		LAND_INFO?: { icon?: string; label?: string };
-		SLOT_INFO?: { icon?: string; label?: string };
-	};
-
-	const { resources, populationInfo, populationRoles, landInfo, slotInfo } =
-		syntheticData;
-
-	return {
-		...actual,
-		RESOURCES: { ...(actual.RESOURCES ?? {}), ...resources },
-		POPULATION_INFO: { ...(actual.POPULATION_INFO ?? {}), ...populationInfo },
-		POPULATION_ROLES: {
-			...(actual.POPULATION_ROLES ?? {}),
-			...populationRoles,
-		},
-		LAND_INFO: { ...(actual.LAND_INFO ?? {}), ...landInfo },
-		SLOT_INFO: { ...(actual.SLOT_INFO ?? {}), ...slotInfo },
-	};
-});
 
 export type { PhaseDef, StartConfig };

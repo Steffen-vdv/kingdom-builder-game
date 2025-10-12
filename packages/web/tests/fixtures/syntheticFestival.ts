@@ -3,26 +3,58 @@ import {
 	type EffectDef,
 	type RuleSet,
 } from '@kingdom-builder/engine';
-import {
-	RESOURCES,
-	STATS,
-	PHASES,
-	PhaseId,
-	PhaseTrigger,
-	Resource,
-	Stat,
-} from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
 import type { TranslationContext } from '../../src/translation/context/types';
 
-const ON_UPKEEP_PHASE = PhaseTrigger.OnUpkeepPhase;
+const ON_UPKEEP_PHASE = 'onUpkeepPhase';
+
+const SYNTHETIC_RESOURCES = Object.freeze({
+	actionPoints: Object.freeze({
+		id: 'resource:synthetic:ap',
+		icon: '🛠️',
+		label: 'Synthetic Action Points',
+	}),
+	happiness: Object.freeze({
+		id: 'resource:synthetic:happiness',
+		icon: '🎊',
+		label: 'Synthetic Happiness',
+	}),
+});
+
+const SYNTHETIC_RESULT_MODIFIER = Object.freeze({
+	icon: '✨',
+	label: 'Outcome Adjustment',
+});
+
+const FALLBACK_UPKEEP = Object.freeze({
+	icon: '🧹',
+	label: 'Upkeep',
+});
+
+type SyntheticResourceId =
+	(typeof SYNTHETIC_RESOURCES)[keyof typeof SYNTHETIC_RESOURCES]['id'];
+
+const toResourceLookup = () => {
+	const entries: Record<string, { icon: string; label: string }> = {};
+	for (const resource of Object.values(SYNTHETIC_RESOURCES)) {
+		entries[resource.id] = { icon: resource.icon, label: resource.label };
+	}
+	return Object.freeze(entries);
+};
+
+const RESOURCE_LOOKUP = toResourceLookup();
+
+const FORTIFICATION_STAT_KEY = 'fortificationStrength';
 
 export interface SyntheticFestivalScenario {
 	ctx: ReturnType<typeof createEngine>;
 	translation: TranslationContext;
 	festivalActionId: string;
 	attackActionId: string;
+	resources: Readonly<
+		Record<SyntheticResourceId, { icon: string; label: string }>
+	>;
 }
 
 export const createSyntheticFestivalScenario =
@@ -31,25 +63,28 @@ export const createSyntheticFestivalScenario =
 		const attackAction = factory.action({
 			name: 'Synthetic Raid',
 			icon: '⚔️',
-			baseCosts: { [Resource.ap]: 1 },
+			baseCosts: { [SYNTHETIC_RESOURCES.actionPoints.id]: 1 },
 		});
 		const passiveId = 'passive:synthetic:festival-hangover';
 		const resultModId = 'result:synthetic:festival-penalty';
 		const festivalAction = factory.action({
 			name: 'Synthetic Festival',
 			icon: '🎊',
-			baseCosts: { [Resource.ap]: 1 },
+			baseCosts: { [SYNTHETIC_RESOURCES.actionPoints.id]: 1 },
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.happiness, amount: 4 },
+					params: {
+						key: SYNTHETIC_RESOURCES.happiness.id,
+						amount: 4,
+					},
 				},
 				{
 					type: 'stat',
 					method: 'remove',
 					params: {
-						key: Stat.fortificationStrength,
+						key: FORTIFICATION_STAT_KEY,
 						amount: 2,
 					},
 				},
@@ -81,7 +116,7 @@ export const createSyntheticFestivalScenario =
 									type: 'resource',
 									method: 'remove',
 									params: {
-										key: Resource.happiness,
+										key: SYNTHETIC_RESOURCES.happiness.id,
 										amount: 2,
 									},
 									meta: { allowShortfall: true },
@@ -123,11 +158,11 @@ export const createSyntheticFestivalScenario =
 		const start = {
 			player: {
 				resources: {
-					[Resource.ap]: 3,
-					[Resource.happiness]: 0,
+					[SYNTHETIC_RESOURCES.actionPoints.id]: 3,
+					[SYNTHETIC_RESOURCES.happiness.id]: 0,
 				},
 				stats: {
-					[Stat.fortificationStrength]: 5,
+					[FORTIFICATION_STAT_KEY]: 5,
 				},
 				population: {},
 				lands: [],
@@ -138,7 +173,9 @@ export const createSyntheticFestivalScenario =
 			defaultActionAPCost: 1,
 			absorptionCapPct: 1,
 			absorptionRounding: 'down',
-			tieredResourceKey: Resource.happiness,
+			tieredResourceKey: SYNTHETIC_RESOURCES.happiness.id,
+			// The happiness key uses the same fallback iconography described in
+			// the domain migration inventory (✨ modifier icon and 🧹 upkeep).
 			tierDefinitions: [],
 			slotsPerNewLand: 1,
 			maxSlotsPerLand: 1,
@@ -159,6 +196,13 @@ export const createSyntheticFestivalScenario =
 		const translation = createTranslationContextForEngine(ctx, (registries) => {
 			const raid = ctx.actions.get(attackAction.id);
 			const festivalDef = ctx.actions.get(festivalAction.id);
+			for (const resource of Object.values(SYNTHETIC_RESOURCES)) {
+				registries.resources[resource.id] = {
+					key: resource.id,
+					icon: resource.icon,
+					label: resource.label,
+				};
+			}
 			if (raid) {
 				registries.actions.add(raid.id, {
 					...raid,
@@ -176,25 +220,33 @@ export const createSyntheticFestivalScenario =
 			translation,
 			festivalActionId: festivalAction.id,
 			attackActionId: attackAction.id,
+			resources: RESOURCE_LOOKUP,
 		};
 	};
 
 export const getSyntheticFestivalDetails = (
-	ctx: SyntheticFestivalScenario['ctx'],
-	festivalActionId: string,
-	attackActionId: string,
+	scenario: SyntheticFestivalScenario,
 ) => {
+	const { ctx, translation, festivalActionId, attackActionId, resources } =
+		scenario;
 	const festival = ctx.actions.get(festivalActionId)!;
 	const happinessEff = festival.effects.find(
 		(e: EffectDef) => e.type === 'resource',
-	) as EffectDef<{ key: string; amount: number }>;
-	const happinessInfo =
-		RESOURCES[happinessEff.params.key as keyof typeof RESOURCES];
+	) as EffectDef<{ key: SyntheticResourceId; amount: number }>;
+	const happinessInfo = translation.assets.resources[happinessEff.params.key] ??
+		resources[happinessEff.params.key] ?? {
+			icon: '',
+			label: happinessEff.params.key,
+		};
 	const happinessAmt = Number(happinessEff.params.amount);
 	const fortEff = festival.effects.find(
 		(e: EffectDef) => e.type === 'stat',
 	) as EffectDef<{ key: string; amount: number }>;
-	const fortInfo = STATS[fortEff.params.key as keyof typeof STATS];
+	const fortInfo = translation.assets.stats[fortEff.params.key] ??
+		translation.assets.stats[FORTIFICATION_STAT_KEY] ?? {
+			icon: '',
+			label: fortEff.params.key,
+		};
 	const fortAmt =
 		fortEff.method === 'remove'
 			? -Number(fortEff.params.amount)
@@ -211,28 +263,26 @@ export const getSyntheticFestivalDetails = (
 	const innerRes = resMod.effects?.find(
 		(e: EffectDef) =>
 			e.type === 'resource' &&
-			(e.params as { key?: string }).key === Resource.happiness,
+			(e.params as { key?: string }).key === SYNTHETIC_RESOURCES.happiness.id,
 	) as EffectDef<{ amount: number }>;
 	const penaltyAmt =
 		innerRes.method === 'remove'
 			? -Number(innerRes.params.amount)
 			: Number(innerRes.params.amount);
 	const armyAttack = ctx.actions.get(attackActionId)!;
-	const upkeepPhase =
-		ctx.phases.find((phase) =>
-			phase.steps.some((step) => step.triggers?.includes(ON_UPKEEP_PHASE)),
-		) ??
-		PHASES.find((phaseDefinition) =>
-			phaseDefinition.steps.some((step) =>
-				step.triggers?.includes(ON_UPKEEP_PHASE),
-			),
-		) ??
-		ctx.phases.find(
-			(phaseDefinition) => phaseDefinition.id === PhaseId.Upkeep,
-		) ??
-		PHASES.find((phaseDefinition) => phaseDefinition.id === PhaseId.Upkeep);
-	const upkeepLabel = upkeepPhase?.label || 'Upkeep';
-	const upkeepIcon = upkeepPhase?.icon;
+	const upkeepPhase = ctx.phases.find((phase) =>
+		phase.steps.some((step) => step.triggers?.includes(ON_UPKEEP_PHASE)),
+	);
+	const upkeepTrigger = translation.assets.triggers[ON_UPKEEP_PHASE];
+	const upkeepLabel =
+		upkeepPhase?.label ??
+		upkeepTrigger?.label ??
+		upkeepTrigger?.past ??
+		FALLBACK_UPKEEP.label;
+	const upkeepIcon =
+		upkeepPhase?.icon ?? upkeepTrigger?.icon ?? FALLBACK_UPKEEP.icon;
+	const modifierInfo =
+		translation.assets.modifiers.result ?? SYNTHETIC_RESULT_MODIFIER;
 
 	return {
 		festival,
@@ -248,5 +298,6 @@ export const getSyntheticFestivalDetails = (
 		penaltyAmt,
 		upkeepLabel,
 		upkeepIcon,
+		modifierInfo,
 	};
 };

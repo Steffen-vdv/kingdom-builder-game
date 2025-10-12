@@ -5,11 +5,6 @@ import {
 	summarizeContent,
 	type Summary,
 } from '../src/translation/content';
-import {
-	MODIFIER_INFO,
-	POPULATION_INFO,
-	RESOURCE_TRANSFER_ICON,
-} from '@kingdom-builder/contents';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../src/icons';
 import { increaseOrDecrease, signed } from '../src/translation/effects/helpers';
 import { formatTargetLabel } from '../src/translation/effects/formatters/modifier_helpers';
@@ -20,6 +15,7 @@ import {
 	getModifier,
 	getResourceEffect,
 	type RaidersGuildSyntheticContext,
+	SYNTHETIC_RESOURCE_TRANSFER_ICON,
 } from './fixtures/syntheticRaidersGuild';
 import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
 
@@ -56,6 +52,10 @@ describe('raiders guild translation', () => {
 
 	it('describes transfer modifier with hoisted action card', () => {
 		const { ctx, translation, ids } = synthetic;
+		const modifierInfo = translation.assets.modifiers.result ?? {
+			icon: '✨',
+			label: 'Outcome Adjustment',
+		};
 		const summary = describeContent(
 			'building',
 			ids.transferBuilding,
@@ -65,10 +65,10 @@ describe('raiders guild translation', () => {
 		const modifier = getModifier(ctx, ids.transferBuilding);
 		const adjust = Number(modifier.params?.['adjust'] ?? 0);
 		const raid = ctx.actions.get(ids.raidAction);
-		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${formatTargetLabel(
+		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
 			raid.icon ?? '',
 			raid.name,
-		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
+		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${SYNTHETIC_RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
 			adjust,
 		)} transfer by ${Math.abs(adjust)}%`;
 		expect(collectText(effects)).toContain(clause);
@@ -77,6 +77,9 @@ describe('raiders guild translation', () => {
 
 	it('summarizes population modifier compactly', () => {
 		const { ctx, translation, ids } = synthetic;
+		const modifierInfo = translation.assets.modifiers.result ?? {
+			icon: '✨',
+		};
 		const summary = summarizeContent(
 			'building',
 			ids.populationBuilding,
@@ -87,7 +90,9 @@ describe('raiders guild translation', () => {
 		const amount = Number(modifier.params?.['amount'] ?? 0);
 		const actionIcon =
 			ledger.icon && ledger.icon.trim().length ? ledger.icon : ledger.name;
-		const expected = `${MODIFIER_INFO.result.icon}${POPULATION_INFO.icon}(${actionIcon}): ${GENERAL_RESOURCE_ICON}${signed(
+		const populationAsset = translation.assets.population;
+		const populationIcon = populationAsset.icon ?? '';
+		const expected = `${modifierInfo.icon ?? ''}${populationIcon}(${actionIcon}): ${GENERAL_RESOURCE_ICON}${signed(
 			amount,
 		)}${Math.abs(amount)}`;
 		expect(collectText(summary)).toContain(expected);
@@ -95,6 +100,9 @@ describe('raiders guild translation', () => {
 
 	it('summarizes development modifier compactly', () => {
 		const { ctx, translation, ids } = synthetic;
+		const modifierInfo = translation.assets.modifiers.result ?? {
+			icon: '✨',
+		};
 		const summary = summarizeContent(
 			'building',
 			ids.developmentBuilding,
@@ -106,7 +114,7 @@ describe('raiders guild translation', () => {
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
 		const resourceIcon = selectAttackResourceDescriptor(key).icon || key;
-		const expected = `${MODIFIER_INFO.result.icon}${development.icon}: ${resourceIcon}${signed(
+		const expected = `${modifierInfo.icon ?? ''}${development.icon}: ${resourceIcon}${signed(
 			amount,
 		)}${Math.abs(amount)}`;
 		expect(collectText(summary)).toContain(expected);
@@ -114,6 +122,10 @@ describe('raiders guild translation', () => {
 
 	it('describes population modifier with detailed clause', () => {
 		const { ctx, translation, ids } = synthetic;
+		const modifierInfo = translation.assets.modifiers.result ?? {
+			icon: '✨',
+			label: 'Outcome Adjustment',
+		};
 		const summary = describeContent(
 			'building',
 			ids.populationBuilding,
@@ -122,11 +134,14 @@ describe('raiders guild translation', () => {
 		const ledger = ctx.actions.get(ids.ledgerAction);
 		const modifier = getModifier(ctx, ids.populationBuilding);
 		const amount = Number(modifier.params?.['amount'] ?? 0);
-		const target = `${POPULATION_INFO.icon} ${POPULATION_INFO.label} through ${formatTargetLabel(
+		const populationAsset = translation.assets.population;
+		const populationIcon = populationAsset.icon ?? '';
+		const populationLabel = populationAsset.label ?? 'Population';
+		const target = `${populationIcon ? `${populationIcon} ` : ''}${populationLabel} through ${formatTargetLabel(
 			ledger.icon ?? '',
 			ledger.name,
 		)}`;
-		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${target}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${GENERAL_RESOURCE_ICON}${signed(
+		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${target}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${GENERAL_RESOURCE_ICON}${signed(
 			amount,
 		)}${Math.abs(amount)} more of that resource`;
 		expect(collectText(summary)).toContain(clause);
@@ -134,6 +149,10 @@ describe('raiders guild translation', () => {
 
 	it('describes development modifier with detailed clause', () => {
 		const { ctx, translation, ids } = synthetic;
+		const modifierInfo = translation.assets.modifiers.result ?? {
+			icon: '✨',
+			label: 'Outcome Adjustment',
+		};
 		const summary = describeContent(
 			'building',
 			ids.developmentBuilding,
@@ -145,7 +164,7 @@ describe('raiders guild translation', () => {
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
 		const icon = selectAttackResourceDescriptor(key).icon || key;
-		const clause = `${MODIFIER_INFO.result.icon} ${MODIFIER_INFO.result.label} on ${formatTargetLabel(
+		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
 			development.icon ?? '',
 			development.name,
 		)}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${icon}${signed(amount)}${Math.abs(
