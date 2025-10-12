@@ -176,7 +176,12 @@ export function usePhaseProgress({
 				}
 				throw error;
 			}
-			console.error(error);
+			markFatalSessionError(error);
+			if (onFatalSessionError) {
+				onFatalSessionError(error);
+				return;
+			}
+			throw error;
 		}
 	}, [
 		actionCostResource,
