@@ -71,6 +71,27 @@ type EngineRegistries = {
 	populations: Registry<PopulationDef>;
 };
 
+function ensureValidPhaseConfiguration(phases: PhaseConfig[] | undefined) {
+	if (!phases || phases.length === 0) {
+		const message = [
+			'Cannot create engine: expected at least one phase ',
+			'with steps, but received none.',
+		].join('');
+		throw new Error(message);
+	}
+	for (let phaseIndex = 0; phaseIndex < phases.length; phaseIndex += 1) {
+		const phase = phases[phaseIndex];
+		const phaseId = phase?.id ?? `<phase ${phaseIndex}>`;
+		if (!phase?.steps || phase.steps.length === 0) {
+			const message =
+				'Cannot create engine: phase "' +
+				phaseId +
+				'" must define at least one step.';
+			throw new Error(message);
+		}
+	}
+}
+
 function buildRegistry<DefinitionType extends { id: string }>(
 	definitions: DefinitionType[] | undefined,
 	schema: ZodType<DefinitionType>,
@@ -148,22 +169,7 @@ export function createEngine({
 			startConfig = validatedConfig.start;
 		}
 	}
-	if (!phases || phases.length === 0) {
-		const message =
-			'Cannot create engine: expected at least one phase with ' +
-			'steps, but received none.';
-		throw new Error(message);
-	}
-	for (const phase of phases) {
-		if (!phase.steps || phase.steps.length === 0) {
-			const phaseId = phase?.id ?? '<unknown phase>';
-			const message =
-				'Cannot create engine: phase "' +
-				phaseId +
-				'" must define at least one step.';
-			throw new Error(message);
-		}
-	}
+	ensureValidPhaseConfiguration(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
 	setResourceKeys(Object.keys(startConfig.player.resources || {}));
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
