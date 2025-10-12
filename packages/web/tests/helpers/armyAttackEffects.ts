@@ -1,22 +1,5 @@
-import {
-	effect,
-	attackParams,
-	resourceParams,
-	transferParams,
-	statParams,
-} from '@kingdom-builder/contents/config/builders';
-import {
-	Types,
-	ResourceMethods,
-	ActionMethods,
-	StatMethods,
-} from '@kingdom-builder/contents/config/builderShared';
-import {
-	Resource as ContentResource,
-	Stat as ContentStat,
-	type StatKey,
-} from '@kingdom-builder/contents';
-import type { SyntheticAction, CombatStatKey } from './armyAttackConfig';
+import type { EffectDef } from '@kingdom-builder/engine';
+
 import {
 	SYNTH_ATTACK,
 	SYNTH_PLUNDER,
@@ -24,17 +7,24 @@ import {
 	SYNTH_PARTIAL_ATTACK,
 	SYNTH_BUILDING,
 	COMBAT_STAT_CONFIG,
+	SYNTH_RESOURCE_IDS,
+	SYNTH_STAT_IDS,
 	ATTACKER_HAPPINESS_GAIN,
 	DEFENDER_HAPPINESS_LOSS,
 	WAR_WEARINESS_GAIN,
 	BUILDING_REWARD_GOLD,
 	PLUNDER_PERCENT,
+	type SyntheticAction,
 } from './armyAttackConfig';
+
+export type ResourceMethod = 'add' | 'remove' | 'transfer';
+export type ActionMethod = 'perform';
+export type StatMethod = 'add';
 
 export type ResourceEffectDescriptor = {
 	kind: 'resource';
-	method: ResourceMethods;
-	key: ContentResource;
+	method: ResourceMethod;
+	key: string;
 	amount?: number;
 	percent?: number;
 };
@@ -46,7 +36,7 @@ export type ActionEffectDescriptor = {
 
 export type StatEffectDescriptor = {
 	kind: 'stat';
-	key: ContentStat;
+	key: string;
 	amount: number;
 };
 
@@ -56,10 +46,10 @@ export type EffectDescriptor =
 	| StatEffectDescriptor;
 
 export type AttackEffectDescriptor = {
-	target: { resource?: ContentResource; building?: string };
+	target: { resource?: string; building?: string };
 	attacker?: EffectDescriptor[];
 	defender?: EffectDescriptor[];
-	stats?: CombatStatKey[];
+	stats?: Array<'power' | 'absorption' | 'fortification'>;
 };
 
 export type ActionDefinition = {
@@ -70,42 +60,46 @@ export type ActionDefinition = {
 	system?: boolean;
 };
 
-function statKey(key: keyof typeof COMBAT_STAT_CONFIG): StatKey {
-	return COMBAT_STAT_CONFIG[key].key as unknown as StatKey;
-}
-
-function buildResourceEffect(descriptor: ResourceEffectDescriptor) {
-	if (descriptor.method === ResourceMethods.TRANSFER) {
-		return effect(Types.Resource, descriptor.method)
-			.params(
-				transferParams()
-					.key(descriptor.key)
-					.percent(descriptor.percent ?? 0),
-			)
-			.build();
+function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
+	if (descriptor.method === 'transfer') {
+		return {
+			type: 'resource',
+			method: 'transfer',
+			params: {
+				key: descriptor.key,
+				percent: descriptor.percent ?? 0,
+			},
+		};
 	}
-	return effect(Types.Resource, descriptor.method)
-		.params(
-			resourceParams()
-				.key(descriptor.key)
-				.amount(descriptor.amount ?? 0),
-		)
-		.build();
+	return {
+		type: 'resource',
+		method: descriptor.method,
+		params: {
+			key: descriptor.key,
+			amount: descriptor.amount ?? 0,
+		},
+	};
 }
 
-function buildActionEffect(descriptor: ActionEffectDescriptor) {
-	return effect(Types.Action, ActionMethods.PERFORM)
-		.param('id', descriptor.id)
-		.build();
+function buildActionEffect(descriptor: ActionEffectDescriptor): EffectDef {
+	return {
+		type: 'action',
+		method: 'perform',
+		params: { id: descriptor.id },
+	};
 }
 
-function buildStatEffect(descriptor: StatEffectDescriptor) {
-	return effect(Types.Stat, StatMethods.ADD)
-		.params(statParams().key(descriptor.key).amount(descriptor.amount))
-		.build();
+function buildStatEffect(descriptor: StatEffectDescriptor): EffectDef {
+	return {
+		type: 'stat',
+		method: 'add',
+		params: { key: descriptor.key, amount: descriptor.amount },
+	};
 }
 
-export function buildEffects(descriptors: EffectDescriptor[] = []) {
+export function buildEffects(
+	descriptors: EffectDescriptor[] = [],
+): EffectDef[] {
 	return descriptors.map((descriptor) => {
 		if (descriptor.kind === 'resource') {
 			return buildResourceEffect(descriptor);
@@ -117,44 +111,77 @@ export function buildEffects(descriptors: EffectDescriptor[] = []) {
 	});
 }
 
-export function buildAttackEffect(descriptor: AttackEffectDescriptor) {
-	const params = attackParams();
+type AttackParams = {
+	target: { type: 'resource'; key: string } | { type: 'building'; id: string };
+	stats?: Array<{
+		role: 'power' | 'absorption' | 'fortification';
+		key: string;
+		label?: string;
+		icon?: string;
+	}>;
+	onDamage?: {
+		attacker?: EffectDef[];
+		defender?: EffectDef[];
+	};
+	ignoreAbsorption?: boolean;
+	ignoreFortification?: boolean;
+};
+
+export function buildAttackEffect(
+	descriptor: AttackEffectDescriptor,
+): EffectDef {
+	const params: AttackParams = {
+		target: descriptor.target.resource
+			? { type: 'resource', key: descriptor.target.resource }
+			: {
+					type: 'building',
+					id: descriptor.target.building ?? SYNTH_BUILDING.id,
+				},
+	};
 	const stats = descriptor.stats ?? ['power', 'absorption', 'fortification'];
-	if (stats.includes('power')) {
-		params.powerStat(statKey('power'));
+	const annotations = [] as AttackParams['stats'];
+	for (const role of stats) {
+		const config = COMBAT_STAT_CONFIG[role];
+		if (!config) {
+			continue;
+		}
+		annotations?.push({
+			role,
+			key: config.key,
+			label: config.label,
+			icon: config.icon,
+		});
 	}
-	if (stats.includes('absorption')) {
-		params.absorptionStat(statKey('absorption'));
+	if (annotations && annotations.length > 0) {
+		params.stats = annotations;
 	}
-	if (stats.includes('fortification')) {
-		params.fortificationStat(statKey('fortification'));
+	if (descriptor.attacker?.length || descriptor.defender?.length) {
+		params.onDamage = {};
+		if (descriptor.attacker?.length) {
+			params.onDamage.attacker = buildEffects(descriptor.attacker);
+		}
+		if (descriptor.defender?.length) {
+			params.onDamage.defender = buildEffects(descriptor.defender);
+		}
 	}
-	if (descriptor.target.resource) {
-		params.targetResource(descriptor.target.resource);
-	}
-	if (descriptor.target.building) {
-		params.targetBuilding(descriptor.target.building);
-	}
-	if (descriptor.attacker?.length) {
-		params.onDamageAttacker(...buildEffects(descriptor.attacker));
-	}
-	if (descriptor.defender?.length) {
-		params.onDamageDefender(...buildEffects(descriptor.defender));
-	}
-	return effect('attack', 'perform').params(params.build()).build();
+	return {
+		type: 'attack',
+		method: 'perform',
+		params,
+	};
 }
 
 export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	attack: {
 		meta: SYNTH_ATTACK,
-		baseCosts: { [ContentResource.ap]: 1 },
+		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 1 },
 		attack: {
-			target: { resource: ContentResource.castleHP },
+			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
 			attacker: [
 				{
 					kind: 'resource',
-					method: ResourceMethods.ADD,
-					key: ContentResource.happiness,
+					method: 'add',
+					key: SYNTH_RESOURCE_IDS.happiness,
 					amount: ATTACKER_HAPPINESS_GAIN,
 				},
 				{ kind: 'action', id: SYNTH_PLUNDER.id },
@@ -162,8 +189,8 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 			defender: [
 				{
 					kind: 'resource',
-					method: ResourceMethods.REMOVE,
-					key: ContentResource.happiness,
+					method: 'remove',
+					key: SYNTH_RESOURCE_IDS.happiness,
 					amount: DEFENDER_HAPPINESS_LOSS,
 				},
 			],
@@ -171,21 +198,21 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 		extra: [
 			{
 				kind: 'stat',
-				key: ContentStat.warWeariness,
+				key: SYNTH_STAT_IDS.warWeariness,
 				amount: WAR_WEARINESS_GAIN,
 			},
 		],
 	},
 	buildingAttack: {
 		meta: SYNTH_BUILDING_ATTACK,
-		baseCosts: { [ContentResource.ap]: 1 },
+		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 1 },
 		attack: {
 			target: { building: SYNTH_BUILDING.id },
 			attacker: [
 				{
 					kind: 'resource',
-					method: ResourceMethods.ADD,
-					key: ContentResource.gold,
+					method: 'add',
+					key: SYNTH_RESOURCE_IDS.gold,
 					amount: BUILDING_REWARD_GOLD,
 				},
 			],
@@ -197,17 +224,17 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 		extra: [
 			{
 				kind: 'resource',
-				method: ResourceMethods.TRANSFER,
-				key: ContentResource.gold,
+				method: 'transfer',
+				key: SYNTH_RESOURCE_IDS.gold,
 				percent: PLUNDER_PERCENT,
 			},
 		],
 	},
 	partial: {
 		meta: SYNTH_PARTIAL_ATTACK,
-		baseCosts: { [ContentResource.ap]: 0 },
+		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 0 },
 		attack: {
-			target: { resource: ContentResource.castleHP },
+			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
 			stats: ['power'],
 		},
 	},

@@ -1,6 +1,8 @@
 import type { AttackPlayerDiff } from '@kingdom-builder/engine';
 import { describe, expect, it } from 'vitest';
 
+import './helpers/armyAttackSyntheticRegistries';
+
 import { formatDiffCommon } from '../src/translation/effects/formatters/attack/shared';
 import {
 	listAttackResourceKeys,
@@ -8,6 +10,15 @@ import {
 	selectAttackResourceDescriptor,
 	selectAttackStatDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
+import {
+	suppressSyntheticStatDescriptor,
+	restoreSyntheticStatDescriptor,
+} from './helpers/armyAttackFactories';
+import {
+	SYNTH_RESOURCE_IDS,
+	SYNTH_RESOURCE_METADATA,
+	SYNTH_STAT_IDS,
+} from './helpers/armyAttackConfig';
 
 const getFirst = <T>(values: readonly T[]): T => {
 	if (!values.length) {
@@ -49,6 +60,45 @@ describe('attack diff formatters registry', () => {
 		expect(formatted.startsWith('Update:')).toBe(true);
 		expect(formatted).toContain(statInfo.label ?? statKey);
 		expect(formatted).toContain('+5');
+	});
+
+	it('falls back to resource key when descriptor metadata is missing', () => {
+		const resourceKey = SYNTH_RESOURCE_IDS.castleHP;
+		const original = SYNTH_RESOURCE_METADATA[resourceKey];
+		delete SYNTH_RESOURCE_METADATA[resourceKey];
+		try {
+			const diff: Extract<AttackPlayerDiff, { type: 'resource' }> = {
+				type: 'resource',
+				key: resourceKey,
+				before: 1,
+				after: 4,
+			};
+			const formatted = formatDiffCommon('Change', diff);
+			expect(formatted).toContain(resourceKey);
+			expect(formatted).toContain('+3');
+		} finally {
+			if (original) {
+				SYNTH_RESOURCE_METADATA[resourceKey] = original;
+			}
+		}
+	});
+
+	it('falls back to stat key when descriptor metadata is missing', () => {
+		const statKey = SYNTH_STAT_IDS.armyStrength;
+		suppressSyntheticStatDescriptor(statKey);
+		try {
+			const diff: Extract<AttackPlayerDiff, { type: 'stat' }> = {
+				type: 'stat',
+				key: statKey,
+				before: 6,
+				after: 7,
+			};
+			const formatted = formatDiffCommon('Adjust', diff);
+			expect(formatted).toContain(statKey);
+			expect(formatted).toContain('+1');
+		} finally {
+			restoreSyntheticStatDescriptor(statKey);
+		}
 	});
 
 	it('throws a clear error when a diff type has no registered formatter', () => {

@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+
+import './helpers/armyAttackSyntheticRegistries';
 import { logContent } from '../src/translation/content';
 import { Resource, Stat, performAction } from '@kingdom-builder/engine';
 import {

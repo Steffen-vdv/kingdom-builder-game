@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+
+import './helpers/armyAttackSyntheticRegistries';
+
 import type { SummaryEntry } from '../src/translation/content';
 import { summarizeContent, describeContent } from '../src/translation/content';
-import {
-	Resource as ContentResource,
-	Stat as ContentStat,
-} from '@kingdom-builder/contents';
 import { Resource, Stat } from '@kingdom-builder/engine';
-import { ResourceMethods } from '@kingdom-builder/contents/config/builderShared';
 import type { EffectDef } from './helpers/armyAttackFactories';
 import {
 	createSyntheticCtx,
@@ -17,7 +15,14 @@ import {
 	iconLabel,
 	SYNTH_ATTACK,
 	SYNTH_COMBAT_STATS,
+	suppressSyntheticStatDescriptor,
+	restoreSyntheticStatDescriptor,
 } from './helpers/armyAttackFactories';
+import {
+	SYNTH_RESOURCE_IDS,
+	SYNTH_STAT_IDS,
+	COMBAT_STAT_CONFIG,
+} from './helpers/armyAttackConfig';
 import {
 	selectAttackBuildingDescriptor,
 	selectAttackResourceDescriptor,
@@ -54,30 +59,27 @@ describe('army attack translation summary', () => {
 			(effectDef: EffectDef) =>
 				effectDef.type === 'resource' &&
 				(effectDef.params as { key?: string }).key ===
-					ContentResource.happiness,
+					SYNTH_RESOURCE_IDS.happiness,
 		);
 		const defenderRes = (onDamage.defender ?? []).find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'resource' &&
 				(effectDef.params as { key?: string }).key ===
-					ContentResource.happiness,
+					SYNTH_RESOURCE_IDS.happiness,
 		);
 		const attackerAmtRaw =
 			(attackerRes?.params as { amount?: number })?.amount ?? 0;
 		const defenderAmtRaw =
 			(defenderRes?.params as { amount?: number })?.amount ?? 0;
 		const attackerAmt =
-			attackerRes?.method === ResourceMethods.REMOVE
-				? -attackerAmtRaw
-				: attackerAmtRaw;
+			attackerRes?.method === 'remove' ? -attackerAmtRaw : attackerAmtRaw;
 		const defenderAmt =
-			defenderRes?.method === ResourceMethods.REMOVE
-				? -defenderAmtRaw
-				: defenderAmtRaw;
+			defenderRes?.method === 'remove' ? -defenderAmtRaw : defenderAmtRaw;
 		const warEffect = attack.effects.find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'stat' &&
-				(effectDef.params as { key?: string }).key === ContentStat.warWeariness,
+				(effectDef.params as { key?: string }).key ===
+					SYNTH_STAT_IDS.warWeariness,
 		);
 		const warAmt = (warEffect?.params as { amount?: number })?.amount ?? 0;
 		const summary = summarizeContent('action', attack.id, translation);
@@ -124,35 +126,47 @@ describe('army attack translation summary', () => {
 	});
 
 	it('falls back to generic labels when combat stat descriptors are omitted', () => {
-		const { translation, attack } = createPartialStatCtx();
-		const castle = selectAttackResourceDescriptor(Resource.castleHP);
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const targetDisplay = iconLabel(
-			castle.icon,
-			castle.label,
-			Resource.castleHP,
-		);
+		const { translation, attack, resourceMetadata } = createPartialStatCtx();
+		const originalResource = resourceMetadata[SYNTH_RESOURCE_IDS.castleHP];
+		delete resourceMetadata[SYNTH_RESOURCE_IDS.castleHP];
+		suppressSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
+		try {
+			const castle = selectAttackResourceDescriptor(Resource.castleHP);
+			const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
+			expect(powerStat.label).toBe(SYNTH_COMBAT_STATS.power.key);
+			const targetDisplay = iconLabel(
+				castle.icon,
+				castle.label,
+				Resource.castleHP,
+			);
 
-		const summary = summarizeContent('action', attack.id, translation);
-		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
-		const targetSummary = castle.icon || castle.label;
-		expect(summary).toEqual([`${powerSummary}${targetSummary}`]);
+			const summary = summarizeContent('action', attack.id, translation);
+			const targetSummary = castle.icon || castle.label;
+			expect(summary).toEqual([
+				`${COMBAT_STAT_CONFIG.power.icon}${targetSummary}`,
+			]);
 
-		const description = describeContent('action', attack.id, translation);
-		expect(description).toEqual([
-			{
-				title: `Attack opponent with your ${iconLabel(
-					powerStat.icon,
-					powerStat.label,
-					'attack power',
-				)}`,
-				items: [
-					'Damage reduction applied',
-					'Apply damage to opponent defenses',
-					`If opponent defenses fall, overflow remaining damage onto opponent ${targetDisplay}`,
-				],
-			},
-		]);
+			const description = describeContent('action', attack.id, translation);
+			expect(description).toEqual([
+				{
+					title: `Attack opponent with your ${iconLabel(
+						COMBAT_STAT_CONFIG.power.icon,
+						COMBAT_STAT_CONFIG.power.label,
+						'attack power',
+					)}`,
+					items: [
+						'Damage reduction applied',
+						'Apply damage to opponent defenses',
+						`If opponent defenses fall, overflow remaining damage onto opponent ${targetDisplay}`,
+					],
+				},
+			]);
+		} finally {
+			if (originalResource) {
+				resourceMetadata[SYNTH_RESOURCE_IDS.castleHP] = originalResource;
+			}
+			restoreSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
+		}
 	});
 
 	it('summarizes building attack as destruction', () => {
@@ -171,7 +185,7 @@ describe('army attack translation summary', () => {
 		const rewardEffect = (onDamage.attacker ?? []).find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'resource' &&
-				(effectDef.params as { key?: string }).key === ContentResource.gold,
+				(effectDef.params as { key?: string }).key === SYNTH_RESOURCE_IDS.gold,
 		);
 		const rewardAmount =
 			(rewardEffect?.params as { amount?: number })?.amount ?? 0;
