@@ -20,9 +20,6 @@ import {
 	type DefinitionLookup,
 } from './registryMetadataLookups';
 import {
-	DEFAULT_LAND_DESCRIPTOR,
-	DEFAULT_PASSIVE_DESCRIPTOR,
-	DEFAULT_SLOT_DESCRIPTOR,
 	buildPhaseMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
@@ -34,6 +31,11 @@ import {
 	type RegistryMetadataDescriptor,
 	type TriggerMetadata,
 } from './registryMetadataDescriptors';
+import {
+	DEFAULT_LAND_DESCRIPTOR,
+	DEFAULT_PASSIVE_DESCRIPTOR,
+	DEFAULT_SLOT_DESCRIPTOR,
+} from './defaultRegistryMetadata';
 import {
 	createAssetMetadataSelector,
 	createMetadataSelector,
