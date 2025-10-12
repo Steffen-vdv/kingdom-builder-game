@@ -35,6 +35,87 @@ describe('usePhaseProgress', () => {
 		advanceToActionPhaseMock.mockResolvedValue(undefined);
 	});
 
+	it('uses latest fatal handler when advancing to action phase', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const player = createSnapshotPlayer({
+			id: 'player-1',
+			name: 'Hero',
+			resources: { [actionCostResource]: 0 },
+		});
+		const opponent = createSnapshotPlayer({
+			id: 'player-2',
+			name: 'Rival',
+			resources: { [actionCostResource]: 0 },
+		});
+		const phases = [
+			{ id: 'phase-main', label: 'Main Phase', action: true, steps: [] },
+		];
+		const sessionSnapshot = createSessionSnapshot({
+			players: [player, opponent],
+			activePlayerId: player.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			turn: 1,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: phases[0]?.id ?? 'phase-main',
+		});
+		const session = {
+			getSnapshot: vi.fn(() => sessionSnapshot),
+		};
+		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
+			return await task();
+		});
+		const firstFatalHandler = vi.fn();
+		const secondFatalHandler = vi.fn();
+		const { result, rerender } = renderHook(
+			({ fatalHandler }: { fatalHandler: (error: unknown) => void }) =>
+				usePhaseProgress({
+					session: session as never,
+					sessionState: sessionSnapshot,
+					sessionId: 'session-1',
+					actionCostResource,
+					mountedRef: { current: true },
+					refresh: vi.fn(),
+					resourceKeys: [actionCostResource],
+					enqueue,
+					registries: createSessionRegistries(),
+					showResolution: vi.fn().mockResolvedValue(undefined),
+					onFatalSessionError: fatalHandler,
+				}),
+			{
+				initialProps: { fatalHandler: firstFatalHandler },
+			},
+		);
+
+		await act(async () => {
+			await result.current.runUntilActionPhase();
+		});
+
+		expect(advanceToActionPhaseMock).toHaveBeenCalledTimes(1);
+		const firstCall = advanceToActionPhaseMock.mock.calls[0]?.[0];
+		expect(firstCall?.onFatalSessionError).toBe(firstFatalHandler);
+
+		rerender({ fatalHandler: secondFatalHandler });
+
+		await act(async () => {
+			await result.current.runUntilActionPhase();
+		});
+
+		expect(advanceToActionPhaseMock).toHaveBeenCalledTimes(2);
+		const secondCall = advanceToActionPhaseMock.mock.calls[1]?.[0];
+		expect(secondCall?.onFatalSessionError).toBe(secondFatalHandler);
+		expect(enqueue).toHaveBeenCalledTimes(2);
+	});
+
 	it('invokes fatal handler when advancing the session fails', async () => {
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {
