@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SessionTransport } from '../src/transport/SessionTransport.js';
+import {
+	SessionTransport,
+	PLAYER_NAME_MAX_LENGTH,
+} from '../src/transport/SessionTransport.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
@@ -37,6 +40,33 @@ describe('SessionTransport updatePlayerName', () => {
 		expect(updateSpy).toHaveBeenCalledWith('A', 'Voyager');
 		const [player] = response.snapshot.game.players;
 		expect(player?.name).toBe('Voyager');
+	});
+
+	it('rejects player names that exceed the maximum length', () => {
+		const { manager } = createSyntheticSessionManager();
+		manager.createSession('length-check');
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const overLengthName = 'Q'.repeat(PLAYER_NAME_MAX_LENGTH + 1);
+		let thrown: unknown;
+		try {
+			transport.updatePlayerName({
+				body: {
+					sessionId: 'length-check',
+					playerId: 'A',
+					playerName: overLengthName,
+				},
+				headers: authorizedHeaders,
+			});
+		} catch (error) {
+			thrown = error;
+		}
+		expect(thrown).toBeInstanceOf(TransportError);
+		if (thrown instanceof TransportError) {
+			expect(thrown.code).toBe('INVALID_REQUEST');
+		}
 	});
 
 	it('rejects player names that trim to empty strings', () => {

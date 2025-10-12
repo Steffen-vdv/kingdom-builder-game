@@ -35,3 +35,11 @@ Roles gate access to specific transport actions:
 
 Tokens without required roles trigger `403 Forbidden`. Missing tokens return
 `401 Unauthorized`.
+
+## Player name validation
+
+Session creation and player name updates trim whitespace and accept names up to
+40 visible characters. Any request that submits a longer name is rejected with a
+`400 Bad Request` response carrying the `INVALID_REQUEST` code and the message
+"Player names must be 40 characters or fewer." Blank names are ignored during
+session creation and remain disallowed when updating an existing player.
