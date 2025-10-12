@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SessionTransport } from '../src/transport/SessionTransport.js';
+import {
+	SessionTransport,
+	SESSION_PLAYER_NAME_MAX_LENGTH,
+} from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
@@ -82,6 +85,46 @@ describe('SessionTransport createSession', () => {
 		});
 		const [playerA] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Charlie');
+	});
+
+	it('accepts player names up to the maximum length', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('length-session'),
+			authMiddleware: middleware,
+		});
+		const maxLengthName = 'X'.repeat(SESSION_PLAYER_NAME_MAX_LENGTH);
+		const response = transport.createSession({
+			body: { playerNames: { A: maxLengthName } },
+			headers: authorizedHeaders,
+		});
+		const [playerA] = response.snapshot.game.players;
+		expect(playerA?.name).toBe(maxLengthName);
+	});
+
+	it('rejects player names longer than the maximum length', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('invalid-name'),
+			authMiddleware: middleware,
+		});
+		const tooLongName = 'Y'.repeat(SESSION_PLAYER_NAME_MAX_LENGTH + 1);
+		let thrown: unknown;
+		try {
+			transport.createSession({
+				body: { playerNames: { A: tooLongName } },
+				headers: authorizedHeaders,
+			});
+		} catch (error) {
+			thrown = error;
+		}
+		expect(thrown).toBeInstanceOf(TransportError);
+		if (thrown instanceof TransportError) {
+			expect(thrown.code).toBe('INVALID_REQUEST');
+			expect(thrown.message).toContain('at most');
+		}
 	});
 
 	it('fails when unique session identifiers cannot be generated', () => {
