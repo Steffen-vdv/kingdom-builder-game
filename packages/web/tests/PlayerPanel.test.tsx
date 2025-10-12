@@ -18,6 +18,10 @@ const {
 	registries,
 	metadata,
 	metadataSelectors,
+	tieredResourceKey,
+	fallbackResourceKey,
+	fallbackResourceIcon,
+	unknownPhaseId,
 } = createPlayerPanelFixtures();
 
 const renderPanel = () =>
@@ -142,5 +146,27 @@ describe('<PlayerPanel />', () => {
 		);
 		expect(statForecastBadge).toBeInTheDocument();
 		expect(statForecastBadge).toHaveClass('text-emerald-300');
+	});
+
+	it('resolves selector fallbacks and caches unknown phase descriptors', () => {
+		renderPanel();
+		const resourceDescriptor =
+			metadataSelectors.resourceMetadata.select(fallbackResourceKey);
+		if (fallbackResourceIcon) {
+			expect(resourceDescriptor.icon).toBe(fallbackResourceIcon);
+		}
+		const registryResource = registries.resources[fallbackResourceKey];
+		expect(resourceDescriptor.description).toBe(registryResource?.description);
+		const passiveAsset = metadataSelectors.passiveMetadata.select();
+		expect(passiveAsset.icon).toBe('♾️');
+		const unknownPhase = metadataSelectors.phaseMetadata.select(unknownPhaseId);
+		const cachedUnknownPhase =
+			metadataSelectors.phaseMetadata.select(unknownPhaseId);
+		expect(cachedUnknownPhase).toBe(unknownPhase);
+		expect(unknownPhase.label).toBe('Phase:Unknown');
+		expect(unknownPhase.icon).toBeUndefined();
+		const tieredDescriptor =
+			metadataSelectors.resourceMetadata.select(tieredResourceKey);
+		expect(tieredDescriptor.label).toBe('Morale');
 	});
 });

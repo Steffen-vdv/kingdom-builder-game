@@ -5,16 +5,16 @@ import type {
 	PlayerId,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
-import {
-	PHASES,
-	RULES,
-	Stat,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
-import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+	createTestPhaseSequence,
+	createTestRuleSnapshot,
+	createTestSessionMetadata,
+} from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
@@ -29,20 +29,29 @@ export interface PlayerPanelFixtures {
 	registries: SessionRegistries;
 	metadata: EngineSessionSnapshot['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
+	tieredResourceKey: string;
+	fallbackResourceKey: string;
+	fallbackResourceIcon?: string;
+	unknownPhaseId: string;
 }
 
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	const activePlayerId = 'player-1' as PlayerId;
 	const opponentId = 'player-2' as PlayerId;
-	const ruleSnapshot: RuleSnapshot = {
-		...RULES,
-		tierDefinitions: RULES.tierDefinitions.map((tier) => ({ ...tier })),
-	};
 	const sessionRegistries = createSessionRegistries();
-	const translationAssets = createTranslationAssets({
-		populations: sessionRegistries.populations,
-		resources: sessionRegistries.resources,
-	});
+	const phases = createTestPhaseSequence();
+	const ruleSnapshot: RuleSnapshot = createTestRuleSnapshot(
+		sessionRegistries.resources,
+	);
+	const metadata = createTestSessionMetadata(sessionRegistries, phases);
+	const translationAssets = createTranslationAssets(
+		{
+			populations: sessionRegistries.populations,
+			resources: sessionRegistries.resources,
+		},
+		metadata,
+		{ rules: ruleSnapshot },
+	);
 	const resourceValues = Object.keys(sessionRegistries.resources).reduce<
 		Record<string, number>
 	>((acc, key, index) => {
@@ -52,8 +61,9 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	const stats: Record<string, number> = {};
 	const statsHistory: Record<string, boolean> = {};
 	let statIndex = 0;
+	const maxPopulationKey = 'maxPopulation';
 	for (const statKey of Object.keys(translationAssets.stats)) {
-		if (statKey === Stat.maxPopulation) {
+		if (statKey === maxPopulationKey) {
 			continue;
 		}
 		const value = statIndex % 2 === 0 ? statIndex + 1 : 0;
@@ -78,18 +88,22 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		stats: {},
 		population: {},
 	});
+	const sessionMetadata: EngineSessionSnapshot['metadata'] = {
+		...metadata,
+	};
 	const sessionState = createSessionSnapshot({
 		players: [activePlayer, opponent],
 		activePlayerId,
 		opponentId,
-		phases: PHASES,
-		actionCostResource: RULES.tieredResourceKey as ResourceKey,
+		phases,
+		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
+		metadata: sessionMetadata,
 	});
 	const translationContext = createTranslationContext(
 		sessionState,
 		sessionRegistries,
-		sessionState.metadata,
+		sessionMetadata,
 		{
 			ruleSnapshot,
 			passiveRecords: sessionState.passiveRecords,
@@ -97,7 +111,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	);
 	const metadataSelectors = createTestRegistryMetadata(
 		sessionRegistries,
-		sessionState.metadata,
+		sessionMetadata,
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: LegacyGameEngineContextValue = {
@@ -168,7 +182,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	}, {});
 	const displayableStatKeys = Object.entries(activePlayer.stats)
 		.filter(([statKey, statValue]) => {
-			if (statKey === Stat.maxPopulation) {
+			if (statKey === maxPopulationKey) {
 				return false;
 			}
 			if (statValue !== 0) {
@@ -185,6 +199,14 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		},
 		{},
 	);
+	const tieredResourceKey = ruleSnapshot.tieredResourceKey;
+	const fallbackResourceKey = Object.keys(sessionRegistries.resources).find(
+		(key) => key !== tieredResourceKey,
+	);
+	const fallbackResourceIcon = fallbackResourceKey
+		? sessionRegistries.resources[fallbackResourceKey]?.icon
+		: undefined;
+	const unknownPhaseId = 'phase:unknown';
 	return {
 		activePlayer,
 		mockGame,
@@ -192,7 +214,11 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		displayableStatKeys,
 		statForecast,
 		registries: sessionRegistries,
-		metadata: sessionState.metadata,
+		metadata: sessionMetadata,
 		metadataSelectors,
+		tieredResourceKey,
+		fallbackResourceKey: fallbackResourceKey ?? tieredResourceKey,
+		fallbackResourceIcon,
+		unknownPhaseId,
 	};
 }
