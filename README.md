@@ -1,6 +1,6 @@
 # 👑 Kingdom Builder v5.11
 
-## 0) Preface
+## 0) Preface 
 
 This repository has been entirely brought to life through AI (ChatGPT Codex). The
 technical and conceptual vision of the game was invented and curated by a human,
