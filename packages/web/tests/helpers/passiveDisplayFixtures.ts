@@ -4,20 +4,19 @@ import type {
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
 import {
-	BUILDINGS,
-	PHASES,
-	RULES,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
-import {
 	createPassiveRecord,
 	createSessionSnapshot,
 	createSnapshotPlayer,
+	createTestPhases,
+	createTestRuleSnapshot,
+	createTestSessionMetadata,
 } from './sessionFixtures';
 import {
 	createPassiveGame,
 	type PassiveGameContext,
 } from './createPassiveDisplayGame';
+import { createSessionRegistries } from './sessionRegistries';
+import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
 export type TierPassiveScenario = PassiveGameContext & {
 	activePlayer: PlayerStateSnapshot;
@@ -32,19 +31,31 @@ export type BuildingPassiveScenario = PassiveGameContext & {
 	activePlayer: PlayerStateSnapshot;
 };
 
-const happinessKey = RULES.tieredResourceKey as ResourceKey;
+const ensureRuleTitles = (ruleSnapshot: RuleSnapshot): RuleSnapshot => ({
+	...ruleSnapshot,
+	tierDefinitions: ruleSnapshot.tierDefinitions.map((tier) => ({
+		...tier,
+		display: {
+			...(tier.display ?? {}),
+			title: tier.display?.title ?? `Snapshot ${tier.id}`,
+		},
+	})),
+});
 
-function cloneRuleSnapshot(): RuleSnapshot {
-	return {
-		...RULES,
-		tierDefinitions: RULES.tierDefinitions.map((tier) => ({
-			...tier,
-			display: {
-				...(tier.display ?? {}),
-				title: `Snapshot ${tier.id}`,
-			},
-		})),
-	};
+function createScenarioContext(): {
+	registries: SessionRegistries;
+	phases: ReturnType<typeof createTestPhases>;
+	ruleSnapshot: RuleSnapshot;
+	metadata: ReturnType<typeof createTestSessionMetadata>;
+	happinessKey: string;
+} {
+	const registries = createSessionRegistries();
+	const phases = createTestPhases();
+	const resourceKeys = Object.keys(registries.resources);
+	const happinessKey = resourceKeys[0] ?? 'resource:auric-light';
+	const ruleSnapshot = ensureRuleTitles(createTestRuleSnapshot(happinessKey));
+	const metadata = createTestSessionMetadata(registries, phases);
+	return { registries, phases, ruleSnapshot, metadata, happinessKey };
 }
 
 function sampleValueForTier(
@@ -59,7 +70,8 @@ function sampleValueForTier(
 }
 
 export function createTierPassiveScenario(): TierPassiveScenario {
-	const ruleSnapshot = cloneRuleSnapshot();
+	const { phases, ruleSnapshot, metadata, happinessKey } =
+		createScenarioContext();
 	const tier = ruleSnapshot.tierDefinitions.find(
 		(entry) => entry.preview?.id && (entry.range.min ?? 0) >= 0,
 	);
@@ -115,20 +127,22 @@ export function createTierPassiveScenario(): TierPassiveScenario {
 		players: [activePlayer, opponent],
 		activePlayerId,
 		opponentId,
-		phases: PHASES,
-		actionCostResource: RULES.tieredResourceKey as ResourceKey,
+		phases,
+		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
 		passiveRecords: {
 			[activePlayerId]: [passiveRecord],
 			[opponentId]: [],
 		},
+		metadata,
 	});
 	const context = createPassiveGame(sessionState, { ruleSnapshot });
 	return { ...context, activePlayer, ruleSnapshot };
 }
 
 export function createNeutralScenario(): NeutralPassiveScenario {
-	const ruleSnapshot = cloneRuleSnapshot();
+	const { phases, ruleSnapshot, metadata, happinessKey } =
+		createScenarioContext();
 	const neutralTier = ruleSnapshot.tierDefinitions.find(
 		(entry) => !entry.preview?.id,
 	);
@@ -150,23 +164,28 @@ export function createNeutralScenario(): NeutralPassiveScenario {
 		players: [activePlayer, opponent],
 		activePlayerId,
 		opponentId,
-		phases: PHASES,
-		actionCostResource: RULES.tieredResourceKey as ResourceKey,
+		phases,
+		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
 		passiveRecords: {
 			[activePlayerId]: [],
 			[opponentId]: [],
 		},
+		metadata,
 	});
 	return { ...createPassiveGame(sessionState, { ruleSnapshot }), activePlayer };
 }
 
 export function createBuildingScenario(): BuildingPassiveScenario {
-	const ruleSnapshot = cloneRuleSnapshot();
+	const { registries, phases, ruleSnapshot, metadata, happinessKey } =
+		createScenarioContext();
 	const activePlayerId = 'player-1' as PlayerId;
 	const opponentId = 'player-2' as PlayerId;
-	const buildingId = 'castle_walls';
-	const buildingInfo = BUILDINGS.get(buildingId);
+	const buildingEntry = registries.buildings.entries()[0];
+	if (!buildingEntry) {
+		throw new Error('No building definition available for scenario.');
+	}
+	const [buildingId, buildingInfo] = buildingEntry;
 	const passiveId = `${buildingId}_bonus`;
 	const passiveMeta = {
 		source: {
@@ -201,13 +220,14 @@ export function createBuildingScenario(): BuildingPassiveScenario {
 		players: [activePlayer, opponent],
 		activePlayerId,
 		opponentId,
-		phases: PHASES,
-		actionCostResource: RULES.tieredResourceKey as ResourceKey,
+		phases,
+		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
 		passiveRecords: {
 			[activePlayerId]: [passiveRecord],
 			[opponentId]: [],
 		},
+		metadata,
 	});
 	return { ...createPassiveGame(sessionState, { ruleSnapshot }), activePlayer };
 }

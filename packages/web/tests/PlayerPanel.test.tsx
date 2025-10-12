@@ -68,6 +68,32 @@ describe('<PlayerPanel />', () => {
 			const icon = display.icon ?? '❔';
 			expect(screen.getByText(`${icon}${amount}`)).toBeInTheDocument();
 		}
+		const missingIconDescriptor = metadataSelectors.resourceMetadata.list.find(
+			(descriptor) => descriptor.icon === undefined,
+		);
+		expect(missingIconDescriptor).toBeDefined();
+		if (missingIconDescriptor) {
+			const cachedDescriptor = metadataSelectors.resourceMetadata.select(
+				missingIconDescriptor.id,
+			);
+			expect(
+				metadataSelectors.resourceMetadata.select(missingIconDescriptor.id),
+			).toBe(cachedDescriptor);
+			expect(cachedDescriptor.description).toBeUndefined();
+		}
+		const fallbackPhaseId = mockGame.sessionSnapshot.phases
+			.map((phase) => phase.id)
+			.find(
+				(phaseId) =>
+					metadataSelectors.phaseMetadata.byId[phaseId] === undefined,
+			);
+		if (fallbackPhaseId) {
+			const fallbackPhase =
+				metadataSelectors.phaseMetadata.select(fallbackPhaseId);
+			expect(metadataSelectors.phaseMetadata.select(fallbackPhaseId)).toBe(
+				fallbackPhase,
+			);
+		}
 	});
 
 	it('renders next-turn forecasts with accessible labels', () => {

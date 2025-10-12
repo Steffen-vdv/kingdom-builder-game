@@ -5,16 +5,16 @@ import type {
 	PlayerId,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
-import {
-	PHASES,
-	RULES,
-	Stat,
-	type ResourceKey,
-} from '@kingdom-builder/contents';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
-import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+	createTestPhases,
+	createTestRuleSnapshot,
+	createTestSessionMetadata,
+} from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
@@ -34,26 +34,43 @@ export interface PlayerPanelFixtures {
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	const activePlayerId = 'player-1' as PlayerId;
 	const opponentId = 'player-2' as PlayerId;
-	const ruleSnapshot: RuleSnapshot = {
-		...RULES,
-		tierDefinitions: RULES.tierDefinitions.map((tier) => ({ ...tier })),
-	};
 	const sessionRegistries = createSessionRegistries();
-	const translationAssets = createTranslationAssets({
-		populations: sessionRegistries.populations,
-		resources: sessionRegistries.resources,
-	});
-	const resourceValues = Object.keys(sessionRegistries.resources).reduce<
+	const phases = createTestPhases();
+	const resourceKeys = Object.keys(sessionRegistries.resources);
+	const tieredResourceKey = resourceKeys[0] ?? 'resource:auric-light';
+	const fallbackResourceKey =
+		resourceKeys[resourceKeys.length - 1] ?? tieredResourceKey;
+	const fallbackResource = sessionRegistries.resources[fallbackResourceKey];
+	if (fallbackResource) {
+		delete fallbackResource.icon;
+		delete fallbackResource.description;
+	}
+	const ruleSnapshot: RuleSnapshot = createTestRuleSnapshot(tieredResourceKey);
+	const metadata = createTestSessionMetadata(sessionRegistries, phases);
+	const metadataSelectors = createTestRegistryMetadata(
+		sessionRegistries,
+		metadata,
+	);
+	const translationAssets = createTranslationAssets(
+		sessionRegistries,
+		metadata,
+		{ rules: ruleSnapshot },
+	);
+	const resourceValues = metadataSelectors.resourceMetadata.list.reduce<
 		Record<string, number>
 	>((acc, key, index) => {
-		acc[key] = index + 2;
+		acc[key.id] = index + 2;
 		return acc;
 	}, {});
 	const stats: Record<string, number> = {};
 	const statsHistory: Record<string, boolean> = {};
 	let statIndex = 0;
-	for (const statKey of Object.keys(translationAssets.stats)) {
-		if (statKey === Stat.maxPopulation) {
+	const statKeys = Object.keys(translationAssets.stats);
+	const statIds = statKeys.length
+		? statKeys
+		: metadataSelectors.statMetadata.list.map((descriptor) => descriptor.id);
+	for (const statKey of statIds) {
+		if (statKey === 'maxPopulation') {
 			continue;
 		}
 		const value = statIndex % 2 === 0 ? statIndex + 1 : 0;
@@ -82,9 +99,10 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		players: [activePlayer, opponent],
 		activePlayerId,
 		opponentId,
-		phases: PHASES,
-		actionCostResource: RULES.tieredResourceKey as ResourceKey,
+		phases,
+		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
+		metadata,
 	});
 	const translationContext = createTranslationContext(
 		sessionState,
@@ -94,10 +112,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			ruleSnapshot,
 			passiveRecords: sessionState.passiveRecords,
 		},
-	);
-	const metadataSelectors = createTestRegistryMetadata(
-		sessionRegistries,
-		sessionState.metadata,
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const mockGame: LegacyGameEngineContextValue = {
@@ -159,18 +173,15 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		handlePerform: vi.fn().mockResolvedValue(undefined),
 		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 	};
-	const resourceForecast = Object.keys(sessionRegistries.resources).reduce<
+	const resourceForecast = metadataSelectors.resourceMetadata.list.reduce<
 		Record<string, number>
 	>((acc, key, index) => {
 		const offset = index + 1;
-		acc[key] = index % 2 === 0 ? offset : -offset;
+		acc[key.id] = index % 2 === 0 ? offset : -offset;
 		return acc;
 	}, {});
 	const displayableStatKeys = Object.entries(activePlayer.stats)
 		.filter(([statKey, statValue]) => {
-			if (statKey === Stat.maxPopulation) {
-				return false;
-			}
 			if (statValue !== 0) {
 				return true;
 			}

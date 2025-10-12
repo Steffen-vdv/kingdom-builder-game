@@ -69,6 +69,23 @@ describe('<PassiveDisplay />', () => {
 				registries,
 				metadata,
 			);
+			const fallbackPhaseId = mockGame.sessionState.phases
+				.map((phase) => phase.id)
+				.find(
+					(phaseId) =>
+						metadataSelectors.phaseMetadata.byId[phaseId] === undefined,
+				);
+			if (fallbackPhaseId) {
+				const fallbackPhase =
+					metadataSelectors.phaseMetadata.select(fallbackPhaseId);
+				expect(metadataSelectors.phaseMetadata.select(fallbackPhaseId)).toBe(
+					fallbackPhase,
+				);
+			}
+			const passiveDescriptor = metadataSelectors.passiveMetadata.select();
+			expect(metadataSelectors.passiveMetadata.select()).toBe(
+				passiveDescriptor,
+			);
 			const tieredResourceDescriptor = toDescriptorDisplay(
 				metadataSelectors.resourceMetadata.select(
 					mockGame.ruleSnapshot.tieredResourceKey,
