@@ -207,6 +207,60 @@ describe('HttpSessionGateway', () => {
 		expect(response.snapshot.game.devMode).toBe(true);
 	});
 
+	it('returns transport errors when developer mode updates fail', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/dev-mode',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({ enabled: false });
+				return jsonResponse(
+					{
+						code: 'INVALID_REQUEST',
+						message: 'enabled flag must be provided.',
+					},
+					{ status: 400 },
+				);
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const promise = gateway.setDevMode({
+			sessionId: 'test',
+			enabled: false,
+		});
+		await expect(promise).rejects.toBeInstanceOf(TransportError);
+		await promise.catch((error) => {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('INVALID_REQUEST');
+				expect(error.message).toBe('enabled flag must be provided.');
+			}
+		});
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('uses generic transport errors for malformed developer mode payloads', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(jsonResponse({}, { status: 409 })),
+		);
+		const gateway = createGateway({ fetch });
+		const promise = gateway.setDevMode({
+			sessionId: 'test',
+			enabled: true,
+		});
+		await expect(promise).rejects.toBeInstanceOf(TransportError);
+		await promise.catch((error) => {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('CONFLICT');
+				expect(error.message).toContain('409');
+			}
+		});
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
 	it('supports asynchronous header factories', async () => {
 		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
 			const request =
