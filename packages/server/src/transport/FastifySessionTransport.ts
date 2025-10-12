@@ -90,6 +90,22 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		},
 	);
 
+	fastify.patch<SessionRequestParams>(
+		'/sessions/:id/player',
+		async (request, reply) => {
+			try {
+				const payload = mergeSessionPayload(request);
+				const response = transport.updatePlayerName({
+					body: payload,
+					headers: extractHeaders(request),
+				});
+				return reply.send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
+
 	done();
 };
 

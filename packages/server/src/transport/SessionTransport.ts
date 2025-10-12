@@ -11,6 +11,8 @@ import {
 	sessionSetDevModeResponseSchema,
 	sessionIdSchema,
 	sessionStateResponseSchema,
+	sessionUpdatePlayerNameRequestSchema,
+	sessionUpdatePlayerNameResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
 	ActionExecuteErrorResponse,
@@ -22,6 +24,7 @@ import type {
 	SessionPlayerId,
 	SessionPlayerNameMap,
 	SessionSnapshot,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
@@ -220,6 +223,36 @@ export class SessionTransport {
 			snapshot,
 		) satisfies SessionSetDevModeResponse;
 		return sessionSetDevModeResponseSchema.parse(response);
+	}
+
+	public updatePlayerName(
+		request: TransportRequest,
+	): SessionUpdatePlayerNameResponse {
+		this.requireAuthorization(request, 'session:advance');
+		const parsed = sessionUpdatePlayerNameRequestSchema.safeParse(request.body);
+		if (!parsed.success) {
+			throw new TransportError(
+				'INVALID_REQUEST',
+				'Invalid player name update request.',
+				{ issues: parsed.error.issues },
+			);
+		}
+		const { sessionId, playerId, playerName } = parsed.data;
+		const sanitizedName = playerName.trim();
+		if (!sanitizedName) {
+			throw new TransportError(
+				'INVALID_REQUEST',
+				'Player names must include visible characters.',
+			);
+		}
+		const session = this.requireSession(sessionId);
+		session.updatePlayerName(playerId, sanitizedName);
+		const snapshot = this.sessionManager.getSnapshot(sessionId);
+		const response = this.buildStateResponse(
+			sessionId,
+			snapshot,
+		) satisfies SessionUpdatePlayerNameResponse;
+		return sessionUpdatePlayerNameResponseSchema.parse(response);
 	}
 
 	private attachHttpStatus<T extends object>(
