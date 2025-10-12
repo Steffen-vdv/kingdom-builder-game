@@ -76,6 +76,7 @@ interface RegistryMetadataProviderProps {
 		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
 	>;
 	metadata: SessionSnapshotMetadata;
+	overviewContent?: OverviewContentTemplate;
 	children: React.ReactNode;
 }
 
@@ -85,6 +86,7 @@ const RegistryMetadataContext =
 export function RegistryMetadataProvider({
 	registries,
 	metadata,
+	overviewContent: overviewContentOverride,
 	children,
 }: RegistryMetadataProviderProps) {
 	const resourceLookup = useMemo(
@@ -222,7 +224,10 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const overviewContent = useMemo(
+		() => overviewContentOverride ?? OVERVIEW_CONTENT,
+		[overviewContentOverride],
+	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({

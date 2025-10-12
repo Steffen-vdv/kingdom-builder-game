@@ -3,54 +3,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import type * as ContentsModule from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
+import Overview from '../src/Overview';
+import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 
 describe('Overview content integration', () => {
-	it('consumes swapped overview metadata from the content package', async () => {
-		vi.resetModules();
-
-		const actual = await vi.importActual<ContentsModule>(
-			'@kingdom-builder/contents',
-		);
-
-		vi.doMock('@kingdom-builder/contents', () => ({
-			...actual,
-			OVERVIEW_CONTENT: {
-				hero: {
-					badgeIcon: '🧭',
-					badgeLabel: 'Scout The Wilds',
-					title: 'Frontier Briefing',
-					intro: 'Chart {gold} prospects before the caravan departs.',
-					paragraph:
-						'Rally {council} envoys and {expand} into unclaimed wilds.',
-					tokens: {
-						game: 'Frontier Duel',
-					},
-				},
-				tokens: actual.OVERVIEW_CONTENT.tokens,
-				sections: [
-					{
-						kind: 'paragraph',
-						id: 'scouting',
-						icon: 'growth',
-						title: 'Scouting Notes',
-						paragraphs: [
-							'Secure {land} footholds and guard your {castleHP} borders.',
-							'Keep {happiness} high to fuel {ap} ambitions.',
-						],
-					},
-				],
-			},
-		}));
-
-		const { RegistryMetadataProvider } = await import(
-			'../src/contexts/RegistryMetadataContext'
-		);
-		const { default: Overview } = await import('../src/Overview');
-
+	it('consumes provided overview metadata from the registry context', () => {
 		const factory = createContentFactory();
 		const registries: SessionRegistries = {
 			actions: factory.actions,
@@ -91,11 +51,54 @@ describe('Overview content integration', () => {
 			assets: {
 				land: { label: 'Land', icon: '🗺️' },
 				slot: { label: 'Slot', icon: '🧩' },
+				passive: { label: 'Passive', icon: '♾️' },
+				upkeep: { label: 'Upkeep', icon: '🧹' },
+				modifiers: {},
+				triggers: {},
+				tierSummaries: {},
 			},
 		};
+		const overviewContent = {
+			hero: {
+				badgeIcon: '🧭',
+				badgeLabel: 'Scout The Wilds',
+				title: 'Frontier Briefing',
+				intro: 'Chart {gold} prospects before the caravan departs.',
+				paragraph: 'Rally {council} envoys and {expand} into unclaimed wilds.',
+				tokens: {
+					game: 'Frontier Duel',
+				},
+			},
+			tokens: {
+				actions: { expand: ['expand'] },
+				phases: { growth: ['growth'] },
+				resources: {
+					gold: ['gold'],
+					ap: ['ap'],
+				},
+				stats: {},
+				population: { council: ['council'] },
+			},
+			sections: [
+				{
+					kind: 'paragraph' as const,
+					id: 'scouting',
+					icon: 'growth',
+					title: 'Scouting Notes',
+					paragraphs: [
+						'Secure {land} footholds and guard your {castleHP} borders.',
+						'Keep {happiness} high to fuel {ap} ambitions.',
+					],
+				},
+			],
+		} as const;
 
 		render(
-			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+			<RegistryMetadataProvider
+				registries={registries}
+				metadata={metadata}
+				overviewContent={overviewContent}
+			>
 				<Overview onBack={vi.fn()} />
 			</RegistryMetadataProvider>,
 		);
@@ -115,8 +118,5 @@ describe('Overview content integration', () => {
 		if (scoutingSection) {
 			expect(scoutingSection.textContent).not.toContain('{');
 		}
-
-		vi.doUnmock('@kingdom-builder/contents');
-		vi.resetModules();
 	});
 });

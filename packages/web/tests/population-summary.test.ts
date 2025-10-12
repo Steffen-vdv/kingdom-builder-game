@@ -1,24 +1,100 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
 	summarizeContent,
 	summarizeEffects,
 	describeEffects,
 	type Summary,
 } from '../src/translation';
-import { createEngine } from '@kingdom-builder/engine';
+import { createContentFactory } from '@kingdom-builder/testing';
+import { createRegistry } from './helpers/createRegistry';
 import {
-	ACTIONS,
-	BUILDINGS,
-	DEVELOPMENTS,
-	POPULATIONS,
-	PHASES,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
+	wrapTranslationRegistry,
+	toTranslationPlayer,
+} from './helpers/translationContextStub';
+import type { TranslationContext } from '../src/translation/context';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
+function createTranslationContext(): TranslationContext {
+	const factory = createContentFactory();
+	const population = factory.population({
+		id: 'role.council',
+		name: 'Council',
+		icon: '👑',
+	});
+	const raiseAction = factory.action({
+		id: 'action.raiseCouncil',
+		name: 'Raise Council',
+		icon: '🛡️',
+		effects: [
+			{
+				type: 'population',
+				method: 'add',
+				params: { role: population.id },
+			},
+		],
+	});
+	const actions = createRegistry([raiseAction]);
+	const populations = createRegistry([population]);
+	const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
+	const compensations: Record<string, PlayerStartConfig> = {
+		'player-1': {},
+		'player-2': {},
+	};
+	return {
+		actions: wrapTranslationRegistry(actions),
+		buildings: wrapTranslationRegistry(createRegistry([])),
+		developments: wrapTranslationRegistry(createRegistry([])),
+		populations: wrapTranslationRegistry(populations),
+		passives: {
+			list: () => [],
+			get: () => undefined,
+			getDefinition: () => undefined,
+			definitions: () => [],
+			get evaluationMods() {
+				return EMPTY_MODIFIERS;
+			},
+		},
+		phases: [],
+		activePlayer: toTranslationPlayer({
+			id: 'player-1',
+			name: 'Player One',
+			resources: {},
+			population: {},
+		}),
+		opponent: toTranslationPlayer({
+			id: 'player-2',
+			name: 'Player Two',
+			resources: {},
+			population: {},
+		}),
+		rules: {
+			tieredResourceKey: 'happiness',
+			tierDefinitions: [],
+			winConditions: [],
+		},
+		recentResourceGains: [],
+		compensations,
+		pullEffectLog: () => undefined,
+		actionCostResource: 'resource.action',
+		assets: {
+			resources: {},
+			stats: {},
+			populations: {
+				[population.id]: { icon: population.icon, label: population.name },
+			},
+			population: { icon: '👥', label: 'Population' },
+			land: {},
+			slot: {},
+			passive: {},
+			upkeep: { icon: '🧹', label: 'Upkeep' },
+			modifiers: {},
+			triggers: {},
+			tierSummaries: {},
+			formatPassiveRemoval: (description: string) =>
+				`Active as long as ${description}`,
+		},
+	};
+}
 
 function flatten(summary: Summary): string[] {
 	const result: string[] = [];
@@ -33,48 +109,12 @@ function flatten(summary: Summary): string[] {
 }
 
 describe('population effect translation', () => {
-	const engineContext = createEngine({
-		actions: ACTIONS,
-		buildings: BUILDINGS,
-		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
-		phases: PHASES,
-		start: GAME_START,
-		rules: RULES,
-	});
+	const translationContext = createTranslationContext();
+	const actionId = translationContext.actions.get('action.raiseCouncil').id;
+	const roleId = translationContext.populations.get('role.council').id;
 
 	it('summarizes population-raising action for specific role', () => {
-		const raiseEntry = Array.from(
-			(
-				ACTIONS as unknown as {
-					map: Map<
-						string,
-						{
-							effects: {
-								type: string;
-								method?: string;
-								params?: { role?: string };
-							}[];
-						}
-					>;
-				}
-			).map.entries(),
-		).find(([, a]) =>
-			a.effects.some(
-				(e: { type: string; method?: string }) =>
-					e.type === 'population' && e.method === 'add',
-			),
-		);
-		const raiseId = raiseEntry?.[0] as string;
-		const roleEffect = raiseEntry?.[1].effects.find(
-			(e: { type: string; method?: string }) =>
-				e.type === 'population' && e.method === 'add',
-		);
-		const roleId = (roleEffect?.params as { role?: string } | undefined)?.role;
-		if (!raiseId || !roleId) {
-			throw new Error('Unable to locate population-raising action.');
-		}
-		const summary = summarizeContent('action', raiseId, engineContext, {
+		const summary = summarizeContent('action', actionId, translationContext, {
 			role: roleId,
 		});
 		const flat = flatten(summary);
@@ -86,43 +126,27 @@ describe('population effect translation', () => {
 					params: { role: roleId },
 				},
 			],
-			engineContext,
+			translationContext,
 		)[0];
 		expect(flat).toContain(expected);
 	});
 
 	it('handles population removal effect', () => {
-		const removalRole = Array.from(
-			(
-				ACTIONS as unknown as {
-					map: Map<
-						string,
-						{
-							effects: {
-								type: string;
-								method?: string;
-								params?: { role?: string };
-							}[];
-						}
-					>;
-				}
-			).map.values(),
-		)
-			.flatMap((action) => action.effects)
-			.find((effect) => effect.type === 'population' && effect.params?.role)
-			?.params?.role as string | undefined;
-		if (!removalRole) {
-			throw new Error('No population role found for removal test.');
-		}
 		const removalEffect = {
 			type: 'population' as const,
 			method: 'remove' as const,
-			params: { role: removalRole },
+			params: { role: roleId },
 		};
-		const summary = summarizeEffects([removalEffect], engineContext);
-		const desc = describeEffects([removalEffect], engineContext);
-		const expectedSummary = summarizeEffects([removalEffect], engineContext)[0];
-		const expectedDesc = describeEffects([removalEffect], engineContext)[0];
+		const summary = summarizeEffects([removalEffect], translationContext);
+		const desc = describeEffects([removalEffect], translationContext);
+		const expectedSummary = summarizeEffects(
+			[removalEffect],
+			translationContext,
+		)[0];
+		const expectedDesc = describeEffects(
+			[removalEffect],
+			translationContext,
+		)[0];
 		expect(summary).toContain(expectedSummary);
 		expect(desc).toContain(expectedDesc);
 	});

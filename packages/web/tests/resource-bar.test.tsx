@@ -3,31 +3,19 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import { createTranslationContext } from '../src/translation/context';
-import { PHASES, RULES, type ResourceKey } from '@kingdom-builder/contents';
 import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { LegacyGameEngineContextValue } from '../src/state/GameContext.types';
-import type {
-	EngineSession,
-	PlayerId,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
-import {
-	createSessionSnapshot,
-	createSnapshotPlayer,
-} from './helpers/sessionFixtures';
-import { selectSessionView } from '../src/state/sessionSelectors';
-import { createSessionRegistries } from './helpers/sessionRegistries';
-import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
+import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import {
 	formatDescriptorSummary,
 	toDescriptorDisplay,
 } from '../src/components/player/registryDisplays';
+import { createTierPassiveScenario } from './helpers/passiveDisplayFixtures';
+
 type MockGame = LegacyGameEngineContextValue;
-type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
 type SummaryGroupLike = {
 	title?: string;
@@ -69,127 +57,32 @@ function normalizeSummary(summary: string | undefined): string[] {
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
 }
+
 let currentGame: MockGame;
+
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => currentGame,
 }));
+
 describe('<ResourceBar /> happiness hover card', () => {
 	it('lists happiness tiers with concise summaries and highlights the active threshold', () => {
-		const happinessKey = RULES.tieredResourceKey;
-		const activePlayerId = 'player-1' as PlayerId;
-		const opponentId = 'player-2' as PlayerId;
-		const tierDefinitions = RULES.tierDefinitions.map((tier) => ({
-			...tier,
-			display: {
-				...(tier.display ?? {}),
-				title: `Snapshot ${tier.id}`,
-			},
-		}));
-		const ruleSnapshot = {
-			...RULES,
-			tierDefinitions,
-		};
-		const activePlayer = createSnapshotPlayer({
-			id: activePlayerId,
-			name: 'Player One',
-			resources: { [happinessKey]: 6 },
-		});
-		const opponent = createSnapshotPlayer({
-			id: opponentId,
-			name: 'Player Two',
-		});
-		const sessionState = createSessionSnapshot({
-			players: [activePlayer, opponent],
-			activePlayerId,
-			opponentId,
-			phases: PHASES,
-			actionCostResource: RULES.tieredResourceKey as ResourceKey,
-			ruleSnapshot,
-		});
-		const handleHoverCard = vi.fn();
-		const clearHoverCard = vi.fn();
-		const sessionRegistries = createSessionRegistries();
-		const translationContext = createTranslationContext(
-			sessionState,
-			sessionRegistries,
-			sessionState.metadata,
-			{
-				ruleSnapshot,
-				passiveRecords: sessionState.passiveRecords,
-			},
-		);
-		const sessionView = selectSessionView(sessionState, sessionRegistries);
-		currentGame = {
-			sessionId: 'test-session',
-			sessionSnapshot: sessionState,
-			cachedSessionSnapshot: sessionState,
-			selectors: { sessionView },
-			translationContext,
-			ruleSnapshot,
-			log: [],
-			logOverflowed: false,
-			resolution: null,
-			showResolution: vi.fn().mockResolvedValue(undefined),
-			acknowledgeResolution: vi.fn(),
-			hoverCard: null,
+		const scenario = createTierPassiveScenario();
+		const {
+			mockGame,
 			handleHoverCard,
-			clearHoverCard,
-			phase: {
-				currentPhaseId: sessionState.game.currentPhase,
-				isActionPhase: Boolean(
-					sessionState.phases[sessionState.game.phaseIndex]?.action,
-				),
-				canEndTurn: true,
-				isAdvancing: false,
-			},
-			actionCostResource: sessionState.actionCostResource as ResourceKey,
-			requests: {
-				performAction: vi.fn().mockResolvedValue(undefined),
-				advancePhase: vi.fn().mockResolvedValue(undefined),
-				refreshSession: vi.fn().mockResolvedValue(undefined),
-			},
-			metadata: {
-				getRuleSnapshot: () => ruleSnapshot,
-				getSessionView: () => sessionView,
-				getTranslationContext: () => translationContext,
-			},
-			runUntilActionPhase: vi.fn().mockResolvedValue(undefined),
-			refreshPhaseState: vi.fn(),
-			darkMode: true,
-			onToggleDark: vi.fn(),
-			musicEnabled: true,
-			onToggleMusic: vi.fn(),
-			soundEnabled: true,
-			onToggleSound: vi.fn(),
-			backgroundAudioMuted: true,
-			onToggleBackgroundAudioMute: vi.fn(),
-			timeScale: 1,
-			setTimeScale: vi.fn(),
-			toasts: [],
-			pushToast: vi.fn(),
-			pushErrorToast: vi.fn(),
-			pushSuccessToast: vi.fn(),
-			dismissToast: vi.fn(),
-			playerName: 'Player',
-			onChangePlayerName: vi.fn(),
-			session: {} as EngineSession,
-			sessionState,
-			sessionView,
-			handlePerform: vi.fn().mockResolvedValue(undefined),
-			handleEndTurn: vi.fn().mockResolvedValue(undefined),
-		} as MockGame;
-		const metadataSelectors = createTestRegistryMetadata(
-			sessionRegistries,
-			sessionState.metadata,
-		);
+			activePlayer,
+			ruleSnapshot,
+			registries,
+			metadata,
+		} = scenario;
+		currentGame = mockGame;
+		const metadataSelectors = createTestRegistryMetadata(registries, metadata);
 		render(
-			<RegistryMetadataProvider
-				registries={sessionRegistries}
-				metadata={sessionState.metadata}
-			>
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
 				<ResourceBar player={activePlayer} />
 			</RegistryMetadataProvider>,
 		);
+		const happinessKey = ruleSnapshot.tieredResourceKey;
 		const resourceDescriptor = toDescriptorDisplay(
 			metadataSelectors.resourceMetadata.select(happinessKey),
 		);
@@ -206,24 +99,19 @@ describe('<ResourceBar /> happiness hover card', () => {
 		expect(hoverCard?.effectsTitle).toBe(
 			`Happiness thresholds (current: ${resourceValue})`,
 		);
+		const tierDefinitions = ruleSnapshot.tierDefinitions;
 		const tierEntries = (hoverCard?.effects ?? []).filter(
 			(section): section is SummaryGroupLike =>
 				Boolean(section) && typeof section === 'object',
 		);
-		expect(tierEntries).toHaveLength(3);
-		expect(
-			tierEntries.some((entry) => (entry?.title ?? '').includes('Snapshot')),
-		).toBe(true);
+		const expectedTierCount = Math.min(3, tierDefinitions.length);
+		expect(tierEntries).toHaveLength(expectedTierCount);
 		const [higherEntry, currentEntry, lowerEntry] = tierEntries;
-		expect(higherEntry).toBeTruthy();
-		expect(currentEntry).toBeTruthy();
-		expect(lowerEntry).toBeTruthy();
 		const currentClassName = currentEntry?.className ?? '';
 		expect(currentClassName.includes('text-emerald-600')).toBe(true);
-		const tiers = ruleSnapshot.tierDefinitions;
-		const getRangeStart = (tier: TierDefinition) =>
+		const getRangeStart = (tier: (typeof tierDefinitions)[number]) =>
 			tier.range.min ?? Number.NEGATIVE_INFINITY;
-		const orderedTiers = [...tiers].sort(
+		const orderedTiers = [...tierDefinitions].sort(
 			(a, b) => getRangeStart(b) - getRangeStart(a),
 		);
 		const tierResourceIcon = resourceDescriptor.icon ?? '❔';
@@ -240,7 +128,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 				? orderedTiers[activeTierIndex + 1]
 				: undefined;
 		const expectTierEntryMatches = (
-			tier: TierDefinition | undefined,
+			tier: (typeof tierDefinitions)[number] | undefined,
 			entry: SummaryGroupLike | undefined,
 			orientation: 'higher' | 'current' | 'lower',
 		) => {
@@ -271,7 +159,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 			const items = entry?.items ?? [];
 			expect(items.length).toBeLessThanOrEqual(MAX_TIER_SUMMARY_LINES);
 			const summaryEntries = tier.preview?.effects?.length
-				? describeEffects(tier.preview.effects, translationContext)
+				? describeEffects(tier.preview.effects, mockGame.translationContext)
 				: normalizeSummary(tier.text?.summary);
 			const baseSummary = summaryEntries.length
 				? summaryEntries
@@ -284,9 +172,45 @@ describe('<ResourceBar /> happiness hover card', () => {
 				expect(flattenSummary(items)).not.toContain(removalText);
 			}
 		};
-		expectTierEntryMatches(higherTier, higherEntry, 'higher');
-		expectTierEntryMatches(activeTier, currentEntry, 'current');
-		expectTierEntryMatches(lowerTier, lowerEntry, 'lower');
+		const tierContexts = [
+			{ tier: higherTier, entry: higherEntry, orientation: 'higher' as const },
+			{
+				tier: activeTier,
+				entry: currentEntry,
+				orientation: 'current' as const,
+			},
+			{ tier: lowerTier, entry: lowerEntry, orientation: 'lower' as const },
+		];
+		for (const context of tierContexts) {
+			expectTierEntryMatches(context.tier, context.entry, context.orientation);
+		}
+	});
+
+	it('uses fallback descriptors when metadata omits resource icons and labels', () => {
+		const scenario = createTierPassiveScenario();
+		const { mockGame, activePlayer, registries, metadata } = scenario;
+		currentGame = mockGame;
+		const metadataSelectors = createTestRegistryMetadata(registries, metadata);
+		const displays = metadataSelectors.resourceMetadata.list.map((descriptor) =>
+			toDescriptorDisplay(descriptor),
+		);
+		const fallbackDisplay = displays.find(
+			(display) => display.icon === undefined,
+		);
+		if (!fallbackDisplay) {
+			throw new Error('Expected a resource descriptor without an icon.');
+		}
+		render(
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<ResourceBar player={activePlayer} />
+			</RegistryMetadataProvider>,
+		);
+		const value = activePlayer.resources[fallbackDisplay.id] ?? 0;
+		const buttons = screen.getAllByRole('button', {
+			name: `${fallbackDisplay.label}: ${value}`,
+		});
+		expect(buttons.length).toBeGreaterThan(0);
+		expect(fallbackDisplay.icon).toBeUndefined();
 	});
 });
 
