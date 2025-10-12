@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import React, {
 	useCallback,
 	useContext,
@@ -23,7 +24,12 @@ import {
 	formatFailureDetails,
 	type SessionFailureDetails,
 } from './sessionFailures';
-import { createSession, fetchSnapshot, releaseSession } from './sessionSdk';
+import {
+	createSession,
+	fetchSnapshot,
+	releaseSession,
+	setSessionDevMode,
+} from './sessionSdk';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
@@ -139,6 +145,9 @@ export function GameProvider(props: GameProviderProps) {
 		setSessionError(null);
 		const create = () =>
 			runExclusive(async () => {
+				if (sessionStateRef.current) {
+					return;
+				}
 				releaseCurrentSession();
 				try {
 					const created = await createSession(
@@ -238,6 +247,43 @@ export function GameProvider(props: GameProviderProps) {
 			}
 		});
 	}, [runExclusive, updateSessionData, applyFatalSessionError]);
+
+	useEffect(() => {
+		const current = sessionStateRef.current;
+		if (!current) {
+			return;
+		}
+		const currentDevMode = current.snapshot.game.devMode ?? false;
+		if (currentDevMode === devMode) {
+			return;
+		}
+		void runExclusive(async () => {
+			try {
+				const updated = await setSessionDevMode(current.sessionId, devMode);
+				if (
+					!mountedRef.current ||
+					sessionStateRef.current?.sessionId !== current.sessionId
+				) {
+					return;
+				}
+				updateSessionData({
+					session: updated.session,
+					legacySession: updated.legacySession,
+					sessionId: current.sessionId,
+					snapshot: updated.snapshot,
+					ruleSnapshot: updated.ruleSnapshot,
+					registries: updated.registries,
+					resourceKeys: updated.resourceKeys,
+					metadata: updated.metadata,
+				});
+			} catch (error) {
+				if (!mountedRef.current) {
+					return;
+				}
+				applyFatalSessionError(error);
+			}
+		});
+	}, [devMode, runExclusive, updateSessionData, applyFatalSessionError]);
 
 	const handleRelease = useCallback(() => {
 		teardownSession();

@@ -12,6 +12,7 @@ import {
 	performSessionAction,
 	advanceSessionPhase,
 	releaseSession,
+	setSessionDevMode,
 	setGameApi,
 } from '../../src/state/sessionSdk';
 import {
@@ -141,6 +142,47 @@ describe('sessionSdk', () => {
 		expect(fetched.snapshot).toEqual(initialSnapshot);
 		expect(fetched.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(fetched.metadata).toEqual(initialSnapshot.metadata);
+	});
+
+	it('sets dev mode via the API and refreshes local state', async () => {
+		const created = await createSession();
+		const session = created.legacySession;
+		const setDevModeSpy = vi.spyOn(session, 'setDevMode');
+		const updatedSnapshot = createSessionSnapshot({
+			players: [playerA, playerB],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			turn: 5,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+			devMode: true,
+		});
+		const mutatedRegistries = createSessionRegistriesPayload();
+		mutatedRegistries.actions[taxActionId] = {
+			...mutatedRegistries.actions[taxActionId],
+			name: 'Tax (Developer)',
+		};
+		delete mutatedRegistries.resources[resourceKey];
+		api.setNextSetDevModeResponse({
+			sessionId: 'session-1',
+			snapshot: updatedSnapshot,
+			registries: mutatedRegistries,
+		});
+		const result = await setSessionDevMode('session-1', true);
+		expect(result.session).toBe(created.session);
+		expect(result.legacySession).toBe(session);
+		expect(result.snapshot).toEqual(updatedSnapshot);
+		expect(result.ruleSnapshot).toEqual(updatedSnapshot.rules);
+		expect(result.metadata).toEqual(updatedSnapshot.metadata);
+		expect(result.registries.actions.get(taxActionId)?.name).toBe(
+			'Tax (Developer)',
+		);
+		expect(result.resourceKeys).not.toContain(resourceKey);
+		expect(setDevModeSpy).toHaveBeenCalledWith(true);
+		setDevModeSpy.mockRestore();
 	});
 
 	it('propagates abort signals without touching cached registries', async () => {

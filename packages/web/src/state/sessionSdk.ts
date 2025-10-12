@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import {
 	createEngineSession,
 	type ActionParams,
@@ -281,6 +282,30 @@ export async function fetchSnapshot(
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
+	record.registries = registries;
+	record.resourceKeys = resourceKeys;
+	return {
+		session: record.handle,
+		legacySession: record.legacySession,
+		snapshot: response.snapshot,
+		ruleSnapshot: response.snapshot.rules,
+		registries,
+		resourceKeys,
+		metadata: response.snapshot.metadata,
+	};
+}
+
+export async function setSessionDevMode(
+	sessionId: string,
+	enabled: boolean,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<FetchSnapshotResult> {
+	const api = ensureGameApi();
+	const record = ensureSessionRecord(sessionId);
+	const response = await api.setDevMode({ sessionId, enabled }, requestOptions);
+	const registries = deserializeSessionRegistries(response.registries);
+	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
+	record.legacySession.setDevMode(enabled);
 	record.registries = registries;
 	record.resourceKeys = resourceKeys;
 	return {
