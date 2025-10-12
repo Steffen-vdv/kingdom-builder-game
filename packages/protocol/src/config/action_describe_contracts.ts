@@ -3,6 +3,7 @@ import {
 	actionParametersSchema,
 	actionRequirementFailureSchema,
 } from './action_contracts';
+import { actionEffectGroupSchema } from './schema';
 import { sessionIdSchema } from './session_contracts';
 import type {
 	ActionDescribeRequest,
@@ -30,6 +31,8 @@ const actionRequirementListSchema = z
 	.array(actionRequirementFailureSchema)
 	.transform((value) => value as SessionActionRequirementList);
 
+const actionOptionGroupListSchema = z.array(actionEffectGroupSchema);
+
 export const actionDescribeRequestSchema = z.object({
 	sessionId: sessionIdSchema,
 	actionId: z.string().min(1),
@@ -40,6 +43,7 @@ export const actionDescribeResponseSchema = z.object({
 	sessionId: sessionIdSchema,
 	actionId: z.string().min(1),
 	definition: actionDefinitionSummarySchema.optional(),
+	options: actionOptionGroupListSchema,
 	costs: actionCostMapSchema,
 	requirements: actionRequirementListSchema,
 });

@@ -7,6 +7,7 @@ import type {
 	SessionPassiveSummary,
 } from '../session';
 import type { SessionIdentifier } from '../session/contracts';
+import type { ActionEffectGroup } from '../config/schema';
 
 export interface ActionEffectChoice {
 	optionId: string;
@@ -68,6 +69,7 @@ export interface ActionExecuteErrorResponse {
 export interface ActionDescribeResponse extends SessionIdentifier {
 	actionId: string;
 	definition?: SessionActionDefinitionSummary;
+	options: ActionEffectGroup[];
 	costs: SessionActionCostMap;
 	requirements: SessionActionRequirementList;
 }

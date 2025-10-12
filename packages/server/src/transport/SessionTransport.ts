@@ -1,8 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import {
-	actionExecuteRequestSchema,
-	actionExecuteResponseSchema,
-	actionExecuteErrorResponseSchema,
 	sessionCreateRequestSchema,
 	sessionCreateResponseSchema,
 	sessionAdvanceRequestSchema,
@@ -15,6 +12,7 @@ import {
 	sessionUpdatePlayerNameResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
+	ActionDescribeResponse,
 	ActionExecuteErrorResponse,
 	ActionExecuteSuccessResponse,
 	SessionAdvanceResponse,
@@ -26,8 +24,6 @@ import type {
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
-import { normalizeActionTraces } from './engineTraceNormalizer.js';
-import { extractRequirementFailures } from './extractRequirementFailures.js';
 import type {
 	SessionManager,
 	CreateSessionOptions,
@@ -45,6 +41,7 @@ import {
 	sanitizePlayerName,
 	sanitizePlayerNameEntries,
 } from './playerNameHelpers.js';
+import { handleExecuteAction, handleDescribeAction } from './actionHandlers.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 
 export interface SessionTransportOptions {
@@ -148,63 +145,20 @@ export class SessionTransport {
 		| TransportHttpResponse<ActionExecuteSuccessResponse>
 		| TransportHttpResponse<ActionExecuteErrorResponse>
 	> {
-		const parsed = actionExecuteRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			const response = actionExecuteErrorResponseSchema.parse({
-				status: 'error',
-				error: 'Invalid action request.',
-			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
-		}
-		this.requireAuthorization(request, 'session:advance');
-		const { sessionId, actionId, params } = parsed.data;
-		const session = this.sessionManager.getSession(sessionId);
-		if (!session) {
-			const response = actionExecuteErrorResponseSchema.parse({
-				status: 'error',
-				error: `Session "${sessionId}" was not found.`,
-			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
-		}
-		try {
-			const rawCosts = session.getActionCosts(actionId, params as never);
-			const costs: Record<string, number> = {};
-			for (const [resourceKey, amount] of Object.entries(rawCosts)) {
-				if (typeof amount === 'number') {
-					costs[resourceKey] = amount;
-				}
-			}
-			const result = await session.enqueue(() => {
-				const traces = session.performAction(actionId, params as never);
-				const snapshot = session.getSnapshot();
-				return { traces, snapshot };
-			});
-			const response = actionExecuteResponseSchema.parse({
-				status: 'success',
-				snapshot: result.snapshot,
-				costs,
-				traces: normalizeActionTraces(result.traces),
-			}) as ActionExecuteSuccessResponse;
-			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
-		} catch (error) {
-			const failures = extractRequirementFailures(error);
-			const message =
-				error instanceof Error ? error.message : 'Action execution failed.';
-			const base: ActionExecuteErrorResponse = {
-				status: 'error',
-				error: message,
-			};
-			if (failures.requirementFailure) {
-				base.requirementFailure = failures.requirementFailure;
-			}
-			if (failures.requirementFailures) {
-				base.requirementFailures = failures.requirementFailures;
-			}
-			const response = actionExecuteErrorResponseSchema.parse(
-				base,
-			) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
-		}
+		return handleExecuteAction({
+			request,
+			authorize: () => this.requireAuthorization(request, 'session:advance'),
+			getSession: (sessionId) => this.sessionManager.getSession(sessionId),
+			attachHttpStatus: this.attachHttpStatus.bind(this),
+		});
+	}
+
+	public describeAction(request: TransportRequest): ActionDescribeResponse {
+		return handleDescribeAction({
+			request,
+			authorize: () => this.requireAuthorization(request, 'session:advance'),
+			requireSession: (sessionId) => this.requireSession(sessionId),
+		});
 	}
 
 	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
