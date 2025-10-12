@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { advanceToActionPhase } from '../../src/state/usePhaseProgress.helpers';
-import { SessionMirroringError } from '../../src/state/sessionSdk';
+import { SessionMirroringError } from '../../src/state/legacySessionMirror';
 import type { LegacySession } from '../../src/state/sessionTypes';
 import {
 	createSessionSnapshot,
