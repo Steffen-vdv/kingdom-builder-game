@@ -1,50 +1,57 @@
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import type {
+	TranslationAssets,
+	TranslationContext,
+} from '../../translation/context';
+import { selectTriggerDisplay } from '../../translation/context';
 import type { DescriptorRegistryEntry, ResolveResult } from './types';
 
-type TriggerInfoRecord = Record<
-	string,
-	{ icon?: string; future?: string; past?: string }
->;
-
-const TRIGGER_LOOKUP = TRIGGER_INFO as TriggerInfoRecord;
-
-export function resolveTriggerDescriptor(id?: string): ResolveResult {
+function resolveTriggerDescriptorFromAssets(
+	assets: TranslationAssets | undefined,
+	id?: string,
+): ResolveResult {
 	if (id) {
-		const info = TRIGGER_LOOKUP[id];
-		if (info) {
-			return {
-				icon: info.icon ?? '',
-				label: info.past ?? info.future ?? id,
-			} satisfies ResolveResult;
-		}
+		const info = selectTriggerDisplay(assets, id);
+		return {
+			icon: info.icon ?? '',
+			label: info.past ?? info.label ?? id,
+		} satisfies ResolveResult;
 	}
-	return { icon: '', label: id ?? 'Trigger' } satisfies ResolveResult;
+	return { icon: '', label: 'Trigger' } satisfies ResolveResult;
+}
+
+export function resolveTriggerDescriptor(
+	assets: TranslationAssets | undefined,
+	id?: string,
+): ResolveResult {
+	return resolveTriggerDescriptorFromAssets(assets, id);
 }
 
 export function createTriggerDescriptorEntry(
+	translationContext: TranslationContext,
 	defaultFormatDetail: NonNullable<DescriptorRegistryEntry['formatDetail']>,
 ): DescriptorRegistryEntry {
 	return {
-		resolve: resolveTriggerDescriptor,
+		resolve: (id) =>
+			resolveTriggerDescriptorFromAssets(translationContext.assets, id),
 		formatDetail: defaultFormatDetail,
 	} satisfies DescriptorRegistryEntry;
 }
 
-export function formatTriggerLabel(id: string): string | undefined {
+export function formatTriggerLabel(
+	assets: TranslationAssets | undefined,
+	id: string,
+): string | undefined {
 	if (!id) {
 		return undefined;
 	}
-	const info = TRIGGER_LOOKUP[id];
-	if (info) {
-		const parts: string[] = [];
-		if (info.icon) {
-			parts.push(info.icon);
-		}
-		const label = info.past ?? info.future ?? id;
-		if (label) {
-			parts.push(label);
-		}
-		return parts.join(' ').trim();
+	const resolved = resolveTriggerDescriptorFromAssets(assets, id);
+	const parts: string[] = [];
+	if (resolved.icon) {
+		parts.push(resolved.icon);
 	}
-	return id;
+	if (resolved.label) {
+		parts.push(resolved.label);
+	}
+	const label = parts.join(' ').trim();
+	return label || id;
 }

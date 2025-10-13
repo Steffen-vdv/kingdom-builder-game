@@ -15,6 +15,7 @@ import {
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import { selectResourceDisplay } from '../src/translation/context/assetSelectors';
+import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
 import { ownerLabel } from '../src/translation/effects/formatters/attackFormatterUtils';
@@ -32,8 +33,8 @@ interface TestSetup {
 	translationContext: ReturnType<typeof createTranslationContext>;
 	resourceKey: string;
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
-	customResourceLabel: string;
-	canonicalResourceLabel: string;
+	metadataResourceLabel: string;
+	logResourceLabel: string;
 }
 
 const TEST_PHASES = [
@@ -121,18 +122,20 @@ function createTestSetup(): TestSetup {
 	);
 	const resourceDescriptor =
 		metadataSelectors.resourceMetadata.select(resourceKey);
-	const labelSource = resourceDisplay.label ?? resourceDescriptor.label;
-	const customResourceLabel = resourceDisplay.icon
-		? `${resourceDisplay.icon} ${labelSource}`
-		: labelSource;
-	const canonicalResourceLabel =
-		formatKindLabel(translationContext, 'resource', resourceKey) ?? resourceKey;
+	const metadataLabelSource = resourceDisplay.label ?? resourceDescriptor.label;
+	const metadataResourceLabel = resourceDisplay.icon
+		? `${resourceDisplay.icon} ${metadataLabelSource}`
+		: metadataLabelSource;
+	const attackDescriptor = selectAttackResourceDescriptor(resourceKey);
+	const logResourceLabel = attackDescriptor.icon
+		? `${attackDescriptor.icon} ${attackDescriptor.label}`
+		: attackDescriptor.label;
 	return {
 		translationContext,
 		resourceKey,
 		metadataSelectors,
-		customResourceLabel,
-		canonicalResourceLabel,
+		metadataResourceLabel,
+		logResourceLabel,
 	};
 }
 
@@ -146,8 +149,8 @@ describe('attack on-damage formatter registry', () => {
 		translationContext,
 		resourceKey,
 		metadataSelectors,
-		customResourceLabel,
-		canonicalResourceLabel,
+		metadataResourceLabel,
+		logResourceLabel,
 	} = createTestSetup();
 	const defenderLabel = ownerLabel(translationContext, 'defender');
 	const attackerLabel = ownerLabel(translationContext, 'attacker');
@@ -216,8 +219,8 @@ describe('attack on-damage formatter registry', () => {
 
 		expect(result).not.toBeNull();
 		expect(result?.items).toEqual([
-			`${defenderLabel}: ${canonicalResourceLabel} -2 (5→3)`,
-			`${attackerLabel}: ${canonicalResourceLabel} +3 (1→4)`,
+			`${defenderLabel}: ${logResourceLabel} -2 (5→3)`,
+			`${attackerLabel}: ${logResourceLabel} +3 (1→4)`,
 		]);
 	});
 
@@ -255,8 +258,8 @@ describe('attack on-damage formatter registry', () => {
 
 		expect(result).not.toBeNull();
 		expect(result?.items).toEqual([
-			`${defenderLabel}: ${canonicalResourceLabel} -0.5% (10→5) (-5)`,
-			`${attackerLabel}: ${canonicalResourceLabel} +5 (2→7)`,
+			`${defenderLabel}: ${logResourceLabel} -0.5% (10→5) (-5)`,
+			`${attackerLabel}: ${logResourceLabel} +5 (2→7)`,
 		]);
 	});
 
@@ -293,6 +296,8 @@ describe('attack on-damage formatter registry', () => {
 				resources: {},
 			},
 		} as typeof translationContext;
+		const fallbackResourceLabel =
+			formatKindLabel(mutatedContext, 'resource', resourceKey) ?? resourceKey;
 
 		const first = buildOnDamageEntry([logEntry], mutatedContext, attackEffect);
 		const second = buildOnDamageEntry([logEntry], mutatedContext, attackEffect);
@@ -300,11 +305,12 @@ describe('attack on-damage formatter registry', () => {
 		expect(
 			metadataSelectors.resourceMetadata.select(resourceKey).label,
 		).toContain('Auric Coin');
-		expect(customResourceLabel).toContain('Auric Coin');
-		expect(canonicalResourceLabel).not.toContain('Auric Coin');
+		expect(metadataResourceLabel).toContain('Auric Coin');
+		expect(logResourceLabel).toContain('Gold');
+		expect(fallbackResourceLabel).not.toContain('Auric Coin');
 		expect(first?.items).toEqual([
-			`${ownerLabel(mutatedContext, 'defender')}: ${canonicalResourceLabel} -2 (5→3)`,
-			`${ownerLabel(mutatedContext, 'attacker')}: ${canonicalResourceLabel} +3 (1→4)`,
+			`${ownerLabel(mutatedContext, 'defender')}: ${logResourceLabel} -2 (5→3)`,
+			`${ownerLabel(mutatedContext, 'attacker')}: ${logResourceLabel} +3 (1→4)`,
 		]);
 		expect(second?.items).toEqual(first?.items);
 	});

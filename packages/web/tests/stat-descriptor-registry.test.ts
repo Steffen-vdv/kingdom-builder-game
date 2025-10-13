@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getStatBreakdownSummary, formatStatValue } from '../src/utils/stats';
 import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
+import {
+	selectPopulationRoleDisplay,
+	selectTriggerDisplay,
+} from '../src/translation/context/assetSelectors';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
@@ -366,13 +370,35 @@ describe('stat descriptor registry', () => {
 			'population',
 			'unknown-role',
 		);
-		expect(populationFallback).toContain('unknown-role');
+		const populationDisplay = selectPopulationRoleDisplay(
+			mutatedContext.assets,
+			'unknown-role',
+		);
+		const expectedPopulationLabel = [
+			populationDisplay.icon,
+			populationDisplay.label,
+		]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+		expect(populationFallback).toBe(expectedPopulationLabel);
 		const triggerFallback = formatKindLabel(
 			mutatedContext,
 			'trigger',
 			'mystery-trigger',
 		);
-		expect(triggerFallback).toBe('mystery-trigger');
+		const triggerDisplay = selectTriggerDisplay(
+			mutatedContext.assets,
+			'mystery-trigger',
+		);
+		const expectedTriggerLabel = [
+			triggerDisplay.icon,
+			triggerDisplay.past ?? triggerDisplay.label,
+		]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+		expect(triggerFallback).toBe(expectedTriggerLabel);
 		const phaseFallback = formatKindLabel(
 			mutatedContext,
 			'phase',

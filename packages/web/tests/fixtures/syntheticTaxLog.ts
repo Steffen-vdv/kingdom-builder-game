@@ -38,7 +38,10 @@ export const SYNTHETIC_ASSETS = {
 	land: SYNTHETIC_LAND_INFO,
 	slot: SYNTHETIC_SLOT_INFO,
 	passive: {},
+	upkeep: { icon: '🧹', label: 'Synthetic Upkeep' },
 	modifiers: {},
+	triggers: {},
+	tierSummaries: {},
 	formatPassiveRemoval: (description: string) =>
 		`Active as long as ${description}`,
 };
