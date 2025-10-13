@@ -74,6 +74,90 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		},
 	);
 
+	fastify.post<SessionActionRequestParams>(
+		'/sessions/:id/actions/:actionId/costs',
+		async (request, reply) => {
+			try {
+				const payload = mergeSessionPayload(request);
+				const response = transport.getActionCosts({
+					body: payload,
+					headers: extractHeaders(request),
+				});
+				return reply.send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
+
+	fastify.post<SessionActionRequestParams>(
+		'/sessions/:id/actions/:actionId/requirements',
+		async (request, reply) => {
+			try {
+				const payload = mergeSessionPayload(request);
+				const headers = extractHeaders(request);
+				const response = transport.getActionRequirements({
+					body: payload,
+					headers,
+				});
+				return reply.send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
+
+	fastify.get<SessionActionRequestParams>(
+		'/sessions/:id/actions/:actionId/options',
+		async (request, reply) => {
+			try {
+				const payload = mergeSessionPayload(request);
+				const headers = extractHeaders(request);
+				const response = transport.getActionOptions({
+					body: payload,
+					headers,
+				});
+				return reply.send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
+
+	fastify.post<SessionRequestParams>(
+		'/sessions/:id/ai-turn',
+		async (request, reply) => {
+			try {
+				const payload = mergeSessionPayload(request);
+				const headers = extractHeaders(request);
+				const response = await transport.runAiTurn({
+					body: payload,
+					headers,
+				});
+				return reply.send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
+
+	fastify.post<SessionRequestParams>(
+		'/sessions/:id/simulate',
+		async (request, reply) => {
+			try {
+				const payload = mergeSessionPayload(request);
+				const headers = extractHeaders(request);
+				const response = transport.simulateUpcomingPhases({
+					body: payload,
+					headers,
+				});
+				return reply.send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
+
 	fastify.post<SessionRequestParams>(
 		'/sessions/:id/dev-mode',
 		async (request, reply) => {
@@ -115,16 +199,28 @@ type SessionRequestParams = {
 	};
 };
 
+type SessionActionRequestParams = {
+	Params: {
+		id: string;
+		actionId: string;
+	};
+};
+
 type SessionRequestBody = Record<string, unknown>;
 
-function mergeSessionPayload(
-	request: FastifyRequest<SessionRequestParams>,
-): SessionRequestBody {
+type SessionRequest = FastifyRequest<
+	SessionRequestParams | SessionActionRequestParams
+>;
+
+function mergeSessionPayload(request: SessionRequest): SessionRequestBody {
 	const body =
 		typeof request.body === 'object' && request.body !== null
 			? { ...(request.body as SessionRequestBody) }
 			: {};
 	body.sessionId = request.params.id;
+	if ('actionId' in request.params) {
+		body.actionId = request.params.actionId;
+	}
 	return body;
 }
 

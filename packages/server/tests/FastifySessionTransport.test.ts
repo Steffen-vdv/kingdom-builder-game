@@ -1,5 +1,5 @@
 import fastify from 'fastify';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,
@@ -28,7 +28,7 @@ describe('FastifySessionTransport', () => {
 		};
 		await app.register(createSessionTransportPlugin, options);
 		await app.ready();
-		return { app, actionId, gainKey };
+		return { app, actionId, gainKey, manager };
 	}
 
 	it('creates sessions over HTTP', async () => {
@@ -170,6 +170,53 @@ describe('FastifySessionTransport', () => {
 		await app.close();
 	});
 
+	it('returns action metadata over HTTP', async () => {
+		const { app, actionId } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const metadataBase = `/sessions/${sessionId}/actions/${actionId}`;
+		const costResponse = await app.inject({
+			method: 'POST',
+			url: `${metadataBase}/costs`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(costResponse.statusCode).toBe(200);
+		const costBody = costResponse.json() as {
+			costs: Record<string, number>;
+		};
+		expect(typeof costBody.costs).toBe('object');
+		const requirementResponse = await app.inject({
+			method: 'POST',
+			url: `${metadataBase}/requirements`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(requirementResponse.statusCode).toBe(200);
+		const requirementBody = requirementResponse.json() as {
+			requirements: unknown[];
+		};
+		expect(Array.isArray(requirementBody.requirements)).toBe(true);
+		const optionsResponse = await app.inject({
+			method: 'GET',
+			url: `${metadataBase}/options`,
+			headers: authorizedHeaders,
+		});
+		expect(optionsResponse.statusCode).toBe(200);
+		const optionsBody = optionsResponse.json() as {
+			groups: unknown[];
+		};
+		expect(Array.isArray(optionsBody.groups)).toBe(true);
+		await app.close();
+	});
+
 	it('rejects invalid action payloads with protocol errors', async () => {
 		const { app } = await createServer();
 		const createResponse = await app.inject({
@@ -204,9 +251,109 @@ describe('FastifySessionTransport', () => {
 			payload: { actionId },
 		});
 		expect(response.statusCode).toBe(404);
-		const body = response.json() as { status: string; error: string };
+		const body = response.json() as {
+			status: string;
+			error: string;
+		};
 		expect(body.status).toBe('error');
 		expect(body.error).toContain('was not found');
+		await app.close();
+	});
+
+	it('runs AI turns through the API when controllers exist', async () => {
+		const { app, manager } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		let runSpy: ReturnType<typeof vi.spyOn> | null = null;
+		if (session) {
+			vi.spyOn(session, 'hasAiController').mockReturnValue(true);
+			runSpy = vi.spyOn(session, 'runAiTurn').mockResolvedValue(true);
+			vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+				return await factory();
+			});
+		}
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/ai-turn`,
+			headers: authorizedHeaders,
+			payload: { playerId: 'A' },
+		});
+		expect(response.statusCode).toBe(200);
+		const body = response.json() as {
+			ranTurn: boolean;
+		};
+		expect(body.ranTurn).toBe(true);
+		if (runSpy) {
+			expect(runSpy).toHaveBeenCalledWith('A');
+		}
+		await app.close();
+	});
+
+	it('returns conflicts when AI controllers are missing', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/ai-turn`,
+			headers: authorizedHeaders,
+			payload: { playerId: 'A' },
+		});
+		expect(response.statusCode).toBe(409);
+		const body = response.json() as {
+			code: string;
+		};
+		expect(body.code).toBe('CONFLICT');
+		await app.close();
+	});
+
+	it('simulates upcoming phases over HTTP', async () => {
+		const { app, manager } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		const expected = { forecast: [{ id: 'main' }] };
+		const simulateSpy = session
+			? vi.spyOn(session, 'simulateUpcomingPhases').mockReturnValue(expected)
+			: null;
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/simulate`,
+			headers: authorizedHeaders,
+			payload: { playerId: 'A', options: { maxIterations: 2 } },
+		});
+		expect(response.statusCode).toBe(200);
+		const body = response.json() as {
+			result: unknown;
+		};
+		expect(body.result).toEqual(expected);
+		if (simulateSpy) {
+			expect(simulateSpy).toHaveBeenCalledWith('A', { maxIterations: 2 });
+		}
 		await app.close();
 	});
 
