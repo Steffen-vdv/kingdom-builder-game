@@ -1,16 +1,32 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import Overview, { type OverviewTokenConfig } from '../src/Overview';
+import { DEFAULT_OVERVIEW_CONTENT } from '../src/contexts/defaultRegistryMetadata';
 import type { OverviewContentSection } from '../src/components/overview/sectionsData';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
 
+afterEach(cleanup);
+
 describe('<Overview />', () => {
+	it('renders snapshot defaults when registry metadata is unavailable', () => {
+		render(<Overview onBack={vi.fn()} />);
+		const { hero } = DEFAULT_OVERVIEW_CONTENT;
+		expect(
+			screen.getByRole('heading', { name: hero.title }),
+		).toBeInTheDocument();
+		expect(screen.getByText(hero.badgeLabel)).toBeInTheDocument();
+		expect(screen.getByText(hero.badgeIcon)).toBeInTheDocument();
+		expect(
+			screen.getByText(hero.tokens?.game ?? 'Kingdom Builder'),
+		).toBeInTheDocument();
+	});
+
 	it('renders supplied overview content using dynamic token fallbacks', () => {
 		const factory = createContentFactory();
 		const expandAction = factory.action({ id: 'expand', icon: '🚀' });

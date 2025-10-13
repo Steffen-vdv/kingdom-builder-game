@@ -27,10 +27,8 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+import { DEFAULT_OVERVIEW_CONTENT } from './contexts/defaultRegistryMetadata';
+import type { OverviewTokenCandidates } from './components/overview/overviewContentTypes';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
 
@@ -148,7 +146,7 @@ export default function Overview({
 	content,
 }: OverviewProps) {
 	const metadata = useOptionalRegistryMetadata();
-	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
+	const overviewContent = metadata?.overviewContent ?? DEFAULT_OVERVIEW_CONTENT;
 	const sections = content ?? overviewContent.sections;
 	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
 	const heroContent = overviewContent.hero;
@@ -180,7 +178,7 @@ export default function Overview({
 
 	const heroTokens: Record<string, React.ReactNode> = React.useMemo(() => {
 		const heroTokenNodes: Record<string, React.ReactNode> = {};
-		for (const [tokenKey, label] of Object.entries(heroContent.tokens)) {
+		for (const [tokenKey, label] of Object.entries(heroContent.tokens ?? {})) {
 			heroTokenNodes[tokenKey] = <strong>{label}</strong>;
 		}
 		return { ...tokens, ...heroTokenNodes };
