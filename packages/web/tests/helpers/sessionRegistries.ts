@@ -1,14 +1,25 @@
 import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
 } from '../../src/state/sessionRegistries';
-import registriesPayload from '../fixtures/sessionRegistriesPayload.json';
+import type { OverviewContentTemplate } from '../../src/components/overview/overviewContentTypes';
+import snapshot from '../../src/contexts/defaultRegistryMetadata.json';
 
-const BASE_PAYLOAD = registriesPayload as SessionRegistriesPayload;
+interface DefaultRegistrySnapshot {
+	readonly registries: SessionRegistriesPayload;
+	readonly metadata: SessionSnapshotMetadata;
+	readonly overviewContent: OverviewContentTemplate;
+}
+
+const BASE_SNAPSHOT = snapshot as DefaultRegistrySnapshot;
+const BASE_PAYLOAD = BASE_SNAPSHOT.registries;
+const BASE_METADATA = BASE_SNAPSHOT.metadata;
+const BASE_OVERVIEW_CONTENT = BASE_SNAPSHOT.overviewContent;
 type ResourceKey = SessionResourceDefinition['key'];
 
 function cloneResourceDefinition(
@@ -68,4 +79,16 @@ export function createSessionRegistries(): SessionRegistries {
 
 export function createResourceKeys(): ResourceKey[] {
 	return Object.keys(BASE_PAYLOAD.resources ?? {}) as ResourceKey[];
+}
+
+function cloneSnapshot<T>(value: T): T {
+	return JSON.parse(JSON.stringify(value)) as T;
+}
+
+export function createDefaultRegistryMetadata(): SessionSnapshotMetadata {
+	return cloneSnapshot(BASE_METADATA);
+}
+
+export function createDefaultOverviewContent(): OverviewContentTemplate {
+	return cloneSnapshot(BASE_OVERVIEW_CONTENT);
 }
