@@ -16,6 +16,7 @@ import type {
 	StartConfig,
 } from '@kingdom-builder/protocol';
 import type { ContentFactory } from '@kingdom-builder/testing';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 
 export type SyntheticSessionManagerOptions = Omit<
 	SessionManagerOptions,
@@ -29,6 +30,8 @@ export interface SyntheticSessionManagerResult {
 	factory: ContentFactory;
 	costKey: string;
 	gainKey: string;
+	costResource: SessionResourceDefinition;
+	gainResource: SessionResourceDefinition;
 	actionId: string;
 	phases: PhaseConfig[];
 	start: StartConfig;
@@ -41,6 +44,16 @@ export function createSyntheticSessionManager(
 	const factory = createContentFactory();
 	const costKey = 'synthetic:cost';
 	const gainKey = 'synthetic:gain';
+	const costResource: SessionResourceDefinition = {
+		key: costKey,
+		label: 'Synthetic Cost',
+		icon: '🧪',
+	};
+	const gainResource: SessionResourceDefinition = {
+		key: gainKey,
+		label: 'Synthetic Gain',
+		icon: '📈',
+	};
 	const action = factory.action({
 		baseCosts: { [costKey]: 1 },
 		effects: [
@@ -52,12 +65,28 @@ export function createSyntheticSessionManager(
 		],
 	});
 	const phases: PhaseConfig[] = [
-		{ id: 'main', action: true, steps: [{ id: 'main' }] },
+		{
+			id: 'main',
+			action: true,
+			label: 'Main Phase',
+			icon: '🎯',
+			steps: [
+				{
+					id: 'main',
+					title: 'Main Actions',
+					icon: '🗡️',
+				},
+			],
+		},
 		{
 			id: 'end',
+			label: 'End Phase',
+			icon: '🏁',
 			steps: [
 				{
 					id: 'refresh',
+					title: 'Refresh Step',
+					icon: '🔄',
 					effects: [
 						{
 							type: 'resource',
@@ -117,8 +146,8 @@ export function createSyntheticSessionManager(
 		start: engineOverrides.start ?? start,
 		rules: engineOverrides.rules ?? rules,
 		resourceRegistry: engineOverrides.resourceRegistry ?? {
-			[costKey]: { key: costKey },
-			[gainKey]: { key: gainKey },
+			[costKey]: { ...costResource },
+			[gainKey]: { ...gainResource },
 		},
 	};
 	const manager = new SessionManager({
@@ -130,6 +159,8 @@ export function createSyntheticSessionManager(
 		factory,
 		costKey,
 		gainKey,
+		costResource,
+		gainResource,
 		actionId: action.id,
 		phases,
 		start,
