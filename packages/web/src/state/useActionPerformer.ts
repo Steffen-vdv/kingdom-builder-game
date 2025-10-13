@@ -179,7 +179,7 @@ export function useActionPerformer({
 				}
 				const costs = response.costs ?? {};
 				const traces = response.traces;
-				const snapshotAfter = response.snapshot;
+				const snapshotAfter = session.getSnapshot();
 				const legacyContext = getLegacySessionContext({
 					snapshot: snapshotAfter,
 					ruleSnapshot: snapshotAfter.rules,
@@ -342,9 +342,9 @@ export function useActionPerformer({
 			),
 		[enqueue, perform],
 	);
-	const performRef = useRef<typeof perform>(perform);
+	const performRef = useRef<typeof handlePerform>(handlePerform);
 	useEffect(() => {
-		performRef.current = perform;
-	}, [perform]);
+		performRef.current = handlePerform;
+	}, [handlePerform]);
 	return { handlePerform, performRef };
 }
