@@ -3,16 +3,14 @@ import type {
 	SessionMetadataDescriptor,
 	SessionRuleSnapshot,
 	SessionSnapshotMetadata,
-	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
 	TranslationIconLabel,
 	TranslationModifierInfo,
-	TranslationTriggerAsset,
 } from './types';
+import { buildTriggerAssetMap } from './triggerAssets';
 
 const DEFAULT_POPULATION_INFO = Object.freeze({
 	icon: '👥',
@@ -99,6 +97,23 @@ function mergeIconLabel(
 	return Object.freeze(entry);
 }
 
+function mergeModifierInfo(
+	base: TranslationModifierInfo | undefined,
+	descriptor: SessionMetadataDescriptor | undefined,
+	fallbackLabel: string,
+): TranslationModifierInfo {
+	const entry: TranslationModifierInfo = {};
+	const icon = descriptor?.icon ?? base?.icon;
+	if (icon !== undefined) {
+		entry.icon = icon;
+	}
+	const label = descriptor?.label ?? base?.label ?? fallbackLabel;
+	if (label !== undefined) {
+		entry.label = label;
+	}
+	return Object.freeze(entry);
+}
+
 function toIconLabel(
 	definition: Partial<PopulationConfig> & {
 		id?: string;
@@ -173,59 +188,6 @@ function buildStatMap(
 	return Object.freeze(entries);
 }
 
-const DEFAULT_TRIGGER_ASSETS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => [
-			id,
-			Object.freeze({
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-				label: info.past,
-			} satisfies TranslationTriggerAsset),
-		]),
-	),
-);
-
-function mergeTriggerAsset(
-	base: TranslationTriggerAsset | undefined,
-	descriptor: SessionTriggerMetadata | undefined,
-): TranslationTriggerAsset {
-	const entry: TranslationTriggerAsset = {};
-	const icon = descriptor?.icon ?? base?.icon;
-	if (icon !== undefined) {
-		entry.icon = icon;
-	}
-	const future = descriptor?.future ?? base?.future;
-	if (future !== undefined) {
-		entry.future = future;
-	}
-	const past = descriptor?.past ?? base?.past;
-	if (past !== undefined) {
-		entry.past = past;
-	}
-	const label = descriptor?.label ?? base?.label ?? past;
-	if (label !== undefined) {
-		entry.label = label;
-	}
-	return Object.freeze(entry);
-}
-
-function buildTriggerMap(
-	triggers?: Record<string, SessionTriggerMetadata> | undefined,
-): Readonly<Record<string, TranslationTriggerAsset>> {
-	const entries: Record<string, TranslationTriggerAsset> = {
-		...DEFAULT_TRIGGER_ASSETS,
-	};
-	if (!triggers) {
-		return Object.freeze(entries);
-	}
-	for (const [id, descriptor] of Object.entries(triggers)) {
-		entries[id] = mergeTriggerAsset(entries[id], descriptor);
-	}
-	return Object.freeze(entries);
-}
-
 function buildTierSummaryMap(
 	rules?: SessionRuleSnapshot,
 ): Readonly<Record<string, string>> {
@@ -247,7 +209,7 @@ export function createTranslationAssets(
 	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
 	metadata?: Pick<
 		SessionSnapshotMetadata,
-		'resources' | 'populations' | 'stats' | 'assets' | 'triggers'
+		'assets' | 'phases' | 'populations' | 'resources' | 'stats' | 'triggers'
 	>,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
@@ -283,7 +245,20 @@ export function createTranslationAssets(
 		assetDescriptors.upkeep,
 		DEFAULT_UPKEEP_INFO.label,
 	);
-	const triggers = buildTriggerMap(metadata?.triggers);
+	const modifiers: Readonly<Record<string, TranslationModifierInfo>> =
+		Object.freeze({
+			cost: mergeModifierInfo(
+				DEFAULT_MODIFIER_INFO.cost,
+				assetDescriptors.modifierCost,
+				DEFAULT_MODIFIER_INFO.cost.label ?? 'Cost Adjustment',
+			),
+			result: mergeModifierInfo(
+				DEFAULT_MODIFIER_INFO.result,
+				assetDescriptors.modifierResult,
+				DEFAULT_MODIFIER_INFO.result.label ?? 'Outcome Adjustment',
+			),
+		});
+	const triggers = buildTriggerAssetMap(metadata?.triggers, metadata?.phases);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
 		resources,
@@ -294,7 +269,7 @@ export function createTranslationAssets(
 		slot: slotAsset,
 		passive: passiveAsset,
 		upkeep: upkeepAsset,
-		modifiers: DEFAULT_MODIFIER_INFO,
+		modifiers,
 		triggers,
 		tierSummaries,
 		formatPassiveRemoval: formatRemoval,

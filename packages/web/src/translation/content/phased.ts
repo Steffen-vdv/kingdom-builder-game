@@ -1,5 +1,4 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
@@ -97,6 +96,19 @@ export class PhasedTranslator {
 					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
 					return `${prefix}During ${stepLabel}`;
 				}
+				if (identifier.startsWith('onPhase.') && identifier.endsWith('Phase')) {
+					const remainder = identifier.slice('on'.length, -'Phase'.length);
+					const normalizedId =
+						remainder.charAt(0).toLowerCase() + remainder.slice(1);
+					const phase = context.phases.find((entry) => {
+						return entry.id === normalizedId;
+					});
+					const baseLabel = phase?.label ?? formatDetailText(normalizedId);
+					const icon = phase?.icon ?? '';
+					const trimmedIcon = icon.trim();
+					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
+					return `${prefix}On each ${baseLabel} Phase`.trim();
+				}
 				const future = info.future ?? info.label;
 				const icon = info.icon ?? '';
 				if (future && future.trim().length) {
@@ -130,11 +142,25 @@ export class PhasedTranslator {
 			applyTrigger(phaseKey, phaseTitle);
 		}
 
-		const triggerLookup = context.assets?.triggers ?? TRIGGER_INFO;
-		const stepKeysFromInfo = Object.keys(triggerLookup).filter((key) =>
-			key.endsWith('Step'),
-		);
-		for (const key of stepKeysFromInfo) {
+		const triggerAssets = context.assets?.triggers ?? {};
+		const stepKeys = new Set<string>();
+		for (const [triggerKey] of Object.entries(triggerAssets)) {
+			if (triggerKey.endsWith('Step')) {
+				stepKeys.add(triggerKey);
+			}
+		}
+		for (const phase of context.phases) {
+			const steps = phase.steps ?? [];
+			for (const step of steps) {
+				const triggers = step.triggers ?? [];
+				for (const triggerKey of triggers) {
+					if (triggerKey.endsWith('Step')) {
+						stepKeys.add(triggerKey);
+					}
+				}
+			}
+		}
+		for (const key of stepKeys) {
 			applyTrigger(key as keyof PhasedDef, key);
 		}
 
