@@ -36,12 +36,7 @@ import {
 	getRemoteAdapter,
 } from './remoteSessionAdapter';
 import type { RemoteSessionAdapter } from './remoteSessionAdapter';
-import {
-	SessionMirroringError,
-	markFatalSessionError,
-	isFatalSessionError,
-	type SessionMirroringErrorOptions,
-} from './sessionErrors';
+import { SessionMirroringError, markFatalSessionError } from './sessionErrors';
 
 interface CreateSessionOptions {
 	devMode?: boolean;
@@ -320,6 +315,3 @@ export function releaseSession(sessionId: string): void {
 	deleteSessionRecord(sessionId);
 	deleteRemoteAdapter(sessionId);
 }
-
-export type { SessionMirroringErrorOptions };
-export { SessionMirroringError, markFatalSessionError, isFatalSessionError };

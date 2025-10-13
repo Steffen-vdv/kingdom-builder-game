@@ -7,7 +7,7 @@ import {
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
 import { createResourceKeys } from '../helpers/sessionRegistries';
-import { markFatalSessionError } from '../../src/state/sessionSdk';
+import { markFatalSessionError } from '../../src/state/sessionErrors';
 import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 
 describe('useAiRunner', () => {

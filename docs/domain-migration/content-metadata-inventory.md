@@ -51,7 +51,7 @@
 
 ### Web state & session scaffolding
 
-- **`packages/web/src/state/developerModeSetup.ts`** – Instantiates registries via `createDevelopmentRegistry()` and enumerates ids to seed developer presets. Migration should expose developer presets from the content domain (e.g., `selectDeveloperPreset()`) rather than constructing from raw registries.【F:packages/web/src/state/developerModeSetup.ts†L1-L53】
+- **Removed:** `packages/web/src/state/developerModeSetup.ts` formerly iterated ids from local registries to assemble developer presets. The remote session adapter now expects protocol-provided presets and toggles dev mode by mutating cached snapshots instead of replaying engine helpers.【F:packages/web/src/state/remoteSessionAdapter.ts†L1-L120】【F:packages/web/src/state/sessionSdk.ts†L1-L120】
 - **`packages/web/src/state/sessionSdk.ts`** – Bootstraps engine sessions using `PHASES`, `GAME_START`, `RULES`, and `BuildingId`. Also extracts resource keys from registries. Wrap this bootstrapping inside a session service that consumes content selectors instead of static imports, keeping the SDK agnostic to content structure changes.【F:packages/web/src/state/sessionSdk.ts†L1-L126】
 - **`packages/web/src/state/useActionPerformer.ts`** – Accepts `ActionId` typed parameters and relies on registries inside translation context after performing actions. Ensure the proposed selectors feed `useActionPerformer` with normalized action descriptors so it does not reach back into raw registries for icons/focus metadata.【F:packages/web/src/state/useActionPerformer.ts†L1-L116】
 

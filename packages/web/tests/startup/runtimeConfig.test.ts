@@ -41,10 +41,6 @@ describe('getLegacyContentConfig', () => {
 		}
 		globalScope.__KINGDOM_BUILDER_CONFIG__ = {
 			primaryIconId: 'custom-primary',
-			developerPreset: {
-				landCount: 7,
-				resourceTargets: [{ key: firstResourceKey, target: 200 }],
-			},
 			resources: {
 				[firstResourceKey]: { ...fallbackResource },
 				extra: { key: 'extra', icon: '✨' },
@@ -53,10 +49,6 @@ describe('getLegacyContentConfig', () => {
 		const { getLegacyContentConfig } = await import(runtimeModulePath);
 		const config = await getLegacyContentConfig();
 		expect(config.primaryIconId).toBe('custom-primary');
-		expect(config.developerPreset?.landCount).toBe(7);
-		expect(config.developerPreset?.resourceTargets).toEqual([
-			{ key: firstResourceKey, target: 200 },
-		]);
 		expect(config.resources.extra).toEqual({ key: 'extra', icon: '✨' });
 		expect(config.resources[firstResourceKey]).toEqual(
 			expect.objectContaining({ key: firstResourceKey }),

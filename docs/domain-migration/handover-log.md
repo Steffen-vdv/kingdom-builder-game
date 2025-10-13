@@ -10,7 +10,12 @@
   remote record derived from the session state store, keeping the adapter in
   sync while callers consume the canonical snapshot cache.
 - Updated web state tests (GameProvider, session SDK) to assert against the new
-  record payloads and queue wiring.
+  record payloads and queue wiring.\
+
+## Domain Migration - P3 - T9 - Remote Session Mirror Removal
+
+- Removed the legacy engine mirror and developer-mode bootstrap so session lifecycle now flows entirely through the remote adapter backed by the session state store.【F:packages/web/src/state/sessionSdk.ts†L1-L340】【F:packages/web/src/state/remoteSessionAdapter.ts†L1-L220】
+- Simplified runtime configuration by dropping developer preset plumbing after the mirror removal, keeping only the favicon bootstrap metadata.【F:packages/web/src/startup/runtimeConfig.ts†L1-L140】【F:packages/web/src/startup/runtimeConfigFallback.json†L1048-L1054】
 
 ## Domain Migration - P3 - T10 - Session Queue Store Integration
 
