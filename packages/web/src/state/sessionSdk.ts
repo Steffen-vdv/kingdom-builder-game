@@ -12,11 +12,7 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	deserializeSessionRegistries,
-	extractResourceKeys,
-	type SessionRegistries,
-} from './sessionRegistries';
+import { type SessionRegistries } from './sessionRegistries';
 import {
 	createLegacySessionMirror,
 	getLegacySessionRecord,
@@ -28,6 +24,11 @@ import {
 	type ResourceKey,
 	type SessionHandle,
 } from './legacySessionMirror';
+import {
+	applySessionState,
+	deleteSessionRecord,
+	initializeSessionState,
+} from './sessionStateStore';
 import {
 	createGameApi,
 	type GameApi,
@@ -101,6 +102,7 @@ export async function createSession(
 	};
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest, requestOptions);
+	const stateRecord = initializeSessionState(response);
 	const mirror = await createLegacySessionMirror({
 		sessionId: response.sessionId,
 		devMode,
@@ -111,11 +113,11 @@ export async function createSession(
 		sessionId: mirror.sessionId,
 		session: mirror.session,
 		legacySession: mirror.legacySession,
-		snapshot: response.snapshot,
-		ruleSnapshot: response.snapshot.rules,
-		registries: mirror.registries,
-		resourceKeys: mirror.resourceKeys,
-		metadata: response.snapshot.metadata,
+		snapshot: stateRecord.snapshot,
+		ruleSnapshot: stateRecord.ruleSnapshot,
+		registries: stateRecord.registries,
+		resourceKeys: stateRecord.resourceKeys,
+		metadata: stateRecord.metadata,
 	};
 }
 
@@ -132,17 +134,20 @@ export async function fetchSnapshot(
 	const api = ensureGameApi();
 	const record = getLegacySessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
-	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	replaceLegacySessionCaches(record, registries, resourceKeys);
+	const stateRecord = applySessionState(response);
+	replaceLegacySessionCaches(
+		record,
+		stateRecord.registries,
+		stateRecord.resourceKeys,
+	);
 	return {
 		session: record.handle,
 		legacySession: record.legacySession,
-		snapshot: response.snapshot,
-		ruleSnapshot: response.snapshot.rules,
-		registries,
-		resourceKeys,
-		metadata: response.snapshot.metadata,
+		snapshot: stateRecord.snapshot,
+		ruleSnapshot: stateRecord.ruleSnapshot,
+		registries: stateRecord.registries,
+		resourceKeys: stateRecord.resourceKeys,
+		metadata: stateRecord.metadata,
 	};
 }
 
@@ -154,18 +159,21 @@ export async function setSessionDevMode(
 	const api = ensureGameApi();
 	const record = getLegacySessionRecord(sessionId);
 	const response = await api.setDevMode({ sessionId, enabled }, requestOptions);
-	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	record.legacySession.setDevMode(enabled);
-	replaceLegacySessionCaches(record, registries, resourceKeys);
+	const stateRecord = applySessionState(response);
+	replaceLegacySessionCaches(
+		record,
+		stateRecord.registries,
+		stateRecord.resourceKeys,
+	);
 	return {
 		session: record.handle,
 		legacySession: record.legacySession,
-		snapshot: response.snapshot,
-		ruleSnapshot: response.snapshot.rules,
-		registries,
-		resourceKeys,
-		metadata: response.snapshot.metadata,
+		snapshot: stateRecord.snapshot,
+		ruleSnapshot: stateRecord.ruleSnapshot,
+		registries: stateRecord.registries,
+		resourceKeys: stateRecord.resourceKeys,
+		metadata: stateRecord.metadata,
 	};
 }
 
@@ -240,9 +248,12 @@ export async function advanceSessionPhase(
 	const api = ensureGameApi();
 	const record = getLegacySessionRecord(request.sessionId);
 	const response = await api.advancePhase(request, requestOptions);
-	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	mergeLegacySessionCaches(record, registries, resourceKeys);
+	const stateRecord = applySessionState(response);
+	mergeLegacySessionCaches(
+		record,
+		stateRecord.registries,
+		stateRecord.resourceKeys,
+	);
 	try {
 		await record.handle.enqueue(() => {
 			record.handle.advancePhase();
@@ -263,6 +274,7 @@ export async function advanceSessionPhase(
 }
 
 export function releaseSession(sessionId: string): void {
+	deleteSessionRecord(sessionId);
 	releaseLegacySession(sessionId);
 }
 
