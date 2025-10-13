@@ -111,7 +111,6 @@ describe('sessionSdk', () => {
 			playerName: 'Commander',
 		});
 		expect(created.sessionId).toBe('session-1');
-		expect(created.session).toBe(created.legacySession);
 		expect(created.snapshot).toEqual(initialSnapshot);
 		expect(created.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(created.resourceKeys).toEqual(resourceKeys);
@@ -255,7 +254,7 @@ describe('sessionSdk', () => {
 			sessionId: 'session-1',
 		});
 		expect(response.advance).toEqual(advanceResult);
-		const cachedAdvance = created.legacySession.advancePhase();
+		const cachedAdvance = created.session.advancePhase();
 		expect(cachedAdvance).toEqual(advanceResult);
 	});
 
@@ -309,7 +308,7 @@ describe('sessionSdk', () => {
 			playerId: playerA.id,
 		});
 		expect(response).toEqual(simulation);
-		const cached = created.legacySession.simulateUpcomingPhases(playerA.id);
+		const cached = created.session.simulateUpcomingPhases(playerA.id);
 		expect(cached).toEqual(simulation.result);
 	});
 

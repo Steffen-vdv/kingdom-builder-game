@@ -26,7 +26,6 @@ import {
 	updateSessionSnapshot,
 } from './sessionStateStore';
 import {
-	type LegacySession,
 	type Session,
 	type SessionRegistries,
 	type SessionResourceKeys,
@@ -53,7 +52,6 @@ interface CreateSessionOptions {
 export interface CreateSessionResult {
 	sessionId: string;
 	session: Session;
-	legacySession: LegacySession;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
@@ -71,7 +69,6 @@ type ActionExecutionFailure = Error & {
 
 export interface FetchSnapshotResult {
 	session: Session;
-	legacySession: LegacySession;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
@@ -120,7 +117,6 @@ export async function createSession(
 	return {
 		sessionId: response.sessionId,
 		session: adapter,
-		legacySession: adapter,
 		snapshot: stateRecord.snapshot,
 		ruleSnapshot: stateRecord.ruleSnapshot,
 		registries: stateRecord.registries,
@@ -139,7 +135,6 @@ export async function fetchSnapshot(
 	const stateRecord = applySessionState(response);
 	return {
 		session: adapter,
-		legacySession: adapter,
 		snapshot: stateRecord.snapshot,
 		ruleSnapshot: stateRecord.ruleSnapshot,
 		registries: stateRecord.registries,
@@ -162,7 +157,6 @@ export async function setSessionDevMode(
 	adapter.setDevMode(enabled);
 	return {
 		session: adapter,
-		legacySession: adapter,
 		snapshot: stateRecord.snapshot,
 		ruleSnapshot: stateRecord.ruleSnapshot,
 		registries: stateRecord.registries,

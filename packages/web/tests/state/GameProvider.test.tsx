@@ -307,7 +307,6 @@ describe('GameProvider', () => {
 			return Promise.resolve({
 				sessionId,
 				session,
-				legacySession: session,
 				snapshot: initialSnapshot,
 				ruleSnapshot: initialSnapshot.rules,
 				registries,
@@ -324,7 +323,6 @@ describe('GameProvider', () => {
 			applySessionState(response);
 			return Promise.resolve({
 				session,
-				legacySession: session,
 				snapshot: refreshedSnapshot,
 				ruleSnapshot: refreshedSnapshot.rules,
 				registries,
@@ -401,7 +399,6 @@ describe('GameProvider', () => {
 			applySessionState(response);
 			return Promise.resolve({
 				session,
-				legacySession: session,
 				snapshot: devModeSnapshot,
 				ruleSnapshot: devModeSnapshot.rules,
 				registries,

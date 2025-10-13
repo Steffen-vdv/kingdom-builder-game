@@ -174,7 +174,6 @@ export function GameProvider(props: GameProviderProps) {
 					}
 					updateSessionData({
 						session: created.session,
-						legacySession: created.legacySession,
 						sessionId: created.sessionId,
 						snapshot: created.snapshot,
 						ruleSnapshot: created.ruleSnapshot,
@@ -230,7 +229,6 @@ export function GameProvider(props: GameProviderProps) {
 				}
 				updateSessionData({
 					session: result.session,
-					legacySession: result.legacySession,
 					sessionId,
 					snapshot: result.snapshot,
 					ruleSnapshot: result.ruleSnapshot,
@@ -279,7 +277,6 @@ export function GameProvider(props: GameProviderProps) {
 				}
 				updateSessionData({
 					session: updated.session,
-					legacySession: updated.legacySession,
 					sessionId: current.sessionId,
 					snapshot: updated.snapshot,
 					ruleSnapshot: updated.ruleSnapshot,

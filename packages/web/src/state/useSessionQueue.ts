@@ -4,12 +4,10 @@ import type {
 	SessionQueueHelpers,
 	SessionSnapshot,
 	Session,
-	LegacySession,
 } from './sessionTypes';
 
 interface UseSessionQueueResult {
 	session: Session;
-	legacySession: LegacySession;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	cachedSessionSnapshot: SessionSnapshot;
 }
@@ -41,7 +39,6 @@ export function useSessionQueue(
 	}, [queue, sessionId, sessionState]);
 	return {
 		session,
-		legacySession: adapter,
 		enqueue,
 		cachedSessionSnapshot,
 	};
