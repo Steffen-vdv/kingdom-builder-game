@@ -71,6 +71,7 @@ export function GameProviderInner({
 	const { legacySession, enqueue, cachedSessionSnapshot } = useSessionQueue(
 		queue,
 		sessionState,
+		sessionId,
 	);
 
 	const refresh = useCallback(() => {
