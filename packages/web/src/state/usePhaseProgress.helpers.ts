@@ -24,12 +24,9 @@ type FormatPhaseResolution = (
 	options: FormatPhaseResolutionOptions,
 ) => PhaseResolutionFormatResult;
 
-interface SessionSnapshotSource {
-	getSnapshot(): SessionSnapshot;
-}
-
 interface AdvanceToActionPhaseOptions {
-	session: SessionSnapshotSource;
+	initialSnapshot: SessionSnapshot;
+	getLatestSnapshot: () => SessionSnapshot | null;
 	sessionId: string;
 	resourceKeys: SessionResourceKey[];
 	mountedRef: React.MutableRefObject<boolean>;
@@ -48,7 +45,8 @@ interface AdvanceToActionPhaseOptions {
 }
 
 export async function advanceToActionPhase({
-	session,
+	initialSnapshot,
+	getLatestSnapshot,
 	sessionId,
 	resourceKeys,
 	mountedRef,
@@ -60,7 +58,7 @@ export async function advanceToActionPhase({
 	onFatalSessionError,
 }: AdvanceToActionPhaseOptions) {
 	try {
-		let snapshot = session.getSnapshot();
+		let snapshot = getLatestSnapshot() ?? initialSnapshot;
 		if (snapshot.game.conclusion) {
 			applyPhaseSnapshot(snapshot, { isAdvancing: false });
 			refresh();
@@ -131,10 +129,7 @@ export async function advanceToActionPhase({
 		if (!mountedRef.current) {
 			return;
 		}
-		const refreshed = session.getSnapshot();
-		if (!mountedRef.current) {
-			return;
-		}
+		const refreshed = getLatestSnapshot() ?? snapshot;
 		applyPhaseSnapshot(refreshed, { isAdvancing: false });
 		refresh();
 	} catch (error) {
