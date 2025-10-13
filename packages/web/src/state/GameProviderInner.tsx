@@ -187,7 +187,7 @@ export function GameProviderInner({
 		});
 
 	useCompensationLogger({
-		session: legacySession,
+		sessionId,
 		sessionState,
 		addLog,
 		resourceKeys,
