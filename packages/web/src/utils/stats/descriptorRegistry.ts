@@ -1,3 +1,4 @@
+import { RESOURCES, type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
 	TranslationRegistry,
@@ -187,7 +188,36 @@ function createDescriptorRegistry(
 			},
 		},
 		resource: {
-			resolve: createRecordResolver(assets.resources, 'Resource'),
+			resolve: (id) => {
+				if (!id) {
+					return { icon: '', label: 'Resource' } satisfies ResolveResult;
+				}
+				const resource = RESOURCES[id as ResourceKey];
+				if (resource) {
+					const icon = typeof resource.icon === 'string' ? resource.icon : '';
+					const label =
+						typeof resource.label === 'string' &&
+						resource.label.trim().length > 0
+							? resource.label
+							: id;
+					return { icon, label } satisfies ResolveResult;
+				}
+				const assetEntry = assets.resources[id];
+				if (assetEntry) {
+					const icon =
+						typeof assetEntry.icon === 'string' &&
+						assetEntry.icon.trim().length > 0
+							? assetEntry.icon
+							: '';
+					const label =
+						typeof assetEntry.label === 'string' &&
+						assetEntry.label.trim().length > 0
+							? assetEntry.label
+							: id;
+					return { icon, label } satisfies ResolveResult;
+				}
+				return { icon: '', label: id } satisfies ResolveResult;
+			},
 			formatDetail: defaultFormatDetail,
 		},
 		trigger: createTriggerDescriptorEntry(defaultFormatDetail, assets.triggers),

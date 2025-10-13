@@ -39,6 +39,33 @@ function formatStepTriggerLabel(
 	return undefined;
 }
 
+function humanizeTriggerKey(key: string | undefined): string | undefined {
+	if (typeof key !== 'string') {
+		return undefined;
+	}
+	const trimmed = key.trim();
+	if (!trimmed.length) {
+		return undefined;
+	}
+	const withoutPrefix = trimmed.startsWith('on') ? trimmed.slice(2) : trimmed;
+	if (!withoutPrefix.length) {
+		return undefined;
+	}
+	const spaced = withoutPrefix
+		.replace(/([A-Z])/gu, ' $1')
+		.replace(/_/gu, ' ')
+		.replace(/\s+/gu, ' ')
+		.trim();
+	if (!spaced.length) {
+		return undefined;
+	}
+	if (spaced.toLowerCase().endsWith(' step')) {
+		const normalized = `${spaced.slice(0, -4).trim()} step`;
+		return normalized;
+	}
+	return spaced;
+}
+
 export interface PhasedDef {
 	onBuild?: EffectDef<Record<string, unknown>>[] | undefined;
 	onBeforeAttacked?: EffectDef<Record<string, unknown>>[] | undefined;
@@ -89,20 +116,55 @@ export class PhasedTranslator {
 			}
 			const info = selectTriggerDisplay(context.assets, key as string);
 			const stepLabel = formatStepTriggerLabel(context, identifier);
+			const trimmedIdentifier = identifier.trim();
+			const isStepTrigger = trimmedIdentifier.toLowerCase().endsWith('step');
 			const title = (() => {
-				if (stepLabel) {
-					const icon = info.icon ?? '';
-					const trimmedIcon = icon.trim();
-					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
-					return `${prefix}During ${stepLabel}`;
+				if (stepLabel && isStepTrigger) {
+					const icon = info.icon?.trim();
+					const parts = [icon, `During ${stepLabel}`]
+						.filter((value) => value && value.trim().length > 0)
+						.map((value) => value!.trim());
+					return parts.join(' ');
 				}
 				const future = info.future ?? info.label;
 				const icon = info.icon ?? '';
 				if (future && future.trim().length) {
 					const parts = [icon, future].filter(Boolean).join(' ').trim();
 					if (parts.length) {
+						const normalizedFuture = future.trim();
+						const normalizedFallback = fallbackTitle?.trim();
+						if (
+							normalizedFallback &&
+							normalizedFallback.length > 0 &&
+							normalizedFallback !== normalizedFuture
+						) {
+							const normalizedFutureLower = normalizedFuture.toLowerCase();
+							const normalizedFallbackLower = normalizedFallback.toLowerCase();
+							if (normalizedFallbackLower.includes(normalizedFutureLower)) {
+								const fallbackParts = [icon, normalizedFallback]
+									.filter(Boolean)
+									.join(' ')
+									.trim();
+								if (fallbackParts.length) {
+									return fallbackParts;
+								}
+							}
+						}
+						if (
+							normalizedFuture === identifier ||
+							normalizedFuture === fallbackTitle
+						) {
+							const humanizedFuture = humanizeTriggerKey(normalizedFuture);
+							if (humanizedFuture) {
+								return humanizedFuture;
+							}
+						}
 						return parts;
 					}
+				}
+				const humanized = humanizeTriggerKey(fallbackTitle);
+				if (humanized) {
+					return humanized;
 				}
 				return fallbackTitle;
 			})();
@@ -120,8 +182,11 @@ export class PhasedTranslator {
 		handled.add('onBuild');
 
 		for (const phase of context.phases) {
+			const phaseIdentifier = phase.id.includes('.')
+				? phase.id.slice(phase.id.lastIndexOf('.') + 1)
+				: phase.id;
 			const capitalizedPhaseId =
-				phase.id.charAt(0).toUpperCase() + phase.id.slice(1);
+				phaseIdentifier.charAt(0).toUpperCase() + phaseIdentifier.slice(1);
 			const phaseKey = `on${capitalizedPhaseId}Phase` as keyof PhasedDef;
 			const icon = phase.icon ? `${phase.icon} ` : '';
 			const label = phase.label ?? formatDetailText(phase.id);
