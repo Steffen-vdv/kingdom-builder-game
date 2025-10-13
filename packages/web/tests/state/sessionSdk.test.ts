@@ -136,13 +136,20 @@ describe('sessionSdk', () => {
 		expect(created.resourceKeys).toEqual(resourceKeys);
 		expect(created.registries).toHaveProperty('actions');
 		expect(created.metadata).toEqual(initialSnapshot.metadata);
+		expect(created.session.getLatestSnapshot()).toEqual(initialSnapshot);
+		expect(created.session.getLatestRegistries()).toBe(created.registries);
+		expect(created.session.getLatestMetadata()).toEqual(
+			initialSnapshot.metadata,
+		);
 	});
 	it('fetches snapshots via the API client', async () => {
-		await createSession();
+		const created = await createSession();
 		const fetched = await fetchSnapshot('session-1');
 		expect(fetched.snapshot).toEqual(initialSnapshot);
 		expect(fetched.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(fetched.metadata).toEqual(initialSnapshot.metadata);
+		expect(fetched.session).toBe(created.session);
+		expect(fetched.session.getLatestSnapshot()).toEqual(initialSnapshot);
 	});
 
 	it('sets dev mode via the API and refreshes local state', async () => {
@@ -263,7 +270,7 @@ describe('sessionSdk', () => {
 	});
 	it('performs session actions via the API and mirrors locally', async () => {
 		const created = await createSession();
-		const session = created.session;
+		const session = created.legacySession;
 		const performSpy = vi.spyOn(session, 'performAction').mockReturnValue([]);
 		const updatedSnapshot = createSessionSnapshot({
 			players: [
@@ -296,23 +303,25 @@ describe('sessionSdk', () => {
 		});
 		expect(response).toEqual(successResponse);
 		expect(performSpy).toHaveBeenCalledWith(taxActionId, undefined);
+		expect(created.session.getLatestSnapshot()).toEqual(updatedSnapshot);
 	});
 	it('returns error payloads when the API action fails', async () => {
-		const { session } = await createSession();
+		const { legacySession, session } = await createSession();
 		api.setNextActionResponse({
 			status: 'error',
 			error: 'Nope.',
 		});
-		const performSpy = vi.spyOn(session, 'performAction');
+		const performSpy = vi.spyOn(legacySession, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
 			actionId: taxActionId,
 		});
 		expect(response.status).toBe('error');
 		expect(performSpy).not.toHaveBeenCalled();
+		expect(session.getLatestSnapshot()).toEqual(initialSnapshot);
 	});
 	it('converts thrown API errors into error responses', async () => {
-		const { session } = await createSession();
+		const { legacySession, session } = await createSession();
 		setGameApi(
 			createGameApiMock({
 				performAction: () => {
@@ -320,7 +329,7 @@ describe('sessionSdk', () => {
 				},
 			}),
 		);
-		const performSpy = vi.spyOn(session, 'performAction');
+		const performSpy = vi.spyOn(legacySession, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
 			actionId: taxActionId,
@@ -328,11 +337,12 @@ describe('sessionSdk', () => {
 		expect(response.status).toBe('error');
 		expect(response).toHaveProperty('error', 'Boom');
 		expect(performSpy).not.toHaveBeenCalled();
+		expect(session.getLatestSnapshot()).toEqual(initialSnapshot);
 	});
 	it('advances phases via the API and mirrors locally', async () => {
-		await createSession();
+		const created = await createSession();
 		const advanceSpy = vi
-			.spyOn((await fetchSnapshot('session-1')).session, 'advancePhase')
+			.spyOn(created.legacySession, 'advancePhase')
 			.mockReturnValue({
 				phase: 'phase-main',
 				step: 'phase-main:start',
@@ -364,11 +374,12 @@ describe('sessionSdk', () => {
 		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(response.snapshot).toEqual(updatedSnapshot);
 		expect(advanceSpy).toHaveBeenCalled();
+		expect(created.session.getLatestSnapshot()).toEqual(updatedSnapshot);
 	});
 	it('updates cached registries and resource keys when the phase advances', async () => {
 		const created = await createSession();
-		const { session, registries, resourceKeys } = created;
-		const advanceSpy = vi.spyOn(session, 'advancePhase').mockReturnValue({
+		const { legacySession, session } = created;
+		const advanceSpy = vi.spyOn(legacySession, 'advancePhase').mockReturnValue({
 			phase: 'phase-main',
 			step: 'phase-main:start',
 			effects: [],
@@ -402,11 +413,16 @@ describe('sessionSdk', () => {
 			},
 			registries: mutatedRegistries,
 		});
-		await advanceSessionPhase({ sessionId: 'session-1' });
+		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(advanceSpy).toHaveBeenCalled();
-		expect(registries.actions.get(taxActionId)?.name).toBe('Tax (Advanced)');
-		expect(registries.resources[resourceKey]).toBeUndefined();
-		expect(resourceKeys).not.toContain(resourceKey);
+		expect(response.registries.actions).toBeDefined();
+		expect(response.registries.resources[resourceKey]).toBeUndefined();
+		expect(response.resourceKeys ?? []).not.toContain(resourceKey);
+		const latestRegistries = session.getLatestRegistries();
+		expect(latestRegistries?.actions.get(taxActionId)?.name).toBe(
+			'Tax (Advanced)',
+		);
+		expect(session.getLatestMetadata()).toEqual(updatedSnapshot.metadata);
 	});
 	it('releases session state from the local cache', async () => {
 		await createSession();

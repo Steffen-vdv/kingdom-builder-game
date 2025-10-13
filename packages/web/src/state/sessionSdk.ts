@@ -15,26 +15,32 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
-	extractResourceKeys,
 	type SessionRegistries,
 } from './sessionRegistries';
-import {
-	createLegacySessionMirror,
-	getLegacySessionRecord,
-	markFatalSessionError,
-	mergeLegacySessionCaches,
-	replaceLegacySessionCaches,
-	releaseLegacySession,
-	SessionMirroringError,
-	type ResourceKey,
-	type SessionHandle,
-} from './legacySessionMirror';
 import {
 	createGameApi,
 	type GameApi,
 	type GameApiRequestOptions,
 } from '../services/gameApi';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
+import {
+	createLegacySession,
+	type ResourceKey,
+} from './legacySessionBootstrap';
+import {
+	getSessionRecord as getSessionRecordImpl,
+	registerSession,
+	releaseSessionRecord,
+	updateRecordSnapshot as updateRecordSnapshotImpl,
+	updateRecordState as updateRecordStateImpl,
+	type SessionHandle,
+	type SessionRecord,
+} from './remoteSessionStore';
+import {
+	SessionMirroringError,
+	markFatalSessionError,
+	isFatalSessionError,
+} from './sessionErrors';
 
 interface CreateSessionOptions {
 	devMode?: boolean;
@@ -84,6 +90,15 @@ export function setGameApi(instance: GameApi | null): void {
 	gameApi = instance;
 }
 
+function getSessionRecord(sessionId: string): SessionRecord {
+	try {
+		return getSessionRecordImpl(sessionId);
+	} catch (error) {
+		markFatalSessionError(error);
+		throw error;
+	}
+}
+
 /**
  * Creates a new game session via the remote API.
  *
@@ -102,20 +117,28 @@ export async function createSession(
 	};
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest, requestOptions);
-	const mirror = await createLegacySessionMirror({
+	const legacy = await createLegacySession({
 		sessionId: response.sessionId,
 		devMode,
 		playerName,
 		registries: response.registries,
 	});
+	const record = registerSession({
+		sessionId: response.sessionId,
+		legacySession: legacy.session,
+		registries: legacy.registries,
+		resourceKeys: legacy.resourceKeys,
+		snapshot: response.snapshot,
+		metadata: response.snapshot.metadata,
+	});
 	return {
-		sessionId: mirror.sessionId,
-		session: mirror.session,
-		legacySession: mirror.legacySession,
+		sessionId: response.sessionId,
+		session: record.handle,
+		legacySession: legacy.session,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
-		registries: mirror.registries,
-		resourceKeys: mirror.resourceKeys,
+		registries: record.registries,
+		resourceKeys: record.resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
 }
@@ -131,18 +154,22 @@ export async function fetchSnapshot(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const record = getLegacySessionRecord(sessionId);
+	const record = getSessionRecord(sessionId);
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	replaceLegacySessionCaches(record, registries, resourceKeys);
+	updateRecordStateImpl(
+		record,
+		response.snapshot,
+		registries,
+		response.snapshot.metadata,
+	);
 	return {
 		session: record.handle,
 		legacySession: record.legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries,
-		resourceKeys,
+		resourceKeys: record.resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
 }
@@ -153,19 +180,23 @@ export async function setSessionDevMode(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const record = getLegacySessionRecord(sessionId);
+	const record = getSessionRecord(sessionId);
 	const response = await api.setDevMode({ sessionId, enabled }, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	record.legacySession.setDevMode(enabled);
-	replaceLegacySessionCaches(record, registries, resourceKeys);
+	updateRecordStateImpl(
+		record,
+		response.snapshot,
+		registries,
+		response.snapshot.metadata,
+	);
 	return {
 		session: record.handle,
 		legacySession: record.legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries,
-		resourceKeys,
+		resourceKeys: record.resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
 }
@@ -175,11 +206,15 @@ export async function updateSessionPlayerName(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const record = getLegacySessionRecord(request.sessionId);
+	const record = getSessionRecord(request.sessionId);
 	const response = await api.updatePlayerName(request, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	replaceLegacySessionCaches(record, registries, resourceKeys);
+	updateRecordStateImpl(
+		record,
+		response.snapshot,
+		registries,
+		response.snapshot.metadata,
+	);
 	const updatedPlayer = response.snapshot.game.players.find(
 		(player) => player.id === request.playerId,
 	);
@@ -192,7 +227,7 @@ export async function updateSessionPlayerName(
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries,
-		resourceKeys,
+		resourceKeys: record.resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
 }
@@ -208,15 +243,14 @@ export async function performSessionAction(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<ActionExecuteResponse> {
 	const api = ensureGameApi();
-	const { handle } = getLegacySessionRecord(request.sessionId);
+	const record = getSessionRecord(request.sessionId);
 	try {
 		const response = await api.performAction(request, requestOptions);
 		if (response.status === 'success') {
 			try {
 				const params = request.params;
-				await handle.enqueue(() => {
-					handle.performAction(request.actionId, params);
-				});
+				updateRecordSnapshotImpl(record, response.snapshot);
+				record.legacySession.performAction(request.actionId, params);
 			} catch (localError) {
 				const error = new SessionMirroringError(
 					'Local session failed to mirror remote action.',
@@ -266,15 +300,17 @@ export async function advanceSessionPhase(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionAdvanceResponse> {
 	const api = ensureGameApi();
-	const record = getLegacySessionRecord(request.sessionId);
+	const record = getSessionRecord(request.sessionId);
 	const response = await api.advancePhase(request, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
-	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	mergeLegacySessionCaches(record, registries, resourceKeys);
+	updateRecordStateImpl(
+		record,
+		response.snapshot,
+		registries,
+		response.snapshot.metadata,
+	);
 	try {
-		await record.handle.enqueue(() => {
-			record.handle.advancePhase();
-		});
+		record.legacySession.advancePhase();
 	} catch (localError) {
 		const error = new SessionMirroringError(
 			'Local session failed to mirror remote phase advance.',
@@ -291,9 +327,8 @@ export async function advanceSessionPhase(
 }
 
 export function releaseSession(sessionId: string): void {
-	releaseLegacySession(sessionId);
+	releaseSessionRecord(sessionId);
 }
 
 export type { CreateSessionResult, FetchSnapshotResult, SessionHandle };
-export { SessionMirroringError, markFatalSessionError };
-export { isFatalSessionError } from './legacySessionMirror';
+export { SessionMirroringError, markFatalSessionError, isFatalSessionError };
