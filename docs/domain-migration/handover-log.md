@@ -1,5 +1,17 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T17 - Compensation Logger Session Decoupling
+
+- Updated `useCompensationLogger` to reset per-session tracking by keying on
+  the active `sessionId`, removing the legacy session handle dependency and
+  sourcing translation context data entirely from the snapshot and registry
+  store inputs.【F:packages/web/src/state/useCompensationLogger.ts†L1-L118】
+- Adjusted `GameProviderInner` and its tests to pass the protocol `sessionId`
+  into the compensation logger so it relogs when the session state store swaps
+  to a new record without touching the legacy session mock.
+  【F:packages/web/src/state/GameProviderInner.tsx†L1-L360】
+  【F:packages/web/tests/state/useCompensationLogger.test.tsx†L1-L212】
+
 ## Domain Migration - P3 - T9 - Remote Session Mirror Removal
 
 - Removed the legacy engine mirror and developer-mode bootstrap so session lifecycle now flows entirely through the remote adapter backed by the session state store.【F:packages/web/src/state/sessionSdk.ts†L1-L340】【F:packages/web/src/state/remoteSessionAdapter.ts†L1-L220】
