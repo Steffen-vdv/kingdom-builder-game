@@ -1,5 +1,15 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T13 - Action Performer Queue Alignment
+
+- Updated `useActionPerformer` to read the authoritative session snapshot from
+  the adapter after remote executions and to expose the queued handler to AI
+  callers, eliminating the legacy engine mirror dependency for action
+  completion state and queuing.【F:packages/web/src/state/useActionPerformer.ts†L129-L349】
+- Refreshed the hook's tests to mock protocol requirement failures and adapter
+  snapshot updates instead of engine fixtures so coverage follows the GameApi
+  transport path.【F:packages/web/tests/state/useActionPerformer.test.ts†L1-L332】
+
 ## Domain Migration - P3 - T11 - Session Container Remote Adapter Migration
 
 - `GameContext` now persists the remote session adapter alongside the
