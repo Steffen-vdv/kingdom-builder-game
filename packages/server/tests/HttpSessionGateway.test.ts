@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type {
-	SessionGateway,
-	SessionRegistriesPayload,
-} from '@kingdom-builder/protocol';
+import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import {
 	HttpSessionGateway,
 	type HttpSessionGatewayOptions,
@@ -14,7 +11,7 @@ describe('HttpSessionGateway', () => {
 
 	function createGateway(
 		options: Partial<HttpSessionGatewayOptions> = {},
-	): SessionGateway {
+	): HttpSessionGateway {
 		return new HttpSessionGateway({
 			baseUrl,
 			headers: { authorization: 'Bearer token' },
@@ -205,6 +202,315 @@ describe('HttpSessionGateway', () => {
 			enabled: true,
 		});
 		expect(response.snapshot.game.devMode).toBe(true);
+	});
+
+	it('fetches action costs through the REST endpoint', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/actions/costs',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({
+					sessionId: 'test',
+					actionId: 'build',
+				});
+				return jsonResponse({
+					sessionId: 'test',
+					costs: { gold: 4 },
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.fetchActionCosts({
+			sessionId: 'test',
+			actionId: 'build',
+		});
+		expect(response.costs).toEqual({ gold: 4 });
+	});
+
+	it('propagates transport errors from action cost lookup', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse(
+					{ code: 'NOT_FOUND', message: 'Missing action.' },
+					{ status: 404 },
+				),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionCosts({ sessionId: 'test', actionId: 'missing' }),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates action cost requests before dispatching', async () => {
+		const fetch = vi.fn();
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionCosts({
+				sessionId: '',
+				actionId: '',
+			} as never),
+		).rejects.toThrow();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('fetches action requirements through the REST endpoint', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/actions/requirements',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({
+					sessionId: 'test',
+					actionId: 'build',
+					params: { choices: { slot: { optionId: 'farm' } } },
+				});
+				return jsonResponse({
+					sessionId: 'test',
+					requirements: [
+						{
+							requirement: {
+								type: 'resource',
+								method: 'minimum',
+								params: {
+									resourceKey: 'gold',
+									amount: 1,
+								},
+							},
+							message: 'Need gold',
+						},
+					],
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.fetchActionRequirements({
+			sessionId: 'test',
+			actionId: 'build',
+			params: { choices: { slot: { optionId: 'farm' } } },
+		});
+		expect(response.requirements).toHaveLength(1);
+	});
+
+	it('propagates transport errors from action requirement lookup', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse(
+					{ code: 'CONFLICT', message: 'Requirement failure.' },
+					{ status: 409 },
+				),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionRequirements({
+				sessionId: 'test',
+				actionId: 'build',
+			}),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates action requirement requests before dispatching', async () => {
+		const fetch = vi.fn();
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionRequirements({
+				sessionId: 'test',
+				actionId: '',
+			} as never),
+		).rejects.toThrow();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('fetches action options through the REST endpoint', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/actions/options',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({
+					sessionId: 'test',
+					actionId: 'choose',
+				});
+				return jsonResponse({
+					sessionId: 'test',
+					groups: [
+						{
+							id: 'group',
+							title: 'Choices',
+							options: [
+								{
+									id: 'option',
+									actionId: 'child',
+									label: 'Pick',
+								},
+							],
+						},
+					],
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.fetchActionOptions({
+			sessionId: 'test',
+			actionId: 'choose',
+		});
+		expect(response.groups).toHaveLength(1);
+	});
+
+	it('propagates transport errors from action option lookup', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse(
+					{ code: 'NOT_FOUND', message: 'Missing options.' },
+					{ status: 404 },
+				),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionOptions({
+				sessionId: 'test',
+				actionId: 'choose',
+			}),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates action option requests before dispatching', async () => {
+		const fetch = vi.fn();
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionOptions({
+				sessionId: '',
+				actionId: 'choose',
+			} as never),
+		).rejects.toThrow();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('runs AI turns via the REST endpoint', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe('/api/sessions/test/ai');
+				const payload = await request.clone().json();
+				expect(payload).toEqual({ sessionId: 'test', playerId: 'A' });
+				return jsonResponse({
+					sessionId: 'test',
+					snapshot: { game: { players: [] } },
+					registries: createRegistries(),
+					ranTurn: true,
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.runAiTurn({
+			sessionId: 'test',
+			playerId: 'A',
+		});
+		expect(response.ranTurn).toBe(true);
+	});
+
+	it('propagates transport errors from AI runs', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse(
+					{ code: 'FORBIDDEN', message: 'AI disabled.' },
+					{ status: 403 },
+				),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.runAiTurn({ sessionId: 'test', playerId: 'A' }),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates AI run requests before dispatching', async () => {
+		const fetch = vi.fn();
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.runAiTurn({
+				sessionId: 'test',
+				playerId: 'C',
+			} as never),
+		).rejects.toThrow();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('simulates upcoming phases via the REST endpoint', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/simulate',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({
+					sessionId: 'test',
+					playerId: 'A',
+					options: { maxIterations: 3 },
+				});
+				return jsonResponse({
+					sessionId: 'test',
+					result: { summary: 'ok' },
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.simulateUpcomingPhases({
+			sessionId: 'test',
+			playerId: 'A',
+			options: { maxIterations: 3 },
+		});
+		expect(response.result).toEqual({ summary: 'ok' });
+	});
+
+	it('propagates transport errors from simulation requests', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse(
+					{ code: 'INVALID_REQUEST', message: 'Bad options.' },
+					{ status: 400 },
+				),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.simulateUpcomingPhases({
+				sessionId: 'test',
+				playerId: 'A',
+			}),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates simulation requests before dispatching', async () => {
+		const fetch = vi.fn();
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.simulateUpcomingPhases({
+				sessionId: 'test',
+				playerId: 'Z',
+			} as never),
+		).rejects.toThrow();
+		expect(fetch).not.toHaveBeenCalled();
 	});
 
 	it('supports asynchronous header factories', async () => {
