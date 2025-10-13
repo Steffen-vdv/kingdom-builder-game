@@ -1,5 +1,17 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T11 - Session Container Remote Adapter Migration
+
+- `GameContext` now persists the remote session adapter alongside the
+  store-backed snapshot metadata, removing the legacy engine session fields from
+  the container and routing queue helpers through the shared store promise
+  chain.
+- Refreshed the session SDK bootstrap/refresh/dev-mode methods to return the
+  remote record derived from the session state store, keeping the adapter in
+  sync while callers consume the canonical snapshot cache.
+- Updated web state tests (GameProvider, session SDK) to assert against the new
+  record payloads and queue wiring.
+
 ## Domain Migration - P3 - T10 - Session Queue Store Integration
 
 - Refactored `packages/web/src/state/useSessionQueue.ts` to route UI tasks

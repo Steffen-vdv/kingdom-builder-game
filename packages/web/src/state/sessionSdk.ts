@@ -8,13 +8,10 @@ import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
 	SessionCreateRequest,
-	SessionRuleSnapshot,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
-	SessionSnapshot,
-	SessionSnapshotMetadata,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
@@ -24,13 +21,9 @@ import {
 	enqueueSessionTask,
 	initializeSessionState,
 	updateSessionSnapshot,
+	type SessionStateRecord,
 } from './sessionStateStore';
-import {
-	type LegacySession,
-	type Session,
-	type SessionRegistries,
-	type SessionResourceKeys,
-} from './sessionTypes';
+import { type Session, type RemoteSessionRecord } from './sessionTypes';
 import {
 	createGameApi,
 	type GameApi,
@@ -57,13 +50,8 @@ interface CreateSessionOptions {
 
 export interface CreateSessionResult {
 	sessionId: string;
-	session: Session;
-	legacySession: LegacySession;
-	snapshot: SessionSnapshot;
-	ruleSnapshot: SessionRuleSnapshot;
-	registries: SessionRegistries;
-	resourceKeys: SessionResourceKeys;
-	metadata: SessionSnapshotMetadata;
+	adapter: Session;
+	record: RemoteSessionRecord;
 }
 type ActionRequirementFailure =
 	ActionExecuteErrorResponse['requirementFailure'];
@@ -75,13 +63,9 @@ type ActionExecutionFailure = Error & {
 };
 
 export interface FetchSnapshotResult {
-	session: Session;
-	legacySession: LegacySession;
-	snapshot: SessionSnapshot;
-	ruleSnapshot: SessionRuleSnapshot;
-	registries: SessionRegistries;
-	resourceKeys: SessionResourceKeys;
-	metadata: SessionSnapshotMetadata;
+	sessionId: string;
+	adapter: Session;
+	record: RemoteSessionRecord;
 }
 const clone = <T>(value: T): T => {
 	if (typeof structuredClone === 'function') {
@@ -95,6 +79,18 @@ function ensureGameApi(): GameApi {
 		gameApi = createGameApi();
 	}
 	return gameApi;
+}
+
+function toRemoteRecord(record: SessionStateRecord): RemoteSessionRecord {
+	return {
+		sessionId: record.sessionId,
+		snapshot: record.snapshot,
+		ruleSnapshot: record.ruleSnapshot,
+		registries: record.registries,
+		resourceKeys: record.resourceKeys,
+		metadata: record.metadata,
+		queueSeed: record.queueSeed,
+	};
 }
 
 export function setGameApi(instance: GameApi | null): void {
@@ -124,13 +120,8 @@ export async function createSession(
 	const adapter = getAdapter(response.sessionId);
 	return {
 		sessionId: response.sessionId,
-		session: adapter,
-		legacySession: adapter,
-		snapshot: stateRecord.snapshot,
-		ruleSnapshot: stateRecord.ruleSnapshot,
-		registries: stateRecord.registries,
-		resourceKeys: stateRecord.resourceKeys,
-		metadata: stateRecord.metadata,
+		adapter,
+		record: toRemoteRecord(stateRecord),
 	};
 }
 
@@ -143,13 +134,9 @@ export async function fetchSnapshot(
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const stateRecord = applySessionState(response);
 	return {
-		session: adapter,
-		legacySession: adapter,
-		snapshot: stateRecord.snapshot,
-		ruleSnapshot: stateRecord.ruleSnapshot,
-		registries: stateRecord.registries,
-		resourceKeys: stateRecord.resourceKeys,
-		metadata: stateRecord.metadata,
+		sessionId,
+		adapter,
+		record: toRemoteRecord(stateRecord),
 	};
 }
 
@@ -166,13 +153,9 @@ export async function setSessionDevMode(
 	const stateRecord = applySessionState(response);
 	adapter.setDevMode(enabled);
 	return {
-		session: adapter,
-		legacySession: adapter,
-		snapshot: stateRecord.snapshot,
-		ruleSnapshot: stateRecord.ruleSnapshot,
-		registries: stateRecord.registries,
-		resourceKeys: stateRecord.resourceKeys,
-		metadata: stateRecord.metadata,
+		sessionId,
+		adapter,
+		record: toRemoteRecord(stateRecord),
 	};
 }
 
