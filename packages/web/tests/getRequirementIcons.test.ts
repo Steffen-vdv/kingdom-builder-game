@@ -23,6 +23,7 @@ const DEFAULT_ASSETS: TranslationAssets = {
 	passive: {},
 	modifiers: {},
 	triggers: {},
+	tierSummaries: {},
 	formatPassiveRemoval: (description: string) =>
 		`Active as long as ${description}`,
 };
@@ -121,6 +122,32 @@ describe('getRequirementIcons', () => {
 		const icons = getRequirementIcons('test-action', translationContext);
 		expect(icons).toContain('📊');
 		expect(icons).toContain('👥');
+	});
+
+	it('resolves resource evaluator icons from translation assets', () => {
+		const resourceKey = 'mock-resource';
+		const translationContext = createTranslationContext(
+			[
+				{
+					type: 'evaluator',
+					method: 'compare',
+					params: {
+						left: {
+							type: 'resource',
+							params: { key: resourceKey },
+						},
+					},
+				},
+			],
+			{
+				resources: {
+					[resourceKey]: { icon: '🪙' },
+				},
+			},
+		);
+
+		const icons = getRequirementIcons('test-action', translationContext);
+		expect(icons).toEqual(['🪙']);
 	});
 
 	it('allows registering custom requirement icon handlers', () => {
