@@ -71,6 +71,14 @@ export function GameProviderInner({
 		updatePlayerName: syncPlayerName,
 	} = useSessionQueue(queue, sessionState, sessionId);
 
+	const readCachedSessionSnapshot = useCallback(() => {
+		const latest = queue.getLatestSnapshot();
+		if (latest) {
+			return latest;
+		}
+		return cachedSessionSnapshot;
+	}, [queue, cachedSessionSnapshot]);
+
 	const refresh = useCallback(() => {
 		void refreshSession();
 	}, [refreshSession]);
@@ -175,7 +183,7 @@ export function GameProviderInner({
 		});
 
 	useCompensationLogger({
-		session: legacySession,
+		sessionId,
 		sessionState,
 		addLog,
 		resourceKeys,
@@ -183,10 +191,10 @@ export function GameProviderInner({
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
-		session: legacySession,
 		sessionId,
 		actionCostResource,
 		registries,
+		getCachedSessionSnapshot: readCachedSessionSnapshot,
 		addLog,
 		showResolution: handleShowResolution,
 		syncPhaseState: applyPhaseSnapshot,

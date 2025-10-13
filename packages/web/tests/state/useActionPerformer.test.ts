@@ -43,7 +43,9 @@ vi.mock('../../src/state/sessionSdk', async () => {
 });
 
 describe('useActionPerformer', () => {
-	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
+	let getCachedSessionSnapshot: ReturnType<
+		typeof vi.fn<[], ReturnType<typeof createSessionSnapshot>>
+	>;
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
@@ -110,9 +112,7 @@ describe('useActionPerformer', () => {
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		getCachedSessionSnapshot = vi.fn(() => sessionSnapshot);
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
@@ -139,10 +139,10 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSessionSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -182,10 +182,10 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSessionSnapshot,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
@@ -229,10 +229,10 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSessionSnapshot,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
@@ -282,16 +282,14 @@ describe('useActionPerformer', () => {
 			currentPhase: sessionSnapshot.game.currentPhase,
 			currentStep: sessionSnapshot.game.currentStep,
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		getCachedSessionSnapshot.mockImplementation(() => sessionSnapshot);
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSessionSnapshot,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
@@ -364,10 +362,10 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSessionSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -454,10 +452,10 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSessionSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -518,10 +516,10 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSessionSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,

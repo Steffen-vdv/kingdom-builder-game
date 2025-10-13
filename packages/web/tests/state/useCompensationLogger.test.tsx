@@ -9,10 +9,7 @@ import type {
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
-import type {
-	LegacySession,
-	SessionResourceKey,
-} from '../../src/state/sessionTypes';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
 
 vi.mock('../../src/translation', async () => {
@@ -39,25 +36,6 @@ function createRegistriesWithFallback() {
 		? [primaryResource]
 		: [];
 	return { registries, resourceKeys, primaryResource } as const;
-}
-
-function createSession(primaryResource: SessionResourceKey): LegacySession {
-	return {
-		hasAiController: () => false,
-		getActionDefinition: () => undefined,
-		runAiTurn: vi.fn().mockResolvedValue(false),
-		advancePhase: vi.fn(),
-		pullEffectLog: vi.fn(),
-		getPassiveEvaluationMods: vi.fn(() => new Map()),
-		getRuleSnapshot: vi.fn(() => ({
-			tieredResourceKey: primaryResource,
-			tierDefinitions: [],
-			winConditions: [],
-		})),
-		pushEffectLog: vi.fn(),
-		applyDeveloperPreset: vi.fn(),
-		updatePlayerName: vi.fn(),
-	} as unknown as LegacySession;
 }
 
 function createPlayer(
@@ -124,7 +102,7 @@ function createSessionState(
 }
 
 interface HarnessProps {
-	session: LegacySession;
+	sessionId: string;
 	state: SessionSnapshot;
 	addLog: (entry: string | string[]) => void;
 	registries: ReturnType<typeof createSessionRegistries>;
@@ -132,14 +110,14 @@ interface HarnessProps {
 }
 
 function Harness({
-	session,
+	sessionId,
 	state,
 	addLog,
 	registries,
 	resourceKeys,
 }: HarnessProps) {
 	useCompensationLogger({
-		session,
+		sessionId,
 		sessionState: state,
 		addLog,
 		resourceKeys,
@@ -156,11 +134,11 @@ describe('useCompensationLogger', () => {
 			createRegistriesWithFallback();
 		const resourceKey =
 			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
-		const session = createSession(resourceKey);
+		const sessionId = 'session-primary';
 		const state = createSessionState(1, resourceKey);
 		const { rerender } = render(
 			<Harness
-				session={session}
+				sessionId={sessionId}
 				state={state}
 				addLog={addLog}
 				registries={registries}
@@ -178,7 +156,7 @@ describe('useCompensationLogger', () => {
 		const nextState = createSessionState(1, resourceKey);
 		rerender(
 			<Harness
-				session={session}
+				sessionId={sessionId}
 				state={nextState}
 				addLog={addLog}
 				registries={registries}
@@ -195,11 +173,11 @@ describe('useCompensationLogger', () => {
 		const { registries, resourceKeys } = createRegistriesWithFallback();
 		const resourceKey =
 			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
-		const session = createSession(resourceKey);
+		const sessionId = 'session-original';
 		const state = createSessionState(1, resourceKey);
 		const { rerender } = render(
 			<Harness
-				session={session}
+				sessionId={sessionId}
 				state={state}
 				addLog={addLog}
 				registries={registries}
@@ -208,11 +186,11 @@ describe('useCompensationLogger', () => {
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
-		const newSession = createSession(resourceKey);
+		const newSessionId = 'session-new';
 		const newState = createSessionState(1, resourceKey);
 		rerender(
 			<Harness
-				session={newSession}
+				sessionId={newSessionId}
 				state={newState}
 				addLog={addLog}
 				registries={registries}

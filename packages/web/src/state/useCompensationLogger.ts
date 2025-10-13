@@ -7,14 +7,10 @@ import {
 	type TranslationDiffContext,
 } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
-import type {
-	LegacySession,
-	SessionRegistries,
-	SessionResourceKey,
-} from './sessionTypes';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 
 interface UseCompensationLoggerOptions {
-	session: LegacySession;
+	sessionId: string;
 	sessionState: SessionSnapshot;
 	addLog: (
 		entry: string | string[],
@@ -28,17 +24,17 @@ interface UseCompensationLoggerOptions {
 }
 
 export function useCompensationLogger({
-	session,
+	sessionId,
 	sessionState,
 	addLog,
 	resourceKeys,
 	registries,
 }: UseCompensationLoggerOptions) {
-	const loggedSessionRef = useRef<LegacySession | null>(null);
+	const loggedSessionRef = useRef<string | null>(null);
 	const loggedPlayersRef = useRef<Set<string>>(new Set());
 	useEffect(() => {
-		if (loggedSessionRef.current !== session) {
-			loggedSessionRef.current = session;
+		if (loggedSessionRef.current !== sessionId) {
+			loggedSessionRef.current = sessionId;
 			loggedPlayersRef.current = new Set();
 		}
 		if (sessionState.game.turn !== 1) {
@@ -108,5 +104,5 @@ export function useCompensationLogger({
 				loggedPlayersRef.current.add(player.id);
 			}
 		});
-	}, [addLog, registries, resourceKeys, session, sessionState]);
+	}, [addLog, registries, resourceKeys, sessionId, sessionState]);
 }
