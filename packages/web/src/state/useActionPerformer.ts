@@ -31,12 +31,12 @@ import {
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
+import { performSessionAction } from './sessionSdk';
 import {
-	performSessionAction,
 	SessionMirroringError,
 	markFatalSessionError,
 	isFatalSessionError,
-} from './sessionSdk';
+} from './sessionErrors';
 import type {
 	LegacySession,
 	SessionRegistries,

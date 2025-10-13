@@ -1055,34 +1055,5 @@
 			"tags": ["attack-target", "win-condition-zero"]
 		}
 	},
-	"primaryIconId": "castleHP",
-	"developerPreset": {
-		"resourceTargets": [
-			{
-				"key": "gold",
-				"target": 100
-			},
-			{
-				"key": "happiness",
-				"target": 10
-			}
-		],
-		"populationPlan": [
-			{
-				"role": "council",
-				"count": 2
-			},
-			{
-				"role": "legion",
-				"count": 1
-			},
-			{
-				"role": "fortifier",
-				"count": 1
-			}
-		],
-		"landCount": 5,
-		"developments": ["house", "farm", "outpost", "watchtower"],
-		"buildings": ["mill"]
-	}
+	"primaryIconId": "castleHP"
 }

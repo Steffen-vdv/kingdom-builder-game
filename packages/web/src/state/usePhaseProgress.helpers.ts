@@ -6,12 +6,12 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { snapshotPlayer } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
+import { advanceSessionPhase } from './sessionSdk';
 import {
-	advanceSessionPhase,
 	SessionMirroringError,
 	markFatalSessionError,
 	isFatalSessionError,
-} from './sessionSdk';
+} from './sessionErrors';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type {
 	FormatPhaseResolutionOptions,

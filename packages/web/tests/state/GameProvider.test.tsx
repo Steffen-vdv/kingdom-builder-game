@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
-import { SessionMirroringError } from '../../src/state/sessionSdk';
+import { SessionMirroringError } from '../../src/state/sessionErrors';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
