@@ -6,7 +6,7 @@ import React from 'react';
 import RaisePopOptions from '../../../src/components/actions/RaisePopOptions';
 // prettier-ignore
 import {
-	RegistryMetadataProvider,
+        RegistryMetadataProvider,
 } from '../../../src/contexts/RegistryMetadataContext';
 // prettier-ignore
 import {
@@ -29,6 +29,7 @@ import type {
 import type { PlayerId } from '@kingdom-builder/engine';
 import type { Action } from '../../../src/components/actions/types';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
+import type { PopulationRoleKey } from '../../../src/components/actions/populationHelpers';
 
 interface RaisePopScenario {
 	registries: SessionRegistries;
@@ -37,7 +38,7 @@ interface RaisePopScenario {
 	mockGame: LegacyGameEngineContextValue;
 	action: Action;
 	player: LegacyGameEngineContextValue['sessionView']['active'];
-	populationIds: string[];
+	populationIds: PopulationRoleKey[];
 }
 
 function createRaisePopScenario(

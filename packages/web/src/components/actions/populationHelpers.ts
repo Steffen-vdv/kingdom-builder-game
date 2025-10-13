@@ -1,4 +1,3 @@
-import type { PopulationRoleId } from '@kingdom-builder/contents';
 import type { PopulationConfig } from '@kingdom-builder/protocol';
 import type { RegistryMetadataDescriptor } from '../../contexts/RegistryMetadataContext';
 import type { Action } from './types';
@@ -13,12 +12,12 @@ export type EffectConfig = {
 };
 
 export interface PopulationRegistryLike {
-	get(id: string): PopulationDefinition;
-	entries(): [string, PopulationDefinition][];
+	get(id: PopulationRoleKey): PopulationDefinition;
+	entries(): [PopulationRoleKey, PopulationDefinition][];
 }
 
 export type PopulationDescriptorSelector = (
-	roleId: string,
+	roleId: PopulationRoleKey,
 ) => RegistryMetadataDescriptor;
 
 type RequirementConfig = {
@@ -81,8 +80,14 @@ export function collectPopulationRolesFromEffects(
 	return usesPlaceholder;
 }
 
+export type PopulationRoleKey = PopulationDefinition extends { id: infer Id }
+	? Id extends string
+		? Id
+		: string
+	: string;
+
 export function getPopulationIconFromRole(
-	role: string,
+	role: PopulationRoleKey,
 	populations: PopulationRegistryLike,
 	selectDescriptor: PopulationDescriptorSelector,
 	defaultIcon?: string,
@@ -111,7 +116,7 @@ export function getPopulationIconFromRole(
 
 function getIconsFromEvaluator(
 	evaluator: EvaluatorConfig | undefined,
-	roleId: PopulationRoleId,
+	roleId: PopulationRoleKey,
 	populations: PopulationRegistryLike,
 	selectDescriptor: PopulationDescriptorSelector,
 	defaultIcon?: string,
@@ -154,7 +159,7 @@ function getIconsFromEvaluator(
 export function determineRaisePopRoles(
 	actionDefinition: Action | undefined,
 	populations: PopulationRegistryLike,
-): PopulationRoleId[] {
+): PopulationRoleKey[] {
 	const explicitRoles = new Set<string>();
 	const usesPlaceholder = collectPopulationRolesFromEffects(
 		(actionDefinition?.effects as EffectConfig[]) ?? [],
@@ -169,14 +174,14 @@ export function determineRaisePopRoles(
 			orderedRoles.add(roleId);
 		}
 	}
-	const result: PopulationRoleId[] = [];
+	const result: PopulationRoleKey[] = [];
 	for (const roleId of orderedRoles) {
 		try {
 			const population = populations.get(roleId);
 			if (!explicitRoles.has(roleId) && !isHirablePopulation(population)) {
 				continue;
 			}
-			result.push(roleId as PopulationRoleId);
+			result.push(roleId);
 		} catch {
 			// Ignore missing population ids when collecting options.
 		}
@@ -186,7 +191,7 @@ export function determineRaisePopRoles(
 
 export function buildRequirementIconsForRole(
 	actionDefinition: Action | undefined,
-	roleId: PopulationRoleId,
+	roleId: PopulationRoleKey,
 	baseIcons: string[],
 	populations: PopulationRegistryLike,
 	selectDescriptor: PopulationDescriptorSelector,

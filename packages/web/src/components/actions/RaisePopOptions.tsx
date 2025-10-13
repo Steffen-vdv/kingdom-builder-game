@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from 'react';
-import { type PopulationRoleId } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	splitSummary,
@@ -24,6 +23,7 @@ import {
 	type PopulationRegistryLike,
 	type PopulationDescriptorSelector,
 	type PopulationDefinition,
+	type PopulationRoleKey,
 } from './populationHelpers';
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';
 import { normalizeActionFocus } from './types';
@@ -64,11 +64,10 @@ export default function RaisePopOptions({
 		return populationMetadata.list.find((entry) => entry.icon)?.icon;
 	}, [populationMetadata]);
 	const populationRegistry = useMemo<PopulationRegistryLike>(() => {
-		const entries: Array<[string, PopulationDefinition]> = populations
-			.entries()
-			.map(([id, definition]) => [id, definition]);
+		const entries: Array<[PopulationRoleKey, PopulationDefinition]> =
+			populations.entries().map(([id, definition]) => [id, definition]);
 		return {
-			get(id: string) {
+			get(id: PopulationRoleKey) {
 				const definition = populations.get(id);
 				if (!definition) {
 					throw new Error(`Unknown population: ${id}`);
@@ -93,7 +92,7 @@ export default function RaisePopOptions({
 		[actionDefinition, populationRegistry],
 	);
 	const getRequirementIconsForRole = useCallback(
-		(role: PopulationRoleId) =>
+		(role: PopulationRoleKey) =>
 			buildRequirementIconsForRole(
 				actionDefinition,
 				role,
