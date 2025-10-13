@@ -111,6 +111,18 @@ export function applySessionState(
 	return record;
 }
 
+export function updateSessionSnapshot(
+	sessionId: string,
+	snapshot: SessionSnapshot,
+): SessionStateRecord {
+	const record = assertSessionRecord(sessionId);
+	record.snapshot = clone(snapshot);
+	record.ruleSnapshot = clone(snapshot.rules);
+	applyMetadata(record, snapshot.metadata);
+	records.set(sessionId, record);
+	return record;
+}
+
 export function updateRegistries(
 	sessionId: string,
 	payload: SessionRegistriesPayload,
@@ -149,4 +161,14 @@ export function deleteSessionRecord(sessionId: string): void {
 
 export function clearSessionStateStore(): void {
 	records.clear();
+}
+
+export function enqueueSessionTask<T>(
+	sessionId: string,
+	task: () => Promise<T> | T,
+): Promise<T> {
+	const record = assertSessionRecord(sessionId);
+	const chain = record.queueSeed.then(() => Promise.resolve().then(task));
+	record.queueSeed = chain.catch(() => {}).then(() => undefined);
+	return chain;
 }

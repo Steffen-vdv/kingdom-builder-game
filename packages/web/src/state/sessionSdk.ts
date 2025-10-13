@@ -1,57 +1,70 @@
-import type { EngineSession } from '@kingdom-builder/engine';
 import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
+	ActionExecuteSuccessResponse,
 } from '@kingdom-builder/protocol/actions';
 import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 	SessionRuleSnapshot,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
-import { type SessionRegistries } from './sessionRegistries';
-import {
-	createLegacySessionMirror,
-	getLegacySessionRecord,
-	markFatalSessionError,
-	mergeLegacySessionCaches,
-	replaceLegacySessionCaches,
-	releaseLegacySession,
-	SessionMirroringError,
-	type ResourceKey,
-	type SessionHandle,
-} from './legacySessionMirror';
 import {
 	applySessionState,
 	deleteSessionRecord,
+	enqueueSessionTask,
 	initializeSessionState,
+	updateSessionSnapshot,
 } from './sessionStateStore';
+import {
+	type LegacySession,
+	type Session,
+	type SessionRegistries,
+	type SessionResourceKeys,
+} from './sessionTypes';
 import {
 	createGameApi,
 	type GameApi,
 	type GameApiRequestOptions,
 } from '../services/gameApi';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
+import {
+	deleteRemoteAdapter,
+	getOrCreateRemoteAdapter,
+	getRemoteAdapter,
+} from './remoteSessionAdapter';
+import type { RemoteSessionAdapter } from './remoteSessionAdapter';
+import {
+	SessionMirroringError,
+	markFatalSessionError,
+	isFatalSessionError,
+	type SessionMirroringErrorOptions,
+} from './sessionErrors';
 
 interface CreateSessionOptions {
 	devMode?: boolean;
 	playerName?: string;
 }
 
-interface CreateSessionResult {
+export interface CreateSessionResult {
 	sessionId: string;
-	session: SessionHandle;
-	legacySession: EngineSession;
+	session: Session;
+	legacySession: LegacySession;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKeys;
 	metadata: SessionSnapshotMetadata;
 }
-
 type ActionRequirementFailure =
 	ActionExecuteErrorResponse['requirementFailure'];
 type ActionRequirementFailures =
@@ -61,18 +74,22 @@ type ActionExecutionFailure = Error & {
 	requirementFailures?: ActionRequirementFailures;
 };
 
-interface FetchSnapshotResult {
-	session: SessionHandle;
-	legacySession: EngineSession;
+export interface FetchSnapshotResult {
+	session: Session;
+	legacySession: LegacySession;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
-	resourceKeys: ResourceKey[];
+	resourceKeys: SessionResourceKeys;
 	metadata: SessionSnapshotMetadata;
 }
-
+const clone = <T>(value: T): T => {
+	if (typeof structuredClone === 'function') {
+		return structuredClone(value);
+	}
+	return JSON.parse(JSON.stringify(value)) as T;
+};
 let gameApi: GameApi | null = null;
-
 function ensureGameApi(): GameApi {
 	if (!gameApi) {
 		gameApi = createGameApi();
@@ -84,12 +101,13 @@ export function setGameApi(instance: GameApi | null): void {
 	gameApi = instance;
 }
 
-/**
- * Creates a new game session via the remote API.
- *
- * @param options - Configuration for the local session bootstrap.
- * @param requestOptions - Transport settings such as an abort signal.
- */
+function getAdapter(sessionId: string): RemoteSessionAdapter {
+	return getOrCreateRemoteAdapter(sessionId, {
+		ensureGameApi,
+		runAiTurn: runAiTurnInternal,
+	});
+}
+
 export async function createSession(
 	options: CreateSessionOptions = {},
 	requestOptions: GameApiRequestOptions = {},
@@ -103,16 +121,11 @@ export async function createSession(
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest, requestOptions);
 	const stateRecord = initializeSessionState(response);
-	const mirror = await createLegacySessionMirror({
-		sessionId: response.sessionId,
-		devMode,
-		playerName,
-		registries: response.registries,
-	});
+	const adapter = getAdapter(response.sessionId);
 	return {
-		sessionId: mirror.sessionId,
-		session: mirror.session,
-		legacySession: mirror.legacySession,
+		sessionId: response.sessionId,
+		session: adapter,
+		legacySession: adapter,
 		snapshot: stateRecord.snapshot,
 		ruleSnapshot: stateRecord.ruleSnapshot,
 		registries: stateRecord.registries,
@@ -121,28 +134,17 @@ export async function createSession(
 	};
 }
 
-/**
- * Retrieves the latest snapshot for the provided session.
- *
- * @param sessionId - Target session identifier.
- * @param requestOptions - Transport settings such as an abort signal.
- */
 export async function fetchSnapshot(
 	sessionId: string,
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const record = getLegacySessionRecord(sessionId);
+	const adapter = getAdapter(sessionId);
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const stateRecord = applySessionState(response);
-	replaceLegacySessionCaches(
-		record,
-		stateRecord.registries,
-		stateRecord.resourceKeys,
-	);
 	return {
-		session: record.handle,
-		legacySession: record.legacySession,
+		session: adapter,
+		legacySession: adapter,
 		snapshot: stateRecord.snapshot,
 		ruleSnapshot: stateRecord.ruleSnapshot,
 		registries: stateRecord.registries,
@@ -157,18 +159,15 @@ export async function setSessionDevMode(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const record = getLegacySessionRecord(sessionId);
-	const response = await api.setDevMode({ sessionId, enabled }, requestOptions);
-	record.legacySession.setDevMode(enabled);
-	const stateRecord = applySessionState(response);
-	replaceLegacySessionCaches(
-		record,
-		stateRecord.registries,
-		stateRecord.resourceKeys,
+	const adapter = getAdapter(sessionId);
+	const response = await enqueueSessionTask(sessionId, async () =>
+		api.setDevMode({ sessionId, enabled }, requestOptions),
 	);
+	const stateRecord = applySessionState(response);
+	adapter.setDevMode(enabled);
 	return {
-		session: record.handle,
-		legacySession: record.legacySession,
+		session: adapter,
+		legacySession: adapter,
 		snapshot: stateRecord.snapshot,
 		ruleSnapshot: stateRecord.ruleSnapshot,
 		registries: stateRecord.registries,
@@ -177,107 +176,167 @@ export async function setSessionDevMode(
 	};
 }
 
-/**
- * Executes an action against the remote session and mirrors it locally.
- *
- * @param request - Action execution payload.
- * @param requestOptions - Transport settings such as an abort signal.
- */
+function normalizeActionError(error: unknown): ActionExecuteErrorResponse {
+	const failure = error as ActionExecutionFailure;
+	const response: ActionExecuteErrorResponse = {
+		status: 'error',
+		error: failure?.message ?? 'Action failed.',
+	};
+	if (failure?.requirementFailure) {
+		response.requirementFailure = failure.requirementFailure;
+	}
+	if (failure?.requirementFailures) {
+		response.requirementFailures = failure.requirementFailures;
+	}
+	if (!response.requirementFailure && !response.requirementFailures) {
+		response.fatal = true;
+	}
+	return response;
+}
+
 export async function performSessionAction(
 	request: ActionExecuteRequest,
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<ActionExecuteResponse> {
 	const api = ensureGameApi();
-	const { handle } = getLegacySessionRecord(request.sessionId);
 	try {
-		const response = await api.performAction(request, requestOptions);
-		if (response.status === 'success') {
-			try {
-				const params = request.params;
-				await handle.enqueue(() => {
-					handle.performAction(request.actionId, params);
-				});
-			} catch (localError) {
-				const error = new SessionMirroringError(
-					'Local session failed to mirror remote action.',
-					{
-						cause: localError,
-						details: {
-							sessionId: request.sessionId,
-							actionId: request.actionId,
-						},
-					},
-				);
-				throw error;
+		return await enqueueSessionTask(request.sessionId, async () => {
+			const response = await api.performAction(request, requestOptions);
+			if (response.status === 'success') {
+				applyActionSnapshot(request.sessionId, response);
 			}
-		}
-		return response;
+			return response;
+		});
 	} catch (error) {
 		if (error instanceof SessionMirroringError) {
 			markFatalSessionError(error);
 			throw error;
 		}
-		const failure = error as ActionExecutionFailure;
-		const response: ActionExecuteErrorResponse = {
-			status: 'error',
-			error: failure?.message ?? 'Action failed.',
-		};
-		if (failure?.requirementFailure) {
-			response.requirementFailure = failure.requirementFailure;
-		}
-		if (failure?.requirementFailures) {
-			response.requirementFailures = failure.requirementFailures;
-		}
-		if (!response.requirementFailure && !response.requirementFailures) {
-			response.fatal = true;
-		}
-		return response;
+		return normalizeActionError(error);
 	}
 }
 
-/**
- * Advances the remote session phase and updates local caches.
- *
- * @param request - Phase advance payload.
- * @param requestOptions - Transport settings such as an abort signal.
- */
+function applyActionSnapshot(
+	sessionId: string,
+	response: ActionExecuteSuccessResponse,
+): void {
+	try {
+		updateSessionSnapshot(sessionId, response.snapshot);
+	} catch (cause) {
+		throw new SessionMirroringError(
+			'Failed to update session snapshot after action.',
+			{
+				cause,
+				details: {
+					sessionId,
+				},
+			},
+		);
+	}
+}
+
 export async function advanceSessionPhase(
 	request: SessionAdvanceRequest,
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionAdvanceResponse> {
 	const api = ensureGameApi();
-	const record = getLegacySessionRecord(request.sessionId);
-	const response = await api.advancePhase(request, requestOptions);
-	const stateRecord = applySessionState(response);
-	mergeLegacySessionCaches(
-		record,
-		stateRecord.registries,
-		stateRecord.resourceKeys,
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.advancePhase(request, requestOptions),
 	);
-	try {
-		await record.handle.enqueue(() => {
-			record.handle.advancePhase();
+	const stateRecord = applySessionState(response);
+	adapter.recordAdvanceResult(response.advance);
+	return {
+		sessionId: response.sessionId,
+		snapshot: stateRecord.snapshot,
+		registries: response.registries,
+		advance: clone(response.advance),
+	};
+}
+
+async function runAiTurnInternal(
+	request: SessionRunAiRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionRunAiResponse> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.runAiTurn(request, requestOptions),
+	);
+	const stateRecord = applySessionState(response);
+	const activePlayer = stateRecord.snapshot.game.players.find(
+		(entry) => entry.id === stateRecord.snapshot.game.activePlayerId,
+	);
+	if (activePlayer) {
+		adapter.recordAdvanceResult({
+			phase: stateRecord.snapshot.game.currentPhase,
+			step: stateRecord.snapshot.game.currentStep,
+			effects: [],
+			player: activePlayer,
 		});
-	} catch (localError) {
-		const error = new SessionMirroringError(
-			'Local session failed to mirror remote phase advance.',
-			{
-				cause: localError,
-				details: {
-					sessionId: request.sessionId,
-				},
-			},
-		);
-		throw error;
 	}
-	return response;
+	return {
+		sessionId: response.sessionId,
+		snapshot: stateRecord.snapshot,
+		registries: response.registries,
+		ranTurn: response.ranTurn,
+	};
+}
+
+export async function runAiTurn(
+	request: SessionRunAiRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionRunAiResponse> {
+	return runAiTurnInternal(request, requestOptions);
+}
+
+async function simulateUpcomingPhasesInternal(
+	request: SessionSimulateRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionSimulateResponse> {
+	const api = ensureGameApi();
+	const response = await api.simulateUpcomingPhases(request, requestOptions);
+	const adapter = getRemoteAdapter(request.sessionId);
+	if (adapter) {
+		adapter.cacheSimulation(request.playerId, response.result);
+	}
+	return clone(response);
+}
+
+export async function simulateUpcomingPhases(
+	request: SessionSimulateRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionSimulateResponse> {
+	return simulateUpcomingPhasesInternal(request, requestOptions);
+}
+
+export async function updatePlayerName(
+	request: SessionUpdatePlayerNameRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionUpdatePlayerNameResponse> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.updatePlayerName(request, requestOptions),
+	);
+	const stateRecord = applySessionState(response);
+	const player = stateRecord.snapshot.game.players.find(
+		(entry) => entry.id === request.playerId,
+	);
+	if (player) {
+		adapter.updatePlayerName(request.playerId, player.name);
+	}
+	return {
+		sessionId: response.sessionId,
+		snapshot: stateRecord.snapshot,
+		registries: response.registries,
+	};
 }
 
 export function releaseSession(sessionId: string): void {
 	deleteSessionRecord(sessionId);
-	releaseLegacySession(sessionId);
+	deleteRemoteAdapter(sessionId);
 }
 
-export type { CreateSessionResult, FetchSnapshotResult, SessionHandle };
-export { SessionMirroringError, markFatalSessionError };
-export { isFatalSessionError } from './legacySessionMirror';
+export type { SessionMirroringErrorOptions };
+export { SessionMirroringError, markFatalSessionError, isFatalSessionError };

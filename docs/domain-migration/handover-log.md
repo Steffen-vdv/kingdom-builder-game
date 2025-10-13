@@ -110,3 +110,17 @@
   reflecting the methods consumed during migration (costs, requirements,
   options, AI helpers, simulation, etc.) and the queue helpers seeded from the
   remote session store.
+
+## Domain Migration - P3 - T8 - Remote Session SDK Adapter
+
+- Replaced the engine-backed mirror in `packages/web/src/state/sessionSdk.ts`
+  with a protocol-driven adapter that shares the session queue store, forwards
+  lifecycle calls to `GameApi`, and caches registries, snapshots, metadata, and
+  advance results directly in the session state store.
+- Added queue helpers to the session state store to serialize remote mutations
+  and expose snapshot-only updates for action responses, ensuring the adapter
+  can refresh local caches without the engine.
+- Updated `GameProviderInner` to call the remote `updatePlayerName` utility and
+  rewrote the session SDK test suite to exercise remote behaviour using the
+  revised `GameApiFake`, removing the final engine dependencies from the web
+  session bootstrap path.
