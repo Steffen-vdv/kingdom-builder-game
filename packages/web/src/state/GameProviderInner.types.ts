@@ -6,6 +6,7 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionMetadata,
+	LegacySession,
 } from './sessionTypes';
 
 export interface GameProviderInnerProps {
@@ -25,6 +26,7 @@ export interface GameProviderInnerProps {
 	queue: SessionQueueHelpers;
 	sessionId: string;
 	sessionState: SessionSnapshot;
+	legacySession: LegacySession;
 	ruleSnapshot: SessionRuleSnapshot;
 	refreshSession: () => Promise<void>;
 	onReleaseSession: () => void;

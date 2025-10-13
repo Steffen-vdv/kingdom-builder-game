@@ -16,8 +16,8 @@ export type { SessionRuleSnapshot, SessionSnapshot };
 
 export interface SessionQueueHelpers {
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
-	getCurrentSession: () => Session;
-	getLegacySession: () => LegacySession;
 	getLatestSnapshot: () => SessionSnapshot | null;
+	getLatestRegistries: () => SessionRegistries | null;
+	getLatestMetadata: () => SessionMetadata | null;
 	updatePlayerName: (playerId: string, playerName: string) => Promise<void>;
 }
