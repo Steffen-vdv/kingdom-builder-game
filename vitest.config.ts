@@ -4,7 +4,6 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	resolve: {
 		alias: {
-			'@kingdom-builder/engine': path.resolve(__dirname, 'packages/engine/src'),
 			'@kingdom-builder/contents': path.resolve(
 				__dirname,
 				'packages/contents/src',
@@ -18,6 +17,10 @@ export default defineConfig({
 				'packages/protocol/src',
 			),
 			'@kingdom-builder/web': path.resolve(__dirname, 'packages/web/src'),
+			'@kingdom-builder/web/session-queue': path.resolve(
+				__dirname,
+				'packages/web/src/state/RemoteSessionQueue.ts',
+			),
 		},
 	},
 	test: {

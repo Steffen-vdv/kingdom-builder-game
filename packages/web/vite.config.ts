@@ -12,7 +12,10 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@kingdom-builder/contents': path.resolve(rootDir, '../contents/src'),
-			'@kingdom-builder/engine': path.resolve(rootDir, '../engine/src'),
+			'@kingdom-builder/web/session-queue': path.resolve(
+				rootDir,
+				'./src/state/RemoteSessionQueue.ts',
+			),
 			'@kingdom-builder/protocol': path.resolve(rootDir, '../protocol/src'),
 		},
 	},
