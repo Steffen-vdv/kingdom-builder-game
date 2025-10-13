@@ -103,3 +103,10 @@
 - Registered session transport endpoints for action metadata, AI turns, and
   phase simulations so the domain handover includes HTTP access to the new
   protocol routes.
+
+## Domain Migration - P3 - T7 - Web legacy session interface audit
+
+- Documented the explicit `LegacySession` interface exposed to the web layer,
+  reflecting the methods consumed during migration (costs, requirements,
+  options, AI helpers, simulation, etc.) and the queue helpers seeded from the
+  remote session store.

@@ -14,6 +14,7 @@ import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
+import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -43,7 +44,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 });
 
 describe('useActionPerformer', () => {
-	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
+	let session: LegacySession;
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
@@ -110,9 +111,9 @@ describe('useActionPerformer', () => {
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		session = createLegacySessionMock({
+			snapshot: sessionSnapshot,
+		});
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();

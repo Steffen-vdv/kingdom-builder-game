@@ -12,7 +12,11 @@ import {
 	GameProviderInner,
 	type GameProviderInnerProps,
 } from './GameProviderInner';
-import { type SessionQueueHelpers, type SessionSnapshot } from './sessionTypes';
+import {
+	type SessionQueueHelpers,
+	type SessionQueueSeed,
+	type SessionSnapshot,
+} from './sessionTypes';
 import type {
 	GameProviderProps,
 	LegacyGameEngineContextValue,
@@ -55,7 +59,7 @@ export function GameProvider(props: GameProviderProps) {
 	} = props;
 
 	const mountedRef = useRef(true);
-	const queueRef = useRef<Promise<void>>(Promise.resolve());
+	const queueRef = useRef<SessionQueueSeed>(Promise.resolve());
 	const sessionStateRef = useRef<SessionContainer | null>(null);
 	const latestSnapshotRef = useRef<SessionSnapshot | null>(null);
 	const refreshAbortRef = useRef<AbortController | null>(null);

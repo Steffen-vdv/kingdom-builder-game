@@ -2,7 +2,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { advanceToActionPhase } from '../../src/state/usePhaseProgress.helpers';
 import { SessionMirroringError } from '../../src/state/legacySessionMirror';
-import type { LegacySession } from '../../src/state/sessionTypes';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -11,6 +10,7 @@ import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
+import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 
 const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
 
@@ -54,9 +54,7 @@ describe('advanceToActionPhase', () => {
 			currentPhase: phases[0]?.id ?? 'phase-setup',
 			currentStep: phases[0]?.id ?? 'phase-setup',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => snapshot),
-		} as unknown as LegacySession;
+		const session = createLegacySessionMock({ snapshot });
 		const mountedRef = { current: true };
 		const applyPhaseSnapshot = vi.fn();
 		const refresh = vi.fn();

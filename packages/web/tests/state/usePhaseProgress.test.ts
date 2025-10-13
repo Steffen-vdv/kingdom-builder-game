@@ -11,6 +11,7 @@ import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
+import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 
 const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
 const advanceToActionPhaseMock = vi.hoisted(() => vi.fn());
@@ -68,9 +69,9 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		const session = createLegacySessionMock({
+			snapshot: sessionSnapshot,
+		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -149,9 +150,9 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		const session = createLegacySessionMock({
+			snapshot: sessionSnapshot,
+		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -221,9 +222,9 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		const session = createLegacySessionMock({
+			snapshot: sessionSnapshot,
+		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
