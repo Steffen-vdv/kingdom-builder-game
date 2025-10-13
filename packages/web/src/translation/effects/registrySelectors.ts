@@ -1,8 +1,3 @@
-import {
-	STATS,
-	type PopulationRoleId,
-	type StatKey,
-} from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
 
@@ -84,7 +79,7 @@ function resolvePopulationFallback(context: ContextWithAssets | undefined) {
 
 export function selectPopulationDescriptor(
 	context: ContextWithAssets,
-	role: PopulationRoleId | undefined,
+	role: string | undefined,
 ): RegistryDescriptor {
 	const cache = getCacheEntry(
 		context,
@@ -137,6 +132,10 @@ export function selectResourceDescriptor(
 const statCache: CacheStore<StatRegistryDescriptor> = new WeakMap();
 const statFallbackCache: CacheFallback<StatRegistryDescriptor> = new Map();
 
+const DEFAULT_STAT_FORMATS: Record<string, { prefix?: string }> = {
+	maxPopulation: { prefix: 'Max ' },
+};
+
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
@@ -149,13 +148,13 @@ export function selectStatDescriptor(
 	}
 	const assets = context.assets;
 	const entry = assets?.stats?.[key];
-	const statDef = STATS[key as StatKey];
-	const statLabelFallback = statDef?.label ?? humanizeIdentifier(key);
-	const fallbackLabel =
-		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
-	const label = coerceLabel(entry?.label ?? statDef?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon ?? statDef?.icon, key);
-	const format = statDef?.addFormat ? { ...statDef.addFormat } : undefined;
+	const fallbackLabel = entry?.label ?? humanizeIdentifier(key) ?? key;
+	const label = coerceLabel(entry?.label, fallbackLabel);
+	const icon = coerceIcon(entry?.icon, key);
+	const baseFormat = DEFAULT_STAT_FORMATS[key];
+	const format = entry?.displayAsPercent
+		? { ...(baseFormat ?? {}), percent: true as const }
+		: baseFormat;
 	const descriptor: StatRegistryDescriptor = {
 		icon,
 		label,
