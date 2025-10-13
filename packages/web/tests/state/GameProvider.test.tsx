@@ -10,12 +10,23 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import type {
+	SessionCreateResponse,
+	SessionResourceDefinition,
+	SessionSnapshot,
+	SessionStateResponse,
+} from '@kingdom-builder/protocol/session';
 import {
 	createResourceKeys,
 	createSessionRegistries,
+	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
 import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import {
+	applySessionState,
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../src/state/sessionStateStore';
 
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
@@ -168,10 +179,13 @@ function SessionInspector() {
 describe('GameProvider', () => {
 	let session: LegacySession;
 	let registries: ReturnType<typeof createSessionRegistries>;
+	let registriesPayload: ReturnType<typeof createSessionRegistriesPayload>;
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
+	const sessionId = 'session-1';
 	beforeEach(() => {
+		clearSessionStateStore();
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
@@ -254,11 +268,20 @@ describe('GameProvider', () => {
 			currentStep: phases[0]?.steps?.[0]?.id ?? phases[0]?.id ?? 'phase-main',
 		});
 		registries = createSessionRegistries();
+		registriesPayload = createSessionRegistriesPayload();
 		resourceKeys = [resourceKey];
-		updatePlayerNameMock.mockResolvedValue({
-			sessionId: 'session-1',
-			snapshot: initialSnapshot,
-			registries,
+		updatePlayerNameMock.mockImplementation(() => {
+			const response: SessionStateResponse = {
+				sessionId,
+				snapshot: initialSnapshot as unknown as SessionSnapshot,
+				registries: registriesPayload,
+			};
+			applySessionState(response);
+			return Promise.resolve({
+				sessionId,
+				snapshot: initialSnapshot,
+				registries,
+			});
 		});
 		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
 			return await task();
@@ -274,24 +297,40 @@ describe('GameProvider', () => {
 				setDevMode: vi.fn(),
 			},
 		);
-		createSessionMock.mockResolvedValue({
-			sessionId: 'session-1',
-			session,
-			legacySession: session,
-			snapshot: initialSnapshot,
-			ruleSnapshot: initialSnapshot.rules,
-			registries,
-			resourceKeys,
-			metadata: initialSnapshot.metadata,
+		createSessionMock.mockImplementation(() => {
+			const response: SessionCreateResponse = {
+				sessionId,
+				snapshot: initialSnapshot as unknown as SessionSnapshot,
+				registries: registriesPayload,
+			};
+			initializeSessionState(response);
+			return Promise.resolve({
+				sessionId,
+				session,
+				legacySession: session,
+				snapshot: initialSnapshot,
+				ruleSnapshot: initialSnapshot.rules,
+				registries,
+				resourceKeys,
+				metadata: initialSnapshot.metadata,
+			});
 		});
-		fetchSnapshotMock.mockResolvedValue({
-			session,
-			legacySession: session,
-			snapshot: refreshedSnapshot,
-			ruleSnapshot: refreshedSnapshot.rules,
-			registries,
-			resourceKeys,
-			metadata: refreshedSnapshot.metadata,
+		fetchSnapshotMock.mockImplementation(() => {
+			const response: SessionStateResponse = {
+				sessionId,
+				snapshot: refreshedSnapshot as unknown as SessionSnapshot,
+				registries: registriesPayload,
+			};
+			applySessionState(response);
+			return Promise.resolve({
+				session,
+				legacySession: session,
+				snapshot: refreshedSnapshot,
+				ruleSnapshot: refreshedSnapshot.rules,
+				registries,
+				resourceKeys,
+				metadata: refreshedSnapshot.metadata,
+			});
 		});
 	});
 
@@ -353,14 +392,22 @@ describe('GameProvider', () => {
 			devMode: true,
 		});
 
-		setSessionDevModeMock.mockResolvedValueOnce({
-			session,
-			legacySession: session,
-			snapshot: devModeSnapshot,
-			ruleSnapshot: devModeSnapshot.rules,
-			registries,
-			resourceKeys,
-			metadata: devModeSnapshot.metadata,
+		setSessionDevModeMock.mockImplementationOnce(() => {
+			const response: SessionStateResponse = {
+				sessionId,
+				snapshot: devModeSnapshot as unknown as SessionSnapshot,
+				registries: registriesPayload,
+			};
+			applySessionState(response);
+			return Promise.resolve({
+				session,
+				legacySession: session,
+				snapshot: devModeSnapshot,
+				ruleSnapshot: devModeSnapshot.rules,
+				registries,
+				resourceKeys,
+				metadata: devModeSnapshot.metadata,
+			});
 		});
 
 		rerender(
