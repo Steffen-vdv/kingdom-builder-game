@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { createDefaultRegistryMetadata } from '../helpers/defaultRegistrySnapshot';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
@@ -43,20 +44,37 @@ describe('createTranslationContext', () => {
 		const [firstPhase] = phases;
 		const firstStep = firstPhase?.steps?.[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
-		const metadata = {
-			effectLogs: { legacy: [{ note: 'legacy entry' }] },
-			passiveEvaluationModifiers: {
-				[resourceKey]: ['modifier'],
-			},
-			triggers: {
-				[triggerId]: {
-					icon: '🔔',
-					future: 'At the start of Alpha',
-					past: 'Alpha Start',
-					label: 'Alpha Start',
-				},
-			},
-		};
+                const metadata = createDefaultRegistryMetadata();
+                metadata.effectLogs = { legacy: [{ note: 'legacy entry' }] };
+                metadata.passiveEvaluationModifiers = {
+                        [resourceKey]: ['modifier'],
+                };
+                metadata.triggers = {
+                        ...metadata.triggers,
+                        [triggerId]: {
+                                icon: '🔔',
+                                future: 'At the start of Alpha',
+                                past: 'Alpha Start',
+                                label: 'Alpha Start',
+                        },
+                };
+                const phaseId = firstPhase?.id ?? 'phase.alpha';
+                metadata.phases = {
+                        ...metadata.phases,
+                        [phaseId]: {
+                                id: phaseId,
+                                label: firstPhase?.label ?? 'Alpha',
+                                icon: firstPhase?.icon,
+                                action: firstPhase?.action,
+                                steps: [
+                                        {
+                                                id: firstStep,
+                                                label: firstPhase?.steps?.[0]?.title ?? 'Open Alpha',
+                                                triggers: [triggerId],
+                                        },
+                                ],
+                        },
+                };
 		const compensation = (amount: number): PlayerStartConfig => ({
 			resources: { [resourceKey]: amount },
 		});

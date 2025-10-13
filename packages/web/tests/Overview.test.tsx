@@ -3,13 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import Overview, { type OverviewTokenConfig } from '../src/Overview';
 import { DEFAULT_OVERVIEW_CONTENT } from '../src/contexts/defaultRegistryMetadata';
 import type { OverviewContentSection } from '../src/components/overview/sectionsData';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
-import type { SessionRegistries } from '../src/state/sessionRegistries';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import { createDefaultRegistryMetadata } from './helpers/defaultRegistrySnapshot';
 
 afterEach(cleanup);
 
@@ -27,68 +26,57 @@ describe('<Overview />', () => {
 		).toBeInTheDocument();
 	});
 
-	it('renders supplied overview content using dynamic token fallbacks', () => {
-		const factory = createContentFactory();
-		const expandAction = factory.action({ id: 'expand', icon: '🚀' });
-		const councilRole = factory.population({
-			id: 'council',
-			icon: '👑',
-			name: 'Council',
-		});
-		const registries: SessionRegistries = {
-			actions: factory.actions,
-			buildings: factory.buildings,
-			developments: factory.developments,
-			populations: factory.populations,
-			resources: {
-				gold: {
-					key: 'gold',
-					label: 'Gold',
-					icon: '🥇',
-				},
-				ap: {
-					key: 'ap',
-					label: 'Action Points',
-					icon: '⚡',
-				},
-			},
-		};
-		const metadata: SessionSnapshotMetadata = {
-			passiveEvaluationModifiers: {},
-			resources: {
-				gold: { label: 'Refined Gold', icon: '🪙' },
-				ap: { label: 'Reserve AP', icon: '✨' },
-			},
-			populations: {
-				[councilRole.id]: {
-					label: 'Guiding Council',
-					icon: councilRole.icon,
-				},
-			},
-			buildings: {},
-			developments: {},
-			stats: {
-				army: { label: 'Army Strength', icon: '🛡️' },
-			},
-			phases: {
-				growth: {
-					label: 'Growth Phase',
-					icon: '🌱',
-					action: false,
-					steps: [],
-				},
-			},
-			triggers: {},
-			assets: {
-				land: { label: 'Land', icon: '🗺️' },
-				slot: { label: 'Slot', icon: '🧩' },
-			},
-		};
+        it('renders supplied overview content using dynamic token fallbacks', () => {
+                const registries = createSessionRegistries();
+                const expandAction = registries.actions.get('expand');
+                const councilRole = registries.populations.get('council');
+                if (!expandAction || !councilRole) {
+                        throw new Error('Expected default registries to expose expand and council entries.');
+                }
+                registries.actions.add(expandAction.id, { ...expandAction, icon: '🚀' });
+                const metadata = createDefaultRegistryMetadata();
+                metadata.resources = {
+                        ...metadata.resources,
+                        gold: { ...metadata.resources?.gold, label: 'Refined Gold', icon: '🪙' },
+                        ap: { ...metadata.resources?.ap, label: 'Reserve AP', icon: '✨' },
+                };
+                metadata.populations = {
+                        ...metadata.populations,
+                        [councilRole.id]: {
+                                label: 'Guiding Council',
+                                icon: councilRole.icon,
+                        },
+                };
+                metadata.stats = {
+                        ...metadata.stats,
+                        armyStrength: {
+                                ...metadata.stats?.armyStrength,
+                                label: 'Army Strength',
+                                icon: '🛡️',
+                        },
+                        army: {
+                                label: 'Army Strength',
+                                icon: '🛡️',
+                        },
+                };
+                metadata.phases = {
+                        ...metadata.phases,
+                        growth: {
+                                ...(metadata.phases?.growth ?? { id: 'growth', label: 'Growth', steps: [] }),
+                                label: 'Growth Phase',
+                                icon: '🌱',
+                        },
+                };
+                metadata.assets = {
+                        ...metadata.assets,
+                        land: { ...metadata.assets?.land, label: 'Land', icon: '🗺️' },
+                        slot: { ...metadata.assets?.slot, label: 'Slot', icon: '🧩' },
+                };
 
-		const tokenConfig: OverviewTokenConfig = {
-			actions: {
-				expand: ['missing-action', expandAction.id],
-			},
+                const tokenConfig: OverviewTokenConfig = {
+                        actions: {
+                                expand: ['missing-action', expandAction.id],
+                        },
 			phases: {
 				growth: ['missing-phase', 'growth'],
 			},
@@ -96,9 +84,9 @@ describe('<Overview />', () => {
 				gold: ['missing-gold', 'gold'],
 				ap: ['missing-ap', 'ap'],
 			},
-			stats: {
-				army: ['missing-army', 'army'],
-			},
+                        stats: {
+                                army: ['missing-army', 'army'],
+                        },
 			population: {
 				council: ['missing-council', councilRole.id],
 			},

@@ -4,12 +4,13 @@ import { getStatBreakdownSummary } from '../src/utils/stats';
 import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
-	createSessionSnapshot,
-	createSnapshotPlayer,
+        createSessionSnapshot,
+        createSnapshotPlayer,
 } from './helpers/sessionFixtures';
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+import { createDefaultRegistryMetadata } from './helpers/defaultRegistrySnapshot';
 
 type SummaryGroup = { title: string; items: unknown[] };
 
@@ -72,53 +73,64 @@ function createStatBreakdownSetup(): BreakdownSetup {
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
-		populations: {
-			[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
-		},
-		buildings: {
-			[buildingId]: { label: 'Sky Bastion', icon: '🏯' },
-		},
-		developments: {
-			[developmentId]: { label: 'Celestial Garden', icon: '🌿' },
-		},
-		resources: {
-			[resourceKey]: {
-				label: 'Starlight',
-				icon: '✨',
-				description: 'Brilliant astral currency.',
-			},
-		},
-		triggers: {
-			[triggerId]: {
-				label: 'Starlight Surge',
-				icon: '⚡',
-				future: 'When the stars align',
-				past: 'Starlight Surge',
-			},
-		},
-		phases: {
-			[phaseId]: {
-				label: 'Ascension Phase',
-				icon: '🛸',
-				action: true,
-				steps: [
-					{
-						id: phaseStepId,
-						label: 'Empower',
-						icon: '💫',
-						triggers: [triggerId],
-					},
-				],
-			},
-		},
-		assets: {
-			land: { label: 'Territory', icon: '🗺️' },
-			slot: { label: 'Development Slot', icon: '🧩' },
-			passive: { label: 'Aura', icon: '♾️' },
-		},
-	};
+        const metadata: SessionSnapshotMetadata = createDefaultRegistryMetadata();
+        metadata.passiveEvaluationModifiers = {};
+        metadata.populations = {
+                ...metadata.populations,
+                [populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
+        };
+        metadata.buildings = {
+                ...metadata.buildings,
+                [buildingId]: { label: 'Sky Bastion', icon: '🏯' },
+        };
+        metadata.developments = {
+                ...metadata.developments,
+                [developmentId]: { label: 'Celestial Garden', icon: '🌿' },
+        };
+        metadata.resources = {
+                ...metadata.resources,
+                [resourceKey]: {
+                        label: 'Starlight',
+                        icon: '✨',
+                        description: 'Brilliant astral currency.',
+                },
+        };
+        metadata.triggers = {
+                ...metadata.triggers,
+                [triggerId]: {
+                        label: 'Starlight Surge',
+                        icon: '⚡',
+                        future: 'When the stars align',
+                        past: 'Starlight Surge',
+                },
+        };
+        metadata.phases = {
+                ...metadata.phases,
+                [phaseId]: {
+                        id: phaseId,
+                        label: 'Ascension Phase',
+                        icon: '🛸',
+                        action: true,
+                        steps: [
+                                {
+                                        id: phaseStepId,
+                                        label: 'Empower',
+                                        icon: '💫',
+                                        triggers: [triggerId],
+                                },
+                        ],
+                },
+        };
+        metadata.assets = {
+                ...metadata.assets,
+                land: { ...metadata.assets?.land, label: 'Territory', icon: '🗺️' },
+                slot: {
+                        ...metadata.assets?.slot,
+                        label: 'Development Slot',
+                        icon: '🧩',
+                },
+                passive: { ...metadata.assets?.passive, label: 'Aura', icon: '♾️' },
+        };
 	const activePlayer = createSnapshotPlayer({
 		id: 'player:active',
 		name: 'Active Player',

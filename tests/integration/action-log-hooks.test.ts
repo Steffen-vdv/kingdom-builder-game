@@ -9,7 +9,7 @@ import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
 } from '@kingdom-builder/web/state/sessionRegistries';
-import registriesPayload from '../../packages/web/tests/fixtures/sessionRegistriesPayload.json';
+import { createDefaultRegistriesPayload } from '../../packages/web/tests/helpers/defaultRegistrySnapshot';
 
 type TimelineEntry = string | { text: string };
 
@@ -20,13 +20,13 @@ function extractLineText(entry: TimelineEntry | undefined): string {
 	return typeof entry === 'string' ? entry : entry.text;
 }
 
-const BASE_REGISTRIES_PAYLOAD = registriesPayload as SessionRegistriesPayload;
+const BASE_REGISTRIES_PAYLOAD = createDefaultRegistriesPayload();
 
 function createSessionRegistries(): SessionRegistries {
-	const payload = JSON.parse(
-		JSON.stringify(BASE_REGISTRIES_PAYLOAD),
-	) as SessionRegistriesPayload;
-	return deserializeSessionRegistries(payload);
+        const payload = JSON.parse(
+                JSON.stringify(BASE_REGISTRIES_PAYLOAD),
+        ) as SessionRegistriesPayload;
+        return deserializeSessionRegistries(payload);
 }
 
 describe('content-driven action log hooks', () => {

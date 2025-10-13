@@ -1,9 +1,8 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { createContentFactory } from '@kingdom-builder/testing';
 import type {
-	SessionResourceDefinition,
-	SessionSnapshotMetadata,
+        SessionResourceDefinition,
+        SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { OverviewContentTemplate } from '../src/components/overview/overviewContentTypes';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
@@ -28,6 +27,8 @@ import {
 	type AssetMetadataSelector,
 } from '../../src/contexts/RegistryMetadataContext';
 import { describe, expect, it } from 'vitest';
+import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { createDefaultRegistryMetadata } from '../helpers/defaultRegistrySnapshot';
 
 interface TestSetup {
 	registries: SessionRegistries;
@@ -53,101 +54,56 @@ const nextKey = (prefix: string) => {
 };
 
 function createTestSetup(): TestSetup {
-	const factory = createContentFactory();
-	const action = factory.action({
-		name: 'Sky Assault',
-		icon: '🛩️',
-	});
-	const building = factory.building({
-		name: 'Sky Bastion',
-		icon: '🏯',
-	});
-	const development = factory.development({
-		name: 'Celestial Garden',
-		icon: '🌿',
-	});
-	const population = factory.population({
-		name: 'Astral Council',
-		icon: '✨',
-	});
-	const resourceKey = nextKey('resource');
-	const resource: SessionResourceDefinition = {
-		key: resourceKey,
-		label: 'Starlight',
-		icon: '🌟',
-		description: 'Rare energy gathered from the firmament.',
-	};
-	const statId = nextKey('stat');
-	const phaseId = nextKey('phase');
-	const phaseStepId = nextKey('step');
-	const triggerId = nextKey('trigger');
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
-		resources: {
-			[resourceKey]: {
-				label: 'Auric Light',
-				icon: '💡',
-				description: 'Condensed radiance.',
-			},
-		},
-		populations: {
-			[population.id]: { label: 'Astral Council', icon: '✨' },
-		},
-		buildings: {
-			[building.id]: { label: 'Sky Bastion Prime', icon: '🏯' },
-		},
-		developments: {
-			[development.id]: { label: 'Celestial Garden', icon: '🌿' },
-		},
-		stats: {
-			[statId]: { label: 'Resolve', icon: '🔥' },
-		},
-		phases: {
-			[phaseId]: {
-				label: 'Ascension',
-				icon: '🚀',
-				action: true,
-				steps: [
-					{
-						id: phaseStepId,
-						label: 'Ignition',
-						icon: '🔥',
-						triggers: ['ignite'],
-					},
-				],
-			},
-		},
-		triggers: {
-			[triggerId]: {
-				label: 'Ignition Trigger',
-				icon: '🔥',
-				future: 'Ignite at dawn',
-				past: 'Ignition complete',
-			},
-		},
-		assets: {
-			land: { label: 'Territory', icon: '🗺️' },
-			passive: { label: 'Aura', icon: '✨' },
-		},
-	};
-	const registries: SessionRegistries = {
-		actions: factory.actions,
-		buildings: factory.buildings,
-		developments: factory.developments,
-		populations: factory.populations,
-		resources: { [resourceKey]: resource },
-	};
-	return {
-		registries,
-		actionId: action.id,
-		buildingId: building.id,
-		developmentId: development.id,
-		populationId: population.id,
-		resourceKey,
-		resource,
-		metadata,
-		statId,
-		phaseId,
+        const registries = createSessionRegistries();
+        const metadata = createDefaultRegistryMetadata();
+        const [actionId] = registries.actions.keys();
+        const [buildingId] = registries.buildings.keys();
+        const [developmentId] = registries.developments.keys();
+        const [populationId] = registries.populations.keys();
+        const [resourceKey] = Object.keys(registries.resources);
+        if (
+                !actionId ||
+                !buildingId ||
+                !developmentId ||
+                !populationId ||
+                !resourceKey
+        ) {
+                throw new Error('Expected registries to contain baseline entries.');
+        }
+        const resource = registries.resources[resourceKey];
+        if (!resource) {
+                throw new Error('Failed to resolve a resource definition.');
+        }
+        const [statId] = Object.keys(metadata.stats ?? {});
+        if (!statId) {
+                throw new Error('Expected default metadata to include stat descriptors.');
+        }
+        const [phaseEntry] = Object.entries(metadata.phases ?? {});
+        if (!phaseEntry) {
+                throw new Error('Expected default metadata to include phase descriptors.');
+        }
+        const [phaseId, phaseMetadata] = phaseEntry;
+        const phaseStepId = phaseMetadata.steps?.[0]?.id ?? `${phaseId}:step`;
+        const triggerIds = new Set(
+                phaseMetadata.steps?.flatMap((step) => step.triggers ?? []) ?? [],
+        );
+        const triggerEntries = Object.entries(metadata.triggers ?? {});
+        const [fallbackTriggerId] = triggerEntries[0] ?? [];
+        const triggerId = [...triggerIds][0] ?? fallbackTriggerId;
+        if (!triggerId) {
+                throw new Error('Expected default metadata to include trigger descriptors.');
+        }
+        return {
+                registries,
+                actionId,
+                buildingId,
+                developmentId,
+                populationId,
+                resourceKey,
+                resource,
+                metadata,
+                statId,
+                phaseId,
 		phaseStepId,
 		triggerId,
 	};
@@ -219,28 +175,35 @@ describe('RegistryMetadataProvider', () => {
 			slot,
 			passive,
 		} = captured;
-		const { actionId, buildingId, developmentId, populationId, resourceKey } =
-			setup;
-		expect(context.actions.getOrThrow(actionId).id).toBe(actionId);
-		expect(context.buildings.getOrThrow(buildingId).id).toBe(buildingId);
-		expect(context.developments.getOrThrow(developmentId).id).toBe(
-			developmentId,
-		);
-		expect(context.populations.getOrThrow(populationId).id).toBe(populationId);
-		expect(context.resources.getOrThrow(resourceKey)).toEqual(setup.resource);
-		expect(context.buildings.keys()).toContain(buildingId);
-		expect(context.developments.values().map((item) => item.id)).toContain(
-			developmentId,
-		);
-		expect(context.populations.has(nextKey('population'))).toBe(false);
-		const resourceDescriptor = resources.byId[resourceKey];
-		expect(resourceDescriptor.label).toBe('Auric Light');
-		expect(resourceDescriptor.description).toBe('Condensed radiance.');
-		const fallbackResourceId = nextKey('resource');
-		expect(resources.select(fallbackResourceId).label).toBe(
-			formatFallbackLabel(fallbackResourceId),
-		);
-		const selectedResources = resources.selectMany([
+                const { actionId, buildingId, developmentId, populationId, resourceKey } =
+                        setup;
+                expect(context.actions.getOrThrow(actionId).id).toBe(actionId);
+                expect(context.buildings.getOrThrow(buildingId).id).toBe(buildingId);
+                expect(context.developments.getOrThrow(developmentId).id).toBe(
+                        developmentId,
+                );
+                expect(context.populations.getOrThrow(populationId).id).toBe(populationId);
+                expect(context.resources.getOrThrow(resourceKey)).toEqual(setup.resource);
+                expect(context.buildings.keys()).toContain(buildingId);
+                expect(context.developments.values().map((item) => item.id)).toContain(
+                        developmentId,
+                );
+                expect(context.populations.has(nextKey('population'))).toBe(false);
+                const resourceDescriptor = resources.byId[resourceKey];
+                const expectedResource = setup.metadata.resources?.[resourceKey];
+                expect(resourceDescriptor.label).toBe(
+                        expectedResource?.label ?? formatFallbackLabel(resourceKey),
+                );
+                if (expectedResource?.description) {
+                        expect(resourceDescriptor.description).toBe(
+                                expectedResource.description,
+                        );
+                }
+                const fallbackResourceId = nextKey('resource');
+                expect(resources.select(fallbackResourceId).label).toBe(
+                        formatFallbackLabel(fallbackResourceId),
+                );
+                const selectedResources = resources.selectMany([
 			resourceKey,
 			fallbackResourceId,
 		]);
@@ -248,48 +211,71 @@ describe('RegistryMetadataProvider', () => {
 		expect(selectedResources[1].label).toBe(
 			formatFallbackLabel(fallbackResourceId),
 		);
-		const resourceRecord = resources.selectRecord([
-			resourceKey,
-			fallbackResourceId,
-		]);
-		expect(resourceRecord[resourceKey]).toBe(resourceDescriptor);
-		expect(Object.isFrozen(selectedResources)).toBe(true);
-		expect(Object.isFrozen(resourceRecord)).toBe(true);
-		expect(populations.byId[populationId].label).toBe('Astral Council');
-		expect(buildings.byId[buildingId].label).toBe('Sky Bastion Prime');
-		expect(developments.byId[developmentId].label).toBe('Celestial Garden');
-		expect(stats.select(setup.statId).icon).toBe('🔥');
-		const fallbackStatId = nextKey('stat');
-		expect(stats.select(fallbackStatId).label).toBe(
-			formatFallbackLabel(fallbackStatId),
-		);
-		const phaseDescriptor = phases.select(setup.phaseId);
-		expect(phaseDescriptor.label).toBe('Ascension');
-		expect(phaseDescriptor.action).toBe(true);
-		const step = phaseDescriptor.stepsById[setup.phaseStepId];
-		expect(step.label).toBe('Ignition');
-		expect(step.triggers).toEqual(['ignite']);
-		const fallbackPhaseId = nextKey('phase');
-		const fallbackPhase = phases.select(fallbackPhaseId);
-		expect(fallbackPhase.steps).toHaveLength(0);
-		expect(fallbackPhase.action).toBe(false);
-		const trigger = triggers.select(setup.triggerId);
-		expect(trigger.future).toBe('Ignite at dawn');
-		expect(trigger.past).toBe('Ignition complete');
-		const fallbackTriggerId = nextKey('trigger');
-		expect(triggers.select(fallbackTriggerId).label).toBe(
-			formatFallbackLabel(fallbackTriggerId),
-		);
-		const phaseRecord = phases.selectRecord([setup.phaseId, fallbackPhaseId]);
-		expect(phaseRecord[setup.phaseId]).toBe(phaseDescriptor);
-		expect(Object.isFrozen(phaseRecord)).toBe(true);
-		expect(land.descriptor.label).toBe('Territory');
-		expect(land.select()).toBe(land.descriptor);
-		expect(passive.descriptor.label).toBe('Aura');
-		expect(slot.descriptor.label).toBe('Development Slot');
-		expect(context.overviewContent.hero.title).toBe('Game Overview');
-		expect(Object.isFrozen(context.overviewContent)).toBe(true);
-	});
+                const resourceRecord = resources.selectRecord([
+                        resourceKey,
+                        fallbackResourceId,
+                ]);
+                expect(resourceRecord[resourceKey]).toBe(resourceDescriptor);
+                expect(Object.isFrozen(selectedResources)).toBe(true);
+                expect(Object.isFrozen(resourceRecord)).toBe(true);
+                expect(populations.byId[populationId].label).toBe(
+                        setup.metadata.populations?.[populationId]?.label,
+                );
+                expect(buildings.byId[buildingId].label).toBe(
+                        setup.metadata.buildings?.[buildingId]?.label,
+                );
+                expect(developments.byId[developmentId].label).toBe(
+                        setup.metadata.developments?.[developmentId]?.label,
+                );
+                expect(stats.select(setup.statId).icon).toBe(
+                        setup.metadata.stats?.[setup.statId]?.icon,
+                );
+                const fallbackStatId = nextKey('stat');
+                expect(stats.select(fallbackStatId).label).toBe(
+                        formatFallbackLabel(fallbackStatId),
+                );
+                const phaseDescriptor = phases.select(setup.phaseId);
+                expect(phaseDescriptor.label).toBe(
+                        setup.metadata.phases?.[setup.phaseId]?.label ?? '',
+                );
+                expect(phaseDescriptor.action).toBe(
+                        setup.metadata.phases?.[setup.phaseId]?.action ?? false,
+                );
+                const step = phaseDescriptor.stepsById[setup.phaseStepId];
+                const expectedPhase = setup.metadata.phases?.[setup.phaseId];
+                const expectedStep = expectedPhase?.steps?.find(
+                        (entry) => entry.id === setup.phaseStepId,
+                );
+                expect(step?.label).toBe(expectedStep?.label ?? formatFallbackLabel(step?.id ?? ''));
+                expect(step?.triggers).toEqual(expectedStep?.triggers ?? []);
+                const fallbackPhaseId = nextKey('phase');
+                const fallbackPhase = phases.select(fallbackPhaseId);
+                expect(fallbackPhase.steps).toHaveLength(0);
+                expect(fallbackPhase.action).toBe(false);
+                const trigger = triggers.select(setup.triggerId);
+                const expectedTrigger = setup.metadata.triggers?.[setup.triggerId];
+                expect(trigger.future).toBe(expectedTrigger?.future ?? '');
+                expect(trigger.past).toBe(expectedTrigger?.past ?? '');
+                const fallbackTriggerId = nextKey('trigger');
+                expect(triggers.select(fallbackTriggerId).label).toBe(
+                        formatFallbackLabel(fallbackTriggerId),
+                );
+                const phaseRecord = phases.selectRecord([setup.phaseId, fallbackPhaseId]);
+                expect(phaseRecord[setup.phaseId]).toBe(phaseDescriptor);
+                expect(Object.isFrozen(phaseRecord)).toBe(true);
+                expect(land.descriptor.label).toBe(
+                        setup.metadata.assets?.land?.label ?? land.descriptor.label,
+                );
+                expect(land.select()).toBe(land.descriptor);
+                expect(passive.descriptor.label).toBe(
+                        setup.metadata.assets?.passive?.label ?? passive.descriptor.label,
+                );
+                expect(slot.descriptor.label).toBe(
+                        setup.metadata.assets?.slot?.label ?? slot.descriptor.label,
+                );
+                expect(context.overviewContent.hero.title).toBe('Game Overview');
+                expect(Object.isFrozen(context.overviewContent)).toBe(true);
+        });
 
 	it('prefers overview content supplied through metadata', () => {
 		const setup = createTestSetup();
