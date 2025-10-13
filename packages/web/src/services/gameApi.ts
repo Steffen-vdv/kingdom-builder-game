@@ -10,6 +10,8 @@ import type {
 	SessionStateResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
 
 type FetchFn = (input: RequestInfo, init?: RequestInit) => Promise<Response>;
@@ -52,6 +54,10 @@ export interface GameApi {
 		request: SessionSetDevModeRequest,
 		options?: GameApiRequestOptions,
 	): Promise<SessionSetDevModeResponse>;
+	updatePlayerName(
+		request: SessionUpdatePlayerNameRequest,
+		options?: GameApiRequestOptions,
+	): Promise<SessionUpdatePlayerNameResponse>;
 }
 
 export class GameApiError extends Error {
@@ -198,6 +204,28 @@ class HttpGameApi implements GameApi {
 			{
 				method: 'POST',
 				body: { enabled },
+			},
+			options,
+		);
+	}
+
+	async updatePlayerName(
+		request: SessionUpdatePlayerNameRequest,
+		options: GameApiRequestOptions = {},
+	): Promise<SessionUpdatePlayerNameResponse> {
+		const { sessionId, playerId, playerName } = request as {
+			sessionId: string;
+			playerId: string;
+			playerName: string;
+		};
+		return this.#send<SessionUpdatePlayerNameResponse>(
+			`/sessions/${encodeURIComponent(sessionId)}/player-name`,
+			{
+				method: 'PATCH',
+				body: {
+					playerId,
+					playerName,
+				},
 			},
 			options,
 		);

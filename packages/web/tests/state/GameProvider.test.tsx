@@ -20,6 +20,7 @@ const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
 const setSessionDevModeMock = vi.hoisted(() => vi.fn());
+const updatePlayerNameMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/sessionSdk', async () => {
 	const actual = await vi.importActual('../../src/state/sessionSdk');
@@ -29,6 +30,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 		fetchSnapshot: fetchSnapshotMock,
 		releaseSession: releaseSessionMock,
 		setSessionDevMode: setSessionDevModeMock,
+		updatePlayerName: updatePlayerNameMock,
 	};
 });
 
@@ -168,11 +170,13 @@ describe('GameProvider', () => {
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let enqueueMock: ReturnType<typeof vi.fn>;
 	beforeEach(() => {
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
 		setSessionDevModeMock.mockReset();
+		updatePlayerNameMock.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -251,7 +255,7 @@ describe('GameProvider', () => {
 		});
 		registries = createSessionRegistries();
 		resourceKeys = [resourceKey];
-		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
+		enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
 			return await task();
 		});
 		session = {
@@ -318,6 +322,46 @@ describe('GameProvider', () => {
 		await waitFor(() =>
 			expect(runUntilActionPhaseMock).toHaveBeenCalledTimes(1),
 		);
+	});
+
+	it('queues player name updates when the player name changes', async () => {
+		updatePlayerNameMock.mockResolvedValue({
+			session,
+			legacySession: session,
+			snapshot: refreshedSnapshot,
+			ruleSnapshot: refreshedSnapshot.rules,
+			registries,
+			resourceKeys,
+			metadata: refreshedSnapshot.metadata,
+		});
+
+		const { rerender } = render(
+			<GameProvider devMode playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		enqueueMock.mockClear();
+		fetchSnapshotMock.mockClear();
+
+		rerender(
+			<GameProvider devMode playerName="Pathfinder">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() => expect(updatePlayerNameMock).toHaveBeenCalledTimes(1));
+		expect(updatePlayerNameMock).toHaveBeenCalledWith(
+			'session-1',
+			'player-1',
+			'Pathfinder',
+		);
+		await waitFor(() => expect(enqueueMock).toHaveBeenCalledTimes(1));
+		await waitFor(() => expect(fetchSnapshotMock).toHaveBeenCalled());
 	});
 
 	it('updates the active session when the dev mode prop changes', async () => {

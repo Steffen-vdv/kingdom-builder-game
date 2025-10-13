@@ -9,6 +9,8 @@ import type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import {
 	actionExecuteRequestSchema,
@@ -20,6 +22,8 @@ import {
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
 	sessionStateResponseSchema,
+	sessionUpdatePlayerNameRequestSchema,
+	sessionUpdatePlayerNameResponseSchema,
 } from '@kingdom-builder/protocol';
 import { TransportError } from '../transport/TransportTypes.js';
 import type { TransportErrorCode } from '../transport/TransportTypes.js';
@@ -151,15 +155,35 @@ export class HttpSessionGateway implements SessionGateway {
 		request: SessionSetDevModeRequest,
 	): Promise<SessionSetDevModeResponse> {
 		const payload = sessionSetDevModeRequestSchema.parse(request);
+		const encodedId = this.encodeSessionId(payload.sessionId);
 		const result = await this.execute({
 			method: 'POST',
-			path: `sessions/${this.encodeSessionId(payload.sessionId)}/dev-mode`,
+			path: `sessions/${encodedId}/dev-mode`,
 			body: { enabled: payload.enabled },
 		});
 		if (!result.response.ok) {
 			throw this.toTransportError(result);
 		}
 		return sessionSetDevModeResponseSchema.parse(result.data);
+	}
+
+	public async updatePlayerName(
+		request: SessionUpdatePlayerNameRequest,
+	): Promise<SessionUpdatePlayerNameResponse> {
+		const payload = sessionUpdatePlayerNameRequestSchema.parse(request);
+		const encodedId = this.encodeSessionId(payload.sessionId);
+		const result = await this.execute({
+			method: 'PATCH',
+			path: `sessions/${encodedId}/player-name`,
+			body: {
+				playerId: payload.playerId,
+				playerName: payload.playerName,
+			},
+		});
+		if (!result.response.ok) {
+			throw this.toTransportError(result);
+		}
+		return sessionUpdatePlayerNameResponseSchema.parse(result.data);
 	}
 
 	private async execute(options: RequestOptions): Promise<HttpExecutionResult> {

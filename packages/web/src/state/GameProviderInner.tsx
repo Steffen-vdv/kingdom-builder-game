@@ -29,7 +29,11 @@ import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
+import {
+	isFatalSessionError,
+	markFatalSessionError,
+	updatePlayerName,
+} from './sessionSdk';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -85,17 +89,21 @@ export function GameProviderInner({
 		) {
 			return;
 		}
-		void enqueue(() => {
-			legacySession.updatePlayerName(primaryPlayerId, desiredName);
-		}).finally(() => {
-			refresh();
-		});
+		void enqueue(async () => {
+			await updatePlayerName(sessionId, primaryPlayerId, desiredName);
+		})
+			.catch((error) => {
+				markFatalSessionError(error);
+			})
+			.finally(() => {
+				refresh();
+			});
 	}, [
 		enqueue,
-		legacySession,
 		primaryPlayerId,
 		primaryPlayerName,
 		refresh,
+		sessionId,
 		playerName,
 	]);
 

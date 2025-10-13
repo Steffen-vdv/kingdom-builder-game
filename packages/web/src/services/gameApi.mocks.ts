@@ -11,6 +11,8 @@ import type {
 	SessionStateResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
 import type { GameApi, GameApiRequestOptions } from './gameApi';
 import { GameApiError } from './gameApi';
@@ -106,27 +108,33 @@ const toStateResponse = (
 	registries: clone(response.registries),
 });
 
+type GameApiMockHandler<TRequest, TResponse> = (
+	request: TRequest,
+	options?: GameApiRequestOptions,
+) => Promise<TResponse> | TResponse;
+
 export type GameApiMockHandlers = {
-	createSession?: (
-		request: SessionCreateRequest,
-		options?: GameApiRequestOptions,
-	) => Promise<SessionCreateResponse> | SessionCreateResponse;
-	fetchSnapshot?: (
-		sessionId: string,
-		options?: GameApiRequestOptions,
-	) => Promise<SessionStateResponse> | SessionStateResponse;
-	performAction?: (
-		request: ActionExecuteRequest,
-		options?: GameApiRequestOptions,
-	) => Promise<ActionExecuteResponse> | ActionExecuteResponse;
-	advancePhase?: (
-		request: SessionAdvanceRequest,
-		options?: GameApiRequestOptions,
-	) => Promise<SessionAdvanceResponse> | SessionAdvanceResponse;
-	setDevMode?: (
-		request: SessionSetDevModeRequest,
-		options?: GameApiRequestOptions,
-	) => Promise<SessionSetDevModeResponse> | SessionSetDevModeResponse;
+	createSession?: GameApiMockHandler<
+		SessionCreateRequest,
+		SessionCreateResponse
+	>;
+	fetchSnapshot?: GameApiMockHandler<string, SessionStateResponse>;
+	performAction?: GameApiMockHandler<
+		ActionExecuteRequest,
+		ActionExecuteResponse
+	>;
+	advancePhase?: GameApiMockHandler<
+		SessionAdvanceRequest,
+		SessionAdvanceResponse
+	>;
+	setDevMode?: GameApiMockHandler<
+		SessionSetDevModeRequest,
+		SessionSetDevModeResponse
+	>;
+	updatePlayerName?: GameApiMockHandler<
+		SessionUpdatePlayerNameRequest,
+		SessionUpdatePlayerNameResponse
+	>;
 };
 
 export const createGameApiMock = (
@@ -179,6 +187,20 @@ export const createGameApiMock = (
 
 		return Promise.resolve(handlers.setDevMode(request, options));
 	},
+	updatePlayerName: (
+		request: SessionUpdatePlayerNameRequest,
+		options: GameApiRequestOptions = {},
+	) => {
+		if (!handlers.updatePlayerName) {
+			return Promise.reject(
+				new Error('updatePlayerName handler not provided.'),
+			);
+		}
+
+		return Promise.resolve<SessionUpdatePlayerNameResponse>(
+			handlers.updatePlayerName(request, options),
+		);
+	},
 });
 
 export interface GameApiFakeState {
@@ -191,6 +213,7 @@ export class GameApiFake implements GameApi {
 	#nextAdvance: SessionAdvanceResponse | undefined;
 	#nextAction: ActionExecuteResponse | undefined;
 	#nextDevMode: SessionSetDevModeResponse | undefined;
+	#nextPlayerName: SessionUpdatePlayerNameResponse | undefined;
 
 	constructor(state: GameApiFakeState = {}) {
 		this.#sessions = state.sessions ?? new Map<string, SessionStateResponse>();
@@ -210,6 +233,10 @@ export class GameApiFake implements GameApi {
 
 	setNextSetDevModeResponse(response: SessionSetDevModeResponse) {
 		this.#nextDevMode = clone(response);
+	}
+
+	setNextUpdatePlayerNameResponse(response: SessionUpdatePlayerNameResponse) {
+		this.#nextPlayerName = clone(response);
 	}
 
 	primeSession(response: SessionStateResponse) {
@@ -297,6 +324,17 @@ export class GameApiFake implements GameApi {
 		return Promise.resolve(clone(response));
 	}
 
+	updatePlayerName(
+		_request: SessionUpdatePlayerNameRequest,
+		_options: GameApiRequestOptions = {},
+	): Promise<SessionUpdatePlayerNameResponse> {
+		const response = this.#consumeUpdatePlayerName();
+
+		this.#sessions.set(response.sessionId, clone(response));
+
+		return Promise.resolve(clone(response));
+	}
+
 	#consumeCreate(): SessionCreateResponse {
 		const response = this.#nextCreate;
 
@@ -338,6 +376,17 @@ export class GameApiFake implements GameApi {
 		}
 
 		this.#nextDevMode = undefined;
+		return response;
+	}
+
+	#consumeUpdatePlayerName(): SessionUpdatePlayerNameResponse {
+		const response = this.#nextPlayerName;
+
+		if (response === undefined) {
+			throw new Error('No update player name response primed.');
+		}
+
+		this.#nextPlayerName = undefined;
 		return response;
 	}
 

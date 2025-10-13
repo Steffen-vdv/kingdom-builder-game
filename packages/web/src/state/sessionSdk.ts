@@ -11,6 +11,9 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
+	SessionUpdatePlayerNameResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionPlayerId,
 } from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
@@ -167,6 +170,50 @@ export async function setSessionDevMode(
 		resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
+}
+
+export async function updatePlayerName(
+	sessionId: string,
+	playerId: SessionPlayerId,
+	playerName: string,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<FetchSnapshotResult> {
+	const api = ensureGameApi();
+	const record = getLegacySessionRecord(sessionId);
+	const typedApi = api as GameApi & {
+		updatePlayerName(
+			request: SessionUpdatePlayerNameRequest,
+			options?: GameApiRequestOptions,
+		): Promise<SessionUpdatePlayerNameResponse>;
+	};
+	/* eslint-disable
+@typescript-eslint/no-unsafe-assignment,
+@typescript-eslint/no-unsafe-member-access,
+@typescript-eslint/no-unsafe-argument
+*/
+	const normalized = await typedApi.updatePlayerName(
+		{ sessionId, playerId, playerName },
+		requestOptions,
+	);
+	const registries = deserializeSessionRegistries(normalized.registries);
+	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
+	replaceLegacySessionCaches(record, registries, resourceKeys);
+	record.legacySession.updatePlayerName(playerId, playerName);
+	const result: FetchSnapshotResult = {
+		session: record.handle,
+		legacySession: record.legacySession,
+		snapshot: normalized.snapshot,
+		ruleSnapshot: normalized.snapshot.rules,
+		registries,
+		resourceKeys,
+		metadata: normalized.snapshot.metadata,
+	};
+	/* eslint-enable
+@typescript-eslint/no-unsafe-assignment,
+@typescript-eslint/no-unsafe-member-access,
+@typescript-eslint/no-unsafe-argument
+*/
+	return result;
 }
 
 /**
