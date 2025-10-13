@@ -7,11 +7,15 @@ import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
-import { createSessionRegistries } from '../helpers/sessionRegistries';
+import {
+	createSessionRegistries,
+	createDefaultRegistryMetadata,
+} from '../helpers/sessionRegistries';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
 		const registries = createSessionRegistries();
+		const metadata = createDefaultRegistryMetadata();
 		const [resourceKey] = Object.keys(registries.resources) as ResourceKey[];
 		if (resourceKey) {
 			registries.resources[resourceKey] = {
@@ -43,18 +47,17 @@ describe('createTranslationContext', () => {
 		const [firstPhase] = phases;
 		const firstStep = firstPhase?.steps?.[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
-		const metadata = {
-			effectLogs: { legacy: [{ note: 'legacy entry' }] },
-			passiveEvaluationModifiers: {
-				[resourceKey]: ['modifier'],
-			},
-			triggers: {
-				[triggerId]: {
-					icon: '🔔',
-					future: 'At the start of Alpha',
-					past: 'Alpha Start',
-					label: 'Alpha Start',
-				},
+		metadata.effectLogs = { legacy: [{ note: 'legacy entry' }] };
+		metadata.passiveEvaluationModifiers = {
+			[resourceKey]: ['modifier'],
+		};
+		metadata.triggers = {
+			...metadata.triggers,
+			[triggerId]: {
+				icon: '🔔',
+				future: 'At the start of Alpha',
+				past: 'Alpha Start',
+				label: 'Alpha Start',
 			},
 		};
 		const compensation = (amount: number): PlayerStartConfig => ({
@@ -203,115 +206,115 @@ describe('createTranslationContext', () => {
 			},
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
-                        {
-                          "actionCostResource": "gold",
-                          "assets": {
-                            "passive": {
-                              "icon": "♾️",
-                              "label": "Passive",
-                            },
-                            "resource": {
-                              "description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
-                              "icon": "🪙",
-                              "label": "gold",
-                            },
-                            "slot": {
-                              "icon": "🧩",
-                              "label": "Development Slot",
-                            },
-                            "trigger": {
-                              "future": "At the start of Alpha",
-                              "icon": "🔔",
-                              "label": "Alpha Start",
-                              "past": "Alpha Start",
-                            },
-                          },
-                          "compensations": {
-                            "A": {
-                              "resources": {
-                                "gold": 2,
-                              },
-                            },
-                            "B": {
-                              "resources": {
-                                "gold": 1,
-                              },
-                            },
-                          },
-                          "passives": {
-                            "definition": {
-                              "icon": "🌱",
-                              "id": "passive-a",
-                              "meta": {
-                                "source": {
-                                  "icon": "🏘️",
-                                },
-                              },
-                              "owner": "A",
-                            },
-                            "definitions": [
-                              "passive-a",
-                            ],
-                            "descriptor": {
-                              "icon": "🌱",
-                              "meta": {
-                                "source": {
-                                  "icon": "🏘️",
-                                },
-                              },
-                            },
-                            "evaluationMods": [
-                              [
-                                "gold",
-                                [
-                                  "modifier",
-                                ],
-                              ],
-                            ],
-                            "list": [
-                              "passive-a",
-                            ],
-                            "owned": [
-                              "passive-a",
-                            ],
-                          },
-                          "phases": [
-                            "phase.alpha",
-                          ],
-                          "players": {
-                            "active": "A",
-                            "opponent": "B",
-                          },
-                          "recentResourceGains": [
-                            {
-                              "amount": 3,
-                              "key": "gold",
-                            },
-                          ],
-                          "registries": {
-                            "action": {
-                              "has": true,
-                              "id": "expand",
-                            },
-                            "building": {
-                              "has": true,
-                              "id": "town_charter",
-                            },
-                            "development": {
-                              "has": true,
-                              "id": "farm",
-                            },
-                            "population": {
-                              "has": true,
-                              "id": "council",
-                            },
-                          },
-                          "rules": {
-                            "tierDefinitions": [],
-                            "tieredResourceKey": "gold",
-                            "winConditions": [],
-                          },
-                        }
-                `);
+			{
+			  "actionCostResource": "gold",
+			  "assets": {
+			    "passive": {
+			      "icon": "♾️",
+			      "label": "Passive",
+			    },
+			    "resource": {
+			      "description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
+			      "icon": "🪙",
+			      "label": "Gold",
+			    },
+			    "slot": {
+			      "icon": "🧩",
+			      "label": "Development Slot",
+			    },
+			    "trigger": {
+			      "future": "At the start of Alpha",
+			      "icon": "🔔",
+			      "label": "Alpha Start",
+			      "past": "Alpha Start",
+			    },
+			  },
+			  "compensations": {
+			    "A": {
+			      "resources": {
+			        "gold": 2,
+			      },
+			    },
+			    "B": {
+			      "resources": {
+			        "gold": 1,
+			      },
+			    },
+			  },
+			  "passives": {
+			    "definition": {
+			      "icon": "🌱",
+			      "id": "passive-a",
+			      "meta": {
+			        "source": {
+			          "icon": "🏘️",
+			        },
+			      },
+			      "owner": "A",
+			    },
+			    "definitions": [
+			      "passive-a",
+			    ],
+			    "descriptor": {
+			      "icon": "🌱",
+			      "meta": {
+			        "source": {
+			          "icon": "🏘️",
+			        },
+			      },
+			    },
+			    "evaluationMods": [
+			      [
+			        "gold",
+			        [
+			          "modifier",
+			        ],
+			      ],
+			    ],
+			    "list": [
+			      "passive-a",
+			    ],
+			    "owned": [
+			      "passive-a",
+			    ],
+			  },
+			  "phases": [
+			    "phase.alpha",
+			  ],
+			  "players": {
+			    "active": "A",
+			    "opponent": "B",
+			  },
+			  "recentResourceGains": [
+			    {
+			      "amount": 3,
+			      "key": "gold",
+			    },
+			  ],
+			  "registries": {
+			    "action": {
+			      "has": true,
+			      "id": "expand",
+			    },
+			    "building": {
+			      "has": true,
+			      "id": "town_charter",
+			    },
+			    "development": {
+			      "has": true,
+			      "id": "farm",
+			    },
+			    "population": {
+			      "has": true,
+			      "id": "council",
+			    },
+			  },
+			  "rules": {
+			    "tierDefinitions": [],
+			    "tieredResourceKey": "gold",
+			    "winConditions": [],
+			  },
+			}
+		`);
 	});
 });

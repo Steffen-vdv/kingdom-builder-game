@@ -1,12 +1,15 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { createContentFactory } from '@kingdom-builder/testing';
 import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { OverviewContentTemplate } from '../src/components/overview/overviewContentTypes';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import {
+	createSessionRegistries,
+	createDefaultRegistryMetadata,
+} from '../helpers/sessionRegistries';
 import {
 	RegistryMetadataProvider,
 	useRegistryMetadata,
@@ -53,96 +56,104 @@ const nextKey = (prefix: string) => {
 };
 
 function createTestSetup(): TestSetup {
-	const factory = createContentFactory();
-	const action = factory.action({
-		name: 'Sky Assault',
-		icon: '🛩️',
-	});
-	const building = factory.building({
-		name: 'Sky Bastion',
-		icon: '🏯',
-	});
-	const development = factory.development({
-		name: 'Celestial Garden',
-		icon: '🌿',
-	});
-	const population = factory.population({
-		name: 'Astral Council',
-		icon: '✨',
-	});
-	const resourceKey = nextKey('resource');
+	const registries = createSessionRegistries();
+	const metadata = createDefaultRegistryMetadata();
+	const [actionId] = registries.actions.keys();
+	const [buildingId] = registries.buildings.keys();
+	const [developmentId] = registries.developments.keys();
+	const [populationId] = registries.populations.keys();
+	const resourceKeys = Object.keys(registries.resources);
+	const statKeys = Object.keys(metadata.stats ?? {});
+	const phaseId = 'main';
+	const phaseSteps = metadata.phases?.[phaseId]?.steps ?? [];
+	const phaseStepId = phaseSteps[0]?.id ?? `${phaseId}:step:0`;
+	const triggerId = 'ignite';
+	if (
+		!actionId ||
+		!buildingId ||
+		!developmentId ||
+		!populationId ||
+		resourceKeys.length === 0 ||
+		statKeys.length === 0 ||
+		!metadata.phases?.[phaseId]
+	) {
+		throw new Error(
+			'Expected default registries and metadata to provide entries.',
+		);
+	}
+	const resourceKey = resourceKeys[0];
 	const resource: SessionResourceDefinition = {
 		key: resourceKey,
 		label: 'Starlight',
 		icon: '🌟',
-		description: 'Rare energy gathered from the firmament.',
+		description: 'Condensed radiance.',
 	};
-	const statId = nextKey('stat');
-	const phaseId = nextKey('phase');
-	const phaseStepId = nextKey('step');
-	const triggerId = nextKey('trigger');
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
-		resources: {
-			[resourceKey]: {
-				label: 'Auric Light',
-				icon: '💡',
-				description: 'Condensed radiance.',
-			},
-		},
-		populations: {
-			[population.id]: { label: 'Astral Council', icon: '✨' },
-		},
-		buildings: {
-			[building.id]: { label: 'Sky Bastion Prime', icon: '🏯' },
-		},
-		developments: {
-			[development.id]: { label: 'Celestial Garden', icon: '🌿' },
-		},
-		stats: {
-			[statId]: { label: 'Resolve', icon: '🔥' },
-		},
-		phases: {
-			[phaseId]: {
-				label: 'Ascension',
-				icon: '🚀',
-				action: true,
-				steps: [
-					{
-						id: phaseStepId,
-						label: 'Ignition',
-						icon: '🔥',
-						triggers: ['ignite'],
-					},
-				],
-			},
-		},
-		triggers: {
-			[triggerId]: {
-				label: 'Ignition Trigger',
-				icon: '🔥',
-				future: 'Ignite at dawn',
-				past: 'Ignition complete',
-			},
-		},
-		assets: {
-			land: { label: 'Territory', icon: '🗺️' },
-			passive: { label: 'Aura', icon: '✨' },
+	registries.resources[resourceKey] = resource;
+	metadata.passiveEvaluationModifiers =
+		metadata.passiveEvaluationModifiers ?? {};
+	metadata.resources = {
+		...metadata.resources,
+		[resourceKey]: {
+			...metadata.resources?.[resourceKey],
+			label: 'Auric Light',
+			icon: '💡',
+			description: 'Condensed radiance.',
 		},
 	};
-	const registries: SessionRegistries = {
-		actions: factory.actions,
-		buildings: factory.buildings,
-		developments: factory.developments,
-		populations: factory.populations,
-		resources: { [resourceKey]: resource },
+	metadata.populations = {
+		...metadata.populations,
+		[populationId]: { label: 'Astral Council', icon: '✨' },
+	};
+	metadata.buildings = {
+		...metadata.buildings,
+		[buildingId]: { label: 'Sky Bastion Prime', icon: '🏯' },
+	};
+	metadata.developments = {
+		...metadata.developments,
+		[developmentId]: { label: 'Celestial Garden', icon: '🌿' },
+	};
+	const statId = statKeys[0];
+	metadata.stats = {
+		...metadata.stats,
+		[statId]: { label: 'Resolve', icon: '🔥' },
+	};
+	metadata.phases = {
+		...metadata.phases,
+		[phaseId]: {
+			id: phaseId,
+			label: 'Ascension',
+			icon: '🚀',
+			action: true,
+			steps: [
+				{
+					id: phaseStepId,
+					label: 'Ignition',
+					icon: '🔥',
+					triggers: [triggerId],
+				},
+			],
+		},
+	};
+	metadata.triggers = {
+		...metadata.triggers,
+		[triggerId]: {
+			label: 'Ignition Trigger',
+			icon: '🔥',
+			future: 'Ignite at dawn',
+			past: 'Ignition complete',
+		},
+	};
+	metadata.assets = {
+		...metadata.assets,
+		land: { label: 'Territory', icon: '🗺️' },
+		passive: { label: 'Aura', icon: '✨' },
 	};
 	return {
 		registries,
-		actionId: action.id,
-		buildingId: building.id,
-		developmentId: development.id,
-		populationId: population.id,
+		actionId,
+		buildingId,
+		developmentId,
+		populationId,
 		resourceKey,
 		resource,
 		metadata,

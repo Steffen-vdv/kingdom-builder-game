@@ -3,13 +3,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import { createContentFactory } from '@kingdom-builder/testing';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import Overview, { type OverviewTokenConfig } from '../src/Overview';
 import { DEFAULT_OVERVIEW_CONTENT } from '../src/contexts/defaultRegistryMetadata';
 import type { OverviewContentSection } from '../src/components/overview/sectionsData';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
-import type { SessionRegistries } from '../src/state/sessionRegistries';
+import {
+	createSessionRegistries,
+	createDefaultRegistryMetadata,
+} from './helpers/sessionRegistries';
 
 afterEach(cleanup);
 
@@ -28,79 +29,79 @@ describe('<Overview />', () => {
 	});
 
 	it('renders supplied overview content using dynamic token fallbacks', () => {
-		const factory = createContentFactory();
-		const expandAction = factory.action({ id: 'expand', icon: '🚀' });
-		const councilRole = factory.population({
-			id: 'council',
-			icon: '👑',
-			name: 'Council',
-		});
-		const registries: SessionRegistries = {
-			actions: factory.actions,
-			buildings: factory.buildings,
-			developments: factory.developments,
-			populations: factory.populations,
-			resources: {
-				gold: {
-					key: 'gold',
-					label: 'Gold',
-					icon: '🥇',
-				},
-				ap: {
-					key: 'ap',
-					label: 'Action Points',
-					icon: '⚡',
-				},
+		const registries = createSessionRegistries();
+		const metadata = createDefaultRegistryMetadata();
+		const [expandActionId] = registries.actions.keys();
+		const [populationId] = registries.populations.keys();
+		const resourceKeys = Object.keys(registries.resources);
+		const statKeys = Object.keys(metadata.stats ?? {});
+		const phaseKeys = Object.keys(metadata.phases ?? {});
+		if (
+			!expandActionId ||
+			!populationId ||
+			resourceKeys.length < 2 ||
+			statKeys.length === 0 ||
+			phaseKeys.length === 0
+		) {
+			throw new Error(
+				'Expected default registry snapshot to contain baseline data.',
+			);
+		}
+		const expandAction = registries.actions.get(expandActionId);
+		const councilRole = registries.populations.get(populationId);
+		const [goldKey, apKey] = resourceKeys;
+		const statKey = statKeys[0];
+		const phaseId = phaseKeys[0];
+		metadata.passiveEvaluationModifiers =
+			metadata.passiveEvaluationModifiers ?? {};
+		metadata.resources = {
+			...metadata.resources,
+			[goldKey]: { label: 'Refined Gold', icon: '🪙' },
+			[apKey]: { label: 'Reserve AP', icon: '✨' },
+		};
+		metadata.populations = {
+			...metadata.populations,
+			[populationId]: {
+				label: 'Guiding Council',
+				icon: councilRole.icon,
 			},
 		};
-		const metadata: SessionSnapshotMetadata = {
-			passiveEvaluationModifiers: {},
-			resources: {
-				gold: { label: 'Refined Gold', icon: '🪙' },
-				ap: { label: 'Reserve AP', icon: '✨' },
+		metadata.stats = {
+			...metadata.stats,
+			[statKey]: { label: 'Army Strength', icon: '🛡️' },
+		};
+		metadata.phases = {
+			...metadata.phases,
+			[phaseId]: {
+				...(metadata.phases?.[phaseId] ?? { id: phaseId }),
+				label: 'Growth Phase',
+				icon: '🌱',
+				action: false,
+				steps: [],
 			},
-			populations: {
-				[councilRole.id]: {
-					label: 'Guiding Council',
-					icon: councilRole.icon,
-				},
-			},
-			buildings: {},
-			developments: {},
-			stats: {
-				army: { label: 'Army Strength', icon: '🛡️' },
-			},
-			phases: {
-				growth: {
-					label: 'Growth Phase',
-					icon: '🌱',
-					action: false,
-					steps: [],
-				},
-			},
-			triggers: {},
-			assets: {
-				land: { label: 'Land', icon: '🗺️' },
-				slot: { label: 'Slot', icon: '🧩' },
-			},
+		};
+		metadata.assets = {
+			...metadata.assets,
+			land: { label: 'Land', icon: '🗺️' },
+			slot: { label: 'Slot', icon: '🧩' },
 		};
 
 		const tokenConfig: OverviewTokenConfig = {
 			actions: {
-				expand: ['missing-action', expandAction.id],
+				[expandActionId]: ['missing-action', expandAction.id],
 			},
 			phases: {
-				growth: ['missing-phase', 'growth'],
+				[phaseId]: ['missing-phase', phaseId],
 			},
 			resources: {
-				gold: ['missing-gold', 'gold'],
-				ap: ['missing-ap', 'ap'],
+				[goldKey]: ['missing-gold', goldKey],
+				[apKey]: ['missing-ap', apKey],
 			},
 			stats: {
-				army: ['missing-army', 'army'],
+				[statKey]: ['missing-army', statKey],
 			},
 			population: {
-				council: ['missing-council', councilRole.id],
+				[populationId]: ['missing-council', councilRole.id],
 			},
 		};
 
@@ -112,8 +113,8 @@ describe('<Overview />', () => {
 				title: 'Custom Story',
 				span: true,
 				paragraphs: [
-					'Story {gold} keepers guard the realm.',
-					'Advisors {council} manage {ap} to fuel plans.',
+					`Story {${goldKey}} keepers guard the realm.`,
+					`Advisors {${populationId}} manage {${apKey}} to fuel plans.`,
 				],
 			},
 			{
@@ -123,11 +124,11 @@ describe('<Overview />', () => {
 				title: 'Custom Flow',
 				items: [
 					{
-						icon: 'expand',
+						icon: expandAction.id,
 						label: 'Advance',
 						body: [
-							'Execute {expand} during the {growth} sequence.',
-							'Strengthen {army} before moving out.',
+							`Execute {${expandActionId}} during the {${phaseId}} sequence.`,
+							`Strengthen {${statKey}} before moving out.`,
 						],
 					},
 				],

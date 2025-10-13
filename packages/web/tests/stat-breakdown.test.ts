@@ -2,14 +2,16 @@ import { describe, expect, it } from 'vitest';
 import type { SessionStatSourceLink as StatSourceLink } from '@kingdom-builder/protocol';
 import { getStatBreakdownSummary } from '../src/utils/stats';
 import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
-import { createSessionRegistries } from './helpers/sessionRegistries';
+import {
+	createSessionRegistries,
+	createDefaultRegistryMetadata,
+} from './helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 
 type SummaryGroup = { title: string; items: unknown[] };
 
@@ -54,70 +56,79 @@ const isSummaryObject = (entry: unknown): entry is SummaryGroup => {
 
 function createStatBreakdownSetup(): BreakdownSetup {
 	const registries = createSessionRegistries();
+	const metadata = createDefaultRegistryMetadata();
 	const populationId = registries.populations.keys()[0];
 	const buildingId = registries.buildings.keys()[0];
 	const developmentId = registries.developments.keys()[0];
 	const actionId = registries.actions.keys()[0];
-	const resourceKey = Object.keys(registries.resources)[0];
+	const resourceKeys = Object.keys(registries.resources);
 	if (
 		!populationId ||
 		!buildingId ||
 		!developmentId ||
 		!actionId ||
-		!resourceKey
+		resourceKeys.length === 0
 	) {
 		throw new Error('Expected registries to provide baseline entries.');
 	}
-	const phaseId = 'phase:test';
-	const phaseStepId = 'phase:test:step';
+	const resourceKey = resourceKeys[0];
+	const phaseId = 'main';
+	const phaseStepId = `${phaseId}:step`;
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
-		populations: {
-			[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
+	metadata.passiveEvaluationModifiers =
+		metadata.passiveEvaluationModifiers ?? {};
+	metadata.populations = {
+		...metadata.populations,
+		[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
+	};
+	metadata.buildings = {
+		...metadata.buildings,
+		[buildingId]: { label: 'Sky Bastion', icon: '🏯' },
+	};
+	metadata.developments = {
+		...metadata.developments,
+		[developmentId]: { label: 'Celestial Garden', icon: '🌿' },
+	};
+	metadata.resources = {
+		...metadata.resources,
+		[resourceKey]: {
+			label: 'Starlight',
+			icon: '✨',
+			description: 'Brilliant astral currency.',
 		},
-		buildings: {
-			[buildingId]: { label: 'Sky Bastion', icon: '🏯' },
+	};
+	metadata.triggers = {
+		...metadata.triggers,
+		[triggerId]: {
+			label: 'Starlight Surge',
+			icon: '⚡',
+			future: 'When the stars align',
+			past: 'Starlight Surge',
 		},
-		developments: {
-			[developmentId]: { label: 'Celestial Garden', icon: '🌿' },
+	};
+	metadata.phases = {
+		...metadata.phases,
+		[phaseId]: {
+			id: phaseId,
+			label: 'Ascension Phase',
+			icon: '🛸',
+			action: true,
+			steps: [
+				{
+					id: phaseStepId,
+					label: 'Empower',
+					icon: '💫',
+					triggers: [triggerId],
+				},
+			],
 		},
-		resources: {
-			[resourceKey]: {
-				label: 'Starlight',
-				icon: '✨',
-				description: 'Brilliant astral currency.',
-			},
-		},
-		triggers: {
-			[triggerId]: {
-				label: 'Starlight Surge',
-				icon: '⚡',
-				future: 'When the stars align',
-				past: 'Starlight Surge',
-			},
-		},
-		phases: {
-			[phaseId]: {
-				label: 'Ascension Phase',
-				icon: '🛸',
-				action: true,
-				steps: [
-					{
-						id: phaseStepId,
-						label: 'Empower',
-						icon: '💫',
-						triggers: [triggerId],
-					},
-				],
-			},
-		},
-		assets: {
-			land: { label: 'Territory', icon: '🗺️' },
-			slot: { label: 'Development Slot', icon: '🧩' },
-			passive: { label: 'Aura', icon: '♾️' },
-		},
+	};
+	metadata.assets = {
+		...metadata.assets,
+		land: { label: 'Territory', icon: '🗺️' },
+		slot: { label: 'Development Slot', icon: '🧩' },
+		passive: { label: 'Aura', icon: '♾️' },
 	};
 	const activePlayer = createSnapshotPlayer({
 		id: 'player:active',
