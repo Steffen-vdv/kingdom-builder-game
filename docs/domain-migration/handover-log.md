@@ -1,5 +1,12 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T16 - Next Turn Forecast Remote Simulation
+
+- `useNextTurnForecast` now requests phase simulations through the remote
+  session adapter and `GameApi`, caching results per snapshot hash while
+  falling back to empty deltas during cache misses. Tests mock the simulation
+  request helper to verify memoization and the updated async workflow.
+
 ## Domain Migration - P3 - T17 - Compensation Logger Session Decoupling
 
 - Updated `useCompensationLogger` to reset per-session tracking by keying on
