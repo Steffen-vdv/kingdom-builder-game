@@ -1,10 +1,12 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
 	PlayerSnapshotDeltaBucket,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import { useGameEngine } from './GameContext';
+import type { LegacySession } from './sessionTypes';
+import { simulateUpcomingPhases as requestSimulation } from './sessionSdk';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
 
@@ -14,6 +16,76 @@ function cloneEmptyDelta(): PlayerSnapshotDeltaBucket {
 		stats: {},
 		population: {},
 	};
+}
+
+function cloneDelta(
+	delta: PlayerSnapshotDeltaBucket,
+): PlayerSnapshotDeltaBucket {
+	if (typeof structuredClone === 'function') {
+		return structuredClone(delta);
+	}
+	return JSON.parse(JSON.stringify(delta)) as PlayerSnapshotDeltaBucket;
+}
+
+function buildEmptyForecast(
+	players: SessionPlayerStateSnapshot[],
+): NextTurnForecast {
+	const forecast: NextTurnForecast = {};
+	for (const player of players) {
+		forecast[player.id] = cloneEmptyDelta();
+	}
+	return forecast;
+}
+
+function readCachedForecast(
+	session: LegacySession,
+	players: SessionPlayerStateSnapshot[],
+): NextTurnForecast | null {
+	const forecast: NextTurnForecast = {};
+	for (const player of players) {
+		try {
+			const { delta } = session.simulateUpcomingPhases(player.id);
+			forecast[player.id] = cloneDelta(delta);
+		} catch (error) {
+			return null;
+		}
+	}
+	return forecast;
+}
+
+async function requestForecast(
+	session: LegacySession,
+	sessionId: string,
+	players: SessionPlayerStateSnapshot[],
+): Promise<NextTurnForecast> {
+	const entries = await Promise.all(
+		players.map(async (player) => {
+			const delta = await session
+				.enqueue(() =>
+					requestSimulation({
+						sessionId,
+						playerId: player.id,
+					}),
+				)
+				.then((response) => cloneDelta(response.result.delta))
+				.catch(() => {
+					try {
+						const { delta: cachedDelta } = session.simulateUpcomingPhases(
+							player.id,
+						);
+						return cloneDelta(cachedDelta);
+					} catch (error) {
+						return cloneEmptyDelta();
+					}
+				});
+			return [player.id, delta] as const;
+		}),
+	);
+	const forecast: NextTurnForecast = {};
+	for (const [playerId, delta] of entries) {
+		forecast[playerId] = delta;
+	}
+	return forecast;
 }
 
 function stableSerialize(value: unknown): string {
@@ -93,7 +165,7 @@ function hashGameState(
 }
 
 export function useNextTurnForecast(): NextTurnForecast {
-	const { session, sessionState } = useGameEngine();
+	const { sessionId, session, sessionState } = useGameEngine();
 	const { game, phases } = sessionState;
 	const players = game.players;
 	const hashKey = useMemo(() => {
@@ -114,20 +186,85 @@ export function useNextTurnForecast(): NextTurnForecast {
 		players,
 	]);
 	const cacheRef = useRef<{ key: string; value: NextTurnForecast }>();
-	return useMemo(() => {
+	const pendingRef = useRef<Map<string, Promise<NextTurnForecast>>>(new Map());
+	const lastAppliedKeyRef = useRef<string>();
+	const [forecastState, setForecastState] = useState<NextTurnForecast>(() => {
 		if (cacheRef.current?.key === hashKey) {
 			return cacheRef.current.value;
 		}
-		const forecast: NextTurnForecast = {};
-		for (const player of players) {
-			try {
-				const { delta } = session.simulateUpcomingPhases(player.id);
-				forecast[player.id] = delta;
-			} catch (error) {
-				forecast[player.id] = cloneEmptyDelta();
-			}
+		const cached = readCachedForecast(session, players);
+		if (cached) {
+			cacheRef.current = { key: hashKey, value: cached };
+			return cached;
 		}
-		cacheRef.current = { key: hashKey, value: forecast };
-		return forecast;
-	}, [session, hashKey, players]);
+		return buildEmptyForecast(players);
+	});
+
+	useEffect(() => {
+		let disposed = false;
+
+		if (cacheRef.current?.key === hashKey) {
+			if (forecastState !== cacheRef.current.value) {
+				setForecastState(cacheRef.current.value);
+			}
+			lastAppliedKeyRef.current = hashKey;
+			return () => {
+				disposed = true;
+			};
+		}
+
+		const cached = readCachedForecast(session, players);
+		if (cached) {
+			cacheRef.current = { key: hashKey, value: cached };
+			if (forecastState !== cached) {
+				setForecastState(cached);
+			}
+			lastAppliedKeyRef.current = hashKey;
+			return () => {
+				disposed = true;
+			};
+		}
+
+		if (lastAppliedKeyRef.current !== hashKey) {
+			const empty = buildEmptyForecast(players);
+			if (forecastState !== empty) {
+				setForecastState(empty);
+			}
+			lastAppliedKeyRef.current = hashKey;
+		}
+
+		const existing = pendingRef.current.get(hashKey);
+		const promise = existing ?? requestForecast(session, sessionId, players);
+		if (!existing) {
+			pendingRef.current.set(hashKey, promise);
+		}
+
+		promise
+			.then((value) => {
+				if (disposed) {
+					return;
+				}
+				cacheRef.current = { key: hashKey, value };
+				setForecastState(value);
+			})
+			.catch(() => {
+				if (disposed) {
+					return;
+				}
+				const fallback = buildEmptyForecast(players);
+				cacheRef.current = { key: hashKey, value: fallback };
+				setForecastState(fallback);
+			})
+			.finally(() => {
+				if (pendingRef.current.get(hashKey) === promise) {
+					pendingRef.current.delete(hashKey);
+				}
+			});
+
+		return () => {
+			disposed = true;
+		};
+	}, [hashKey, session, sessionId, players, forecastState]);
+
+	return forecastState;
 }

@@ -1,5 +1,15 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T16 - Next Turn Forecast Remote Simulations
+
+- `useNextTurnForecast` now queues remote `simulateUpcomingPhases` requests
+  through the session adapter, reuses hashed memoization keys for cached
+  results, and falls back to cached deltas when remote calls fail so the UI
+  keeps rendering safe defaults.【F:packages/web/src/state/useNextTurnForecast.ts†L1-L266】
+- Updated the `useNextTurnForecast` tests to mock the session SDK request layer
+  and verify asynchronous caching, rerenders without duplicate requests, and
+  failure recovery behaviour.【F:packages/web/tests/useNextTurnForecast.test.ts†L1-L340】
+
 ## Domain Migration - P3 - T9 - Remote Session Mirror Removal
 
 - Removed the legacy engine mirror and developer-mode bootstrap so session lifecycle now flows entirely through the remote adapter backed by the session state store.【F:packages/web/src/state/sessionSdk.ts†L1-L340】【F:packages/web/src/state/remoteSessionAdapter.ts†L1-L220】
