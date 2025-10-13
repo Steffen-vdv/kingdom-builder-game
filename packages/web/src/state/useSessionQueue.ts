@@ -36,8 +36,8 @@ export function useSessionQueue(
 		if (latest) {
 			return latest;
 		}
-		return legacySession.getSnapshot();
-	}, [queue, legacySession, sessionState]);
+		return sessionState;
+	}, [queue, sessionState]);
 	return {
 		legacySession,
 		enqueue,

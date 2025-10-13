@@ -182,8 +182,12 @@ export function GameProviderInner({
 		registries,
 	});
 
+	const getLatestSnapshot = useCallback(
+		() => queue.getLatestSnapshot() ?? sessionState,
+		[queue, sessionState],
+	);
+
 	const { handlePerform, performRef } = useActionPerformer({
-		session: legacySession,
 		sessionId,
 		actionCostResource,
 		registries,
@@ -196,6 +200,7 @@ export function GameProviderInner({
 		endTurn,
 		enqueue,
 		resourceKeys,
+		getLatestSnapshot,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
