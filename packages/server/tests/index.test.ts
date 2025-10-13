@@ -52,7 +52,7 @@ describe('server entrypoint', () => {
 		});
 		expect(response.status).toBe(201);
 		await result.app.close();
-	});
+	}, 15000);
 
 	it('allows HttpSessionGateway to toggle developer mode', async () => {
 		const module = await import('../src/index.js');

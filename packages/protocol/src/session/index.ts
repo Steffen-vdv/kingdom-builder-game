@@ -389,6 +389,13 @@ export type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
+	SessionRegistriesMetadata,
+	SessionOverviewMetadata,
+	SessionOverviewHeroMetadata,
+	SessionOverviewSectionMetadata,
+	SessionOverviewSectionItemMetadata,
+	SessionDeveloperPresetPlan,
+	SessionDeveloperPresetPlanEntry,
 } from './contracts';
 
 export * as contracts from './contracts';

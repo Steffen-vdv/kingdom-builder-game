@@ -45,6 +45,19 @@ export interface SessionOverviewMetadata {
 	tokens: Record<string, unknown>;
 }
 
+export interface SessionDeveloperPresetPlanEntry {
+	resources?: Record<string, number>;
+	population?: Record<string, number>;
+	landCount?: number;
+	developments?: string[];
+	buildings?: string[];
+}
+
+export interface SessionDeveloperPresetPlan {
+	default?: SessionDeveloperPresetPlanEntry;
+	players?: Record<string, SessionDeveloperPresetPlanEntry>;
+}
+
 export interface SessionRegistriesMetadata {
 	resources?: Record<string, SessionMetadataDescriptor>;
 	populations?: Record<string, SessionMetadataDescriptor>;
@@ -55,6 +68,7 @@ export interface SessionRegistriesMetadata {
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
 	overviewContent?: SessionOverviewMetadata;
+	developerPresetPlan?: SessionDeveloperPresetPlan;
 }
 
 export interface SessionIdentifier {

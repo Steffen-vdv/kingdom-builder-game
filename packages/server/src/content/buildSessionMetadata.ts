@@ -17,23 +17,24 @@ import type {
 	SessionMetadataDescriptor,
 	SessionPhaseMetadata,
 	SessionPhaseStepMetadata,
-	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
+	SessionDeveloperPresetPlan,
 } from '@kingdom-builder/protocol/session';
+import { buildDeveloperPresetPlan } from './developerPresetPlan.js';
 
 type MetadataDescriptorRecord = Record<string, SessionMetadataDescriptor>;
 
-type SessionMetadataBundle = Pick<
-	SessionSnapshotMetadata,
-	| 'resources'
-	| 'populations'
-	| 'buildings'
-	| 'developments'
-	| 'stats'
-	| 'phases'
-	| 'triggers'
-	| 'assets'
->;
+interface SessionMetadataBundle {
+	resources: MetadataDescriptorRecord;
+	populations: MetadataDescriptorRecord;
+	buildings: MetadataDescriptorRecord;
+	developments: MetadataDescriptorRecord;
+	stats: MetadataDescriptorRecord;
+	phases: Record<string, SessionPhaseMetadata>;
+	triggers: Record<string, SessionTriggerMetadata>;
+	assets: MetadataDescriptorRecord;
+	developerPresetPlan?: SessionDeveloperPresetPlan;
+}
 
 const isNonEmptyString = (value: string | undefined): value is string => {
 	return typeof value === 'string' && value.trim().length > 0;
@@ -208,7 +209,8 @@ const createAssetDescriptors = (): MetadataDescriptorRecord => {
 };
 
 export function buildSessionMetadata(): SessionMetadataBundle {
-	return Object.freeze({
+	const developerPresetPlan = buildDeveloperPresetPlan();
+	const metadata: SessionMetadataBundle = {
 		resources: createResourceDescriptors(),
 		populations: createRegistryDescriptors(POPULATIONS.entries()),
 		buildings: createRegistryDescriptors(BUILDINGS.entries()),
@@ -217,5 +219,9 @@ export function buildSessionMetadata(): SessionMetadataBundle {
 		phases: createPhaseDescriptors(),
 		triggers: createTriggerDescriptors(),
 		assets: createAssetDescriptors(),
-	});
+	};
+	if (developerPresetPlan) {
+		metadata.developerPresetPlan = developerPresetPlan;
+	}
+	return metadata;
 }
