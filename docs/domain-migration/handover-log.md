@@ -12,6 +12,16 @@
   【F:packages/web/src/state/GameProviderInner.tsx†L1-L360】
   【F:packages/web/tests/state/useCompensationLogger.test.tsx†L1-L212】
 
+## Domain Migration - P3 - T13 - Action Performer Queue Alignment
+
+- Updated `useActionPerformer` to read the authoritative session snapshot from
+  the adapter after remote executions and to expose the queued handler to AI
+  callers, eliminating the legacy engine mirror dependency for action
+  completion state and queuing.【F:packages/web/src/state/useActionPerformer.ts†L129-L349】
+- Refreshed the hook's tests to mock protocol requirement failures and adapter
+  snapshot updates instead of engine fixtures so coverage follows the GameApi
+  transport path.【F:packages/web/tests/state/useActionPerformer.test.ts†L1-L332】
+
 ## Domain Migration - P3 - T11 - Session Container Remote Adapter Migration
 
 - `GameContext` now persists the remote session adapter alongside the
@@ -166,6 +176,18 @@
   rewrote the session SDK test suite to exercise remote behaviour using the
   revised `GameApiFake`, removing the final engine dependencies from the web
   session bootstrap path.
+
+## Domain Migration - P3 - T15 - AI Runner Remote Orchestration
+
+- `useAiRunner` now delegates to the remote session adapter's `runAiTurn` and
+  `hasAiController` helpers, removing the local engine overrides and letting
+  the `GameApi` drive AI execution.
+- The hook refreshes the session store from the adapter snapshot after each AI
+  turn before resuming phase advancement so queued effects reflect the remote
+  state.
+- `packages/web/tests/state/useAiRunner.test.ts` now stubs the adapter/GameApi
+  behaviour to validate fatal error propagation without touching engine-only
+  helpers.
 
 ## Domain Migration - P3 - T14 - Phase progress snapshot mirroring
 
