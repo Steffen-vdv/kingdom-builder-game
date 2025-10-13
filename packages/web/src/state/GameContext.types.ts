@@ -17,7 +17,6 @@ import type {
 import type { ReactNode } from 'react';
 import type {
 	LegacySession,
-	Session,
 	SessionMetadata,
 	SessionRegistries,
 	SessionResourceKey,
@@ -25,8 +24,6 @@ import type {
 } from './sessionTypes';
 
 export interface SessionContainer {
-	session: Session;
-	legacySession: LegacySession;
 	sessionId: string;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;

@@ -53,7 +53,6 @@ export function GameProviderInner({
 	queue,
 	sessionId,
 	sessionState,
-	legacySession: propLegacySession,
 	ruleSnapshot,
 	refreshSession,
 	onReleaseSession,
@@ -70,7 +69,7 @@ export function GameProviderInner({
 		enqueue,
 		cachedSessionSnapshot,
 		updatePlayerName: syncPlayerName,
-	} = useSessionQueue(queue, sessionState, propLegacySession);
+	} = useSessionQueue(queue, sessionState, sessionId);
 
 	const refresh = useCallback(() => {
 		void refreshSession();

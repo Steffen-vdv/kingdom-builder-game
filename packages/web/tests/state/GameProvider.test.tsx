@@ -3,7 +3,6 @@ import React from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
 import { SessionMirroringError } from '../../src/state/legacySessionMirror';
 import {
@@ -34,6 +33,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 	};
 });
 
+const getLegacySessionRecordMock = vi.hoisted(() => vi.fn());
 const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
 const runUntilActionPhaseCoreMock = vi.hoisted(() => vi.fn());
 const handleEndTurnMock = vi.hoisted(() => vi.fn());
@@ -49,6 +49,30 @@ const createTranslationContextMock = vi.hoisted(() => vi.fn(() => ({})));
 let capturedPhaseOptions:
 	| (Record<string, unknown> & { refresh?: () => void })
 	| undefined;
+
+vi.mock('../../src/state/legacySessionMirror', () => {
+	class MockSessionMirroringError extends Error {
+		public override readonly cause: unknown;
+
+		public readonly details: Record<string, unknown>;
+
+		public constructor(
+			message: string,
+			options: { cause: unknown; details?: Record<string, unknown> },
+		) {
+			super(message);
+			this.name = 'SessionMirroringError';
+			this.cause = options.cause;
+			this.details = options.details ?? {};
+		}
+	}
+	return {
+		SessionMirroringError: MockSessionMirroringError,
+		markFatalSessionError: vi.fn(),
+		isFatalSessionError: vi.fn(() => false),
+		getLegacySessionRecord: getLegacySessionRecordMock,
+	};
+});
 
 vi.mock('../../src/state/useTimeScale', () => ({
 	useTimeScale: () => ({
@@ -165,7 +189,26 @@ function SessionInspector() {
 }
 
 describe('GameProvider', () => {
-	let session: LegacySession;
+	type LegacySessionStub = {
+		enqueue: ReturnType<typeof vi.fn>;
+		updatePlayerName: ReturnType<typeof vi.fn>;
+		pullEffectLog: ReturnType<typeof vi.fn>;
+		getPassiveEvaluationMods: ReturnType<typeof vi.fn>;
+		getSnapshot: ReturnType<typeof vi.fn>;
+		advancePhase: ReturnType<typeof vi.fn>;
+		getActionCosts: ReturnType<typeof vi.fn>;
+		performAction: ReturnType<typeof vi.fn>;
+		setDevMode: ReturnType<typeof vi.fn>;
+	};
+
+	let legacySession: LegacySessionStub;
+	type RemoteHandleStub = {
+		enqueue: ReturnType<typeof vi.fn>;
+		advancePhase: ReturnType<typeof vi.fn>;
+		performAction: ReturnType<typeof vi.fn>;
+	};
+
+	let remoteHandle: RemoteHandleStub;
 	let registries: ReturnType<typeof createSessionRegistries>;
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
@@ -176,6 +219,7 @@ describe('GameProvider', () => {
 		releaseSessionMock.mockReset();
 		setSessionDevModeMock.mockReset();
 		updateSessionPlayerNameMock.mockReset();
+		getLegacySessionRecordMock.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -257,7 +301,7 @@ describe('GameProvider', () => {
 		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
 			return await task();
 		});
-		session = {
+		legacySession = {
 			enqueue: enqueueMock,
 			updatePlayerName: vi.fn(),
 			pullEffectLog: vi.fn(),
@@ -267,11 +311,22 @@ describe('GameProvider', () => {
 			getActionCosts: vi.fn(() => ({})),
 			performAction: vi.fn(),
 			setDevMode: vi.fn(),
-		} as unknown as LegacySession;
+		};
+		remoteHandle = {
+			enqueue: enqueueMock,
+			advancePhase: vi.fn(),
+			performAction: vi.fn(),
+		};
+		getLegacySessionRecordMock.mockReturnValue({
+			legacySession,
+			registries,
+			resourceKeys,
+			handle: remoteHandle,
+		});
 		createSessionMock.mockResolvedValue({
 			sessionId: 'session-1',
-			session,
-			legacySession: session,
+			session: remoteHandle,
+			legacySession,
 			snapshot: initialSnapshot,
 			ruleSnapshot: initialSnapshot.rules,
 			registries,
@@ -279,8 +334,8 @@ describe('GameProvider', () => {
 			metadata: initialSnapshot.metadata,
 		});
 		fetchSnapshotMock.mockResolvedValue({
-			session,
-			legacySession: session,
+			session: remoteHandle,
+			legacySession,
 			snapshot: refreshedSnapshot,
 			ruleSnapshot: refreshedSnapshot.rules,
 			registries,
@@ -288,8 +343,8 @@ describe('GameProvider', () => {
 			metadata: refreshedSnapshot.metadata,
 		});
 		updateSessionPlayerNameMock.mockResolvedValue({
-			session,
-			legacySession: session,
+			session: remoteHandle,
+			legacySession,
 			snapshot: refreshedSnapshot,
 			ruleSnapshot: refreshedSnapshot.rules,
 			registries,
@@ -330,6 +385,10 @@ describe('GameProvider', () => {
 		await waitFor(() =>
 			expect(runUntilActionPhaseMock).toHaveBeenCalledTimes(1),
 		);
+
+		await waitFor(() =>
+			expect(getLegacySessionRecordMock).toHaveBeenCalledWith('session-1'),
+		);
 	});
 
 	it('syncs player name updates through the session queue', async () => {
@@ -359,8 +418,8 @@ describe('GameProvider', () => {
 				'phase-main',
 		});
 		updateSessionPlayerNameMock.mockResolvedValueOnce({
-			session,
-			legacySession: session,
+			session: remoteHandle,
+			legacySession,
 			snapshot: renamedSnapshot,
 			ruleSnapshot: renamedSnapshot.rules,
 			registries,
@@ -408,8 +467,8 @@ describe('GameProvider', () => {
 		});
 
 		setSessionDevModeMock.mockResolvedValueOnce({
-			session,
-			legacySession: session,
+			session: remoteHandle,
+			legacySession,
 			snapshot: devModeSnapshot,
 			ruleSnapshot: devModeSnapshot.rules,
 			registries,
