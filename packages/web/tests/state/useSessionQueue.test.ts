@@ -71,6 +71,7 @@ describe('useSessionQueue', () => {
 		await act(async () => {
 			value = await result.current.enqueue(task);
 		});
+		expect(result.current.adapter).toBe(adapter);
 		expect(value).toBe('complete');
 		expect(task).toHaveBeenCalledTimes(1);
 		expect(enqueueMock).not.toHaveBeenCalled();

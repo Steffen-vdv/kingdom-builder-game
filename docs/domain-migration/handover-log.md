@@ -12,6 +12,19 @@
   【F:packages/web/src/state/GameProviderInner.tsx†L1-L360】
   【F:packages/web/tests/state/useCompensationLogger.test.tsx†L1-L212】
 
+## Domain Migration - P3 - T12 - Remote Adapter Context Wiring
+
+- Replaced the remaining `legacySession` references in `GameProviderInner` with
+  the remote session adapter returned by the queue hook so downstream hooks now
+  receive the protocol-backed adapter instead of the engine mirror.
+  【F:packages/web/src/state/GameProviderInner.tsx†L1-L360】
+- Updated `useSessionQueue` to expose the shared adapter under an `adapter`
+  property and adjusted its tests and new `GameProviderInner` coverage to assert
+  the adapter, enqueue helper, and cached snapshot flow through the unified
+  wiring.【F:packages/web/src/state/useSessionQueue.ts†L1-L41】
+  【F:packages/web/tests/state/useSessionQueue.test.ts†L1-L88】
+  【F:packages/web/tests/state/GameProviderInner.test.tsx†L1-L226】
+
 ## Domain Migration - P3 - T13 - Action Performer Queue Alignment
 
 - Updated `useActionPerformer` to read the authoritative session snapshot from
