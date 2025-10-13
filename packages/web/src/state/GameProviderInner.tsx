@@ -175,17 +175,18 @@ export function GameProviderInner({
 		});
 
 	useCompensationLogger({
-		session: legacySession,
+		sessionId,
 		sessionState,
 		addLog,
 		resourceKeys,
 		registries,
+		getLatestSnapshot: queue.getLatestSnapshot,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
-		session: legacySession,
 		sessionId,
 		actionCostResource,
+		getLatestSnapshot: queue.getLatestSnapshot,
 		registries,
 		addLog,
 		showResolution: handleShowResolution,

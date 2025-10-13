@@ -43,7 +43,9 @@ vi.mock('../../src/state/sessionSdk', async () => {
 });
 
 describe('useActionPerformer', () => {
-	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
+	let getLatestSnapshotMock: ReturnType<
+		typeof vi.fn<() => ReturnType<typeof createSessionSnapshot> | null>
+	>;
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
@@ -110,9 +112,7 @@ describe('useActionPerformer', () => {
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		getLatestSnapshotMock = vi.fn(() => sessionSnapshot);
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
@@ -139,9 +139,9 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
+				getLatestSnapshot: getLatestSnapshotMock,
 				registries,
 				addLog,
 				showResolution,
@@ -182,9 +182,9 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
+				getLatestSnapshot: getLatestSnapshotMock,
 				registries,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
@@ -229,9 +229,9 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
+				getLatestSnapshot: getLatestSnapshotMock,
 				registries,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
@@ -282,15 +282,12 @@ describe('useActionPerformer', () => {
 			currentPhase: sessionSnapshot.game.currentPhase,
 			currentStep: sessionSnapshot.game.currentStep,
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
+				getLatestSnapshot: getLatestSnapshotMock,
 				registries,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
@@ -364,9 +361,9 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
+				getLatestSnapshot: getLatestSnapshotMock,
 				registries,
 				addLog,
 				showResolution,
@@ -454,9 +451,9 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
+				getLatestSnapshot: getLatestSnapshotMock,
 				registries,
 				addLog,
 				showResolution,
@@ -518,9 +515,9 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
+				getLatestSnapshot: getLatestSnapshotMock,
 				registries,
 				addLog,
 				showResolution,

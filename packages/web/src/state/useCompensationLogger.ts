@@ -7,14 +7,10 @@ import {
 	type TranslationDiffContext,
 } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
-import type {
-	LegacySession,
-	SessionRegistries,
-	SessionResourceKey,
-} from './sessionTypes';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 
 interface UseCompensationLoggerOptions {
-	session: LegacySession;
+	sessionId: string;
 	sessionState: SessionSnapshot;
 	addLog: (
 		entry: string | string[],
@@ -25,36 +21,39 @@ interface UseCompensationLoggerOptions {
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
 	>;
+	getLatestSnapshot: () => SessionSnapshot | null;
 }
 
 export function useCompensationLogger({
-	session,
+	sessionId,
 	sessionState,
 	addLog,
 	resourceKeys,
 	registries,
+	getLatestSnapshot,
 }: UseCompensationLoggerOptions) {
-	const loggedSessionRef = useRef<LegacySession | null>(null);
+	const loggedSessionRef = useRef<string | null>(null);
 	const loggedPlayersRef = useRef<Set<string>>(new Set());
 	useEffect(() => {
-		if (loggedSessionRef.current !== session) {
-			loggedSessionRef.current = session;
+		if (loggedSessionRef.current !== sessionId) {
+			loggedSessionRef.current = sessionId;
 			loggedPlayersRef.current = new Set();
 		}
-		if (sessionState.game.turn !== 1) {
+		const latestSnapshot = getLatestSnapshot() ?? sessionState;
+		if (latestSnapshot.game.turn !== 1) {
 			return;
 		}
 		const { diffContext: baseDiffContext } = getLegacySessionContext({
-			snapshot: sessionState,
-			ruleSnapshot: sessionState.rules,
-			passiveRecords: sessionState.passiveRecords,
+			snapshot: latestSnapshot,
+			ruleSnapshot: latestSnapshot.rules,
+			passiveRecords: latestSnapshot.passiveRecords,
 			registries,
 		});
-		sessionState.game.players.forEach((player) => {
+		latestSnapshot.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {
 				return;
 			}
-			const compensation = sessionState.compensations[player.id];
+			const compensation = latestSnapshot.compensations[player.id];
 			if (
 				!compensation ||
 				(Object.keys(compensation.resources || {}).length === 0 &&
@@ -108,5 +107,12 @@ export function useCompensationLogger({
 				loggedPlayersRef.current.add(player.id);
 			}
 		});
-	}, [addLog, registries, resourceKeys, session, sessionState]);
+	}, [
+		addLog,
+		registries,
+		resourceKeys,
+		sessionId,
+		sessionState,
+		getLatestSnapshot,
+	]);
 }

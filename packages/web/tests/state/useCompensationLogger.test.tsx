@@ -9,10 +9,7 @@ import type {
 import { useCompensationLogger } from '../../src/state/useCompensationLogger';
 import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
-import type {
-	LegacySession,
-	SessionResourceKey,
-} from '../../src/state/sessionTypes';
+import type { SessionResourceKey } from '../../src/state/sessionTypes';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
 
 vi.mock('../../src/translation', async () => {
@@ -39,25 +36,6 @@ function createRegistriesWithFallback() {
 		? [primaryResource]
 		: [];
 	return { registries, resourceKeys, primaryResource } as const;
-}
-
-function createSession(primaryResource: SessionResourceKey): LegacySession {
-	return {
-		hasAiController: () => false,
-		getActionDefinition: () => undefined,
-		runAiTurn: vi.fn().mockResolvedValue(false),
-		advancePhase: vi.fn(),
-		pullEffectLog: vi.fn(),
-		getPassiveEvaluationMods: vi.fn(() => new Map()),
-		getRuleSnapshot: vi.fn(() => ({
-			tieredResourceKey: primaryResource,
-			tierDefinitions: [],
-			winConditions: [],
-		})),
-		pushEffectLog: vi.fn(),
-		applyDeveloperPreset: vi.fn(),
-		updatePlayerName: vi.fn(),
-	} as unknown as LegacySession;
 }
 
 function createPlayer(
@@ -124,26 +102,29 @@ function createSessionState(
 }
 
 interface HarnessProps {
-	session: LegacySession;
+	sessionId: string;
 	state: SessionSnapshot;
 	addLog: (entry: string | string[]) => void;
 	registries: ReturnType<typeof createSessionRegistries>;
 	resourceKeys: SessionResourceKey[];
+	getLatestSnapshot: () => SessionSnapshot | null;
 }
 
 function Harness({
-	session,
+	sessionId,
 	state,
 	addLog,
 	registries,
 	resourceKeys,
+	getLatestSnapshot,
 }: HarnessProps) {
 	useCompensationLogger({
-		session,
+		sessionId,
 		sessionState: state,
 		addLog,
 		resourceKeys,
 		registries,
+		getLatestSnapshot,
 	});
 	return null;
 }
@@ -156,15 +137,18 @@ describe('useCompensationLogger', () => {
 			createRegistriesWithFallback();
 		const resourceKey =
 			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
-		const session = createSession(resourceKey);
 		const state = createSessionState(1, resourceKey);
+		const sessionId = 'session-primary';
+		let latestSnapshot = state;
+		const getLatestSnapshot = vi.fn(() => latestSnapshot);
 		const { rerender } = render(
 			<Harness
-				session={session}
+				sessionId={sessionId}
 				state={state}
 				addLog={addLog}
 				registries={registries}
 				resourceKeys={resourceKeys}
+				getLatestSnapshot={getLatestSnapshot}
 			/>,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
@@ -176,13 +160,15 @@ describe('useCompensationLogger', () => {
 			expect(resourceDescriptor?.label).toBe(primaryResource);
 		}
 		const nextState = createSessionState(1, resourceKey);
+		latestSnapshot = nextState;
 		rerender(
 			<Harness
-				session={session}
+				sessionId={sessionId}
 				state={nextState}
 				addLog={addLog}
 				registries={registries}
 				resourceKeys={resourceKeys}
+				getLatestSnapshot={getLatestSnapshot}
 			/>,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
@@ -195,28 +181,31 @@ describe('useCompensationLogger', () => {
 		const { registries, resourceKeys } = createRegistriesWithFallback();
 		const resourceKey =
 			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
-		const session = createSession(resourceKey);
 		const state = createSessionState(1, resourceKey);
+		let latestSnapshot = state;
+		const getLatestSnapshot = vi.fn(() => latestSnapshot);
 		const { rerender } = render(
 			<Harness
-				session={session}
+				sessionId="session-primary"
 				state={state}
 				addLog={addLog}
 				registries={registries}
 				resourceKeys={resourceKeys}
+				getLatestSnapshot={getLatestSnapshot}
 			/>,
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
-		const newSession = createSession(resourceKey);
 		const newState = createSessionState(1, resourceKey);
+		latestSnapshot = newState;
 		rerender(
 			<Harness
-				session={newSession}
+				sessionId="session-next"
 				state={newState}
 				addLog={addLog}
 				registries={registries}
 				resourceKeys={resourceKeys}
+				getLatestSnapshot={getLatestSnapshot}
 			/>,
 		);
 		expect(addLog).toHaveBeenCalledTimes(2);

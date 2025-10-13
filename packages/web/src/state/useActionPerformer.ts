@@ -37,11 +37,7 @@ import {
 	markFatalSessionError,
 	isFatalSessionError,
 } from './sessionSdk';
-import type {
-	LegacySession,
-	SessionRegistries,
-	SessionResourceKey,
-} from './sessionTypes';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
 
@@ -86,9 +82,9 @@ function ensureTimelineLines(
 	return lines;
 }
 interface UseActionPerformerOptions {
-	session: LegacySession;
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
+	getLatestSnapshot: () => SessionSnapshot | null;
 	registries: Pick<
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
@@ -111,9 +107,9 @@ interface UseActionPerformerOptions {
 	onFatalSessionError?: (error: unknown) => void;
 }
 export function useActionPerformer({
-	session,
 	sessionId,
 	actionCostResource,
+	getLatestSnapshot,
 	registries,
 	addLog,
 	showResolution,
@@ -143,10 +139,13 @@ export function useActionPerformer({
 				throw error;
 			};
 			const ensureValue = <T>(
-				value: T | undefined,
+				value: T | null | undefined,
 				createError: () => Error,
 			): T => value ?? throwFatal(createError());
-			const snapshotBefore = session.getSnapshot();
+			const snapshotBefore = ensureValue<SessionSnapshot>(
+				getLatestSnapshot(),
+				() => new Error('Missing session snapshot before action'),
+			);
 			if (snapshotBefore.game.conclusion) {
 				pushErrorToast('The battle is already decided.');
 				return;
@@ -323,11 +322,11 @@ export function useActionPerformer({
 			pushErrorToast,
 			refresh,
 			resourceKeys,
-			session,
 			showResolution,
 			syncPhaseState,
 			actionCostResource,
 			onFatalSessionError,
+			getLatestSnapshot,
 		],
 	);
 	const handlePerform = useCallback(
