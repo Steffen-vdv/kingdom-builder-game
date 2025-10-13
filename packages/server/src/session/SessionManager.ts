@@ -11,8 +11,6 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
-	STATS,
-	TRIGGER_INFO,
 	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
 import type {
@@ -22,8 +20,8 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SessionRegistriesMetadata,
-	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol';
+import { buildSessionMetadata } from '../content/buildSessionMetadata.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -190,58 +188,34 @@ export class SessionManager {
 		return result;
 	}
 
-	private buildDescriptorMap(
-		entries: Record<
-			string,
-			{ label?: string; icon?: string; description?: string }
-		>,
-	): Record<string, SessionMetadataDescriptor> {
-		return Object.fromEntries(
-			Object.entries(entries).map(([id, descriptor]) => {
-				const metadata: SessionMetadataDescriptor = {};
-				if (descriptor.label !== undefined) {
-					metadata.label = descriptor.label;
-				}
-				if (descriptor.icon !== undefined) {
-					metadata.icon = descriptor.icon;
-				}
-				if (descriptor.description !== undefined) {
-					metadata.description = descriptor.description;
-				}
-				return [id, metadata];
-			}),
-		);
-	}
-
-	private buildTriggerMetadata(): NonNullable<
-		SessionRegistriesMetadata['triggers']
-	> {
-		const triggerEntries = Object.entries(
-			TRIGGER_INFO as Record<
-				string,
-				{ icon?: string; future?: string; past?: string }
-			>,
-		);
-		return Object.fromEntries(
-			triggerEntries.map(([id, info]) => [
-				id,
-				{
-					label: info.past ?? info.future ?? id,
-					...(info.icon !== undefined ? { icon: info.icon } : {}),
-					...(info.future !== undefined ? { future: info.future } : {}),
-					...(info.past !== undefined ? { past: info.past } : {}),
-				},
-			]),
-		) as NonNullable<SessionRegistriesMetadata['triggers']>;
-	}
-
 	private buildMetadata(): SessionRegistriesMetadata {
-		return {
-			resources: this.buildDescriptorMap(RESOURCES),
-			stats: this.buildDescriptorMap(STATS),
-			triggers: this.buildTriggerMetadata(),
+		const bundle = buildSessionMetadata();
+		const metadata: SessionRegistriesMetadata = {
 			overviewContent: structuredClone(OVERVIEW_CONTENT),
-		} satisfies SessionRegistriesMetadata;
+		};
+		const assign = <K extends keyof SessionRegistriesMetadata>(
+			key: K,
+			source: SessionRegistriesMetadata[K],
+		): void => {
+			if (source === undefined) {
+				return;
+			}
+			metadata[key] = structuredClone(source);
+		};
+		assign('resources', bundle.resources);
+		assign('populations', bundle.populations);
+		assign('buildings', bundle.buildings);
+		assign('developments', bundle.developments);
+		assign('stats', bundle.stats);
+		assign('phases', bundle.phases);
+		assign('triggers', bundle.triggers);
+		assign('assets', bundle.assets);
+		if (bundle.developerPresetPlan) {
+			metadata.developerPresetPlan = structuredClone(
+				bundle.developerPresetPlan,
+			);
+		}
+		return metadata;
 	}
 
 	private buildResourceRegistry(

@@ -179,6 +179,8 @@ export type {
 	SessionOverviewHeroMetadata,
 	SessionOverviewSectionMetadata,
 	SessionOverviewSectionItemMetadata,
+	SessionDeveloperPresetPlan,
+	SessionDeveloperPresetPlanEntry,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {
