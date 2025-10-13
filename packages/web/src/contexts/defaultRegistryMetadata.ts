@@ -2,6 +2,7 @@ import type {
 	SessionRegistriesPayload,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
+import type { OverviewContentTemplate } from '@kingdom-builder/contents';
 import { deserializeSessionRegistries } from '../state/sessionRegistries';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import snapshot from './defaultRegistryMetadata.json';
@@ -9,6 +10,7 @@ import snapshot from './defaultRegistryMetadata.json';
 interface DefaultRegistrySnapshot {
 	readonly registries: SessionRegistriesPayload;
 	readonly metadata: SessionSnapshotMetadata;
+	readonly overviewContent: OverviewContentTemplate;
 }
 
 function deepFreeze<T>(value: T): T {
@@ -43,3 +45,6 @@ export const DEFAULT_REGISTRIES: SessionRegistries =
 
 export const DEFAULT_REGISTRY_METADATA: SessionSnapshotMetadata =
 	SNAPSHOT.metadata;
+
+export const DEFAULT_OVERVIEW_CONTENT: OverviewContentTemplate =
+	SNAPSHOT.overviewContent;

@@ -9,10 +9,7 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
+import { type OverviewContentTemplate } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -43,6 +40,7 @@ import {
 	type AssetMetadataSelector,
 	type MetadataSelector,
 } from './registryMetadataSelectors';
+import { DEFAULT_OVERVIEW_CONTENT } from './defaultRegistryMetadata';
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
@@ -70,12 +68,16 @@ export interface RegistryMetadataContextValue {
 	overviewContent: OverviewContentTemplate;
 }
 
+type MetadataWithOverview = SessionSnapshotMetadata & {
+	overviewContent?: OverviewContentTemplate;
+};
+
 interface RegistryMetadataProviderProps {
 	registries: Pick<
 		SessionRegistries,
 		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
 	>;
-	metadata: SessionSnapshotMetadata;
+	metadata: MetadataWithOverview;
 	children: React.ReactNode;
 }
 
@@ -222,7 +224,11 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const metadataOverviewContent = metadata.overviewContent;
+	const overviewContent = useMemo(
+		() => metadataOverviewContent ?? DEFAULT_OVERVIEW_CONTENT,
+		[metadataOverviewContent],
+	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({

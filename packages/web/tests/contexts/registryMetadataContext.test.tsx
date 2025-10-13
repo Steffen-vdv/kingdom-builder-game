@@ -5,6 +5,7 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
+import type { OverviewContentTemplate } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
 	RegistryMetadataProvider,
@@ -36,7 +37,9 @@ interface TestSetup {
 	populationId: string;
 	resourceKey: string;
 	resource: SessionResourceDefinition;
-	metadata: SessionSnapshotMetadata;
+	metadata: SessionSnapshotMetadata & {
+		overviewContent?: OverviewContentTemplate;
+	};
 	statId: string;
 	phaseId: string;
 	phaseStepId: string;
@@ -285,5 +288,54 @@ describe('RegistryMetadataProvider', () => {
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
 		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(Object.isFrozen(context.overviewContent)).toBe(true);
+	});
+
+	it('prefers overview content supplied through metadata', () => {
+		const setup = createTestSetup();
+		const customOverview: OverviewContentTemplate = {
+			hero: {
+				badgeIcon: '🧭',
+				badgeLabel: 'Scout the Realm',
+				title: 'Charted Territories',
+				intro: 'Navigate the frontier with a pioneering spirit.',
+				paragraph: 'Every expedition reveals new wonders.',
+				tokens: { journey: 'Expedition' },
+			},
+			sections: [
+				{
+					kind: 'paragraph',
+					id: 'introduction',
+					icon: 'compass',
+					title: 'First Steps',
+					paragraphs: ['Begin with a single stride into the unknown.'],
+				},
+			],
+			tokens: {
+				static: { map: ['map'] },
+			},
+		};
+		const metadata = {
+			...setup.metadata,
+			overviewContent: customOverview,
+		};
+		let captured: RegistryMetadataContextValue | null = null;
+		const Capture = () => {
+			captured = useRegistryMetadata();
+			return null;
+		};
+		renderToStaticMarkup(
+			<RegistryMetadataProvider
+				registries={setup.registries}
+				metadata={metadata}
+			>
+				<Capture />
+			</RegistryMetadataProvider>,
+		);
+		if (!captured) {
+			throw new Error('Registry metadata context was not captured.');
+		}
+		expect(captured.overviewContent).toBe(customOverview);
+		expect(captured.overviewContent.hero.title).toBe('Charted Territories');
 	});
 });
