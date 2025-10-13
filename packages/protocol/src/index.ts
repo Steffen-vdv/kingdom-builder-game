@@ -147,6 +147,9 @@ export type {
 	SerializedRegistry,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionRunAiOverrides,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {
@@ -173,6 +176,8 @@ export {
 	sessionSetDevModeResponseSchema,
 	sessionUpdatePlayerNameRequestSchema,
 	sessionUpdatePlayerNameResponseSchema,
+	sessionRunAiRequestSchema,
+	sessionRunAiResponseSchema,
 } from './config/session_contracts';
 export {
 	actionEffectChoiceSchema,
