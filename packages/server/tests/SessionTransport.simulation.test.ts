@@ -18,7 +18,7 @@ const authorizedHeaders = {
 } satisfies Record<string, string>;
 
 describe('SessionTransport simulateUpcomingPhases', () => {
-	it('returns simulation results from the engine session', () => {
+	it('returns simulation results from the engine session', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -31,31 +31,47 @@ describe('SessionTransport simulateUpcomingPhases', () => {
 		const session = manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		const expected = { forecast: [{ phaseId: 'main', steps: [] }] };
-		const simulateSpy = session
-			? vi.spyOn(session, 'simulateUpcomingPhases').mockReturnValue(expected)
-			: null;
-		const result = transport.simulateUpcomingPhases({
-			body: { sessionId, playerId: 'A', options: { maxIterations: 2 } },
+		let playerId: string | null = null;
+		if (session) {
+			const snapshot = session.getSnapshot();
+			playerId = snapshot.game.players[0]?.id ?? null;
+		}
+		expect(playerId).not.toBeNull();
+		if (!session || playerId === null) {
+			throw new Error('Session snapshot was unavailable.');
+		}
+		const simulateSpy = vi
+			.spyOn(session, 'simulateUpcomingPhases')
+			.mockReturnValue(expected);
+		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+			return await factory();
+		});
+		const result = await transport.simulateUpcomingPhases({
+			body: {
+				sessionId,
+				playerId,
+				options: { maxIterations: 2 },
+			},
 			headers: authorizedHeaders,
 		});
 		expect(result.sessionId).toBe(sessionId);
 		expect(result.result).toEqual(expected);
-		if (simulateSpy) {
-			expect(simulateSpy).toHaveBeenCalledWith('A', { maxIterations: 2 });
-		}
+		expect(simulateSpy).toHaveBeenCalledWith(playerId, {
+			maxIterations: 2,
+		});
 	});
 
-	it('validates simulation payloads', () => {
+	it('validates simulation payloads', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
-		expect(() =>
+		await expect(
 			transport.simulateUpcomingPhases({
 				body: {},
 				headers: authorizedHeaders,
 			}),
-		).toThrowError(TransportError);
+		).rejects.toThrowError(TransportError);
 	});
 });

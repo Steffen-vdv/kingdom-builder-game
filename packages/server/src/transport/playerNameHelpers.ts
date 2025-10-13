@@ -2,6 +2,7 @@ import type {
 	SessionPlayerId,
 	SessionPlayerNameMap,
 } from '@kingdom-builder/protocol';
+import type { EngineSession } from '@kingdom-builder/engine';
 import { TransportError } from './TransportTypes.js';
 
 export const PLAYER_NAME_MAX_LENGTH = 40;
@@ -39,4 +40,14 @@ export function sanitizePlayerNameEntries(
 		entries.push([playerId, sanitizedName]);
 	}
 	return entries;
+}
+
+export function applyPlayerNames(
+	session: EngineSession,
+	names: SessionPlayerNameMap,
+): void {
+	const entries = sanitizePlayerNameEntries(names);
+	for (const [playerId, sanitizedName] of entries) {
+		session.updatePlayerName(playerId, sanitizedName);
+	}
 }

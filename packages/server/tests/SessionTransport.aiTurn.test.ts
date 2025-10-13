@@ -38,15 +38,21 @@ describe('SessionTransport runAiTurn', () => {
 		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
 			return await factory();
 		});
+		const snapshot = session.getSnapshot();
+		const playerId = snapshot.game.players[0]?.id ?? null;
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No player id was available.');
+		}
 		const result = await transport.runAiTurn({
-			body: { sessionId, playerId: 'A' },
+			body: { sessionId, playerId },
 			headers: authorizedHeaders,
 		});
 		expect(result.sessionId).toBe(sessionId);
 		expect(result.ranTurn).toBe(true);
 		expect(result.snapshot.game).toBeDefined();
 		expect(result.registries.actions).toBeDefined();
-		expect(runSpy).toHaveBeenCalledWith('A');
+		expect(runSpy).toHaveBeenCalledWith(playerId);
 	});
 
 	it('rejects AI requests when controllers are missing', async () => {
@@ -59,9 +65,18 @@ describe('SessionTransport runAiTurn', () => {
 			body: {},
 			headers: authorizedHeaders,
 		});
+		const state = transport.getSessionState({
+			body: { sessionId },
+			headers: authorizedHeaders,
+		});
+		const playerId = state.snapshot.game.players[0]?.id ?? null;
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No player id was available.');
+		}
 		await expect(
 			transport.runAiTurn({
-				body: { sessionId, playerId: 'A' },
+				body: { sessionId, playerId },
 				headers: authorizedHeaders,
 			}),
 		).rejects.toThrowError(TransportError);
@@ -73,9 +88,23 @@ describe('SessionTransport runAiTurn', () => {
 			sessionManager: manager,
 			authMiddleware: middleware,
 		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const state = transport.getSessionState({
+			body: { sessionId },
+			headers: authorizedHeaders,
+		});
+		const playerId = state.snapshot.game.players[0]?.id ?? null;
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No player id was available.');
+		}
+		const invalidBody = { sessionId: 123, playerId } as unknown;
 		await expect(
 			transport.runAiTurn({
-				body: {},
+				body: invalidBody,
 				headers: authorizedHeaders,
 			}),
 		).rejects.toThrowError(TransportError);

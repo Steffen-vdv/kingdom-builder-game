@@ -21,7 +21,6 @@ import type {
 	SessionCreateResponse,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
-	SessionPlayerNameMap,
 	SessionSnapshot,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
@@ -41,10 +40,8 @@ import type {
 	TransportIdFactory,
 	TransportRequest,
 } from './TransportTypes.js';
-import {
-	sanitizePlayerName,
-	sanitizePlayerNameEntries,
-} from './playerNameHelpers.js';
+import { applyPlayerNames, sanitizePlayerName } from './playerNameHelpers.js';
+import { parseActionParameters } from './actionParameterHelpers.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 export interface SessionTransportOptions {
 	sessionManager: SessionManager;
@@ -72,7 +69,6 @@ export class SessionTransportBase {
 			);
 		}
 		const data = parsed.data;
-		data.playerNames && sanitizePlayerNameEntries(data.playerNames);
 		const sessionId = this.generateSessionId();
 		try {
 			const options: CreateSessionOptions = {
@@ -82,7 +78,9 @@ export class SessionTransportBase {
 				options.config = data.config;
 			}
 			const session = this.sessionManager.createSession(sessionId, options);
-			data.playerNames && this.applyPlayerNames(session, data.playerNames);
+			if (data.playerNames) {
+				applyPlayerNames(session, data.playerNames);
+			}
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
 				cause: error,
@@ -152,6 +150,10 @@ export class SessionTransportBase {
 		}
 		this.requireAuthorization(request, 'session:advance');
 		const { sessionId, actionId, params } = parsed.data;
+		const normalizedParams = parseActionParameters(
+			params,
+			'Invalid action request.',
+		);
 		const session = this.sessionManager.getSession(sessionId);
 		if (!session) {
 			const response = actionExecuteErrorResponseSchema.parse({
@@ -161,7 +163,7 @@ export class SessionTransportBase {
 			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
 		try {
-			const rawCosts = session.getActionCosts(actionId, params as never);
+			const rawCosts = session.getActionCosts(actionId, normalizedParams);
 			const costs: Record<string, number> = {};
 			for (const [resourceKey, amount] of Object.entries(rawCosts)) {
 				if (typeof amount === 'number') {
@@ -169,7 +171,7 @@ export class SessionTransportBase {
 				}
 			}
 			const result = await session.enqueue(() => {
-				const traces = session.performAction(actionId, params as never);
+				const traces = session.performAction(actionId, normalizedParams);
 				const snapshot = session.getSnapshot();
 				return { traces, snapshot };
 			});
@@ -293,15 +295,6 @@ export class SessionTransportBase {
 			);
 		}
 		return session;
-	}
-	protected applyPlayerNames(
-		session: EngineSession,
-		names: SessionPlayerNameMap,
-	): void {
-		const entries = sanitizePlayerNameEntries(names);
-		for (const [playerId, sanitizedName] of entries) {
-			session.updatePlayerName(playerId, sanitizedName);
-		}
 	}
 	protected requireAuthorization(
 		request: TransportRequest,

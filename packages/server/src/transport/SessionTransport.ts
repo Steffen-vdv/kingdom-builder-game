@@ -18,7 +18,10 @@ import type {
 	SessionSimulateResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
-import type { infer as Infer } from 'zod';
+import {
+	parseActionParameters,
+	type EngineActionParameters,
+} from './actionParameterHelpers.js';
 import type { TransportRequest } from './TransportTypes.js';
 import { TransportError } from './TransportTypes.js';
 import { SessionTransportBase } from './SessionTransportBase.js';
@@ -28,10 +31,8 @@ type ActionMetadataRequest = {
 	session: EngineSession;
 	sessionId: string;
 	actionId: string;
-	params?: Record<string, unknown>;
+	params?: EngineActionParameters;
 };
-
-type ActionMetadataPayload = Infer<typeof sessionActionCostRequestSchema>;
 
 type ActionMetadataSchema =
 	| typeof sessionActionCostRequestSchema
@@ -51,7 +52,7 @@ export class SessionTransport extends SessionTransportBase {
 				sessionActionCostRequestSchema,
 				'Invalid action cost request.',
 			);
-		const rawCosts = session.getActionCosts(actionId, params as never);
+		const rawCosts = session.getActionCosts(actionId, params);
 		const costs: Record<string, number> = {};
 		for (const [resourceKey, amount] of Object.entries(rawCosts)) {
 			if (typeof amount === 'number') {
@@ -75,10 +76,7 @@ export class SessionTransport extends SessionTransportBase {
 				sessionActionRequirementRequestSchema,
 				'Invalid action requirement request.',
 			);
-		const requirements = session.getActionRequirements(
-			actionId,
-			params as never,
-		);
+		const requirements = session.getActionRequirements(actionId, params);
 		const response = {
 			sessionId,
 			requirements,
@@ -137,9 +135,9 @@ export class SessionTransport extends SessionTransportBase {
 		}
 	}
 
-	public simulateUpcomingPhases(
+	public async simulateUpcomingPhases(
 		request: TransportRequest,
-	): SessionSimulateResponse {
+	): Promise<SessionSimulateResponse> {
 		this.requireAuthorization(request, 'session:advance');
 		const parsed = sessionSimulateRequestSchema.safeParse(request.body);
 		if (!parsed.success) {
@@ -151,7 +149,9 @@ export class SessionTransport extends SessionTransportBase {
 		}
 		const { sessionId, playerId, options } = parsed.data;
 		const session = this.requireSession(sessionId);
-		const result = session.simulateUpcomingPhases(playerId, options);
+		const result = await session.enqueue(() =>
+			session.simulateUpcomingPhases(playerId, options),
+		);
 		const response = {
 			sessionId,
 			result,
@@ -159,9 +159,9 @@ export class SessionTransport extends SessionTransportBase {
 		return sessionSimulateResponseSchema.parse(response);
 	}
 
-	private parseActionMetadataRequest(
+	private parseActionMetadataRequest<S extends ActionMetadataSchema>(
 		request: TransportRequest,
-		schema: ActionMetadataSchema,
+		schema: S,
 		errorMessage: string,
 	): ActionMetadataRequest {
 		const parsed = schema.safeParse(request.body);
@@ -170,8 +170,7 @@ export class SessionTransport extends SessionTransportBase {
 				issues: parsed.error.issues,
 			});
 		}
-		const { sessionId, actionId, params } =
-			parsed.data as ActionMetadataPayload;
+		const { sessionId, actionId } = parsed.data;
 		const session = this.requireSession(sessionId);
 		this.requireActionDefinition(session, actionId, sessionId);
 		const metadataRequest: ActionMetadataRequest = {
@@ -179,8 +178,14 @@ export class SessionTransport extends SessionTransportBase {
 			sessionId,
 			actionId,
 		};
-		if (params !== undefined) {
-			metadataRequest.params = params;
+		if ('params' in parsed.data) {
+			const normalized = parseActionParameters(
+				parsed.data.params,
+				errorMessage,
+			);
+			if (normalized !== undefined) {
+				metadataRequest.params = normalized;
+			}
 		}
 		return metadataRequest;
 	}
