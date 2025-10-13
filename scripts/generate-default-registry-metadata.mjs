@@ -3,12 +3,19 @@ import { access, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
+/**
+ * Regenerates the default registry metadata snapshot consumed by the web
+ * client. The script requires the built dist artifacts from
+ * `@kingdom-builder/contents`, including the overview exports, so run
+ * `npm run build --workspace @kingdom-builder/contents` beforehand.
+ */
 const REQUIRED_DIST_FILES = [
 	'../packages/contents/dist/actions.js',
 	'../packages/contents/dist/buildings.js',
 	'../packages/contents/dist/developments.js',
 	'../packages/contents/dist/populations.js',
 	'../packages/contents/dist/land.js',
+	'../packages/contents/dist/overview.js',
 	'../packages/contents/dist/passive.js',
 	'../packages/contents/dist/phases.js',
 	'../packages/contents/dist/resources.js',
@@ -41,6 +48,7 @@ async function loadContentModules() {
 		developmentsModule,
 		populationsModule,
 		landModule,
+		overviewModule,
 		passiveModule,
 		phasesModule,
 		resourcesModule,
@@ -52,6 +60,7 @@ async function loadContentModules() {
 		import(new URL('developments.js', baseUrl)),
 		import(new URL('populations.js', baseUrl)),
 		import(new URL('land.js', baseUrl)),
+		import(new URL('overview.js', baseUrl)),
 		import(new URL('passive.js', baseUrl)),
 		import(new URL('phases.js', baseUrl)),
 		import(new URL('resources.js', baseUrl)),
@@ -65,6 +74,7 @@ async function loadContentModules() {
 		createPopulationRegistry: populationsModule.createPopulationRegistry,
 		LAND_INFO: landModule.LAND_INFO,
 		SLOT_INFO: landModule.SLOT_INFO,
+		OVERVIEW_CONTENT: overviewModule.OVERVIEW_CONTENT,
 		PASSIVE_INFO: passiveModule.PASSIVE_INFO,
 		PHASES: phasesModule.PHASES,
 		RESOURCES: resourcesModule.RESOURCES,
@@ -235,9 +245,12 @@ async function main() {
 	const content = await loadContentModules();
 	const registries = createRegistries(content);
 	const metadata = createMetadata(registries, content);
+	// Preserve plain data structures so `defaultRegistryMetadata.ts` can
+	// continue deep-freezing the fallback snapshot safely.
 	const snapshot = {
 		registries,
 		metadata,
+		overviewContent: structuredClone(content.OVERVIEW_CONTENT),
 	};
 	const target = resolve(
 		dirname(fileURLToPath(import.meta.url)),
