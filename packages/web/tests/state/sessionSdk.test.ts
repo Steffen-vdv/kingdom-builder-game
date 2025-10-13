@@ -111,19 +111,19 @@ describe('sessionSdk', () => {
 			playerName: 'Commander',
 		});
 		expect(created.sessionId).toBe('session-1');
-		expect(created.session).toBe(created.legacySession);
-		expect(created.snapshot).toEqual(initialSnapshot);
-		expect(created.ruleSnapshot).toEqual(initialSnapshot.rules);
-		expect(created.resourceKeys).toEqual(resourceKeys);
-		expect(created.metadata).toEqual(initialSnapshot.metadata);
+		expect(created.adapter).toBeDefined();
+		expect(created.record.snapshot).toEqual(initialSnapshot);
+		expect(created.record.ruleSnapshot).toEqual(initialSnapshot.rules);
+		expect(created.record.resourceKeys).toEqual(resourceKeys);
+		expect(created.record.metadata).toEqual(initialSnapshot.metadata);
 	});
 
 	it('fetches snapshots via the API client', async () => {
 		await createSession();
 		const fetched = await fetchSnapshot('session-1');
-		expect(fetched.snapshot).toEqual(initialSnapshot);
-		expect(fetched.ruleSnapshot).toEqual(initialSnapshot.rules);
-		expect(fetched.metadata).toEqual(initialSnapshot.metadata);
+		expect(fetched.record.snapshot).toEqual(initialSnapshot);
+		expect(fetched.record.ruleSnapshot).toEqual(initialSnapshot.rules);
+		expect(fetched.record.metadata).toEqual(initialSnapshot.metadata);
 	});
 
 	it('sets dev mode via the API and refreshes local state', async () => {
@@ -152,11 +152,11 @@ describe('sessionSdk', () => {
 			registries: mutatedRegistries,
 		});
 		const result = await setSessionDevMode('session-1', true);
-		expect(result.snapshot).toEqual(updatedSnapshot);
-		expect(result.registries.actions.get(taxActionId)?.name).toBe(
+		expect(result.record.snapshot).toEqual(updatedSnapshot);
+		expect(result.record.registries.actions.get(taxActionId)?.name).toBe(
 			'Tax (Developer)',
 		);
-		expect(result.resourceKeys).not.toContain(resourceKey);
+		expect(result.record.resourceKeys).not.toContain(resourceKey);
 	});
 
 	it('performs actions via the API', async () => {
@@ -255,7 +255,7 @@ describe('sessionSdk', () => {
 			sessionId: 'session-1',
 		});
 		expect(response.advance).toEqual(advanceResult);
-		const cachedAdvance = created.legacySession.advancePhase();
+		const cachedAdvance = created.adapter.advancePhase();
 		expect(cachedAdvance).toEqual(advanceResult);
 	});
 
@@ -309,7 +309,7 @@ describe('sessionSdk', () => {
 			playerId: playerA.id,
 		});
 		expect(response).toEqual(simulation);
-		const cached = created.legacySession.simulateUpcomingPhases(playerA.id);
+		const cached = created.adapter.simulateUpcomingPhases(playerA.id);
 		expect(cached).toEqual(simulation.result);
 	});
 
