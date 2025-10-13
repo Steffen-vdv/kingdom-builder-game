@@ -1,4 +1,3 @@
-import { RESOURCE_TRANSFER_ICON } from '@kingdom-builder/contents';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
 	RESULT_EVENT_RESOLVE,
@@ -26,6 +25,16 @@ import {
 	selectModifierInfo,
 	selectResourceDescriptor,
 } from '../registrySelectors';
+
+const DEFAULT_TRANSFER_ICON = '🔁';
+
+function resolveTransferIcon(context: TranslationContext): string {
+	const transferEntry = context.assets.modifiers.transfer;
+	if (transferEntry?.icon && transferEntry.icon.trim().length > 0) {
+		return transferEntry.icon;
+	}
+	return DEFAULT_TRANSFER_ICON;
+}
 
 interface ModifierEvalHandler {
 	summarize: (
@@ -178,18 +187,23 @@ registerModifierEvalHandler('transfer_pct', {
 		const sign = amount >= 0 ? '+' : '';
 		const descriptor = getResultModifierLabel(context);
 		const targetSummaryLabel = `${descriptor.icon}${target.summaryLabel}`;
-		const transferAdjustment = `${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(amount)}%`;
+		const transferIcon = resolveTransferIcon(context);
+		const magnitude = Math.abs(amount);
+		const transferAdjustment = `${transferIcon}${sign}${magnitude}%`;
 		return [`${targetSummaryLabel}: ${transferAdjustment}`];
 	},
 	describe: (effect, evaluation, context) => {
 		const target = resolveTransferModifierTarget(effect, evaluation, context);
 		const amount = Number(effect.params?.['adjust'] ?? 0);
 		const descriptor = getResultModifierLabel(context);
+		const transferIcon = resolveTransferIcon(context);
+		const magnitude = Math.abs(amount);
+		const direction = increaseOrDecrease(amount);
 		const modifierDescription = formatResultModifierClause(
 			buildModifierLabelText(descriptor),
 			target.clauseTarget,
 			RESULT_EVENT_TRANSFER,
-			`${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,
+			`${transferIcon} ${direction} transfer by ${magnitude}%`,
 		);
 		const entries: Summary = [modifierDescription];
 		if (target.actionId) {

@@ -17,7 +17,10 @@ const EMPTY_ASSETS: TranslationAssets = {
 	land: {},
 	slot: {},
 	passive: {},
+	upkeep: {},
 	modifiers: {},
+	triggers: {},
+	tierSummaries: {},
 	formatPassiveRemoval: (description: string) =>
 		`Active as long as ${description}`,
 };
@@ -69,6 +72,63 @@ export function toTranslationPlayer(
 	};
 }
 
+function mergeAssets(
+	overrides?: Partial<TranslationAssets>,
+): TranslationAssets {
+	if (!overrides) {
+		return EMPTY_ASSETS;
+	}
+	const formatFallback = (description: string) =>
+		EMPTY_ASSETS.formatPassiveRemoval(description);
+	return {
+		resources: {
+			...EMPTY_ASSETS.resources,
+			...(overrides.resources ?? {}),
+		},
+		stats: {
+			...EMPTY_ASSETS.stats,
+			...(overrides.stats ?? {}),
+		},
+		populations: {
+			...EMPTY_ASSETS.populations,
+			...(overrides.populations ?? {}),
+		},
+		population: {
+			...EMPTY_ASSETS.population,
+			...(overrides.population ?? {}),
+		},
+		land: {
+			...EMPTY_ASSETS.land,
+			...(overrides.land ?? {}),
+		},
+		slot: {
+			...EMPTY_ASSETS.slot,
+			...(overrides.slot ?? {}),
+		},
+		passive: {
+			...EMPTY_ASSETS.passive,
+			...(overrides.passive ?? {}),
+		},
+		upkeep: {
+			...EMPTY_ASSETS.upkeep,
+			...(overrides.upkeep ?? {}),
+		},
+		modifiers: {
+			...EMPTY_ASSETS.modifiers,
+			...(overrides.modifiers ?? {}),
+		},
+		triggers: {
+			...EMPTY_ASSETS.triggers,
+			...(overrides.triggers ?? {}),
+		},
+		tierSummaries: {
+			...EMPTY_ASSETS.tierSummaries,
+			...(overrides.tierSummaries ?? {}),
+		},
+		formatPassiveRemoval: overrides.formatPassiveRemoval ?? formatFallback,
+	} satisfies TranslationAssets;
+}
+
 export function createTranslationContextStub(
 	options: Pick<TranslationContext, 'phases' | 'actionCostResource'> & {
 		actions: TranslationRegistry<unknown>;
@@ -78,6 +138,7 @@ export function createTranslationContextStub(
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: RuleSnapshot;
+		assets?: Partial<TranslationAssets>;
 	},
 ): TranslationContext {
 	const rules: RuleSnapshot =
@@ -103,6 +164,6 @@ export function createTranslationContextStub(
 		actionCostResource: options.actionCostResource,
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
-		assets: EMPTY_ASSETS,
+		assets: mergeAssets(options.assets),
 	};
 }

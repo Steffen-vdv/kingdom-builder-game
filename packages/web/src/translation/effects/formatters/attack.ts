@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	AttackLog,
 	AttackOnDamageLogEntry,
@@ -89,7 +88,7 @@ function buildActionLog(
 	const id = entry.effect.params?.['id'] as string | undefined;
 	let icon = '';
 	let name = id || 'Unknown action';
-	const transferPercents = new Map<ResourceKey, number>();
+	const transferPercents = new Map<string, number>();
 	if (id) {
 		try {
 			const definition = translationContext.actions.get(id);
@@ -106,14 +105,14 @@ function buildActionLog(
 	const items: SummaryEntry[] = [];
 	entry.defender.forEach((diff) => {
 		const percent =
-			diff.type === 'resource'
-				? transferPercents.get(diff.key as ResourceKey)
-				: undefined;
+			diff.type === 'resource' ? transferPercents.get(diff.key) : undefined;
+		const diffOptions =
+			percent !== undefined ? { percent } : { showPercent: true as const };
 		items.push(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'defender'),
 				diff,
-				percent !== undefined ? { percent } : { showPercent: true as const },
+				diffOptions,
 			),
 		);
 	});

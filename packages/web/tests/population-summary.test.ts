@@ -56,6 +56,57 @@ describe('population effect translation', () => {
 		}),
 	});
 
+	it('uses population metadata when summarizing role changes', () => {
+		const raiseEntry = registries.actions
+			.entries()
+			.find(([, action]) =>
+				action.effects.some(
+					(effect) => effect.type === 'population' && effect.method === 'add',
+				),
+			);
+		const roleId = raiseEntry?.[1].effects.find(
+			(effect) => effect.type === 'population' && effect.method === 'add',
+		)?.params?.role as string | undefined;
+		if (!roleId) {
+			throw new Error('Unable to locate population role for metadata test.');
+		}
+		const baseIcon = '👑';
+		const baseLabel = 'Citizens';
+		const roleIcon = '🎖️';
+		const roleLabel = 'Champions';
+		const contextWithAssets = createTranslationContextStub({
+			actions: wrapTranslationRegistry(registries.actions),
+			buildings: wrapTranslationRegistry(registries.buildings),
+			developments: wrapTranslationRegistry(registries.developments),
+			populations: wrapTranslationRegistry(registries.populations),
+			phases: translationContext.phases,
+			actionCostResource,
+			activePlayer: translationContext.activePlayer,
+			opponent: translationContext.opponent,
+			assets: {
+				population: {
+					icon: baseIcon,
+					label: baseLabel,
+				},
+				populations: {
+					[roleId]: {
+						icon: roleIcon,
+						label: roleLabel,
+					},
+				},
+			},
+		});
+		const effect = {
+			type: 'population' as const,
+			method: 'add' as const,
+			params: { role: roleId },
+		};
+		const summary = summarizeEffects([effect], contextWithAssets);
+		expect(summary).toContain(`${baseIcon}(${roleIcon}) +1`);
+		const description = describeEffects([effect], contextWithAssets);
+		expect(description).toContain(`Add ${roleIcon} ${roleLabel}`);
+	});
+
 	it('summarizes population-raising action for specific role', () => {
 		const raiseEntry = registries.actions
 			.entries()

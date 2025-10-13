@@ -199,6 +199,37 @@ describe('modifier evaluation handlers', () => {
 		expect(primaryLine.includes(resourceToken)).toBe(true);
 	});
 
+	it('reflects metadata overrides for modifier descriptors', () => {
+		const customIcon = '🌀';
+		const customLabel = 'Custom Outcome';
+		const { translationContext, registries } = createModifierHarness({
+			customizeMetadata(metadata) {
+				metadata.assets = {
+					...metadata.assets,
+					modifierResult: {
+						icon: customIcon,
+						label: customLabel,
+					},
+				};
+			},
+		});
+		const { id: actionId } = selectActionWithIcon(registries);
+		const eff: EffectDef = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				evaluation: { type: 'transfer_pct', id: actionId },
+				adjust: 3,
+			},
+		};
+		const summary = summarizeEffects([eff], translationContext);
+		expect(summary[0].startsWith(`${customIcon}`)).toBe(true);
+		const description = describeEffects([eff], translationContext)[0];
+		expect(description.startsWith(`${customIcon} ${customLabel} on`)).toBe(
+			true,
+		);
+	});
+
 	it('formats cost modifiers with percent adjustments', () => {
 		const { translationContext, metadataSelectors, registries } =
 			createModifierHarness();

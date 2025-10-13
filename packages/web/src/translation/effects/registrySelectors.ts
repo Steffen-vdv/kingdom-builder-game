@@ -1,8 +1,3 @@
-import {
-	STATS,
-	type PopulationRoleId,
-	type StatKey,
-} from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
 
@@ -65,6 +60,34 @@ function coerceLabel(label: unknown, fallback: string): string {
 	return coerceString(label) ?? fallback;
 }
 
+function deriveStatPrefix(label: string | undefined): string | undefined {
+	if (!label) {
+		return undefined;
+	}
+	const trimmed = label.trim();
+	if (trimmed.startsWith('Max ')) {
+		return 'Max ';
+	}
+	return undefined;
+}
+
+function deriveStatFormat(
+	entry: TranslationAssets['stats'][string] | undefined,
+): StatRegistryDescriptor['format'] | undefined {
+	if (!entry) {
+		return undefined;
+	}
+	const format: StatRegistryDescriptor['format'] = {};
+	const prefix = deriveStatPrefix(entry.label);
+	if (prefix) {
+		format.prefix = prefix;
+	}
+	if (entry.displayAsPercent) {
+		format.percent = true;
+	}
+	return Object.keys(format).length > 0 ? format : undefined;
+}
+
 type ContextWithAssets =
 	| Pick<TranslationContext, 'assets'>
 	| { assets?: TranslationAssets };
@@ -84,7 +107,7 @@ function resolvePopulationFallback(context: ContextWithAssets | undefined) {
 
 export function selectPopulationDescriptor(
 	context: ContextWithAssets,
-	role: PopulationRoleId | undefined,
+	role: string | undefined,
 ): RegistryDescriptor {
 	const cache = getCacheEntry(
 		context,
@@ -149,13 +172,10 @@ export function selectStatDescriptor(
 	}
 	const assets = context.assets;
 	const entry = assets?.stats?.[key];
-	const statDef = STATS[key as StatKey];
-	const statLabelFallback = statDef?.label ?? humanizeIdentifier(key);
-	const fallbackLabel =
-		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
-	const label = coerceLabel(entry?.label ?? statDef?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon ?? statDef?.icon, key);
-	const format = statDef?.addFormat ? { ...statDef.addFormat } : undefined;
+	const fallbackLabel = humanizeIdentifier(key) || key;
+	const label = coerceLabel(entry?.label, fallbackLabel);
+	const icon = coerceIcon(entry?.icon, key);
+	const format = deriveStatFormat(entry);
 	const descriptor: StatRegistryDescriptor = {
 		icon,
 		label,

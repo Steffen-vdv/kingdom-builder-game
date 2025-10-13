@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { summarizeEffects } from '../src/translation/effects';
+import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { summarizeContent } from '../src/translation/content';
 import type { EffectDef, PlayerId } from '@kingdom-builder/engine';
 import {
@@ -12,8 +12,14 @@ import {
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
 
-function createContext() {
+function createContext(
+	customizeMetadata?: (
+		metadata: ReturnType<typeof createTestSessionScaffold>['metadata'],
+	) => void,
+) {
 	const scaffold = createTestSessionScaffold();
+	const metadata = structuredClone(scaffold.metadata);
+	customizeMetadata?.(metadata);
 	const activePlayer = createSnapshotPlayer({
 		id: 'player:active' as PlayerId,
 	});
@@ -27,7 +33,7 @@ function createContext() {
 		phases: scaffold.phases,
 		actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
 		ruleSnapshot: scaffold.ruleSnapshot,
-		metadata: scaffold.metadata,
+		metadata,
 	});
 	return {
 		context: createTranslationContext(
@@ -57,6 +63,26 @@ describe('land till formatter', () => {
 		} else {
 			expect(summary).toContain('+1');
 		}
+	});
+
+	it('honors metadata overrides when adding land', () => {
+		const landIcon = '🏝️';
+		const landLabel = 'Archipelago';
+		const { context } = createContext((metadata) => {
+			metadata.assets = {
+				...metadata.assets,
+				land: { icon: landIcon, label: landLabel },
+			};
+		});
+		const effect: EffectDef = {
+			type: 'land',
+			method: 'add',
+			params: { count: 2 },
+		};
+		const summary = summarizeEffects([effect], context);
+		expect(summary).toContain(`${landIcon}+2`);
+		const description = describeEffects([effect], context);
+		expect(description).toContain(`${landIcon} +2 ${landLabel}`);
 	});
 
 	it('summarizes till action', () => {
