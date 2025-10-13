@@ -175,6 +175,25 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-17 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/src/services/gameApi.ts` (Web)
+    - `packages/web/src/services/gameApi.mocks.ts` (Web)
+    - `packages/web/src/services/gameApi.fake.ts` (Web)
+    - `packages/web/src/services/gameApi.clone.ts` (Web)
+    - `packages/web/tests/services/gameApi.test.ts` (Web)
+  - **Intent**: Extend the GameApi client and test doubles to cover player
+    renaming, action metadata queries, AI orchestration, and phase simulations so
+    the frontend can migrate away from the engine mirror for these capabilities.
+  - **Communication Path Update**: Web now calls `/sessions/{id}/player`,
+    `/sessions/{id}/actions/{actionId}/costs`,
+    `/sessions/{id}/actions/{actionId}/requirements`,
+    `/sessions/{id}/actions/{actionId}/options`, `/sessions/{id}/ai`, and
+    `/sessions/{id}/simulate`, matching the expanded session protocol surface.
+  - **Follow-Up Notes**: Adapt session adapters and hooks to consume the new
+    transport responses once the backend routes are live, replacing local engine
+    mirrors for these flows.
+
 - **Date & Author**: 2025-10-16 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/startup/runtimeConfig.ts` (Web)
