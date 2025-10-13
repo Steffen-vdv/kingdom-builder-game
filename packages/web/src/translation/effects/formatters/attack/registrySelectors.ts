@@ -1,79 +1,78 @@
+import type { TranslationContext } from '../../../context';
 import {
-	BUILDINGS,
-	RESOURCES,
-	STATS,
-	type ResourceKey,
-	type StatKey,
-} from '@kingdom-builder/contents';
+	selectResourceDescriptor,
+	selectStatDescriptor,
+} from '../../registrySelectors';
+import { humanizeIdentifier } from '../../stringUtils';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
-function coerceLabel(value: string | undefined, fallback: string): string {
-	if (!value) {
-		return fallback;
-	}
-	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : fallback;
-}
-
-function coerceIcon(icon: string | undefined): string {
-	return icon ? icon : '';
-}
-
-function toDescriptor(
-	label: string | undefined,
-	icon: string | undefined,
+function normalizeDescriptor(
+	descriptor: { icon: string; label: string },
 	fallback: string,
 ): AttackRegistryDescriptor {
-	return {
-		icon: coerceIcon(icon),
-		label: coerceLabel(label, fallback),
-	};
+	const icon = descriptor.icon?.trim() ?? '';
+	const baseLabel = descriptor.label?.trim() ?? '';
+	const label = baseLabel.length > 0 ? baseLabel : fallback;
+	return { icon, label };
 }
 
 export function selectAttackResourceDescriptor(
+	context: TranslationContext,
 	resourceKey: string,
 ): AttackRegistryDescriptor {
-	const definition = RESOURCES[resourceKey as ResourceKey];
-	return toDescriptor(definition?.label, definition?.icon, resourceKey);
+	const descriptor = selectResourceDescriptor(context, resourceKey);
+	return normalizeDescriptor(descriptor, resourceKey);
 }
 
 export function selectAttackStatDescriptor(
+	context: TranslationContext,
 	statKey: string,
 ): AttackRegistryDescriptor {
-	const definition = STATS[statKey as StatKey];
-	return toDescriptor(definition?.label, definition?.icon, statKey);
+	const descriptor = selectStatDescriptor(context, statKey);
+	return normalizeDescriptor(descriptor, statKey);
 }
 
 export function selectAttackBuildingDescriptor(
+	context: TranslationContext,
 	buildingId: string,
 ): AttackRegistryDescriptor {
+	let icon = '';
+	let label = humanizeIdentifier(buildingId) || buildingId;
 	try {
-		const definition = BUILDINGS.get(buildingId);
-		return toDescriptor(definition.name, definition.icon, buildingId);
+		if (context.buildings.has(buildingId)) {
+			const definition = context.buildings.get(buildingId);
+			if (typeof definition.icon === 'string') {
+				icon = definition.icon;
+			}
+			if (
+				typeof definition.name === 'string' &&
+				definition.name.trim().length > 0
+			) {
+				label = definition.name;
+			}
+		}
 	} catch {
-		return { icon: '', label: buildingId };
+		/* ignore missing building definitions */
 	}
+	return { icon, label };
 }
 
-export function listAttackResourceKeys(): ReadonlyArray<ResourceKey> {
-	return Object.freeze(Object.keys(RESOURCES) as ReadonlyArray<ResourceKey>);
+export function listAttackResourceKeys(
+	context: TranslationContext,
+): ReadonlyArray<string> {
+	return Object.freeze(Object.keys(context.assets.resources));
 }
 
-export function listAttackStatKeys(): ReadonlyArray<StatKey> {
-	return Object.freeze(Object.keys(STATS) as ReadonlyArray<StatKey>);
+export function listAttackStatKeys(
+	context: TranslationContext,
+): ReadonlyArray<string> {
+	return Object.freeze(Object.keys(context.assets.stats));
 }
 
-export function listAttackBuildingIds(): ReadonlyArray<string> {
-	return Object.freeze(BUILDINGS.keys().slice());
-}
-
-export function selectAttackDefaultStatKey(): StatKey | undefined {
-	const keys = listAttackStatKeys();
+export function selectAttackDefaultStatKey(
+	context: TranslationContext,
+): string | undefined {
+	const keys = Object.keys(context.assets.stats);
 	return keys.length > 0 ? keys[0] : undefined;
-}
-
-export function selectAttackDefaultBuildingId(): string | undefined {
-	const ids = listAttackBuildingIds();
-	return ids.length > 0 ? ids[0] : undefined;
 }

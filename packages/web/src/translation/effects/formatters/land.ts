@@ -1,20 +1,30 @@
-import { LAND_INFO, SLOT_INFO } from '@kingdom-builder/contents';
 import { signed } from '../helpers';
 import { registerEffectFormatter } from '../factory';
 
 registerEffectFormatter('land', 'add', {
-	summarize: (effect) => {
+	summarize: (effect, context) => {
 		const count = Number(effect.params?.['count'] ?? 1);
-		return `${LAND_INFO.icon}${signed(count)}${count}`;
+		const landIcon = context.assets.land.icon ?? '🗺️';
+		return `${landIcon}${signed(count)}${count}`;
 	},
-	describe: (effect) => {
+	describe: (effect, context) => {
 		const count = Number(effect.params?.['count'] ?? 1);
-		return `${LAND_INFO.icon} ${signed(count)}${count} ${LAND_INFO.label}`;
+		const landIcon = context.assets.land.icon ?? '🗺️';
+		const landLabel = context.assets.land.label ?? 'Land';
+		return `${landIcon} ${signed(count)}${count} ${landLabel}`;
 	},
 });
 
 registerEffectFormatter('land', 'till', {
-	summarize: () => `${SLOT_INFO.icon}+1`,
-	describe: () =>
-		`Till ${LAND_INFO.icon} ${LAND_INFO.label} to unlock ${SLOT_INFO.icon} ${SLOT_INFO.label}`,
+	summarize: (_effect, context) => {
+		const slotIcon = context.assets.slot.icon ?? '🧩';
+		return `${slotIcon}+1`;
+	},
+	describe: (_effect, context) => {
+		const landIcon = context.assets.land.icon ?? '🗺️';
+		const landLabel = context.assets.land.label ?? 'Land';
+		const slotIcon = context.assets.slot.icon ?? '🧩';
+		const slotLabel = context.assets.slot.label ?? 'Development Slot';
+		return `Till ${landIcon} ${landLabel} to unlock ${slotIcon} ${slotLabel}`;
+	},
 });

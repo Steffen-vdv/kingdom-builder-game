@@ -1,4 +1,3 @@
-import { type StatKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -15,17 +14,17 @@ import {
 
 const statFormatter: AttackTargetFormatter<{
 	type: 'stat';
-	key: StatKey;
+	key: string;
 }> = {
 	type: 'stat',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, translationContext) {
 		const targetParam = effect.params?.['target'] as
-			| { type: 'stat'; key: StatKey }
+			| { type: 'stat'; key: string }
 			| undefined;
 		if (targetParam?.type === 'stat') {
 			return targetParam;
 		}
-		const fallbackKey = selectAttackDefaultStatKey();
+		const fallbackKey = selectAttackDefaultStatKey(translationContext);
 		if (!fallbackKey) {
 			throw new Error('No stat definitions available');
 		}
@@ -36,10 +35,10 @@ const statFormatter: AttackTargetFormatter<{
 			AttackLog['evaluation']['target'],
 			{ type: 'stat' }
 		>;
-		return { type: 'stat', key: statTarget.key as StatKey };
+		return { type: 'stat', key: String(statTarget.key) };
 	},
-	getInfo(target) {
-		return selectAttackStatDescriptor(target.key);
+	getInfo(translationContext, target) {
+		return selectAttackStatDescriptor(translationContext, target.key);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
@@ -60,10 +59,10 @@ const statFormatter: AttackTargetFormatter<{
 	buildEvaluationEntry(log, context) {
 		return buildStandardEvaluationEntry(log, context, true);
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, translationContext, options) {
+		return formatDiffCommon(translationContext, prefix, diff, options);
 	},
-	onDamageLogTitle(info) {
+	onDamageLogTitle(info, _target, _translationContext) {
 		return `${info.icon} ${info.label} damage trigger evaluation`;
 	},
 };

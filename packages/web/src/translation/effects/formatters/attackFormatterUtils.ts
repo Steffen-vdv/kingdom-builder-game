@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	AttackOnDamageLogEntry,
 	EffectDef,
@@ -67,8 +66,12 @@ export function ownerLabel(
 export function buildBaseEntry(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	mode: Mode,
+	translationContext: TranslationContext,
 ): BaseEntryResult {
-	const context = resolveAttackFormatterContext(effectDefinition);
+	const context = resolveAttackFormatterContext(
+		effectDefinition,
+		translationContext,
+	);
 	const ignoreAbsorption = Boolean(
 		effectDefinition.params?.['ignoreAbsorption'],
 	);
@@ -76,6 +79,7 @@ export function buildBaseEntry(
 		effectDefinition.params?.['ignoreFortification'],
 	);
 	const entry = context.formatter.buildBaseEntry({
+		translationContext,
 		mode,
 		stats: context.stats,
 		info: context.info,
@@ -91,6 +95,7 @@ export function buildBaseEntry(
 		target: context.target,
 		targetLabel: context.targetLabel,
 		stats: context.stats,
+		translationContext,
 	};
 }
 
@@ -175,6 +180,7 @@ export function summarizeOnDamage(
 	}
 	return {
 		title: formatter.buildOnDamageTitle(mode, {
+			translationContext,
 			info,
 			target,
 			targetLabel,
@@ -194,6 +200,7 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'defender'),
 				diffEntry,
+				translationContext,
 			),
 		),
 	);
@@ -202,6 +209,7 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'attacker'),
 				diffEntry,
+				translationContext,
 			),
 		),
 	);
@@ -210,7 +218,7 @@ export function formatDiffEntries(
 
 export function collectTransferPercents(
 	effects: EffectDef[] | undefined,
-	transferPercents: Map<ResourceKey, number>,
+	transferPercents: Map<string, number>,
 ): void {
 	if (!effects) {
 		return;
@@ -222,8 +230,7 @@ export function collectTransferPercents(
 			effectDefinition.params
 		) {
 			const key =
-				(effectDefinition.params['key'] as ResourceKey | undefined) ??
-				undefined;
+				(effectDefinition.params['key'] as string | undefined) ?? undefined;
 			const percent = effectDefinition.params['percent'] as number | undefined;
 			if (key && percent !== undefined && !transferPercents.has(key)) {
 				transferPercents.set(key, percent);

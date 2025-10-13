@@ -1,5 +1,4 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import type { ActionDef } from '@kingdom-builder/contents';
 import { formatTargetLabel, formatGainFrom } from './modifier_helpers';
 import type { ResultModifierLabel } from './modifier_helpers';
 import type { TranslationContext } from '../../context';
@@ -40,7 +39,7 @@ export function getActionInfo(
 	id: string,
 ) {
 	try {
-		const actionDefinition: ActionDef = translationContext.actions.get(id);
+		const actionDefinition = translationContext.actions.get(id);
 		return {
 			icon: actionDefinition.icon ?? id,
 			name: actionDefinition.name ?? id,
