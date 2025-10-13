@@ -94,6 +94,33 @@
   `useNextTurnForecast` can migrate to the protocol contracts to remove their
   direct Engine dependency once the consumer side is updated.
 
+## Authoritative metadata pipeline
+
+- **Server source of truth** – `SessionManager` now deep-clones content
+  registries during construction and exposes them through
+  `SessionRegistriesPayload` so clients receive stable `actions`, `buildings`,
+  `developments`, `populations`, and normalized `resources` in the
+  `SessionCreateResponse`/`SessionStateResponse` envelope.
+  - **Metadata descriptors** – The manager precomputes
+    `SessionSnapshotMetadata` via `createSessionBaseMetadata`, bundling
+    resource, stat, trigger, land, slot, and passive descriptors plus
+    phase/step outlines and passive evaluation modifiers. Snapshot responses
+    merge live metadata via `mergeSessionMetadata` so consumers always receive
+    the authoritative labels, icons, and descriptions alongside gameplay
+    deltas.
+- **Client expectations** – Web selectors, translators, and UI helpers must
+  hydrate themselves from the `snapshot.metadata` and `registries` payloads
+  (or the cached `getBaseMetadata()` result server-side) instead of importing
+  `@kingdom-builder/contents`. Tests that previously relied on registry
+  constants should create sessions through `SessionManager` (or its synthetic
+  helper) and snapshot the metadata fixture they require. When a selector needs
+  fallback behaviour, implement it on top of the protocol descriptors rather
+  than mirroring content lookups.
+- **Extensibility** – Any new metadata surface (e.g., future asset categories)
+  should be wired into `METADATA_SOURCES`/`createSessionBaseMetadata` so a
+  single server deployment can fan out consistent descriptors to all clients
+  without asking them to parse content packages locally.
+
 ## Guiding Principles
 
 1. **API-First Collaboration**: All cross-domain collaboration happens through
@@ -113,21 +140,25 @@
    include monitoring, tests, and reference docs so future iterations can verify
    compatibility quickly.
 
-## Static runtime configuration snapshot
+## Metadata distribution & runtime configuration
 
-- `packages/web/src/startup/runtimeConfigFallback.json` stores the fallback
-  configuration the web client loads when the host page does not define
-  `__KINGDOM_BUILDER_CONFIG__`.
-- After editing content metadata, refresh the snapshot by running:
-  `npx tsx scripts/generateRuntimeConfig.ts` from the repository root. The
-  script reads the current `@kingdom-builder/contents` exports and rewrites the
-  JSON file in place.
-- Once regenerated, execute:
-  `npx vitest run packages/web/tests/startup/runtimeConfig.test.ts` to confirm
-  the loader keeps cloning the snapshot and merging runtime overrides
-  correctly.
-- Commit the updated JSON alongside the content changes and mention the refresh
-  in the pull request summary so reviewers can spot snapshot drift quickly.
+- `packages/server/src/session/SessionManager.ts` is the authoritative source
+  for registry clones and descriptor metadata. The server should cache
+  `SessionManager.getRegistries()`/`getBaseMetadata()` and fan them out
+  through protocol transports instead of asking clients to import contents
+  packages.
+- Web bootstrap should treat `runtimeConfigFallback.json` as a last-resort
+  configuration for offline shells only. Live sessions are expected to
+  hydrate from the server-provided registries and metadata descriptors
+  delivered with the first session snapshot; client code must not reach into
+  `@kingdom-builder/contents` for runtime lookups.
+- After editing content metadata, refresh the fallback snapshot by running
+  `npx tsx scripts/generateRuntimeConfig.ts` so non-network builds stay
+  consistent. Then rerun
+  `npx vitest run packages/web/tests/startup/runtimeConfig.test.ts` to
+  confirm the loader still merges overrides correctly. Call out the refresh
+  in the PR summary only when the fallback asset changes—routine feature
+  work should rely on the server descriptors instead of modifying this file.
 
 ## Domain Responsibilities
 
@@ -174,6 +205,24 @@ diagrams are linked where possible. Do not merge a change affecting domain
 boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
+
+- **Date & Author**: 2025-10-17 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `docs/domain-migration-plan.md` (Docs)
+    - `docs/architecture/navigation-cheatsheet.md` (Docs)
+    - `docs/domain-migration/handover-log.md` (Docs)
+  - **Intent**: Document the server-authored metadata pipeline so every domain
+    treats `SessionManager` snapshots as the authoritative descriptor source and
+    retires client-side registry fallbacks.
+  - **Communication Path Update**: Server sessions now emit normalized
+    registries plus descriptor metadata via
+    `packages/server/src/session/SessionManager.ts` and
+    `packages/server/src/session/sessionMetadata.ts`. Clients are expected to
+    read `SessionRegistriesPayload` and `SessionSnapshot.metadata` instead of
+    touching `@kingdom-builder/contents` directly.
+  - **Follow-Up Notes**: Audit remaining UI selectors and tests to ensure they
+    hydrate from `snapshot.metadata` before removing the legacy
+    `runtimeConfigFallback.json` dependency from development builds.
 
 - **Date & Author**: 2025-10-16 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
