@@ -24,6 +24,7 @@ describe('createTranslationContext', () => {
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
+		const triggerId = 'phase.alpha.open';
 		const phases: EngineSessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
@@ -34,6 +35,7 @@ describe('createTranslationContext', () => {
 						id: 'phase.alpha.step-0',
 						title: 'Open Alpha',
 						effects: [],
+						triggers: [triggerId],
 					},
 				],
 			},
@@ -45,6 +47,14 @@ describe('createTranslationContext', () => {
 			effectLogs: { legacy: [{ note: 'legacy entry' }] },
 			passiveEvaluationModifiers: {
 				[resourceKey]: ['modifier'],
+			},
+			triggers: {
+				[triggerId]: {
+					icon: '🛎️',
+					future: 'During Alpha',
+					past: 'Alpha Phase',
+					label: 'Alpha Trigger',
+				},
 			},
 		};
 		const compensation = (amount: number): PlayerStartConfig => ({
@@ -180,6 +190,7 @@ describe('createTranslationContext', () => {
 				passive: context.assets.passive,
 				slot: context.assets.slot,
 				resource: context.assets.resources[resourceKey],
+				trigger: context.assets.triggers[triggerId],
 			},
 			rules: context.rules,
 			passives: {
@@ -207,6 +218,12 @@ describe('createTranslationContext', () => {
                             "slot": {
                               "icon": "🧩",
                               "label": "Development Slot",
+                            },
+                            "trigger": {
+                              "future": "During Alpha",
+                              "icon": "🛎️",
+                              "label": "Alpha Trigger",
+                              "past": "Alpha Phase",
                             },
                           },
                           "compensations": {
