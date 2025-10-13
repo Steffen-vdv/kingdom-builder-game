@@ -81,3 +81,9 @@
   dependency directly. We will need a protocol-level hook (or server-side AI
   orchestration endpoint) that surfaces the same parameter payload contract so
   the web client can stop injecting overrides into `runAiTurn`.
+
+## Domain Migration - P3 - T3 - Session metadata transport endpoints
+
+- Registered session transport endpoints for action metadata, AI turns, and
+  phase simulations so the domain handover includes HTTP access to the new
+  protocol routes.
