@@ -1,12 +1,8 @@
-import {
-	PASSIVE_INFO,
-	POPULATION_ROLES,
-	RESOURCES,
-} from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
 	TranslationRegistry,
 } from '../../translation/context';
+import type { TranslationIconLabel } from '../../translation/context/types';
 import {
 	formatDetailText,
 	formatPhaseStep,
@@ -68,41 +64,55 @@ function createTranslationRegistryResolver<
 	};
 }
 
-function createRecordResolver<T extends { icon?: string; label?: string }>(
-	record: Readonly<Record<string, T>>,
-	fallback: string,
+function createRecordResolver(
+	record: Readonly<Record<string, TranslationIconLabel>>,
+	fallbackLabel: string,
+	fallbackIcon?: string,
 ): RegistryResolver {
 	return (id) => {
 		if (id) {
 			const item = record[id];
 			if (item) {
-				return {
-					icon: item.icon ?? '',
-					label: item.label ?? id,
-				} satisfies ResolveResult;
+				const icon =
+					typeof item.icon === 'string' && item.icon.trim().length > 0
+						? item.icon
+						: '';
+				const label =
+					typeof item.label === 'string' && item.label.trim().length > 0
+						? item.label
+						: id;
+				return { icon, label } satisfies ResolveResult;
 			}
+			return {
+				icon: '',
+				label: id,
+			} satisfies ResolveResult;
 		}
-		return {
-			icon: '',
-			label: id ?? fallback,
-		} satisfies ResolveResult;
+		const icon =
+			typeof fallbackIcon === 'string' && fallbackIcon.trim().length > 0
+				? fallbackIcon
+				: '';
+		const label =
+			typeof fallbackLabel === 'string' && fallbackLabel.trim().length > 0
+				? fallbackLabel
+				: 'Source';
+		return { icon, label } satisfies ResolveResult;
 	};
 }
 
 function createDescriptorRegistry(
 	translationContext: TranslationContext,
 ): Registry {
+	const assets = translationContext.assets;
+	const populationAsset = assets.population;
+	const passiveAsset = assets.passive;
 	return {
 		population: {
-			resolve: (id) => {
-				const role = id
-					? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
-					: undefined;
-				return {
-					icon: role?.icon ?? '',
-					label: role?.label ?? id ?? 'Population',
-				} satisfies ResolveResult;
-			},
+			resolve: createRecordResolver(
+				assets.populations,
+				populationAsset.label ?? 'Population',
+				populationAsset.icon,
+			),
 			formatDetail: defaultFormatDetail,
 			augmentDependencyDetail: (detail, link, player, _context, options) => {
 				const includeCounts = options.includeCounts ?? true;
@@ -164,7 +174,7 @@ function createDescriptorRegistry(
 			} satisfies DescriptorRegistryEntry;
 		})(),
 		stat: {
-			resolve: createRecordResolver(translationContext.assets.stats, 'Stat'),
+			resolve: createRecordResolver(assets.stats, 'Stat'),
 			formatDetail: defaultFormatDetail,
 			augmentDependencyDetail: (detail, link, player, context) => {
 				if (!link.id) {
@@ -177,14 +187,22 @@ function createDescriptorRegistry(
 			},
 		},
 		resource: {
-			resolve: createRecordResolver(RESOURCES, 'Resource'),
+			resolve: createRecordResolver(assets.resources, 'Resource'),
 			formatDetail: defaultFormatDetail,
 		},
-		trigger: createTriggerDescriptorEntry(defaultFormatDetail),
+		trigger: createTriggerDescriptorEntry(defaultFormatDetail, assets.triggers),
 		passive: {
 			resolve: () => ({
-				icon: PASSIVE_INFO.icon ?? '',
-				label: PASSIVE_INFO.label ?? 'Passive',
+				icon:
+					typeof passiveAsset.icon === 'string' &&
+					passiveAsset.icon.trim().length > 0
+						? passiveAsset.icon
+						: '',
+				label:
+					typeof passiveAsset.label === 'string' &&
+					passiveAsset.label.trim().length > 0
+						? passiveAsset.label
+						: 'Passive',
 			}),
 			formatDetail: defaultFormatDetail,
 		},

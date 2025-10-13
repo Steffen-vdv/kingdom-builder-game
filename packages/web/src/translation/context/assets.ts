@@ -5,7 +5,6 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -173,20 +172,6 @@ function buildStatMap(
 	return Object.freeze(entries);
 }
 
-const DEFAULT_TRIGGER_ASSETS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => [
-			id,
-			Object.freeze({
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-				label: info.past,
-			} satisfies TranslationTriggerAsset),
-		]),
-	),
-);
-
 function mergeTriggerAsset(
 	base: TranslationTriggerAsset | undefined,
 	descriptor: SessionTriggerMetadata | undefined,
@@ -214,14 +199,12 @@ function mergeTriggerAsset(
 function buildTriggerMap(
 	triggers?: Record<string, SessionTriggerMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
-	const entries: Record<string, TranslationTriggerAsset> = {
-		...DEFAULT_TRIGGER_ASSETS,
-	};
 	if (!triggers) {
-		return Object.freeze(entries);
+		return Object.freeze({});
 	}
+	const entries: Record<string, TranslationTriggerAsset> = {};
 	for (const [id, descriptor] of Object.entries(triggers)) {
-		entries[id] = mergeTriggerAsset(entries[id], descriptor);
+		entries[id] = mergeTriggerAsset({ label: id }, descriptor);
 	}
 	return Object.freeze(entries);
 }

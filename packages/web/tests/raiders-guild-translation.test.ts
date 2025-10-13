@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import {
 	describeContent,
+	logContent,
 	splitSummary,
 	summarizeContent,
 	type Summary,
@@ -48,6 +49,12 @@ describe('raiders guild translation', () => {
 
 	beforeEach(() => {
 		synthetic = createRaidersGuildContext();
+	});
+
+	it('logs population roles using translation metadata', () => {
+		const { translation } = synthetic;
+		const result = logContent('population', 'population:ledger', translation);
+		expect(result).toEqual(['🧾 Ledger Keepers']);
 	});
 
 	it('describes transfer modifier with hoisted action card', () => {
