@@ -1,15 +1,17 @@
+import type { EffectDef, PlayerStartConfig } from '@kingdom-builder/protocol';
 import type {
-	EffectDef,
-	EngineSessionSnapshot,
-	PassiveRecordSnapshot,
-	PlayerId,
-	PlayerStateSnapshot,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+	SessionPassiveRecordSnapshot,
+	SessionPlayerId,
+	SessionPlayerStateSnapshot,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+	SessionPhaseDefinition,
+	SessionRecentResourceGain,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 
 interface SnapshotPlayerOptions {
-	id: PlayerId;
+	id: SessionPlayerId;
 	name?: string;
 	resources?: Record<string, number>;
 	stats?: Record<string, number>;
@@ -38,8 +40,8 @@ export function createSnapshotPlayer({
 	skipPhases = {},
 	skipSteps = {},
 	passives = [],
-}: SnapshotPlayerOptions): PlayerStateSnapshot {
-	const clonedStatSources: PlayerStateSnapshot['statSources'] = {};
+}: SnapshotPlayerOptions): SessionPlayerStateSnapshot {
+	const clonedStatSources: SessionPlayerStateSnapshot['statSources'] = {};
 	for (const [statId, contributions] of Object.entries(statSources)) {
 		const clonedContributions: Record<
 			string,
@@ -53,11 +55,11 @@ export function createSnapshotPlayer({
 		}
 		clonedStatSources[statId] = clonedContributions;
 	}
-	const clonedSkipPhases: PlayerStateSnapshot['skipPhases'] = {};
+	const clonedSkipPhases: SessionPlayerStateSnapshot['skipPhases'] = {};
 	for (const [phaseId, sources] of Object.entries(skipPhases)) {
 		clonedSkipPhases[phaseId] = { ...sources };
 	}
-	const clonedSkipSteps: PlayerStateSnapshot['skipSteps'] = {};
+	const clonedSkipSteps: SessionPlayerStateSnapshot['skipSteps'] = {};
 	for (const [phaseId, stepMap] of Object.entries(skipSteps)) {
 		const clonedStepMap: Record<string, Record<string, true>> = {};
 		for (const [stepId, stepSources] of Object.entries(stepMap)) {
@@ -65,7 +67,7 @@ export function createSnapshotPlayer({
 		}
 		clonedSkipSteps[phaseId] = clonedStepMap;
 	}
-	return {
+	const player: SessionPlayerStateSnapshot = {
 		id,
 		name,
 		resources: { ...resources },
@@ -87,15 +89,16 @@ export function createSnapshotPlayer({
 			meta: passive.meta ? { ...passive.meta } : undefined,
 		})),
 	};
+	return player;
 }
 
 interface PassiveRecordOptions {
 	id: string;
-	owner: PlayerId;
+	owner: SessionPlayerId;
 	name?: string;
 	icon?: string;
 	detail?: string;
-	meta?: PassiveRecordSnapshot['meta'];
+	meta?: SessionPassiveRecordSnapshot['meta'];
 	effects?: EffectDef[];
 	onGrowthPhase?: EffectDef[];
 	onUpkeepPhase?: EffectDef[];
@@ -115,11 +118,11 @@ export function createPassiveRecord({
 	onUpkeepPhase,
 	onBeforeAttacked,
 	onAttackResolved,
-}: PassiveRecordOptions): PassiveRecordSnapshot {
-	const record: PassiveRecordSnapshot = {
+}: PassiveRecordOptions): SessionPassiveRecordSnapshot {
+	const record: SessionPassiveRecordSnapshot = {
 		id,
 		owner,
-	} as PassiveRecordSnapshot;
+	} as SessionPassiveRecordSnapshot;
 	if (name !== undefined) {
 		record.name = name;
 	}
@@ -151,22 +154,22 @@ export function createPassiveRecord({
 }
 
 interface SessionSnapshotOptions {
-	players: PlayerStateSnapshot[];
-	activePlayerId: PlayerId;
-	opponentId: PlayerId;
-	phases: EngineSessionSnapshot['phases'];
-	actionCostResource: EngineSessionSnapshot['actionCostResource'];
-	ruleSnapshot: RuleSnapshot;
-	passiveRecords?: Record<PlayerId, PassiveRecordSnapshot[]>;
-	compensations?: Record<PlayerId, PlayerStartConfig>;
-	recentResourceGains?: EngineSessionSnapshot['recentResourceGains'];
+	players: SessionPlayerStateSnapshot[];
+	activePlayerId: SessionPlayerId;
+	opponentId: SessionPlayerId;
+	phases: SessionPhaseDefinition[];
+	actionCostResource: string;
+	ruleSnapshot: SessionRuleSnapshot;
+	passiveRecords?: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
+	compensations?: Record<SessionPlayerId, PlayerStartConfig>;
+	recentResourceGains?: SessionRecentResourceGain[];
 	turn?: number;
 	currentPhase?: string;
 	currentStep?: string;
 	phaseIndex?: number;
 	stepIndex?: number;
 	devMode?: boolean;
-	metadata?: EngineSessionSnapshot['metadata'];
+	metadata?: SessionSnapshotMetadata;
 }
 
 export function createSessionSnapshot({
@@ -186,7 +189,7 @@ export function createSessionSnapshot({
 	stepIndex = 0,
 	devMode = false,
 	metadata: metadataOverride,
-}: SessionSnapshotOptions): EngineSessionSnapshot {
+}: SessionSnapshotOptions): SessionSnapshot {
 	const phase = phases[phaseIndex] ?? phases[0];
 	const resolvedCurrentPhase =
 		currentPhase ?? phase?.id ?? phases[0]?.id ?? 'phase-0';
@@ -196,10 +199,12 @@ export function createSessionSnapshot({
 		(player) => player.id === activePlayerId,
 	);
 	const opponentIndex = players.findIndex((player) => player.id === opponentId);
-	const normalizedCompensations: Record<PlayerId, PlayerStartConfig> =
-		{} as Record<PlayerId, PlayerStartConfig>;
-	const normalizedPassiveRecords: Record<PlayerId, PassiveRecordSnapshot[]> =
-		{} as Record<PlayerId, PassiveRecordSnapshot[]>;
+	const normalizedCompensations: Record<SessionPlayerId, PlayerStartConfig> =
+		{} as Record<SessionPlayerId, PlayerStartConfig>;
+	const normalizedPassiveRecords: Record<
+		SessionPlayerId,
+		SessionPassiveRecordSnapshot[]
+	> = {} as Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
 	for (const player of players) {
 		normalizedCompensations[player.id] = {
 			...(compensations[player.id] ?? {}),
