@@ -1,4 +1,4 @@
-import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
+import type { EngineSessionSnapshot } from '../../../engine/src';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import type { TranslationContext } from '../../src/translation/context';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';

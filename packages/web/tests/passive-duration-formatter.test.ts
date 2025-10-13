@@ -4,7 +4,7 @@ import {
 	describeEffects,
 	logEffects,
 } from '../src/translation/effects';
-import type { EffectDef, PlayerId } from '@kingdom-builder/engine';
+import type { EffectDef, PlayerId } from '../../engine/src';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import {

@@ -1,7 +1,4 @@
-import type {
-	EngineSessionSnapshot,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
+import type { EngineSessionSnapshot, RuleSnapshot } from '../../../engine/src';
 import type {
 	SessionMetadataDescriptor,
 	SessionPhaseMetadata,

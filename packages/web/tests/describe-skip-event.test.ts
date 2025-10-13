@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { PlayerId } from '@kingdom-builder/engine';
+import type { PlayerId } from '../../engine/src';
 import type { SessionAdvanceSkipSnapshot } from '@kingdom-builder/protocol/session';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
 import { createTranslationContext } from '../src/translation/context';

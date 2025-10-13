@@ -1,5 +1,5 @@
-import { createEngine } from '@kingdom-builder/engine';
-import type { EffectDef } from '@kingdom-builder/engine';
+import { createEngine } from '../../../engine/src';
+import type { EffectDef } from '../../../engine/src';
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 import {
 	describeContent,

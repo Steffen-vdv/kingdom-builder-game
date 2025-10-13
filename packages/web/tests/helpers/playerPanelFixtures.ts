@@ -3,7 +3,7 @@ import type {
 	EngineSession,
 	EngineSessionSnapshot,
 	PlayerId,
-} from '@kingdom-builder/engine';
+} from '../../../engine/src';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';

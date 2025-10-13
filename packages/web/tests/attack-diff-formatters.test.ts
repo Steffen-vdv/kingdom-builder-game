@@ -1,4 +1,4 @@
-import type { AttackPlayerDiff } from '@kingdom-builder/engine';
+import type { AttackPlayerDiff } from '../../engine/src';
 import { describe, expect, it } from 'vitest';
 
 import './helpers/armyAttackSyntheticRegistries';

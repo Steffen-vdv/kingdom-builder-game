@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+} from '../../../engine/src';
 import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	selectSessionOptions,

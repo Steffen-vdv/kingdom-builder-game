@@ -5,7 +5,7 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import type {
 	EngineSessionSnapshot,
 	RequirementFailure,
-} from '@kingdom-builder/engine';
+} from '../../../engine/src';
 import { createActionsPanelState } from './createActionsPanelState';
 import { createRegistry } from './createRegistry';
 import {

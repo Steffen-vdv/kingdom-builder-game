@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { translateRequirementFailure } from '../src/translation';
-import type { PlayerId } from '@kingdom-builder/engine';
+import type { PlayerId } from '../../engine/src';
 import {
 	createTranslationContext,
 	selectPopulationRoleDisplay,

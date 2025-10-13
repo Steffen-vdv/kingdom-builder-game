@@ -26,7 +26,7 @@ import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import type {
 	LegacyGameEngineContextValue,
 } from '../../../src/state/GameContext.types';
-import type { PlayerId } from '@kingdom-builder/engine';
+import type { PlayerId } from '../../../../engine/src';
 import type { Action } from '../../../src/components/actions/types';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
 

@@ -132,6 +132,13 @@
 - Commit the updated JSON alongside the content changes and mention the refresh
   in the pull request summary so reviewers can spot snapshot drift quickly.
 
+## Regression guards
+
+- **2025-02-17** – `packages/web/tests/regression/no-engine-internals.test.ts`
+  now scans both `src/` and `tests/` for any
+  `@kingdom-builder/engine` (root or deep) imports, ensuring the web package
+  remains isolated from engine internals after removing the Vite alias.
+
 ## Domain Responsibilities
 
 - **Web**: Render UI, manage client-side state, compose content-driven visuals,

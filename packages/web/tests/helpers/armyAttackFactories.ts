@@ -1,4 +1,4 @@
-import { createEngine, type EffectDef } from '@kingdom-builder/engine';
+import { createEngine, type EffectDef } from '../../../engine/src';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 import type { SessionRegistries } from '../../src/state/sessionRegistries';

@@ -3,7 +3,7 @@ import { renderToString } from 'react-dom/server';
 import React from 'react';
 import App from '../src/App';
 
-vi.mock('@kingdom-builder/engine', () => {
+vi.mock('../../engine/src', () => {
 	const phaseA = 'phaseA';
 	const phaseB = 'phaseB';
 	const phaseC = 'phaseC';

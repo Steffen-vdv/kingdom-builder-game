@@ -23,18 +23,32 @@ async function collectSourceFiles(dir: string): Promise<string[]> {
 }
 
 describe('web package avoids engine internals', () => {
-	it('does not import deep engine paths', async () => {
+	it('does not import engine internals anywhere', async () => {
 		const testDir = path.dirname(fileURLToPath(import.meta.url));
-		const root = path.resolve(testDir, '../../src');
-		const files = await collectSourceFiles(root);
-		const violations: Array<{ file: string; specifier: string }> = [];
+		const packageRoot = path.resolve(testDir, '../..');
+		const roots = ['src', 'tests'];
 		const importPattern = /(?:import|export)\s[^;]*?from\s+['"]([^'"\n]+)['"]/g;
-		for (const file of files) {
-			const contents = await fs.readFile(file, 'utf8');
-			for (const match of contents.matchAll(importPattern)) {
-				const specifier = match[1];
-				if (specifier.startsWith('@kingdom-builder/engine/')) {
-					violations.push({ file: path.relative(root, file), specifier });
+		const violations: Array<{ file: string; specifier: string }> = [];
+		for (const rootName of roots) {
+			const rootDir = path.join(packageRoot, rootName);
+			const stats = await fs.stat(rootDir).catch(() => undefined);
+			if (!stats?.isDirectory()) {
+				continue;
+			}
+			const files = await collectSourceFiles(rootDir);
+			for (const file of files) {
+				const contents = await fs.readFile(file, 'utf8');
+				for (const match of contents.matchAll(importPattern)) {
+					const specifier = match[1];
+					if (
+						specifier === '@kingdom-builder/engine' ||
+						specifier.startsWith('@kingdom-builder/engine/')
+					) {
+						violations.push({
+							file: path.relative(packageRoot, file),
+							specifier,
+						});
+					}
 				}
 			}
 		}

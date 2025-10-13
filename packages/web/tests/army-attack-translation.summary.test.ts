@@ -4,7 +4,7 @@ import './helpers/armyAttackSyntheticRegistries';
 
 import type { SummaryEntry } from '../src/translation/content';
 import { summarizeContent, describeContent } from '../src/translation/content';
-import { Resource, Stat } from '@kingdom-builder/engine';
+import { Resource, Stat } from '../../engine/src';
 import type { EffectDef } from './helpers/armyAttackFactories';
 import {
 	createSyntheticCtx,
@@ -29,7 +29,7 @@ import {
 	selectAttackStatDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

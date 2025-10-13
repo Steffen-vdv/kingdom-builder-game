@@ -5,7 +5,7 @@ import {
 	performAction,
 	advance,
 	collectTriggerEffects,
-} from '@kingdom-builder/engine';
+} from '../../engine/src';
 import {
 	createSyntheticTaxScenario,
 	SYNTHETIC_ASSETS,
@@ -30,7 +30,7 @@ const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
 ) as SyntheticResourceKey[];
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

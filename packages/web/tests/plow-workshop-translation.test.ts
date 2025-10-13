@@ -5,9 +5,9 @@ import {
 	splitSummary,
 	type Summary,
 } from '../src/translation/content';
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngine } from '../../engine/src';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

@@ -6,7 +6,7 @@ import Game from '../src/Game';
 // Render the application with the real engine to ensure that
 // dynamic action effects (e.g. build with "$id") don't crash
 // the rendering pipeline when summarized.
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	// Re-export the actual engine source since vitest doesn't
 	// resolve the monorepo alias.
 	return await import('../../engine/src');

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { isActionPhaseActive } from '../src/utils/isActionPhaseActive';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

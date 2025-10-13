@@ -2,7 +2,7 @@ import type {
 	EngineSessionSnapshot,
 	PlayerId,
 	ResourceKey,
-} from '@kingdom-builder/engine';
+} from '../../../engine/src';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import { describe, expect, it } from 'vitest';
 

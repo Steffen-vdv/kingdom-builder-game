@@ -19,7 +19,7 @@ import {
 } from './fixtures/syntheticRaidersGuild';
 import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

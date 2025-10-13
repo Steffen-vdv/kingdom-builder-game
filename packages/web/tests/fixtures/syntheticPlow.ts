@@ -9,7 +9,7 @@ import type {
 	ActionConfig,
 	BuildingConfig,
 } from '@kingdom-builder/protocol';
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '../../../engine/src';
 
 type SyntheticResourceKey = 'gold' | 'ap' | 'happiness';
 

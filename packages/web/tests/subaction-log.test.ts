@@ -4,7 +4,7 @@ import {
 	performAction,
 	getActionCosts,
 	type ActionTrace,
-} from '@kingdom-builder/engine';
+} from '../../engine/src';
 import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
@@ -52,7 +52,7 @@ const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
 ) as (keyof typeof SYNTHETIC_RESOURCES)[];
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

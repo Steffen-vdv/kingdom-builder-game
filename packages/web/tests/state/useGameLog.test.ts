@@ -4,7 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 import type {
 	EngineSessionSnapshot,
 	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+} from '../../../engine/src';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
 
 const primaryResource = 'resource.primary';

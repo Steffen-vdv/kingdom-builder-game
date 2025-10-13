@@ -2,7 +2,7 @@ import {
 	createEngine,
 	type EffectDef,
 	type RuleSet,
-} from '@kingdom-builder/engine';
+} from '../../../engine/src';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
 import type { TranslationContext } from '../../src/translation/context/types';

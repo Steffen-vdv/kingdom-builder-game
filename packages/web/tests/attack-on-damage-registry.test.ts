@@ -3,10 +3,7 @@ import {
 	registerAttackOnDamageFormatter,
 	buildOnDamageEntry,
 } from '../src/translation/effects/formatters/attack';
-import type {
-	AttackOnDamageLogEntry,
-	EffectDef,
-} from '@kingdom-builder/engine';
+import type { AttackOnDamageLogEntry, EffectDef } from '../../engine/src';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	createSessionSnapshot,

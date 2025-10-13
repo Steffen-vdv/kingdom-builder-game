@@ -5,7 +5,7 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { EngineSession } from '@kingdom-builder/engine';
+import type { EngineSession } from '../../engine/src';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import {
 	createSessionSnapshot,

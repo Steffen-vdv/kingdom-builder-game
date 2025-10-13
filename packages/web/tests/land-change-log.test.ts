@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runEffects } from '@kingdom-builder/engine';
+import { runEffects } from '../../engine/src';
 import type {
 	PhaseConfig,
 	RuleSet,
@@ -18,7 +18,7 @@ import {
 } from '../src/translation/log/logMessages';
 import { createEngineTranslationContext } from './helpers/createEngineTranslationContext';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

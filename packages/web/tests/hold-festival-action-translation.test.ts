@@ -10,7 +10,7 @@ import {
 	getSyntheticFestivalDetails,
 } from './fixtures/syntheticFestival';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

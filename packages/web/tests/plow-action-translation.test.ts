@@ -12,10 +12,10 @@ import {
 	describeContent,
 	splitSummary,
 } from '../src/translation/content';
-import { createEngine, type EffectDef } from '@kingdom-builder/engine';
+import { createEngine, type EffectDef } from '../../engine/src';
 import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

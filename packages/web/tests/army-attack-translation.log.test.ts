@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 
 import './helpers/armyAttackSyntheticRegistries';
 import { logContent } from '../src/translation/content';
-import { Resource, Stat, performAction } from '@kingdom-builder/engine';
+import { Resource, Stat, performAction } from '../../engine/src';
 import {
 	createSyntheticCtx,
 	setupStatOverrides,
@@ -21,7 +21,7 @@ import {
 	selectAttackResourceDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 
-vi.mock('@kingdom-builder/engine', async () => {
+vi.mock('../../engine/src', async () => {
 	return await import('../../engine/src');
 });
 

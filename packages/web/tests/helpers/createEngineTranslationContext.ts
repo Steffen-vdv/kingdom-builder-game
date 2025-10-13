@@ -1,4 +1,4 @@
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngine } from '../../../engine/src';
 import type {
 	PhaseConfig,
 	RuleSet,

@@ -3,7 +3,7 @@ import type {
 	EngineSession,
 	EngineSessionSnapshot,
 	RuleSnapshot,
-} from '@kingdom-builder/engine';
+} from '../../../engine/src';
 import { createTranslationContext } from '../../src/translation/context';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';

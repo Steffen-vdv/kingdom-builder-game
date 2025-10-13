@@ -20,7 +20,7 @@ import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 import type {
 	LegacyGameEngineContextValue,
 } from '../src/state/GameContext.types';
-import type { PlayerId } from '@kingdom-builder/engine';
+import type { PlayerId } from '../../engine/src';
 
 interface PopulationInfoScenario {
 	registries: ReturnType<typeof createTestSessionScaffold>['registries'];

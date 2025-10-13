@@ -5,7 +5,7 @@ import type {
 	PlayerId,
 	PlayerStateSnapshot,
 	RuleSnapshot,
-} from '@kingdom-builder/engine';
+} from '../../../engine/src';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 
 interface SnapshotPlayerOptions {

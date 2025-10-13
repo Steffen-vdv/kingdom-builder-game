@@ -5,7 +5,7 @@ import type {
 	TranslationPlayer,
 	TranslationRegistry,
 } from '../../src/translation/context';
-import type { RuleSnapshot } from '@kingdom-builder/engine';
+import type { RuleSnapshot } from '../../../engine/src';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
 

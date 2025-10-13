@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine, runEffects } from '@kingdom-builder/engine';
+import { createEngine, runEffects } from '../../engine/src';
 import type { StartConfig } from '@kingdom-builder/protocol';
 import {
 	snapshotPlayer,

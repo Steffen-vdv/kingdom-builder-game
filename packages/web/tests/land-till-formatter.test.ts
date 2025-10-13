@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { summarizeEffects } from '../src/translation/effects';
 import { summarizeContent } from '../src/translation/content';
-import type { EffectDef, PlayerId } from '@kingdom-builder/engine';
+import type { EffectDef, PlayerId } from '../../engine/src';
 import {
 	createTranslationContext,
 	selectSlotDisplay,
