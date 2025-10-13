@@ -355,6 +355,16 @@ export function GameProvider(props: GameProviderProps) {
 				const current = sessionStateRef.current;
 				return current?.metadata ?? null;
 			},
+			updateSnapshot: (snapshot) => {
+				const queue = remoteQueueRef.current;
+				if (queue) {
+					const updated = queue.updateSnapshot(snapshot);
+					latestSnapshotRef.current = updated;
+					return updated;
+				}
+				latestSnapshotRef.current = snapshot;
+				return snapshot;
+			},
 			updatePlayerName: (playerId, playerName) =>
 				runExclusive(async () => {
 					const current = sessionStateRef.current;

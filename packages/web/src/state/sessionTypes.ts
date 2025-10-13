@@ -19,5 +19,6 @@ export interface SessionQueueHelpers {
 	getLatestSnapshot: () => SessionSnapshot | null;
 	getLatestRegistries: () => SessionRegistries | null;
 	getLatestMetadata: () => SessionMetadata | null;
+	updateSnapshot: (snapshot: SessionSnapshot) => SessionSnapshot;
 	updatePlayerName: (playerId: string, playerName: string) => Promise<void>;
 }

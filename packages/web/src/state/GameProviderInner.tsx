@@ -183,10 +183,11 @@ export function GameProviderInner({
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
-		session: legacySession,
 		sessionId,
 		actionCostResource,
 		registries,
+		getCachedSnapshot: queue.getLatestSnapshot,
+		updateCachedSnapshot: queue.updateSnapshot,
 		addLog,
 		showResolution: handleShowResolution,
 		syncPhaseState: applyPhaseSnapshot,

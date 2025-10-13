@@ -43,18 +43,25 @@ vi.mock('../../src/state/sessionSdk', async () => {
 });
 
 describe('useActionPerformer', () => {
-	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
 	let enqueueMock: ReturnType<
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
-	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let cachedSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let actionCostResource: SessionResourceDefinition['key'];
 	let ruleSnapshot: RuleSnapshot;
 	let registries: ReturnType<typeof createSessionRegistries>;
+	let getCachedSnapshot: ReturnType<typeof vi.fn>;
+	let updateCachedSnapshot: ReturnType<
+		typeof vi.fn<
+			(
+				snapshot: ReturnType<typeof createSessionSnapshot>,
+			) => ReturnType<typeof createSessionSnapshot>
+		>
+	>;
 	const sessionId = 'test-session';
 
 	beforeEach(() => {
@@ -94,7 +101,7 @@ describe('useActionPerformer', () => {
 			name: 'Rival',
 			resources: { [actionCostResource]: 4 },
 		});
-		sessionSnapshot = createSessionSnapshot({
+		cachedSnapshot = createSessionSnapshot({
 			players: [player, opponent],
 			activePlayerId: player.id,
 			opponentId: opponent.id,
@@ -110,9 +117,11 @@ describe('useActionPerformer', () => {
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		getCachedSnapshot = vi.fn(() => cachedSnapshot);
+		updateCachedSnapshot = vi.fn((snapshot) => {
+			cachedSnapshot = snapshot;
+			return snapshot;
+		});
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
@@ -139,10 +148,11 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSnapshot,
+				updateCachedSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -168,6 +178,7 @@ describe('useActionPerformer', () => {
 		expect(addLog).not.toHaveBeenCalled();
 		expect(enqueueMock).toHaveBeenCalled();
 		expect(translateRequirementFailureMock).not.toHaveBeenCalled();
+		expect(getCachedSnapshot).toHaveBeenCalled();
 	});
 
 	it('translates requirement failures for authentication errors', async () => {
@@ -182,10 +193,11 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSnapshot,
+				updateCachedSnapshot,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
@@ -198,6 +210,7 @@ describe('useActionPerformer', () => {
 				onFatalSessionError: undefined,
 			}),
 		);
+		const beforeSnapshot = cachedSnapshot;
 
 		await act(async () => {
 			await result.current.handlePerform(action);
@@ -211,8 +224,8 @@ describe('useActionPerformer', () => {
 		expect(addLog).toHaveBeenCalledWith(
 			`Failed to play ⚔️ Attack: ${authMessage}`,
 			{
-				id: sessionSnapshot.game.activePlayerId,
-				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
+				id: beforeSnapshot.game.activePlayerId,
+				name: beforeSnapshot.game.players[0]?.name ?? 'Hero',
 			},
 		);
 	});
@@ -229,10 +242,11 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSnapshot,
+				updateCachedSnapshot,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
@@ -245,6 +259,7 @@ describe('useActionPerformer', () => {
 				onFatalSessionError: undefined,
 			}),
 		);
+		const beforeSnapshot = cachedSnapshot;
 
 		await act(async () => {
 			await result.current.handlePerform(action);
@@ -258,40 +273,38 @@ describe('useActionPerformer', () => {
 		expect(addLog).toHaveBeenCalledWith(
 			`Failed to play ⚔️ Attack: ${translated}`,
 			{
-				id: sessionSnapshot.game.activePlayerId,
-				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
+				id: beforeSnapshot.game.activePlayerId,
+				name: beforeSnapshot.game.players[0]?.name ?? 'Hero',
 			},
 		);
 	});
 
 	it('treats missing active players as fatal errors', async () => {
-		const phases = sessionSnapshot.phases;
+		const phases = cachedSnapshot.phases;
 		const opponentOnly = createSnapshotPlayer({
 			id: 'player-2',
 			name: 'Rival',
 			resources: { [actionCostResource]: 4 },
 		});
-		sessionSnapshot = createSessionSnapshot({
+		cachedSnapshot = createSessionSnapshot({
 			players: [opponentOnly],
 			activePlayerId: 'player-1',
 			opponentId: opponentOnly.id,
 			phases,
 			actionCostResource,
 			ruleSnapshot,
-			turn: sessionSnapshot.game.turn,
-			currentPhase: sessionSnapshot.game.currentPhase,
-			currentStep: sessionSnapshot.game.currentStep,
+			turn: cachedSnapshot.game.turn,
+			currentPhase: cachedSnapshot.game.currentPhase,
+			currentStep: cachedSnapshot.game.currentStep,
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSnapshot,
+				updateCachedSnapshot,
 				addLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
@@ -325,7 +338,7 @@ describe('useActionPerformer', () => {
 		const syncPhaseState = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn();
-		const [activeBefore, opponentBefore] = sessionSnapshot.game.players;
+		const [activeBefore, opponentBefore] = cachedSnapshot.game.players;
 		if (!activeBefore || !opponentBefore) {
 			throw new Error('Expected players in snapshot');
 		}
@@ -347,12 +360,12 @@ describe('useActionPerformer', () => {
 			players: [updatedPlayer, updatedOpponent],
 			activePlayerId: updatedPlayer.id,
 			opponentId: updatedOpponent.id,
-			phases: sessionSnapshot.phases,
+			phases: cachedSnapshot.phases,
 			actionCostResource,
 			ruleSnapshot,
-			turn: sessionSnapshot.game.turn,
-			currentPhase: sessionSnapshot.game.currentPhase,
-			currentStep: sessionSnapshot.game.currentStep,
+			turn: cachedSnapshot.game.turn,
+			currentPhase: cachedSnapshot.game.currentPhase,
+			currentStep: cachedSnapshot.game.currentStep,
 		});
 		performSessionActionMock.mockResolvedValueOnce({
 			status: 'success',
@@ -364,10 +377,11 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSnapshot,
+				updateCachedSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -385,6 +399,7 @@ describe('useActionPerformer', () => {
 			await result.current.handlePerform(action);
 		});
 
+		expect(updateCachedSnapshot).toHaveBeenCalledWith(snapshotAfter);
 		expect(showResolution).toHaveBeenCalledTimes(1);
 		expect(showResolution).toHaveBeenLastCalledWith(
 			expect.objectContaining({
@@ -406,7 +421,7 @@ describe('useActionPerformer', () => {
 		const syncPhaseState = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn();
-		const [activeBefore, opponentBefore] = sessionSnapshot.game.players;
+		const [activeBefore, opponentBefore] = cachedSnapshot.game.players;
 		if (!activeBefore || !opponentBefore) {
 			throw new Error('Expected players in snapshot');
 		}
@@ -428,12 +443,12 @@ describe('useActionPerformer', () => {
 			players: [updatedPlayer, updatedOpponent],
 			activePlayerId: updatedPlayer.id,
 			opponentId: updatedOpponent.id,
-			phases: sessionSnapshot.phases,
+			phases: cachedSnapshot.phases,
 			actionCostResource,
 			ruleSnapshot,
-			turn: sessionSnapshot.game.turn,
-			currentPhase: sessionSnapshot.game.currentPhase,
-			currentStep: sessionSnapshot.game.currentStep,
+			turn: cachedSnapshot.game.turn,
+			currentPhase: cachedSnapshot.game.currentPhase,
+			currentStep: cachedSnapshot.game.currentStep,
 		});
 		performSessionActionMock.mockResolvedValueOnce({
 			status: 'success',
@@ -454,10 +469,11 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSnapshot,
+				updateCachedSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -518,10 +534,11 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				getCachedSnapshot,
+				updateCachedSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
