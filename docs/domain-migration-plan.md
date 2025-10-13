@@ -178,6 +178,23 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-18 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/vite.config.ts` (Web)
+    - `packages/web/tests/regression/no-engine-internals.test.ts` (Web)
+  - **Intent**: Remove the legacy Engine alias from the web build and harden
+    the regression suite so the frontend cannot reintroduce direct Engine
+    imports while the Domain Migration decoupling proceeds.
+  - **Communication Path Update**: Web must now resolve gameplay data via the
+    published protocol and contents packages exclusively; build tooling no
+    longer exposes the Engine source tree.
+  - **Regression Guard**: The `no-engine-internals` regression test now scans
+    both `src/` and the regression suite under `tests/` for any
+    `@kingdom-builder/engine` import (root or deep) and fails if one appears,
+    ensuring the alias removal is enforced over time.
+  - **Follow-Up Notes**: Continue migrating any residual Engine helpers behind
+    protocol endpoints before re-enabling affected UI panels.
+
 - **Date & Author**: 2025-10-17 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/services/gameApi.ts` (Web)
