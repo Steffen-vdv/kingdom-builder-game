@@ -29,11 +29,8 @@ import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import {
-	isFatalSessionError,
-	markFatalSessionError,
-	updatePlayerName as updateRemotePlayerName,
-} from './sessionSdk';
+import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
+import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 

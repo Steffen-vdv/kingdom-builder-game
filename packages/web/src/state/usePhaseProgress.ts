@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
+import { advanceSessionPhase } from './sessionSdk';
 import {
-	advanceSessionPhase,
 	SessionMirroringError,
 	markFatalSessionError,
 	isFatalSessionError,
-} from './sessionSdk';
+} from './sessionErrors';
 import type {
 	LegacySession,
 	SessionRegistries,
