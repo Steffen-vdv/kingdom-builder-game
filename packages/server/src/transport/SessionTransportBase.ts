@@ -40,7 +40,11 @@ import type {
 	TransportIdFactory,
 	TransportRequest,
 } from './TransportTypes.js';
-import { applyPlayerNames, sanitizePlayerName } from './playerNameHelpers.js';
+import {
+	sanitizePlayerName,
+	sanitizePlayerNameEntries,
+	type SanitizedPlayerNameEntry,
+} from './playerNameHelpers.js';
 import { parseActionParameters } from './actionParameterHelpers.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 export interface SessionTransportOptions {
@@ -69,6 +73,10 @@ export class SessionTransportBase {
 			);
 		}
 		const data = parsed.data;
+		let sanitizedEntries: SanitizedPlayerNameEntry[] | undefined;
+		if (data.playerNames) {
+			sanitizedEntries = sanitizePlayerNameEntries(data.playerNames);
+		}
 		const sessionId = this.generateSessionId();
 		try {
 			const options: CreateSessionOptions = {
@@ -78,8 +86,10 @@ export class SessionTransportBase {
 				options.config = data.config;
 			}
 			const session = this.sessionManager.createSession(sessionId, options);
-			if (data.playerNames) {
-				applyPlayerNames(session, data.playerNames);
+			if (sanitizedEntries && sanitizedEntries.length > 0) {
+				for (const [playerId, sanitizedName] of sanitizedEntries) {
+					session.updatePlayerName(playerId, sanitizedName);
+				}
 			}
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
