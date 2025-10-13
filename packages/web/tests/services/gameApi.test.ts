@@ -185,6 +185,40 @@ describe('createGameApi', () => {
 		expect(init?.signal).toBe(controller.signal);
 	});
 
+	it('omits auth headers when the provider resolves to null', async () => {
+		const response = createStateResponse('session-no-token');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const tokenProvider = vi.fn().mockResolvedValue(null);
+		const api = createGameApi({
+			fetchFn: fetchMock,
+			getAuthToken: tokenProvider,
+		});
+
+		await api.fetchSnapshot('session-no-token');
+
+		expect(tokenProvider).toHaveBeenCalledTimes(1);
+		const [, init] = fetchMock.mock.calls[0] ?? [];
+		const headers = init?.headers as Headers;
+		expect(headers.has('Authorization')).toBe(false);
+		expect(headers.get('Accept')).toBe('application/json');
+	});
+
+	it('throws a clear error when the global fetch API is unavailable', () => {
+		const globalTarget = globalThis as { fetch?: typeof fetch };
+		const originalFetch = globalTarget.fetch;
+
+		try {
+			delete globalTarget.fetch;
+			expect(() => createGameApi()).toThrow('Global fetch API is unavailable.');
+		} finally {
+			if (originalFetch) {
+				globalTarget.fetch = originalFetch;
+			} else {
+				delete globalTarget.fetch;
+			}
+		}
+	});
+
 	it('requests session snapshots from the snapshot endpoint', async () => {
 		const response = createStateResponse('session/special');
 		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
@@ -267,6 +301,57 @@ describe('createGameApi', () => {
 			status: 503,
 			body: { message: 'failed' },
 		});
+	});
+
+	it('treats structured JSON error responses as objects', async () => {
+		const problem = { title: 'Nope', status: 422 };
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(JSON.stringify(problem), {
+				status: 422,
+				headers: {
+					'Content-Type': 'application/problem+json; charset=utf-8',
+				},
+			}),
+		);
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		await expect(
+			api.performAction({
+				sessionId: 'session-problem',
+				actionId: 'action.problem',
+			}),
+		).rejects.toMatchObject({
+			status: 422,
+			body: problem,
+		});
+	});
+
+	it('captures plain text error payloads', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response('Not Found', {
+				status: 404,
+				headers: { 'Content-Type': 'text/plain' },
+			}),
+		);
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		await expect(api.fetchSnapshot('missing')).rejects.toMatchObject({
+			status: 404,
+			body: 'Not Found',
+		});
+	});
+
+	it('returns undefined when responses omit the content type', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(new Response(null, { status: 200 }));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		const result = await (
+			api.createSession as unknown as () => Promise<unknown>
+		)();
+
+		expect(result).toBeUndefined();
 	});
 });
 
