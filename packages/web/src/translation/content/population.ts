@@ -14,7 +14,7 @@ class PopulationTranslator implements ContentTranslator<string> {
 
 	log(id: string, context: TranslationContext): string[] {
 		const normalized = id?.trim();
-		const role = normalized || undefined;
+		const role = normalized ? (normalized as string | undefined) : undefined;
 		const { icon, label } = resolvePopulationDisplay(context, role);
 		const display = [icon, label].filter(Boolean).join(' ').trim();
 		return [display || label || normalized || ''];
