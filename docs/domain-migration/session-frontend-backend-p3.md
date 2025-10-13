@@ -43,3 +43,7 @@ UI hooks should no longer speak to `EngineSession` objects. Instead, they consum
 ## Handover Notes
 
 Follow-up tasks must append a concise bullet list under this section summarising any behavioural changes they introduce. Keep entries chronological so future agents can review this document instead of tracing every pull request.
+
+- Extended the HTTP session gateway with endpoints for action metadata, AI
+  turn execution, and simulation so remote clients can consume protocol-first
+  workflows without instantiating local engine mirrors.

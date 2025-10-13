@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ZodError } from 'zod';
 import type {
 	SessionGateway,
 	SessionRegistriesPayload,
@@ -205,6 +206,288 @@ describe('HttpSessionGateway', () => {
 			enabled: true,
 		});
 		expect(response.snapshot.game.devMode).toBe(true);
+	});
+
+	it('fetches action costs from the REST transport', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/actions/build/costs',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({
+					sessionId: 'test',
+					actionId: 'build',
+					params: { target: 'farm' },
+				});
+				return jsonResponse({
+					sessionId: 'test',
+					costs: { gold: 2 },
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.fetchActionCosts({
+			sessionId: 'test',
+			actionId: 'build',
+			params: { target: 'farm' },
+		});
+		expect(response.costs).toEqual({ gold: 2 });
+	});
+
+	it('throws transport errors when fetching action costs fails', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(jsonResponse({ message: 'No action.' }, { status: 404 })),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionCosts({
+				sessionId: 'missing',
+				actionId: 'unknown',
+			}),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates action cost requests before sending them', async () => {
+		const gateway = createGateway();
+		await expect(
+			gateway.fetchActionCosts({
+				// @ts-expect-error: exercising validation failures
+				sessionId: '',
+				actionId: '',
+			}),
+		).rejects.toBeInstanceOf(ZodError);
+	});
+
+	it('fetches action requirements from the REST transport', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(request.method).toBe('POST');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/actions/build/requirements',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({
+					sessionId: 'test',
+					actionId: 'build',
+					params: { target: 'farm' },
+				});
+				return jsonResponse({
+					sessionId: 'test',
+					requirements: [
+						{
+							requirement: {
+								type: 'resource',
+								method: 'minimum',
+								params: { resourceId: 'gold' },
+								message: 'Needs gold.',
+							},
+							details: { amount: 2 },
+							message: 'Met',
+						},
+					],
+				});
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.fetchActionRequirements({
+			sessionId: 'test',
+			actionId: 'build',
+			params: { target: 'farm' },
+		});
+		expect(response.requirements).toEqual([
+			{
+				requirement: {
+					type: 'resource',
+					method: 'minimum',
+					params: { resourceId: 'gold' },
+					message: 'Needs gold.',
+				},
+				details: { amount: 2 },
+				message: 'Met',
+			},
+		]);
+	});
+
+	it('throws transport errors when fetching requirements fails', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse({ message: 'No requirements.' }, { status: 409 }),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionRequirements({
+				sessionId: 'test',
+				actionId: 'failure',
+			}),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates action requirement requests before sending them', async () => {
+		const gateway = createGateway();
+		await expect(
+			gateway.fetchActionRequirements({
+				// @ts-expect-error: exercising validation failures
+				sessionId: '',
+				actionId: '',
+			}),
+		).rejects.toBeInstanceOf(ZodError);
+	});
+
+	it('fetches action options from the REST transport', async () => {
+		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+			const request =
+				input instanceof Request ? input : new Request(input, init);
+			expect(request.method).toBe('GET');
+			expect(new URL(request.url).pathname).toBe(
+				'/api/sessions/test/actions/build/options',
+			);
+			return Promise.resolve(
+				jsonResponse({
+					sessionId: 'test',
+					groups: [],
+				}),
+			);
+		});
+		const gateway = createGateway({ fetch });
+		const response = await gateway.fetchActionOptions({
+			sessionId: 'test',
+			actionId: 'build',
+		});
+		expect(response.groups).toEqual([]);
+	});
+
+	it('throws transport errors when fetching options fails', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse({ message: 'Options unavailable.' }, { status: 500 }),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.fetchActionOptions({
+				sessionId: 'test',
+				actionId: 'broken',
+			}),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates action option requests before sending them', async () => {
+		const gateway = createGateway();
+		await expect(
+			gateway.fetchActionOptions({
+				// @ts-expect-error: exercising validation failures
+				sessionId: '',
+				actionId: '',
+			}),
+		).rejects.toBeInstanceOf(ZodError);
+	});
+
+	it('runs AI turns remotely', async () => {
+		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+			const request =
+				input instanceof Request ? input : new Request(input, init);
+			expect(request.method).toBe('POST');
+			expect(new URL(request.url).pathname).toBe(
+				'/api/sessions/test/players/A/ai/turn',
+			);
+			return Promise.resolve(
+				jsonResponse({
+					sessionId: 'test',
+					snapshot: { game: { players: [] } },
+					registries: createRegistries(),
+					ranTurn: true,
+				}),
+			);
+		});
+		const gateway = createGateway({ fetch });
+		const response = await gateway.runAiTurn({
+			sessionId: 'test',
+			playerId: 'A',
+		});
+		expect(response.ranTurn).toBe(true);
+	});
+
+	it('throws transport errors when AI execution fails', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse({ message: 'AI unavailable.' }, { status: 409 }),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.runAiTurn({
+				sessionId: 'test',
+				playerId: 'A',
+			}),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates AI turn requests before sending them', async () => {
+		const gateway = createGateway();
+		await expect(
+			gateway.runAiTurn({
+				// @ts-expect-error: exercising validation failures
+				sessionId: '',
+				playerId: '',
+			}),
+		).rejects.toBeInstanceOf(ZodError);
+	});
+
+	it('simulates upcoming phases remotely', async () => {
+		const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+			const request =
+				input instanceof Request ? input : new Request(input, init);
+			expect(request.method).toBe('POST');
+			expect(new URL(request.url).pathname).toBe(
+				'/api/sessions/test/players/A/simulate',
+			);
+			return Promise.resolve(
+				jsonResponse({
+					sessionId: 'test',
+					result: { phases: [] },
+				}),
+			);
+		});
+		const gateway = createGateway({ fetch });
+		const response = await gateway.simulateUpcomingPhases({
+			sessionId: 'test',
+			playerId: 'A',
+			options: { maxIterations: 2 },
+		});
+		expect(response.result).toEqual({ phases: [] });
+	});
+
+	it('throws transport errors when simulations fail', async () => {
+		const fetch = vi.fn(() =>
+			Promise.resolve(
+				jsonResponse({ message: 'Simulation error.' }, { status: 400 }),
+			),
+		);
+		const gateway = createGateway({ fetch });
+		await expect(
+			gateway.simulateUpcomingPhases({
+				sessionId: 'test',
+				playerId: 'A',
+			}),
+		).rejects.toBeInstanceOf(TransportError);
+	});
+
+	it('validates simulation requests before sending them', async () => {
+		const gateway = createGateway();
+		await expect(
+			gateway.simulateUpcomingPhases({
+				// @ts-expect-error: exercising validation failures
+				sessionId: '',
+				playerId: '',
+			}),
+		).rejects.toBeInstanceOf(ZodError);
 	});
 
 	it('supports asynchronous header factories', async () => {
