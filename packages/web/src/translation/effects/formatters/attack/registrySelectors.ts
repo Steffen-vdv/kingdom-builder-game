@@ -5,6 +5,8 @@ import {
 	type ResourceKey,
 	type StatKey,
 } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../../../context/types';
+import { humanizeIdentifier } from '../../stringUtils';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
@@ -25,9 +27,10 @@ function toDescriptor(
 	icon: string | undefined,
 	fallback: string,
 ): AttackRegistryDescriptor {
+	const fallbackLabel = humanizeIdentifier(fallback) || fallback;
 	return {
 		icon: coerceIcon(icon),
-		label: coerceLabel(label, fallback),
+		label: coerceLabel(label, fallbackLabel),
 	};
 }
 
@@ -52,7 +55,7 @@ export function selectAttackBuildingDescriptor(
 		const definition = BUILDINGS.get(buildingId);
 		return toDescriptor(definition.name, definition.icon, buildingId);
 	} catch {
-		return { icon: '', label: buildingId };
+		return toDescriptor(undefined, undefined, buildingId);
 	}
 }
 
@@ -76,4 +79,11 @@ export function selectAttackDefaultStatKey(): StatKey | undefined {
 export function selectAttackDefaultBuildingId(): string | undefined {
 	const ids = listAttackBuildingIds();
 	return ids.length > 0 ? ids[0] : undefined;
+}
+
+export function withAttackTranslationContext<T>(
+	_context: TranslationContext,
+	run: () => T,
+): T {
+	return run();
 }

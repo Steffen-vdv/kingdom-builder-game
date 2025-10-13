@@ -30,8 +30,10 @@ import {
 	ACTION_DEFS,
 	type ActionDefinition,
 } from './armyAttackEffects';
+import type { TranslationContext } from '../../src/translation/context/types';
 import {
 	selectAttackStatDescriptor,
+	withAttackTranslationContext,
 	type AttackRegistryDescriptor,
 } from '../../src/translation/effects/formatters/attack/registrySelectors';
 
@@ -176,8 +178,13 @@ export function createPartialStatCtx() {
 	} as const;
 }
 
-export function getStat(key: string): AttackRegistryDescriptor {
-	return selectAttackStatDescriptor(key);
+export function getStat(
+	translation: TranslationContext,
+	key: string,
+): AttackRegistryDescriptor {
+	return withAttackTranslationContext(translation, () =>
+		selectAttackStatDescriptor(key),
+	);
 }
 
 export function iconLabel(
