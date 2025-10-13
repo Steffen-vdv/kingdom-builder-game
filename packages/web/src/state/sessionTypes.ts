@@ -12,7 +12,6 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
-import { type CreateSessionResult } from './sessionSdk';
 import type { SessionStateRecord } from './sessionStateStore';
 
 export interface LegacySessionAiOverrides {
@@ -53,9 +52,8 @@ export interface LegacySession {
 	updatePlayerName(playerId: SessionPlayerId, name: string): void;
 }
 
-export type Session = CreateSessionResult['session'];
-export type SessionRegistries = CreateSessionResult['registries'];
-export type SessionResourceKeys = CreateSessionResult['resourceKeys'];
+export type Session = Pick<LegacySession, 'enqueue'>;
+export type SessionResourceKeys = string[];
 export type SessionResourceKey = SessionResourceKeys[number];
 export type SessionMetadata = SessionSnapshotMetadata;
 
@@ -73,6 +71,7 @@ export type RemoteSessionRecord = Pick<
 export type SessionQueueSeed = SessionStateRecord['queueSeed'];
 
 export type { SessionRuleSnapshot, SessionSnapshot };
+export type { SessionRegistries } from './sessionRegistries';
 
 export interface SessionQueueHelpers {
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
