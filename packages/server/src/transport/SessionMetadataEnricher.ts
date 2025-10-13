@@ -53,6 +53,8 @@ export class SessionMetadataEnricher {
 		const phases = this.mergeRecords(metadata.phases, additions.phases);
 		const triggers = this.mergeRecords(metadata.triggers, additions.triggers);
 		const assets = this.mergeRecords(metadata.assets, additions.assets);
+		const developerPresetPlan =
+			metadata.developerPresetPlan ?? additions.developerPresetPlan;
 
 		if (
 			resources === metadata.resources &&
@@ -62,7 +64,8 @@ export class SessionMetadataEnricher {
 			stats === metadata.stats &&
 			phases === metadata.phases &&
 			triggers === metadata.triggers &&
-			assets === metadata.assets
+			assets === metadata.assets &&
+			developerPresetPlan === metadata.developerPresetPlan
 		) {
 			return metadata;
 		}
@@ -88,6 +91,7 @@ export class SessionMetadataEnricher {
 		assign('phases', phases);
 		assign('triggers', triggers);
 		assign('assets', assets);
+		assign('developerPresetPlan', developerPresetPlan);
 
 		return updated;
 	}

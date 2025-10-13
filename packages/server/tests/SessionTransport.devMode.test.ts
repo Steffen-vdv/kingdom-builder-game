@@ -116,4 +116,50 @@ describe('SessionTransport dev mode', () => {
 			}
 		}
 	});
+
+	it('applies developer presets when toggling dev mode on', () => {
+		const metadata = buildSessionMetadata();
+		const manager = new SessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: expect.getState().currentTestName
+				? () => 'dev-session-toggle'
+				: undefined,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: { devMode: false },
+			headers: authorizedHeaders,
+		});
+		const response = transport.setDevMode({
+			body: { sessionId, enabled: true },
+			headers: authorizedHeaders,
+		});
+		expect(response.snapshot.game.devMode).toBe(true);
+		const devModeConfig = GAME_START.modes?.dev;
+		if (!devModeConfig) {
+			throw new Error('Expected dev mode configuration in GAME_START.');
+		}
+		const presetPlayer = devModeConfig.player;
+		const player = response.snapshot.game.players[0];
+		if (!player) {
+			throw new Error('Expected at least one player in the snapshot.');
+		}
+		if (presetPlayer?.resources) {
+			for (const [key, expectedAmount] of Object.entries(
+				presetPlayer.resources,
+			)) {
+				expect(metadata.resources?.[key]).toBeDefined();
+				expect(player.resources[key]).toBe(expectedAmount);
+			}
+		}
+		if (presetPlayer?.population) {
+			for (const [role, expectedCount] of Object.entries(
+				presetPlayer.population,
+			)) {
+				expect(metadata.populations?.[role]).toBeDefined();
+				expect(player.population[role]).toBe(expectedCount);
+			}
+		}
+	});
 });

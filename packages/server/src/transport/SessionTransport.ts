@@ -49,6 +49,7 @@ import {
 	attachHttpStatus,
 	parseSessionIdentifier,
 } from './sessionRequestUtils.js';
+import { applyDeveloperPresetPlan } from '../session/applyDeveloperPresetPlan.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 
 export interface SessionTransportOptions {
@@ -94,7 +95,12 @@ export class SessionTransport {
 				options.config = data.config;
 			}
 			const session = this.sessionManager.createSession(sessionId, options);
-			data.playerNames && this.applyPlayerNames(session, data.playerNames);
+			if (data.playerNames) {
+				this.applyPlayerNames(session, data.playerNames);
+			}
+			if (options.devMode) {
+				applyDeveloperPresetPlan(session);
+			}
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
 				cause: error,
@@ -227,6 +233,9 @@ export class SessionTransport {
 		const { sessionId, enabled } = parsed.data;
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
+		if (enabled) {
+			applyDeveloperPresetPlan(session);
+		}
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
 		const response = this.buildStateResponse(
 			sessionId,

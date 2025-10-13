@@ -6,6 +6,7 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type { SessionDeveloperPresetPlan } from './contracts';
 
 export type SessionPlayerId = 'A' | 'B';
 
@@ -345,6 +346,7 @@ export interface SessionSnapshotMetadata {
 	modifierDisplays?: SessionModifierDisplayMap;
 	assets?: SessionAssetMetadataMap;
 	overviewContent?: SessionOverviewContentPayload;
+	developerPresetPlan?: SessionDeveloperPresetPlan;
 }
 
 export interface SessionSnapshot {
@@ -387,6 +389,11 @@ export type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
+	SessionRegistriesMetadata,
+	SessionDeveloperPresetPlan,
+	SessionDeveloperPresetPlayerPlan,
+	SessionDeveloperPresetPopulationPlanEntry,
+	SessionDeveloperPresetResourceTarget,
 } from './contracts';
 
 export * as contracts from './contracts';

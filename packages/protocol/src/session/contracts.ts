@@ -57,6 +57,29 @@ export interface SessionRegistriesMetadata {
 	overviewContent?: SessionOverviewMetadata;
 }
 
+export interface SessionDeveloperPresetResourceTarget {
+	key: string;
+	target: number;
+}
+
+export interface SessionDeveloperPresetPopulationPlanEntry {
+	role: string;
+	count: number;
+}
+
+export interface SessionDeveloperPresetPlayerPlan {
+	playerId: string;
+	resources?: SessionDeveloperPresetResourceTarget[];
+	population?: SessionDeveloperPresetPopulationPlanEntry[];
+	landCount?: number;
+	developments?: string[];
+	buildings?: string[];
+}
+
+export interface SessionDeveloperPresetPlan {
+	players: SessionDeveloperPresetPlayerPlan[];
+}
+
 export interface SessionIdentifier {
 	sessionId: string;
 }

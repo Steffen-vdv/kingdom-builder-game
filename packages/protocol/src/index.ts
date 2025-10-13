@@ -179,6 +179,10 @@ export type {
 	SessionOverviewHeroMetadata,
 	SessionOverviewSectionMetadata,
 	SessionOverviewSectionItemMetadata,
+	SessionDeveloperPresetPlan,
+	SessionDeveloperPresetPlayerPlan,
+	SessionDeveloperPresetPopulationPlanEntry,
+	SessionDeveloperPresetResourceTarget,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {
