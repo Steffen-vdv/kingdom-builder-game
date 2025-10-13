@@ -10,8 +10,12 @@ import {
 import {
 	createResourceKeys,
 	createSessionRegistries,
+	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
-import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import {
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../src/state/sessionStateStore';
 
 const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
 const advanceToActionPhaseMock = vi.hoisted(() => vi.fn());
@@ -34,6 +38,7 @@ describe('usePhaseProgress', () => {
 		advanceSessionPhaseMock.mockReset();
 		advanceToActionPhaseMock.mockReset();
 		advanceToActionPhaseMock.mockResolvedValue(undefined);
+		clearSessionStateStore();
 	});
 
 	it('uses latest fatal handler when advancing to action phase', async () => {
@@ -69,8 +74,10 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = createLegacySessionMock({
+		initializeSessionState({
+			sessionId: 'session-1',
 			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
 		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
@@ -80,7 +87,6 @@ describe('usePhaseProgress', () => {
 		const { result, rerender } = renderHook(
 			({ fatalHandler }: { fatalHandler: (error: unknown) => void }) =>
 				usePhaseProgress({
-					session: session as never,
 					sessionState: sessionSnapshot,
 					sessionId: 'session-1',
 					actionCostResource,
@@ -150,8 +156,10 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = createLegacySessionMock({
+		initializeSessionState({
+			sessionId: 'session-1',
 			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
 		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
@@ -163,7 +171,6 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				session: session as never,
 				sessionState: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,
@@ -222,8 +229,10 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = createLegacySessionMock({
+		initializeSessionState({
+			sessionId: 'session-1',
 			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
 		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
@@ -233,7 +242,6 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				session: session as never,
 				sessionState: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,

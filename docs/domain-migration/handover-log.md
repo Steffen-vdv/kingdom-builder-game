@@ -1,5 +1,17 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T11 - Session Container Remote Adapter Migration
+
+- `GameContext` now persists the remote session adapter alongside the
+  store-backed snapshot metadata, removing the legacy engine session fields from
+  the container and routing queue helpers through the shared store promise
+  chain.
+- Refreshed the session SDK bootstrap/refresh/dev-mode methods to return the
+  remote record derived from the session state store, keeping the adapter in
+  sync while callers consume the canonical snapshot cache.
+- Updated web state tests (GameProvider, session SDK) to assert against the new
+  record payloads and queue wiring.\
+
 ## Domain Migration - P3 - T9 - Remote Session Mirror Removal
 
 - Removed the legacy engine mirror and developer-mode bootstrap so session lifecycle now flows entirely through the remote adapter backed by the session state store.【F:packages/web/src/state/sessionSdk.ts†L1-L340】【F:packages/web/src/state/remoteSessionAdapter.ts†L1-L220】
@@ -154,3 +166,11 @@
 - `packages/web/tests/state/useAiRunner.test.ts` now stubs the adapter/GameApi
   behaviour to validate fatal error propagation without touching engine-only
   helpers.
+
+## Domain Migration - P3 - T14 - Phase progress snapshot mirroring
+
+- Rewired `usePhaseProgress` and its helper to source all snapshots from the
+  remote session state store and drive phase advancement exclusively through the
+  `advanceSessionPhase` API, so queued snapshots fuel diff formatting without
+  invoking legacy engine methods. Tests now seed the session state store instead
+  of engine mocks to cover the remote workflow.
