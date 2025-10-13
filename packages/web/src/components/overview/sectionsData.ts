@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import {
-	type OverviewSectionTemplate,
-	type OverviewTokenCandidates,
-	type OverviewTokenCategoryName,
-} from '@kingdom-builder/contents';
+import type {
+	OverviewSectionTemplate,
+	OverviewTokenCandidates,
+	OverviewTokenCategoryName,
+} from './overviewContentTypes';
 import type { OverviewSectionDef } from './OverviewLayout';
 import {
 	buildOverviewIconSet,
@@ -84,13 +84,14 @@ export function createOverviewSections(
 	const icons = buildOverviewIconSet(tokenSources, mergedTokenConfig);
 
 	const sections = content.map((section) => {
+		const sectionIcon = section.icon ? (icons[section.icon] ?? null) : null;
 		if (section.kind === 'paragraph') {
 			return {
 				kind: 'paragraph',
 				id: section.id,
-				icon: icons[section.icon] ?? null,
+				icon: sectionIcon,
 				title: section.title,
-				paragraphs: section.paragraphs,
+				paragraphs: [...section.paragraphs],
 				...spanProps(section.span),
 			} satisfies OverviewSectionDef;
 		}
@@ -98,12 +99,12 @@ export function createOverviewSections(
 		return {
 			kind: 'list',
 			id: section.id,
-			icon: icons[section.icon] ?? null,
+			icon: sectionIcon,
 			title: section.title,
 			items: section.items.map((item) => ({
 				icon: item.icon ? (icons[item.icon] ?? null) : undefined,
 				label: item.label,
-				body: item.body,
+				body: [...item.body],
 			})),
 			...spanProps(section.span),
 		} satisfies OverviewSectionDef;

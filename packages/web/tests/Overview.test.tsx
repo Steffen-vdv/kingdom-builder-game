@@ -7,6 +7,8 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import Overview, { type OverviewTokenConfig } from '../src/Overview';
 import type { OverviewContentSection } from '../src/components/overview/sectionsData';
+import type { OverviewContentTemplate } from '../src/components/overview/overviewContentTypes';
+import { DEFAULT_OVERVIEW_CONTENT } from '../src/contexts/defaultRegistryMetadata';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
 
@@ -35,56 +37,6 @@ describe('<Overview />', () => {
 					label: 'Action Points',
 					icon: '⚡',
 				},
-			},
-		};
-		const metadata: SessionSnapshotMetadata = {
-			passiveEvaluationModifiers: {},
-			resources: {
-				gold: { label: 'Refined Gold', icon: '🪙' },
-				ap: { label: 'Reserve AP', icon: '✨' },
-			},
-			populations: {
-				[councilRole.id]: {
-					label: 'Guiding Council',
-					icon: councilRole.icon,
-				},
-			},
-			buildings: {},
-			developments: {},
-			stats: {
-				army: { label: 'Army Strength', icon: '🛡️' },
-			},
-			phases: {
-				growth: {
-					label: 'Growth Phase',
-					icon: '🌱',
-					action: false,
-					steps: [],
-				},
-			},
-			triggers: {},
-			assets: {
-				land: { label: 'Land', icon: '🗺️' },
-				slot: { label: 'Slot', icon: '🧩' },
-			},
-		};
-
-		const tokenConfig: OverviewTokenConfig = {
-			actions: {
-				expand: ['missing-action', expandAction.id],
-			},
-			phases: {
-				growth: ['missing-phase', 'growth'],
-			},
-			resources: {
-				gold: ['missing-gold', 'gold'],
-				ap: ['missing-ap', 'ap'],
-			},
-			stats: {
-				army: ['missing-army', 'army'],
-			},
-			population: {
-				council: ['missing-council', councilRole.id],
 			},
 		};
 
@@ -117,14 +69,96 @@ describe('<Overview />', () => {
 				],
 			},
 		];
+		const metadata: SessionSnapshotMetadata & {
+			overviewContent: OverviewContentTemplate;
+		} = {
+			passiveEvaluationModifiers: {},
+			resources: {
+				gold: { label: 'Refined Gold', icon: '🪙' },
+				ap: { label: 'Reserve AP', icon: '✨' },
+			},
+			populations: {
+				[councilRole.id]: {
+					label: 'Guiding Council',
+					icon: councilRole.icon,
+				},
+			},
+			buildings: {},
+			developments: {},
+			stats: {
+				army: { label: 'Army Strength', icon: '🛡️' },
+			},
+			phases: {
+				growth: {
+					label: 'Growth Phase',
+					icon: '🌱',
+					action: false,
+					steps: [],
+				},
+			},
+			triggers: {},
+			assets: {
+				land: { label: 'Land', icon: '🗺️' },
+				slot: { label: 'Slot', icon: '🧩' },
+			},
+			overviewContent: {
+				hero: {
+					badgeIcon: '🧪',
+					badgeLabel: 'Experiment',
+					title: 'Custom Realm',
+					intro: 'Test {expand} turns and {ap} reserves.',
+					paragraph: 'Legends speak of {council} guidance and {gold} riches.',
+					tokens: {
+						game: 'Custom Realm',
+					},
+				},
+				sections: customContent,
+				tokens: {
+					actions: {
+						expand: ['expand'],
+					},
+					phases: {
+						growth: ['growth'],
+					},
+					resources: {
+						gold: ['gold'],
+						ap: ['ap'],
+					},
+					stats: {
+						army: ['army'],
+					},
+					population: {
+						council: ['council'],
+					},
+					static: {
+						land: ['land'],
+						slot: ['slot'],
+					},
+				},
+			},
+		};
 
+		const tokenConfig: OverviewTokenConfig = {
+			actions: {
+				expand: ['missing-action', expandAction.id],
+			},
+			phases: {
+				growth: ['missing-phase', 'growth'],
+			},
+			resources: {
+				gold: ['missing-gold', 'gold'],
+				ap: ['missing-ap', 'ap'],
+			},
+			stats: {
+				army: ['missing-army', 'army'],
+			},
+			population: {
+				council: ['missing-council', councilRole.id],
+			},
+		};
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<Overview
-					onBack={vi.fn()}
-					tokenConfig={tokenConfig}
-					content={customContent}
-				/>
+				<Overview onBack={vi.fn()} tokenConfig={tokenConfig} />
 			</RegistryMetadataProvider>,
 		);
 
@@ -157,5 +191,16 @@ describe('<Overview />', () => {
 		expect(flowSection).toHaveTextContent('🛡️');
 
 		expect(screen.getByText('Advance')).toBeInTheDocument();
+	});
+
+	it('renders snapshot overview when no metadata provider is present', () => {
+		render(<Overview onBack={vi.fn()} />);
+
+		expect(
+			screen.getByText(DEFAULT_OVERVIEW_CONTENT.hero.title),
+		).toBeInTheDocument();
+		for (const section of DEFAULT_OVERVIEW_CONTENT.sections) {
+			expect(screen.getByText(section.title)).toBeInTheDocument();
+		}
 	});
 });

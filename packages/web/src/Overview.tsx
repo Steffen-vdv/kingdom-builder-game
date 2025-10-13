@@ -27,10 +27,8 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+import { DEFAULT_OVERVIEW_CONTENT } from './contexts/defaultRegistryMetadata';
+import type { OverviewTokenCandidates } from './components/overview/overviewContentTypes';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
 
@@ -49,7 +47,7 @@ function createFallbackSections(
 				id: section.id,
 				icon: null,
 				title: section.title,
-				paragraphs: section.paragraphs,
+				paragraphs: [...section.paragraphs],
 				span: section.span ?? false,
 			} satisfies OverviewSectionDef;
 		}
@@ -62,7 +60,7 @@ function createFallbackSections(
 			items: section.items.map((item) => ({
 				icon: item.icon ? null : undefined,
 				label: item.label,
-				body: item.body,
+				body: [...item.body],
 			})),
 			span: section.span ?? false,
 		} satisfies OverviewSectionDef;
@@ -148,7 +146,7 @@ export default function Overview({
 	content,
 }: OverviewProps) {
 	const metadata = useOptionalRegistryMetadata();
-	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
+	const overviewContent = metadata?.overviewContent ?? DEFAULT_OVERVIEW_CONTENT;
 	const sections = content ?? overviewContent.sections;
 	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
 	const heroContent = overviewContent.hero;

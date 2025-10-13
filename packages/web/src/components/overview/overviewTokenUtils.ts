@@ -8,7 +8,7 @@ import type {
 	PhaseMetadata,
 	RegistryMetadataDescriptor,
 } from '../../contexts/RegistryMetadataContext';
-import type { OverviewTokenCategoryName } from '@kingdom-builder/contents';
+import type { OverviewTokenCategoryName } from './overviewContentTypes';
 
 export type TokenCandidateInput = string | ReadonlyArray<string>;
 
