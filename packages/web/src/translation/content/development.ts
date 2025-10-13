@@ -92,19 +92,31 @@ function collectPhaseEffects(
 	const rawId = params['id'];
 	const selfId = typeof rawId === 'string' ? rawId : undefined;
 	for (const phase of context.phases) {
-		const phaseHandlerKey = `on${
-			phase.id.charAt(0).toUpperCase() + phase.id.slice(1)
-		}Phase`;
+		const phaseIdentifier = phase.id.includes('.')
+			? phase.id.slice(phase.id.lastIndexOf('.') + 1)
+			: phase.id;
+		const capitalizedPhaseId =
+			phaseIdentifier.charAt(0).toUpperCase() + phaseIdentifier.slice(1);
+		const phaseHandlerKey = `on${capitalizedPhaseId}Phase`;
 		const key = phaseHandlerKey as keyof PhaseEffects;
 		for (const step of phase.steps ?? []) {
 			const bucket: EffectDef[] = [];
 			gatherEffects(step.effects as EffectDef[] | undefined, id, bucket);
-			if (bucket.length) {
-				const applied = applyParamsToEffects(bucket, params);
-				const additions = stripSelfEvaluators(applied, selfId) ?? applied;
-				if (additions.length) {
-					result[key] = [...(result[key] ?? []), ...additions];
+			if (!bucket.length) {
+				continue;
+			}
+			const applied = applyParamsToEffects(bucket, params);
+			const additions = stripSelfEvaluators(applied, selfId) ?? applied;
+			if (!additions.length) {
+				continue;
+			}
+			result[key] = [...(result[key] ?? []), ...additions];
+			for (const trigger of step.triggers ?? []) {
+				if (typeof trigger !== 'string' || trigger.trim().length === 0) {
+					continue;
 				}
+				const triggerKey = trigger as keyof PhaseEffects;
+				result[triggerKey] = [...(result[triggerKey] ?? []), ...additions];
 			}
 		}
 	}

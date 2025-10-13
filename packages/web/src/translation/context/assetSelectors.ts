@@ -1,3 +1,4 @@
+import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import type {
 	TranslationAssets,
 	TranslationIconLabel,
@@ -75,6 +76,10 @@ export function selectTriggerDisplay(
 	const entry = assets?.triggers?.[triggerId];
 	if (entry) {
 		return entry;
+	}
+	const fallback = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
+	if (fallback) {
+		return fallback;
 	}
 	return Object.freeze({
 		label: triggerId,
