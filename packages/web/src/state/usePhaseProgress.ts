@@ -2,21 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
+import { getSessionRecord } from './sessionStateStore';
 import {
 	SessionMirroringError,
 	markFatalSessionError,
 	isFatalSessionError,
 } from './sessionErrors';
-import type {
-	LegacySession,
-	SessionRegistries,
-	SessionResourceKey,
-} from './sessionTypes';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import { formatPhaseResolution } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
 
 interface PhaseProgressOptions {
-	session: LegacySession;
 	sessionState: SessionSnapshot;
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
@@ -64,7 +60,6 @@ function computePhaseState(
 }
 
 export function usePhaseProgress({
-	session,
 	sessionState,
 	sessionId,
 	actionCostResource,
@@ -92,10 +87,11 @@ export function usePhaseProgress({
 
 	const refreshPhaseState = useCallback(
 		(overrides: Partial<PhaseProgressState> = {}) => {
-			const snapshot = session.getSnapshot();
+			const record = getSessionRecord(sessionId);
+			const snapshot = record?.snapshot ?? sessionState;
 			applyPhaseSnapshot(snapshot, overrides);
 		},
-		[applyPhaseSnapshot, session],
+		[applyPhaseSnapshot, sessionId, sessionState],
 	);
 
 	useEffect(() => {
@@ -107,33 +103,33 @@ export function usePhaseProgress({
 		});
 	}, [sessionState, actionCostResource]);
 
-	const runUntilActionPhaseCore = useCallback(
-		() =>
-			advanceToActionPhase({
-				session,
-				sessionId,
-				resourceKeys,
-				mountedRef,
-				applyPhaseSnapshot,
-				refresh,
-				formatPhaseResolution,
-				showResolution,
-				registries,
-				...(onFatalSessionError ? { onFatalSessionError } : {}),
-			}),
-		[
-			applyPhaseSnapshot,
-			formatPhaseResolution,
-			mountedRef,
-			onFatalSessionError,
-			refresh,
-			resourceKeys,
-			registries,
-			session,
+	const runUntilActionPhaseCore = useCallback(() => {
+		const record = getSessionRecord(sessionId);
+		const latestSnapshot = record?.snapshot ?? sessionState;
+		return advanceToActionPhase({
 			sessionId,
+			initialSnapshot: latestSnapshot,
+			resourceKeys,
+			mountedRef,
+			applyPhaseSnapshot,
+			refresh,
+			formatPhaseResolution,
 			showResolution,
-		],
-	);
+			registries,
+			...(onFatalSessionError ? { onFatalSessionError } : {}),
+		});
+	}, [
+		applyPhaseSnapshot,
+		formatPhaseResolution,
+		mountedRef,
+		onFatalSessionError,
+		sessionId,
+		refresh,
+		resourceKeys,
+		registries,
+		showResolution,
+		sessionState,
+	]);
 
 	const runUntilActionPhase = useCallback(
 		() => enqueue(runUntilActionPhaseCore),
@@ -141,7 +137,8 @@ export function usePhaseProgress({
 	);
 
 	const endTurn = useCallback(async () => {
-		const snapshot = session.getSnapshot();
+		const record = getSessionRecord(sessionId);
+		const snapshot = record?.snapshot ?? sessionState;
 		if (snapshot.game.conclusion) {
 			return;
 		}
@@ -163,7 +160,9 @@ export function usePhaseProgress({
 			await advanceSessionPhase({ sessionId });
 			await runUntilActionPhaseCore();
 		} catch (error) {
-			applyPhaseSnapshot(session.getSnapshot(), {
+			const record = getSessionRecord(sessionId);
+			const latest = record?.snapshot ?? sessionState;
+			applyPhaseSnapshot(latest, {
 				isAdvancing: false,
 			});
 			if (error instanceof SessionMirroringError) {
@@ -188,8 +187,8 @@ export function usePhaseProgress({
 		actionCostResource,
 		applyPhaseSnapshot,
 		runUntilActionPhaseCore,
-		session,
 		sessionId,
+		sessionState,
 		onFatalSessionError,
 	]);
 
