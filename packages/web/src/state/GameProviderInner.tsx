@@ -162,7 +162,6 @@ export function GameProviderInner({
 		applyPhaseSnapshot,
 		refreshPhaseState,
 	} = usePhaseProgress({
-		session: legacySession,
 		sessionState,
 		sessionId,
 		actionCostResource,
@@ -172,6 +171,7 @@ export function GameProviderInner({
 		enqueue,
 		showResolution: handleShowResolution,
 		registries: cachedRegistries,
+		getLatestSnapshot: queue.getLatestSnapshot,
 		onFatalSessionError,
 	});
 

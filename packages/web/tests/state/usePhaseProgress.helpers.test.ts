@@ -2,7 +2,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { advanceToActionPhase } from '../../src/state/usePhaseProgress.helpers';
 import { SessionMirroringError } from '../../src/state/sessionSdk';
-import type { LegacySession } from '../../src/state/sessionTypes';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -12,20 +11,9 @@ import {
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
 
-const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
-
-vi.mock('../../src/state/sessionSdk', async () => {
-	const actual = await vi.importActual('../../src/state/sessionSdk');
-	return {
-		...(actual as Record<string, unknown>),
-		advanceSessionPhase: advanceSessionPhaseMock,
-	};
-});
-
 describe('advanceToActionPhase', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		advanceSessionPhaseMock.mockReset();
 	});
 
 	it('forwards mirroring failures to the fatal handler', async () => {
@@ -54,9 +42,7 @@ describe('advanceToActionPhase', () => {
 			currentPhase: phases[0]?.id ?? 'phase-setup',
 			currentStep: phases[0]?.id ?? 'phase-setup',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => snapshot),
-		} as unknown as LegacySession;
+		const getLatestSnapshot = vi.fn(() => snapshot);
 		const mountedRef = { current: true };
 		const applyPhaseSnapshot = vi.fn();
 		const refresh = vi.fn();
@@ -66,13 +52,13 @@ describe('advanceToActionPhase', () => {
 		const fatalError = new SessionMirroringError('Mirroring failed', {
 			cause: new Error('desync'),
 		});
-		advanceSessionPhaseMock.mockRejectedValueOnce(fatalError);
+		const advancePhase = vi.fn().mockRejectedValueOnce(fatalError);
 		const onFatalSessionError = vi.fn();
 
 		await expect(
 			advanceToActionPhase({
-				session: session as never,
-				sessionId: 'session-1',
+				initialSnapshot: snapshot,
+				getLatestSnapshot,
 				resourceKeys: [actionCostResource],
 				mountedRef,
 				applyPhaseSnapshot,
@@ -80,13 +66,12 @@ describe('advanceToActionPhase', () => {
 				formatPhaseResolution: formatPhaseResolution as never,
 				showResolution: showResolution as never,
 				registries,
+				advancePhase,
 				onFatalSessionError,
 			}),
 		).resolves.toBeUndefined();
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
-		expect(advanceSessionPhaseMock).toHaveBeenCalledWith({
-			sessionId: 'session-1',
-		});
+		expect(advancePhase).toHaveBeenCalledTimes(1);
 	});
 });
