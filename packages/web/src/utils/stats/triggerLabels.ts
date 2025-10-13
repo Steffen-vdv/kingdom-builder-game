@@ -1,49 +1,61 @@
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import type { TranslationTriggerAsset } from '../../translation/context/types';
 import type { DescriptorRegistryEntry, ResolveResult } from './types';
 
-type TriggerInfoRecord = Record<
-	string,
-	{ icon?: string; future?: string; past?: string }
->;
+export type TriggerLookup = Readonly<Record<string, TranslationTriggerAsset>>;
 
-const TRIGGER_LOOKUP = TRIGGER_INFO as TriggerInfoRecord;
-
-export function resolveTriggerDescriptor(id?: string): ResolveResult {
+export function resolveTriggerDescriptor(
+	lookup: TriggerLookup,
+	id?: string,
+): ResolveResult {
 	if (id) {
-		const info = TRIGGER_LOOKUP[id];
+		const info = lookup[id];
 		if (info) {
-			return {
-				icon: info.icon ?? '',
-				label: info.past ?? info.future ?? id,
-			} satisfies ResolveResult;
+			const icon =
+				typeof info.icon === 'string' && info.icon.trim().length > 0
+					? info.icon
+					: '';
+			const label =
+				[info.label, info.past, info.future, id].find(
+					(value): value is string =>
+						typeof value === 'string' && value.trim().length > 0,
+				) ?? id;
+			return { icon, label } satisfies ResolveResult;
 		}
+		return { icon: '', label: id } satisfies ResolveResult;
 	}
-	return { icon: '', label: id ?? 'Trigger' } satisfies ResolveResult;
+	return { icon: '', label: 'Trigger' } satisfies ResolveResult;
 }
 
 export function createTriggerDescriptorEntry(
 	defaultFormatDetail: NonNullable<DescriptorRegistryEntry['formatDetail']>,
+	lookup: TriggerLookup,
 ): DescriptorRegistryEntry {
 	return {
-		resolve: resolveTriggerDescriptor,
+		resolve: (id) => resolveTriggerDescriptor(lookup, id),
 		formatDetail: defaultFormatDetail,
 	} satisfies DescriptorRegistryEntry;
 }
 
-export function formatTriggerLabel(id: string): string | undefined {
+export function formatTriggerLabel(
+	lookup: TriggerLookup,
+	id: string,
+): string | undefined {
 	if (!id) {
 		return undefined;
 	}
-	const info = TRIGGER_LOOKUP[id];
+	const info = lookup[id];
 	if (info) {
 		const parts: string[] = [];
 		if (info.icon) {
 			parts.push(info.icon);
 		}
-		const label = info.past ?? info.future ?? id;
-		if (label) {
-			parts.push(label);
-		}
+		const label =
+			[info.label, info.past, info.future, id].find(
+				(value): value is string => {
+					return typeof value === 'string' && value.trim().length > 0;
+				},
+			) ?? id;
+		parts.push(label);
 		return parts.join(' ').trim();
 	}
 	return id;
