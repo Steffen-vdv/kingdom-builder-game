@@ -9,7 +9,7 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import { type OverviewContentTemplate } from '@kingdom-builder/contents';
+import type { OverviewContentTemplate } from '../components/overview/overviewContentTypes';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,

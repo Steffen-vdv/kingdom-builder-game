@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import {
-	type OverviewSectionTemplate,
-	type OverviewTokenCandidates,
-	type OverviewTokenCategoryName,
-} from '@kingdom-builder/contents';
+import type {
+	OverviewSectionTemplate,
+	OverviewTokenCandidates,
+	OverviewTokenCategoryName,
+} from './overviewContentTypes';
 import type { OverviewSectionDef } from './OverviewLayout';
 import {
 	buildOverviewIconSet,

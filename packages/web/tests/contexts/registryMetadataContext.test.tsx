@@ -5,7 +5,7 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import type { OverviewContentTemplate } from '@kingdom-builder/contents';
+import type { OverviewContentTemplate } from '../src/components/overview/overviewContentTypes';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
 	RegistryMetadataProvider,

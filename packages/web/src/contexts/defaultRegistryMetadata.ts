@@ -2,7 +2,7 @@ import type {
 	SessionRegistriesPayload,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import type { OverviewContentTemplate } from '@kingdom-builder/contents';
+import type { OverviewContentTemplate } from '../components/overview/overviewContentTypes';
 import { deserializeSessionRegistries } from '../state/sessionRegistries';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import snapshot from './defaultRegistryMetadata.json';
