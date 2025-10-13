@@ -192,8 +192,6 @@ export function GameProvider(props: GameProviderProps) {
 						return;
 					}
 					updateSessionData({
-						session: created.session,
-						legacySession: created.legacySession,
 						sessionId: created.sessionId,
 						snapshot: created.snapshot,
 						ruleSnapshot: created.ruleSnapshot,
@@ -248,8 +246,6 @@ export function GameProvider(props: GameProviderProps) {
 					return;
 				}
 				updateSessionData({
-					session: result.session,
-					legacySession: result.legacySession,
 					sessionId,
 					snapshot: result.snapshot,
 					ruleSnapshot: result.ruleSnapshot,
@@ -297,8 +293,6 @@ export function GameProvider(props: GameProviderProps) {
 					return;
 				}
 				updateSessionData({
-					session: updated.session,
-					legacySession: updated.legacySession,
 					sessionId: current.sessionId,
 					snapshot: updated.snapshot,
 					ruleSnapshot: updated.ruleSnapshot,
@@ -323,11 +317,11 @@ export function GameProvider(props: GameProviderProps) {
 		() => ({
 			enqueue: <T,>(task: () => Promise<T> | T) =>
 				runExclusive(() => {
-					const current = sessionStateRef.current;
-					if (!current) {
+					const queue = remoteQueueRef.current;
+					if (!queue) {
 						throw new Error('Session not ready');
 					}
-					return current.session.enqueue(task);
+					return task();
 				}),
 			getLatestSnapshot: () => {
 				const queue = remoteQueueRef.current;
@@ -380,8 +374,6 @@ export function GameProvider(props: GameProviderProps) {
 							return;
 						}
 						updateSessionData({
-							session: updated.session,
-							legacySession: updated.legacySession,
 							sessionId: current.sessionId,
 							snapshot: updated.snapshot,
 							ruleSnapshot: updated.ruleSnapshot,
@@ -432,7 +424,6 @@ export function GameProvider(props: GameProviderProps) {
 		queue: queueHelpers,
 		sessionId: sessionData.sessionId,
 		sessionState: sessionData.snapshot,
-		legacySession: sessionData.legacySession,
 		ruleSnapshot: sessionData.ruleSnapshot,
 		refreshSession,
 		onReleaseSession: handleRelease,
