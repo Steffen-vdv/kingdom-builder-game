@@ -45,6 +45,7 @@ import {
 	sanitizePlayerNameEntries,
 } from './playerNameHelpers.js';
 import { SessionMetadataEnricher } from './SessionMetadataEnricher.js';
+import { applyDeveloperPresetPlan } from '../session/applyDeveloperPresetPlan.js';
 import {
 	attachHttpStatus,
 	parseSessionIdentifier,
@@ -93,8 +94,12 @@ export class SessionTransport {
 			if (data.config !== undefined) {
 				options.config = data.config;
 			}
+			const devMode = options.devMode ?? false;
 			const session = this.sessionManager.createSession(sessionId, options);
 			data.playerNames && this.applyPlayerNames(session, data.playerNames);
+			if (devMode) {
+				applyDeveloperPresetPlan(session);
+			}
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
 				cause: error,
@@ -227,6 +232,9 @@ export class SessionTransport {
 		const { sessionId, enabled } = parsed.data;
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
+		if (enabled) {
+			applyDeveloperPresetPlan(session);
+		}
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
 		const response = this.buildStateResponse(
 			sessionId,

@@ -12,6 +12,7 @@ import type {
 	SessionPlayerId,
 	SessionSnapshot,
 	SessionTriggerMetadata,
+	SessionDeveloperPresetPlan,
 } from './index';
 
 export interface SessionOverviewHeroMetadata {
@@ -55,6 +56,7 @@ export interface SessionRegistriesMetadata {
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
 	overviewContent?: SessionOverviewMetadata;
+	developerPresetPlan?: SessionDeveloperPresetPlan;
 }
 
 export interface SessionIdentifier {

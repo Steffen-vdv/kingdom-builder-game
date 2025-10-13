@@ -12,6 +12,7 @@ import {
 	MODIFIER_INFO,
 	OVERVIEW_CONTENT,
 	POPULATION_INFO,
+	GAME_START,
 } from '@kingdom-builder/contents';
 import type {
 	SessionMetadataDescriptor,
@@ -19,7 +20,10 @@ import type {
 	SessionPhaseStepMetadata,
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
+	SessionDeveloperPresetPlan,
+	SessionDeveloperPresetPlanEntry,
 } from '@kingdom-builder/protocol/session';
+import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 
 type MetadataDescriptorRecord = Record<string, SessionMetadataDescriptor>;
 
@@ -33,7 +37,7 @@ type SessionMetadataBundle = Pick<
 	| 'phases'
 	| 'triggers'
 	| 'assets'
->;
+> & { developerPresetPlan?: SessionDeveloperPresetPlan };
 
 const isNonEmptyString = (value: string | undefined): value is string => {
 	return typeof value === 'string' && value.trim().length > 0;
@@ -62,6 +66,111 @@ const freezeDescriptorRecord = (
 ): MetadataDescriptorRecord => {
 	const record = Object.fromEntries(entries);
 	return Object.freeze(record) as MetadataDescriptorRecord;
+};
+
+const toFiniteNumber = (value: number | undefined): number | undefined => {
+	if (typeof value !== 'number' || !Number.isFinite(value)) {
+		return undefined;
+	}
+	return value;
+};
+
+const clonePlanEntries = <TEntry extends Record<string, string | number>>(
+	entries: TEntry[],
+): TEntry[] => {
+	return entries.map((entry) => {
+		return { ...entry };
+	});
+};
+
+const createDeveloperPresetPlanEntry = (
+	config: PlayerStartConfig | undefined,
+): SessionDeveloperPresetPlanEntry | undefined => {
+	if (!config) {
+		return undefined;
+	}
+	const entry: SessionDeveloperPresetPlanEntry = {};
+	if (config.resources) {
+		const targets: Array<{ key: string; target: number }> = [];
+		for (const [key, amount] of Object.entries(config.resources)) {
+			const target = toFiniteNumber(amount);
+			if (target === undefined) {
+				continue;
+			}
+			targets.push({ key, target });
+		}
+		if (targets.length > 0) {
+			entry.resources = clonePlanEntries(targets);
+		}
+	}
+	if (config.population) {
+		const population: Array<{ role: string; count: number }> = [];
+		for (const [role, amount] of Object.entries(config.population)) {
+			const count = toFiniteNumber(amount);
+			if (count === undefined) {
+				continue;
+			}
+			population.push({ role, count });
+		}
+		if (population.length > 0) {
+			entry.population = clonePlanEntries(population);
+		}
+	}
+	if (Array.isArray(config.lands) && config.lands.length > 0) {
+		entry.landCount = config.lands.length;
+		const developmentIds = new Set<string>();
+		for (const land of config.lands) {
+			if (!land?.developments) {
+				continue;
+			}
+			for (const id of land.developments) {
+				if (typeof id === 'string' && id.trim().length > 0) {
+					developmentIds.add(id);
+				}
+			}
+		}
+		if (developmentIds.size > 0) {
+			entry.developments = [...developmentIds];
+		}
+	}
+	if (Object.keys(entry).length === 0) {
+		return undefined;
+	}
+	return entry;
+};
+
+const createDeveloperPresetPlan = ():
+	| SessionDeveloperPresetPlan
+	| undefined => {
+	const devMode = GAME_START.modes?.dev;
+	if (!devMode) {
+		return undefined;
+	}
+	const plan: SessionDeveloperPresetPlan = {};
+	const baseEntry = createDeveloperPresetPlanEntry(devMode.player);
+	if (baseEntry) {
+		plan.player = baseEntry;
+	}
+	if (devMode.players) {
+		const entries: Array<readonly [string, SessionDeveloperPresetPlanEntry]> =
+			[];
+		for (const [playerId, playerConfig] of Object.entries(devMode.players)) {
+			const playerEntry = createDeveloperPresetPlanEntry(playerConfig);
+			if (!playerEntry) {
+				continue;
+			}
+			entries.push([playerId, playerEntry]);
+		}
+		if (entries.length > 0) {
+			plan.players = Object.fromEntries(entries) as NonNullable<
+				SessionDeveloperPresetPlan['players']
+			>;
+		}
+	}
+	if (!plan.player && !plan.players) {
+		return undefined;
+	}
+	return plan;
 };
 
 const createResourceDescriptors = (): MetadataDescriptorRecord => {
@@ -208,7 +317,7 @@ const createAssetDescriptors = (): MetadataDescriptorRecord => {
 };
 
 export function buildSessionMetadata(): SessionMetadataBundle {
-	return Object.freeze({
+	const metadata: SessionMetadataBundle = {
 		resources: createResourceDescriptors(),
 		populations: createRegistryDescriptors(POPULATIONS.entries()),
 		buildings: createRegistryDescriptors(BUILDINGS.entries()),
@@ -217,5 +326,10 @@ export function buildSessionMetadata(): SessionMetadataBundle {
 		phases: createPhaseDescriptors(),
 		triggers: createTriggerDescriptors(),
 		assets: createAssetDescriptors(),
-	});
+	};
+	const developerPresetPlan = createDeveloperPresetPlan();
+	if (developerPresetPlan) {
+		metadata.developerPresetPlan = developerPresetPlan;
+	}
+	return Object.freeze(metadata);
 }

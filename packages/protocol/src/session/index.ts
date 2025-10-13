@@ -326,6 +326,29 @@ export interface SessionOverviewContentPayload {
 	tokens?: SessionOverviewTokenCandidates;
 }
 
+export interface SessionDeveloperPresetResourceTarget {
+	key: string;
+	target: number;
+}
+
+export interface SessionDeveloperPresetPopulationEntry {
+	role: string;
+	count: number;
+}
+
+export interface SessionDeveloperPresetPlanEntry {
+	resources?: SessionDeveloperPresetResourceTarget[];
+	population?: SessionDeveloperPresetPopulationEntry[];
+	landCount?: number;
+	developments?: string[];
+	buildings?: string[];
+}
+
+export interface SessionDeveloperPresetPlan {
+	player?: SessionDeveloperPresetPlanEntry;
+	players?: Partial<Record<SessionPlayerId, SessionDeveloperPresetPlanEntry>>;
+}
+
 export interface SessionSnapshotMetadata {
 	/**
 	 * Snapshot metadata now guarantees descriptor coverage for the registries,
@@ -345,6 +368,7 @@ export interface SessionSnapshotMetadata {
 	modifierDisplays?: SessionModifierDisplayMap;
 	assets?: SessionAssetMetadataMap;
 	overviewContent?: SessionOverviewContentPayload;
+	developerPresetPlan?: SessionDeveloperPresetPlan;
 }
 
 export interface SessionSnapshot {
