@@ -194,7 +194,7 @@ export function GameProviderInner({
 		registries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
+	const { handlePerform } = useActionPerformer({
 		session: legacySession,
 		sessionId,
 		actionCostResource,
@@ -216,7 +216,6 @@ export function GameProviderInner({
 		sessionState,
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
-		performRef,
 		mountedRef,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});

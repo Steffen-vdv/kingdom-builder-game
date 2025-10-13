@@ -7,7 +7,6 @@ import {
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
 import { createResourceKeys } from '../helpers/sessionRegistries';
-import { markFatalSessionError } from '../../src/state/sessionErrors';
 import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 
 describe('useAiRunner', () => {
@@ -46,7 +45,7 @@ describe('useAiRunner', () => {
 			.fn<[], Promise<void>>()
 			.mockRejectedValueOnce(fatalError);
 		const onFatalSessionError = vi.fn();
-		const performRef = { current: vi.fn().mockResolvedValue(undefined) };
+		const runAiTurn = vi.fn(() => Promise.resolve(true));
 		const session = createLegacySessionMock(
 			{ snapshot: sessionState },
 			{
@@ -54,12 +53,7 @@ describe('useAiRunner', () => {
 				enqueue: vi.fn(async (task: () => Promise<void>) => {
 					await task();
 				}),
-				runAiTurn: vi.fn(() => Promise.resolve(true)),
-				getActionDefinition: vi.fn(() => ({
-					id: 'action.advance',
-					name: 'Advance',
-				})),
-				advancePhase: vi.fn(),
+				runAiTurn,
 			},
 		);
 		const syncPhaseState = vi.fn();
@@ -71,7 +65,6 @@ describe('useAiRunner', () => {
 				sessionState,
 				runUntilActionPhaseCore,
 				syncPhaseState,
-				performRef,
 				mountedRef,
 				onFatalSessionError,
 			}),
@@ -81,12 +74,17 @@ describe('useAiRunner', () => {
 			await Promise.resolve();
 		});
 
+		expect(runAiTurn).toHaveBeenCalledTimes(1);
+		expect(syncPhaseState).toHaveBeenCalledWith(sessionState, {
+			isAdvancing: true,
+			canEndTurn: false,
+		});
 		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 	});
 
-	it('stops background turns when the action performer reports a fatal error', async () => {
+	it('stops background turns when the AI run reports a fatal error', async () => {
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -116,19 +114,9 @@ describe('useAiRunner', () => {
 			currentStep: phases[0]?.id,
 			phaseIndex: 0,
 		});
-		const fatalError = new Error('fatal action failure');
+		const fatalError = new Error('fatal AI failure');
 		const onFatalSessionError = vi.fn();
-		const performRef = {
-			current: vi.fn(() => {
-				markFatalSessionError(fatalError);
-				onFatalSessionError(fatalError);
-				return Promise.reject(fatalError);
-			}),
-		};
-		const runAiTurn = vi.fn(async (_id, options) => {
-			await options.performAction('action.advance', undefined, {});
-			return true;
-		});
+		const runAiTurn = vi.fn(() => Promise.reject(fatalError));
 		const session = createLegacySessionMock(
 			{ snapshot: sessionState },
 			{
@@ -137,11 +125,6 @@ describe('useAiRunner', () => {
 					await task();
 				}),
 				runAiTurn,
-				getActionDefinition: vi.fn(() => ({
-					id: 'action.advance',
-					name: 'Advance',
-				})),
-				advancePhase: vi.fn(),
 			},
 		);
 		const syncPhaseState = vi.fn();
@@ -153,7 +136,6 @@ describe('useAiRunner', () => {
 				sessionState,
 				runUntilActionPhaseCore: vi.fn(),
 				syncPhaseState,
-				performRef,
 				mountedRef,
 				onFatalSessionError,
 			}),
@@ -164,7 +146,6 @@ describe('useAiRunner', () => {
 		});
 
 		expect(runAiTurn).toHaveBeenCalledTimes(1);
-		expect(performRef.current).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
 	});
