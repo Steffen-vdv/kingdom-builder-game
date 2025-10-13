@@ -1,5 +1,5 @@
 import fastify from 'fastify';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,
@@ -210,6 +210,19 @@ describe('FastifySessionTransport', () => {
 		await app.close();
 	});
 
+	it('returns not found when snapshots are requested for missing sessions', async () => {
+		const { app } = await createServer();
+		const response = await app.inject({
+			method: 'GET',
+			url: '/sessions/missing-session/snapshot',
+			headers: authorizedHeaders,
+		});
+		expect(response.statusCode).toBe(404);
+		const body = response.json() as { code: string };
+		expect(body.code).toBe('NOT_FOUND');
+		await app.close();
+	});
+
 	it('returns 401 when authorization headers are missing', async () => {
 		const { app } = await createServer();
 		const response = await app.inject({
@@ -258,6 +271,53 @@ describe('FastifySessionTransport', () => {
 			payload: {},
 		});
 		expect(response.statusCode).toBe(403);
+		await app.close();
+	});
+
+	it('merges session payloads when non-object bodies are provided', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/actions`,
+			headers: {
+				...authorizedHeaders,
+				'content-type': 'text/plain',
+			},
+			payload: 'noop',
+		});
+		expect(response.statusCode).toBe(400);
+		await app.close();
+	});
+
+	it('rethrows unexpected transport errors', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const getSnapshot = vi
+			.spyOn(manager, 'getSnapshot')
+			.mockImplementation(() => {
+				throw new Error('snapshot exploded');
+			});
+		const app = fastify();
+		const options: FastifySessionTransportOptions = {
+			sessionManager: manager,
+			authMiddleware: createTokenAuthMiddleware({ tokens: defaultTokens }),
+		};
+		await app.register(createSessionTransportPlugin, options);
+		await app.ready();
+		const response = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(response.statusCode).toBe(500);
+		getSnapshot.mockRestore();
 		await app.close();
 	});
 });
