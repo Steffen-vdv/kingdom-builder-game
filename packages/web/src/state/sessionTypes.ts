@@ -19,4 +19,5 @@ export interface SessionQueueHelpers {
 	getCurrentSession: () => Session;
 	getLegacySession: () => LegacySession;
 	getLatestSnapshot: () => SessionSnapshot | null;
+	updatePlayerName: (playerId: string, playerName: string) => Promise<void>;
 }

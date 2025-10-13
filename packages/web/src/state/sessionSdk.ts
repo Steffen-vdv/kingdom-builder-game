@@ -11,6 +11,7 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
+	SessionUpdatePlayerNameRequest,
 } from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
@@ -158,6 +159,33 @@ export async function setSessionDevMode(
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	record.legacySession.setDevMode(enabled);
 	replaceLegacySessionCaches(record, registries, resourceKeys);
+	return {
+		session: record.handle,
+		legacySession: record.legacySession,
+		snapshot: response.snapshot,
+		ruleSnapshot: response.snapshot.rules,
+		registries,
+		resourceKeys,
+		metadata: response.snapshot.metadata,
+	};
+}
+
+export async function updateSessionPlayerName(
+	request: SessionUpdatePlayerNameRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<FetchSnapshotResult> {
+	const api = ensureGameApi();
+	const record = getLegacySessionRecord(request.sessionId);
+	const response = await api.updatePlayerName(request, requestOptions);
+	const registries = deserializeSessionRegistries(response.registries);
+	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
+	replaceLegacySessionCaches(record, registries, resourceKeys);
+	const updatedPlayer = response.snapshot.game.players.find(
+		(player) => player.id === request.playerId,
+	);
+	if (updatedPlayer) {
+		record.legacySession.updatePlayerName(updatedPlayer.id, updatedPlayer.name);
+	}
 	return {
 		session: record.handle,
 		legacySession: record.legacySession,

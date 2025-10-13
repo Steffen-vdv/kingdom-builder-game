@@ -130,7 +130,7 @@ describe('FastifySessionTransport', () => {
 		const { sessionId } = createResponse.json() as { sessionId: string };
 		const updateResponse = await app.inject({
 			method: 'PATCH',
-			url: `/sessions/${sessionId}/player`,
+			url: `/sessions/${sessionId}/player-name`,
 			headers: authorizedHeaders,
 			payload: { playerId: 'A', playerName: ' Captain ' },
 		});

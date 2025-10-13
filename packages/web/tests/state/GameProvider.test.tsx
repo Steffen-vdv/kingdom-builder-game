@@ -20,6 +20,7 @@ const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
 const setSessionDevModeMock = vi.hoisted(() => vi.fn());
+const updateSessionPlayerNameMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/sessionSdk', async () => {
 	const actual = await vi.importActual('../../src/state/sessionSdk');
@@ -29,6 +30,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 		fetchSnapshot: fetchSnapshotMock,
 		releaseSession: releaseSessionMock,
 		setSessionDevMode: setSessionDevModeMock,
+		updateSessionPlayerName: updateSessionPlayerNameMock,
 	};
 });
 
@@ -173,6 +175,7 @@ describe('GameProvider', () => {
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
 		setSessionDevModeMock.mockReset();
+		updateSessionPlayerNameMock.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -284,6 +287,15 @@ describe('GameProvider', () => {
 			resourceKeys,
 			metadata: refreshedSnapshot.metadata,
 		});
+		updateSessionPlayerNameMock.mockResolvedValue({
+			session,
+			legacySession: session,
+			snapshot: refreshedSnapshot,
+			ruleSnapshot: refreshedSnapshot.rules,
+			registries,
+			resourceKeys,
+			metadata: refreshedSnapshot.metadata,
+		});
 	});
 
 	afterEach(() => {
@@ -317,6 +329,57 @@ describe('GameProvider', () => {
 
 		await waitFor(() =>
 			expect(runUntilActionPhaseMock).toHaveBeenCalledTimes(1),
+		);
+	});
+
+	it('syncs player name updates through the session queue', async () => {
+		const renamedSnapshot = createSessionSnapshot({
+			players: [
+				createSnapshotPlayer({
+					id: initialSnapshot.game.players[0]?.id ?? 'player-1',
+					name: 'Empress',
+					resources: initialSnapshot.game.players[0]?.resources ?? {},
+				}),
+				createSnapshotPlayer({
+					id: initialSnapshot.game.players[1]?.id ?? 'player-2',
+					name: initialSnapshot.game.players[1]?.name ?? 'Rival',
+					resources: initialSnapshot.game.players[1]?.resources ?? {},
+				}),
+			],
+			activePlayerId: initialSnapshot.game.activePlayerId,
+			opponentId: initialSnapshot.game.opponentId,
+			phases: initialSnapshot.phases,
+			actionCostResource: initialSnapshot.actionCostResource,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 1,
+			currentPhase: initialSnapshot.phases[0]?.id ?? 'phase-main',
+			currentStep:
+				initialSnapshot.phases[0]?.steps?.[0]?.id ??
+				initialSnapshot.phases[0]?.id ??
+				'phase-main',
+		});
+		updateSessionPlayerNameMock.mockResolvedValueOnce({
+			session,
+			legacySession: session,
+			snapshot: renamedSnapshot,
+			ruleSnapshot: renamedSnapshot.rules,
+			registries,
+			resourceKeys,
+			metadata: renamedSnapshot.metadata,
+		});
+
+		render(
+			<GameProvider devMode playerName="Empress">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(updateSessionPlayerNameMock).toHaveBeenCalledWith({
+				sessionId: 'session-1',
+				playerId: initialSnapshot.game.players[0]?.id ?? 'player-1',
+				playerName: 'Empress',
+			}),
 		);
 	});
 

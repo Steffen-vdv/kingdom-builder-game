@@ -64,10 +64,12 @@ export function GameProviderInner({
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const { legacySession, enqueue, cachedSessionSnapshot } = useSessionQueue(
-		queue,
-		sessionState,
-	);
+	const {
+		legacySession,
+		enqueue,
+		cachedSessionSnapshot,
+		updatePlayerName: syncPlayerName,
+	} = useSessionQueue(queue, sessionState);
 
 	const refresh = useCallback(() => {
 		void refreshSession();
@@ -85,19 +87,10 @@ export function GameProviderInner({
 		) {
 			return;
 		}
-		void enqueue(() => {
-			legacySession.updatePlayerName(primaryPlayerId, desiredName);
-		}).finally(() => {
+		void syncPlayerName(primaryPlayerId, desiredName).finally(() => {
 			refresh();
 		});
-	}, [
-		enqueue,
-		legacySession,
-		primaryPlayerId,
-		primaryPlayerName,
-		refresh,
-		playerName,
-	]);
+	}, [primaryPlayerId, primaryPlayerName, refresh, playerName, syncPlayerName]);
 
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({

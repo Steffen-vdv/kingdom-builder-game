@@ -91,7 +91,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 	);
 
 	fastify.patch<SessionRequestParams>(
-		'/sessions/:id/player',
+		'/sessions/:id/player-name',
 		async (request, reply) => {
 			try {
 				const payload = mergeSessionPayload(request);
