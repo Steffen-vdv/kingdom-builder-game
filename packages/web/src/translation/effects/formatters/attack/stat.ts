@@ -1,4 +1,3 @@
-import { type StatKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -12,39 +11,47 @@ import {
 	selectAttackDefaultStatKey,
 	selectAttackStatDescriptor,
 } from './registrySelectors';
+import type { TranslationContext } from '../../../context';
 
 const statFormatter: AttackTargetFormatter<{
 	type: 'stat';
-	key: StatKey;
+	key: string;
 }> = {
 	type: 'stat',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, translationContext) {
 		const targetParam = effect.params?.['target'] as
-			| { type: 'stat'; key: StatKey }
+			| { type: 'stat'; key: string }
 			| undefined;
 		if (targetParam?.type === 'stat') {
 			return targetParam;
 		}
-		const fallbackKey = selectAttackDefaultStatKey();
+		const fallbackKey = selectAttackDefaultStatKey(translationContext);
 		if (!fallbackKey) {
 			throw new Error('No stat definitions available');
 		}
 		return { type: 'stat', key: fallbackKey };
 	},
-	normalizeLogTarget(target) {
+	normalizeLogTarget(target, translationContext) {
 		const statTarget = target as Extract<
 			AttackLog['evaluation']['target'],
 			{ type: 'stat' }
 		>;
-		return { type: 'stat', key: statTarget.key as StatKey };
+		const key =
+			typeof statTarget.key === 'string'
+				? statTarget.key
+				: selectAttackDefaultStatKey(translationContext);
+		if (!key) {
+			throw new Error('No stat definitions available');
+		}
+		return { type: 'stat', key };
 	},
-	getInfo(target) {
-		return selectAttackStatDescriptor(target.key);
+	getInfo(target, translationContext) {
+		return selectAttackStatDescriptor(translationContext, target.key);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
 	},
-	buildBaseEntry(context) {
+	buildBaseEntry(context, _translationContext: TranslationContext) {
 		if (context.mode === 'summarize') {
 			return buildAttackSummaryBullet(context);
 		}
@@ -57,11 +64,11 @@ const statFormatter: AttackTargetFormatter<{
 		}
 		return `On opponent ${info.icon} ${info.label} damage`;
 	},
-	buildEvaluationEntry(log, context) {
+	buildEvaluationEntry(log, context, _translationContext: TranslationContext) {
 		return buildStandardEvaluationEntry(log, context, true);
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, translationContext, options) {
+		return formatDiffCommon(prefix, diff, translationContext, options);
 	},
 	onDamageLogTitle(info) {
 		return `${info.icon} ${info.label} damage trigger evaluation`;

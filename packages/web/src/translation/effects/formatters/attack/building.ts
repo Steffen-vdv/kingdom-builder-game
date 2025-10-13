@@ -12,40 +12,37 @@ import { buildAttackSummaryBullet } from './summary';
 import { buildDescribeEntry, buildingFortificationItems } from './evaluation';
 import type { AttackTargetFormatter } from './types';
 import type { SummaryEntry } from '../../../content';
-import {
-	selectAttackBuildingDescriptor,
-	selectAttackDefaultBuildingId,
-} from './registrySelectors';
+import { selectAttackBuildingDescriptor } from './registrySelectors';
+import type { TranslationContext } from '../../../context';
 
 const buildingFormatter: AttackTargetFormatter<{
 	type: 'building';
 	id: string;
 }> = {
 	type: 'building',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, _translationContext: TranslationContext) {
 		const targetParam = effect.params?.['target'] as
 			| { type: 'building'; id: string }
 			| undefined;
 		if (targetParam?.type === 'building') {
 			return targetParam;
 		}
-		const fallbackId = selectAttackDefaultBuildingId() ?? 'unknown_building';
-		return { type: 'building', id: fallbackId };
+		return { type: 'building', id: 'unknown_building' };
 	},
-	normalizeLogTarget(target) {
+	normalizeLogTarget(target, _translationContext: TranslationContext) {
 		const buildingTarget = target as Extract<
 			AttackLog['evaluation']['target'],
 			{ type: 'building' }
 		>;
 		return { type: 'building', id: buildingTarget.id };
 	},
-	getInfo(target) {
-		return selectAttackBuildingDescriptor(target.id);
+	getInfo(target, translationContext) {
+		return selectAttackBuildingDescriptor(translationContext, target.id);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
 	},
-	buildBaseEntry(context) {
+	buildBaseEntry(context, _translationContext: TranslationContext) {
 		if (context.mode === 'summarize') {
 			return buildAttackSummaryBullet(context);
 		}
@@ -58,7 +55,7 @@ const buildingFormatter: AttackTargetFormatter<{
 		}
 		return `On opponent ${targetLabel} destruction`;
 	},
-	buildEvaluationEntry(log, context) {
+	buildEvaluationEntry(log, context, _translationContext: TranslationContext) {
 		const { stats, targetLabel } = context;
 		const power = stats.power;
 		const absorption = stats.absorption;
@@ -151,8 +148,8 @@ const buildingFormatter: AttackTargetFormatter<{
 
 		return { title, items };
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, translationContext, options) {
+		return formatDiffCommon(prefix, diff, translationContext, options);
 	},
 	onDamageLogTitle(info) {
 		const display = iconLabel(info.icon, info.label);

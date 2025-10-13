@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	AttackOnDamageLogEntry,
 	EffectDef,
@@ -67,23 +66,30 @@ export function ownerLabel(
 export function buildBaseEntry(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	mode: Mode,
+	translationContext: TranslationContext,
 ): BaseEntryResult {
-	const context = resolveAttackFormatterContext(effectDefinition);
+	const context = resolveAttackFormatterContext(
+		effectDefinition,
+		translationContext,
+	);
 	const ignoreAbsorption = Boolean(
 		effectDefinition.params?.['ignoreAbsorption'],
 	);
 	const ignoreFortification = Boolean(
 		effectDefinition.params?.['ignoreFortification'],
 	);
-	const entry = context.formatter.buildBaseEntry({
-		mode,
-		stats: context.stats,
-		info: context.info,
-		target: context.target,
-		targetLabel: context.targetLabel,
-		ignoreAbsorption,
-		ignoreFortification,
-	});
+	const entry = context.formatter.buildBaseEntry(
+		{
+			mode,
+			stats: context.stats,
+			info: context.info,
+			target: context.target,
+			targetLabel: context.targetLabel,
+			ignoreAbsorption,
+			ignoreFortification,
+		},
+		translationContext,
+	);
 	return {
 		entry,
 		formatter: context.formatter,
@@ -174,11 +180,15 @@ export function summarizeOnDamage(
 		return null;
 	}
 	return {
-		title: formatter.buildOnDamageTitle(mode, {
-			info,
-			target,
-			targetLabel,
-		}),
+		title: formatter.buildOnDamageTitle(
+			mode,
+			{
+				info,
+				target,
+				targetLabel,
+			},
+			translationContext,
+		),
 		items: combined,
 	};
 }
@@ -194,6 +204,7 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'defender'),
 				diffEntry,
+				translationContext,
 			),
 		),
 	);
@@ -202,6 +213,7 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'attacker'),
 				diffEntry,
+				translationContext,
 			),
 		),
 	);
@@ -210,7 +222,7 @@ export function formatDiffEntries(
 
 export function collectTransferPercents(
 	effects: EffectDef[] | undefined,
-	transferPercents: Map<ResourceKey, number>,
+	transferPercents: Map<string, number>,
 ): void {
 	if (!effects) {
 		return;
@@ -221,9 +233,8 @@ export function collectTransferPercents(
 			effectDefinition.method === 'transfer' &&
 			effectDefinition.params
 		) {
-			const key =
-				(effectDefinition.params['key'] as ResourceKey | undefined) ??
-				undefined;
+			const keyParam = effectDefinition.params['key'];
+			const key = typeof keyParam === 'string' ? keyParam : undefined;
 			const percent = effectDefinition.params['percent'] as number | undefined;
 			if (key && percent !== undefined && !transferPercents.has(key)) {
 				transferPercents.set(key, percent);

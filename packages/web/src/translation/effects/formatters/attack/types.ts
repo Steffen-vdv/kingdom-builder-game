@@ -3,16 +3,16 @@ import {
 	type AttackPlayerDiff,
 	type EffectDef,
 } from '@kingdom-builder/protocol';
-import type { ResourceKey, StatKey } from '@kingdom-builder/contents';
 import type { SummaryEntry } from '../../../content';
+import type { TranslationContext } from '../../../context';
 
 export type Mode = 'summarize' | 'describe';
 
 export type TargetInfo = { icon: string; label: string };
 
 export type AttackTarget =
-	| { type: 'resource'; key: ResourceKey }
-	| { type: 'stat'; key: StatKey }
+	| { type: 'resource'; key: string }
+	| { type: 'stat'; key: string }
 	| { type: 'building'; id: string };
 
 export type AttackStatRole = 'power' | 'absorption' | 'fortification';
@@ -21,7 +21,7 @@ export type AttackStatDescriptor = {
 	role: AttackStatRole;
 	label: string;
 	icon?: string;
-	key?: StatKey;
+	key?: string;
 };
 
 export type AttackStatContext = Partial<
@@ -66,23 +66,43 @@ export interface AttackTargetFormatter<
 	TTarget extends AttackTarget = AttackTarget,
 > {
 	readonly type: TTarget['type'];
-	parseEffectTarget(effect: EffectDef<Record<string, unknown>>): TTarget;
-	normalizeLogTarget(target: AttackLog['evaluation']['target']): TTarget;
-	getInfo(target: TTarget): TargetInfo;
-	getTargetLabel(info: TargetInfo, target: TTarget): string;
-	buildBaseEntry(context: BaseEntryContext<TTarget>): SummaryEntry;
+	parseEffectTarget(
+		effect: EffectDef<Record<string, unknown>>,
+		context: TranslationContext,
+	): TTarget;
+	normalizeLogTarget(
+		target: AttackLog['evaluation']['target'],
+		context: TranslationContext,
+	): TTarget;
+	getInfo(target: TTarget, context: TranslationContext): TargetInfo;
+	getTargetLabel(
+		info: TargetInfo,
+		target: TTarget,
+		context: TranslationContext,
+	): string;
+	buildBaseEntry(
+		context: BaseEntryContext<TTarget>,
+		translationContext: TranslationContext,
+	): SummaryEntry;
 	buildOnDamageTitle(
 		mode: Mode,
 		context: OnDamageTitleContext<TTarget>,
+		translationContext: TranslationContext,
 	): string;
 	buildEvaluationEntry(
 		log: AttackLog['evaluation'],
 		context: EvaluationContext<TTarget>,
+		translationContext: TranslationContext,
 	): SummaryEntry;
 	formatDiff(
 		prefix: string,
 		diff: AttackPlayerDiff,
+		translationContext: TranslationContext,
 		options?: DiffFormatOptions,
 	): string;
-	onDamageLogTitle(info: TargetInfo, target: TTarget): string;
+	onDamageLogTitle(
+		info: TargetInfo,
+		target: TTarget,
+		translationContext: TranslationContext,
+	): string;
 }

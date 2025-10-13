@@ -1,10 +1,5 @@
-import {
-	BUILDINGS,
-	RESOURCES,
-	STATS,
-	type ResourceKey,
-	type StatKey,
-} from '@kingdom-builder/contents';
+import type { TranslationContext } from '../../../context';
+import { humanizeIdentifier } from '../../stringUtils';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
@@ -16,64 +11,68 @@ function coerceLabel(value: string | undefined, fallback: string): string {
 	return trimmed.length > 0 ? trimmed : fallback;
 }
 
-function coerceIcon(icon: string | undefined): string {
-	return icon ? icon : '';
-}
-
-function toDescriptor(
-	label: string | undefined,
-	icon: string | undefined,
-	fallback: string,
-): AttackRegistryDescriptor {
-	return {
-		icon: coerceIcon(icon),
-		label: coerceLabel(label, fallback),
-	};
+function resolveIcon(icon: string | undefined): string {
+	const trimmed = icon?.trim();
+	return trimmed && trimmed.length > 0 ? trimmed : '';
 }
 
 export function selectAttackResourceDescriptor(
+	context: TranslationContext,
 	resourceKey: string,
 ): AttackRegistryDescriptor {
-	const definition = RESOURCES[resourceKey as ResourceKey];
-	return toDescriptor(definition?.label, definition?.icon, resourceKey);
-}
-
-export function selectAttackStatDescriptor(
-	statKey: string,
-): AttackRegistryDescriptor {
-	const definition = STATS[statKey as StatKey];
-	return toDescriptor(definition?.label, definition?.icon, statKey);
+	const entry = context.assets.resources?.[resourceKey];
+	const fallbackLabel = humanizeIdentifier(resourceKey) || resourceKey;
+	return {
+		icon: resolveIcon(entry?.icon),
+		label: coerceLabel(entry?.label, fallbackLabel),
+	};
 }
 
 export function selectAttackBuildingDescriptor(
+	context: TranslationContext,
 	buildingId: string,
 ): AttackRegistryDescriptor {
 	try {
-		const definition = BUILDINGS.get(buildingId);
-		return toDescriptor(definition.name, definition.icon, buildingId);
+		const definition = context.buildings.get(buildingId);
+		const labelFallback =
+			humanizeIdentifier(buildingId) || definition.name || buildingId;
+		return {
+			icon: resolveIcon(definition.icon),
+			label: coerceLabel(definition.name, labelFallback),
+		};
 	} catch {
-		return { icon: '', label: buildingId };
+		const fallbackLabel = humanizeIdentifier(buildingId) || buildingId;
+		return { icon: '', label: fallbackLabel };
 	}
 }
 
-export function listAttackResourceKeys(): ReadonlyArray<ResourceKey> {
-	return Object.freeze(Object.keys(RESOURCES) as ReadonlyArray<ResourceKey>);
+export function selectAttackStatDescriptor(
+	context: TranslationContext,
+	statKey: string,
+): AttackRegistryDescriptor {
+	const entry = context.assets.stats?.[statKey];
+	const fallbackLabel = humanizeIdentifier(statKey) || statKey;
+	return {
+		icon: resolveIcon(entry?.icon),
+		label: coerceLabel(entry?.label, fallbackLabel),
+	};
 }
 
-export function listAttackStatKeys(): ReadonlyArray<StatKey> {
-	return Object.freeze(Object.keys(STATS) as ReadonlyArray<StatKey>);
-}
-
-export function listAttackBuildingIds(): ReadonlyArray<string> {
-	return Object.freeze(BUILDINGS.keys().slice());
-}
-
-export function selectAttackDefaultStatKey(): StatKey | undefined {
-	const keys = listAttackStatKeys();
-	return keys.length > 0 ? keys[0] : undefined;
-}
-
-export function selectAttackDefaultBuildingId(): string | undefined {
-	const ids = listAttackBuildingIds();
-	return ids.length > 0 ? ids[0] : undefined;
+export function selectAttackDefaultStatKey(
+	context: TranslationContext,
+): string | undefined {
+	const statEntries = context.assets.stats;
+	const keys = Object.keys(statEntries ?? {});
+	if (keys.length > 0) {
+		return keys[0];
+	}
+	const playerStatKeys = Object.keys(context.activePlayer.stats ?? {});
+	if (playerStatKeys.length > 0) {
+		return playerStatKeys[0];
+	}
+	const opponentStatKeys = Object.keys(context.opponent.stats ?? {});
+	if (opponentStatKeys.length > 0) {
+		return opponentStatKeys[0];
+	}
+	return undefined;
 }

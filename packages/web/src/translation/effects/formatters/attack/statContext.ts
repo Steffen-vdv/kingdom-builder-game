@@ -1,4 +1,3 @@
-import { Stat, type StatKey } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import {
 	resolveAttackTargetFormatter,
@@ -12,7 +11,11 @@ import {
 	type AttackStatRole,
 	DEFAULT_ATTACK_STAT_LABELS,
 } from '../attack/types';
-import { selectAttackStatDescriptor } from './registrySelectors';
+import {
+	selectAttackStatDescriptor,
+	selectAttackDefaultStatKey,
+} from './registrySelectors';
+import type { TranslationContext } from '../../../context';
 
 const ATTACK_STAT_ROLES: AttackStatRole[] = [
 	'power',
@@ -20,10 +23,10 @@ const ATTACK_STAT_ROLES: AttackStatRole[] = [
 	'fortification',
 ];
 
-const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, StatKey> = {
-	power: Stat.armyStrength,
-	absorption: Stat.absorption,
-	fortification: Stat.fortificationStrength,
+const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, string> = {
+	power: 'armyStrength',
+	absorption: 'absorption',
+	fortification: 'fortificationStrength',
 };
 
 type RawAttackStatParam = {
@@ -49,11 +52,14 @@ function isRawAttackStatParam(value: unknown): value is RawAttackStatParam {
 }
 
 function buildStatDescriptor(
+	translationContext: TranslationContext,
 	role: AttackStatRole,
-	key: StatKey | undefined,
+	key: string | undefined,
 	overrides: AttackStatOverrides,
 ): AttackStatDescriptor {
-	const baseDescriptor = key ? selectAttackStatDescriptor(key) : undefined;
+	const baseDescriptor = key
+		? selectAttackStatDescriptor(translationContext, key)
+		: undefined;
 	const label =
 		overrides.label ??
 		baseDescriptor?.label ??
@@ -68,6 +74,7 @@ function buildStatDescriptor(
 
 function resolveAttackStats(
 	effectDefinition: EffectDef<Record<string, unknown>>,
+	translationContext: TranslationContext,
 ): AttackStatContext {
 	const stats: AttackStatContext = {};
 	const rawStats = effectDefinition.params?.['stats'];
@@ -80,8 +87,7 @@ function resolveAttackStats(
 			if (!isAttackStatRole(role)) {
 				continue;
 			}
-			const key =
-				typeof entry.key === 'string' ? (entry.key as StatKey) : undefined;
+			const key = typeof entry.key === 'string' ? entry.key : undefined;
 			const label = typeof entry.label === 'string' ? entry.label : undefined;
 			const icon = typeof entry.icon === 'string' ? entry.icon : undefined;
 			const overrides: AttackStatOverrides = {};
@@ -91,13 +97,24 @@ function resolveAttackStats(
 			if (icon !== undefined) {
 				overrides.icon = icon;
 			}
-			stats[role] = buildStatDescriptor(role, key, overrides);
+			stats[role] = buildStatDescriptor(
+				translationContext,
+				role,
+				key,
+				overrides,
+			);
 		}
 		return stats;
 	}
 	for (const role of ATTACK_STAT_ROLES) {
-		const key = DEFAULT_ATTACK_STAT_KEYS[role];
-		stats[role] = buildStatDescriptor(role, key, {});
+		const defaultKey = selectAttackDefaultStatKey(translationContext);
+		const fallbackKey = defaultKey ?? DEFAULT_ATTACK_STAT_KEYS[role];
+		stats[role] = buildStatDescriptor(
+			translationContext,
+			role,
+			fallbackKey,
+			{},
+		);
 	}
 	return stats;
 }
@@ -112,9 +129,12 @@ export type AttackFormatterContext = {
 
 export function resolveAttackFormatterContext(
 	effectDefinition: EffectDef<Record<string, unknown>>,
+	translationContext: TranslationContext,
 ): AttackFormatterContext {
-	const { formatter, target, info, targetLabel } =
-		resolveAttackTargetFormatter(effectDefinition);
-	const stats = resolveAttackStats(effectDefinition);
+	const { formatter, target, info, targetLabel } = resolveAttackTargetFormatter(
+		effectDefinition,
+		translationContext,
+	);
+	const stats = resolveAttackStats(effectDefinition, translationContext);
 	return { formatter, target, info, targetLabel, stats };
 }
