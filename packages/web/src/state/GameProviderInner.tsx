@@ -234,10 +234,16 @@ export function GameProviderInner({
 		};
 	}, [runUntilActionPhase, onFatalSessionError]);
 
-	const metadataSnapshot = useMemo(
-		() => sessionMetadata ?? cachedSessionSnapshot.metadata,
-		[sessionMetadata, cachedSessionSnapshot],
-	);
+	const metadataSnapshot = useMemo(() => {
+		if (sessionMetadata) {
+			return sessionMetadata;
+		}
+		const latestMetadata = queue.getLatestMetadata();
+		if (latestMetadata) {
+			return latestMetadata;
+		}
+		return cachedSessionSnapshot.metadata;
+	}, [sessionMetadata, cachedSessionSnapshot, queue]);
 
 	const metadata = useMemo<SessionMetadataFetchers>(
 		() => ({
