@@ -9,7 +9,6 @@ import {
 	sessionAdvanceResponseSchema,
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
-	sessionIdSchema,
 	sessionStateResponseSchema,
 	sessionUpdatePlayerNameRequestSchema,
 	sessionUpdatePlayerNameResponseSchema,
@@ -45,6 +44,11 @@ import {
 	sanitizePlayerName,
 	sanitizePlayerNameEntries,
 } from './playerNameHelpers.js';
+import { SessionMetadataEnricher } from './SessionMetadataEnricher.js';
+import {
+	attachHttpStatus,
+	parseSessionIdentifier,
+} from './sessionRequestUtils.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 
 export interface SessionTransportOptions {
@@ -60,10 +64,13 @@ export class SessionTransport {
 
 	private readonly authMiddleware: AuthMiddleware | undefined;
 
+	private readonly metadataEnricher: SessionMetadataEnricher;
+
 	public constructor(options: SessionTransportOptions) {
 		this.sessionManager = options.sessionManager;
 		this.idFactory = options.idFactory ?? randomUUID;
 		this.authMiddleware = options.authMiddleware;
+		this.metadataEnricher = new SessionMetadataEnricher();
 	}
 
 	public createSession(request: TransportRequest): SessionCreateResponse {
@@ -102,7 +109,7 @@ export class SessionTransport {
 	}
 
 	public getSessionState(request: TransportRequest): SessionStateResponse {
-		const sessionId = this.parseSessionIdentifier(request.body);
+		const sessionId = parseSessionIdentifier(request.body);
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
 		const response = this.buildStateResponse(sessionId, snapshot);
@@ -154,7 +161,7 @@ export class SessionTransport {
 				status: 'error',
 				error: 'Invalid action request.',
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
 		}
 		this.requireAuthorization(request, 'session:advance');
 		const { sessionId, actionId, params } = parsed.data;
@@ -164,7 +171,7 @@ export class SessionTransport {
 				status: 'error',
 				error: `Session "${sessionId}" was not found.`,
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
 		try {
 			const rawCosts = session.getActionCosts(actionId, params as never);
@@ -181,11 +188,11 @@ export class SessionTransport {
 			});
 			const response = actionExecuteResponseSchema.parse({
 				status: 'success',
-				snapshot: result.snapshot,
+				snapshot: this.metadataEnricher.enrich(result.snapshot),
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
-			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
+			return attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {
 			const failures = extractRequirementFailures(error);
 			const message =
@@ -203,7 +210,7 @@ export class SessionTransport {
 			const response = actionExecuteErrorResponseSchema.parse(
 				base,
 			) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
 		}
 	}
 
@@ -256,31 +263,6 @@ export class SessionTransport {
 			snapshot,
 		) satisfies SessionUpdatePlayerNameResponse;
 		return sessionUpdatePlayerNameResponseSchema.parse(response);
-	}
-
-	private attachHttpStatus<T extends object>(
-		payload: T,
-		status: number,
-	): TransportHttpResponse<T> {
-		Object.defineProperty(payload, 'httpStatus', {
-			value: status,
-			enumerable: false,
-		});
-		return payload as TransportHttpResponse<T>;
-	}
-
-	private parseSessionIdentifier(body: unknown): string {
-		const parsed = sessionIdSchema.safeParse(
-			(body as { sessionId?: unknown })?.sessionId,
-		);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session identifier.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		return parsed.data;
 	}
 
 	private generateSessionId(): string {
@@ -358,7 +340,7 @@ export class SessionTransport {
 	): SessionStateResponse {
 		return {
 			sessionId,
-			snapshot,
+			snapshot: this.metadataEnricher.enrich(snapshot),
 			registries: this.sessionManager.getRegistries(),
 		};
 	}
