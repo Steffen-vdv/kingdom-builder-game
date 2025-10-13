@@ -17,23 +17,11 @@ import type {
 import type { ReactNode } from 'react';
 import type {
 	LegacySession,
-	Session,
-	SessionMetadata,
-	SessionRegistries,
+	RemoteSessionRecord,
 	SessionResourceKey,
-	SessionResourceKeys,
 } from './sessionTypes';
 
-export interface SessionContainer {
-	session: Session;
-	legacySession: LegacySession;
-	sessionId: string;
-	snapshot: SessionSnapshot;
-	ruleSnapshot: SessionRuleSnapshot;
-	registries: SessionRegistries;
-	resourceKeys: SessionResourceKeys;
-	metadata: SessionMetadata;
-}
+export type SessionContainer = RemoteSessionRecord;
 
 export interface GameProviderProps {
 	children: ReactNode;

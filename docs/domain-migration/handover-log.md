@@ -1,5 +1,9 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T7 - Legacy Session Surface Typing
+
+- Documented the web-facing `LegacySession` interface in `packages/web/src/state/sessionTypes.ts`, capturing the queue helpers and remote session record types so React consumers remain engine-free while the store seeds promise chains.
+
 ## Domain Migration - P3 - T6 - Session State Store Bootstrap
 
 - Added `packages/web/src/state/sessionStateStore.ts` to cache authoritative
