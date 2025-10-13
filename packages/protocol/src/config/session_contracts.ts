@@ -19,9 +19,6 @@ import type {
 	SessionStateResponse,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
-	SessionRunAiRequest,
-	SessionRunAiResponse,
-	SessionRunAiOverrides,
 } from '../session/contracts';
 import type {
 	SessionAdvanceResult,
@@ -86,21 +83,6 @@ export const sessionAdvanceResponseSchema = z.object({
 	registries: sessionRegistriesSchema,
 });
 
-const sessionRunAiOverridesSchema = z
-	.record(z.string(), z.unknown())
-	.transform((value) => value as SessionRunAiOverrides);
-
-export const sessionRunAiRequestSchema = z.object({
-	sessionId: sessionIdSchema,
-	playerId: sessionPlayerIdSchema,
-	overrides: sessionRunAiOverridesSchema.optional(),
-});
-
-export const sessionRunAiResponseSchema = sessionCreateResponseSchema.extend({
-	ranTurn: z.boolean(),
-	advance: z.custom<SessionAdvanceResult>().optional(),
-});
-
 export const sessionSetDevModeRequestSchema = z.object({
 	sessionId: sessionIdSchema,
 	enabled: z.boolean(),
@@ -143,15 +125,6 @@ type _SessionAdvanceRequestMatches = Expect<
 >;
 type _SessionAdvanceResponseMatches = Expect<
 	Equal<z.infer<typeof sessionAdvanceResponseSchema>, SessionAdvanceResponse>
->;
-type _SessionRunAiOverridesMatches = Expect<
-	Equal<z.infer<typeof sessionRunAiOverridesSchema>, SessionRunAiOverrides>
->;
-type _SessionRunAiRequestMatches = Expect<
-	Equal<z.infer<typeof sessionRunAiRequestSchema>, SessionRunAiRequest>
->;
-type _SessionRunAiResponseMatches = Expect<
-	Equal<z.infer<typeof sessionRunAiResponseSchema>, SessionRunAiResponse>
 >;
 type _SessionSetDevModeRequestMatches = Expect<
 	Equal<
