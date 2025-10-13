@@ -20,8 +20,25 @@ Use this as a jumping-off point when you need to track how combat, passives, and
 
 ## Server Session Management
 
-- **`packages/server/src/session/SessionManager.ts`** – Source of truth for creating, caching, and snapshotting engine sessions; clones registries and merges optional overrides on boot.【F:packages/server/src/session/SessionManager.ts†L1-L126】
-- **`packages/server/tests/helpers/createSyntheticSessionManager.ts`** – Test scaffold that seeds synthetic actions, phases, and rules via `createContentFactory()`; reuse when spinning up isolated sessions.【F:packages/server/tests/helpers/createSyntheticSessionManager.ts†L1-L109】
-- **`packages/engine/src/setup/create_engine.ts`** – Engine bootstrap that wires `PassiveManager`, registries, and services; server sessions call through here, so update this when changing startup requirements.【F:packages/engine/src/setup/create_engine.ts†L157-L180】
-- **`packages/engine/src/runtime/session.ts`** – Handles snapshot cloning and evaluation modifier persistence so server calls stay deterministic across requests.【F:packages/engine/src/runtime/session.ts†L23-L178】
-- **Registries to preload** – Ensure `ACTIONS`, `BUILDINGS`, `DEVELOPMENTS`, `POPULATIONS`, `RESOURCES`, `RULES`, and `GAME_START` are available before `SessionManager` bootstraps, or provide explicit overrides via `engineOptions`.
+- **`packages/server/src/session/SessionManager.ts`** – Source of truth for
+  creating, caching, and snapshotting engine sessions. Deep-clones registries,
+  builds resource descriptors, and exposes `getRegistries()`/`getBaseMetadata()`
+  so transports can ship authoritative metadata with each snapshot.【F:packages/server/src/session/SessionManager.ts†L1-L214】
+- **`packages/server/src/session/sessionMetadata.ts`** – Normalizes registry data
+  into `SessionSnapshotMetadata`, wiring resources, stats, triggers, land/slot
+  descriptors, and phase outlines into immutable payloads that client code can
+  consume without content imports.【F:packages/server/src/session/sessionMetadata.ts†L1-L169】
+- **`packages/server/tests/helpers/createSyntheticSessionManager.ts`** – Test
+  scaffold that seeds synthetic actions, phases, and rules via
+  `createContentFactory()`; reuse when spinning up isolated sessions.【F:packages/server/tests/helpers/createSyntheticSessionManager.ts†L1-L109】
+- **`packages/engine/src/setup/create_engine.ts`** – Engine bootstrap that wires
+  `PassiveManager`, registries, and services; server sessions call through here,
+  so update this when changing startup requirements.【F:packages/engine/src/setup/create_engine.ts†L157-L180】
+- **`packages/engine/src/runtime/session.ts`** – Handles snapshot cloning and
+  evaluation modifier persistence so server calls stay deterministic across
+  requests.【F:packages/engine/src/runtime/session.ts†L23-L178】
+- **Metadata distribution** – Preload `ACTIONS`, `BUILDINGS`, `DEVELOPMENTS`,
+  `POPULATIONS`, `RESOURCES`, `RULES`, and `GAME_START` before boot so
+  `SessionManager` can serialize them once and share the clones. Downstream
+  consumers should request registries and `snapshot.metadata` from the
+  transport rather than importing `@kingdom-builder/contents` directly.

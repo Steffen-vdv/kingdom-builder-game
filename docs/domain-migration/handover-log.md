@@ -58,7 +58,11 @@
 
 - No protocol equivalents exist for `ActionEffectGroup`/`ActionEffectGroupOption` typing, leaving action card components bound to engine definitions. The forthcoming protocol needs DTOs for selectable effect groups.
 - Session bootstrap requires bundled content metadata (resources, populations, triggers). Provide a protocol endpoint that delivers the normalized metadata currently assembled via `defaultRegistryMetadata` and `RegistryMetadataContext`.
-- Runtime configuration fallback (`packages/web/src/startup/runtimeConfig.ts`) still dynamically imports `@kingdom-builder/contents` to construct presets. Migration will need a protocol entry point that returns pre-normalized content snapshots so the web layer can drop the dynamic import and registry iteration.
+- Runtime configuration fallback (`packages/web/src/startup/runtimeConfig.ts`)
+  should now defer to the server-provided registries and metadata emitted by
+  `SessionManager`. Web bootstrap needs to hydrate from
+  `SessionStateResponse.registries` and `snapshot.metadata`, keeping the
+  fallback JSON strictly for offline shells.
 
 ## Domain Migration - P1 - T8 - Forecast Protocol Alignment
 
