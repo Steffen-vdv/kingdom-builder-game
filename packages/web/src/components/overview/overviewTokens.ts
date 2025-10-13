@@ -1,4 +1,5 @@
 import type { OverviewIconSet } from './sectionsData';
+import type { SessionOverviewTokenCandidates } from '@kingdom-builder/protocol/session';
 import {
 	createCategoryConfig,
 	hasOwn,
@@ -15,9 +16,10 @@ export type {
 
 export function buildOverviewIconSet(
 	sources: OverviewTokenSources,
+	tokenCandidates: SessionOverviewTokenCandidates | undefined,
 	overrides?: OverviewTokenConfig,
 ): OverviewIconSet {
-	const config = mergeTokenConfig(sources, overrides);
+	const config = mergeTokenConfig(sources, tokenCandidates, overrides);
 	const categoryConfig = createCategoryConfig(sources);
 	const icons: OverviewIconSet = {};
 

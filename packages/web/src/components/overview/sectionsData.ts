@@ -1,87 +1,30 @@
 import type { ReactNode } from 'react';
-import {
-	type OverviewSectionTemplate,
-	type OverviewTokenCandidates,
-	type OverviewTokenCategoryName,
-} from '@kingdom-builder/contents';
+import type {
+	SessionOverviewSectionDescriptor,
+	SessionOverviewTokenCandidates,
+} from '@kingdom-builder/protocol/session';
 import type { OverviewSectionDef } from './OverviewLayout';
 import {
 	buildOverviewIconSet,
 	type OverviewTokenConfig,
-	type TokenCandidateInput,
 	type OverviewTokenSources,
 } from './overviewTokens';
-import { normalizeCandidates } from './overviewTokenUtils';
 
 export type OverviewIconSet = Record<string, ReactNode | undefined>;
 
-export type OverviewContentSection = OverviewSectionTemplate;
+export type OverviewContentSection = SessionOverviewSectionDescriptor;
 
 function spanProps(span?: boolean) {
 	return span === undefined ? {} : { span };
 }
 
-function mergeTokenSources(
-	base: OverviewTokenCandidates,
-	overrides?: OverviewTokenConfig,
-): OverviewTokenConfig {
-	const merged: OverviewTokenConfig = {};
-	const categories = new Set<OverviewTokenCategoryName>([
-		...(Object.keys(base ?? {}) as OverviewTokenCategoryName[]),
-		...(overrides
-			? (Object.keys(overrides) as OverviewTokenCategoryName[])
-			: []),
-	]);
-
-	for (const category of categories) {
-		const baseEntries = base?.[category] ?? {};
-		const overrideEntries = overrides?.[category];
-		const categoryResult: Record<string, TokenCandidateInput> = {};
-		const tokens = new Set<string>([
-			...Object.keys(baseEntries),
-			...(overrideEntries ? Object.keys(overrideEntries) : []),
-		]);
-
-		for (const tokenKey of tokens) {
-			const baseCandidates = baseEntries[tokenKey] ?? [];
-			const overrideCandidates = normalizeCandidates(
-				overrideEntries?.[tokenKey],
-			);
-			const combined: string[] = [];
-
-			for (const candidate of overrideCandidates) {
-				if (!combined.includes(candidate)) {
-					combined.push(candidate);
-				}
-			}
-
-			for (const candidate of baseCandidates) {
-				if (!combined.includes(candidate)) {
-					combined.push(candidate);
-				}
-			}
-
-			if (combined.length > 0) {
-				categoryResult[tokenKey] = combined;
-			}
-		}
-
-		if (Object.keys(categoryResult).length > 0) {
-			merged[category] = categoryResult;
-		}
-	}
-
-	return merged;
-}
-
 export function createOverviewSections(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: SessionOverviewTokenCandidates,
 	overrides: OverviewTokenConfig | undefined,
 	content: OverviewContentSection[],
 	tokenSources: OverviewTokenSources,
 ): { sections: OverviewSectionDef[]; tokens: OverviewIconSet } {
-	const mergedTokenConfig = mergeTokenSources(tokenCandidates, overrides);
-	const icons = buildOverviewIconSet(tokenSources, mergedTokenConfig);
+	const icons = buildOverviewIconSet(tokenSources, tokenCandidates, overrides);
 
 	const sections = content.map((section) => {
 		if (section.kind === 'paragraph') {
