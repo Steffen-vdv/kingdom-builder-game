@@ -13,8 +13,6 @@ import {
 	SYNTHETIC_RESOURCES,
 	SYNTHETIC_RESOURCE_KEYS,
 	type SyntheticResourceKey,
-	SYNTHETIC_POPULATION_INFO,
-	SYNTHETIC_POPULATION_ROLES,
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_ASSETS,
@@ -25,6 +23,10 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	selectPopulationRoleDisplay,
+	selectResourceDisplay,
+} from '../src/translation/context';
 import {
 	appendSubActionChanges,
 	filterActionDiffChanges,
@@ -114,9 +116,9 @@ describe('tax action logging with market', () => {
 			if (!amount) {
 				continue;
 			}
-			const info = SYNTHETIC_RESOURCES[key];
-			const icon = info?.icon ? `${info.icon} ` : '';
-			const label = info?.label ?? key;
+			const info = selectResourceDisplay(SYNTHETIC_ASSETS, key);
+			const icon = info.icon ? `${info.icon} ` : '';
+			const label = info.label ?? key;
 			const beforeAmount = before.resources[key] ?? 0;
 			const afterAmount = beforeAmount - amount;
 			costDescriptors.push({
@@ -146,10 +148,15 @@ describe('tax action logging with market', () => {
 			subLines,
 		});
 		const logLines = formatActionLogLines(messages, filtered);
-		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
-		const populationIcon =
-			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon ||
-			SYNTHETIC_POPULATION_INFO.icon;
+		const goldInfo = selectResourceDisplay(
+			SYNTHETIC_ASSETS,
+			SYNTHETIC_RESOURCE_KEYS.coin,
+		);
+		const populationDisplay = selectPopulationRoleDisplay(
+			SYNTHETIC_ASSETS,
+			SYNTHETIC_POPULATION_ROLE_ID,
+		);
+		const populationIcon = populationDisplay.icon ?? '';
 		const marketIcon =
 			engineContext.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
 		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;

@@ -1,10 +1,8 @@
-import {
-	STATS,
-	POPULATION_ROLES,
-	type StatKey,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
 import type { TranslationContext } from '../translation';
+import {
+	selectPopulationRoleDisplay,
+	selectStatDisplay,
+} from '../translation/context';
 
 interface EvalConfig {
 	type: string;
@@ -18,25 +16,23 @@ export type EvaluatorIconGetter = (
 
 export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
 	stat: (params, translationContext) => {
-		const key = params?.['key'] as StatKey | undefined;
+		const key = params?.['key'] as string | undefined;
 		if (!key) {
 			return [];
 		}
-		const icon =
-			STATS[key]?.icon || translationContext.assets.stats?.[key]?.icon || '';
-		return icon ? [icon] : [];
+		const display = selectStatDisplay(translationContext.assets, key);
+		return display.icon ? [display.icon] : [];
 	},
 	population: (params, translationContext) => {
-		const role = params?.['role'] as PopulationRoleId | undefined;
+		const role = params?.['role'] as string | undefined;
 		if (!role) {
 			return [];
 		}
-		const icon =
-			POPULATION_ROLES[role]?.icon ||
-			translationContext.assets.populations?.[role]?.icon ||
-			translationContext.assets.population?.icon ||
-			'';
-		return icon ? [icon] : [];
+		const display = selectPopulationRoleDisplay(
+			translationContext.assets,
+			role,
+		);
+		return display.icon ? [display.icon] : [];
 	},
 };
 

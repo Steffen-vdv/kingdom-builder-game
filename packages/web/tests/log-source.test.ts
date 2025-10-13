@@ -15,8 +15,6 @@ import {
 	type SyntheticResourceKey,
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_STEP_IDS,
-	SYNTHETIC_POPULATION_INFO,
-	SYNTHETIC_POPULATION_ROLES,
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_LAND_INFO,
 } from './fixtures/syntheticTaxLog';
@@ -25,6 +23,10 @@ import {
 	diffStepSnapshots,
 	createTranslationDiffContext,
 } from '../src/translation/log';
+import {
+	selectPopulationRoleDisplay,
+	selectResourceDisplay,
+} from '../src/translation/context';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -82,7 +84,10 @@ describe('log resource sources', () => {
 			translationDiffContext,
 			RESOURCE_KEYS,
 		);
-		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
+		const goldInfo = selectResourceDisplay(
+			SYNTHETIC_ASSETS,
+			SYNTHETIC_RESOURCE_KEYS.coin,
+		);
 		const farmIcon =
 			engineContext.developments.get(SYNTHETIC_IDS.farmDevelopment)?.icon || '';
 		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
@@ -135,9 +140,15 @@ describe('log resource sources', () => {
 			translationDiffContext,
 			RESOURCE_KEYS,
 		);
-		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
-		const populationRoleIcon =
-			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon || '';
+		const goldInfo = selectResourceDisplay(
+			SYNTHETIC_ASSETS,
+			SYNTHETIC_RESOURCE_KEYS.coin,
+		);
+		const populationDisplay = selectPopulationRoleDisplay(
+			SYNTHETIC_ASSETS,
+			SYNTHETIC_POPULATION_ROLE_ID,
+		);
+		const populationRoleIcon = populationDisplay.icon ?? '';
 		expect(populationRoleIcon).toBeTruthy();
 		const marketIcon =
 			engineContext.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
@@ -192,7 +203,10 @@ describe('log resource sources', () => {
 			translationDiffContext,
 			RESOURCE_KEYS,
 		);
-		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
+		const goldInfo = selectResourceDisplay(
+			SYNTHETIC_ASSETS,
+			SYNTHETIC_RESOURCE_KEYS.coin,
+		);
 		const goldLine = lines.find((line) =>
 			line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
@@ -213,9 +227,11 @@ describe('log resource sources', () => {
 				}
 				if (source.type === 'population') {
 					const role = source.id;
-					const icon = role
-						? engineContext.populations.get(role)?.icon || role
-						: SYNTHETIC_POPULATION_INFO.icon;
+					const populationDisplay = selectPopulationRoleDisplay(
+						engineContext.assets,
+						role,
+					);
+					const icon = populationDisplay.icon ?? '';
 					if (!icon) {
 						return '';
 					}
