@@ -1,5 +1,4 @@
 import React from 'react';
-import { Stat } from '@kingdom-builder/contents';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { getStatBreakdownSummary } from '../../utils/stats';
 import { useGameEngine } from '../../state/GameContext';
@@ -17,6 +16,11 @@ import {
 	type DescriptorDisplay,
 } from './registryDisplays';
 import StatButton from './StatButton';
+
+const MAX_POPULATION_KEY = 'maxPopulation';
+
+const normalizeLabel = (value: string | undefined) =>
+	value?.toLowerCase().trim() ?? '';
 
 const createDisplayMap = (descriptors: DescriptorDisplay[]) =>
 	new Map(
@@ -78,12 +82,37 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			: translationContext.opponent.id === player.id
 				? translationContext.opponent
 				: undefined;
+	const maxPopulationKey = React.useMemo(() => {
+		const descriptorMatch = statDescriptors.find((descriptor) => {
+			if (descriptor.id === MAX_POPULATION_KEY) {
+				return true;
+			}
+			const label = normalizeLabel(descriptor.label);
+			return label.includes('max population');
+		});
+		if (descriptorMatch) {
+			return descriptorMatch.id;
+		}
+		for (const [statKey, statInfo] of Object.entries(
+			translationContext.assets.stats ?? {},
+		)) {
+			if (statKey === MAX_POPULATION_KEY) {
+				return statKey;
+			}
+			const label = normalizeLabel(statInfo.label);
+			if (label.includes('max population')) {
+				return statKey;
+			}
+		}
+		return MAX_POPULATION_KEY;
+	}, [statDescriptors, translationContext.assets.stats]);
+
 	const maxPopulation = (() => {
-		const direct = player.stats?.[Stat.maxPopulation];
+		const direct = player.stats?.[maxPopulationKey];
 		if (typeof direct === 'number') {
 			return direct;
 		}
-		return translationPlayer?.stats?.[Stat.maxPopulation] ?? 0;
+		return translationPlayer?.stats?.[maxPopulationKey] ?? 0;
 	})();
 
 	const populationInfo = React.useMemo(
@@ -185,8 +214,14 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-		[handleHoverCard, player, statDisplayMap, statMetadata, translationContext],
-	);
+                [
+                        handleHoverCard,
+                        player,
+                        statDisplayMap,
+                        statMetadata,
+                        translationContext,
+                ],
+        );
 
 	return (
 		<div className="info-bar stat-bar">
@@ -231,7 +266,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			</div>
 			{Object.entries(player.stats)
 				.filter(([statKey, statValue]) => {
-					if (statKey === Stat.maxPopulation) {
+					if (statKey === maxPopulationKey) {
 						return false;
 					}
 					if (statValue !== 0) {

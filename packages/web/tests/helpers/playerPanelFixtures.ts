@@ -50,10 +50,16 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	const statsHistory: Record<string, boolean> = {};
 	let statIndex = 0;
 	const statEntries = Object.entries(translationAssets.stats);
-	const maxPopulationKey =
-		statEntries.find(([, entry]) =>
+	const maxPopulationKey = (() => {
+		const direct = statEntries.find(([key]) => key === 'maxPopulation');
+		if (direct) {
+			return direct[0];
+		}
+		const labeled = statEntries.find(([, entry]) =>
 			entry.label?.toLowerCase().includes('max population'),
-		)?.[0] ?? 'maxPopulation';
+		);
+		return labeled?.[0] ?? 'maxPopulation';
+	})();
 	for (const [statKey] of statEntries) {
 		if (statKey === maxPopulationKey) {
 			continue;
