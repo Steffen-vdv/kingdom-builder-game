@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
-import { SessionMirroringError } from '../../src/state/legacySessionMirror';
+import { SessionMirroringError } from '../../src/state/sessionSdk';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -21,6 +21,7 @@ const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
 const setSessionDevModeMock = vi.hoisted(() => vi.fn());
+const updatePlayerNameMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/sessionSdk', async () => {
 	const actual = await vi.importActual('../../src/state/sessionSdk');
@@ -30,6 +31,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 		fetchSnapshot: fetchSnapshotMock,
 		releaseSession: releaseSessionMock,
 		setSessionDevMode: setSessionDevModeMock,
+		updatePlayerName: updatePlayerNameMock,
 	};
 });
 
@@ -174,6 +176,7 @@ describe('GameProvider', () => {
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
 		setSessionDevModeMock.mockReset();
+		updatePlayerNameMock.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -252,6 +255,11 @@ describe('GameProvider', () => {
 		});
 		registries = createSessionRegistries();
 		resourceKeys = [resourceKey];
+		updatePlayerNameMock.mockResolvedValue({
+			sessionId: 'session-1',
+			snapshot: initialSnapshot,
+			registries,
+		});
 		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
 			return await task();
 		});
