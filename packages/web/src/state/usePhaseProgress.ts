@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import {
@@ -7,16 +7,11 @@ import {
 	markFatalSessionError,
 	isFatalSessionError,
 } from './sessionSdk';
-import type {
-	LegacySession,
-	SessionRegistries,
-	SessionResourceKey,
-} from './sessionTypes';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import { formatPhaseResolution } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
 
 interface PhaseProgressOptions {
-	session: LegacySession;
 	sessionState: SessionSnapshot;
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
@@ -29,6 +24,7 @@ interface PhaseProgressOptions {
 		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+	getLatestSnapshot: () => SessionSnapshot | null;
 	onFatalSessionError?: ((error: unknown) => void) | undefined;
 }
 
@@ -64,7 +60,6 @@ function computePhaseState(
 }
 
 export function usePhaseProgress({
-	session,
 	sessionState,
 	sessionId,
 	actionCostResource,
@@ -74,6 +69,7 @@ export function usePhaseProgress({
 	enqueue,
 	registries,
 	showResolution,
+	getLatestSnapshot,
 	onFatalSessionError,
 }: PhaseProgressOptions) {
 	const [phaseState, setPhaseState] = useState<PhaseProgressState>(() =>
@@ -92,10 +88,10 @@ export function usePhaseProgress({
 
 	const refreshPhaseState = useCallback(
 		(overrides: Partial<PhaseProgressState> = {}) => {
-			const snapshot = session.getSnapshot();
+			const snapshot = getLatestSnapshot() ?? sessionState;
 			applyPhaseSnapshot(snapshot, overrides);
 		},
-		[applyPhaseSnapshot, session],
+		[applyPhaseSnapshot, getLatestSnapshot, sessionState],
 	);
 
 	useEffect(() => {
@@ -107,11 +103,34 @@ export function usePhaseProgress({
 		});
 	}, [sessionState, actionCostResource]);
 
+	const queueDepthRef = useRef(0);
+
+	const runQueued = useCallback(
+		<T>(task: () => Promise<T> | T): Promise<T> =>
+			enqueue(async () => {
+				queueDepthRef.current += 1;
+				try {
+					return await task();
+				} finally {
+					queueDepthRef.current -= 1;
+				}
+			}),
+		[enqueue],
+	);
+
+	const callAdvancePhase = useCallback(() => {
+		const advance = () => advanceSessionPhase({ sessionId });
+		if (queueDepthRef.current > 0) {
+			return advance();
+		}
+		return runQueued(advance);
+	}, [runQueued, sessionId]);
+
 	const runUntilActionPhaseCore = useCallback(
 		() =>
 			advanceToActionPhase({
-				session,
-				sessionId,
+				initialSnapshot: sessionState,
+				getLatestSnapshot,
 				resourceKeys,
 				mountedRef,
 				applyPhaseSnapshot,
@@ -119,29 +138,31 @@ export function usePhaseProgress({
 				formatPhaseResolution,
 				showResolution,
 				registries,
+				advancePhase: callAdvancePhase,
 				...(onFatalSessionError ? { onFatalSessionError } : {}),
 			}),
 		[
 			applyPhaseSnapshot,
+			callAdvancePhase,
 			formatPhaseResolution,
+			getLatestSnapshot,
 			mountedRef,
 			onFatalSessionError,
 			refresh,
 			resourceKeys,
 			registries,
-			session,
-			sessionId,
+			sessionState,
 			showResolution,
 		],
 	);
 
 	const runUntilActionPhase = useCallback(
-		() => enqueue(runUntilActionPhaseCore),
-		[enqueue, runUntilActionPhaseCore],
+		() => runQueued(runUntilActionPhaseCore),
+		[runQueued, runUntilActionPhaseCore],
 	);
 
 	const endTurn = useCallback(async () => {
-		const snapshot = session.getSnapshot();
+		const snapshot = getLatestSnapshot() ?? sessionState;
 		if (snapshot.game.conclusion) {
 			return;
 		}
@@ -160,10 +181,11 @@ export function usePhaseProgress({
 		}
 		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
 		try {
-			await advanceSessionPhase({ sessionId });
+			await callAdvancePhase();
 			await runUntilActionPhaseCore();
 		} catch (error) {
-			applyPhaseSnapshot(session.getSnapshot(), {
+			const latestSnapshot = getLatestSnapshot() ?? snapshot;
+			applyPhaseSnapshot(latestSnapshot, {
 				isAdvancing: false,
 			});
 			if (error instanceof SessionMirroringError) {
@@ -187,13 +209,17 @@ export function usePhaseProgress({
 	}, [
 		actionCostResource,
 		applyPhaseSnapshot,
-		runUntilActionPhaseCore,
-		session,
-		sessionId,
+		callAdvancePhase,
+		getLatestSnapshot,
 		onFatalSessionError,
+		runUntilActionPhaseCore,
+		sessionState,
 	]);
 
-	const handleEndTurn = useCallback(() => enqueue(endTurn), [enqueue, endTurn]);
+	const handleEndTurn = useCallback(
+		() => runQueued(endTurn),
+		[runQueued, endTurn],
+	);
 
 	return {
 		phase: phaseState,

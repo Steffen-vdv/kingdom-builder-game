@@ -68,18 +68,15 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
+		const getLatestSnapshot = vi.fn(() => sessionSnapshot);
 		const firstFatalHandler = vi.fn();
 		const secondFatalHandler = vi.fn();
 		const { result, rerender } = renderHook(
 			({ fatalHandler }: { fatalHandler: (error: unknown) => void }) =>
 				usePhaseProgress({
-					session: session as never,
 					sessionState: sessionSnapshot,
 					sessionId: 'session-1',
 					actionCostResource,
@@ -89,6 +86,7 @@ describe('usePhaseProgress', () => {
 					enqueue,
 					registries: createSessionRegistries(),
 					showResolution: vi.fn().mockResolvedValue(undefined),
+					getLatestSnapshot,
 					onFatalSessionError: fatalHandler,
 				}),
 			{
@@ -103,6 +101,8 @@ describe('usePhaseProgress', () => {
 		expect(advanceToActionPhaseMock).toHaveBeenCalledTimes(1);
 		const firstCall = advanceToActionPhaseMock.mock.calls[0]?.[0];
 		expect(firstCall?.onFatalSessionError).toBe(firstFatalHandler);
+		expect(firstCall?.initialSnapshot).toBe(sessionSnapshot);
+		expect(firstCall?.getLatestSnapshot).toBe(getLatestSnapshot);
 
 		rerender({ fatalHandler: secondFatalHandler });
 
@@ -149,12 +149,10 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
+		const getLatestSnapshot = vi.fn(() => sessionSnapshot);
 		const error = new SessionMirroringError('Session unavailable', {
 			cause: new Error('mirror'),
 		});
@@ -162,7 +160,6 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				session: session as never,
 				sessionState: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,
@@ -172,6 +169,7 @@ describe('usePhaseProgress', () => {
 				enqueue,
 				registries: createSessionRegistries(),
 				showResolution: vi.fn().mockResolvedValue(undefined),
+				getLatestSnapshot,
 				onFatalSessionError,
 			}),
 		);
@@ -221,18 +219,15 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
+		const getLatestSnapshot = vi.fn(() => sessionSnapshot);
 		const error = new Error('Session not found');
 		advanceSessionPhaseMock.mockRejectedValueOnce(error);
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				session: session as never,
 				sessionState: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,
@@ -242,6 +237,7 @@ describe('usePhaseProgress', () => {
 				enqueue,
 				registries: createSessionRegistries(),
 				showResolution: vi.fn().mockResolvedValue(undefined),
+				getLatestSnapshot,
 				onFatalSessionError,
 			}),
 		);

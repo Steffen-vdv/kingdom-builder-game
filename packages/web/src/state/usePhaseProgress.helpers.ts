@@ -7,7 +7,6 @@ import type {
 import { snapshotPlayer } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
 import {
-	advanceSessionPhase,
 	SessionMirroringError,
 	markFatalSessionError,
 	isFatalSessionError,
@@ -24,13 +23,9 @@ type FormatPhaseResolution = (
 	options: FormatPhaseResolutionOptions,
 ) => PhaseResolutionFormatResult;
 
-interface SessionSnapshotSource {
-	getSnapshot(): SessionSnapshot;
-}
-
 interface AdvanceToActionPhaseOptions {
-	session: SessionSnapshotSource;
-	sessionId: string;
+	initialSnapshot: SessionSnapshot;
+	getLatestSnapshot: () => SessionSnapshot | null;
 	resourceKeys: SessionResourceKey[];
 	mountedRef: React.MutableRefObject<boolean>;
 	applyPhaseSnapshot: (
@@ -44,12 +39,13 @@ interface AdvanceToActionPhaseOptions {
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
 	>;
+	advancePhase: () => Promise<SessionAdvanceResponse>;
 	onFatalSessionError?: (error: unknown) => void;
 }
 
 export async function advanceToActionPhase({
-	session,
-	sessionId,
+	initialSnapshot,
+	getLatestSnapshot,
 	resourceKeys,
 	mountedRef,
 	applyPhaseSnapshot,
@@ -57,10 +53,11 @@ export async function advanceToActionPhase({
 	formatPhaseResolution,
 	showResolution,
 	registries,
+	advancePhase,
 	onFatalSessionError,
 }: AdvanceToActionPhaseOptions) {
 	try {
-		let snapshot = session.getSnapshot();
+		let snapshot = getLatestSnapshot() ?? initialSnapshot;
 		if (snapshot.game.conclusion) {
 			applyPhaseSnapshot(snapshot, { isAdvancing: false });
 			refresh();
@@ -82,11 +79,7 @@ export async function advanceToActionPhase({
 				break;
 			}
 			const before = snapshotPlayer(activePlayerBefore);
-			const advanceResponse: SessionAdvanceResponse = await advanceSessionPhase(
-				{
-					sessionId,
-				},
-			);
+			const advanceResponse: SessionAdvanceResponse = await advancePhase();
 			const advanceResult: SessionAdvanceResult = advanceResponse.advance;
 			const { player } = advanceResult;
 			const skipMetadata: SessionAdvanceSkipSnapshot | undefined =
@@ -131,10 +124,7 @@ export async function advanceToActionPhase({
 		if (!mountedRef.current) {
 			return;
 		}
-		const refreshed = session.getSnapshot();
-		if (!mountedRef.current) {
-			return;
-		}
+		const refreshed = getLatestSnapshot() ?? snapshot;
 		applyPhaseSnapshot(refreshed, { isAdvancing: false });
 		refresh();
 	} catch (error) {
