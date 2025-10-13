@@ -48,3 +48,7 @@ Follow-up tasks must append a concise bullet list under this section summarising
   action costs, requirements, options, AI turn execution, and phase
   simulations so transport clients can consume the protocol-only
   surface without falling back to the local engine mirror.
+- Routed the web GameProvider to feed remote session adapter snapshots
+  through downstream hooks and legacy context bridges, ensuring
+  compensation logging, AI runners, and action performers operate on
+  the cached store data instead of engine-only session mirrors.

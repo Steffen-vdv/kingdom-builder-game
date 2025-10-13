@@ -4,12 +4,10 @@ import type {
 	SessionQueueHelpers,
 	SessionSnapshot,
 	Session,
-	LegacySession,
 } from './sessionTypes';
 
 interface UseSessionQueueResult {
-	session: Session;
-	legacySession: LegacySession;
+	adapter: Session;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	cachedSessionSnapshot: SessionSnapshot;
 }
@@ -23,7 +21,6 @@ export function useSessionQueue(
 		() => queue.getCurrentSession(),
 		[queue, sessionState],
 	);
-	const session = adapter;
 	const enqueue = useCallback(
 		<T>(task: () => Promise<T> | T) => enqueueSessionTask(sessionId, task),
 		[sessionId],
@@ -40,8 +37,7 @@ export function useSessionQueue(
 		return sessionState;
 	}, [queue, sessionId, sessionState]);
 	return {
-		session,
-		legacySession: adapter,
+		adapter,
 		enqueue,
 		cachedSessionSnapshot,
 	};

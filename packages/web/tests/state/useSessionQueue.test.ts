@@ -66,6 +66,7 @@ describe('useSessionQueue', () => {
 		const { result } = renderHook(() =>
 			useSessionQueue(queueHelpers, snapshot, sessionId),
 		);
+		expect(result.current.adapter).toBe(adapter);
 		const task = vi.fn(() => 'complete');
 		let value: string | undefined;
 		await act(async () => {

@@ -65,17 +65,19 @@ export function GameProviderInner({
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const { legacySession, enqueue, cachedSessionSnapshot } = useSessionQueue(
-		queue,
-		sessionState,
-		sessionId,
-	);
+	const {
+		adapter: sessionAdapter,
+		enqueue,
+		cachedSessionSnapshot,
+	} = useSessionQueue(queue, sessionState, sessionId);
+
+	const sessionSnapshot = cachedSessionSnapshot;
 
 	const refresh = useCallback(() => {
 		void refreshSession();
 	}, [refreshSession]);
 
-	const primaryPlayerSnapshot = sessionState.game.players[0];
+	const primaryPlayerSnapshot = sessionSnapshot.game.players[0];
 	const primaryPlayerId = primaryPlayerSnapshot?.id;
 	const primaryPlayerName = primaryPlayerSnapshot?.name;
 	useEffect(() => {
@@ -107,11 +109,11 @@ export function GameProviderInner({
 
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
-			sessionState,
+			sessionState: sessionSnapshot,
 			registries,
 			ruleSnapshot,
 			sessionMetadata,
-			cachedSessionSnapshot,
+			cachedSessionSnapshot: sessionSnapshot,
 			onFatalSessionError,
 		});
 
@@ -125,11 +127,11 @@ export function GameProviderInner({
 	} = useTimeScale({ devMode });
 
 	const actionCostResource: SessionResourceKey =
-		sessionState.actionCostResource;
+		sessionSnapshot.actionCostResource;
 
 	const sessionView = useMemo(
-		() => selectSessionView(sessionState, registries),
-		[sessionState, registries],
+		() => selectSessionView(sessionSnapshot, registries),
+		[sessionSnapshot, registries],
 	);
 	const selectors = useMemo<SessionDerivedSelectors>(
 		() => ({ sessionView }),
@@ -141,7 +143,7 @@ export function GameProviderInner({
 	});
 
 	const { log, logOverflowed, addLog } = useGameLog({
-		sessionState,
+		sessionState: sessionSnapshot,
 	});
 
 	const { resolution, showResolution, acknowledgeResolution } =
@@ -169,7 +171,7 @@ export function GameProviderInner({
 		applyPhaseSnapshot,
 		refreshPhaseState,
 	} = usePhaseProgress({
-		sessionState,
+		sessionState: sessionSnapshot,
 		sessionId,
 		actionCostResource,
 		mountedRef,
@@ -188,14 +190,14 @@ export function GameProviderInner({
 
 	useCompensationLogger({
 		sessionId,
-		sessionState,
+		sessionState: sessionSnapshot,
 		addLog,
 		resourceKeys,
 		registries,
 	});
 
 	const { handlePerform } = useActionPerformer({
-		session: legacySession,
+		session: sessionAdapter,
 		sessionId,
 		actionCostResource,
 		registries,
@@ -212,8 +214,8 @@ export function GameProviderInner({
 	});
 
 	useAiRunner({
-		session: legacySession,
-		sessionState,
+		session: sessionAdapter,
+		sessionState: sessionSnapshot,
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
 		mountedRef,
@@ -246,8 +248,8 @@ export function GameProviderInner({
 	}, [runUntilActionPhase, onFatalSessionError]);
 
 	const metadataSnapshot = useMemo(
-		() => sessionMetadata ?? cachedSessionSnapshot.metadata,
-		[sessionMetadata, cachedSessionSnapshot],
+		() => sessionMetadata ?? sessionSnapshot.metadata,
+		[sessionMetadata, sessionSnapshot],
 	);
 
 	const metadata = useMemo<SessionMetadataFetchers>(
@@ -293,8 +295,8 @@ export function GameProviderInner({
 
 	const value: LegacyGameEngineContextValue = {
 		sessionId,
-		sessionSnapshot: sessionState,
-		cachedSessionSnapshot,
+		sessionSnapshot,
+		cachedSessionSnapshot: sessionSnapshot,
 		selectors,
 		translationContext,
 		ruleSnapshot,
@@ -329,8 +331,8 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session: legacySession,
-		sessionState,
+		session: sessionAdapter,
+		sessionState: sessionSnapshot,
 		sessionView,
 		handlePerform,
 		handleEndTurn,
