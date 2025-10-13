@@ -81,3 +81,10 @@
   dependency directly. We will need a protocol-level hook (or server-side AI
   orchestration endpoint) that surfaces the same parameter payload contract so
   the web client can stop injecting overrides into `runAiTurn`.
+
+## Domain Migration - P3 - T3 - Session Metadata & Simulation Routes
+
+- Added server transport methods and Fastify routes for action metadata, AI
+  orchestration, and upcoming-phase simulation so downstream clients can query
+  costs, requirements, options, AI runs, and forecasts without touching engine
+  internals.

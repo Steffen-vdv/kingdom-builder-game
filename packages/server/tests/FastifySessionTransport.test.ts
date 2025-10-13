@@ -20,7 +20,8 @@ describe('FastifySessionTransport', () => {
 	} satisfies Record<string, string>;
 
 	async function createServer(tokens = defaultTokens) {
-		const { manager, actionId, gainKey } = createSyntheticSessionManager();
+		const { manager, actionId, gainKey, costKey } =
+			createSyntheticSessionManager();
 		const app = fastify();
 		const options: FastifySessionTransportOptions = {
 			sessionManager: manager,
@@ -28,7 +29,7 @@ describe('FastifySessionTransport', () => {
 		};
 		await app.register(createSessionTransportPlugin, options);
 		await app.ready();
-		return { app, actionId, gainKey };
+		return { app, actionId, gainKey, costKey };
 	}
 
 	it('creates sessions over HTTP', async () => {
@@ -170,6 +171,93 @@ describe('FastifySessionTransport', () => {
 		await app.close();
 	});
 
+	it('returns action costs through the API', async () => {
+		const { app, actionId, costKey } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const costsResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/actions/${actionId}/costs`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(costsResponse.statusCode).toBe(200);
+		const body = costsResponse.json() as {
+			sessionId: string;
+			costs: Record<string, number>;
+		};
+		expect(body.sessionId).toBe(sessionId);
+		expect(body.costs[costKey]).toBe(1);
+		await app.close();
+	});
+
+	it('returns action requirements through the API', async () => {
+		const { app, actionId } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const requirementResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/actions/${actionId}/requirements`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(requirementResponse.statusCode).toBe(200);
+		const body = requirementResponse.json() as { requirements: unknown[] };
+		expect(Array.isArray(body.requirements)).toBe(true);
+		await app.close();
+	});
+
+	it('returns action options through the API', async () => {
+		const { app, actionId } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const optionsResponse = await app.inject({
+			method: 'GET',
+			url: `/sessions/${sessionId}/actions/${actionId}/options`,
+			headers: authorizedHeaders,
+		});
+		expect(optionsResponse.statusCode).toBe(200);
+		const body = optionsResponse.json() as { groups: unknown[] };
+		expect(Array.isArray(body.groups)).toBe(true);
+		await app.close();
+	});
+
+	it('returns 404 for missing action metadata requests', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/actions/missing-action/costs`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(response.statusCode).toBe(404);
+		const body = response.json() as { code: string };
+		expect(body.code).toBe('NOT_FOUND');
+		await app.close();
+	});
+
 	it('rejects invalid action payloads with protocol errors', async () => {
 		const { app } = await createServer();
 		const createResponse = await app.inject({
@@ -192,6 +280,97 @@ describe('FastifySessionTransport', () => {
 		};
 		expect(invalidBody.status).toBe('error');
 		expect(invalidBody.error).toBe('Invalid action request.');
+		await app.close();
+	});
+
+	it('runs AI controllers through the API', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const aiResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/ai-turn`,
+			headers: authorizedHeaders,
+			payload: { playerId: 'B' },
+		});
+		expect(aiResponse.statusCode).toBe(200);
+		const body = aiResponse.json() as {
+			ranTurn: boolean;
+			registries: Record<string, unknown>;
+		};
+		expect(typeof body.ranTurn).toBe('boolean');
+		expect(body.registries.actions).toBeDefined();
+		await app.close();
+	});
+
+	it('returns 404 when the AI controller is missing', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const aiResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/ai-turn`,
+			headers: authorizedHeaders,
+			payload: { playerId: 'A' },
+		});
+		expect(aiResponse.statusCode).toBe(404);
+		const body = aiResponse.json() as { code: string };
+		expect(body.code).toBe('NOT_FOUND');
+		await app.close();
+	});
+
+	it('simulates upcoming phases over HTTP', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const simulateResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/simulate`,
+			headers: authorizedHeaders,
+			payload: {
+				playerId: 'A',
+				options: { phaseIds: { growth: 'main', upkeep: 'end' } },
+			},
+		});
+		expect(simulateResponse.statusCode).toBe(200);
+		const body = simulateResponse.json() as { result: { playerId: string } };
+		expect(body.result.playerId).toBe('A');
+		await app.close();
+	});
+
+	it('validates simulation requests over HTTP', async () => {
+		const { app } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as { sessionId: string };
+		const simulateResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/simulate`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(simulateResponse.statusCode).toBe(400);
+		const body = simulateResponse.json() as { code: string };
+		expect(body.code).toBe('INVALID_REQUEST');
 		await app.close();
 	});
 
