@@ -20,6 +20,7 @@ import {
 	buildActionCostLines,
 	filterActionDiffChanges,
 	handleMissingActionDefinition,
+	ensureTimelineLines,
 	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
 import type { Action } from './actionTypes';
@@ -38,7 +39,7 @@ import {
 	isFatalSessionError,
 } from './sessionSdk';
 import type {
-	LegacySession,
+	SessionQueueHelpers,
 	SessionRegistries,
 	SessionResourceKey,
 } from './sessionTypes';
@@ -64,35 +65,15 @@ function createActionExecutionError(
 	}
 	return failure;
 }
-function ensureTimelineLines(
-	entries: readonly (string | ActionLogLineDescriptor)[],
-): ActionLogLineDescriptor[] {
-	const lines: ActionLogLineDescriptor[] = [];
-	for (const [index, entry] of entries.entries()) {
-		if (typeof entry === 'string') {
-			const text = entry.trim();
-			if (!text) {
-				continue;
-			}
-			lines.push({
-				text,
-				depth: index === 0 ? 0 : 1,
-				kind: index === 0 ? 'headline' : 'effect',
-			});
-			continue;
-		}
-		lines.push(entry);
-	}
-	return lines;
-}
 interface UseActionPerformerOptions {
-	session: LegacySession;
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
 	registries: Pick<
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
+	queue: Pick<SessionQueueHelpers, 'getLatestSnapshot' | 'getLatestRegistries'>;
+	cachedSessionSnapshot: SessionSnapshot;
 	addLog: (
 		entry: string | string[],
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
@@ -111,10 +92,11 @@ interface UseActionPerformerOptions {
 	onFatalSessionError?: (error: unknown) => void;
 }
 export function useActionPerformer({
-	session,
 	sessionId,
 	actionCostResource,
 	registries,
+	queue,
+	cachedSessionSnapshot,
 	addLog,
 	showResolution,
 	syncPhaseState,
@@ -146,17 +128,22 @@ export function useActionPerformer({
 				value: T | undefined,
 				createError: () => Error,
 			): T => value ?? throwFatal(createError());
-			const snapshotBefore = session.getSnapshot();
+			const snapshotBefore = ensureValue(
+				queue.getLatestSnapshot() ?? cachedSessionSnapshot,
+				() => new Error('Missing session snapshot before action execution'),
+			);
 			if (snapshotBefore.game.conclusion) {
 				pushErrorToast('The battle is already decided.');
 				return;
 			}
-			let { translationContext: context } = getLegacySessionContext({
+			const registriesForContext = queue.getLatestRegistries() ?? registries;
+			const beforeContext = getLegacySessionContext({
 				snapshot: snapshotBefore,
 				ruleSnapshot: snapshotBefore.rules,
 				passiveRecords: snapshotBefore.passiveRecords,
-				registries,
+				registries: registriesForContext,
 			});
+			let { translationContext: context } = beforeContext;
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = ensureValue(
 				snapshotBefore.game.players.find(
@@ -184,7 +171,7 @@ export function useActionPerformer({
 					snapshot: snapshotAfter,
 					ruleSnapshot: snapshotAfter.rules,
 					passiveRecords: snapshotAfter.passiveRecords,
-					registries,
+					registries: registriesForContext,
 				});
 				const { translationContext, diffContext } = legacyContext;
 				context = translationContext;
@@ -316,14 +303,15 @@ export function useActionPerformer({
 		},
 		[
 			addLog,
+			cachedSessionSnapshot,
 			endTurn,
 			mountedRef,
+			queue,
 			registries,
 			sessionId,
 			pushErrorToast,
 			refresh,
 			resourceKeys,
-			session,
 			showResolution,
 			syncPhaseState,
 			actionCostResource,
