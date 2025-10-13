@@ -41,6 +41,10 @@ interface PopulationInfoScenario {
 
 function resolveMaxPopulationKey(metadata: PopulationInfoScenario['metadata']) {
 	const statEntries = Object.entries(metadata.stats ?? {});
+	const direct = statEntries.find(([key]) => key === 'maxPopulation');
+	if (direct) {
+		return direct[0];
+	}
 	const keyed = statEntries.find(([, descriptor]) =>
 		descriptor.label?.toLowerCase().includes('max population'),
 	);
