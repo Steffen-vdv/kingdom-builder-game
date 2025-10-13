@@ -20,6 +20,7 @@ const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
 const setSessionDevModeMock = vi.hoisted(() => vi.fn());
+const updateSessionPlayerNameMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/sessionSdk', async () => {
 	const actual = await vi.importActual('../../src/state/sessionSdk');
@@ -29,6 +30,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 		fetchSnapshot: fetchSnapshotMock,
 		releaseSession: releaseSessionMock,
 		setSessionDevMode: setSessionDevModeMock,
+		updateSessionPlayerName: updateSessionPlayerNameMock,
 	};
 });
 
@@ -173,6 +175,7 @@ describe('GameProvider', () => {
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
 		setSessionDevModeMock.mockReset();
+		updateSessionPlayerNameMock.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -284,6 +287,11 @@ describe('GameProvider', () => {
 			resourceKeys,
 			metadata: refreshedSnapshot.metadata,
 		});
+		updateSessionPlayerNameMock.mockResolvedValue({
+			sessionId: 'session-1',
+			snapshot: refreshedSnapshot,
+			registries,
+		});
 	});
 
 	afterEach(() => {
@@ -318,6 +326,88 @@ describe('GameProvider', () => {
 		await waitFor(() =>
 			expect(runUntilActionPhaseMock).toHaveBeenCalledTimes(1),
 		);
+	});
+
+	it('queues player name updates when the snapshot name differs', async () => {
+		const [playerSnapshot, opponentSnapshot] = initialSnapshot.game.players;
+		if (!playerSnapshot || !opponentSnapshot) {
+			throw new Error('Expected player snapshots to be defined.');
+		}
+		const mismatchedSnapshot = createSessionSnapshot({
+			players: [
+				createSnapshotPlayer({
+					id: playerSnapshot.id,
+					name: 'Scout',
+					resources: playerSnapshot.resources,
+				}),
+				createSnapshotPlayer({
+					id: opponentSnapshot.id,
+					name: opponentSnapshot.name,
+					resources: opponentSnapshot.resources,
+				}),
+			],
+			activePlayerId: playerSnapshot.id,
+			opponentId: opponentSnapshot.id,
+			phases: initialSnapshot.phases,
+			actionCostResource: initialSnapshot.actionCostResource,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: initialSnapshot.game.turn,
+			currentPhase: initialSnapshot.game.currentPhase,
+			currentStep: initialSnapshot.game.currentStep,
+		});
+		const renamedSnapshot = createSessionSnapshot({
+			players: [
+				createSnapshotPlayer({
+					id: playerSnapshot.id,
+					name: 'Commander',
+					resources: playerSnapshot.resources,
+				}),
+				createSnapshotPlayer({
+					id: opponentSnapshot.id,
+					name: opponentSnapshot.name,
+					resources: opponentSnapshot.resources,
+				}),
+			],
+			activePlayerId: mismatchedSnapshot.game.activePlayerId,
+			opponentId: mismatchedSnapshot.game.opponentId,
+			phases: mismatchedSnapshot.phases,
+			actionCostResource: mismatchedSnapshot.actionCostResource,
+			ruleSnapshot: mismatchedSnapshot.rules,
+			turn: mismatchedSnapshot.game.turn,
+			currentPhase: mismatchedSnapshot.game.currentPhase,
+			currentStep: mismatchedSnapshot.game.currentStep,
+		});
+		createSessionMock.mockResolvedValueOnce({
+			sessionId: 'session-1',
+			session,
+			legacySession: session,
+			snapshot: mismatchedSnapshot,
+			ruleSnapshot: mismatchedSnapshot.rules,
+			registries,
+			resourceKeys,
+			metadata: mismatchedSnapshot.metadata,
+		});
+		updateSessionPlayerNameMock.mockResolvedValueOnce({
+			sessionId: 'session-1',
+			snapshot: renamedSnapshot,
+			registries,
+		});
+
+		render(
+			<GameProvider playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(updateSessionPlayerNameMock).toHaveBeenCalledWith({
+				sessionId: 'session-1',
+				playerId: playerSnapshot.id,
+				playerName: 'Commander',
+			}),
+		);
+
+		await waitFor(() => expect(fetchSnapshotMock).toHaveBeenCalledTimes(1));
 	});
 
 	it('updates the active session when the dev mode prop changes', async () => {

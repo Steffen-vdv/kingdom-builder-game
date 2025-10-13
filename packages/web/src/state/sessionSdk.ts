@@ -11,6 +11,8 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
@@ -167,6 +169,40 @@ export async function setSessionDevMode(
 		resourceKeys,
 		metadata: response.snapshot.metadata,
 	};
+}
+
+export async function updateSessionPlayerName(
+	request: SessionUpdatePlayerNameRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionUpdatePlayerNameResponse> {
+	const api = ensureGameApi();
+	const record = getLegacySessionRecord(request.sessionId);
+	const response = await api.updatePlayerName(request, requestOptions);
+	const registries = deserializeSessionRegistries(response.registries);
+	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
+	replaceLegacySessionCaches(record, registries, resourceKeys);
+	const updatedPlayer = response.snapshot.game.players.find(
+		(player) => player.id === request.playerId,
+	);
+	const resolvedName = updatedPlayer?.name ?? request.playerName;
+	try {
+		await record.handle.enqueue(() => {
+			record.legacySession.updatePlayerName(request.playerId, resolvedName);
+		});
+	} catch (localError) {
+		const error = new SessionMirroringError(
+			'Local session failed to mirror remote player name update.',
+			{
+				cause: localError,
+				details: {
+					sessionId: request.sessionId,
+					playerId: request.playerId,
+				},
+			},
+		);
+		throw error;
+	}
+	return response;
 }
 
 /**

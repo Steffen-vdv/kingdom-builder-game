@@ -2,6 +2,8 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
+	SessionUpdatePlayerNameResponse,
+	SessionPlayerId,
 } from '@kingdom-builder/protocol/session';
 import { type CreateSessionResult } from './sessionSdk';
 
@@ -19,4 +21,8 @@ export interface SessionQueueHelpers {
 	getCurrentSession: () => Session;
 	getLegacySession: () => LegacySession;
 	getLatestSnapshot: () => SessionSnapshot | null;
+	updatePlayerName(
+		playerId: SessionPlayerId,
+		playerName: string,
+	): Promise<SessionUpdatePlayerNameResponse>;
 }

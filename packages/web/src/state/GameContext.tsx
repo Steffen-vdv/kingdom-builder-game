@@ -13,6 +13,7 @@ import {
 	type GameProviderInnerProps,
 } from './GameProviderInner';
 import { type SessionQueueHelpers, type SessionSnapshot } from './sessionTypes';
+import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
 import type {
 	GameProviderProps,
 	LegacyGameEngineContextValue,
@@ -29,6 +30,7 @@ import {
 	fetchSnapshot,
 	releaseSession,
 	setSessionDevMode,
+	updateSessionPlayerName,
 } from './sessionSdk';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
@@ -314,6 +316,18 @@ export function GameProvider(props: GameProviderProps) {
 				return current.legacySession;
 			},
 			getLatestSnapshot: () => latestSnapshotRef.current,
+			updatePlayerName: (playerId: string, playerName: string) =>
+				runExclusive(() => {
+					const current = sessionStateRef.current;
+					if (!current) {
+						throw new Error('Session not ready');
+					}
+					return updateSessionPlayerName({
+						sessionId: current.sessionId,
+						playerId: playerId as SessionPlayerId,
+						playerName,
+					});
+				}),
 		}),
 		[runExclusive],
 	);

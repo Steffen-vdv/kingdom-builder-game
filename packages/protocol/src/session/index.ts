@@ -384,6 +384,8 @@ export type {
 	SessionAdvanceResponse,
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
