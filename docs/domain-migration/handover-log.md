@@ -1,5 +1,15 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T18 - Engine alias regression guard
+
+- Removed the Vite alias that exposed `@kingdom-builder/engine` to the web
+  workspace so UI modules resolve protocol DTOs or translated content rather
+  than linking against engine internals directly.【F:packages/web/vite.config.ts†L1-L29】
+- Hardened the regression test to scan all web `src/` and `tests/` TypeScript
+  modules for static, dynamic, or CommonJS imports targeting
+  `@kingdom-builder/engine/*`, ensuring no module reaches into engine internals
+  via subpath aliases after the Vite resolver change.【F:packages/web/tests/regression/no-engine-internals.test.ts†L1-L63】
+
 ## Domain Migration - P3 - T16 - Next Turn Forecast Remote Simulation
 
 - `useNextTurnForecast` now requests phase simulations through the remote
