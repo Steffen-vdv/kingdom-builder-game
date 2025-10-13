@@ -16,17 +16,16 @@ import type {
 } from './useActionResolution';
 import type { ReactNode } from 'react';
 import type {
-	LegacySession,
-	Session,
-	SessionMetadata,
-	SessionRegistries,
-	SessionResourceKey,
-	SessionResourceKeys,
+        LegacySession,
+        Session,
+        SessionMetadata,
+        SessionRegistries,
+        SessionResourceKey,
+        SessionResourceKeys,
 } from './sessionTypes';
 
 export interface SessionContainer {
 	session: Session;
-	legacySession: LegacySession;
 	sessionId: string;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;

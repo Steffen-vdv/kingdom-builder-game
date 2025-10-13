@@ -193,7 +193,6 @@ export function GameProvider(props: GameProviderProps) {
 					}
 					updateSessionData({
 						session: created.session,
-						legacySession: created.legacySession,
 						sessionId: created.sessionId,
 						snapshot: created.snapshot,
 						ruleSnapshot: created.ruleSnapshot,
@@ -249,7 +248,6 @@ export function GameProvider(props: GameProviderProps) {
 				}
 				updateSessionData({
 					session: result.session,
-					legacySession: result.legacySession,
 					sessionId,
 					snapshot: result.snapshot,
 					ruleSnapshot: result.ruleSnapshot,
@@ -298,7 +296,6 @@ export function GameProvider(props: GameProviderProps) {
 				}
 				updateSessionData({
 					session: updated.session,
-					legacySession: updated.legacySession,
 					sessionId: current.sessionId,
 					snapshot: updated.snapshot,
 					ruleSnapshot: updated.ruleSnapshot,
@@ -321,6 +318,7 @@ export function GameProvider(props: GameProviderProps) {
 
 	const queueHelpers = useMemo<SessionQueueHelpers>(
 		() => ({
+			runExclusive: <T,>(task: () => Promise<T> | T) => runExclusive(task),
 			enqueue: <T,>(task: () => Promise<T> | T) =>
 				runExclusive(() => {
 					const current = sessionStateRef.current;
@@ -381,7 +379,6 @@ export function GameProvider(props: GameProviderProps) {
 						}
 						updateSessionData({
 							session: updated.session,
-							legacySession: updated.legacySession,
 							sessionId: current.sessionId,
 							snapshot: updated.snapshot,
 							ruleSnapshot: updated.ruleSnapshot,
@@ -432,7 +429,6 @@ export function GameProvider(props: GameProviderProps) {
 		queue: queueHelpers,
 		sessionId: sessionData.sessionId,
 		sessionState: sessionData.snapshot,
-		legacySession: sessionData.legacySession,
 		ruleSnapshot: sessionData.ruleSnapshot,
 		refreshSession,
 		onReleaseSession: handleRelease,

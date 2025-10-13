@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
-import { SessionMirroringError } from '../../src/state/legacySessionMirror';
+import {
+	SessionMirroringError,
+	type LegacySessionRecord,
+} from '../../src/state/legacySessionMirror';
+import * as legacySessionMirror from '../../src/state/legacySessionMirror';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -33,6 +37,11 @@ vi.mock('../../src/state/sessionSdk', async () => {
 		updateSessionPlayerName: updateSessionPlayerNameMock,
 	};
 });
+
+const getLegacySessionRecordSpy = vi.spyOn(
+	legacySessionMirror,
+	'getLegacySessionRecord',
+);
 
 const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
 const runUntilActionPhaseCoreMock = vi.hoisted(() => vi.fn());
@@ -170,12 +179,14 @@ describe('GameProvider', () => {
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let legacyRecord: LegacySessionRecord;
 	beforeEach(() => {
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
 		setSessionDevModeMock.mockReset();
 		updateSessionPlayerNameMock.mockReset();
+		getLegacySessionRecordSpy.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -254,6 +265,16 @@ describe('GameProvider', () => {
 		});
 		registries = createSessionRegistries();
 		resourceKeys = [resourceKey];
+		legacyRecord = {
+			handle: {
+				enqueue: vi.fn(),
+				advancePhase: vi.fn(),
+				performAction: vi.fn(),
+			},
+			legacySession: undefined as unknown as LegacySession,
+			registries,
+			resourceKeys,
+		};
 		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -268,6 +289,18 @@ describe('GameProvider', () => {
 			performAction: vi.fn(),
 			setDevMode: vi.fn(),
 		} as unknown as LegacySession;
+		legacyRecord.handle = {
+			enqueue: session.enqueue.bind(session),
+			advancePhase: session.advancePhase.bind(session),
+			performAction: session.performAction.bind(session),
+		};
+		legacyRecord.legacySession = session;
+		getLegacySessionRecordSpy.mockImplementation((sessionId) => {
+			if (sessionId !== 'session-1') {
+				throw new Error(`Unexpected session lookup: ${sessionId}`);
+			}
+			return legacyRecord;
+		});
 		createSessionMock.mockResolvedValue({
 			sessionId: 'session-1',
 			session,
@@ -300,6 +333,7 @@ describe('GameProvider', () => {
 
 	afterEach(() => {
 		cleanup();
+		legacyRecord = undefined as unknown as LegacySessionRecord;
 	});
 
 	it('creates a session and renders children after loading completes', async () => {

@@ -15,6 +15,7 @@ export type SessionMetadata = SessionSnapshotMetadata;
 export type { SessionRuleSnapshot, SessionSnapshot };
 
 export interface SessionQueueHelpers {
+	runExclusive<T>(task: () => Promise<T> | T): Promise<T>;
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
 	getLatestSnapshot: () => SessionSnapshot | null;
 	getLatestRegistries: () => SessionRegistries | null;

@@ -4,6 +4,7 @@ import type {
 	SessionSnapshot,
 	LegacySession,
 } from './sessionTypes';
+import { getLegacySessionRecord } from './legacySessionMirror';
 
 interface UseSessionQueueResult {
 	legacySession: LegacySession;
@@ -15,8 +16,12 @@ interface UseSessionQueueResult {
 export function useSessionQueue(
 	queue: SessionQueueHelpers,
 	sessionState: SessionSnapshot,
-	legacySession: LegacySession,
+	sessionId: string,
 ): UseSessionQueueResult {
+	const legacySession: LegacySession = useMemo(
+		() => getLegacySessionRecord(sessionId).legacySession,
+		[sessionId],
+	);
 	const enqueue = useCallback(
 		<T>(task: () => Promise<T> | T) => queue.enqueue(task),
 		[queue],
