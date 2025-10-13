@@ -67,6 +67,23 @@ describe('<Overview />', () => {
 				land: { label: 'Land', icon: '🗺️' },
 				slot: { label: 'Slot', icon: '🧩' },
 			},
+			overviewContent: {
+				tokens: {
+					actions: { expand: [expandAction.id] },
+					phases: { growth: ['growth'] },
+					resources: {
+						gold: ['gold'],
+						ap: ['ap'],
+					},
+					stats: { army: ['army'] },
+					population: { [councilRole.id]: [councilRole.id] },
+					static: { land: ['land'], slot: ['slot'] },
+				},
+				hero: {
+					title: 'Session Overview',
+					intro: 'Custom overview from metadata.',
+				},
+			},
 		};
 
 		const tokenConfig: OverviewTokenConfig = {

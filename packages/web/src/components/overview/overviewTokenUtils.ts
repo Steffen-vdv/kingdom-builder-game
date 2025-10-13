@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import type {
+	SessionOverviewTokenCandidates,
+	SessionOverviewTokenCategoryName,
+} from '@kingdom-builder/protocol/session';
+import type {
 	AssetMetadata,
 	AssetMetadataSelector,
 	DefinitionLookup,
@@ -8,14 +12,13 @@ import type {
 	PhaseMetadata,
 	RegistryMetadataDescriptor,
 } from '../../contexts/RegistryMetadataContext';
-import type { OverviewTokenCategoryName } from '@kingdom-builder/contents';
 
 export type TokenCandidateInput = string | ReadonlyArray<string>;
 
 type OverviewTokenCategoryOverrides = Record<string, TokenCandidateInput>;
 type OverviewTokenCategoryConfig = Record<string, string[]>;
 type OverviewTokenConfigResolved = Record<
-	OverviewTokenCategoryName,
+	SessionOverviewTokenCategoryName,
 	OverviewTokenCategoryConfig
 >;
 
@@ -66,7 +69,7 @@ export const createOverviewTokenSources = ({
 };
 
 type OverviewTokenCategoryDescriptor = {
-	name: OverviewTokenCategoryName;
+	name: SessionOverviewTokenCategoryName;
 	keys: () => string[];
 	resolve: (candidates: string[]) => ReactNode | undefined;
 };
@@ -210,27 +213,48 @@ export function mergeTokenCategory(
 }
 
 export type OverviewTokenConfig = Partial<
-	Record<OverviewTokenCategoryName, OverviewTokenCategoryOverrides>
+	Record<SessionOverviewTokenCategoryName, OverviewTokenCategoryOverrides>
 >;
+
+const normalizeCandidateList = (candidates: string[] | undefined) => {
+	if (!candidates || candidates.length === 0) {
+		return [];
+	}
+	return [...candidates];
+};
+
+const buildDefaultCategoryConfig = (
+	sources: OverviewTokenCategoryDescriptor,
+	tokenCandidates?: SessionOverviewTokenCandidates,
+) => {
+	const metadataEntries = tokenCandidates?.[sources.name] ?? {};
+	const metadataKeys = Object.keys(metadataEntries);
+	const descriptorKeys = sources.keys();
+	const keys = new Set<string>([...metadataKeys, ...descriptorKeys]);
+	const categoryResult: OverviewTokenCategoryConfig = {};
+
+	for (const key of keys) {
+		const candidates = normalizeCandidateList(metadataEntries[key]);
+		if (candidates.length > 0) {
+			categoryResult[key] = candidates;
+			continue;
+		}
+		categoryResult[key] = [key];
+	}
+
+	return categoryResult;
+};
 
 export function createDefaultTokenConfig(
 	sources: OverviewTokenSources,
+	tokenCandidates?: SessionOverviewTokenCandidates,
 ): OverviewTokenConfigResolved {
 	const result = {} as OverviewTokenConfigResolved;
 
-	const addDefaultCandidate = (
-		acc: OverviewTokenCategoryConfig,
-		key: string,
-	) => {
-		acc[key] = [key];
-		return acc;
-	};
-
-	for (const { name, keys } of createCategoryConfig(sources)) {
-		const entries = keys();
-		result[name] = entries.reduce<OverviewTokenCategoryConfig>(
-			addDefaultCandidate,
-			{},
+	for (const descriptor of createCategoryConfig(sources)) {
+		result[descriptor.name] = buildDefaultCategoryConfig(
+			descriptor,
+			tokenCandidates,
 		);
 	}
 
@@ -239,9 +263,10 @@ export function createDefaultTokenConfig(
 
 export function mergeTokenConfig(
 	sources: OverviewTokenSources,
+	tokenCandidates: SessionOverviewTokenCandidates | undefined,
 	overrides?: OverviewTokenConfig,
 ): OverviewTokenConfigResolved {
-	const defaults = createDefaultTokenConfig(sources);
+	const defaults = createDefaultTokenConfig(sources, tokenCandidates);
 	const actions = mergeTokenCategory(defaults.actions, overrides?.actions);
 	const phases = mergeTokenCategory(defaults.phases, overrides?.phases);
 	const resources = mergeTokenCategory(

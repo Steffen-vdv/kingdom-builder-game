@@ -24,6 +24,13 @@ describe('Overview content integration', () => {
 			label: 'Council',
 			icon: '👑',
 		};
+		metadata.overviewContent = {
+			tokens: {
+				resources: { gold: ['gold'], ap: ['ap'] },
+				population: { council: ['council'] },
+				static: { land: ['land'], slot: ['slot'] },
+			},
+		};
 		const overviewContent = [
 			{
 				kind: 'paragraph' as const,

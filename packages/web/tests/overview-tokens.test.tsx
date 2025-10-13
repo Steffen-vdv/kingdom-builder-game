@@ -54,6 +54,34 @@ describe('buildOverviewIconSet', () => {
 			land: { label: 'Land', icon: '🗺️' },
 			slot: { label: 'Slot', icon: '🧩' },
 		},
+		overviewContent: {
+			tokens: {
+				actions: {
+					expand: [expandAction.id],
+					develop: [developAction.id],
+				},
+				phases: {
+					growth: ['growth'],
+					upkeep: ['upkeep'],
+				},
+				resources: {
+					gold: ['gold'],
+					ap: ['ap'],
+				},
+				stats: {
+					army: ['army'],
+					fortification: ['fortification'],
+				},
+				population: {
+					[councilRole.id]: [councilRole.id],
+					[legionRole.id]: [legionRole.id],
+				},
+				static: {
+					land: ['land'],
+					slot: ['slot'],
+				},
+			},
+		},
 	};
 
 	const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -71,6 +99,7 @@ describe('buildOverviewIconSet', () => {
 			populationMetadata,
 			landMetadata,
 			slotMetadata,
+			overviewContent,
 		} = useRegistryMetadata();
 		const sources = React.useMemo(
 			() =>
@@ -93,7 +122,7 @@ describe('buildOverviewIconSet', () => {
 				slotMetadata,
 			],
 		);
-		return buildOverviewIconSet(sources, overrides);
+		return buildOverviewIconSet(sources, overviewContent?.tokens, overrides);
 	};
 
 	it('includes icons for ids provided by registry metadata', () => {

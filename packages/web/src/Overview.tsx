@@ -27,10 +27,10 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+import type {
+	SessionOverviewHeroDescriptor,
+	SessionOverviewTokenCandidates,
+} from '@kingdom-builder/protocol/session';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
 
@@ -70,7 +70,7 @@ function createFallbackSections(
 }
 
 function collectTokenKeys(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: SessionOverviewTokenCandidates | undefined,
 	overrides?: OverviewTokenConfig,
 ): ReadonlyArray<string> {
 	const keys = new Set<string>();
@@ -83,8 +83,10 @@ function collectTokenKeys(
 		}
 	};
 
-	for (const candidate of Object.values(tokenCandidates)) {
-		addKeys(candidate);
+	if (tokenCandidates) {
+		for (const candidate of Object.values(tokenCandidates)) {
+			addKeys(candidate);
+		}
 	}
 
 	if (overrides) {
@@ -97,7 +99,7 @@ function collectTokenKeys(
 }
 
 function createFallbackTokens(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: SessionOverviewTokenCandidates | undefined,
 	overrides: OverviewTokenConfig | undefined,
 ): OverviewTokenRecord {
 	const keys = collectTokenKeys(tokenCandidates, overrides);
@@ -149,24 +151,19 @@ export default function Overview({
 }: OverviewProps) {
 	const metadata = useOptionalRegistryMetadata();
 	const sessionOverview = metadata?.overviewContent;
-	const fallbackOverview = OVERVIEW_CONTENT;
-	const sessionSections = sessionOverview?.sections as
-		| OverviewContentSection[]
-		| undefined;
-	const sections =
-		content ?? sessionSections ?? fallbackOverview.sections ?? [];
-	const sessionTokens = sessionOverview?.tokens as
-		| OverviewTokenCandidates
-		| undefined;
-	const defaultTokens: OverviewTokenCandidates =
-		sessionTokens ?? fallbackOverview.tokens ?? {};
-	const fallbackHero = {
-		badgeIcon: fallbackOverview.hero?.badgeIcon,
-		badgeLabel: fallbackOverview.hero?.badgeLabel,
-		title: fallbackOverview.hero?.title ?? 'Overview',
-		intro: fallbackOverview.hero?.intro ?? '',
-		paragraph: fallbackOverview.hero?.paragraph ?? '',
-		tokens: fallbackOverview.hero?.tokens ?? {},
+	const sessionSections: OverviewContentSection[] | undefined =
+		sessionOverview?.sections ?? undefined;
+	const sections = content ?? sessionSections ?? [];
+	const sessionTokens: SessionOverviewTokenCandidates | undefined =
+		sessionOverview?.tokens;
+	const defaultTokens: SessionOverviewTokenCandidates = sessionTokens ?? {};
+	const fallbackHero: Required<SessionOverviewHeroDescriptor> = {
+		badgeIcon: '🏰',
+		badgeLabel: 'Kingdom Builder',
+		title: 'Overview',
+		intro: '',
+		paragraph: '',
+		tokens: {},
 	};
 	const heroContent = sessionOverview?.hero;
 	const heroBadgeIcon = heroContent?.badgeIcon ?? fallbackHero.badgeIcon;
