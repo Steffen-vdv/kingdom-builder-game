@@ -136,13 +136,20 @@ describe('sessionSdk', () => {
 		expect(created.resourceKeys).toEqual(resourceKeys);
 		expect(created.registries).toHaveProperty('actions');
 		expect(created.metadata).toEqual(initialSnapshot.metadata);
+		expect(created.session.getLatestSnapshot()).toEqual(initialSnapshot);
+		expect(created.session.getLatestRegistries()).toBe(created.registries);
+		expect(created.session.getLatestMetadata()).toEqual(
+			initialSnapshot.metadata,
+		);
 	});
 	it('fetches snapshots via the API client', async () => {
-		await createSession();
+		const created = await createSession();
 		const fetched = await fetchSnapshot('session-1');
 		expect(fetched.snapshot).toEqual(initialSnapshot);
 		expect(fetched.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(fetched.metadata).toEqual(initialSnapshot.metadata);
+		expect(created.session).toBe(fetched.session);
+		expect(created.session.getLatestSnapshot()).toEqual(initialSnapshot);
 	});
 
 	it('sets dev mode via the API and refreshes local state', async () => {
@@ -183,6 +190,10 @@ describe('sessionSdk', () => {
 		);
 		expect(result.resourceKeys).not.toContain(resourceKey);
 		expect(setDevModeSpy).toHaveBeenCalledWith(true);
+		expect(created.session.getLatestSnapshot()).toEqual(updatedSnapshot);
+		expect(created.session.getLatestMetadata()).toEqual(
+			updatedSnapshot.metadata,
+		);
 		setDevModeSpy.mockRestore();
 	});
 
@@ -226,6 +237,7 @@ describe('sessionSdk', () => {
 		expect(result.ruleSnapshot).toEqual(renamedSnapshot.rules);
 		expect(result.metadata).toEqual(renamedSnapshot.metadata);
 		expect(updateSpy).toHaveBeenCalledWith(playerA.id, 'Empress');
+		expect(created.session.getLatestSnapshot()).toEqual(renamedSnapshot);
 		updateSpy.mockRestore();
 	});
 
@@ -259,6 +271,7 @@ describe('sessionSdk', () => {
 		await expect(promise).rejects.toBeInstanceOf(DOMException);
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(deserializeSpy).not.toHaveBeenCalled();
+		expect(created.session.getLatestSnapshot()).toEqual(initialSnapshot);
 		deserializeSpy.mockRestore();
 	});
 	it('performs session actions via the API and mirrors locally', async () => {
@@ -296,9 +309,11 @@ describe('sessionSdk', () => {
 		});
 		expect(response).toEqual(successResponse);
 		expect(performSpy).toHaveBeenCalledWith(taxActionId, undefined);
+		expect(created.session.getLatestSnapshot()).toEqual(updatedSnapshot);
 	});
 	it('returns error payloads when the API action fails', async () => {
-		const { session } = await createSession();
+		const created = await createSession();
+		const { session } = created;
 		api.setNextActionResponse({
 			status: 'error',
 			error: 'Nope.',
@@ -310,9 +325,11 @@ describe('sessionSdk', () => {
 		});
 		expect(response.status).toBe('error');
 		expect(performSpy).not.toHaveBeenCalled();
+		expect(created.session.getLatestSnapshot()).toEqual(initialSnapshot);
 	});
 	it('converts thrown API errors into error responses', async () => {
-		const { session } = await createSession();
+		const created = await createSession();
+		const { session } = created;
 		setGameApi(
 			createGameApiMock({
 				performAction: () => {
@@ -328,11 +345,12 @@ describe('sessionSdk', () => {
 		expect(response.status).toBe('error');
 		expect(response).toHaveProperty('error', 'Boom');
 		expect(performSpy).not.toHaveBeenCalled();
+		expect(created.session.getLatestSnapshot()).toEqual(initialSnapshot);
 	});
 	it('advances phases via the API and mirrors locally', async () => {
-		await createSession();
+		const created = await createSession();
 		const advanceSpy = vi
-			.spyOn((await fetchSnapshot('session-1')).session, 'advancePhase')
+			.spyOn(created.session, 'advancePhase')
 			.mockReturnValue({
 				phase: 'phase-main',
 				step: 'phase-main:start',
@@ -364,6 +382,7 @@ describe('sessionSdk', () => {
 		const response = await advanceSessionPhase({ sessionId: 'session-1' });
 		expect(response.snapshot).toEqual(updatedSnapshot);
 		expect(advanceSpy).toHaveBeenCalled();
+		expect(created.session.getLatestSnapshot()).toEqual(updatedSnapshot);
 	});
 	it('updates cached registries and resource keys when the phase advances', async () => {
 		const created = await createSession();
@@ -391,6 +410,11 @@ describe('sessionSdk', () => {
 			name: 'Tax (Advanced)',
 		};
 		delete mutatedRegistries.resources[resourceKey];
+		mutatedRegistries.metadata = {
+			resources: {
+				[resourceKey]: { label: 'Advanced Resource' },
+			},
+		};
 		api.setNextAdvanceResponse({
 			sessionId: 'session-1',
 			snapshot: updatedSnapshot,
@@ -407,6 +431,10 @@ describe('sessionSdk', () => {
 		expect(registries.actions.get(taxActionId)?.name).toBe('Tax (Advanced)');
 		expect(registries.resources[resourceKey]).toBeUndefined();
 		expect(resourceKeys).not.toContain(resourceKey);
+		expect(created.session.getLatestSnapshot()).toEqual(updatedSnapshot);
+		expect(created.session.getLatestRegistriesMetadata()).toEqual(
+			mutatedRegistries.metadata,
+		);
 	});
 	it('releases session state from the local cache', async () => {
 		await createSession();
