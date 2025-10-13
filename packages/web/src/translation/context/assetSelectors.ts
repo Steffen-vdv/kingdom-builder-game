@@ -3,7 +3,34 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import { resolveTriggerAssetFromContent } from './triggerAssets';
+
+const FALLBACK_TRIGGER_ICON = '🔔';
+
+function toTitleCase(value: string): string {
+	return value
+		.split(/[^a-zA-Z0-9]+/u)
+		.filter((part) => part.length > 0)
+		.map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+		.join(' ');
+}
+
+function buildTriggerFallback(triggerId: string): TranslationTriggerAsset {
+	const cleanId = triggerId.startsWith('on')
+		? triggerId.slice('on'.length)
+		: triggerId;
+	const readable = toTitleCase(cleanId.replace(/Step$/u, ''));
+	const past = readable.length ? readable : triggerId;
+	const entry: TranslationTriggerAsset = {
+		icon: FALLBACK_TRIGGER_ICON,
+		past,
+		label: past,
+	};
+	if (readable.length) {
+		entry.future = `On ${readable}`;
+	}
+	return Object.freeze(entry);
+}
 
 interface IconLabelDisplay {
 	icon?: string;
@@ -73,20 +100,12 @@ export function selectTriggerDisplay(
 	assets: TranslationAssets | undefined,
 	triggerId: string,
 ): TranslationTriggerAsset {
-	const entry = assets?.triggers?.[triggerId];
+	const entry =
+		assets?.triggers?.[triggerId] ?? resolveTriggerAssetFromContent(triggerId);
 	if (entry) {
 		return entry;
 	}
-	const fallback = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
-	if (fallback) {
-		return Object.freeze({
-			icon: fallback.icon,
-			future: fallback.future,
-			past: fallback.past,
-			label: fallback.past,
-		});
-	}
-	return {};
+	return buildTriggerFallback(triggerId);
 }
 
 export function selectTierSummary(
