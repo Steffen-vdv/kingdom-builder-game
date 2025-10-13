@@ -1,14 +1,13 @@
 import { useCallback, useMemo } from 'react';
+import { getSessionRecord } from './sessionStateStore';
 import type {
+	SessionAdapter,
 	SessionQueueHelpers,
 	SessionSnapshot,
-	Session,
-	LegacySession,
 } from './sessionTypes';
 
 interface UseSessionQueueResult {
-	session: Session;
-	legacySession: LegacySession;
+	sessionAdapter: SessionAdapter;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	cachedSessionSnapshot: SessionSnapshot;
 }
@@ -17,12 +16,8 @@ export function useSessionQueue(
 	queue: SessionQueueHelpers,
 	sessionState: SessionSnapshot,
 ): UseSessionQueueResult {
-	const session = useMemo(
-		() => queue.getCurrentSession(),
-		[queue, sessionState],
-	);
-	const legacySession = useMemo(
-		() => queue.getLegacySession(),
+	const sessionAdapter = useMemo(
+		() => queue.getSessionAdapter(),
 		[queue, sessionState],
 	);
 	const enqueue = useCallback(
@@ -34,7 +29,11 @@ export function useSessionQueue(
 		if (latest) {
 			return latest;
 		}
-		return legacySession.getSnapshot();
-	}, [queue, legacySession, sessionState]);
-	return { session, legacySession, enqueue, cachedSessionSnapshot };
+		const record = getSessionRecord(queue.getSessionId());
+		if (record) {
+			return record.snapshot;
+		}
+		return sessionState;
+	}, [queue, sessionState]);
+	return { sessionAdapter, enqueue, cachedSessionSnapshot };
 }

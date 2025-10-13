@@ -19,13 +19,14 @@ import type {
 	LegacySession,
 	RemoteSessionRecord,
 	Session,
+	SessionAdapter,
 	SessionResourceKey,
 } from './sessionTypes';
 
 export interface SessionContainer
 	extends Omit<RemoteSessionRecord, 'queueSeed'> {
 	session: Session;
-	legacySession: LegacySession;
+	sessionAdapter: SessionAdapter;
 }
 
 export interface GameProviderProps {

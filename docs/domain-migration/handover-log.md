@@ -1,5 +1,19 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T10 - Session Queue Store Integration
+
+- Refactored `packages/web/src/state/useSessionQueue.ts` to consume the remote
+  session adapter from the queue helpers, delegate task scheduling to the
+  session state store promise chain, and source cached snapshots directly from
+  stored session records.
+- Updated `GameContext` and `GameProviderInner` to expose the adapter as the
+  canonical session handle, ensuring queue helpers operate on the store-backed
+  session id and all downstream hooks rely on the remote adapter rather than
+  the legacy engine mirror.
+- Added `packages/web/tests/state/useSessionQueue.test.ts` to lock in the queue
+  semantics around adapter exposure and snapshot fallbacks, covering both store
+  and live snapshot paths.
+
 ## Domain Migration - P3 - T6 - Session State Store Bootstrap
 
 - Added `packages/web/src/state/sessionStateStore.ts` to cache authoritative

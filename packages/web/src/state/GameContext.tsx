@@ -34,7 +34,7 @@ import {
 	releaseSession,
 	setSessionDevMode,
 } from './sessionSdk';
-import { getSessionRecord } from './sessionStateStore';
+import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
@@ -172,15 +172,10 @@ export function GameProvider(props: GameProviderProps) {
 						releaseSession(created.sessionId);
 						return;
 					}
+					const { legacySession: _ignoredLegacy, ...createdData } = created;
 					updateSessionData({
-						session: created.session,
-						legacySession: created.legacySession,
-						sessionId: created.sessionId,
-						snapshot: created.snapshot,
-						ruleSnapshot: created.ruleSnapshot,
-						registries: created.registries,
-						resourceKeys: created.resourceKeys,
-						metadata: created.metadata,
+						...createdData,
+						sessionAdapter: created.session,
 					});
 				} catch (error) {
 					if (disposed || !mountedRef.current) {
@@ -228,15 +223,11 @@ export function GameProvider(props: GameProviderProps) {
 				) {
 					return;
 				}
+				const { legacySession: _ignoredLegacy, ...resultData } = result;
 				updateSessionData({
-					session: result.session,
-					legacySession: result.legacySession,
+					...resultData,
+					sessionAdapter: result.session,
 					sessionId,
-					snapshot: result.snapshot,
-					ruleSnapshot: result.ruleSnapshot,
-					registries: result.registries,
-					resourceKeys: result.resourceKeys,
-					metadata: result.metadata,
 				});
 			} catch (error) {
 				if (!mountedRef.current) {
@@ -277,15 +268,11 @@ export function GameProvider(props: GameProviderProps) {
 				) {
 					return;
 				}
+				const { legacySession: _ignoredLegacy, ...updatedData } = updated;
 				updateSessionData({
-					session: updated.session,
-					legacySession: updated.legacySession,
+					...updatedData,
+					sessionAdapter: updated.session,
 					sessionId: current.sessionId,
-					snapshot: updated.snapshot,
-					ruleSnapshot: updated.ruleSnapshot,
-					registries: updated.registries,
-					resourceKeys: updated.resourceKeys,
-					metadata: updated.metadata,
 				});
 			} catch (error) {
 				if (!mountedRef.current) {
@@ -308,21 +295,21 @@ export function GameProvider(props: GameProviderProps) {
 					if (!current) {
 						throw new Error('Session not ready');
 					}
-					return current.session.enqueue(task);
+					return enqueueSessionTask(current.sessionId, task);
 				}),
-			getCurrentSession: () => {
+			getSessionAdapter: () => {
 				const current = sessionStateRef.current;
 				if (!current) {
 					throw new Error('Session not ready');
 				}
-				return current.session;
+				return current.sessionAdapter;
 			},
-			getLegacySession: () => {
+			getSessionId: () => {
 				const current = sessionStateRef.current;
 				if (!current) {
 					throw new Error('Session not ready');
 				}
-				return current.legacySession;
+				return current.sessionId;
 			},
 			getLatestSnapshot: () => latestSnapshotRef.current,
 		}),

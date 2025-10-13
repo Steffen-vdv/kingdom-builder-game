@@ -52,7 +52,8 @@ export interface LegacySession {
 	updatePlayerName(playerId: SessionPlayerId, name: string): void;
 }
 
-export type Session = Pick<LegacySession, 'enqueue'>;
+export type SessionAdapter = LegacySession;
+export type Session = SessionAdapter;
 export type SessionResourceKeys = string[];
 export type SessionResourceKey = SessionResourceKeys[number];
 export type SessionMetadata = SessionSnapshotMetadata;
@@ -75,7 +76,7 @@ export type { SessionRegistries } from './sessionRegistries';
 
 export interface SessionQueueHelpers {
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
-	getCurrentSession: () => Session;
-	getLegacySession: () => LegacySession;
+	getSessionAdapter: () => SessionAdapter;
+	getSessionId: () => string;
 	getLatestSnapshot: () => SessionSnapshot | null;
 }
