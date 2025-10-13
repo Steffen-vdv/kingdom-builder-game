@@ -317,13 +317,6 @@ export function GameProvider(props: GameProviderProps) {
 				}
 				return current.session;
 			},
-			getLegacySession: () => {
-				const current = sessionStateRef.current;
-				if (!current) {
-					throw new Error('Session not ready');
-				}
-				return current.legacySession;
-			},
 			getLatestSnapshot: () => latestSnapshotRef.current,
 		}),
 		[runExclusive],

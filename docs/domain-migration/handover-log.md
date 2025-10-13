@@ -4,6 +4,17 @@
 
 - Removed the legacy engine mirror and developer-mode bootstrap so session lifecycle now flows entirely through the remote adapter backed by the session state store.【F:packages/web/src/state/sessionSdk.ts†L1-L340】【F:packages/web/src/state/remoteSessionAdapter.ts†L1-L220】
 - Simplified runtime configuration by dropping developer preset plumbing after the mirror removal, keeping only the favicon bootstrap metadata.【F:packages/web/src/startup/runtimeConfig.ts†L1-L140】【F:packages/web/src/startup/runtimeConfigFallback.json†L1048-L1054】
+## Domain Migration - P3 - T10 - Session Queue Store Integration
+- Refactored `packages/web/src/state/useSessionQueue.ts` to route UI tasks
+  through the session state store's promise queue and to source cached
+  snapshots from the authoritative record instead of the legacy engine mirror.
+- Updated `GameProviderInner` and queue helper wiring so the unified session
+  adapter is retrieved via `getCurrentSession`, and expanded the session SDK
+  tests to seed the store during mocked workflows.
+- Added `packages/web/tests/state/useSessionQueue.test.ts` to verify the hook
+  defers to the store-backed queue seed and reads fallback snapshots from the
+  store cache, preventing regressions while the legacy engine mirror is
+  retired.
 
 ## Domain Migration - P3 - T6 - Session State Store Bootstrap
 
