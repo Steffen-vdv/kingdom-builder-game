@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { createEngine } from '@kingdom-builder/engine';
 import type { EngineContext } from '@kingdom-builder/engine';
@@ -8,10 +8,9 @@ import {
 } from '@kingdom-builder/web/translation/content';
 // prettier-ignore
 import type {
-	PhasedDef,
+        PhasedDef,
 } from '@kingdom-builder/web/translation/content/phased';
 import {
-	TRIGGER_INFO,
 	RESOURCES,
 	PHASES,
 	POPULATIONS,
@@ -21,9 +20,11 @@ import {
 import type { ResourceKey } from '@kingdom-builder/contents';
 // prettier-ignore
 import {
-	createContentFactory,
+        createContentFactory,
 } from '@kingdom-builder/testing';
+import type { SessionTriggerMetadata } from '@kingdom-builder/protocol/session';
 import { formatDetailText } from '../../packages/web/src/utils/stats/format';
+import { createDefaultTranslationAssets } from '../../packages/web/tests/helpers/translationAssets';
 
 type Entry = string | { title: string; items: Entry[] };
 
@@ -84,19 +85,34 @@ function formatStepTriggerLabel(
 }
 
 describe('PhasedTranslator step triggers', () => {
-	const addedStep = {
+	const addedStep: SessionTriggerMetadata = {
 		icon: '🧪',
 		future: 'During test step',
 		past: 'Test step',
-	} as const;
+		label: 'Test step',
+	};
 
-	beforeAll(() => {
-		(TRIGGER_INFO as Record<string, typeof addedStep>)['onTestStep'] =
-			addedStep;
-	});
-
-	afterAll(() => {
-		delete (TRIGGER_INFO as Record<string, unknown>)['onTestStep'];
+	const DEFAULT_STEP_TRIGGERS: Readonly<
+		Record<string, SessionTriggerMetadata>
+	> = Object.freeze({
+		onPayUpkeepStep: {
+			icon: '🧹',
+			future: 'During Upkeep Phase — Pay Upkeep step',
+			past: 'Upkeep Phase — Pay Upkeep step',
+			label: 'Upkeep Phase — Pay Upkeep step',
+		},
+		onGainIncomeStep: {
+			icon: '💰',
+			future: 'During Growth Phase — Gain Income step',
+			past: 'Growth Phase — Gain Income step',
+			label: 'Growth Phase — Gain Income step',
+		},
+		onGainAPStep: {
+			icon: '⚡',
+			future: 'During action point step',
+			past: 'Action point step',
+			label: 'Action point step',
+		},
 	});
 
 	it('renders dynamic step metadata from trigger info', () => {
@@ -113,9 +129,12 @@ describe('PhasedTranslator step triggers', () => {
 			params: { key: resourceKey, amount },
 		});
 
-		const stepKeys = Object.keys(TRIGGER_INFO).filter((key) =>
-			key.endsWith('Step'),
-		);
+		const metadataTriggers: Record<string, SessionTriggerMetadata> = {
+			...DEFAULT_STEP_TRIGGERS,
+			onTestStep: addedStep,
+		};
+
+		const stepKeys = Object.keys(metadataTriggers);
 
 		expect(stepKeys).toContain('onTestStep');
 		expect(stepKeys.some((key) => key !== 'onTestStep')).toBe(true);
@@ -134,6 +153,28 @@ describe('PhasedTranslator step triggers', () => {
 			rules: RULES,
 		});
 
+		const baseAssets = createDefaultTranslationAssets();
+		const triggerAssets = Object.fromEntries(
+			Object.entries({
+				...baseAssets.triggers,
+				...metadataTriggers,
+			}).map(([id, descriptor]) => {
+				return [
+					id,
+					Object.freeze({
+						icon: descriptor.icon,
+						future: descriptor.future,
+						past: descriptor.past,
+						label: descriptor.label ?? descriptor.future ?? descriptor.past,
+					}),
+				];
+			}),
+		);
+		ctx.assets = {
+			...baseAssets,
+			triggers: Object.freeze(triggerAssets),
+		};
+
 		const summary = summarizeContent(
 			'development',
 			development.id,
@@ -145,21 +186,15 @@ describe('PhasedTranslator step triggers', () => {
 			ctx,
 		) as unknown as Entry[];
 
-		const info = TRIGGER_INFO as Record<
-			string,
-			{ icon: string; future: string }
-		>;
 		for (const key of stepKeys) {
-			const expectedTitle = [info[key]?.icon, info[key]?.future]
+			const info = metadataTriggers[key];
+			const expectedTitle = [info?.icon, info?.future]
 				.filter(Boolean)
 				.join(' ')
 				.trim();
 			const stepLabel = formatStepTriggerLabel(ctx, key);
 			const resolvedTitle = stepLabel
-				? [info[key]?.icon, `During ${stepLabel}`]
-						.filter(Boolean)
-						.join(' ')
-						.trim()
+				? [info?.icon, `During ${stepLabel}`].filter(Boolean).join(' ').trim()
 				: expectedTitle;
 
 			const summaryEntry =

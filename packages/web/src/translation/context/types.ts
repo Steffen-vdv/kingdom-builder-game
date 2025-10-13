@@ -28,6 +28,13 @@ export interface TranslationIconLabel {
 	displayAsPercent?: boolean;
 }
 
+export interface TranslationStatAsset extends TranslationIconLabel {
+	format?: {
+		prefix?: string;
+		percent?: boolean;
+	};
+}
+
 export interface TranslationModifierInfo {
 	icon?: string;
 	label?: string;
@@ -42,7 +49,7 @@ export interface TranslationTriggerAsset {
 
 export interface TranslationAssets {
 	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
-	readonly stats: Readonly<Record<string, TranslationIconLabel>>;
+	readonly stats: Readonly<Record<string, TranslationStatAsset>>;
 	readonly populations: Readonly<Record<string, TranslationIconLabel>>;
 	readonly population: Readonly<TranslationIconLabel>;
 	readonly land: Readonly<TranslationIconLabel>;

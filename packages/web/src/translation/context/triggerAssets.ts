@@ -1,4 +1,3 @@
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import type {
 	SessionPhaseMetadata,
 	SessionTriggerMetadata,
@@ -119,17 +118,6 @@ export function mergeTriggerAsset(
 	return Object.freeze(entry);
 }
 
-function resolveStaticTriggerDescriptor(
-	triggerId: string,
-): SessionTriggerMetadata | undefined {
-	for (const [id, descriptor] of STATIC_TRIGGER_FALLBACKS) {
-		if (id === triggerId) {
-			return descriptor;
-		}
-	}
-	return undefined;
-}
-
 function buildPhaseTriggerFallbacks(
 	phases?: Record<string, SessionPhaseMetadata> | undefined,
 ): Record<string, SessionTriggerMetadata> {
@@ -165,19 +153,10 @@ export function buildTriggerAssetMap(
 	triggers?: Record<string, SessionTriggerMetadata> | undefined,
 	phases?: Record<string, SessionPhaseMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
-	const triggerInfoDescriptors: Record<string, SessionTriggerMetadata> = {};
-	for (const [id, descriptor] of Object.entries(TRIGGER_INFO)) {
-		triggerInfoDescriptors[id] = {
-			icon: descriptor.icon,
-			future: descriptor.future,
-			past: descriptor.past,
-		};
-	}
 	const staticDescriptors = Object.fromEntries(
 		STATIC_TRIGGER_FALLBACKS,
 	) as Record<string, SessionTriggerMetadata>;
 	const fallbackDescriptors: Record<string, SessionTriggerMetadata> = {
-		...triggerInfoDescriptors,
 		...staticDescriptors,
 		...buildPhaseTriggerFallbacks(phases),
 	};
@@ -192,29 +171,4 @@ export function buildTriggerAssetMap(
 		}
 	}
 	return Object.freeze(entries);
-}
-
-export function resolveTriggerAssetFromContent(
-	triggerId: string,
-): TranslationTriggerAsset | undefined {
-	type TriggerInfoMap = typeof TRIGGER_INFO;
-	const triggerInfo: TriggerInfoMap = TRIGGER_INFO;
-	if (Object.prototype.hasOwnProperty.call(triggerInfo, triggerId)) {
-		const descriptor = triggerInfo[triggerId as keyof TriggerInfoMap];
-		const metadata: SessionTriggerMetadata = {
-			past: descriptor.past,
-		};
-		if (descriptor.icon !== undefined) {
-			metadata.icon = descriptor.icon;
-		}
-		if (descriptor.future !== undefined) {
-			metadata.future = descriptor.future;
-		}
-		return mergeTriggerAsset(undefined, metadata);
-	}
-	const fallback = resolveStaticTriggerDescriptor(triggerId);
-	if (fallback) {
-		return mergeTriggerAsset(undefined, fallback);
-	}
-	return undefined;
 }

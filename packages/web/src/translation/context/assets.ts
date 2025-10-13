@@ -9,6 +9,7 @@ import type {
 	TranslationAssets,
 	TranslationIconLabel,
 	TranslationModifierInfo,
+	TranslationStatAsset,
 } from './types';
 import { buildTriggerAssetMap } from './triggerAssets';
 
@@ -43,24 +44,36 @@ const DEFAULT_MODIFIER_INFO = Object.freeze({
 }) satisfies Readonly<Record<string, TranslationModifierInfo>>;
 
 const DEFAULT_STAT_INFO = Object.freeze({
-	maxPopulation: Object.freeze({ icon: '👥', label: 'Max Population' }),
-	armyStrength: Object.freeze({ icon: '⚔️', label: 'Army Strength' }),
+	maxPopulation: Object.freeze({
+		icon: '👥',
+		label: 'Max Population',
+		format: { prefix: 'Max ' },
+	}) satisfies TranslationStatAsset,
+	armyStrength: Object.freeze({
+		icon: '⚔️',
+		label: 'Army Strength',
+	}) satisfies TranslationStatAsset,
 	fortificationStrength: Object.freeze({
 		icon: '🛡️',
 		label: 'Fortification Strength',
-	}),
+	}) satisfies TranslationStatAsset,
 	absorption: Object.freeze({
 		icon: '🌀',
 		label: 'Absorption',
 		displayAsPercent: true,
-	}),
+		format: { percent: true },
+	}) satisfies TranslationStatAsset,
 	growth: Object.freeze({
 		icon: '📈',
 		label: 'Growth',
 		displayAsPercent: true,
-	}),
-	warWeariness: Object.freeze({ icon: '💤', label: 'War Weariness' }),
-}) satisfies Readonly<Record<string, TranslationIconLabel>>;
+		format: { percent: true },
+	}) satisfies TranslationStatAsset,
+	warWeariness: Object.freeze({
+		icon: '💤',
+		label: 'War Weariness',
+	}) satisfies TranslationStatAsset,
+}) satisfies Readonly<Record<string, TranslationStatAsset>>;
 
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
@@ -69,11 +82,11 @@ type PercentAwareDescriptor = SessionMetadataDescriptor & {
 	displayAsPercent?: boolean;
 };
 
-function mergeIconLabel(
-	base: TranslationIconLabel | undefined,
+function mergeIconLabel<T extends TranslationIconLabel>(
+	base: T | undefined,
 	descriptor: SessionMetadataDescriptor | undefined,
 	fallbackLabel: string,
-): TranslationIconLabel {
+): T {
 	const entry: TranslationIconLabel = {};
 	const icon = descriptor?.icon ?? base?.icon;
 	if (icon !== undefined) {
@@ -94,7 +107,12 @@ function mergeIconLabel(
 	} else if (base?.displayAsPercent !== undefined) {
 		entry.displayAsPercent = base.displayAsPercent;
 	}
-	return Object.freeze(entry);
+	if ((base as TranslationStatAsset | undefined)?.format) {
+		(entry as TranslationStatAsset).format = {
+			...(base as TranslationStatAsset).format!,
+		};
+	}
+	return Object.freeze(entry) as T;
 }
 
 function mergeModifierInfo(
@@ -172,8 +190,8 @@ function buildResourceMap(
 
 function buildStatMap(
 	descriptors?: Record<string, SessionMetadataDescriptor> | undefined,
-): Readonly<Record<string, TranslationIconLabel>> {
-	const entries: Record<string, TranslationIconLabel> = {};
+): Readonly<Record<string, TranslationStatAsset>> {
+	const entries: Record<string, TranslationStatAsset> = {};
 	for (const [key, base] of Object.entries(DEFAULT_STAT_INFO)) {
 		entries[key] = mergeIconLabel(base, descriptors?.[key], base.label ?? key);
 	}
