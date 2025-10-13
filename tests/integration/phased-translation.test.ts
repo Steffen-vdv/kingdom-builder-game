@@ -1,28 +1,24 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { createEngine } from '@kingdom-builder/engine';
-import type { EngineContext } from '@kingdom-builder/engine';
 import {
 	summarizeContent,
 	describeContent,
 } from '@kingdom-builder/web/translation/content';
-// prettier-ignore
+import type { PhasedDef } from '@kingdom-builder/web/translation/content/phased';
 import type {
-	PhasedDef,
-} from '@kingdom-builder/web/translation/content/phased';
+	DevelopmentConfig,
+	PhaseConfig,
+	RuleSet,
+	StartConfig,
+} from '@kingdom-builder/protocol';
+import type { SessionTriggerMetadata } from '@kingdom-builder/protocol/session';
 import {
-	TRIGGER_INFO,
-	RESOURCES,
-	PHASES,
-	POPULATIONS,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/contents';
-// prettier-ignore
-import {
-	createContentFactory,
-} from '@kingdom-builder/testing';
+	createTranslationContext,
+	type TranslationContext,
+} from '@kingdom-builder/web/translation/context';
+import { snapshotEngine } from '../../packages/engine/src/runtime/engine_snapshot';
+import { createSessionRegistries } from '../../packages/web/tests/helpers/sessionRegistries';
 import { formatDetailText } from '../../packages/web/src/utils/stats/format';
 
 type Entry = string | { title: string; items: Entry[] };
@@ -47,7 +43,7 @@ function findEntry(
 }
 
 function formatStepTriggerLabel(
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	triggerKey: string,
 ): string | undefined {
 	for (const phase of ctx.phases) {
@@ -84,88 +80,170 @@ function formatStepTriggerLabel(
 }
 
 describe('PhasedTranslator step triggers', () => {
-	const addedStep = {
-		icon: '🧪',
-		future: 'During test step',
-		past: 'Test step',
-	} as const;
+	it('renders dynamic step metadata from trigger descriptors', () => {
+		const registries = createSessionRegistries();
+		const development: DevelopmentConfig = {
+			id: 'development.trigger.test',
+			name: 'Trigger Test Development',
+			onBuild: [],
+			onGrowthPhase: [],
+			onBeforeAttacked: [],
+			onAttackResolved: [],
+			onPayUpkeepStep: [],
+			onGainIncomeStep: [],
+			onGainAPStep: [],
+		};
+		registries.developments.add(development.id, development);
 
-	beforeAll(() => {
-		(TRIGGER_INFO as Record<string, typeof addedStep>)['onTestStep'] =
-			addedStep;
-	});
+		const resourceKeys = Object.keys(registries.resources);
+		if (!resourceKeys.length) {
+			throw new Error('No resources available in session registries payload.');
+		}
+		const resourceKey = resourceKeys[0];
+		const growthPhaseId = 'phase.synthetic.growth';
+		const upkeepPhaseId = 'phase.synthetic.upkeep';
+		const phases: PhaseConfig[] = [
+			{
+				id: growthPhaseId,
+				label: 'Growth',
+				icon: '🌱',
+				steps: [
+					{
+						id: 'gainIncome',
+						title: 'Gain Income',
+						triggers: ['onGainIncomeStep'],
+					},
+					{
+						id: 'gainAP',
+						title: 'Gain Action Points',
+						triggers: ['onGainAPStep'],
+					},
+				],
+			},
+			{
+				id: upkeepPhaseId,
+				label: 'Upkeep',
+				icon: '🧹',
+				steps: [
+					{
+						id: 'payUpkeep',
+						title: 'Pay Upkeep',
+						triggers: ['onPayUpkeepStep'],
+					},
+				],
+			},
+		];
+		const start: StartConfig = {
+			player: {
+				resources: { [resourceKey]: 0 },
+				stats: {},
+				population: {},
+				lands: [],
+			},
+		};
+		const rules: RuleSet = {
+			defaultActionAPCost: 1,
+			absorptionCapPct: 1,
+			absorptionRounding: 'down',
+			tieredResourceKey: resourceKey,
+			tierDefinitions: [],
+			slotsPerNewLand: 1,
+			maxSlotsPerLand: 1,
+			basePopulationCap: 1,
+			winConditions: [],
+			corePhaseIds: { growth: growthPhaseId, upkeep: upkeepPhaseId },
+		};
 
-	afterAll(() => {
-		delete (TRIGGER_INFO as Record<string, unknown>)['onTestStep'];
-	});
-
-	it('renders dynamic step metadata from trigger info', () => {
-		const content = createContentFactory();
-		const development = content.development();
-		const stored = content.developments.get(
+		const ctx = createEngine({
+			actions: registries.actions,
+			buildings: registries.buildings,
+			developments: registries.developments,
+			populations: registries.populations,
+			phases,
+			start,
+			rules,
+		});
+		const snapshot = snapshotEngine(ctx);
+		const stored = registries.developments.get(
 			development.id,
 		) as unknown as PhasedDef;
-
-		const [resourceKey] = Object.keys(RESOURCES) as ResourceKey[];
 		const makeEffect = (amount: number) => ({
 			type: 'resource',
 			method: 'add',
 			params: { key: resourceKey, amount },
 		});
-
-		const stepKeys = Object.keys(TRIGGER_INFO).filter((key) =>
+		const triggerMetadata: Record<string, SessionTriggerMetadata> = {
+			onGainIncomeStep: {
+				icon: '💰',
+				future: 'During Growth Phase — Gain Income step',
+				past: 'Growth Phase — Gain Income step',
+			},
+			onPayUpkeepStep: {
+				icon: '🧹',
+				future: 'During Upkeep Phase — Pay Upkeep step',
+				past: 'Upkeep Phase — Pay Upkeep step',
+			},
+			onGainAPStep: {
+				icon: '⚡',
+				future: 'During action point step',
+				past: 'Action point step',
+			},
+			onTestStep: {
+				icon: '🧪',
+				future: 'During test step',
+				past: 'Test step',
+			},
+		};
+		const stepKeys = Object.keys(triggerMetadata).filter((key) =>
 			key.endsWith('Step'),
 		);
-
-		expect(stepKeys).toContain('onTestStep');
-		expect(stepKeys.some((key) => key !== 'onTestStep')).toBe(true);
-
 		stepKeys.forEach((key, index) => {
 			stored[key as keyof PhasedDef] = [makeEffect(index + 1)];
 		});
-
-		const ctx = createEngine({
-			actions: content.actions,
-			buildings: content.buildings,
-			developments: content.developments,
-			populations: POPULATIONS,
-			phases: PHASES,
-			start: GAME_START,
-			rules: RULES,
-		});
+		const metadata = {
+			...snapshot.metadata,
+			triggers: {
+				...(snapshot.metadata.triggers ?? {}),
+				...triggerMetadata,
+			},
+			phases: {
+				[growthPhaseId]: { icon: '🌱', label: 'Growth' },
+				[upkeepPhaseId]: { icon: '🧹', label: 'Upkeep' },
+			},
+		};
+		const translation = createTranslationContext(
+			{ ...snapshot, metadata },
+			registries,
+			metadata,
+			{
+				ruleSnapshot: snapshot.rules,
+				passiveRecords: snapshot.passiveRecords,
+			},
+		);
 
 		const summary = summarizeContent(
 			'development',
 			development.id,
-			ctx,
+			translation,
 		) as unknown as Entry[];
 		const details = describeContent(
 			'development',
 			development.id,
-			ctx,
+			translation,
 		) as unknown as Entry[];
-
-		const info = TRIGGER_INFO as Record<
-			string,
-			{ icon: string; future: string }
-		>;
 		for (const key of stepKeys) {
-			const expectedTitle = [info[key]?.icon, info[key]?.future]
+			const info = translation.assets.triggers[key];
+			const expectedTitle = [info?.icon, info?.future]
 				.filter(Boolean)
 				.join(' ')
 				.trim();
-			const stepLabel = formatStepTriggerLabel(ctx, key);
+			const stepLabel = formatStepTriggerLabel(translation, key);
 			const resolvedTitle = stepLabel
-				? [info[key]?.icon, `During ${stepLabel}`]
-						.filter(Boolean)
-						.join(' ')
-						.trim()
+				? [info?.icon, `During ${stepLabel}`].filter(Boolean).join(' ').trim()
 				: expectedTitle;
-
 			const summaryEntry =
 				findEntry(summary, resolvedTitle) ?? findEntry(summary, expectedTitle);
 			expect(summaryEntry, `summary entry for ${key}`).toBeDefined();
-
 			const describeEntry =
 				findEntry(details, resolvedTitle) ?? findEntry(details, expectedTitle);
 			expect(describeEntry, `describe entry for ${key}`).toBeDefined();
