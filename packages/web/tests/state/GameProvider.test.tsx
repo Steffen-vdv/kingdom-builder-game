@@ -12,7 +12,6 @@ import {
 } from '../helpers/sessionFixtures';
 import type {
 	SessionCreateResponse,
-	SessionResourceDefinition,
 	SessionSnapshot,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol/session';
@@ -180,7 +179,6 @@ describe('GameProvider', () => {
 	let session: LegacySession;
 	let registries: ReturnType<typeof createSessionRegistries>;
 	let registriesPayload: ReturnType<typeof createSessionRegistriesPayload>;
-	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
 	const sessionId = 'session-1';
@@ -267,9 +265,12 @@ describe('GameProvider', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.steps?.[0]?.id ?? phases[0]?.id ?? 'phase-main',
 		});
+		const initialSnapshotPayload =
+			initialSnapshot as unknown as SessionSnapshot;
+		const refreshedSnapshotPayload =
+			refreshedSnapshot as unknown as SessionSnapshot;
 		registries = createSessionRegistries();
 		registriesPayload = createSessionRegistriesPayload();
-		resourceKeys = [resourceKey];
 		updatePlayerNameMock.mockImplementation(() => {
 			const response: SessionStateResponse = {
 				sessionId,
@@ -300,36 +301,43 @@ describe('GameProvider', () => {
 		createSessionMock.mockImplementation(() => {
 			const response: SessionCreateResponse = {
 				sessionId,
-				snapshot: initialSnapshot as unknown as SessionSnapshot,
+				snapshot: initialSnapshotPayload,
 				registries: registriesPayload,
 			};
-			initializeSessionState(response);
+			const stateRecord = initializeSessionState(response);
 			return Promise.resolve({
 				sessionId,
-				session,
-				legacySession: session,
-				snapshot: initialSnapshot,
-				ruleSnapshot: initialSnapshot.rules,
-				registries,
-				resourceKeys,
-				metadata: initialSnapshot.metadata,
+				adapter: session,
+				record: {
+					sessionId: stateRecord.sessionId,
+					snapshot: stateRecord.snapshot,
+					ruleSnapshot: stateRecord.ruleSnapshot,
+					registries: stateRecord.registries,
+					resourceKeys: stateRecord.resourceKeys,
+					metadata: stateRecord.metadata,
+					queueSeed: stateRecord.queueSeed,
+				},
 			});
 		});
 		fetchSnapshotMock.mockImplementation(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: refreshedSnapshot as unknown as SessionSnapshot,
+				snapshot: refreshedSnapshotPayload,
 				registries: registriesPayload,
 			};
-			applySessionState(response);
+			const stateRecord = applySessionState(response);
 			return Promise.resolve({
-				session,
-				legacySession: session,
-				snapshot: refreshedSnapshot,
-				ruleSnapshot: refreshedSnapshot.rules,
-				registries,
-				resourceKeys,
-				metadata: refreshedSnapshot.metadata,
+				sessionId,
+				adapter: session,
+				record: {
+					sessionId: stateRecord.sessionId,
+					snapshot: stateRecord.snapshot,
+					ruleSnapshot: stateRecord.ruleSnapshot,
+					registries: stateRecord.registries,
+					resourceKeys: stateRecord.resourceKeys,
+					metadata: stateRecord.metadata,
+					queueSeed: stateRecord.queueSeed,
+				},
 			});
 		});
 	});
@@ -391,22 +399,28 @@ describe('GameProvider', () => {
 			turn: 3,
 			devMode: true,
 		});
+		const devModeSnapshotPayload =
+			devModeSnapshot as unknown as SessionSnapshot;
 
 		setSessionDevModeMock.mockImplementationOnce(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: devModeSnapshot as unknown as SessionSnapshot,
+				snapshot: devModeSnapshotPayload,
 				registries: registriesPayload,
 			};
-			applySessionState(response);
+			const stateRecord = applySessionState(response);
 			return Promise.resolve({
-				session,
-				legacySession: session,
-				snapshot: devModeSnapshot,
-				ruleSnapshot: devModeSnapshot.rules,
-				registries,
-				resourceKeys,
-				metadata: devModeSnapshot.metadata,
+				sessionId,
+				adapter: session,
+				record: {
+					sessionId: stateRecord.sessionId,
+					snapshot: stateRecord.snapshot,
+					ruleSnapshot: stateRecord.ruleSnapshot,
+					registries: stateRecord.registries,
+					resourceKeys: stateRecord.resourceKeys,
+					metadata: stateRecord.metadata,
+					queueSeed: stateRecord.queueSeed,
+				},
 			});
 		});
 

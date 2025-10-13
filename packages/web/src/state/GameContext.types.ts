@@ -24,8 +24,7 @@ import type {
 
 export interface SessionContainer
 	extends Omit<RemoteSessionRecord, 'queueSeed'> {
-	session: Session;
-	legacySession: LegacySession;
+	adapter: Session;
 }
 
 export interface GameProviderProps {
