@@ -214,14 +214,8 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-                [
-                        handleHoverCard,
-                        player,
-                        statDisplayMap,
-                        statMetadata,
-                        translationContext,
-                ],
-        );
+		[handleHoverCard, player, statDisplayMap, statMetadata, translationContext],
+	);
 
 	return (
 		<div className="info-bar stat-bar">
