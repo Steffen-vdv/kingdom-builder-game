@@ -139,10 +139,6 @@ export function selectResourceDescriptor(
 const statCache: CacheStore<StatRegistryDescriptor> = new WeakMap();
 const statFallbackCache: CacheFallback<StatRegistryDescriptor> = new Map();
 
-const DEFAULT_STAT_FORMATS: Record<string, { prefix?: string }> = {
-	maxPopulation: { prefix: 'Max ' },
-};
-
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
