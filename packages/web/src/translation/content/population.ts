@@ -1,4 +1,3 @@
-import { type PopulationRoleId } from '@kingdom-builder/contents';
 import { resolvePopulationDisplay } from '../effects/helpers';
 import { registerContentTranslator } from './factory';
 import type { ContentTranslator, Summary } from './types';
@@ -15,9 +14,7 @@ class PopulationTranslator implements ContentTranslator<string> {
 
 	log(id: string, context: TranslationContext): string[] {
 		const normalized = id?.trim();
-		const role = normalized
-			? (normalized as PopulationRoleId | undefined)
-			: undefined;
+		const role = normalized ? (normalized as string | undefined) : undefined;
 		const { icon, label } = resolvePopulationDisplay(context, role);
 		const display = [icon, label].filter(Boolean).join(' ').trim();
 		return [display || label || normalized || ''];
