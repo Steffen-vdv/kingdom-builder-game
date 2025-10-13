@@ -4,10 +4,12 @@ import type {
 	ResourceKey,
 } from '@kingdom-builder/engine';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { selectTriggerDisplay } from '../../src/translation/context/assetSelectors';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
@@ -41,10 +43,18 @@ describe('createTranslationContext', () => {
 		const [firstPhase] = phases;
 		const firstStep = firstPhase?.steps?.[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
-		const metadata = {
+		const triggerId = 'trigger.synthetic';
+		const metadata: SessionSnapshotMetadata = {
 			effectLogs: { legacy: [{ note: 'legacy entry' }] },
 			passiveEvaluationModifiers: {
 				[resourceKey]: ['modifier'],
+			},
+			triggers: {
+				[triggerId]: {
+					icon: '✨',
+					future: 'When shimmering',
+					past: 'Shimmered',
+				},
 			},
 		};
 		const compensation = (amount: number): PlayerStartConfig => ({
@@ -144,6 +154,15 @@ describe('createTranslationContext', () => {
 		const context = createTranslationContext(session, registries, metadata, {
 			ruleSnapshot: session.rules,
 			passiveRecords: session.passiveRecords,
+		});
+		expect(context.assets.triggers[triggerId]).toEqual({
+			icon: '✨',
+			future: 'When shimmering',
+			past: 'Shimmered',
+			label: 'Shimmered',
+		});
+		expect(selectTriggerDisplay(context.assets, 'trigger.unknown')).toEqual({
+			label: 'trigger.unknown',
 		});
 		expect(context.pullEffectLog<{ note: string }>('legacy')).toEqual({
 			note: 'legacy entry',

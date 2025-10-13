@@ -5,7 +5,6 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -132,6 +131,18 @@ function buildPopulationMap(
 		const base = toIconLabel(definition, id);
 		entries[id] = mergeIconLabel(base, descriptors?.[id], base.label ?? id);
 	}
+	if (descriptors) {
+		for (const [id, descriptor] of Object.entries(descriptors)) {
+			if (entries[id]) {
+				continue;
+			}
+			entries[id] = mergeIconLabel(
+				undefined,
+				descriptor,
+				descriptor?.label ?? id,
+			);
+		}
+	}
 	return Object.freeze(entries);
 }
 
@@ -151,6 +162,15 @@ function buildResourceMap(
 		}
 		const descriptor = descriptors?.[key];
 		entries[key] = mergeIconLabel(entry, descriptor, entry.label ?? key);
+	}
+	if (descriptors) {
+		for (const [key, descriptor] of Object.entries(descriptors)) {
+			if (entries[key]) {
+				continue;
+			}
+			const fallbackLabel = descriptor?.label ?? key;
+			entries[key] = mergeIconLabel(undefined, descriptor, fallbackLabel);
+		}
 	}
 	return Object.freeze(entries);
 }
@@ -173,55 +193,29 @@ function buildStatMap(
 	return Object.freeze(entries);
 }
 
-const DEFAULT_TRIGGER_ASSETS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => [
-			id,
-			Object.freeze({
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-				label: info.past,
-			} satisfies TranslationTriggerAsset),
-		]),
-	),
-);
-
-function mergeTriggerAsset(
-	base: TranslationTriggerAsset | undefined,
-	descriptor: SessionTriggerMetadata | undefined,
-): TranslationTriggerAsset {
-	const entry: TranslationTriggerAsset = {};
-	const icon = descriptor?.icon ?? base?.icon;
-	if (icon !== undefined) {
-		entry.icon = icon;
-	}
-	const future = descriptor?.future ?? base?.future;
-	if (future !== undefined) {
-		entry.future = future;
-	}
-	const past = descriptor?.past ?? base?.past;
-	if (past !== undefined) {
-		entry.past = past;
-	}
-	const label = descriptor?.label ?? base?.label ?? past;
-	if (label !== undefined) {
-		entry.label = label;
-	}
-	return Object.freeze(entry);
-}
-
 function buildTriggerMap(
 	triggers?: Record<string, SessionTriggerMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
-	const entries: Record<string, TranslationTriggerAsset> = {
-		...DEFAULT_TRIGGER_ASSETS,
-	};
 	if (!triggers) {
-		return Object.freeze(entries);
+		return Object.freeze({});
 	}
+	const entries: Record<string, TranslationTriggerAsset> = {};
 	for (const [id, descriptor] of Object.entries(triggers)) {
-		entries[id] = mergeTriggerAsset(entries[id], descriptor);
+		const entry: TranslationTriggerAsset = {};
+		if (descriptor?.icon !== undefined) {
+			entry.icon = descriptor.icon;
+		}
+		if (descriptor?.future !== undefined) {
+			entry.future = descriptor.future;
+		}
+		if (descriptor?.past !== undefined) {
+			entry.past = descriptor.past;
+		}
+		const label = descriptor?.label ?? descriptor?.past ?? id;
+		if (label !== undefined) {
+			entry.label = label;
+		}
+		entries[id] = Object.freeze(entry);
 	}
 	return Object.freeze(entries);
 }
