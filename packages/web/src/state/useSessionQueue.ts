@@ -31,13 +31,8 @@ export function useSessionQueue(
 			queue.updatePlayerName(playerId, playerName),
 		[queue],
 	);
-	const cachedSessionSnapshot = useMemo(() => {
-		const latest = queue.getLatestSnapshot();
-		if (latest) {
-			return latest;
-		}
-		return legacySession.getSnapshot();
-	}, [queue, legacySession, sessionState]);
+	const latestSnapshot = queue.getLatestSnapshot();
+	const cachedSessionSnapshot = latestSnapshot ?? sessionState;
 	return {
 		legacySession,
 		enqueue,
