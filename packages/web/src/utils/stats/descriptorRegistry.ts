@@ -1,12 +1,12 @@
-import {
-	PASSIVE_INFO,
-	POPULATION_ROLES,
-	RESOURCES,
-} from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
 	TranslationRegistry,
 } from '../../translation/context';
+import {
+	selectPopulationRoleDisplay,
+	selectResourceDisplay,
+	selectStatDisplay,
+} from '../../translation/context/assetSelectors';
 import {
 	formatDetailText,
 	formatPhaseStep,
@@ -68,39 +68,17 @@ function createTranslationRegistryResolver<
 	};
 }
 
-function createRecordResolver<T extends { icon?: string; label?: string }>(
-	record: Readonly<Record<string, T>>,
-	fallback: string,
-): RegistryResolver {
-	return (id) => {
-		if (id) {
-			const item = record[id];
-			if (item) {
-				return {
-					icon: item.icon ?? '',
-					label: item.label ?? id,
-				} satisfies ResolveResult;
-			}
-		}
-		return {
-			icon: '',
-			label: id ?? fallback,
-		} satisfies ResolveResult;
-	};
-}
-
 function createDescriptorRegistry(
 	translationContext: TranslationContext,
 ): Registry {
+	const { assets } = translationContext;
 	return {
 		population: {
 			resolve: (id) => {
-				const role = id
-					? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
-					: undefined;
+				const display = selectPopulationRoleDisplay(assets, id);
 				return {
-					icon: role?.icon ?? '',
-					label: role?.label ?? id ?? 'Population',
+					icon: display.icon ?? '',
+					label: display.label ?? id ?? 'Population',
 				} satisfies ResolveResult;
 			},
 			formatDetail: defaultFormatDetail,
@@ -164,7 +142,16 @@ function createDescriptorRegistry(
 			} satisfies DescriptorRegistryEntry;
 		})(),
 		stat: {
-			resolve: createRecordResolver(translationContext.assets.stats, 'Stat'),
+			resolve: (id) => {
+				if (!id) {
+					return { icon: '', label: 'Stat' } satisfies ResolveResult;
+				}
+				const display = selectStatDisplay(assets, id);
+				return {
+					icon: display.icon ?? '',
+					label: display.label ?? id,
+				} satisfies ResolveResult;
+			},
 			formatDetail: defaultFormatDetail,
 			augmentDependencyDetail: (detail, link, player, context) => {
 				if (!link.id) {
@@ -177,14 +164,23 @@ function createDescriptorRegistry(
 			},
 		},
 		resource: {
-			resolve: createRecordResolver(RESOURCES, 'Resource'),
+			resolve: (id) => {
+				if (!id) {
+					return { icon: '', label: 'Resource' } satisfies ResolveResult;
+				}
+				const display = selectResourceDisplay(assets, id);
+				return {
+					icon: display.icon ?? '',
+					label: display.label ?? id,
+				} satisfies ResolveResult;
+			},
 			formatDetail: defaultFormatDetail,
 		},
-		trigger: createTriggerDescriptorEntry(defaultFormatDetail),
+		trigger: createTriggerDescriptorEntry(assets, defaultFormatDetail),
 		passive: {
 			resolve: () => ({
-				icon: PASSIVE_INFO.icon ?? '',
-				label: PASSIVE_INFO.label ?? 'Passive',
+				icon: assets.passive.icon ?? '',
+				label: assets.passive.label ?? 'Passive',
 			}),
 			formatDetail: defaultFormatDetail,
 		},

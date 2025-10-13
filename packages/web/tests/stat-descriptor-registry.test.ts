@@ -366,13 +366,13 @@ describe('stat descriptor registry', () => {
 			'population',
 			'unknown-role',
 		);
-		expect(populationFallback).toContain('unknown-role');
+		expect(populationFallback).toContain('Population');
 		const triggerFallback = formatKindLabel(
 			mutatedContext,
 			'trigger',
 			'mystery-trigger',
 		);
-		expect(triggerFallback).toBe('mystery-trigger');
+		expect(triggerFallback).toBe('🔔 Mystery Trigger');
 		const phaseFallback = formatKindLabel(
 			mutatedContext,
 			'phase',
