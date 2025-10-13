@@ -126,7 +126,7 @@ export class SessionTransport {
 		try {
 			const result = await session.enqueue(() => {
 				const advance = session.advancePhase();
-				const snapshot = session.getSnapshot();
+				const snapshot = this.sessionManager.getSnapshot(sessionId);
 				return { advance, snapshot };
 			});
 			const base = this.buildStateResponse(sessionId, result.snapshot);
@@ -176,7 +176,7 @@ export class SessionTransport {
 			}
 			const result = await session.enqueue(() => {
 				const traces = session.performAction(actionId, params as never);
-				const snapshot = session.getSnapshot();
+				const snapshot = this.sessionManager.getSnapshot(sessionId);
 				return { traces, snapshot };
 			});
 			const response = actionExecuteResponseSchema.parse({
