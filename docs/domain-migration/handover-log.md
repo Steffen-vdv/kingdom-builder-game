@@ -142,3 +142,11 @@
   rewrote the session SDK test suite to exercise remote behaviour using the
   revised `GameApiFake`, removing the final engine dependencies from the web
   session bootstrap path.
+
+## Domain Migration - P3 - T14 - Phase progress snapshot mirroring
+
+- Rewired `usePhaseProgress` and its helper to source all snapshots from the
+  remote session state store and drive phase advancement exclusively through the
+  `advanceSessionPhase` API, so queued snapshots fuel diff formatting without
+  invoking legacy engine methods. Tests now seed the session state store instead
+  of engine mocks to cover the remote workflow.

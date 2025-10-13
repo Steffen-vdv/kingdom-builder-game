@@ -169,7 +169,6 @@ export function GameProviderInner({
 		applyPhaseSnapshot,
 		refreshPhaseState,
 	} = usePhaseProgress({
-		session: legacySession,
 		sessionState,
 		sessionId,
 		actionCostResource,
