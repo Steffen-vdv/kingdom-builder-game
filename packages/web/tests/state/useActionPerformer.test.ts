@@ -10,6 +10,7 @@ import {
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
 import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import type { SessionQueueHelpers } from '../../src/state/sessionTypes';
 import {
 	createResourceKeys,
 	createSessionRegistries,
@@ -43,7 +44,6 @@ vi.mock('../../src/state/sessionSdk', async () => {
 });
 
 describe('useActionPerformer', () => {
-	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
@@ -51,10 +51,15 @@ describe('useActionPerformer', () => {
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
 	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let cachedSessionSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let actionCostResource: SessionResourceDefinition['key'];
 	let ruleSnapshot: RuleSnapshot;
 	let registries: ReturnType<typeof createSessionRegistries>;
+	let queue: Pick<
+		SessionQueueHelpers,
+		'getLatestSnapshot' | 'getLatestRegistries'
+	>;
 	const sessionId = 'test-session';
 
 	beforeEach(() => {
@@ -105,13 +110,17 @@ describe('useActionPerformer', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
+		cachedSessionSnapshot = sessionSnapshot;
 		resourceKeys = [actionCostResource];
 		registries = createSessionRegistries();
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
+		const getLatestSnapshot = vi.fn(() => sessionSnapshot);
+		const getLatestRegistries = vi.fn(() => registries);
+		queue = {
+			getLatestSnapshot,
+			getLatestRegistries,
 		};
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
@@ -139,10 +148,11 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				queue,
+				cachedSessionSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -180,14 +190,16 @@ describe('useActionPerformer', () => {
 			error: error.message,
 			requirementFailure: failure,
 		});
+		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				queue,
+				cachedSessionSnapshot,
 				addLog,
-				showResolution: vi.fn().mockResolvedValue(undefined),
+				showResolution,
 				syncPhaseState: vi.fn(),
 				refresh: vi.fn(),
 				pushErrorToast,
@@ -227,14 +239,16 @@ describe('useActionPerformer', () => {
 			error: error.message,
 			requirementFailures: [failure],
 		});
+		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				queue,
+				cachedSessionSnapshot,
 				addLog,
-				showResolution: vi.fn().mockResolvedValue(undefined),
+				showResolution,
 				syncPhaseState: vi.fn(),
 				refresh: vi.fn(),
 				pushErrorToast,
@@ -282,18 +296,18 @@ describe('useActionPerformer', () => {
 			currentPhase: sessionSnapshot.game.currentPhase,
 			currentStep: sessionSnapshot.game.currentStep,
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		cachedSessionSnapshot = sessionSnapshot;
 		const onFatalSessionError = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				queue,
+				cachedSessionSnapshot,
 				addLog,
-				showResolution: vi.fn().mockResolvedValue(undefined),
+				showResolution,
 				syncPhaseState: vi.fn(),
 				refresh: vi.fn(),
 				pushErrorToast,
@@ -364,10 +378,11 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				queue,
+				cachedSessionSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -454,10 +469,11 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				queue,
+				cachedSessionSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
@@ -518,10 +534,11 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
+				queue,
+				cachedSessionSnapshot,
 				addLog,
 				showResolution,
 				syncPhaseState,
