@@ -142,3 +142,15 @@
   rewrote the session SDK test suite to exercise remote behaviour using the
   revised `GameApiFake`, removing the final engine dependencies from the web
   session bootstrap path.
+
+## Domain Migration - P3 - T15 - AI Runner Remote Orchestration
+
+- `useAiRunner` now delegates to the remote session adapter's `runAiTurn` and
+  `hasAiController` helpers, removing the local engine overrides and letting
+  the `GameApi` drive AI execution.
+- The hook refreshes the session store from the adapter snapshot after each AI
+  turn before resuming phase advancement so queued effects reflect the remote
+  state.
+- `packages/web/tests/state/useAiRunner.test.ts` now stubs the adapter/GameApi
+  behaviour to validate fatal error propagation without touching engine-only
+  helpers.

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
-import type { Action } from './actionTypes';
+import type { MutableRefObject } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { LegacySession } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
@@ -14,10 +13,7 @@ interface UseAiRunnerOptions {
 		snapshot: SessionSnapshot,
 		overrides?: Partial<PhaseProgressState>,
 	) => void;
-	performRef: React.MutableRefObject<
-		(action: Action, params?: ActionParametersPayload) => Promise<void>
-	>;
-	mountedRef: React.MutableRefObject<boolean>;
+	mountedRef: MutableRefObject<boolean>;
 	onFatalSessionError?: (error: unknown) => void;
 }
 
@@ -26,7 +22,6 @@ export function useAiRunner({
 	sessionState,
 	runUntilActionPhaseCore,
 	syncPhaseState,
-	performRef,
 	mountedRef,
 	onFatalSessionError,
 }: UseAiRunnerOptions) {
@@ -58,39 +53,15 @@ export function useAiRunner({
 				}
 			};
 			try {
-				const ranTurn = await session.runAiTurn(activeId, {
-					performAction: async (
-						actionId: string,
-						_ignored: unknown,
-						params?: ActionParametersPayload,
-					) => {
-						const definition = session.getActionDefinition(actionId);
-						if (!definition) {
-							throw new Error(`Unknown action ${String(actionId)} for AI`);
-						}
-						const action: Action = {
-							id: definition.id,
-							name: definition.name,
-						};
-						if (definition.system !== undefined) {
-							action.system = definition.system;
-						}
-						try {
-							await performRef.current(action, params);
-						} catch (error) {
-							forwardFatalError(error);
-							throw error;
-						}
-					},
-					advance: () => {
-						const snapshot = session.getSnapshot();
-						if (snapshot.game.conclusion) {
-							return;
-						}
-						session.advancePhase();
-					},
-				});
-				if (!ranTurn || !mountedRef.current || fatalError !== null) {
+				const ranTurn = await session.runAiTurn(activeId);
+				if (!ranTurn || fatalError !== null) {
+					if (ranTurn && mountedRef.current && fatalError === null) {
+						syncPhaseState(session.getSnapshot());
+					}
+					return;
+				}
+				if (!mountedRef.current) {
+					syncPhaseState(session.getSnapshot());
 					return;
 				}
 				try {
@@ -116,7 +87,6 @@ export function useAiRunner({
 		sessionState.phases,
 		runUntilActionPhaseCore,
 		syncPhaseState,
-		performRef,
 		mountedRef,
 		onFatalSessionError,
 	]);
