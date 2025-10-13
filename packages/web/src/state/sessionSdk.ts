@@ -1,4 +1,3 @@
-import type { EngineSession } from '@kingdom-builder/engine';
 import type {
 	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
@@ -45,7 +44,6 @@ interface CreateSessionOptions {
 interface CreateSessionResult {
 	sessionId: string;
 	session: SessionHandle;
-	legacySession: EngineSession;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
@@ -64,7 +62,6 @@ type ActionExecutionFailure = Error & {
 
 interface FetchSnapshotResult {
 	session: SessionHandle;
-	legacySession: EngineSession;
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	registries: SessionRegistries;
@@ -111,7 +108,6 @@ export async function createSession(
 	return {
 		sessionId: record.sessionId,
 		session: record.handle,
-		legacySession: record.legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries: record.registries,
@@ -129,16 +125,17 @@ export async function fetchSnapshot(
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	replaceSessionCaches(
-		record,
-		registries,
-		resourceKeys,
-		response.snapshot,
-		response.registries.metadata,
-	);
+	await record.handle.enqueue(() => {
+		replaceSessionCaches(
+			record,
+			registries,
+			resourceKeys,
+			response.snapshot,
+			response.registries.metadata,
+		);
+	});
 	return {
 		session: record.handle,
-		legacySession: record.legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries,
@@ -157,17 +154,17 @@ export async function setSessionDevMode(
 	const response = await api.setDevMode({ sessionId, enabled }, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	record.legacySession.setDevMode(enabled);
-	replaceSessionCaches(
-		record,
-		registries,
-		resourceKeys,
-		response.snapshot,
-		response.registries.metadata,
-	);
+	await record.handle.enqueue(() => {
+		replaceSessionCaches(
+			record,
+			registries,
+			resourceKeys,
+			response.snapshot,
+			response.registries.metadata,
+		);
+	});
 	return {
 		session: record.handle,
-		legacySession: record.legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries,
@@ -185,22 +182,17 @@ export async function updateSessionPlayerName(
 	const response = await api.updatePlayerName(request, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	replaceSessionCaches(
-		record,
-		registries,
-		resourceKeys,
-		response.snapshot,
-		response.registries.metadata,
-	);
-	const updatedPlayer = response.snapshot.game.players.find(
-		(player) => player.id === request.playerId,
-	);
-	if (updatedPlayer) {
-		record.legacySession.updatePlayerName(updatedPlayer.id, updatedPlayer.name);
-	}
+	await record.handle.enqueue(() => {
+		replaceSessionCaches(
+			record,
+			registries,
+			resourceKeys,
+			response.snapshot,
+			response.registries.metadata,
+		);
+	});
 	return {
 		session: record.handle,
-		legacySession: record.legacySession,
 		snapshot: response.snapshot,
 		ruleSnapshot: response.snapshot.rules,
 		registries,
@@ -218,25 +210,9 @@ export async function performSessionAction(
 	try {
 		const response = await api.performAction(request, requestOptions);
 		if (response.status === 'success') {
-			record.queue.updateSnapshot(response.snapshot);
-			try {
-				const params = request.params;
-				await record.handle.enqueue(() => {
-					record.handle.performAction(request.actionId, params);
-				});
-			} catch (localError) {
-				const error = new SessionMirroringError(
-					'Local session failed to mirror remote action.',
-					{
-						cause: localError,
-						details: {
-							sessionId: request.sessionId,
-							actionId: request.actionId,
-						},
-					},
-				);
-				throw error;
-			}
+			await record.handle.enqueue(() => {
+				record.queue.updateSnapshot(response.snapshot);
+			});
 		}
 		return response;
 	} catch (error) {
@@ -271,27 +247,15 @@ export async function advanceSessionPhase(
 	const response = await api.advancePhase(request, requestOptions);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
-	mergeSessionCaches(
-		record,
-		registries,
-		resourceKeys,
-		response.snapshot,
-		response.registries.metadata,
-	);
-	try {
-		await record.handle.enqueue(() => {
-			record.handle.advancePhase();
-		});
-	} catch (localError) {
-		const error = new SessionMirroringError(
-			'Local session failed to mirror remote phase advance.',
-			{
-				cause: localError,
-				details: { sessionId: request.sessionId },
-			},
+	await record.handle.enqueue(() => {
+		mergeSessionCaches(
+			record,
+			registries,
+			resourceKeys,
+			response.snapshot,
+			response.registries.metadata,
 		);
-		throw error;
-	}
+	});
 	return response;
 }
 

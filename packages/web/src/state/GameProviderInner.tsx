@@ -65,11 +65,10 @@ export function GameProviderInner({
 	playerNameRef.current = playerName;
 
 	const {
-		legacySession,
 		enqueue,
 		cachedSessionSnapshot,
 		updatePlayerName: syncPlayerName,
-	} = useSessionQueue(queue, sessionState, sessionId);
+	} = useSessionQueue(queue, sessionState);
 
 	const cachedRegistries = queue.getLatestRegistries() ?? registries;
 	const cachedMetadata =
@@ -181,7 +180,7 @@ export function GameProviderInner({
 		});
 
 	useCompensationLogger({
-		session: legacySession,
+		sessionId,
 		sessionState,
 		addLog,
 		resourceKeys,
@@ -207,7 +206,9 @@ export function GameProviderInner({
 	});
 
 	useAiRunner({
-		session: legacySession,
+		sessionId,
+		enqueue,
+		getLatestSnapshot: queue.getLatestSnapshot,
 		sessionState,
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
@@ -322,7 +323,6 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session: legacySession,
 		sessionState,
 		sessionView,
 		handlePerform,

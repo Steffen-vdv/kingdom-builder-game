@@ -16,7 +16,6 @@ import type {
 } from './useActionResolution';
 import type { ReactNode } from 'react';
 import type {
-	LegacySession,
 	SessionMetadata,
 	SessionRegistries,
 	SessionResourceKey,
@@ -75,6 +74,8 @@ export interface GameEngineContextValue {
 	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
 	cachedSessionSnapshot: SessionSnapshot;
+	sessionState: SessionSnapshot;
+	sessionView: SessionView;
 	selectors: SessionDerivedSelectors;
 	translationContext: TranslationContext;
 	ruleSnapshot: SessionRuleSnapshot;
@@ -93,6 +94,11 @@ export interface GameEngineContextValue {
 		advancePhase: AdvancePhaseHandler;
 		refreshSession: RefreshSessionHandler;
 	};
+	handlePerform: (
+		action: Action,
+		params?: Record<string, unknown>,
+	) => Promise<void>;
+	handleEndTurn: () => Promise<void>;
 	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;
 	refreshPhaseState: (overrides?: Partial<PhaseProgressState>) => void;
@@ -120,33 +126,4 @@ export interface GameEngineContextValue {
 	onChangePlayerName: (name: string) => void;
 }
 
-export interface LegacyGameEngineContextBridge {
-	/**
-	 * TODO(#session-migration): Remove direct EngineSession exposure once
-	 * all consumers rely on request helpers.
-	 */
-	session: LegacySession;
-	/**
-	 * TODO(#session-migration): Replace with `sessionSnapshot` in consuming
-	 * modules after the serialization audit completes.
-	 */
-	sessionState: SessionSnapshot;
-	/**
-	 * TODO(#session-migration): Read from `selectors.sessionView` instead.
-	 */
-	sessionView: SessionView;
-	/**
-	 * TODO(#session-migration): Use `requests.performAction`.
-	 */
-	handlePerform: (
-		action: Action,
-		params?: Record<string, unknown>,
-	) => Promise<void>;
-	/**
-	 * TODO(#session-migration): Use `requests.advancePhase`.
-	 */
-	handleEndTurn: () => Promise<void>;
-}
-
-export type LegacyGameEngineContextValue = GameEngineContextValue &
-	LegacyGameEngineContextBridge;
+export type LegacyGameEngineContextValue = GameEngineContextValue;

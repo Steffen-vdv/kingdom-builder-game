@@ -154,8 +154,6 @@ describe('sessionSdk', () => {
 
 	it('sets dev mode via the API and refreshes local state', async () => {
 		const created = await createSession();
-		const session = created.legacySession;
-		const setDevModeSpy = vi.spyOn(session, 'setDevMode');
 		const updatedSnapshot = createSessionSnapshot({
 			players: [playerA, playerB],
 			activePlayerId: playerA.id,
@@ -181,7 +179,6 @@ describe('sessionSdk', () => {
 		});
 		const result = await setSessionDevMode('session-1', true);
 		expect(result.session).toBe(created.session);
-		expect(result.legacySession).toBe(session);
 		expect(result.snapshot).toEqual(updatedSnapshot);
 		expect(result.ruleSnapshot).toEqual(updatedSnapshot.rules);
 		expect(result.metadata).toEqual(updatedSnapshot.metadata);
@@ -189,18 +186,14 @@ describe('sessionSdk', () => {
 			'Tax (Developer)',
 		);
 		expect(result.resourceKeys).not.toContain(resourceKey);
-		expect(setDevModeSpy).toHaveBeenCalledWith(true);
 		expect(created.session.getLatestSnapshot()).toEqual(updatedSnapshot);
 		expect(created.session.getLatestMetadata()).toEqual(
 			updatedSnapshot.metadata,
 		);
-		setDevModeSpy.mockRestore();
 	});
 
 	it('updates player names via the API and mirrors the local session', async () => {
 		const created = await createSession();
-		const session = created.legacySession;
-		const updateSpy = vi.spyOn(session, 'updatePlayerName');
 		const renamedSnapshot = createSessionSnapshot({
 			players: [
 				createSnapshotPlayer({
@@ -232,13 +225,10 @@ describe('sessionSdk', () => {
 		});
 
 		expect(result.session).toBe(created.session);
-		expect(result.legacySession).toBe(session);
 		expect(result.snapshot).toEqual(renamedSnapshot);
 		expect(result.ruleSnapshot).toEqual(renamedSnapshot.rules);
 		expect(result.metadata).toEqual(renamedSnapshot.metadata);
-		expect(updateSpy).toHaveBeenCalledWith(playerA.id, 'Empress');
 		expect(created.session.getLatestSnapshot()).toEqual(renamedSnapshot);
-		updateSpy.mockRestore();
 	});
 
 	it('propagates abort signals without touching cached registries', async () => {

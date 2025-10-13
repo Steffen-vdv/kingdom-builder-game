@@ -1,7 +1,3 @@
-import {
-	createEngineSession,
-	type EngineSession,
-} from '@kingdom-builder/engine';
 import type {
 	SessionRegistriesMetadata,
 	SessionRegistriesPayload,
@@ -13,18 +9,10 @@ import {
 	type RemoteSessionQueueSnapshot,
 	type RemoteSessionQueueOptions,
 } from './RemoteSessionQueue';
-import {
-	initializeDeveloperMode,
-	type DeveloperModeOptions,
-} from './developerModeSetup';
-import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import type { SessionRegistries } from './sessionRegistries';
-import { getLegacyContentConfig } from '../startup/runtimeConfig';
 
 export interface SessionHandle {
-	enqueue: EngineSession['enqueue'];
-	advancePhase: EngineSession['advancePhase'];
-	performAction: EngineSession['performAction'];
+	enqueue: RemoteSessionQueue['enqueue'];
 	getLatestSnapshot(): SessionSnapshot | null;
 	getLatestRegistries(): SessionRegistries | null;
 	getLatestMetadata(): SessionSnapshot['metadata'] | null;
@@ -34,7 +22,6 @@ export interface SessionHandle {
 export interface SessionRecord {
 	sessionId: string;
 	handle: SessionHandle;
-	legacySession: EngineSession;
 	queue: RemoteSessionQueue;
 	registries: SessionRegistries;
 	resourceKeys: ResourceKey[];
@@ -63,10 +50,6 @@ const SESSION_PREFIX = 'local-session-';
 const sessions = new Map<string, SessionRecord>();
 
 let nextSessionId = 1;
-
-let legacyContentPromise: Promise<
-	Awaited<ReturnType<typeof getLegacyContentConfig>>
-> | null = null;
 
 export class SessionMirroringError extends Error {
 	public override readonly cause: unknown;
@@ -104,23 +87,9 @@ export function isFatalSessionError(error: unknown): boolean {
 	);
 }
 
-async function ensureLegacyContentConfig(): Promise<
-	Awaited<ReturnType<typeof getLegacyContentConfig>>
-> {
-	if (!legacyContentPromise) {
-		legacyContentPromise = getLegacyContentConfig();
-	}
-	return legacyContentPromise;
-}
-
-function createSessionHandle(
-	session: EngineSession,
-	queue: RemoteSessionQueue,
-): SessionHandle {
+function createSessionHandle(queue: RemoteSessionQueue): SessionHandle {
 	return {
-		enqueue: session.enqueue.bind(session),
-		advancePhase: session.advancePhase.bind(session),
-		performAction: session.performAction.bind(session),
+		enqueue: (task) => queue.enqueue(task),
 		getLatestSnapshot: () => queue.getLatestSnapshot(),
 		getLatestRegistries: () => queue.getLatestRegistries(),
 		getLatestMetadata: () => queue.getLatestMetadata(),
@@ -128,66 +97,9 @@ function createSessionHandle(
 	};
 }
 
-function applyDeveloperPreset(
-	session: EngineSession,
-	snapshot: SessionSnapshot,
-	devMode: boolean,
-	options: DeveloperModeOptions,
-): void {
-	if (!devMode) {
-		return;
-	}
-	const primaryPlayer = snapshot.game.players[0];
-	const primaryPlayerId = primaryPlayer?.id;
-	if (!primaryPlayerId || snapshot.game.turn !== 1) {
-		return;
-	}
-	initializeDeveloperMode(session, primaryPlayerId, options);
-}
-
-function applyPlayerName(
-	session: EngineSession,
-	snapshot: SessionSnapshot,
-	name?: string,
-): void {
-	const desiredName = name ?? DEFAULT_PLAYER_NAME;
-	const primaryPlayer = snapshot.game.players[0];
-	const primaryPlayerId = primaryPlayer?.id;
-	if (!primaryPlayerId) {
-		return;
-	}
-	session.updatePlayerName(primaryPlayerId, desiredName);
-}
-
-export async function createSessionRecord(
+export function createSessionRecord(
 	options: SessionBootstrapOptions,
 ): Promise<SessionRecord> {
-	const contentConfig = await ensureLegacyContentConfig();
-	const legacySession = createEngineSession({
-		actions: options.registries.actions,
-		buildings: options.registries.buildings,
-		developments: options.registries.developments,
-		populations: options.registries.populations,
-		phases: contentConfig.phases,
-		start: contentConfig.start,
-		rules: contentConfig.rules,
-		devMode: options.devMode,
-	});
-	legacySession.setDevMode(options.devMode);
-	const initialSnapshot = legacySession.getSnapshot();
-	const developerOptions: DeveloperModeOptions = {
-		registries: options.registries,
-	};
-	if (contentConfig.developerPreset) {
-		developerOptions.preset = contentConfig.developerPreset;
-	}
-	applyDeveloperPreset(
-		legacySession,
-		initialSnapshot,
-		options.devMode,
-		developerOptions,
-	);
-	applyPlayerName(legacySession, initialSnapshot, options.playerName);
 	const sessionId = options.sessionId ?? `${SESSION_PREFIX}${nextSessionId++}`;
 	const queueOptions = {
 		sessionId,
@@ -199,17 +111,16 @@ export async function createSessionRecord(
 		queueOptions.registriesMetadata = options.registriesPayload.metadata;
 	}
 	const queue = createRemoteSessionQueue(queueOptions);
-	const handle = createSessionHandle(legacySession, queue);
+	const handle = createSessionHandle(queue);
 	const record: SessionRecord = {
 		sessionId,
 		handle,
-		legacySession,
 		queue,
 		registries: options.registries,
 		resourceKeys: options.resourceKeys,
 	};
 	sessions.set(sessionId, record);
-	return record;
+	return Promise.resolve(record);
 }
 
 export function getSessionRecord(sessionId: string): SessionRecord {

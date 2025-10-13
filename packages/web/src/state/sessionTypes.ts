@@ -6,7 +6,6 @@ import type {
 import { type CreateSessionResult } from './sessionSdk';
 
 export type Session = CreateSessionResult['session'];
-export type LegacySession = CreateSessionResult['legacySession'];
 export type SessionRegistries = CreateSessionResult['registries'];
 export type SessionResourceKeys = CreateSessionResult['resourceKeys'];
 export type SessionResourceKey = SessionResourceKeys[number];
