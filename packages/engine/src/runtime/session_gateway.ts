@@ -14,6 +14,8 @@ import type {
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
 	ActionExecuteErrorResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from './session';
 import type { PlayerId } from '../state';
@@ -187,6 +189,20 @@ export function createLocalSessionGateway(
 		): Promise<SessionSetDevModeResponse> {
 			assertSessionId(request, sessionId);
 			session.setDevMode(request.enabled);
+			return Promise.resolve({
+				sessionId,
+				snapshot: session.getSnapshot(),
+				registries: getRegistries(),
+			});
+		},
+		updatePlayerName(
+			request: SessionUpdatePlayerNameRequest,
+		): Promise<SessionUpdatePlayerNameResponse> {
+			assertSessionId(request, sessionId);
+			session.updatePlayerName(
+				request.playerId as PlayerId,
+				request.playerName,
+			);
 			return Promise.resolve({
 				sessionId,
 				snapshot: session.getSnapshot(),

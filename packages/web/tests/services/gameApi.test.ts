@@ -253,6 +253,25 @@ describe('createGameApi', () => {
 		expect(init?.body).toBe(JSON.stringify({ enabled: true }));
 	});
 
+	it('updates player names using the player-name endpoint', async () => {
+		const response = createStateResponse('session-name');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+		const request = {
+			sessionId: 'session-name',
+			playerId: 'A' as SessionPlayerId,
+			playerName: 'General',
+		};
+
+		await api.updatePlayerName(request);
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe('/api/sessions/session-name/player-name');
+		expect(init?.method).toBe('POST');
+		expect(init?.body).toBe(JSON.stringify(request));
+	});
+
 	it('propagates errors when toggling dev mode fails', async () => {
 		const fetchMock = vi
 			.fn()
@@ -279,6 +298,7 @@ describe('createGameApiMock', () => {
 			createSession: handler,
 			fetchSnapshot: handler,
 			setDevMode: handler,
+			updatePlayerName: handler,
 		});
 
 		await expect(mock.createSession()).resolves.toEqual(
@@ -286,12 +306,22 @@ describe('createGameApiMock', () => {
 		);
 		await mock.fetchSnapshot('mock-session');
 		await mock.setDevMode({ sessionId: 'mock-session', enabled: true });
-		expect(handler).toHaveBeenCalledTimes(3);
+		await mock.updatePlayerName({
+			sessionId: 'mock-session',
+			playerId: 'A',
+			playerName: 'Hero',
+		});
+		expect(handler).toHaveBeenCalledTimes(4);
 		const calls = handler.mock.calls;
 		expect(calls[1]?.[0]).toBe('mock-session');
 		expect(calls[2]?.[0]).toEqual({
 			sessionId: 'mock-session',
 			enabled: true,
+		});
+		expect(calls[3]?.[0]).toEqual({
+			sessionId: 'mock-session',
+			playerId: 'A',
+			playerName: 'Hero',
 		});
 	});
 
@@ -343,6 +373,31 @@ describe('GameApiFake', () => {
 		expect(result).toEqual(response);
 		const snapshot = await fake.fetchSnapshot('session-dev-mode');
 		expect(snapshot.snapshot.game.devMode).toBe(true);
+	});
+
+	it('updates stored sessions when player names change', async () => {
+		const fake = new GameApiFake();
+		const initial = createStateResponse('session-player');
+		fake.primeSession(initial);
+		const renamed = createStateResponse('session-player', {
+			game: {
+				...initial.snapshot.game,
+				players: [
+					createPlayerSnapshot('A', { name: 'General' }),
+					createPlayerSnapshot('B'),
+				],
+			} as Mutable<SessionSnapshot['game']>,
+		});
+		fake.setNextUpdatePlayerNameResponse(renamed);
+
+		await fake.updatePlayerName({
+			sessionId: 'session-player',
+			playerId: 'A',
+			playerName: 'General',
+		});
+
+		const snapshot = await fake.fetchSnapshot('session-player');
+		expect(snapshot.snapshot.game.players[0]?.name).toBe('General');
 	});
 
 	it('updates stored snapshot on successful actions', async () => {

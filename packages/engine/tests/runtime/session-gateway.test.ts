@@ -184,4 +184,18 @@ describe('createLocalSessionGateway', () => {
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		expect(refreshed.snapshot.game.devMode).toBe(true);
 	});
+
+	it('updates player names using the local gateway', async () => {
+		const { gateway } = createGateway();
+		const { sessionId } = await gateway.createSession();
+		const updated = await gateway.updatePlayerName({
+			sessionId,
+			playerId: 'A',
+			playerName: 'General',
+		});
+		expect(updated.snapshot.game.players[0]?.name).toBe('General');
+		updated.snapshot.game.players[0]!.name = 'Mutated';
+		const refreshed = await gateway.fetchSnapshot({ sessionId });
+		expect(refreshed.snapshot.game.players[0]?.name).toBe('General');
+	});
 });

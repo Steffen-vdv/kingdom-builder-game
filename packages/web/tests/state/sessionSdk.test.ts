@@ -13,6 +13,7 @@ import {
 	advanceSessionPhase,
 	releaseSession,
 	setSessionDevMode,
+	updateSessionPlayerName,
 	setGameApi,
 } from '../../src/state/sessionSdk';
 import {
@@ -183,6 +184,50 @@ describe('sessionSdk', () => {
 		expect(result.resourceKeys).not.toContain(resourceKey);
 		expect(setDevModeSpy).toHaveBeenCalledWith(true);
 		setDevModeSpy.mockRestore();
+	});
+
+	it('updates player names via the API and syncs the legacy session', async () => {
+		const created = await createSession();
+		const session = created.legacySession;
+		const updateSpy = vi.spyOn(session, 'updatePlayerName');
+		const renamedSnapshot = createSessionSnapshot({
+			players: [
+				createSnapshotPlayer({
+					id: playerA.id,
+					name: 'General',
+					resources: playerA.resources,
+				}),
+				playerB,
+			],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			turn: 3,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+		});
+		const renamedRegistries = createSessionRegistriesPayload();
+		api.setNextUpdatePlayerNameResponse({
+			sessionId: 'session-1',
+			snapshot: renamedSnapshot,
+			registries: renamedRegistries,
+		});
+		const result = await updateSessionPlayerName({
+			sessionId: 'session-1',
+			playerId: playerA.id,
+			playerName: 'General',
+		});
+		expect(result.session).toBe(created.session);
+		expect(result.legacySession).toBe(session);
+		expect(result.snapshot).toEqual(renamedSnapshot);
+		expect(result.ruleSnapshot).toEqual(renamedSnapshot.rules);
+		expect(result.metadata).toEqual(renamedSnapshot.metadata);
+		expect(result.registries).toHaveProperty('actions');
+		expect(result.resourceKeys).toEqual(resourceKeys);
+		expect(updateSpy).toHaveBeenCalledWith(playerA.id, 'General');
+		updateSpy.mockRestore();
 	});
 
 	it('propagates abort signals without touching cached registries', async () => {

@@ -20,6 +20,7 @@ const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
 const setSessionDevModeMock = vi.hoisted(() => vi.fn());
+const updateSessionPlayerNameMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/sessionSdk', async () => {
 	const actual = await vi.importActual('../../src/state/sessionSdk');
@@ -29,6 +30,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 		fetchSnapshot: fetchSnapshotMock,
 		releaseSession: releaseSessionMock,
 		setSessionDevMode: setSessionDevModeMock,
+		updateSessionPlayerName: updateSessionPlayerNameMock,
 	};
 });
 
@@ -168,11 +170,15 @@ describe('GameProvider', () => {
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let player: ReturnType<typeof createSnapshotPlayer>;
+	let opponent: ReturnType<typeof createSnapshotPlayer>;
+	let updateLegacyPlayerName: ReturnType<typeof vi.fn>;
 	beforeEach(() => {
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
 		setSessionDevModeMock.mockReset();
+		updateSessionPlayerNameMock.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -206,12 +212,12 @@ describe('GameProvider', () => {
 			tierDefinitions: [],
 			winConditions: [],
 		} as const;
-		const player = createSnapshotPlayer({
+		player = createSnapshotPlayer({
 			id: 'player-1',
 			name: 'Commander',
 			resources: { [resourceKey]: 10 },
 		});
-		const opponent = createSnapshotPlayer({
+		opponent = createSnapshotPlayer({
 			id: 'player-2',
 			name: 'Rival',
 			resources: { [resourceKey]: 6 },
@@ -254,9 +260,10 @@ describe('GameProvider', () => {
 		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
 			return await task();
 		});
+		updateLegacyPlayerName = vi.fn();
 		session = {
 			enqueue: enqueueMock,
-			updatePlayerName: vi.fn(),
+			updatePlayerName: updateLegacyPlayerName,
 			pullEffectLog: vi.fn(),
 			getPassiveEvaluationMods: vi.fn(() => ({})),
 			getSnapshot: vi.fn(() => initialSnapshot),
@@ -283,6 +290,18 @@ describe('GameProvider', () => {
 			registries,
 			resourceKeys,
 			metadata: refreshedSnapshot.metadata,
+		});
+		updateSessionPlayerNameMock.mockImplementation((request) => {
+			updateLegacyPlayerName(request.playerId, request.playerName);
+			return Promise.resolve({
+				session,
+				legacySession: session,
+				snapshot: refreshedSnapshot,
+				ruleSnapshot: refreshedSnapshot.rules,
+				registries,
+				resourceKeys,
+				metadata: refreshedSnapshot.metadata,
+			});
 		});
 	});
 
@@ -367,6 +386,66 @@ describe('GameProvider', () => {
 		await waitFor(() =>
 			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:3'),
 		);
+	});
+
+	it('queues player name updates through the session queue', async () => {
+		const { rerender } = render(
+			<GameProvider devMode={false} playerName="Commander">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		updateSessionPlayerNameMock.mockClear();
+		const renamedSnapshot = createSessionSnapshot({
+			players: [
+				createSnapshotPlayer({
+					id: player.id,
+					name: 'General',
+					resources: player.resources,
+				}),
+				createSnapshotPlayer({
+					id: opponent.id,
+					name: opponent.name,
+					resources: opponent.resources,
+				}),
+			],
+			activePlayerId: player.id,
+			opponentId: opponent.id,
+			phases: initialSnapshot.phases,
+			actionCostResource: initialSnapshot.actionCostResource,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: initialSnapshot.game.turn,
+			currentPhase: initialSnapshot.game.currentPhase,
+			currentStep: initialSnapshot.game.currentStep,
+		});
+		updateSessionPlayerNameMock.mockResolvedValueOnce({
+			session,
+			legacySession: session,
+			snapshot: renamedSnapshot,
+			ruleSnapshot: renamedSnapshot.rules,
+			registries,
+			resourceKeys,
+			metadata: renamedSnapshot.metadata,
+		});
+
+		rerender(
+			<GameProvider devMode={false} playerName="General">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(updateSessionPlayerNameMock).toHaveBeenCalledWith({
+				sessionId: 'session-1',
+				playerId: player.id,
+				playerName: 'General',
+			}),
+		);
+		expect(updateLegacyPlayerName).toHaveBeenCalledWith(player.id, 'General');
 	});
 
 	it('refreshes the session state when hooks request a snapshot', async () => {
