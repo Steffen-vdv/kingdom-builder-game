@@ -24,12 +24,7 @@ type FormatPhaseResolution = (
 	options: FormatPhaseResolutionOptions,
 ) => PhaseResolutionFormatResult;
 
-interface SessionSnapshotSource {
-	getSnapshot(): SessionSnapshot;
-}
-
 interface AdvanceToActionPhaseOptions {
-	session: SessionSnapshotSource;
 	sessionId: string;
 	resourceKeys: SessionResourceKey[];
 	mountedRef: React.MutableRefObject<boolean>;
@@ -44,11 +39,11 @@ interface AdvanceToActionPhaseOptions {
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
 	>;
+	getSnapshot: () => SessionSnapshot;
 	onFatalSessionError?: (error: unknown) => void;
 }
 
 export async function advanceToActionPhase({
-	session,
 	sessionId,
 	resourceKeys,
 	mountedRef,
@@ -57,10 +52,11 @@ export async function advanceToActionPhase({
 	formatPhaseResolution,
 	showResolution,
 	registries,
+	getSnapshot,
 	onFatalSessionError,
 }: AdvanceToActionPhaseOptions) {
 	try {
-		let snapshot = session.getSnapshot();
+		let snapshot = getSnapshot();
 		if (snapshot.game.conclusion) {
 			applyPhaseSnapshot(snapshot, { isAdvancing: false });
 			refresh();
@@ -131,7 +127,7 @@ export async function advanceToActionPhase({
 		if (!mountedRef.current) {
 			return;
 		}
-		const refreshed = session.getSnapshot();
+		const refreshed = getSnapshot();
 		if (!mountedRef.current) {
 			return;
 		}

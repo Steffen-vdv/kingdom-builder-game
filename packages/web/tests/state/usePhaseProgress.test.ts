@@ -68,9 +68,8 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		const latestSnapshot = sessionSnapshot;
+		const readLatestSnapshot = vi.fn(() => latestSnapshot);
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -79,7 +78,6 @@ describe('usePhaseProgress', () => {
 		const { result, rerender } = renderHook(
 			({ fatalHandler }: { fatalHandler: (error: unknown) => void }) =>
 				usePhaseProgress({
-					session: session as never,
 					sessionState: sessionSnapshot,
 					sessionId: 'session-1',
 					actionCostResource,
@@ -89,6 +87,7 @@ describe('usePhaseProgress', () => {
 					enqueue,
 					registries: createSessionRegistries(),
 					showResolution: vi.fn().mockResolvedValue(undefined),
+					readLatestSnapshot,
 					onFatalSessionError: fatalHandler,
 				}),
 			{
@@ -149,9 +148,8 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		const latestSnapshot = sessionSnapshot;
+		const readLatestSnapshot = vi.fn(() => latestSnapshot);
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -162,7 +160,6 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				session: session as never,
 				sessionState: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,
@@ -172,6 +169,7 @@ describe('usePhaseProgress', () => {
 				enqueue,
 				registries: createSessionRegistries(),
 				showResolution: vi.fn().mockResolvedValue(undefined),
+				readLatestSnapshot,
 				onFatalSessionError,
 			}),
 		);
@@ -221,9 +219,8 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		const latestSnapshot = sessionSnapshot;
+		const readLatestSnapshot = vi.fn(() => latestSnapshot);
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -232,7 +229,6 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				session: session as never,
 				sessionState: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,
@@ -242,6 +238,7 @@ describe('usePhaseProgress', () => {
 				enqueue,
 				registries: createSessionRegistries(),
 				showResolution: vi.fn().mockResolvedValue(undefined),
+				readLatestSnapshot,
 				onFatalSessionError,
 			}),
 		);

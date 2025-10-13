@@ -2,7 +2,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { advanceToActionPhase } from '../../src/state/usePhaseProgress.helpers';
 import { SessionMirroringError } from '../../src/state/sessionSdk';
-import type { LegacySession } from '../../src/state/sessionTypes';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -54,9 +53,6 @@ describe('advanceToActionPhase', () => {
 			currentPhase: phases[0]?.id ?? 'phase-setup',
 			currentStep: phases[0]?.id ?? 'phase-setup',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => snapshot),
-		} as unknown as LegacySession;
 		const mountedRef = { current: true };
 		const applyPhaseSnapshot = vi.fn();
 		const refresh = vi.fn();
@@ -68,10 +64,10 @@ describe('advanceToActionPhase', () => {
 		});
 		advanceSessionPhaseMock.mockRejectedValueOnce(fatalError);
 		const onFatalSessionError = vi.fn();
+		const getSnapshot = vi.fn(() => snapshot);
 
 		await expect(
 			advanceToActionPhase({
-				session: session as never,
 				sessionId: 'session-1',
 				resourceKeys: [actionCostResource],
 				mountedRef,
@@ -80,11 +76,13 @@ describe('advanceToActionPhase', () => {
 				formatPhaseResolution: formatPhaseResolution as never,
 				showResolution: showResolution as never,
 				registries,
+				getSnapshot,
 				onFatalSessionError,
 			}),
 		).resolves.toBeUndefined();
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
+		expect(getSnapshot).toHaveBeenCalled();
 		expect(advanceSessionPhaseMock).toHaveBeenCalledWith({
 			sessionId: 'session-1',
 		});
