@@ -9,65 +9,87 @@ import type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
-	SessionActionCostRequest,
-	SessionActionCostResponse,
-	SessionActionRequirementRequest,
-	SessionActionRequirementResponse,
-	SessionActionOptionsRequest,
-	SessionActionOptionsResponse,
-	SessionRunAiRequest,
-	SessionRunAiResponse,
-	SessionSimulateRequest,
-	SessionSimulateResponse,
 } from '@kingdom-builder/protocol';
 import {
 	actionExecuteRequestSchema,
 	actionExecuteResponseSchema,
+	sessionActionCostRequestSchema,
+	sessionActionCostResponseSchema,
+	sessionActionOptionsRequestSchema,
+	sessionActionOptionsResponseSchema,
+	sessionActionRequirementRequestSchema,
+	sessionActionRequirementResponseSchema,
 	sessionAdvanceRequestSchema,
 	sessionAdvanceResponseSchema,
 	sessionCreateRequestSchema,
 	sessionCreateResponseSchema,
+	sessionRunAiRequestSchema,
+	sessionRunAiResponseSchema,
 	sessionSetDevModeRequestSchema,
 	sessionSetDevModeResponseSchema,
+	sessionSimulateRequestSchema,
+	sessionSimulateResponseSchema,
 	sessionStateResponseSchema,
 } from '@kingdom-builder/protocol';
 import { TransportError } from '../transport/TransportTypes.js';
 import type { TransportErrorCode } from '../transport/TransportTypes.js';
-
-type FetchInput = Parameters<typeof fetch>[0];
-
-type FetchInit = Parameters<typeof fetch>[1];
-
-type FetchLike = (input: FetchInput, init?: FetchInit) => Promise<Response>;
-
-type HeaderInput = ConstructorParameters<typeof Headers>[0];
-
-type HeaderFactory = HeaderInput | (() => HeaderInput | Promise<HeaderInput>);
-
-interface RequestOptions {
-	readonly method: string;
-	readonly path: string;
-	readonly body?: unknown;
-}
-
-interface HttpExecutionResult {
-	readonly response: Response;
-	readonly data: unknown;
-}
-
+import type {
+	FetchLike,
+	HeaderFactory,
+	HeaderInput,
+	RequestOptions,
+	HttpExecutionResult,
+	FetchActionCostsHandler,
+	FetchActionRequirementsHandler,
+	FetchActionOptionsHandler,
+	RunAiTurnHandler,
+	SimulatePhasesHandler,
+} from './HttpSessionGatewayTypes.js';
 export interface HttpSessionGatewayOptions {
 	readonly baseUrl: string;
 	readonly fetch?: FetchLike;
 	readonly headers?: HeaderFactory;
 }
-
 export class HttpSessionGateway implements SessionGateway {
 	private readonly baseUrl: string;
-
 	private readonly fetchImpl: FetchLike;
-
 	private readonly headerFactory?: () => Promise<HeaderInput>;
-
+	public readonly fetchActionCosts: FetchActionCostsHandler =
+		this.createActionHandler(
+			sessionActionCostRequestSchema,
+			'actions/costs',
+			sessionActionCostResponseSchema,
+		) as FetchActionCostsHandler;
+	public readonly getActionCosts: SessionGateway['getActionCosts'] = this
+		.fetchActionCosts as SessionGateway['getActionCosts'];
+	public readonly fetchActionRequirements: FetchActionRequirementsHandler =
+		this.createActionHandler(
+			sessionActionRequirementRequestSchema,
+			'actions/requirements',
+			sessionActionRequirementResponseSchema,
+		) as FetchActionRequirementsHandler;
+	public readonly getActionRequirements: SessionGateway['getActionRequirements'] =
+		this.fetchActionRequirements as SessionGateway['getActionRequirements'];
+	public readonly fetchActionOptions: FetchActionOptionsHandler =
+		this.createActionHandler(
+			sessionActionOptionsRequestSchema,
+			'actions/options',
+			sessionActionOptionsResponseSchema,
+		) as FetchActionOptionsHandler;
+	public readonly getActionOptions: SessionGateway['getActionOptions'] = this
+		.fetchActionOptions as SessionGateway['getActionOptions'];
+	public readonly runAiTurn: SessionGateway['runAiTurn'] =
+		this.createActionHandler(
+			sessionRunAiRequestSchema,
+			'ai',
+			sessionRunAiResponseSchema,
+		) as RunAiTurnHandler;
+	public readonly simulateUpcomingPhases: SessionGateway['simulateUpcomingPhases'] =
+		this.createActionHandler(
+			sessionSimulateRequestSchema,
+			'simulate',
+			sessionSimulateResponseSchema,
+		) as SimulatePhasesHandler;
 	public constructor(options: HttpSessionGatewayOptions) {
 		const normalizedBase = options.baseUrl.endsWith('/')
 			? options.baseUrl
@@ -86,7 +108,6 @@ export class HttpSessionGateway implements SessionGateway {
 			this.headerFactory = () => Promise.resolve(headers);
 		}
 	}
-
 	public async createSession(
 		request?: SessionCreateRequest,
 	): Promise<SessionCreateResponse> {
@@ -103,7 +124,6 @@ export class HttpSessionGateway implements SessionGateway {
 		}
 		return sessionCreateResponseSchema.parse(result.data);
 	}
-
 	public async fetchSnapshot(
 		request: SessionAdvanceRequest,
 	): Promise<SessionStateResponse> {
@@ -117,7 +137,6 @@ export class HttpSessionGateway implements SessionGateway {
 		}
 		return sessionStateResponseSchema.parse(result.data);
 	}
-
 	public async performAction(
 		request: ActionExecuteRequest,
 	): Promise<ActionExecuteResponse> {
@@ -142,7 +161,6 @@ export class HttpSessionGateway implements SessionGateway {
 		) as ActionExecuteResponse;
 		return parsed;
 	}
-
 	public async advancePhase(
 		request: SessionAdvanceRequest,
 	): Promise<SessionAdvanceResponse> {
@@ -156,7 +174,6 @@ export class HttpSessionGateway implements SessionGateway {
 		}
 		return sessionAdvanceResponseSchema.parse(result.data);
 	}
-
 	public async setDevMode(
 		request: SessionSetDevModeRequest,
 	): Promise<SessionSetDevModeResponse> {
@@ -171,47 +188,45 @@ export class HttpSessionGateway implements SessionGateway {
 		}
 		return sessionSetDevModeResponseSchema.parse(result.data);
 	}
-
-	public getActionCosts(
-		_request: SessionActionCostRequest,
-	): Promise<SessionActionCostResponse> {
-		return Promise.reject(
-			new Error('SessionGateway#getActionCosts is not implemented.'),
+	private async postSessionRequest<ResponseType>(
+		path: string,
+		body: unknown,
+		schema: { parse(data: unknown): ResponseType },
+	): Promise<ResponseType> {
+		const result = await this.execute({
+			method: 'POST',
+			path,
+			body,
+		});
+		if (!result.response.ok) {
+			throw this.toTransportError(result);
+		}
+		return schema.parse(result.data);
+	}
+	private postSessionDetail<ResponseType>(
+		payload: { sessionId: string },
+		suffix: string,
+		schema: { parse(data: unknown): ResponseType },
+	): Promise<ResponseType> {
+		return this.postSessionRequest(
+			`sessions/${this.encodeSessionId(payload.sessionId)}/${suffix}`,
+			payload,
+			schema,
 		);
 	}
-
-	public getActionRequirements(
-		_request: SessionActionRequirementRequest,
-	): Promise<SessionActionRequirementResponse> {
-		return Promise.reject(
-			new Error('SessionGateway#getActionRequirements is not implemented.'),
-		);
+	private createActionHandler<
+		RequestType extends { sessionId: string },
+		ResponseType,
+	>(
+		requestSchema: { parse(data: unknown): RequestType },
+		suffix: string,
+		responseSchema: { parse(data: unknown): ResponseType },
+	): (request: RequestType) => Promise<ResponseType> {
+		return async (request) => {
+			const payload = requestSchema.parse(request);
+			return this.postSessionDetail(payload, suffix, responseSchema);
+		};
 	}
-
-	public getActionOptions(
-		_request: SessionActionOptionsRequest,
-	): Promise<SessionActionOptionsResponse> {
-		return Promise.reject(
-			new Error('SessionGateway#getActionOptions is not implemented.'),
-		);
-	}
-
-	public runAiTurn(
-		_request: SessionRunAiRequest,
-	): Promise<SessionRunAiResponse> {
-		return Promise.reject(
-			new Error('SessionGateway#runAiTurn is not implemented.'),
-		);
-	}
-
-	public simulateUpcomingPhases(
-		_request: SessionSimulateRequest,
-	): Promise<SessionSimulateResponse> {
-		return Promise.reject(
-			new Error('SessionGateway#simulateUpcomingPhases is not implemented.'),
-		);
-	}
-
 	private async execute(options: RequestOptions): Promise<HttpExecutionResult> {
 		const request = await this.createRequest(options);
 		const response = await this.fetchImpl(request);
