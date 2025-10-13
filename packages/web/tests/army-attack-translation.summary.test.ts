@@ -27,6 +27,7 @@ import {
 	selectAttackBuildingDescriptor,
 	selectAttackResourceDescriptor,
 	selectAttackStatDescriptor,
+	withAttackTranslationContext,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -44,10 +45,16 @@ afterAll(() => {
 describe('army attack translation summary', () => {
 	it('summarizes attack action with on-damage effects', () => {
 		const { translation, attack, plunder } = createSyntheticCtx();
-		const castle = selectAttackResourceDescriptor(Resource.castleHP);
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const happiness = selectAttackResourceDescriptor(Resource.happiness);
-		const warWeariness = selectAttackStatDescriptor(Stat.warWeariness);
+		const castle = withAttackTranslationContext(translation, () =>
+			selectAttackResourceDescriptor(Resource.castleHP),
+		);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const happiness = withAttackTranslationContext(translation, () =>
+			selectAttackResourceDescriptor(Resource.happiness),
+		);
+		const warWeariness = withAttackTranslationContext(translation, () =>
+			selectAttackStatDescriptor(Stat.warWeariness),
+		);
 		const attackEffect = attack.effects.find(
 			(effectDef: EffectDef) => effectDef.type === 'attack',
 		);
@@ -83,19 +90,24 @@ describe('army attack translation summary', () => {
 		);
 		const warAmt = (warEffect?.params as { amount?: number })?.amount ?? 0;
 		const summary = summarizeContent('action', attack.id, translation);
-		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
+		const powerIcon = powerStat.icon || COMBAT_STAT_CONFIG.power.icon;
+		const summaryPrefix = `${powerIcon}${targetSummary}`;
+		const attackerSign = attackerAmt >= 0 ? '+' : '';
+		const defenderChange = `🛡️${happiness.icon}${defenderAmt}`;
+		const attackerChange = `⚔️${happiness.icon}${attackerSign}${attackerAmt}`;
+		const warChange = `${warWeariness.icon}${warAmt >= 0 ? '+' : ''}${warAmt}`;
 		expect(summary).toEqual([
-			`${powerSummary}${targetSummary}`,
+			summaryPrefix,
 			{
 				title: `${targetSummary}💥`,
 				items: [
-					`🛡️${happiness.icon}${defenderAmt}`,
-					`⚔️${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt}`,
+					defenderChange,
+					attackerChange,
 					`⚔️${plunder.icon} ${plunder.name}`,
 				],
 			},
-			`${warWeariness.icon}${warAmt >= 0 ? '+' : ''}${warAmt}`,
+			warChange,
 		]);
 	});
 
@@ -112,10 +124,11 @@ describe('army attack translation summary', () => {
 				'title' in entry &&
 				entry.title.startsWith('On opponent'),
 		) as { items: SummaryEntry[] };
+		const plunderTitle = `${plunder.icon} ${plunder.name}`;
 		const plunderEntry = onDamage.items.find(
 			(item) =>
 				typeof item === 'object' &&
-				(item as { title: string }).title === `${plunder.icon} ${plunder.name}`,
+				(item as { title: string }).title === plunderTitle,
 		) as { items?: unknown[] } | undefined;
 		expect(plunderEntry).toBeDefined();
 		expect(
@@ -131,9 +144,11 @@ describe('army attack translation summary', () => {
 		delete resourceMetadata[SYNTH_RESOURCE_IDS.castleHP];
 		suppressSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
 		try {
-			const castle = selectAttackResourceDescriptor(Resource.castleHP);
-			const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-			expect(powerStat.label).toBe(SYNTH_COMBAT_STATS.power.key);
+			const castle = withAttackTranslationContext(translation, () =>
+				selectAttackResourceDescriptor(Resource.castleHP),
+			);
+			const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+			expect(powerStat.label).toBe('Valor');
 			const targetDisplay = iconLabel(
 				castle.icon,
 				castle.label,
@@ -147,17 +162,21 @@ describe('army attack translation summary', () => {
 			]);
 
 			const description = describeContent('action', attack.id, translation);
+			const defaultAttack = iconLabel(
+				COMBAT_STAT_CONFIG.power.icon,
+				COMBAT_STAT_CONFIG.power.label,
+				'attack power',
+			);
+			const overflowDescription =
+				'If opponent defenses fall, overflow remaining damage ' +
+				`onto opponent ${targetDisplay}`;
 			expect(description).toEqual([
 				{
-					title: `Attack opponent with your ${iconLabel(
-						COMBAT_STAT_CONFIG.power.icon,
-						COMBAT_STAT_CONFIG.power.label,
-						'attack power',
-					)}`,
+					title: `Attack opponent with your ${defaultAttack}`,
 					items: [
 						'Damage reduction applied',
 						'Apply damage to opponent defenses',
-						`If opponent defenses fall, overflow remaining damage onto opponent ${targetDisplay}`,
+						overflowDescription,
 					],
 				},
 			]);
@@ -171,9 +190,13 @@ describe('army attack translation summary', () => {
 
 	it('summarizes building attack as destruction', () => {
 		const { translation, buildingAttack, building } = createSyntheticCtx();
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const gold = selectAttackResourceDescriptor(Resource.gold);
-		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const gold = withAttackTranslationContext(translation, () =>
+			selectAttackResourceDescriptor(Resource.gold),
+		);
+		const buildingDescriptor = withAttackTranslationContext(translation, () =>
+			selectAttackBuildingDescriptor(building.id),
+		);
 		const summaryTarget =
 			buildingDescriptor.icon || buildingDescriptor.label || building.id;
 		const attackEffect = buildingAttack.effects.find(
@@ -191,9 +214,10 @@ describe('army attack translation summary', () => {
 			(rewardEffect?.params as { amount?: number })?.amount ?? 0;
 
 		const summary = summarizeContent('action', buildingAttack.id, translation);
-		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
+		const powerIcon = powerStat.icon || COMBAT_STAT_CONFIG.power.icon;
+		const summaryPrefix = `${powerIcon}${summaryTarget}`;
 		expect(summary).toEqual([
-			`${powerSummary}${summaryTarget}`,
+			summaryPrefix,
 			{
 				title: `${summaryTarget}💥`,
 				items: [`⚔️${gold.icon}+${rewardAmount}`],

@@ -15,10 +15,12 @@ import {
 	DEFENDER_HAPPINESS_LOSS,
 	BUILDING_REWARD_GOLD,
 } from './helpers/armyAttackFactories';
+import { COMBAT_STAT_CONFIG } from './helpers/armyAttackConfig';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import {
 	selectAttackBuildingDescriptor,
 	selectAttackResourceDescriptor,
+	withAttackTranslationContext,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -51,12 +53,24 @@ describe('army attack translation log', () => {
 			attack,
 			plunder,
 		} = createSyntheticCtx();
-		const castle = selectAttackResourceDescriptor(Resource.castleHP);
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
-		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const happiness = selectAttackResourceDescriptor(Resource.happiness);
-		const gold = selectAttackResourceDescriptor(Resource.gold);
+		const castle = withAttackTranslationContext(translation, () =>
+			selectAttackResourceDescriptor(Resource.castleHP),
+		);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const absorptionStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.absorption.key,
+		)!;
+		const fortStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.fortification.key,
+		)!;
+		const happiness = withAttackTranslationContext(translation, () =>
+			selectAttackResourceDescriptor(Resource.happiness),
+		);
+		const gold = withAttackTranslationContext(translation, () =>
+			selectAttackResourceDescriptor(Resource.gold),
+		);
 
 		engineContext.activePlayer.resources[Resource.ap] = 1;
 		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
@@ -69,25 +83,41 @@ describe('army attack translation log', () => {
 		performAction(attack.id, engineContext);
 
 		const log = logContent('action', attack.id, translation);
-		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
+		const powerIcon = powerStat.icon || COMBAT_STAT_CONFIG.power.icon;
+		const powerLabel = iconLabel(powerIcon, powerStat.label, 'Attack');
+		const absorptionIcon =
+			absorptionStat.icon || COMBAT_STAT_CONFIG.absorption.icon;
 		const absorptionLabel = iconLabel(
-			absorptionStat.icon,
+			absorptionIcon,
 			absorptionStat.label,
 			'Absorption',
 		);
-		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
+		const fortIcon = fortStat.icon || COMBAT_STAT_CONFIG.fortification.icon;
+		const fortLabel = iconLabel(fortIcon, fortStat.label, 'Fortification');
 		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
+		const overflowLine =
+			`    If opponent ${fortLabel} falls to 0, overflow remaining damage ` +
+			`onto opponent ${castleLabel}`;
+		const defenderPenalty =
+			`    ${happiness.icon}-${DEFENDER_HAPPINESS_LOSS} ${happiness.label} ` +
+			'for Opponent';
+		const attackerReward =
+			`    ${happiness.icon}+${ATTACKER_HAPPINESS_GAIN} ${happiness.label} ` +
+			'for Player';
+		const transferLine =
+			`      Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}` +
+			`${gold.label} to you`;
 		expect(withLegacyIndent(log)).toEqual([
 			`${attack.icon} ${attack.name}`,
 			`  Attack opponent with your ${powerLabel}`,
 			`    ${absorptionLabel} damage reduction applied`,
 			`    Apply damage to opponent ${fortLabel}`,
-			`    If opponent ${fortLabel} falls to 0, overflow remaining damage onto opponent ${castleLabel}`,
+			overflowLine,
 			`  On opponent ${castleLabel} damage`,
-			`    ${happiness.icon}-${DEFENDER_HAPPINESS_LOSS} ${happiness.label} for Opponent`,
-			`    ${happiness.icon}+${ATTACKER_HAPPINESS_GAIN} ${happiness.label} for Player`,
+			defenderPenalty,
+			attackerReward,
 			`    ${plunder.icon} ${plunder.name}`,
-			`      Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}${gold.label} to you`,
+			transferLine,
 		]);
 	});
 
@@ -98,11 +128,21 @@ describe('army attack translation log', () => {
 			buildingAttack,
 			building,
 		} = createSyntheticCtx();
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
-		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const gold = selectAttackResourceDescriptor(Resource.gold);
-		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const absorptionStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.absorption.key,
+		)!;
+		const fortStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.fortification.key,
+		)!;
+		const gold = withAttackTranslationContext(translation, () =>
+			selectAttackResourceDescriptor(Resource.gold),
+		);
+		const buildingDescriptor = withAttackTranslationContext(translation, () =>
+			selectAttackBuildingDescriptor(building.id),
+		);
 		const buildingDisplay = iconLabel(
 			buildingDescriptor.icon,
 			buildingDescriptor.label,
@@ -117,19 +157,26 @@ describe('army attack translation log', () => {
 
 		performAction(buildingAttack.id, engineContext);
 		const log = logContent('action', buildingAttack.id, translation);
-		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
+		const powerIcon = powerStat.icon || COMBAT_STAT_CONFIG.power.icon;
+		const powerLabel = iconLabel(powerIcon, powerStat.label, 'Attack');
+		const absorptionIcon =
+			absorptionStat.icon || COMBAT_STAT_CONFIG.absorption.icon;
 		const absorptionLabel = iconLabel(
-			absorptionStat.icon,
+			absorptionIcon,
 			absorptionStat.label,
 			'Absorption',
 		);
-		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
+		const fortIcon = fortStat.icon || COMBAT_STAT_CONFIG.fortification.icon;
+		const fortLabel = iconLabel(fortIcon, fortStat.label, 'Fortification');
+		const destroyLine =
+			`    If opponent ${fortLabel} falls to 0, use remaining damage to ` +
+			`attempt to destroy opponent ${buildingDisplay}`;
 		expect(withLegacyIndent(log)).toEqual([
 			`${buildingAttack.icon} ${buildingAttack.name}`,
 			`  Attack opponent with your ${powerLabel}`,
 			`    ${absorptionLabel} damage reduction applied`,
 			`    Apply damage to opponent ${fortLabel}`,
-			`    If opponent ${fortLabel} falls to 0, use remaining damage to attempt to destroy opponent ${buildingDisplay}`,
+			destroyLine,
 			`  On opponent ${buildingDisplay} destruction`,
 			`    ${gold.icon}+${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
 		]);

@@ -9,8 +9,10 @@ import {
 	listAttackStatKeys,
 	selectAttackResourceDescriptor,
 	selectAttackStatDescriptor,
+	withAttackTranslationContext,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 import {
+	createSyntheticCtx,
 	suppressSyntheticStatDescriptor,
 	restoreSyntheticStatDescriptor,
 } from './helpers/armyAttackFactories';
@@ -29,40 +31,47 @@ const getFirst = <T>(values: readonly T[]): T => {
 
 describe('attack diff formatters registry', () => {
 	it('formats resource diffs using the registered formatter', () => {
-		const resourceKey = getFirst(listAttackResourceKeys());
-		const resourceInfo = selectAttackResourceDescriptor(resourceKey);
-		const diff: Extract<AttackPlayerDiff, { type: 'resource' }> = {
-			type: 'resource',
-			key: resourceKey,
-			before: 2,
-			after: 5,
-		};
-
-		const formatted = formatDiffCommon('Change', diff);
-
-		expect(formatted.startsWith('Change:')).toBe(true);
-		expect(formatted).toContain(resourceInfo.label ?? resourceKey);
-		expect(formatted).toContain('+3');
+		const { translation } = createSyntheticCtx();
+		const formatted = withAttackTranslationContext(translation, () => {
+			const resourceKey = getFirst(listAttackResourceKeys());
+			const resourceInfo = selectAttackResourceDescriptor(resourceKey);
+			const diff: Extract<AttackPlayerDiff, { type: 'resource' }> = {
+				type: 'resource',
+				key: resourceKey,
+				before: 2,
+				after: 5,
+			};
+			const result = formatDiffCommon('Change', diff, translation);
+			expect(result.startsWith('Change:')).toBe(true);
+			expect(result).toContain(resourceInfo.label ?? resourceKey);
+			expect(result).toContain('+3');
+			return result;
+		});
+		expect(formatted).toBeDefined();
 	});
 
 	it('formats stat diffs using the registered formatter', () => {
-		const statKey = getFirst(listAttackStatKeys());
-		const statInfo = selectAttackStatDescriptor(statKey);
-		const diff: Extract<AttackPlayerDiff, { type: 'stat' }> = {
-			type: 'stat',
-			key: statKey,
-			before: 4,
-			after: 9,
-		};
-
-		const formatted = formatDiffCommon('Update', diff);
-
-		expect(formatted.startsWith('Update:')).toBe(true);
-		expect(formatted).toContain(statInfo.label ?? statKey);
-		expect(formatted).toContain('+5');
+		const { translation } = createSyntheticCtx();
+		const formatted = withAttackTranslationContext(translation, () => {
+			const statKey = getFirst(listAttackStatKeys());
+			const statInfo = selectAttackStatDescriptor(statKey);
+			const diff: Extract<AttackPlayerDiff, { type: 'stat' }> = {
+				type: 'stat',
+				key: statKey,
+				before: 4,
+				after: 9,
+			};
+			const result = formatDiffCommon('Update', diff, translation);
+			expect(result.startsWith('Update:')).toBe(true);
+			expect(result).toContain(statInfo.label ?? statKey);
+			expect(result).toContain('+5');
+			return result;
+		});
+		expect(formatted).toBeDefined();
 	});
 
 	it('falls back to resource key when descriptor metadata is missing', () => {
+		const { translation } = createSyntheticCtx();
 		const resourceKey = SYNTH_RESOURCE_IDS.castleHP;
 		const original = SYNTH_RESOURCE_METADATA[resourceKey];
 		delete SYNTH_RESOURCE_METADATA[resourceKey];
@@ -73,8 +82,11 @@ describe('attack diff formatters registry', () => {
 				before: 1,
 				after: 4,
 			};
-			const formatted = formatDiffCommon('Change', diff);
-			expect(formatted).toContain(resourceKey);
+			const formatted = withAttackTranslationContext(translation, () =>
+				formatDiffCommon('Change', diff, translation),
+			);
+			expect(formatted).toContain('Castle HP');
+			expect(formatted).not.toContain(resourceKey);
 			expect(formatted).toContain('+3');
 		} finally {
 			if (original) {
@@ -84,6 +96,7 @@ describe('attack diff formatters registry', () => {
 	});
 
 	it('falls back to stat key when descriptor metadata is missing', () => {
+		const { translation } = createSyntheticCtx();
 		const statKey = SYNTH_STAT_IDS.armyStrength;
 		suppressSyntheticStatDescriptor(statKey);
 		try {
@@ -93,8 +106,11 @@ describe('attack diff formatters registry', () => {
 				before: 6,
 				after: 7,
 			};
-			const formatted = formatDiffCommon('Adjust', diff);
-			expect(formatted).toContain(statKey);
+			const formatted = withAttackTranslationContext(translation, () =>
+				formatDiffCommon('Adjust', diff, translation),
+			);
+			expect(formatted).toContain('Army Strength');
+			expect(formatted).not.toContain(statKey);
 			expect(formatted).toContain('+1');
 		} finally {
 			restoreSyntheticStatDescriptor(statKey);
@@ -109,8 +125,11 @@ describe('attack diff formatters registry', () => {
 			after: 1,
 		} as unknown as AttackPlayerDiff;
 
-		expect(() => formatDiffCommon('Oops', unsupportedDiff)).toThrow(
-			/Unsupported attack diff type: unknown/,
-		);
+		const { translation } = createSyntheticCtx();
+		expect(() =>
+			withAttackTranslationContext(translation, () =>
+				formatDiffCommon('Oops', unsupportedDiff, translation),
+			),
+		).toThrow(/Unsupported attack diff type: unknown/);
 	});
 });
