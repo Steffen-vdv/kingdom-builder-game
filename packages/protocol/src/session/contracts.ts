@@ -17,6 +17,8 @@ export interface SessionIdentifier {
 
 export type SessionPlayerNameMap = Partial<Record<SessionPlayerId, string>>;
 
+export type SessionRunAiOverrides = Record<string, unknown>;
+
 export interface SessionCreateRequest {
 	devMode?: boolean;
 	config?: GameConfig;
@@ -53,6 +55,16 @@ export interface SessionAdvanceRequest extends SessionIdentifier {}
 
 export interface SessionAdvanceResponse extends SessionStateResponse {
 	advance: SessionAdvanceResult;
+}
+
+export interface SessionRunAiRequest extends SessionIdentifier {
+	playerId: SessionPlayerId;
+	overrides?: SessionRunAiOverrides;
+}
+
+export interface SessionRunAiResponse extends SessionStateResponse {
+	ranTurn: boolean;
+	advance?: SessionAdvanceResult;
 }
 
 export interface SessionSetDevModeRequest extends SessionIdentifier {
