@@ -30,6 +30,7 @@ import {
 	releaseSession,
 	setSessionDevMode,
 } from './sessionSdk';
+import { getSessionRecord } from './sessionStateStore';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
@@ -72,8 +73,14 @@ export function GameProvider(props: GameProviderProps) {
 			setSessionData(next);
 		}
 		if (next) {
+			const record = getSessionRecord(next.sessionId);
+			if (record) {
+				queueRef.current = record.queueSeed;
+			}
 			setSessionError(null);
+			return;
 		}
+		queueRef.current = Promise.resolve();
 	}, []);
 
 	const handleRetry = useCallback(() => {

@@ -1,5 +1,21 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T6 - Session State Store Bootstrap
+
+- Added `packages/web/src/state/sessionStateStore.ts` to cache authoritative
+  session snapshots, rule snapshots, registries, resource keys, and metadata
+  emitted by the protocol service. The store clones incoming payloads to guard
+  against accidental mutation and seeds a per-session promise queue used by the
+  web client to coordinate serialized lifecycle tasks.
+- `sessionSdk` now initializes and mutates the store whenever snapshots refresh,
+  ensuring effect logs and passive metadata remain accessible to translation
+  contexts even when the Engine mirror is not queried. The SDK also clears the
+  store on release.
+- `GameContext` consumes the cached queue seed so the UI promise chain resets
+  safely on session hand-off, and new tests under
+  `packages/web/tests/state/sessionStateStore.test.ts` confirm registry merge
+  semantics and cloning behaviour.
+
 ## Domain Migration - P1 - T17 - Stat Summary Metadata Decoupling
 
 - Reworked `packages/web/src/utils/stats.ts` and supporting descriptors to read
