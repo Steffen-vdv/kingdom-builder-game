@@ -19,6 +19,12 @@ describe('FastifySessionTransport', () => {
 		authorization: 'Bearer session-manager',
 	} satisfies Record<string, string>;
 
+	type SnapshotResponse = {
+		snapshot: {
+			game: { players: Array<{ id: string }> };
+		};
+	};
+
 	async function createServer(tokens = defaultTokens) {
 		const { manager, actionId, gainKey } = createSyntheticSessionManager();
 		const app = fastify();
@@ -281,11 +287,23 @@ describe('FastifySessionTransport', () => {
 				return await factory();
 			});
 		}
+		const snapshotResp = await app.inject({
+			method: 'GET',
+			url: `/sessions/${sessionId}/snapshot`,
+			headers: authorizedHeaders,
+		});
+		const snapshot = snapshotResp.json() as SnapshotResponse;
+		const players = snapshot.snapshot.game.players;
+		const playerId = players[0]?.id ?? null;
+		expect(playerId).not.toBeNull();
+		if (!playerId) {
+			throw new Error('No player id was found in the snapshot.');
+		}
 		const response = await app.inject({
 			method: 'POST',
 			url: `/sessions/${sessionId}/ai-turn`,
 			headers: authorizedHeaders,
-			payload: { playerId: 'A' },
+			payload: { playerId },
 		});
 		expect(response.statusCode).toBe(200);
 		const body = response.json() as {
@@ -293,7 +311,7 @@ describe('FastifySessionTransport', () => {
 		};
 		expect(body.ranTurn).toBe(true);
 		if (runSpy) {
-			expect(runSpy).toHaveBeenCalledWith('A');
+			expect(runSpy).toHaveBeenCalledWith(playerId);
 		}
 		await app.close();
 	});
@@ -309,11 +327,23 @@ describe('FastifySessionTransport', () => {
 		const { sessionId } = createResponse.json() as {
 			sessionId: string;
 		};
+		const snapshotResp = await app.inject({
+			method: 'GET',
+			url: `/sessions/${sessionId}/snapshot`,
+			headers: authorizedHeaders,
+		});
+		const snapshot = snapshotResp.json() as SnapshotResponse;
+		const players = snapshot.snapshot.game.players;
+		const playerId = players[0]?.id ?? null;
+		expect(playerId).not.toBeNull();
+		if (!playerId) {
+			throw new Error('No player id was found in the snapshot.');
+		}
 		const response = await app.inject({
 			method: 'POST',
 			url: `/sessions/${sessionId}/ai-turn`,
 			headers: authorizedHeaders,
-			payload: { playerId: 'A' },
+			payload: { playerId },
 		});
 		expect(response.statusCode).toBe(409);
 		const body = response.json() as {
@@ -337,14 +367,31 @@ describe('FastifySessionTransport', () => {
 		const session = manager.getSession(sessionId);
 		expect(session).toBeDefined();
 		const expected = { forecast: [{ id: 'main' }] };
+		const snapshotResp = await app.inject({
+			method: 'GET',
+			url: `/sessions/${sessionId}/snapshot`,
+			headers: authorizedHeaders,
+		});
+		const snapshot = snapshotResp.json() as SnapshotResponse;
+		const players = snapshot.snapshot.game.players;
+		const playerId = players[0]?.id ?? null;
+		expect(playerId).not.toBeNull();
+		if (!playerId) {
+			throw new Error('No player id was found in the snapshot.');
+		}
 		const simulateSpy = session
 			? vi.spyOn(session, 'simulateUpcomingPhases').mockReturnValue(expected)
 			: null;
+		if (session) {
+			vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+				return await factory();
+			});
+		}
 		const response = await app.inject({
 			method: 'POST',
 			url: `/sessions/${sessionId}/simulate`,
 			headers: authorizedHeaders,
-			payload: { playerId: 'A', options: { maxIterations: 2 } },
+			payload: { playerId, options: { maxIterations: 2 } },
 		});
 		expect(response.statusCode).toBe(200);
 		const body = response.json() as {
@@ -352,7 +399,9 @@ describe('FastifySessionTransport', () => {
 		};
 		expect(body.result).toEqual(expected);
 		if (simulateSpy) {
-			expect(simulateSpy).toHaveBeenCalledWith('A', { maxIterations: 2 });
+			expect(simulateSpy).toHaveBeenCalledWith(playerId, {
+				maxIterations: 2,
+			});
 		}
 		await app.close();
 	});

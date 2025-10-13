@@ -147,7 +147,7 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 			try {
 				const payload = mergeSessionPayload(request);
 				const headers = extractHeaders(request);
-				const response = transport.simulateUpcomingPhases({
+				const response = await transport.simulateUpcomingPhases({
 					body: payload,
 					headers,
 				});
