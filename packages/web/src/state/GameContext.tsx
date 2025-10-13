@@ -32,6 +32,10 @@ import {
 	setSessionDevMode,
 	updateSessionPlayerName,
 } from './sessionSdk';
+import {
+	createRemoteSessionQueue,
+	type RemoteSessionQueue,
+} from './RemoteSessionQueue';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
@@ -56,7 +60,8 @@ export function GameProvider(props: GameProviderProps) {
 	} = props;
 
 	const mountedRef = useRef(true);
-	const queueRef = useRef<Promise<void>>(Promise.resolve());
+	const exclusiveQueueRef = useRef<Promise<void>>(Promise.resolve());
+	const remoteQueueRef = useRef<RemoteSessionQueue | null>(null);
 	const sessionStateRef = useRef<SessionContainer | null>(null);
 	const latestSnapshotRef = useRef<SessionSnapshot | null>(null);
 	const refreshAbortRef = useRef<AbortController | null>(null);
@@ -70,6 +75,25 @@ export function GameProvider(props: GameProviderProps) {
 	const updateSessionData = useCallback((next: SessionContainer | null) => {
 		sessionStateRef.current = next;
 		latestSnapshotRef.current = next?.snapshot ?? null;
+		if (next) {
+			const currentQueue = remoteQueueRef.current;
+			if (!currentQueue || currentQueue.sessionId !== next.sessionId) {
+				remoteQueueRef.current = createRemoteSessionQueue({
+					sessionId: next.sessionId,
+					snapshot: next.snapshot,
+					registries: next.registries,
+					metadata: next.metadata,
+				});
+			} else {
+				currentQueue.updateState({
+					snapshot: next.snapshot,
+					registries: next.registries,
+					metadata: next.metadata,
+				});
+			}
+		} else {
+			remoteQueueRef.current = null;
+		}
 		if (mountedRef.current) {
 			setSessionData(next);
 		}
@@ -85,9 +109,13 @@ export function GameProvider(props: GameProviderProps) {
 
 	const runExclusive = useCallback(
 		<T,>(task: () => Promise<T> | T): Promise<T> => {
-			const chain = queueRef.current;
+			const queue = remoteQueueRef.current;
+			if (queue) {
+				return queue.enqueue(task);
+			}
+			const chain = exclusiveQueueRef.current;
 			const next = chain.then(() => Promise.resolve().then(task));
-			queueRef.current = next.catch(() => {}).then(() => undefined);
+			exclusiveQueueRef.current = next.catch(() => {}).then(() => undefined);
 			return next;
 		},
 		[],
@@ -301,21 +329,38 @@ export function GameProvider(props: GameProviderProps) {
 					}
 					return current.session.enqueue(task);
 				}),
-			getCurrentSession: () => {
-				const current = sessionStateRef.current;
-				if (!current) {
-					throw new Error('Session not ready');
+			getLatestSnapshot: () => {
+				const queue = remoteQueueRef.current;
+				if (queue) {
+					const snapshot = queue.getLatestSnapshot();
+					if (snapshot) {
+						return snapshot;
+					}
 				}
-				return current.session;
+				return latestSnapshotRef.current;
 			},
-			getLegacySession: () => {
-				const current = sessionStateRef.current;
-				if (!current) {
-					throw new Error('Session not ready');
+			getLatestRegistries: () => {
+				const queue = remoteQueueRef.current;
+				if (queue) {
+					const registries = queue.getLatestRegistries();
+					if (registries) {
+						return registries;
+					}
 				}
-				return current.legacySession;
+				const current = sessionStateRef.current;
+				return current?.registries ?? null;
 			},
-			getLatestSnapshot: () => latestSnapshotRef.current,
+			getLatestMetadata: () => {
+				const queue = remoteQueueRef.current;
+				if (queue) {
+					const metadata = queue.getLatestMetadata();
+					if (metadata) {
+						return metadata;
+					}
+				}
+				const current = sessionStateRef.current;
+				return current?.metadata ?? null;
+			},
 			updatePlayerName: (playerId, playerName) =>
 				runExclusive(async () => {
 					const current = sessionStateRef.current;
@@ -387,6 +432,7 @@ export function GameProvider(props: GameProviderProps) {
 		queue: queueHelpers,
 		sessionId: sessionData.sessionId,
 		sessionState: sessionData.snapshot,
+		legacySession: sessionData.legacySession,
 		ruleSnapshot: sessionData.ruleSnapshot,
 		refreshSession,
 		onReleaseSession: handleRelease,

@@ -2,12 +2,10 @@ import { useCallback, useMemo } from 'react';
 import type {
 	SessionQueueHelpers,
 	SessionSnapshot,
-	Session,
 	LegacySession,
 } from './sessionTypes';
 
 interface UseSessionQueueResult {
-	session: Session;
 	legacySession: LegacySession;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	cachedSessionSnapshot: SessionSnapshot;
@@ -17,15 +15,8 @@ interface UseSessionQueueResult {
 export function useSessionQueue(
 	queue: SessionQueueHelpers,
 	sessionState: SessionSnapshot,
+	legacySession: LegacySession,
 ): UseSessionQueueResult {
-	const session = useMemo(
-		() => queue.getCurrentSession(),
-		[queue, sessionState],
-	);
-	const legacySession = useMemo(
-		() => queue.getLegacySession(),
-		[queue, sessionState],
-	);
 	const enqueue = useCallback(
 		<T>(task: () => Promise<T> | T) => queue.enqueue(task),
 		[queue],
@@ -43,7 +34,6 @@ export function useSessionQueue(
 		return legacySession.getSnapshot();
 	}, [queue, legacySession, sessionState]);
 	return {
-		session,
 		legacySession,
 		enqueue,
 		cachedSessionSnapshot,
