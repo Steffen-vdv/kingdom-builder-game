@@ -14,6 +14,29 @@ import type {
 	SessionTriggerMetadata,
 } from './index';
 
+export interface SessionDeveloperPresetResourceTarget {
+	key: string;
+	target: number;
+}
+
+export interface SessionDeveloperPresetPopulationEntry {
+	role: string;
+	count: number;
+}
+
+export interface SessionDeveloperPresetPlayerPlan {
+	resources?: SessionDeveloperPresetResourceTarget[];
+	population?: SessionDeveloperPresetPopulationEntry[];
+	landCount?: number;
+	developments?: string[];
+	buildings?: string[];
+}
+
+export interface SessionDeveloperPresetPlan {
+	player?: SessionDeveloperPresetPlayerPlan;
+	players?: Record<string, SessionDeveloperPresetPlayerPlan>;
+}
+
 export interface SessionOverviewHeroMetadata {
 	badgeIcon: string;
 	badgeLabel: string;
@@ -55,6 +78,7 @@ export interface SessionRegistriesMetadata {
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
 	overviewContent?: SessionOverviewMetadata;
+	developerPresetPlan?: SessionDeveloperPresetPlan;
 }
 
 export interface SessionIdentifier {

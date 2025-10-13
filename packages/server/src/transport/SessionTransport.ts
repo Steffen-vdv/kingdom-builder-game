@@ -49,6 +49,10 @@ import {
 	attachHttpStatus,
 	parseSessionIdentifier,
 } from './sessionRequestUtils.js';
+// prettier-ignore
+import {
+	applyDeveloperPresetPlan,
+} from '../session/applyDeveloperPresetPlan.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 
 export interface SessionTransportOptions {
@@ -95,6 +99,10 @@ export class SessionTransport {
 			}
 			const session = this.sessionManager.createSession(sessionId, options);
 			data.playerNames && this.applyPlayerNames(session, data.playerNames);
+			if (options.devMode) {
+				const metadata = this.sessionManager.getRegistries().metadata;
+				applyDeveloperPresetPlan(session, metadata);
+			}
 		} catch (error) {
 			throw new TransportError('CONFLICT', 'Failed to create session.', {
 				cause: error,
@@ -227,6 +235,10 @@ export class SessionTransport {
 		const { sessionId, enabled } = parsed.data;
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
+		if (enabled) {
+			const metadata = this.sessionManager.getRegistries().metadata;
+			applyDeveloperPresetPlan(session, metadata);
+		}
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
 		const response = this.buildStateResponse(
 			sessionId,

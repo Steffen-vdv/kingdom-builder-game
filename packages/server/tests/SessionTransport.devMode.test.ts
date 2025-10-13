@@ -2,10 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
-import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+// prettier-ignore
+import {
+	createSyntheticSessionManager,
+} from './helpers/createSyntheticSessionManager.js';
 import { SessionManager } from '../src/session/SessionManager.js';
 import { GAME_START } from '@kingdom-builder/contents';
 import { buildSessionMetadata } from '../src/content/buildSessionMetadata.js';
+import type { SessionSnapshot } from '@kingdom-builder/protocol';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -19,6 +23,47 @@ const middleware = createTokenAuthMiddleware({
 const authorizedHeaders = {
 	authorization: 'Bearer session-manager',
 } satisfies Record<string, string>;
+
+function expectDeveloperPresetApplied(
+	snapshot: SessionSnapshot,
+	metadata: ReturnType<typeof buildSessionMetadata>,
+): void {
+	const devModeConfig = GAME_START.modes?.dev;
+	if (!devModeConfig) {
+		throw new Error('Expected dev mode configuration in GAME_START.');
+	}
+	const presetPlayer = devModeConfig.player;
+	const player = snapshot.game.players[0];
+	if (!player) {
+		throw new Error('Expected at least one player in the developer snapshot.');
+	}
+	if (presetPlayer?.resources) {
+		for (const [key, expectedAmount] of Object.entries(
+			presetPlayer.resources,
+		)) {
+			expect(metadata.resources?.[key]).toBeDefined();
+			expect(player.resources[key]).toBe(expectedAmount);
+		}
+	}
+	if (presetPlayer?.population) {
+		for (const [role, expectedCount] of Object.entries(
+			presetPlayer.population,
+		)) {
+			expect(metadata.populations?.[role]).toBeDefined();
+			expect(player.population[role]).toBe(expectedCount);
+		}
+	}
+	const opponentConfig = devModeConfig.players?.['B'];
+	const opponent = snapshot.game.players[1];
+	if (opponentConfig?.resources && opponent) {
+		for (const [key, expectedAmount] of Object.entries(
+			opponentConfig.resources,
+		)) {
+			expect(metadata.resources?.[key]).toBeDefined();
+			expect(opponent.resources[key]).toBe(expectedAmount);
+		}
+	}
+}
 
 describe('SessionTransport dev mode', () => {
 	it('toggles developer mode on demand', () => {
@@ -78,42 +123,32 @@ describe('SessionTransport dev mode', () => {
 			headers: authorizedHeaders,
 		});
 		expect(response.snapshot.game.devMode).toBe(true);
-		const devModeConfig = GAME_START.modes?.dev;
-		if (!devModeConfig) {
-			throw new Error('Expected dev mode configuration in GAME_START.');
-		}
-		const presetPlayer = devModeConfig.player;
-		const player = response.snapshot.game.players[0];
-		if (!player) {
-			throw new Error(
-				'Expected at least one player in the developer snapshot.',
-			);
-		}
-		if (presetPlayer?.resources) {
-			for (const [key, expectedAmount] of Object.entries(
-				presetPlayer.resources,
-			)) {
-				expect(metadata.resources?.[key]).toBeDefined();
-				expect(player.resources[key]).toBe(expectedAmount);
-			}
-		}
-		if (presetPlayer?.population) {
-			for (const [role, expectedCount] of Object.entries(
-				presetPlayer.population,
-			)) {
-				expect(metadata.populations?.[role]).toBeDefined();
-				expect(player.population[role]).toBe(expectedCount);
-			}
-		}
-		const opponentConfig = devModeConfig.players?.['B'];
-		const opponent = response.snapshot.game.players[1];
-		if (opponentConfig?.resources && opponent) {
-			for (const [key, expectedAmount] of Object.entries(
-				opponentConfig.resources,
-			)) {
-				expect(metadata.resources?.[key]).toBeDefined();
-				expect(opponent.resources[key]).toBe(expectedAmount);
-			}
-		}
+		expectDeveloperPresetApplied(response.snapshot, metadata);
+	});
+
+	it('applies developer presets when enabling dev mode again', () => {
+		const metadata = buildSessionMetadata();
+		const manager = new SessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: expect.getState().currentTestName
+				? () => 'dev-session-toggle'
+				: undefined,
+			authMiddleware: middleware,
+		});
+		const creation = transport.createSession({
+			body: { devMode: false },
+			headers: authorizedHeaders,
+		});
+		expect(creation.snapshot.game.devMode).toBe(false);
+		const response = transport.setDevMode({
+			body: {
+				sessionId: creation.sessionId,
+				enabled: true,
+			},
+			headers: authorizedHeaders,
+		});
+		expect(response.snapshot.game.devMode).toBe(true);
+		expectDeveloperPresetApplied(response.snapshot, metadata);
 	});
 });

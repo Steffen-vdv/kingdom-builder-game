@@ -24,6 +24,7 @@ import type {
 	SessionRegistriesMetadata,
 	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol';
+import { createDeveloperPresetPlan } from './createDeveloperPresetPlan.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -236,12 +237,19 @@ export class SessionManager {
 	}
 
 	private buildMetadata(): SessionRegistriesMetadata {
-		return {
+		const metadata: SessionRegistriesMetadata = {
 			resources: this.buildDescriptorMap(RESOURCES),
 			stats: this.buildDescriptorMap(STATS),
 			triggers: this.buildTriggerMetadata(),
 			overviewContent: structuredClone(OVERVIEW_CONTENT),
 		} satisfies SessionRegistriesMetadata;
+		const developerPresetPlan = createDeveloperPresetPlan(
+			this.baseOptions.start,
+		);
+		if (developerPresetPlan) {
+			metadata.developerPresetPlan = developerPresetPlan;
+		}
+		return metadata;
 	}
 
 	private buildResourceRegistry(
