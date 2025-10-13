@@ -15,6 +15,7 @@ import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
+import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
@@ -254,17 +255,17 @@ describe('GameProvider', () => {
 		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
 			return await task();
 		});
-		session = {
-			enqueue: enqueueMock,
-			updatePlayerName: vi.fn(),
-			pullEffectLog: vi.fn(),
-			getPassiveEvaluationMods: vi.fn(() => ({})),
-			getSnapshot: vi.fn(() => initialSnapshot),
-			advancePhase: vi.fn(),
-			getActionCosts: vi.fn(() => ({})),
-			performAction: vi.fn(),
-			setDevMode: vi.fn(),
-		} as unknown as LegacySession;
+		session = createLegacySessionMock(
+			{ snapshot: initialSnapshot },
+			{
+				enqueue: enqueueMock,
+				updatePlayerName: vi.fn(),
+				getSnapshot: vi.fn(() => initialSnapshot),
+				advancePhase: vi.fn(),
+				getActionCosts: vi.fn(() => ({})),
+				setDevMode: vi.fn(),
+			},
+		);
 		createSessionMock.mockResolvedValue({
 			sessionId: 'session-1',
 			session,

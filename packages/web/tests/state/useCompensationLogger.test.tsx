@@ -14,6 +14,7 @@ import type {
 	SessionResourceKey,
 } from '../../src/state/sessionTypes';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 
 vi.mock('../../src/translation', async () => {
 	const actual = await vi.importActual<TranslationTypes>(
@@ -39,25 +40,6 @@ function createRegistriesWithFallback() {
 		? [primaryResource]
 		: [];
 	return { registries, resourceKeys, primaryResource } as const;
-}
-
-function createSession(primaryResource: SessionResourceKey): LegacySession {
-	return {
-		hasAiController: () => false,
-		getActionDefinition: () => undefined,
-		runAiTurn: vi.fn().mockResolvedValue(false),
-		advancePhase: vi.fn(),
-		pullEffectLog: vi.fn(),
-		getPassiveEvaluationMods: vi.fn(() => new Map()),
-		getRuleSnapshot: vi.fn(() => ({
-			tieredResourceKey: primaryResource,
-			tierDefinitions: [],
-			winConditions: [],
-		})),
-		pushEffectLog: vi.fn(),
-		applyDeveloperPreset: vi.fn(),
-		updatePlayerName: vi.fn(),
-	} as unknown as LegacySession;
 }
 
 function createPlayer(
@@ -156,7 +138,7 @@ describe('useCompensationLogger', () => {
 			createRegistriesWithFallback();
 		const resourceKey =
 			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
-		const session = createSession(resourceKey);
+		const session = createLegacySessionMock();
 		const state = createSessionState(1, resourceKey);
 		const { rerender } = render(
 			<Harness
@@ -195,7 +177,7 @@ describe('useCompensationLogger', () => {
 		const { registries, resourceKeys } = createRegistriesWithFallback();
 		const resourceKey =
 			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
-		const session = createSession(resourceKey);
+		const session = createLegacySessionMock();
 		const state = createSessionState(1, resourceKey);
 		const { rerender } = render(
 			<Harness
@@ -208,7 +190,7 @@ describe('useCompensationLogger', () => {
 		);
 		expect(addLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
-		const newSession = createSession(resourceKey);
+		const newSession = createLegacySessionMock();
 		const newState = createSessionState(1, resourceKey);
 		rerender(
 			<Harness

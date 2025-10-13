@@ -2,13 +2,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useAiRunner } from '../../src/state/useAiRunner';
-import type { LegacySession } from '../../src/state/sessionTypes';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
 import { createResourceKeys } from '../helpers/sessionRegistries';
 import { markFatalSessionError } from '../../src/state/sessionSdk';
+import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 
 describe('useAiRunner', () => {
 	it('forwards fatal errors from the action phase runner', async () => {
@@ -47,19 +47,21 @@ describe('useAiRunner', () => {
 			.mockRejectedValueOnce(fatalError);
 		const onFatalSessionError = vi.fn();
 		const performRef = { current: vi.fn().mockResolvedValue(undefined) };
-		const session = {
-			hasAiController: vi.fn(() => true),
-			enqueue: vi.fn(async (task: () => Promise<void>) => {
-				await task();
-			}),
-			runAiTurn: vi.fn(() => Promise.resolve(true)),
-			getActionDefinition: vi.fn(() => ({
-				id: 'action.advance',
-				name: 'Advance',
-			})),
-			getSnapshot: vi.fn(() => sessionState),
-			advancePhase: vi.fn(),
-		} as unknown as LegacySession;
+		const session = createLegacySessionMock(
+			{ snapshot: sessionState },
+			{
+				hasAiController: vi.fn(() => true),
+				enqueue: vi.fn(async (task: () => Promise<void>) => {
+					await task();
+				}),
+				runAiTurn: vi.fn(() => Promise.resolve(true)),
+				getActionDefinition: vi.fn(() => ({
+					id: 'action.advance',
+					name: 'Advance',
+				})),
+				advancePhase: vi.fn(),
+			},
+		);
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
 
@@ -127,19 +129,21 @@ describe('useAiRunner', () => {
 			await options.performAction('action.advance', undefined, {});
 			return true;
 		});
-		const session = {
-			hasAiController: vi.fn(() => true),
-			enqueue: vi.fn(async (task: () => Promise<void>) => {
-				await task();
-			}),
-			runAiTurn,
-			getActionDefinition: vi.fn(() => ({
-				id: 'action.advance',
-				name: 'Advance',
-			})),
-			getSnapshot: vi.fn(() => sessionState),
-			advancePhase: vi.fn(),
-		} as unknown as LegacySession;
+		const session = createLegacySessionMock(
+			{ snapshot: sessionState },
+			{
+				hasAiController: vi.fn(() => true),
+				enqueue: vi.fn(async (task: () => Promise<void>) => {
+					await task();
+				}),
+				runAiTurn,
+				getActionDefinition: vi.fn(() => ({
+					id: 'action.advance',
+					name: 'Advance',
+				})),
+				advancePhase: vi.fn(),
+			},
+		);
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
 
