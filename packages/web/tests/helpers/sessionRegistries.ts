@@ -55,6 +55,9 @@ function cloneRegistriesPayload(
 				cloneResourceDefinition(definition),
 			]),
 		),
+		...(payload.metadata
+			? { metadata: structuredClone(payload.metadata) }
+			: {}),
 	};
 }
 

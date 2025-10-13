@@ -79,6 +79,12 @@ export function GameProviderInner({
 		return cachedSessionSnapshot;
 	}, [queue, cachedSessionSnapshot]);
 
+  const cachedRegistries = queue.getLatestRegistries() ?? registries;
+	const cachedMetadata =
+		queue.getLatestMetadata() ??
+		sessionMetadata ??
+		cachedSessionSnapshot.metadata;
+
 	const refresh = useCallback(() => {
 		void refreshSession();
 	}, [refreshSession]);
@@ -103,9 +109,9 @@ export function GameProviderInner({
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
 			sessionState,
-			registries,
+			registries: cachedRegistries,
 			ruleSnapshot,
-			sessionMetadata,
+			sessionMetadata: cachedMetadata,
 			cachedSessionSnapshot,
 			onFatalSessionError,
 		});
@@ -123,8 +129,8 @@ export function GameProviderInner({
 		sessionState.actionCostResource;
 
 	const sessionView = useMemo(
-		() => selectSessionView(sessionState, registries),
-		[sessionState, registries],
+		() => selectSessionView(sessionState, cachedRegistries),
+		[sessionState, cachedRegistries],
 	);
 	const selectors = useMemo<SessionDerivedSelectors>(
 		() => ({ sessionView }),
@@ -173,7 +179,7 @@ export function GameProviderInner({
 		resourceKeys,
 		enqueue,
 		showResolution: handleShowResolution,
-		registries,
+		registries: cachedRegistries,
 		onFatalSessionError,
 	});
 
@@ -187,13 +193,13 @@ export function GameProviderInner({
 		sessionState,
 		addLog,
 		resourceKeys,
-		registries,
+		registries: cachedRegistries,
 	});
 
 	const { handlePerform, performRef } = useActionPerformer({
 		sessionId,
 		actionCostResource,
-		registries,
+		registries: cachedRegistries,
 		getCachedSessionSnapshot: readCachedSessionSnapshot,
 		addLog,
 		showResolution: handleShowResolution,
@@ -242,10 +248,7 @@ export function GameProviderInner({
 		};
 	}, [runUntilActionPhase, onFatalSessionError]);
 
-	const metadataSnapshot = useMemo(
-		() => sessionMetadata ?? cachedSessionSnapshot.metadata,
-		[sessionMetadata, cachedSessionSnapshot],
-	);
+	const metadataSnapshot = cachedMetadata;
 
 	const metadata = useMemo<SessionMetadataFetchers>(
 		() => ({
@@ -336,7 +339,7 @@ export function GameProviderInner({
 
 	return (
 		<RegistryMetadataProvider
-			registries={registries}
+			registries={cachedRegistries}
 			metadata={metadataSnapshot}
 		>
 			<GameEngineContext.Provider value={value}>

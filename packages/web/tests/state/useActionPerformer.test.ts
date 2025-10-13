@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequirementFailure, RuleSnapshot } from '@kingdom-builder/engine';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
-import { SessionMirroringError } from '../../src/state/legacySessionMirror';
+import { SessionMirroringError } from '../../src/state/sessionSdk';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
