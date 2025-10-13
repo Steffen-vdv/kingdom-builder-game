@@ -1,4 +1,9 @@
 import type { TranslationContext, TranslationAssets } from '../context';
+import {
+	selectPopulationRoleDisplay,
+	selectResourceDisplay,
+	selectStatDisplay,
+} from '../context/assetSelectors';
 import { humanizeIdentifier } from './stringUtils';
 
 export type RegistryDescriptor = { icon: string; label: string };
@@ -17,6 +22,10 @@ const DEFAULT_RESULT_ICON = '✨';
 const DEFAULT_RESULT_LABEL = 'Outcome Adjustment';
 
 const DEFAULT_KEY = Symbol('default');
+
+const DEFAULT_STAT_PREFIXES: Readonly<Record<string, string>> = Object.freeze({
+	maxPopulation: 'Max ',
+});
 
 type CacheKey = string | typeof DEFAULT_KEY;
 
@@ -96,11 +105,10 @@ export function selectPopulationDescriptor(
 		cache.set(cacheKey, fallback);
 		return fallback;
 	}
-	const assets = context.assets;
-	const entry = assets?.populations?.[role];
-	const icon = coerceIcon(entry?.icon, fallback.icon);
+	const display = selectPopulationRoleDisplay(context.assets, role);
+	const icon = coerceIcon(display.icon, fallback.icon);
 	const fallbackLabel = humanizeIdentifier(role) || fallback.label;
-	const label = coerceLabel(entry?.label, fallbackLabel);
+	const label = coerceLabel(display.label, fallbackLabel);
 	const descriptor = { icon, label } satisfies RegistryDescriptor;
 	cache.set(cacheKey, descriptor);
 	return descriptor;
@@ -119,11 +127,10 @@ export function selectResourceDescriptor(
 	if (cached) {
 		return cached;
 	}
-	const assets = context.assets;
-	const entry = assets?.resources?.[key];
+	const display = selectResourceDisplay(context.assets, key);
 	const fallbackLabel = humanizeIdentifier(key) || key;
-	const label = coerceLabel(entry?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon, '');
+	const label = coerceLabel(display.label, fallbackLabel);
+	const icon = coerceIcon(display.icon, '');
 	const descriptor = { icon, label } satisfies RegistryDescriptor;
 	cache.set(cacheKey, descriptor);
 	return descriptor;
@@ -131,10 +138,6 @@ export function selectResourceDescriptor(
 
 const statCache: CacheStore<StatRegistryDescriptor> = new WeakMap();
 const statFallbackCache: CacheFallback<StatRegistryDescriptor> = new Map();
-
-const DEFAULT_STAT_FORMATS: Record<string, { prefix?: string }> = {
-	maxPopulation: { prefix: 'Max ' },
-};
 
 export function selectStatDescriptor(
 	context: ContextWithAssets,
@@ -146,15 +149,23 @@ export function selectStatDescriptor(
 	if (cached) {
 		return cached;
 	}
+	const display = selectStatDisplay(context.assets, key);
 	const assets = context.assets;
-	const entry = assets?.stats?.[key];
-	const fallbackLabel = entry?.label ?? humanizeIdentifier(key) ?? key;
-	const label = coerceLabel(entry?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon, key);
-	const baseFormat = DEFAULT_STAT_FORMATS[key];
-	const format = entry?.displayAsPercent
-		? { ...(baseFormat ?? {}), percent: true as const }
-		: baseFormat;
+	const statAsset = assets?.stats?.[key];
+	const fallbackLabel = humanizeIdentifier(key) || key;
+	const label = coerceLabel(display.label, fallbackLabel);
+	const icon = coerceIcon(display.icon, key);
+	const format: StatRegistryDescriptor['format'] | undefined = (() => {
+		const percent = statAsset?.displayAsPercent ? { percent: true } : undefined;
+		const prefixValue = DEFAULT_STAT_PREFIXES[key];
+		if (!percent && !prefixValue) {
+			return undefined;
+		}
+		return {
+			...(prefixValue ? { prefix: prefixValue } : {}),
+			...(percent ?? {}),
+		};
+	})();
 	const descriptor: StatRegistryDescriptor = {
 		icon,
 		label,
