@@ -11,6 +11,8 @@ import type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionStateResponse,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
 } from './contracts';
 
 export interface SessionGateway {
@@ -21,4 +23,7 @@ export interface SessionGateway {
 	setDevMode(
 		request: SessionSetDevModeRequest,
 	): Promise<SessionSetDevModeResponse>;
+	updatePlayerName(
+		request: SessionUpdatePlayerNameRequest,
+	): Promise<SessionUpdatePlayerNameResponse>;
 }

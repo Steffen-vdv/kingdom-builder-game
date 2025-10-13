@@ -7,6 +7,7 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
+import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
 import {
 	GameEngineContext,
 	GameProviderInner,
@@ -29,6 +30,7 @@ import {
 	fetchSnapshot,
 	releaseSession,
 	setSessionDevMode,
+	updateSessionPlayerName,
 } from './sessionSdk';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
@@ -314,8 +316,43 @@ export function GameProvider(props: GameProviderProps) {
 				return current.legacySession;
 			},
 			getLatestSnapshot: () => latestSnapshotRef.current,
+			updatePlayerName: (playerId, playerName) =>
+				runExclusive(async () => {
+					const current = sessionStateRef.current;
+					if (!current) {
+						throw new Error('Session not ready');
+					}
+					try {
+						const updated = await updateSessionPlayerName({
+							sessionId: current.sessionId,
+							playerId: playerId as SessionPlayerId,
+							playerName,
+						});
+						if (
+							!mountedRef.current ||
+							sessionStateRef.current?.sessionId !== current.sessionId
+						) {
+							return;
+						}
+						updateSessionData({
+							session: updated.session,
+							legacySession: updated.legacySession,
+							sessionId: current.sessionId,
+							snapshot: updated.snapshot,
+							ruleSnapshot: updated.ruleSnapshot,
+							registries: updated.registries,
+							resourceKeys: updated.resourceKeys,
+							metadata: updated.metadata,
+						});
+					} catch (error) {
+						if (!mountedRef.current) {
+							return;
+						}
+						applyFatalSessionError(error);
+					}
+				}),
 		}),
-		[runExclusive],
+		[runExclusive, applyFatalSessionError, updateSessionData],
 	);
 
 	if (!sessionData) {
