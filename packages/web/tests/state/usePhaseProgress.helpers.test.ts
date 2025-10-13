@@ -9,8 +9,12 @@ import {
 import {
 	createResourceKeys,
 	createSessionRegistries,
+	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
-import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import {
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../src/state/sessionStateStore';
 
 const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
 
@@ -26,6 +30,7 @@ describe('advanceToActionPhase', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		advanceSessionPhaseMock.mockReset();
+		clearSessionStateStore();
 	});
 
 	it('forwards mirroring failures to the fatal handler', async () => {
@@ -54,7 +59,11 @@ describe('advanceToActionPhase', () => {
 			currentPhase: phases[0]?.id ?? 'phase-setup',
 			currentStep: phases[0]?.id ?? 'phase-setup',
 		});
-		const session = createLegacySessionMock({ snapshot });
+		initializeSessionState({
+			sessionId: 'session-1',
+			snapshot,
+			registries: createSessionRegistriesPayload(),
+		});
 		const mountedRef = { current: true };
 		const applyPhaseSnapshot = vi.fn();
 		const refresh = vi.fn();
@@ -69,8 +78,8 @@ describe('advanceToActionPhase', () => {
 
 		await expect(
 			advanceToActionPhase({
-				session: session as never,
 				sessionId: 'session-1',
+				initialSnapshot: snapshot,
 				resourceKeys: [actionCostResource],
 				mountedRef,
 				applyPhaseSnapshot,
