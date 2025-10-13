@@ -21,6 +21,7 @@ import {
 	resolveAttackTargetFormatter,
 	type AttackTargetFormatter,
 } from './attack/target-formatter';
+import { withAttackTranslationContext } from './attack/registrySelectors';
 import type { TranslationContext } from '../../context';
 
 type AttackOnDamageFormatterArgs = {
@@ -195,51 +196,54 @@ registerAttackOnDamageFormatter(
 );
 
 registerEffectFormatter('attack', 'perform', {
-	summarize: (effect, translationContext) => {
-		const baseEntry = buildBaseEntry(effect, 'summarize');
-		const parts: SummaryEntry[] = [baseEntry.entry];
-		const onDamage = summarizeOnDamage(
-			effect,
-			translationContext,
-			'summarize',
-			baseEntry,
-		);
-		if (onDamage) {
-			parts.push(onDamage);
-		}
-		return parts;
-	},
-	describe: (effect, translationContext) => {
-		const baseEntry = buildBaseEntry(effect, 'describe');
-		const parts: SummaryEntry[] = [baseEntry.entry];
-		const onDamage = summarizeOnDamage(
-			effect,
-			translationContext,
-			'describe',
-			baseEntry,
-		);
-		if (onDamage) {
-			parts.push(onDamage);
-		}
-		return parts;
-	},
-	log: (effect, translationContext) => {
-		const log = translationContext.pullEffectLog<AttackLog>('attack:perform');
-		if (!log) {
-			return fallbackLog(effect, translationContext);
-		}
-		const contextDetails = resolveAttackFormatterContext(effect);
-		const entries: SummaryEntry[] = [
-			buildEvaluationEntry(log.evaluation, contextDetails),
-		];
-		const onDamage = buildOnDamageEntry(
-			log.onDamage,
-			translationContext,
-			effect,
-		);
-		if (onDamage) {
-			entries.push(onDamage);
-		}
-		return entries;
-	},
+	summarize: (effect, translationContext) =>
+		withAttackTranslationContext(translationContext, () => {
+			const baseEntry = buildBaseEntry(effect, 'summarize');
+			const parts: SummaryEntry[] = [baseEntry.entry];
+			const onDamage = summarizeOnDamage(
+				effect,
+				translationContext,
+				'summarize',
+				baseEntry,
+			);
+			if (onDamage) {
+				parts.push(onDamage);
+			}
+			return parts;
+		}),
+	describe: (effect, translationContext) =>
+		withAttackTranslationContext(translationContext, () => {
+			const baseEntry = buildBaseEntry(effect, 'describe');
+			const parts: SummaryEntry[] = [baseEntry.entry];
+			const onDamage = summarizeOnDamage(
+				effect,
+				translationContext,
+				'describe',
+				baseEntry,
+			);
+			if (onDamage) {
+				parts.push(onDamage);
+			}
+			return parts;
+		}),
+	log: (effect, translationContext) =>
+		withAttackTranslationContext(translationContext, () => {
+			const log = translationContext.pullEffectLog<AttackLog>('attack:perform');
+			if (!log) {
+				return fallbackLog(effect, translationContext);
+			}
+			const contextDetails = resolveAttackFormatterContext(effect);
+			const entries: SummaryEntry[] = [
+				buildEvaluationEntry(log.evaluation, contextDetails),
+			];
+			const onDamage = buildOnDamageEntry(
+				log.onDamage,
+				translationContext,
+				effect,
+			);
+			if (onDamage) {
+				entries.push(onDamage);
+			}
+			return entries;
+		}),
 });
