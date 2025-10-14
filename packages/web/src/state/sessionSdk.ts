@@ -210,9 +210,19 @@ export async function performSessionAction(
 	try {
 		const response = await api.performAction(request, requestOptions);
 		if (response.status === 'success') {
+			const localTraces = record.handle.performAction(
+				request.actionId,
+				request.params,
+			);
 			await record.handle.enqueue(() => {
 				record.queue.updateSnapshot(response.snapshot);
 			});
+			if (localTraces?.length) {
+				return {
+					...response,
+					traces: localTraces,
+				};
+			}
 		}
 		return response;
 	} catch (error) {
@@ -245,6 +255,7 @@ export async function advanceSessionPhase(
 	const api = ensureGameApi();
 	const record = getSessionRecord(request.sessionId);
 	const response = await api.advancePhase(request, requestOptions);
+	const mirroredAdvance = record.handle.advancePhase(response.advance);
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	await record.handle.enqueue(() => {
@@ -256,6 +267,12 @@ export async function advanceSessionPhase(
 			response.registries.metadata,
 		);
 	});
+	if (mirroredAdvance && mirroredAdvance !== response.advance) {
+		return {
+			...response,
+			advance: mirroredAdvance,
+		};
+	}
 	return response;
 }
 

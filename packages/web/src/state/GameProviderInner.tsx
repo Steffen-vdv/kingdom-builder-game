@@ -30,6 +30,7 @@ import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
+import { createSessionApi } from './createSessionApi';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -96,6 +97,26 @@ export function GameProviderInner({
 			refresh();
 		});
 	}, [primaryPlayerId, primaryPlayerName, refresh, playerName, syncPlayerName]);
+
+	const sessionApi = useMemo(
+		() =>
+			createSessionApi({
+				sessionState,
+				registries: {
+					actions: cachedRegistries.actions,
+					buildings: cachedRegistries.buildings,
+					developments: cachedRegistries.developments,
+					populations: cachedRegistries.populations,
+				},
+			}),
+		[
+			sessionState,
+			cachedRegistries.actions,
+			cachedRegistries.buildings,
+			cachedRegistries.developments,
+			cachedRegistries.populations,
+		],
+	);
 
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
@@ -187,7 +208,7 @@ export function GameProviderInner({
 		registries: cachedRegistries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
+	const { handlePerform } = useActionPerformer({
 		sessionId,
 		actionCostResource,
 		registries: cachedRegistries,
@@ -211,8 +232,6 @@ export function GameProviderInner({
 		getLatestSnapshot: queue.getLatestSnapshot,
 		sessionState,
 		runUntilActionPhaseCore,
-		syncPhaseState: applyPhaseSnapshot,
-		performRef,
 		mountedRef,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
@@ -325,6 +344,7 @@ export function GameProviderInner({
 		onChangePlayerName,
 		sessionState,
 		sessionView,
+		session: sessionApi,
 		handlePerform,
 		handleEndTurn,
 		...(onExit ? { onExit: handleExit } : {}),

@@ -1,8 +1,10 @@
 import type {
+	SessionAdvanceResponse,
 	SessionRegistriesMetadata,
 	SessionRegistriesPayload,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import type { ActionExecuteSuccessResponse } from '@kingdom-builder/protocol/actions';
 import {
 	createRemoteSessionQueue,
 	type RemoteSessionQueue,
@@ -17,6 +19,13 @@ export interface SessionHandle {
 	getLatestRegistries(): SessionRegistries | null;
 	getLatestMetadata(): SessionSnapshot['metadata'] | null;
 	getLatestRegistriesMetadata(): SessionRegistriesMetadata | undefined;
+	performAction(
+		actionId: string,
+		params?: Record<string, unknown>,
+	): ActionExecuteSuccessResponse['traces'];
+	advancePhase(
+		advance?: SessionAdvanceResponse['advance'],
+	): SessionAdvanceResponse['advance'] | undefined;
 }
 
 export interface SessionRecord {
@@ -94,6 +103,8 @@ function createSessionHandle(queue: RemoteSessionQueue): SessionHandle {
 		getLatestRegistries: () => queue.getLatestRegistries(),
 		getLatestMetadata: () => queue.getLatestMetadata(),
 		getLatestRegistriesMetadata: () => queue.getLatestRegistriesMetadata(),
+		performAction: () => [],
+		advancePhase: (advance) => advance,
 	};
 }
 
