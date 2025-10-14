@@ -6,10 +6,9 @@ import { useSessionQueue } from '../../src/state/useSessionQueue';
 import type { SessionQueueHelpers } from '../../src/state/sessionTypes';
 import {
 	clearSessionStateStore,
-	initializeSessionState,
 	updateSessionSnapshot,
 } from '../../src/state/sessionStateStore';
-import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import { createRemoteSessionAdapter } from '../helpers/remoteSessionAdapter';
 import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
@@ -37,7 +36,7 @@ const createTestSnapshot = (): SessionSnapshot => {
 			tierDefinitions: [],
 			winConditions: [],
 		},
-	}) as unknown as SessionSnapshot;
+	});
 };
 
 describe('useSessionQueue', () => {
@@ -49,12 +48,12 @@ describe('useSessionQueue', () => {
 
 	it('delegates enqueue to the session state store queue seed', async () => {
 		const snapshot = createTestSnapshot();
-		initializeSessionState({
+		const registries = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
 			sessionId,
 			snapshot,
-			registries: createSessionRegistriesPayload(),
+			registries,
 		});
-		const adapter = createLegacySessionMock({ snapshot });
 		const enqueueMock = vi.fn(() => {
 			throw new Error('queue helper enqueue should not be used');
 		});
@@ -74,18 +73,20 @@ describe('useSessionQueue', () => {
 		expect(value).toBe('complete');
 		expect(task).toHaveBeenCalledTimes(1);
 		expect(enqueueMock).not.toHaveBeenCalled();
+		cleanup();
 	});
 
 	it('returns the cached snapshot stored in the session state store', () => {
 		const snapshot = createTestSnapshot();
-		initializeSessionState({
+		const registries = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
 			sessionId,
 			snapshot,
-			registries: createSessionRegistriesPayload(),
+			registries,
 		});
 		const queueHelpers: SessionQueueHelpers = {
 			enqueue: vi.fn(async <T>(task: () => Promise<T> | T) => await task()),
-			getCurrentSession: () => createLegacySessionMock({ snapshot }),
+			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
 		const { result, rerender } = renderHook(
@@ -97,5 +98,6 @@ describe('useSessionQueue', () => {
 		updateSessionSnapshot(sessionId, updated);
 		rerender({ currentSnapshot: snapshot });
 		expect(result.current.cachedSessionSnapshot).toEqual(updated);
+		cleanup();
 	});
 });

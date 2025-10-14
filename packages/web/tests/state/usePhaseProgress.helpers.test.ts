@@ -42,8 +42,8 @@ describe('advanceToActionPhase', () => {
 			{ id: 'phase-setup', name: 'Setup', action: false, steps: [] },
 			{ id: 'phase-main', name: 'Main', action: true, steps: [] },
 		];
-		const player = createSnapshotPlayer({ id: 'player-1' });
-		const opponent = createSnapshotPlayer({ id: 'player-2' });
+		const player = createSnapshotPlayer({ id: 'A' });
+		const opponent = createSnapshotPlayer({ id: 'B' });
 		const snapshot = createSessionSnapshot({
 			players: [player, opponent],
 			activePlayerId: player.id,

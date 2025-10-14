@@ -47,12 +47,12 @@ describe('usePhaseProgress', () => {
 			throw new Error('RESOURCE_KEYS is empty');
 		}
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Hero',
 			resources: { [actionCostResource]: 0 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 0 },
 		});
@@ -129,12 +129,12 @@ describe('usePhaseProgress', () => {
 			throw new Error('RESOURCE_KEYS is empty');
 		}
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Hero',
 			resources: { [actionCostResource]: 0 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 0 },
 		});
@@ -202,12 +202,12 @@ describe('usePhaseProgress', () => {
 			throw new Error('RESOURCE_KEYS is empty');
 		}
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Hero',
 			resources: { [actionCostResource]: 0 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 0 },
 		});
