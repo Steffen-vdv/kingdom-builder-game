@@ -44,15 +44,16 @@ export default function DemolishOptions({
 	selectResourceDescriptor,
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
+	const game = useGameEngine();
+	const sessionApi = game.session;
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
-	} = useGameEngine();
+	} = game;
 
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)
@@ -61,7 +62,7 @@ export default function DemolishOptions({
 				if (!building) {
 					return null;
 				}
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = sessionApi.getActionCosts(action.id, {
 					id: buildingId,
 				});
 				const costs: Record<string, number> = {};
@@ -90,7 +91,7 @@ export default function DemolishOptions({
 				return first.building.name.localeCompare(second.building.name);
 			});
 	}, [
-		session,
+		sessionApi,
 		sessionView.buildings,
 		action.id,
 		actionCostResource,

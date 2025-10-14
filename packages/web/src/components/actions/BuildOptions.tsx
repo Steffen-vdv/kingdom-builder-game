@@ -4,6 +4,7 @@ import {
 	translateRequirementFailure,
 	type Summary,
 } from '../../translation';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
@@ -50,31 +51,39 @@ export default function BuildOptions({
 	selectResourceDescriptor,
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
+	const game = useGameEngine();
+	const sessionApi = game.session;
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
-	} = useGameEngine();
+	} = game;
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		translateRequirementFailure(failure, translationContext),
+	const requirementFailures = sessionApi.getActionRequirements(action.id);
+	const requirements = requirementFailures.map(
+		(failure: SessionRequirementFailure) =>
+			translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
-	const entries = useMemo(() => {
+	const entries = useMemo<
+		Array<{
+			building: Building;
+			costs: Record<string, number>;
+			total: number;
+		}>
+	>(() => {
 		const owned = player.buildings;
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = sessionApi.getActionCosts(action.id, {
 					id: building.id,
 				});
 				const costs: Record<string, number> = {};
@@ -87,7 +96,7 @@ export default function BuildOptions({
 			.sort((first, second) => first.total - second.total);
 	}, [
 		buildings,
-		session,
+		sessionApi,
 		action.id,
 		actionCostResource,
 		player.buildings.size,

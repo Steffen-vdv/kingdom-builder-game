@@ -1,6 +1,5 @@
-import { describe, expect, it, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { useNextTurnForecast } from '../src/state/useNextTurnForecast';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { computeNextTurnForecast } from '../src/state/useNextTurnForecast';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -22,12 +21,6 @@ let currentSessionState = createSessionSnapshot({
 	},
 });
 
-vi.mock('../src/state/GameContext', () => ({
-	useGameEngine: () => ({
-		sessionState: currentSessionState,
-	}),
-}));
-
 describe('useNextTurnForecast', () => {
 	beforeEach(() => {
 		currentSessionState = createSessionSnapshot({
@@ -48,16 +41,18 @@ describe('useNextTurnForecast', () => {
 	});
 
 	it('returns empty deltas for each player', () => {
-		const { result } = renderHook(() => useNextTurnForecast());
-		expect(result.current).toEqual({
+		const forecast = computeNextTurnForecast(currentSessionState.game.players);
+		expect(forecast).toEqual({
 			'player-1': { resources: {}, stats: {}, population: {} },
 			'player-2': { resources: {}, stats: {}, population: {} },
 		});
 	});
 
 	it('updates when the player list changes', () => {
-		const { result, rerender } = renderHook(() => useNextTurnForecast());
-		expect(result.current).toEqual({
+		const initialForecast = computeNextTurnForecast(
+			currentSessionState.game.players,
+		);
+		expect(initialForecast).toEqual({
 			'player-1': { resources: {}, stats: {}, population: {} },
 			'player-2': { resources: {}, stats: {}, population: {} },
 		});
@@ -77,8 +72,10 @@ describe('useNextTurnForecast', () => {
 				winConditions: [],
 			},
 		});
-		rerender();
-		expect(result.current).toEqual({
+		const updatedForecast = computeNextTurnForecast(
+			currentSessionState.game.players,
+		);
+		expect(updatedForecast).toEqual({
 			'player-1': { resources: {}, stats: {}, population: {} },
 			'player-2': { resources: {}, stats: {}, population: {} },
 			'player-3': { resources: {}, stats: {}, population: {} },

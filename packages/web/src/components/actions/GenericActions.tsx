@@ -7,7 +7,12 @@ import type {
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import GenericActionCard from './GenericActionCard';
-import { toPerformableAction, type Action, type DisplayPlayer } from './types';
+import {
+	toPerformableAction,
+	type Action,
+	type DisplayPlayer,
+	type SessionApi,
+} from './types';
 import type { ResourceDescriptorSelector } from './utils';
 
 export interface PendingActionState {
@@ -31,15 +36,16 @@ function GenericActions({
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
+	const game = useGameEngine();
+	const sessionApi: SessionApi = game.session;
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
-	} = useGameEngine();
+	} = game;
 	const formatRequirement = (requirement: string) => requirement;
 	const performAction = useCallback(
 		(action: Action, params?: Record<string, unknown>) =>
@@ -164,10 +170,17 @@ function GenericActions({
 		[handlePerform],
 	);
 
-	const entries = useMemo(() => {
+	const entries = useMemo<
+		Array<{
+			action: Action;
+			costs: Record<string, number>;
+			total: number;
+			groups: ActionEffectGroup[];
+		}>
+	>(() => {
 		return actions
 			.map((action) => {
-				const costBag = session.getActionCosts(action.id);
+				const costBag = sessionApi.getActionCosts(action.id);
 				const costs: Record<string, number> = {};
 				for (const [resourceKey, cost] of Object.entries(costBag)) {
 					costs[resourceKey] = cost ?? 0;
@@ -181,11 +194,11 @@ function GenericActions({
 					},
 					0,
 				);
-				const groups = session.getActionOptions(action.id);
+				const groups = sessionApi.getActionOptions(action.id);
 				return { action, costs, total, groups };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [actions, session, actionCostResource]);
+	}, [actions, sessionApi, actionCostResource]);
 
 	return (
 		<>
@@ -203,7 +216,7 @@ function GenericActions({
 					cancelPending={cancelPending}
 					beginSelection={beginSelection}
 					handleOptionSelect={handleOptionSelect}
-					session={session}
+					session={sessionApi}
 					translationContext={translationContext}
 					actionCostResource={actionCostResource}
 					handlePerform={performAction}
