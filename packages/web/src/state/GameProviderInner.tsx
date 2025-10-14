@@ -334,7 +334,7 @@ export function GameProviderInner({
 		phase,
 		actionCostResource,
 		requests: requestHelpers,
-		session: sessionFacade,
+		sessionFacade: sessionFacade,
 		metadata,
 		runUntilActionPhase,
 		refreshPhaseState,
