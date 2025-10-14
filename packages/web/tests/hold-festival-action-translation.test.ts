@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
 	summarizeContent,
 	describeContent,
@@ -9,10 +9,6 @@ import {
 	createSyntheticFestivalScenario,
 	getSyntheticFestivalDetails,
 } from './fixtures/syntheticFestival';
-
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
 
 const sign = (n: number) => (n >= 0 ? '+' : '');
 

@@ -1,9 +1,8 @@
-import type {
-	EngineSessionSnapshot,
-	PlayerId,
-	ResourceKey,
-} from '@kingdom-builder/engine';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type {
+	SessionPlayerId,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
@@ -12,7 +11,7 @@ import { createSessionRegistries } from '../helpers/sessionRegistries';
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
 		const registries = createSessionRegistries();
-		const [resourceKey] = Object.keys(registries.resources) as ResourceKey[];
+		const [resourceKey] = Object.keys(registries.resources);
 		if (resourceKey) {
 			registries.resources[resourceKey] = {
 				...registries.resources[resourceKey],
@@ -24,7 +23,7 @@ describe('createTranslationContext', () => {
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
-		const phases: EngineSessionSnapshot['phases'] = [
+		const phases: SessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
 				label: 'Alpha',
@@ -46,19 +45,19 @@ describe('createTranslationContext', () => {
 			passiveEvaluationModifiers: {
 				[resourceKey]: ['modifier'],
 			},
-		};
+		} satisfies SessionSnapshot['metadata'];
 		const compensation = (amount: number): PlayerStartConfig => ({
 			resources: { [resourceKey]: amount },
 		});
 		const makePlayer = (config: {
-			id: PlayerId;
+			id: SessionPlayerId;
 			name: string;
 			resource: number;
 			stat: number;
 			population: number;
 			buildings?: string[];
-			passives?: EngineSessionSnapshot['game']['players'][number]['passives'];
-		}): EngineSessionSnapshot['game']['players'][number] => ({
+			passives?: SessionSnapshot['game']['players'][number]['passives'];
+		}): SessionSnapshot['game']['players'][number] => ({
 			id: config.id,
 			name: config.name,
 			resources: { [resourceKey]: config.resource },
@@ -73,9 +72,9 @@ describe('createTranslationContext', () => {
 			skipSteps: {},
 			passives: config.passives ?? [],
 		});
-		const players: EngineSessionSnapshot['game']['players'] = [
+		const players: SessionSnapshot['game']['players'] = [
 			makePlayer({
-				id: 'A' as PlayerId,
+				id: 'A' as SessionPlayerId,
 				name: 'Player A',
 				resource: 7,
 				stat: 3,
@@ -92,14 +91,14 @@ describe('createTranslationContext', () => {
 				],
 			}),
 			makePlayer({
-				id: 'B' as PlayerId,
+				id: 'B' as SessionPlayerId,
 				name: 'Player B',
 				resource: 5,
 				stat: 1,
 				population: 1,
 			}),
 		];
-		const session: EngineSessionSnapshot = {
+		const session: SessionSnapshot = {
 			game: {
 				turn: 4,
 				currentPlayerIndex: 0,
