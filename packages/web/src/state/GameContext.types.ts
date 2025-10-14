@@ -23,6 +23,7 @@ import type {
 	SessionResourceKey,
 	SessionResourceKeys,
 } from './sessionTypes';
+import type { SessionFacade } from './createSessionFacade';
 
 export interface SessionContainer {
 	sessionId: string;
@@ -103,6 +104,7 @@ export interface GameEngineContextValue {
 	clearHoverCard: () => void;
 	phase: PhaseProgressState;
 	actionCostResource: SessionResourceKey;
+	sessionFacade: SessionFacade;
 	requests: {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;

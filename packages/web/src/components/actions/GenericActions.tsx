@@ -185,7 +185,7 @@ function GenericActions({
 				for (const [resourceKey, cost] of Object.entries(costBag)) {
 					costs[resourceKey] = cost ?? 0;
 				}
-				const total = Object.entries(costs).reduce(
+				const total = Object.entries(costs).reduce<number>(
 					(sum, [resourceKey, cost]) => {
 						if (resourceKey === actionCostResource) {
 							return sum;

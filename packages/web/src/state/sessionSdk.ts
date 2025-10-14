@@ -252,6 +252,7 @@ export async function advanceSessionPhase(
 		if (response.advance) {
 			record.handle.advancePhase(response.advance);
 		}
+
 		mergeSessionCaches(
 			record,
 			registries,

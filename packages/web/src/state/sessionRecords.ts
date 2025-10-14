@@ -14,12 +14,12 @@ import type { SessionRegistries } from './sessionRegistries';
 
 export interface SessionHandle {
 	enqueue: RemoteSessionQueue['enqueue'];
+	performAction(actionId: string, params?: Record<string, unknown>): unknown;
+	advancePhase(advance: SessionAdvanceResult): unknown;
 	getLatestSnapshot(): SessionSnapshot | null;
 	getLatestRegistries(): SessionRegistries | null;
 	getLatestMetadata(): SessionSnapshot['metadata'] | null;
 	getLatestRegistriesMetadata(): SessionRegistriesMetadata | undefined;
-	performAction(actionId: string, params?: Record<string, unknown>): unknown;
-	advancePhase(advance: SessionAdvanceResult): unknown;
 }
 
 export interface SessionRecord {
@@ -93,12 +93,12 @@ export function isFatalSessionError(error: unknown): boolean {
 function createSessionHandle(queue: RemoteSessionQueue): SessionHandle {
 	return {
 		enqueue: (task) => queue.enqueue(task),
+		performAction: () => undefined,
+		advancePhase: () => undefined,
 		getLatestSnapshot: () => queue.getLatestSnapshot(),
 		getLatestRegistries: () => queue.getLatestRegistries(),
 		getLatestMetadata: () => queue.getLatestMetadata(),
 		getLatestRegistriesMetadata: () => queue.getLatestRegistriesMetadata(),
-		performAction: () => undefined,
-		advancePhase: () => undefined,
 	};
 }
 

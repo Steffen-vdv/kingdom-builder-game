@@ -55,7 +55,15 @@ export default function DemolishOptions({
 		actionCostResource,
 	} = game;
 
-	const entries = useMemo(() => {
+	const entries = useMemo<
+		Array<{
+			id: string;
+			building: Building;
+			costs: Record<string, number>;
+			total: number;
+			focus: ActionFocus | undefined;
+		}>
+	>(() => {
 		return Array.from(player.buildings)
 			.map((buildingId) => {
 				const building = sessionView.buildings.get(buildingId);

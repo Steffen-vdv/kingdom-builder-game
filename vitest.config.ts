@@ -18,9 +18,18 @@ export default defineConfig({
 				'packages/protocol/src',
 			),
 			'@kingdom-builder/web': path.resolve(__dirname, 'packages/web/src'),
+			'@kingdom-builder/web/session-queue': path.resolve(
+				__dirname,
+				'packages/web/src/state/RemoteSessionQueue.ts',
+			),
 		},
 	},
 	test: {
+		environment: 'node',
+		environmentMatchGlobs: [
+			['packages/web/**', 'jsdom'],
+			['tests/**/*.test.tsx', 'jsdom'],
+		],
 		include: ['**/*.test.ts', '**/*.test.tsx'],
 		exclude: ['**/node_modules/**'],
 		coverage: {
