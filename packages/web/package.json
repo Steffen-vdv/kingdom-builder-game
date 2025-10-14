@@ -11,7 +11,7 @@
 		"test": "npm run lint && vitest run"
 	},
 	"dependencies": {
-		"@formkit/auto-animate": "^0.8.4",
+		"@formkit/auto-animate": "^0.9.0",
 		"@kingdom-builder/contents": "^0.1.0",
 		"@kingdom-builder/engine": "^0.1.0",
 		"clsx": "^2.1.1",
