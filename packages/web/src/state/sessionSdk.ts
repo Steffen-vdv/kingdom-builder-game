@@ -211,6 +211,7 @@ export async function performSessionAction(
 		const response = await api.performAction(request, requestOptions);
 		if (response.status === 'success') {
 			await record.handle.enqueue(() => {
+				record.handle.performAction(request.actionId, request.params);
 				record.queue.updateSnapshot(response.snapshot);
 			});
 		}
@@ -248,6 +249,7 @@ export async function advanceSessionPhase(
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	await record.handle.enqueue(() => {
+		record.handle.advancePhase(response.advance);
 		mergeSessionCaches(
 			record,
 			registries,

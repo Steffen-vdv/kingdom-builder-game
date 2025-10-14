@@ -30,6 +30,7 @@ import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
+import { createSessionFacade } from './createSessionFacade';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -187,7 +188,7 @@ export function GameProviderInner({
 		registries: cachedRegistries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
+	const { handlePerform } = useActionPerformer({
 		sessionId,
 		actionCostResource,
 		registries: cachedRegistries,
@@ -211,8 +212,6 @@ export function GameProviderInner({
 		getLatestSnapshot: queue.getLatestSnapshot,
 		sessionState,
 		runUntilActionPhaseCore,
-		syncPhaseState: applyPhaseSnapshot,
-		performRef,
 		mountedRef,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
@@ -256,6 +255,32 @@ export function GameProviderInner({
 			},
 		}),
 		[ruleSnapshot, sessionView, translationContext],
+	);
+
+	const {
+		actions: sessionActionRegistry,
+		buildings: sessionBuildingRegistry,
+		developments: sessionDevelopmentRegistry,
+		populations: sessionPopulationRegistry,
+	} = cachedRegistries;
+	const sessionFacade = useMemo(
+		() =>
+			createSessionFacade({
+				sessionState,
+				registries: {
+					actions: sessionActionRegistry,
+					buildings: sessionBuildingRegistry,
+					developments: sessionDevelopmentRegistry,
+					populations: sessionPopulationRegistry,
+				},
+			}),
+		[
+			sessionState,
+			sessionActionRegistry,
+			sessionBuildingRegistry,
+			sessionDevelopmentRegistry,
+			sessionPopulationRegistry,
+		],
 	);
 
 	const performActionRequest = useCallback<PerformActionHandler>(
@@ -303,6 +328,7 @@ export function GameProviderInner({
 		phase,
 		actionCostResource,
 		requests: requestHelpers,
+		session: sessionFacade,
 		metadata,
 		runUntilActionPhase,
 		refreshPhaseState,

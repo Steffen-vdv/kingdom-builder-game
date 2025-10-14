@@ -13,6 +13,8 @@ import type { SessionRegistries } from './sessionRegistries';
 
 export interface SessionHandle {
 	enqueue: RemoteSessionQueue['enqueue'];
+	performAction(actionId: string, params?: Record<string, unknown>): unknown;
+	advancePhase(result?: unknown): unknown;
 	getLatestSnapshot(): SessionSnapshot | null;
 	getLatestRegistries(): SessionRegistries | null;
 	getLatestMetadata(): SessionSnapshot['metadata'] | null;
@@ -90,6 +92,12 @@ export function isFatalSessionError(error: unknown): boolean {
 function createSessionHandle(queue: RemoteSessionQueue): SessionHandle {
 	return {
 		enqueue: (task) => queue.enqueue(task),
+		performAction() {
+			return [] as unknown[];
+		},
+		advancePhase() {
+			return null;
+		},
 		getLatestSnapshot: () => queue.getLatestSnapshot(),
 		getLatestRegistries: () => queue.getLatestRegistries(),
 		getLatestMetadata: () => queue.getLatestMetadata(),

@@ -71,7 +71,13 @@ export default function DevelopOptions({
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
-	const entries = useMemo(() => {
+	const entries = useMemo<
+		Array<{
+			development: Development;
+			costs: Record<string, number>;
+			total: number;
+		}>
+	>(() => {
 		return developments
 			.map((development) => {
 				const costsBag = session.getActionCosts(action.id, {

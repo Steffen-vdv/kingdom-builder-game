@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	resolve: {
 		alias: {
+			'@kingdom-builder/engine': path.resolve(__dirname, 'packages/engine/src'),
 			'@kingdom-builder/contents': path.resolve(
 				__dirname,
 				'packages/contents/src',
@@ -24,6 +25,11 @@ export default defineConfig({
 		},
 	},
 	test: {
+		environment: 'node',
+		environmentMatchGlobs: [
+			['packages/web/**', 'jsdom'],
+			['tests/**/*.test.tsx', 'jsdom'],
+		],
 		include: ['**/*.test.ts', '**/*.test.tsx'],
 		exclude: ['**/node_modules/**'],
 		coverage: {
