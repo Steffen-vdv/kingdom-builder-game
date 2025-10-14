@@ -43,16 +43,16 @@
 		"server:build": "npm run build --workspace @kingdom-builder/server"
 	},
 	"dependencies": {
-		"react": "^18.3.1",
-		"react-dom": "^18.3.1",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0",
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/react": "^16.3.0",
 		"@types/node": "^20.14.10",
-		"@types/react": "^18.3.3",
-		"@types/react-dom": "^18.3.0",
+		"@types/react": "^19.2.2",
+		"@types/react-dom": "^19.2.2",
 		"@typescript-eslint/eslint-plugin": "^8.46.1",
 		"@typescript-eslint/parser": "^8.46.1",
 		"@vitejs/plugin-react": "^4.3.1",
