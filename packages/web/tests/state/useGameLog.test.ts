@@ -2,14 +2,14 @@
 import { describe, expect, it } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type {
-	EngineSessionSnapshot,
-	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+	SessionSnapshot,
+	SessionPlayerStateSnapshot,
+} from '@kingdom-builder/protocol/session';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
 
 const primaryResource = 'resource.primary';
 
-const createPlayer = (id: string): PlayerStateSnapshot => ({
+const createPlayer = (id: string): SessionPlayerStateSnapshot => ({
 	id,
 	name: `Player ${id}`,
 	resources: { [primaryResource]: 0 },
@@ -35,11 +35,11 @@ const createPlayer = (id: string): PlayerStateSnapshot => ({
 
 describe('useGameLog', () => {
 	it('preserves incrementing ids when trimming overflowing log entries', () => {
-		const players: PlayerStateSnapshot[] = [
+		const players: SessionPlayerStateSnapshot[] = [
 			createPlayer('A'),
 			createPlayer('B'),
 		];
-		const sessionState: EngineSessionSnapshot = {
+		const sessionState: SessionSnapshot = {
 			game: {
 				turn: 1,
 				currentPlayerIndex: 0,

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type {
-	EngineSessionSnapshot,
-	PlayerStateSnapshot,
-} from '@kingdom-builder/engine';
+	SessionPlayerStateSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	selectSessionOptions,
@@ -70,8 +70,8 @@ describe('sessionSelectors', () => {
 	});
 	const makePlayer = (
 		id: string,
-		overrides: Partial<PlayerStateSnapshot> = {},
-	): PlayerStateSnapshot => ({
+		overrides: Partial<SessionPlayerStateSnapshot> = {},
+	): SessionPlayerStateSnapshot => ({
 		id,
 		name: `Player ${id}`,
 		resources: { [primaryResource]: 5, ...(overrides.resources ?? {}) },
@@ -101,7 +101,7 @@ describe('sessionSelectors', () => {
 		skipSteps: overrides.skipSteps ?? {},
 		passives: overrides.passives ?? [],
 	});
-	const players: PlayerStateSnapshot[] = [
+	const players: SessionPlayerStateSnapshot[] = [
 		makePlayer('A', {
 			buildings: [buildingA.id],
 			actions: [actionA.id, systemUnlocked.id],
@@ -111,7 +111,7 @@ describe('sessionSelectors', () => {
 			actions: [actionB.id],
 		}),
 	];
-	const sessionState: EngineSessionSnapshot = {
+	const sessionState: SessionSnapshot = {
 		game: {
 			turn: 1,
 			currentPlayerIndex: 0,
@@ -143,7 +143,9 @@ describe('sessionSelectors', () => {
 		actions: factory.actions,
 		buildings: factory.buildings,
 		developments: factory.developments,
-	};
+		populations: factory.populations,
+		resources: sessionRegistries.resources,
+	} satisfies ReturnType<typeof createSessionRegistries>;
 
 	it('falls back to registry ids when definitions omit optional metadata', () => {
 		const fallbackAction = factory.action({ name: 'Fallback Action' });
