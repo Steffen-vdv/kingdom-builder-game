@@ -1,9 +1,12 @@
-import type {
-	EngineSessionSnapshot,
-	PlayerId,
-	ResourceKey,
-} from '@kingdom-builder/engine';
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+import type {
+	SessionPassiveRecordSnapshot,
+	SessionPassiveSummary,
+	SessionPlayerId,
+	SessionPlayerStateSnapshot,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
@@ -12,19 +15,25 @@ import { createSessionRegistries } from '../helpers/sessionRegistries';
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
 		const registries = createSessionRegistries();
-		const [resourceKey] = Object.keys(registries.resources) as ResourceKey[];
-		if (resourceKey) {
+		const resourceKeys = Object.keys(registries.resources);
+		const resourceKey = resourceKeys[0] ?? 'resource:synthetic:primary';
+		if (registries.resources[resourceKey]) {
 			registries.resources[resourceKey] = {
 				...registries.resources[resourceKey],
 				label: undefined,
 			};
+		} else {
+			registries.resources[resourceKey] = { key: resourceKey };
 		}
 		const statKey = 'maxPopulation';
 		const [populationId] = registries.populations.keys();
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
-		const phases: EngineSessionSnapshot['phases'] = [
+		if (!populationId || !actionId || !buildingId || !developmentId) {
+			throw new Error('Expected registries to include baseline definitions.');
+		}
+		const phases: SessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
 				label: 'Alpha',
@@ -41,7 +50,7 @@ describe('createTranslationContext', () => {
 		const [firstPhase] = phases;
 		const firstStep = firstPhase?.steps?.[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
-		const metadata = {
+		const metadata: SessionSnapshotMetadata = {
 			effectLogs: { legacy: [{ note: 'legacy entry' }] },
 			passiveEvaluationModifiers: {
 				[resourceKey]: ['modifier'],
@@ -51,14 +60,14 @@ describe('createTranslationContext', () => {
 			resources: { [resourceKey]: amount },
 		});
 		const makePlayer = (config: {
-			id: PlayerId;
+			id: SessionPlayerId;
 			name: string;
 			resource: number;
 			stat: number;
 			population: number;
 			buildings?: string[];
-			passives?: EngineSessionSnapshot['game']['players'][number]['passives'];
-		}): EngineSessionSnapshot['game']['players'][number] => ({
+			passives?: SessionPassiveSummary[];
+		}): SessionPlayerStateSnapshot => ({
 			id: config.id,
 			name: config.name,
 			resources: { [resourceKey]: config.resource },
@@ -73,9 +82,9 @@ describe('createTranslationContext', () => {
 			skipSteps: {},
 			passives: config.passives ?? [],
 		});
-		const players: EngineSessionSnapshot['game']['players'] = [
+		const players: SessionPlayerStateSnapshot[] = [
 			makePlayer({
-				id: 'A' as PlayerId,
+				id: 'A',
 				name: 'Player A',
 				resource: 7,
 				stat: 3,
@@ -92,14 +101,14 @@ describe('createTranslationContext', () => {
 				],
 			}),
 			makePlayer({
-				id: 'B' as PlayerId,
+				id: 'B',
 				name: 'Player B',
 				resource: 5,
 				stat: 1,
 				population: 1,
 			}),
 		];
-		const session: EngineSessionSnapshot = {
+		const session: SessionSnapshot = {
 			game: {
 				turn: 4,
 				currentPlayerIndex: 0,
@@ -136,9 +145,9 @@ describe('createTranslationContext', () => {
 							},
 						},
 					},
-				],
-				B: [],
-			},
+				] satisfies SessionPassiveRecordSnapshot[],
+				B: [] satisfies SessionPassiveRecordSnapshot[],
+			} as Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>,
 			metadata,
 		};
 		const context = createTranslationContext(session, registries, metadata, {

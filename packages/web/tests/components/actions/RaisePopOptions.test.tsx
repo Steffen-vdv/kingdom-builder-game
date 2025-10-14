@@ -26,7 +26,6 @@ import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import type {
 	LegacyGameEngineContextValue,
 } from '../../../src/state/GameContext.types';
-import type { PlayerId } from '@kingdom-builder/engine';
 import type { Action } from '../../../src/components/actions/types';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
 
@@ -57,7 +56,7 @@ function createRaisePopScenario(
 	}
 	const [primaryRole, secondaryRole] = populationIds;
 	const activePlayer = createSnapshotPlayer({
-		id: 'player-1' as PlayerId,
+		id: 'A',
 		name: 'Player One',
 		resources: { gold: 12, ap: 5 },
 		population: {
@@ -66,7 +65,7 @@ function createRaisePopScenario(
 		},
 	});
 	const opponent = createSnapshotPlayer({
-		id: 'player-2' as PlayerId,
+		id: 'B',
 		name: 'Player Two',
 	});
 	const sessionState = createSessionSnapshot({

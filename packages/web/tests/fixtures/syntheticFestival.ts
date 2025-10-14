@@ -1,11 +1,8 @@
-import {
-	createEngine,
-	type EffectDef,
-	type RuleSet,
-} from '@kingdom-builder/engine';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
+import type { ActionConfig, EffectDef } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../src/translation/context/types';
+import { buildSyntheticTranslationContext } from '../helpers/createSyntheticTranslationContext';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 
 const ON_UPKEEP_PHASE = 'onUpkeepPhase';
 
@@ -47,8 +44,13 @@ const RESOURCE_LOOKUP = toResourceLookup();
 
 const FORTIFICATION_STAT_KEY = 'fortificationStrength';
 
+interface SyntheticFestivalCtx {
+	actions: { get(id: string): ActionConfig };
+	phases: SessionSnapshot['phases'];
+}
+
 export interface SyntheticFestivalScenario {
-	ctx: ReturnType<typeof createEngine>;
+	ctx: SyntheticFestivalCtx;
 	translation: TranslationContext;
 	festivalActionId: string;
 	attackActionId: string;
@@ -155,69 +157,80 @@ export const createSyntheticFestivalScenario =
 			},
 		];
 
-		const start = {
-			player: {
-				resources: {
-					[SYNTHETIC_RESOURCES.actionPoints.id]: 3,
-					[SYNTHETIC_RESOURCES.happiness.id]: 0,
-				},
-				stats: {
-					[FORTIFICATION_STAT_KEY]: 5,
-				},
-				population: {},
-				lands: [],
-			},
-		};
-
-		const rules: RuleSet = {
-			defaultActionAPCost: 1,
-			absorptionCapPct: 1,
-			absorptionRounding: 'down',
-			tieredResourceKey: SYNTHETIC_RESOURCES.happiness.id,
-			// The happiness key uses the same fallback iconography described in
-			// the domain migration inventory (✨ modifier icon and 🧹 upkeep).
-			tierDefinitions: [],
-			slotsPerNewLand: 1,
-			maxSlotsPerLand: 1,
-			basePopulationCap: 1,
-			winConditions: [],
-		};
-
-		const ctx = createEngine({
-			actions: factory.actions,
-			buildings: factory.buildings,
-			developments: factory.developments,
-			populations: factory.populations,
-			phases,
-			start,
-			rules,
-		});
-
-		const translation = createTranslationContextForEngine(ctx, (registries) => {
-			const raid = ctx.actions.get(attackAction.id);
-			const festivalDef = ctx.actions.get(festivalAction.id);
-			for (const resource of Object.values(SYNTHETIC_RESOURCES)) {
-				registries.resources[resource.id] = {
-					key: resource.id,
-					icon: resource.icon,
-					label: resource.label,
+		const synthetic = buildSyntheticTranslationContext(
+			({ session, registries, metadata }) => {
+				session.phases = phases;
+				session.rules.tieredResourceKey = SYNTHETIC_RESOURCES.happiness.id;
+				session.actionCostResource = SYNTHETIC_RESOURCES.actionPoints.id;
+				const [active] = session.game.players;
+				if (active) {
+					active.resources = {
+						[SYNTHETIC_RESOURCES.actionPoints.id]: 3,
+						[SYNTHETIC_RESOURCES.happiness.id]: 0,
+					};
+					active.stats = { [FORTIFICATION_STAT_KEY]: 5 };
+					active.actions = [attackAction.id, festivalAction.id];
+				}
+				registries.actions.add(
+					attackAction.id,
+					structuredClone(factory.actions.get(attackAction.id)),
+				);
+				registries.actions.add(
+					festivalAction.id,
+					structuredClone(factory.actions.get(festivalAction.id)),
+				);
+				for (const resource of Object.values(SYNTHETIC_RESOURCES)) {
+					registries.resources[resource.id] = {
+						key: resource.id,
+						icon: resource.icon,
+						label: resource.label,
+					};
+				}
+				metadata.resources = {
+					...(metadata.resources ?? {}),
+					...Object.fromEntries(
+						Object.values(SYNTHETIC_RESOURCES).map((entry) => [
+							entry.id,
+							{ icon: entry.icon, label: entry.label },
+						]),
+					),
 				};
-			}
-			if (raid) {
-				registries.actions.add(raid.id, {
-					...raid,
-				});
-			}
-			if (festivalDef) {
-				registries.actions.add(festivalDef.id, {
-					...festivalDef,
-				});
-			}
-		});
+				metadata.phases = {
+					...(metadata.phases ?? {}),
+					[phases[0]?.id ?? 'phase:synthetic:main']: {
+						id: phases[0]?.id,
+						label: phases[0]?.label,
+						icon: phases[0]?.icon,
+					},
+					[phases[1]?.id ?? 'phase:synthetic:rest']: {
+						id: phases[1]?.id,
+						label: phases[1]?.label,
+						icon: phases[1]?.icon,
+					},
+				};
+				metadata.triggers = {
+					...(metadata.triggers ?? {}),
+					[ON_UPKEEP_PHASE]: {
+						icon: FALLBACK_UPKEEP.icon,
+						label: FALLBACK_UPKEEP.label,
+						past: FALLBACK_UPKEEP.label,
+					},
+				};
+			},
+		);
+
+		const ctx: SyntheticFestivalCtx = {
+			actions: {
+				get(id: string) {
+					return synthetic.registries.actions.get(id);
+				},
+			},
+			phases: synthetic.session.phases,
+		};
 
 		return {
 			ctx,
-			translation,
+			translation: synthetic.translationContext,
 			festivalActionId: festivalAction.id,
 			attackActionId: attackAction.id,
 			resources: RESOURCE_LOOKUP,

@@ -1,14 +1,19 @@
-import { createEngine } from '@kingdom-builder/engine';
-import type { EffectDef } from '@kingdom-builder/engine';
-import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
+import { createContentFactory } from '@kingdom-builder/testing';
+import type {
+	ActionConfig,
+	BuildingConfig,
+	DevelopmentConfig,
+	EffectDef,
+} from '@kingdom-builder/protocol';
+import type { TranslationContext } from '../../src/translation/context/types';
 import {
 	describeContent,
 	splitSummary,
 	type Summary,
 } from '../../src/translation/content';
-import { createContentFactory } from '@kingdom-builder/testing';
-import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
-import type { TranslationContext } from '../../src/translation/context/types';
+import { buildSyntheticTranslationContext } from '../helpers/createSyntheticTranslationContext';
+import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 
 interface SyntheticIds {
 	transferBuilding: string;
@@ -19,47 +24,21 @@ interface SyntheticIds {
 	harvestDevelopment: string;
 }
 
+interface SyntheticContextMaps {
+	actions: { get(id: string): ActionConfig };
+	buildings: { get(id: string): BuildingConfig };
+	developments: { get(id: string): DevelopmentConfig };
+}
+
 export interface RaidersGuildSyntheticContext {
-	ctx: ReturnType<typeof createEngine>;
+	ctx: SyntheticContextMaps;
 	translation: TranslationContext;
+	registries: SessionRegistries;
+	session: SessionSnapshot;
 	ids: SyntheticIds;
 }
 
-const tierResourceKey = 'synthetic:tier';
 const syntheticGoldKey = 'gold';
-
-const phases: PhaseDef[] = [
-	{
-		id: 'phase:synthetic',
-		label: 'Synthetic',
-		icon: '🧪',
-		steps: [{ id: 'phase:synthetic:step' }],
-	},
-];
-
-const start: StartConfig = {
-	player: {
-		resources: {
-			[tierResourceKey]: 0,
-			[syntheticGoldKey]: 0,
-		},
-		stats: {},
-		population: {},
-		lands: [],
-	},
-};
-
-const rules: RuleSet = {
-	defaultActionAPCost: 1,
-	absorptionCapPct: 1,
-	absorptionRounding: 'down',
-	tieredResourceKey: tierResourceKey,
-	tierDefinitions: [],
-	slotsPerNewLand: 1,
-	maxSlotsPerLand: 1,
-	basePopulationCap: 1,
-	winConditions: [],
-};
 
 export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 	const content = createContentFactory();
@@ -89,7 +68,7 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		icon: '🌾',
 	});
 
-	content.population({
+	const ledgerRole = content.population({
 		id: 'population:ledger',
 		name: 'Ledger Keepers',
 		icon: '🧾',
@@ -152,55 +131,112 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		],
 	});
 
-	const ctx = createEngine({
-		actions: content.actions,
-		buildings: content.buildings,
-		developments: content.developments,
-		populations: content.populations,
-		phases,
-		start,
-		rules,
-	});
+	const synthetic = buildSyntheticTranslationContext(
+		({ session, registries, metadata }) => {
+			registries.actions.add(raidAction.id, structuredClone(raidAction));
+			registries.actions.add(ledgerAction.id, structuredClone(ledgerAction));
+			registries.buildings.add(
+				transferBuilding.id,
+				structuredClone(transferBuilding),
+			);
+			registries.buildings.add(
+				populationBuilding.id,
+				structuredClone(populationBuilding),
+			);
+			registries.buildings.add(
+				developmentBuilding.id,
+				structuredClone(developmentBuilding),
+			);
+			registries.developments.add(
+				harvestDevelopment.id,
+				structuredClone(harvestDevelopment),
+			);
+			registries.populations.add(ledgerRole.id, structuredClone(ledgerRole));
+			registries.resources[syntheticGoldKey] = {
+				key: syntheticGoldKey,
+				icon: '🪙',
+				label: 'Synthetic Gold',
+			};
 
-	const translation = createTranslationContextForEngine(ctx, (registries) => {
-		const raid = ctx.actions.get(raidAction.id);
-		const ledger = ctx.actions.get(ledgerAction.id);
-		const transfer = ctx.buildings.get(transferBuilding.id);
-		const population = ctx.buildings.get(populationBuilding.id);
-		const development = ctx.buildings.get(developmentBuilding.id);
-		const harvest = ctx.developments.get(harvestDevelopment.id);
-		const ledgerRole = ctx.populations.get('population:ledger');
-		registries.resources[syntheticGoldKey] = {
-			key: syntheticGoldKey,
-			icon: '🪙',
-			label: 'Synthetic Gold',
-		};
-		if (raid) {
-			registries.actions.add(raid.id, { ...raid });
-		}
-		if (ledger) {
-			registries.actions.add(ledger.id, { ...ledger });
-		}
-		if (transfer) {
-			registries.buildings.add(transfer.id, { ...transfer });
-		}
-		if (population) {
-			registries.buildings.add(population.id, { ...population });
-		}
-		if (development) {
-			registries.buildings.add(development.id, { ...development });
-		}
-		if (harvest) {
-			registries.developments.add(harvest.id, { ...harvest });
-		}
-		if (ledgerRole) {
-			registries.populations.add(ledgerRole.id, { ...ledgerRole });
-		}
-	});
+			metadata.resources = {
+				...(metadata.resources ?? {}),
+				[syntheticGoldKey]: {
+					icon: '🪙',
+					label: 'Synthetic Gold',
+				},
+			};
+			metadata.buildings = {
+				...(metadata.buildings ?? {}),
+				[transferBuilding.id]: {
+					icon: transferBuilding.icon,
+					label: transferBuilding.name,
+				},
+				[populationBuilding.id]: {
+					icon: populationBuilding.icon,
+					label: populationBuilding.name,
+				},
+				[developmentBuilding.id]: {
+					icon: developmentBuilding.icon,
+					label: developmentBuilding.name,
+				},
+			};
+			metadata.developments = {
+				...(metadata.developments ?? {}),
+				[harvestDevelopment.id]: {
+					icon: harvestDevelopment.icon,
+					label: harvestDevelopment.name,
+				},
+			};
+			metadata.populations = {
+				...(metadata.populations ?? {}),
+				[ledgerRole.id]: {
+					icon: ledgerRole.icon,
+					label: ledgerRole.name,
+				},
+			};
+
+			const [active, opponent] = session.game.players;
+			if (active) {
+				active.actions = [raidAction.id, ledgerAction.id];
+				active.buildings = [transferBuilding.id, populationBuilding.id];
+				active.lands = [
+					{
+						id: 'land:synthetic:home',
+						slotsMax: 1,
+						slotsUsed: 0,
+						developments: [harvestDevelopment.id],
+					},
+				];
+			}
+			if (opponent) {
+				opponent.actions = [];
+			}
+		},
+	);
+
+	const ctx: SyntheticContextMaps = {
+		actions: {
+			get(id: string) {
+				return synthetic.registries.actions.get(id);
+			},
+		},
+		buildings: {
+			get(id: string) {
+				return synthetic.registries.buildings.get(id);
+			},
+		},
+		developments: {
+			get(id: string) {
+				return synthetic.registries.developments.get(id);
+			},
+		},
+	};
 
 	return {
 		ctx,
-		translation,
+		translation: synthetic.translationContext,
+		registries: synthetic.registries,
+		session: synthetic.session,
 		ids: {
 			transferBuilding: transferBuilding.id,
 			populationBuilding: populationBuilding.id,
@@ -215,7 +251,7 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 export const SYNTHETIC_RESOURCE_TRANSFER_ICON = '🔁';
 
 export function getModifier(
-	ctx: ReturnType<typeof createEngine>,
+	ctx: SyntheticContextMaps,
 	buildingId: string,
 ): EffectDef {
 	return (ctx.buildings.get(buildingId).onBuild?.[0] ?? {}) as EffectDef;

@@ -1,5 +1,18 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T20 - Protocol Fixture Realignment
+
+- Reworked the synthetic Raiders Guild and festival fixtures to assemble
+  protocol session snapshots, registries, and metadata without touching engine
+  contexts, exposing registry-backed `ctx` lookups for translation assertions.
+  【F:packages/web/tests/fixtures/syntheticRaidersGuild.ts†L1-L337】【F:packages/web/tests/fixtures/syntheticFestival.ts†L1-L315】
+- Extended the synthetic translation context builder so fixture configurators
+  can mutate snapshot metadata before the translation context is created,
+  supporting protocol-driven resource and phase assets.【F:packages/web/tests/helpers/createSyntheticTranslationContext.ts†L1-L80】
+- Shifted shared fixtures and tests to protocol typings by swapping engine
+  `EffectDef`/player ids for protocol equivalents in the plow fixture,
+  translation context test, and raise population component test.【F:packages/web/tests/fixtures/syntheticPlow.ts†L1-L160】【F:packages/web/tests/translation/createTranslationContext.test.ts†L1-L307】【F:packages/web/tests/components/actions/RaisePopOptions.test.tsx†L1-L200】
+
 ## Domain Migration - P3 - T18 - Engine alias regression guard
 
 - Removed the Vite alias that exposed `@kingdom-builder/engine` to the web

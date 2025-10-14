@@ -1,21 +1,25 @@
-import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import type { TranslationContext } from '../../src/translation/context';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestSessionScaffold } from './testSessionScaffold';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { createTestRegistryMetadata } from './registryMetadata';
+import type {
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 
 export interface SyntheticTranslationContextResult {
 	translationContext: TranslationContext;
 	registries: SessionRegistries;
-	session: EngineSessionSnapshot;
+	session: SessionSnapshot;
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 }
 
 export type SyntheticContextConfigurator = (options: {
-	session: EngineSessionSnapshot;
+	session: SessionSnapshot;
 	registries: SessionRegistries;
+	metadata: SessionSnapshotMetadata;
 }) => void;
 
 export function buildSyntheticTranslationContext(
@@ -48,7 +52,7 @@ export function buildSyntheticTranslationContext(
 		ruleSnapshot,
 		metadata,
 	});
-	configure?.({ session, registries });
+	configure?.({ session, registries, metadata: session.metadata });
 	const translationContext = createTranslationContext(
 		session,
 		registries,
