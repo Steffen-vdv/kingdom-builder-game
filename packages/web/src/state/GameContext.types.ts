@@ -1,7 +1,9 @@
 import type {
+	SessionRequirementFailure,
 	SessionRuleSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
@@ -70,6 +72,18 @@ export interface SessionDerivedSelectors {
 	sessionView: SessionView;
 }
 
+export interface GameSessionApi {
+	getActionCosts(
+		actionId: string,
+		params?: Record<string, unknown>,
+	): Record<string, number>;
+	getActionRequirements(
+		actionId: string,
+		params?: Record<string, unknown>,
+	): SessionRequirementFailure[];
+	getActionOptions(actionId: string): ActionEffectGroup[];
+}
+
 export interface GameEngineContextValue {
 	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
@@ -124,6 +138,7 @@ export interface GameEngineContextValue {
 	dismissToast: (id: number) => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
+	session: GameSessionApi;
 }
 
 export type LegacyGameEngineContextValue = GameEngineContextValue;

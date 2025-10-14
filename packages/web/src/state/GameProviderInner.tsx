@@ -26,6 +26,7 @@ import type {
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import type { SessionResourceKey } from './sessionTypes';
+import { createSessionApi } from './createSessionApi';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
@@ -75,6 +76,11 @@ export function GameProviderInner({
 		queue.getLatestMetadata() ??
 		sessionMetadata ??
 		cachedSessionSnapshot.metadata;
+
+	const sessionApi = useMemo(
+		() => createSessionApi(cachedMetadata, cachedSessionSnapshot),
+		[cachedMetadata, cachedSessionSnapshot],
+	);
 
 	const refresh = useCallback(() => {
 		void refreshSession();
@@ -323,6 +329,7 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
+		session: sessionApi,
 		sessionState,
 		sessionView,
 		handlePerform,
