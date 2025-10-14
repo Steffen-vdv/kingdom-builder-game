@@ -64,7 +64,7 @@ export interface SessionRunAiRequest extends SessionIdentifier {
 
 export interface SessionRunAiResponse extends SessionStateResponse {
 	ranTurn: boolean;
-	advance?: SessionAdvanceResult;
+	advance?: SessionAdvanceResult | undefined;
 }
 
 export interface SessionSetDevModeRequest extends SessionIdentifier {
