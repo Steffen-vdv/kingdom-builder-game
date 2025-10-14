@@ -49,6 +49,8 @@ describe('SessionTransport executeAction', () => {
 		expect(player?.resources[gainKey]).toBe(1);
 		expect(Array.isArray(result.traces)).toBe(true);
 		expect(result.costs).toEqual(expectedCosts);
+		expect(result.snapshot.metadata.triggers?.onBuild?.past).toBeDefined();
+		expect(result.snapshot.metadata.overview?.hero?.title).toBeDefined();
 		expect(result.httpStatus).toBe(200);
 	});
 

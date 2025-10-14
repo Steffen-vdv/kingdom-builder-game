@@ -18,7 +18,10 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
+import { createSessionMetadata } from './createSessionMetadata.js';
+import { cloneValue } from '../utils/structuredClone.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -65,6 +68,8 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
+	private readonly metadata: SessionSnapshotMetadata;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -92,6 +97,13 @@ export class SessionManager {
 			populations: this.cloneRegistry(this.baseOptions.populations),
 			resources: this.buildResourceRegistry(resourceRegistry),
 		};
+		this.metadata = createSessionMetadata({
+			populations: this.baseOptions.populations,
+			buildings: this.baseOptions.buildings,
+			developments: this.baseOptions.developments,
+			phases: this.baseOptions.phases,
+			resources: this.registries.resources,
+		});
 	}
 
 	public createSession(
@@ -163,6 +175,10 @@ export class SessionManager {
 
 	public getRegistries(): SessionRegistriesPayload {
 		return structuredClone(this.registries);
+	}
+
+	public getMetadata(): SessionSnapshotMetadata {
+		return cloneValue(this.metadata);
 	}
 
 	private requireSession(sessionId: string): EngineSession {

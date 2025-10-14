@@ -35,6 +35,8 @@ describe('SessionTransport advanceSession', () => {
 		});
 		expect(advance.sessionId).toBe(sessionId);
 		expect(advance.snapshot.game.currentPhase).toBe('end');
+		expect(advance.snapshot.metadata.triggers?.onBuild?.past).toBeDefined();
+		expect(advance.snapshot.metadata.overview?.hero?.title).toBeDefined();
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
 		expect(advance.registries.actions[actionId]).toBeDefined();
 	});

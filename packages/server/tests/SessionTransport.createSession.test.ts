@@ -183,4 +183,29 @@ describe('SessionTransport createSession', () => {
 		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
 	});
+
+	it('merges static metadata with snapshots without mutating the cache', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('metadata-session'),
+			authMiddleware: middleware,
+		});
+		const cachedBefore = manager.getMetadata();
+		const response = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const { metadata } = response.snapshot;
+		expect(metadata.triggers?.onBuild?.past).toBeDefined();
+		expect(metadata.overview?.hero?.title).toBeDefined();
+		if (!metadata.resources) {
+			metadata.resources = {};
+		}
+		metadata.resources['synthetic:mutation'] = {
+			label: 'mutated',
+		};
+		const cachedAfter = manager.getMetadata();
+		expect(cachedAfter).toEqual(cachedBefore);
+	});
 });

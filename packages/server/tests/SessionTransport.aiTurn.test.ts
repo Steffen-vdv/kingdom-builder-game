@@ -54,6 +54,8 @@ describe('SessionTransport runAiTurn', () => {
 		expect(result.snapshot.game.currentPhase).toBeDefined();
 		expect(Array.isArray(result.snapshot.recentResourceGains)).toBe(true);
 		expect(result.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(result.snapshot.metadata.triggers?.onBuild?.past).toBeDefined();
+		expect(result.snapshot.metadata.overview?.hero?.title).toBeDefined();
 		expect(Object.keys(result.registries.actions)).not.toHaveLength(0);
 		expect(runSpy).toHaveBeenCalledWith(playerId);
 	});

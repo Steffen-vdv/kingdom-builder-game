@@ -36,6 +36,8 @@ describe('SessionTransport dev mode', () => {
 			headers: authorizedHeaders,
 		});
 		expect(updated.snapshot.game.devMode).toBe(true);
+		expect(updated.snapshot.metadata.triggers?.onBuild?.past).toBeDefined();
+		expect(updated.snapshot.metadata.overview?.hero?.title).toBeDefined();
 		expect(updated.registries.actions[actionId]).toBeDefined();
 	});
 
