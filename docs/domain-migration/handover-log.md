@@ -222,3 +222,16 @@
 - Updated helper utilities to emit protocol-driven snapshots and remote
   adapters, and migrated suites such as `GameProvider`, `useActionPerformer`,
   `useSessionQueue`, and `useAiRunner` to exercise the adapter behaviours.
+
+## Domain Migration - P3 - T20 - Web test fixture protocol migration
+
+- Rebuilt the web translation and component fixtures (`syntheticFestival`,
+  `syntheticRaidersGuild`, `syntheticPlow`) to generate session snapshots and
+  registries directly from the protocol helpers, removing every
+  `@kingdom-builder/engine` dependency from the fixture tree.
+- Updated the translation suites to consume the protocol-driven fixtures and
+  cleaned up engine mocks, keeping action/building summaries powered entirely by
+  synthetic protocol data.
+- Swapped remaining test-only engine identifiers (e.g., `PlayerId`) for
+  protocol equivalents and reran the `no-engine-internals` regression check to
+  confirm the web package has no lingering engine imports.

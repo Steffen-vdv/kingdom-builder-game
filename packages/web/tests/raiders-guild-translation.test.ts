@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect } from 'vitest';
 import {
 	describeContent,
 	splitSummary,
@@ -18,10 +18,6 @@ import {
 	SYNTHETIC_RESOURCE_TRANSFER_ICON,
 } from './fixtures/syntheticRaidersGuild';
 import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
-
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
 
 const RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
 function expectHoistedActionCard(
