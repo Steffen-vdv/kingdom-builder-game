@@ -4,6 +4,16 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 	SessionCreateResponse,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 	SessionGateway,
 	SessionIdentifier,
 	SessionSetDevModeRequest,
@@ -47,5 +57,35 @@ describe('SessionGateway', () => {
 		expectTypeOf<SessionGateway['setDevMode']>().returns.toEqualTypeOf<
 			Promise<SessionSetDevModeResponse>
 		>();
+		expectTypeOf<SessionGateway['getActionCosts']>()
+			.parameter(0)
+			.toEqualTypeOf<SessionActionCostRequest>();
+		expectTypeOf<SessionGateway['getActionCosts']>().returns.toEqualTypeOf<
+			Promise<SessionActionCostResponse>
+		>();
+		expectTypeOf<SessionGateway['getActionRequirements']>()
+			.parameter(0)
+			.toEqualTypeOf<SessionActionRequirementRequest>();
+		expectTypeOf<
+			SessionGateway['getActionRequirements']
+		>().returns.toEqualTypeOf<Promise<SessionActionRequirementResponse>>();
+		expectTypeOf<SessionGateway['getActionOptions']>()
+			.parameter(0)
+			.toEqualTypeOf<SessionActionOptionsRequest>();
+		expectTypeOf<SessionGateway['getActionOptions']>().returns.toEqualTypeOf<
+			Promise<SessionActionOptionsResponse>
+		>();
+		expectTypeOf<SessionGateway['runAiTurn']>()
+			.parameter(0)
+			.toEqualTypeOf<SessionRunAiRequest>();
+		expectTypeOf<SessionGateway['runAiTurn']>().returns.toEqualTypeOf<
+			Promise<SessionRunAiResponse>
+		>();
+		expectTypeOf<SessionGateway['simulateUpcomingPhases']>()
+			.parameter(0)
+			.toEqualTypeOf<SessionSimulateRequest>();
+		expectTypeOf<
+			SessionGateway['simulateUpcomingPhases']
+		>().returns.toEqualTypeOf<Promise<SessionSimulateResponse>>();
 	});
 });

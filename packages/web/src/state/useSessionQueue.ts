@@ -1,14 +1,13 @@
 import { useCallback, useMemo } from 'react';
+import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
 import type {
 	SessionQueueHelpers,
 	SessionSnapshot,
 	Session,
-	LegacySession,
 } from './sessionTypes';
 
 interface UseSessionQueueResult {
-	session: Session;
-	legacySession: LegacySession;
+	adapter: Session;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	cachedSessionSnapshot: SessionSnapshot;
 }
@@ -16,25 +15,30 @@ interface UseSessionQueueResult {
 export function useSessionQueue(
 	queue: SessionQueueHelpers,
 	sessionState: SessionSnapshot,
+	sessionId: string,
 ): UseSessionQueueResult {
-	const session = useMemo(
+	const adapter = useMemo(
 		() => queue.getCurrentSession(),
 		[queue, sessionState],
 	);
-	const legacySession = useMemo(
-		() => queue.getLegacySession(),
-		[queue, sessionState],
-	);
 	const enqueue = useCallback(
-		<T>(task: () => Promise<T> | T) => queue.enqueue(task),
-		[queue],
+		<T>(task: () => Promise<T> | T) => enqueueSessionTask(sessionId, task),
+		[sessionId],
 	);
 	const cachedSessionSnapshot = useMemo(() => {
 		const latest = queue.getLatestSnapshot();
 		if (latest) {
 			return latest;
 		}
-		return legacySession.getSnapshot();
-	}, [queue, legacySession, sessionState]);
-	return { session, legacySession, enqueue, cachedSessionSnapshot };
+		const record = getSessionRecord(sessionId);
+		if (record) {
+			return record.snapshot;
+		}
+		return sessionState;
+	}, [queue, sessionId, sessionState]);
+	return {
+		adapter,
+		enqueue,
+		cachedSessionSnapshot,
+	};
 }

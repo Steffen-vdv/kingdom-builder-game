@@ -1,16 +1,23 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAiRunner } from '../../src/state/useAiRunner';
-import type { LegacySession } from '../../src/state/sessionTypes';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import { createResourceKeys } from '../helpers/sessionRegistries';
-import { markFatalSessionError } from '../../src/state/sessionSdk';
+import {
+	createResourceKeys,
+	createSessionRegistriesPayload,
+} from '../helpers/sessionRegistries';
+import { createRemoteSessionAdapter } from '../helpers/remoteSessionAdapter';
+import { clearSessionStateStore } from '../../src/state/sessionStateStore';
 
 describe('useAiRunner', () => {
+	beforeEach(() => {
+		clearSessionStateStore();
+	});
+
 	it('forwards fatal errors from the action phase runner', async () => {
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {
@@ -24,8 +31,8 @@ describe('useAiRunner', () => {
 				steps: [],
 			},
 		];
-		const activePlayer = createSnapshotPlayer({ id: 'player-1' });
-		const opponent = createSnapshotPlayer({ id: 'player-2' });
+		const activePlayer = createSnapshotPlayer({ id: 'A', aiControlled: true });
+		const opponent = createSnapshotPlayer({ id: 'B' });
 		const sessionState = createSessionSnapshot({
 			players: [activePlayer, opponent],
 			activePlayerId: activePlayer.id,
@@ -41,35 +48,32 @@ describe('useAiRunner', () => {
 			currentStep: phases[0]?.id,
 			phaseIndex: 0,
 		});
+		const registries = createSessionRegistriesPayload();
+		const { adapter, api, cleanup } = createRemoteSessionAdapter({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
+		});
+		api.setNextRunAiResponse({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
+			ranTurn: true,
+		});
 		const fatalError = new Error('failed to reach action phase');
 		const runUntilActionPhaseCore = vi
 			.fn<[], Promise<void>>()
 			.mockRejectedValueOnce(fatalError);
 		const onFatalSessionError = vi.fn();
-		const performRef = { current: vi.fn().mockResolvedValue(undefined) };
-		const session = {
-			hasAiController: vi.fn(() => true),
-			enqueue: vi.fn(async (task: () => Promise<void>) => {
-				await task();
-			}),
-			runAiTurn: vi.fn(() => Promise.resolve(true)),
-			getActionDefinition: vi.fn(() => ({
-				id: 'action.advance',
-				name: 'Advance',
-			})),
-			getSnapshot: vi.fn(() => sessionState),
-			advancePhase: vi.fn(),
-		} as unknown as LegacySession;
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
 
 		renderHook(() =>
 			useAiRunner({
-				session,
+				session: adapter,
 				sessionState,
 				runUntilActionPhaseCore,
 				syncPhaseState,
-				performRef,
 				mountedRef,
 				onFatalSessionError,
 			}),
@@ -79,12 +83,17 @@ describe('useAiRunner', () => {
 			await Promise.resolve();
 		});
 
+		expect(syncPhaseState).toHaveBeenCalledWith(sessionState, {
+			isAdvancing: true,
+			canEndTurn: false,
+		});
 		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
+		cleanup();
 	});
 
-	it('stops background turns when the action performer reports a fatal error', async () => {
+	it('stops background turns when the AI run reports a fatal error', async () => {
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -97,8 +106,8 @@ describe('useAiRunner', () => {
 				steps: [],
 			},
 		];
-		const activePlayer = createSnapshotPlayer({ id: 'player-1' });
-		const opponent = createSnapshotPlayer({ id: 'player-2' });
+		const activePlayer = createSnapshotPlayer({ id: 'A', aiControlled: true });
+		const opponent = createSnapshotPlayer({ id: 'B' });
 		const sessionState = createSessionSnapshot({
 			players: [activePlayer, opponent],
 			activePlayerId: activePlayer.id,
@@ -114,42 +123,24 @@ describe('useAiRunner', () => {
 			currentStep: phases[0]?.id,
 			phaseIndex: 0,
 		});
-		const fatalError = new Error('fatal action failure');
-		const onFatalSessionError = vi.fn();
-		const performRef = {
-			current: vi.fn(() => {
-				markFatalSessionError(fatalError);
-				onFatalSessionError(fatalError);
-				return Promise.reject(fatalError);
-			}),
-		};
-		const runAiTurn = vi.fn(async (_id, options) => {
-			await options.performAction('action.advance', undefined, {});
-			return true;
+		const registries = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
 		});
-		const session = {
-			hasAiController: vi.fn(() => true),
-			enqueue: vi.fn(async (task: () => Promise<void>) => {
-				await task();
-			}),
-			runAiTurn,
-			getActionDefinition: vi.fn(() => ({
-				id: 'action.advance',
-				name: 'Advance',
-			})),
-			getSnapshot: vi.fn(() => sessionState),
-			advancePhase: vi.fn(),
-		} as unknown as LegacySession;
+		const fatalError = new Error('fatal AI failure');
+		const onFatalSessionError = vi.fn();
+		vi.spyOn(adapter, 'runAiTurn').mockRejectedValueOnce(fatalError);
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
 
 		renderHook(() =>
 			useAiRunner({
-				session,
+				session: adapter,
 				sessionState,
 				runUntilActionPhaseCore: vi.fn(),
 				syncPhaseState,
-				performRef,
 				mountedRef,
 				onFatalSessionError,
 			}),
@@ -159,9 +150,8 @@ describe('useAiRunner', () => {
 			await Promise.resolve();
 		});
 
-		expect(runAiTurn).toHaveBeenCalledTimes(1);
-		expect(performRef.current).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
+		cleanup();
 	});
 });

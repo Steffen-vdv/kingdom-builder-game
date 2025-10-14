@@ -6,12 +6,13 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { snapshotPlayer } from '../translation';
 import { getLegacySessionContext } from './getLegacySessionContext';
+import { advanceSessionPhase } from './sessionSdk';
+import { getSessionRecord } from './sessionStateStore';
 import {
-	advanceSessionPhase,
 	SessionMirroringError,
 	markFatalSessionError,
 	isFatalSessionError,
-} from './sessionSdk';
+} from './sessionErrors';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type {
 	FormatPhaseResolutionOptions,
@@ -24,13 +25,9 @@ type FormatPhaseResolution = (
 	options: FormatPhaseResolutionOptions,
 ) => PhaseResolutionFormatResult;
 
-interface SessionSnapshotSource {
-	getSnapshot(): SessionSnapshot;
-}
-
 interface AdvanceToActionPhaseOptions {
-	session: SessionSnapshotSource;
 	sessionId: string;
+	initialSnapshot: SessionSnapshot;
 	resourceKeys: SessionResourceKey[];
 	mountedRef: React.MutableRefObject<boolean>;
 	applyPhaseSnapshot: (
@@ -48,8 +45,8 @@ interface AdvanceToActionPhaseOptions {
 }
 
 export async function advanceToActionPhase({
-	session,
 	sessionId,
+	initialSnapshot,
 	resourceKeys,
 	mountedRef,
 	applyPhaseSnapshot,
@@ -60,7 +57,8 @@ export async function advanceToActionPhase({
 	onFatalSessionError,
 }: AdvanceToActionPhaseOptions) {
 	try {
-		let snapshot = session.getSnapshot();
+		const record = getSessionRecord(sessionId);
+		let snapshot = record?.snapshot ?? initialSnapshot;
 		if (snapshot.game.conclusion) {
 			applyPhaseSnapshot(snapshot, { isAdvancing: false });
 			refresh();
@@ -91,7 +89,8 @@ export async function advanceToActionPhase({
 			const { player } = advanceResult;
 			const skipMetadata: SessionAdvanceSkipSnapshot | undefined =
 				advanceResult.skipped;
-			const snapshotAfter = advanceResponse.snapshot;
+			const latestRecord = getSessionRecord(sessionId);
+			const snapshotAfter = latestRecord?.snapshot ?? advanceResponse.snapshot;
 			if (snapshotAfter.game.conclusion) {
 				applyPhaseSnapshot(snapshotAfter, { isAdvancing: false });
 				refresh();
@@ -131,7 +130,8 @@ export async function advanceToActionPhase({
 		if (!mountedRef.current) {
 			return;
 		}
-		const refreshed = session.getSnapshot();
+		const refreshedRecord = getSessionRecord(sessionId);
+		const refreshed = refreshedRecord?.snapshot ?? snapshot;
 		if (!mountedRef.current) {
 			return;
 		}

@@ -1,10 +1,11 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
 	PlayerSnapshotDeltaBucket,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import { useGameEngine } from './GameContext';
+import { simulateUpcomingPhases } from './sessionSdk';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
 
@@ -93,9 +94,13 @@ function hashGameState(
 }
 
 export function useNextTurnForecast(): NextTurnForecast {
-	const { session, sessionState } = useGameEngine();
+	const { session, sessionState, sessionId } = useGameEngine();
 	const { game, phases } = sessionState;
 	const players = game.players;
+	const playerIds = useMemo(
+		() => players.map((player) => player.id),
+		[players],
+	);
 	const hashKey = useMemo(() => {
 		const gameHash = hashGameState(game, phases);
 		const playerHashes = players.map((player) => hashPlayer(player));
@@ -113,7 +118,68 @@ export function useNextTurnForecast(): NextTurnForecast {
 		phases,
 		players,
 	]);
+	const [revision, setRevision] = useState(0);
 	const cacheRef = useRef<{ key: string; value: NextTurnForecast }>();
+	const requestKeyRef = useRef<string>();
+
+	useEffect(() => {
+		let disposed = false;
+		if (requestKeyRef.current === hashKey) {
+			return;
+		}
+		requestKeyRef.current = hashKey;
+		const run = async () => {
+			const updates: NextTurnForecast = {};
+			let hasSuccess = false;
+			let hasError = false;
+			await Promise.all(
+				playerIds.map(async (playerId) => {
+					try {
+						const response = await session.enqueue(() =>
+							simulateUpcomingPhases({
+								sessionId,
+								playerId,
+							}),
+						);
+						updates[playerId] = response.result.delta;
+						hasSuccess = true;
+					} catch (error) {
+						hasError = true;
+					}
+				}),
+			);
+			if (disposed) {
+				return;
+			}
+			if (hasSuccess) {
+				const existing =
+					cacheRef.current?.key === hashKey
+						? cacheRef.current.value
+						: undefined;
+				const merged: NextTurnForecast = {};
+				for (const playerId of playerIds) {
+					if (updates[playerId]) {
+						merged[playerId] = updates[playerId];
+						continue;
+					}
+					if (existing?.[playerId]) {
+						merged[playerId] = existing[playerId];
+						continue;
+					}
+					merged[playerId] = cloneEmptyDelta();
+				}
+				cacheRef.current = { key: hashKey, value: merged };
+				setRevision((value) => value + 1);
+			} else if (hasError) {
+				requestKeyRef.current = undefined;
+			}
+		};
+		void run();
+		return () => {
+			disposed = true;
+		};
+	}, [hashKey, playerIds, session, sessionId]);
+
 	return useMemo(() => {
 		if (cacheRef.current?.key === hashKey) {
 			return cacheRef.current.value;
@@ -129,5 +195,5 @@ export function useNextTurnForecast(): NextTurnForecast {
 		}
 		cacheRef.current = { key: hashKey, value: forecast };
 		return forecast;
-	}, [session, hashKey, players]);
+	}, [session, hashKey, players, revision]);
 }

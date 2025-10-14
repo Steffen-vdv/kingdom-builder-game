@@ -1,5 +1,90 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T18 - Engine alias regression guard
+
+- Removed the Vite alias that exposed `@kingdom-builder/engine` to the web
+  workspace so UI modules resolve protocol DTOs or translated content rather
+  than linking against engine internals directly.【F:packages/web/vite.config.ts†L1-L29】
+- Hardened the regression test to scan all web `src/` and `tests/` TypeScript
+  modules for static, dynamic, or CommonJS imports targeting
+  `@kingdom-builder/engine/*`, ensuring no module reaches into engine internals
+  via subpath aliases after the Vite resolver change.【F:packages/web/tests/regression/no-engine-internals.test.ts†L1-L63】
+
+## Domain Migration - P3 - T16 - Next Turn Forecast Remote Simulation
+
+- `useNextTurnForecast` now requests phase simulations through the remote
+  session adapter and `GameApi`, caching results per snapshot hash while
+  falling back to empty deltas during cache misses. Tests mock the simulation
+  request helper to verify memoization and the updated async workflow.
+
+## Domain Migration - P3 - T17 - Compensation Logger Session Decoupling
+
+- Updated `useCompensationLogger` to reset per-session tracking by keying on
+  the active `sessionId`, removing the legacy session handle dependency and
+  sourcing translation context data entirely from the snapshot and registry
+  store inputs.【F:packages/web/src/state/useCompensationLogger.ts†L1-L118】
+- Adjusted `GameProviderInner` and its tests to pass the protocol `sessionId`
+  into the compensation logger so it relogs when the session state store swaps
+  to a new record without touching the legacy session mock.
+  【F:packages/web/src/state/GameProviderInner.tsx†L1-L360】
+  【F:packages/web/tests/state/useCompensationLogger.test.tsx†L1-L212】
+
+## Domain Migration - P3 - T13 - Action Performer Queue Alignment
+
+- Updated `useActionPerformer` to read the authoritative session snapshot from
+  the adapter after remote executions and to expose the queued handler to AI
+  callers, eliminating the legacy engine mirror dependency for action
+  completion state and queuing.【F:packages/web/src/state/useActionPerformer.ts†L129-L349】
+- Refreshed the hook's tests to mock protocol requirement failures and adapter
+  snapshot updates instead of engine fixtures so coverage follows the GameApi
+  transport path.【F:packages/web/tests/state/useActionPerformer.test.ts†L1-L332】
+
+## Domain Migration - P3 - T11 - Session Container Remote Adapter Migration
+
+- `GameContext` now persists the remote session adapter alongside the
+  store-backed snapshot metadata, removing the legacy engine session fields from
+  the container and routing queue helpers through the shared store promise
+  chain.
+- Refreshed the session SDK bootstrap/refresh/dev-mode methods to return the
+  remote record derived from the session state store, keeping the adapter in
+  sync while callers consume the canonical snapshot cache.
+- Updated web state tests (GameProvider, session SDK) to assert against the new
+  record payloads and queue wiring.\
+
+## Domain Migration - P3 - T9 - Remote Session Mirror Removal
+
+- Removed the legacy engine mirror and developer-mode bootstrap so session lifecycle now flows entirely through the remote adapter backed by the session state store.【F:packages/web/src/state/sessionSdk.ts†L1-L340】【F:packages/web/src/state/remoteSessionAdapter.ts†L1-L220】
+- Simplified runtime configuration by dropping developer preset plumbing after the mirror removal, keeping only the favicon bootstrap metadata.【F:packages/web/src/startup/runtimeConfig.ts†L1-L140】【F:packages/web/src/startup/runtimeConfigFallback.json†L1048-L1054】
+
+## Domain Migration - P3 - T10 - Session Queue Store Integration
+
+- Refactored `packages/web/src/state/useSessionQueue.ts` to route UI tasks
+  through the session state store's promise queue and to source cached
+  snapshots from the authoritative record instead of the legacy engine mirror.
+- Updated `GameProviderInner` and queue helper wiring so the unified session
+  adapter is retrieved via `getCurrentSession`, and expanded the session SDK
+  tests to seed the store during mocked workflows.
+- Added `packages/web/tests/state/useSessionQueue.test.ts` to verify the hook
+  defers to the store-backed queue seed and reads fallback snapshots from the
+  store cache, preventing regressions while the legacy engine mirror is
+  retired.
+
+## Domain Migration - P3 - T6 - Session State Store Bootstrap
+
+- Added `packages/web/src/state/sessionStateStore.ts` to cache authoritative
+  session snapshots, rule snapshots, registries, resource keys, and metadata
+  emitted by the protocol service. The store clones incoming payloads to guard
+  against accidental mutation and seeds a per-session promise queue used by the
+  web client to coordinate serialized lifecycle tasks.
+- `sessionSdk` now initializes and mutates the store whenever snapshots refresh,
+  ensuring effect logs and passive metadata remain accessible to translation
+  contexts even when the Engine mirror is not queried. The SDK also clears the
+  store on release.
+- `GameContext` consumes the cached queue seed so the UI promise chain resets
+  safely on session hand-off, and new tests under
+  `packages/web/tests/state/sessionStateStore.test.ts` confirm registry merge
+  semantics and cloning behaviour.
+
 ## Domain Migration - P1 - T17 - Stat Summary Metadata Decoupling
 
 - Reworked `packages/web/src/utils/stats.ts` and supporting descriptors to read
@@ -81,3 +166,72 @@
   dependency directly. We will need a protocol-level hook (or server-side AI
   orchestration endpoint) that surfaces the same parameter payload contract so
   the web client can stop injecting overrides into `runAiTurn`.
+
+## Domain Migration - P3 - T3 - Session metadata transport endpoints
+
+- Registered session transport endpoints for action metadata, AI turns, and
+  phase simulations so the domain handover includes HTTP access to the new
+  protocol routes.
+
+## Domain Migration - P3 - T7 - Web legacy session interface audit
+
+- Documented the explicit `LegacySession` interface exposed to the web layer,
+  reflecting the methods consumed during migration (costs, requirements,
+  options, AI helpers, simulation, etc.) and the queue helpers seeded from the
+  remote session store.
+
+## Domain Migration - P3 - T8 - Remote Session SDK Adapter
+
+- Replaced the engine-backed mirror in `packages/web/src/state/sessionSdk.ts`
+  with a protocol-driven adapter that shares the session queue store, forwards
+  lifecycle calls to `GameApi`, and caches registries, snapshots, metadata, and
+  advance results directly in the session state store.
+- Added queue helpers to the session state store to serialize remote mutations
+  and expose snapshot-only updates for action responses, ensuring the adapter
+  can refresh local caches without the engine.
+- Updated `GameProviderInner` to call the remote `updatePlayerName` utility and
+  rewrote the session SDK test suite to exercise remote behaviour using the
+  revised `GameApiFake`, removing the final engine dependencies from the web
+  session bootstrap path.
+
+## Domain Migration - P3 - T15 - AI Runner Remote Orchestration
+
+- `useAiRunner` now delegates to the remote session adapter's `runAiTurn` and
+  `hasAiController` helpers, removing the local engine overrides and letting
+  the `GameApi` drive AI execution.
+- The hook refreshes the session store from the adapter snapshot after each AI
+  turn before resuming phase advancement so queued effects reflect the remote
+  state.
+- `packages/web/tests/state/useAiRunner.test.ts` now stubs the adapter/GameApi
+  behaviour to validate fatal error propagation without touching engine-only
+  helpers.
+
+## Domain Migration - P3 - T14 - Phase progress snapshot mirroring
+
+- Rewired `usePhaseProgress` and its helper to source all snapshots from the
+  remote session state store and drive phase advancement exclusively through the
+  `advanceSessionPhase` API, so queued snapshots fuel diff formatting without
+  invoking legacy engine methods. Tests now seed the session state store instead
+  of engine mocks to cover the remote workflow.
+
+## Domain Migration - P3 - T19 - State test remote migration
+
+- Rebuilt the state test fixtures around the remote session adapter and
+  `GameApiFake`, seeding snapshots and registries through the session state
+  store to mirror queue, action, and AI flows without legacy engine mocks.
+- Updated helper utilities to emit protocol-driven snapshots and remote
+  adapters, and migrated suites such as `GameProvider`, `useActionPerformer`,
+  `useSessionQueue`, and `useAiRunner` to exercise the adapter behaviours.
+
+## Domain Migration - P3 - T20 - Web test fixture protocol migration
+
+- Rebuilt the web translation and component fixtures (`syntheticFestival`,
+  `syntheticRaidersGuild`, `syntheticPlow`) to generate session snapshots and
+  registries directly from the protocol helpers, removing every
+  `@kingdom-builder/engine` dependency from the fixture tree.
+- Updated the translation suites to consume the protocol-driven fixtures and
+  cleaned up engine mocks, keeping action/building summaries powered entirely by
+  synthetic protocol data.
+- Swapped remaining test-only engine identifiers (e.g., `PlayerId`) for
+  protocol equivalents and reran the `no-engine-internals` regression check to
+  confirm the web package has no lingering engine imports.

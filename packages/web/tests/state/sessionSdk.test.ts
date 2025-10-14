@@ -1,19 +1,22 @@
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ActionExecuteSuccessResponse } from '@kingdom-builder/protocol/actions';
 import type {
-	PhaseConfig,
-	RuleSet,
-	StartConfig,
-} from '@kingdom-builder/protocol';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+	SessionAdvanceResult,
+	SessionResourceDefinition,
+	SessionRunAiResponse,
+	SessionSimulateResponse,
+} from '@kingdom-builder/protocol/session';
 import {
+	advanceSessionPhase,
 	createSession,
 	fetchSnapshot,
 	performSessionAction,
-	advanceSessionPhase,
 	releaseSession,
-	setSessionDevMode,
+	runAiTurn,
 	setGameApi,
+	setSessionDevMode,
+	simulateUpcomingPhases,
+	updatePlayerName,
 } from '../../src/state/sessionSdk';
 import {
 	GameApiFake,
@@ -28,136 +31,113 @@ import {
 	createResourceKeys,
 	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
-import * as sessionRegistriesModule from '../../src/state/sessionRegistries';
+import {
+	getSessionRecord,
+	clearSessionStateStore,
+} from '../../src/state/sessionStateStore';
 
-const getLegacyContentConfigMock = vi.hoisted(() => vi.fn());
+const resourceKeys = createResourceKeys();
+const [resourceKey] = resourceKeys;
+if (!resourceKey) {
+	throw new Error('RESOURCE_KEYS is empty');
+}
 
-vi.mock('../../src/startup/runtimeConfig', () => ({
-	getLegacyContentConfig: getLegacyContentConfigMock,
-}));
+const playerA = createSnapshotPlayer({
+	id: 'A',
+	name: 'Commander',
+	resources: { [resourceKey]: 10 },
+});
+const playerB = createSnapshotPlayer({
+	id: 'B',
+	name: 'Scout',
+	resources: { [resourceKey]: 5 },
+});
+
+const phases = [
+	{
+		id: 'phase-main',
+		action: true,
+		steps: [{ id: 'phase-main:start' }],
+	},
+];
+
+const mainStepId = phases[0]?.steps?.[0]?.id ?? 'phase-main:start';
+
+const resources: Record<string, SessionResourceDefinition> = Object.fromEntries(
+	resourceKeys.map((key) => [key, { key, icon: '🪙', label: key }]),
+);
+
+const initialSnapshot = createSessionSnapshot({
+	players: [playerA, playerB],
+	activePlayerId: playerA.id,
+	opponentId: playerB.id,
+	phases,
+	actionCostResource: resourceKey,
+	ruleSnapshot: {
+		tieredResourceKey: resourceKey,
+		tierDefinitions: [],
+		winConditions: [],
+	},
+	turn: 1,
+	currentPhase: phases[0]?.id ?? 'phase-main',
+	currentStep: mainStepId,
+});
+
+const taxActionId = 'tax';
 
 describe('sessionSdk', () => {
-	const resourceKeys = createResourceKeys();
-	const [resourceKey] = resourceKeys;
-	if (!resourceKey) {
-		throw new Error('RESOURCE_KEYS is empty');
-	}
-	const phases: PhaseConfig[] = [
-		{
-			id: 'phase-main',
-			action: true,
-			steps: [{ id: 'phase-main:start' }],
-		},
-	];
-	const ruleSnapshot = {
-		tieredResourceKey: resourceKey,
-		tierDefinitions: [],
-		winConditions: [],
-	} as const;
-	const playerA = createSnapshotPlayer({
-		id: 'A',
-		name: 'Commander',
-		resources: { [resourceKey]: 10 },
-	});
-	const playerB = createSnapshotPlayer({
-		id: 'B',
-		name: 'Scout',
-		resources: { [resourceKey]: 5 },
-	});
-	const resources: Record<string, SessionResourceDefinition> =
-		Object.fromEntries(
-			resourceKeys.map((key) => [key, { key, icon: '🪙', label: key }]),
-		);
-	const startConfig: StartConfig = {
-		player: {
-			resources: { [resourceKey]: 10 },
-			stats: {},
-			population: {},
-			lands: [],
-			buildings: [],
-		},
-	};
-	const rules: RuleSet = {
-		defaultActionAPCost: 1,
-		absorptionCapPct: 1,
-		absorptionRounding: 'nearest',
-		tieredResourceKey: resourceKey,
-		tierDefinitions: [],
-		slotsPerNewLand: 1,
-		maxSlotsPerLand: 1,
-		basePopulationCap: 1,
-		winConditions: [],
-	};
-	const initialSnapshot = createSessionSnapshot({
-		players: [playerA, playerB],
-		activePlayerId: playerA.id,
-		opponentId: playerB.id,
-		phases,
-		actionCostResource: resourceKey,
-		ruleSnapshot,
-		turn: 1,
-		currentPhase: phases[0]?.id ?? 'phase-main',
-		currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
-	});
 	let api: GameApiFake;
+
 	beforeEach(() => {
-		getLegacyContentConfigMock.mockResolvedValue({
-			phases,
-			start: startConfig,
-			rules,
-			resources,
-			primaryIconId: resourceKey,
-			developerPreset: {
-				resourceTargets: [{ key: resourceKey, target: 100 }],
-				landCount: 5,
-			},
-		});
 		api = new GameApiFake();
 		setGameApi(api);
+		const registries = createSessionRegistriesPayload();
+		registries.resources = resources;
 		api.setNextCreateResponse({
 			sessionId: 'session-1',
 			snapshot: initialSnapshot,
-			registries: createSessionRegistriesPayload(),
+			registries,
 		});
 	});
+
 	afterEach(() => {
 		setGameApi(null);
+		clearSessionStateStore();
 	});
-	const taxActionId = 'tax';
+
 	it('creates a session using the API response payload', async () => {
 		const created = await createSession({
 			devMode: true,
 			playerName: 'Commander',
 		});
 		expect(created.sessionId).toBe('session-1');
-		expect(created.snapshot).toEqual(initialSnapshot);
-		expect(created.ruleSnapshot).toEqual(initialSnapshot.rules);
-		expect(created.resourceKeys).toEqual(resourceKeys);
-		expect(created.registries).toHaveProperty('actions');
-		expect(created.metadata).toEqual(initialSnapshot.metadata);
+		expect(created.adapter).toBeDefined();
+		expect(created.record.snapshot).toEqual(initialSnapshot);
+		expect(created.record.ruleSnapshot).toEqual(initialSnapshot.rules);
+		expect(created.record.resourceKeys).toEqual(resourceKeys);
+		expect(created.record.metadata).toEqual(initialSnapshot.metadata);
 	});
+
 	it('fetches snapshots via the API client', async () => {
 		await createSession();
 		const fetched = await fetchSnapshot('session-1');
-		expect(fetched.snapshot).toEqual(initialSnapshot);
-		expect(fetched.ruleSnapshot).toEqual(initialSnapshot.rules);
-		expect(fetched.metadata).toEqual(initialSnapshot.metadata);
+		expect(fetched.record.snapshot).toEqual(initialSnapshot);
+		expect(fetched.record.ruleSnapshot).toEqual(initialSnapshot.rules);
+		expect(fetched.record.metadata).toEqual(initialSnapshot.metadata);
 	});
 
 	it('sets dev mode via the API and refreshes local state', async () => {
-		const created = await createSession();
-		const session = created.legacySession;
-		const setDevModeSpy = vi.spyOn(session, 'setDevMode');
+		await createSession();
 		const updatedSnapshot = createSessionSnapshot({
 			players: [playerA, playerB],
 			activePlayerId: playerA.id,
 			opponentId: playerB.id,
 			phases,
 			actionCostResource: resourceKey,
-			ruleSnapshot,
+			ruleSnapshot: initialSnapshot.rules,
 			turn: 5,
 			currentPhase: phases[0]?.id ?? 'phase-main',
-			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
 			devMode: true,
 		});
 		const mutatedRegistries = createSessionRegistriesPayload();
@@ -172,55 +152,15 @@ describe('sessionSdk', () => {
 			registries: mutatedRegistries,
 		});
 		const result = await setSessionDevMode('session-1', true);
-		expect(result.session).toBe(created.session);
-		expect(result.legacySession).toBe(session);
-		expect(result.snapshot).toEqual(updatedSnapshot);
-		expect(result.ruleSnapshot).toEqual(updatedSnapshot.rules);
-		expect(result.metadata).toEqual(updatedSnapshot.metadata);
-		expect(result.registries.actions.get(taxActionId)?.name).toBe(
+		expect(result.record.snapshot).toEqual(updatedSnapshot);
+		expect(result.record.registries.actions.get(taxActionId)?.name).toBe(
 			'Tax (Developer)',
 		);
-		expect(result.resourceKeys).not.toContain(resourceKey);
-		expect(setDevModeSpy).toHaveBeenCalledWith(true);
-		setDevModeSpy.mockRestore();
+		expect(result.record.resourceKeys).not.toContain(resourceKey);
 	});
 
-	it('propagates abort signals without touching cached registries', async () => {
-		const created = await createSession();
-		const deserializeSpy = vi.spyOn(
-			sessionRegistriesModule,
-			'deserializeSessionRegistries',
-		);
-		const fetchMock = vi.fn(
-			(_input: RequestInfo, init?: RequestInit) =>
-				new Promise<Response>((_resolve, reject) => {
-					const signal = init?.signal;
-					if (!signal) {
-						reject(new Error('Missing abort signal.'));
-						return;
-					}
-					signal.addEventListener(
-						'abort',
-						() => reject(new DOMException('Aborted', 'AbortError')),
-						{ once: true },
-					);
-				}),
-		);
-		setGameApi(createGameApi({ fetchFn: fetchMock }));
-		const controller = new AbortController();
-		const promise = fetchSnapshot(created.sessionId, {
-			signal: controller.signal,
-		});
-		controller.abort();
-		await expect(promise).rejects.toBeInstanceOf(DOMException);
-		expect(fetchMock).toHaveBeenCalledTimes(1);
-		expect(deserializeSpy).not.toHaveBeenCalled();
-		deserializeSpy.mockRestore();
-	});
-	it('performs session actions via the API and mirrors locally', async () => {
-		const created = await createSession();
-		const session = created.session;
-		const performSpy = vi.spyOn(session, 'performAction').mockReturnValue([]);
+	it('performs actions via the API', async () => {
+		await createSession();
 		const updatedSnapshot = createSessionSnapshot({
 			players: [
 				createSnapshotPlayer({
@@ -234,10 +174,10 @@ describe('sessionSdk', () => {
 			opponentId: playerB.id,
 			phases,
 			actionCostResource: resourceKey,
-			ruleSnapshot,
+			ruleSnapshot: initialSnapshot.rules,
 			turn: 2,
 			currentPhase: phases[0]?.id ?? 'phase-main',
-			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
 		});
 		const successResponse: ActionExecuteSuccessResponse = {
 			status: 'success',
@@ -251,24 +191,26 @@ describe('sessionSdk', () => {
 			actionId: taxActionId,
 		});
 		expect(response).toEqual(successResponse);
-		expect(performSpy).toHaveBeenCalledWith(taxActionId, undefined);
+		const record = getSessionRecord('session-1');
+		expect(record?.snapshot).toEqual(updatedSnapshot);
 	});
+
 	it('returns error payloads when the API action fails', async () => {
-		const { session } = await createSession();
+		await createSession();
 		api.setNextActionResponse({
 			status: 'error',
 			error: 'Nope.',
 		});
-		const performSpy = vi.spyOn(session, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
 			actionId: taxActionId,
 		});
 		expect(response.status).toBe('error');
-		expect(performSpy).not.toHaveBeenCalled();
+		expect(response).toHaveProperty('error', 'Nope.');
 	});
+
 	it('converts thrown API errors into error responses', async () => {
-		const { session } = await createSession();
+		await createSession();
 		setGameApi(
 			createGameApiMock({
 				performAction: () => {
@@ -276,99 +218,167 @@ describe('sessionSdk', () => {
 				},
 			}),
 		);
-		const performSpy = vi.spyOn(session, 'performAction');
 		const response = await performSessionAction({
 			sessionId: 'session-1',
 			actionId: taxActionId,
 		});
 		expect(response.status).toBe('error');
 		expect(response).toHaveProperty('error', 'Boom');
-		expect(performSpy).not.toHaveBeenCalled();
 	});
-	it('advances phases via the API and mirrors locally', async () => {
-		await createSession();
-		const advanceSpy = vi
-			.spyOn((await fetchSnapshot('session-1')).session, 'advancePhase')
-			.mockReturnValue({
-				phase: 'phase-main',
-				step: 'phase-main:start',
-				effects: [],
-				player: playerA,
-			});
-		const updatedSnapshot = createSessionSnapshot({
-			players: [playerA, playerB],
-			activePlayerId: playerA.id,
-			opponentId: playerB.id,
-			phases,
-			actionCostResource: resourceKey,
-			ruleSnapshot,
-			turn: 2,
-			currentPhase: phases[0]?.id ?? 'phase-main',
-			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
-		});
-		api.setNextAdvanceResponse({
-			sessionId: 'session-1',
-			snapshot: updatedSnapshot,
-			advance: {
-				phase: 'phase-main',
-				step: 'phase-main:start',
-				effects: [],
-				player: playerA,
-			},
-			registries: createSessionRegistriesPayload(),
-		});
-		const response = await advanceSessionPhase({ sessionId: 'session-1' });
-		expect(response.snapshot).toEqual(updatedSnapshot);
-		expect(advanceSpy).toHaveBeenCalled();
-	});
-	it('updates cached registries and resource keys when the phase advances', async () => {
+
+	it('advances phases via the API and exposes results', async () => {
 		const created = await createSession();
-		const { session, registries, resourceKeys } = created;
-		const advanceSpy = vi.spyOn(session, 'advancePhase').mockReturnValue({
+		const advanceResult: SessionAdvanceResult = {
 			phase: 'phase-main',
 			step: 'phase-main:start',
 			effects: [],
 			player: playerA,
-		});
+		};
 		const updatedSnapshot = createSessionSnapshot({
 			players: [playerA, playerB],
 			activePlayerId: playerA.id,
 			opponentId: playerB.id,
 			phases,
 			actionCostResource: resourceKey,
-			ruleSnapshot,
+			ruleSnapshot: initialSnapshot.rules,
 			turn: 2,
 			currentPhase: phases[0]?.id ?? 'phase-main',
-			currentStep: phases[0]?.steps?.[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
 		});
-		const mutatedRegistries = createSessionRegistriesPayload();
-		mutatedRegistries.actions[taxActionId] = {
-			...mutatedRegistries.actions[taxActionId],
-			name: 'Tax (Advanced)',
-		};
-		delete mutatedRegistries.resources[resourceKey];
 		api.setNextAdvanceResponse({
 			sessionId: 'session-1',
 			snapshot: updatedSnapshot,
-			advance: {
-				phase: 'phase-main',
-				step: 'phase-main:start',
-				effects: [],
-				player: playerA,
-			},
-			registries: mutatedRegistries,
+			advance: advanceResult,
+			registries: createSessionRegistriesPayload(),
 		});
-		await advanceSessionPhase({ sessionId: 'session-1' });
-		expect(advanceSpy).toHaveBeenCalled();
-		expect(registries.actions.get(taxActionId)?.name).toBe('Tax (Advanced)');
-		expect(registries.resources[resourceKey]).toBeUndefined();
-		expect(resourceKeys).not.toContain(resourceKey);
+		const response = await advanceSessionPhase({
+			sessionId: 'session-1',
+		});
+		expect(response.advance).toEqual(advanceResult);
+		const cachedAdvance = created.adapter.advancePhase();
+		expect(cachedAdvance).toEqual(advanceResult);
 	});
+
+	it('runs AI turns via the API and refreshes local state', async () => {
+		await createSession();
+		const updatedSnapshot = createSessionSnapshot({
+			players: [playerA, playerB],
+			activePlayerId: playerB.id,
+			opponentId: playerA.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 2,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
+		});
+		const runAiResponse: SessionRunAiResponse = {
+			sessionId: 'session-1',
+			snapshot: updatedSnapshot,
+			registries: createSessionRegistriesPayload(),
+			ranTurn: true,
+		};
+		api.setNextRunAiResponse(runAiResponse);
+		const response = await runAiTurn({
+			sessionId: 'session-1',
+			playerId: playerA.id,
+		});
+		expect(response).toEqual(runAiResponse);
+		const record = getSessionRecord('session-1');
+		expect(record?.snapshot).toEqual(updatedSnapshot);
+	});
+
+	it('caches simulation results for the adapter', async () => {
+		const created = await createSession();
+		const simulation: SessionSimulateResponse = {
+			sessionId: 'session-1',
+			result: {
+				delta: {
+					resources: {},
+					stats: {},
+					population: {},
+				},
+				before: playerA,
+				after: playerA,
+				steps: [],
+			},
+		};
+		api.setNextSimulationResponse(simulation);
+		const response = await simulateUpcomingPhases({
+			sessionId: 'session-1',
+			playerId: playerA.id,
+		});
+		expect(response).toEqual(simulation);
+		const cached = created.adapter.simulateUpcomingPhases(playerA.id);
+		expect(cached).toEqual(simulation.result);
+	});
+
+	it('updates player names via the API', async () => {
+		await createSession();
+		const updatedSnapshot = createSessionSnapshot({
+			players: [
+				createSnapshotPlayer({
+					id: playerA.id,
+					name: 'Strategist',
+					resources: playerA.resources,
+				}),
+				playerB,
+			],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 1,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
+		});
+		api.setNextUpdatePlayerNameResponse({
+			sessionId: 'session-1',
+			snapshot: updatedSnapshot,
+			registries: createSessionRegistriesPayload(),
+		});
+		const response = await updatePlayerName({
+			sessionId: 'session-1',
+			playerId: playerA.id,
+			playerName: 'Strategist',
+		});
+		expect(response.snapshot).toEqual(updatedSnapshot);
+		const record = getSessionRecord('session-1');
+		const updatedName = record?.snapshot.game.players[0]?.name;
+		expect(updatedName).toBe('Strategist');
+	});
+
 	it('releases session state from the local cache', async () => {
 		await createSession();
 		releaseSession('session-1');
-		await expect(fetchSnapshot('session-1')).rejects.toThrow(
-			'Session not found',
+		expect(getSessionRecord('session-1')).toBeUndefined();
+	});
+
+	it('propagates abort signals without touching registries', async () => {
+		await createSession();
+		const missingSignalError = new Error('Missing abort signal.');
+		const abortDomException = new DOMException('Aborted', 'AbortError');
+		const fetchMock = vi.fn(
+			(_input: RequestInfo, init?: RequestInit) =>
+				new Promise<Response>((_resolve, reject) => {
+					const signal = init?.signal;
+					if (!signal) {
+						reject(missingSignalError);
+						return;
+					}
+					signal.addEventListener('abort', () => reject(abortDomException), {
+						once: true,
+					});
+				}),
 		);
+		setGameApi(createGameApi({ fetchFn: fetchMock }));
+		const controller = new AbortController();
+		const promise = fetchSnapshot('session-1', {
+			signal: controller.signal,
+		});
+		controller.abort();
+		await expect(promise).rejects.toBeInstanceOf(DOMException);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 });

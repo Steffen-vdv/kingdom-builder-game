@@ -1,8 +1,7 @@
 /** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { advanceToActionPhase } from '../../src/state/usePhaseProgress.helpers';
-import { SessionMirroringError } from '../../src/state/legacySessionMirror';
-import type { LegacySession } from '../../src/state/sessionTypes';
+import { SessionMirroringError } from '../../src/state/sessionErrors';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -10,7 +9,12 @@ import {
 import {
 	createResourceKeys,
 	createSessionRegistries,
+	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
+import {
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../src/state/sessionStateStore';
 
 const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
 
@@ -26,6 +30,7 @@ describe('advanceToActionPhase', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		advanceSessionPhaseMock.mockReset();
+		clearSessionStateStore();
 	});
 
 	it('forwards mirroring failures to the fatal handler', async () => {
@@ -37,8 +42,8 @@ describe('advanceToActionPhase', () => {
 			{ id: 'phase-setup', name: 'Setup', action: false, steps: [] },
 			{ id: 'phase-main', name: 'Main', action: true, steps: [] },
 		];
-		const player = createSnapshotPlayer({ id: 'player-1' });
-		const opponent = createSnapshotPlayer({ id: 'player-2' });
+		const player = createSnapshotPlayer({ id: 'A' });
+		const opponent = createSnapshotPlayer({ id: 'B' });
 		const snapshot = createSessionSnapshot({
 			players: [player, opponent],
 			activePlayerId: player.id,
@@ -54,9 +59,11 @@ describe('advanceToActionPhase', () => {
 			currentPhase: phases[0]?.id ?? 'phase-setup',
 			currentStep: phases[0]?.id ?? 'phase-setup',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => snapshot),
-		} as unknown as LegacySession;
+		initializeSessionState({
+			sessionId: 'session-1',
+			snapshot,
+			registries: createSessionRegistriesPayload(),
+		});
 		const mountedRef = { current: true };
 		const applyPhaseSnapshot = vi.fn();
 		const refresh = vi.fn();
@@ -71,8 +78,8 @@ describe('advanceToActionPhase', () => {
 
 		await expect(
 			advanceToActionPhase({
-				session: session as never,
 				sessionId: 'session-1',
+				initialSnapshot: snapshot,
 				resourceKeys: [actionCostResource],
 				mountedRef,
 				applyPhaseSnapshot,

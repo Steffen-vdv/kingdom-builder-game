@@ -1,365 +1,217 @@
-import { randomUUID } from 'node:crypto';
 import {
-	actionExecuteRequestSchema,
-	actionExecuteResponseSchema,
-	actionExecuteErrorResponseSchema,
-	sessionCreateRequestSchema,
-	sessionCreateResponseSchema,
-	sessionAdvanceRequestSchema,
-	sessionAdvanceResponseSchema,
-	sessionSetDevModeRequestSchema,
-	sessionSetDevModeResponseSchema,
-	sessionIdSchema,
-	sessionStateResponseSchema,
-	sessionUpdatePlayerNameRequestSchema,
-	sessionUpdatePlayerNameResponseSchema,
+	sessionActionCostRequestSchema,
+	sessionActionCostResponseSchema,
+	sessionActionRequirementRequestSchema,
+	sessionActionRequirementResponseSchema,
+	sessionActionOptionsRequestSchema,
+	sessionActionOptionsResponseSchema,
+	sessionRunAiRequestSchema,
+	sessionRunAiResponseSchema,
+	sessionSimulateRequestSchema,
+	sessionSimulateResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
-	ActionExecuteErrorResponse,
-	ActionExecuteSuccessResponse,
-	SessionAdvanceResponse,
-	SessionCreateResponse,
-	SessionSetDevModeResponse,
-	SessionStateResponse,
-	SessionPlayerNameMap,
-	SessionSnapshot,
-	SessionUpdatePlayerNameResponse,
+	SessionActionCostResponse,
+	SessionActionRequirementResponse,
+	SessionActionOptionsResponse,
+	SessionRunAiResponse,
+	SessionSimulateResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
-import { normalizeActionTraces } from './engineTraceNormalizer.js';
-import { extractRequirementFailures } from './extractRequirementFailures.js';
-import type {
-	SessionManager,
-	CreateSessionOptions,
-} from '../session/SessionManager.js';
-import type { AuthContext, AuthRole } from '../auth/AuthContext.js';
-import { AuthError } from '../auth/AuthError.js';
-import type { AuthMiddleware } from '../auth/tokenAuthMiddleware.js';
-import { TransportError } from './TransportTypes.js';
-import type {
-	TransportHttpResponse,
-	TransportIdFactory,
-	TransportRequest,
-} from './TransportTypes.js';
 import {
-	sanitizePlayerName,
-	sanitizePlayerNameEntries,
-} from './playerNameHelpers.js';
-export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
+	parseActionParameters,
+	type EngineActionParameters,
+} from './actionParameterHelpers.js';
+import type { TransportRequest } from './TransportTypes.js';
+import { TransportError } from './TransportTypes.js';
+import { SessionTransportBase } from './SessionTransportBase.js';
+import type { SessionTransportOptions } from './SessionTransportBase.js';
 
-export interface SessionTransportOptions {
-	sessionManager: SessionManager;
-	idFactory?: TransportIdFactory;
-	authMiddleware?: AuthMiddleware;
-}
+type ActionMetadataRequest = {
+	session: EngineSession;
+	sessionId: string;
+	actionId: string;
+	params?: EngineActionParameters;
+};
 
-export class SessionTransport {
-	private readonly sessionManager: SessionManager;
+type ActionMetadataSchema =
+	| typeof sessionActionCostRequestSchema
+	| typeof sessionActionRequirementRequestSchema
+	| typeof sessionActionOptionsRequestSchema;
 
-	private readonly idFactory: TransportIdFactory;
-
-	private readonly authMiddleware: AuthMiddleware | undefined;
-
+export class SessionTransport extends SessionTransportBase {
 	public constructor(options: SessionTransportOptions) {
-		this.sessionManager = options.sessionManager;
-		this.idFactory = options.idFactory ?? randomUUID;
-		this.authMiddleware = options.authMiddleware;
+		super(options);
 	}
 
-	public createSession(request: TransportRequest): SessionCreateResponse {
-		this.requireAuthorization(request, 'session:create');
-		const parsed = sessionCreateRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session create request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const data = parsed.data;
-		data.playerNames && sanitizePlayerNameEntries(data.playerNames);
-		const sessionId = this.generateSessionId();
-		try {
-			const options: CreateSessionOptions = {
-				devMode: data.devMode,
-			};
-			if (data.config !== undefined) {
-				options.config = data.config;
-			}
-			const session = this.sessionManager.createSession(sessionId, options);
-			data.playerNames && this.applyPlayerNames(session, data.playerNames);
-		} catch (error) {
-			throw new TransportError('CONFLICT', 'Failed to create session.', {
-				cause: error,
-			});
-		}
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(
-			sessionId,
-			snapshot,
-		) satisfies SessionCreateResponse;
-		return sessionCreateResponseSchema.parse(response);
-	}
-
-	public getSessionState(request: TransportRequest): SessionStateResponse {
-		const sessionId = this.parseSessionIdentifier(request.body);
-		this.requireSession(sessionId);
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(sessionId, snapshot);
-		return sessionStateResponseSchema.parse(response);
-	}
-
-	public async advanceSession(
-		request: TransportRequest,
-	): Promise<SessionAdvanceResponse> {
-		const parsed = sessionAdvanceRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session advance request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const { sessionId } = parsed.data;
+	public getActionCosts(request: TransportRequest): SessionActionCostResponse {
 		this.requireAuthorization(request, 'session:advance');
-		const session = this.requireSession(sessionId);
-		try {
-			const result = await session.enqueue(() => {
-				const advance = session.advancePhase();
-				const snapshot = session.getSnapshot();
-				return { advance, snapshot };
+		const { session, sessionId, actionId, params } =
+			this.parseActionMetadataRequest(
+				request,
+				sessionActionCostRequestSchema,
+				'Invalid action cost request.',
+			);
+		const rawCosts = session.getActionCosts(actionId, params);
+		const costs: Record<string, number> = {};
+		for (const [resourceKey, amount] of Object.entries(rawCosts)) {
+			if (typeof amount === 'number') {
+				costs[resourceKey] = amount;
+			}
+		}
+		const response = {
+			sessionId,
+			costs,
+		} satisfies SessionActionCostResponse;
+		return sessionActionCostResponseSchema.parse(response);
+	}
+
+	public getActionRequirements(
+		request: TransportRequest,
+	): SessionActionRequirementResponse {
+		this.requireAuthorization(request, 'session:advance');
+		const { session, sessionId, actionId, params } =
+			this.parseActionMetadataRequest(
+				request,
+				sessionActionRequirementRequestSchema,
+				'Invalid action requirement request.',
+			);
+		const requirements = session.getActionRequirements(actionId, params);
+		const response = {
+			sessionId,
+			requirements,
+		} satisfies SessionActionRequirementResponse;
+		return sessionActionRequirementResponseSchema.parse(response);
+	}
+
+	public getActionOptions(
+		request: TransportRequest,
+	): SessionActionOptionsResponse {
+		this.requireAuthorization(request, 'session:advance');
+		const { session, sessionId, actionId } = this.parseActionMetadataRequest(
+			request,
+			sessionActionOptionsRequestSchema,
+			'Invalid action options request.',
+		);
+		const groups = session.getActionOptions(actionId);
+		const response = {
+			sessionId,
+			groups,
+		} satisfies SessionActionOptionsResponse;
+		return sessionActionOptionsResponseSchema.parse(response);
+	}
+
+	public async runAiTurn(
+		request: TransportRequest,
+	): Promise<SessionRunAiResponse> {
+		this.requireAuthorization(request, 'session:advance');
+		const parsed = sessionRunAiRequestSchema.safeParse(request.body);
+		if (!parsed.success) {
+			throw new TransportError('INVALID_REQUEST', 'Invalid AI turn request.', {
+				issues: parsed.error.issues,
 			});
-			const base = this.buildStateResponse(sessionId, result.snapshot);
+		}
+		const { sessionId, playerId } = parsed.data;
+		const session = this.requireSession(sessionId);
+		if (!session.hasAiController(playerId)) {
+			throw new TransportError(
+				'CONFLICT',
+				`No AI controller is available for player "${playerId}".`,
+			);
+		}
+		try {
+			const ranTurn = await session.enqueue(() => session.runAiTurn(playerId));
+			const snapshot = this.sessionManager.getSnapshot(sessionId);
+			const base = this.buildStateResponse(sessionId, snapshot);
 			const response = {
 				...base,
-				advance: result.advance,
-			} satisfies SessionAdvanceResponse;
-			return sessionAdvanceResponseSchema.parse(response);
+				ranTurn,
+			} satisfies SessionRunAiResponse;
+			return sessionRunAiResponseSchema.parse(response);
 		} catch (error) {
-			throw new TransportError('CONFLICT', 'Failed to advance session.', {
+			throw new TransportError('CONFLICT', 'Failed to execute AI turn.', {
 				cause: error,
 			});
 		}
 	}
 
-	public async executeAction(
+	public async simulateUpcomingPhases(
 		request: TransportRequest,
-	): Promise<
-		| TransportHttpResponse<ActionExecuteSuccessResponse>
-		| TransportHttpResponse<ActionExecuteErrorResponse>
-	> {
-		const parsed = actionExecuteRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			const response = actionExecuteErrorResponseSchema.parse({
-				status: 'error',
-				error: 'Invalid action request.',
-			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
-		}
+	): Promise<SessionSimulateResponse> {
 		this.requireAuthorization(request, 'session:advance');
-		const { sessionId, actionId, params } = parsed.data;
-		const session = this.sessionManager.getSession(sessionId);
-		if (!session) {
-			const response = actionExecuteErrorResponseSchema.parse({
-				status: 'error',
-				error: `Session "${sessionId}" was not found.`,
-			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
+		const parsed = sessionSimulateRequestSchema.safeParse(request.body);
+		if (!parsed.success) {
+			throw new TransportError(
+				'INVALID_REQUEST',
+				'Invalid simulation request.',
+				{ issues: parsed.error.issues },
+			);
 		}
-		try {
-			const rawCosts = session.getActionCosts(actionId, params as never);
-			const costs: Record<string, number> = {};
-			for (const [resourceKey, amount] of Object.entries(rawCosts)) {
-				if (typeof amount === 'number') {
-					costs[resourceKey] = amount;
-				}
-			}
-			const result = await session.enqueue(() => {
-				const traces = session.performAction(actionId, params as never);
-				const snapshot = session.getSnapshot();
-				return { traces, snapshot };
+		const { sessionId, playerId, options } = parsed.data;
+		const session = this.requireSession(sessionId);
+		const result = await session.enqueue(() =>
+			session.simulateUpcomingPhases(playerId, options),
+		);
+		const response = {
+			sessionId,
+			result,
+		} satisfies SessionSimulateResponse;
+		return sessionSimulateResponseSchema.parse(response);
+	}
+
+	private parseActionMetadataRequest<S extends ActionMetadataSchema>(
+		request: TransportRequest,
+		schema: S,
+		errorMessage: string,
+	): ActionMetadataRequest {
+		const parsed = schema.safeParse(request.body);
+		if (!parsed.success) {
+			throw new TransportError('INVALID_REQUEST', errorMessage, {
+				issues: parsed.error.issues,
 			});
-			const response = actionExecuteResponseSchema.parse({
-				status: 'success',
-				snapshot: result.snapshot,
-				costs,
-				traces: normalizeActionTraces(result.traces),
-			}) as ActionExecuteSuccessResponse;
-			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
+		}
+		const { sessionId, actionId } = parsed.data;
+		const session = this.requireSession(sessionId);
+		this.requireActionDefinition(session, actionId, sessionId);
+		const metadataRequest: ActionMetadataRequest = {
+			session,
+			sessionId,
+			actionId,
+		};
+		if ('params' in parsed.data) {
+			const normalized = parseActionParameters(
+				parsed.data.params,
+				errorMessage,
+			);
+			if (normalized !== undefined) {
+				metadataRequest.params = normalized;
+			}
+		}
+		return metadataRequest;
+	}
+
+	private requireActionDefinition(
+		session: EngineSession,
+		actionId: string,
+		sessionId: string,
+	): void {
+		try {
+			const definition = session.getActionDefinition(actionId);
+			if (!definition) {
+				throw new TransportError(
+					'NOT_FOUND',
+					`Action "${actionId}" was not found in session "${sessionId}".`,
+				);
+			}
 		} catch (error) {
-			const failures = extractRequirementFailures(error);
-			const message =
-				error instanceof Error ? error.message : 'Action execution failed.';
-			const base: ActionExecuteErrorResponse = {
-				status: 'error',
-				error: message,
-			};
-			if (failures.requirementFailure) {
-				base.requirementFailure = failures.requirementFailure;
-			}
-			if (failures.requirementFailures) {
-				base.requirementFailures = failures.requirementFailures;
-			}
-			const response = actionExecuteErrorResponseSchema.parse(
-				base,
-			) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
-		}
-	}
-
-	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
-		this.requireAuthorization(request, 'session:advance');
-		const parsed = sessionSetDevModeRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session dev mode request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const { sessionId, enabled } = parsed.data;
-		const session = this.requireSession(sessionId);
-		session.setDevMode(enabled);
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(
-			sessionId,
-			snapshot,
-		) satisfies SessionSetDevModeResponse;
-		return sessionSetDevModeResponseSchema.parse(response);
-	}
-
-	public updatePlayerName(
-		request: TransportRequest,
-	): SessionUpdatePlayerNameResponse {
-		this.requireAuthorization(request, 'session:advance');
-		const parsed = sessionUpdatePlayerNameRequestSchema.safeParse(request.body);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid player name update request.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		const { sessionId, playerId, playerName } = parsed.data;
-		const sanitizedName = sanitizePlayerName(playerName);
-		if (!sanitizedName) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Player names must include visible characters.',
-			);
-		}
-		const session = this.requireSession(sessionId);
-		session.updatePlayerName(playerId, sanitizedName);
-		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		const response = this.buildStateResponse(
-			sessionId,
-			snapshot,
-		) satisfies SessionUpdatePlayerNameResponse;
-		return sessionUpdatePlayerNameResponseSchema.parse(response);
-	}
-
-	private attachHttpStatus<T extends object>(
-		payload: T,
-		status: number,
-	): TransportHttpResponse<T> {
-		Object.defineProperty(payload, 'httpStatus', {
-			value: status,
-			enumerable: false,
-		});
-		return payload as TransportHttpResponse<T>;
-	}
-
-	private parseSessionIdentifier(body: unknown): string {
-		const parsed = sessionIdSchema.safeParse(
-			(body as { sessionId?: unknown })?.sessionId,
-		);
-		if (!parsed.success) {
-			throw new TransportError(
-				'INVALID_REQUEST',
-				'Invalid session identifier.',
-				{ issues: parsed.error.issues },
-			);
-		}
-		return parsed.data;
-	}
-
-	private generateSessionId(): string {
-		let attempts = 0;
-		while (attempts < 10) {
-			const sessionId = this.idFactory();
-			if (!this.sessionManager.getSession(sessionId)) {
-				return sessionId;
-			}
-			attempts += 1;
-		}
-		throw new TransportError(
-			'CONFLICT',
-			'Failed to generate a unique session identifier.',
-		);
-	}
-
-	private requireSession(sessionId: string): EngineSession {
-		const session = this.sessionManager.getSession(sessionId);
-		if (!session) {
 			throw new TransportError(
 				'NOT_FOUND',
-				`Session "${sessionId}" was not found.`,
+				`Action "${actionId}" was not found in session "${sessionId}".`,
+				{ cause: error },
 			);
 		}
-		return session;
-	}
-
-	private applyPlayerNames(
-		session: EngineSession,
-		names: SessionPlayerNameMap,
-	): void {
-		const entries = sanitizePlayerNameEntries(names);
-		for (const [playerId, sanitizedName] of entries) {
-			session.updatePlayerName(playerId, sanitizedName);
-		}
-	}
-
-	private requireAuthorization(
-		request: TransportRequest,
-		role: AuthRole,
-	): AuthContext {
-		if (!this.authMiddleware) {
-			throw new TransportError(
-				'UNAUTHORIZED',
-				'Authorization middleware is not configured.',
-			);
-		}
-		try {
-			const context = this.authMiddleware(request);
-			if (!this.hasRole(context, role)) {
-				throw new AuthError('FORBIDDEN', `Missing required role "${role}".`);
-			}
-			return context;
-		} catch (error) {
-			if (error instanceof AuthError) {
-				throw new TransportError(error.code, error.message, {
-					cause: error,
-				});
-			}
-			throw error;
-		}
-	}
-
-	private hasRole(context: AuthContext, role: AuthRole): boolean {
-		if (context.roles.includes(role)) {
-			return true;
-		}
-		return context.roles.includes('admin');
-	}
-
-	private buildStateResponse(
-		sessionId: string,
-		snapshot: SessionSnapshot,
-	): SessionStateResponse {
-		return {
-			sessionId,
-			snapshot,
-			registries: this.sessionManager.getRegistries(),
-		};
 	}
 }
+
+export type { SessionTransportOptions } from './SessionTransportBase.js';
+export { PLAYER_NAME_MAX_LENGTH } from './SessionTransportBase.js';

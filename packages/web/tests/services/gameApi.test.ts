@@ -13,10 +13,18 @@ import type {
 	SessionSnapshot,
 	SessionStateResponse,
 	SessionSetDevModeRequest,
+	SessionActionCostResponse,
+	SessionActionRequirementResponse,
+	SessionActionOptionsResponse,
+	SessionRunAiResponse,
+	SessionSimulateResponse,
+	SessionSimulateRequest,
+	SessionUpdatePlayerNameRequest,
 } from '@kingdom-builder/protocol/session';
 import {
 	GameApiError,
 	GameApiFake,
+	type GameApiMockHandlers,
 	createGameApi,
 	createGameApiMock,
 } from '../../src/services/gameApi';
@@ -33,6 +41,12 @@ const createJsonResponse = <T>(value: T, options: JsonResponseOptions = {}) =>
 		status: options.status ?? 200,
 		headers: { 'Content-Type': 'application/json' },
 	});
+
+const missingMockHandlerMessage = (name: keyof GameApiMockHandlers): string =>
+	[
+		`Missing handler for ${name}.`,
+		'Configure createGameApiMock with a handler before using this mock.',
+	].join(' ');
 
 const createPlayerSnapshot = (
 	id: SessionPlayerId,
@@ -107,6 +121,36 @@ const createStateResponse = (
 	sessionId,
 	snapshot: createSnapshot(snapshotOverrides),
 	registries: createSessionRegistriesPayload(),
+});
+
+const createSimulationResponse = (
+	sessionId: string,
+	playerId: SessionPlayerId,
+): SessionSimulateResponse => ({
+	sessionId,
+	result: {
+		playerId,
+		before: createPlayerSnapshot(playerId),
+		after: createPlayerSnapshot(playerId, {
+			resources: { 'resource.gold': 11 },
+		}),
+		delta: {
+			resources: { 'resource.gold': 1 },
+			stats: {},
+			population: {},
+		},
+		steps: [],
+	},
+});
+
+const createRunAiResponse = (
+	sessionId: string,
+	ranTurn: boolean,
+): SessionRunAiResponse => ({
+	sessionId,
+	snapshot: createSnapshot(),
+	registries: createSessionRegistriesPayload(),
+	ranTurn,
 });
 
 const createAdvanceResponse = (sessionId: string): SessionAdvanceResponse => ({
@@ -268,39 +312,223 @@ describe('createGameApi', () => {
 			body: { message: 'failed' },
 		});
 	});
+
+	it('updates player names via the patch endpoint', async () => {
+		const response = createStateResponse('session-name');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+		const request: SessionUpdatePlayerNameRequest = {
+			sessionId: 'session-name',
+			playerId: 'A',
+			playerName: 'Voyager',
+		};
+
+		const result = await api.updatePlayerName(request);
+
+		expect(result).toEqual(response);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe('/api/sessions/session-name/player');
+		expect(init?.method).toBe('PATCH');
+		expect(init?.body).toBe(JSON.stringify(request));
+	});
+
+	it('fetches action costs for session actions', async () => {
+		const response: SessionActionCostResponse = {
+			sessionId: 'session-actions',
+			costs: { 'resource.gold': 4 },
+		};
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		const result = await api.getActionCosts({
+			sessionId: 'session-actions',
+			actionId: 'action.plan',
+		});
+
+		expect(result).toEqual(response);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe('/api/sessions/session-actions/actions/action.plan/costs');
+		expect(init?.method).toBe('POST');
+		expect(init?.body).toBe(
+			JSON.stringify({
+				sessionId: 'session-actions',
+				actionId: 'action.plan',
+			}),
+		);
+	});
+
+	it('fetches action requirements for session actions', async () => {
+		const response: SessionActionRequirementResponse = {
+			sessionId: 'session-req',
+			requirements: [],
+		};
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		await api.getActionRequirements({
+			sessionId: 'session-req',
+			actionId: 'action.require',
+		});
+
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe(
+			'/api/sessions/session-req/actions/action.require/requirements',
+		);
+		expect(init?.method).toBe('POST');
+		expect(init?.body).toBe(
+			JSON.stringify({
+				sessionId: 'session-req',
+				actionId: 'action.require',
+			}),
+		);
+	});
+
+	it('retrieves action options for session actions', async () => {
+		const response: SessionActionOptionsResponse = {
+			sessionId: 'session-options',
+			groups: [],
+		};
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		const result = await api.getActionOptions({
+			sessionId: 'session-options',
+			actionId: 'action.options',
+		});
+
+		expect(result).toEqual(response);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe(
+			'/api/sessions/session-options/actions/action.options/options',
+		);
+		expect(init?.method).toBe('GET');
+		expect(init?.body).toBeUndefined();
+	});
+
+	it('runs AI turns through the AI endpoint', async () => {
+		const response = createRunAiResponse('session-ai', true);
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		const result = await api.runAiTurn({
+			sessionId: 'session-ai',
+			playerId: 'A',
+		});
+
+		expect(result).toEqual(response);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe('/api/sessions/session-ai/ai');
+		expect(init?.method).toBe('POST');
+		expect(init?.body).toBe(
+			JSON.stringify({ sessionId: 'session-ai', playerId: 'A' }),
+		);
+	});
+
+	it('simulates upcoming phases via the simulation endpoint', async () => {
+		const response = createSimulationResponse('session-sim', 'A');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+		const request: SessionSimulateRequest = {
+			sessionId: 'session-sim',
+			playerId: 'A',
+			options: { maxIterations: 2 },
+		};
+
+		const result = await api.simulateUpcomingPhases(request);
+
+		expect(result).toEqual(response);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe('/api/sessions/session-sim/simulate');
+		expect(init?.method).toBe('POST');
+		expect(init?.body).toBe(JSON.stringify(request));
+	});
 });
 
 describe('createGameApiMock', () => {
 	it('delegates to provided handlers', async () => {
-		const handler = vi
-			.fn()
-			.mockResolvedValue(createStateResponse('mock-session'));
+		const createResponse = createStateResponse('mock-session');
+		const updateResponse = createStateResponse('mock-session');
+		const costResponse: SessionActionCostResponse = {
+			sessionId: 'mock-session',
+			costs: { 'resource.gold': 2 },
+		};
+		const requirementsResponse: SessionActionRequirementResponse = {
+			sessionId: 'mock-session',
+			requirements: [],
+		};
+		const optionsResponse: SessionActionOptionsResponse = {
+			sessionId: 'mock-session',
+			groups: [],
+		};
+		const runAiResponse = createRunAiResponse('mock-session', true);
+		const simulationResponse = createSimulationResponse('mock-session', 'A');
 		const mock = createGameApiMock({
-			createSession: handler,
-			fetchSnapshot: handler,
-			setDevMode: handler,
+			createSession: vi.fn().mockResolvedValue(createResponse),
+			fetchSnapshot: vi.fn().mockResolvedValue(createResponse),
+			setDevMode: vi.fn().mockResolvedValue(createResponse),
+			updatePlayerName: vi.fn().mockResolvedValue(updateResponse),
+			getActionCosts: vi.fn().mockResolvedValue(costResponse),
+			getActionRequirements: vi.fn().mockResolvedValue(requirementsResponse),
+			getActionOptions: vi.fn().mockResolvedValue(optionsResponse),
+			runAiTurn: vi.fn().mockResolvedValue(runAiResponse),
+			simulateUpcomingPhases: vi.fn().mockResolvedValue(simulationResponse),
 		});
 
-		await expect(mock.createSession()).resolves.toEqual(
-			createStateResponse('mock-session'),
+		await expect(mock.createSession()).resolves.toEqual(createResponse);
+		await expect(mock.fetchSnapshot('mock-session')).resolves.toEqual(
+			createResponse,
 		);
-		await mock.fetchSnapshot('mock-session');
-		await mock.setDevMode({ sessionId: 'mock-session', enabled: true });
-		expect(handler).toHaveBeenCalledTimes(3);
-		const calls = handler.mock.calls;
-		expect(calls[1]?.[0]).toBe('mock-session');
-		expect(calls[2]?.[0]).toEqual({
-			sessionId: 'mock-session',
-			enabled: true,
-		});
+		await expect(
+			mock.setDevMode({ sessionId: 'mock-session', enabled: true }),
+		).resolves.toEqual(createResponse);
+		await expect(
+			mock.updatePlayerName({
+				sessionId: 'mock-session',
+				playerId: 'A',
+				playerName: 'Voyager',
+			}),
+		).resolves.toEqual(updateResponse);
+		await expect(
+			mock.getActionCosts({
+				sessionId: 'mock-session',
+				actionId: 'action.mock',
+			}),
+		).resolves.toEqual(costResponse);
+		await expect(
+			mock.getActionRequirements({
+				sessionId: 'mock-session',
+				actionId: 'action.mock',
+			}),
+		).resolves.toEqual(requirementsResponse);
+		await expect(
+			mock.getActionOptions({
+				sessionId: 'mock-session',
+				actionId: 'action.mock',
+			}),
+		).resolves.toEqual(optionsResponse);
+		await expect(
+			mock.runAiTurn({ sessionId: 'mock-session', playerId: 'A' }),
+		).resolves.toEqual(runAiResponse);
+		await expect(
+			mock.simulateUpcomingPhases({
+				sessionId: 'mock-session',
+				playerId: 'A',
+			}),
+		).resolves.toEqual(simulationResponse);
 	});
 
 	it('throws when handler is missing', async () => {
 		const mock = createGameApiMock();
 
 		await expect(mock.fetchSnapshot('missing')).rejects.toThrow(
-			'fetchSnapshot handler not provided.',
+			missingMockHandlerMessage('fetchSnapshot'),
 		);
+		await expect(
+			mock.getActionCosts({
+				sessionId: 'missing',
+				actionId: 'action',
+			}),
+		).rejects.toThrow(missingMockHandlerMessage('getActionCosts'));
 	});
 });
 
@@ -370,6 +598,131 @@ describe('GameApiFake', () => {
 
 		expect(snapshot.snapshot.game.turn).toBe(2);
 		expect(snapshot).not.toBe(session);
+	});
+
+	it('applies primed player name responses', async () => {
+		const fake = new GameApiFake();
+		const response = createStateResponse('session-name');
+		fake.setNextUpdatePlayerNameResponse(response);
+
+		const result = await fake.updatePlayerName({
+			sessionId: 'session-name',
+			playerId: 'A',
+			playerName: 'Voyager',
+		});
+
+		expect(result).toEqual(response);
+		const stored = await fake.fetchSnapshot('session-name');
+		expect(stored.snapshot).toEqual(response.snapshot);
+	});
+
+	it('updates player names locally when no response is primed', async () => {
+		const fake = new GameApiFake();
+		const session = createStateResponse('session-local');
+		fake.primeSession(session);
+
+		const result = await fake.updatePlayerName({
+			sessionId: 'session-local',
+			playerId: 'A',
+			playerName: 'Scout',
+		});
+
+		const [player] = result.snapshot.game.players;
+		expect(player?.name).toBe('Scout');
+		const stored = await fake.fetchSnapshot('session-local');
+		expect(stored.snapshot.game.players[0]?.name).toBe('Scout');
+	});
+
+	it('returns primed action metadata responses', async () => {
+		const fake = new GameApiFake();
+		const cost: SessionActionCostResponse = {
+			sessionId: 'session-meta',
+			costs: { 'resource.gold': 1 },
+		};
+		const requirements: SessionActionRequirementResponse = {
+			sessionId: 'session-meta',
+			requirements: [],
+		};
+		const options: SessionActionOptionsResponse = {
+			sessionId: 'session-meta',
+			groups: [],
+		};
+		fake.setNextActionCostResponse(cost);
+		fake.setNextActionRequirementResponse(requirements);
+		fake.setNextActionOptionsResponse(options);
+
+		await expect(
+			fake.getActionCosts({ sessionId: 'session-meta', actionId: 'action' }),
+		).resolves.toEqual(cost);
+		await expect(
+			fake.getActionRequirements({
+				sessionId: 'session-meta',
+				actionId: 'action',
+			}),
+		).resolves.toEqual(requirements);
+		await expect(
+			fake.getActionOptions({
+				sessionId: 'session-meta',
+				actionId: 'action',
+			}),
+		).resolves.toEqual(options);
+	});
+
+	it('returns primed AI responses and updates sessions', async () => {
+		const fake = new GameApiFake();
+		const response = createRunAiResponse('session-ai', true);
+		fake.setNextRunAiResponse(response);
+
+		const result = await fake.runAiTurn({
+			sessionId: 'session-ai',
+			playerId: 'A',
+		});
+
+		expect(result).toEqual(response);
+		const stored = await fake.fetchSnapshot('session-ai');
+		expect(stored.snapshot).toEqual(response.snapshot);
+	});
+
+	it('uses primed AI map entries for repeated runs', async () => {
+		const fake = new GameApiFake();
+		const response = createRunAiResponse('session-ai-map', false);
+		fake.primeRunAiResponse('session-ai-map', 'A', response);
+
+		await fake.runAiTurn({ sessionId: 'session-ai-map', playerId: 'A' });
+		await fake.runAiTurn({ sessionId: 'session-ai-map', playerId: 'A' });
+		const stored = await fake.fetchSnapshot('session-ai-map');
+		expect(stored.snapshot).toEqual(response.snapshot);
+	});
+
+	it('returns primed simulation results', async () => {
+		const fake = new GameApiFake();
+		const response = createSimulationResponse('session-sim', 'A');
+		fake.setNextSimulationResponse(response);
+
+		await expect(
+			fake.simulateUpcomingPhases({
+				sessionId: 'session-sim',
+				playerId: 'A',
+			}),
+		).resolves.toEqual(response);
+	});
+
+	it('uses simulation map entries for repeated requests', async () => {
+		const fake = new GameApiFake();
+		const response = createSimulationResponse('session-sim-map', 'A');
+		fake.primeSimulationResult('session-sim-map', 'A', response);
+
+		const first = await fake.simulateUpcomingPhases({
+			sessionId: 'session-sim-map',
+			playerId: 'A',
+		});
+		const second = await fake.simulateUpcomingPhases({
+			sessionId: 'session-sim-map',
+			playerId: 'A',
+		});
+
+		expect(first).toEqual(response);
+		expect(second).toEqual(response);
 	});
 
 	it('throws GameApiError for unknown sessions', async () => {

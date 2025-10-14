@@ -29,7 +29,8 @@ import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
+import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
+import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -64,10 +65,11 @@ export function GameProviderInner({
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const { legacySession, enqueue, cachedSessionSnapshot } = useSessionQueue(
-		queue,
-		sessionState,
-	);
+	const {
+		adapter: sessionAdapter,
+		enqueue,
+		cachedSessionSnapshot,
+	} = useSessionQueue(queue, sessionState, sessionId);
 
 	const refresh = useCallback(() => {
 		void refreshSession();
@@ -85,18 +87,22 @@ export function GameProviderInner({
 		) {
 			return;
 		}
-		void enqueue(() => {
-			legacySession.updatePlayerName(primaryPlayerId, desiredName);
-		}).finally(() => {
+		void enqueue(() =>
+			updateRemotePlayerName({
+				sessionId,
+				playerId: primaryPlayerId,
+				playerName: desiredName,
+			}),
+		).finally(() => {
 			refresh();
 		});
 	}, [
 		enqueue,
-		legacySession,
 		primaryPlayerId,
 		primaryPlayerName,
 		refresh,
 		playerName,
+		sessionId,
 	]);
 
 	const { translationContext, isReady: translationContextReady } =
@@ -163,7 +169,6 @@ export function GameProviderInner({
 		applyPhaseSnapshot,
 		refreshPhaseState,
 	} = usePhaseProgress({
-		session: legacySession,
 		sessionState,
 		sessionId,
 		actionCostResource,
@@ -182,15 +187,15 @@ export function GameProviderInner({
 		});
 
 	useCompensationLogger({
-		session: legacySession,
+		sessionId,
 		sessionState,
 		addLog,
 		resourceKeys,
 		registries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
-		session: legacySession,
+	const { handlePerform } = useActionPerformer({
+		session: sessionAdapter,
 		sessionId,
 		actionCostResource,
 		registries,
@@ -207,11 +212,10 @@ export function GameProviderInner({
 	});
 
 	useAiRunner({
-		session: legacySession,
+		session: sessionAdapter,
 		sessionState,
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
-		performRef,
 		mountedRef,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
@@ -325,7 +329,7 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session: legacySession,
+		session: sessionAdapter,
 		sessionState,
 		sessionView,
 		handlePerform,

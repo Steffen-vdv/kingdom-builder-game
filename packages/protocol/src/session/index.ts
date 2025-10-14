@@ -60,6 +60,7 @@ export interface SessionPassiveSummary {
 export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
+	aiControlled?: boolean;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	statsHistory: Record<string, boolean>;
@@ -266,6 +267,18 @@ export type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
+	SessionUpdatePlayerNameRequest,
+	SessionUpdatePlayerNameResponse,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
+	SessionRunAiRequest,
+	SessionRunAiResponse,
+	SessionSimulateRequest,
+	SessionSimulateResponse,
 } from './contracts';
 
 export * as contracts from './contracts';

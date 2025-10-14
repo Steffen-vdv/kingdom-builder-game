@@ -17,22 +17,14 @@ import type {
 import type { ReactNode } from 'react';
 import type {
 	LegacySession,
+	RemoteSessionRecord,
 	Session,
-	SessionMetadata,
-	SessionRegistries,
 	SessionResourceKey,
-	SessionResourceKeys,
 } from './sessionTypes';
 
-export interface SessionContainer {
-	session: Session;
-	legacySession: LegacySession;
-	sessionId: string;
-	snapshot: SessionSnapshot;
-	ruleSnapshot: SessionRuleSnapshot;
-	registries: SessionRegistries;
-	resourceKeys: SessionResourceKeys;
-	metadata: SessionMetadata;
+export interface SessionContainer
+	extends Omit<RemoteSessionRecord, 'queueSeed'> {
+	adapter: Session;
 }
 
 export interface GameProviderProps {

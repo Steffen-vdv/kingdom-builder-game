@@ -2,7 +2,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePhaseProgress } from '../../src/state/usePhaseProgress';
-import { SessionMirroringError } from '../../src/state/legacySessionMirror';
+import { SessionMirroringError } from '../../src/state/sessionErrors';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -10,7 +10,12 @@ import {
 import {
 	createResourceKeys,
 	createSessionRegistries,
+	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
+import {
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../src/state/sessionStateStore';
 
 const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
 const advanceToActionPhaseMock = vi.hoisted(() => vi.fn());
@@ -33,6 +38,7 @@ describe('usePhaseProgress', () => {
 		advanceSessionPhaseMock.mockReset();
 		advanceToActionPhaseMock.mockReset();
 		advanceToActionPhaseMock.mockResolvedValue(undefined);
+		clearSessionStateStore();
 	});
 
 	it('uses latest fatal handler when advancing to action phase', async () => {
@@ -41,12 +47,12 @@ describe('usePhaseProgress', () => {
 			throw new Error('RESOURCE_KEYS is empty');
 		}
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Hero',
 			resources: { [actionCostResource]: 0 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 0 },
 		});
@@ -68,9 +74,11 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		initializeSessionState({
+			sessionId: 'session-1',
+			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
+		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -79,7 +87,6 @@ describe('usePhaseProgress', () => {
 		const { result, rerender } = renderHook(
 			({ fatalHandler }: { fatalHandler: (error: unknown) => void }) =>
 				usePhaseProgress({
-					session: session as never,
 					sessionState: sessionSnapshot,
 					sessionId: 'session-1',
 					actionCostResource,
@@ -122,12 +129,12 @@ describe('usePhaseProgress', () => {
 			throw new Error('RESOURCE_KEYS is empty');
 		}
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Hero',
 			resources: { [actionCostResource]: 0 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 0 },
 		});
@@ -149,9 +156,11 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		initializeSessionState({
+			sessionId: 'session-1',
+			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
+		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -162,7 +171,6 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				session: session as never,
 				sessionState: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,
@@ -194,12 +202,12 @@ describe('usePhaseProgress', () => {
 			throw new Error('RESOURCE_KEYS is empty');
 		}
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Hero',
 			resources: { [actionCostResource]: 0 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 0 },
 		});
@@ -221,9 +229,11 @@ describe('usePhaseProgress', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
-		const session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		initializeSessionState({
+			sessionId: 'session-1',
+			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
+		});
 		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
 			return await task();
 		});
@@ -232,7 +242,6 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				session: session as never,
 				sessionState: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,

@@ -5,21 +5,33 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
-import { SessionMirroringError } from '../../src/state/legacySessionMirror';
+import { SessionMirroringError } from '../../src/state/sessionErrors';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import type {
+	SessionCreateResponse,
+	SessionStateResponse,
+} from '@kingdom-builder/protocol/session';
 import {
 	createResourceKeys,
-	createSessionRegistries,
+	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
+import {
+	applySessionState,
+	clearSessionStateStore,
+} from '../../src/state/sessionStateStore';
+import {
+	createRemoteSessionAdapter,
+	type RemoteSessionAdapterHarness,
+} from '../helpers/remoteSessionAdapter';
 
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
 const releaseSessionMock = vi.hoisted(() => vi.fn());
 const setSessionDevModeMock = vi.hoisted(() => vi.fn());
+const updatePlayerNameMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/state/sessionSdk', async () => {
 	const actual = await vi.importActual('../../src/state/sessionSdk');
@@ -29,6 +41,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 		fetchSnapshot: fetchSnapshotMock,
 		releaseSession: releaseSessionMock,
 		setSessionDevMode: setSessionDevModeMock,
+		updatePlayerName: updatePlayerNameMock,
 	};
 });
 
@@ -164,15 +177,19 @@ function SessionInspector() {
 
 describe('GameProvider', () => {
 	let session: LegacySession;
-	let registries: ReturnType<typeof createSessionRegistries>;
-	let resourceKeys: Array<SessionResourceDefinition['key']>;
+	let registriesPayload: ReturnType<typeof createSessionRegistriesPayload>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let sessionHarness: RemoteSessionAdapterHarness | null;
+	const sessionId = 'session-1';
 	beforeEach(() => {
+		clearSessionStateStore();
+		sessionHarness = null;
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
 		setSessionDevModeMock.mockReset();
+		updatePlayerNameMock.mockReset();
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
@@ -207,12 +224,12 @@ describe('GameProvider', () => {
 			winConditions: [],
 		} as const;
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Commander',
 			resources: { [resourceKey]: 10 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [resourceKey]: 6 },
 		});
@@ -249,45 +266,70 @@ describe('GameProvider', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.steps?.[0]?.id ?? phases[0]?.id ?? 'phase-main',
 		});
-		registries = createSessionRegistries();
-		resourceKeys = [resourceKey];
-		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
-			return await task();
+		registriesPayload = createSessionRegistriesPayload();
+		updatePlayerNameMock.mockImplementation(() => {
+			const response: SessionStateResponse = {
+				sessionId,
+				snapshot: initialSnapshot,
+				registries: registriesPayload,
+			};
+			const stateRecord = applySessionState(response);
+			return Promise.resolve({
+				sessionId,
+				snapshot: stateRecord.snapshot,
+				registries: stateRecord.registries,
+			});
 		});
-		session = {
-			enqueue: enqueueMock,
-			updatePlayerName: vi.fn(),
-			pullEffectLog: vi.fn(),
-			getPassiveEvaluationMods: vi.fn(() => ({})),
-			getSnapshot: vi.fn(() => initialSnapshot),
-			advancePhase: vi.fn(),
-			getActionCosts: vi.fn(() => ({})),
-			performAction: vi.fn(),
-			setDevMode: vi.fn(),
-		} as unknown as LegacySession;
-		createSessionMock.mockResolvedValue({
-			sessionId: 'session-1',
-			session,
-			legacySession: session,
-			snapshot: initialSnapshot,
-			ruleSnapshot: initialSnapshot.rules,
-			registries,
-			resourceKeys,
-			metadata: initialSnapshot.metadata,
+		createSessionMock.mockImplementation(() => {
+			const response: SessionCreateResponse = {
+				sessionId,
+				snapshot: initialSnapshot,
+				registries: registriesPayload,
+			};
+			sessionHarness = createRemoteSessionAdapter({
+				sessionId,
+				snapshot: response.snapshot,
+				registries: response.registries,
+			});
+			session = sessionHarness.adapter;
+			return Promise.resolve({
+				sessionId,
+				adapter: session,
+				record: sessionHarness.record,
+			});
 		});
-		fetchSnapshotMock.mockResolvedValue({
-			session,
-			legacySession: session,
-			snapshot: refreshedSnapshot,
-			ruleSnapshot: refreshedSnapshot.rules,
-			registries,
-			resourceKeys,
-			metadata: refreshedSnapshot.metadata,
+		fetchSnapshotMock.mockImplementation(() => {
+			if (!sessionHarness) {
+				throw new Error('Session harness not initialised');
+			}
+			const response: SessionStateResponse = {
+				sessionId,
+				snapshot: refreshedSnapshot,
+				registries: registriesPayload,
+			};
+			const stateRecord = applySessionState(response);
+			return Promise.resolve({
+				sessionId,
+				adapter: session,
+				record: {
+					sessionId: stateRecord.sessionId,
+					snapshot: stateRecord.snapshot,
+					ruleSnapshot: stateRecord.ruleSnapshot,
+					registries: stateRecord.registries,
+					resourceKeys: stateRecord.resourceKeys,
+					metadata: stateRecord.metadata,
+					queueSeed: stateRecord.queueSeed,
+				},
+			});
 		});
 	});
 
 	afterEach(() => {
 		cleanup();
+		if (sessionHarness) {
+			sessionHarness.cleanup();
+			sessionHarness = null;
+		}
 	});
 
 	it('creates a session and renders children after loading completes', async () => {
@@ -343,15 +385,26 @@ describe('GameProvider', () => {
 			turn: 3,
 			devMode: true,
 		});
-
-		setSessionDevModeMock.mockResolvedValueOnce({
-			session,
-			legacySession: session,
-			snapshot: devModeSnapshot,
-			ruleSnapshot: devModeSnapshot.rules,
-			registries,
-			resourceKeys,
-			metadata: devModeSnapshot.metadata,
+		setSessionDevModeMock.mockImplementationOnce(() => {
+			const response: SessionStateResponse = {
+				sessionId,
+				snapshot: devModeSnapshot,
+				registries: registriesPayload,
+			};
+			const stateRecord = applySessionState(response);
+			return Promise.resolve({
+				sessionId,
+				adapter: session,
+				record: {
+					sessionId: stateRecord.sessionId,
+					snapshot: stateRecord.snapshot,
+					ruleSnapshot: stateRecord.ruleSnapshot,
+					registries: stateRecord.registries,
+					resourceKeys: stateRecord.resourceKeys,
+					metadata: stateRecord.metadata,
+					queueSeed: stateRecord.queueSeed,
+				},
+			});
 		});
 
 		rerender(

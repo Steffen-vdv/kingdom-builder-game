@@ -1,19 +1,31 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RequirementFailure, RuleSnapshot } from '@kingdom-builder/engine';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
-import { SessionMirroringError } from '../../src/state/legacySessionMirror';
+import { SessionMirroringError } from '../../src/state/sessionErrors';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import type {
+	SessionRequirementFailure,
+	SessionResourceDefinition,
+	SessionRuleSnapshot,
+} from '@kingdom-builder/protocol/session';
 import {
 	createResourceKeys,
 	createSessionRegistries,
+	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
+import {
+	createRemoteSessionAdapter,
+	type RemoteSessionAdapterHarness,
+} from '../helpers/remoteSessionAdapter';
+import {
+	clearSessionStateStore,
+	updateSessionSnapshot,
+} from '../../src/state/sessionStateStore';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -43,7 +55,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 });
 
 describe('useActionPerformer', () => {
-	let session: { getSnapshot: () => ReturnType<typeof createSessionSnapshot> };
+	let session: LegacySession;
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
@@ -53,11 +65,15 @@ describe('useActionPerformer', () => {
 	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let actionCostResource: SessionResourceDefinition['key'];
-	let ruleSnapshot: RuleSnapshot;
+	let ruleSnapshot: SessionRuleSnapshot;
 	let registries: ReturnType<typeof createSessionRegistries>;
+	let registriesPayload: ReturnType<typeof createSessionRegistriesPayload>;
+	let sessionHarness: RemoteSessionAdapterHarness | null;
 	const sessionId = 'test-session';
 
 	beforeEach(() => {
+		clearSessionStateStore();
+		sessionHarness = null;
 		vi.clearAllMocks();
 		performSessionActionMock.mockReset();
 		diffStepSnapshotsMock.mockReset();
@@ -85,12 +101,12 @@ describe('useActionPerformer', () => {
 			winConditions: [],
 		};
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Hero',
 			resources: { [actionCostResource]: 5 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 4 },
 		});
@@ -106,13 +122,17 @@ describe('useActionPerformer', () => {
 			currentStep: phases[0]?.id ?? 'phase-main',
 		});
 		resourceKeys = [actionCostResource];
+		registriesPayload = createSessionRegistriesPayload();
 		registries = createSessionRegistries();
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		sessionHarness = createRemoteSessionAdapter({
+			sessionId,
+			snapshot: sessionSnapshot,
+			registries: registriesPayload,
+		});
+		session = sessionHarness.adapter;
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
@@ -124,6 +144,13 @@ describe('useActionPerformer', () => {
 			},
 			diffContext: {},
 		});
+	});
+
+	afterEach(() => {
+		if (sessionHarness) {
+			sessionHarness.cleanup();
+			sessionHarness = null;
+		}
 	});
 
 	it('flags fatal transport failures instead of showing a toast', async () => {
@@ -172,7 +199,7 @@ describe('useActionPerformer', () => {
 
 	it('translates requirement failures for authentication errors', async () => {
 		const error = new Error('Forbidden');
-		const failure = { reason: 'auth' } as RequirementFailure;
+		const failure = { reason: 'auth' } as SessionRequirementFailure;
 		const authMessage = 'Authentication required';
 		translateRequirementFailureMock.mockReturnValue(authMessage);
 		performSessionActionMock.mockResolvedValueOnce({
@@ -219,7 +246,7 @@ describe('useActionPerformer', () => {
 
 	it('uses requirement failures array when single failure field is missing', async () => {
 		const error = new Error('Requirements failed');
-		const failure = { reason: 'missing-resource' } as RequirementFailure;
+		const failure = { reason: 'missing-resource' } as SessionRequirementFailure;
 		const translated = 'You need more resources.';
 		translateRequirementFailureMock.mockReturnValue(translated);
 		performSessionActionMock.mockResolvedValueOnce({
@@ -267,13 +294,13 @@ describe('useActionPerformer', () => {
 	it('treats missing active players as fatal errors', async () => {
 		const phases = sessionSnapshot.phases;
 		const opponentOnly = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 4 },
 		});
 		sessionSnapshot = createSessionSnapshot({
 			players: [opponentOnly],
-			activePlayerId: 'player-1',
+			activePlayerId: 'A',
 			opponentId: opponentOnly.id,
 			phases,
 			actionCostResource,
@@ -282,9 +309,7 @@ describe('useActionPerformer', () => {
 			currentPhase: sessionSnapshot.game.currentPhase,
 			currentStep: sessionSnapshot.game.currentStep,
 		});
-		session = {
-			getSnapshot: vi.fn(() => sessionSnapshot),
-		};
+		updateSessionSnapshot(sessionId, sessionSnapshot);
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
@@ -354,11 +379,15 @@ describe('useActionPerformer', () => {
 			currentPhase: sessionSnapshot.game.currentPhase,
 			currentStep: sessionSnapshot.game.currentStep,
 		});
-		performSessionActionMock.mockResolvedValueOnce({
-			status: 'success',
-			costs: { [actionCostResource]: 1 },
-			traces: [],
-			snapshot: snapshotAfter,
+		performSessionActionMock.mockImplementationOnce(() => {
+			sessionSnapshot = snapshotAfter;
+			updateSessionSnapshot(sessionId, snapshotAfter);
+			return Promise.resolve({
+				status: 'success',
+				costs: { [actionCostResource]: 1 },
+				traces: [],
+				snapshot: snapshotAfter,
+			});
 		});
 		logContentMock.mockReturnValue(['⚔️ Attack']);
 
@@ -435,11 +464,15 @@ describe('useActionPerformer', () => {
 			currentPhase: sessionSnapshot.game.currentPhase,
 			currentStep: sessionSnapshot.game.currentStep,
 		});
-		performSessionActionMock.mockResolvedValueOnce({
-			status: 'success',
-			costs: { [actionCostResource]: 1 },
-			traces: [],
-			snapshot: snapshotAfter,
+		performSessionActionMock.mockImplementationOnce(() => {
+			sessionSnapshot = snapshotAfter;
+			updateSessionSnapshot(sessionId, snapshotAfter);
+			return Promise.resolve({
+				status: 'success',
+				costs: { [actionCostResource]: 1 },
+				traces: [],
+				snapshot: snapshotAfter,
+			});
 		});
 		getLegacySessionContextMock.mockReturnValueOnce({
 			translationContext: {

@@ -1,11 +1,14 @@
 import fastify from 'fastify';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,
 	type FastifySessionTransportOptions,
 } from '../src/transport/FastifySessionTransport.js';
-import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	createSyntheticSessionManager,
+	findAiPlayerId,
+} from './helpers/createSyntheticSessionManager.js';
 
 describe('FastifySessionTransport', () => {
 	const defaultTokens = {
@@ -19,6 +22,14 @@ describe('FastifySessionTransport', () => {
 		authorization: 'Bearer session-manager',
 	} satisfies Record<string, string>;
 
+	type SnapshotResponse = {
+		snapshot: {
+			game: { players: Array<{ id: string }>; currentPhase?: string };
+			recentResourceGains?: unknown[];
+			metadata: { passiveEvaluationModifiers?: unknown };
+		};
+	};
+
 	async function createServer(tokens = defaultTokens) {
 		const { manager, actionId, gainKey } = createSyntheticSessionManager();
 		const app = fastify();
@@ -28,7 +39,7 @@ describe('FastifySessionTransport', () => {
 		};
 		await app.register(createSessionTransportPlugin, options);
 		await app.ready();
-		return { app, actionId, gainKey };
+		return { app, actionId, gainKey, manager };
 	}
 
 	it('creates sessions over HTTP', async () => {
@@ -170,6 +181,53 @@ describe('FastifySessionTransport', () => {
 		await app.close();
 	});
 
+	it('returns action metadata over HTTP', async () => {
+		const { app, actionId } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const metadataBase = `/sessions/${sessionId}/actions/${actionId}`;
+		const costResponse = await app.inject({
+			method: 'POST',
+			url: `${metadataBase}/costs`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(costResponse.statusCode).toBe(200);
+		const costBody = costResponse.json() as {
+			costs: Record<string, number>;
+		};
+		expect(typeof costBody.costs).toBe('object');
+		const requirementResponse = await app.inject({
+			method: 'POST',
+			url: `${metadataBase}/requirements`,
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		expect(requirementResponse.statusCode).toBe(200);
+		const requirementBody = requirementResponse.json() as {
+			requirements: unknown[];
+		};
+		expect(Array.isArray(requirementBody.requirements)).toBe(true);
+		const optionsResponse = await app.inject({
+			method: 'GET',
+			url: `${metadataBase}/options`,
+			headers: authorizedHeaders,
+		});
+		expect(optionsResponse.statusCode).toBe(200);
+		const optionsBody = optionsResponse.json() as {
+			groups: unknown[];
+		};
+		expect(Array.isArray(optionsBody.groups)).toBe(true);
+		await app.close();
+	});
+
 	it('rejects invalid action payloads with protocol errors', async () => {
 		const { app } = await createServer();
 		const createResponse = await app.inject({
@@ -204,9 +262,211 @@ describe('FastifySessionTransport', () => {
 			payload: { actionId },
 		});
 		expect(response.statusCode).toBe(404);
-		const body = response.json() as { status: string; error: string };
+		const body = response.json() as {
+			status: string;
+			error: string;
+		};
 		expect(body.status).toBe('error');
 		expect(body.error).toContain('was not found');
+		await app.close();
+	});
+
+	it('runs AI turns through the API when controllers exist', async () => {
+		const { app, manager } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const playerId = findAiPlayerId(session);
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No AI controller was available.');
+		}
+		const runSpy = vi.spyOn(session, 'runAiTurn').mockResolvedValue(true);
+		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+			return await factory();
+		});
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/ai-turn`,
+			headers: authorizedHeaders,
+			payload: { playerId },
+		});
+		expect(response.statusCode).toBe(200);
+		const body = response.json() as {
+			sessionId: string;
+			ranTurn: boolean;
+			snapshot: SnapshotResponse['snapshot'];
+			registries: { actions: Record<string, unknown> };
+		};
+		expect(body.sessionId).toBe(sessionId);
+		expect(body.ranTurn).toBe(true);
+		expect(body.snapshot.game.currentPhase).toBeDefined();
+		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);
+		expect(body.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(body.registries.actions).toBeDefined();
+		expect(runSpy).toHaveBeenCalledWith(playerId);
+		await app.close();
+	});
+
+	it('returns conflicts when AI controllers are missing', async () => {
+		const { app, manager } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const snapshot = session.getSnapshot();
+		const nonAi = snapshot.game.players.find((entry) => {
+			return !session.hasAiController(entry.id);
+		});
+		expect(nonAi).toBeDefined();
+		if (!nonAi) {
+			throw new Error('No non-AI player was found.');
+		}
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/ai-turn`,
+			headers: authorizedHeaders,
+			payload: { playerId: nonAi.id },
+		});
+		expect(response.statusCode).toBe(409);
+		const body = response.json() as {
+			code: string;
+		};
+		expect(body.code).toBe('CONFLICT');
+		await app.close();
+	});
+
+	it('rejects AI requests from unauthorized callers', async () => {
+		const { app, manager } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const playerId = findAiPlayerId(session);
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No AI controller was available.');
+		}
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/ai-turn`,
+			payload: { playerId },
+		});
+		expect(response.statusCode).toBe(401);
+		const body = response.json() as { code: string };
+		expect(body.code).toBe('UNAUTHORIZED');
+		await app.close();
+	});
+
+	it('validates AI payloads over HTTP', async () => {
+		const { app, manager } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const invalidResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/ai-turn`,
+			headers: authorizedHeaders,
+			payload: { playerId: 42 },
+		});
+		expect(invalidResponse.statusCode).toBe(400);
+		const body = invalidResponse.json() as { code: string };
+		expect(body.code).toBe('INVALID_REQUEST');
+		await app.close();
+	});
+
+	it('simulates upcoming phases over HTTP', async () => {
+		const { app, manager } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		const expected = { forecast: [{ id: 'main' }] };
+		const snapshotResp = await app.inject({
+			method: 'GET',
+			url: `/sessions/${sessionId}/snapshot`,
+			headers: authorizedHeaders,
+		});
+		const snapshot = snapshotResp.json() as SnapshotResponse;
+		const players = snapshot.snapshot.game.players;
+		const playerId = players[0]?.id ?? null;
+		expect(playerId).not.toBeNull();
+		if (!playerId) {
+			throw new Error('No player id was found in the snapshot.');
+		}
+		const simulateSpy = session
+			? vi.spyOn(session, 'simulateUpcomingPhases').mockReturnValue(expected)
+			: null;
+		if (session) {
+			vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+				return await factory();
+			});
+		}
+		const response = await app.inject({
+			method: 'POST',
+			url: `/sessions/${sessionId}/simulate`,
+			headers: authorizedHeaders,
+			payload: { playerId, options: { maxIterations: 2 } },
+		});
+		expect(response.statusCode).toBe(200);
+		const body = response.json() as {
+			result: unknown;
+		};
+		expect(body.result).toEqual(expected);
+		if (simulateSpy) {
+			expect(simulateSpy).toHaveBeenCalledWith(playerId, {
+				maxIterations: 2,
+			});
+		}
 		await app.close();
 	});
 

@@ -12,7 +12,11 @@ import {
 	GameProviderInner,
 	type GameProviderInnerProps,
 } from './GameProviderInner';
-import { type SessionQueueHelpers, type SessionSnapshot } from './sessionTypes';
+import {
+	type SessionQueueHelpers,
+	type SessionQueueSeed,
+	type SessionSnapshot,
+} from './sessionTypes';
 import type {
 	GameProviderProps,
 	LegacyGameEngineContextValue,
@@ -30,6 +34,7 @@ import {
 	releaseSession,
 	setSessionDevMode,
 } from './sessionSdk';
+import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
@@ -54,7 +59,7 @@ export function GameProvider(props: GameProviderProps) {
 	} = props;
 
 	const mountedRef = useRef(true);
-	const queueRef = useRef<Promise<void>>(Promise.resolve());
+	const queueRef = useRef<SessionQueueSeed>(Promise.resolve());
 	const sessionStateRef = useRef<SessionContainer | null>(null);
 	const latestSnapshotRef = useRef<SessionSnapshot | null>(null);
 	const refreshAbortRef = useRef<AbortController | null>(null);
@@ -72,8 +77,14 @@ export function GameProvider(props: GameProviderProps) {
 			setSessionData(next);
 		}
 		if (next) {
+			const record = getSessionRecord(next.sessionId);
+			if (record) {
+				queueRef.current = record.queueSeed;
+			}
 			setSessionError(null);
+			return;
 		}
+		queueRef.current = Promise.resolve();
 	}, []);
 
 	const handleRetry = useCallback(() => {
@@ -161,15 +172,10 @@ export function GameProvider(props: GameProviderProps) {
 						releaseSession(created.sessionId);
 						return;
 					}
+					const { queueSeed: _queue, ...record } = created.record;
 					updateSessionData({
-						session: created.session,
-						legacySession: created.legacySession,
-						sessionId: created.sessionId,
-						snapshot: created.snapshot,
-						ruleSnapshot: created.ruleSnapshot,
-						registries: created.registries,
-						resourceKeys: created.resourceKeys,
-						metadata: created.metadata,
+						adapter: created.adapter,
+						...record,
 					});
 				} catch (error) {
 					if (disposed || !mountedRef.current) {
@@ -217,15 +223,10 @@ export function GameProvider(props: GameProviderProps) {
 				) {
 					return;
 				}
+				const { queueSeed: _queue, ...record } = result.record;
 				updateSessionData({
-					session: result.session,
-					legacySession: result.legacySession,
-					sessionId,
-					snapshot: result.snapshot,
-					ruleSnapshot: result.ruleSnapshot,
-					registries: result.registries,
-					resourceKeys: result.resourceKeys,
-					metadata: result.metadata,
+					adapter: result.adapter,
+					...record,
 				});
 			} catch (error) {
 				if (!mountedRef.current) {
@@ -266,15 +267,10 @@ export function GameProvider(props: GameProviderProps) {
 				) {
 					return;
 				}
+				const { queueSeed: _queue, ...record } = updated.record;
 				updateSessionData({
-					session: updated.session,
-					legacySession: updated.legacySession,
-					sessionId: current.sessionId,
-					snapshot: updated.snapshot,
-					ruleSnapshot: updated.ruleSnapshot,
-					registries: updated.registries,
-					resourceKeys: updated.resourceKeys,
-					metadata: updated.metadata,
+					adapter: updated.adapter,
+					...record,
 				});
 			} catch (error) {
 				if (!mountedRef.current) {
@@ -297,21 +293,14 @@ export function GameProvider(props: GameProviderProps) {
 					if (!current) {
 						throw new Error('Session not ready');
 					}
-					return current.session.enqueue(task);
+					return enqueueSessionTask(current.sessionId, task);
 				}),
 			getCurrentSession: () => {
 				const current = sessionStateRef.current;
 				if (!current) {
 					throw new Error('Session not ready');
 				}
-				return current.session;
-			},
-			getLegacySession: () => {
-				const current = sessionStateRef.current;
-				if (!current) {
-					throw new Error('Session not ready');
-				}
-				return current.legacySession;
+				return current.adapter;
 			},
 			getLatestSnapshot: () => latestSnapshotRef.current,
 		}),
