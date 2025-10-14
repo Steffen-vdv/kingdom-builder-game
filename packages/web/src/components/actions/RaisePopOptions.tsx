@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { type PopulationRoleId } from '@kingdom-builder/contents';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 import {
 	describeContent,
 	splitSummary,
@@ -128,8 +129,9 @@ export default function RaisePopOptions({
 					upkeep = undefined;
 				}
 				const rawRequirements = session.getActionRequirements(action.id);
-				const requirements = rawRequirements.map((failure) =>
-					translateRequirementFailure(failure, translationContext),
+				const requirements = rawRequirements.map(
+					(failure: SessionRequirementFailure) =>
+						translateRequirementFailure(failure, translationContext),
 				);
 				const canPay = playerHasRequiredResources(player.resources, costs);
 				const meetsReq = requirements.length === 0;

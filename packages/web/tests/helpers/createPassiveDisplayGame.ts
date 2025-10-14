@@ -1,11 +1,13 @@
 import { vi } from 'vitest';
 import type {
-	EngineSession,
 	EngineSessionSnapshot,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../../src/translation/context';
-import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
+import type {
+	GameEngineSessionApi,
+	LegacyGameEngineContextValue,
+} from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
@@ -43,6 +45,11 @@ export function createPassiveGame(
 		},
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
+	const sessionApi: GameEngineSessionApi = {
+		getActionCosts: vi.fn(() => ({})),
+		getActionRequirements: vi.fn(() => []),
+		getActionOptions: vi.fn(() => []),
+	};
 	const mockGame: MockGame = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
@@ -96,7 +103,7 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
+		session: sessionApi,
 		sessionState,
 		sessionView,
 		handlePerform: vi.fn().mockResolvedValue(undefined),

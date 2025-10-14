@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
+	SessionRequirementFailure,
 } from '@kingdom-builder/protocol';
 import {
 	describeContent,
@@ -11,7 +12,11 @@ import {
 	type TranslationContext,
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
-import type { HoverCardData, GameEngineApi } from './types';
+import type {
+	HoverCardData,
+	GameEngineApi,
+	GameEngineSessionApi,
+} from './types';
 import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
 
 type OptionParams = ActionEffectGroupOption['params'];
@@ -20,7 +25,7 @@ type PendingParams = Record<string, unknown> | undefined;
 type BuildOptionsParams = {
 	currentGroup: ActionEffectGroup | undefined;
 	pendingParams: PendingParams;
-	session: GameEngineApi['session'];
+	session: GameEngineSessionApi;
 	translationContext: TranslationContext;
 	formatRequirement: (requirement: string) => string;
 	handleOptionSelect: (
@@ -84,8 +89,11 @@ function buildHoverDetails(
 		option.actionId,
 		mergedParams,
 	);
-	const requirements = requirementFailures.map((failure) =>
-		formatRequirement(translateRequirementFailure(failure, translationContext)),
+	const requirements = requirementFailures.map(
+		(failure: SessionRequirementFailure) =>
+			formatRequirement(
+				translateRequirementFailure(failure, translationContext),
+			),
 	);
 	let effects = baseEffects;
 	const idParam = mergedParams?.id;

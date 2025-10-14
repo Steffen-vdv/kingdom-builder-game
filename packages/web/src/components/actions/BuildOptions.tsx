@@ -22,6 +22,7 @@ import {
 	type DisplayPlayer,
 } from './types';
 import { normalizeActionFocus } from './types';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -65,8 +66,9 @@ export default function BuildOptions({
 	);
 	const actionInfo = sessionView.actions.get(action.id);
 	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		translateRequirementFailure(failure, translationContext),
+	const requirements = requirementFailures.map(
+		(failure: SessionRequirementFailure) =>
+			translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
 	const entries = useMemo(() => {

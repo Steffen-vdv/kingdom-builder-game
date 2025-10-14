@@ -2,6 +2,10 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import type {
+	ActionEffectGroup,
+	SessionRequirementFailure,
+} from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
@@ -70,6 +74,21 @@ export interface SessionDerivedSelectors {
 	sessionView: SessionView;
 }
 
+export interface GameEngineSessionApi {
+	getActionCosts: (
+		actionId: string,
+		params?: Record<string, unknown>,
+	) => Record<string, number>;
+	getActionRequirements: (
+		actionId: string,
+		params?: Record<string, unknown>,
+	) => SessionRequirementFailure[];
+	getActionOptions: (
+		actionId: string,
+		params?: Record<string, unknown>,
+	) => ActionEffectGroup[];
+}
+
 export interface GameEngineContextValue {
 	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
@@ -87,6 +106,7 @@ export interface GameEngineContextValue {
 	hoverCard: HoverCard | null;
 	handleHoverCard: (data: HoverCard) => void;
 	clearHoverCard: () => void;
+	session: GameEngineSessionApi;
 	phase: PhaseProgressState;
 	actionCostResource: SessionResourceKey;
 	requests: {

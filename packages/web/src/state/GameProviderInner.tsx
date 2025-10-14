@@ -30,6 +30,7 @@ import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
+import { createSessionPreviewApi } from './sessionPreview';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -187,7 +188,7 @@ export function GameProviderInner({
 		registries: cachedRegistries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
+	const { handlePerform } = useActionPerformer({
 		sessionId,
 		actionCostResource,
 		registries: cachedRegistries,
@@ -211,8 +212,6 @@ export function GameProviderInner({
 		getLatestSnapshot: queue.getLatestSnapshot,
 		sessionState,
 		runUntilActionPhaseCore,
-		syncPhaseState: applyPhaseSnapshot,
-		performRef,
 		mountedRef,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
@@ -258,6 +257,11 @@ export function GameProviderInner({
 		[ruleSnapshot, sessionView, translationContext],
 	);
 
+	const sessionApi = useMemo(
+		() => createSessionPreviewApi(sessionState, translationContext),
+		[sessionState, translationContext],
+	);
+
 	const performActionRequest = useCallback<PerformActionHandler>(
 		async ({ action, params }) => {
 			await handlePerform(action, params);
@@ -300,6 +304,7 @@ export function GameProviderInner({
 		hoverCard,
 		handleHoverCard,
 		clearHoverCard,
+		session: sessionApi,
 		phase,
 		actionCostResource,
 		requests: requestHelpers,
