@@ -175,6 +175,10 @@ export class SessionManager {
 		return this.composeSnapshot(session);
 	}
 
+	public captureSnapshot(session: EngineSession): SessionSnapshot {
+		return this.composeSnapshot(session);
+	}
+
 	public getRuleSnapshot(
 		sessionId: string,
 	): ReturnType<EngineSession['getRuleSnapshot']> {

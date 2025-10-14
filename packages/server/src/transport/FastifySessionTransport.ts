@@ -59,6 +59,22 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 	);
 
 	fastify.post<SessionRequestParams>(
+		'/sessions/:id/ai-turn',
+		async (request, reply) => {
+			try {
+				const payload = mergeSessionPayload(request);
+				const response = await transport.runAiTurn({
+					body: payload,
+					headers: extractHeaders(request),
+				});
+				return reply.send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
+
+	fastify.post<SessionRequestParams>(
 		'/sessions/:id/actions',
 		async (request, reply) => {
 			try {
