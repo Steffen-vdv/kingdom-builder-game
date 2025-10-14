@@ -214,6 +214,42 @@ export interface SessionTriggerMetadata {
 	past?: string;
 }
 
+export type SessionMetadataAliasType =
+	| 'legacy'
+	| 'regional'
+	| 'external-system';
+
+export interface SessionMetadataAlias {
+	aliasId: string;
+	primaryId: string;
+	aliasType: SessionMetadataAliasType;
+	validFrom?: number;
+	validTo?: number;
+	syncNotes?: string;
+}
+
+export type SessionMetadataAliasRecord = Record<string, SessionMetadataAlias[]>;
+
+export interface SessionMetadataOverviewPublishWindow {
+	startEpoch?: number;
+	endEpoch?: number;
+}
+
+export interface SessionMetadataOverview {
+	contentId: string;
+	summary: string;
+	details: string;
+	tags?: string[];
+	defaultState?: unknown;
+	publishWindow?: SessionMetadataOverviewPublishWindow;
+	localizationMap?: Record<string, string>;
+}
+
+export type SessionMetadataOverviewMap = Record<
+	string,
+	SessionMetadataOverview
+>;
+
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
@@ -225,6 +261,8 @@ export interface SessionSnapshotMetadata {
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
+	overview?: SessionMetadataOverviewMap;
+	aliases?: SessionMetadataAliasRecord;
 }
 
 export interface SessionSnapshot {
