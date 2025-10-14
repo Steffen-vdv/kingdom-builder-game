@@ -86,3 +86,44 @@ describe('SessionTransport session state', () => {
 		}
 	});
 });
+
+describe('SessionTransport session metadata', () => {
+	it('merges static metadata into snapshots without mutating the cache', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: expect.getState().currentTestName
+				? () => 'metadata-session'
+				: undefined,
+			authMiddleware: middleware,
+		});
+		const baselineMetadata = manager.getMetadata();
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const state = transport.getSessionState({
+			body: { sessionId },
+			headers: authorizedHeaders,
+		});
+		const { metadata } = state.snapshot;
+		expect(metadata.passiveEvaluationModifiers).toBeDefined();
+		const resourceKeys = metadata.resources
+			? Object.keys(metadata.resources)
+			: [];
+		expect(resourceKeys.length).toBeGreaterThan(0);
+		expect(metadata.triggers).toBeDefined();
+		const triggerKeys = metadata.triggers ? Object.keys(metadata.triggers) : [];
+		expect(triggerKeys.length).toBeGreaterThan(0);
+		expect(metadata.overview?.hero).toBeDefined();
+		if (resourceKeys.length > 0 && metadata.resources) {
+			const key = resourceKeys[0];
+			const entry = metadata.resources[key];
+			if (entry) {
+				entry.label = 'mutated';
+			}
+		}
+		const refreshedMetadata = manager.getMetadata();
+		expect(refreshedMetadata).toEqual(baselineMetadata);
+	});
+});

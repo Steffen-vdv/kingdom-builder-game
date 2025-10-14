@@ -31,6 +31,7 @@ import type {
 	SessionManager,
 	CreateSessionOptions,
 } from '../session/SessionManager.js';
+import { enrichSessionSnapshot } from '../session/sessionMetadata.js';
 import type { AuthContext, AuthRole } from '../auth/AuthContext.js';
 import { AuthError } from '../auth/AuthError.js';
 import type { AuthMiddleware } from '../auth/tokenAuthMiddleware.js';
@@ -101,7 +102,6 @@ export class SessionTransportBase {
 			this.buildStateResponse(sessionId, snapshot),
 		);
 	}
-
 	public getSessionState(request: TransportRequest): SessionStateResponse {
 		const sessionId = this.parseSessionIdentifier(request.body);
 		this.requireSession(sessionId);
@@ -110,7 +110,6 @@ export class SessionTransportBase {
 			this.buildStateResponse(sessionId, snapshot),
 		);
 	}
-
 	public async advanceSession(
 		request: TransportRequest,
 	): Promise<SessionAdvanceResponse> {
@@ -143,7 +142,6 @@ export class SessionTransportBase {
 			});
 		}
 	}
-
 	public async executeAction(
 		request: TransportRequest,
 	): Promise<
@@ -185,9 +183,10 @@ export class SessionTransportBase {
 				const snapshot = session.getSnapshot();
 				return { traces, snapshot };
 			});
+			const snapshot = this.enrichSnapshot(result.snapshot);
 			const response = actionExecuteResponseSchema.parse({
 				status: 'success',
-				snapshot: result.snapshot,
+				snapshot,
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
@@ -212,7 +211,6 @@ export class SessionTransportBase {
 			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
 		}
 	}
-
 	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
 		this.requireAuthorization(request, 'session:advance');
 		const parsed = sessionSetDevModeRequestSchema.safeParse(request.body);
@@ -231,7 +229,6 @@ export class SessionTransportBase {
 			this.buildStateResponse(sessionId, snapshot),
 		);
 	}
-
 	public updatePlayerName(
 		request: TransportRequest,
 	): SessionUpdatePlayerNameResponse {
@@ -332,19 +329,20 @@ export class SessionTransportBase {
 		}
 	}
 	protected hasRole(context: AuthContext, role: AuthRole): boolean {
-		if (context.roles.includes(role)) {
-			return true;
-		}
-		return context.roles.includes('admin');
+		return context.roles.includes(role) || context.roles.includes('admin');
 	}
 	protected buildStateResponse(
 		sessionId: string,
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
+		const enriched = this.enrichSnapshot(snapshot);
 		return {
 			sessionId,
-			snapshot,
+			snapshot: enriched,
 			registries: this.sessionManager.getRegistries(),
 		};
+	}
+	protected enrichSnapshot(snapshot: SessionSnapshot): SessionSnapshot {
+		return enrichSessionSnapshot(snapshot, this.sessionManager.getMetadata());
 	}
 }

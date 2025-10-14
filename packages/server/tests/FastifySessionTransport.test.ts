@@ -26,7 +26,12 @@ describe('FastifySessionTransport', () => {
 		snapshot: {
 			game: { players: Array<{ id: string }>; currentPhase?: string };
 			recentResourceGains?: unknown[];
-			metadata: { passiveEvaluationModifiers?: unknown };
+			metadata: {
+				passiveEvaluationModifiers?: unknown;
+				resources?: Record<string, unknown>;
+				triggers?: Record<string, unknown>;
+				overview?: { hero?: unknown };
+			};
 		};
 	};
 
@@ -51,10 +56,15 @@ describe('FastifySessionTransport', () => {
 			payload: { devMode: true },
 		});
 		expect(response.statusCode).toBe(201);
-		const body = response.json() as {
-			snapshot: { game: { devMode: boolean } };
-		};
+		const body = response.json() as SnapshotResponse;
 		expect(body.snapshot.game.devMode).toBe(true);
+		expect(
+			Object.keys(body.snapshot.metadata.resources ?? {}).length,
+		).toBeGreaterThan(0);
+		expect(
+			Object.keys(body.snapshot.metadata.triggers ?? {}).length,
+		).toBeGreaterThan(0);
+		expect(body.snapshot.metadata.overview?.hero).toBeDefined();
 		await app.close();
 	});
 
