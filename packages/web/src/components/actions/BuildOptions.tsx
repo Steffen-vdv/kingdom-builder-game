@@ -69,7 +69,9 @@ export default function BuildOptions({
 		translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
-	const entries = useMemo(() => {
+	const entries = useMemo<
+		Array<{ building: Building; costs: Record<string, number>; total: number }>
+	>(() => {
 		const owned = player.buildings;
 		return buildings
 			.filter((building) => !owned.has(building.id))
