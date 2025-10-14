@@ -12,12 +12,17 @@ import type {
 	SessionRequirementFailure,
 	SessionResourceDefinition,
 	SessionRuleSnapshot,
+	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
 import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import {
+	clearSessionStateStore,
+	updateSessionSnapshot,
+} from '../../src/state/sessionStateStore';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -54,7 +59,7 @@ describe('useActionPerformer', () => {
 	let enqueueMock: ReturnType<
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
-	let sessionSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let sessionSnapshot: SessionSnapshot;
 	let resourceKeys: Array<SessionResourceDefinition['key']>;
 	let actionCostResource: SessionResourceDefinition['key'];
 	let ruleSnapshot: SessionRuleSnapshot;
@@ -63,6 +68,7 @@ describe('useActionPerformer', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clearSessionStateStore();
 		performSessionActionMock.mockReset();
 		diffStepSnapshotsMock.mockReset();
 		diffStepSnapshotsMock.mockReturnValue([]);
@@ -116,6 +122,7 @@ describe('useActionPerformer', () => {
 		});
 		session = createLegacySessionMock(
 			{
+				sessionId,
 				snapshot: sessionSnapshot,
 			},
 			{
@@ -364,6 +371,7 @@ describe('useActionPerformer', () => {
 			currentStep: sessionSnapshot.game.currentStep,
 		});
 		performSessionActionMock.mockImplementationOnce(() => {
+			updateSessionSnapshot(sessionId, snapshotAfter);
 			sessionSnapshot = snapshotAfter;
 			return Promise.resolve({
 				status: 'success',

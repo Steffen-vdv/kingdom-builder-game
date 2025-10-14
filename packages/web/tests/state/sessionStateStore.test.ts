@@ -56,7 +56,7 @@ describe('sessionStateStore', () => {
 					resolution: [{ label: 'Start' }],
 				},
 			}),
-		}) as unknown as SessionSnapshot;
+		});
 
 	it('clones snapshot and metadata when initializing', () => {
 		const baseSnapshot = createBaseSnapshot();
@@ -104,7 +104,7 @@ describe('sessionStateStore', () => {
 					resolution: [{ label: 'Advance' }],
 				},
 			}),
-		}) as unknown as SessionSnapshot;
+		});
 		const registriesPayload = createSessionRegistriesPayload();
 		const actionIds = Object.keys(registriesPayload.actions ?? {});
 		const firstAction = actionIds[0];

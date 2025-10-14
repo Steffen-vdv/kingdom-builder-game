@@ -12,7 +12,6 @@ import {
 } from '../helpers/sessionFixtures';
 import type {
 	SessionCreateResponse,
-	SessionSnapshot,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol/session';
 import {
@@ -265,16 +264,12 @@ describe('GameProvider', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.steps?.[0]?.id ?? phases[0]?.id ?? 'phase-main',
 		});
-		const initialSnapshotPayload =
-			initialSnapshot as unknown as SessionSnapshot;
-		const refreshedSnapshotPayload =
-			refreshedSnapshot as unknown as SessionSnapshot;
 		registries = createSessionRegistries();
 		registriesPayload = createSessionRegistriesPayload();
 		updatePlayerNameMock.mockImplementation(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: initialSnapshot as unknown as SessionSnapshot,
+				snapshot: initialSnapshot,
 				registries: registriesPayload,
 			};
 			applySessionState(response);
@@ -288,7 +283,11 @@ describe('GameProvider', () => {
 			return await task();
 		});
 		session = createLegacySessionMock(
-			{ snapshot: initialSnapshot },
+			{
+				sessionId,
+				snapshot: initialSnapshot,
+				registries: registriesPayload,
+			},
 			{
 				enqueue: enqueueMock,
 				updatePlayerName: vi.fn(),
@@ -301,7 +300,7 @@ describe('GameProvider', () => {
 		createSessionMock.mockImplementation(() => {
 			const response: SessionCreateResponse = {
 				sessionId,
-				snapshot: initialSnapshotPayload,
+				snapshot: initialSnapshot,
 				registries: registriesPayload,
 			};
 			const stateRecord = initializeSessionState(response);
@@ -322,7 +321,7 @@ describe('GameProvider', () => {
 		fetchSnapshotMock.mockImplementation(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: refreshedSnapshotPayload,
+				snapshot: refreshedSnapshot,
 				registries: registriesPayload,
 			};
 			const stateRecord = applySessionState(response);
@@ -399,13 +398,10 @@ describe('GameProvider', () => {
 			turn: 3,
 			devMode: true,
 		});
-		const devModeSnapshotPayload =
-			devModeSnapshot as unknown as SessionSnapshot;
-
 		setSessionDevModeMock.mockImplementationOnce(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: devModeSnapshotPayload,
+				snapshot: devModeSnapshot,
 				registries: registriesPayload,
 			};
 			const stateRecord = applySessionState(response);

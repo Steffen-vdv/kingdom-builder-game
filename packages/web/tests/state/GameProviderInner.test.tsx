@@ -18,6 +18,7 @@ import {
 	createResourceKeys,
 } from '../helpers/sessionRegistries';
 import type { TranslationContext } from '../../src/translation/context';
+import { clearSessionStateStore } from '../../src/state/sessionStateStore';
 
 const runUntilActionPhaseMock = vi.fn(() => Promise.resolve());
 const runUntilActionPhaseCoreMock = vi.fn(() => Promise.resolve());
@@ -146,6 +147,7 @@ describe('GameProviderInner', () => {
 		capturedAiOptions = null;
 		capturedLoggerOptions = null;
 		capturedTranslationOptions = null;
+		clearSessionStateStore();
 		runUntilActionPhaseMock.mockClear();
 		runUntilActionPhaseCoreMock.mockClear();
 		handleEndTurnMock.mockClear();
@@ -169,11 +171,14 @@ describe('GameProviderInner', () => {
 				tierDefinitions: [],
 				winConditions: [],
 			},
-		}) as unknown as SessionSnapshot;
+		});
 	});
 
 	it('routes the remote adapter through hooks and the legacy bridge for the playbook', () => {
-		const adapter = createLegacySessionMock({ snapshot: sessionState });
+		const adapter = createLegacySessionMock({
+			sessionId,
+			snapshot: sessionState,
+		});
 		(adapter as { id: string }).id = 'adapter:test';
 		const enqueue = vi.fn(
 			async <T,>(task: () => Promise<T> | T) => await task(),

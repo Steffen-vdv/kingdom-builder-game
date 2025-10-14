@@ -8,9 +8,11 @@ import {
 } from '../helpers/sessionFixtures';
 import { createResourceKeys } from '../helpers/sessionRegistries';
 import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import { clearSessionStateStore } from '../../src/state/sessionStateStore';
 
 describe('useAiRunner', () => {
 	it('forwards fatal errors from the action phase runner', async () => {
+		clearSessionStateStore();
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -46,8 +48,9 @@ describe('useAiRunner', () => {
 			.mockRejectedValueOnce(fatalError);
 		const onFatalSessionError = vi.fn();
 		const runAiTurn = vi.fn(() => Promise.resolve(true));
+		const sessionId = 'session:ai:fatal';
 		const session = createLegacySessionMock(
-			{ snapshot: sessionState },
+			{ sessionId, snapshot: sessionState },
 			{
 				hasAiController: vi.fn(() => true),
 				enqueue: vi.fn(async (task: () => Promise<void>) => {
@@ -85,6 +88,7 @@ describe('useAiRunner', () => {
 	});
 
 	it('stops background turns when the AI run reports a fatal error', async () => {
+		clearSessionStateStore();
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {
 			throw new Error('RESOURCE_KEYS is empty');
@@ -117,8 +121,9 @@ describe('useAiRunner', () => {
 		const fatalError = new Error('fatal AI failure');
 		const onFatalSessionError = vi.fn();
 		const runAiTurn = vi.fn(() => Promise.reject(fatalError));
+		const sessionId = 'session:ai:stop';
 		const session = createLegacySessionMock(
-			{ snapshot: sessionState },
+			{ sessionId, snapshot: sessionState },
 			{
 				hasAiController: vi.fn(() => true),
 				enqueue: vi.fn(async (task: () => Promise<void>) => {

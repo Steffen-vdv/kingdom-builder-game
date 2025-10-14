@@ -37,7 +37,7 @@ const createTestSnapshot = (): SessionSnapshot => {
 			tierDefinitions: [],
 			winConditions: [],
 		},
-	}) as unknown as SessionSnapshot;
+	});
 };
 
 describe('useSessionQueue', () => {
@@ -54,7 +54,7 @@ describe('useSessionQueue', () => {
 			snapshot,
 			registries: createSessionRegistriesPayload(),
 		});
-		const adapter = createLegacySessionMock({ snapshot });
+		const adapter = createLegacySessionMock({ sessionId, snapshot });
 		const enqueueMock = vi.fn(() => {
 			throw new Error('queue helper enqueue should not be used');
 		});
@@ -85,7 +85,7 @@ describe('useSessionQueue', () => {
 		});
 		const queueHelpers: SessionQueueHelpers = {
 			enqueue: vi.fn(async <T>(task: () => Promise<T> | T) => await task()),
-			getCurrentSession: () => createLegacySessionMock({ snapshot }),
+			getCurrentSession: () => createLegacySessionMock({ sessionId, snapshot }),
 			getLatestSnapshot: () => null,
 		};
 		const { result, rerender } = renderHook(

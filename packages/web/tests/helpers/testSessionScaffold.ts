@@ -1,10 +1,8 @@
 import type {
-	EngineSessionSnapshot,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
-import type {
 	SessionMetadataDescriptor,
 	SessionPhaseMetadata,
+	SessionRuleSnapshot,
+	SessionSnapshot,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 import { createSessionRegistries } from './sessionRegistries';
@@ -97,9 +95,9 @@ const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 
 export interface TestSessionScaffold {
 	registries: SessionRegistries;
-	metadata: EngineSessionSnapshot['metadata'];
-	phases: EngineSessionSnapshot['phases'];
-	ruleSnapshot: RuleSnapshot;
+	metadata: SessionSnapshot['metadata'];
+	phases: SessionSnapshot['phases'];
+	ruleSnapshot: SessionRuleSnapshot;
 	tierPassiveId: string;
 	neutralTierId: string;
 }
@@ -163,7 +161,7 @@ const buildStatMetadata = (): Record<string, SessionMetadataDescriptor> => ({
 
 const buildPhaseDefinitions = (
 	entries: readonly PhaseOrderEntry[],
-): EngineSessionSnapshot['phases'] =>
+): SessionSnapshot['phases'] =>
 	entries.map(({ id, metadata }) => ({
 		id,
 		label: metadata.label,
@@ -185,7 +183,7 @@ const buildPhaseMetadata = (): Record<string, SessionPhaseMetadata> => {
 	return descriptors;
 };
 
-const buildRuleSnapshot = (resourceKey: string): RuleSnapshot => ({
+const buildRuleSnapshot = (resourceKey: string): SessionRuleSnapshot => ({
 	tieredResourceKey: resourceKey,
 	tierDefinitions: [
 		{
@@ -240,7 +238,7 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 	const populationMetadata = buildPopulationMetadata(registries);
 	const statMetadata = buildStatMetadata();
 	const phaseMetadata = buildPhaseMetadata();
-	const metadata: EngineSessionSnapshot['metadata'] = {
+	const metadata: SessionSnapshot['metadata'] = {
 		passiveEvaluationModifiers: {},
 		resources: resourceMetadata,
 		populations: populationMetadata,

@@ -1,5 +1,17 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T19 - Remote state harness migration
+
+- Converted the shared session fixtures to emit protocol `SessionSnapshot` and
+  passive record DTOs so state tests seed the session state store with remote
+  data instead of cloning engine snapshots.【F:packages/web/tests/helpers/sessionFixtures.ts†L1-L210】
+- Replaced the legacy session mock with a remote adapter harness that
+  initializes the store, records simulated advance results, and exposes hooks
+  for AI runs and action metadata overrides during test setup.【F:packages/web/tests/helpers/createLegacySessionMock.ts†L1-L189】
+- Updated the web state test suites to exercise the adapter-backed queue,
+  provider, and performer workflows using the new harness and protocol types
+  rather than engine factories.【F:packages/web/tests/state/useActionPerformer.test.ts†L1-L215】【F:packages/web/tests/state/GameProvider.test.tsx†L1-L420】【F:packages/web/tests/state/useSessionQueue.test.ts†L1-L120】
+
 ## Domain Migration - P3 - T18 - Engine alias regression guard
 
 - Removed the Vite alias that exposed `@kingdom-builder/engine` to the web
