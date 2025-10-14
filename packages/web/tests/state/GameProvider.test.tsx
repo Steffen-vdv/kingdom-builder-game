@@ -12,20 +12,20 @@ import {
 } from '../helpers/sessionFixtures';
 import type {
 	SessionCreateResponse,
-	SessionSnapshot,
 	SessionStateResponse,
 } from '@kingdom-builder/protocol/session';
 import {
 	createResourceKeys,
-	createSessionRegistries,
 	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
-import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
 import {
 	applySessionState,
 	clearSessionStateStore,
-	initializeSessionState,
 } from '../../src/state/sessionStateStore';
+import {
+	createRemoteSessionAdapter,
+	type RemoteSessionAdapterHarness,
+} from '../helpers/remoteSessionAdapter';
 
 const createSessionMock = vi.hoisted(() => vi.fn());
 const fetchSnapshotMock = vi.hoisted(() => vi.fn());
@@ -177,13 +177,14 @@ function SessionInspector() {
 
 describe('GameProvider', () => {
 	let session: LegacySession;
-	let registries: ReturnType<typeof createSessionRegistries>;
 	let registriesPayload: ReturnType<typeof createSessionRegistriesPayload>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
+	let sessionHarness: RemoteSessionAdapterHarness | null;
 	const sessionId = 'session-1';
 	beforeEach(() => {
 		clearSessionStateStore();
+		sessionHarness = null;
 		createSessionMock.mockReset();
 		fetchSnapshotMock.mockReset();
 		releaseSessionMock.mockReset();
@@ -223,12 +224,12 @@ describe('GameProvider', () => {
 			winConditions: [],
 		} as const;
 		const player = createSnapshotPlayer({
-			id: 'player-1',
+			id: 'A',
 			name: 'Commander',
 			resources: { [resourceKey]: 10 },
 		});
 		const opponent = createSnapshotPlayer({
-			id: 'player-2',
+			id: 'B',
 			name: 'Rival',
 			resources: { [resourceKey]: 6 },
 		});
@@ -265,64 +266,45 @@ describe('GameProvider', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.steps?.[0]?.id ?? phases[0]?.id ?? 'phase-main',
 		});
-		const initialSnapshotPayload =
-			initialSnapshot as unknown as SessionSnapshot;
-		const refreshedSnapshotPayload =
-			refreshedSnapshot as unknown as SessionSnapshot;
-		registries = createSessionRegistries();
 		registriesPayload = createSessionRegistriesPayload();
 		updatePlayerNameMock.mockImplementation(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: initialSnapshot as unknown as SessionSnapshot,
+				snapshot: initialSnapshot,
 				registries: registriesPayload,
 			};
-			applySessionState(response);
+			const stateRecord = applySessionState(response);
 			return Promise.resolve({
 				sessionId,
-				snapshot: initialSnapshot,
-				registries,
+				snapshot: stateRecord.snapshot,
+				registries: stateRecord.registries,
 			});
 		});
-		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
-			return await task();
-		});
-		session = createLegacySessionMock(
-			{ snapshot: initialSnapshot },
-			{
-				enqueue: enqueueMock,
-				updatePlayerName: vi.fn(),
-				getSnapshot: vi.fn(() => initialSnapshot),
-				advancePhase: vi.fn(),
-				getActionCosts: vi.fn(() => ({})),
-				setDevMode: vi.fn(),
-			},
-		);
 		createSessionMock.mockImplementation(() => {
 			const response: SessionCreateResponse = {
 				sessionId,
-				snapshot: initialSnapshotPayload,
+				snapshot: initialSnapshot,
 				registries: registriesPayload,
 			};
-			const stateRecord = initializeSessionState(response);
+			sessionHarness = createRemoteSessionAdapter({
+				sessionId,
+				snapshot: response.snapshot,
+				registries: response.registries,
+			});
+			session = sessionHarness.adapter;
 			return Promise.resolve({
 				sessionId,
 				adapter: session,
-				record: {
-					sessionId: stateRecord.sessionId,
-					snapshot: stateRecord.snapshot,
-					ruleSnapshot: stateRecord.ruleSnapshot,
-					registries: stateRecord.registries,
-					resourceKeys: stateRecord.resourceKeys,
-					metadata: stateRecord.metadata,
-					queueSeed: stateRecord.queueSeed,
-				},
+				record: sessionHarness.record,
 			});
 		});
 		fetchSnapshotMock.mockImplementation(() => {
+			if (!sessionHarness) {
+				throw new Error('Session harness not initialised');
+			}
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: refreshedSnapshotPayload,
+				snapshot: refreshedSnapshot,
 				registries: registriesPayload,
 			};
 			const stateRecord = applySessionState(response);
@@ -344,6 +326,10 @@ describe('GameProvider', () => {
 
 	afterEach(() => {
 		cleanup();
+		if (sessionHarness) {
+			sessionHarness.cleanup();
+			sessionHarness = null;
+		}
 	});
 
 	it('creates a session and renders children after loading completes', async () => {
@@ -399,13 +385,10 @@ describe('GameProvider', () => {
 			turn: 3,
 			devMode: true,
 		});
-		const devModeSnapshotPayload =
-			devModeSnapshot as unknown as SessionSnapshot;
-
 		setSessionDevModeMock.mockImplementationOnce(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: devModeSnapshotPayload,
+				snapshot: devModeSnapshot,
 				registries: registriesPayload,
 			};
 			const stateRecord = applySessionState(response);

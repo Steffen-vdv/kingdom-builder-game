@@ -213,3 +213,12 @@
   `advanceSessionPhase` API, so queued snapshots fuel diff formatting without
   invoking legacy engine methods. Tests now seed the session state store instead
   of engine mocks to cover the remote workflow.
+
+## Domain Migration - P3 - T19 - State test remote migration
+
+- Rebuilt the state test fixtures around the remote session adapter and
+  `GameApiFake`, seeding snapshots and registries through the session state
+  store to mirror queue, action, and AI flows without legacy engine mocks.
+- Updated helper utilities to emit protocol-driven snapshots and remote
+  adapters, and migrated suites such as `GameProvider`, `useActionPerformer`,
+  `useSessionQueue`, and `useAiRunner` to exercise the adapter behaviours.
