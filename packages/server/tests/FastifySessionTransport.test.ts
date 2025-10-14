@@ -92,6 +92,54 @@ describe('FastifySessionTransport', () => {
 		await app.close();
 	});
 
+	it('runs AI turns through the API', async () => {
+		const { app, gainKey } = await createServer();
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const created = createResponse.json() as {
+			sessionId: string;
+			snapshot: { game: { activePlayerId: string } };
+		};
+		let snapshot = created.snapshot;
+		for (
+			let index = 0;
+			index < 6 && snapshot.game.activePlayerId !== 'B';
+			index += 1
+		) {
+			const advanceResponse = await app.inject({
+				method: 'POST',
+				url: `/sessions/${created.sessionId}/advance`,
+				headers: authorizedHeaders,
+				payload: {},
+			});
+			const advanceBody = advanceResponse.json() as {
+				snapshot: { game: { activePlayerId: string } };
+			};
+			snapshot = advanceBody.snapshot;
+		}
+		const aiResponse = await app.inject({
+			method: 'POST',
+			url: `/sessions/${created.sessionId}/ai-turn`,
+			headers: authorizedHeaders,
+			payload: { playerId: 'B' },
+		});
+		expect(aiResponse.statusCode).toBe(200);
+		const aiBody = aiResponse.json() as {
+			ranTurn: boolean;
+			advance?: unknown;
+			snapshot: {
+				game: { players: Array<{ resources: Record<string, number> }> };
+			};
+		};
+		expect(aiBody.ranTurn).toBe(true);
+		const players = aiBody.snapshot.game.players;
+		expect(players[1]?.resources[gainKey]).not.toBeUndefined();
+		await app.close();
+	});
 	it('toggles developer mode through the API', async () => {
 		const { app } = await createServer();
 		const createResponse = await app.inject({
