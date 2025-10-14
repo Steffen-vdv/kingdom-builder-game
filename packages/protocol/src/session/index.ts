@@ -192,6 +192,53 @@ export interface SessionMetadataDescriptor {
 	description?: string;
 }
 
+export type SessionMetadataAliasType =
+	| 'legacy'
+	| 'regional'
+	| 'external-system';
+
+export interface SessionMetadataAlias {
+	aliasId: string;
+	primaryId: string;
+	aliasType: SessionMetadataAliasType;
+	validFrom?: number;
+	validTo?: number;
+	syncNotes?: string;
+}
+
+export type SessionMetadataAliasRecord = Record<string, SessionMetadataAlias[]>;
+
+export interface SessionMetadataAssetDimensions {
+	width?: number;
+	height?: number;
+}
+
+export interface SessionMetadataAssetDescriptor
+	extends SessionMetadataDescriptor {
+	assetId?: string;
+	assetType?: string;
+	mediaUri?: string;
+	checksum?: string;
+	dimensions?: SessionMetadataAssetDimensions;
+	usageContexts?: string[];
+	deliveryProfile?: string;
+}
+
+export interface SessionMetadataPublishWindow {
+	startEpoch?: number;
+	endEpoch?: number;
+}
+
+export interface SessionMetadataOverview {
+	contentId: string;
+	summary: string;
+	details: string;
+	tags?: string[];
+	defaultState?: Record<string, unknown>;
+	publishWindow?: SessionMetadataPublishWindow;
+	localizationMap?: Record<string, string>;
+}
+
 export interface SessionPhaseStepMetadata {
 	id: string;
 	label?: string;
@@ -224,7 +271,9 @@ export interface SessionSnapshotMetadata {
 	stats?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
-	assets?: Record<string, SessionMetadataDescriptor>;
+	assets?: Record<string, SessionMetadataAssetDescriptor>;
+	aliases?: SessionMetadataAliasRecord;
+	overview?: SessionMetadataOverview;
 }
 
 export interface SessionSnapshot {
