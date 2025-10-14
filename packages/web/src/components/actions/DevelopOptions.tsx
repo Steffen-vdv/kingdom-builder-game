@@ -58,15 +58,16 @@ export default function DevelopOptions({
 	selectResourceDescriptor,
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
+	const game = useGameEngine();
+	const sessionApi = game.session;
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
-	} = useGameEngine();
+	} = game;
 	const slotMetadata = useSlotMetadata();
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const landIdForCost = player.lands[0]?.id as string;
@@ -80,7 +81,7 @@ export default function DevelopOptions({
 	>(() => {
 		return developments
 			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = sessionApi.getActionCosts(action.id, {
 					id: development.id,
 					landId: landIdForCost,
 				});
@@ -92,7 +93,7 @@ export default function DevelopOptions({
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	}, [developments, sessionApi, action.id, landIdForCost, actionCostResource]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

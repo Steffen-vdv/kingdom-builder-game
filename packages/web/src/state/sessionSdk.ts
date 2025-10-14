@@ -249,7 +249,10 @@ export async function advanceSessionPhase(
 	const registries = deserializeSessionRegistries(response.registries);
 	const resourceKeys: ResourceKey[] = extractResourceKeys(registries);
 	await record.handle.enqueue(() => {
-		record.handle.advancePhase(response.advance);
+		if (response.advance) {
+			record.handle.advancePhase(response.advance);
+		}
+
 		mergeSessionCaches(
 			record,
 			registries,

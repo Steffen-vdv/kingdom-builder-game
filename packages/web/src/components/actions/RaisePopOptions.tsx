@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { type PopulationRoleId } from '@kingdom-builder/contents';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
 import {
 	describeContent,
 	splitSummary,
@@ -45,15 +46,16 @@ export default function RaisePopOptions({
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
+	const game = useGameEngine();
+	const sessionApi = game.session;
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
-	} = useGameEngine();
+	} = game;
 	const { populations } = useRegistryMetadata();
 	const populationMetadata = usePopulationMetadata();
 	const selectPopulationDescriptor = useCallback<PopulationDescriptorSelector>(
@@ -115,7 +117,7 @@ export default function RaisePopOptions({
 	return (
 		<>
 			{roleOptions.map((role) => {
-				const costsBag = session.getActionCosts(action.id);
+				const costsBag = sessionApi.getActionCosts(action.id);
 				const costEntries = Object.entries(costsBag);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of costEntries) {
@@ -127,9 +129,10 @@ export default function RaisePopOptions({
 				} catch {
 					upkeep = undefined;
 				}
-				const rawRequirements = session.getActionRequirements(action.id);
-				const requirements = rawRequirements.map((failure) =>
-					translateRequirementFailure(failure, translationContext),
+				const rawRequirements = sessionApi.getActionRequirements(action.id);
+				const requirements = rawRequirements.map(
+					(failure: SessionRequirementFailure) =>
+						translateRequirementFailure(failure, translationContext),
 				);
 				const canPay = playerHasRequiredResources(player.resources, costs);
 				const meetsReq = requirements.length === 0;

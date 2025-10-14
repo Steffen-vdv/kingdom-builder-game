@@ -5,7 +5,10 @@ import type {
 	SessionDevelopmentOption,
 	SessionPlayerView,
 } from '../../state/sessionSelectors.types';
-import type { useGameEngine } from '../../state/GameContext';
+import type {
+	LegacyGameEngineContextValue,
+	GameSessionApi,
+} from '../../state/GameContext.types';
 import type { Action as PerformableAction } from '../../state/actionTypes';
 
 export type ActionFocus = string & { __brand?: 'ActionFocus' };
@@ -39,7 +42,8 @@ export interface Building extends SessionBuildingOption {
 	focus?: ActionFocus;
 }
 
-export type GameEngineApi = ReturnType<typeof useGameEngine>;
+export type GameEngineApi = LegacyGameEngineContextValue;
+export type SessionApi = GameSessionApi;
 export type DisplayPlayer = SessionPlayerView;
 export type HoverCardData = Parameters<GameEngineApi['handleHoverCard']>[0];
 

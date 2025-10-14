@@ -3,6 +3,7 @@ import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
 } from '@kingdom-builder/protocol';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
 import {
 	describeContent,
 	splitSummary,
@@ -23,7 +24,7 @@ import {
 	toPerformableAction,
 	type Action,
 	type DisplayPlayer,
-	type GameEngineApi,
+	type SessionApi,
 	type HoverCardData,
 } from './types';
 import { normalizeActionFocus } from './types';
@@ -44,7 +45,7 @@ interface GenericActionCardProps {
 		option: ActionEffectGroupOption,
 		params?: Record<string, unknown>,
 	) => void;
-	session: GameEngineApi['session'];
+	session: SessionApi;
 	translationContext: TranslationContext;
 	actionCostResource: string;
 	handlePerform: (
@@ -79,8 +80,11 @@ function GenericActionCard({
 	selectResourceDescriptor,
 }: GenericActionCardProps) {
 	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		formatRequirement(translateRequirementFailure(failure, translationContext)),
+	const requirements = requirementFailures.map(
+		(failure: SessionRequirementFailure) =>
+			formatRequirement(
+				translateRequirementFailure(failure, translationContext),
+			),
 	);
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
 	const canPay = Object.entries(costs).every(

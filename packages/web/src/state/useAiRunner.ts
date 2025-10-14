@@ -10,6 +10,8 @@ interface UseAiRunnerOptions {
 	getLatestSnapshot: () => SessionSnapshot | null;
 	mountedRef: React.MutableRefObject<boolean>;
 	onFatalSessionError?: (error: unknown) => void;
+	syncPhaseState?: (snapshot: SessionSnapshot) => void;
+	performRef?: React.MutableRefObject<unknown>;
 }
 
 export function useAiRunner({
@@ -20,6 +22,8 @@ export function useAiRunner({
 	getLatestSnapshot,
 	mountedRef,
 	onFatalSessionError,
+	syncPhaseState: _syncPhaseState,
+	performRef: _performRef,
 }: UseAiRunnerOptions) {
 	useEffect(() => {
 		const phaseDefinition = sessionState.phases[sessionState.game.phaseIndex];
