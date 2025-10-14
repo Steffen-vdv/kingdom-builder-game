@@ -19,6 +19,10 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
+import {
+	buildSessionMetadata,
+	type SessionStaticMetadataPayload,
+} from './buildSessionMetadata.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -65,6 +69,8 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
+	private readonly metadata: SessionStaticMetadataPayload;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -85,13 +91,21 @@ export class SessionManager {
 			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
 		};
+		const resources = this.buildResourceRegistry(resourceRegistry);
 		this.registries = {
 			actions: this.cloneRegistry(this.baseOptions.actions),
 			buildings: this.cloneRegistry(this.baseOptions.buildings),
 			developments: this.cloneRegistry(this.baseOptions.developments),
 			populations: this.cloneRegistry(this.baseOptions.populations),
-			resources: this.buildResourceRegistry(resourceRegistry),
+			resources,
 		};
+		this.metadata = buildSessionMetadata({
+			buildings: this.baseOptions.buildings,
+			developments: this.baseOptions.developments,
+			populations: this.baseOptions.populations,
+			resources,
+			phases: this.baseOptions.phases,
+		});
 	}
 
 	public createSession(
@@ -163,6 +177,10 @@ export class SessionManager {
 
 	public getRegistries(): SessionRegistriesPayload {
 		return structuredClone(this.registries);
+	}
+
+	public getMetadata(): SessionStaticMetadataPayload {
+		return structuredClone(this.metadata);
 	}
 
 	private requireSession(sessionId: string): EngineSession {
@@ -259,3 +277,5 @@ export class SessionManager {
 		}
 	}
 }
+
+export type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';

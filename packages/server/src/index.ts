@@ -13,6 +13,7 @@ export type {
 	SessionManagerOptions,
 	CreateSessionOptions,
 } from './session/SessionManager.js';
+export type { SessionStaticMetadataPayload } from './session/buildSessionMetadata.js';
 export { SessionTransport } from './transport/SessionTransport.js';
 export type { SessionTransportOptions } from './transport/SessionTransport.js';
 export { HttpSessionGateway } from './client/HttpSessionGateway.js';
