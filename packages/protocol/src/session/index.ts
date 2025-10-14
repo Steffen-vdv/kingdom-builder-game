@@ -282,4 +282,14 @@ export type {
 } from './contracts';
 
 export * as contracts from './contracts';
+export type {
+	OverviewContentTemplate,
+	OverviewHeroTemplate,
+	OverviewListTemplate,
+	OverviewParagraphTemplate,
+	OverviewSectionTemplate,
+	OverviewTokenCandidates,
+	OverviewTokenCategoryName,
+} from './overview';
+
 export type { SessionGateway } from './gateway';
