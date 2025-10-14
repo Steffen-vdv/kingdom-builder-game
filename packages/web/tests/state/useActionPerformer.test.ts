@@ -1,7 +1,11 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RequirementFailure, RuleSnapshot } from '@kingdom-builder/engine';
+import type {
+	SessionRequirementFailure,
+	SessionResourceDefinition,
+	SessionRuleSnapshot,
+} from '@kingdom-builder/protocol/session';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
 import { SessionMirroringError } from '../../src/state/sessionSdk';
@@ -9,12 +13,12 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import type { SessionQueueHelpers } from '../../src/state/sessionTypes';
 import {
 	createResourceKeys,
 	createSessionRegistries,
 } from '../helpers/sessionRegistries';
+import { createTestSessionQueue } from '../helpers/sessionQueue';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -56,10 +60,8 @@ describe('useActionPerformer', () => {
 	let actionCostResource: SessionResourceDefinition['key'];
 	let ruleSnapshot: RuleSnapshot;
 	let registries: ReturnType<typeof createSessionRegistries>;
-	let queue: Pick<
-		SessionQueueHelpers,
-		'getLatestSnapshot' | 'getLatestRegistries'
-	>;
+	let queue: SessionQueueHelpers;
+	let testQueue: ReturnType<typeof createTestSessionQueue>;
 	const sessionId = 'test-session';
 
 	beforeEach(() => {
@@ -88,7 +90,7 @@ describe('useActionPerformer', () => {
 			tieredResourceKey: actionCostResource,
 			tierDefinitions: [],
 			winConditions: [],
-		};
+		} satisfies SessionRuleSnapshot;
 		const player = createSnapshotPlayer({
 			id: 'player-1',
 			name: 'Hero',
@@ -116,12 +118,11 @@ describe('useActionPerformer', () => {
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
-		const getLatestSnapshot = vi.fn(() => sessionSnapshot);
-		const getLatestRegistries = vi.fn(() => registries);
-		queue = {
-			getLatestSnapshot,
-			getLatestRegistries,
-		};
+		testQueue = createTestSessionQueue({
+			snapshot: sessionSnapshot,
+			registries,
+		});
+		queue = testQueue.queue;
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
@@ -182,7 +183,7 @@ describe('useActionPerformer', () => {
 
 	it('translates requirement failures for authentication errors', async () => {
 		const error = new Error('Forbidden');
-		const failure = { reason: 'auth' } as RequirementFailure;
+		const failure = { reason: 'auth' } as SessionRequirementFailure;
 		const authMessage = 'Authentication required';
 		translateRequirementFailureMock.mockReturnValue(authMessage);
 		performSessionActionMock.mockResolvedValueOnce({
@@ -231,7 +232,7 @@ describe('useActionPerformer', () => {
 
 	it('uses requirement failures array when single failure field is missing', async () => {
 		const error = new Error('Requirements failed');
-		const failure = { reason: 'missing-resource' } as RequirementFailure;
+		const failure = { reason: 'missing-resource' } as SessionRequirementFailure;
 		const translated = 'You need more resources.';
 		translateRequirementFailureMock.mockReturnValue(translated);
 		performSessionActionMock.mockResolvedValueOnce({
@@ -297,6 +298,7 @@ describe('useActionPerformer', () => {
 			currentStep: sessionSnapshot.game.currentStep,
 		});
 		cachedSessionSnapshot = sessionSnapshot;
+		testQueue.updateSnapshot(sessionSnapshot);
 		const onFatalSessionError = vi.fn();
 		const showResolution = vi.fn().mockResolvedValue(undefined);
 		const { result } = renderHook(() =>
