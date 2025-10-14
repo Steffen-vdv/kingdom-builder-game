@@ -1,27 +1,38 @@
+import type { EffectDef, PlayerStartConfig } from '@kingdom-builder/protocol';
 import type {
-	EffectDef,
-	EngineSessionSnapshot,
-	PassiveRecordSnapshot,
-	PlayerId,
-	PlayerStateSnapshot,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
-import type { PlayerStartConfig } from '@kingdom-builder/protocol';
+	SessionPassiveRecordSnapshot,
+	SessionPlayerId,
+	SessionPlayerStateSnapshot,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+	SessionPhaseDefinition,
+	SessionCreateResponse,
+	SessionRegistriesPayload,
+} from '@kingdom-builder/protocol/session';
+
+const clone = <T>(value: T): T => {
+	if (typeof structuredClone === 'function') {
+		return structuredClone(value);
+	}
+	return JSON.parse(JSON.stringify(value)) as T;
+};
 
 interface SnapshotPlayerOptions {
-	id: PlayerId;
+	id: SessionPlayerId;
 	name?: string;
 	resources?: Record<string, number>;
 	stats?: Record<string, number>;
 	statsHistory?: Record<string, boolean>;
 	population?: Record<string, number>;
-	lands?: PlayerStateSnapshot['lands'];
+	lands?: SessionPlayerStateSnapshot['lands'];
 	buildings?: string[];
 	actions?: string[];
-	statSources?: PlayerStateSnapshot['statSources'];
-	skipPhases?: PlayerStateSnapshot['skipPhases'];
-	skipSteps?: PlayerStateSnapshot['skipSteps'];
-	passives?: PlayerStateSnapshot['passives'];
+	statSources?: SessionPlayerStateSnapshot['statSources'];
+	skipPhases?: SessionPlayerStateSnapshot['skipPhases'];
+	skipSteps?: SessionPlayerStateSnapshot['skipSteps'];
+	passives?: SessionPlayerStateSnapshot['passives'];
+	aiControlled?: boolean;
 }
 
 export function createSnapshotPlayer({
@@ -38,8 +49,9 @@ export function createSnapshotPlayer({
 	skipPhases = {},
 	skipSteps = {},
 	passives = [],
-}: SnapshotPlayerOptions): PlayerStateSnapshot {
-	const clonedStatSources: PlayerStateSnapshot['statSources'] = {};
+	aiControlled,
+}: SnapshotPlayerOptions): SessionPlayerStateSnapshot {
+	const clonedStatSources: SessionPlayerStateSnapshot['statSources'] = {};
 	for (const [statId, contributions] of Object.entries(statSources)) {
 		const clonedContributions: Record<
 			string,
@@ -53,11 +65,11 @@ export function createSnapshotPlayer({
 		}
 		clonedStatSources[statId] = clonedContributions;
 	}
-	const clonedSkipPhases: PlayerStateSnapshot['skipPhases'] = {};
+	const clonedSkipPhases: SessionPlayerStateSnapshot['skipPhases'] = {};
 	for (const [phaseId, sources] of Object.entries(skipPhases)) {
 		clonedSkipPhases[phaseId] = { ...sources };
 	}
-	const clonedSkipSteps: PlayerStateSnapshot['skipSteps'] = {};
+	const clonedSkipSteps: SessionPlayerStateSnapshot['skipSteps'] = {};
 	for (const [phaseId, stepMap] of Object.entries(skipSteps)) {
 		const clonedStepMap: Record<string, Record<string, true>> = {};
 		for (const [stepId, stepSources] of Object.entries(stepMap)) {
@@ -72,30 +84,26 @@ export function createSnapshotPlayer({
 		stats: { ...stats },
 		statsHistory: { ...statsHistory },
 		population: { ...population },
-		lands: lands.map((land) => ({
-			...land,
-			developments: [...land.developments],
-			slots: land.slots.map((slot) => ({ ...slot })),
-		})),
+		lands: lands.map((land) =>
+			clone(land),
+		) as SessionPlayerStateSnapshot['lands'],
 		buildings: [...buildings],
 		actions: [...actions],
 		statSources: clonedStatSources,
 		skipPhases: clonedSkipPhases,
 		skipSteps: clonedSkipSteps,
-		passives: passives.map((passive) => ({
-			...passive,
-			meta: passive.meta ? { ...passive.meta } : undefined,
-		})),
+		passives: passives.map((passive) => clone(passive)),
+		...(aiControlled !== undefined ? { aiControlled } : {}),
 	};
 }
 
 interface PassiveRecordOptions {
 	id: string;
-	owner: PlayerId;
+	owner: SessionPlayerId;
 	name?: string;
 	icon?: string;
 	detail?: string;
-	meta?: PassiveRecordSnapshot['meta'];
+	meta?: SessionPassiveRecordSnapshot['meta'];
 	effects?: EffectDef[];
 	onGrowthPhase?: EffectDef[];
 	onUpkeepPhase?: EffectDef[];
@@ -115,11 +123,8 @@ export function createPassiveRecord({
 	onUpkeepPhase,
 	onBeforeAttacked,
 	onAttackResolved,
-}: PassiveRecordOptions): PassiveRecordSnapshot {
-	const record: PassiveRecordSnapshot = {
-		id,
-		owner,
-	} as PassiveRecordSnapshot;
+}: PassiveRecordOptions): SessionPassiveRecordSnapshot {
+	const record: SessionPassiveRecordSnapshot = { id, owner };
 	if (name !== undefined) {
 		record.name = name;
 	}
@@ -130,43 +135,43 @@ export function createPassiveRecord({
 		record.detail = detail;
 	}
 	if (meta !== undefined) {
-		record.meta = { ...meta };
+		record.meta = clone(meta);
 	}
 	if (effects) {
-		record.effects = effects.map((effect) => ({ ...effect }));
+		record.effects = effects.map((effect) => clone(effect));
 	}
 	if (onGrowthPhase) {
-		record.onGrowthPhase = onGrowthPhase.map((effect) => ({ ...effect }));
+		record.onGrowthPhase = onGrowthPhase.map((effect) => clone(effect));
 	}
 	if (onUpkeepPhase) {
-		record.onUpkeepPhase = onUpkeepPhase.map((effect) => ({ ...effect }));
+		record.onUpkeepPhase = onUpkeepPhase.map((effect) => clone(effect));
 	}
 	if (onBeforeAttacked) {
-		record.onBeforeAttacked = onBeforeAttacked.map((effect) => ({ ...effect }));
+		record.onBeforeAttacked = onBeforeAttacked.map((effect) => clone(effect));
 	}
 	if (onAttackResolved) {
-		record.onAttackResolved = onAttackResolved.map((effect) => ({ ...effect }));
+		record.onAttackResolved = onAttackResolved.map((effect) => clone(effect));
 	}
 	return record;
 }
 
 interface SessionSnapshotOptions {
-	players: PlayerStateSnapshot[];
-	activePlayerId: PlayerId;
-	opponentId: PlayerId;
-	phases: EngineSessionSnapshot['phases'];
-	actionCostResource: EngineSessionSnapshot['actionCostResource'];
-	ruleSnapshot: RuleSnapshot;
-	passiveRecords?: Record<PlayerId, PassiveRecordSnapshot[]>;
-	compensations?: Record<PlayerId, PlayerStartConfig>;
-	recentResourceGains?: EngineSessionSnapshot['recentResourceGains'];
+	players: SessionPlayerStateSnapshot[];
+	activePlayerId: SessionPlayerId;
+	opponentId: SessionPlayerId;
+	phases: SessionPhaseDefinition[];
+	actionCostResource: SessionSnapshot['actionCostResource'];
+	ruleSnapshot: SessionRuleSnapshot;
+	passiveRecords?: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
+	compensations?: Record<SessionPlayerId, PlayerStartConfig>;
+	recentResourceGains?: SessionSnapshot['recentResourceGains'];
 	turn?: number;
 	currentPhase?: string;
 	currentStep?: string;
 	phaseIndex?: number;
 	stepIndex?: number;
 	devMode?: boolean;
-	metadata?: EngineSessionSnapshot['metadata'];
+	metadata?: SessionSnapshotMetadata;
 }
 
 export function createSessionSnapshot({
@@ -186,7 +191,7 @@ export function createSessionSnapshot({
 	stepIndex = 0,
 	devMode = false,
 	metadata: metadataOverride,
-}: SessionSnapshotOptions): EngineSessionSnapshot {
+}: SessionSnapshotOptions): SessionSnapshot {
 	const phase = phases[phaseIndex] ?? phases[0];
 	const resolvedCurrentPhase =
 		currentPhase ?? phase?.id ?? phases[0]?.id ?? 'phase-0';
@@ -196,20 +201,22 @@ export function createSessionSnapshot({
 		(player) => player.id === activePlayerId,
 	);
 	const opponentIndex = players.findIndex((player) => player.id === opponentId);
-	const normalizedCompensations: Record<PlayerId, PlayerStartConfig> =
-		{} as Record<PlayerId, PlayerStartConfig>;
-	const normalizedPassiveRecords: Record<PlayerId, PassiveRecordSnapshot[]> =
-		{} as Record<PlayerId, PassiveRecordSnapshot[]>;
+	const normalizedCompensations: Record<SessionPlayerId, PlayerStartConfig> =
+		{} as Record<SessionPlayerId, PlayerStartConfig>;
+	const normalizedPassiveRecords: Record<
+		SessionPlayerId,
+		SessionPassiveRecordSnapshot[]
+	> = {} as Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
 	for (const player of players) {
-		normalizedCompensations[player.id] = {
-			...(compensations[player.id] ?? {}),
-		} as PlayerStartConfig;
+		normalizedCompensations[player.id] = clone(
+			(compensations[player.id] ?? {}) as PlayerStartConfig,
+		);
 		normalizedPassiveRecords[player.id] = (passiveRecords[player.id] ?? []).map(
-			(record) => ({ ...record }),
+			(record) => clone(record),
 		);
 	}
 	const metadata = metadataOverride
-		? structuredClone(metadataOverride)
+		? clone(metadataOverride)
 		: { passiveEvaluationModifiers: {} };
 	return {
 		game: {
@@ -220,19 +227,37 @@ export function createSessionSnapshot({
 			phaseIndex,
 			stepIndex,
 			devMode,
-			players,
+			players: players.map((player) => clone(player)),
 			activePlayerId,
 			opponentId:
 				opponentIndex >= 0 ? opponentId : (players[0]?.id ?? activePlayerId),
 		},
 		phases,
 		actionCostResource,
-		recentResourceGains: recentResourceGains.map((gain) => ({
-			...gain,
-		})),
+		recentResourceGains: recentResourceGains.map((gain) => clone(gain)),
 		compensations: normalizedCompensations,
 		rules: ruleSnapshot,
 		passiveRecords: normalizedPassiveRecords,
 		metadata,
 	};
 }
+
+interface CreateSessionResponseOptions {
+	sessionId: string;
+	snapshot: SessionSnapshot;
+	registries: SessionRegistriesPayload;
+}
+
+export function createSessionCreateResponse({
+	sessionId,
+	snapshot,
+	registries,
+}: CreateSessionResponseOptions): SessionCreateResponse {
+	return {
+		sessionId,
+		snapshot: clone(snapshot),
+		registries: clone(registries),
+	};
+}
+
+export type { SessionSnapshotOptions };

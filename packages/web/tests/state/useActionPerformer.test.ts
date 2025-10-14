@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
 import { SessionMirroringError } from '../../src/state/sessionErrors';
+import type { LegacySession } from '../../src/state/sessionTypes';
 import {
+	createSessionCreateResponse,
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
@@ -16,8 +18,13 @@ import type {
 import {
 	createResourceKeys,
 	createSessionRegistries,
+	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
-import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import { createRemoteSessionAdapter } from '../helpers/createRemoteSessionAdapter';
+import {
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../src/state/sessionStateStore';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -62,6 +69,7 @@ describe('useActionPerformer', () => {
 	const sessionId = 'test-session';
 
 	beforeEach(() => {
+		clearSessionStateStore();
 		vi.clearAllMocks();
 		performSessionActionMock.mockReset();
 		diffStepSnapshotsMock.mockReset();
@@ -114,14 +122,13 @@ describe('useActionPerformer', () => {
 		enqueueMock = vi.fn(async (task: () => Promise<void>) => {
 			await task();
 		});
-		session = createLegacySessionMock(
-			{
-				snapshot: sessionSnapshot,
-			},
-			{
-				getSnapshot: vi.fn(() => sessionSnapshot),
-			},
-		);
+		const createResponse = createSessionCreateResponse({
+			sessionId,
+			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
+		});
+		initializeSessionState(createResponse);
+		session = createRemoteSessionAdapter({ sessionId });
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();

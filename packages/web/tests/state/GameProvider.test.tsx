@@ -7,20 +7,17 @@ import type { LegacySession } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
 import { SessionMirroringError } from '../../src/state/sessionErrors';
 import {
+	createSessionCreateResponse,
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type {
-	SessionCreateResponse,
-	SessionSnapshot,
-	SessionStateResponse,
-} from '@kingdom-builder/protocol/session';
+import type { SessionStateResponse } from '@kingdom-builder/protocol/session';
 import {
 	createResourceKeys,
 	createSessionRegistries,
 	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
-import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import { createRemoteSessionAdapter } from '../helpers/createRemoteSessionAdapter';
 import {
 	applySessionState,
 	clearSessionStateStore,
@@ -265,16 +262,12 @@ describe('GameProvider', () => {
 			currentPhase: phases[0]?.id ?? 'phase-main',
 			currentStep: phases[0]?.steps?.[0]?.id ?? phases[0]?.id ?? 'phase-main',
 		});
-		const initialSnapshotPayload =
-			initialSnapshot as unknown as SessionSnapshot;
-		const refreshedSnapshotPayload =
-			refreshedSnapshot as unknown as SessionSnapshot;
 		registries = createSessionRegistries();
 		registriesPayload = createSessionRegistriesPayload();
 		updatePlayerNameMock.mockImplementation(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: initialSnapshot as unknown as SessionSnapshot,
+				snapshot: initialSnapshot,
 				registries: registriesPayload,
 			};
 			applySessionState(response);
@@ -284,27 +277,14 @@ describe('GameProvider', () => {
 				registries,
 			});
 		});
-		const enqueueMock = vi.fn(async <T,>(task: () => Promise<T> | T) => {
-			return await task();
-		});
-		session = createLegacySessionMock(
-			{ snapshot: initialSnapshot },
-			{
-				enqueue: enqueueMock,
-				updatePlayerName: vi.fn(),
-				getSnapshot: vi.fn(() => initialSnapshot),
-				advancePhase: vi.fn(),
-				getActionCosts: vi.fn(() => ({})),
-				setDevMode: vi.fn(),
-			},
-		);
 		createSessionMock.mockImplementation(() => {
-			const response: SessionCreateResponse = {
+			const response = createSessionCreateResponse({
 				sessionId,
-				snapshot: initialSnapshotPayload,
+				snapshot: initialSnapshot,
 				registries: registriesPayload,
-			};
+			});
 			const stateRecord = initializeSessionState(response);
+			session = createRemoteSessionAdapter({ sessionId });
 			return Promise.resolve({
 				sessionId,
 				adapter: session,
@@ -322,7 +302,7 @@ describe('GameProvider', () => {
 		fetchSnapshotMock.mockImplementation(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: refreshedSnapshotPayload,
+				snapshot: refreshedSnapshot,
 				registries: registriesPayload,
 			};
 			const stateRecord = applySessionState(response);
@@ -399,13 +379,10 @@ describe('GameProvider', () => {
 			turn: 3,
 			devMode: true,
 		});
-		const devModeSnapshotPayload =
-			devModeSnapshot as unknown as SessionSnapshot;
-
 		setSessionDevModeMock.mockImplementationOnce(() => {
 			const response: SessionStateResponse = {
 				sessionId,
-				snapshot: devModeSnapshotPayload,
+				snapshot: devModeSnapshot,
 				registries: registriesPayload,
 			};
 			const stateRecord = applySessionState(response);

@@ -9,14 +9,20 @@ import {
 	GameProviderInner,
 } from '../../src/state/GameProviderInner';
 import {
+	createSessionCreateResponse,
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import { createLegacySessionMock } from '../helpers/createLegacySessionMock';
+import { createRemoteSessionAdapter } from '../helpers/createRemoteSessionAdapter';
 import {
 	createSessionRegistries,
+	createSessionRegistriesPayload,
 	createResourceKeys,
 } from '../helpers/sessionRegistries';
+import {
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../src/state/sessionStateStore';
 import type { TranslationContext } from '../../src/translation/context';
 
 const runUntilActionPhaseMock = vi.fn(() => Promise.resolve());
@@ -141,6 +147,7 @@ describe('GameProviderInner', () => {
 	const resourceKeys = createResourceKeys();
 
 	beforeEach(() => {
+		clearSessionStateStore();
 		capturedPhaseOptions = null;
 		capturedPerformerOptions = null;
 		capturedAiOptions = null;
@@ -169,11 +176,17 @@ describe('GameProviderInner', () => {
 				tierDefinitions: [],
 				winConditions: [],
 			},
-		}) as unknown as SessionSnapshot;
+		});
+		const response = createSessionCreateResponse({
+			sessionId,
+			snapshot: sessionState,
+			registries: createSessionRegistriesPayload(),
+		});
+		initializeSessionState(response);
 	});
 
 	it('routes the remote adapter through hooks and the legacy bridge for the playbook', () => {
-		const adapter = createLegacySessionMock({ snapshot: sessionState });
+		const adapter = createRemoteSessionAdapter({ sessionId });
 		(adapter as { id: string }).id = 'adapter:test';
 		const enqueue = vi.fn(
 			async <T,>(task: () => Promise<T> | T) => await task(),
