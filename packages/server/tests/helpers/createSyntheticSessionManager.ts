@@ -1,6 +1,7 @@
 import { SessionManager } from '../../src/session/SessionManager.js';
 import type { SessionManagerOptions } from '../../src/session/SessionManager.js';
 import { createContentFactory } from '@kingdom-builder/testing';
+import type { EngineSession } from '@kingdom-builder/engine';
 import {
 	happinessTier,
 	effect,
@@ -135,4 +136,14 @@ export function createSyntheticSessionManager(
 		start,
 		rules,
 	};
+}
+
+export function findAiPlayerId(session: EngineSession): string | null {
+	const snapshot = session.getSnapshot();
+	for (const player of snapshot.game.players) {
+		if (session.hasAiController(player.id)) {
+			return player.id;
+		}
+	}
+	return null;
 }

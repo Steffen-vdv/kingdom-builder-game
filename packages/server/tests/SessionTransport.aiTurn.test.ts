@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
-import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	createSyntheticSessionManager,
+	findAiPlayerId,
+} from './helpers/createSyntheticSessionManager.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 
 const middleware = createTokenAuthMiddleware({
@@ -33,25 +36,25 @@ describe('SessionTransport runAiTurn', () => {
 		if (!session) {
 			throw new Error('Session was not created.');
 		}
-		vi.spyOn(session, 'hasAiController').mockReturnValue(true);
+		const playerId = findAiPlayerId(session);
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No AI controller was available.');
+		}
 		const runSpy = vi.spyOn(session, 'runAiTurn').mockResolvedValue(true);
 		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
 			return await factory();
 		});
-		const snapshot = session.getSnapshot();
-		const playerId = snapshot.game.players[0]?.id ?? null;
-		expect(playerId).not.toBeNull();
-		if (playerId === null) {
-			throw new Error('No player id was available.');
-		}
 		const result = await transport.runAiTurn({
 			body: { sessionId, playerId },
 			headers: authorizedHeaders,
 		});
 		expect(result.sessionId).toBe(sessionId);
 		expect(result.ranTurn).toBe(true);
-		expect(result.snapshot.game).toBeDefined();
-		expect(result.registries.actions).toBeDefined();
+		expect(result.snapshot.game.currentPhase).toBeDefined();
+		expect(Array.isArray(result.snapshot.recentResourceGains)).toBe(true);
+		expect(result.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(Object.keys(result.registries.actions)).not.toHaveLength(0);
 		expect(runSpy).toHaveBeenCalledWith(playerId);
 	});
 
@@ -65,21 +68,29 @@ describe('SessionTransport runAiTurn', () => {
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const state = transport.getSessionState({
-			body: { sessionId },
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const snapshot = session.getSnapshot();
+		const missing = snapshot.game.players.find((player) => {
+			return !session.hasAiController(player.id);
+		});
+		expect(missing).toBeDefined();
+		if (!missing) {
+			throw new Error('No human-controlled player was found.');
+		}
+		const attempt = transport.runAiTurn({
+			body: { sessionId, playerId: missing.id },
 			headers: authorizedHeaders,
 		});
-		const playerId = state.snapshot.game.players[0]?.id ?? null;
-		expect(playerId).not.toBeNull();
-		if (playerId === null) {
-			throw new Error('No player id was available.');
-		}
-		await expect(
-			transport.runAiTurn({
-				body: { sessionId, playerId },
-				headers: authorizedHeaders,
-			}),
-		).rejects.toThrowError(TransportError);
+		await expect(attempt).rejects.toBeInstanceOf(TransportError);
+		await attempt.catch((error) => {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('CONFLICT');
+			}
+		});
 	});
 
 	it('validates AI request payloads', async () => {
@@ -92,21 +103,26 @@ describe('SessionTransport runAiTurn', () => {
 			body: {},
 			headers: authorizedHeaders,
 		});
-		const state = transport.getSessionState({
-			body: { sessionId },
-			headers: authorizedHeaders,
-		});
-		const playerId = state.snapshot.game.players[0]?.id ?? null;
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const playerId = findAiPlayerId(session);
 		expect(playerId).not.toBeNull();
 		if (playerId === null) {
-			throw new Error('No player id was available.');
+			throw new Error('No AI controller was available.');
 		}
 		const invalidBody = { sessionId: 123, playerId } as unknown;
-		await expect(
-			transport.runAiTurn({
-				body: invalidBody,
-				headers: authorizedHeaders,
-			}),
-		).rejects.toThrowError(TransportError);
+		const attempt = transport.runAiTurn({
+			body: invalidBody,
+			headers: authorizedHeaders,
+		});
+		await expect(attempt).rejects.toBeInstanceOf(TransportError);
+		await attempt.catch((error) => {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('INVALID_REQUEST');
+			}
+		});
 	});
 });
