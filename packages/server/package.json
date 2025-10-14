@@ -14,7 +14,7 @@
 		"@kingdom-builder/contents": "^0.1.0",
 		"@kingdom-builder/engine": "^0.1.0",
 		"@kingdom-builder/protocol": "^0.1.0",
-		"fastify": "^4.29.1"
+		"fastify": "^5.6.1"
 	},
 	"devDependencies": {
 		"tsx": "^4.19.2",
