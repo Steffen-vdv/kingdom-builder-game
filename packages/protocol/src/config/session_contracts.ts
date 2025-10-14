@@ -40,6 +40,7 @@ import type {
 	SessionActionRequirementList,
 	SimulateUpcomingPhasesOptions,
 	SimulateUpcomingPhasesResult,
+	SessionOverviewContent,
 } from '../session';
 import type { ActionParametersPayload } from '../actions/contracts';
 
@@ -345,5 +346,12 @@ type _SimulateUpcomingPhasesOptionsSchemaMatches = Expect<
 	Equal<
 		z.infer<typeof simulateUpcomingPhasesOptionsSchema>,
 		SimulateUpcomingPhasesOptions
+	>
+>;
+
+type _SessionOverviewContentMetadataMatches = Expect<
+	Equal<
+		NonNullable<SessionSnapshot['metadata']['overviewContent']>,
+		SessionOverviewContent
 	>
 >;

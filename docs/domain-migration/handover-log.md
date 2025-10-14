@@ -1,5 +1,11 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P2 - T1 - Protocol Overview Metadata Snapshot
+
+- Protocol session metadata now exposes overview hero, section, and token
+  content so frontend consumers can render migration-ready overview screens
+  without importing contents templates.
+
 ## Domain Migration - P3 - T18 - Engine alias regression guard
 
 - Removed the Vite alias that exposed `@kingdom-builder/engine` to the web

@@ -214,6 +214,64 @@ export interface SessionTriggerMetadata {
 	past?: string;
 }
 
+export type SessionResourceKey = string;
+
+export type SessionStatKey = string;
+
+export type SessionPopulationRoleKey = string;
+
+export interface SessionOverviewHeroContent {
+	badgeIcon: string;
+	badgeLabel: string;
+	title: string;
+	intro: string;
+	paragraph: string;
+	tokens: Record<string, string>;
+}
+
+export interface SessionOverviewListItemContent {
+	icon?: string;
+	label: string;
+	body: string[];
+}
+
+export interface SessionOverviewParagraphSectionContent {
+	kind: 'paragraph';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+}
+
+export interface SessionOverviewListSectionContent {
+	kind: 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	items: SessionOverviewListItemContent[];
+}
+
+export type SessionOverviewSectionContent =
+	| SessionOverviewParagraphSectionContent
+	| SessionOverviewListSectionContent;
+
+export interface SessionOverviewTokenMap {
+	actions?: Record<string, string[]>;
+	phases?: Record<string, string[]>;
+	resources?: Record<SessionResourceKey, string[]>;
+	stats?: Record<SessionStatKey, string[]>;
+	population?: Record<SessionPopulationRoleKey, string[]>;
+	static?: Record<string, string[]>;
+}
+
+export interface SessionOverviewContent {
+	hero: SessionOverviewHeroContent;
+	sections: SessionOverviewSectionContent[];
+	tokens?: SessionOverviewTokenMap;
+}
+
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
@@ -225,6 +283,7 @@ export interface SessionSnapshotMetadata {
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
+	overviewContent?: SessionOverviewContent;
 }
 
 export interface SessionSnapshot {
