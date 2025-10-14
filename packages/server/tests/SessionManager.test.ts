@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import * as metadataModule from '../src/session/buildSessionMetadata.js';
 
 describe('SessionManager', () => {
 	it('creates and retrieves sessions using synthetic content', () => {
@@ -62,6 +63,34 @@ describe('SessionManager', () => {
 		now = 2;
 		expect(manager.getSession('expire-me')).toBeUndefined();
 		expect(manager.getSessionCount()).toBe(0);
+	});
+
+	it('caches metadata and clones results on access', () => {
+		const buildSpy = vi.spyOn(metadataModule, 'buildSessionMetadata');
+		const { manager, costKey } = createSyntheticSessionManager();
+		expect(buildSpy).toHaveBeenCalledTimes(1);
+		const baseline = manager.getMetadata();
+		expect(buildSpy).toHaveBeenCalledTimes(1);
+		expect(baseline.resources?.[costKey]).toBeDefined();
+		const mutated = manager.getMetadata();
+		expect(mutated).not.toBe(baseline);
+		expect(mutated).toEqual(baseline);
+		if (mutated.resources) {
+			mutated.resources[costKey] = { label: 'changed' };
+		}
+		const next = manager.getMetadata();
+		expect(next).toEqual(baseline);
+		expect(next.resources?.[costKey]?.label).not.toBe('changed');
+		buildSpy.mockRestore();
+	});
+
+	it('keeps metadata stable after sessions mutate state', async () => {
+		const { manager, actionId } = createSyntheticSessionManager();
+		const snapshotMetadata = manager.getMetadata();
+		const session = manager.createSession('metadata-stability');
+		await session.enqueue(() => session.performAction(actionId));
+		session.advancePhase();
+		expect(manager.getMetadata()).toEqual(snapshotMetadata);
 	});
 
 	it('throws when retrieving snapshots for unknown sessions', () => {
