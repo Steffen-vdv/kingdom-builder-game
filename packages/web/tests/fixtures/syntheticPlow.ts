@@ -8,8 +8,8 @@ import type {
 	StartConfig,
 	ActionConfig,
 	BuildingConfig,
+	EffectDef,
 } from '@kingdom-builder/protocol';
-import type { EffectDef } from '@kingdom-builder/engine';
 
 type SyntheticResourceKey = 'gold' | 'ap' | 'happiness';
 
