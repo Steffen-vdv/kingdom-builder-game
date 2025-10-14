@@ -7,6 +7,7 @@ import {
 	sessionActionRequirementResponseSchema,
 	sessionActionOptionsRequestSchema,
 	sessionActionOptionsResponseSchema,
+	sessionCreateResponseSchema,
 	sessionRunAiRequestSchema,
 	sessionRunAiResponseSchema,
 	sessionSimulateRequestSchema,
@@ -23,6 +24,11 @@ import type {
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
+	SessionCreateResponse,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+	SessionOverviewMetadata,
+	SessionMetadataAliasMap,
 	SessionPlayerStateSnapshot,
 } from '../src/session';
 
@@ -89,5 +95,95 @@ describe('session player state snapshot', () => {
 		expectTypeOf<SessionPlayerStateSnapshot['aiControlled']>().toEqualTypeOf<
 			boolean | undefined
 		>();
+	});
+});
+
+describe('session metadata integration', () => {
+	it('exposes overview and alias types on session metadata', () => {
+		expectTypeOf<SessionSnapshotMetadata['overview']>().toEqualTypeOf<
+			SessionOverviewMetadata | undefined
+		>();
+		expectTypeOf<SessionSnapshotMetadata['aliases']>().toEqualTypeOf<
+			SessionMetadataAliasMap | undefined
+		>();
+	});
+
+	it('matches create response schema inference for metadata', () => {
+		expectTypeOf<
+			ZodInfer<typeof sessionCreateResponseSchema>
+		>().toEqualTypeOf<SessionCreateResponse>();
+		expectTypeOf<
+			ZodInfer<typeof sessionCreateResponseSchema>['snapshot']
+		>().toEqualTypeOf<SessionSnapshot>();
+		expectTypeOf<
+			ZodInfer<typeof sessionCreateResponseSchema>['snapshot']['metadata']
+		>().toEqualTypeOf<SessionSnapshotMetadata>();
+		expectTypeOf<
+			ZodInfer<
+				typeof sessionCreateResponseSchema
+			>['snapshot']['metadata']['overview']
+		>().toEqualTypeOf<SessionOverviewMetadata | undefined>();
+		expectTypeOf<
+			ZodInfer<
+				typeof sessionCreateResponseSchema
+			>['snapshot']['metadata']['aliases']
+		>().toEqualTypeOf<SessionMetadataAliasMap | undefined>();
+	});
+
+	it('preserves optional overview metadata through create response parsing', () => {
+		const overview: SessionOverviewMetadata = {
+			hero: {
+				badgeIcon: '⚔️',
+				badgeLabel: 'Strategy',
+				title: 'Strategic Briefing',
+				intro: 'Survey the coming conflicts.',
+				paragraph: 'Plot {gold} investments wisely.',
+				tokens: { game: 'Kingdom Builder' },
+			},
+			sections: [
+				{
+					kind: 'paragraph',
+					id: 'objective',
+					icon: 'castle',
+					title: 'Hold the Line',
+					paragraphs: [
+						'Defend your {castle} from every siege.',
+						'Channel {gold} reserves into critical upgrades.',
+					],
+				},
+			],
+			tokens: {
+				resources: { gold: ['treasury', 'gold'] },
+				static: { castle: ['castle'] },
+			},
+		};
+		const metadata: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			assets: {
+				castle: { label: 'Castle', icon: '🏰' },
+			},
+			overview,
+			aliases: {
+				resources: { treasury: ['gold'] },
+			},
+		};
+		const snapshot = { metadata } as unknown as SessionSnapshot;
+		const response: SessionCreateResponse = {
+			sessionId: 'session-1',
+			snapshot,
+			registries: {
+				actions: {},
+				buildings: {},
+				developments: {},
+				populations: {},
+				resources: {},
+			},
+		};
+		const parsed = sessionCreateResponseSchema.parse(response);
+		expect(parsed.snapshot.metadata.assets?.castle?.label).toBe('Castle');
+		expect(parsed.snapshot.metadata.overview).toEqual(overview);
+		expect(parsed.snapshot.metadata.aliases?.resources?.treasury).toEqual([
+			'gold',
+		]);
 	});
 });

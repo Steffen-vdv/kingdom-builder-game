@@ -5,6 +5,10 @@ import type {
 	PhaseSkipConfig,
 	WinConditionDefinition,
 } from '../services';
+import type {
+	SessionMetadataAliasMap,
+	SessionOverviewMetadata,
+} from './metadata';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
 
 export type SessionPlayerId = 'A' | 'B';
@@ -225,6 +229,8 @@ export interface SessionSnapshotMetadata {
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
+	aliases?: SessionMetadataAliasMap;
+	overview?: SessionOverviewMetadata;
 }
 
 export interface SessionSnapshot {
@@ -253,6 +259,22 @@ export interface SessionRequirementFailure {
 }
 
 export type SessionActionRequirementList = SessionRequirementFailure[];
+
+export type {
+	SessionMetadataAliasCandidate,
+	SessionMetadataAliasCategory,
+	SessionMetadataAliasMap,
+	SessionOverviewTokenCandidate,
+	SessionOverviewTokenCategoryName,
+	SessionOverviewTokenCategoryConfig,
+	SessionOverviewTokenConfig,
+	SessionOverviewHeroMetadata,
+	SessionOverviewListItemMetadata,
+	SessionOverviewParagraphSectionMetadata,
+	SessionOverviewListSectionMetadata,
+	SessionOverviewSectionMetadata,
+	SessionOverviewMetadata,
+} from './metadata';
 
 export type {
 	SessionIdentifier,

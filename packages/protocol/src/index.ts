@@ -133,6 +133,21 @@ export type {
 	SessionActionRequirementList,
 } from './session';
 export type {
+	SessionMetadataAliasCandidate,
+	SessionMetadataAliasCategory,
+	SessionMetadataAliasMap,
+	SessionOverviewTokenCandidate,
+	SessionOverviewTokenCategoryName,
+	SessionOverviewTokenCategoryConfig,
+	SessionOverviewTokenConfig,
+	SessionOverviewHeroMetadata,
+	SessionOverviewListItemMetadata,
+	SessionOverviewParagraphSectionMetadata,
+	SessionOverviewListSectionMetadata,
+	SessionOverviewSectionMetadata,
+	SessionOverviewMetadata,
+} from './session/metadata';
+export type {
 	SessionIdentifier,
 	SessionPlayerNameMap,
 	SessionCreateRequest,
