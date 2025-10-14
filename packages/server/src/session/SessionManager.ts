@@ -10,15 +10,13 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
-	RESOURCES,
+	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
 import type {
-	PlayerStartConfig,
-	Registry,
-	SerializedRegistry,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
-} from '@kingdom-builder/protocol';
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
+import { buildSessionMetadata } from './sessionMetadataBuilder.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -26,10 +24,8 @@ type EngineSessionBaseOptions = Omit<
 	'devMode' | 'config'
 >;
 
-type SessionResourceRegistry = SerializedRegistry<SessionResourceDefinition>;
-
 type EngineSessionOverrideOptions = Partial<EngineSessionBaseOptions> & {
-	resourceRegistry?: SessionResourceRegistry;
+	resourceRegistry?: SessionRegistriesPayload['resources'];
 };
 
 type SessionRecord = {
@@ -65,6 +61,10 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
+	private readonly staticMetadata: Partial<SessionSnapshotMetadata>;
+
+	private readonly overviewContent: OverviewContentTemplate;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -85,13 +85,18 @@ export class SessionManager {
 			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
 		};
-		this.registries = {
-			actions: this.cloneRegistry(this.baseOptions.actions),
-			buildings: this.cloneRegistry(this.baseOptions.buildings),
-			developments: this.cloneRegistry(this.baseOptions.developments),
-			populations: this.cloneRegistry(this.baseOptions.populations),
-			resources: this.buildResourceRegistry(resourceRegistry),
-		};
+		const built = buildSessionMetadata({
+			actions: this.baseOptions.actions,
+			buildings: this.baseOptions.buildings,
+			developments: this.baseOptions.developments,
+			populations: this.baseOptions.populations,
+			phases: this.baseOptions.phases,
+			startConfig: this.baseOptions.start,
+			...(resourceRegistry !== undefined ? { resourceRegistry } : {}),
+		});
+		this.registries = built.registries;
+		this.staticMetadata = built.metadata;
+		this.overviewContent = built.overviewContent;
 	}
 
 	public createSession(
@@ -146,7 +151,9 @@ export class SessionManager {
 		sessionId: string,
 	): ReturnType<EngineSession['getSnapshot']> {
 		const session = this.requireSession(sessionId);
-		return session.getSnapshot();
+		const snapshot = session.getSnapshot();
+		snapshot.metadata = this.mergeMetadata(snapshot.metadata);
+		return snapshot;
 	}
 
 	public getRuleSnapshot(
@@ -173,81 +180,46 @@ export class SessionManager {
 		return session;
 	}
 
-	private cloneRegistry<DefinitionType>(
-		registry: Registry<DefinitionType>,
-	): SerializedRegistry<DefinitionType> {
-		const entries = registry.entries();
-		const result: SerializedRegistry<DefinitionType> = {};
-		for (const [id, definition] of entries) {
-			result[id] = structuredClone(definition);
-		}
-		return result;
-	}
-
-	private buildResourceRegistry(
-		overrides?: SessionResourceRegistry,
-	): SessionResourceRegistry {
-		const registry = new Map<string, SessionResourceDefinition>();
-		const applyOverride = (
-			source: SessionResourceRegistry | undefined,
-		): void => {
-			if (!source) {
-				return;
-			}
-			for (const [key, definition] of Object.entries(source)) {
-				registry.set(key, structuredClone(definition));
+	private mergeMetadata(
+		metadata: SessionSnapshotMetadata,
+	): SessionSnapshotMetadata {
+		const merged: SessionSnapshotMetadata = { ...metadata };
+		const mergeRecord = <Key extends keyof SessionSnapshotMetadata>(
+			key: Key,
+		) => {
+			const staticRecord = this.staticMetadata[key];
+			const dynamicRecord = metadata[key];
+			if (
+				staticRecord &&
+				typeof staticRecord === 'object' &&
+				!Array.isArray(staticRecord)
+			) {
+				if (
+					dynamicRecord &&
+					typeof dynamicRecord === 'object' &&
+					!Array.isArray(dynamicRecord)
+				) {
+					merged[key] = Object.freeze({
+						...(staticRecord as Record<string, unknown>),
+						...(dynamicRecord as Record<string, unknown>),
+					}) as SessionSnapshotMetadata[Key];
+					return;
+				}
+				merged[key] = staticRecord as SessionSnapshotMetadata[Key];
 			}
 		};
-		applyOverride(overrides);
-		const addKey = (key: string): void => {
-			if (registry.has(key)) {
-				return;
-			}
-			const info = RESOURCES[key as keyof typeof RESOURCES];
-			if (info) {
-				const definition: SessionResourceDefinition = {
-					key: info.key,
-					icon: info.icon,
-					label: info.label,
-					description: info.description,
-				};
-				if (info.tags && info.tags.length > 0) {
-					definition.tags = [...info.tags];
-				}
-				registry.set(key, definition);
-				return;
-			}
-			registry.set(key, { key });
-		};
-		const addFromStart = (config: PlayerStartConfig | undefined): void => {
-			if (!config?.resources) {
-				return;
-			}
-			for (const key of Object.keys(config.resources)) {
-				addKey(key);
-			}
-		};
-		const { start } = this.baseOptions;
-		addFromStart(start.player);
-		if (start.players) {
-			for (const playerConfig of Object.values(start.players)) {
-				addFromStart(playerConfig);
-			}
-		}
-		if (start.modes) {
-			for (const mode of Object.values(start.modes)) {
-				if (!mode) {
-					continue;
-				}
-				addFromStart(mode.player);
-				if (mode.players) {
-					for (const modePlayer of Object.values(mode.players)) {
-						addFromStart(modePlayer);
-					}
-				}
-			}
-		}
-		return Object.fromEntries(registry.entries());
+		mergeRecord('resources');
+		mergeRecord('populations');
+		mergeRecord('buildings');
+		mergeRecord('developments');
+		mergeRecord('stats');
+		mergeRecord('phases');
+		mergeRecord('triggers');
+		mergeRecord('assets');
+		(
+			merged as unknown as { overviewContent: OverviewContentTemplate }
+		).overviewContent = this.overviewContent;
+		return merged;
 	}
 
 	private purgeExpiredSessions(): void {
