@@ -10,6 +10,7 @@ import {
 	type Summary,
 	type TranslationContext,
 } from '../../translation';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import {
@@ -79,8 +80,11 @@ function GenericActionCard({
 	selectResourceDescriptor,
 }: GenericActionCardProps) {
 	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		formatRequirement(translateRequirementFailure(failure, translationContext)),
+	const requirements = requirementFailures.map(
+		(failure: SessionRequirementFailure) =>
+			formatRequirement(
+				translateRequirementFailure(failure, translationContext),
+			),
 	);
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
 	const canPay = Object.entries(costs).every(

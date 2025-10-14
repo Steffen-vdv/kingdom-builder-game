@@ -1,4 +1,5 @@
 import type {
+	SessionRequirementFailure,
 	SessionRuleSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
@@ -21,6 +22,7 @@ import type {
 	SessionResourceKey,
 	SessionResourceKeys,
 } from './sessionTypes';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 
 export interface SessionContainer {
 	sessionId: string;
@@ -70,6 +72,18 @@ export interface SessionDerivedSelectors {
 	sessionView: SessionView;
 }
 
+export interface SessionEvaluationApi {
+	getActionCosts<T extends string>(
+		actionId: T,
+		params?: Record<string, unknown>,
+	): Record<string, number>;
+	getActionRequirements<T extends string>(
+		actionId: T,
+		params?: Record<string, unknown>,
+	): SessionRequirementFailure[];
+	getActionOptions(actionId: string): ActionEffectGroup[];
+}
+
 export interface GameEngineContextValue {
 	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
@@ -99,6 +113,7 @@ export interface GameEngineContextValue {
 		params?: Record<string, unknown>,
 	) => Promise<void>;
 	handleEndTurn: () => Promise<void>;
+	session: SessionEvaluationApi;
 	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;
 	refreshPhaseState: (overrides?: Partial<PhaseProgressState>) => void;

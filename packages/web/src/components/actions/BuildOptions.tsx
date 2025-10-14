@@ -5,6 +5,7 @@ import {
 	type Summary,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
@@ -65,8 +66,9 @@ export default function BuildOptions({
 	);
 	const actionInfo = sessionView.actions.get(action.id);
 	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		translateRequirementFailure(failure, translationContext),
+	const requirements = requirementFailures.map(
+		(failure: SessionRequirementFailure) =>
+			translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
 	const entries = useMemo(() => {

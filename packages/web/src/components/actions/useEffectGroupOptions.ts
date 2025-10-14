@@ -3,6 +3,7 @@ import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
 } from '@kingdom-builder/protocol';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
 import {
 	describeContent,
 	splitSummary,
@@ -84,8 +85,11 @@ function buildHoverDetails(
 		option.actionId,
 		mergedParams,
 	);
-	const requirements = requirementFailures.map((failure) =>
-		formatRequirement(translateRequirementFailure(failure, translationContext)),
+	const requirements = requirementFailures.map(
+		(failure: SessionRequirementFailure) =>
+			formatRequirement(
+				translateRequirementFailure(failure, translationContext),
+			),
 	);
 	let effects = baseEffects;
 	const idParam = mergedParams?.id;

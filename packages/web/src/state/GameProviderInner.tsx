@@ -30,6 +30,7 @@ import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
+import { createSessionEvaluationApi } from './createSessionEvaluationApi';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -187,7 +188,7 @@ export function GameProviderInner({
 		registries: cachedRegistries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
+	const { handlePerform } = useActionPerformer({
 		sessionId,
 		actionCostResource,
 		registries: cachedRegistries,
@@ -205,14 +206,21 @@ export function GameProviderInner({
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
+	const sessionApi = useMemo(
+		() =>
+			createSessionEvaluationApi({
+				snapshot: sessionState,
+				registries: cachedRegistries,
+			}),
+		[sessionState, cachedRegistries],
+	);
+
 	useAiRunner({
 		sessionId,
 		enqueue,
 		getLatestSnapshot: queue.getLatestSnapshot,
 		sessionState,
 		runUntilActionPhaseCore,
-		syncPhaseState: applyPhaseSnapshot,
-		performRef,
 		mountedRef,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
@@ -327,6 +335,7 @@ export function GameProviderInner({
 		sessionView,
 		handlePerform,
 		handleEndTurn,
+		session: sessionApi,
 		...(onExit ? { onExit: handleExit } : {}),
 	};
 

@@ -1,4 +1,6 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+// @vitest-environment jsdom
+
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useNextTurnForecast } from '../src/state/useNextTurnForecast';
 import {

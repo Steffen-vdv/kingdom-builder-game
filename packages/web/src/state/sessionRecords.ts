@@ -1,8 +1,10 @@
 import type {
+	SessionAdvanceResult,
 	SessionRegistriesMetadata,
 	SessionRegistriesPayload,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import {
 	createRemoteSessionQueue,
 	type RemoteSessionQueue,
@@ -11,12 +13,25 @@ import {
 } from './RemoteSessionQueue';
 import type { SessionRegistries } from './sessionRegistries';
 
+export type SessionActionHandler = (
+	actionId: string,
+	params?: ActionParametersPayload,
+) => unknown;
+
+export type SessionAdvanceHandler = (
+	advance: SessionAdvanceResult | undefined,
+) => unknown;
+
 export interface SessionHandle {
 	enqueue: RemoteSessionQueue['enqueue'];
 	getLatestSnapshot(): SessionSnapshot | null;
 	getLatestRegistries(): SessionRegistries | null;
 	getLatestMetadata(): SessionSnapshot['metadata'] | null;
 	getLatestRegistriesMetadata(): SessionRegistriesMetadata | undefined;
+	setPerformActionHandler(handler: SessionActionHandler | null): void;
+	setAdvancePhaseHandler(handler: SessionAdvanceHandler | null): void;
+	performAction(actionId: string, params?: ActionParametersPayload): unknown;
+	advancePhase(advance: SessionAdvanceResult | undefined): unknown;
 }
 
 export interface SessionRecord {
@@ -88,12 +103,32 @@ export function isFatalSessionError(error: unknown): boolean {
 }
 
 function createSessionHandle(queue: RemoteSessionQueue): SessionHandle {
+	let performActionHandler: SessionActionHandler | null = null;
+	let advancePhaseHandler: SessionAdvanceHandler | null = null;
 	return {
 		enqueue: (task) => queue.enqueue(task),
 		getLatestSnapshot: () => queue.getLatestSnapshot(),
 		getLatestRegistries: () => queue.getLatestRegistries(),
 		getLatestMetadata: () => queue.getLatestMetadata(),
 		getLatestRegistriesMetadata: () => queue.getLatestRegistriesMetadata(),
+		setPerformActionHandler(handler) {
+			performActionHandler = handler ?? null;
+		},
+		setAdvancePhaseHandler(handler) {
+			advancePhaseHandler = handler ?? null;
+		},
+		performAction(actionId, params) {
+			if (!performActionHandler) {
+				return undefined;
+			}
+			return performActionHandler(actionId, params);
+		},
+		advancePhase(advance) {
+			if (!advancePhaseHandler) {
+				return undefined;
+			}
+			return advancePhaseHandler(advance);
+		},
 	};
 }
 

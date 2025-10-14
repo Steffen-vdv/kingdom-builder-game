@@ -213,6 +213,7 @@ export async function performSessionAction(
 			await record.handle.enqueue(() => {
 				record.queue.updateSnapshot(response.snapshot);
 			});
+			record.handle.performAction(request.actionId, request.params);
 		}
 		return response;
 	} catch (error) {
@@ -256,6 +257,7 @@ export async function advanceSessionPhase(
 			response.registries.metadata,
 		);
 	});
+	record.handle.advancePhase(response.advance);
 	return response;
 }
 
