@@ -7,6 +7,30 @@ import type {
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
 
+/**
+ * Canonical alias for resource identifiers exchanged across domains.
+ * See docs/domain-migration/plan-1.md for the migration contract.
+ */
+export type SessionResourceKey = string;
+
+/**
+ * Canonical alias for stat identifiers exchanged across domains.
+ * See docs/domain-migration/plan-1.md for the migration contract.
+ */
+export type SessionStatKey = string;
+
+/**
+ * Canonical alias for population role identifiers exchanged across domains.
+ * See docs/domain-migration/plan-1.md for the migration contract.
+ */
+export type SessionPopulationRoleId = string;
+
+/**
+ * Canonical alias for asset identifiers exchanged across domains.
+ * See docs/domain-migration/plan-1.md for the migration contract.
+ */
+export type SessionAssetId = string;
+
 export type SessionPlayerId = 'A' | 'B';
 
 export type SessionStatSourceLink = {
@@ -17,7 +41,7 @@ export type SessionStatSourceLink = {
 };
 
 export interface SessionStatSourceMeta {
-	key: string;
+	key: SessionStatKey;
 	longevity: 'ongoing' | 'permanent';
 	kind?: string;
 	id?: string;
@@ -43,7 +67,7 @@ export interface SessionLandSnapshot {
 	slotsUsed: number;
 	tilled: boolean;
 	developments: string[];
-	upkeep?: Record<string, number>;
+	upkeep?: Record<SessionResourceKey, number>;
 	onPayUpkeepStep?: EffectDef[];
 	onGainIncomeStep?: EffectDef[];
 	onGainAPStep?: EffectDef[];
@@ -61,14 +85,17 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	statsHistory: Record<string, boolean>;
-	population: Record<string, number>;
+	resources: Record<SessionResourceKey, number>;
+	stats: Record<SessionStatKey, number>;
+	statsHistory: Record<SessionStatKey, boolean>;
+	population: Record<SessionPopulationRoleId, number>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
-	statSources: Record<string, Record<string, SessionStatSourceContribution>>;
+	statSources: Record<
+		SessionStatKey,
+		Record<string, SessionStatSourceContribution>
+	>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	passives: SessionPassiveSummary[];
@@ -132,9 +159,9 @@ export interface SessionAdvanceResult {
 }
 
 export interface PlayerSnapshotDeltaBucket {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
+	resources: Record<SessionResourceKey, number>;
+	stats: Record<SessionStatKey, number>;
+	population: Record<SessionPopulationRoleId, number>;
 }
 
 export interface SimulateUpcomingPhasesIds {
@@ -169,13 +196,13 @@ export interface SessionPassiveRecordSnapshot extends SessionPassiveSummary {
 }
 
 export interface SessionRuleSnapshot {
-	tieredResourceKey: string;
+	tieredResourceKey: SessionResourceKey;
 	tierDefinitions: HappinessTierDefinition[];
 	winConditions: WinConditionDefinition[];
 }
 
 export interface SessionRecentResourceGain {
-	key: string;
+	key: SessionResourceKey;
 	amount: number;
 }
 
@@ -214,23 +241,131 @@ export interface SessionTriggerMetadata {
 	past?: string;
 }
 
+/**
+ * Canonical overview token categories for domain snapshots.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
+export type SessionOverviewTokenCategoryName =
+	| 'actions'
+	| 'phases'
+	| 'resources'
+	| 'stats'
+	| 'population'
+	| 'static';
+
+/**
+ * Token candidate map shared between content, engine, and web domains.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
+export type SessionOverviewTokenCandidates = Partial<
+	Record<SessionOverviewTokenCategoryName, Record<string, string[]>>
+>;
+
+/**
+ * Overview bullet list entry exchanged between domains.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
+export interface SessionOverviewListItem {
+	icon?: string;
+	label: string;
+	body: string[];
+}
+
+/**
+ * Overview paragraph block exchanged between domains.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
+export interface SessionOverviewParagraphSection {
+	kind: 'paragraph';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+}
+
+/**
+ * Overview list block exchanged between domains.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
+export interface SessionOverviewListSection {
+	kind: 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	items: SessionOverviewListItem[];
+}
+
+/**
+ * Overview section union exchanged between domains.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
+export type SessionOverviewSection =
+	| SessionOverviewParagraphSection
+	| SessionOverviewListSection;
+
+/**
+ * Overview hero banner exchanged between domains.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
+export interface SessionOverviewHero {
+	badgeIcon: string;
+	badgeLabel: string;
+	title: string;
+	intro: string;
+	paragraph: string;
+	tokens: Record<string, string>;
+}
+
+/**
+ * Structured overview payload mirrored from content registries.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
+export interface SessionOverviewContent {
+	hero: SessionOverviewHero;
+	sections: SessionOverviewSection[];
+	tokens: SessionOverviewTokenCandidates;
+}
+
+/**
+ * Structured asset descriptors keyed by canonical asset identifiers.
+ * See docs/domain-migration/plan-1.md for reference asset categories.
+ */
+export interface SessionSnapshotMetadataAssets {
+	population?: SessionMetadataDescriptor;
+	land?: SessionMetadataDescriptor;
+	slot?: SessionMetadataDescriptor;
+	passive?: SessionMetadataDescriptor;
+	upkeep?: SessionMetadataDescriptor;
+	[assetId: SessionAssetId]:
+		| SessionMetadataDescriptor
+		| Record<string, SessionMetadataDescriptor>
+		| undefined;
+}
+
+/**
+ * Aggregated metadata describing snapshot descriptors across domains.
+ * See docs/domain-migration/plan-1.md for cross-domain expectations.
+ */
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
+	resources?: Record<SessionResourceKey, SessionMetadataDescriptor>;
+	populations?: Record<SessionPopulationRoleId, SessionMetadataDescriptor>;
 	buildings?: Record<string, SessionMetadataDescriptor>;
 	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
+	stats?: Record<SessionStatKey, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
-	assets?: Record<string, SessionMetadataDescriptor>;
+	assets?: SessionSnapshotMetadataAssets;
+	overview?: SessionOverviewContent;
 }
 
 export interface SessionSnapshot {
 	game: SessionGameSnapshot;
 	phases: SessionPhaseDefinition[];
-	actionCostResource: string;
+	actionCostResource: SessionResourceKey;
 	recentResourceGains: SessionRecentResourceGain[];
 	compensations: Record<SessionPlayerId, PlayerStartConfig>;
 	rules: SessionRuleSnapshot;
@@ -244,7 +379,7 @@ export interface SessionActionDefinitionSummary {
 	system?: boolean;
 }
 
-export type SessionActionCostMap = Partial<Record<string, number>>;
+export type SessionActionCostMap = Partial<Record<SessionResourceKey, number>>;
 
 export interface SessionRequirementFailure {
 	requirement: RequirementConfig;
