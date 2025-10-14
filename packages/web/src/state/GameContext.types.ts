@@ -104,7 +104,7 @@ export interface GameEngineContextValue {
 	clearHoverCard: () => void;
 	phase: PhaseProgressState;
 	actionCostResource: SessionResourceKey;
-	session: SessionFacade;
+	sessionFacade: SessionFacade;
 	requests: {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;
