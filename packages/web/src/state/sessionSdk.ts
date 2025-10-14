@@ -212,6 +212,12 @@ export async function performSessionAction(
 		if (response.status === 'success') {
 			await record.handle.enqueue(() => {
 				record.queue.updateSnapshot(response.snapshot);
+				try {
+					record.handle.performAction(request.actionId, request.params);
+				} catch (hookError) {
+					markFatalSessionError(hookError);
+					throw hookError;
+				}
 			});
 		}
 		return response;
@@ -255,6 +261,12 @@ export async function advanceSessionPhase(
 			response.snapshot,
 			response.registries.metadata,
 		);
+		try {
+			record.handle.advancePhase(response.advance, response.snapshot);
+		} catch (hookError) {
+			markFatalSessionError(hookError);
+			throw hookError;
+		}
 	});
 	return response;
 }

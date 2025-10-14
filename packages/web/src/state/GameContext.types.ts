@@ -15,13 +15,13 @@ import type {
 	ShowResolutionOptions,
 } from './useActionResolution';
 import type { ReactNode } from 'react';
+import type { SessionActionApi } from './sessionActionApi';
 import type {
 	SessionMetadata,
 	SessionRegistries,
 	SessionResourceKey,
 	SessionResourceKeys,
 } from './sessionTypes';
-
 export interface SessionContainer {
 	sessionId: string;
 	snapshot: SessionSnapshot;
@@ -124,6 +124,7 @@ export interface GameEngineContextValue {
 	dismissToast: (id: number) => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
+	session: SessionActionApi;
 }
 
 export type LegacyGameEngineContextValue = GameEngineContextValue;

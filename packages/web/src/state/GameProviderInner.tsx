@@ -30,6 +30,7 @@ import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { isFatalSessionError, markFatalSessionError } from './sessionSdk';
+import { createSessionActionApi } from './sessionActionApi';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -119,6 +120,16 @@ export function GameProviderInner({
 	const actionCostResource: SessionResourceKey =
 		sessionState.actionCostResource;
 
+	const sessionApi = useMemo(
+		() =>
+			createSessionActionApi({
+				snapshot: cachedSessionSnapshot,
+				actionCostResource,
+				registries: cachedRegistries,
+			}),
+		[cachedSessionSnapshot, actionCostResource, cachedRegistries],
+	);
+
 	const sessionView = useMemo(
 		() => selectSessionView(sessionState, cachedRegistries),
 		[sessionState, cachedRegistries],
@@ -187,7 +198,7 @@ export function GameProviderInner({
 		registries: cachedRegistries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
+	const { handlePerform } = useActionPerformer({
 		sessionId,
 		actionCostResource,
 		registries: cachedRegistries,
@@ -211,8 +222,6 @@ export function GameProviderInner({
 		getLatestSnapshot: queue.getLatestSnapshot,
 		sessionState,
 		runUntilActionPhaseCore,
-		syncPhaseState: applyPhaseSnapshot,
-		performRef,
 		mountedRef,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
@@ -327,6 +336,7 @@ export function GameProviderInner({
 		sessionView,
 		handlePerform,
 		handleEndTurn,
+		session: sessionApi,
 		...(onExit ? { onExit: handleExit } : {}),
 	};
 

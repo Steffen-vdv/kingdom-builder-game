@@ -1,4 +1,5 @@
 import type {
+	SessionAdvanceResponse,
 	SessionRegistriesMetadata,
 	SessionRegistriesPayload,
 	SessionSnapshot,
@@ -17,6 +18,14 @@ export interface SessionHandle {
 	getLatestRegistries(): SessionRegistries | null;
 	getLatestMetadata(): SessionSnapshot['metadata'] | null;
 	getLatestRegistriesMetadata(): SessionRegistriesMetadata | undefined;
+	performAction: (
+		actionId: string,
+		params?: Record<string, unknown>,
+	) => unknown;
+	advancePhase: (
+		advance: SessionAdvanceResponse['advance'],
+		snapshot: SessionSnapshot,
+	) => unknown;
 }
 
 export interface SessionRecord {
@@ -94,6 +103,8 @@ function createSessionHandle(queue: RemoteSessionQueue): SessionHandle {
 		getLatestRegistries: () => queue.getLatestRegistries(),
 		getLatestMetadata: () => queue.getLatestMetadata(),
 		getLatestRegistriesMetadata: () => queue.getLatestRegistriesMetadata(),
+		performAction: () => undefined,
+		advancePhase: () => undefined,
 	};
 }
 
