@@ -176,6 +176,7 @@ describe('passive formatter duration metadata', () => {
 					id: growthId,
 					label: 'Rapid Growth',
 					icon: '🌱',
+					steps: [{ id: `${growthId}:step` }],
 				},
 			],
 			configureMetadata(metadata) {
