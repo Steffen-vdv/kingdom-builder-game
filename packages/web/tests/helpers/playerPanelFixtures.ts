@@ -1,9 +1,5 @@
 import { vi } from 'vitest';
-import type {
-	EngineSession,
-	EngineSessionSnapshot,
-	PlayerId,
-} from '@kingdom-builder/engine';
+import type { EngineSessionSnapshot, PlayerId } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
@@ -156,7 +152,11 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
+		session: {
+			getActionCosts: vi.fn(() => ({}) as Record<string, number>),
+			getActionRequirements: vi.fn(() => []),
+			getActionOptions: vi.fn(() => []),
+		} as unknown as LegacyGameEngineContextValue['session'],
 		sessionState,
 		sessionView,
 		handlePerform: vi.fn().mockResolvedValue(undefined),

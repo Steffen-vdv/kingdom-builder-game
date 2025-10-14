@@ -26,6 +26,7 @@ import type {
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import type { SessionResourceKey } from './sessionTypes';
+import { createSessionActionApi } from './sessionActionApi';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
@@ -127,6 +128,10 @@ export function GameProviderInner({
 		() => ({ sessionView }),
 		[sessionView],
 	);
+	const sessionApi = useMemo(
+		() => createSessionActionApi(sessionState, cachedRegistries),
+		[sessionState, cachedRegistries],
+	);
 	const { hoverCard, handleHoverCard, clearHoverCard } = useHoverCard({
 		setTrackedTimeout,
 		clearTrackedTimeout,
@@ -187,7 +192,7 @@ export function GameProviderInner({
 		registries: cachedRegistries,
 	});
 
-	const { handlePerform, performRef } = useActionPerformer({
+	const { handlePerform } = useActionPerformer({
 		sessionId,
 		actionCostResource,
 		registries: cachedRegistries,
@@ -211,8 +216,6 @@ export function GameProviderInner({
 		getLatestSnapshot: queue.getLatestSnapshot,
 		sessionState,
 		runUntilActionPhaseCore,
-		syncPhaseState: applyPhaseSnapshot,
-		performRef,
 		mountedRef,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
@@ -292,6 +295,7 @@ export function GameProviderInner({
 		selectors,
 		translationContext,
 		ruleSnapshot,
+		session: sessionApi,
 		log,
 		logOverflowed,
 		resolution,

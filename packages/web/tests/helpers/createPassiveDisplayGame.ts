@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import type {
-	EngineSession,
 	EngineSessionSnapshot,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
@@ -96,7 +95,11 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
+		session: {
+			getActionCosts: vi.fn(() => ({}) as Record<string, number>),
+			getActionRequirements: vi.fn(() => []),
+			getActionOptions: vi.fn(() => []),
+		} as unknown as LegacyGameEngineContextValue['session'],
 		sessionState,
 		sessionView,
 		handlePerform: vi.fn().mockResolvedValue(undefined),
