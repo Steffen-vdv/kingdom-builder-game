@@ -14,11 +14,12 @@ import {
 } from '@kingdom-builder/contents';
 import type {
 	PlayerStartConfig,
-	Registry,
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
+import { SessionMetadataBuilder } from './SessionMetadataBuilder.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -65,6 +66,8 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
+	private readonly metadataBuilder: SessionMetadataBuilder;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -85,12 +88,31 @@ export class SessionManager {
 			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
 		};
+		const baseBuilder = new SessionMetadataBuilder({
+			actions: this.baseOptions.actions,
+			buildings: this.baseOptions.buildings,
+			developments: this.baseOptions.developments,
+			populations: this.baseOptions.populations,
+		});
+		const baseRegistries = baseBuilder.createRegistriesPayload();
+		const resources = this.buildResourceRegistry(
+			baseRegistries.resources,
+			resourceRegistry,
+		);
+		this.metadataBuilder = new SessionMetadataBuilder({
+			actions: this.baseOptions.actions,
+			buildings: this.baseOptions.buildings,
+			developments: this.baseOptions.developments,
+			populations: this.baseOptions.populations,
+			resources,
+		});
+		const fullRegistries = this.metadataBuilder.createRegistriesPayload();
 		this.registries = {
-			actions: this.cloneRegistry(this.baseOptions.actions),
-			buildings: this.cloneRegistry(this.baseOptions.buildings),
-			developments: this.cloneRegistry(this.baseOptions.developments),
-			populations: this.cloneRegistry(this.baseOptions.populations),
-			resources: this.buildResourceRegistry(resourceRegistry),
+			actions: fullRegistries.actions,
+			buildings: fullRegistries.buildings,
+			developments: fullRegistries.developments,
+			populations: fullRegistries.populations,
+			resources: fullRegistries.resources,
 		};
 	}
 
@@ -146,7 +168,9 @@ export class SessionManager {
 		sessionId: string,
 	): ReturnType<EngineSession['getSnapshot']> {
 		const session = this.requireSession(sessionId);
-		return session.getSnapshot();
+		const snapshot = session.getSnapshot();
+		const metadata = this.mergeSnapshotMetadata(snapshot.metadata);
+		return { ...snapshot, metadata };
 	}
 
 	public getRuleSnapshot(
@@ -173,18 +197,8 @@ export class SessionManager {
 		return session;
 	}
 
-	private cloneRegistry<DefinitionType>(
-		registry: Registry<DefinitionType>,
-	): SerializedRegistry<DefinitionType> {
-		const entries = registry.entries();
-		const result: SerializedRegistry<DefinitionType> = {};
-		for (const [id, definition] of entries) {
-			result[id] = structuredClone(definition);
-		}
-		return result;
-	}
-
 	private buildResourceRegistry(
+		base: SessionResourceRegistry,
 		overrides?: SessionResourceRegistry,
 	): SessionResourceRegistry {
 		const registry = new Map<string, SessionResourceDefinition>();
@@ -198,6 +212,7 @@ export class SessionManager {
 				registry.set(key, structuredClone(definition));
 			}
 		};
+		applyOverride(base);
 		applyOverride(overrides);
 		const addKey = (key: string): void => {
 			if (registry.has(key)) {
@@ -248,6 +263,14 @@ export class SessionManager {
 			}
 		}
 		return Object.fromEntries(registry.entries());
+	}
+
+	private mergeSnapshotMetadata(
+		metadata: SessionSnapshotMetadata,
+	): SessionSnapshotMetadata {
+		const baseMetadata = this.metadataBuilder.createSnapshotMetadata();
+		const sessionMetadata = structuredClone(metadata);
+		return { ...baseMetadata, ...sessionMetadata };
 	}
 
 	private purgeExpiredSessions(): void {

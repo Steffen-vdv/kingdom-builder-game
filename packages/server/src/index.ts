@@ -2,17 +2,17 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { SessionManager } from './session/SessionManager.js';
+import { SessionManager } from './session/index.js';
 import { createSessionTransportPlugin } from './transport/FastifySessionTransport.js';
 import type { FastifySessionTransportOptions } from './transport/FastifySessionTransport.js';
 import { createTokenAuthMiddleware } from './auth/tokenAuthMiddleware.js';
 import type { TokenDefinition } from './auth/tokenAuthMiddleware.js';
 
-export { SessionManager } from './session/SessionManager.js';
+export { SessionManager, SessionMetadataBuilder } from './session/index.js';
 export type {
 	SessionManagerOptions,
 	CreateSessionOptions,
-} from './session/SessionManager.js';
+} from './session/index.js';
 export { SessionTransport } from './transport/SessionTransport.js';
 export type { SessionTransportOptions } from './transport/SessionTransport.js';
 export { HttpSessionGateway } from './client/HttpSessionGateway.js';
