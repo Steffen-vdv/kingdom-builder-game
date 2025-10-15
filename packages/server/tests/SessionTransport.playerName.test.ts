@@ -6,6 +6,7 @@ import {
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import { expectSnapshotIncludesStaticMetadata } from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -40,6 +41,7 @@ describe('SessionTransport updatePlayerName', () => {
 		expect(updateSpy).toHaveBeenCalledWith('A', 'Voyager');
 		const [player] = response.snapshot.game.players;
 		expect(player?.name).toBe('Voyager');
+		expectSnapshotIncludesStaticMetadata(response.snapshot, manager);
 	});
 
 	it('rejects player names that exceed the maximum length', () => {

@@ -49,12 +49,14 @@ export interface SessionMetadataBuildResult {
 	readonly overviewContent: OverviewContentTemplate;
 }
 
-interface StatMetadataDescriptor extends SessionMetadataDescriptor {
-	format?: {
-		prefix?: string;
-		percent?: boolean;
-	};
-}
+type StatFormatDescriptor = {
+	prefix?: string;
+	percent?: boolean;
+};
+
+type StatMetadataDescriptor = Omit<SessionMetadataDescriptor, 'format'> & {
+	format?: SessionMetadataDescriptor['format'] | StatFormatDescriptor;
+};
 
 const deepFreeze = <T>(value: T): T => {
 	if (Array.isArray(value)) {

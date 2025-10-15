@@ -20,8 +20,8 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateResponse,
 	SessionSetDevModeResponse,
-	SessionStateResponse,
 	SessionSnapshot,
+	SessionStateResponse,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
@@ -35,6 +35,7 @@ import type { AuthContext, AuthRole } from '../auth/AuthContext.js';
 import { AuthError } from '../auth/AuthError.js';
 import type { AuthMiddleware } from '../auth/tokenAuthMiddleware.js';
 import { TransportError } from './TransportTypes.js';
+import { attachHttpStatus, mergeSnapshotMetadata } from './transportHelpers.js';
 import type {
 	TransportHttpResponse,
 	TransportIdFactory,
@@ -156,7 +157,7 @@ export class SessionTransportBase {
 				status: 'error',
 				error: 'Invalid action request.',
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
 		}
 		this.requireAuthorization(request, 'session:advance');
 		const { sessionId, actionId, params } = parsed.data;
@@ -170,7 +171,7 @@ export class SessionTransportBase {
 				status: 'error',
 				error: `Session "${sessionId}" was not found.`,
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
 		try {
 			const rawCosts = session.getActionCosts(actionId, normalizedParams);
@@ -191,7 +192,7 @@ export class SessionTransportBase {
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
-			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
+			return attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {
 			const failures = extractRequirementFailures(error);
 			const message =
@@ -209,7 +210,7 @@ export class SessionTransportBase {
 			const response = actionExecuteErrorResponseSchema.parse(
 				base,
 			) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
 		}
 	}
 
@@ -258,16 +259,6 @@ export class SessionTransportBase {
 		return sessionUpdatePlayerNameResponseSchema.parse(
 			this.buildStateResponse(sessionId, snapshot),
 		);
-	}
-	protected attachHttpStatus<T extends object>(
-		payload: T,
-		status: number,
-	): TransportHttpResponse<T> {
-		Object.defineProperty(payload, 'httpStatus', {
-			value: status,
-			enumerable: false,
-		});
-		return payload as TransportHttpResponse<T>;
 	}
 	protected parseSessionIdentifier(body: unknown): string {
 		const parsed = sessionIdSchema.safeParse(
@@ -318,7 +309,9 @@ export class SessionTransportBase {
 		}
 		try {
 			const context = this.authMiddleware(request);
-			if (!this.hasRole(context, role)) {
+			const authorized =
+				context.roles.includes(role) || context.roles.includes('admin');
+			if (!authorized) {
 				throw new AuthError('FORBIDDEN', `Missing required role "${role}".`);
 			}
 			return context;
@@ -331,20 +324,22 @@ export class SessionTransportBase {
 			throw error;
 		}
 	}
-	protected hasRole(context: AuthContext, role: AuthRole): boolean {
-		if (context.roles.includes(role)) {
-			return true;
-		}
-		return context.roles.includes('admin');
-	}
 	protected buildStateResponse(
 		sessionId: string,
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
+		const registries = this.sessionManager.getRegistries();
+		const staticMetadata = this.sessionManager.getMetadata();
+		const enrichedMetadata = mergeSnapshotMetadata(
+			staticMetadata,
+			snapshot.metadata,
+		);
+		const enrichedSnapshot = structuredClone(snapshot);
+		enrichedSnapshot.metadata = enrichedMetadata;
 		return {
 			sessionId,
-			snapshot,
-			registries: this.sessionManager.getRegistries(),
+			snapshot: enrichedSnapshot,
+			registries,
 		};
 	}
 }

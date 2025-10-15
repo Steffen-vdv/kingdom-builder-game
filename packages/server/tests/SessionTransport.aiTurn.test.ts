@@ -6,6 +6,7 @@ import {
 	findAiPlayerId,
 } from './helpers/createSyntheticSessionManager.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
+import { expectSnapshotIncludesStaticMetadata } from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -56,6 +57,7 @@ describe('SessionTransport runAiTurn', () => {
 		expect(result.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
 		expect(Object.keys(result.registries.actions)).not.toHaveLength(0);
 		expect(runSpy).toHaveBeenCalledWith(playerId);
+		expectSnapshotIncludesStaticMetadata(result.snapshot, manager);
 	});
 
 	it('rejects AI requests when controllers are missing', async () => {

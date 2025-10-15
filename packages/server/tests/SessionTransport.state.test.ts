@@ -3,6 +3,7 @@ import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import { expectSnapshotIncludesStaticMetadata } from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -41,6 +42,7 @@ describe('SessionTransport session state', () => {
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expectSnapshotIncludesStaticMetadata(state.snapshot, manager);
 	});
 
 	it('throws when a session cannot be located', () => {

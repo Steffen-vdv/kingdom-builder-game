@@ -3,6 +3,7 @@ import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import { expectSnapshotIncludesStaticMetadata } from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -37,6 +38,7 @@ describe('SessionTransport dev mode', () => {
 		});
 		expect(updated.snapshot.game.devMode).toBe(true);
 		expect(updated.registries.actions[actionId]).toBeDefined();
+		expectSnapshotIncludesStaticMetadata(updated.snapshot, manager);
 	});
 
 	it('validates dev mode toggles before applying them', () => {

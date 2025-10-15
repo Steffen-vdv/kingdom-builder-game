@@ -6,6 +6,10 @@ import {
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	expectSnapshotIncludesStaticMetadata,
+	expectSnapshotMetadataIsolation,
+} from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -41,6 +45,8 @@ describe('SessionTransport createSession', () => {
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
+		expectSnapshotIncludesStaticMetadata(response.snapshot, manager);
+		expectSnapshotMetadataIsolation(response.snapshot, manager);
 	});
 
 	it('skips blank player name entries when applying preferences', () => {
