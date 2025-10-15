@@ -12,10 +12,33 @@ const stringifyUnknown = (value: unknown): string => {
 	if (value === undefined) {
 		return 'undefined';
 	}
+	if (value === null) {
+		return 'null';
+	}
+	if (typeof value === 'string') {
+		return value;
+	}
+	if (typeof value === 'number' || typeof value === 'boolean') {
+		return String(value);
+	}
+	if (typeof value === 'bigint') {
+		return value.toString();
+	}
+	if (typeof value === 'symbol') {
+		return value.toString();
+	}
+	if (typeof value === 'function') {
+		const name = value.name ? ` ${value.name}` : '';
+		return `[function${name}]`;
+	}
 	try {
 		return JSON.stringify(value, null, 2);
-	} catch (error) {
-		return String(value);
+	} catch (error: unknown) {
+		if (typeof value === 'object') {
+			return '[unserializable object]';
+		}
+		void error;
+		return 'unknown';
 	}
 };
 

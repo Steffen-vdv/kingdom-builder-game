@@ -20,7 +20,8 @@ function readStoredPlayerName(): StoredName {
 		}
 		const trimmed = sanitizeName(raw);
 		return trimmed.length > 0 ? trimmed : null;
-	} catch (error) {
+	} catch (error: unknown) {
+		void error;
 		return null;
 	}
 }
@@ -35,8 +36,9 @@ function writeStoredPlayerName(name: StoredName): void {
 			return;
 		}
 		window.localStorage.setItem(PLAYER_NAME_STORAGE_KEY, name);
-	} catch (error) {
+	} catch (error: unknown) {
 		// Ignore storage exceptions (e.g., private browsing modes).
+		void error;
 	}
 }
 

@@ -125,8 +125,19 @@ export function extractMetaFromEffect(
 	if (typeof rawMeta['detail'] === 'string' && rawMeta['detail'].trim()) {
 		partialMeta.detail = rawMeta['detail'].trim();
 	}
-	if (rawMeta['instance'] !== undefined) {
-		partialMeta.instance = String(rawMeta['instance']);
+	const rawInstance = rawMeta['instance'];
+	if (typeof rawInstance === 'string') {
+		const trimmedInstance = rawInstance.trim();
+		if (trimmedInstance) {
+			partialMeta.instance = trimmedInstance;
+		}
+	} else if (
+		typeof rawInstance === 'number' ||
+		typeof rawInstance === 'boolean'
+	) {
+		partialMeta.instance = String(rawInstance);
+	} else if (typeof rawInstance === 'bigint') {
+		partialMeta.instance = rawInstance.toString();
 	}
 	const dependsOnLinks = normalizeLinks(rawMeta['dependsOn']);
 	if (dependsOnLinks) {

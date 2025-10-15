@@ -114,8 +114,9 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		) {
 			try {
 				await dependencies.performAction(TAX_ACTION_ID, engineContext);
-			} catch (error) {
+			} catch (error: unknown) {
 				await finishActionPhaseAsync();
+				void error;
 				return;
 			}
 		}

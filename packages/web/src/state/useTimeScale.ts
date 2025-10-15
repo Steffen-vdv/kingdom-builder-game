@@ -23,7 +23,8 @@ function readStoredTimeScale(): TimeScale | null {
 		return (TIME_SCALE_OPTIONS as readonly number[]).includes(parsed)
 			? (parsed as TimeScale)
 			: null;
-	} catch (error) {
+	} catch (error: unknown) {
+		void error;
 		return null;
 	}
 }
@@ -80,8 +81,9 @@ export function useTimeScale({
 					try {
 						const storage = window.localStorage;
 						storage.setItem(TIME_SCALE_STORAGE_KEY, String(value));
-					} catch (error) {
+					} catch (error: unknown) {
 						// Ignore storage exceptions (e.g., Safari private mode).
+						void error;
 					}
 				}
 				timeScaleRef.current = value;

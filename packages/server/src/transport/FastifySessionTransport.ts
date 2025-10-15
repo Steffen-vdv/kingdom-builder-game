@@ -8,8 +8,7 @@ import type { SessionTransportOptions } from './SessionTransport.js';
 import { TransportError } from './TransportTypes.js';
 import type { TransportErrorCode } from './TransportTypes.js';
 
-export interface FastifySessionTransportOptions
-	extends SessionTransportOptions {}
+export type FastifySessionTransportOptions = SessionTransportOptions;
 
 export const createSessionTransportPlugin: FastifyPluginCallback<
 	FastifySessionTransportOptions
@@ -23,7 +22,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 				headers: extractHeaders(request),
 			});
 			return reply.status(201).send(response);
-		} catch (error) {
+		} catch (error: unknown) {
+			void error;
 			return handleTransportError(reply, error);
 		}
 	});
@@ -37,7 +37,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers: extractHeaders(request),
 				});
 				return reply.send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},
@@ -52,7 +53,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers: extractHeaders(request),
 				});
 				return reply.send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},
@@ -68,7 +70,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers: extractHeaders(request),
 				});
 				return reply.status(response.httpStatus ?? 200).send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},
@@ -84,7 +87,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers: extractHeaders(request),
 				});
 				return reply.send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},
@@ -101,7 +105,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers,
 				});
 				return reply.send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},
@@ -118,7 +123,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers,
 				});
 				return reply.send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},
@@ -135,7 +141,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers,
 				});
 				return reply.send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},
@@ -152,7 +159,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers,
 				});
 				return reply.send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},
@@ -168,7 +176,8 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 					headers: extractHeaders(request),
 				});
 				return reply.send(response);
-			} catch (error) {
+			} catch (error: unknown) {
+				void error;
 				return handleTransportError(reply, error);
 			}
 		},

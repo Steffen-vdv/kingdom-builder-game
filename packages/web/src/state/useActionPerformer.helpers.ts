@@ -221,9 +221,10 @@ export async function handleMissingActionDefinition({
 			source: resolutionSource,
 			actorLabel: 'Played by',
 		});
-	} catch (_error) {
+	} catch (error: unknown) {
 		addLog(logLines, resolutionPlayer);
 		shouldAddLog = false;
+		void error;
 	}
 	if (shouldAddLog) {
 		addLog(logLines, resolutionPlayer);
@@ -282,7 +283,8 @@ export async function presentResolutionOrLog({
 			source,
 			actorLabel: 'Played by',
 		});
-	} catch (_error) {
+	} catch (error: unknown) {
 		addLog(logLines, playerIdentity);
+		void error;
 	}
 }
