@@ -17,7 +17,6 @@ import {
 } from './components/overview/OverviewLayout';
 import type { OverviewSectionDef } from './components/overview/OverviewLayout';
 import { createOverviewSections } from './components/overview/sectionsData';
-import type { OverviewContentSection } from './components/overview/sectionsData';
 import type {
 	OverviewTokenConfig,
 	OverviewTokenSources,
@@ -27,10 +26,13 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
+import type {
+	SessionOverviewContent,
+	SessionOverviewSection,
+	SessionOverviewTokenCandidates,
+} from '@kingdom-builder/protocol/session';
+import { buildOverviewContent } from './contexts/registryMetadataDescriptors';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
 
@@ -40,7 +42,7 @@ const EMPTY_SECTIONS_RESULT = Object.freeze({
 });
 
 function createFallbackSections(
-	sections: OverviewContentSection[],
+	sections: ReadonlyArray<SessionOverviewSection>,
 ): OverviewSectionDef[] {
 	return sections.map((section) => {
 		if (section.kind === 'paragraph') {
@@ -70,7 +72,7 @@ function createFallbackSections(
 }
 
 function collectTokenKeys(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: SessionOverviewTokenCandidates,
 	overrides?: OverviewTokenConfig,
 ): ReadonlyArray<string> {
 	const keys = new Set<string>();
@@ -97,7 +99,7 @@ function collectTokenKeys(
 }
 
 function createFallbackTokens(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: SessionOverviewTokenCandidates,
 	overrides: OverviewTokenConfig | undefined,
 ): OverviewTokenRecord {
 	const keys = collectTokenKeys(tokenCandidates, overrides);
@@ -139,7 +141,7 @@ export type { OverviewTokenConfig } from './components/overview/overviewTokens';
 export interface OverviewProps {
 	onBack: () => void;
 	tokenConfig?: OverviewTokenConfig;
-	content?: OverviewContentSection[];
+	content?: ReadonlyArray<SessionOverviewSection>;
 }
 
 export default function Overview({
@@ -148,9 +150,15 @@ export default function Overview({
 	content,
 }: OverviewProps) {
 	const metadata = useOptionalRegistryMetadata();
-	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
+	const fallbackOverview = React.useMemo(
+		() => buildOverviewContent(OVERVIEW_CONTENT),
+		[],
+	);
+	const overviewContent: SessionOverviewContent =
+		metadata?.overviewContent ?? fallbackOverview;
 	const sections = content ?? overviewContent.sections;
-	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
+	const defaultTokens: SessionOverviewTokenCandidates =
+		overviewContent.tokens ?? {};
 	const heroContent = overviewContent.hero;
 	const tokenSources = React.useMemo(
 		() => resolveOverviewTokenSources(metadata),

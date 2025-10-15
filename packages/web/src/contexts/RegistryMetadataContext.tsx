@@ -8,11 +8,9 @@ import type {
 import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
+	SessionOverviewContent,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
+import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -28,6 +26,7 @@ import {
 	buildResourceMetadata,
 	buildStatMetadata,
 	buildTriggerMetadata,
+	buildOverviewContent,
 	resolveAssetDescriptor,
 	type MetadataLookup,
 	type PhaseMetadata,
@@ -67,7 +66,7 @@ export interface RegistryMetadataContextValue {
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
-	overviewContent: OverviewContentTemplate;
+	overviewContent: SessionOverviewContent;
 }
 
 interface RegistryMetadataProviderProps {
@@ -222,7 +221,14 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const defaultOverviewContent = useMemo(
+		() => buildOverviewContent(OVERVIEW_CONTENT),
+		[],
+	);
+	const overviewContent = useMemo(
+		() => metadata.overview ?? defaultOverviewContent,
+		[metadata.overview, defaultOverviewContent],
+	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
@@ -334,7 +340,7 @@ export const useSlotMetadata = (): AssetMetadataSelector =>
 export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().passiveMetadata;
 
-export const useOverviewContent = (): OverviewContentTemplate =>
+export const useOverviewContent = (): SessionOverviewContent =>
 	useRegistryMetadata().overviewContent;
 
 export type {

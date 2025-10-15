@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import {
-	type OverviewSectionTemplate,
-	type OverviewTokenCandidates,
-	type OverviewTokenCategoryName,
-} from '@kingdom-builder/contents';
+import type {
+	SessionOverviewSection,
+	SessionOverviewTokenCandidates,
+	SessionOverviewTokenCategoryName,
+} from '@kingdom-builder/protocol/session';
 import type { OverviewSectionDef } from './OverviewLayout';
 import {
 	buildOverviewIconSet,
@@ -15,21 +15,21 @@ import { normalizeCandidates } from './overviewTokenUtils';
 
 export type OverviewIconSet = Record<string, ReactNode | undefined>;
 
-export type OverviewContentSection = OverviewSectionTemplate;
+export type OverviewContentSection = SessionOverviewSection;
 
 function spanProps(span?: boolean) {
 	return span === undefined ? {} : { span };
 }
 
 function mergeTokenSources(
-	base: OverviewTokenCandidates,
+	base: SessionOverviewTokenCandidates,
 	overrides?: OverviewTokenConfig,
 ): OverviewTokenConfig {
 	const merged: OverviewTokenConfig = {};
-	const categories = new Set<OverviewTokenCategoryName>([
-		...(Object.keys(base ?? {}) as OverviewTokenCategoryName[]),
+	const categories = new Set<SessionOverviewTokenCategoryName>([
+		...(Object.keys(base ?? {}) as SessionOverviewTokenCategoryName[]),
 		...(overrides
-			? (Object.keys(overrides) as OverviewTokenCategoryName[])
+			? (Object.keys(overrides) as SessionOverviewTokenCategoryName[])
 			: []),
 	]);
 
@@ -75,9 +75,9 @@ function mergeTokenSources(
 }
 
 export function createOverviewSections(
-	tokenCandidates: OverviewTokenCandidates,
+	tokenCandidates: SessionOverviewTokenCandidates,
 	overrides: OverviewTokenConfig | undefined,
-	content: OverviewContentSection[],
+	content: ReadonlyArray<SessionOverviewSection>,
 	tokenSources: OverviewTokenSources,
 ): { sections: OverviewSectionDef[]; tokens: OverviewIconSet } {
 	const mergedTokenConfig = mergeTokenSources(tokenCandidates, overrides);

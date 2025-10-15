@@ -199,6 +199,8 @@ const mergeRegistryEntries = <TDefinition extends { id: string }>(
 	return entries;
 };
 
+export { buildOverviewContent } from './overviewMetadata';
+
 const mergeResourceEntries = (
 	resources: Record<string, SessionResourceDefinition>,
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,

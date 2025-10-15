@@ -14,6 +14,7 @@ const REQUIRED_DIST_FILES = [
 	'../packages/contents/dist/resources.js',
 	'../packages/contents/dist/stats.js',
 	'../packages/contents/dist/triggers.js',
+	'../packages/contents/dist/overview.js',
 ];
 
 async function ensureDistArtifacts() {
@@ -46,6 +47,7 @@ async function loadContentModules() {
 		resourcesModule,
 		statsModule,
 		triggersModule,
+		overviewModule,
 	] = await Promise.all([
 		import(new URL('actions.js', baseUrl)),
 		import(new URL('buildings.js', baseUrl)),
@@ -57,6 +59,7 @@ async function loadContentModules() {
 		import(new URL('resources.js', baseUrl)),
 		import(new URL('stats.js', baseUrl)),
 		import(new URL('triggers.js', baseUrl)),
+		import(new URL('overview.js', baseUrl)),
 	]);
 	return {
 		createActionRegistry: actionsModule.createActionRegistry,
@@ -70,6 +73,7 @@ async function loadContentModules() {
 		RESOURCES: resourcesModule.RESOURCES,
 		STATS: statsModule.STATS,
 		TRIGGER_INFO: triggersModule.TRIGGER_INFO,
+		OVERVIEW_CONTENT: overviewModule.OVERVIEW_CONTENT,
 	};
 }
 
@@ -198,6 +202,98 @@ function createAssetMetadata(content) {
 	};
 }
 
+function cloneStringArray(values) {
+	return values.map((value) => `${value}`);
+}
+
+function cloneOverviewListItem(item) {
+	const cloned = {
+		label: item.label,
+		body: cloneStringArray(item.body),
+	};
+	if (item.icon !== undefined) {
+		cloned.icon = item.icon;
+	}
+	return cloned;
+}
+
+function cloneOverviewParagraphSection(section) {
+	const cloned = {
+		kind: 'paragraph',
+		id: section.id,
+		icon: section.icon,
+		title: section.title,
+		paragraphs: cloneStringArray(section.paragraphs),
+	};
+	if (section.span !== undefined) {
+		cloned.span = section.span;
+	}
+	return cloned;
+}
+
+function cloneOverviewListSection(section) {
+	const cloned = {
+		kind: 'list',
+		id: section.id,
+		icon: section.icon,
+		title: section.title,
+		items: section.items.map(cloneOverviewListItem),
+	};
+	if (section.span !== undefined) {
+		cloned.span = section.span;
+	}
+	return cloned;
+}
+
+function cloneOverviewSection(section) {
+	if (section.kind === 'paragraph') {
+		return cloneOverviewParagraphSection(section);
+	}
+	return cloneOverviewListSection(section);
+}
+
+function cloneOverviewHero(hero) {
+	const tokens = {};
+	for (const [key, label] of Object.entries(hero.tokens ?? {})) {
+		tokens[key] = `${label}`;
+	}
+	return {
+		badgeIcon: hero.badgeIcon,
+		badgeLabel: hero.badgeLabel,
+		title: hero.title,
+		intro: hero.intro,
+		paragraph: hero.paragraph,
+		tokens,
+	};
+}
+
+function cloneOverviewTokenCandidates(candidates) {
+	if (!candidates) {
+		return {};
+	}
+	const result = {};
+	for (const [category, entries] of Object.entries(candidates)) {
+		const clonedEntries = {};
+		for (const [token, values] of Object.entries(entries)) {
+			clonedEntries[token] = cloneStringArray(values);
+		}
+		result[category] = clonedEntries;
+	}
+	return result;
+}
+
+function createOverviewMetadata(content) {
+	if (!content.OVERVIEW_CONTENT) {
+		return undefined;
+	}
+	const template = content.OVERVIEW_CONTENT;
+	return {
+		hero: cloneOverviewHero(template.hero),
+		sections: template.sections.map(cloneOverviewSection),
+		tokens: cloneOverviewTokenCandidates(template.tokens),
+	};
+}
+
 function serializeRegistry(registry) {
 	return Object.fromEntries(
 		registry
@@ -227,6 +323,7 @@ function createMetadata(registries, content) {
 		phases: createPhaseMetadata(content),
 		triggers: createTriggerMetadata(content),
 		assets: createAssetMetadata(content),
+		overview: createOverviewMetadata(content),
 	};
 }
 
