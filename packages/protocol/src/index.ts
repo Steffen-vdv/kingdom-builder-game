@@ -190,8 +190,8 @@ export {
 	type MetadataAssetSources,
 } from './session/metadataBuilder';
 export type {
-ActionEffectChoice,
-ActionChoiceMap,
+	ActionEffectChoice,
+	ActionChoiceMap,
 	ActionParametersPayload,
 	ActionExecuteRequest,
 	ActionTraceLandSnapshot,
