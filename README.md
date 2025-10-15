@@ -40,6 +40,17 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
   coverage tasks so automated checks share the same review context as manual
   CLI runs.
 
+### Pre-PR checklist
+
+- Run `npm run format` to enforce tab indentation and other Prettier rules.
+- Use `npm run fix` (or rerun `npm run lint`) until eslint succeeds without
+  warnings or auto-fixable errors.
+- Execute `npm run check` and then `npm run verify`. Resolve any failures and
+  rerun the commands until both complete cleanly without changing files.
+- Husky installs the repository's `pre-commit` and `pre-push` hooks during
+  `npm install`. If the hooks ever go missing, run `npm run prepare` and do not
+  bypass them—fix the reported issues locally before pushing.
+
 ## 2) Game Overview
 
 Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, manage resources, and try to outlast or conquer the opponent. Victory is achieved by capturing the opposing castle, forcing enemy bankruptcy, or holding the most victory points when the game ends after the final round.

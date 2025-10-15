@@ -123,6 +123,7 @@ export type {
 	SessionEffectLogMap,
 	SessionPassiveEvaluationModifierMap,
 	SessionMetadataDescriptor,
+	SessionMetadataFormat,
 	SessionOverviewTokenCategoryName,
 	SessionOverviewTokenMap,
 	SessionOverviewHero,

@@ -19,12 +19,26 @@ const dependencies = [
 		path: resolve(rootDir, 'node_modules', 'npm-run-all', 'package.json'),
 	},
 	{
+		name: 'cross-env',
+		path: resolve(rootDir, 'node_modules', 'cross-env', 'package.json'),
+	},
+	{
 		name: '@vitest/coverage-v8',
 		path: resolve(
 			rootDir,
 			'node_modules',
 			'@vitest',
 			'coverage-v8',
+			'package.json',
+		),
+	},
+	{
+		name: '@tailwindcss/postcss',
+		path: resolve(
+			rootDir,
+			'node_modules',
+			'@tailwindcss',
+			'postcss',
 			'package.json',
 		),
 	},

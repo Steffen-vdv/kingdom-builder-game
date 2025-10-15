@@ -55,7 +55,7 @@ export interface SessionCreateResponse {
 
 export type SessionStateResponse = SessionCreateResponse;
 
-export interface SessionAdvanceRequest extends SessionIdentifier {}
+export type SessionAdvanceRequest = SessionIdentifier;
 
 export interface SessionAdvanceResponse extends SessionStateResponse {
 	advance: SessionAdvanceResult;
