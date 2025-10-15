@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 
 const rawArgs = process.argv.slice(2);
 const hasExplicitTarget = rawArgs.some((arg, index) => {
@@ -15,9 +17,11 @@ const env = {
 	ESLINT_USE_FLAT_CONFIG: process.env.ESLINT_USE_FLAT_CONFIG ?? 'true',
 };
 
-const npxExecutable = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const require = createRequire(import.meta.url);
+const eslintPackagePath = require.resolve('eslint/package.json');
+const eslintBin = join(dirname(eslintPackagePath), 'bin', 'eslint.js');
 
-const child = spawn(npxExecutable, ['eslint', ...finalArgs], {
+const child = spawn(process.execPath, [eslintBin, ...finalArgs], {
 	stdio: 'inherit',
 	env,
 });
