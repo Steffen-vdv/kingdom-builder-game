@@ -12,7 +12,7 @@ const hasExplicitTarget = rawArgs.some((arg, index) => {
 const finalArgs = hasExplicitTarget ? rawArgs : ['.', ...rawArgs];
 const env = {
 	...process.env,
-	ESLINT_USE_FLAT_CONFIG: process.env.ESLINT_USE_FLAT_CONFIG ?? 'false',
+	ESLINT_USE_FLAT_CONFIG: process.env.ESLINT_USE_FLAT_CONFIG ?? 'true',
 };
 
 const npxExecutable = process.platform === 'win32' ? 'npx.cmd' : 'npx';
