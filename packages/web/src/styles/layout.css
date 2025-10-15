@@ -1,6 +1,9 @@
+@reference './tailwind.css';
+
 @layer components {
 	.bar-item {
-		@apply flex items-center gap-1 whitespace-nowrap rounded-full border border-white/40 bg-white/50 px-3 py-1 text-sm font-semibold tabular-nums text-slate-700 shadow-sm shadow-white/30 transition appearance-none dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100;
+		@apply flex items-center whitespace-nowrap rounded-full border border-white/40 bg-white/50 px-3 py-1 text-sm font-semibold tabular-nums text-slate-700 shadow-sm shadow-white/30 transition appearance-none dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100;
+		gap: 0.25rem;
 	}
 
 	.info-bar {
@@ -146,5 +149,11 @@
 	.hover-card-transition[data-state='exit'] {
 		opacity: 0;
 		transform: translateY(6px);
+	}
+}
+
+@layer utilities {
+	.gap-1 {
+		gap: 0.25rem;
 	}
 }

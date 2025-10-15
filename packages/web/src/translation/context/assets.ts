@@ -125,7 +125,7 @@ function toIconLabel(
 
 function buildPopulationMap(
 	registry: SessionRegistries['populations'],
-	descriptors?: Record<string, SessionMetadataDescriptor> | undefined,
+	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
 	for (const [id, definition] of registry.entries()) {
@@ -137,7 +137,7 @@ function buildPopulationMap(
 
 function buildResourceMap(
 	resources: SessionRegistries['resources'],
-	descriptors?: Record<string, SessionMetadataDescriptor> | undefined,
+	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
 	for (const [key, definition] of Object.entries(resources)) {
@@ -156,7 +156,7 @@ function buildResourceMap(
 }
 
 function buildStatMap(
-	descriptors?: Record<string, SessionMetadataDescriptor> | undefined,
+	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
 	for (const [key, base] of Object.entries(DEFAULT_STAT_INFO)) {
@@ -212,7 +212,7 @@ function mergeTriggerAsset(
 }
 
 function buildTriggerMap(
-	triggers?: Record<string, SessionTriggerMetadata> | undefined,
+	triggers: Record<string, SessionTriggerMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
 	const entries: Record<string, TranslationTriggerAsset> = {
 		...DEFAULT_TRIGGER_ASSETS,

@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactElement } from 'react';
 
 import OptionCard, { type ActionCardOption } from './OptionCard';
 
@@ -6,7 +6,7 @@ export interface OptionListProps {
 	options: ActionCardOption[];
 }
 
-export default function OptionList({ options }: OptionListProps): JSX.Element {
+export default function OptionList({ options }: OptionListProps): ReactElement {
 	if (options.length === 0) {
 		return (
 			<div className="text-sm text-slate-600 dark:text-slate-300">

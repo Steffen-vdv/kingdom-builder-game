@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, type FC } from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import ResourceBar from './ResourceBar';
 import PopulationInfo from './PopulationInfo';
@@ -14,14 +14,14 @@ interface PlayerPanelProps {
 	onHeightChange?: (height: number) => void;
 }
 
-const PlayerPanel: React.FC<PlayerPanelProps> = ({
+const PlayerPanel: FC<PlayerPanelProps> = ({
 	player,
 	className = '',
 	isActive = false,
 	onHeightChange,
 }) => {
 	const panelRef = useRef<HTMLDivElement | null>(null);
-	const heightCallbackRef = useRef<typeof onHeightChange>();
+	const heightCallbackRef = useRef<typeof onHeightChange | null>(null);
 	const animateBar = useAnimate<HTMLDivElement>();
 	const animateSections = useAnimate<HTMLDivElement>();
 	useEffect(() => {

@@ -46,7 +46,7 @@ const sessionPassiveSummarySchema = z.object({
 
 export const actionEffectChoiceSchema = z.object({
 	optionId: z.string(),
-	params: z.record(z.unknown()).optional(),
+	params: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const actionChoiceMapSchema = z.record(
@@ -58,7 +58,8 @@ export const actionParametersSchema = z
 	.object({
 		choices: actionChoiceMapSchema.optional(),
 	})
-	.catchall(z.unknown());
+	.catchall(z.unknown())
+	.transform((value) => value as ActionParametersPayload);
 
 export const actionTraceLandSnapshotSchema = z.object({
 	id: z.string(),
@@ -68,8 +69,8 @@ export const actionTraceLandSnapshotSchema = z.object({
 });
 
 export const actionPlayerSnapshotSchema = z.object({
-	resources: z.record(z.number()),
-	stats: z.record(z.number()),
+	resources: z.record(z.string(), z.number()),
+	stats: z.record(z.string(), z.number()),
 	buildings: z.array(z.string()),
 	lands: z.array(actionTraceLandSnapshotSchema),
 	passives: z.array(sessionPassiveSummarySchema),
@@ -83,7 +84,7 @@ export const actionTraceSchema = z.object({
 
 export const actionRequirementFailureSchema = z.object({
 	requirement: requirementSchema,
-	details: z.record(z.unknown()).optional(),
+	details: z.record(z.string(), z.unknown()).optional(),
 	message: z.string().optional(),
 });
 
@@ -95,8 +96,10 @@ export const actionExecuteRequestSchema = z.object({
 
 export const actionExecuteSuccessResponseSchema = z.object({
 	status: z.literal('success'),
-	snapshot: z.custom<SessionSnapshot>(),
-	costs: z.record(z.number()),
+	snapshot: z.custom<SessionSnapshot>(
+		(value): value is SessionSnapshot => true,
+	),
+	costs: z.record(z.string(), z.number()),
 	traces: z.array(actionTraceSchema),
 });
 
