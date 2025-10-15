@@ -186,12 +186,19 @@ export type SessionPassiveEvaluationModifierMap = Record<
 	ReadonlyArray<string>
 >;
 
+export type SessionMetadataFormat =
+	| string
+	| {
+			prefix?: string;
+			percent?: boolean;
+	  };
+
 export interface SessionMetadataDescriptor {
 	label?: string;
 	icon?: string;
 	description?: string;
 	displayAsPercent?: boolean;
-	format?: string;
+	format?: SessionMetadataFormat;
 }
 
 export type SessionOverviewTokenCategoryName =

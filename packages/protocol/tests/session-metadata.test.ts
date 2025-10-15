@@ -2,6 +2,7 @@ import { describe, expect, it, expectTypeOf } from 'vitest';
 import { sessionCreateResponseSchema } from '../src';
 import type {
 	SessionMetadataDescriptor,
+	SessionMetadataFormat,
 	SessionOverviewMetadata,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
@@ -80,7 +81,7 @@ describe('session snapshot metadata', () => {
 			boolean | undefined
 		>();
 		expectTypeOf<SessionMetadataDescriptor['format']>().toEqualTypeOf<
-			string | undefined
+			SessionMetadataFormat | undefined
 		>();
 	});
 });

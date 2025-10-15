@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import Game from './Game';
 import Menu from './Menu';
 import Overview from './Overview';
@@ -33,7 +34,7 @@ export default function App() {
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
 
-	let screen: JSX.Element;
+	let screen: ReactNode;
 	switch (currentScreen) {
 		case Screen.Overview:
 			screen = (
