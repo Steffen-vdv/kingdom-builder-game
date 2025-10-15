@@ -14,8 +14,41 @@ const stringifyUnknown = (value: unknown): string => {
 	}
 	try {
 		return JSON.stringify(value, null, 2);
-	} catch (error) {
-		return String(value);
+	} catch {
+		if (value === null) {
+			return 'null';
+		}
+		if (typeof value === 'object') {
+			const customToString = (
+				value as {
+					toString?: () => string;
+				}
+			).toString;
+			if (
+				typeof customToString === 'function' &&
+				customToString !== Object.prototype.toString
+			) {
+				const result = customToString.call(value);
+				if (typeof result === 'string' && result.trim().length > 0) {
+					return result;
+				}
+			}
+			return Object.prototype.toString.call(value);
+		}
+		if (typeof value === 'symbol') {
+			return value.toString();
+		}
+		if (typeof value === 'string') {
+			return value;
+		}
+		if (
+			typeof value === 'number' ||
+			typeof value === 'boolean' ||
+			typeof value === 'bigint'
+		) {
+			return String(value);
+		}
+		return '[unserializable]';
 	}
 };
 

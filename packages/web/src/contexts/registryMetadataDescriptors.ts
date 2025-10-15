@@ -14,7 +14,7 @@ export interface RegistryMetadataDescriptor {
 	description?: string;
 }
 
-export interface AssetMetadata extends RegistryMetadataDescriptor {}
+export type AssetMetadata = RegistryMetadataDescriptor;
 
 export interface PhaseStepMetadata {
 	id: string;
@@ -92,9 +92,9 @@ const createLookup = <TDescriptor extends { id: string }>(
 };
 
 interface RegistryDescriptorFallback {
-	label?: string | undefined;
-	icon?: string | undefined;
-	description?: string | undefined;
+	label?: string;
+	icon?: string;
+	description?: string;
 }
 
 const createRegistryDescriptor = (

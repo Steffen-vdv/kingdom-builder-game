@@ -78,8 +78,9 @@ export const clone: CloneFn = (value) => {
 		const cloneFn = structuredClone as unknown as <U>(input: U) => U;
 		try {
 			return cloneFn(value);
-		} catch (error) {
-			// Fall through when structuredClone cannot process the value.
+		} catch {
+			// Fall through when structuredClone cannot process
+			// the provided value.
 		}
 	}
 

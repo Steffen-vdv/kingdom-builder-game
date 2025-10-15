@@ -145,7 +145,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 						);
 						updates[playerId] = response.result.delta;
 						hasSuccess = true;
-					} catch (error) {
+					} catch {
 						hasError = true;
 					}
 				}),
@@ -189,9 +189,9 @@ export function useNextTurnForecast(): NextTurnForecast {
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
 			try {
-				const { delta } = session.simulateUpcomingPhases(player.id);
-				forecast[player.id] = delta;
-			} catch (error) {
+				const simulation = session.simulateUpcomingPhases(player.id);
+				forecast[player.id] = simulation.delta;
+			} catch {
 				forecast[player.id] = cloneEmptyDelta();
 			}
 		}
