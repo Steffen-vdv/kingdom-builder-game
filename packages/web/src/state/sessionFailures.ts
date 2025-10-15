@@ -15,7 +15,20 @@ const stringifyUnknown = (value: unknown): string => {
 	try {
 		return JSON.stringify(value, null, 2);
 	} catch (error) {
-		return String(value);
+		void error;
+		if (typeof value === 'string') {
+			return value;
+		}
+		if (typeof value === 'number' || typeof value === 'boolean') {
+			return String(value);
+		}
+		if (typeof value === 'bigint') {
+			return `${value}n`;
+		}
+		if (typeof value === 'symbol') {
+			return value.toString();
+		}
+		return Object.prototype.toString.call(value);
 	}
 };
 
