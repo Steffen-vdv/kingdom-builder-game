@@ -1,3 +1,5 @@
+import type { ReactElement } from 'react';
+
 function normalizeIcon(icon: string | undefined): string | undefined {
 	if (typeof icon !== 'string') {
 		return undefined;
@@ -9,7 +11,7 @@ function normalizeIcon(icon: string | undefined): string | undefined {
 export function renderIconLabel(
 	icon: string | undefined,
 	label: string,
-): JSX.Element {
+): ReactElement {
 	const normalized = normalizeIcon(icon);
 	return (
 		<span className="inline-flex items-center gap-1">
