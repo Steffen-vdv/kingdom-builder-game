@@ -125,8 +125,13 @@ export function extractMetaFromEffect(
 	if (typeof rawMeta['detail'] === 'string' && rawMeta['detail'].trim()) {
 		partialMeta.detail = rawMeta['detail'].trim();
 	}
-	if (rawMeta['instance'] !== undefined) {
-		partialMeta.instance = String(rawMeta['instance']);
+	const instance = rawMeta['instance'];
+	if (
+		typeof instance === 'string' ||
+		typeof instance === 'number' ||
+		typeof instance === 'boolean'
+	) {
+		partialMeta.instance = String(instance);
 	}
 	const dependsOnLinks = normalizeLinks(rawMeta['dependsOn']);
 	if (dependsOnLinks) {

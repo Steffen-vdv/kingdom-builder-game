@@ -12,10 +12,38 @@ const stringifyUnknown = (value: unknown): string => {
 	if (value === undefined) {
 		return 'undefined';
 	}
+	if (value === null) {
+		return 'null';
+	}
+	if (typeof value === 'string') {
+		return value;
+	}
+	if (
+		typeof value === 'number' ||
+		typeof value === 'boolean' ||
+		typeof value === 'bigint'
+	) {
+		return String(value);
+	}
+	if (typeof value === 'symbol') {
+		return value.toString();
+	}
+	if (typeof value === 'function') {
+		return value.name ? `[Function ${value.name}]` : '[Function anonymous]';
+	}
 	try {
 		return JSON.stringify(value, null, 2);
-	} catch (error) {
-		return String(value);
+	} catch {
+		const constructorName =
+			(value as { constructor?: { name?: string } })?.constructor?.name ??
+			'Object';
+		const keys = Object.keys(value as Record<string, unknown>);
+		if (keys.length === 0) {
+			return `${constructorName} { }`;
+		}
+		const previewKeys = keys.slice(0, 5).join(', ');
+		const suffix = keys.length > 5 ? ', …' : '';
+		return `${constructorName} { ${previewKeys}${suffix} }`;
 	}
 };
 
