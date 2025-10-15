@@ -174,6 +174,21 @@ export type {
 	SessionOverviewContent,
 } from './session';
 export type { SessionGateway } from './session/gateway';
+export {
+	buildSessionSnapshotMetadata,
+	type BuildSessionSnapshotMetadataOptions,
+	type MetadataRegistrySources,
+	type MetadataRegistrySource,
+	type MetadataRegistryEntrySource,
+	type MetadataContentSources,
+	type MetadataResourceSource,
+	type MetadataPhaseSource,
+	type MetadataPhaseStepSource,
+	type MetadataTriggerSource,
+	type MetadataDescriptorSource,
+	type MetadataAssetEntry,
+	type MetadataAssetSources,
+} from './session/metadataBuilder';
 export type {
 	ActionEffectChoice,
 	ActionChoiceMap,
