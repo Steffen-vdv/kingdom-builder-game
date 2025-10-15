@@ -1,4 +1,4 @@
-import { Stat, type StatKey } from '@kingdom-builder/contents';
+import type { StatKey } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import {
 	resolveAttackTargetFormatter,
@@ -21,9 +21,9 @@ const ATTACK_STAT_ROLES: AttackStatRole[] = [
 ];
 
 const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, StatKey> = {
-	power: Stat.armyStrength,
-	absorption: Stat.absorption,
-	fortification: Stat.fortificationStrength,
+	power: 'armyStrength',
+	absorption: 'absorption',
+	fortification: 'fortificationStrength',
 };
 
 type RawAttackStatParam = {

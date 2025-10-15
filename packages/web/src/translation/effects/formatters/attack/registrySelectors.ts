@@ -1,79 +1,123 @@
+import type { BuildingConfig } from '@kingdom-builder/protocol';
 import {
-	BUILDINGS,
-	RESOURCES,
-	STATS,
-	type ResourceKey,
-	type StatKey,
-} from '@kingdom-builder/contents';
+	DEFAULT_REGISTRIES,
+	DEFAULT_REGISTRY_METADATA,
+} from '../../../../contexts/defaultRegistryMetadata';
+import {
+	createRegistryLookup,
+	createResourceLookup,
+	type DefinitionLookup,
+} from '../../../../contexts/registryMetadataLookups';
+import {
+	buildRegistryMetadata,
+	buildResourceMetadata,
+	buildStatMetadata,
+	type MetadataLookup,
+	type RegistryMetadataDescriptor,
+} from '../../../../contexts/registryMetadataDescriptors';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
-function coerceLabel(value: string | undefined, fallback: string): string {
-	if (!value) {
-		return fallback;
-	}
-	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : fallback;
+interface AttackRegistryConfig {
+	readonly resources: MetadataLookup<RegistryMetadataDescriptor>;
+	readonly stats: MetadataLookup<RegistryMetadataDescriptor>;
+	readonly buildings: MetadataLookup<RegistryMetadataDescriptor>;
+	readonly buildingDefinitions: DefinitionLookup<BuildingConfig>;
 }
 
-function coerceIcon(icon: string | undefined): string {
-	return icon ? icon : '';
-}
+const freezeConfig = (config: AttackRegistryConfig): AttackRegistryConfig =>
+	Object.freeze({
+		resources: config.resources,
+		stats: config.stats,
+		buildings: config.buildings,
+		buildingDefinitions: config.buildingDefinitions,
+	});
 
-function toDescriptor(
-	label: string | undefined,
-	icon: string | undefined,
+const createDefaultConfig = (): AttackRegistryConfig => {
+	const defaultResourceLookup = createResourceLookup(
+		DEFAULT_REGISTRIES.resources,
+	);
+	const defaultBuildingLookup = createRegistryLookup(
+		DEFAULT_REGISTRIES.buildings,
+		'building',
+	);
+	return freezeConfig({
+		resources: buildResourceMetadata(
+			DEFAULT_REGISTRIES.resources,
+			DEFAULT_REGISTRY_METADATA.resources,
+		),
+		stats: buildStatMetadata(DEFAULT_REGISTRY_METADATA.stats),
+		buildings: buildRegistryMetadata(
+			DEFAULT_REGISTRIES.buildings,
+			DEFAULT_REGISTRY_METADATA.buildings,
+		),
+		buildingDefinitions: defaultBuildingLookup,
+	});
+};
+
+let registryConfig: AttackRegistryConfig = createDefaultConfig();
+
+export const configureAttackRegistry = (config: AttackRegistryConfig): void => {
+	registryConfig = freezeConfig(config);
+};
+
+const getRegistryConfig = (): AttackRegistryConfig => registryConfig;
+
+const toDescriptor = (
+	descriptor: RegistryMetadataDescriptor,
 	fallback: string,
-): AttackRegistryDescriptor {
-	return {
-		icon: coerceIcon(icon),
-		label: coerceLabel(label, fallback),
-	};
-}
+): AttackRegistryDescriptor => ({
+	icon: descriptor.icon ?? '',
+	label: descriptor.label ?? fallback,
+});
 
-export function selectAttackResourceDescriptor(
+export const selectAttackResourceDescriptor = (
 	resourceKey: string,
-): AttackRegistryDescriptor {
-	const definition = RESOURCES[resourceKey as ResourceKey];
-	return toDescriptor(definition?.label, definition?.icon, resourceKey);
-}
+): AttackRegistryDescriptor => {
+	const { resources } = getRegistryConfig();
+	const descriptor = resources.get(resourceKey);
+	return toDescriptor(descriptor, resourceKey);
+};
 
-export function selectAttackStatDescriptor(
+export const selectAttackStatDescriptor = (
 	statKey: string,
-): AttackRegistryDescriptor {
-	const definition = STATS[statKey as StatKey];
-	return toDescriptor(definition?.label, definition?.icon, statKey);
-}
+): AttackRegistryDescriptor => {
+	const { stats } = getRegistryConfig();
+	const descriptor = stats.get(statKey);
+	return toDescriptor(descriptor, statKey);
+};
 
-export function selectAttackBuildingDescriptor(
+export const selectAttackBuildingDescriptor = (
 	buildingId: string,
-): AttackRegistryDescriptor {
-	try {
-		const definition = BUILDINGS.get(buildingId);
-		return toDescriptor(definition.name, definition.icon, buildingId);
-	} catch {
-		return { icon: '', label: buildingId };
-	}
-}
+): AttackRegistryDescriptor => {
+	const { buildings } = getRegistryConfig();
+	const descriptor = buildings.get(buildingId);
+	return toDescriptor(descriptor, buildingId);
+};
 
-export function listAttackResourceKeys(): ReadonlyArray<ResourceKey> {
-	return Object.freeze(Object.keys(RESOURCES) as ReadonlyArray<ResourceKey>);
-}
+export const listAttackResourceKeys = (): ReadonlyArray<string> => {
+	const { resources } = getRegistryConfig();
+	return Object.freeze(resources.values().map((entry) => entry.id));
+};
 
-export function listAttackStatKeys(): ReadonlyArray<StatKey> {
-	return Object.freeze(Object.keys(STATS) as ReadonlyArray<StatKey>);
-}
+export const listAttackStatKeys = (): ReadonlyArray<string> => {
+	const { stats } = getRegistryConfig();
+	return Object.freeze(stats.values().map((entry) => entry.id));
+};
 
-export function listAttackBuildingIds(): ReadonlyArray<string> {
-	return Object.freeze(BUILDINGS.keys().slice());
-}
+export const listAttackBuildingIds = (): ReadonlyArray<string> => {
+	const { buildingDefinitions } = getRegistryConfig();
+	return buildingDefinitions.keys();
+};
 
-export function selectAttackDefaultStatKey(): StatKey | undefined {
+export const selectAttackDefaultStatKey = (): string | undefined => {
 	const keys = listAttackStatKeys();
 	return keys.length > 0 ? keys[0] : undefined;
-}
+};
 
-export function selectAttackDefaultBuildingId(): string | undefined {
+export const selectAttackDefaultBuildingId = (): string | undefined => {
 	const ids = listAttackBuildingIds();
 	return ids.length > 0 ? ids[0] : undefined;
-}
+};
+
+export type { AttackRegistryConfig };

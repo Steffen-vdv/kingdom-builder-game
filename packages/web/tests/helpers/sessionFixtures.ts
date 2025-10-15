@@ -10,7 +10,7 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
+import { DEFAULT_REGISTRY_METADATA } from '../../src/contexts/defaultRegistryMetadata';
 
 const clone = <T>(value: T): T => {
 	if (typeof structuredClone === 'function') {
@@ -23,9 +23,23 @@ export const createTestMetadata = (
 	overrides: Partial<SessionSnapshotMetadata> = {},
 ): SessionSnapshotMetadata => {
 	const overridesClone = clone(overrides);
+	const fallbackOverview = DEFAULT_REGISTRY_METADATA.overviewContent
+		? clone(DEFAULT_REGISTRY_METADATA.overviewContent)
+		: {
+				hero: {
+					badgeIcon: '',
+					badgeLabel: '',
+					title: '',
+					intro: '',
+					paragraph: '',
+					tokens: {},
+				},
+				sections: [],
+				tokens: {},
+			};
 	const overviewContent = overridesClone.overviewContent
 		? clone(overridesClone.overviewContent)
-		: clone(OVERVIEW_CONTENT);
+		: fallbackOverview;
 	if (overridesClone.overviewContent !== undefined) {
 		overridesClone.overviewContent = overviewContent;
 	}

@@ -1,4 +1,4 @@
-import { Resource, type ResourceKey } from '@kingdom-builder/contents';
+import type { ResourceKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -8,7 +8,10 @@ import {
 	defaultFortificationItems,
 } from './evaluation';
 import type { AttackTargetFormatter } from './types';
-import { selectAttackResourceDescriptor } from './registrySelectors';
+import {
+	selectAttackResourceDescriptor,
+	listAttackResourceKeys,
+} from './registrySelectors';
 
 const resourceFormatter: AttackTargetFormatter<{
 	type: 'resource';
@@ -22,7 +25,12 @@ const resourceFormatter: AttackTargetFormatter<{
 		if (targetParam?.type === 'resource') {
 			return targetParam;
 		}
-		return { type: 'resource', key: Resource.castleHP };
+		const resourceKeys = listAttackResourceKeys();
+		const fallbackKey = resourceKeys[0] as ResourceKey | undefined;
+		if (!fallbackKey) {
+			throw new Error('No resource definitions available');
+		}
+		return { type: 'resource', key: fallbackKey };
 	},
 	normalizeLogTarget(target) {
 		const resourceTarget = target as Extract<

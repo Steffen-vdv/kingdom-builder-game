@@ -1,4 +1,3 @@
-import { RESOURCE_TRANSFER_ICON } from '@kingdom-builder/contents';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
 	RESULT_EVENT_RESOLVE,
@@ -265,3 +264,4 @@ registerEffectFormatter('result_mod', 'add', {
 		);
 	},
 });
+const RESOURCE_TRANSFER_ICON = '🔁';
