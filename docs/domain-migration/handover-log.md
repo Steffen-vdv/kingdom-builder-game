@@ -6,6 +6,12 @@
   content so frontend consumers can render migration-ready overview screens
   without importing contents templates.
 
+## Domain Migration - P2 - T3 - Transport Metadata Enrichment
+
+- Backend session responses now deep-merge static content metadata with engine
+  snapshots, so web clients receive resource, trigger, and overview descriptors
+  without importing content bundles or mutating returned payloads.
+
 ## Domain Migration - P3 - T18 - Engine alias regression guard
 
 - Removed the Vite alias that exposed `@kingdom-builder/engine` to the web

@@ -26,7 +26,12 @@ describe('FastifySessionTransport', () => {
 		snapshot: {
 			game: { players: Array<{ id: string }>; currentPhase?: string };
 			recentResourceGains?: unknown[];
-			metadata: { passiveEvaluationModifiers?: unknown };
+			metadata: {
+				passiveEvaluationModifiers?: unknown;
+				resources?: Record<string, unknown>;
+				triggers?: Record<string, unknown>;
+				overviewContent?: unknown;
+			};
 		};
 	};
 
@@ -43,7 +48,7 @@ describe('FastifySessionTransport', () => {
 	}
 
 	it('creates sessions over HTTP', async () => {
-		const { app } = await createServer();
+		const { app, gainKey } = await createServer();
 		const response = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -51,32 +56,47 @@ describe('FastifySessionTransport', () => {
 			payload: { devMode: true },
 		});
 		expect(response.statusCode).toBe(201);
-		const body = response.json() as {
+		const body = response.json() as SnapshotResponse & {
 			snapshot: { game: { devMode: boolean } };
 		};
 		expect(body.snapshot.game.devMode).toBe(true);
+		const metadata = body.snapshot.metadata;
+		expect(metadata.resources?.[gainKey]).toBeDefined();
+		expect(metadata.triggers).toBeDefined();
+		expect(metadata.overviewContent).toBeDefined();
 		await app.close();
 	});
 
 	it('retrieves snapshots for sessions', async () => {
-		const { app } = await createServer();
+		const { app, gainKey } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
 			headers: authorizedHeaders,
 			payload: {},
 		});
-		const { sessionId } = createResponse.json() as { sessionId: string };
+		const createBody = createResponse.json() as SnapshotResponse & {
+			sessionId: string;
+		};
+		const { sessionId } = createBody;
+		const createResources = createBody.snapshot.metadata.resources;
+		expect(createResources).toBeDefined();
+		if (createResources) {
+			createResources[gainKey] = { mutated: true };
+		}
 		const snapshotResponse = await app.inject({
 			method: 'GET',
 			url: `/sessions/${sessionId}/snapshot`,
 			headers: authorizedHeaders,
 		});
 		expect(snapshotResponse.statusCode).toBe(200);
-		const snapshot = snapshotResponse.json() as {
-			snapshot: { game: { players: unknown[] } };
-		};
+		const snapshot = snapshotResponse.json() as SnapshotResponse;
 		expect(snapshot.snapshot.game.players).toHaveLength(2);
+		expect(snapshot.snapshot.metadata.resources?.[gainKey]).not.toEqual({
+			mutated: true,
+		});
+		expect(snapshot.snapshot.metadata.triggers).toBeDefined();
+		expect(snapshot.snapshot.metadata.overviewContent).toBeDefined();
 		await app.close();
 	});
 
@@ -169,7 +189,7 @@ describe('FastifySessionTransport', () => {
 			payload: { actionId },
 		});
 		expect(actionResponse.statusCode).toBe(200);
-		const actionBody = actionResponse.json() as {
+		const actionBody = actionResponse.json() as SnapshotResponse & {
 			status: string;
 			snapshot: {
 				game: { players: Array<{ resources: Record<string, number> }> };
@@ -178,6 +198,7 @@ describe('FastifySessionTransport', () => {
 		expect(actionBody.status).toBe('success');
 		const [player] = actionBody.snapshot.game.players;
 		expect(player?.resources[gainKey]).toBe(1);
+		expect(actionBody.snapshot.metadata.resources?.[gainKey]).toBeDefined();
 		await app.close();
 	});
 

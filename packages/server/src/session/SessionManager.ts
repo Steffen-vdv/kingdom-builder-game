@@ -20,6 +20,7 @@ import type {
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
 import { SessionMetadataBuilder } from './SessionMetadataBuilder.js';
+import { mergeSessionMetadata } from './mergeSessionMetadata.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -66,7 +67,7 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
-	private readonly metadataBuilder: SessionMetadataBuilder;
+	private readonly metadata: SessionSnapshotMetadata;
 
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
@@ -99,14 +100,14 @@ export class SessionManager {
 			baseRegistries.resources,
 			resourceRegistry,
 		);
-		this.metadataBuilder = new SessionMetadataBuilder({
+		const metadataBuilder = new SessionMetadataBuilder({
 			actions: this.baseOptions.actions,
 			buildings: this.baseOptions.buildings,
 			developments: this.baseOptions.developments,
 			populations: this.baseOptions.populations,
 			resources,
 		});
-		const fullRegistries = this.metadataBuilder.createRegistriesPayload();
+		const fullRegistries = metadataBuilder.createRegistriesPayload();
 		this.registries = {
 			actions: fullRegistries.actions,
 			buildings: fullRegistries.buildings,
@@ -114,6 +115,7 @@ export class SessionManager {
 			populations: fullRegistries.populations,
 			resources: fullRegistries.resources,
 		};
+		this.metadata = metadataBuilder.createSnapshotMetadata();
 	}
 
 	public createSession(
@@ -169,7 +171,8 @@ export class SessionManager {
 	): ReturnType<EngineSession['getSnapshot']> {
 		const session = this.requireSession(sessionId);
 		const snapshot = session.getSnapshot();
-		const metadata = this.mergeSnapshotMetadata(snapshot.metadata);
+		const baseMetadata = this.getSnapshotMetadata();
+		const metadata = mergeSessionMetadata(baseMetadata, snapshot.metadata);
 		return { ...snapshot, metadata };
 	}
 
@@ -187,6 +190,10 @@ export class SessionManager {
 
 	public getRegistries(): SessionRegistriesPayload {
 		return structuredClone(this.registries);
+	}
+
+	public getSnapshotMetadata(): SessionSnapshotMetadata {
+		return structuredClone(this.metadata);
 	}
 
 	private requireSession(sessionId: string): EngineSession {
@@ -263,14 +270,6 @@ export class SessionManager {
 			}
 		}
 		return Object.fromEntries(registry.entries());
-	}
-
-	private mergeSnapshotMetadata(
-		metadata: SessionSnapshotMetadata,
-	): SessionSnapshotMetadata {
-		const baseMetadata = this.metadataBuilder.createSnapshotMetadata();
-		const sessionMetadata = structuredClone(metadata);
-		return { ...baseMetadata, ...sessionMetadata };
 	}
 
 	private purgeExpiredSessions(): void {

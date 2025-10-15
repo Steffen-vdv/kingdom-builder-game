@@ -25,6 +25,7 @@ import type {
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
+import { mergeSessionMetadata } from '../session/mergeSessionMetadata.js';
 import { normalizeActionTraces } from './engineTraceNormalizer.js';
 import { extractRequirementFailures } from './extractRequirementFailures.js';
 import type {
@@ -185,9 +186,10 @@ export class SessionTransportBase {
 				const snapshot = session.getSnapshot();
 				return { traces, snapshot };
 			});
+			const enrichedSnapshot = this.enrichSnapshot(result.snapshot);
 			const response = actionExecuteResponseSchema.parse({
 				status: 'success',
-				snapshot: result.snapshot,
+				snapshot: enrichedSnapshot,
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
@@ -341,10 +343,17 @@ export class SessionTransportBase {
 		sessionId: string,
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
+		const enrichedSnapshot = this.enrichSnapshot(snapshot);
 		return {
 			sessionId,
-			snapshot,
+			snapshot: enrichedSnapshot,
 			registries: this.sessionManager.getRegistries(),
 		};
+	}
+
+	protected enrichSnapshot(snapshot: SessionSnapshot): SessionSnapshot {
+		const baseMetadata = this.sessionManager.getSnapshotMetadata();
+		const metadata = mergeSessionMetadata(baseMetadata, snapshot.metadata);
+		return { ...snapshot, metadata };
 	}
 }
