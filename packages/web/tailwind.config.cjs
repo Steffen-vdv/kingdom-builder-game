@@ -9,6 +9,12 @@ module.exports = {
 			path.resolve(__dirname, 'src/**/*.{js,ts,jsx,tsx}'),
 		],
 	},
-	theme: { extend: {} },
+	theme: {
+		extend: {
+			spacing: {
+				1: '0.25rem',
+			},
+		},
+	},
 	plugins: [],
 };
