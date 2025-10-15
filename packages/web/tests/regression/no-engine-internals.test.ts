@@ -37,7 +37,7 @@ describe('web package avoids engine internals', () => {
 			let stat;
 			try {
 				stat = await fs.stat(rootPath);
-			} catch (error) {
+			} catch {
 				continue;
 			}
 			if (!stat.isDirectory()) {
