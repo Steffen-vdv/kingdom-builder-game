@@ -100,14 +100,14 @@ function mergeIconLabel(
 }
 
 function toIconLabel(
-	definition: Partial<PopulationConfig> & {
-		id?: string;
-		icon?: string | undefined;
-		name?: string | undefined;
-		label?: string | undefined;
-		description?: string | undefined;
-	},
-	fallbackId: string,
+        definition: Partial<PopulationConfig> & {
+                id?: string;
+                icon?: string;
+                name?: string;
+                label?: string;
+                description?: string;
+        },
+        fallbackId: string,
 ): TranslationIconLabel {
 	const label = definition.name ?? definition.label ?? fallbackId;
 	const entry: TranslationIconLabel = {};
@@ -124,8 +124,8 @@ function toIconLabel(
 }
 
 function buildPopulationMap(
-	registry: SessionRegistries['populations'],
-	descriptors?: Record<string, SessionMetadataDescriptor> | undefined,
+        registry: SessionRegistries['populations'],
+        descriptors?: Record<string, SessionMetadataDescriptor>,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
 	for (const [id, definition] of registry.entries()) {
@@ -136,8 +136,8 @@ function buildPopulationMap(
 }
 
 function buildResourceMap(
-	resources: SessionRegistries['resources'],
-	descriptors?: Record<string, SessionMetadataDescriptor> | undefined,
+        resources: SessionRegistries['resources'],
+        descriptors?: Record<string, SessionMetadataDescriptor>,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
 	for (const [key, definition] of Object.entries(resources)) {
@@ -156,7 +156,7 @@ function buildResourceMap(
 }
 
 function buildStatMap(
-	descriptors?: Record<string, SessionMetadataDescriptor> | undefined,
+        descriptors?: Record<string, SessionMetadataDescriptor>,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
 	for (const [key, base] of Object.entries(DEFAULT_STAT_INFO)) {
@@ -212,7 +212,7 @@ function mergeTriggerAsset(
 }
 
 function buildTriggerMap(
-	triggers?: Record<string, SessionTriggerMetadata> | undefined,
+        triggers?: Record<string, SessionTriggerMetadata>,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
 	const entries: Record<string, TranslationTriggerAsset> = {
 		...DEFAULT_TRIGGER_ASSETS,

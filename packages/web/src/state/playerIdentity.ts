@@ -13,31 +13,35 @@ function readStoredPlayerName(): StoredName {
 	if (typeof window === 'undefined') {
 		return null;
 	}
-	try {
-		const raw = window.localStorage.getItem(PLAYER_NAME_STORAGE_KEY);
-		if (!raw) {
-			return null;
-		}
-		const trimmed = sanitizeName(raw);
-		return trimmed.length > 0 ? trimmed : null;
-	} catch (error) {
-		return null;
-	}
+        try {
+                const raw = window.localStorage.getItem(
+                        PLAYER_NAME_STORAGE_KEY,
+                );
+                if (!raw) {
+                        return null;
+                }
+                const trimmed = sanitizeName(raw);
+                return trimmed.length > 0 ? trimmed : null;
+        } catch {
+                return null;
+        }
 }
 
 function writeStoredPlayerName(name: StoredName): void {
 	if (typeof window === 'undefined') {
 		return;
 	}
-	try {
-		if (!name || name.length === 0) {
-			window.localStorage.removeItem(PLAYER_NAME_STORAGE_KEY);
-			return;
-		}
-		window.localStorage.setItem(PLAYER_NAME_STORAGE_KEY, name);
-	} catch (error) {
-		// Ignore storage exceptions (e.g., private browsing modes).
-	}
+        try {
+                if (!name || name.length === 0) {
+                        window.localStorage.removeItem(
+                                PLAYER_NAME_STORAGE_KEY,
+                        );
+                        return;
+                }
+                window.localStorage.setItem(PLAYER_NAME_STORAGE_KEY, name);
+        } catch {
+                // Ignore storage exceptions (e.g., private browsing modes).
+        }
 }
 
 export interface PlayerIdentityState {

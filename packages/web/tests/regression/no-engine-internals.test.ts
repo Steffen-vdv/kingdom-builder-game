@@ -35,11 +35,11 @@ describe('web package avoids engine internals', () => {
 		for (const rootName of roots) {
 			const rootPath = path.join(packageRoot, rootName);
 			let stat;
-			try {
-				stat = await fs.stat(rootPath);
-			} catch (error) {
-				continue;
-			}
+                        try {
+                                stat = await fs.stat(rootPath);
+                        } catch {
+                                continue;
+                        }
 			if (!stat.isDirectory()) {
 				continue;
 			}

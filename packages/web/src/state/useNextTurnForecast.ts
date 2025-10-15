@@ -145,9 +145,9 @@ export function useNextTurnForecast(): NextTurnForecast {
 						);
 						updates[playerId] = response.result.delta;
 						hasSuccess = true;
-					} catch (error) {
-						hasError = true;
-					}
+                                        } catch {
+                                                hasError = true;
+                                        }
 				}),
 			);
 			if (disposed) {
@@ -191,9 +191,9 @@ export function useNextTurnForecast(): NextTurnForecast {
 			try {
 				const { delta } = session.simulateUpcomingPhases(player.id);
 				forecast[player.id] = delta;
-			} catch (error) {
-				forecast[player.id] = cloneEmptyDelta();
-			}
+                        } catch {
+                                forecast[player.id] = cloneEmptyDelta();
+                        }
 		}
 		cacheRef.current = { key: hashKey, value: forecast };
 		return forecast;

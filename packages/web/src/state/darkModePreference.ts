@@ -15,15 +15,15 @@ function getSystemDarkModePreference(): boolean {
 		return true;
 	}
 
-	try {
-		if (typeof window.matchMedia !== 'function') {
-			return true;
-		}
+        try {
+                if (typeof window.matchMedia !== 'function') {
+                        return true;
+                }
 
-		return window.matchMedia('(prefers-color-scheme: dark)').matches;
-	} catch (error) {
-		return true;
-	}
+                return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch {
+                return true;
+        }
 }
 
 function readDarkModePreference(): boolean {
@@ -33,19 +33,19 @@ function readDarkModePreference(): boolean {
 		return defaultValue;
 	}
 
-	try {
-		const storedValue = window.localStorage.getItem(
-			DARK_MODE_PREFERENCE_STORAGE_KEY,
-		);
+        try {
+                const storedValue = window.localStorage.getItem(
+                        DARK_MODE_PREFERENCE_STORAGE_KEY,
+                );
 
-		if (storedValue === null) {
-			return defaultValue;
-		}
+                if (storedValue === null) {
+                        return defaultValue;
+                }
 
-		return storedValue === 'true';
-	} catch (error) {
-		return defaultValue;
-	}
+                return storedValue === 'true';
+        } catch {
+                return defaultValue;
+        }
 }
 
 function writeDarkModePreference(value: boolean) {
@@ -53,14 +53,14 @@ function writeDarkModePreference(value: boolean) {
 		return;
 	}
 
-	try {
-		window.localStorage.setItem(
-			DARK_MODE_PREFERENCE_STORAGE_KEY,
-			value ? 'true' : 'false',
-		);
-	} catch (error) {
-		// Ignore storage exceptions (e.g., Safari private mode).
-	}
+        try {
+                window.localStorage.setItem(
+                        DARK_MODE_PREFERENCE_STORAGE_KEY,
+                        value ? 'true' : 'false',
+                );
+        } catch {
+                // Ignore storage exceptions (e.g., Safari private mode).
+        }
 }
 
 function useStoredDarkModePreference(): [

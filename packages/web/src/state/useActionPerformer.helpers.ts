@@ -212,19 +212,19 @@ export async function handleMissingActionDefinition({
 	syncPhaseState(snapshot);
 	refresh();
 	let shouldAddLog = true;
-	try {
-		await showResolution({
-			action: actionMeta,
-			lines: logLines,
-			player: resolutionPlayer,
-			summaries: [],
-			source: resolutionSource,
-			actorLabel: 'Played by',
-		});
-	} catch (_error) {
-		addLog(logLines, resolutionPlayer);
-		shouldAddLog = false;
-	}
+        try {
+                await showResolution({
+                        action: actionMeta,
+                        lines: logLines,
+                        player: resolutionPlayer,
+                        summaries: [],
+                        source: resolutionSource,
+                        actorLabel: 'Played by',
+                });
+        } catch {
+                addLog(logLines, resolutionPlayer);
+                shouldAddLog = false;
+        }
 	if (shouldAddLog) {
 		addLog(logLines, resolutionPlayer);
 	}
@@ -273,16 +273,16 @@ export async function presentResolutionOrLog({
 		id: player.id,
 		name: player.name,
 	} satisfies ShowResolutionOptions['player'];
-	try {
-		await showResolution({
-			action,
-			lines: logLines,
-			player: playerIdentity,
-			summaries,
-			source,
-			actorLabel: 'Played by',
-		});
-	} catch (_error) {
-		addLog(logLines, playerIdentity);
-	}
+        try {
+                await showResolution({
+                        action,
+                        lines: logLines,
+                        player: playerIdentity,
+                        summaries,
+                        source,
+                        actorLabel: 'Played by',
+                });
+        } catch {
+                addLog(logLines, playerIdentity);
+        }
 }

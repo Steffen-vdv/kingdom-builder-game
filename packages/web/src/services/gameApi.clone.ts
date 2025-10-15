@@ -74,14 +74,16 @@ const deepClone = <T>(value: T, seen = new WeakMap<object, unknown>()): T => {
 };
 
 export const clone: CloneFn = (value) => {
-	if (typeof structuredClone === 'function') {
-		const cloneFn = structuredClone as unknown as <U>(input: U) => U;
-		try {
-			return cloneFn(value);
-		} catch (error) {
-			// Fall through when structuredClone cannot process the value.
-		}
-	}
+        if (typeof structuredClone === 'function') {
+                const cloneFn = structuredClone as unknown as <U>(
+                        input: U,
+                ) => U;
+                try {
+                        return cloneFn(value);
+                } catch {
+                        // structuredClone could not process the value.
+                }
+        }
 
 	return deepClone(value);
 };

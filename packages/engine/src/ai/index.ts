@@ -112,12 +112,15 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			engineContext.phases[engineContext.game.phaseIndex]?.action &&
 			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) > 0
 		) {
-			try {
-				await dependencies.performAction(TAX_ACTION_ID, engineContext);
-			} catch (error) {
-				await finishActionPhaseAsync();
-				return;
-			}
+                        try {
+                                await dependencies.performAction(
+                                        TAX_ACTION_ID,
+                                        engineContext,
+                                );
+                        } catch {
+                                await finishActionPhaseAsync();
+                                return;
+                        }
 		}
 
 		if (

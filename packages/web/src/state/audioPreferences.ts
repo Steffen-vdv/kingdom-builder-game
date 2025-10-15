@@ -14,16 +14,16 @@ function readBooleanPreference(key: string, defaultValue: boolean): boolean {
 		return defaultValue;
 	}
 
-	try {
-		const storedValue = window.localStorage.getItem(key);
-		if (storedValue === null) {
-			return defaultValue;
-		}
+        try {
+                const storedValue = window.localStorage.getItem(key);
+                if (storedValue === null) {
+                        return defaultValue;
+                }
 
-		return storedValue === 'true';
-	} catch (error) {
-		return defaultValue;
-	}
+                return storedValue === 'true';
+        } catch {
+                return defaultValue;
+        }
 }
 
 function writeBooleanPreference(key: string, value: boolean) {
@@ -31,11 +31,11 @@ function writeBooleanPreference(key: string, value: boolean) {
 		return;
 	}
 
-	try {
-		window.localStorage.setItem(key, value ? 'true' : 'false');
-	} catch (error) {
-		// Ignore storage exceptions (e.g., Safari private mode).
-	}
+        try {
+                window.localStorage.setItem(key, value ? 'true' : 'false');
+        } catch {
+                // Ignore storage exceptions (e.g., Safari private mode).
+        }
 }
 
 function useStoredBooleanPreference(

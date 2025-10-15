@@ -127,8 +127,8 @@ function readTokensFromEnv(
 		if (parsed && typeof parsed === 'object') {
 			return parsed;
 		}
-	} catch (error) {
-		throw new AuthError('FORBIDDEN', 'Invalid token configuration.');
-	}
+        } catch {
+                throw new AuthError('FORBIDDEN', 'Invalid token configuration.');
+        }
 	return {};
 }

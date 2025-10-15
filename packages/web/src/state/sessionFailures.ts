@@ -9,14 +9,41 @@ const DEFAULT_FAILURE_SUMMARY =
 	'An unexpected error prevented the game from loading.';
 
 const stringifyUnknown = (value: unknown): string => {
-	if (value === undefined) {
-		return 'undefined';
-	}
-	try {
-		return JSON.stringify(value, null, 2);
-	} catch (error) {
-		return String(value);
-	}
+        if (value === undefined) {
+                return 'undefined';
+        }
+        if (value === null) {
+                return 'null';
+        }
+        if (typeof value === 'string') {
+                return value;
+        }
+        if (
+                typeof value === 'number' ||
+                typeof value === 'boolean' ||
+                typeof value === 'bigint'
+        ) {
+                return String(value);
+        }
+        if (typeof value === 'symbol') {
+                const description = value.description;
+                return description ? `Symbol(${description})` : 'Symbol()';
+        }
+        if (typeof value === 'function') {
+                return `[function ${value.name || 'anonymous'}]`;
+        }
+        try {
+                return JSON.stringify(value, null, 2);
+        } catch {
+                if (typeof value === 'object') {
+                        const constructorInfo = (
+                                value as { constructor?: { name?: string } }
+                        ).constructor;
+                        const constructorName = constructorInfo?.name ?? 'Object';
+                        return `{ [unserializable ${constructorName}] }`;
+                }
+                return 'unknown';
+        }
 };
 
 export const formatFailureDetails = (error: unknown): SessionFailureDetails => {

@@ -1,7 +1,4 @@
-import type {
-	AssetMetadata,
-	RegistryMetadataDescriptor,
-} from '../../contexts/RegistryMetadataContext';
+import type { RegistryMetadataDescriptor } from '../../contexts/RegistryMetadataContext';
 import type { TranslationIconLabel } from '../../translation/context/types';
 
 export interface DescriptorDisplay {
@@ -19,9 +16,9 @@ const resolveLabel = (label: string | undefined, fallback: string): string => {
 	return fallback;
 };
 
-export const toDescriptorDisplay = (
-	descriptor: RegistryMetadataDescriptor | AssetMetadata,
-): DescriptorDisplay => {
+export const toDescriptorDisplay = <
+TDescriptor extends RegistryMetadataDescriptor,
+>(descriptor: TDescriptor): DescriptorDisplay => {
 	const entry: DescriptorDisplay = {
 		id: descriptor.id,
 		label: resolveLabel(descriptor.label, descriptor.id),

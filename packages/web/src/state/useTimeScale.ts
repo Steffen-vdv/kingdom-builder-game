@@ -15,15 +15,18 @@ function readStoredTimeScale(): TimeScale | null {
 		return null;
 	}
 	try {
-		const raw = window.localStorage.getItem(TIME_SCALE_STORAGE_KEY);
+		const raw = window.localStorage.getItem(
+			TIME_SCALE_STORAGE_KEY,
+		);
 		if (!raw) {
 			return null;
 		}
 		const parsed = Number(raw);
-		return (TIME_SCALE_OPTIONS as readonly number[]).includes(parsed)
-			? (parsed as TimeScale)
-			: null;
-	} catch (error) {
+		const isAllowed = (
+			TIME_SCALE_OPTIONS as readonly number[]
+		).includes(parsed);
+		return isAllowed ? (parsed as TimeScale) : null;
+	} catch {
 		return null;
 	}
 }
@@ -78,10 +81,12 @@ export function useTimeScale({
 				}
 				if (typeof window !== 'undefined') {
 					try {
-						const storage = window.localStorage;
-						storage.setItem(TIME_SCALE_STORAGE_KEY, String(value));
-					} catch (error) {
-						// Ignore storage exceptions (e.g., Safari private mode).
+						window.localStorage.setItem(
+							TIME_SCALE_STORAGE_KEY,
+							String(value),
+						);
+					} catch {
+						// Ignore storage exceptions (Safari private mode).
 					}
 				}
 				timeScaleRef.current = value;

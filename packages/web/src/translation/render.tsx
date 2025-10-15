@@ -31,11 +31,11 @@ export function renderSummary(summary: Summary | undefined): React.ReactNode {
 }
 
 export function renderCosts(
-	costs: Record<string, number | undefined> | undefined,
-	resources: Record<string, number>,
-	actionCostResource?: string,
-	upkeep?: Record<string, number | undefined> | undefined,
-	options?: { showFreeLabel?: boolean; assets?: TranslationAssets },
+        costs: Record<string, number | undefined> | undefined,
+        resources: Record<string, number>,
+        actionCostResource?: string,
+        upkeep?: Record<string, number | undefined>,
+        options?: { showFreeLabel?: boolean; assets?: TranslationAssets },
 ) {
 	const showFreeLabel = options?.showFreeLabel ?? true;
 	const assets = options?.assets;
