@@ -79,6 +79,7 @@ export const clone: CloneFn = (value) => {
 		try {
 			return cloneFn(value);
 		} catch (error) {
+			void error;
 			// Fall through when structuredClone cannot process the value.
 		}
 	}

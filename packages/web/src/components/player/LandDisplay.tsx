@@ -63,7 +63,7 @@ const LandTile: React.FC<{
 	);
 	return (
 		<div
-			className="land-tile"
+			className="panel-card hoverable land-tile"
 			onMouseEnter={showLandCard}
 			onMouseLeave={clearHoverCard}
 		>
@@ -111,7 +111,7 @@ const LandTile: React.FC<{
 						return (
 							<span
 								key={slotIndex}
-								className="land-slot"
+								className="panel-card hoverable land-slot"
 								aria-label={developmentDisplay.label}
 								onMouseEnter={handleMouseEnter}
 								onMouseLeave={handleMouseLeave}
@@ -146,7 +146,7 @@ const LandTile: React.FC<{
 					return (
 						<span
 							key={slotIndex}
-							className="land-slot italic"
+							className="panel-card hoverable land-slot italic"
 							aria-label={`${slotDisplay.label} (empty)`}
 							onMouseEnter={handleMouseEnter}
 							onMouseLeave={handleMouseLeave}

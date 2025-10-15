@@ -7,7 +7,10 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
-import { useNextTurnForecast } from '../src/state/useNextTurnForecast';
+import {
+	resetNextTurnForecastCacheForTests,
+	useNextTurnForecast,
+} from '../src/state/useNextTurnForecast';
 import { createSessionHelpers } from './utils/sessionStateHelpers';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
@@ -147,6 +150,7 @@ describe('useNextTurnForecast', () => {
 	const secondPlayerId = createPlayer(2).id;
 
 	beforeEach(() => {
+		resetNextTurnForecastCacheForTests();
 		simulationMocks.simulateUpcomingPhases.mockReset();
 		simulationMocks.simulateUpcomingPhases.mockResolvedValue({
 			sessionId: engineValue.sessionId,

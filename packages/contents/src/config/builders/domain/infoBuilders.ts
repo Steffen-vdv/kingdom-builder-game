@@ -55,7 +55,7 @@ export class ResourceBuilder extends InfoBuilder<ResourceInfo> {
 	}
 }
 
-export interface PopulationRoleInfo extends InfoDef {}
+export type PopulationRoleInfo = InfoDef;
 
 export class PopulationRoleBuilder extends InfoBuilder<PopulationRoleInfo> {
 	constructor(key: PopulationRoleId) {

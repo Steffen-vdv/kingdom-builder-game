@@ -22,6 +22,7 @@ function readBooleanPreference(key: string, defaultValue: boolean): boolean {
 
 		return storedValue === 'true';
 	} catch (error) {
+		void error;
 		return defaultValue;
 	}
 }
@@ -34,6 +35,7 @@ function writeBooleanPreference(key: string, value: boolean) {
 	try {
 		window.localStorage.setItem(key, value ? 'true' : 'false');
 	} catch (error) {
+		void error;
 		// Ignore storage exceptions (e.g., Safari private mode).
 	}
 }
