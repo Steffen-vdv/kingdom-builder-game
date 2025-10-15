@@ -6,9 +6,15 @@ import { deserializeSessionRegistries } from '../state/sessionRegistries';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import snapshot from './defaultRegistryMetadata.json';
 
+type SnapshotMetadata = typeof snapshot.metadata;
+
+export type DefaultOverviewContent = SnapshotMetadata['overviewContent'];
+
 interface DefaultRegistrySnapshot {
 	readonly registries: SessionRegistriesPayload;
-	readonly metadata: SessionSnapshotMetadata;
+	readonly metadata: SessionSnapshotMetadata & {
+		readonly overviewContent: DefaultOverviewContent;
+	};
 }
 
 function deepFreeze<T>(value: T): T {
@@ -43,3 +49,6 @@ export const DEFAULT_REGISTRIES: SessionRegistries =
 
 export const DEFAULT_REGISTRY_METADATA: SessionSnapshotMetadata =
 	SNAPSHOT.metadata;
+
+export const DEFAULT_OVERVIEW_CONTENT: DefaultOverviewContent =
+	SNAPSHOT.metadata.overviewContent;

@@ -7,6 +7,11 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
+	DEFAULT_REGISTRIES,
+	DEFAULT_REGISTRY_METADATA,
+	DEFAULT_OVERVIEW_CONTENT,
+} from '../../src/contexts/defaultRegistryMetadata';
+import {
 	RegistryMetadataProvider,
 	useRegistryMetadata,
 	useResourceMetadata,
@@ -285,5 +290,71 @@ describe('RegistryMetadataProvider', () => {
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
 		expect(context.overviewContent.hero.title).toBe('Game Overview');
+	});
+
+	it('falls back to default metadata when snapshot data is missing', () => {
+		const metadata: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+		};
+		let captured: RegistryMetadataContextValue | null = null;
+		const Capture = () => {
+			captured = useRegistryMetadata();
+			return null;
+		};
+		renderToStaticMarkup(
+			<RegistryMetadataProvider
+				registries={DEFAULT_REGISTRIES}
+				metadata={metadata}
+			>
+				<Capture />
+			</RegistryMetadataProvider>,
+		);
+		if (!captured) {
+			throw new Error('Registry metadata context was not captured.');
+		}
+		const {
+			resourceMetadata,
+			populationMetadata,
+			buildingMetadata,
+			developmentMetadata,
+			statMetadata,
+			phaseMetadata,
+			triggerMetadata,
+			landMetadata,
+			slotMetadata,
+			passiveMetadata,
+			overviewContent,
+		} = captured;
+		expect(overviewContent).toBe(DEFAULT_OVERVIEW_CONTENT);
+		expect(resourceMetadata.select('gold').label).toBe(
+			DEFAULT_REGISTRY_METADATA.resources?.gold?.label,
+		);
+		expect(populationMetadata.select('council').label).toBe(
+			DEFAULT_REGISTRY_METADATA.populations?.council?.label,
+		);
+		expect(buildingMetadata.select('market').label).toBe(
+			DEFAULT_REGISTRY_METADATA.buildings?.market?.label,
+		);
+		expect(developmentMetadata.select('farm').label).toBe(
+			DEFAULT_REGISTRY_METADATA.developments?.farm?.label,
+		);
+		expect(statMetadata.select('growth').label).toBe(
+			DEFAULT_REGISTRY_METADATA.stats?.growth?.label,
+		);
+		expect(phaseMetadata.select('growth').label).toBe(
+			DEFAULT_REGISTRY_METADATA.phases?.growth?.label,
+		);
+		expect(triggerMetadata.select('onGrowthPhase').label).toBe(
+			DEFAULT_REGISTRY_METADATA.triggers?.onGrowthPhase?.label,
+		);
+		expect(landMetadata.select().label).toBe(
+			DEFAULT_REGISTRY_METADATA.assets?.land?.label,
+		);
+		expect(slotMetadata.select().label).toBe(
+			DEFAULT_REGISTRY_METADATA.assets?.slot?.label,
+		);
+		expect(passiveMetadata.select().label).toBe(
+			DEFAULT_REGISTRY_METADATA.assets?.passive?.label,
+		);
 	});
 });

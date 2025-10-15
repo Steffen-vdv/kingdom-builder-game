@@ -9,10 +9,6 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -35,6 +31,11 @@ import {
 	type TriggerMetadata,
 } from './registryMetadataDescriptors';
 import {
+	DEFAULT_REGISTRY_METADATA,
+	DEFAULT_OVERVIEW_CONTENT,
+	type DefaultOverviewContent,
+} from './defaultRegistryMetadata';
+import {
 	createAssetMetadataSelector,
 	createMetadataSelector,
 	extractDescriptorRecord,
@@ -43,6 +44,67 @@ import {
 	type AssetMetadataSelector,
 	type MetadataSelector,
 } from './registryMetadataSelectors';
+
+type OverviewContentTemplate = DefaultOverviewContent;
+
+type SnapshotMetadataWithOverview = SessionSnapshotMetadata & {
+	overviewContent?: OverviewContentTemplate;
+};
+
+const DEFAULT_RESOURCE_DESCRIPTORS = extractDescriptorRecord(
+	DEFAULT_REGISTRY_METADATA,
+	'resources',
+);
+
+const DEFAULT_POPULATION_DESCRIPTORS = extractDescriptorRecord(
+	DEFAULT_REGISTRY_METADATA,
+	'populations',
+);
+
+const DEFAULT_BUILDING_DESCRIPTORS = extractDescriptorRecord(
+	DEFAULT_REGISTRY_METADATA,
+	'buildings',
+);
+
+const DEFAULT_DEVELOPMENT_DESCRIPTORS = extractDescriptorRecord(
+	DEFAULT_REGISTRY_METADATA,
+	'developments',
+);
+
+const DEFAULT_STAT_DESCRIPTORS = extractDescriptorRecord(
+	DEFAULT_REGISTRY_METADATA,
+	'stats',
+);
+
+const DEFAULT_ASSET_DESCRIPTORS = extractDescriptorRecord(
+	DEFAULT_REGISTRY_METADATA,
+	'assets',
+);
+
+const DEFAULT_PHASES = extractPhaseRecord(DEFAULT_REGISTRY_METADATA);
+
+const DEFAULT_TRIGGERS = extractTriggerRecord(DEFAULT_REGISTRY_METADATA);
+
+const mergeDescriptorRecords = <TValue,>(
+	fallback: Readonly<Record<string, TValue>> | undefined,
+	overrides: Readonly<Record<string, TValue>> | undefined,
+): Readonly<Record<string, TValue>> | undefined => {
+	if (!fallback) {
+		return overrides;
+	}
+	if (!overrides) {
+		return fallback;
+	}
+	return Object.freeze({
+		...fallback,
+		...overrides,
+	}) as Readonly<Record<string, TValue>>;
+};
+
+const readOverviewContent = (
+	snapshot: SessionSnapshotMetadata,
+): OverviewContentTemplate | undefined =>
+	(snapshot as SnapshotMetadataWithOverview).overviewContent;
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
@@ -107,52 +169,90 @@ export function RegistryMetadataProvider({
 		() => createRegistryLookup(registries.populations, 'population'),
 		[registries.populations],
 	);
-	const resourceMetadataLookup = useMemo(
+	const resourceDescriptors = useMemo(
 		() =>
-			buildResourceMetadata(
-				registries.resources,
+			mergeDescriptorRecords(
+				DEFAULT_RESOURCE_DESCRIPTORS,
 				extractDescriptorRecord(metadata, 'resources'),
 			),
-		[registries.resources, metadata],
+		[metadata],
 	);
-	const populationMetadataLookup = useMemo(
+	const resourceMetadataLookup = useMemo(
+		() => buildResourceMetadata(registries.resources, resourceDescriptors),
+		[registries.resources, resourceDescriptors],
+	);
+	const populationDescriptors = useMemo(
 		() =>
-			buildRegistryMetadata(
-				registries.populations,
+			mergeDescriptorRecords(
+				DEFAULT_POPULATION_DESCRIPTORS,
 				extractDescriptorRecord(metadata, 'populations'),
 			),
-		[registries.populations, metadata],
+		[metadata],
 	);
-	const buildingMetadataLookup = useMemo(
+	const populationMetadataLookup = useMemo(
+		() => buildRegistryMetadata(registries.populations, populationDescriptors),
+		[registries.populations, populationDescriptors],
+	);
+	const buildingDescriptors = useMemo(
 		() =>
-			buildRegistryMetadata(
-				registries.buildings,
+			mergeDescriptorRecords(
+				DEFAULT_BUILDING_DESCRIPTORS,
 				extractDescriptorRecord(metadata, 'buildings'),
 			),
-		[registries.buildings, metadata],
+		[metadata],
+	);
+	const buildingMetadataLookup = useMemo(
+		() => buildRegistryMetadata(registries.buildings, buildingDescriptors),
+		[registries.buildings, buildingDescriptors],
+	);
+	const developmentDescriptors = useMemo(
+		() =>
+			mergeDescriptorRecords(
+				DEFAULT_DEVELOPMENT_DESCRIPTORS,
+				extractDescriptorRecord(metadata, 'developments'),
+			),
+		[metadata],
 	);
 	const developmentMetadataLookup = useMemo(
 		() =>
-			buildRegistryMetadata(
-				registries.developments,
-				extractDescriptorRecord(metadata, 'developments'),
+			buildRegistryMetadata(registries.developments, developmentDescriptors),
+		[registries.developments, developmentDescriptors],
+	);
+	const statDescriptors = useMemo(
+		() =>
+			mergeDescriptorRecords(
+				DEFAULT_STAT_DESCRIPTORS,
+				extractDescriptorRecord(metadata, 'stats'),
 			),
-		[registries.developments, metadata],
+		[metadata],
 	);
 	const statMetadataLookup = useMemo(
-		() => buildStatMetadata(extractDescriptorRecord(metadata, 'stats')),
+		() => buildStatMetadata(statDescriptors),
+		[statDescriptors],
+	);
+	const phaseDescriptors = useMemo(
+		() => mergeDescriptorRecords(DEFAULT_PHASES, extractPhaseRecord(metadata)),
 		[metadata],
 	);
 	const phaseMetadataLookup = useMemo(
-		() => buildPhaseMetadata(extractPhaseRecord(metadata)),
+		() => buildPhaseMetadata(phaseDescriptors),
+		[phaseDescriptors],
+	);
+	const triggerDescriptors = useMemo(
+		() =>
+			mergeDescriptorRecords(DEFAULT_TRIGGERS, extractTriggerRecord(metadata)),
 		[metadata],
 	);
 	const triggerMetadataLookup = useMemo(
-		() => buildTriggerMetadata(extractTriggerRecord(metadata)),
-		[metadata],
+		() => buildTriggerMetadata(triggerDescriptors),
+		[triggerDescriptors],
 	);
 	const assetDescriptors = useMemo(
-		() => extractDescriptorRecord(metadata, 'assets'),
+		() =>
+			mergeDescriptorRecords(
+				DEFAULT_ASSET_DESCRIPTORS,
+				extractDescriptorRecord(metadata, 'assets'),
+			),
 		[metadata],
 	);
 	const landDescriptor = useMemo(
@@ -222,7 +322,10 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const overviewContent = useMemo(
+		() => readOverviewContent(metadata) ?? DEFAULT_OVERVIEW_CONTENT,
+		[metadata],
+	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({

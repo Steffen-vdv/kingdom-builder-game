@@ -6,6 +6,7 @@ import type {
 	SessionResourceDefinition,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
+import { DEFAULT_REGISTRY_METADATA } from './defaultRegistryMetadata';
 
 export interface RegistryMetadataDescriptor {
 	id: string;
@@ -294,23 +295,23 @@ export const buildTriggerMetadata = (
 		(id) => createTriggerDescriptor(id, undefined),
 	);
 
-export const DEFAULT_LAND_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'land',
-	label: 'Land',
-	icon: '🗺️',
-});
+const DEFAULT_ASSET_DESCRIPTOR_RECORD = (DEFAULT_REGISTRY_METADATA.assets ??
+	{}) as Record<string, SessionMetadataDescriptor>;
 
-export const DEFAULT_SLOT_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'slot',
-	label: 'Development Slot',
-	icon: '🧩',
-});
+const createDefaultAssetDescriptor = (id: string): AssetMetadata =>
+	resolveAssetDescriptor(id, DEFAULT_ASSET_DESCRIPTOR_RECORD[id], {
+		id,
+		label: formatLabel(id),
+	});
 
-export const DEFAULT_PASSIVE_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'passive',
-	label: 'Passive',
-	icon: '♾️',
-});
+export const DEFAULT_LAND_DESCRIPTOR: AssetMetadata =
+	createDefaultAssetDescriptor('land');
+
+export const DEFAULT_SLOT_DESCRIPTOR: AssetMetadata =
+	createDefaultAssetDescriptor('slot');
+
+export const DEFAULT_PASSIVE_DESCRIPTOR: AssetMetadata =
+	createDefaultAssetDescriptor('passive');
 
 export const resolveAssetDescriptor = (
 	id: string,
