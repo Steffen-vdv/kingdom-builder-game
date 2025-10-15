@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactElement } from 'react';
 
 import { type ActionCardVariant } from './ActionCard';
 
@@ -16,7 +16,7 @@ export default function StepBadge({
 	stepLabel,
 	variant,
 	multiStep,
-}: StepBadgeProps): JSX.Element | null {
+}: StepBadgeProps): ReactElement | null {
 	if (variant === 'back') {
 		const label = stepLabel?.trim();
 		if (!label) {
