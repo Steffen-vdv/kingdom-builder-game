@@ -152,8 +152,8 @@ const buildPhaseMetadata = (
 	const entries: Array<readonly [string, SessionPhaseMetadata]> = [];
 	for (const phase of phases) {
 		const steps = phase.steps?.map(
-			(step): SessionPhaseMetadata['steps'][number] => {
-				const clonedStep: SessionPhaseMetadata['steps'][number] = {
+			(step): NonNullable<SessionPhaseMetadata['steps']>[number] => {
+				const clonedStep: NonNullable<SessionPhaseMetadata['steps']>[number] = {
 					id: step.id,
 				};
 				if (step.title !== undefined) {
@@ -193,15 +193,19 @@ const buildTriggerMetadata = (
 		return undefined;
 	}
 	return Object.fromEntries(
-		Object.entries(triggers).map(([id, info]) => [
-			id,
-			{
-				label: info.past,
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-			},
-		]),
+		Object.entries(triggers).map(([id, info]) => {
+			const descriptor: SessionTriggerMetadata = {
+				...(info.label !== undefined
+					? { label: info.label }
+					: info.past !== undefined
+						? { label: info.past }
+						: {}),
+				...(info.icon !== undefined ? { icon: info.icon } : {}),
+				...(info.future !== undefined ? { future: info.future } : {}),
+				...(info.past !== undefined ? { past: info.past } : {}),
+			};
+			return [id, descriptor];
+		}),
 	);
 };
 
