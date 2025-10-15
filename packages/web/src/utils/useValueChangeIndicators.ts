@@ -9,7 +9,7 @@ export interface ValueChangeIndicator {
 const INDICATOR_DURATION = 1200;
 
 export const useValueChangeIndicators = (value: number) => {
-	const previousRef = useRef<number | undefined>();
+	const previousRef = useRef<number | undefined>(undefined);
 	const idRef = useRef(0);
 	const [changes, setChanges] = useState<ValueChangeIndicator[]>([]);
 	const timersRef = useRef<Map<number, number>>(new Map());
