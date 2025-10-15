@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import {
 	type OverviewSectionTemplate,
-	type OverviewTokenCandidates,
+	type OverviewTokenCandidates as OverviewTokenCandidatesTemplate,
 	type OverviewTokenCategoryName,
 } from '@kingdom-builder/contents';
 import type { OverviewSectionDef } from './OverviewLayout';
@@ -14,6 +14,8 @@ import {
 import { normalizeCandidates } from './overviewTokenUtils';
 
 export type OverviewIconSet = Record<string, ReactNode | undefined>;
+
+export type OverviewTokenCandidates = OverviewTokenCandidatesTemplate;
 
 export type OverviewContentSection = OverviewSectionTemplate;
 

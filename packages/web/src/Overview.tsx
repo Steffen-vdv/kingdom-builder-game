@@ -16,8 +16,11 @@ import {
 	renderTokens,
 } from './components/overview/OverviewLayout';
 import type { OverviewSectionDef } from './components/overview/OverviewLayout';
-import { createOverviewSections } from './components/overview/sectionsData';
-import type { OverviewContentSection } from './components/overview/sectionsData';
+import {
+	createOverviewSections,
+	type OverviewContentSection,
+	type OverviewTokenCandidates,
+} from './components/overview/sectionsData';
 import type {
 	OverviewTokenConfig,
 	OverviewTokenSources,
@@ -27,11 +30,8 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
 import type { SessionOverviewHero } from '@kingdom-builder/protocol/session';
+import { DEFAULT_OVERVIEW_CONTENT } from './contexts/registryMetadataDefaults';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
 
@@ -157,7 +157,7 @@ export default function Overview({
 	content,
 }: OverviewProps) {
 	const metadata = useOptionalRegistryMetadata();
-	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
+	const overviewContent = metadata?.overviewContent ?? DEFAULT_OVERVIEW_CONTENT;
 	const sections = content ?? overviewContent.sections ?? [];
 	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
 	const heroContent = overviewContent.hero ?? DEFAULT_HERO_CONTENT;
@@ -166,16 +166,19 @@ export default function Overview({
 		() => resolveOverviewTokenSources(metadata),
 		[metadata],
 	);
+	const fallbackTokens = React.useMemo(
+		() => createFallbackTokens(defaultTokens, tokenConfig),
+		[defaultTokens, tokenConfig],
+	);
 	const { sections: renderedSections, tokens: iconTokens } =
 		React.useMemo(() => {
-			if (sections.length === 0) {
-				return EMPTY_SECTIONS_RESULT;
-			}
-
 			if (!tokenSources) {
 				return {
-					sections: createFallbackSections(sections),
-					tokens: createFallbackTokens(defaultTokens, tokenConfig),
+					sections:
+						sections.length > 0
+							? createFallbackSections(sections)
+							: EMPTY_SECTIONS_RESULT.sections,
+					tokens: EMPTY_SECTIONS_RESULT.tokens,
 				};
 			}
 
@@ -186,12 +189,22 @@ export default function Overview({
 				tokenSources,
 			);
 		}, [defaultTokens, sections, tokenConfig, tokenSources]);
-	const tokens = React.useMemo(() => ({ ...iconTokens }), [iconTokens]);
+	const tokens = React.useMemo(() => {
+		const resolvedTokens: OverviewTokenRecord = {
+			...fallbackTokens,
+		};
+		for (const [tokenKey, iconToken] of Object.entries(iconTokens)) {
+			if (iconToken !== undefined && iconToken !== null) {
+				resolvedTokens[tokenKey] = iconToken;
+			}
+		}
+		return resolvedTokens;
+	}, [fallbackTokens, iconTokens]);
 
 	const heroTokens: Record<string, React.ReactNode> = React.useMemo(() => {
 		const heroTokenNodes: Record<string, React.ReactNode> = {};
 		for (const [tokenKey, label] of Object.entries(heroTokenSource)) {
-			heroTokenNodes[tokenKey] = <strong>{label}</strong>;
+			heroTokenNodes[tokenKey] = <strong>{label ?? tokenKey}</strong>;
 		}
 		return { ...tokens, ...heroTokenNodes };
 	}, [heroTokenSource, tokens]);

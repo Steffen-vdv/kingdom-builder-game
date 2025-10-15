@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -157,5 +157,31 @@ describe('<Overview />', () => {
 		expect(flowSection).toHaveTextContent('🛡️');
 
 		expect(screen.getByText('Advance')).toBeInTheDocument();
+	});
+
+	it('falls back to labeled tokens when registry metadata is unavailable', () => {
+		const fallbackContent: OverviewContentSection[] = [
+			{
+				kind: 'paragraph',
+				id: 'fallback-section',
+				icon: 'castleHP',
+				title: 'Fallback Section',
+				paragraphs: ['Use {expand} to grow your reach.'],
+			},
+		];
+
+		render(<Overview onBack={vi.fn()} content={fallbackContent} />);
+
+		const section = screen.getByText('Fallback Section').closest('section');
+		expect(section).not.toBeNull();
+		if (!section) {
+			return;
+		}
+
+		const highlightedToken = within(section).getByText('expand', {
+			selector: 'strong',
+		});
+		expect(highlightedToken).toBeInTheDocument();
+		expect(section.textContent).not.toContain('{expand}');
 	});
 });
