@@ -49,13 +49,6 @@ export interface SessionMetadataBuildResult {
 	readonly overviewContent: OverviewContentTemplate;
 }
 
-interface StatMetadataDescriptor extends SessionMetadataDescriptor {
-	format?: {
-		prefix?: string;
-		percent?: boolean;
-	};
-}
-
 const deepFreeze = <T>(value: T): T => {
 	if (Array.isArray(value)) {
 		for (const entry of value) {
@@ -182,9 +175,9 @@ const buildDevelopmentMetadata = () =>
 	);
 
 const buildStatMetadata = () =>
-	createMetadataRecord(
+	createMetadataRecord<SessionMetadataDescriptor>(
 		Object.entries(STATS).map(([id, info]) => {
-			const descriptor: StatMetadataDescriptor = {
+			const descriptor: SessionMetadataDescriptor = {
 				label: info.label,
 				icon: info.icon,
 				description: info.description,
