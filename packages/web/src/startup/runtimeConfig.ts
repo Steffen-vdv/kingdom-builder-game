@@ -17,7 +17,6 @@ export interface LegacyContentConfig {
 type RuntimeConfigSource = Partial<LegacyContentConfig>;
 
 declare global {
-	// eslint-disable-next-line no-var
 	var __KINGDOM_BUILDER_CONFIG__: RuntimeConfigSource | undefined;
 }
 
