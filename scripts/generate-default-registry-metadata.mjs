@@ -1,7 +1,14 @@
 import { constants as fsConstants } from 'node:fs';
 import { access, writeFile } from 'node:fs/promises';
+import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+
+const loaderUrl = new URL(
+	'./loaders/extensionless-resolution-loader.mjs',
+	import.meta.url,
+);
+await register(loaderUrl, import.meta.url);
 
 const REQUIRED_DIST_FILES = [
 	'../packages/contents/dist/actions.js',
@@ -14,6 +21,8 @@ const REQUIRED_DIST_FILES = [
 	'../packages/contents/dist/resources.js',
 	'../packages/contents/dist/stats.js',
 	'../packages/contents/dist/triggers.js',
+	'../packages/contents/dist/population.js',
+	'../packages/contents/dist/overview.js',
 ];
 
 async function ensureDistArtifacts() {
@@ -46,6 +55,8 @@ async function loadContentModules() {
 		resourcesModule,
 		statsModule,
 		triggersModule,
+		populationModule,
+		overviewModule,
 	] = await Promise.all([
 		import(new URL('actions.js', baseUrl)),
 		import(new URL('buildings.js', baseUrl)),
@@ -57,6 +68,8 @@ async function loadContentModules() {
 		import(new URL('resources.js', baseUrl)),
 		import(new URL('stats.js', baseUrl)),
 		import(new URL('triggers.js', baseUrl)),
+		import(new URL('population.js', baseUrl)),
+		import(new URL('overview.js', baseUrl)),
 	]);
 	return {
 		createActionRegistry: actionsModule.createActionRegistry,
@@ -66,23 +79,26 @@ async function loadContentModules() {
 		LAND_INFO: landModule.LAND_INFO,
 		SLOT_INFO: landModule.SLOT_INFO,
 		PASSIVE_INFO: passiveModule.PASSIVE_INFO,
+		POPULATION_INFO: populationModule.POPULATION_INFO,
 		PHASES: phasesModule.PHASES,
 		RESOURCES: resourcesModule.RESOURCES,
 		STATS: statsModule.STATS,
 		TRIGGER_INFO: triggersModule.TRIGGER_INFO,
+		OVERVIEW_CONTENT: overviewModule.OVERVIEW_CONTENT,
 	};
 }
 
-function createDescriptor(label, icon, description) {
+function toDescriptor(definition) {
 	const descriptor = {};
+	if (definition.icon !== undefined) {
+		descriptor.icon = definition.icon;
+	}
+	const label = definition.label ?? definition.name;
 	if (label !== undefined) {
 		descriptor.label = label;
 	}
-	if (icon !== undefined) {
-		descriptor.icon = icon;
-	}
-	if (description !== undefined) {
-		descriptor.description = description;
+	if (definition.description !== undefined) {
+		descriptor.description = definition.description;
 	}
 	return descriptor;
 }
@@ -91,11 +107,7 @@ function createRegistryDescriptorMap(registry) {
 	return Object.fromEntries(
 		Object.entries(registry).map(([id, definition]) => [
 			id,
-			createDescriptor(
-				definition.name,
-				definition.icon,
-				definition.description,
-			),
+			toDescriptor(definition),
 		]),
 	);
 }
@@ -121,12 +133,23 @@ function createResourceDefinitions(content) {
 	);
 }
 
-function createResourceMetadata(content) {
+function createResourceMetadata(resourceDefinitions, content) {
 	return Object.fromEntries(
-		Object.entries(content.RESOURCES).map(([key, info]) => [
-			key,
-			createDescriptor(info.label, info.icon, info.description),
-		]),
+		Object.entries(resourceDefinitions).map(([key, definition]) => {
+			const info = content.RESOURCES[key];
+			const descriptor = {};
+			const icon = definition.icon ?? info?.icon;
+			if (icon !== undefined) {
+				descriptor.icon = icon;
+			}
+			const label = definition.label ?? info?.label ?? definition.key ?? key;
+			descriptor.label = label;
+			const description = definition.description ?? info?.description;
+			if (description !== undefined) {
+				descriptor.description = description;
+			}
+			return [key, descriptor];
+		}),
 	);
 }
 
@@ -134,7 +157,7 @@ function createStatMetadata(content) {
 	return Object.fromEntries(
 		Object.entries(content.STATS).map(([key, info]) => [
 			key,
-			createDescriptor(info.label, info.icon, info.description),
+			toDescriptor(info),
 		]),
 	);
 }
@@ -142,7 +165,7 @@ function createStatMetadata(content) {
 function createPhaseMetadata(content) {
 	return Object.fromEntries(
 		content.PHASES.map((phase) => {
-			const steps = phase.steps?.map((step) => {
+			const steps = (phase.steps ?? []).map((step) => {
 				const baseStep = { id: step.id };
 				if (step.title !== undefined) {
 					baseStep.label = step.title;
@@ -155,7 +178,7 @@ function createPhaseMetadata(content) {
 				}
 				return baseStep;
 			});
-			const phaseMetadata = { id: phase.id };
+			const phaseMetadata = { id: phase.id, steps };
 			if (phase.label !== undefined) {
 				phaseMetadata.label = phase.label;
 			}
@@ -164,9 +187,6 @@ function createPhaseMetadata(content) {
 			}
 			if (phase.action !== undefined) {
 				phaseMetadata.action = phase.action;
-			}
-			if (steps && steps.length > 0) {
-				phaseMetadata.steps = steps;
 			}
 			return [phase.id, phaseMetadata];
 		}),
@@ -189,12 +209,10 @@ function createTriggerMetadata(content) {
 
 function createAssetMetadata(content) {
 	return {
-		land: createDescriptor(content.LAND_INFO.label, content.LAND_INFO.icon),
-		slot: createDescriptor(content.SLOT_INFO.label, content.SLOT_INFO.icon),
-		passive: createDescriptor(
-			content.PASSIVE_INFO.label,
-			content.PASSIVE_INFO.icon,
-		),
+		land: toDescriptor(content.LAND_INFO),
+		slot: toDescriptor(content.SLOT_INFO),
+		passive: toDescriptor(content.PASSIVE_INFO),
+		population: toDescriptor(content.POPULATION_INFO),
 	};
 }
 
@@ -219,7 +237,7 @@ function createRegistries(content) {
 function createMetadata(registries, content) {
 	return {
 		passiveEvaluationModifiers: {},
-		resources: createResourceMetadata(content),
+		resources: createResourceMetadata(registries.resources, content),
 		populations: createRegistryDescriptorMap(registries.populations),
 		buildings: createRegistryDescriptorMap(registries.buildings),
 		developments: createRegistryDescriptorMap(registries.developments),
@@ -227,6 +245,7 @@ function createMetadata(registries, content) {
 		phases: createPhaseMetadata(content),
 		triggers: createTriggerMetadata(content),
 		assets: createAssetMetadata(content),
+		overviewContent: structuredClone(content.OVERVIEW_CONTENT),
 	};
 }
 
