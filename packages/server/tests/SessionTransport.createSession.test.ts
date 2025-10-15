@@ -41,6 +41,10 @@ describe('SessionTransport createSession', () => {
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
+		expect(response.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(response.snapshot.metadata.triggers).toBeDefined();
+		expect(response.snapshot.metadata.stats).toBeDefined();
+		expect(response.snapshot.metadata.overview).toBeDefined();
 	});
 
 	it('skips blank player name entries when applying preferences', () => {

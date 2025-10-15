@@ -40,6 +40,10 @@ describe('SessionTransport updatePlayerName', () => {
 		expect(updateSpy).toHaveBeenCalledWith('A', 'Voyager');
 		const [player] = response.snapshot.game.players;
 		expect(player?.name).toBe('Voyager');
+		expect(response.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(response.snapshot.metadata.triggers).toBeDefined();
+		expect(response.snapshot.metadata.stats).toBeDefined();
+		expect(response.snapshot.metadata.overview).toBeDefined();
 	});
 
 	it('rejects player names that exceed the maximum length', () => {

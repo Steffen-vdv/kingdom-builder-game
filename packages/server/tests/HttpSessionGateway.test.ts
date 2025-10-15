@@ -36,6 +36,18 @@ describe('HttpSessionGateway', () => {
 		};
 	}
 
+	function createSnapshot(overrides: Record<string, unknown> = {}) {
+		return {
+			metadata: {
+				passiveEvaluationModifiers: {},
+				triggers: {},
+				stats: {},
+				overview: {},
+			},
+			...overrides,
+		};
+	}
+
 	it('creates sessions through the REST transport', async () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -49,7 +61,7 @@ describe('HttpSessionGateway', () => {
 				return jsonResponse(
 					{
 						sessionId: 'rest-session',
-						snapshot: { game: { devMode: true } },
+						snapshot: createSnapshot({ game: { devMode: true } }),
 						registries: createRegistries(),
 					},
 					{ status: 201 },
@@ -98,7 +110,7 @@ describe('HttpSessionGateway', () => {
 			return Promise.resolve(
 				jsonResponse({
 					sessionId: 'test',
-					snapshot: { game: { players: [] } },
+					snapshot: createSnapshot({ game: { players: [] } }),
 					registries: createRegistries(),
 				}),
 			);
@@ -118,7 +130,7 @@ describe('HttpSessionGateway', () => {
 			return Promise.resolve(
 				jsonResponse({
 					sessionId: 'test',
-					snapshot: { game: { currentPhase: 'growth' } },
+					snapshot: createSnapshot({ game: { currentPhase: 'growth' } }),
 					advance: { effects: [] },
 					registries: createRegistries(),
 				}),
@@ -142,7 +154,7 @@ describe('HttpSessionGateway', () => {
 				expect(payload).toEqual({ sessionId: 'test', actionId: 'gain' });
 				return jsonResponse({
 					status: 'success',
-					snapshot: { game: { players: [] } },
+					snapshot: createSnapshot({ game: { players: [] } }),
 					costs: {},
 					traces: [],
 				});
@@ -191,7 +203,7 @@ describe('HttpSessionGateway', () => {
 				expect(payload).toEqual({ enabled: true });
 				return jsonResponse({
 					sessionId: 'test',
-					snapshot: { game: { devMode: true } },
+					snapshot: createSnapshot({ game: { devMode: true } }),
 					registries: createRegistries(),
 				});
 			},

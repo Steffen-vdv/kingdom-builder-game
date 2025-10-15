@@ -11,6 +11,7 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
 import type {
 	PlayerStartConfig,
@@ -18,6 +19,9 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionOverviewMetadata,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -71,6 +75,8 @@ export class SessionManager {
 
 	private readonly metadata: SessionStaticMetadataPayload;
 
+	private readonly overviewMetadata: SessionOverviewMetadata;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -106,6 +112,7 @@ export class SessionManager {
 			resources,
 			phases: this.baseOptions.phases,
 		});
+		this.overviewMetadata = structuredClone(OVERVIEW_CONTENT);
 	}
 
 	public createSession(
@@ -181,6 +188,21 @@ export class SessionManager {
 
 	public getMetadata(): SessionStaticMetadataPayload {
 		return structuredClone(this.metadata);
+	}
+
+	public getOverviewMetadata(): SessionOverviewMetadata {
+		return structuredClone(this.overviewMetadata);
+	}
+
+	public mergeSnapshotMetadata(snapshot: SessionSnapshot): SessionSnapshot {
+		const metadata: SessionSnapshotMetadata = {
+			...this.getMetadata(),
+			...snapshot.metadata,
+		};
+		if (!metadata.overview) {
+			metadata.overview = this.getOverviewMetadata();
+		}
+		return { ...snapshot, metadata };
 	}
 
 	private requireSession(sessionId: string): EngineSession {

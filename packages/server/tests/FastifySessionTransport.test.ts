@@ -1,5 +1,9 @@
 import fastify from 'fastify';
 import { describe, it, expect, vi } from 'vitest';
+import type {
+	SessionRegistriesPayload,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,
@@ -26,8 +30,12 @@ describe('FastifySessionTransport', () => {
 		snapshot: {
 			game: { players: Array<{ id: string }>; currentPhase?: string };
 			recentResourceGains?: unknown[];
-			metadata: { passiveEvaluationModifiers?: unknown };
+			metadata: SessionSnapshotMetadata;
 		};
+	};
+
+	type RegistriesResponse = {
+		registries: SessionRegistriesPayload;
 	};
 
 	async function createServer(tokens = defaultTokens) {
@@ -52,9 +60,17 @@ describe('FastifySessionTransport', () => {
 		});
 		expect(response.statusCode).toBe(201);
 		const body = response.json() as {
-			snapshot: { game: { devMode: boolean } };
+			snapshot: {
+				game: { devMode: boolean };
+				metadata: SessionSnapshotMetadata;
+			};
+			registries: SessionRegistriesPayload;
 		};
 		expect(body.snapshot.game.devMode).toBe(true);
+		expect(body.snapshot.metadata.triggers).toBeDefined();
+		expect(body.snapshot.metadata.stats).toBeDefined();
+		expect(body.snapshot.metadata.overview).toBeDefined();
+		expect(body.registries.resources).toBeDefined();
 		await app.close();
 	});
 
@@ -74,9 +90,17 @@ describe('FastifySessionTransport', () => {
 		});
 		expect(snapshotResponse.statusCode).toBe(200);
 		const snapshot = snapshotResponse.json() as {
-			snapshot: { game: { players: unknown[] } };
+			snapshot: {
+				game: { players: unknown[] };
+				metadata: SessionSnapshotMetadata;
+			};
+			registries: SessionRegistriesPayload;
 		};
 		expect(snapshot.snapshot.game.players).toHaveLength(2);
+		expect(snapshot.snapshot.metadata.triggers).toBeDefined();
+		expect(snapshot.snapshot.metadata.stats).toBeDefined();
+		expect(snapshot.snapshot.metadata.overview).toBeDefined();
+		expect(snapshot.registries.resources).toBeDefined();
 		await app.close();
 	});
 
@@ -97,9 +121,17 @@ describe('FastifySessionTransport', () => {
 		});
 		expect(advanceResponse.statusCode).toBe(200);
 		const advanceBody = advanceResponse.json() as {
-			snapshot: { game: { currentPhase: string } };
+			snapshot: {
+				game: { currentPhase: string };
+				metadata: SessionSnapshotMetadata;
+			};
+			registries: SessionRegistriesPayload;
 		};
 		expect(advanceBody.snapshot.game.currentPhase).toBe('end');
+		expect(advanceBody.snapshot.metadata.triggers).toBeDefined();
+		expect(advanceBody.snapshot.metadata.stats).toBeDefined();
+		expect(advanceBody.snapshot.metadata.overview).toBeDefined();
+		expect(advanceBody.registries.resources).toBeDefined();
 		await app.close();
 	});
 
@@ -113,7 +145,11 @@ describe('FastifySessionTransport', () => {
 		});
 		const { sessionId, snapshot: createdSnapshot } = createResponse.json() as {
 			sessionId: string;
-			snapshot: { game: { devMode: boolean } };
+			snapshot: {
+				game: { devMode: boolean };
+				metadata: SessionSnapshotMetadata;
+			};
+			registries: SessionRegistriesPayload;
 		};
 		expect(createdSnapshot.game.devMode).toBe(false);
 		const devModeResponse = await app.inject({
@@ -124,9 +160,17 @@ describe('FastifySessionTransport', () => {
 		});
 		expect(devModeResponse.statusCode).toBe(200);
 		const devModeBody = devModeResponse.json() as {
-			snapshot: { game: { devMode: boolean } };
+			snapshot: {
+				game: { devMode: boolean };
+				metadata: SessionSnapshotMetadata;
+			};
+			registries: SessionRegistriesPayload;
 		};
 		expect(devModeBody.snapshot.game.devMode).toBe(true);
+		expect(devModeBody.snapshot.metadata.triggers).toBeDefined();
+		expect(devModeBody.snapshot.metadata.stats).toBeDefined();
+		expect(devModeBody.snapshot.metadata.overview).toBeDefined();
+		expect(devModeBody.registries.resources).toBeDefined();
 		await app.close();
 	});
 
@@ -147,9 +191,17 @@ describe('FastifySessionTransport', () => {
 		});
 		expect(updateResponse.statusCode).toBe(200);
 		const body = updateResponse.json() as {
-			snapshot: { game: { players: Array<{ name: string }> } };
+			snapshot: {
+				game: { players: Array<{ name: string }> };
+				metadata: SessionSnapshotMetadata;
+			};
+			registries: SessionRegistriesPayload;
 		};
 		expect(body.snapshot.game.players[0]?.name).toBe('Captain');
+		expect(body.snapshot.metadata.triggers).toBeDefined();
+		expect(body.snapshot.metadata.stats).toBeDefined();
+		expect(body.snapshot.metadata.overview).toBeDefined();
+		expect(body.registries.resources).toBeDefined();
 		await app.close();
 	});
 
@@ -173,11 +225,15 @@ describe('FastifySessionTransport', () => {
 			status: string;
 			snapshot: {
 				game: { players: Array<{ resources: Record<string, number> }> };
+				metadata: SessionSnapshotMetadata;
 			};
 		};
 		expect(actionBody.status).toBe('success');
 		const [player] = actionBody.snapshot.game.players;
 		expect(player?.resources[gainKey]).toBe(1);
+		expect(actionBody.snapshot.metadata.triggers).toBeDefined();
+		expect(actionBody.snapshot.metadata.stats).toBeDefined();
+		expect(actionBody.snapshot.metadata.overview).toBeDefined();
 		await app.close();
 	});
 
@@ -307,14 +363,18 @@ describe('FastifySessionTransport', () => {
 			sessionId: string;
 			ranTurn: boolean;
 			snapshot: SnapshotResponse['snapshot'];
-			registries: { actions: Record<string, unknown> };
+			registries: RegistriesResponse['registries'];
 		};
 		expect(body.sessionId).toBe(sessionId);
 		expect(body.ranTurn).toBe(true);
 		expect(body.snapshot.game.currentPhase).toBeDefined();
 		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);
 		expect(body.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(body.snapshot.metadata.triggers).toBeDefined();
+		expect(body.snapshot.metadata.stats).toBeDefined();
+		expect(body.snapshot.metadata.overview).toBeDefined();
 		expect(body.registries.actions).toBeDefined();
+		expect(body.registries.resources).toBeDefined();
 		expect(runSpy).toHaveBeenCalledWith(playerId);
 		await app.close();
 	});

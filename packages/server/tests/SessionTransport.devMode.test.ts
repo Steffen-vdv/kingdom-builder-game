@@ -37,6 +37,10 @@ describe('SessionTransport dev mode', () => {
 		});
 		expect(updated.snapshot.game.devMode).toBe(true);
 		expect(updated.registries.actions[actionId]).toBeDefined();
+		expect(updated.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(updated.snapshot.metadata.triggers).toBeDefined();
+		expect(updated.snapshot.metadata.stats).toBeDefined();
+		expect(updated.snapshot.metadata.overview).toBeDefined();
 	});
 
 	it('validates dev mode toggles before applying them', () => {

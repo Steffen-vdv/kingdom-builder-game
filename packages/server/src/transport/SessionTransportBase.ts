@@ -187,7 +187,7 @@ export class SessionTransportBase {
 			});
 			const response = actionExecuteResponseSchema.parse({
 				status: 'success',
-				snapshot: result.snapshot,
+				snapshot: this.sessionManager.mergeSnapshotMetadata(result.snapshot),
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
@@ -341,9 +341,11 @@ export class SessionTransportBase {
 		sessionId: string,
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
+		const enrichedSnapshot =
+			this.sessionManager.mergeSnapshotMetadata(snapshot);
 		return {
 			sessionId,
-			snapshot,
+			snapshot: enrichedSnapshot,
 			registries: this.sessionManager.getRegistries(),
 		};
 	}

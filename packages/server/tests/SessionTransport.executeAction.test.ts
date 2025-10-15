@@ -50,6 +50,10 @@ describe('SessionTransport executeAction', () => {
 		expect(Array.isArray(result.traces)).toBe(true);
 		expect(result.costs).toEqual(expectedCosts);
 		expect(result.httpStatus).toBe(200);
+		expect(result.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(result.snapshot.metadata.triggers).toBeDefined();
+		expect(result.snapshot.metadata.stats).toBeDefined();
+		expect(result.snapshot.metadata.overview).toBeDefined();
 	});
 
 	it('returns conflict responses when actions fail without requirement details', async () => {

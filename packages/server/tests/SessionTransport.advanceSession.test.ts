@@ -37,6 +37,11 @@ describe('SessionTransport advanceSession', () => {
 		expect(advance.snapshot.game.currentPhase).toBe('end');
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
 		expect(advance.registries.actions[actionId]).toBeDefined();
+		expect(advance.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expect(advance.snapshot.metadata.triggers).toBeDefined();
+		expect(advance.snapshot.metadata.stats).toBeDefined();
+		expect(advance.snapshot.metadata.overview).toBeDefined();
+		expect(Object.keys(advance.registries.resources)).not.toHaveLength(0);
 	});
 
 	it('reports conflicts when advancing sessions fail', async () => {

@@ -72,15 +72,39 @@ describe('SessionManager', () => {
 		const baseline = manager.getMetadata();
 		expect(buildSpy).toHaveBeenCalledTimes(1);
 		expect(baseline.resources?.[costKey]).toBeDefined();
+		expect(baseline.triggers).toBeDefined();
+		expect(baseline.stats).toBeDefined();
 		const mutated = manager.getMetadata();
 		expect(mutated).not.toBe(baseline);
 		expect(mutated).toEqual(baseline);
 		if (mutated.resources) {
 			mutated.resources[costKey] = { label: 'changed' };
 		}
+		if (mutated.triggers) {
+			mutated.triggers['synthetic:trigger'] = { label: 'Synthetic Trigger' };
+		}
+		if (mutated.stats) {
+			const [statKey] = Object.keys(mutated.stats);
+			if (statKey) {
+				mutated.stats[statKey] = { label: 'Rewritten Stat' };
+			}
+		}
 		const next = manager.getMetadata();
 		expect(next).toEqual(baseline);
 		expect(next.resources?.[costKey]?.label).not.toBe('changed');
+		expect(next.triggers?.['synthetic:trigger']).toBeUndefined();
+		const [statKey] = Object.keys(next.stats ?? {});
+		if (statKey) {
+			expect(next.stats?.[statKey]?.label).not.toBe('Rewritten Stat');
+		}
+		const overview = manager.getOverviewMetadata();
+		const overviewClone = manager.getOverviewMetadata();
+		expect(overview).toEqual(overviewClone);
+		if (overview.hero) {
+			overview.hero.title = 'Altered Title';
+		}
+		const refreshedOverview = manager.getOverviewMetadata();
+		expect(refreshedOverview.hero?.title).not.toBe('Altered Title');
 		buildSpy.mockRestore();
 	});
 
