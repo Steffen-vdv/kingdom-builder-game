@@ -286,4 +286,31 @@ describe('RegistryMetadataProvider', () => {
 		expect(slot.descriptor.label).toBe('Development Slot');
 		expect(context.overviewContent.hero.title).toBe('Game Overview');
 	});
+
+	it('falls back to default metadata when snapshot metadata is missing', () => {
+		const setup = createTestSetup();
+		let captured: {
+			slot: AssetMetadataSelector;
+			overviewTitle: string | undefined;
+		} | null = null;
+		const Capture = () => {
+			const { overviewContent } = useRegistryMetadata();
+			captured = {
+				slot: useSlotMetadata(),
+				overviewTitle: overviewContent.hero?.title,
+			};
+			return null;
+		};
+		renderToStaticMarkup(
+			<RegistryMetadataProvider registries={setup.registries}>
+				<Capture />
+			</RegistryMetadataProvider>,
+		);
+		if (!captured) {
+			throw new Error('Registry metadata context was not captured.');
+		}
+		expect(captured.slot.descriptor.icon).toBe('🧩');
+		expect(captured.slot.descriptor.label).toBe('Development Slot');
+		expect(captured.overviewTitle).toBe('Game Overview');
+	});
 });
