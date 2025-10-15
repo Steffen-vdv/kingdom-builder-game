@@ -119,8 +119,10 @@ export function useNextTurnForecast(): NextTurnForecast {
 		players,
 	]);
 	const [revision, setRevision] = useState(0);
-	const cacheRef = useRef<{ key: string; value: NextTurnForecast }>();
-	const requestKeyRef = useRef<string>();
+	const cacheRef = useRef<{ key: string; value: NextTurnForecast } | null>(
+		null,
+	);
+	const requestKeyRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		let disposed = false;
@@ -152,10 +154,9 @@ export function useNextTurnForecast(): NextTurnForecast {
 				return;
 			}
 			if (hasSuccess) {
+				const cacheEntry = cacheRef.current;
 				const existing =
-					cacheRef.current?.key === hashKey
-						? cacheRef.current.value
-						: undefined;
+					cacheEntry?.key === hashKey ? cacheEntry.value : undefined;
 				const merged: NextTurnForecast = {};
 				for (const playerId of playerIds) {
 					if (updates[playerId]) {
@@ -171,7 +172,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 				cacheRef.current = { key: hashKey, value: merged };
 				setRevision((value) => value + 1);
 			} else if (hasError) {
-				requestKeyRef.current = undefined;
+				requestKeyRef.current = null;
 			}
 		};
 		void run();
@@ -181,8 +182,9 @@ export function useNextTurnForecast(): NextTurnForecast {
 	}, [hashKey, playerIds, session, sessionId]);
 
 	return useMemo(() => {
-		if (cacheRef.current?.key === hashKey) {
-			return cacheRef.current.value;
+		const cacheEntry = cacheRef.current;
+		if (cacheEntry?.key === hashKey) {
+			return cacheEntry.value;
 		}
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {

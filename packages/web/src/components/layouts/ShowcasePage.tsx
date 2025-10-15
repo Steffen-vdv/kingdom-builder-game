@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ElementType, ReactNode } from 'react';
 
 export const SHOWCASE_BACKGROUND_CLASS = [
 	'relative min-h-screen overflow-hidden bg-gradient-to-br',
@@ -59,7 +59,7 @@ export const SHOWCASE_INTRO_CLASS = [
 ].join(' ');
 
 interface ShowcaseBackgroundProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	className?: string;
 }
 
@@ -81,7 +81,7 @@ export function ShowcaseBackground({
 }
 
 interface ShowcaseLayoutProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	className?: string;
 }
 
@@ -95,9 +95,9 @@ export function ShowcaseLayout({
 }
 
 interface ShowcaseCardProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	className?: string;
-	as?: keyof JSX.IntrinsicElements;
+	as?: ElementType;
 }
 
 export function ShowcaseCard({

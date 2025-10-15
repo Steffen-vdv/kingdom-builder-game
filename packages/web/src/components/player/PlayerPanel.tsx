@@ -21,7 +21,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
 	onHeightChange,
 }) => {
 	const panelRef = useRef<HTMLDivElement | null>(null);
-	const heightCallbackRef = useRef<typeof onHeightChange>();
+	const heightCallbackRef = useRef<typeof onHeightChange>(undefined);
 	const animateBar = useAnimate<HTMLDivElement>();
 	const animateSections = useAnimate<HTMLDivElement>();
 	useEffect(() => {

@@ -29,8 +29,8 @@ export default function HoverCard() {
 	const [transitionState, setTransitionState] = useState<'enter' | 'exit'>(
 		data ? 'enter' : 'exit',
 	);
-	const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-	const showRafRef = useRef<number>();
+	const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const showRafRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		if (!data) {
@@ -39,7 +39,7 @@ export default function HoverCard() {
 
 		if (hideTimeoutRef.current) {
 			clearTimeout(hideTimeoutRef.current);
-			hideTimeoutRef.current = undefined;
+			hideTimeoutRef.current = null;
 		}
 
 		setRenderedData(data);
@@ -55,7 +55,7 @@ export default function HoverCard() {
 
 		showRafRef.current = window.requestAnimationFrame(() => {
 			setTransitionState('enter');
-			showRafRef.current = undefined;
+			showRafRef.current = null;
 		});
 	}, [data]);
 
@@ -72,13 +72,13 @@ export default function HoverCard() {
 		setTransitionState('exit');
 		hideTimeoutRef.current = setTimeout(() => {
 			setRenderedData(null);
-			hideTimeoutRef.current = undefined;
+			hideTimeoutRef.current = null;
 		}, FADE_DURATION_MS);
 
 		return () => {
 			if (hideTimeoutRef.current) {
 				clearTimeout(hideTimeoutRef.current);
-				hideTimeoutRef.current = undefined;
+				hideTimeoutRef.current = null;
 			}
 		};
 	}, [data, renderedData]);

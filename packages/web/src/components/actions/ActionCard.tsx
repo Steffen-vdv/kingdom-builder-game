@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { type Summary } from '../../translation';
 import type { TranslationAssets } from '../../translation/context';
 import { renderSummary, renderCosts } from '../../translation/render';
@@ -14,7 +14,7 @@ export type { ActionCardOption } from './OptionCard';
 export type ActionCardVariant = 'front' | 'back';
 
 export interface ActionCardProps {
-	title: React.ReactNode;
+	title: ReactNode;
 	costs: Record<string, number>;
 	playerResources: Record<string, number>;
 	actionCostResource: string;
@@ -33,7 +33,7 @@ export interface ActionCardProps {
 	stepIndex?: number | undefined;
 	stepCount?: number | undefined;
 	stepLabel?: string | undefined;
-	promptTitle?: React.ReactNode | undefined;
+	promptTitle?: ReactNode | undefined;
 	promptSummary?: string | undefined;
 	promptDescription?: string | undefined;
 	options?: ActionCardOption[] | undefined;
@@ -69,7 +69,7 @@ export default function ActionCard({
 	onCancel,
 	multiStep = false,
 	assets,
-}: ActionCardProps): JSX.Element {
+}: ActionCardProps): ReactElement {
 	const focusClass =
 		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
 	const isBack = variant === 'back';
