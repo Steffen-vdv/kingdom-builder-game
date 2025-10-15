@@ -24,24 +24,24 @@ export function useHoverCard({
 	clearTrackedTimeout,
 }: HoverCardOptions) {
 	const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
-	const hoverTimeout = useRef<number>();
+	const hoverTimeout = useRef<number | null>(null);
 
 	useEffect(() => {
 		return () => {
-			if (hoverTimeout.current) {
+			if (hoverTimeout.current !== null) {
 				clearTrackedTimeout(hoverTimeout.current);
 			}
-			hoverTimeout.current = undefined;
+			hoverTimeout.current = null;
 		};
 	}, [clearTrackedTimeout]);
 
 	const handleHoverCard = useCallback(
 		(data: HoverCard) => {
-			if (hoverTimeout.current) {
+			if (hoverTimeout.current !== null) {
 				clearTrackedTimeout(hoverTimeout.current);
 			}
 			hoverTimeout.current = setTrackedTimeout(() => {
-				hoverTimeout.current = undefined;
+				hoverTimeout.current = null;
 				setHoverCard(data);
 			}, 300);
 		},
@@ -49,9 +49,9 @@ export function useHoverCard({
 	);
 
 	const clearHoverCard = useCallback(() => {
-		if (hoverTimeout.current) {
+		if (hoverTimeout.current !== null) {
 			clearTrackedTimeout(hoverTimeout.current);
-			hoverTimeout.current = undefined;
+			hoverTimeout.current = null;
 		}
 		setHoverCard(null);
 	}, [clearTrackedTimeout]);
