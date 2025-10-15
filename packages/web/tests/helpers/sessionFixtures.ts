@@ -10,12 +10,39 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
+import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 
 const clone = <T>(value: T): T => {
 	if (typeof structuredClone === 'function') {
 		return structuredClone(value);
 	}
 	return JSON.parse(JSON.stringify(value)) as T;
+};
+
+export const createTestMetadata = (
+	overrides: Partial<SessionSnapshotMetadata> = {},
+): SessionSnapshotMetadata => {
+	const overridesClone = clone(overrides);
+	const overviewContent = overridesClone.overviewContent
+		? clone(overridesClone.overviewContent)
+		: clone(OVERVIEW_CONTENT);
+	if (overridesClone.overviewContent !== undefined) {
+		overridesClone.overviewContent = overviewContent;
+	}
+	const merged: SessionSnapshotMetadata = {
+		passiveEvaluationModifiers: {},
+		resources: {},
+		populations: {},
+		buildings: {},
+		developments: {},
+		stats: {},
+		phases: {},
+		triggers: {},
+		assets: {},
+		overviewContent,
+		...overridesClone,
+	};
+	return merged;
 };
 
 interface SnapshotPlayerOptions {
@@ -278,9 +305,7 @@ export function createSessionSnapshot({
 			...record,
 		}));
 	}
-	const metadata = metadataOverride
-		? clone(metadataOverride)
-		: ({ passiveEvaluationModifiers: {} } satisfies SessionSnapshotMetadata);
+	const metadata = createTestMetadata(metadataOverride);
 	return {
 		game: {
 			turn,

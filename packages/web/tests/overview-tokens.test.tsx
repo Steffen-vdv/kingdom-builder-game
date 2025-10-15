@@ -12,6 +12,7 @@ import {
 } from '../src/contexts/RegistryMetadataContext';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
 import type { OverviewTokenConfig } from '../src/components/overview/overviewTokens';
+import { createTestMetadata } from './helpers/sessionFixtures';
 
 describe('buildOverviewIconSet', () => {
 	const factory = createContentFactory();
@@ -29,8 +30,7 @@ describe('buildOverviewIconSet', () => {
 			ap: { key: 'ap', label: 'AP', icon: '⚡' },
 		},
 	};
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
+	const metadata: SessionSnapshotMetadata = createTestMetadata({
 		resources: {
 			gold: { label: 'Refined Gold', icon: '🪙' },
 			ap: { label: 'Reserve AP', icon: '✨' },
@@ -39,8 +39,6 @@ describe('buildOverviewIconSet', () => {
 			[councilRole.id]: { label: 'Guiding Council', icon: councilRole.icon },
 			[legionRole.id]: { label: 'Legion Vanguard', icon: legionRole.icon },
 		},
-		buildings: {},
-		developments: {},
 		stats: {
 			army: { label: 'Army Strength', icon: '🛡️' },
 			fortification: { label: 'Fortification', icon: '🧱' },
@@ -49,12 +47,12 @@ describe('buildOverviewIconSet', () => {
 			growth: { label: 'Growth', icon: '🌱', action: false, steps: [] },
 			upkeep: { label: 'Upkeep', icon: '🧹', action: false, steps: [] },
 		},
-		triggers: {},
 		assets: {
 			land: { label: 'Land', icon: '🗺️' },
 			slot: { label: 'Slot', icon: '🧩' },
+			passive: { label: 'Passive', icon: '♾️' },
 		},
-	};
+	});
 
 	const wrapper = ({ children }: { children: React.ReactNode }) => (
 		<RegistryMetadataProvider registries={registries} metadata={metadata}>

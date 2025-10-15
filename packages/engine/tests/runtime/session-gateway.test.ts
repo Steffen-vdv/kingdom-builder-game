@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	createEngineSession,
 	createLocalSessionGateway,
+	type EngineRegistryMetadataSources,
 } from '../../src/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { StartConfig, RuleSet } from '@kingdom-builder/protocol';
@@ -15,6 +16,32 @@ const STEP_MAIN = 'test:step:main';
 
 const FAILURE_REQUIREMENT_ID = 'vitest:fail';
 const FAILURE_MESSAGE = 'Requirement failed for gateway test';
+
+const METADATA_SOURCES: EngineRegistryMetadataSources = {
+	resources: {
+		[RESOURCE_AP]: { label: 'Action Points' },
+		[RESOURCE_GOLD]: { label: 'Gold' },
+	},
+	stats: {},
+	triggers: {},
+	assets: {
+		land: { label: 'Land' },
+		slot: { label: 'Slot' },
+		passive: { label: 'Passive' },
+	},
+	overviewContent: {
+		hero: {
+			badgeIcon: '',
+			badgeLabel: '',
+			title: 'Gateway Overview',
+			intro: '',
+			paragraph: '',
+			tokens: {},
+		},
+		sections: [],
+		tokens: {},
+	},
+};
 
 if (!REQUIREMENTS.has(FAILURE_REQUIREMENT_ID)) {
 	REQUIREMENTS.add(FAILURE_REQUIREMENT_ID, (requirement) => ({
@@ -91,6 +118,7 @@ function createGateway() {
 		phases: PHASES,
 		start: START,
 		rules: RULES,
+		metadataSources: METADATA_SOURCES,
 	});
 	return {
 		gateway: createLocalSessionGateway(session),

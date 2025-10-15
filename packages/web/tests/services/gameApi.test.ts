@@ -29,6 +29,7 @@ import {
 	createGameApiMock,
 } from '../../src/services/gameApi';
 import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
+import { createTestMetadata } from '../helpers/sessionFixtures';
 
 type Mutable<T> = { -readonly [K in keyof T]: Mutable<T[K]> };
 
@@ -105,7 +106,7 @@ const createSnapshot = (
 			A: [],
 			B: [],
 		},
-		metadata: overrides.metadata ?? { passiveEvaluationModifiers: {} },
+		metadata: createTestMetadata(overrides.metadata),
 	};
 
 	return {

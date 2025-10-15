@@ -10,6 +10,7 @@ import { createSessionRegistries } from '../helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
+	createTestMetadata,
 } from '../helpers/sessionFixtures';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import type { TranslationContext } from '../../src/translation/context/types';
@@ -73,7 +74,7 @@ const buildMetadata = (
 ): SessionSnapshotMetadata => {
 	const population = registries.populations.get(populationId);
 	const development = registries.developments.get(developmentId);
-	return {
+	return createTestMetadata({
 		resources: {
 			[resourceKey]: {
 				icon: '🪙',
@@ -104,8 +105,12 @@ const buildMetadata = (
 				label: development.name ?? developmentId,
 			},
 		},
-		passiveEvaluationModifiers: {},
-	};
+		assets: {
+			land: { label: 'Territory', icon: '🗺️' },
+			slot: { label: 'Development Slot', icon: '🧩' },
+			passive: { label: 'Passive', icon: '♾️' },
+		},
+	});
 };
 
 const createPlayers = () => {

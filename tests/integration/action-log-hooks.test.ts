@@ -10,6 +10,7 @@ import {
 	type SessionRegistries,
 } from '@kingdom-builder/web/state/sessionRegistries';
 import registriesPayload from '../../packages/web/tests/fixtures/sessionRegistriesPayload.json';
+import { createIntegrationMetadataSources } from './fixtures';
 
 type TimelineEntry = string | { text: string };
 
@@ -95,6 +96,7 @@ describe('content-driven action log hooks', () => {
 				phases: PHASES,
 				start: GAME_START,
 				rules: RULES,
+				metadataSources: createIntegrationMetadataSources(),
 			});
 			const snapshot = session.getSnapshot();
 			const translationContext = createTranslationContext(

@@ -2,6 +2,7 @@ import type {
 	SessionRegistriesPayload,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
+import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 import { deserializeSessionRegistries } from '../state/sessionRegistries';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import snapshot from './defaultRegistryMetadata.json';
@@ -32,14 +33,40 @@ function freezeRegistries(registries: SessionRegistries): SessionRegistries {
 	return Object.freeze(registries);
 }
 
-const SNAPSHOT = deepFreeze(snapshot) as DefaultRegistrySnapshot;
+function assertDefaultRegistrySnapshot(
+	value: unknown,
+): asserts value is DefaultRegistrySnapshot {
+	if (!value || typeof value !== 'object') {
+		throw new Error('Invalid default registry snapshot payload.');
+	}
+	const record = value as Record<string, unknown>;
+	if (typeof record.registries !== 'object' || record.registries === null) {
+		throw new Error('Invalid registries payload in default snapshot.');
+	}
+	if (typeof record.metadata !== 'object' || record.metadata === null) {
+		throw new Error('Invalid metadata payload in default snapshot.');
+	}
+}
 
-const DEFAULT_REGISTRIES_INTERNAL = freezeRegistries(
+const snapshotSource: unknown = snapshot;
+
+assertDefaultRegistrySnapshot(snapshotSource);
+
+const normalizedSnapshot = {
+	registries: snapshotSource.registries,
+	metadata: {
+		...snapshotSource.metadata,
+		overviewContent:
+			snapshotSource.metadata.overviewContent ?? OVERVIEW_CONTENT,
+	},
+} satisfies DefaultRegistrySnapshot;
+
+const SNAPSHOT = deepFreeze(normalizedSnapshot);
+
+const DEFAULT_REGISTRIES_INTERNAL: SessionRegistries = freezeRegistries(
 	deserializeSessionRegistries(SNAPSHOT.registries),
 );
 
-export const DEFAULT_REGISTRIES: SessionRegistries =
-	DEFAULT_REGISTRIES_INTERNAL;
+export const DEFAULT_REGISTRIES = DEFAULT_REGISTRIES_INTERNAL;
 
-export const DEFAULT_REGISTRY_METADATA: SessionSnapshotMetadata =
-	SNAPSHOT.metadata;
+export const DEFAULT_REGISTRY_METADATA = SNAPSHOT.metadata;

@@ -192,6 +192,61 @@ export interface SessionMetadataDescriptor {
 	description?: string;
 }
 
+export interface SessionOverviewHeroContent {
+	badgeIcon: string;
+	badgeLabel: string;
+	title: string;
+	intro: string;
+	paragraph: string;
+	tokens: Record<string, string>;
+}
+
+export interface SessionOverviewListItem {
+	icon?: string;
+	label: string;
+	body: string[];
+}
+
+export interface SessionOverviewParagraphSection {
+	kind: 'paragraph';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	paragraphs: string[];
+}
+
+export interface SessionOverviewListSection {
+	kind: 'list';
+	id: string;
+	icon: string;
+	title: string;
+	span?: boolean;
+	items: SessionOverviewListItem[];
+}
+
+export type SessionOverviewSection =
+	| SessionOverviewParagraphSection
+	| SessionOverviewListSection;
+
+export type SessionOverviewTokenCategoryName =
+	| 'actions'
+	| 'phases'
+	| 'resources'
+	| 'stats'
+	| 'population'
+	| 'static';
+
+export type SessionOverviewTokenCandidates = Partial<
+	Record<SessionOverviewTokenCategoryName, Record<string, string[]>>
+>;
+
+export interface SessionOverviewContent {
+	hero: SessionOverviewHeroContent;
+	sections: SessionOverviewSection[];
+	tokens: SessionOverviewTokenCandidates;
+}
+
 export interface SessionPhaseStepMetadata {
 	id: string;
 	label?: string;
@@ -217,14 +272,15 @@ export interface SessionTriggerMetadata {
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
-	buildings?: Record<string, SessionMetadataDescriptor>;
-	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
-	phases?: Record<string, SessionPhaseMetadata>;
-	triggers?: Record<string, SessionTriggerMetadata>;
-	assets?: Record<string, SessionMetadataDescriptor>;
+	resources: Record<string, SessionMetadataDescriptor>;
+	populations: Record<string, SessionMetadataDescriptor>;
+	buildings: Record<string, SessionMetadataDescriptor>;
+	developments: Record<string, SessionMetadataDescriptor>;
+	stats: Record<string, SessionMetadataDescriptor>;
+	phases: Record<string, SessionPhaseMetadata>;
+	triggers: Record<string, SessionTriggerMetadata>;
+	assets: Record<string, SessionMetadataDescriptor>;
+	overviewContent: SessionOverviewContent;
 }
 
 export interface SessionSnapshot {

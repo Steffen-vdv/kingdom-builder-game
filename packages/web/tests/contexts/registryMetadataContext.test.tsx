@@ -27,6 +27,7 @@ import {
 	type AssetMetadataSelector,
 } from '../../src/contexts/RegistryMetadataContext';
 import { describe, expect, it } from 'vitest';
+import { createTestMetadata } from '../helpers/sessionFixtures';
 
 interface TestSetup {
 	registries: SessionRegistries;
@@ -78,8 +79,7 @@ function createTestSetup(): TestSetup {
 	const phaseId = nextKey('phase');
 	const phaseStepId = nextKey('step');
 	const triggerId = nextKey('trigger');
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
+	const metadata: SessionSnapshotMetadata = createTestMetadata({
 		resources: {
 			[resourceKey]: {
 				label: 'Auric Light',
@@ -125,8 +125,9 @@ function createTestSetup(): TestSetup {
 		assets: {
 			land: { label: 'Territory', icon: '🗺️' },
 			passive: { label: 'Aura', icon: '✨' },
+			slot: { label: 'Development Slot', icon: '🧩' },
 		},
-	};
+	});
 	const registries: SessionRegistries = {
 		actions: factory.actions,
 		buildings: factory.buildings,

@@ -17,6 +17,18 @@ describe('SessionManager', () => {
 		expect(snapshot.game.devMode).toBe(true);
 	});
 
+	it('returns snapshots with descriptor metadata', () => {
+		const { manager } = createSyntheticSessionManager();
+		const sessionId = 'metadata-check';
+		manager.createSession(sessionId);
+		const snapshot = manager.getSnapshot(sessionId);
+		const { metadata } = snapshot;
+		expect(Object.keys(metadata.resources)).not.toHaveLength(0);
+		expect(Object.keys(metadata.populations)).not.toHaveLength(0);
+		expect(metadata.assets.passive?.label).toBeDefined();
+		expect(metadata.overviewContent.hero.title.length).toBeGreaterThan(0);
+	});
+
 	it('destroys sessions and releases resources', () => {
 		const { manager } = createSyntheticSessionManager();
 		const sessionId = 'session-destroy';

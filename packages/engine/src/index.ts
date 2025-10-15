@@ -12,6 +12,7 @@ export type {
 	StatSourceMeta,
 	StatSourceContribution,
 	StatSourceLink,
+	EngineRegistryMetadataSources,
 } from './setup/create_engine';
 export {
 	createEngineSession,

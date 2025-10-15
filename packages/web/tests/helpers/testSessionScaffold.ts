@@ -9,6 +9,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { createTestMetadata } from './sessionFixtures';
 
 interface PhaseOrderEntry {
 	id: string;
@@ -240,15 +241,14 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 	const populationMetadata = buildPopulationMetadata(registries);
 	const statMetadata = buildStatMetadata();
 	const phaseMetadata = buildPhaseMetadata();
-	const metadata: EngineSessionSnapshot['metadata'] = {
-		passiveEvaluationModifiers: {},
+	const metadata: EngineSessionSnapshot['metadata'] = createTestMetadata({
 		resources: resourceMetadata,
 		populations: populationMetadata,
 		stats: statMetadata,
 		phases: phaseMetadata,
 		triggers: { ...TRIGGER_METADATA },
 		assets: { ...ASSET_METADATA },
-	};
+	});
 	const phases = buildPhaseDefinitions(PHASE_ORDER);
 	const tieredResourceKey = resourceKeys[0] ?? 'resource-0';
 	const ruleSnapshot = buildRuleSnapshot(tieredResourceKey);

@@ -5,6 +5,7 @@ import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
+	createTestMetadata,
 } from './helpers/sessionFixtures';
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
@@ -81,8 +82,7 @@ function createDescriptorSetup(): DescriptorSetup {
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
+	const metadata: SessionSnapshotMetadata = createTestMetadata({
 		populations: {
 			[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
 		},
@@ -127,7 +127,7 @@ function createDescriptorSetup(): DescriptorSetup {
 			slot: { label: 'Development Slot', icon: '🧩' },
 			passive: { label: 'Aura', icon: '♾️' },
 		},
-	};
+	});
 	const activePlayer = createSnapshotPlayer({
 		id: 'player:active',
 		name: 'Active Player',

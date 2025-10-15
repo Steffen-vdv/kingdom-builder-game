@@ -11,6 +11,7 @@ import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
 import type { SessionResourceKey } from '../../src/state/sessionTypes';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { createTestMetadata } from '../helpers/sessionFixtures';
 
 vi.mock('../../src/translation', async () => {
 	const actual = await vi.importActual<TranslationTypes>(
@@ -97,7 +98,7 @@ function createSessionState(
 			A: [],
 			B: [],
 		},
-		metadata: { passiveEvaluationModifiers: {} },
+		metadata: createTestMetadata(),
 	};
 }
 

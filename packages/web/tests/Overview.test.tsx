@@ -9,6 +9,7 @@ import Overview, { type OverviewTokenConfig } from '../src/Overview';
 import type { OverviewContentSection } from '../src/components/overview/sectionsData';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
+import { createTestMetadata } from './helpers/sessionFixtures';
 
 describe('<Overview />', () => {
 	it('renders supplied overview content using dynamic token fallbacks', () => {
@@ -37,8 +38,7 @@ describe('<Overview />', () => {
 				},
 			},
 		};
-		const metadata: SessionSnapshotMetadata = {
-			passiveEvaluationModifiers: {},
+		const metadata: SessionSnapshotMetadata = createTestMetadata({
 			resources: {
 				gold: { label: 'Refined Gold', icon: '🪙' },
 				ap: { label: 'Reserve AP', icon: '✨' },
@@ -49,8 +49,6 @@ describe('<Overview />', () => {
 					icon: councilRole.icon,
 				},
 			},
-			buildings: {},
-			developments: {},
 			stats: {
 				army: { label: 'Army Strength', icon: '🛡️' },
 			},
@@ -62,12 +60,12 @@ describe('<Overview />', () => {
 					steps: [],
 				},
 			},
-			triggers: {},
 			assets: {
 				land: { label: 'Land', icon: '🗺️' },
 				slot: { label: 'Slot', icon: '🧩' },
+				passive: { label: 'Passive', icon: '♾️' },
 			},
-		};
+		});
 
 		const tokenConfig: OverviewTokenConfig = {
 			actions: {

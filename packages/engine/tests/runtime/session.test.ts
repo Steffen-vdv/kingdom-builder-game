@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createEngineSession, type EngineSession } from '../../src/index.ts';
+import {
+	createEngineSession,
+	type EngineSession,
+	type EngineRegistryMetadataSources,
+} from '../../src/index.ts';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -10,6 +14,13 @@ import {
 	GAME_START,
 	RULES,
 	Resource as CResource,
+	RESOURCES,
+	STATS,
+	TRIGGER_INFO,
+	LAND_INFO,
+	SLOT_INFO,
+	PASSIVE_INFO,
+	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
 import type {
 	ActionConfig as ActionDef,
@@ -18,6 +29,8 @@ import type {
 	PopulationConfig as PopulationDef,
 	Registry,
 	StartConfig,
+	SessionMetadataDescriptor,
+	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
@@ -42,6 +55,78 @@ const BASE: {
 
 type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
 
+function createMetadataSources(): EngineRegistryMetadataSources {
+	const resources = Object.values(RESOURCES).reduce<
+		Record<string, SessionMetadataDescriptor>
+	>((acc, info) => {
+		if (!info) {
+			return acc;
+		}
+		const descriptor: SessionMetadataDescriptor = {
+			label: info.label,
+		};
+		if (info.icon !== undefined) {
+			descriptor.icon = info.icon;
+		}
+		if (info.description !== undefined) {
+			descriptor.description = info.description;
+		}
+		acc[info.key] = descriptor;
+		return acc;
+	}, {});
+	const stats = Object.entries(STATS).reduce<
+		Record<string, SessionMetadataDescriptor>
+	>((acc, [key, info]) => {
+		if (!info) {
+			return acc;
+		}
+		const descriptor: SessionMetadataDescriptor = {
+			label: info.label,
+		};
+		if (info.icon !== undefined) {
+			descriptor.icon = info.icon;
+		}
+		if (info.description !== undefined) {
+			descriptor.description = info.description;
+		}
+		acc[key] = descriptor;
+		return acc;
+	}, {});
+	const triggers = Object.entries(TRIGGER_INFO).reduce<
+		Record<string, SessionTriggerMetadata>
+	>((acc, [key, info]) => {
+		if (!info) {
+			return acc;
+		}
+		const descriptor: SessionTriggerMetadata = {
+			label: info.past ?? info.future ?? key,
+		};
+		if (info.icon !== undefined) {
+			descriptor.icon = info.icon;
+		}
+		if (info.future !== undefined) {
+			descriptor.future = info.future;
+		}
+		if (info.past !== undefined) {
+			descriptor.past = info.past;
+		}
+		acc[key] = descriptor;
+		return acc;
+	}, {});
+	const assets: Record<string, SessionMetadataDescriptor> = {
+		land: { label: LAND_INFO.label, icon: LAND_INFO.icon },
+		slot: { label: SLOT_INFO.label, icon: SLOT_INFO.icon },
+		passive: { label: PASSIVE_INFO.label, icon: PASSIVE_INFO.icon },
+	};
+	return {
+		resources,
+		stats,
+		triggers,
+		assets,
+		overviewContent: structuredClone(OVERVIEW_CONTENT),
+	} satisfies EngineRegistryMetadataSources;
+}
+
 function createTestSession(overrides: EngineOverrides = {}) {
 	const { rules, ...rest } = overrides;
 	return createEngineSession({
@@ -52,6 +137,7 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		phases: rest.phases ?? BASE.phases,
 		start: rest.start ?? BASE.start,
 		rules: rules ?? RULES,
+		metadataSources: createMetadataSources(),
 	});
 }
 
@@ -249,5 +335,20 @@ describe('EngineSession', () => {
 				message: requirementMessage,
 			},
 		]);
+	});
+
+	it('includes registry descriptors in snapshot metadata', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const { metadata } = snapshot;
+		expect(Object.keys(metadata.resources)).not.toHaveLength(0);
+		expect(Object.keys(metadata.populations)).not.toHaveLength(0);
+		expect(Object.keys(metadata.buildings)).not.toHaveLength(0);
+		expect(Object.keys(metadata.developments)).not.toHaveLength(0);
+		expect(Object.keys(metadata.stats)).not.toHaveLength(0);
+		expect(Object.keys(metadata.phases)).not.toHaveLength(0);
+		expect(Object.keys(metadata.triggers)).not.toHaveLength(0);
+		expect(metadata.assets.passive?.label).toBeDefined();
+		expect(metadata.overviewContent.hero.title.length).toBeGreaterThan(0);
 	});
 });

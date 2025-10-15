@@ -20,7 +20,7 @@ import type {
 } from '../state';
 import { Services, PassiveManager } from '../services';
 import type { RuleSet } from '../services';
-import { EngineContext } from '../context';
+import { EngineContext, type EngineRegistryMetadataSources } from '../context';
 import { registerCoreEffects } from '../effects';
 import { registerCoreEvaluators } from '../evaluators';
 import { registerCoreRequirements } from '../requirements';
@@ -42,6 +42,7 @@ import {
 	type PopulationConfig as PopulationDef,
 	type StartConfig,
 	type PhaseConfig,
+	type SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
 import {
 	applyPlayerStartConfiguration,
@@ -60,6 +61,8 @@ export interface EngineCreationOptions {
 	rules: RuleSet;
 	config?: GameConfig;
 	devMode?: boolean;
+	resourceRegistry?: Record<string, SessionResourceDefinition>;
+	metadataSources?: EngineRegistryMetadataSources;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -170,6 +173,8 @@ export function createEngine({
 	rules,
 	config,
 	devMode = false,
+	resourceRegistry,
+	metadataSources,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
@@ -222,7 +227,9 @@ export function createEngine({
 		passiveManager,
 		phases,
 		actionCostResource,
+		structuredClone(resourceRegistry ?? {}),
 		compensationMap,
+		structuredClone(metadataSources ?? {}),
 	);
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
@@ -250,4 +257,5 @@ export type {
 	StatSourceMeta,
 	StatSourceContribution,
 	StatSourceLink,
+	EngineRegistryMetadataSources,
 };
