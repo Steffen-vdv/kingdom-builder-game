@@ -1,10 +1,5 @@
-import {
-	BUILDINGS,
-	RESOURCES,
-	STATS,
-	type ResourceKey,
-	type StatKey,
-} from '@kingdom-builder/contents';
+import { type ResourceKey, type StatKey } from '@kingdom-builder/contents';
+import type { TranslationContext } from '../../../context';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
@@ -32,48 +27,29 @@ function toDescriptor(
 }
 
 export function selectAttackResourceDescriptor(
-	resourceKey: string,
+        context: TranslationContext,
+        resourceKey: string,
 ): AttackRegistryDescriptor {
-	const definition = RESOURCES[resourceKey as ResourceKey];
-	return toDescriptor(definition?.label, definition?.icon, resourceKey);
+        const entry = context.assets.resources?.[resourceKey];
+        return toDescriptor(entry?.label, entry?.icon, resourceKey);
 }
 
 export function selectAttackStatDescriptor(
-	statKey: string,
+        context: TranslationContext,
+        statKey: string,
 ): AttackRegistryDescriptor {
-	const definition = STATS[statKey as StatKey];
-	return toDescriptor(definition?.label, definition?.icon, statKey);
+        const entry = context.assets.stats?.[statKey];
+        return toDescriptor(entry?.label, entry?.icon, statKey);
 }
 
 export function selectAttackBuildingDescriptor(
-	buildingId: string,
+        context: TranslationContext,
+        buildingId: string,
 ): AttackRegistryDescriptor {
-	try {
-		const definition = BUILDINGS.get(buildingId);
-		return toDescriptor(definition.name, definition.icon, buildingId);
-	} catch {
-		return { icon: '', label: buildingId };
-	}
-}
-
-export function listAttackResourceKeys(): ReadonlyArray<ResourceKey> {
-	return Object.freeze(Object.keys(RESOURCES) as ReadonlyArray<ResourceKey>);
-}
-
-export function listAttackStatKeys(): ReadonlyArray<StatKey> {
-	return Object.freeze(Object.keys(STATS) as ReadonlyArray<StatKey>);
-}
-
-export function listAttackBuildingIds(): ReadonlyArray<string> {
-	return Object.freeze(BUILDINGS.keys().slice());
-}
-
-export function selectAttackDefaultStatKey(): StatKey | undefined {
-	const keys = listAttackStatKeys();
-	return keys.length > 0 ? keys[0] : undefined;
-}
-
-export function selectAttackDefaultBuildingId(): string | undefined {
-	const ids = listAttackBuildingIds();
-	return ids.length > 0 ? ids[0] : undefined;
+        try {
+                const definition = context.buildings.get(buildingId);
+                return toDescriptor(definition.name, definition.icon, buildingId);
+        } catch {
+                return { icon: '', label: buildingId };
+        }
 }

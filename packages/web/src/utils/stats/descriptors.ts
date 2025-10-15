@@ -15,10 +15,9 @@ export {
 	getSourceDescriptor,
 } from './dependencyFormatters';
 export {
-	formatDetailText,
-	formatPhaseStep,
-	formatStatValue,
-	formatStepLabel,
-	statDisplaysAsPercent,
+        formatDetailText,
+        formatPhaseStep,
+        formatStatValue,
+        formatStepLabel,
+        statDisplaysAsPercent,
 } from './format';
-export { formatTriggerLabel } from './triggerLabels';

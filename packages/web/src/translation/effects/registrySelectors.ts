@@ -1,8 +1,4 @@
-import {
-	STATS,
-	type PopulationRoleId,
-	type StatKey,
-} from '@kingdom-builder/contents';
+import { type PopulationRoleId, type StatKey } from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
 
@@ -147,20 +143,22 @@ export function selectStatDescriptor(
 	if (cached) {
 		return cached;
 	}
-	const assets = context.assets;
-	const entry = assets?.stats?.[key];
-	const statDef = STATS[key as StatKey];
-	const statLabelFallback = statDef?.label ?? humanizeIdentifier(key);
-	const fallbackLabel =
-		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
-	const label = coerceLabel(entry?.label ?? statDef?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon ?? statDef?.icon, key);
-	const format = statDef?.addFormat ? { ...statDef.addFormat } : undefined;
-	const descriptor: StatRegistryDescriptor = {
-		icon,
-		label,
-		...(format ? { format } : {}),
-	};
+        const assets = context.assets;
+        const entry = assets?.stats?.[key];
+        const statLabelFallback = entry?.label ?? humanizeIdentifier(key);
+        const fallbackLabel =
+                statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
+        const label = coerceLabel(entry?.label, fallbackLabel);
+        const icon = coerceIcon(entry?.icon, key);
+        let format = entry?.format ? { ...entry.format } : undefined;
+        if (!format && entry?.displayAsPercent) {
+                format = { percent: true };
+        }
+        const descriptor: StatRegistryDescriptor = {
+                icon,
+                label,
+                ...(format ? { format } : {}),
+        };
 	cache.set(cacheKey, descriptor);
 	return descriptor;
 }

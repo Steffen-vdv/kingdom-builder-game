@@ -65,33 +65,39 @@ export function ownerLabel(
 // Attack summary strings must stay icon-based. Target formatters should call
 // buildAttackSummaryBullet for the summarize branch instead of returning prose.
 export function buildBaseEntry(
-	effectDefinition: EffectDef<Record<string, unknown>>,
-	mode: Mode,
+        effectDefinition: EffectDef<Record<string, unknown>>,
+        mode: Mode,
+        translationContext: TranslationContext,
 ): BaseEntryResult {
-	const context = resolveAttackFormatterContext(effectDefinition);
-	const ignoreAbsorption = Boolean(
-		effectDefinition.params?.['ignoreAbsorption'],
-	);
-	const ignoreFortification = Boolean(
-		effectDefinition.params?.['ignoreFortification'],
+        const context = resolveAttackFormatterContext(
+                effectDefinition,
+                translationContext,
+        );
+        const ignoreAbsorption = Boolean(
+                effectDefinition.params?.['ignoreAbsorption'],
+        );
+        const ignoreFortification = Boolean(
+                effectDefinition.params?.['ignoreFortification'],
 	);
 	const entry = context.formatter.buildBaseEntry({
 		mode,
 		stats: context.stats,
-		info: context.info,
-		target: context.target,
-		targetLabel: context.targetLabel,
-		ignoreAbsorption,
-		ignoreFortification,
-	});
-	return {
-		entry,
-		formatter: context.formatter,
-		info: context.info,
-		target: context.target,
-		targetLabel: context.targetLabel,
-		stats: context.stats,
-	};
+                info: context.info,
+                target: context.target,
+                targetLabel: context.targetLabel,
+                ignoreAbsorption,
+                ignoreFortification,
+                translationContext,
+        });
+        return {
+                entry,
+                formatter: context.formatter,
+                info: context.info,
+                target: context.target,
+                targetLabel: context.targetLabel,
+                stats: context.stats,
+                translationContext,
+        };
 }
 
 function applyOwnerPresentation(
@@ -189,22 +195,26 @@ export function formatDiffEntries(
 	translationContext: TranslationContext,
 ): SummaryEntry[] {
 	const formattedEntries: SummaryEntry[] = [];
-	entry.defender.forEach((diffEntry) =>
-		formattedEntries.push(
-			formatter.formatDiff(
-				ownerLabel(translationContext, 'defender'),
-				diffEntry,
-			),
-		),
-	);
-	entry.attacker.forEach((diffEntry) =>
-		formattedEntries.push(
-			formatter.formatDiff(
-				ownerLabel(translationContext, 'attacker'),
-				diffEntry,
-			),
-		),
-	);
+        entry.defender.forEach((diffEntry) =>
+                formattedEntries.push(
+                        formatter.formatDiff(
+                                ownerLabel(translationContext, 'defender'),
+                                diffEntry,
+                                undefined,
+                                translationContext,
+                        ),
+                ),
+        );
+        entry.attacker.forEach((diffEntry) =>
+                formattedEntries.push(
+                        formatter.formatDiff(
+                                ownerLabel(translationContext, 'attacker'),
+                                diffEntry,
+                                undefined,
+                                translationContext,
+                        ),
+                ),
+        );
 	return formattedEntries;
 }
 

@@ -1,8 +1,3 @@
-import {
-	PASSIVE_INFO,
-	POPULATION_ROLES,
-	RESOURCES,
-} from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
 	TranslationRegistry,
@@ -92,17 +87,27 @@ function createRecordResolver<T extends { icon?: string; label?: string }>(
 function createDescriptorRegistry(
 	translationContext: TranslationContext,
 ): Registry {
-	return {
-		population: {
-			resolve: (id) => {
-				const role = id
-					? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
-					: undefined;
-				return {
-					icon: role?.icon ?? '',
-					label: role?.label ?? id ?? 'Population',
-				} satisfies ResolveResult;
-			},
+        const populationFallback = {
+                icon: translationContext.assets.population?.icon ?? '',
+                label: translationContext.assets.population?.label ?? 'Population',
+        } satisfies ResolveResult;
+        return {
+                population: {
+                        resolve: (id) => {
+                                if (id) {
+                                        const entry = translationContext.assets.populations?.[id];
+                                        if (entry) {
+                                                return {
+                                                        icon: entry.icon ?? populationFallback.icon,
+                                                        label: entry.label ?? id,
+                                                } satisfies ResolveResult;
+                                        }
+                                }
+                                return {
+                                        icon: populationFallback.icon,
+                                        label: id ?? populationFallback.label,
+                                } satisfies ResolveResult;
+                        },
 			formatDetail: defaultFormatDetail,
 			augmentDependencyDetail: (detail, link, player, _context, options) => {
 				const includeCounts = options.includeCounts ?? true;
@@ -176,23 +181,37 @@ function createDescriptorRegistry(
 				return detail ? `${detail} ${valueText}` : valueText;
 			},
 		},
-		resource: {
-			resolve: createRecordResolver(RESOURCES, 'Resource'),
-			formatDetail: defaultFormatDetail,
-		},
-		trigger: createTriggerDescriptorEntry(defaultFormatDetail),
-		passive: {
-			resolve: () => ({
-				icon: PASSIVE_INFO.icon ?? '',
-				label: PASSIVE_INFO.label ?? 'Passive',
-			}),
-			formatDetail: defaultFormatDetail,
-		},
-		land: {
-			resolve: (id) => ({
-				icon: '',
-				label: id ?? 'Land',
-			}),
+                resource: {
+                        resolve: (id) => {
+                                if (id) {
+                                        const entry = translationContext.assets.resources?.[id];
+                                        if (entry) {
+                                                return {
+                                                        icon: entry.icon ?? '',
+                                                        label: entry.label ?? id,
+                                                } satisfies ResolveResult;
+                                        }
+                                }
+                                return { icon: '', label: id ?? 'Resource' } satisfies ResolveResult;
+                        },
+                        formatDetail: defaultFormatDetail,
+                },
+                trigger: createTriggerDescriptorEntry(
+                        translationContext.assets,
+                        defaultFormatDetail,
+                ),
+                passive: {
+                        resolve: () => ({
+                                icon: translationContext.assets.passive?.icon ?? '',
+                                label: translationContext.assets.passive?.label ?? 'Passive',
+                        }),
+                        formatDetail: defaultFormatDetail,
+                },
+                land: {
+                        resolve: (id) => ({
+                                icon: translationContext.assets.land?.icon ?? '',
+                                label: id ?? translationContext.assets.land?.label ?? 'Land',
+                        }),
 			formatDetail: defaultFormatDetail,
 		},
 		start: {

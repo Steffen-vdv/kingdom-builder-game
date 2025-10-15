@@ -8,10 +8,12 @@ import type {
 } from '@kingdom-builder/protocol/session';
 
 export interface RegistryMetadataDescriptor {
-	id: string;
-	label: string;
-	icon?: string;
-	description?: string;
+        id: string;
+        label: string;
+        icon?: string;
+        description?: string;
+        format?: { prefix?: string; percent?: boolean };
+        displayAsPercent?: boolean;
 }
 
 export interface AssetMetadata extends RegistryMetadataDescriptor {}
@@ -98,21 +100,31 @@ interface RegistryDescriptorFallback {
 }
 
 const createRegistryDescriptor = (
-	id: string,
-	descriptor: SessionMetadataDescriptor | undefined,
-	fallback: RegistryDescriptorFallback,
+        id: string,
+        descriptor: SessionMetadataDescriptor | undefined,
+        fallback: RegistryDescriptorFallback,
 ): RegistryMetadataDescriptor => {
-	const label = descriptor?.label ?? fallback.label ?? formatLabel(id);
-	const entry: RegistryMetadataDescriptor = { id, label };
-	const icon = descriptor?.icon ?? fallback.icon;
-	if (icon !== undefined) {
-		entry.icon = icon;
-	}
-	const description = descriptor?.description ?? fallback.description;
-	if (description !== undefined) {
-		entry.description = description;
-	}
-	return Object.freeze(entry);
+        const label = descriptor?.label ?? fallback.label ?? formatLabel(id);
+        const entry: RegistryMetadataDescriptor = { id, label };
+        const icon = descriptor?.icon ?? fallback.icon;
+        if (icon !== undefined) {
+                entry.icon = icon;
+        }
+        const description = descriptor?.description ?? fallback.description;
+        if (description !== undefined) {
+                entry.description = description;
+        }
+        const extended = descriptor as (SessionMetadataDescriptor & {
+                format?: { prefix?: string; percent?: boolean };
+                displayAsPercent?: boolean;
+        }) | undefined;
+        if (extended?.format) {
+                entry.format = Object.freeze({ ...extended.format });
+        }
+        if (extended?.displayAsPercent !== undefined) {
+                entry.displayAsPercent = extended.displayAsPercent;
+        }
+        return Object.freeze(entry);
 };
 
 const createPhaseStep = (step: SessionPhaseStepMetadata): PhaseStepMetadata => {

@@ -5,7 +5,6 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -68,7 +67,8 @@ const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
 
 type PercentAwareDescriptor = SessionMetadataDescriptor & {
-	displayAsPercent?: boolean;
+        displayAsPercent?: boolean;
+        format?: { prefix?: string; percent?: boolean };
 };
 
 function mergeIconLabel(
@@ -86,11 +86,11 @@ function mergeIconLabel(
 		entry.label = label;
 	}
 	const description = descriptor?.description ?? base?.description;
-	if (description !== undefined) {
-		entry.description = description;
-	}
-	const percentFlag = (descriptor as PercentAwareDescriptor | undefined)
-		?.displayAsPercent;
+        if (description !== undefined) {
+                entry.description = description;
+        }
+        const percentFlag = (descriptor as PercentAwareDescriptor | undefined)
+                ?.displayAsPercent;
 	if (percentFlag !== undefined) {
 		entry.displayAsPercent = percentFlag;
 	} else if (base?.displayAsPercent !== undefined) {
@@ -173,30 +173,17 @@ function buildStatMap(
 	return Object.freeze(entries);
 }
 
-const DEFAULT_TRIGGER_ASSETS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => [
-			id,
-			Object.freeze({
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-				label: info.past,
-			} satisfies TranslationTriggerAsset),
-		]),
-	),
-);
-
 function mergeTriggerAsset(
-	base: TranslationTriggerAsset | undefined,
-	descriptor: SessionTriggerMetadata | undefined,
+        id: string,
+        base: TranslationTriggerAsset | undefined,
+        descriptor: SessionTriggerMetadata | undefined,
 ): TranslationTriggerAsset {
-	const entry: TranslationTriggerAsset = {};
-	const icon = descriptor?.icon ?? base?.icon;
-	if (icon !== undefined) {
-		entry.icon = icon;
-	}
-	const future = descriptor?.future ?? base?.future;
+        const entry: TranslationTriggerAsset = {};
+        const icon = descriptor?.icon ?? base?.icon;
+        if (icon !== undefined) {
+                entry.icon = icon;
+        }
+        const future = descriptor?.future ?? base?.future;
 	if (future !== undefined) {
 		entry.future = future;
 	}
@@ -204,26 +191,28 @@ function mergeTriggerAsset(
 	if (past !== undefined) {
 		entry.past = past;
 	}
-	const label = descriptor?.label ?? base?.label ?? past;
-	if (label !== undefined) {
-		entry.label = label;
-	}
-	return Object.freeze(entry);
+        const label = descriptor?.label ?? base?.label ?? past;
+        entry.label = label ?? base?.label ?? past ?? id;
+        const format = (descriptor as PercentAwareDescriptor | undefined)?.format;
+        if (format !== undefined) {
+                entry.format = Object.freeze({ ...format });
+        } else if (base?.format !== undefined) {
+                entry.format = base.format;
+        }
+        return Object.freeze(entry);
 }
 
 function buildTriggerMap(
-	triggers?: Record<string, SessionTriggerMetadata> | undefined,
+        triggers?: Record<string, SessionTriggerMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
-	const entries: Record<string, TranslationTriggerAsset> = {
-		...DEFAULT_TRIGGER_ASSETS,
-	};
-	if (!triggers) {
-		return Object.freeze(entries);
-	}
-	for (const [id, descriptor] of Object.entries(triggers)) {
-		entries[id] = mergeTriggerAsset(entries[id], descriptor);
-	}
-	return Object.freeze(entries);
+        if (!triggers) {
+                return Object.freeze({});
+        }
+        const entries: Record<string, TranslationTriggerAsset> = {};
+        for (const [id, descriptor] of Object.entries(triggers)) {
+                entries[id] = mergeTriggerAsset(id, undefined, descriptor);
+        }
+        return Object.freeze(entries);
 }
 
 function buildTierSummaryMap(

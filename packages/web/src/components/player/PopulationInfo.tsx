@@ -1,5 +1,4 @@
 import React from 'react';
-import { Stat } from '@kingdom-builder/contents';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { getStatBreakdownSummary } from '../../utils/stats';
 import { useGameEngine } from '../../state/GameContext';
@@ -78,13 +77,32 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			: translationContext.opponent.id === player.id
 				? translationContext.opponent
 				: undefined;
-	const maxPopulation = (() => {
-		const direct = player.stats?.[Stat.maxPopulation];
-		if (typeof direct === 'number') {
-			return direct;
-		}
-		return translationPlayer?.stats?.[Stat.maxPopulation] ?? 0;
-	})();
+        const maxPopulationKey = React.useMemo(() => {
+                const knownKeys = new Set(Object.keys(player.stats ?? {}));
+                if (knownKeys.has('maxPopulation')) {
+                        return 'maxPopulation';
+                }
+                const labeled = statMetadata.list.find((descriptor) => {
+                        const label = descriptor.label?.toLowerCase() ?? '';
+                        return label.includes('max population');
+                });
+                if (labeled) {
+                        return labeled.id;
+                }
+                const firstKey = knownKeys.values().next().value;
+                if (typeof firstKey === 'string') {
+                        return firstKey;
+                }
+                return 'maxPopulation';
+        }, [player.stats, statMetadata]);
+
+        const maxPopulation = (() => {
+                const direct = player.stats?.[maxPopulationKey];
+                if (typeof direct === 'number') {
+                        return direct;
+                }
+                return translationPlayer?.stats?.[maxPopulationKey] ?? 0;
+        })();
 
 	const populationInfo = React.useMemo(
 		() => toAssetDisplay(assets.population, 'population'),

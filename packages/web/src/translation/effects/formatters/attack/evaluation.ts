@@ -2,20 +2,21 @@ import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatStatValue } from '../../../../utils/stats';
 import type { SummaryEntry } from '../../../content';
 import {
-	attackStatLabel,
-	attackStatValue,
-	formatNumber,
-	formatPercent,
-	formatSignedValue,
-	iconLabel,
+        attackStatLabel,
+        attackStatValue,
+        formatNumber,
+        formatPercent,
+        formatSignedValue,
+        iconLabel,
 } from './shared';
 import type {
-	AttackTarget,
-	BaseEntryContext,
-	EvaluationContext,
-	TargetInfo,
+        AttackTarget,
+        BaseEntryContext,
+        EvaluationContext,
+        TargetInfo,
 } from './types';
 import { selectAttackBuildingDescriptor } from './registrySelectors';
+import type { TranslationContext } from '../../../context';
 
 export function buildDescribeEntry(
 	context: BaseEntryContext<AttackTarget>,
@@ -186,6 +187,9 @@ export function buildStandardEvaluationEntry(
 	return { title, items };
 }
 
-export function getBuildingDisplay(buildingId: string): TargetInfo {
-	return selectAttackBuildingDescriptor(buildingId);
+export function getBuildingDisplay(
+        buildingId: string,
+        context: TranslationContext,
+): TargetInfo {
+        return selectAttackBuildingDescriptor(context, buildingId);
 }

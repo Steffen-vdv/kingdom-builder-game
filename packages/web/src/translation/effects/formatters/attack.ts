@@ -52,15 +52,15 @@ function resolveAttackOnDamageFormatter(
 }
 
 function fallbackLog(
-	effectDefinition: EffectDef<Record<string, unknown>>,
-	translationContext: TranslationContext,
+        effectDefinition: EffectDef<Record<string, unknown>>,
+        translationContext: TranslationContext,
 ): SummaryEntry[] {
-	const baseEntry = buildBaseEntry(effectDefinition, 'describe');
-	const onDamage = summarizeOnDamage(
-		effectDefinition,
-		translationContext,
-		'describe',
-		baseEntry,
+        const baseEntry = buildBaseEntry(effectDefinition, 'describe', translationContext);
+        const onDamage = summarizeOnDamage(
+                effectDefinition,
+                translationContext,
+                'describe',
+                baseEntry,
 	);
 	const parts: SummaryEntry[] = [baseEntry.entry];
 	if (onDamage) {
@@ -70,15 +70,16 @@ function fallbackLog(
 }
 
 function buildEvaluationEntry(
-	log: AttackLog['evaluation'],
-	context: AttackFormatterContext,
+        log: AttackLog['evaluation'],
+        context: AttackFormatterContext,
 ): SummaryEntry {
-	return context.formatter.buildEvaluationEntry(log, {
-		stats: context.stats,
-		info: context.info,
-		target: context.target,
-		targetLabel: context.targetLabel,
-	});
+        return context.formatter.buildEvaluationEntry(log, {
+                stats: context.stats,
+                info: context.info,
+                target: context.target,
+                targetLabel: context.targetLabel,
+                translationContext: context.translationContext,
+        });
 }
 
 function buildActionLog(
@@ -104,37 +105,43 @@ function buildActionLog(
 		}
 	}
 	const items: SummaryEntry[] = [];
-	entry.defender.forEach((diff) => {
-		const percent =
-			diff.type === 'resource'
-				? transferPercents.get(diff.key as ResourceKey)
-				: undefined;
-		items.push(
-			formatter.formatDiff(
-				ownerLabel(translationContext, 'defender'),
-				diff,
-				percent !== undefined ? { percent } : { showPercent: true as const },
-			),
-		);
-	});
-	entry.attacker.forEach((diff) => {
-		items.push(
-			formatter.formatDiff(ownerLabel(translationContext, 'attacker'), diff),
-		);
-	});
+        entry.defender.forEach((diff) => {
+                const percent =
+                        diff.type === 'resource'
+                                ? transferPercents.get(diff.key as ResourceKey)
+                                : undefined;
+                items.push(
+                        formatter.formatDiff(
+                                ownerLabel(translationContext, 'defender'),
+                                diff,
+                                percent !== undefined ? { percent } : { showPercent: true as const },
+                                translationContext,
+                        ),
+                );
+        });
+        entry.attacker.forEach((diff) => {
+                items.push(
+                        formatter.formatDiff(
+                                ownerLabel(translationContext, 'attacker'),
+                                diff,
+                                undefined,
+                                translationContext,
+                        ),
+                );
+        });
 	return { title: `Trigger ${icon} ${name}`.trim(), items };
 }
 
 export function buildOnDamageEntry(
-	logEntries: AttackLog['onDamage'],
-	translationContext: TranslationContext,
-	effectDefinition: EffectDef<Record<string, unknown>>,
+        logEntries: AttackLog['onDamage'],
+        translationContext: TranslationContext,
+        effectDefinition: EffectDef<Record<string, unknown>>,
 ): SummaryEntry | null {
 	if (!logEntries.length) {
 		return null;
 	}
-	const { formatter, info, target } =
-		resolveAttackTargetFormatter(effectDefinition);
+        const { formatter, info, target } =
+                resolveAttackTargetFormatter(effectDefinition, translationContext);
 	const items: SummaryEntry[] = [];
 	const defenderEntries = logEntries.filter(
 		(entry) => entry.owner === 'defender',
@@ -145,18 +152,18 @@ export function buildOnDamageEntry(
 	const ordered = defenderEntries.concat(attackerEntries);
 	for (const entry of ordered) {
 		const handler = resolveAttackOnDamageFormatter(entry);
-		const formatted = handler
-			? handler({ entry, translationContext, formatter })
-			: formatDiffEntries(entry, formatter, translationContext);
-		items.push(...formatted);
-	}
+                const formatted = handler
+                        ? handler({ entry, translationContext, formatter })
+                        : formatDiffEntries(entry, formatter, translationContext);
+                items.push(...formatted);
+        }
 	if (!items.length) {
 		return null;
 	}
-	return {
-		title: formatter.onDamageLogTitle(info, target),
-		items,
-	};
+        return {
+                title: formatter.onDamageLogTitle(info, target, translationContext),
+                items,
+        };
 }
 
 registerAttackOnDamageFormatter(
@@ -178,30 +185,35 @@ registerAttackOnDamageFormatter(
 			return formatDiffEntries(entry, formatter, translationContext);
 		}
 		const parts: SummaryEntry[] = [];
-		entry.defender.forEach((diff) => {
-			parts.push(
-				formatter.formatDiff(ownerLabel(translationContext, 'defender'), diff, {
-					percent,
-				}),
-			);
-		});
-		entry.attacker.forEach((diff) => {
-			parts.push(
-				formatter.formatDiff(ownerLabel(translationContext, 'attacker'), diff),
-			);
-		});
+                entry.defender.forEach((diff) => {
+                        parts.push(
+                                formatter.formatDiff(ownerLabel(translationContext, 'defender'), diff, {
+                                        percent,
+                                }, translationContext),
+                        );
+                });
+                entry.attacker.forEach((diff) => {
+                        parts.push(
+                                formatter.formatDiff(
+                                        ownerLabel(translationContext, 'attacker'),
+                                        diff,
+                                        undefined,
+                                        translationContext,
+                                ),
+                        );
+                });
 		return parts;
 	},
 );
 
 registerEffectFormatter('attack', 'perform', {
-	summarize: (effect, translationContext) => {
-		const baseEntry = buildBaseEntry(effect, 'summarize');
-		const parts: SummaryEntry[] = [baseEntry.entry];
-		const onDamage = summarizeOnDamage(
-			effect,
-			translationContext,
-			'summarize',
+        summarize: (effect, translationContext) => {
+                const baseEntry = buildBaseEntry(effect, 'summarize', translationContext);
+                const parts: SummaryEntry[] = [baseEntry.entry];
+                const onDamage = summarizeOnDamage(
+                        effect,
+                        translationContext,
+                        'summarize',
 			baseEntry,
 		);
 		if (onDamage) {
@@ -209,13 +221,13 @@ registerEffectFormatter('attack', 'perform', {
 		}
 		return parts;
 	},
-	describe: (effect, translationContext) => {
-		const baseEntry = buildBaseEntry(effect, 'describe');
-		const parts: SummaryEntry[] = [baseEntry.entry];
-		const onDamage = summarizeOnDamage(
-			effect,
-			translationContext,
-			'describe',
+        describe: (effect, translationContext) => {
+                const baseEntry = buildBaseEntry(effect, 'describe', translationContext);
+                const parts: SummaryEntry[] = [baseEntry.entry];
+                const onDamage = summarizeOnDamage(
+                        effect,
+                        translationContext,
+                        'describe',
 			baseEntry,
 		);
 		if (onDamage) {
@@ -223,17 +235,20 @@ registerEffectFormatter('attack', 'perform', {
 		}
 		return parts;
 	},
-	log: (effect, translationContext) => {
-		const log = translationContext.pullEffectLog<AttackLog>('attack:perform');
-		if (!log) {
-			return fallbackLog(effect, translationContext);
-		}
-		const contextDetails = resolveAttackFormatterContext(effect);
-		const entries: SummaryEntry[] = [
-			buildEvaluationEntry(log.evaluation, contextDetails),
-		];
-		const onDamage = buildOnDamageEntry(
-			log.onDamage,
+        log: (effect, translationContext) => {
+                const log = translationContext.pullEffectLog<AttackLog>('attack:perform');
+                if (!log) {
+                        return fallbackLog(effect, translationContext);
+                }
+                const contextDetails = resolveAttackFormatterContext(
+                        effect,
+                        translationContext,
+                );
+                const entries: SummaryEntry[] = [
+                        buildEvaluationEntry(log.evaluation, contextDetails),
+                ];
+                const onDamage = buildOnDamageEntry(
+                        log.onDamage,
 			translationContext,
 			effect,
 		);

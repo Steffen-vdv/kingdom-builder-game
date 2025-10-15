@@ -1,4 +1,3 @@
-import { RESOURCE_TRANSFER_ICON } from '@kingdom-builder/contents';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
 	RESULT_EVENT_RESOLVE,
@@ -41,6 +40,8 @@ interface ModifierEvalHandler {
 }
 
 export const MODIFIER_EVAL_HANDLERS: Record<string, ModifierEvalHandler> = {};
+
+const RESOURCE_TRANSFER_ICON = '🔁';
 
 export function registerModifierEvalHandler(
 	type: string,

@@ -9,10 +9,6 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -67,7 +63,7 @@ export interface RegistryMetadataContextValue {
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
-	overviewContent: OverviewContentTemplate;
+        overviewContent: SessionSnapshotMetadata['overviewContent'];
 }
 
 interface RegistryMetadataProviderProps {
@@ -222,7 +218,24 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+        const overviewContent = useMemo(() => {
+                const content = metadata.overviewContent;
+                if (content) {
+                        return content;
+                }
+                return {
+                        hero: {
+                                badgeIcon: '',
+                                badgeLabel: '',
+                                title: '',
+                                intro: '',
+                                paragraph: '',
+                                tokens: {},
+                        },
+                        sections: [],
+                        tokens: {},
+                } satisfies SessionSnapshotMetadata['overviewContent'];
+        }, [metadata]);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
@@ -273,9 +286,9 @@ export function RegistryMetadataProvider({
 			landMetadata,
 			slotMetadata,
 			passiveMetadata,
-			overviewContent,
-		],
-	);
+                        overviewContent,
+                ],
+        );
 	return (
 		<RegistryMetadataContext.Provider value={value}>
 			{children}

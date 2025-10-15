@@ -22,10 +22,11 @@ export interface TranslationRegistry<TDefinition> {
 }
 
 export interface TranslationIconLabel {
-	icon?: string;
-	label?: string;
-	description?: string;
-	displayAsPercent?: boolean;
+        icon?: string;
+        label?: string;
+        description?: string;
+        displayAsPercent?: boolean;
+        format?: { prefix?: string; percent?: boolean };
 }
 
 export interface TranslationModifierInfo {

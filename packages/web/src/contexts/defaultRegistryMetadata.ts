@@ -2,7 +2,6 @@ import type {
 	SessionRegistriesPayload,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 import { deserializeSessionRegistries } from '../state/sessionRegistries';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import snapshot from './defaultRegistryMetadata.json';
@@ -67,12 +66,12 @@ function assertDefaultRegistrySnapshot(
 			);
 		}
 	}
-	const overviewEntry = metadataRecord.overviewContent;
-	if (typeof overviewEntry !== 'object' || overviewEntry === null) {
-		throw new Error(
-			'Missing overviewContent in default registry snapshot metadata.',
-		);
-	}
+        const overviewEntry = metadataRecord.overviewContent;
+        if (typeof overviewEntry !== 'object' || overviewEntry === null) {
+                throw new Error(
+                        'Missing overviewContent in default registry snapshot metadata.',
+                );
+        }
 }
 
 const snapshotSource: unknown = snapshot;
@@ -81,12 +80,7 @@ assertDefaultRegistrySnapshot(snapshotSource);
 
 const normalizedSnapshot = {
 	registries: snapshotSource.registries,
-	metadata: {
-		...snapshotSource.metadata,
-		overviewContent: snapshotSource.metadata.overviewContent
-			? structuredClone(snapshotSource.metadata.overviewContent)
-			: structuredClone(OVERVIEW_CONTENT),
-	},
+        metadata: snapshotSource.metadata,
 } satisfies DefaultRegistrySnapshot;
 
 const SNAPSHOT = deepFreeze(structuredClone(normalizedSnapshot));

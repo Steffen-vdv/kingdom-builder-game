@@ -3,7 +3,6 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 
 interface IconLabelDisplay {
 	icon?: string;
@@ -70,23 +69,14 @@ export function selectUpkeepDisplay(
 }
 
 export function selectTriggerDisplay(
-	assets: TranslationAssets | undefined,
-	triggerId: string,
+        assets: TranslationAssets | undefined,
+        triggerId: string,
 ): TranslationTriggerAsset {
-	const entry = assets?.triggers?.[triggerId];
-	if (entry) {
-		return entry;
-	}
-	const fallback = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
-	if (fallback) {
-		return Object.freeze({
-			icon: fallback.icon,
-			future: fallback.future,
-			past: fallback.past,
-			label: fallback.past,
-		});
-	}
-	return {};
+        const entry = assets?.triggers?.[triggerId];
+        if (entry) {
+                return entry;
+        }
+        return Object.freeze({ label: triggerId });
 }
 
 export function selectTierSummary(
