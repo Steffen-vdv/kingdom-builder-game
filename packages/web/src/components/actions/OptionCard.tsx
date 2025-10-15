@@ -16,6 +16,7 @@ export type ActionCardOption = {
 function buildOptionClass(option: ActionCardOption): string {
 	return [
 		'action-card__option',
+		'panel-card',
 		option.compact ? 'action-card__option--compact' : '',
 		option.disabled ? 'opacity-50 cursor-not-allowed' : 'hoverable',
 	]
