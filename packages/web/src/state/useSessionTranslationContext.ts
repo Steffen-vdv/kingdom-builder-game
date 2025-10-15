@@ -37,18 +37,13 @@ export function useSessionTranslationContext({
 		error: unknown;
 	}>(() => {
 		const fallbackMetadata = cachedSessionSnapshot.metadata;
-		const fallbackModifiers =
-			fallbackMetadata?.passiveEvaluationModifiers ?? {};
-		const passiveEvaluationModifiers =
-			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
-		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
-		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
-				}
-			: { passiveEvaluationModifiers };
+		const metadataPayload = structuredClone(sessionMetadata);
+		if (
+			metadataPayload.effectLogs === undefined &&
+			fallbackMetadata.effectLogs !== undefined
+		) {
+			metadataPayload.effectLogs = structuredClone(fallbackMetadata.effectLogs);
+		}
 		try {
 			const context = createTranslationContext(
 				sessionState,

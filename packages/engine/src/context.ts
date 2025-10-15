@@ -9,9 +9,21 @@ import type {
 	PopulationConfig as PopulationDef,
 	PlayerStartConfig,
 	Registry,
+	SessionResourceDefinition,
+	SessionMetadataDescriptor,
+	SessionTriggerMetadata,
+	SessionOverviewContent,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
+
+export interface EngineRegistryMetadataSources {
+	resources?: Record<string, SessionMetadataDescriptor>;
+	stats?: Record<string, SessionMetadataDescriptor>;
+	triggers?: Record<string, SessionTriggerMetadata>;
+	assets?: Record<string, SessionMetadataDescriptor>;
+	overviewContent?: SessionOverviewContent;
+}
 
 export class EngineContext {
 	constructor(
@@ -24,10 +36,12 @@ export class EngineContext {
 		public passives: PassiveManager,
 		public phases: PhaseDef[],
 		public actionCostResource: ResourceKey,
+		public resourceDefinitions: Record<string, SessionResourceDefinition> = {},
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},
 		},
+		public registryMetadataSources: EngineRegistryMetadataSources = {},
 	) {}
 	aiSystem?: AISystem;
 	recentResourceGains: {

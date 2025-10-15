@@ -32,6 +32,7 @@ import {
 	deepClone,
 	snapshotPlayer,
 } from './player_snapshot';
+import { buildRegistryMetadata } from './registry_metadata';
 
 function clonePhaseStep(step: StepDef): SessionPhaseStepDefinition {
 	const cloned: SessionPhaseStepDefinition = { id: step.id };
@@ -139,9 +140,12 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const rules = cloneRuleSnapshot(context);
 	const effectLogs = cloneEffectLogs(context);
 	const passiveEvaluationModifiers = snapshotEvaluationModifiers(context);
-	const metadata: SessionSnapshotMetadata = effectLogs
-		? { passiveEvaluationModifiers, effectLogs }
-		: { passiveEvaluationModifiers };
+	const registryMetadata = buildRegistryMetadata(context);
+	const metadataBase: SessionSnapshotMetadata = {
+		passiveEvaluationModifiers,
+		...registryMetadata,
+	};
+	const metadata = effectLogs ? { ...metadataBase, effectLogs } : metadataBase;
 	return {
 		game: {
 			turn: context.game.turn,

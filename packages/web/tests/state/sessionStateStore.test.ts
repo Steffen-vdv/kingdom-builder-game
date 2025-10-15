@@ -16,12 +16,11 @@ import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
+	createTestMetadata,
 } from '../helpers/sessionFixtures';
 
-const createMetadata = (overrides: Partial<SessionSnapshotMetadata> = {}) => ({
-	passiveEvaluationModifiers: {},
-	...overrides,
-});
+const createMetadata = (overrides: Partial<SessionSnapshotMetadata> = {}) =>
+	createTestMetadata(overrides);
 
 describe('sessionStateStore', () => {
 	beforeEach(() => {

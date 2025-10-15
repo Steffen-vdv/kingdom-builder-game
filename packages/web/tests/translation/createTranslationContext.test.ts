@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { createTestMetadata } from '../helpers/sessionFixtures';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
@@ -40,12 +41,12 @@ describe('createTranslationContext', () => {
 		const [firstPhase] = phases;
 		const firstStep = firstPhase?.steps?.[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
-		const metadata = {
+		const metadata = createTestMetadata({
 			effectLogs: { legacy: [{ note: 'legacy entry' }] },
 			passiveEvaluationModifiers: {
 				[resourceKey]: ['modifier'],
 			},
-		} satisfies SessionSnapshot['metadata'];
+		});
 		const compensation = (amount: number): PlayerStartConfig => ({
 			resources: { [resourceKey]: amount },
 		});

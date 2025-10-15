@@ -11,6 +11,7 @@ import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
+	createTestMetadata,
 } from './helpers/sessionFixtures';
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
@@ -78,8 +79,7 @@ function createTestSetup(): TestSetup {
 		name: 'Defender',
 		resources: { [resourceKey]: 0 },
 	});
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
+	const metadata: SessionSnapshotMetadata = createTestMetadata({
 		resources: {
 			[resourceKey]: {
 				label: 'Auric Coin',
@@ -92,7 +92,7 @@ function createTestSetup(): TestSetup {
 			slot: { label: 'Development Slot', icon: '🧩' },
 			passive: { label: 'Passive', icon: '♾️' },
 		},
-	};
+	});
 	const sessionSnapshot = createSessionSnapshot({
 		players: [attacker, defender],
 		activePlayerId: attacker.id,

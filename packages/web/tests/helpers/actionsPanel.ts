@@ -25,6 +25,7 @@ import {
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { createTestMetadata } from './sessionFixtures';
 
 const POPULATION_ICON_FALLBACK = '👥';
 
@@ -405,7 +406,7 @@ export function createActionsPanelGame({
 			[player.id]: [],
 			[opponent.id]: [],
 		},
-		metadata: { passiveEvaluationModifiers: {} },
+		metadata: createTestMetadata(),
 	};
 
 	sessionRegistries.actions = actionsRegistry;
@@ -471,13 +472,12 @@ export function createActionsPanelGame({
 		getActionOptions: vi.fn(() => []),
 	} as const;
 
-	sessionState.metadata = {
-		passiveEvaluationModifiers: {},
+	sessionState.metadata = createTestMetadata({
 		resources: resourceDescriptors,
 		populations: populationDescriptors,
 		stats: Object.fromEntries(statMetadataEntries),
 		assets: { slot: slotDescriptor },
-	};
+	});
 
 	return {
 		session,

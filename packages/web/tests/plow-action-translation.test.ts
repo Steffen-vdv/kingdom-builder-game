@@ -4,7 +4,6 @@ import {
 	SYNTHETIC_UPKEEP_PHASE,
 	SYNTHETIC_PASSIVE_INFO,
 	SYNTHETIC_LAND_INFO,
-	SYNTHETIC_SLOT_INFO,
 	registerSyntheticPlowResources,
 } from './fixtures/syntheticPlow';
 import {
@@ -136,8 +135,8 @@ describe('plow action translation', () => {
 		const landIcon = landAsset.icon ?? SYNTHETIC_LAND_INFO.icon;
 		const landLabel = landAsset.label ?? SYNTHETIC_LAND_INFO.label;
 		const slotAsset = translation.assets.slot ?? {};
-		const slotIcon = slotAsset.icon ?? SYNTHETIC_SLOT_INFO.icon;
-		const slotLabel = slotAsset.label ?? SYNTHETIC_SLOT_INFO.label;
+		const slotIcon = slotAsset.icon ?? '🧩';
+		const expectedSlotLabel = 'Development Slot';
 		expect(effects).toEqual([
 			{
 				title: `${expand.icon} ${expand.name}`,
@@ -149,7 +148,7 @@ describe('plow action translation', () => {
 			{
 				title: `${till.icon} ${till.name}`,
 				items: [
-					`Till ${landIcon} ${landLabel} to unlock ${slotIcon} ${slotLabel}`,
+					`Till ${landIcon} ${landLabel} to unlock ${slotIcon} ${expectedSlotLabel}`,
 				],
 			},
 			{

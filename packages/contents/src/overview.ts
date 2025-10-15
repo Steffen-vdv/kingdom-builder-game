@@ -1,60 +1,31 @@
 import { ActionId } from './actions';
 import { PhaseId } from './phases';
+import type {
+	SessionOverviewContent,
+	SessionOverviewHeroContent,
+	SessionOverviewListItem,
+	SessionOverviewListSection,
+	SessionOverviewParagraphSection,
+	SessionOverviewSection,
+	SessionOverviewTokenCandidates,
+	SessionOverviewTokenCategoryName,
+} from '@kingdom-builder/protocol';
 
-export type OverviewTokenCategoryName =
-	| 'actions'
-	| 'phases'
-	| 'resources'
-	| 'stats'
-	| 'population'
-	| 'static';
+export type OverviewTokenCategoryName = SessionOverviewTokenCategoryName;
 
-export type OverviewTokenCandidates = Partial<
-	Record<OverviewTokenCategoryName, Record<string, string[]>>
->;
+export type OverviewTokenCandidates = SessionOverviewTokenCandidates;
 
-export type OverviewListItemTemplate = {
-	icon?: string;
-	label: string;
-	body: string[];
-};
+export type OverviewListItemTemplate = SessionOverviewListItem;
 
-export type OverviewParagraphTemplate = {
-	kind: 'paragraph';
-	id: string;
-	icon: string;
-	title: string;
-	span?: boolean;
-	paragraphs: string[];
-};
+export type OverviewParagraphTemplate = SessionOverviewParagraphSection;
 
-export type OverviewListTemplate = {
-	kind: 'list';
-	id: string;
-	icon: string;
-	title: string;
-	span?: boolean;
-	items: OverviewListItemTemplate[];
-};
+export type OverviewListTemplate = SessionOverviewListSection;
 
-export type OverviewSectionTemplate =
-	| OverviewParagraphTemplate
-	| OverviewListTemplate;
+export type OverviewSectionTemplate = SessionOverviewSection;
 
-export type OverviewHeroTemplate = {
-	badgeIcon: string;
-	badgeLabel: string;
-	title: string;
-	intro: string;
-	paragraph: string;
-	tokens: Record<string, string>;
-};
+export type OverviewHeroTemplate = SessionOverviewHeroContent;
 
-export type OverviewContentTemplate = {
-	hero: OverviewHeroTemplate;
-	sections: OverviewSectionTemplate[];
-	tokens: OverviewTokenCandidates;
-};
+export type OverviewContentTemplate = SessionOverviewContent;
 
 const HERO_INTRO_TEXT = [
 	'Map the rhythms of the realm before you issue your first decree.',

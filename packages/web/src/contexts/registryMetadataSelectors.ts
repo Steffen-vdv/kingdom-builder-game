@@ -105,20 +105,20 @@ export const extractDescriptorRecord = (
 
 export const extractPhaseRecord = (
 	snapshot: SessionSnapshotMetadata,
-): SessionSnapshotMetadata['phases'] => {
+): SessionSnapshotMetadata['phases'] | undefined => {
 	const record = toUnknownRecord(readMetadataEntry(snapshot, 'phases'));
 	if (!record) {
-		return undefined as SessionSnapshotMetadata['phases'];
+		return undefined;
 	}
 	return record as SessionSnapshotMetadata['phases'];
 };
 
 export const extractTriggerRecord = (
 	snapshot: SessionSnapshotMetadata,
-): SessionSnapshotMetadata['triggers'] => {
+): SessionSnapshotMetadata['triggers'] | undefined => {
 	const record = toUnknownRecord(readMetadataEntry(snapshot, 'triggers'));
 	if (!record) {
-		return undefined as SessionSnapshotMetadata['triggers'];
+		return undefined;
 	}
 	return record as SessionSnapshotMetadata['triggers'];
 };

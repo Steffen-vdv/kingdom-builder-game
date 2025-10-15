@@ -1,4 +1,9 @@
-import { createEngine, getActionCosts } from '@kingdom-builder/engine';
+import {
+	createEngine,
+	getActionCosts,
+	type EngineRegistryMetadataSources,
+	type EngineContext,
+} from '@kingdom-builder/engine';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import {
 	ACTIONS,
@@ -9,11 +14,22 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	STATS,
+	TRIGGER_INFO,
+	LAND_INFO,
+	SLOT_INFO,
+	PASSIVE_INFO,
+	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type {
+	EffectDef,
+	SessionMetadataDescriptor,
+	SessionTriggerMetadata,
+} from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
+
+type MetadataSources = EngineRegistryMetadataSources;
 
 function deepClone<T>(value: T): T {
 	return structuredClone(value);
@@ -45,6 +61,7 @@ export function createTestContext(
 		phases: PHASES,
 		start: GAME_START,
 		rules: RULES,
+		metadataSources: createIntegrationMetadataSources(),
 	});
 	if (overrides) {
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
@@ -177,6 +194,78 @@ export function getBuildingWithStatBonuses() {
 		}
 	}
 	throw new Error('No building with stat bonuses found');
+}
+
+export function createIntegrationMetadataSources(): MetadataSources {
+	const resources = Object.values(RESOURCES).reduce<
+		Record<string, SessionMetadataDescriptor>
+	>((acc, info) => {
+		if (!info) {
+			return acc;
+		}
+		const descriptor: SessionMetadataDescriptor = {
+			label: info.label,
+		};
+		if (info.icon !== undefined) {
+			descriptor.icon = info.icon;
+		}
+		if (info.description !== undefined) {
+			descriptor.description = info.description;
+		}
+		acc[info.key] = descriptor;
+		return acc;
+	}, {});
+	const stats = Object.entries(STATS).reduce<
+		Record<string, SessionMetadataDescriptor>
+	>((acc, [key, info]) => {
+		if (!info) {
+			return acc;
+		}
+		const descriptor: SessionMetadataDescriptor = {
+			label: info.label,
+		};
+		if (info.icon !== undefined) {
+			descriptor.icon = info.icon;
+		}
+		if (info.description !== undefined) {
+			descriptor.description = info.description;
+		}
+		acc[key] = descriptor;
+		return acc;
+	}, {});
+	const triggers = Object.entries(TRIGGER_INFO).reduce<
+		Record<string, SessionTriggerMetadata>
+	>((acc, [key, info]) => {
+		if (!info) {
+			return acc;
+		}
+		const descriptor: SessionTriggerMetadata = {
+			label: info.past ?? info.future ?? key,
+		};
+		if (info.icon !== undefined) {
+			descriptor.icon = info.icon;
+		}
+		if (info.future !== undefined) {
+			descriptor.future = info.future;
+		}
+		if (info.past !== undefined) {
+			descriptor.past = info.past;
+		}
+		acc[key] = descriptor;
+		return acc;
+	}, {});
+	const assets: Record<string, SessionMetadataDescriptor> = {
+		land: { label: LAND_INFO.label, icon: LAND_INFO.icon },
+		slot: { label: SLOT_INFO.label, icon: SLOT_INFO.icon },
+		passive: { label: PASSIVE_INFO.label, icon: PASSIVE_INFO.icon },
+	};
+	return {
+		resources,
+		stats,
+		triggers,
+		assets,
+		overviewContent: structuredClone(OVERVIEW_CONTENT),
+	};
 }
 
 export function getActionWithMultipleCosts(ctx: EngineContext) {

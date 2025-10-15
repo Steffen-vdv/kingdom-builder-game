@@ -41,6 +41,10 @@ describe('SessionTransport session state', () => {
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(Object.keys(state.snapshot.metadata.resources)).not.toHaveLength(0);
+		expect(
+			state.snapshot.metadata.overviewContent.hero.title.length,
+		).toBeGreaterThan(0);
 	});
 
 	it('throws when a session cannot be located', () => {

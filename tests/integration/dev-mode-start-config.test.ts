@@ -11,6 +11,7 @@ import {
 	Resource,
 	PopulationRole,
 } from '@kingdom-builder/contents';
+import { createIntegrationMetadataSources } from './fixtures';
 
 describe('dev mode start configuration', () => {
 	it('applies content-driven overrides when dev mode is enabled', () => {
@@ -23,6 +24,7 @@ describe('dev mode start configuration', () => {
 			start: GAME_START,
 			rules: RULES,
 			devMode: true,
+			metadataSources: createIntegrationMetadataSources(),
 		});
 		const snapshot = session.getSnapshot();
 		const [player, opponent] = snapshot.game.players;

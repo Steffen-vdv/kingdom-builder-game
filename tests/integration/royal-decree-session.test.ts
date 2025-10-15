@@ -11,6 +11,7 @@ import {
 	Resource,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
+import { createIntegrationMetadataSources } from './fixtures';
 
 interface EffectGroup {
 	id: string;
@@ -35,6 +36,7 @@ describe('royal decree via session', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			metadataSources: createIntegrationMetadataSources(),
 		});
 		let snapshot = session.getSnapshot();
 		while (snapshot.game.currentPhase !== 'main') {

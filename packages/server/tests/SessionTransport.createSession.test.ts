@@ -41,6 +41,12 @@ describe('SessionTransport createSession', () => {
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
+		expect(Object.keys(response.snapshot.metadata.resources)).not.toHaveLength(
+			0,
+		);
+		expect(
+			response.snapshot.metadata.overviewContent.hero.title.length,
+		).toBeGreaterThan(0);
 	});
 
 	it('skips blank player name entries when applying preferences', () => {

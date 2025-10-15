@@ -6,6 +6,7 @@ import type {
 	PlayerStateSnapshot,
 } from '@kingdom-builder/engine';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
+import { createTestMetadata } from '../helpers/sessionFixtures';
 
 const primaryResource = 'resource.primary';
 
@@ -65,7 +66,7 @@ describe('useGameLog', () => {
 				[players[0]!.id]: [],
 				[players[1]!.id]: [],
 			},
-			metadata: { passiveEvaluationModifiers: {} },
+			metadata: createTestMetadata(),
 		};
 		const { result } = renderHook(() => useGameLog({ sessionState }));
 

@@ -1,6 +1,7 @@
 import {
 	createEngineSession,
 	type EngineSession,
+	type EngineRegistryMetadataSources,
 } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
@@ -19,17 +20,19 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
+import { createMetadataSources, formatLabel } from './metadata';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
 	EngineSessionOptions,
-	'devMode' | 'config'
+	'devMode' | 'config' | 'resourceRegistry'
 >;
 
 type SessionResourceRegistry = SerializedRegistry<SessionResourceDefinition>;
 
 type EngineSessionOverrideOptions = Partial<EngineSessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
+	metadataSources?: EngineRegistryMetadataSources;
 };
 
 type SessionRecord = {
@@ -65,6 +68,8 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
+	private readonly metadataSources: EngineRegistryMetadataSources;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -72,7 +77,11 @@ export class SessionManager {
 			now = Date.now,
 			engineOptions = {},
 		} = options;
-		const { resourceRegistry, ...engineOverrides } = engineOptions;
+		const {
+			resourceRegistry,
+			metadataSources: metadataOverrides,
+			...engineOverrides
+		} = engineOptions;
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
@@ -92,6 +101,10 @@ export class SessionManager {
 			populations: this.cloneRegistry(this.baseOptions.populations),
 			resources: this.buildResourceRegistry(resourceRegistry),
 		};
+		this.metadataSources = createMetadataSources(
+			this.registries.resources,
+			metadataOverrides,
+		);
 	}
 
 	public createSession(
@@ -113,6 +126,8 @@ export class SessionManager {
 		const sessionOptions: EngineSessionOptions = {
 			...this.baseOptions,
 			devMode,
+			resourceRegistry: structuredClone(this.registries.resources),
+			metadataSources: structuredClone(this.metadataSources),
 		};
 		if (config !== undefined) {
 			sessionOptions.config = config;
@@ -217,7 +232,7 @@ export class SessionManager {
 				registry.set(key, definition);
 				return;
 			}
-			registry.set(key, { key });
+			registry.set(key, { key, label: formatLabel(key) });
 		};
 		const addFromStart = (config: PlayerStartConfig | undefined): void => {
 			if (!config?.resources) {
