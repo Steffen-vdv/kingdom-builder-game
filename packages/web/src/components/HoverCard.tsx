@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
 import {
@@ -29,17 +29,17 @@ export default function HoverCard() {
 	const [transitionState, setTransitionState] = useState<'enter' | 'exit'>(
 		data ? 'enter' : 'exit',
 	);
-	const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-	const showRafRef = useRef<number>();
+	const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const showRafRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		if (!data) {
 			return;
 		}
 
-		if (hideTimeoutRef.current) {
+		if (hideTimeoutRef.current !== null) {
 			clearTimeout(hideTimeoutRef.current);
-			hideTimeoutRef.current = undefined;
+			hideTimeoutRef.current = null;
 		}
 
 		setRenderedData(data);
@@ -49,13 +49,13 @@ export default function HoverCard() {
 			return;
 		}
 
-		if (showRafRef.current) {
+		if (showRafRef.current !== null) {
 			cancelAnimationFrame(showRafRef.current);
 		}
 
 		showRafRef.current = window.requestAnimationFrame(() => {
 			setTransitionState('enter');
-			showRafRef.current = undefined;
+			showRafRef.current = null;
 		});
 	}, [data]);
 
@@ -72,23 +72,23 @@ export default function HoverCard() {
 		setTransitionState('exit');
 		hideTimeoutRef.current = setTimeout(() => {
 			setRenderedData(null);
-			hideTimeoutRef.current = undefined;
+			hideTimeoutRef.current = null;
 		}, FADE_DURATION_MS);
 
 		return () => {
-			if (hideTimeoutRef.current) {
+			if (hideTimeoutRef.current !== null) {
 				clearTimeout(hideTimeoutRef.current);
-				hideTimeoutRef.current = undefined;
+				hideTimeoutRef.current = null;
 			}
 		};
 	}, [data, renderedData]);
 
 	useEffect(
 		() => () => {
-			if (hideTimeoutRef.current) {
+			if (hideTimeoutRef.current !== null) {
 				clearTimeout(hideTimeoutRef.current);
 			}
-			if (showRafRef.current) {
+			if (showRafRef.current !== null) {
 				cancelAnimationFrame(showRafRef.current);
 			}
 		},

@@ -8,8 +8,7 @@ import type { SessionTransportOptions } from './SessionTransport.js';
 import { TransportError } from './TransportTypes.js';
 import type { TransportErrorCode } from './TransportTypes.js';
 
-export interface FastifySessionTransportOptions
-	extends SessionTransportOptions {}
+export type FastifySessionTransportOptions = SessionTransportOptions;
 
 export const createSessionTransportPlugin: FastifyPluginCallback<
 	FastifySessionTransportOptions

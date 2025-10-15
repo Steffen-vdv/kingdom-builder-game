@@ -77,7 +77,7 @@ const sessionPlayerIdSchema = z
 
 const actionEffectChoiceSchema = z.object({
 	optionId: z.string(),
-	params: z.record(z.unknown()).optional(),
+	params: z.record(z.string(), z.unknown()).optional(),
 });
 
 const actionChoiceMapSchema = z.record(z.string(), actionEffectChoiceSchema);
@@ -90,12 +90,12 @@ const actionParametersPayloadSchema = z
 	.transform((value) => value as ActionParametersPayload);
 
 const sessionActionCostMapSchema = z
-	.record(z.number())
+	.record(z.string(), z.number())
 	.transform((value) => value as SessionActionCostMap);
 
 const sessionRequirementFailureSchema = z.object({
 	requirement: requirementSchema,
-	details: z.record(z.unknown()).optional(),
+	details: z.record(z.string(), z.unknown()).optional(),
 	message: z.string().optional(),
 });
 
@@ -123,7 +123,9 @@ export const sessionCreateRequestSchema = z.object({
 
 export const sessionCreateResponseSchema = z.object({
 	sessionId: sessionIdSchema,
-	snapshot: z.custom<SessionSnapshot>(),
+	snapshot: z.custom<SessionSnapshot>(
+		(value): value is SessionSnapshot => true,
+	),
 	registries: sessionRegistriesSchema,
 });
 
@@ -135,8 +137,12 @@ export const sessionAdvanceRequestSchema = z.object({
 
 export const sessionAdvanceResponseSchema = z.object({
 	sessionId: sessionIdSchema,
-	snapshot: z.custom<SessionSnapshot>(),
-	advance: z.custom<SessionAdvanceResult>(),
+	snapshot: z.custom<SessionSnapshot>(
+		(value): value is SessionSnapshot => true,
+	),
+	advance: z.custom<SessionAdvanceResult>(
+		(value): value is SessionAdvanceResult => true,
+	),
 	registries: sessionRegistriesSchema,
 });
 
@@ -195,7 +201,9 @@ export const sessionRunAiRequestSchema = z.object({
 
 export const sessionRunAiResponseSchema = z.object({
 	sessionId: sessionIdSchema,
-	snapshot: z.custom<SessionSnapshot>(),
+	snapshot: z.custom<SessionSnapshot>(
+		(value): value is SessionSnapshot => true,
+	),
 	registries: sessionRegistriesSchema,
 	ranTurn: z.boolean(),
 });
@@ -208,7 +216,9 @@ export const sessionSimulateRequestSchema = z.object({
 
 export const sessionSimulateResponseSchema = z.object({
 	sessionId: sessionIdSchema,
-	result: z.custom<SimulateUpcomingPhasesResult>(),
+	result: z.custom<SimulateUpcomingPhasesResult>(
+		(value): value is SimulateUpcomingPhasesResult => true,
+	),
 });
 
 type Equal<X, Y> =
