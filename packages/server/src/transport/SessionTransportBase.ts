@@ -47,6 +47,7 @@ import {
 	type SanitizedPlayerNameEntry,
 } from './playerNameHelpers.js';
 import { parseActionParameters } from './actionParameterHelpers.js';
+import { attachHttpStatus } from './attachHttpStatus.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 export interface SessionTransportOptions {
 	sessionManager: SessionManager;
@@ -157,7 +158,7 @@ export class SessionTransportBase {
 				status: 'error',
 				error: 'Invalid action request.',
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 400);
 		}
 		this.requireAuthorization(request, 'session:advance');
 		const { sessionId, actionId, params } = parsed.data;
@@ -171,7 +172,7 @@ export class SessionTransportBase {
 				status: 'error',
 				error: `Session "${sessionId}" was not found.`,
 			}) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 404);
 		}
 		try {
 			const rawCosts = session.getActionCosts(actionId, normalizedParams);
@@ -193,7 +194,7 @@ export class SessionTransportBase {
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
-			return this.attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
+			return attachHttpStatus<ActionExecuteSuccessResponse>(response, 200);
 		} catch (error) {
 			const failures = extractRequirementFailures(error);
 			const message =
@@ -211,7 +212,7 @@ export class SessionTransportBase {
 			const response = actionExecuteErrorResponseSchema.parse(
 				base,
 			) as ActionExecuteErrorResponse;
-			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
+			return attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
 		}
 	}
 
@@ -260,16 +261,6 @@ export class SessionTransportBase {
 		return sessionUpdatePlayerNameResponseSchema.parse(
 			this.buildStateResponse(sessionId, snapshot),
 		);
-	}
-	protected attachHttpStatus<T extends object>(
-		payload: T,
-		status: number,
-	): TransportHttpResponse<T> {
-		Object.defineProperty(payload, 'httpStatus', {
-			value: status,
-			enumerable: false,
-		});
-		return payload as TransportHttpResponse<T>;
 	}
 	protected parseSessionIdentifier(body: unknown): string {
 		const parsed = sessionIdSchema.safeParse(
@@ -334,10 +325,7 @@ export class SessionTransportBase {
 		}
 	}
 	protected hasRole(context: AuthContext, role: AuthRole): boolean {
-		if (context.roles.includes(role)) {
-			return true;
-		}
-		return context.roles.includes('admin');
+		return context.roles.includes(role) || context.roles.includes('admin');
 	}
 	protected buildStateResponse(
 		sessionId: string,
