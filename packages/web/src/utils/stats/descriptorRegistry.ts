@@ -1,8 +1,3 @@
-import {
-	PASSIVE_INFO,
-	POPULATION_ROLES,
-	RESOURCES,
-} from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
 	TranslationRegistry,
@@ -95,13 +90,11 @@ function createDescriptorRegistry(
 	return {
 		population: {
 			resolve: (id) => {
-				const role = id
-					? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
-					: undefined;
-				return {
-					icon: role?.icon ?? '',
-					label: role?.label ?? id ?? 'Population',
-				} satisfies ResolveResult;
+				const assets = translationContext.assets;
+				const entry = id ? assets.populations?.[id] : undefined;
+				const icon = entry?.icon ?? assets.population?.icon ?? '';
+				const label = entry?.label ?? id ?? 'Population';
+				return { icon, label } satisfies ResolveResult;
 			},
 			formatDetail: defaultFormatDetail,
 			augmentDependencyDetail: (detail, link, player, _context, options) => {
@@ -177,21 +170,27 @@ function createDescriptorRegistry(
 			},
 		},
 		resource: {
-			resolve: createRecordResolver(RESOURCES, 'Resource'),
+			resolve: createRecordResolver(
+				translationContext.assets.resources,
+				'Resource',
+			),
 			formatDetail: defaultFormatDetail,
 		},
-		trigger: createTriggerDescriptorEntry(defaultFormatDetail),
+		trigger: createTriggerDescriptorEntry(
+			defaultFormatDetail,
+			() => translationContext.assets.triggers,
+		),
 		passive: {
 			resolve: () => ({
-				icon: PASSIVE_INFO.icon ?? '',
-				label: PASSIVE_INFO.label ?? 'Passive',
+				icon: translationContext.assets.passive?.icon ?? '',
+				label: translationContext.assets.passive?.label ?? 'Passive',
 			}),
 			formatDetail: defaultFormatDetail,
 		},
 		land: {
 			resolve: (id) => ({
-				icon: '',
-				label: id ?? 'Land',
+				icon: translationContext.assets.land?.icon ?? '',
+				label: id ?? translationContext.assets.land?.label ?? 'Land',
 			}),
 			formatDetail: defaultFormatDetail,
 		},

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Stat } from '@kingdom-builder/contents';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { getStatBreakdownSummary } from '../../utils/stats';
 import { useGameEngine } from '../../state/GameContext';
@@ -24,6 +23,7 @@ const createDisplayMap = (descriptors: DescriptorDisplay[]) =>
 	);
 
 const POPULATION_ARCHETYPE_LABEL = 'Archetypes';
+const MAX_POPULATION_KEY = 'maxPopulation';
 
 const ROLE_BUTTON_CLASSES = [
 	'cursor-help rounded-full border border-white/40 bg-white/40 px-2 py-1',
@@ -79,11 +79,11 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				? translationContext.opponent
 				: undefined;
 	const maxPopulation = (() => {
-		const direct = player.stats?.[Stat.maxPopulation];
+		const direct = player.stats?.[MAX_POPULATION_KEY];
 		if (typeof direct === 'number') {
 			return direct;
 		}
-		return translationPlayer?.stats?.[Stat.maxPopulation] ?? 0;
+		return translationPlayer?.stats?.[MAX_POPULATION_KEY] ?? 0;
 	})();
 
 	const populationInfo = React.useMemo(

@@ -1,4 +1,5 @@
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import type { TranslationTriggerAsset } from '../../translation/context';
+import { formatDetailText } from './format';
 import type { DescriptorRegistryEntry, ResolveResult } from './types';
 
 type TriggerInfoRecord = Record<
@@ -6,45 +7,79 @@ type TriggerInfoRecord = Record<
 	{ icon?: string; future?: string; past?: string }
 >;
 
-const TRIGGER_LOOKUP = TRIGGER_INFO as TriggerInfoRecord;
+type TriggerAssetLookup = () =>
+	| Readonly<Record<string, TranslationTriggerAsset>>
+	| undefined;
 
-export function resolveTriggerDescriptor(id?: string): ResolveResult {
+const resolveTriggerInfo = (
+	id: string | undefined,
+	lookup: TriggerAssetLookup,
+): TriggerInfoRecord[string] | undefined => {
+	if (!id) {
+		return undefined;
+	}
+	const assets = lookup();
+	if (!assets) {
+		return undefined;
+	}
+	const asset = assets[id];
+	if (!asset) {
+		return undefined;
+	}
+	return {
+		icon: asset.icon,
+		future: asset.future,
+		past: asset.past ?? asset.label,
+	};
+};
+
+export function resolveTriggerDescriptor(
+	id: string | undefined,
+	lookup: TriggerAssetLookup,
+): ResolveResult {
 	if (id) {
-		const info = TRIGGER_LOOKUP[id];
+		const info = resolveTriggerInfo(id, lookup);
 		if (info) {
 			return {
 				icon: info.icon ?? '',
-				label: info.past ?? info.future ?? id,
+				label: info.past ?? info.future ?? formatDetailText(id),
 			} satisfies ResolveResult;
 		}
+		return {
+			icon: '',
+			label: formatDetailText(id) || id,
+		} satisfies ResolveResult;
 	}
-	return { icon: '', label: id ?? 'Trigger' } satisfies ResolveResult;
+	return { icon: '', label: 'Trigger' } satisfies ResolveResult;
 }
 
 export function createTriggerDescriptorEntry(
 	defaultFormatDetail: NonNullable<DescriptorRegistryEntry['formatDetail']>,
+	lookup: TriggerAssetLookup,
 ): DescriptorRegistryEntry {
 	return {
-		resolve: resolveTriggerDescriptor,
+		resolve: (id?: string) => resolveTriggerDescriptor(id, lookup),
 		formatDetail: defaultFormatDetail,
 	} satisfies DescriptorRegistryEntry;
 }
 
-export function formatTriggerLabel(id: string): string | undefined {
+export function formatTriggerLabel(
+	id: string,
+	assets?: Readonly<Record<string, TranslationTriggerAsset>>,
+): string | undefined {
 	if (!id) {
 		return undefined;
 	}
-	const info = TRIGGER_LOOKUP[id];
-	if (info) {
-		const parts: string[] = [];
-		if (info.icon) {
-			parts.push(info.icon);
-		}
-		const label = info.past ?? info.future ?? id;
-		if (label) {
-			parts.push(label);
-		}
-		return parts.join(' ').trim();
+	const info = assets?.[id];
+	const parts: string[] = [];
+	if (info?.icon) {
+		parts.push(info.icon);
 	}
-	return id;
+	const label =
+		info?.past ?? info?.label ?? info?.future ?? formatDetailText(id);
+	if (label) {
+		parts.push(label);
+	}
+	const combined = parts.join(' ').trim();
+	return combined || id;
 }

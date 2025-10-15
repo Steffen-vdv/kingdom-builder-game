@@ -2,7 +2,6 @@ import type {
 	SessionRegistriesPayload,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 import { deserializeSessionRegistries } from '../state/sessionRegistries';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import snapshot from './defaultRegistryMetadata.json';
@@ -61,9 +60,7 @@ function assertDefaultRegistrySnapshot(
 		const entry = metadataRecord[key];
 		if (typeof entry !== 'object' || entry === null) {
 			throw new Error(
-				'Default snapshot metadata missing required "' +
-					key +
-					'" map.',
+				'Default snapshot metadata missing required "' + key + '" map.',
 			);
 		}
 	}
@@ -83,9 +80,7 @@ const normalizedSnapshot = {
 	registries: snapshotSource.registries,
 	metadata: {
 		...snapshotSource.metadata,
-		overviewContent: snapshotSource.metadata.overviewContent
-			? structuredClone(snapshotSource.metadata.overviewContent)
-			: structuredClone(OVERVIEW_CONTENT),
+		overviewContent: structuredClone(snapshotSource.metadata.overviewContent),
 	},
 } satisfies DefaultRegistrySnapshot;
 

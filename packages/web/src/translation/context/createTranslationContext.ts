@@ -8,6 +8,13 @@ import type {
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import { createTranslationAssets } from './assets';
 import type { TranslationContext, TranslationPassives } from './types';
+import { createRegistryLookup } from '../../contexts/registryMetadataLookups';
+import {
+	buildRegistryMetadata,
+	buildResourceMetadata,
+	buildStatMetadata,
+} from '../../contexts/registryMetadataDescriptors';
+import { configureAttackRegistry } from '../effects/formatters/attack/registrySelectors';
 import {
 	cloneCompensations,
 	cloneEvaluationModifiers,
@@ -91,6 +98,12 @@ export function createTranslationContext(
 	});
 	const assets = createTranslationAssets(registries, metadata, {
 		rules: options.ruleSnapshot,
+	});
+	configureAttackRegistry({
+		resources: buildResourceMetadata(registries.resources, metadata.resources),
+		stats: buildStatMetadata(metadata.stats),
+		buildings: buildRegistryMetadata(registries.buildings, metadata.buildings),
+		buildingDefinitions: createRegistryLookup(registries.buildings, 'building'),
 	});
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import type {
 	BuildingConfig,
 	DevelopmentConfig,
@@ -9,16 +9,13 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
 	createResourceLookup,
 	type DefinitionLookup,
 } from './registryMetadataLookups';
+import { DEFAULT_REGISTRY_METADATA } from './defaultRegistryMetadata';
 import {
 	DEFAULT_LAND_DESCRIPTOR,
 	DEFAULT_PASSIVE_DESCRIPTOR,
@@ -43,6 +40,22 @@ import {
 	type AssetMetadataSelector,
 	type MetadataSelector,
 } from './registryMetadataSelectors';
+import { configureAttackRegistry } from '../translation/effects/formatters/attack/registrySelectors';
+
+type OverviewContent = NonNullable<SessionSnapshotMetadata['overviewContent']>;
+
+const EMPTY_OVERVIEW_CONTENT: OverviewContent = Object.freeze({
+	hero: Object.freeze({
+		badgeIcon: '',
+		badgeLabel: '',
+		title: '',
+		intro: '',
+		paragraph: '',
+		tokens: Object.freeze({}) as OverviewContent['hero']['tokens'],
+	}),
+	sections: Object.freeze([]) as OverviewContent['sections'],
+	tokens: Object.freeze({}) as OverviewContent['tokens'],
+});
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
@@ -67,7 +80,7 @@ export interface RegistryMetadataContextValue {
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
-	overviewContent: OverviewContentTemplate;
+	overviewContent: OverviewContent;
 }
 
 interface RegistryMetadataProviderProps {
@@ -222,7 +235,26 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const overviewContent = useMemo<OverviewContent>(() => {
+		return (
+			metadata.overviewContent ??
+			DEFAULT_REGISTRY_METADATA.overviewContent ??
+			EMPTY_OVERVIEW_CONTENT
+		);
+	}, [metadata]);
+	useEffect(() => {
+		configureAttackRegistry({
+			resources: resourceMetadataLookup,
+			stats: statMetadataLookup,
+			buildings: buildingMetadataLookup,
+			buildingDefinitions: buildingLookup,
+		});
+	}, [
+		resourceMetadataLookup,
+		statMetadataLookup,
+		buildingMetadataLookup,
+		buildingLookup,
+	]);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
