@@ -19,12 +19,14 @@ import {
 	useLandMetadata,
 	useSlotMetadata,
 	usePassiveAssetMetadata,
+	useOverviewContent,
 	type RegistryMetadataContextValue,
 	type RegistryMetadataDescriptor,
 	type PhaseMetadata,
 	type TriggerMetadata,
 	type MetadataSelector,
 	type AssetMetadataSelector,
+	type OverviewContentTemplate,
 } from '../../src/contexts/RegistryMetadataContext';
 import { describe, expect, it } from 'vitest';
 
@@ -162,6 +164,7 @@ interface CapturedLookups {
 	land: AssetMetadataSelector;
 	slot: AssetMetadataSelector;
 	passive: AssetMetadataSelector;
+	overview: OverviewContentTemplate;
 }
 
 const formatFallbackLabel = (value: string): string => {
@@ -189,6 +192,7 @@ describe('RegistryMetadataProvider', () => {
 				land: useLandMetadata(),
 				slot: useSlotMetadata(),
 				passive: usePassiveAssetMetadata(),
+				overview: useOverviewContent(),
 			};
 			return null;
 		};
@@ -215,6 +219,7 @@ describe('RegistryMetadataProvider', () => {
 			land,
 			slot,
 			passive,
+			overview,
 		} = captured;
 		const { actionId, buildingId, developmentId, populationId, resourceKey } =
 			setup;
@@ -285,5 +290,44 @@ describe('RegistryMetadataProvider', () => {
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
 		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(context.overviewContent).toBe(overview);
+	});
+
+	it('prefers overview metadata provided by the session snapshot', () => {
+		const setup = createTestSetup();
+		const customOverview = Object.freeze({
+			hero: {
+				badgeIcon: '🪐',
+				badgeLabel: 'Astral Dispatch',
+				title: 'Astral Overview',
+				intro: 'Survey the stars before issuing edicts.',
+				paragraph: 'Every command ripples across the cosmos.',
+				tokens: { starlight: 'Starlight' },
+			},
+			sections: [],
+			tokens: {},
+		}) satisfies OverviewContentTemplate;
+		const metadata = {
+			...setup.metadata,
+			overviewContent: customOverview,
+		} satisfies SessionSnapshotMetadata;
+		let capturedOverview: OverviewContentTemplate | null = null;
+		const Capture = () => {
+			capturedOverview = useOverviewContent();
+			return null;
+		};
+		renderToStaticMarkup(
+			<RegistryMetadataProvider
+				registries={setup.registries}
+				metadata={metadata}
+			>
+				<Capture />
+			</RegistryMetadataProvider>,
+		);
+		if (!capturedOverview) {
+			throw new Error('Overview metadata was not captured.');
+		}
+		expect(capturedOverview.hero.title).toBe('Astral Overview');
+		expect(capturedOverview).toBe(customOverview);
 	});
 });

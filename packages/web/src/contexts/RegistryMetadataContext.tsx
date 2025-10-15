@@ -9,10 +9,6 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -43,6 +39,8 @@ import {
 	type AssetMetadataSelector,
 	type MetadataSelector,
 } from './registryMetadataSelectors';
+import type { OverviewContentTemplate } from './overviewContentTypes';
+import { mergeMetadataWithDefaults } from './registryMetadataUtils';
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
@@ -87,6 +85,10 @@ export function RegistryMetadataProvider({
 	metadata,
 	children,
 }: RegistryMetadataProviderProps) {
+	const mergedMetadata = useMemo(
+		() => mergeMetadataWithDefaults(metadata),
+		[metadata],
+	);
 	const resourceLookup = useMemo(
 		() => createResourceLookup(registries.resources),
 		[registries.resources],
@@ -111,49 +113,49 @@ export function RegistryMetadataProvider({
 		() =>
 			buildResourceMetadata(
 				registries.resources,
-				extractDescriptorRecord(metadata, 'resources'),
+				extractDescriptorRecord(mergedMetadata, 'resources'),
 			),
-		[registries.resources, metadata],
+		[registries.resources, mergedMetadata],
 	);
 	const populationMetadataLookup = useMemo(
 		() =>
 			buildRegistryMetadata(
 				registries.populations,
-				extractDescriptorRecord(metadata, 'populations'),
+				extractDescriptorRecord(mergedMetadata, 'populations'),
 			),
-		[registries.populations, metadata],
+		[registries.populations, mergedMetadata],
 	);
 	const buildingMetadataLookup = useMemo(
 		() =>
 			buildRegistryMetadata(
 				registries.buildings,
-				extractDescriptorRecord(metadata, 'buildings'),
+				extractDescriptorRecord(mergedMetadata, 'buildings'),
 			),
-		[registries.buildings, metadata],
+		[registries.buildings, mergedMetadata],
 	);
 	const developmentMetadataLookup = useMemo(
 		() =>
 			buildRegistryMetadata(
 				registries.developments,
-				extractDescriptorRecord(metadata, 'developments'),
+				extractDescriptorRecord(mergedMetadata, 'developments'),
 			),
-		[registries.developments, metadata],
+		[registries.developments, mergedMetadata],
 	);
 	const statMetadataLookup = useMemo(
-		() => buildStatMetadata(extractDescriptorRecord(metadata, 'stats')),
-		[metadata],
+		() => buildStatMetadata(extractDescriptorRecord(mergedMetadata, 'stats')),
+		[mergedMetadata],
 	);
 	const phaseMetadataLookup = useMemo(
-		() => buildPhaseMetadata(extractPhaseRecord(metadata)),
-		[metadata],
+		() => buildPhaseMetadata(extractPhaseRecord(mergedMetadata)),
+		[mergedMetadata],
 	);
 	const triggerMetadataLookup = useMemo(
-		() => buildTriggerMetadata(extractTriggerRecord(metadata)),
-		[metadata],
+		() => buildTriggerMetadata(extractTriggerRecord(mergedMetadata)),
+		[mergedMetadata],
 	);
 	const assetDescriptors = useMemo(
-		() => extractDescriptorRecord(metadata, 'assets'),
-		[metadata],
+		() => extractDescriptorRecord(mergedMetadata, 'assets'),
+		[mergedMetadata],
 	);
 	const landDescriptor = useMemo(
 		() =>
@@ -222,7 +224,10 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const overviewContent = useMemo(
+		() => mergedMetadata.overviewContent,
+		[mergedMetadata],
+	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
@@ -302,38 +307,28 @@ export function useOptionalRegistryMetadata(): OptionalRegistryMetadataValue {
 export const useResourceMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().resourceMetadata;
-
 export const usePopulationMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().populationMetadata;
-
 export const useBuildingMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().buildingMetadata;
-
 export const useDevelopmentMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().developmentMetadata;
-
 export const useStatMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().statMetadata;
-
 export const usePhaseMetadata = (): MetadataSelector<PhaseMetadata> =>
 	useRegistryMetadata().phaseMetadata;
-
 export const useTriggerMetadata = (): MetadataSelector<TriggerMetadata> =>
 	useRegistryMetadata().triggerMetadata;
-
 export const useLandMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().landMetadata;
-
 export const useSlotMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().slotMetadata;
-
 export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().passiveMetadata;
-
 export const useOverviewContent = (): OverviewContentTemplate =>
 	useRegistryMetadata().overviewContent;
 
@@ -342,10 +337,11 @@ export type {
 	TriggerMetadata,
 	PhaseMetadata,
 	MetadataLookup,
+	AssetMetadata,
 } from './registryMetadataDescriptors';
 export type { DefinitionLookup } from './registryMetadataLookups';
-export type { AssetMetadata } from './registryMetadataDescriptors';
 export type {
 	AssetMetadataSelector,
 	MetadataSelector,
 } from './registryMetadataSelectors';
+export type { OverviewContentTemplate } from './overviewContentTypes';

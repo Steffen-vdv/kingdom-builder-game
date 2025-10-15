@@ -6,6 +6,7 @@ import type {
 	SessionResourceDefinition,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
+import { DEFAULT_REGISTRY_METADATA } from './defaultRegistryMetadata';
 
 export interface RegistryMetadataDescriptor {
 	id: string;
@@ -14,7 +15,7 @@ export interface RegistryMetadataDescriptor {
 	description?: string;
 }
 
-export interface AssetMetadata extends RegistryMetadataDescriptor {}
+export type AssetMetadata = RegistryMetadataDescriptor;
 
 export interface PhaseStepMetadata {
 	id: string;
@@ -294,24 +295,6 @@ export const buildTriggerMetadata = (
 		(id) => createTriggerDescriptor(id, undefined),
 	);
 
-export const DEFAULT_LAND_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'land',
-	label: 'Land',
-	icon: '🗺️',
-});
-
-export const DEFAULT_SLOT_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'slot',
-	label: 'Development Slot',
-	icon: '🧩',
-});
-
-export const DEFAULT_PASSIVE_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'passive',
-	label: 'Passive',
-	icon: '♾️',
-});
-
 export const resolveAssetDescriptor = (
 	id: string,
 	descriptor: SessionMetadataDescriptor | undefined,
@@ -331,3 +314,29 @@ export const resolveAssetDescriptor = (
 	}
 	return Object.freeze(entry);
 };
+
+const DEFAULT_ASSET_FALLBACKS = Object.freeze({
+	land: Object.freeze({ id: 'land', label: 'Land', icon: '🗺️' }),
+	slot: Object.freeze({ id: 'slot', label: 'Development Slot', icon: '🧩' }),
+	passive: Object.freeze({ id: 'passive', label: 'Passive', icon: '♾️' }),
+}) satisfies Record<string, AssetMetadata>;
+
+const DEFAULT_ASSET_METADATA = DEFAULT_REGISTRY_METADATA.assets ?? {};
+
+export const DEFAULT_LAND_DESCRIPTOR = resolveAssetDescriptor(
+	'land',
+	DEFAULT_ASSET_METADATA.land,
+	DEFAULT_ASSET_FALLBACKS.land,
+);
+
+export const DEFAULT_SLOT_DESCRIPTOR = resolveAssetDescriptor(
+	'slot',
+	DEFAULT_ASSET_METADATA.slot,
+	DEFAULT_ASSET_FALLBACKS.slot,
+);
+
+export const DEFAULT_PASSIVE_DESCRIPTOR = resolveAssetDescriptor(
+	'passive',
+	DEFAULT_ASSET_METADATA.passive,
+	DEFAULT_ASSET_FALLBACKS.passive,
+);
