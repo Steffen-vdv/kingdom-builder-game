@@ -16,10 +16,10 @@
 		"build:web": "vite build packages/web",
 		"preview": "vite preview packages/web",
 		"prelint": "npm run ensure:dev-deps",
-		"lint": "npm run lint:deps && eslint . --ext .ts,.tsx --rulesdir scripts",
+		"lint": "npm run lint:deps && eslint . --ext .ts,.tsx",
 		"typecheck": "tsc -b --pretty false",
 		"posttypecheck": "node scripts/clean-dists.cjs",
-		"fix": "eslint . --ext .ts,.tsx --fix --rulesdir scripts",
+		"fix": "eslint . --ext .ts,.tsx --fix",
 		"format:check": "prettier --check --log-level warn .",
 		"precheck": "npm run ensure:dev-deps",
 		"check": "run-s format:check typecheck lint test",
@@ -60,6 +60,8 @@
 		"autoprefixer": "^10.4.21",
 		"dependency-cruiser": "^17.0.2",
 		"eslint": "^9.37.0",
+		"eslint-plugin-eslint-comments": "^3.2.0",
+		"eslint-plugin-check-test-content": "file:scripts/eslint-plugin-check-test-content",
 		"eslint-plugin-import": "^2.32.0",
 		"eslint-plugin-markdown": "^5.1.0",
 		"eslint-plugin-unused-imports": "^4.2.0",
@@ -78,7 +80,7 @@
 	"lint-staged": {
 		"*.{js,jsx,ts,tsx,json,md,cjs}": "prettier --write",
 		"*.{ts,tsx}": [
-			"eslint --max-warnings=0 --rulesdir scripts",
+			"eslint --max-warnings=0",
 			"bash -c 'tsc --noEmit'"
 		]
 	}
