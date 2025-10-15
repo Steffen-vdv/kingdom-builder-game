@@ -105,6 +105,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Reviewers will immediately bounce any PR whose description omits a section
   from the template or leaves placeholders unaddressed, so confirm compliance
   before invoking `make_pr`.
+- Never commit, push, or call `make_pr` until `npm run format`, `npm run lint`,
+  `npm run check`, and `npm run verify` have finished without errors. Fix every
+  reported issue—including spacing drift back to tabs—before you stage files.
 
 #### Coding Standards Checklist
 

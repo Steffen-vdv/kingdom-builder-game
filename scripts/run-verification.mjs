@@ -11,7 +11,8 @@ const tasks = [
 
 const artifactsDirectory = path.resolve(process.cwd(), 'artifacts');
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-const npmExecutable = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const isWindows = process.platform === 'win32';
+const npmExecutable = isWindows ? 'npm.cmd' : 'npm';
 
 await mkdir(artifactsDirectory, { recursive: true });
 
@@ -21,7 +22,10 @@ async function runTask(task) {
 	const writeStream = createWriteStream(artifactPath, { flags: 'w' });
 
 	return new Promise((resolve) => {
-		const child = spawn(npmExecutable, ['run', task.script], { shell: false });
+		const child = spawn(npmExecutable, ['run', task.script], {
+			shell: isWindows,
+			env: process.env,
+		});
 		let hasSettled = false;
 		let errorCode;
 
