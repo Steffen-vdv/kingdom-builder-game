@@ -28,6 +28,16 @@ const dependencies = [
 			'package.json',
 		),
 	},
+	{
+		name: '@tailwindcss/postcss',
+		path: resolve(
+			rootDir,
+			'node_modules',
+			'@tailwindcss',
+			'postcss',
+			'package.json',
+		),
+	},
 ];
 
 const missing = dependencies

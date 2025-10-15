@@ -7,10 +7,12 @@ guide for rationale, lore, and extended background.
 ## 1. Required Workflow
 
 1. **Set up tooling**
-   - Install Node.js 18+ and run `npm install` from the repository root.
-   - Install and authenticate the [CodeRabbit CLI](https://docs.coderabbit.ai/cli)
-     so the `coderabbit` binary is available on your `PATH` and respects the
-     repository's `.coderabbit.yml` filters.
+   - Install Node.js 18+ and run `npm install` from the repository
+     root.
+   - Install and authenticate the
+     [CodeRabbit CLI](https://docs.coderabbit.ai/cli) so the `coderabbit` binary
+     is available on your `PATH` and respects the repository's
+     `.coderabbit.yml` filters.
    - Keep CodeRabbit running in a separate terminal via
      `npm run coderabbit -- --watch` (or the CLI's equivalent). Treat it as an
      asynchronous reviewer: continue coding while it processes local changes and
@@ -33,6 +35,11 @@ guide for rationale, lore, and extended background.
      `npm run check && npm run test:coverage` on tooling failures). If you must
      execute the fallback manually, note the environment issue in your PR body
      so reviewers know why the hook could not complete normally.
+   - Husky also runs the commit-time trio: `lint-staged`, `npm run check`,
+     and `npm run test:quick`. Never bypass the hooks; fix the underlying
+     problem so the automated gates pass cleanly before calling `make_pr`.
+   - Reach for `npm run fix` after Prettier when eslint complains about
+     spacing or other autofixable style violations.
    - `npm run check` still runs linting, type checks, and tests together if you
      need a direct invocation or the verification script is unavailable.
    - Documentation-only updates or pure content typo fixes may skip coverage
@@ -48,9 +55,9 @@ guide for rationale, lore, and extended background.
      `@kingdom-builder/contents` or registries.
    - Tests should create data through `createContentFactory()` or other
      registries so ids and numbers stay dynamic.
-   - Respect dependency boundaries: the web app imports engine code only from
-     `@kingdom-builder/engine`, and the engine runtime never reaches into web or
-     content internals beyond registry surfaces.
+   - Respect dependency boundaries: the web app imports engine code only
+     from `@kingdom-builder/engine`, and the engine runtime never reaches into
+     web or content internals beyond registry surfaces.
 4. **Honor the PR template**
    - Copy `.github/PULL_REQUEST_TEMPLATE.md` into every PR body and replace all
      placeholders with specific details before calling `make_pr`.
