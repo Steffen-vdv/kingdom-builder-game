@@ -6,6 +6,7 @@ import type {
 	SessionResourceDefinition,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
+import { DEFAULT_REGISTRY_METADATA } from './defaultRegistryMetadata';
 
 export interface RegistryMetadataDescriptor {
 	id: string;
@@ -14,7 +15,7 @@ export interface RegistryMetadataDescriptor {
 	description?: string;
 }
 
-export interface AssetMetadata extends RegistryMetadataDescriptor {}
+export type AssetMetadata = RegistryMetadataDescriptor;
 
 export interface PhaseStepMetadata {
 	id: string;
@@ -199,6 +200,21 @@ const mergeRegistryEntries = <TDefinition extends { id: string }>(
 	return entries;
 };
 
+const DEFAULT_ASSET_RECORD = DEFAULT_REGISTRY_METADATA.assets;
+
+const createDefaultAssetDescriptor = (id: string): AssetMetadata => {
+	const descriptor = DEFAULT_ASSET_RECORD?.[id];
+	const label = descriptor?.label ?? formatLabel(id);
+	const entry: AssetMetadata = { id, label };
+	if (descriptor?.icon !== undefined) {
+		entry.icon = descriptor.icon;
+	}
+	if (descriptor?.description !== undefined) {
+		entry.description = descriptor.description;
+	}
+	return Object.freeze(entry);
+};
+
 const mergeResourceEntries = (
 	resources: Record<string, SessionResourceDefinition>,
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
@@ -294,23 +310,14 @@ export const buildTriggerMetadata = (
 		(id) => createTriggerDescriptor(id, undefined),
 	);
 
-export const DEFAULT_LAND_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'land',
-	label: 'Land',
-	icon: '🗺️',
-});
+export const DEFAULT_LAND_DESCRIPTOR: AssetMetadata =
+	createDefaultAssetDescriptor('land');
 
-export const DEFAULT_SLOT_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'slot',
-	label: 'Development Slot',
-	icon: '🧩',
-});
+export const DEFAULT_SLOT_DESCRIPTOR: AssetMetadata =
+	createDefaultAssetDescriptor('slot');
 
-export const DEFAULT_PASSIVE_DESCRIPTOR: AssetMetadata = Object.freeze({
-	id: 'passive',
-	label: 'Passive',
-	icon: '♾️',
-});
+export const DEFAULT_PASSIVE_DESCRIPTOR: AssetMetadata =
+	createDefaultAssetDescriptor('passive');
 
 export const resolveAssetDescriptor = (
 	id: string,

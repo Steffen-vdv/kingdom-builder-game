@@ -164,6 +164,38 @@ interface CapturedLookups {
 	passive: AssetMetadataSelector;
 }
 
+function captureLookups(
+	registries: SessionRegistries,
+	metadata: SessionSnapshotMetadata,
+): CapturedLookups {
+	let captured: CapturedLookups | null = null;
+	const Capture = () => {
+		captured = {
+			context: useRegistryMetadata(),
+			resources: useResourceMetadata(),
+			populations: usePopulationMetadata(),
+			buildings: useBuildingMetadata(),
+			developments: useDevelopmentMetadata(),
+			stats: useStatMetadata(),
+			phases: usePhaseMetadata(),
+			triggers: useTriggerMetadata(),
+			land: useLandMetadata(),
+			slot: useSlotMetadata(),
+			passive: usePassiveAssetMetadata(),
+		} satisfies CapturedLookups;
+		return null;
+	};
+	renderToStaticMarkup(
+		<RegistryMetadataProvider registries={registries} metadata={metadata}>
+			<Capture />
+		</RegistryMetadataProvider>,
+	);
+	if (!captured) {
+		throw new Error('Registry metadata context was not captured.');
+	}
+	return captured;
+}
+
 const formatFallbackLabel = (value: string): string => {
 	const spaced = value.replace(/[_-]+/g, ' ').trim();
 	if (spaced.length === 0) {
@@ -175,34 +207,7 @@ const formatFallbackLabel = (value: string): string => {
 describe('RegistryMetadataProvider', () => {
 	it('provides memoized metadata lookups for registries', () => {
 		const setup = createTestSetup();
-		let captured: CapturedLookups | null = null;
-		const Capture = () => {
-			captured = {
-				context: useRegistryMetadata(),
-				resources: useResourceMetadata(),
-				populations: usePopulationMetadata(),
-				buildings: useBuildingMetadata(),
-				developments: useDevelopmentMetadata(),
-				stats: useStatMetadata(),
-				phases: usePhaseMetadata(),
-				triggers: useTriggerMetadata(),
-				land: useLandMetadata(),
-				slot: useSlotMetadata(),
-				passive: usePassiveAssetMetadata(),
-			};
-			return null;
-		};
-		renderToStaticMarkup(
-			<RegistryMetadataProvider
-				registries={setup.registries}
-				metadata={setup.metadata}
-			>
-				<Capture />
-			</RegistryMetadataProvider>,
-		);
-		if (!captured) {
-			throw new Error('Registry metadata context was not captured.');
-		}
+		const captured = captureLookups(setup.registries, setup.metadata);
 		const {
 			context,
 			resources,
@@ -285,5 +290,46 @@ describe('RegistryMetadataProvider', () => {
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
 		expect(context.overviewContent.hero.title).toBe('Game Overview');
+	});
+
+	it('falls back to default registry metadata when snapshot sections are missing', () => {
+		const setup = createTestSetup();
+		const minimalMetadata: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+		};
+		const captured = captureLookups(setup.registries, minimalMetadata);
+		expect(captured.resources.select(setup.resourceKey).label).toBe(
+			'Starlight',
+		);
+		const growthPhase = captured.phases.select('growth');
+		expect(growthPhase.label).toBe('Growth');
+		expect(growthPhase.steps.length).toBeGreaterThan(0);
+		const trigger = captured.triggers.select('onGrowthPhase');
+		expect(trigger.past).toBe('Growth Phase');
+		expect(captured.slot.descriptor.icon).toBe('🧩');
+		expect(captured.passive.descriptor.label).toBe('Passive');
+		expect(captured.context.overviewContent.hero.title).toBe('Game Overview');
+	});
+
+	it('uses overview content supplied by session metadata when available', () => {
+		const setup = createTestSetup();
+		const customOverview = {
+			hero: {
+				badgeIcon: '🧭',
+				badgeLabel: 'Expedition',
+				title: 'Explorer Briefing',
+				intro: 'Scout the frontier before dawn.',
+				paragraph: 'Survey {land} prospects and secure {slot} sites.',
+				tokens: {},
+			},
+			sections: [],
+			tokens: {},
+		} as const;
+		const metadataWithOverview = {
+			...setup.metadata,
+			overviewContent: customOverview,
+		} as unknown as SessionSnapshotMetadata;
+		const captured = captureLookups(setup.registries, metadataWithOverview);
+		expect(captured.context.overviewContent).toBe(customOverview);
 	});
 });
