@@ -19,6 +19,10 @@ const dependencies = [
 		path: resolve(rootDir, 'node_modules', 'npm-run-all', 'package.json'),
 	},
 	{
+		name: 'cross-env',
+		path: resolve(rootDir, 'node_modules', 'cross-env', 'package.json'),
+	},
+	{
 		name: '@vitest/coverage-v8',
 		path: resolve(
 			rootDir,
