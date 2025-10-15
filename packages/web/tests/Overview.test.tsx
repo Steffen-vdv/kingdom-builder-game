@@ -4,8 +4,11 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
-import Overview, { type OverviewTokenConfig } from '../src/Overview';
+import type {
+	SessionOverviewMetadata,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
+import Overview from '../src/Overview';
 import type { OverviewContentSection } from '../src/components/overview/sectionsData';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
@@ -69,25 +72,6 @@ describe('<Overview />', () => {
 			},
 		};
 
-		const tokenConfig: OverviewTokenConfig = {
-			actions: {
-				expand: ['missing-action', expandAction.id],
-			},
-			phases: {
-				growth: ['missing-phase', 'growth'],
-			},
-			resources: {
-				gold: ['missing-gold', 'gold'],
-				ap: ['missing-ap', 'ap'],
-			},
-			stats: {
-				army: ['missing-army', 'army'],
-			},
-			population: {
-				council: ['missing-council', councilRole.id],
-			},
-		};
-
 		const customContent: OverviewContentSection[] = [
 			{
 				kind: 'paragraph',
@@ -118,13 +102,41 @@ describe('<Overview />', () => {
 			},
 		];
 
+		const overviewTokens = {
+			actions: {
+				expand: ['missing-action', expandAction.id],
+			},
+			phases: {
+				growth: ['missing-phase', 'growth'],
+			},
+			resources: {
+				gold: ['missing-gold', 'gold'],
+				ap: ['missing-ap', 'ap'],
+			},
+			stats: {
+				army: ['missing-army', 'army'],
+			},
+			population: {
+				council: ['missing-council', councilRole.id],
+			},
+		} satisfies NonNullable<SessionOverviewMetadata['tokens']>;
+
+		const metadataWithOverview = {
+			...metadata,
+			overview: {
+				sections: customContent,
+				tokens: overviewTokens,
+			},
+		} satisfies SessionSnapshotMetadata & {
+			overview: SessionOverviewMetadata;
+		};
+
 		render(
-			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<Overview
-					onBack={vi.fn()}
-					tokenConfig={tokenConfig}
-					content={customContent}
-				/>
+			<RegistryMetadataProvider
+				registries={registries}
+				metadata={metadataWithOverview}
+			>
+				<Overview onBack={vi.fn()} />
 			</RegistryMetadataProvider>,
 		);
 
