@@ -46,6 +46,33 @@ function assertDefaultRegistrySnapshot(
 	if (typeof record.metadata !== 'object' || record.metadata === null) {
 		throw new Error('Invalid metadata payload in default snapshot.');
 	}
+	const metadataRecord = record.metadata as Record<string, unknown>;
+	const requiredMaps = [
+		'resources',
+		'populations',
+		'buildings',
+		'developments',
+		'stats',
+		'phases',
+		'triggers',
+		'assets',
+	];
+	for (const key of requiredMaps) {
+		const entry = metadataRecord[key];
+		if (typeof entry !== 'object' || entry === null) {
+			throw new Error(
+				'Default snapshot metadata missing required "' +
+					key +
+					'" map.',
+			);
+		}
+	}
+	const overviewEntry = metadataRecord.overviewContent;
+	if (typeof overviewEntry !== 'object' || overviewEntry === null) {
+		throw new Error(
+			'Missing overviewContent in default registry snapshot metadata.',
+		);
+	}
 }
 
 const snapshotSource: unknown = snapshot;
@@ -56,12 +83,13 @@ const normalizedSnapshot = {
 	registries: snapshotSource.registries,
 	metadata: {
 		...snapshotSource.metadata,
-		overviewContent:
-			snapshotSource.metadata.overviewContent ?? OVERVIEW_CONTENT,
+		overviewContent: snapshotSource.metadata.overviewContent
+			? structuredClone(snapshotSource.metadata.overviewContent)
+			: structuredClone(OVERVIEW_CONTENT),
 	},
 } satisfies DefaultRegistrySnapshot;
 
-const SNAPSHOT = deepFreeze(normalizedSnapshot);
+const SNAPSHOT = deepFreeze(structuredClone(normalizedSnapshot));
 
 const DEFAULT_REGISTRIES_INTERNAL: SessionRegistries = freezeRegistries(
 	deserializeSessionRegistries(SNAPSHOT.registries),

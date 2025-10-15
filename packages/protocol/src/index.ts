@@ -167,6 +167,7 @@ export type {
 	SessionSimulateResponse,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
+export { formatLabel } from './utils/formatLabel';
 export type {
 	ActionEffectChoice,
 	ActionChoiceMap,

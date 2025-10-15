@@ -8,15 +8,8 @@ import type {
 	SessionOverviewContent,
 } from '@kingdom-builder/protocol/session';
 import type { Registry } from '@kingdom-builder/protocol';
+import { formatLabel } from '@kingdom-builder/protocol';
 import type { PhaseDef, StepDef } from '../phases';
-
-const formatLabel = (value: string): string => {
-	const spaced = value.replace(/[_-]+/g, ' ').trim();
-	if (spaced.length === 0) {
-		return value;
-	}
-	return spaced.replace(/\b\w/g, (char) => char.toUpperCase());
-};
 
 const cloneMetadataDescriptor = (
 	label: string,
@@ -97,7 +90,11 @@ const buildResourceMetadata = (
 		resourceKeys.add(key);
 	}
 	resourceKeys.add(context.actionCostResource);
-	resourceKeys.add(context.services.rules.tieredResourceKey);
+	const tiered = context.services.rules.tieredResourceKey as
+		string | undefined;
+	if (tiered) {
+		resourceKeys.add(tiered);
+	}
 	for (const player of context.game.players) {
 		for (const key of Object.keys(player.resources)) {
 			resourceKeys.add(key);
@@ -272,7 +269,7 @@ const cloneOverviewContent = (
 		hero: {
 			badgeIcon: '',
 			badgeLabel: '',
-			title: 'Session Overview',
+			title: '',
 			intro: '',
 			paragraph: '',
 			tokens: {},

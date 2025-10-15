@@ -20,7 +20,8 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
-import { createMetadataSources, formatLabel } from './metadata';
+import { formatLabel } from '@kingdom-builder/protocol';
+import { createMetadataSources } from './metadata';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<

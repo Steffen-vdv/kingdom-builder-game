@@ -42,7 +42,17 @@ export function useSessionTranslationContext({
 			metadataPayload.effectLogs === undefined &&
 			fallbackMetadata.effectLogs !== undefined
 		) {
-			metadataPayload.effectLogs = structuredClone(fallbackMetadata.effectLogs);
+			metadataPayload.effectLogs = structuredClone(
+				fallbackMetadata.effectLogs,
+			);
+		}
+		if (
+			metadataPayload.overviewContent === undefined &&
+			fallbackMetadata.overviewContent !== undefined
+		) {
+			metadataPayload.overviewContent = structuredClone(
+				fallbackMetadata.overviewContent,
+			);
 		}
 		try {
 			const context = createTranslationContext(

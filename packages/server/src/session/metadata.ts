@@ -6,13 +6,14 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { SessionOverviewContent } from '@kingdom-builder/protocol/session';
 import {
-	STATS,
-	TRIGGER_INFO,
-	LAND_INFO,
-	SLOT_INFO,
-	PASSIVE_INFO,
-	OVERVIEW_CONTENT,
+STATS,
+TRIGGER_INFO,
+LAND_INFO,
+SLOT_INFO,
+PASSIVE_INFO,
+OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
+import { formatLabel } from '@kingdom-builder/protocol';
 
 type TriggerInfoEntry = {
 	icon?: string;
@@ -20,34 +21,13 @@ type TriggerInfoEntry = {
 	past?: string;
 };
 
-const formatLabel = (value: string): string => {
-	const spaced = value.replace(/[_-]+/g, ' ').trim();
-	if (spaced.length === 0) {
-		return value;
-	}
-	return spaced.replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
-const cloneDescriptorRecord = (
-	source: Record<string, SessionMetadataDescriptor> | undefined,
-): Record<string, SessionMetadataDescriptor> => {
+const cloneRecord = <T extends object>(
+	source: Record<string, T> | undefined,
+): Record<string, T> => {
 	if (!source) {
 		return {};
 	}
-	const record: Record<string, SessionMetadataDescriptor> = {};
-	for (const [key, descriptor] of Object.entries(source)) {
-		record[key] = structuredClone(descriptor);
-	}
-	return record;
-};
-
-const cloneTriggerRecord = (
-	source: Record<string, SessionTriggerMetadata> | undefined,
-): Record<string, SessionTriggerMetadata> => {
-	if (!source) {
-		return {};
-	}
-	const record: Record<string, SessionTriggerMetadata> = {};
+	const record: Record<string, T> = {};
 	for (const [key, descriptor] of Object.entries(source)) {
 		record[key] = structuredClone(descriptor);
 	}
@@ -138,10 +118,10 @@ export const createMetadataSources = (
 	const stats = buildStatMetadataSources();
 	const triggers = buildTriggerMetadataSources();
 	const assets = buildAssetMetadataSources();
-	Object.assign(resources, cloneDescriptorRecord(overrides?.resources));
-	Object.assign(stats, cloneDescriptorRecord(overrides?.stats));
-	Object.assign(triggers, cloneTriggerRecord(overrides?.triggers));
-	Object.assign(assets, cloneDescriptorRecord(overrides?.assets));
+	Object.assign(resources, cloneRecord(overrides?.resources));
+	Object.assign(stats, cloneRecord(overrides?.stats));
+	Object.assign(triggers, cloneRecord(overrides?.triggers));
+	Object.assign(assets, cloneRecord(overrides?.assets));
 	const overviewContent: SessionOverviewContent = overrides?.overviewContent
 		? structuredClone(overrides.overviewContent)
 		: structuredClone(OVERVIEW_CONTENT);
@@ -153,5 +133,3 @@ export const createMetadataSources = (
 		overviewContent,
 	};
 };
-
-export { formatLabel };
