@@ -14,7 +14,7 @@ export interface RegistryMetadataDescriptor {
 	description?: string;
 }
 
-export interface AssetMetadata extends RegistryMetadataDescriptor {}
+export type AssetMetadata = RegistryMetadataDescriptor;
 
 export interface PhaseStepMetadata {
 	id: string;

@@ -16,10 +16,10 @@
 		"build:web": "vite build packages/web",
 		"preview": "vite preview packages/web",
 		"prelint": "npm run ensure:dev-deps",
-		"lint": "npm run lint:deps && eslint . --ext .ts,.tsx --rulesdir scripts",
+		"lint": "npm run lint:deps && cross-env ESLINT_USE_FLAT_CONFIG=false eslint . --ext .ts,.tsx --rulesdir scripts",
 		"typecheck": "tsc -b --pretty false",
 		"posttypecheck": "node scripts/clean-dists.cjs",
-		"fix": "eslint . --ext .ts,.tsx --fix --rulesdir scripts",
+		"fix": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint . --ext .ts,.tsx --fix --rulesdir scripts",
 		"format:check": "prettier --check --log-level warn .",
 		"precheck": "npm run ensure:dev-deps",
 		"check": "run-s format:check typecheck lint test",
@@ -57,7 +57,9 @@
 		"@typescript-eslint/parser": "^8.46.1",
 		"@vitejs/plugin-react": "^5.0.4",
 		"@vitest/coverage-v8": "^3.2.4",
+		"@tailwindcss/postcss": "^4.0.7",
 		"autoprefixer": "^10.4.21",
+		"cross-env": "^7.0.3",
 		"dependency-cruiser": "^17.0.2",
 		"eslint": "^9.37.0",
 		"eslint-plugin-import": "^2.32.0",
@@ -78,7 +80,7 @@
 	"lint-staged": {
 		"*.{js,jsx,ts,tsx,json,md,cjs}": "prettier --write",
 		"*.{ts,tsx}": [
-			"eslint --max-warnings=0 --rulesdir scripts",
+			"cross-env ESLINT_USE_FLAT_CONFIG=false eslint --max-warnings=0 --rulesdir scripts",
 			"bash -c 'tsc --noEmit'"
 		]
 	}
