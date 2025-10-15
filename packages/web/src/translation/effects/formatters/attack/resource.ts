@@ -1,4 +1,3 @@
-import { Resource, type ResourceKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -7,22 +6,26 @@ import {
 	buildStandardEvaluationEntry,
 	defaultFortificationItems,
 } from './evaluation';
-import type { AttackTargetFormatter } from './types';
-import { selectAttackResourceDescriptor } from './registrySelectors';
+import type { AttackTargetFormatter, ResourceKey } from './types';
+import {
+	selectAttackDefaultResourceKey,
+	selectAttackResourceDescriptor,
+} from './registrySelectors';
 
 const resourceFormatter: AttackTargetFormatter<{
 	type: 'resource';
 	key: ResourceKey;
 }> = {
 	type: 'resource',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, context) {
 		const targetParam = effect.params?.['target'] as
 			| { type: 'resource'; key: ResourceKey }
 			| undefined;
 		if (targetParam?.type === 'resource') {
 			return targetParam;
 		}
-		return { type: 'resource', key: Resource.castleHP };
+		const fallbackKey = selectAttackDefaultResourceKey(context);
+		return { type: 'resource', key: fallbackKey ?? 'resource' };
 	},
 	normalizeLogTarget(target) {
 		const resourceTarget = target as Extract<
@@ -31,8 +34,8 @@ const resourceFormatter: AttackTargetFormatter<{
 		>;
 		return { type: 'resource', key: resourceTarget.key as ResourceKey };
 	},
-	getInfo(target) {
-		return selectAttackResourceDescriptor(target.key);
+	getInfo(target, context) {
+		return selectAttackResourceDescriptor(context, target.key);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
@@ -53,8 +56,8 @@ const resourceFormatter: AttackTargetFormatter<{
 	buildEvaluationEntry(log, context) {
 		return buildStandardEvaluationEntry(log, context, false);
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, options, context) {
+		return formatDiffCommon(prefix, diff, options, context);
 	},
 	onDamageLogTitle(info) {
 		return `${info.icon} ${info.label} damage trigger evaluation`;

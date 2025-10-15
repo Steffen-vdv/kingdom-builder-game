@@ -6,12 +6,12 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { SessionOverviewContent } from '@kingdom-builder/protocol/session';
 import {
-STATS,
-TRIGGER_INFO,
-LAND_INFO,
-SLOT_INFO,
-PASSIVE_INFO,
-OVERVIEW_CONTENT,
+	STATS,
+	TRIGGER_INFO,
+	LAND_INFO,
+	SLOT_INFO,
+	PASSIVE_INFO,
+	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
 import { formatLabel } from '@kingdom-builder/protocol';
 

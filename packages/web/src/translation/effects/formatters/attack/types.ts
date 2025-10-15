@@ -3,8 +3,11 @@ import {
 	type AttackPlayerDiff,
 	type EffectDef,
 } from '@kingdom-builder/protocol';
-import type { ResourceKey, StatKey } from '@kingdom-builder/contents';
 import type { SummaryEntry } from '../../../content';
+import type { TranslationContext } from '../../../context';
+
+export type ResourceKey = string;
+export type StatKey = string;
 
 export type Mode = 'summarize' | 'describe';
 
@@ -66,9 +69,12 @@ export interface AttackTargetFormatter<
 	TTarget extends AttackTarget = AttackTarget,
 > {
 	readonly type: TTarget['type'];
-	parseEffectTarget(effect: EffectDef<Record<string, unknown>>): TTarget;
+	parseEffectTarget(
+		effect: EffectDef<Record<string, unknown>>,
+		context: TranslationContext,
+	): TTarget;
 	normalizeLogTarget(target: AttackLog['evaluation']['target']): TTarget;
-	getInfo(target: TTarget): TargetInfo;
+	getInfo(target: TTarget, context: TranslationContext): TargetInfo;
 	getTargetLabel(info: TargetInfo, target: TTarget): string;
 	buildBaseEntry(context: BaseEntryContext<TTarget>): SummaryEntry;
 	buildOnDamageTitle(
@@ -83,6 +89,7 @@ export interface AttackTargetFormatter<
 		prefix: string,
 		diff: AttackPlayerDiff,
 		options?: DiffFormatOptions,
+		context?: TranslationContext,
 	): string;
 	onDamageLogTitle(info: TargetInfo, target: TTarget): string;
 }

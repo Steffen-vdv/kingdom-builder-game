@@ -8,14 +8,14 @@ import type {
 	PhaseMetadata,
 	RegistryMetadataDescriptor,
 } from '../../contexts/RegistryMetadataContext';
-import type { OverviewTokenCategoryName } from '@kingdom-builder/contents';
+import type { SessionOverviewTokenCategoryName } from '@kingdom-builder/protocol/session';
 
 export type TokenCandidateInput = string | ReadonlyArray<string>;
 
 type OverviewTokenCategoryOverrides = Record<string, TokenCandidateInput>;
 type OverviewTokenCategoryConfig = Record<string, string[]>;
 type OverviewTokenConfigResolved = Record<
-	OverviewTokenCategoryName,
+	SessionOverviewTokenCategoryName,
 	OverviewTokenCategoryConfig
 >;
 
@@ -66,7 +66,7 @@ export const createOverviewTokenSources = ({
 };
 
 type OverviewTokenCategoryDescriptor = {
-	name: OverviewTokenCategoryName;
+	name: SessionOverviewTokenCategoryName;
 	keys: () => string[];
 	resolve: (candidates: string[]) => ReactNode | undefined;
 };
@@ -210,7 +210,7 @@ export function mergeTokenCategory(
 }
 
 export type OverviewTokenConfig = Partial<
-	Record<OverviewTokenCategoryName, OverviewTokenCategoryOverrides>
+	Record<SessionOverviewTokenCategoryName, OverviewTokenCategoryOverrides>
 >;
 
 export function createDefaultTokenConfig(

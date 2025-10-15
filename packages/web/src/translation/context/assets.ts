@@ -5,7 +5,6 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -42,10 +41,15 @@ const DEFAULT_UPKEEP_INFO = Object.freeze({
 const DEFAULT_MODIFIER_INFO = Object.freeze({
 	cost: Object.freeze({ icon: '💲', label: 'Cost Adjustment' }),
 	result: Object.freeze({ icon: '✨', label: 'Outcome Adjustment' }),
+	transfer: Object.freeze({ icon: '🔁', label: 'Transfer Adjustment' }),
 }) satisfies Readonly<Record<string, TranslationModifierInfo>>;
 
 const DEFAULT_STAT_INFO = Object.freeze({
-	maxPopulation: Object.freeze({ icon: '👥', label: 'Max Population' }),
+	maxPopulation: Object.freeze({
+		icon: '👥',
+		label: 'Max Population',
+		format: Object.freeze({ prefix: 'Max ' }),
+	}),
 	armyStrength: Object.freeze({ icon: '⚔️', label: 'Army Strength' }),
 	fortificationStrength: Object.freeze({
 		icon: '🛡️',
@@ -55,11 +59,13 @@ const DEFAULT_STAT_INFO = Object.freeze({
 		icon: '🌀',
 		label: 'Absorption',
 		displayAsPercent: true,
+		format: Object.freeze({ percent: true }),
 	}),
 	growth: Object.freeze({
 		icon: '📈',
 		label: 'Growth',
 		displayAsPercent: true,
+		format: Object.freeze({ percent: true }),
 	}),
 	warWeariness: Object.freeze({ icon: '💤', label: 'War Weariness' }),
 }) satisfies Readonly<Record<string, TranslationIconLabel>>;
@@ -67,8 +73,9 @@ const DEFAULT_STAT_INFO = Object.freeze({
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
 
-type PercentAwareDescriptor = SessionMetadataDescriptor & {
+type ExtendedDescriptor = SessionMetadataDescriptor & {
 	displayAsPercent?: boolean;
+	format?: { prefix?: string; percent?: boolean };
 };
 
 function mergeIconLabel(
@@ -89,12 +96,16 @@ function mergeIconLabel(
 	if (description !== undefined) {
 		entry.description = description;
 	}
-	const percentFlag = (descriptor as PercentAwareDescriptor | undefined)
-		?.displayAsPercent;
+	const extendedDescriptor = descriptor as ExtendedDescriptor | undefined;
+	const percentFlag = extendedDescriptor?.displayAsPercent;
 	if (percentFlag !== undefined) {
 		entry.displayAsPercent = percentFlag;
 	} else if (base?.displayAsPercent !== undefined) {
 		entry.displayAsPercent = base.displayAsPercent;
+	}
+	const format = extendedDescriptor?.format ?? base?.format;
+	if (format !== undefined) {
+		entry.format = Object.freeze({ ...format });
 	}
 	return Object.freeze(entry);
 }
@@ -173,21 +184,19 @@ function buildStatMap(
 	return Object.freeze(entries);
 }
 
-const DEFAULT_TRIGGER_ASSETS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => [
-			id,
-			Object.freeze({
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-				label: info.past,
-			} satisfies TranslationTriggerAsset),
-		]),
-	),
-);
+const formatDefaultLabel = (value: string): string => {
+	const spaced = value
+		.replace(/[_-]+/g, ' ')
+		.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+	const trimmed = spaced.trim();
+	if (!trimmed) {
+		return value;
+	}
+	return trimmed.replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
 function mergeTriggerAsset(
+	id: string,
 	base: TranslationTriggerAsset | undefined,
 	descriptor: SessionTriggerMetadata | undefined,
 ): TranslationTriggerAsset {
@@ -204,9 +213,16 @@ function mergeTriggerAsset(
 	if (past !== undefined) {
 		entry.past = past;
 	}
-	const label = descriptor?.label ?? base?.label ?? past;
+	const label =
+		descriptor?.label ??
+		base?.label ??
+		past ??
+		descriptor?.future ??
+		base?.future;
 	if (label !== undefined) {
 		entry.label = label;
+	} else {
+		entry.label = formatDefaultLabel(id);
 	}
 	return Object.freeze(entry);
 }
@@ -214,14 +230,13 @@ function mergeTriggerAsset(
 function buildTriggerMap(
 	triggers?: Record<string, SessionTriggerMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
-	const entries: Record<string, TranslationTriggerAsset> = {
-		...DEFAULT_TRIGGER_ASSETS,
-	};
 	if (!triggers) {
-		return Object.freeze(entries);
+		return Object.freeze({});
 	}
+	const entries: Record<string, TranslationTriggerAsset> = {};
 	for (const [id, descriptor] of Object.entries(triggers)) {
-		entries[id] = mergeTriggerAsset(entries[id], descriptor);
+		const base = entries[id];
+		entries[id] = mergeTriggerAsset(id, base, descriptor);
 	}
 	return Object.freeze(entries);
 }

@@ -27,12 +27,10 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+import type { SessionOverviewTokenCandidates } from '@kingdom-builder/protocol/session';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
+type OverviewTokenCandidates = SessionOverviewTokenCandidates;
 
 const EMPTY_SECTIONS_RESULT = Object.freeze({
 	sections: Object.freeze([]) as ReadonlyArray<OverviewSectionDef>,
@@ -148,10 +146,18 @@ export default function Overview({
 	content,
 }: OverviewProps) {
 	const metadata = useOptionalRegistryMetadata();
-	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
-	const sections = content ?? overviewContent.sections;
-	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
-	const heroContent = overviewContent.hero;
+	const overviewContent = metadata?.overviewContent;
+	const sections = content ?? overviewContent?.sections ?? [];
+	const defaultTokens: SessionOverviewTokenCandidates =
+		overviewContent?.tokens ?? {};
+	const heroContent = overviewContent?.hero ?? {
+		badgeIcon: '',
+		badgeLabel: '',
+		title: '',
+		intro: '',
+		paragraph: '',
+		tokens: {},
+	};
 	const tokenSources = React.useMemo(
 		() => resolveOverviewTokenSources(metadata),
 		[metadata],

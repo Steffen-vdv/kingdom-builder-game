@@ -21,4 +21,3 @@ export {
 	formatStepLabel,
 	statDisplaysAsPercent,
 } from './format';
-export { formatTriggerLabel } from './triggerLabels';

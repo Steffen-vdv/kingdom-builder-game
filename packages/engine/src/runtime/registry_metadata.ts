@@ -90,8 +90,7 @@ const buildResourceMetadata = (
 		resourceKeys.add(key);
 	}
 	resourceKeys.add(context.actionCostResource);
-	const tiered = context.services.rules.tieredResourceKey as
-		string | undefined;
+	const tiered = context.services.rules.tieredResourceKey as string | undefined;
 	if (tiered) {
 		resourceKeys.add(tiered);
 	}

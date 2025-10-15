@@ -1,8 +1,3 @@
-import {
-	PASSIVE_INFO,
-	POPULATION_ROLES,
-	RESOURCES,
-} from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
 	TranslationRegistry,
@@ -13,7 +8,6 @@ import {
 	formatStatValue,
 	formatStepLabel,
 } from './format';
-import { createTriggerDescriptorEntry } from './triggerLabels';
 import type { DescriptorRegistryEntry, ResolveResult } from './types';
 
 type RegistryResolver = DescriptorRegistryEntry['resolve'];
@@ -92,15 +86,15 @@ function createRecordResolver<T extends { icon?: string; label?: string }>(
 function createDescriptorRegistry(
 	translationContext: TranslationContext,
 ): Registry {
+	const assets = translationContext.assets;
 	return {
 		population: {
 			resolve: (id) => {
-				const role = id
-					? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
-					: undefined;
+				const role = id ? assets.populations?.[id] : undefined;
+				const base = assets.population;
 				return {
-					icon: role?.icon ?? '',
-					label: role?.label ?? id ?? 'Population',
+					icon: role?.icon ?? base?.icon ?? '',
+					label: role?.label ?? base?.label ?? id ?? 'Population',
 				} satisfies ResolveResult;
 			},
 			formatDetail: defaultFormatDetail,
@@ -177,22 +171,55 @@ function createDescriptorRegistry(
 			},
 		},
 		resource: {
-			resolve: createRecordResolver(RESOURCES, 'Resource'),
+			resolve: (id) => {
+				if (id) {
+					const resource = assets.resources?.[id];
+					if (resource) {
+						return {
+							icon: resource.icon ?? '',
+							label: resource.label ?? id,
+						} satisfies ResolveResult;
+					}
+				}
+				return { icon: '', label: id ?? 'Resource' } satisfies ResolveResult;
+			},
 			formatDetail: defaultFormatDetail,
 		},
 		trigger: createTriggerDescriptorEntry(defaultFormatDetail),
+		trigger: {
+			resolve: (id) => {
+				if (id) {
+					const trigger = assets.triggers?.[id];
+					if (trigger) {
+						const label = trigger.label ?? trigger.past ?? trigger.future ?? id;
+						return {
+							icon: trigger.icon ?? '',
+							label,
+						} satisfies ResolveResult;
+					}
+				}
+				return {
+					icon: '',
+					label: id ?? 'Trigger',
+				} satisfies ResolveResult;
+			},
+			formatDetail: defaultFormatDetail,
+		},
 		passive: {
 			resolve: () => ({
-				icon: PASSIVE_INFO.icon ?? '',
-				label: PASSIVE_INFO.label ?? 'Passive',
+				icon: assets.passive?.icon ?? '',
+				label: assets.passive?.label ?? 'Passive',
 			}),
 			formatDetail: defaultFormatDetail,
 		},
 		land: {
-			resolve: (id) => ({
-				icon: '',
-				label: id ?? 'Land',
-			}),
+			resolve: (id) => {
+				const land = assets.land;
+				return {
+					icon: land?.icon ?? '',
+					label: id ?? land?.label ?? 'Land',
+				} satisfies ResolveResult;
+			},
 			formatDetail: defaultFormatDetail,
 		},
 		start: {

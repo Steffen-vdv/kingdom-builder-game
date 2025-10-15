@@ -1,8 +1,4 @@
-import {
-	STATS,
-	type PopulationRoleId,
-	type StatKey,
-} from '@kingdom-builder/contents';
+import type { PopulationRoleId } from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
 
@@ -149,18 +145,16 @@ export function selectStatDescriptor(
 	}
 	const assets = context.assets;
 	const entry = assets?.stats?.[key];
-	const statDef = STATS[key as StatKey];
-	const statLabelFallback = statDef?.label ?? humanizeIdentifier(key);
-	const fallbackLabel =
-		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
-	const label = coerceLabel(entry?.label ?? statDef?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon ?? statDef?.icon, key);
-	const format = statDef?.addFormat ? { ...statDef.addFormat } : undefined;
-	const descriptor: StatRegistryDescriptor = {
-		icon,
-		label,
-		...(format ? { format } : {}),
-	};
+	const fallbackLabel = humanizeIdentifier(key) || key;
+	const label = coerceLabel(entry?.label, fallbackLabel);
+	const icon = coerceIcon(entry?.icon, key);
+	const descriptor: StatRegistryDescriptor = { icon, label };
+	const format = entry?.format;
+	if (format) {
+		descriptor.format = { ...format };
+	} else if (entry?.displayAsPercent) {
+		descriptor.format = { percent: true };
+	}
 	cache.set(cacheKey, descriptor);
 	return descriptor;
 }

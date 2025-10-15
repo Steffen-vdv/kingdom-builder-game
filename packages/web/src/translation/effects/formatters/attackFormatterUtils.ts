@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	AttackOnDamageLogEntry,
 	EffectDef,
@@ -10,6 +9,7 @@ import {
 	type AttackTargetFormatter,
 	type Mode,
 } from './attack/target-formatter';
+import type { ResourceKey } from './attack/types';
 import {
 	resolveAttackFormatterContext,
 	type AttackFormatterContext,
@@ -67,8 +67,12 @@ export function ownerLabel(
 export function buildBaseEntry(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	mode: Mode,
+	translationContext: TranslationContext,
 ): BaseEntryResult {
-	const context = resolveAttackFormatterContext(effectDefinition);
+	const context = resolveAttackFormatterContext(
+		effectDefinition,
+		translationContext,
+	);
 	const ignoreAbsorption = Boolean(
 		effectDefinition.params?.['ignoreAbsorption'],
 	);
@@ -194,6 +198,8 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'defender'),
 				diffEntry,
+				undefined,
+				translationContext,
 			),
 		),
 	);
@@ -202,6 +208,8 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'attacker'),
 				diffEntry,
+				undefined,
+				translationContext,
 			),
 		),
 	);

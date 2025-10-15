@@ -26,6 +26,7 @@ export interface TranslationIconLabel {
 	label?: string;
 	description?: string;
 	displayAsPercent?: boolean;
+	format?: { prefix?: string; percent?: boolean };
 }
 
 export interface TranslationModifierInfo {

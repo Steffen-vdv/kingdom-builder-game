@@ -1,4 +1,3 @@
-import { type StatKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -7,7 +6,7 @@ import {
 	buildStandardEvaluationEntry,
 	defaultFortificationItems,
 } from './evaluation';
-import type { AttackTargetFormatter } from './types';
+import type { AttackTargetFormatter, StatKey } from './types';
 import {
 	selectAttackDefaultStatKey,
 	selectAttackStatDescriptor,
@@ -18,14 +17,14 @@ const statFormatter: AttackTargetFormatter<{
 	key: StatKey;
 }> = {
 	type: 'stat',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, context) {
 		const targetParam = effect.params?.['target'] as
 			| { type: 'stat'; key: StatKey }
 			| undefined;
 		if (targetParam?.type === 'stat') {
 			return targetParam;
 		}
-		const fallbackKey = selectAttackDefaultStatKey();
+		const fallbackKey = selectAttackDefaultStatKey(context);
 		if (!fallbackKey) {
 			throw new Error('No stat definitions available');
 		}
@@ -38,8 +37,8 @@ const statFormatter: AttackTargetFormatter<{
 		>;
 		return { type: 'stat', key: statTarget.key as StatKey };
 	},
-	getInfo(target) {
-		return selectAttackStatDescriptor(target.key);
+	getInfo(target, context) {
+		return selectAttackStatDescriptor(context, target.key);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
@@ -60,8 +59,8 @@ const statFormatter: AttackTargetFormatter<{
 	buildEvaluationEntry(log, context) {
 		return buildStandardEvaluationEntry(log, context, true);
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, options, context) {
+		return formatDiffCommon(prefix, diff, options, context);
 	},
 	onDamageLogTitle(info) {
 		return `${info.icon} ${info.label} damage trigger evaluation`;

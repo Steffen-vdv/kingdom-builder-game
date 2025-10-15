@@ -1,4 +1,3 @@
-import { Stat, type StatKey } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import {
 	resolveAttackTargetFormatter,
@@ -12,7 +11,12 @@ import {
 	type AttackStatRole,
 	DEFAULT_ATTACK_STAT_LABELS,
 } from '../attack/types';
-import { selectAttackStatDescriptor } from './registrySelectors';
+import {
+	selectAttackDefaultStatKey,
+	selectAttackStatDescriptor,
+} from './registrySelectors';
+import type { TranslationContext } from '../../../context';
+import type { StatKey } from '../attack/types';
 
 const ATTACK_STAT_ROLES: AttackStatRole[] = [
 	'power',
@@ -20,10 +24,10 @@ const ATTACK_STAT_ROLES: AttackStatRole[] = [
 	'fortification',
 ];
 
-const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, StatKey> = {
-	power: Stat.armyStrength,
-	absorption: Stat.absorption,
-	fortification: Stat.fortificationStrength,
+const ROLE_PREFERRED_KEYS: Record<AttackStatRole, ReadonlyArray<string>> = {
+	power: ['armyStrength'],
+	absorption: ['absorption'],
+	fortification: ['fortificationStrength'],
 };
 
 type RawAttackStatParam = {
@@ -52,8 +56,11 @@ function buildStatDescriptor(
 	role: AttackStatRole,
 	key: StatKey | undefined,
 	overrides: AttackStatOverrides,
+	context: TranslationContext,
 ): AttackStatDescriptor {
-	const baseDescriptor = key ? selectAttackStatDescriptor(key) : undefined;
+	const baseDescriptor = key
+		? selectAttackStatDescriptor(context, key)
+		: undefined;
 	const label =
 		overrides.label ??
 		baseDescriptor?.label ??
@@ -68,6 +75,7 @@ function buildStatDescriptor(
 
 function resolveAttackStats(
 	effectDefinition: EffectDef<Record<string, unknown>>,
+	context: TranslationContext,
 ): AttackStatContext {
 	const stats: AttackStatContext = {};
 	const rawStats = effectDefinition.params?.['stats'];
@@ -91,13 +99,13 @@ function resolveAttackStats(
 			if (icon !== undefined) {
 				overrides.icon = icon;
 			}
-			stats[role] = buildStatDescriptor(role, key, overrides);
+			stats[role] = buildStatDescriptor(role, key, overrides, context);
 		}
 		return stats;
 	}
 	for (const role of ATTACK_STAT_ROLES) {
-		const key = DEFAULT_ATTACK_STAT_KEYS[role];
-		stats[role] = buildStatDescriptor(role, key, {});
+		const key = resolveDefaultAttackStatKey(role, context);
+		stats[role] = buildStatDescriptor(role, key, {}, context);
 	}
 	return stats;
 }
@@ -112,9 +120,31 @@ export type AttackFormatterContext = {
 
 export function resolveAttackFormatterContext(
 	effectDefinition: EffectDef<Record<string, unknown>>,
+	context: TranslationContext,
 ): AttackFormatterContext {
-	const { formatter, target, info, targetLabel } =
-		resolveAttackTargetFormatter(effectDefinition);
-	const stats = resolveAttackStats(effectDefinition);
+	const { formatter, target, info, targetLabel } = resolveAttackTargetFormatter(
+		effectDefinition,
+		context,
+	);
+	const stats = resolveAttackStats(effectDefinition, context);
 	return { formatter, target, info, targetLabel, stats };
+}
+
+function resolveDefaultAttackStatKey(
+	role: AttackStatRole,
+	context: TranslationContext,
+): StatKey | undefined {
+	const preferred = ROLE_PREFERRED_KEYS[role] ?? [];
+	const stats = context.assets.stats ?? {};
+	for (const candidate of preferred) {
+		if (stats[candidate]) {
+			return candidate as StatKey;
+		}
+	}
+	const fallback = selectAttackDefaultStatKey(context);
+	if (fallback) {
+		return fallback as StatKey;
+	}
+	const firstKey = Object.keys(stats)[0];
+	return firstKey as StatKey | undefined;
 }

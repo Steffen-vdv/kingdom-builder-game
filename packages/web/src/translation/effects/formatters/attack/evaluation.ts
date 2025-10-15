@@ -1,6 +1,7 @@
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatStatValue } from '../../../../utils/stats';
 import type { SummaryEntry } from '../../../content';
+import type { TranslationContext } from '../../../context';
 import {
 	attackStatLabel,
 	attackStatValue,
@@ -186,6 +187,9 @@ export function buildStandardEvaluationEntry(
 	return { title, items };
 }
 
-export function getBuildingDisplay(buildingId: string): TargetInfo {
-	return selectAttackBuildingDescriptor(buildingId);
+export function getBuildingDisplay(
+	buildingId: string,
+	context: TranslationContext,
+): TargetInfo {
+	return selectAttackBuildingDescriptor(context, buildingId);
 }

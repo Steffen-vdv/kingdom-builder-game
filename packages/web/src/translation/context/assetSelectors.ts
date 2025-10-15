@@ -3,13 +3,22 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
-
 interface IconLabelDisplay {
 	icon?: string;
 	label: string;
 	description?: string;
 }
+
+const formatDefaultLabel = (value: string): string => {
+	const spaced = value
+		.replace(/[_-]+/g, ' ')
+		.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+	const trimmed = spaced.trim();
+	if (!trimmed) {
+		return value;
+	}
+	return trimmed.replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
 function coerceIconLabel(
 	source: TranslationIconLabel | undefined,
@@ -77,16 +86,9 @@ export function selectTriggerDisplay(
 	if (entry) {
 		return entry;
 	}
-	const fallback = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
-	if (fallback) {
-		return Object.freeze({
-			icon: fallback.icon,
-			future: fallback.future,
-			past: fallback.past,
-			label: fallback.past,
-		});
-	}
-	return {};
+	return Object.freeze({
+		label: formatDefaultLabel(triggerId),
+	});
 }
 
 export function selectTierSummary(
