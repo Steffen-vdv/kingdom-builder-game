@@ -128,6 +128,7 @@ function readTokensFromEnv(
 			return parsed;
 		}
 	} catch (error) {
+		void error;
 		throw new AuthError('FORBIDDEN', 'Invalid token configuration.');
 	}
 	return {};
