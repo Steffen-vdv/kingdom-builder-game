@@ -4,7 +4,7 @@ import type { EffectDef } from '../effects';
 export const requirementSchema = z.object({
 	type: z.string(),
 	method: z.string(),
-	params: z.record(z.unknown()).optional(),
+	params: z.record(z.string(), z.unknown()).optional(),
 	message: z.string().optional(),
 });
 
@@ -14,18 +14,18 @@ const costBagSchema = z.record(z.string(), z.number());
 
 const evaluatorSchema = z.object({
 	type: z.string(),
-	params: z.record(z.unknown()).optional(),
+	params: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
 	z.object({
 		type: z.string().optional(),
 		method: z.string().optional(),
-		params: z.record(z.unknown()).optional(),
+		params: z.record(z.string(), z.unknown()).optional(),
 		effects: z.array(effectSchema).optional(),
 		evaluator: evaluatorSchema.optional(),
 		round: z.enum(['up', 'down']).optional(),
-		meta: z.record(z.unknown()).optional(),
+		meta: z.record(z.string(), z.unknown()).optional(),
 	}),
 );
 
@@ -38,7 +38,7 @@ const actionEffectGroupOptionSchema = z.object({
 	summary: z.string().optional(),
 	description: z.string().optional(),
 	actionId: z.string(),
-	params: z.record(z.unknown()).optional(),
+	params: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const actionEffectGroupSchema = z.object({
