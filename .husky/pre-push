@@ -13,6 +13,7 @@ verify_status=${PIPESTATUS[0]}
 
 environment_error_pattern='ENOENT|ERR_MODULE_NOT_FOUND|Cannot find module'
 environment_error_pattern+='|Missing script: verify'
+environment_error_pattern+='|is not recognized as an internal or external command'
 
 if grep -Eq "$environment_error_pattern" "$log_buffer"; then
   echo "npm run verify is unavailable in this environment; falling back to" >&2
