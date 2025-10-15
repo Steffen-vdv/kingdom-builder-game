@@ -27,6 +27,27 @@ describe('SessionManager', () => {
 		expect(manager.getSessionCount()).toBe(0);
 	});
 
+	it('exposes cloned metadata snapshots', () => {
+		const { manager } = createSyntheticSessionManager();
+		const first = manager.getMetadata();
+		const second = manager.getMetadata();
+		expect(first).not.toBe(second);
+		const resourceKey = Object.keys(first.resources ?? {})[0];
+		expect(resourceKey).toBeDefined();
+		if (!resourceKey) {
+			return;
+		}
+		first.resources![resourceKey]!.label = '__mutated__';
+		expect(second.resources?.[resourceKey]?.label).not.toBe('__mutated__');
+	});
+
+	it('includes synthetic resource metadata', () => {
+		const { manager, costKey, gainKey } = createSyntheticSessionManager();
+		const metadata = manager.getMetadata();
+		expect(metadata.resources?.[costKey]?.label).toBe(costKey);
+		expect(metadata.resources?.[gainKey]?.label).toBe(gainKey);
+	});
+
 	it('throws when creating a duplicate session identifier', () => {
 		const { manager } = createSyntheticSessionManager();
 		const sessionId = 'duplicate';

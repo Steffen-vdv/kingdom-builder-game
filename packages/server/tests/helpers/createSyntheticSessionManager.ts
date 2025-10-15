@@ -1,5 +1,6 @@
 import { SessionManager } from '../../src/session/SessionManager.js';
 import type { SessionManagerOptions } from '../../src/session/SessionManager.js';
+import { createBaseSessionMetadata } from '../../src/session/SessionMetadataBuilder.js';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { EngineSession } from '@kingdom-builder/engine';
 import {
@@ -108,7 +109,11 @@ export function createSyntheticSessionManager(
 		basePopulationCap: 1,
 		winConditions: [],
 	};
-	const { engineOptions: engineOverrides = {}, ...rest } = options;
+	const {
+		engineOptions: engineOverrides = {},
+		metadataBuilder: metadataOverride,
+		...rest
+	} = options;
 	const engineOptions: NonNullable<SessionManagerOptions['engineOptions']> = {
 		actions: engineOverrides.actions ?? factory.actions,
 		buildings: engineOverrides.buildings ?? factory.buildings,
@@ -122,8 +127,21 @@ export function createSyntheticSessionManager(
 			[gainKey]: { key: gainKey },
 		},
 	};
+	const metadataBuilder =
+		metadataOverride ??
+		(() => {
+			const metadata = createBaseSessionMetadata();
+			const baseResources = metadata.resources ?? {};
+			metadata.resources = {
+				...baseResources,
+				[costKey]: { label: costKey },
+				[gainKey]: { label: gainKey },
+			};
+			return metadata;
+		});
 	const manager = new SessionManager({
 		...rest,
+		metadataBuilder,
 		engineOptions,
 	});
 	return {

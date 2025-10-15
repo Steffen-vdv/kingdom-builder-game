@@ -18,7 +18,10 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionSnapshotMetadata,
+	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol';
+import { createBaseSessionMetadata } from './SessionMetadataBuilder.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -43,6 +46,7 @@ export interface SessionManagerOptions {
 	maxSessions?: number;
 	now?: () => number;
 	engineOptions?: EngineSessionOverrideOptions;
+	metadataBuilder?: () => SessionSnapshotMetadata;
 }
 
 export interface CreateSessionOptions {
@@ -65,12 +69,15 @@ export class SessionManager {
 
 	private readonly registries: SessionRegistriesPayload;
 
+	private readonly metadata: SessionSnapshotMetadata;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
 			maxSessions,
 			now = Date.now,
 			engineOptions = {},
+			metadataBuilder = createBaseSessionMetadata,
 		} = options;
 		const { resourceRegistry, ...engineOverrides } = engineOptions;
 		this.maxIdleDurationMs = maxIdleDurationMs;
@@ -92,6 +99,10 @@ export class SessionManager {
 			populations: this.cloneRegistry(this.baseOptions.populations),
 			resources: this.buildResourceRegistry(resourceRegistry),
 		};
+		this.metadata = this.buildMetadataSnapshot(
+			metadataBuilder,
+			resourceRegistry,
+		);
 	}
 
 	public createSession(
@@ -163,6 +174,10 @@ export class SessionManager {
 
 	public getRegistries(): SessionRegistriesPayload {
 		return structuredClone(this.registries);
+	}
+
+	public getMetadata(): SessionSnapshotMetadata {
+		return structuredClone(this.metadata);
 	}
 
 	private requireSession(sessionId: string): EngineSession {
@@ -248,6 +263,35 @@ export class SessionManager {
 			}
 		}
 		return Object.fromEntries(registry.entries());
+	}
+
+	private buildMetadataSnapshot(
+		metadataBuilder: () => SessionSnapshotMetadata,
+		resourceRegistry: SessionResourceRegistry | undefined,
+	): SessionSnapshotMetadata {
+		const metadata = structuredClone(metadataBuilder());
+		if (resourceRegistry) {
+			const entries = metadata.resources ? { ...metadata.resources } : {};
+			for (const [key, definition] of Object.entries(resourceRegistry)) {
+				if (entries[key]) {
+					continue;
+				}
+				const descriptor: SessionMetadataDescriptor = {
+					label: definition.label ?? definition.key ?? key,
+				};
+				if (definition.icon !== undefined) {
+					descriptor.icon = definition.icon;
+				}
+				if (definition.description !== undefined) {
+					descriptor.description = definition.description;
+				}
+				entries[key] = descriptor;
+			}
+			if (Object.keys(entries).length > 0) {
+				metadata.resources = entries;
+			}
+		}
+		return metadata;
 	}
 
 	private purgeExpiredSessions(): void {
