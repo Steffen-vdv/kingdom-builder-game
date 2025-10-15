@@ -119,8 +119,8 @@ export function useNextTurnForecast(): NextTurnForecast {
 		players,
 	]);
 	const [revision, setRevision] = useState(0);
-	const cacheRef = useRef<{ key: string; value: NextTurnForecast }>();
-	const requestKeyRef = useRef<string>();
+	const cacheRef = useRef<{ key: string; value: NextTurnForecast } | null>(null);
+	const requestKeyRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		let disposed = false;
@@ -171,7 +171,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 				cacheRef.current = { key: hashKey, value: merged };
 				setRevision((value) => value + 1);
 			} else if (hasError) {
-				requestKeyRef.current = undefined;
+				requestKeyRef.current = null;
 			}
 		};
 		void run();

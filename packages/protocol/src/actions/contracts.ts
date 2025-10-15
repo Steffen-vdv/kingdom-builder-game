@@ -8,18 +8,18 @@ import type { SessionIdentifier } from '../session/contracts';
 
 export interface ActionEffectChoice {
 	optionId: string;
-	params?: Record<string, unknown>;
+	params?: Record<string, unknown> | undefined;
 }
 
 export type ActionChoiceMap = Record<string, ActionEffectChoice>;
 
-export type ActionParametersPayload = Record<string, unknown> & {
-	choices?: ActionChoiceMap;
-};
+export interface ActionParametersPayload extends Record<string, unknown> {
+	choices?: ActionChoiceMap | undefined;
+}
 
 export interface ActionExecuteRequest extends SessionIdentifier {
 	actionId: string;
-	params?: ActionParametersPayload;
+	params?: ActionParametersPayload | undefined;
 }
 
 export interface ActionTraceLandSnapshot {

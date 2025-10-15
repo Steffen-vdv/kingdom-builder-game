@@ -1,6 +1,6 @@
-import React from 'react';
-
 import { type ActionCardVariant } from './ActionCard';
+
+import type { ReactElement } from 'react';
 
 export interface StepBadgeProps {
 	stepIndex: number | undefined;
@@ -16,7 +16,7 @@ export default function StepBadge({
 	stepLabel,
 	variant,
 	multiStep,
-}: StepBadgeProps): JSX.Element | null {
+}: StepBadgeProps): ReactElement | null {
 	if (variant === 'back') {
 		const label = stepLabel?.trim();
 		if (!label) {

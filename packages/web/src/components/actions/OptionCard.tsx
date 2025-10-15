@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactElement } from 'react';
 
 export type ActionCardOption = {
 	id: string;
@@ -27,7 +27,7 @@ export default function OptionCard({
 	option,
 }: {
 	option: ActionCardOption;
-}): JSX.Element {
+}): ReactElement {
 	const icon = option.icon?.trim();
 	const label = option.label.trim();
 	const ariaLabel = label.length > 0 ? label : option.id;

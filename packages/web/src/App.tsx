@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import Game from './Game';
 import Menu from './Menu';
 import Overview from './Overview';
@@ -12,7 +13,7 @@ import {
 	DEFAULT_REGISTRY_METADATA,
 } from './contexts/defaultRegistryMetadata';
 
-export default function App() {
+export default function App(): ReactElement {
 	const {
 		currentScreen,
 		currentGameKey,
@@ -33,7 +34,7 @@ export default function App() {
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
 
-	let screen: JSX.Element;
+	let screen: ReactElement;
 	switch (currentScreen) {
 		case Screen.Overview:
 			screen = (

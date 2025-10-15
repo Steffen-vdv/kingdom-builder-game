@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ElementType, ReactElement, ReactNode } from 'react';
 
 export const SHOWCASE_BACKGROUND_CLASS = [
 	'relative min-h-screen overflow-hidden bg-gradient-to-br',
@@ -59,14 +59,14 @@ export const SHOWCASE_INTRO_CLASS = [
 ].join(' ');
 
 interface ShowcaseBackgroundProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	className?: string;
 }
 
 export function ShowcaseBackground({
 	children,
 	className = '',
-}: ShowcaseBackgroundProps) {
+}: ShowcaseBackgroundProps): ReactElement {
 	return (
 		<div className={`${SHOWCASE_BACKGROUND_CLASS} ${className}`}>
 			<div className="pointer-events-none absolute inset-0">
@@ -81,30 +81,30 @@ export function ShowcaseBackground({
 }
 
 interface ShowcaseLayoutProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	className?: string;
 }
 
 export function ShowcaseLayout({
 	children,
 	className = '',
-}: ShowcaseLayoutProps) {
+}: ShowcaseLayoutProps): ReactElement {
 	return (
 		<div className={`${SHOWCASE_LAYOUT_CLASS} ${className}`}>{children}</div>
 	);
 }
 
 interface ShowcaseCardProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	className?: string;
-	as?: keyof JSX.IntrinsicElements;
+	as?: ElementType;
 }
 
 export function ShowcaseCard({
 	children,
 	className = '',
 	as: Component = 'section',
-}: ShowcaseCardProps) {
+}: ShowcaseCardProps): ReactElement {
 	return (
 		<Component className={`${SHOWCASE_CARD_BASE_CLASS} ${className}`}>
 			{children}

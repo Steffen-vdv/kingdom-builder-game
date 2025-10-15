@@ -77,7 +77,7 @@ const sessionPlayerIdSchema = z
 
 const actionEffectChoiceSchema = z.object({
 	optionId: z.string(),
-	params: z.record(z.unknown()).optional(),
+	params: z.record(z.string(), z.unknown()).optional(),
 });
 
 const actionChoiceMapSchema = z.record(z.string(), actionEffectChoiceSchema);
@@ -86,16 +86,16 @@ const actionParametersPayloadSchema = z
 	.object({
 		choices: actionChoiceMapSchema.optional(),
 	})
-	.catchall(z.unknown())
+	.passthrough()
 	.transform((value) => value as ActionParametersPayload);
 
 const sessionActionCostMapSchema = z
-	.record(z.number())
+	.record(z.string(), z.number())
 	.transform((value) => value as SessionActionCostMap);
 
 const sessionRequirementFailureSchema = z.object({
 	requirement: requirementSchema,
-	details: z.record(z.unknown()).optional(),
+	details: z.record(z.string(), z.unknown()).optional(),
 	message: z.string().optional(),
 });
 
