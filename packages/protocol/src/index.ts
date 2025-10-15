@@ -172,6 +172,15 @@ export type {
 	SessionOverviewSection,
 	SessionOverviewHero,
 	SessionOverviewContent,
+	PhaseDefinitionLike,
+	PhaseStepDefinitionLike,
+	SessionMetadataBuilderSource,
+	TriggerInfoDefinitionLike,
+} from './session';
+export {
+	buildPhaseMetadataMap,
+	buildSessionMetadataFromContent,
+	buildTriggerMetadataMap,
 } from './session';
 export type { SessionGateway } from './session/gateway';
 export type {

@@ -428,3 +428,14 @@ export type {
 } from './overview';
 
 export type { SessionGateway } from './gateway';
+export {
+	buildPhaseMetadataMap,
+	buildSessionMetadataFromContent,
+	buildTriggerMetadataMap,
+} from './metadataBuilder';
+export type {
+	PhaseDefinitionLike,
+	PhaseStepDefinitionLike,
+	SessionMetadataBuilderSource,
+	TriggerInfoDefinitionLike,
+} from './metadataBuilder';
