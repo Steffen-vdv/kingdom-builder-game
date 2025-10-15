@@ -21,6 +21,10 @@ import { createRemoteSessionAdapter } from '../helpers/remoteSessionAdapter';
 import { clearSessionStateStore } from '../../src/state/sessionStateStore';
 import type { TranslationContext } from '../../src/translation/context';
 
+vi.mock('../../src/state/TranslationContextLoading', () => ({
+	default: () => <div data-testid="translation-loading" />,
+}));
+
 const runUntilActionPhaseMock = vi.fn(() => Promise.resolve());
 const runUntilActionPhaseCoreMock = vi.fn(() => Promise.resolve());
 const handleEndTurnMock = vi.fn();
