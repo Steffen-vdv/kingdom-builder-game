@@ -15,13 +15,7 @@ describe('dev server smoke test', () => {
 	let baseUrl: string | undefined;
 
 	beforeAll(async () => {
-		let server: ViteDevServer | undefined;
-
-		beforeAll(async () => {
 		server = await createServer({
-			configFile: path.resolve(process.cwd(), 'packages/web/vite.config.ts'),
-			server: {
-				host: '127.0.0.1',
 			configFile: path.resolve(process.cwd(), 'packages/web/vite.config.ts'),
 			server: {
 				host: '127.0.0.1',
