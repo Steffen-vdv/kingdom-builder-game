@@ -34,7 +34,7 @@ export function renderCosts(
 	costs: Record<string, number | undefined> | undefined,
 	resources: Record<string, number>,
 	actionCostResource?: string,
-	upkeep?: Record<string, number | undefined> | undefined,
+	upkeep?: Record<string, number | undefined>,
 	options?: { showFreeLabel?: boolean; assets?: TranslationAssets },
 ) {
 	const showFreeLabel = options?.showFreeLabel ?? true;

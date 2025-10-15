@@ -22,6 +22,7 @@ function getSystemDarkModePreference(): boolean {
 
 		return window.matchMedia('(prefers-color-scheme: dark)').matches;
 	} catch (error) {
+		void error;
 		return true;
 	}
 }
@@ -44,6 +45,7 @@ function readDarkModePreference(): boolean {
 
 		return storedValue === 'true';
 	} catch (error) {
+		void error;
 		return defaultValue;
 	}
 }
@@ -59,6 +61,7 @@ function writeDarkModePreference(value: boolean) {
 			value ? 'true' : 'false',
 		);
 	} catch (error) {
+		void error;
 		// Ignore storage exceptions (e.g., Safari private mode).
 	}
 }
