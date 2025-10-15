@@ -15,15 +15,17 @@ describe('dev server smoke test', () => {
 	let baseUrl: string | undefined;
 
 	beforeAll(async () => {
-		server = await createServer({
+		const startedServer = await createServer({
 			configFile: path.resolve(process.cwd(), 'packages/web/vite.config.ts'),
 			server: {
 				host: '127.0.0.1',
 				port: 0,
 			},
 		});
-		await server.listen();
-		const address = server.httpServer?.address() as AddressInfo | null;
+		server = startedServer;
+		await startedServer.listen();
+		await startedServer.waitForRequestsIdle();
+		const address = startedServer.httpServer?.address() as AddressInfo | null;
 		if (!address || typeof address === 'string') {
 			throw new Error('Unable to determine dev server address');
 		}
