@@ -21,15 +21,16 @@ guide for rationale, lore, and extended background.
      `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 2. **Run core commands**
    - `npm run lint` and `npm run format` keep eslint and Prettier happy.
-   - `npm run lint` also runs dependency-cruiser to enforce package boundaries.
+   - `npm run lint` also runs dependency-cruiser to enforce package
+     boundaries.
    - [`npm run verify`](../scripts/run-verification.mjs) now runs CodeRabbit
      before the formatting, lint, type, and coverage checks; it streams output
-     to the console and writes timestamped logs in `artifacts/` for sharing with
-     reviewers.
-   - The Husky pre-push hook enforces that verification run (with a fallback to
-     `npm run check && npm run test:coverage` on tooling failures). If you must
-     execute the fallback manually, note the environment issue in your PR body
-     so reviewers know why the hook could not complete normally.
+     to the console and writes timestamped logs in `artifacts/` for sharing
+     with reviewers.
+   - The Husky pre-push hook enforces that verification run (with a fallback
+     to `npm run check && npm run test:coverage` on tooling failures). If you
+     must execute the fallback manually, note the environment issue in your PR
+     body so reviewers know why the hook could not complete normally.
    - `npm run check` still runs linting, type checks, and tests together if you
      need a direct invocation or the verification script is unavailable.
    - Documentation-only updates or pure content typo fixes may skip coverage
@@ -40,6 +41,20 @@ guide for rationale, lore, and extended background.
    - Use `npm run build` only when you must validate a production bundle.
    - See [`AGENTS.md` §2.5](../AGENTS.md#25-testing-workflow) for the complete
      testing workflow policy and quick-run commands.
+
+### Before pushing or calling `make_pr`
+
+- Run `npm run format` to ensure tabs and other Prettier conventions are
+  applied across the repository.
+- Use `npm run fix` (or rerun `npm run lint`) until eslint reports success;
+  do not rely on reviewers to catch spacing or rule violations.
+- Execute `npm run check` followed by `npm run verify` and confirm that both
+  commands finish without errors or uncommitted file changes. Re-run the
+  commands after fixing any issues to verify the workspace is clean.
+- Husky installs the `pre-commit` and `pre-push` hooks automatically when you
+  run `npm install` (`npm run prepare` manually reapplies them if necessary).
+  Never bypass the hooks—resolve the reported failures locally before pushing.
+
 3. **Work content-first**
    - Never hardcode game data in engine, web, or tests—load from
      `@kingdom-builder/contents` or registries.
