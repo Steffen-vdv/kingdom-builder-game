@@ -7,6 +7,12 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
+	DEFAULT_LAND_DESCRIPTOR,
+	DEFAULT_OVERVIEW_CONTENT,
+	DEFAULT_PASSIVE_DESCRIPTOR,
+	DEFAULT_SLOT_DESCRIPTOR,
+} from '../../src/contexts/registryMetadataDefaults';
+import {
 	RegistryMetadataProvider,
 	useRegistryMetadata,
 	useResourceMetadata,
@@ -291,12 +297,16 @@ describe('RegistryMetadataProvider', () => {
 		const setup = createTestSetup();
 		let captured: {
 			slot: AssetMetadataSelector;
+			land: AssetMetadataSelector;
+			passive: AssetMetadataSelector;
 			overviewTitle: string | undefined;
 		} | null = null;
 		const Capture = () => {
 			const { overviewContent } = useRegistryMetadata();
 			captured = {
+				land: useLandMetadata(),
 				slot: useSlotMetadata(),
+				passive: usePassiveAssetMetadata(),
 				overviewTitle: overviewContent.hero?.title,
 			};
 			return null;
@@ -309,8 +319,9 @@ describe('RegistryMetadataProvider', () => {
 		if (!captured) {
 			throw new Error('Registry metadata context was not captured.');
 		}
-		expect(captured.slot.descriptor.icon).toBe('🧩');
-		expect(captured.slot.descriptor.label).toBe('Development Slot');
-		expect(captured.overviewTitle).toBe('Game Overview');
+		expect(captured.land.descriptor).toEqual(DEFAULT_LAND_DESCRIPTOR);
+		expect(captured.slot.descriptor).toEqual(DEFAULT_SLOT_DESCRIPTOR);
+		expect(captured.passive.descriptor).toEqual(DEFAULT_PASSIVE_DESCRIPTOR);
+		expect(captured.overviewTitle).toBe(DEFAULT_OVERVIEW_CONTENT.hero?.title);
 	});
 });
