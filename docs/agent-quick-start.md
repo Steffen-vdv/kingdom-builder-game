@@ -26,6 +26,9 @@ guide for rationale, lore, and extended background.
      before the formatting, lint, type, and coverage checks; it streams output
      to the console and writes timestamped logs in `artifacts/` for sharing with
      reviewers.
+   - Stop immediately if any of these commands fail. Fix the reported problem
+     (formatting, type errors, lint drift, or test regressions) and re-run the
+     command locally before staging changes so the PR lands clean.
    - The Husky pre-push hook enforces that verification run (with a fallback to
      `npm run check && npm run test:coverage` on tooling failures). If you must
      execute the fallback manually, note the environment issue in your PR body
