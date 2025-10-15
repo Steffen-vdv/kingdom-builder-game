@@ -1,3 +1,5 @@
+@reference './tailwind.css';
+
 @layer components {
 	.action-card {
 		display: flex;
@@ -74,7 +76,7 @@
 	}
 
 	.action-card__option {
-		@apply panel-card w-full cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition whitespace-normal break-words dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;
+		@apply w-full cursor-pointer border border-white/40 bg-white/70 p-3 text-left text-sm text-slate-700 transition whitespace-normal break-words dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100;
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;

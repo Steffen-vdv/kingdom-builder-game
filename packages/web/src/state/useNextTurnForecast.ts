@@ -9,6 +9,21 @@ import { simulateUpcomingPhases } from './sessionSdk';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
 
+interface ForecastCacheEntry {
+	key: string;
+	value: NextTurnForecast;
+}
+
+const forecastCache = new Map<string, ForecastCacheEntry>();
+const inflightRequests = new Set<string>();
+const resolvedRequests = new Map<string, string>();
+
+export function resetNextTurnForecastCacheForTests(): void {
+	forecastCache.clear();
+	inflightRequests.clear();
+	resolvedRequests.clear();
+}
+
 function cloneEmptyDelta(): PlayerSnapshotDeltaBucket {
 	return {
 		resources: {},
@@ -119,15 +134,26 @@ export function useNextTurnForecast(): NextTurnForecast {
 		players,
 	]);
 	const [revision, setRevision] = useState(0);
-	const cacheRef = useRef<{ key: string; value: NextTurnForecast }>();
-	const requestKeyRef = useRef<string>();
+	const cacheRef = useRef<{ key: string; value: NextTurnForecast } | null>(
+		null,
+	);
+	const requestKeyRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		let disposed = false;
 		if (requestKeyRef.current === hashKey) {
 			return;
 		}
+		const requestKey = `${sessionId}#${hashKey}`;
+		if (resolvedRequests.get(sessionId) === hashKey) {
+			cacheRef.current = forecastCache.get(sessionId) ?? null;
+			return;
+		}
+		if (inflightRequests.has(requestKey)) {
+			return;
+		}
 		requestKeyRef.current = hashKey;
+		inflightRequests.add(requestKey);
 		const run = async () => {
 			const updates: NextTurnForecast = {};
 			let hasSuccess = false;
@@ -144,11 +170,13 @@ export function useNextTurnForecast(): NextTurnForecast {
 						updates[playerId] = response.result.delta;
 						hasSuccess = true;
 					} catch (error) {
+						void error;
 						hasError = true;
 					}
 				}),
 			);
 			if (disposed) {
+				inflightRequests.delete(requestKey);
 				return;
 			}
 			if (hasSuccess) {
@@ -168,15 +196,25 @@ export function useNextTurnForecast(): NextTurnForecast {
 					}
 					merged[playerId] = cloneEmptyDelta();
 				}
-				cacheRef.current = { key: hashKey, value: merged };
+				const entry: ForecastCacheEntry = {
+					key: hashKey,
+					value: merged,
+				};
+				cacheRef.current = entry;
+				forecastCache.set(sessionId, entry);
+				resolvedRequests.set(sessionId, hashKey);
+				inflightRequests.delete(requestKey);
 				setRevision((value) => value + 1);
 			} else if (hasError) {
-				requestKeyRef.current = undefined;
+				requestKeyRef.current = null;
+				inflightRequests.delete(requestKey);
+				resolvedRequests.delete(sessionId);
 			}
 		};
 		void run();
 		return () => {
 			disposed = true;
+			inflightRequests.delete(requestKey);
 		};
 	}, [hashKey, playerIds, session, sessionId]);
 
@@ -184,16 +222,24 @@ export function useNextTurnForecast(): NextTurnForecast {
 		if (cacheRef.current?.key === hashKey) {
 			return cacheRef.current.value;
 		}
+		const sessionEntry = forecastCache.get(sessionId);
+		if (sessionEntry?.key === hashKey) {
+			cacheRef.current = sessionEntry;
+			return sessionEntry.value;
+		}
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
 			try {
 				const { delta } = session.simulateUpcomingPhases(player.id);
 				forecast[player.id] = delta;
 			} catch (error) {
+				void error;
 				forecast[player.id] = cloneEmptyDelta();
 			}
 		}
-		cacheRef.current = { key: hashKey, value: forecast };
+		const entry: ForecastCacheEntry = { key: hashKey, value: forecast };
+		cacheRef.current = entry;
+		forecastCache.set(sessionId, entry);
 		return forecast;
-	}, [session, hashKey, players, revision]);
+	}, [session, hashKey, players, revision, sessionId]);
 }
