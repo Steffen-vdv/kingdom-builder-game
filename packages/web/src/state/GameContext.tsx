@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import React, {
 	useCallback,
 	useContext,
