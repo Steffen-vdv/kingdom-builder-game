@@ -119,7 +119,14 @@ const baseRules = {
 
 export default [
 	{
-		ignores: ['dist', 'node_modules', '**/*.d.ts', 'packages/**/src/**/*.js'],
+		ignores: [
+			'dist',
+			'node_modules',
+			'coverage',
+			'**/coverage/**',
+			'**/*.d.ts',
+			'packages/**/src/**/*.js',
+		],
 	},
 	{
 		files: ['**/*.{ts,tsx,js,cjs,mjs}'],
