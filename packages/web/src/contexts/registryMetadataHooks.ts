@@ -1,9 +1,20 @@
 import { useMemo } from 'react';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+import type {
+	ActionConfig,
+	BuildingConfig,
+	DevelopmentConfig,
+	PopulationConfig,
+} from '@kingdom-builder/protocol';
+import type {
+	SessionMetadataDescriptor,
+	SessionResourceDefinition,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
 	createResourceLookup,
+	type DefinitionLookup,
 } from './registryMetadataLookups';
 import {
 	buildPhaseMetadata,
@@ -62,11 +73,11 @@ export const useDescriptorOverrides = (
 	}, [snapshotMetadata]);
 
 interface DefinitionLookups {
-	readonly resourceLookup: ReturnType<typeof createResourceLookup>;
-	readonly actionLookup: ReturnType<typeof createRegistryLookup>;
-	readonly buildingLookup: ReturnType<typeof createRegistryLookup>;
-	readonly developmentLookup: ReturnType<typeof createRegistryLookup>;
-	readonly populationLookup: ReturnType<typeof createRegistryLookup>;
+	readonly resourceLookup: DefinitionLookup<SessionResourceDefinition>;
+	readonly actionLookup: DefinitionLookup<ActionConfig>;
+	readonly buildingLookup: DefinitionLookup<BuildingConfig>;
+	readonly developmentLookup: DefinitionLookup<DevelopmentConfig>;
+	readonly populationLookup: DefinitionLookup<PopulationConfig>;
 }
 
 export const useDefinitionLookups = (
@@ -113,7 +124,9 @@ interface MetadataLookups {
 	readonly statMetadataLookup: ReturnType<typeof buildStatMetadata>;
 	readonly phaseMetadataLookup: ReturnType<typeof buildPhaseMetadata>;
 	readonly triggerMetadataLookup: ReturnType<typeof buildTriggerMetadata>;
-	readonly assetDescriptors: ReturnType<typeof mergeDescriptorRecords>;
+	readonly assetDescriptors:
+		| Readonly<Record<string, SessionMetadataDescriptor>>
+		| undefined;
 }
 
 export const useMetadataLookups = (
@@ -155,7 +168,7 @@ export const useMetadataLookups = (
 		const triggerMetadataLookup = buildTriggerMetadata(
 			mergeDescriptorRecords(DEFAULT_TRIGGER_METADATA, overrides.triggers),
 		);
-		const assetDescriptors = mergeDescriptorRecords(
+		const assetDescriptors = mergeDescriptorRecords<SessionMetadataDescriptor>(
 			DEFAULT_ASSET_METADATA,
 			overrides.assets,
 		);

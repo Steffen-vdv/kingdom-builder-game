@@ -18,8 +18,19 @@ export type SnapshotMetadataWithOverview = SessionSnapshotMetadata & {
 	overview?: SessionOverviewMetadata;
 };
 
-const DEFAULT_METADATA: SnapshotMetadataWithOverview =
-	DEFAULT_REGISTRY_METADATA;
+const DEFAULT_METADATA =
+	DEFAULT_REGISTRY_METADATA as SnapshotMetadataWithOverview;
+
+const FALLBACK_OVERVIEW_CONTENT: SessionOverviewMetadata = {
+	hero: { tokens: {} },
+	sections: [],
+	tokens: {},
+};
+
+const DEFAULT_OVERVIEW_SOURCE: SessionOverviewMetadata =
+	DEFAULT_METADATA.overviewContent ??
+	DEFAULT_METADATA.overview ??
+	FALLBACK_OVERVIEW_CONTENT;
 
 export const DEFAULT_RESOURCE_METADATA = extractDescriptorRecord(
 	DEFAULT_METADATA,
@@ -70,12 +81,7 @@ export const DEFAULT_PASSIVE_DESCRIPTOR = resolveAssetDescriptor(
 );
 
 export const DEFAULT_OVERVIEW_CONTENT: SessionOverviewMetadata = Object.freeze(
-	(DEFAULT_METADATA.overviewContent ??
-		DEFAULT_METADATA.overview ?? {
-			hero: { tokens: {} },
-			sections: [],
-			tokens: {},
-		}) as SessionOverviewMetadata,
+	DEFAULT_OVERVIEW_SOURCE,
 );
 
 export const mergeDescriptorRecords = <TValue>(
