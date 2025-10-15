@@ -6,12 +6,15 @@ import React from 'react';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import Overview, { type OverviewTokenConfig } from '../src/Overview';
-import type { OverviewContentSection } from '../src/components/overview/sectionsData';
+import type {
+	OverviewContentSection,
+	OverviewTokenCandidates,
+} from '../src/components/overview/sectionsData';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
 
 describe('<Overview />', () => {
-	it('renders supplied overview content using dynamic token fallbacks', () => {
+	it('renders overview metadata content using dynamic token fallbacks', () => {
 		const factory = createContentFactory();
 		const expandAction = factory.action({ id: 'expand', icon: '🚀' });
 		const councilRole = factory.population({
@@ -35,6 +38,57 @@ describe('<Overview />', () => {
 					label: 'Action Points',
 					icon: '⚡',
 				},
+			},
+		};
+		const customContent: OverviewContentSection[] = [
+			{
+				kind: 'paragraph',
+				id: 'custom-story',
+				icon: 'land',
+				title: 'Custom Story',
+				span: true,
+				paragraphs: [
+					'Story {gold} keepers guard the realm.',
+					'Advisors {council} manage {ap} to fuel plans.',
+				],
+			},
+			{
+				kind: 'list',
+				id: 'custom-flow',
+				icon: 'growth',
+				title: 'Custom Flow',
+				items: [
+					{
+						icon: 'expand',
+						label: 'Advance',
+						body: [
+							'Execute {expand} during the {growth} sequence.',
+							'Strengthen {army} before moving out.',
+						],
+					},
+				],
+			},
+		];
+		const tokenCandidates: OverviewTokenCandidates = {
+			actions: {
+				expand: [expandAction.id],
+			},
+			phases: {
+				growth: ['growth'],
+			},
+			resources: {
+				gold: ['gold'],
+				ap: ['ap'],
+			},
+			stats: {
+				army: ['army'],
+			},
+			population: {
+				council: [councilRole.id],
+			},
+			static: {
+				land: ['land'],
+				slot: ['slot'],
 			},
 		};
 		const metadata: SessionSnapshotMetadata = {
@@ -67,6 +121,10 @@ describe('<Overview />', () => {
 				land: { label: 'Land', icon: '🗺️' },
 				slot: { label: 'Slot', icon: '🧩' },
 			},
+			overview: {
+				sections: customContent,
+				tokens: tokenCandidates,
+			},
 		};
 
 		const tokenConfig: OverviewTokenConfig = {
@@ -88,43 +146,9 @@ describe('<Overview />', () => {
 			},
 		};
 
-		const customContent: OverviewContentSection[] = [
-			{
-				kind: 'paragraph',
-				id: 'custom-story',
-				icon: 'land',
-				title: 'Custom Story',
-				span: true,
-				paragraphs: [
-					'Story {gold} keepers guard the realm.',
-					'Advisors {council} manage {ap} to fuel plans.',
-				],
-			},
-			{
-				kind: 'list',
-				id: 'custom-flow',
-				icon: 'growth',
-				title: 'Custom Flow',
-				items: [
-					{
-						icon: 'expand',
-						label: 'Advance',
-						body: [
-							'Execute {expand} during the {growth} sequence.',
-							'Strengthen {army} before moving out.',
-						],
-					},
-				],
-			},
-		];
-
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<Overview
-					onBack={vi.fn()}
-					tokenConfig={tokenConfig}
-					content={customContent}
-				/>
+				<Overview onBack={vi.fn()} tokenConfig={tokenConfig} />
 			</RegistryMetadataProvider>,
 		);
 

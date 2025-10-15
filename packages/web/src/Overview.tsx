@@ -16,8 +16,11 @@ import {
 	renderTokens,
 } from './components/overview/OverviewLayout';
 import type { OverviewSectionDef } from './components/overview/OverviewLayout';
-import { createOverviewSections } from './components/overview/sectionsData';
-import type { OverviewContentSection } from './components/overview/sectionsData';
+import {
+	createOverviewSections,
+	type OverviewContentSection,
+	type OverviewTokenCandidates,
+} from './components/overview/sectionsData';
 import type {
 	OverviewTokenConfig,
 	OverviewTokenSources,
@@ -27,10 +30,7 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+import { OVERVIEW_CONTENT } from '@kingdom-builder/contents';
 import type { SessionOverviewHero } from '@kingdom-builder/protocol/session';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;

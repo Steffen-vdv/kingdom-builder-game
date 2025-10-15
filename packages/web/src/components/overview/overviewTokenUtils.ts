@@ -8,9 +8,11 @@ import type {
 	PhaseMetadata,
 	RegistryMetadataDescriptor,
 } from '../../contexts/RegistryMetadataContext';
-import type { OverviewTokenCategoryName } from '@kingdom-builder/contents';
+import type { SessionOverviewTokenCategoryName } from '@kingdom-builder/protocol/session';
 
 export type TokenCandidateInput = string | ReadonlyArray<string>;
+
+type OverviewTokenCategoryName = SessionOverviewTokenCategoryName;
 
 type OverviewTokenCategoryOverrides = Record<string, TokenCandidateInput>;
 type OverviewTokenCategoryConfig = Record<string, string[]>;
