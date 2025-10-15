@@ -21,8 +21,12 @@ describe('dev server smoke test', () => {
 				host: '127.0.0.1',
 				port: 0,
 			},
+			optimizeDeps: {
+				noDiscovery: true,
+			},
 		});
 		await server.listen();
+		await server.waitForRequestsIdle();
 		const address = server.httpServer?.address() as AddressInfo | null;
 		if (!address || typeof address === 'string') {
 			throw new Error('Unable to determine dev server address');
@@ -32,6 +36,7 @@ describe('dev server smoke test', () => {
 
 	afterAll(async () => {
 		if (server) {
+			await server.waitForRequestsIdle();
 			await server.close();
 		}
 	});
