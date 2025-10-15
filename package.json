@@ -16,10 +16,10 @@
 		"build:web": "vite build packages/web",
 		"preview": "vite preview packages/web",
 		"prelint": "npm run ensure:dev-deps",
-		"lint": "npm run lint:deps && eslint . --ext .ts,.tsx --rulesdir scripts",
+		"lint": "npm run lint:deps && node scripts/run-eslint.cjs . --ext .ts,.tsx --rulesdir scripts",
 		"typecheck": "tsc -b --pretty false",
 		"posttypecheck": "node scripts/clean-dists.cjs",
-		"fix": "eslint . --ext .ts,.tsx --fix --rulesdir scripts",
+		"fix": "node scripts/run-eslint.cjs . --ext .ts,.tsx --fix --rulesdir scripts",
 		"format:check": "prettier --check --log-level warn .",
 		"precheck": "npm run ensure:dev-deps",
 		"check": "run-s format:check typecheck lint test",
@@ -78,7 +78,7 @@
 	"lint-staged": {
 		"*.{js,jsx,ts,tsx,json,md,cjs}": "prettier --write",
 		"*.{ts,tsx}": [
-			"eslint --max-warnings=0 --rulesdir scripts",
+			"node scripts/run-eslint.cjs --max-warnings=0 --rulesdir scripts",
 			"bash -c 'tsc --noEmit'"
 		]
 	}
