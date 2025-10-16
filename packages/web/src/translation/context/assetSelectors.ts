@@ -3,6 +3,7 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
+import type { SessionTriggerMetadata } from '@kingdom-builder/protocol/session';
 import { DEFAULT_TRIGGER_METADATA } from '../../contexts/defaultRegistryMetadata';
 
 interface IconLabelDisplay {
@@ -10,6 +11,50 @@ interface IconLabelDisplay {
 	label: string;
 	description?: string;
 }
+
+const EMPTY_TRIGGER_ASSET = Object.freeze({}) as TranslationTriggerAsset;
+
+function createTriggerAssetFromMetadata(
+	descriptor: SessionTriggerMetadata | undefined,
+): TranslationTriggerAsset {
+	if (!descriptor) {
+		return EMPTY_TRIGGER_ASSET;
+	}
+	const entry: TranslationTriggerAsset = {};
+	let hasMetadata = false;
+	if (descriptor.icon !== undefined) {
+		entry.icon = descriptor.icon;
+		hasMetadata = true;
+	}
+	if (descriptor.future !== undefined) {
+		entry.future = descriptor.future;
+		hasMetadata = true;
+	}
+	if (descriptor.past !== undefined) {
+		entry.past = descriptor.past;
+		hasMetadata = true;
+	}
+	const label = descriptor.label ?? descriptor.past;
+	if (label !== undefined) {
+		entry.label = label;
+		hasMetadata = true;
+	}
+	if (!hasMetadata) {
+		return EMPTY_TRIGGER_ASSET;
+	}
+	return Object.freeze(entry);
+}
+
+const FALLBACK_TRIGGER_ASSETS: Readonly<
+	Record<string, TranslationTriggerAsset>
+> = Object.freeze(
+	Object.fromEntries(
+		Object.entries(DEFAULT_TRIGGER_METADATA ?? {}).map(([key, descriptor]) => [
+			key,
+			createTriggerAssetFromMetadata(descriptor),
+		]),
+	),
+);
 
 function coerceIconLabel(
 	source: TranslationIconLabel | undefined,
@@ -74,28 +119,14 @@ export function selectTriggerDisplay(
 	triggerId: string,
 ): TranslationTriggerAsset {
 	const entry = assets?.triggers?.[triggerId];
-	if (entry) {
+	if (entry !== undefined) {
 		return entry;
 	}
-	const fallback = DEFAULT_TRIGGER_METADATA?.[triggerId];
-	if (fallback) {
-		const entry: TranslationTriggerAsset = {};
-		if (fallback.icon !== undefined) {
-			entry.icon = fallback.icon;
-		}
-		if (fallback.future !== undefined) {
-			entry.future = fallback.future;
-		}
-		if (fallback.past !== undefined) {
-			entry.past = fallback.past;
-		}
-		const label = fallback.label ?? fallback.past;
-		if (label !== undefined) {
-			entry.label = label;
-		}
-		return Object.freeze(entry);
+	const fallback = FALLBACK_TRIGGER_ASSETS[triggerId];
+	if (fallback !== undefined) {
+		return fallback;
 	}
-	return {};
+	return EMPTY_TRIGGER_ASSET;
 }
 
 export function selectTierSummary(
