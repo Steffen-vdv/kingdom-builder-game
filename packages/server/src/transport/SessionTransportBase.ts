@@ -46,6 +46,7 @@ import {
 	type SanitizedPlayerNameEntry,
 } from './playerNameHelpers.js';
 import { parseActionParameters } from './actionParameterHelpers.js';
+import { mergeSessionSnapshotMetadata } from './sessionMetadataMerge.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 export interface SessionTransportOptions {
 	sessionManager: SessionManager;
@@ -61,7 +62,6 @@ export class SessionTransportBase {
 		this.idFactory = options.idFactory ?? randomUUID;
 		this.authMiddleware = options.authMiddleware;
 	}
-
 	public createSession(request: TransportRequest): SessionCreateResponse {
 		this.requireAuthorization(request, 'session:create');
 		const parsed = sessionCreateRequestSchema.safeParse(request.body);
@@ -97,20 +97,16 @@ export class SessionTransportBase {
 			});
 		}
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		return sessionCreateResponseSchema.parse(
-			this.buildStateResponse(sessionId, snapshot),
-		);
+		const state = this.buildStateResponse(sessionId, snapshot);
+		return sessionCreateResponseSchema.parse(state);
 	}
-
 	public getSessionState(request: TransportRequest): SessionStateResponse {
 		const sessionId = this.parseSessionIdentifier(request.body);
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		return sessionStateResponseSchema.parse(
-			this.buildStateResponse(sessionId, snapshot),
-		);
+		const state = this.buildStateResponse(sessionId, snapshot);
+		return sessionStateResponseSchema.parse(state);
 	}
-
 	public async advanceSession(
 		request: TransportRequest,
 	): Promise<SessionAdvanceResponse> {
@@ -143,7 +139,6 @@ export class SessionTransportBase {
 			});
 		}
 	}
-
 	public async executeAction(
 		request: TransportRequest,
 	): Promise<
@@ -212,7 +207,6 @@ export class SessionTransportBase {
 			return this.attachHttpStatus<ActionExecuteErrorResponse>(response, 409);
 		}
 	}
-
 	public setDevMode(request: TransportRequest): SessionSetDevModeResponse {
 		this.requireAuthorization(request, 'session:advance');
 		const parsed = sessionSetDevModeRequestSchema.safeParse(request.body);
@@ -227,11 +221,9 @@ export class SessionTransportBase {
 		const session = this.requireSession(sessionId);
 		session.setDevMode(enabled);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		return sessionSetDevModeResponseSchema.parse(
-			this.buildStateResponse(sessionId, snapshot),
-		);
+		const state = this.buildStateResponse(sessionId, snapshot);
+		return sessionSetDevModeResponseSchema.parse(state);
 	}
-
 	public updatePlayerName(
 		request: TransportRequest,
 	): SessionUpdatePlayerNameResponse {
@@ -255,9 +247,8 @@ export class SessionTransportBase {
 		const session = this.requireSession(sessionId);
 		session.updatePlayerName(playerId, sanitizedName);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
-		return sessionUpdatePlayerNameResponseSchema.parse(
-			this.buildStateResponse(sessionId, snapshot),
-		);
+		const state = this.buildStateResponse(sessionId, snapshot);
+		return sessionUpdatePlayerNameResponseSchema.parse(state);
 	}
 	protected attachHttpStatus<T extends object>(
 		payload: T,
@@ -341,9 +332,17 @@ export class SessionTransportBase {
 		sessionId: string,
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
+		const metadata = mergeSessionSnapshotMetadata(
+			this.sessionManager.getMetadata(),
+			snapshot.metadata,
+		);
+		const enrichedSnapshot: SessionSnapshot = {
+			...snapshot,
+			metadata,
+		};
 		return {
 			sessionId,
-			snapshot,
+			snapshot: enrichedSnapshot,
 			registries: this.sessionManager.getRegistries(),
 		};
 	}
