@@ -37,7 +37,7 @@ function clonePlayer(player: PlayerState) {
 export function createTestContext(
 	overrides?: Partial<Record<keyof typeof RESOURCES, number>>,
 ) {
-	const ctx = createEngine({
+	const engineContext = createEngine({
 		actions: ACTIONS,
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
@@ -50,24 +50,24 @@ export function createTestContext(
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
 			const value = overrides[key];
 			if (value !== undefined) {
-				ctx.activePlayer.resources[key] = value;
+				engineContext.activePlayer.resources[key] = value;
 			}
 		}
 	}
-	return ctx;
+	return engineContext;
 }
 
 export function simulateEffects(
 	effects: EffectDef[],
-	ctx: EngineContext,
+	engineContext: EngineContext,
 	actionId?: string,
 ) {
-	const before = clonePlayer(ctx.activePlayer);
-	const dummy = clonePlayer(ctx.activePlayer);
-	const dummyCtx = { ...ctx, activePlayer: dummy } as EngineContext;
+	const before = clonePlayer(engineContext.activePlayer);
+	const dummy = clonePlayer(engineContext.activePlayer);
+	const dummyCtx = { ...engineContext, activePlayer: dummy } as EngineContext;
 	runEffects(effects, dummyCtx);
 	if (actionId) {
-		ctx.passives.runResultMods(actionId, dummyCtx);
+		engineContext.passives.runResultMods(actionId, dummyCtx);
 	}
 
 	const resources: Record<string, number> = {};
@@ -94,11 +94,15 @@ export function simulateEffects(
 	return { resources, stats, land };
 }
 
-export function getActionOutcome(id: string, ctx: EngineContext) {
-	const actionDefinition = ctx.actions.get(id);
+export function getActionOutcome(id: string, engineContext: EngineContext) {
+	const actionDefinition = engineContext.actions.get(id);
 	const resolved = resolveActionEffects(actionDefinition);
-	const costs = getActionCosts(id, ctx);
-	const results = simulateEffects(resolved.effects, ctx, actionDefinition.id);
+	const costs = getActionCosts(id, engineContext);
+	const results = simulateEffects(
+		resolved.effects,
+		engineContext,
+		actionDefinition.id,
+	);
 	return { costs, results };
 }
 
@@ -120,8 +124,8 @@ function findEffect(
 	return undefined;
 }
 
-export function getBuildActionId(ctx: EngineContext) {
-	for (const [id, def] of ctx.actions.entries()) {
+export function getBuildActionId(engineContext: EngineContext) {
+	for (const [id, def] of engineContext.actions.entries()) {
 		if (
 			findEffect(
 				def.effects,
@@ -179,9 +183,9 @@ export function getBuildingWithStatBonuses() {
 	throw new Error('No building with stat bonuses found');
 }
 
-export function getActionWithMultipleCosts(ctx: EngineContext) {
-	for (const [id] of ctx.actions.entries()) {
-		const costs = getActionCosts(id, ctx);
+export function getActionWithMultipleCosts(engineContext: EngineContext) {
+	for (const [id] of engineContext.actions.entries()) {
+		const costs = getActionCosts(id, engineContext);
 		if (Object.keys(costs).length > 1) {
 			return { actionId: id, costs };
 		}
@@ -189,9 +193,9 @@ export function getActionWithMultipleCosts(ctx: EngineContext) {
 	throw new Error('No action with multiple costs found');
 }
 
-export function getActionWithCost(ctx: EngineContext) {
-	for (const [id] of ctx.actions.entries()) {
-		const costs = getActionCosts(id, ctx);
+export function getActionWithCost(engineContext: EngineContext) {
+	for (const [id] of engineContext.actions.entries()) {
+		const costs = getActionCosts(id, engineContext);
 		if (Object.keys(costs).length > 0) {
 			return { actionId: id, costs };
 		}

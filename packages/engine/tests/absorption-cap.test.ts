@@ -5,11 +5,11 @@ import { Resource } from '../src/state/index.ts';
 
 describe('absorption cap', () => {
 	it('caps absorption at 100%', () => {
-		const ctx = createTestEngine();
-		const defender = ctx.game.opponent;
+		const engineContext = createTestEngine();
+		const defender = engineContext.game.opponent;
 		defender.absorption = 1.5;
 		const start = defender.resources[Resource.castleHP];
-		const result = resolveAttack(defender, 5, ctx, {
+		const result = resolveAttack(defender, 5, engineContext, {
 			type: 'resource',
 			key: Resource.castleHP,
 		});

@@ -16,13 +16,8 @@ function createRng(seed: number) {
 
 describe('random action flow', () => {
 	it('advances phases, pays costs and applies effects across turns', () => {
-		const {
-			ctx: engineContext,
-			actions,
-			phases,
-			costKey,
-			gainKey,
-		} = createSyntheticContext();
+		const { engineContext, actions, phases, costKey, gainKey } =
+			createSyntheticContext();
 		const actionIds = actions.map((a) => a.id);
 		const mainPhase = phases[0].id;
 		const endPhase = phases[1].id;
