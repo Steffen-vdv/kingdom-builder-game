@@ -3,6 +3,10 @@ import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	createMetadataBuilderWithOverview,
+	SYNTHETIC_OVERVIEW,
+} from './helpers/metadataFixtures.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -133,5 +137,54 @@ describe('SessionTransport advanceSession', () => {
 				expect(error.code).toBe('FORBIDDEN');
 			}
 		}
+	});
+
+	it('retains metadata descriptors and overview after advancing sessions', async () => {
+		const metadataBuilder = createMetadataBuilderWithOverview();
+		const { manager, costKey, gainKey } = createSyntheticSessionManager({
+			metadataBuilder,
+		});
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const expectedOverview = structuredClone(SYNTHETIC_OVERVIEW);
+		const advance = await transport.advanceSession({
+			body: { sessionId },
+			headers: authorizedHeaders,
+		});
+		const metadata = advance.snapshot.metadata;
+		expect(metadata.resources?.[costKey]).toEqual({ label: costKey });
+		expect(metadata.resources?.[gainKey]).toEqual({ label: gainKey });
+		expect(metadata.overview).toEqual(expectedOverview);
+		if (metadata.resources?.[costKey]) {
+			metadata.resources[costKey]!.label = '__mutated__';
+		}
+		if (metadata.resources?.[gainKey]) {
+			metadata.resources[gainKey]!.label = '__mutated__';
+		}
+		if (metadata.overview) {
+			metadata.overview.hero.tokens.extra = 'mutated';
+			const resourceTokens = metadata.overview.tokens.resources;
+			const tokenList = resourceTokens
+				? (resourceTokens[costKey] ?? resourceTokens[gainKey])
+				: undefined;
+			if (tokenList) {
+				tokenList.push('advance-mutation');
+			}
+		}
+		const refreshed = transport.getSessionState({
+			body: { sessionId },
+			headers: {},
+		});
+		const nextMetadata = refreshed.snapshot.metadata;
+		expect(nextMetadata.resources?.[costKey]?.label).toBe(costKey);
+		expect(nextMetadata.resources?.[gainKey]?.label).toBe(gainKey);
+		expect(nextMetadata.overview).toEqual(expectedOverview);
+		expect(nextMetadata.overview).not.toBe(metadata.overview);
 	});
 });
