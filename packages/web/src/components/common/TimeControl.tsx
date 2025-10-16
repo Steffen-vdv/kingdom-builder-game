@@ -32,7 +32,7 @@ export default function TimeControl() {
 						<button
 							key={option}
 							type="button"
-							className={`px-3 py-1 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-0 ${
+							className={`px-3 py-1 text-sm font-semibold transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-0 ${
 								active
 									? 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-inner'
 									: 'text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-slate-800/80'
