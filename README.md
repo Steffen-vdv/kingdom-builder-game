@@ -46,6 +46,10 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
   CLI runs. When the CLI is missing, the script records instructions in
   `artifacts/*coderabbit-review.log` so you can correct the environment and
   rerun the suite.
+- Automated agent environments fall back to the bundled stub documented in
+  [`docs/tooling/coderabbit-cli.md`](docs/tooling/coderabbit-cli.md). This
+  keeps verification steady when the official binary cannot be installed,
+  while developers should still use the real CLI locally.
 
 ### Pre-PR checklist
 

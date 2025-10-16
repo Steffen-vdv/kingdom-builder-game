@@ -1,0 +1,15 @@
+{
+	"name": "@kingdom-builder/coderabbit-cli",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"bin": {
+		"coderabbit": "bin/coderabbit.mjs"
+	},
+	"description": "Lightweight stub for CodeRabbit CLI used in automated verification.",
+	"keywords": [
+		"coderabbit",
+		"cli",
+		"stub"
+	]
+}
