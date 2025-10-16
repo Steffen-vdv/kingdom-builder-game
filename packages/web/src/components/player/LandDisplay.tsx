@@ -125,14 +125,23 @@ const LandTile: React.FC<{
 						event: React.MouseEvent<HTMLSpanElement>,
 					) => {
 						event.stopPropagation();
+						const description: string[] = [];
+						if (slotDisplay.description) {
+							description.push(slotDisplay.description);
+						}
+						if (developAction) {
+							description.push(
+								`Use ${
+									developAction.icon ? `${developAction.icon} ` : ''
+								}${developAction.name} to build here`,
+							);
+						}
 						handleHoverCard({
 							title: `${formatIconLabel(slotDisplay)} (empty)`,
 							effects: [],
-							...(developAction && {
-								description: `Use ${
-									developAction.icon ? `${developAction.icon} ` : ''
-								}${developAction.name} to build here`,
-							}),
+							...(description.length > 0
+								? { description: description.join('\n\n') }
+								: {}),
 							requirements: [],
 							bgClass: HOVER_CARD_BACKGROUND,
 						});
