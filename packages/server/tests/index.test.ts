@@ -1,5 +1,7 @@
 import { fileURLToPath } from 'node:url';
+import { Writable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FastifyBaseLogger } from 'fastify';
 
 const originalArgv = [...process.argv];
 const originalEnv = { ...process.env };
@@ -27,13 +29,41 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
+function createTestLogger(): FastifyBaseLogger {
+	const logger: Partial<FastifyBaseLogger> = {
+		child: vi.fn(),
+		debug: vi.fn(),
+		error: vi.fn(),
+		fatal: vi.fn(),
+		info: vi.fn(),
+		trace: vi.fn(),
+		warn: vi.fn(),
+	};
+	(logger.child as ReturnType<typeof vi.fn>).mockReturnValue(logger);
+	return logger as FastifyBaseLogger;
+}
+
 describe('server entrypoint', () => {
 	it('starts a Fastify server and listens for requests', async () => {
-		const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+		const messages: Array<{ level: number; msg: string }> = [];
+		const stream = new Writable({
+			write(chunk, _encoding, callback) {
+				try {
+					messages.push(JSON.parse(String(chunk)));
+				} catch {
+					// Ignore parse errors from non-JSON log entries.
+				}
+				callback();
+			},
+		});
 		const module = await import('../src/index.js');
 		const result = await module.startServer({
 			host: '127.0.0.1',
 			port: 0,
+			logger: {
+				level: 'info',
+				stream,
+			},
 			tokens: {
 				'integration-token': {
 					userId: 'integration-tester',
@@ -41,7 +71,6 @@ describe('server entrypoint', () => {
 				},
 			},
 		});
-		expect(log).toHaveBeenCalledWith('Starting Kingdom Builder server...');
 		const response = await fetch(`${result.address}/sessions`, {
 			method: 'POST',
 			headers: {
@@ -51,7 +80,19 @@ describe('server entrypoint', () => {
 			body: JSON.stringify({}),
 		});
 		expect(response.status).toBe(201);
+		expect(
+			messages.some(
+				(entry) => entry.msg === 'Starting Kingdom Builder server...',
+			),
+		).toBe(true);
+		expect(
+			messages.some(
+				(entry) =>
+					entry.msg === `Kingdom Builder server listening on ${result.address}`,
+			),
+		).toBe(true);
 		await result.app.close();
+		stream.end();
 	});
 
 	it('allows HttpSessionGateway to toggle developer mode', async () => {
@@ -86,9 +127,17 @@ describe('server entrypoint', () => {
 
 	it('does not auto-start when imported as a module', async () => {
 		process.argv = ['/usr/bin/node', '/not/the/entrypoint'];
-		const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+		const fastifyMock = vi.fn(() => ({
+			register: vi.fn(),
+			listen: vi.fn(),
+			log: createTestLogger(),
+		}));
+		vi.doMock('fastify', () => ({
+			__esModule: true,
+			default: fastifyMock,
+		}));
 		await import('../src/index.js');
-		expect(log).not.toHaveBeenCalled();
+		expect(fastifyMock).not.toHaveBeenCalled();
 	});
 
 	it('auto-starts when the module is executed directly', async () => {
@@ -103,20 +152,25 @@ describe('server entrypoint', () => {
 				roles: ['admin'],
 			},
 		});
-		const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+		const log = createTestLogger();
 		const listen = vi.fn().mockResolvedValue('http://127.0.0.1:3001');
 		const register = vi.fn().mockResolvedValue(undefined);
+		const fastifyMock = vi.fn(() => ({
+			register,
+			listen,
+			log,
+		}));
 		vi.doMock('fastify', () => ({
 			__esModule: true,
-			default: () => ({
-				register,
-				listen,
-			}),
+			default: fastifyMock,
 		}));
 		await import('../src/index.js');
-		expect(log).toHaveBeenCalledWith('Starting Kingdom Builder server...');
+		expect(log.info).toHaveBeenCalledWith('Starting Kingdom Builder server...');
 		expect(register).toHaveBeenCalled();
 		expect(listen).toHaveBeenCalled();
+		expect(fastifyMock).toHaveBeenCalledWith(
+			expect.objectContaining({ logger: true }),
+		);
 	});
 
 	it('allows the built-in development token when explicitly enabled', async () => {
