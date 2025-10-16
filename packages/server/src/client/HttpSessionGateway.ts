@@ -203,17 +203,6 @@ export class HttpSessionGateway implements SessionGateway {
 		}
 		return schema.parse(result.data);
 	}
-	private postSessionDetail<ResponseType>(
-		payload: { sessionId: string },
-		suffix: string,
-		schema: { parse(data: unknown): ResponseType },
-	): Promise<ResponseType> {
-		return this.postSessionRequest(
-			`sessions/${this.encodeSessionId(payload.sessionId)}/${suffix}`,
-			payload,
-			schema,
-		);
-	}
 	private createActionHandler<
 		RequestType extends { sessionId: string },
 		ResponseType,
@@ -224,7 +213,19 @@ export class HttpSessionGateway implements SessionGateway {
 	): (request: RequestType) => Promise<ResponseType> {
 		return async (request) => {
 			const payload = requestSchema.parse(request);
-			return this.postSessionDetail(payload, suffix, responseSchema);
+			let resolvedSuffix = suffix;
+			if (resolvedSuffix.startsWith('actions/')) {
+				const candidate = (payload as { actionId?: unknown }).actionId;
+				if (typeof candidate === 'string' && candidate.length > 0) {
+					const encodedActionId = encodeURIComponent(candidate);
+					const remainder = resolvedSuffix.slice('actions/'.length);
+					resolvedSuffix = remainder
+						? `actions/${encodedActionId}/${remainder}`
+						: `actions/${encodedActionId}`;
+				}
+			}
+			const path = `sessions/${this.encodeSessionId(payload.sessionId)}/${resolvedSuffix}`;
+			return this.postSessionRequest(path, payload, responseSchema);
 		};
 	}
 	private async execute(options: RequestOptions): Promise<HttpExecutionResult> {
