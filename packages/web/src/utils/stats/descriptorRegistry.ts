@@ -180,7 +180,10 @@ function createDescriptorRegistry(
 			resolve: createRecordResolver(RESOURCES, 'Resource'),
 			formatDetail: defaultFormatDetail,
 		},
-		trigger: createTriggerDescriptorEntry(defaultFormatDetail),
+		trigger: createTriggerDescriptorEntry(
+			translationContext.assets,
+			defaultFormatDetail,
+		),
 		passive: {
 			resolve: () => ({
 				icon: PASSIVE_INFO.icon ?? '',
