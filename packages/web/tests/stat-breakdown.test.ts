@@ -90,6 +90,25 @@ function createStatBreakdownSetup(): BreakdownSetup {
 				description: 'Brilliant astral currency.',
 			},
 		},
+		stats: {
+			armyStrength: {
+				label: 'Steel Resolve',
+				icon: '⚔️',
+				description: 'Represents martial power.',
+			},
+			fortificationStrength: {
+				label: 'Citadel Guard',
+				icon: '🛡️',
+				description: 'Defines defensive resilience.',
+			},
+			absorption: {
+				label: 'Prismatic Barrier',
+				icon: '🌈',
+				description: 'Absorbs incoming damage.',
+				displayAsPercent: true,
+				format: { percent: true },
+			},
+		},
 		triggers: {
 			[triggerId]: {
 				label: 'Starlight Surge',

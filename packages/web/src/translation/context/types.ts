@@ -10,6 +10,7 @@ import type {
 	SessionPlayerId,
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
+import type { SessionMetadataFormat } from '@kingdom-builder/protocol/session';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that
@@ -26,6 +27,7 @@ export interface TranslationIconLabel {
 	label?: string;
 	description?: string;
 	displayAsPercent?: boolean;
+	format?: SessionMetadataFormat;
 }
 
 export interface TranslationModifierInfo {

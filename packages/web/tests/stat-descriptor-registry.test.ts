@@ -99,6 +99,20 @@ function createDescriptorSetup(): DescriptorSetup {
 				description: 'Brilliant astral currency.',
 			},
 		},
+		stats: {
+			armyStrength: {
+				label: 'Steel Resolve',
+				icon: '⚔️',
+				description: 'Represents martial power.',
+			},
+			absorption: {
+				label: 'Prismatic Barrier',
+				icon: '🌈',
+				description: 'Absorbs incoming damage.',
+				displayAsPercent: true,
+				format: { percent: true },
+			},
+		},
 		triggers: {
 			[triggerId]: {
 				label: 'Starlight Surge',

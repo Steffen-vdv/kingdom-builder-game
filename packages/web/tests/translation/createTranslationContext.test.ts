@@ -12,12 +12,15 @@ describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
 		const registries = createSessionRegistries();
 		const [resourceKey] = Object.keys(registries.resources);
-		if (resourceKey) {
-			registries.resources[resourceKey] = {
-				...registries.resources[resourceKey],
-				label: undefined,
-			};
+		if (!resourceKey) {
+			throw new Error(
+				'Expected test registries to expose at least one resource.',
+			);
 		}
+		registries.resources[resourceKey] = {
+			...registries.resources[resourceKey],
+			label: undefined,
+		};
 		const statKey = 'maxPopulation';
 		const [populationId] = registries.populations.keys();
 		const [actionId] = registries.actions.keys();
@@ -40,10 +43,54 @@ describe('createTranslationContext', () => {
 		const [firstPhase] = phases;
 		const firstStep = firstPhase?.steps?.[0]?.id ?? firstPhase?.id ?? 'phase';
 		const passiveId = 'passive-a';
+		const triggerId = 'trigger.session.signal';
 		const metadata = {
 			effectLogs: { legacy: [{ note: 'legacy entry' }] },
 			passiveEvaluationModifiers: {
 				[resourceKey]: ['modifier'],
+			},
+			resources: {
+				[resourceKey]: {
+					label: 'Royal Treasury',
+					icon: '💰',
+					description: 'The royal treasury fuels your ambitions.',
+				},
+			},
+			populations: populationId
+				? {
+						[populationId]: {
+							label: 'Royal Court',
+							icon: '🏰',
+						},
+					}
+				: undefined,
+			stats: {
+				[statKey]: {
+					label: 'Citizen Capacity',
+					icon: '🏯',
+					description: 'Represents how many citizens can serve the realm.',
+					displayAsPercent: true,
+					format: { prefix: '~', percent: true },
+				},
+			},
+			assets: {
+				passive: { icon: '✨', label: 'Passive Aura' },
+				slot: {
+					icon: '📦',
+					label: 'Plot Slot',
+					description: 'Designated location for new developments.',
+				},
+				land: { icon: '🌄', label: 'Territory' },
+				population: { icon: '🧑‍🤝‍🧑', label: 'Citizens' },
+				upkeep: { icon: '🪣', label: 'Maintenance' },
+			},
+			triggers: {
+				[triggerId]: {
+					icon: '🔔',
+					future: 'When the signal sounds',
+					past: 'Signal',
+					label: 'Signal Trigger',
+				},
 			},
 		} satisfies SessionSnapshot['metadata'];
 		const compensation = (amount: number): PlayerStartConfig => ({
@@ -179,6 +226,9 @@ describe('createTranslationContext', () => {
 				passive: context.assets.passive,
 				slot: context.assets.slot,
 				resource: context.assets.resources[resourceKey],
+				stat: context.assets.stats[statKey],
+				trigger: context.assets.triggers[triggerId],
+				population: context.assets.population,
 			},
 			rules: context.rules,
 			passives: {
@@ -195,17 +245,38 @@ describe('createTranslationContext', () => {
                           "actionCostResource": "gold",
                           "assets": {
                             "passive": {
-                              "icon": "♾️",
-                              "label": "Passive",
+                              "icon": "✨",
+                              "label": "Passive Aura",
+                            },
+                            "population": {
+                              "icon": "🧑‍🤝‍🧑",
+                              "label": "Citizens",
                             },
                             "resource": {
-                              "description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
-                              "icon": "🪙",
-                              "label": "gold",
+                              "description": "The royal treasury fuels your ambitions.",
+                              "icon": "💰",
+                              "label": "Royal Treasury",
                             },
                             "slot": {
-                              "icon": "🧩",
-                              "label": "Development Slot",
+                              "description": "Designated location for new developments.",
+                              "icon": "📦",
+                              "label": "Plot Slot",
+                            },
+                            "stat": {
+                              "description": "Represents how many citizens can serve the realm.",
+                              "displayAsPercent": true,
+                              "format": {
+                                "percent": true,
+                                "prefix": "~",
+                              },
+                              "icon": "🏯",
+                              "label": "Citizen Capacity",
+                            },
+                            "trigger": {
+                              "future": "When the signal sounds",
+                              "icon": "🔔",
+                              "label": "Signal Trigger",
+                              "past": "Signal",
                             },
                           },
                           "compensations": {
