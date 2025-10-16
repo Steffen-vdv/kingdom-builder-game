@@ -1,7 +1,7 @@
 import {
 	STATS,
 	type StatKey,
-	type PopulationRoleId
+	type PopulationRoleId,
 } from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
