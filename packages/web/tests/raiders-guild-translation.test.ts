@@ -15,7 +15,6 @@ import {
 	getModifier,
 	getResourceEffect,
 	type RaidersGuildSyntheticContext,
-	SYNTHETIC_RESOURCE_TRANSFER_ICON,
 } from './fixtures/syntheticRaidersGuild';
 import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
 
@@ -61,10 +60,11 @@ describe('raiders guild translation', () => {
 		const modifier = getModifier(ctx, ids.transferBuilding);
 		const adjust = Number(modifier.params?.['adjust'] ?? 0);
 		const raid = ctx.actions.get(ids.raidAction);
+		const transferIcon = translation.assets.transfer.icon ?? '🔁';
 		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
 			raid.icon ?? '',
 			raid.name,
-		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${SYNTHETIC_RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
+		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${transferIcon} ${increaseOrDecrease(
 			adjust,
 		)} transfer by ${Math.abs(adjust)}%`;
 		expect(collectText(effects)).toContain(clause);

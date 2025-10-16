@@ -1,4 +1,8 @@
-import { STATS, type StatKey } from '@kingdom-builder/contents';
+import { 
+	STATS, 
+	type StatKey, 
+	type PopulationRoleId 
+} from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
 
@@ -16,6 +20,8 @@ const DEFAULT_COST_ICON = '💲';
 const DEFAULT_COST_LABEL = 'Cost Adjustment';
 const DEFAULT_RESULT_ICON = '✨';
 const DEFAULT_RESULT_LABEL = 'Outcome Adjustment';
+const DEFAULT_TRANSFER_ICON = '🔁';
+const DEFAULT_TRANSFER_LABEL = 'Transfer';
 
 const DEFAULT_KEY = Symbol('default');
 
@@ -133,6 +139,47 @@ export function selectResourceDescriptor(
 const statCache: CacheStore<StatRegistryDescriptor> = new WeakMap();
 const statFallbackCache: CacheFallback<StatRegistryDescriptor> = new Map();
 
+function resolveStatFormat(
+	entry: TranslationAssets['stats'][string] | undefined,
+): { prefix?: string; percent?: boolean } | undefined {
+	if (!entry) {
+		return undefined;
+	}
+	const descriptor = entry.format;
+	let prefix: string | undefined;
+	let percent: boolean | undefined;
+	if (typeof descriptor === 'string') {
+		if (descriptor.trim().length > 0) {
+			prefix = descriptor;
+		}
+	} else if (descriptor && typeof descriptor === 'object') {
+		const formatted = descriptor as { prefix?: unknown; percent?: unknown };
+		if (
+			typeof formatted.prefix === 'string' &&
+			formatted.prefix.trim().length > 0
+		) {
+			prefix = formatted.prefix;
+		}
+		if (typeof formatted.percent === 'boolean') {
+			percent = formatted.percent;
+		}
+	}
+	if (percent === undefined && entry.displayAsPercent === true) {
+		percent = true;
+	}
+	if (prefix === undefined && percent === undefined) {
+		return undefined;
+	}
+	const format: { prefix?: string; percent?: boolean } = {};
+	if (prefix !== undefined) {
+		format.prefix = prefix;
+	}
+	if (percent !== undefined) {
+		format.percent = percent;
+	}
+	return format;
+}
+
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
@@ -145,13 +192,12 @@ export function selectStatDescriptor(
 	}
 	const assets = context.assets;
 	const entry = assets?.stats?.[key];
-	const statDef = STATS[key as StatKey];
-	const statLabelFallback = statDef?.label ?? humanizeIdentifier(key);
+	const statLabelFallback = humanizeIdentifier(key);
 	const fallbackLabel =
 		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
-	const label = coerceLabel(entry?.label ?? statDef?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon ?? statDef?.icon, key);
-	const format = statDef?.addFormat ? { ...statDef.addFormat } : undefined;
+	const label = coerceLabel(entry?.label, fallbackLabel);
+	const icon = coerceIcon(entry?.icon, key);
+	const format = resolveStatFormat(entry);
 	const descriptor: StatRegistryDescriptor = {
 		icon,
 		label,
@@ -204,6 +250,30 @@ function resolveModifierFallback(context: ContextWithAssets | undefined) {
 			label: coerceLabel(result.label, DEFAULT_RESULT_LABEL),
 		},
 	};
+}
+
+const transferCache: CacheStore<RegistryDescriptor> = new WeakMap();
+const transferFallbackCache: CacheFallback<RegistryDescriptor> = new Map();
+
+function resolveTransferDescriptor(context: ContextWithAssets | undefined) {
+	const assets = context?.assets;
+	const icon = coerceIcon(assets?.transfer?.icon, DEFAULT_TRANSFER_ICON);
+	const label = coerceLabel(assets?.transfer?.label, DEFAULT_TRANSFER_LABEL);
+	return { icon, label } satisfies RegistryDescriptor;
+}
+
+export function selectTransferDescriptor(
+	context: ContextWithAssets,
+): RegistryDescriptor {
+	const cache = getCacheEntry(context, transferCache, transferFallbackCache);
+	const cacheKey = normalizeKey(undefined);
+	const cached = cache.get(cacheKey);
+	if (cached) {
+		return cached;
+	}
+	const descriptor = resolveTransferDescriptor(context);
+	cache.set(cacheKey, descriptor);
+	return descriptor;
 }
 
 export function selectModifierInfo(
