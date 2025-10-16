@@ -417,7 +417,7 @@ describe('createGameApi', () => {
 
 		expect(result).toEqual(response);
 		const [url, init] = fetchMock.mock.calls[0];
-		expect(url).toBe('/api/sessions/session-ai/ai');
+		expect(url).toBe('/api/sessions/session-ai/ai-turn');
 		expect(init?.method).toBe('POST');
 		expect(init?.body).toBe(
 			JSON.stringify({ sessionId: 'session-ai', playerId: 'A' }),
