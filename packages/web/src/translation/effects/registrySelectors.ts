@@ -1,8 +1,4 @@
-import {
-	STATS,
-	type PopulationRoleId,
-	type StatKey,
-} from '@kingdom-builder/contents';
+import { type PopulationRoleId } from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
 
@@ -137,6 +133,47 @@ export function selectResourceDescriptor(
 const statCache: CacheStore<StatRegistryDescriptor> = new WeakMap();
 const statFallbackCache: CacheFallback<StatRegistryDescriptor> = new Map();
 
+function resolveStatFormat(
+	entry: TranslationAssets['stats'][string] | undefined,
+): { prefix?: string; percent?: boolean } | undefined {
+	if (!entry) {
+		return undefined;
+	}
+	const descriptor = entry.format;
+	let prefix: string | undefined;
+	let percent: boolean | undefined;
+	if (typeof descriptor === 'string') {
+		if (descriptor.trim().length > 0) {
+			prefix = descriptor;
+		}
+	} else if (descriptor && typeof descriptor === 'object') {
+		const formatted = descriptor as { prefix?: unknown; percent?: unknown };
+		if (
+			typeof formatted.prefix === 'string' &&
+			formatted.prefix.trim().length > 0
+		) {
+			prefix = formatted.prefix;
+		}
+		if (typeof formatted.percent === 'boolean') {
+			percent = formatted.percent;
+		}
+	}
+	if (percent === undefined && entry.displayAsPercent === true) {
+		percent = true;
+	}
+	if (prefix === undefined && percent === undefined) {
+		return undefined;
+	}
+	const format: { prefix?: string; percent?: boolean } = {};
+	if (prefix !== undefined) {
+		format.prefix = prefix;
+	}
+	if (percent !== undefined) {
+		format.percent = percent;
+	}
+	return format;
+}
+
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
@@ -149,13 +186,12 @@ export function selectStatDescriptor(
 	}
 	const assets = context.assets;
 	const entry = assets?.stats?.[key];
-	const statDef = STATS[key as StatKey];
-	const statLabelFallback = statDef?.label ?? humanizeIdentifier(key);
+	const statLabelFallback = humanizeIdentifier(key);
 	const fallbackLabel =
 		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
-	const label = coerceLabel(entry?.label ?? statDef?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon ?? statDef?.icon, key);
-	const format = statDef?.addFormat ? { ...statDef.addFormat } : undefined;
+	const label = coerceLabel(entry?.label, fallbackLabel);
+	const icon = coerceIcon(entry?.icon, key);
+	const format = resolveStatFormat(entry);
 	const descriptor: StatRegistryDescriptor = {
 		icon,
 		label,
