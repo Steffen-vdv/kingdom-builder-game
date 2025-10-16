@@ -178,6 +178,24 @@ boundaries without updating this log.
 
 <!-- Handover entries start below. Keep newest entries at the top. -->
 
+- **Date & Author**: 2025-10-18 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/vite.config.ts` (Web)
+    - `packages/web/src/translation/effects/formatters/*` (Web)
+    - `packages/web/src/utils/getRequirementIcons.ts` (Web)
+    - `packages/web/src/utils/stats/descriptorRegistry.ts` (Web)
+    - `packages/web/tests/regression/no-engine-internals.test.ts` (Web Tests)
+  - **Intent**: Remove direct `@kingdom-builder/contents` imports from the web
+    runtime so presentation logic consumes translation context assets and
+    protocol DTOs instead of touching content registries directly.
+  - **Communication Path Update**: Web translators, stat helpers, and
+    requirement icon builders now read icons and labels from translation assets
+    and protocol registries. The regression test enforces that runtime `src/`
+    modules can no longer import `@kingdom-builder/contents`.
+  - **Follow-Up Notes**: Audit remaining tests and build tooling that mock the
+    contents package to ensure they purposefully exercise migrations rather than
+    masking missing protocol metadata.
+
 - **Date & Author**: 2025-10-17 – ChatGPT (gpt-5-codex)
   - **Files Touched**:
     - `packages/web/src/services/gameApi.ts` (Web)
