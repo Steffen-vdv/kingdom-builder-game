@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
+import type { PhasedDef } from '../src/translation/content/phased';
 import {
 	summarizeContent,
 	summarizeEffects,
@@ -47,17 +48,21 @@ describe('development summary', () => {
 		const factory = createContentFactory();
 		let developmentId = '';
 		let triggerId = '';
-		let phaseLabel = '';
-		const { translationContext, session } = buildSyntheticTranslationContext(
+		let triggerEffects: EffectDef<Record<string, unknown>>[] = [];
+		const triggerMetadata = {
+			icon: '🧪',
+			label: 'Synthetic Trigger',
+			future: 'During Synthetic Phase',
+			past: 'Synthetic Phase',
+		} as const;
+		const { translationContext } = buildSyntheticTranslationContext(
 			({ registries, session }) => {
 				const development = factory.development({
 					name: 'Test Development',
 					icon: '🧪',
 				});
 				developmentId = development.id;
-				registries.developments.add(development.id, development);
-				const triggerEntries = Object.keys(session.metadata.triggers ?? {});
-				triggerId = triggerEntries[0] ?? 'trigger.synthetic';
+				triggerId = 'onGainIncomeStep';
 				const resourceKeys = Object.keys(registries.resources);
 				const resourceKey = resourceKeys[0] ?? 'gold';
 				const nestedEffect: EffectDef<Record<string, unknown>> = {
@@ -65,32 +70,21 @@ describe('development summary', () => {
 					method: 'add',
 					params: { key: resourceKey, amount: 3 },
 				};
-				const phaseEffect: EffectDef<Record<string, unknown>> = {
-					evaluator: {
-						type: 'development',
-						params: { id: development.id },
-					},
-					effects: [nestedEffect],
-				};
-				const targetPhase = session.phases[0];
-				phaseLabel = targetPhase?.label ?? targetPhase?.id ?? 'Growth';
-				const syntheticStep = {
-					id: 'phase.synthetic.summary',
-					title: 'Synthetic Income',
-					icon: '🧪',
-					triggers: [triggerId],
-					effects: [phaseEffect],
-				};
-				if (targetPhase) {
-					const existingSteps = targetPhase.steps ?? [];
-					targetPhase.steps = [...existingSteps, syntheticStep];
-				}
+				(development as PhasedDef)[triggerId as keyof PhasedDef] = [
+					nestedEffect,
+				];
+				triggerEffects = [nestedEffect];
+				registries.developments.add(development.id, development);
 				session.metadata.developments = {
 					...(session.metadata.developments ?? {}),
 					[development.id]: {
 						label: development.name,
 						icon: development.icon,
 					},
+				};
+				session.metadata.triggers = {
+					...(session.metadata.triggers ?? {}),
+					[triggerId]: triggerMetadata,
 				};
 			},
 		);
@@ -104,53 +98,33 @@ describe('development summary', () => {
 			developmentId,
 			translationContext,
 		);
-		const expectedPhaseLabel = `On each ${phaseLabel} Phase`;
-		const incomeGroup = findGroup(summary, (entry) => {
-			return entry.title.includes(expectedPhaseLabel);
-		});
-		expect(incomeGroup).toBeDefined();
-		if (!incomeGroup) {
-			return;
-		}
-		const targetPhase = session.phases[0];
-		const matchedStep = targetPhase?.steps?.find((step) => {
-			return step.id === 'phase.synthetic.summary';
-		});
 		const triggerDisplay = selectTriggerDisplay(
 			translationContext.assets,
 			triggerId,
 		);
-		const fallbackIcons = [matchedStep?.icon, targetPhase?.icon].filter(
-			(icon): icon is string => typeof icon === 'string' && icon.length > 0,
+		expect(triggerDisplay.icon).toBe(triggerMetadata.icon);
+		expect(triggerDisplay.future).toBe(triggerMetadata.future);
+		const expectedTitleParts = [
+			triggerDisplay.icon,
+			triggerDisplay.future ?? triggerDisplay.past ?? triggerDisplay.label,
+		]
+			.filter((part): part is string => typeof part === 'string')
+			.map((part) => part.trim())
+			.filter((part) => part.length > 0);
+		const flattenedSummary = flatten(summary);
+		const matchingTitle = flattenedSummary.find((line) => {
+			return expectedTitleParts.every((part) => line.includes(part));
+		});
+		expect(matchingTitle).toBeDefined();
+		const incomeGroup = findGroup(
+			summary,
+			(entry) => entry.title === matchingTitle,
 		);
-		if (triggerDisplay.icon) {
-			if (!incomeGroup.title.includes(triggerDisplay.icon)) {
-				if (fallbackIcons.length > 0) {
-					const hasFallbackIcon = fallbackIcons.some((icon) => {
-						return incomeGroup.title.includes(icon);
-					});
-					expect(hasFallbackIcon).toBe(true);
-				}
-			} else {
-				expect(incomeGroup.title).toContain(triggerDisplay.icon);
-			}
-		} else if (fallbackIcons.length > 0) {
-			const hasFallbackIcon = fallbackIcons.some((icon) => {
-				return incomeGroup.title.includes(icon);
-			});
-			expect(hasFallbackIcon).toBe(true);
+		expect(incomeGroup).toBeDefined();
+		if (!incomeGroup) {
+			return;
 		}
-		if (triggerDisplay.past) {
-			const hasTriggerLabel = incomeGroup.title.includes(triggerDisplay.past);
-			expect(hasTriggerLabel || incomeGroup.title.includes(phaseLabel)).toBe(
-				true,
-			);
-		}
-		expect(incomeGroup.title).toContain(phaseLabel);
-		const expectedLines = summarizeEffects(
-			matchedStep?.effects,
-			translationContext,
-		);
+		const expectedLines = summarizeEffects(triggerEffects, translationContext);
 		const flattened = flatten(incomeGroup.items);
 		for (const expected of expectedLines) {
 			if (typeof expected === 'string') {
