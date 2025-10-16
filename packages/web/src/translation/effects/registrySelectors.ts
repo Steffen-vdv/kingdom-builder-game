@@ -1,4 +1,4 @@
-import { 
+import {
 	STATS,
 	type StatKey,
 	type PopulationRoleId
