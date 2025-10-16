@@ -407,7 +407,9 @@ describe('HttpSessionGateway', () => {
 				const request =
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
-				expect(new URL(request.url).pathname).toBe('/api/sessions/test/ai');
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/ai-turn',
+				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({ sessionId: 'test', playerId: 'A' });
 				return jsonResponse({
