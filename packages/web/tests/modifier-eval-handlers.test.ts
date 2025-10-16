@@ -12,7 +12,9 @@ import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import {
 	selectModifierInfo,
 	selectResourceDescriptor,
+	selectTransferDescriptor,
 } from '../src/translation/effects/registrySelectors';
+import { increaseOrDecrease } from '../src/translation/effects/helpers';
 
 type ModifierHarnessOptions = {
 	customizeMetadata?: (
@@ -268,11 +270,16 @@ describe('modifier evaluation handlers', () => {
 			actionInfo?.icon ?? actionDef.icon,
 			actionInfo?.name ?? actionDef.name ?? actionId,
 		);
+		const transferDescriptor = selectTransferDescriptor(translationContext);
+		const transferIcon = transferDescriptor.icon;
+		const transferAdjust = Math.abs(Number(eff.params?.['adjust']));
+		const transferChange = increaseOrDecrease(transferAdjust);
 		expect(summary).toHaveLength(1);
 		expect(
 			summary[0].startsWith(`${resultDescriptor.icon}${actionIcon}: `),
 		).toBe(true);
 		expect(summary[0]).toMatch(/\+10%$/u);
+		expect(summary[0]).toContain(`${transferIcon}+${transferAdjust}%`);
 		const primaryLine = description[0];
 		expect(
 			primaryLine.startsWith(
@@ -280,6 +287,9 @@ describe('modifier evaluation handlers', () => {
 			),
 		).toBe(true);
 		expect(primaryLine).toMatch(/transfers.+10%/u);
+		expect(primaryLine.toLowerCase()).toContain(
+			`${transferIcon} ${transferChange.toLowerCase()} transfer by ${transferAdjust}%`,
+		);
 		const card = description[1];
 		expect(card).toMatchObject({
 			title: targetLabel,
