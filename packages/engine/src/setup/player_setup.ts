@@ -110,6 +110,22 @@ export function diffPlayerStartConfiguration(
 	return diff;
 }
 
+export function initializePlayerActions(
+	playerState: PlayerState,
+	actions: Registry<ActionDef>,
+): void {
+	for (const [actionId, actionDefinition] of actions.entries()) {
+		if (actionDefinition.system) {
+			continue;
+		}
+		const id = actionDefinition.id ?? actionId;
+		if (!id) {
+			continue;
+		}
+		playerState.actions.add(id);
+	}
+}
+
 export function determineCommonActionCostResource(
 	actions: Registry<ActionDef>,
 ): ResourceKey {

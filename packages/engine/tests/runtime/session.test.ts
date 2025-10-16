@@ -199,6 +199,27 @@ describe('EngineSession', () => {
 		expect(refreshed[CResource.gold]).toBe(goldCost);
 	});
 
+	it('unlocks non-system actions at session start', () => {
+		const content = createContentFactory();
+		const unlocked = content.action({ name: 'Unlocked Action' });
+		const locked = content.action({
+			name: 'Locked System',
+			system: true,
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		const snapshot = session.getSnapshot();
+		const [first, second] = snapshot.game.players;
+		expect(first?.actions).toContain(unlocked.id);
+		expect(second?.actions).toContain(unlocked.id);
+		expect(first?.actions).not.toContain(locked.id);
+		expect(second?.actions).not.toContain(locked.id);
+	});
+
 	it('clones action requirement lookups from the session', () => {
 		const requirementId = 'vitest:fail';
 		const requirementMessage = 'Requirement failed for test';
