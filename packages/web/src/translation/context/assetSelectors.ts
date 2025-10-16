@@ -3,7 +3,7 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import { DEFAULT_TRIGGER_METADATA } from '../../contexts/defaultRegistryMetadata';
 
 interface IconLabelDisplay {
 	icon?: string;
@@ -77,14 +77,23 @@ export function selectTriggerDisplay(
 	if (entry) {
 		return entry;
 	}
-	const fallback = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
+	const fallback = DEFAULT_TRIGGER_METADATA?.[triggerId];
 	if (fallback) {
-		return Object.freeze({
-			icon: fallback.icon,
-			future: fallback.future,
-			past: fallback.past,
-			label: fallback.past,
-		});
+		const entry: TranslationTriggerAsset = {};
+		if (fallback.icon !== undefined) {
+			entry.icon = fallback.icon;
+		}
+		if (fallback.future !== undefined) {
+			entry.future = fallback.future;
+		}
+		if (fallback.past !== undefined) {
+			entry.past = fallback.past;
+		}
+		const label = fallback.label ?? fallback.past;
+		if (label !== undefined) {
+			entry.label = label;
+		}
+		return Object.freeze(entry);
 	}
 	return {};
 }
