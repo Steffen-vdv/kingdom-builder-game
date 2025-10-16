@@ -302,3 +302,44 @@ boundaries without updating this log.
     on published session contracts.
   - **Follow-Up Notes**: Coordinate with Web to switch
     `useNextTurnForecast` (and related tests) to the new protocol exports.
+- **Date & Author**: 2025-10-17 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/vite.config.ts` (Web)
+    - `packages/web/src/translation/effects/formatters/attack/**/*` (Web)
+    - `packages/web/src/translation/context/createTranslationContext.ts` (Web)
+    - `packages/web/tests/regression/no-engine-internals.test.ts` (Web)
+    - `packages/web/tests/helpers/armyAttackSyntheticRegistries.ts` (Web)
+    - `packages/web/src/types/registryIds.ts` (Web)
+    - `docs/domain-migration-plan.md` (Docs)
+  - **Intent**: Remove the local Vite alias for
+    `@kingdom-builder/contents` and teach the web translation layer to
+    hydrate attack descriptors from protocol metadata so the runtime no
+    longer resolves Content modules directly.
+  - **Communication Path Update**: Attack formatters now read
+    descriptor icons and labels from translation assets and session
+    metadata via a small registry bridge that the translation context
+    refreshes on creation. Regression coverage was tightened to fail
+    whenever `packages/web/src` references `@kingdom-builder/contents`,
+    and the synthetic attack helpers configure the new bridge for Vitest
+    suites.
+- **Follow-Up Notes**: Audit residual tests outside of the web package
+  that still import Content enums directly and migrate them to the
+  registry bridge or protocol fixtures as they are touched.
+- **Date & Author**: 2025-10-18 – ChatGPT (gpt-5-codex)
+  - **Files Touched**:
+    - `packages/web/tsconfig.json` (Web)
+    - `packages/web/src/types/__forbiddenContentsImport.ts` (Web)
+    - `packages/web/tests/regression/no-engine-internals.test.ts` (Web)
+    - `docs/domain-migration-plan.md` (Docs)
+    - `docs/domain-migration/handover-log.md` (Docs)
+  - **Intent**: Enforce the removal of the web runtime's content
+    dependency by poisoning the local TypeScript path mapping and
+    tightening regression coverage around forbidden imports.
+  - **Communication Path Update**: Web's tsconfig now redirects
+    `@kingdom-builder/contents` to an empty stub so compilation fails if
+    any runtime or test module reaches for Content enums, and the
+    regression guard also detects bare side-effect imports.
+  - **Follow-Up Notes**: Keep the stub file in sync with future
+    TypeScript configuration changes and extend the regression guard to
+    any new tooling that scans the source tree (e.g., eslint rules)
+    should additional bypass vectors appear.

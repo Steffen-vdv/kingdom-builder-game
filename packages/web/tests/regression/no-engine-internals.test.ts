@@ -31,7 +31,9 @@ describe('web package avoids engine internals', () => {
 			/(?:import|export)\s[^;]*?from\s+['"]([^'"\n]+)['"]/g;
 		const dynamicImportPattern = /\bimport\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g;
 		const requirePattern = /\brequire\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g;
+		const bareImportPattern = /(?:^|\n)\s*import\s+['"]([^'"\n]+)['"];?/gm;
 		const violations: Array<{ file: string; specifier: string }> = [];
+		const contentViolations: Array<{ file: string; specifier: string }> = [];
 		for (const rootName of roots) {
 			const rootPath = path.join(packageRoot, rootName);
 			let stat;
@@ -50,6 +52,7 @@ describe('web package avoids engine internals', () => {
 					...contents.matchAll(importFromPattern),
 					...contents.matchAll(dynamicImportPattern),
 					...contents.matchAll(requirePattern),
+					...contents.matchAll(bareImportPattern),
 				];
 				for (const match of matches) {
 					const specifier = match[1];
@@ -59,9 +62,20 @@ describe('web package avoids engine internals', () => {
 							specifier,
 						});
 					}
+					if (
+						rootName === 'src' &&
+						(specifier === '@kingdom-builder/contents' ||
+							specifier.startsWith('@kingdom-builder/contents/'))
+					) {
+						contentViolations.push({
+							file: path.relative(packageRoot, file),
+							specifier,
+						});
+					}
 				}
 			}
 		}
 		expect(violations).toEqual([]);
+		expect(contentViolations).toEqual([]);
 	});
 });

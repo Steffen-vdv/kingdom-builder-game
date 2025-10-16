@@ -1,7 +1,20 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"composite": true
+		"composite": true,
+		"paths": {
+			"@kingdom-builder/engine/*": ["packages/engine/src/*"],
+			"@kingdom-builder/protocol": ["packages/protocol/src/index"],
+			"@kingdom-builder/protocol/*": ["packages/protocol/src/*"],
+			"@kingdom-builder/contents": ["./src/types/__forbiddenContentsImport.ts"],
+			"@kingdom-builder/contents/*": [
+				"./src/types/__forbiddenContentsImport.ts"
+			],
+			"@kingdom-builder/testing": ["packages/testing/src/index"],
+			"@kingdom-builder/testing/*": ["packages/testing/src/*"],
+			"@kingdom-builder/*": ["packages/*/src"],
+			"@kingdom-builder/server/*": ["packages/server/src/*"]
+		}
 	},
 	"include": ["src", "../engine/src", "../contents/src", "../protocol/src"]
 }

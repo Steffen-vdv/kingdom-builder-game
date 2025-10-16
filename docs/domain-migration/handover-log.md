@@ -235,3 +235,26 @@
 - Swapped remaining test-only engine identifiers (e.g., `PlayerId`) for
   protocol equivalents and reran the `no-engine-internals` regression check to
   confirm the web package has no lingering engine imports.
+
+## Domain Migration - P3 - T20 - Web runtime content alias removal
+
+- Dropped the Vite alias that pointed `@kingdom-builder/contents` at the local
+  content sources, forcing the web bundle to rely on protocol snapshots and the
+  pre-generated registry metadata.
+- Introduced a lightweight attack descriptor bridge that the translation
+  context hydrates from session metadata so attack formatters and resource/stat
+  diff helpers no longer read directly from Content registries.
+- Strengthened the regression suite to fail when `packages/web/src` imports the
+  content package and updated the Vitest helpers to seed the new descriptor
+  bridge for synthetic attack suites.
+
+## Domain Migration - P3 - T20 - Web runtime content import hardening
+
+- Overrode the web package TypeScript paths so `@kingdom-builder/contents`
+  resolves to an empty stub, guaranteeing compilation errors for any new direct
+  imports.
+- Documented the stub in `packages/web/src/types/__forbiddenContentsImport.ts`
+  to warn future contributors and keep tooling aligned with the migration
+  objective.
+- Expanded the regression test to catch bare side-effect imports, ensuring the
+  guard fails even if `from` clauses are omitted.
