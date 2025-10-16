@@ -201,6 +201,44 @@ describe('createGameApi', () => {
 		);
 	});
 
+	it('falls back to the dev token environment variable when available', async () => {
+		const response = createStateResponse('session-env');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		vi.stubEnv('VITE_KB_DEV_TOKEN', 'env-dev-token');
+		try {
+			const api = createGameApi({ fetchFn: fetchMock });
+			await api.createSession();
+			const [, init] = fetchMock.mock.calls[0] ?? [];
+			const headers = init?.headers as Headers;
+			expect(headers.get('Authorization')).toBe('Bearer env-dev-token');
+		} finally {
+			vi.unstubAllEnvs();
+		}
+	});
+
+	it('falls back to the global dev token when available', async () => {
+		const response = createStateResponse('session-global');
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const scope = globalThis as {
+			__KINGDOM_BUILDER_DEV_TOKEN__?: string;
+		};
+		const previous = scope.__KINGDOM_BUILDER_DEV_TOKEN__;
+		scope.__KINGDOM_BUILDER_DEV_TOKEN__ = 'global-dev-token';
+		try {
+			const api = createGameApi({ fetchFn: fetchMock });
+			await api.createSession();
+			const [, init] = fetchMock.mock.calls[0] ?? [];
+			const headers = init?.headers as Headers;
+			expect(headers.get('Authorization')).toBe('Bearer global-dev-token');
+		} finally {
+			if (previous === undefined) {
+				delete scope.__KINGDOM_BUILDER_DEV_TOKEN__;
+			} else {
+				scope.__KINGDOM_BUILDER_DEV_TOKEN__ = previous;
+			}
+		}
+	});
+
 	it('throws GameApiError on non-success responses', async () => {
 		const fetchMock = vi
 			.fn()

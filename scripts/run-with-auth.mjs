@@ -15,15 +15,63 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
 function createEnv(tokensString) {
-	return {
+	const env = {
 		...process.env,
 		KB_SERVER_AUTH_TOKENS: tokensString,
 	};
+	const clientToken = selectClientToken(tokensString);
+	if (clientToken) {
+		env.VITE_KB_DEV_TOKEN = clientToken;
+	}
+	return env;
 }
 
 async function readJsonFile(filePath) {
 	const contents = await readFile(filePath, 'utf8');
 	return JSON.parse(contents);
+}
+
+function selectClientToken(tokensString) {
+	try {
+		const parsed = JSON.parse(tokensString);
+		if (!parsed || typeof parsed !== 'object') {
+			return null;
+		}
+		const entries = Object.entries(parsed).filter(
+			([token]) => typeof token === 'string' && token.trim().length > 0,
+		);
+		if (entries.length === 0) {
+			return null;
+		}
+		const prioritized = entries.find(([, definition]) =>
+			tokenSupportsClientAuth(definition),
+		);
+		const [selected] = prioritized ?? entries[0];
+		return selected.trim();
+	} catch (error) {
+		void error;
+		return null;
+	}
+}
+
+function tokenSupportsClientAuth(definition) {
+	if (!definition || typeof definition !== 'object') {
+		return false;
+	}
+	const roles = Array.isArray(definition.roles) ? definition.roles : [];
+	if (
+		roles.some((role) => typeof role === 'string' && role.trim() === 'admin')
+	) {
+		return true;
+	}
+	const normalized = roles
+		.map((role) => (typeof role === 'string' ? role.trim() : ''))
+		.filter((role) => role.length > 0);
+	const required = new Set(['session:create', 'session:advance']);
+	for (const role of normalized) {
+		required.delete(role);
+	}
+	return required.size === 0;
 }
 
 async function resolveTokens({ requireTokens }) {
