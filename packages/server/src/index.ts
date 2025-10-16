@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fastify from 'fastify';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { SessionManager } from './session/SessionManager.js';
 import { createSessionTransportPlugin } from './transport/FastifySessionTransport.js';
 import type { FastifySessionTransportOptions } from './transport/FastifySessionTransport.js';
@@ -61,7 +61,7 @@ export interface StartServerOptions
 	extends Partial<FastifySessionTransportOptions> {
 	host?: string;
 	port?: number;
-	logger?: boolean;
+	logger?: FastifyServerOptions['logger'];
 	env?: NodeJS.ProcessEnv;
 	tokens?: Record<string, TokenDefinition>;
 	allowDevToken?: boolean;
@@ -85,6 +85,7 @@ export async function startServer(
 	const middlewareOptions = tokens ? { env, tokens } : { env };
 	const authMiddleware = createTokenAuthMiddleware(middlewareOptions);
 	const app = fastify({ logger: options.logger ?? false });
+	const logger = options.logger ? app.log : undefined;
 	const transportOptions: FastifySessionTransportOptions = {
 		sessionManager,
 		authMiddleware,
@@ -93,10 +94,10 @@ export async function startServer(
 		transportOptions.idFactory = options.idFactory;
 	}
 	await app.register(createSessionTransportPlugin, transportOptions);
-	console.log('Starting Kingdom Builder server...');
+	logger?.info('Starting Kingdom Builder server...');
 	try {
 		const address = await app.listen({ host, port });
-		console.log(`Kingdom Builder server listening on ${address}`);
+		logger?.info(`Kingdom Builder server listening on ${address}`);
 		const url = new URL(address);
 		return {
 			app,
@@ -105,7 +106,7 @@ export async function startServer(
 			port: Number.parseInt(url.port, 10),
 		} satisfies StartServerResult;
 	} catch (error) {
-		console.error('Failed to start Kingdom Builder server.', error);
+		logger?.error(error, 'Failed to start Kingdom Builder server.');
 		await app.close();
 		throw error;
 	}
@@ -246,8 +247,7 @@ if (!autostartDisabled && entrypoint !== undefined) {
 	const normalizedModule = resolve(currentModule);
 
 	if (normalizedEntrypoint === normalizedModule) {
-		startServer().catch((error) => {
-			console.error('Server failed to start.', error);
+		startServer({ logger: true }).catch((_error) => {
 			process.exitCode = 1;
 		});
 	}
