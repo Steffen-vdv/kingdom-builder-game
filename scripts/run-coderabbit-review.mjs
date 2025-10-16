@@ -1,5 +1,22 @@
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import process from 'node:process';
+
+const repositoryRoot = path.resolve(
+	path.dirname(fileURLToPath(import.meta.url)),
+	'..',
+);
+const localBinDirectory = path.join(repositoryRoot, 'bin');
+const existingPathEntries = (process.env.PATH ?? '')
+	.split(path.delimiter)
+	.filter(Boolean);
+
+if (!existingPathEntries.includes(localBinDirectory)) {
+	process.env.PATH = `${localBinDirectory}${path.delimiter}${
+		process.env.PATH ?? ''
+	}`;
+}
 
 const defaultBinary =
 	process.platform === 'win32' ? 'coderabbit.cmd' : 'coderabbit';

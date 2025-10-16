@@ -11,14 +11,30 @@ const tasks = [
 
 const isWindows = process.platform === 'win32';
 const npmExecutable = isWindows ? 'npm.cmd' : 'npm';
+const repositoryRoot = process.cwd();
+const localBinDirectory = path.resolve(repositoryRoot, 'bin');
+const existingPathEntries = (process.env.PATH ?? '')
+	.split(path.delimiter)
+	.filter(Boolean);
+
+if (!existingPathEntries.includes(localBinDirectory)) {
+	process.env.PATH = `${localBinDirectory}${path.delimiter}${
+		process.env.PATH ?? ''
+	}`;
+}
+
 const coderabbitBinary =
 	process.env.CODERABBIT_BIN ?? (isWindows ? 'coderabbit.cmd' : 'coderabbit');
 const coderabbitCheck = spawnSync(coderabbitBinary, ['--version'], {
-	stdio: 'ignore',
 	env: process.env,
 	shell: false,
+	encoding: 'utf8',
 });
 const coderabbitMissing = coderabbitCheck.error?.code === 'ENOENT';
+const coderabbitVersionOutput = (coderabbitCheck.stdout ?? '').trim();
+const coderabbitIsStub = coderabbitVersionOutput.includes(
+	'CodeRabbit CLI (stub)',
+);
 const artifactsDirectory = path.resolve(process.cwd(), 'artifacts');
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
@@ -121,6 +137,11 @@ const encounteredEnvironmentFailure = results.some(
 );
 
 console.log('\nVerification summary:');
+if (coderabbitIsStub && !coderabbitMissing) {
+	console.log(
+		'- Using bundled CodeRabbit stub. Install the official CLI for full review capabilities.',
+	);
+}
 
 for (const result of results) {
 	const status = result.code === 0 ? 'PASS' : 'FAIL';

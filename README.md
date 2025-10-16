@@ -19,11 +19,17 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
    so the `coderabbit` binary is available on your `PATH`. The CLI consumes the
    repository's `.coderabbit.yml` and must be present for `npm run verify` and
    the Husky hooks to pass.
-   - Follow the platform notes in
-     [`docs/tooling/coderabbit-cli.md`](docs/tooling/coderabbit-cli.md) during
-     your initial setup.
-   - Confirm the install with `coderabbit --version`.
-   - Run `coderabbit auth login` so the reviewer can authenticate locally.
+
+- Follow the platform notes in
+  [`docs/tooling/coderabbit-cli.md`](docs/tooling/coderabbit-cli.md) during
+  your initial setup.
+- Confirm the install with `coderabbit --version`.
+- Run `coderabbit auth login` so the reviewer can authenticate locally.
+- Working inside a restricted sandbox? The repository includes a stubbed
+  binary in `bin/coderabbit` that keeps verification scripts running, but it
+  does not contact CodeRabbit's service. Install the official CLI whenever
+  possible for full review coverage.
+
 3. Install dependencies: `npm install` (uses npm workspaces to link local packages).
 4. Start the combined dev environment (Fastify server + Vite web client):
    `npm run dev`.

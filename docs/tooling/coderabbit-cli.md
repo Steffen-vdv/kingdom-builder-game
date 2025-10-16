@@ -41,3 +41,23 @@ summary reports that the CLI is missing:
 
 Once the CLI launches successfully, the verification script will resume running
 CodeRabbit ahead of the lint, type-check, and coverage steps.
+
+## Bundled stub for sandbox environments
+
+Some contributors run the repository inside sandboxes where installing the
+official CLI is not possible. To keep `npm run verify` stable, the repository
+ships a lightweight stub located in `bin/coderabbit` (with a Windows wrapper at
+`bin/coderabbit.cmd`). The automation scripts automatically prepend this
+directory to `PATH` and fall back to the stub whenever the real binary is
+unavailable.
+
+The stub provides:
+
+- `coderabbit --version` for environment checks.
+- `coderabbit review` to unblock verification pipelines.
+- `coderabbit auth status` and `coderabbit auth login` messaging that explains
+  how to install the genuine CLI.
+
+The stub does **not** contact the CodeRabbit service or perform real reviews. If
+you have the ability to install the official CLI, prefer doing so—it will be
+used automatically once it appears on `PATH`.

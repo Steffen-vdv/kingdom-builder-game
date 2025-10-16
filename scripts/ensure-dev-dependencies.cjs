@@ -1,9 +1,18 @@
 const { existsSync } = require('fs');
-const { resolve } = require('path');
+const { resolve, delimiter } = require('path');
 const { spawnSync } = require('child_process');
 const { platform } = require('os');
 
 const rootDir = resolve(__dirname, '..');
+
+const localBinDirectory = resolve(rootDir, 'bin');
+const existingPathEntries = (process.env.PATH ?? '')
+	.split(delimiter)
+	.filter(Boolean);
+
+if (!existingPathEntries.includes(localBinDirectory)) {
+	process.env.PATH = `${localBinDirectory}${delimiter}${process.env.PATH ?? ''}`;
+}
 
 const dependencies = [
 	{

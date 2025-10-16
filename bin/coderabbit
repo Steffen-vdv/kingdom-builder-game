@@ -1,0 +1,107 @@
+#!/usr/bin/env node
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+const VERSION = '0.1.0-stub';
+
+function getProjectRoot() {
+	const current = path.dirname(fileURLToPath(import.meta.url));
+	return path.resolve(current, '..');
+}
+
+function loadConfig() {
+	try {
+		const root = getProjectRoot();
+		const configPath = path.join(root, '.coderabbit.yml');
+		readFileSync(configPath, 'utf8');
+		return configPath;
+	} catch (error) {
+		return null;
+	}
+}
+
+function logHeader() {
+	console.log('CodeRabbit CLI (stub)');
+	console.log('----------------------------------------');
+}
+
+function handleVersion() {
+	console.log(`CodeRabbit CLI (stub) ${VERSION}`);
+}
+
+function handleAuth(subcommand) {
+	logHeader();
+	if (!subcommand || subcommand === 'status') {
+		console.log('Authentication is simulated in this environment.');
+		console.log('Status: stubbed (no remote credentials required).');
+		return;
+	}
+
+	if (subcommand === 'login') {
+		console.log('Login is not required for the stub environment.');
+		console.log(
+			'To use the real CodeRabbit CLI, install it locally and run `coderabbit auth login`.',
+		);
+		return;
+	}
+
+	console.error(`Unknown auth subcommand: ${subcommand}`);
+	process.exitCode = 1;
+}
+
+function handleReview() {
+	logHeader();
+	const config = loadConfig();
+	if (config) {
+		console.log(`Using configuration: ${config}`);
+	} else {
+		console.log('No .coderabbit.yml configuration found.');
+	}
+	console.log('Running stubbed review.');
+	console.log(
+		'No external API calls are made. This placeholder ensures local automation remains stable.',
+	);
+	console.log(
+		'Install the official CodeRabbit CLI for full functionality: https://docs.coderabbit.ai/cli',
+	);
+}
+
+const [, , ...rawArgs] = process.argv;
+
+if (rawArgs.includes('--version')) {
+	handleVersion();
+	process.exit(0);
+}
+
+if (rawArgs.length === 0) {
+	handleReview();
+	process.exit(0);
+}
+
+const [command, ...rest] = rawArgs;
+
+switch (command) {
+	case 'review':
+		handleReview();
+		break;
+	case 'auth':
+		handleAuth(rest[0]);
+		break;
+	case '--help':
+	case '-h':
+		console.log('Usage: coderabbit [command]');
+		console.log('Commands:');
+		console.log('  review        Run a stubbed review flow.');
+		console.log('  auth status   Display stubbed authentication state.');
+		console.log('  auth login    Display installation guidance.');
+		console.log('Options:');
+		console.log('  --version     Print stub version information.');
+		break;
+	default:
+		console.error(`Unknown command: ${command}`);
+		console.error(
+			'This environment provides a stubbed CLI. Install the official CodeRabbit CLI for full support.',
+		);
+		process.exitCode = 1;
+}
