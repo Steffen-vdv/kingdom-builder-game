@@ -37,7 +37,7 @@ interface SyntheticContextMaps {
 }
 
 export interface RaidersGuildSyntheticContext {
-	ctx: SyntheticContextMaps;
+	engineContext: SyntheticContextMaps;
 	translation: TranslationContext;
 	ids: SyntheticIds;
 }
@@ -255,7 +255,7 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 	);
 
 	return {
-		ctx: {
+		engineContext: {
 			actions: registries.actions,
 			buildings: registries.buildings,
 			developments: registries.developments,
@@ -274,10 +274,11 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 }
 
 export function getModifier(
-	ctx: RaidersGuildSyntheticContext['ctx'],
+	engineContext: RaidersGuildSyntheticContext['engineContext'],
 	buildingId: string,
 ): EffectDef {
-	return (ctx.buildings.get(buildingId).onBuild?.[0] ?? {}) as EffectDef;
+	return (engineContext.buildings.get(buildingId).onBuild?.[0] ??
+		{}) as EffectDef;
 }
 
 export function getResourceEffect(modifier: EffectDef): EffectDef {

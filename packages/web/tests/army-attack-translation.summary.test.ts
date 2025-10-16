@@ -7,8 +7,8 @@ import { summarizeContent, describeContent } from '../src/translation/content';
 import { Resource, Stat } from '@kingdom-builder/engine';
 import type { EffectDef } from './helpers/armyAttackFactories';
 import {
-	createSyntheticCtx,
-	createPartialStatCtx,
+	createSyntheticEngineContext,
+	createPartialStatEngineContext,
 	setupStatOverrides,
 	teardownStatOverrides,
 	getStat,
@@ -45,7 +45,7 @@ afterAll(() => {
 
 describe('army attack translation summary', () => {
 	it('summarizes attack action with on-damage effects', () => {
-		const { translation, attack, plunder } = createSyntheticCtx();
+		const { translation, attack, plunder } = createSyntheticEngineContext();
 		const castle = selectAttackResourceDescriptor(
 			translation,
 			Resource.castleHP,
@@ -111,7 +111,7 @@ describe('army attack translation summary', () => {
 	});
 
 	it('describes plunder effects under on-damage entry', () => {
-		const { ctx: engineContext, plunder } = createSyntheticCtx();
+		const { engineContext, plunder } = createSyntheticEngineContext();
 		const description = describeContent(
 			'action',
 			SYNTH_ATTACK.id,
@@ -142,7 +142,7 @@ describe('army attack translation summary', () => {
 		delete SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP];
 		suppressSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
 		try {
-			const { translation, attack } = createPartialStatCtx();
+			const { translation, attack } = createPartialStatEngineContext();
 			const castle = selectAttackResourceDescriptor(
 				translation,
 				Resource.castleHP,
@@ -188,7 +188,8 @@ describe('army attack translation summary', () => {
 	});
 
 	it('summarizes building attack as destruction', () => {
-		const { translation, buildingAttack, building } = createSyntheticCtx();
+		const { translation, buildingAttack, building } =
+			createSyntheticEngineContext();
 		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
 		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
 		const buildingDescriptor = selectAttackBuildingDescriptor(

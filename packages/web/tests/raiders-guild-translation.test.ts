@@ -20,7 +20,7 @@ import { selectAttackResourceDescriptor } from '../src/translation/effects/forma
 
 const RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
 function expectHoistedActionCard(
-	ctx: RaidersGuildSyntheticContext['ctx'],
+	engineContext: RaidersGuildSyntheticContext['engineContext'],
 	translation: RaidersGuildSyntheticContext['translation'],
 	description: Summary | undefined,
 	actionId: string,
@@ -31,7 +31,7 @@ function expectHoistedActionCard(
 	if (!hoisted || typeof hoisted === 'string') {
 		return;
 	}
-	const action = ctx.actions.get(actionId);
+	const action = engineContext.actions.get(actionId);
 	expect(hoisted.title).toBe(formatTargetLabel(action.icon ?? '', action.name));
 	expect(hoisted.items as Summary).toEqual(
 		getActionSummaryItems(translation, actionId),
@@ -46,7 +46,7 @@ describe('raiders guild translation', () => {
 	});
 
 	it('describes transfer modifier with hoisted action card', () => {
-		const { ctx, translation, ids } = synthetic;
+		const { engineContext, translation, ids } = synthetic;
 		const modifierInfo = translation.assets.modifiers.result ?? {
 			icon: '✨',
 			label: 'Outcome Adjustment',
@@ -57,9 +57,9 @@ describe('raiders guild translation', () => {
 			translation,
 		);
 		const { effects, description } = splitSummary(summary);
-		const modifier = getModifier(ctx, ids.transferBuilding);
+		const modifier = getModifier(engineContext, ids.transferBuilding);
 		const adjust = Number(modifier.params?.['adjust'] ?? 0);
-		const raid = ctx.actions.get(ids.raidAction);
+		const raid = engineContext.actions.get(ids.raidAction);
 		const transferIcon = translation.assets.transfer.icon ?? '🔁';
 		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
 			raid.icon ?? '',
@@ -68,11 +68,16 @@ describe('raiders guild translation', () => {
 			adjust,
 		)} transfer by ${Math.abs(adjust)}%`;
 		expect(collectText(effects)).toContain(clause);
-		expectHoistedActionCard(ctx, translation, description, ids.raidAction);
+		expectHoistedActionCard(
+			engineContext,
+			translation,
+			description,
+			ids.raidAction,
+		);
 	});
 
 	it('summarizes population modifier compactly', () => {
-		const { ctx, translation, ids } = synthetic;
+		const { engineContext, translation, ids } = synthetic;
 		const modifierInfo = translation.assets.modifiers.result ?? {
 			icon: '✨',
 		};
@@ -81,8 +86,8 @@ describe('raiders guild translation', () => {
 			ids.populationBuilding,
 			translation,
 		);
-		const ledger = ctx.actions.get(ids.ledgerAction);
-		const modifier = getModifier(ctx, ids.populationBuilding);
+		const ledger = engineContext.actions.get(ids.ledgerAction);
+		const modifier = getModifier(engineContext, ids.populationBuilding);
 		const amount = Number(modifier.params?.['amount'] ?? 0);
 		const actionIcon =
 			ledger.icon && ledger.icon.trim().length ? ledger.icon : ledger.name;
@@ -95,7 +100,7 @@ describe('raiders guild translation', () => {
 	});
 
 	it('summarizes development modifier compactly', () => {
-		const { ctx, translation, ids } = synthetic;
+		const { engineContext, translation, ids } = synthetic;
 		const modifierInfo = translation.assets.modifiers.result ?? {
 			icon: '✨',
 		};
@@ -104,8 +109,8 @@ describe('raiders guild translation', () => {
 			ids.developmentBuilding,
 			translation,
 		);
-		const development = ctx.developments.get(ids.harvestDevelopment);
-		const modifier = getModifier(ctx, ids.developmentBuilding);
+		const development = engineContext.developments.get(ids.harvestDevelopment);
+		const modifier = getModifier(engineContext, ids.developmentBuilding);
 		const resourceEffect = getResourceEffect(modifier);
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
@@ -118,7 +123,7 @@ describe('raiders guild translation', () => {
 	});
 
 	it('describes population modifier with detailed clause', () => {
-		const { ctx, translation, ids } = synthetic;
+		const { engineContext, translation, ids } = synthetic;
 		const modifierInfo = translation.assets.modifiers.result ?? {
 			icon: '✨',
 			label: 'Outcome Adjustment',
@@ -128,8 +133,8 @@ describe('raiders guild translation', () => {
 			ids.populationBuilding,
 			translation,
 		);
-		const ledger = ctx.actions.get(ids.ledgerAction);
-		const modifier = getModifier(ctx, ids.populationBuilding);
+		const ledger = engineContext.actions.get(ids.ledgerAction);
+		const modifier = getModifier(engineContext, ids.populationBuilding);
 		const amount = Number(modifier.params?.['amount'] ?? 0);
 		const populationAsset = translation.assets.population;
 		const populationIcon = populationAsset.icon ?? '';
@@ -145,7 +150,7 @@ describe('raiders guild translation', () => {
 	});
 
 	it('describes development modifier with detailed clause', () => {
-		const { ctx, translation, ids } = synthetic;
+		const { engineContext, translation, ids } = synthetic;
 		const modifierInfo = translation.assets.modifiers.result ?? {
 			icon: '✨',
 			label: 'Outcome Adjustment',
@@ -155,8 +160,8 @@ describe('raiders guild translation', () => {
 			ids.developmentBuilding,
 			translation,
 		);
-		const development = ctx.developments.get(ids.harvestDevelopment);
-		const modifier = getModifier(ctx, ids.developmentBuilding);
+		const development = engineContext.developments.get(ids.harvestDevelopment);
+		const modifier = getModifier(engineContext, ids.developmentBuilding);
 		const resourceEffect = getResourceEffect(modifier);
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);

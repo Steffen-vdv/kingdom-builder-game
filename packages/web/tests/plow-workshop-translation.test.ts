@@ -14,7 +14,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 describe('plow workshop translation', () => {
 	it('includes action card and omits Immediately', () => {
 		const synthetic = createSyntheticPlowContent();
-		const ctx = createEngine({
+		const engineContext = createEngine({
 			actions: synthetic.factory.actions,
 			buildings: synthetic.factory.buildings,
 			developments: synthetic.factory.developments,
@@ -23,7 +23,11 @@ describe('plow workshop translation', () => {
 			start: synthetic.start,
 			rules: synthetic.rules,
 		});
-		const summary = describeContent('building', synthetic.building.id, ctx);
+		const summary = describeContent(
+			'building',
+			synthetic.building.id,
+			engineContext,
+		);
 		const { effects, description } = splitSummary(summary);
 		expect(effects).toHaveLength(1);
 		const build = effects[0] as { title: string; items?: unknown[] };

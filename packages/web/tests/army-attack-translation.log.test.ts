@@ -4,7 +4,7 @@ import './helpers/armyAttackSyntheticRegistries';
 import { logContent } from '../src/translation/content';
 import { Resource, Stat, performAction } from '@kingdom-builder/engine';
 import {
-	createSyntheticCtx,
+	createSyntheticEngineContext,
 	setupStatOverrides,
 	teardownStatOverrides,
 	getStat,
@@ -45,12 +45,8 @@ afterAll(() => {
 
 describe('army attack translation log', () => {
 	it('logs army attack action with concrete evaluation', () => {
-		const {
-			ctx: engineContext,
-			translation,
-			attack,
-			plunder,
-		} = createSyntheticCtx();
+		const { engineContext, translation, attack, plunder } =
+			createSyntheticEngineContext();
 		const castle = selectAttackResourceDescriptor(
 			translation,
 			Resource.castleHP,
@@ -104,12 +100,8 @@ describe('army attack translation log', () => {
 	});
 
 	it('logs building attack action with destruction evaluation', () => {
-		const {
-			ctx: engineContext,
-			translation,
-			buildingAttack,
-			building,
-		} = createSyntheticCtx();
+		const { engineContext, translation, buildingAttack, building } =
+			createSyntheticEngineContext();
 		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(
 			translation,

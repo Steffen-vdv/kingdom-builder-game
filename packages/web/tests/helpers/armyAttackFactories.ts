@@ -74,7 +74,7 @@ export function teardownStatOverrides() {
 
 function createBaseEngine() {
 	const factory = createContentFactory();
-	const ctx = createEngine({
+	const engineContext = createEngine({
 		actions: factory.actions,
 		buildings: factory.buildings,
 		developments: factory.developments,
@@ -83,7 +83,7 @@ function createBaseEngine() {
 		start: START,
 		rules: RULES,
 	});
-	return { factory, ctx } as const;
+	return { factory, engineContext } as const;
 }
 
 type FactoryWithActions = ReturnType<typeof createContentFactory>;
@@ -122,8 +122,8 @@ function registerSyntheticResources(registries: SessionRegistries) {
 	};
 }
 
-export function createSyntheticCtx() {
-	const { factory, ctx } = createBaseEngine();
+export function createSyntheticEngineContext() {
+	const { factory, engineContext } = createBaseEngine();
 	const building = factory.building({ ...SYNTH_BUILDING });
 	const plunder = buildAction(factory, ACTION_DEFS.plunder);
 	const attack = buildAction(factory, ACTION_DEFS.attack);
@@ -141,12 +141,12 @@ export function createSyntheticCtx() {
 		}),
 	);
 	const translation = createTranslationContextForEngine(
-		ctx,
+		engineContext,
 		(registries) => {
-			const raid = ctx.actions.get(attack.id);
-			const raidPlunder = ctx.actions.get(plunder.id);
-			const raidBuilding = ctx.actions.get(buildingAttack.id);
-			const ctxBuilding = ctx.buildings.get(building.id);
+			const raid = engineContext.actions.get(attack.id);
+			const raidPlunder = engineContext.actions.get(plunder.id);
+			const raidBuilding = engineContext.actions.get(buildingAttack.id);
+			const contextBuilding = engineContext.buildings.get(building.id);
 			if (raid) {
 				registries.actions.add(raid.id, { ...raid });
 			}
@@ -156,15 +156,17 @@ export function createSyntheticCtx() {
 			if (raidBuilding) {
 				registries.actions.add(raidBuilding.id, { ...raidBuilding });
 			}
-			if (ctxBuilding) {
-				registries.buildings.add(ctxBuilding.id, { ...ctxBuilding });
+			if (contextBuilding) {
+				registries.buildings.add(contextBuilding.id, {
+					...contextBuilding,
+				});
 			}
 			registerSyntheticResources(registries);
 		},
 		{ metadata: { stats: statMetadata } },
 	);
 	return {
-		ctx,
+		engineContext,
 		translation,
 		attack,
 		plunder,
@@ -174,9 +176,8 @@ export function createSyntheticCtx() {
 		statMetadata: SYNTH_STAT_METADATA,
 	} as const;
 }
-
-export function createPartialStatCtx() {
-	const { factory, ctx } = createBaseEngine();
+export function createPartialStatEngineContext() {
+	const { factory, engineContext } = createBaseEngine();
 	const attack = buildAction(factory, ACTION_DEFS.partial);
 	const statMetadata = Object.fromEntries(
 		Object.entries(SYNTH_STAT_METADATA).map(([key, descriptor]) => {
@@ -191,9 +192,9 @@ export function createPartialStatCtx() {
 		}),
 	);
 	const translation = createTranslationContextForEngine(
-		ctx,
+		engineContext,
 		(registries) => {
-			const raid = ctx.actions.get(attack.id);
+			const raid = engineContext.actions.get(attack.id);
 			if (raid) {
 				registries.actions.add(raid.id, { ...raid });
 			}
@@ -202,7 +203,7 @@ export function createPartialStatCtx() {
 		{ metadata: { stats: statMetadata } },
 	);
 	return {
-		ctx,
+		engineContext,
 		translation,
 		attack,
 		resourceMetadata: SYNTH_RESOURCE_METADATA,
