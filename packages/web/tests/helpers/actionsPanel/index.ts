@@ -1,0 +1,1 @@
+export { createActionsPanelGame } from './createActionsPanelGame';
