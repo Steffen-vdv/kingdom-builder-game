@@ -9,7 +9,7 @@
 	"scripts": {
 		"ensure:dev-deps": "node scripts/ensure-dev-dependencies.cjs",
 		"predev": "npm run ensure:dev-deps && npm run build --workspace @kingdom-builder/contents",
-		"dev": "run-p server:dev dev:web",
+		"dev": "node scripts/run-with-auth.mjs dev:run",
 		"dev:web": "vite packages/web",
 		"prebuild": "npm run ensure:dev-deps",
 		"build": "run-s server:build build:web",
@@ -41,7 +41,10 @@
 		"verify": "node scripts/run-verification.mjs",
 		"server:dev": "npm run dev --workspace @kingdom-builder/server",
 		"server:build": "npm run build --workspace @kingdom-builder/server",
-		"lint:eslint": "node scripts/run-eslint.mjs --ext=.ts,.tsx"
+		"lint:eslint": "node scripts/run-eslint.mjs --ext=.ts,.tsx",
+		"dev:run": "run-p server:dev dev:web",
+		"start:server": "node packages/server/dist/index.js",
+		"start": "cross-env NODE_ENV=production node scripts/run-with-auth.mjs start:server --require-tokens"
 	},
 	"dependencies": {
 		"react": "^19.2.0",

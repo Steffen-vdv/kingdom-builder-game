@@ -1,0 +1,6 @@
+{
+	"local-dev": {
+		"userId": "local-dev",
+		"roles": ["admin", "session:create", "session:advance"]
+	}
+}

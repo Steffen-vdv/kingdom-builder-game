@@ -26,13 +26,23 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
    - Run `coderabbit auth login` so the reviewer can authenticate locally.
 3. Install dependencies: `npm install` (uses npm workspaces to link local packages).
 4. Start the combined dev environment (Fastify server + Vite web client):
-   `npm run dev`.
-5. Run a single target when needed:
+   `npm run dev`. The wrapper automatically loads
+   `config/server-auth.tokens.default.json` so the development server boots with
+   an admin token.
+5. Override the default token table when you need different credentials by
+   either creating `config/server-auth.tokens.local.json` (ignored by git) or by
+   exporting a `KB_SERVER_AUTH_TOKENS` environment variable that contains your
+   JSON token map.
+6. Run a single target when needed:
    - Web client only: `npm run dev:web`
    - Server only: `npm run server:dev`
-6. Build production bundles for both server and web: `npm run build`.
-7. Build just the Node server bundle: `npm run server:build`.
-8. Review the docs directory for additional deep dives into systems and lore.
+7. Build production bundles for both server and web: `npm run build`.
+8. Build just the Node server bundle: `npm run server:build`.
+9. Launch the production server locally with `npm run start` after supplying a
+   real token map via `KB_SERVER_AUTH_TOKENS` or
+   `config/server-auth.tokens.local.json`. The wrapper enables `NODE_ENV=production`,
+   ignores the default dev token file, and refuses to start without valid tokens.
+10. Review the docs directory for additional deep dives into systems and lore.
 
 ### CodeRabbit usage
 
