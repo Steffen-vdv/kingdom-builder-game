@@ -126,6 +126,32 @@ function createTestSetup(): TestSetup {
 			land: { label: 'Territory', icon: '🗺️' },
 			passive: { label: 'Aura', icon: '✨' },
 		},
+		overview: {
+			hero: {
+				badgeIcon: '📘',
+				badgeLabel: 'Realm Primer',
+				title: 'Game Overview',
+				intro: 'Survey the frontier.',
+				paragraph: 'Command the realm wisely.',
+				tokens: {
+					realm: 'Astral Dominion',
+				},
+			},
+			sections: [
+				{
+					kind: 'paragraph',
+					id: 'intro',
+					icon: 'land',
+					title: 'Welcome',
+					paragraphs: ['Begin your ascension.'],
+				},
+			],
+			tokens: {
+				static: {
+					realm: ['realm', 'dominion'],
+				},
+			},
+		},
 	};
 	const registries: SessionRegistries = {
 		actions: factory.actions,
