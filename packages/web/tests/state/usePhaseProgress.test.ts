@@ -190,9 +190,11 @@ describe('usePhaseProgress', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(error);
 		expect(result.current.phase.isAdvancing).toBe(false);
-		expect(advanceSessionPhaseMock).toHaveBeenCalledWith({
-			sessionId: 'session-1',
-		});
+		expect(advanceSessionPhaseMock).toHaveBeenCalledWith(
+			{ sessionId: 'session-1' },
+			undefined,
+			expect.objectContaining({ skipQueue: true }),
+		);
 		expect(enqueue).toHaveBeenCalled();
 	});
 
@@ -261,9 +263,11 @@ describe('usePhaseProgress', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(error);
 		expect(result.current.phase.isAdvancing).toBe(false);
-		expect(advanceSessionPhaseMock).toHaveBeenCalledWith({
-			sessionId: 'session-1',
-		});
+		expect(advanceSessionPhaseMock).toHaveBeenCalledWith(
+			{ sessionId: 'session-1' },
+			undefined,
+			expect.objectContaining({ skipQueue: true }),
+		);
 		expect(enqueue).toHaveBeenCalled();
 	});
 });

@@ -84,6 +84,8 @@ export async function advanceToActionPhase({
 				{
 					sessionId,
 				},
+				undefined,
+				{ skipQueue: true },
 			);
 			const advanceResult: SessionAdvanceResult = advanceResponse.advance;
 			const { player } = advanceResult;

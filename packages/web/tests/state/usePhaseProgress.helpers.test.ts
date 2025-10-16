@@ -92,8 +92,10 @@ describe('advanceToActionPhase', () => {
 		).resolves.toBeUndefined();
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
-		expect(advanceSessionPhaseMock).toHaveBeenCalledWith({
-			sessionId: 'session-1',
-		});
+		expect(advanceSessionPhaseMock).toHaveBeenCalledWith(
+			{ sessionId: 'session-1' },
+			undefined,
+			expect.objectContaining({ skipQueue: true }),
+		);
 	});
 });

@@ -162,7 +162,7 @@ export function usePhaseProgress({
 		}
 		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
 		try {
-			await advanceSessionPhase({ sessionId });
+			await advanceSessionPhase({ sessionId }, undefined, { skipQueue: true });
 			await runUntilActionPhaseCore();
 		} catch (error) {
 			const record = getSessionRecord(sessionId);
