@@ -6,6 +6,10 @@ import {
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	createMetadataBuilderWithOverview,
+	SYNTHETIC_OVERVIEW,
+} from './helpers/metadataFixtures.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -182,5 +186,58 @@ describe('SessionTransport createSession', () => {
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
 		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+	});
+
+	it('merges snapshot metadata descriptors, overview, and clones results', () => {
+		const metadataBuilder = createMetadataBuilderWithOverview();
+		const { manager, costKey, gainKey } = createSyntheticSessionManager({
+			metadataBuilder,
+		});
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('metadata-session'),
+			authMiddleware: middleware,
+		});
+		const response = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const metadata = response.snapshot.metadata;
+		expect(metadata.resources?.[costKey]).toEqual({ label: costKey });
+		expect(metadata.resources?.[gainKey]).toEqual({ label: gainKey });
+		const expectedOverview = structuredClone(SYNTHETIC_OVERVIEW);
+		expect(metadata.overview).toEqual(expectedOverview);
+		expect(metadata.overview).not.toBe(SYNTHETIC_OVERVIEW);
+		if (metadata.resources?.[costKey]) {
+			metadata.resources[costKey]!.label = '__mutated__';
+		}
+		if (metadata.resources?.[gainKey]) {
+			metadata.resources[gainKey]!.label = '__mutated__';
+		}
+		if (metadata.overview) {
+			metadata.overview.hero.title = 'Mutated Title';
+			const [section] = metadata.overview.sections;
+			if (section?.kind === 'paragraph') {
+				section.paragraphs.push('Mutated paragraph.');
+			}
+			const resourceTokens = metadata.overview.tokens.resources;
+			const tokenList = resourceTokens
+				? (resourceTokens[costKey] ?? resourceTokens[gainKey])
+				: undefined;
+			if (tokenList) {
+				tokenList.push('mutated-token');
+			}
+			metadata.overview.hero.tokens.mutated = 'yes';
+			metadata.overview.tokens.static = { mutated: ['entry'] };
+		}
+		const sessionState = transport.getSessionState({
+			body: { sessionId: response.sessionId },
+			headers: {},
+		});
+		const nextMetadata = sessionState.snapshot.metadata;
+		expect(nextMetadata.resources?.[costKey]?.label).toBe(costKey);
+		expect(nextMetadata.resources?.[gainKey]?.label).toBe(gainKey);
+		expect(nextMetadata.overview).toEqual(expectedOverview);
+		expect(nextMetadata.overview).not.toBe(metadata.overview);
 	});
 });
