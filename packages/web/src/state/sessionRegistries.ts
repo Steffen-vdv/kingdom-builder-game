@@ -14,13 +14,7 @@ import type {
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol/session';
 import type { ZodType } from 'zod';
-
-const clone = <T>(value: T): T => {
-	if (typeof structuredClone === 'function') {
-		return structuredClone(value);
-	}
-	return JSON.parse(JSON.stringify(value)) as T;
-};
+import { clone } from './clone';
 
 function createRegistryFromPayload<DefinitionType>(
 	entries: Record<string, DefinitionType>,
