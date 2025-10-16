@@ -3,7 +3,12 @@ import {
 	type PopulationRoleId,
 	type StatKey,
 } from '@kingdom-builder/contents';
-import type { TranslationContext, TranslationAssets } from '../context';
+import type {
+	TranslationContext,
+	TranslationAssets,
+	TranslationModifierInfo,
+} from '../context';
+import { DEFAULT_MODIFIER_INFO } from '../context/assets';
 import { humanizeIdentifier } from './stringUtils';
 
 export type RegistryDescriptor = { icon: string; label: string };
@@ -16,10 +21,6 @@ const DEFAULT_POPULATION_ICON = '👥';
 const DEFAULT_POPULATION_LABEL = 'Population';
 const DEFAULT_PASSIVE_ICON = '♾️';
 const DEFAULT_PASSIVE_LABEL = 'Passive';
-const DEFAULT_COST_ICON = '💲';
-const DEFAULT_COST_LABEL = 'Cost Adjustment';
-const DEFAULT_RESULT_ICON = '✨';
-const DEFAULT_RESULT_LABEL = 'Outcome Adjustment';
 
 const DEFAULT_KEY = Symbol('default');
 
@@ -196,36 +197,63 @@ const modifierFallbackCache: CacheFallback<Record<string, RegistryDescriptor>> =
 
 function resolveModifierFallback(context: ContextWithAssets | undefined) {
 	const assets = context?.assets;
-	const cost = assets?.modifiers?.cost ?? {};
-	const result = assets?.modifiers?.result ?? {};
-	return {
-		cost: {
-			icon: coerceIcon(cost.icon, DEFAULT_COST_ICON),
-			label: coerceLabel(cost.label, DEFAULT_COST_LABEL),
-		},
-		result: {
-			icon: coerceIcon(result.icon, DEFAULT_RESULT_ICON),
-			label: coerceLabel(result.label, DEFAULT_RESULT_LABEL),
-		},
-	};
+	const modifierAssets: Readonly<Record<string, TranslationModifierInfo>> =
+		assets?.modifiers ??
+		(Object.create(null) as Readonly<Record<string, TranslationModifierInfo>>);
+	const defaults = DEFAULT_MODIFIER_INFO;
+	const descriptors: Record<string, RegistryDescriptor> = {};
+	for (const [key, defaultInfo] of Object.entries(defaults)) {
+		const fallbackIcon = defaultInfo.icon ?? '';
+		const fallbackLabel = defaultInfo.label ?? (humanizeIdentifier(key) || key);
+		const assetInfo = modifierAssets[key];
+		const icon = coerceIcon(assetInfo?.icon ?? defaultInfo.icon, fallbackIcon);
+		const label = coerceLabel(
+			assetInfo?.label ?? defaultInfo.label,
+			fallbackLabel,
+		);
+		descriptors[key] = { icon, label } satisfies RegistryDescriptor;
+	}
+	for (const [key, assetInfo] of Object.entries(modifierAssets)) {
+		if (Object.prototype.hasOwnProperty.call(descriptors, key)) {
+			continue;
+		}
+		const fallbackLabel = humanizeIdentifier(key) || key;
+		const icon = coerceIcon(assetInfo?.icon, '');
+		const label = coerceLabel(assetInfo?.label, fallbackLabel);
+		descriptors[key] = { icon, label } satisfies RegistryDescriptor;
+	}
+	return descriptors;
 }
 
 export function selectModifierInfo(
 	context: ContextWithAssets,
-	kind: 'cost' | 'result',
+	kind: string,
 ): RegistryDescriptor {
 	const cache = getCacheEntry(context, modifierCache, modifierFallbackCache);
 	const cacheKey = normalizeKey(undefined);
-	const cached = cache.get(cacheKey);
-	const base = cached ?? resolveModifierFallback(context);
-	if (!cached) {
+	let base = cache.get(cacheKey);
+	if (!base) {
+		base = resolveModifierFallback(context);
 		cache.set(cacheKey, base);
 	}
 	const descriptor = base[kind];
 	if (descriptor) {
 		return descriptor;
 	}
-	const fallback = resolveModifierFallback(context)[kind];
-	cache.set(cacheKey, { ...base, [kind]: fallback });
+	const fallback = createModifierDescriptor(context, kind);
+	const next = { ...base, [kind]: fallback };
+	cache.set(cacheKey, next);
 	return fallback;
+}
+
+function createModifierDescriptor(
+	context: ContextWithAssets | undefined,
+	kind: string,
+): RegistryDescriptor {
+	const modifierAssets = context?.assets?.modifiers ?? {};
+	const assetInfo = modifierAssets[kind];
+	const fallbackLabel = humanizeIdentifier(kind) || kind;
+	const icon = coerceIcon(assetInfo?.icon, '');
+	const label = coerceLabel(assetInfo?.label, fallbackLabel);
+	return { icon, label } satisfies RegistryDescriptor;
 }

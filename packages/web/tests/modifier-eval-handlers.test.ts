@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EffectDef } from '@kingdom-builder/engine';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
+import { increaseOrDecrease } from '../src/translation/effects/helpers';
 import { registerModifierEvalHandler } from '../src/translation/effects/formatters/modifier';
 import {
 	createSnapshotPlayer,
@@ -259,6 +260,10 @@ describe('modifier evaluation handlers', () => {
 		const summary = summarizeEffects([eff], translationContext);
 		const description = describeEffects([eff], translationContext);
 		const resultDescriptor = selectModifierInfo(translationContext, 'result');
+		const transferDescriptor = selectModifierInfo(
+			translationContext,
+			'transfer',
+		);
 		const actionInfo = translationContext.actions.get(actionId);
 		const actionIcon =
 			actionInfo?.icon && actionInfo.icon.trim().length > 0
@@ -268,18 +273,23 @@ describe('modifier evaluation handlers', () => {
 			actionInfo?.icon ?? actionDef.icon,
 			actionInfo?.name ?? actionDef.name ?? actionId,
 		);
-		expect(summary).toHaveLength(1);
-		expect(
-			summary[0].startsWith(`${resultDescriptor.icon}${actionIcon}: `),
-		).toBe(true);
-		expect(summary[0]).toMatch(/\+10%$/u);
+		const transferIcon = transferDescriptor.icon || '';
+		const expectedSummary = `${resultDescriptor.icon}${actionIcon}: ${transferIcon}+10%`;
+		expect(summary).toEqual([expectedSummary]);
 		const primaryLine = description[0];
 		expect(
 			primaryLine.startsWith(
 				`${joinParts(resultDescriptor.icon, resultDescriptor.label)} on ${targetLabel}:`,
 			),
 		).toBe(true);
-		expect(primaryLine).toMatch(/transfers.+10%/u);
+		const transferEffect = [
+			transferDescriptor.icon,
+			`${increaseOrDecrease(10)} transfer by ${Math.abs(10)}%`,
+		]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+		expect(primaryLine.endsWith(`, ${transferEffect}`)).toBe(true);
 		const card = description[1];
 		expect(card).toMatchObject({
 			title: targetLabel,
@@ -299,8 +309,13 @@ describe('modifier evaluation handlers', () => {
 		const { id: actionId, definition: actionDef } =
 			selectActionWithIcon(registries);
 		const resultDescriptor = selectModifierInfo(translationContext, 'result');
+		const transferDescriptor = selectModifierInfo(
+			translationContext,
+			'transfer',
+		);
 		expect(resultDescriptor.icon).toBeTruthy();
 		expect(resultDescriptor.label).toBeTruthy();
+		expect(transferDescriptor.icon).toBeTruthy();
 		const eff: EffectDef = {
 			type: 'result_mod',
 			method: 'add',
@@ -311,6 +326,7 @@ describe('modifier evaluation handlers', () => {
 		};
 		const summary = summarizeEffects([eff], translationContext);
 		expect(summary[0].startsWith(resultDescriptor.icon)).toBe(true);
+		expect(summary[0]).toContain(transferDescriptor.icon);
 		const targetLabel = joinParts(
 			translationContext.actions.get(actionId)?.icon ?? actionDef.icon,
 			translationContext.actions.get(actionId)?.name ??

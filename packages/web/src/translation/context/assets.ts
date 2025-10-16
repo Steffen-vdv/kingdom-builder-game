@@ -39,9 +39,10 @@ const DEFAULT_UPKEEP_INFO = Object.freeze({
 	label: 'Upkeep',
 });
 
-const DEFAULT_MODIFIER_INFO = Object.freeze({
+export const DEFAULT_MODIFIER_INFO = Object.freeze({
 	cost: Object.freeze({ icon: '💲', label: 'Cost Adjustment' }),
 	result: Object.freeze({ icon: '✨', label: 'Outcome Adjustment' }),
+	transfer: Object.freeze({ icon: '🔁', label: 'Transfer Adjustment' }),
 }) satisfies Readonly<Record<string, TranslationModifierInfo>>;
 
 const formatRemoval = (description: string) =>
@@ -142,6 +143,56 @@ function buildResourceMap(
 		}
 		const descriptor = descriptors?.[key];
 		entries[key] = mergeIconLabel(entry, descriptor, entry.label ?? key);
+	}
+	return Object.freeze(entries);
+}
+
+function extractModifierDescriptors(
+	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
+): Record<string, SessionMetadataDescriptor> | undefined {
+	if (!descriptors) {
+		return undefined;
+	}
+	const entries: Record<string, SessionMetadataDescriptor> = {};
+	for (const [key, descriptor] of Object.entries(descriptors)) {
+		if (!key.startsWith('modifiers.')) {
+			continue;
+		}
+		const modifierKey = key.slice('modifiers.'.length);
+		if (!modifierKey) {
+			continue;
+		}
+		entries[modifierKey] = descriptor;
+	}
+	return Object.keys(entries).length > 0 ? entries : undefined;
+}
+
+function buildModifierInfo(
+	defaults: Readonly<Record<string, TranslationModifierInfo>>,
+	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
+): Readonly<Record<string, TranslationModifierInfo>> {
+	const entries: Record<string, TranslationModifierInfo> = {};
+	const descriptorEntries = descriptors ? Object.entries(descriptors) : [];
+	const keys = new Set([
+		...Object.keys(defaults),
+		...descriptorEntries.map(([key]) => key),
+	]);
+	for (const key of keys) {
+		const base = defaults[key];
+		const descriptor = descriptors?.[key];
+		const entry: TranslationModifierInfo = {};
+		if (descriptor?.icon !== undefined) {
+			entry.icon = descriptor.icon;
+		} else if (base?.icon !== undefined) {
+			entry.icon = base.icon;
+		}
+		const fallbackLabel = base?.label ?? key;
+		if (descriptor?.label !== undefined) {
+			entry.label = descriptor.label;
+		} else if (fallbackLabel !== undefined) {
+			entry.label = fallbackLabel;
+		}
+		entries[key] = Object.freeze(entry);
 	}
 	return Object.freeze(entries);
 }
@@ -248,6 +299,7 @@ export function createTranslationAssets(
 		assetDescriptors.upkeep,
 		DEFAULT_UPKEEP_INFO.label,
 	);
+	const modifierDescriptors = extractModifierDescriptors(assetDescriptors);
 	const triggers = buildTriggerMap(metadata?.triggers);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
@@ -259,7 +311,7 @@ export function createTranslationAssets(
 		slot: slotAsset,
 		passive: passiveAsset,
 		upkeep: upkeepAsset,
-		modifiers: DEFAULT_MODIFIER_INFO,
+		modifiers: buildModifierInfo(DEFAULT_MODIFIER_INFO, modifierDescriptors),
 		triggers,
 		tierSummaries,
 		formatPassiveRemoval: formatRemoval,

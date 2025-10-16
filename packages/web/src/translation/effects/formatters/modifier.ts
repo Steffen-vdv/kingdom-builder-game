@@ -1,4 +1,3 @@
-import { RESOURCE_TRANSFER_ICON } from '@kingdom-builder/contents';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
 	RESULT_EVENT_RESOLVE,
@@ -177,19 +176,29 @@ registerModifierEvalHandler('transfer_pct', {
 		const amount = Number(effect.params?.['adjust'] ?? 0);
 		const sign = amount >= 0 ? '+' : '';
 		const descriptor = getResultModifierLabel(context);
+		const transferDescriptor = selectModifierInfo(context, 'transfer');
+		const transferIcon = transferDescriptor.icon || '';
 		const targetSummaryLabel = `${descriptor.icon}${target.summaryLabel}`;
-		const transferAdjustment = `${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(amount)}%`;
+		const transferAdjustment = `${transferIcon}${sign}${Math.abs(amount)}%`;
 		return [`${targetSummaryLabel}: ${transferAdjustment}`];
 	},
 	describe: (effect, evaluation, context) => {
 		const target = resolveTransferModifierTarget(effect, evaluation, context);
 		const amount = Number(effect.params?.['adjust'] ?? 0);
 		const descriptor = getResultModifierLabel(context);
+		const transferDescriptor = selectModifierInfo(context, 'transfer');
+		const transferEffect = [
+			transferDescriptor.icon,
+			`${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,
+		]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
 		const modifierDescription = formatResultModifierClause(
 			buildModifierLabelText(descriptor),
 			target.clauseTarget,
 			RESULT_EVENT_TRANSFER,
-			`${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,
+			transferEffect,
 		);
 		const entries: Summary = [modifierDescription];
 		if (target.actionId) {
