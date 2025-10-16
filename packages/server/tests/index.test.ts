@@ -42,7 +42,7 @@ describe('server entrypoint', () => {
 			},
 		});
 		expect(log).toHaveBeenCalledWith('Starting Kingdom Builder server...');
-		const response = await fetch(`${result.address}/sessions`, {
+		const response = await fetch(`${result.address}/api/sessions`, {
 			method: 'POST',
 			headers: {
 				authorization: 'Bearer integration-token',
@@ -68,7 +68,7 @@ describe('server entrypoint', () => {
 		});
 		try {
 			const gateway = new module.HttpSessionGateway({
-				baseUrl: result.address,
+				baseUrl: `${result.address}/api`,
 				headers: {
 					authorization: 'Bearer integration-token',
 				},
@@ -128,7 +128,7 @@ describe('server entrypoint', () => {
 			allowDevToken: true,
 		});
 		try {
-			const response = await fetch(`${result.address}/sessions`, {
+			const response = await fetch(`${result.address}/api/sessions`, {
 				method: 'POST',
 				headers: {
 					authorization: 'Bearer local-dev',

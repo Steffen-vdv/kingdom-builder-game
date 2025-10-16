@@ -92,7 +92,10 @@ export async function startServer(
 	if (options.idFactory) {
 		transportOptions.idFactory = options.idFactory;
 	}
-	await app.register(createSessionTransportPlugin, transportOptions);
+	await app.register(createSessionTransportPlugin, {
+		prefix: '/api',
+		...transportOptions,
+	});
 	console.log('Starting Kingdom Builder server...');
 	try {
 		const address = await app.listen({ host, port });
