@@ -23,31 +23,42 @@ describe('tax collector AI controller', () => {
 			],
 		});
 
-		const ctx = createTestEngine(content);
-		const actionPhaseIndex = ctx.phases.findIndex((phase) => phase.action);
+		const engineContext = createTestEngine(content);
+		const actionPhaseIndex = engineContext.phases.findIndex(
+			(phase) => phase.action,
+		);
 		if (actionPhaseIndex === -1) {
 			throw new Error('Action phase not found');
 		}
 
-		ctx.game.currentPlayerIndex = 1;
-		ctx.game.phaseIndex = actionPhaseIndex;
-		ctx.game.stepIndex = 0;
-		ctx.game.currentPhase = ctx.phases[actionPhaseIndex]!.id;
-		ctx.game.currentStep = ctx.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
+		engineContext.game.currentPlayerIndex = 1;
+		engineContext.game.phaseIndex = actionPhaseIndex;
+		engineContext.game.stepIndex = 0;
+		engineContext.game.currentPhase =
+			engineContext.phases[actionPhaseIndex]!.id;
+		engineContext.game.currentStep =
+			engineContext.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
 
-		const apKey = ctx.actionCostResource;
-		ctx.activePlayer.resources[apKey] = 2;
+		const apKey = engineContext.actionCostResource;
+		engineContext.activePlayer.resources[apKey] = 2;
 
-		const controller = createTaxCollectorController(ctx.activePlayer.id);
-		const perform = vi.fn((actionId: string) => performAction(actionId, ctx));
-		const endPhase = vi.fn(() => advance(ctx));
+		const controller = createTaxCollectorController(
+			engineContext.activePlayer.id,
+		);
+		const perform = vi.fn((actionId: string) =>
+			performAction(actionId, engineContext),
+		);
+		const endPhase = vi.fn(() => advance(engineContext));
 
-		await controller(ctx, { performAction: perform, advance: endPhase });
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+		});
 
 		expect(perform).toHaveBeenCalledTimes(2);
-		expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, ctx);
-		expect(perform).toHaveBeenNthCalledWith(2, TAX_ACTION_ID, ctx);
-		expect(ctx.activePlayer.resources[apKey]).toBe(0);
+		expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, engineContext);
+		expect(perform).toHaveBeenNthCalledWith(2, TAX_ACTION_ID, engineContext);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
 		expect(endPhase).toHaveBeenCalledTimes(1);
 	});
 });
