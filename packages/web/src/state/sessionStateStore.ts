@@ -14,6 +14,7 @@ import {
 	extractResourceKeys,
 	type SessionRegistries,
 } from './sessionRegistries';
+import { clone } from './clone';
 
 export interface SessionStateRecord {
 	readonly sessionId: string;
@@ -28,13 +29,6 @@ export interface SessionStateRecord {
 type SessionStatePayload = SessionStateResponse | SessionAdvanceResponse;
 
 const records = new Map<string, SessionStateRecord>();
-
-const clone = <T>(value: T): T => {
-	if (typeof structuredClone === 'function') {
-		return structuredClone(value);
-	}
-	return JSON.parse(JSON.stringify(value)) as T;
-};
 
 function mergeRegistryEntries<DefinitionType>(
 	target: Registry<DefinitionType>,

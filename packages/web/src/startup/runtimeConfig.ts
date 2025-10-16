@@ -5,6 +5,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import fallbackConfigJson from './runtimeConfigFallback.json';
+import { clone } from '../state/clone';
 
 export interface LegacyContentConfig {
 	phases: PhaseConfig[];
@@ -19,13 +20,6 @@ type RuntimeConfigSource = Partial<LegacyContentConfig>;
 declare global {
 	var __KINGDOM_BUILDER_CONFIG__: RuntimeConfigSource | undefined;
 }
-
-const clone = <T>(value: T): T => {
-	if (typeof structuredClone === 'function') {
-		return structuredClone(value);
-	}
-	return JSON.parse(JSON.stringify(value)) as T;
-};
 
 function normalizeResourceDefinitions(
 	resources: Record<string, SessionResourceDefinition> | undefined,
