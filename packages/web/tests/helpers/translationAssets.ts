@@ -1,10 +1,14 @@
 import { createTranslationAssets } from '../../src/translation/context/assets';
-import { createSessionRegistries } from './sessionRegistries';
+import { createTestSessionScaffold } from './testSessionScaffold';
 
 export function createDefaultTranslationAssets() {
-	const registries = createSessionRegistries();
-	return createTranslationAssets({
-		populations: registries.populations,
-		resources: registries.resources,
-	});
+	const { registries, metadata, ruleSnapshot } = createTestSessionScaffold();
+	return createTranslationAssets(
+		{
+			populations: registries.populations,
+			resources: registries.resources,
+		},
+		metadata,
+		{ rules: ruleSnapshot },
+	);
 }
