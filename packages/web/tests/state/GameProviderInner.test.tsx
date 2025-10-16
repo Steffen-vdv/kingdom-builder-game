@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import React, { useContext } from 'react';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
@@ -20,6 +20,7 @@ import {
 import { createRemoteSessionAdapter } from '../helpers/remoteSessionAdapter';
 import { clearSessionStateStore } from '../../src/state/sessionStateStore';
 import type { TranslationContext } from '../../src/translation/context';
+import { updatePlayerName as updateRemotePlayerName } from '../../src/state/sessionSdk';
 
 const runUntilActionPhaseMock = vi.fn(() => Promise.resolve());
 const runUntilActionPhaseCoreMock = vi.fn(() => Promise.resolve());
@@ -139,6 +140,8 @@ function ContextInspector() {
 describe('GameProviderInner', () => {
 	const sessionId = 'session:test';
 	let sessionState: SessionSnapshot;
+	let localPlayer: ReturnType<typeof createSnapshotPlayer>;
+	let aiOpponent: ReturnType<typeof createSnapshotPlayer>;
 	const registries = createSessionRegistries();
 	const resourceKeys = createResourceKeys();
 
@@ -156,15 +159,20 @@ describe('GameProviderInner', () => {
 		refreshPhaseStateMock.mockClear();
 		handlePerformMock.mockClear();
 		useSessionQueueMock.mockReset();
+		vi.mocked(updateRemotePlayerName).mockClear();
 		const phases = [
 			{ id: 'phase:test', action: true, steps: [{ id: 'phase:test:start' }] },
 		];
-		const primary = createSnapshotPlayer({ id: 'A', name: 'Player A' });
-		const opponent = createSnapshotPlayer({ id: 'B', name: 'Player B' });
+		localPlayer = createSnapshotPlayer({ id: 'A', name: 'Player A' });
+		aiOpponent = createSnapshotPlayer({
+			id: 'B',
+			name: 'Player B',
+			aiControlled: true,
+		});
 		sessionState = createSessionSnapshot({
-			players: [primary, opponent],
-			activePlayerId: primary.id,
-			opponentId: opponent.id,
+			players: [aiOpponent, localPlayer],
+			activePlayerId: aiOpponent.id,
+			opponentId: localPlayer.id,
 			phases,
 			actionCostResource: 'ap',
 			ruleSnapshot: {
@@ -203,7 +211,7 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				playerName={sessionState.game.players[0]?.name ?? 'Player'}
+				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={{
 					enqueue: vi.fn(),
@@ -229,6 +237,125 @@ describe('GameProviderInner', () => {
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionState).toBe(sessionState);
 		expect(getByTestId('adapter-id')).toHaveTextContent('adapter:test');
+		cleanup();
+	});
+
+	it('updates the human-controlled player name even when listed after AI opponents', async () => {
+		const registriesPayload = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const enqueue = vi.fn(
+			async <T,>(task: () => Promise<T> | T) => await task(),
+		);
+		const refreshSession = vi.fn(async () => {});
+		let currentSnapshot = sessionState;
+		useSessionQueueMock.mockImplementation(() => ({
+			adapter,
+			enqueue,
+			cachedSessionSnapshot: currentSnapshot,
+		}));
+
+		const { rerender } = render(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				playerName="Strategist"
+				onChangePlayerName={() => {}}
+				queue={{
+					enqueue: vi.fn(),
+					getCurrentSession: () => adapter,
+					getLatestSnapshot: () => null,
+				}}
+				sessionId={sessionId}
+				sessionState={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={refreshSession}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<ContextInspector />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(updateRemotePlayerName).toHaveBeenCalledWith({
+				sessionId,
+				playerId: localPlayer.id,
+				playerName: 'Strategist',
+			});
+		});
+		await waitFor(() => {
+			expect(refreshSession).toHaveBeenCalled();
+		});
+
+		const updatedLocal = createSnapshotPlayer({
+			id: localPlayer.id,
+			name: 'Strategist',
+		});
+		currentSnapshot = createSessionSnapshot({
+			players: [aiOpponent, updatedLocal],
+			activePlayerId: aiOpponent.id,
+			opponentId: updatedLocal.id,
+			phases: sessionState.phases,
+			actionCostResource: sessionState.actionCostResource,
+			ruleSnapshot: sessionState.rules,
+		});
+		useSessionQueueMock.mockImplementation(() => ({
+			adapter,
+			enqueue,
+			cachedSessionSnapshot: currentSnapshot,
+		}));
+
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				playerName="Warlord"
+				onChangePlayerName={() => {}}
+				queue={{
+					enqueue: vi.fn(),
+					getCurrentSession: () => adapter,
+					getLatestSnapshot: () => null,
+				}}
+				sessionId={sessionId}
+				sessionState={currentSnapshot}
+				ruleSnapshot={currentSnapshot.rules}
+				refreshSession={refreshSession}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={currentSnapshot.metadata}
+			>
+				<ContextInspector />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(updateRemotePlayerName).toHaveBeenLastCalledWith({
+				sessionId,
+				playerId: localPlayer.id,
+				playerName: 'Warlord',
+			});
+		});
 		cleanup();
 	});
 });
