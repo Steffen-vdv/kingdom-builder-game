@@ -37,6 +37,7 @@ interface PopulationInfoScenario {
 		}
 	>;
 	populationIds: string[];
+	maxPopulationKey: string;
 }
 
 function resolveMaxPopulationKey(metadata: PopulationInfoScenario['metadata']) {
@@ -48,7 +49,11 @@ function resolveMaxPopulationKey(metadata: PopulationInfoScenario['metadata']) {
 }
 
 function createPopulationInfoScenario(
-	options: { omitMetadataFor?: string } = {},
+	options: {
+		omitMetadataFor?: string;
+		playerStats?: Record<string, number>;
+		statsHistory?: Record<string, boolean>;
+	} = {},
 ): PopulationInfoScenario {
 	const scaffold = createTestSessionScaffold();
 	const registries = scaffold.registries;
@@ -68,11 +73,18 @@ function createPopulationInfoScenario(
 		populationCounts[secondaryRole] = 1;
 	}
 	const maxPopulationKey = resolveMaxPopulationKey(metadata);
+	const playerStats: Record<string, number> = {
+		...(options.playerStats ?? {}),
+	};
+	if (!(maxPopulationKey in playerStats)) {
+		playerStats[maxPopulationKey] = 5;
+	}
 	const activePlayer = createSnapshotPlayer({
 		id: 'player-1' as PlayerId,
 		name: 'Player One',
 		population: populationCounts,
-		stats: { [maxPopulationKey]: 5 },
+		stats: playerStats,
+		statsHistory: { ...(options.statsHistory ?? {}) },
 	});
 	const opponent = createSnapshotPlayer({
 		id: 'player-2' as PlayerId,
@@ -108,6 +120,7 @@ function createPopulationInfoScenario(
 		mockGame: mockGame as LegacyGameEngineContextValue,
 		forecast,
 		populationIds,
+		maxPopulationKey,
 	};
 }
 
@@ -191,6 +204,34 @@ describe('<PopulationInfo />', () => {
 			descriptor.icon ?? registries.populations.get(fallbackRole)?.icon;
 		if (fallbackIcon) {
 			expect(button.textContent).toContain(fallbackIcon);
+		}
+	});
+
+	it('renders stat buttons using metadata-driven descriptors', () => {
+		scenario = createPopulationInfoScenario({
+			playerStats: { armyStrength: 2 },
+		});
+		currentGame = scenario.mockGame;
+		forecastByPlayerId = scenario.forecast;
+		const { registries, metadata, metadataSelectors, activePlayer } = scenario;
+		render(
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<PopulationInfo player={activePlayer} />
+			</RegistryMetadataProvider>,
+		);
+		const descriptor = toDescriptorDisplay(
+			metadataSelectors.statMetadata.select('armyStrength'),
+		);
+		const escapedLabel = descriptor.label.replace(
+			/[.*+?^${}()|[\]\\]/g,
+			'\\$&',
+		);
+		const statButton = screen.getByRole('button', {
+			name: new RegExp(escapedLabel, 'i'),
+		});
+		expect(statButton).toBeInTheDocument();
+		if (descriptor.icon) {
+			expect(statButton.textContent).toContain(descriptor.icon);
 		}
 	});
 });
