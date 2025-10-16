@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import {
-	type OverviewSectionTemplate,
-	type OverviewTokenCandidates as OverviewTokenCandidatesTemplate,
-	type OverviewTokenCategoryName,
-} from '@kingdom-builder/contents';
+import type {
+	SessionOverviewMetadata,
+	SessionOverviewSection,
+	SessionOverviewTokenCategoryName,
+} from '@kingdom-builder/protocol/session';
 import type { OverviewSectionDef } from './OverviewLayout';
 import {
 	buildOverviewIconSet,
@@ -15,9 +15,13 @@ import { normalizeCandidates } from './overviewTokenUtils';
 
 export type OverviewIconSet = Record<string, ReactNode | undefined>;
 
-export type OverviewTokenCandidates = OverviewTokenCandidatesTemplate;
+type OverviewTokenCategoryName = SessionOverviewTokenCategoryName;
 
-export type OverviewContentSection = OverviewSectionTemplate;
+export type OverviewTokenCandidates = NonNullable<
+	SessionOverviewMetadata['tokens']
+>;
+
+export type OverviewContentSection = SessionOverviewSection;
 
 function spanProps(span?: boolean) {
 	return span === undefined ? {} : { span };
