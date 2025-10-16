@@ -211,7 +211,7 @@ export function createPhaseTestEnvironment() {
 		winConditions: RULES.winConditions,
 	};
 
-	const ctx = createEngine({
+	const engineContext = createEngine({
 		actions: content.actions,
 		buildings: content.buildings,
 		developments: content.developments,
@@ -222,7 +222,7 @@ export function createPhaseTestEnvironment() {
 	});
 
 	return {
-		ctx,
+		engineContext,
 		phases,
 		ids: {
 			phases: phaseIds,
