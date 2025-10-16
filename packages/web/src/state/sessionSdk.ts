@@ -201,15 +201,17 @@ function applyActionSnapshot(
 	}
 }
 
-export async function advanceSessionPhase(
+interface AdvanceSessionPhaseOptions {
+	skipQueue?: boolean;
+}
+
+async function runAdvanceSessionPhase(
 	request: SessionAdvanceRequest,
-	requestOptions: GameApiRequestOptions = {},
+	requestOptions: GameApiRequestOptions,
+	api: ReturnType<typeof ensureGameApi>,
+	adapter: RemoteSessionAdapter,
 ): Promise<SessionAdvanceResponse> {
-	const api = ensureGameApi();
-	const adapter = getAdapter(request.sessionId);
-	const response = await enqueueSessionTask(request.sessionId, async () =>
-		api.advancePhase(request, requestOptions),
-	);
+	const response = await api.advancePhase(request, requestOptions);
 	const stateRecord = applySessionState(response);
 	adapter.recordAdvanceResult(response.advance);
 	return {
@@ -218,6 +220,21 @@ export async function advanceSessionPhase(
 		registries: response.registries,
 		advance: clone(response.advance),
 	};
+}
+
+export async function advanceSessionPhase(
+	request: SessionAdvanceRequest,
+	requestOptions: GameApiRequestOptions = {},
+	options: AdvanceSessionPhaseOptions = {},
+): Promise<SessionAdvanceResponse> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	if (options.skipQueue) {
+		return runAdvanceSessionPhase(request, requestOptions, api, adapter);
+	}
+	return enqueueSessionTask(request.sessionId, () =>
+		runAdvanceSessionPhase(request, requestOptions, api, adapter),
+	);
 }
 async function runAiTurnInternal(
 	request: SessionRunAiRequest,
