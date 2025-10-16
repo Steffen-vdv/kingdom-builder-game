@@ -5,7 +5,10 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import {
+	DEFAULT_ASSET_METADATA,
+	DEFAULT_TRIGGER_METADATA,
+} from '../../contexts/defaultRegistryMetadata';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -14,27 +17,27 @@ import type {
 	TranslationTriggerAsset,
 } from './types';
 
-const DEFAULT_POPULATION_INFO = Object.freeze({
+const EMOJI_POPULATION_INFO = Object.freeze({
 	icon: '👥',
 	label: 'Population',
 });
 
-const DEFAULT_LAND_INFO = Object.freeze({
+const EMOJI_LAND_INFO = Object.freeze({
 	icon: '🗺️',
 	label: 'Land',
 });
 
-const DEFAULT_SLOT_INFO = Object.freeze({
+const EMOJI_SLOT_INFO = Object.freeze({
 	icon: '🧩',
 	label: 'Development Slot',
 });
 
-const DEFAULT_PASSIVE_INFO = Object.freeze({
+const EMOJI_PASSIVE_INFO = Object.freeze({
 	icon: '♾️',
 	label: 'Passive',
 });
 
-const DEFAULT_UPKEEP_INFO = Object.freeze({
+const EMOJI_UPKEEP_INFO = Object.freeze({
 	icon: '🧹',
 	label: 'Upkeep',
 });
@@ -173,20 +176,6 @@ function buildStatMap(
 	return Object.freeze(entries);
 }
 
-const DEFAULT_TRIGGER_ASSETS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => [
-			id,
-			Object.freeze({
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-				label: info.past,
-			} satisfies TranslationTriggerAsset),
-		]),
-	),
-);
-
 function mergeTriggerAsset(
 	base: TranslationTriggerAsset | undefined,
 	descriptor: SessionTriggerMetadata | undefined,
@@ -210,6 +199,15 @@ function mergeTriggerAsset(
 	}
 	return Object.freeze(entry);
 }
+
+const DEFAULT_TRIGGER_ASSETS = Object.freeze(
+	Object.fromEntries(
+		Object.entries(DEFAULT_TRIGGER_METADATA ?? {}).map(([id, descriptor]) => [
+			id,
+			mergeTriggerAsset(undefined, descriptor),
+		]),
+	),
+);
 
 function buildTriggerMap(
 	triggers: Record<string, SessionTriggerMetadata> | undefined,
@@ -257,32 +255,30 @@ export function createTranslationAssets(
 	);
 	const resources = buildResourceMap(registries.resources, metadata?.resources);
 	const stats = buildStatMap(metadata?.stats);
-	const assetDescriptors = metadata?.assets ?? {};
-	const populationAsset = mergeIconLabel(
-		DEFAULT_POPULATION_INFO,
-		assetDescriptors.population,
-		DEFAULT_POPULATION_INFO.label,
-	);
-	const landAsset = mergeIconLabel(
-		DEFAULT_LAND_INFO,
-		assetDescriptors.land,
-		DEFAULT_LAND_INFO.label,
-	);
-	const slotAsset = mergeIconLabel(
-		DEFAULT_SLOT_INFO,
-		assetDescriptors.slot,
-		DEFAULT_SLOT_INFO.label,
-	);
-	const passiveAsset = mergeIconLabel(
-		DEFAULT_PASSIVE_INFO,
-		assetDescriptors.passive,
-		DEFAULT_PASSIVE_INFO.label,
-	);
-	const upkeepAsset = mergeIconLabel(
-		DEFAULT_UPKEEP_INFO,
-		assetDescriptors.upkeep,
-		DEFAULT_UPKEEP_INFO.label,
-	);
+	const resolveAsset = (
+		key: 'population' | 'land' | 'slot' | 'passive' | 'upkeep',
+		emojiFallback: TranslationIconLabel,
+	): TranslationIconLabel => {
+		const metadataDescriptor = DEFAULT_ASSET_METADATA?.[key];
+		const baseAsset =
+			metadataDescriptor !== undefined
+				? mergeIconLabel(
+						emojiFallback,
+						metadataDescriptor,
+						metadataDescriptor.label ?? emojiFallback.label ?? key,
+					)
+				: emojiFallback;
+		return mergeIconLabel(
+			baseAsset,
+			metadata?.assets?.[key],
+			baseAsset.label ?? emojiFallback.label ?? key,
+		);
+	};
+	const populationAsset = resolveAsset('population', EMOJI_POPULATION_INFO);
+	const landAsset = resolveAsset('land', EMOJI_LAND_INFO);
+	const slotAsset = resolveAsset('slot', EMOJI_SLOT_INFO);
+	const passiveAsset = resolveAsset('passive', EMOJI_PASSIVE_INFO);
+	const upkeepAsset = resolveAsset('upkeep', EMOJI_UPKEEP_INFO);
 	const triggers = buildTriggerMap(metadata?.triggers);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
