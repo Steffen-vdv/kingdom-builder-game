@@ -12,7 +12,10 @@ guide for rationale, lore, and extended background.
    - Install and authenticate the
      [CodeRabbit CLI](https://docs.coderabbit.ai/cli) so the `coderabbit` binary
      is available on your `PATH` and respects the repository's
-     `.coderabbit.yml` filters.
+     `.coderabbit.yml` filters. Review
+     [`docs/tooling/coderabbit-cli.md`](tooling/coderabbit-cli.md) for setup
+     pointers, confirm the install with `coderabbit --version`, and authenticate
+     locally via `coderabbit auth login`.
    - Keep CodeRabbit running in a separate terminal via
      `npm run coderabbit -- --watch` (or the CLI's equivalent). Treat it as an
      asynchronous reviewer: continue coding while it processes local changes and
@@ -27,6 +30,10 @@ guide for rationale, lore, and extended background.
      boundaries.
    - [`npm run verify`](../scripts/run-verification.mjs) now runs CodeRabbit
      before the formatting, lint, type, and coverage checks; it streams output
+     into timestamped logs inside `artifacts/` so you can share the run when
+     needed. If the CLI is missing, the script writes remediation guidance to
+     `*coderabbit-review.log` and flags the verification as an environment
+     failure until the binary is installed.
    - Stop immediately if any of these commands fail. Fix the reported problem
      (formatting, type errors, lint drift, or test regressions) and re-run the
      command locally before staging changes so the PR lands clean.
