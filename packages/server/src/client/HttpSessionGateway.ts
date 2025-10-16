@@ -45,6 +45,11 @@ import type {
 	RunAiTurnHandler,
 	SimulatePhasesHandler,
 } from './HttpSessionGatewayTypes.js';
+import {
+	createSessionDetailPath,
+	encodeSessionId,
+	normalizeRequestPath,
+} from './sessionPathHelpers.js';
 export interface HttpSessionGatewayOptions {
 	readonly baseUrl: string;
 	readonly fetch?: FetchLike;
@@ -130,7 +135,7 @@ export class HttpSessionGateway implements SessionGateway {
 		const payload = sessionAdvanceRequestSchema.parse(request);
 		const result = await this.execute({
 			method: 'GET',
-			path: `sessions/${this.encodeSessionId(payload.sessionId)}/snapshot`,
+			path: `sessions/${encodeSessionId(payload.sessionId)}/snapshot`,
 		});
 		if (!result.response.ok) {
 			throw this.toTransportError(result);
@@ -143,7 +148,7 @@ export class HttpSessionGateway implements SessionGateway {
 		const payload = actionExecuteRequestSchema.parse(request);
 		const result = await this.execute({
 			method: 'POST',
-			path: `sessions/${this.encodeSessionId(payload.sessionId)}/actions`,
+			path: `sessions/${encodeSessionId(payload.sessionId)}/actions`,
 			body: payload,
 		});
 		if (!result.response.ok) {
@@ -167,7 +172,7 @@ export class HttpSessionGateway implements SessionGateway {
 		const payload = sessionAdvanceRequestSchema.parse(request);
 		const result = await this.execute({
 			method: 'POST',
-			path: `sessions/${this.encodeSessionId(payload.sessionId)}/advance`,
+			path: `sessions/${encodeSessionId(payload.sessionId)}/advance`,
 		});
 		if (!result.response.ok) {
 			throw this.toTransportError(result);
@@ -180,7 +185,7 @@ export class HttpSessionGateway implements SessionGateway {
 		const payload = sessionSetDevModeRequestSchema.parse(request);
 		const result = await this.execute({
 			method: 'POST',
-			path: `sessions/${this.encodeSessionId(payload.sessionId)}/dev-mode`,
+			path: `sessions/${encodeSessionId(payload.sessionId)}/dev-mode`,
 			body: { enabled: payload.enabled },
 		});
 		if (!result.response.ok) {
@@ -204,15 +209,16 @@ export class HttpSessionGateway implements SessionGateway {
 		return schema.parse(result.data);
 	}
 	private postSessionDetail<ResponseType>(
-		payload: { sessionId: string },
+		payload: { sessionId: string } & Partial<{ actionId: string }>,
 		suffix: string,
 		schema: { parse(data: unknown): ResponseType },
 	): Promise<ResponseType> {
-		return this.postSessionRequest(
-			`sessions/${this.encodeSessionId(payload.sessionId)}/${suffix}`,
-			payload,
-			schema,
+		const path = createSessionDetailPath(
+			payload.sessionId,
+			suffix,
+			payload.actionId,
 		);
+		return this.postSessionRequest(path, payload, schema);
 	}
 	private createActionHandler<
 		RequestType extends { sessionId: string },
@@ -239,7 +245,7 @@ export class HttpSessionGateway implements SessionGateway {
 		path,
 		body,
 	}: RequestOptions): Promise<Request> {
-		const url = new URL(this.normalizePath(path), this.baseUrl);
+		const url = new URL(normalizeRequestPath(path), this.baseUrl);
 		const headers = new Headers(await this.resolveHeaders());
 		const init: RequestInit = { method };
 		if (body !== undefined) {
@@ -248,10 +254,6 @@ export class HttpSessionGateway implements SessionGateway {
 		}
 		init.headers = headers;
 		return new Request(url, init);
-	}
-
-	private normalizePath(path: string): string {
-		return path.startsWith('/') ? path.slice(1) : path;
 	}
 
 	private async resolveHeaders(): Promise<HeaderInput> {
@@ -336,9 +338,5 @@ export class HttpSessionGateway implements SessionGateway {
 			value === 'UNAUTHORIZED' ||
 			value === 'FORBIDDEN'
 		);
-	}
-
-	private encodeSessionId(sessionId: string): string {
-		return encodeURIComponent(sessionId);
 	}
 }

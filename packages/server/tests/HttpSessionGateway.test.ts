@@ -3,7 +3,7 @@ import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import {
 	HttpSessionGateway,
 	type HttpSessionGatewayOptions,
-} from '../src/client/HttpSessionGateway.js';
+} from '../src/index.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 
 describe('HttpSessionGateway', () => {
@@ -211,7 +211,7 @@ describe('HttpSessionGateway', () => {
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/costs',
+					'/api/sessions/test/actions/build/costs',
 				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({
@@ -266,7 +266,7 @@ describe('HttpSessionGateway', () => {
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/requirements',
+					'/api/sessions/test/actions/build/requirements',
 				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({
@@ -338,7 +338,7 @@ describe('HttpSessionGateway', () => {
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/options',
+					'/api/sessions/test/actions/choose/options',
 				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({
@@ -399,6 +399,31 @@ describe('HttpSessionGateway', () => {
 			} as never),
 		).rejects.toThrow();
 		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('encodes action identifiers in metadata request paths', async () => {
+		const fetch = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const request =
+					input instanceof Request ? input : new Request(input, init);
+				expect(new URL(request.url).pathname).toBe(
+					'/api/sessions/test/actions/build%2Fspecial/costs',
+				);
+				const payload = await request.clone().json();
+				expect(payload).toEqual({
+					sessionId: 'test',
+					actionId: 'build/special',
+				});
+				return jsonResponse({ sessionId: 'test', costs: {} });
+			},
+		);
+		const gateway = createGateway({ fetch });
+		const response = await gateway.fetchActionCosts({
+			sessionId: 'test',
+			actionId: 'build/special',
+		});
+		expect(response.costs).toEqual({});
+		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
 	it('runs AI turns via the REST endpoint', async () => {
