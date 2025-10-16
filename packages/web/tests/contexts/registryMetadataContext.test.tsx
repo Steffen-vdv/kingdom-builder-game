@@ -126,6 +126,36 @@ function createTestSetup(): TestSetup {
 			land: { label: 'Territory', icon: '🗺️' },
 			passive: { label: 'Aura', icon: '✨' },
 		},
+		overview: {
+			hero: {
+				badgeIcon: '🜂',
+				badgeLabel: 'Astral Watch',
+				title: 'Astral Briefing',
+				intro: 'Survey the skies before you march.',
+				paragraph: 'Harness the constellations to guide your ascent.',
+				tokens: { realm: 'Aether Dominion' },
+			},
+			sections: [
+				{
+					kind: 'paragraph',
+					id: 'astral-intro',
+					icon: '✨',
+					title: 'Astral Introduction',
+					paragraphs: [
+						'Channel {starlight} energies into every decree.',
+						'Let {astralCouncil} envoys map your dominion.',
+					],
+				},
+			],
+			tokens: {
+				resources: {
+					[resourceKey]: [resourceKey, 'starlight'],
+				},
+				population: {
+					[population.id]: [population.id],
+				},
+			},
+		},
 	};
 	const registries: SessionRegistries = {
 		actions: factory.actions,
@@ -284,6 +314,15 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
-		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(context.overviewContent.hero.title).toBe('Astral Briefing');
+		expect(context.overviewContent.hero.tokens.realm).toBe('Aether Dominion');
+		expect(context.overviewContent.sections).toHaveLength(1);
+		const [section] = context.overviewContent.sections;
+		expect(section.kind).toBe('paragraph');
+		const resourceTokenCandidates = context.overviewContent.tokens.resources;
+		expect(resourceTokenCandidates?.[setup.resourceKey]).toEqual([
+			setup.resourceKey,
+			'starlight',
+		]);
 	});
 });

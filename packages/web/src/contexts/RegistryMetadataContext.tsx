@@ -8,12 +8,10 @@ import type {
 import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
+	OverviewContentTemplate,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
+import { createOverviewContentFromMetadata } from './registryOverviewContent';
 import {
 	createRegistryLookup,
 	createResourceLookup,
@@ -222,7 +220,10 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const overviewContent = useMemo(
+		() => createOverviewContentFromMetadata(metadata.overview),
+		[metadata],
+	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
