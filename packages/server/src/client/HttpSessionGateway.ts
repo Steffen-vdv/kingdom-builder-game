@@ -57,7 +57,7 @@ export class HttpSessionGateway implements SessionGateway {
 	public readonly fetchActionCosts: FetchActionCostsHandler =
 		this.createActionHandler(
 			sessionActionCostRequestSchema,
-			'actions/costs',
+			(payload) => `actions/${this.encodeActionId(payload.actionId)}/costs`,
 			sessionActionCostResponseSchema,
 		) as FetchActionCostsHandler;
 	public readonly getActionCosts: SessionGateway['getActionCosts'] = this
@@ -65,7 +65,8 @@ export class HttpSessionGateway implements SessionGateway {
 	public readonly fetchActionRequirements: FetchActionRequirementsHandler =
 		this.createActionHandler(
 			sessionActionRequirementRequestSchema,
-			'actions/requirements',
+			(payload) =>
+				`actions/${this.encodeActionId(payload.actionId)}/requirements`,
 			sessionActionRequirementResponseSchema,
 		) as FetchActionRequirementsHandler;
 	public readonly getActionRequirements: SessionGateway['getActionRequirements'] =
@@ -73,7 +74,7 @@ export class HttpSessionGateway implements SessionGateway {
 	public readonly fetchActionOptions: FetchActionOptionsHandler =
 		this.createActionHandler(
 			sessionActionOptionsRequestSchema,
-			'actions/options',
+			(payload) => `actions/${this.encodeActionId(payload.actionId)}/options`,
 			sessionActionOptionsResponseSchema,
 		) as FetchActionOptionsHandler;
 	public readonly getActionOptions: SessionGateway['getActionOptions'] = this
@@ -203,13 +204,18 @@ export class HttpSessionGateway implements SessionGateway {
 		}
 		return schema.parse(result.data);
 	}
-	private postSessionDetail<ResponseType>(
-		payload: { sessionId: string },
-		suffix: string,
+	private postSessionDetail<
+		ResponseType,
+		RequestType extends { sessionId: string },
+	>(
+		payload: RequestType,
+		suffix: string | ((payload: RequestType) => string),
 		schema: { parse(data: unknown): ResponseType },
 	): Promise<ResponseType> {
+		const resolvedSuffix =
+			typeof suffix === 'function' ? suffix(payload) : suffix;
 		return this.postSessionRequest(
-			`sessions/${this.encodeSessionId(payload.sessionId)}/${suffix}`,
+			`sessions/${this.encodeSessionId(payload.sessionId)}/${resolvedSuffix}`,
 			payload,
 			schema,
 		);
@@ -219,7 +225,7 @@ export class HttpSessionGateway implements SessionGateway {
 		ResponseType,
 	>(
 		requestSchema: { parse(data: unknown): RequestType },
-		suffix: string,
+		suffix: string | ((payload: RequestType) => string),
 		responseSchema: { parse(data: unknown): ResponseType },
 	): (request: RequestType) => Promise<ResponseType> {
 		return async (request) => {
@@ -340,5 +346,9 @@ export class HttpSessionGateway implements SessionGateway {
 
 	private encodeSessionId(sessionId: string): string {
 		return encodeURIComponent(sessionId);
+	}
+
+	private encodeActionId(actionId: string): string {
+		return encodeURIComponent(actionId);
 	}
 }
