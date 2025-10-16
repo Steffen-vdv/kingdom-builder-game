@@ -66,9 +66,13 @@ export function ownerLabel(
 // buildAttackSummaryBullet for the summarize branch instead of returning prose.
 export function buildBaseEntry(
 	effectDefinition: EffectDef<Record<string, unknown>>,
+	translationContext: TranslationContext,
 	mode: Mode,
 ): BaseEntryResult {
-	const context = resolveAttackFormatterContext(effectDefinition);
+	const context = resolveAttackFormatterContext(
+		effectDefinition,
+		translationContext,
+	);
 	const ignoreAbsorption = Boolean(
 		effectDefinition.params?.['ignoreAbsorption'],
 	);
@@ -194,6 +198,7 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'defender'),
 				diffEntry,
+				translationContext,
 			),
 		),
 	);
@@ -202,6 +207,7 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'attacker'),
 				diffEntry,
+				translationContext,
 			),
 		),
 	);

@@ -12,25 +12,21 @@ import { buildAttackSummaryBullet } from './summary';
 import { buildDescribeEntry, buildingFortificationItems } from './evaluation';
 import type { AttackTargetFormatter } from './types';
 import type { SummaryEntry } from '../../../content';
-import {
-	selectAttackBuildingDescriptor,
-	selectAttackDefaultBuildingId,
-} from './registrySelectors';
+import { selectAttackBuildingDescriptor } from './registrySelectors';
 
 const buildingFormatter: AttackTargetFormatter<{
 	type: 'building';
 	id: string;
 }> = {
 	type: 'building',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, _context) {
 		const targetParam = effect.params?.['target'] as
 			| { type: 'building'; id: string }
 			| undefined;
 		if (targetParam?.type === 'building') {
 			return targetParam;
 		}
-		const fallbackId = selectAttackDefaultBuildingId() ?? 'unknown_building';
-		return { type: 'building', id: fallbackId };
+		return { type: 'building', id: 'unknown_building' };
 	},
 	normalizeLogTarget(target) {
 		const buildingTarget = target as Extract<
@@ -39,8 +35,8 @@ const buildingFormatter: AttackTargetFormatter<{
 		>;
 		return { type: 'building', id: buildingTarget.id };
 	},
-	getInfo(target) {
-		return selectAttackBuildingDescriptor(target.id);
+	getInfo(target, context) {
+		return selectAttackBuildingDescriptor(context, target.id);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
@@ -151,8 +147,8 @@ const buildingFormatter: AttackTargetFormatter<{
 
 		return { title, items };
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, context, options) {
+		return formatDiffCommon(prefix, diff, context, options);
 	},
 	onDamageLogTitle(info) {
 		const display = iconLabel(info.icon, info.label);

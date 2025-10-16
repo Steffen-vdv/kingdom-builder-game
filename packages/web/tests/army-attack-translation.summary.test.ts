@@ -20,6 +20,7 @@ import {
 } from './helpers/armyAttackFactories';
 import {
 	SYNTH_RESOURCE_IDS,
+	SYNTH_RESOURCE_METADATA,
 	SYNTH_STAT_IDS,
 	COMBAT_STAT_CONFIG,
 } from './helpers/armyAttackConfig';
@@ -28,6 +29,7 @@ import {
 	selectAttackResourceDescriptor,
 	selectAttackStatDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
+import { humanizeIdentifier } from '../src/translation/effects/stringUtils';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -44,10 +46,19 @@ afterAll(() => {
 describe('army attack translation summary', () => {
 	it('summarizes attack action with on-damage effects', () => {
 		const { translation, attack, plunder } = createSyntheticCtx();
-		const castle = selectAttackResourceDescriptor(Resource.castleHP);
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const happiness = selectAttackResourceDescriptor(Resource.happiness);
-		const warWeariness = selectAttackStatDescriptor(Stat.warWeariness);
+		const castle = selectAttackResourceDescriptor(
+			translation,
+			Resource.castleHP,
+		);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const happiness = selectAttackResourceDescriptor(
+			translation,
+			Resource.happiness,
+		);
+		const warWeariness = selectAttackStatDescriptor(
+			translation,
+			Stat.warWeariness,
+		);
 		const attackEffect = attack.effects.find(
 			(effectDef: EffectDef) => effectDef.type === 'attack',
 		);
@@ -126,14 +137,21 @@ describe('army attack translation summary', () => {
 	});
 
 	it('falls back to generic labels when combat stat descriptors are omitted', () => {
-		const { translation, attack, resourceMetadata } = createPartialStatCtx();
-		const originalResource = resourceMetadata[SYNTH_RESOURCE_IDS.castleHP];
-		delete resourceMetadata[SYNTH_RESOURCE_IDS.castleHP];
+		const originalResource =
+			SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP];
+		delete SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP];
 		suppressSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
 		try {
-			const castle = selectAttackResourceDescriptor(Resource.castleHP);
-			const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-			expect(powerStat.label).toBe(SYNTH_COMBAT_STATS.power.key);
+			const { translation, attack } = createPartialStatCtx();
+			const castle = selectAttackResourceDescriptor(
+				translation,
+				Resource.castleHP,
+			);
+			const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+			const fallbackLabel =
+				humanizeIdentifier(SYNTH_COMBAT_STATS.power.key) ||
+				SYNTH_COMBAT_STATS.power.key;
+			expect(powerStat.label).toBe(fallbackLabel);
 			const targetDisplay = iconLabel(
 				castle.icon,
 				castle.label,
@@ -163,7 +181,7 @@ describe('army attack translation summary', () => {
 			]);
 		} finally {
 			if (originalResource) {
-				resourceMetadata[SYNTH_RESOURCE_IDS.castleHP] = originalResource;
+				SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP] = originalResource;
 			}
 			restoreSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
 		}
@@ -171,9 +189,12 @@ describe('army attack translation summary', () => {
 
 	it('summarizes building attack as destruction', () => {
 		const { translation, buildingAttack, building } = createSyntheticCtx();
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const gold = selectAttackResourceDescriptor(Resource.gold);
-		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
+		const buildingDescriptor = selectAttackBuildingDescriptor(
+			translation,
+			building.id,
+		);
 		const summaryTarget =
 			buildingDescriptor.icon || buildingDescriptor.label || building.id;
 		const attackEffect = buildingAttack.effects.find(
