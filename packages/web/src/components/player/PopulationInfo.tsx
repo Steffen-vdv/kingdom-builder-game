@@ -1,5 +1,4 @@
 import React from 'react';
-import { Stat } from '@kingdom-builder/contents';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { getStatBreakdownSummary } from '../../utils/stats';
 import { useGameEngine } from '../../state/GameContext';
@@ -24,6 +23,62 @@ const createDisplayMap = (descriptors: DescriptorDisplay[]) =>
 	);
 
 const POPULATION_ARCHETYPE_LABEL = 'Archetypes';
+const MAX_POPULATION_FALLBACK_KEY = 'maxPopulation';
+
+const NORMALIZE_PATTERN = /[\s_-]+/g;
+const POPULATION_KEYWORDS = ['population', 'citizen', 'inhabitant'];
+const CAPACITY_KEYWORDS = ['max', 'cap', 'capacity', 'limit', 'maximum'];
+
+const normalizeDescriptor = (value: string | undefined): string | undefined =>
+	value?.toLowerCase().replace(NORMALIZE_PATTERN, ' ').trim();
+
+const matchesPopulationCapacity = (value: string | undefined): boolean => {
+	const normalized = normalizeDescriptor(value);
+	if (!normalized) {
+		return false;
+	}
+	const hasPopulationKeyword = POPULATION_KEYWORDS.some((keyword) =>
+		normalized.includes(keyword),
+	);
+	if (!hasPopulationKeyword) {
+		return false;
+	}
+	return CAPACITY_KEYWORDS.some((keyword) => normalized.includes(keyword));
+};
+
+const resolveMaxPopulationKey = (
+	descriptors: DescriptorDisplay[],
+	assets: Readonly<Record<string, { label?: string }>>,
+	player: SessionPlayerStateSnapshot,
+): string => {
+	for (const descriptor of descriptors) {
+		if (
+			matchesPopulationCapacity(descriptor.id) ||
+			matchesPopulationCapacity(descriptor.label)
+		) {
+			return descriptor.id;
+		}
+	}
+	for (const [statKey, info] of Object.entries(assets)) {
+		if (
+			matchesPopulationCapacity(statKey) ||
+			matchesPopulationCapacity(info?.label)
+		) {
+			return statKey;
+		}
+	}
+	for (const statKey of Object.keys(player.stats ?? {})) {
+		if (matchesPopulationCapacity(statKey)) {
+			return statKey;
+		}
+	}
+	for (const statKey of Object.keys(player.statsHistory ?? {})) {
+		if (matchesPopulationCapacity(statKey)) {
+			return statKey;
+		}
+	}
+	return MAX_POPULATION_FALLBACK_KEY;
+};
 
 const ROLE_BUTTON_CLASSES = [
 	'cursor-help rounded-full border border-white/40 bg-white/40 px-2 py-1',
@@ -78,12 +133,22 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			: translationContext.opponent.id === player.id
 				? translationContext.opponent
 				: undefined;
+	const maxPopulationKey = React.useMemo(
+		() =>
+			resolveMaxPopulationKey(
+				statDescriptors,
+				translationContext.assets.stats,
+				player,
+			),
+		[player, statDescriptors, translationContext.assets.stats],
+	);
+
 	const maxPopulation = (() => {
-		const direct = player.stats?.[Stat.maxPopulation];
+		const direct = player.stats?.[maxPopulationKey];
 		if (typeof direct === 'number') {
 			return direct;
 		}
-		return translationPlayer?.stats?.[Stat.maxPopulation] ?? 0;
+		return translationPlayer?.stats?.[maxPopulationKey] ?? 0;
 	})();
 
 	const populationInfo = React.useMemo(
@@ -231,7 +296,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			</div>
 			{Object.entries(player.stats)
 				.filter(([statKey, statValue]) => {
-					if (statKey === Stat.maxPopulation) {
+					if (statKey === maxPopulationKey) {
 						return false;
 					}
 					if (statValue !== 0) {
