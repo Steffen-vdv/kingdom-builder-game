@@ -17,12 +17,13 @@ default map. The wrapper script resolves tokens in this order:
 1. `KB_SERVER_AUTH_TOKENS` (useful for CI and deployment environments).
 2. `config/server-auth.tokens.local.json` (ignored by git).
 3. `config/server-auth.tokens.default.json` (checked into the repo for
-   development).
+   development; ignored when `--require-tokens` is passed).
 
 When neither the environment variable nor the local override is present, the
 default file keeps the development server accessible with admin privileges. For
-production, call `npm run start` so `NODE_ENV=production` is set and the wrapper
-enforces the presence of real tokens.
+production, call `npm run start` so `NODE_ENV=production` is set. The wrapper
+skips the default dev file (and the built-in fallback) when `--require-tokens`
+is present, forcing you to supply real credentials.
 
 Both the environment variable and the JSON files share the same structure. Set
 the `KB_SERVER_AUTH_TOKENS` variable (or populate the config files) with a JSON

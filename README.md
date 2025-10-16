@@ -35,8 +35,8 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 8. Build just the Node server bundle: `npm run server:build`.
 9. Launch the production server locally with `npm run start` after supplying a
    real token map via `KB_SERVER_AUTH_TOKENS` or
-   `config/server-auth.tokens.local.json`. The wrapper enables `NODE_ENV=production`
-   and refuses to start without valid tokens.
+   `config/server-auth.tokens.local.json`. The wrapper enables `NODE_ENV=production`,
+   ignores the default dev token file, and refuses to start without valid tokens.
 10. Review the docs directory for additional deep dives into systems and lore.
 
 ### CodeRabbit usage

@@ -46,17 +46,19 @@ async function resolveTokens({ requireTokens }) {
 		}
 	}
 
-	const defaultPath = path.join(
-		ROOT_DIR,
-		'config',
-		'server-auth.tokens.default.json',
-	);
-	try {
-		const defaultTokens = await readJsonFile(defaultPath);
-		return JSON.stringify(defaultTokens);
-	} catch (error) {
-		if (requireTokens || (error && error.code !== 'ENOENT')) {
-			throw error;
+	if (!requireTokens) {
+		const defaultPath = path.join(
+			ROOT_DIR,
+			'config',
+			'server-auth.tokens.default.json',
+		);
+		try {
+			const defaultTokens = await readJsonFile(defaultPath);
+			return JSON.stringify(defaultTokens);
+		} catch (error) {
+			if (error && error.code !== 'ENOENT') {
+				throw error;
+			}
 		}
 	}
 
