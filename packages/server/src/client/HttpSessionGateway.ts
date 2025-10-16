@@ -169,6 +169,7 @@ export class HttpSessionGateway implements SessionGateway {
 		const result = await this.execute({
 			method: 'POST',
 			path: `sessions/${this.encodeSessionId(payload.sessionId)}/advance`,
+			body: payload,
 		});
 		if (!result.response.ok) {
 			throw this.toTransportError(result);
