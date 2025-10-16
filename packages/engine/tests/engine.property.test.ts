@@ -5,9 +5,9 @@ import { createTestEngine } from './helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { advance, performAction, getActionCosts, snapshotPlayer } from '../src';
 
-function toMain(ctx: ReturnType<typeof createTestEngine>) {
-	while (ctx.game.currentPhase !== PhaseId.Main) {
-		advance(ctx);
+function toMain(engineContext: ReturnType<typeof createTestEngine>) {
+	while (engineContext.game.currentPhase !== PhaseId.Main) {
+		advance(engineContext);
 	}
 }
 
@@ -45,18 +45,27 @@ describe('engine property invariants', () => {
 							{ type: 'building', method: 'add', params: { id: building.id } },
 						],
 					});
-					const ctx = createTestEngine(content);
-					toMain(ctx);
-					const costs = getActionCosts(action.id, ctx, { id: building.id });
+					const engineContext = createTestEngine(content);
+					toMain(engineContext);
+					const costs = getActionCosts(action.id, engineContext, {
+						id: building.id,
+					});
 					for (const [key, amount] of Object.entries(costs)) {
-						ctx.activePlayer.resources[key] = amount;
+						engineContext.activePlayer.resources[key] = amount;
 					}
-					const before = snapshotPlayer(ctx.activePlayer, ctx);
+					const before = snapshotPlayer(
+						engineContext.activePlayer,
+						engineContext,
+					);
 					const beforeCopy = JSON.parse(JSON.stringify(before));
-					performAction(action.id, ctx, { id: building.id });
-					expect(ctx.activePlayer.buildings.has(building.id)).toBe(true);
-					for (const key of Object.keys(ctx.activePlayer.resources)) {
-						expect(ctx.activePlayer.resources[key]).toBeGreaterThanOrEqual(0);
+					performAction(action.id, engineContext, { id: building.id });
+					expect(engineContext.activePlayer.buildings.has(building.id)).toBe(
+						true,
+					);
+					for (const key of Object.keys(engineContext.activePlayer.resources)) {
+						expect(
+							engineContext.activePlayer.resources[key],
+						).toBeGreaterThanOrEqual(0);
 					}
 					for (const key of new Set([
 						...Object.keys(costs),
@@ -66,7 +75,7 @@ describe('engine property invariants', () => {
 							(before.resources[key] ?? 0) -
 							(costs[key] ?? 0) +
 							(gains[key] ?? 0);
-						expect(ctx.activePlayer.resources[key]).toBe(expected);
+						expect(engineContext.activePlayer.resources[key]).toBe(expected);
 					}
 					expect(before).toEqual(beforeCopy);
 					expect(before.buildings.includes(building.id)).toBe(false);

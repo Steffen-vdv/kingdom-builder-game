@@ -8,19 +8,19 @@ function wait(milliseconds: number) {
 
 describe('EngineContext enqueue', () => {
 	it('runs tasks sequentially', async () => {
-		const ctx = createTestEngine();
+		const engineContext = createTestEngine();
 		const order: number[] = [];
-		void ctx.enqueue(async () => {
+		void engineContext.enqueue(async () => {
 			await wait(10);
 			order.push(1);
 		});
-		void ctx.enqueue(() => {
+		void engineContext.enqueue(() => {
 			order.push(2);
 		});
-		void ctx.enqueue(() => {
+		void engineContext.enqueue(() => {
 			order.push(3);
 		});
-		await ctx.enqueue(() => advance(ctx));
+		await engineContext.enqueue(() => advance(engineContext));
 		expect(order).toEqual([1, 2, 3]);
 	});
 });

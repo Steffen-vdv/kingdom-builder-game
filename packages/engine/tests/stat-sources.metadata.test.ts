@@ -15,9 +15,9 @@ import type { EvaluatorDependencyCollector } from '../src/stat_sources.ts';
 
 describe('stat sources metadata', () => {
 	it('merges frame metadata with effect overrides when recording stat deltas', () => {
-		const ctx = createTestEngine();
-		const player = ctx.activePlayer;
-		const firstPhase = ctx.phases[0];
+		const engineContext = createTestEngine();
+		const player = engineContext.activePlayer;
+		const firstPhase = engineContext.phases[0];
 		const firstStep = firstPhase?.steps[0];
 		expect(firstPhase).toBeDefined();
 		expect(firstStep).toBeDefined();
@@ -65,8 +65,8 @@ describe('stat sources metadata', () => {
 			},
 		};
 
-		const meta = withStatSourceFrames(ctx, frame, () =>
-			resolveStatSourceMeta(effect, ctx, Stat.armyStrength),
+		const meta = withStatSourceFrames(engineContext, frame, () =>
+			resolveStatSourceMeta(effect, engineContext, Stat.armyStrength),
 		);
 
 		expect(meta).toMatchObject({
@@ -108,7 +108,7 @@ describe('stat sources metadata', () => {
 		expect(initialEntry?.meta.longevity).toBe('ongoing');
 
 		const updateMeta = withStatSourceFrames(
-			ctx,
+			engineContext,
 			() => ({
 				dependsOn: [{ type: 'stat', id: Stat.growth }],
 				extra: { updateTag: 'gamma' },
@@ -131,7 +131,7 @@ describe('stat sources metadata', () => {
 							},
 						},
 					},
-					ctx,
+					engineContext,
 					Stat.armyStrength,
 				),
 		);
@@ -168,9 +168,9 @@ describe('stat sources metadata', () => {
 	});
 
 	it('records evaluator dependencies and percent-based stat deltas', () => {
-		const ctx = createTestEngine();
-		const player = ctx.activePlayer;
-		const developmentId = ctx.developments.keys()[0];
+		const engineContext = createTestEngine();
+		const player = engineContext.activePlayer;
+		const developmentId = engineContext.developments.keys()[0];
 		expect(developmentId).toBeDefined();
 
 		const dependencies = collectEvaluatorDependencies({
@@ -199,7 +199,7 @@ describe('stat sources metadata', () => {
 			method: 'add_pct',
 			params: { key: Stat.armyStrength, percent: 25, percentStat: Stat.growth },
 		};
-		recordEffectStatDelta(pctEffect, ctx, Stat.armyStrength, 1);
+		recordEffectStatDelta(pctEffect, engineContext, Stat.armyStrength, 1);
 		const pctEntry = Object.values(
 			player.statSources[Stat.armyStrength] ?? {},
 		).find((entry) => entry.meta.effect?.method === 'add_pct');

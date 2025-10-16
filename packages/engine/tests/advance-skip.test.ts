@@ -58,8 +58,8 @@ describe('advance skip handling', () => {
 			],
 		};
 
-		const ctx = createTestEngine({ rules: customRules });
-		const result = advance(ctx);
+		const engineContext = createTestEngine({ rules: customRules });
+		const result = advance(engineContext);
 
 		expect(result.effects).toHaveLength(0);
 		expect(result.phase).toBe(growthPhaseId);
@@ -70,10 +70,10 @@ describe('advance skip handling', () => {
 		);
 		expect(result.skipped?.sources[0]?.detail).toBe(phaseSummary);
 
-		expect(ctx.game.currentPhase).toBe(upkeepPhaseId);
+		expect(engineContext.game.currentPhase).toBe(upkeepPhaseId);
 		const firstUpkeepStep =
 			PHASES.find((phase) => phase.id === upkeepPhaseId)?.steps[0]?.id ?? '';
-		expect(ctx.game.currentStep).toBe(firstUpkeepStep);
+		expect(engineContext.game.currentStep).toBe(firstUpkeepStep);
 	});
 
 	it('skips individual steps when markers are present', () => {
@@ -105,18 +105,18 @@ describe('advance skip handling', () => {
 			],
 		};
 
-		const ctx = createTestEngine({ rules: customRules });
+		const engineContext = createTestEngine({ rules: customRules });
 		const upkeepIndex = PHASES.findIndex((phase) => phase.id === upkeepPhaseId);
 		const stepIndex =
 			upkeepPhase?.steps.findIndex((step) => step.id === warRecoveryStepId) ??
 			0;
 
-		ctx.game.phaseIndex = upkeepIndex;
-		ctx.game.currentPhase = upkeepPhaseId;
-		ctx.game.stepIndex = stepIndex;
-		ctx.game.currentStep = warRecoveryStepId;
+		engineContext.game.phaseIndex = upkeepIndex;
+		engineContext.game.currentPhase = upkeepPhaseId;
+		engineContext.game.stepIndex = stepIndex;
+		engineContext.game.currentStep = warRecoveryStepId;
 
-		const result = advance(ctx);
+		const result = advance(engineContext);
 
 		expect(result.effects).toHaveLength(0);
 		expect(result.phase).toBe(upkeepPhaseId);
@@ -126,9 +126,9 @@ describe('advance skip handling', () => {
 		expect(result.skipped?.stepId).toBe(warRecoveryStepId);
 		expect(result.skipped?.sources[0]?.detail).toBe(stepSummary);
 
-		expect(ctx.game.currentPhase).toBe(mainPhase?.id ?? '');
+		expect(engineContext.game.currentPhase).toBe(mainPhase?.id ?? '');
 		const expectedStep = mainPhase?.steps[0]?.id ?? '';
-		expect(ctx.game.currentStep).toBe(expectedStep);
+		expect(engineContext.game.currentStep).toBe(expectedStep);
 	});
 
 	it('collects metadata for every skip source to support logging', () => {
@@ -160,22 +160,27 @@ describe('advance skip handling', () => {
 			],
 		};
 
-		const ctx = createTestEngine({ rules: customRules });
-		ctx.passives.addPassive({ id: 'test:passive:extra' }, ctx, {
-			detail: 'Extra skip detail',
-			meta: {
-				source: {
-					id: 'test:extra',
-					icon: '🔥',
-					labelToken: 'tier.extra',
+		const engineContext = createTestEngine({ rules: customRules });
+		engineContext.passives.addPassive(
+			{ id: 'test:passive:extra' },
+			engineContext,
+			{
+				detail: 'Extra skip detail',
+				meta: {
+					source: {
+						id: 'test:extra',
+						icon: '🔥',
+						labelToken: 'tier.extra',
+					},
 				},
 			},
-		});
-		const skipBucket = ctx.activePlayer.skipPhases[growthPhaseId] ?? {};
+		);
+		const skipBucket =
+			engineContext.activePlayer.skipPhases[growthPhaseId] ?? {};
 		skipBucket['test:passive:extra'] = true;
-		ctx.activePlayer.skipPhases[growthPhaseId] = skipBucket;
+		engineContext.activePlayer.skipPhases[growthPhaseId] = skipBucket;
 
-		const result = advance(ctx);
+		const result = advance(engineContext);
 
 		const sources = result.skipped?.sources ?? [];
 		expect(result.skipped?.type).toBe('phase');

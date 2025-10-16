@@ -5,9 +5,9 @@ import { createTestEngine } from './helpers.ts';
 
 describe('stat:add_pct additive scaling', () => {
 	it('adds multiple percentages from the original base in the same step', () => {
-		const ctx = createTestEngine();
+		const engineContext = createTestEngine();
 		const base = 10;
-		ctx.activePlayer.stats[Stat.armyStrength] = base;
+		engineContext.activePlayer.stats[Stat.armyStrength] = base;
 
 		const pct1 = 0.2;
 		const pct2 = 0.4;
@@ -24,12 +24,14 @@ describe('stat:add_pct additive scaling', () => {
 			},
 		];
 
-		runEffects(effects, ctx);
+		runEffects(effects, engineContext);
 
 		const expected = base * (1 + pct1 + pct2);
-		expect(ctx.activePlayer.stats[Stat.armyStrength]).toBeCloseTo(expected);
+		expect(engineContext.activePlayer.stats[Stat.armyStrength]).toBeCloseTo(
+			expected,
+		);
 		const sequential = base * (1 + pct1) * (1 + pct2);
-		expect(ctx.activePlayer.stats[Stat.armyStrength]).not.toBeCloseTo(
+		expect(engineContext.activePlayer.stats[Stat.armyStrength]).not.toBeCloseTo(
 			sequential,
 		);
 	});

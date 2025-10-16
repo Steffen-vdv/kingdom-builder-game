@@ -68,11 +68,11 @@ describe('action effect groups integration', () => {
 		actions.add(rewardAction.id, rewardAction);
 		actions.add(alternateAction.id, alternateAction);
 		actions.add(chooser.id, chooser);
-		const ctx = createTestEngine({ actions });
-		while (ctx.game.currentPhase !== 'main') {
-			advance(ctx);
+		const engineContext = createTestEngine({ actions });
+		while (engineContext.game.currentPhase !== 'main') {
+			advance(engineContext);
 		}
-		const stored = ctx.actions.get(chooser.id);
+		const stored = engineContext.actions.get(chooser.id);
 		if (!stored.effects.some((effect) => 'options' in (effect as object))) {
 			throw new Error('Test setup failed: action lacks effect group entry');
 		}
@@ -82,31 +82,31 @@ describe('action effect groups integration', () => {
 				'Test setup failed: effect group should require a choice',
 			);
 		}
-		ctx.activePlayer.resources[Resource.ap] = 5;
-		ctx.activePlayer.resources[Resource.gold] = 0;
-		ctx.activePlayer.resources[Resource.happiness] = 0;
-		return { ctx, chooser, group, rewardAmount };
+		engineContext.activePlayer.resources[Resource.ap] = 5;
+		engineContext.activePlayer.resources[Resource.gold] = 0;
+		engineContext.activePlayer.resources[Resource.happiness] = 0;
+		return { engineContext, chooser, group, rewardAmount };
 	}
 
 	it('requires explicit selections for effect groups', () => {
-		const { ctx, chooser, group } = setup();
-		const costBag = getActionCosts(chooser.id, ctx);
+		const { engineContext, chooser, group } = setup();
+		const costBag = getActionCosts(chooser.id, engineContext);
 		expect(costBag[Resource.ap] ?? 0).toBe(0);
-		expect(() => performAction(chooser.id, ctx)).toThrowError(
+		expect(() => performAction(chooser.id, engineContext)).toThrowError(
 			new RegExp(group.id),
 		);
 	});
 
 	it('applies chosen option effects and preserves action traces', () => {
-		const { ctx, chooser, group, rewardAmount } = setup();
+		const { engineContext, chooser, group, rewardAmount } = setup();
 		const params = {
 			choices: {
 				[group.id]: { optionId: 'gold_reward' },
 			},
 		} as const;
-		const beforeGold = ctx.activePlayer.resources[Resource.gold];
-		const traces = performAction(chooser.id, ctx, params);
-		expect(ctx.activePlayer.resources[Resource.gold]).toBe(
+		const beforeGold = engineContext.activePlayer.resources[Resource.gold];
+		const traces = performAction(chooser.id, engineContext, params);
+		expect(engineContext.activePlayer.resources[Resource.gold]).toBe(
 			beforeGold + rewardAmount,
 		);
 		expect(traces).toHaveLength(1);
@@ -118,13 +118,13 @@ describe('action effect groups integration', () => {
 	});
 
 	it('exposes effect groups for logging and summaries', () => {
-		const { ctx, chooser, group } = setup();
+		const { engineContext, chooser, group } = setup();
 		const resolved = resolveActionEffects(chooser, {
 			choices: { [group.id]: { optionId: 'mood_reward' } },
 		});
 		expect(resolved.groups).toHaveLength(1);
 		expect(resolved.groups[0]?.group.id).toBe(group.id);
-		const lines = logContent('action', chooser.id, ctx, {
+		const lines = logContent('action', chooser.id, engineContext, {
 			choices: { [group.id]: { optionId: 'mood_reward' } },
 		});
 		const serialized = lines

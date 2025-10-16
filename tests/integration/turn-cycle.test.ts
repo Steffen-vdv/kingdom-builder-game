@@ -55,7 +55,7 @@ const rules: RuleSet = {
 describe('Turn cycle integration', () => {
 	it('advances players through all phases sequentially', () => {
 		const content = createContentFactory();
-		const ctx = createEngine({
+		const engineContext = createEngine({
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
@@ -65,24 +65,24 @@ describe('Turn cycle integration', () => {
 			rules,
 		});
 
-		while (ctx.game.currentPhase !== phaseIds.main) {
-			advance(ctx);
+		while (engineContext.game.currentPhase !== phaseIds.main) {
+			advance(engineContext);
 		}
-		expect(ctx.game.currentPlayerIndex).toBe(0);
-		expect(ctx.game.currentPhase).toBe(phaseIds.main);
+		expect(engineContext.game.currentPlayerIndex).toBe(0);
+		expect(engineContext.game.currentPhase).toBe(phaseIds.main);
 
-		advance(ctx);
+		advance(engineContext);
 
-		while (ctx.game.currentPhase !== phaseIds.main) {
-			advance(ctx);
+		while (engineContext.game.currentPhase !== phaseIds.main) {
+			advance(engineContext);
 		}
-		expect(ctx.game.currentPlayerIndex).toBe(1);
-		expect(ctx.game.currentPhase).toBe(phaseIds.main);
+		expect(engineContext.game.currentPlayerIndex).toBe(1);
+		expect(engineContext.game.currentPhase).toBe(phaseIds.main);
 
-		advance(ctx);
+		advance(engineContext);
 
-		expect(ctx.game.turn).toBe(2);
-		expect(ctx.game.currentPlayerIndex).toBe(0);
-		expect(ctx.game.currentPhase).toBe(phaseIds.growth);
+		expect(engineContext.game.turn).toBe(2);
+		expect(engineContext.game.currentPlayerIndex).toBe(0);
+		expect(engineContext.game.currentPhase).toBe(phaseIds.growth);
 	});
 });

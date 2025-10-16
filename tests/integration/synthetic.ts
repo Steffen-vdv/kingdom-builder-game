@@ -129,7 +129,7 @@ export function createSyntheticContext() {
 		winConditions: [],
 	};
 
-	const ctx = createEngine({
+	const engineContext = createEngine({
 		actions: actionsReg,
 		buildings,
 		developments,
@@ -139,5 +139,5 @@ export function createSyntheticContext() {
 		rules,
 	});
 
-	return { ctx, actions, phases, costKey, gainKey, start };
+	return { engineContext, actions, phases, costKey, gainKey, start };
 }

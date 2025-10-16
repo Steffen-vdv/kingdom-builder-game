@@ -130,10 +130,13 @@ const skipStepsByTier: Partial<
 
 describe('content happiness tiers', () => {
 	it('exposes tier passive metadata for web presentation', () => {
-		const ctx = createTestContext();
-		const player = ctx.activePlayer;
+		const engineContext = createTestContext();
+		const player = engineContext.activePlayer;
 		const tiersById = new Map(
-			ctx.services.rules.tierDefinitions.map((tier) => [tier.id, tier]),
+			engineContext.services.rules.tierDefinitions.map((tier) => [
+				tier.id,
+				tier,
+			]),
 		);
 		const samples = [
 			{ value: -10, label: 'despair' },
@@ -151,25 +154,32 @@ describe('content happiness tiers', () => {
 
 		for (const sample of samples) {
 			player.resources[Resource.happiness] = sample.value;
-			ctx.services.handleTieredResourceChange(ctx, player, Resource.happiness);
+			engineContext.services.handleTieredResourceChange(
+				engineContext,
+				player,
+				Resource.happiness,
+			);
 
-			const translationContext = createTranslationContextForEngine(ctx);
-			const passives = ctx.passives.values(player.id).map((passive) => {
-				const sourceId = passive.meta?.source?.id;
-				const tier = sourceId ? tiersById.get(sourceId) : undefined;
-				const summaryToken = tier?.display?.summaryToken;
-				const summary = translateTierSummary(
-					summaryToken,
-					translationContext.assets,
-				);
-				const removalToken = passive.meta?.removal?.token;
-				return {
-					id: passive.id,
-					removalToken,
-					summary,
-					summaryToken,
-				};
-			});
+			const translationContext =
+				createTranslationContextForEngine(engineContext);
+			const passives = engineContext.passives
+				.values(player.id)
+				.map((passive) => {
+					const sourceId = passive.meta?.source?.id;
+					const tier = sourceId ? tiersById.get(sourceId) : undefined;
+					const summaryToken = tier?.display?.summaryToken;
+					const summary = translateTierSummary(
+						summaryToken,
+						translationContext.assets,
+					);
+					const removalToken = passive.meta?.removal?.token;
+					return {
+						id: passive.id,
+						removalToken,
+						summary,
+						summaryToken,
+					};
+				});
 
 			snapshot[sample.label] = {
 				happiness: sample.value,

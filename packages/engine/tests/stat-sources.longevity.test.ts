@@ -5,18 +5,18 @@ import type { PhaseStepIdValue } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 
 function findPhaseStep(
-	ctx: ReturnType<typeof createTestEngine>,
+	engineContext: ReturnType<typeof createTestEngine>,
 	stepId: PhaseStepIdValue,
 ) {
-	return ctx.phases.find((phase) =>
+	return engineContext.phases.find((phase) =>
 		phase.steps.some((step) => step.id === stepId),
 	);
 }
 
 describe('stat sources longevity', () => {
 	it('captures ongoing and permanent stat sources with dependencies', () => {
-		const ctx = createTestEngine();
-		const player = ctx.activePlayer;
+		const engineContext = createTestEngine();
+		const player = engineContext.activePlayer;
 
 		const growthSources = Object.values(player.statSources[Stat.growth] ?? {});
 		expect(growthSources.length).toBeGreaterThan(0);
@@ -37,7 +37,7 @@ describe('stat sources longevity', () => {
 					params: { role: PopulationRole.Legion },
 				},
 			],
-			ctx,
+			engineContext,
 		);
 
 		const getPopulationEntries = () =>
@@ -60,11 +60,14 @@ describe('stat sources longevity', () => {
 			detail: 'unassigned',
 		});
 
-		const raiseStrengthPhase = findPhaseStep(ctx, PhaseStepId.RaiseStrength);
+		const raiseStrengthPhase = findPhaseStep(
+			engineContext,
+			PhaseStepId.RaiseStrength,
+		);
 		expect(raiseStrengthPhase).toBeDefined();
 		let result;
 		do {
-			result = advance(ctx);
+			result = advance(engineContext);
 		} while (
 			result.phase !== raiseStrengthPhase!.id ||
 			result.step !== PhaseStepId.RaiseStrength
@@ -91,7 +94,7 @@ describe('stat sources longevity', () => {
 					params: { role: PopulationRole.Legion },
 				},
 			],
-			ctx,
+			engineContext,
 		);
 
 		expect(getPopulationEntries()).toHaveLength(0);
