@@ -52,6 +52,10 @@ describe('raiders guild translation', () => {
 			icon: '✨',
 			label: 'Outcome Adjustment',
 		};
+		const transferDescriptor =
+			translation.assets.assets?.['resource:transfer'] ?? {};
+		const transferIcon =
+			transferDescriptor.icon ?? SYNTHETIC_RESOURCE_TRANSFER_ICON;
 		const summary = describeContent(
 			'building',
 			ids.transferBuilding,
@@ -64,7 +68,7 @@ describe('raiders guild translation', () => {
 		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
 			raid.icon ?? '',
 			raid.name,
-		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${SYNTHETIC_RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
+		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${transferIcon} ${increaseOrDecrease(
 			adjust,
 		)} transfer by ${Math.abs(adjust)}%`;
 		expect(collectText(effects)).toContain(clause);

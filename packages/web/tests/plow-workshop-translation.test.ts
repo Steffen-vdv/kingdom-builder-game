@@ -1,11 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createSyntheticPlowContent } from './fixtures/syntheticPlow';
+import {
+	createSyntheticPlowContent,
+	registerSyntheticPlowResources,
+} from './fixtures/syntheticPlow';
 import {
 	describeContent,
 	splitSummary,
 	type Summary,
 } from '../src/translation/content';
 import { createEngine } from '@kingdom-builder/engine';
+import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -23,7 +27,20 @@ describe('plow workshop translation', () => {
 			start: synthetic.start,
 			rules: synthetic.rules,
 		});
-		const summary = describeContent('building', synthetic.building.id, ctx);
+		const translation = createTranslationContextForEngine(ctx, (registries) => {
+			registerSyntheticPlowResources(registries.resources);
+			[synthetic.expand, synthetic.till, synthetic.plow].forEach((action) => {
+				registries.actions.add(action.id, { ...action });
+			});
+			registries.buildings.add(synthetic.building.id, {
+				...synthetic.building,
+			});
+		});
+		const summary = describeContent(
+			'building',
+			synthetic.building.id,
+			translation,
+		);
 		const { effects, description } = splitSummary(summary);
 		expect(effects).toHaveLength(1);
 		const build = effects[0] as { title: string; items?: unknown[] };

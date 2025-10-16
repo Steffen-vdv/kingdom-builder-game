@@ -1,4 +1,4 @@
-import type { PopulationRoleId } from '@kingdom-builder/contents';
+import type { SessionPopulationRoleId } from '@kingdom-builder/protocol/session';
 import type { TranslationContext } from '../context';
 import { selectPopulationDescriptor } from './registrySelectors';
 
@@ -9,7 +9,7 @@ export const increaseOrDecrease = (n: number): string =>
 
 export function resolvePopulationDisplay(
 	context: TranslationContext,
-	role: PopulationRoleId | undefined,
+	role: SessionPopulationRoleId | undefined,
 ): {
 	icon: string;
 	label: string;

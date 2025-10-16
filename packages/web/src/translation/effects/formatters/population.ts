@@ -1,10 +1,16 @@
-import type { PopulationRoleId } from '@kingdom-builder/contents';
+import type { SessionPopulationRoleId } from '@kingdom-builder/protocol/session';
 import { registerEffectFormatter } from '../factory';
 import { resolvePopulationDisplay } from '../helpers';
 import { selectPopulationDescriptor } from '../registrySelectors';
 
-function coercePopulationRole(value: unknown): PopulationRoleId | undefined {
-	return typeof value === 'string' ? (value as PopulationRoleId) : undefined;
+function isPopulationRoleId(value: unknown): value is SessionPopulationRoleId {
+	return typeof value === 'string';
+}
+
+function coercePopulationRole(
+	value: unknown,
+): SessionPopulationRoleId | undefined {
+	return isPopulationRoleId(value) ? value : undefined;
 }
 
 registerEffectFormatter('population', 'add', {

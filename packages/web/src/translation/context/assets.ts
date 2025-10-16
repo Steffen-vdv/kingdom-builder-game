@@ -3,6 +3,7 @@ import type {
 	SessionMetadataDescriptor,
 	SessionRuleSnapshot,
 	SessionSnapshotMetadata,
+	SessionSnapshotMetadataAssets,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 import { TRIGGER_INFO } from '@kingdom-builder/contents';
@@ -97,6 +98,40 @@ function mergeIconLabel(
 		entry.displayAsPercent = base.displayAsPercent;
 	}
 	return Object.freeze(entry);
+}
+
+function isDescriptorCandidate(
+	descriptor: unknown,
+): descriptor is SessionMetadataDescriptor {
+	if (!descriptor || typeof descriptor !== 'object') {
+		return false;
+	}
+	if (Array.isArray(descriptor)) {
+		return false;
+	}
+	const candidate = descriptor as Record<string, unknown>;
+	return (
+		'icon' in candidate ||
+		'label' in candidate ||
+		'description' in candidate ||
+		'displayAsPercent' in candidate
+	);
+}
+
+function buildAssetDescriptorMap(
+	descriptors: SessionSnapshotMetadataAssets | undefined,
+): Readonly<Record<string, TranslationIconLabel>> {
+	if (!descriptors) {
+		return Object.freeze({});
+	}
+	const entries: Record<string, TranslationIconLabel> = {};
+	for (const [id, descriptor] of Object.entries(descriptors)) {
+		if (!isDescriptorCandidate(descriptor)) {
+			continue;
+		}
+		entries[id] = mergeIconLabel(undefined, descriptor, id);
+	}
+	return Object.freeze(entries);
 }
 
 function toIconLabel(
@@ -258,6 +293,7 @@ export function createTranslationAssets(
 	const resources = buildResourceMap(registries.resources, metadata?.resources);
 	const stats = buildStatMap(metadata?.stats);
 	const assetDescriptors = metadata?.assets ?? {};
+	const generalAssets = buildAssetDescriptorMap(assetDescriptors);
 	const populationAsset = mergeIconLabel(
 		DEFAULT_POPULATION_INFO,
 		assetDescriptors.population,
@@ -294,6 +330,7 @@ export function createTranslationAssets(
 		slot: slotAsset,
 		passive: passiveAsset,
 		upkeep: upkeepAsset,
+		assets: generalAssets,
 		modifiers: DEFAULT_MODIFIER_INFO,
 		triggers,
 		tierSummaries,

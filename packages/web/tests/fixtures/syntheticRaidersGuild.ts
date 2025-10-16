@@ -45,6 +45,8 @@ export interface RaidersGuildSyntheticContext {
 const tierResourceKey = 'synthetic:tier';
 const syntheticGoldKey = 'gold';
 
+export const SYNTHETIC_RESOURCE_TRANSFER_ICON = '🔁';
+
 const SYNTHETIC_PHASES: SessionSnapshot['phases'] = [
 	{
 		id: 'phase:synthetic',
@@ -102,6 +104,15 @@ const buildMetadata = (
 			[developmentId]: {
 				icon: development.icon,
 				label: development.name ?? developmentId,
+			},
+		},
+		assets: {
+			land: { icon: '🗺️', label: 'Synthetic Land' },
+			slot: { icon: '🧩', label: 'Synthetic Slot' },
+			passive: { icon: '♾️', label: 'Synthetic Passive' },
+			['resource:transfer']: {
+				icon: SYNTHETIC_RESOURCE_TRANSFER_ICON,
+				label: 'Resource Transfer',
 			},
 		},
 		passiveEvaluationModifiers: {},
@@ -272,8 +283,6 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		},
 	};
 }
-
-export const SYNTHETIC_RESOURCE_TRANSFER_ICON = '🔁';
 
 export function getModifier(
 	ctx: RaidersGuildSyntheticContext['ctx'],
