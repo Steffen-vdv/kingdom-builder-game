@@ -1,4 +1,3 @@
-import { Stat, type StatKey } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../../context';
 import {
@@ -11,8 +10,14 @@ import {
 	type AttackStatContext,
 	type AttackStatDescriptor,
 	type AttackStatRole,
+	type AttackStatKey,
 	DEFAULT_ATTACK_STAT_LABELS,
 } from '../attack/types';
+import {
+	DEFAULT_ATTACK_POWER_STAT_KEY,
+	DEFAULT_ATTACK_ABSORPTION_STAT_KEY,
+	DEFAULT_ATTACK_FORTIFICATION_STAT_KEY,
+} from './defaultKeys';
 import { selectAttackStatDescriptor } from './registrySelectors';
 
 const ATTACK_STAT_ROLES: AttackStatRole[] = [
@@ -21,10 +26,10 @@ const ATTACK_STAT_ROLES: AttackStatRole[] = [
 	'fortification',
 ];
 
-const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, StatKey> = {
-	power: Stat.armyStrength,
-	absorption: Stat.absorption,
-	fortification: Stat.fortificationStrength,
+const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, AttackStatKey> = {
+	power: DEFAULT_ATTACK_POWER_STAT_KEY,
+	absorption: DEFAULT_ATTACK_ABSORPTION_STAT_KEY,
+	fortification: DEFAULT_ATTACK_FORTIFICATION_STAT_KEY,
 };
 
 type RawAttackStatParam = {
@@ -51,7 +56,7 @@ function isRawAttackStatParam(value: unknown): value is RawAttackStatParam {
 
 function buildStatDescriptor(
 	role: AttackStatRole,
-	key: StatKey | undefined,
+	key: AttackStatKey | undefined,
 	overrides: AttackStatOverrides,
 	context: TranslationContext,
 ): AttackStatDescriptor {
@@ -85,8 +90,7 @@ function resolveAttackStats(
 			if (!isAttackStatRole(role)) {
 				continue;
 			}
-			const key =
-				typeof entry.key === 'string' ? (entry.key as StatKey) : undefined;
+			const key = typeof entry.key === 'string' ? entry.key : undefined;
 			const label = typeof entry.label === 'string' ? entry.label : undefined;
 			const icon = typeof entry.icon === 'string' ? entry.icon : undefined;
 			const overrides: AttackStatOverrides = {};

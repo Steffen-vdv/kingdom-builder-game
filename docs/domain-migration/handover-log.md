@@ -1,5 +1,20 @@
 # Domain Migration Handover Log
 
+## Domain Migration - P3 - T20 - Web runtime content isolation
+
+- Dropped the Vite alias exposing `@kingdom-builder/contents` to the web bundle
+  and rewired translation/stats helpers to read icons, labels, and defaults from
+  translation assets or protocol registries, eliminating the direct runtime
+  dependency on content modules.【F:packages/web/vite.config.ts†L1-L29】【F:packages/web/src/utils/stats/descriptorRegistry.ts†L1-L213】【F:packages/web/src/translation/effects/formatters/land.ts†L1-L44】
+- Replaced all web runtime imports of `@kingdom-builder/contents` with protocol
+  DTOs or literal keys, and added default attack/resource constants so attack
+  formatters derive fallback targets without touching the contents package.
+  【F:packages/web/src/translation/effects/formatters/attack/defaultKeys.ts†L1-L4】【F:packages/web/src/translation/effects/formatters/attack/statContext.ts†L1-L120】【F:packages/web/src/utils/getRequirementIcons.ts†L1-L72】
+- Strengthened the regression suite to fail when any `packages/web/src`
+  TypeScript module imports `@kingdom-builder/contents`, ensuring future
+  refactors keep runtime content access confined to translation assets.
+  【F:packages/web/tests/regression/no-engine-internals.test.ts†L1-L68】
+
 ## Domain Migration - P3 - T18 - Engine alias regression guard
 
 - Removed the Vite alias that exposed `@kingdom-builder/engine` to the web

@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	AttackOnDamageLogEntry,
 	EffectDef,
@@ -216,7 +215,7 @@ export function formatDiffEntries(
 
 export function collectTransferPercents(
 	effects: EffectDef[] | undefined,
-	transferPercents: Map<ResourceKey, number>,
+	transferPercents: Map<string, number>,
 ): void {
 	if (!effects) {
 		return;
@@ -227,9 +226,10 @@ export function collectTransferPercents(
 			effectDefinition.method === 'transfer' &&
 			effectDefinition.params
 		) {
-			const key =
-				(effectDefinition.params['key'] as ResourceKey | undefined) ??
-				undefined;
+			const key = (() => {
+				const rawKey = effectDefinition.params['key'];
+				return typeof rawKey === 'string' ? rawKey : undefined;
+			})();
 			const percent = effectDefinition.params['percent'] as number | undefined;
 			if (key && percent !== undefined && !transferPercents.has(key)) {
 				transferPercents.set(key, percent);

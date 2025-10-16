@@ -1,4 +1,3 @@
-import { Stat, type StatKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -7,22 +6,23 @@ import {
 	buildStandardEvaluationEntry,
 	defaultFortificationItems,
 } from './evaluation';
-import type { AttackTargetFormatter } from './types';
+import type { AttackTargetFormatter, AttackStatKey } from './types';
 import { selectAttackStatDescriptor } from './registrySelectors';
+import { DEFAULT_ATTACK_POWER_STAT_KEY } from './defaultKeys';
 
 const statFormatter: AttackTargetFormatter<{
 	type: 'stat';
-	key: StatKey;
+	key: AttackStatKey;
 }> = {
 	type: 'stat',
 	parseEffectTarget(effect, _context) {
 		const targetParam = effect.params?.['target'] as
-			| { type: 'stat'; key: StatKey }
+			| { type: 'stat'; key: AttackStatKey }
 			| undefined;
 		if (targetParam?.type === 'stat') {
 			return targetParam;
 		}
-		const fallbackKey = Stat.armyStrength as StatKey;
+		const fallbackKey = DEFAULT_ATTACK_POWER_STAT_KEY;
 		return { type: 'stat', key: fallbackKey };
 	},
 	normalizeLogTarget(target) {
@@ -30,7 +30,7 @@ const statFormatter: AttackTargetFormatter<{
 			AttackLog['evaluation']['target'],
 			{ type: 'stat' }
 		>;
-		return { type: 'stat', key: statTarget.key as StatKey };
+		return { type: 'stat', key: statTarget.key };
 	},
 	getInfo(target, context) {
 		return selectAttackStatDescriptor(context, target.key);

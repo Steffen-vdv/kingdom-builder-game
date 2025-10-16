@@ -1,4 +1,3 @@
-import type { StatKey, PopulationRoleId } from '@kingdom-builder/contents';
 import { selectPopulationRoleDisplay, selectStatDisplay } from '../translation';
 import type { TranslationContext } from '../translation';
 
@@ -14,7 +13,7 @@ export type EvaluatorIconGetter = (
 
 export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
 	stat: (params, translationContext) => {
-		const key = params?.['key'] as StatKey | undefined;
+		const key = params?.['key'] as string | undefined;
 		if (!key) {
 			return [];
 		}
@@ -22,7 +21,7 @@ export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
 		return icon ? [icon] : [];
 	},
 	population: (params, translationContext) => {
-		const role = params?.['role'] as PopulationRoleId | undefined;
+		const role = params?.['role'] as string | undefined;
 		if (!role) {
 			return [];
 		}

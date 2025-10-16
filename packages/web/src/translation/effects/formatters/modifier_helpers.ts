@@ -1,6 +1,5 @@
-import type { EffectDef } from '@kingdom-builder/protocol';
+import type { EffectDef, DevelopmentConfig } from '@kingdom-builder/protocol';
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
-import type { DevelopmentDef } from '@kingdom-builder/contents';
 import { signed } from '../helpers';
 import { humanizeIdentifier } from '../stringUtils';
 import type { SummaryEntry } from '../../content/types';
@@ -246,7 +245,7 @@ export function getDevelopmentInfo(
 	id: string,
 ) {
 	try {
-		const developmentDefinition: DevelopmentDef =
+		const developmentDefinition: DevelopmentConfig =
 			translationContext.developments.get(id);
 		return {
 			icon: developmentDefinition.icon ?? '',

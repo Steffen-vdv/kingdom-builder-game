@@ -1,8 +1,3 @@
-import {
-	PASSIVE_INFO,
-	POPULATION_ROLES,
-	RESOURCES,
-} from '@kingdom-builder/contents';
 import type {
 	TranslationContext,
 	TranslationRegistry,
@@ -95,12 +90,15 @@ function createDescriptorRegistry(
 	return {
 		population: {
 			resolve: (id) => {
-				const role = id
-					? POPULATION_ROLES[id as keyof typeof POPULATION_ROLES]
+				const base = translationContext.assets.population;
+				const fallbackIcon = base.icon ?? '';
+				const fallbackLabel = base.label ?? 'Population';
+				const entry = id
+					? translationContext.assets.populations[id]
 					: undefined;
 				return {
-					icon: role?.icon ?? '',
-					label: role?.label ?? id ?? 'Population',
+					icon: entry?.icon ?? fallbackIcon,
+					label: entry?.label ?? id ?? fallbackLabel,
 				} satisfies ResolveResult;
 			},
 			formatDetail: defaultFormatDetail,
@@ -177,7 +175,10 @@ function createDescriptorRegistry(
 			},
 		},
 		resource: {
-			resolve: createRecordResolver(RESOURCES, 'Resource'),
+			resolve: createRecordResolver(
+				translationContext.assets.resources,
+				'Resource',
+			),
 			formatDetail: defaultFormatDetail,
 		},
 		trigger: createTriggerDescriptorEntry(
@@ -185,10 +186,13 @@ function createDescriptorRegistry(
 			defaultFormatDetail,
 		),
 		passive: {
-			resolve: () => ({
-				icon: PASSIVE_INFO.icon ?? '',
-				label: PASSIVE_INFO.label ?? 'Passive',
-			}),
+			resolve: () => {
+				const passive = translationContext.assets.passive;
+				return {
+					icon: passive.icon ?? '',
+					label: passive.label ?? 'Passive',
+				} satisfies ResolveResult;
+			},
 			formatDetail: defaultFormatDetail,
 		},
 		land: {

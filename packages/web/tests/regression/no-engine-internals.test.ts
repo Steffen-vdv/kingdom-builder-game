@@ -31,7 +31,8 @@ describe('web package avoids engine internals', () => {
 			/(?:import|export)\s[^;]*?from\s+['"]([^'"\n]+)['"]/g;
 		const dynamicImportPattern = /\bimport\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g;
 		const requirePattern = /\brequire\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g;
-		const violations: Array<{ file: string; specifier: string }> = [];
+		const engineViolations: Array<{ file: string; specifier: string }> = [];
+		const contentViolations: Array<{ file: string; specifier: string }> = [];
 		for (const rootName of roots) {
 			const rootPath = path.join(packageRoot, rootName);
 			let stat;
@@ -53,15 +54,26 @@ describe('web package avoids engine internals', () => {
 				];
 				for (const match of matches) {
 					const specifier = match[1];
+					const relativeFile = path.relative(packageRoot, file);
 					if (specifier.startsWith('@kingdom-builder/engine/')) {
-						violations.push({
-							file: path.relative(packageRoot, file),
+						engineViolations.push({
+							file: relativeFile,
+							specifier,
+						});
+					}
+					if (
+						rootName === 'src' &&
+						specifier.startsWith('@kingdom-builder/contents')
+					) {
+						contentViolations.push({
+							file: relativeFile,
 							specifier,
 						});
 					}
 				}
 			}
 		}
-		expect(violations).toEqual([]);
+		expect(engineViolations).toEqual([]);
+		expect(contentViolations).toEqual([]);
 	});
 });
