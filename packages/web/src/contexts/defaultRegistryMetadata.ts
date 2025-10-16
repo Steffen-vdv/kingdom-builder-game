@@ -2,6 +2,7 @@ import type {
 	SessionRegistriesPayload,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
+import { clone } from '../services/gameApi.clone';
 import { deserializeSessionRegistries } from '../state/sessionRegistries';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import snapshot from './defaultRegistryMetadata.json';
@@ -34,12 +35,53 @@ function freezeRegistries(registries: SessionRegistries): SessionRegistries {
 
 const SNAPSHOT = deepFreeze(snapshot) as DefaultRegistrySnapshot;
 
-const DEFAULT_REGISTRIES_INTERNAL = freezeRegistries(
-	deserializeSessionRegistries(SNAPSHOT.registries),
+const cloneAndFreeze = <T>(value: T): T => deepFreeze(clone(value));
+
+function createFrozenRegistries(): SessionRegistries {
+	const registries = deserializeSessionRegistries(SNAPSHOT.registries);
+	return freezeRegistries(registries);
+}
+
+const DEFAULT_REGISTRIES_INTERNAL = createFrozenRegistries();
+const DEFAULT_METADATA_INTERNAL = cloneAndFreeze(SNAPSHOT.metadata);
+const DEFAULT_TRIGGER_METADATA_INTERNAL = cloneAndFreeze(
+	SNAPSHOT.metadata.triggers ?? {},
+);
+const DEFAULT_ASSET_METADATA_INTERNAL = cloneAndFreeze(
+	SNAPSHOT.metadata.assets ?? {},
+);
+const DEFAULT_OVERVIEW_CONTENT_INTERNAL = cloneAndFreeze(
+	SNAPSHOT.metadata.overviewContent,
 );
 
 export const DEFAULT_REGISTRIES: SessionRegistries =
 	DEFAULT_REGISTRIES_INTERNAL;
 
 export const DEFAULT_REGISTRY_METADATA: SessionSnapshotMetadata =
-	SNAPSHOT.metadata;
+	DEFAULT_METADATA_INTERNAL;
+
+export const DEFAULT_TRIGGER_METADATA = DEFAULT_TRIGGER_METADATA_INTERNAL;
+
+export const DEFAULT_ASSET_METADATA = DEFAULT_ASSET_METADATA_INTERNAL;
+
+export const DEFAULT_OVERVIEW_CONTENT = DEFAULT_OVERVIEW_CONTENT_INTERNAL;
+
+export function createDefaultRegistries(): SessionRegistries {
+	return createFrozenRegistries();
+}
+
+export function createDefaultRegistryMetadata(): SessionSnapshotMetadata {
+	return cloneAndFreeze(SNAPSHOT.metadata);
+}
+
+export function createDefaultTriggerMetadata(): SessionSnapshotMetadata['triggers'] {
+	return cloneAndFreeze(DEFAULT_TRIGGER_METADATA_INTERNAL);
+}
+
+export function createDefaultAssetMetadata(): SessionSnapshotMetadata['assets'] {
+	return cloneAndFreeze(DEFAULT_ASSET_METADATA_INTERNAL);
+}
+
+export function createDefaultOverviewContent(): SessionSnapshotMetadata['overviewContent'] {
+	return cloneAndFreeze(DEFAULT_OVERVIEW_CONTENT_INTERNAL);
+}
