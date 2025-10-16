@@ -8,6 +8,7 @@ import {
 	splitSummary,
 	summarizeContent,
 	translateRequirementFailure,
+	type Summary,
 	type TranslationContext,
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
@@ -37,8 +38,8 @@ interface ActiveOptionState {
 	option: ActionEffectGroupOption;
 	mergedParams: Record<string, unknown>;
 	optionLabel: string;
-	baseEffects: string[];
-	description?: string;
+	baseEffects: Summary;
+	description?: Summary;
 }
 
 function resolveOptionParams(
@@ -202,13 +203,14 @@ export function useEffectGroupOptions({
 				);
 				const { effects: baseEffects, description } =
 					splitSummary(hoverSummary);
-				setActiveOption({
+				const nextActiveOption: ActiveOptionState = {
 					option,
 					mergedParams,
 					optionLabel,
 					baseEffects,
-					description,
-				});
+					...(description ? { description } : {}),
+				};
+				setActiveOption(nextActiveOption);
 				handleHoverCard({
 					title: optionLabel.trim() || option.label || option.id,
 					effects: baseEffects,
