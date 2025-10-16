@@ -54,42 +54,55 @@ export class HttpSessionGateway implements SessionGateway {
 	private readonly baseUrl: string;
 	private readonly fetchImpl: FetchLike;
 	private readonly headerFactory?: () => Promise<HeaderInput>;
-	public readonly fetchActionCosts: FetchActionCostsHandler =
-		this.createActionHandler(
-			sessionActionCostRequestSchema,
-			'actions/costs',
-			sessionActionCostResponseSchema,
-		) as FetchActionCostsHandler;
+        public readonly fetchActionCosts: FetchActionCostsHandler =
+                this.createActionHandler(
+                        sessionActionCostRequestSchema,
+                        (payload) =>
+                                `sessions/${this.encodeSessionId(
+                                        payload.sessionId,
+                                )}/actions/${this.encodeActionId(payload.actionId)}/costs`,
+                        sessionActionCostResponseSchema,
+                ) as FetchActionCostsHandler;
 	public readonly getActionCosts: SessionGateway['getActionCosts'] = this
 		.fetchActionCosts as SessionGateway['getActionCosts'];
-	public readonly fetchActionRequirements: FetchActionRequirementsHandler =
-		this.createActionHandler(
-			sessionActionRequirementRequestSchema,
-			'actions/requirements',
-			sessionActionRequirementResponseSchema,
-		) as FetchActionRequirementsHandler;
+	public readonly fetchActionRequirements:
+		FetchActionRequirementsHandler = this.createActionHandler(
+                        sessionActionRequirementRequestSchema,
+                        (payload) =>
+                                `sessions/${this.encodeSessionId(
+                                        payload.sessionId,
+                                )}/actions/${this.encodeActionId(
+                                        payload.actionId,
+                                )}/requirements`,
+                        sessionActionRequirementResponseSchema,
+                ) as FetchActionRequirementsHandler;
 	public readonly getActionRequirements: SessionGateway['getActionRequirements'] =
 		this.fetchActionRequirements as SessionGateway['getActionRequirements'];
-	public readonly fetchActionOptions: FetchActionOptionsHandler =
-		this.createActionHandler(
-			sessionActionOptionsRequestSchema,
-			'actions/options',
-			sessionActionOptionsResponseSchema,
-		) as FetchActionOptionsHandler;
+        public readonly fetchActionOptions: FetchActionOptionsHandler =
+                this.createActionHandler(
+                        sessionActionOptionsRequestSchema,
+                        (payload) =>
+                                `sessions/${this.encodeSessionId(
+                                        payload.sessionId,
+                                )}/actions/${this.encodeActionId(payload.actionId)}/options`,
+                        sessionActionOptionsResponseSchema,
+                ) as FetchActionOptionsHandler;
 	public readonly getActionOptions: SessionGateway['getActionOptions'] = this
 		.fetchActionOptions as SessionGateway['getActionOptions'];
-	public readonly runAiTurn: SessionGateway['runAiTurn'] =
-		this.createActionHandler(
-			sessionRunAiRequestSchema,
-			'ai',
-			sessionRunAiResponseSchema,
-		) as RunAiTurnHandler;
-	public readonly simulateUpcomingPhases: SessionGateway['simulateUpcomingPhases'] =
-		this.createActionHandler(
-			sessionSimulateRequestSchema,
-			'simulate',
-			sessionSimulateResponseSchema,
-		) as SimulatePhasesHandler;
+        public readonly runAiTurn: SessionGateway['runAiTurn'] =
+                this.createActionHandler(
+                        sessionRunAiRequestSchema,
+                        (payload) =>
+                                `sessions/${this.encodeSessionId(payload.sessionId)}/ai`,
+                        sessionRunAiResponseSchema,
+                ) as RunAiTurnHandler;
+        public readonly simulateUpcomingPhases: SessionGateway['simulateUpcomingPhases'] =
+                this.createActionHandler(
+                        sessionSimulateRequestSchema,
+                        (payload) =>
+                                `sessions/${this.encodeSessionId(payload.sessionId)}/simulate`,
+                        sessionSimulateResponseSchema,
+                ) as SimulatePhasesHandler;
 	public constructor(options: HttpSessionGatewayOptions) {
 		const normalizedBase = options.baseUrl.endsWith('/')
 			? options.baseUrl
@@ -203,30 +216,23 @@ export class HttpSessionGateway implements SessionGateway {
 		}
 		return schema.parse(result.data);
 	}
-	private postSessionDetail<ResponseType>(
-		payload: { sessionId: string },
-		suffix: string,
-		schema: { parse(data: unknown): ResponseType },
-	): Promise<ResponseType> {
-		return this.postSessionRequest(
-			`sessions/${this.encodeSessionId(payload.sessionId)}/${suffix}`,
-			payload,
-			schema,
-		);
-	}
-	private createActionHandler<
-		RequestType extends { sessionId: string },
-		ResponseType,
-	>(
-		requestSchema: { parse(data: unknown): RequestType },
-		suffix: string,
-		responseSchema: { parse(data: unknown): ResponseType },
-	): (request: RequestType) => Promise<ResponseType> {
-		return async (request) => {
-			const payload = requestSchema.parse(request);
-			return this.postSessionDetail(payload, suffix, responseSchema);
-		};
-	}
+        private createActionHandler<
+                RequestType extends { sessionId: string },
+                ResponseType,
+        >(
+                requestSchema: { parse(data: unknown): RequestType },
+                pathBuilder: (payload: RequestType) => string,
+                responseSchema: { parse(data: unknown): ResponseType },
+        ): (request: RequestType) => Promise<ResponseType> {
+                return async (request) => {
+                        const payload = requestSchema.parse(request);
+                        return this.postSessionRequest(
+                                pathBuilder(payload),
+                                payload,
+                                responseSchema,
+                        );
+                };
+        }
 	private async execute(options: RequestOptions): Promise<HttpExecutionResult> {
 		const request = await this.createRequest(options);
 		const response = await this.fetchImpl(request);
@@ -338,7 +344,11 @@ export class HttpSessionGateway implements SessionGateway {
 		);
 	}
 
-	private encodeSessionId(sessionId: string): string {
-		return encodeURIComponent(sessionId);
-	}
+        private encodeSessionId(sessionId: string): string {
+                return encodeURIComponent(sessionId);
+        }
+
+        private encodeActionId(actionId: string): string {
+                return encodeURIComponent(actionId);
+        }
 }

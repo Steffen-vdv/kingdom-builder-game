@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { describe, expect, it, vi } from 'vitest';
 import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import {
@@ -40,7 +41,9 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
-					input instanceof Request ? input : new Request(input, init);
+					input instanceof Request
+						? input
+						: new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe('/api/sessions');
 				const payload = await request.clone().json();
@@ -133,7 +136,9 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
-					input instanceof Request ? input : new Request(input, init);
+					input instanceof Request
+						? input
+						: new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
 					'/api/sessions/test/actions',
@@ -182,7 +187,9 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
-					input instanceof Request ? input : new Request(input, init);
+					input instanceof Request
+						? input
+						: new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
 					'/api/sessions/test/dev-mode',
@@ -204,33 +211,33 @@ describe('HttpSessionGateway', () => {
 		expect(response.snapshot.game.devMode).toBe(true);
 	});
 
-	it('fetches action costs through the REST endpoint', async () => {
-		const fetch = vi.fn(
-			async (input: RequestInfo | URL, init?: RequestInit) => {
-				const request =
-					input instanceof Request ? input : new Request(input, init);
-				expect(request.method).toBe('POST');
-				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/costs',
-				);
-				const payload = await request.clone().json();
-				expect(payload).toEqual({
-					sessionId: 'test',
-					actionId: 'build',
-				});
-				return jsonResponse({
-					sessionId: 'test',
-					costs: { gold: 4 },
-				});
+        it('fetches action costs through the REST endpoint', async () => {
+                const fetch = vi.fn(
+                        async (input: RequestInfo | URL, init?: RequestInit) => {
+                                const request =
+                                        input instanceof Request ? input : new Request(input, init);
+                                expect(request.method).toBe('POST');
+                                expect(new URL(request.url).pathname).toBe(
+                                        '/api/sessions/test/actions/build%2Fkeep/costs',
+                                );
+                                const payload = await request.clone().json();
+                                expect(payload).toEqual({
+                                        sessionId: 'test',
+                                        actionId: 'build/keep',
+                                });
+                                return jsonResponse({
+                                        sessionId: 'test',
+                                        costs: { gold: 4 },
+                                });
 			},
 		);
 		const gateway = createGateway({ fetch });
 		const response = await gateway.fetchActionCosts({
 			sessionId: 'test',
-			actionId: 'build',
-		});
-		expect(response.costs).toEqual({ gold: 4 });
-	});
+                        actionId: 'build/keep',
+                });
+                expect(response.costs).toEqual({ gold: 4 });
+        });
 
 	it('propagates transport errors from action cost lookup', async () => {
 		const fetch = vi.fn(() =>
@@ -243,9 +250,12 @@ describe('HttpSessionGateway', () => {
 		);
 		const gateway = createGateway({ fetch });
 		await expect(
-			gateway.fetchActionCosts({ sessionId: 'test', actionId: 'missing' }),
-		).rejects.toBeInstanceOf(TransportError);
-	});
+                        gateway.fetchActionCosts({
+                                sessionId: 'test',
+                                actionId: 'missing',
+                        }),
+                ).rejects.toBeInstanceOf(TransportError);
+        });
 
 	it('validates action cost requests before dispatching', async () => {
 		const fetch = vi.fn();
@@ -263,17 +273,19 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
-					input instanceof Request ? input : new Request(input, init);
+					input instanceof Request
+						? input
+						: new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/requirements',
-				);
-				const payload = await request.clone().json();
-				expect(payload).toEqual({
-					sessionId: 'test',
-					actionId: 'build',
-					params: { choices: { slot: { optionId: 'farm' } } },
-				});
+                                        '/api/sessions/test/actions/build%20dock/requirements',
+                                );
+                                const payload = await request.clone().json();
+                                expect(payload).toEqual({
+                                        sessionId: 'test',
+                                        actionId: 'build dock',
+                                        params: { choices: { slot: { optionId: 'farm' } } },
+                                });
 				return jsonResponse({
 					sessionId: 'test',
 					requirements: [
@@ -295,11 +307,11 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.fetchActionRequirements({
 			sessionId: 'test',
-			actionId: 'build',
-			params: { choices: { slot: { optionId: 'farm' } } },
-		});
-		expect(response.requirements).toHaveLength(1);
-	});
+                        actionId: 'build dock',
+                        params: { choices: { slot: { optionId: 'farm' } } },
+                });
+                expect(response.requirements).toHaveLength(1);
+        });
 
 	it('propagates transport errors from action requirement lookup', async () => {
 		const fetch = vi.fn(() =>
@@ -312,12 +324,12 @@ describe('HttpSessionGateway', () => {
 		);
 		const gateway = createGateway({ fetch });
 		await expect(
-			gateway.fetchActionRequirements({
-				sessionId: 'test',
-				actionId: 'build',
-			}),
-		).rejects.toBeInstanceOf(TransportError);
-	});
+                        gateway.fetchActionRequirements({
+                                sessionId: 'test',
+                                actionId: 'build',
+                        }),
+                ).rejects.toBeInstanceOf(TransportError);
+        });
 
 	it('validates action requirement requests before dispatching', async () => {
 		const fetch = vi.fn();
@@ -335,16 +347,18 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
-					input instanceof Request ? input : new Request(input, init);
+					input instanceof Request
+						? input
+						: new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/options',
-				);
-				const payload = await request.clone().json();
-				expect(payload).toEqual({
-					sessionId: 'test',
-					actionId: 'choose',
-				});
+                                        '/api/sessions/test/actions/choose%3Aoption/options',
+                                );
+                                const payload = await request.clone().json();
+                                expect(payload).toEqual({
+                                        sessionId: 'test',
+                                        actionId: 'choose:option',
+                                });
 				return jsonResponse({
 					sessionId: 'test',
 					groups: [
@@ -366,10 +380,10 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.fetchActionOptions({
 			sessionId: 'test',
-			actionId: 'choose',
-		});
-		expect(response.groups).toHaveLength(1);
-	});
+                        actionId: 'choose:option',
+                });
+                expect(response.groups).toHaveLength(1);
+        });
 
 	it('propagates transport errors from action option lookup', async () => {
 		const fetch = vi.fn(() =>
@@ -389,23 +403,51 @@ describe('HttpSessionGateway', () => {
 		).rejects.toBeInstanceOf(TransportError);
 	});
 
-	it('validates action option requests before dispatching', async () => {
-		const fetch = vi.fn();
-		const gateway = createGateway({ fetch });
-		await expect(
-			gateway.fetchActionOptions({
-				sessionId: '',
-				actionId: 'choose',
-			} as never),
-		).rejects.toThrow();
-		expect(fetch).not.toHaveBeenCalled();
-	});
+        it('validates action option requests before dispatching', async () => {
+                const fetch = vi.fn();
+                const gateway = createGateway({ fetch });
+                await expect(
+                        gateway.fetchActionOptions({
+                                sessionId: '',
+                                actionId: 'choose',
+                        } as never),
+                ).rejects.toThrow();
+                expect(fetch).not.toHaveBeenCalled();
+        });
+
+        it('routes action metadata lookups through the public gateway export', async () => {
+                const module = await import('../src/index.js');
+                const fetch = vi.fn(
+                        async (input: RequestInfo | URL, init?: RequestInit) => {
+                                const request =
+                                        input instanceof Request ? input : new Request(input, init);
+                                expect(new URL(request.url).pathname).toBe(
+                                        '/api/sessions/test/actions/export%2Ftest/costs',
+                                );
+                                const payload = await request.clone().json();
+                                expect(payload).toEqual({
+                                        sessionId: 'test',
+                                        actionId: 'export/test',
+                                });
+                                return jsonResponse({ sessionId: 'test', costs: {} });
+                        },
+                );
+                const gateway = new module.HttpSessionGateway({ baseUrl, fetch });
+                const response = await gateway.getActionCosts({
+                        sessionId: 'test',
+                        actionId: 'export/test',
+                });
+                expect(response.sessionId).toBe('test');
+                expect(fetch).toHaveBeenCalledTimes(1);
+        });
 
 	it('runs AI turns via the REST endpoint', async () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
-					input instanceof Request ? input : new Request(input, init);
+					input instanceof Request
+						? input
+						: new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe('/api/sessions/test/ai');
 				const payload = await request.clone().json();
@@ -457,7 +499,9 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn(
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
-					input instanceof Request ? input : new Request(input, init);
+					input instanceof Request
+						? input
+						: new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
 					'/api/sessions/test/simulate',
