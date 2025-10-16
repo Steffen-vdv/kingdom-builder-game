@@ -15,7 +15,7 @@ const resourceFormatter: AttackTargetFormatter<{
 	key: ResourceKey;
 }> = {
 	type: 'resource',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, _context) {
 		const targetParam = effect.params?.['target'] as
 			| { type: 'resource'; key: ResourceKey }
 			| undefined;
@@ -31,8 +31,8 @@ const resourceFormatter: AttackTargetFormatter<{
 		>;
 		return { type: 'resource', key: resourceTarget.key as ResourceKey };
 	},
-	getInfo(target) {
-		return selectAttackResourceDescriptor(target.key);
+	getInfo(target, context) {
+		return selectAttackResourceDescriptor(context, target.key);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
@@ -53,8 +53,8 @@ const resourceFormatter: AttackTargetFormatter<{
 	buildEvaluationEntry(log, context) {
 		return buildStandardEvaluationEntry(log, context, false);
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, context, options) {
+		return formatDiffCommon(prefix, diff, context, options);
 	},
 	onDamageLogTitle(info) {
 		return `${info.icon} ${info.label} damage trigger evaluation`;

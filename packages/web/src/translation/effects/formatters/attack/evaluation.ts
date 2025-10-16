@@ -15,6 +15,7 @@ import type {
 	EvaluationContext,
 	TargetInfo,
 } from './types';
+import type { TranslationContext } from '../../../context';
 import { selectAttackBuildingDescriptor } from './registrySelectors';
 
 export function buildDescribeEntry(
@@ -186,6 +187,9 @@ export function buildStandardEvaluationEntry(
 	return { title, items };
 }
 
-export function getBuildingDisplay(buildingId: string): TargetInfo {
-	return selectAttackBuildingDescriptor(buildingId);
+export function getBuildingDisplay(
+	context: Pick<TranslationContext, 'assets' | 'buildings'>,
+	buildingId: string,
+): TargetInfo {
+	return selectAttackBuildingDescriptor(context, buildingId);
 }

@@ -31,6 +31,7 @@ import {
 	ACTION_DEFS,
 	type ActionDefinition,
 } from './armyAttackEffects';
+import type { TranslationContext } from '../../src/translation/context';
 import {
 	selectAttackStatDescriptor,
 	type AttackRegistryDescriptor,
@@ -209,8 +210,11 @@ export function createPartialStatCtx() {
 	} as const;
 }
 
-export function getStat(key: string): AttackRegistryDescriptor {
-	return selectAttackStatDescriptor(key);
+export function getStat(
+	context: Pick<TranslationContext, 'assets'>,
+	key: string,
+): AttackRegistryDescriptor {
+	return selectAttackStatDescriptor(context, key);
 }
 
 export function iconLabel(

@@ -1,5 +1,6 @@
 import { Stat, type StatKey } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
+import type { TranslationContext } from '../../../context';
 import {
 	resolveAttackTargetFormatter,
 	type AttackTargetFormatter,
@@ -52,8 +53,11 @@ function buildStatDescriptor(
 	role: AttackStatRole,
 	key: StatKey | undefined,
 	overrides: AttackStatOverrides,
+	context: TranslationContext,
 ): AttackStatDescriptor {
-	const baseDescriptor = key ? selectAttackStatDescriptor(key) : undefined;
+	const baseDescriptor = key
+		? selectAttackStatDescriptor(context, key)
+		: undefined;
 	const label =
 		overrides.label ??
 		baseDescriptor?.label ??
@@ -68,6 +72,7 @@ function buildStatDescriptor(
 
 function resolveAttackStats(
 	effectDefinition: EffectDef<Record<string, unknown>>,
+	translationContext: TranslationContext,
 ): AttackStatContext {
 	const stats: AttackStatContext = {};
 	const rawStats = effectDefinition.params?.['stats'];
@@ -91,13 +96,18 @@ function resolveAttackStats(
 			if (icon !== undefined) {
 				overrides.icon = icon;
 			}
-			stats[role] = buildStatDescriptor(role, key, overrides);
+			stats[role] = buildStatDescriptor(
+				role,
+				key,
+				overrides,
+				translationContext,
+			);
 		}
 		return stats;
 	}
 	for (const role of ATTACK_STAT_ROLES) {
 		const key = DEFAULT_ATTACK_STAT_KEYS[role];
-		stats[role] = buildStatDescriptor(role, key, {});
+		stats[role] = buildStatDescriptor(role, key, {}, translationContext);
 	}
 	return stats;
 }
@@ -112,9 +122,12 @@ export type AttackFormatterContext = {
 
 export function resolveAttackFormatterContext(
 	effectDefinition: EffectDef<Record<string, unknown>>,
+	translationContext: TranslationContext,
 ): AttackFormatterContext {
-	const { formatter, target, info, targetLabel } =
-		resolveAttackTargetFormatter(effectDefinition);
-	const stats = resolveAttackStats(effectDefinition);
+	const { formatter, target, info, targetLabel } = resolveAttackTargetFormatter(
+		effectDefinition,
+		translationContext,
+	);
+	const stats = resolveAttackStats(effectDefinition, translationContext);
 	return { formatter, target, info, targetLabel, stats };
 }

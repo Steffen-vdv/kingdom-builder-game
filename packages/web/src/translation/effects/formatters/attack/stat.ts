@@ -1,4 +1,4 @@
-import { type StatKey } from '@kingdom-builder/contents';
+import { Stat, type StatKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -8,27 +8,21 @@ import {
 	defaultFortificationItems,
 } from './evaluation';
 import type { AttackTargetFormatter } from './types';
-import {
-	selectAttackDefaultStatKey,
-	selectAttackStatDescriptor,
-} from './registrySelectors';
+import { selectAttackStatDescriptor } from './registrySelectors';
 
 const statFormatter: AttackTargetFormatter<{
 	type: 'stat';
 	key: StatKey;
 }> = {
 	type: 'stat',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, _context) {
 		const targetParam = effect.params?.['target'] as
 			| { type: 'stat'; key: StatKey }
 			| undefined;
 		if (targetParam?.type === 'stat') {
 			return targetParam;
 		}
-		const fallbackKey = selectAttackDefaultStatKey();
-		if (!fallbackKey) {
-			throw new Error('No stat definitions available');
-		}
+		const fallbackKey = Stat.armyStrength as StatKey;
 		return { type: 'stat', key: fallbackKey };
 	},
 	normalizeLogTarget(target) {
@@ -38,8 +32,8 @@ const statFormatter: AttackTargetFormatter<{
 		>;
 		return { type: 'stat', key: statTarget.key as StatKey };
 	},
-	getInfo(target) {
-		return selectAttackStatDescriptor(target.key);
+	getInfo(target, context) {
+		return selectAttackStatDescriptor(context, target.key);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
@@ -60,8 +54,8 @@ const statFormatter: AttackTargetFormatter<{
 	buildEvaluationEntry(log, context) {
 		return buildStandardEvaluationEntry(log, context, true);
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, context, options) {
+		return formatDiffCommon(prefix, diff, context, options);
 	},
 	onDamageLogTitle(info) {
 		return `${info.icon} ${info.label} damage trigger evaluation`;

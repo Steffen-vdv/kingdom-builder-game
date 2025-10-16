@@ -51,12 +51,24 @@ describe('army attack translation log', () => {
 			attack,
 			plunder,
 		} = createSyntheticCtx();
-		const castle = selectAttackResourceDescriptor(Resource.castleHP);
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
-		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const happiness = selectAttackResourceDescriptor(Resource.happiness);
-		const gold = selectAttackResourceDescriptor(Resource.gold);
+		const castle = selectAttackResourceDescriptor(
+			translation,
+			Resource.castleHP,
+		);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const absorptionStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.absorption.key,
+		)!;
+		const fortStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.fortification.key,
+		)!;
+		const happiness = selectAttackResourceDescriptor(
+			translation,
+			Resource.happiness,
+		);
+		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
 
 		engineContext.activePlayer.resources[Resource.ap] = 1;
 		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
@@ -98,11 +110,20 @@ describe('army attack translation log', () => {
 			buildingAttack,
 			building,
 		} = createSyntheticCtx();
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
-		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const gold = selectAttackResourceDescriptor(Resource.gold);
-		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const absorptionStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.absorption.key,
+		)!;
+		const fortStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.fortification.key,
+		)!;
+		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
+		const buildingDescriptor = selectAttackBuildingDescriptor(
+			translation,
+			building.id,
+		);
 		const buildingDisplay = iconLabel(
 			buildingDescriptor.icon,
 			buildingDescriptor.label,
