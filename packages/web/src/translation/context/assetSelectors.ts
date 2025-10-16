@@ -3,7 +3,7 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import { formatDetailText } from '../../utils/stats/format';
 
 interface IconLabelDisplay {
 	icon?: string;
@@ -26,6 +26,47 @@ function coerceIconLabel(
 		result.description = source.description;
 	}
 	return result;
+}
+
+function buildTriggerFallback(triggerId: string): TranslationTriggerAsset {
+	if (typeof triggerId !== 'string' || triggerId.length === 0) {
+		return {};
+	}
+	const trimmed = triggerId.replace(/^on(?=[A-Z])/u, '');
+	const hyphenated = trimmed
+		.replace(/([a-z0-9])([A-Z])/gu, '$1-$2')
+		.replace(/([A-Z])([A-Z][a-z])/gu, '$1-$2')
+		.replace(/_/gu, '-');
+	const tokens = hyphenated
+		.split(/[-\s]+/u)
+		.map((token) => token.trim())
+		.filter((token) => token.length > 0);
+	if (!tokens.length) {
+		return {};
+	}
+	const label = tokens
+		.map((segment) => {
+			const upperCase = segment === segment.toUpperCase();
+			if (upperCase && segment.length <= 3) {
+				return segment;
+			}
+			const lowered = segment.toLowerCase();
+			const formatted = formatDetailText(lowered);
+			if (formatted.length > 0) {
+				return formatted;
+			}
+			return formatDetailText(segment);
+		})
+		.join(' ')
+		.trim();
+	if (!label.length) {
+		return {};
+	}
+	return Object.freeze({
+		label,
+		past: label,
+		future: label,
+	});
 }
 
 export function selectResourceDisplay(
@@ -77,16 +118,7 @@ export function selectTriggerDisplay(
 	if (entry) {
 		return entry;
 	}
-	const fallback = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
-	if (fallback) {
-		return Object.freeze({
-			icon: fallback.icon,
-			future: fallback.future,
-			past: fallback.past,
-			label: fallback.past,
-		});
-	}
-	return {};
+	return buildTriggerFallback(triggerId);
 }
 
 export function selectTierSummary(

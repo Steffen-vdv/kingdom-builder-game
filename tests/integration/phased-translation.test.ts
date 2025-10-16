@@ -1,28 +1,23 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { createEngine } from '@kingdom-builder/engine';
-import type { EngineContext } from '@kingdom-builder/engine';
 import {
 	summarizeContent,
 	describeContent,
 } from '@kingdom-builder/web/translation/content';
 // prettier-ignore
 import type {
-	PhasedDef,
+        PhasedDef,
 } from '@kingdom-builder/web/translation/content/phased';
-import {
-	TRIGGER_INFO,
-	RESOURCES,
-	PHASES,
-	POPULATIONS,
-	GAME_START,
-	RULES,
-} from '@kingdom-builder/contents';
-import type { ResourceKey } from '@kingdom-builder/contents';
+import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
 // prettier-ignore
 import {
-	createContentFactory,
+        createContentFactory,
 } from '@kingdom-builder/testing';
+import type { SessionTriggerMetadata } from '@kingdom-builder/protocol/session';
+import type { TranslationContext } from '@kingdom-builder/web/translation/context';
+import { createTranslationContextForEngine } from '../../packages/web/tests/helpers/createTranslationContextForEngine';
+import { createResourceKeys } from '../../packages/web/tests/helpers/sessionRegistries';
 import { formatDetailText } from '../../packages/web/src/utils/stats/format';
 
 type Entry = string | { title: string; items: Entry[] };
@@ -47,7 +42,7 @@ function findEntry(
 }
 
 function formatStepTriggerLabel(
-	ctx: EngineContext,
+	ctx: TranslationContext,
 	triggerKey: string,
 ): string | undefined {
 	for (const phase of ctx.phases) {
@@ -84,36 +79,42 @@ function formatStepTriggerLabel(
 }
 
 describe('PhasedTranslator step triggers', () => {
-	const addedStep = {
-		icon: '🧪',
-		future: 'During test step',
-		past: 'Test step',
-	} as const;
-
-	beforeAll(() => {
-		(TRIGGER_INFO as Record<string, typeof addedStep>)['onTestStep'] =
-			addedStep;
-	});
-
-	afterAll(() => {
-		delete (TRIGGER_INFO as Record<string, unknown>)['onTestStep'];
-	});
-
-	it('renders dynamic step metadata from trigger info', () => {
+	it('renders dynamic step metadata from trigger assets', () => {
 		const content = createContentFactory();
 		const development = content.development();
 		const stored = content.developments.get(
 			development.id,
 		) as unknown as PhasedDef;
 
-		const [resourceKey] = Object.keys(RESOURCES) as ResourceKey[];
+		const [resourceKey] = createResourceKeys();
+		if (!resourceKey) {
+			throw new Error('Expected at least one resource key for test fixtures.');
+		}
 		const makeEffect = (amount: number) => ({
 			type: 'resource',
 			method: 'add',
 			params: { key: resourceKey, amount },
 		});
 
-		const stepKeys = Object.keys(TRIGGER_INFO).filter((key) =>
+		const triggerMetadata: Record<string, SessionTriggerMetadata> = {
+			onGainIncomeStep: {
+				icon: '💰',
+				future: 'During the Gain Income step',
+				past: 'Gain Income step',
+			},
+			onGainAPStep: {
+				icon: '⚡',
+				future: 'During the Gain AP step',
+				past: 'Gain AP step',
+			},
+			onTestStep: {
+				icon: '🧪',
+				future: 'During the Research step',
+				past: 'Research step',
+			},
+		};
+
+		const stepKeys = Object.keys(triggerMetadata).filter((key) =>
 			key.endsWith('Step'),
 		);
 
@@ -128,46 +129,68 @@ describe('PhasedTranslator step triggers', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: POPULATIONS,
+			populations: content.populations,
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
 		});
 
+		const translation = createTranslationContextForEngine(ctx, {
+			configureRegistries(registries) {
+				registries.developments.add(development.id, development);
+			},
+			configureSnapshot(snapshot) {
+				const [firstPhase] = snapshot.phases;
+				if (!firstPhase) {
+					return;
+				}
+				const existingSteps = firstPhase.steps ?? [];
+				firstPhase.steps = [
+					...existingSteps,
+					{
+						id: 'custom-research',
+						title: 'Research step',
+						icon: '🧪',
+						triggers: ['onTestStep'],
+					},
+				];
+			},
+			configureMetadata(metadata) {
+				return {
+					...metadata,
+					triggers: { ...triggerMetadata },
+				};
+			},
+		});
+
 		const summary = summarizeContent(
 			'development',
 			development.id,
-			ctx,
+			translation,
 		) as unknown as Entry[];
 		const details = describeContent(
 			'development',
 			development.id,
-			ctx,
+			translation,
 		) as unknown as Entry[];
 
-		const info = TRIGGER_INFO as Record<
-			string,
-			{ icon: string; future: string }
-		>;
 		for (const key of stepKeys) {
-			const expectedTitle = [info[key]?.icon, info[key]?.future]
+			const info = triggerMetadata[key];
+			const defaultTitle = [info?.icon, info?.future ?? info?.past ?? key]
 				.filter(Boolean)
 				.join(' ')
 				.trim();
-			const stepLabel = formatStepTriggerLabel(ctx, key);
+			const stepLabel = formatStepTriggerLabel(translation, key);
 			const resolvedTitle = stepLabel
-				? [info[key]?.icon, `During ${stepLabel}`]
-						.filter(Boolean)
-						.join(' ')
-						.trim()
-				: expectedTitle;
+				? [info?.icon, `During ${stepLabel}`].filter(Boolean).join(' ').trim()
+				: defaultTitle;
 
 			const summaryEntry =
-				findEntry(summary, resolvedTitle) ?? findEntry(summary, expectedTitle);
+				findEntry(summary, resolvedTitle) ?? findEntry(summary, defaultTitle);
 			expect(summaryEntry, `summary entry for ${key}`).toBeDefined();
 
 			const describeEntry =
-				findEntry(details, resolvedTitle) ?? findEntry(details, expectedTitle);
+				findEntry(details, resolvedTitle) ?? findEntry(details, defaultTitle);
 			expect(describeEntry, `describe entry for ${key}`).toBeDefined();
 		}
 	});
