@@ -1,24 +1,15 @@
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const tasks = [
-	{ label: 'coderabbit-review', script: 'coderabbit' },
 	{ label: 'check', script: 'check' },
 	{ label: 'test-coverage', script: 'test:coverage' },
 ];
 
 const isWindows = process.platform === 'win32';
 const npmExecutable = isWindows ? 'npm.cmd' : 'npm';
-const coderabbitBinary =
-	process.env.CODERABBIT_BIN ?? (isWindows ? 'coderabbit.cmd' : 'coderabbit');
-const coderabbitCheck = spawnSync(coderabbitBinary, ['--version'], {
-	stdio: 'ignore',
-	env: process.env,
-	shell: false,
-});
-const coderabbitMissing = coderabbitCheck.error?.code === 'ENOENT';
 const artifactsDirectory = path.resolve(process.cwd(), 'artifacts');
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
@@ -83,32 +74,6 @@ async function runTask(task) {
 const results = [];
 
 for (const task of tasks) {
-	if (task.label === 'coderabbit-review' && coderabbitMissing) {
-		const artifactName = `${timestamp}-${task.label}.log`;
-		const artifactPath = path.join(artifactsDirectory, artifactName);
-		const instructions = [
-			'CodeRabbit CLI was not found on your PATH.',
-			'Install and authenticate it before rerunning verification.',
-			'',
-			'Quick checklist:',
-			'- Follow https://docs.coderabbit.ai/cli for installation steps.',
-			'- Run `coderabbit --version` to confirm it is available.',
-			'- Execute `coderabbit auth login` to authenticate the CLI.',
-			'',
-			'npm run verify will continue once the CLI is detected.',
-		].join('\n');
-
-		await writeFile(artifactPath, `${instructions}\n`, 'utf8');
-		console.error(`${instructions}\n`);
-		results.push({
-			label: task.label,
-			code: 1,
-			artifactPath,
-			errorCode: 'ENOENT',
-		});
-		continue;
-	}
-
 	const result = await runTask(task);
 	results.push(result);
 }

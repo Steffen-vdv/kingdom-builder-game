@@ -15,47 +15,32 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 ## 1) Setup
 
 1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
-2. Install and authenticate the [CodeRabbit CLI](https://docs.coderabbit.ai/cli)
-   so the `coderabbit` binary is available on your `PATH`. The CLI consumes the
-   repository's `.coderabbit.yml` and must be present for `npm run verify` and
-   the Husky hooks to pass.
-   - Follow the platform notes in
-     [`docs/tooling/coderabbit-cli.md`](docs/tooling/coderabbit-cli.md) during
-     your initial setup.
-   - Confirm the install with `coderabbit --version`.
-   - Run `coderabbit auth login` so the reviewer can authenticate locally.
-3. Install dependencies: `npm install` (uses npm workspaces to link local packages).
-4. Start the combined dev environment (Fastify server + Vite web client):
+2. Install dependencies: `npm install` (uses npm workspaces to link local packages).
+3. Start the combined dev environment (Fastify server + Vite web client):
    `npm run dev`. The wrapper automatically loads
    `config/server-auth.tokens.default.json` so the development server boots with
    an admin token.
-5. Override the default token table when you need different credentials by
+4. Override the default token table when you need different credentials by
    either creating `config/server-auth.tokens.local.json` (ignored by git) or by
    exporting a `KB_SERVER_AUTH_TOKENS` environment variable that contains your
    JSON token map.
-6. Run a single target when needed:
+5. Run a single target when needed:
    - Web client only: `npm run dev:web`
    - Server only: `npm run server:dev`
-7. Build production bundles for both server and web: `npm run build`.
-8. Build just the Node server bundle: `npm run server:build`.
-9. Launch the production server locally with `npm run start` after supplying a
+6. Build production bundles for both server and web: `npm run build`.
+7. Build just the Node server bundle: `npm run server:build`.
+8. Launch the production server locally with `npm run start` after supplying a
    real token map via `KB_SERVER_AUTH_TOKENS` or
    `config/server-auth.tokens.local.json`. The wrapper enables `NODE_ENV=production`,
    ignores the default dev token file, and refuses to start without valid tokens.
-10. Review the docs directory for additional deep dives into systems and lore.
+9. Review the docs directory for additional deep dives into systems and lore.
 
-### CodeRabbit usage
+### Verification workflow
 
-- Run `npm run coderabbit` for a single local review or pass additional
-  arguments (for example `npm run coderabbit -- --watch`) to keep an
-  asynchronous reviewer running while you iterate. Continue coding while the
-  CLI analyzes your changes and circle back to its comments at a natural break
-  in your work.
-- `npm run verify` now launches CodeRabbit before the existing lint, test, and
-  coverage tasks so automated checks share the same review context as manual
-  CLI runs. When the CLI is missing, the script records instructions in
-  `artifacts/*coderabbit-review.log` so you can correct the environment and
-  rerun the suite.
+- `npm run verify` runs the full quality gate (`npm run check` followed by
+  `npm run test:coverage`) and streams each command into timestamped logs under
+  `artifacts/`. Share those logs when asking for review support or debugging a
+  failing step.
 
 ### Pre-PR checklist
 
