@@ -8,12 +8,13 @@ import { createTestEngine } from '../helpers.ts';
 describe('resource removal penalties', () => {
 	it('can target the opponent when shortfalls are allowed', () => {
 		const content = createContentFactory();
-		const ctx = createTestEngine(content);
-		advance(ctx);
-		const original = ctx.game.currentPlayerIndex;
-		ctx.game.currentPlayerIndex = 1;
-		ctx.activePlayer.resources[Resource.happiness] = 0;
-		const before = ctx.activePlayer.resources[Resource.happiness] ?? 0;
+		const engineContext = createTestEngine(content);
+		advance(engineContext);
+		const original = engineContext.game.currentPlayerIndex;
+		engineContext.game.currentPlayerIndex = 1;
+		engineContext.activePlayer.resources[Resource.happiness] = 0;
+		const before =
+			engineContext.activePlayer.resources[Resource.happiness] ?? 0;
 		runEffects(
 			[
 				{
@@ -23,11 +24,11 @@ describe('resource removal penalties', () => {
 					meta: { allowShortfall: true },
 				},
 			],
-			ctx,
+			engineContext,
 		);
-		const after = ctx.activePlayer.resources[Resource.happiness] ?? 0;
+		const after = engineContext.activePlayer.resources[Resource.happiness] ?? 0;
 		expect(after).toBe(before - 1);
 		expect(after).toBeLessThan(0);
-		ctx.game.currentPlayerIndex = original;
+		engineContext.game.currentPlayerIndex = original;
 	});
 });

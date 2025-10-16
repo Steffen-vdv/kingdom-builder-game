@@ -19,41 +19,43 @@ describe('action costs error handling', () => {
 	it('throws when costs are requested for an unknown action', () => {
 		const content = createContentFactory();
 		const action = content.action();
-		const ctx = createTestEngine({ actions: content.actions });
+		const engineContext = createTestEngine({ actions: content.actions });
 		const expectedMessage = expectMissingActionError(action.id);
-		vi.spyOn(ctx.actions, 'get').mockImplementation(() => {
+		vi.spyOn(engineContext.actions, 'get').mockImplementation(() => {
 			return undefined as unknown as typeof action;
 		});
 
-		expect(() => getActionCosts(action.id, ctx)).toThrowError(expectedMessage);
+		expect(() => getActionCosts(action.id, engineContext)).toThrowError(
+			expectedMessage,
+		);
 	});
 
 	it('throws when passive mods see an unknown action', () => {
 		const content = createContentFactory();
 		const action = content.action();
-		const ctx = createTestEngine({ actions: content.actions });
+		const engineContext = createTestEngine({ actions: content.actions });
 		const baseCosts = action.baseCosts || {};
 		const expectedMessage = expectMissingActionError(action.id);
-		vi.spyOn(ctx.actions, 'get').mockImplementation(() => {
+		vi.spyOn(engineContext.actions, 'get').mockImplementation(() => {
 			return undefined as unknown as typeof action;
 		});
 
 		expect(() => {
-			applyCostsWithPassives(action.id, baseCosts, ctx);
+			applyCostsWithPassives(action.id, baseCosts, engineContext);
 		}).toThrowError(expectedMessage);
 	});
 
 	it('throws when requirements use an unknown action', () => {
 		const content = createContentFactory();
 		const action = content.action();
-		const ctx = createTestEngine({ actions: content.actions });
+		const engineContext = createTestEngine({ actions: content.actions });
 		const expectedMessage = expectMissingActionError(action.id);
-		vi.spyOn(ctx.actions, 'get').mockImplementation(() => {
+		vi.spyOn(engineContext.actions, 'get').mockImplementation(() => {
 			return undefined as unknown as typeof action;
 		});
 
 		expect(() => {
-			getActionRequirements(action.id, ctx);
+			getActionRequirements(action.id, engineContext);
 		}).toThrowError(expectedMessage);
 	});
 });
