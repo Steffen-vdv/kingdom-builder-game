@@ -1,7 +1,6 @@
 const { existsSync } = require('fs');
 const { resolve } = require('path');
 const { spawnSync } = require('child_process');
-const { platform } = require('os');
 
 const rootDir = resolve(__dirname, '..');
 
@@ -59,21 +58,4 @@ if (missing.length > 0) {
 	if (result.status !== 0) {
 		process.exit(result.status ?? 1);
 	}
-}
-
-const isWindows = platform() === 'win32';
-const coderabbitBinary =
-	process.env.CODERABBIT_BIN ?? (isWindows ? 'coderabbit.cmd' : 'coderabbit');
-const coderabbitCheck = spawnSync(coderabbitBinary, ['--version'], {
-	stdio: 'ignore',
-	env: process.env,
-	shell: false,
-});
-
-if (coderabbitCheck.error?.code === 'ENOENT') {
-	console.warn(
-		'⚠️  CodeRabbit CLI is not installed or not on your PATH. Install it ' +
-			'and rerun this command so `npm run verify` can launch the ' +
-			'review step. See docs/tooling/coderabbit-cli.md for help.',
-	);
 }
